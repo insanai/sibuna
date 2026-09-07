@@ -21,8 +21,13 @@ pub fn add(
         .optimize = optimize,
         .imports = &.{.{ .name = "console_protocol", .module = protocol }},
     });
+    const serve = b.addModule("sibuna-serve", .{
+        .root_source_file = b.path("libs/serve/src/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
     const step = b.step("console-test", "Test console contracts and bounded ownership");
-    for ([_]*std.Build.Module{ protocol, console }) |module| {
+    for ([_]*std.Build.Module{ protocol, console, serve }) |module| {
         const tests = b.addTest(.{ .root_module = module });
         step.dependOn(&b.addRunArtifact(tests).step);
     }
