@@ -68,20 +68,6 @@ fn isWordByte(c: u8) bool {
     return std.ascii.isAlphanumeric(c) or c == '_';
 }
 
-/// Case-insensitive whole-word search: `select` matches `SELECT ` but not
-/// `selected`, so ordinary prose cannot accumulate SQL keyword evidence.
-fn containsWord(text: []const u8, word: []const u8) bool {
-    var start: usize = 0;
-    while (std.ascii.indexOfIgnoreCasePos(text, start, word)) |idx| {
-        const before_ok = idx == 0 or !isWordByte(text[idx - 1]);
-        const after = idx + word.len;
-        const after_ok = after >= text.len or !isWordByte(text[after]);
-        if (before_ok and after_ok) return true;
-        start = idx + 1;
-    }
-    return false;
-}
-
 /// All strong signatures of every category live in one automaton, so a
 /// field is scanned exactly once regardless of how many signatures exist.
 pub const Signatures = aho.Automaton(2048);
@@ -117,10 +103,59 @@ const traversal_strong = [_][]const u8{
     "web.config", "/windows/system32",
 };
 
+/// Byte classes gathered in one pass so the structural detectors and the
+/// canonicalisation gate need no further scans of the field.
+const Classes = packed struct {
+    quote: bool = false,
+    eq: bool = false,
+    lt: bool = false,
+    shell: bool = false,
+    percent: bool = false,
+    nul: bool = false,
+    canonical: bool = false,
+    double_space: bool = false,
+};
+
+const class_table: [256]u8 = blk: {
+    var t = [_]u8{0} ** 256;
+    t['\''] = 1;
+    t['"'] = 1;
+    t['`'] = 1;
+    t['='] = 2;
+    t['<'] = 4;
+    for (";|&$`\n") |c| t[c] |= 8;
+    t['%'] |= 16 | 64;
+    t[0] = 32;
+    for ("+\t\r\n\x0b\x0c") |c| t[c] |= 64;
+    break :blk t;
+};
+
+fn scanClasses(text: []const u8) Classes {
+    var bits: u8 = 0;
+    var prev: u8 = 0;
+    var double_space = false;
+    for (text) |c| {
+        bits |= class_table[c];
+        if (c == ' ' and prev == ' ') double_space = true;
+        if (c == '*' and prev == '/') bits |= 64;
+        prev = c;
+    }
+    return .{
+        .quote = bits & 1 != 0,
+        .eq = bits & 2 != 0,
+        .lt = bits & 4 != 0,
+        .shell = bits & 8 != 0,
+        .percent = bits & 16 != 0,
+        .nul = bits & 32 != 0,
+        .canonical = bits & 64 != 0,
+        .double_space = double_space,
+    };
+}
+
 /// A null byte truncates C string paths; inside a request it has no
 /// legitimate use and always signals an attempt to cut off a suffix.
-fn checkNullByte(text: []const u8) ?Violation {
-    if (std.mem.indexOfScalar(u8, text, 0) != null or containsIgnoreCase(text, "%00")) {
+fn checkNullByte(text: []const u8, classes: Classes) ?Violation {
+    if (classes.nul or (classes.percent and std.mem.indexOf(u8, text, "%00") != null)) {
         return Violation.of(.path_traversal, "%00");
     }
     return null;
@@ -128,7 +163,7 @@ fn checkNullByte(text: []const u8) ?Violation {
 
 pub fn checkPathTraversal(text: []const u8) ?Violation {
     if (firstMatch(text, &traversal_strong)) |pat| return Violation.of(.path_traversal, pat);
-    return checkNullByte(text);
+    return checkNullByte(text, scanClasses(text));
 }
 
 const sqli_strong = [_][]const u8{
@@ -141,11 +176,20 @@ const sqli_strong = [_][]const u8{
     "updatexml(",    "group_concat(",    "sqlite_master",         "sysobjects",
 };
 
-const sqli_keywords = [_][]const u8{
+const sqli_keyword_list = [_][]const u8{
     "select", "union",  "insert",  "update", "delete", "drop",    "from",
     "where",  "having", "order",   "group",  "exec",   "declare", "cast",
     "concat", "char",   "convert", "table",  "values", "limit",   "offset",
 };
+
+/// Returns the canonical static keyword equal to `word`, comparing only
+/// same-length entries so a scan touches at most a handful of strings.
+fn keywordName(word: []const u8) ?[]const u8 {
+    for (sqli_keyword_list) |kw| {
+        if (kw.len == word.len and std.mem.eql(u8, kw, word)) return kw;
+    }
+    return null;
+}
 
 fn hasSqlComment(text: []const u8) bool {
     return std.mem.indexOf(u8, text, "--") != null or
@@ -179,26 +223,46 @@ fn skipLiteral(text: []const u8, start: usize) ?usize {
 /// A boolean tautology is `or`/`and` followed by `literal = literal`, as in
 /// `or 1=1` or `and 'a'='a'`. Identifiers on either side (`or b=2`) are
 /// ordinary filter syntax and are not counted.
-fn hasTautology(text: []const u8) bool {
-    var pos: usize = 0;
-    while (pos < text.len) {
-        const or_idx = std.ascii.indexOfIgnoreCasePos(text, pos, "or");
-        const and_idx = std.ascii.indexOfIgnoreCasePos(text, pos, "and");
-        const idx = @min(or_idx orelse text.len, and_idx orelse text.len);
-        if (idx >= text.len) return false;
-        const word_len: usize = if (or_idx != null and idx == or_idx.?) 2 else 3;
-        pos = idx + 1;
-        const before_ok = idx == 0 or !isWordByte(text[idx - 1]);
-        if (!before_ok) continue;
-        const lhs_start = skipSpaces(text, idx + word_len);
-        if (lhs_start == idx + word_len) continue;
-        const lhs_end = skipLiteral(text, lhs_start) orelse continue;
-        const eq = skipSpaces(text, lhs_end);
-        if (eq >= text.len or text[eq] != '=') continue;
-        const rhs_start = skipSpaces(text, eq + 1);
-        if (skipLiteral(text, rhs_start) != null) return true;
+fn tautologyAfter(text: []const u8, word_end: usize) bool {
+    const lhs_start = skipSpaces(text, word_end);
+    if (lhs_start == word_end) return false;
+    const lhs_end = skipLiteral(text, lhs_start) orelse return false;
+    const eq = skipSpaces(text, lhs_end);
+    if (eq >= text.len or text[eq] != '=') return false;
+    return skipLiteral(text, skipSpaces(text, eq + 1)) != null;
+}
+
+const SqlScan = struct {
+    keyword_hits: u32 = 0,
+    first_keyword: []const u8 = "",
+    tautology: bool = false,
+};
+
+/// One pass over the text: every alphanumeric word is looked up in the
+/// keyword table, and `or`/`and` words are checked for a tautology.
+fn scanSql(text: []const u8) SqlScan {
+    var out = SqlScan{};
+    var i: usize = 0;
+    while (i < text.len) {
+        if (!isWordByte(text[i])) {
+            i += 1;
+            continue;
+        }
+        const start = i;
+        while (i < text.len and isWordByte(text[i])) : (i += 1) {}
+        const word = text[start..i];
+        if (word.len > 7) continue;
+        var lower: [7]u8 = undefined;
+        for (word, 0..) |c, k| lower[k] = std.ascii.toLower(c);
+        const lw = lower[0..word.len];
+        if (keywordName(lw)) |name| {
+            if (out.keyword_hits == 0) out.first_keyword = name;
+            out.keyword_hits += 1;
+        } else if (std.mem.eql(u8, lw, "or") or std.mem.eql(u8, lw, "and")) {
+            if (tautologyAfter(text, i)) out.tautology = true;
+        }
     }
-    return false;
+    return out;
 }
 
 /// SQL injection scoring. Strong signatures fire alone. Otherwise a quote
@@ -209,11 +273,18 @@ fn hasTautology(text: []const u8) bool {
 /// passes; `name='x' union all from t--` scores four and is blocked.
 pub fn checkSqli(text: []const u8) ?Violation {
     if (firstMatch(text, &sqli_strong)) |pat| return Violation.of(.sqli, pat);
-    return checkSqliStructure(text);
+    return checkSqliStructure(text, scanClasses(text));
 }
 
-fn checkSqliStructure(text: []const u8) ?Violation {
-    if (hasTautology(text)) return Violation.of(.sqli, "tautology");
+fn checkSqliStructure(text: []const u8, classes: Classes) ?Violation {
+    const has_quote = classes.quote;
+    const has_eq = classes.eq;
+    // Without a quote or an equals sign no structural pattern can exist,
+    // which lets ordinary header values skip the tokenizer entirely.
+    if (!has_quote and !has_eq) return null;
+    const scan = scanSql(text);
+    if (scan.tautology) return Violation.of(.sqli, "tautology");
+    if (!has_quote) return null;
     // A closing quote followed by a comment marker is the classic
     // `admin'--` termination trick and carries no keywords at all.
     if (std.mem.indexOf(u8, text, "'--") != null or std.mem.indexOf(u8, text, "'/*") != null or
@@ -221,21 +292,10 @@ fn checkSqliStructure(text: []const u8) ?Violation {
     {
         return Violation.of(.sqli, "'--");
     }
-    if (std.mem.indexOfAny(u8, text, "'\"`") == null) return null;
-    var score: u32 = 1;
-    var first_keyword: []const u8 = "";
-    var keyword_hits: u32 = 0;
-    for (sqli_keywords) |kw| {
-        if (containsWord(text, kw)) {
-            if (keyword_hits == 0) first_keyword = kw;
-            keyword_hits += 1;
-            if (keyword_hits == 2) break;
-        }
-    }
-    score += keyword_hits;
+    var score: u32 = 1 + @min(scan.keyword_hits, 2);
     if (hasSqlComment(text)) score += 1;
-    if (std.mem.indexOfScalar(u8, text, '=') != null) score += 1;
-    if (score >= 4 and keyword_hits > 0) return Violation.of(.sqli, first_keyword);
+    if (has_eq) score += 1;
+    if (score >= 4 and scan.keyword_hits > 0) return Violation.of(.sqli, scan.first_keyword);
     return null;
 }
 
@@ -291,10 +351,11 @@ fn hasEventHandler(text: []const u8) bool {
 /// with an event-handler attribute in attribute position.
 pub fn checkXss(text: []const u8) ?Violation {
     if (firstMatch(text, &xss_strong)) |pat| return Violation.of(.xss, pat);
-    return checkXssStructure(text);
+    return checkXssStructure(text, scanClasses(text));
 }
 
-fn checkXssStructure(text: []const u8) ?Violation {
+fn checkXssStructure(text: []const u8, classes: Classes) ?Violation {
+    if (!classes.lt) return null;
     if (hasHtmlTag(text) and hasEventHandler(text)) return Violation.of(.xss, "on*=");
     return null;
 }
@@ -334,10 +395,11 @@ fn startsWithShellCommand(text: []const u8) bool {
 /// `;` or `|` is punctuation; `;wget` is a payload.
 pub fn checkRce(text: []const u8) ?Violation {
     if (firstMatch(text, &rce_strong)) |pat| return Violation.of(.rce, pat);
-    return checkRceStructure(text);
+    return checkRceStructure(text, scanClasses(text));
 }
 
-fn checkRceStructure(text: []const u8) ?Violation {
+fn checkRceStructure(text: []const u8, classes: Classes) ?Violation {
+    if (!classes.shell) return null;
     var i: usize = 0;
     while (i < text.len) : (i += 1) {
         const c = text[i];
@@ -358,28 +420,36 @@ fn checkRceStructure(text: []const u8) ?Violation {
     return null;
 }
 
-fn inspectRaw(sigs: *const Signatures, text: []const u8) ?Violation {
+fn inspectRaw(sigs: *const Signatures, text: []const u8, classes: Classes) ?Violation {
     if (sigs.findFirstTagged(text)) |m| {
         return Violation.of(@enumFromInt(m.tag), m.name);
     }
-    if (checkNullByte(text)) |v| return v;
-    if (checkSqliStructure(text)) |v| return v;
-    if (checkXssStructure(text)) |v| return v;
-    if (checkRceStructure(text)) |v| return v;
+    if (checkNullByte(text, classes)) |v| return v;
+    if (checkSqliStructure(text, classes)) |v| return v;
+    if (checkXssStructure(text, classes)) |v| return v;
+    if (checkRceStructure(text, classes)) |v| return v;
     return null;
 }
 
 /// Inspects one text field twice: as received, then canonicalised (double
 /// percent-decoding, SQL comment stripping, whitespace folding, lowercase)
 /// so that `%2527/**/UnIoN` style evasion collapses onto the raw signatures.
+/// Canonicalisation can only change the outcome when the input carries
+/// percent escapes, plus signs, comment openers, or collapsible whitespace;
+/// case never matters because every detector already folds it.
+fn needsCanonical(classes: Classes) bool {
+    return classes.canonical or classes.double_space;
+}
+
 pub fn inspectTextWith(sigs: *const Signatures, text: []const u8) ?Violation {
     if (text.len == 0) return null;
-    if (inspectRaw(sigs, text)) |v| return v;
-    if (text.len > MAX_CANONICAL) return null;
+    const classes = scanClasses(text);
+    if (inspectRaw(sigs, text, classes)) |v| return v;
+    if (text.len > MAX_CANONICAL or !needsCanonical(classes)) return null;
     var norm_buf: [MAX_CANONICAL]u8 = undefined;
     const normalized = normalizer.canonicalize(text, &norm_buf);
     if (normalized.len > 0 and !std.mem.eql(u8, normalized, text)) {
-        return inspectRaw(sigs, normalized);
+        return inspectRaw(sigs, normalized, scanClasses(normalized));
     }
     return null;
 }
@@ -389,7 +459,7 @@ pub fn inspectTextWith(sigs: *const Signatures, text: []const u8) ?Violation {
 pub fn inspectText(text: []const u8) ?Violation {
     if (text.len == 0) return null;
     if (inspectSequential(text)) |v| return v;
-    if (text.len > MAX_CANONICAL) return null;
+    if (text.len > MAX_CANONICAL or !needsCanonical(scanClasses(text))) return null;
     var norm_buf: [MAX_CANONICAL]u8 = undefined;
     const normalized = normalizer.canonicalize(text, &norm_buf);
     if (normalized.len > 0 and !std.mem.eql(u8, normalized, text)) {

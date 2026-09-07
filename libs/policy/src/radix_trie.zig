@@ -26,16 +26,22 @@ pub const Trie = struct {
     /// 0 = no action; otherwise `@intFromEnum(action) + 1`.
     actions: [MAX_NODES]u8 = [_]u8{0} ** MAX_NODES,
     node_count: u16 = 1,
+    /// Node at depth 96 under `::ffff:0:0`, so IPv4 lookups skip the
+    /// mapped prefix and walk at most 32 levels.
+    v4_root: u16 = 0,
 
     pub fn init() Trie {
-        return .{};
+        var trie = Trie{};
+        trie.v4_root = trie.pathTo(v4_mapped_prefix, 96) catch unreachable;
+        return trie;
     }
 
-    pub fn insert(self: *Trie, address: u128, prefix_len: u8, action: Action) !void {
-        std.debug.assert(prefix_len <= 128);
+    /// Returns the node for the first `depth` bits of `address`, creating
+    /// nodes as needed.
+    fn pathTo(self: *Trie, address: u128, depth: u8) !u16 {
         var current: u16 = 0;
         var i: u8 = 0;
-        while (i < prefix_len) : (i += 1) {
+        while (i < depth) : (i += 1) {
             const shift: u7 = @intCast(127 - i);
             const bit: u1 = @intCast((address >> shift) & 1);
             if (self.children[current][bit] == 0) {
@@ -45,7 +51,13 @@ pub const Trie = struct {
             }
             current = self.children[current][bit];
         }
-        self.actions[current] = @intFromEnum(action) + 1;
+        return current;
+    }
+
+    pub fn insert(self: *Trie, address: u128, prefix_len: u8, action: Action) !void {
+        std.debug.assert(prefix_len <= 128);
+        const node = try self.pathTo(address, prefix_len);
+        self.actions[node] = @intFromEnum(action) + 1;
     }
 
     /// Inserts a `/32` or `/128` host entry or a CIDR block of either family.
@@ -58,6 +70,12 @@ pub const Trie = struct {
         var current: u16 = 0;
         var best: u8 = self.actions[0];
         var i: u8 = 0;
+        if (address >> 32 == v4_mapped_prefix >> 32) {
+            // The mapped prefix carries no entries of its own (IPv6 rules
+            // inside ::ffff:0:0/96 are IPv4 rules), so start at its node.
+            current = self.v4_root;
+            i = 96;
+        }
         while (i < 128) : (i += 1) {
             const shift: u7 = @intCast(127 - i);
             const bit: u1 = @intCast((address >> shift) & 1);
@@ -82,6 +100,7 @@ pub const Trie = struct {
             self.actions[i] = 0;
         }
         self.node_count = 1;
+        self.v4_root = self.pathTo(v4_mapped_prefix, 96) catch unreachable;
     }
 };
 
