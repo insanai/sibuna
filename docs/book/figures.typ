@@ -8,55 +8,217 @@
   corner-radius: 3pt,
   inset: 7pt,
 )
+#let good_style = (fill: green_light, stroke: 0.8pt + green, corner-radius: 3pt, inset: 7pt)
+#let warn_style = (fill: amber_light, stroke: 0.8pt + amber, corner-radius: 3pt, inset: 7pt)
+#let bad_style = (fill: red_light, stroke: 0.8pt + red, corner-radius: 3pt, inset: 7pt)
 
-#let pipeline_flow() = diagram(
-  spacing: (28mm, 16mm),
+// ------------------------------------------------------------------ pipeline
+
+#let fit(body, pct) = scale(x: pct, y: pct, reflow: true, body)
+
+#let pipeline_flow() = fit(diagram(
+  spacing: (12mm, 10mm),
   node-stroke: 0.8pt + blue,
   edge-stroke: 0.8pt + gray,
-  node((0, 0), [Incoming #linebreak() HTTP Request], ..node_style),
-  node((1, 0), [Zero-Copy #linebreak() Parser], ..node_style),
-  node((2, 0), [Token / Cookie #linebreak() Verified?], fill: amber_light, stroke: 0.8pt + amber,
-    corner-radius: 3pt, inset: 7pt),
-  node((3, 0), [Streaming #linebreak() Reverse Proxy], fill: green_light, stroke: 0.8pt + green,
-    corner-radius: 3pt, inset: 7pt),
-  node((2, 1), [Policy Engine #linebreak() Trie & Automaton], ..node_style),
-  node((3, 1), [WASM Solver #linebreak() Interstitial], fill: rgb("eff6ff"), stroke: 0.8pt + blue,
-    corner-radius: 3pt, inset: 7pt),
-  node((1, 1), [403 Forbidden], fill: red_light, stroke: 0.8pt + red,
-    corner-radius: 3pt, inset: 7pt),
-
+  node((0, 0), [Request #linebreak() (64 KB buffer)], ..node_style),
+  node((1, 0), [Ban table #linebreak() lock-free read], ..node_style),
+  node((2, 0), [GCRA #linebreak() rate limiter], ..node_style),
+  node((3, 0), [Session cookie #linebreak() keyed MAC], ..warn_style),
+  node((4, 0), [Proxy with #linebreak() audit headers], ..good_style),
+  node((0, 1), [Semantic WAF #linebreak() automaton], ..node_style),
+  node((1, 1), [Reputation trie #linebreak() allow / deny], ..node_style),
+  node((2, 1), [Rules + WEIGH #linebreak() first terminal], ..node_style),
+  node((3, 1), [Bypass paths, #linebreak() bot automaton], ..node_style),
+  node((4, 1), [Interstitial #linebreak() or 401 JSON], ..warn_style),
+  node((1, 2), [403 Forbidden], ..bad_style),
   edge((0, 0), (1, 0), "-|>"),
   edge((1, 0), (2, 0), "-|>"),
-  edge((2, 0), (3, 0), "-|>", [valid token]),
-  edge((2, 0), (2, 1), "-|>", [no token]),
-  edge((2, 1), (1, 1), "-|>", [blocked bot/IP]),
-  edge((2, 1), (3, 1), "-|>", [challenge]),
-  edge((3, 1), (3, 0), "-|>", [PoW solved], bend: -35deg),
-)
+  edge((2, 0), (3, 0), "-|>"),
+  edge((3, 0), (4, 0), "-|>", [valid]),
+  edge((3, 0), (0, 1), "-|>", [none], bend: 25deg),
+  edge((0, 1), (1, 1), "-|>", [clean]),
+  edge((1, 1), (2, 1), "-|>"),
+  edge((2, 1), (3, 1), "-|>"),
+  edge((3, 1), (4, 1), "-|>", [challenge]),
+  edge((3, 1), (4, 0), "-|>", [allow], bend: -20deg),
+  edge((0, 1), (1, 2), "-|>", [violation]),
+  edge((1, 1), (1, 2), "-|>", [banned]),
+  edge((2, 0), (1, 2), "-|>", [429], bend: 20deg),
+), 78%)
 
-#let token_wire_format() = cetz.canvas(length: 1cm, {
+#let challenge_round_trip() = fit(diagram(
+  spacing: (14mm, 11mm),
+  node-stroke: 0.8pt + blue,
+  edge-stroke: 0.8pt + gray,
+  node((0, 0), [Browser #linebreak() navigation], ..node_style),
+  node((1, 0), [Interstitial #linebreak() (HTTP 200)], ..warn_style),
+  node((2, 0), [`GET /__sibuna/challenge.json?path=`], ..node_style),
+  node((3, 0), [Stateless id: #linebreak() payload + tag], ..good_style),
+  node((3, 1), [Web Worker #linebreak() WASM / JS prover], ..node_style),
+  node((2, 1), [`POST /__sibuna/verify`], ..node_style),
+  node((1, 1), [Verify, spent set, #linebreak() mint MAC token], ..good_style),
+  node((0, 1), [`Set-Cookie` #linebreak() then reload], ..warn_style),
+  edge((0, 0), (1, 0), "-|>"),
+  edge((1, 0), (2, 0), "-|>"),
+  edge((2, 0), (3, 0), "-|>"),
+  edge((3, 0), (3, 1), "-|>", [solve]),
+  edge((3, 1), (2, 1), "-|>", [nonce or proof]),
+  edge((2, 1), (1, 1), "-|>"),
+  edge((1, 1), (0, 1), "-|>"),
+  edge((0, 1), (0, 0), "-|>", [session], bend: 30deg),
+), 78%)
+
+// ----------------------------------------------------------------- PoSW tree
+
+#let posw_tree() = cetz.canvas(length: 1cm, {
   import cetz.draw: *
-
-  // Payload: 32 bytes
-  rect((0, 0), (7, 1.2), fill: blue_light, stroke: 0.8pt + blue, radius: 2pt)
-  content((3.5, 0.6), text(size: 8.5pt, weight: "bold", fill: blue)[
-    Payload (32 Bytes): Timestamp (8B) · Expiry (8B) · RuleHash (8B) · Fingerprint (8B)
-  ])
-
-  // Signature: 64 bytes
-  rect((7.2, 0), (14.2, 1.2), fill: green_light, stroke: 0.8pt + green, radius: 2pt)
-  content((10.7, 0.6), text(size: 8.5pt, weight: "bold", fill: green)[
-    Ed25519 Cryptographic Signature (64 Bytes)
-  ])
-
-  // Summary bracket
-  line((0, -0.3), (14.2, -0.3), stroke: 0.8pt + gray)
-  line((0, -0.2), (0, -0.4), stroke: 0.8pt + gray)
-  line((14.2, -0.2), (14.2, -0.4), stroke: 0.8pt + gray)
-  content((7.1, -0.75), text(size: 8.5pt, fill: gray)[
-    Total: 96 Bytes Raw Binary -> 128 Chars URL-Safe Base64 (`__sibuna_token`)
+  let pos(d, i) = {
+    let width = 12.0
+    let n = calc.pow(2, d)
+    ((i + 0.5) * width / n - width / 2, 3.6 - d * 1.2)
+  }
+  // edges from children to parents (labels flow upward)
+  for d in range(1, 4) {
+    for i in range(calc.pow(2, d)) {
+      let child = pos(d, i)
+      let parent = pos(d - 1, calc.quo(i, 2))
+      line(child, parent, stroke: 0.6pt + gray)
+    }
+  }
+  // left-sibling edges into leaf 5 = 101: turns right at depth 1 and 3
+  let leaf = pos(3, 5)
+  for (d, sib) in ((1, 0), (3, 4)) {
+    line(pos(d, sib), leaf, stroke: (paint: red, thickness: 0.9pt, dash: "dashed"), mark: (end: ">"))
+  }
+  // opening path for leaf 5 highlighted
+  for (d, i) in ((3, 5), (2, 2), (1, 1), (0, 0)) {
+    circle(pos(d, i), radius: 0.28, fill: amber_light, stroke: 1pt + amber)
+  }
+  for (d, i) in ((3, 4), (2, 3), (1, 0)) {
+    circle(pos(d, i), radius: 0.28, fill: green_light, stroke: 1pt + green)
+  }
+  for d in range(0, 4) {
+    for i in range(calc.pow(2, d)) {
+      if not ((d, i) in ((3, 5), (2, 2), (1, 1), (0, 0), (3, 4), (2, 3), (1, 0))) {
+        circle(pos(d, i), radius: 0.28, fill: white, stroke: 0.8pt + blue)
+      }
+      content(pos(d, i), text(size: 6.5pt)[#d.#i])
+    }
+  }
+  content((-6.6, 3.6), anchor: "east", text(size: 7pt, fill: gray)[root $phi$])
+  content((-6.6, 0.0), anchor: "east", text(size: 7pt, fill: gray)[leaves])
+  content((0, -0.9), text(size: 7.5pt)[
+    #box(width: 0.3cm, height: 0.3cm, fill: amber_light, stroke: 1pt + amber) path of leaf 3.5
+    #h(6pt)
+    #box(width: 0.3cm, height: 0.3cm, fill: green_light, stroke: 1pt + green) siblings sent in the opening
+    #h(6pt)
+    #text(fill: red)[dashed] left-sibling edges hashed into the leaf
   ])
 })
+
+// -------------------------------------------------------------- wire formats
+
+#let bytes_row(y, fields, total_label) = {
+  import cetz.draw: *
+  let x = 0.0
+  for (label, width, fill, stroke) in fields {
+    rect((x, y), (x + width, y + 0.9), fill: fill, stroke: 0.8pt + stroke, radius: 2pt)
+    content((x + width / 2, y + 0.45), text(size: 7pt, weight: "bold", fill: stroke)[#label])
+    x += width
+  }
+  content((x / 2, y - 0.35), text(size: 7.5pt, fill: gray)[#total_label])
+}
+
+#let wire_formats() = cetz.canvas(length: 1cm, {
+  import cetz.draw: *
+  let f = 0.26
+  bytes_row(2.6, (
+    ([ver 1], 1 * f + 0.3, blue_light, blue), ([alg 1], 1 * f + 0.3, blue_light, blue),
+    ([diff 1], 1 * f + 0.3, blue_light, blue), ([t 1], 1 * f + 0.3, blue_light, blue),
+    ([issued_at 8], 8 * f, blue_light, blue), ([fingerprint 8], 8 * f, blue_light, blue),
+    ([nonce 8], 8 * f, blue_light, blue), ([rule_hash 8], 8 * f, blue_light, blue),
+    ([BLAKE3 tag 16], 16 * f, green_light, green),
+  ), [Challenge identifier: 36-byte payload + 16-byte keyed tag = 52 bytes, 70 URL-safe base64 characters])
+  bytes_row(0.6, (
+    ([timestamp 8], 8 * f, blue_light, blue), ([expiry 8], 8 * f, blue_light, blue),
+    ([rule_hash 8], 8 * f, blue_light, blue), ([fingerprint 8], 8 * f, blue_light, blue),
+    ([BLAKE3 tag 16], 16 * f, green_light, green),
+  ), [Session token: 32-byte payload + 16-byte keyed tag = 48 bytes, 64 URL-safe base64 characters])
+})
+
+// ------------------------------------------------------------------- GCRA
+
+#let gcra_timeline() = cetz.canvas(length: 1cm, {
+  import cetz.draw: *
+  let x0 = 0.6
+  let scale = 8.0 / 1000.0
+  line((x0, 0), (x0 + 8.6, 0), stroke: 0.8pt + gray, mark: (end: ">"))
+  for t in (0, 200, 400, 600, 800, 1000) {
+    let x = x0 + t * scale
+    line((x, -0.1), (x, 0.1), stroke: 0.6pt + gray)
+    content((x, -0.4), text(size: 6.5pt, fill: gray)[#t ms])
+  }
+  // burst of 5 at t=0 admitted, 6th rejected, then one every 200 ms
+  for k in range(5) {
+    let x = x0 + k * 0.08
+    line((x, 0.15), (x, 1.0), stroke: 1.2pt + green)
+  }
+  line((x0 + 0.45, 0.15), (x0 + 0.45, 1.0), stroke: (paint: red, thickness: 1.2pt, dash: "dashed"))
+  content((x0 + 0.5, 1.2), anchor: "west", text(size: 6.8pt, fill: red)[6th arrival rejected: TAT $> t + tau$])
+  for t in (200, 400, 600, 800, 1000) {
+    let x = x0 + t * scale
+    line((x, 0.15), (x, 1.0), stroke: 1.2pt + green)
+    line((x - 0.06, 0.15), (x - 0.06, 1.0), stroke: (paint: red, thickness: 1.2pt, dash: "dashed"))
+  }
+  content((x0 + 4.3, 1.75), text(size: 7pt)[rate = 5 per 1000 ms, so $T$ = 200 ms and $tau$ = 800 ms: a burst of five, then one admission per $T$])
+  // TAT curve
+  let pts = ((0, 1000), (200, 1200), (400, 1400), (600, 1600), (800, 1800), (1000, 2000))
+  content((x0 + 4.3, -0.85), text(size: 6.8pt, fill: blue)[green: admitted; dashed red: rejected. TAT after the $k$-th admission is $t_1 + k T$, so any interval of length $L$ admits at most $N + floor(L \/ T)$])
+})
+
+// ------------------------------------------------------------------- RCU
+
+#let rcu_swap() = fit(diagram(
+  spacing: (16mm, 11mm),
+  node-stroke: 0.8pt + blue,
+  edge-stroke: 0.8pt + gray,
+  node((0, 0), [Worker thread #linebreak() `acquireEngine`], ..node_style),
+  node((1, 0), [`slot` pointer #linebreak() atomic], ..warn_style),
+  node((2, 0), [Slot A: engine, #linebreak() readers = 3], ..good_style),
+  node((2, 1), [Slot B: engine, #linebreak() readers = 0], ..node_style),
+  node((0, 1), [Storage thread #linebreak() rebuild B, swap, #linebreak() wait A.readers = 0], ..node_style),
+  edge((0, 0), (1, 0), "-|>", [load]),
+  edge((1, 0), (2, 0), "-|>", [pin, re-check]),
+  edge((0, 1), (2, 1), "-|>", [build]),
+  edge((0, 1), (1, 0), "-|>", [swap to B], bend: 20deg),
+  edge((0, 1), (2, 0), "--|>", [drain], bend: -10deg),
+), 85%)
+
+// --------------------------------------------------------------- storage
+
+#let storage_architecture() = fit(diagram(
+  spacing: (12mm, 11mm),
+  node-stroke: 0.8pt + blue,
+  edge-stroke: 0.8pt + gray,
+  node((0, 0), [Workers #linebreak() (hot path)], ..node_style),
+  node((1, 0), [MPSC ring #linebreak() 512 incidents], ..warn_style),
+  node((2, 0), [Storage thread #linebreak() drain + poll], ..node_style),
+  node((3, 0), [Zaxonlite #linebreak() SQLite + Paxos], ..good_style),
+  node((3, 1), [`policies`, `ip_reputation`, #linebreak() `security_incidents`, FTS5, vec0], ..good_style),
+  node((2, 1), [Rebuild spare #linebreak() engine slot], ..node_style),
+  node((1, 1), [`publishEngine` #linebreak() RCU swap], ..warn_style),
+  node((0, 1), [Other cluster #linebreak() nodes], ..node_style),
+  edge((0, 0), (1, 0), "-|>", [push]),
+  edge((1, 0), (2, 0), "-|>", [pop]),
+  edge((2, 0), (3, 0), "-|>", [batched SQL]),
+  edge((3, 0), (3, 1), "-|>"),
+  edge((3, 1), (2, 1), "-|>", [changed?]),
+  edge((2, 1), (1, 1), "-|>"),
+  edge((1, 1), (0, 0), "-|>", [new rules], bend: 20deg),
+  edge((3, 0), (0, 1), "<-|>", [Multi-Paxos], bend: 30deg),
+), 80%)
+
+// --------------------------------------------------------- Aho-Corasick
 
 #let aho_corasick_graph() = diagram(
   spacing: (20mm, 14mm),
@@ -69,7 +231,6 @@
   node((1, 1), [C], ..node_style),
   node((2, 1), [Cl], ..node_style),
   node((3, 1), [ClaudeBot], fill: red_light, stroke: 0.8pt + red, corner-radius: 3pt, inset: 6pt),
-
   edge((0, 0), (1, -1), "-|>", [g]),
   edge((1, -1), (2, -1), "-|>", [p]),
   edge((2, -1), (3, -1), "-|>", [tbot]),
@@ -79,6 +240,8 @@
   edge((2, -1), (0, 0), "--|>", [fail], stroke: 0.7pt + amber, bend: 30deg),
   edge((2, 1), (0, 0), "--|>", [fail], stroke: 0.7pt + amber, bend: -30deg),
 )
+
+// ------------------------------------------------------------- benchmarks
 
 #let stat_tile(number, label, detail, fill: blue_light, stroke: blue) = block(
   breakable: false,
@@ -93,184 +256,139 @@
   #text(size: 7.2pt, fill: gray)[#detail]
 ]
 
+#let bench_data() = json("/benchmarks/results/latest.json")
+
+#let bench_find(data, impl, subsystem, workload) = data.runs.find(run =>
+  run.impl == impl and run.subsystem == subsystem and run.workload == workload)
+
+#let fmt_ns(v) = {
+  if v == none { [-] }
+  else if v >= 1000000 { [#calc.round(v / 1000000, digits: 2) ms] }
+  else if v >= 1000 { [#calc.round(v / 1000, digits: 2) µs] }
+  else { [#calc.round(v, digits: 1) ns] }
+}
+
+#let benchmark_rows() = (
+  ("Hashcash verify (16 bits)", "pow_verify", "hashcash_16_bits", true),
+  ("PoSW verify (depth 13, t = 16)", "pow_verify", "posw_depth13_t16", false),
+  ("Bot signatures (40, Aho-Corasick)", "bot_matcher", "aho_corasick_40_signatures", true),
+  ("IPv4 CIDR lookup", "ip_filter", "ipv4_cidr_classification", true),
+  ("IPv6 CIDR lookup", "ip_filter", "ipv6_cidr_classification", false),
+  ("Session token (keyed BLAKE3)", "token_auth", "blake3_mac_token", true),
+  ("Session token (Ed25519)", "token_auth", "ed25519_compact_token", false),
+  ("Spent set (Robin Hood)", "challenge_store", "robin_hood_spend_and_lookup", true),
+  ("Rate limiter (GCRA)", "rate_limiter", "gcra_check", false),
+  ("HTTP parse + cookie", "http_parser", "zero_copy_request_and_cookie", true),
+  ("Classification, Gate profile", "policy_engine", "browser_request_gate_profile", false),
+  ("Classification, Shield profile", "policy_engine", "browser_request_full_classification", false),
+  ("WAF body scan (8 KB)", "waf_inspect", "8kb_body_semantic_scan", false),
+)
+
 #let benchmark_log_chart() = {
-  let data = json("/benchmarks/results/latest.json")
-  let find(impl, subsystem, workload) = data.runs.find(run =>
-    run.impl == impl and run.subsystem == subsystem and run.workload == workload)
-
-  let items = (
-    ("PoW Verify", find("sibuna", "pow_verify", "sha256_hashcash_diff4"),
-                   find("anubis", "pow_verify", "sha256_hashcash_diff4")),
-    ("Bot Matcher", find("sibuna", "bot_matcher", "user_agent_40_signatures"),
-                    find("anubis", "bot_matcher", "user_agent_40_signatures")),
-    ("IP CIDR", find("sibuna", "ip_filter", "ipv4_cidr_classification"),
-                find("anubis", "ip_filter", "ipv4_cidr_classification")),
-    ("Token Auth", find("sibuna", "token_auth", "ed25519_compact_token"),
-                   find("anubis", "token_auth", "ed25519_compact_token")),
-    ("Decay Store", find("sibuna", "challenge_store", "sharded_spinlock_decay_map"),
-                    find("anubis", "challenge_store", "sharded_spinlock_decay_map")),
-    ("HTTP Parser", find("sibuna", "http_parser", "zero_copy_request_and_cookie"),
-                    find("anubis", "http_parser", "zero_copy_request_and_cookie")),
-  )
-
+  let data = bench_data()
+  let items = benchmark_rows().map(((label, sub, wl, has_model)) => (
+    label,
+    bench_find(data, "sibuna", sub, wl),
+    if has_model { bench_find(data, "anubis-model", sub, wl) } else { none },
+  ))
   cetz.canvas(length: 1cm, {
     import cetz.draw: *
-
-    let x0 = 2.4
-    let xw = 9.8
-    let lmin = 1.0
-    let lmax = 5.2
-    let row_h = 0.78
-    let bar_h = 0.20
+    let x0 = 4.4
+    let xw = 9.2
+    let lmin = 0.5
+    let lmax = 5.0
+    let row_h = 0.62
+    let bar_h = 0.18
     let height = items.len() * row_h
-
     let xpos(v) = {
-      let lv = calc.log(calc.max(v, 10.0), base: 10)
+      let lv = calc.log(calc.max(v, 3.2), base: 10)
       x0 + ((lv - lmin) / (lmax - lmin)) * xw
     }
-
     for exp in range(1, 6) {
       let val = calc.pow(10, exp)
       let x = xpos(val)
       line((x, 0.2), (x, -height - 0.2), stroke: (paint: rule, thickness: 0.4pt, dash: "dashed"))
-      let label_str = if exp == 1 { "10 ns" }
-        else if exp == 2 { "100 ns" }
-        else if exp == 3 { "1 μs" }
-        else if exp == 4 { "10 μs" }
-        else { "100 μs" }
+      let label_str = if exp == 1 { "10 ns" } else if exp == 2 { "100 ns" } else if exp == 3 { "1 µs" } else if exp == 4 { "10 µs" } else { "100 µs" }
       content((x, 0.45), text(size: 6.8pt, fill: gray)[#label_str])
     }
-
-    rect((x0, 0.95), (x0 + 0.35, 0.75), fill: blue, stroke: none)
-    content((x0 + 0.45, 0.85), anchor: "west", text(size: 7.2pt, weight: "bold", fill: blue)[Sibuna (Pure Zig, 0 Alloc)])
-    rect((x0 + 4.2, 0.95), (x0 + 4.55, 0.75), fill: red, stroke: none)
-    content((x0 + 4.65, 0.85), anchor: "west", text(size: 7.2pt, weight: "bold", fill: red)[Anubis (Go, Wazero VM)])
-
-    for (i, (label, sib, anu)) in items.enumerate() {
+    rect((x0, 1.0), (x0 + 0.35, 0.8), fill: blue, stroke: none)
+    content((x0 + 0.45, 0.9), anchor: "west", text(size: 7.2pt, weight: "bold", fill: blue)[Sibuna, measured on this host])
+    rect((x0 + 5.0, 1.0), (x0 + 5.35, 0.8), fill: red, stroke: none)
+    content((x0 + 5.45, 0.9), anchor: "west", text(size: 7.2pt, weight: "bold", fill: red)[Anubis reference model, not measured])
+    for (i, (label, sib, model)) in items.enumerate() {
       let y = -(i + 0.5) * row_h
-      content((x0 - 0.15, y), anchor: "east", text(size: 7.5pt, weight: "bold")[#label])
-
+      content((x0 - 0.15, y), anchor: "east", text(size: 7pt, weight: "bold")[#label])
       if sib != none {
-        let x_sib = xpos(sib.ns_per_op)
-        rect((x0, y + 0.02), (x_sib, y + bar_h + 0.02), fill: blue, stroke: none)
-        let txt = str(calc.round(sib.ns_per_op, digits: 1)) + " ns"
-        content((x_sib + 0.08, y + bar_h / 2 + 0.02), anchor: "west", text(size: 5.8pt, fill: blue)[#txt])
+        let x_s = xpos(sib.ns_per_op_median)
+        rect((x0, y + 0.02), (x_s, y + bar_h + 0.02), fill: blue, stroke: none)
+        content((x_s + 0.08, y + bar_h / 2 + 0.02), anchor: "west", text(size: 5.8pt, fill: blue)[#fmt_ns(sib.ns_per_op_median)])
       }
-
-      if anu != none {
-        let x_anu = xpos(anu.ns_per_op)
-        rect((x0, y - bar_h - 0.02), (x_anu, y - 0.02), fill: red, stroke: none)
-        let txt = str(calc.round(anu.ns_per_op, digits: 1)) + " ns"
-        content((x_anu + 0.08, y - bar_h / 2 - 0.02), anchor: "west", text(size: 5.8pt, fill: red)[#txt])
+      if model != none {
+        let x_m = xpos(model.ns_per_op_median)
+        rect((x0, y - bar_h - 0.02), (x_m, y - 0.02), fill: red, stroke: none)
+        content((x_m + 0.08, y - bar_h / 2 - 0.02), anchor: "west", text(size: 5.8pt, fill: red)[#fmt_ns(model.ns_per_op_median)])
       }
     }
   })
 }
 
 #let benchmark_results_table() = {
-  let data = json("/benchmarks/results/latest.json")
+  let data = bench_data()
   let meta = data.meta
-
-  let find(impl, subsystem, workload) = data.runs.find(run =>
-    run.impl == impl and run.subsystem == subsystem and run.workload == workload)
-
-  let ns(run) = if run != none { calc.round(run.ns_per_op, digits: 1) } else { [-] }
-  let ops(run) = if run != none { run.ops_per_sec } else { [-] }
-  let alloc(run) = if run != none { run.alloc_bytes } else { [-] }
-  let speedup(sib, anu) = if sib != none and anu != none and sib.ns_per_op > 0 {
-    calc.round(anu.ns_per_op / sib.ns_per_op, digits: 1)
-  } else { [-] }
-
   let dirty_tag = if "dirty" in meta and meta.dirty { [ · modified tree] } else { [] }
-
-  let panel(title, subtitle, body, tint: blue_light) = block(
-    width: 100%,
-    inset: 10pt,
-    radius: 5pt,
-    fill: tint,
-    stroke: 0.5pt + rule,
-  )[
-    #text(size: 11pt, weight: "bold")[#title]
-    #linebreak()
-    #text(size: 8pt, fill: gray)[#subtitle]
-    #v(5pt)
-    #body
-  ]
-
-  let p_sib = find("sibuna", "pow_verify", "sha256_hashcash_diff4")
-  let p_anu = find("anubis", "pow_verify", "sha256_hashcash_diff4")
-
-  let b_sib = find("sibuna", "bot_matcher", "user_agent_40_signatures")
-  let b_anu = find("anubis", "bot_matcher", "user_agent_40_signatures")
-
-  let i_sib = find("sibuna", "ip_filter", "ipv4_cidr_classification")
-  let i_anu = find("anubis", "ip_filter", "ipv4_cidr_classification")
-
-  let t_sib = find("sibuna", "token_auth", "ed25519_compact_token")
-  let t_anu = find("anubis", "token_auth", "ed25519_compact_token")
-
-  let c_sib = find("sibuna", "challenge_store", "sharded_spinlock_decay_map")
-  let c_anu = find("anubis", "challenge_store", "sharded_spinlock_decay_map")
-
-  let h_sib = find("sibuna", "http_parser", "zero_copy_request_and_cookie")
-  let h_anu = find("anubis", "http_parser", "zero_copy_request_and_cookie")
-
+  let rows = benchmark_rows().map(((label, sub, wl, has_model)) => {
+    let sib = bench_find(data, "sibuna", sub, wl)
+    let model = if has_model { bench_find(data, "anubis-model", sub, wl) } else { none }
+    (
+      [#label],
+      [#fmt_ns(if sib != none { sib.ns_per_op_median } else { none })],
+      [#fmt_ns(if sib != none { sib.ns_per_op_min } else { none }) – #fmt_ns(if sib != none { sib.ns_per_op_max } else { none })],
+      [#if sib != none { sib.ops_per_sec } else { [-] }],
+      [#if model != none { fmt_ns(model.ns_per_op_median) } else { text(fill: gray)[n/a] }],
+      [#if model != none and sib != none { [#calc.round(model.ns_per_op_median / sib.ns_per_op_median, digits: 1)×] } else { text(fill: gray)[-] }],
+    )
+  }).flatten()
+  let naive = bench_find(data, "sibuna-naive", "bot_matcher", "sequential_substring_40_signatures")
+  let ac = bench_find(data, "sibuna", "bot_matcher", "aho_corasick_40_signatures")
   [
     #text(size: 8pt, fill: gray)[
       Recorded #meta.date · #meta.host · #meta.cpu · #meta.os · revision
-      #raw(meta.git)#dirty_tag · Zig #meta.zig · ReleaseFast
+      #raw(meta.git)#dirty_tag · Zig #meta.zig · ReleaseFast · 7 batches, median with min–max spread
     ]
     #v(6pt)
     #grid(
       columns: (1fr, 1fr, 1fr, 1fr),
       gutter: 6pt,
-      stat_tile([#speedup(p_sib, p_anu)x], [PoW Verify Speedup],
-        [Host silicon vs Wazero VM], fill: blue_light, stroke: blue),
-      stat_tile([0 Bytes], [Heap Allocation],
-        [Zero alloc on hot-path], fill: green_light, stroke: green),
-      stat_tile([#speedup(b_sib, b_anu)x], [Bot Matching],
-        [Branchless Aho-Corasick], fill: amber_light, stroke: amber),
-      stat_tile([< 5 MB], [Static RSS Footprint],
-        [16x leaner than Anubis], fill: rgb("f5f3ff"), stroke: rgb("7c3aed")),
+      stat_tile([#fmt_ns(bench_find(data, "sibuna", "pow_verify", "hashcash_16_bits").ns_per_op_median)], [Hashcash verify],
+        [Hardware SHA-256, zero allocation], fill: blue_light, stroke: blue),
+      stat_tile([#fmt_ns(bench_find(data, "sibuna", "token_auth", "blake3_mac_token").ns_per_op_median)], [Session token check],
+        [Keyed BLAKE3, 64-character cookie], fill: green_light, stroke: green),
+      stat_tile([#calc.round(meta.idle_rss_kb / 1024, digits: 1) MB], [Idle resident memory],
+        [Daemon after start, storage off], fill: amber_light, stroke: amber),
+      stat_tile([#calc.round(meta.binary_bytes / 1048576, digits: 1) MB], [Static binary],
+        [WASM solver #meta.wasm_bytes bytes], fill: rgb("f5f3ff"), stroke: rgb("7c3aed")),
     )
     #v(8pt)
-
-    #panel(
-      [Sibuna vs Anubis: Performance & Allocation Audit],
-      [Tested in ReleaseFast · 7 independent sample passes · Median results],
-      table(
-        columns: (1.3fr, 1.1fr, 1.1fr, 1.1fr, 1fr, 1.1fr),
-        table.header(
-          [*Subsystem Workload*], [*Sibuna (ns/op)*], [*Anubis (ns/op)*],
-          [*Sibuna Alloc*], [*Anubis Alloc*], [*Advantage*],
-        ),
-        [PoW Verification (Diff 4)], [#ns(p_sib) ns], [#ns(p_anu) ns],
-          [#alloc(p_sib) B], [#alloc(p_anu) B], [*#speedup(p_sib, p_anu)x faster*],
-
-        [Bot Detection (40 Signatures)], [#ns(b_sib) ns], [#ns(b_anu) ns],
-          [#alloc(b_sib) B], [#alloc(b_anu) B], [*#speedup(b_sib, b_anu)x faster*],
-
-        [IP CIDR Classification], [#ns(i_sib) ns], [#ns(i_anu) ns],
-          [#alloc(i_sib) B], [#alloc(i_anu) B], [*#speedup(i_sib, i_anu)x faster*],
-
-        [Token Authentication], [#ns(t_sib) ns], [#ns(t_anu) ns],
-          [#alloc(t_sib) B], [#alloc(t_anu) B], [*#speedup(t_sib, t_anu)x faster*],
-
-        [Challenge Store Operations], [#ns(c_sib) ns], [#ns(c_anu) ns],
-          [#alloc(c_sib) B], [#alloc(c_anu) B], [*#speedup(c_sib, c_anu)x faster*],
-
-        [HTTP Parsing & Cookie Decode], [#ns(h_sib) ns], [#ns(h_anu) ns],
-          [#alloc(h_sib) B], [#alloc(h_anu) B], [*#speedup(h_sib, h_anu)x faster*],
-      ),
-    )
+    #block(width: 100%, inset: 10pt, radius: 5pt, fill: blue_light, stroke: 0.5pt + rule)[
+      #text(size: 11pt, weight: "bold")[Measured latency per operation]
+      #linebreak()
+      #text(size: 8pt, fill: gray)[The "reference model" column is a fixed per-call cost taken from public profiling of a Go Anubis deployment; it is a model, not a measurement on this host.]
+      #v(5pt)
+      #table(
+        columns: (1.6fr, 0.8fr, 1fr, 0.8fr, 0.9fr, 0.6fr),
+        table.header([*Workload*], [*Median*], [*Spread*], [*ops/s*], [*Reference model*], [*Ratio*]),
+        ..rows,
+      )
+      #v(4pt)
+      #text(size: 8pt, fill: gray)[For scale, the same 40 bot signatures scanned by sequential substring search on this host cost #fmt_ns(naive.ns_per_op_median) against #fmt_ns(ac.ns_per_op_median) for the automaton.]
+    ]
     #v(8pt)
-    #panel(
-      [Logarithmic Latency Comparison: Sibuna vs Anubis (ns/op)],
-      [Lower is better · Horizontal log-10 scale · Hardware instructions vs VM bytecode],
-      align(center, benchmark_log_chart()),
-    )
+    #block(width: 100%, inset: 10pt, radius: 5pt, fill: blue_light, stroke: 0.5pt + rule)[
+      #text(size: 11pt, weight: "bold")[Logarithmic latency comparison]
+      #linebreak()
+      #text(size: 8pt, fill: gray)[Lower is better · log-10 scale · blue bars are measured, red bars are the reference model]
+      #v(5pt)
+      #align(center, benchmark_log_chart())
+    ]
   ]
 }
-
-
-

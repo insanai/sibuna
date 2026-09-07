@@ -2,147 +2,134 @@
 #import "figures.typ": *
 
 #part_page("I", [Foundations of Asymmetric Web Defense], [
-  We explore the macroeconomic drivers of automated web scraping, expose why traditional
-  defensive boundaries fail, and establish Proof-of-Work as a thermodynamic friction barrier.
+  We explore the economics of automated web scraping, explain why the traditional
+  defensive boundaries fail, and establish verifiable computation as the friction that
+  restores the balance between requester and server.
 ])
 
 = The AI Scraping Arms Race
 
 #objectives([
   By the end of this chapter, you should be able to quantify the economic asymmetry between web
-  scrapers and origin servers, articulate why IP reputation lists cannot prevent distributed
-  harvesting, and explain why modern computer vision models have rendered CAPTCHAs obsolete.
+  scrapers and origin servers, articulate why IP reputation lists cannot stop distributed
+  harvesting, and explain why cognitive tests such as CAPTCHAs no longer separate humans from
+  machines.
 ])
 
 == The Economics of Automated Data Extraction
 
-The explosion of generative artificial intelligence and frontier foundation models has ignited
-a global gold rush for high-quality human text, code, scientific papers, and creative media.
-Training a modern foundation model demands trillions of tokens harvested from the public web.
-Consequently, commercial AI entities, specialized data brokers, and private automated scrapers
-subject web services to unceasing, high-throughput extraction pipelines.
-
-Under traditional HTTP traffic patterns, the computational cost of an interaction was borne
-disproportionately by the *server*:
+The demand for training text, code, and media has turned the public web into a quarry. Model
+builders, data brokers, and autonomous agents run extraction pipelines against every reachable
+site, continuously. Under ordinary HTTP the cost of an interaction falls almost entirely on the
+*server*:
 
 #table(
   columns: (1fr, 1.2fr, 1.2fr),
   table.header([*Actor*], [*Action*], [*Computational Cost*]),
   [Scraper Client],
-  [Emits HTTP GET over existing TCP connection],
-  [$approx 0.0001$ ms CPU time (negligible energy)],
+  [Emits HTTP GET over an existing TCP connection],
+  [$approx 0.0001$ ms CPU time],
 
   [Origin Web Server],
   [Accepts socket, TLS termination, routing, database query, template rendering, response serialization],
-  [$5$ to $50$ ms CPU time + database I/O + bandwidth],
+  [$5$ to $50$ ms CPU time, plus database I/O and bandwidth],
 )
 
-This asymmetry favored the attacker by an order of at least $10,000 : 1$. A bot running on a
-cheap \$5/month virtual private server could easily saturate an origin server backed by dozens
-of high-end database replicas.
+The asymmetry favours the requester by at least $10,000 : 1$. A bot on a five-dollar virtual
+machine can saturate an origin backed by a fleet of database replicas.
 
 == The Collapse of Legacy Defenses
 
 #warning([The Failure of Convention], [
-  Relying on `robots.txt` in the modern AI era is equivalent to locking a vault door with a
-  paper ribbon. Commercial scrapers routinely disguise their User-Agent headers, spoof human
-  browsers, or ignore crawling directives altogether.
+  Relying on `robots.txt` against a harvesting fleet is locking a vault with a paper ribbon.
+  Commercial scrapers disguise their User-Agent, present browser headers, and ignore crawling
+  directives entirely.
 ])
 
 === The Residential Proxy Revolution
 
-Historically, firewalls blocked crawlers by maintaining IP reputation lists and imposing
-per-IP rate limits. Attackers neutralized this defense by acquiring access to vast *residential
-proxy pools* (such as Bright Data, Oxylabs, and Smartproxy). These networks route traffic
-through millions of compromised consumer routers and IoT devices around the world. A botnet
-can issue 100,000 requests per minute with each individual request originating from a unique,
-previously unseen IPv4 address in a residential ISP range. Under these conditions, standard
-token-bucket rate limiting based on client IP is completely blind.
+Firewalls used to block crawlers with IP reputation lists and per-address rate limits.
+Residential proxy pools defeated both: traffic is routed through millions of consumer routers
+and devices so that a fleet can issue a hundred thousand requests a minute, each from a fresh,
+previously unseen address. A token bucket keyed by client address sees one request per bucket.
 
 === The Death of the CAPTCHA
 
-When IP filtering failed, the industry turned to CAPTCHAs (Completely Automated Public Turing test
-to tell Computers and Humans Apart). Users were subjected to clicking distorted letters, audio
-puzzles, and image classification challenges.
+CAPTCHAs replaced identity with cognition: distorted letters, audio puzzles, image grids.
+Multimodal models now solve them faster and more reliably than people, while users with visual
+impairments or small screens fail them at rates between $15%$ and $30%$. The test punishes the
+humans and admits the machines.
 
-However, modern multi-modal neural networks solve standard image CAPTCHAs with accuracy exceeding
-$98%$, often solving them in under 400 milliseconds. Legitimate human users, particularly those
-with visual impairments or mobile devices, suffer failure rates between $15%$ and $30%$.
-CAPTCHAs now punish real humans while offering zero defense against automated AI systems.
+== What Remains: Verifiable Cost
+
+The one resource a requester cannot borrow from a proxy pool is *its own computation*. If
+admission requires a proof that a known amount of work was done, and the server can check that
+proof in nanoseconds, the economics invert. The idea is old, Dwork and Naor proposed "pricing via
+processing" in 1992 and Back's Hashcash followed in 1997, but the engineering that makes it usable
+at the edge is recent: hardware hash instructions, WebAssembly in every browser, and constructions
+with proofs of sequentiality. Sibuna is built on that engineering.
 
 #v(4mm)
 
-= Proof-of-Work as a Thermodynamic Barrier
+= Proof of Work as a Thermodynamic Barrier
 
 #objectives([
-  Derive the mathematical mechanics of Hashcash, calculate expected nonce trials as a function
-  of difficulty, and demonstrate how computational friction destroys the profitability of mass
-  scraping.
+  Derive the mechanics of a bit-level Hashcash puzzle, calculate expected work as a function of
+  difficulty, and see how computational friction removes the profit from mass scraping while
+  staying imperceptible to a person.
 ])
 
 == The Hashcash Paradigm
 
-In 1997, Adam Back proposed *Hashcash* as a mechanism to throttle email spam and denial-of-service
-attacks. Instead of relying on identity, reputation, or human cognitive tests, Hashcash conditions
-service admission upon the presentation of a cryptographic proof that a verifiable quantity of
-computational work was expended by the caller.
+Given a server-issued challenge string $C$ and a difficulty $b$ in *bits*, the client must find
+a nonce $N$ such that
 
-Given a server-issued challenge string $C$ and a target difficulty parameter $D$, the client must
-discover a nonce integer $N$ such that:
+$ "SHA-256"(C || ":" || N) < 2^(256 - b), $
 
-$ "SHA-256"(C || ":" || N) < 2^{256 - 4 D} $
-
-In hexadecimal notation, this inequality dictates that the leading $D$ hexadecimal characters
-(nibbles) of the 32-byte SHA-256 output digest must be identically zero.
+that is, the digest begins with $b$ zero bits. Sibuna measures difficulty in bits rather than in
+hexadecimal digits so that each step doubles the work instead of multiplying it by sixteen; the
+operational difference is the gap between a 20 ms and a 320 ms interstitial on a phone.
 
 === Probability and Geometric Distribution
 
-Because SHA-256 behaves as a cryptographically secure pseudo-random oracle, each candidate nonce
-$N$ produces a digest whose leading nibbles are uniformly distributed across $\{0, 1, ..., 15\}$.
-The probability $P$ that any single trial satisfies a difficulty of $D$ leading hex zeros is:
+SHA-256 behaves as a random oracle, so each trial succeeds independently with probability
+$p = 2^(-b)$. The number of trials $X$ is geometric:
 
-$ P = (frac(1, 16))^D = 16^(-D) $
+$ E[X] = 2^b, quad "Var"[X] = (1 - p) / p^2 approx 2^(2b), quad P[X > k dot 2^b] approx e^(-k). $
 
-The number of trials $X$ required to locate a valid nonce follows a *Geometric Distribution*:
-
-$ E[X] = frac(1, P) = 16^D $
-
-Let us tabulate the expected trial counts and representative single-core solving times across
-typical difficulty settings:
+The distribution has a long tail: one client in twenty needs three times the expected work. Part
+III shows how the sequential-work tier removes this variance entirely.
 
 #table(
-  columns: (1fr, 1.2fr, 1.2fr, 1.4fr),
-  table.header([*Difficulty ($D$)*], [*Prefix Constraint*], [*Expected Hashes ($16^D$)*], [*Average Solve Time (Core)*]),
-  [3], [`000...`], [4,096], [$approx 3$ to $8$ ms],
-  [4], [`0000...`], [65,536], [$approx 50$ to $180$ ms],
-  [5], [`00000...`], [1,048,576], [$approx 0.8$ to $2.5$ seconds],
-  [6], [`000000...`], [16,777,216], [$approx 15$ to $40$ seconds],
+  columns: (0.8fr, 1.2fr, 1.4fr, 1.4fr),
+  table.header([*Bits $b$*], [*Expected hashes*], [*V8 WebAssembly (0.3 µs/hash)*], [*Native, hardware SHA (52 ns/hash)*]),
+  [12], [4,096], [$approx 1$ ms], [$approx 0.2$ ms],
+  [16], [65,536], [$approx 20$ ms], [$approx 3.4$ ms],
+  [18], [262,144], [$approx 80$ ms], [$approx 14$ ms],
+  [20], [1,048,576], [$approx 320$ ms], [$approx 55$ ms],
 )
+
+The WebAssembly column is measured with the shipped solver under V8 on an Apple M1; the native
+column is the same solver compiled for the host.
 
 == Reversing the Asymmetry
 
-Notice the extraordinary asymmetry inherent in this mathematical relation:
-- *The Scraper's Burden:* To harvest a single page protected by difficulty $D=4$, the scraper's
-  CPU must compute, on average, $65,536$ distinct SHA-256 iterations.
-- *The Server's Verification:* To verify the validity of the submitted solution, the server
-  executes exactly *one single SHA-256 hash operation* and inspects the leading bytes.
+The server verifies a solution with exactly one SHA-256 evaluation, 62.6 ns on the reference
+host. At $b = 16$ the asymmetry is therefore
 
-On modern server silicon (Apple M-series or Intel Xeon with SHA-NI instructions), a single SHA-256
-hash of a 40-byte input takes less than *30 nanoseconds*.
+$ "Asymmetry" = frac(E["Hashes"_"client"], 1) = 65,536 : 1, $
 
-$ "Asymmetry Ratio" = frac(E["Hashes"_"Client"], 1) = 65,536 : 1 $
-
-The computational balance is completely inverted. The server spends 30 nanoseconds of CPU time
-to force the automated crawler to burn 100 milliseconds of dedicated core compute.
+and a single core verifies sixteen million solutions per second. No submission flood can outpace
+verification; the attacker's cost is bounded below by the honest client's cost, which Part III
+makes precise.
 
 #exercise([1.1], [
-  A crawler botnet attempts to scrape a database of 10,000,000 product pages protected by
-  Sibuna at difficulty $D=4$. If each worker CPU core hashes at $150,000$ hashes per second
-  and consumes $15$ Watts of power, calculate the total compute time (in core-hours) and the
-  total electrical energy (in kilowatt-hours) required to complete the crawl.
-], hint: [Total hashes required = $10^7 times 65,536$. Divide by hashing rate to find seconds.])
+  A crawler botnet attempts to scrape 10,000,000 pages protected by Sibuna at $b = 16$. If
+  each worker core hashes at 3,000,000 hashes per second (a fast native solver) and consumes
+  15 W, calculate the core-hours and kilowatt-hours needed. Repeat for $b = 18$.
+], hint: [Total hashes $= 10^7 times 2^b$. Divide by the hash rate for seconds.])
 
 #teach_back([
-  Explain why Proof-of-Work friction deters a commercial AI data scraper while remaining
-  completely acceptable to a human reader visiting five articles in an evening.
+  Explain why a puzzle whose verification costs one hash deters a harvesting fleet but not a
+  reader who opens five articles in an evening.
 ])

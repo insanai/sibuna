@@ -112,13 +112,13 @@
       line((-1.8, 1.8), (-2.2, 0.6), stroke: 0.8pt + cover_muted)
       line((-1.8, 1.8), (-1.4, 0.6), stroke: 0.8pt + cover_muted)
       rect((-2.4, 0.2), (-1.2, 0.6), fill: rgb("fee2e2"), stroke: 0.8pt + red)
-      content((-1.8, 0.4), text(size: 7pt, weight: "bold", fill: red)[100,000x HASHES])
+      content((-1.8, 0.4), text(size: 7pt, weight: "bold", fill: red)[65,536 HASHES])
 
       // Right pan: Server verify (Feather / Microsecond)
       line((1.8, 1.8), (1.4, 1.0), stroke: 0.8pt + cover_muted)
       line((1.8, 1.8), (2.2, 1.0), stroke: 0.8pt + cover_muted)
       rect((1.2, 0.6), (2.4, 1.0), fill: rgb("dcfce7"), stroke: 0.8pt + green)
-      content((1.8, 0.8), text(size: 7pt, weight: "bold", fill: green)[< 75 ns SILICON])
+      content((1.8, 0.8), text(size: 7pt, weight: "bold", fill: green)[62.6 ns VERIFY])
 
       // Bottom Crest: Silicon Chip
       rect((-0.9, -1.8), (0.9, -0.6), radius: 3pt, fill: white, stroke: 1pt + cover_ink)
@@ -250,7 +250,7 @@
 ]
 
 #let book_figure(caption, body) = figure(
-  placement: auto,
+  placement: none,
   body,
   caption: text(size: 9pt, fill: gray)[#caption],
 )

@@ -7,105 +7,109 @@
   #text(size: 16pt, weight: "bold")[About This Book]
 ]
 
-This book explains the architecture, cryptographic foundations, and implementation of
-*Sibuna*—an ultra-high-performance Web AI Firewall and anti-crawler daemon written in pure
-Zig. It also provides an exhaustive empirical evaluation comparing Sibuna against *Anubis*,
-the Go-based reverse proxy upon which its operational model was originally conceived.
+This book explains the architecture, the cryptographic foundations, and the implementation of
+*Sibuna*, a web firewall and anti-crawler daemon written in pure Zig. Sibuna sits in front of an
+origin as a reverse proxy, or beside an ingress as a forward-auth validator, and decides every
+request in a few hundred nanoseconds without touching the heap: it inspects the request for
+application attacks, consults reputation and declarative rules, and, when the client is not yet
+known, asks the browser to pay a small, verifiable amount of computation before a session token
+is minted.
 
-The two systems share an ambition: to protect open web content from predatory, unconsented AI
-scrapers and distributed crawler botnets without forcing human users to solve degrading
-CAPTCHAs. But their internal machinery belongs to two completely different engineering
-universes. Anubis relies on the Go runtime, dynamic garbage-collected heap allocations,
-reflection-based JSON Web Tokens, and an in-process WebAssembly virtual machine (`wazero`)
-to execute cryptographic routines. Sibuna eliminates every intermediate layer: requests are
-evaluated without a single heap allocation, bot signatures are scanned across hundreds of
-patterns in a single SIMD-ready pass, and Proof-of-Work solutions are validated directly on host
-silicon in nanoseconds.
+The design is research-driven rather than convention-driven. Proof of work is not a single
+hash-search loop but a two-tier system: bit-level Hashcash for the cheapest possible verification,
+and the Cohen–Pietrzak *Proof of Sequential Work*, a construction with a published security
+proof (including a post-quantum proof) whose solve time cannot be shortened by parallel hardware.
+Session and challenge authentication use a keyed pseudorandom function rather than a signature,
+so verification costs one BLAKE3 compression. Rate limiting is the Generic Cell Rate Algorithm
+with a one-integer state per client. The hot path never allocates.
+
+Sibuna ships as three surfaces built from one binary:
+
+#table(
+  columns: (0.8fr, 2.6fr, 1.2fr),
+  table.header([*Surface*], [*What it does*], [*Enable*]),
+  [*Gate*], [Proof-of-work admission only: challenge unknown clients, admit sessions, allow listed paths.], [`--gate`],
+  [*Shield*], [Gate plus the semantic WAF (SQL injection, XSS, traversal, command injection), GCRA rate limits, honeypot bans.], [default, `--shield`],
+  [*Edge*], [Shield plus Zaxonlite storage: dynamic policies, cluster-wide reputation, incident forensics, replicated by Multi-Paxos.], [`--data-dir`, `--cluster-*`],
+)
 
 #v(4mm)
 #book_quote([
-  In Egyptian mythology, Anubis weighed the deceased's heart against the feather of Ma'at.
-  If the heart was heavier than truth, the soul was consumed. In Sibuna, the balance is reversed:
-  the burden of computational heat is cast upon the predatory machine, while the legitimate human
-  passes unfettered.
+  In Egyptian mythology, Anubis weighed the heart against the feather of truth. Sibuna reverses
+  the balance: the weight is placed on the machine that wants in, and the door itself weighs
+  nothing.
 ], [Sibuna Engineering Manifesto])
 
 #v(8mm)
 #callout([The Core Promise], [
-  A careful reader of this book will understand the economics of automated web scraping,
-  derive the mathematics of client-side Proof-of-Work friction, trace the zero-allocation
-  HTTP parsing and policy pipeline down to CPU cache lines, inspect the 6.9 KB browser
-  WebAssembly solver, and deploy Sibuna in production either as an autonomous reverse proxy
-  or as a forward-auth engine behind Nginx, Caddy, Traefik, or Envoy.
+  A reader of this book will be able to derive the cost model of both proof-of-work tiers, read
+  the sequential-work prover and verifier line by line, trace a request through the
+  zero-allocation pipeline down to the byte-class table, understand why a keyed hash is the right
+  primitive for session tokens, operate the daemon in all three surfaces, and reproduce every
+  number in Part VIII from the committed benchmark file.
 ], kind: "idea")
+
+#v(6mm)
+#table(
+  columns: (1.4fr, 1fr, 2fr),
+  table.header([*Measured on the reference host*], [*Value*], [*Where*]),
+  [Hashcash verification], [62.6 ns], [Part VIII, `pow_verify`],
+  [Proof of Sequential Work verification (depth 13, 16 openings)], [16.9 µs], [Part VIII, `pow_verify`],
+  [Session token verification (keyed BLAKE3)], [134 ns], [Part VIII, `token_auth`],
+  [Forty bot signatures, single pass], [85 ns], [Part VIII, `bot_matcher`],
+  [Full classification, Gate profile], [295 ns], [Part VIII, `policy_engine`],
+  [Full classification, Shield profile], [1.46 µs], [Part VIII, `policy_engine`],
+  [Browser solver module], [8,831 bytes], [Part VII],
+  [Idle resident memory / static binary], [7.6 MB / 4.2 MB], [Part VIII],
+)
 
 #v(1fr)
 #align(center, text(size: 8.5pt, fill: gray)[
-  Version 0.1.0 · Monorepo Commit Attributed · Built with Typst 0.15+
+  Version 0.2.0 · Numbers rendered from `benchmarks/results/latest.json` · Built with Typst 0.15
 ])
 
 #pagebreak()
 
 = Preface
 
-The open web is undergoing an unprecedented tragedy of the commons. Modern Large Language
-Model (LLM) providers, academic labs, commercial data brokers, and private automated agents
-deploy relentless, distributed crawler botnets that traverse public web infrastructure around
-the clock. These automated scrapers consume gigabytes of bandwidth, exhaust database connection
-pools, cause latency spikes for real users, and monetize copyrighted publications without
-consent or attribution.
+The open web is being harvested. Foundation-model training pipelines, data brokers, and private
+agents crawl public sites around the clock, consuming bandwidth and database capacity while
+returning nothing to the people who publish. The two traditional defences no longer hold:
+`robots.txt` is an honour system that harvesters ignore, and CAPTCHAs are now solved by vision
+models more reliably than by the humans they inconvenience. IP reputation fails against
+residential proxy pools that rotate through millions of consumer addresses.
 
-For two decades, web administrators relied on two primary defensive mechanisms:
+What remains is economics. If every admission costs the requester a verifiable slice of
+computation, and the server's cost to verify it is negligible, then mass harvesting becomes a
+power bill while a human reading twenty pages in an evening pays a fraction of a second once.
+This is the client-puzzle idea of Dwork and Naor (1992) and Back's Hashcash (1997), and it is the
+foundation Sibuna builds on.
 
-1. *The `robots.txt` Standard:* An honor-system convention created in 1994. Predatory crawlers
-   routinely bypass, ignore, or strip this header entirely.
-2. *CAPTCHAs:* Systems such as reCAPTCHA and hCaptcha that force users to identify traffic
-   lights, crosswalks, or distorted letters. Today, multi-modal vision models solve these tests
-   faster and more reliably than humans, leaving legitimate users frustrated and accessibility-impaired.
+== What This Book Adds
 
-Traditional Web Application Firewalls (WAFs) rely on IP reputation lists and rate limits.
-However, in an era of cheap residential proxy pools and serverless IP rotation, an attacker can
-originate each request from a distinct IP address across hundreds of cloud regions, rendering IP
-rate limits ineffective.
+Sibuna is a complete, measured implementation of that idea in a single static binary, and this
+book documents both the engineering and the mathematics behind it:
 
-== The Thermodynamic Solution: Computational Asymmetry
+1. *Two proof-of-work tiers with known security properties.* Hashcash is retained for its
+   one-hash verification. Above it sits the Cohen–Pietrzak Proof of Sequential Work, whose
+   soundness and sequentiality are proven in the random-oracle model and, by Blocki, Lee and
+   Zhou, against quantum adversaries. Part III derives both cost models and explains why the
+   memory-hard alternatives were rejected for a server-verified puzzle.
+2. *Stateless challenges and symmetric authentication.* A challenge is a self-authenticating
+   record; the server remembers only solved challenges, so its state grows with work the
+   client actually paid for. Tokens are keyed-hash tags, verified in 134 nanoseconds.
+3. *A zero-allocation request pipeline.* One 64 KB buffer per connection, slices everywhere,
+   a single-pass signature automaton, a byte-class tokenizer for the semantic firewall, Robin
+   Hood hashing for the spent set, and the Generic Cell Rate Algorithm for rate limiting.
+4. *Distributed edge state without external services.* Zaxonlite, an embedded SQLite
+   replicated by Multi-Paxos, holds dynamic policies, reputation, and incident forensics with
+   full-text and vector search, while the hot path reads an immutable engine snapshot swapped
+   with read-copy-update semantics.
+5. *Honest numbers.* Every figure in Part VIII is rendered from a committed benchmark file with
+   its host, revision, and spread. Where a comparison to other systems is drawn, the reference
+   values are labelled as models.
 
-The only viable defense against distributed automated scraping is *economic and thermodynamic
-friction*. If requesting an article costs the scraper $0.000001$ cents in electricity, scraping
-one billion pages costs ten dollars. If every request is conditioned upon solving a cryptographic
-Proof-of-Work (PoW) puzzle that demands 100 milliseconds of dedicated CPU core time, scraping
-that same dataset demands months of continuous compute and thousands of dollars in energy costs.
-The economic model of automated mass harvesting collapses.
-
-For the legitimate human user browsing twenty articles in an evening, an invisible Web Worker
-solving a 150-millisecond background challenge creates imperceptible overhead. Once solved,
-a cryptographically signed session cookie is minted, allowing subsequent navigation with zero
-latency.
-
-== Why Anubis Needed Re-architecting
-
-In 2024, `TecharoHQ/anubis` popularized this concept by implementing a PoW reverse proxy in Go.
-While its conceptual vision was brilliant, its implementation in Go suffered from structural
-runtime limitations:
-- *The WebAssembly Virtual Machine Tax:* To evaluate custom cryptographic proofs such as HashX
-  or Argon2id, Anubis hosted Wazero (a WebAssembly interpreter/JIT written in pure Go) inside
-  the server daemon. Every verification incurred context-switching overhead, bounds checking,
-  and memory copying, taking 12 to 25 microseconds per solution.
-- *Garbage Collection Jitter:* Under high-concurrency crawler floods (50,000+ req/s), Go's
-  `net/http` request objects, string slices, regex match contexts, and `golang-jwt` map allocations
-  triggered frequent GC sweep cycles, causing tail latencies to surge past hundreds of milliseconds.
-- *Memory Footprint:* Anubis requires 45 to 80 megabytes of resident memory just to service basic
-  loads, making lightweight edge sidecar deployment expensive.
-
-Sibuna is the answer to these bottlenecks. By building on bare-metal Zig 0.16, Sibuna:
-1. Validates Proof-of-Work solutions directly using host silicon hardware instructions (such as
-   ARM NEON and x86 SHA-NI), dropping verification time to *under 75 nanoseconds* (a 175x speedup).
-2. Operates with *zero dynamic heap allocations* on the request classification and verification
-   hot path.
-3. Evaluates 40+ bot signatures simultaneously in a single pass using a case-insensitive
-   Aho-Corasick automaton with comptime tables (*59.6 ns* per User-Agent).
-4. Emits a freestanding browser WebAssembly solver measuring only *6.9 KB* with mathematical
-   prefix pre-hashing that doubles browser solver speed.
-5. Runs in a static memory footprint of *less than 5 MB RSS*.
-
-Let us explore how this is achieved.
+Prior work is credited where it is used. Anubis showed that a proof-of-work interstitial is a
+practical anti-scraping tool; SafeLine shows what a semantic WAF must detect; Cloudflare shows
+what a replicated edge control plane looks like. Sibuna's contribution is to build all three
+layers on primitives with proofs, in one small binary, and to measure the result.
