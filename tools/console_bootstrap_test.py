@@ -24,6 +24,8 @@ def change(h, port, temporary, permanent):
     for path in ("/console/api/stats", "/console/api/geoip",
                  "/console/assets/world-110m.bin", "/console/stream"):
         assert h.request(port, "GET", path, cookie=cookie)[0] == 403
+    assert h.request(port, "POST", "/console/api/challenges", {},
+                     cookie, login["csrf"])[0] == 403
     body = {"old_password": temporary["password"], "password": permanent}
     assert h.request(port, "POST", "/console/api/password", body, cookie)[0] == 400
     status, replacement_headers, result = h.request(port, "POST", "/console/api/password",

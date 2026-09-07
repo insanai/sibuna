@@ -100,6 +100,19 @@ pub const Runtime = struct {
             key,
         );
         errdefer app.deinit();
+        const spec = owner.state.coordinator.default_spec;
+        app.challenge_defaults = .{
+            .algorithm = switch (spec.algorithm) {
+                .hashcash => .hashcash,
+                .posw => .posw,
+            },
+            .difficulty = spec.difficulty,
+            .parameter = switch (spec.algorithm) {
+                .hashcash => @intCast(spec.hashcashBits()),
+                .posw => spec.poswDepth(),
+            },
+            .openings = if (spec.algorithm == .posw) spec.posw_challenges else 0,
+        };
         const host = if (config.host.len == 0) "127.0.0.1" else config.host.slice();
         const kernel = try console.Kernel.start(
             gpa,

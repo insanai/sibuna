@@ -1,6 +1,7 @@
 //! Shared native/Wasm contracts. No networking, database or daemon dependencies.
 const std = @import("std");
 
+pub const challenges = @import("challenges.zig");
 pub const events = @import("events.zig");
 pub const auth = @import("auth.zig");
 pub const geo = @import("geo.zig");

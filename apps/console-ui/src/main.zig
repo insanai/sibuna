@@ -67,6 +67,10 @@ export fn sb_event(kind: u32, length: usize) void {
     defer std.crypto.secureZero(u8, &memory);
     defer std.crypto.secureZero(u8, input[0..length]);
     var fixed = std.heap.FixedBufferAllocator.init(&memory);
+    if (kind == 2 and (challengeEnvelope(input[0..length], fixed.allocator()) catch false)) {
+        finish();
+        return;
+    }
     const parsed = std.json.parseFromSlice(
         std.json.Value,
         fixed.allocator(),
@@ -96,7 +100,7 @@ fn begin() void {
 }
 
 fn finish() void {
-    if (state.phase == .dashboard and !state.hidden)
+    if ((state.phase == .dashboard or state.phase == .challenges) and !state.hidden)
         command(.{ .op = "timer", .id = "age", .delay_ms = 1000 }) catch unreachable;
     command_writer.writeByte(']') catch unreachable;
     commands_length = command_writer.buffered().len;
@@ -162,6 +166,7 @@ fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
 fn action(value: std.json.Value) !void {
     const name = string(value, "action");
     const fields = field(value, "fields") orelse .null;
+    if (try challengeAction(name, fields)) return;
     if (try eventAction(name, fields)) return;
     if (try securityAction(name, fields)) return;
     if (try geographicAction(name, fields)) return;
@@ -648,4 +653,100 @@ fn eventExportResponse(status: i64) !void {
         429 => "The export allowance is used. Wait a minute before exporting again.",
         else => "Could not prepare the export. Check your connection and retry.",
     });
+}
+
+fn challengeAction(name: []const u8, fields: std.json.Value) !bool {
+    if (!state.fullAccess()) return false;
+    if (equal(name, "challenges")) {
+        state.phase = .challenges;
+        state.challenges = .{};
+    } else {
+        if (state.phase != .challenges or state.challenges.busy) return false;
+        if (equal(name, "challenges-bin")) {
+            state.challenges.selected = try std.fmt.parseInt(u8, string(fields, "bin"), 10);
+        } else if (!equal(name, "challenges-refresh")) return false;
+    }
+    state.message = .{};
+    state.challenges.busy = true;
+    state.stats_busy = false;
+    try command(.{ .op = "disconnect" });
+    try post("challenges", "/console/api/challenges", .{ .bin = state.challenges.selected });
+    return true;
+}
+
+fn challengeResponse(status: i64, snapshot: p.challenges.Snapshot) void {
+    if (state.phase != .challenges) return;
+    state.challenges.busy = false;
+    if (status == 401 or status == 403) {
+        state = .{ .phase = .login, .dark = state.dark };
+        setMessage("Your access changed. Sign in again to view challenges.");
+        return;
+    }
+    if (status != 200) {
+        state.challenges.stale = true;
+        setMessage("Could not refresh challenges. Check your connection and try again.");
+        return;
+    }
+    state.challenges.snapshot = snapshot;
+    state.challenges.selected = snapshot.selected;
+    state.challenges.received_at = state.browser_time;
+    state.challenges.stale = false;
+}
+
+/// Large fixed arrays bypass the generic Value tree, whose growth would consume the
+/// event arena despite a small wire response. Unknown fields are skipped without a tree.
+fn challengeEnvelope(bytes: []const u8, alloc: std.mem.Allocator) !bool {
+    const header = try std.json.parseFromSlice(
+        struct { id: []const u8 = "" },
+        alloc,
+        bytes,
+        .{ .ignore_unknown_fields = true },
+    );
+    defer header.deinit();
+    if (!equal(header.value.id, "challenges")) return false;
+    if (state.phase != .challenges) return true;
+    const Envelope = struct {
+        id: []const u8,
+        status: i64,
+        body: p.challenges.Snapshot,
+        browser_time: u64 = 0,
+    };
+    const parsed = std.json.parseFromSlice(
+        Envelope,
+        alloc,
+        bytes,
+        .{ .ignore_unknown_fields = true },
+    ) catch {
+        state.challenges.busy = false;
+        state.challenges.stale = true;
+        setMessage("Could not read challenge observations. Try refreshing.");
+        return true;
+    };
+    defer parsed.deinit();
+    state.browser_time = parsed.value.browser_time;
+    const previous = state.phase;
+    challengeResponse(parsed.value.status, parsed.value.body);
+    if (state.phase != previous) try command(.{
+        .op = "focus",
+        .selector = "main h1",
+        .top = true,
+    });
+    return true;
+}
+
+test "complete challenge browser response fits the fixed event arena and releases refresh" {
+    sb_init();
+    state.phase = .challenges;
+    state.challenges.busy = true;
+    var writer: std.Io.Writer = .fixed(&input);
+    try std.json.Stringify.value(.{
+        .id = "challenges",
+        .status = 200,
+        .browser_time = 100,
+        .body = p.challenges.Snapshot{ .submitted = 123, .bin_accepted = @splat(1) },
+    }, .{}, &writer);
+    sb_event(2, writer.buffered().len);
+    try std.testing.expect(!state.challenges.busy);
+    try std.testing.expectEqual(@as(u64, 123), state.challenges.snapshot.?.submitted);
+    try std.testing.expectEqual(@as(u64, 100), state.challenges.received_at);
 }

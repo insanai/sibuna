@@ -623,9 +623,9 @@ Campaign similarity is the current 64-dimensional embedding/cosine heuristic (th
 
 == The challenge funnel
 
-Existing counters expose issued, accepted and aggregate verification rejection. Add submitted,
-malformed and exhaustive per-cause rejection counters at the verification endpoint; no
-`explainProofError` histogram currently exists. Window totals are a flow summary, not a cohort
+Existing Prometheus counters expose issued, accepted and aggregate verification rejection.
+Console-owned counters now add submitted, malformed and exhaustive per-cause rejections at
+the verification endpoint. Window totals are a flow summary, not a cohort
 conversion rate: retries, abandonment and solutions crossing windows break that interpretation.
 Per-address records, fallback share and adaptive-difficulty histories need separate bounded
 instrumentation, retention and loss accounting before display. Rule-hit totals likewise need

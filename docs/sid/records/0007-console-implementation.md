@@ -69,7 +69,7 @@ semantics remain unchanged unless a stage explicitly extends them.
 - [ ] Grouped/raw incidents, filters, bounded pagination/export, campaigns and similarity;
   absent history says “not recorded”.
 - [ ] Versioned bounded evidence capture with redaction and truncation metadata.
-- [ ] Challenge submissions/rejections and optional untrusted timing on existing POST;
+- [x] Challenge submissions/rejections and optional untrusted timing on existing POST;
   configured/effective difficulty separate, PoSW conversion and proof format unchanged.
 - [ ] Rule edit/order/import/export, private-engine tester with config/file fallbacks,
   revisions/revert and complete candidate validation.
@@ -320,3 +320,24 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
   console-disabled daemon build passed. Benchmark regeneration follows for this measured change.
 - Authenticated challenge presentation, historical windows and per-address observations remain
   pending; this foundation does not close the challenge or performance acceptance gates.
+
+
+### Authenticated Challenges interface (2026-09-08)
+
+- The bounded, CSRF-protected snapshot endpoint shows boot-local issued/submitted/accepted
+  totals, exhaustive rejection causes and one selected timing histogram. Configured difficulty,
+  converted default parameters and most recently issued authenticated parameters are distinct.
+  Query budgets apply; the response remains below 16 KiB even with maximal bin counts.
+- The Zig page offers populated parameter partitions, accepted timing/missing/invalid counts,
+  reported solver labels, explicit untrusted-data explanations and manual refresh. Snapshot age
+  advances, failed refresh retains labelled stale values, and recovered connections refresh them.
+- Required repository/live tests, formatting and SID generation passed; final native UI tests
+  passed after browser corrections. The live browser solved a real PoSW depth-13/16-opening
+  challenge and observed one issued/submitted/accepted proof with Wasm timing in 64–128 ms.
+  Mobile rendering had no horizontal overflow; partition selection retained keyboard focus.
+  Stopping/restarting the isolated daemon verified stale feedback and successful refresh recovery.
+- Browser testing exposed generic JSON-tree arena exhaustion on the 256-bin array. A typed
+  response decoder fixes it, with a full browser-event native regression; refresh is no longer
+  stuck disabled. The UI also ignores delayed responses after leaving the Challenges page.
+- Benchmark snapshot `latest-20260907T225257Z.json` was regenerated for the preceding measured
+  observation changes. This does not replace the outstanding SID console-impact release gate.

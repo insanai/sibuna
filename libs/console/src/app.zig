@@ -25,6 +25,7 @@ pub const App = struct {
     telemetry: *store.ConsoleTelemetry,
     metrics: *const core.Metrics,
     stats: Stats = .{},
+    challenge_defaults: p.challenges.Defaults = .{},
     geo: @import("geoip_generation.zig").Registry = .{},
     geo_job: @import("geoip_job.zig").Job = .{},
     collector: ?std.Thread = null,
@@ -227,6 +228,7 @@ pub const App = struct {
                 if (status != .setup_required) return error.StorageUnavailable;
                 return http.json(context, .{ .setup_required = status.setup_required }, &.{});
             },
+            .challenges => return @import("challenge_routes.zig").handle(self, context),
             .events => return @import("event_routes.zig").query(self, context, false),
             .events_export => return @import("event_routes.zig").query(self, context, true),
             .login => return auth.login(self, context),

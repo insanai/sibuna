@@ -3,6 +3,7 @@ const State = @import("state.zig").State;
 const Writer = std.Io.Writer;
 
 pub fn render(state: *const State, w: *Writer) Writer.Error!void {
+    if (state.phase == .challenges) return @import("challenges_page.zig").render(state, w);
     if (state.phase == .events) return @import("events_page.zig").render(state, w);
     if (state.phase == .security) return @import("security.zig").page(state, w);
     if (state.phase == .geoip) return @import("geoip_page.zig").render(state, w);
@@ -13,6 +14,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         "<p class=\"sb-caption\">SECURITY CONSOLE</p></div>" ++
         "<button class=\"btn btn-ghost\" aria-current=\"page\">Statistics</button>" ++
         "<button class=\"btn btn-ghost\" data-action=\"events\">Events</button>" ++
+        "<button class=\"btn btn-ghost\" data-action=\"challenges\">Challenges</button>" ++
         "<button class=\"btn btn-ghost\" data-action=\"geoip\">GeoIP</button>" ++
         "<button class=\"btn btn-ghost\" data-action=\"account\">Account</button>" ++
         "<button class=\"btn btn-ghost\" data-action=\"logout\">Sign out</button></nav>" ++

@@ -121,6 +121,18 @@ def check(binary):
                 assert "HttpOnly" in headers["Set-Cookie"]
                 csrf = json.loads(body)["csrf"]
                 assert request(console_port, "GET", "/console/api/session", cookie=cookie)[0] == 200
+                endpoint = "/console/api/challenges"
+                assert request(console_port, "POST", endpoint, {})[0] == 401
+                assert request(console_port, "POST", endpoint, {}, cookie)[0] == 400
+                status, _, snapshot = request(console_port, "POST", endpoint, {}, cookie, csrf)
+                assert status == 200
+                snapshot = json.loads(snapshot)
+                assert snapshot["configured"]["difficulty"] == 16
+                assert snapshot["configured"]["algorithm"] == "posw"
+                assert snapshot["configured"]["parameter"] == 13
+                assert len(snapshot["buckets"]) == 16 and len(snapshot["bin_accepted"]) == 256
+                assert request(console_port, "POST", endpoint, {"bin": 256}, cookie, csrf)[0] == 400
+
                 geometry = request(console_port, "GET", "/console/assets/world-110m.bin",
                                    cookie=cookie)
                 assert geometry[0] == 200 and geometry[2][:4] in (b"SBG1", b"SBG2")

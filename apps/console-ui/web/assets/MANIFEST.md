@@ -1,17 +1,18 @@
 # Console asset input/output digests
 
 ```text
+038ba2580003927bfe60e59bb3512037931905b5dd4d45f2c855a16a951a6b76  apps/console-ui/src/challenges_page.zig
 a1f9f0912736942395744443c56cb3e5fc08e9979249863712bfeb5f09efc52b  apps/console-ui/src/events_actions.zig
 c9f98e93a76138b8cfb856cad62aa761d90893b63f95aa05e2ff67d45272ff1c  apps/console-ui/src/events_page.zig
 c6752bc0a9f85f41651e8b625dcd83b666681ace6118261b0559bb412a533fb5  apps/console-ui/src/events_state.zig
 b470c53ec296d4620f4b4be1a16ba4337620afcfa9e42726fb1ff75ee565daff  apps/console-ui/src/geography.zig
 393ca6fcd10e137aa781fc7b4047a7ce20393e63daadadcc125c323f36610023  apps/console-ui/src/geoip_page.zig
 cc51ce2b276c68c19bbe478d9cc180fa7c78e8ca1474bd19e4b466c1627ad502  apps/console-ui/src/globe.zig
-4736a8a258d74d9e51c7d856af5fd1ea217f105c50fcb17babd5ea0d8ce1d9c2  apps/console-ui/src/main.zig
+d6b8f1297c0c54b9eb874838f50cba7b2fde321d47f6187b67a8de874d204b37  apps/console-ui/src/main.zig
 0ff91580006b7eb739dc276187dff3fdecb8e4085d23892f6c5f3bd9afb0ea92  apps/console-ui/src/qr.zig
-2b6442e2c87a6e6e29b68dec8aa747ccd91832fa1bde2e4f77d78e7013549896  apps/console-ui/src/render.zig
+4e1db7c0a0bd237007a192d82478c72bd1cad11a90b828b4e356e9c81cb425b1  apps/console-ui/src/render.zig
 e30b2f8f617558a641214ccceb921d1e8cbd3bc4393db546d2d47ef9a3f61d08  apps/console-ui/src/security.zig
-ae2c5da49aecddaf5ce7c6bb64cfbb69f21199c02a3818720a3d001ad3573242  apps/console-ui/src/state.zig
+8cbf1dde0cc98c4248f04504cca5962a576c575c293fa7c2db30d9298dc1e61c  apps/console-ui/src/state.zig
 09f75faaeb382969e4a52bcf1f14cfb636be906c644cdd92a395d0e21b083d4c  apps/console-ui/web/assets/GEOGRAPHY.md
 09b010842decedb6e326adac729ca9019665db5f403ff8b599bd6ae68c764277  apps/console-ui/web/assets/console.css
 50b2fa3e78ea67eb1a72a9e22cb325ec884b8e83432c3f66808ee190835b4686  apps/console-ui/web/assets/world-110m.bin
