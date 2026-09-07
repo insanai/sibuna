@@ -411,8 +411,20 @@ fn addSid(b: *std.Build) void {
     });
     compile_site.step.dependOn(&make_site_dir.step);
     site_step.dependOn(&compile_site.step);
+    addSidChecklist(b, site_step, &compile_site.step);
 
     addSidTool(b);
+}
+
+/// Keep the source checklist link usable in the exported SID discussion site.
+fn addSidChecklist(b: *std.Build, site: *std.Build.Step, compiled: *std.Build.Step) void {
+    const copy = b.addSystemCommand(&.{
+        "cp",
+        "docs/sid/records/0007-console-implementation.md",
+        "docs/build/sid-site/sid/0007-console-implementation.md",
+    });
+    copy.step.dependOn(compiled);
+    site.dependOn(&copy.step);
 }
 
 fn sidRecordStems(b: *std.Build, filter: ?[]const u8) [][]const u8 {

@@ -97,7 +97,7 @@ semantics remain unchanged unless a stage explicitly extends them.
 - [ ] `zig build fmt`, `zig build test`, `zig build sid`, console checks and build matrix.
 - [ ] Native UI render tests and browser auth/update/accessibility/responsive/reconnect tests.
 - [ ] Typst PDF/PNGs regenerated; every wireframe visually inspected; HTML embeds figures.
-- [ ] SID 0007 has no removed-product references; book comparisons preserved.
+- [x] SID 0007 has no removed-product references; book comparisons preserved.
 - [ ] Regenerate benchmark results when measured subsystems change.
 - [ ] Impact matrix: compiled out, disabled, idle, eight dashboards; admitted, challenged,
   incident-heavy and policy reload workloads, including clustered runs.
@@ -114,3 +114,27 @@ semantics remain unchanged unless a stage explicitly extends them.
   scheduling, single-consumption completions and cancellation ownership tests.
 - `console-test` tests these foundations; runtime composition, wire serialization and
   application workflows remain unchecked. No live console or performance result is claimed.
+
+### Transport and build verification (2026-09-08)
+
+- Added a bounded RFC 6455 codec with fragmentation, masking direction, control frames,
+  UTF-8 and close validation. Tests include the masked Hello vector, every partial prefix,
+  interleaved ping/UTF-8 fragments, malformed lengths and aggregate message overflow.
+- Added listener-owned admission accounting with reserved HTTP capacity and separate peer
+  quota. These primitives are not yet connected to sockets or daemon startup.
+- `zig build fmt test sid sid-site --summary all`: 108 tests passed, including 18 console
+  and transport tests. `console-test` additionally checks Wasm compilation.
+- Storage-off: 87 tests passed. Console-off: 90 tests passed. Cluster-enabled daemon builds.
+  The existing overload test now reads admission rejection without racing a request write
+  against immediate server closure; both disabled configurations pass with that fix.
+- Invalid `-Dconsole=true -Dstorage=false` fails cleanly with `CONSOLE001` and a recovery hint.
+- Typst generated PDF and page PNGs; wireframe overview pages were inspected. HTML export
+  retains SVG figures. Full-resolution review remains part of the document release gate.
+- No measured request subsystem changed, and the console primitives are not yet composed
+  into the daemon. No impact benchmark has run or passed. `console-e2e`, `console-assets`
+  and `console-impact` remain unimplemented, rather than reporting success without evidence.
+
+Next implementation work: finish daemon composition and lifecycle, connect the mailbox to
+`Persistent` with bounded prepared queries and migrations, then implement authentication and
+live transport before building the authenticated GeoIP dashboard. Later workflow and cluster
+stages remain required; these commits do not deliver the complete SID 0007 console.
