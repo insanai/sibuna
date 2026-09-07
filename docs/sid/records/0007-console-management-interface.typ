@@ -2,7 +2,7 @@
 #let sid-title = "The Sibuna Console: A Real-Time Management Interface for Nodes and Clusters in Pure Zig"
 #let sid-state = "discussion"
 #let sid-created = "2026-09-08"
-#let sid-discussion = "Specifies a SafeLine-class management console for Sibuna: a separate pure-Zig module started from the Sibuna CLI that serves a real-time web interface over the standard library's HTTP server and WebSockets, renders its pages from a WebAssembly module styled with daisyUI 5, keeps authentication, statistics, audit, and a GeoIP database in the embedded Zaxonlite store, manages one node or a replicated cluster, and is bound by a measured contract never to slow the data plane."
+#let sid-discussion = "Specifies the Sibuna Console, a complete management interface for Sibuna: a separate pure-Zig module started from the Sibuna CLI that serves a real-time web interface over the standard library's HTTP server and WebSockets, renders its pages from a WebAssembly module styled with daisyUI 5, keeps authentication, statistics, audit, and a GeoIP database in the embedded Zaxonlite store, manages one node or a replicated cluster, and is bound by a measured contract never to slow the data plane."
 #let sid-labels = ("console", "management", "websocket", "ui", "zaxonlite", "geoip", "cluster",)
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
@@ -163,10 +163,10 @@
 = Abstract
 
 Sibuna is operated today through command-line flags, a JSON policy file, and SQL against the
-embedded Zaxonlite database. Operators of a comparable product, SafeLine, get a web console: a
+embedded Zaxonlite database. Operators of an application firewall expect a web console: a
 statistics overview with live traffic and attack charts, an attack-event browser with payload
-detail, per-site protection settings, rule editors, IP groups, and system settings. This
-record specifies the Sibuna Console: a separate pure-Zig module, compiled into the same binary
+detail, rule editors, address groups, and system settings. This record specifies the Sibuna
+Console: a separate pure-Zig module, compiled into the same binary
 and started from the Sibuna command line, that provides that class of interface for one node
 or a replicated cluster. The console serves HTTP and WebSockets with the Zig standard library,
 renders every page from a WebAssembly module written in Zig and styled with daisyUI 5 through
@@ -174,9 +174,8 @@ first-party components, streams statistics and events in real time, and keeps us
 sessions, audit records, minute-level statistics, and a GeoIP country database in the same
 Zaxonlite store the data plane already replicates. Its interface is designed by three
 principles applied page by page: Krug's "don't make me think", support for fast System 1
-judgement, and support for deliberate System 2 analysis; SafeLine's console is studied as
-inspiration, not as a parity target. Its defining engineering constraint is an isolation
-contract: the console may read the data plane's counters and its database, and it may write
+judgement, and support for deliberate System 2 analysis. Its defining engineering constraint
+is an isolation contract: the console may read the data plane's counters and its database, and it may write
 the database, but it never enters a request thread, never allocates on one, and never holds a
 lock a worker needs; a benchmark gate measures that the console's presence changes data-plane
 throughput and tail latency by less than one percent.
@@ -194,65 +193,51 @@ look like? Is node 2 the leader, and is it healthy? The answers exist in Prometh
 the `security_incidents` table, and node logs, but assembling them needs three tools and a
 schema in one's head.
 
-SafeLine's console is the reference for what operators expect from a self-hosted application
-firewall. Its front page, "Statistics", shows request and interception counts for a period,
-a traffic timeline, attack-type and source breakdowns, and a globe; "Attacks" lists blocked
-requests with a request-level detail; "Applications" configures protected sites; "Allow &
-Deny", "HTTP Flood", "Anti-Bot" and "Auth" hold rules, rate limits, the challenge, and
-authentication; "Settings" holds IP groups, users, notifications, and system options. Section
-3 records each page as observed. This record adopts that information architecture where
-Sibuna has the same concept, replaces it where Sibuna's model differs (there are no per-site
-upstreams; there are surfaces, policies, and nodes), and adds what SafeLine does not have: a
-challenge funnel, cluster membership, campaign clustering, and a live transport.
+Operators arrive with expectations formed by the consoles of the firewalls, proxies, and
+monitoring systems they already run: a front page that says what is happening now, an event
+browser with a request-level detail, editors for rules and address groups, and settings for
+users, retention, and notifications. Section 3 records those expectations as a checklist of
+capabilities. This record adopts each where Sibuna has the same concept, replaces it where
+Sibuna's model differs (there are no per-site upstreams; there are surfaces, policies, and
+nodes), and adds what Sibuna can show and others cannot: a challenge funnel, cluster
+membership, campaign clustering, and a live transport.
 
-#callout([Inspiration, not a target], [
-  SafeLine's console was studied on its hosted demonstration (`demo.waf.chaitin.com`,
-  version 9.4.1, 8 September 2026) page by page through a browser session, and cross-checked
-  against its documentation. The next section records what was seen, because an operator's
-  expectations are shaped by tools like it. Nothing in it is a requirement: each panel is
-  kept, changed, or dropped by the principles of section 4 and by what Sibuna actually does.
-  No SafeLine markup, stylesheet, or code is reproduced or referenced.
-], fill: amber-light, stroke: amber)
+= What Operators Expect
 
-= Inspiration: The SafeLine Console, as Observed
-
-The demonstration console has a fixed left sidebar (Statistics, Applications, Attacks,
-Allow & Deny, HTTP Flood with Rate Limiting and Waiting Room, Anti-Bot, Auth, Settings; the
-version and support links at the bottom), a top bar with a breadcrumb, the licence badge, a
-community link, a theme toggle and a refresh button, and a page body. Every list page shares
-one grammar: a filter bar (address, application, port, date range), an auto-refresh selector
-that defaults to off, a refresh button, an export button where a log is involved, and a
-paginated table. Attack payloads are shown in a modal with a request and a response tab. The
-pages, in the order of the sidebar:
+The consoles operators already know share one shape: a fixed left sidebar of pages, a top
+bar with a breadcrumb, a theme toggle and a refresh control, and a page body. Every list page
+shares one grammar: a filter bar (address, site, port, date range), an auto-refresh selector,
+a refresh button, an export button where a log is involved, and a paginated table. Attack
+payloads open in a modal with a request tab and a response tab. The capabilities operators
+look for, and what the Sibuna console does with each:
 
 #table(
   columns: (0.9fr, 2.2fr, 1.9fr),
-  table.header([*SafeLine page*], [*What it shows*], [*Sibuna console equivalent*]),
-  [Statistics · Traffic Analysis], [Period and application selectors; tiles for requests, page views, unique visitors, unique addresses, blocked, blocking addresses, 4xx and 5xx counts with rates; a 3D or 2D globe of requests or blocks by country with a ranked country list; queries per second, request-status and blocking-status sparklines; top-five bars for client operating systems and browsers, response status codes, referring applications and pages, popular applications and pages], [*Statistics · Traffic*: the same tiles in Sibuna's vocabulary (requests, admitted, challenged, denied, banned addresses, origin 4xx and 5xx from relayed response heads), the choropleth, the live timeline, and the top-five panels fed by the traffic sample ring (section 8.4)],
-  [Statistics · Security Posture], [Tiles per protection module (attacks, allow and deny, rate limiting, waiting room, anti-bot, auth); a trend chart per module with its top source addresses; a real-time event feed with a module chip, name, and time; a web-attack donut; rule-hit, attacked-page, and attacked-application rankings], [*Statistics · Security*: tiles per Sibuna module (inspection, reputation, rate limiting, challenges, bans, honeypot); trend plus top addresses per module; the live event feed from the `events` topic; the attack-category donut; attacked paths],
-  [Statistics · Data Dashboard], [A full-screen "big screen" export with its own theme, title, and validity, for a wall display], [*Kiosk view*: a read-only full-screen statistics page reachable with a scoped viewer token],
-  [Applications], [One card per protected site (defense mode, host match, port and scheme, requests and blocks today, module chips) and a detail page with basic settings, upstream, forwarding rules, routings, per-site module toggles, per-site statistics, and access and error logs], [*Nodes*: Sibuna protects one origin per process, so the unit is the node, not the site; the card carries surface, upstream, listener, and the same request and block counts],
-  [Attacks · Events and Logs], [Events grouped by source address and application with attack count, duration, and start; raw logs with action, URL, attack type, address and country, time; detail modal with the type chip, URL, address with "add to IP group" and "IP info", the JA4 fingerprint, the payload location and value, module, time, id, a "deny" stamp, request and response tabs with charset selection, and "copy as cURL"], [*Attack events*: the same two views (grouped by source, raw) and the same detail modal; Sibuna adds the rule and score, the campaign, and similar incidents by vector search; JA4 is shown only when the ingress forwards it, because Sibuna does not terminate TLS],
-  [Attacks · Semantic Analysis], [A per-module mode matrix, each of fourteen detection modules set to disabled, audit, balance, or strict, with batch edit], [*Policy · Inspection*: per-category mode for Sibuna's categories (disabled, audit, enforce); balance and strict do not apply, since Sibuna's detectors have one calibrated threshold each],
-  [Allow & Deny], [Events and logs of rule hits; custom rules in whitelist and blacklist tabs with order, id, status, type, name, detail, hits today, creator, and update time], [*Policy · Rules* and *IP groups*: the ordered rules table with the same columns, and reputation prefixes as groups],
-  [HTTP Flood · Rate Limiting], [Per-address records with the triggering reason ("n requests within m seconds"), the action taken (an anti-bot challenge for a period), blocked count, start, and an unblock-all button; settings], [*Statistics · Security* rate-limit panel and *Policy · Limits*: GCRA is per node and configured by flags today; the console shows hits and offers the rate settings per rule in Phase 2],
-  [HTTP Flood · Waiting Room], [Per-application queue statistics: active users allowed, waiting, peak, average wait, bounce rate], [Not adopted: Sibuna's answer to overload is the proof-of-work challenge and the `503` connection bound, both already visible],
-  [Anti-Bot], [Per-address challenge records with hits and verified counts, duration, start; settings], [*Challenges*: the funnel and solve-time histogram, plus per-address records of issued, accepted, and rejected solutions with the rejection cause],
-  [Auth], [Login records per account, application, method, result, address, time; single sign-on centre; settings], [Not adopted as a data-plane feature; the console's own user and audit pages cover console access],
-  [Settings · Protections], [IP groups including a vendor-maintained malicious-address group and a search-engine group; a JA4 fingerprint database; TLS certificates; custom blocking pages per status code; performance mode; retention for logs and statistics; configuration synchronisation between a master and slave nodes with machine codes and sync status; notifications to Telegram, Discord, webhooks, and syslog; information-sharing programmes], [*Settings*: IP groups map to reputation prefixes; blocking and challenge pages become editable templates; retention as specified; synchronisation is replaced by the symmetric cluster of SID 0005 on the *Nodes* page; webhooks and syslog are adopted; no vendor feeds],
-  [Settings · Management], [Manager users with role, two-factor state, and last login; the API token; the console's own certificate; a proxy for outbound calls; system information and machine id], [*Settings · Users*, *API tokens*, and *About*; two-factor authentication by TOTP is adopted],
-  [Settings · System Log], [Console activity log], [*Audit*],
+  table.header([*Expected capability*], [*What operators look for*], [*Sibuna console*]),
+  [Traffic statistics], [Period and application selectors; tiles for requests, page views, unique visitors, unique addresses, blocked, blocking addresses, 4xx and 5xx counts with rates; a 3D or 2D globe of requests or blocks by country with a ranked country list; queries per second, request-status and blocking-status sparklines; top-five bars for client operating systems and browsers, response status codes, referring applications and pages, popular applications and pages], [*Statistics · Traffic*: the same tiles in Sibuna's vocabulary (requests, admitted, challenged, denied, banned addresses, origin 4xx and 5xx from relayed response heads), the choropleth, the live timeline, and the top-five panels fed by the traffic sample ring (section 8.4)],
+  [Security posture], [Tiles per protection module (attacks, allow and deny, rate limiting, waiting room, anti-bot, auth); a trend chart per module with its top source addresses; a real-time event feed with a module chip, name, and time; a web-attack donut; rule-hit, attacked-page, and attacked-application rankings], [*Statistics · Security*: tiles per Sibuna module (inspection, reputation, rate limiting, challenges, bans, honeypot); trend plus top addresses per module; the live event feed from the `events` topic; the attack-category donut; attacked paths],
+  [Wall display], [A full-screen "big screen" export with its own theme, title, and validity, for a wall display], [*Kiosk view*: a read-only full-screen statistics page reachable with a scoped viewer token],
+  [Protected sites], [One card per protected site (defense mode, host match, port and scheme, requests and blocks today, module chips) and a detail page with basic settings, upstream, forwarding rules, routings, per-site module toggles, per-site statistics, and access and error logs], [*Nodes*: Sibuna protects one origin per process, so the unit is the node, not the site; the card carries surface, upstream, listener, and the same request and block counts],
+  [Attack events and logs], [Events grouped by source address and application with attack count, duration, and start; raw logs with action, URL, attack type, address and country, time; detail modal with the type chip, URL, address with "add to IP group" and "IP info", the JA4 fingerprint, the payload location and value, module, time, id, a "deny" stamp, request and response tabs with charset selection, and "copy as cURL"], [*Attack events*: the same two views (grouped by source, raw) and the same detail modal; Sibuna adds the rule and score, the campaign, and similar incidents by vector search; JA4 is shown only when the ingress forwards it, because Sibuna does not terminate TLS],
+  [Inspection modes], [A per-module mode matrix, each detection module set to off, audit-only, or one of several blocking strengths, with batch edit], [*Policy · Inspection*: per-category mode for Sibuna's categories (disabled, audit, enforce); there is no "balanced" versus "strict" level, since Sibuna's detectors have one calibrated threshold each],
+  [Allow and deny rules], [Events and logs of rule hits; custom rules in whitelist and blacklist tabs with order, id, status, type, name, detail, hits today, creator, and update time], [*Policy · Rules* and *IP groups*: the ordered rules table with the same columns, and reputation prefixes as groups],
+  [Rate limiting], [Per-address records with the triggering reason ("n requests within m seconds"), the action taken (an anti-bot challenge for a period), blocked count, start, and an unblock-all button; settings], [*Statistics · Security* rate-limit panel and *Policy · Limits*: GCRA is per node and configured by flags today; the console shows hits and offers the rate settings per rule in Phase 2],
+  [Waiting room], [Per-application queue statistics: active users allowed, waiting, peak, average wait, bounce rate], [Not adopted: Sibuna's answer to overload is the proof-of-work challenge and the `503` connection bound, both already visible],
+  [Anti-bot challenges], [Per-address challenge records with hits and verified counts, duration, start; settings], [*Challenges*: the funnel and solve-time histogram, plus per-address records of issued, accepted, and rejected solutions with the rejection cause],
+  [Site authentication], [Login records per account, application, method, result, address, time; single sign-on centre; settings], [Not adopted as a data-plane feature; the console's own user and audit pages cover console access],
+  [Protection settings], [address groups including maintained malicious-address and search-engine lists; a TLS fingerprint database; TLS certificates; custom blocking pages per status code; performance mode; retention for logs and statistics; configuration synchronisation between a master and slave nodes with machine codes and sync status; notifications to Telegram, Discord, webhooks, and syslog; information-sharing programmes], [*Settings*: address groups map to reputation prefixes; blocking and challenge pages become editable templates; retention as specified; synchronisation is replaced by the symmetric cluster of SID 0005 on the *Nodes* page; webhooks and syslog are adopted; no external feeds],
+  [Management settings], [Manager users with role, two-factor state, and last login; the API token; the console's own certificate; a proxy for outbound calls; system information and machine id], [*Settings · Users*, *API tokens*, and *About*; two-factor authentication by TOTP is adopted],
+  [System log], [Console activity log], [*Audit*],
 )
 
-Three observations shaped the design more than any single page. First, every SafeLine list
-is polled (auto-refresh off by default) whereas the security-posture page has a "real-time
-events" feed; Sibuna makes every page live over one WebSocket and drops polling entirely.
-Second, SafeLine's statistics are dominated by traffic analytics (page views, visitors,
-referrers, popular pages) that a firewall can only compute by sampling the request stream;
-Sibuna adopts them through a bounded sample ring rather than by logging every request.
-Third, the detail modal is the page operators spend the most time in; Sibuna's version
-keeps its layout and adds what the engine knows and SafeLine cannot show: the rule, the
-score, the campaign, and the nearest incidents.
+Three of these expectations shaped the design more than any single page. First, consoles
+typically poll (auto-refresh off by default) and reserve a live feed for one panel; Sibuna
+makes every page live over one WebSocket and drops polling entirely. Second, statistics pages
+are dominated by traffic analytics (page views, visitors, referrers, popular pages) that a
+firewall can only compute by sampling the request stream; Sibuna adopts them through a
+bounded sample ring rather than by logging every request. Third, the detail modal is the
+page operators spend the most time in; Sibuna's version keeps the familiar layout and adds
+what its engine knows: the rule, the score, the campaign, and the nearest incidents.
 
 
 The design follows the approach the zenfmt project uses for its server interface: a bounded
@@ -402,8 +387,7 @@ licensing, and mobile-native clients.
   data plane; `-Dconsole=false` compiles it out entirely.
 - A complete management surface for everything Sibuna does: statistics, events, challenges,
   policy, reputation, nodes, GeoIP, users, tokens, pages, retention, notifications, audit.
-  SafeLine's console is inspiration for what operators expect; Sibuna's console is complete
-  on its own terms and makes no distinction between editions.
+  The console is complete on its own terms: one product, one feature set, no editions.
 - Designed by three principles, applied and audited per page (section 4): don't make me think;
   fast, glanceable judgement (System 1); deliberate, evidence-backed analysis (System 2).
 - Elegant: one accent colour, one type scale, one spacing unit, restrained motion, and nothing
@@ -610,7 +594,7 @@ require a second bounded ring drained on the hot path's schedule.
 
 == The challenge funnel
 
-Sibuna has a measure SafeLine does not: the funnel from challenges issued, to solutions
+Sibuna has a measure other consoles lack: the funnel from challenges issued, to solutions
 submitted, to accepted, to rejected by cause (double spend, fingerprint mismatch, expired,
 wrong difficulty), and the distribution of solve times reported by the interstitial. The
 `funnel.zig` aggregator derives issued and accepted from the counters and the rejection
@@ -621,8 +605,8 @@ accepted solution.
 
 == Traffic sampling and top-k rankings
 
-SafeLine's traffic analytics (client families, response status codes, referring pages,
-popular pages) need a view of ordinary requests, not only denied ones. Logging every request
+Traffic analytics (client families, response status codes, referring pages, popular pages)
+need a view of ordinary requests, not only denied ones. Logging every request
 is out of the question on a data plane that serves 180,000 requests per second per node.
 Sibuna samples: the request path increments one atomic counter per request and, when the
 counter is a multiple of the sample interval (64 by default, configurable), copies a fixed
@@ -646,8 +630,8 @@ are data-plane code, reviewed as such, each one atomic operation per request or 
   sampled request;
 + per-category inspection modes (`disabled`, `audit`, `enforce`) carried by the policy
   snapshot and applied by the storage thread at rebuild, so that the request path tests one
-  bitmask; `audit` records the incident and admits the request, which is how SafeLine's
-  observe mode behaves and what an operator needs to tune a rule without risk.
+  bitmask; `audit` records the incident and admits the request, which is what an operator
+  needs to tune a rule without risk.
 
 == Cluster aggregation
 
@@ -960,8 +944,8 @@ wire(170, 118, H => {
 }))
 
 #figure-box([Attack events with the detail modal open over the raw view. The list streams new
-rows at the top while a filter is active; the modal keeps the layout operators know from
-SafeLine and adds the rule, the score, the campaign, and the nearest incidents.],
+rows at the top while a filter is active; the modal keeps the layout operators know and
+adds the rule, the score, the campaign, and the nearest incidents.],
 wire(170, 125, H => {
   import cetz.draw: *
   shell(H, 170, "Attack events")
@@ -1181,15 +1165,9 @@ the committed stylesheet.
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
   inspection), SID 0005 (Zaxonlite storage), SID 0006 (mathematical foundations).
-- Chaitin SafeLine 9.4.1, hosted demonstration console observed on 8 September 2026
-  (Statistics with Traffic Analysis, Security Posture and Data Dashboard; Applications;
-  Attacks with Events, Logs, Semantic Analysis and Enhanced Rules; Allow & Deny; HTTP Flood;
-  Anti-Bot; Auth; Settings), and its documentation.
-- Krug, S. _Don't Make Me Think, Revisited: A Common Sense Approach to Web Usability_, 3rd
-  edition, New Riders, 2014.
-- Kahneman, D. _Thinking, Fast and Slow_, Farrar, Straus and Giroux, 2011.
-- Ware, C. _Information Visualization: Perception for Design_, 4th edition, Morgan Kaufmann,
-  2020 (preattentive attributes behind R8–R11).
+- Operator expectations for management consoles were collected from the self-hosted
+  application-firewall, reverse-proxy, and monitoring consoles in common use in 2026; the
+  capability checklist of section 3 is the record of that survey.
 - Metwally, A., Agrawal, D., and El Abbadi, A. "Efficient computation of frequent and top-k
   elements in data streams." _ICDT_, 2005 (the Space-Saving algorithm).
 - M'Raihi, D., Machani, S., Pei, M., and Rydell, J. _TOTP: Time-Based One-Time Password

@@ -99,7 +99,7 @@
     status: "Proposed",
     created: "2026-09-08",
     updated: "2026-09-08",
-    summary: "Specifies a SafeLine-class management console for Sibuna: a separate pure-Zig module started from the Sibuna CLI, serving a real-time web interface over the standard library's HTTP server and WebSockets, rendering pages from a WebAssembly module styled with daisyUI 5, keeping users, sessions, audit, minute statistics, and a GeoIP database in the embedded Zaxonlite store, managing one node or a cluster, under a measured contract never to slow the data plane; with wireframes, protocol, data model, build pipeline, and delivery plan.",
+    summary: "Specifies the Sibuna Console, a complete management interface: a separate pure-Zig module started from the Sibuna CLI, serving a real-time web interface over the standard library's HTTP server and WebSockets, rendering pages from a WebAssembly module styled with daisyUI 5, keeping users, sessions, audit, minute statistics, and a GeoIP database in the embedded Zaxonlite store, managing one node or a cluster, under a measured contract never to slow the data plane; with wireframes, protocol, data model, build pipeline, and delivery plan.",
     source: "docs/sid/records/0007-console-management-interface.typ",
     html: "sid/0007-console-management-interface.html",
     pdf: "pdf/sid-0007-console-management-interface.pdf",

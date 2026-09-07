@@ -92,7 +92,7 @@
   "sid/0007-console-management-interface.html",
   title: [SID 0007: The Sibuna Console: A Real-Time Management Interface for Nodes and Clusters in Pure Zig],
   author: ("Sibuna Contributors",),
-  description: [A SafeLine-class management console in pure Zig: kernel, WebSocket protocol, data model, GeoIP, cluster management, wireframes, and build pipeline.],
+  description: [The Sibuna Console, a complete management interface in pure Zig: kernel, WebSocket protocol, data model, GeoIP, cluster management, wireframes, and build pipeline.],
 )[
   #include "records/0007-console-management-interface.typ"
 ]
