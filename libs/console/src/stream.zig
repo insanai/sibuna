@@ -118,6 +118,9 @@ const Stream = struct {
                 if (!self.send(.ping, "")) break;
                 last_ping = now;
             }
+            // Progressing idle writers stay alive between 20-second pings. A blocked
+            // write or authorization still expires under the independent kernel watchdog.
+            self.context.extend(10);
             std.Io.sleep(self.app.io, std.Io.Duration.fromMilliseconds(100), .awake) catch break;
         }
         const code = self.close_code.load(.acquire);

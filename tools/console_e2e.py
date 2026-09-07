@@ -118,6 +118,7 @@ def check(binary):
                                    cookie=cookie)
                 assert geometry[0] == 200 and geometry[2][:4] in (b"SBG1", b"SBG2")
                 geo_import(console_port, cookie, csrf)
+                console_ws_test.idle_delivery(console_port, cookie)
                 stream = console_ws_test.delivery(console_port, cookie)
                 assert request(console_port, "POST", "/console/api/logout", cookie=cookie)[0] == 400
                 assert request(console_port, "POST", "/console/api/logout",

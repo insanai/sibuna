@@ -89,3 +89,17 @@ def revoked(stream):
         raise AssertionError("revoked subscriber remained connected")
     finally:
         stream.close()
+
+
+def idle_delivery(port, cookie):
+    stream = Stream(port, cookie)
+    try:
+        stream.sock.settimeout(25)
+        opcode, body = stream.receive()
+        assert opcode == 9 and body == b"", (opcode, body)
+        stream.send(10, body)
+        stream.send(1, b'{"op":"subscribe","topics":["stats"]}')
+        opcode, body = stream.receive()
+        assert opcode == 1 and json.loads(body)["op"] == "snapshot"
+    finally:
+        stream.close()
