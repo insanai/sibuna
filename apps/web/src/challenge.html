@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sibuna — Security Verification</title>
+    <style>
+        :root {
+            --bg: #090d16;
+            --surface: #111827;
+            --border: #1f293d;
+            --primary: #0284c7;
+            --primary-glow: rgba(2, 132, 199, 0.25);
+            --accent: #38bdf8;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 36px 32px;
+            max-width: 460px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            text-align: center;
+        }
+        .icon-wrap {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--primary-glow);
+            border: 1px solid var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            animation: pulse 2s infinite ease-in-out;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 var(--primary-glow); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px 4px var(--primary-glow); }
+        }
+        h1 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+        p { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px; }
+        .progress-bar-wrap {
+            width: 100%;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 30%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 3px;
+            animation: indeterminate 1.5s infinite ease-in-out;
+        }
+        @keyframes indeterminate {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(400%); }
+        }
+        .status-text { font-size: 12px; font-family: monospace; color: var(--accent); }
+        .footer { margin-top: 24px; font-size: 11px; color: #475569; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon-wrap">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+        </div>
+        <h1>Weighing Connection</h1>
+        <p>Verifying browser integrity to protect origin services against automated scraping.</p>
+        <div class="progress-bar-wrap">
+            <div class="progress-bar"></div>
+        </div>
+        <div class="status-text" id="status">Initializing silicon solver...</div>
+        <div class="footer">Protected by Sibuna Web AI Firewall</div>
+    </div>
+
+    <script>
+    (async function() {
+        const statusEl = document.getElementById('status');
+        try {
+            statusEl.textContent = 'Acquiring proof-of-work challenge...';
+            const challengeResp = await fetch('/__sibuna/challenge.json');
+            if (!challengeResp.ok) throw new Error('Failed to acquire challenge');
+            const { id: challengeId, difficulty } = await challengeResp.json();
+
+            statusEl.textContent = 'Computing silicon proof-of-work (WASM)...';
+            const worker = new Worker('/__sibuna/worker.js');
+            worker.postMessage({ challenge: challengeId, difficulty: difficulty });
+
+            worker.onmessage = async function(e) {
+                if (e.data.type === 'progress') {
+                    statusEl.textContent = `Computing... (${e.data.iterations} iterations)`;
+                } else if (e.data.type === 'solved') {
+                    statusEl.textContent = 'Verifying solution with firewall...';
+                    const verifyResp = await fetch('/__sibuna/verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            challenge_id: e.data.challenge,
+                            nonce: e.data.nonce
+                        })
+                    });
+                    if (verifyResp.ok) {
+                        statusEl.textContent = 'Verification successful. Redirecting...';
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const redirectUrl = urlParams.get('return') || window.location.pathname;
+                        window.location.href = redirectUrl;
+                    } else {
+                        statusEl.textContent = 'Verification rejected. Please refresh.';
+                    }
+                } else if (e.data.type === 'error') {
+                    statusEl.textContent = 'Solver error: ' + e.data.message;
+                }
+            };
+        } catch (err) {
+            statusEl.textContent = 'Verification error: ' + err.message;
+        }
+    })();
+    </script>
+</body>
+</html>
