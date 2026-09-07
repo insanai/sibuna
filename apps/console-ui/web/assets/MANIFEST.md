@@ -1,14 +1,14 @@
 # Console asset input/output digests
 
 ```text
-10bdcbfe2c0959ea6eeeac371e9ffd63c88fc187d380024b18a75d7780282e06  apps/console-ui/src/main.zig
-6bd108a3849bc5ec6d57d487ea4ff29c266441b0c53d7bf01757d18e5be30f3b  apps/console-ui/src/render.zig
-a0b87021bfc88c4bdd9d577f0fc29e0c4d7150c2a1b84b1982ca53426e08504f  apps/console-ui/src/state.zig
-5d3aee4c85f44da6167b5ff3dbcff346b8795cbdefa9d3d35f2bea23df1c798a  apps/console-ui/web/assets/console.css
+c86796df73cdb42dc87ec2a21ac21a253db4acc4227239e8c1da222ce8558da4  apps/console-ui/src/main.zig
+59bca529ba052c3710f35e0d359897c071d2bb80ae553acaebe3cfd7d259a139  apps/console-ui/src/render.zig
+78f5cc9cf973148ce502c276c27166eacf72e67eed550f0013e277edb2714b1e  apps/console-ui/src/state.zig
+ce526950c97c87b636d082d7c0a52e4801eebb3ad4b5408ff747849988e2b7dc  apps/console-ui/web/assets/console.css
 5eb9ac6da94c5dfa23e694ad0c4d1063a9052f23b57b8c79499e58d893045161  apps/console-ui/web/glue.js
 de19ed3c281af27df160c0184b9dc6e368f0dcc64236020887257dbf202986a0  apps/console-ui/web/package-lock.json
 b337b6d0d37776b3cd099a24feb055f54113818d49ed7426ca79292baa331c2c  apps/console-ui/web/package.json
 e0440a0fe29eae188efc04927cb094f4ac77db5a7dd07771abf35589272aa9fa  apps/console-ui/web/shell.html
-4df93119d007145cca0400c9b6727b51a64b334b8e7baffde5d1b87b275f101a  apps/console-ui/web/tailwind.css
+504b6e5719e8feae63fd50160a446ef88164b5ad686865667682917c2cb0071c  apps/console-ui/web/tailwind.css
 b3af31f6ab34e792b8420767d0f8290199aad7665db515fbcb5e8e3a698582c2  tools/console_assets.py
 ```

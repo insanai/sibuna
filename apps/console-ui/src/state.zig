@@ -7,6 +7,7 @@ pub const State = struct {
     csrf: p.Bytes(64) = .{},
     role: p.Bytes(16) = .{},
     busy: bool = false,
+    must_change: bool = false,
     stats_busy: bool = false,
     epoch: p.Bytes(32) = .{},
     sequence: u64 = 0,

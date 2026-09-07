@@ -129,6 +129,11 @@ fn action(value: std.json.Value) !void {
         } else try refresh();
         return;
     }
+    if (equal(name, "dashboard") and state.csrf.len != 0 and !state.must_change) {
+        state.phase = .dashboard;
+        state.message = .{};
+        return refresh();
+    }
     if (equal(name, "account")) {
         state.phase = .password;
         state.stats_busy = false;
@@ -186,10 +191,8 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
         state.csrf = try p.Bytes(64).init(string(body, "csrf"));
         state.role = try p.Bytes(16).init(string(body, "role"));
         const change = field(body, "must_change");
-        state.phase = if (change != null and change.? == .bool and change.?.bool)
-            .password
-        else
-            .dashboard;
+        state.must_change = change != null and change.? == .bool and change.?.bool;
+        state.phase = if (state.must_change) .password else .dashboard;
         state.message = .{};
         if (state.phase == .dashboard) try refresh();
         return;
@@ -307,4 +310,21 @@ fn setMessage(message: []const u8) void {
 
 test {
     _ = @import("render.zig");
+}
+
+test "required password changes cannot open subscriptions through navigation" {
+    sb_init();
+    const login =
+        \\{"id":"session","status":200,"body":{"csrf":"test","role":"admin",
+        \\"must_change":true}}
+    ;
+    @memcpy(input[0..login.len], login);
+    sb_event(2, login.len);
+    try std.testing.expectEqual(.password, state.phase);
+    try std.testing.expect(std.mem.indexOf(u8, commands[0..commands_length], "connect") == null);
+    const action_json = "{\"action\":\"dashboard\",\"fields\":{}}";
+    @memcpy(input[0..action_json.len], action_json);
+    sb_event(1, action_json.len);
+    try std.testing.expectEqual(.password, state.phase);
+    try std.testing.expect(std.mem.indexOf(u8, html[0..html_length], "<svg") == null);
 }

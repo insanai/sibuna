@@ -4,8 +4,9 @@
   themes: light --default, dark --prefersdark;
   include: button, input, card, badge, alert, table, tabs, menu, navbar, select, textarea, checkbox;
 }
-:root { font-family: ui-sans-serif, system-ui, sans-serif; color-scheme: light dark; }
-body { margin: 0; min-width: 320px; }
+:root { font-family: ui-sans-serif, system-ui, sans-serif; color-scheme: light; }
+body { margin: 0; min-width: 320px; color: var(--color-base-content); background: var(--color-base-200); }
+[data-theme="dark"] { color-scheme: dark; }
 button, input, select, textarea { font: inherit; }
 :focus-visible { outline: 3px solid #0284c7; outline-offset: 3px; }
 .sb-shell { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 100vh; }

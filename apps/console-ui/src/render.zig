@@ -15,7 +15,10 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         "<p class=\"sb-subtitle\">SINGLE NODE / STATISTICS</p><h1>Traffic overview</h1>" ++
         "<p class=\"sb-subtitle\">Know what is reaching your applications.</p></div>" ++
         "<div class=\"sb-status\"><span class=\"badge badge-outline\">");
-    try w.writeAll(if (state.paused) "Paused" else if (state.stale) "Disconnected" else "Live");
+    const status = if (state.paused) "Paused" else if (state.stale)
+        "Disconnected"
+    else if (state.stats == null) "Connecting" else "Live";
+    try w.writeAll(status);
     try w.writeAll("</span><button class=\"btn btn-sm\" data-action=\"pause\">");
     try w.writeAll(if (state.paused) "Resume" else "Pause");
     try w.writeAll("</button><button class=\"btn btn-sm\" data-action=\"theme\">Theme</button>" ++
@@ -103,6 +106,10 @@ fn authentication(state: *const State, w: *Writer) Writer.Error!void {
             else => "Sign in",
         }},
     );
+    if (state.phase == .password and !state.must_change) {
+        try w.writeAll("<button class=\"btn btn-ghost\" " ++
+            "data-action=\"dashboard\">Back to dashboard</button>");
+    }
     if (state.phase == .setup) try w.writeAll("<p class=\"sb-note mt-4\">" ++
         "The setup key is printed once when the console starts for the first time.</p>");
     try w.writeAll("<p class=\"sb-note mt-6\">Protected with Argon2id and secure sessions.</p>" ++
