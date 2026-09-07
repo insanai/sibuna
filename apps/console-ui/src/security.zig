@@ -5,7 +5,7 @@ const Writer = std.Io.Writer;
 
 pub fn page(state: *const State, w: *Writer) Writer.Error!void {
     try w.writeAll("<main class=\"sb-auth\"><section class=\"sb-auth-card\">" ++
-        "<h1>Two-factor authentication</h1>");
+        "<h1 id=\"page-heading\" tabindex=\"-1\">Two-factor authentication</h1>");
     try render.message(state, w);
     if (state.recovery_count != 0) {
         try w.writeAll("<h2>Save your recovery codes</h2><p>Each code works once. " ++

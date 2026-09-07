@@ -78,10 +78,13 @@ export fn sb_event(kind: u32, length: usize) void {
         return;
     };
     defer parsed.deinit();
+    const previous_phase = state.phase;
     dispatch(kind, parsed.value, fixed.allocator()) catch {
         setMessage("Could not complete the action. Please try again.");
         state.busy = false;
     };
+    if (state.phase != previous_phase)
+        command(.{ .op = "focus", .selector = "main h1", .top = true }) catch unreachable;
     finish();
 }
 
@@ -159,6 +162,7 @@ fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
 fn action(value: std.json.Value) !void {
     const name = string(value, "action");
     const fields = field(value, "fields") orelse .null;
+    if (try @import("events_actions.zig").act(&state, name, fields)) return eventQuery();
     if (try securityAction(name, fields)) return;
     if (try geographicAction(name, fields)) return;
     if (equal(name, "theme")) {
@@ -213,6 +217,7 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
     const body = field(value, "body") orelse return;
     if (std.mem.startsWith(u8, id, "totp")) return securityResponse(id, status, body);
     if (equal(id, "stats")) return statsResponse(status, body, alloc);
+    if (equal(id, "events")) return eventResponse(status, body);
     if (equal(id, "geoip") or equal(id, "geo-import"))
         return geoResponse(id, status, body);
     state.busy = false;
@@ -561,4 +566,43 @@ test "required authenticator enrollment cannot open dashboard data or geometry" 
     try std.testing.expectEqual(.security, state.phase);
     try std.testing.expect(std.mem.indexOf(u8, commands[0..commands_length], "connect") == null);
     try std.testing.expect(std.mem.indexOf(u8, html[0..html_length], "<svg") == null);
+}
+
+fn eventQuery() !void {
+    try command(.{ .op = "disconnect" });
+    const model = &state.events;
+    var id: [20]u8 = undefined;
+    const before: ?struct { time: u64, id: []const u8 } = if (model.cursors[model.page]) |cursor|
+        .{ .time = cursor.time, .id = try std.fmt.bufPrint(&id, "{d}", .{cursor.id}) }
+    else
+        null;
+    try post("events", "/console/api/events/query", .{
+        .before = before,
+        .category = model.category.slice(),
+        .ip = model.ip.slice(),
+        .path_prefix = model.path.slice(),
+        .until = model.until,
+        .from = if (model.hours == 0) @as(u64, 0) else model.until -| model.hours * 3600,
+    });
+}
+
+fn eventResponse(status: i64, body: std.json.Value) !void {
+    if (state.phase != .events) return;
+    state.events.busy = false;
+    if (status == 401 or status == 403) {
+        state.events = .{};
+        state.csrf = .{};
+        state.phase = .login;
+        setMessage("Your access changed. Sign in again to view incidents.");
+        return;
+    }
+    if (status != 200) {
+        setMessage("Could not load incidents. Check your connection or narrow the filters.");
+        return;
+    }
+    try state.events.decode(body);
+    if (state.events.focus_results) try command(.{
+        .op = "focus",
+        .selector = "[aria-label=\"Incident results\"]",
+    });
 }

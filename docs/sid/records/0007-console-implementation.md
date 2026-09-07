@@ -267,3 +267,22 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
   Storage-off, console-off, clustered TLS and x86_64 Linux/musl builds passed.
 - The browser retained the last observed dashboard values and displayed Disconnected with
   stale age after the review daemon stopped. Broader release and feature gates remain open.
+
+### Incident browsing and interface (2026-09-08)
+
+- Owner-executed incident queries support time, node, category, address and path filters,
+  timestamp/id keyset cursors, at most ten rows and a 4 KiB serialized response. Schema v5
+  adds indexes without rewriting forensic/FTS/vector content. IDs cross the browser as strings.
+- Historical query strings are removed from displayed paths. Unversioned payloads are withheld;
+  absent country, response status, matched rule and capture metadata explicitly remain unrecorded.
+  Existing campaign identifiers are labelled automated similarity candidates.
+- The Events page provides time/category/address/path filters, bounded paging, UTC timestamps,
+  expandable details and empty/error states. Filters use a compact desktop row and mobile stack.
+  Stable heading/results targets preserve keyboard focus across asynchronous rendering.
+- Repository tests, live query tests, SID generation and final native UI/asset checks passed.
+  Live tests generated 15 honeypot incidents and verified filtering, complete pagination,
+  authorization/CSRF, exact string IDs and omission of payload secrets. Browser checks verified
+  two populated pages, address filtering, empty results, escaped script-like user-agent text,
+  missing-evidence labels, mobile/desktop layouts and heading/results focus without overflow.
+- Grouped investigation, exports, richer versioned evidence and remaining policy/operational
+  workflows are still open; this entry does not close the full investigation acceptance gate.

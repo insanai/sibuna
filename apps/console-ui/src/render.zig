@@ -3,6 +3,7 @@ const State = @import("state.zig").State;
 const Writer = std.Io.Writer;
 
 pub fn render(state: *const State, w: *Writer) Writer.Error!void {
+    if (state.phase == .events) return @import("events_page.zig").render(state, w);
     if (state.phase == .security) return @import("security.zig").page(state, w);
     if (state.phase == .geoip) return @import("geoip_page.zig").render(state, w);
     if (state.phase != .dashboard) return authentication(state, w);
@@ -11,11 +12,13 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         "<div><a class=\"sb-brand\" href=\"/console/\">SIBUNA</a>" ++
         "<p class=\"sb-caption\">SECURITY CONSOLE</p></div>" ++
         "<button class=\"btn btn-ghost\" aria-current=\"page\">Statistics</button>" ++
+        "<button class=\"btn btn-ghost\" data-action=\"events\">Events</button>" ++
         "<button class=\"btn btn-ghost\" data-action=\"geoip\">GeoIP</button>" ++
         "<button class=\"btn btn-ghost\" data-action=\"account\">Account</button>" ++
         "<button class=\"btn btn-ghost\" data-action=\"logout\">Sign out</button></nav>" ++
         "<main class=\"sb-main\"><header class=\"sb-header\"><div>" ++
-        "<p class=\"sb-subtitle\">SINGLE NODE / STATISTICS</p><h1>Traffic overview</h1>" ++
+        "<p class=\"sb-subtitle\">SINGLE NODE / STATISTICS</p>" ++
+        "<h1 id=\"page-heading\" tabindex=\"-1\">Traffic overview</h1>" ++
         "<p class=\"sb-subtitle\">Know what is reaching your applications.</p></div>" ++
         "<div class=\"sb-status\"><span class=\"badge badge-outline\">");
     const status = if (state.paused) "Paused" else if (state.stale)
@@ -56,7 +59,7 @@ fn authentication(state: *const State, w: *Writer) Writer.Error!void {
         .password => "Change your password",
         else => "Welcome back",
     };
-    try w.print("<h1>{s}</h1>", .{title});
+    try w.print("<h1 id=\"page-heading\" tabindex=\"-1\">{s}</h1>", .{title});
     try w.writeAll("<p class=\"sb-subtitle\">Your firewall. Your infrastructure.</p>");
     try message(state, w);
     if (state.phase == .loading) {

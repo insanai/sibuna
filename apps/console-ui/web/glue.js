@@ -85,6 +85,14 @@ async function run(command) {
     if (socket) { socket.onclose = null; socket.close(); socket = undefined; }
     for (const timer of timers.values()) clearTimeout(timer);
     timers.clear();
+  } else if (command.op === "focus") {
+    const element = root.querySelector(command.selector);
+    if (element) {
+      element.tabIndex = -1;
+      element.focus({preventScroll: true});
+      if (command.top) window.scrollTo({top: 0});
+      else element.scrollIntoView({block: "start"});
+    }
   } else if (command.op === "theme") {
     document.documentElement.dataset.theme = command.value;
   }

@@ -1,7 +1,8 @@
 const p = @import("console_protocol");
-pub const Phase = enum { loading, setup, login, password, dashboard, geoip, security };
+pub const Phase = enum { loading, setup, login, password, dashboard, geoip, security, events };
 pub const State = struct {
     phase: Phase = .loading,
+    events: @import("events_state.zig").Model = .{},
     message: p.Bytes(256) = .{},
     username: p.Bytes(64) = .{},
     csrf: p.Bytes(64) = .{},

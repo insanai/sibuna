@@ -1,0 +1,146 @@
+const std = @import("std");
+const p = @import("console_protocol");
+const State = @import("state.zig").State;
+const escape = @import("render.zig").escape;
+const Model = @import("events_state.zig").Model;
+const Writer = std.Io.Writer;
+
+pub fn render(state: *const State, w: *Writer) Writer.Error!void {
+    const model = &state.events;
+    try w.writeAll("<main class=\"sb-main min-h-screen\"><header class=\"sb-header\"><div>" ++
+        "<p class=\"sb-subtitle\">INVESTIGATION / RECORDED INCIDENTS</p>" ++
+        "<h1 id=\"page-heading\" tabindex=\"-1\">Events</h1>" ++
+        "<p class=\"sb-subtitle\">Inspect what your firewall recorded.</p></div>" ++
+        "<button class=\"btn\" data-action=\"dashboard\">Back to dashboard</button></header>");
+    if (state.message.len != 0) {
+        try w.writeAll("<p class=\"sb-error\" role=\"status\">");
+        try escape(w, state.message.slice());
+        try w.writeAll("</p>");
+    }
+    try filters(model, w);
+    try w.writeAll("<section id=\"incident-results\" tabindex=\"-1\" " ++
+        "class=\"sb-panel mt-6\" aria-label=\"Incident results\">");
+    if (model.busy) try w.writeAll("<p role=\"status\">Loading incidents…</p>");
+    if (!model.busy and model.loaded and model.count == 0)
+        try w.writeAll("<p>No recorded incidents match these filters.</p>");
+    for (model.rows[0..model.count]) |*row| try incident(row, w);
+    try w.print(
+        "<div class=\"flex flex-wrap gap-3 mt-6\"><span>Page {d}</span>",
+        .{model.page + 1},
+    );
+    try button(w, "events-prev", "Previous", model.busy or model.page == 0);
+    try button(w, "events-next", "Next", model.busy or model.next == null or
+        model.page + 1 == model.cursors.len);
+    try button(w, "events-refresh", "Latest results", model.busy);
+    if (model.page + 1 == model.cursors.len and model.next != null)
+        try w.writeAll("<p>Narrow the time range or filters to browse more records.</p>");
+    try w.writeAll("</div><p class=\"sb-note mt-4\">Records are ordered by capture time (UTC). " ++
+        "Pages retain the selected time boundary; use Latest results to include new incidents. " ++
+        "Missing historical evidence and capture coverage are not inferred.</p></section></main>");
+}
+
+fn filters(model: *const Model, w: *Writer) Writer.Error!void {
+    try w.writeAll("<section class=\"sb-panel mt-6\"><h2>Filter incidents</h2>" ++
+        "<form id=\"events-filter\" class=\"grid gap-3 sm:grid-cols-2 lg:grid-cols-5\">");
+    try input(w, "category", "Category (exact)", model.category.slice(), 32);
+    try input(w, "ip", "Client address (exact)", model.ip.slice(), 48);
+    try input(w, "path_prefix", "Path starts with", model.path.slice(), 256);
+    try w.writeAll("<div class=\"grid gap-2 min-w-0\"><label for=\"hours\">Time range</label>" ++
+        "<select id=\"hours\" name=\"hours\" class=\"select select-bordered w-full\">");
+    inline for (.{
+        .{ 0, "All recorded time" },
+        .{ 1, "Last hour" },
+        .{ 24, "Last 24 hours" },
+        .{ 168, "Last 7 days" },
+    }) |option| {
+        try w.print("<option value=\"{d}\"{s}>{s}</option>", .{
+            option[0], if (model.hours == option[0]) " selected" else "", option[1],
+        });
+    }
+    try w.writeAll("</select></div><button type=\"submit\" " ++
+        "class=\"btn btn-primary self-end sm:col-span-2 lg:col-span-1\"");
+    if (model.busy) try w.writeAll(" disabled");
+    try w.writeAll(">Apply filters</button></form></section>");
+}
+
+fn incident(row: *const p.events.Row, w: *Writer) Writer.Error!void {
+    try w.writeAll("<article class=\"border-b border-base-300 py-4\"><h2>");
+    try escape(w, row.category.slice());
+    try w.print(" <span class=\"sb-note\">#{d}</span></h2><p>", .{row.id});
+    try timestamp(w, row.time);
+    try w.print(" · Node {d}</p><p class=\"break-all\">", .{row.node});
+    try escape(w, row.ip.slice());
+    try w.writeAll(" · ");
+    try escape(w, row.method.slice());
+    try w.writeAll(" ");
+    try escape(w, row.path.slice());
+    try w.writeAll("</p><details class=\"mt-3\"><summary>Historical details</summary>" ++
+        "<dl class=\"grid gap-2 mt-3\"><dt>User agent</dt><dd class=\"break-all\">");
+    try escape(w, row.user_agent.slice());
+    try w.writeAll("</dd><dt>Campaign candidate</dt><dd>");
+    if (row.campaign) |id| {
+        try w.print("{d} (automated similarity grouping)", .{id});
+    } else try w.writeAll("Not recorded");
+    try w.writeAll("</dd><dt>Country, response status and matched rule</dt>" ++
+        "<dd>Not recorded</dd><dt>Versioned evidence and capture truncation</dt>" ++
+        "<dd>Not recorded</dd></dl><p class=\"sb-note mt-3\">" ++
+        "Historical payloads are withheld because they lack redaction metadata.</p>");
+    if (row.query_redacted) try w.writeAll("<p class=\"sb-note\">Query string removed.</p>");
+    if (row.display_truncated) try w.writeAll("<p class=\"sb-note\">Display text truncated.</p>");
+    try w.writeAll("</details></article>");
+}
+
+fn input(
+    w: *Writer,
+    name: []const u8,
+    label: []const u8,
+    value: []const u8,
+    limit: usize,
+) Writer.Error!void {
+    try w.writeAll("<div class=\"grid gap-2 min-w-0\">");
+    try w.print("<label for=\"{s}\">{s}</label><input id=\"{s}\" name=\"{s}\" " ++
+        "class=\"input input-bordered w-full\" maxlength=\"{d}\" value=\"", .{
+        name, label, name, name, limit,
+    });
+    try escape(w, value);
+    try w.writeAll("\"></div>");
+}
+
+fn button(w: *Writer, action: []const u8, label: []const u8, disabled: bool) Writer.Error!void {
+    try w.print("<button class=\"btn\" data-action=\"{s}\"{s}>{s}</button>", .{
+        action, if (disabled) " disabled" else "", label,
+    });
+}
+
+fn timestamp(w: *Writer, value: u64) Writer.Error!void {
+    if (value > 253402300799) return w.writeAll("Time unavailable");
+    const seconds: std.time.epoch.EpochSeconds = .{ .secs = value };
+    const day = seconds.getEpochDay().calculateYearDay();
+    const date = day.calculateMonthDay();
+    const time = seconds.getDaySeconds();
+    try w.print("{d:0>4}-{d:0>2}-{d:0>2} {d:0>2}:{d:0>2}:{d:0>2} UTC", .{
+        day.year,               @intFromEnum(date.month),  @as(u8, date.day_index) + 1,
+        time.getHoursIntoDay(), time.getMinutesIntoHour(), time.getSecondsIntoMinute(),
+    });
+}
+
+test "historical incident rendering escapes stored markup and names absent fields" {
+    var state: State = .{ .phase = .events };
+    state.events.loaded = true;
+    state.events.count = 1;
+    state.events.rows[0] = .{
+        .id = 9007199254740993,
+        .time = 0,
+        .user_agent = try p.Bytes(128).init("<script>alert(1)</script>"),
+        .path = try p.Bytes(256).init("/\"quoted\""),
+    };
+    var buffer: [16384]u8 = undefined;
+    var writer: Writer = .fixed(&buffer);
+    try render(&state, &writer);
+    const output = writer.buffered();
+    try std.testing.expect(std.mem.indexOf(u8, output, "<script>") == null);
+    try std.testing.expect(std.mem.indexOf(u8, output, "&lt;script&gt;") != null);
+    try std.testing.expect(std.mem.indexOf(u8, output, "9007199254740993") != null);
+    try std.testing.expect(std.mem.indexOf(u8, output, "Not recorded") != null);
+    try std.testing.expect(std.mem.indexOf(u8, output, "1970-01-01 00:00:00 UTC") != null);
+}

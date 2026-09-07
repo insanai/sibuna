@@ -4,7 +4,8 @@ const escape = @import("render.zig").escape;
 
 pub fn render(state: *const State, w: *std.Io.Writer) std.Io.Writer.Error!void {
     try w.writeAll("<main class=\"sb-main min-h-screen\"><header class=\"sb-header\"><div>" ++
-        "<p class=\"sb-subtitle\">COUNTRY ENRICHMENT</p><h1>GeoIP</h1></div>" ++
+        "<p class=\"sb-subtitle\">COUNTRY ENRICHMENT</p>" ++
+        "<h1 id=\"page-heading\" tabindex=\"-1\">GeoIP</h1></div>" ++
         "<button class=\"btn\" data-action=\"dashboard\">Back to dashboard</button></header>" ++
         "<section class=\"sb-panel mt-6\"><h2>DB-IP IP to Country Lite</h2>" ++
         "<p>Monthly country data, licensed under CC BY 4.0. " ++
