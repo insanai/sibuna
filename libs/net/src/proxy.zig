@@ -335,7 +335,9 @@ pub fn streamProxy(
     const retryable = declared <= req.body.len;
     var attempt: u8 = 0;
     while (true) : (attempt += 1) {
-        const pooled = pool.take();
+        // A retry always connects afresh: after an idle period every pooled
+        // socket may be stale, and a second stale one would fail the request.
+        const pooled = if (attempt == 0) pool.take() else null;
         const stream = pooled orelse try connectUpstream(io, upstream_host, upstream_port);
         const outcome = exchange(
             stream,

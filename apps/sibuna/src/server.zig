@@ -22,7 +22,7 @@ pub const worker_js = @embedFile("worker_js");
 pub const version = "0.2.0";
 pub const max_request_bytes = 64 * 1024;
 pub const max_head_bytes = 16 * 1024;
-pub const max_requests_per_connection = 256;
+pub const max_requests_per_connection = 4096;
 
 pub const Metrics = struct {
     incidents_persisted: std.atomic.Value(u64) = .init(0),
