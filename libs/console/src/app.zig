@@ -229,6 +229,7 @@ pub const App = struct {
                 return http.json(context, .{ .setup_required = status.setup_required }, &.{});
             },
             .challenges => return @import("challenge_routes.zig").handle(self, context),
+            .events_similar => return @import("similarity_routes.zig").query(self, context),
             .events => return @import("event_routes.zig").query(self, context, false),
             .events_export => return @import("event_routes.zig").query(self, context, true),
             .login => return auth.login(self, context),

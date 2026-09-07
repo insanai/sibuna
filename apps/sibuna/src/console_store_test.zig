@@ -754,3 +754,54 @@ test "candidate membership preserves large IDs and excludes unrelated rows under
         row.object.get("campaign").?.string,
     );
 }
+
+test "incremental similarity scans yield at 64 rows and recheck authorization" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try geoFixture(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/similarity",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    const hook = fx.state.hooks.record_incident.?;
+    for (0..130) |i| hook(fx.state.hooks.context, .{
+        .client_ip = "8.8.8.8",
+        .user_agent = "test",
+        .method = "GET",
+        .path = "/test",
+        .category = "waf:test",
+        .now = 200 + i,
+        .payload = if (i % 3 == 0) "id=1 union select password" else "../../etc/passwd",
+    });
+    for (0..5) |_| try fx.owner.tick();
+    var input: p.similarity.Query = .{
+        .session_digest = @splat(1),
+        .now = 500,
+        .source = (1 << 40) | 1,
+        .until = 400,
+    };
+    var best: p.similarity.Best = .{};
+    var scanned: usize = 0;
+    var parts: usize = 0;
+    while (true) {
+        const part = (try fx.run(.{ .events_similar = input })).similarity;
+        try t.expect(part.source_available and part.scanned <= 64 and part.invalid == 0);
+        scanned += part.scanned;
+        parts += 1;
+        for (part.best.rows[0..part.best.count]) |row| {
+            try t.expect(row.id != input.source);
+            best.add(row);
+        }
+        input.before = part.next;
+        if (part.next == null) break;
+        try t.expect(parts < 4);
+    }
+    try t.expectEqual(@as(usize, 130), scanned);
+    try t.expectEqual(@as(usize, 3), parts);
+    try t.expectEqual(@as(u8, 10), best.count);
+    for (best.rows) |row| try t.expect(row.distance < 0.00001);
+    _ = try fx.run(.{ .logout = .{ .digest = @splat(1), .now = 501 } });
+    try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .events_similar = input })).failed);
+}

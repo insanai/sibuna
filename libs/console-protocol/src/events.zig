@@ -13,6 +13,7 @@ pub const Query = struct {
     until: u64 = std.math.maxInt(i64),
     node: u32 = 0,
     campaign: u64 = 0,
+    incident: u64 = 0,
     category: Bytes(32) = .{},
     ip: Bytes(48) = .{},
     path_prefix: Bytes(256) = .{},
@@ -76,7 +77,8 @@ pub const Row = struct {
 
 pub fn validate(query: Query) error{InvalidLimit}!void {
     if (query.limit == 0 or query.limit > 10 or query.from > query.until or
-        query.until > std.math.maxInt(i64) or query.campaign > std.math.maxInt(i64))
+        query.until > std.math.maxInt(i64) or query.campaign > std.math.maxInt(i64) or
+        query.incident > std.math.maxInt(i64))
         return error.InvalidLimit;
     if (query.before) |cursor| {
         if (cursor.time > std.math.maxInt(i64) or cursor.id > std.math.maxInt(i64))

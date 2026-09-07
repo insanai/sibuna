@@ -1,6 +1,7 @@
 //! Shared native/Wasm contracts. No networking, database or daemon dependencies.
 const std = @import("std");
 
+pub const similarity = @import("similarity.zig");
 pub const challenges = @import("challenges.zig");
 pub const events = @import("events.zig");
 pub const auth = @import("auth.zig");
@@ -107,6 +108,7 @@ pub const StorageRequest = union(enum) {
     authorize: struct { session_digest: [32]u8, now: u64, touch: bool = false },
     incidents: struct { before_id: ?u64, limit: u16 },
     events_query: events.Query,
+    events_similar: similarity.Query,
     policy_edit: struct {
         actor: u64,
         authorization_revision: u64,
@@ -117,6 +119,7 @@ pub const StorageRequest = union(enum) {
     control_complete: struct { id: u64, succeeded: bool },
 };
 pub const StorageResult = union(enum) {
+    similarity: similarity.Part,
     setup_required: bool,
     geo_metadata: geo.Metadata,
     geo_bytes: Bytes(3400),
@@ -162,6 +165,7 @@ pub fn Bytes(comptime capacity: usize) type {
 pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
     switch (request) {
         .events_query => |query| try events.validate(query),
+        .events_similar => |query| try similarity.validate(query),
         inline .geo_begin, .geo_activate, .totp_begin => |input| {
             if (input.expected_revision >= std.math.maxInt(i64)) return error.InvalidLimit;
         },

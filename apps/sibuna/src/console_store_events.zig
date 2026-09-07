@@ -17,7 +17,7 @@ pub fn query(owner: *Persistent, input: p.events.Query) !p.StorageResult {
         .time = std.math.maxInt(i64),
         .id = std.math.maxInt(i64),
     };
-    const sql = statement(input.grouped, input.campaign != 0);
+    const sql = statement(input.grouped, input.campaign != 0, input.incident != 0);
     var result = try db.query(owner.db, owner.gpa, sql, &.{
         integer(input.from),             integer(input.until),
         integer(input.node),             integer(input.node),
@@ -25,6 +25,7 @@ pub fn query(owner: *Persistent, input: p.events.Query) !p.StorageResult {
         text(input.ip.slice()),          text(input.ip.slice()),
         text(input.path_prefix.slice()), text(input.path_prefix.slice()),
         integer(input.campaign),         integer(input.campaign),
+        integer(input.incident),         integer(input.incident),
         integer(before.time),            integer(before.time),
         integer(before.id),              integer(input.limit + 1),
     });
@@ -143,6 +144,8 @@ const base_filters =
     "AND (?=0 OR node_id=?) AND (?='' OR violation_category=?) AND (?='' OR client_ip=?) " ++
     "AND substr(path,1,length(?))=? ";
 const filters = base_filters ++ "AND (?=0 OR campaign_id=?) ";
+const id_filter = "AND (?=0 OR id=?) ";
+const exact_id = "AND id=? AND ?!=0 ";
 const campaign_filters = base_filters ++ "AND campaign_id=? AND ?!=0 ";
 const raw_select =
     "SELECT id,node_id,recorded_at,client_ip,method,path,violation_category,user_agent," ++
@@ -158,11 +161,13 @@ const group_order =
     "GROUP BY node_id,client_ip HAVING MAX(recorded_at)<? OR " ++
     "(MAX(recorded_at)=? AND MAX(id)<?) ORDER BY MAX(recorded_at) DESC,MAX(id) DESC LIMIT ?";
 
-fn statement(grouped: bool, campaign: bool) []const u8 {
+fn statement(grouped: bool, campaign: bool, incident: bool) []const u8 {
     if (grouped) {
-        if (campaign) return group_select ++ campaign_filters ++ group_order;
-        return group_select ++ filters ++ group_order;
+        if (incident) return group_select ++ filters ++ exact_id ++ group_order;
+        if (campaign) return group_select ++ campaign_filters ++ id_filter ++ group_order;
+        return group_select ++ filters ++ id_filter ++ group_order;
     }
-    if (campaign) return raw_select ++ campaign_filters ++ raw_order;
-    return raw_select ++ filters ++ raw_order;
+    if (incident) return raw_select ++ filters ++ exact_id ++ raw_order;
+    if (campaign) return raw_select ++ campaign_filters ++ id_filter ++ raw_order;
+    return raw_select ++ filters ++ id_filter ++ raw_order;
 }

@@ -381,3 +381,16 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
 - Nearest-incident search and policy/reputation actions remain pending. The preceding capture
   benchmark regeneration is committed as `latest-20260907T231647Z.json`; console-impact and
   storage-contention acceptance still require the release harness.
+
+### Incremental nearest-incident queries (2026-09-08)
+
+- Similarity requests read the source vector by ID and scan at most 64 time/id-ordered records
+  per background mailbox operation. They recheck authorization on every part and retain existing
+  prepared-query limits. This avoids claiming that VM-step limits bound a vec0 internal KNN scan.
+- Each part returns at most ten IDs, node/time metadata and normalized cosine distances in a
+  bounded response. Raw payloads and vectors are not returned. The shared fixed top-ten merger
+  preserves global ordering across parts, including deterministic ties and duplicate rejection.
+  Missing/invalid vectors and the continuation cursor make search coverage explicit.
+- Deterministic storage tests scan 130 records in three parts, verify closest-match merging and
+  per-part revocation. Live API tests cover CSRF/authentication, missing source vectors, exact
+  IDs, bounded output and incident drill-down. UI progress and browser acceptance follow below.

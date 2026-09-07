@@ -70,6 +70,27 @@ def check(binary, h):
                         break
                     members["before"] = page["next"]
                 assert len(member_ids) == 15
+                similar_endpoint = "/console/api/events/similar"
+                search = {"source": min(member_ids), "until": int(time.time()), "generation": 7}
+                assert h.request(port, "POST", similar_endpoint, search)[0] == 401
+                assert h.request(port, "POST", similar_endpoint, search, cookie)[0] == 400
+                status, _, body = h.request(port, "POST", similar_endpoint, search, cookie, csrf)
+                assert status == 200 and len(body) <= 4096
+                neighbors = json.loads(body)
+                assert neighbors["source_available"] and neighbors["generation"] == 7
+                assert neighbors["scanned"] == 15 and neighbors["next"] is None
+                assert len(neighbors["rows"]) == 10
+                for neighbor in neighbors["rows"]:
+                    assert neighbor["id"] != search["source"] and neighbor["id"] in member_ids
+                    assert 0 <= neighbor["distance"] < 0.00001
+                exact_id = neighbors["rows"][0]["id"]
+                exact = h.request(port, "POST", endpoint, {"incident": exact_id}, cookie, csrf)
+                assert exact[0] == 200
+                exact_rows = json.loads(exact[2])["rows"]
+                assert len(exact_rows) == 1 and exact_rows[0]["id"] == exact_id
+                search["source"] = "123"
+                missing = h.request(port, "POST", similar_endpoint, search, cookie, csrf)
+                assert missing[0] == 200 and not json.loads(missing[2])["source_available"]
                 assert h.request(port, "POST", endpoint,
                                  {"campaign": "18446744073709551615"}, cookie, csrf)[0] == 400
                 query = {"ip": "8.8.8.1"}
