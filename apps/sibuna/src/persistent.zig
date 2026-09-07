@@ -328,14 +328,23 @@ pub const Persistent = struct {
     }
 
     fn worker(self: *Persistent) void {
+        const interval: u64 = @max(50, self.cfg.storage_poll_ms);
+        var next_tick: i96 = 0;
         while (!self.stopping.load(.acquire)) {
-            self.tick() catch |err| {
-                std.debug.print("storage: tick failed: {t}\n", .{err});
-            };
-            const pause = Io.Duration.fromMilliseconds(
-                @intCast(@max(50, self.cfg.storage_poll_ms)),
-            );
-            Io.sleep(self.io, pause, .awake) catch return;
+            const now = Io.Clock.awake.now(self.io).nanoseconds;
+            if (now >= next_tick) {
+                self.tick() catch |err| {
+                    std.debug.print("storage: tick failed: {t}\n", .{err});
+                };
+                next_tick = now + @as(i96, interval) * std.time.ns_per_ms;
+            } else if (build_options.console) @import("console_store.zig").tick(self);
+            const remaining = @max(0, next_tick - Io.Clock.awake.now(self.io).nanoseconds);
+            const wait_ms: u64 = @intCast(@divTrunc(remaining, std.time.ns_per_ms));
+            if (build_options.console) {
+                self.console_mailbox.wait(self.io, wait_ms) catch return;
+            } else {
+                Io.sleep(self.io, .fromMilliseconds(@intCast(wait_ms)), .awake) catch return;
+            }
         }
     }
 

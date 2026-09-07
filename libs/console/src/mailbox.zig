@@ -20,6 +20,7 @@ pub const Mailbox = struct {
     };
     pub const Error = error{ Full, Stopping, StaleTicket, NotExecuting, IdExhausted };
 
+    wake: std.Io.Event = .unset,
     mutex: std.Io.Mutex = .init,
     slots: [capacity]Slot = @splat(.{}),
     next_id: u64 = 1,
@@ -46,6 +47,7 @@ pub const Mailbox = struct {
                 .request = request,
             };
             self.next_id += 1;
+            self.wake.set(io);
             return .{ .slot = index, .id = slot.id };
         }
         return error.Full;
@@ -121,6 +123,7 @@ pub const Mailbox = struct {
         self.mutex.lockUncancelable(io);
         defer self.mutex.unlock(io);
         self.stopping = true;
+        self.wake.set(io);
         for (&self.slots) |*slot| {
             switch (slot.state) {
                 .queued => {
@@ -130,6 +133,24 @@ pub const Mailbox = struct {
                 else => {},
             }
         }
+    }
+
+    /// Only the storage owner waits. Reset and inspect under the submission mutex so
+    /// an arrival between the inspection and futex wait cannot lose its notification.
+    pub fn wait(self: *Self, io: std.Io, milliseconds: u64) std.Io.Cancelable!void {
+        self.mutex.lockUncancelable(io);
+        self.wake.reset();
+        var queued = false;
+        for (self.slots) |slot| queued = queued or slot.state == .queued;
+        self.mutex.unlock(io);
+        if (queued) return;
+        self.wake.waitTimeout(io, .{ .duration = .{
+            .clock = .awake,
+            .raw = .fromMilliseconds(@intCast(milliseconds)),
+        } }) catch |err| switch (err) {
+            error.Timeout => {},
+            error.Canceled => return error.Canceled,
+        };
     }
 
     fn lookup(self: *Self, ticket: Ticket) Error!*Slot {
