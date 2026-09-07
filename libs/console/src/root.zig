@@ -15,6 +15,8 @@ pub const Password = @import("password.zig").Password;
 test {
     _ = @import("password.zig");
     _ = @import("stats.zig");
+    _ = @import("geoip.zig");
+    _ = @import("geoip_generation.zig");
 }
 
 pub const App = @import("app.zig").App;
