@@ -226,6 +226,7 @@ pub const App = struct {
                 if (status != .setup_required) return error.StorageUnavailable;
                 return http.json(context, .{ .setup_required = status.setup_required }, &.{});
             },
+            .events => return @import("event_routes.zig").query(self, context),
             .login => return auth.login(self, context),
             .logout => return auth.logout(self, context),
             .password => return auth.password(self, context, identity.?),

@@ -25,6 +25,7 @@ pub fn tick(owner: *Persistent) void {
 pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
     if (!owner.console_initialized) try @import("console_migrations.zig").run(owner);
     return switch (request) {
+        .events_query => |input| @import("console_store_events.zig").query(owner, input),
         .totp_read => |user| @import("console_store_totp.zig").read(owner, user),
         .totp_begin => |input| @import("console_store_totp.zig").begin(owner, input),
         .totp_confirm => |input| @import("console_store_totp.zig").confirm(owner, input),

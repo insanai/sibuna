@@ -548,3 +548,68 @@ test "password rotation rolls back revocation on failed replacement and checks r
     defer staging.deinit();
     try t.expectEqual(@as(usize, 0), staging.rows.len);
 }
+
+test "incident pages bound bytes, paginate tied timestamps and redact historical queries" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var buffer: [160]u8 = undefined;
+    const fx = try geoFixture(try std.fmt.bufPrint(
+        &buffer,
+        ".zig-cache/tmp/{s}/event-pages",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try insertEvents(fx.owner);
+    var input: p.events.Query = .{ .session_digest = @splat(1), .now = 250 };
+    var seen: [31]bool = @splat(false);
+    var count: usize = 0;
+    while (true) {
+        const result = try fx.run(.{ .events_query = input });
+        try t.expect(result == .page);
+        try t.expect(result.page.len <= p.max_message);
+        try t.expect(std.mem.indexOf(u8, result.page.slice(), "secret-marker") == null);
+        const parsed = try std.json.parseFromSlice(
+            std.json.Value,
+            t.allocator,
+            result.page.slice(),
+            .{},
+        );
+        defer parsed.deinit();
+        const rows = parsed.value.object.get("rows").?.array.items;
+        try t.expect(rows.len != 0 and rows.len <= input.limit);
+        for (rows) |row| {
+            const id = try std.fmt.parseInt(usize, row.object.get("id").?.string, 10);
+            try t.expect(id > 0 and id < seen.len and !seen[id]);
+            seen[id] = true;
+            count += 1;
+            try t.expect(row.object.get("query_redacted").?.bool);
+            try t.expect(row.object.get("evidence_version").? == .null);
+        }
+        const next = parsed.value.object.get("next").?;
+        if (next == .null) break;
+        input.before = .{
+            .time = @intCast(next.object.get("time").?.integer),
+            .id = try std.fmt.parseInt(u64, next.object.get("id").?.string, 10),
+        };
+    }
+    try t.expectEqual(@as(usize, 30), count);
+    input.before = null;
+    input.category = try p.Bytes(32).init("attack' OR 1=1 --");
+    const empty = try fx.run(.{ .events_query = input });
+    try t.expectEqualStrings("{\"rows\":[],\"next\":null}", empty.page.slice());
+    _ = try fx.run(.{ .logout = .{ .digest = @splat(1), .now = 251 } });
+    try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .events_query = input })).failed);
+}
+
+fn insertEvents(owner: *Persistent) !void {
+    for (1..31) |id| {
+        _ = try db.exec(
+            owner.db,
+            t.allocator,
+            "INSERT INTO security_incidents(id,node_id,client_ip,user_agent,method,path," ++
+                "violation_category,offending_payload,recorded_at) VALUES(?,1,'8.8.8.8'," ++
+                "'<script>','GET','/attack?token=secret-marker','attack','secret-marker',?)",
+            &.{ .{ .integer = @intCast(id) }, .{ .integer = @intCast(200 + id % 2) } },
+        );
+    }
+}

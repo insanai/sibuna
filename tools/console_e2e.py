@@ -147,6 +147,8 @@ def check(binary):
                 stop(proc)
     import console_bootstrap_test
     console_bootstrap_test.check(binary, sys.modules[__name__])
+    import console_events_test
+    console_events_test.check(binary, sys.modules[__name__])
     import console_shutdown_test
     console_shutdown_test.check(binary, sys.modules[__name__])
     import console_totp_test
