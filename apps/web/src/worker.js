@@ -187,11 +187,12 @@ async function solveHashcashWasm(challenge, bits, report) {
     const encoded = encoder.encode(challenge);
     new Uint8Array(ex.memory.buffer).set(encoded, ptr);
     const maxSteps = 20000;
-    const exhausted = 18446744073709551615n;
     let nonce = 0n;
     for (;;) {
-        const found = ex.sibuna_solve_step(ptr, encoded.length, bits, nonce, maxSteps);
-        if (found !== exhausted) return found.toString();
+        // WebAssembly i64 results arrive as signed BigInts, so the u64
+        // "exhausted" sentinel (all ones) reads back as -1n.
+        const found = BigInt.asUintN(64, ex.sibuna_solve_step(ptr, encoded.length, bits, nonce, maxSteps));
+        if (found !== 18446744073709551615n) return found.toString();
         nonce += BigInt(maxSteps);
         report(Number(nonce));
     }
