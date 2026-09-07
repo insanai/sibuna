@@ -185,6 +185,7 @@ fn printHelp() void {
         \\  --mode, -m <mode>            reverse_proxy | forward_auth (default: reverse_proxy)
         \\  --workers, -w <n>            Accept threads (default: one per CPU)
         \\  --trust-forwarded            Honour X-Forwarded-For / X-Real-IP from the peer
+        \\  --idle-timeout <s>           Socket idle timeout in seconds (default: 15)
         \\
         \\Proof of work and sessions:
         \\  --algorithm, -a <alg>        posw | hashcash (default: posw)

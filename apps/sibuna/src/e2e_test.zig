@@ -72,6 +72,7 @@ fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
     cfg.workers = 1;
     cfg.rate_limit = 8;
     cfg.rate_window_seconds = 10;
+    cfg.idle_timeout_seconds = 1;
     cfg.ban_seconds = 60;
     f.engine.initInPlace(cfg.default_difficulty);
     f.engine.waf_enabled = cfg.waf;
@@ -87,6 +88,7 @@ fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
         .{ &f.listener, io, &f.state },
     ) catch unreachable;
     t.detach();
+    server.startReaper(io, &f.state);
 }
 
 var origin_listener: Io.net.Server = undefined;
@@ -512,6 +514,22 @@ test "assets are served with caching and the wasm module is the embedded solver"
     try std.testing.expectEqual(server.wasm_bytes.len, resp.body().len);
     try get(p, "/__sibuna/worker.js", "203.0.113.50", browser_ua, "", resp);
     try std.testing.expect(resp.contains("solvePoswJs"));
+}
+
+test "an idle connection is closed after the socket timeout" {
+    boot_once.call();
+    const addr = try Io.net.IpAddress.parse("127.0.0.1", proxy_fixture.port);
+    const stream = try addr.connect(io, .{ .mode = .stream });
+    defer stream.close(io);
+    const started = Io.Clock.awake.now(io);
+    var rbuf: [256]u8 = undefined;
+    var reader = stream.reader(io, &rbuf);
+    var scratch: [64]u8 = undefined;
+    const n = reader.interface.readSliceShort(&scratch) catch 0;
+    const elapsed = started.durationTo(Io.Clock.awake.now(io)).nanoseconds;
+    const elapsed_ms = @divTrunc(elapsed, 1_000_000);
+    try std.testing.expectEqual(@as(usize, 0), n);
+    try std.testing.expect(elapsed_ms >= 900 and elapsed_ms < 5000);
 }
 
 test {

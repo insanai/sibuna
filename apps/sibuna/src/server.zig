@@ -85,6 +85,7 @@ pub const AppState = struct {
     spent: store.ChallengeStore = .{},
     rate_limiter: store.RateLimiter = store.RateLimiter.init(),
     bans: store.BanList = .{},
+    idle: IdleTable = .{},
     coordinator: challenge.Coordinator,
     metrics: Metrics = .{},
     hooks: Hooks = .{},
@@ -135,6 +136,7 @@ pub const AppState = struct {
 };
 
 pub fn runServer(server: *Io.net.Server, io: Io, state: *AppState) void {
+    startReaper(io, state);
     const cpu_count = std.Thread.getCpuCount() catch 1;
     const wanted: usize = if (state.config.workers == 0) cpu_count else state.config.workers;
     const extra = @min(wanted -| 1, 63);
@@ -185,8 +187,95 @@ fn formatIpv6(buf: *[48]u8, bytes: *const [16]u8) []const u8 {
     return w.buffered();
 }
 
+/// Registry of open connections for the idle reaper. Each slot pairs a
+/// socket with its last-activity time under a tiny spinlock; the reaper
+/// shuts a stale socket down while holding that lock, and a connection
+/// unregisters under the same lock before it closes, so a reused
+/// descriptor can never be shut down by mistake.
+pub const IdleTable = struct {
+    pub const capacity = 8192;
+
+    const Slot = struct {
+        lock: store.rate_limiter.SpinLock = .{},
+        active: bool = false,
+        stream: Io.net.Stream = undefined,
+        last_active_ms: u64 = 0,
+    };
+
+    slots: [capacity]Slot = [_]Slot{.{}} ** capacity,
+    cursor: std.atomic.Value(u32) = std.atomic.Value(u32).init(0),
+
+    fn register(self: *IdleTable, stream: Io.net.Stream, now_ms: u64) ?u32 {
+        const start = self.cursor.fetchAdd(1, .monotonic) % capacity;
+        var probe: u32 = 0;
+        while (probe < capacity) : (probe += 1) {
+            const idx = (start + probe) % capacity;
+            const slot = &self.slots[idx];
+            slot.lock.lock();
+            defer slot.lock.unlock();
+            if (!slot.active) {
+                slot.* = .{ .active = true, .stream = stream, .last_active_ms = now_ms };
+                return idx;
+            }
+        }
+        return null;
+    }
+
+    fn touch(self: *IdleTable, idx: u32, now_ms: u64) void {
+        const slot = &self.slots[idx];
+        slot.lock.lock();
+        defer slot.lock.unlock();
+        slot.last_active_ms = now_ms;
+    }
+
+    fn unregister(self: *IdleTable, idx: u32) void {
+        const slot = &self.slots[idx];
+        slot.lock.lock();
+        defer slot.lock.unlock();
+        slot.active = false;
+    }
+
+    /// Shuts down every connection idle longer than `timeout_ms`; the
+    /// blocked worker then sees end-of-stream and releases the thread.
+    pub fn reap(self: *IdleTable, io: Io, now_ms: u64, timeout_ms: u64) u32 {
+        var reaped: u32 = 0;
+        for (&self.slots) |*slot| {
+            slot.lock.lock();
+            defer slot.lock.unlock();
+            if (slot.active and now_ms > slot.last_active_ms + timeout_ms) {
+                slot.stream.shutdown(io, .both) catch {};
+                slot.active = false;
+                reaped += 1;
+            }
+        }
+        return reaped;
+    }
+};
+
+fn nowMs(io: Io) u64 {
+    return @intCast(@max(0, @divTrunc(Io.Clock.awake.now(io).nanoseconds, std.time.ns_per_ms)));
+}
+
+fn reaperLoop(io: Io, state: *AppState) void {
+    const timeout_ms = @as(u64, state.config.idle_timeout_seconds) * 1000;
+    while (true) {
+        const pause = Io.Duration.fromMilliseconds(@intCast(@max(200, timeout_ms / 4)));
+        Io.sleep(io, pause, .awake) catch return;
+        _ = state.idle.reap(io, nowMs(io), timeout_ms);
+    }
+}
+
+/// Starts the idle reaper when a timeout is configured.
+pub fn startReaper(io: Io, state: *AppState) void {
+    if (state.config.idle_timeout_seconds == 0) return;
+    const t = std.Thread.spawn(.{}, reaperLoop, .{ io, state }) catch return;
+    t.detach();
+}
+
 pub fn handleConnection(stream: Io.net.Stream, io: Io, state: *AppState) void {
     defer stream.close(io);
+    const idle_slot = state.idle.register(stream, nowMs(io));
+    defer if (idle_slot) |idx| state.idle.unregister(idx);
     var conn_buf: [max_request_bytes]u8 = undefined;
     var reader = stream.reader(io, &conn_buf);
     var writer_buf: [16 * 1024]u8 = undefined;
@@ -203,6 +292,7 @@ pub fn handleConnection(stream: Io.net.Stream, io: Io, state: *AppState) void {
     while (served < max_requests_per_connection) : (served += 1) {
         const keep = serveOne(&conn) catch break;
         if (!keep) break;
+        if (idle_slot) |idx| state.idle.touch(idx, nowMs(io));
     }
 }
 

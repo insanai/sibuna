@@ -86,6 +86,9 @@ pub const Config = struct {
     trust_forwarded: ?bool = null,
     /// Accept worker threads; zero means one per CPU.
     workers: u16 = 0,
+    /// Socket read/write timeout; bounds how long an idle or trickling
+    /// connection can hold a worker thread.
+    idle_timeout_seconds: u32 = 15,
     rate_limit: u32 = 100,
     rate_window_seconds: u64 = 10,
     ban_seconds: u64 = 3600,
@@ -180,6 +183,8 @@ pub const Config = struct {
             cfg.policy_file = v;
         } else if (eqlAny(arg, "--workers", "-w")) {
             cfg.workers = std.fmt.parseInt(u16, v, 10) catch cfg.workers;
+        } else if (eqlAny(arg, "--idle-timeout", "--idle-timeout")) {
+            cfg.idle_timeout_seconds = std.fmt.parseInt(u32, v, 10) catch cfg.idle_timeout_seconds;
         } else if (eqlAny(arg, "--rate-limit", "--rate-limit")) {
             cfg.rate_limit = std.fmt.parseInt(u32, v, 10) catch cfg.rate_limit;
         } else if (eqlAny(arg, "--rate-window", "--rate-window")) {
@@ -242,6 +247,7 @@ test "config defaults and arg parsing" {
         "--token-scheme",  "ed25519",
         "--workers",       "3",
         "--rate-limit",    "20",
+        "--idle-timeout",  "7",
         "--rate-window",   "5",
         "--no-waf",        "--secret-file",
         "/run/secret",     "--data-dir",
@@ -261,6 +267,7 @@ test "config defaults and arg parsing" {
     try std.testing.expectEqual(TokenScheme.ed25519, parsed.token_scheme);
     try std.testing.expectEqual(@as(u16, 3), parsed.workers);
     try std.testing.expectEqual(@as(u32, 20), parsed.rate_limit);
+    try std.testing.expectEqual(@as(u32, 7), parsed.idle_timeout_seconds);
     try std.testing.expectEqual(@as(u64, 5), parsed.rate_window_seconds);
     try std.testing.expect(!parsed.waf);
     try std.testing.expectEqualStrings("/run/secret", parsed.secret_file.?);
