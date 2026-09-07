@@ -25,6 +25,10 @@ pub const max_head_bytes = 16 * 1024;
 pub const max_requests_per_connection = 256;
 
 pub const Metrics = struct {
+    incidents_persisted: std.atomic.Value(u64) = .init(0),
+    incidents_dropped: std.atomic.Value(u64) = .init(0),
+    incident_write_failures: std.atomic.Value(u64) = .init(0),
+    incident_batches: std.atomic.Value(u64) = .init(0),
     requests: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
     allowed: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
     denied: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
@@ -104,6 +108,7 @@ pub const AppState = struct {
             .difficulty = cfg.default_difficulty,
             .posw_challenges = cfg.posw_challenges,
         }, @intCast(cfg.challenge_ttl_seconds), cfg.token_ttl_seconds);
+        if (cfg.cluster_node != 0) self.coordinator.bindNode(cfg.cluster_node);
         self.coordinator.token_scheme = switch (cfg.token_scheme) {
             .mac => .mac,
             .ed25519 => .ed25519,
@@ -115,22 +120,22 @@ pub const AppState = struct {
     /// readers between our load and our increment.
     pub fn acquireEngine(self: *AppState) *EngineSlot {
         while (true) {
-            const slot = self.slot.load(.acquire);
-            _ = slot.readers.fetchAdd(1, .acq_rel);
-            if (self.slot.load(.acquire) == slot) return slot;
-            _ = slot.readers.fetchSub(1, .acq_rel);
+            const slot = self.slot.load(.seq_cst);
+            _ = slot.readers.fetchAdd(1, .seq_cst);
+            if (self.slot.load(.seq_cst) == slot) return slot;
+            _ = slot.readers.fetchSub(1, .seq_cst);
         }
     }
 
     pub fn releaseEngine(slot: *EngineSlot) void {
-        _ = slot.readers.fetchSub(1, .acq_rel);
+        _ = slot.readers.fetchSub(1, .seq_cst);
     }
 
     /// Publishes `fresh` and returns the previous slot once no request is
     /// still reading it, so the caller may rebuild into it safely.
     pub fn publishEngine(self: *AppState, fresh: *EngineSlot) *EngineSlot {
-        const old = self.slot.swap(fresh, .acq_rel);
-        while (old.readers.load(.acquire) != 0) std.atomic.spinLoopHint();
+        const old = self.slot.swap(fresh, .seq_cst);
+        while (old.readers.load(.seq_cst) != 0) std.atomic.spinLoopHint();
         return old;
     }
 };
@@ -336,7 +341,10 @@ fn serveOne(c: *Connection) !bool {
     const declared = req.contentLength() orelse 0;
     const fits = @min(declared, max_request_bytes - head_len);
     if (fits > 0) {
-        c.reader.fill(head_len + fits) catch {};
+        c.reader.fill(head_len + fits) catch {
+            try net.response.write400(c.writer, "Truncated request body");
+            return false;
+        };
     }
     const buffered = c.reader.buffered();
     const body_end = @min(buffered.len, head_len + fits);
@@ -368,7 +376,7 @@ const RequestContext = struct {
             .user_agent = req.getHeader("user-agent") orelse "",
             .now = now_ms / 1000,
             .now_ms = now_ms,
-            .keep_alive = req.wantsKeepAlive(),
+            .keep_alive = req.wantsKeepAlive() and declared_body <= req.body.len,
         };
     }
 
@@ -435,11 +443,6 @@ fn dispatch(ctx: *RequestContext) !bool {
         );
         return ctx.keep_alive;
     }
-    if (ctx.req.getCookie(st.config.cookie_name)) |cookie| {
-        if (st.coordinator.verifyCookie(cookie, ctx.client_ip, ctx.user_agent, ctx.now)) |token| {
-            return forward(ctx, "PASS", "session", token.rule_hash);
-        } else |_| {}
-    }
     return applyPolicy(ctx);
 }
 
@@ -453,13 +456,15 @@ fn policyHeaders(
     return out[0..req.header_count];
 }
 
-fn applyPolicy(ctx: *RequestContext) !bool {
+/// Copy the only borrowed decision field needed by the response before
+/// releasing the snapshot, so a slow origin cannot stall policy publication.
+fn requestDecision(ctx: *RequestContext, name: *[policy.engine.MAX_RULE_NAME]u8) policy.Decision {
     const st = ctx.state();
     var hdr_buf: [net.MAX_HEADERS]policy.Header = undefined;
     const headers = policyHeaders(ctx.req, &hdr_buf);
     const slot = st.acquireEngine();
     defer AppState.releaseEngine(slot);
-    const decision = slot.engine.evaluateRequest(.{
+    var decision = slot.engine.evaluateRequest(.{
         .path = ctx.req.path,
         .query = ctx.req.query,
         .client_ip = ctx.client_ip,
@@ -467,6 +472,24 @@ fn applyPolicy(ctx: *RequestContext) !bool {
         .headers = headers,
         .body = ctx.req.body,
     });
+    @memcpy(name[0..decision.rule_name.len], decision.rule_name);
+    decision.rule_name = name[0..decision.rule_name.len];
+    decision.algorithm = null; // Only challenge issuance uses the algorithm override.
+    return decision;
+}
+
+fn applyPolicy(ctx: *RequestContext) !bool {
+    const st = ctx.state();
+    var name: [policy.engine.MAX_RULE_NAME]u8 = undefined;
+    const decision = requestDecision(ctx, &name);
+    // A session clears admission challenges, never WAF or explicit denials.
+    if (decision.action != .deny) {
+        if (ctx.req.getCookie(st.config.cookie_name)) |cookie| {
+            if (st.coordinator.verifyCookie(cookie, ctx.client_ip, ctx.user_agent, ctx.now)) |t| {
+                return forward(ctx, "PASS", "session", t.rule_hash);
+            } else |_| {}
+        }
+    }
     switch (decision.action) {
         .allow => return forward(
             ctx,

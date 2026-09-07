@@ -314,6 +314,13 @@ test "hashcash flow: challenge, solve, verify, cookie, proxied, replay and bindi
         !resp.contains("Cookie: __sibuna_token") or resp.contains("Cookie: __sibuna_token"),
     );
 
+    try get(p, "/search?q=%3Cscript%3Ealert(1)%3C/script%3E", ip, browser_ua, cookie_hdr, resp);
+    try std.testing.expectEqual(@as(u16, 403), resp.status());
+    var deny_hdr: [600]u8 = undefined;
+    const denied = try std.fmt.bufPrint(&deny_hdr, "{s}CF-Worker: worker\r\n", .{cookie_hdr});
+    try get(p, "/blog/post-1", ip, browser_ua, denied, resp);
+    try std.testing.expectEqual(@as(u16, 403), resp.status());
+
     // Replay of the same solution is a double spend.
     try post(p, "/__sibuna/verify", ip, browser_ua, body, resp);
     try std.testing.expectEqual(@as(u16, 400), resp.status());

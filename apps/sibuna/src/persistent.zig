@@ -2,7 +2,7 @@
 //!
 //! Durable, optionally replicated state behind the in-memory hot path:
 //! dynamic policies, IP reputation, and incident forensics with full-text
-//! and vector search. Nothing here runs on a request thread. Workers hand
+//! and vector search. SQL and maintenance run on a storage thread. Workers hand
 //! incidents to a lock-free ring and pin an immutable `EngineSlot`; this
 //! module's single storage thread drains the ring into batched SQL
 //! transactions, polls the policy tables for changes, rebuilds the inactive
@@ -124,12 +124,16 @@ pub const Persistent = struct {
     policy_text: ?[]const u8,
     db: Db,
     queue: IncidentQueue,
+    pending: [incident_batch]IncidentRecord = undefined,
+    pending_len: usize = 0,
+    pending_sql: ?[]u8 = null,
     /// Two engine buffers: one live, one being rebuilt. `owned_slot` is the
     /// one this layer allocated; the other belongs to the caller.
     spare: *server.EngineSlot,
     owned_slot: *server.EngineSlot,
     arenas: [2]std.heap.ArenaAllocator,
     version: u64 = 0,
+    reputation_expires: u64 = std.math.maxInt(u64),
     next_incident: u64 = 1,
     node_id: u32 = 1,
     thread: ?std.Thread = null,
@@ -157,6 +161,8 @@ pub const Persistent = struct {
         state: *server.AppState,
         policy_text: ?[]const u8,
     ) !*Persistent {
+        // Incident IDs occupy SQLite's positive signed 64-bit domain.
+        if (cfg.cluster_node >= 0x80_0000) return error.IncidentNodeIdTooLarge;
         const self = try gpa.create(Persistent);
         errdefer gpa.destroy(self);
         const spare = try gpa.create(server.EngineSlot);
@@ -179,9 +185,11 @@ pub const Persistent = struct {
         };
         self.db = try openDb(self);
         errdefer self.db.close();
-        try self.migrate();
-        try self.loadIncidentCounter();
-        try self.rebuild();
+        errdefer {
+            self.arenas[0].deinit();
+            self.arenas[1].deinit();
+        }
+        try self.initializeStore();
         state.hooks = .{ .context = self, .record_incident = recordIncidentHook };
         return self;
     }
@@ -190,7 +198,17 @@ pub const Persistent = struct {
         self.stopping.store(true, .release);
         if (self.thread) |t| t.join();
         self.state.hooks = .{};
-        self.drain() catch {};
+        // Producers have stopped. Flush every bounded batch, then account
+        // records whose commit could not be confirmed before shutdown.
+        while (true) {
+            self.drain() catch |err| {
+                std.log.err("storage shutdown could not confirm pending incidents: {t}", .{err});
+                break;
+            };
+            self.fillPending();
+            if (self.pending_len == 0) break;
+        }
+        if (self.pending_sql) |sql| self.gpa.free(sql);
         self.db.close();
         // Make sure the caller's slot is live again before the owned one
         // is freed, so no worker can still be pinned on freed memory.
@@ -274,8 +292,49 @@ pub const Persistent = struct {
         return buf[0..trimmed.len];
     }
 
+    fn initializeStore(self: *Persistent) !void {
+        var attempt: u32 = 0;
+        while (true) : (attempt += 1) {
+            self.initializeAttempt() catch |err| {
+                // A listening cluster member may not yet have a stable leader.
+                // Only idempotent startup work is retried, never incident writes.
+                if (self.cfg.cluster_node == 0 or attempt >= 29) return err;
+                std.debug.print("storage: startup retry {d}: {t}\n", .{ attempt + 1, err });
+                try Io.sleep(self.io, Io.Duration.fromMilliseconds(100), .awake);
+                continue;
+            };
+            return;
+        }
+    }
+
+    fn initializeAttempt(self: *Persistent) !void {
+        try self.migrate();
+        try self.loadIncidentCounter();
+        const stamp = try self.policyVersion();
+        try self.rebuild();
+        self.version = stamp;
+    }
+
     fn migrate(self: *Persistent) !void {
-        for (schema) |statement| try self.db.exec(self.gpa, statement);
+        // One transaction exposes a complete schema and avoids one
+        // consensus round trip per DDL statement on every starting node.
+        var sql = Io.Writer.Allocating.init(self.gpa);
+        defer sql.deinit();
+        const w = &sql.writer;
+        for (schema) |statement| try w.print("{s};", .{statement});
+        try w.writeAll(
+            "INSERT OR IGNORE INTO sibuna_meta(key,value) VALUES ('policy_version','0');",
+        );
+        // Triggers also cover direct SQL writes and updates within one second.
+        inline for (.{ "policies", "ip_reputation" }) |table| {
+            inline for (.{ "INSERT", "UPDATE", "DELETE" }) |event| {
+                try w.writeAll("CREATE TRIGGER IF NOT EXISTS version_" ++
+                    table ++ "_" ++ event ++ " AFTER " ++ event ++ " ON " ++ table ++
+                    " BEGIN UPDATE sibuna_meta SET value = CAST(value AS INTEGER) + 1 " ++
+                    "WHERE key = 'policy_version'; END;");
+            }
+        }
+        try self.db.exec(self.gpa, sql.written());
     }
 
     /// Incident ids are `node_id << 40 | sequence`, unique across a
@@ -309,56 +368,90 @@ pub const Persistent = struct {
     /// One maintenance round: persist queued incidents, then reload the
     /// policy tables if anything changed.
     pub fn tick(self: *Persistent) !void {
-        try self.drain();
-        if (try self.policiesChanged()) try self.rebuild();
+        // A stalled incident commit must not starve policy/reputation reads.
+        self.drain() catch |err| {
+            _ = self.state.metrics.incident_write_failures.fetchAdd(1, .monotonic);
+            std.log.warn("storage retains pending batch after: {t}", .{err});
+        };
+        const stamp = try self.policyVersion();
+        const now = self.nowSeconds();
+        if (stamp != self.version or now >= self.reputation_expires) {
+            try self.rebuild();
+            // A failed rebuild must be retried; never acknowledge it early.
+            self.version = stamp;
+        }
+    }
+
+    fn fillPending(self: *Persistent) void {
+        if (self.pending_len != 0) return;
+        while (self.pending_len < incident_batch) {
+            self.pending[self.pending_len] = self.queue.pop() orelse break;
+            self.pending_len += 1;
+        }
     }
 
     fn drain(self: *Persistent) !void {
-        var handled: usize = 0;
-        while (handled < incident_batch * 4) : (handled += 1) {
-            const rec = self.queue.pop() orelse return;
-            try self.insertIncident(&rec);
+        self.fillPending();
+        if (self.pending_len == 0) return;
+        if (self.pending_sql == null) {
+            var sql = Io.Writer.Allocating.init(self.gpa);
+            defer sql.deinit();
+            const w = &sql.writer;
+            if (self.next_incident + self.pending_len > 0x100_0000_0000)
+                return error.IncidentIdExhausted;
+            for (self.pending[0..self.pending_len], 0..) |*rec, index| {
+                try self.appendIncident(w, rec, self.next_incident + index);
+            }
+            // One receipt per issuer, in the same transaction as all indexes
+            // and reputation changes. An ambiguous reply can replay this exact
+            // SQL safely, even if the first attempt committed on another leader.
+            try w.print(
+                "INSERT INTO sibuna_meta(key,value) VALUES ('incident_cursor_{d}','{d}') " ++
+                    "ON CONFLICT(key) DO UPDATE SET value=MAX(CAST(value AS INTEGER)," ++
+                    "CAST(excluded.value AS INTEGER));",
+                .{ self.node_id, self.next_incident + self.pending_len },
+            );
+            self.pending_sql = try self.gpa.dupe(u8, sql.written());
         }
+        try self.db.exec(self.gpa, self.pending_sql.?);
+        _ = self.state.metrics.incidents_persisted.fetchAdd(self.pending_len, .monotonic);
+        _ = self.state.metrics.incident_batches.fetchAdd(1, .monotonic);
+        self.next_incident += self.pending_len;
+        self.pending_len = 0;
+        self.gpa.free(self.pending_sql.?);
+        self.pending_sql = null;
+    }
+
+    fn receiptGuard(self: *Persistent, w: *Io.Writer) !void {
+        try w.print(" WHERE COALESCE((SELECT CAST(value AS INTEGER) FROM sibuna_meta " ++
+            "WHERE key='incident_cursor_{d}'),0)<{d}", .{
+            self.node_id,
+            self.next_incident + self.pending_len,
+        });
     }
 
     fn recordIncidentHook(ctx: ?*anyopaque, incident: server.Incident) void {
         const self: *Persistent = @ptrCast(@alignCast(ctx orelse return));
-        _ = self.queue.push(IncidentRecord.from(incident));
+        if (!self.queue.push(IncidentRecord.from(incident))) {
+            _ = self.state.metrics.incidents_dropped.fetchAdd(1, .monotonic);
+        }
     }
 
-    fn nearestCampaign(self: *Persistent, embedding_hex: []const u8) !?u64 {
-        const sql = try std.fmt.allocPrint(
-            self.gpa,
-            "SELECT s.campaign_id, v.distance FROM incidents_vec v " ++
-                "JOIN security_incidents s ON s.id = v.item_id " ++
-                "WHERE v.embedding MATCH X'{s}' AND k = 1",
-            .{embedding_hex},
-        );
-        defer self.gpa.free(sql);
-        var result = try self.db.query(self.gpa, sql);
-        defer result.deinit();
-        if (result.rows.len == 0) return null;
-        const campaign = result.rows[0][0] orelse return null;
-        const distance = std.fmt.parseFloat(f32, result.rows[0][1] orelse "1") catch 1.0;
-        if (distance > campaign_distance) return null;
-        return std.fmt.parseInt(u64, campaign, 10) catch null;
-    }
-
-    fn insertIncident(self: *Persistent, rec: *const IncidentRecord) !void {
+    fn appendIncident(
+        self: *Persistent,
+        w: *Io.Writer,
+        rec: *const IncidentRecord,
+        sequence: u64,
+    ) !void {
         const payload = rec.payload[0..rec.payload_len];
         const vector = policy.embedding.embed(payload);
         const bytes = policy.embedding.toBytes(&vector);
         var hex_buf: [bytes.len * 2]u8 = undefined;
         const hex = std.fmt.bufPrint(&hex_buf, "{x}", .{&bytes}) catch unreachable;
-        const id = (@as(u64, self.node_id) << 40) | self.next_incident;
-        const campaign = (try self.nearestCampaign(hex)) orelse id;
-
-        var sql = Io.Writer.Allocating.init(self.gpa);
-        defer sql.deinit();
-        const w = &sql.writer;
+        const id = (@as(u64, self.node_id) << 40) | sequence;
         try w.print(
             "INSERT INTO security_incidents(id,node_id,client_ip,user_agent,method,path," ++
-                "violation_category,offending_payload,campaign_id,recorded_at) VALUES ({d},{d},",
+                "violation_category,offending_payload,campaign_id,recorded_at) SELECT {d},{d},",
             .{ id, self.node_id },
         );
         try quote(w, rec.ip[0..rec.ip_len]);
@@ -372,26 +465,40 @@ pub const Persistent = struct {
         try quote(w, rec.category[0..rec.category_len]);
         try w.writeAll(",");
         try quote(w, payload);
-        try w.print(",{d},{d}); ", .{ campaign, rec.now });
-        try w.print("INSERT INTO incidents_fts(rowid,path,offending_payload) VALUES ({d},", .{id});
+        try w.print(",COALESCE((SELECT CASE WHEN v.distance <= {d} THEN s.campaign_id " ++
+            "ELSE NULL END FROM incidents_vec v JOIN security_incidents s ON s.id=v.item_id " ++
+            "WHERE v.embedding MATCH X'{s}' AND k=1),{d}),{d}", .{
+            campaign_distance,
+            hex,
+            id,
+            rec.now,
+        });
+        try self.receiptGuard(w);
+        try w.writeAll("; ");
+        try w.print("INSERT INTO incidents_fts(rowid,path,offending_payload) SELECT {d},", .{id});
         try quote(w, rec.path[0..rec.path_len]);
         try w.writeAll(",");
         try quote(w, payload);
-        try w.print("); INSERT INTO incidents_vec(item_id,embedding,embedding_coarse) " ++
-            "VALUES ({d},X'{s}',vec_quantize_binary(X'{s}'))", .{ id, hex, hex });
+        try self.receiptGuard(w);
+        try w.print("; INSERT INTO incidents_vec(item_id,embedding,embedding_coarse) " ++
+            "SELECT {d},X'{s}',vec_quantize_binary(X'{s}')", .{ id, hex, hex });
+        try self.receiptGuard(w);
         if (std.mem.eql(u8, rec.category[0..rec.category_len], "honeypot")) {
             try w.writeAll("; ");
-            try reputationUpsert(
-                w,
-                rec.ip[0..rec.ip_len],
-                -100,
-                rec.now + self.cfg.ban_seconds,
-                "honeypot",
-                rec.now,
+            try w.writeAll("INSERT INTO ip_reputation(ip_or_cidr,reputation_score,banned_until," ++
+                "trigger_rule,hits,last_seen) SELECT ");
+            try quote(w, rec.ip[0..rec.ip_len]);
+            try w.print(
+                ",-100,{d},'honeypot',1,{d}",
+                .{ rec.now +| self.cfg.ban_seconds, rec.now },
             );
+            try self.receiptGuard(w);
+            try w.writeAll(" ON CONFLICT(ip_or_cidr) DO UPDATE SET hits=hits+1," ++
+                "reputation_score=-100," ++
+                "banned_until=MAX(COALESCE(banned_until,0),excluded.banned_until)," ++
+                "trigger_rule='honeypot',last_seen=MAX(last_seen,excluded.last_seen)");
         }
-        try self.db.exec(self.gpa, sql.written());
-        self.next_incident += 1;
+        try w.writeAll("; ");
     }
 
     fn reputationUpsert(
@@ -426,34 +533,35 @@ pub const Persistent = struct {
         try self.db.exec(self.gpa, sql.written());
     }
 
-    /// Change stamp over both dynamic tables; any insert, update, or delete
-    /// moves it.
-    fn policiesChanged(self: *Persistent) !bool {
-        const sql = "SELECT (SELECT COALESCE(MAX(updated_at),0) FROM policies) + " ++
-            "(SELECT COUNT(*) FROM policies) * 7 + " ++
-            "(SELECT COALESCE(MAX(last_seen),0) FROM ip_reputation) * 3 + " ++
-            "(SELECT COUNT(*) FROM ip_reputation) * 11";
-        var result = try self.db.query(self.gpa, sql);
+    fn nowSeconds(self: *const Persistent) u64 {
+        return @intCast(@max(
+            0,
+            @divTrunc(Io.Clock.real.now(self.io).nanoseconds, std.time.ns_per_s),
+        ));
+    }
+
+    fn policyVersion(self: *Persistent) !u64 {
+        var result = try self.db.query(
+            self.gpa,
+            "SELECT value FROM sibuna_meta WHERE key = 'policy_version'",
+        );
         defer result.deinit();
-        if (result.rows.len == 0) return false;
-        const text = result.rows[0][0] orelse return false;
-        const stamp = std.fmt.parseInt(u64, text, 10) catch return false;
-        if (stamp == self.version) return false;
-        self.version = stamp;
-        return true;
+        if (result.rows.len != 1) return error.MissingPolicyVersion;
+        return std.fmt.parseInt(u64, result.rows[0][0] orelse
+            return error.MissingPolicyVersion, 10);
     }
 
     /// Rebuilds the spare engine from file policy, database policies, and
     /// reputation, then publishes it. The previously live slot becomes the
     /// spare once its readers have drained.
     pub fn rebuild(self: *Persistent) !void {
-        const which: usize = if (self.spare == self.state.slot.load(.acquire)) 1 else 0;
+        const which: usize = if (self.spare == self.owned_slot) 1 else 0;
         _ = self.arenas[which].reset(.retain_capacity);
         const arena = self.arenas[which].allocator();
         const engine = self.spare.engine;
         engine.initInPlace(self.cfg.default_difficulty);
         engine.waf_enabled = self.cfg.waf;
-        if (self.policy_text) |text| engine.loadFromJsonInto(arena, text) catch {};
+        if (self.policy_text) |text| try engine.loadFromJsonInto(arena, text);
         try self.loadDbPolicies(engine, arena);
         try self.loadReputation(engine);
         self.spare = self.state.publishEngine(self.spare);
@@ -465,6 +573,10 @@ pub const Persistent = struct {
             "ORDER BY priority, name";
         var result = try self.db.query(self.gpa, sql);
         defer result.deinit();
+        // Dynamic rules precede file/default rules so generic admission
+        // rules cannot hide an operator's live denial.
+        const fallback_count = engine.rule_count;
+        engine.rule_count = 0;
         for (result.rows) |row| {
             const name = row[0] orelse continue;
             const action = policy.Action.parse(row[3] orelse continue) orelse continue;
@@ -476,8 +588,17 @@ pub const Persistent = struct {
             if (row[8]) |wt| r.weight = std.fmt.parseInt(i32, wt, 10) catch 0;
             if (row[6]) |h| try parseHeaderMatchers(arena, h, &r);
             if (row[7]) |c| parseCidrMatchers(c, &r);
-            engine.addRule(r) catch break;
+            if (engine.rule_count + fallback_count >= policy.engine.MAX_RULES)
+                return error.TooManyRules;
+            const index = engine.rule_count;
+            std.mem.copyBackwards(
+                policy.PolicyRule,
+                engine.rules[index + 1 .. index + 1 + fallback_count],
+                engine.rules[index .. index + fallback_count],
+            );
+            try engine.addRule(r);
         }
+        engine.rule_count += fallback_count;
     }
 
     fn parseHeaderMatchers(
@@ -517,7 +638,7 @@ pub const Persistent = struct {
         );
         const sql = try std.fmt.allocPrint(
             self.gpa,
-            "SELECT ip_or_cidr, reputation_score FROM ip_reputation " ++
+            "SELECT ip_or_cidr, reputation_score, banned_until FROM ip_reputation " ++
                 "WHERE (banned_until IS NULL OR banned_until > {d}) " ++
                 "AND (reputation_score <= -50 OR reputation_score >= 50)",
             .{now},
@@ -525,10 +646,17 @@ pub const Persistent = struct {
         defer self.gpa.free(sql);
         var result = try self.db.query(self.gpa, sql);
         defer result.deinit();
+        self.reputation_expires = std.math.maxInt(u64);
         for (result.rows) |row| {
+            if (row[2]) |expiry| {
+                self.reputation_expires = @min(
+                    self.reputation_expires,
+                    try std.fmt.parseInt(u64, expiry, 10),
+                );
+            }
             const cidr = row[0] orelse continue;
             const score = std.fmt.parseInt(i32, row[1] orelse continue, 10) catch continue;
-            engine.ip_trie.insertCidr(cidr, if (score < 0) .deny else .allow) catch continue;
+            try engine.ip_trie.insertCidr(cidr, if (score < 0) .deny else .allow);
         }
     }
 
@@ -650,6 +778,34 @@ test "persistent store: policy reload, reputation, forensics, campaigns" {
     // Release before the next rebuild: a publisher waits for readers to drain.
     server.AppState.releaseEngine(fresh);
 
+    // Repeated updates with identical timestamps must reload, and each
+    // slot must retain its own arena while the other slot is rebuilt.
+    for (0..4) |i| {
+        const action = if (i % 2 == 0) "DENY" else "ALLOW";
+        const sql = try std.fmt.allocPrint(
+            gpa,
+            "UPDATE policies SET action='{s}' WHERE id='p1'",
+            .{action},
+        );
+        defer gpa.free(sql);
+        try p.db.exec(gpa, sql);
+        try p.tick();
+        const current = fx.state.acquireEngine();
+        defer server.AppState.releaseEngine(current);
+        const verdict = current.engine.evaluateWithHeaders(
+            "/secret/x",
+            "10.1.2.3",
+            "Mozilla",
+            &hdrs,
+        );
+        try std.testing.expectEqual(policy.Action.parse(action).?, verdict.action);
+        try std.testing.expectEqualStrings("protect-secret", verdict.rule_name);
+        try std.testing.expectEqual(
+            policy.Action.allow,
+            current.engine.evaluate("/from-file", "9.9.9.9", "curl").action,
+        );
+    }
+
     // Incidents flow through the ring into FTS and vector tables.
     const hook = fx.state.hooks.record_incident.?;
     const ctx = fx.state.hooks.context;
@@ -700,4 +856,44 @@ test "persistent store: policy reload, reputation, forensics, campaigns" {
     defer rep.deinit();
     try std.testing.expectEqualStrings("-100", rep.rows[0][0].?);
     try std.testing.expectEqualStrings("honeypot", rep.rows[0][1].?);
+
+    // Hold a full batch across a real SQL failure. Policy reads still run.
+    try p.db.exec(gpa, "CREATE TRIGGER fail_incident BEFORE INSERT ON security_incidents " ++
+        "BEGIN SELECT RAISE(ABORT,'injected test failure'); END;");
+    const event: server.Incident = .{
+        .client_ip = "198.51.100.99",
+        .user_agent = "test",
+        .method = "GET",
+        .path = "/trap",
+        .category = "honeypot",
+        .payload = "repeat",
+        .now = 203,
+    };
+    for (0..40) |_| hook(ctx, event);
+    try p.tick();
+    try std.testing.expectEqual(@as(usize, 32), p.pending_len);
+    try std.testing.expect(p.pending_sql != null);
+    const fail_cnt = fx.state.metrics.incident_write_failures.load(.monotonic);
+    try std.testing.expectEqual(@as(u64, 1), fail_cnt);
+    try p.db.exec(gpa, "DROP TRIGGER fail_incident");
+    // Commit successfully but pretend the client lost its acknowledgement.
+    try p.db.exec(gpa, p.pending_sql.?);
+    try p.tick();
+    try p.tick();
+    var replayed = try p.db.query(gpa, "SELECT " ++
+        "(SELECT COUNT(*) FROM security_incidents)," ++
+        "(SELECT COUNT(*) FROM incidents_vec)," ++
+        "(SELECT COUNT(*) FROM incidents_fts WHERE incidents_fts MATCH 'repeat')," ++
+        "(SELECT hits FROM ip_reputation WHERE ip_or_cidr='198.51.100.99')");
+    defer replayed.deinit();
+    inline for (.{ "43", "43", "40", "40" }, 0..) |expected, i|
+        try std.testing.expectEqualStrings(expected, replayed.rows[0][i].?);
+    const p_cnt = fx.state.metrics.incidents_persisted.load(.monotonic);
+    try std.testing.expectEqual(@as(u64, 43), p_cnt);
+    try std.testing.expectEqual(@as(u64, 3), fx.state.metrics.incident_batches.load(.monotonic));
+    for (0..513) |_| hook(ctx, event);
+    try std.testing.expectEqual(@as(u64, 1), fx.state.metrics.incidents_dropped.load(.monotonic));
+    for (0..16) |_| try p.tick();
+    const p_cnt2 = fx.state.metrics.incidents_persisted.load(.monotonic);
+    try std.testing.expectEqual(@as(u64, 555), p_cnt2);
 }

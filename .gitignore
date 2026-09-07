@@ -4,3 +4,9 @@ zig-out/
 docs/build/
 *.log
 zig-pkg/
+__pycache__/
+# Local benchmark binaries, third-party downloads and visual review scratch.
+benchmarks/vendor/
+benchmarks/tmp/
+tmp/
+output/
