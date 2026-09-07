@@ -49,19 +49,38 @@ var boot_once = BootOnce{};
 fn originLoop(listener: *Io.net.Server) void {
     while (true) {
         const stream = listener.accept(io) catch return;
-        defer stream.close(io);
-        var buf: [16 * 1024]u8 = undefined;
-        var reader = stream.reader(io, &buf);
-        const head = reader.interface.peekGreedy(1) catch continue;
-        var wbuf: [16 * 1024]u8 = undefined;
-        var writer = stream.writer(io, &wbuf);
-        const end = std.mem.indexOf(u8, head, "\r\n\r\n") orelse head.len;
+        const t = std.Thread.spawn(.{}, originConnection, .{stream}) catch {
+            stream.close(io);
+            continue;
+        };
+        t.detach();
+    }
+}
+
+/// Serves one origin connection with keep-alive; `X-Origin-Seq` counts the
+/// requests seen on this socket so tests can observe pooled reuse.
+fn originConnection(stream: Io.net.Stream) void {
+    defer stream.close(io);
+    var buf: [16 * 1024]u8 = undefined;
+    var reader = stream.reader(io, &buf);
+    var wbuf: [16 * 1024]u8 = undefined;
+    var writer = stream.writer(io, &wbuf);
+    var seq: u32 = 0;
+    while (true) {
+        const end = blk: while (true) {
+            const buffered = reader.interface.buffered();
+            if (std.mem.indexOf(u8, buffered, "\r\n\r\n")) |idx| break :blk idx;
+            reader.interface.fill(buffered.len + 1) catch return;
+        };
+        const head = reader.interface.buffered()[0..end];
+        seq += 1;
         writer.interface.print(
             "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nX-Origin: stub\r\n" ++
-                "Content-Length: {d}\r\nConnection: close\r\n\r\nORIGIN|{s}",
-            .{ end + 7, head[0..end] },
-        ) catch continue;
-        writer.interface.flush() catch continue;
+                "X-Origin-Seq: {d}\r\nContent-Length: {d}\r\n\r\nORIGIN|{s}",
+            .{ seq, end + 7, head },
+        ) catch return;
+        writer.interface.flush() catch return;
+        reader.interface.toss(end + 4);
     }
 }
 
@@ -477,6 +496,13 @@ test "proxied responses keep the client connection open for the next request" {
     try std.testing.expect(std.mem.indexOf(u8, t, "Connection: keep-alive") != null);
     try std.testing.expect(std.mem.indexOf(u8, t, "Connection: close") != null);
     try std.testing.expect(std.mem.indexOf(u8, t, "X-Origin: stub") != null);
+    // The second request reused the pooled origin socket: its sequence is
+    // exactly one more than the first response's.
+    const a = std.mem.indexOf(u8, t, "X-Origin-Seq: ").?;
+    const b = std.mem.indexOfPos(u8, t, a + 1, "X-Origin-Seq: ").?;
+    const seq_a = try std.fmt.parseInt(u32, std.mem.sliceTo(t[a + 14 ..], '\r'), 10);
+    const seq_b = try std.fmt.parseInt(u32, std.mem.sliceTo(t[b + 14 ..], '\r'), 10);
+    try std.testing.expectEqual(seq_a + 1, seq_b);
 }
 
 test "connections beyond the configured limit are answered 503 and closed" {

@@ -93,6 +93,8 @@ pub const AppState = struct {
     idle: IdleTable = .{},
     /// Connections currently served on their own threads.
     connections: std.atomic.Value(u32) = .init(0),
+    /// Idle keep-alive connections to the origin.
+    upstream: net.proxy.Pool = .{},
     coordinator: challenge.Coordinator,
     metrics: Metrics = .{},
     hooks: Hooks = .{},
@@ -629,6 +631,7 @@ fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule
     const port = cfg.upstream_port;
     const keep = ctx.keep_alive;
     const relay = net.proxy.streamProxy(
+        &st.upstream,
         c.writer,
         c.reader,
         c.io,
