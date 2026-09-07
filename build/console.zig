@@ -29,6 +29,7 @@ pub fn add(
     console.addImport("serve", serve);
     addUi(b, protocol, console);
     addAssets(b);
+    addGeoCheck(b, console);
     const step = b.step("console-test", "Test console contracts and bounded ownership");
     step.dependOn(&b.top_level_steps.get("console-render-test").?.step);
     step.dependOn(&b.top_level_steps.get("console-assets-check").?.step);
@@ -100,4 +101,19 @@ fn addAssets(b: *std.Build) void {
     const check = b.step("console-assets-check", "Verify committed console assets without npm");
     const verify = b.addSystemCommand(&.{ "python3", "tools/console_assets.py", "check" });
     check.dependOn(&verify.step);
+}
+
+fn addGeoCheck(b: *std.Build, console: *std.Build.Module) void {
+    const executable = b.addExecutable(.{
+        .name = "console-geoip-check",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tools/console_geoip_check.zig"),
+            .target = b.graph.host,
+            .optimize = .ReleaseSafe,
+            .imports = &.{.{ .name = "console", .module = console }},
+        }),
+    });
+    const run = b.addRunArtifact(executable);
+    if (b.args) |args| run.addArgs(args);
+    b.step("console-geoip-check", "Validate a downloaded DB-IP country gzip").dependOn(&run.step);
 }

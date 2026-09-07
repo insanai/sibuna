@@ -10,6 +10,7 @@ test {
     _ = @import("mailbox.zig");
 }
 
+pub const geoip_gzip = @import("geoip_gzip.zig");
 pub const geoip = @import("geoip.zig");
 pub const schema = @import("schema.zig");
 pub const Password = @import("password.zig").Password;
@@ -18,6 +19,7 @@ test {
     _ = @import("stats.zig");
     _ = @import("geoip.zig");
     _ = @import("geoip_generation.zig");
+    _ = @import("geoip_gzip.zig");
 }
 
 pub const App = @import("app.zig").App;

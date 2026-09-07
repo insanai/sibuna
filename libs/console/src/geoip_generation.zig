@@ -7,6 +7,7 @@ pub const max_ranges = 1024 * 1024;
 pub const Generation = struct {
     allocator: std.mem.Allocator,
     ranges: []const geo.Range,
+    allocation: []geo.Range,
     digest: [32]u8,
 
     pub fn fromCsv(allocator: std.mem.Allocator, csv: []const u8) !Generation {
@@ -32,18 +33,20 @@ pub const Generation = struct {
         return .{
             .allocator = allocator,
             .ranges = try builder.finish(),
+            .allocation = storage,
             .digest = digest,
         };
     }
 
     pub fn deinit(self: *Generation) void {
-        self.allocator.free(self.ranges);
+        self.allocator.free(self.allocation);
         self.* = undefined;
     }
 };
 
 pub const Registry = struct {
     mutex: std.Io.Mutex = .init,
+    loaded: std.atomic.Value(bool) = .init(false),
     importing: std.atomic.Value(bool) = .init(false),
     active: ?Generation = null,
     revision: u64 = 0,
@@ -73,6 +76,7 @@ pub const Registry = struct {
         var old = self.active;
         self.active = staged;
         self.revision += 1;
+        self.loaded.store(true, .release);
         if (old) |*generation| generation.deinit();
     }
 

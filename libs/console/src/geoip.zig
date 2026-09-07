@@ -24,6 +24,7 @@ const countries =
 
 pub fn countryValid(code: []const u8) bool {
     if (code.len != 2) return false;
+    if (std.mem.eql(u8, code, "ZZ")) return true;
     var i: usize = 0;
     while (i < countries.len) : (i += 3) {
         if (std.mem.eql(u8, countries[i..][0..2], code)) return true;
@@ -70,13 +71,14 @@ pub fn parseRow(line: []const u8) Error!Range {
 pub const Builder = struct {
     storage: []Range,
     count: usize = 0,
+    rows: usize = 0,
     last_v4: ?[16]u8 = null,
     last_v6: ?[16]u8 = null,
 
     pub fn append(self: *Builder, line: []const u8) Error!void {
-        if (self.count == self.storage.len) return error.Capacity;
+        if (self.rows == self.storage.len) return error.Capacity;
         const range = try parseRow(line);
-        const last = if (std.mem.startsWith(u8, &range.first, &mapped))
+        const last = if (std.mem.indexOfScalar(u8, line, ':') == null)
             &self.last_v4
         else
             &self.last_v6;
@@ -84,6 +86,10 @@ pub const Builder = struct {
             if (std.mem.order(u8, &range.first, &previous) != .gt) return error.Overlap;
         }
         last.* = range.last;
+        self.rows += 1;
+        // DB-IP includes broad ZZ ranges spanning the IPv4-mapped IPv6 region. Validate
+        // source ordering, then omit these explicitly unknown ranges before normalization.
+        if (std.mem.eql(u8, &range.country, "ZZ")) return;
         self.storage[self.count] = range;
         self.count += 1;
     }
@@ -115,7 +121,10 @@ pub fn lookup(ranges: []const Range, ip: [16]u8) ?[2]u8 {
             hi = mid;
         } else if (std.mem.order(u8, &ranges[mid].last, &ip) == .lt) {
             lo = mid + 1;
-        } else return ranges[mid].country;
+        } else return if (std.mem.eql(u8, &ranges[mid].country, "ZZ"))
+            null
+        else
+            ranges[mid].country;
     }
     return null;
 }
@@ -173,4 +182,18 @@ test "private and reserved addresses never acquire a country from provider rows"
         "192.0.2.1",   "203.0.113.1", "::1",         "fc00::1",    "fe80::1",
         "2001:db8::1",
     }) |ip| try std.testing.expect(lookup(&ranges, try address(ip)) == null);
+}
+
+test "publisher unknown IPv6 super-ranges do not overlap normalized IPv4 countries" {
+    const t = std.testing;
+    var storage: [4]Range = undefined;
+    var builder: Builder = .{ .storage = &storage };
+    try builder.append("0.0.0.0,7.255.255.255,ZZ");
+    try builder.append("8.8.8.0,8.8.8.255,US");
+    try builder.append("::,1fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff,ZZ");
+    try builder.append("2001:4860::,2001:4860:ffff:ffff:ffff:ffff:ffff:ffff,US");
+    const ranges = try builder.finish();
+    try t.expectEqual(@as(usize, 2), ranges.len);
+    try t.expectEqualStrings("US", &(lookup(ranges, try address("8.8.8.8")).?));
+    try t.expect(lookup(ranges, try address("1.1.1.1")) == null);
 }
