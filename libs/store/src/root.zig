@@ -1,18 +1,22 @@
 //! Sibuna Store Library
 //!
-//! Provides a lockless / sharded Robin Hood hash map with atomic decay,
-//! in-memory challenge caching, and optional Valkey/Redis integration.
+//! In-memory, zero-allocation state: the Robin Hood spent-challenge set and
+//! the GCRA rate limiter. Durable and replicated state (dynamic policies,
+//! IP reputation, incident forensics) lives in `persistent.zig` on top of
+//! Zaxonlite when the daemon is built with storage enabled.
 
 const std = @import("std");
 const core = @import("core");
 
 pub const challenge_store = @import("challenge_store.zig");
 pub const ChallengeStore = challenge_store.ChallengeStore;
-pub const ChallengeRecord = challenge_store.ChallengeRecord;
+pub const ChallengeTag = challenge_store.Tag;
 pub const StoreError = challenge_store.StoreError;
 
 pub const rate_limiter = @import("rate_limiter.zig");
 pub const RateLimiter = rate_limiter.RateLimiter;
+pub const RateLimits = rate_limiter.Limits;
+pub const RateDecision = rate_limiter.Decision;
 
 test {
     _ = @import("challenge_store.zig");

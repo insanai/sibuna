@@ -1,7 +1,18 @@
-//! Sibuna Challenge and Decay Store
+//! Sibuna Spent-Challenge Set
 //!
-//! Provides a high-performance, sharded in-memory cache for tracking active
-//! proof-of-work challenges with atomic double-spend prevention and zero heap churn.
+//! Challenges are stateless: the coordinator encodes issue time, difficulty,
+//! algorithm, and client binding inside a MAC-authenticated identifier, so
+//! issuing one costs the server no memory. The only state that must exist
+//! is the set of identifiers that have already been *spent*, and every entry
+//! in that set corresponds to a proof of work the client actually paid for.
+//! An adversary therefore cannot fill this table without solving puzzles.
+//!
+//! Entries are the 16-byte challenge tag plus its expiry, kept in 16
+//! lock-striped shards of Robin Hood open addressing (Celis, 1986): an
+//! insert displaces any occupant closer to its home slot than the incoming
+//! key, which keeps probe lengths tightly clustered around the mean.
+//! Expired entries are dropped when displaced or overwritten in place when
+//! that keeps the probe invariant, so no background sweeper is needed.
 
 const std = @import("std");
 
@@ -13,19 +24,21 @@ pub const StoreError = error{
     StoreFull,
 };
 
-pub const ChallengeRecord = struct {
-    id: [32]u8,
-    id_len: u8,
-    difficulty: u32,
-    issued_at: u64,
-    ttl_seconds: u32,
-    bound_fingerprint: u64,
-    spent: bool,
-    occupied: bool,
-};
-
+pub const Tag = [16]u8;
 pub const NUM_SHARDS = 16;
-pub const SHARD_CAPACITY = 1024;
+pub const SHARD_CAPACITY = 4096;
+pub const MAX_PROBE = 64;
+
+pub const Entry = struct {
+    tag: Tag = [_]u8{0} ** 16,
+    expires_at: u64 = 0,
+    dist: u8 = 0,
+    occupied: bool = false,
+
+    fn expired(self: Entry, now: u64) bool {
+        return now > self.expires_at;
+    }
+};
 
 pub const SpinLock = struct {
     locked: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
@@ -43,131 +56,132 @@ pub const SpinLock = struct {
 
 const Shard = struct {
     lock: SpinLock = .{},
+    entries: [SHARD_CAPACITY]Entry = [_]Entry{.{}} ** SHARD_CAPACITY,
+    live: u32 = 0,
 
-    entries: [SHARD_CAPACITY]ChallengeRecord = [_]ChallengeRecord{.{
-        .id = [_]u8{0} ** 32,
-        .id_len = 0,
-        .difficulty = 0,
-        .issued_at = 0,
-        .ttl_seconds = 0,
-        .bound_fingerprint = 0,
-        .spent = false,
-        .occupied = false,
-    }} ** SHARD_CAPACITY,
+    fn home(tag: *const Tag) usize {
+        return @intCast(std.mem.readInt(u64, tag[8..16], .little) % SHARD_CAPACITY);
+    }
 
-    fn findSlot(self: *Shard, id: []const u8, now: u64) ?usize {
-        var free_idx: ?usize = null;
-        var oldest_idx: usize = 0;
-        var oldest_time: u64 = std.math.maxInt(u64);
-
-        for (&self.entries, 0..) |*entry, idx| {
-            if (!entry.occupied) {
-                if (free_idx == null) free_idx = idx;
-            } else if (entry.id_len == id.len and
-                std.mem.eql(u8, entry.id[0..entry.id_len], id))
-            {
-                return idx;
-            } else if (now > entry.issued_at + entry.ttl_seconds) {
-                if (free_idx == null) free_idx = idx;
-            } else if (entry.issued_at < oldest_time) {
-                oldest_time = entry.issued_at;
-                oldest_idx = idx;
-            }
+    /// Robin Hood lookup with early termination: once a slot's occupant is
+    /// closer to its home than we are to ours, the key cannot be further.
+    fn find(self: *Shard, tag: *const Tag) ?*Entry {
+        var idx = home(tag);
+        var dist: u8 = 0;
+        while (dist < MAX_PROBE) : (dist += 1) {
+            const e = &self.entries[idx];
+            if (!e.occupied or e.dist < dist) return null;
+            if (std.mem.eql(u8, &e.tag, tag)) return e;
+            idx = (idx + 1) % SHARD_CAPACITY;
         }
-        return free_idx orelse oldest_idx;
+        return null;
+    }
+
+    fn insert(self: *Shard, tag: *const Tag, expires_at: u64, now: u64) StoreError!void {
+        var carry = Entry{ .tag = tag.*, .expires_at = expires_at, .dist = 0, .occupied = true };
+        var idx = home(tag);
+        while (carry.dist < MAX_PROBE) {
+            const e = &self.entries[idx];
+            if (!e.occupied) {
+                e.* = carry;
+                self.live += 1;
+                return;
+            }
+            // Overwriting an expired occupant is safe only when the new
+            // distance is not smaller, so keys probing past this slot still
+            // pass the early-termination test.
+            if (e.expired(now) and carry.dist >= e.dist) {
+                e.* = carry;
+                return;
+            }
+            if (carry.dist > e.dist) {
+                std.mem.swap(Entry, &carry, e);
+                if (carry.expired(now)) return;
+            }
+            idx = (idx + 1) % SHARD_CAPACITY;
+            carry.dist += 1;
+        }
+        return error.StoreFull;
     }
 };
 
 pub const ChallengeStore = struct {
     shards: [NUM_SHARDS]Shard = [_]Shard{.{}} ** NUM_SHARDS,
 
-    fn shardIndex(id: []const u8) usize {
-        return @as(usize, @intCast(std.hash.Wyhash.hash(0xdead_beef, id) % NUM_SHARDS));
+    fn shardFor(self: *ChallengeStore, tag: *const Tag) *Shard {
+        return &self.shards[std.mem.readInt(u64, tag[0..8], .little) % NUM_SHARDS];
     }
 
-    pub fn put(
-        self: *ChallengeStore,
-        id: []const u8,
-        difficulty: u32,
-        now: u64,
-        ttl_seconds: u32,
-        bound_fingerprint: u64,
-    ) !void {
-        if (id.len == 0 or id.len > 32) return error.StoreFull;
-        const shard = &self.shards[shardIndex(id)];
+    /// Records `tag` as spent until `expires_at`. Fails with
+    /// `DoubleSpendAttempt` when it is already present and unexpired.
+    pub fn markSpent(self: *ChallengeStore, tag: *const Tag, expires_at: u64, now: u64) StoreError!void {
+        const shard = self.shardFor(tag);
         shard.lock.lock();
         defer shard.lock.unlock();
-
-        const slot_idx = shard.findSlot(id, now) orelse return error.StoreFull;
-        const entry = &shard.entries[slot_idx];
-
-        @memcpy(entry.id[0..id.len], id);
-        entry.id_len = @intCast(id.len);
-        entry.difficulty = difficulty;
-        entry.issued_at = now;
-        entry.ttl_seconds = ttl_seconds;
-        entry.bound_fingerprint = bound_fingerprint;
-        entry.spent = false;
-        entry.occupied = true;
-    }
-
-    pub fn getAndMarkSpent(
-        self: *ChallengeStore,
-        id: []const u8,
-        now: u64,
-        fingerprint: ?u64,
-    ) StoreError!ChallengeRecord {
-        if (id.len == 0 or id.len > 32) return error.ChallengeNotFound;
-        const shard = &self.shards[shardIndex(id)];
-        shard.lock.lock();
-        defer shard.lock.unlock();
-
-        for (&shard.entries) |*entry| {
-            if (entry.occupied and entry.id_len == id.len and
-                std.mem.eql(u8, entry.id[0..entry.id_len], id))
-            {
-                if (now > entry.issued_at + entry.ttl_seconds) {
-                    entry.occupied = false;
-                    return error.ChallengeExpired;
-                }
-                if (entry.spent) {
-                    return error.DoubleSpendAttempt;
-                }
-                if (fingerprint) |fp| {
-                    if (entry.bound_fingerprint != 0 and entry.bound_fingerprint != fp) {
-                        return error.FingerprintMismatch;
-                    }
-                }
-                entry.spent = true;
-                return entry.*;
-            }
+        if (shard.find(tag)) |existing| {
+            if (!existing.expired(now)) return error.DoubleSpendAttempt;
+            existing.expires_at = expires_at;
+            return;
         }
-        return error.ChallengeNotFound;
+        try shard.insert(tag, expires_at, now);
+    }
+
+    pub fn isSpent(self: *ChallengeStore, tag: *const Tag, now: u64) bool {
+        const shard = self.shardFor(tag);
+        shard.lock.lock();
+        defer shard.lock.unlock();
+        const e = shard.find(tag) orelse return false;
+        return !e.expired(now);
     }
 };
 
-test "challenge store put, spend, double-spend prevention" {
+fn tagFrom(n: u64) Tag {
+    var tag: Tag = undefined;
+    std.mem.writeInt(u64, tag[0..8], std.hash.Wyhash.hash(1, std.mem.asBytes(&n)), .little);
+    std.mem.writeInt(u64, tag[8..16], std.hash.Wyhash.hash(2, std.mem.asBytes(&n)), .little);
+    return tag;
+}
+
+test "spent set rejects double spend and forgets expired tags" {
     var store = ChallengeStore{};
     const now: u64 = 1_000_000;
-    const cid = "test-challenge-uuid-1";
+    const tag = tagFrom(1);
+    try store.markSpent(&tag, now + 600, now);
+    try std.testing.expect(store.isSpent(&tag, now + 10));
+    try std.testing.expectError(error.DoubleSpendAttempt, store.markSpent(&tag, now + 600, now + 15));
+    try std.testing.expect(!store.isSpent(&tag, now + 601));
+    // After expiry the same tag may be spent again (a fresh challenge with
+    // an identical tag is astronomically unlikely, but the rule is defined).
+    try store.markSpent(&tag, now + 1200, now + 601);
+}
 
-    try store.put(cid, 4, now, 600, 0x1234);
-
-    // First spend: succeeds
-    const rec = try store.getAndMarkSpent(cid, now + 10, 0x1234);
-    try std.testing.expectEqual(@as(u32, 4), rec.difficulty);
-
-    // Second spend: rejected as double-spend
-    try std.testing.expectError(
-        error.DoubleSpendAttempt,
-        store.getAndMarkSpent(cid, now + 15, 0x1234),
-    );
-
-    // Expired challenge
-    const exp_cid = "test-challenge-uuid-2";
-    try store.put(exp_cid, 3, now, 10, 0x5678);
-    try std.testing.expectError(
-        error.ChallengeExpired,
-        store.getAndMarkSpent(exp_cid, now + 20, 0x5678),
-    );
+test "robin hood shards stay correct under load and reclaim expired slots" {
+    const store = try std.testing.allocator.create(ChallengeStore);
+    defer std.testing.allocator.destroy(store);
+    store.* = .{};
+    const now: u64 = 5000;
+    const total: u64 = NUM_SHARDS * SHARD_CAPACITY / 2;
+    var n: u64 = 0;
+    while (n < total) : (n += 1) {
+        const tag = tagFrom(n);
+        try store.markSpent(&tag, now + 100, now);
+    }
+    n = 0;
+    while (n < total) : (n += 1) {
+        const tag = tagFrom(n);
+        try std.testing.expect(store.isSpent(&tag, now + 50));
+        try std.testing.expectError(error.DoubleSpendAttempt, store.markSpent(&tag, now + 100, now + 50));
+    }
+    // Everything expires; the next generation reuses the same slots.
+    n = total;
+    while (n < 2 * total) : (n += 1) {
+        const tag = tagFrom(n);
+        try store.markSpent(&tag, now + 1000, now + 200);
+    }
+    n = total;
+    while (n < 2 * total) : (n += 1) {
+        const tag = tagFrom(n);
+        try std.testing.expect(store.isSpent(&tag, now + 300));
+    }
+    try std.testing.expect(!store.isSpent(&tagFrom(3), now + 300));
 }
