@@ -1,24 +1,26 @@
 //! Sibuna Challenge Library
 //!
-//! Coordinates proof-of-work challenge generation, verification, and
-//! dynamic load-based difficulty adjustment.
+//! Stateless challenge issuance, native verification of both proof-of-work
+//! tiers, single-use enforcement, token minting, and load-adaptive
+//! difficulty control.
 
 const std = @import("std");
 const core = @import("core");
 const crypto = @import("crypto");
 
 pub const coordinator = @import("coordinator.zig");
+pub const adaptive = @import("adaptive.zig");
 pub const Coordinator = coordinator.Coordinator;
 pub const ChallengePayload = coordinator.ChallengePayload;
+pub const ChallengeSpec = coordinator.ChallengeSpec;
+pub const Algorithm = coordinator.Algorithm;
+pub const TokenScheme = coordinator.TokenScheme;
+pub const Solution = coordinator.Solution;
 pub const VerifiedResult = coordinator.VerifiedResult;
-
-pub const Algorithm = enum {
-    fast_sha256,
-    slow_sha256,
-    hashx,
-    argon2id,
-};
+pub const VerifyError = coordinator.VerifyError;
+pub const Adaptive = adaptive.Adaptive;
 
 test {
     _ = @import("coordinator.zig");
+    _ = @import("adaptive.zig");
 }
