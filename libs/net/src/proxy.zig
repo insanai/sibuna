@@ -36,7 +36,7 @@ fn isHopByHop(name: []const u8) bool {
 }
 
 fn writeHead(w: *Io.Writer, req: *const http.Request, audit: Audit) !void {
-    const method = @tagName(req.method);
+    const method = req.method_text;
     if (req.query.len > 0) {
         try w.print("{s} {s}?{s} HTTP/1.1\r\n", .{ method, req.path, req.query });
     } else {
@@ -65,7 +65,7 @@ fn relayBody(client_reader: *Io.Reader, up: *Io.Writer, remaining: usize) !void 
         const got = client_reader.readSliceShort(
             chunk[0..want],
         ) catch return error.ClientWriteFailed;
-        if (got == 0) return;
+        if (got == 0) return error.ClientWriteFailed;
         up.writeAll(chunk[0..got]) catch return error.UpstreamWriteFailed;
         left -= got;
     }

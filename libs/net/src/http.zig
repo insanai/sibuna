@@ -36,6 +36,7 @@ pub const MAX_HEADERS = 32;
 
 pub const Request = struct {
     method: Method = .GET,
+    method_text: []const u8 = "GET",
     path: []const u8 = "/",
     query: []const u8 = "",
     version: []const u8 = "HTTP/1.1",
@@ -78,9 +79,9 @@ pub const Request = struct {
 
     pub fn getCookie(self: *const Request, cookie_name: []const u8) ?[]const u8 {
         const cookie_hdr = self.getHeader("Cookie") orelse return null;
-        var it = std.mem.splitSequence(u8, cookie_hdr, "; ");
+        var it = std.mem.splitScalar(u8, cookie_hdr, ';');
         while (it.next()) |pair| {
-            var eq_it = std.mem.splitScalar(u8, pair, '=');
+            var eq_it = std.mem.splitScalar(u8, std.mem.trim(u8, pair, " \t"), '=');
             const k = eq_it.first();
             if (std.mem.eql(u8, k, cookie_name)) {
                 return eq_it.next() orelse "";
@@ -100,7 +101,24 @@ pub const ParseError = error{
     RequestSmugglingAttempt,
     UnsupportedVersion,
     TooManyHeaders,
+    UnsupportedTransferEncoding,
+    InvalidContentLength,
 };
+
+fn validToken(text: []const u8) bool {
+    if (text.len == 0) return false;
+    for (text) |c| {
+        if (!std.ascii.isAlphanumeric(c) and
+            std.mem.indexOfScalar(u8, "!#$%&'*+-.^_`|~", c) == null) return false;
+    }
+    return true;
+}
+
+fn validateContentLength(value: []const u8) ParseError!void {
+    if (value.len == 0) return error.InvalidContentLength;
+    for (value) |c| if (!std.ascii.isDigit(c)) return error.InvalidContentLength;
+    _ = std.fmt.parseInt(usize, value, 10) catch return error.InvalidContentLength;
+}
 
 pub fn parseRequest(data: []const u8) ParseError!Request {
     var req = Request{};
@@ -114,6 +132,10 @@ pub fn parseRequest(data: []const u8) ParseError!Request {
     const uri_str = req_tokens.next() orelse return error.InvalidRequestLine;
     const ver_str = req_tokens.next() orelse return error.InvalidRequestLine;
 
+    if (!validToken(method_str) or uri_str.len == 0 or req_tokens.next() != null)
+        return error.InvalidRequestLine;
+    for (uri_str) |c| if (c <= 32 or c == 127) return error.InvalidRequestLine;
+    req.method_text = method_str;
     req.method = Method.fromString(method_str);
     req.version = ver_str;
     if (!std.mem.eql(u8, ver_str, "HTTP/1.1") and !std.mem.eql(u8, ver_str, "HTTP/1.0")) {
@@ -142,8 +164,11 @@ pub fn parseRequest(data: []const u8) ParseError!Request {
             return error.InvalidHeaderWhitespace;
         }
 
-        var value = line[colon_idx + 1 ..];
-        if (value.len > 0 and value[0] == ' ') value = value[1..];
+        if (!validToken(name)) return error.InvalidHeader;
+        const value = std.mem.trim(u8, line[colon_idx + 1 ..], " \t");
+        for (value) |c| {
+            if ((c < 32 and c != '\t') or c == 127) return error.InvalidHeader;
+        }
 
         if (std.ascii.eqlIgnoreCase(name, "content-length")) {
             if (has_content_length and !std.mem.eql(u8, content_length_val, value)) {
@@ -164,6 +189,8 @@ pub fn parseRequest(data: []const u8) ParseError!Request {
         return error.RequestSmugglingAttempt;
     }
 
+    if (has_transfer_encoding) return error.UnsupportedTransferEncoding;
+    if (has_content_length) try validateContentLength(content_length_val);
     const header_end = std.mem.indexOf(u8, data, "\r\n\r\n");
     if (header_end) |end_idx| {
         req.body = data[end_idx + 4 ..];
@@ -221,4 +248,23 @@ test "parseRequest rejects HTTP request smuggling and malformed headers" {
         "GET / HTTP/1.1\r\n" ++
         "Host : localhost\r\n\r\n";
     try std.testing.expectError(error.InvalidHeaderWhitespace, parseRequest(ws_colon));
+}
+
+test "parser rejects ambiguous framing and control bytes" {
+    const bad = [_][]const u8{
+        "GET / HTTP/1.1 extra\r\n\r\n",
+        "GET /bad\npath HTTP/1.1\r\n\r\n",
+        "GET / HTTP/1.1\r\n: empty\r\n\r\n",
+        "GET / HTTP/1.1\r\nHost: a\nb\r\n\r\n",
+        "POST / HTTP/1.1\r\nContent-Length: +5\r\n\r\n",
+        "POST / HTTP/1.1\r\nContent-Length: invalid\r\n\r\n",
+        "POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\n",
+    };
+    for (bad) |raw| {
+        if (parseRequest(raw)) |_| return error.AcceptedMalformedRequest else |_| {}
+    }
+    const req = try parseRequest("PROPFIND / HTTP/1.1\r\n" ++
+        "Cookie: a=1;__sibuna_token=abc\r\n\r\n");
+    try std.testing.expectEqualStrings("PROPFIND", req.method_text);
+    try std.testing.expectEqualStrings("abc", req.getCookie("__sibuna_token").?);
 }
