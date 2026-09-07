@@ -54,6 +54,18 @@ def check(binary, h):
                 query = {"ip": "8.8.8.1"}
                 page = json.loads(h.request(port, "POST", endpoint, query, cookie, csrf)[2])
                 assert len(page["rows"]) == 1
+                grouped = {"view": "source", "ip": "8.8.8.1"}
+                page = json.loads(h.request(port, "POST", endpoint, grouped, cookie, csrf)[2])
+                assert len(page["rows"]) == 1 and page["rows"][0]["count"] == 1
+                assert page["rows"][0]["grouped"]
+                for _ in range(6):
+                    status, headers, body = h.request(
+                        port, "POST", "/console/api/events/export", grouped, cookie, csrf)
+                    assert status == 200 and len(body) <= 4096
+                    assert "attachment" in headers["Content-Disposition"]
+                    assert b"hidden-value" not in body
+                assert h.request(port, "POST", "/console/api/events/export",
+                                 grouped, cookie, csrf)[0] == 429
             finally:
                 h.stop(proc)
     print("console-e2e: real incident queries, filtering, pagination and privacy boundaries passed")

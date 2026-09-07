@@ -17,14 +17,14 @@ pub fn query(owner: *Persistent, input: p.events.Query) !p.StorageResult {
         .time = std.math.maxInt(i64),
         .id = std.math.maxInt(i64),
     };
-    var result = try db.query(owner.db, owner.gpa, sql, &.{
+    var result = try db.query(owner.db, owner.gpa, if (input.grouped) grouped_sql else sql, &.{
         integer(input.from),             integer(input.until),
+        integer(input.node),             integer(input.node),
+        text(input.category.slice()),    text(input.category.slice()),
+        text(input.ip.slice()),          text(input.ip.slice()),
+        text(input.path_prefix.slice()), text(input.path_prefix.slice()),
         integer(before.time),            integer(before.time),
-        integer(before.id),              integer(input.node),
-        integer(input.node),             text(input.category.slice()),
-        text(input.category.slice()),    text(input.ip.slice()),
-        text(input.ip.slice()),          text(input.path_prefix.slice()),
-        text(input.path_prefix.slice()), integer(input.limit + 1),
+        integer(before.id),              integer(input.limit + 1),
     });
     defer result.deinit();
     var output: p.Bytes(p.max_message) = .{};
@@ -34,7 +34,8 @@ pub fn query(owner: *Persistent, input: p.events.Query) !p.StorageResult {
     var cursor: ?p.events.Cursor = null;
     for (result.rows) |row| {
         if (count >= input.limit) break;
-        const event = try decode(row);
+        var event = try decode(row);
+        event.grouped = input.grouped;
         var scratch: [4096]u8 = undefined;
         var item: std.Io.Writer = .fixed(&scratch);
         try event.write(&item);
@@ -51,7 +52,25 @@ pub fn query(owner: *Persistent, input: p.events.Query) !p.StorageResult {
     } else try writer.writeAll("null");
     try writer.writeAll("}");
     output.len = writer.buffered().len;
+    if (input.export_page and !try auditExport(owner, input))
+        return .{ .failed = .unauthorized };
     return .{ .page = output };
+}
+
+fn auditExport(owner: *Persistent, input: p.events.Query) !bool {
+    const digest = std.fmt.bytesToHex(input.session_digest, .lower);
+    // Export preparation is recorded before returning bytes. This does not claim delivery.
+    const changes = try db.exec(
+        owner.db,
+        owner.gpa,
+        "INSERT INTO console_audit(actor,action,subject,recorded_at) " ++
+            "SELECT u.id,'events.export_prepared',0,? FROM console_sessions s " ++
+            "JOIN console_users u ON u.id=s.user_id WHERE s.digest=? " ++
+            "AND s.revision=u.revision AND u.disabled=0 AND u.must_change=0 " ++
+            "AND MIN(s.expires,s.idle_expires)>?",
+        &.{ integer(input.now), text(&digest), integer(input.now) },
+    );
+    return changes == 1;
 }
 
 fn decode(row: []const ?[]const u8) !p.events.Row {
@@ -61,6 +80,8 @@ fn decode(row: []const ?[]const u8) !p.events.Row {
             return error.InvalidStoredValue,
         .time = try store.number(row[2]),
         .campaign = if (row[8] != null) try store.number(row[8]) else null,
+        .count = try store.number(row[9]),
+        .first_seen = try store.number(row[10]),
     };
     copy(48, &result.ip, row[3] orelse "", &result.display_truncated);
     copy(8, &result.method, row[4] orelse "", &result.display_truncated);
@@ -100,9 +121,17 @@ fn copy(
     truncated.* = truncated.* or position != source.len;
 }
 
+const filters =
+    " FROM security_incidents WHERE recorded_at BETWEEN ? AND ? " ++
+    "AND (?=0 OR node_id=?) AND (?='' OR violation_category=?) AND (?='' OR client_ip=?) " ++
+    "AND substr(path,1,length(?))=? ";
 const sql =
     "SELECT id,node_id,recorded_at,client_ip,method,path,violation_category,user_agent," ++
-    "campaign_id FROM security_incidents WHERE recorded_at BETWEEN ? AND ? " ++
-    "AND (recorded_at<? OR (recorded_at=? AND id<?)) AND (?=0 OR node_id=?) " ++
-    "AND (?='' OR violation_category=?) AND (?='' OR client_ip=?) " ++
-    "AND substr(path,1,length(?))=? ORDER BY recorded_at DESC,id DESC LIMIT ?";
+    "campaign_id,1,recorded_at" ++ filters ++
+    "AND (recorded_at<? OR (recorded_at=? AND id<?)) " ++
+    "ORDER BY recorded_at DESC,id DESC LIMIT ?";
+const grouped_sql =
+    "SELECT MAX(id),node_id,MAX(recorded_at),client_ip,'','','','',NULL," ++
+    "COUNT(*),MIN(recorded_at)" ++ filters ++
+    "GROUP BY node_id,client_ip HAVING MAX(recorded_at)<? OR " ++
+    "(MAX(recorded_at)=? AND MAX(id)<?) ORDER BY MAX(recorded_at) DESC,MAX(id) DESC LIMIT ?";

@@ -613,3 +613,48 @@ fn insertEvents(owner: *Persistent) !void {
         );
     }
 }
+
+test "source groups report exact filtered counts and audit bounded export preparation" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var buffer: [160]u8 = undefined;
+    const fx = try geoFixture(try std.fmt.bufPrint(
+        &buffer,
+        ".zig-cache/tmp/{s}/event-groups",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try insertEvents(fx.owner);
+    const input: p.events.Query = .{
+        .session_digest = @splat(1),
+        .now = 250,
+        .grouped = true,
+        .export_page = true,
+        .from = 201,
+        .until = 201,
+    };
+    const result = try fx.run(.{ .events_query = input });
+    const parsed = try std.json.parseFromSlice(
+        std.json.Value,
+        t.allocator,
+        result.page.slice(),
+        .{},
+    );
+    defer parsed.deinit();
+    const rows = parsed.value.object.get("rows").?.array.items;
+    try t.expectEqual(@as(usize, 1), rows.len);
+    const row = rows[0].object;
+    try t.expect(row.get("grouped").?.bool);
+    try t.expectEqual(@as(i64, 15), row.get("count").?.integer);
+    try t.expectEqual(@as(i64, 201), row.get("first_seen").?.integer);
+    try t.expectEqual(@as(i64, 201), row.get("time").?.integer);
+    var audit = try db.query(
+        fx.owner.db,
+        t.allocator,
+        "SELECT actor FROM console_audit WHERE action='events.export_prepared' LIMIT 10",
+        &.{},
+    );
+    defer audit.deinit();
+    try t.expectEqual(@as(usize, 1), audit.rows.len);
+    try t.expectEqualStrings("1", audit.rows[0][0].?);
+}

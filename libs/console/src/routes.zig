@@ -11,6 +11,7 @@ pub const Handler = enum {
     password,
     stats,
     events,
+    events_export,
     stream,
     geoip,
     totp,
@@ -23,6 +24,12 @@ pub const Route = struct {
     handler: Handler,
 };
 const table = [_]Route{
+    .{
+        .path = "/console/api/events/export",
+        .method = .POST,
+        .access = .full,
+        .handler = .events_export,
+    },
     .{
         .path = "/console/api/events/query",
         .method = .POST,

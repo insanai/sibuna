@@ -19,6 +19,7 @@ pub const App = struct {
     passwords: Password,
     totp_key: ?[32]u8,
     limiter: Limiter = .{},
+    query_budget: @import("query_budget.zig").Budget = .{},
     dummy_hash: p.Bytes(255),
     setup_required: bool,
     telemetry: *store.ConsoleTelemetry,
@@ -226,7 +227,8 @@ pub const App = struct {
                 if (status != .setup_required) return error.StorageUnavailable;
                 return http.json(context, .{ .setup_required = status.setup_required }, &.{});
             },
-            .events => return @import("event_routes.zig").query(self, context),
+            .events => return @import("event_routes.zig").query(self, context, false),
+            .events_export => return @import("event_routes.zig").query(self, context, true),
             .login => return auth.login(self, context),
             .logout => return auth.logout(self, context),
             .password => return auth.password(self, context, identity.?),

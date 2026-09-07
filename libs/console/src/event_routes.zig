@@ -3,12 +3,16 @@ const p = @import("console_protocol");
 const App = @import("app.zig").App;
 const http = @import("http.zig");
 
-pub fn query(app: *App, context: *http.Context) !void {
+pub fn query(app: *App, context: *http.Context, export_page: bool) !void {
     const digest = try http.session(context);
+    const kind: @import("query_budget.zig").Kind = if (export_page) .export_page else .query;
+    if (!app.query_budget.allow(app.io, digest, app.now(), kind))
+        return http.fail(context, .too_many_requests, "CONSOLEQUERY");
     var body: [2048]u8 = undefined;
     var arena: [8192]u8 = undefined;
     var fixed = std.heap.FixedBufferAllocator.init(&arena);
     const input = try http.parse(struct {
+        view: enum { raw, source } = .raw,
         before: ?struct { time: u64, id: []const u8 } = null,
         limit: u16 = 10,
         from: u64 = 0,
@@ -22,6 +26,8 @@ pub fn query(app: *App, context: *http.Context) !void {
     const fields = input.value;
     var request: p.events.Query = .{
         .session_digest = digest,
+        .grouped = fields.view == .source,
+        .export_page = export_page,
         .now = app.now(),
         .limit = fields.limit,
         .from = fields.from,
@@ -36,8 +42,13 @@ pub fn query(app: *App, context: *http.Context) !void {
         .id = std.fmt.parseInt(u64, cursor.id, 10) catch return error.InvalidRequest,
     };
     const result = try app.request(.{ .events_query = request });
-    if (result == .page)
-        return context.respond(.ok, "application/json", result.page.slice(), &.{});
+    if (result == .page) {
+        const headers: []const std.http.Header = if (export_page) &.{.{
+            .name = "Content-Disposition",
+            .value = "attachment; filename=\"sibuna-events.json\"",
+        }} else &.{};
+        return context.respond(.ok, "application/json", result.page.slice(), headers);
+    }
     const status: std.http.Status = switch (result.failed) {
         .unauthorized => .unauthorized,
         .forbidden => .forbidden,

@@ -5,6 +5,8 @@ pub const Cursor = struct { time: u64, id: u64 };
 pub const Query = struct {
     session_digest: [32]u8,
     now: u64,
+    grouped: bool = false,
+    export_page: bool = false,
     before: ?Cursor = null,
     limit: u16 = 10,
     from: u64 = 0,
@@ -16,6 +18,9 @@ pub const Query = struct {
 };
 pub const Row = struct {
     id: u64 = 0,
+    grouped: bool = false,
+    count: u64 = 1,
+    first_seen: u64 = 0,
     node: u32 = 0,
     time: u64 = 0,
     ip: Bytes(48) = .{},
@@ -37,6 +42,9 @@ pub const Row = struct {
             null;
         try std.json.Stringify.value(.{
             .id = id_text,
+            .grouped = self.grouped,
+            .count = self.count,
+            .first_seen = self.first_seen,
             .node = self.node,
             .time = self.time,
             .ip = self.ip.slice(),

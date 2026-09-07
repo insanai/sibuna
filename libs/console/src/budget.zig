@@ -19,6 +19,7 @@ pub const Budget = struct {
     pub const auth_bytes = @import("password.zig").Password.workspace_bytes;
     pub const topic_bytes = 10 * 1024 * 1024;
     pub const traffic_bytes = 1024 * 1024;
+    pub const query_bytes = @sizeOf(@import("query_budget.zig").Budget);
 
     pub fn validate(self: Budget) Error!void {
         if (self.slots < 16 or self.slots > 256) return error.InvalidBudget;
@@ -39,7 +40,8 @@ pub const Budget = struct {
         const stacks = (connections + self.subscribers + self.peers + 3) * self.stack_bytes;
         return stacks + connections * 2 * socket_buffer_bytes +
             @as(u64, self.slots) * body_bytes + import_bytes + auth_bytes +
-            topic_bytes + traffic_bytes + 2 * @as(u64, self.geoip_generation_bytes);
+            topic_bytes + traffic_bytes + query_bytes +
+            2 * @as(u64, self.geoip_generation_bytes);
     }
 };
 
