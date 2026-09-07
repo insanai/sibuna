@@ -19,6 +19,7 @@ const io = std.testing.io;
 
 const Fixture = struct {
     engine: policy.Engine = undefined,
+    slot: server.EngineSlot = undefined,
     state: server.AppState = undefined,
     listener: Io.net.Server = undefined,
     port: u16 = 0,
@@ -73,8 +74,9 @@ fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
     cfg.ban_seconds = 60;
     f.engine.initInPlace(cfg.default_difficulty);
     f.engine.waf_enabled = cfg.waf;
+    f.slot = .{ .engine = &f.engine };
     const seed = [_]u8{0x5a} ** 32;
-    f.state.init(cfg, &f.engine, &seed);
+    f.state.init(cfg, &f.slot, &seed);
     const addr = Io.net.IpAddress.parse("127.0.0.1", 0) catch unreachable;
     f.listener = addr.listen(io, .{ .reuse_address = true }) catch unreachable;
     f.port = f.listener.socket.address.ip4.port;
@@ -438,4 +440,8 @@ test "assets are served with caching and the wasm module is the embedded solver"
     try std.testing.expectEqual(server.wasm_bytes.len, resp.body().len);
     try get(p, "/__sibuna/worker.js", "203.0.113.50", browser_ua, "", resp);
     try std.testing.expect(resp.contains("solvePoswJs"));
+}
+
+test {
+    _ = @import("storage.zig");
 }

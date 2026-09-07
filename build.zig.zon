@@ -3,7 +3,12 @@
     .version = "0.1.0",
     .fingerprint = 0xaa8849243c3108cc,
     .minimum_zig_version = "0.16.0",
-    .dependencies = .{},
+    .dependencies = .{
+        .zaxonlite = .{
+            .url = "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.6.0.tar.gz",
+            .hash = "zaxonlite-0.6.0-o9bF7Dq-GgB7Om9QDMglwd6amKHErcxCbcOamgPCDZy0",
+        },
+    },
     .paths = .{
         "build.zig",
         "build.zig.zon",

@@ -14,6 +14,7 @@ pub const loader = @import("loader.zig");
 pub const engine = @import("engine.zig");
 pub const waf = @import("waf.zig");
 pub const normalizer = @import("normalizer.zig");
+pub const embedding = @import("embedding.zig");
 
 pub const Action = engine.Action;
 pub const Header = engine.Header;
@@ -29,4 +30,5 @@ test {
     _ = @import("engine.zig");
     _ = @import("waf.zig");
     _ = @import("normalizer.zig");
+    _ = @import("embedding.zig");
 }

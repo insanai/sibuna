@@ -70,11 +70,18 @@ pub const Incident = struct {
     now: u64,
 };
 
+/// A policy engine plus its reader count. The active slot is swapped by
+/// the storage layer (read-copy-update): readers pin a slot for the
+/// duration of one request, and a writer that has published a new slot
+/// waits until the old slot's readers drain before rebuilding into it.
+pub const EngineSlot = struct {
+    engine: *policy.Engine,
+    readers: std.atomic.Value(u32) align(64) = std.atomic.Value(u32).init(0),
+};
+
 pub const AppState = struct {
     config: core.Config,
-    /// Active policy engine. Swapped atomically by the storage layer; hot
-    /// paths load it once per request.
-    engine: std.atomic.Value(*const policy.Engine),
+    slot: std.atomic.Value(*EngineSlot),
     spent: store.ChallengeStore = .{},
     rate_limiter: store.RateLimiter = store.RateLimiter.init(),
     bans: store.BanList = .{},
@@ -82,10 +89,10 @@ pub const AppState = struct {
     metrics: Metrics = .{},
     hooks: Hooks = .{},
 
-    pub fn init(self: *AppState, cfg: core.Config, engine: *const policy.Engine, seed: *const [32]u8) void {
+    pub fn init(self: *AppState, cfg: core.Config, slot: *EngineSlot, seed: *const [32]u8) void {
         self.* = .{
             .config = cfg,
-            .engine = std.atomic.Value(*const policy.Engine).init(engine),
+            .slot = std.atomic.Value(*EngineSlot).init(slot),
             .coordinator = undefined,
         };
         self.coordinator = challenge.Coordinator.init(&self.spent, seed, .{
@@ -102,8 +109,28 @@ pub const AppState = struct {
         };
     }
 
-    pub fn currentEngine(self: *const AppState) *const policy.Engine {
-        return self.engine.load(.acquire);
+    /// Pins the active slot. The re-check after incrementing closes the
+    /// window in which a writer could have swapped and observed zero
+    /// readers between our load and our increment.
+    pub fn acquireEngine(self: *AppState) *EngineSlot {
+        while (true) {
+            const slot = self.slot.load(.acquire);
+            _ = slot.readers.fetchAdd(1, .acq_rel);
+            if (self.slot.load(.acquire) == slot) return slot;
+            _ = slot.readers.fetchSub(1, .acq_rel);
+        }
+    }
+
+    pub fn releaseEngine(slot: *EngineSlot) void {
+        _ = slot.readers.fetchSub(1, .acq_rel);
+    }
+
+    /// Publishes `fresh` and returns the previous slot once no request is
+    /// still reading it, so the caller may rebuild into it safely.
+    pub fn publishEngine(self: *AppState, fresh: *EngineSlot) *EngineSlot {
+        const old = self.slot.swap(fresh, .acq_rel);
+        while (old.readers.load(.acquire) != 0) std.atomic.spinLoopHint();
+        return old;
     }
 };
 
@@ -317,7 +344,9 @@ fn applyPolicy(ctx: *RequestContext) !bool {
     const st = ctx.state();
     var hdr_buf: [net.MAX_HEADERS]policy.Header = undefined;
     const headers = policyHeaders(ctx.req, &hdr_buf);
-    const decision = st.currentEngine().evaluateRequest(.{
+    const slot = st.acquireEngine();
+    defer AppState.releaseEngine(slot);
+    const decision = slot.engine.evaluateRequest(.{
         .path = ctx.req.path,
         .query = ctx.req.query,
         .client_ip = ctx.client_ip,
@@ -460,7 +489,9 @@ fn handleChallengeJson(ctx: *RequestContext) !void {
     const target_path = policy.normalizer.percentDecode(raw_path, &path_buf);
     var hdr_buf: [net.MAX_HEADERS]policy.Header = undefined;
     const headers = policyHeaders(ctx.req, &hdr_buf);
-    const decision = st.currentEngine().evaluateWithHeaders(target_path, ctx.client_ip, ctx.user_agent, headers);
+    const slot = st.acquireEngine();
+    const decision = slot.engine.evaluateWithHeaders(target_path, ctx.client_ip, ctx.user_agent, headers);
+    AppState.releaseEngine(slot);
 
     var spec = st.coordinator.default_spec;
     if (decision.difficulty > 0) spec.difficulty = decision.difficulty;

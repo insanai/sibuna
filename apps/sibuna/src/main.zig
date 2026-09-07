@@ -38,14 +38,16 @@ pub fn main(init: std.process.Init) !u8 {
     const engine = try gpa.create(policy.Engine);
     engine.initInPlace(cfg.default_difficulty);
     engine.waf_enabled = cfg.waf;
-    if (cfg.policy_file) |pfile| loadCustomPolicy(io, arena.allocator(), pfile, engine);
+    const policy_text = if (cfg.policy_file) |pfile| loadCustomPolicy(io, arena.allocator(), pfile, engine) else null;
+    const slot = try gpa.create(server.EngineSlot);
+    slot.* = .{ .engine = engine };
 
     const state = try gpa.create(server.AppState);
-    state.init(cfg, engine, &seed);
+    state.init(cfg, slot, &seed);
 
     var persistent: ?*storage.Persistent = null;
     if (cfg.data_dir != null) {
-        persistent = storage.Persistent.start(gpa, io, cfg, state, engine) catch |err| {
+        persistent = storage.Persistent.start(gpa, io, cfg, state, policy_text) catch |err| {
             std.debug.print("Failed to start persistent storage: {t}\n", .{err});
             return 1;
         };
@@ -134,21 +136,30 @@ fn printBanner(cfg: core.Config, persistent: bool) void {
     });
 }
 
-fn loadCustomPolicy(io: std.Io, allocator: std.mem.Allocator, path: []const u8, engine: *policy.Engine) void {
+/// Loads the JSON policy into `engine` and returns the file text (owned by
+/// `allocator`) so the storage layer can replay it on every rebuild.
+fn loadCustomPolicy(
+    io: std.Io,
+    allocator: std.mem.Allocator,
+    path: []const u8,
+    engine: *policy.Engine,
+) ?[]const u8 {
     const file = std.Io.Dir.openFile(.cwd(), io, path, .{}) catch |err| {
         std.debug.print("Warning: unable to open policy file {s}: {t}\n", .{ path, err });
-        return;
+        return null;
     };
     defer file.close(io);
     var buf: [256 * 1024]u8 = undefined;
     var reader = file.reader(io, &buf);
     const content = reader.interface.peekGreedy(1) catch |err| {
         std.debug.print("Warning: failed to read policy file {s}: {t}\n", .{ path, err });
-        return;
+        return null;
     };
-    engine.loadFromJsonInto(allocator, content) catch |err| {
+    const owned = allocator.dupe(u8, content) catch return null;
+    engine.loadFromJsonInto(allocator, owned) catch |err| {
         std.debug.print("Warning: failed to parse policy file {s}: {t}\n", .{ path, err });
     };
+    return owned;
 }
 
 fn printHelp() void {

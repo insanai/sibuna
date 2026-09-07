@@ -16,9 +16,13 @@ else
             _: std.Io,
             _: anytype,
             _: anytype,
-            _: anytype,
+            _: ?[]const u8,
         ) error{StorageDisabled}!*Persistent {
             return error.StorageDisabled;
         }
         pub fn stop(_: *Persistent) void {}
     };
+
+test {
+    if (build_options.storage) _ = @import("persistent.zig");
+}

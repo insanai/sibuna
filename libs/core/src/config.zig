@@ -97,6 +97,11 @@ pub const Config = struct {
     cluster_peers: [max_cluster_peers][]const u8 = undefined,
     cluster_peer_count: u8 = 0,
     cluster_secret_file: ?[]const u8 = null,
+    cluster_tls_cert: ?[]const u8 = null,
+    cluster_tls_key: ?[]const u8 = null,
+    cluster_tls_ca: ?[]const u8 = null,
+    /// Storage worker cadence: incident drain and policy change polling.
+    storage_poll_ms: u64 = 500,
     verbose: bool = false,
 
     pub fn default() Config {
@@ -197,6 +202,14 @@ pub const Config = struct {
             }
         } else if (eqlAny(arg, "--cluster-secret-file", "--cluster-secret-file")) {
             cfg.cluster_secret_file = v;
+        } else if (eqlAny(arg, "--cluster-tls-cert", "--cluster-tls-cert")) {
+            cfg.cluster_tls_cert = v;
+        } else if (eqlAny(arg, "--cluster-tls-key", "--cluster-tls-key")) {
+            cfg.cluster_tls_key = v;
+        } else if (eqlAny(arg, "--cluster-tls-ca", "--cluster-tls-ca")) {
+            cfg.cluster_tls_ca = v;
+        } else if (eqlAny(arg, "--storage-poll-ms", "--storage-poll-ms")) {
+            cfg.storage_poll_ms = std.fmt.parseInt(u64, v, 10) catch cfg.storage_poll_ms;
         } else {
             return false;
         }

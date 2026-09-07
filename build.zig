@@ -19,10 +19,15 @@ pub fn build(b: *std.Build) void {
         "storage",
         "Link Zaxonlite for persistent policies, reputation, and forensics (default: true)",
     ) orelse true;
+    const cluster = b.option(
+        bool,
+        "cluster",
+        "Enable multi-node replication; links OpenSSL 3 for Zaxonlite mTLS (default: false)",
+    ) orelse false;
 
     const modules = addModules(b, target, optimize);
     const wasm_pow = addWasmSolver(b);
-    const app = addServer(b, target, optimize, modules, wasm_pow, storage);
+    const app = addServer(b, target, optimize, modules, wasm_pow, storage, cluster);
     addTests(b, modules, app);
     addBenchmarks(b, target, optimize, modules);
     addBook(b);
@@ -161,14 +166,18 @@ fn addServer(
     modules: Modules,
     wasm_pow: *std.Build.Step.Compile,
     storage: bool,
+    cluster: bool,
 ) AppModules {
     const options = b.addOptions();
     options.addOption(bool, "storage", storage);
+    options.addOption(bool, "cluster", storage and cluster);
+    // The embedded single-node store needs no transport, so OpenSSL stays
+    // out of the binary unless clustering is requested.
     const zaxonlite: ?*std.Build.Module = if (storage)
         b.dependency("zaxonlite", .{
             .target = target,
             .optimize = optimize,
-            .tls = false,
+            .tls = cluster,
         }).module("zaxonlite")
     else
         null;
