@@ -11,6 +11,7 @@
     },
     .paths = .{
         "build.zig",
+        "build",
         "build.zig.zon",
         "apps",
         "benchmarks",

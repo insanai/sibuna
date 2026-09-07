@@ -1,4 +1,5 @@
 const std = @import("std");
+const console_build = @import("build/console.zig");
 
 pub const Modules = struct {
     core: *std.Build.Module,
@@ -25,10 +26,23 @@ pub fn build(b: *std.Build) void {
         "Enable multi-node replication; links OpenSSL 3 for Zaxonlite mTLS (default: false)",
     ) orelse false;
 
+    const console_enabled = b.option(
+        bool,
+        "console",
+        "Compile console support (default: follows storage)",
+    ) orelse storage;
+    if (console_enabled and !storage) {
+        std.debug.panic("-Dconsole=true requires -Dstorage=true", .{});
+    }
+    _ = console_build.add(b, target, optimize);
+
     const modules = addModules(b, target, optimize);
     const wasm_pow = addWasmSolver(b);
     const app = addServer(b, target, optimize, modules, wasm_pow, storage, cluster);
     addTests(b, modules, app);
+    if (console_enabled) b.top_level_steps.get("test").?.step.dependOn(
+        &b.top_level_steps.get("console-test").?.step,
+    );
     addBenchmarks(b, target, optimize, modules);
     addBook(b);
 
@@ -325,7 +339,7 @@ fn addBook(b: *std.Build) void {
 
 fn addFormatting(b: *std.Build) void {
     const fmt = b.addFmt(.{
-        .paths = &.{ "build.zig", "apps", "libs", "tools", "benchmarks" },
+        .paths = &.{ "build.zig", "build", "apps", "libs", "tools", "benchmarks" },
         .check = true,
     });
     const style = b.addSystemCommand(&.{ "sh", "tools/check-style.sh" });

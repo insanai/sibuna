@@ -190,8 +190,9 @@ lock a worker needs; a proposed benchmark gate checks that the console's presenc
 throughput by at most one percent and p99 latency by at most ten percent under the specified workloads. These are proposed acceptance targets, not measured results.
 
 #callout("Review and implementation boundary · 2026-09-08")[
-  This is a *proposed* console, not a delivery record. No `libs/serve`, `libs/console`,
-  `apps/console-ui`, console CLI, or console build steps exist in the reviewed tree.
+  This is a *proposed* console, not a delivery record. The implementation checklist records
+  the initial contract modules and tests. The live listener, authenticated UI and management
+  workflows are not yet implemented.
   Present-tense requirements below describe intended behavior unless explicitly called current.
   Evidence was checked against `build.zig`, `build.zig.zon`, `apps/sibuna/src/server.zig`,
   `persistent.zig`, `libs/policy/src/engine.zig`, `waf.zig`, `radix_trie.zig`, and the browser solver.

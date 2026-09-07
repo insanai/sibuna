@@ -15,8 +15,8 @@ semantics remain unchanged unless a stage explicitly extends them.
   `apps/console-ui` owns Zig state, components, forms and SVG; JS only bridges capabilities.
 - [ ] Share metrics and incident types through libraries with compatibility aliases.
 - [ ] Strict console CLI parsing in daemon composition without changing data-plane parsing.
-- [ ] `-Dconsole` defaults to storage; explicit console without storage fails.
-- [ ] Build-helper directory included in package, formatting and structural checks.
+- [x] `-Dconsole` defaults to storage; explicit console without storage fails.
+- [x] Build-helper directory included in package, formatting and structural checks.
 - [ ] `console-test`, `console-e2e`, `console-assets`, `console-impact` run real checks.
 - [ ] Storage starts first; console drains, cancels and joins before storage closes.
 - [ ] Gate: storage-off, console-off, storage single-node and clustered builds work;
@@ -107,4 +107,10 @@ semantics remain unchanged unless a stage explicitly extends them.
 
 ## Implementation evidence
 
-Pending verification. No live console or performance result is claimed by this checklist.
+- 2026-09-08: `zig build fmt console-test test sid` passed for the contract foundation.
+  The storage failure-injection test emits its expected retained-batch warning.
+- Added native/Wasm protocol types, configuration and reservation validation, and a
+  mutex-protected management mailbox with owned payloads, correlation IDs, bounded fair
+  scheduling, single-consumption completions and cancellation ownership tests.
+- `console-test` tests these foundations; runtime composition, wire serialization and
+  application workflows remain unchecked. No live console or performance result is claimed.

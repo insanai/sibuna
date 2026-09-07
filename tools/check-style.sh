@@ -4,7 +4,7 @@ set -eu
 # Scan Zig source code files across the repository.
 # Note: docs/ is deliberately excluded per guidelines so documentation formatting is preserved.
 roots=""
-for root in build.zig apps libs tools benchmarks; do
+for root in build.zig build apps libs tools benchmarks; do
     if [ -e "$root" ]; then
         roots="$roots $root"
     fi
