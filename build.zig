@@ -32,7 +32,12 @@ pub fn build(b: *std.Build) void {
         "Compile console support (default: follows storage)",
     ) orelse storage;
     if (console_enabled and !storage) {
-        std.debug.panic("-Dconsole=true requires -Dstorage=true", .{});
+        std.log.err(
+            "CONSOLE001: console support requires persistent storage. " ++
+                "Use -Dstorage=true or -Dconsole=false.",
+            .{},
+        );
+        b.invalid_user_input = true;
     }
     _ = console_build.add(b, target, optimize);
 
