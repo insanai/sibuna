@@ -23,6 +23,12 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     try button(w, "events-raw", "Raw incidents", model.busy or !model.grouped);
     try button(w, "events-source", "By source address", model.busy or model.grouped);
     try w.writeAll("</div>");
+    if (model.incident != 0) {
+        try w.print("<p class=\"sb-note mt-4\">Incident #{d}</p>", .{model.incident});
+        try button(w, "events-clear-incident", "Clear incident filter", model.busy);
+        if (state.similarity.source != 0)
+            try button(w, "similarity-return", "Back to similarity results", model.busy);
+    }
     if (model.campaign != 0) {
         try w.print("<p class=\"sb-note mt-4\">Campaign candidate #{d}. " ++
             "Automated similarity grouping is not attribution or proof of a common attacker. " ++
@@ -110,6 +116,8 @@ fn incident(row: *const p.events.Row, w: *Writer) Writer.Error!void {
     try w.writeAll("</dd><dt>Country, delivered response status and matched rule</dt>" ++
         "<dd>Not recorded</dd></dl>");
     try evidence(row, w);
+    try w.print("<button class=\"btn mt-3\" data-action=\"events-similar-{d}\">" ++
+        "Find similar incidents</button>", .{row.id});
     if (row.query_redacted) try w.writeAll("<p class=\"sb-note\">Query string removed.</p>");
     if (row.display_truncated) try w.writeAll("<p class=\"sb-note\">Display text truncated.</p>");
     try w.writeAll("</details></article>");
@@ -153,7 +161,7 @@ fn button(w: *Writer, action: []const u8, label: []const u8, disabled: bool) Wri
     });
 }
 
-fn timestamp(w: *Writer, value: u64) Writer.Error!void {
+pub fn timestamp(w: *Writer, value: u64) Writer.Error!void {
     if (value > 253402300799) return w.writeAll("Time unavailable");
     const seconds: std.time.epoch.EpochSeconds = .{ .secs = value };
     const day = seconds.getEpochDay().calculateYearDay();

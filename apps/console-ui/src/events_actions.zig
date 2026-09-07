@@ -5,6 +5,7 @@ const values = @import("events_state.zig");
 
 pub fn act(state: *State, name: []const u8, fields: std.json.Value) !bool {
     if (!state.fullAccess()) return false;
+    if (try incident(state, name)) return true;
     if (try campaign(state, name)) return true;
     const model = &state.events;
     if (std.mem.eql(u8, name, "events")) {
@@ -133,4 +134,17 @@ test "campaign navigation preserves exact identifiers and time boundaries across
     state.events.busy = false;
     try std.testing.expect(try act(&state, "events-clear-campaign", .null));
     try std.testing.expectEqual(@as(u64, 0), state.events.campaign);
+}
+
+fn incident(state: *State, name: []const u8) !bool {
+    const prefix = "events-incident-";
+    const clear = std.mem.eql(u8, name, "events-clear-incident");
+    if (!clear and !std.mem.startsWith(u8, name, prefix)) return false;
+    const id = if (clear) 0 else try std.fmt.parseInt(u64, name[prefix.len..], 10);
+    if (id > std.math.maxInt(i64) or (!clear and id == 0)) return error.InvalidRequest;
+    state.events = .{ .incident = id, .until = state.browser_time, .busy = true };
+    state.phase = .events;
+    state.similarity.running = false;
+    state.message = .{};
+    return true;
 }

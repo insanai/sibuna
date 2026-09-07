@@ -4,6 +4,7 @@ const p = @import("console_protocol");
 const State = @import("state.zig").State;
 const render = @import("render.zig");
 var state: State = .{};
+var similarity_generation: u32 = 0;
 var input: [16 * 1024]u8 = undefined;
 var html: [512 * 1024]u8 = undefined;
 var geometry: [@import("geography.zig").max_bytes]u8 = undefined;
@@ -144,6 +145,7 @@ fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
             if (equal(string(value, "id"), "age") or state.hidden) return;
             if (state.phase == .dashboard and !state.paused) try refresh();
             if (state.phase == .geoip) try get("geoip", "/console/api/geoip");
+            if (state.phase == .similarity) try similarityQuery();
         },
         4 => try streamEvent(value, alloc),
         5 => {
@@ -155,6 +157,8 @@ fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
                 try command(.{ .op = "disconnect" });
             } else if (state.phase == .dashboard and !state.paused) {
                 try refresh();
+            } else if (state.phase == .similarity) {
+                try similarityQuery();
             } else if (state.phase == .geoip) {
                 try get("geoip", "/console/api/geoip");
             }
@@ -166,6 +170,7 @@ fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
 fn action(value: std.json.Value) !void {
     const name = string(value, "action");
     const fields = field(value, "fields") orelse .null;
+    if (try similarityAction(name)) return;
     if (try challengeAction(name, fields)) return;
     if (try eventAction(name, fields)) return;
     if (try securityAction(name, fields)) return;
@@ -578,6 +583,11 @@ fn eventQuery(export_page: bool, csv: bool) !void {
     const model = &state.events;
     var id: [20]u8 = undefined;
     var campaign_id: [20]u8 = undefined;
+    var incident_id: [20]u8 = undefined;
+    const incident = switch (model.incident) {
+        0 => "",
+        else => try std.fmt.bufPrint(&incident_id, "{d}", .{model.incident}),
+    };
     const campaign = switch (model.campaign) {
         0 => "",
         else => try std.fmt.bufPrint(&campaign_id, "{d}", .{model.campaign}),
@@ -598,6 +608,7 @@ fn eventQuery(export_page: bool, csv: bool) !void {
             .view = if (model.grouped) "source" else "raw",
             .node = model.node,
             .campaign = campaign,
+            .incident = incident,
             .before = before,
             .category = model.category.slice(),
             .ip = model.ip.slice(),
@@ -708,6 +719,8 @@ fn boundedEnvelope(bytes: []const u8, alloc: std.mem.Allocator) !bool {
         .{ .ignore_unknown_fields = true },
     );
     defer header.deinit();
+    if (std.mem.startsWith(u8, header.value.id, "similarity-"))
+        return similarityEnvelope(bytes, header.value.id, alloc);
     if (equal(header.value.id, "events")) return eventEnvelope(bytes, alloc);
     if (!equal(header.value.id, "challenges")) return false;
     if (state.phase != .challenges) return true;
@@ -816,4 +829,175 @@ test "full incident browser envelope fits fixed arena and retains exact candidat
     try std.testing.expect(!state.events.busy);
     try std.testing.expectEqual(@as(usize, 10), state.events.count);
     try std.testing.expectEqual(@as(u64, 9007199254740993), state.events.rows[0].campaign.?);
+}
+
+fn similarityAction(name: []const u8) !bool {
+    if (!state.fullAccess()) return false;
+    if (equal(name, "similarity-return") and state.similarity.source != 0) {
+        state.phase = .similarity;
+        state.message = .{};
+        try command(.{ .op = "disconnect" });
+        return true;
+    }
+    const prefix = "events-similar-";
+    if (std.mem.startsWith(u8, name, prefix)) {
+        const source = try std.fmt.parseInt(u64, name[prefix.len..], 10);
+        if (source == 0 or source > std.math.maxInt(i64)) return error.InvalidRequest;
+        state.similarity = .{
+            .source = source,
+            .until = state.events.until,
+            .from = switch (state.events.hours) {
+                0 => 0,
+                else => state.events.until -| state.events.hours * 3600,
+            },
+            .running = true,
+        };
+        state.phase = .similarity;
+    } else {
+        if (state.phase != .similarity or state.similarity.complete) return false;
+        if (equal(name, "similarity-pause")) {
+            state.similarity.running = false;
+        } else if (equal(name, "similarity-resume")) {
+            state.similarity.running = true;
+        } else return false;
+    }
+    similarity_generation +%= 1;
+    state.similarity.generation = similarity_generation;
+    state.similarity.busy = false;
+    state.message = .{};
+    try command(.{ .op = "disconnect" });
+    try similarityQuery();
+    return true;
+}
+
+fn similarityQuery() !void {
+    const model = &state.similarity;
+    if (!model.running or model.busy or state.hidden or !state.fullAccess()) return;
+    var source: [20]u8 = undefined;
+    var cursor_id: [20]u8 = undefined;
+    var request_id: [32]u8 = undefined;
+    const before: ?struct { time: u64, id: []const u8 } = if (model.next) |cursor| .{
+        .time = cursor.time,
+        .id = try std.fmt.bufPrint(&cursor_id, "{d}", .{cursor.id}),
+    } else null;
+    model.busy = true;
+    try post(
+        try std.fmt.bufPrint(&request_id, "similarity-{d}", .{model.generation}),
+        "/console/api/events/similar",
+        .{
+            .source = try std.fmt.bufPrint(&source, "{d}", .{model.source}),
+            .generation = model.generation,
+            .before = before,
+            .from = model.from,
+            .until = model.until,
+        },
+    );
+}
+
+fn similarityEnvelope(bytes: []const u8, id: []const u8, alloc: std.mem.Allocator) !bool {
+    const generation = try std.fmt.parseInt(u32, id["similarity-".len..], 10);
+    if (state.phase != .similarity or generation != state.similarity.generation or
+        !state.similarity.running) return true;
+    const Envelope = struct {
+        id: []const u8,
+        status: i64,
+        body: @import("similarity_state.zig").WirePart,
+        browser_time: u64 = 0,
+    };
+    const parsed = std.json.parseFromSlice(
+        Envelope,
+        alloc,
+        bytes,
+        .{ .ignore_unknown_fields = true },
+    ) catch {
+        state.similarity.busy = false;
+        state.similarity.running = false;
+        setMessage("Could not read similarity results. Resume to retry this part.");
+        return true;
+    };
+    defer parsed.deinit();
+    state.browser_time = parsed.value.browser_time;
+    try similarityResponse(parsed.value.status, parsed.value.body);
+    return true;
+}
+
+fn similarityResponse(status: i64, part: @import("similarity_state.zig").WirePart) !void {
+    const model = &state.similarity;
+    model.busy = false;
+    if (status == 401 or status == 403) {
+        state = .{ .phase = .login, .dark = state.dark };
+        setMessage("Your access changed. Sign in again to investigate incidents.");
+        return command(.{ .op = "focus", .selector = "main h1", .top = true });
+    }
+    if (status == 429) {
+        setMessage("Query allowance reached. Search resumes in one minute; you can pause it.");
+        return command(.{ .op = "timer", .id = "similarity", .delay_ms = 60000 });
+    }
+    if (status != 200) {
+        model.running = false;
+        setMessage("Search interrupted. Partial results are retained; resume to retry.");
+        return;
+    }
+    if (part.generation != model.generation) return error.InvalidResponse;
+    model.accept(part) catch {
+        model.running = false;
+        setMessage("Invalid similarity response. Partial results are retained.");
+        return;
+    };
+    model.received_at = state.browser_time;
+    state.message = .{};
+    if (model.running and !state.hidden) try command(.{
+        .op = "timer",
+        .id = "similarity",
+        .delay_ms = 250,
+    });
+}
+
+test "paused similarity rejects delayed parts and resumes with a fresh generation" {
+    sb_init();
+    state.phase = .events;
+    state.csrf = try p.Bytes(64).init("test");
+    state.events.until = 200;
+    const start = "{\"action\":\"events-similar-9007199254740993\",\"browser_time\":200}";
+    @memcpy(input[0..start.len], start);
+    sb_event(1, start.len);
+    try std.testing.expectEqual(.similarity, state.phase);
+    const old_generation = state.similarity.generation;
+    const pause = "{\"action\":\"similarity-pause\",\"browser_time\":200}";
+    @memcpy(input[0..pause.len], pause);
+    sb_event(1, pause.len);
+    try std.testing.expect(!state.similarity.running);
+    var id: [32]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&input);
+    try std.json.Stringify.value(.{
+        .id = try std.fmt.bufPrint(&id, "similarity-{d}", .{old_generation}),
+        .status = 200,
+        .body = .{ .generation = old_generation, .scanned = 64 },
+    }, .{}, &writer);
+    sb_event(2, writer.buffered().len);
+    try std.testing.expectEqual(@as(u64, 0), state.similarity.scanned);
+    const resume_search = "{\"action\":\"similarity-resume\",\"browser_time\":200}";
+    @memcpy(input[0..resume_search.len], resume_search);
+    sb_event(1, resume_search.len);
+    try std.testing.expect(state.similarity.running and state.similarity.busy);
+    try std.testing.expect(state.similarity.generation != old_generation);
+}
+
+test "inspecting a match preserves similarity results for return navigation" {
+    sb_init();
+    state.phase = .similarity;
+    state.csrf = try p.Bytes(64).init("test");
+    state.similarity = .{ .source = 1, .complete = true };
+    state.similarity.best.add(.{ .id = 2, .distance = 0.1 });
+    const inspect = "{\"action\":\"events-incident-2\",\"browser_time\":200}";
+    @memcpy(input[0..inspect.len], inspect);
+    sb_event(1, inspect.len);
+    try std.testing.expectEqual(.events, state.phase);
+    try std.testing.expectEqual(@as(u64, 2), state.events.incident);
+    const back = "{\"action\":\"similarity-return\",\"browser_time\":200}";
+    @memcpy(input[0..back.len], back);
+    sb_event(1, back.len);
+    try std.testing.expectEqual(.similarity, state.phase);
+    try std.testing.expectEqual(@as(u8, 1), state.similarity.best.count);
+    try std.testing.expect(state.similarity.complete);
 }

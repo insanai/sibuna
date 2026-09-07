@@ -9,9 +9,11 @@ pub const Phase = enum {
     security,
     events,
     challenges,
+    similarity,
 };
 pub const State = struct {
     phase: Phase = .loading,
+    similarity: @import("similarity_state.zig").Model = .{},
     challenges: @import("challenges_page.zig").Model = .{},
     events: @import("events_state.zig").Model = .{},
     message: p.Bytes(256) = .{},

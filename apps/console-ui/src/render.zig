@@ -3,6 +3,7 @@ const State = @import("state.zig").State;
 const Writer = std.Io.Writer;
 
 pub fn render(state: *const State, w: *Writer) Writer.Error!void {
+    if (state.phase == .similarity) return @import("similarity_page.zig").render(state, w);
     if (state.phase == .challenges) return @import("challenges_page.zig").render(state, w);
     if (state.phase == .events) return @import("events_page.zig").render(state, w);
     if (state.phase == .security) return @import("security.zig").page(state, w);

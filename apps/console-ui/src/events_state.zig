@@ -11,6 +11,7 @@ pub const Model = struct {
     export_ready: bool = false,
     node: u32 = 0,
     campaign: u64 = 0,
+    incident: u64 = 0,
     next: ?p.events.Cursor = null,
     cursors: [64]?p.events.Cursor = @splat(null),
     page: usize = 0,
