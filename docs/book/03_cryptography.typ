@@ -33,7 +33,7 @@ $(1-p)/p^2$. The verifier checks one candidate digest rather than performing the
 Parsing, challenge authentication, fingerprint checks, spent-state insertion, and the response
 are additional work. A primitive timing cannot be inverted into a server's flood capacity.
 
-=== Two limits of search
+=== Two Limits of Search
 
 The first is variance: a long search is not necessarily a broken worker. The second is
 parallelism: independent nonce trials can run concurrently. More cores reduce elapsed search
@@ -123,7 +123,7 @@ fn verifyOpening(base: *const Sha256, n: u8, phi: *const Label, gamma: u32,
 }
 ```
 
-=== Sampling, soundness, and their limits
+=== Sampling, Soundness, and Their Limits
 
 Consider a fixed commitment with an independently detectable bad fraction $alpha$. If each
 opening samples uniformly and independently, the chance of missing every bad location in $t$
@@ -158,7 +158,7 @@ retained levels. Total prover cost is $2^(n+1) - 1 + t (2^(n - m + 1) - 1)$ hash
 workspace, including the output proof, is under 100 KB: a browser tab and a native test share the
 same `Workspace` type.
 
-=== Parameters are not timings
+=== Parameters Are Not Timings
 
 Sibuna maps work bits to depth using $n=b-3$, clamped to the supported interval $[4,24]$.
 This is a work-scale convention, not a guarantee of equal wall-clock time between algorithms.
@@ -173,7 +173,7 @@ verifier's work, even if the dominant cost of constructing the tree stays the sa
 #exercise("3.2", [Compute the proof size at depth 17 with 16 openings. Then double the
 opening count. Which term doubles and which term remains fixed?])
 
-=== Choosing a construction
+=== Choosing a Construction
 
 The relevant comparison is a resource budget, not an algorithm's reputation. Record the
 prover's memory, the verifier's worst-case work, the proof bytes, and the assumptions needed

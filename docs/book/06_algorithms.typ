@@ -204,17 +204,7 @@ string is free to forge, so admitting it would make the gate decorative.
 }
 ```
 
-#exercise([6.1], [
-  Write the byte-class table entries needed to add a detector for LDAP injection (`)(|(`
-  patterns), and explain which existing class bits it can reuse.
-])
-
-#teach_back([
-  Explain to a reviewer why `Accept: */*` was a false positive, what structural property the
-  new SQL detector requires, and how the automaton and the tokenizer divide the work.
-])
-
-=== Worked trace: an encoded attack with a valid session
+=== Worked Trace: an Encoded Attack with a Valid Session
 
 Consider `GET /search?q=%2527%2520OR%25201%253D1` from a client holding a valid session.
 First the HTTP parser separates the path and query without copying their bytes. Local limits
@@ -230,3 +220,13 @@ is idle.
 #exercise("6.1", [Replace the payload with `O'Reilly` and then with `order=1`. Why should
 neither alone establish SQL injection? Give an example of a false positive a substring-only
 detector could produce.])
+
+#exercise([6.2], [
+  Write the byte-class table entries needed to add a detector for LDAP injection (`)(|(`
+  patterns), and explain which existing class bits it can reuse.
+])
+
+#teach_back([
+  Explain to a reviewer why `Accept: */*` was a false positive, what structural property the
+  new SQL detector requires, and how the automaton and the tokenizer divide the work.
+])

@@ -11,9 +11,28 @@
 
 #objectives([
   By the end of this chapter, you should be able to explain how one 64 KB buffer serves an
-  entire keep-alive connection, how the head and body are located without copying, and why
-  proxied requests close the connection while internal routes keep it open.
+  entire keep-alive connection, how the head and body are located without copying, why every
+  connection gets its own bounded thread, and how the proxy learns the origin's framing so a
+  proxied client connection can stay open.
 ])
+
+=== One Thread per Connection, Bounded
+
+Accept threads (`--workers`, one per CPU by default) share the listening socket. Each accepted
+connection is handed to its own thread with a one-megabyte stack, and the accept loop goes
+straight back to `accept`. The alternative, serving a connection to completion on the accept
+thread, was the first design: it measured well on a single client and badly on sixty-four,
+because sixty of them waited for a worker to finish its 256-request quota. The tail latency
+under that design was over 100 ms at 64 connections; with a thread per connection it is
+under one millisecond (Part VIII).
+
+The number of connection threads is bounded by `--max-connections` (1,024 by default). Past
+the bound the accept loop answers `503 Service Unavailable` on the new socket and closes it
+without spawning anything, and counts the event in `sibuna_overloaded_total`. Memory is
+bounded the same way: a connection thread touches about 100 KB of its stack, so the worst case
+is a known number rather than a function of how many sockets a client can open. The idle
+reaper (below) closes connections that stop sending, so a slow client cannot pin a thread
+past `--idle-timeout`.
 
 === One Buffer per Connection
 
@@ -30,7 +49,7 @@ pub fn handleConnection(stream: Io.net.Stream, io: Io, state: *AppState) void {
     var reader = stream.reader(io, &conn_buf);
     var writer_buf: [16 * 1024]u8 = undefined;
     var writer = stream.writer(io, &writer_buf);
-    // ... format the peer address once, then serve up to 256 requests
+    // ... format the peer address once, then serve up to 4096 requests
     while (served < max_requests_per_connection) : (served += 1) {
         const keep = serveOne(&conn) catch break;
         if (!keep) break;
@@ -42,9 +61,8 @@ pub fn handleConnection(stream: Io.net.Stream, io: Io, state: *AppState) void {
 The parser produces a `Request` whose method, path, query, headers, and cookies are slices of
 the buffer; the declared body is filled up to what fits and sliced after the head; then
 `toss(body_end)` advances the reader so the next keep-alive request starts cleanly. Internal
-routes are length-delimited and keep the connection open. Proxied requests stream the origin's
-response until it closes, so the daemon closes the client too: correct framing without parsing
-the origin's response.
+routes are length-delimited and keep the connection open. Proxied requests keep it open too,
+provided the origin's response is framed; the next section shows how the proxy decides.
 
 === The Proxy Head Rewrite
 
@@ -63,6 +81,61 @@ X-Sibuna-Rule: session | robots-txt | ip/cidr-trie | ...
 Bodies larger than the buffer are relayed in 16 KB chunks from the client reader to the origin
 writer before the response is streamed back. The unit test in `proxy.zig` asserts the rewrite
 drops a spoofed `X-Forwarded-For` and injects the audit fields.
+
+=== Relaying the Origin Response
+
+The first proxy streamed the origin's bytes until the origin closed and then closed the client:
+correct framing with no parsing, at the price of a new TCP connection per proxied request.
+Under a load generator that price was visible as tens of thousands of sockets in `TIME_WAIT`
+and, on loopback, exhausted ephemeral ports. The proxy now reads the origin's head (at most
+16 KB) and classifies the body by RFC 9112's rules:
+
+#api_anchor([`proxy.parseResponseHead`], [
+  Returns the status and one of four framings: no body (HEAD, 1xx, 204, 304), a
+  `Content-Length`, chunked transfer coding, or close-delimited.
+], source: "libs/net/src/proxy.zig")
+
+```zig
+pub const Framing = union(enum) { none, length: u64, chunked, until_close };
+
+pub fn parseResponseHead(head: []const u8, head_request: bool) ?ResponseHead {
+    if (head.len < 12 or !std.mem.startsWith(u8, head, "HTTP/1.")) return null;
+    const status = std.fmt.parseInt(u16, head[9..12], 10) catch return null;
+    var framing: Framing = .until_close;
+    var chunked = false;
+    // ... one pass over the header lines for Transfer-Encoding and Content-Length
+    if (head_request or status / 100 == 1 or status == 204 or status == 304) framing = .none;
+    if (chunked) framing = .chunked;
+    return .{ .status = status, .framing = framing };
+}
+```
+
+The head is re-emitted to the client with the origin's `Connection` headers replaced by
+Sibuna's own decision, and the body is relayed exactly: `streamExact` for a length, chunk by
+chunk (size line, data, trailers) for chunked coding, `streamRemaining` for the legacy case.
+Only the legacy case closes the client.
+
+=== The Origin Pool
+
+Parsing the framing also tells the proxy whether the *origin* socket can be used again: an
+HTTP/1.1 response without `Connection: close` (or an HTTP/1.0 one with `keep-alive`) whose body
+was fully consumed leaves the socket at a clean request boundary. Such sockets go into a fixed
+pool of 256 idle origin connections guarded by a spinlock; the next proxied request takes one
+instead of connecting. The measurement that forced this (Part VIII) was blunt: with a new
+origin connection per request, a four-core proxy managed about 1,400 requests per second
+before loopback ran out of ephemeral ports.
+
+A pooled socket may have been closed by the origin while idle. The proxy notices in one of two
+ways, a failed write or an end-of-stream before the first response byte, and in both cases
+nothing has reached the client yet, so it closes the socket and retries once on a fresh
+connection, never on another pooled one: after an idle period every pooled socket may be
+stale, and the first version of this retry, which took a second pooled socket, answered `502`
+to the first request after every quiet spell. The retry is allowed only when the request body was fully buffered; a body that
+was relayed in chunks cannot be sent again, and the client gets `502`. Unit tests relay fixed
+byte strings through the same function and assert the output is byte-identical apart from the
+connection header; an end-to-end test sends two proxied requests on one client socket and
+checks, through a sequence header the stub origin adds, that the second reused the pooled
+origin connection.
 
 #exercise([5.1], [
   A client sends a 200 KB upload. Trace which bytes live in the 64 KB buffer, which are relayed
@@ -209,6 +282,11 @@ load and its increment and observes zero readers: the reader notices the pointer
 releases, and retries on the new slot. The test suite includes a scenario that deadlocked when a
 test held a slot across a rebuild, which is exactly the guarantee working as designed.
 
+Each physical slot owns its own allocation arena, so a rebuild into the spare slot cannot free
+strings the active engine still references. A request copies the matched rule name into a
+bounded buffer and releases its slot *before* proxy I/O begins; otherwise a slow origin would
+hold a reader count and stall the next publication for as long as the origin took to answer.
+
 #exercise([5.2], [
   Using the GCRA theorem, compute the maximum number of requests a single client can get
   through in the first 3 seconds after being idle, for `--rate-limit 100 --rate-window 10`.
@@ -219,7 +297,3 @@ test held a slot across a rebuild, which is exactly the guarantee working as des
   Explain why an expired Robin Hood entry can be overwritten only by a key with a distance at
   least as large, using a three-slot example.
 ])
-
-Each physical slot owns its own allocation arena. Pinning and publication use sequentially
-consistent atomics. Response rule names are copied into a bounded buffer, then the reader
-releases its slot before proxy I/O. This prevents a slow origin from stalling publication.

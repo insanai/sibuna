@@ -16,4 +16,6 @@
 #include "book/08_benchmarks.typ"
 #include "book/09_operations.typ"
 #include "book/10_reference.typ"
-#include "book/11_solutions.typ"
+#include "book/11_quick_reference.typ"
+#include "book/12_solutions.typ"
+#include "book/13_glossary.typ"

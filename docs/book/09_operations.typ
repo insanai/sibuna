@@ -32,7 +32,9 @@
   [`--upstream-host`], [`127.0.0.1`], [Origin host (reverse proxy mode)],
   [`--upstream-port, -u`], [`3000`], [Origin port],
   [`--mode, -m`], [`reverse_proxy`], [`reverse_proxy` or `forward_auth`],
-  [`--workers, -w`], [CPU count], [Accept threads sharing the listening socket],
+  [`--workers, -w`], [CPU count], [Accept threads sharing the listening socket; each connection then gets its own thread],
+  [`--max-connections`], [`1024`], [Connections served concurrently; further ones are answered `503`],
+  [`--idle-timeout`], [`15`], [Seconds an idle connection may hold its thread before the reaper closes it],
   [`--trust-forwarded`], [off; on in forward-auth], [Honour `X-Forwarded-For` / `X-Real-IP` from the peer],
   [`--algorithm, -a`], [`posw`], [`posw` or `hashcash`],
   [`--difficulty, -d`], [`16`], [Work bits: Hashcash zero bits, or PoSW depth plus three],
@@ -213,7 +215,7 @@ Scores at or below $-50$ become `deny` prefixes in the trie, scores at or above 
 `allow`, and `banned_until` bounds the ban. Honeypot hits insert a $-100$ record automatically,
 so a trap sprung on one node bans the address on all of them.
 
-=== A transaction receipt makes retry safe
+=== A Transaction Receipt Makes Retry Safe
 
 The storage thread collects at most 32 pending records and builds one SQL transaction. The
 transaction inserts incidents, updates the text and vector indexes, and applies honeypot
@@ -264,6 +266,18 @@ elected leader and replicate as SQLite page images by Multi-Paxos; each node's s
 sees the committed change and rebuilds its engine. For local experiments a loopback cluster may
 use `--cluster-secret-file` (a pre-shared key) instead of certificates.
 
+=== Cluster Challenge Routing
+
+Challenge keys are bound to `--cluster-node`; keep challenge issuance and verification on the
+same member. Tokens use the shared seed and work on other members. Local rate quotas do not
+become global quotas, and process restarts clear spent sets. See the distributed benchmark
+results for loopback throughput, replicated ban propagation and one-member-loss coverage.
+
+The storage transport authenticates each node certificate using the common name
+`zaxon-node-<id>` (matching `--cluster-node`), signed by the configured CA. A certificate
+with an arbitrary common name does not authenticate a storage member. The distributed
+harness creates temporary CA-signed identities and exercises this mutual-TLS transport.
+
 == Packaging
 
 #objectives([
@@ -294,7 +308,7 @@ ReadWritePaths=/var/lib/sibuna
 WantedBy=multi-user.target
 ```
 
-#exercise([9.1], [
+#exercise([9.2], [
   Write the policy file and the `ip_reputation` rows needed so that a staging network
   (`10.20.0.0/16`) bypasses challenges, `/admin/*` demands 20 work bits of sequential work, and
   a partner scraper identified by `X-Partner-Key` is admitted at 30 requests per 10 seconds.
@@ -304,15 +318,3 @@ WantedBy=multi-user.target
   Explain to an operator why adding a row to `policies` takes effect without a restart and
   without a request ever waiting, in terms of the storage thread and the engine slots.
 ])
-
-=== Cluster challenge routing
-
-Challenge keys are bound to `--cluster-node`; keep challenge issuance and verification on the
-same member. Tokens use the shared seed and work on other members. Local rate quotas do not
-become global quotas, and process restarts clear spent sets. See the distributed benchmark
-results for loopback throughput, replicated ban propagation and one-member-loss coverage.
-
-The storage transport authenticates each node certificate using the common name
-`zaxon-node-<id>` (matching `--cluster-node`), signed by the configured CA. A certificate
-with an arbitrary common name does not authenticate a storage member. The distributed
-harness creates temporary CA-signed identities and exercises this mutual-TLS transport.

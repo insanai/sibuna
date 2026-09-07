@@ -1,11 +1,20 @@
 #import "theme.typ": *
 #import "figures.typ": *
 
-#part_page("I", [The cost of a request], [
-  Before choosing an algorithm, identify the resource it is meant to protect.
+#part_page("I", [The Cost of a Request], [
+  Before choosing an algorithm, identify the resource it is meant to protect. This chapter
+  builds the small models that every later design decision is measured against: origin work,
+  puzzle work, session amortisation, and the memory an untrusted client can make a server hold.
 ])
 
-== Admission is an economic decision
+#objectives([
+  By the end of this chapter, you should be able to write the inequality that decides whether a
+  gate pays for itself, state what a proof of work does and does not establish, derive the
+  expectation and tail of hash search, explain how sessions amortise work, and list the five
+  invariants the rest of the book maintains.
+])
+
+== Admission Is an Economic Decision
 
 Suppose an origin performs a database lookup and renders a page for each admitted request.
 Let $c_o$ be that work, $c_g$ the gate's work per request, and $r$ the arrival rate. With no gate,
@@ -26,7 +35,7 @@ small; a costly query may make it large. There is no universal requester-to-serv
   numbers are not timings. They show why the workload belongs in every performance claim.
 ])
 
-== What a proof of work establishes
+== What a Proof of Work Establishes
 
 A client puzzle establishes that somebody found an input satisfying a public verification
 rule. It does not establish humanity, identity, or good intent. A requester can rent compute,
@@ -38,7 +47,7 @@ represent many people and one requester can use many addresses. Neither a puzzle
 address is an identity oracle. Sibuna therefore keeps admission, inspection, and reputation
 as distinct decisions.
 
-== Hash search as a random variable
+== Hash Search as a Random Variable
 
 For an ideal 256-bit digest, requiring $b$ leading zero bits gives success probability
 $p=2^(-b)$ for each independent trial. Let $K$ count trials through the first success. Then
@@ -62,7 +71,7 @@ expected trials; the continuous curves use the large-work approximation $P(K>x/p
   should tolerate that spread rather than announcing failure at the expected completion time.
 ])
 
-== Sessions amortize work
+== Sessions Amortise Work
 
 Suppose a session permits $m$ requests before expiry, a puzzle costs $c_p$, verification costs
 $c_v$, and a session check costs $c_s$. Ignoring unsuccessful attempts, the amortized gate cost
@@ -74,7 +83,7 @@ cryptographic optimization.
 one million trials. What is the amortized work per request? What changes if it shares the
 session with a second process?], hint: [Distinguish the accounting model from the token's actual bindings.])
 
-== Bounded state is a second budget
+== Bounded State Is a Second Budget
 
 Moving work off the request path does not make it disappear. Let incidents arrive at rate
 $lambda$, let the storage thread persist them at average rate $mu$, and let the queue hold
@@ -91,7 +100,7 @@ The operator must monitor the lost evidence as well as the HTTP success rate.
 How long can an initially empty queue absorb the excess? Why is the answer only an approximation?],
   hint: [Use the difference of rates, then consider bursts and batch commits.])
 
-== The invariants we will carry forward
+== The Invariants We Will Carry Forward
 
 1. Untrusted requests cannot create unbounded server state.
 2. A valid admission token does not bypass an application denial.
@@ -101,3 +110,8 @@ How long can an initially empty queue absorb the excess? Why is the answer only 
 
 The rest of the book derives the mechanisms that make these statements true, and the tests
 that would reveal a violation. A fast path is useful only while those statements remain true.
+
+#teach_back([
+  State the gate inequality $c_g < (1-a) c_o$ in words, then explain why a measured
+  verification latency alone cannot tell an operator whether the gate is worth running.
+])

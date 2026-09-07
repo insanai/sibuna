@@ -30,9 +30,26 @@ replies).
 
 == Metrics
 
-Counters exposed as `sibuna_<name>_total`:
-`requests`, `allowed`, `denied`, `challenged`, `challenges_issued`, `solutions_accepted`,
-`solutions_rejected`, `rate_limited`, `banned`, `proxied`, `upstream_errors`, `parse_errors`.
+Counters exposed as `sibuna_<name>_total` in Prometheus text format:
+
+#table(
+  columns: (1.1fr, 2.4fr),
+  table.header([*Counter*], [*Incremented when*]),
+  [`requests`], [A request head was parsed],
+  [`allowed`, `denied`, `challenged`], [A policy decision was made (admitted, refused, challenge issued or reissued)],
+  [`challenges_issued`], [`/__sibuna/challenge.json` minted a challenge record],
+  [`solutions_accepted`, `solutions_rejected`], [`/__sibuna/verify` accepted or rejected a proof],
+  [`rate_limited`], [GCRA refused a request (`429`)],
+  [`banned`], [A banned address was refused, or the honeypot banned one],
+  [`proxied`, `upstream_errors`], [A request was relayed to the origin, or the origin failed (`502`)],
+  [`parse_errors`], [A malformed head was refused (`400`)],
+  [`overloaded`], [A connection beyond `--max-connections` was answered `503`],
+  [`incidents_persisted`, `incident_batches`], [Records and transactions whose commit the storage thread confirmed],
+  [`incidents_dropped`, `incident_write_failures`], [Queue pushes rejected because the ring was full, and failed commit attempts],
+)
+
+A retry can increment `incident_write_failures` without losing records, because the pending
+batch is retained. Monitor increments over an interval; totals alone are not a queue depth.
 
 == Status Codes
 
@@ -47,7 +64,8 @@ Counters exposed as `sibuna_<name>_total`:
   [413], [Solution body larger than the 64 KB connection buffer],
   [429], [GCRA limit exceeded; `Retry-After` in seconds],
   [431], [Request head over 16 KB],
-  [502], [Origin unreachable],
+  [502], [Origin unreachable, or its response head was malformed or larger than 16 KB],
+  [503], [Connection limit (`--max-connections`) reached; the socket is closed after the reply],
 )
 
 == Error Catalog
@@ -131,11 +149,3 @@ case-insensitive substring.
   Without looking, list the endpoints a reverse proxy in front of Sibuna must route to the
   daemon rather than to the origin, and say why each is needed.
 ])
-
-== Incident counters
-
-`incidents_persisted` counts records whose commit the storage thread confirmed;
-`incident_batches` counts confirmed transactions. `incidents_dropped` counts rejected queue
-pushes, and `incident_write_failures` counts failed commit attempts. Their Prometheus names
-carry the `sibuna_` prefix and `_total` suffix. A retry can increment failures without losing
-records. Monitor increments over an interval; totals alone are not a queue depth gauge.

@@ -2,6 +2,31 @@
 #import "@preview/cetz:0.5.2" as cetz
 #import "theme.typ": blue, blue_light, green, green_light, amber, amber_light, red, red_light, gray, rule
 
+// ------------------------------------------------------------ formatting
+
+#let fmt_int(v) = {
+  if v == none { return [-] }
+  let s = str(calc.round(v))
+  let out = ""
+  let i = 0
+  for c in s.rev() {
+    if i != 0 and calc.rem(i, 3) == 0 { out = "," + out }
+    out = c + out
+    i += 1
+  }
+  out
+}
+
+#let fmt_ms(us) = {
+  if us == none { [-] }
+  else if us >= 1000 { [#calc.round(us / 1000, digits: 2) ms] }
+  else { [#calc.round(us, digits: 0) µs] }
+}
+
+#let fmt_mib(kib) = if kib == none { [-] } else { [#calc.round(kib / 1024, digits: 1) MiB] }
+#let fmt_dec(v, digits: 1) = if v == none { [-] } else { [#calc.round(v, digits: digits)] }
+
+
 #let node_style = (
   fill: blue_light,
   stroke: 0.8pt + blue,
@@ -353,7 +378,7 @@
       [#label],
       [#fmt_ns(if sib != none { sib.ns_per_op_median } else { none })],
       [#fmt_ns(if sib != none { sib.ns_per_op_min } else { none }) – #fmt_ns(if sib != none { sib.ns_per_op_max } else { none })],
-      [#if sib != none { sib.ops_per_sec } else { [-] }],
+      [#fmt_int(if sib != none { sib.ops_per_sec } else { none })],
     )
   }).flatten()
   let naive = bench_find(data, "sibuna-naive", "bot_matcher", "sequential_substring_40_signatures")
@@ -390,13 +415,182 @@
       #v(4pt)
       #text(size: 8pt, fill: gray)[For scale, the same 40 bot signatures scanned by sequential substring search on this host cost #fmt_ns(naive.ns_per_op_median) against #fmt_ns(ac.ns_per_op_median) for the automaton.]
     ]
-    #v(8pt)
-    #block(width: 100%, inset: 10pt, radius: 5pt, fill: blue_light, stroke: 0.5pt + rule)[
-      #text(size: 11pt, weight: "bold")[Logarithmic latency comparison]
-      #linebreak()
-      #text(size: 8pt, fill: gray)[Lower is better · log-10 scale · blue bars are measured, red bars are the reference model]
-      #v(5pt)
-      #align(center, benchmark_log_chart())
-    ]
   ]
+}
+
+#let benchmark_chart_block() = block(
+  width: 100%, inset: 10pt, radius: 5pt, fill: blue_light, stroke: 0.5pt + rule, breakable: false,
+)[
+  #text(size: 11pt, weight: "bold")[Measured latency on a logarithmic scale]
+  #linebreak()
+  #text(size: 8pt, fill: gray)[Lower is better · log-10 scale · every bar is a measurement from the run above]
+  #v(5pt)
+  #align(center, fit(benchmark_log_chart(), 88%))
+]
+
+// ------------------------------------------------------------ lineage
+
+#let design_lineage() = fit(diagram(
+  spacing: (7mm, 9mm),
+  edge-stroke: 0.7pt + gray,
+  node-corner-radius: 3pt,
+  node((0,0), [Dwork–Naor #linebreak() 1992], ..node_style),
+  node((1,0), [Hashcash #linebreak() 1997], ..node_style),
+  node((2,0), [Juels–Brainard #linebreak() 1999], ..node_style),
+  node((3,0), [Mahmoody et al. #linebreak() 2013], ..node_style),
+  node((4,0), [Cohen–Pietrzak #linebreak() 2018], ..node_style),
+  node((5,0), [Blocki–Lee–Zhou #linebreak() 2021], ..node_style),
+  node((0,1), [Aho–Corasick #linebreak() 1975], ..good_style),
+  node((1,1), [ModSecurity, CRS #linebreak() 2002], ..good_style),
+  node((2,1), [libinjection #linebreak() 2012], ..good_style),
+  node((3,1), [Hyperscan #linebreak() 2019], ..good_style),
+  node((4,1), [GCRA #linebreak() ATM Forum 1996], ..good_style),
+  node((5,1), [Multi-Paxos #linebreak() Lamport 1998], ..good_style),
+  node((1,2), [Anubis #linebreak() interstitial], ..warn_style),
+  node((2,2), [SafeLine #linebreak() semantic WAF], ..warn_style),
+  node((4,2), [Cloudflare #linebreak() hosted edge], ..warn_style),
+  node((3,3), text(fill: white)[*Sibuna* #linebreak() Gate · Shield · Edge], fill: blue,
+    stroke: 1pt + blue, inset: 8pt, corner-radius: 3pt),
+  edge((0,0),(1,0), "-|>"), edge((1,0),(2,0), "-|>"), edge((2,0),(3,0), "-|>"),
+  edge((3,0),(4,0), "-|>"), edge((4,0),(5,0), "-|>"),
+  edge((1,1),(2,1), "-|>"), edge((0,1),(3,1), "-|>", bend: -20deg),
+  edge((1,0),(1,2), "-|>"), edge((2,1),(2,2), "-|>"),
+  edge((1,0),(3,3), "-|>", bend: -12deg), edge((4,0),(3,3), "-|>"), edge((5,0),(3,3), "-|>", bend: 20deg),
+  edge((0,1),(3,3), "-|>", bend: 25deg), edge((2,1),(3,3), "-|>"), edge((4,1),(3,3), "-|>"),
+  edge((5,1),(3,3), "-|>", bend: 15deg),
+  edge((1,2),(3,3), "-|>"), edge((2,2),(3,3), "-|>"), edge((4,2),(3,3), "-|>"),
+), 78%)
+
+// ------------------------------------------------------------ whole-product comparison
+
+#let tools_data() = json("/benchmarks/results/tools-comparison-latest.json")
+
+#let product_label(p) = if p == "sibuna-gate" { [Sibuna Gate] } else if p == "sibuna-shield" { [Sibuna Shield] } else if p == "anubis" { [Anubis] } else { [#p] }
+
+#let workload_label(w) = (
+  admitted: [Admitted (session)], challenged: [Challenged (no session)],
+  allowed_static: [Allowed static path], attack: [SQL injection with session],
+).at(w, default: [#w])
+
+#let tools_mode_table(mode) = {
+  let data = tools_data()
+  let rows = ()
+  for run in data.runs.filter(r => r.mode == mode) {
+    for (name, w) in run.workloads.pairs() {
+      let numeric = type(w.status) == int
+      let status_color = if not numeric or w.status >= 400 { red } else { green }
+      let status_text = if numeric { [#w.status] } else { [failed] }
+      let failed = "failed" in w and w.failed
+      rows.push((
+        product_label(run.product), workload_label(name),
+        text(fill: status_color, weight: "bold")[#status_text],
+        if failed { text(fill: red)[load generator #linebreak() could not connect] } else { [#fmt_int(w.requests_per_second_median)] },
+        [#fmt_ms(w.latency_us_p50_median)], [#fmt_ms(w.latency_us_p99_median)],
+        [#fmt_dec(w.cpu_us_per_request_median)],
+        [#fmt_dec(w.cores_busy_median, digits: 2)],
+        [#fmt_mib(w.peak_rss_kib_max)],
+      ))
+    }
+  }
+  set text(size: 7.6pt)
+  table(
+    columns: (1fr, 1.35fr, 0.55fr, 0.75fr, 0.65fr, 0.65fr, 0.6fr, 0.5fr, 0.6fr),
+    inset: 4pt, stroke: 0.4pt + rule,
+    fill: (col, row) => if row == 0 { blue_light } else { none },
+    table.header([*Product*], [*Workload*], [*Status*], [*req/s*], [*p50*], [*p99*], [*CPU µs/req*], [*Cores*], [*Peak RSS*]),
+    ..rows.flatten(),
+  )
+}
+
+#let tools_footprint_table() = {
+  let data = tools_data()
+  let seen = ()
+  let rows = ()
+  for run in data.runs {
+    if run.product in seen { continue }
+    seen.push(run.product)
+    rows.push((product_label(run.product), [#fmt_int(run.binary_bytes / 1024) KiB],
+      [#fmt_mib(run.idle_rss_kib)], [#fmt_mib(run.rss_kib_after_workload)]))
+  }
+  set text(size: 8pt)
+  table(
+    columns: (1fr, 1fr, 1fr, 1fr), inset: 4.5pt, stroke: 0.4pt + rule,
+    fill: (col, row) => if row == 0 { blue_light } else { none },
+    table.header([*Product*], [*Binary*], [*Idle RSS*], [*RSS after workloads*]),
+    ..rows.flatten(),
+  )
+}
+
+#let tools_not_measured_table() = {
+  let data = tools_data()
+  let rows = ()
+  for item in data.not_measured {
+    let facts = item.published.pairs().map(((k, v)) => [*#k.replace("_", " ")*: #v]).join(linebreak())
+    rows.push(([#item.product #linebreak() #text(size: 7pt, fill: gray)[#item.version_checked]], [#item.reason], facts))
+  }
+  set text(size: 7.8pt)
+  set par(justify: false)
+  table(
+    columns: (0.8fr, 1.6fr, 1.6fr), inset: 4.5pt, stroke: 0.4pt + rule,
+    fill: (col, row) => if row == 0 { blue_light } else { none },
+    table.header([*Product*], [*Why it is not measured here*], [*Published facts a reader can check*]),
+    ..rows.flatten(),
+  )
+}
+
+#let tools_meta_line() = {
+  let data = tools_data()
+  let m = data.meta
+  text(size: 8pt, fill: gray)[
+    Recorded #m.date · #m.host · #m.cpu · #m.os · revision #raw(m.git) · #data.wrk ·
+    #data.load.threads threads, #data.load.connections connections, #data.load.seconds s ×
+    #data.load.repetitions repetitions, median · origin: #data.origin · #data.anubis_version
+  ]
+}
+
+// ------------------------------------------------------------ distributed and admission results
+
+#let distributed_results_table() = {
+  let data = json("/benchmarks/results/distributed-latest.json")
+  let rows = ()
+  for run in data.runs {
+    let cluster = if run.clustered { [Yes, #run.transport] } else { [No] }
+    let rss = run.rss_kb.map(k => fmt_mib(k)).join([ #sym.slash ])
+    let ban = if "ban_propagation_ms" in run { [#calc.round(run.ban_propagation_ms, digits: 0) ms] } else { [-] }
+    let down = if "one_node_down" in run { [#fmt_int(run.one_node_down.requests_per_second_median)] } else { [-] }
+    rows.push(([#run.profile], cluster, [#run.nodes × #run.workers_per_node],
+      [#fmt_int(run.admitted.requests_per_second_median)],
+      [#fmt_int(run.challenged.requests_per_second_median)], [#rss], ban, down,
+      text(fill: if run.status == "passed" { green } else { red }, weight: "bold")[#run.status]))
+  }
+  set text(size: 7.6pt)
+  table(
+    columns: (0.6fr, 0.9fr, 0.7fr, 0.8fr, 0.8fr, 1.3fr, 0.7fr, 0.8fr, 0.6fr),
+    inset: 4pt, stroke: 0.4pt + rule,
+    fill: (col, row) => if row == 0 { blue_light } else { none },
+    table.header([*Profile*], [*Replicated*], [*Nodes × workers*], [*Admitted req/s*], [*Challenged req/s*],
+      [*RSS per node*], [*Ban propagation*], [*req/s, one node down*], [*Checks*]),
+    ..rows.flatten(),
+  )
+}
+
+#let admission_comparison_table() = {
+  let data = json("/benchmarks/results/admission-comparison-latest.json")
+  let rows = ()
+  for run in data.runs {
+    rows.push(([#product_label(run.product) (#run.token_scheme)],
+      [#fmt_int(run.valid_session.operations_per_second_median)],
+      [#fmt_int(run.unauthenticated_check.operations_per_second_median)],
+      [#fmt_int(run.challenge_bootstrap.operations_per_second_median)],
+      [#fmt_int(run.proof_verification.operations_per_second_median)],
+      [#fmt_mib(run.rss_kib_after_workload)]))
+  }
+  set text(size: 7.8pt)
+  table(
+    columns: (1.3fr, 0.9fr, 0.9fr, 0.9fr, 0.9fr, 0.8fr), inset: 4.5pt, stroke: 0.4pt + rule,
+    fill: (col, row) => if row == 0 { blue_light } else { none },
+    table.header([*Product (token)*], [*Session check ops/s*], [*Unauthenticated ops/s*],
+      [*Bootstrap ops/s*], [*Proof verification ops/s*], [*RSS*]),
+    ..rows.flatten(),
+  )
 }
