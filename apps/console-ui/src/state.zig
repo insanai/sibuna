@@ -1,5 +1,5 @@
 const p = @import("console_protocol");
-pub const Phase = enum { loading, setup, login, password, dashboard, geoip };
+pub const Phase = enum { loading, setup, login, password, dashboard, geoip, security };
 pub const State = struct {
     phase: Phase = .loading,
     message: p.Bytes(256) = .{},
@@ -25,6 +25,12 @@ pub const State = struct {
     geo_status: p.Bytes(16) = .{},
     geo_progress: u32 = 0,
     geo_importing: bool = false,
+    totp_available: bool = false,
+    totp_enabled: bool = false,
+    totp_revision: u64 = 0,
+    totp_secret: p.Bytes(32) = .{},
+    recovery_codes: [10]p.Bytes(32) = @splat(.{}),
+    recovery_count: usize = 0,
     stats: ?p.StatsSnapshot = null,
     points: [60]struct { second: u64 = 0, count: u64 = 0 } = @splat(.{}),
 };

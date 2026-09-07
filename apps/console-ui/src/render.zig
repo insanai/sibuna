@@ -3,6 +3,7 @@ const State = @import("state.zig").State;
 const Writer = std.Io.Writer;
 
 pub fn render(state: *const State, w: *Writer) Writer.Error!void {
+    if (state.phase == .security) return @import("security.zig").page(state, w);
     if (state.phase == .geoip) return @import("geoip_page.zig").render(state, w);
     if (state.phase != .dashboard) return authentication(state, w);
     try w.writeAll("<div class=\"sb-shell\">" ++
@@ -69,6 +70,32 @@ fn authentication(state: *const State, w: *Writer) Writer.Error!void {
         else => "login",
     };
     try w.print("<form id=\"{s}\">", .{form});
+    try authenticationFields(state, w);
+    try w.writeAll("<button class=\"btn btn-primary\" type=\"submit\"");
+    if (state.busy) try w.writeAll(" disabled aria-busy=\"true\"");
+    try w.print(
+        "> {s}</button></form>",
+        .{if (state.busy) "Please wait…" else switch (state.phase) {
+            .setup => "Create administrator",
+            .password => "Update password",
+            else => "Sign in",
+        }},
+    );
+    if (state.phase == .password) try w.writeAll(
+        "<button class=\"btn btn-ghost\" data-action=\"security\">" ++
+            "Two-factor authentication</button>",
+    );
+    if (state.phase == .password and !state.must_change) {
+        try w.writeAll("<button class=\"btn btn-ghost\" " ++
+            "data-action=\"dashboard\">Back to dashboard</button>");
+    }
+    if (state.phase == .setup) try w.writeAll("<p class=\"sb-note mt-4\">" ++
+        "The setup key is printed once when the console starts for the first time.</p>");
+    try w.writeAll("<p class=\"sb-note mt-6\">Protected with Argon2id and secure sessions.</p>" ++
+        "</section></main>");
+}
+
+fn authenticationFields(state: *const State, w: *Writer) Writer.Error!void {
     if (state.phase == .setup) {
         try field(w, "setup_key", "One-time setup key", "password", "", "off");
     }
@@ -97,27 +124,14 @@ fn authentication(state: *const State, w: *Writer) Writer.Error!void {
         "",
         if (state.phase == .login) "current-password" else "new-password",
     );
-    try w.writeAll("<button class=\"btn btn-primary\" type=\"submit\"");
-    if (state.busy) try w.writeAll(" disabled aria-busy=\"true\"");
-    try w.print(
-        "> {s}</button></form>",
-        .{if (state.busy) "Please wait…" else switch (state.phase) {
-            .setup => "Create administrator",
-            .password => "Update password",
-            else => "Sign in",
-        }},
+    if (state.phase == .login) try w.writeAll(
+        "<label for=\"code\">Authenticator or recovery code (if enabled)</label>" ++
+            "<input class=\"input input-bordered\" id=\"code\" name=\"code\" " ++
+            "autocomplete=\"one-time-code\" maxlength=\"32\">",
     );
-    if (state.phase == .password and !state.must_change) {
-        try w.writeAll("<button class=\"btn btn-ghost\" " ++
-            "data-action=\"dashboard\">Back to dashboard</button>");
-    }
-    if (state.phase == .setup) try w.writeAll("<p class=\"sb-note mt-4\">" ++
-        "The setup key is printed once when the console starts for the first time.</p>");
-    try w.writeAll("<p class=\"sb-note mt-6\">Protected with Argon2id and secure sessions.</p>" ++
-        "</section></main>");
 }
 
-fn field(
+pub fn field(
     w: *Writer,
     id: []const u8,
     label: []const u8,
@@ -134,7 +148,7 @@ fn field(
     try w.writeAll("\">");
 }
 
-fn message(state: *const State, w: *Writer) Writer.Error!void {
+pub fn message(state: *const State, w: *Writer) Writer.Error!void {
     if (state.message.len == 0) return;
     try w.writeAll("<p class=\"sb-error\" role=\"status\">");
     try escape(w, state.message.slice());

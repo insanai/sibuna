@@ -27,7 +27,7 @@ button, input, select, textarea { font: inherit; }
 .sb-panel svg { width: 100%; height: auto; }
 .sb-note { font-size: 12px; opacity: .65; line-height: 1.7; }
 .sb-auth { min-height: 100vh; display: grid; place-items: center; background: #eef3f9; padding: 24px; color: #14263d; }
-.sb-auth-card { width: min(100%, 430px); background: white; padding: 36px; border: 1px solid #d8e2ef; border-radius: 16px; box-shadow: 0 20px 70px #1932510a; }
+.sb-auth-card { min-width: 0; width: min(100%, 430px); background: white; padding: 36px; border: 1px solid #d8e2ef; border-radius: 16px; box-shadow: 0 20px 70px #1932510a; }
 .sb-auth h1 { font-size: 26px; font-weight: 750; margin-top: 24px; }
 .sb-auth label { display: block; font-size: 13px; margin-top: 18px; margin-bottom: 7px; }
 .sb-auth .input { width: 100%; background: white; color: #14263d; }
@@ -57,3 +57,5 @@ button, input, select, textarea { font: inherit; }
 .sb-settings-form .input, .sb-settings-form .textarea { width: 100%; }
 .sb-settings-form label { display: block; margin-top: 8px; font-size: 14px; }
 .sb-panel a { text-decoration: underline; text-underline-offset: 3px; }
+
+.sb-auth code { font-size: 13px; overflow-wrap: anywhere; }

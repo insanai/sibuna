@@ -157,6 +157,7 @@ fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
 fn action(value: std.json.Value) !void {
     const name = string(value, "action");
     const fields = field(value, "fields") orelse .null;
+    if (try securityAction(name, fields)) return;
     if (try geographicAction(name, fields)) return;
     if (equal(name, "theme")) {
         state.dark = !state.dark;
@@ -206,6 +207,7 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
     if (status_value != .integer) return;
     const status = status_value.integer;
     const body = field(value, "body") orelse return;
+    if (std.mem.startsWith(u8, id, "totp")) return securityResponse(id, status, body);
     if (equal(id, "stats")) return statsResponse(status, body, alloc);
     if (equal(id, "geoip") or equal(id, "geo-import"))
         return geoResponse(id, status, body);
@@ -458,4 +460,74 @@ test "required password changes cannot open subscriptions through navigation" {
     sb_event(1, action_json.len);
     try std.testing.expectEqual(.password, state.phase);
     try std.testing.expect(std.mem.indexOf(u8, html[0..html_length], "<svg") == null);
+}
+
+fn securityAction(name: []const u8, fields: std.json.Value) !bool {
+    if (equal(name, "recovery-saved")) {
+        state.totp_secret = .{};
+        state.recovery_codes = @splat(.{});
+        state.recovery_count = 0;
+        state.csrf = .{};
+        state.phase = .login;
+        return true;
+    }
+    if (equal(name, "security") and state.csrf.len != 0) {
+        state.phase = .security;
+        state.message = .{};
+        state.totp_secret = .{};
+        state.stats_busy = false;
+        try command(.{ .op = "disconnect" });
+        try get("totp", "/console/api/totp");
+        return true;
+    }
+    if (state.phase != .security or state.busy) return false;
+    if (!equal(name, "totp-enroll") and !equal(name, "totp-confirm")) return false;
+    state.busy = true;
+    state.message = .{};
+    const enroll = equal(name, "totp-enroll");
+    try post(
+        name,
+        if (enroll) "/console/api/totp/enroll" else "/console/api/totp/confirm",
+        .{
+            .password = string(fields, "password"),
+            .code = string(fields, "code"),
+            .revision = state.totp_revision,
+        },
+    );
+    return true;
+}
+
+fn securityResponse(id: []const u8, status: i64, body: std.json.Value) !void {
+    state.busy = false;
+    if (state.phase != .security) return;
+    if (status != 200) {
+        const message = switch (status) {
+            429 => "Too many attempts. Wait a minute and try again.",
+            else => "Could not update authentication. Check your password, code and session.",
+        };
+        setMessage(message);
+        return;
+    }
+    if (equal(id, "totp")) {
+        const available = field(body, "available") orelse .null;
+        const enabled = field(body, "enabled") orelse .null;
+        state.totp_available = available == .bool and available.bool;
+        state.totp_enabled = enabled == .bool and enabled.bool;
+        state.totp_revision = number(body, "revision");
+    } else if (equal(id, "totp-enroll")) {
+        state.totp_secret = try p.Bytes(32).init(string(body, "secret"));
+        state.totp_revision = number(body, "revision");
+    } else if (equal(id, "totp-confirm")) {
+        const codes = field(body, "recovery_codes") orelse return error.InvalidResponse;
+        if (codes != .array or codes.array.items.len != 10) return error.InvalidResponse;
+        for (codes.array.items, &state.recovery_codes) |code, *dest| {
+            if (code != .string or code.string.len != 32) return error.InvalidResponse;
+            dest.* = try p.Bytes(32).init(code.string);
+        }
+        state.recovery_count = 10;
+        state.totp_secret = .{};
+        state.csrf = .{};
+        state.geometry = null;
+        state.stats = null;
+    }
 }
