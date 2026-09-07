@@ -176,11 +176,15 @@ fn roundTrip(port: u16, raw: []const u8, out: *Response) !void {
     const addr = try Io.net.IpAddress.parse("127.0.0.1", port);
     const stream = try addr.connect(io, .{ .mode = .stream });
     defer stream.close(io);
-    var wbuf: [4096]u8 = undefined;
-    var writer = stream.writer(io, &wbuf);
-    try writer.interface.writeAll(raw);
-    try writer.interface.flush();
-    try stream.shutdown(io, .send);
+    // Admission rejection is sent before reading a request. An empty input reads that
+    // response without racing a write/shutdown against the server's immediate close.
+    if (raw.len != 0) {
+        var wbuf: [4096]u8 = undefined;
+        var writer = stream.writer(io, &wbuf);
+        try writer.interface.writeAll(raw);
+        try writer.interface.flush();
+        try stream.shutdown(io, .send);
+    }
     var rbuf: [4096]u8 = undefined;
     var reader = stream.reader(io, &rbuf);
     out.len = 0;
@@ -513,7 +517,7 @@ test "connections beyond the configured limit are answered 503 and closed" {
     defer st.config.max_connections = saved;
     const resp = try std.testing.allocator.create(Response);
     defer std.testing.allocator.destroy(resp);
-    try roundTrip(proxy_fixture.port, "GET /__sibuna/health HTTP/1.1\r\nHost: t\r\n\r\n", resp);
+    try roundTrip(proxy_fixture.port, "", resp);
     try std.testing.expectEqual(@as(u16, 503), resp.status());
     try std.testing.expect(resp.contains("connection limit"));
     st.config.max_connections = saved;
