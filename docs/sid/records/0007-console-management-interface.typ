@@ -2,7 +2,7 @@
 #let sid-title = "The Sibuna Console: A Real-Time Management Interface for Nodes and Clusters in Pure Zig"
 #let sid-state = "discussion"
 #let sid-created = "2026-09-08"
-#let sid-discussion = "Specifies the Sibuna Console, a complete management interface for Sibuna: a separate pure-Zig module started from the Sibuna CLI that serves a real-time web interface over the standard library's HTTP server and WebSockets, renders its pages from a WebAssembly module styled with daisyUI 5, keeps authentication, statistics, audit, and a GeoIP database in the embedded Zaxonlite store, manages one node or a replicated cluster, and is bound by a measured contract never to slow the data plane."
+#let sid-discussion = "Specifies the Sibuna Console, a complete management interface for Sibuna: a separate pure-Zig module started from the Sibuna CLI that serves a real-time web interface over the standard library's HTTP server and WebSockets, renders its pages from a WebAssembly module styled with daisyUI 5, keeps authentication, statistics, audit, and a GeoIP database in the embedded Zaxonlite store, manages one node or a replicated cluster, and defines performance acceptance targets that remain to be measured."
 #let sid-labels = ("console", "management", "websocket", "ui", "zaxonlite", "geoip", "cluster",)
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
@@ -33,7 +33,7 @@
 ]
 
 #let phase(name, body, state: "planned") = block(
-  width: 100%, breakable: true, inset: 10pt, radius: 6pt, stroke: 0.7pt + rule,
+  width: 100%, breakable: false, inset: 10pt, radius: 6pt, stroke: 0.7pt + rule,
 )[
   #text(weight: "bold", fill: blue)[#name]
   #h(6pt)
@@ -52,7 +52,16 @@
 #let fig(body) = context { if target() == "html" { html.frame(body) } else { body } }
 
 #let figure-box(caption, body) = figure(
-  align(center, fig(body)),
+  context {
+    if target() == "html" {
+      html.frame(body)
+    } else {
+      layout(size => {
+        let factor = calc.min(1, size.width / measure(body).width)
+        align(center, scale(factor * 100%, reflow: true, body))
+      })
+    }
+  },
   caption: text(size: 9pt, fill: gray)[#caption],
 )
 
@@ -68,7 +77,7 @@
   import cetz.draw: *
   rect((x, H - y - h), (x + w, H - y), stroke: 0.4pt + gray, fill: bg)
   if label != none {
-    content((x + 1.5, H - y - 1.6), anchor: "west", text(size: size, weight: weight, fill: ink)[#label])
+    content((x + 1.5, H - y - 1.2), anchor: "north-west", block(width: (w - 3) * 1mm)[#text(size: size, weight: weight, fill: ink)[#label]])
   }
 }
 
@@ -166,7 +175,7 @@ Sibuna is operated today through command-line flags, a JSON policy file, and SQL
 embedded Zaxonlite database. Operators of an application firewall expect a web console: a
 statistics overview with live traffic and attack charts, an attack-event browser with payload
 detail, rule editors, address groups, and system settings. This record specifies the Sibuna
-Console: a separate pure-Zig module, compiled into the same binary
+Console: a proposed first-party Zig module, compiled into the same binary
 and started from the Sibuna command line, that provides that class of interface for one node
 or a replicated cluster. The console serves HTTP and WebSockets with the Zig standard library,
 renders every page from a WebAssembly module written in Zig and styled with daisyUI 5 through
@@ -177,51 +186,56 @@ principles applied page by page: Krug's "don't make me think", support for fast 
 judgement, and support for deliberate System 2 analysis. Its defining engineering constraint
 is an isolation contract: the console may read the data plane's counters and its database, and it may write
 the database, but it never enters a request thread, never allocates on one, and never holds a
-lock a worker needs; a benchmark gate measures that the console's presence changes data-plane
-throughput and tail latency by less than one percent.
+lock a worker needs; a proposed benchmark gate checks that the console's presence degrades data-plane
+throughput by at most one percent and p99 latency by at most ten percent under the specified workloads. These are proposed acceptance targets, not measured results.
+
+#callout("Review and implementation boundary · 2026-09-08")[
+  This is a *proposed* console, not a delivery record. No `libs/serve`, `libs/console`,
+  `apps/console-ui`, console CLI, or console build steps exist in the reviewed tree.
+  Present-tense requirements below describe intended behavior unless explicitly called current.
+  Evidence was checked against `build.zig`, `build.zig.zon`, `apps/sibuna/src/server.zig`,
+  `persistent.zig`, `libs/policy/src/engine.zig`, `waf.zig`, `radix_trie.zig`, and the browser solver.
+  The toolchain is Zig 0.16.0; Zaxonlite is pinned to 0.6.1. First-party service and UI logic
+  is Zig, with browser JavaScript glue and CSS assets. The storage-enabled daemon links
+  SQLite and libc (SID 0005); this is native software for a host OS, not a freestanding
+  bare-metal kernel. Only the browser modules target `wasm32-freestanding`.
+]
 
 = Introduction and Motivation
 
 SID 0002 defines the Gate and Shield surfaces, SID 0003 the declarative policy, SID 0004 the
 inspection engine, and SID 0005 the storage layer with dynamic policies, replicated
 reputation, and forensic incident search. SID 0005 closed with an open item: "an
-authenticated HTTP administration API for policies and incident search." Every operator
-question since has pointed at the same gap. How much traffic did the gate challenge in the
+authenticated HTTP administration API for policies and incident search." Operator
+questions illustrate that gap. How much traffic did the gate challenge in the
 last hour, and how many challenges were solved? Which addresses were banned on which node,
 and did the ban propagate? Which rule fired for a denied request, and what did the payload
-look like? Is node 2 the leader, and is it healthy? The answers exist in Prometheus counters,
-the `security_incidents` table, and node logs, but assembling them needs three tools and a
-schema in one's head.
+look like? Is node 2 the leader, and is it healthy? Some answers exist in Prometheus counters and `security_incidents`; others require new instrumentation and a storage-status API. The console must distinguish measured values, sampled estimates, missing evidence, and planned capabilities.
 
-Operators arrive with expectations formed by the consoles of the firewalls, proxies, and
-monitoring systems they already run: a front page that says what is happening now, an event
-browser with a request-level detail, editors for rules and address groups, and settings for
-users, retention, and notifications. Section 3 records those expectations as a checklist of
-capabilities. This record adopts each where Sibuna has the same concept, replaces it where
-Sibuna's model differs (there are no per-site upstreams; there are surfaces, policies, and
-nodes), and adds what Sibuna can show and others cannot: a challenge funnel, cluster
-membership, campaign clustering, and a live transport.
+Sibuna operators need a front page that explains current traffic and protection outcomes,
+an investigation path from a denial to recorded evidence, and controlled editing of policies,
+address groups, users, retention, and notifications. These workflows must reflect Sibuna's
+surfaces, policies, and nodes, including challenge verification, cluster membership, and
+campaign investigation. Missing evidence must remain visibly unavailable.
 
-= What Operators Expect
+= Operator Workflows
 
-The consoles operators already know share one shape: a fixed left sidebar of pages, a top
-bar with a breadcrumb, a theme toggle and a refresh control, and a page body. Every list page
-shares one grammar: a filter bar (address, site, port, date range), an auto-refresh selector,
-a refresh button, an export button where a log is involved, and a paginated table. Attack
-payloads open in a modal with a request tab and a response tab. The capabilities operators
-look for, and what the Sibuna console does with each:
+The interface uses a labelled left sidebar, a top bar with a breadcrumb, theme and refresh
+controls, and a page body. Lists provide relevant filters, refresh controls, bounded exports,
+and pagination. Incident details distinguish recorded request evidence from absent response
+data. The following requirements describe the proposed Sibuna workflows.
 
 #table(
   columns: (0.9fr, 2.2fr, 1.9fr),
   table.header([*Expected capability*], [*What operators look for*], [*Sibuna console*]),
-  [Traffic statistics], [Period and application selectors; tiles for requests, page views, unique visitors, unique addresses, blocked, blocking addresses, 4xx and 5xx counts with rates; a 3D or 2D globe of requests or blocks by country with a ranked country list; queries per second, request-status and blocking-status sparklines; top-five bars for client operating systems and browsers, response status codes, referring applications and pages, popular applications and pages], [*Statistics · Traffic*: the same tiles in Sibuna's vocabulary (requests, admitted, challenged, denied, banned addresses, origin 4xx and 5xx from relayed response heads), the choropleth, the live timeline, and the top-five panels fed by the traffic sample ring (section 8.4)],
+  [Traffic statistics], [Period and application selectors; tiles for requests, page views, unique visitors, unique addresses, blocked, blocking addresses, 4xx and 5xx counts with rates; a 3D or 2D globe of requests or blocks by country with a ranked country list; queries per second, request-status and blocking-status sparklines; top-five bars for client operating systems and browsers, response status codes, referring applications and pages, popular applications and pages], [*Statistics · Traffic*: the same tiles in Sibuna's vocabulary (requests, admitted, challenged, denied, banned addresses, origin 4xx and 5xx from relayed response heads), the live earth globe and country table, the live timeline, and the top-five panels fed by the traffic sample ring (“Traffic sampling and top-k rankings”)],
   [Security posture], [Tiles per protection module (attacks, allow and deny, rate limiting, waiting room, anti-bot, auth); a trend chart per module with its top source addresses; a real-time event feed with a module chip, name, and time; a web-attack donut; rule-hit, attacked-page, and attacked-application rankings], [*Statistics · Security*: tiles per Sibuna module (inspection, reputation, rate limiting, challenges, bans, honeypot); trend plus top addresses per module; the live event feed from the `events` topic; the attack-category donut; attacked paths],
   [Wall display], [A full-screen "big screen" export with its own theme, title, and validity, for a wall display], [*Kiosk view*: a read-only full-screen statistics page reachable with a scoped viewer token],
   [Protected sites], [One card per protected site (defense mode, host match, port and scheme, requests and blocks today, module chips) and a detail page with basic settings, upstream, forwarding rules, routings, per-site module toggles, per-site statistics, and access and error logs], [*Nodes*: Sibuna protects one origin per process, so the unit is the node, not the site; the card carries surface, upstream, listener, and the same request and block counts],
-  [Attack events and logs], [Events grouped by source address and application with attack count, duration, and start; raw logs with action, URL, attack type, address and country, time; detail modal with the type chip, URL, address with "add to IP group" and "IP info", the JA4 fingerprint, the payload location and value, module, time, id, a "deny" stamp, request and response tabs with charset selection, and "copy as cURL"], [*Attack events*: the same two views (grouped by source, raw) and the same detail modal; Sibuna adds the rule and score, the campaign, and similar incidents by vector search; JA4 is shown only when the ingress forwards it, because Sibuna does not terminate TLS],
-  [Inspection modes], [A per-module mode matrix, each detection module set to off, audit-only, or one of several blocking strengths, with batch edit], [*Policy · Inspection*: per-category mode for Sibuna's categories (disabled, audit, enforce); there is no "balanced" versus "strict" level, since Sibuna's detectors have one calibrated threshold each],
+  [Attack events and logs], [Events grouped by source address and application with attack count, duration, and start; raw logs with action, URL, attack type, address and country, time; detail modal with the type chip, URL, address with "add to IP group" and "IP info", the JA4 fingerprint, the payload location and value, module, time, id, a "deny" stamp, request and response tabs with charset selection, and "copy as cURL"], [*Attack events*: the same two views (grouped by source, raw) and the same detail modal; Sibuna adds recorded rule evidence (numeric score only when available), the campaign, and similar incidents by vector search; JA4 requires new bounded capture from an allowlisted ingress that overwrites spoofed headers; Sibuna does not terminate TLS],
+  [Inspection modes], [A per-module mode matrix, each detection module set to off, audit-only, or one of several blocking strengths, with batch edit], [*Policy · Inspection*: per-category mode for Sibuna's categories (disabled, audit, enforce); the current engine has a global WAF switch and fixed structural detectors; category modes are new work, and a numeric score is not available for every detector],
   [Allow and deny rules], [Events and logs of rule hits; custom rules in whitelist and blacklist tabs with order, id, status, type, name, detail, hits today, creator, and update time], [*Policy · Rules* and *IP groups*: the ordered rules table with the same columns, and reputation prefixes as groups],
-  [Rate limiting], [Per-address records with the triggering reason ("n requests within m seconds"), the action taken (an anti-bot challenge for a period), blocked count, start, and an unblock-all button; settings], [*Statistics · Security* rate-limit panel and *Policy · Limits*: GCRA is per node and configured by flags today; the console shows hits and offers the rate settings per rule in Phase 2],
+  [Rate limiting], [Per-address records with the triggering reason ("n requests within m seconds"), the action taken (an anti-bot challenge for a period), blocked count, start, and an unblock-all button; settings], [*Statistics · Security* rate-limit panel and *Policy · Limits*: GCRA is per node and configured by flags today; the console shows existing limit counters; per-rule rate settings require a separately validated Phase 2 extension],
   [Waiting room], [Per-application queue statistics: active users allowed, waiting, peak, average wait, bounce rate], [Not adopted: Sibuna's answer to overload is the proof-of-work challenge and the `503` connection bound, both already visible],
   [Anti-bot challenges], [Per-address challenge records with hits and verified counts, duration, start; settings], [*Challenges*: the funnel and solve-time histogram, plus per-address records of issued, accepted, and rejected solutions with the rejection cause],
   [Site authentication], [Login records per account, application, method, result, address, time; single sign-on centre; settings], [Not adopted as a data-plane feature; the console's own user and audit pages cover console access],
@@ -230,28 +244,23 @@ look for, and what the Sibuna console does with each:
   [System log], [Console activity log], [*Audit*],
 )
 
-Three of these expectations shaped the design more than any single page. First, consoles
-typically poll (auto-refresh off by default) and reserve a live feed for one panel; Sibuna
-makes every page live over one WebSocket and drops polling entirely. Second, statistics pages
-are dominated by traffic analytics (page views, visitors, referrers, popular pages) that a
-firewall can only compute by sampling the request stream; Sibuna adopts them through a
-bounded sample ring rather than by logging every request. Third, the detail modal is the
-page operators spend the most time in; Sibuna's version keeps the familiar layout and adds
-what its engine knows: the rule, the score, the campaign, and the nearest incidents.
-
+Authenticated pages share one WebSocket with snapshot/delta streaming; the backend polls
+storage and health endpoints. Bounded request samples feed request-level rankings. Page views
+and unique visitors cannot be inferred accurately from these samples and are excluded unless
+separately instrumented. Incident details expose recorded rules, available scores, campaign
+membership, and similar incidents while marking missing or truncated evidence.
 
 The design follows the approach the zenfmt project uses for its server interface: a bounded
 service kernel over the standard library, an application layer that composes routing,
 authentication, and handlers as straight-line code, a WebAssembly interface module in Zig
 that owns every page and all interface state, a fixed JavaScript glue that only moves events
-in and commands out, and vendored daisyUI styling. Sibuna's console is larger than zenfmt's
-(eight pages, live streams, a cluster) so the module structure below is deliberately more
+in and commands out, and vendored daisyUI styling. Sibuna's console has eight navigation sections, live streams and a cluster, so the module structure below is deliberately more
 granular, and the transport is WebSockets rather than server-sent events because the
 interface also sends commands (subscribe, filter, acknowledge) on the same connection.
 
 = Design Principles
 
-Three principles govern every page, and section 4.5 audits each page against them. They are
+Three principles govern every page, and the principle audit audits each page against them. They are
 not decoration: each yields testable rules (R1 to R18) that the verification section checks.
 
 == Don't make me think
@@ -263,8 +272,7 @@ operator is often looking at it under pressure, the rule becomes:
 - *R1 One question per page.* Every page answers one question stated in its title: "What is
   happening?" (Statistics), "What was attacked and why?" (Attack events), "Are the puzzles
   working?" (Challenges), "What are the rules?" (Policy), "Is the cluster healthy?" (Nodes).
-  A page never asks the operator a question of its own; defaults answer them (all nodes,
-  last 24 hours, live on).
+  Observation pages have useful defaults (all nodes, last 24 hours, live on); mutation forms explicitly ask for the information and confirmation they need.
 - *R2 The trunk test.* From any page, without scrolling, the operator can name the product,
   the cluster and node, the page, the section within it, and the way back: the top bar and
   breadcrumb carry all five, always in the same place.
@@ -279,27 +287,25 @@ operator is often looking at it under pressure, the rule becomes:
   banners, marketing copy, and explanations of what a firewall is do not appear; the one
   explanatory line a panel may carry links to the book.
 - *R6 Nothing moves that does not need to.* Tiles and charts update in place at 1 Hz with
-  no animation; new event rows fade in at the top and never push a row the operator is
-  reading; layout never reflows on data.
+  no animation; new rows accumulate behind a “Show new events” control whenever the reader has scrolled or focused a row; layout never reflows on data.
 - *R7 Errors are Elm-style.* A failed action names what happened, why, and what to do, in
   the diagnostic voice the daemon already uses, inline where the action was taken.
 
 == Fast judgement: System 1
 
 Kahneman's System 1 is fast, automatic, and pattern-driven; an operator glancing at the
-console should be able to tell "normal" from "not normal" in under a second and be right.
+console should be able to notice a potential anomaly quickly; these are usability goals to test with operators, not guarantees of correct judgement.
 The interface therefore invests in preattentive cues and consistency:
 
 - *R8 One colour per decision, everywhere.* Admitted is green, challenged is amber, denied is
   red, banned is dark red, informational is the single blue accent; the same hue in tiles,
-  chart series, badges, and rows, in both themes. No other meaning is ever given to these
-  colours.
+  chart series, badges, and rows, in both themes. Decision badges keep these meanings; health uses separate labelled status icons, and charts never rely on colour alone.
 - *R9 Deviation, not magnitude.* Each tile shows its value and a small marker of how it
   compares with the same window yesterday (an arrow with a percentage), because a raw count
   is meaningless at a glance and a change is not. A tile whose deviation exceeds a threshold
-  gets a tinted background, and the page keeps a quiet look otherwise.
+  gets a tinted background. Compare equal-duration windows with matching coverage; zero prior counts show “new”, and absent history shows “not available”, never an infinite percentage.
 - *R10 Stable positions.* A panel is always in the same place at the same size; rankings keep
-  slots and animate bar length only; the map keeps its projection. Recognition works by
+  slots and update bar length without animation; the map keeps its projection. Recognition works by
   location as much as by shape.
 - *R11 Sparklines beside numbers.* Every count that has a history shows a 60-point
   sparkline next to it, so a spike is seen before it is read.
@@ -315,9 +321,8 @@ System 2 is slow, effortful, and analytic; it is what an operator engages when d
 whether to ban a network, change a rule, or declare an incident. The console supports it by
 making evidence explicit and decisions reversible:
 
-- *R14 Evidence for every conclusion.* A denial always shows the rule, the score and its
-  terms, the decoded payload with the matched structure highlighted, and the raw request;
-  a challenge shows its parameters and outcome; a ban shows who or what caused it and when
+- *R14 Evidence for every conclusion.* A denial shows its recorded reason and evidence; score terms, matched spans and raw request fields appear only when captured, otherwise “not recorded”;
+  a challenge shows its parameters and recorded outcome; a ban shows who or what caused it and when
   it expires. No verdict appears without its reason.
 - *R15 Depth on demand.* Pages are layered: glance (tiles), scan (tables), study (detail
   modal), investigate (campaign members, nearest incidents, the same address across nodes).
@@ -327,10 +332,9 @@ making evidence explicit and decisions reversible:
   side by side so the operator never holds one in memory.
 - *R17 Simulate before you commit.* The policy tester evaluates a synthetic request against
   the current policy; a rule edit shows a diff of what will change and which recent events
-  it would have matched, before Save.
+  it could have matched from retained inputs, before Save. Truncated or absent inputs make a replay inconclusive; the tester does not reproduce live rate-limit, ban, or token state.
 - *R18 Reversible by default.* Bans and allows carry a duration and an "undo" for thirty
-  seconds; rule edits are versioned and can be reverted from the audit page; deletion needs
-  a typed confirmation and is the only action with one.
+  seconds; rule edits are versioned and can be reverted from the audit page; deletion needs a typed confirmation; drain and broad country changes require an impact preview and confirmation. Undo is a new versioned mutation, not deletion of the audit record.
 
 == Elegance
 
@@ -352,7 +356,7 @@ laptop and rows on a wall display.
   table.header([*Page*], [*Don't make me think*], [*System 1*], [*System 2*]),
   [Statistics · Traffic], [Answers "what is happening?" with defaults: all nodes, 24 h, live. No selectors demand attention until needed (R1, R2).], [Six tiles with deviation markers and sparklines; one stacked timeline; decision colours throughout (R8–R11).], [Period comparison toggle; every tile drills into its table; sampled panels say "sampled" (R15, R16).],
   [Statistics · Security], [One row of module tiles, one trend per module, the live feed on the right; the same layout as Traffic so the eye does not relearn (R3, R10).], [Trends share a y-axis so a spike in one module reads against the others; the feed uses module icons and decision colours (R8, R13).], [Each trend opens its module's events filtered to the period; the feed row opens the detail modal (R14, R15).],
-  [Attack events], [Two views named for what they group (by source, raw); one filter bar; one detail control (R1, R4).], [Category chips coloured by decision; country flags; new rows fade in at the top (R6, R8).], [The detail modal is the System 2 workbench: rule, score terms, decoded payload, raw request, campaign, nearest incidents, and the actions with durations and undo (R14, R17, R18).],
+  [Attack events], [Two views named for what they group (by source, raw); one filter bar; one detail control (R1, R4).], [Category chips coloured by decision; country flags; new rows wait behind the reader-controlled update button (R6, R8).], [The detail modal is the System 2 workbench: rule, score terms, decoded payload, raw request, campaign, nearest incidents, and the actions with durations and undo (R14, R17, R18).],
   [Challenges], [The funnel is the page; nothing else competes with it (R1, R5).], [Funnel stages in decision colours; the histogram shape shows a slow-device tail at a glance (R8, R11).], [Per-cause rejection tables; difficulty bump timeline against load; per-rule parameters editable with a preview of expected solve time (R14, R17).],
   [Policy], [Rules read top to bottom in evaluation order, with the order shown as a number and drag handles; one editor (R3, R4).], [Type chips in decision colours; hits-today sparkline per rule; disabled rules greyed (R8, R11).], [Tester, diff before save, "would have matched" against recent events, versions with revert, inspection-mode matrix with a one-line consequence per mode (R16–R18).],
   [Nodes], [One card per node; leader marked; unhealthy first (R1, R10).], [Health as colour plus word; sparklines for rate, memory, CPU (R8, R11).], [Per-node drill to its statistics; replication lag history; drain with a confirmation that states what it does (R14, R18).],
@@ -362,14 +366,14 @@ laptop and rows on a wall display.
 = Terminology and Scope
 
 - *Data plane*: the Sibuna daemon's request path (accept, parse, classify, verify, proxy),
-  its worker and connection threads, and its lock-free tables.
+  its worker and connection threads, and its bounded tables (including the sharded, locked spent set).
 - *Storage thread*: the existing thread of SID 0005 that owns the Zaxonlite node and rebuilds
   engine slots.
 - *Console*: the management application specified here: its listener, threads, module, and
   tables.
 - *Kernel*: the console's bounded HTTP and WebSocket service layer (`libs/serve`).
 - *Interface module*: the `wasm32-freestanding` Zig module that renders pages in the browser.
-- *Glue*: the fixed JavaScript file that loads the module, opens the WebSocket, forwards
+- *Glue*: the fixed JavaScript file that loads the module, opens the WebSocket only after authentication, forwards
   events, and executes commands.
 - *Topic*: a named real-time stream (`stats`, `events`, `nodes`, `policy`, `challenges`).
 - *Node*: one Sibuna process; *cluster*: the Zaxonlite member set of SID 0005.
@@ -388,17 +392,16 @@ licensing, and mobile-native clients.
 - A complete management surface for everything Sibuna does: statistics, events, challenges,
   policy, reputation, nodes, GeoIP, users, tokens, pages, retention, notifications, audit.
   The console is complete on its own terms: one product, one feature set, no editions.
-- Designed by three principles, applied and audited per page (section 4): don't make me think;
+- Designed by three principles, applied and audited per page (Design Principles): don't make me think;
   fast, glanceable judgement (System 1); deliberate, evidence-backed analysis (System 2).
 - Elegant: one accent colour, one type scale, one spacing unit, restrained motion, and nothing
   on a page that does not earn its place.
-- Real-time by default: the overview and the event list update within one second of the data
-  plane's counters and within one storage tick of a committed incident.
-- Cluster-aware: one console shows every member; policy and reputation edits made on any node
+- Real-time by default: the overview targets 1.25-second counter-to-display updates; incident delivery is subject to storage backlog, commit time, polling, and broadcast delay.
+- Cluster-aware: one console shows configured members and marks unobserved members; policy and reputation edits made on any node
   reach every node through the replicated tables of SID 0005.
 - Pure Zig: the kernel, the application, and the interface module are Zig; the only
   JavaScript is the fixed glue; the only CSS is daisyUI 5 plus first-party components.
-- The isolation contract of section 6.2, with a measured gate.
+- The isolation contract in “Process model and the isolation contract”, with a measured gate.
 - Every build product, including the stylesheet built by npm, is produced by `zig build`.
 
 == Non-Goals
@@ -428,13 +431,12 @@ licensing, and mobile-native clients.
   edge((0,0), (2,0), "-|>", [starts; counters]),
   edge((2,0), (2,1), "-|>"),
   edge((2,0), (3.2,0), "-|>", [embeds]),
-  edge((2,0), (1,2), "-|>", [SQL]),
+  edge((2,0), (0,0), "-|>", [storage/control mailbox], bend: -25deg),
   edge((0,0), (1,2), "-|>", [SQL]),
   edge((2,0), (0,0), "--|>", [atomic loads], bend: 30deg),
 )
 
-#figure-box([Modules and their dependencies. Solid arrows are imports; the dashed arrow is the
-only path from the console into the data plane, and it is read-only.],
+#figure-box([Proposed modules and runtime interfaces. The daemon owns database access; console work uses its bounded mailbox. Dashed telemetry reads do not take engine or request-state locks.],
 scale(72%, reflow: true, fit-diagram()))
 
 
@@ -446,45 +448,59 @@ scale(72%, reflow: true, fit-diagram()))
   [`libs/serve/src/`], [`kernel.zig` (listener, connection slots, deadlines, drain), `router.zig` (comptime route table), `context.zig` (request context, response helpers), `websocket.zig` (upgrade, frame loop, per-connection send queue), `assets.zig` (embedded files with content-addressed paths), `json.zig` (bounded writer and reader), `ratelimit.zig`, `log.zig`],
   [`libs/console/src/`], [`app.zig` (composition and `handle`), `auth.zig` (Argon2id, sessions, roles, tokens, CSRF), `api/` (`stats.zig`, `events.zig`, `policy.zig`, `reputation.zig`, `nodes.zig`, `challenges.zig`, `settings.zig`, `users.zig`, `audit.zig`, `geoip.zig`), `telemetry/` (`sampler.zig`, `minutes.zig`, `funnel.zig`), `hub.zig` (topics, ring, subscribers), `geoip/` (`loader.zig`, `ranges.zig`, `lookup.zig`), `cluster/` (`members.zig`, `probe.zig`), `schema.zig`, `retention.zig`],
   [`apps/console-ui/src/`], [`main.zig` (ABI, state, event dispatch), `render/` (one file per page, plus `components.zig` for the `sb-*` components and `charts.zig` for SVG), `protocol.zig` (frames shared with `libs/console` by import), `main_test.zig` (golden renders)],
-  [`apps/console-ui/web/`], [`shell.html`, `glue.js`, `tailwind.css` (source), `package.json`, `assets/console.css` (built, committed with digest), `assets/world-110m.svg` (committed)],
+  [`apps/console-ui/web/`], [`shell.html`, `glue.js`, `tailwind.css` (source), `package.json`, `assets/console.css` (built, committed with digest), `assets/world-110m.bin` (committed)],
   [`apps/sibuna/src/console_start.zig`], [Flag parsing for `--console*`, the `sibuna console` subcommands, thread start and stop],
 )
 
-The three console libraries import `core`, `crypto`, `policy`, and `store` for types they
+The two libraries and the UI module may import `core`, `crypto`, `policy`, and `store` for types they
 share with the data plane (rule structures, address parsing, the incident record), and import
-nothing from `apps/sibuna`. The daemon imports `console` and passes it three things at start:
-a pointer to its `Metrics`, a pointer to the storage layer's database handle factory, and the
-`AppState` publication hook used to rebuild engines (already exercised by the storage thread).
+nothing from `apps/sibuna`. The daemon imports `console` and supplies narrow, library-owned interfaces for metric
+snapshots and a bounded storage-command mailbox. `Metrics` and `IncidentRecord` currently
+live in the application and must be extracted or adapted; no database-handle factory exists.
+The storage thread remains the sole owner of `Persistent`, its allocator and database facade.
+Console SQL work is serialized through that mailbox with priorities, result-size bounds and
+per-tick quotas; it must not call `rebuild` or `publishEngine` itself. Heavy forensic queries
+need validated cancellation/deadlines or a separately owned read snapshot before release.
+An arbitrary SQLite connection must not bypass Zaxonlite's commit/replication path.
+
+
 
 == Process model and the isolation contract
 
 The console runs on its own listener, its own bounded thread pool, and its own allocator
-arena. It shares three things with the data plane: the process, the Zaxonlite database, and
-the `Metrics` counters. The contract is stated as invariants and each has a test.
+arena. It shares the process and its CPU/cache/memory bandwidth with the data plane, plus controlled storage, metric, telemetry and command interfaces. The contract is stated as invariants and each has a test.
 
 #invariant([I1], [No console code executes on a data-plane worker or connection thread. The
   daemon's `dispatch` has no console branch; console routes live on the console listener.])
 #invariant([I2], [The console reads data-plane state only through atomic loads of `Metrics`
-  and through SQL against the database. It never takes a shard spinlock, an engine slot, or
-  the incident ring's consumer side.])
+  and through bounded storage requests, plus the explicitly proposed telemetry rings. It never takes a shard spinlock, pins an engine slot, or consumes
+  the incident ring.])
 #invariant([I3], [The console writes data-plane state only through the database. A policy or
   reputation change is a committed row; the storage thread's existing tick observes the
   revision and publishes a rebuilt engine exactly as SID 0005 specifies.])
-#invariant([I4], [Console memory is bounded at start: the connection slots, the WebSocket ring,
+#invariant([I4], [Console-owned memory has explicit capacity and admission bounds: the connection slots, the WebSocket ring,
   the subscriber table, the sampler's minute buffers, and the GeoIP range array have fixed
-  capacities recorded in `console.Budget`, and the sum is printed in the startup banner.])
-#invariant([I5], [Console CPU is bounded by construction: the sampler runs at 4 Hz, broadcasts
+  capacities recorded in `console.Budget`, and the sum is printed in the startup banner, including thread stacks, request bodies, authentication workspaces and double-buffered GeoIP reloads. Database/cache memory is measured separately as part of process RSS.])
+#invariant([I5], [Console work is rate- and size-limited: the sampler runs at 4 Hz, broadcasts
   are coalesced to 1 Hz per topic, event fan-out is capped at 64 records per second per
-  subscriber, and the GeoIP loader runs at a low priority in one thread with a bounded batch.])
-#invariant([I6], [A console failure (panic in a handler, database error, exhausted slots) is
-  contained: handlers return errors that become responses, the listener thread restarts the
-  accept loop, and the data plane is unaffected. The reverse holds too: with the console
-  compiled out (`-Dconsole=false`) the daemon has no code path that references it.])
+  subscriber, and the GeoIP loader uses bounded batches. This does not provide a hard CPU-time bound: SQL, hashing, scheduling and shared cache/memory bandwidth still require measurement.])
+#invariant([I6], [Recoverable handler, database and capacity errors fail console operations
+  without stopping the request listener. A Zig panic, memory corruption, or process OOM can
+  terminate both planes: a shared process is not a fault-isolation boundary. A separate
+  console process is required if crash isolation becomes a requirement.])
 
-The measured form of the contract is the gate in section 17: `benchmarks/tools.py` gains a
-`--console` case that runs the admitted workload with no console, with the console idle, and
-with eight live dashboards subscribed to every topic; the three medians must lie within one
-percent of each other and the p99 within ten percent.
+I3 has two explicit proposed control exceptions: drain and clear-local-bans use a bounded,
+authenticated command mailbox consumed by data-plane control code. Console threads never
+mutate ban-table internals. Both commands require an audit intent, operation id and completion
+record, since a local effect and a database transaction cannot be committed atomically.
+
+The impact gate compares console compiled out, compiled in but disabled, idle, and eight
+active dashboards. Measure admitted, challenge, denied/incident-heavy and policy-reload
+workloads, including authentication and GeoIP reload contention. Use repeated interleaved
+runs on a declared host, fixed warm-up/duration and traffic mix, and report uncertainty.
+Throughput loss must be ≤ 1% and p99 increase ≤ 10% relative to the corresponding baseline;
+inconclusive/noisy runs do not establish compliance. No console benchmark has yet run.
+
 
 == Startup from the command line
 
@@ -497,20 +513,18 @@ sibuna console geoip update --data-dir ...                    # fetch and load t
 sibuna console token create --role operator ci --data-dir ... # API token for automation
 ```
 
-`--console` requires `--data-dir`: users, sessions, and statistics live in the database, and a
+`--console` requires `--data-dir` and storage support (`-Dconsole=true` with `-Dstorage=false` is a build error; the console default follows storage): users, sessions, and statistics live in the database, and a
 console without persistence would lose its administrator on restart. The console listens on
-loopback by default; binding elsewhere without `--console-behind-proxy` (which turns on
-`Secure` cookies and trusts `X-Forwarded-For` from the ingress) prints a warning naming the
-risk. In a cluster every member may run a console; each shows the whole cluster, because the
+loopback by default; binding elsewhere without `--console-behind-proxy` (which requires an explicit trusted-proxy CIDR list and canonical HTTPS console origin) is refused. Only allowlisted socket peers may supply forwarded address or scheme headers; the ingress strips client-supplied copies. Proxy mode enables `Secure` cookies. HTTP on loopback is development-only. CLI examples are proposed. Offline bootstrap takes an exclusive data-directory lock; commands against a running node use the authenticated console API, never a second embedded node over the same directory. In a cluster every member may run a console; each shows the whole cluster, because the
 tables it reads are replicated, and each probes the others' health endpoints directly.
 
 = The Serve Kernel
 
 `libs/serve` is a bounded service kernel over `std.http.Server` and `std.Io`. It is the
-console's HTTP substrate and is written to be reusable by a future service; it knows nothing
+console's HTTP substrate, not an OS kernel, and is written to be reusable by a future service; it knows nothing
 about firewalls.
 
-- *Listener and slots.* One acceptor thread; `max_slots` (default 64, at most 256) connection
+- *Listener and slots.* One acceptor thread; `max_slots` (default 80, at most 256; reserve at least 16 slots for HTTP and control traffic) connection
   threads with fixed 16 KB receive and send buffers. A head larger than the receive buffer is
   `431`; a full slot table is `503` with `Retry-After`. Deadlines (head 10 s, idle 60 s, body
   30 s) are enforced by a watchdog thread that shuts down expired sockets, the same mechanism
@@ -518,154 +532,197 @@ about firewalls.
 - *HTTP.* `std.http.Server.receiveHead` parses the request; `Request.respond` and
   `respondStreaming` write responses. Bodies are limited to 1 MB except the policy import
   route (8 MB). Every response carries `Cache-Control`, `Content-Security-Policy`
-  (`default-src 'self'; connect-src 'self' wss:`; no inline script; styles from the embedded
-  sheet only), `X-Content-Type-Options`, `Referrer-Policy`, and `X-Frame-Options`.
-- *WebSocket.* `Request.upgradeRequested` and `respondWebSocket` from the standard library
-  perform the handshake; the kernel's `websocket.zig` owns the frame loop on the connection
-  thread: it reads small text messages (at most 4 KB, the standard library's
-  `readSmallMessage` bound), answers pings, and writes outbound frames from a per-connection
-  bounded queue filled by the hub. Messages larger than the input buffer close the socket
-  with status 1009.
+  (`default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'`; add only the exact console WebSocket origin if required by a supported browser), `X-Content-Type-Options`, `Referrer-Policy`, and `X-Frame-Options`.
+- *WebSocket.* `Request.upgradeRequested` and `respondWebSocket` provide the Zig 0.16
+  handshake/writer primitives. `readSmallMessage` is bounded by its input buffer, not a
+  built-in 4 KB constant, and rejects fragmentation. The kernel must implement and test
+  RFC 6455 fragmentation, masking, RSV/opcode checks, UTF-8, control-frame limits and close
+  handling; cap a reassembled client message at 4 KiB (1009 on overflow). Each connection
+  has independent read progress and one serialized writer, so blocked reads do not prevent
+  unsolicited statistics delivery. Ping/pong and close frames share that writer. Bound
+  write time, close idle peers, and account both tasks/threads in the memory budget.
+
+
 - *Assets.* Embedded files (`shell.html`, `glue.js`, `console.css`, the interface module,
-  `world-110m.svg`) are served under `/console/assets/<sha256-prefix>/<name>` with
+  `world-110m.bin`) are served under `/console/assets/<sha256-prefix>/<name>` with
   `Cache-Control: immutable`; the shell's placeholders resolve at start to those paths, so a
-  new build never serves a stale module from a browser cache.
+  new build names its assets by content; serve the shell with `no-cache`, immutable assets with `max-age=31536000`, and sensitive API responses with `no-store`.
 - *Router.* A comptime table of `(method, pattern, role, handler)`; patterns are literal
   segments with at most two `{param}` segments; matching is a bounded loop with no
   allocation. Unknown paths under `/console/` return the shell so the interface module can
   route client-side; unknown paths under `/console/api/` return a JSON `404`.
 - *Rate limits.* Token buckets keyed by client address for login (5 per minute) and by
-  session for mutations (60 per minute); reads are unlimited within the slot budget.
+  session for mutations (60 per minute); reads have per-session/global query, export and result-size budgets as well as the slot budget. Idle/read deadlines also cover slow response writers.
 
 = Authentication and Authorization
 
-- *Passwords* are hashed with Argon2id at the OWASP interactive parameters (`t=2`,
+- *Passwords* are hashed with Argon2id at the OWASP minimum recommended parameters (`t=2`,
   `m=19 MiB`, `p=1`) and stored as PHC strings; verification runs on the console's thread,
-  never the data plane's, and the login route is rate limited so the 19 MiB cost cannot be
-  weaponised against the console host.
+  never the data plane's, with a global single-verifier semaphore and bounded wait queue in addition to per-IP and per-account limits. Reserve the 19 MiB workspace and enforce supported PHC parameter maxima before verification; an IP limit alone cannot bound distributed login load.
 - *Sessions* are 256-bit random tokens stored only as SHA-256 digests in `console_sessions`
   with an absolute lifetime (12 h) and an idle lifetime (30 min), delivered in an `HttpOnly;
   SameSite=Strict; Path=/console` cookie, `Secure` when behind a proxy. A session records the
-  client address and User-Agent; a mismatch invalidates it, the same binding the data plane
-  applies to its own tokens.
+  client address and User-Agent for audit; binding is an explicit console policy independent of data-plane proof tokens. Role changes, disablement and password resets revoke sessions and applicable tokens through an authorization revision. Privileged actions fail closed when current authorization cannot be established from the authoritative store.
 - *Roles* form the order `viewer < operator < administrator`. Viewers read; operators edit
   policy, reputation, and bans; administrators manage users, tokens, GeoIP, retention, and
   settings. Every route declares its minimum role in the router table.
-- *Cross-site request forgery* is prevented by the strict cookie plus a double-submit token:
+- *Cross-site request forgery* is prevented by the strict cookie plus a session-bound synchronizer token:
   the interface module receives a CSRF token at login and sends it in `X-Console-CSRF` on
   every mutation; the WebSocket upgrade is accepted only when `Origin` matches the console's
-  own host.
+  configured canonical origin (scheme, host and port), not the untrusted Host header. Cookie-authenticated mutations require the token and same-origin checks; bearer-only API calls do not require a CSRF cookie. WebSocket commands are subscriptions only, with role/expiry/revocation rechecked during the stream.
 - *Two-factor authentication* is optional per user and required for administrators when
   the console is bound off loopback: time-based one-time passwords (RFC 6238, HMAC-SHA1 from
   the standard library) enrolled through a QR code rendered by the interface module, with
-  ten single-use recovery codes stored as digests.
+  ten single-use recovery codes stored as digests. Encrypt the TOTP seed under a separately provisioned console key; atomically consume recovery codes and accepted TOTP time steps to prevent replay across nodes. Enrollment and recovery endpoints are rate limited. This is Phase 1 for any off-loopback release.
 - *API tokens* for automation are opaque 256-bit values with a printable id, a role, and an
   optional expiry, presented as `Authorization: Bearer`; they are hashed like sessions.
 - *Audit.* Every mutation writes one `console_audit` row (actor, role, action, subject,
-  before and after summaries, address) in the same transaction as the change.
-- *Bootstrap.* With no users in the database the console serves only the setup page, which
-  accepts the one-time password printed by `sibuna console init-admin` and forces a change.
+  before and after summaries, address) in the same transaction as a database change. Redact passwords, token values, TOTP seeds, cookies and webhook secrets. Local effects use the intent/completion protocol above; exports and authentication outcomes also emit audit events.
+- *Bootstrap.* `init-admin` atomically creates the first administrator with `must_change=true` and an expiring one-time password digest. Before initialization, HTTP serves only a “run init-admin locally” notice. A must-change account can only change its password and enroll required TOTP; consume the bootstrap credential and rotate the session atomically.
 
 = The Telemetry Pipeline
 
-The console's numbers come from three sources, none of which touches a worker thread.
+The pipeline combines existing counters and persisted incidents with proposed bounded
+instrumentation. “Exact” below means exact for the instrumented scope, not every connection.
 
 == The sampler
 
-A console thread wakes every 250 ms, loads every `Metrics` counter with `.monotonic` atomics,
-computes deltas against the previous sample, and appends one record to a per-node ring of
-3,600 one-second buckets (an hour). Once a minute it folds the last sixty seconds into a
-`traffic_minutes` row: requests, allowed, denied, challenged, challenges issued, solutions
-accepted and rejected, rate limited, banned, proxied, upstream errors, overloaded, incidents
-persisted and dropped, and the node's resident set and CPU seconds read from the operating
-system. Rows are keyed by node id and minute, so in a cluster every console sees every node's
-minutes after replication, and a node that restarts leaves a gap rather than a corrupt
-series.
+At 4 Hz the sampler reads `Metrics` using monotonic atomic loads; it sums four deltas into
+one second bucket and keeps 3,600 buckets. Loads are not a simultaneous snapshot. Persist
+minute deltas with node id, boot id, coverage and completeness. Use monotonic time for
+rates and UTC minute labels; a restart resets the baseline, never unsigned-subtracts the
+old process's counters. CPU usage is delta CPU seconds / delta wall seconds, not a sum of RSS.
+RSS is a gauge with last/max aggregation. Upsert partial minutes idempotently by boot id.
+
+Current `requests` includes internal routes; `banned` counts requests rejected by the local
+ban table, not distinct banned addresses. `denied`, `challenged`, `allowed`, `rate_limited`
+and verification counters describe different branches; issued/accepted are separate requests,
+and malformed submissions may not increment `solutions_rejected`. Never stack them as an
+exhaustive partition. A new external-request outcome counter family must assign exactly one
+outcome (admitted, challenged, denied, banned, rate-limited, other) per external request.
+Origin 4xx/5xx counts require response instrumentation; upstream errors are not their proxy.
+Distinct active bans need a control-thread snapshot, not the existing `banned` counter.
 
 == The incident tap
 
-Incidents already flow through the storage thread into `security_incidents` (SID 0005). The
-console does not add a second consumer to the incident ring (I2); instead its event feeder
-polls the table once per storage tick (`--storage-poll-ms`, 500 ms by default) with a cursor
-on the node-scoped id, enriches new rows with GeoIP and the campaign id, and publishes them
-to the `events` topic. The latency from denial to dashboard is therefore one storage tick plus
-one poll, about one second at defaults; the trade is deliberate, since a direct tap would
-require a second bounded ring drained on the hot path's schedule.
+The storage thread alone drains the existing 512-slot MPSC incident ring, up to 32 records
+per 500 ms tick: approximately 64 records/s before commit costs, with loss on overflow.
+A feeder polls committed rows using a separate sequence cursor *per issuer node*; a single
+maximum id would skip later records from lower-numbered nodes. Capture a cursor watermark
+with each snapshot, then send later rows. Bound pagination, report missing retention history,
+queue loss and replica staleness. Delivery includes queue drain, commit, feeder poll and
+1 Hz fan-out; it is not bounded to one second during backlog or lost quorum.
+
+Current rows retain node, IP, User-Agent (200 bytes), method (8), path (512), category (32),
+payload (512), campaign and timestamp. The payload is the query if present, otherwise body;
+it is not necessarily the matched substring. There is no full request/response capture,
+JA4, WEIGH decomposition, WAF numeric score, matched offset, rule version or truncation flag.
+These need a versioned bounded incident format and schema migration before their UI ships.
+Show unavailable fields as “not recorded”; never reconstruct a raw request as if captured.
+Campaign similarity is the current 64-dimensional embedding/cosine heuristic (threshold
+0.35), not attribution or proof of a common attacker. A denied request has no origin response.
 
 == The challenge funnel
 
-Sibuna has a measure other consoles lack: the funnel from challenges issued, to solutions
-submitted, to accepted, to rejected by cause (double spend, fingerprint mismatch, expired,
-wrong difficulty), and the distribution of solve times reported by the interstitial. The
-`funnel.zig` aggregator derives issued and accepted from the counters and the rejection
-causes from a small histogram the daemon already keeps per `explainProofError` outcome; solve
-times require one addition to the data plane, a 16-bucket logarithmic histogram of the
-`elapsed_ms` field the worker posts with its solution, updated with one atomic add per
-accepted solution.
+Existing counters expose issued, accepted and aggregate verification rejection. Add submitted,
+malformed and exhaustive per-cause rejection counters at the verification endpoint; no
+`explainProofError` histogram currently exists. Window totals are a flow summary, not a cohort
+conversion rate: retries, abandonment and solutions crossing windows break that interpretation.
+Per-address records, fallback share and adaptive-difficulty histories need separate bounded
+instrumentation, retention and loss accounting before display. Rule-hit totals likewise need
+fixed-capacity counters keyed by rule id and applied revision; incident counts cannot supply
+exact allow/WEIGH hits. Distinguish category findings from the one final outcome per request.
+
+Accept optional `elapsed_ms` and solver metadata in the existing data-plane verify request;
+the interstitial does not send them today. Measure solver time before verification, validate
+finite nonnegative bounds, and record only accepted solutions. Client timing is untrusted
+telemetry, never an admission or difficulty input. Use 16 buckets: [0,1) ms, powers-of-two
+intervals [1,2) through [8192,16384), and [16384,+infinity), with separate missing/invalid
+counts. Partition by algorithm and bounded parameter bins. Hashcash has expected trial count
+$2^b$ for $b$ work bits; PoSW depth $d$ requires $2^(d+1)-1$ labels in this implementation.
+Do not label PoSW depth as a Hashcash security/work-bit equivalent or predict device solve
+time without calibration. Server response time and client solve time are different metrics.
 
 == Traffic sampling and top-k rankings
 
-Traffic analytics (client families, response status codes, referring pages, popular pages)
-need a view of ordinary requests, not only denied ones. Logging every request
-is out of the question on a data plane that serves 180,000 requests per second per node.
-Sibuna samples: the request path increments one atomic counter per request and, when the
-counter is a multiple of the sample interval (64 by default, configurable), copies a fixed
-256-byte record (timestamp, node, decision, method, path prefix, User-Agent family, Referer
-host, origin status when relayed, client country resolved later) into a lock-free
-single-producer-per-worker ring of 4,096 slots. The push is one compare-and-swap and one
-memcpy on the sampled request only and nothing on the other 63; the ring is drained by the
-console's sampler thread. Rankings are computed with the Space-Saving algorithm (Metwally,
-Agrawal, and El Abbadi, ICDT 2005) with 256 counters per kind, which bounds memory and gives
-the exact top-k for any key whose frequency exceeds $1/256$ of the samples; the top twenty per
-kind per minute are persisted in `topk_minutes`. Counts are shown scaled by the sample
-interval and labelled as sampled.
+Use a per-connection PRNG with independently initialized state to select external requests
+with probability $p=1/64$ by default. This avoids the periodic bias of every 64th request.
+Copy at most 256 bytes of explicitly sized fields (including client IP, truncation flags,
+method/path prefix, client-family labels, Referer host and outcome/origin status) into one
+preallocated bounded MPSC queue drained by the console. Connection threads, not acceptor
+workers, are producers; one shared queue of 4,096 slots costs 1 MiB for records, plus queue
+metadata. A full queue drops and counts the sample; producer contention may require retries,
+so no single-CAS cost guarantee is claimed. Unsampled requests still pay the sampling test.
+Disable production when the console sampler is absent. Resolve country off the request path.
+
+For $N$ retained samples and $m=256$ Space-Saving counters, every key with frequency greater
+than $N/m$ is retained, and a tracked estimate obeys $hat(f)-e <= f <= hat(f)$ with
+$e <= N/m$. This guarantees heavy-hitter inclusion, not exact counts or exact top-k order.
+Persist all 256 counters, their errors, N, sampling probability, losses and covered interval
+per kind; use a tested merge procedure for cross-minute/node queries. Saving only twenty
+local winners can lose a global winner. Counts scaled by $1/p$ are sampling estimates;
+queue loss, key truncation and sketch error remain visible. Use exact small sampled
+histograms for countries and response classes instead of a top-k sketch. Country history
+must survive minute folding. Visitors, page views and a complete traffic log are not inferred.
 
 == Data-plane changes this record requests
 
-The isolation contract forbids console code on the request path; the three additions below
-are data-plane code, reviewed as such, each one atomic operation per request or less:
-
-+ the 16-bucket solve-time histogram above, one atomic add per accepted solution;
-+ the traffic sample ring above, one atomic increment per request and one ring push per
-  sampled request;
-+ per-category inspection modes (`disabled`, `audit`, `enforce`) carried by the policy
-  snapshot and applied by the storage thread at rebuild, so that the request path tests one
-  bitmask; `audit` records the incident and admits the request, which is what an operator
-  needs to tune a rule without risk.
+The proposed work exceeds three atomic additions: outcome/response metrics, rejection and
+client-timing histograms, the sample queue, bounded challenge events and richer incidents,
+control commands, and new policy snapshot fields all require implementation and impact tests.
+Current WAF configuration is a global boolean. Add per-category disabled/audit/enforce modes
+inside inspection; audit records a finding and *continues* evaluation, so another enforcing
+category, reputation denial or later rule can still block. Disabled categories skip detection.
+New per-rule limits and page templates require loader and request-path changes; a database
+schema alone does not activate them. Validate the immutable snapshot before commit and publish
+only from storage/control code; failed rebuilds retain the prior snapshot and surface an error.
 
 == Cluster aggregation
 
-Statistics pages show the cluster total and a per-node breakdown. Totals are sums over
-`traffic_minutes` for the selected period; the live tiles sum the latest one-second bucket
-from every node's sampler, which reaches other consoles through the `nodes` topic rather
-than the database (a node publishes its live bucket to its peers' consoles over the same
-WebSocket protocol, node-to-node, with the cluster pre-shared key or client certificate).
+Minute history sums disjoint node/boot intervals; exclude overlapping live seconds already
+covered by persisted minutes. Report node coverage, clock skew, reset/gap and stale values.
+Live tiles consume authenticated direct peer snapshots/deltas, tagged by node id, boot id,
+sequence and interval; never forward received totals as a node's own contribution. Only
+nodes running telemetry contribute; label a partial cluster rather than treating missing
+members as zero. Applied policy revision is a per-node acknowledgment, not evidence inferred
+from a committed row. Client dashboards do not connect directly to data-plane listeners.
+
 
 = The Real-Time Protocol
 
 One WebSocket per browser tab at `/console/ws`, opened after login. Frames are JSON text.
 
 #table(
-  columns: (1fr, 1.2fr, 2.4fr),
-  table.header([*Direction*], [*Frame*], [*Meaning*]),
-  [client → server], [`{"op":"sub","topic":"stats","args":{"window":"1h"}}`], [Subscribe; the server replies with a snapshot then deltas],
-  [client → server], [`{"op":"unsub","topic":"events"}`], [Stop a stream],
-  [client → server], [`{"op":"filter","topic":"events","args":{"node":2,"category":"waf:sqli"}}`], [Replace the server-side filter for a stream],
-  [client → server], [`{"op":"ping"}`], [Application heartbeat (the transport ping is separate)],
-  [server → client], [`{"topic":"stats","seq":8812,"snapshot":true,"data":{...}}`], [Full state on subscribe or after a gap],
-  [server → client], [`{"topic":"stats","seq":8813,"data":{"t":1757…,"req":1832,"deny":12,…}}`], [One-second delta, coalesced at 1 Hz],
-  [server → client], [`{"topic":"events","seq":91,"data":[{...},{...}]}`], [Batch of new incidents, at most 64 per second],
-  [server → client], [`{"topic":"events","dropped":37}`], [The subscriber fell behind; the client requests a snapshot],
-  [server → client], [`{"error":"unauthorized"}`], [Session expired; the client returns to login],
+  columns: (0.8fr, 1.1fr, 2.4fr),
+  table.header([*Direction*], [*Operation*], [*Fields and behavior*]),
+  [Client → server], [`sub`], [`topic`, `args`: subscribe; snapshot precedes deltas.],
+  [Client → server], [`unsub`], [`topic`: stop a subscription.],
+  [Client → server], [`filter`], [`topic`, `args`: replace filter and start a new epoch.],
+  [Client → server], [`ping`], [Application heartbeat, distinct from a transport ping.],
+  [Server → client], [Snapshot], [`topic`, `epoch`, `seq`, `snapshot`, `data`: full bounded state, chunked if necessary.],
+  [Server → client], [Delta], [`topic`, `epoch`, `seq`, `data`: coalesced updates; events carry bounded summaries.],
+  [Server → client], [Gap], [`topic`, `epoch`, `dropped`: resubscribe for a new snapshot; never apply deltas across the gap.],
+  [Server → client], [Unauthorized], [`error`: close the subscription and return to sign-in.],
 )
+
+Example subscription and response (separate JSON messages; production snapshots include
+coverage and a watermark). `epoch` changes on reconnect, filter replacement or server restart.
+
+```json
+{"op":"sub","topic":"stats","args":{"window":"1h"}}
+{
+  "topic":"stats", "epoch":"node1-boot7-sub4", "seq":0,
+  "snapshot":true, "data":{"requests":1832,"coverage":1.0}
+}
+```
 
 The hub keeps one bounded ring per topic (1,024 entries of at most 2 KB) and a cursor per
 subscriber; publishing never blocks and never allocates, and a slow consumer sees a `dropped`
-count rather than growing memory (the design of zenfmt's event hub, with a ring per topic).
+count rather than growing memory. This is a proposed bounded hub design informed by zenfmt's event-hub pattern.
 Fan-out runs on the hub thread, which writes into each connection's bounded send queue; a
 queue that is full drops the oldest delta for that connection and marks it, so a stalled
 tab costs one queue and nothing else. Subscribers are capped at 64 per console; the 65th
-receives a `503` at upgrade.
+receives a `503` at upgrade. Reserve separate HTTP/control capacity so 64 long-lived sockets cannot prevent login or API requests. Sequence numbers are per subscription with an epoch; filters start a new epoch/snapshot. A 2 KiB ring entry carries a bounded event summary, not a 64-record full-payload batch. Chunk snapshots with explicit begin/end watermarks; bound reassembly and resynchronize after a gap. Reconnect with jittered backoff, show stale age and keep the last good view.
 
 #let sequence() = cetz.canvas(length: 1mm, {
   import cetz.draw: *
@@ -682,7 +739,7 @@ receives a `503` at upgrade.
     content(((xa + xb) / 2, -y + 2.2), text(size: 5.5pt, fill: ink)[#label])
   }
   msg(9, 0, 1, [POST /console/api/session])
-  msg(16, 1, 2, [SELECT user; verify Argon2id; INSERT session])
+  msg(16, 1, 2, [read user; verify off-owner; store session])
   msg(23, 1, 0, [200 + session cookie + CSRF token], dashed: true)
   msg(30, 0, 1, [GET /console/ws (Upgrade, same origin)])
   msg(37, 1, 0, [snapshot, then 1 Hz stats deltas], dashed: true)
@@ -694,78 +751,118 @@ receives a `503` at upgrade.
 })
 
 #figure-box([One browser session: login, upgrade, subscribe, live deltas, a mutation, and the
-policy rebuild it causes on every node.], sequence())
+policy rebuild it causes on every node. Storage arrows represent mailbox requests; password verification runs between the user read and session write, outside a storage transaction.], sequence())
 
 = Data Model
 
 All console tables live in the same Zaxonlite database as SID 0005 and replicate with it.
-Migrations are numbered in `schema.zig` and run in one transaction at console start.
+Migrations are numbered and version-gated in `schema.zig`. The authoritative writer serializes each migration and schema-version update; followers wait for application before serving compatible routes. Never run concurrent startup DDL independently on every member. All tables below are proposed. Bound row/result sizes and use typed SQL operations with parameter binding where supported (otherwise audited literal escaping), never client-supplied SQL. Console object IDs must be globally unique (random 128-bit ids or node-scoped sequences); foreign keys and uniqueness constraints are required.
 
 #table(
   columns: (1fr, 2.8fr),
   table.header([*Table*], [*Columns and purpose*]),
-  [`console_users`], [`id`, `name` (unique), `role`, `password_phc`, `must_change`, `disabled`, `created_at`, `updated_at`],
-  [`console_sessions`], [`digest` (primary), `user_id`, `role`, `client_ip`, `user_agent_hash`, `csrf`, `issued_at`, `last_seen`, `expires_at`; expired rows are purged by retention],
-  [`console_tokens`], [`id` (printable), `digest`, `label`, `role`, `created_by`, `created_at`, `expires_at`, `disabled`],
+  [`console_users`], [`id`, `name` (unique), `role`, `password_phc`, `must_change`, `disabled`, `auth_revision`, `last_login`, `totp_ciphertext`, `totp_key_id`, `totp_last_step`, `created_at`, `updated_at`],
+  [`console_sessions`], [`digest` (primary), `user_id`, `role`, `client_ip`, `user_agent_hash`, `csrf`, `issued_at`, `last_seen`, `expires_at`, `auth_revision`; expired rows are purged by retention],
+  [`console_tokens`], [`id` (printable), `digest`, `label`, `role`, `scopes`, `auth_revision`, `created_by`, `created_at`, `expires_at`, `disabled`],
   [`console_audit`], [`id`, `at`, `actor`, `role`, `action`, `subject`, `before`, `after`, `client_ip`; append-only],
   [`console_settings`], [`key`, `value`, `updated_at`, `updated_by`; retention days, GeoIP source, notification webhooks],
-  [`traffic_minutes`], [`node_id`, `minute` (epoch/60), the counters of section 8.1, `rss_kib`, `cpu_seconds`; primary key (`node_id`, `minute`)],
-  [`challenge_minutes`], [`node_id`, `minute`, `issued`, `accepted`, `rejected_double_spend`, `rejected_fingerprint`, `rejected_expired`, `rejected_difficulty`, `solve_ms_buckets` (16 integers as JSON)],
-  [`topk_minutes`], [`node_id`, `minute`, `kind` (path, user_agent, referer, origin_status, client_os, client_browser), `key`, `sampled_count`; top twenty per kind per minute],
+  [`traffic_minutes`], [`node_id`, `boot_id`, `minute` (epoch/60), coverage, completeness, counters from “The sampler”, `rss_last_kib`, `rss_max_kib`, `cpu_delta_seconds`; primary key (`node_id`, `boot_id`, `minute`)],
+  [`challenge_minutes`], [`node_id`, `boot_id`, `minute`, algorithm/parameter bin, submitted/issued/accepted, rejected by exhaustive cause, missing/invalid timing, coverage, `solve_ms_buckets` (16 integers)],
+  [`topk_minutes`], [`node_id`, `boot_id`, `minute`, `kind`, `key`, estimate and error; all bounded sketch counters plus N, probability, losses and coverage metadata],
   [`console_pages`], [`kind` (challenge, denied, rate_limited, banned, overloaded), `html`, `updated_at`, `updated_by`; operator-edited templates the data plane loads at engine rebuild],
-  [`geoip_ranges`], [`start` (16-byte address as blob), `end`, `country` (ISO 3166-1 alpha-2); one row per range from the source CSV],
-  [`geoip_meta`], [`source`, `licence`, `published`, `loaded_at`, `ranges`, `sha256`],
+  [`geoip_ranges`], [`generation`, `start` (16-byte address as blob), `end`, `country` (ISO 3166-1 alpha-2); one row per range from the source CSV],
+  [`geoip_meta`], [`generation`, `active`, `source`, `licence`, `published`, `loaded_at`, `ranges`, `sha256`],
   [`nodes`], [`node_id`, `address`, `console_url`, `version`, `first_seen`, `last_seen`; written by each node at start and every minute],
 )
 
+Additional migrations are required for `console_recovery_codes` (digest and consumed state),
+`console_policy_versions` (revision and bounded before/after JSON for conflict-checked revert),
+`console_jobs` (import/notifier/retention leases with expiry, fencing token and progress),
+`console_node_commands` (target, operation id, expiry, desired state and acknowledgment),
+`country_minutes` (node/boot/minute/country/outcome, sample count, probability and coverage),
+and versioned incident/challenge evidence. Authentication-only changes must not trigger
+policy rebuilds. Coalesce session activity writes; specify replica-staleness handling for
+idle expiry. Audit is append-only to application users until explicit retention deletion;
+it is not cryptographically tamper-proof. Retention deletes associated FTS/vector rows in
+the same transaction and reports maintenance lag.
+
 Existing tables are read, and two are written: `policies` (rule editor) and `ip_reputation`
-(ban and allow actions, GeoIP-derived blocks), both exactly as the storage thread already
-expects them, so the rebuild path of SID 0005 needs no change.
+(ban and allow actions, GeoIP-derived blocks), using the existing row formats for currently supported operations. Dynamic rules sort by `(priority, name)` before file rules, within the larger WAF/reputation/rules evaluation order. Preflight the whole candidate snapshot (128 total rules, matcher limits, 8,192 trie nodes) before commit; use an expected revision to prevent lost updates. New modes, limits and templates require rebuild-path changes. Report committed and applied status separately, including per-node failures.
 
 = GeoIP
 
-The console enriches addresses with a country, for the events table, the top-countries chart,
-and the map. The source is an open database with a permissive licence: the DB-IP
-"IP to Country Lite" CSV (Creative Commons Attribution 4.0, monthly), with MaxMind GeoLite2
-Country as a configurable alternative for operators who have an account. The licence text
-and attribution are shown on the GeoIP settings page and in the footer, as both licences
-require.
+Country enrichment runs only off the request path. DB-IP IP to Country Lite supplies
+monthly CC BY 4.0 data with attribution. MaxMind GeoLite2 Country is an optional separately
+licensed provider requiring account/license-key setup and its own CSV parser (network blocks
+join location records); it is not a drop-in DB-IP start/end/country CSV. Retain source,
+version, licence and checksum; show provider-specific attribution. Unknown, private,
+reserved and unmapped addresses stay in “Unknown” and never acquire an invented country.
 
-- *Loader.* `sibuna console geoip update` (or the settings page) downloads the CSV over
-  HTTPS with the standard library's client, verifies the size and the published SHA-256
-  when the source provides one, parses ranges in a streaming pass, and inserts them in
-  batches of 2,000 rows inside a transaction per batch on the console thread at low
-  priority, replacing the previous set atomically by loading into `geoip_ranges_next` and
-  renaming. About 300,000 ranges load in well under a minute on the reference host and
-  replicate to the cluster like any other rows, so one update serves every node.
-- *Lookup.* At start and after each load the console reads the ranges into a sorted
-  in-memory array of `(start, end, country)` with 16-byte addresses (IPv4 mapped), about
-  10 MB for the full set, and answers a lookup by binary search in under a microsecond.
-  Lookups run on the event feeder thread and the API threads only (I2).
-- *Privacy.* Only the country code is stored with an event; the console never stores city
-  or coordinates, and the map is coloured by count per country.
-- *Actions.* An operator can turn a country into `ip_reputation` rows (deny or challenge for
-  every range of that country) with one audited action; the data plane then applies them
-  through its trie exactly as any other reputation row, which keeps geo-blocking a policy
-  decision made by a person rather than a data-plane lookup.
+The loader bounds download/compressed and expanded sizes, row count, string lengths and
+transaction sizes. HTTPS and an operator/publisher checksum when available protect transfer;
+a locally computed digest identifies a dataset but does not authenticate its publisher.
+Parse and validate address families, ordering, non-overlap and country codes, stage an
+immutable generation, and atomically switch its active id only after validation. Replicate
+bounded batches through the storage mailbox. Keep the previous generation until readers
+release it, with at most two in-memory generations and one bounded import in flight.
+Use sorted normalized 16-byte addresses with explicit IPv4 mapping semantics and binary
+search. Memory is `capacity × @sizeOf(Range)` per generation; neither range count, 10 MB,
+sub-microsecond lookup nor a one-minute import is an established result.
+
+An operator may preview a country's ranges decomposed into exact CIDRs, with deduplication,
+expiry and overlap analysis. Existing reputation maps scores ≤ -50 to deny and ≥ 50 to
+allow; it does not load challenge verdicts. Country challenge requires explicit declarative
+challenge rules and their limits, or a separately specified extension. Reject an entire
+country action if the candidate engine would exceed 8,192 trie nodes or 128 total rules;
+never apply a truncated country. GeoIP updates do not silently change existing country
+policies: pin the generation and require a reviewed diff to refresh them.
+
+== Live earth globe on the landing page
+
+The front-page focal panel is a real-time earth globe showing traffic by country whenever
+GeoIP is loaded. A pinned, attributed low-resolution world-boundary asset supplies geometry;
+country-centroid markers are representative positions, not measured client coordinates.
+Do not draw city-level locations or source-to-destination arcs from country-only data.
+Zig generates an orthographic SVG projection with a configurable center $(lambda_0, phi_0)$:
+$x = cos(phi) sin(lambda-lambda_0)$,
+$y = cos(phi_0) sin(phi)-sin(phi_0) cos(phi) cos(lambda-lambda_0)$,
+$z = sin(phi_0) sin(phi)+cos(phi_0) cos(phi) cos(lambda-lambda_0)$.
+Draw only $z >= 0$ and clip/split coastlines at the horizon and antimeridian; map to screen
+coordinates $(c_x+R x, c_y-R y)$. Displaying the rear hemisphere through the sphere is a bug.
+Preprocess geometry to a bounded vertex budget, simplifying before runtime.
+
+Update country counts at 1 Hz over a rolling 60-second window via the `stats` subscription.
+Default to sampled traffic with coverage, sample probability, lost samples, unknown count,
+last update and node coverage visible; switching to persisted incidents explicitly labels
+that incomplete incident population. Use marker area proportional to count (radius grows
+with the square root of count, capped), and discrete intensity classes on country fills.
+A ranked country table next to the globe contains *all* hemispheres and offers keyboard
+selection to center the globe and open filtered events. No automatic rotation: provide
+Rotate left/right, reset, pause/live and a flat-map alternative. Hidden tabs suspend visual
+updates and resnapshot on return. A globe is one panel, not a replacement for totals.
+
+Without GeoIP, keep the earth outline and show “GeoIP unavailable”, Unknown totals and an
+administrator setup link; no synthetic country markers. With zero traffic say “No traffic in
+this window”. On disconnection freeze the last good state and label its age; never animate
+stale traffic. Use accessible text/table equivalents; user-driven rotation honors reduced
+motion. The same globe component serves desktop, responsive and kiosk views.
+
 
 = Cluster Management
 
 The `nodes` page shows every member known from the `nodes` table and the cluster
-configuration: id, address, role (leader or follower, read from the Zaxonlite node status the
-storage thread already logs), version, uptime, last replicated commit, the sampler's live
+configuration: id, address, role (leader or follower, through a proposed storage-owned status snapshot), version, uptime, last replicated commit, the sampler's live
 request rate, resident memory, CPU, and the health of its data-plane listener. Health is
-probed by each console directly (`GET /__sibuna/health` and `/__sibuna/metrics` every
+probed by each console over explicitly configured management addresses (never arbitrary browser-supplied URLs) (`GET /__sibuna/health` and `/__sibuna/metrics` every
 5 seconds, bounded to 2 s per probe) so a console can show a member whose storage has
 failed but whose data plane still serves from its last snapshot, the failure mode SID 0005
 documents.
 
 Operations offered per node: drain (set a flag the node's accept loop reads, so it answers
-`503` to new connections while finishing current ones, for maintenance), clear local bans,
+`503` to new connections while finishing current ones, for maintenance), clear local bans (a control command; a replicated reputation denial can still apply),
 and open that node's own console. Cluster-wide operations are edits of replicated tables and
 need no per-node action: a rule saved on any console is a `policies` row; a ban is an
-`ip_reputation` row; both propagate in the ban-propagation time measured in Part VIII of the
-book (about 100 ms on loopback). The page also shows the two facts an operator must know
+`ip_reputation` row; both require commit, replica application and the next successful storage rebuild. Book benchmark results are workload-specific and do not establish a 100 ms bound at the default 500 ms polling interval. The page also shows the two facts an operator must know
 from SID 0005: challenge verification is issuer-bound (sticky routing is needed), and rate
 limits are per node.
 
@@ -773,7 +870,7 @@ limits are per node.
 
 The interface follows the zenfmt approach: a `wasm32-freestanding` Zig module owns every
 page, all interface state, and every fragment of markup; the glue owns the browser. The glue
-loads the module, opens the WebSocket, forwards browser events and WebSocket frames into the
+loads the module, opens the WebSocket only after authentication, forwards browser events and WebSocket frames into the
 module as length-prefixed JSON, and executes the returned command list: `patch` (replace an
 element's inner HTML), `attr`, `class`, `focus`, `navigate` (push state), `fetch` (issue an
 API request the module described and post the result back), `ws` (send a frame), `download`,
@@ -784,12 +881,9 @@ same module natively and assert rendered HTML strings.
   escapes by construction. A page re-renders only the panels whose inputs changed (each panel
   is a function of a slice of state with an explicit version), so a one-second stats delta
   patches four tiles and one chart, not the document.
-- *Charts* are inline SVG produced by `charts.zig`: a stacked area timeline (allowed,
-  challenged, denied), sparklines, horizontal bars, a donut, a histogram, and the choropleth
-  over the committed `world-110m.svg` (country paths keyed by ISO code, coloured by a class
-  the module sets). Drawing a 3,600-point timeline is a single string build of about 40 KB;
+- *Charts* are inline SVG produced by `charts.zig`: an external-outcome timeline (admitted, challenged, denied, banned, rate-limited and other), sparklines, horizontal bars, a donut, a histogram, and the orthographic earth globe and country table generated from the committed `world-110m.bin` (bounded longitude/latitude polygon vertices keyed by ISO code, projected to SVG at runtime; a flat-map SVG alone cannot supply rotating globe geometry). Decimate long timelines to the visible pixel width and enforce the output bound; output size depends on series and coordinate encoding, not just point count;
   no charting library is loaded, and no canvas is used, so the charts print, zoom, and are
-  accessible through titles.
+  accompanied by titles and equivalent data tables; SVG titles alone do not establish accessibility.
 - *Components.* daisyUI 5 supplies the primitives (`btn`, `card`, `table`, `drawer`,
   `badge`, `tabs`, `toast`, `modal`, `stat`). First-party `sb-*` components compose them
   with fixed markup and are the only elements the render functions emit: `sb-shell`,
@@ -797,27 +891,29 @@ same module natively and assert rendered HTML strings.
   `sb-drawer` (event detail), `sb-form` (schema-driven, with validation messages in the
   daemon's Elm-style diagnostic voice), `sb-flag`, `sb-node-card`, `sb-diff`.
 - *Visual system.* One daisyUI theme, `sibuna`, defined in `tailwind.css` from the tokens
-  of section 4.4 (accent, four decision colours, five neutral surfaces, the type scale, the
-  8-pixel unit) with a light and a dark variant selected by `data-theme`, following the
+  of the Elegance subsection (accent, four decision colours, five neutral surfaces, the type scale, the
+  8-pixel unit) with `sibuna-light` and `sibuna-dark` variants selected by `data-theme`, following the
   system preference by default and remembered per browser, together with the density
   preference. The `sb-*` components consume only these tokens; a component that needs a new
   colour is a design change, reviewed as one.
 - *Charts obey the rules.* `charts.zig` has one palette (the decision colours and the accent),
   draws deviation markers and sparklines as first-class marks, keeps axes and positions
-  stable across updates, and animates nothing but bar length (R6, R8–R11).
-- *Budget.* The module is compiled at `ReleaseSmall` with a 300 KB size gate, 4 MB initial
-  memory, and no allocator on the event path beyond a bump arena reset per event.
+  stable across updates, and uses no animation on data updates (R6, R8–R11).
+- *Budget.* The module is compiled at `ReleaseSmall` with a 300 KB size gate, 4 MiB initial and explicit maximum linear memory, bounded retained history, and no allocator on the event path beyond a bump arena reset per event.
 
 == Pages
+
+All panels are conditional on the instrumentation in “Data-plane changes this record requests”. Missing fields stay
+explicitly unavailable; none of the wireframe examples establishes current capture support.
 
 #table(
   columns: (0.9fr, 3fr),
   table.header([*Page*], [*Panels*]),
   [Setup and login], [First-run password change; login form with the optional one-time code; session expiry notices.],
-  [Statistics · Traffic], [Period selector (live, 1 h, 24 h, 7 d, 30 d) and node selector; tiles (requests, admitted, challenged, denied, banned addresses, origin 4xx and 5xx with rates, nodes healthy); live timeline (allowed, challenged, denied); queries-per-second, request-status and blocking-status sparklines; choropleth with ranked countries (requests or denials); top-five panels: client operating systems, browsers, response status, referring hosts, popular paths, all marked as sampled.],
+  [Statistics · Traffic], [Period selector (live, 1 h, 24 h, 7 d, 30 d) and node selector; tiles (requests, admitted, challenged, denied, banned addresses, origin 4xx and 5xx with rates, nodes healthy); live timeline of disjoint external outcomes; queries-per-second, request-status and blocking-status sparklines; live orthographic earth globe with a ranked country table, 60-second sampled traffic window, manual rotation, pause and flat-map fallback (“Live earth globe on the landing page”); top-five panels: client operating systems, browsers, response status, referring hosts, popular paths, all marked as sampled.],
   [Statistics · Security], [Tiles per module (inspection, reputation, rate limiting, challenges, bans, honeypot); a trend chart per module with its top source addresses; the live event feed; attack-category donut; attacked paths; rule hits.],
-  [Kiosk], [The traffic and security panels in a full-screen, read-only, auto-cycling layout for a wall display, reached with a scoped viewer token and no session.],
-  [Attack events], [Grouped view (source address, country, node, attack count, first and last seen) and raw view (action, URL, category, rule, address, time, detail); filter bar (node, category, rule, address, country, path, period); export; detail modal (category chip, URL, address with country and "ban", "allow", "add to group", "address info" actions, JA4 when forwarded by the ingress, payload location and decoded value with the matched structure highlighted, rule and score, campaign and its members, similar incidents, request and response heads with charset selection, "copy as cURL").],
+  [Kiosk], [The traffic and security panels in a full-screen, read-only, optionally auto-cycling layout (off with reduced motion) for a wall display, reached by exchanging a short-lived, read-only scoped token for a kiosk session; never put bearer credentials in URLs or local storage.],
+  [Attack events], [Grouped view (source address, country, node, attack count, first and last seen) and raw view (action, URL, category, rule, address, time, detail); filter bar (node, category, rule, address, country, path, period); export; detail modal (category chip, URL, address with country and "ban", "allow", "add to group", "address info" actions, JA4 only after trusted-ingress capture is implemented, payload location and decoded value with the matched structure highlighted, rule and score, campaign and its members, similar incidents, request and response heads with charset selection, "copy as cURL").],
   [Challenges], [Funnel (issued, submitted, accepted, rejected by cause); solve-time histogram by algorithm and difficulty; adaptive-difficulty bump timeline; JavaScript-fallback share; per-address records (issued, accepted, rejected, cause, duration, start); per-rule challenge parameters.],
   [Policy], [Rules table with drag ordering, enable toggle, type (allow, deny, challenge, weigh), name, match summary, hits today, creator, updated; rule editor (form and JSON); pattern tester; import and export; inspection mode matrix per category (disabled, audit, enforce); limits (rate, window, ban seconds); IP groups (reputation prefixes with score, expiry, trigger, source, hits); GeoIP block builder.],
   [Nodes], [Member cards with surface, upstream, listener, role, health, version, requests and blocks today, sparklines; per-node drain and clear-bans; replication lag; the sticky-routing and local-limit notices.],
@@ -828,14 +924,23 @@ same module natively and assert rendered HTML strings.
 
 = Wireframes
 
+These drawings specify every route and key workflow; illustrative values are not benchmark
+results. Setup/sign-in are authentication-only: no globe geometry is fetched or decoded,
+no GeoIP query runs and no telemetry WebSocket opens until successful login (and required
+password change/TOTP). Then navigate to Statistics · Traffic and load the dashboard assets.
+Sign-out closes streams, clears retained telemetry and returns to the authentication shell.
+Dashboard globe controls select Traffic or Attacks; the latter shows recorded security
+incidents with loss/coverage warnings, not an exhaustive attack count.
+
+
 The drawings fix layout and information density, not visual style; the visual system of
-section 4.4 supplies the style. Every panel named here maps to one `sb-*` component and one
-render function, and every page is laid out to pass the audit of section 4.5: tiles first,
+the Elegance subsection supplies the style. Every panel named here maps to one `sb-*` component and one
+render function, and every page is laid out to pass the audit of the principle audit: tiles first,
 trends second, tables third, detail on the right or in a modal, and the way back in the same
 place on every page.
 
 #figure-box([The shell: top bar with cluster status and the account menu, a fixed sidebar of the
-eight pages, and the page body. The sidebar collapses to icons below 1,024 px.],
+eight pages, and the page body. Below 1,024 px navigation becomes a labelled menu drawer.],
 wire(170, 96, H => {
   shell(H, 170, "Statistics")
   panel(H, 28, 10, 140, 84, [page body], bg: rgb("fcfcfd"))
@@ -850,62 +955,14 @@ wire(170, 80, H => {
   panel(H, 60, 22, 50, 8, [user name])
   panel(H, 60, 33, 50, 8, [password])
   panel(H, 60, 45, 50, 8, [Sign in], bg: blue-light, weight: "bold")
-  content((85, H - 60), text(size: 5pt, fill: gray)[edge-eu · node 1 · v0.3.0 · GeoIP by DB-IP (CC BY 4.0)])
+  content((85, H - 60), text(size: 5pt, fill: gray)[Authentication required · no telemetry before sign-in])
   content((85, H - 74), text(size: 5pt, fill: gray)[Five attempts per minute per address · sessions expire after 30 idle minutes])
 }))
 
-#figure-box([Statistics · Traffic, the landing page. Tiles update every second; the timeline
-shows the selected period with the live second at the right edge; the choropleth colours
-countries by denied requests; the bottom panels are fed by the sample ring and say so.],
-wire(170, 150, H => {
-  import cetz.draw: *
-  shell(H, 170, "Statistics")
-  content((29, H - 12), anchor: "west", text(size: 6.5pt, weight: "bold")[Statistics])
-  panel(H, 60, 9.5, 42, 5, [TRAFFIC · SECURITY · KIOSK ↗], size: 5pt)
-  panel(H, 106, 9.5, 30, 5, [all nodes ▾], size: 5pt)
-  panel(H, 138, 9.5, 30, 5, [live · 1h · 24h · 7d · 30d], size: 5pt)
-  let tiles = (("1.28 M", "requests 24 h"), ("1.19 M", "admitted"), ("64 k", "challenged"), ("21 k", "denied"), ("312", "banned addresses"), ("2.1 % · 0.3 %", "origin 4xx · 5xx"))
-  for (i, t) in tiles.enumerate() {
-    tile(H, 28 + i * 23.5, 16, 22, 13, t.at(0), t.at(1))
-  }
-  panel(H, 28, 32, 92, 36, [requests per second · allowed / challenged / denied (stacked)], size: 5.5pt)
-  line_chart(H, 30, 38, 88, 28, series: 3)
-  panel(H, 123, 32, 45, 11, [queries per second · 2,140], size: 5pt)
-  line_chart(H, 124, 36, 43, 6, series: 1)
-  panel(H, 123, 44.5, 45, 11, [request status · max 264], size: 5pt)
-  line_chart(H, 124, 48.5, 43, 6, series: 1)
-  panel(H, 123, 57, 45, 11, [blocking status · max 18], size: 5pt)
-  line_chart(H, 124, 61, 43, 6, series: 1)
-  panel(H, 28, 71, 60, 40, [geo location · requests ○ denied ●], size: 5.5pt)
-  panel(H, 30, 77, 34, 32, none, bg: rgb("f8fafc"))
-  content((47, H - 93), text(size: 5pt, fill: gray)[choropleth])
-  for (i, c) in (("CN", 18), ("US", 14), ("RU", 10), ("BR", 7), ("DE", 4)).enumerate() {
-    bar_row(H, 66, 79 + i * 5, c.at(1), c.at(0))
-  }
-  panel(H, 91, 71, 37, 40, [attack types], size: 5.5pt)
-  donut(H, 95, 78, 9)
-  for (i, l) in ("sqli 48%", "xss 22%", "traversal 17%", "rce 9%", "honeypot 4%").enumerate() {
-    content((116, H - 79 - i * 4.5), anchor: "west", text(size: 4.5pt, fill: ink)[#l])
-  }
-  panel(H, 131, 71, 37, 40, [top source addresses], size: 5.5pt)
-  table_rows(H, 132, 76, 35, 7, (([address], 16), ([denied], 9), ([action], 9)))
-  panel(H, 28, 114, 34, 33, [response status (sampled)], size: 5pt)
-  for (i, c) in (("200", 30), ("404", 8), ("403", 6), ("429", 2), ("502", 1)).enumerate() {
-    bar_row(H, 30, 121 + i * 4.8, c.at(1) * 0.3, c.at(0))
-  }
-  panel(H, 64, 114, 34, 33, [clients (sampled)], size: 5pt)
-  for (i, c) in (("Chrome", 26), ("Firefox", 9), ("Safari", 7), ("curl", 3), ("Python", 2)).enumerate() {
-    bar_row(H, 66, 121 + i * 4.8, c.at(1) * 0.3, c.at(0))
-  }
-  panel(H, 100, 114, 34, 33, [popular paths (sampled)], size: 5pt)
-  for (i, c) in (("/", 24), ("/blog", 11), ("/api/v1", 8), ("/search", 5), ("/login", 3)).enumerate() {
-    bar_row(H, 102, 121 + i * 4.8, c.at(1) * 0.3, c.at(0))
-  }
-  panel(H, 136, 114, 32, 33, [referring hosts (sampled)], size: 5pt)
-  for (i, c) in (("direct", 22), ("news.ycombinator", 6), ("google", 5), ("t.co", 2), ("mastodon", 1)).enumerate() {
-    bar_row(H, 138, 121 + i * 4.8, c.at(1) * 0.35, c.at(0))
-  }
-}))
+#import "../figures/0007-console-landing.typ": landing-page, earth
+#figure-box([The signed-in landing page: Traffic overview with a live country-level earth globe,
+ranked countries across both hemispheres, traffic totals and timeline. Values and geography
+are illustrative; sampling, Unknown coverage and freshness are explicit.], landing-page())
 
 #figure-box([Statistics · Security: one tile and one trend per module, the live event feed,
 and the rankings that answer "what was attacked".],
@@ -939,13 +996,13 @@ wire(170, 118, H => {
   }
   panel(H, 134, 74, 34, 40, [attacked paths · rule hits], size: 5.5pt)
   for (i, c) in (("/search", 22), ("/login", 12), ("/.git/config", 9), ("/wp-admin", 6), ("/api/v1", 3)).enumerate() {
-    bar_row(H, 136, 82 + i * 5, c.at(1) * 0.5, c.at(0))
+    bar_row(H, 135, 82 + i * 5, c.at(1) * 0.4, c.at(0))
   }
 }))
 
-#figure-box([Attack events with the detail modal open over the raw view. The list streams new
-rows at the top while a filter is active; the modal keeps the layout operators know and
-adds the rule, the score, the campaign, and the nearest incidents.],
+#figure-box([Attack events with the detail modal open over the raw view. New rows wait behind a
+“Show new events” control while the reader is interacting; the modal keeps the layout operators know and
+adds available rule evidence, the campaign, and the nearest incidents. Raw-head capture shown below is a proposed redacted extension, not current stored evidence.],
 wire(170, 125, H => {
   import cetz.draw: *
   shell(H, 170, "Attack events")
@@ -958,15 +1015,15 @@ wire(170, 125, H => {
   rect((42, H - 22 - 3.5), (56, H - 22), stroke: none, fill: rgb("fef2f2"), radius: 0.8)
   content((49, H - 23.8), text(size: 4.5pt, weight: "bold", fill: red)[waf:sqli])
   content((58, H - 23.8), anchor: "west", text(size: 5pt, fill: ink)[GET /search?q=%27%20OR%201%3D1-- · node 2 · 2026-09-08 12:41:07])
-  for (i, r) in (("address", "198.51.100.7 · CN   Ban 24 h · Allow · Add to group · Address info"), ("JA4 (from ingress)", "t13d1517h2_8daaf6152771_a323378790d4"), ("payload", "QUERY q · decoded: ' OR 1=1--   quote · keyword OR · tautology 1=1"), ("rule · score", "waf:sqli (terminal) · score 4 of 4"), ("campaign", "41 · 3 incidents · nearest: 12:38:51 node 1 (0.12), 11:02:10 node 3 (0.21)"), ("id", "node 2 · seq 88,412")).enumerate() {
+  for (i, r) in (("address", "198.51.100.7 · Unknown (documentation IP) · Ban 24 h · Allow"), ("JA4 (from ingress)", "Not recorded · requires trusted-ingress capture"), ("payload", "Query excerpt: ' OR 1=1-- · matched span not recorded"), ("rule · score", "waf:sqli (terminal) · numeric score not recorded"), ("campaign", "41 · 3 incidents · nearest: 12:38:51 node 1 (0.12), 11:02:10 node 3 (0.21)"), ("id", "node 2 · seq 88,412")).enumerate() {
     let y = 28 + i * 5.2
     content((43, H - y - 2), anchor: "west", text(size: 4.5pt, fill: gray)[#r.at(0)])
     content((66, H - y - 2), anchor: "west", text(size: 4.5pt, fill: ink)[#r.at(1)])
   }
   panel(H, 42, 61, 116, 5, [REQUEST · RESPONSE                                   UTF-8 ▾], size: 4.5pt)
   panel(H, 42, 67, 116, 30, none, bg: rgb("f8fafc"))
-  for (i, l) in ("GET /search?q=%27%20OR%201%3D1-- HTTP/1.1", "Host: shop.example", "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) …", "Accept: text/html,application/xhtml+xml,*/*;q=0.8", "Cookie: __sibuna_token=…", "X-Sibuna-Status: DENY · X-Sibuna-Rule: waf:sqli").enumerate() {
-    content((44, H - 70 - i * 4.2), anchor: "west", text(size: 4.3pt, font: "DejaVu Sans Mono", fill: ink)[#l])
+  for (i, l) in ("GET /search?q=%27%20OR%201%3D1-- HTTP/1.1", "Host: shop.example", "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) …", "Accept: text/html,application/xhtml+xml,*/*;q=0.8", "Cookie: [redacted]", "Response: local denial · no origin response").enumerate() {
+    content((44, H - 70 - i * 4.2), anchor: "west", text(size: 4.3pt, font: "Menlo", fill: ink)[#l])
   }
   panel(H, 42, 99, 22, 5, [Copy as cURL], size: 4.5pt)
   panel(H, 138, 99, 20, 5, [Close], bg: blue-light, weight: "bold", size: 4.5pt)
@@ -983,7 +1040,7 @@ wire(170, 120, H => {
   table_rows(H, 28, 23, 90, 12, (([≡], 4), ([name], 22), ([match], 30), ([action], 12), ([difficulty], 12), ([on], 8)))
   panel(H, 121, 10, 47, 62, none, bg: rgb("fcfcfd"))
   content((123, H - 14), anchor: "west", text(size: 6pt, weight: "bold")[Edit rule · protect-checkout])
-  for (i, f) in ("name", "path pattern", "user agent", "headers (4)", "CIDRs (8)", "action ▾ · weight", "challenge: 20 bits · posw").enumerate() {
+  for (i, f) in ("name", "path pattern", "user agent", "headers (4)", "CIDRs (8)", "action ▾ · weight", "challenge: posw · depth 20").enumerate() {
     panel(H, 123, 18 + i * 6.5, 43, 5.5, [#f], size: 5pt)
   }
   panel(H, 123, 64, 20, 6, [Save], bg: blue-light, weight: "bold", size: 5.5pt)
@@ -992,7 +1049,7 @@ wire(170, 120, H => {
   content((123, H - 79), anchor: "west", text(size: 6pt, weight: "bold")[Test a request])
   panel(H, 123, 83, 43, 5.5, [GET /checkout/pay  UA: Mozilla/5.0 …], size: 5pt)
   panel(H, 123, 90, 43, 5.5, [X-Api-Key: … · 203.0.113.9], size: 5pt)
-  panel(H, 123, 97, 43, 9, [CHALLENGE · rule protect-checkout #linebreak() 20 work bits · posw · score 0], bg: amber-light, size: 5pt)
+  panel(H, 123, 97, 43, 9, [CHALLENGE · rule protect-checkout #linebreak() posw depth 20 · openings per config], bg: amber-light, size: 5pt)
   panel(H, 123, 108, 43, 6, [Evaluate], bg: blue-light, weight: "bold", size: 5.5pt)
 }))
 
@@ -1002,7 +1059,7 @@ wire(170, 100, H => {
   import cetz.draw: *
   shell(H, 170, "Nodes")
   content((29, H - 12), anchor: "west", text(size: 6.5pt, weight: "bold")[Nodes · edge-eu · leader: node 2 · last commit 4,118 · lag 0])
-  for (i, n) in (("node 1 · 10.0.0.1 · follower", "healthy · v0.3.0 · up 3d 4h"), ("node 2 · 10.0.0.2 · leader", "healthy · v0.3.0 · up 3d 4h"), ("node 3 · 10.0.0.3 · follower", "storage degraded · serving last snapshot")).enumerate() {
+  for (i, n) in (("node 1 · 10.0.0.1 · follower", "healthy · v0.1.0 · up 3d 4h"), ("node 2 · 10.0.0.2 · leader", "healthy · v0.1.0 · up 3d 4h"), ("node 3 · 10.0.0.3 · follower", "storage degraded · serving last snapshot")).enumerate() {
     let x = 28 + i * 47
     panel(H, x, 16, 45, 60, none, bg: rgb("fcfcfd"))
     content((x + 2, H - 20), anchor: "west", text(size: 5.5pt, weight: "bold")[#n.at(0)])
@@ -1031,11 +1088,298 @@ wire(170, 110, H => {
     panel(H, 123, 32 + i * 5.2, 43, 4.6, [#f], size: 4.8pt)
   }
   panel(H, 28, 58, 45, 24, [Pages #linebreak() challenge · denied · rate limited · banned · overloaded #linebreak() edit template · preview · reset], size: 5pt)
-  panel(H, 76, 58, 45, 24, [Retention #linebreak() minutes 90 d · incidents 30 d · audit 365 d · samples 7 d], size: 5pt)
+  panel(H, 76, 58, 45, 24, [Retention #linebreak() minutes 90 d · incidents 30 d · audit 365 d · rankings 7 d], size: 5pt)
   panel(H, 124, 58, 44, 24, [Notifications #linebreak() webhook · syslog · events: denial spike, ban, node unhealthy, leader change], size: 5pt)
-  panel(H, 28, 85, 68, 22, [GeoIP #linebreak() DB-IP Lite · 2026-09 · 318,402 ranges · loaded 2026-09-08 #linebreak() Update now · attribution shown in footer], size: 5pt)
-  panel(H, 99, 85, 69, 22, [About #linebreak() v0.3.0 · node 1 · cluster edge-eu · bound 127.0.0.1:9443 behind proxy #linebreak() build 2c9e258 · storage v0.6.1], size: 5pt)
+  panel(H, 28, 85, 68, 22, [GeoIP #linebreak() DB-IP Lite · 2026-09 · range count from import · loaded 2026-09-08 #linebreak() Update now · attribution shown in footer], size: 5pt)
+  panel(H, 99, 85, 69, 22, [About #linebreak() v0.1.0 · node 1 · cluster edge-eu · bound 127.0.0.1:9443 behind proxy #linebreak() build (example) · storage v0.6.1], size: 5pt)
 }))
+
+// Supplemental route and workflow wireframes use the same navigation shell.
+#let detail-wire(active, title, left-title, left, right-title, right, footer) = wire(170, 100, H => {
+  import cetz.draw: *
+  shell(H, 170, active)
+  content((29, H - 13), anchor: "west", text(size: 8pt, weight: "bold", fill: ink)[#title])
+  panel(H, 28, 19, 68, 67, none, bg: white)
+  panel(H, 100, 19, 68, 67, none, bg: white)
+  content((31, H - 23), anchor: "north-west", block(width: 62mm)[
+    #text(size: 7.5pt, weight: "bold", fill: blue)[#left-title]
+    #v(2mm)
+    #text(size: 6.8pt, fill: ink)[#left]
+  ])
+  content((103, H - 23), anchor: "north-west", block(width: 62mm)[
+    #text(size: 7.5pt, weight: "bold", fill: blue)[#right-title]
+    #v(2mm)
+    #text(size: 6.8pt, fill: ink)[#right]
+  ])
+  panel(H, 28, 89, 140, 9, footer, bg: blue-light, size: 6pt)
+})
+
+#figure-box([Challenge dashboard visual layout: independently counted flow stages, accepted
+solve-time buckets and explicit missing-data coverage. The detailed controls follow.],
+wire(170, 100, H => {
+  import cetz.draw: *
+  shell(H,170,"Challenges")
+  content((29,H - 13),anchor:"west",text(size:8pt,weight:"bold")[Challenges · all nodes · last hour])
+  panel(H,28,19,65,63,[*Challenge flow · window totals*],size:7pt)
+  for (i,r) in (("Issued · 8,200",57,blue-light),("Submitted · 7,900",54,amber-light),("Accepted · 7,750",52,green-light),("Rejected 120 · malformed 30",48,rgb("fef2f2"))).enumerate() {
+    let x=32+(57-r.at(1))/2
+    panel(H,x,29+i*12,r.at(1),9,[#r.at(0)],bg:r.at(2),size:7pt)
+  }
+  panel(H,97,19,71,63,[*Accepted solve time · client reported* #linebreak() Hashcash ▾ · difficulty 16 ▾],size:7pt)
+  for (i,n) in (1,2,3,6,10,15,22,29,34,25,18,11,7,4,2,1).enumerate() {
+    rect((101+i*3.8,H - 70),(103.5+i*3.8,H - 70+n*0.8),stroke:none,fill:blue)
+  }
+  content((101,H - 75),anchor:"west",text(size:5pt,fill:gray)[0–1 ms · logarithmic powers of two · ≥16,384 ms])
+  panel(H,28,86,140,11,[Timing missing 4% · invalid 0.1% · client-reported values are untrusted. Issued and submitted can refer to different time-window cohorts.],bg:blue-light,size:6pt)
+}))
+
+#figure-box([Challenges: flow totals, timing and rejection analysis, with algorithm-aware
+parameters. Counts are illustrative window totals, not a cohort conversion rate.],
+detail-wire("Challenges", [Challenges · all nodes · last hour · live], [Challenge flow], [
+  Issued: 8,200 → Submitted: 7,900\
+  Accepted: 7,750 · Rejected: 120 · Malformed: 30
+
+  *Accepted solve time (client reported)*\
+  Algorithm: Hashcash ▾ · difficulty: 16 ▾\
+  Median: 280 ms · p95 bucket: 1,024–2,048 ms\
+  Timing missing: 4% · invalid: 0.1%
+
+  Histogram: 16 logarithmic buckets\
+  Show bucket counts / Open timing table
+
+  PoSW view uses depth and opening count.\
+  Untrusted device timing; no security inference.
+], [Investigate and tune], [
+  *Rejections by cause*\
+  Double spend: 52 · Expired: 31\
+  Fingerprint mismatch: 12 · Other causes: 25\
+  Select a cause → per-address records
+
+  Address / node / issued / accepted / cause\
+  192.0.2.44 / 2 / 10 / 8 / expired\
+  Per-address capture missing? “Not recorded”
+
+  Adaptive difficulty: Show change timeline\
+  Solver mode: Wasm / JS fallback / unknown
+
+  Edit rule parameters → preview → save\
+  Runtime limits remain node-local.
+], [No data: “No challenges in this window”. Missing instrumentation: “Not available”. Late submissions may cross windows.]))
+
+#figure-box([Attack events grouped by source, including filters, pagination, export and the
+transition to raw evidence. A paused reader controls when new rows appear.],
+detail-wire("Attack events", [Attack events · By source / Raw], [Source groups], [
+  Node: all ▾ · Category: all ▾\
+  Address: ​──────── · Country: all ▾\
+  Path: ​──────── · Period: last 24 h ▾
+
+  *Show 12 new events* · Live paused\
+  Address / incidents / first / last\
+  198.51.100.7 / 18 / 12:00 / 12:41\
+  192.0.2.44 / 9 / 11:30 / 12:39
+
+  Select source → filtered raw events\
+  Country: Unknown for these example IPs
+
+  Previous / Page 1 / Next · Export CSV\
+  Export respects filters and size limits.
+], [Source detail], [
+  *198.51.100.7* · nodes 1, 2\
+  18 recorded incidents · 2 categories
+
+  Timeline / categories / campaign candidates\
+  Open raw event → retained evidence\
+  Similarity is heuristic, not attribution.
+
+  Ban 24 h / Allow 1 h / Add to group\
+  Preview overlap and effective precedence\
+  Confirm → applied per-node revision
+
+  Undo 30 s → new audited mutation\
+  Export omits credentials and redacted data.
+], [Empty: adjust filters. Retention gap, dropped incidents and stale replica state are shown above the list.]))
+
+#figure-box([Policy modes, limits and IP groups complement the rule editor. Audit mode
+continues evaluation; country operations are capacity-checked before commit.],
+detail-wire("Policy", [Policy · Rules / Inspection / Limits / IP groups], [Inspection and limits], [
+  Category / mode\
+  SQL injection / Enforce ▾\
+  XSS / Audit ▾\
+  Path traversal / Enforce ▾\
+  RCE / Disabled ▾
+
+  Audit logs a finding then continues evaluation.\
+  Another enforcing rule can still deny.
+
+  *Limits* · target node: node 2 ▾\
+  Current GCRA: rate / window / ban duration\
+  Per-rule overrides require new implementation.
+
+  Review changes → Save expected revision 17
+], [IP groups and country action], [
+  Prefix / action / expiry / provenance\
+  192.0.2.0/24 / deny / 1 h / operator\
+  Add prefix / edit / remove
+
+  *Country builder*\
+  Country: select ▾ · GeoIP generation: current\
+  Action: Deny ▾ · Duration: 24 h ▾\
+  Preview CIDRs / overlaps / trie-node usage
+
+  Reject if full; never silently truncate.\
+  Challenge needs explicit supported rules.
+
+  Confirm / Cancel · Conflict? reload and diff\
+  Committed revision ≠ applied on every node.
+], [Viewer: edits disabled. Invalid input: inline error. Full engine: reject. Concurrent edit: show conflict before retry.]))
+
+#figure-box([GeoIP is a complete source/import workflow, with validation, attribution,
+progress, failure recovery and policy-generation pinning.],
+detail-wire("GeoIP", [GeoIP · country enrichment], [Current database], [
+  Provider: DB-IP IP to Country Lite ▾\
+  Source publication: 2026-09 (example)\
+  Active generation: 7 · Loaded: 12:00 UTC\
+  IPv4 / IPv6 ranges: counts from loader\
+  SHA-256: copy digest\
+  Licence: CC BY 4.0 · Attribution: DB-IP
+
+  Country only; no individual coordinates.\
+  Private/reserved/unmapped addresses: Unknown
+
+  Lookup address: ​────────  [Look up]\
+  Result: country / unknown / generation
+], [Update database], [
+  Download → validate → stage → activate\
+  Progress: 2 of 4 stages · Cancel\
+  Bounded bytes and rows; one import at a time
+
+  Preview source, licence, checksum, range count\
+  Errors keep the prior generation active.\
+  Retry / View diagnostic
+
+  Optional MaxMind: account credentials\
+  Stored secret masked · separate format parser
+
+  Update data / Review affected country policies\
+  Policy prefixes stay pinned until approved.
+], [No database: “GeoIP unavailable”; dashboard globe shows only outline and Unknown totals. No invented locations.]))
+
+#figure-box([Audit with before/after evidence, safe exports and conflict-checked rule revert.
+Local commands show intent and completion separately.],
+detail-wire("Audit", [Audit · activity and policy history], [Activity], [
+  Actor: all ▾ · Action: all ▾ · Period: 24 h ▾\
+  Subject: ​──────── · Node: all ▾
+
+  Time / actor / action / subject / result\
+  12:41 / alice / policy edit / p1 / committed\
+  12:40 / admin / drain / node 2 / completed\
+  12:38 / ci / export / events / completed
+
+  Previous / Page 1 / Next · Export\
+  Retention: 365 days · old records expire\
+  Append-only for users, not tamper-proof.
+], [Selected change], [
+  Actor: alice · operator · address recorded\
+  Policy p1 · revision 17 → 18
+
+  Before: action challenge; difficulty 16\
+  After: action deny\
+  Reason: operator description
+
+  Applied: node 1 ✓ · node 2 ✓ · node 3 pending\
+  Open policy / Show diff / Revert to revision 17
+
+  Revert creates revision 19 with a fresh audit.\
+  Reject if revision 18 is no longer current.\
+  Secrets and full token values never displayed.
+], [Local action detail: request id, intent, target acknowledgment and failure reason; no false atomicity claim.]))
+
+#figure-box([Settings forms cover credentials, templates, retention and notifications,
+with separate read-only About information and safe previews.],
+detail-wire("Settings", [Settings · Users / Tokens / Pages / Retention / Notifications / About], [Users and API tokens], [
+  User: alice · role: operator ▾\
+  TOTP: enrolled · last login: 12:00 UTC\
+  Disable user / reset password / revoke sessions
+
+  Token label: deploy-ci · role: operator ▾\
+  Expiry: date/time · scope: policy only\
+  Create → show secret once → copy → close\
+  Existing tokens: id / scope / expiry / revoke
+
+  Viewer role: inspect, cannot change settings.\
+  Administrator changes require recent auth.
+
+  About: node/version/build/listener/storage\
+  Never expose secrets or arbitrary environment.
+], [Operational settings], [
+  *Templates* · denied ▾ · bounded placeholders\
+  Edit / sandboxed preview / reset / save\
+  No executable scripts or arbitrary imports
+
+  *Retention* · traffic 90 d · incidents 30 d\
+  Rankings 7 d / 512 MiB · audit 365 d\
+  Estimate footprint → review → save
+
+  *Notifications* · destination type: webhook ▾\
+  URL / masked secret / events / cooldown\
+  Test destination → show result → save\
+  Node unhealthy / leader change / denial spike\
+  Bounded retries; one cluster notifier lease
+], [Validation is inline; save has pending/success/error states. Slow notifications never run in data-plane threads.]))
+
+#figure-box([Authentication states. The public sign-in surface loads no globe, GeoIP or
+telemetry; the dashboard starts only after all required authentication steps succeed.],
+wire(170, 98, H => {
+  import cetz.draw: *
+  content((85,H - 8),text(size:10pt,weight:"bold",fill:blue)[SIBUNA · Sign in])
+  panel(H,8,17,48,66,[*1 · Credentials* #linebreak() #linebreak() Username #linebreak() [────────] #linebreak() Password #linebreak() [••••••••••••••••] #linebreak() #linebreak() [Sign in] #linebreak() #linebreak() Invalid credentials: retry #linebreak() Rate limited: retry after Ns],size:7pt)
+  panel(H,61,17,48,66,[*2 · Required verification* #linebreak() #linebreak() Authenticator code #linebreak() [────────] #linebreak() [Verify] #linebreak() #linebreak() Use recovery code #linebreak() #linebreak() First login: change temporary password; enroll TOTP when required.],size:7pt)
+  panel(H,114,17,48,66,[*3 · Success / expiry* #linebreak() #linebreak() Success → Traffic overview #linebreak() Load globe + open streams #linebreak() #linebreak() Expired → Sign in again #linebreak() Preserve safe return route #linebreak() #linebreak() No users? Run init-admin locally; no public account creation.],size:7pt)
+  panel(H,8,87,154,8,[Authentication only: no globe assets, telemetry connection, country data, cluster health or traffic on the sign-in page.],bg:blue-light,size:6pt)
+}))
+
+#figure-box([Kiosk after scoped authentication: full-screen live globe, coverage and traffic/
+attack summaries. Expired access returns to sign-in; no mutation controls are present.],
+wire(170, 95, H => {
+  import cetz.draw: *
+  panel(H,3,3,164,9,[SIBUNA · edge-eu · Traffic / Attacks · 3/3 reporting · live · last update 1 s],bg:blue-light,size:7pt)
+  panel(H,3,15,103,62,[*Live earth globe · Traffic / Attacks*],size:8pt)
+  earth((35,H - 49),23)
+  panel(H,64,26,40,40,[*Countries* #linebreak() Germany · 2,560 #linebreak() India · 1,920 #linebreak() Brazil · 1,280 #linebreak() Unknown · 4% #linebreak() #linebreak() Samples · p=1/64 #linebreak() Loss: 0 (example)],size:6.5pt)
+  panel(H,64,68,40,7,[Rotate / Pause / Reset],size:6pt)
+  panel(H,110,15,57,29,[*Last 60 seconds* #linebreak() Requests: 128 k (example) #linebreak() Recorded incidents: 128 #linebreak() Unknown country: 4%],size:7pt)
+  panel(H,110,48,57,29,[*Module trends* #linebreak() Inspection / reputation / limits #linebreak() Challenges / bans / honeypot #linebreak() Read-only · no payload detail],size:7pt)
+  panel(H,3,81,164,10,[Exit kiosk · session expiry visible · no URL bearer token · stale stream freezes with age; GeoIP unavailable shows outline only],bg:amber-light,size:6pt)
+}))
+
+#figure-box([Responsive and data-state variants. Navigation remains labelled; the mobile
+landing page places the globe and country table in a vertical flow.],
+wire(170, 114, H => {
+  import cetz.draw: *
+  panel(H,5,5,51,103,none)
+  panel(H,7,7,47,9,[Menu · SIBUNA · admin ▾],bg:blue-light,size:7pt)
+  panel(H,7,19,47,12,[Traffic · all nodes #linebreak() 24 h · Live / Pause],size:7pt)
+  panel(H,7,34,22,17,[128 k #linebreak() Requests],size:7pt)
+  panel(H,32,34,22,17,[128 #linebreak() Incidents],size:7pt)
+  panel(H,7,54,47,27,[Globe · Traffic / Attacks],size:6pt)
+  earth((22,H - 70),9)
+  panel(H,34,64,18,13,[Rotate #linebreak() Flat map],size:5pt)
+  panel(H,7,84,47,21,[Countries ↓ #linebreak() Timeline ↓ #linebreak() Full labels in menu],size:7pt)
+  panel(H,62,5,103,23,[*Loading / empty* #linebreak() Fixed-size skeleton; no fabricated zeros. Once loaded: “No traffic in this window”. First use preserves navigation and setup links.],size:7pt)
+  panel(H,62,32,103,23,[*GeoIP unavailable* #linebreak() Earth outline only; Unknown totals, provider state and admin setup link. Country controls disabled with explanation.],size:7pt)
+  panel(H,62,59,103,23,[*Disconnected / partial cluster* #linebreak() Freeze last values; display age and 2/3 reporting. Retry with backoff. Resnapshot before clearing stale state.],size:7pt)
+  panel(H,62,86,103,23,[*Error / permission / overflow* #linebreak() Inline diagnosis and retry; viewer actions disabled; truncated history marked. Keyboard focus persists across live patches.],size:7pt)
+}))
+
+#table(
+  columns: (1fr, 2.5fr),
+  table.header([*Coverage*], [*Required variants and navigation*]),
+  [Statistics], [Signed-in globe/timeline, Traffic and Security tabs, sampled/incident modes, country drill-down, kiosk, mobile, GeoIP missing and stale/partial cluster.],
+  [Events and Challenges], [Grouped and raw events, evidence detail, source actions, export/pagination, challenge flow/timing/cause, missing instrumentation and retained-history gaps.],
+  [Policy and Nodes], [Rule editor/tester, inspection/limits/groups/country builder, revision conflict; node drill-down, drain preview/confirm/result and clear-local-bans result.],
+  [Settings and Audit], [Users, tokens, TOTP/recovery, templates, retention, notifications and About; audit diff/revert and local-command intent/completion.],
+  [Authentication and shared states], [Credentials, setup, forced password change, TOTP, recovery, expiry; loading/empty/error/forbidden; labelled responsive navigation, focus and reduced motion.],
+)
 
 = The Build Pipeline
 
@@ -1045,51 +1389,53 @@ concern layout), wired by the existing `AppModules` helper.
 #table(
   columns: (1.2fr, 2.6fr),
   table.header([*Step*], [*What it does*]),
-  [`-Dconsole` (default true)], [Compiles `libs/serve`, `libs/console`, and the interface module into the daemon; `-Dconsole=false` removes every console symbol and the `--console` flags.],
+  [`-Dconsole` (defaults to storage enabled)], [Compiles `libs/serve`, `libs/console`, and the interface module into the daemon; `-Dconsole=false` removes every console symbol and the `--console` flags.],
   [`console-ui` (implicit)], [Compiles `apps/console-ui/src/main.zig` for `wasm32-freestanding` at `ReleaseSmall`, asserts the 300 KB budget, and embeds the bytes.],
-  [`zig build console-assets`], [Runs `npm ci` and `npm run build` in `apps/console-ui/web/` through `b.addSystemCommand`, producing `assets/console.css` from `tailwind.css` with Tailwind 4 and the daisyUI 5 plugin, scanning `apps/console-ui/src/render/*.zig` for class names so unused daisyUI components are pruned. The step then writes `assets/MANIFEST.md` with the SHA-256 of every asset.],
-  [Digest gate (in `zig build test`)], [A unit test in `libs/console/src/assets_test.zig` recomputes the digests of the committed assets and compares them with `MANIFEST.md`, so an edited source without a rebuilt sheet fails the suite. A plain `zig build` therefore needs no npm; only `console-assets` does, and CI runs it and checks the tree is clean.],
+  [`zig build console-assets`], [Runs `npm ci` and `npm run build` in `apps/console-ui/web/` through `b.addSystemCommand`, producing `assets/console.css` from `tailwind.css` with Tailwind 4 and the daisyUI 5 plugin, using explicit Tailwind source paths for the Zig render files and a safelist for generated classes; daisyUI components are restricted with its `include` configuration. The step then writes `assets/MANIFEST.md` with the SHA-256 of every asset.],
+  [Digest gate (in `zig build test`)], [A unit test in `libs/console/src/assets_test.zig` hashes both build inputs (render sources, CSS configuration, package lock and scripts) and outputs against `MANIFEST.md`; output digests alone cannot detect stale CSS. A plain `zig build` therefore needs no npm; only `console-assets` does, and CI runs it and checks the tree is clean.],
   [`zig build console-test`], [Golden tests of the interface module compiled natively (rendered HTML per page and per event), protocol round-trip tests, and the kernel's HTTP and WebSocket tests with an in-process client.],
-  [`zig build console-e2e`], [Boots a daemon with `--console` on loopback, runs setup, login, a WebSocket subscription, a policy edit, and asserts the engine rebuild and the audit row; part of `zig build test`.],
-  [`zig build console-impact`], [The isolation gate of section 6.2 through `benchmarks/tools.py --console`.],
+  [`zig build console-e2e`], [Boots a daemon with `--console` on loopback, runs setup, login, a WebSocket subscription, a policy edit, and asserts the engine rebuild and the audit row; part of `zig build test` when console support is enabled.],
+  [`zig build console-impact`], [The isolation gate in “Process model and the isolation contract” through `benchmarks/tools.py --console`.],
 )
 
-`package.json` pins `tailwindcss` 4 and `daisyui` 5 exactly and has no other dependency;
+`package.json` pins exact compatible versions of `tailwindcss` 4, `@tailwindcss/cli` 4 and `daisyui` 5;
 `package-lock.json` is committed. npm runs only inside `console-assets`, never in the default
 graph, so a contributor without Node can build, test, and run the daemon and the console with
 the committed stylesheet.
 
 = Security Considerations
 
-- The console is an administrative surface and is bound to loopback by default; exposure
-  requires an explicit address and, off a trusted network, `--console-behind-proxy` with TLS
+- The console is an administrative surface and is bound to loopback by default; off-loopback exposure
+  requires an explicit address and `--console-behind-proxy` with TLS
   at the ingress. The data plane's own listener never serves console routes (I1), so a
   console vulnerability cannot be reached through the protected site.
-- All state-changing routes require a session or token with an adequate role, the CSRF header,
-  and are rate limited; all are audited. Password hashing cost is bounded by the login rate
-  limit; session digests mean a database read exposure does not yield usable sessions.
+- All state-changing routes require a session or token with an adequate role (cookie-authenticated requests also require the CSRF header),
+  and are rate limited; all are audited. Password hashing concurrency, memory and request rates have independent bounds; session digests mean a database read exposure does not yield usable sessions.
 - The interface module renders through an escaping writer; the content security policy
   forbids inline script and remote resources; the WebSocket accepts only same-origin
   upgrades; the shell sets `X-Frame-Options: DENY`.
 - The policy tester evaluates through the real engine code but on the console thread against
-  a private engine instance built from the current tables, never against the live slot.
-- GeoIP data is a country only; the loader verifies transport integrity and the source's
-  digest, and the loaded set replaces the previous one atomically.
-- The `drain` operation is the only console action that touches a data-plane flag; it is an
-  atomic boolean the accept loop reads once per accept, and it is audited.
+  a private engine instance built from the same configuration, file fallback and current tables, never against the live slot.
+- GeoIP enrichment is country-only; incident rows still contain client addresses and bounded request data. The loader verifies HTTPS and a publisher/operator digest when supplied, and the loaded set replaces the previous one atomically.
+- Drain and clear-local-bans follow the audited control-command protocol. Rich incident capture redacts sensitive headers and query/body fields before persistence; previews and “copy as cURL” use escaped, redacted data and mark incomplete requests. Operator templates are constrained placeholders, not executable script, and preview inside a sandboxed frame. Webhook destinations and node probes use allowlisted schemes/hosts/ports with redirect and DNS-rebinding checks; credentials never appear in audit payloads.
 
 = Performance Budget
+
+These are proposed targets to validate, not measured properties or hard real-time guarantees.
+Latency includes scheduling, contention and replication; expose age and backlog when targets
+are missed. The default idle budget excludes active hashing/import work but includes the
+configured slots, queues and optional GeoIP dataset. Record active peak RSS separately.
 
 #table(
   columns: (1.6fr, 1fr, 2fr),
   table.header([*Quantity*], [*Bound*], [*Mechanism*]),
-  [Console resident memory, idle], [≤ 24 MiB above the daemon], [Fixed slots and rings; GeoIP array ≈ 10 MB is the largest item and is optional],
+  [Console resident memory, idle], [Target to size and measure], [Five topic rings already cost 10 MiB; add 1 MiB traffic queue, slot buffers/stacks, SQL results, GeoIP generations, and 19 MiB per active Argon2 verifier],
   [Console CPU, idle], [≤ 2 % of one core], [4 Hz sampler, 1 Hz coalescing, 5 s probes],
   [Data-plane throughput with 8 live dashboards], [within 1 % of no console], [I1, I2, I5; measured by `console-impact`],
   [Data-plane p99 with 8 live dashboards], [within 10 %], [Same],
   [Statistics delta latency], [≤ 1.25 s], [Sampler period plus 1 Hz broadcast],
-  [Incident to dashboard], [≤ storage tick + poll ≈ 1 s], [Section 8.2],
-  [Policy edit to rebuilt engine on every node], [≤ replication + storage tick ≈ 0.6 s on loopback], [SID 0005 path],
+  [Incident to dashboard], [Target ≤ 2.25 s + commit delay without backlog], [“The incident tap”; slow storage and replication can exceed this],
+  [Policy edit to rebuilt engine on every node], [Target: commit/apply + next successful tick], [SID 0005 path],
   [Interface module size], [≤ 300 KB], [`ReleaseSmall`, size gate],
   [Page render (statistics, 3,600-point timeline)], [≤ 5 ms in the module], [Bounded writer, per-panel versions],
   [WebSocket subscribers per console], [64], [Slot table; `503` beyond],
@@ -1097,11 +1443,15 @@ the committed stylesheet.
 
 = Delivery Plan
 
+The staged implementation and acceptance evidence are tracked in
+#link("0007-console-implementation.md")[the implementation checklist beside this SID].
+The status remains *Proposed* until all release gates pass.
+
 #phase("Phase 1: Kernel, authentication, statistics")[
   `libs/serve` with HTTP, assets, and WebSocket; `libs/console` with auth, sessions, audit,
   the sampler, `traffic_minutes`, and the `stats` topic; the interface module with the shell,
   setup, login, and the statistics page; `console-assets` and the digest gate; the e2e test;
-  the impact gate at its Phase 1 value. A single node is fully observable.
+  the impact gate with the stated throughput/p99 thresholds. A single node exposes currently available counters; unavailable panels say so. Include TOTP before permitting off-loopback access and keyboard/focus/accessibility support from this phase.
 ]
 #phase("Phase 2: Events, policy, challenges, GeoIP")[
   The incident tap and `events` topic with the detail drawer and actions; the policy editor,
@@ -1116,7 +1466,7 @@ the committed stylesheet.
   `benchmarks/cluster.py`.
 ]
 #phase("Phase 4: Operations")[
-  API tokens, two-factor authentication, notification webhooks and syslog, exports, editable
+  API tokens, notification webhooks and syslog, exports, editable
   page templates, the kiosk view, the audit page, dark theme polish, keyboard navigation and
   screen-reader labels, and the operator guide in the book (a new chapter in Part IX with the
   wireframes replaced by screenshots of the built console).
@@ -1125,13 +1475,13 @@ the committed stylesheet.
 = Verification
 
 - *Unit.* Router matching, JSON writer bounds, Argon2id and token digests, CSRF, WebSocket
-  framing against the standard library's own tests, ring and cursor semantics, sampler deltas
+  framing and fragmentation against RFC 6455 vectors (standard-library helper tests alone are insufficient), ring and cursor semantics, sampler deltas
   across counter wrap, minute folding, GeoIP range parsing and lookup, retention windows.
 - *Golden.* Every page and every event-driven patch of the interface module compiled
   natively, compared byte-for-byte with committed HTML; a change to markup is a reviewed diff.
 - *End-to-end.* The `console-e2e` scenario above, plus: session expiry, role refusal, rate
-  limit on login, a slow subscriber receiving `dropped`, a policy tester result agreeing with
-  a live request's `X-Sibuna-Rule`, a country block appearing in the trie, and a cluster run
+  limit on login, a slow subscriber receiving `dropped`, a stateless policy tester result agreeing with
+  a live request's `X-Sibuna-Rule` under controlled identical inputs and configuration, a country block appearing in the trie, and a cluster run
   in which a rule saved on node 1's console changes node 3's decision.
 - *Impact.* The `console-impact` gate on every change to `libs/serve` or `libs/console`.
 - *Principles.* The golden tests assert the mechanical rules: every page passes the trunk
@@ -1140,44 +1490,93 @@ the committed stylesheet.
   deviation marker and a sparkline (R9, R11); numbers render with tabular figures and
   separators (R12); no verdict element renders without its reason element (R14); every
   destructive action renders with a duration or a confirmation (R18). The judgement rules are
-  checked by two scripted tasks in the browser suite: a five-second look at Statistics must
+  evaluated with human operators using two scripted tasks (browser automation checks mechanics, not human comprehension): a five-second look at Statistics must
   let a reader name the anomalous module, and "find why request X was denied" must complete in
   three clicks from the shell.
+- *Telemetry correctness.* Inject counter resets, issuer-order inversions, duplicate peer
+  buckets, partial minutes, sample loss, and cross-window challenge solutions. Check sketch
+  estimates against exact sample counts and merge error bounds; exercise the Unknown bucket.
+- *Globe and authentication.* Assert zero globe/GeoIP/telemetry loads before successful login,
+  including failed login, TOTP and forced-change states. Test Traffic/Attacks switching,
+  missing GeoIP, country coverage, back hemisphere clipping, poles, antimeridian crossings,
+  keyboard centering, pause, stale/reconnect and sign-out stream teardown. Record geometry
+  vertex, linear-memory and render-time budgets on desktop and a low-end device.
+- *Abuse and failure.* Test bounded distributed login load, revoked sessions on followers,
+  fragmented/invalid WebSockets, unsolicited delivery while the reader blocks, 64 subscribers
+  with HTTP slots remaining, SQL deadline/backpressure, GeoIP failed activation, trie-full
+  country rejection, revision conflicts and unauthenticated probe/webhook destinations.
+- *Document.* Compile this source to PDF and to page PNGs with Typst; inspect every wireframe
+  for clipping, overlap, navigation completeness and the separate authentication shell.
 - *Browser.* A minimal Chromium script (the harness family of the benchmarks) loads the
   console, logs in, and checks that tiles update, kept outside `zig build test` because it
   needs a browser.
 
-= Open Questions
+Document review is reproducible without building the daemon:
 
-- Whether the node-to-node live bucket exchange should reuse the Zaxonlite transport instead
-  of a second WebSocket, which would remove one authenticated channel at the cost of coupling
-  live statistics to the consensus library's connection lifecycle.
-- Whether the challenge solve-time histogram belongs in the data plane at all, or whether the
-  interstitial should post it to the console's own endpoint; the former costs one atomic add
-  per accepted solution, the latter a second request from every browser.
-- The retention default for `traffic_minutes` in a cluster: 90 days of one-minute rows for
-  three nodes is about 390,000 rows, well within SQLite's comfort, but replication of every
-  minute row is traffic each member pays.
-- Whether to ship a pruned daisyUI sheet only (the `console-assets` output) or also the full
-  sheet for operators who theme the console with their own components.
+```sh
+mkdir -p docs/build/review-0007
+typst compile --root docs docs/sid/records/0007-console-management-interface.typ docs/build/review-0007/console.pdf
+typst compile --root docs docs/sid/records/0007-console-management-interface.typ 'docs/build/review-0007/page-{0p}.png' --ppi 120
+typst compile --root docs docs/sid/figures/0007-console-landing-preview.typ docs/build/review-0007/landing.png --ppi 160
+```
+
+= Resolved Design Decisions
+
+The former open questions are resolved as follows; implementation must verify the stated
+bounds rather than reopen the architecture implicitly.
+
++ *Live cluster transport:* use direct authenticated management WebSockets on a separate
+  `/console/peer` route and bounded peer quota. Authenticate node identity against configured
+  membership, using mTLS terminated by a trusted management ingress or a domain-separated
+  HMAC challenge over TLS. The consensus PSK is not a browser bearer token. Never use a
+  server-only masked-frame reader as the outbound client: peer clients must mask writes and
+  accept unmasked server frames. Keep ephemeral statistics out of consensus and require
+  fresh epoch/sequence metadata; disconnected peers become stale, never healthy zeros.
++ *Solve timing:* add optional telemetry to the existing verification POST as specified in
+  “The challenge funnel”. No separate public endpoint on the privileged console listener, no second browser
+  request, and no trust in client timing for security decisions. Missing telemetry is counted.
++ *Retention:* default traffic/challenge/country minutes to 90 days, ranking sketches to
+  7 days, incidents to 30 days and audit to 365 days. Three continuously running nodes yield
+  388,800 node-minute rows per 90-day table before boot/bin multiplicity. Ranking sketches
+  can dominate storage (up to 256 keys × kinds × node-minutes); enforce explicit byte/row
+  quotas, batch deletion and storage backpressure. Default to a 512 MiB ranking-store quota;
+  on exhaustion shorten retained ranking history with a visible coverage boundary. Coalesce
+  minute writes, prefer incident/control work over telemetry, and measure replicated disk,
+  journal and compaction costs. Never assume a SQLite row count establishes capacity.
++ *Stylesheet:* ship only the pinned, curated sheet and its input/output manifest. The explicit
+  `console-assets` step regenerates it reproducibly; ordinary builds use committed assets.
+  Themes are reviewed source changes through the same build, not an unbounded full-CSS option.
++ *Globe:* implement the bounded orthographic SVG view in “Live earth globe on the landing page” with country-only traffic/attack views after successful login,
+  1 Hz updates, accessible ranked table, manual rotation and honest unavailable/stale states.
+  Its geometry, attribution, seam clipping and render budget are release checks.
++ *Storage ownership and local commands:* retain a single Zaxonlite owner and add bounded
+  mailboxes, preflight validation and revision acknowledgments. SQL query cancellation or
+  separately owned read snapshots is an implementation prerequisite for heavy forensics.
+  This design cannot promise panic isolation inside the single daemon process.
+
+Remaining work consists of implementation and acceptance measurements: storage adapter
+concurrency/cancellation validation, memory sizing, provider import tests, browser protocol
+conformance, globe projection tests, operator usability sessions and the impact matrix.
+No unmeasured target in this record is a release claim.
+
 
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
-  inspection), SID 0005 (Zaxonlite storage), SID 0006 (mathematical foundations).
-- Operator expectations for management consoles were collected from the self-hosted
-  application-firewall, reverse-proxy, and monitoring consoles in common use in 2026; the
-  capability checklist of section 3 is the record of that survey.
-- Metwally, A., Agrawal, D., and El Abbadi, A. "Efficient computation of frequent and top-k
-  elements in data streams." _ICDT_, 2005 (the Space-Saving algorithm).
-- M'Raihi, D., Machani, S., Pei, M., and Rydell, J. _TOTP: Time-Based One-Time Password
-  Algorithm_, RFC 6238. IETF, 2011.
-- zenfmt ZDS 0016, "The zenfmt server": the service kernel, the interface module and glue,
-  the event hub, and the vendored stylesheet policy that this record adapts.
-- Zig 0.16 standard library: `std.http.Server` (`receiveHead`, `respond`,
-  `respondStreaming`, `upgradeRequested`, `respondWebSocket`, `WebSocket.readSmallMessage`,
-  `WebSocket.writeMessage`), `std.crypto.pwhash.argon2`.
-- daisyUI 5 and Tailwind CSS 4 documentation (component classes and the standalone build).
-- DB-IP, "IP to Country Lite" (CC BY 4.0); MaxMind GeoLite2 Country (licence on account).
-- RFC 6455 (WebSocket), RFC 9110 (HTTP semantics), OWASP Password Storage Cheat Sheet
-  (Argon2id parameters), OWASP Cross-Site Request Forgery Prevention Cheat Sheet.
+  inspection), SID 0005 (Zaxonlite storage), SID 0006 (mathematical foundations); repository
+  implementation paths are listed in the dated review note.
+- Krug, Steve. _Don't Make Me Think, Revisited_, 2014; Kahneman, Daniel. _Thinking, Fast
+  and Slow_, 2011. Interface heuristics, not guarantees of operator performance.
+- Metwally, A., Agrawal, D., and El Abbadi, A. “Efficient computation of frequent and top-k
+  elements in data streams.” _ICDT_, 2005. See also #link("https://dimacs.rutgers.edu/~graham/pubs/papers/freq.pdf")[Cormode and Hadjieleftheriou, Finding Frequent Items in Data Streams] for Space-Saving bounds.
+- zenfmt ZDS 0016, “The zenfmt Server: REST, Streaming, and the Administered Service”
+  (`zenfmt/docs/zds/records/0016-server.typ`, reviewed from the sibling checkout): service,
+  UI/glue and vendored-style patterns. Sibuna defines its own asset build and peer protocol.
+- #link("https://github.com/ziglang/zig/blob/0.16.0/lib/std/http/Server.zig")[Zig 0.16.0 HTTP/WebSocket source], checked against the installed source; `std.crypto.pwhash.argon2`.
+- #link("https://tailwindcss.com/docs/installation/tailwind-cli")[Tailwind CLI] and
+  #link("https://daisyui.com/docs/config/")[daisyUI configuration]: CLI dependency and explicit component inclusion.
+- #link("https://db-ip.com/db/lite.php")[DB-IP Lite] (CC BY 4.0) and
+  #link("https://dev.maxmind.com/geoip/docs/databases/city-and-country/")[MaxMind country CSV schema] (provider-specific account, format and licence requirements).
+- RFC 6455 (WebSocket), RFC 9110 (HTTP semantics), RFC 6238 (TOTP).
+- #link("https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html")[OWASP password storage] and
+  #link("https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html")[OWASP CSRF prevention].
