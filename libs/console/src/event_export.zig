@@ -20,6 +20,7 @@ const Row = struct {
     response_status: ?u16 = null,
     matched_rule: ?[]const u8 = null,
     evidence_version: ?u16 = null,
+    capture: ?@import("console_protocol").events.Capture = null,
     display_truncated: bool = false,
     query_redacted: bool = false,
 };
@@ -58,6 +59,12 @@ fn value(w: *std.Io.Writer, item: anytype) Error!void {
         .int => w.print("{d}", .{item}) catch return error.TooLarge,
         .bool => w.writeAll(if (item) "true" else "false") catch return error.TooLarge,
         .optional => if (item) |present| try value(w, present) else try cell(w, "Not recorded"),
+        .@"struct" => {
+            var bytes: [512]u8 = undefined;
+            var writer: std.Io.Writer = .fixed(&bytes);
+            std.json.Stringify.value(item, .{}, &writer) catch return error.TooLarge;
+            try cell(w, writer.buffered());
+        },
         else => @compileError("unsupported CSV field type"),
     }
 }

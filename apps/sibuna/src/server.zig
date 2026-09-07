@@ -598,6 +598,14 @@ fn recordIncident(ctx: *RequestContext, category: []const u8) void {
         .path = ctx.req.path,
         .category = category,
         .payload = payload[0..@min(payload.len, 2048)],
+        .evidence = if (build_options.console and st.telemetry != null) .{
+            .version = 1,
+            .selected_status = 403,
+            .query_bytes = @intCast(@min(ctx.req.query.len, std.math.maxInt(u32))),
+            .body_bytes = @intCast(@min(ctx.req.body.len, std.math.maxInt(u32))),
+            .declared_body_bytes = @intCast(@min(ctx.declared_body, std.math.maxInt(u32))),
+            .truncated = if (ctx.declared_body > std.math.maxInt(u32)) 128 else 0,
+        } else .{},
         .now = ctx.now,
     });
 }

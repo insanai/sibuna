@@ -92,17 +92,16 @@ fn incident(row: *const p.events.Row, w: *Writer) Writer.Error!void {
     try escape(w, row.method.slice());
     try w.writeAll(" ");
     try escape(w, row.path.slice());
-    try w.writeAll("</p><details class=\"mt-3\"><summary>Historical details</summary>" ++
+    try w.writeAll("</p><details class=\"mt-3\"><summary>Incident details</summary>" ++
         "<dl class=\"grid gap-2 mt-3\"><dt>User agent</dt><dd class=\"break-all\">");
     try escape(w, row.user_agent.slice());
     try w.writeAll("</dd><dt>Campaign candidate</dt><dd>");
     if (row.campaign) |id| {
         try w.print("{d} (automated similarity grouping)", .{id});
     } else try w.writeAll("Not recorded");
-    try w.writeAll("</dd><dt>Country, response status and matched rule</dt>" ++
-        "<dd>Not recorded</dd><dt>Versioned evidence and capture truncation</dt>" ++
-        "<dd>Not recorded</dd></dl><p class=\"sb-note mt-3\">" ++
-        "Historical payloads are withheld because they lack redaction metadata.</p>");
+    try w.writeAll("</dd><dt>Country, delivered response status and matched rule</dt>" ++
+        "<dd>Not recorded</dd></dl>");
+    try evidence(row, w);
     if (row.query_redacted) try w.writeAll("<p class=\"sb-note\">Query string removed.</p>");
     if (row.display_truncated) try w.writeAll("<p class=\"sb-note\">Display text truncated.</p>");
     try w.writeAll("</details></article>");
@@ -177,4 +176,45 @@ test "historical incident rendering escapes stored markup and names absent field
     try std.testing.expect(std.mem.indexOf(u8, output, "9007199254740993") != null);
     try std.testing.expect(std.mem.indexOf(u8, output, "Not recorded") != null);
     try std.testing.expect(std.mem.indexOf(u8, output, "1970-01-01 00:00:00 UTC") != null);
+}
+
+fn evidence(row: *const p.events.Row, w: *Writer) Writer.Error!void {
+    const capture = row.capture orelse {
+        try w.writeAll("<p class=\"sb-note mt-3\">Versioned evidence and capture truncation: " ++
+            "Not recorded. Historical payloads are withheld because they lack " ++
+            "redaction metadata.</p>");
+        return;
+    };
+    try w.print("<h3 class=\"mt-4\">Evidence metadata v{d}</h3>" ++
+        "<p>Firewall response selected: {d}. Delivery is not recorded.</p>" ++
+        "<p>Query: {d} bytes. Received body: {d} bytes. Declared body: {d} bytes.</p>" ++
+        "<p class=\"sb-note\">Query values, body contents, cookies and other headers " ++
+        "are omitted " ++
+        "from this evidence view. This is not a reconstructed request.</p>", .{
+        capture.version,    capture.selected_status,     capture.query_bytes,
+        capture.body_bytes, capture.declared_body_bytes,
+    });
+    if (capture.truncated == 0) {
+        try w.writeAll("<p class=\"sb-note\">No capture truncation recorded.</p>");
+        return;
+    }
+    try w.writeAll("<p class=\"sb-note\">Capture limits: ");
+    const names = [_][]const u8{
+        "client address",
+        "user agent",
+        "method",
+        "path",
+        "category",
+        "forensic payload",
+        "body incomplete",
+        "byte length saturated (shown as a lower bound)",
+    };
+    var separator = false;
+    for (names, 0..) |name, bit| {
+        if (capture.truncated & (@as(u16, 1) << @intCast(bit)) == 0) continue;
+        if (separator) try w.writeAll(", ");
+        try w.writeAll(name);
+        separator = true;
+    }
+    try w.writeAll(".</p>");
 }

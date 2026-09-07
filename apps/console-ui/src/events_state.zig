@@ -40,6 +40,17 @@ pub const Model = struct {
                 .query_redacted = boolean(row, "query_redacted"),
                 .display_truncated = boolean(row, "display_truncated"),
             };
+            const capture = field(row, "capture") orelse .null;
+            if (capture != .null) {
+                if (number(capture, "version") != 1) return error.InvalidResponse;
+                parsed[i].capture = .{
+                    .selected_status = try bounded(u16, capture, "selected_status"),
+                    .query_bytes = try bounded(u32, capture, "query_bytes"),
+                    .body_bytes = try bounded(u32, capture, "body_bytes"),
+                    .declared_body_bytes = try bounded(u32, capture, "declared_body_bytes"),
+                    .truncated = try bounded(u16, capture, "truncated"),
+                };
+            }
             if (string(row, "campaign").len != 0)
                 parsed[i].campaign = try std.fmt.parseInt(u64, string(row, "campaign"), 10);
         }
@@ -70,4 +81,10 @@ fn number(value: std.json.Value, key: []const u8) u64 {
 fn boolean(value: std.json.Value, key: []const u8) bool {
     const item = field(value, key) orelse return false;
     return item == .bool and item.bool;
+}
+
+fn bounded(comptime T: type, object: std.json.Value, key: []const u8) !T {
+    const item = field(object, key) orelse return error.InvalidResponse;
+    if (item != .integer) return error.InvalidResponse;
+    return std.math.cast(T, item.integer) orelse error.InvalidResponse;
 }

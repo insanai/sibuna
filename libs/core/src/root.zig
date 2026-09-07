@@ -31,4 +31,5 @@ test "core sanity" {
 }
 
 pub const Metrics = @import("metrics.zig").Metrics;
+pub const IncidentEvidence = @import("incident.zig").Evidence;
 pub const Incident = @import("incident.zig").Incident;

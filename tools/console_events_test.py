@@ -45,7 +45,11 @@ def check(binary, h):
                     page = json.loads(body)
                     for row in page["rows"]:
                         assert isinstance(row["id"], str) and row["id"] not in seen
-                        assert row["evidence_version"] is None and row["country"] is None
+                        assert row["evidence_version"] == 1 and row["country"] is None
+                        assert row["capture"]["selected_status"] == 403
+                        assert row["capture"]["query_bytes"] == len("token=hidden-value")
+                        assert row["query_redacted"]
+                        assert row["response_status"] is None
                         seen.add(row["id"])
                     if page["next"] is None:
                         break

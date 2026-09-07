@@ -341,3 +341,25 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
   stuck disabled. The UI also ignores delayed responses after leaving the Challenges page.
 - Benchmark snapshot `latest-20260907T225257Z.json` was regenerated for the preceding measured
   observation changes. This does not replace the outstanding SID console-impact release gate.
+
+### Versioned incident metadata (2026-09-08)
+
+- Additive schema v6 stores an incident metadata sidecar in the same idempotent transaction as
+  forensic, FTS, vector and reputation writes. Historical content remains intact; historical
+  and grouped rows have no inferred envelope. Console-disabled builds omit metadata producers
+  and queue fields; the reservation estimate includes the incremental queue/batch metadata.
+- Version 1 captures the selected firewall status, query/received/declared body lengths and
+  separate capture truncation flags. The evidence view omits query/body values, cookies and
+  other headers; it preserves the existing bounded User-Agent display. Selected status is not
+  presented as proof of delivery. Country, matched rule and delivered status remain unrecorded.
+- Required repository/live tests, SID compilation and final formatting/native UI checks passed.
+  A deterministic failure trigger verifies incident/evidence rollback, retained-batch retry and
+  migration replay. Live queries verify new metadata, private query omission and bounded CSV.
+  A storage-free console-disabled build passed.
+- Browser review checked mixed historical/new rows, address filtering, exact byte lengths,
+  capture versus display truncation, escaped historical markup and successful versioned CSV
+  export. A synthetic request's query/body/cookie/authorization values were absent from the view;
+  its 810-byte body and User-Agent capture limit were represented explicitly.
+- Rich matched evidence, policy revision, country-at-capture and configurable redaction remain
+  future envelope extensions. Existing private forensic storage is not relabelled as sanitized
+  evidence. Benchmark regeneration follows for this measured capture-path change.

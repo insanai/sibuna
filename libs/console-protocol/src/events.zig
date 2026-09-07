@@ -16,7 +16,16 @@ pub const Query = struct {
     ip: Bytes(48) = .{},
     path_prefix: Bytes(256) = .{},
 };
+pub const Capture = struct {
+    version: u8 = 1,
+    selected_status: u16,
+    query_bytes: u32,
+    body_bytes: u32,
+    declared_body_bytes: u32,
+    truncated: u16,
+};
 pub const Row = struct {
+    capture: ?Capture = null,
     id: u64 = 0,
     grouped: bool = false,
     count: u64 = 1,
@@ -55,7 +64,8 @@ pub const Row = struct {
             .campaign = campaign_text,
             .display_truncated = self.display_truncated,
             .query_redacted = self.query_redacted,
-            .evidence_version = @as(?u16, null),
+            .evidence_version = if (self.capture) |c| @as(?u16, c.version) else null,
+            .capture = self.capture,
             .country = @as(?[]const u8, null),
             .response_status = @as(?u16, null),
             .matched_rule = @as(?[]const u8, null),

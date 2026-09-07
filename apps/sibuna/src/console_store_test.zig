@@ -658,3 +658,64 @@ test "source groups report exact filtered counts and audit bounded export prepar
     try t.expectEqual(@as(usize, 1), audit.rows.len);
     try t.expectEqualStrings("1", audit.rows[0][0].?);
 }
+
+test "versioned incident metadata commits with forensics and survives migration replay" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try geoFixture(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/evidence",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try fx.owner.db.exec(
+        t.allocator,
+        "CREATE TRIGGER reject_evidence BEFORE INSERT ON console_incident_evidence " ++
+            "BEGIN SELECT RAISE(ABORT,'test evidence failure'); END;",
+    );
+    const hook = fx.state.hooks.record_incident.?;
+    hook(fx.state.hooks.context, .{
+        .client_ip = "8.8.8.8",
+        .user_agent = &(@as([201]u8, @splat('x'))),
+        .method = "POST",
+        .path = "/evidence",
+        .category = "waf:test",
+        .payload = "private-body-value",
+        .now = 105,
+        .evidence = .{
+            .version = 1,
+            .selected_status = 403,
+            .query_bytes = 25,
+            .body_bytes = 18,
+            .declared_body_bytes = 20,
+        },
+    });
+    try fx.owner.tick();
+    var failed = try db.query(
+        fx.owner.db,
+        t.allocator,
+        "SELECT (SELECT COUNT(*) FROM security_incidents)," ++
+            "(SELECT COUNT(*) FROM console_incident_evidence)",
+        &.{},
+    );
+    defer failed.deinit();
+    try t.expectEqualStrings("0", failed.rows[0][0].?);
+    try t.expectEqualStrings("0", failed.rows[0][1].?);
+    try fx.owner.db.exec(t.allocator, "DROP TRIGGER reject_evidence");
+    try fx.owner.tick();
+    try @import("console_migrations.zig").run(fx.owner);
+    const result = (try fx.run(.{ .events_query = .{
+        .session_digest = @splat(1),
+        .now = 110,
+    } })).page;
+    try t.expect(std.mem.indexOf(u8, result.slice(), "private-body-value") == null);
+    const parsed = try std.json.parseFromSlice(std.json.Value, t.allocator, result.slice(), .{});
+    defer parsed.deinit();
+    const rows = parsed.value.object.get("rows").?.array.items;
+    try t.expectEqual(@as(usize, 1), rows.len);
+    const capture = rows[0].object.get("capture").?.object;
+    try t.expectEqual(@as(i64, 403), capture.get("selected_status").?.integer);
+    try t.expectEqual(@as(i64, 66), capture.get("truncated").?.integer);
+    try t.expect(rows[0].object.get("query_redacted").?.bool);
+}

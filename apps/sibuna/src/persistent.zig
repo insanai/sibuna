@@ -62,6 +62,8 @@ pub const IncidentRecord = struct {
     payload: [512]u8 = undefined,
     payload_len: u16 = 0,
     now: u64 = 0,
+    evidence: if (build_options.console) core.IncidentEvidence else void =
+        if (build_options.console) .{} else {},
 
     fn copy(dst: []u8, src: []const u8) usize {
         const n = @min(dst.len, src.len);
@@ -77,6 +79,21 @@ pub const IncidentRecord = struct {
         r.path_len = @intCast(copy(&r.path, incident.path));
         r.category_len = @intCast(copy(&r.category, incident.category));
         r.payload_len = @intCast(copy(&r.payload, incident.payload));
+        if (build_options.console) {
+            r.evidence = incident.evidence;
+            const lengths = [_]bool{
+                incident.client_ip.len > r.ip.len,
+                incident.user_agent.len > r.ua.len,
+                incident.method.len > r.method.len,
+                incident.path.len > r.path.len,
+                incident.category.len > r.category.len,
+                incident.payload.len > r.payload.len,
+                r.evidence.body_bytes < r.evidence.declared_body_bytes,
+            };
+            for (lengths, 0..) |truncated, bit| {
+                if (truncated) r.evidence.truncated |= @as(u16, 1) << @intCast(bit);
+            }
+        }
         return r;
     }
 };
@@ -483,6 +500,11 @@ pub const Persistent = struct {
                 "trigger_rule='honeypot',last_seen=MAX(last_seen,excluded.last_seen)");
         }
         try w.writeAll("; ");
+        if (build_options.console) if (rec.evidence.version != 0) {
+            try @import("console_evidence.zig").append(w, id, rec.evidence);
+            try self.receiptGuard(w);
+            try w.writeAll("; ");
+        };
     }
 
     fn reputationUpsert(

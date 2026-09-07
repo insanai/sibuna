@@ -91,7 +91,21 @@ fn decode(row: []const ?[]const u8) !p.events.Row {
     copy(256, &result.path, path[0..end], &result.display_truncated);
     copy(32, &result.category, row[6] orelse "", &result.display_truncated);
     copy(128, &result.user_agent, row[7] orelse "", &result.display_truncated);
+    if (row[11] != null and try store.number(row[11]) == 1) {
+        result.capture = .{
+            .selected_status = try narrow(u16, row[12]),
+            .query_bytes = try narrow(u32, row[13]),
+            .body_bytes = try narrow(u32, row[14]),
+            .declared_body_bytes = try narrow(u32, row[15]),
+            .truncated = try narrow(u16, row[16]),
+        };
+        result.query_redacted = result.query_redacted or result.capture.?.query_bytes != 0;
+    }
     return result;
+}
+
+fn narrow(comptime T: type, value: ?[]const u8) !T {
+    return std.math.cast(T, try store.number(value)) orelse error.InvalidStoredValue;
 }
 
 fn copy(
@@ -122,16 +136,18 @@ fn copy(
 }
 
 const filters =
-    " FROM security_incidents WHERE recorded_at BETWEEN ? AND ? " ++
+    " FROM security_incidents LEFT JOIN console_incident_evidence e ON e.incident_id=id " ++
+    "WHERE recorded_at BETWEEN ? AND ? " ++
     "AND (?=0 OR node_id=?) AND (?='' OR violation_category=?) AND (?='' OR client_ip=?) " ++
     "AND substr(path,1,length(?))=? ";
 const sql =
     "SELECT id,node_id,recorded_at,client_ip,method,path,violation_category,user_agent," ++
-    "campaign_id,1,recorded_at" ++ filters ++
+    "campaign_id,1,recorded_at,e.version,e.selected_status,e.query_bytes,e.body_bytes," ++
+    "e.declared_body_bytes,e.truncated" ++ filters ++
     "AND (recorded_at<? OR (recorded_at=? AND id<?)) " ++
     "ORDER BY recorded_at DESC,id DESC LIMIT ?";
 const grouped_sql =
     "SELECT MAX(id),node_id,MAX(recorded_at),client_ip,'','','','',NULL," ++
-    "COUNT(*),MIN(recorded_at)" ++ filters ++
+    "COUNT(*),MIN(recorded_at),NULL,NULL,NULL,NULL,NULL,NULL" ++ filters ++
     "GROUP BY node_id,client_ip HAVING MAX(recorded_at)<? OR " ++
     "(MAX(recorded_at)=? AND MAX(id)<?) ORDER BY MAX(recorded_at) DESC,MAX(id) DESC LIMIT ?";

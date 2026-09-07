@@ -3,8 +3,8 @@
 ```text
 038ba2580003927bfe60e59bb3512037931905b5dd4d45f2c855a16a951a6b76  apps/console-ui/src/challenges_page.zig
 a1f9f0912736942395744443c56cb3e5fc08e9979249863712bfeb5f09efc52b  apps/console-ui/src/events_actions.zig
-c9f98e93a76138b8cfb856cad62aa761d90893b63f95aa05e2ff67d45272ff1c  apps/console-ui/src/events_page.zig
-c6752bc0a9f85f41651e8b625dcd83b666681ace6118261b0559bb412a533fb5  apps/console-ui/src/events_state.zig
+963a5d848f45861f1aba84c4130d5281b1be2133dbf9b941713928cab07d9330  apps/console-ui/src/events_page.zig
+9328a742ec3bcf7790036a5b7df39e7a9c2753268489cfd243ddbf8ee44b453c  apps/console-ui/src/events_state.zig
 b470c53ec296d4620f4b4be1a16ba4337620afcfa9e42726fb1ff75ee565daff  apps/console-ui/src/geography.zig
 393ca6fcd10e137aa781fc7b4047a7ce20393e63daadadcc125c323f36610023  apps/console-ui/src/geoip_page.zig
 cc51ce2b276c68c19bbe478d9cc180fa7c78e8ca1474bd19e4b466c1627ad502  apps/console-ui/src/globe.zig

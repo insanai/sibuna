@@ -615,8 +615,11 @@ queue loss and replica staleness. Delivery includes queue drain, commit, feeder 
 Current rows retain node, IP, User-Agent (200 bytes), method (8), path (512), category (32),
 payload (512), campaign and timestamp. The payload is the query if present, otherwise body;
 it is not necessarily the matched substring. There is no full request/response capture,
-JA4, WEIGH decomposition, WAF numeric score, matched offset, rule version or truncation flag.
-These need a versioned bounded incident format and schema migration before their UI ships.
+JA4, WEIGH decomposition, WAF numeric score, matched offset or rule version. Console-enabled
+capture now adds a version-1 metadata sidecar: selected firewall status, query/body byte lengths
+and capture truncation flags. Query/body values and headers are omitted from this evidence view;
+selected status does not establish delivery. Historical rows have no sidecar. Richer evidence
+still needs explicitly bounded and redacted capture before its UI ships.
 Show unavailable fields as “not recorded”; never reconstruct a raw request as if captured.
 Campaign similarity is the current 64-dimensional embedding/cosine heuristic (threshold
 0.35), not attribution or proof of a common attacker. A denied request has no origin response.
