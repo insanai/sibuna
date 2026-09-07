@@ -58,7 +58,12 @@ def check(binary, h):
                 page = json.loads(h.request(port, "POST", endpoint, grouped, cookie, csrf)[2])
                 assert len(page["rows"]) == 1 and page["rows"][0]["count"] == 1
                 assert page["rows"][0]["grouped"]
-                for _ in range(6):
+                status, headers, csv = h.request(port, "POST", "/console/api/events/export",
+                                                {"format": "csv"}, cookie, csrf)
+                assert status == 200 and "text/csv" in headers["Content-Type"]
+                assert b'"id","node"' in csv and b"hidden-value" not in csv
+                assert csv.count(b"\r\n") > 2
+                for _ in range(5):
                     status, headers, body = h.request(
                         port, "POST", "/console/api/events/export", grouped, cookie, csrf)
                     assert status == 200 and len(body) <= 4096

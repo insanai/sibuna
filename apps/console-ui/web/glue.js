@@ -6,6 +6,7 @@ const module = await WebAssembly.instantiateStreaming(fetch("/console/assets/con
 const wasm = module.instance.exports;
 let socket;
 let geometryController;
+let pendingFocus;
 const timers = new Map();
 function read(pointer, length) {
   return decoder.decode(new Uint8Array(wasm.memory.buffer, pointer, length));
@@ -22,12 +23,18 @@ function flush() {
   const html = read(wasm.sb_html(), wasm.sb_html_length());
   const focus = document.activeElement;
   const activeId = focus?.id;
+  const activeAction = focus?.dataset?.action;
+  const submitForm = focus?.type === "submit" ? focus.closest("form")?.id : null;
   const selection = typeof focus?.selectionStart === "number" ? focus.selectionStart : null;
   if (html !== root.innerHTML) {
     root.innerHTML = html;
     root.setAttribute("aria-busy", "false");
-    const next = activeId && document.getElementById(activeId);
-    if (next) {
+    const target = (activeId && `#${CSS.escape(activeId)}`) ||
+      (activeAction && `[data-action="${CSS.escape(activeAction)}"]`) ||
+      (submitForm && `#${CSS.escape(submitForm)} [type=submit]`) || pendingFocus;
+    const next = target && root.querySelector(target);
+    pendingFocus = next?.disabled ? target : undefined;
+    if (next && !next.disabled) {
       next.focus({preventScroll: true});
       if (selection !== null && next.setSelectionRange) next.setSelectionRange(selection, selection);
     }
@@ -36,7 +43,9 @@ function flush() {
   for (const command of commands) run(command);
 }
 async function run(command) {
-  if (command.op === "request") {
+  if (command.op === "download") {
+    await download(command);
+  } else if (command.op === "request") {
     const headers = {};
     if (command.body) headers["Content-Type"] = "application/json";
     if (command.csrf) headers["X-Console-CSRF"] = command.csrf;
@@ -88,6 +97,7 @@ async function run(command) {
   } else if (command.op === "focus") {
     const element = root.querySelector(command.selector);
     if (element) {
+      pendingFocus = undefined;
       element.tabIndex = -1;
       element.focus({preventScroll: true});
       if (command.top) window.scrollTo({top: 0});
@@ -108,3 +118,42 @@ root.addEventListener("click", e => {
 document.addEventListener("visibilitychange", () => event(5, {hidden: document.hidden}));
 wasm.sb_init();
 flush();
+
+
+async function download(command) {
+  try {
+    const response = await fetch(command.path, {
+      method: command.method, credentials: "same-origin",
+      headers: {"Content-Type": "application/json", "X-Console-CSRF": command.csrf},
+      body: JSON.stringify(command.body),
+    });
+    if (!response.ok) {
+      await response.body?.cancel();
+      event(2, {id: command.id, status: response.status, body: {}});
+      return;
+    }
+    const reader = response.body.getReader();
+    const chunks = [];
+    let length = 0;
+    try {
+      while (true) {
+        const part = await reader.read();
+        if (part.done) break;
+        length += part.value.length;
+        if (length > 4096) {
+          await reader.cancel();
+          throw new Error("Export capacity exceeded");
+        }
+        chunks.push(part.value);
+      }
+    } finally { reader.releaseLock(); }
+    const type = response.headers.get("Content-Type") || "application/octet-stream";
+    const url = URL.createObjectURL(new Blob(chunks, {type}));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = command.filename;
+    anchor.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    event(2, {id: command.id, status: 200, body: {}});
+  } catch { event(2, {id: command.id, status: 0, body: {}}); }
+}

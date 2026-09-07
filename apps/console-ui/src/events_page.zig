@@ -13,10 +13,16 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         "<p class=\"sb-subtitle\">Inspect what your firewall recorded.</p></div>" ++
         "<button class=\"btn\" data-action=\"dashboard\">Back to dashboard</button></header>");
     if (state.message.len != 0) {
-        try w.writeAll("<p class=\"sb-error\" role=\"status\">");
+        try w.print("<p class=\"{s}\" role=\"status\">", .{
+            if (model.export_ready) "sb-note" else "sb-error",
+        });
         try escape(w, state.message.slice());
         try w.writeAll("</p>");
     }
+    try w.writeAll("<div class=\"flex flex-wrap gap-3 mt-6\" aria-label=\"Incident view\">");
+    try button(w, "events-raw", "Raw incidents", model.busy or !model.grouped);
+    try button(w, "events-source", "By source address", model.busy or model.grouped);
+    try w.writeAll("</div>");
     try filters(model, w);
     try w.writeAll("<section id=\"incident-results\" tabindex=\"-1\" " ++
         "class=\"sb-panel mt-6\" aria-label=\"Incident results\">");
@@ -32,19 +38,30 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     try button(w, "events-next", "Next", model.busy or model.next == null or
         model.page + 1 == model.cursors.len);
     try button(w, "events-refresh", "Latest results", model.busy);
+    const export_disabled = model.busy or model.exporting or model.count == 0;
+    try button(w, "events-export", "Export this page (JSON)", export_disabled);
+    try button(w, "events-export-csv", "Export this page (CSV)", export_disabled);
     if (model.page + 1 == model.cursors.len and model.next != null)
         try w.writeAll("<p>Narrow the time range or filters to browse more records.</p>");
     try w.writeAll("</div><p class=\"sb-note mt-4\">Records are ordered by capture time (UTC). " ++
         "Pages retain the selected time boundary; use Latest results to include new incidents. " ++
-        "Missing historical evidence and capture coverage are not inferred.</p></section></main>");
+        "Missing historical evidence and capture coverage are not inferred.</p>" ++
+        "<p class=\"sb-note\">CSV prefixes formula-like text with “Text: ”. " ++
+        "JSON preserves string values and exact identifiers.</p></section></main>");
 }
 
 fn filters(model: *const Model, w: *Writer) Writer.Error!void {
     try w.writeAll("<section class=\"sb-panel mt-6\"><h2>Filter incidents</h2>" ++
-        "<form id=\"events-filter\" class=\"grid gap-3 sm:grid-cols-2 lg:grid-cols-5\">");
+        "<form id=\"events-filter\" class=\"grid gap-3 sm:grid-cols-2 lg:grid-cols-6\">");
     try input(w, "category", "Category (exact)", model.category.slice(), 32);
     try input(w, "ip", "Client address (exact)", model.ip.slice(), 48);
     try input(w, "path_prefix", "Path starts with", model.path.slice(), 256);
+    var node: [10]u8 = undefined;
+    const node_text = switch (model.node) {
+        0 => "",
+        else => std.fmt.bufPrint(&node, "{d}", .{model.node}) catch unreachable,
+    };
+    try input(w, "node", "Node ID (optional)", node_text, 10);
     try w.writeAll("<div class=\"grid gap-2 min-w-0\"><label for=\"hours\">Time range</label>" ++
         "<select id=\"hours\" name=\"hours\" class=\"select select-bordered w-full\">");
     inline for (.{
@@ -64,6 +81,7 @@ fn filters(model: *const Model, w: *Writer) Writer.Error!void {
 }
 
 fn incident(row: *const p.events.Row, w: *Writer) Writer.Error!void {
+    if (row.grouped) return source(row, w);
     try w.writeAll("<article class=\"border-b border-base-300 py-4\"><h2>");
     try escape(w, row.category.slice());
     try w.print(" <span class=\"sb-note\">#{d}</span></h2><p>", .{row.id});
@@ -88,6 +106,22 @@ fn incident(row: *const p.events.Row, w: *Writer) Writer.Error!void {
     if (row.query_redacted) try w.writeAll("<p class=\"sb-note\">Query string removed.</p>");
     if (row.display_truncated) try w.writeAll("<p class=\"sb-note\">Display text truncated.</p>");
     try w.writeAll("</details></article>");
+}
+
+fn source(row: *const p.events.Row, w: *Writer) Writer.Error!void {
+    try w.writeAll("<article class=\"border-b border-base-300 py-4\"><h2>");
+    try escape(w, row.ip.slice());
+    try w.print("</h2><p>{d} recorded incident{s} · Node {d}</p><p>First seen: ", .{
+        row.count, if (row.count == 1) "" else "s", row.node,
+    });
+    try timestamp(w, row.first_seen);
+    try w.writeAll("</p><p>Last seen: ");
+    try timestamp(w, row.time);
+    try w.writeAll("</p><p class=\"sb-note\">Historical country: Not recorded</p>" ++
+        "<button class=\"btn mt-3\" data-action=\"events-source-");
+    try w.print("{d}/", .{row.node});
+    try escape(w, row.ip.slice());
+    try w.writeAll("\">Inspect source incidents</button></article>");
 }
 
 fn input(

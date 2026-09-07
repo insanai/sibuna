@@ -13,6 +13,7 @@ pub fn query(app: *App, context: *http.Context, export_page: bool) !void {
     var fixed = std.heap.FixedBufferAllocator.init(&arena);
     const input = try http.parse(struct {
         view: enum { raw, source } = .raw,
+        format: enum { json, csv } = .json,
         before: ?struct { time: u64, id: []const u8 } = null,
         limit: u16 = 10,
         from: u64 = 0,
@@ -43,6 +44,14 @@ pub fn query(app: *App, context: *http.Context, export_page: bool) !void {
     };
     const result = try app.request(.{ .events_query = request });
     if (result == .page) {
+        if (export_page and fields.format == .csv) {
+            var output: [4096]u8 = undefined;
+            const csv = try @import("event_export.zig").csv(result.page.slice(), &output);
+            return context.respond(.ok, "text/csv; charset=utf-8", csv, &.{.{
+                .name = "Content-Disposition",
+                .value = "attachment; filename=\"sibuna-events.csv\"",
+            }});
+        }
         const headers: []const std.http.Header = if (export_page) &.{.{
             .name = "Content-Disposition",
             .value = "attachment; filename=\"sibuna-events.json\"",

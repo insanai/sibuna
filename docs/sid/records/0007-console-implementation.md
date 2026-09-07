@@ -286,3 +286,20 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
   missing-evidence labels, mobile/desktop layouts and heading/results focus without overflow.
 - Grouped investigation, exports, richer versioned evidence and remaining policy/operational
   workflows are still open; this entry does not close the full investigation acceptance gate.
+
+### Source grouping and bounded exports (2026-09-08)
+
+- Source groups retain node/address identity, exact filtered record counts and first/last
+  capture times. Drill-down keeps the selected node, address and time boundary. Historical
+  countries stay unrecorded. Query and export budgets are independently bounded per session
+  and globally, with their fixed memory included in the console reservation estimate.
+- JSON and CSV export only the selected bounded page. The owner rechecks authorization and
+  records export preparation before returning bytes; the audit does not claim download delivery.
+  CSV visibly prefixes formula-like text and quotes separators; JSON preserves returned strings.
+- All 152 unit tests and live console tests passed; formatting passed after final corrections.
+  Browser review covered grouped/raw switching, node/address drill-down and both export controls.
+  A full-page CSV test exposed dynamic parser exhaustion that a one-record export missed. A
+  typed bounded parser and full-page live regression resolve it; the browser repeated the
+  full-page export successfully. Export feedback preserves button focus and uses status styling.
+- Rich versioned evidence, rule/address actions, campaign-member and nearest-incident navigation,
+  and the remaining policy/cluster/operational work still block full SID acceptance.

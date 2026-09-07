@@ -6,6 +6,10 @@ pub const Model = struct {
     loaded: bool = false,
     busy: bool = false,
     focus_results: bool = false,
+    grouped: bool = false,
+    exporting: bool = false,
+    export_ready: bool = false,
+    node: u32 = 0,
     next: ?p.events.Cursor = null,
     cursors: [64]?p.events.Cursor = @splat(null),
     page: usize = 0,
@@ -22,6 +26,9 @@ pub const Model = struct {
         for (rows.array.items, 0..) |row, i| {
             parsed[i] = .{
                 .id = try std.fmt.parseInt(u64, string(row, "id"), 10),
+                .grouped = boolean(row, "grouped"),
+                .count = number(row, "count"),
+                .first_seen = number(row, "first_seen"),
                 .node = std.math.cast(u32, number(row, "node")) orelse
                     return error.InvalidResponse,
                 .time = number(row, "time"),

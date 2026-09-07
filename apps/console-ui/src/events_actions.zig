@@ -20,10 +20,26 @@ pub fn act(state: *State, name: []const u8, fields: std.json.Value) !bool {
             const hours = try std.fmt.parseInt(u32, values.string(fields, "hours"), 10);
             if (hours != 0 and hours != 1 and hours != 24 and hours != 168)
                 return error.InvalidRequest;
+            const node = values.string(fields, "node");
+            model.node = if (node.len == 0) 0 else try std.fmt.parseInt(u32, node, 10);
             model.hours = hours;
             model.page = 0;
             model.cursors = @splat(null);
             model.until = state.browser_time;
+        } else if (std.mem.eql(u8, name, "events-source") or
+            std.mem.eql(u8, name, "events-raw"))
+        {
+            model.grouped = std.mem.eql(u8, name, "events-source");
+            model.page = 0;
+            model.cursors = @splat(null);
+        } else if (std.mem.startsWith(u8, name, "events-source-")) {
+            const value = name["events-source-".len..];
+            const split = std.mem.indexOfScalar(u8, value, '/') orelse return error.InvalidRequest;
+            model.node = try std.fmt.parseInt(u32, value[0..split], 10);
+            model.ip = try p.Bytes(48).init(value[split + 1 ..]);
+            model.grouped = false;
+            model.page = 0;
+            model.cursors = @splat(null);
         } else if (std.mem.eql(u8, name, "events-next")) {
             if (model.next == null or model.page + 1 >= model.cursors.len) return false;
             model.page += 1;
@@ -39,6 +55,7 @@ pub fn act(state: *State, name: []const u8, fields: std.json.Value) !bool {
     }
     model.focus_results = !std.mem.eql(u8, name, "events");
     model.busy = true;
+    model.export_ready = false;
     model.count = 0;
     model.loaded = false;
     model.next = null;
@@ -61,5 +78,22 @@ test "incident navigation requires full authentication and preserves paging time
     state.events.busy = false;
     state.browser_time = 300;
     try std.testing.expect(try act(&state, "events-prev", .null));
+    try std.testing.expectEqual(@as(u64, 200), state.events.until);
+}
+
+test "source drill-down retains node, address and the selected time boundary" {
+    var state: State = .{};
+    state.csrf = try p.Bytes(64).init("test");
+    state.browser_time = 200;
+    try std.testing.expect(try act(&state, "events", .null));
+    state.events.busy = false;
+    try std.testing.expect(try act(&state, "events-source", .null));
+    try std.testing.expect(state.events.grouped);
+    state.events.busy = false;
+    state.browser_time = 300;
+    try std.testing.expect(try act(&state, "events-source-7/2001:4860::1", .null));
+    try std.testing.expect(!state.events.grouped);
+    try std.testing.expectEqual(@as(u32, 7), state.events.node);
+    try std.testing.expectEqualStrings("2001:4860::1", state.events.ip.slice());
     try std.testing.expectEqual(@as(u64, 200), state.events.until);
 }

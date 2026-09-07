@@ -162,7 +162,7 @@ fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
 fn action(value: std.json.Value) !void {
     const name = string(value, "action");
     const fields = field(value, "fields") orelse .null;
-    if (try @import("events_actions.zig").act(&state, name, fields)) return eventQuery();
+    if (try eventAction(name, fields)) return;
     if (try securityAction(name, fields)) return;
     if (try geographicAction(name, fields)) return;
     if (equal(name, "theme")) {
@@ -218,6 +218,7 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
     if (std.mem.startsWith(u8, id, "totp")) return securityResponse(id, status, body);
     if (equal(id, "stats")) return statsResponse(status, body, alloc);
     if (equal(id, "events")) return eventResponse(status, body);
+    if (equal(id, "events-export")) return eventExportResponse(status);
     if (equal(id, "geoip") or equal(id, "geo-import"))
         return geoResponse(id, status, body);
     state.busy = false;
@@ -568,7 +569,7 @@ test "required authenticator enrollment cannot open dashboard data or geometry" 
     try std.testing.expect(std.mem.indexOf(u8, html[0..html_length], "<svg") == null);
 }
 
-fn eventQuery() !void {
+fn eventQuery(export_page: bool, csv: bool) !void {
     try command(.{ .op = "disconnect" });
     const model = &state.events;
     var id: [20]u8 = undefined;
@@ -576,13 +577,24 @@ fn eventQuery() !void {
         .{ .time = cursor.time, .id = try std.fmt.bufPrint(&id, "{d}", .{cursor.id}) }
     else
         null;
-    try post("events", "/console/api/events/query", .{
-        .before = before,
-        .category = model.category.slice(),
-        .ip = model.ip.slice(),
-        .path_prefix = model.path.slice(),
-        .until = model.until,
-        .from = if (model.hours == 0) @as(u64, 0) else model.until -| model.hours * 3600,
+    try command(.{
+        .op = if (export_page) "download" else "request",
+        .id = if (export_page) "events-export" else "events",
+        .method = "POST",
+        .filename = if (csv) "sibuna-events.csv" else "sibuna-events.json",
+        .path = if (export_page) "/console/api/events/export" else "/console/api/events/query",
+        .csrf = state.csrf.slice(),
+        .body = .{
+            .format = if (csv) "csv" else "json",
+            .view = if (model.grouped) "source" else "raw",
+            .node = model.node,
+            .before = before,
+            .category = model.category.slice(),
+            .ip = model.ip.slice(),
+            .path_prefix = model.path.slice(),
+            .until = model.until,
+            .from = if (model.hours == 0) @as(u64, 0) else model.until -| model.hours * 3600,
+        },
     });
 }
 
@@ -596,6 +608,10 @@ fn eventResponse(status: i64, body: std.json.Value) !void {
         setMessage("Your access changed. Sign in again to view incidents.");
         return;
     }
+    if (status == 429) {
+        setMessage("The query allowance is used. Wait a minute before trying again.");
+        return;
+    }
     if (status != 200) {
         setMessage("Could not load incidents. Check your connection or narrow the filters.");
         return;
@@ -604,5 +620,32 @@ fn eventResponse(status: i64, body: std.json.Value) !void {
     if (state.events.focus_results) try command(.{
         .op = "focus",
         .selector = "[aria-label=\"Incident results\"]",
+    });
+}
+
+fn eventAction(name: []const u8, fields: std.json.Value) !bool {
+    const exporting = equal(name, "events-export") or equal(name, "events-export-csv");
+    if (exporting and state.phase == .events and state.fullAccess()) {
+        if (state.events.busy or state.events.exporting or state.events.count == 0) return true;
+        state.events.exporting = true;
+        state.events.export_ready = false;
+        state.message = .{};
+        try eventQuery(true, equal(name, "events-export-csv"));
+        return true;
+    }
+    if (!try @import("events_actions.zig").act(&state, name, fields)) return false;
+    try eventQuery(false, false);
+    return true;
+}
+
+fn eventExportResponse(status: i64) !void {
+    state.events.exporting = false;
+    state.events.export_ready = status == 200;
+    if (state.phase != .events) return;
+    if (status == 401 or status == 403) return eventResponse(status, .null);
+    setMessage(switch (status) {
+        200 => "Your page export is ready. It contains records matching this view.",
+        429 => "The export allowance is used. Wait a minute before exporting again.",
+        else => "Could not prepare the export. Check your connection and retry.",
     });
 }
