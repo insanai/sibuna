@@ -37,7 +37,7 @@ pub fn computeHashcash(challenge: []const u8, nonce: u64) [32]u8 {
     return out;
 }
 
-/// Fast branchless prefix check for target difficulty.
+/// Fast branchless prefix check for target difficulty (hex nibbles).
 pub fn checkDifficulty(digest: [32]u8, difficulty: u32) bool {
     const full_bytes = difficulty / 2;
     var i: usize = 0;
@@ -50,10 +50,45 @@ pub fn checkDifficulty(digest: [32]u8, difficulty: u32) bool {
     return true;
 }
 
-/// Verifies whether the proof-of-work solution satisfies the target difficulty.
+/// Calculates the number of leading zero bits using hardware CLZ instructions.
+pub fn countLeadingZeroBits(digest: [32]u8) u32 {
+    var zeros: u32 = 0;
+    for (digest) |byte| {
+        if (byte == 0) {
+            zeros += 8;
+        } else {
+            zeros += @clz(byte);
+            break;
+        }
+    }
+    return zeros;
+}
+
+/// Verifies fine-grained bit-level difficulty allowing 2x scaling per bit.
+pub fn checkDifficultyBits(digest: [32]u8, bits: u32) bool {
+    const full_bytes = bits / 8;
+    const rem_bits = bits % 8;
+    for (digest[0..full_bytes]) |b| {
+        if (b != 0) return false;
+    }
+    if (rem_bits > 0) {
+        const shift: u3 = @intCast(8 - rem_bits);
+        const mask = @as(u8, 0xff) << shift;
+        if ((digest[full_bytes] & mask) != 0) return false;
+    }
+    return true;
+}
+
+/// Verifies whether the proof-of-work solution satisfies the target hex difficulty.
 pub fn verifyHashcash(challenge: []const u8, nonce: u64, difficulty: u32) bool {
     const digest = computeHashcash(challenge, nonce);
     return checkDifficulty(digest, difficulty);
+}
+
+/// Verifies whether the proof-of-work solution satisfies bit-level difficulty.
+pub fn verifyHashcashBits(challenge: []const u8, nonce: u64, bits: u32) bool {
+    const digest = computeHashcash(challenge, nonce);
+    return checkDifficultyBits(digest, bits);
 }
 
 test "countLeadingZeroHex counts nibbles correctly" {
@@ -80,4 +115,20 @@ test "verifyHashcash finds and validates solution" {
     try std.testing.expect(nonce < 100_000);
     try std.testing.expect(verifyHashcash(challenge, nonce, difficulty));
     try std.testing.expect(!verifyHashcash(challenge, nonce, 10));
+}
+
+test "countLeadingZeroBits and checkDifficultyBits" {
+    var digest: [32]u8 = [_]u8{0xff} ** 32;
+    try std.testing.expectEqual(@as(u32, 0), countLeadingZeroBits(digest));
+
+    digest[0] = 0x7f; // 01111111 -> 1 leading zero bit
+    try std.testing.expectEqual(@as(u32, 1), countLeadingZeroBits(digest));
+    try std.testing.expect(checkDifficultyBits(digest, 1));
+    try std.testing.expect(!checkDifficultyBits(digest, 2));
+
+    digest[0] = 0x00;
+    digest[1] = 0x1f; // 00011111 -> 8 + 3 = 11 leading zero bits
+    try std.testing.expectEqual(@as(u32, 11), countLeadingZeroBits(digest));
+    try std.testing.expect(checkDifficultyBits(digest, 11));
+    try std.testing.expect(!checkDifficultyBits(digest, 12));
 }
