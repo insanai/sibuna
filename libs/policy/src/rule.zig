@@ -127,7 +127,9 @@ pub fn patternMatches(pattern: []const u8, text: []const u8) bool {
         return true;
     }
     if (pattern.len >= 2 and pattern[0] == '^' and pattern[pattern.len - 1] == '$') {
-        return matchPrefixWildcard(pattern[1 .. pattern.len - 1], text);
+        const inner = pattern[1 .. pattern.len - 1];
+        if (std.mem.endsWith(u8, inner, "*")) return matchPrefixWildcard(inner, text);
+        return std.mem.eql(u8, inner, text);
     }
     return matchPrefixWildcard(pattern, text);
 }
@@ -147,6 +149,8 @@ fn matchPrefixWildcard(pattern: []const u8, text: []const u8) bool {
 
 test "rule pattern matches paths, uas, and wildcards" {
     try std.testing.expect(patternMatches(".*", "anything"));
+    try std.testing.expect(patternMatches("^bot$", "bot"));
+    try std.testing.expect(!patternMatches("^bot$", "robot"));
     try std.testing.expect(patternMatches("^/favicon.ico$", "/favicon.ico"));
     try std.testing.expect(!patternMatches("^/favicon.ico$", "/favicon.ico2"));
     try std.testing.expect(patternMatches("^/.well-known/.*$", "/.well-known/acme"));

@@ -89,22 +89,14 @@ pub fn collapseWhitespace(input: []const u8, out: []u8) []const u8 {
 /// Full canonicalization pipeline: multi-pass percent-decode, comment strip,
 /// whitespace collapse, and ASCII lowercase normalization.
 pub fn canonicalize(input: []const u8, out: []u8) []const u8 {
-    var buf1: [2048]u8 = undefined;
-    var buf2: [2048]u8 = undefined;
-
-    // Pass 1: Percent decode
-    const pass1 = percentDecode(input, &buf1);
-
-    // Pass 2: Second percent decode (catches double-encoding like %252e -> %2e -> .)
+    // Every stage only shrinks its input, so all passes can share the
+    // caller's buffer without fixed-size intermediate truncation.
+    const pass1 = percentDecode(input, out);
     const pass2 = if (std.mem.indexOfScalar(u8, pass1, '%') != null)
-        percentDecode(pass1, &buf2)
+        percentDecode(pass1, out)
     else
         pass1;
-
-    // Pass 3: Strip SQL comments
-    const pass3 = stripSqlComments(pass2, &buf1);
-
-    // Pass 4: Collapse whitespace
+    const pass3 = stripSqlComments(pass2, out);
     const pass4 = collapseWhitespace(pass3, out);
 
     // Pass 5: Lowercase in-place

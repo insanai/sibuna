@@ -145,7 +145,18 @@ fn findFirstImpl(self: anytype, haystack: []const u8) ?Match {
 
 pub const MAX_STATES = 2048;
 pub const Matcher = Automaton(MAX_STATES);
-pub const BotMatcher = Automaton(1024);
+const bots = @import("bot_signatures.zig");
+
+pub fn patternCapacity(comptime patterns: []const []const u8) u16 {
+    comptime {
+        var count: u16 = 0;
+        for (patterns) |pattern| count += @intCast(pattern.len);
+        return count;
+    }
+}
+
+pub const BotMatcher = Automaton(1 + patternCapacity(&bots.AI_SCRAPERS) +
+    patternCapacity(&bots.SCRAPER_LIBRARIES) + patternCapacity(&bots.SEARCH_CRAWLERS));
 
 test "aho corasick matches substrings case-insensitively with tags" {
     var matcher = Matcher.init();

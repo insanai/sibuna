@@ -19,6 +19,7 @@ pub const Action = rule.Action;
 pub const Header = rule.Header;
 pub const PolicyRule = rule.PolicyRule;
 pub const MAX_RULES: usize = 128;
+pub const MAX_RULE_NAME: usize = 128;
 
 /// Everything the engine looks at for one request; all slices borrow the
 /// connection buffer.
@@ -95,6 +96,8 @@ pub const Engine = struct {
 
     pub fn addRule(self: *Engine, r: PolicyRule) !void {
         if (self.rule_count >= MAX_RULES) return error.TooManyRules;
+        if (r.name.len == 0 or r.name.len > MAX_RULE_NAME) return error.InvalidRuleName;
+        for (r.name) |c| if (c < 32 or c == 127) return error.InvalidRuleName;
         self.rules[self.rule_count] = r;
         self.rule_count += 1;
     }
@@ -254,7 +257,7 @@ pub const Engine = struct {
         for (self.rules[0..self.rule_count]) |*r| {
             if (!r.matches(req.path, req.client_ip, req.user_agent, req.headers)) continue;
             if (r.action == .weigh) {
-                score += r.weight;
+                score +|= r.weight;
                 weigh_rule = r.name;
                 continue;
             }

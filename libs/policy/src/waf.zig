@@ -52,13 +52,13 @@ pub const Violation = struct {
 };
 
 /// Bodies larger than this are inspected only over their prefix; attack
-/// payloads that must reach an application parser sit at the front of the
-/// body, and bounding the scan keeps worst-case inspection cost fixed.
+/// payloads beyond the prefix can evade this layer. The bound limits cost,
+/// not application parser input; deployments must account for this limit.
 pub const MAX_BODY_INSPECT: usize = 8 * 1024;
 
 /// Longest input that is canonicalised (percent-decoded, comment-stripped)
 /// before the second inspection pass. Inputs beyond this are inspected raw.
-pub const MAX_CANONICAL: usize = 2048;
+pub const MAX_CANONICAL: usize = MAX_BODY_INSPECT;
 
 pub fn containsIgnoreCase(haystack: []const u8, needle: []const u8) bool {
     return std.ascii.indexOfIgnoreCase(haystack, needle) != null;
@@ -70,7 +70,9 @@ fn isWordByte(c: u8) bool {
 
 /// All strong signatures of every category live in one automaton, so a
 /// field is scanned exactly once regardless of how many signatures exist.
-pub const Signatures = aho.Automaton(2048);
+pub const Signatures = aho.Automaton(1 + aho.patternCapacity(&traversal_strong) +
+    aho.patternCapacity(&sqli_strong) + aho.patternCapacity(&xss_strong) +
+    aho.patternCapacity(&rce_strong));
 
 pub fn buildSignatures(sigs: *Signatures) void {
     sigs.* = Signatures.init();
@@ -630,4 +632,12 @@ test "inspectRequest still catches attacks in custom headers and bodies" {
         "",
     ).?;
     try std.testing.expectEqual(AttackCategory.sqli, q.category);
+}
+
+test "encoded payload after two kilobytes is canonicalised" {
+    var payload: [4096]u8 = undefined;
+    @memset(&payload, 'a');
+    const attack = "%3Cscript%3Ealert(1)%3C/script%3E";
+    @memcpy(payload[3000..][0..attack.len], attack);
+    try std.testing.expect(inspectText(&payload) != null);
 }
