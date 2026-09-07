@@ -29,3 +29,6 @@ test {
 test "core sanity" {
     try std.testing.expect(time.ns_per_s == 1_000_000_000);
 }
+
+pub const Metrics = @import("metrics.zig").Metrics;
+pub const Incident = @import("incident.zig").Incident;

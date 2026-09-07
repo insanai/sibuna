@@ -27,6 +27,7 @@ pub const Audit = struct {
     client_ip: []const u8,
     status: []const u8,
     rule: []const u8,
+    response_status: ?*u16 = null,
 };
 
 pub const ProxyError = error{
@@ -264,10 +265,12 @@ fn relayResponse(
     w: *Io.Writer,
     head_request: bool,
     client_keep_alive: bool,
+    response_status: ?*u16,
 ) ProxyError!Relayed {
     const head_len = try readResponseHead(up);
     const head = up.buffered()[0..head_len];
     const parsed = parseResponseHead(head, head_request) orelse return error.UpstreamReadFailed;
+    if (response_status) |output| output.* = parsed.status;
     const framed = parsed.framing != .until_close;
     const keep = client_keep_alive and framed;
     try writeClientHead(w, head, keep);
@@ -307,7 +310,13 @@ fn exchange(
     var up_reader_buf: [max_response_head]u8 = undefined;
     var up_reader = upstream_stream.reader(io, &up_reader_buf);
     const head_request = req.method == .HEAD;
-    return relayResponse(&up_reader.interface, client_writer, head_request, client_keep_alive);
+    return relayResponse(
+        &up_reader.interface,
+        client_writer,
+        head_request,
+        client_keep_alive,
+        audit.response_status,
+    );
 }
 
 fn connectUpstream(io: Io, host: []const u8, port: u16) ProxyError!Io.net.Stream {
@@ -420,7 +429,7 @@ const Fixed = struct { keep: bool, reusable: bool, len: usize };
 fn relayFixed(origin: []const u8, out: []u8, keep_alive: bool) !Fixed {
     var up = std.Io.Reader.fixed(origin);
     var w = std.Io.Writer.fixed(out);
-    const relayed = try relayResponse(&up, &w, false, keep_alive);
+    const relayed = try relayResponse(&up, &w, false, keep_alive, null);
     return .{
         .keep = relayed.client_keep,
         .reusable = relayed.origin_reusable,

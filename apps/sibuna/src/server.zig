@@ -14,6 +14,7 @@ const net = @import("net");
 const policy = @import("policy");
 const challenge = @import("challenge");
 const store = @import("store");
+const build_options = @import("build_options");
 
 pub const wasm_bytes = @embedFile("wasm_solver");
 pub const challenge_html = @embedFile("challenge_html");
@@ -24,38 +25,7 @@ pub const max_request_bytes = 64 * 1024;
 pub const max_head_bytes = 16 * 1024;
 pub const max_requests_per_connection = 4096;
 
-pub const Metrics = struct {
-    incidents_persisted: std.atomic.Value(u64) = .init(0),
-    incidents_dropped: std.atomic.Value(u64) = .init(0),
-    incident_write_failures: std.atomic.Value(u64) = .init(0),
-    incident_batches: std.atomic.Value(u64) = .init(0),
-    requests: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
-    allowed: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
-    denied: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
-    challenged: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
-    challenges_issued: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
-    solutions_accepted: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
-    solutions_rejected: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
-    rate_limited: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
-    banned: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
-    proxied: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
-    upstream_errors: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
-    parse_errors: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
-    overloaded: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
-
-    fn bump(counter: *std.atomic.Value(u64)) void {
-        _ = counter.fetchAdd(1, .monotonic);
-    }
-
-    pub fn writePrometheus(self: *const Metrics, w: *Io.Writer) !void {
-        inline for (std.meta.fields(Metrics)) |field| {
-            try w.print(
-                "# TYPE sibuna_{s}_total counter\nsibuna_{s}_total {d}\n",
-                .{ field.name, field.name, @field(self, field.name).load(.monotonic) },
-            );
-        }
-    }
-};
+pub const Metrics = core.Metrics;
 
 /// Hooks for the optional persistent layer (SID 0005). Null callbacks make
 /// the daemon behave exactly like the in-memory build.
@@ -65,15 +35,7 @@ pub const Hooks = struct {
     record_incident: ?*const fn (ctx: ?*anyopaque, incident: Incident) void = null,
 };
 
-pub const Incident = struct {
-    client_ip: []const u8,
-    user_agent: []const u8,
-    method: []const u8,
-    path: []const u8,
-    category: []const u8,
-    payload: []const u8,
-    now: u64,
-};
+pub const Incident = core.Incident;
 
 /// A policy engine plus its reader count. The active slot is swapped by
 /// the storage layer (read-copy-update): readers pin a slot for the
@@ -97,6 +59,8 @@ pub const AppState = struct {
     upstream: net.proxy.Pool = .{},
     coordinator: challenge.Coordinator,
     metrics: Metrics = .{},
+    telemetry: if (build_options.console) ?*store.ConsoleTelemetry else void =
+        if (build_options.console) null else {},
     hooks: Hooks = .{},
 
     pub fn init(self: *AppState, cfg: core.Config, slot: *EngineSlot, seed: *const [32]u8) void {
@@ -190,6 +154,13 @@ pub fn workerLoop(server: *Io.net.Server, io: Io, state: *AppState) void {
 }
 
 fn connectionThread(stream: Io.net.Stream, io: Io, state: *AppState) void {
+    if (build_options.console) {
+        if (state.telemetry != null) {
+            var seed: [8]u8 = undefined;
+            io.random(&seed);
+            store.telemetry.seed(std.mem.readInt(u64, &seed, .little));
+        }
+    }
     defer _ = state.connections.fetchSub(1, .monotonic);
     handleConnection(stream, io, state);
 }
@@ -452,6 +423,7 @@ fn dispatch(ctx: *RequestContext) !bool {
     Metrics.bump(&st.metrics.requests);
     if (st.bans.isBanned(ctx.client_ip, ctx.now)) {
         Metrics.bump(&st.metrics.banned);
+        recordOutcome(ctx, .denied);
         try net.response.writeText(
             ctx.writer(),
             .forbidden,
@@ -471,6 +443,7 @@ fn dispatch(ctx: *RequestContext) !bool {
     const rate = st.rate_limiter.check(ctx.client_ip, ctx.now_ms, limits);
     if (rate.limited) {
         Metrics.bump(&st.metrics.rate_limited);
+        recordOutcome(ctx, .denied);
         var hdr: [64]u8 = undefined;
         const retry = try std.fmt.bufPrint(
             &hdr,
@@ -542,6 +515,7 @@ fn applyPolicy(ctx: *RequestContext) !bool {
         ),
         .deny => {
             Metrics.bump(&st.metrics.denied);
+            recordOutcome(ctx, .denied);
             if (std.mem.startsWith(u8, decision.rule_name, "waf:")) recordIncident(
                 ctx,
                 decision.rule_name,
@@ -556,10 +530,18 @@ fn applyPolicy(ctx: *RequestContext) !bool {
         },
         .challenge, .weigh => {
             Metrics.bump(&st.metrics.challenged);
+            recordOutcome(ctx, .challenged);
             try writeChallengeResponse(ctx);
             return ctx.keep_alive;
         },
     }
+}
+
+fn recordOutcome(ctx: *RequestContext, outcome: store.telemetry.Outcome) void {
+    if (!build_options.console) return;
+    const telemetry = ctx.state().telemetry orelse return;
+    if (std.mem.startsWith(u8, ctx.req.path, "/__sibuna/")) return;
+    telemetry.record(outcome, ctx.now, ctx.client_ip, ctx.req.path, ctx.user_agent);
 }
 
 fn recordIncident(ctx: *RequestContext, category: []const u8) void {
@@ -603,6 +585,7 @@ fn writeChallengeResponse(ctx: *RequestContext) !void {
 fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule_hash: u64) !bool {
     const st = ctx.state();
     Metrics.bump(&st.metrics.allowed);
+    recordOutcome(ctx, .admitted);
     if (st.config.mode == .forward_auth) {
         var hdr: [256]u8 = undefined;
         const headers = try std.fmt.bufPrint(
@@ -622,10 +605,15 @@ fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule
     Metrics.bump(&st.metrics.proxied);
     const c = ctx.c;
     const cfg = st.config;
+    var origin_status: u16 = 0;
+    defer if (build_options.console) {
+        if (st.telemetry) |telemetry| telemetry.origin(origin_status);
+    };
     const audit = net.ProxyAudit{
         .client_ip = ctx.client_ip,
         .status = status,
         .rule = rule_name,
+        .response_status = if (build_options.console) &origin_status else null,
     };
     const host = cfg.upstream_host;
     const port = cfg.upstream_port;

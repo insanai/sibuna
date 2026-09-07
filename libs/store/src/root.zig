@@ -30,3 +30,9 @@ test {
     _ = @import("ban_list.zig");
     _ = @import("ring.zig");
 }
+
+pub const telemetry = @import("telemetry.zig");
+pub const ConsoleTelemetry = telemetry.ConsoleTelemetry;
+test {
+    _ = @import("telemetry.zig");
+}
