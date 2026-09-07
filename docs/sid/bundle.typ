@@ -61,3 +61,16 @@
 #document("pdf/sid-0004-safeline-waf-parity-semantic-inspection.pdf")[
   #include "records/0004-safeline-waf-parity-semantic-inspection.typ"
 ]
+
+#document(
+  "sid/0005-zaxonlite-storage-architecture.html",
+  title: [SID 0005: Distributed Storage Architecture: Zaxonlite Integration for Multi-Node Consensus and Cloudflare-Grade Edge Protection],
+  author: ("Sibuna Contributors",),
+  description: [Zaxonlite integration for multi-node consensus, dynamic policies, and distributed IP reputation.],
+)[
+  #include "records/0005-zaxonlite-storage-architecture.typ"
+]
+
+#document("pdf/sid-0005-zaxonlite-storage-architecture.pdf")[
+  #include "records/0005-zaxonlite-storage-architecture.typ"
+]

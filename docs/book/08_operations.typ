@@ -209,3 +209,40 @@ Sibuna supports declarative rule policies in JSON, achieving full functional par
 When evaluated, rules are checked in declaration order on the zero-allocation request hot path.
 Matching rules immediately trigger their configured action (`ALLOW`, `DENY`, `CHALLENGE`, or `WEIGH`).
 
+#v(4mm)
+
+= Distributed Edge Consensus: Zaxonlite Integration
+
+#objectives([
+  Understand how Sibuna leverages Zaxonlite (from `paxos-zig`) to scale from a single proxy to a
+  distributed multi-node edge firewall, analyze byte-level SQLite WAL replication, and evaluate the
+  operational advantages over SafeLine WAF and Cloudflare.
+])
+
+== The Limitations of File-Based Configuration
+
+While local JSON policies (`--policy-file`) excel in single-instance deployments, enterprise edge networks require running dozens of Sibuna nodes across geographical regions. In this distributed topology:
+- Updating static configuration files requires out-of-band orchestration tools (Ansible, Puppet, Kubernetes config maps) and process reloads.
+- An attack detected by Node A (e.g. hitting an invisible honeypot trap `/__sibuna/honeypot` or executing an automated SQLi probe) remains invisible to Nodes B and C.
+- Traditional solutions like SafeLine WAF mandate external PostgreSQL and Redis clusters, introducing massive memory overhead (>1.5 GB), multi-container Docker complexity, and network IPC latency.
+
+== The Zaxonlite Architecture (`paxos-zig`)
+
+To achieve Cloudflare-grade distributed edge capabilities without external servers or Docker dependencies, Sibuna integrates *Zaxonlite*—an embedded, distributed SQL engine built on SQLite and the `paxos-zig` Multi-Paxos consensus library:
+
+1. *Replicating Page Images via Multi-Paxos:* Rather than replicating nondeterministic SQL statements, Zaxonlite executes writes on the cluster leader and replicates SQLite's committed Write-Ahead Log (WAL) page images across quorum nodes. Replicas converge to byte-identical local SQLite databases.
+2. *Read-Copy-Update (RCU) Hot Path:* Request evaluation never executes blocking SQL queries on the hot path. A background consensus worker watches committed Zaxonlite transactions, rebuilds the in-memory `policy.Engine` trie, and atomically swaps the pointer. Requests continue evaluating in under 80 nanoseconds.
+3. *Cluster-Wide IP Threat Intelligence:* When a malicious IP triggers a WAF violation or CC rate limit on any node, the node commits an IP reputation record into Zaxonlite. Consensus propagates the ban to all cluster nodes within milliseconds.
+4. *Forensic Audit Search (SQLite FTS5):* Blocked payloads are archived asynchronously into SQLite virtual tables (`fts5`), allowing security engineers to perform fast full-text forensic queries without deploying external Elasticsearch or OpenSearch clusters.
+
+#table(
+  columns: (1.3fr, 1.2fr, 1.2fr, 1.3fr),
+  table.header([*Attribute*], [*SafeLine WAF*], [*Cloudflare Edge*], [*Sibuna + Zaxonlite*]),
+  [Storage Backend], [PostgreSQL + Redis], [Quicksilver + D1], [*Zaxonlite (SQLite + Paxos)*],
+  [Runtime Dependencies], [Docker, Compose, DBs], [Proprietary Cloud SaaS], [*Single Static Binary*],
+  [Consensus Protocol], [External Postgres Master], [Internal Paxos/Raft], [*Pure Zig Multi-Paxos*],
+  [Memory Footprint], [1,500 MB – 2,000 MB], [Multi-Tenant Cloud], [*< 35 MB Total*],
+  [Latency Overhead], [2,000 – 6,000 µs], [Edge Proxy (< 1 ms)], [*Sub-microsecond (< 1 µs)*],
+  [Deployment Model], [Heavy Docker Compose], [Cloudflare Account], [*`./sibuna --cluster`*],
+)
+
