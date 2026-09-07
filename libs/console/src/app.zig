@@ -24,6 +24,8 @@ pub const App = struct {
     telemetry: *store.ConsoleTelemetry,
     metrics: *const core.Metrics,
     stats: Stats = .{},
+    geo: @import("geoip_generation.zig").Registry = .{},
+    geo_job: @import("geoip_job.zig").Job = .{},
     collector: ?std.Thread = null,
     stopping: std.atomic.Value(bool) = .init(false),
 
@@ -67,6 +69,9 @@ pub const App = struct {
                 .{ if (ipv6) "[" else "", host, if (ipv6) "]" else "", cfg.port },
             ));
         }
+        self.geo_job.app = self;
+        try self.geo_job.restore();
+        errdefer self.geo.deinit();
         self.collector = try std.Thread.spawn(
             .{ .stack_size = 256 * 1024 },
             collect,
@@ -78,7 +83,9 @@ pub const App = struct {
     /// Called only after the kernel has joined all handlers and streams.
     pub fn deinit(self: *App) void {
         self.stopping.store(true, .release);
+        self.geo_job.stop();
         if (self.collector) |thread| thread.join();
+        self.geo.deinit();
         self.passwords.deinit();
         self.gpa.destroy(self.telemetry);
         std.crypto.secureZero(u8, &self.bootstrap_key);
@@ -86,14 +93,36 @@ pub const App = struct {
     }
 
     fn collect(self: *App) void {
+        var last_prune: u64 = 0;
         while (!self.stopping.load(.acquire)) {
-            self.stats.collect(self.io, self.telemetry, self.now());
+            const second = self.now();
+            self.stats.collect(self.io, self.telemetry, second, &self.geo);
+            if (self.geo.loaded.load(.acquire) and !self.geo_job.running.load(.acquire) and
+                second -| last_prune >= 5)
+            {
+                _ = self.background(.{ .geo_prune = second }) catch |err| {
+                    std.log.warn("console GeoIP maintenance: {t}", .{err});
+                };
+                last_prune = second;
+            }
             std.Io.sleep(self.io, std.Io.Duration.fromMilliseconds(250), .awake) catch return;
         }
     }
 
     pub fn request(self: *App, operation: p.StorageRequest) !p.StorageResult {
-        const ticket = try self.mailbox.submit(self.io, operation, .urgent);
+        return self.requestAt(operation, .urgent);
+    }
+
+    pub fn background(self: *App, operation: p.StorageRequest) !p.StorageResult {
+        return self.requestAt(operation, .background);
+    }
+
+    fn requestAt(
+        self: *App,
+        operation: p.StorageRequest,
+        priority: Mailbox.Priority,
+    ) !p.StorageResult {
+        const ticket = try self.mailbox.submit(self.io, operation, priority);
         errdefer self.mailbox.abandon(self.io, ticket) catch |err| {
             std.log.err("console request cancellation: {t}", .{err});
         };
@@ -147,6 +176,8 @@ pub const App = struct {
             const origin = try context.header("Origin") orelse return error.InvalidRequest;
             if (!std.mem.eql(u8, origin, self.config.origin.slice())) return error.InvalidRequest;
         }
+        if (std.mem.eql(u8, path, "/console/api/geoip"))
+            return @import("geoip_routes.zig").handle(self, context);
         if (std.mem.eql(u8, path, "/console/api/setup")) {
             if (method == .GET) {
                 const status = try self.request(.setup_status);

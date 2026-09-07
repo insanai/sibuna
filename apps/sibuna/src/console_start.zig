@@ -94,6 +94,11 @@ pub const Runtime = struct {
             .{std.fmt.bytesToHex(app.bootstrap_key, .lower)},
         );
         std.debug.print("Console: {s}/console/\n", .{app.config.origin.slice()});
+        std.debug.print(
+            "Console capacity envelope: {d} MiB; " ++
+                "database/cache and allocator overhead are separate.\n",
+            .{(try config.budget.reservedBytes()) / (1024 * 1024)},
+        );
         return .{ .app = app, .kernel = kernel };
     }
 

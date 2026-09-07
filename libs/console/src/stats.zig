@@ -1,29 +1,46 @@
 const std = @import("std");
 const core = @import("core");
 const store = @import("store");
+const Geo = @import("geoip_generation.zig").Registry;
+const geoip = @import("geoip.zig");
+const p = @import("console_protocol");
 
 pub const Snapshot = @import("console_protocol").StatsSnapshot;
 
 /// The collector owns the single queue consumer; HTTP and streaming writers copy a snapshot.
 pub const Stats = struct {
     mutex: std.Io.Mutex = .init,
-    buckets: [60]struct { second: u64 = 0, samples: u64 = 0 } = @splat(.{}),
+    buckets: [60]struct {
+        second: u64 = 0,
+        samples: u64 = 0,
+        countries: [676]u32 = @splat(0),
+    } = @splat(.{}),
+    geo_available: bool = false,
 
     pub fn collect(
         self: *Stats,
         io: std.Io,
         telemetry: *store.ConsoleTelemetry,
         now: u64,
+        geo: *Geo,
     ) void {
         self.mutex.lockUncancelable(io);
         defer self.mutex.unlock(io);
+        self.geo_available = geo.loaded.load(.acquire);
         // One bounded drain per observation; input beyond capacity has explicit loss counters.
         for (0..4096) |_| {
             const record = telemetry.queue.pop() orelse break;
             if (record.second > now or now - record.second >= 60) continue;
             const bucket = &self.buckets[record.second % 60];
             if (bucket.second != record.second) bucket.* = .{ .second = record.second };
-            bucket.samples += 1;
+            const address = geoip.address(record.ip[0..record.ip_len]) catch {
+                bucket.samples += 1;
+                continue;
+            };
+            if (geo.lookup(io, address)) |country| {
+                const index = @as(usize, country[0] - 'A') * 26 + country[1] - 'A';
+                bucket.countries[index] +|= 1;
+            } else bucket.samples += 1;
         }
     }
 
@@ -37,13 +54,20 @@ pub const Stats = struct {
         self.mutex.lockUncancelable(io);
         defer self.mutex.unlock(io);
         var unknown: u64 = 0;
+        var countries: [676]u64 = @splat(0);
         for (self.buckets) |bucket| {
-            if (bucket.second <= now and now - bucket.second < 60) unknown += bucket.samples;
+            if (bucket.second > now or now - bucket.second >= 60) continue;
+            unknown += bucket.samples;
+            for (bucket.countries, &countries) |count, *total| total.* += count;
         }
         const admitted = telemetry.admitted.load(.monotonic);
         const challenged = telemetry.challenged.load(.monotonic);
         const denied = telemetry.denied.load(.monotonic);
+        const ranked = rank(&countries);
         return .{
+            .geoip_available = self.geo_available,
+            .countries = ranked.top,
+            .other_country_samples = ranked.other,
             .requests = admitted +% challenged +% denied,
             .admitted = admitted,
             .challenged = challenged,
@@ -71,9 +95,28 @@ test "collector excludes expired and future samples independently of subscribers
         record.second = second;
         try t.expect(telemetry.queue.push(record));
     }
-    stats.collect(t.io, telemetry, 100);
+    var geo: Geo = .{};
+    stats.collect(t.io, telemetry, 100, &geo);
     try t.expectEqual(@as(u64, 2), stats.snapshot(t.io, telemetry, &metrics, 100).unknown_samples);
     try t.expectEqual(@as(u64, 1), stats.snapshot(t.io, telemetry, &metrics, 101).unknown_samples);
     try t.expectEqual(@as(u64, 0), stats.snapshot(t.io, telemetry, &metrics, 160).unknown_samples);
     try t.expect(telemetry.queue.pop() == null);
+}
+
+const Ranked = struct { top: [32]p.CountryCount = @splat(.{}), other: u64 = 0 };
+fn rank(counts: *const [676]u64) Ranked {
+    var result: Ranked = .{};
+    for (counts, 0..) |count, index| {
+        if (count == 0) continue;
+        var candidate: p.CountryCount = .{
+            .code = @as(u16, @intCast(index / 26 + 'A')) * 256 +
+                @as(u16, @intCast(index % 26 + 'A')),
+            .samples = count,
+        };
+        for (&result.top) |*entry| {
+            if (candidate.samples > entry.samples) std.mem.swap(p.CountryCount, &candidate, entry);
+        }
+        result.other += candidate.samples;
+    }
+    return result;
 }

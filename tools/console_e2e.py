@@ -63,6 +63,31 @@ def stop(proc):
         proc.wait()
 
 
+def geo_import(console_port, cookie, csrf):
+    source = {"source_version": "2026-09", "expected_revision": 0,
+              "csv": "".join(f"8.8.{i}.0,8.8.{i}.255,US\n" for i in range(200))}
+    assert request(console_port, "POST", "/console/api/geoip", source, cookie, csrf)[0] == 200
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        metadata = json.loads(request(console_port, "GET", "/console/api/geoip", cookie=cookie)[2])
+        if metadata["status"] == "applied":
+            assert metadata["ranges"] == 200 and metadata["revision"] == 1
+            break
+        assert metadata["status"] != "failed", metadata
+        time.sleep(0.02)
+    else:
+        raise AssertionError("GeoIP import did not complete")
+    source.update(expected_revision=1, csv="8.8.8.0,8.8.8.255,AA")
+    assert request(console_port, "POST", "/console/api/geoip", source, cookie, csrf)[0] == 200
+    while time.monotonic() < deadline:
+        metadata = json.loads(request(console_port, "GET", "/console/api/geoip", cookie=cookie)[2])
+        if metadata["status"] == "failed":
+            assert metadata["ranges"] == 200 and metadata["revision"] == 1
+            return
+        time.sleep(0.02)
+    raise AssertionError("Invalid GeoIP import did not fail")
+
+
 def check(binary):
     with tempfile.TemporaryDirectory(prefix="sibuna-console-") as root:
         logpath = Path(root) / "daemon.log"
@@ -91,7 +116,8 @@ def check(binary):
                 assert request(console_port, "GET", "/console/api/session", cookie=cookie)[0] == 200
                 geometry = request(console_port, "GET", "/console/assets/world-110m.bin",
                                    cookie=cookie)
-                assert geometry[0] == 200 and geometry[2].startswith(b"SBG1")
+                assert geometry[0] == 200 and geometry[2][:4] in (b"SBG1", b"SBG2")
+                geo_import(console_port, cookie, csrf)
                 stream = console_ws_test.delivery(console_port, cookie)
                 assert request(console_port, "POST", "/console/api/logout", cookie=cookie)[0] == 400
                 assert request(console_port, "POST", "/console/api/logout",
@@ -104,7 +130,11 @@ def check(binary):
             try:
                 assert not json.loads(request(console_port, "GET", "/console/api/setup")[2])[
                     "setup_required"]
-                assert request(console_port, "POST", "/console/api/login", credentials)[0] == 200
+                login = request(console_port, "POST", "/console/api/login", credentials)
+                assert login[0] == 200
+                cookie = login[1]["Set-Cookie"].split(";", 1)[0]
+                metadata = request(console_port, "GET", "/console/api/geoip", cookie=cookie)
+                assert json.loads(metadata[2])["ranges"] == 200
             finally:
                 stop(proc)
     print("console-e2e: bootstrap, login, CSRF, stream delivery/revocation, restart persistence passed")

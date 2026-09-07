@@ -165,6 +165,7 @@ test "owned payload boundaries and pagination reject unbounded input" {
     try t.expect(!Role.operator.allows(.manage_users));
 }
 
+pub const CountryCount = struct { code: u16 = 0, samples: u64 = 0 };
 pub const StatsSnapshot = struct {
     requests: u64,
     admitted: u64,
@@ -177,6 +178,8 @@ pub const StatsSnapshot = struct {
     sample_loss: u64,
     sample_probability: []const u8 = "1/64",
     geoip_available: bool = false,
+    countries: [32]CountryCount = @splat(.{}),
+    other_country_samples: u64 = 0,
     unknown_samples: u64,
     timestamp: u64,
 };

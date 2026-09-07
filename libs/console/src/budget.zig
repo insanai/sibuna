@@ -9,12 +9,13 @@ pub const Budget = struct {
     peers: u16 = 16,
     stack_bytes: u32 = 256 * 1024,
     auth_verifiers: u8 = 1,
-    geoip_generation_bytes: u32 = 0,
+    geoip_generation_bytes: u32 = @import("geoip_generation.zig").max_ranges *
+        @sizeOf(@import("geoip.zig").Range),
 
     pub const Error = error{InvalidBudget};
     pub const socket_buffer_bytes = 16 * 1024;
     pub const body_bytes = 1024 * 1024;
-    pub const import_bytes = 8 * 1024 * 1024;
+    pub const import_bytes = 16 * 1024 * 1024 + 40 * 1024;
     pub const auth_bytes = @import("password.zig").Password.workspace_bytes;
     pub const topic_bytes = 10 * 1024 * 1024;
     pub const traffic_bytes = 1024 * 1024;
@@ -46,7 +47,7 @@ test "budget preserves HTTP headroom and accounts for both GeoIP generations" {
     const t = std.testing;
     try t.expectError(error.InvalidBudget, (Budget{ .slots = 79 }).validate());
     try t.expectError(error.InvalidBudget, (Budget{ .auth_verifiers = 2 }).validate());
-    const base = try (Budget{}).reservedBytes();
+    const base = try (Budget{ .geoip_generation_bytes = 0 }).reservedBytes();
     const loaded = try (Budget{ .geoip_generation_bytes = 1000 }).reservedBytes();
     try t.expectEqual(base + 2000, loaded);
 }
