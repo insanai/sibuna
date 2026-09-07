@@ -23,6 +23,12 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     try button(w, "events-raw", "Raw incidents", model.busy or !model.grouped);
     try button(w, "events-source", "By source address", model.busy or model.grouped);
     try w.writeAll("</div>");
+    if (model.campaign != 0) {
+        try w.print("<p class=\"sb-note mt-4\">Campaign candidate #{d}. " ++
+            "Automated similarity grouping is not attribution or proof of a common attacker. " ++
+            "Membership uses the selected time range.</p>", .{model.campaign});
+        try button(w, "events-clear-campaign", "Clear campaign filter", model.busy);
+    }
     try filters(model, w);
     try w.writeAll("<section id=\"incident-results\" tabindex=\"-1\" " ++
         "class=\"sb-panel mt-6\" aria-label=\"Incident results\">");
@@ -97,7 +103,9 @@ fn incident(row: *const p.events.Row, w: *Writer) Writer.Error!void {
     try escape(w, row.user_agent.slice());
     try w.writeAll("</dd><dt>Campaign candidate</dt><dd>");
     if (row.campaign) |id| {
-        try w.print("{d} (automated similarity grouping)", .{id});
+        try w.print("{d} (automated similarity grouping) " ++
+            "<button class=\"btn btn-sm\" data-action=\"events-campaign-{d}\">" ++
+            "Inspect candidate</button>", .{ id, id });
     } else try w.writeAll("Not recorded");
     try w.writeAll("</dd><dt>Country, delivered response status and matched rule</dt>" ++
         "<dd>Not recorded</dd></dl>");

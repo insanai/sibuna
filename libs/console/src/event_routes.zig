@@ -19,6 +19,7 @@ pub fn query(app: *App, context: *http.Context, export_page: bool) !void {
         from: u64 = 0,
         until: ?u64 = null,
         node: u32 = 0,
+        campaign: []const u8 = "",
         category: []const u8 = "",
         ip: []const u8 = "",
         path_prefix: []const u8 = "",
@@ -34,6 +35,7 @@ pub fn query(app: *App, context: *http.Context, export_page: bool) !void {
         .from = fields.from,
         .until = fields.until orelse std.math.maxInt(i64),
         .node = fields.node,
+        .campaign = try campaignId(fields.campaign),
         .category = try p.Bytes(32).init(fields.category),
         .ip = try p.Bytes(48).init(fields.ip),
         .path_prefix = try p.Bytes(256).init(fields.path_prefix),
@@ -65,4 +67,9 @@ pub fn query(app: *App, context: *http.Context, export_page: bool) !void {
         else => .service_unavailable,
     };
     return http.fail(context, status, "CONSOLEEVENTS");
+}
+
+fn campaignId(value: []const u8) error{InvalidRequest}!u64 {
+    if (value.len == 0) return 0;
+    return std.fmt.parseInt(u64, value, 10) catch error.InvalidRequest;
 }

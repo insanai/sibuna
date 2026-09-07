@@ -39,6 +39,7 @@ pub fn run(owner: *Persistent) !void {
         console.schema.rotation_v4,
         console.schema.events_v5,
         console.schema.evidence_v6,
+        console.schema.campaign_v7,
     };
     inline for (migrations, 2..) |sql, target| {
         if (version == target - 1) {

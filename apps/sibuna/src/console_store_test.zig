@@ -719,3 +719,38 @@ test "versioned incident metadata commits with forensics and survives migration 
     try t.expectEqual(@as(i64, 66), capture.get("truncated").?.integer);
     try t.expect(rows[0].object.get("query_redacted").?.bool);
 }
+
+test "candidate membership preserves large IDs and excludes unrelated rows under query bounds" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try geoFixture(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/candidate",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try insertEvents(fx.owner);
+    try fx.owner.db.exec(
+        t.allocator,
+        "UPDATE security_incidents SET campaign_id=9007199254740993 WHERE id<=3;" ++
+            "WITH RECURSIVE seq(x) AS (VALUES(31) UNION ALL SELECT x+1 FROM seq WHERE x<15000) " ++
+            "INSERT INTO security_incidents(id,node_id,client_ip,user_agent,method,path," ++
+            "violation_category,offending_payload,recorded_at,campaign_id) " ++
+            "SELECT x,1,'8.8.4.4','','GET','/unrelated','test','',201,9007199254740992 FROM seq;",
+    );
+    const input: p.events.Query = .{
+        .session_digest = @splat(1),
+        .now = 250,
+        .campaign = 9007199254740993,
+    };
+    const result = (try fx.run(.{ .events_query = input })).page;
+    const parsed = try std.json.parseFromSlice(std.json.Value, t.allocator, result.slice(), .{});
+    defer parsed.deinit();
+    const rows = parsed.value.object.get("rows").?.array.items;
+    try t.expectEqual(@as(usize, 3), rows.len);
+    for (rows) |row| try t.expectEqualStrings(
+        "9007199254740993",
+        row.object.get("campaign").?.string,
+    );
+}

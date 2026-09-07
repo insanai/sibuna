@@ -55,6 +55,23 @@ def check(binary, h):
                         break
                     query["before"] = page["next"]
                 assert len(seen) == 15
+                campaign = row["campaign"]
+                assert campaign is not None
+                members = {"campaign": campaign, "limit": 10}
+                member_ids = set()
+                while True:
+                    response = h.request(port, "POST", endpoint, members, cookie, csrf)
+                    assert response[0] == 200
+                    page = json.loads(response[2])
+                    for member in page["rows"]:
+                        assert member["campaign"] == campaign
+                        member_ids.add(member["id"])
+                    if page["next"] is None:
+                        break
+                    members["before"] = page["next"]
+                assert len(member_ids) == 15
+                assert h.request(port, "POST", endpoint,
+                                 {"campaign": "18446744073709551615"}, cookie, csrf)[0] == 400
                 query = {"ip": "8.8.8.1"}
                 page = json.loads(h.request(port, "POST", endpoint, query, cookie, csrf)[2])
                 assert len(page["rows"]) == 1

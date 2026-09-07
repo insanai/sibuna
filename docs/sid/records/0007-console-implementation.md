@@ -363,3 +363,21 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
 - Rich matched evidence, policy revision, country-at-capture and configurable redaction remain
   future envelope extensions. Existing private forensic storage is not relabelled as sanitized
   evidence. Benchmark regeneration follows for this measured capture-path change.
+
+### Candidate membership navigation (2026-09-08)
+
+- Incident details link existing similarity candidates to raw or grouped membership. Navigation
+  preserves exact string IDs and the selected time boundary, clears address/node restrictions,
+  and retains a visible candidate filter through paging, regrouping and bounded export.
+  The interface explicitly distinguishes automated similarity grouping from attribution.
+- Schema v7 adds a campaign/time/id index. Candidate queries use an equality predicate so
+  SQLite can use it within the existing VM-step budget. A deterministic fixture with 15,000
+  unrelated records verifies exact membership for an ID above JavaScript's integer precision.
+  Live tests verify all 15 related incidents across pages and reject oversized IDs.
+- Required formatting, repository/live tests and SID compilation passed. Browser review exposed
+  generic JSON-tree exhaustion on a full historical page; incident responses now use typed
+  decoding, with a complete ten-row browser-event regression including versioned metadata.
+  Browser repetition successfully displayed ten then five members and restored results focus.
+- Nearest-incident search and policy/reputation actions remain pending. The preceding capture
+  benchmark regeneration is committed as `latest-20260907T231647Z.json`; console-impact and
+  storage-contention acceptance still require the release harness.

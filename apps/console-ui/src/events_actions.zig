@@ -5,6 +5,7 @@ const values = @import("events_state.zig");
 
 pub fn act(state: *State, name: []const u8, fields: std.json.Value) !bool {
     if (!state.fullAccess()) return false;
+    if (try campaign(state, name)) return true;
     const model = &state.events;
     if (std.mem.eql(u8, name, "events")) {
         state.phase = .events;
@@ -96,4 +97,40 @@ test "source drill-down retains node, address and the selected time boundary" {
     try std.testing.expectEqual(@as(u32, 7), state.events.node);
     try std.testing.expectEqualStrings("2001:4860::1", state.events.ip.slice());
     try std.testing.expectEqual(@as(u64, 200), state.events.until);
+}
+
+fn campaign(state: *State, name: []const u8) !bool {
+    const prefix = "events-campaign-";
+    const clear = std.mem.eql(u8, name, "events-clear-campaign");
+    if (!clear and !std.mem.startsWith(u8, name, prefix)) return false;
+    const model = &state.events;
+    if (state.phase != .events or model.busy) return false;
+    const id = if (clear) 0 else try std.fmt.parseInt(u64, name[prefix.len..], 10);
+    if (id > std.math.maxInt(i64) or (!clear and id == 0)) return error.InvalidRequest;
+    // Candidate membership spans addresses and nodes; retain only the reader's time boundary.
+    model.* = .{
+        .campaign = id,
+        .until = model.until,
+        .hours = model.hours,
+        .busy = true,
+        .focus_results = true,
+    };
+    state.message = .{};
+    return true;
+}
+
+test "campaign navigation preserves exact identifiers and time boundaries across nodes" {
+    var state: State = .{ .phase = .events };
+    state.csrf = try p.Bytes(64).init("test");
+    state.events.until = 200;
+    state.events.node = 7;
+    state.events.ip = try p.Bytes(48).init("8.8.8.8");
+    try std.testing.expect(try act(&state, "events-campaign-9007199254740993", .null));
+    try std.testing.expectEqual(@as(u64, 9007199254740993), state.events.campaign);
+    try std.testing.expectEqual(@as(u64, 200), state.events.until);
+    try std.testing.expectEqual(@as(u32, 0), state.events.node);
+    try std.testing.expectEqual(@as(usize, 0), state.events.ip.len);
+    state.events.busy = false;
+    try std.testing.expect(try act(&state, "events-clear-campaign", .null));
+    try std.testing.expectEqual(@as(u64, 0), state.events.campaign);
 }

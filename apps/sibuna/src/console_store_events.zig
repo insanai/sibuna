@@ -17,12 +17,14 @@ pub fn query(owner: *Persistent, input: p.events.Query) !p.StorageResult {
         .time = std.math.maxInt(i64),
         .id = std.math.maxInt(i64),
     };
-    var result = try db.query(owner.db, owner.gpa, if (input.grouped) grouped_sql else sql, &.{
+    const sql = statement(input.grouped, input.campaign != 0);
+    var result = try db.query(owner.db, owner.gpa, sql, &.{
         integer(input.from),             integer(input.until),
         integer(input.node),             integer(input.node),
         text(input.category.slice()),    text(input.category.slice()),
         text(input.ip.slice()),          text(input.ip.slice()),
         text(input.path_prefix.slice()), text(input.path_prefix.slice()),
+        integer(input.campaign),         integer(input.campaign),
         integer(before.time),            integer(before.time),
         integer(before.id),              integer(input.limit + 1),
     });
@@ -135,19 +137,32 @@ fn copy(
     truncated.* = truncated.* or position != source.len;
 }
 
-const filters =
+const base_filters =
     " FROM security_incidents LEFT JOIN console_incident_evidence e ON e.incident_id=id " ++
     "WHERE recorded_at BETWEEN ? AND ? " ++
     "AND (?=0 OR node_id=?) AND (?='' OR violation_category=?) AND (?='' OR client_ip=?) " ++
     "AND substr(path,1,length(?))=? ";
-const sql =
+const filters = base_filters ++ "AND (?=0 OR campaign_id=?) ";
+const campaign_filters = base_filters ++ "AND campaign_id=? AND ?!=0 ";
+const raw_select =
     "SELECT id,node_id,recorded_at,client_ip,method,path,violation_category,user_agent," ++
     "campaign_id,1,recorded_at,e.version,e.selected_status,e.query_bytes,e.body_bytes," ++
-    "e.declared_body_bytes,e.truncated" ++ filters ++
+    "e.declared_body_bytes,e.truncated";
+const raw_order =
     "AND (recorded_at<? OR (recorded_at=? AND id<?)) " ++
     "ORDER BY recorded_at DESC,id DESC LIMIT ?";
-const grouped_sql =
+const group_select =
     "SELECT MAX(id),node_id,MAX(recorded_at),client_ip,'','','','',NULL," ++
-    "COUNT(*),MIN(recorded_at),NULL,NULL,NULL,NULL,NULL,NULL" ++ filters ++
+    "COUNT(*),MIN(recorded_at),NULL,NULL,NULL,NULL,NULL,NULL";
+const group_order =
     "GROUP BY node_id,client_ip HAVING MAX(recorded_at)<? OR " ++
     "(MAX(recorded_at)=? AND MAX(id)<?) ORDER BY MAX(recorded_at) DESC,MAX(id) DESC LIMIT ?";
+
+fn statement(grouped: bool, campaign: bool) []const u8 {
+    if (grouped) {
+        if (campaign) return group_select ++ campaign_filters ++ group_order;
+        return group_select ++ filters ++ group_order;
+    }
+    if (campaign) return raw_select ++ campaign_filters ++ raw_order;
+    return raw_select ++ filters ++ raw_order;
+}

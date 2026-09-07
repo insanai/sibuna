@@ -67,7 +67,7 @@ export fn sb_event(kind: u32, length: usize) void {
     defer std.crypto.secureZero(u8, &memory);
     defer std.crypto.secureZero(u8, input[0..length]);
     var fixed = std.heap.FixedBufferAllocator.init(&memory);
-    if (kind == 2 and (challengeEnvelope(input[0..length], fixed.allocator()) catch false)) {
+    if (kind == 2 and (boundedEnvelope(input[0..length], fixed.allocator()) catch false)) {
         finish();
         return;
     }
@@ -222,7 +222,6 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
     const body = field(value, "body") orelse return;
     if (std.mem.startsWith(u8, id, "totp")) return securityResponse(id, status, body);
     if (equal(id, "stats")) return statsResponse(status, body, alloc);
-    if (equal(id, "events")) return eventResponse(status, body);
     if (equal(id, "events-export")) return eventExportResponse(status);
     if (equal(id, "geoip") or equal(id, "geo-import"))
         return geoResponse(id, status, body);
@@ -578,6 +577,11 @@ fn eventQuery(export_page: bool, csv: bool) !void {
     try command(.{ .op = "disconnect" });
     const model = &state.events;
     var id: [20]u8 = undefined;
+    var campaign_id: [20]u8 = undefined;
+    const campaign = switch (model.campaign) {
+        0 => "",
+        else => try std.fmt.bufPrint(&campaign_id, "{d}", .{model.campaign}),
+    };
     const before: ?struct { time: u64, id: []const u8 } = if (model.cursors[model.page]) |cursor|
         .{ .time = cursor.time, .id = try std.fmt.bufPrint(&id, "{d}", .{cursor.id}) }
     else
@@ -593,6 +597,7 @@ fn eventQuery(export_page: bool, csv: bool) !void {
             .format = if (csv) "csv" else "json",
             .view = if (model.grouped) "source" else "raw",
             .node = model.node,
+            .campaign = campaign,
             .before = before,
             .category = model.category.slice(),
             .ip = model.ip.slice(),
@@ -603,7 +608,7 @@ fn eventQuery(export_page: bool, csv: bool) !void {
     });
 }
 
-fn eventResponse(status: i64, body: std.json.Value) !void {
+fn eventResponse(status: i64, body: ?@import("events_state.zig").WirePage) !void {
     if (state.phase != .events) return;
     state.events.busy = false;
     if (status == 401 or status == 403) {
@@ -621,7 +626,7 @@ fn eventResponse(status: i64, body: std.json.Value) !void {
         setMessage("Could not load incidents. Check your connection or narrow the filters.");
         return;
     }
-    try state.events.decode(body);
+    try state.events.decode(body orelse return error.InvalidResponse);
     if (state.events.focus_results) try command(.{
         .op = "focus",
         .selector = "[aria-label=\"Incident results\"]",
@@ -647,7 +652,7 @@ fn eventExportResponse(status: i64) !void {
     state.events.exporting = false;
     state.events.export_ready = status == 200;
     if (state.phase != .events) return;
-    if (status == 401 or status == 403) return eventResponse(status, .null);
+    if (status == 401 or status == 403) return eventResponse(status, null);
     setMessage(switch (status) {
         200 => "Your page export is ready. It contains records matching this view.",
         429 => "The export allowance is used. Wait a minute before exporting again.",
@@ -695,7 +700,7 @@ fn challengeResponse(status: i64, snapshot: p.challenges.Snapshot) void {
 
 /// Large fixed arrays bypass the generic Value tree, whose growth would consume the
 /// event arena despite a small wire response. Unknown fields are skipped without a tree.
-fn challengeEnvelope(bytes: []const u8, alloc: std.mem.Allocator) !bool {
+fn boundedEnvelope(bytes: []const u8, alloc: std.mem.Allocator) !bool {
     const header = try std.json.parseFromSlice(
         struct { id: []const u8 = "" },
         alloc,
@@ -703,6 +708,7 @@ fn challengeEnvelope(bytes: []const u8, alloc: std.mem.Allocator) !bool {
         .{ .ignore_unknown_fields = true },
     );
     defer header.deinit();
+    if (equal(header.value.id, "events")) return eventEnvelope(bytes, alloc);
     if (!equal(header.value.id, "challenges")) return false;
     if (state.phase != .challenges) return true;
     const Envelope = struct {
@@ -749,4 +755,65 @@ test "complete challenge browser response fits the fixed event arena and release
     try std.testing.expect(!state.challenges.busy);
     try std.testing.expectEqual(@as(u64, 123), state.challenges.snapshot.?.submitted);
     try std.testing.expectEqual(@as(u64, 100), state.challenges.received_at);
+}
+
+fn eventEnvelope(bytes: []const u8, alloc: std.mem.Allocator) !bool {
+    if (state.phase != .events) return true;
+    const Envelope = struct {
+        id: []const u8,
+        status: i64,
+        body: @import("events_state.zig").WirePage,
+        browser_time: u64 = 0,
+    };
+    const parsed = std.json.parseFromSlice(
+        Envelope,
+        alloc,
+        bytes,
+        .{ .ignore_unknown_fields = true },
+    ) catch {
+        state.events.busy = false;
+        setMessage("Could not read incidents. Narrow the filters and try again.");
+        return true;
+    };
+    defer parsed.deinit();
+    state.browser_time = parsed.value.browser_time;
+    const previous = state.phase;
+    eventResponse(parsed.value.status, parsed.value.body) catch {
+        state.events.busy = false;
+        setMessage("Could not read incident fields. Please try again.");
+    };
+    if (state.phase != previous) try command(.{
+        .op = "focus",
+        .selector = "main h1",
+        .top = true,
+    });
+    return true;
+}
+
+test "full incident browser envelope fits fixed arena and retains exact candidate IDs" {
+    sb_init();
+    state.phase = .events;
+    state.events.busy = true;
+    var writer: std.Io.Writer = .fixed(&input);
+    const row: @import("events_state.zig").WireRow = .{
+        .id = "9007199254740993",
+        .campaign = "9007199254740993",
+        .capture = .{
+            .selected_status = 403,
+            .query_bytes = 20,
+            .body_bytes = 30,
+            .declared_body_bytes = 40,
+            .truncated = 64,
+        },
+    };
+    try std.json.Stringify.value(.{
+        .id = "events",
+        .status = 200,
+        .browser_time = 100,
+        .body = .{ .rows = @as([10]@TypeOf(row), @splat(row)), .next = null },
+    }, .{}, &writer);
+    sb_event(2, writer.buffered().len);
+    try std.testing.expect(!state.events.busy);
+    try std.testing.expectEqual(@as(usize, 10), state.events.count);
+    try std.testing.expectEqual(@as(u64, 9007199254740993), state.events.rows[0].campaign.?);
 }
