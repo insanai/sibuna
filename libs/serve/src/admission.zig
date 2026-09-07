@@ -17,7 +17,8 @@ pub const Admission = struct {
         if (self.max_slots < 16 or self.max_slots > 256) return error.InvalidCapacity;
         if (self.http_reserved < 16 or self.http_reserved > self.max_slots)
             return error.InvalidCapacity;
-        if (self.max_browsers > self.max_slots - self.http_reserved or self.max_peers > 64)
+        if (self.max_browsers > 64 or
+            self.max_browsers > self.max_slots - self.http_reserved or self.max_peers > 64)
             return error.InvalidCapacity;
     }
 
@@ -77,4 +78,11 @@ test "browser and peer saturation retain reserved HTTP capacity" {
     try t.expectEqual(@as(u16, 15), admission.http);
     admission.stopping = true;
     try t.expectError(error.Stopping, admission.acquire(.http));
+}
+
+test "larger listener cannot expand browser subscription quota" {
+    try std.testing.expectError(error.InvalidCapacity, (Admission{
+        .max_slots = 256,
+        .max_browsers = 65,
+    }).validate());
 }

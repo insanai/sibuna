@@ -47,11 +47,12 @@ pub const ConsoleConfig = struct {
         const authority = origin[8..];
         if (authority.len == 0) return error.InvalidOrigin;
         for (authority) |c| {
-            if (c <= 32 or c >= 127 or std.mem.indexOfScalar(u8, "/?#@\\", c) != null)
+            if (c <= 32 or c >= 127 or std.mem.indexOfScalar(u8, "/?#@%\\", c) != null)
                 return error.InvalidOrigin;
         }
         const uri = std.Uri.parse(origin) catch return error.InvalidOrigin;
-        if (uri.host == null or uri.user != null or uri.password != null)
+        if (uri.host == null or uri.host.?.isEmpty() or
+            uri.user != null or uri.password != null or uri.port == 0)
             return error.InvalidOrigin;
         for (self.trusted_proxies[0..self.trusted_proxy_count]) |proxy| {
             if (proxy.len > proxy.data.len) return error.InvalidProxy;
@@ -81,4 +82,21 @@ test "off-loopback requires explicit HTTPS ingress and bounded CIDR list" {
     try cfg.validate(true);
     cfg.origin = try protocol.Bytes(255).init("https://console.example/path");
     try t.expectError(error.InvalidOrigin, cfg.validate(true));
+}
+
+test "proxy origin rejects unusable authorities and ambiguous encoded hosts" {
+    var cfg = ConsoleConfig{ .enabled = true, .behind_proxy = true };
+    cfg.trusted_proxy_count = 1;
+    cfg.trusted_proxies[0] = try protocol.Bytes(49).init("::1/128");
+    for ([_][]const u8{
+        "https://:443",
+        "https://console.example:0",
+        "https://%65xample.com",
+        "https://user@console.example",
+    }) |origin| {
+        cfg.origin = try protocol.Bytes(255).init(origin);
+        try std.testing.expectError(error.InvalidOrigin, cfg.validate(true));
+    }
+    cfg.origin = try protocol.Bytes(255).init("https://[::1]:9443");
+    try cfg.validate(true);
 }
