@@ -83,40 +83,13 @@ pub const IncidentRecord = struct {
 
 pub const IncidentQueue = store.BoundedQueue(IncidentRecord, 512);
 
-const Db = union(enum) {
-    node: *zx.Node,
-    embedded: if (build_options.cluster) *zx.Embedded else void,
-
-    fn exec(self: Db, gpa: std.mem.Allocator, sql: []const u8) !void {
-        switch (self) {
-            .node => |n| {
-                const z = try gpa.dupeZ(u8, sql);
-                defer gpa.free(z);
-                _ = try n.exec(z);
-            },
-            .embedded => |e| {
-                if (!build_options.cluster) unreachable;
-                _ = try e.exec(sql);
-            },
-        }
-    }
-
-    fn query(self: Db, gpa: std.mem.Allocator, sql: []const u8) !zx.QueryResult {
-        return switch (self) {
-            .node => |n| n.query(gpa, sql),
-            .embedded => |e| if (build_options.cluster) e.query(gpa, sql) else unreachable,
-        };
-    }
-
-    fn close(self: Db) void {
-        switch (self) {
-            .node => |n| n.close(),
-            .embedded => |e| if (build_options.cluster) e.close(),
-        }
-    }
-};
+const Db = @import("database.zig").Db;
+const console = if (build_options.console) @import("console") else struct {};
 
 pub const Persistent = struct {
+    console_mailbox: if (build_options.console) console.Mailbox else void =
+        if (build_options.console) .{} else {},
+    console_initialized: bool = false,
     gpa: std.mem.Allocator,
     io: Io,
     cfg: core.Config,
@@ -195,6 +168,7 @@ pub const Persistent = struct {
     }
 
     pub fn stop(self: *Persistent) void {
+        if (build_options.console) self.console_mailbox.stop(self.io);
         self.stopping.store(true, .release);
         if (self.thread) |t| t.join();
         self.state.hooks = .{};
@@ -368,6 +342,7 @@ pub const Persistent = struct {
     /// One maintenance round: persist queued incidents, then reload the
     /// policy tables if anything changed.
     pub fn tick(self: *Persistent) !void {
+        if (build_options.console) @import("console_store.zig").tick(self);
         // A stalled incident commit must not starve policy/reputation reads.
         self.drain() catch |err| {
             _ = self.state.metrics.incident_write_failures.fetchAdd(1, .monotonic);
@@ -896,4 +871,8 @@ test "persistent store: policy reload, reputation, forensics, campaigns" {
     for (0..16) |_| try p.tick();
     const p_cnt2 = fx.state.metrics.incidents_persisted.load(.monotonic);
     try std.testing.expectEqual(@as(u64, 555), p_cnt2);
+}
+
+test {
+    if (build_options.console) _ = @import("console_store_test.zig");
 }

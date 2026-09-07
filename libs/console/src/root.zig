@@ -9,3 +9,5 @@ test {
     _ = @import("config.zig");
     _ = @import("mailbox.zig");
 }
+
+pub const schema = @import("schema.zig");

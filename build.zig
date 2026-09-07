@@ -39,11 +39,20 @@ pub fn build(b: *std.Build) void {
         );
         b.invalid_user_input = true;
     }
-    _ = console_build.add(b, target, optimize);
+    const console_modules = console_build.add(b, target, optimize);
 
     const modules = addModules(b, target, optimize);
     const wasm_pow = addWasmSolver(b);
-    const app = addServer(b, target, optimize, modules, wasm_pow, storage, cluster);
+    const app = addServer(
+        b,
+        target,
+        optimize,
+        modules,
+        wasm_pow,
+        storage,
+        cluster,
+        if (console_enabled) console_modules.console else null,
+    );
     addTests(b, modules, app);
     if (console_enabled) b.top_level_steps.get("test").?.step.dependOn(
         &b.top_level_steps.get("console-test").?.step,
@@ -176,6 +185,7 @@ const AppModules = struct {
     wasm_bin: std.Build.LazyPath,
     options: *std.Build.Step.Options,
     zaxonlite: ?*std.Build.Module,
+    console: ?*std.Build.Module,
 };
 
 fn addServer(
@@ -186,9 +196,11 @@ fn addServer(
     wasm_pow: *std.Build.Step.Compile,
     storage: bool,
     cluster: bool,
+    console: ?*std.Build.Module,
 ) AppModules {
     const options = b.addOptions();
     options.addOption(bool, "storage", storage);
+    options.addOption(bool, "console", console != null);
     options.addOption(bool, "cluster", storage and cluster);
     // The embedded single-node store needs no transport, so OpenSSL stays
     // out of the binary unless clustering is requested.
@@ -213,6 +225,7 @@ fn addServer(
         .wasm_bin = wasm_pow.getEmittedBin(),
         .options = options,
         .zaxonlite = zaxonlite,
+        .console = console,
     };
 
     const root = b.createModule(.{
@@ -248,6 +261,7 @@ fn wireApp(b: *std.Build, root: *std.Build.Module, app: AppModules) void {
     );
     root.addOptions("build_options", app.options);
     if (app.zaxonlite) |z| root.addImport("zaxonlite", z);
+    if (app.console) |module| root.addImport("console", module);
 }
 
 fn addTests(b: *std.Build, modules: Modules, app: AppModules) void {

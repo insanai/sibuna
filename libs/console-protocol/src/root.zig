@@ -42,7 +42,41 @@ pub const ControlRequest = struct {
     node: u32,
     command: union(enum) { drain: bool, clear_local_bans },
 };
+pub const AuthUser = struct {
+    id: u64,
+    username: Bytes(64),
+    password_hash: Bytes(255),
+    role: Role,
+    revision: u64,
+    must_change: bool,
+};
+pub const Principal = struct {
+    actor: u64,
+    role: Role,
+    revision: u64,
+    expires: u64,
+    csrf_digest: [32]u8,
+    must_change: bool,
+};
 pub const StorageRequest = union(enum) {
+    setup_status,
+    bootstrap: struct { username: Bytes(64), password_hash: Bytes(255), now: u64 },
+    auth_user: Bytes(64),
+    session_create: struct {
+        user: u64,
+        revision: u64,
+        digest: [32]u8,
+        csrf_digest: [32]u8,
+        now: u64,
+        expires: u64,
+    },
+    logout: [32]u8,
+    password_change: struct {
+        session_digest: [32]u8,
+        csrf_digest: [32]u8,
+        password_hash: Bytes(255),
+        now: u64,
+    },
     authorize: struct { session_digest: [32]u8, now: u64 },
     incidents: struct { before_id: ?u64, limit: u16 },
     policy_edit: struct {
@@ -55,7 +89,9 @@ pub const StorageRequest = union(enum) {
     control_complete: struct { id: u64, succeeded: bool },
 };
 pub const StorageResult = union(enum) {
-    authorized: struct { actor: u64, role: Role, revision: u64, expires: u64 },
+    setup_required: bool,
+    auth_user: AuthUser,
+    authorized: Principal,
     page: Bytes(max_message),
     revision: Revision,
     command_recorded,
