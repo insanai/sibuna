@@ -58,6 +58,9 @@ pub const Pool = struct {
     mutex: SpinLock = .{},
     idle: [capacity]Io.net.Stream = undefined,
     count: usize = 0,
+    active: [8192]?Io.net.Stream = @splat(null),
+    cursor: usize = 0,
+    stopping: bool = false,
 
     /// Takes an idle origin socket if one is pooled.
     pub fn take(self: *Pool) ?Io.net.Stream {
@@ -71,7 +74,7 @@ pub const Pool = struct {
     /// Returns a reusable origin socket, or closes it when the pool is full.
     pub fn give(self: *Pool, io: Io, stream: Io.net.Stream) void {
         self.mutex.lock();
-        if (self.count < capacity) {
+        if (!self.stopping and self.count < capacity) {
             self.idle[self.count] = stream;
             self.count += 1;
             self.mutex.unlock();
@@ -79,6 +82,39 @@ pub const Pool = struct {
         }
         self.mutex.unlock();
         stream.close(io);
+    }
+
+    /// Active exchanges retain their slot until before closing or returning the descriptor.
+    fn track(self: *Pool, stream: Io.net.Stream) ?usize {
+        self.mutex.lock();
+        defer self.mutex.unlock();
+        if (self.stopping) return null;
+        for (0..self.active.len) |offset| {
+            const index = (self.cursor + offset) % self.active.len;
+            if (self.active[index] != null) continue;
+            self.active[index] = stream;
+            self.cursor = (index + 1) % self.active.len;
+            return index;
+        }
+        return null;
+    }
+
+    fn untrack(self: *Pool, index: usize) void {
+        self.mutex.lock();
+        defer self.mutex.unlock();
+        std.debug.assert(self.active[index] != null);
+        self.active[index] = null;
+    }
+
+    /// Interrupt stalled origin reads/writes before joining request workers. Closing remains
+    /// the worker's responsibility, preventing descriptor reuse while shutdown holds the lock.
+    pub fn shutdown(self: *Pool, io: Io) void {
+        self.mutex.lock();
+        defer self.mutex.unlock();
+        self.stopping = true;
+        for (self.active) |entry| {
+            if (entry) |stream| stream.shutdown(io, .both) catch {};
+        }
     }
 
     /// Closes every pooled socket (shutdown or tests).
@@ -321,7 +357,7 @@ fn exchange(
 
 fn connectUpstream(io: Io, host: []const u8, port: u16) ProxyError!Io.net.Stream {
     const addr = Io.net.IpAddress.parse(host, port) catch return error.UpstreamUnreachable;
-    return addr.connect(io, .{ .mode = .stream }) catch error.UpstreamUnreachable;
+    return @import("connect.zig").bounded(io, addr);
 }
 
 /// Proxies one request through a pooled origin connection. Returns whether
@@ -348,6 +384,10 @@ pub fn streamProxy(
         // socket may be stale, and a second stale one would fail the request.
         const pooled = if (attempt == 0) pool.take() else null;
         const stream = pooled orelse try connectUpstream(io, upstream_host, upstream_port);
+        const active = pool.track(stream) orelse {
+            stream.close(io);
+            return error.UpstreamUnreachable;
+        };
         const outcome = exchange(
             stream,
             client_writer,
@@ -357,6 +397,7 @@ pub fn streamProxy(
             audit,
             client_keep_alive,
         );
+        pool.untrack(active);
         if (outcome) |relayed| {
             if (relayed.origin_reusable) pool.give(io, stream) else stream.close(io);
             return relayed.client_keep;

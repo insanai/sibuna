@@ -18,7 +18,7 @@ semantics remain unchanged unless a stage explicitly extends them.
 - [x] `-Dconsole` defaults to storage; explicit console without storage fails.
 - [x] Build-helper directory included in package, formatting and structural checks.
 - [ ] `console-test`, `console-e2e`, `console-assets`, `console-impact` run real checks.
-- [ ] Storage starts first; console drains, cancels and joins before storage closes.
+- [x] Storage starts first; console drains, cancels and joins before storage closes.
 - [ ] Gate: storage-off, console-off, storage single-node and clustered builds work;
   console-off has no console integration or telemetry producers.
 
@@ -247,3 +247,23 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
 - All 144 unit tests, live console E2E tests, formatting and SID generation passed. Chrome
   verified the empty-instance notice, local initialization, restricted temporary login,
   forced password change and immediate live dashboard access at 390 px width.
+
+
+### Joined daemon shutdown (2026-09-08)
+
+- SIGTERM/SIGINT handlers set a lock-free flag. A normal monitor wakes acceptors; bounded
+  task slots retain joinable connection threads. Shutdown stops admission, interrupts client
+  and active upstream sockets, joins workers/reaper, drains pooled sockets, then releases
+  console tasks before Persistent flushes incidents and closes storage.
+- Idle slots remain owned until their connection unregisters. A deterministic regression
+  covers the former reaper/reuse race. Startup/shutdown also release daemon-owned engine,
+  slot and application state allocations after their borrowers have stopped.
+- Zig 0.16's native connect-timeout option is unimplemented and panics. A fixed-buffer
+  nonblocking POSIX connector uses a five-second monotonic deadline and restores blocking
+  operation before handing the connected socket to Io. No request-path allocations were added.
+- `zig build fmt test sid` passed, with 146 unit tests and live shutdown checks covering
+  four accept workers, partial HTTP clients, an authenticated subscription, a silent origin,
+  clean exit and restart. Tests fail on forced termination or a nonzero shutdown status.
+  Storage-off, console-off, clustered TLS and x86_64 Linux/musl builds passed.
+- The browser retained the last observed dashboard values and displayed Disconnected with
+  stale age after the review daemon stopped. Broader release and feature gates remain open.

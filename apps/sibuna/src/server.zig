@@ -55,6 +55,8 @@ pub const AppState = struct {
     idle: IdleTable = .{},
     /// Connections currently served on their own threads.
     connections: std.atomic.Value(u32) = .init(0),
+    stopping: std.atomic.Value(bool) = .init(false),
+    tasks: @import("connection_tasks.zig").Pool = .{},
     /// Idle keep-alive connections to the origin.
     upstream: net.proxy.Pool = .{},
     coordinator: challenge.Coordinator,
@@ -110,7 +112,7 @@ pub const AppState = struct {
 };
 
 pub fn runServer(server: *Io.net.Server, io: Io, state: *AppState) void {
-    startReaper(io, state);
+    const reaper = startReaper(io, state);
     const cpu_count = std.Thread.getCpuCount() catch 1;
     const wanted: usize = if (state.config.workers == 0) cpu_count else state.config.workers;
     const extra = @min(wanted -| 1, 63);
@@ -120,40 +122,62 @@ pub fn runServer(server: *Io.net.Server, io: Io, state: *AppState) void {
         workers[spawned] = std.Thread.spawn(.{}, workerLoop, .{ server, io, state }) catch break;
     }
     workerLoop(server, io, state);
+    requestStop(server, io, state);
+    for (workers[0..spawned]) |thread| thread.join();
+    state.idle.shutdown(io);
+    state.upstream.shutdown(io);
+    state.tasks.join();
+    if (reaper) |thread| thread.join();
+    state.upstream.drain(io);
 }
 
-/// Stack of one connection thread: the 64 KB request buffer, the 16 KB
-/// writer, proxy relay buffers, and inspection scratch all live on it.
-const connection_stack_size = 1024 * 1024;
+/// Wake each possible accept worker without closing a descriptor underneath a blocked accept.
+pub fn requestStop(listener: *Io.net.Server, io: Io, state: *AppState) void {
+    if (state.stopping.swap(true, .acq_rel)) return;
+    var address = listener.socket.address;
+    switch (address) {
+        .ip4 => |*ip| if (std.mem.allEqual(u8, &ip.bytes, 0)) {
+            ip.bytes = .{ 127, 0, 0, 1 };
+        },
+        .ip6 => |*ip| if (std.mem.allEqual(u8, &ip.bytes, 0)) {
+            ip.bytes = .{0} ** 15 ++ .{1};
+        },
+    }
+    for (0..64) |_| {
+        const wake = address.connect(io, .{ .mode = .stream }) catch break;
+        wake.close(io);
+    }
+}
 
 /// Accepts connections and serves each on its own bounded thread, so a slow
 /// or idle client never delays the others. Beyond `max_connections` new
 /// connections are answered 503 and closed without allocating a thread.
 pub fn workerLoop(server: *Io.net.Server, io: Io, state: *AppState) void {
-    while (true) {
+    while (!state.stopping.load(.acquire)) {
         const client_stream = server.accept(io) catch |err| switch (err) {
             error.Canceled, error.SocketNotListening => return,
             else => continue,
         };
+        if (state.stopping.load(.acquire)) {
+            client_stream.close(io);
+            return;
+        }
         if (state.connections.fetchAdd(1, .monotonic) >= state.config.max_connections) {
             _ = state.connections.fetchSub(1, .monotonic);
             Metrics.bump(&state.metrics.overloaded);
             rejectOverloaded(client_stream, io);
             continue;
         }
-        const thread = std.Thread.spawn(
-            .{ .stack_size = connection_stack_size },
-            connectionThread,
-            .{ client_stream, io, state },
-        ) catch {
-            connectionThread(client_stream, io, state);
-            continue;
+        state.tasks.launch(io, client_stream, state, connectionThread) catch {
+            _ = state.connections.fetchSub(1, .monotonic);
+            Metrics.bump(&state.metrics.overloaded);
+            client_stream.close(io);
         };
-        thread.detach();
     }
 }
 
-fn connectionThread(stream: Io.net.Stream, io: Io, state: *AppState) void {
+fn connectionThread(stream: Io.net.Stream, io: Io, context: *anyopaque) void {
+    const state: *AppState = @ptrCast(@alignCast(context));
     if (build_options.console) {
         if (state.telemetry != null) {
             var seed: [8]u8 = undefined;
@@ -233,7 +257,9 @@ pub const IdleTable = struct {
             slot.lock.lock();
             defer slot.lock.unlock();
             if (!slot.active) {
-                slot.* = .{ .active = true, .stream = stream, .last_active_ms = now_ms };
+                slot.active = true;
+                slot.stream = stream;
+                slot.last_active_ms = now_ms;
                 return idx;
             }
         }
@@ -254,6 +280,14 @@ pub const IdleTable = struct {
         slot.active = false;
     }
 
+    pub fn shutdown(self: *IdleTable, io: Io) void {
+        for (&self.slots) |*slot| {
+            slot.lock.lock();
+            defer slot.lock.unlock();
+            if (slot.active) slot.stream.shutdown(io, .both) catch {};
+        }
+    }
+
     /// Shuts down every connection idle longer than `timeout_ms`; the
     /// blocked worker then sees end-of-stream and releases the thread.
     pub fn reap(self: *IdleTable, io: Io, now_ms: u64, timeout_ms: u64) u32 {
@@ -263,7 +297,7 @@ pub const IdleTable = struct {
             defer slot.lock.unlock();
             if (slot.active and now_ms > slot.last_active_ms + timeout_ms) {
                 slot.stream.shutdown(io, .both) catch {};
-                slot.active = false;
+                // Keep ownership until unregister; an old worker must not clear a reused slot.
                 reaped += 1;
             }
         }
@@ -277,24 +311,28 @@ fn nowMs(io: Io) u64 {
 
 fn reaperLoop(io: Io, state: *AppState) void {
     const timeout_ms = @as(u64, state.config.idle_timeout_seconds) * 1000;
-    while (true) {
-        const pause = Io.Duration.fromMilliseconds(@intCast(@max(200, timeout_ms / 4)));
+    var next_reap = nowMs(io) + @max(200, timeout_ms / 4);
+    while (!state.stopping.load(.acquire)) {
+        const pause = Io.Duration.fromMilliseconds(200);
         Io.sleep(io, pause, .awake) catch return;
-        _ = state.idle.reap(io, nowMs(io), timeout_ms);
+        const now = nowMs(io);
+        if (now < next_reap) continue;
+        _ = state.idle.reap(io, now, timeout_ms);
+        next_reap = now + @max(200, timeout_ms / 4);
     }
 }
 
 /// Starts the idle reaper when a timeout is configured.
-pub fn startReaper(io: Io, state: *AppState) void {
-    if (state.config.idle_timeout_seconds == 0) return;
-    const t = std.Thread.spawn(.{}, reaperLoop, .{ io, state }) catch return;
-    t.detach();
+pub fn startReaper(io: Io, state: *AppState) ?std.Thread {
+    if (state.config.idle_timeout_seconds == 0) return null;
+    return std.Thread.spawn(.{}, reaperLoop, .{ io, state }) catch null;
 }
 
 pub fn handleConnection(stream: Io.net.Stream, io: Io, state: *AppState) void {
     defer stream.close(io);
-    const idle_slot = state.idle.register(stream, nowMs(io));
-    defer if (idle_slot) |idx| state.idle.unregister(idx);
+    const idle_slot = state.idle.register(stream, nowMs(io)) orelse return;
+    defer state.idle.unregister(idle_slot);
+    if (state.stopping.load(.acquire)) return;
     var conn_buf: [max_request_bytes]u8 = undefined;
     var reader = stream.reader(io, &conn_buf);
     var writer_buf: [16 * 1024]u8 = undefined;
@@ -311,7 +349,7 @@ pub fn handleConnection(stream: Io.net.Stream, io: Io, state: *AppState) void {
     while (served < max_requests_per_connection) : (served += 1) {
         const keep = serveOne(&conn) catch break;
         if (!keep) break;
-        if (idle_slot) |idx| state.idle.touch(idx, nowMs(io));
+        state.idle.touch(idle_slot, nowMs(io));
     }
 }
 
@@ -879,4 +917,27 @@ test "query parameter lookup and ipv6 peer formatting" {
     var buf: [48]u8 = undefined;
     const bytes = [_]u8{ 0x20, 0x01, 0x0d, 0xb8 } ++ [_]u8{0} ** 11 ++ [_]u8{1};
     try std.testing.expectEqualStrings("2001:db8:0:0:0:0:0:1", formatIpv6(&buf, &bytes));
+}
+
+test "reaped idle slots remain owned until the original connection unregisters" {
+    const io = std.testing.io;
+    const table = try std.testing.allocator.create(IdleTable);
+    defer std.testing.allocator.destroy(table);
+    table.* = .{};
+    const address = try Io.net.IpAddress.parse("127.0.0.1", 0);
+    var listener = try address.listen(io, .{ .reuse_address = true });
+    defer listener.deinit(io);
+    const client = try listener.socket.address.connect(io, .{ .mode = .stream });
+    defer client.close(io);
+    const stream = try listener.accept(io);
+    defer stream.close(io);
+    const old = table.register(stream, 0).?;
+    try std.testing.expectEqual(@as(u32, 1), table.reap(io, 200, 100));
+    table.cursor.store(old, .monotonic);
+    // The same socket is sufficient to check registry ownership; neither registration closes it.
+    const fresh = table.register(stream, 200).?;
+    try std.testing.expect(old != fresh);
+    table.unregister(old);
+    try std.testing.expect(table.slots[fresh].active);
+    table.unregister(fresh);
 }

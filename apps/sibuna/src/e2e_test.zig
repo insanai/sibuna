@@ -107,7 +107,7 @@ fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
         .{ &f.listener, io, &f.state },
     ) catch unreachable;
     t.detach();
-    server.startReaper(io, &f.state);
+    if (server.startReaper(io, &f.state)) |reaper| reaper.detach();
 }
 
 var origin_listener: Io.net.Server = undefined;

@@ -17,20 +17,7 @@ pub fn main(init: std.process.Init) !u8 {
     const gpa = init.gpa;
 
     var args_buf: [96][]const u8 = undefined;
-    var arg_count: usize = 0;
-    var arg_it = std.process.Args.Iterator.init(init.minimal.args);
-    defer arg_it.deinit();
-    _ = arg_it.next();
-    while (arg_it.next()) |arg| {
-        if (std.mem.eql(u8, arg, "--help")) {
-            printHelp();
-            return 0;
-        }
-        if (arg_count < args_buf.len) {
-            args_buf[arg_count] = arg;
-            arg_count += 1;
-        }
-    }
+    const arg_count = readArgs(init.minimal.args, &args_buf) orelse return 0;
     var data_args: [96][]const u8 = undefined;
     const parsed = if (build_options.console)
         console_start.parse(args_buf[0..arg_count], &data_args) catch |err| {
@@ -54,6 +41,7 @@ pub fn main(init: std.process.Init) !u8 {
     defer arena.deinit();
 
     const engine = try gpa.create(policy.Engine);
+    defer gpa.destroy(engine);
     engine.initInPlace(cfg.default_difficulty);
     engine.waf_enabled = cfg.waf;
     const policy_text = if (cfg.policy_file) |pfile| loadCustomPolicy(
@@ -63,9 +51,11 @@ pub fn main(init: std.process.Init) !u8 {
         engine,
     ) else null;
     const slot = try gpa.create(server.EngineSlot);
+    defer gpa.destroy(slot);
     slot.* = .{ .engine = engine };
 
     const state = try gpa.create(server.AppState);
+    defer gpa.destroy(state);
     state.init(cfg, slot, &seed);
 
     var persistent: ?*storage.Persistent = null;
@@ -90,6 +80,24 @@ pub fn main(init: std.process.Init) !u8 {
     return runListener(io, cfg, state);
 }
 
+fn readArgs(args: std.process.Args, output: [][]const u8) ?usize {
+    var count: usize = 0;
+    var iterator = std.process.Args.Iterator.init(args);
+    defer iterator.deinit();
+    _ = iterator.next();
+    while (iterator.next()) |arg| {
+        if (std.mem.eql(u8, arg, "--help")) {
+            printHelp();
+            return null;
+        }
+        if (count < output.len) {
+            output[count] = arg;
+            count += 1;
+        }
+    }
+    return count;
+}
+
 fn runListener(io: std.Io, cfg: core.Config, state: *server.AppState) u8 {
     const addr = std.Io.net.IpAddress.parse(cfg.listen_host, cfg.listen_port) catch |err| {
         std.debug.print(
@@ -104,7 +112,10 @@ fn runListener(io: std.Io, cfg: core.Config, state: *server.AppState) u8 {
     };
     defer listener.deinit(io);
 
-    server.runServer(&listener, io, state);
+    @import("shutdown.zig").run(&listener, io, state) catch |err| {
+        std.debug.print("Failed to start shutdown monitor: {t}\n", .{err});
+        return 1;
+    };
     return 0;
 }
 

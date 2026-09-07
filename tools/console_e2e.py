@@ -37,14 +37,15 @@ def request(console_port, method, path, body=None, cookie=None, csrf=None, extra
         conn.close()
 
 
-def start(binary, directory, console_port, logfile, key_file=None, proxy=False):
+def start(binary, directory, console_port, logfile, key_file=None, proxy=False,
+          workers=1, extra=()):
     proc = subprocess.Popen([
         binary, "--data-dir", directory, "--host", "127.0.0.1",
-        "--port", str(port()), "--workers", "1", "--console", f"127.0.0.1:{console_port}",
+        "--port", str(port()), "--workers", str(workers), "--console", f"127.0.0.1:{console_port}",
     ] + (["--console-key-file", key_file] if key_file else []) + ([
         "--console-behind-proxy", "--console-origin", "https://console.test",
         "--console-trusted-proxy", "127.0.0.1/32",
-    ] if proxy else []), stdout=logfile, stderr=logfile)
+    ] if proxy else []) + list(extra), stdout=logfile, stderr=logfile)
     deadline = time.monotonic() + 30
     while time.monotonic() < deadline:
         if proc.poll() is not None:
@@ -61,10 +62,12 @@ def start(binary, directory, console_port, logfile, key_file=None, proxy=False):
 def stop(proc):
     proc.terminate()
     try:
-        proc.wait(timeout=5)
+        proc.wait(timeout=10)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.wait()
+        raise AssertionError("daemon failed to shut down within ten seconds")
+    assert proc.returncode == 0, f"daemon shutdown status {proc.returncode}"
 
 
 def geo_import(console_port, cookie, csrf):
@@ -144,6 +147,8 @@ def check(binary):
                 stop(proc)
     import console_bootstrap_test
     console_bootstrap_test.check(binary, sys.modules[__name__])
+    import console_shutdown_test
+    console_shutdown_test.check(binary, sys.modules[__name__])
     import console_totp_test
     console_totp_test.check(binary, sys.modules[__name__])
     console_totp_test.check_proxy(binary, sys.modules[__name__])
