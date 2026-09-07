@@ -9,13 +9,12 @@ pub const Stats = struct {
     mutex: std.Io.Mutex = .init,
     buckets: [60]struct { second: u64 = 0, samples: u64 = 0 } = @splat(.{}),
 
-    pub fn snapshot(
+    pub fn collect(
         self: *Stats,
         io: std.Io,
         telemetry: *store.ConsoleTelemetry,
-        metrics: *const core.Metrics,
         now: u64,
-    ) Snapshot {
+    ) void {
         self.mutex.lockUncancelable(io);
         defer self.mutex.unlock(io);
         // One bounded drain per observation; input beyond capacity has explicit loss counters.
@@ -26,6 +25,17 @@ pub const Stats = struct {
             if (bucket.second != record.second) bucket.* = .{ .second = record.second };
             bucket.samples += 1;
         }
+    }
+
+    pub fn snapshot(
+        self: *Stats,
+        io: std.Io,
+        telemetry: *store.ConsoleTelemetry,
+        metrics: *const core.Metrics,
+        now: u64,
+    ) Snapshot {
+        self.mutex.lockUncancelable(io);
+        defer self.mutex.unlock(io);
         var unknown: u64 = 0;
         for (self.buckets) |bucket| {
             if (bucket.second <= now and now - bucket.second < 60) unknown += bucket.samples;
@@ -48,3 +58,22 @@ pub const Stats = struct {
         };
     }
 };
+
+test "collector excludes expired and future samples independently of subscribers" {
+    const t = std.testing;
+    const telemetry = try t.allocator.create(store.ConsoleTelemetry);
+    defer t.allocator.destroy(telemetry);
+    telemetry.* = store.ConsoleTelemetry.init();
+    var stats: Stats = .{};
+    var metrics: core.Metrics = .{};
+    for ([_]u64{ 39, 40, 41, 100, 101 }) |second| {
+        var record = std.mem.zeroes(store.telemetry.Record);
+        record.second = second;
+        try t.expect(telemetry.queue.push(record));
+    }
+    stats.collect(t.io, telemetry, 100);
+    try t.expectEqual(@as(u64, 2), stats.snapshot(t.io, telemetry, &metrics, 100).unknown_samples);
+    try t.expectEqual(@as(u64, 1), stats.snapshot(t.io, telemetry, &metrics, 101).unknown_samples);
+    try t.expectEqual(@as(u64, 0), stats.snapshot(t.io, telemetry, &metrics, 160).unknown_samples);
+    try t.expect(telemetry.queue.pop() == null);
+}

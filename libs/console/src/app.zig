@@ -24,6 +24,8 @@ pub const App = struct {
     telemetry: *store.ConsoleTelemetry,
     metrics: *const core.Metrics,
     stats: Stats = .{},
+    collector: ?std.Thread = null,
+    stopping: std.atomic.Value(bool) = .init(false),
 
     pub fn init(
         gpa: std.mem.Allocator,
@@ -65,15 +67,29 @@ pub const App = struct {
                 .{ if (ipv6) "[" else "", host, if (ipv6) "]" else "", cfg.port },
             ));
         }
+        self.collector = try std.Thread.spawn(
+            .{ .stack_size = 256 * 1024 },
+            collect,
+            .{self},
+        );
         return self;
     }
 
     /// Called only after the kernel has joined all handlers and streams.
     pub fn deinit(self: *App) void {
+        self.stopping.store(true, .release);
+        if (self.collector) |thread| thread.join();
         self.passwords.deinit();
         self.gpa.destroy(self.telemetry);
         std.crypto.secureZero(u8, &self.bootstrap_key);
         self.gpa.destroy(self);
+    }
+
+    fn collect(self: *App) void {
+        while (!self.stopping.load(.acquire)) {
+            self.stats.collect(self.io, self.telemetry, self.now());
+            std.Io.sleep(self.io, std.Io.Duration.fromMilliseconds(250), .awake) catch return;
+        }
     }
 
     pub fn request(self: *App, operation: p.StorageRequest) !p.StorageResult {

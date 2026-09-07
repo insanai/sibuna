@@ -14,6 +14,7 @@ pub const schema = @import("schema.zig");
 pub const Password = @import("password.zig").Password;
 test {
     _ = @import("password.zig");
+    _ = @import("stats.zig");
 }
 
 pub const App = @import("app.zig").App;
