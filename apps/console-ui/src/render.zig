@@ -52,7 +52,7 @@ fn authentication(state: *const State, w: *Writer) Writer.Error!void {
         "<a class=\"sb-brand\" href=\"/console/\">SIBUNA</a>");
     const title = switch (state.phase) {
         .loading => "Connecting securely",
-        .setup => "Set up your console",
+        .setup => "Initialize your console",
         .password => "Change your password",
         else => "Welcome back",
     };
@@ -64,8 +64,17 @@ fn authentication(state: *const State, w: *Writer) Writer.Error!void {
             "</section></main>");
         return;
     }
+    if (state.phase == .setup) {
+        try w.writeAll("<p class=\"mt-6\">Stop Sibuna and create the first administrator " ++
+            "on the server:</p><code class=\"block mt-4 break-all\">" ++
+            "sibuna init-admin admin --data-dir /path/to/data</code>" ++
+            "<p class=\"sb-note mt-4\">Restart Sibuna, then sign in with the temporary " ++
+            "password printed by the command. You must replace it before using the console.</p>" ++
+            "<a class=\"btn btn-primary mt-6\" href=\"/console/\">Check again</a>" ++
+            "</section></main>");
+        return;
+    }
     const form = switch (state.phase) {
-        .setup => "setup",
         .password => "change-password",
         else => "login",
     };
@@ -76,7 +85,6 @@ fn authentication(state: *const State, w: *Writer) Writer.Error!void {
     try w.print(
         "> {s}</button></form>",
         .{if (state.busy) "Please wait…" else switch (state.phase) {
-            .setup => "Create administrator",
             .password => "Update password",
             else => "Sign in",
         }},
@@ -89,16 +97,11 @@ fn authentication(state: *const State, w: *Writer) Writer.Error!void {
         try w.writeAll("<button class=\"btn btn-ghost\" " ++
             "data-action=\"dashboard\">Back to dashboard</button>");
     }
-    if (state.phase == .setup) try w.writeAll("<p class=\"sb-note mt-4\">" ++
-        "The setup key is printed once when the console starts for the first time.</p>");
     try w.writeAll("<p class=\"sb-note mt-6\">Protected with Argon2id and secure sessions.</p>" ++
         "</section></main>");
 }
 
 fn authenticationFields(state: *const State, w: *Writer) Writer.Error!void {
-    if (state.phase == .setup) {
-        try field(w, "setup_key", "One-time setup key", "password", "", "off");
-    }
     if (state.phase != .password) {
         try field(
             w,

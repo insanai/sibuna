@@ -7,21 +7,27 @@ const text = store.text;
 const integer = store.integer;
 const number = store.number;
 
-pub fn bootstrap(
-    owner: *Persistent,
-    username: []const u8,
-    password_hash: []const u8,
-    now: u64,
-) !p.StorageResult {
+pub fn bootstrap(owner: *Persistent, input: anytype) !p.StorageResult {
+    const username = input.username.slice();
+    const password_hash = input.password_hash.slice();
+    if (input.password_expires != 0 and (input.password_expires <= input.now or
+        input.password_expires - input.now > 3600)) return .{ .failed = .invalid_input };
     if (username.len == 0 or password_hash.len == 0) return .{ .failed = .invalid_input };
     // Conditional insert plus its audit trigger commit as one replicated transaction.
     // Concurrent initializers cannot create a second bootstrap administrator.
     const changes = try db.exec(
         owner.db,
         owner.gpa,
-        "INSERT INTO console_users(username,password_hash,role,modified_at) " ++
-            "SELECT ?,?,'admin',? WHERE NOT EXISTS(SELECT 1 FROM console_users)",
-        &.{ text(username), text(password_hash), integer(now) },
+        "INSERT INTO console_users(username,password_hash,role,modified_at," ++
+            "must_change,password_expires) SELECT ?,?,'admin',?,?,? " ++
+            "WHERE NOT EXISTS(SELECT 1 FROM console_users)",
+        &.{
+            text(username),
+            text(password_hash),
+            integer(input.now),
+            integer(@intFromBool(input.must_change)),
+            integer(input.password_expires),
+        },
     );
     return if (changes == 0) .{ .failed = .conflict } else .command_recorded;
 }
@@ -31,7 +37,8 @@ pub fn user(owner: *Persistent, username: []const u8) !p.StorageResult {
         owner.db,
         owner.gpa,
         "SELECT id,username,password_hash,role,revision,must_change," ++
-            "EXISTS(SELECT 1 FROM console_totp WHERE user_id=console_users.id AND enabled=1) " ++
+            "EXISTS(SELECT 1 FROM console_totp WHERE user_id=console_users.id AND enabled=1)," ++
+            "password_expires " ++
             "FROM console_users " ++
             "WHERE username=? AND disabled=0 LIMIT 1",
         &.{text(username)},
@@ -47,16 +54,17 @@ pub fn user(owner: *Persistent, username: []const u8) !p.StorageResult {
         .revision = try number(row[4]),
         .must_change = try number(row[5]) != 0,
         .totp_enabled = try number(row[6]) != 0,
+        .password_expires = try number(row[7]),
     } };
 }
 
-pub fn logout(owner: *Persistent, digest: [32]u8) !p.StorageResult {
-    const hex = std.fmt.bytesToHex(digest, .lower);
+pub fn logout(owner: *Persistent, input: anytype) !p.StorageResult {
+    const hex = std.fmt.bytesToHex(input.digest, .lower);
     _ = try db.exec(
         owner.db,
         owner.gpa,
-        "DELETE FROM console_sessions WHERE digest=?",
-        &.{text(&hex)},
+        "UPDATE console_sessions SET ended_at=? WHERE digest=?",
+        &.{ integer(input.now), text(&hex) },
     );
     return .command_recorded;
 }
@@ -68,6 +76,7 @@ pub fn password(owner: *Persistent, input: anytype) !p.StorageResult {
         owner.db,
         owner.gpa,
         "UPDATE console_users SET password_hash=?,revision=revision+1,must_change=0," ++
+            "password_expires=0," ++
             "modified_at=?,modified_by=id WHERE disabled=0 AND id=(SELECT user_id " ++
             "FROM console_sessions WHERE digest=? AND csrf_digest=? AND expires>? " ++
             "AND idle_expires>? AND revision=console_users.revision)",

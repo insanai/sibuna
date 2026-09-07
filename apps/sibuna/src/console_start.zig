@@ -2,15 +2,27 @@
 const std = @import("std");
 const console = @import("console");
 const Persistent = @import("persistent.zig").Persistent;
-pub const Parsed = struct { config: console.ConsoleConfig, data_args: []const []const u8 };
+pub const Parsed = struct {
+    config: console.ConsoleConfig,
+    data_args: []const []const u8,
+    initial_admin: ?console.protocol.Bytes(64) = null,
+};
 
 pub fn parse(args: []const []const u8, remaining: [][]const u8) !Parsed {
     var config: console.ConsoleConfig = .{};
+    var initial_admin: ?console.protocol.Bytes(64) = null;
     var count: usize = 0;
     var i: usize = 0;
     var options_seen = false;
     while (i < args.len) : (i += 1) {
         const flag = args[i];
+        if (i == 0 and std.mem.eql(u8, flag, "init-admin")) {
+            i += 1;
+            if (i == args.len or !console.protocol.validUsername(args[i]))
+                return error.InvalidUsername;
+            initial_admin = try console.protocol.Bytes(64).init(args[i]);
+            continue;
+        }
         if (!std.mem.startsWith(u8, flag, "--console")) {
             if (count == remaining.len) return error.TooManyArguments;
             remaining[count] = flag;
@@ -48,8 +60,9 @@ pub fn parse(args: []const []const u8, remaining: [][]const u8) !Parsed {
             config.trusted_proxy_count += 1;
         } else return error.UnknownConsoleOption;
     }
+    if (initial_admin != null and options_seen) return error.UnexpectedConsoleOptions;
     if (options_seen and !config.enabled) return error.ConsoleRequired;
-    return .{ .config = config, .data_args = remaining[0..count] };
+    return .{ .config = config, .data_args = remaining[0..count], .initial_admin = initial_admin };
 }
 
 fn endpoint(config: *console.ConsoleConfig, value: []const u8) !void {
@@ -97,8 +110,8 @@ pub const Runtime = struct {
         );
         owner.state.telemetry = app.telemetry;
         if (app.setup_required) std.debug.print(
-            "Console setup key (one-time bootstrap): {s}\n",
-            .{std.fmt.bytesToHex(app.bootstrap_key, .lower)},
+            "Console is uninitialized. Stop Sibuna and run init-admin locally.\n",
+            .{},
         );
         std.debug.print("Console: {s}/console/\n", .{app.config.origin.slice()});
         std.debug.print(
@@ -126,4 +139,13 @@ test "console parsing preserves data-plane arguments and rejects unknown flags" 
         parse(&.{ "--console-mistake", "1" }, &remaining),
     );
     try std.testing.expectError(error.MissingValue, parse(&.{"--console"}, &remaining));
+}
+
+pub fn validate(config: console.ConsoleConfig, has_storage: bool) bool {
+    config.validate(has_storage) catch |err| {
+        std.debug.print("CONSOLE001: console configuration rejected ({t}). " ++
+            "Hint: configure storage and a trusted HTTPS ingress for remote access.\n", .{err});
+        return false;
+    };
+    return true;
 }

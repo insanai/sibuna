@@ -189,11 +189,11 @@ fn action(value: std.json.Value) !void {
     if (state.busy) return;
     state.message = .{};
     state.busy = true;
-    if (equal(name, "login") or equal(name, "setup")) {
+    if (equal(name, "login")) {
         state.username = try p.Bytes(64).init(string(fields, "username"));
         return post(
             name,
-            if (equal(name, "login")) "/console/api/login" else "/console/api/setup",
+            "/console/api/login",
             fields,
         );
     }

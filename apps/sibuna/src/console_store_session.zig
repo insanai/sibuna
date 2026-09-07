@@ -50,6 +50,7 @@ const sql =
     "i.expires,MIN(i.expires,i.now+1800),i.step,i.slot FROM i JOIN console_users u " ++
     "ON u.id=i.uid LEFT JOIN console_totp m ON m.user_id=u.id AND m.enabled=1 " ++
     "WHERE u.revision=i.revision AND u.disabled=0 " ++
+    "AND (u.password_expires=0 OR u.password_expires>i.now) " ++
     "AND (SELECT COUNT(*) FROM console_sessions WHERE MIN(expires,idle_expires)>i.now)<4096 " ++
     "AND ((m.user_id IS NULL AND i.factor_revision IS NULL AND i.step IS NULL " ++
     "AND i.slot IS NULL) OR (m.revision=i.factor_revision AND " ++

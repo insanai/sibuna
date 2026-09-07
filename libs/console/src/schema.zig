@@ -1,5 +1,6 @@
 //! Versioned additive schema. The owner serializes migration before serving console work.
-pub const version = 2;
+pub const version = 3;
+pub const bootstrap_v3 = @import("schema_bootstrap.zig").sql;
 pub const auth_v2 = @import("schema_auth.zig").sql;
 pub const sql = @import("geo_schema.zig").sql ++
     "CREATE TABLE IF NOT EXISTS console_schema (version INTEGER PRIMARY KEY CHECK(version=1));" ++

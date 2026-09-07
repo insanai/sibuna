@@ -221,3 +221,16 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
   16.2 seconds and retained revision 1 with all 717,152 known ranges. The original fixture
   remains untouched. Storage-off and console-off test builds and the clustered TLS build
   passed. These observations close this regression, not the broader cluster/release gates.
+
+### Local initialization verification (2026-09-08)
+
+- `sibuna init-admin <username> --data-dir <path>` initializes through Persistent before
+  any listeners start. The command prints a random temporary password once, stores only its
+  Argon2id digest, and requires replacement within one hour. Duplicate initialization fails.
+- HTTP setup now reports initialization status only; the UI explains the local command.
+  Schema v3 adds temporary credential expiry and transactional explicit sign-out auditing.
+- `zig build fmt test console-e2e sid` passed. Live tests cover an empty daemon, rejection
+  of HTTP initialization, the local command, restricted temporary sessions, replacement,
+  old-password rejection, authenticated geometry, TOTP and trusted-proxy restrictions.
+  Password replacement currently revokes old sessions and requires another login; atomic
+  replacement-session issuance remains the next authentication change.

@@ -52,6 +52,7 @@ pub const AuthUser = struct {
     revision: u64,
     must_change: bool,
     totp_enabled: bool = false,
+    password_expires: u64 = 0,
 };
 pub const Principal = struct {
     actor: u64,
@@ -74,7 +75,13 @@ pub const StorageRequest = union(enum) {
     geo_batch: geo.Batch,
     geo_activate: geo.Activate,
     geo_read: geo.Read,
-    bootstrap: struct { username: Bytes(64), password_hash: Bytes(255), now: u64 },
+    bootstrap: struct {
+        username: Bytes(64),
+        password_hash: Bytes(255),
+        now: u64,
+        must_change: bool = false,
+        password_expires: u64 = 0,
+    },
     auth_user: Bytes(64),
     session_create: struct {
         factor: auth.Factor = .none,
@@ -85,7 +92,7 @@ pub const StorageRequest = union(enum) {
         now: u64,
         expires: u64,
     },
-    logout: [32]u8,
+    logout: struct { digest: [32]u8, now: u64 },
     password_change: struct {
         session_digest: [32]u8,
         csrf_digest: [32]u8,
@@ -199,3 +206,12 @@ pub const StatsSnapshot = struct {
     unknown_samples: u64,
     timestamp: u64,
 };
+
+pub fn validUsername(username: []const u8) bool {
+    if (username.len == 0 or username.len > 64) return false;
+    for (username) |byte| {
+        if (!std.ascii.isAlphanumeric(byte) and byte != '_' and byte != '-' and byte != '.')
+            return false;
+    }
+    return true;
+}

@@ -1,5 +1,6 @@
 """Exercise encrypted enrollment, factor boundaries and durable single-use recovery."""
 import base64
+import console_bootstrap_test
 import hashlib
 import hmac
 import json
@@ -17,10 +18,8 @@ def code(secret, step):
     return f"{(struct.unpack('!I', digest[offset:offset+4])[0] & 0x7fffffff) % 1000000:06d}"
 
 
-def enroll(h, port, logpath, restricted=False):
-    key = re.search(r"Console setup key .*: ([0-9a-f]{64})", logpath.read_text())[1]
-    credentials = {"username": "factor-admin", "password": "factor test long passphrase"}
-    assert h.request(port, "POST", "/console/api/setup", dict(credentials, setup_key=key))[0] == 200
+def enroll(h, port, temporary, restricted=False):
+    credentials = console_bootstrap_test.change(h, port, temporary, "factor test long passphrase")
     status, headers, body = h.request(port, "POST", "/console/api/login", credentials)
     assert status == 200, body
     cookie = headers["Set-Cookie"].split(";", 1)[0]
@@ -67,13 +66,15 @@ def check(binary, h):
         keypath = Path(root) / "console.key"
         keypath.write_text(os.urandom(32).hex() + "\n")
         keypath.chmod(0o600)
+        temporary = console_bootstrap_test.initialize(
+            binary, str(Path(root) / "data"), "factor-admin")
         logpath = Path(root) / "daemon.log"
         port = h.port()
         with logpath.open("w+") as log:
             args = binary, str(Path(root) / "data"), port, log, str(keypath)
             proc = h.start(*args)
             try:
-                credentials, secret, step, recovery = enroll(h, port, logpath)
+                credentials, secret, step, recovery = enroll(h, port, temporary)
             except BaseException:
                 print(re.sub(r"[0-9a-f]{64}", "<redacted>", logpath.read_text())[-6000:])
                 raise
@@ -103,6 +104,8 @@ def check_proxy(binary, h):
         keypath = Path(root) / "console.key"
         keypath.write_text(os.urandom(32).hex() + "\n")
         keypath.chmod(0o600)
+        temporary = console_bootstrap_test.initialize(
+            binary, str(Path(root) / "data"), "factor-admin")
         logpath = Path(root) / "daemon.log"
         port = h.port()
         with logpath.open("w+") as log:
@@ -114,7 +117,7 @@ def check_proxy(binary, h):
                     "X-Forwarded-Proto": "http"})[0] == 403
                 assert h.request(port, "POST", "/console/api/login", {}, extra_headers={
                     "Origin": "https://wrong.test", "X-Forwarded-Proto": "https"})[0] == 400
-                credentials, secret, step, recovery = enroll(trusted, port, logpath, True)
+                credentials, secret, step, recovery = enroll(trusted, port, temporary, True)
             finally:
                 h.stop(proc)
             proc = h.start(*args)

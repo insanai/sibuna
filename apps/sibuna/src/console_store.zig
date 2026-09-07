@@ -44,19 +44,14 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
             defer result.deinit();
             break :blk .{ .setup_required = result.rows.len == 0 };
         },
-        .bootstrap => |input| auth.bootstrap(
-            owner,
-            input.username.slice(),
-            input.password_hash.slice(),
-            input.now,
-        ),
+        .bootstrap => |input| auth.bootstrap(owner, input),
         .auth_user => |username| auth.user(owner, username.slice()),
         .session_create => |input| @import("console_store_session.zig").create(owner, input),
         .authorize => |input| blk: {
             if (input.touch) try auth.touch(owner, input.session_digest, input.now);
             break :blk try authorize(owner, input.session_digest, input.now);
         },
-        .logout => |digest| auth.logout(owner, digest),
+        .logout => |input| auth.logout(owner, input),
         .password_change => |input| auth.password(owner, input),
         else => .{ .failed = .invalid_input },
     };

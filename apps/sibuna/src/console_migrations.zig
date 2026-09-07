@@ -33,13 +33,16 @@ pub fn run(owner: *Persistent) !void {
         try owner.db.exec(owner.gpa, console.schema.sql);
         version = try current(owner);
     }
-    if (version == 1) {
-        owner.db.exec(owner.gpa, console.schema.auth_v2) catch |err| {
-            // Another node may have committed the same upgrade after our read. Accept
-            // only the exact supported marker; every other failure remains recoverable.
-            if (try current(owner) != console.schema.version) return err;
-        };
-        version = try current(owner);
+    const migrations = .{ console.schema.auth_v2, console.schema.bootstrap_v3 };
+    inline for (migrations, 2..) |sql, target| {
+        if (version == target - 1) {
+            owner.db.exec(owner.gpa, sql) catch |err| {
+                // Another node may have committed this upgrade after our read.
+                const observed = try current(owner);
+                if (observed < target or observed > console.schema.version) return err;
+            };
+            version = try current(owner);
+        }
     }
     if (version != console.schema.version) return error.UnsupportedConsoleSchema;
     owner.console_initialized = true;

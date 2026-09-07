@@ -6,7 +6,6 @@ const Context = http.Context;
 const Credentials = struct {
     username: []const u8,
     password: []const u8,
-    setup_key: []const u8 = "",
     code: []const u8 = "",
 };
 
@@ -26,39 +25,6 @@ pub fn allowed(app: *App, context: *Context, username: []const u8) bool {
         app.limiter.allow(app.io, account, app.now());
 }
 
-fn validUsername(username: []const u8) bool {
-    if (username.len == 0 or username.len > 64) return false;
-    for (username) |byte| {
-        if (!std.ascii.isAlphanumeric(byte) and byte != '_' and byte != '-' and byte != '.')
-            return false;
-    }
-    return true;
-}
-
-pub fn bootstrap(app: *App, context: *Context) !void {
-    var body: [2048]u8 = undefined;
-    var arena: [8192]u8 = undefined;
-    defer std.crypto.secureZero(u8, &body);
-    defer std.crypto.secureZero(u8, &arena);
-    var fixed = std.heap.FixedBufferAllocator.init(&arena);
-    const input = try http.parse(Credentials, context, &body, fixed.allocator());
-    defer input.deinit();
-    if (!validUsername(input.value.username)) return error.InvalidRequest;
-    if (!allowed(app, context, "bootstrap"))
-        return http.fail(context, .too_many_requests, "CONSOLE003");
-    const key = try http.token(input.value.setup_key);
-    if (!std.crypto.timing_safe.eql([32]u8, key, app.bootstrap_key))
-        return http.fail(context, .unauthorized, "CONSOLE401");
-    const hash = try app.passwords.hash(app.io, input.value.password);
-    const result = try app.request(.{ .bootstrap = .{
-        .username = try p.Bytes(64).init(input.value.username),
-        .password_hash = hash,
-        .now = app.now(),
-    } });
-    if (result != .command_recorded) return http.fail(context, .conflict, "CONSOLE409");
-    try http.json(context, .{ .created = true }, &.{});
-}
-
 pub fn login(app: *App, context: *Context) !void {
     var body: [2048]u8 = undefined;
     var arena: [8192]u8 = undefined;
@@ -67,7 +33,7 @@ pub fn login(app: *App, context: *Context) !void {
     var fixed = std.heap.FixedBufferAllocator.init(&arena);
     const input = try http.parse(Credentials, context, &body, fixed.allocator());
     defer input.deinit();
-    if (!validUsername(input.value.username)) return error.InvalidRequest;
+    if (!p.validUsername(input.value.username)) return error.InvalidRequest;
     if (!allowed(app, context, input.value.username))
         return http.fail(context, .too_many_requests, "CONSOLE003");
     const result = try app.request(.{ .auth_user = try p.Bytes(64).init(input.value.username) });
@@ -94,6 +60,10 @@ fn establish(app: *App, context: *Context, user: p.AuthUser, factor: p.auth.Fact
     var csrf_digest: [32]u8 = undefined;
     http.digest(&csrf, &csrf_digest, .{});
     const now = app.now();
+    if (user.password_expires != 0 and user.password_expires <= now)
+        return http.fail(context, .unauthorized, "CONSOLE401");
+    var expires = now + 43200;
+    if (user.password_expires != 0) expires = @min(expires, user.password_expires);
     const result = try app.request(.{ .session_create = .{
         .factor = factor,
         .user = user.id,
@@ -101,7 +71,7 @@ fn establish(app: *App, context: *Context, user: p.AuthUser, factor: p.auth.Fact
         .digest = digest,
         .csrf_digest = csrf_digest,
         .now = now,
-        .expires = now + 43200,
+        .expires = expires,
     } });
     if (result != .command_recorded) return http.fail(context, .conflict, "CONSOLE409");
     const encoded = std.fmt.bytesToHex(raw, .lower);
@@ -109,8 +79,12 @@ fn establish(app: *App, context: *Context, user: p.AuthUser, factor: p.auth.Fact
     var cookie: [256]u8 = undefined;
     const value = try std.fmt.bufPrint(
         &cookie,
-        "__sibuna_console={s}; HttpOnly; SameSite=Strict; Path=/console; Max-Age=43200{s}",
-        .{ encoded, if (app.config.behind_proxy or app.config.cookie_secure) "; Secure" else "" },
+        "__sibuna_console={s}; HttpOnly; SameSite=Strict; Path=/console; Max-Age={d}{s}",
+        .{
+            encoded,
+            expires - now,
+            if (app.config.behind_proxy or app.config.cookie_secure) "; Secure" else "",
+        },
     );
     try http.json(context, .{
         .user = user.id,
@@ -122,7 +96,10 @@ fn establish(app: *App, context: *Context, user: p.AuthUser, factor: p.auth.Fact
 }
 
 pub fn logout(app: *App, context: *Context) !void {
-    const result = try app.request(.{ .logout = try http.session(context) });
+    const result = try app.request(.{ .logout = .{
+        .digest = try http.session(context),
+        .now = app.now(),
+    } });
     if (result != .command_recorded) return error.StorageUnavailable;
     const cookie = if (app.config.behind_proxy or app.config.cookie_secure)
         "__sibuna_console=; HttpOnly; SameSite=Strict; Path=/console; Max-Age=0; Secure"

@@ -5,7 +5,6 @@ const p = @import("console_protocol");
 pub const Access = enum { public, account, full };
 pub const Handler = enum {
     setup_status,
-    bootstrap,
     login,
     session,
     logout,
@@ -28,12 +27,6 @@ const table = [_]Route{
         .method = .GET,
         .access = .public,
         .handler = .setup_status,
-    },
-    .{
-        .path = "/console/api/setup",
-        .method = .POST,
-        .access = .public,
-        .handler = .bootstrap,
     },
     .{
         .path = "/console/api/login",

@@ -93,7 +93,9 @@ def geo_import(console_port, cookie, csrf):
 
 
 def check(binary):
+    import console_bootstrap_test
     with tempfile.TemporaryDirectory(prefix="sibuna-console-") as root:
+        temporary = console_bootstrap_test.initialize(binary, str(Path(root) / "data"), "admin")
         logpath = Path(root) / "daemon.log"
         with logpath.open("wb") as log:
             console_port = port()
@@ -104,10 +106,8 @@ def check(binary):
                 assert b"world-110m" not in shell and b"WebSocket(" not in shell
                 assert request(console_port, "GET", "/console/api/session")[0] == 401
                 assert request(console_port, "GET", "/console/assets/world-110m.bin")[0] == 401
-                key = re.search(r"Console setup key .*: ([0-9a-f]{64})", logpath.read_text())[1]
-                credentials = {"username": "admin", "password": "first long test passphrase"}
-                assert request(console_port, "POST", "/console/api/setup",
-                               dict(credentials, setup_key=key))[0] == 200
+                credentials = console_bootstrap_test.change(
+                    sys.modules[__name__], console_port, temporary, "first long test passphrase")
                 assert not json.loads(request(console_port, "GET", "/console/api/setup")[2])[
                     "setup_required"]
                 assert request(console_port, "POST", "/console/api/login",
@@ -142,6 +142,8 @@ def check(binary):
                 assert json.loads(metadata[2])["ranges"] == 200
             finally:
                 stop(proc)
+    import console_bootstrap_test
+    console_bootstrap_test.check(binary, sys.modules[__name__])
     import console_totp_test
     console_totp_test.check(binary, sys.modules[__name__])
     console_totp_test.check_proxy(binary, sys.modules[__name__])

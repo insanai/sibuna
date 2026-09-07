@@ -43,10 +43,10 @@ pub fn main(init: std.process.Init) !u8 {
         parsed.data_args
     else
         args_buf[0..arg_count]);
-    if (build_options.console) parsed.config.validate(cfg.data_dir != null) catch |err| {
-        std.debug.print("CONSOLE001: console configuration rejected ({t}). " ++
-            "Hint: configure storage and a trusted HTTPS ingress for remote access.\n", .{err});
+    if (build_options.console and !console_start.validate(parsed.config, cfg.data_dir != null))
         return 1;
+    if (build_options.console) if (parsed.initial_admin) |username| {
+        return @import("console_init.zig").execute(gpa, io, cfg, username.slice());
     };
     const seed = resolveSecret(io, init.environ_map, &cfg) orelse return 1;
 
@@ -205,7 +205,8 @@ fn loadCustomPolicy(
 
 fn printHelp() void {
     if (build_options.console) std.debug.print(
-        "Console: --console <host:port> (requires --data-dir); " ++
+        "Local bootstrap: sibuna init-admin <username> --data-dir <path>\n" ++
+            "Console: --console <host:port> (requires --data-dir); " ++
             "--console-key-file <path> (64 hex characters, owner-only permissions); " ++
             "--console-origin <https-origin>; --console-behind-proxy; " ++
             "--console-trusted-proxy <CIDR> (repeatable).\n",

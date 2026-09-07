@@ -19,7 +19,6 @@ pub const App = struct {
     passwords: Password,
     totp_key: ?[32]u8,
     limiter: Limiter = .{},
-    bootstrap_key: [32]u8,
     dummy_hash: p.Bytes(255),
     setup_required: bool,
     telemetry: *store.ConsoleTelemetry,
@@ -52,7 +51,6 @@ pub const App = struct {
             .passwords = try Password.init(gpa),
             .telemetry = telemetry,
             .metrics = metrics,
-            .bootstrap_key = undefined,
             .dummy_hash = .{},
             .setup_required = false,
         };
@@ -60,7 +58,6 @@ pub const App = struct {
             self.passwords.deinit();
             if (self.totp_key) |*key| std.crypto.secureZero(u8, key);
         }
-        io.random(&self.bootstrap_key);
         self.dummy_hash = try self.passwords.hash(io, "dummy password never grants access");
         const status = try self.request(.setup_status);
         if (status != .setup_required) return error.StorageUnavailable;
@@ -95,7 +92,6 @@ pub const App = struct {
         self.passwords.deinit();
         if (self.totp_key) |*key| std.crypto.secureZero(u8, key);
         self.gpa.destroy(self.telemetry);
-        std.crypto.secureZero(u8, &self.bootstrap_key);
         self.gpa.destroy(self);
     }
 
@@ -230,7 +226,6 @@ pub const App = struct {
                 if (status != .setup_required) return error.StorageUnavailable;
                 return http.json(context, .{ .setup_required = status.setup_required }, &.{});
             },
-            .bootstrap => return auth.bootstrap(self, context),
             .login => return auth.login(self, context),
             .logout => return auth.logout(self, context),
             .password => return auth.password(self, context, identity.?),
