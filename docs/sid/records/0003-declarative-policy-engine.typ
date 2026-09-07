@@ -1,9 +1,9 @@
 #let sid-number = "0003"
-#let sid-title = "Declarative Rule Policy Engine and Anubis Feature Parity"
+#let sid-title = "Declarative Rule Policy Engine"
 #let sid-state = "published"
 #let sid-created = "2026-09-07"
-#let sid-discussion = "Architectural specification and design for Sibuna's zero-allocation declarative rule engine, matching and exceeding Anubis botPolicies specifications with JSON file configuration, multi-criteria matching, custom difficulty, and per-rule actions."
-#let sid-labels = ("policy", "architecture", "anubis", "zero-alloc", "firewall",)
+#let sid-discussion = "Specification of Sibuna's zero-allocation declarative rule engine: JSON policy files, multi-criteria matching over path, user agent, headers, and IPv4/IPv6 CIDRs, WEIGH scoring with thresholds, per-rule challenge parameters, the evaluation order, and dynamic policies replicated through Zaxonlite."
+#let sid-labels = ("policy", "architecture", "zero-alloc", "firewall",)
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
 #let sid-status = "Published"
@@ -11,7 +11,6 @@
 
 #import "../../shared/sid.typ": sid-document
 
-#let ink = rgb("172033")
 #let blue = rgb("0284c7")
 #let blue-light = rgb("f0f9ff")
 #let green = rgb("16a34a")
@@ -20,7 +19,6 @@
 #let amber-light = rgb("fffbeb")
 #let red = rgb("dc2626")
 #let red-light = rgb("fef2f2")
-#let gray = rgb("64748b")
 #let rule = rgb("cbd5e1")
 
 #let callout(title, body, fill: blue-light, stroke: blue) = block(
@@ -44,6 +42,8 @@
   stroke: 0.7pt + rule,
 )[
   #text(weight: "bold", fill: blue)[#name]
+  #h(6pt)
+  #box(inset: (x: 5pt, y: 2pt), radius: 3pt, fill: green-light)[#text(size: 8.5pt, weight: "bold", fill: green)[delivered]]
   #v(0.2em)
   *Outcome:* #outcome \
   *Exit criterion:* #exit
@@ -63,183 +63,176 @@
   last-updated: sid-last-updated,
 )
 
-= Decision Summary
+#callout([Revision note (2026-09-07)], [
+  Revised after the implementation review of 2026-09-07. The original default rule table
+  admitted any User-Agent containing `Mozilla` and fell through to `ALLOW`; that contradicted the
+  product principle that an unverified client must pay for admission, and it meant a scraper
+  with a browser User-Agent was never challenged. The implemented defaults, WEIGH semantics,
+  JSON schema, IPv6 support, and evaluation order are recorded here as built.
+], fill: amber-light, stroke: amber)
 
-Implement a high-performance, declarative, file-configurable policy engine in Sibuna that
-achieves complete functional parity with `TecharoHQ/anubis` policy definitions
-(`docs/docs/admin/policies.mdx`), while preserving Sibuna's strict zero-allocation memory contract
-on the request evaluation hot path.
+= Decision summary
 
-Sibuna administrators can declare rules either via an external JSON configuration file
-(`--policy-file <path>`) or rely on a hardened, built-in default policy set. Each rule specifies:
-1. *Rule Identity:* Lowercase kebab-case identifier (`name`) exposed in metrics and logging.
-2. *Multi-Criteria Matching (Conjunction):*
-   - Request path pattern (`path_regex` or glob pattern)
-   - User-Agent substring or regex pattern (`user_agent_regex`)
-   - HTTP request header key-value patterns (`headers_regex`)
-   - Remote client IP addresses or CIDR subnets (`remote_addresses`)
-3. *Rule Actions:* `ALLOW`, `DENY`, `CHALLENGE`, or `WEIGH`.
-4. *Challenge Parameter Overrides:* Per-rule Proof-of-Work difficulty (`challenge.difficulty`) and
-   algorithm flavor (`challenge.algorithm`).
+Sibuna evaluates every request against an ordered table of declarative rules compiled at
+startup (or rebuilt off the hot path from the Zaxonlite `policies` table, SID 0005). A rule is a
+conjunction of optional criteria over the request path, the User-Agent, up to four headers, and
+up to eight IPv4 or IPv6 CIDR blocks. Its action is `ALLOW`, `DENY`, `CHALLENGE`, or `WEIGH`,
+with optional per-rule challenge difficulty (work bits) and algorithm (`hashcash` or `posw`).
+Evaluation is first-terminal-match-wins; `WEIGH` rules contribute a signed score that is resolved
+against thresholds when no terminal rule matched. The engine holds at most 128 rules and never
+allocates during evaluation.
 
-#callout([Performance Contract for Declarative Policies], [
-  Regardless of the number of declared rules (up to 128 compiled rules), policy evaluation on
-  incoming requests must execute in $< 200$ nanoseconds with strictly *0 bytes* of dynamic heap
-  allocation. All header parsing, path inspection, and CIDR checks slice directly over stack buffers.
+#callout([Performance contract (measured)], [
+  Classification of a complete browser request (7 headers) through rules, bypass table,
+  reputation trie, and bot automaton costs *295 ns* on the Gate surface and *1.46 µs* on the
+  Shield surface where the semantic WAF also runs; both with zero heap allocation
+  (`benchmarks/results/latest.json`, Apple M1, `ReleaseFast`).
 ], fill: green-light, stroke: green)
 
-= Analysis of Anubis Policy Architecture
-
-In `TecharoHQ/anubis`, bot policies are defined in YAML or JSON (`data/botPolicies.yaml` or user
-files) and evaluated sequentially by the Go runtime. Anubis provides four primary action types:
-
-#table(
-  columns: (1fr, 3.2fr),
-  table.header([*Anubis Action*], [*Operational Effect*]),
-  [`ALLOW`], [Bypasses all subsequent checks and proxies request directly to upstream backend.],
-  [`DENY`], [Terminates request immediately with an error page (or 403 Forbidden).],
-  [`CHALLENGE`], [Presents a client-side Proof-of-Work interstitial page; verifies issued cookie.],
-  [`WEIGH`], [Dynamically scales challenge difficulty or rate weight for suspicious connections.],
-)
-
-== Limitations in Anubis Implementation
-
-While Anubis's declarative policy model is flexible, its Go implementation introduces substantial
-runtime latency and resource overhead:
-1. *Regular Expression Compilation & Churn:* Each rule's `user_agent_regex` and `path_regex` executes
-   via Go's `regexp` package, causing dynamic heap allocations and branch mispredictions per request.
-2. *Header Map Allocations:* Inspecting `headers_regex` requires traversing Go's `http.Header` map
-   (`map[string][]string`), invoking hashing and slice indexing on every evaluation.
-3. *Wazero Challenge Coupling:* When `CHALLENGE` is selected with custom difficulty, Anubis enters
-   its in-process Wazero WebAssembly VM to generate challenge nonces, adding 5--12 milliseconds of
-   runtime delay.
-
-= Sibuna Declarative Engine Design
-
-Sibuna replaces runtime regex interpretation and dynamic map allocations with a pre-compiled,
-flat-memory rule table evaluated via cache-line sequential scanning.
-
-== 1. Wire & Memory Representation
+= Data model
 
 ```zig
-pub const Action = enum(u8) {
-    allow,
-    deny,
-    challenge,
-    weigh,
-};
+pub const Action = enum(u8) { allow, deny, challenge, weigh };
 
-pub const HeaderMatcher = struct {
-    name: []const u8,
-    pattern: []const u8,
-};
-
-pub const CidrMatcher = struct {
-    network: u32,
-    mask: u32,
-};
+pub const HeaderMatcher = struct { name: []const u8, pattern: []const u8 };
+pub const CidrMatcher = struct { network: u128, mask: u128 };   // IPv4 mapped into ::ffff:0:0/96
 
 pub const PolicyRule = struct {
     name: []const u8,
     path_pattern: ?[]const u8 = null,
     ua_pattern: ?[]const u8 = null,
-    headers: [4]HeaderMatcher = undefined,
-    header_count: u8 = 0,
-    cidrs: [8]CidrMatcher = undefined,
-    cidr_count: u8 = 0,
+    headers: [4]HeaderMatcher, header_count: u8 = 0,
+    cidrs: [8]CidrMatcher, cidr_count: u8 = 0,
     action: Action = .allow,
-    difficulty: ?u32 = null,
-    algorithm: ?[]const u8 = null,
+    difficulty: ?u32 = null,        // work bits
+    algorithm: ?[]const u8 = null,  // "hashcash" | "posw"
+    weight: i32 = 0,                // WEIGH contribution, may be negative
+};
+
+pub const RequestView = struct {
+    path: []const u8, query: []const u8 = "", client_ip: []const u8,
+    user_agent: []const u8 = "", headers: []const Header = &.{}, body: []const u8 = "",
+};
+
+pub const Decision = struct {
+    action: Action, rule_name: []const u8, difficulty: u32,
+    algorithm: ?[]const u8 = null, score: i32 = 0,
 };
 ```
 
-== 2. Zero-Allocation Evaluation Pipeline
+Pattern grammar: `.*` or `*` matches anything; `^...$` anchors an exact path; a trailing `*`,
+`/*`, or `.*` is a prefix match; a pattern beginning with `/` is an exact path; anything else is a
+case-insensitive substring, the natural form for User-Agent rules. Header patterns use the same
+grammar against the header value. CIDR matchers accept `10.0.0.0/8`, `2001:db8::/32`, bare
+addresses, and IPv4-mapped IPv6 literals.
 
-When an HTTP request arrives, the `PolicyEngine` evaluates the compiled rules in declaration order:
-1. *Path Matching:* Slices the zero-copy request path against `path_pattern`. Supports exact matches
-   (`/favicon.ico`), prefix wildcards (`/.well-known/*`), and substring matches.
-2. *Header Matching:* For each required header rule, executes zero-copy lookup in `req.getHeader(name)`
-   and evaluates whether the parsed value contains or matches `pattern`.
-3. *Remote CIDR Matching:* Converts `client_ip` to an integer using bitwise shifts and checks
-   `(ip & mask) == network`.
-4. *User-Agent Matching:* Evaluates case-insensitive substring search or branchless automaton.
-5. *Conjunction Check:* A rule triggers if and only if *all* declared criteria match.
-6. *First-Match-Wins:* The first rule that matches produces the terminal `Decision`. If no rule
-   matches, the engine returns the default action (`.allow`).
+= Evaluation order
 
-== 3. Anubis-Equivalent Default Policy Set
+`Engine.evaluateRequest(RequestView) Decision` runs:
 
-When no external policy file is supplied, Sibuna initializes with an Anubis-parity rule table:
+1. *Semantic WAF* (Shield surface only, SID 0004): any violation is a terminal `DENY` named
+   `waf:<category>`.
+2. *Reputation trie, terminal verdicts*: an IP matching a `deny` or `allow` prefix returns
+   immediately as `ip/cidr-trie`. Bans propagated from storage therefore beat every rule,
+   including the generic-browser challenge.
+3. *Declarative rules in order*: the first `ALLOW`/`DENY`/`CHALLENGE` match returns; `WEIGH`
+   matches add `weight` to the score and continue.
+4. *Score resolution* (when the score is non-zero): negative totals `ALLOW`; totals at or above
+   `deny_at` (default 40) `DENY`; totals at or above `challenge_at` (default 10) `CHALLENGE`
+   with `default_difficulty + min((score - challenge_at) / bits_step, max_extra_bits)` work bits
+   (`bits_step` 5, `max_extra_bits` 6).
+5. *Static bypass paths*: `/favicon.ico`, `/robots.txt`, `/.well-known/*`, `/__sibuna/*`.
+6. *Reputation trie, challenge verdict.*
+7. *Bot-signature automaton*: a match is `CHALLENGE` named after the signature.
+8. *Default action*: `CHALLENGE` unless the policy file sets `default_action`.
+
+= Built-in policy
 
 #table(
-  columns: (1fr, 1.4fr, 0.8fr, 1.8fr),
-  table.header([*Rule Name*], [*Match Criteria*], [*Action*], [*Purpose*]),
-  [`well-known`], [Path `/.well-known/*`], [`ALLOW`], [ACME challenge & security.txt bypass],
-  [`favicon`], [Path `/favicon.ico`], [`ALLOW`], [Browser static icon bypass],
-  [`robots-txt`], [Path `/robots.txt`], [`ALLOW`], [Robots exclusion standard bypass],
-  [`sibuna-internal`], [Path `/__sibuna/*`], [`ALLOW`], [Embedded WASM solver and health API],
-  [`cloudflare-workers`], [Header `cf-worker: *`], [`DENY`], [Block unconsented serverless scrapers],
-  [`amazonbot`], [UA contains `Amazonbot`], [`DENY`], [Block Amazon aggressive harvesting],
-  [`ai-scrapers`], [UA in AI scraper list], [`CHALLENGE`], [Enforce PoW (default diff 4)],
-  [`scraper-libs`], [UA in library list (curl, python)], [`CHALLENGE`], [Enforce PoW (elevated diff 6)],
-  [`generic-browser`], [UA contains `Mozilla`], [`ALLOW`], [Standard human browser flow],
-  [`default-allow`], [Catch-all], [`ALLOW`], [Default open web pass-through],
+  columns: (1fr, 1.5fr, 0.8fr, 1.8fr),
+  table.header([*Rule*], [*Criteria*], [*Action*], [*Purpose*]),
+  [`well-known`], [Path `^/.well-known/.*$`], [`ALLOW`], [ACME and security.txt],
+  [`favicon`], [Path `^/favicon.ico$`], [`ALLOW`], [Browser icon fetch],
+  [`robots-txt`], [Path `^/robots.txt$`], [`ALLOW`], [Robots exclusion standard],
+  [`sibuna-internal`], [Path `/__sibuna/*`], [`ALLOW`], [Solver assets and APIs],
+  [`cloudflare-workers`], [Header `CF-Worker: .*`], [`DENY`], [Unconsented serverless scrapers],
+  [`amazonbot`], [UA contains `Amazonbot`], [`DENY`], [Aggressive harvester],
+  [`generic-browser`], [UA contains `Mozilla`], [`CHALLENGE`], [Humans clear the interstitial; scrapers pay],
+  [(bot automaton)], [UA matches an AI-scraper or scraper-library signature], [`CHALLENGE`], [Known automation],
+  [(default)], [Anything else], [`CHALLENGE`], [Unknown clients must prove work],
 )
 
-== 4. External Policy File Specification (JSON)
+#callout([Why browsers are challenged], [
+  A browser User-Agent is free to forge. If `Mozilla` admitted a client, every scraper would send
+  it and the proof-of-work gate would be decorative. The interstitial costs a human 15–150 ms once
+  per session; a harvesting fleet pays it for every session it opens. Operators who need
+  unauthenticated API traffic admit it explicitly by path, header, or CIDR rule, or set
+  `"default_action": "ALLOW"` to run the engine as a pure block list.
+])
 
-Administrators may provide a JSON policy file via `--policy-file <path>`:
+= Policy file
+
+`--policy-file <path>` (or `-P`) loads a JSON document at startup. An explicit `rules` array
+replaces the built-in rule table; the bypass paths, reputation trie, and bot automaton remain.
 
 ```json
 {
-  "default_action": "ALLOW",
+  "default_action": "CHALLENGE",
+  "waf": true,
+  "thresholds": { "challenge_at": 10, "deny_at": 40, "bits_step": 5 },
+  "ip_rules": { "10.0.0.0/8": "ALLOW", "2001:db8::/32": "DENY" },
   "rules": [
-    {
-      "name": "deny-bad-worker",
-      "headers": { "CF-Worker": ".*" },
-      "action": "DENY"
-    },
-    {
-      "name": "protect-checkout",
-      "path": "/api/checkout/*",
-      "action": "CHALLENGE",
-      "challenge": {
-        "difficulty": 6,
-        "algorithm": "sha256"
-      }
-    },
-    {
-      "name": "internal-subnets",
-      "remote_addresses": ["10.0.0.0/8", "192.168.0.0/16"],
-      "action": "ALLOW"
-    }
+    { "name": "deny-bad-worker", "headers": { "CF-Worker": ".*" }, "action": "DENY" },
+    { "name": "protect-checkout", "path": "/api/checkout/*", "action": "CHALLENGE",
+      "challenge": { "difficulty": 20, "algorithm": "posw" } },
+    { "name": "internal-subnets", "remote_addresses": ["10.0.0.0/8", "fd00::/8"], "action": "ALLOW" },
+    { "name": "headless", "user_agent": "Headless", "action": "WEIGH", "weight": 30 },
+    { "name": "partner-token", "headers": { "X-Partner": "v2" }, "action": "WEIGH", "weight": -20 }
   ]
 }
 ```
 
-= Milestones and Delivery Plan
+Field aliases accepted for compatibility with existing policy files: `path_regex`,
+`user_agent_regex`, `headers_regex`, `cidrs`. `ip_rules` feeds the reputation trie, which scales
+to thousands of prefixes; per-rule `remote_addresses` is meant for a handful.
+
+= Dynamic policies
+
+With `--data-dir`, rows of the Zaxonlite `policies` table (name, priority, patterns, action,
+difficulty, algorithm, JSON header matchers, JSON CIDR list, weight, enabled) are appended after
+the file rules on every rebuild, and rebuilds are published to the workers through the
+read-copy-update engine slot without a restart. Rows replicate across a cluster by Multi-Paxos.
+The mechanism is specified in SID 0005.
+
+= Verification
+
+- Unit tests cover pattern grammar, IPv4 and IPv6 CIDR matching, rule conjunction, WEIGH
+  accumulation into allow, challenge with extra bits, and deny, JSON loading including
+  `waf`, `thresholds`, `ip_rules`, and `weight`, and a 100,000-request zero-allocation loop.
+- End-to-end tests exercise the built-in denials (`amazonbot`, `cloudflare-workers`), the
+  static bypass on `/robots.txt` with a bot User-Agent, and the interstitial for a browser.
+- The storage test inserts a policy row with header and CIDR matchers and observes the rebuilt
+  engine apply it with the row's difficulty and algorithm.
+
+= Milestones
 
 #milestone(
-  "M1: Rule Data Structures & Zero-Alloc Pattern Matcher",
-  "Implement `PolicyRule`, `Action`, zero-allocation path/header/CIDR matching in `libs/policy/`.",
-  "Unit tests passing with 100% code coverage and zero heap allocations.",
+  "M1: Rule data structures and zero-allocation matchers",
+  "`PolicyRule`, `Action`, path/header/CIDR matching over stack slices, IPv6 support.",
+  "Unit tests pass with zero heap allocation.",
 )
-
 #milestone(
-  "M2: PolicyEngine JSON Loader & Default Rule Table",
-  "Implement `Engine.loadFromJson` (arena startup) and `Engine.initDefault` in pure Zig.",
-  "All 10 Anubis parity rules operational and verified.",
+  "M2: JSON loader and default table",
+  "`Engine.loadFromJsonInto`, thresholds, `ip_rules`, WEIGH weights, default challenge posture.",
+  "Loader test and engine tests pass.",
 )
-
 #milestone(
-  "M3: Server & Coordinator Integration",
-  "Wire `--policy-file` CLI flag, propagate rule-specific challenge difficulties to PoW coordinator.",
-  "Integration test verifying per-rule custom difficulties and header-based denial.",
+  "M3: Server and coordinator integration",
+  "`--policy-file`, rule difficulty and algorithm carried in the challenge id, rule hash bound into the session token.",
+  "End-to-end tests observe per-rule challenge parameters.",
 )
-
 #milestone(
-  "M4: SID Promotion and Book Documentation",
-  "Compile SID-0003 PDF and document declarative policies in Part VIII of The Book of Sibuna.",
-  "Clean compilation of `docs/build/sid-0003-declarative-policy-engine.pdf`.",
+  "M4: Dynamic policies",
+  "Zaxonlite `policies` table rebuilt into the spare engine and published by RCU.",
+  "Storage test observes a database rule after one tick.",
 )
-

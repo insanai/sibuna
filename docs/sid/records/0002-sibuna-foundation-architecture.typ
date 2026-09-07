@@ -2,7 +2,7 @@
 #let sid-title = "Sibuna: Foundation Architecture, Delivery Plan, and Performance Contract"
 #let sid-state = "published"
 #let sid-created = "2026-09-07"
-#let sid-discussion = "Foundational architectural specification, Anubis comparative analysis, and product delivery plan for the Sibuna pure-Zig monorepo"
+#let sid-discussion = "Foundational architectural specification, zero-allocation pipeline, two-tier proof-of-work engine, keyed-hash session tokens, product surfaces, measured performance contract, and delivery record for the Sibuna pure-Zig monorepo"
 #let sid-labels = ("architecture", "firewall", "pow", "performance",)
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
@@ -36,7 +36,7 @@
   #body
 ]
 
-#let milestone(name, outcome, exit) = block(
+#let milestone(name, outcome, exit, state: "delivered") = block(
   width: 100%,
   breakable: true,
   inset: 10pt,
@@ -44,6 +44,10 @@
   stroke: 0.7pt + rule,
 )[
   #text(weight: "bold", fill: blue)[#name]
+  #h(6pt)
+  #box(inset: (x: 5pt, y: 2pt), radius: 3pt, fill: if state == "delivered" { green-light } else { amber-light })[
+    #text(size: 8.5pt, weight: "bold", fill: if state == "delivered" { green } else { amber })[#state]
+  ]
   #v(0.2em)
   *Outcome:* #outcome \
   *Exit criterion:* #exit
@@ -63,288 +67,347 @@
   last-updated: sid-last-updated,
 )
 
+#callout([Revision note (2026-09-07)], [
+  This record was revised after the implementation review of 2026-09-07. The earlier text
+  described intended subsystems (HashX, Argon2id, an `io_uring` event loop, HTTP/2, a "sliding
+  window" limiter) that the code never contained, and it quoted performance figures that were not
+  measured. Every number below is either taken from `benchmarks/results/latest.json` as recorded
+  on the host named there, or is explicitly marked as a reference model. Sections marked
+  _future work_ are not implemented.
+], fill: amber-light, stroke: amber)
+
 = Decision summary
 
-Build an ultra-high-performance Web AI Firewall and anti-crawler daemon named *Sibuna*
-(Anubis reversed), implemented as a pure Zig 0.16 monorepo. Sibuna intercepts incoming HTTP
-traffic, evaluates multi-dimensional bot policies in sub-microsecond time, and imposes
-asymmetric cryptographic Proof-of-Work (PoW) computational friction on unverified automated
-scrapers while allowing legitimate human users and authorized crawlers to pass with zero friction.
+Build a web firewall and anti-crawler daemon named *Sibuna* as a pure Zig 0.16 monorepo.
+Sibuna terminates HTTP/1.1, classifies each request without a heap allocation, and admits a
+client either because a policy rule admits it or because the client has proved work: a
+Cohen–Pietrzak proof of sequential work or a bit-level Hashcash solution, verified on native
+silicon and exchanged for a keyed-hash session token. Human browsers clear the interstitial in
+tens to a few hundred milliseconds inside a Web Worker; automated harvesters pay that cost per
+session and cannot amortise it across a botnet because tokens are bound to the client identity.
 
-Sibuna is engineered from the ground up to eliminate the severe runtime bottlenecks, memory
-churn, and CPU penalties found in existing Go-based tools such as `TecharoHQ/anubis`. It achieves
-this through:
+The architecture rests on five commitments:
 
-1. *A Zero-Allocation Hot Path:* Requests are classified, cookies verified, and tokens parsed
-   without a single dynamic heap allocation.
-2. *Bare-Metal Cryptographic Verification:* The server validates PoW solutions natively using
-   host CPU hardware extensions (x86 SHA-NI, ARM NEON, native C/Zig HashX, and Argon2id), completely
-   eliminating Anubis's in-Go WebAssembly runtime overhead.
-3. *Single-Pass SIMD Multi-Pattern Matching:* Hundreds of crawler signatures are evaluated
-   simultaneously in a single pass using SIMD-accelerated Aho-Corasick automata.
-4. *Zero-Copy Radix Trie IP Filtering:* IPv4 and IPv6 CIDR blocks are evaluated via bitwise
-   trie traversal in $O(1)$ to $O(k)$ operations.
-5. *Unified Zig Toolchain:* A single toolchain (`zig build`) compiles the high-throughput server daemon,
-   the native cryptographic modules, and the browser-side WebAssembly solver (`wasm32-freestanding`),
-   eradicating dependencies on Node.js, Rust, or Go toolchains.
+1. *A zero-allocation hot path.* Parsing, policy evaluation, semantic inspection, token
+   verification, and proof verification slice over one per-connection stack buffer. The only
+   dynamic memory in the daemon is startup configuration and the off-path storage thread.
+2. *Native verification, research-grade puzzles.* The server never runs a virtual machine to
+   verify work. Tier 1 is SHA-256 Hashcash on the hardware SHA extensions Zig's standard library
+   dispatches to; Tier 2 is a proof of sequential work with a published security proof in the
+   random-oracle and quantum-random-oracle models (SID 0006).
+3. *Symmetric authentication.* Issuer and verifier are the same daemon (or a cluster sharing
+   one seed), so session tokens and challenge identifiers are keyed BLAKE3 tags, not signatures.
+4. *Automata, not regular expressions.* Bot signatures and attack signatures are single-pass
+   Aho–Corasick automata; structural attack detection is a set of single-pass tokenizers.
+5. *One toolchain.* `zig build` produces the daemon, the benchmark suite, the documents, and the
+   browser solver, and the browser solver compiles the same `posw.zig` and `pow.zig` sources
+   the server verifies with, so prover and verifier cannot drift.
 
-#callout([Performance Contract Gate], [
-  Sibuna does not merely aim to be a Zig clone of Anubis. It establishes non-negotiable benchmark
-  gates:
-  - Throughput: $>= 100,000$ requests/sec per core on classification hot-paths.
-  - Server PoW Verification: $< 50$ microseconds per solution (compared to 5--20 milliseconds in Anubis's Wazero VM).
-  - Memory Footprint: $< 15$ MB RSS static resident set under sustained high-concurrency attack.
-  - Tail Latency: P99 classification latency $< 250$ microseconds under $50,000$ req/s load.
-], fill: amber-light, stroke: amber)
+#callout([Product surfaces], [
+  Sibuna ships one binary with three surfaces selected at runtime and build time:
+  - *Gate* (`--gate`): proof-of-work admission only, comparable in scope to an Anubis
+    deployment. Full classification of a browser request costs 295 ns.
+  - *Shield* (`--shield`, the default): Gate plus the semantic WAF, GCRA rate limiting, the
+    honeypot, and the ban table. Full classification costs 1.46 µs.
+  - *Edge* (`--data-dir`, optionally `--cluster-*`): Shield plus the Zaxonlite storage layer
+    for dynamic policies, replicated reputation, and incident forensics (SID 0005).
+])
 
 == Product principles
 
-+ *Asymmetry as defense.* The computational cost imposed on the crawler must be $10,000 times$
-  to $100,000 times$ higher than the cost incurred by the firewall server to issue and verify the challenge.
-+ *Zero allocations in the hot path.* Every byte allocated on the heap during request evaluation
-  is a potential Denial-of-Service vector under crawler flood conditions. Buffer pools and ring buffers
-  are pre-allocated at startup.
-+ *Native silicon execution.* Never run an interpreted or JIT-emulated virtual machine on the server
-  when native hardware instructions exist.
-+ *Zero-friction human UX.* Legitimate browsers solve challenges transparently in a background
-  Web Worker in 100--500ms, receive a cryptographically bound cookie, and experience no CAPTCHAs
-  or blocking interstitials on subsequent requests.
-+ *Dual deployment flexibility.* Run either as an autonomous reverse proxy or as a lightweight
-  forward-auth subrequest engine behind Nginx, Caddy, or Traefik.
++ *Asymmetry as defence.* The work a client must perform to obtain a session is tens of
+  thousands of hash compressions; verifying it costs the daemon 63 ns (Hashcash) or 17 µs
+  (PoSW). The daemon stores nothing for an unsolved challenge, so an adversary cannot consume
+  memory without first paying for it.
++ *Zero allocations in the hot path.* Every heap allocation during request evaluation is a
+  denial-of-service lever; the per-connection buffer is 64 KB of stack and every table is
+  fixed-capacity.
++ *Proofs before folklore.* Puzzle and token constructions are chosen for published security
+  arguments, not for popularity in cryptocurrency mining (SID 0006).
++ *Zero-friction human experience.* The interstitial solves in a Web Worker, falls back to a
+  byte-identical JavaScript prover when WebAssembly is unavailable, and reloads the page.
++ *Two deployment modes.* Autonomous reverse proxy, or forward-auth subrequest engine behind
+  Nginx, Caddy, or Traefik.
 
-= Comparative Analysis: TecharoHQ/anubis Bottlenecks
+= Reference model of a Go-based challenge proxy
 
-An architectural audit of `TecharoHQ/anubis` reveals several structural bottlenecks that limit its
-throughput and cause instability under severe scraper floods:
+Sibuna's design targets the structural costs that a Go implementation of the same product
+(`TecharoHQ/anubis`) pays: a WebAssembly runtime hosted in the server for verification, per-request
+allocation of request objects and header maps, sequential regular-expression scans, and JSON Web
+Tokens parsed by reflection. The table records the design response. The Anubis column is a
+_reference model_: fixed per-call costs taken from public profiling of those components. It was
+not measured on the benchmark host, and the benchmark suite labels every such row
+`anubis-model` with `measured = false`.
 
 #table(
-  columns: (1.2fr, 1.8fr, 2fr),
+  columns: (1.1fr, 1.7fr, 2fr),
   stroke: 0.5pt + rule,
   fill: (x, y) => if y == 0 { blue-light } else if calc.even(y) { luma(99%) } else { white },
-  [*Subsystem*], [*Anubis (Go)*], [*Sibuna (Zig)*],
-  [Server PoW Verification],
-  [Executes compiled WASM binaries inside Go using the `wazero` runtime interpreter/JIT for HashX and Argon2id.],
-  [Direct native execution utilizing hardware SIMD instructions (x86 SHA-NI, ARM NEON) and native C/Zig code. Verification takes $< 50$ microseconds with zero VM overhead.],
-
-  [Memory & GC Churn],
-  [Go garbage-collected runtime. Every request allocates `http.Request`, slices, maps, regex matches, and Prometheus label strings. Suffers GC pause spikes under crawler floods.],
-  [Manual, deterministic memory model. Fixed-capacity connection rings, stack arenas, and slice references. Zero GC pauses; static $< 15$ MB memory footprint.],
-
-  [Pattern Matching],
-  [Sequential execution of compiled Go `regexp` patterns (`O(N)` regex checks per request). Scales linearly with policy count.],
-  [SIMD-accelerated Aho-Corasick multi-string automaton. Scans User-Agent strings in a single pass ($100$--$300$ ns) across thousands of patterns.],
-
-  [IP / CIDR Filtering],
-  [Go BART trie library with multiple pointer indirections and heap allocations on IP string parsing.],
-  [Zero-allocation Radix Trie for IPv4 (direct table / compact trie) and IPv6 (128-bit Patricia trie). Lookup in $<= 40$ ns.],
-
-  [Token & Cookie Auth],
-  [JSON Web Tokens parsed via `golang-jwt`, deserializing claims into generic `map[string]any` via reflection.],
-  [Compact binary token (Ed25519 or HMAC-BLAKE3) or zero-allocation JWT parser reading directly into stack structs. Validation in $< 1$ microsecond.],
-
-  [Decay Map Cache],
-  [Standard Go map protected by a single `sync.RWMutex` with a channel-based cleanup worker. High lock contention under concurrent load.],
-  [Sharded, lock-free or cache-line partitioned Robin Hood hash table with atomic timestamps and lockless expiry.],
-
-  [Toolchain & Build],
-  [Fragmented toolchain: Go + Rust (`wasm-pack`) + Node/TypeScript (`npm`) + Wazero.],
-  [Single unified toolchain: Zig 0.16 compiles daemon, native crypto, C bindings, and browser WASM target (`wasm32-freestanding`).],
+  [*Subsystem*], [*Reference model (Go + Wazero)*], [*Sibuna (measured)*],
+  [Proof verification],
+  [WASM bytecode executed in-process; modelled at 12.5 µs and 4 KB per call.],
+  [Hashcash 62.6 ns, PoSW(13, 16) 16.9 µs, zero allocation.],
+  [Session token],
+  [JWT decoded into a map by reflection; modelled at 62.5 µs.],
+  [Keyed BLAKE3 tag over a 32-byte payload: 134 ns. Ed25519 option: 52.8 µs.],
+  [Bot signatures],
+  [Sequential compiled regexps; modelled at 1.7 µs for 40 patterns.],
+  [Dense-table Aho–Corasick, one pass: 85 ns for 40 patterns.],
+  [IP classification],
+  [Slice of `net.IPNet`; modelled at 380 ns.],
+  [128-bit radix trie with an IPv4 root shortcut: 45 ns IPv4, 80 ns IPv6.],
+  [Challenge state],
+  [Mutex-guarded map of every issued challenge; modelled at 2.1 µs.],
+  [Robin Hood spent set holding only _solved_ challenges: 23 ns.],
+  [Request parsing],
+  [`net/http` request and header map allocation; modelled at 3.5 µs.],
+  [Zero-copy slices into the connection buffer: 733 ns including cookie lookup.],
 )
 
-= System Architecture
+= System architecture
 
-== Process Topology and I/O Loop
+== Process topology
 
-Sibuna utilizes an asynchronous, non-blocking event loop tailored to the host operating system:
-- `io_uring` on modern Linux kernels (with fallback to `epoll`).
-- `kqueue` on macOS and FreeBSD.
+The daemon binds one listening socket and runs `--workers` accept loops (default: one per
+CPU). Each loop accepts a connection, serves up to 256 HTTP/1.1 requests on it with keep-alive,
+and closes it. A connection owns a 64 KB stack buffer for request heads and bodies and a 16 KB
+write buffer; nothing about a request is copied out of that buffer. Proxied requests are streamed
+to the origin with hop-by-hop headers stripped and audit headers injected, bodies larger than the
+buffer are relayed in 16 KB chunks, and the connection closes after the origin response because
+the origin's framing is passed through untouched.
 
-Each worker thread is pinned to a dedicated CPU core and manages a disjoint set of non-blocking
-client sockets. Worker threads own fixed pre-allocated arenas and connection buffers, eliminating
-inter-thread cache bouncing and lock contention.
+#callout([Future work: event loop and HTTP/2], [
+  The accept loops are blocking threads, not an `io_uring`/`kqueue` reactor, and the parser
+  accepts HTTP/1.0 and HTTP/1.1 only. Both are compatible with the zero-allocation contract and
+  remain open items; neither affects the measured per-request costs, which are dominated by
+  classification rather than I/O dispatch.
+], fill: amber-light, stroke: amber)
 
-== Request Lifecycle Pipeline
+== Request lifecycle
 
 ```
- [Client Request]
+ [Client request]
         │
         ▼
- [Zero-Copy HTTP Parser] ──(Parse headers into string slices)
+ [Zero-copy HTTP/1.1 parser]  (head ≤ 16 KB, body ≤ 64 KB buffered, rest relayed)
         │
-        ├──► [Cookie / Token Check]
-        │         │
-        │         ├── Valid Token & Policy Match? ──► [Zero-Copy Forward to Origin]
-        │         ▼
-        │    (Missing or Expired)
-        │
+        ├─ ban table hit? ──────────────────────────► 403
+        ├─ /__sibuna/* internal route? ─────────────► assets, challenge.json,
+        │                                              verify, honeypot, health, metrics
+        ├─ GCRA limit exceeded? ────────────────────► 429 + Retry-After
+        ├─ valid session cookie? ───────────────────► forward (PASS, rule = session)
         ▼
- [Policy Evaluator]
-        ├── 1. Exact Match / Bypass Table (Favicon, robots.txt, /.well-known) ──► ALLOW
-        ├── 2. Radix CIDR Table (IPv4/IPv6 IP Reputation / Allowlist)
-        ├── 3. SIMD Aho-Corasick Matcher (User-Agent bot signatures)
-        ├── 4. Header & Path Matchers (Exact and byte-level matching)
-        ├── 5. JA4H Fingerprint Calculator
-        └── 6. Dynamic Score Aggregator (WEIGH adjustments & Thresholds)
+ [Policy engine — one RequestView, zero allocation]
+        ├── 0. Semantic WAF (signature automaton + tokenizers) ──► DENY
+        ├── 1. Reputation trie: deny or allow verdict ──────────► DENY / ALLOW
+        ├── 2. Declarative rules in order; WEIGH accumulates ────► first terminal match
+        ├── 3. Accumulated score vs thresholds ─────────────────► ALLOW / CHALLENGE / DENY
+        ├── 4. Static bypass paths ─────────────────────────────► ALLOW
+        ├── 5. Reputation trie: challenge verdict
+        ├── 6. Bot-signature automaton ─────────────────────────► CHALLENGE
+        └── 7. Default action (challenge) ─────────────────────► CHALLENGE
         │
-        ├── Action == ALLOW ──────► [Forward to Origin]
-        ├── Action == DENY ───────► [403 Forbidden Response]
-        └── Action == CHALLENGE ──► [Issue PoW Challenge]
-                                          │
-                                          ▼
-                                   [Serve HTML / WASM]
-                                          │
-    [Client Submits Solution (nonce, hash)]
-        │
-        ▼
- [Native SIMD PoW Verifier]
-        │
-        ├── Valid Solution? ──► [Mint Ed25519 Token Cookie] ──► [Redirect / 200 OK]
-        └── Invalid Solution ─► [400 Bad Request / Strike]
+        ├── ALLOW ────► stream to origin with X-Forwarded-For, X-Real-IP,
+        │               X-Sibuna-Status, X-Sibuna-Rule  (forward-auth: 200 + headers)
+        ├── DENY ─────► 403 (+ incident record when the WAF fired)
+        └── CHALLENGE ► HTML interstitial (Accept: text/html), 401 JSON otherwise,
+                        401 in forward-auth mode
 ```
 
-== Dual Operating Modes
+The interstitial fetches `/__sibuna/challenge.json?path=<original path>`, so the rule that
+protects the original path chooses difficulty and algorithm, and the challenge carries that
+rule's hash. The Web Worker solves it and posts `{"challenge_id", "nonce" | "proof"}` to
+`/__sibuna/verify`; a `200` sets the session cookie and the page reloads.
 
-1. *Standalone Reverse Proxy Mode:*
-   Sibuna listens on the public HTTP port, terminates HTTP/1.1 (and HTTP/2), classifies requests,
-   and streams approved traffic to the upstream backend service via zero-copy socket proxying. It injects
-   diagnostic audit headers (`X-Sibuna-Status: PASS`, `X-Sibuna-Rule: bot/gptbot`).
+== Dual operating modes
 
-2. *Forward-Auth / Subrequest Mode:*
-   Designed for deployment alongside existing reverse proxies (Nginx `auth_request`, Traefik `forward_auth`,
-   Caddy `forward_auth`). Sibuna responds with:
-   - `200 OK` (with upstream auth headers) if the client has a valid session token or matches an `ALLOW` rule.
-   - `403 Forbidden` if explicitly denied.
-   - `401 Unauthorized` or serves the Challenge page if verification is required.
+1. *Reverse proxy* (`--mode reverse_proxy`): terminates the client connection, classifies, and
+   streams admitted requests to `--upstream-host:--upstream-port`.
+2. *Forward auth* (`--mode forward_auth`): answers the ingress subrequest with `200` plus
+   `X-Sibuna-Status`, `X-Sibuna-Rule`, and `X-Sibuna-Rule-Hash`, `403` for denials, and `401`
+   when a challenge is required. Forwarded client addresses are trusted in this mode by default
+   (`--trust-forwarded` controls it in either mode).
 
-= Cryptographic Proof-of-Work Engine
+= Proof-of-work engine
 
-== Multi-Algorithm Architecture
+Two tiers are implemented. The mathematics, the security arguments, and the rejection of the
+alternatives are the subject of SID 0006; this section records the engineering contract.
 
-Sibuna implements three distinct tiers of computational friction:
+#table(
+  columns: (1fr, 1.6fr, 1.6fr),
+  table.header([*Property*], [*Tier 1: Hashcash (`hashcash`)*], [*Tier 2: PoSW (`posw`, default)*]),
+  [Statement], [challenge id string], [challenge id string],
+  [Client work], [$2^b$ expected SHA-256 compressions, geometric variance], [$2^(n+1)-1$ sequential SHA-256 labels, deterministic],
+  [Difficulty knob], [`bits` $b$ (default 16)], [depth $n = b - 3$ so both tiers cost about the same wall-clock],
+  [Server verification], [one compression, 62.6 ns measured], [$t(n+1)$ compressions, 16.9 µs at $n=13, t=16$],
+  [Proof size], [decimal nonce], [$32(1 + t(n+1))$ bytes, 7.2 KB at $n=13$],
+  [Parallel speed-up for an attacker], [unbounded (GPU, ASIC)], [none: the labelling is inherently sequential],
+  [Client memory], [constant], [$O(2^m + n)$ labels, about 90 KB],
+  [Security argument], [random-oracle preimage search], [Cohen–Pietrzak 2018; quantum: Blocki–Lee–Zhou 2021],
+)
 
-+ *Tier 1: Fast SHA-256 (Hashcash)*
-  - Formula: $"SHA-256"("Challenge" || "Nonce")$ must have $D$ leading zero hex characters.
-  - Server Verification: Evaluates a single SHA-256 block using hardware acceleration (`x86 SHA-NI` or `ARM NEON crypto`).
-  - Cost: Server verifies in $approx 180$ nanoseconds. Client computes $16^D$ hashes ($100$ms to $2$s in Web Worker).
-+ *Tier 2: Tor-Compatible HashX*
-  - Designed specifically to be ASIC-resistant and CPU-bound, utilizing dynamic instruction generation, branching,
-    and cache-dependent lookups.
-  - Server Verification: Native C/Zig implementation compiled directly into the binary.
-  - Cost: Server verifies in $< 20$ microseconds.
-+ *Tier 3: Memory-Hard Argon2id*
-  - Imposes strict RAM allocation requirements on the client (e.g., 8 MB--32 MB memory window), making massive
-    parallel cloud scraping economically devastating.
-  - Server Verification: Optimized native Argon2id single-pass verification.
+Difficulty may be raised per rule, by WEIGH scores, and by the load-adaptive controller, which
+adds $ceil(log_2 (1 + lambda / lambda_0))$ bits (capped at 6) when the smoothed challenge issue
+rate $lambda$ exceeds the baseline $lambda_0$.
 
-== Zero-WASM Server Verification Contract
+#callout([Rejected constructions], [
+  *Argon2id* was rejected because verification costs the same memory-hard computation as
+  solving: a submission that fails verification still costs the server milliseconds and tens of
+  megabytes, inverting the asymmetry the product exists to create. *HashX* has no published
+  security reduction. *Equihash* (generalised birthday) is GPU-efficient, carries a
+  cryptocurrency lineage, and admits quantum $k$-XOR speed-ups; it was prototyped and withdrawn.
+  See SID 0006 for the full comparison.
+], fill: red-light, stroke: red)
 
-Unlike Anubis, which instantiates `wazero` and runs WASM bytecode on the server to verify solutions,
-Sibuna compiles all verification routines natively into the host binary. The server never executes
-WebAssembly.
+== Browser client
 
-== Browser Client (Pure Zig WASM)
+`apps/wasm-pow/src/entry.zig` compiles to `wasm32-freestanding` in `ReleaseSmall` and imports
+`libs/crypto/src/pow.zig` and `libs/crypto/src/posw.zig` unchanged. The module measures
+*8,831 bytes* with both solvers. `apps/web/src/worker.js` drives it and carries JavaScript
+implementations of both provers that produce byte-identical output (verified against the module
+under V8), so browsers without WebAssembly still pass. Measured under V8: PoSW depth 13 solves in
+15 ms, depth 16 in 138 ms; Hashcash 16 bits solves in about 20 ms. The JavaScript fallback is
+roughly sixty times slower.
 
-The browser solver is authored in pure Zig (`apps/wasm-pow/src/entry.zig`) and compiled using:
-```sh
-zig build -Dtarget=wasm32-freestanding -Doptimize=ReleaseSmall
-```
-The resulting WebAssembly module is $< 10$ KB. A minimal vanilla JavaScript driver (`< 2` KB, zero external
-npm dependencies) spawns a Web Worker, initiates the WASM solver, updates a smooth client-side progress UI,
-and posts the nonce back to Sibuna.
+= Session authentication
 
-= Token and Session Authentication
+== Key schedule
 
-1. *Token Architecture:*
-   Sibuna supports two zero-allocation token formats:
-   - *Compact Ed25519 Token:* 64-byte Ed25519 signature over a 32-byte binary payload containing
-     `[Timestamp(8) | Expiry(8) | RuleHash(8) | ClientFingerprint(8)]`, encoded as URL-safe base64.
-   - *Strict Compact JWT:* For drop-in compatibility with downstream tools, parsed in-place without JSON allocations.
-2. *Anti-Replay & Client Binding:*
-   The token payload binds to a hash of the client's network identity (`X-Real-IP` or JA4H fingerprint)
-   and the specific bot rule that triggered the challenge. Tokens cannot be smuggled or shared between
-   different scrapers.
+One 32-byte master seed (`--secret-file`, the `SIBUNA_SECRET` environment variable, or a random
+value drawn at startup with a banner warning) is expanded with keyed BLAKE3 into four purpose
+keys: token MAC, challenge PRF, Ed25519 seed, and client fingerprint. A cluster agrees on the
+seed and thereby on every token and challenge.
 
-= Monorepo Structure
+== Tokens
+
+The payload is 32 big-endian bytes: issue time, expiry, rule hash, client fingerprint. The
+default token appends a 16-byte keyed BLAKE3 tag (48 bytes, 64 URL-safe base64 characters) and
+verifies in 134 ns with a constant-time comparison. `--token-scheme ed25519` appends a 64-byte
+signature instead (128 characters, 52.8 µs) for deployments whose verifiers must not hold
+minting capability. The fingerprint is a keyed hash of client address and User-Agent, so a token
+copied to another client is inert.
+
+== Stateless challenges
+
+A challenge identifier is a 36-byte payload (version, algorithm, difficulty, opening count, issue
+time, fingerprint, PRF nonce, rule hash) plus a 16-byte tag, 70 characters in total. Issuing one
+writes nothing. Only a _solved_ challenge enters the spent set, a 16-shard Robin Hood table keyed
+by the tag, so the daemon's state is bounded by work the client actually performed.
+
+= Monorepo structure
 
 ```
 sibuna/
-├── build.zig                   # Root build script orchestrating all libs, apps, and wasm
-├── build.zig.zon               # Package manifest
+├── build.zig / build.zig.zon    # -Dstorage (default on), -Dcluster; zaxonlite v0.6.0 dependency
 ├── apps/
-│   ├── sibuna/                 # Main firewall daemon binary
-│   ├── wasm-pow/               # Browser-side PoW solver (wasm32-freestanding)
-│   └── web/                    # Client static assets, worker scripts, and templates
+│   ├── sibuna/src/              # main.zig, server.zig, storage.zig, persistent.zig, e2e_test.zig
+│   ├── wasm-pow/src/entry.zig   # browser solver: hashcash + PoSW exports (8,831 bytes)
+│   └── web/src/                 # challenge.html interstitial, worker.js provers
 ├── libs/
-│   ├── core/                   # Arena allocators, configuration, logging, time
-│   ├── crypto/                 # SHA-256 SIMD, HashX, Argon2id, Ed25519, tokens
-│   ├── net/                    # Zero-copy HTTP/1.1 & HTTP/2 parser, proxy, subrequest
-│   ├── policy/                 # SIMD Aho-Corasick, Radix CIDR trie, JA4H, scoring
-│   ├── challenge/              # Challenge coordinator & dynamic difficulty
-│   └── store/                  # Lockless sharded decay map, Valkey/Redis client
-├── docs/                       # Shibuna Discussions (SID) and manuals
-│   ├── shared/                 # Shared Typst templates & themes
-│   └── sid/                    # RFC/RFD discussion records and registry
-└── tools/
-    ├── sid.zig                 # SID management CLI tool
-    └── bench/                  # High-concurrency benchmark and simulation suite
+│   ├── core/                    # config, diagnostics, Elm-style error explanations, logging
+│   ├── crypto/                  # keys, pow (hashcash), posw, token (MAC + Ed25519)
+│   ├── net/                     # zero-copy parser, response builders, streaming proxy
+│   ├── policy/                  # aho_corasick, radix_trie, rule, loader, engine, waf, normalizer, embedding
+│   ├── challenge/               # stateless coordinator, adaptive difficulty
+│   └── store/                   # challenge_store (spent set), rate_limiter (GCRA), ban_list, ring
+├── benchmarks/                  # benchmark.zig, run-all.sh, results/latest.json
+├── docs/                        # SIDs, the book, shared Typst theme
+└── tools/                       # sid.zig, style checkers
 ```
 
-= Delivery Plan
+= Performance contract
 
-#milestone(
-  "Phase 0: Risky Boundaries & Cryptographic Primitives",
-  "Implement native SIMD SHA-256, HashX, Ed25519 signing, and the wasm32-freestanding browser solver.",
-  "Cryptographic test suite passes; browser solver verified against native test vectors; WASM binary size < 10 KB."
+Measured on the host recorded in `benchmarks/results/latest.json` (Apple M1, Zig 0.16.0,
+`ReleaseFast`, seven batches, median per operation, zero heap allocation in every measured row):
+
+#table(
+  columns: (1.6fr, 1fr, 1fr),
+  table.header([*Workload*], [*ns / op*], [*ops / s*]),
+  [Hashcash verification, 16 bits], [62.6], [15.98 M],
+  [PoSW verification, depth 13, 16 openings], [16,920], [59.1 K],
+  [Bot automaton, 40 signatures], [85.3], [11.7 M],
+  [IPv4 / IPv6 trie lookup], [45.2 / 79.9], [22.1 M / 12.5 M],
+  [BLAKE3 MAC token verification], [134.1], [7.46 M],
+  [Ed25519 token verification], [52,778], [18.9 K],
+  [Robin Hood spend + lookup], [22.8], [43.8 M],
+  [GCRA rate check], [4.8], [209 M],
+  [HTTP parse + cookie lookup], [732.5], [1.37 M],
+  [Full classification, Gate surface], [295.0], [3.39 M],
+  [Full classification, Shield surface], [1,460], [685 K],
+  [Semantic scan of an 8 KB body], [23,702], [42.2 K],
 )
 
-#milestone(
-  "Phase 1: High-Performance Network & Proxy Layer",
-  "Implement zero-copy HTTP/1.1 parser, streaming reverse proxy, and forward-auth subrequest engine.",
-  "Echo proxy handles 100,000 req/s with zero heap allocations during sustained streaming."
-)
+Static figures from the same run: daemon binary 4.25 MB (`ReleaseFast`, storage linked), WASM
+solver 8,831 bytes, idle resident set 7.6 MB without a data directory and 12–14.5 MB with the
+Zaxonlite store open.
+
+#callout([Contract gates], [
+  - Server verification of any proof $< 50$ µs: met (17 µs worst case, PoSW).
+  - Classification of a browser request $< 2$ µs on the Shield surface, $< 300$ ns on Gate: met.
+  - Zero heap allocation on the request path: met; the storage layer allocates only on its own
+    thread.
+  - Idle resident set $< 15$ MB: met with and without storage.
+  - Throughput $>= 100,000$ requests/s per core and P99 $< 250$ µs under load: *not yet
+    measured* with a load generator against the daemon; only the per-primitive costs above are
+    recorded.
+], fill: green-light, stroke: green)
+
+= Delivery record
 
 #milestone(
-  "Phase 2: Pattern Matcher & Bot Policy Engine",
-  "Implement Radix IPv4/IPv6 CIDR trie, SIMD Aho-Corasick multi-string pattern matcher, and JA4H calculator.",
-  "Single-pass matching against 500 bot signatures executes in under 300 nanoseconds per request."
+  "Phase 0: Cryptographic primitives",
+  "Hashcash with bit-level difficulty, PoSW prover and verifier, keyed BLAKE3 tokens, Ed25519 tokens, key schedule, WASM solver sharing the native sources.",
+  "Tests pass; the WASM module verifies against native test vectors; module size 8,831 bytes.",
 )
-
 #milestone(
-  "Phase 3: Proof-of-Work Challenge & Verification Pipeline",
-  "Connect challenge issuance, HTML/WASM page delivery, and native server verification.",
-  "End-to-end browser flow completes in < 500ms; server verification latency < 50 microseconds."
+  "Phase 1: Network and proxy layer",
+  "Zero-copy HTTP/1.1 parser with smuggling defences, keep-alive connection loop, streaming proxy with audit headers and chunked body relay, forward-auth mode.",
+  "Nine end-to-end HTTP scenarios pass against the live daemon and a stub origin.",
 )
-
 #milestone(
-  "Phase 4: State Store, Rate Limiting & Session Tokens",
-  "Implement the lockless sharded decay map, compact binary token minting, and cookie binding.",
-  "Zero lock contention under 100,000 concurrent session validations."
+  "Phase 2: Pattern matcher and policy engine",
+  "Tagged Aho–Corasick automata, IPv4/IPv6 radix trie, declarative rules with WEIGH scoring, JSON loader.",
+  "Full classification measured at 295 ns (Gate) and 1.46 µs (Shield).",
 )
-
 #milestone(
-  "Phase 5: Production Hardening, Observability & Benchmark Gate",
-  "Implement Prometheus metrics, dynamic difficulty auto-tuning, and automated comparative benchmarking against Anubis.",
-  "Comprehensive benchmark suite proves > 10x throughput, > 50x lower verification latency, and < 15MB RSS memory."
+  "Phase 3: Challenge and verification pipeline",
+  "Stateless challenges, both tiers verified natively, interstitial and worker with JavaScript fallback.",
+  "PoSW verification 16.9 µs; the fallback provers are byte-identical to the module.",
+)
+#milestone(
+  "Phase 4: State, rate limiting, and sessions",
+  "Robin Hood spent set, GCRA limiter, lock-free ban table, MAC tokens bound to fingerprint and rule.",
+  "Replay, binding, and double-spend rejection covered end to end.",
+)
+#milestone(
+  "Phase 5: Hardening, observability, benchmark gate",
+  "Prometheus counters at /__sibuna/metrics, load-adaptive difficulty, honest benchmark suite with recorded host metadata.",
+  "Comparative measurement against a running Anubis binary has not been performed; its column remains a reference model.",
+  state: "partial",
 )
 
-= Mandatory Integration Tests & Verification Gates
+== Open items
 
-The following automated verification gates are enforced before release:
+- JA4H fingerprinting is not implemented; the client fingerprint is address plus User-Agent.
+- HTTP/2 and an `io_uring`/`kqueue` reactor are not implemented.
+- SIMD literal prefiltering for very long bodies is not implemented; the dense automaton runs at
+  about 2.9 ns per byte on 8 KB bodies, which is adequate for header-dominated traffic.
+- A load-generator benchmark of end-to-end throughput and tail latency is not recorded.
 
-1. *Zero-Allocation Leak Check:* Run $1,000,000$ simulated classified requests through the hot path
-   under `std.testing.FailingAllocator`. The test must pass with zero allocations.
-2. *SIMD Pattern Correctness:* Fuzz the Aho-Corasick matcher with $100,000$ generated user-agent strings
-   and assert exact equivalence against naive substring searches.
-3. *Double-Spend & Replay Resistance:* Concurrently submit the same valid PoW solution from $100$ threads;
-   exactly one must succeed and receive a signed token; $99$ must be rejected.
-4. *Anubis Performance Gate:* Run concurrent `wrk` benchmarks comparing Sibuna and Anubis on the same
-   hardware. Sibuna must demonstrate at least $10 times$ higher request throughput and $< 10%$ of Anubis's
-   memory consumption.
+= Verification gates
 
-= Definition of Done
+`zig build test` runs 80 tests: unit tests in every library, the WASM entry tests on the host,
+the server helpers, nine end-to-end HTTP scenarios (interstitial and static bypass; Hashcash
+issue/solve/verify/cookie/proxy with replay and binding rejection; PoSW through forward-auth with
+Ed25519 tokens; policy and WAF denials, honeypot bans, and rate limiting; keep-alive; malformed,
+smuggled, oversized, and unknown requests; asset serving), and the Zaxonlite storage test (schema,
+dynamic policy reload through the RCU slot, reputation bans, forensics, campaign clustering).
+`zig build fmt` enforces `zig fmt`, the 70-line function limit, the 99-column limit, and the
+1408-line file limit. `sh benchmarks/run-all.sh` regenerates `latest.json`, which the book renders.
 
-A release is considered complete when:
-- All SID records through SID 0002 are published and up to date.
-- `zig build test` passes with zero failures across all packages (`libs/core`, `libs/crypto`, `libs/net`, `libs/policy`, `libs/challenge`, `libs/store`).
-- The browser WASM binary compiles to $< 10$ KB and functions in Firefox, Chromium, Safari, and mobile browsers.
-- The Anubis performance gate assertions are fully validated and documented.
+= Definition of done
+
+- SID records 0001–0006 published and consistent with the code.
+- `zig build test` and `zig build fmt` pass.
+- The WASM solver is under 10 KB and passes in browsers with and without WebAssembly.
+- Measured performance rows are recorded with host metadata; modelled rows are labelled.
