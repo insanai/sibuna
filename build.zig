@@ -18,6 +18,7 @@ pub fn build(b: *std.Build) void {
     addServer(b, target, optimize, modules, wasm_pow);
     addTests(b, modules);
     addBenchmarks(b, target, optimize, modules);
+    addBook(b);
 
     addFormatting(b);
     addShd(b);
@@ -203,6 +204,21 @@ fn addBenchmarks(
     const run_all = b.addSystemCommand(&.{ "sh", "benchmarks/run-all.sh" });
     const run_all_step = b.step("benchmark", "Run full benchmark matrix and update results");
     run_all_step.dependOn(&run_all.step);
+}
+
+fn addBook(b: *std.Build) void {
+    const make_dir = b.addSystemCommand(&.{ "mkdir", "-p", "docs/build" });
+    const book_cmd = b.addSystemCommand(&.{
+        "typst",
+        "compile",
+        "--root",
+        ".",
+        "docs/book.typ",
+        "docs/build/sibuna-book.pdf",
+    });
+    book_cmd.step.dependOn(&make_dir.step);
+    const book_step = b.step("book", "Build the Sibuna book PDF (docs/build/sibuna-book.pdf)");
+    book_step.dependOn(&book_cmd.step);
 }
 
 fn addFormatting(b: *std.Build) void {
