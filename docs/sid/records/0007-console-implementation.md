@@ -195,3 +195,29 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
   authenticated subscriptions, labelled password fields, password change/session revocation,
   and successful login with the replacement password. Geographic markers are clipped at the
   visible globe horizon; returning to a visible GeoIP page refreshes import status.
+
+### Authentication and journal restart verification (2026-09-08)
+
+- TOTP uses the RFC 4226/6238 SHA-1 vectors, six digits and a bounded adjacent-step window.
+  Seeds use separately provisioned console-key encryption, with user-bound authenticated
+  envelopes. Enrollment revokes earlier sessions. Session insertion atomically consumes
+  the accepted step or one of ten recovery digests; rollback does not consume a code.
+- Authentication schema v2 migrates in one owner-executed transaction. Deterministic tests
+  cover a failure after ALTER, replay, refusal of future schemas, idle expiry and absolute
+  expiry. Sessions now use the SID's 12-hour absolute and 30-minute idle lifetimes;
+  passive subscription checks do not extend idle access.
+- Live-daemon tests cover enrollment, password-only rejection for an enrolled account,
+  replayed codes, recovery use, and recovery rejection after restarting. Chrome exercised
+  enrollment, recovery delivery, recovery login, sign-out and rejection of the consumed code.
+  The mobile review found a minimum-content card width issue; recovery text now wraps and
+  the card can shrink. QR provisioning and complete account-management workflows remain open.
+- The full country-data fixture crossed a journal rotation boundary and exposed a pinned
+  Zaxonlite 0.6.1 iterator defect on restart. The manifest and segment checksums were valid.
+  A reviewed one-line generated-source patch selects the sealed-segment reader, preserving
+  trailer validation. The downloaded dependency and on-disk format are unchanged. A new
+  deterministic regression writes across multiple rotations and authorizes after reopening.
+  See `build/patches/README.md` for the patch bounds and removal condition.
+- A copy of the exact failed full-size fixture reopened with the sealed-reader fix in
+  16.2 seconds and retained revision 1 with all 717,152 known ranges. The original fixture
+  remains untouched. Storage-off and console-off test builds and the clustered TLS build
+  passed. These observations close this regression, not the broader cluster/release gates.
