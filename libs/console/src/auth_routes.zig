@@ -103,7 +103,7 @@ fn establish(app: *App, context: *Context, user: p.AuthUser) !void {
     const value = try std.fmt.bufPrint(
         &cookie,
         "__sibuna_console={s}; HttpOnly; SameSite=Strict; Path=/console; Max-Age=86400{s}",
-        .{ encoded, if (app.config.behind_proxy) "; Secure" else "" },
+        .{ encoded, if (app.config.behind_proxy or app.config.cookie_secure) "; Secure" else "" },
     );
     try http.json(context, .{
         .user = user.id,
@@ -118,7 +118,7 @@ pub fn logout(app: *App, context: *Context) !void {
     try http.csrf(context, principal.csrf_digest);
     const result = try app.request(.{ .logout = try http.session(context) });
     if (result != .command_recorded) return error.StorageUnavailable;
-    const cookie = if (app.config.behind_proxy)
+    const cookie = if (app.config.behind_proxy or app.config.cookie_secure)
         "__sibuna_console=; HttpOnly; SameSite=Strict; Path=/console; Max-Age=0; Secure"
     else
         "__sibuna_console=; HttpOnly; SameSite=Strict; Path=/console; Max-Age=0";
@@ -147,11 +147,14 @@ pub fn password(app: *App, context: *Context) !void {
         return http.fail(context, .too_many_requests, "CONSOLE003");
     const account = try app.request(.{ .auth_user = principal.username });
     if (account != .auth_user) return http.fail(context, .unauthorized, "CONSOLE401");
-    try app.passwords.verify(
+    app.passwords.verify(
         app.io,
         input.value.old_password,
         account.auth_user.password_hash.slice(),
-    );
+    ) catch |err| {
+        if (err == error.Busy) return err;
+        return http.fail(context, .unauthorized, "CONSOLE401");
+    };
     const hash = try app.passwords.hash(app.io, input.value.password);
     const result = try app.request(.{ .password_change = .{
         .session_digest = session_digest,

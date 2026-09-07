@@ -22,7 +22,11 @@ pub fn parse(args: []const []const u8, remaining: [][]const u8) !Parsed {
             config.behind_proxy = true;
             continue;
         }
-        if (std.mem.eql(u8, flag, "--console-cookie-secure")) continue;
+        if (std.mem.eql(u8, flag, "--console-cookie-secure")) {
+            if (config.cookie_secure) return error.DuplicateCookieSecure;
+            config.cookie_secure = true;
+            continue;
+        }
         i += 1;
         if (i == args.len or std.mem.startsWith(u8, args[i], "--")) return error.MissingValue;
         const value = args[i];

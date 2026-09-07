@@ -7,6 +7,7 @@ pub const ConsoleConfig = struct {
     host: protocol.Bytes(45) = .{},
     port: u16 = 9443,
     behind_proxy: bool = false,
+    cookie_secure: bool = false,
     origin: protocol.Bytes(255) = .{},
     trusted_proxies: [16]protocol.Bytes(49) = @splat(.{}),
     trusted_proxy_count: u8 = 0,

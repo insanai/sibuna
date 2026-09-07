@@ -15,7 +15,7 @@ pub const Budget = struct {
     pub const socket_buffer_bytes = 16 * 1024;
     pub const body_bytes = 1024 * 1024;
     pub const import_bytes = 8 * 1024 * 1024;
-    pub const auth_bytes = 19 * 1024 * 1024;
+    pub const auth_bytes = @import("password.zig").Password.workspace_bytes;
     pub const topic_bytes = 10 * 1024 * 1024;
     pub const traffic_bytes = 1024 * 1024;
 
