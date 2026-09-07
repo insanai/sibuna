@@ -10,6 +10,7 @@ const radix = @import("radix_trie.zig");
 const bots = @import("bot_signatures.zig");
 const rule = @import("rule.zig");
 const loader = @import("loader.zig");
+const waf = @import("waf.zig");
 
 pub const Action = rule.Action;
 pub const Header = rule.Header;
@@ -123,13 +124,23 @@ pub const Engine = struct {
         return self.evaluateWithHeaders(path, client_ip, user_agent, &.{});
     }
 
-    pub fn evaluateWithHeaders(
+    pub fn evaluateWithHeadersAndBody(
         self: *const Engine,
         path: []const u8,
         client_ip: []const u8,
         user_agent: []const u8,
         headers: []const Header,
+        body: []const u8,
     ) Decision {
+        // 0. SafeLine-grade semantic WAF inspection
+        if (waf.inspectRequest(path, user_agent, headers, body)) |violation| {
+            return .{
+                .action = .deny,
+                .rule_name = violation.rule_name,
+                .difficulty = 0,
+            };
+        }
+
         // 1. Evaluate declarative rules in order (first-match-wins)
         for (self.rules[0..self.rule_count]) |r| {
             if (r.matches(path, client_ip, user_agent, headers)) {
@@ -178,6 +189,16 @@ pub const Engine = struct {
             .rule_name = "default/allow",
             .difficulty = 0,
         };
+    }
+
+    pub fn evaluateWithHeaders(
+        self: *const Engine,
+        path: []const u8,
+        client_ip: []const u8,
+        user_agent: []const u8,
+        headers: []const Header,
+    ) Decision {
+        return self.evaluateWithHeadersAndBody(path, client_ip, user_agent, headers, "");
     }
 
     pub fn loadFromJsonInto(
@@ -241,4 +262,35 @@ test "zero-allocation hot-path policy classification" {
         const dec = engine.evaluate("/api/v1/resource", "192.168.1.50", ua);
         _ = dec;
     }
+}
+
+test "engine blocks SafeLine WAF attack vectors" {
+    const engine = Engine.init(4);
+
+    // SQLi in query string
+    const d_sqli = engine.evaluate("/api/users?id=1 union select null", "1.2.3.4", "curl");
+    try std.testing.expectEqual(Action.deny, d_sqli.action);
+    try std.testing.expectEqualStrings("waf:sqli", d_sqli.rule_name);
+
+    // Path traversal in path
+    const d_lfi = engine.evaluate("/static/../../etc/passwd", "1.2.3.4", "Mozilla");
+    try std.testing.expectEqual(Action.deny, d_lfi.action);
+    try std.testing.expectEqualStrings("waf:path-traversal", d_lfi.rule_name);
+
+    // XSS in header
+    const xss_hdr = [_]Header{.{ .name = "X-Query", .value = "<script>alert(1)</script>" }};
+    const d_xss = engine.evaluateWithHeaders("/search", "1.2.3.4", "Mozilla", &xss_hdr);
+    try std.testing.expectEqual(Action.deny, d_xss.action);
+    try std.testing.expectEqualStrings("waf:xss", d_xss.rule_name);
+
+    // RCE in body
+    const d_rce = engine.evaluateWithHeadersAndBody(
+        "/submit",
+        "1.2.3.4",
+        "Mozilla",
+        &.{},
+        "cmd=test; /bin/sh",
+    );
+    try std.testing.expectEqual(Action.deny, d_rce.action);
+    try std.testing.expectEqualStrings("waf:rce", d_rce.rule_name);
 }

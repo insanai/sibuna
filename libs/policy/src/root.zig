@@ -12,6 +12,7 @@ pub const bot_signatures = @import("bot_signatures.zig");
 pub const rule = @import("rule.zig");
 pub const loader = @import("loader.zig");
 pub const engine = @import("engine.zig");
+pub const waf = @import("waf.zig");
 
 pub const Action = engine.Action;
 pub const Header = engine.Header;
@@ -25,4 +26,5 @@ test {
     _ = @import("rule.zig");
     _ = @import("loader.zig");
     _ = @import("engine.zig");
+    _ = @import("waf.zig");
 }
