@@ -172,7 +172,10 @@ or a replicated cluster. The console serves HTTP and WebSockets with the Zig sta
 renders every page from a WebAssembly module written in Zig and styled with daisyUI 5 through
 first-party components, streams statistics and events in real time, and keeps users,
 sessions, audit records, minute-level statistics, and a GeoIP country database in the same
-Zaxonlite store the data plane already replicates. Its defining constraint is an isolation
+Zaxonlite store the data plane already replicates. Its interface is designed by three
+principles applied page by page: Krug's "don't make me think", support for fast System 1
+judgement, and support for deliberate System 2 analysis; SafeLine's console is studied as
+inspiration, not as a parity target. Its defining engineering constraint is an isolation
 contract: the console may read the data plane's counters and its database, and it may write
 the database, but it never enters a request thread, never allocates on one, and never holds a
 lock a worker needs; a benchmark gate measures that the console's presence changes data-plane
@@ -202,15 +205,16 @@ Sibuna has the same concept, replaces it where Sibuna's model differs (there are
 upstreams; there are surfaces, policies, and nodes), and adds what SafeLine does not have: a
 challenge funnel, cluster membership, campaign clustering, and a live transport.
 
-#callout([Reference material], [
+#callout([Inspiration, not a target], [
   SafeLine's console was studied on its hosted demonstration (`demo.waf.chaitin.com`,
-  community edition 9.4.1, Pro licence, 8 September 2026) page by page through a browser
-  session, and cross-checked against its documentation. The next section records what was
-  seen. No SafeLine markup, stylesheet, or code is reproduced or referenced; the record
-  adopts information architecture, not implementation.
+  version 9.4.1, 8 September 2026) page by page through a browser session, and cross-checked
+  against its documentation. The next section records what was seen, because an operator's
+  expectations are shaped by tools like it. Nothing in it is a requirement: each panel is
+  kept, changed, or dropped by the principles of section 4 and by what Sibuna actually does.
+  No SafeLine markup, stylesheet, or code is reproduced or referenced.
 ], fill: amber-light, stroke: amber)
 
-= The Reference Interface, as Observed
+= Inspiration: The SafeLine Console, as Observed
 
 The demonstration console has a fixed left sidebar (Statistics, Applications, Attacks,
 Allow & Deny, HTTP Flood with Rate Limiting and Waiting Room, Anti-Bot, Auth, Settings; the
@@ -260,6 +264,116 @@ in and commands out, and vendored daisyUI styling. Sibuna's console is larger th
 granular, and the transport is WebSockets rather than server-sent events because the
 interface also sends commands (subscribe, filter, acknowledge) on the same connection.
 
+= Design Principles
+
+Three principles govern every page, and section 4.5 audits each page against them. They are
+not decoration: each yields testable rules (R1 to R18) that the verification section checks.
+
+== Don't make me think
+
+Krug's rule is that a page should be self-evident: a person should know what it is, what
+they can do, and where they are without reading. Applied to a security console, whose
+operator is often looking at it under pressure, the rule becomes:
+
+- *R1 One question per page.* Every page answers one question stated in its title: "What is
+  happening?" (Statistics), "What was attacked and why?" (Attack events), "Are the puzzles
+  working?" (Challenges), "What are the rules?" (Policy), "Is the cluster healthy?" (Nodes).
+  A page never asks the operator a question of its own; defaults answer them (all nodes,
+  last 24 hours, live on).
+- *R2 The trunk test.* From any page, without scrolling, the operator can name the product,
+  the cluster and node, the page, the section within it, and the way back: the top bar and
+  breadcrumb carry all five, always in the same place.
+- *R3 Conventions over invention.* A left sidebar of pages, a filter bar above every list, a
+  detail on the right, primary actions top right, destructive actions red and confirmed.
+  Sibuna's own vocabulary (Gate, Shield, Edge, work bits) appears with a plain-language
+  gloss on first use per page, never a tooltip the operator must discover.
+- *R4 Obvious clickability.* Every clickable thing looks clickable and nothing else does:
+  links are coloured and underlined on hover, buttons are buttons, table rows that open a
+  detail show a chevron. No hidden gestures, no right-click menus, no double-click.
+- *R5 Omit needless words.* Labels are nouns, buttons are verbs, and both are short. Intro
+  banners, marketing copy, and explanations of what a firewall is do not appear; the one
+  explanatory line a panel may carry links to the book.
+- *R6 Nothing moves that does not need to.* Tiles and charts update in place at 1 Hz with
+  no animation; new event rows fade in at the top and never push a row the operator is
+  reading; layout never reflows on data.
+- *R7 Errors are Elm-style.* A failed action names what happened, why, and what to do, in
+  the diagnostic voice the daemon already uses, inline where the action was taken.
+
+== Fast judgement: System 1
+
+Kahneman's System 1 is fast, automatic, and pattern-driven; an operator glancing at the
+console should be able to tell "normal" from "not normal" in under a second and be right.
+The interface therefore invests in preattentive cues and consistency:
+
+- *R8 One colour per decision, everywhere.* Admitted is green, challenged is amber, denied is
+  red, banned is dark red, informational is the single blue accent; the same hue in tiles,
+  chart series, badges, and rows, in both themes. No other meaning is ever given to these
+  colours.
+- *R9 Deviation, not magnitude.* Each tile shows its value and a small marker of how it
+  compares with the same window yesterday (an arrow with a percentage), because a raw count
+  is meaningless at a glance and a change is not. A tile whose deviation exceeds a threshold
+  gets a tinted background, and the page keeps a quiet look otherwise.
+- *R10 Stable positions.* A panel is always in the same place at the same size; rankings keep
+  slots and animate bar length only; the map keeps its projection. Recognition works by
+  location as much as by shape.
+- *R11 Sparklines beside numbers.* Every count that has a history shows a 60-point
+  sparkline next to it, so a spike is seen before it is read.
+- *R12 Scannable typography.* Numbers use tabular figures and thousands separators, are
+  right-aligned in tables and large in tiles; addresses and identifiers are monospaced;
+  relative times ("12 s ago") in live views and absolute times in logs.
+- *R13 Semantic icons only.* One icon per module (inspection, reputation, limits, challenge,
+  ban, honeypot, node), used consistently; no decorative icons.
+
+== Careful judgement: System 2
+
+System 2 is slow, effortful, and analytic; it is what an operator engages when deciding
+whether to ban a network, change a rule, or declare an incident. The console supports it by
+making evidence explicit and decisions reversible:
+
+- *R14 Evidence for every conclusion.* A denial always shows the rule, the score and its
+  terms, the decoded payload with the matched structure highlighted, and the raw request;
+  a challenge shows its parameters and outcome; a ban shows who or what caused it and when
+  it expires. No verdict appears without its reason.
+- *R15 Depth on demand.* Pages are layered: glance (tiles), scan (tables), study (detail
+  modal), investigate (campaign members, nearest incidents, the same address across nodes).
+  Each layer is one click deeper and the way back is always the same control.
+- *R16 Compare, don't recall.* Any period can be compared with the previous one, any node
+  with another, and any rule's hits before and after an edit; the interface places the two
+  side by side so the operator never holds one in memory.
+- *R17 Simulate before you commit.* The policy tester evaluates a synthetic request against
+  the current policy; a rule edit shows a diff of what will change and which recent events
+  it would have matched, before Save.
+- *R18 Reversible by default.* Bans and allows carry a duration and an "undo" for thirty
+  seconds; rule edits are versioned and can be reverted from the audit page; deletion needs
+  a typed confirmation and is the only action with one.
+
+== Elegance
+
+Elegance is the absence of anything unnecessary, not the presence of ornament. The visual
+system is small enough to hold in one's head: one accent colour and the four decision
+colours; a neutral surface scale of five steps per theme; one typeface for text and one
+monospaced face for identifiers, in a five-step type scale (12, 14, 16, 20, 28 px); an
+8-pixel spacing unit; 4-pixel corner radius on inputs and 8 on cards; one shadow level for
+overlays only; 150 ms transitions on hover and none on data. The daisyUI theme `sibuna` is
+defined once from these tokens and the `sb-*` components use nothing else, so the console
+looks like one thing rather than a collection of widgets. Density is a preference
+(comfortable or compact) remembered per browser, because the same operator wants air on a
+laptop and rows on a wall display.
+
+== Principle audit by page
+
+#table(
+  columns: (0.75fr, 1.4fr, 1.4fr, 1.4fr),
+  table.header([*Page*], [*Don't make me think*], [*System 1*], [*System 2*]),
+  [Statistics · Traffic], [Answers "what is happening?" with defaults: all nodes, 24 h, live. No selectors demand attention until needed (R1, R2).], [Six tiles with deviation markers and sparklines; one stacked timeline; decision colours throughout (R8–R11).], [Period comparison toggle; every tile drills into its table; sampled panels say "sampled" (R15, R16).],
+  [Statistics · Security], [One row of module tiles, one trend per module, the live feed on the right; the same layout as Traffic so the eye does not relearn (R3, R10).], [Trends share a y-axis so a spike in one module reads against the others; the feed uses module icons and decision colours (R8, R13).], [Each trend opens its module's events filtered to the period; the feed row opens the detail modal (R14, R15).],
+  [Attack events], [Two views named for what they group (by source, raw); one filter bar; one detail control (R1, R4).], [Category chips coloured by decision; country flags; new rows fade in at the top (R6, R8).], [The detail modal is the System 2 workbench: rule, score terms, decoded payload, raw request, campaign, nearest incidents, and the actions with durations and undo (R14, R17, R18).],
+  [Challenges], [The funnel is the page; nothing else competes with it (R1, R5).], [Funnel stages in decision colours; the histogram shape shows a slow-device tail at a glance (R8, R11).], [Per-cause rejection tables; difficulty bump timeline against load; per-rule parameters editable with a preview of expected solve time (R14, R17).],
+  [Policy], [Rules read top to bottom in evaluation order, with the order shown as a number and drag handles; one editor (R3, R4).], [Type chips in decision colours; hits-today sparkline per rule; disabled rules greyed (R8, R11).], [Tester, diff before save, "would have matched" against recent events, versions with revert, inspection-mode matrix with a one-line consequence per mode (R16–R18).],
+  [Nodes], [One card per node; leader marked; unhealthy first (R1, R10).], [Health as colour plus word; sparklines for rate, memory, CPU (R8, R11).], [Per-node drill to its statistics; replication lag history; drain with a confirmation that states what it does (R14, R18).],
+  [Settings, GeoIP, Audit], [Tabs named by noun; forms with one primary action; nothing hidden behind icons (R3, R5).], [Two-factor state and token expiry as badges; retention as a sentence, not a table (R12).], [Audit rows show before and after; page templates preview live; GeoIP shows source, licence, and count before the update button (R14, R17).],
+)
+
 = Terminology and Scope
 
 - *Data plane*: the Sibuna daemon's request path (accept, parse, classify, verify, proxy),
@@ -286,8 +400,14 @@ licensing, and mobile-native clients.
 
 - One binary, one command: `sibuna --console 127.0.0.1:9443` starts the console beside the
   data plane; `-Dconsole=false` compiles it out entirely.
-- Parity with the SafeLine console's information architecture for statistics, events, rules,
-  IP groups, and settings, expressed in Sibuna's own concepts.
+- A complete management surface for everything Sibuna does: statistics, events, challenges,
+  policy, reputation, nodes, GeoIP, users, tokens, pages, retention, notifications, audit.
+  SafeLine's console is inspiration for what operators expect; Sibuna's console is complete
+  on its own terms and makes no distinction between editions.
+- Designed by three principles, applied and audited per page (section 4): don't make me think;
+  fast, glanceable judgement (System 1); deliberate, evidence-backed analysis (System 2).
+- Elegant: one accent colour, one type scale, one spacing unit, restrained motion, and nothing
+  on a page that does not earn its place.
 - Real-time by default: the overview and the event list update within one second of the data
   plane's counters and within one storage tick of a committed incident.
 - Cluster-aware: one console shows every member; policy and reputation edits made on any node
@@ -692,8 +812,15 @@ same module natively and assert rendered HTML strings.
   `sb-tile`, `sb-timeline`, `sb-table` (virtualised rows, sortable, with a filter bar),
   `sb-drawer` (event detail), `sb-form` (schema-driven, with validation messages in the
   daemon's Elm-style diagnostic voice), `sb-flag`, `sb-node-card`, `sb-diff`.
-- *Themes.* daisyUI's `light` and `dark` themes selected by `data-theme`, following the
-  system preference by default and remembered per browser.
+- *Visual system.* One daisyUI theme, `sibuna`, defined in `tailwind.css` from the tokens
+  of section 4.4 (accent, four decision colours, five neutral surfaces, the type scale, the
+  8-pixel unit) with a light and a dark variant selected by `data-theme`, following the
+  system preference by default and remembered per browser, together with the density
+  preference. The `sb-*` components consume only these tokens; a component that needs a new
+  colour is a design change, reviewed as one.
+- *Charts obey the rules.* `charts.zig` has one palette (the decision colours and the accent),
+  draws deviation markers and sparklines as first-class marks, keeps axes and positions
+  stable across updates, and animates nothing but bar length (R6, R8–R11).
 - *Budget.* The module is compiled at `ReleaseSmall` with a 300 KB size gate, 4 MB initial
   memory, and no allocator on the event path beyond a bump arena reset per event.
 
@@ -717,8 +844,11 @@ same module natively and assert rendered HTML strings.
 
 = Wireframes
 
-The drawings fix layout and information density, not visual style; daisyUI supplies the
-style. Every panel named here maps to one `sb-*` component and one render function.
+The drawings fix layout and information density, not visual style; the visual system of
+section 4.4 supplies the style. Every panel named here maps to one `sb-*` component and one
+render function, and every page is laid out to pass the audit of section 4.5: tiles first,
+trends second, tables third, detail on the right or in a modal, and the way back in the same
+place on every page.
 
 #figure-box([The shell: top bar with cluster status and the account menu, a fixed sidebar of the
 eight pages, and the page body. The sidebar collapses to icons below 1,024 px.],
@@ -1020,6 +1150,15 @@ the committed stylesheet.
   a live request's `X-Sibuna-Rule`, a country block appearing in the trie, and a cluster run
   in which a rule saved on node 1's console changes node 3's decision.
 - *Impact.* The `console-impact` gate on every change to `libs/serve` or `libs/console`.
+- *Principles.* The golden tests assert the mechanical rules: every page passes the trunk
+  test (product, cluster and node, page, section, way back present in the rendered shell,
+  R2); decision colours appear only through the four semantic classes (R8); tiles carry a
+  deviation marker and a sparkline (R9, R11); numbers render with tabular figures and
+  separators (R12); no verdict element renders without its reason element (R14); every
+  destructive action renders with a duration or a confirmation (R18). The judgement rules are
+  checked by two scripted tasks in the browser suite: a five-second look at Statistics must
+  let a reader name the anomalous module, and "find why request X was denied" must complete in
+  three clicks from the shell.
 - *Browser.* A minimal Chromium script (the harness family of the benchmarks) loads the
   console, logs in, and checks that tiles update, kept outside `zig build test` because it
   needs a browser.
@@ -1046,6 +1185,11 @@ the committed stylesheet.
   (Statistics with Traffic Analysis, Security Posture and Data Dashboard; Applications;
   Attacks with Events, Logs, Semantic Analysis and Enhanced Rules; Allow & Deny; HTTP Flood;
   Anti-Bot; Auth; Settings), and its documentation.
+- Krug, S. _Don't Make Me Think, Revisited: A Common Sense Approach to Web Usability_, 3rd
+  edition, New Riders, 2014.
+- Kahneman, D. _Thinking, Fast and Slow_, Farrar, Straus and Giroux, 2011.
+- Ware, C. _Information Visualization: Perception for Design_, 4th edition, Morgan Kaufmann,
+  2020 (preattentive attributes behind R8–R11).
 - Metwally, A., Agrawal, D., and El Abbadi, A. "Efficient computation of frequent and top-k
   elements in data streams." _ICDT_, 2005 (the Space-Saving algorithm).
 - M'Raihi, D., Machani, S., Pei, M., and Rydell, J. _TOTP: Time-Based One-Time Password
