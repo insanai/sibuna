@@ -54,9 +54,14 @@ pub fn build(b: *std.Build) void {
         if (console_enabled) console_modules.console else null,
     );
     addTests(b, modules, app);
-    if (console_enabled) b.top_level_steps.get("test").?.step.dependOn(
-        &b.top_level_steps.get("console-test").?.step,
-    );
+    if (console_enabled) {
+        b.top_level_steps.get("test").?.step.dependOn(
+            &b.top_level_steps.get("console-test").?.step,
+        );
+        b.top_level_steps.get("test").?.step.dependOn(
+            &b.top_level_steps.get("console-e2e").?.step,
+        );
+    }
     addBenchmarks(b, target, optimize, modules);
     addBook(b);
 
@@ -236,6 +241,12 @@ fn addServer(
     wireApp(b, root, app);
     const exe = b.addExecutable(.{ .name = "sibuna", .root_module = root });
     b.installArtifact(exe);
+    const console_e2e = b.step("console-e2e", "Exercise authentication through a real daemon");
+    if (console != null) {
+        const check = b.addSystemCommand(&.{ "python3", "tools/console_e2e.py" });
+        check.addArtifactArg(exe);
+        console_e2e.dependOn(&check.step);
+    } else console_e2e.dependOn(&b.addFail("console-e2e requires -Dconsole=true").step);
 
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());

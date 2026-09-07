@@ -52,6 +52,7 @@ pub const AuthUser = struct {
 };
 pub const Principal = struct {
     actor: u64,
+    username: Bytes(64),
     role: Role,
     revision: u64,
     expires: u64,

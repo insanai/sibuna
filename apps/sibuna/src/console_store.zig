@@ -81,7 +81,7 @@ pub fn authorize(owner: *Persistent, digest: [32]u8, now: u64) !p.StorageResult 
     var result = try db.query(
         owner.db,
         owner.gpa,
-        "SELECT u.id,u.role,u.revision,s.expires,s.csrf_digest,u.must_change " ++
+        "SELECT u.id,u.role,u.revision,s.expires,s.csrf_digest,u.must_change,u.username " ++
             "FROM console_sessions s JOIN console_users u ON u.id=s.user_id " ++
             "WHERE s.digest=? AND s.expires>? AND s.revision=u.revision " ++
             "AND u.disabled=0 LIMIT 1",
@@ -94,6 +94,7 @@ pub fn authorize(owner: *Persistent, digest: [32]u8, now: u64) !p.StorageResult 
     _ = try std.fmt.hexToBytes(&csrf, row[4] orelse return error.InvalidStoredValue);
     return .{ .authorized = .{
         .actor = try number(row[0]),
+        .username = try p.Bytes(64).init(row[6].?),
         .role = std.meta.stringToEnum(p.Role, row[1].?) orelse return error.InvalidStoredValue,
         .revision = try number(row[2]),
         .expires = try number(row[3]),

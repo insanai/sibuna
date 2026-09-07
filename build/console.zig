@@ -26,6 +26,7 @@ pub fn add(
         .target = target,
         .optimize = optimize,
     });
+    console.addImport("serve", serve);
     const step = b.step("console-test", "Test console contracts and bounded ownership");
     for ([_]*std.Build.Module{ protocol, console, serve }) |module| {
         const tests = b.addTest(.{ .root_module = module });

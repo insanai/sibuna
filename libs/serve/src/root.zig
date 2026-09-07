@@ -6,3 +6,9 @@ test {
     _ = @import("websocket.zig");
     _ = @import("admission.zig");
 }
+
+pub const Context = @import("context.zig").Context;
+pub const Kernel = @import("kernel.zig").Kernel;
+test {
+    _ = @import("kernel_test.zig");
+}

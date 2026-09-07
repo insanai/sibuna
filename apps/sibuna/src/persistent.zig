@@ -874,5 +874,8 @@ test "persistent store: policy reload, reputation, forensics, campaigns" {
 }
 
 test {
-    if (build_options.console) _ = @import("console_store_test.zig");
+    if (build_options.console) {
+        _ = @import("console_store_test.zig");
+        _ = @import("console_start.zig");
+    }
 }

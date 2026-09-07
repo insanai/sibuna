@@ -11,3 +11,10 @@ test {
 }
 
 pub const schema = @import("schema.zig");
+pub const Password = @import("password.zig").Password;
+test {
+    _ = @import("password.zig");
+}
+
+pub const App = @import("app.zig").App;
+pub const Kernel = @import("serve").Kernel;

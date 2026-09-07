@@ -9,6 +9,8 @@ const crypto = @import("crypto");
 const policy = @import("policy");
 const server = @import("server.zig");
 const storage = @import("storage.zig");
+const build_options = @import("build_options");
+const console_start = if (build_options.console) @import("console_start.zig") else struct {};
 
 pub fn main(init: std.process.Init) !u8 {
     const io = init.io;
@@ -29,7 +31,23 @@ pub fn main(init: std.process.Init) !u8 {
             arg_count += 1;
         }
     }
-    var cfg = core.Config.parseArgs(args_buf[0..arg_count]);
+    var data_args: [96][]const u8 = undefined;
+    const parsed = if (build_options.console)
+        console_start.parse(args_buf[0..arg_count], &data_args) catch |err| {
+            std.debug.print("CONSOLE002: invalid console options ({t}). " ++
+                "Hint: check --console host:port and proxy settings.\n", .{err});
+            return 1;
+        }
+    else {};
+    var cfg = core.Config.parseArgs(if (build_options.console)
+        parsed.data_args
+    else
+        args_buf[0..arg_count]);
+    if (build_options.console) parsed.config.validate(cfg.data_dir != null) catch |err| {
+        std.debug.print("CONSOLE001: console configuration rejected ({t}). " ++
+            "Hint: configure storage and a trusted HTTPS ingress for remote access.\n", .{err});
+        return 1;
+    };
     const seed = resolveSecret(io, init.environ_map, &cfg) orelse return 1;
 
     var arena = std.heap.ArenaAllocator.init(gpa);
@@ -59,8 +77,20 @@ pub fn main(init: std.process.Init) !u8 {
     }
     defer if (persistent) |p| p.stop();
 
+    const runtime = if (build_options.console and parsed.config.enabled)
+        try console_start.Runtime.start(gpa, io, parsed.config, persistent.?)
+    else
+        null;
+    defer if (build_options.console) {
+        if (runtime) |running| running.stop();
+    };
+
     printBanner(cfg, persistent != null);
 
+    return runListener(io, cfg, state);
+}
+
+fn runListener(io: std.Io, cfg: core.Config, state: *server.AppState) u8 {
     const addr = std.Io.net.IpAddress.parse(cfg.listen_host, cfg.listen_port) catch |err| {
         std.debug.print(
             "Failed to parse listen address {s}:{d}: {t}\n",
@@ -174,6 +204,12 @@ fn loadCustomPolicy(
 }
 
 fn printHelp() void {
+    if (build_options.console) std.debug.print(
+        "Console: --console <host:port> (requires --data-dir); " ++
+            "--console-origin <https-origin>; --console-behind-proxy; " ++
+            "--console-trusted-proxy <CIDR> (repeatable).\n",
+        .{},
+    );
     std.debug.print(
         \\Usage: sibuna [options]
         \\

@@ -1,0 +1,78 @@
+const std = @import("std");
+const serve = @import("serve");
+pub const Context = serve.Context;
+pub const digest = std.crypto.hash.sha2.Sha256.hash;
+
+pub fn json(context: *Context, value: anytype, extra: []const std.http.Header) Context.Error!void {
+    var buffer: [16 * 1024]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&buffer);
+    std.json.Stringify.value(value, .{}, &writer) catch return error.TooLarge;
+    try context.respond(.ok, "application/json", writer.buffered(), extra);
+}
+
+pub fn fail(context: *Context, status: std.http.Status, code: []const u8) Context.Error!void {
+    var buffer: [256]u8 = undefined;
+    const body = std.fmt.bufPrint(
+        &buffer,
+        "{{\"error\":\"{s}\",\"hint\":\"Check your input or sign in again.\"}}",
+        .{code},
+    ) catch
+        return error.TooLarge;
+    try context.respond(status, "application/json", body, &.{});
+}
+
+pub fn token(text: []const u8) error{InvalidRequest}![32]u8 {
+    if (text.len != 64) return error.InvalidRequest;
+    var bytes: [32]u8 = undefined;
+    _ = std.fmt.hexToBytes(&bytes, text) catch return error.InvalidRequest;
+    return bytes;
+}
+
+pub fn sessionToken(context: *Context) error{InvalidRequest}![32]u8 {
+    const cookie = try context.header("Cookie") orelse return error.InvalidRequest;
+    var it = std.mem.splitScalar(u8, cookie, ';');
+    var result: ?[32]u8 = null;
+    while (it.next()) |part| {
+        const pair = std.mem.trim(u8, part, " ");
+        const prefix = "__sibuna_console=";
+        if (!std.mem.startsWith(u8, pair, prefix)) continue;
+        if (result != null) return error.InvalidRequest;
+        const raw = try token(pair[prefix.len..]);
+        result = raw;
+    }
+    return result orelse error.InvalidRequest;
+}
+
+pub fn csrf(context: *Context, expected: [32]u8) error{InvalidRequest}!void {
+    const header = try context.header("X-Console-CSRF") orelse return error.InvalidRequest;
+    const raw = try token(header);
+    var hashed: [32]u8 = undefined;
+    digest(&raw, &hashed, .{});
+    if (!std.crypto.timing_safe.eql([32]u8, hashed, expected)) return error.InvalidRequest;
+}
+
+/// Body and parse allocations stay in caller-owned buffers, which the handler wipes.
+pub fn parse(
+    comptime T: type,
+    context: *Context,
+    body_buffer: []u8,
+    allocator: std.mem.Allocator,
+) Context.Error!std.json.Parsed(T) {
+    const content_type = try context.header("Content-Type") orelse return error.InvalidRequest;
+    if (!std.mem.eql(u8, content_type, "application/json")) return error.InvalidRequest;
+    const body = try context.body(body_buffer);
+    return std.json.parseFromSlice(T, allocator, body, .{}) catch error.InvalidRequest;
+}
+
+pub fn session(context: *Context) error{InvalidRequest}![32]u8 {
+    const raw = try sessionToken(context);
+    var hashed: [32]u8 = undefined;
+    digest(&raw, &hashed, .{});
+    return hashed;
+}
+
+pub fn csrfToken(raw: [32]u8) [32]u8 {
+    var output: [32]u8 = undefined;
+    std.crypto.auth.hmac.sha2.HmacSha256.create(&output, "sibuna-console-csrf-v1", &raw);
+    return output;
+}
