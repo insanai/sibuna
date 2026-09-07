@@ -78,6 +78,7 @@
     </style>
 </head>
 <body>
+    <a href="/__sibuna/honeypot" style="position:absolute;left:-9999px;top:-9999px;opacity:0;pointer-events:none;" tabindex="-1" rel="nofollow" aria-hidden="true">Direct Bypass Gateway</a>
     <div class="card">
         <div class="icon-wrap">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
@@ -96,10 +97,24 @@
     <script>
     (async function() {
         const statusEl = document.getElementById('status');
+
+        async function fetchWithRetry(url, options = {}, retries = 3, backoff = 500) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const res = await fetch(url, options);
+                    if (res.ok) return res;
+                } catch (e) {
+                    if (i === retries - 1) throw e;
+                }
+                const jitter = Math.random() * 200;
+                await new Promise(r => setTimeout(r, backoff * Math.pow(1.5, i) + jitter));
+            }
+            throw new Error('Network request failed after retries');
+        }
+
         try {
             statusEl.textContent = 'Acquiring proof-of-work challenge...';
-            const challengeResp = await fetch('/__sibuna/challenge.json');
-            if (!challengeResp.ok) throw new Error('Failed to acquire challenge');
+            const challengeResp = await fetchWithRetry('/__sibuna/challenge.json');
             const { id: challengeId, difficulty } = await challengeResp.json();
 
             statusEl.textContent = 'Computing silicon proof-of-work (WASM)...';
@@ -107,18 +122,20 @@
             worker.postMessage({ challenge: challengeId, difficulty: difficulty });
 
             worker.onmessage = async function(e) {
-                if (e.data.type === 'progress') {
+                if (e.data.type === 'fallback') {
+                    statusEl.textContent = 'Computing silicon proof-of-work (JS Fallback)...';
+                } else if (e.data.type === 'progress') {
                     statusEl.textContent = `Computing... (${e.data.iterations} iterations)`;
                 } else if (e.data.type === 'solved') {
                     statusEl.textContent = 'Verifying solution with firewall...';
-                    const verifyResp = await fetch('/__sibuna/verify', {
+                    const verifyResp = await fetchWithRetry('/__sibuna/verify', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             challenge_id: e.data.challenge,
                             nonce: e.data.nonce
                         })
-                    });
+                    }, 2, 300);
                     if (verifyResp.ok) {
                         statusEl.textContent = 'Verification successful. Redirecting...';
                         const urlParams = new URLSearchParams(window.location.search);

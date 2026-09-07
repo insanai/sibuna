@@ -245,34 +245,12 @@ fn handleInternalRoutes(
         try net.response.write200(writer, "text/html; charset=utf-8", challenge_html);
         return true;
     }
+    if (std.mem.eql(u8, req.path, "/__sibuna/honeypot")) {
+        try net.response.write403(writer, "Access Denied: Automated scraper honeypot triggered");
+        return true;
+    }
     if (std.mem.eql(u8, req.path, "/__sibuna/challenge.json")) {
-        var policy_hdrs: [net.MAX_HEADERS]policy.Header = undefined;
-        for (req.headers[0..req.header_count], 0..) |h, idx| {
-            policy_hdrs[idx] = .{ .name = h.name, .value = h.value };
-        }
-        const dec = state.policy_engine.evaluateWithHeaders(
-            req.path,
-            client_ip,
-            user_agent,
-            policy_hdrs[0..req.header_count],
-        );
-        const diff = if (dec.difficulty > 0)
-            dec.difficulty
-        else
-            state.config.default_difficulty;
-        const ch = try state.coordinator.createChallengeWithDifficulty(
-            client_ip,
-            user_agent,
-            now,
-            diff,
-        );
-        var json_buf: [256]u8 = undefined;
-        const json = try std.fmt.bufPrint(
-            &json_buf,
-            "{{\"id\":\"{s}\",\"difficulty\":{d},\"algorithm\":\"{s}\"}}",
-            .{ ch.id, ch.difficulty, ch.algorithm },
-        );
-        try net.response.write200(writer, "application/json", json);
+        try handleChallengeJson(writer, req, state, client_ip, user_agent, now);
         return true;
     }
     if (std.mem.eql(u8, req.path, "/__sibuna/verify") and req.method == .POST) {
@@ -285,6 +263,43 @@ fn handleInternalRoutes(
         return true;
     }
     return false;
+}
+
+fn handleChallengeJson(
+    writer: *std.Io.Writer,
+    req: net.Request,
+    state: *AppState,
+    client_ip: []const u8,
+    user_agent: []const u8,
+    now: u64,
+) !void {
+    var policy_hdrs: [net.MAX_HEADERS]policy.Header = undefined;
+    for (req.headers[0..req.header_count], 0..) |h, idx| {
+        policy_hdrs[idx] = .{ .name = h.name, .value = h.value };
+    }
+    const dec = state.policy_engine.evaluateWithHeaders(
+        req.path,
+        client_ip,
+        user_agent,
+        policy_hdrs[0..req.header_count],
+    );
+    const diff = if (dec.difficulty > 0)
+        dec.difficulty
+    else
+        state.config.default_difficulty;
+    const ch = try state.coordinator.createChallengeWithDifficulty(
+        client_ip,
+        user_agent,
+        now,
+        diff,
+    );
+    var json_buf: [256]u8 = undefined;
+    const json = try std.fmt.bufPrint(
+        &json_buf,
+        "{{\"id\":\"{s}\",\"difficulty\":{d},\"algorithm\":\"{s}\"}}",
+        .{ ch.id, ch.difficulty, ch.algorithm },
+    );
+    try net.response.write200(writer, "application/json", json);
 }
 
 fn handleVerifySolution(
