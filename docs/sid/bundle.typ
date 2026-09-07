@@ -48,3 +48,16 @@
 #document("pdf/sid-0003-declarative-policy-engine.pdf")[
   #include "records/0003-declarative-policy-engine.typ"
 ]
+
+#document(
+  "sid/0004-safeline-waf-parity-semantic-inspection.html",
+  title: [SID 0004: SafeLine WAF & Anubis Parity: Semantic Attack Inspection and Sliding-Window Rate Limiter],
+  author: ("Sibuna Contributors",),
+  description: [SafeLine WAF semantic attack inspection parity and lock-striped sliding-window rate limiting.],
+)[
+  #include "records/0004-safeline-waf-parity-semantic-inspection.typ"
+]
+
+#document("pdf/sid-0004-safeline-waf-parity-semantic-inspection.pdf")[
+  #include "records/0004-safeline-waf-parity-semantic-inspection.typ"
+]

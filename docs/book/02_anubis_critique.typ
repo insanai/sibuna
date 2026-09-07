@@ -160,6 +160,32 @@ In February 2026, the author of Anubis published a candid retrospective titled _
 
 As we demonstrate in the following chapters, Sibuna bypasses this entire ordeal by design: a single toolchain (`zig build`) compiles both the high-performance native server and the freestanding 6.9 KB browser WebAssembly solver without any external dependencies.
 
+== The Dual-Stack Dilemma: Chaitin SafeLine WAF vs Anubis
+
+In production deployments, protecting a web property requires defending against two fundamentally distinct threat profiles:
+1. *Application-Layer Exploits:* SQL Injection (SQLi), Cross-Site Scripting (XSS), Path Traversal (LFI), and Remote Code Execution (RCE).
+2. *Automated AI Crawlers & Scrapers:* Distributed scraping botnets and LLM spiders that harvest data while appearing as legitimate HTTP requests.
+
+Traditionally, defending against both required combining an application firewall like Chaitin's `SafeLine WAF` (雷池) with an anti-bot PoW proxy like `Anubis`:
+
+#table(
+  columns: (1.2fr, 1.2fr, 1.2fr, 1.4fr),
+  table.header([*Metric / Feature*], [*SafeLine WAF*], [*Anubis*], [*Sibuna (Unified Zig)*]),
+  [SQLi & XSS Detection], [Yes (AST Lexer)], [No], [*Yes (Zero-Alloc Tokenizer)*],
+  [Path Traversal / LFI], [Yes], [No], [*Yes (Sub-microsecond)*],
+  [RCE / Shell Injections], [Yes], [No], [*Yes (Sub-microsecond)*],
+  [Client Proof-of-Work], [No (Captcha only)], [Yes (HashX/Argon2id)], [*Yes (6.9 KB Native WASM)*],
+  [CC / HTTP Flood Rate Limit], [Yes (Redis Sliding Window)], [Basic], [*Yes (Lock-Striped In-Memory)*],
+  [Deployment Footprint], [Multi-Container Docker], [Single Go Binary], [*Single Static Binary*],
+  [External Dependencies], [Docker, Postgres, Redis, Nginx], [None], [*None (Zero external deps)*],
+  [RAM Usage (Idle/Peak)], [1,500 MB – 2,000 MB], [50 MB – 80 MB], [*< 15 MB (100x reduction)*],
+  [Latency Overhead], [2,000 – 6,000 µs (IPC hops)], [12.5 µs (Wazero)], [*0.08 µs (80 ns silicon)*],
+)
+
+Running SafeLine and Anubis in series multiplies latency, introduces inter-process connection overhead, and consumes over 1.5 GB of RAM solely for security proxies.
+
+Sibuna collapses this entire architecture into a single, unified pure-Zig daemon. By inspecting request paths, headers, and bodies for semantic attacks while concurrently weighing suspicious connections with Proof-of-Work challenges, Sibuna provides strict superiority over both SafeLine and Anubis at a fraction of the hardware cost.
+
 #exercise([2.1], [
   Calculate the total memory allocated by Anubis during a 60-second scraper flood delivering
   25,000 unauthenticated requests per second, assuming an average of 4,200 bytes allocated per
