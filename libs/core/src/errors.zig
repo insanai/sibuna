@@ -12,6 +12,10 @@ pub fn explainError(err: anyerror) []const u8 {
         error.DifficultyNotMet,
         error.DoubleSpendAttempt,
         error.FingerprintMismatch,
+        error.MalformedChallenge,
+        error.InvalidChallengeTag,
+        error.InvalidProof,
+        error.WrongSolutionType,
         => explainChallengeError(err),
 
         error.InvalidTokenSignature,
@@ -47,9 +51,9 @@ fn explainChallengeError(err: anyerror) []const u8 {
         error.ChallengeExpired =>
         \\-- CHALLENGE EXPIRED -----------------------------------------------------------
         \\
-        \\The issued proof-of-work challenge has passed its 30-minute validity window.
+        \\The issued proof-of-work challenge has passed its validity window.
         \\
-        \\Hint: Request a new challenge from /challenge/make and re-run the solver worker.
+        \\Hint: Request a new challenge from /__sibuna/challenge.json and re-run the solver.
         ,
         error.ChallengeNotFound =>
         \\-- CHALLENGE NOT FOUND ---------------------------------------------------------
@@ -85,6 +89,34 @@ fn explainChallengeError(err: anyerror) []const u8 {
         \\The client IP address or User-Agent does not match the issued challenge binding.
         \\
         \\Hint: Ensure the same browser or HTTP client submits the solver response.
+        ,
+        error.MalformedChallenge =>
+        \\-- MALFORMED CHALLENGE ---------------------------------------------------------
+        \\
+        \\The challenge identifier is not a well-formed Sibuna challenge record.
+        \\
+        \\Hint: Fetch a fresh challenge from /__sibuna/challenge.json and submit it unchanged.
+        ,
+        error.InvalidChallengeTag =>
+        \\-- INVALID CHALLENGE TAG -------------------------------------------------------
+        \\
+        \\The challenge identifier failed authentication; it was not issued by this cluster.
+        \\
+        \\Hint: Challenges cannot be forged or edited; request a new one from the daemon.
+        ,
+        error.InvalidProof =>
+        \\-- INVALID PROOF OF SEQUENTIAL WORK --------------------------------------------
+        \\
+        \\The submitted proof does not open the committed labels for the derived challenges.
+        \\
+        \\Hint: Run the prover to completion for the exact depth and opening count issued.
+        ,
+        error.WrongSolutionType =>
+        \\-- WRONG SOLUTION TYPE ---------------------------------------------------------
+        \\
+        \\A nonce was submitted for a PoSW challenge, or a proof for a hashcash challenge.
+        \\
+        \\Hint: Submit "nonce" for hashcash challenges and "proof" for posw challenges.
         ,
         else => unreachable,
     };

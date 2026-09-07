@@ -1,144 +1,153 @@
 //! Sibuna Daemon Entry Point
 //!
-//! Ultra-High-Performance Web AI Firewall & Anti-Crawler Daemon in Pure Zig 0.16.
+//! Parses configuration, resolves the master secret, loads policy, wires the
+//! optional persistent storage layer, and starts the accept loops.
 
 const std = @import("std");
 const core = @import("core");
 const crypto = @import("crypto");
-const net = @import("net");
 const policy = @import("policy");
-const challenge = @import("challenge");
-const store = @import("store");
-
-const wasm_bytes = @embedFile("wasm_solver");
-const challenge_html = @embedFile("challenge_html");
-const worker_js = @embedFile("worker_js");
-
-const AppState = struct {
-    config: core.Config,
-    policy_engine: policy.Engine,
-    challenge_store: store.ChallengeStore,
-    rate_limiter: store.RateLimiter,
-    coordinator: challenge.Coordinator,
-};
+const server = @import("server.zig");
+const storage = @import("storage.zig");
 
 pub fn main(init: std.process.Init) !u8 {
     const io = init.io;
-    _ = init.gpa;
+    const gpa = init.gpa;
 
-    var args_buf: [64][]const u8 = undefined;
+    var args_buf: [96][]const u8 = undefined;
     var arg_count: usize = 0;
-
     var arg_it = std.process.Args.Iterator.init(init.minimal.args);
     defer arg_it.deinit();
-    _ = arg_it.next(); // skip binary name
-
+    _ = arg_it.next();
     while (arg_it.next()) |arg| {
         if (std.mem.eql(u8, arg, "--help")) {
             printHelp();
             return 0;
         }
-        if (arg_count < 64) {
+        if (arg_count < args_buf.len) {
             args_buf[arg_count] = arg;
             arg_count += 1;
         }
     }
+    var cfg = core.Config.parseArgs(args_buf[0..arg_count]);
+    const seed = resolveSecret(io, init.environ_map, &cfg) orelse return 1;
 
-    const cfg = core.Config.parseArgs(args_buf[0..arg_count]);
-
-    var arena = std.heap.ArenaAllocator.init(init.gpa);
+    var arena = std.heap.ArenaAllocator.init(gpa);
     defer arena.deinit();
 
-    var state = AppState{
-        .config = cfg,
-        .policy_engine = undefined,
-        .challenge_store = store.ChallengeStore{},
-        .rate_limiter = store.RateLimiter.init(),
-        .coordinator = undefined,
-    };
-    state.policy_engine.initInPlace(cfg.default_difficulty);
+    const engine = try gpa.create(policy.Engine);
+    engine.initInPlace(cfg.default_difficulty);
+    engine.waf_enabled = cfg.waf;
+    if (cfg.policy_file) |pfile| loadCustomPolicy(io, arena.allocator(), pfile, engine);
 
-    if (cfg.policy_file) |pfile| {
-        loadCustomPolicy(io, arena.allocator(), pfile, &state.policy_engine);
+    const state = try gpa.create(server.AppState);
+    state.init(cfg, engine, &seed);
+
+    var persistent: ?*storage.Persistent = null;
+    if (cfg.data_dir != null) {
+        persistent = storage.Persistent.start(gpa, io, cfg, state, engine) catch |err| {
+            std.debug.print("Failed to start persistent storage: {t}\n", .{err});
+            return 1;
+        };
     }
+    defer if (persistent) |p| p.stop();
 
-    state.coordinator = challenge.Coordinator.init(
-        &state.challenge_store,
-        cfg.secret_seed,
-        cfg.default_difficulty,
-        @intCast(cfg.challenge_ttl_seconds),
-        cfg.token_ttl_seconds,
-    );
-
-    printBanner(cfg);
+    printBanner(cfg, persistent != null);
 
     const addr = std.Io.net.IpAddress.parse(cfg.listen_host, cfg.listen_port) catch |err| {
-        std.debug.print("Failed to parse listen address {s}:{d}: {any}\n", .{
-            cfg.listen_host,
-            cfg.listen_port,
-            err,
-        });
+        std.debug.print("Failed to parse listen address {s}:{d}: {t}\n", .{ cfg.listen_host, cfg.listen_port, err });
         return 1;
     };
-
-    var server = addr.listen(io, .{ .reuse_address = true }) catch |err| {
-        std.debug.print("Failed to bind socket on port {d}: {any}\n", .{ cfg.listen_port, err });
+    var listener = addr.listen(io, .{ .reuse_address = true }) catch |err| {
+        std.debug.print("Failed to bind socket on port {d}: {t}\n", .{ cfg.listen_port, err });
         return 1;
     };
-    defer server.deinit(io);
+    defer listener.deinit(io);
 
-    while (true) {
-        const client_stream = server.accept(io) catch continue;
-        handleConnection(client_stream, io, &state) catch {};
-    }
+    server.runServer(&listener, io, state);
+    return 0;
 }
 
-fn printBanner(cfg: core.Config) void {
-    const mode_name = switch (cfg.mode) {
-        .reverse_proxy => "reverse_proxy",
-        .forward_auth => "forward_auth",
-    };
+/// Secret precedence: `--secret-file`, then `SIBUNA_SECRET`, then a random
+/// per-process seed (tokens then die with the process, which is fine for a
+/// single node but wrong for a cluster, so the banner warns).
+fn resolveSecret(io: std.Io, environ: *std.process.Environ.Map, cfg: *core.Config) ?[32]u8 {
+    if (cfg.secret_file) |path| {
+        const file = std.Io.Dir.openFile(.cwd(), io, path, .{}) catch |err| {
+            std.debug.print("Cannot open secret file {s}: {t}\n", .{ path, err });
+            return null;
+        };
+        defer file.close(io);
+        var buf: [256]u8 = undefined;
+        var reader = file.reader(io, &buf);
+        const content = reader.interface.peekGreedy(1) catch "";
+        const seed = crypto.parseSeed(content) orelse {
+            std.debug.print("Secret file {s} must hold 64 hex characters or 32 raw bytes\n", .{path});
+            return null;
+        };
+        cfg.secret_seed = seed;
+        return seed;
+    }
+    if (environ.get("SIBUNA_SECRET")) |text| {
+        const seed = crypto.parseSeed(text) orelse {
+            std.debug.print("SIBUNA_SECRET must hold 64 hex characters\n", .{});
+            return null;
+        };
+        cfg.secret_seed = seed;
+        cfg.secret_file = "env";
+        return seed;
+    }
+    var seed: [32]u8 = undefined;
+    io.random(&seed);
+    cfg.secret_seed = seed;
+    return seed;
+}
+
+fn printBanner(cfg: core.Config, persistent: bool) void {
     std.debug.print(
         \\--------------------------------------------------------------------------------
-        \\  SIBUNA Web AI Firewall & Anti-Crawler Daemon v0.1.0
+        \\  SIBUNA Web AI Firewall & Anti-Crawler Daemon v{s}
         \\  "Weighing incoming connections with silicon speed"
         \\--------------------------------------------------------------------------------
-        \\Mode:       {s}
-        \\Listening:  {s}:{d}
-        \\Upstream:   {s}:{d}
-        \\Difficulty: {d} leading hex zero chars
-        \\Memory:     Zero-allocation hot path, <15 MB resident set size
+        \\Mode:        {s}
+        \\Listening:   {s}:{d}
+        \\Upstream:    {s}:{d}
+        \\Proof:       {s} at {d} work bits ({s} tokens)
+        \\Surface:     {s}
+        \\Storage:     {s}
+        \\Secret:      {s}
         \\--------------------------------------------------------------------------------
         \\
     , .{
-        mode_name,
+        server.version,
+        cfg.mode.name(),
         cfg.listen_host,
         cfg.listen_port,
         cfg.upstream_host,
         cfg.upstream_port,
+        cfg.algorithm.name(),
         cfg.default_difficulty,
+        @tagName(cfg.token_scheme),
+        if (cfg.waf) "shield (bot challenge + semantic WAF + rate limits)" else "gate (bot challenge only)",
+        if (persistent) "zaxonlite (dynamic policies, reputation, forensics)" else "in-memory only",
+        if (cfg.secret_file != null) "loaded from file" else "random per process (set --secret-file for restarts and clusters)",
     });
 }
 
-fn loadCustomPolicy(
-    io: std.Io,
-    allocator: std.mem.Allocator,
-    path: []const u8,
-    engine: *policy.Engine,
-) void {
+fn loadCustomPolicy(io: std.Io, allocator: std.mem.Allocator, path: []const u8, engine: *policy.Engine) void {
     const file = std.Io.Dir.openFile(.cwd(), io, path, .{}) catch |err| {
-        std.debug.print("Warning: unable to open policy file {s}: {any}\n", .{ path, err });
+        std.debug.print("Warning: unable to open policy file {s}: {t}\n", .{ path, err });
         return;
     };
     defer file.close(io);
-    var buf: [64 * 1024]u8 = undefined;
+    var buf: [256 * 1024]u8 = undefined;
     var reader = file.reader(io, &buf);
     const content = reader.interface.peekGreedy(1) catch |err| {
-        std.debug.print("Warning: failed to read policy file {s}: {any}\n", .{ path, err });
+        std.debug.print("Warning: failed to read policy file {s}: {t}\n", .{ path, err });
         return;
     };
     engine.loadFromJsonInto(allocator, content) catch |err| {
-        std.debug.print("Warning: failed to parse policy file {s}: {any}\n", .{ path, err });
+        std.debug.print("Warning: failed to parse policy file {s}: {t}\n", .{ path, err });
     };
 }
 
@@ -146,316 +155,43 @@ fn printHelp() void {
     std.debug.print(
         \\Usage: sibuna [options]
         \\
-        \\Options:
-        \\  --port, -p <port>           Listening port (default: 8080)
-        \\  --host, -h <host>           Listening host (default: 0.0.0.0)
-        \\  --upstream-host <host>      Upstream target host (default: 127.0.0.1)
-        \\  --upstream-port, -u <port>  Upstream target port (default: 3000)
-        \\  --mode, -m <mode>           Mode: reverse_proxy | forward_auth (default: reverse_proxy)
-        \\  --difficulty, -d <diff>     PoW difficulty leading hex zeros (default: 4)
-        \\  --policy-file, -P <path>    Declarative JSON policy file path
-        \\  --verbose, -v               Enable verbose diagnostic logging
-        \\  --help                      Show this help message
+        \\Network:
+        \\  --port, -p <port>            Listening port (default: 8080)
+        \\  --host, -h <host>            Listening host (default: 0.0.0.0)
+        \\  --upstream-host <host>       Upstream origin host (default: 127.0.0.1)
+        \\  --upstream-port, -u <port>   Upstream origin port (default: 3000)
+        \\  --mode, -m <mode>            reverse_proxy | forward_auth (default: reverse_proxy)
+        \\  --workers, -w <n>            Accept threads (default: one per CPU)
+        \\  --trust-forwarded            Honour X-Forwarded-For / X-Real-IP from the peer
+        \\
+        \\Proof of work and sessions:
+        \\  --algorithm, -a <alg>        posw | hashcash (default: posw)
+        \\  --difficulty, -d <bits>      Work bits (default: 16)
+        \\  --posw-challenges <t>        PoSW openings per proof (default: 16)
+        \\  --token-scheme <s>           mac | ed25519 (default: mac)
+        \\  --token-ttl <s>              Session lifetime in seconds (default: 86400)
+        \\  --challenge-ttl <s>          Challenge lifetime in seconds (default: 300)
+        \\  --secret-file, -s <path>     Master seed (64 hex chars); random if omitted
+        \\  --cookie-name <name>         Session cookie name (default: __sibuna_token)
+        \\  --secure-cookie              Emit the Secure cookie attribute
+        \\
+        \\Surface:
+        \\  --gate | --no-waf            Bot challenge only (Anubis-style)
+        \\  --shield | --waf             Bot challenge + semantic WAF (default)
+        \\  --rate-limit <n>             Requests per window per client (default: 100)
+        \\  --rate-window <s>            Rate window seconds (default: 10)
+        \\  --ban-seconds <s>            Honeypot ban duration (default: 3600)
+        \\  --policy-file, -P <path>     Declarative JSON policy file
+        \\
+        \\Storage and cluster (Zaxonlite):
+        \\  --data-dir, -D <path>        Enable persistent policies, reputation, forensics
+        \\  --cluster-node <id>          This node's id (enables replication)
+        \\  --cluster-listen <host:port> This node's cluster endpoint
+        \\  --cluster-peer <id@host:port> Peer member (repeatable)
+        \\  --cluster-secret-file <path> Shared cluster PSK for loopback development
+        \\
+        \\  --verbose, -v                Verbose logging
+        \\  --help                       Show this help message
         \\
     , .{});
-}
-
-fn handleConnection(client_stream: std.Io.net.Stream, io: std.Io, state: *AppState) !void {
-    defer client_stream.close(io);
-
-    var conn_buf: [16 * 1024]u8 = undefined;
-    var reader = client_stream.reader(io, &conn_buf);
-    var raw_req = reader.interface.peekGreedy(1) catch return;
-    if (raw_req.len == 0) return;
-
-    var req = net.parseRequest(raw_req) catch {
-        var writer_buf: [1024]u8 = undefined;
-        var writer = client_stream.writer(io, &writer_buf);
-        try net.response.write400(&writer.interface, "Malformed HTTP request");
-        return;
-    };
-
-    if (req.getHeader("content-length")) |clen_str| {
-        const clen = std.fmt.parseInt(usize, clen_str, 10) catch 0;
-        const header_end = std.mem.indexOf(u8, raw_req, "\r\n\r\n") orelse 0;
-        const total_needed = (header_end + 4) + clen;
-        while (raw_req.len < total_needed and raw_req.len < conn_buf.len) {
-            reader.interface.fill(total_needed - raw_req.len) catch break;
-            raw_req = reader.interface.buffered();
-        }
-        if (header_end + 4 <= raw_req.len) {
-            req.body = raw_req[header_end + 4 .. @min(raw_req.len, total_needed)];
-        }
-    }
-
-    var writer_buf: [16 * 1024]u8 = undefined;
-    var writer = client_stream.writer(io, &writer_buf);
-
-    const client_ip = req.getHeader("x-forwarded-for") orelse
-        req.getHeader("x-real-ip") orelse "127.0.0.1";
-    const user_agent = req.getHeader("user-agent") orelse "";
-    const ts = std.Io.Clock.real.now(io);
-    const now = @as(u64, @intCast(@max(0, ts.toSeconds())));
-
-    if (try handleInternalRoutes(
-        client_stream,
-        io,
-        &writer.interface,
-        req,
-        state,
-        client_ip,
-        user_agent,
-        now,
-    )) {
-        return;
-    }
-
-    try handleFirewallTraffic(
-        client_stream,
-        io,
-        &writer.interface,
-        req,
-        state,
-        client_ip,
-        user_agent,
-        raw_req,
-        now,
-    );
-}
-
-fn handleInternalRoutes(
-    client_stream: std.Io.net.Stream,
-    io: std.Io,
-    writer: *std.Io.Writer,
-    req: net.Request,
-    state: *AppState,
-    client_ip: []const u8,
-    user_agent: []const u8,
-    now: u64,
-) !bool {
-    _ = client_stream;
-    _ = io;
-    if (std.mem.eql(u8, req.path, "/__sibuna/wasm/sibuna-pow.wasm")) {
-        try net.response.write200(writer, "application/wasm", wasm_bytes);
-        return true;
-    }
-    if (std.mem.eql(u8, req.path, "/__sibuna/worker.js")) {
-        try net.response.write200(writer, "application/javascript", worker_js);
-        return true;
-    }
-    if (std.mem.eql(u8, req.path, "/__sibuna/challenge")) {
-        try net.response.write200(writer, "text/html; charset=utf-8", challenge_html);
-        return true;
-    }
-    if (std.mem.eql(u8, req.path, "/__sibuna/honeypot")) {
-        try net.response.write403(writer, "Access Denied: Automated scraper honeypot triggered");
-        return true;
-    }
-    if (std.mem.eql(u8, req.path, "/__sibuna/challenge.json")) {
-        try handleChallengeJson(writer, req, state, client_ip, user_agent, now);
-        return true;
-    }
-    if (std.mem.eql(u8, req.path, "/__sibuna/verify") and req.method == .POST) {
-        try handleVerifySolution(writer, req.body, state, client_ip, user_agent, now);
-        return true;
-    }
-    if (std.mem.eql(u8, req.path, "/__sibuna/health")) {
-        const health_json = "{\"status\":\"ok\",\"engine\":\"sibuna\"}";
-        try net.response.write200(writer, "application/json", health_json);
-        return true;
-    }
-    return false;
-}
-
-fn handleChallengeJson(
-    writer: *std.Io.Writer,
-    req: net.Request,
-    state: *AppState,
-    client_ip: []const u8,
-    user_agent: []const u8,
-    now: u64,
-) !void {
-    var policy_hdrs: [net.MAX_HEADERS]policy.Header = undefined;
-    for (req.headers[0..req.header_count], 0..) |h, idx| {
-        policy_hdrs[idx] = .{ .name = h.name, .value = h.value };
-    }
-    const dec = state.policy_engine.evaluateWithHeaders(
-        req.path,
-        client_ip,
-        user_agent,
-        policy_hdrs[0..req.header_count],
-    );
-    const diff = if (dec.difficulty > 0)
-        dec.difficulty
-    else
-        state.config.default_difficulty;
-    const ch = try state.coordinator.createChallengeWithDifficulty(
-        client_ip,
-        user_agent,
-        now,
-        diff,
-    );
-    var json_buf: [256]u8 = undefined;
-    const json = try std.fmt.bufPrint(
-        &json_buf,
-        "{{\"id\":\"{s}\",\"difficulty\":{d},\"algorithm\":\"{s}\"}}",
-        .{ ch.id, ch.difficulty, ch.algorithm },
-    );
-    try net.response.write200(writer, "application/json", json);
-}
-
-fn handleVerifySolution(
-    writer: *std.Io.Writer,
-    body: []const u8,
-    state: *AppState,
-    client_ip: []const u8,
-    user_agent: []const u8,
-    now: u64,
-) !void {
-    const cid = extractJsonString(body, "challenge_id") orelse {
-        try net.response.write400(writer, "Missing challenge_id field");
-        return;
-    };
-    const nonce_str = extractJsonString(body, "nonce") orelse {
-        try net.response.write400(writer, "Missing nonce field");
-        return;
-    };
-    const nonce = std.fmt.parseInt(u64, nonce_str, 10) catch {
-        try net.response.write400(writer, "Invalid numeric nonce");
-        return;
-    };
-
-    const res = state.coordinator.verifyAndMint(
-        cid,
-        nonce,
-        client_ip,
-        user_agent,
-        now,
-    ) catch |err| {
-        try net.response.write400(writer, core.explainError(err));
-        return;
-    };
-
-    try net.response.write302(
-        writer,
-        "/",
-        state.config.cookie_name,
-        &res.token,
-        res.ttl_seconds,
-    );
-}
-
-fn forwardTraffic(
-    client_stream: std.Io.net.Stream,
-    io: std.Io,
-    writer: *std.Io.Writer,
-    state: *AppState,
-    raw_req: []const u8,
-) !void {
-    if (state.config.mode == .forward_auth) {
-        try net.response.write200(writer, "text/plain", "OK");
-    } else {
-        try net.streamProxy(
-            client_stream,
-            io,
-            state.config.upstream_host,
-            state.config.upstream_port,
-            raw_req,
-        );
-    }
-}
-
-fn handleFirewallTraffic(
-    client_stream: std.Io.net.Stream,
-    io: std.Io,
-    writer: *std.Io.Writer,
-    req: net.Request,
-    state: *AppState,
-    client_ip: []const u8,
-    user_agent: []const u8,
-    raw_req: []const u8,
-    now: u64,
-) !void {
-    // 0. Rate limiting: SafeLine CC flood protection (100 req per 10s per IP)
-    if (state.rate_limiter.isRateLimited(client_ip, now, 100, 10)) {
-        try net.response.write403(
-            writer,
-            "Rate Limit Exceeded: Connection throttled by Sibuna CC Protection.",
-        );
-        return;
-    }
-
-    // 1. Check existing session cookie
-    if (req.getCookie(state.config.cookie_name)) |cookie_val| {
-        if (state.coordinator.verifyCookie(cookie_val, client_ip, user_agent, now)) |_| {
-            try forwardTraffic(client_stream, io, writer, state, raw_req);
-            return;
-        } else |_| {}
-    }
-
-    // 2. Evaluate bot, IP, WAF, and header reputation policies
-    var policy_hdrs: [net.MAX_HEADERS]policy.Header = undefined;
-    for (req.headers[0..req.header_count], 0..) |h, idx| {
-        policy_hdrs[idx] = .{ .name = h.name, .value = h.value };
-    }
-    const decision = state.policy_engine.evaluateWithHeadersAndBody(
-        req.path,
-        client_ip,
-        user_agent,
-        policy_hdrs[0..req.header_count],
-        req.body,
-    );
-    switch (decision.action) {
-        .allow => {
-            try forwardTraffic(client_stream, io, writer, state, raw_req);
-        },
-        .deny => {
-            try net.response.write403(
-                writer,
-                "Forbidden: Connection blocked by Sibuna AI Firewall policy.",
-            );
-        },
-        .challenge, .weigh => {
-            if (state.config.mode == .forward_auth) {
-                try net.response.write401(
-                    writer,
-                    "Unauthorized: Proof-of-Work Challenge Required",
-                );
-            } else {
-                try net.response.write200(writer, "text/html; charset=utf-8", challenge_html);
-            }
-        },
-    }
-}
-
-fn extractJsonString(json: []const u8, key: []const u8) ?[]const u8 {
-    var search_buf: [64]u8 = undefined;
-    const search_key = std.fmt.bufPrint(&search_buf, "\"{s}\"", .{key}) catch return null;
-    const k_idx = std.mem.indexOf(u8, json, search_key) orelse return null;
-    var rest = json[k_idx + search_key.len ..];
-    const colon_idx = std.mem.indexOfScalar(u8, rest, ':') orelse return null;
-    rest = rest[colon_idx + 1 ..];
-    while (rest.len > 0 and (rest[0] == ' ' or rest[0] == '\t' or rest[0] == '"')) {
-        rest = rest[1..];
-    }
-    var end_idx: usize = 0;
-    while (end_idx < rest.len and
-        rest[end_idx] != '"' and
-        rest[end_idx] != ',' and
-        rest[end_idx] != '}' and
-        rest[end_idx] != ' ' and
-        rest[end_idx] != '\r' and
-        rest[end_idx] != '\n') : (end_idx += 1)
-    {}
-    return rest[0..end_idx];
-}
-
-test "extractJsonString handles various JSON formats" {
-    const j1 = "{\"challenge_id\":\"cid123\",\"nonce\":\"456\"}";
-    try std.testing.expectEqualStrings("cid123", extractJsonString(j1, "challenge_id").?);
-    try std.testing.expectEqualStrings("456", extractJsonString(j1, "nonce").?);
-
-    const j2 = "{\n  \"challenge_id\": \"cid456\" ,\n  \"nonce\": 789\n}";
-    try std.testing.expectEqualStrings("cid456", extractJsonString(j2, "challenge_id").?);
-    try std.testing.expectEqualStrings("789", extractJsonString(j2, "nonce").?);
 }

@@ -20,6 +20,17 @@ pub const Header = rule.Header;
 pub const PolicyRule = rule.PolicyRule;
 pub const MAX_RULES: usize = 128;
 
+/// Everything the engine looks at for one request; all slices borrow the
+/// connection buffer.
+pub const RequestView = struct {
+    path: []const u8,
+    query: []const u8 = "",
+    client_ip: []const u8,
+    user_agent: []const u8 = "",
+    headers: []const Header = &.{},
+    body: []const u8 = "",
+};
+
 pub const Decision = struct {
     action: Action,
     rule_name: []const u8,
@@ -44,7 +55,10 @@ pub const WeighThresholds = struct {
 pub const Engine = struct {
     rules: [MAX_RULES]PolicyRule = undefined,
     rule_count: usize = 0,
-    default_action: Action = .allow,
+    /// Unmatched clients are challenged: a scraper that presents no known
+    /// signature must still pay for admission, and humans clear the
+    /// interstitial in well under a second.
+    default_action: Action = .challenge,
     default_difficulty: u32 = 16,
     thresholds: WeighThresholds = .{},
     waf_enabled: bool = true,
@@ -60,7 +74,7 @@ pub const Engine = struct {
     /// automaton tables, so callers keep it in static or heap storage.
     pub fn initInPlace(self: *Engine, default_diff: u32) void {
         self.rule_count = 0;
-        self.default_action = .allow;
+        self.default_action = .challenge;
         self.default_difficulty = default_diff;
         self.thresholds = .{};
         self.waf_enabled = true;
@@ -104,6 +118,7 @@ pub const Engine = struct {
         cf_worker.header_count = 1;
         self.addRule(cf_worker) catch unreachable;
         self.addRule(.{ .name = "amazonbot", .ua_pattern = "Amazonbot", .action = .deny }) catch unreachable;
+        self.addRule(.{ .name = "generic-browser", .ua_pattern = "Mozilla", .action = .challenge }) catch unreachable;
     }
 
     pub fn isBypassPath(path: []const u8) bool {
@@ -168,16 +183,44 @@ pub const Engine = struct {
         headers: []const Header,
         body: []const u8,
     ) Decision {
+        return self.evaluateRequest(.{
+            .path = path,
+            .client_ip = client_ip,
+            .user_agent = user_agent,
+            .headers = headers,
+            .body = body,
+        });
+    }
+
+    fn ipDecision(self: *const Engine, action: Action, score: i32) Decision {
+        return .{
+            .action = action,
+            .rule_name = "ip/cidr-trie",
+            .difficulty = if (action == .challenge) self.default_difficulty else 0,
+            .score = score,
+        };
+    }
+
+    /// Evaluation order: semantic WAF; reputation trie verdicts that admit
+    /// or ban outright; declarative rules (WEIGH accumulates, anything
+    /// else terminates); accumulated score; static bypass paths; a trie
+    /// challenge verdict; bot signatures; the default action.
+    pub fn evaluateRequest(self: *const Engine, req: RequestView) Decision {
         if (self.waf_enabled) {
-            if (waf.inspectRequest(&self.waf_signatures, path, user_agent, headers, body)) |violation| {
+            const hit = waf.inspectRequest(&self.waf_signatures, req.path, req.query, req.user_agent, req.headers, req.body);
+            if (hit) |violation| {
                 return .{ .action = .deny, .rule_name = violation.rule_name, .difficulty = 0 };
             }
+        }
+        const ip_verdict = self.ip_trie.matchIpStr(req.client_ip);
+        if (ip_verdict) |v| {
+            if (v == .deny or v == .allow) return self.ipDecision(v, 0);
         }
 
         var score: i32 = 0;
         var weigh_rule: []const u8 = "weigh";
         for (self.rules[0..self.rule_count]) |*r| {
-            if (!r.matches(path, client_ip, user_agent, headers)) continue;
+            if (!r.matches(req.path, req.client_ip, req.user_agent, req.headers)) continue;
             if (r.action == .weigh) {
                 score += r.weight;
                 weigh_rule = r.name;
@@ -188,19 +231,11 @@ pub const Engine = struct {
         if (score != 0) {
             if (self.weighDecision(score, weigh_rule)) |d| return d;
         }
-
-        if (isBypassPath(path)) {
+        if (isBypassPath(req.path)) {
             return .{ .action = .allow, .rule_name = "bypass/static", .difficulty = 0, .score = score };
         }
-        if (self.ip_trie.matchIpStr(client_ip)) |ip_action| {
-            return .{
-                .action = ip_action,
-                .rule_name = "ip/cidr-trie",
-                .difficulty = if (ip_action == .challenge) self.default_difficulty else 0,
-                .score = score,
-            };
-        }
-        if (self.bot_matcher.findFirst(user_agent)) |matched_bot| {
+        if (ip_verdict) |v| return self.ipDecision(v, score);
+        if (self.bot_matcher.findFirst(req.user_agent)) |matched_bot| {
             return .{
                 .action = .challenge,
                 .rule_name = matched_bot,
@@ -208,7 +243,12 @@ pub const Engine = struct {
                 .score = score,
             };
         }
-        return .{ .action = self.default_action, .rule_name = "default/allow", .difficulty = 0, .score = score };
+        return .{
+            .action = self.default_action,
+            .rule_name = if (self.default_action == .allow) "default/allow" else "default/challenge",
+            .difficulty = if (self.default_action == .challenge) self.default_difficulty else 0,
+            .score = score,
+        };
     }
 
     pub fn loadFromJsonInto(self: *Engine, allocator: std.mem.Allocator, json_text: []const u8) !void {
@@ -247,9 +287,18 @@ test "engine evaluates declarative rules, bypass, ip, and bot user agents" {
     try std.testing.expectEqualStrings("python-requests", d2.rule_name);
     try std.testing.expectEqual(@as(u32, 16), d2.difficulty);
 
+    // Browsers and unknown clients both pay the default challenge; only
+    // explicit rules, bypass paths, or reputation entries admit for free.
     const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
     const d3 = engine.evaluate("/index.html", "192.168.1.1", ua);
-    try std.testing.expectEqual(Action.allow, d3.action);
+    try std.testing.expectEqual(Action.challenge, d3.action);
+    try std.testing.expectEqualStrings("generic-browser", d3.rule_name);
+    const d4 = engine.evaluate("/index.html", "192.168.1.1", "");
+    try std.testing.expectEqual(Action.challenge, d4.action);
+    try std.testing.expectEqualStrings("default/challenge", d4.rule_name);
+    try engine.ip_trie.insertCidr("192.168.0.0/16", .allow);
+    const d5 = engine.evaluate("/index.html", "192.168.1.1", "");
+    try std.testing.expectEqual(Action.allow, d5.action);
 
     try engine.ip_trie.insertCidr("2001:db8::/32", .deny);
     const d6 = engine.evaluate("/index.html", "2001:db8::7", ua);
@@ -305,7 +354,12 @@ test "engine blocks SafeLine WAF attack vectors and can disable the WAF" {
     const engine = try testEngine();
     defer std.testing.allocator.destroy(engine);
 
-    const d_sqli = engine.evaluate("/api/users?id=1 union select null", "1.2.3.4", "curl");
+    const d_sqli = engine.evaluateRequest(.{
+        .path = "/api/users",
+        .query = "id=1%20union%20select%20null",
+        .client_ip = "1.2.3.4",
+        .user_agent = "curl",
+    });
     try std.testing.expectEqual(Action.deny, d_sqli.action);
     try std.testing.expectEqualStrings("waf:sqli", d_sqli.rule_name);
 
@@ -324,5 +378,5 @@ test "engine blocks SafeLine WAF attack vectors and can disable the WAF" {
 
     engine.waf_enabled = false;
     const gate_only = engine.evaluate("/static/../../etc/passwd", "1.2.3.4", "Mozilla");
-    try std.testing.expectEqual(Action.allow, gate_only.action);
+    try std.testing.expectEqual(Action.challenge, gate_only.action);
 }

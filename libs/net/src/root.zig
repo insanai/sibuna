@@ -1,7 +1,7 @@
 //! Sibuna Net Library
 //!
-//! Provides zero-copy HTTP/1.1 and HTTP/2 request/response parsing,
-//! streaming reverse proxying, and subrequest forward-auth handlers.
+//! Zero-copy HTTP/1.1 request parsing, response builders, and the
+//! streaming reverse proxy with audit-header injection.
 
 const std = @import("std");
 const core = @import("core");
@@ -17,15 +17,8 @@ pub const MAX_HEADERS = http.MAX_HEADERS;
 pub const parseRequest = http.parseRequest;
 pub const streamProxy = proxy.streamProxy;
 
-pub const HttpStatus = enum(u16) {
-    ok = 200,
-    bad_request = 400,
-    unauthorized = 401,
-    forbidden = 403,
-    not_found = 404,
-    internal_error = 500,
-    bad_gateway = 502,
-};
+pub const Status = response.Status;
+pub const ProxyAudit = proxy.Audit;
 
 test {
     _ = @import("http.zig");

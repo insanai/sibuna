@@ -4,10 +4,10 @@
 //! silicon, enforces single use through the spent set, and mints session
 //! tokens.
 //!
-//! A challenge identifier is a self-authenticating record: a 26-byte payload
+//! A challenge identifier is a self-authenticating record: a 36-byte payload
 //! (version, algorithm, difficulty, opening count, issue time, client
-//! fingerprint, unique nonce) followed by a 16-byte keyed BLAKE3 tag,
-//! encoded as 56 URL-safe base64 characters. Issuing one writes nothing;
+//! fingerprint, unique nonce, policy rule hash) followed by a 16-byte keyed
+//! BLAKE3 tag, encoded as 70 URL-safe base64 characters. Issuing one writes nothing;
 //! the daemon only remembers challenges that were *solved*, so table
 //! occupancy is bounded by work the client actually performed.
 
@@ -62,7 +62,7 @@ pub const ChallengeSpec = struct {
     }
 };
 
-pub const payload_len = 26;
+pub const payload_len = 36;
 pub const tag_len = 16;
 pub const id_raw_len = payload_len + tag_len;
 pub const id_len = b64.Encoder.calcSize(id_raw_len);
@@ -111,6 +111,7 @@ const Decoded = struct {
     challenges: u8,
     issued_at: u64,
     fingerprint: u64,
+    rule_hash: u64,
     tag: store.ChallengeTag,
 };
 
@@ -182,7 +183,7 @@ pub const Coordinator = struct {
         user_agent: []const u8,
         now: u64,
     ) ChallengePayload {
-        return self.createChallengeWithSpec(client_ip, user_agent, now, self.default_spec);
+        return self.createChallengeWithSpec(client_ip, user_agent, now, self.default_spec, 0);
     }
 
     pub fn createChallengeWithSpec(
@@ -191,6 +192,7 @@ pub const Coordinator = struct {
         user_agent: []const u8,
         now: u64,
         spec: ChallengeSpec,
+        rule_hash: u64,
     ) ChallengePayload {
         self.adaptive.observe(now * 1000);
         var effective = spec;
@@ -210,7 +212,8 @@ pub const Coordinator = struct {
         std.mem.writeInt(u64, raw[4..12], now, .little);
         std.mem.writeInt(u64, raw[12..20], fp, .little);
         std.mem.writeInt(u64, raw[20..28], self.nextNonce(now, fp), .little);
-        std.mem.copyForwards(u8, raw[payload_len..id_raw_len], &self.tagFor(raw[0..payload_len]));
+        std.mem.writeInt(u64, raw[28..36], rule_hash, .little);
+        raw[payload_len..id_raw_len].* = self.tagFor(raw[0..payload_len]);
 
         var id: [id_len]u8 = undefined;
         _ = b64.Encoder.encode(&id, &raw);
@@ -243,6 +246,7 @@ pub const Coordinator = struct {
             .challenges = raw[3],
             .issued_at = std.mem.readInt(u64, raw[4..12], .little),
             .fingerprint = std.mem.readInt(u64, raw[12..20], .little),
+            .rule_hash = std.mem.readInt(u64, raw[28..36], .little),
             .tag = given,
         };
     }
@@ -281,7 +285,6 @@ pub const Coordinator = struct {
         client_ip: []const u8,
         user_agent: []const u8,
         now: u64,
-        rule_hash: u64,
     ) VerifyError!VerifiedResult {
         const decoded = try self.decode(challenge_id);
         const expires_at = decoded.issued_at + self.challenge_ttl;
@@ -294,7 +297,7 @@ pub const Coordinator = struct {
             error.DoubleSpendAttempt => return error.DoubleSpendAttempt,
             else => return error.StoreFull,
         };
-        return self.mintToken(now, rule_hash, decoded.fingerprint);
+        return self.mintToken(now, decoded.rule_hash, decoded.fingerprint);
     }
 
     fn mintToken(self: *const Coordinator, now: u64, rule_hash: u64, fp: u64) VerifiedResult {
@@ -358,38 +361,39 @@ test "hashcash challenge: issue, solve, verify, mint, replay, binding" {
     const ip = "127.0.0.1";
     const ua = "SibunaTestAgent/1.0";
 
-    const ch = ctx.coord.createChallenge(ip, ua, now);
+    const spec = ctx.coord.default_spec;
+    const ch = ctx.coord.createChallengeWithSpec(ip, ua, now, spec, 7);
     try std.testing.expectEqual(Algorithm.hashcash, ch.algorithm);
     try std.testing.expectEqual(@as(u32, 10), ch.difficulty);
     const nonce = crypto.pow.solveHashcashBits(&ch.id, ch.difficulty, 10_000_000).?;
 
-    const wrong = ctx.coord.verifyAndMint(&ch.id, .{ .nonce = nonce + 1 }, ip, ua, now + 5, 7);
+    const wrong = ctx.coord.verifyAndMint(&ch.id, .{ .nonce = nonce + 1 }, ip, ua, now + 5);
     try std.testing.expect(wrong == error.DifficultyNotMet or wrong != error.DifficultyNotMet);
     try std.testing.expectError(
         error.FingerprintMismatch,
-        ctx.coord.verifyAndMint(&ch.id, .{ .nonce = nonce }, "10.0.0.9", ua, now + 5, 7),
+        ctx.coord.verifyAndMint(&ch.id, .{ .nonce = nonce }, "10.0.0.9", ua, now + 5),
     );
     try std.testing.expectError(
         error.WrongSolutionType,
-        ctx.coord.verifyAndMint(&ch.id, .{ .proof = "" }, ip, ua, now + 5, 7),
+        ctx.coord.verifyAndMint(&ch.id, .{ .proof = "" }, ip, ua, now + 5),
     );
-    const result = try ctx.coord.verifyAndMint(&ch.id, .{ .nonce = nonce }, ip, ua, now + 5, 7);
+    const result = try ctx.coord.verifyAndMint(&ch.id, .{ .nonce = nonce }, ip, ua, now + 5);
     try std.testing.expectEqual(crypto.MacToken.encoded_size, result.token_len);
     const token = try ctx.coord.verifyCookie(result.slice(), ip, ua, now + 10);
     try std.testing.expectEqual(@as(u64, 7), token.rule_hash);
     try std.testing.expectError(error.TokenBoundAddressMismatch, ctx.coord.verifyCookie(result.slice(), "1.2.3.4", ua, now + 10));
     try std.testing.expectError(
         error.DoubleSpendAttempt,
-        ctx.coord.verifyAndMint(&ch.id, .{ .nonce = nonce }, ip, ua, now + 15, 7),
+        ctx.coord.verifyAndMint(&ch.id, .{ .nonce = nonce }, ip, ua, now + 15),
     );
     try std.testing.expectError(
         error.ChallengeExpired,
-        ctx.coord.verifyAndMint(&ch.id, .{ .nonce = nonce }, ip, ua, now + 601, 7),
+        ctx.coord.verifyAndMint(&ch.id, .{ .nonce = nonce }, ip, ua, now + 601),
     );
 
     var forged = ch.id;
     forged[5] = if (forged[5] == 'A') 'B' else 'A';
-    const forged_result = ctx.coord.verifyAndMint(&forged, .{ .nonce = nonce }, ip, ua, now + 5, 7);
+    const forged_result = ctx.coord.verifyAndMint(&forged, .{ .nonce = nonce }, ip, ua, now + 5);
     try std.testing.expect(forged_result == error.InvalidChallengeTag or forged_result == error.MalformedChallenge);
 }
 
@@ -403,7 +407,7 @@ test "posw challenge round trip and ed25519 token scheme" {
     const ip = "203.0.113.5";
     const ua = "Mozilla/5.0";
 
-    const ch = ctx.coord.createChallenge(ip, ua, now);
+    const ch = ctx.coord.createChallengeWithSpec(ip, ua, now, ctx.coord.default_spec, 1);
     try std.testing.expectEqual(Algorithm.posw, ch.algorithm);
     try std.testing.expectEqual(@as(u32, 8), ch.difficulty);
     try std.testing.expectEqual(@as(u8, 6), ch.challenges);
@@ -415,18 +419,18 @@ test "posw challenge round trip and ed25519 token scheme" {
 
     try std.testing.expectError(
         error.WrongSolutionType,
-        ctx.coord.verifyAndMint(&ch.id, .{ .nonce = 1 }, ip, ua, now, 1),
+        ctx.coord.verifyAndMint(&ch.id, .{ .nonce = 1 }, ip, ua, now),
     );
     try std.testing.expectError(
         error.InvalidProof,
-        ctx.coord.verifyAndMint(&ch.id, .{ .proof = proof[0 .. proof.len - 1] }, ip, ua, now, 1),
+        ctx.coord.verifyAndMint(&ch.id, .{ .proof = proof[0 .. proof.len - 1] }, ip, ua, now),
     );
-    const result = try ctx.coord.verifyAndMint(&ch.id, .{ .proof = proof }, ip, ua, now + 1, 1);
+    const result = try ctx.coord.verifyAndMint(&ch.id, .{ .proof = proof }, ip, ua, now + 1);
     try std.testing.expectEqual(crypto.Token.encoded_size, result.token_len);
     const token = try ctx.coord.verifyCookie(result.slice(), ip, ua, now + 2);
     try std.testing.expectEqual(@as(u64, 1), token.rule_hash);
     try std.testing.expectError(
         error.DoubleSpendAttempt,
-        ctx.coord.verifyAndMint(&ch.id, .{ .proof = proof }, ip, ua, now + 3, 1),
+        ctx.coord.verifyAndMint(&ch.id, .{ .proof = proof }, ip, ua, now + 3),
     );
 }

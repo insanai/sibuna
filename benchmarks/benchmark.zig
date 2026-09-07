@@ -355,12 +355,11 @@ fn benchChallengeStore(io: std.Io, runs: *BenchmarkRuns) !void {
         var i: usize = 0;
         var dummy: usize = 0;
         while (i < iters) : (i += 1) {
-            var cid_buf: [32]u8 = undefined;
-            const cid = std.fmt.bufPrint(&cid_buf, "cid_{d}", .{i}) catch unreachable;
-            try c_store.put(cid, 4, 1725700000, 120, 0);
-            if (c_store.getAndMarkSpent(cid, 1725700010, null)) |_| {
-                dummy += 1;
-            } else |_| {}
+            var tag: store.ChallengeTag = undefined;
+            std.mem.writeInt(u64, tag[0..8], std.hash.Wyhash.hash(1, std.mem.asBytes(&i)), .little);
+            std.mem.writeInt(u64, tag[8..16], std.hash.Wyhash.hash(2, std.mem.asBytes(&i)), .little);
+            c_store.markSpent(&tag, 1725700120, 1725700000) catch {};
+            if (c_store.isSpent(&tag, 1725700010)) dummy += 1;
         }
         std.mem.doNotOptimizeAway(dummy);
         const t1 = std.Io.Clock.Timestamp.now(io, .awake);

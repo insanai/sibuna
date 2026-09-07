@@ -14,11 +14,16 @@ pub const Modules = struct {
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    const storage = b.option(
+        bool,
+        "storage",
+        "Link Zaxonlite for persistent policies, reputation, and forensics (default: true)",
+    ) orelse true;
 
     const modules = addModules(b, target, optimize);
     const wasm_pow = addWasmSolver(b);
-    addServer(b, target, optimize, modules, wasm_pow);
-    addTests(b, modules);
+    const app = addServer(b, target, optimize, modules, wasm_pow, storage);
+    addTests(b, modules, app);
     addBenchmarks(b, target, optimize, modules);
     addBook(b);
 
@@ -142,51 +147,89 @@ fn addWasmSolver(b: *std.Build) *std.Build.Step.Compile {
     return wasm_pow;
 }
 
+const AppModules = struct {
+    imports: [6]std.Build.Module.Import,
+    wasm_bin: std.Build.LazyPath,
+    options: *std.Build.Step.Options,
+    zaxonlite: ?*std.Build.Module,
+};
+
 fn addServer(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
     modules: Modules,
     wasm_pow: *std.Build.Step.Compile,
-) void {
-    const exe = b.addExecutable(.{
-        .name = "sibuna",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("apps/sibuna/src/main.zig"),
+    storage: bool,
+) AppModules {
+    const options = b.addOptions();
+    options.addOption(bool, "storage", storage);
+    const zaxonlite: ?*std.Build.Module = if (storage)
+        b.dependency("zaxonlite", .{
             .target = target,
             .optimize = optimize,
-        }),
-    });
-    exe.root_module.addAnonymousImport("wasm_solver", .{
-        .root_source_file = wasm_pow.getEmittedBin(),
-    });
-    exe.root_module.addAnonymousImport("challenge_html", .{
-        .root_source_file = b.path("apps/web/src/challenge.html"),
-    });
-    exe.root_module.addAnonymousImport("worker_js", .{
-        .root_source_file = b.path("apps/web/src/worker.js"),
-    });
+            .tls = false,
+        }).module("zaxonlite")
+    else
+        null;
 
-    exe.root_module.addImport("core", modules.core);
-    exe.root_module.addImport("crypto", modules.crypto);
-    exe.root_module.addImport("net", modules.net);
-    exe.root_module.addImport("policy", modules.policy);
-    exe.root_module.addImport("challenge", modules.challenge);
-    exe.root_module.addImport("store", modules.store);
+    const app = AppModules{
+        .imports = .{
+            .{ .name = "core", .module = modules.core },
+            .{ .name = "crypto", .module = modules.crypto },
+            .{ .name = "net", .module = modules.net },
+            .{ .name = "policy", .module = modules.policy },
+            .{ .name = "challenge", .module = modules.challenge },
+            .{ .name = "store", .module = modules.store },
+        },
+        .wasm_bin = wasm_pow.getEmittedBin(),
+        .options = options,
+        .zaxonlite = zaxonlite,
+    };
 
+    const root = b.createModule(.{
+        .root_source_file = b.path("apps/sibuna/src/main.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    wireApp(b, root, app);
+    const exe = b.addExecutable(.{ .name = "sibuna", .root_module = root });
     b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
-    }
+    if (b.args) |args| run_cmd.addArgs(args);
     const run_step = b.step("run", "Run the Sibuna daemon");
     run_step.dependOn(&run_cmd.step);
+    return app;
 }
 
-fn addTests(b: *std.Build, modules: Modules) void {
-    const test_step = b.step("test", "Run all unit tests");
+/// Attaches the library modules, embedded browser assets, build options,
+/// and (when enabled) Zaxonlite to a daemon root module. The end-to-end
+/// test module receives exactly the same graph as the executable.
+fn wireApp(b: *std.Build, root: *std.Build.Module, app: AppModules) void {
+    for (app.imports) |imp| root.addImport(imp.name, imp.module);
+    root.addAnonymousImport("wasm_solver", .{ .root_source_file = app.wasm_bin });
+    root.addAnonymousImport("challenge_html", .{ .root_source_file = b.path("apps/web/src/challenge.html") });
+    root.addAnonymousImport("worker_js", .{ .root_source_file = b.path("apps/web/src/worker.js") });
+    root.addOptions("build_options", app.options);
+    if (app.zaxonlite) |z| root.addImport("zaxonlite", z);
+}
+
+fn addTests(b: *std.Build, modules: Modules, app: AppModules) void {
+    const test_step = b.step("test", "Run all unit and end-to-end tests");
+    const e2e_root = b.createModule(.{
+        .root_source_file = b.path("apps/sibuna/src/e2e_test.zig"),
+        .target = b.graph.host,
+    });
+    wireApp(b, e2e_root, app);
+    const e2e_tests = b.addTest(.{ .root_module = e2e_root });
+    const server_root = b.createModule(.{
+        .root_source_file = b.path("apps/sibuna/src/server.zig"),
+        .target = b.graph.host,
+    });
+    wireApp(b, server_root, app);
+    const server_tests = b.addTest(.{ .root_module = server_root });
     const core_tests = b.addTest(.{ .root_module = modules.core });
     const crypto_tests = b.addTest(.{ .root_module = modules.crypto });
     const net_tests = b.addTest(.{ .root_module = modules.net });
@@ -211,6 +254,8 @@ fn addTests(b: *std.Build, modules: Modules) void {
     test_step.dependOn(&b.addRunArtifact(challenge_tests).step);
     test_step.dependOn(&b.addRunArtifact(store_tests).step);
     test_step.dependOn(&b.addRunArtifact(solver_tests).step);
+    test_step.dependOn(&b.addRunArtifact(server_tests).step);
+    test_step.dependOn(&b.addRunArtifact(e2e_tests).step);
 }
 
 fn addBenchmarks(
