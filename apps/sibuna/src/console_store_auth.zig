@@ -30,7 +30,9 @@ pub fn user(owner: *Persistent, username: []const u8) !p.StorageResult {
     var result = try db.query(
         owner.db,
         owner.gpa,
-        "SELECT id,username,password_hash,role,revision,must_change FROM console_users " ++
+        "SELECT id,username,password_hash,role,revision,must_change," ++
+            "EXISTS(SELECT 1 FROM console_totp WHERE user_id=console_users.id AND enabled=1) " ++
+            "FROM console_users " ++
             "WHERE username=? AND disabled=0 LIMIT 1",
         &.{text(username)},
     );
@@ -44,35 +46,8 @@ pub fn user(owner: *Persistent, username: []const u8) !p.StorageResult {
         .role = std.meta.stringToEnum(p.Role, row[3].?) orelse return error.InvalidStoredValue,
         .revision = try number(row[4]),
         .must_change = try number(row[5]) != 0,
+        .totp_enabled = try number(row[6]) != 0,
     } };
-}
-
-pub fn session(owner: *Persistent, input: anytype) !p.StorageResult {
-    if (input.expires <= input.now or input.expires - input.now > 43200)
-        return .{ .failed = .invalid_input };
-    const digest = std.fmt.bytesToHex(input.digest, .lower);
-    const csrf = std.fmt.bytesToHex(input.csrf_digest, .lower);
-    // The password was verified off-thread; recheck the user revision inside the insert.
-    // Authorization never treats a stale password check as a current user grant.
-    const changes = try db.exec(
-        owner.db,
-        owner.gpa,
-        "INSERT INTO console_sessions(digest,user_id,revision,csrf_digest,created_at,expires," ++
-            "idle_expires) SELECT ?,id,revision,?,?,?,? FROM console_users " ++
-            "WHERE id=? AND revision=? " ++
-            "AND disabled=0 AND (SELECT COUNT(*) FROM console_sessions WHERE expires>?)<4096",
-        &.{
-            text(&digest),
-            text(&csrf),
-            integer(input.now),
-            integer(input.expires),
-            integer(@min(input.expires, input.now + 1800)),
-            integer(input.user),
-            integer(input.revision),
-            integer(input.now),
-        },
-    );
-    return if (changes == 0) .{ .failed = .conflict } else .command_recorded;
 }
 
 pub fn logout(owner: *Persistent, digest: [32]u8) !p.StorageResult {

@@ -298,3 +298,87 @@ test "session idle activity never revives expiry or extends the absolute lifetim
         .touch = true,
     } })).failed);
 }
+
+fn enrollTotp(fx: *Fixture) ![10][32]u8 {
+    const auth: p.auth.Authorization = .{
+        .session_digest = @splat(1),
+        .csrf_digest = @splat(2),
+        .now = 110,
+    };
+    const begin: p.StorageRequest = .{ .totp_begin = .{
+        .auth = auth,
+        .expected_revision = 0,
+        .envelope = @splat(3),
+        .key_id = @splat(4),
+    } };
+    try t.expect((try fx.run(begin)) == .command_recorded);
+    try t.expectEqual(p.Failure.conflict, (try fx.run(begin)).failed);
+    const pending = (try fx.run(.{ .totp_read = 1 })).totp;
+    try t.expect(!pending.enabled);
+    var digests: [10][32]u8 = undefined;
+    for (&digests, 0..) |*digest, index| digest.* = @splat(@intCast(index + 10));
+    const confirm: p.StorageRequest = .{ .totp_confirm = .{
+        .auth = auth,
+        .expected_revision = pending.revision,
+        .step = 3,
+        .recovery_digests = digests,
+    } };
+    try t.expect((try fx.run(confirm)) == .command_recorded);
+    try t.expectEqual(p.Failure.conflict, (try fx.run(confirm)).failed);
+    try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .authorize = .{
+        .session_digest = @splat(1),
+        .now = 110,
+    } })).failed);
+    const user = (try fx.run(.{ .auth_user = try p.Bytes(64).init("geo-admin") })).auth_user;
+    try t.expect(user.totp_enabled and user.revision == 2);
+    return digests;
+}
+
+fn factorSession(factor: p.auth.Factor, digest_byte: u8, now: u64) p.StorageRequest {
+    return .{ .session_create = .{
+        .user = 1,
+        .revision = 2,
+        .factor = factor,
+        .digest = @splat(digest_byte),
+        .csrf_digest = @splat(8),
+        .now = now,
+        .expires = now + 1800,
+    } };
+}
+
+test "TOTP enrollment revokes sessions and each step or recovery value commits once" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try geoFixture(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/console-totp",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    const digests = try enrollTotp(fx);
+    try t.expectEqual(p.Failure.conflict, (try fx.run(factorSession(.none, 5, 130))).failed);
+    const totp: p.auth.Factor = .{ .totp = .{ .revision = 1, .step = 4 } };
+    try t.expect((try fx.run(factorSession(totp, 5, 130))) == .command_recorded);
+    try t.expectEqual(p.Failure.conflict, (try fx.run(factorSession(totp, 6, 130))).failed);
+    const next: p.auth.Factor = .{ .totp = .{ .revision = 1, .step = 5 } };
+    // A duplicate session digest aborts the insert and must not consume its fresh step.
+    try t.expectEqual(p.Failure.unavailable, (try fx.run(factorSession(next, 5, 150))).failed);
+    try t.expectEqual(4, (try fx.run(.{ .totp_read = 1 })).totp.last_step.?);
+    try t.expect((try fx.run(factorSession(next, 6, 150))) == .command_recorded);
+    const recovery: p.auth.Factor = .{ .recovery = .{
+        .revision = 1,
+        .slot = 0,
+        .digest = digests[0],
+    } };
+    try t.expect((try fx.run(factorSession(recovery, 7, 150))) == .command_recorded);
+    try t.expectEqual(p.Failure.conflict, (try fx.run(factorSession(recovery, 8, 150))).failed);
+    try t.expectEqual(1, (try fx.run(.{ .totp_read = 1 })).totp.recovery_used);
+    const stale: p.auth.Factor = .{ .recovery = .{
+        .revision = 2,
+        .slot = 1,
+        .digest = digests[1],
+    } };
+    try t.expectEqual(p.Failure.conflict, (try fx.run(factorSession(stale, 9, 150))).failed);
+    try t.expectEqual(1, (try fx.run(.{ .totp_read = 1 })).totp.recovery_used);
+}

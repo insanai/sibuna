@@ -25,6 +25,9 @@ pub fn tick(owner: *Persistent) void {
 pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
     if (!owner.console_initialized) try @import("console_migrations.zig").run(owner);
     return switch (request) {
+        .totp_read => |user| @import("console_store_totp.zig").read(owner, user),
+        .totp_begin => |input| @import("console_store_totp.zig").begin(owner, input),
+        .totp_confirm => |input| @import("console_store_totp.zig").confirm(owner, input),
         .geo_prune => |now| @import("console_store_geo.zig").prune(owner, now),
         .geo_metadata => @import("console_store_geo.zig").metadata(owner),
         .geo_begin => |input| @import("console_store_geo.zig").begin(owner, input),
@@ -48,7 +51,7 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
             input.now,
         ),
         .auth_user => |username| auth.user(owner, username.slice()),
-        .session_create => |input| auth.session(owner, input),
+        .session_create => |input| @import("console_store_session.zig").create(owner, input),
         .authorize => |input| blk: {
             if (input.touch) try auth.touch(owner, input.session_digest, input.now);
             break :blk try authorize(owner, input.session_digest, input.now);

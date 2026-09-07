@@ -1,6 +1,7 @@
 //! Shared native/Wasm contracts. No networking, database or daemon dependencies.
 const std = @import("std");
 
+pub const auth = @import("auth.zig");
 pub const geo = @import("geo.zig");
 pub const version: u16 = 1;
 pub const max_message = 4096;
@@ -50,6 +51,7 @@ pub const AuthUser = struct {
     role: Role,
     revision: u64,
     must_change: bool,
+    totp_enabled: bool = false,
 };
 pub const Principal = struct {
     actor: u64,
@@ -62,6 +64,9 @@ pub const Principal = struct {
 };
 pub const StorageRequest = union(enum) {
     setup_status,
+    totp_read: u64,
+    totp_begin: auth.Enrollment,
+    totp_confirm: auth.Confirmation,
     geo_metadata,
     geo_prune: u64,
     geo_begin: geo.Begin,
@@ -71,6 +76,7 @@ pub const StorageRequest = union(enum) {
     bootstrap: struct { username: Bytes(64), password_hash: Bytes(255), now: u64 },
     auth_user: Bytes(64),
     session_create: struct {
+        factor: auth.Factor = .none,
         user: u64,
         revision: u64,
         digest: [32]u8,
@@ -101,6 +107,7 @@ pub const StorageResult = union(enum) {
     geo_metadata: geo.Metadata,
     geo_bytes: Bytes(3400),
     auth_user: AuthUser,
+    totp: auth.Totp,
     authorized: Principal,
     page: Bytes(max_message),
     revision: Revision,
