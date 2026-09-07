@@ -23,7 +23,7 @@
   "sid/0002-sibuna-foundation-architecture.html",
   title: [SID 0002: Sibuna: Foundation Architecture, Delivery Plan, and Performance Contract],
   author: ("Sibuna Contributors",),
-  description: [Foundation architecture, Anubis comparative analysis, zero-allocation pipeline, and delivery plan.],
+  description: [Foundation architecture, product surfaces, zero-allocation pipeline, and delivery plan.],
 )[
   #include "records/0002-sibuna-foundation-architecture.typ"
 ]
@@ -38,7 +38,7 @@
 
 #document(
   "sid/0003-declarative-policy-engine.html",
-  title: [SID 0003: Title Goes Here],
+  title: [SID 0003: Declarative Rule Policy Engine],
   author: ("Sibuna Contributors",),
   description: [Draft discussion note],
 )[
@@ -50,21 +50,21 @@
 ]
 
 #document(
-  "sid/0004-safeline-waf-parity-semantic-inspection.html",
-  title: [SID 0004: SafeLine WAF & Anubis Parity: Semantic Attack Inspection and Sliding-Window Rate Limiter],
+  "sid/0004-semantic-inspection.html",
+  title: [SID 0004: Semantic Inspection and Local Flood Controls],
   author: ("Sibuna Contributors",),
-  description: [SafeLine WAF semantic attack inspection parity and lock-striped sliding-window rate limiting.],
+  description: [Semantic attack inspection and GCRA rate limiting.],
 )[
-  #include "records/0004-safeline-waf-parity-semantic-inspection.typ"
+  #include "records/0004-semantic-inspection.typ"
 ]
 
-#document("pdf/sid-0004-safeline-waf-parity-semantic-inspection.pdf")[
-  #include "records/0004-safeline-waf-parity-semantic-inspection.typ"
+#document("pdf/sid-0004-semantic-inspection.pdf")[
+  #include "records/0004-semantic-inspection.typ"
 ]
 
 #document(
   "sid/0005-zaxonlite-storage-architecture.html",
-  title: [SID 0005: Distributed Storage Architecture: Zaxonlite Integration for Multi-Node Consensus and Cloudflare-Grade Edge Protection],
+  title: [SID 0005: Distributed Storage Architecture],
   author: ("Sibuna Contributors",),
   description: [Zaxonlite integration for multi-node consensus, dynamic policies, and distributed IP reputation.],
 )[

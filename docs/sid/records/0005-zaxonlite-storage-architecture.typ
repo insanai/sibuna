@@ -65,7 +65,7 @@
 #callout([Revision note (2026-09-07)], [
   Revised after the implementation review of 2026-09-07, at which point the storage layer
   existed only as a design. All three phases are now implemented in `apps/sibuna/src/persistent.zig`
-  against the official `insanai/zaxonlite` v0.6.0 release. This record describes the code as
+  against the official `insanai/zaxonlite` v0.6.1 release. This record describes the code as
   built and lists what remains unexercised.
 ], fill: amber-light, stroke: amber)
 
@@ -89,7 +89,7 @@ request path.
    proceeds; the SQLite file is a materialised cache rebuildable from the durable anchor plus
    the journal suffix.
 3. *Embedded.* Zaxonlite compiles into the Sibuna binary from `build.zig.zon`
-   (`https://github.com/insanai/zaxonlite/archive/refs/tags/v0.6.0.tar.gz`, hash pinned). The
+   (`https://github.com/insanai/zaxonlite/archive/refs/tags/v0.6.1.tar.gz`, hash pinned). The
    single-node `Node` needs no transport; the cluster `Embedded` facade adds a TCP listener,
    peers, and either mTLS or the loopback development PSK.
 
@@ -146,10 +146,9 @@ Workers never touch the database. `AppState` holds an atomic pointer to an `Engi
 load the pointer, increment the slot's reader count, and re-load the pointer; if it changed,
 decrement and retry. The re-check closes the window in which a writer could have swapped and
 observed zero readers between the load and the increment. The storage thread rebuilds the
-_spare_ slot (file policy replayed from its retained text, then database policies, then
+_spare_ slot (database policies followed by file/default rules, then
 reputation prefixes into the trie), publishes it with an atomic swap, and spins until the old
-slot's reader count reaches zero before it becomes the new spare. Two engine buffers of about
-1.5 MB each therefore serve an unbounded sequence of policy changes.
+slot's reader count reaches zero before it becomes the new spare. Two engine buffers, sized in the benchmark metadata, therefore serve an unbounded sequence of policy changes.
 
 == Incident ring
 
@@ -160,11 +159,22 @@ is the single consumer.
 
 == Storage thread tick
 
-Every `--storage-poll-ms`: drain up to 128 records into `INSERT` transactions (incident,
-FTS row, vector row, and for honeypot hits an `ip_reputation` upsert to score −100 with
-`banned_until = now + ban_seconds`); then compute a change stamp over both dynamic tables and,
-if it moved, rebuild and publish the engine. A ban recorded by any member is a `deny` prefix on
-every member after its next tick.
+Every `--storage-poll-ms`, persist at most 32 records in one transaction, including
+incident, FTS, vector, and honeypot reputation writes. The nearest-campaign query executes
+inside that transaction and sees earlier records in the same batch. A per-issuer cursor in
+`sibuna_meta` guards every effect; the cursor advances atomically with the data. The exact
+pending SQL is retained after an uncertain reply, making retries idempotent without one
+network read per incident. Queue admission itself is not durable.
+
+The thread then reads the trigger-maintained policy revision and rebuilds when it changes or
+a loaded reputation entry expires, even if incident persistence failed. Each slot owns its own
+arena until its readers drain. A committed ban propagates when a healthy member next reloads;
+quorum recovery and backlog can increase latency beyond the polling interval.
+
+Production counters expose persisted incidents, committed batches, dropped queue entries and
+failed write attempts. The queue holds 512 records plus one pending batch of at most 32.
+Incident issuer IDs are limited to 23 bits so `issuer << 40 | sequence` stays within SQLite's
+positive signed integer range; sequence exhaustion fails explicitly rather than wrapping.
 
 = Campaign clustering
 
@@ -182,19 +192,11 @@ downloaded and nothing allocates on a request thread.
 the incident rows, ordered by rank. There is no HTTP administration endpoint yet; operators
 query the data directory with `zaxon sql --data <dir>` or read `current.db` directly.
 
-= Comparison
+= Product boundary
 
-#table(
-  columns: (1.3fr, 1.2fr, 1.2fr, 1.3fr),
-  table.header([*Dimension*], [*SafeLine WAF*], [*Cloudflare edge*], [*Sibuna Edge (measured)*]),
-  [Storage], [PostgreSQL + Redis], [Quicksilver + D1], [Zaxonlite (SQLite + Multi-Paxos), embedded],
-  [Processes], [Multi-container], [Proprietary SaaS], [One binary, one storage thread],
-  [Consensus], [None (external primaries)], [Internal], [`paxos-zig` Multi-Paxos],
-  [Resident memory], [Gigabytes (documented)], [n/a], [12–14.5 MB with the store open],
-  [Request-path database access], [IPC to detectors], [Edge worker], [None; RCU snapshot],
-  [Full-text search], [PostgreSQL], [Logpush], [Embedded FTS5],
-  [Similarity search], [No], [No], [Embedded sqlite-vec, cosine],
-)
+Gate provides admission, policy and local flood controls. Shield adds payload inspection.
+Distributed edge deployment adds replicated policy and reputation to either surface.
+No vendor feature-parity claim is made; coverage and limitations are defined by the code and tests.
 
 = Delivery record
 
@@ -205,8 +207,8 @@ query the data directory with `zaxon sql --data <dir>` or read `current.db` dire
 #phase("Phase 2: Consensus replication")[
   `Embedded` facade behind `-Dcluster=true`, member list from `--cluster-*` flags, loopback
   PSK or mTLS transport, node-scoped incident ids, cluster-wide bans through `ip_reputation`.
-  The cluster build compiles and links; a multi-member cluster is *not exercised by automated
-  tests* in this repository (single-node storage is).
+  The external `benchmarks/distributed.py` harness exercises three real members, shared
+  sessions, issuer-bound challenge verification, replicated bans, and one-member loss.
 ]
 #phase("Phase 3: Payload clustering")[
   Feature-hashed trigram embeddings stored in `incidents_vec`, cosine nearest-neighbour campaign
@@ -230,3 +232,27 @@ denials and a honeypot ban in `current.db` with 12 MB resident memory.
 - Automated multi-node tests (leader failover, ban propagation latency).
 - An authenticated HTTP administration API for policies and incident search.
 - Retention and archival policy for `security_incidents`.
+
+= Review corrections (2026-09-07)
+
+Startup retries idempotent initialization while a cluster leader settles; incident writes are
+not blindly retried because an ambiguous transport failure may already have committed them.
+INSERT/UPDATE/DELETE triggers maintain a revision for both dynamic tables, including multiple
+updates with the same timestamp. A failed rebuild does not acknowledge the revision. Expiry
+of a loaded reputation entry independently triggers a rebuild, so time-based bans disappear
+without another write. Dynamic rules precede generic file/default rules; capacity exhaustion
+fails the reload rather than silently dropping security rules. Each engine slot has its own
+arena, and all publication/pinning operations use sequential consistency.
+
+`--cluster-node` binds challenge authentication to an issuer; token keys remain shared.
+Route challenge fetching and verification to that member. Rate limits and spent sets remain
+local, and spent state is not durable across restarts. Replication is off the request path,
+but snapshot pinning, incident copying/enqueue, local limits and production metrics are not free.
+The external load harness adds no server-side timing instrumentation. See
+`benchmarks/results/distributed-latest.json` for local results and their limits. A healthy HTTP
+endpoint alone does not prove quorum health. WAN partitions and sustained
+forensic-write saturation are separate test targets.
+
+Response rule names are copied into a bounded buffer before the snapshot is released, so a
+slow origin does not hold the reader counter. Persistent rule strings remain owned by the
+corresponding slot arena until readers drain.

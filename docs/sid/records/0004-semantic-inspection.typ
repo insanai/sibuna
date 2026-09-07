@@ -2,7 +2,7 @@
 #let sid-title = "Semantic Attack Inspection and GCRA Rate Limiting: The Shield Surface"
 #let sid-state = "published"
 #let sid-created = "2026-09-07"
-#let sid-discussion = "Design and measured implementation of Sibuna's Shield surface: a single-pass tagged signature automaton, single-pass structural tokenizers for SQL injection, cross-site scripting, path traversal, and command injection, the byte-class pre-scan and canonicalisation gate, the GCRA rate limiter, the ban table, and incident recording, with a comparison against SafeLine WAF and Anubis."
+#let sid-discussion = "Design and measured implementation of Sibuna's Shield surface: a single-pass tagged signature automaton, single-pass structural tokenizers for SQL injection, cross-site scripting, path traversal, and command injection, the byte-class pre-scan and canonicalisation gate, the GCRA rate limiter, the ban table, and incident recording."
 #let sid-labels = ("waf", "security", "rate-limiting", "zero-alloc",)
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
@@ -73,7 +73,7 @@ want proof-of-work admission.
 
 Three families of engine were considered.
 
-- *Regular-expression rule sets* (ModSecurity CRS style) execute hundreds of backtracking
+- *Regular-expression rule sets* (backtracking engines) execute hundreds of backtracking
   patterns per request, allocate match contexts, and are notoriously prone to false positives.
 - *SIMD literal engines* (Hyperscan, Vectorscan) prefilter with shuffle-based literal matchers
   and verify with automata; they win on long inputs and very large literal sets, at the cost of
@@ -84,7 +84,7 @@ Three families of engine were considered.
   scanners.
 
 Sibuna's inputs are dominated by short header fields; a User-Agent scans in 85 ns and an entire
-browser request classifies in 1.46 µs, well below a single cache miss budget. The third family
+browser request is measured by the standalone policy benchmark. The third family
 was chosen. The measured cost on an 8 KB body is 23.7 µs (about 2.9 ns per byte); SIMD
 prefiltering remains an open item for body-heavy deployments (SID 0006 records the analysis).
 
@@ -101,8 +101,8 @@ spaces. Every subsequent detector consults the classes instead of rescanning, an
 
 All strong signatures of every category (traversal targets such as `../` and `/etc/passwd`,
 SQL constructs such as `union select` and `xp_cmdshell`, script vectors such as `<script` and
-`javascript:`, command vectors such as `/bin/sh` and `${jndi:`) live in one 2048-state dense
-Aho–Corasick automaton with an 8-bit category tag per pattern. A field is scanned exactly once
+`javascript:`, command vectors such as `/bin/sh` and `${jndi:`) live in one dense
+Aho–Corasick automaton sized from the sum of signature lengths with an 8-bit category tag per pattern. A field is scanned exactly once
 regardless of the number of signatures; a hit yields a `Decision` of `deny` named
 `waf:<category>`. The automaton is case-folded through a comptime table.
 
@@ -130,7 +130,7 @@ The path, the query string, the User-Agent, every header except the structural
 content-negotiation set (`Accept*`, `Content-Type`, `Sec-*`, `If-*`, `Cache-Control`, ...), and
 the first 8 KB of the body are inspected. When the pre-scan saw percent escapes, plus signs,
 comment openers, or collapsible whitespace, the field is canonicalised (two rounds of percent
-decoding, `/* */` stripping, whitespace folding, lower-casing) into a 2 KB stack buffer and
+decoding, `/* */` stripping, whitespace folding, lower-casing) into an 8 KB stack buffer and
 inspected again, so `1%27/**/UnIoN/**/SeLeCt` and `%252e%252e/` collapse onto the raw
 signatures.
 
@@ -138,35 +138,25 @@ signatures.
 
 The flood limiter is the Generic Cell Rate Algorithm in its virtual-scheduling form. A client's
 state is one 16-byte cell (keyed hash, theoretical arrival time). With emission interval
-$T = W / N$ and burst tolerance $tau = W - T$, an arrival at $t$ conforms iff $"TAT" <= t + tau$,
+$T = max(1, ceil(W / N))$ and burst tolerance $tau = (N - 1) T$, an arrival at $t$ conforms iff $"TAT" <= t + tau$,
 after which $"TAT" = max("TAT", t) + T$. The guarantee is the token-bucket bound: at most
 $N + floor(L / T)$ requests conform in any interval of length $L$, with no fixed-window
 boundary artefact and no per-request log. Cells live in 16 lock-striped shards of 512 slots with
 a 16-slot probe window; a cell whose TAT is older than $t - tau$ is drained and reclaimed in
-place. A check costs 4.8 ns. Defaults are 100 requests per 10 s (`--rate-limit`,
+place. Defaults are 100 requests per 10 s (`--rate-limit`,
 `--rate-window`); a rejection answers `429` with `Retry-After`.
 
 == Ban table and incidents
 
-Honeypot hits ban the client address for `--ban-seconds` (default 3600) in a lock-free
-open-addressed table read with two atomic loads per probe. WAF denials and honeypot hits are
+Honeypot hits ban the client address for `--ban-seconds` (default 3600) in an
+open-addressed table with versioned atomic snapshots and retry on concurrent replacement. WAF denials and honeypot hits are
 handed to the storage layer's incident ring when a data directory is configured (SID 0005).
 
-= Comparison
+= Product boundary
 
-The Sibuna column is measured (`benchmarks/results/latest.json`); the other columns are taken
-from the projects' public documentation and are not measurements.
-
-#table(
-  columns: (1.3fr, 1.1fr, 1fr, 1.4fr),
-  table.header([*Capability*], [*SafeLine WAF (documented)*], [*Anubis (documented)*], [*Sibuna (measured)*]),
-  [SQLi / XSS / traversal / RCE], [Yes, lexer engine], [No], [Yes, automaton + tokenizers, 1.46 µs per request],
-  [Proof-of-work admission], [No (captcha)], [Yes], [Yes, Hashcash and PoSW, 8.8 KB solver],
-  [Flood limiting], [Redis-backed counters], [Basic], [GCRA, 4.8 ns, in-process],
-  [Hot-path allocation], [IPC to detector], [Per-request Go allocations], [0 bytes],
-  [Idle memory], [Multi-container, gigabytes], [Tens of MB], [7.6 MB (Gate/Shield), 12–14.5 MB with storage],
-  [Deployment], [Docker Compose, PostgreSQL, Redis], [Single Go binary], [Single 4.25 MB binary],
-)
+Gate provides admission, policy and local flood controls. Shield adds payload inspection.
+Distributed edge deployment adds replicated policy and reputation to either surface.
+No vendor feature-parity claim is made; coverage and limitations are defined by the code and tests.
 
 = Verification
 
@@ -180,3 +170,17 @@ from the projects' public documentation and are not measurements.
 - End-to-end: traversal in the path and SQL injection in the query string answer `403`; the
   honeypot answers `403` and the address is banned for subsequent requests; a burst of 12
   requests against a limit of 8 yields exactly 4 `429` responses with `Retry-After`.
+
+= Review corrections (2026-09-07)
+
+A valid session never bypasses inspection or a terminal policy denial. Canonicalisation now
+uses its caller's buffer in place and covers the full 8 KB inspection prefix; an encoded attack
+after byte 2048 is a regression case. Inputs beyond the bound remain a documented coverage gap.
+The signature automaton's capacity is derived from pattern lengths, preserving dense lookups
+with a smaller footprint. GCRA uses a ceiling-rounded interval and tolerance `(rate-1)*interval`,
+so non-divisible windows do not over-admit. Zero rate refuses requests. Hash zero alone is
+remapped: forcing every hash odd previously wasted half the shards. Saturated probe windows
+refuse new clients instead of evicting active quota state. Ban readers validate a versioned
+key/expiry snapshot, retrying concurrent replacements. These synchronization operations have
+real costs. Current measurements are in the benchmark result files; earlier numeric examples
+in this record are historical and must not be used as current performance gates.

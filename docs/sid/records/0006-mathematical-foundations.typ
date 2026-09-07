@@ -85,6 +85,16 @@
   last-updated: sid-last-updated,
 )
 
+#callout([Implementation review — 2026-09-07], [
+  The cited sequential-work results apply under their random-oracle assumptions to the
+  constructions and bounds in the papers. They are not an independent audit of this concrete
+  SHA-256 protocol, its parameter calibration, browser timing or quantum security level.
+  #link("https://eprint.iacr.org/2018/183")[Cohen–Pietrzak (2018)] and
+  #link("https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.ITC.2021.22")[Blocki–Lee–Zhou (2021)]
+  are the primary references. Hash evaluations below must not be confused with SHA-256
+  compression calls: variable-length labels and padding can require multiple compressions.
+])
+
 = Abstract
 
 Sibuna is a web firewall whose admission decisions must cost the server almost nothing and cost an unverified client a measurable, unavoidable amount of work. This record states the mathematics that makes that asymmetry a theorem rather than a hope. It gives, for every hot-path primitive, a definition, the lemmas or theorems that bound its cost and its security, a citation to the primary literature, and the exact pure-Zig function that realises it together with the number we measured on the reference host.
@@ -97,7 +107,7 @@ Around the puzzle, the record proves: that a 16-byte keyed-BLAKE3 tag bounds for
 
 == Setting
 
-A request arrives at the daemon from a client that is either a human browser, an authorised crawler, or an unverified automaton. The daemon must decide, in the time budget of a single cache miss, whether to forward the request to the origin, refuse it, or demand a proof of work. The client that presents a valid proof receives a session token and is not asked again for the token's lifetime.
+A request arrives at the daemon from a client that is either a human browser, an authorised crawler, or an unverified automaton. The daemon must decide, within a bounded request-classification budget, whether to forward the request to the origin, refuse it, or demand a proof of work. The client that presents a valid proof receives a session token and is not asked again for the token's lifetime.
 
 The adversary controls unbounded parallel hardware (GPU farms, ASICs, botnets with fresh IP addresses for every request), sees every byte the daemon emits, may replay, forge, or reorder messages, and may submit arbitrary garbage to every endpoint at line rate. The adversary does not hold the daemon's master seed.
 
@@ -157,7 +167,7 @@ The figure below fixes the pipeline that the rest of the record analyses; each b
 The tail is what an operator feels: at any difficulty, about 5% of honest clients need more than three times the mean, and 0.7% need more than five times. This variance is inherent to nonce search and is the first reason the sequential tier of Part B is preferred for the human-facing default.
 
 #lemma([Bit-granular calibration])[
-  Raising $b$ by one doubles $EE[X]$. Measuring difficulty in hexadecimal digits, as early Anubis did, allows only factors of sixteen between adjacent settings; measuring in bits allows any factor $2^k$.
+  Raising $b$ by one doubles $EE[X]$. Measuring difficulty in hexadecimal digits, allows only factors of sixteen between adjacent settings; measuring in bits allows any factor $2^k$.
 ]
 
 #callout([Quantum caveat], [
@@ -196,21 +206,20 @@ The verifier recomputes the leaf label from the siblings that the leaf's extra e
 
 == Theorems
 
-#theorem([Sequentiality, Cohen–Pietrzak Thm. 1, random oracle model])[
-  Let an adversary make at most $q$ oracle queries in total but at most $N(1 - alpha)$ *sequential* rounds of queries. Then for $t$ opened leaves the verifier accepts with probability at most $(1 - alpha)^t + q^2 \/ 2^(|H|)$, where $|H| = 256$ here.
-]
-#proof[
-  (Sketch; the full argument is [4], Section 4.) Any accepting proof exhibits, for each opened leaf, a chain of $n+1$ consistent oracle queries from the leaf to $phi$. Consider the set of labels the adversary computed correctly with respect to the DAG. The DAG has the property that every path from a leaf to the root passes through a node whose label depends, through the extra edges, on all labels to its left; if the adversary skipped a fraction $alpha$ of the sequential work, a fraction at least $alpha$ of leaves have an inconsistent chain. A uniformly chosen opened leaf then detects the inconsistency with probability at least $alpha$, and the $t$ leaves are independent up to the collision term $q^2\/2^(|H|)$ that bounds the adversary's ability to find two consistent labellings.
-]
-
-#lemma([Cheating never pays in expectation])[
-  For $t >= 2$ and any skip fraction $alpha in (0, 1)$, the expected sequential cost of an adversary per *accepted* proof is at least $N$.
-]
-#proof[
-  Each attempt costs $N(1-alpha)$ sequential steps and is accepted with probability at most $(1-alpha)^t$ (ignoring the negligible collision term). The number of attempts to the first acceptance is geometric with mean $(1-alpha)^(-t)$, so the expected cost is $N(1-alpha) dot (1-alpha)^(-t) = N (1-alpha)^(1-t)$. For $t >= 2$ the exponent $1 - t$ is negative and $(1-alpha) < 1$, hence $(1-alpha)^(1-t) >= 1$.
+#theorem([Scope of the sequentiality results [4, 6]])[
+  The cited papers establish sequential-work security in their classical and quantum
+  random-oracle models, with bounds depending on the adversary's query budget, sequential
+  rounds and protocol parameters. Their full bounds, including Fiat–Shamir query effects,
+  must be used for calibration; this record does not derive a concrete bound for Sibuna.
 ]
 
-The lemma is stronger than it looks: it means the operator need not choose $t$ large enough to make one cheating attempt unlikely, only large enough that repeated cheating is not profitable, and $t = 2$ already suffices. Sibuna's default $t = 16$ makes a single 10% skip succeed with probability $0.9^16 approx 18%$ and a 50% skip with probability $2^(-16)$; the operator can trade proof size for soundness by adjusting `--posw-challenges`.
+For intuition only, if a fixed commitment has an invalid fraction $alpha$ of leaf openings and
+$t$ independent uniformly sampled leaves are checked, the chance of missing all invalid leaves
+is $(1-alpha)^t$. Sibuna derives samples from the commitment. An adversary can try many
+commitments and reuse work, so this elementary fixed-commitment calculation does not prove
+that cheating is unprofitable, nor that two openings suffice. The previous unconditional
+"cheating never pays" lemma is withdrawn. Default $t=16$ is an engineering parameter requiring
+independent adversarial calibration, not a 128-bit soundness guarantee.
 
 #lemma([Verification cost])[
   Verifying a proof costs exactly $t(n+1)$ hash evaluations of at most $32(n+2) + 37$ input bytes each, plus $t$ evaluations to derive the challenges, and needs $O(1)$ working memory beyond the proof itself.
@@ -232,7 +241,7 @@ With $m = 10$ the retained labels occupy $2047 dot 32 = 64$ KB, and for $n = 16,
   The Cohen–Pietrzak proof of sequential work remains a secure proof of sequential work against quantum adversaries in the parallel quantum random oracle model: any quantum prover making fewer than $N(1-alpha)$ sequential rounds of (superposition) queries is accepted with probability negligible in $t$ and the output length, up to polynomial loss.
 ]
 
-We cite the theorem rather than reprove it; its proof uses the compressed-oracle technique to track which labels a quantum adversary has "computed". The consequence for Sibuna is that the sequential tier is the one admission mechanism whose cost does not fall under Grover, because its cost is depth, not search.
+We cite the theorem rather than reprove it; its proof uses the compressed-oracle technique to track which labels a quantum adversary has "computed". This motivates the sequential tier under the cited oracle assumptions. It does not independently certify Sibuna's concrete protocol or parameter choices.
 
 == Why not the alternatives
 
@@ -249,7 +258,7 @@ We cite the theorem rather than reprove it; its proof uses the compressed-oracle
   [RSA / class-group VDFs], [1 modexp with trapdoor], [sequential], [group-of-unknown-order assumptions], [Rejected: Shor [25] breaks the group assumptions],
 )
 
-The Argon2id row deserves emphasis because it is the mechanism Anubis offers. A puzzle whose verification is the same memory-hard function forces the server to spend the same 16–64 MB and tens of milliseconds as the client on every submission. Since submissions are free to send, an adversary who fetches challenges and posts garbage converts each of its cheap requests into a full memory-hard evaluation on the server: the inverse of Axiom 1.
+The Argon2id row deserves emphasis. A puzzle whose verification is the same memory-hard function forces the server to spend the same 16–64 MB and tens of milliseconds as the client on every submission. Since submissions are free to send, an adversary who fetches challenges and posts garbage converts each of its cheap requests into a full memory-hard evaluation on the server: the inverse of Axiom 1.
 
 == Implementation and calibration
 
@@ -257,21 +266,10 @@ The Argon2id row deserves emphasis because it is the mechanism Anubis offers. A 
   `libs/crypto/src/posw.zig`: `Params{depth, challenges}` with `validate`, `proofSize`; `challengeLeaf` derives $gamma_i$; `verify` implements the verifier in `t(n+1)` hashes with no allocation; `Workspace` holds the retained levels (`top`, $2^11$ labels), the sibling `stack`, and the proof buffer; `solve` runs the depth-first prover with the `Prover.labelOf` recursion and `open` for captures. The identical source is compiled for `wasm32-freestanding` and exported by `apps/wasm-pow/src/entry.zig` as `sibuna_posw_solve`; `apps/web/src/worker.js` carries a JavaScript prover that we verified produces byte-identical proofs to the WASM module (Node/V8 harness). The coordinator maps work bits $b$ to depth $n = b - 3$ (`ChallengeSpec.posw_depth_offset`) so that the two tiers cost a browser about the same wall-clock time at equal $b$.
 ]
 
-#table(
-  columns: (0.8fr, 1fr, 1fr, 1fr, 1fr),
-  stroke: 0.5pt + rule,
-  fill: (x, y) => if y == 0 { blue-light } else if calc.even(y) { luma(99%) } else { white },
-  [*Depth $n$*], [*Native solve (M1)*], [*Native verify*], [*V8 WASM solve*], [*Proof bytes ($t=16$)*],
-  [12], [2.2 ms], [40 µs], [17.8 ms], [6688],
-  [13], [5.0 ms], [34 µs], [15.4 ms], [7200],
-  [14], [8.3 ms], [30 µs], [32.0 ms], [7712],
-  [15], [13.3 ms], [25 µs], [66.4 ms], [8224],
-  [16], [20.8 ms], [20 µs], [137.9 ms], [8736],
-  [17], [33.9 ms], [18 µs], [285.1 ms], [9248],
-  [18], [65.4 ms], [18 µs], [—], [9760],
-)
-
-All numbers are our measurements (`scratchpad/bench_posw.zig` natively in ReleaseFast; the WASM module under Node 26's V8). The JavaScript fallback prover is about sixty times slower than WASM and exists so that clients with WebAssembly disabled still pass; it is not the intended path. The benchmark suite reports PoSW verification at depth 13 with $t=16$ at *16.9 µs*, within the 50 µs contract of SID 0002.
+The reproducible suite measures native verification at depth 13 with sixteen openings.
+Browser solve-time calibration from earlier drafts depended on a scratch harness absent from
+this repository, so those timing tables are withdrawn. Work-bit parity between the two tiers
+is an engineering approximation and must be calibrated on target client hardware.
 
 = Part C: Stateless Challenges and Symmetric Tokens
 
@@ -342,7 +340,7 @@ Ed25519 tokens remain available (`--token-scheme ed25519`) for the one deploymen
 = Part D: Rate Limiting by the Generic Cell Rate Algorithm
 
 #definition([GCRA, virtual scheduling form [18]])[
-  Fix a rate $N$ per window $W$. Let $T = W\/N$ be the emission interval and $tau = W - T$ the tolerance. Each client keeps one theoretical arrival time $"TAT"$, initially $0$. An arrival at time $t$ *conforms* iff $"TAT" <= t + tau$; on conformance set $"TAT" <- max("TAT", t) + T$, otherwise leave it unchanged and report a retry delay of $"TAT" - tau - t$.
+  Fix a rate $N$ per window $W$. For $N > 0$, let $T = max(1, ceil(W\/N))$ be the integer emission interval and $tau = (N-1)T$ the tolerance. Each client keeps one theoretical arrival time $"TAT"$, initially $0$. An arrival at time $t$ *conforms* iff $"TAT" <= t + tau$; on conformance set $"TAT" <- max("TAT", t) + T$, otherwise leave it unchanged and report a retry delay of $"TAT" - tau - t$.
 ]
 
 #theorem([Interval bound])[
@@ -389,10 +387,14 @@ The theorem is deliberately stated as an inequality rather than the marketing ph
   Every key passing $s$ has distance at most $d_s <= d$, so the invariant holds with the new occupant. If $d < d_s$, a key $k$ passing $s$ with distance $d_s$ (which the invariant permits) would now terminate early at $s$ and be lost.
 ]
 
-This lemma is why the insert path overwrites an expired entry only when `carry.dist >= e.dist` and otherwise swaps and drops the expired key when it becomes the carried one; both cases reclaim without a sweeper and without ever moving a live key backwards. The expected probe length of Robin Hood at load $alpha$ equals that of linear probing, about $(1 + 1\/(1-alpha))\/2$ for successful search, but its variance is bounded by $O(log log M)$ [15], which is the property that lets `MAX_PROBE` be a small constant (64) without measurable failures.
+Insertion first simulates the bounded displacement path without mutation and refuses if no safe destination exists. This prevents a failed insertion from losing a live tag. This lemma is why the insert path overwrites an expired entry only when `carry.dist >= e.dist` and otherwise swaps and drops the expired key when it becomes the carried one; both cases reclaim without a sweeper and without ever moving a live key backwards. Expected probe costs depend on load and hash distribution; results for other probing
+models do not prove a universal variance bound for this linear-probing implementation.
+Lookup is capped at 64 probes. Insertion preflight can inspect up to one shard and refuses
+before mutation when it cannot preserve all live keys. Saturation is a correctness case,
+not something an average-case bound allows us to ignore.
 
 #impl[
-  `libs/store/src/challenge_store.zig`: 16 shards × 4096 entries of `{tag: [16]u8, expires_at, dist, occupied}`; `Shard.find` implements early termination, `Shard.insert` the swap-and-drop rule; `markSpent` refuses live duplicates with `DoubleSpendAttempt`. Measured *22.8 ns* per spend-and-lookup pair. The lock-free ban table `ban_list.zig` uses the same open addressing with atomic loads for readers.
+  `libs/store/src/challenge_store.zig`: 16 shards × 4096 entries of `{tag: [16]u8, expires_at, dist, occupied}`; `Shard.find` implements early termination, `Shard.insert` the swap-and-drop rule; `markSpent` refuses live duplicates with `DoubleSpendAttempt`. Measured *22.8 ns* per spend-and-lookup pair. The ban table `ban_list.zig` uses versioned key/expiry snapshots; readers retry concurrent replacement.
 ]
 
 = Part F: Linear-Time Inspection
@@ -403,7 +405,7 @@ This lemma is why the insert path overwrites an expired entry only when `carry.d
   For a pattern set $cal(P)$ of total length $m$ over an alphabet of size $sigma$ and a text of length $M$, the Aho–Corasick automaton is built in $O(m sigma)$ time and space (dense) and reports whether any pattern occurs in $O(M)$ time, independent of $|cal(P)|$.
 ]
 
-Sibuna uses the dense form: 256 successors of two bytes each per state, 512 bytes per state, failure links folded into the table so that scanning is exactly one load per input byte and never follows a failure chain. Case folding uses a comptime table so the automaton is byte-oriented and branch-free. Every pattern carries a tag (category), so one pass over a field returns both the match and its class. The bot signature automaton is sized at 1024 states (0.5 MB), the WAF signature automaton at 2048 states (1 MB); both live inside the `Engine` value so an engine can be rebuilt and swapped as one object (Part G).
+Sibuna uses the dense form: 256 successors of two bytes each per state, 512 bytes per state, failure links folded into the table so that scanning is exactly one load per input byte and never follows a failure chain. Case folding uses a comptime table so the automaton is byte-oriented and branch-free. Every pattern carries a tag (category), so one pass over a field returns both the match and its class. Each automaton capacity is one plus the sum of its pattern lengths; both live inside the `Engine` value so an engine can be rebuilt and swapped as one object (Part G).
 
 == The semantic layer
 
@@ -413,7 +415,7 @@ Signatures alone are either too loose (a bare `/*` flags every browser's `Accept
 2. A *SQL word tokenizer*: one pass extracting alphanumeric words, folding case into a 7-byte buffer, looking each up in a 21-entry keyword list pruned by length, and, on `or`/`and`, checking the tautology grammar `literal = literal` in place. The verdict is a small score: a quote is mandatory, up to two keywords, a comment marker, and an equals sign add one point each, and four points deny. Prose such as _it's a group order from the shop_ scores three; `name='x' union all from t--` scores four.
 3. Tag/attribute and separator/command recognisers for XSS and command injection that fire only in attribute or separator position.
 
-This is a deliberate middle between two extremes. Regular-expression rule sets (ModSecurity CRS style) run hundreds of backtracking engines per request, each its own pass with its own match state, and are neither linear nor allocation-free. Full SQL/HTML parsers (the SafeLine approach) are linear but carry parser state, memory for ASTs, and a large surface of grammar edge cases; their precision advantage is real for a general-purpose WAF, but for an edge gate the fingerprint approach pioneered by libinjection captures most of it with a fixed-size tokenizer state.
+This is a deliberate middle between two extremes. Regular-expression rule sets (backtracking engines) run hundreds of backtracking engines per request, each its own pass with its own match state, and are neither linear nor allocation-free. Full SQL/HTML parsers are linear but carry parser state, memory for ASTs, and a large surface of grammar edge cases; their precision advantage is real for a general-purpose WAF, but for an edge gate the fingerprint approach pioneered by libinjection captures most of it with a fixed-size tokenizer state.
 
 == Vectorised matchers
 
@@ -425,7 +427,7 @@ Hyperscan [17] and its portable fork Vectorscan reach multi-gigabyte-per-second 
 
 = Part G: Read-Copy-Update Engine Slots
 
-The policy engine is a two-megabyte value (rules, both automata, the reputation trie). Dynamic policy from Part I's storage layer must replace it without stopping workers. Sibuna uses the read-copy-update discipline [23] with an explicit reader count per slot.
+The policy engine is a fixed-capacity value (rules, both automata, the reputation trie). Dynamic policy from Part I's storage layer must replace it without stopping workers. Sibuna uses the read-copy-update discipline [23] with an explicit reader count per slot.
 
 #definition([Slot protocol])[
   A slot is a pair (engine, readers). Readers: load the active slot pointer, increment its reader count, reload the pointer, and if it changed decrement and retry. Writers: publish the new slot by an atomic swap, then wait until the old slot's reader count is zero before rebuilding into it.
@@ -435,10 +437,10 @@ The policy engine is a two-megabyte value (rules, both automata, the reputation 
   A writer never begins rebuilding a slot while a reader that will use it holds it.
 ]
 #proof[
-  Consider a reader $R$ and the swap $S$ that retires slot $A$. If $R$'s increment on $A$ precedes $S$ in the modification order of the pointer, the writer's subsequent zero-check observes the increment and waits until $R$ releases. If $R$'s increment follows $S$, then $R$'s reload of the pointer (which follows its increment) observes the swapped value $B != A$, so $R$ decrements and retries; $R$ never uses $A$. Acquire/release ordering on the pointer and the counter make these observations coherent across threads.
+  Consider a reader $R$ and the swap $S$ that retires slot $A$. If $R$'s increment and successful pointer recheck on $A$ precede $S$ in the sequentially consistent order, the writer's subsequent zero-check observes the increment and waits until $R$ releases. If $R$'s increment follows $S$, then $R$'s reload of the pointer (which follows its increment) observes the swapped value $B != A$, so $R$ decrements and retries; $R$ never uses $A$. All pointer publication, pointer recheck, counter increments/decrements and writer zero-checks use sequential consistency. In that single total order, either the reader pins and rechecks before retirement (the writer sees its count), or its recheck sees retirement and retries. Acquire/release alone on separate atomics is not sufficient for this argument.
 ]
 
-The cost is one atomic increment and decrement per request on a cache-line-aligned counter, which is far below the request's own cost, and the writer's wait is bounded by the longest request in flight. Incidents flow from workers to the storage thread through a bounded multi-producer single-consumer ring (Vyukov's sequence-stamped design [19]): each slot carries a sequence number that tells producers whether it is free and the consumer whether it is full, so neither side locks, and a full ring drops the newest record rather than blocking a response.
+The cost includes an atomic increment and decrement per classification on a cache-line-aligned counter; contention must be measured. The response copies its rule name before releasing the slot, so origin I/O does not prolong the writer's wait. Incidents flow from workers to the storage thread through a bounded multi-producer single-consumer ring (Vyukov's sequence-stamped design [19]): each slot carries a sequence number that tells producers whether it is free and the consumer whether it is full, so neither side locks, and a full ring drops the newest record rather than blocking a response.
 
 #impl[
   `apps/sibuna/src/server.zig`: `EngineSlot`, `AppState.acquireEngine`, `releaseEngine`, `publishEngine`. `libs/store/src/ring.zig`: `BoundedQueue(T, capacity)`. `apps/sibuna/src/persistent.zig`: the storage thread's `tick` drains the ring, detects policy changes by a change stamp, rebuilds the spare slot from file policy, database policy, and reputation, and publishes it.
@@ -457,10 +459,10 @@ The cost is one atomic increment and decrement per request on a cache-line-align
   $2^(b + beta) >= 2^b dot 2^(log_2(1 + lambda\/lambda_0) - 1)$ since $ceil(x) >= x$ costs at most one bit in the other direction; multiply by $lambda$ for aggregate work.
 ]
 
-The cap $beta_max$ (default 6 bits, 64×) bounds what a human on a slow device is ever asked, so a flood degrades the human experience by at most a fixed factor rather than locking humans out. The state is two atomics and needs no lock.
+The cap $beta_max$ (default 6 bits, 64×) bounds what a human on a slow device is ever asked, so a flood degrades the human experience by at most a fixed factor rather than locking humans out. The state is three atomics and needs no lock.
 
 #impl[
-  `libs/challenge/src/adaptive.zig`: `Adaptive.observe(now_ms)` rolls buckets with a compare-and-swap; `bump()` computes $beta$. Applied in `Coordinator.createChallengeWithSpec`.
+  `libs/challenge/src/adaptive.zig`: `Adaptive.observe(now_ms)` rolls buckets with a compare-and-swap; `bump()` computes $beta$. Applied in `Coordinator.createChallengeWithSpec`. The fixed-point ratio is rounded upward before the integer ceiling-logarithm; flooring 15/10 previously returned one bit instead of two.
 ]
 
 = Part I: Campaign Clustering by Feature Hashing
@@ -479,36 +481,27 @@ This is the hashing trick of Weinberger et al. [20] over Broder's shingles [21];
 
 = Verification and Benchmark Gates
 
-The repository's `zig build test` runs 80 tests: unit tests per library, the WASM solver's native tests, the server module's tests, nine end-to-end scenarios that boot the real daemon on a loopback port in front of a stub origin and drive it with raw HTTP/1.1 (interstitial, hashcash and PoSW flows with replay and binding rejection, policy and WAF denial, honeypot bans, GCRA 429s, keep-alive, malformed and smuggled requests, asset serving), and the Zaxonlite storage test (schema, dynamic policy reload through the RCU slot, replicated reputation ban, FTS5 forensics, campaign clustering). `zig build fmt` enforces the structural limits of SID 0001. The following are our measurements on an Apple M1, ReleaseFast, median of seven batches, from `benchmarks/results/latest.json`; heap allocation is zero on every row.
+`zig build test` runs library, server, solver, storage and live HTTP regressions. The standalone
+primitive harness records seven batches after untimed warmup and resets mutable state before
+each batch. Failed insertions are errors, not accepted benchmark samples. Both bot algorithms
+search the same patterns with any-match semantics. Compiler barriers keep pure calls in their
+loops without per-operation clocks. The harness does not measure heap allocations; its zero
+allocation expectation is based on the inspected APIs and sources.
 
-#table(
-  columns: (1.5fr, 1.8fr, 0.8fr, 1fr),
-  stroke: 0.5pt + rule,
-  fill: (x, y) => if y == 0 { blue-light } else if calc.even(y) { luma(99%) } else { white },
-  [*Subsystem*], [*Workload*], [*ns/op*], [*Part*],
-  [Proof of work], [hashcash verify, 16 bits], [62.6], [A],
-  [Proof of work], [PoSW verify, depth 13, $t=16$], [16 920], [B],
-  [Tokens], [keyed BLAKE3 token verify], [134], [C],
-  [Tokens], [Ed25519 token verify], [52 778], [C],
-  [Bot matcher], [Aho–Corasick, 40 signatures], [85], [F],
-  [Bot matcher], [naive sequential substring, 40 signatures], [4 166], [F],
-  [IP filter], [IPv4 CIDR trie], [45], [—],
-  [IP filter], [IPv6 CIDR trie], [80], [—],
-  [Spent set], [Robin Hood spend and lookup], [22.8], [E],
-  [Rate limiter], [GCRA check], [4.8], [D],
-  [HTTP], [zero-copy parse and cookie], [733], [—],
-  [Policy], [gate profile classification], [295], [F],
-  [Policy], [shield profile classification], [1 460], [F],
-  [WAF], [8 KB body scan], [23 702], [F],
-)
+See `benchmarks/results/latest.json` for primitive measurements and exact `@sizeOf` values,
+and `benchmarks/results/distributed-latest.json` for three-process loopback measurements.
+Older numerical examples in this paper describe the pre-review build and are illustrative,
+not current performance claims. Unsupported fixed competitor cost rows were removed.
 
-Idle resident set of the daemon: *7.6 MB* (storage disabled); *12 MB* observed with Zaxonlite open. Static binary: *4.2 MB* ReleaseFast with storage. WebAssembly solver with both tiers: *8 831 bytes*. The Anubis figures in the benchmark file (`impl = "anubis-model"`) are fixed reference costs from public profiling of the Wazero boundary, Go regexp, `net.IPNet`, `golang-jwt`, and `net/http`; they are models, carried for the comparison chapter of the book, and are never presented as measurements.
+The external distributed harness checks session sharing, authenticated WAF denial, issuer-bound
+challenge rejection, ban propagation, and HTTP service with one member down. It does not
+establish WAN latency, production mTLS performance, global quotas or durable replay protection.
 
 = Security Considerations
 
 - *Trust boundary for client identity.* The fingerprint uses the peer address unless `--trust-forwarded` is set, in which case `X-Forwarded-For` is trusted; that flag must be set only when an ingress that overwrites the header is the sole peer, as in forward-auth mode where it defaults on.
 - *Secret handling.* Without `--secret-file` or `SIBUNA_SECRET` the seed is random per process: tokens and challenges do not survive restarts and are not shared across nodes. The banner says so. A cluster must share one seed.
-- *Replay.* Challenges are single-use through the spent set (Theorem in Part C); tokens are bound to the fingerprint and expire; both carry the issue time so clock skew beyond sixty seconds forward is rejected.
+- *Replay.* Challenges are single-use within a process lifetime. Cluster node ids derive distinct challenge keys, so verification must return to the issuing node; tokens remain cluster-wide. Spent state is not durable across restarts; tokens are bound to the fingerprint and expire; both carry the issue time so clock skew beyond sixty seconds forward is rejected.
 - *Amplification.* Every endpoint is bounded: heads over 16 KB are refused, bodies over 64 KB are refused for the verify endpoint, proofs are length-checked before any hash, and the expensive verification is reached only after the constant-cost tag, expiry, and fingerprint checks.
 - *Side channels.* Tag comparison is constant-time. Hashing time is independent of secrets. Response codes distinguish malformed, expired, mismatched, and invalid submissions for the honest client's benefit; none of these outcomes depends on secret material beyond the tag verdict, which is uniform.
 - *WAF false negatives.* The structural layer is a fingerprint classifier, not a parser; it will miss injections that avoid keywords, quotes, and separators entirely. Operators needing parser-grade coverage should treat Sibuna's shield profile as the first layer and keep an application-level defence.

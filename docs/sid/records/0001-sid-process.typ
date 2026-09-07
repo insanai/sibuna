@@ -52,7 +52,7 @@ SID is used for topics such as:
 - Multi-pattern bot detection, SIMD Aho-Corasick, and Radix CIDR routing
 - Session token formats, Ed25519 signing, and cookie binding
 - State caching, lockless decay maps, and distributed store integrations
-- Performance benchmarking methodology and comparative gates against Anubis
+- Performance benchmarking methodology and reproducible comparison gates
 
 = The SID Lifecycle
 

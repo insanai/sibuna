@@ -82,12 +82,12 @@ Evaluation is first-terminal-match-wins; `WEIGH` rules contribute a signed score
 against thresholds when no terminal rule matched. The engine holds at most 128 rules and never
 allocates during evaluation.
 
-#callout([Performance contract (measured)], [
-  Classification of a complete browser request (7 headers) through rules, bypass table,
-  reputation trie, and bot automaton costs *295 ns* on the Gate surface and *1.46 µs* on the
-  Shield surface where the semantic WAF also runs; both with zero heap allocation
-  (`benchmarks/results/latest.json`, Apple M1, `ReleaseFast`).
-], fill: green-light, stroke: green)
+#callout([Performance contract], [
+  Evaluation uses fixed-capacity tables and borrowed request slices with no allocator argument.
+  Exact engine memory and current Gate/Shield timings are recorded by the standalone harness
+  in `benchmarks/results/latest.json`. These primitive timings exclude socket I/O and do not
+  establish HTTP throughput or instrumented allocation counts.
+])
 
 = Data model
 
@@ -155,7 +155,7 @@ addresses, and IPv4-mapped IPv6 literals.
   [`favicon`], [Path `^/favicon.ico$`], [`ALLOW`], [Browser icon fetch],
   [`robots-txt`], [Path `^/robots.txt$`], [`ALLOW`], [Robots exclusion standard],
   [`sibuna-internal`], [Path `/__sibuna/*`], [`ALLOW`], [Solver assets and APIs],
-  [`cloudflare-workers`], [Header `CF-Worker: .*`], [`DENY`], [Unconsented serverless scrapers],
+  [Serverless-header denial], [Header `CF-Worker: .*`], [`DENY`], [Unconsented serverless scrapers],
   [`amazonbot`], [UA contains `Amazonbot`], [`DENY`], [Aggressive harvester],
   [`generic-browser`], [UA contains `Mozilla`], [`CHALLENGE`], [Humans clear the interstitial; scrapers pay],
   [(bot automaton)], [UA matches an AI-scraper or scraper-library signature], [`CHALLENGE`], [Known automation],
@@ -209,7 +209,7 @@ The mechanism is specified in SID 0005.
 - Unit tests cover pattern grammar, IPv4 and IPv6 CIDR matching, rule conjunction, WEIGH
   accumulation into allow, challenge with extra bits, and deny, JSON loading including
   `waf`, `thresholds`, `ip_rules`, and `weight`, and a 100,000-request zero-allocation loop.
-- End-to-end tests exercise the built-in denials (`amazonbot`, `cloudflare-workers`), the
+- End-to-end tests exercise the built-in denials (crawler and serverless-header denials), the
   static bypass on `/robots.txt` with a bot User-Agent, and the interstitial for a browser.
 - The storage test inserts a policy row with header and CIDR matchers and observes the rebuilt
   engine apply it with the row's difficulty and algorithm.
@@ -236,3 +236,12 @@ The mechanism is specified in SID 0005.
   "Zaxonlite `policies` table rebuilt into the spare engine and published by RCU.",
   "Storage test observes a database rule after one tick.",
 )
+
+= Review corrections (2026-09-07)
+
+The daemon evaluates policy before accepting a session, so a session bypasses only the
+challenge verdict. Dynamic database rules are ordered before file/default rules to keep a
+generic browser challenge from masking an operator's denial. Exact anchored patterns match
+the complete string. Rule names must contain 1–128 bytes and no control bytes, bounding response copies and
+preventing injected audit headers. The engine uses pattern-derived automaton capacity. Current timings are
+recorded in `benchmarks/results/latest.json`; older figures above describe the previous build.
