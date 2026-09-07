@@ -193,21 +193,63 @@ schema in one's head.
 
 SafeLine's console is the reference for what operators expect from a self-hosted application
 firewall. Its front page, "Statistics", shows request and interception counts for a period,
-a traffic timeline, attack-type and source breakdowns, and a map; "Attack Events" lists
-blocked requests with an expandable detail; "Applications" configures protected sites;
-"Protection" holds rules, rate limits, the anti-bot challenge, and IP groups; "Settings" holds
-users, notifications, and system options. This record adopts that information architecture
-where Sibuna has the same concept, replaces it where Sibuna's model differs (there are no
-per-site upstreams; there are surfaces, policies, and nodes), and adds what SafeLine does not
-have: a challenge funnel, cluster membership, and campaign clustering.
+a traffic timeline, attack-type and source breakdowns, and a globe; "Attacks" lists blocked
+requests with a request-level detail; "Applications" configures protected sites; "Allow &
+Deny", "HTTP Flood", "Anti-Bot" and "Auth" hold rules, rate limits, the challenge, and
+authentication; "Settings" holds IP groups, users, notifications, and system options. Section
+3 records each page as observed. This record adopts that information architecture where
+Sibuna has the same concept, replaces it where Sibuna's model differs (there are no per-site
+upstreams; there are surfaces, policies, and nodes), and adds what SafeLine does not have: a
+challenge funnel, cluster membership, campaign clustering, and a live transport.
 
 #callout([Reference material], [
-  SafeLine's console was studied from its public documentation, README screenshots, and
-  published walkthroughs (September 2026). The hosted demonstration at
-  `demo.waf.chaitin.com` could not be opened from the authoring environment because no
-  browser session was available; page names and panel contents below are taken from the
-  documentation, and no SafeLine markup, stylesheet, or code is reproduced or referenced.
+  SafeLine's console was studied on its hosted demonstration (`demo.waf.chaitin.com`,
+  community edition 9.4.1, Pro licence, 8 September 2026) page by page through a browser
+  session, and cross-checked against its documentation. The next section records what was
+  seen. No SafeLine markup, stylesheet, or code is reproduced or referenced; the record
+  adopts information architecture, not implementation.
 ], fill: amber-light, stroke: amber)
+
+= The Reference Interface, as Observed
+
+The demonstration console has a fixed left sidebar (Statistics, Applications, Attacks,
+Allow & Deny, HTTP Flood with Rate Limiting and Waiting Room, Anti-Bot, Auth, Settings; the
+version and support links at the bottom), a top bar with a breadcrumb, the licence badge, a
+community link, a theme toggle and a refresh button, and a page body. Every list page shares
+one grammar: a filter bar (address, application, port, date range), an auto-refresh selector
+that defaults to off, a refresh button, an export button where a log is involved, and a
+paginated table. Attack payloads are shown in a modal with a request and a response tab. The
+pages, in the order of the sidebar:
+
+#table(
+  columns: (0.9fr, 2.2fr, 1.9fr),
+  table.header([*SafeLine page*], [*What it shows*], [*Sibuna console equivalent*]),
+  [Statistics · Traffic Analysis], [Period and application selectors; tiles for requests, page views, unique visitors, unique addresses, blocked, blocking addresses, 4xx and 5xx counts with rates; a 3D or 2D globe of requests or blocks by country with a ranked country list; queries per second, request-status and blocking-status sparklines; top-five bars for client operating systems and browsers, response status codes, referring applications and pages, popular applications and pages], [*Statistics · Traffic*: the same tiles in Sibuna's vocabulary (requests, admitted, challenged, denied, banned addresses, origin 4xx and 5xx from relayed response heads), the choropleth, the live timeline, and the top-five panels fed by the traffic sample ring (section 8.4)],
+  [Statistics · Security Posture], [Tiles per protection module (attacks, allow and deny, rate limiting, waiting room, anti-bot, auth); a trend chart per module with its top source addresses; a real-time event feed with a module chip, name, and time; a web-attack donut; rule-hit, attacked-page, and attacked-application rankings], [*Statistics · Security*: tiles per Sibuna module (inspection, reputation, rate limiting, challenges, bans, honeypot); trend plus top addresses per module; the live event feed from the `events` topic; the attack-category donut; attacked paths],
+  [Statistics · Data Dashboard], [A full-screen "big screen" export with its own theme, title, and validity, for a wall display], [*Kiosk view*: a read-only full-screen statistics page reachable with a scoped viewer token],
+  [Applications], [One card per protected site (defense mode, host match, port and scheme, requests and blocks today, module chips) and a detail page with basic settings, upstream, forwarding rules, routings, per-site module toggles, per-site statistics, and access and error logs], [*Nodes*: Sibuna protects one origin per process, so the unit is the node, not the site; the card carries surface, upstream, listener, and the same request and block counts],
+  [Attacks · Events and Logs], [Events grouped by source address and application with attack count, duration, and start; raw logs with action, URL, attack type, address and country, time; detail modal with the type chip, URL, address with "add to IP group" and "IP info", the JA4 fingerprint, the payload location and value, module, time, id, a "deny" stamp, request and response tabs with charset selection, and "copy as cURL"], [*Attack events*: the same two views (grouped by source, raw) and the same detail modal; Sibuna adds the rule and score, the campaign, and similar incidents by vector search; JA4 is shown only when the ingress forwards it, because Sibuna does not terminate TLS],
+  [Attacks · Semantic Analysis], [A per-module mode matrix, each of fourteen detection modules set to disabled, audit, balance, or strict, with batch edit], [*Policy · Inspection*: per-category mode for Sibuna's categories (disabled, audit, enforce); balance and strict do not apply, since Sibuna's detectors have one calibrated threshold each],
+  [Allow & Deny], [Events and logs of rule hits; custom rules in whitelist and blacklist tabs with order, id, status, type, name, detail, hits today, creator, and update time], [*Policy · Rules* and *IP groups*: the ordered rules table with the same columns, and reputation prefixes as groups],
+  [HTTP Flood · Rate Limiting], [Per-address records with the triggering reason ("n requests within m seconds"), the action taken (an anti-bot challenge for a period), blocked count, start, and an unblock-all button; settings], [*Statistics · Security* rate-limit panel and *Policy · Limits*: GCRA is per node and configured by flags today; the console shows hits and offers the rate settings per rule in Phase 2],
+  [HTTP Flood · Waiting Room], [Per-application queue statistics: active users allowed, waiting, peak, average wait, bounce rate], [Not adopted: Sibuna's answer to overload is the proof-of-work challenge and the `503` connection bound, both already visible],
+  [Anti-Bot], [Per-address challenge records with hits and verified counts, duration, start; settings], [*Challenges*: the funnel and solve-time histogram, plus per-address records of issued, accepted, and rejected solutions with the rejection cause],
+  [Auth], [Login records per account, application, method, result, address, time; single sign-on centre; settings], [Not adopted as a data-plane feature; the console's own user and audit pages cover console access],
+  [Settings · Protections], [IP groups including a vendor-maintained malicious-address group and a search-engine group; a JA4 fingerprint database; TLS certificates; custom blocking pages per status code; performance mode; retention for logs and statistics; configuration synchronisation between a master and slave nodes with machine codes and sync status; notifications to Telegram, Discord, webhooks, and syslog; information-sharing programmes], [*Settings*: IP groups map to reputation prefixes; blocking and challenge pages become editable templates; retention as specified; synchronisation is replaced by the symmetric cluster of SID 0005 on the *Nodes* page; webhooks and syslog are adopted; no vendor feeds],
+  [Settings · Management], [Manager users with role, two-factor state, and last login; the API token; the console's own certificate; a proxy for outbound calls; system information and machine id], [*Settings · Users*, *API tokens*, and *About*; two-factor authentication by TOTP is adopted],
+  [Settings · System Log], [Console activity log], [*Audit*],
+)
+
+Three observations shaped the design more than any single page. First, every SafeLine list
+is polled (auto-refresh off by default) whereas the security-posture page has a "real-time
+events" feed; Sibuna makes every page live over one WebSocket and drops polling entirely.
+Second, SafeLine's statistics are dominated by traffic analytics (page views, visitors,
+referrers, popular pages) that a firewall can only compute by sampling the request stream;
+Sibuna adopts them through a bounded sample ring rather than by logging every request.
+Third, the detail modal is the page operators spend the most time in; Sibuna's version
+keeps its layout and adds what the engine knows and SafeLine cannot show: the rule, the
+score, the campaign, and the nearest incidents.
+
 
 The design follows the approach the zenfmt project uses for its server interface: a bounded
 service kernel over the standard library, an application layer that composes routing,
@@ -409,6 +451,10 @@ about firewalls.
   the interface module receives a CSRF token at login and sends it in `X-Console-CSRF` on
   every mutation; the WebSocket upgrade is accepted only when `Origin` matches the console's
   own host.
+- *Two-factor authentication* is optional per user and required for administrators when
+  the console is bound off loopback: time-based one-time passwords (RFC 6238, HMAC-SHA1 from
+  the standard library) enrolled through a QR code rendered by the interface module, with
+  ten single-use recovery codes stored as digests.
 - *API tokens* for automation are opaque 256-bit values with a printable id, a role, and an
   optional expiry, presented as `Authorization: Bearer`; they are hashed like sessions.
 - *Audit.* Every mutation writes one `console_audit` row (actor, role, action, subject,
@@ -451,7 +497,37 @@ wrong difficulty), and the distribution of solve times reported by the interstit
 causes from a small histogram the daemon already keeps per `explainProofError` outcome; solve
 times require one addition to the data plane, a 16-bucket logarithmic histogram of the
 `elapsed_ms` field the worker posts with its solution, updated with one atomic add per
-accepted solution. That single addition is the only data-plane change this record requests.
+accepted solution.
+
+== Traffic sampling and top-k rankings
+
+SafeLine's traffic analytics (client families, response status codes, referring pages,
+popular pages) need a view of ordinary requests, not only denied ones. Logging every request
+is out of the question on a data plane that serves 180,000 requests per second per node.
+Sibuna samples: the request path increments one atomic counter per request and, when the
+counter is a multiple of the sample interval (64 by default, configurable), copies a fixed
+256-byte record (timestamp, node, decision, method, path prefix, User-Agent family, Referer
+host, origin status when relayed, client country resolved later) into a lock-free
+single-producer-per-worker ring of 4,096 slots. The push is one compare-and-swap and one
+memcpy on the sampled request only and nothing on the other 63; the ring is drained by the
+console's sampler thread. Rankings are computed with the Space-Saving algorithm (Metwally,
+Agrawal, and El Abbadi, ICDT 2005) with 256 counters per kind, which bounds memory and gives
+the exact top-k for any key whose frequency exceeds $1/256$ of the samples; the top twenty per
+kind per minute are persisted in `topk_minutes`. Counts are shown scaled by the sample
+interval and labelled as sampled.
+
+== Data-plane changes this record requests
+
+The isolation contract forbids console code on the request path; the three additions below
+are data-plane code, reviewed as such, each one atomic operation per request or less:
+
++ the 16-bucket solve-time histogram above, one atomic add per accepted solution;
++ the traffic sample ring above, one atomic increment per request and one ring push per
+  sampled request;
++ per-category inspection modes (`disabled`, `audit`, `enforce`) carried by the policy
+  snapshot and applied by the storage thread at rebuild, so that the request path tests one
+  bitmask; `audit` records the incident and admits the request, which is how SafeLine's
+  observe mode behaves and what an operator needs to tune a rule without risk.
 
 == Cluster aggregation
 
@@ -531,6 +607,8 @@ Migrations are numbered in `schema.zig` and run in one transaction at console st
   [`console_settings`], [`key`, `value`, `updated_at`, `updated_by`; retention days, GeoIP source, notification webhooks],
   [`traffic_minutes`], [`node_id`, `minute` (epoch/60), the counters of section 8.1, `rss_kib`, `cpu_seconds`; primary key (`node_id`, `minute`)],
   [`challenge_minutes`], [`node_id`, `minute`, `issued`, `accepted`, `rejected_double_spend`, `rejected_fingerprint`, `rejected_expired`, `rejected_difficulty`, `solve_ms_buckets` (16 integers as JSON)],
+  [`topk_minutes`], [`node_id`, `minute`, `kind` (path, user_agent, referer, origin_status, client_os, client_browser), `key`, `sampled_count`; top twenty per kind per minute],
+  [`console_pages`], [`kind` (challenge, denied, rate_limited, banned, overloaded), `html`, `updated_at`, `updated_by`; operator-edited templates the data plane loads at engine rebuild],
   [`geoip_ranges`], [`start` (16-byte address as blob), `end`, `country` (ISO 3166-1 alpha-2); one row per range from the source CSV],
   [`geoip_meta`], [`source`, `licence`, `published`, `loaded_at`, `ranges`, `sha256`],
   [`nodes`], [`node_id`, `address`, `console_url`, `version`, `first_seen`, `last_seen`; written by each node at start and every minute],
@@ -624,14 +702,16 @@ same module natively and assert rendered HTML strings.
 #table(
   columns: (0.9fr, 3fr),
   table.header([*Page*], [*Panels*]),
-  [Setup and login], [First-run password change; login form; session expiry notices.],
-  [Statistics], [Period selector (live, 1 h, 24 h, 7 d, 30 d); tiles (requests, admitted, challenged, denied, banned addresses, nodes healthy); live timeline; attack-type donut; top source addresses; top countries with map; per-node breakdown table.],
-  [Attack events], [Live table with filter bar (node, category, rule, address, country, path, period); detail drawer (request head, decoded payload with matched structure highlighted, rule and score, campaign and its members, GeoIP, actions: ban, allow, add to group, copy as curl).],
-  [Challenges], [Funnel (issued, submitted, accepted, rejected by cause); solve-time histogram by algorithm and difficulty; adaptive-difficulty bump timeline; JavaScript-fallback share; per-rule challenge parameters.],
-  [Policy], [Ordered rules table with drag ordering, enable toggle, surface (Gate or Shield), thresholds; rule editor (form and JSON), pattern tester ("would this request be admitted, challenged, or denied, and by which rule"), import and export of the JSON file grammar; IP groups (reputation prefixes with score, expiry, trigger, source); GeoIP block builder.],
-  [Nodes], [Member cards with role, health, version, sparklines; per-node drain and clear-bans; replication lag; the sticky-routing and local-limit notices.],
+  [Setup and login], [First-run password change; login form with the optional one-time code; session expiry notices.],
+  [Statistics · Traffic], [Period selector (live, 1 h, 24 h, 7 d, 30 d) and node selector; tiles (requests, admitted, challenged, denied, banned addresses, origin 4xx and 5xx with rates, nodes healthy); live timeline (allowed, challenged, denied); queries-per-second, request-status and blocking-status sparklines; choropleth with ranked countries (requests or denials); top-five panels: client operating systems, browsers, response status, referring hosts, popular paths, all marked as sampled.],
+  [Statistics · Security], [Tiles per module (inspection, reputation, rate limiting, challenges, bans, honeypot); a trend chart per module with its top source addresses; the live event feed; attack-category donut; attacked paths; rule hits.],
+  [Kiosk], [The traffic and security panels in a full-screen, read-only, auto-cycling layout for a wall display, reached with a scoped viewer token and no session.],
+  [Attack events], [Grouped view (source address, country, node, attack count, first and last seen) and raw view (action, URL, category, rule, address, time, detail); filter bar (node, category, rule, address, country, path, period); export; detail modal (category chip, URL, address with country and "ban", "allow", "add to group", "address info" actions, JA4 when forwarded by the ingress, payload location and decoded value with the matched structure highlighted, rule and score, campaign and its members, similar incidents, request and response heads with charset selection, "copy as cURL").],
+  [Challenges], [Funnel (issued, submitted, accepted, rejected by cause); solve-time histogram by algorithm and difficulty; adaptive-difficulty bump timeline; JavaScript-fallback share; per-address records (issued, accepted, rejected, cause, duration, start); per-rule challenge parameters.],
+  [Policy], [Rules table with drag ordering, enable toggle, type (allow, deny, challenge, weigh), name, match summary, hits today, creator, updated; rule editor (form and JSON); pattern tester; import and export; inspection mode matrix per category (disabled, audit, enforce); limits (rate, window, ban seconds); IP groups (reputation prefixes with score, expiry, trigger, source, hits); GeoIP block builder.],
+  [Nodes], [Member cards with surface, upstream, listener, role, health, version, requests and blocks today, sparklines; per-node drain and clear-bans; replication lag; the sticky-routing and local-limit notices.],
   [GeoIP], [Source, licence, published date, ranges loaded, last update, update button, attribution text.],
-  [Settings], [Users and roles; API tokens; retention (minutes, incidents, audit); notification webhooks (deny spike, ban, node unhealthy, leader change); console binding and proxy facts (read-only).],
+  [Settings], [Users (role, two-factor state, last login); API tokens; pages (challenge, denied, rate limited, banned, overloaded templates with preview); retention (minutes, incidents, audit, samples); notifications (webhooks, syslog; events: denial spike, ban, node unhealthy, leader change); about (version, node id, build, binding and proxy facts).],
   [Audit], [Append-only log with actor, action, subject, before and after, filterable and exportable.],
 )
 
@@ -660,53 +740,122 @@ wire(170, 80, H => {
   content((85, H - 74), text(size: 5pt, fill: gray)[Five attempts per minute per address · sessions expire after 30 idle minutes])
 }))
 
-#figure-box([Statistics, the landing page. Tiles update every second; the timeline shows the
-selected period with the live second at the right edge; the map colours countries by denied
-requests.],
-wire(170, 125, H => {
+#figure-box([Statistics · Traffic, the landing page. Tiles update every second; the timeline
+shows the selected period with the live second at the right edge; the choropleth colours
+countries by denied requests; the bottom panels are fed by the sample ring and say so.],
+wire(170, 150, H => {
   import cetz.draw: *
   shell(H, 170, "Statistics")
   content((29, H - 12), anchor: "west", text(size: 6.5pt, weight: "bold")[Statistics])
-  panel(H, 120, 9.5, 48, 5, [live · 1h · 24h · 7d · 30d], size: 5pt)
-  let tiles = (("1.28 M", "requests 24 h"), ("1.19 M", "admitted"), ("64 k", "challenged"), ("21 k", "denied"), ("312", "banned addresses"), ("3 / 3", "nodes healthy"))
+  panel(H, 60, 9.5, 42, 5, [TRAFFIC · SECURITY · KIOSK ↗], size: 5pt)
+  panel(H, 106, 9.5, 30, 5, [all nodes ▾], size: 5pt)
+  panel(H, 138, 9.5, 30, 5, [live · 1h · 24h · 7d · 30d], size: 5pt)
+  let tiles = (("1.28 M", "requests 24 h"), ("1.19 M", "admitted"), ("64 k", "challenged"), ("21 k", "denied"), ("312", "banned addresses"), ("2.1 % · 0.3 %", "origin 4xx · 5xx"))
   for (i, t) in tiles.enumerate() {
     tile(H, 28 + i * 23.5, 16, 22, 13, t.at(0), t.at(1))
   }
-  panel(H, 28, 32, 92, 40, [requests per second · allowed / challenged / denied (stacked)], size: 5.5pt)
-  line_chart(H, 30, 38, 88, 32, series: 3)
-  panel(H, 123, 32, 45, 40, [attack types], size: 5.5pt)
-  donut(H, 128, 40, 11)
+  panel(H, 28, 32, 92, 36, [requests per second · allowed / challenged / denied (stacked)], size: 5.5pt)
+  line_chart(H, 30, 38, 88, 28, series: 3)
+  panel(H, 123, 32, 45, 11, [queries per second · 2,140], size: 5pt)
+  line_chart(H, 124, 36, 43, 6, series: 1)
+  panel(H, 123, 44.5, 45, 11, [request status · max 264], size: 5pt)
+  line_chart(H, 124, 48.5, 43, 6, series: 1)
+  panel(H, 123, 57, 45, 11, [blocking status · max 18], size: 5pt)
+  line_chart(H, 124, 61, 43, 6, series: 1)
+  panel(H, 28, 71, 60, 40, [geo location · requests ○ denied ●], size: 5.5pt)
+  panel(H, 30, 77, 34, 32, none, bg: rgb("f8fafc"))
+  content((47, H - 93), text(size: 5pt, fill: gray)[choropleth])
+  for (i, c) in (("CN", 18), ("US", 14), ("RU", 10), ("BR", 7), ("DE", 4)).enumerate() {
+    bar_row(H, 66, 79 + i * 5, c.at(1), c.at(0))
+  }
+  panel(H, 91, 71, 37, 40, [attack types], size: 5.5pt)
+  donut(H, 95, 78, 9)
   for (i, l) in ("sqli 48%", "xss 22%", "traversal 17%", "rce 9%", "honeypot 4%").enumerate() {
-    content((153, H - 41 - i * 5), anchor: "west", text(size: 5pt, fill: ink)[#l])
+    content((116, H - 79 - i * 4.5), anchor: "west", text(size: 4.5pt, fill: ink)[#l])
   }
-  panel(H, 28, 75, 60, 46, [top source addresses], size: 5.5pt)
-  table_rows(H, 29, 80, 58, 7, (([address], 20), ([country], 12), ([denied], 12), ([action], 12)))
-  panel(H, 91, 75, 77, 46, [top countries · denied requests], size: 5.5pt)
-  for (i, c) in (("CN", 40), ("US", 31), ("RU", 22), ("BR", 15), ("DE", 9), ("IN", 7)).enumerate() {
-    bar_row(H, 93, 83 + i * 5, c.at(1), c.at(0))
+  panel(H, 131, 71, 37, 40, [top source addresses], size: 5.5pt)
+  table_rows(H, 132, 76, 35, 7, (([address], 16), ([denied], 9), ([action], 9)))
+  panel(H, 28, 114, 34, 33, [response status (sampled)], size: 5pt)
+  for (i, c) in (("200", 30), ("404", 8), ("403", 6), ("429", 2), ("502", 1)).enumerate() {
+    bar_row(H, 30, 121 + i * 4.8, c.at(1) * 0.3, c.at(0))
   }
-  panel(H, 128, 80, 38, 38, none, bg: rgb("f8fafc"))
-  content((147, H - 99), text(size: 5pt, fill: gray)[world map (choropleth)])
+  panel(H, 64, 114, 34, 33, [clients (sampled)], size: 5pt)
+  for (i, c) in (("Chrome", 26), ("Firefox", 9), ("Safari", 7), ("curl", 3), ("Python", 2)).enumerate() {
+    bar_row(H, 66, 121 + i * 4.8, c.at(1) * 0.3, c.at(0))
+  }
+  panel(H, 100, 114, 34, 33, [popular paths (sampled)], size: 5pt)
+  for (i, c) in (("/", 24), ("/blog", 11), ("/api/v1", 8), ("/search", 5), ("/login", 3)).enumerate() {
+    bar_row(H, 102, 121 + i * 4.8, c.at(1) * 0.3, c.at(0))
+  }
+  panel(H, 136, 114, 32, 33, [referring hosts (sampled)], size: 5pt)
+  for (i, c) in (("direct", 22), ("news.ycombinator", 6), ("google", 5), ("t.co", 2), ("mastodon", 1)).enumerate() {
+    bar_row(H, 138, 121 + i * 4.8, c.at(1) * 0.35, c.at(0))
+  }
 }))
 
-#figure-box([Attack events with the detail drawer open. The table is virtualised and streams new
-rows at the top while a filter is active; the drawer shows the decoded payload with the
-matched structure highlighted and offers the audited actions.],
-wire(170, 120, H => {
+#figure-box([Statistics · Security: one tile and one trend per module, the live event feed,
+and the rankings that answer "what was attacked".],
+wire(170, 118, H => {
+  import cetz.draw: *
+  shell(H, 170, "Statistics")
+  content((29, H - 12), anchor: "west", text(size: 6.5pt, weight: "bold")[Statistics])
+  panel(H, 60, 9.5, 42, 5, [TRAFFIC · SECURITY · KIOSK ↗], size: 5pt)
+  let tiles = (("21 k", "inspection denials"), ("1,204", "reputation hits"), ("3,318", "rate limited"), ("64 k", "challenges"), ("312", "bans"), ("41", "honeypot"))
+  for (i, t) in tiles.enumerate() {
+    tile(H, 28 + i * 16, 16, 15, 12, t.at(0), t.at(1))
+  }
+  for (i, m) in ("inspection trend · top addresses", "rate limiting trend · top addresses", "challenges trend · failed solvers").enumerate() {
+    let y = 31 + i * 26
+    panel(H, 28, y, 66, 24, [#m], size: 5pt)
+    line_chart(H, 30, y + 5, 38, 17, series: 1)
+    table_rows(H, 70, y + 5, 23, 4, (([address], 14), ([n], 6)))
+  }
+  panel(H, 97, 31, 71, 40, [real-time events], size: 5.5pt)
+  for (i, e) in (("inspection", "sqli · node 2 · 198.51.100.7", "12:41:07"), ("honeypot", "ban · node 1 · 203.0.113.9", "12:41:02"), ("rate limit", "429 · node 3 · 192.0.2.44", "12:40:58"), ("challenge", "rejected · double spend", "12:40:51"), ("reputation", "deny prefix 2001:db8::/32", "12:40:40"), ("inspection", "xss · node 1 · 198.51.100.7", "12:40:33")).enumerate() {
+    let y = 37 + i * 5.3
+    rect((99, H - y - 3.6), (114, H - y - 0.4), stroke: 0.3pt + blue, fill: blue-light, radius: 0.8)
+    content((106.5, H - y - 2), text(size: 4.3pt, fill: blue)[#e.at(0)])
+    content((116, H - y - 2), anchor: "west", text(size: 4.5pt, fill: ink)[#e.at(1)])
+    content((166, H - y - 2), anchor: "east", text(size: 4.3pt, fill: gray)[#e.at(2)])
+  }
+  panel(H, 97, 74, 34, 40, [attack categories], size: 5.5pt)
+  donut(H, 101, 82, 9)
+  for (i, l) in ("sqli 48%", "xss 22%", "traversal 17%", "rce 9%", "honeypot 4%").enumerate() {
+    content((122, H - 82 - i * 4.5), anchor: "west", text(size: 4.5pt, fill: ink)[#l])
+  }
+  panel(H, 134, 74, 34, 40, [attacked paths · rule hits], size: 5.5pt)
+  for (i, c) in (("/search", 22), ("/login", 12), ("/.git/config", 9), ("/wp-admin", 6), ("/api/v1", 3)).enumerate() {
+    bar_row(H, 136, 82 + i * 5, c.at(1) * 0.5, c.at(0))
+  }
+}))
+
+#figure-box([Attack events with the detail modal open over the raw view. The list streams new
+rows at the top while a filter is active; the modal keeps the layout operators know from
+SafeLine and adds the rule, the score, the campaign, and the nearest incidents.],
+wire(170, 125, H => {
   import cetz.draw: *
   shell(H, 170, "Attack events")
   content((29, H - 12), anchor: "west", text(size: 6.5pt, weight: "bold")[Attack events])
-  panel(H, 28, 15, 90, 6, [node ▾  category ▾  rule ▾  address  country ▾  path  period ▾  ● live], size: 5pt)
-  table_rows(H, 28, 23, 90, 22, (([time], 14), ([node], 8), ([source], 18), ([cat.], 12), ([rule], 14), ([path], 14), ([action], 8)))
-  panel(H, 121, 10, 47, 108, none, bg: rgb("fcfcfd"))
-  content((123, H - 14), anchor: "west", text(size: 6pt, weight: "bold")[waf:sqli · node 2 · 12:41:07])
-  panel(H, 123, 18, 43, 12, [source 198.51.100.7 · CN · campaign 41 (3)], size: 5pt)
-  panel(H, 123, 32, 43, 22, [GET /search?q=%27%20OR%201%3D1-- #linebreak() decoded: ' OR 1=1-- #linebreak() quote · keyword OR · tautology 1=1], size: 5pt)
-  panel(H, 123, 56, 43, 18, [request head (User-Agent, Accept, …)], size: 5pt)
-  panel(H, 123, 76, 43, 16, [similar incidents (vector search) · 3 rows], size: 5pt)
-  panel(H, 123, 95, 20, 7, [Ban 24 h], bg: rgb("fef2f2"), weight: "bold", size: 5.5pt)
-  panel(H, 145, 95, 21, 7, [Allow], size: 5.5pt)
-  panel(H, 123, 104, 43, 7, [Add to group ▾ · Copy as curl], size: 5.5pt)
+  panel(H, 75, 9.5, 30, 5, [BY SOURCE · RAW], size: 5pt)
+  panel(H, 28, 16, 140, 6, [node ▾  category ▾  rule ▾  address  country ▾  path  period ▾  ● live   export ↓], size: 5pt)
+  table_rows(H, 28, 24, 140, 10, (([action], 10), ([URL], 46), ([category], 14), ([rule], 18), ([address · country], 26), ([time], 18), ([], 8)))
+  // modal
+  rect((40, 4), (160, H - 20), stroke: 0.5pt + ink, fill: white)
+  rect((42, H - 22 - 3.5), (56, H - 22), stroke: none, fill: rgb("fef2f2"), radius: 0.8)
+  content((49, H - 23.8), text(size: 4.5pt, weight: "bold", fill: red)[waf:sqli])
+  content((58, H - 23.8), anchor: "west", text(size: 5pt, fill: ink)[GET /search?q=%27%20OR%201%3D1-- · node 2 · 2026-09-08 12:41:07])
+  for (i, r) in (("address", "198.51.100.7 · CN   Ban 24 h · Allow · Add to group · Address info"), ("JA4 (from ingress)", "t13d1517h2_8daaf6152771_a323378790d4"), ("payload", "QUERY q · decoded: ' OR 1=1--   quote · keyword OR · tautology 1=1"), ("rule · score", "waf:sqli (terminal) · score 4 of 4"), ("campaign", "41 · 3 incidents · nearest: 12:38:51 node 1 (0.12), 11:02:10 node 3 (0.21)"), ("id", "node 2 · seq 88,412")).enumerate() {
+    let y = 28 + i * 5.2
+    content((43, H - y - 2), anchor: "west", text(size: 4.5pt, fill: gray)[#r.at(0)])
+    content((66, H - y - 2), anchor: "west", text(size: 4.5pt, fill: ink)[#r.at(1)])
+  }
+  panel(H, 42, 61, 116, 5, [REQUEST · RESPONSE                                   UTF-8 ▾], size: 4.5pt)
+  panel(H, 42, 67, 116, 30, none, bg: rgb("f8fafc"))
+  for (i, l) in ("GET /search?q=%27%20OR%201%3D1-- HTTP/1.1", "Host: shop.example", "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) …", "Accept: text/html,application/xhtml+xml,*/*;q=0.8", "Cookie: __sibuna_token=…", "X-Sibuna-Status: DENY · X-Sibuna-Rule: waf:sqli").enumerate() {
+    content((44, H - 70 - i * 4.2), anchor: "west", text(size: 4.3pt, font: "DejaVu Sans Mono", fill: ink)[#l])
+  }
+  panel(H, 42, 99, 22, 5, [Copy as cURL], size: 4.5pt)
+  panel(H, 138, 99, 20, 5, [Close], bg: blue-light, weight: "bold", size: 4.5pt)
 }))
 
 #figure-box([Policy: the ordered rules table and the editor. The tester on the right evaluates a
@@ -754,21 +903,24 @@ wire(170, 100, H => {
   panel(H, 28, 80, 140, 14, [Challenge verification is issuer-bound: route a solver's fetch and verify to the same node. Rate limits and spent sets are per node.], bg: amber-light, size: 5pt)
 }))
 
-#figure-box([Settings: users and roles, API tokens, retention, notifications, GeoIP.],
-wire(170, 100, H => {
+#figure-box([Settings: users with two-factor state, API tokens, page templates, retention,
+notifications, GeoIP, and about.],
+wire(170, 110, H => {
   import cetz.draw: *
   shell(H, 170, "Settings")
   content((29, H - 12), anchor: "west", text(size: 6.5pt, weight: "bold")[Settings])
-  panel(H, 28, 15, 140, 5.5, [Users · API tokens · Retention · Notifications · GeoIP · About], size: 5pt)
-  table_rows(H, 28, 24, 90, 6, (([user], 26), ([role], 18), ([last login], 24), ([state], 14), ([], 8)))
-  panel(H, 121, 24, 47, 34, none, bg: rgb("fcfcfd"))
+  panel(H, 28, 15, 140, 5.5, [USERS · API TOKENS · PAGES · RETENTION · NOTIFICATIONS · GEOIP · ABOUT], size: 5pt)
+  table_rows(H, 28, 24, 90, 5, (([user], 22), ([role], 16), ([2FA], 12), ([last login], 24), ([state], 10), ([], 6)))
+  panel(H, 121, 24, 47, 30, none, bg: rgb("fcfcfd"))
   content((123, H - 28), anchor: "west", text(size: 6pt, weight: "bold")[Add user])
-  for (i, f) in ("name", "role: viewer ▾", "temporary password").enumerate() {
-    panel(H, 123, 32 + i * 6.5, 43, 5.5, [#f], size: 5pt)
+  for (i, f) in ("name", "role: viewer ▾", "temporary password", "require two-factor ☑").enumerate() {
+    panel(H, 123, 32 + i * 5.2, 43, 4.6, [#f], size: 4.8pt)
   }
-  panel(H, 123, 52, 20, 5.5, [Create], bg: blue-light, weight: "bold", size: 5.5pt)
-  panel(H, 28, 62, 68, 32, [Retention #linebreak() minutes 90 d · incidents 30 d · audit 365 d], size: 5pt)
-  panel(H, 99, 62, 69, 32, [GeoIP #linebreak() DB-IP Lite · 2026-09 · 318,402 ranges · loaded 2026-09-08 #linebreak() Update now · attribution shown in footer], size: 5pt)
+  panel(H, 28, 58, 45, 24, [Pages #linebreak() challenge · denied · rate limited · banned · overloaded #linebreak() edit template · preview · reset], size: 5pt)
+  panel(H, 76, 58, 45, 24, [Retention #linebreak() minutes 90 d · incidents 30 d · audit 365 d · samples 7 d], size: 5pt)
+  panel(H, 124, 58, 44, 24, [Notifications #linebreak() webhook · syslog · events: denial spike, ban, node unhealthy, leader change], size: 5pt)
+  panel(H, 28, 85, 68, 22, [GeoIP #linebreak() DB-IP Lite · 2026-09 · 318,402 ranges · loaded 2026-09-08 #linebreak() Update now · attribution shown in footer], size: 5pt)
+  panel(H, 99, 85, 69, 22, [About #linebreak() v0.3.0 · node 1 · cluster edge-eu · bound 127.0.0.1:9443 behind proxy #linebreak() build 2c9e258 · storage v0.6.1], size: 5pt)
 }))
 
 = The Build Pipeline
@@ -840,8 +992,9 @@ the committed stylesheet.
 #phase("Phase 2: Events, policy, challenges, GeoIP")[
   The incident tap and `events` topic with the detail drawer and actions; the policy editor,
   tester, import and export, and IP groups over `policies` and `ip_reputation`; the challenge
-  funnel with the one data-plane histogram addition; the GeoIP loader, lookup, map, and
-  country actions; retention.
+  funnel with the solve-time histogram; the traffic sample ring, Space-Saving rankings and the
+  sampled panels; per-category inspection modes; the GeoIP loader, lookup, map, and country
+  actions; retention.
 ]
 #phase("Phase 3: Cluster")[
   The `nodes` table and page, health probes, node-to-node live buckets, leader awareness,
@@ -849,9 +1002,10 @@ the committed stylesheet.
   `benchmarks/cluster.py`.
 ]
 #phase("Phase 4: Operations")[
-  API tokens, notification webhooks, exports, the audit page, dark theme polish, keyboard
-  navigation and screen-reader labels, and the operator guide in the book (a new chapter in
-  Part IX with the wireframes replaced by screenshots of the built console).
+  API tokens, two-factor authentication, notification webhooks and syslog, exports, editable
+  page templates, the kiosk view, the audit page, dark theme polish, keyboard navigation and
+  screen-reader labels, and the operator guide in the book (a new chapter in Part IX with the
+  wireframes replaced by screenshots of the built console).
 ]
 
 = Verification
@@ -888,8 +1042,14 @@ the committed stylesheet.
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
   inspection), SID 0005 (Zaxonlite storage), SID 0006 (mathematical foundations).
-- Chaitin SafeLine, community edition documentation and README, September 2026: console
-  pages "Statistics", "Attack Events", "Applications", "Protection", "Settings".
+- Chaitin SafeLine 9.4.1, hosted demonstration console observed on 8 September 2026
+  (Statistics with Traffic Analysis, Security Posture and Data Dashboard; Applications;
+  Attacks with Events, Logs, Semantic Analysis and Enhanced Rules; Allow & Deny; HTTP Flood;
+  Anti-Bot; Auth; Settings), and its documentation.
+- Metwally, A., Agrawal, D., and El Abbadi, A. "Efficient computation of frequent and top-k
+  elements in data streams." _ICDT_, 2005 (the Space-Saving algorithm).
+- M'Raihi, D., Machani, S., Pei, M., and Rydell, J. _TOTP: Time-Based One-Time Password
+  Algorithm_, RFC 6238. IETF, 2011.
 - zenfmt ZDS 0016, "The zenfmt server": the service kernel, the interface module and glue,
   the event hub, and the vendored stylesheet policy that this record adapts.
 - Zig 0.16 standard library: `std.http.Server` (`receiveHead`, `respond`,
