@@ -3,12 +3,14 @@ const State = @import("state.zig").State;
 const Writer = std.Io.Writer;
 
 pub fn render(state: *const State, w: *Writer) Writer.Error!void {
+    if (state.phase == .geoip) return @import("geoip_page.zig").render(state, w);
     if (state.phase != .dashboard) return authentication(state, w);
     try w.writeAll("<div class=\"sb-shell\">" ++
         "<nav class=\"sb-nav\" aria-label=\"Main navigation\">" ++
         "<div><a class=\"sb-brand\" href=\"/console/\">SIBUNA</a>" ++
         "<p class=\"sb-caption\">SECURITY CONSOLE</p></div>" ++
         "<button class=\"btn btn-ghost\" aria-current=\"page\">Statistics</button>" ++
+        "<button class=\"btn btn-ghost\" data-action=\"geoip\">GeoIP</button>" ++
         "<button class=\"btn btn-ghost\" data-action=\"account\">Account</button>" ++
         "<button class=\"btn btn-ghost\" data-action=\"logout\">Sign out</button></nav>" ++
         "<main class=\"sb-main\"><header class=\"sb-header\"><div>" ++
@@ -24,16 +26,15 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     try w.writeAll("</button><button class=\"btn btn-sm\" data-action=\"theme\">Theme</button>" ++
         "</div></header>");
     try message(state, w);
+    if (state.stats != null and (state.stale or state.paused)) {
+        try w.print("<p class=\"sb-note\" role=\"status\">Last update {d} seconds ago.</p>", .{
+            state.browser_time -| state.received_at,
+        });
+    }
     try tiles(state, w);
-    try w.writeAll("<section class=\"sb-panels\"><article class=\"sb-panel\">" ++
-        "<h2>Live earth globe</h2><svg viewBox=\"0 0 400 280\" role=\"img\" " ++
-        "aria-label=\"Earth outline. Country data unavailable.\">" ++
-        "<circle cx=\"200\" cy=\"135\" r=\"110\" fill=\"#e7f1fc\" stroke=\"#94b6d5\"/>" ++
-        "<ellipse cx=\"200\" cy=\"135\" rx=\"55\" ry=\"110\" fill=\"none\" stroke=\"#bdd3e8\"/>" ++
-        "<ellipse cx=\"200\" cy=\"135\" rx=\"110\" ry=\"35\" fill=\"none\" stroke=\"#bdd3e8\"/>" ++
-        "</svg><p class=\"sb-note\">GeoIP unavailable. Traffic is counted as Unknown; " ++
-        "no locations are inferred.</p></article><article class=\"sb-panel\">" ++
-        "<h2>Request timeline</h2>");
+    try w.writeAll("<section class=\"sb-panels\"><article class=\"sb-panel\">");
+    try @import("globe.zig").render(state, w);
+    try w.writeAll("</article><article class=\"sb-panel\"><h2>Request timeline</h2>");
     try timeline(state, w);
     try w.writeAll("<p class=\"sb-note\">External request outcomes per observed interval. " ++
         "Internal endpoints are excluded. Gaps remain unobserved.</p>" ++
@@ -64,7 +65,7 @@ fn authentication(state: *const State, w: *Writer) Writer.Error!void {
     }
     const form = switch (state.phase) {
         .setup => "setup",
-        .password => "password",
+        .password => "change-password",
         else => "login",
     };
     try w.print("<form id=\"{s}\">", .{form});

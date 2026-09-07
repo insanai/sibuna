@@ -5,11 +5,13 @@ const encoder = new TextEncoder();
 const module = await WebAssembly.instantiateStreaming(fetch("/console/assets/console.wasm"), {});
 const wasm = module.instance.exports;
 let socket;
+let geometryController;
 const timers = new Map();
 function read(pointer, length) {
   return decoder.decode(new Uint8Array(wasm.memory.buffer, pointer, length));
 }
 function event(kind, value) {
+  value.browser_time = Math.floor(Date.now() / 1000);
   const bytes = encoder.encode(JSON.stringify(value));
   if (bytes.length > wasm.sb_input_capacity()) return;
   new Uint8Array(wasm.memory.buffer, wasm.sb_input(), bytes.length).set(bytes);
@@ -48,6 +50,20 @@ async function run(command) {
     } catch {
       event(2, {id: command.id, status: 0, body: {}});
     }
+  } else if (command.op === "geometry") {
+    try {
+      geometryController?.abort();
+      geometryController = new AbortController();
+      const response = await fetch(command.path, {
+        credentials: "same-origin", signal: geometryController.signal,
+      });
+      if (!response.ok) throw new Error("Geometry unavailable");
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      if (bytes.length > wasm.sb_geometry_capacity()) throw new Error("Geometry too large");
+      new Uint8Array(wasm.memory.buffer, wasm.sb_geometry_input(), bytes.length).set(bytes);
+      wasm.sb_geometry_loaded(bytes.length);
+    } catch { wasm.sb_geometry_loaded(0); }
+    flush();
   } else if (command.op === "timer") {
     clearTimeout(timers.get(command.id));
     timers.set(command.id, setTimeout(() => event(3, {id: command.id}), command.delay_ms));
@@ -65,6 +81,7 @@ async function run(command) {
   } else if (command.op === "send") {
     if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(command.body));
   } else if (command.op === "disconnect") {
+    geometryController?.abort();
     if (socket) { socket.onclose = null; socket.close(); socket = undefined; }
     for (const timer of timers.values()) clearTimeout(timer);
     timers.clear();
@@ -80,5 +97,6 @@ root.addEventListener("click", e => {
   const button = e.target.closest("[data-action]");
   if (button) event(1, {action: button.dataset.action, fields: {}});
 });
+document.addEventListener("visibilitychange", () => event(5, {hidden: document.hidden}));
 wasm.sb_init();
 flush();

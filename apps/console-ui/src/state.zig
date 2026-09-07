@@ -1,5 +1,5 @@
 const p = @import("console_protocol");
-pub const Phase = enum { loading, setup, login, password, dashboard };
+pub const Phase = enum { loading, setup, login, password, dashboard, geoip };
 pub const State = struct {
     phase: Phase = .loading,
     message: p.Bytes(256) = .{},
@@ -13,8 +13,18 @@ pub const State = struct {
     sequence: u64 = 0,
     reconnect_ms: u32 = 1000,
     paused: bool = false,
+    hidden: bool = false,
+    browser_time: u64 = 0,
+    received_at: u64 = 0,
     stale: bool = false,
     dark: bool = false,
+    geometry: ?[]const u8 = null,
+    geometry_busy: bool = false,
+    globe: @import("geography.zig").View = .{},
+    geo: p.geo.Metadata = .{},
+    geo_status: p.Bytes(16) = .{},
+    geo_progress: u32 = 0,
+    geo_importing: bool = false,
     stats: ?p.StatsSnapshot = null,
     points: [60]struct { second: u64 = 0, count: u64 = 0 } = @splat(.{}),
 };

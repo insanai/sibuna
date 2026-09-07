@@ -12,7 +12,10 @@ source is already generalized; coordinates are quantized to hundredths of a degr
 consecutive duplicates removed. Rings retain closure and holes. `ISO_A2_EH` supplies country
 codes; unavailable codes use `ZZ` and are never assigned traffic counts.
 
-Binary version 1: ASCII `SBG1`, little-endian `u16` ring count, then each ring's two ASCII
+Binary version 2: ASCII `SBG2`, little-endian `u16` center count and ring count, then
+the center records (two ASCII country bytes plus signed little-endian `i16` longitude/latitude).
+Centers use the publisher’s `LABEL_X`/`LABEL_Y` representative country positions.
+Each ring then contains two ASCII
 country bytes, little-endian `u16` point count, and signed little-endian `i16` longitude,
 latitude pairs in hundredths of a degree. Bounds: 1,024 rings, 16,384 vertices, 128 KiB file.
 Geometry is a separate authenticated asset, never part of the authentication Wasm module.

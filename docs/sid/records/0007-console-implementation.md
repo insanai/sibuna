@@ -138,3 +138,60 @@ Next implementation work: finish daemon composition and lifecycle, connect the m
 `Persistent` with bounded prepared queries and migrations, then implement authentication and
 live transport before building the authenticated GeoIP dashboard. Later workflow and cluster
 stages remain required; these commits do not deliver the complete SID 0007 console.
+
+### Live daemon and initial interface (2026-09-08)
+
+- Persistent now executes bounded prepared console operations through the owned mailbox.
+  Bootstrap, password hashing, sessions, CSRF, password changes, and revision revocation
+  are connected to the opt-in listener. Off-loopback startup remains unavailable until
+  mandatory TOTP and proxy authorization are implemented.
+- The Zig/Wasm authentication and initial statistics dashboard compile with committed
+  Tailwind/daisyUI CSS. `console-assets` regenerates assets and `console-assets-check`
+  verifies them without npm. The globe currently shows an honest unavailable outline.
+- Real-daemon E2E tests exercise setup, failed/successful login, CSRF rejection, durable
+  restart, fragmented WebSocket subscriptions, interleaved ping/pong, unsolicited updates,
+  and sign-out revocation. Native tests prevent forced password changes from opening streams.
+- Exact external outcome counters and sampled request records are compiled out when console
+  support is disabled. A bounded background collector drains samples at 4 Hz. Existing
+  Prometheus counter meanings are preserved. Benchmarks were regenerated after instrumentation;
+  these subsystem results do not establish the console impact acceptance gate.
+- Incremental Chrome review exercised setup, sign-in, live traffic (12 requests/12 challenges),
+  pause/resume, theme switching, 390 px mobile layout and sign-out. Fixed an observed light-theme
+  contrast defect. Full UI/accessibility/browser acceptance remains open for later workflows.
+- `zig build test console-test fmt sid` passed with 120 tests for the initial interface;
+  subsequent focused collector, account-boundary and GeoIP parser checks extend that coverage.
+  The older evidence above records the state at those earlier commits, not current feature support.
+- Work remains on durable GeoIP activation, geography, minute history, complete authentication,
+  event/policy/challenge workflows, cluster/operational features, and release performance gates.
+  SID 0007 remains Proposed; no feature-complete or full browser-acceptance claim is made.
+
+### Country import and globe verification (2026-09-08)
+
+- Added a pinned Natural Earth 5.1.2 geographic binary with representative country centers,
+  strict decoder bounds, native orthographic/horizon/seam tests, and an authenticated asset route.
+- DB-IP gzip imports bound compressed bytes (16 MiB), expanded bytes (128 MiB), source rows
+  (1,048,576), line length (128 bytes), and native generation allocations. CRC/size, optional
+  operator SHA-256, address ordering, overlaps and country codes are checked before activation.
+  The full September 2026 file validated and imported in the browser: 717,152 known ranges;
+  compressed SHA-256 `a32bb3c384bd3de60ad9024596aa5b395a6dd5beaa27a7223407cc2edc681d0b`.
+- Unknown provider super-ranges exposed an IPv4-mapping edge case; source ordering is validated
+  before explicitly Unknown ranges are omitted. Full-size browser testing exposed a narrow
+  inferred integer in 100-range batch packing; explicit sizing and a 200-range E2E regression
+  now cover that path. Interrupted same-digest imports replay only identical immutable chunks
+  under current authorization.
+- One background importer publishes through Persistent, with bounded chunks and atomic activation
+  audit. Native lookup uses the restored immutable active generation. The collector now reports
+  rolling country samples, Unknown and Other totals alongside exact request outcome counters.
+- Chrome verified the full HTTPS import, geographic activation, 2,048 controlled requests / 2,048
+  challenges, 33 observed country samples with zero sample loss, country centering, rotation,
+  pause with stale age, and the flat map at 390 px width. Values are observed test results,
+  not sampling or performance guarantees.
+- `zig build test` reached 130 passing tests; storage-off and console-off matrices passed 89 and
+  93 tests respectively. The full release gates and all later SID workflows remain open.
+- Storage completion notifications replace 10 ms caller polling while pinning waiter ownership;
+  shutdown/cancellation cannot recycle an event still referenced by its caller. A full local
+  generation restart became HTTP-ready in 15.6 seconds (one observation, not a performance gate).
+- Browser verification after restart confirmed the active 717,152-range generation, restored
+  authenticated subscriptions, labelled password fields, password change/session revocation,
+  and successful login with the replacement password. Geographic markers are clipped at the
+  visible globe horizon; returning to a visible GeoIP page refreshes import status.

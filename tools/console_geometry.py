@@ -15,11 +15,15 @@ def build(path):
     if hashlib.sha256(data).hexdigest() != SOURCE_SHA256:
         raise SystemExit("Natural Earth source checksum mismatch")
     rings = []
+    centers = {}
     vertices = 0
     for feature in json.loads(data)["features"]:
         code = feature["properties"]["ISO_A2_EH"]
         if len(code) != 2 or not code.isascii() or not code.isalpha():
             code = "ZZ"
+        props = feature["properties"]
+        if code != "ZZ":
+            centers[code] = (round(props["LABEL_X"] * 100), round(props["LABEL_Y"] * 100))
         geometry = feature["geometry"]
         polygons = geometry["coordinates"]
         if geometry["type"] == "Polygon":
@@ -42,7 +46,9 @@ def build(path):
                 vertices += len(points)
                 rings.append((code.encode(), points))
     assert vertices <= 16384 and len(rings) <= 1024
-    output = bytearray(b"SBG1" + struct.pack("<H", len(rings)))
+    output = bytearray(b"SBG2" + struct.pack("<HH", len(centers), len(rings)))
+    for code, point in sorted(centers.items()):
+        output += code.encode() + struct.pack("<hh", *point)
     for code, points in rings:
         output += code + struct.pack("<H", len(points))
         for point in points:

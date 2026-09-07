@@ -6,6 +6,7 @@ const render = @import("render.zig");
 var state: State = .{};
 var input: [16 * 1024]u8 = undefined;
 var html: [512 * 1024]u8 = undefined;
+var geometry: [@import("geography.zig").max_bytes]u8 = undefined;
 var html_length: usize = 0;
 var commands: [16 * 1024]u8 = undefined;
 var command_writer: std.Io.Writer = undefined;
@@ -29,6 +30,27 @@ export fn sb_commands() [*]const u8 {
 }
 export fn sb_commands_length() usize {
     return commands_length;
+}
+
+export fn sb_geometry_input() [*]u8 {
+    return &geometry;
+}
+export fn sb_geometry_capacity() usize {
+    return geometry.len;
+}
+export fn sb_geometry_loaded(length: usize) void {
+    begin();
+    state.geometry_busy = false;
+    if (state.phase != .dashboard or state.must_change or length > geometry.len) {
+        finish();
+        return;
+    }
+    if (@import("geography.zig").validate(geometry[0..length])) |_| {
+        state.geometry = geometry[0..length];
+    } else |_| {
+        setMessage("World boundaries are unavailable. Country totals remain available below.");
+    }
+    finish();
 }
 
 export fn sb_init() void {
@@ -71,6 +93,8 @@ fn begin() void {
 }
 
 fn finish() void {
+    if (state.phase == .dashboard and !state.hidden)
+        command(.{ .op = "timer", .id = "age", .delay_ms = 1000 }) catch unreachable;
     command_writer.writeByte(']') catch unreachable;
     commands_length = command_writer.buffered().len;
     var writer: std.Io.Writer = .fixed(&html);
@@ -91,7 +115,7 @@ fn get(id: []const u8, path: []const u8) !void {
     try command(.{ .op = "request", .id = id, .method = "GET", .path = path });
 }
 
-fn post(id: []const u8, path: []const u8, body: std.json.Value) !void {
+fn post(id: []const u8, path: []const u8, body: anytype) !void {
     try command(.{
         .op = "request",
         .id = id,
@@ -103,13 +127,29 @@ fn post(id: []const u8, path: []const u8, body: std.json.Value) !void {
 }
 
 fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
+    state.browser_time = number(value, "browser_time");
     switch (kind) {
         1 => try action(value),
         2 => try response(value, alloc),
         3 => {
+            if (equal(string(value, "id"), "age") or state.hidden) return;
             if (state.phase == .dashboard and !state.paused) try refresh();
+            if (state.phase == .geoip) try get("geoip", "/console/api/geoip");
         },
         4 => try streamEvent(value, alloc),
+        5 => {
+            const hidden = field(value, "hidden") orelse return;
+            if (hidden != .bool) return;
+            state.hidden = hidden.bool;
+            state.stats_busy = false;
+            if (state.hidden) {
+                try command(.{ .op = "disconnect" });
+            } else if (state.phase == .dashboard and !state.paused) {
+                try refresh();
+            } else if (state.phase == .geoip) {
+                try get("geoip", "/console/api/geoip");
+            }
+        },
         else => {},
     }
 }
@@ -117,6 +157,7 @@ fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
 fn action(value: std.json.Value) !void {
     const name = string(value, "action");
     const fields = field(value, "fields") orelse .null;
+    if (try geographicAction(name, fields)) return;
     if (equal(name, "theme")) {
         state.dark = !state.dark;
         return command(.{ .op = "theme", .value = if (state.dark) "dark" else "light" });
@@ -151,7 +192,7 @@ fn action(value: std.json.Value) !void {
             fields,
         );
     }
-    if (equal(name, "password")) return post(name, "/console/api/password", fields);
+    if (equal(name, "change-password")) return post("password", "/console/api/password", fields);
     if (equal(name, "logout")) {
         try command(.{ .op = "disconnect" });
         return post(name, "/console/api/logout", .null);
@@ -166,6 +207,8 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
     const status = status_value.integer;
     const body = field(value, "body") orelse return;
     if (equal(id, "stats")) return statsResponse(status, body, alloc);
+    if (equal(id, "geoip") or equal(id, "geo-import"))
+        return geoResponse(id, status, body);
     state.busy = false;
     if (equal(id, "session") and status == 401) return get("setup", "/console/api/setup");
     if (status != 200) {
@@ -201,6 +244,7 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
         state.phase = .login;
         state.stats_busy = false;
         state.stats = null;
+        state.geometry = null;
         state.csrf = .{};
         try command(.{ .op = "disconnect" });
         if (equal(id, "password")) setMessage("Password updated. Sign in with your new password.");
@@ -208,7 +252,7 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
 }
 
 fn refresh() !void {
-    if (state.stats_busy or state.paused) return;
+    if (state.stats_busy or state.paused or state.hidden) return;
     state.stats_busy = true;
     state.epoch = .{};
     try command(.{ .op = "connect", .path = "/console/stream" });
@@ -270,6 +314,7 @@ fn statsResponse(status: i64, body: std.json.Value, alloc: std.mem.Allocator) !v
         state.phase = .login;
         state.stats_busy = false;
         state.stats = null;
+        state.geometry = null;
         state.csrf = .{};
         setMessage("Your session ended. Sign in to continue.");
         return command(.{ .op = "disconnect" });
@@ -291,7 +336,92 @@ fn statsResponse(status: i64, body: std.json.Value, alloc: std.mem.Allocator) !v
             };
     }
     state.stats = snapshot;
+    state.received_at = state.browser_time;
+    if (snapshot.geoip_available and state.geometry == null and !state.geometry_busy) {
+        state.geometry_busy = true;
+        try command(.{ .op = "geometry", .path = "/console/assets/world-110m.bin" });
+    }
     state.message = .{};
+}
+
+fn geographicAction(name: []const u8, fields: std.json.Value) !bool {
+    if (equal(name, "geoip") and state.csrf.len != 0 and !state.must_change) {
+        state.phase = .geoip;
+        state.stats_busy = false;
+        try command(.{ .op = "disconnect" });
+        try get("geoip", "/console/api/geoip");
+        return true;
+    }
+    if (equal(name, "geo-import") and state.phase == .geoip and !state.geo_importing) {
+        state.geo_importing = true;
+        try post("geo-import", "/console/api/geoip", .{
+            .source_version = string(fields, "source_version"),
+            .expected_revision = state.geo.revision,
+            .checksum = string(fields, "checksum"),
+            .csv = string(fields, "csv"),
+        });
+        return true;
+    }
+    if (state.phase != .dashboard) return false;
+    if (equal(name, "rotate-left")) {
+        state.globe.lon -= 20;
+    } else if (equal(name, "rotate-right")) {
+        state.globe.lon += 20;
+    } else if (equal(name, "reset-globe")) {
+        state.globe = .{};
+    } else if (equal(name, "flat-map")) {
+        state.globe.flat = !state.globe.flat;
+    } else if (std.mem.startsWith(u8, name, "country-")) {
+        const code = std.fmt.parseInt(u16, name[8..], 10) catch return false;
+        if (state.geometry) |bytes| {
+            if (@import("geography.zig").center(bytes, code)) |position|
+                state.globe = .{ .lon = position.lon, .lat = position.lat };
+        }
+    } else return false;
+    if (state.globe.lon > 180) state.globe.lon -= 360;
+    if (state.globe.lon < -180) state.globe.lon += 360;
+    return true;
+}
+
+fn geoResponse(id: []const u8, status: i64, body: std.json.Value) !void {
+    state.geo_importing = false;
+    if (state.phase != .geoip) return;
+    if (status == 401 or status == 403) {
+        state.phase = .login;
+        state.csrf = .{};
+        state.geometry = null;
+        return;
+    }
+    if (status == 0) {
+        setMessage("Connection lost. Import status is unknown; reconnecting.");
+        state.geo_importing = true;
+        return command(.{ .op = "timer", .id = "geoip", .delay_ms = 5000 });
+    }
+    if (status != 200) {
+        setMessage("Import could not start. Check the source month, checksum, and revision.");
+        return;
+    }
+    if (equal(id, "geo-import")) return get("geoip", "/console/api/geoip");
+    state.message = .{};
+    state.geo = .{
+        .revision = number(body, "revision"),
+        .digest = try p.Bytes(64).init(string(body, "digest")),
+        .source_version = try p.Bytes(7).init(string(body, "source_version")),
+        .ranges = @intCast(number(body, "ranges")),
+        .loaded_at = number(body, "loaded_at"),
+    };
+    state.geo_status = try p.Bytes(16).init(string(body, "status"));
+    state.geo_progress = @intCast(number(body, "processed_ranges"));
+    const active = equal(state.geo_status.slice(), "downloading") or
+        equal(state.geo_status.slice(), "validating") or
+        equal(state.geo_status.slice(), "storing");
+    state.geo_importing = active;
+    if (active) try command(.{ .op = "timer", .id = "geoip", .delay_ms = 1000 });
+}
+
+fn number(value: std.json.Value, key: []const u8) u64 {
+    const item = field(value, key) orelse return 0;
+    return if (item == .integer and item.integer >= 0) @intCast(item.integer) else 0;
 }
 
 fn field(value: std.json.Value, key: []const u8) ?std.json.Value {
