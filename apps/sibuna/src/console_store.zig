@@ -51,6 +51,12 @@ fn migrate(owner: *Persistent) !void {
 pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
     if (!owner.console_initialized) try migrate(owner);
     return switch (request) {
+        .geo_prune => |now| @import("console_store_geo.zig").prune(owner, now),
+        .geo_metadata => @import("console_store_geo.zig").metadata(owner),
+        .geo_begin => |input| @import("console_store_geo.zig").begin(owner, input),
+        .geo_batch => |input| @import("console_store_geo.zig").batch(owner, input),
+        .geo_activate => |input| @import("console_store_geo.zig").activate(owner, input),
+        .geo_read => |input| @import("console_store_geo.zig").read(owner, input),
         .setup_status => blk: {
             var result = try db.query(
                 owner.db,

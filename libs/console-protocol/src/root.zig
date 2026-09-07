@@ -1,6 +1,7 @@
 //! Shared native/Wasm contracts. No networking, database or daemon dependencies.
 const std = @import("std");
 
+pub const geo = @import("geo.zig");
 pub const version: u16 = 1;
 pub const max_message = 4096;
 pub const max_page_rows = 100;
@@ -61,6 +62,12 @@ pub const Principal = struct {
 };
 pub const StorageRequest = union(enum) {
     setup_status,
+    geo_metadata,
+    geo_prune: u64,
+    geo_begin: geo.Begin,
+    geo_batch: geo.Batch,
+    geo_activate: geo.Activate,
+    geo_read: geo.Read,
     bootstrap: struct { username: Bytes(64), password_hash: Bytes(255), now: u64 },
     auth_user: Bytes(64),
     session_create: struct {
@@ -91,6 +98,8 @@ pub const StorageRequest = union(enum) {
 };
 pub const StorageResult = union(enum) {
     setup_required: bool,
+    geo_metadata: geo.Metadata,
+    geo_bytes: Bytes(3400),
     auth_user: AuthUser,
     authorized: Principal,
     page: Bytes(max_message),

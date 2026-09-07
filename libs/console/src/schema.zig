@@ -1,6 +1,6 @@
 //! Versioned additive schema. The owner serializes migration before serving console work.
 pub const version = 1;
-pub const sql =
+pub const sql = @import("geo_schema.zig").sql ++
     "CREATE TABLE IF NOT EXISTS console_schema (version INTEGER PRIMARY KEY CHECK(version=1));" ++
     "INSERT OR IGNORE INTO console_schema VALUES(1);" ++
     "CREATE TABLE IF NOT EXISTS console_users (" ++
