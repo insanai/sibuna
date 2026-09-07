@@ -56,7 +56,9 @@ and max per operation, with untimed warmup and independent mutable state per bat
 `python3 benchmarks/tools.py --anubis <binary>` drives Sibuna Gate, Sibuna Shield, and Anubis as
 whole processes with `wrk` and records throughput, latency percentiles, CPU time per request,
 and peak resident memory; `python3 benchmarks/compare.py --anubis <binary>` measures admission
-operations. Third-party binaries are supplied from their official releases and never committed.
+operations; `python3 benchmarks/cluster.py` compares one node with a three-node replicated
+cluster under `wrk`. Third-party binaries are supplied from their official releases and never
+committed.
 Benchmarks must not add instrumentation to request code. Allocator statistics must be labelled
 as instrumented, source-audited, or unknown. Competitor comparisons require pinned runnable
 artifacts, equivalent workloads, and provenance; fixed unsourced model rows are not accepted.

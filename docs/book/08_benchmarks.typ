@@ -156,6 +156,47 @@ timed batch.
 
 #admission_comparison_table()
 
+== A Cluster of Three
+
+#objectives([
+  Answer the operator's question directly: does a three-node Sibuna cluster keep the
+  security properties, throughput, and latency of one node, and what do replication and
+  storage cost in CPU and memory?
+])
+
+`python3 benchmarks/cluster.py` runs four cases with the same Shield forward-auth
+configuration and two workers per node: one node without storage, one node with the embedded
+database, and three replicated nodes over a loopback pre-shared key and then over mutual TLS
+with a temporary certificate authority. For each case `wrk` drives node 1 alone and then all
+nodes at once (one load generator per node, requests summed, CPU summed over nodes, latency
+the worst of the three). Before any load the harness measures ten idle seconds, so the cost of
+consensus heartbeats and storage polling appears as a percentage of one core per node.
+
+#cluster_meta_line()
+
+#cluster_throughput_table()
+
+The security checks run on every case before the load: a session minted by node 1 is accepted
+by every node (shared seed); a request carrying that valid session but an SQL-injection query
+is refused by every node; a solution already spent on node 1 is rejected when replayed to
+node 2 (challenges are issuer-bound); a honeypot hit on node 1 bans the address on the other
+nodes within the propagation time shown; and after the elected leader is stopped the survivors
+keep admitting requests and still propagate a fresh ban.
+
+#cluster_parity_table()
+
+#callout([What the cluster costs], [
+  Per-node throughput and tail latency in the cluster rows should be read against the
+  single-node rows in the same table, not against the four-worker figures earlier in this
+  part. The differences that matter to an operator are the idle CPU and resident memory
+  columns, which are what replication and the embedded database add to a quiet node, and the
+  all-nodes rows. Those rows do not show three times one node: three daemons and three load
+  generators share eight cores, so the aggregate is host-bound at roughly the single-node
+  figure while the nodes together burn about three cores. The number that transfers to a
+  deployment with one host per node is CPU microseconds per request, which is the same in
+  every row, and the idle cost, which stays below a few percent of one core.
+])
+
 == Distributed Measurement
 
 `python3 benchmarks/distributed.py` starts three real daemons, first Gate and Shield without

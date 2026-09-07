@@ -594,3 +594,78 @@
     ..rows.flatten(),
   )
 }
+
+// ------------------------------------------------------------ cluster of three
+
+#let cluster_data() = json("/benchmarks/results/cluster-latest.json")
+
+#let cluster_cell(s, key, fmt) = if s == none or s.failed { text(fill: red)[failed] } else { fmt(s.at(key)) }
+
+#let cluster_throughput_table() = {
+  let data = cluster_data()
+  let rows = ()
+  for c in data.cases.filter(c => c.status == "passed") {
+    for (scope, group) in (([node 1 alone], c.per_node), ([all nodes at once], c.at("all_nodes", default: none))) {
+      if group == none { continue }
+      for (label, name) in (("admitted", [Admitted (session)]), ("challenged", [Challenged]), ("attack", [SQL injection, session])) {
+        let s = group.at(label, default: none)
+        rows.push((
+          [#c.case], scope, name,
+          cluster_cell(s, "requests_per_second_median", v => [#fmt_int(v)]),
+          cluster_cell(s, "latency_us_p99_median", v => [#fmt_ms(v)]),
+          cluster_cell(s, "cpu_us_per_request_median", v => [#fmt_dec(v)]),
+          cluster_cell(s, "cores_busy_total_median", v => [#fmt_dec(v, digits: 2)]),
+          cluster_cell(s, "peak_rss_kib_per_node_max", v => v.map(k => fmt_mib(k)).join([ #sym.slash ])),
+        ))
+      }
+    }
+  }
+  set text(size: 7.6pt)
+  table(
+    columns: (1.15fr, 0.85fr, 1fr, 0.7fr, 0.6fr, 0.6fr, 0.5fr, 1.2fr),
+    inset: 4pt, stroke: 0.4pt + rule,
+    fill: (col, row) => if row == 0 { blue_light } else { none },
+    table.header([*Case*], [*Load on*], [*Workload*], [*req/s*], [*p99*], [*CPU µs/req*], [*Cores*], [*Peak RSS per node*]),
+    ..rows.flatten(),
+  )
+}
+
+#let cluster_parity_table() = {
+  let data = cluster_data()
+  let mark(v) = if v == true { text(fill: green, weight: "bold")[passed] } else if v == false { text(fill: red, weight: "bold")[failed] } else { [-] }
+  let rows = ()
+  for c in data.cases.filter(c => c.status == "passed") {
+    let ch = c.checks
+    let idle = c.idle
+    let fail = c.at("failover", default: none)
+    rows.push((
+      [#c.case],
+      [#idle.cpu_cores_per_node.map(v => str(calc.round(v * 100, digits: 1))).join([ #sym.slash ]) %],
+      idle.rss_kib_per_node.map(k => fmt_mib(k)).join([ #sym.slash ]),
+      mark(ch.cross_node_session), mark(ch.waf_denial_with_session),
+      mark(ch.at("solution_replay_rejected_on_other_node", default: none)),
+      if "ban_propagation_ms" in ch { [#calc.round(ch.ban_propagation_ms, digits: 0) ms] } else { [-] },
+      if fail == none { [-] } else { [node #fail.stopped_leader_node stopped: #fmt_int(fail.admitted_all_survivors.requests_per_second_median) req/s, ban #calc.round(fail.post_failover_ban_propagation_ms, digits: 0) ms] },
+      mark(ch.storage_chain_log_clean),
+    ))
+  }
+  set text(size: 7.4pt)
+  set par(justify: false)
+  table(
+    columns: (1.1fr, 0.8fr, 0.9fr, 0.55fr, 0.55fr, 0.6fr, 0.6fr, 1.3fr, 0.55fr),
+    inset: 4pt, stroke: 0.4pt + rule,
+    fill: (col, row) => if row == 0 { blue_light } else { none },
+    table.header([*Case*], [*Idle CPU per node*], [*Idle RSS per node*], [*Session on every node*], [*WAF denies with session*], [*Replay on other node rejected*], [*Ban propagation*], [*Leader stopped*], [*Storage log clean*]),
+    ..rows.flatten(),
+  )
+}
+
+#let cluster_meta_line() = {
+  let data = cluster_data()
+  let m = data.meta
+  text(size: 8pt, fill: gray)[
+    Recorded #m.date · #m.host · #m.cpu · revision #raw(m.git) · #data.wrk ·
+    #data.load.threads threads, #data.load.connections connections per node, #data.load.seconds s ×
+    #data.load.repetitions repetitions, median · two workers per node · Shield, forward auth
+  ]
+}

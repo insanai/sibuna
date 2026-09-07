@@ -158,8 +158,15 @@ Current results: [primitive measurements](benchmarks/results/latest.json),
 sh benchmarks/run-all.sh                               # primitives
 python3 benchmarks/tools.py --anubis /path/to/anubis   # whole products under wrk
 python3 benchmarks/compare.py --anubis /path/to/anubis # admission operations
-python3 benchmarks/distributed.py                      # three-node runs
+python3 benchmarks/cluster.py                          # 1 node vs 3 replicated nodes under wrk
+python3 benchmarks/distributed.py                      # three-node checks with Python clients
 ```
+
+`cluster.py` answers the cluster question directly: the same Shield configuration as one
+node, one node with storage, and three replicated nodes (PSK and mutual TLS), each driven by
+`wrk` alone and all at once, with idle CPU and memory per node, cross-node session and WAF
+checks, issuer-bound replay rejection, ban propagation time, and service after the leader is
+stopped. Results are in [`cluster-latest.json`](benchmarks/results/cluster-latest.json).
 
 `tools.py` starts Sibuna Gate, Sibuna Shield, and Anubis as complete processes in forward-auth
 and reverse-proxy modes, obtains a session by solving each product's challenge, and drives
