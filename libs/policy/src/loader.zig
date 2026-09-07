@@ -25,6 +25,15 @@ pub fn parseJsonPolicyInto(
             }
         }
     }
+    if (root.object.get("waf")) |waf_val| {
+        if (waf_val == .bool) engine.waf_enabled = waf_val.bool;
+    }
+    if (root.object.get("thresholds")) |th| {
+        if (th == .object) parseThresholds(th.object, engine);
+    }
+    if (root.object.get("ip_rules")) |ip_val| {
+        if (ip_val == .object) parseIpRules(ip_val.object, engine);
+    }
 
     if (root.object.get("rules")) |rules_val| {
         if (rules_val == .array) {
@@ -36,6 +45,30 @@ pub fn parseJsonPolicyInto(
                 }
             }
         }
+    }
+}
+
+fn parseThresholds(obj: std.json.ObjectMap, engine: *engine_mod.Engine) void {
+    if (obj.get("challenge_at")) |v| {
+        if (v == .integer) engine.thresholds.challenge_at = @intCast(std.math.clamp(v.integer, -1000, 1000));
+    }
+    if (obj.get("deny_at")) |v| {
+        if (v == .integer) engine.thresholds.deny_at = @intCast(std.math.clamp(v.integer, -1000, 1000));
+    }
+    if (obj.get("bits_step")) |v| {
+        if (v == .integer) engine.thresholds.bits_step = @intCast(std.math.clamp(v.integer, 1, 1000));
+    }
+}
+
+/// `"ip_rules": { "10.0.0.0/8": "ALLOW", "2001:db8::/32": "DENY" }` feeds
+/// the reputation trie, which scales to thousands of prefixes where the
+/// per-rule CIDR lists are meant for a handful.
+fn parseIpRules(obj: std.json.ObjectMap, engine: *engine_mod.Engine) void {
+    var it = obj.iterator();
+    while (it.next()) |entry| {
+        if (entry.value_ptr.* != .string) continue;
+        const action = rule.Action.parse(entry.value_ptr.*.string) orelse continue;
+        engine.ip_trie.insertCidr(entry.key_ptr.*, action) catch continue;
     }
 }
 
@@ -70,6 +103,9 @@ fn parseRule(
     try parseHeaders(allocator, obj, &r);
     parseCidrs(obj, &r);
     try parseChallenge(allocator, obj, &r);
+    if (obj.get("weight")) |w| {
+        if (w == .integer) r.weight = @intCast(std.math.clamp(w.integer, -1000, 1000));
+    }
 
     return r;
 }
@@ -167,8 +203,12 @@ test "loader parses json policy into engine rules" {
         \\        "difficulty": 8,
         \\        "algorithm": "sha256"
         \\      }
-        \\    }
-        \\  ]
+        \\    },
+        \\    { "name": "suspicious", "user_agent": "Headless", "action": "WEIGH", "weight": 12 }
+        \\  ],
+        \\  "waf": false,
+        \\  "thresholds": { "deny_at": 30 },
+        \\  "ip_rules": { "2001:db8::/32": "DENY" }
         \\}
     ;
 
@@ -176,7 +216,11 @@ test "loader parses json policy into engine rules" {
     defer arena.deinit();
 
     const eng = try createJsonPolicy(arena.allocator(), json_data, 4);
-    try std.testing.expectEqual(@as(usize, 2), eng.rule_count);
+    try std.testing.expectEqual(@as(usize, 3), eng.rule_count);
+    try std.testing.expectEqual(@as(i32, 12), eng.rules[2].weight);
+    try std.testing.expectEqual(@as(i32, 30), eng.thresholds.deny_at);
+    try std.testing.expect(!eng.waf_enabled);
+    try std.testing.expectEqual(rule.Action.deny, eng.ip_trie.matchIpStr("2001:db8::1").?);
     try std.testing.expectEqualStrings("block-bad-worker", eng.rules[0].name);
     try std.testing.expectEqual(rule.Action.deny, eng.rules[0].action);
     try std.testing.expectEqual(@as(u8, 1), eng.rules[0].header_count);

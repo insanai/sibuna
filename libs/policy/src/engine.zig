@@ -1,8 +1,11 @@
 //! Sibuna Policy Evaluation Engine
 //!
-//! Evaluates incoming request paths, client IP addresses, User-Agent headers,
-//! and arbitrary HTTP headers against declarative rules in sub-microsecond time
-//! with zero dynamic heap allocations on the hot path.
+//! Evaluates a request against, in order: the semantic WAF automaton, the
+//! declarative rule table (first terminal match wins, WEIGH rules
+//! accumulate), the built-in static bypass paths, the IP reputation trie,
+//! and the bot-signature automaton. The whole pass slices over the request
+//! buffer and never allocates; an `Engine` is a self-contained value that
+//! can be rebuilt off the hot path and swapped in atomically.
 
 const std = @import("std");
 const aho = @import("aho_corasick.zig");
@@ -20,36 +23,58 @@ pub const MAX_RULES: usize = 128;
 pub const Decision = struct {
     action: Action,
     rule_name: []const u8,
+    /// Challenge difficulty in work bits; zero when not challenging.
     difficulty: u32,
+    /// Rule-level algorithm override (`hashcash` or `posw`), if any.
+    algorithm: ?[]const u8 = null,
+    /// Accumulated WEIGH score that contributed to the decision.
+    score: i32 = 0,
+};
+
+/// WEIGH scoring: negative totals vouch for a client and allow it; totals
+/// at or above `challenge_at` demand a challenge whose difficulty grows by
+/// one bit per `bits_step` points; totals at or above `deny_at` are denied.
+pub const WeighThresholds = struct {
+    challenge_at: i32 = 10,
+    deny_at: i32 = 40,
+    bits_step: i32 = 5,
+    max_extra_bits: u32 = 6,
 };
 
 pub const Engine = struct {
     rules: [MAX_RULES]PolicyRule = undefined,
     rule_count: usize = 0,
     default_action: Action = .allow,
-    default_difficulty: u32 = 4,
-    bot_matcher: aho.Matcher = aho.Matcher.init(),
+    default_difficulty: u32 = 16,
+    thresholds: WeighThresholds = .{},
+    waf_enabled: bool = true,
+    bot_matcher: aho.BotMatcher = aho.BotMatcher.init(),
+    waf_signatures: waf.Signatures = waf.Signatures.init(),
     ip_trie: radix.Trie = radix.Trie.init(),
 
     pub fn init(default_diff: u32) Engine {
         return initDefault(default_diff);
     }
 
+    /// Initialises an engine in place; the struct is several megabytes of
+    /// automaton tables, so callers keep it in static or heap storage.
     pub fn initInPlace(self: *Engine, default_diff: u32) void {
         self.rule_count = 0;
         self.default_action = .allow;
         self.default_difficulty = default_diff;
-        self.bot_matcher = aho.Matcher.init();
+        self.thresholds = .{};
+        self.waf_enabled = true;
+        self.bot_matcher = aho.BotMatcher.init();
         self.ip_trie = radix.Trie.init();
         self.initSignatures();
+        waf.buildSignatures(&self.waf_signatures);
         self.initAnubisParityRules();
     }
 
     pub fn initDefault(default_diff: u32) Engine {
-        var engine = Engine{
-            .default_difficulty = default_diff,
-        };
+        var engine = Engine{ .default_difficulty = default_diff };
         engine.initSignatures();
+        waf.buildSignatures(&engine.waf_signatures);
         engine.initAnubisParityRules();
         return engine;
     }
@@ -61,50 +86,24 @@ pub const Engine = struct {
     }
 
     fn initSignatures(self: *Engine) void {
-        for (bots.AI_SCRAPERS) |bot| {
-            _ = self.bot_matcher.addPattern(bot) catch {};
-        }
-        for (bots.SCRAPER_LIBRARIES) |lib| {
-            _ = self.bot_matcher.addPattern(lib) catch {};
-        }
+        // The built-in tables are far below the automaton capacity, so the
+        // only failure is an empty pattern, which the tables never contain.
+        for (bots.AI_SCRAPERS) |bot| _ = self.bot_matcher.addPatternTagged(bot, 1) catch unreachable;
+        for (bots.SCRAPER_LIBRARIES) |lib| _ = self.bot_matcher.addPatternTagged(lib, 2) catch unreachable;
         self.bot_matcher.build();
     }
 
     fn initAnubisParityRules(self: *Engine) void {
-        _ = self.addRule(.{
-            .name = "well-known",
-            .path_pattern = "^/.well-known/.*$",
-            .action = .allow,
-        }) catch {};
-        _ = self.addRule(.{
-            .name = "favicon",
-            .path_pattern = "^/favicon.ico$",
-            .action = .allow,
-        }) catch {};
-        _ = self.addRule(.{
-            .name = "robots-txt",
-            .path_pattern = "^/robots.txt$",
-            .action = .allow,
-        }) catch {};
-        _ = self.addRule(.{
-            .name = "sibuna-internal",
-            .path_pattern = "/__sibuna/*",
-            .action = .allow,
-        }) catch {};
-
-        var cf_worker = PolicyRule{
-            .name = "cloudflare-workers",
-            .action = .deny,
-        };
+        // Six rules into a 128-slot table cannot overflow.
+        self.addRule(.{ .name = "well-known", .path_pattern = "^/.well-known/.*$", .action = .allow }) catch unreachable;
+        self.addRule(.{ .name = "favicon", .path_pattern = "^/favicon.ico$", .action = .allow }) catch unreachable;
+        self.addRule(.{ .name = "robots-txt", .path_pattern = "^/robots.txt$", .action = .allow }) catch unreachable;
+        self.addRule(.{ .name = "sibuna-internal", .path_pattern = "/__sibuna/*", .action = .allow }) catch unreachable;
+        var cf_worker = PolicyRule{ .name = "cloudflare-workers", .action = .deny };
         cf_worker.headers[0] = .{ .name = "CF-Worker", .pattern = ".*" };
         cf_worker.header_count = 1;
-        _ = self.addRule(cf_worker) catch {};
-
-        _ = self.addRule(.{
-            .name = "amazonbot",
-            .ua_pattern = "Amazonbot",
-            .action = .deny,
-        }) catch {};
+        self.addRule(cf_worker) catch unreachable;
+        self.addRule(.{ .name = "amazonbot", .ua_pattern = "Amazonbot", .action = .deny }) catch unreachable;
     }
 
     pub fn isBypassPath(path: []const u8) bool {
@@ -124,73 +123,6 @@ pub const Engine = struct {
         return self.evaluateWithHeaders(path, client_ip, user_agent, &.{});
     }
 
-    pub fn evaluateWithHeadersAndBody(
-        self: *const Engine,
-        path: []const u8,
-        client_ip: []const u8,
-        user_agent: []const u8,
-        headers: []const Header,
-        body: []const u8,
-    ) Decision {
-        // 0. SafeLine-grade semantic WAF inspection
-        if (waf.inspectRequest(path, user_agent, headers, body)) |violation| {
-            return .{
-                .action = .deny,
-                .rule_name = violation.rule_name,
-                .difficulty = 0,
-            };
-        }
-
-        // 1. Evaluate declarative rules in order (first-match-wins)
-        for (self.rules[0..self.rule_count]) |r| {
-            if (r.matches(path, client_ip, user_agent, headers)) {
-                const diff = r.difficulty orelse (if (r.action == .challenge)
-                    self.default_difficulty
-                else
-                    0);
-                return .{
-                    .action = r.action,
-                    .rule_name = r.name,
-                    .difficulty = diff,
-                };
-            }
-        }
-
-        // 2. Fallback bypass check
-        if (isBypassPath(path)) {
-            return .{
-                .action = .allow,
-                .rule_name = "bypass/static",
-                .difficulty = 0,
-            };
-        }
-
-        // 3. IP CIDR Trie check
-        if (self.ip_trie.matchIpStr(client_ip)) |ip_action| {
-            return .{
-                .action = ip_action,
-                .rule_name = "ip/cidr-trie",
-                .difficulty = if (ip_action == .challenge) self.default_difficulty else 0,
-            };
-        }
-
-        // 4. Bot User-Agent multi-pattern check
-        if (self.bot_matcher.findFirst(user_agent)) |matched_bot| {
-            return .{
-                .action = .challenge,
-                .rule_name = matched_bot,
-                .difficulty = self.default_difficulty,
-            };
-        }
-
-        // 5. Default action
-        return .{
-            .action = self.default_action,
-            .rule_name = "default/allow",
-            .difficulty = 0,
-        };
-    }
-
     pub fn evaluateWithHeaders(
         self: *const Engine,
         path: []const u8,
@@ -201,54 +133,160 @@ pub const Engine = struct {
         return self.evaluateWithHeadersAndBody(path, client_ip, user_agent, headers, "");
     }
 
-    pub fn loadFromJsonInto(
-        self: *Engine,
-        allocator: std.mem.Allocator,
-        json_text: []const u8,
-    ) !void {
+    fn challengeDecision(self: *const Engine, r: *const PolicyRule, score: i32) Decision {
+        return .{
+            .action = r.action,
+            .rule_name = r.name,
+            .difficulty = if (r.action == .challenge) (r.difficulty orelse self.default_difficulty) else 0,
+            .algorithm = r.algorithm,
+            .score = score,
+        };
+    }
+
+    /// Turns an accumulated WEIGH score into a terminal decision.
+    fn weighDecision(self: *const Engine, score: i32, rule_name: []const u8) ?Decision {
+        const t = self.thresholds;
+        if (score < 0) return .{ .action = .allow, .rule_name = rule_name, .difficulty = 0, .score = score };
+        if (score >= t.deny_at) return .{ .action = .deny, .rule_name = rule_name, .difficulty = 0, .score = score };
+        if (score >= t.challenge_at) {
+            const extra: u32 = @intCast(@divTrunc(score - t.challenge_at, @max(1, t.bits_step)));
+            return .{
+                .action = .challenge,
+                .rule_name = rule_name,
+                .difficulty = self.default_difficulty + @min(extra, t.max_extra_bits),
+                .score = score,
+            };
+        }
+        return null;
+    }
+
+    pub fn evaluateWithHeadersAndBody(
+        self: *const Engine,
+        path: []const u8,
+        client_ip: []const u8,
+        user_agent: []const u8,
+        headers: []const Header,
+        body: []const u8,
+    ) Decision {
+        if (self.waf_enabled) {
+            if (waf.inspectRequest(&self.waf_signatures, path, user_agent, headers, body)) |violation| {
+                return .{ .action = .deny, .rule_name = violation.rule_name, .difficulty = 0 };
+            }
+        }
+
+        var score: i32 = 0;
+        var weigh_rule: []const u8 = "weigh";
+        for (self.rules[0..self.rule_count]) |*r| {
+            if (!r.matches(path, client_ip, user_agent, headers)) continue;
+            if (r.action == .weigh) {
+                score += r.weight;
+                weigh_rule = r.name;
+                continue;
+            }
+            return self.challengeDecision(r, score);
+        }
+        if (score != 0) {
+            if (self.weighDecision(score, weigh_rule)) |d| return d;
+        }
+
+        if (isBypassPath(path)) {
+            return .{ .action = .allow, .rule_name = "bypass/static", .difficulty = 0, .score = score };
+        }
+        if (self.ip_trie.matchIpStr(client_ip)) |ip_action| {
+            return .{
+                .action = ip_action,
+                .rule_name = "ip/cidr-trie",
+                .difficulty = if (ip_action == .challenge) self.default_difficulty else 0,
+                .score = score,
+            };
+        }
+        if (self.bot_matcher.findFirst(user_agent)) |matched_bot| {
+            return .{
+                .action = .challenge,
+                .rule_name = matched_bot,
+                .difficulty = self.default_difficulty,
+                .score = score,
+            };
+        }
+        return .{ .action = self.default_action, .rule_name = "default/allow", .difficulty = 0, .score = score };
+    }
+
+    pub fn loadFromJsonInto(self: *Engine, allocator: std.mem.Allocator, json_text: []const u8) !void {
         return loader.parseJsonPolicyInto(allocator, json_text, self);
     }
 
-    pub fn createFromJson(
-        allocator: std.mem.Allocator,
-        json_text: []const u8,
-        default_diff: u32,
-    ) !*Engine {
+    pub fn createFromJson(allocator: std.mem.Allocator, json_text: []const u8, default_diff: u32) !*Engine {
         return loader.createJsonPolicy(allocator, json_text, default_diff);
     }
 };
 
-test "engine evaluates declarative rules, bypass, ip, and bot user agents" {
-    const engine = Engine.init(4);
+fn testEngine() !*Engine {
+    const engine = try std.testing.allocator.create(Engine);
+    engine.initInPlace(16);
+    return engine;
+}
 
-    // Bypass via default rule
+test "engine evaluates declarative rules, bypass, ip, and bot user agents" {
+    const engine = try testEngine();
+    defer std.testing.allocator.destroy(engine);
+
     const d1 = engine.evaluate("/robots.txt", "1.2.3.4", "GPTBot");
     try std.testing.expectEqual(Action.allow, d1.action);
 
-    // Anubis denial rule: Amazonbot
     const d_amz = engine.evaluate("/index.html", "1.2.3.4", "Mozilla/5.0 Amazonbot/0.1");
     try std.testing.expectEqual(Action.deny, d_amz.action);
     try std.testing.expectEqualStrings("amazonbot", d_amz.rule_name);
 
-    // Header-based denial: CF-Worker
     const hdrs = [_]Header{.{ .name = "CF-Worker", .value = "worker-1" }};
     const d_cf = engine.evaluateWithHeaders("/api/data", "1.2.3.4", "curl", &hdrs);
     try std.testing.expectEqual(Action.deny, d_cf.action);
     try std.testing.expectEqualStrings("cloudflare-workers", d_cf.rule_name);
 
-    // Bot challenge via Aho-Corasick
     const d2 = engine.evaluate("/api/data", "1.2.3.4", "Python-Requests/2.28");
     try std.testing.expectEqual(Action.challenge, d2.action);
     try std.testing.expectEqualStrings("python-requests", d2.rule_name);
+    try std.testing.expectEqual(@as(u32, 16), d2.difficulty);
 
-    // Normal browser allow
     const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
     const d3 = engine.evaluate("/index.html", "192.168.1.1", ua);
     try std.testing.expectEqual(Action.allow, d3.action);
+
+    try engine.ip_trie.insertCidr("2001:db8::/32", .deny);
+    const d6 = engine.evaluate("/index.html", "2001:db8::7", ua);
+    try std.testing.expectEqual(Action.deny, d6.action);
+    try std.testing.expectEqualStrings("ip/cidr-trie", d6.rule_name);
+}
+
+test "weigh rules accumulate into allow, challenge with extra bits, or deny" {
+    const engine = try testEngine();
+    defer std.testing.allocator.destroy(engine);
+    engine.rule_count = 0;
+    try engine.addRule(.{ .name = "no-accept-language", .action = .weigh, .weight = 10, .ua_pattern = "Mozilla" });
+    try engine.addRule(.{ .name = "old-chrome", .action = .weigh, .weight = 15, .ua_pattern = "Chrome/7" });
+    try engine.addRule(.{ .name = "known-good", .action = .weigh, .weight = -20, .path_pattern = "/trusted/*" });
+    try engine.addRule(.{ .name = "very-bad", .action = .weigh, .weight = 30, .ua_pattern = "Headless" });
+
+    const mild = engine.evaluate("/", "1.1.1.1", "Mozilla/5.0");
+    try std.testing.expectEqual(Action.challenge, mild.action);
+    try std.testing.expectEqual(@as(u32, 16), mild.difficulty);
+    try std.testing.expectEqual(@as(i32, 10), mild.score);
+
+    const harder = engine.evaluate("/", "1.1.1.1", "Mozilla/5.0 Chrome/79");
+    try std.testing.expectEqual(Action.challenge, harder.action);
+    try std.testing.expectEqual(@as(u32, 19), harder.difficulty);
+
+    const vouched = engine.evaluate("/trusted/x", "1.1.1.1", "Mozilla/5.0");
+    try std.testing.expectEqual(Action.allow, vouched.action);
+    try std.testing.expectEqual(@as(i32, -10), vouched.score);
+
+    const denied = engine.evaluate("/", "1.1.1.1", "Mozilla/5.0 HeadlessChrome/79");
+    try std.testing.expectEqual(Action.deny, denied.action);
+    try std.testing.expectEqual(@as(i32, 55), denied.score);
 }
 
 test "zero-allocation hot-path policy classification" {
-    const engine = Engine.init(4);
+    const engine = try testEngine();
+    defer std.testing.allocator.destroy(engine);
     const uas = [_][]const u8{
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
         "GPTBot/1.2 (+https://openai.com/gptbot)",
@@ -258,39 +296,33 @@ test "zero-allocation hot-path policy classification" {
     };
     var i: usize = 0;
     while (i < 100_000) : (i += 1) {
-        const ua = uas[i % uas.len];
-        const dec = engine.evaluate("/api/v1/resource", "192.168.1.50", ua);
-        _ = dec;
+        const dec = engine.evaluate("/api/v1/resource", "192.168.1.50", uas[i % uas.len]);
+        std.mem.doNotOptimizeAway(dec.action);
     }
 }
 
-test "engine blocks SafeLine WAF attack vectors" {
-    const engine = Engine.init(4);
+test "engine blocks SafeLine WAF attack vectors and can disable the WAF" {
+    const engine = try testEngine();
+    defer std.testing.allocator.destroy(engine);
 
-    // SQLi in query string
     const d_sqli = engine.evaluate("/api/users?id=1 union select null", "1.2.3.4", "curl");
     try std.testing.expectEqual(Action.deny, d_sqli.action);
     try std.testing.expectEqualStrings("waf:sqli", d_sqli.rule_name);
 
-    // Path traversal in path
     const d_lfi = engine.evaluate("/static/../../etc/passwd", "1.2.3.4", "Mozilla");
     try std.testing.expectEqual(Action.deny, d_lfi.action);
     try std.testing.expectEqualStrings("waf:path-traversal", d_lfi.rule_name);
 
-    // XSS in header
     const xss_hdr = [_]Header{.{ .name = "X-Query", .value = "<script>alert(1)</script>" }};
     const d_xss = engine.evaluateWithHeaders("/search", "1.2.3.4", "Mozilla", &xss_hdr);
     try std.testing.expectEqual(Action.deny, d_xss.action);
     try std.testing.expectEqualStrings("waf:xss", d_xss.rule_name);
 
-    // RCE in body
-    const d_rce = engine.evaluateWithHeadersAndBody(
-        "/submit",
-        "1.2.3.4",
-        "Mozilla",
-        &.{},
-        "cmd=test; /bin/sh",
-    );
+    const d_rce = engine.evaluateWithHeadersAndBody("/submit", "1.2.3.4", "Mozilla", &.{}, "cmd=test; /bin/sh");
     try std.testing.expectEqual(Action.deny, d_rce.action);
     try std.testing.expectEqualStrings("waf:rce", d_rce.rule_name);
+
+    engine.waf_enabled = false;
+    const gate_only = engine.evaluate("/static/../../etc/passwd", "1.2.3.4", "Mozilla");
+    try std.testing.expectEqual(Action.allow, gate_only.action);
 }

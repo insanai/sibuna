@@ -14,6 +14,7 @@
 const std = @import("std");
 const rule = @import("rule.zig");
 const normalizer = @import("normalizer.zig");
+const aho = @import("aho_corasick.zig");
 
 pub const AttackCategory = enum(u8) {
     path_traversal,
@@ -81,6 +82,27 @@ fn containsWord(text: []const u8, word: []const u8) bool {
     return false;
 }
 
+/// All strong signatures of every category live in one automaton, so a
+/// field is scanned exactly once regardless of how many signatures exist.
+pub const Signatures = aho.Automaton(2048);
+
+pub fn buildSignatures(sigs: *Signatures) void {
+    sigs.* = Signatures.init();
+    addAll(sigs, &traversal_strong, .path_traversal);
+    addAll(sigs, &sqli_strong, .sqli);
+    addAll(sigs, &xss_strong, .xss);
+    addAll(sigs, &rce_strong, .rce);
+    sigs.build();
+}
+
+fn addAll(sigs: *Signatures, patterns: []const []const u8, category: AttackCategory) void {
+    for (patterns) |pat| {
+        // The pattern tables are fixed at compile time and sized well below
+        // the automaton capacity; exceeding it is a programming error.
+        _ = sigs.addPatternTagged(pat, @intFromEnum(category)) catch unreachable;
+    }
+}
+
 fn firstMatch(text: []const u8, patterns: []const []const u8) ?[]const u8 {
     for (patterns) |pat| {
         if (containsIgnoreCase(text, pat)) return pat;
@@ -95,14 +117,18 @@ const traversal_strong = [_][]const u8{
     "web.config", "/windows/system32",
 };
 
-pub fn checkPathTraversal(text: []const u8) ?Violation {
-    if (firstMatch(text, &traversal_strong)) |pat| return Violation.of(.path_traversal, pat);
-    // A null byte truncates C string paths; inside a request it has no
-    // legitimate use and always signals an attempt to cut off a suffix.
+/// A null byte truncates C string paths; inside a request it has no
+/// legitimate use and always signals an attempt to cut off a suffix.
+fn checkNullByte(text: []const u8) ?Violation {
     if (std.mem.indexOfScalar(u8, text, 0) != null or containsIgnoreCase(text, "%00")) {
         return Violation.of(.path_traversal, "%00");
     }
     return null;
+}
+
+pub fn checkPathTraversal(text: []const u8) ?Violation {
+    if (firstMatch(text, &traversal_strong)) |pat| return Violation.of(.path_traversal, pat);
+    return checkNullByte(text);
 }
 
 const sqli_strong = [_][]const u8{
@@ -183,6 +209,10 @@ fn hasTautology(text: []const u8) bool {
 /// passes; `name='x' union all from t--` scores four and is blocked.
 pub fn checkSqli(text: []const u8) ?Violation {
     if (firstMatch(text, &sqli_strong)) |pat| return Violation.of(.sqli, pat);
+    return checkSqliStructure(text);
+}
+
+fn checkSqliStructure(text: []const u8) ?Violation {
     if (hasTautology(text)) return Violation.of(.sqli, "tautology");
     // A closing quote followed by a comment marker is the classic
     // `admin'--` termination trick and carries no keywords at all.
@@ -259,17 +289,21 @@ fn hasEventHandler(text: []const u8) bool {
 /// with an event-handler attribute in attribute position.
 pub fn checkXss(text: []const u8) ?Violation {
     if (firstMatch(text, &xss_strong)) |pat| return Violation.of(.xss, pat);
+    return checkXssStructure(text);
+}
+
+fn checkXssStructure(text: []const u8) ?Violation {
     if (hasHtmlTag(text) and hasEventHandler(text)) return Violation.of(.xss, "on*=");
     return null;
 }
 
 const rce_strong = [_][]const u8{
-    "/bin/sh",            "/bin/bash",      "/bin/zsh",    "cmd.exe",       "powershell",
-    "/dev/tcp/",          "xp_cmdshell",    "shell_exec(", "passthru(",     "proc_open(",
-    "popen(",             "system(",        "pcntl_exec(", "wscript.shell", "${ifs}",
-    "$ifs$",              "{{7*7}}",        "${7*7}",      "#{7*7}",        "<%=7*7%>",
-    "${jndi:",            "%24%7bjndi",     "__import__(", "subprocess.",   "os.system",
-    "runtime.getruntime", "processbuilder",
+    "/bin/sh",        "/bin/bash",   "/bin/zsh",      "cmd.exe",    "powershell",
+    "/dev/tcp/",      "shell_exec(", "passthru(",     "proc_open(", "popen(",
+    "system(",        "pcntl_exec(", "wscript.shell", "${ifs}",     "$ifs$",
+    "{{7*7}}",        "${7*7}",      "#{7*7}",        "<%=7*7%>",   "${jndi:",
+    "%24%7bjndi",     "__import__(", "subprocess.",   "os.system",  "runtime.getruntime",
+    "processbuilder",
 };
 
 const shell_commands = [_][]const u8{
@@ -298,6 +332,10 @@ fn startsWithShellCommand(text: []const u8) bool {
 /// `;` or `|` is punctuation; `;wget` is a payload.
 pub fn checkRce(text: []const u8) ?Violation {
     if (firstMatch(text, &rce_strong)) |pat| return Violation.of(.rce, pat);
+    return checkRceStructure(text);
+}
+
+fn checkRceStructure(text: []const u8) ?Violation {
     var i: usize = 0;
     while (i < text.len) : (i += 1) {
         const c = text[i];
@@ -318,26 +356,51 @@ pub fn checkRce(text: []const u8) ?Violation {
     return null;
 }
 
-fn inspectRaw(text: []const u8) ?Violation {
-    if (checkPathTraversal(text)) |v| return v;
-    if (checkSqli(text)) |v| return v;
-    if (checkXss(text)) |v| return v;
-    if (checkRce(text)) |v| return v;
+fn inspectRaw(sigs: *const Signatures, text: []const u8) ?Violation {
+    if (sigs.findFirstTagged(text)) |m| {
+        return Violation.of(@enumFromInt(m.tag), m.name);
+    }
+    if (checkNullByte(text)) |v| return v;
+    if (checkSqliStructure(text)) |v| return v;
+    if (checkXssStructure(text)) |v| return v;
+    if (checkRceStructure(text)) |v| return v;
     return null;
 }
 
 /// Inspects one text field twice: as received, then canonicalised (double
 /// percent-decoding, SQL comment stripping, whitespace folding, lowercase)
 /// so that `%2527/**/UnIoN` style evasion collapses onto the raw signatures.
-pub fn inspectText(text: []const u8) ?Violation {
+pub fn inspectTextWith(sigs: *const Signatures, text: []const u8) ?Violation {
     if (text.len == 0) return null;
-    if (inspectRaw(text)) |v| return v;
+    if (inspectRaw(sigs, text)) |v| return v;
     if (text.len > MAX_CANONICAL) return null;
     var norm_buf: [MAX_CANONICAL]u8 = undefined;
     const normalized = normalizer.canonicalize(text, &norm_buf);
     if (normalized.len > 0 and !std.mem.eql(u8, normalized, text)) {
-        return inspectRaw(normalized);
+        return inspectRaw(sigs, normalized);
     }
+    return null;
+}
+
+/// Convenience for callers without a prebuilt automaton (tests, tools):
+/// scans the signature tables sequentially instead.
+pub fn inspectText(text: []const u8) ?Violation {
+    if (text.len == 0) return null;
+    if (inspectSequential(text)) |v| return v;
+    if (text.len > MAX_CANONICAL) return null;
+    var norm_buf: [MAX_CANONICAL]u8 = undefined;
+    const normalized = normalizer.canonicalize(text, &norm_buf);
+    if (normalized.len > 0 and !std.mem.eql(u8, normalized, text)) {
+        return inspectSequential(normalized);
+    }
+    return null;
+}
+
+fn inspectSequential(text: []const u8) ?Violation {
+    if (checkPathTraversal(text)) |v| return v;
+    if (checkSqli(text)) |v| return v;
+    if (checkXss(text)) |v| return v;
+    if (checkRce(text)) |v| return v;
     return null;
 }
 
@@ -363,20 +426,21 @@ pub fn isStructuralHeader(name: []const u8) bool {
 }
 
 pub fn inspectRequest(
+    sigs: *const Signatures,
     path: []const u8,
     user_agent: []const u8,
     headers: []const rule.Header,
     body: []const u8,
 ) ?Violation {
-    if (inspectText(path)) |v| return v;
-    if (inspectText(user_agent)) |v| return v;
+    if (inspectTextWith(sigs, path)) |v| return v;
+    if (inspectTextWith(sigs, user_agent)) |v| return v;
     for (headers) |h| {
         if (isStructuralHeader(h.name)) continue;
-        if (inspectText(h.value)) |v| return v;
+        if (inspectTextWith(sigs, h.value)) |v| return v;
     }
     if (body.len > 0) {
         const limit = @min(body.len, MAX_BODY_INSPECT);
-        if (inspectText(body[0..limit])) |v| return v;
+        if (inspectTextWith(sigs, body[0..limit])) |v| return v;
     }
     return null;
 }
@@ -430,7 +494,31 @@ test "inspectText blocks obfuscated WAF evasion attacks" {
     try std.testing.expect(inspectText("<img%20src=x%20onerror=alert(1)>") != null);
 }
 
+fn testSignatures() !*Signatures {
+    const sigs = try std.testing.allocator.create(Signatures);
+    buildSignatures(sigs);
+    return sigs;
+}
+
+test "automaton and sequential scans agree on every signature" {
+    const sigs = try testSignatures();
+    defer std.testing.allocator.destroy(sigs);
+    const all = [_][]const []const u8{ &traversal_strong, &sqli_strong, &xss_strong, &rce_strong };
+    for (all) |table| {
+        for (table) |pat| {
+            var buf: [96]u8 = undefined;
+            const text = try std.fmt.bufPrint(&buf, "prefix {s} suffix", .{pat});
+            const fast = inspectTextWith(sigs, text);
+            const slow = inspectText(text);
+            try std.testing.expect(fast != null and slow != null);
+            try std.testing.expectEqual(slow.?.category, fast.?.category);
+        }
+    }
+}
+
 test "inspectRequest passes a real browser request untouched" {
+    const sigs = try testSignatures();
+    defer std.testing.allocator.destroy(sigs);
     const headers = [_]rule.Header{
         .{ .name = "Host", .value = "example.com" },
         .{ .name = "Accept", .value = "text/html,application/xhtml+xml,application/xml;q=0.9," ++
@@ -444,15 +532,17 @@ test "inspectRequest passes a real browser request untouched" {
     const ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " ++
         "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
     const body = "{\"comment\":\"I'd select the second option -- it's cheaper\"}";
-    try std.testing.expect(inspectRequest("/blog/post-1", ua, &headers, body) == null);
+    try std.testing.expect(inspectRequest(sigs, "/blog/post-1", ua, &headers, body) == null);
 }
 
 test "inspectRequest still catches attacks in custom headers and bodies" {
+    const sigs = try testSignatures();
+    defer std.testing.allocator.destroy(sigs);
     const headers = [_]rule.Header{
         .{ .name = "X-Query", .value = "<script>alert(1)</script>" },
     };
-    const v = inspectRequest("/search", "Mozilla", &headers, "").?;
+    const v = inspectRequest(sigs, "/search", "Mozilla", &headers, "").?;
     try std.testing.expectEqual(AttackCategory.xss, v.category);
-    const b = inspectRequest("/submit", "Mozilla", &.{}, "cmd=test; /bin/sh").?;
+    const b = inspectRequest(sigs, "/submit", "Mozilla", &.{}, "cmd=test; /bin/sh").?;
     try std.testing.expectEqual(AttackCategory.rce, b.category);
 }

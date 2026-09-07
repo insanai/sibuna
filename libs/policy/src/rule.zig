@@ -1,10 +1,11 @@
 //! Sibuna Declarative Policy Rule Definitions
 //!
-//! Provides multi-criteria rule definitions matching Anubis policies:
-//! path pattern, user agent, HTTP headers, remote CIDR addresses,
-//! and per-rule actions with custom challenge settings.
+//! Multi-criteria rules with Anubis-compatible semantics: path pattern,
+//! user agent, HTTP headers, remote CIDR addresses (IPv4 and IPv6), and
+//! per-rule actions with challenge overrides and WEIGH scores.
 
 const std = @import("std");
+const radix = @import("radix_trie.zig");
 
 pub const Action = enum(u8) {
     allow,
@@ -18,6 +19,15 @@ pub const Action = enum(u8) {
         if (std.ascii.eqlIgnoreCase(str, "challenge")) return .challenge;
         if (std.ascii.eqlIgnoreCase(str, "weigh")) return .weigh;
         return null;
+    }
+
+    pub fn name(self: Action) []const u8 {
+        return switch (self) {
+            .allow => "allow",
+            .deny => "deny",
+            .challenge => "challenge",
+            .weigh => "weigh",
+        };
     }
 };
 
@@ -41,33 +51,20 @@ pub const HeaderMatcher = struct {
 };
 
 pub const CidrMatcher = struct {
-    network: u32,
-    mask: u32,
+    network: u128,
+    mask: u128,
 
     pub fn parse(cidr_str: []const u8) ?CidrMatcher {
-        var it = std.mem.splitScalar(u8, cidr_str, '/');
-        const ip_part = it.next() orelse return null;
-        const prefix_part = it.next();
-
-        const ip = parseIpv4(ip_part) orelse return null;
-        var prefix: u6 = 32;
-        if (prefix_part) |p_str| {
-            prefix = std.fmt.parseInt(u6, p_str, 10) catch return null;
-            if (prefix > 32) return null;
-        }
-
-        const mask: u32 = if (prefix == 0)
+        const prefix = radix.parseCidr(cidr_str) orelse return null;
+        const mask: u128 = if (prefix.length == 0)
             0
         else
-            ~@as(u32, 0) << @as(u5, @intCast(32 - prefix));
-        return .{
-            .network = ip & mask,
-            .mask = mask,
-        };
+            ~@as(u128, 0) << @intCast(128 - prefix.length);
+        return .{ .network = prefix.address & mask, .mask = mask };
     }
 
     pub fn matches(self: CidrMatcher, ip_str: []const u8) bool {
-        const ip = parseIpv4(ip_str) orelse return false;
+        const ip = radix.parseIp(ip_str) orelse return false;
         return (ip & self.mask) == self.network;
     }
 };
@@ -84,8 +81,12 @@ pub const PolicyRule = struct {
     cidrs: [MAX_RULE_CIDRS]CidrMatcher = undefined,
     cidr_count: u8 = 0,
     action: Action = .allow,
+    /// Challenge difficulty override in work bits.
     difficulty: ?u32 = null,
+    /// `hashcash` or `posw`; null inherits the daemon default.
     algorithm: ?[]const u8 = null,
+    /// Score contributed by a WEIGH rule (negative values vouch for a client).
+    weight: i32 = 0,
 
     pub fn matches(
         self: *const PolicyRule,
@@ -100,10 +101,8 @@ pub const PolicyRule = struct {
         if (self.ua_pattern) |up| {
             if (!patternMatches(up, user_agent)) return false;
         }
-        if (self.header_count > 0) {
-            for (self.headers[0..self.header_count]) |hm| {
-                if (!hm.matches(headers)) return false;
-            }
+        for (self.headers[0..self.header_count]) |hm| {
+            if (!hm.matches(headers)) return false;
         }
         if (self.cidr_count > 0) {
             var matched_cidr = false;
@@ -119,54 +118,31 @@ pub const PolicyRule = struct {
     }
 };
 
+/// Pattern grammar: `.*` or `*` match anything; `^...$` anchors an exact
+/// path; a trailing `*`, `/*`, or `.*` is a prefix match; a pattern that
+/// starts with `/` is an exact path; anything else is a case-insensitive
+/// substring (the common form for user-agent rules).
 pub fn patternMatches(pattern: []const u8, text: []const u8) bool {
     if (pattern.len == 0 or std.mem.eql(u8, pattern, ".*") or std.mem.eql(u8, pattern, "*")) {
         return true;
     }
-    // Regex anchor: ^...$
     if (pattern.len >= 2 and pattern[0] == '^' and pattern[pattern.len - 1] == '$') {
-        const middle = pattern[1 .. pattern.len - 1];
-        return matchPrefixWildcard(middle, text);
+        return matchPrefixWildcard(pattern[1 .. pattern.len - 1], text);
     }
     return matchPrefixWildcard(pattern, text);
 }
 
 fn matchPrefixWildcard(pattern: []const u8, text: []const u8) bool {
-    // Prefix wildcard: /path/* or /path/.*
     if (std.mem.endsWith(u8, pattern, ".*")) {
-        const prefix = pattern[0 .. pattern.len - 2];
-        return std.mem.startsWith(u8, text, prefix);
-    }
-    if (std.mem.endsWith(u8, pattern, "/*")) {
-        const prefix = pattern[0 .. pattern.len - 1];
-        return std.mem.startsWith(u8, text, prefix);
+        return std.mem.startsWith(u8, text, pattern[0 .. pattern.len - 2]);
     }
     if (std.mem.endsWith(u8, pattern, "*")) {
-        const prefix = pattern[0 .. pattern.len - 1];
-        return std.mem.startsWith(u8, text, prefix);
+        return std.mem.startsWith(u8, text, pattern[0 .. pattern.len - 1]);
     }
-    // Exact match or substring
     if (std.mem.startsWith(u8, pattern, "/")) {
         return std.mem.eql(u8, pattern, text);
     }
     return std.ascii.indexOfIgnoreCase(text, pattern) != null;
-}
-
-fn parseIpv4(s: []const u8) ?u32 {
-    var octets: [4]u8 = undefined;
-    var oct_idx: usize = 0;
-    var it = std.mem.splitScalar(u8, s, '.');
-    while (it.next()) |part| {
-        if (oct_idx >= 4) return null;
-        const val = std.fmt.parseInt(u8, part, 10) catch return null;
-        octets[oct_idx] = val;
-        oct_idx += 1;
-    }
-    if (oct_idx != 4) return null;
-    return (@as(u32, octets[0]) << 24) |
-        (@as(u32, octets[1]) << 16) |
-        (@as(u32, octets[2]) << 8) |
-        @as(u32, octets[3]);
 }
 
 test "rule pattern matches paths, uas, and wildcards" {
@@ -179,12 +155,15 @@ test "rule pattern matches paths, uas, and wildcards" {
     try std.testing.expect(!patternMatches("Amazonbot", "Mozilla/5.0 Chrome/120.0"));
 }
 
-test "cidr matcher verifies subnets" {
+test "cidr matcher verifies IPv4 and IPv6 subnets" {
     const cidr = CidrMatcher.parse("192.168.1.0/24").?;
     try std.testing.expect(cidr.matches("192.168.1.50"));
-    try std.testing.expect(cidr.matches("192.168.1.1"));
     try std.testing.expect(!cidr.matches("192.168.2.1"));
-    try std.testing.expect(!cidr.matches("10.0.0.1"));
+    const v6 = CidrMatcher.parse("2a02:1234::/32").?;
+    try std.testing.expect(v6.matches("2a02:1234:5::9"));
+    try std.testing.expect(!v6.matches("2a02:1235::1"));
+    try std.testing.expect(!v6.matches("192.168.1.50"));
+    try std.testing.expect(CidrMatcher.parse("bogus") == null);
 }
 
 test "policy rule multi criteria conjunction" {
