@@ -131,7 +131,13 @@ pub const App = struct {
             if (try self.mailbox.poll(self.io, ticket)) |result| return result;
             if (std.Io.Clock.awake.now(self.io).nanoseconds - start.nanoseconds >
                 10 * std.time.ns_per_s) return error.StorageTimeout;
-            try std.Io.sleep(self.io, std.Io.Duration.fromMilliseconds(10), .awake);
+            self.mailbox.waitFor(self.io, ticket, .{ .deadline = .{
+                .clock = .awake,
+                .raw = start.addDuration(.fromSeconds(10)),
+            } }) catch |err| switch (err) {
+                error.Timeout => {},
+                else => return err,
+            };
         }
     }
 

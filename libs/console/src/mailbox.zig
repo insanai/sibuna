@@ -13,12 +13,21 @@ pub const Mailbox = struct {
     pub const Work = struct { ticket: Ticket, request: protocol.StorageRequest };
     const Slot = struct {
         id: u64 = 0,
+        completion: std.Io.Event = .unset,
+        waiter: bool = false,
         state: State = .free,
         priority: Priority = .background,
         request: protocol.StorageRequest = undefined,
         result: protocol.StorageResult = undefined,
     };
-    pub const Error = error{ Full, Stopping, StaleTicket, NotExecuting, IdExhausted };
+    pub const Error = error{
+        Full,
+        Stopping,
+        StaleTicket,
+        NotExecuting,
+        IdExhausted,
+        WaiterActive,
+    };
 
     wake: std.Io.Event = .unset,
     mutex: std.Io.Mutex = .init,
@@ -94,6 +103,7 @@ pub const Mailbox = struct {
         if (slot.state != .executing) return error.NotExecuting;
         slot.result = result;
         slot.state = .completed;
+        slot.completion.set(io);
     }
 
     /// Null means pending. A result is transferred exactly once, releasing the slot.
@@ -101,6 +111,7 @@ pub const Mailbox = struct {
         self.mutex.lockUncancelable(io);
         defer self.mutex.unlock(io);
         const slot = try self.lookup(ticket);
+        if (slot.waiter) return error.WaiterActive;
         if (slot.state == .abandoned) return error.StaleTicket;
         if (slot.state != .completed) return null;
         const result = slot.result;
@@ -112,6 +123,7 @@ pub const Mailbox = struct {
         self.mutex.lockUncancelable(io);
         defer self.mutex.unlock(io);
         const slot = try self.lookup(ticket);
+        if (slot.waiter) return error.WaiterActive;
         if (slot.state == .executing or slot.state == .abandoned) {
             slot.state = .abandoned;
         } else slot.* = .{};
@@ -129,10 +141,39 @@ pub const Mailbox = struct {
                 .queued => {
                     slot.result = .{ .failed = .cancelled };
                     slot.state = .completed;
+                    slot.completion.set(io);
                 },
                 else => {},
             }
         }
+    }
+
+    /// One ticket owner may wait. Prevent slot reuse until that wait has returned, including
+    /// timeout and cancellation; execution completion may signal while the mutex is released.
+    pub fn waitFor(
+        self: *Self,
+        io: std.Io,
+        ticket: Ticket,
+        timeout: std.Io.Timeout,
+    ) (Error || std.Io.Event.WaitTimeoutError)!void {
+        self.mutex.lockUncancelable(io);
+        const slot = self.lookup(ticket) catch |err| {
+            self.mutex.unlock(io);
+            return err;
+        };
+        if (slot.waiter or slot.state == .abandoned) {
+            self.mutex.unlock(io);
+            return error.WaiterActive;
+        }
+        slot.waiter = true;
+        self.mutex.unlock(io);
+        defer {
+            self.mutex.lockUncancelable(io);
+            std.debug.assert(slot.id == ticket.id and slot.waiter);
+            slot.waiter = false;
+            self.mutex.unlock(io);
+        }
+        try slot.completion.waitTimeout(io, timeout);
     }
 
     /// Only the storage owner waits. Reset and inspect under the submission mutex so
@@ -196,4 +237,48 @@ test "urgent work overtakes background but cannot starve it" {
     }
     _ = try mailbox.submit(io, request, .urgent);
     try t.expectEqual(background.id, mailbox.take(io).?.ticket.id);
+}
+
+const WaitTest = struct {
+    mailbox: *Mailbox,
+    ticket: Mailbox.Ticket,
+    failure: ?anyerror = null,
+
+    fn run(self: *WaitTest) void {
+        self.mailbox.waitFor(std.testing.io, self.ticket, .{ .duration = .{
+            .clock = .awake,
+            .raw = .fromSeconds(5),
+        } }) catch |err| {
+            self.failure = err;
+        };
+    }
+};
+
+test "completion waiter pins the ticket and queued shutdown wakes it" {
+    const t = std.testing;
+    var box: Mailbox = .{};
+    const ticket = try box.submit(t.io, .setup_status, .urgent);
+    var context: WaitTest = .{ .mailbox = &box, .ticket = ticket };
+    const thread = try std.Thread.spawn(.{}, WaitTest.run, .{&context});
+    var joined = false;
+    defer if (!joined) {
+        box.stop(t.io);
+        thread.join();
+    };
+    var waiting = false;
+    for (0..1000) |_| {
+        box.mutex.lockUncancelable(t.io);
+        waiting = box.slots[ticket.slot].waiter;
+        box.mutex.unlock(t.io);
+        if (waiting) break;
+        try std.Io.sleep(t.io, .fromMilliseconds(1), .awake);
+    }
+    try t.expect(waiting);
+    try t.expectError(error.WaiterActive, box.poll(t.io, ticket));
+    try t.expectError(error.WaiterActive, box.abandon(t.io, ticket));
+    box.stop(t.io);
+    thread.join();
+    joined = true;
+    try t.expectEqual(null, context.failure);
+    try t.expectEqual(protocol.Failure.cancelled, (try box.poll(t.io, ticket)).?.failed);
 }
