@@ -4,11 +4,11 @@
 b470c53ec296d4620f4b4be1a16ba4337620afcfa9e42726fb1ff75ee565daff  apps/console-ui/src/geography.zig
 3e79eaeeba364c75c1df683e4feb0d90e86722e7d3e042c6d011efea56c0a53a  apps/console-ui/src/geoip_page.zig
 cc51ce2b276c68c19bbe478d9cc180fa7c78e8ca1474bd19e4b466c1627ad502  apps/console-ui/src/globe.zig
-c8adfbb244b8fc9c6e36e56e0d04a8c1dcd09ddb5c392b0f9e397d3f34963da5  apps/console-ui/src/main.zig
+6e999bcadbe28dc20be233c2dd234d0ebe0ac48b33a4e6ff750669bb9097e901  apps/console-ui/src/main.zig
 0ff91580006b7eb739dc276187dff3fdecb8e4085d23892f6c5f3bd9afb0ea92  apps/console-ui/src/qr.zig
-d24d00d0cd7c4d30322b3a09c084ac5f39132f6944ca794a67b8a1a86a64154a  apps/console-ui/src/render.zig
+e2c742a512ad9150f641bcf77d3e330b8cea2538dffa4a955c900b587ec6d205  apps/console-ui/src/render.zig
 ec6868075d9c6e1bbb96d65c58cb4736b52fa4ec16425d5e9badcc3c8272fa65  apps/console-ui/src/security.zig
-bba900f25efe4217b02deb9c44a0e80df15b5773c5cb91b6cd0a66f19b9cd4e4  apps/console-ui/src/state.zig
+2def57f4a4b087dbf4d60cc6df06c99fd22a65db3f5d10d0027bfdd699388be1  apps/console-ui/src/state.zig
 09f75faaeb382969e4a52bcf1f14cfb636be906c644cdd92a395d0e21b083d4c  apps/console-ui/web/assets/GEOGRAPHY.md
 2ab02b7bb5e1ff8bfbcd4ff6c09a9f840595ae6504d60cd6367e66ee7d5218df  apps/console-ui/web/assets/console.css
 50b2fa3e78ea67eb1a72a9e22cb325ec884b8e83432c3f66808ee190835b4686  apps/console-ui/web/assets/world-110m.bin

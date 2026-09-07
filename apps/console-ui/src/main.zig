@@ -173,7 +173,7 @@ fn action(value: std.json.Value) !void {
         } else try refresh();
         return;
     }
-    if (equal(name, "dashboard") and state.csrf.len != 0 and !state.must_change) {
+    if (equal(name, "dashboard") and state.fullAccess()) {
         state.phase = .dashboard;
         state.message = .{};
         return refresh();
@@ -241,9 +241,15 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
         state.role = try p.Bytes(16).init(string(body, "role"));
         const change = field(body, "must_change");
         state.must_change = change != null and change.? == .bool and change.?.bool;
-        state.phase = if (state.must_change) .password else .dashboard;
+        const totp_required = field(body, "totp_required") orelse .null;
+        state.totp_required = totp_required == .bool and totp_required.bool;
+        state.phase = if (state.must_change) .password else if (state.totp_required)
+            .security
+        else
+            .dashboard;
         state.message = .{};
         if (state.phase == .dashboard) try refresh();
+        if (state.phase == .security) try get("totp", "/console/api/totp");
         return;
     }
     if (equal(id, "logout") or equal(id, "password")) {
@@ -258,7 +264,7 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
 }
 
 fn refresh() !void {
-    if (state.stats_busy or state.paused or state.hidden) return;
+    if (state.stats_busy or state.paused or state.hidden or state.totp_required) return;
     state.stats_busy = true;
     state.epoch = .{};
     try command(.{ .op = "connect", .path = "/console/stream" });
@@ -351,7 +357,7 @@ fn statsResponse(status: i64, body: std.json.Value, alloc: std.mem.Allocator) !v
 }
 
 fn geographicAction(name: []const u8, fields: std.json.Value) !bool {
-    if (equal(name, "geoip") and state.csrf.len != 0 and !state.must_change) {
+    if (equal(name, "geoip") and state.fullAccess()) {
         state.phase = .geoip;
         state.stats_busy = false;
         try command(.{ .op = "disconnect" });
@@ -539,4 +545,21 @@ fn securityResponse(id: []const u8, status: i64, body: std.json.Value) !void {
         state.geometry = null;
         state.stats = null;
     }
+}
+
+test "required authenticator enrollment cannot open dashboard data or geometry" {
+    sb_init();
+    const login =
+        \\{"id":"login","status":200,"body":{"csrf":"test","role":"admin",
+        \\"must_change":false,"totp_required":true}}
+    ;
+    @memcpy(input[0..login.len], login);
+    sb_event(2, login.len);
+    try std.testing.expectEqual(.security, state.phase);
+    const navigation = "{\"action\":\"dashboard\",\"fields\":{}}";
+    @memcpy(input[0..navigation.len], navigation);
+    sb_event(1, navigation.len);
+    try std.testing.expectEqual(.security, state.phase);
+    try std.testing.expect(std.mem.indexOf(u8, commands[0..commands_length], "connect") == null);
+    try std.testing.expect(std.mem.indexOf(u8, html[0..html_length], "<svg") == null);
 }

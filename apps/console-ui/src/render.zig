@@ -85,7 +85,7 @@ fn authentication(state: *const State, w: *Writer) Writer.Error!void {
         "<button class=\"btn btn-ghost\" data-action=\"security\">" ++
             "Two-factor authentication</button>",
     );
-    if (state.phase == .password and !state.must_change) {
+    if (state.phase == .password and state.fullAccess()) {
         try w.writeAll("<button class=\"btn btn-ghost\" " ++
             "data-action=\"dashboard\">Back to dashboard</button>");
     }

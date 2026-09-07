@@ -8,6 +8,7 @@ pub const State = struct {
     role: p.Bytes(16) = .{},
     busy: bool = false,
     must_change: bool = false,
+    totp_required: bool = false,
     stats_busy: bool = false,
     epoch: p.Bytes(32) = .{},
     sequence: u64 = 0,
@@ -34,4 +35,8 @@ pub const State = struct {
     recovery_count: usize = 0,
     stats: ?p.StatsSnapshot = null,
     points: [60]struct { second: u64 = 0, count: u64 = 0 } = @splat(.{}),
+
+    pub fn fullAccess(self: *const State) bool {
+        return self.csrf.len != 0 and !self.must_change and !self.totp_required;
+    }
 };
