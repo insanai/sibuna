@@ -17,6 +17,7 @@ pub fn build(b: *std.Build) void {
     const wasm_pow = addWasmSolver(b);
     addServer(b, target, optimize, modules, wasm_pow);
     addTests(b, modules);
+    addBenchmarks(b, target, optimize, modules);
 
     addFormatting(b);
     addShd(b);
@@ -169,9 +170,44 @@ fn addTests(b: *std.Build, modules: Modules) void {
     test_step.dependOn(&b.addRunArtifact(store_tests).step);
 }
 
+fn addBenchmarks(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+    modules: Modules,
+) void {
+    const bench_exe = b.addExecutable(.{
+        .name = "sibuna-benchmark",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("benchmarks/benchmark.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    bench_exe.root_module.addImport("core", modules.core);
+    bench_exe.root_module.addImport("crypto", modules.crypto);
+    bench_exe.root_module.addImport("net", modules.net);
+    bench_exe.root_module.addImport("policy", modules.policy);
+    bench_exe.root_module.addImport("challenge", modules.challenge);
+    bench_exe.root_module.addImport("store", modules.store);
+
+    b.installArtifact(bench_exe);
+
+    const run_bench = b.addRunArtifact(bench_exe);
+    if (b.args) |args| {
+        run_bench.addArgs(args);
+    }
+    const bench_step = b.step("benchmark-zig", "Run the Sibuna benchmark suite");
+    bench_step.dependOn(&run_bench.step);
+
+    const run_all = b.addSystemCommand(&.{ "sh", "benchmarks/run-all.sh" });
+    const run_all_step = b.step("benchmark", "Run full benchmark matrix and update results");
+    run_all_step.dependOn(&run_all.step);
+}
+
 fn addFormatting(b: *std.Build) void {
     const fmt = b.addFmt(.{
-        .paths = &.{ "build.zig", "apps", "libs", "tools" },
+        .paths = &.{ "build.zig", "apps", "libs", "tools", "benchmarks" },
         .check = true,
     });
     const style = b.addSystemCommand(&.{ "sh", "tools/check-style.sh" });
