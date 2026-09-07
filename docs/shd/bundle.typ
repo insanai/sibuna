@@ -35,3 +35,16 @@
 #document("pdf/shd-0002-sibuna-foundation-architecture.pdf")[
   #include "records/0002-sibuna-foundation-architecture.typ"
 ]
+
+#document(
+  "shd/0003-declarative-policy-engine.html",
+  title: [SHD 0003: Title Goes Here],
+  author: ("Sibuna Contributors",),
+  description: [Draft discussion note],
+)[
+  #include "records/0003-declarative-policy-engine.typ"
+]
+
+#document("pdf/shd-0003-declarative-policy-engine.pdf")[
+  #include "records/0003-declarative-policy-engine.typ"
+]

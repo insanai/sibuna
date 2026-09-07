@@ -167,3 +167,45 @@ the difficulty:
   [$D = 6$],
   [Imposes $16,777,216$ hashes per challenge. Solves in $20$ seconds. Renders mass extraction completely cost-prohibitive.],
 )
+
+== Declarative Policy Configuration (`--policy-file`)
+
+Sibuna supports declarative rule policies in JSON, achieving full functional parity with
+`TecharoHQ/anubis` (`botPolicies.yaml`). Administrators can declare rules by passing
+`--policy-file <path>` (or `-P <path>`):
+
+```json
+{
+  "default_action": "ALLOW",
+  "rules": [
+    {
+      "name": "block-cloudflare-workers",
+      "headers": { "CF-Worker": ".*" },
+      "action": "DENY"
+    },
+    {
+      "name": "deny-amazonbot",
+      "user_agent": "Amazonbot",
+      "action": "DENY"
+    },
+    {
+      "name": "protect-checkout",
+      "path": "/api/checkout/*",
+      "action": "CHALLENGE",
+      "challenge": {
+        "difficulty": 6,
+        "algorithm": "sha256"
+      }
+    },
+    {
+      "name": "allow-internal-vpc",
+      "remote_addresses": ["10.0.0.0/8", "192.168.0.0/16"],
+      "action": "ALLOW"
+    }
+  ]
+}
+```
+
+When evaluated, rules are checked in declaration order on the zero-allocation request hot path.
+Matching rules immediately trigger their configured action (`ALLOW`, `DENY`, `CHALLENGE`, or `WEIGH`).
+

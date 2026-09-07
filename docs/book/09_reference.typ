@@ -42,6 +42,10 @@
   [`4`],
   [Proof-of-Work target difficulty, defined as number of leading hexadecimal zeros.],
 
+  [`--policy-file, -P <path>`],
+  [`none`],
+  [Path to declarative JSON policy file overriding or augmenting default firewall rules.],
+
   [`--verbose, -v`],
   [`false`],
   [Enables diagnostic logging for every evaluated connection and policy rule match.],

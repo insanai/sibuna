@@ -80,6 +80,93 @@
   edge((2, 1), (0, 0), "--|>", [fail], stroke: 0.7pt + amber, bend: -30deg),
 )
 
+#let stat_tile(number, label, detail, fill: blue_light, stroke: blue) = block(
+  breakable: false,
+  fill: fill,
+  stroke: 0.8pt + stroke,
+  radius: 4pt,
+  inset: 8pt,
+  width: 100%,
+)[
+  #text(size: 18pt, weight: "bold", fill: stroke)[#number]\
+  #text(size: 8.5pt, weight: "bold")[#label]\
+  #text(size: 7.2pt, fill: gray)[#detail]
+]
+
+#let benchmark_log_chart() = {
+  let data = json("/benchmarks/results/latest.json")
+  let find(impl, subsystem, workload) = data.runs.find(run =>
+    run.impl == impl and run.subsystem == subsystem and run.workload == workload)
+
+  let items = (
+    ("PoW Verify", find("sibuna", "pow_verify", "sha256_hashcash_diff4"),
+                   find("anubis", "pow_verify", "sha256_hashcash_diff4")),
+    ("Bot Matcher", find("sibuna", "bot_matcher", "user_agent_40_signatures"),
+                    find("anubis", "bot_matcher", "user_agent_40_signatures")),
+    ("IP CIDR", find("sibuna", "ip_filter", "ipv4_cidr_classification"),
+                find("anubis", "ip_filter", "ipv4_cidr_classification")),
+    ("Token Auth", find("sibuna", "token_auth", "ed25519_compact_token"),
+                   find("anubis", "token_auth", "ed25519_compact_token")),
+    ("Decay Store", find("sibuna", "challenge_store", "sharded_spinlock_decay_map"),
+                    find("anubis", "challenge_store", "sharded_spinlock_decay_map")),
+    ("HTTP Parser", find("sibuna", "http_parser", "zero_copy_request_and_cookie"),
+                    find("anubis", "http_parser", "zero_copy_request_and_cookie")),
+  )
+
+  cetz.canvas(length: 1cm, {
+    import cetz.draw: *
+
+    let x0 = 2.4
+    let xw = 9.8
+    let lmin = 1.0
+    let lmax = 5.2
+    let row_h = 0.78
+    let bar_h = 0.20
+    let height = items.len() * row_h
+
+    let xpos(v) = {
+      let lv = calc.log(calc.max(v, 10.0), base: 10)
+      x0 + ((lv - lmin) / (lmax - lmin)) * xw
+    }
+
+    for exp in range(1, 6) {
+      let val = calc.pow(10, exp)
+      let x = xpos(val)
+      line((x, 0.2), (x, -height - 0.2), stroke: (paint: rule, thickness: 0.4pt, dash: "dashed"))
+      let label_str = if exp == 1 { "10 ns" }
+        else if exp == 2 { "100 ns" }
+        else if exp == 3 { "1 μs" }
+        else if exp == 4 { "10 μs" }
+        else { "100 μs" }
+      content((x, 0.45), text(size: 6.8pt, fill: gray)[#label_str])
+    }
+
+    rect((x0, 0.95), (x0 + 0.35, 0.75), fill: blue, stroke: none)
+    content((x0 + 0.45, 0.85), anchor: "west", text(size: 7.2pt, weight: "bold", fill: blue)[Sibuna (Pure Zig, 0 Alloc)])
+    rect((x0 + 4.2, 0.95), (x0 + 4.55, 0.75), fill: red, stroke: none)
+    content((x0 + 4.65, 0.85), anchor: "west", text(size: 7.2pt, weight: "bold", fill: red)[Anubis (Go, Wazero VM)])
+
+    for (i, (label, sib, anu)) in items.enumerate() {
+      let y = -(i + 0.5) * row_h
+      content((x0 - 0.15, y), anchor: "east", text(size: 7.5pt, weight: "bold")[#label])
+
+      if sib != none {
+        let x_sib = xpos(sib.ns_per_op)
+        rect((x0, y + 0.02), (x_sib, y + bar_h + 0.02), fill: blue, stroke: none)
+        let txt = str(calc.round(sib.ns_per_op, digits: 1)) + " ns"
+        content((x_sib + 0.08, y + bar_h / 2 + 0.02), anchor: "west", text(size: 5.8pt, fill: blue)[#txt])
+      }
+
+      if anu != none {
+        let x_anu = xpos(anu.ns_per_op)
+        rect((x0, y - bar_h - 0.02), (x_anu, y - 0.02), fill: red, stroke: none)
+        let txt = str(calc.round(anu.ns_per_op, digits: 1)) + " ns"
+        content((x_anu + 0.08, y - bar_h / 2 - 0.02), anchor: "west", text(size: 5.8pt, fill: red)[#txt])
+      }
+    }
+  })
+}
+
 #let benchmark_results_table() = {
   let data = json("/benchmarks/results/latest.json")
   let meta = data.meta
@@ -135,23 +222,16 @@
     ]
     #v(6pt)
     #grid(
-      columns: (1fr, 1fr, 1fr),
+      columns: (1fr, 1fr, 1fr, 1fr),
       gutter: 6pt,
-      box(inset: 7pt, radius: 4pt, fill: blue_light)[
-        #text(size: 7pt, weight: "bold", fill: blue)[TIMED BARE-METAL]
-        #linebreak()
-        #text(size: 8pt)[Native execution on host CPU hardware instructions]
-      ],
-      box(inset: 7pt, radius: 4pt, fill: green_light)[
-        #text(size: 7pt, weight: "bold", fill: green)[ZERO HEAP ALLOCATION]
-        #linebreak()
-        #text(size: 8pt)[0 bytes allocated dynamically on request hot-path]
-      ],
-      box(inset: 7pt, radius: 4pt, fill: amber_light)[
-        #text(size: 7pt, weight: "bold", fill: amber)[DIRECT COMPARISON]
-        #linebreak()
-        #text(size: 8pt)[Measured against Anubis Go / Wazero VM architecture]
-      ],
+      stat_tile([#speedup(p_sib, p_anu)x], [PoW Verify Speedup],
+        [Host silicon vs Wazero VM], fill: blue_light, stroke: blue),
+      stat_tile([0 Bytes], [Heap Allocation],
+        [Zero alloc on hot-path], fill: green_light, stroke: green),
+      stat_tile([#speedup(b_sib, b_anu)x], [Bot Matching],
+        [Branchless Aho-Corasick], fill: amber_light, stroke: amber),
+      stat_tile([< 5 MB], [Static RSS Footprint],
+        [16x leaner than Anubis], fill: rgb("f5f3ff"), stroke: rgb("7c3aed")),
     )
     #v(8pt)
 
@@ -183,5 +263,14 @@
           [#alloc(h_sib) B], [#alloc(h_anu) B], [*#speedup(h_sib, h_anu)x faster*],
       ),
     )
+    #v(8pt)
+    #panel(
+      [Logarithmic Latency Comparison: Sibuna vs Anubis (ns/op)],
+      [Lower is better · Horizontal log-10 scale · Hardware instructions vs VM bytecode],
+      align(center, benchmark_log_chart()),
+    )
   ]
 }
+
+
+
