@@ -170,12 +170,26 @@ pub const App = struct {
         };
     }
 
+    pub fn needsTotp(self: *App, role: p.Role, enabled: bool) bool {
+        return self.config.behind_proxy and role == .admin and !enabled;
+    }
+
+    pub fn restricted(self: *App, identity: p.Principal) bool {
+        return identity.must_change or self.needsTotp(identity.role, identity.totp_enabled);
+    }
+
     fn dispatch(self: *App, context: *http.Context) !void {
+        const forwarded = if (self.config.behind_proxy)
+            try context.header("X-Forwarded-Proto")
+        else
+            null;
+        if (!@import("ingress.zig").accepts(&self.config, context.peer, forwarded))
+            return http.fail(context, .forbidden, "CONSOLE403");
         const path = context.request.head.target;
-        if (std.mem.eql(u8, path, "/console/assets/world-110m.bin")) {
-            const user = try self.principal(context) orelse return;
-            if (user.must_change) return http.fail(context, .forbidden, "CONSOLE403");
-            if (context.request.head.method != .GET) return error.InvalidRequest;
+        const method = context.request.head.method;
+        if (method == .GET and std.mem.eql(u8, path, "/console/assets/world-110m.bin")) {
+            const identity = try self.principal(context) orelse return;
+            if (self.restricted(identity)) return http.fail(context, .forbidden, "CONSOLE403");
             return context.respond(
                 .ok,
                 "application/octet-stream",
@@ -184,59 +198,70 @@ pub const App = struct {
             );
         }
         if (try @import("assets.zig").serve(context, path)) return;
-        const method = context.request.head.method;
+        if (method == .GET and (std.mem.eql(u8, path, "/console") or
+            std.mem.eql(u8, path, "/console/")))
+            return context.respond(.ok, "text/html; charset=utf-8", shell, &.{});
+        const route = @import("routes.zig").find(path, method) orelse
+            return http.fail(context, .not_found, "CONSOLE404");
         if (method == .POST) {
             const origin = try context.header("Origin") orelse return error.InvalidRequest;
             if (!std.mem.eql(u8, origin, self.config.origin.slice())) return error.InvalidRequest;
         }
-        if (std.mem.eql(u8, path, "/console/api/totp") or
-            std.mem.eql(u8, path, "/console/api/totp/enroll") or
-            std.mem.eql(u8, path, "/console/api/totp/confirm"))
-            return @import("totp_routes.zig").handle(self, context, path);
-        if (std.mem.eql(u8, path, "/console/api/geoip"))
-            return @import("geoip_routes.zig").handle(self, context);
-        if (std.mem.eql(u8, path, "/console/api/setup")) {
-            if (method == .GET) {
+        var identity: ?p.Principal = null;
+        if (route.access != .public) {
+            identity = try self.principal(context) orelse return;
+            if ((route.access == .full and self.restricted(identity.?)) or
+                !identity.?.role.allows(route.action))
+                return http.fail(context, .forbidden, "CONSOLE403");
+            if (method == .POST) try http.csrf(context, identity.?.csrf_digest);
+        }
+        return self.executeRoute(context, route, identity);
+    }
+
+    fn executeRoute(
+        self: *App,
+        context: *http.Context,
+        route: @import("routes.zig").Route,
+        identity: ?p.Principal,
+    ) !void {
+        switch (route.handler) {
+            .setup_status => {
                 const status = try self.request(.setup_status);
                 if (status != .setup_required) return error.StorageUnavailable;
                 return http.json(context, .{ .setup_required = status.setup_required }, &.{});
-            }
-            if (method == .POST) return auth.bootstrap(self, context);
-        }
-        if (std.mem.eql(u8, path, "/console/api/login") and method == .POST)
-            return auth.login(self, context);
-        if (std.mem.eql(u8, path, "/console/api/session") and method == .GET) {
-            const identity = try self.principal(context) orelse return;
-            const raw_token = try http.sessionToken(context);
-            const csrf = std.fmt.bytesToHex(http.csrfToken(raw_token), .lower);
-            return http.json(context, .{
-                .user = identity.actor,
-                .role = @tagName(identity.role),
-                .must_change = identity.must_change,
-                .expires = identity.expires,
-                .csrf = @as([]const u8, &csrf),
-            }, &.{});
-        }
-        if (std.mem.eql(u8, path, "/console/stream") and method == .GET)
-            return @import("stream.zig").handle(self, context);
-        if (std.mem.eql(u8, path, "/console/api/stats") and method == .GET) {
-            const identity = try self.principal(context) orelse return;
-            if (identity.must_change) return http.fail(context, .forbidden, "CONSOLE403");
-            return http.json(context, self.stats.snapshot(
+            },
+            .bootstrap => return auth.bootstrap(self, context),
+            .login => return auth.login(self, context),
+            .logout => return auth.logout(self, context),
+            .password => return auth.password(self, context, identity.?),
+            .geoip => return @import("geoip_routes.zig").handle(self, context, identity.?),
+            .totp => return @import("totp_routes.zig").handle(
+                self,
+                context,
+                route.path,
+                identity.?,
+            ),
+            .stream => return @import("stream.zig").handle(self, context, identity.?),
+            .stats => return http.json(context, self.stats.snapshot(
                 self.io,
                 self.telemetry,
                 self.metrics,
                 self.now(),
-            ), &.{});
+            ), &.{}),
+            .session => {
+                const user = identity.?;
+                const raw = try http.sessionToken(context);
+                const csrf = std.fmt.bytesToHex(http.csrfToken(raw), .lower);
+                return http.json(context, .{
+                    .user = user.actor,
+                    .role = @tagName(user.role),
+                    .must_change = user.must_change,
+                    .expires = user.expires,
+                    .totp_required = self.needsTotp(user.role, user.totp_enabled),
+                    .csrf = @as([]const u8, &csrf),
+                }, &.{});
+            },
         }
-        if (std.mem.eql(u8, path, "/console/api/password") and method == .POST)
-            return auth.password(self, context);
-        if (std.mem.eql(u8, path, "/console/api/logout") and method == .POST)
-            return auth.logout(self, context);
-        if (method == .GET and (std.mem.eql(u8, path, "/console") or
-            std.mem.eql(u8, path, "/console/")))
-            return context.respond(.ok, "text/html; charset=utf-8", shell, &.{});
-        return http.fail(context, .not_found, "CONSOLE404");
     }
 
     pub fn principal(self: *App, context: *http.Context) !?p.Principal {

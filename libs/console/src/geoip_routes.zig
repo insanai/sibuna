@@ -3,9 +3,7 @@ const App = @import("app.zig").App;
 const http = @import("http.zig");
 const p = @import("console_protocol");
 
-pub fn handle(app: *App, context: *http.Context) !void {
-    const user = try app.principal(context) orelse return;
-    if (user.must_change) return http.fail(context, .forbidden, "CONSOLE403");
+pub fn handle(app: *App, context: *http.Context, user: p.Principal) !void {
     const job = &app.geo_job;
     if (context.request.head.method == .GET) {
         job.mutex.lockUncancelable(app.io);
@@ -25,8 +23,6 @@ pub fn handle(app: *App, context: *http.Context) !void {
         }, &.{});
     }
     if (context.request.head.method != .POST) return error.InvalidRequest;
-    if (!user.role.allows(.manage_settings)) return http.fail(context, .forbidden, "CONSOLE403");
-    try http.csrf(context, user.csrf_digest);
     const digest = try http.session(context);
     var body: [16384]u8 = undefined;
     var arena: [32768]u8 = undefined;
@@ -38,6 +34,7 @@ pub fn handle(app: *App, context: *http.Context) !void {
         csv: []const u8 = "",
     }, context, &body, fixed.allocator());
     defer input.deinit();
+    if (input.value.expected_revision >= std.math.maxInt(i64)) return error.InvalidLimit;
     try job.start(.{
         .auth = .{ .session_digest = digest, .csrf_digest = user.csrf_digest, .now = app.now() },
         .expected_revision = input.value.expected_revision,

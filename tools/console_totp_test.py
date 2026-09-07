@@ -17,7 +17,7 @@ def code(secret, step):
     return f"{(struct.unpack('!I', digest[offset:offset+4])[0] & 0x7fffffff) % 1000000:06d}"
 
 
-def enroll(h, port, logpath):
+def enroll(h, port, logpath, restricted=False):
     key = re.search(r"Console setup key .*: ([0-9a-f]{64})", logpath.read_text())[1]
     credentials = {"username": "factor-admin", "password": "factor test long passphrase"}
     assert h.request(port, "POST", "/console/api/setup", dict(credentials, setup_key=key))[0] == 200
@@ -25,6 +25,13 @@ def enroll(h, port, logpath):
     assert status == 200, body
     cookie = headers["Set-Cookie"].split(";", 1)[0]
     csrf = json.loads(body)["csrf"]
+    if restricted:
+        assert "Secure" in headers["Set-Cookie"]
+        assert json.loads(body)["totp_required"]
+        for path in ("/console/api/stats", "/console/api/geoip",
+                     "/console/assets/world-110m.bin", "/console/stream"):
+            assert h.request(port, "GET", path, cookie=cookie)[0] == 403
+        assert h.request(port, "POST", "/console/api/geoip", {}, cookie, csrf)[0] == 403
     body = {"password": credentials["password"], "revision": 0}
     status, _, response = h.request(port, "POST", "/console/api/totp/enroll", body, cookie, csrf)
     assert status == 200, response
@@ -86,3 +93,33 @@ def check(binary, h):
             finally:
                 h.stop(proc)
     print("console-e2e: encrypted TOTP, session revocation, replay and recovery persistence passed")
+
+
+def check_proxy(binary, h):
+    from types import SimpleNamespace
+    headers = {"Origin": "https://console.test", "X-Forwarded-Proto": "https"}
+    trusted = SimpleNamespace(request=lambda *a, **kw: h.request(*a, **kw, extra_headers=headers))
+    with tempfile.TemporaryDirectory(prefix="sibuna-proxy-") as root:
+        keypath = Path(root) / "console.key"
+        keypath.write_text(os.urandom(32).hex() + "\n")
+        keypath.chmod(0o600)
+        logpath = Path(root) / "daemon.log"
+        port = h.port()
+        with logpath.open("w+") as log:
+            args = binary, str(Path(root) / "data"), port, log, str(keypath), True
+            proc = h.start(*args)
+            try:
+                assert h.request(port, "GET", "/console/")[0] == 403
+                assert h.request(port, "GET", "/console/", extra_headers={
+                    "X-Forwarded-Proto": "http"})[0] == 403
+                assert h.request(port, "POST", "/console/api/login", {}, extra_headers={
+                    "Origin": "https://wrong.test", "X-Forwarded-Proto": "https"})[0] == 400
+                credentials, secret, step, recovery = enroll(trusted, port, logpath, True)
+            finally:
+                h.stop(proc)
+            proc = h.start(*args)
+            try:
+                login_checks(trusted, port, credentials, secret, step, recovery)
+            finally:
+                h.stop(proc)
+    print("console-e2e: trusted HTTPS ingress and mandatory administrator TOTP passed")

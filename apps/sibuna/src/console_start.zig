@@ -73,8 +73,7 @@ pub const Runtime = struct {
         owner: *Persistent,
     ) !Runtime {
         try config.validate(true);
-        // Off-loopback is fail-closed until the TOTP enrollment/verification route is wired.
-        if (config.behind_proxy) return error.ConsoleTotpRequired;
+        if (config.behind_proxy and config.key_file.len == 0) return error.ConsoleKeyRequired;
         var key: ?[32]u8 = null;
         if (config.key_file.len != 0)
             key = try @import("console_key.zig").read(io, config.key_file.slice());

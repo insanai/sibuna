@@ -61,6 +61,7 @@ pub const Principal = struct {
     expires: u64,
     csrf_digest: [32]u8,
     must_change: bool,
+    totp_enabled: bool = false,
 };
 pub const StorageRequest = union(enum) {
     setup_status,

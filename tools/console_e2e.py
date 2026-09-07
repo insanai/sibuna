@@ -19,7 +19,7 @@ def port():
         return sock.getsockname()[1]
 
 
-def request(console_port, method, path, body=None, cookie=None, csrf=None):
+def request(console_port, method, path, body=None, cookie=None, csrf=None, extra_headers=None):
     conn = http.client.HTTPConnection("127.0.0.1", console_port, timeout=15)
     headers = {"Origin": f"http://127.0.0.1:{console_port}"}
     if body is not None:
@@ -28,6 +28,7 @@ def request(console_port, method, path, body=None, cookie=None, csrf=None):
         headers["Cookie"] = cookie
     if csrf:
         headers["X-Console-CSRF"] = csrf
+    headers.update(extra_headers or {})
     try:
         conn.request(method, path, json.dumps(body) if body is not None else None, headers)
         response = conn.getresponse()
@@ -36,17 +37,20 @@ def request(console_port, method, path, body=None, cookie=None, csrf=None):
         conn.close()
 
 
-def start(binary, directory, console_port, logfile, key_file=None):
+def start(binary, directory, console_port, logfile, key_file=None, proxy=False):
     proc = subprocess.Popen([
         binary, "--data-dir", directory, "--host", "127.0.0.1",
         "--port", str(port()), "--workers", "1", "--console", f"127.0.0.1:{console_port}",
-    ] + (["--console-key-file", key_file] if key_file else []), stdout=logfile, stderr=logfile)
+    ] + (["--console-key-file", key_file] if key_file else []) + ([
+        "--console-behind-proxy", "--console-origin", "https://console.test",
+        "--console-trusted-proxy", "127.0.0.1/32",
+    ] if proxy else []), stdout=logfile, stderr=logfile)
     deadline = time.monotonic() + 30
     while time.monotonic() < deadline:
         if proc.poll() is not None:
             raise RuntimeError("daemon exited before console startup")
         try:
-            if request(console_port, "GET", "/console/api/setup")[0] == 200:
+            if request(console_port, "GET", "/console/api/setup")[0] == (403 if proxy else 200):
                 return proc
         except (OSError, http.client.HTTPException):
             time.sleep(0.05)
@@ -140,6 +144,7 @@ def check(binary):
                 stop(proc)
     import console_totp_test
     console_totp_test.check(binary, sys.modules[__name__])
+    console_totp_test.check_proxy(binary, sys.modules[__name__])
     print("console-e2e: bootstrap, login, CSRF, stream delivery/revocation, restart persistence passed")
 
 

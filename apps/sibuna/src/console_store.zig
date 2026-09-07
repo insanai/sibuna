@@ -67,7 +67,8 @@ pub fn authorize(owner: *Persistent, digest: [32]u8, now: u64) !p.StorageResult 
     var result = try db.query(
         owner.db,
         owner.gpa,
-        "SELECT u.id,u.role,u.revision,s.expires,s.csrf_digest,u.must_change,u.username " ++
+        "SELECT u.id,u.role,u.revision,s.expires,s.csrf_digest,u.must_change,u.username," ++
+            "EXISTS(SELECT 1 FROM console_totp m WHERE m.user_id=u.id AND m.enabled=1) " ++
             "FROM console_sessions s JOIN console_users u ON u.id=s.user_id " ++
             "WHERE s.digest=? AND s.expires>? AND s.idle_expires>? AND s.revision=u.revision " ++
             "AND u.disabled=0 LIMIT 1",
@@ -86,6 +87,7 @@ pub fn authorize(owner: *Persistent, digest: [32]u8, now: u64) !p.StorageResult 
         .expires = try number(row[3]),
         .csrf_digest = csrf,
         .must_change = try number(row[5]) != 0,
+        .totp_enabled = try number(row[7]) != 0,
     } };
 }
 

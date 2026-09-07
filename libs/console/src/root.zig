@@ -7,6 +7,7 @@ pub const Mailbox = @import("mailbox.zig").Mailbox;
 test {
     _ = @import("budget.zig");
     _ = @import("config.zig");
+    _ = @import("ingress.zig");
     _ = @import("mailbox.zig");
 }
 

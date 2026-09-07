@@ -116,13 +116,12 @@ fn establish(app: *App, context: *Context, user: p.AuthUser, factor: p.auth.Fact
         .user = user.id,
         .role = @tagName(user.role),
         .must_change = user.must_change,
+        .totp_required = app.needsTotp(user.role, user.totp_enabled),
         .csrf = @as([]const u8, &csrf_hex),
     }, &.{.{ .name = "Set-Cookie", .value = value }});
 }
 
 pub fn logout(app: *App, context: *Context) !void {
-    const principal = try app.principal(context) orelse return;
-    try http.csrf(context, principal.csrf_digest);
     const result = try app.request(.{ .logout = try http.session(context) });
     if (result != .command_recorded) return error.StorageUnavailable;
     const cookie = if (app.config.behind_proxy or app.config.cookie_secure)
@@ -136,9 +135,7 @@ pub fn logout(app: *App, context: *Context) !void {
     );
 }
 
-pub fn password(app: *App, context: *Context) !void {
-    const principal = try app.principal(context) orelse return;
-    try http.csrf(context, principal.csrf_digest);
+pub fn password(app: *App, context: *Context, principal: p.Principal) !void {
     const session_digest = try http.session(context);
     var body: [2048]u8 = undefined;
     var arena: [8192]u8 = undefined;

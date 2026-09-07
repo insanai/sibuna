@@ -5,9 +5,7 @@ const http = @import("http.zig");
 const App = @import("app.zig").App;
 const p = @import("console_protocol");
 
-pub fn handle(app: *App, context: *Context) !void {
-    const principal = try app.principal(context) orelse return;
-    if (principal.must_change) return http.fail(context, .forbidden, "CONSOLE403");
+pub fn handle(app: *App, context: *Context, principal: p.Principal) !void {
     const origin = try context.header("Origin") orelse return error.InvalidRequest;
     if (!std.mem.eql(u8, origin, app.config.origin.slice())) return error.InvalidRequest;
     const key = try upgradeKey(context);
@@ -136,7 +134,7 @@ const Stream = struct {
             self.close(1013);
             return false;
         };
-        if (result != .authorized or result.authorized.must_change) {
+        if (result != .authorized or self.app.restricted(result.authorized)) {
             self.close(1008);
             return false;
         }

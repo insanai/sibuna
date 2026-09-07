@@ -47,10 +47,9 @@ fn decrypt(app: *App, record: p.auth.Totp) !totp.Seed {
     return secrets.open(record.envelope, key, record.user);
 }
 
-pub fn handle(app: *App, context: *Context, path: []const u8) !void {
+pub fn handle(app: *App, context: *Context, path: []const u8, principal: p.Principal) !void {
     const enrolling = std.mem.endsWith(u8, path, "/enroll");
     const confirming = std.mem.endsWith(u8, path, "/confirm");
-    const principal = try app.principal(context) orelse return;
     if (context.request.head.method == .GET) {
         const result = try app.request(.{ .totp_read = principal.actor });
         return http.json(context, .{
@@ -60,7 +59,6 @@ pub fn handle(app: *App, context: *Context, path: []const u8) !void {
         }, &.{});
     }
     if (context.request.head.method != .POST) return error.InvalidRequest;
-    try http.csrf(context, principal.csrf_digest);
     // Header iteration borrows the received-head state and must finish before body reads.
     const session_digest = try http.session(context);
     if (!auth.allowed(app, context, principal.username.slice()))
