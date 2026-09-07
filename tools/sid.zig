@@ -1,20 +1,20 @@
-//! Shibuna Discussion (SHD) management tool.
+//! Shibuna Discussion (SID) management tool.
 //!
-//! Drives the numbering workflow defined in SHD 0001: placeholder drafts are
+//! Drives the numbering workflow defined in SID 0001: placeholder drafts are
 //! created from the template as `XXXXX-<slug>.typ`, and promotion assigns the
 //! next permanent four-digit number, rewrites the draft's metadata, and adds
 //! the registry and bundle entries. `build.zig` discovers numbered records by
-//! scanning `docs/shd/records`, so no build file edit is needed.
+//! scanning `docs/sid/records`, so no build file edit is needed.
 
 const std = @import("std");
 const Io = std.Io;
 
 const usage_text =
-    \\usage: shd-tool --root <repo-root> <command> [arguments]
+    \\usage: sid-tool --root <repo-root> <command> [arguments]
     \\
     \\Commands:
     \\  list             Show registry entries and placeholder drafts.
-    \\  new <slug>       Create docs/shd/records/XXXXX-<slug>.typ from the
+    \\  new <slug>       Create docs/sid/records/XXXXX-<slug>.typ from the
     \\                   template with today's date.
     \\  promote <slug>   Assign the next four-digit number to the placeholder
     \\                   draft XXXXX-<slug>.typ, rewrite its metadata for
@@ -25,10 +25,10 @@ const usage_text =
     \\
 ;
 
-const records_dir = "docs/shd/records";
-const registry_path = "docs/shd/registry.typ";
-const bundle_path = "docs/shd/bundle.typ";
-const template_path = "docs/shd/template/rfc-template.typ";
+const records_dir = "docs/sid/records";
+const registry_path = "docs/sid/registry.typ";
+const bundle_path = "docs/sid/bundle.typ";
+const template_path = "docs/sid/template/rfc-template.typ";
 const placeholder = "XXXXX";
 const maximum_file_bytes = 4 * 1024 * 1024;
 
@@ -135,7 +135,7 @@ fn list(gpa: std.mem.Allocator, io: Io, root: Io.Dir, out: *Io.Writer) !u8 {
         const state = fieldAfter(registry, &entry_cursor, "state: \"") orelse break;
         cursor = entry_cursor;
         try registered.append(gpa, try std.fmt.allocPrint(gpa, "{s}-{s}", .{ number, slug }));
-        try out.print("  SHD {s}  {s:<13}  {s}  ({s})\n", .{ number, state, title, slug });
+        try out.print("  SID {s}  {s:<13}  {s}  ({s})\n", .{ number, state, title, slug });
     }
 
     var names = try recordFileNames(gpa, io, root);
@@ -152,7 +152,7 @@ fn list(gpa: std.mem.Allocator, io: Io, root: Io.Dir, out: *Io.Writer) !u8 {
                 try out.writeAll("Placeholder drafts:\n");
                 drafts_seen = true;
             }
-            try out.print("  {s}  (promote with: zig build shd-promote -- {s})\n", .{
+            try out.print("  {s}  (promote with: zig build sid-promote -- {s})\n", .{
                 file_name,
                 stem[placeholder.len + 1 ..],
             });
@@ -225,7 +225,7 @@ fn create(
 
     try root.writeFile(io, .{ .sub_path = draft_path, .data = dated });
     try out.print("created {s}\n", .{draft_path});
-    try out.print("promote when ready: zig build shd-promote -- {s}\n", .{slug});
+    try out.print("promote when ready: zig build sid-promote -- {s}\n", .{slug});
     return exit_ok;
 }
 
@@ -263,9 +263,9 @@ fn buildRegistryEntry(
         \\    created: "{s}",
         \\    updated: "{s}",
         \\    summary: "{s}",
-        \\    source: "docs/shd/records/{s}-{s}.typ",
-        \\    html: "shd/{s}-{s}.html",
-        \\    pdf: "pdf/shd-{s}-{s}.pdf",
+        \\    source: "docs/sid/records/{s}-{s}.typ",
+        \\    html: "sid/{s}-{s}.html",
+        \\    pdf: "pdf/sid-{s}-{s}.pdf",
         \\  ),
         \\
     , .{
@@ -284,15 +284,15 @@ fn buildBundleEntry(
     return std.fmt.allocPrint(gpa,
         \\
         \\#document(
-        \\  "shd/{s}-{s}.html",
-        \\  title: [SHD {s}: {s}],
+        \\  "sid/{s}-{s}.html",
+        \\  title: [SID {s}: {s}],
         \\  author: ("Sibuna Contributors",),
         \\  description: [{s}],
         \\)[
         \\  #include "records/{s}-{s}.typ"
         \\]
         \\
-        \\#document("pdf/shd-{s}-{s}.pdf")[
+        \\#document("pdf/sid-{s}-{s}.pdf")[
         \\  #include "records/{s}-{s}.typ"
         \\]
         \\
@@ -433,7 +433,7 @@ fn promote(
 
     try out.print("promoted {s} -> {s}\n", .{ draft_path, record_path });
     try out.print("updated {s} and {s}\n", .{ registry_path, bundle_path });
-    try out.print("build it with: zig build shd -Dshd={s}\n", .{number});
+    try out.print("build it with: zig build sid -Dsid={s}\n", .{number});
     try out.writeAll("review the registry summary and area fields before committing.\n");
     return exit_ok;
 }
@@ -478,17 +478,17 @@ fn validSlug(slug: []const u8) bool {
     return std.mem.indexOf(u8, slug, "--") == null;
 }
 
-/// Returns the value of `#let shd-<key> = "<value>"`, or null.
+/// Returns the value of `#let sid-<key> = "<value>"`, or null.
 fn metaValue(source: []const u8, comptime key: []const u8) ?[]const u8 {
-    const prefix = "#let shd-" ++ key ++ " = \"";
+    const prefix = "#let sid-" ++ key ++ " = \"";
     const start = (std.mem.indexOf(u8, source, prefix) orelse return null) + prefix.len;
     const end = std.mem.indexOfScalarPos(u8, source, start, '"') orelse return null;
     return source[start..end];
 }
 
-/// Returns the first entry of `#let shd-labels = ("a", ...)`, or null.
+/// Returns the first entry of `#let sid-labels = ("a", ...)`, or null.
 fn firstLabel(source: []const u8) ?[]const u8 {
-    const prefix = "#let shd-labels = (\"";
+    const prefix = "#let sid-labels = (\"";
     const start = (std.mem.indexOf(u8, source, prefix) orelse return null) + prefix.len;
     const end = std.mem.indexOfScalarPos(u8, source, start, '"') orelse return null;
     return source[start..end];

@@ -1,15 +1,15 @@
-#let shd-number = "0002"
-#let shd-title = "Sibuna: Foundation Architecture, Delivery Plan, and Performance Contract"
-#let shd-state = "published"
-#let shd-created = "2026-09-07"
-#let shd-discussion = "Foundational architectural specification, Anubis comparative analysis, and product delivery plan for the Sibuna pure-Zig monorepo"
-#let shd-labels = ("architecture", "firewall", "pow", "performance",)
-#let shd-authors = ("Sibuna Contributors <team@sibuna.local>",)
-#let shd-category = "Architectural Specification"
-#let shd-status = "Published"
-#let shd-last-updated = "2026-09-07"
+#let sid-number = "0002"
+#let sid-title = "Sibuna: Foundation Architecture, Delivery Plan, and Performance Contract"
+#let sid-state = "published"
+#let sid-created = "2026-09-07"
+#let sid-discussion = "Foundational architectural specification, Anubis comparative analysis, and product delivery plan for the Sibuna pure-Zig monorepo"
+#let sid-labels = ("architecture", "firewall", "pow", "performance",)
+#let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
+#let sid-category = "Architectural Specification"
+#let sid-status = "Published"
+#let sid-last-updated = "2026-09-07"
 
-#import "../../shared/shd.typ": shd-document
+#import "../../shared/sid.typ": sid-document
 
 #let ink = rgb("172033")
 #let blue = rgb("0284c7")
@@ -49,18 +49,18 @@
   *Exit criterion:* #exit
 ]
 
-#show: doc => shd-document(
-  shd-number,
-  shd-title,
+#show: doc => sid-document(
+  sid-number,
+  sid-title,
   doc,
-  authors: shd-authors,
-  state: shd-state,
-  created: shd-created,
-  discussion: shd-discussion,
-  labels: shd-labels,
-  category: shd-category,
-  status: shd-status,
-  last-updated: shd-last-updated,
+  authors: sid-authors,
+  state: sid-state,
+  created: sid-created,
+  discussion: sid-discussion,
+  labels: sid-labels,
+  category: sid-category,
+  status: sid-status,
+  last-updated: sid-last-updated,
 )
 
 = Decision summary
@@ -281,11 +281,11 @@ sibuna/
 │   ├── policy/                 # SIMD Aho-Corasick, Radix CIDR trie, JA4H, scoring
 │   ├── challenge/              # Challenge coordinator & dynamic difficulty
 │   └── store/                  # Lockless sharded decay map, Valkey/Redis client
-├── docs/                       # Shibuna Discussions (SHD) and manuals
+├── docs/                       # Shibuna Discussions (SID) and manuals
 │   ├── shared/                 # Shared Typst templates & themes
-│   └── shd/                    # RFC/RFD discussion records and registry
+│   └── sid/                    # RFC/RFD discussion records and registry
 └── tools/
-    ├── shd.zig                 # SHD management CLI tool
+    ├── sid.zig                 # SID management CLI tool
     └── bench/                  # High-concurrency benchmark and simulation suite
 ```
 
@@ -344,7 +344,7 @@ The following automated verification gates are enforced before release:
 = Definition of Done
 
 A release is considered complete when:
-- All SHD records through SHD 0002 are published and up to date.
+- All SID records through SID 0002 are published and up to date.
 - `zig build test` passes with zero failures across all packages (`libs/core`, `libs/crypto`, `libs/net`, `libs/policy`, `libs/challenge`, `libs/store`).
 - The browser WASM binary compiles to $< 10$ KB and functions in Firefox, Chromium, Safari, and mobile browsers.
 - The Anubis performance gate assertions are fully validated and documented.

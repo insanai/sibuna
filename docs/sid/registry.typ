@@ -1,7 +1,7 @@
-#let shd-documents = (
+#let sid-documents = (
   (
     number: "0001",
-    slug: "shd-process",
+    slug: "sid-process",
     title: "The Shibuna Discussion Process and Engineering Standards",
     state: "published",
     area: "documentation",
@@ -9,10 +9,10 @@
     status: "Published",
     created: "2026-09-07",
     updated: "2026-09-07",
-    summary: "Defines the SHD lifecycle, numbering workflow, TigerStyle engineering standards, structural code limits, and Elm-style diagnostic error reporting for the sibuna monorepo.",
-    source: "docs/shd/records/0001-shd-process.typ",
-    html: "shd/0001-shd-process.html",
-    pdf: "pdf/shd-0001-shd-process.pdf",
+    summary: "Defines the SID lifecycle, numbering workflow, TigerStyle engineering standards, structural code limits, and Elm-style diagnostic error reporting for the sibuna monorepo.",
+    source: "docs/sid/records/0001-sid-process.typ",
+    html: "sid/0001-sid-process.html",
+    pdf: "pdf/sid-0001-sid-process.pdf",
   ),
   (
     number: "0002",
@@ -25,9 +25,9 @@
     created: "2026-09-07",
     updated: "2026-09-07",
     summary: "Foundational architectural specification, Anubis comparative analysis, zero-allocation pipeline, native SIMD PoW verification, pure Zig browser WASM solver, and product delivery plan for the Sibuna pure-Zig monorepo.",
-    source: "docs/shd/records/0002-sibuna-foundation-architecture.typ",
-    html: "shd/0002-sibuna-foundation-architecture.html",
-    pdf: "pdf/shd-0002-sibuna-foundation-architecture.pdf",
+    source: "docs/sid/records/0002-sibuna-foundation-architecture.typ",
+    html: "sid/0002-sibuna-foundation-architecture.html",
+    pdf: "pdf/sid-0002-sibuna-foundation-architecture.pdf",
   ),
   (
     number: "0003",
@@ -40,8 +40,8 @@
     created: "2026-09-07",
     updated: "2026-09-07",
     summary: "Architectural specification and design for Sibuna's zero-allocation declarative rule engine, matching and exceeding Anubis botPolicies specifications with JSON file configuration, multi-criteria matching, custom difficulty, and per-rule actions.",
-    source: "docs/shd/records/0003-declarative-policy-engine.typ",
-    html: "shd/0003-declarative-policy-engine.html",
-    pdf: "pdf/shd-0003-declarative-policy-engine.pdf",
+    source: "docs/sid/records/0003-declarative-policy-engine.typ",
+    html: "sid/0003-declarative-policy-engine.html",
+    pdf: "pdf/sid-0003-declarative-policy-engine.pdf",
   ),
 )

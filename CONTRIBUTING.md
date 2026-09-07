@@ -1,6 +1,6 @@
 # Contributing to Sibuna
 
-Run `zig build fmt`, `zig build test`, and `zig build shd` before submitting a change.
+Run `zig build fmt`, `zig build test`, and `zig build sid` before submitting a change.
 
 ---
 
@@ -26,17 +26,17 @@ Sibuna adheres strictly to the engineering and style principles established acro
 
 ---
 
-## Shibuna Discussions (SHD)
+## Shibuna Discussions (SID)
 
-Major architectural decisions, protocol revisions, and security assessments must be drafted as an SHD record under `docs/shd/records/`:
+Major architectural decisions, protocol revisions, and security assessments must be drafted as an SID record under `docs/sid/records/`:
 
 ```sh
 # Create a placeholder draft
-zig build shd-new -- <slug>
+zig build sid-new -- <slug>
 
 # Preview the document PDF
-zig build shd -Dshd=<slug>
+zig build sid -Dshd=<slug>
 
 # Promote the draft to an official numbered discussion
-zig build shd-promote -- <slug>
+zig build sid-promote -- <slug>
 ```

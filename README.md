@@ -18,38 +18,38 @@ Sibuna is an open-source, ultra-fast Web AI Firewall and bot protection reverse 
 
 ---
 
-## Architectural Records: Shibuna Discussions (SHD)
+## Architectural Records: Shibuna Discussions (SID)
 
-Following the engineering practices established in `paxos-zig` (ZDS), Sibuna uses **Shibuna Discussions (SHD)** as RFC/RFD-style decision records authored in Typst:
+Following the engineering practices established in `paxos-zig` (ZDS), Sibuna uses **Shibuna Discussions (SID)** as RFC/RFD-style decision records authored in Typst:
 
-- **[SHD 0001: The Shibuna Discussion Process](docs/shd/records/0001-shd-process.typ)** — Documents the SHD lifecycle, numbering workflow, and review expectations.
-- **[SHD 0002: Sibuna Foundation Architecture, Delivery Plan, and Performance Contract](docs/shd/records/0002-sibuna-foundation-architecture.typ)** — Foundational architectural specification, comparative audit of Anubis, zero-allocation pipeline design, and delivery milestones.
+- **[SID 0001: The Shibuna Discussion Process](docs/sid/records/0001-sid-process.typ)** — Documents the SID lifecycle, numbering workflow, and review expectations.
+- **[SID 0002: Sibuna Foundation Architecture, Delivery Plan, and Performance Contract](docs/sid/records/0002-sibuna-foundation-architecture.typ)** — Foundational architectural specification, comparative audit of Anubis, zero-allocation pipeline design, and delivery milestones.
 
-### SHD Commands
+### SID Commands
 
 ```sh
-# List all registered SHD discussions and drafts
-zig build shd-list
+# List all registered SID discussions and drafts
+zig build sid-list
 
 # Create a new draft discussion record
-zig build shd-new -- <slug>
+zig build sid-new -- <slug>
 
 # Promote a draft to an official numbered discussion
-zig build shd-promote -- <slug>
+zig build sid-promote -- <slug>
 
-# Build all SHD PDF documents into docs/build/
-zig build shd
+# Build all SID PDF documents into docs/build/
+zig build sid
 
-# Build a single SHD PDF by number or slug
-zig build shd -Dshd=0002
-zig build shd -Dshd=2
-zig build shd -Dshd=sibuna-foundation-architecture
+# Build a single SID PDF by number or slug
+zig build sid -Dshd=0002
+zig build sid -Dshd=2
+zig build sid -Dshd=sibuna-foundation-architecture
 
-# Build the SHD index PDF
-zig build shd-index
+# Build the SID index PDF
+zig build sid-index
 
 # Build the experimental HTML bundle
-zig build shd-site
+zig build sid-site
 ```
 
 ---
@@ -72,11 +72,11 @@ sibuna/
 │   ├── challenge/              # Challenge coordinator & dynamic difficulty
 │   └── store/                  # Lockless sharded decay map, Valkey/Redis client
 ├── docs/
-│   ├── shared/                 # Shared Typst templates & styling (theme.typ, shd.typ)
-│   ├── shd/                    # Shibuna Discussions (records/, registry.typ, bundle.typ)
+│   ├── shared/                 # Shared Typst templates & styling (theme.typ, sid.typ)
+│   ├── sid/                    # Shibuna Discussions (records/, registry.typ, bundle.typ)
 │   └── build/                  # Compiled PDF and HTML documentation artifacts
 └── tools/
-    └── shd.zig                 # SHD management CLI tool
+    └── sid.zig                 # SID management CLI tool
 ```
 
 ---

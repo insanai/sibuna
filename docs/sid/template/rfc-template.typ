@@ -1,28 +1,28 @@
-#let shd-number = "XXXXX"
-#let shd-title = "Title Goes Here"
-#let shd-state = "prediscussion"
-#let shd-created = "YYYY-MM-DD"
-#let shd-discussion = "Draft discussion note"
-#let shd-labels = ("documentation", "engineering",)
-#let shd-authors = ("Sibuna Contributors <team@sibuna.local>",)
-#let shd-category = "Engineering Discussion"
-#let shd-status = "Internal Draft"
-#let shd-last-updated = "None"
+#let sid-number = "XXXXX"
+#let sid-title = "Title Goes Here"
+#let sid-state = "prediscussion"
+#let sid-created = "YYYY-MM-DD"
+#let sid-discussion = "Draft discussion note"
+#let sid-labels = ("documentation", "engineering",)
+#let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
+#let sid-category = "Engineering Discussion"
+#let sid-status = "Internal Draft"
+#let sid-last-updated = "None"
 
-#import "../../shared/shd.typ": shd-document
+#import "../../shared/sid.typ": sid-document
 
-#show: doc => shd-document(
-  shd-number,
-  shd-title,
+#show: doc => sid-document(
+  sid-number,
+  sid-title,
   doc,
-  authors: shd-authors,
-  state: shd-state,
-  created: shd-created,
-  discussion: shd-discussion,
-  labels: shd-labels,
-  category: shd-category,
-  status: shd-status,
-  last-updated: shd-last-updated,
+  authors: sid-authors,
+  state: sid-state,
+  created: sid-created,
+  discussion: sid-discussion,
+  labels: sid-labels,
+  category: sid-category,
+  status: sid-status,
+  last-updated: sid-last-updated,
 )
 
 = Abstract

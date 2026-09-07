@@ -1,15 +1,15 @@
-#let shd-number = "0003"
-#let shd-title = "Declarative Rule Policy Engine and Anubis Feature Parity"
-#let shd-state = "published"
-#let shd-created = "2026-09-07"
-#let shd-discussion = "Architectural specification and design for Sibuna's zero-allocation declarative rule engine, matching and exceeding Anubis botPolicies specifications with JSON file configuration, multi-criteria matching, custom difficulty, and per-rule actions."
-#let shd-labels = ("policy", "architecture", "anubis", "zero-alloc", "firewall",)
-#let shd-authors = ("Sibuna Contributors <team@sibuna.local>",)
-#let shd-category = "Architectural Specification"
-#let shd-status = "Published"
-#let shd-last-updated = "2026-09-07"
+#let sid-number = "0003"
+#let sid-title = "Declarative Rule Policy Engine and Anubis Feature Parity"
+#let sid-state = "published"
+#let sid-created = "2026-09-07"
+#let sid-discussion = "Architectural specification and design for Sibuna's zero-allocation declarative rule engine, matching and exceeding Anubis botPolicies specifications with JSON file configuration, multi-criteria matching, custom difficulty, and per-rule actions."
+#let sid-labels = ("policy", "architecture", "anubis", "zero-alloc", "firewall",)
+#let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
+#let sid-category = "Architectural Specification"
+#let sid-status = "Published"
+#let sid-last-updated = "2026-09-07"
 
-#import "../../shared/shd.typ": shd-document
+#import "../../shared/sid.typ": sid-document
 
 #let ink = rgb("172033")
 #let blue = rgb("0284c7")
@@ -49,18 +49,18 @@
   *Exit criterion:* #exit
 ]
 
-#show: doc => shd-document(
-  shd-number,
-  shd-title,
+#show: doc => sid-document(
+  sid-number,
+  sid-title,
   doc,
-  authors: shd-authors,
-  state: shd-state,
-  created: shd-created,
-  discussion: shd-discussion,
-  labels: shd-labels,
-  category: shd-category,
-  status: shd-status,
-  last-updated: shd-last-updated,
+  authors: sid-authors,
+  state: sid-state,
+  created: sid-created,
+  discussion: sid-discussion,
+  labels: sid-labels,
+  category: sid-category,
+  status: sid-status,
+  last-updated: sid-last-updated,
 )
 
 = Decision Summary
@@ -238,8 +238,8 @@ Administrators may provide a JSON policy file via `--policy-file <path>`:
 )
 
 #milestone(
-  "M4: SHD Promotion and Book Documentation",
-  "Compile SHD-0003 PDF and document declarative policies in Part VIII of The Book of Sibuna.",
-  "Clean compilation of `docs/build/shd-0003-declarative-policy-engine.pdf`.",
+  "M4: SID Promotion and Book Documentation",
+  "Compile SID-0003 PDF and document declarative policies in Part VIII of The Book of Sibuna.",
+  "Clean compilation of `docs/build/sid-0003-declarative-policy-engine.pdf`.",
 )
 

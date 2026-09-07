@@ -1,8 +1,8 @@
 #import "theme.typ": configure-document, document-frontmatter
 
-#let shd-placeholder-number = "XXXXX"
+#let sid-placeholder-number = "XXXXX"
 
-#let shd-state-fill(state) = {
+#let sid-state-fill(state) = {
   if state == "published" {
     rgb("dbeafe")
   } else if state == "discussion" {
@@ -16,7 +16,7 @@
   }
 }
 
-#let shd-chip(label, fill) = box(
+#let sid-chip(label, fill) = box(
   inset: (x: 0.45em, y: 0.25em),
   radius: 999pt,
   fill: fill,
@@ -25,11 +25,11 @@
   #text(9pt, weight: "semibold")[#label]
 ]
 
-#let shd-title(number, title) = {
-  if number == shd-placeholder-number {
-    [SHD #shd-placeholder-number: #title]
+#let sid-title(number, title) = {
+  if number == sid-placeholder-number {
+    [SID #sid-placeholder-number: #title]
   } else {
-    [SHD #number: #title]
+    [SID #number: #title]
   }
 }
 
@@ -41,9 +41,9 @@
   }
 }
 
-#let shd-label(label) = text(8.7pt, weight: "bold", tracking: 0.04em, fill: rgb("475569"))[#label]
+#let sid-label(label) = text(8.7pt, weight: "bold", tracking: 0.04em, fill: rgb("475569"))[#label]
 
-#let shd-value(body) = text(10.2pt, fill: rgb("111827"))[#body]
+#let sid-value(body) = text(10.2pt, fill: rgb("111827"))[#body]
 
 #let html-style = "
 :root {
@@ -113,36 +113,36 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.shd-container {
+.sid-container {
   max-width: 880px;
   margin: 4rem auto;
   padding: 0 2rem;
 }
 
-.shd-back-link {
+.sid-back-link {
   margin-bottom: 2rem;
   font-size: 0.95rem;
   font-weight: 600;
 }
 
-.shd-back-link a {
+.sid-back-link a {
   color: var(--text-muted) !important;
   border-bottom: none !important;
   text-decoration: none;
   transition: color 0.15s ease;
 }
 
-.shd-back-link a:hover {
+.sid-back-link a:hover {
   color: var(--color-primary) !important;
 }
 
-.shd-header {
+.sid-header {
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 2.5rem;
   margin-bottom: 3rem;
 }
 
-.shd-badge {
+.sid-badge {
   display: inline-block;
   font-size: 0.75rem;
   font-weight: 700;
@@ -153,13 +153,13 @@ body {
   margin-bottom: 1.25rem;
 }
 
-.shd-badge.published { background: var(--state-published-bg); color: var(--state-published-text); }
-.shd-badge.discussion { background: var(--state-discussion-bg); color: var(--state-discussion-text); }
-.shd-badge.accepted { background: var(--state-accepted-bg); color: var(--state-accepted-text); }
-.shd-badge.committed { background: var(--state-committed-bg); color: var(--state-committed-text); }
-.shd-badge.abandoned { background: var(--state-abandoned-bg); color: var(--state-abandoned-text); }
+.sid-badge.published { background: var(--state-published-bg); color: var(--state-published-text); }
+.sid-badge.discussion { background: var(--state-discussion-bg); color: var(--state-discussion-text); }
+.sid-badge.accepted { background: var(--state-accepted-bg); color: var(--state-accepted-text); }
+.sid-badge.committed { background: var(--state-committed-bg); color: var(--state-committed-text); }
+.sid-badge.abandoned { background: var(--state-abandoned-bg); color: var(--state-abandoned-text); }
 
-.shd-title {
+.sid-title {
   font-size: 2.5rem;
   font-weight: 800;
   line-height: 1.2;
@@ -167,7 +167,7 @@ body {
   margin: 0 0 2rem 0;
 }
 
-.shd-meta-grid {
+.sid-meta-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1.25rem;
@@ -177,12 +177,12 @@ body {
   padding: 1.5rem;
 }
 
-.shd-meta-item {
+.sid-meta-item {
   display: flex;
   flex-direction: column;
 }
 
-.shd-meta-label {
+.sid-meta-label {
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -191,7 +191,7 @@ body {
   margin-bottom: 0.35rem;
 }
 
-.shd-meta-val {
+.sid-meta-val {
   font-size: 0.95rem;
   color: var(--text-secondary);
   font-weight: 600;
@@ -274,26 +274,26 @@ a:hover {
   border-bottom-style: solid;
 }
 
-.shd-index-header {
+.sid-index-header {
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 2rem;
   margin-bottom: 3rem;
 }
 
-.shd-index-header h1 {
+.sid-index-header h1 {
   font-size: 3rem;
   font-weight: 800;
   letter-spacing: -0.03em;
   margin: 0 0 1rem 0;
 }
 
-.shd-index-header p {
+.sid-index-header p {
   font-size: 1.2rem;
   color: var(--text-secondary);
   margin: 0;
 }
 
-.shd-index-card {
+.sid-index-card {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 12px;
@@ -302,30 +302,30 @@ a:hover {
   transition: transform 0.15s ease, border-color 0.15s ease;
 }
 
-.shd-index-card:hover {
+.sid-index-card:hover {
   border-color: var(--color-primary);
   transform: translateY(-2px);
 }
 
-.shd-card-title {
+.sid-card-title {
   font-size: 1.5rem;
   margin: 0 0 0.75rem 0;
 }
 
-.shd-card-desc {
+.sid-card-desc {
   font-size: 1rem;
   color: var(--text-secondary);
   margin: 0 0 1.25rem 0;
   line-height: 1.6;
 }
 
-.shd-card-links {
+.sid-card-links {
   display: flex;
   gap: 1rem;
   margin-bottom: 1.25rem;
 }
 
-.shd-card-links a {
+.sid-card-links a {
   font-size: 0.875rem;
   font-weight: 600;
   padding: 0.4rem 0.8rem;
@@ -335,12 +335,12 @@ a:hover {
   border-bottom: 1px solid var(--border-color);
 }
 
-.shd-card-links a:hover {
+.sid-card-links a:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
 
-.shd-card-meta {
+.sid-card-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 1.25rem;
@@ -351,7 +351,7 @@ a:hover {
 }
 "
 
-#let shd-document(
+#let sid-document(
   number,
   title,
   body,
@@ -367,41 +367,41 @@ a:hover {
   if target() == "html" {
     [
       #html.elem("style")[#html-style]
-      #html.elem("div", attrs: (class: "shd-container"))[
-        #html.elem("div", attrs: (class: "shd-back-link"))[
+      #html.elem("div", attrs: (class: "sid-container"))[
+        #html.elem("div", attrs: (class: "sid-back-link"))[
           #html.elem("a", attrs: (href: "../index.html"))[← Back to Shibuna Discussions]
         ]
-        #html.elem("header", attrs: (class: "shd-header"))[
-          #html.elem("span", attrs: (class: "shd-badge " + state))[#state]
-          #html.elem("h1", attrs: (class: "shd-title"))[#shd-title(number, title)]
-          #html.elem("div", attrs: (class: "shd-meta-grid"))[
-            #html.elem("div", attrs: (class: "shd-meta-item"))[
-              #html.elem("span", attrs: (class: "shd-meta-label"))[Document]
-              #html.elem("span", attrs: (class: "shd-meta-val"))[SHD #number]
+        #html.elem("header", attrs: (class: "sid-header"))[
+          #html.elem("span", attrs: (class: "sid-badge " + state))[#state]
+          #html.elem("h1", attrs: (class: "sid-title"))[#sid-title(number, title)]
+          #html.elem("div", attrs: (class: "sid-meta-grid"))[
+            #html.elem("div", attrs: (class: "sid-meta-item"))[
+              #html.elem("span", attrs: (class: "sid-meta-label"))[Document]
+              #html.elem("span", attrs: (class: "sid-meta-val"))[SID #number]
             ]
-            #html.elem("div", attrs: (class: "shd-meta-item"))[
-              #html.elem("span", attrs: (class: "shd-meta-label"))[Category]
-              #html.elem("span", attrs: (class: "shd-meta-val"))[#category]
+            #html.elem("div", attrs: (class: "sid-meta-item"))[
+              #html.elem("span", attrs: (class: "sid-meta-label"))[Category]
+              #html.elem("span", attrs: (class: "sid-meta-val"))[#category]
             ]
-            #html.elem("div", attrs: (class: "shd-meta-item"))[
-              #html.elem("span", attrs: (class: "shd-meta-label"))[Status]
-              #html.elem("span", attrs: (class: "shd-meta-val"))[#status]
+            #html.elem("div", attrs: (class: "sid-meta-item"))[
+              #html.elem("span", attrs: (class: "sid-meta-label"))[Status]
+              #html.elem("span", attrs: (class: "sid-meta-val"))[#status]
             ]
-            #html.elem("div", attrs: (class: "shd-meta-item"))[
-              #html.elem("span", attrs: (class: "shd-meta-label"))[Created]
-              #html.elem("span", attrs: (class: "shd-meta-val"))[#created]
+            #html.elem("div", attrs: (class: "sid-meta-item"))[
+              #html.elem("span", attrs: (class: "sid-meta-label"))[Created]
+              #html.elem("span", attrs: (class: "sid-meta-val"))[#created]
             ]
-            #html.elem("div", attrs: (class: "shd-meta-item"))[
-              #html.elem("span", attrs: (class: "shd-meta-label"))[Last Updated]
-              #html.elem("span", attrs: (class: "shd-meta-val"))[#last-updated]
+            #html.elem("div", attrs: (class: "sid-meta-item"))[
+              #html.elem("span", attrs: (class: "sid-meta-label"))[Last Updated]
+              #html.elem("span", attrs: (class: "sid-meta-val"))[#last-updated]
             ]
-            #html.elem("div", attrs: (class: "shd-meta-item"))[
-              #html.elem("span", attrs: (class: "shd-meta-label"))[Authors]
-              #html.elem("span", attrs: (class: "shd-meta-val"))[#authors-block(authors)]
+            #html.elem("div", attrs: (class: "sid-meta-item"))[
+              #html.elem("span", attrs: (class: "sid-meta-label"))[Authors]
+              #html.elem("span", attrs: (class: "sid-meta-val"))[#authors-block(authors)]
             ]
-            #html.elem("div", attrs: (class: "shd-meta-item"))[
-              #html.elem("span", attrs: (class: "shd-meta-label"))[Discussion]
-              #html.elem("span", attrs: (class: "shd-meta-val"))[#discussion]
+            #html.elem("div", attrs: (class: "sid-meta-item"))[
+              #html.elem("span", attrs: (class: "sid-meta-label"))[Discussion]
+              #html.elem("span", attrs: (class: "sid-meta-val"))[#discussion]
             ]
           ]
         ]
@@ -412,7 +412,7 @@ a:hover {
   } else {
     [
       #set document(
-        title: [SHD #number: #title],
+        title: [SID #number: #title],
         author: authors,
         description: [#discussion],
         date: none,
@@ -435,7 +435,7 @@ a:hover {
           ],
           [
             #align(right)[
-              #text(13.5pt, weight: "bold")[SHD #if number == shd-placeholder-number { [#shd-placeholder-number] } else { [#number] }]
+              #text(13.5pt, weight: "bold")[SID #if number == sid-placeholder-number { [#sid-placeholder-number] } else { [#number] }]
               #linebreak()
               #text(9.3pt, weight: "semibold", fill: rgb("64748b"))[#category]
             ]
@@ -454,28 +454,28 @@ a:hover {
           column-gutter: 1.9em,
           row-gutter: 0.5em,
           align: (left, top),
-          [#shd-label[STATE]],
-          [#shd-label[INTENDED STATUS]],
-          [#shd-chip(state, shd-state-fill(state))],
-          [#shd-value[#status]],
-          [#shd-label[CREATED]],
-          [#shd-label[AUTHORS]],
-          [#shd-value[#created]],
-          [#block(width: 100%)[#shd-value[#authors-block(authors)]]],
-          [#shd-label[LAST UPDATED]],
+          [#sid-label[STATE]],
+          [#sid-label[INTENDED STATUS]],
+          [#sid-chip(state, sid-state-fill(state))],
+          [#sid-value[#status]],
+          [#sid-label[CREATED]],
+          [#sid-label[AUTHORS]],
+          [#sid-value[#created]],
+          [#block(width: 100%)[#sid-value[#authors-block(authors)]]],
+          [#sid-label[LAST UPDATED]],
           [],
-          [#shd-value[#last-updated]],
+          [#sid-value[#last-updated]],
           [],
         )
 
         #v(0.65em)
-        #shd-label[DISCUSSION]
+        #sid-label[DISCUSSION]
         #linebreak()
-        #block(width: 100%)[#shd-value[#discussion]]
+        #block(width: 100%)[#sid-value[#discussion]]
 
         #if labels.len() > 0 [
           #v(0.65em)
-          #shd-label[LABELS]
+          #sid-label[LABELS]
           #linebreak()
           #text(10pt, fill: rgb("334155"))[#labels.join(", ")]
         ]
@@ -486,7 +486,7 @@ a:hover {
       #block(inset: 0.9em, stroke: 0.7pt + rgb("9ca3af"), fill: luma(98%))[
         *Status of This Memo*
 
-        This document is an internal Sibuna discussion record authored in Typst and tracked in git. It intentionally follows RFC-style structure so the design scope, rationale, trade-offs, and operational constraints remain explicit. Documents that still use the placeholder number #text(font: "Libertinus Mono", size: 10pt)[#shd-placeholder-number] are provisional drafts. Numbered SHD documents are part of the permanent project record.
+        This document is an internal Sibuna discussion record authored in Typst and tracked in git. It intentionally follows RFC-style structure so the design scope, rationale, trade-offs, and operational constraints remain explicit. Documents that still use the placeholder number #text(font: "Libertinus Mono", size: 10pt)[#sid-placeholder-number] are provisional drafts. Numbered SID documents are part of the permanent project record.
       ]
 
       #v(1em)
@@ -498,20 +498,20 @@ a:hover {
   }
 }
 
-#let shd-index-entry(doc) = [
+#let sid-index-entry(doc) = [
   #block(inset: 0.8em, stroke: 0.65pt + rgb("d7dee8"), fill: luma(99%), radius: 4pt)[
     #grid(
       columns: (1fr, auto),
       column-gutter: 1.2em,
       align: (left, top),
       [
-        #text(12.5pt, weight: "bold")[SHD #doc.number: #doc.title]
+        #text(12.5pt, weight: "bold")[SID #doc.number: #doc.title]
         #linebreak()
         #text(9.3pt, fill: rgb("64748b"))[#doc.summary]
       ],
       [
         #align(right)[
-          #shd-chip(doc.state, shd-state-fill(doc.state))
+          #sid-chip(doc.state, sid-state-fill(doc.state))
           #linebreak()
           #text(8.7pt, fill: rgb("64748b"))[#doc.area]
         ]
@@ -523,10 +523,10 @@ a:hover {
       columns: (auto, 1fr, auto, 1fr),
       column-gutter: 0.8em,
       row-gutter: 0.25em,
-      [#shd-label[STATUS]], [#shd-value[#doc.status]],
-      [#shd-label[CREATED]], [#shd-value[#doc.created]],
-      [#shd-label[CATEGORY]], [#shd-value[#doc.category]],
-      [#shd-label[UPDATED]], [#shd-value[#doc.updated]],
+      [#sid-label[STATUS]], [#sid-value[#doc.status]],
+      [#sid-label[CREATED]], [#sid-value[#doc.created]],
+      [#sid-label[CATEGORY]], [#sid-value[#doc.category]],
+      [#sid-label[UPDATED]], [#sid-value[#doc.updated]],
     )
 
     #v(0.55em)
@@ -536,40 +536,40 @@ a:hover {
   ]
 ]
 
-#let shd-index-page(documents) = [
+#let sid-index-page(documents) = [
   = Index
 
-  Shibuna Discussions (SHD) are RFC/RFD-style design records for the sibuna monorepo: the high-performance Web AI Firewall and anti-crawler daemon. Each SHD is a standalone Typst source file with metadata, lifecycle state, area, and summary data surfaced in this index.
+  Shibuna Discussions (SID) are RFC/RFD-style design records for the sibuna monorepo: the high-performance Web AI Firewall and anti-crawler daemon. Each SID is a standalone Typst source file with metadata, lifecycle state, area, and summary data surfaced in this index.
 
-  Placeholder drafts use the number #raw(shd-placeholder-number) until maintainers assign the next permanent four-digit SHD number.
+  Placeholder drafts use the number #raw(sid-placeholder-number) until maintainers assign the next permanent four-digit SID number.
 
   #for doc in documents [
-    #shd-index-entry(doc)
+    #sid-index-entry(doc)
     #v(0.65em)
   ]
 ]
 
-#let shd-site-index(documents) = [
+#let sid-site-index(documents) = [
   #html.elem("style")[#html-style]
   
-  #html.elem("div", attrs: (class: "shd-container"))[
-    #html.elem("div", attrs: (class: "shd-index-header"))[
+  #html.elem("div", attrs: (class: "sid-container"))[
+    #html.elem("div", attrs: (class: "sid-index-header"))[
       #html.elem("h1")[Shibuna Discussions]
-      #html.elem("p")[Index of Shibuna Discussion (SHD) records.]
+      #html.elem("p")[Index of Shibuna Discussion (SID) records.]
     ]
 
     #for doc in documents [
-      #html.elem("div", attrs: (class: "shd-index-card"))[
-        #html.elem("span", attrs: (class: "shd-badge " + doc.state))[#doc.state]
-        #html.elem("h2", attrs: (class: "shd-card-title"))[SHD #doc.number: #doc.title]
-        #html.elem("p", attrs: (class: "shd-card-desc"))[#doc.summary]
+      #html.elem("div", attrs: (class: "sid-index-card"))[
+        #html.elem("span", attrs: (class: "sid-badge " + doc.state))[#doc.state]
+        #html.elem("h2", attrs: (class: "sid-card-title"))[SID #doc.number: #doc.title]
+        #html.elem("p", attrs: (class: "sid-card-desc"))[#doc.summary]
         
-        #html.elem("div", attrs: (class: "shd-card-links"))[
+        #html.elem("div", attrs: (class: "sid-card-links"))[
           #html.elem("a", attrs: (href: doc.html))[HTML View]
           #html.elem("a", attrs: (href: doc.pdf))[PDF View]
         ]
         
-        #html.elem("div", attrs: (class: "shd-card-meta"))[
+        #html.elem("div", attrs: (class: "sid-card-meta"))[
           #html.elem("span")[*Area:* #doc.area]
           #html.elem("span")[*Category:* #doc.category]
           #html.elem("span")[*Status:* #doc.status]

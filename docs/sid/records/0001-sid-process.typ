@@ -1,28 +1,28 @@
-#let shd-number = "0001"
-#let shd-title = "The Shibuna Discussion Process and Engineering Standards"
-#let shd-state = "published"
-#let shd-created = "2026-09-07"
-#let shd-discussion = "Process document establishing RFC/RFD design lifecycle, TigerStyle engineering standards, and Elm-style error reporting"
-#let shd-labels = ("documentation", "process", "standards",)
-#let shd-authors = ("Sibuna Contributors <team@sibuna.local>",)
-#let shd-category = "Process Memo"
-#let shd-status = "Published"
-#let shd-last-updated = "2026-09-07"
+#let sid-number = "0001"
+#let sid-title = "The Shibuna Discussion Process and Engineering Standards"
+#let sid-state = "published"
+#let sid-created = "2026-09-07"
+#let sid-discussion = "Process document establishing RFC/RFD design lifecycle, TigerStyle engineering standards, and Elm-style error reporting"
+#let sid-labels = ("documentation", "process", "standards",)
+#let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
+#let sid-category = "Process Memo"
+#let sid-status = "Published"
+#let sid-last-updated = "2026-09-07"
 
-#import "../../shared/shd.typ": shd-document
+#import "../../shared/sid.typ": sid-document
 
-#show: doc => shd-document(
-  shd-number,
-  shd-title,
+#show: doc => sid-document(
+  sid-number,
+  sid-title,
   doc,
-  authors: shd-authors,
-  state: shd-state,
-  created: shd-created,
-  discussion: shd-discussion,
-  labels: shd-labels,
-  category: shd-category,
-  status: shd-status,
-  last-updated: shd-last-updated,
+  authors: sid-authors,
+  state: sid-state,
+  created: sid-created,
+  discussion: sid-discussion,
+  labels: sid-labels,
+  category: sid-category,
+  status: sid-status,
+  last-updated: sid-last-updated,
 )
 
 = Abstract
@@ -30,22 +30,22 @@
 The `sibuna` monorepo requires a durable decision-record process for architectural,
 cryptographic, protocol, security, and operational changes across the high-performance
 Web AI Firewall and anti-crawler daemon. The project adopts Shibuna Discussions, or
-SHD, as RFC/RFD-style Typst documents that support structured technical reasoning,
+SID, as RFC/RFD-style Typst documents that support structured technical reasoning,
 long-lived references, high-quality PDF archival output, and an HTML discussion website.
 
-This memo defines the lifecycle of an SHD, the placeholder numbering workflow,
+This memo defines the lifecycle of an SID, the placeholder numbering workflow,
 the enforced coding guidelines and structural limits, the TigerStyle engineering priorities,
 and the project's Elm-style diagnostic error reporting standard.
 
 = Introduction
 
-A Shibuna Discussion is a Typst document stored in git under `docs/shd/records`.
+A Shibuna Discussion is a Typst document stored in git under `docs/sid/records`.
 Each discussion is part design memo, part review artifact, and part historical record.
 The structure intentionally follows IETF RFCs and Oxide RFDs because those formats
 force explicit scope, status, rationale, trade-offs, and operational constraints
 instead of relying on ephemeral chat messages or implicit assumptions.
 
-SHD is used for topics such as:
+SID is used for topics such as:
 
 - Reverse proxy architecture and zero-allocation socket I/O loops
 - Cryptographic proof-of-work algorithms (HashX, Argon2id, SHA-256 SIMD)
@@ -54,9 +54,9 @@ SHD is used for topics such as:
 - State caching, lockless decay maps, and distributed store integrations
 - Performance benchmarking methodology and comparative gates against Anubis
 
-= The SHD Lifecycle
+= The SID Lifecycle
 
-Every SHD progresses through explicit lifecycle states:
+Every SID progresses through explicit lifecycle states:
 
 + *Prediscussion (`prediscussion`)*: A draft with the placeholder number `XXXXX`.
   The problem statement, design overview, and open questions are being formulated.
@@ -80,10 +80,10 @@ drafts use the placeholder prefix `XXXXX-<slug>.typ`.
 To create a new draft:
 
 ```sh
-zig build shd-new -- <slug>
+zig build sid-new -- <slug>
 ```
 
-This copies `docs/shd/template/rfc-template.typ` to `docs/shd/records/XXXXX-<slug>.typ`,
+This copies `docs/sid/template/rfc-template.typ` to `docs/sid/records/XXXXX-<slug>.typ`,
 stamps the creation date, and provides a target for local compilation.
 
 == Promoting a Draft
@@ -91,20 +91,20 @@ stamps the creation date, and provides a target for local compilation.
 When a draft is ready for working group discussion:
 
 ```sh
-zig build shd-promote -- <slug>
+zig build sid-promote -- <slug>
 ```
 
 The tool:
 1. Determines the next available four-digit sequence number `NNNN`.
 2. Renames `XXXXX-<slug>.typ` to `NNNN-<slug>.typ`.
 3. Sets state to `discussion` and status to `Open for Discussion`.
-4. Updates `docs/shd/registry.typ` with the new entry metadata.
-5. Updates `docs/shd/bundle.typ` for HTML and PDF generation.
+4. Updates `docs/sid/registry.typ` with the new entry metadata.
+5. Updates `docs/sid/bundle.typ` for HTML and PDF generation.
 
 == Listing Discussions
 
 ```sh
-zig build shd-list
+zig build sid-list
 ```
 
 Displays registered discussions, active placeholder drafts, and detects consistency
@@ -214,16 +214,16 @@ The system strictly distinguishes between two failure classes:
 
 `build.zig` drives Typst compilation and verification:
 
-- `zig build shd`: Builds PDFs for all registered records into `docs/build/`.
-- `zig build shd -Dshd=<number_or_slug>`: Compiles a single record.
-- `zig build shd-index`: Compiles the registry index PDF.
-- `zig build shd-site`: Generates the HTML bundle into `docs/build/shd-site/`.
+- `zig build sid`: Builds PDFs for all registered records into `docs/build/`.
+- `zig build sid -Dshd=<number_or_slug>`: Compiles a single record.
+- `zig build sid-index`: Compiles the registry index PDF.
+- `zig build sid-site`: Generates the HTML bundle into `docs/build/sid-site/`.
 - `zig build fmt`: Runs `zig fmt --check` and `tools/check-style.sh` to enforce all structural limits.
 - `zig build test`: Runs all library unit tests, including diagnostic formatting and error explanation checks.
 
 = Conclusion
 
-By combining version-controlled Typst design records (SHD), rigorous structural limits,
+By combining version-controlled Typst design records (SID), rigorous structural limits,
 TigerStyle engineering discipline, and Elm-style human-friendly diagnostics, Sibuna guarantees
 long-term codebase maintainability, extreme operational reliability, and sub-microsecond
 anti-crawler defense.
