@@ -114,7 +114,12 @@ pub const ChallengeStore = struct {
 
     /// Records `tag` as spent until `expires_at`. Fails with
     /// `DoubleSpendAttempt` when it is already present and unexpired.
-    pub fn markSpent(self: *ChallengeStore, tag: *const Tag, expires_at: u64, now: u64) StoreError!void {
+    pub fn markSpent(
+        self: *ChallengeStore,
+        tag: *const Tag,
+        expires_at: u64,
+        now: u64,
+    ) StoreError!void {
         const shard = self.shardFor(tag);
         shard.lock.lock();
         defer shard.lock.unlock();
@@ -148,7 +153,10 @@ test "spent set rejects double spend and forgets expired tags" {
     const tag = tagFrom(1);
     try store.markSpent(&tag, now + 600, now);
     try std.testing.expect(store.isSpent(&tag, now + 10));
-    try std.testing.expectError(error.DoubleSpendAttempt, store.markSpent(&tag, now + 600, now + 15));
+    try std.testing.expectError(
+        error.DoubleSpendAttempt,
+        store.markSpent(&tag, now + 600, now + 15),
+    );
     try std.testing.expect(!store.isSpent(&tag, now + 601));
     // After expiry the same tag may be spent again (a fresh challenge with
     // an identical tag is astronomically unlikely, but the rule is defined).
@@ -170,7 +178,10 @@ test "robin hood shards stay correct under load and reclaim expired slots" {
     while (n < total) : (n += 1) {
         const tag = tagFrom(n);
         try std.testing.expect(store.isSpent(&tag, now + 50));
-        try std.testing.expectError(error.DoubleSpendAttempt, store.markSpent(&tag, now + 100, now + 50));
+        try std.testing.expectError(
+            error.DoubleSpendAttempt,
+            store.markSpent(&tag, now + 100, now + 50),
+        );
     }
     // Everything expires; the next generation reuses the same slots.
     n = total;

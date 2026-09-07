@@ -167,7 +167,11 @@ pub const Config = struct {
         } else if (eqlAny(arg, "--token-ttl", "--token-ttl")) {
             cfg.token_ttl_seconds = std.fmt.parseInt(u64, v, 10) catch cfg.token_ttl_seconds;
         } else if (eqlAny(arg, "--challenge-ttl", "--challenge-ttl")) {
-            cfg.challenge_ttl_seconds = std.fmt.parseInt(u64, v, 10) catch cfg.challenge_ttl_seconds;
+            cfg.challenge_ttl_seconds = std.fmt.parseInt(
+                u64,
+                v,
+                10,
+            ) catch cfg.challenge_ttl_seconds;
         } else if (eqlAny(arg, "--cookie-name", "--cookie-name")) {
             cfg.cookie_name = v;
         } else if (eqlAny(arg, "--secret-file", "-s")) {

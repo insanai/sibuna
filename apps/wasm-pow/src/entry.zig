@@ -75,7 +75,13 @@ export fn sibuna_solve_sha256(
     challenge_len: usize,
     difficulty_bits: u32,
 ) u64 {
-    return sibuna_solve_step(challenge_ptr, challenge_len, difficulty_bits, 0, std.math.maxInt(u32));
+    return sibuna_solve_step(
+        challenge_ptr,
+        challenge_len,
+        difficulty_bits,
+        0,
+        std.math.maxInt(u32),
+    );
 }
 
 /// Runs the sequential-work prover over `input_buffer[0..challenge_len]`

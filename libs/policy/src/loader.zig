@@ -50,13 +50,19 @@ pub fn parseJsonPolicyInto(
 
 fn parseThresholds(obj: std.json.ObjectMap, engine: *engine_mod.Engine) void {
     if (obj.get("challenge_at")) |v| {
-        if (v == .integer) engine.thresholds.challenge_at = @intCast(std.math.clamp(v.integer, -1000, 1000));
+        if (v == .integer) engine.thresholds.challenge_at = @intCast(
+            std.math.clamp(v.integer, -1000, 1000),
+        );
     }
     if (obj.get("deny_at")) |v| {
-        if (v == .integer) engine.thresholds.deny_at = @intCast(std.math.clamp(v.integer, -1000, 1000));
+        if (v == .integer) engine.thresholds.deny_at = @intCast(
+            std.math.clamp(v.integer, -1000, 1000),
+        );
     }
     if (obj.get("bits_step")) |v| {
-        if (v == .integer) engine.thresholds.bits_step = @intCast(std.math.clamp(v.integer, 1, 1000));
+        if (v == .integer) engine.thresholds.bits_step = @intCast(
+            std.math.clamp(v.integer, 1, 1000),
+        );
     }
 }
 

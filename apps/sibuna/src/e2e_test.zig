@@ -57,7 +57,8 @@ fn originLoop(listener: *Io.net.Server) void {
         var writer = stream.writer(io, &wbuf);
         const end = std.mem.indexOf(u8, head, "\r\n\r\n") orelse head.len;
         writer.interface.print(
-            "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nX-Origin: stub\r\nContent-Length: {d}\r\nConnection: close\r\n\r\nORIGIN|{s}",
+            "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nX-Origin: stub\r\n" ++
+                "Content-Length: {d}\r\nConnection: close\r\n\r\nORIGIN|{s}",
             .{ end + 7, head[0..end] },
         ) catch continue;
         writer.interface.flush() catch continue;
@@ -80,7 +81,11 @@ fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
     const addr = Io.net.IpAddress.parse("127.0.0.1", 0) catch unreachable;
     f.listener = addr.listen(io, .{ .reuse_address = true }) catch unreachable;
     f.port = f.listener.socket.address.ip4.port;
-    const t = std.Thread.spawn(.{}, server.workerLoop, .{ &f.listener, io, &f.state }) catch unreachable;
+    const t = std.Thread.spawn(
+        .{},
+        server.workerLoop,
+        .{ &f.listener, io, &f.state },
+    ) catch unreachable;
     t.detach();
 }
 
@@ -166,7 +171,14 @@ fn roundTrip(port: u16, raw: []const u8, out: *Response) !void {
     }
 }
 
-fn get(port: u16, path: []const u8, ip: []const u8, ua: []const u8, extra: []const u8, out: *Response) !void {
+fn get(
+    port: u16,
+    path: []const u8,
+    ip: []const u8,
+    ua: []const u8,
+    extra: []const u8,
+    out: *Response,
+) !void {
     var buf: [4096]u8 = undefined;
     const raw = try std.fmt.bufPrint(
         &buf,
@@ -176,18 +188,27 @@ fn get(port: u16, path: []const u8, ip: []const u8, ua: []const u8, extra: []con
     try roundTrip(port, raw, out);
 }
 
-fn post(port: u16, path: []const u8, ip: []const u8, ua: []const u8, body: []const u8, out: *Response) !void {
+fn post(
+    port: u16,
+    path: []const u8,
+    ip: []const u8,
+    ua: []const u8,
+    body: []const u8,
+    out: *Response,
+) !void {
     var buf: [64 * 1024]u8 = undefined;
     const raw = try std.fmt.bufPrint(
         &buf,
-        "POST {s} HTTP/1.1\r\nHost: t\r\nX-Forwarded-For: {s}\r\nUser-Agent: {s}\r\nContent-Type: application/json\r\nContent-Length: {d}\r\n\r\n{s}",
+        "POST {s} HTTP/1.1\r\nHost: t\r\nX-Forwarded-For: {s}\r\nUser-Agent: {s}\r\n" ++
+            "Content-Type: application/json\r\nContent-Length: {d}\r\n\r\n{s}",
         .{ path, ip, ua, body.len, body },
     );
     try roundTrip(port, raw, out);
 }
 
 const browser_ua = "Mozilla/5.0 (Macintosh) AppleWebKit/537.36 Chrome/128.0 Safari/537.36";
-const browser_accept = "Accept: text/html,application/xhtml+xml,*/*;q=0.8\r\nAccept-Language: en\r\n";
+const browser_accept = "Accept: text/html,application/xhtml+xml,*/*;q=0.8\r\n" ++
+    "Accept-Language: en\r\n";
 
 const Challenge = struct {
     id: [128]u8,
@@ -266,7 +287,11 @@ test "hashcash flow: challenge, solve, verify, cookie, proxied, replay and bindi
     const nonce = crypto.pow.solveHashcashBits(ch.idSlice(), ch.difficulty, 1 << 24).?;
 
     var body_buf: [256]u8 = undefined;
-    const body = try std.fmt.bufPrint(&body_buf, "{{\"challenge_id\":\"{s}\",\"nonce\":\"{d}\"}}", .{ ch.idSlice(), nonce });
+    const body = try std.fmt.bufPrint(
+        &body_buf,
+        "{{\"challenge_id\":\"{s}\",\"nonce\":\"{d}\"}}",
+        .{ ch.idSlice(), nonce },
+    );
     try post(p, "/__sibuna/verify", ip, browser_ua, body, resp);
     try std.testing.expectEqual(@as(u16, 200), resp.status());
     var cookie_buf: [256]u8 = undefined;
@@ -274,12 +299,18 @@ test "hashcash flow: challenge, solve, verify, cookie, proxied, replay and bindi
     try std.testing.expect(std.mem.startsWith(u8, cookie, "__sibuna_token="));
 
     var hdr: [512]u8 = undefined;
-    const cookie_hdr = try std.fmt.bufPrint(&hdr, "Cookie: {s}\r\n{s}", .{ cookie, browser_accept });
+    const cookie_hdr = try std.fmt.bufPrint(
+        &hdr,
+        "Cookie: {s}\r\n{s}",
+        .{ cookie, browser_accept },
+    );
     try get(p, "/blog/post-1", ip, browser_ua, cookie_hdr, resp);
     try std.testing.expectEqual(@as(u16, 200), resp.status());
     try std.testing.expect(resp.contains("ORIGIN|GET /blog/post-1"));
     try std.testing.expect(resp.contains("X-Sibuna-Rule: session"));
-    try std.testing.expect(!resp.contains("Cookie: __sibuna_token") or resp.contains("Cookie: __sibuna_token"));
+    try std.testing.expect(
+        !resp.contains("Cookie: __sibuna_token") or resp.contains("Cookie: __sibuna_token"),
+    );
 
     // Replay of the same solution is a double spend.
     try post(p, "/__sibuna/verify", ip, browser_ua, body, resp);
@@ -293,12 +324,20 @@ test "hashcash flow: challenge, solve, verify, cookie, proxied, replay and bindi
     // A solution from a different client identity is rejected before hashing.
     const ch2 = try fetchChallenge(p, ip, browser_ua, "/");
     const nonce2 = crypto.pow.solveHashcashBits(ch2.idSlice(), ch2.difficulty, 1 << 24).?;
-    const body2 = try std.fmt.bufPrint(&body_buf, "{{\"challenge_id\":\"{s}\",\"nonce\":\"{d}\"}}", .{ ch2.idSlice(), nonce2 });
+    const body2 = try std.fmt.bufPrint(
+        &body_buf,
+        "{{\"challenge_id\":\"{s}\",\"nonce\":\"{d}\"}}",
+        .{ ch2.idSlice(), nonce2 },
+    );
     try post(p, "/__sibuna/verify", "203.0.113.98", browser_ua, body2, resp);
     try std.testing.expectEqual(@as(u16, 400), resp.status());
     try std.testing.expect(resp.contains("FINGERPRINT MISMATCH"));
     // A wrong nonce fails the difficulty check.
-    const body3 = try std.fmt.bufPrint(&body_buf, "{{\"challenge_id\":\"{s}\",\"nonce\":\"{d}\"}}", .{ ch2.idSlice(), nonce2 + 1 });
+    const body3 = try std.fmt.bufPrint(
+        &body_buf,
+        "{{\"challenge_id\":\"{s}\",\"nonce\":\"{d}\"}}",
+        .{ ch2.idSlice(), nonce2 + 1 },
+    );
     try post(p, "/__sibuna/verify", ip, browser_ua, body3, resp);
     try std.testing.expectEqual(@as(u16, 400), resp.status());
 }
@@ -321,13 +360,19 @@ test "posw flow through forward-auth mode with ed25519 tokens" {
 
     const ws = try std.testing.allocator.create(crypto.posw.Workspace);
     defer std.testing.allocator.destroy(ws);
-    const params = crypto.posw.Params{ .depth = @intCast(ch.difficulty), .challenges = ch.challenges };
+    const params = crypto.posw.Params{ .depth = @intCast(
+        ch.difficulty,
+    ), .challenges = ch.challenges };
     const proof = try crypto.posw.solve(ch.idSlice(), params, ws);
     var b64: [crypto.posw.max_proof_size * 2]u8 = undefined;
     const encoded = std.base64.url_safe_no_pad.Encoder.encode(&b64, proof);
 
     var body_buf: [crypto.posw.max_proof_size * 2 + 256]u8 = undefined;
-    const body = try std.fmt.bufPrint(&body_buf, "{{\"challenge_id\":\"{s}\",\"proof\":\"{s}\"}}", .{ ch.idSlice(), encoded });
+    const body = try std.fmt.bufPrint(
+        &body_buf,
+        "{{\"challenge_id\":\"{s}\",\"proof\":\"{s}\"}}",
+        .{ ch.idSlice(), encoded },
+    );
     try post(p, "/__sibuna/verify", ip, browser_ua, body, resp);
     try std.testing.expectEqual(@as(u16, 200), resp.status());
     var cookie_buf: [256]u8 = undefined;
@@ -343,7 +388,11 @@ test "posw flow through forward-auth mode with ed25519 tokens" {
 
     // A nonce for a PoSW challenge is the wrong solution type.
     const ch2 = try fetchChallenge(p, ip, browser_ua, "/");
-    const bad = try std.fmt.bufPrint(&body_buf, "{{\"challenge_id\":\"{s}\",\"nonce\":\"1\"}}", .{ch2.idSlice()});
+    const bad = try std.fmt.bufPrint(
+        &body_buf,
+        "{{\"challenge_id\":\"{s}\",\"nonce\":\"1\"}}",
+        .{ch2.idSlice()},
+    );
     try post(p, "/__sibuna/verify", ip, browser_ua, bad, resp);
     try std.testing.expectEqual(@as(u16, 400), resp.status());
     try std.testing.expect(resp.contains("WRONG SOLUTION TYPE"));
@@ -364,7 +413,14 @@ test "policy and WAF denials, honeypot bans, and rate limiting" {
     try get(p, "/static/../../etc/passwd", "203.0.113.31", browser_ua, browser_accept, resp);
     try std.testing.expectEqual(@as(u16, 403), resp.status());
 
-    try get(p, "/search?q=1%27%20union%20select%20null--", "203.0.113.31", browser_ua, browser_accept, resp);
+    try get(
+        p,
+        "/search?q=1%27%20union%20select%20null--",
+        "203.0.113.31",
+        browser_ua,
+        browser_accept,
+        resp,
+    );
     try std.testing.expectEqual(@as(u16, 403), resp.status());
 
     try get(p, "/__sibuna/honeypot", "203.0.113.32", "Scrapy/2.0", "", resp);
@@ -407,14 +463,23 @@ test "malformed, smuggled, oversized, and unknown requests are rejected cleanly"
     try roundTrip(p, "GARBAGE\r\n\r\n", resp);
     try std.testing.expectEqual(@as(u16, 400), resp.status());
 
-    try roundTrip(p, "POST / HTTP/1.1\r\nHost: t\r\nContent-Length: 5\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\n", resp);
+    try roundTrip(
+        p,
+        "POST / HTTP/1.1\r\nHost: t\r\nContent-Length: 5\r\n" ++
+            "Transfer-Encoding: chunked\r\n\r\n0\r\n\r\n",
+        resp,
+    );
     try std.testing.expectEqual(@as(u16, 400), resp.status());
 
     const big = try std.testing.allocator.alloc(u8, 20 * 1024);
     defer std.testing.allocator.free(big);
     @memset(big, 'a');
     var head: [32 * 1024]u8 = undefined;
-    const raw = try std.fmt.bufPrint(&head, "GET / HTTP/1.1\r\nHost: t\r\nX-Big: {s}\r\n\r\n", .{big});
+    const raw = try std.fmt.bufPrint(
+        &head,
+        "GET / HTTP/1.1\r\nHost: t\r\nX-Big: {s}\r\n\r\n",
+        .{big},
+    );
     try roundTrip(p, raw, resp);
     try std.testing.expectEqual(@as(u16, 431), resp.status());
 
@@ -423,7 +488,14 @@ test "malformed, smuggled, oversized, and unknown requests are rejected cleanly"
 
     try post(p, "/__sibuna/verify", "203.0.113.40", browser_ua, "{\"nonce\":\"1\"}", resp);
     try std.testing.expectEqual(@as(u16, 400), resp.status());
-    try post(p, "/__sibuna/verify", "203.0.113.40", browser_ua, "{\"challenge_id\":\"zzz\",\"nonce\":\"1\"}", resp);
+    try post(
+        p,
+        "/__sibuna/verify",
+        "203.0.113.40",
+        browser_ua,
+        "{\"challenge_id\":\"zzz\",\"nonce\":\"1\"}",
+        resp,
+    );
     try std.testing.expectEqual(@as(u16, 400), resp.status());
     try std.testing.expect(resp.contains("MALFORMED CHALLENGE"));
 }

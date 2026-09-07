@@ -148,7 +148,11 @@ pub const Coordinator = struct {
         };
     }
 
-    pub fn fingerprint(self: *const Coordinator, client_ip: []const u8, user_agent: []const u8) u64 {
+    pub fn fingerprint(
+        self: *const Coordinator,
+        client_ip: []const u8,
+        user_agent: []const u8,
+    ) u64 {
         return crypto.computeFingerprintKeyed(&self.keys.fingerprint, client_ip, user_agent);
     }
 
@@ -251,7 +255,11 @@ pub const Coordinator = struct {
         };
     }
 
-    fn checkSolution(challenge_id: []const u8, decoded: Decoded, solution: Solution) VerifyError!void {
+    fn checkSolution(
+        challenge_id: []const u8,
+        decoded: Decoded,
+        solution: Solution,
+    ) VerifyError!void {
         switch (decoded.algorithm) {
             .hashcash => switch (solution) {
                 .nonce => |nonce| {
@@ -267,7 +275,9 @@ pub const Coordinator = struct {
                         .depth = decoded.difficulty,
                         .challenges = decoded.challenges,
                     };
-                    if (!crypto.posw.verify(challenge_id, params, proof)) return error.InvalidProof;
+                    if (!crypto.posw.verify(challenge_id, params, proof)) {
+                        return error.InvalidProof;
+                    }
                 },
                 .nonce => return error.WrongSolutionType,
             },
@@ -301,10 +311,20 @@ pub const Coordinator = struct {
     }
 
     fn mintToken(self: *const Coordinator, now: u64, rule_hash: u64, fp: u64) VerifiedResult {
-        var result = VerifiedResult{ .token = undefined, .token_len = 0, .ttl_seconds = self.token_ttl };
+        var result = VerifiedResult{
+            .token = undefined,
+            .token_len = 0,
+            .ttl_seconds = self.token_ttl,
+        };
         switch (self.token_scheme) {
             .mac => {
-                const tok = crypto.MacToken.mint(&self.keys.token, now, self.token_ttl, rule_hash, fp);
+                const tok = crypto.MacToken.mint(
+                    &self.keys.token,
+                    now,
+                    self.token_ttl,
+                    rule_hash,
+                    fp,
+                );
                 @memcpy(result.token[0..tok.len], &tok);
                 result.token_len = tok.len;
             },
@@ -328,7 +348,12 @@ pub const Coordinator = struct {
         return switch (self.token_scheme) {
             .mac => crypto.MacToken.verify(&self.keys.token, cookie_value, now, fp),
             .ed25519 => blk: {
-                const tok = try crypto.Token.verify(self.key_pair.public_key, cookie_value, now, fp);
+                const tok = try crypto.Token.verify(
+                    self.key_pair.public_key,
+                    cookie_value,
+                    now,
+                    fp,
+                );
                 break :blk .{
                     .timestamp = tok.timestamp,
                     .expiry = tok.expiry,
@@ -381,7 +406,10 @@ test "hashcash challenge: issue, solve, verify, mint, replay, binding" {
     try std.testing.expectEqual(crypto.MacToken.encoded_size, result.token_len);
     const token = try ctx.coord.verifyCookie(result.slice(), ip, ua, now + 10);
     try std.testing.expectEqual(@as(u64, 7), token.rule_hash);
-    try std.testing.expectError(error.TokenBoundAddressMismatch, ctx.coord.verifyCookie(result.slice(), "1.2.3.4", ua, now + 10));
+    try std.testing.expectError(
+        error.TokenBoundAddressMismatch,
+        ctx.coord.verifyCookie(result.slice(), "1.2.3.4", ua, now + 10),
+    );
     try std.testing.expectError(
         error.DoubleSpendAttempt,
         ctx.coord.verifyAndMint(&ch.id, .{ .nonce = nonce }, ip, ua, now + 15),
@@ -394,7 +422,9 @@ test "hashcash challenge: issue, solve, verify, mint, replay, binding" {
     var forged = ch.id;
     forged[5] = if (forged[5] == 'A') 'B' else 'A';
     const forged_result = ctx.coord.verifyAndMint(&forged, .{ .nonce = nonce }, ip, ua, now + 5);
-    try std.testing.expect(forged_result == error.InvalidChallengeTag or forged_result == error.MalformedChallenge);
+    try std.testing.expect(
+        forged_result == error.InvalidChallengeTag or forged_result == error.MalformedChallenge,
+    );
 }
 
 test "posw challenge round trip and ed25519 token scheme" {
@@ -414,7 +444,9 @@ test "posw challenge round trip and ed25519 token scheme" {
 
     const ws = try std.testing.allocator.create(crypto.posw.Workspace);
     defer std.testing.allocator.destroy(ws);
-    const params = crypto.posw.Params{ .depth = @intCast(ch.difficulty), .challenges = ch.challenges };
+    const params = crypto.posw.Params{ .depth = @intCast(
+        ch.difficulty,
+    ), .challenges = ch.challenges };
     const proof = try crypto.posw.solve(&ch.id, params, ws);
 
     try std.testing.expectError(

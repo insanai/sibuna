@@ -87,7 +87,11 @@ test "ban list bans, expires, lifts, and survives overflow" {
     var buf: [24]u8 = undefined;
     var n: u32 = 0;
     while (n < CAPACITY * 3) : (n += 1) {
-        const ip = std.fmt.bufPrint(&buf, "192.0.2.{d}.{d}", .{ n / 256, n % 256 }) catch unreachable;
+        const ip = std.fmt.bufPrint(
+            &buf,
+            "192.0.2.{d}.{d}",
+            .{ n / 256, n % 256 },
+        ) catch unreachable;
         list.ban(ip, 1000, 500);
     }
     list.ban("198.51.100.7", 1000, 500);

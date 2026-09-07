@@ -299,7 +299,9 @@ pub const Persistent = struct {
             self.tick() catch |err| {
                 std.debug.print("storage: tick failed: {t}\n", .{err});
             };
-            const pause = Io.Duration.fromMilliseconds(@intCast(@max(50, self.cfg.storage_poll_ms)));
+            const pause = Io.Duration.fromMilliseconds(
+                @intCast(@max(50, self.cfg.storage_poll_ms)),
+            );
             Io.sleep(self.io, pause, .awake) catch return;
         }
     }
@@ -354,8 +356,11 @@ pub const Persistent = struct {
         var sql = Io.Writer.Allocating.init(self.gpa);
         defer sql.deinit();
         const w = &sql.writer;
-        try w.print("INSERT INTO security_incidents(id,node_id,client_ip,user_agent,method,path," ++
-            "violation_category,offending_payload,campaign_id,recorded_at) VALUES ({d},{d},", .{ id, self.node_id });
+        try w.print(
+            "INSERT INTO security_incidents(id,node_id,client_ip,user_agent,method,path," ++
+                "violation_category,offending_payload,campaign_id,recorded_at) VALUES ({d},{d},",
+            .{ id, self.node_id },
+        );
         try quote(w, rec.ip[0..rec.ip_len]);
         try w.writeAll(",");
         try quote(w, rec.ua[0..rec.ua_len]);
@@ -376,23 +381,45 @@ pub const Persistent = struct {
             "VALUES ({d},X'{s}',vec_quantize_binary(X'{s}'))", .{ id, hex, hex });
         if (std.mem.eql(u8, rec.category[0..rec.category_len], "honeypot")) {
             try w.writeAll("; ");
-            try reputationUpsert(w, rec.ip[0..rec.ip_len], -100, rec.now + self.cfg.ban_seconds, "honeypot", rec.now);
+            try reputationUpsert(
+                w,
+                rec.ip[0..rec.ip_len],
+                -100,
+                rec.now + self.cfg.ban_seconds,
+                "honeypot",
+                rec.now,
+            );
         }
         try self.db.exec(self.gpa, sql.written());
         self.next_incident += 1;
     }
 
-    fn reputationUpsert(w: *Io.Writer, ip: []const u8, score: i32, until: u64, trigger: []const u8, now: u64) !void {
-        try w.writeAll("INSERT INTO ip_reputation(ip_or_cidr,reputation_score,banned_until,trigger_rule,hits,last_seen) VALUES (");
+    fn reputationUpsert(
+        w: *Io.Writer,
+        ip: []const u8,
+        score: i32,
+        until: u64,
+        trigger: []const u8,
+        now: u64,
+    ) !void {
+        try w.writeAll("INSERT INTO ip_reputation(ip_or_cidr,reputation_score,banned_until," ++
+            "trigger_rule,hits,last_seen) VALUES (");
         try quote(w, ip);
         try w.print(",{d},{d},", .{ score, until });
         try quote(w, trigger);
-        try w.print(",1,{d}) ON CONFLICT(ip_or_cidr) DO UPDATE SET hits = hits + 1, last_seen = excluded.last_seen, " ++
-            "banned_until = excluded.banned_until, reputation_score = MIN(reputation_score, excluded.reputation_score)", .{now});
+        try w.print(",1,{d}) ON CONFLICT(ip_or_cidr) DO UPDATE SET hits = hits + 1, " ++
+            "last_seen = excluded.last_seen, banned_until = excluded.banned_until, " ++
+            "reputation_score = MIN(reputation_score, excluded.reputation_score)", .{now});
     }
 
     /// Bans `ip` cluster-wide (visible to every node on its next rebuild).
-    pub fn banAddress(self: *Persistent, ip: []const u8, until: u64, trigger: []const u8, now: u64) !void {
+    pub fn banAddress(
+        self: *Persistent,
+        ip: []const u8,
+        until: u64,
+        trigger: []const u8,
+        now: u64,
+    ) !void {
         var sql = Io.Writer.Allocating.init(self.gpa);
         defer sql.deinit();
         try reputationUpsert(&sql.writer, ip, -100, until, trigger, now);
@@ -402,9 +429,11 @@ pub const Persistent = struct {
     /// Change stamp over both dynamic tables; any insert, update, or delete
     /// moves it.
     fn policiesChanged(self: *Persistent) !bool {
-        var result = try self.db.query(self.gpa, "SELECT (SELECT COALESCE(MAX(updated_at),0) FROM policies) + " ++
-            "(SELECT COUNT(*) FROM policies) * 7 + (SELECT COALESCE(MAX(last_seen),0) FROM ip_reputation) * 3 + " ++
-            "(SELECT COUNT(*) FROM ip_reputation) * 11");
+        const sql = "SELECT (SELECT COALESCE(MAX(updated_at),0) FROM policies) + " ++
+            "(SELECT COUNT(*) FROM policies) * 7 + " ++
+            "(SELECT COALESCE(MAX(last_seen),0) FROM ip_reputation) * 3 + " ++
+            "(SELECT COUNT(*) FROM ip_reputation) * 11";
+        var result = try self.db.query(self.gpa, sql);
         defer result.deinit();
         if (result.rows.len == 0) return false;
         const text = result.rows[0][0] orelse return false;
@@ -431,8 +460,10 @@ pub const Persistent = struct {
     }
 
     fn loadDbPolicies(self: *Persistent, engine: *policy.Engine, arena: std.mem.Allocator) !void {
-        var result = try self.db.query(self.gpa, "SELECT name, path_pattern, ua_pattern, action, difficulty, algorithm, " ++
-            "header_matchers, cidr_matchers, weight FROM policies WHERE enabled = 1 ORDER BY priority, name");
+        const sql = "SELECT name, path_pattern, ua_pattern, action, difficulty, algorithm, " ++
+            "header_matchers, cidr_matchers, weight FROM policies WHERE enabled = 1 " ++
+            "ORDER BY priority, name";
+        var result = try self.db.query(self.gpa, sql);
         defer result.deinit();
         for (result.rows) |row| {
             const name = row[0] orelse continue;
@@ -449,7 +480,11 @@ pub const Persistent = struct {
         }
     }
 
-    fn parseHeaderMatchers(arena: std.mem.Allocator, text: []const u8, r: *policy.PolicyRule) !void {
+    fn parseHeaderMatchers(
+        arena: std.mem.Allocator,
+        text: []const u8,
+        r: *policy.PolicyRule,
+    ) !void {
         var parsed = std.json.parseFromSlice(std.json.Value, arena, text, .{}) catch return;
         defer parsed.deinit();
         if (parsed.value != .object) return;
@@ -477,11 +512,14 @@ pub const Persistent = struct {
     }
 
     fn loadReputation(self: *Persistent, engine: *policy.Engine) !void {
-        const now: u64 = @intCast(@max(0, @divTrunc(Io.Clock.real.now(self.io).nanoseconds, std.time.ns_per_s)));
+        const now: u64 = @intCast(
+            @max(0, @divTrunc(Io.Clock.real.now(self.io).nanoseconds, std.time.ns_per_s)),
+        );
         const sql = try std.fmt.allocPrint(
             self.gpa,
             "SELECT ip_or_cidr, reputation_score FROM ip_reputation " ++
-                "WHERE (banned_until IS NULL OR banned_until > {d}) AND (reputation_score <= -50 OR reputation_score >= 50)",
+                "WHERE (banned_until IS NULL OR banned_until > {d}) " ++
+                "AND (reputation_score <= -50 OR reputation_score >= 50)",
             .{now},
         );
         defer self.gpa.free(sql);
@@ -495,11 +533,17 @@ pub const Persistent = struct {
     }
 
     /// Full-text forensic search over recorded incidents.
-    pub fn searchIncidents(self: *Persistent, gpa: std.mem.Allocator, match: []const u8, limit: u32) !zx.QueryResult {
+    pub fn searchIncidents(
+        self: *Persistent,
+        gpa: std.mem.Allocator,
+        match: []const u8,
+        limit: u32,
+    ) !zx.QueryResult {
         var sql = Io.Writer.Allocating.init(gpa);
         defer sql.deinit();
-        try sql.writer.writeAll("SELECT s.id, s.client_ip, s.violation_category, s.path, s.campaign_id " ++
-            "FROM incidents_fts f JOIN security_incidents s ON s.id = f.rowid WHERE incidents_fts MATCH ");
+        try sql.writer.writeAll("SELECT s.id, s.client_ip, s.violation_category, s.path, " ++
+            "s.campaign_id FROM incidents_fts f JOIN security_incidents s ON s.id = f.rowid " ++
+            "WHERE incidents_fts MATCH ");
         try quote(&sql.writer, match);
         try sql.writer.print(" ORDER BY rank LIMIT {d}", .{limit});
         return self.db.query(gpa, sql.written());
@@ -541,13 +585,17 @@ const TestFixture = struct {
     state: server.AppState = undefined,
 };
 
-test "persistent store: schema, dynamic policy reload, reputation, incident forensics and campaigns" {
+test "persistent store: policy reload, reputation, forensics, campaigns" {
     const io = std.testing.io;
     const gpa = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
     var path_buf: [128]u8 = undefined;
-    const data_dir = try std.fmt.bufPrint(&path_buf, ".zig-cache/tmp/{s}/sibuna-data", .{tmp.sub_path});
+    const data_dir = try std.fmt.bufPrint(
+        &path_buf,
+        ".zig-cache/tmp/{s}/sibuna-data",
+        .{tmp.sub_path},
+    );
 
     const fx = try gpa.create(TestFixture);
     defer gpa.destroy(fx);
@@ -559,18 +607,32 @@ test "persistent store: schema, dynamic policy reload, reputation, incident fore
     const seed = [_]u8{1} ** 32;
     fx.state.init(cfg, &fx.slot, &seed);
 
-    const p = try Persistent.open(gpa, io, cfg, &fx.state, "{\"rules\":[{\"name\":\"file-rule\",\"path\":\"/from-file\",\"action\":\"ALLOW\"}]}");
+    const p = try Persistent.open(
+        gpa,
+        io,
+        cfg,
+        &fx.state,
+        "{\"rules\":[{\"name\":\"file-rule\",\"path\":\"/from-file\",\"action\":\"ALLOW\"}]}",
+    );
     defer p.stop();
 
     // File policy survives the rebuild; nothing else is loaded yet.
     const live = fx.state.acquireEngine();
-    try std.testing.expectEqual(policy.Action.allow, live.engine.evaluate("/from-file", "9.9.9.9", "curl").action);
-    try std.testing.expectEqual(policy.Action.challenge, live.engine.evaluate("/secret", "9.9.9.9", "curl").action);
+    try std.testing.expectEqual(
+        policy.Action.allow,
+        live.engine.evaluate("/from-file", "9.9.9.9", "curl").action,
+    );
+    try std.testing.expectEqual(
+        policy.Action.challenge,
+        live.engine.evaluate("/secret", "9.9.9.9", "curl").action,
+    );
     server.AppState.releaseEngine(live);
 
     // A dynamic policy and a reputation ban appear after one tick.
-    try p.db.exec(gpa, "INSERT INTO policies(id,name,priority,path_pattern,action,difficulty,algorithm,header_matchers,cidr_matchers,weight,enabled,created_at,updated_at) " ++
-        "VALUES ('p1','protect-secret',10,'/secret/*','CHALLENGE',20,'posw','{\"X-Api\":\"v2\"}','[\"10.0.0.0/8\"]',0,1,100,100)");
+    try p.db.exec(gpa, "INSERT INTO policies(id,name,priority,path_pattern,action,difficulty," ++
+        "algorithm,header_matchers,cidr_matchers,weight,enabled,created_at,updated_at) " ++
+        "VALUES ('p1','protect-secret',10,'/secret/*','CHALLENGE',20,'posw'," ++
+        "'{\"X-Api\":\"v2\"}','[\"10.0.0.0/8\"]',0,1,100,100)");
     try p.banAddress("198.51.100.7", 4102444800, "test", 100);
     try p.tick();
     const fresh = fx.state.acquireEngine();
@@ -581,25 +643,60 @@ test "persistent store: schema, dynamic policy reload, reputation, incident fore
     try std.testing.expectEqualStrings("protect-secret", d.rule_name);
     try std.testing.expectEqual(@as(u32, 20), d.difficulty);
     try std.testing.expectEqualStrings("posw", d.algorithm.?);
-    try std.testing.expectEqual(policy.Action.deny, fresh.engine.evaluate("/", "198.51.100.7", "Mozilla").action);
+    try std.testing.expectEqual(
+        policy.Action.deny,
+        fresh.engine.evaluate("/", "198.51.100.7", "Mozilla").action,
+    );
     // Release before the next rebuild: a publisher waits for readers to drain.
     server.AppState.releaseEngine(fresh);
 
     // Incidents flow through the ring into FTS and vector tables.
     const hook = fx.state.hooks.record_incident.?;
-    hook(fx.state.hooks.context, .{ .client_ip = "203.0.113.5", .user_agent = "sqlmap", .method = "GET", .path = "/login", .category = "waf:sqli", .payload = "id=1' UNION SELECT username,password FROM users--", .now = 200 });
-    hook(fx.state.hooks.context, .{ .client_ip = "203.0.113.6", .user_agent = "sqlmap", .method = "GET", .path = "/account", .category = "waf:sqli", .payload = "id=77' union select name,pass from users--", .now = 201 });
-    hook(fx.state.hooks.context, .{ .client_ip = "203.0.113.7", .user_agent = "Scrapy", .method = "GET", .path = "/__sibuna/honeypot", .category = "honeypot", .payload = "", .now = 202 });
+    const ctx = fx.state.hooks.context;
+    hook(ctx, .{
+        .client_ip = "203.0.113.5",
+        .user_agent = "sqlmap",
+        .method = "GET",
+        .path = "/login",
+        .category = "waf:sqli",
+        .payload = "id=1' UNION SELECT username,password FROM users--",
+        .now = 200,
+    });
+    hook(ctx, .{
+        .client_ip = "203.0.113.6",
+        .user_agent = "sqlmap",
+        .method = "GET",
+        .path = "/account",
+        .category = "waf:sqli",
+        .payload = "id=77' union select name,pass from users--",
+        .now = 201,
+    });
+    hook(ctx, .{
+        .client_ip = "203.0.113.7",
+        .user_agent = "Scrapy",
+        .method = "GET",
+        .path = "/__sibuna/honeypot",
+        .category = "honeypot",
+        .payload = "",
+        .now = 202,
+    });
     try p.tick();
     var found = try p.searchIncidents(gpa, "users", 10);
     defer found.deinit();
     try std.testing.expectEqual(@as(usize, 2), found.rows.len);
     try std.testing.expectEqualStrings(found.rows[0][4].?, found.rows[1][4].?);
-    var all = try p.db.query(gpa, "SELECT COUNT(*), COUNT(DISTINCT campaign_id) FROM security_incidents");
+    var all = try p.db.query(
+        gpa,
+        "SELECT COUNT(*), COUNT(DISTINCT campaign_id) FROM security_incidents",
+    );
     defer all.deinit();
     try std.testing.expectEqualStrings("3", all.rows[0][0].?);
     try std.testing.expectEqualStrings("2", all.rows[0][1].?);
-    var rep = try p.db.query(gpa, "SELECT reputation_score, trigger_rule FROM ip_reputation WHERE ip_or_cidr = '203.0.113.7'");
+    var rep = try p.db.query(
+        gpa,
+        "SELECT reputation_score, trigger_rule FROM ip_reputation " ++
+            "WHERE ip_or_cidr = '203.0.113.7'",
+    );
     defer rep.deinit();
     try std.testing.expectEqualStrings("-100", rep.rows[0][0].?);
     try std.testing.expectEqualStrings("honeypot", rep.rows[0][1].?);

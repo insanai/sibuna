@@ -97,7 +97,13 @@ fn siblingAt(opening: []const u8, n: u8, d: u8) *const Label {
     return opening[slot * label_len ..][0..label_len];
 }
 
-fn verifyOpening(base: *const Sha256, n: u8, phi: *const Label, gamma: u32, opening: []const u8) bool {
+fn verifyOpening(
+    base: *const Sha256,
+    n: u8,
+    phi: *const Label,
+    gamma: u32,
+    opening: []const u8,
+) bool {
     const leaf: *const Label = opening[0..label_len];
     var h = nodeHasher(base, n, gamma);
     var d: u8 = 1;
@@ -288,7 +294,9 @@ test "posw prover matches the reference labelling and verifies" {
     const ws = try std.testing.allocator.create(Workspace);
     defer std.testing.allocator.destroy(ws);
     const chi = "0123456789abcdef0123456789abcdef";
-    inline for (.{ Params{ .depth = 6, .challenges = 4 }, Params{ .depth = 12, .challenges = 8 } }) |params| {
+    inline for (
+        .{ Params{ .depth = 6, .challenges = 4 }, Params{ .depth = 12, .challenges = 8 } },
+    ) |params| {
         const proof = try solve(chi, params, ws);
         try std.testing.expectEqual(params.proofSize(), proof.len);
         const root = try referenceRoot(std.testing.allocator, chi, params.depth);
@@ -315,5 +323,8 @@ test "posw rejects tampering, wrong statement, and wrong parameters" {
     copy[label_len + 40] ^= 0x01;
     copy[3] ^= 0x80;
     try std.testing.expect(!verify(chi, params, copy[0..proof.len]));
-    try std.testing.expectError(error.InvalidParams, solve(chi, .{ .depth = 2, .challenges = 1 }, ws));
+    try std.testing.expectError(
+        error.InvalidParams,
+        solve(chi, .{ .depth = 2, .challenges = 1 }, ws),
+    );
 }

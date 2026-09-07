@@ -38,7 +38,12 @@ pub fn main(init: std.process.Init) !u8 {
     const engine = try gpa.create(policy.Engine);
     engine.initInPlace(cfg.default_difficulty);
     engine.waf_enabled = cfg.waf;
-    const policy_text = if (cfg.policy_file) |pfile| loadCustomPolicy(io, arena.allocator(), pfile, engine) else null;
+    const policy_text = if (cfg.policy_file) |pfile| loadCustomPolicy(
+        io,
+        arena.allocator(),
+        pfile,
+        engine,
+    ) else null;
     const slot = try gpa.create(server.EngineSlot);
     slot.* = .{ .engine = engine };
 
@@ -57,7 +62,10 @@ pub fn main(init: std.process.Init) !u8 {
     printBanner(cfg, persistent != null);
 
     const addr = std.Io.net.IpAddress.parse(cfg.listen_host, cfg.listen_port) catch |err| {
-        std.debug.print("Failed to parse listen address {s}:{d}: {t}\n", .{ cfg.listen_host, cfg.listen_port, err });
+        std.debug.print(
+            "Failed to parse listen address {s}:{d}: {t}\n",
+            .{ cfg.listen_host, cfg.listen_port, err },
+        );
         return 1;
     };
     var listener = addr.listen(io, .{ .reuse_address = true }) catch |err| {
@@ -84,7 +92,10 @@ fn resolveSecret(io: std.Io, environ: *std.process.Environ.Map, cfg: *core.Confi
         var reader = file.reader(io, &buf);
         const content = reader.interface.peekGreedy(1) catch "";
         const seed = crypto.parseSeed(content) orelse {
-            std.debug.print("Secret file {s} must hold 64 hex characters or 32 raw bytes\n", .{path});
+            std.debug.print(
+                "Secret file {s} must hold 64 hex characters or 32 raw bytes\n",
+                .{path},
+            );
             return null;
         };
         cfg.secret_seed = seed;
@@ -130,9 +141,9 @@ fn printBanner(cfg: core.Config, persistent: bool) void {
         cfg.algorithm.name(),
         cfg.default_difficulty,
         @tagName(cfg.token_scheme),
-        if (cfg.waf) "shield (bot challenge + semantic WAF + rate limits)" else "gate (bot challenge only)",
-        if (persistent) "zaxonlite (dynamic policies, reputation, forensics)" else "in-memory only",
-        if (cfg.secret_file != null) "loaded from file" else "random per process (set --secret-file for restarts and clusters)",
+        if (cfg.waf) "shield (challenge + semantic WAF + limits)" else "gate (challenge only)",
+        if (persistent) "zaxonlite (policies, reputation, forensics)" else "in-memory only",
+        if (cfg.secret_file != null) "loaded from file" else "random (set --secret-file)",
     });
 }
 

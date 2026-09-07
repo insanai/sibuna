@@ -72,7 +72,12 @@ pub fn write(
     try writer.flush();
 }
 
-pub fn writeText(writer: *std.Io.Writer, status: Status, body: []const u8, keep_alive: bool) !void {
+pub fn writeText(
+    writer: *std.Io.Writer,
+    status: Status,
+    body: []const u8,
+    keep_alive: bool,
+) !void {
     try write(writer, status, "text/plain; charset=utf-8", body, .{ .keep_alive = keep_alive });
 }
 
@@ -122,7 +127,11 @@ pub fn write302(
     var cookie_buf: [512]u8 = undefined;
     const cookie = try cookieHeader(&cookie_buf, cookie_name, cookie_value, max_age, false);
     var headers_buf: [768]u8 = undefined;
-    const headers = try std.fmt.bufPrint(&headers_buf, "Location: {s}\r\n{s}", .{ location, cookie });
+    const headers = try std.fmt.bufPrint(
+        &headers_buf,
+        "Location: {s}\r\n{s}",
+        .{ location, cookie },
+    );
     try write(writer, .found, "text/plain; charset=utf-8", "", .{ .headers = headers });
 }
 

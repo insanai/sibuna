@@ -16,6 +16,7 @@ pub const explainError = @import("errors.zig").explainError;
 pub const config = @import("config.zig");
 pub const Config = config.Config;
 pub const Mode = config.Mode;
+pub const max_cluster_peers = config.max_cluster_peers;
 pub const log = @import("log.zig");
 
 test {

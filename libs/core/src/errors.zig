@@ -90,6 +90,12 @@ fn explainChallengeError(err: anyerror) []const u8 {
         \\
         \\Hint: Ensure the same browser or HTTP client submits the solver response.
         ,
+        else => explainProofError(err),
+    };
+}
+
+fn explainProofError(err: anyerror) []const u8 {
+    return switch (err) {
         error.MalformedChallenge =>
         \\-- MALFORMED CHALLENGE ---------------------------------------------------------
         \\

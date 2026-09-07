@@ -62,7 +62,9 @@ fn relayBody(client_reader: *Io.Reader, up: *Io.Writer, remaining: usize) !void 
     var chunk: [16 * 1024]u8 = undefined;
     while (left > 0) {
         const want = @min(left, chunk.len);
-        const got = client_reader.readSliceShort(chunk[0..want]) catch return error.ClientWriteFailed;
+        const got = client_reader.readSliceShort(
+            chunk[0..want],
+        ) catch return error.ClientWriteFailed;
         if (got == 0) return;
         up.writeAll(chunk[0..got]) catch return error.UpstreamWriteFailed;
         left -= got;
@@ -110,7 +112,11 @@ test "proxy head rewrite drops hop-by-hop headers and injects audit fields" {
     const req = try http.parseRequest(raw);
     var buf: [1024]u8 = undefined;
     var w = std.Io.Writer.fixed(&buf);
-    try writeHead(&w, &req, .{ .client_ip = "203.0.113.4", .status = "PASS", .rule = "default/allow" });
+    try writeHead(
+        &w,
+        &req,
+        .{ .client_ip = "203.0.113.4", .status = "PASS", .rule = "default/allow" },
+    );
     const out = w.buffered();
     try std.testing.expect(std.mem.startsWith(u8, out, "POST /api?x=1 HTTP/1.1\r\n"));
     try std.testing.expect(std.mem.indexOf(u8, out, "Host: origin\r\n") != null);

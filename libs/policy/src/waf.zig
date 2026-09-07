@@ -277,7 +277,9 @@ fn hasEventHandler(text: []const u8) bool {
         pos = idx + 1;
         if (idx == 0) continue;
         const prev = text[idx - 1];
-        if (prev != ' ' and prev != '/' and prev != '"' and prev != '\'' and prev != '\t') continue;
+        const attr_prefix = prev == ' ' or prev == '/' or prev == '"' or prev == '\'' or
+            prev == '\t';
+        if (!attr_prefix) continue;
         var end = idx + 2;
         while (end < text.len and std.ascii.isAlphabetic(text[end])) : (end += 1) {}
         if (end > idx + 2 and end < text.len and text[end] == '=') return true;
@@ -534,7 +536,9 @@ test "inspectRequest passes a real browser request untouched" {
     const ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " ++
         "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
     const body = "{\"comment\":\"I'd select the second option -- it's cheaper\"}";
-    try std.testing.expect(inspectRequest(sigs, "/blog/post-1", "tag=c%2B%2B&page=2", ua, &headers, body) == null);
+    try std.testing.expect(
+        inspectRequest(sigs, "/blog/post-1", "tag=c%2B%2B&page=2", ua, &headers, body) == null,
+    );
 }
 
 test "inspectRequest still catches attacks in custom headers and bodies" {
@@ -547,6 +551,13 @@ test "inspectRequest still catches attacks in custom headers and bodies" {
     try std.testing.expectEqual(AttackCategory.xss, v.category);
     const b = inspectRequest(sigs, "/submit", "", "Mozilla", &.{}, "cmd=test; /bin/sh").?;
     try std.testing.expectEqual(AttackCategory.rce, b.category);
-    const q = inspectRequest(sigs, "/search", "q=1%27%20union%20select%20null--", "Mozilla", &.{}, "").?;
+    const q = inspectRequest(
+        sigs,
+        "/search",
+        "q=1%27%20union%20select%20null--",
+        "Mozilla",
+        &.{},
+        "",
+    ).?;
     try std.testing.expectEqual(AttackCategory.sqli, q.category);
 }

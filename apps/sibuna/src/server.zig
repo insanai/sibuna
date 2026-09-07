@@ -228,7 +228,12 @@ fn readHead(c: *Connection) HeadError!?usize {
 fn serveOne(c: *Connection) !bool {
     const head_len = (readHead(c) catch |err| {
         if (err == error.HeadTooLarge) {
-            try net.response.writeText(c.writer, .headers_too_large, "Request head exceeds 16 KB", false);
+            try net.response.writeText(
+                c.writer,
+                .headers_too_large,
+                "Request head exceeds 16 KB",
+                false,
+            );
         }
         return false;
     }) orelse return false;
@@ -306,7 +311,12 @@ fn dispatch(ctx: *RequestContext) !bool {
     Metrics.bump(&st.metrics.requests);
     if (st.bans.isBanned(ctx.client_ip, ctx.now)) {
         Metrics.bump(&st.metrics.banned);
-        try net.response.writeText(ctx.writer(), .forbidden, "Forbidden: address is banned", ctx.keep_alive);
+        try net.response.writeText(
+            ctx.writer(),
+            .forbidden,
+            "Forbidden: address is banned",
+            ctx.keep_alive,
+        );
         return ctx.keep_alive;
     }
     if (std.mem.startsWith(u8, ctx.req.path, "/__sibuna/")) {
@@ -321,8 +331,18 @@ fn dispatch(ctx: *RequestContext) !bool {
     if (rate.limited) {
         Metrics.bump(&st.metrics.rate_limited);
         var hdr: [64]u8 = undefined;
-        const retry = try std.fmt.bufPrint(&hdr, "Retry-After: {d}\r\n", .{(rate.retry_after_ms + 999) / 1000});
-        try net.response.write(ctx.writer(), .too_many_requests, "text/plain; charset=utf-8", "Rate limit exceeded", .{ .headers = retry, .keep_alive = ctx.keep_alive });
+        const retry = try std.fmt.bufPrint(
+            &hdr,
+            "Retry-After: {d}\r\n",
+            .{(rate.retry_after_ms + 999) / 1000},
+        );
+        try net.response.write(
+            ctx.writer(),
+            .too_many_requests,
+            "text/plain; charset=utf-8",
+            "Rate limit exceeded",
+            .{ .headers = retry, .keep_alive = ctx.keep_alive },
+        );
         return ctx.keep_alive;
     }
     if (ctx.req.getCookie(st.config.cookie_name)) |cookie| {
@@ -333,7 +353,10 @@ fn dispatch(ctx: *RequestContext) !bool {
     return applyPolicy(ctx);
 }
 
-fn policyHeaders(req: *const net.Request, out: *[net.MAX_HEADERS]policy.Header) []const policy.Header {
+fn policyHeaders(
+    req: *const net.Request,
+    out: *[net.MAX_HEADERS]policy.Header,
+) []const policy.Header {
     for (req.headers[0..req.header_count], 0..) |h, idx| {
         out[idx] = .{ .name = h.name, .value = h.value };
     }
@@ -355,11 +378,24 @@ fn applyPolicy(ctx: *RequestContext) !bool {
         .body = ctx.req.body,
     });
     switch (decision.action) {
-        .allow => return forward(ctx, "PASS", decision.rule_name, crypto.ruleHash(decision.rule_name)),
+        .allow => return forward(
+            ctx,
+            "PASS",
+            decision.rule_name,
+            crypto.ruleHash(decision.rule_name),
+        ),
         .deny => {
             Metrics.bump(&st.metrics.denied);
-            if (std.mem.startsWith(u8, decision.rule_name, "waf:")) recordIncident(ctx, decision.rule_name);
-            try net.response.writeText(ctx.writer(), .forbidden, "Forbidden: blocked by Sibuna policy", ctx.keep_alive);
+            if (std.mem.startsWith(u8, decision.rule_name, "waf:")) recordIncident(
+                ctx,
+                decision.rule_name,
+            );
+            try net.response.writeText(
+                ctx.writer(),
+                .forbidden,
+                "Forbidden: blocked by Sibuna policy",
+                ctx.keep_alive,
+            );
             return ctx.keep_alive;
         },
         .challenge, .weigh => {
@@ -387,24 +423,22 @@ fn recordIncident(ctx: *RequestContext, category: []const u8) void {
 
 fn writeChallengeResponse(ctx: *RequestContext) !void {
     const st = ctx.state();
+    const extra = net.response.Extra{
+        .headers = "X-Sibuna-Status: CHALLENGE\r\n",
+        .keep_alive = ctx.keep_alive,
+    };
+    const w = ctx.writer();
     if (st.config.mode == .forward_auth) {
-        try net.response.write(ctx.writer(), .unauthorized, "text/plain; charset=utf-8", "Proof-of-work challenge required", .{
-            .headers = "X-Sibuna-Status: CHALLENGE\r\n",
-            .keep_alive = ctx.keep_alive,
-        });
+        const text = "Proof-of-work challenge required";
+        try net.response.write(w, .unauthorized, "text/plain", text, extra);
         return;
     }
     if (ctx.req.acceptsHtml()) {
-        try net.response.write(ctx.writer(), .ok, "text/html; charset=utf-8", challenge_html, .{
-            .headers = "X-Sibuna-Status: CHALLENGE\r\n",
-            .keep_alive = ctx.keep_alive,
-        });
+        try net.response.write(w, .ok, "text/html; charset=utf-8", challenge_html, extra);
         return;
     }
-    try net.response.write(ctx.writer(), .unauthorized, "application/json", "{\"error\":\"challenge_required\",\"challenge\":\"/__sibuna/challenge.json\"}", .{
-        .headers = "X-Sibuna-Status: CHALLENGE\r\n",
-        .keep_alive = ctx.keep_alive,
-    });
+    const json = "{\"error\":\"challenge_required\",\"challenge\":\"/__sibuna/challenge.json\"}";
+    try net.response.write(w, .unauthorized, "application/json", json, extra);
 }
 
 /// Hands an admitted request to the origin (reverse proxy) or answers the
@@ -415,16 +449,31 @@ fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule
     Metrics.bump(&st.metrics.allowed);
     if (st.config.mode == .forward_auth) {
         var hdr: [256]u8 = undefined;
-        const headers = try std.fmt.bufPrint(&hdr, "X-Sibuna-Status: {s}\r\nX-Sibuna-Rule: {s}\r\nX-Sibuna-Rule-Hash: {x}\r\n", .{ status, rule_name, rule_hash });
-        try net.response.write(ctx.writer(), .ok, "text/plain; charset=utf-8", "OK", .{ .headers = headers, .keep_alive = ctx.keep_alive });
+        const headers = try std.fmt.bufPrint(
+            &hdr,
+            "X-Sibuna-Status: {s}\r\nX-Sibuna-Rule: {s}\r\nX-Sibuna-Rule-Hash: {x}\r\n",
+            .{ status, rule_name, rule_hash },
+        );
+        try net.response.write(
+            ctx.writer(),
+            .ok,
+            "text/plain; charset=utf-8",
+            "OK",
+            .{ .headers = headers, .keep_alive = ctx.keep_alive },
+        );
         return ctx.keep_alive;
     }
     Metrics.bump(&st.metrics.proxied);
-    net.proxy.streamProxy(ctx.c.stream, ctx.c.reader, ctx.c.io, st.config.upstream_host, st.config.upstream_port, ctx.req, .{
+    const c = ctx.c;
+    const cfg = st.config;
+    const audit = net.ProxyAudit{
         .client_ip = ctx.client_ip,
         .status = status,
         .rule = rule_name,
-    }) catch |err| {
+    };
+    const host = cfg.upstream_host;
+    const port = cfg.upstream_port;
+    net.proxy.streamProxy(c.stream, c.reader, c.io, host, port, ctx.req, audit) catch |err| {
         Metrics.bump(&st.metrics.upstream_errors);
         if (err == error.UpstreamUnreachable) {
             try net.response.write502(ctx.writer(), "Bad Gateway: upstream unreachable");
@@ -439,11 +488,29 @@ fn handleInternal(ctx: *RequestContext) !void {
     const w = ctx.writer();
     const keep = ctx.keep_alive;
     if (std.mem.eql(u8, path, "/__sibuna/wasm/sibuna-pow.wasm")) {
-        try net.response.write(w, .ok, "application/wasm", wasm_bytes, .{ .keep_alive = keep, .cache = true });
+        try net.response.write(
+            w,
+            .ok,
+            "application/wasm",
+            wasm_bytes,
+            .{ .keep_alive = keep, .cache = true },
+        );
     } else if (std.mem.eql(u8, path, "/__sibuna/worker.js")) {
-        try net.response.write(w, .ok, "application/javascript", worker_js, .{ .keep_alive = keep, .cache = true });
+        try net.response.write(
+            w,
+            .ok,
+            "application/javascript",
+            worker_js,
+            .{ .keep_alive = keep, .cache = true },
+        );
     } else if (std.mem.eql(u8, path, "/__sibuna/challenge")) {
-        try net.response.write(w, .ok, "text/html; charset=utf-8", challenge_html, .{ .keep_alive = keep });
+        try net.response.write(
+            w,
+            .ok,
+            "text/html; charset=utf-8",
+            challenge_html,
+            .{ .keep_alive = keep },
+        );
     } else if (std.mem.eql(u8, path, "/__sibuna/challenge.json")) {
         try handleChallengeJson(ctx);
     } else if (std.mem.eql(u8, path, "/__sibuna/verify") and ctx.req.method == .POST) {
@@ -452,18 +519,32 @@ fn handleInternal(ctx: *RequestContext) !void {
         Metrics.bump(&st.metrics.banned);
         st.bans.ban(ctx.client_ip, ctx.now + st.config.ban_seconds, ctx.now);
         recordIncident(ctx, "honeypot");
-        try net.response.writeText(w, .forbidden, "Access Denied: automated scraper honeypot triggered", keep);
+        try net.response.writeText(
+            w,
+            .forbidden,
+            "Access Denied: automated scraper honeypot triggered",
+            keep,
+        );
     } else if (std.mem.eql(u8, path, "/__sibuna/health")) {
         var buf: [256]u8 = undefined;
-        const json = try std.fmt.bufPrint(&buf, "{{\"status\":\"ok\",\"engine\":\"sibuna\",\"version\":\"{s}\",\"mode\":\"{s}\",\"algorithm\":\"{s}\"}}", .{
-            version, st.config.mode.name(), st.config.algorithm.name(),
-        });
+        const json = try std.fmt.bufPrint(
+            &buf,
+            "{{\"status\":\"ok\",\"engine\":\"sibuna\",\"version\":\"{s}\"," ++
+                "\"mode\":\"{s}\",\"algorithm\":\"{s}\"}}",
+            .{ version, st.config.mode.name(), st.config.algorithm.name() },
+        );
         try net.response.write(w, .ok, "application/json", json, .{ .keep_alive = keep });
     } else if (std.mem.eql(u8, path, "/__sibuna/metrics")) {
         var buf: [4096]u8 = undefined;
         var mw = Io.Writer.fixed(&buf);
         try st.metrics.writePrometheus(&mw);
-        try net.response.write(w, .ok, "text/plain; version=0.0.4", mw.buffered(), .{ .keep_alive = keep });
+        try net.response.write(
+            w,
+            .ok,
+            "text/plain; version=0.0.4",
+            mw.buffered(),
+            .{ .keep_alive = keep },
+        );
     } else {
         try net.response.writeText(w, .not_found, "Not Found", keep);
     }
@@ -490,7 +571,12 @@ fn handleChallengeJson(ctx: *RequestContext) !void {
     var hdr_buf: [net.MAX_HEADERS]policy.Header = undefined;
     const headers = policyHeaders(ctx.req, &hdr_buf);
     const slot = st.acquireEngine();
-    const decision = slot.engine.evaluateWithHeaders(target_path, ctx.client_ip, ctx.user_agent, headers);
+    const decision = slot.engine.evaluateWithHeaders(
+        target_path,
+        ctx.client_ip,
+        ctx.user_agent,
+        headers,
+    );
     AppState.releaseEngine(slot);
 
     var spec = st.coordinator.default_spec;
@@ -499,16 +585,48 @@ fn handleChallengeJson(ctx: *RequestContext) !void {
         if (challenge.Algorithm.parse(alg)) |a| spec.algorithm = a;
     }
     const rule_hash = crypto.ruleHash(decision.rule_name);
-    const ch = st.coordinator.createChallengeWithSpec(ctx.client_ip, ctx.user_agent, ctx.now, spec, rule_hash);
+    const ch = st.coordinator.createChallengeWithSpec(
+        ctx.client_ip,
+        ctx.user_agent,
+        ctx.now,
+        spec,
+        rule_hash,
+    );
     Metrics.bump(&st.metrics.challenges_issued);
 
     var json_buf: [320]u8 = undefined;
     const json = try std.fmt.bufPrint(
         &json_buf,
-        "{{\"id\":\"{s}\",\"algorithm\":\"{s}\",\"difficulty\":{d},\"challenges\":{d},\"expires_at\":{d}}}",
+        "{{\"id\":\"{s}\",\"algorithm\":\"{s}\",\"difficulty\":{d}," ++
+            "\"challenges\":{d},\"expires_at\":{d}}}",
         .{ ch.id, ch.algorithm.name(), ch.difficulty, ch.challenges, ch.expires_at },
     );
-    try net.response.write(ctx.writer(), .ok, "application/json", json, .{ .keep_alive = ctx.keep_alive });
+    try net.response.write(
+        ctx.writer(),
+        .ok,
+        "application/json",
+        json,
+        .{ .keep_alive = ctx.keep_alive },
+    );
+}
+
+const SolutionParse = union(enum) {
+    ok: challenge.Solution,
+    err: []const u8,
+};
+
+fn parseSolution(body: []const u8, proof_buf: []u8) SolutionParse {
+    if (extractJsonString(body, "proof")) |proof_b64| {
+        const decoded = decodeProof(proof_b64, proof_buf) orelse
+            return .{ .err = "Malformed proof encoding" };
+        return .{ .ok = .{ .proof = decoded } };
+    }
+    if (extractJsonString(body, "nonce")) |nonce_str| {
+        const nonce = std.fmt.parseInt(u64, nonce_str, 10) catch
+            return .{ .err = "Invalid numeric nonce" };
+        return .{ .ok = .{ .nonce = nonce } };
+    }
+    return .{ .err = "Missing nonce or proof field" };
 }
 
 fn handleVerifySolution(ctx: *RequestContext) !void {
@@ -516,7 +634,8 @@ fn handleVerifySolution(ctx: *RequestContext) !void {
     const w = ctx.writer();
     const body = ctx.req.body;
     if (body.len < ctx.declared_body) {
-        try net.response.writeText(w, .payload_too_large, "Solution body exceeds the 64 KB limit", ctx.keep_alive);
+        const text = "Solution body exceeds 64 KB";
+        try net.response.writeText(w, .payload_too_large, text, ctx.keep_alive);
         return;
     }
     const cid = extractJsonString(body, "challenge_id") orelse {
@@ -524,32 +643,33 @@ fn handleVerifySolution(ctx: *RequestContext) !void {
         return;
     };
     var proof_buf: [crypto.posw.max_proof_size]u8 = undefined;
-    const solution: challenge.Solution = if (extractJsonString(body, "proof")) |proof_b64| blk: {
-        const decoded = decodeProof(proof_b64, &proof_buf) orelse {
-            try net.response.writeText(w, .bad_request, "Malformed proof encoding", ctx.keep_alive);
+    const solution = switch (parseSolution(body, &proof_buf)) {
+        .ok => |s| s,
+        .err => |message| {
+            try net.response.writeText(w, .bad_request, message, ctx.keep_alive);
             return;
-        };
-        break :blk .{ .proof = decoded };
-    } else if (extractJsonString(body, "nonce")) |nonce_str| blk: {
-        const nonce = std.fmt.parseInt(u64, nonce_str, 10) catch {
-            try net.response.writeText(w, .bad_request, "Invalid numeric nonce", ctx.keep_alive);
-            return;
-        };
-        break :blk .{ .nonce = nonce };
-    } else {
-        try net.response.writeText(w, .bad_request, "Missing nonce or proof field", ctx.keep_alive);
-        return;
+        },
     };
-
-    const res = st.coordinator.verifyAndMint(cid, solution, ctx.client_ip, ctx.user_agent, ctx.now) catch |err| {
+    const coord = &st.coordinator;
+    const ip = ctx.client_ip;
+    const res = coord.verifyAndMint(cid, solution, ip, ctx.user_agent, ctx.now) catch |err| {
         Metrics.bump(&st.metrics.solutions_rejected);
         try net.response.writeText(w, .bad_request, core.explainError(err), ctx.keep_alive);
         return;
     };
     Metrics.bump(&st.metrics.solutions_accepted);
     var cookie_buf: [512]u8 = undefined;
-    const cookie = try net.response.cookieHeader(&cookie_buf, st.config.cookie_name, res.slice(), res.ttl_seconds, st.config.secure_cookie);
-    try net.response.write(w, .ok, "application/json", "{\"status\":\"ok\"}", .{ .headers = cookie, .keep_alive = ctx.keep_alive });
+    const cookie = try net.response.cookieHeader(
+        &cookie_buf,
+        st.config.cookie_name,
+        res.slice(),
+        res.ttl_seconds,
+        st.config.secure_cookie,
+    );
+    try net.response.write(w, .ok, "application/json", "{\"status\":\"ok\"}", .{
+        .headers = cookie,
+        .keep_alive = ctx.keep_alive,
+    });
 }
 
 fn decodeProof(encoded: []const u8, out: []u8) ?[]const u8 {
@@ -568,7 +688,9 @@ pub fn extractJsonString(json: []const u8, key: []const u8) ?[]const u8 {
     var rest = json[k_idx + search_key.len ..];
     const colon_idx = std.mem.indexOfScalar(u8, rest, ':') orelse return null;
     rest = rest[colon_idx + 1 ..];
-    while (rest.len > 0 and (rest[0] == ' ' or rest[0] == '\t' or rest[0] == '"')) rest = rest[1..];
+    while (rest.len > 0 and (rest[0] == ' ' or rest[0] == '\t' or rest[0] == '"')) {
+        rest = rest[1..];
+    }
     var end_idx: usize = 0;
     while (end_idx < rest.len and rest[end_idx] != '"' and rest[end_idx] != ',' and
         rest[end_idx] != '}' and rest[end_idx] != ' ' and rest[end_idx] != '\r' and

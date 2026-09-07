@@ -216,13 +216,25 @@ test "mac token mint, verify, tamper, fingerprint, expiry" {
 
     var tampered = tok;
     tampered[10] = if (tampered[10] == 'A') 'B' else 'A';
-    try std.testing.expectError(error.InvalidTokenSignature, MacToken.verify(&key, &tampered, now, fp));
+    try std.testing.expectError(
+        error.InvalidTokenSignature,
+        MacToken.verify(&key, &tampered, now, fp),
+    );
 
     const other_key = [_]u8{4} ** 32;
-    try std.testing.expectError(error.InvalidTokenSignature, MacToken.verify(&other_key, &tok, now, fp));
-    try std.testing.expectError(error.TokenBoundAddressMismatch, MacToken.verify(&key, &tok, now, fp + 1));
+    try std.testing.expectError(
+        error.InvalidTokenSignature,
+        MacToken.verify(&other_key, &tok, now, fp),
+    );
+    try std.testing.expectError(
+        error.TokenBoundAddressMismatch,
+        MacToken.verify(&key, &tok, now, fp + 1),
+    );
     try std.testing.expectError(error.TokenExpired, MacToken.verify(&key, &tok, now + 4000, fp));
-    try std.testing.expectError(error.InvalidTokenLength, MacToken.verify(&key, tok[0..10], now, fp));
+    try std.testing.expectError(
+        error.InvalidTokenLength,
+        MacToken.verify(&key, tok[0..10], now, fp),
+    );
 }
 
 test "ed25519 token minting, verification, and expiration" {

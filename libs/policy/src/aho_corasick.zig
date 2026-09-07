@@ -19,7 +19,6 @@ pub fn Automaton(comptime max_states: u16) type {
     return struct {
         const Self = @This();
         pub const MAX_STATES = max_states;
-        const no_match: u16 = std.math.maxInt(u16);
 
         transitions: [max_states][256]u16 = [_][256]u16{[_]u16{0} ** 256} ** max_states,
         fail: [max_states]u16 = [_]u16{0} ** max_states,
@@ -34,98 +33,114 @@ pub fn Automaton(comptime max_states: u16) type {
             return .{};
         }
 
-        const to_lower_table: [256]u8 = blk: {
-            var table: [256]u8 = undefined;
-            for (0..256) |i| {
-                const c: u8 = @intCast(i);
-                table[i] = if (c >= 'A' and c <= 'Z') c + 32 else c;
-            }
-            break :blk table;
-        };
-
-        inline fn toLower(c: u8) u8 {
-            return to_lower_table[c];
-        }
-
         pub fn addPattern(self: *Self, pattern: []const u8) !u16 {
-            return self.addPatternTagged(pattern, 0);
+            return addPatternImpl(self, pattern, 0);
         }
 
         pub fn addPatternTagged(self: *Self, pattern: []const u8, tag: u8) !u16 {
-            std.debug.assert(!self.built);
-            if (pattern.len == 0) return error.EmptyPattern;
-            if (self.num_patterns >= max_states) return error.TooManyPatterns;
-            var state: u16 = 0;
-            for (pattern) |byte| {
-                const c = toLower(byte);
-                if (self.transitions[state][c] == 0) {
-                    if (self.num_states >= max_states) return error.TooManyStates;
-                    self.transitions[state][c] = self.num_states;
-                    self.num_states += 1;
-                }
-                state = self.transitions[state][c];
-            }
-            const pid = self.num_patterns;
-            self.match_id[state] = pid;
-            self.pattern_names[pid] = pattern;
-            self.pattern_tags[pid] = tag;
-            self.num_patterns += 1;
-            return pid;
+            return addPatternImpl(self, pattern, tag);
         }
 
         /// Computes failure links breadth-first and folds them into the
         /// transition table, so scanning never follows a failure chain.
         pub fn build(self: *Self) void {
-            var queue: [max_states]u16 = undefined;
-            var head: usize = 0;
-            var tail: usize = 0;
-
-            for (0..256) |c| {
-                const next = self.transitions[0][c];
-                if (next != 0) {
-                    queue[tail] = next;
-                    tail += 1;
-                }
-            }
-
-            while (head < tail) {
-                const state = queue[head];
-                head += 1;
-                const fail_state = self.fail[state];
-                if (self.match_id[state] == no_match) {
-                    self.match_id[state] = self.match_id[fail_state];
-                }
-                for (0..256) |c| {
-                    const next = self.transitions[state][c];
-                    if (next != 0) {
-                        self.fail[next] = self.transitions[fail_state][c];
-                        queue[tail] = next;
-                        tail += 1;
-                    } else {
-                        self.transitions[state][c] = self.transitions[fail_state][c];
-                    }
-                }
-            }
-            self.built = true;
+            buildImpl(self);
         }
 
         pub fn findFirstTagged(self: *const Self, haystack: []const u8) ?Match {
-            var state: u16 = 0;
-            for (haystack) |byte| {
-                state = self.transitions[state][toLower(byte)];
-                const pid = self.match_id[state];
-                if (pid != no_match) {
-                    return .{ .name = self.pattern_names[pid], .tag = self.pattern_tags[pid] };
-                }
-            }
-            return null;
+            return findFirstImpl(self, haystack);
         }
 
         pub fn findFirst(self: *const Self, haystack: []const u8) ?[]const u8 {
-            const m = self.findFirstTagged(haystack) orelse return null;
+            const m = findFirstImpl(self, haystack) orelse return null;
             return m.name;
         }
     };
+}
+
+const no_match: u16 = std.math.maxInt(u16);
+
+const to_lower_table: [256]u8 = blk: {
+    var table: [256]u8 = undefined;
+    for (0..256) |i| {
+        const c: u8 = @intCast(i);
+        table[i] = if (c >= 'A' and c <= 'Z') c + 32 else c;
+    }
+    break :blk table;
+};
+
+inline fn toLower(c: u8) u8 {
+    return to_lower_table[c];
+}
+
+fn addPatternImpl(self: anytype, pattern: []const u8, tag: u8) !u16 {
+    const max_states = @TypeOf(self.*).MAX_STATES;
+    std.debug.assert(!self.built);
+    if (pattern.len == 0) return error.EmptyPattern;
+    if (self.num_patterns >= max_states) return error.TooManyPatterns;
+    var state: u16 = 0;
+    for (pattern) |byte| {
+        const c = toLower(byte);
+        if (self.transitions[state][c] == 0) {
+            if (self.num_states >= max_states) return error.TooManyStates;
+            self.transitions[state][c] = self.num_states;
+            self.num_states += 1;
+        }
+        state = self.transitions[state][c];
+    }
+    const pid = self.num_patterns;
+    self.match_id[state] = pid;
+    self.pattern_names[pid] = pattern;
+    self.pattern_tags[pid] = tag;
+    self.num_patterns += 1;
+    return pid;
+}
+
+fn buildImpl(self: anytype) void {
+    const max_states = @TypeOf(self.*).MAX_STATES;
+    var queue: [max_states]u16 = undefined;
+    var head: usize = 0;
+    var tail: usize = 0;
+
+    for (0..256) |c| {
+        const next = self.transitions[0][c];
+        if (next != 0) {
+            queue[tail] = next;
+            tail += 1;
+        }
+    }
+
+    while (head < tail) {
+        const state = queue[head];
+        head += 1;
+        const fail_state = self.fail[state];
+        if (self.match_id[state] == no_match) {
+            self.match_id[state] = self.match_id[fail_state];
+        }
+        for (0..256) |c| {
+            const next = self.transitions[state][c];
+            if (next != 0) {
+                self.fail[next] = self.transitions[fail_state][c];
+                queue[tail] = next;
+                tail += 1;
+            } else {
+                self.transitions[state][c] = self.transitions[fail_state][c];
+            }
+        }
+    }
+    self.built = true;
+}
+
+fn findFirstImpl(self: anytype, haystack: []const u8) ?Match {
+    var state: u16 = 0;
+    for (haystack) |byte| {
+        state = self.transitions[state][toLower(byte)];
+        const pid = self.match_id[state];
+        if (pid != no_match) {
+            return .{ .name = self.pattern_names[pid], .tag = self.pattern_tags[pid] };
+        }
+    }
+    return null;
 }
 
 pub const MAX_STATES = 2048;
