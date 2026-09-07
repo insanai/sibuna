@@ -18,6 +18,7 @@ const AppState = struct {
     config: core.Config,
     policy_engine: policy.Engine,
     challenge_store: store.ChallengeStore,
+    rate_limiter: store.RateLimiter,
     coordinator: challenge.Coordinator,
 };
 
@@ -52,6 +53,7 @@ pub fn main(init: std.process.Init) !u8 {
         .config = cfg,
         .policy_engine = undefined,
         .challenge_store = store.ChallengeStore{},
+        .rate_limiter = store.RateLimiter.init(),
         .coordinator = undefined,
     };
     state.policy_engine.initInPlace(cfg.default_difficulty);
@@ -343,6 +345,26 @@ fn handleVerifySolution(
     );
 }
 
+fn forwardTraffic(
+    client_stream: std.Io.net.Stream,
+    io: std.Io,
+    writer: *std.Io.Writer,
+    state: *AppState,
+    raw_req: []const u8,
+) !void {
+    if (state.config.mode == .forward_auth) {
+        try net.response.write200(writer, "text/plain", "OK");
+    } else {
+        try net.streamProxy(
+            client_stream,
+            io,
+            state.config.upstream_host,
+            state.config.upstream_port,
+            raw_req,
+        );
+    }
+}
+
 fn handleFirewallTraffic(
     client_stream: std.Io.net.Stream,
     io: std.Io,
@@ -354,48 +376,38 @@ fn handleFirewallTraffic(
     raw_req: []const u8,
     now: u64,
 ) !void {
+    // 0. Rate limiting: SafeLine CC flood protection (100 req per 10s per IP)
+    if (state.rate_limiter.isRateLimited(client_ip, now, 100, 10)) {
+        try net.response.write403(
+            writer,
+            "Rate Limit Exceeded: Connection throttled by Sibuna CC Protection.",
+        );
+        return;
+    }
+
     // 1. Check existing session cookie
     if (req.getCookie(state.config.cookie_name)) |cookie_val| {
         if (state.coordinator.verifyCookie(cookie_val, client_ip, user_agent, now)) |_| {
-            if (state.config.mode == .forward_auth) {
-                try net.response.write200(writer, "text/plain", "OK");
-            } else {
-                try net.streamProxy(
-                    client_stream,
-                    io,
-                    state.config.upstream_host,
-                    state.config.upstream_port,
-                    raw_req,
-                );
-            }
+            try forwardTraffic(client_stream, io, writer, state, raw_req);
             return;
         } else |_| {}
     }
 
-    // 2. Evaluate bot, IP, and header reputation policies
+    // 2. Evaluate bot, IP, WAF, and header reputation policies
     var policy_hdrs: [net.MAX_HEADERS]policy.Header = undefined;
     for (req.headers[0..req.header_count], 0..) |h, idx| {
         policy_hdrs[idx] = .{ .name = h.name, .value = h.value };
     }
-    const decision = state.policy_engine.evaluateWithHeaders(
+    const decision = state.policy_engine.evaluateWithHeadersAndBody(
         req.path,
         client_ip,
         user_agent,
         policy_hdrs[0..req.header_count],
+        req.body,
     );
     switch (decision.action) {
         .allow => {
-            if (state.config.mode == .forward_auth) {
-                try net.response.write200(writer, "text/plain", "OK");
-            } else {
-                try net.streamProxy(
-                    client_stream,
-                    io,
-                    state.config.upstream_host,
-                    state.config.upstream_port,
-                    raw_req,
-                );
-            }
+            try forwardTraffic(client_stream, io, writer, state, raw_req);
         },
         .deny => {
             try net.response.write403(
