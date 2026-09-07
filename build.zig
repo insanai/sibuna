@@ -212,11 +212,7 @@ fn addServer(
     // The embedded single-node store needs no transport, so OpenSSL stays
     // out of the binary unless clustering is requested.
     const zaxonlite: ?*std.Build.Module = if (storage)
-        b.dependency("zaxonlite", .{
-            .target = target,
-            .optimize = optimize,
-            .tls = cluster,
-        }).module("zaxonlite")
+        @import("build/storage.zig").add(b, target, optimize, cluster)
     else
         null;
 

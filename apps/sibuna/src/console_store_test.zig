@@ -382,3 +382,39 @@ test "TOTP enrollment revokes sessions and each step or recovery value commits o
     try t.expectEqual(p.Failure.conflict, (try fx.run(factorSession(stale, 9, 150))).failed);
     try t.expectEqual(1, (try fx.run(.{ .totp_read = 1 })).totp.recovery_used);
 }
+
+test "console storage reopens after sealed journal rotation" {
+    const zx = @import("zaxonlite");
+    const original = zx.segment.rotation_records;
+    zx.segment.rotation_records = 32;
+    defer zx.segment.rotation_records = original;
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var buffer: [160]u8 = undefined;
+    const path = try std.fmt.bufPrint(
+        &buffer,
+        ".zig-cache/tmp/{s}/console-rotation",
+        .{tmp.sub_path},
+    );
+    {
+        const fx = try geoFixture(path);
+        defer fx.close();
+        for (3..35) |index| {
+            try t.expect((try fx.run(.{ .session_create = .{
+                .user = 1,
+                .revision = 1,
+                .digest = @splat(@intCast(index)),
+                .csrf_digest = @splat(2),
+                .now = 100,
+                .expires = 1000,
+            } })) == .command_recorded);
+        }
+    }
+    const restored = try Fixture.open(path);
+    defer restored.close();
+    try t.expect(!(try restored.run(.setup_status)).setup_required);
+    try t.expect((try restored.run(.{ .authorize = .{
+        .session_digest = @splat(34),
+        .now = 101,
+    } })) == .authorized);
+}
