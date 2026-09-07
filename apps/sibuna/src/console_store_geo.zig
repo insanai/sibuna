@@ -74,7 +74,8 @@ pub fn begin(owner: *Persistent, input: p.geo.Begin) !p.StorageResult {
             integer(input.expected_revision),
         },
     );
-    return if (changed > 0) .command_recorded else .{ .failed = .conflict };
+    if (changed > 0) return .command_recorded;
+    return replayBegin(owner, input);
 }
 
 pub fn batch(owner: *Persistent, input: p.geo.Batch) !p.StorageResult {
@@ -110,7 +111,8 @@ pub fn batch(owner: *Persistent, input: p.geo.Batch) !p.StorageResult {
             integer(1024 * 1024),
         },
     );
-    return if (changed > 0) .command_recorded else .{ .failed = .conflict };
+    if (changed > 0) return .command_recorded;
+    return replayBatch(owner, input, encoded[0 .. input.bytes.len * 2]);
 }
 
 pub fn activate(owner: *Persistent, input: p.geo.Activate) !p.StorageResult {
@@ -206,4 +208,48 @@ pub fn prune(owner: *Persistent, now: u64) !p.StorageResult {
         &.{integer(now -| 3600)},
     );
     return .command_recorded;
+}
+
+fn replayBegin(owner: *Persistent, input: p.geo.Begin) !p.StorageResult {
+    const digest = std.fmt.bytesToHex(input.auth.session_digest, .lower);
+    const csrf = std.fmt.bytesToHex(input.auth.csrf_digest, .lower);
+    var result = try db.query(
+        owner.db,
+        owner.gpa,
+        "SELECT g.digest FROM console_geo_generations g,console_geo_active a WHERE a.id=1 " ++
+            "AND g.digest=? AND g.source_version=? AND g.ranges=? AND a.revision=? " ++
+            "AND g.digest<>a.digest AND g.actor IN (" ++ authorized ++ ") LIMIT 1",
+        &.{
+            text(input.digest.slice()),
+            text(input.source_version.slice()),
+            integer(input.ranges),
+            integer(input.expected_revision),
+            text(&digest),
+            text(&csrf),
+            integer(input.auth.now),
+        },
+    );
+    defer result.deinit();
+    return if (result.rows.len == 1) .command_recorded else .{ .failed = .conflict };
+}
+
+/// After restart a validated same-digest import may replay immutable chunks. Accept only an
+/// exact byte match under fresh authorization; a conflicting retry never overwrites a chunk.
+fn replayBatch(owner: *Persistent, input: p.geo.Batch, encoded: []const u8) !p.StorageResult {
+    const digest = std.fmt.bytesToHex(input.auth.session_digest, .lower);
+    const csrf = std.fmt.bytesToHex(input.auth.csrf_digest, .lower);
+    var result = try db.query(
+        owner.db,
+        owner.gpa,
+        "SELECT c.ordinal FROM console_geo_chunks c JOIN console_geo_generations g " ++
+            "ON c.digest=g.digest WHERE c.digest=? AND c.ordinal=? AND c.payload=? " ++
+            "AND g.digest<>(SELECT digest FROM console_geo_active WHERE id=1) " ++
+            "AND g.actor IN (" ++ authorized ++ ") LIMIT 1",
+        &.{
+            text(input.digest.slice()), integer(input.ordinal), text(encoded),
+            text(&digest),              text(&csrf),            integer(input.auth.now),
+        },
+    );
+    defer result.deinit();
+    return if (result.rows.len == 1) .command_recorded else .{ .failed = .conflict };
 }

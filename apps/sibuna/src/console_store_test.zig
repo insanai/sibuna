@@ -182,7 +182,13 @@ test "GeoIP publication rejects incomplete generations and audits the pointer co
         .bytes = try p.Bytes(3400).init(&bytes),
     };
     try t.expect((try fx.run(.{ .geo_batch = batch })) == .command_recorded);
-    try t.expect((try fx.run(.{ .geo_batch = batch })) == .failed);
+    fx.owner.console_initialized = false;
+    try t.expect((try fx.run(.{ .geo_begin = begin })) == .command_recorded);
+    try t.expect((try fx.run(.{ .geo_batch = batch })) == .command_recorded);
+    var conflict = batch;
+    conflict.bytes.data[32] = 'D';
+    conflict.bytes.data[33] = 'E';
+    try t.expect((try fx.run(.{ .geo_batch = conflict })) == .failed);
     try t.expect((try fx.run(.{ .geo_activate = activate })) == .command_recorded);
     try t.expect((try fx.run(.{ .geo_activate = activate })) == .failed);
     const metadata = (try fx.run(.geo_metadata)).geo_metadata;
