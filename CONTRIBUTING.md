@@ -53,6 +53,10 @@ helpers, the end-to-end suite in `apps/sibuna/src/e2e_test.zig`, and the storage
 `benchmarks/benchmark.zig` measures Sibuna rows over seven batches and reports the median, min,
 and max per operation, with untimed warmup and independent mutable state per batch.
 `python3 benchmarks/distributed.py` exercises three real local daemons with external clients.
+`python3 benchmarks/tools.py --anubis <binary>` drives Sibuna Gate, Sibuna Shield, and Anubis as
+whole processes with `wrk` and records throughput, latency percentiles, CPU time per request,
+and peak resident memory; `python3 benchmarks/compare.py --anubis <binary>` measures admission
+operations. Third-party binaries are supplied from their official releases and never committed.
 Benchmarks must not add instrumentation to request code. Allocator statistics must be labelled
 as instrumented, source-audited, or unknown. Competitor comparisons require pinned runnable
 artifacts, equivalent workloads, and provenance; fixed unsourced model rows are not accepted.

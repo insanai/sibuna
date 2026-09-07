@@ -1,0 +1,2928 @@
+{
+  "meta": {
+    "zaxonlite": {
+      "url": "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.6.1.tar.gz",
+      "hash": "zaxonlite-0.6.1-o9bF7AoyGwA_Sia-N5hzepceMrM2r4Fn3rVHWGancpp4"
+    },
+    "source_sha256": "2060dc9f3bd8e4517bdfc08b6955a7730940a973004d91d4c54ee59c85eddd69",
+    "daemon_sha256": "1411a74663bf3745520188736eda6e20626ef1471275b37a270de5445f8c621e",
+    "date": "2026-09-07T15:24:54.949461+00:00",
+    "host": "Vikrants-M1-MacBook-air.local",
+    "cpu": "Apple M1",
+    "os": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "git": "3d40608a1473b22f1cea6d8a69c334486f5b4ccc",
+    "dirty": true,
+    "zig": "0.16.0"
+  },
+  "load": {
+    "threads": 2,
+    "connections": 64,
+    "seconds": 5,
+    "repetitions": 3
+  },
+  "wrk": "wrk 4.2.0 [kqueue] Copyright (C) 2012 Will Glozer",
+  "origin": "caddy respond (static 200)",
+  "anubis_version": "Anubis 1.27.0",
+  "runs": [
+    {
+      "product": "sibuna-gate",
+      "mode": "forward_auth",
+      "workers": 4,
+      "binary_bytes": 3298840,
+      "idle_rss_kib": 6288,
+      "workloads": {
+        "admitted": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 181507.02658951195,
+          "requests_per_second_min": 178443.34785311564,
+          "requests_per_second_max": 181671.27202085085,
+          "latency_us_p50_median": 230,
+          "latency_us_p99_median": 519,
+          "cpu_us_per_request_median": 20.654483451144458,
+          "cores_busy_median": 3.727288002897129,
+          "peak_rss_kib_max": 14032,
+          "errors_total": {
+            "connect": 0,
+            "read": 576,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 925696,
+            "requests_per_second": 181507.02658951195,
+            "latency_us": {
+              "p50": 232,
+              "p90": 339,
+              "p99": 519,
+              "max": 14769,
+              "mean": 248.9
+            },
+            "errors": {
+              "connect": 0,
+              "read": 192,
+              "write": 0,
+              "status": 0,
+              "timeout": 0
+            },
+            "cpu_seconds": 19.339999999999996,
+            "cores_busy": 3.7921152238328353,
+            "cpu_us_per_request": 20.89238799778761,
+            "origin_cpu_seconds": null,
+            "peak_rss_kib": 14032
+          },
+          "samples": [
+            {
+              "requests": 910214,
+              "requests_per_second": 178443.34785311564,
+              "latency_us": {
+                "p50": 223,
+                "p90": 355,
+                "p99": 691,
+                "max": 38199,
+                "mean": 335.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.8,
+              "cores_busy": 3.685655175198991,
+              "cpu_us_per_request": 20.654483451144458,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 14032
+            },
+            {
+              "requests": 926564,
+              "requests_per_second": 181671.27202085085,
+              "latency_us": {
+                "p50": 230,
+                "p90": 329,
+                "p99": 505,
+                "max": 16574,
+                "mean": 239.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 19.01,
+              "cores_busy": 3.727288002897129,
+              "cpu_us_per_request": 20.51666155818702,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 14032
+            },
+            {
+              "requests": 925696,
+              "requests_per_second": 181507.02658951195,
+              "latency_us": {
+                "p50": 232,
+                "p90": 339,
+                "p99": 519,
+                "max": 14769,
+                "mean": 248.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 19.339999999999996,
+              "cores_busy": 3.7921152238328353,
+              "cpu_us_per_request": 20.89238799778761,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 14032
+            }
+          ],
+          "path": "/private",
+          "status": 200,
+          "expected_status": 200,
+          "description": "Valid session cookie; the request is admitted (and proxied to the origin)."
+        },
+        "challenged": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 187767.07862018122,
+          "requests_per_second_min": 187552.02523134256,
+          "requests_per_second_max": 187940.15939899805,
+          "latency_us_p50_median": 217,
+          "latency_us_p99_median": 442,
+          "cpu_us_per_request_median": 19.715359497258337,
+          "cores_busy_median": 3.7018954567468425,
+          "peak_rss_kib_max": 11984,
+          "errors_total": {
+            "connect": 0,
+            "read": 576,
+            "write": 0,
+            "status": 2872634,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 957629,
+            "requests_per_second": 187767.07862018122,
+            "latency_us": {
+              "p50": 217,
+              "p90": 290,
+              "p99": 444,
+              "max": 2919,
+              "mean": 216.5
+            },
+            "errors": {
+              "connect": 0,
+              "read": 192,
+              "write": 0,
+              "status": 957629,
+              "timeout": 0
+            },
+            "cpu_seconds": 18.880000000000003,
+            "cores_busy": 3.7018954567468425,
+            "cpu_us_per_request": 19.715359497258337,
+            "origin_cpu_seconds": null,
+            "peak_rss_kib": 11984
+          },
+          "samples": [
+            {
+              "requests": 957629,
+              "requests_per_second": 187767.07862018122,
+              "latency_us": {
+                "p50": 217,
+                "p90": 290,
+                "p99": 444,
+                "max": 2919,
+                "mean": 216.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 957629,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.880000000000003,
+              "cores_busy": 3.7018954567468425,
+              "cpu_us_per_request": 19.715359497258337,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 11984
+            },
+            {
+              "requests": 958548,
+              "requests_per_second": 187940.15939899805,
+              "latency_us": {
+                "p50": 218,
+                "p90": 287,
+                "p99": 433,
+                "max": 6838,
+                "mean": 219.6
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 958548,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.960000000000008,
+              "cores_busy": 3.7174407773058884,
+              "cpu_us_per_request": 19.779917124651043,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 11984
+            },
+            {
+              "requests": 956457,
+              "requests_per_second": 187552.02523134256,
+              "latency_us": {
+                "p50": 212,
+                "p90": 290,
+                "p99": 442,
+                "max": 2598,
+                "mean": 212.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 956457,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.389999999999986,
+              "cores_busy": 3.6061022544708092,
+              "cpu_us_per_request": 19.2272104234691,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 11984
+            }
+          ],
+          "path": "/private",
+          "status": 401,
+          "expected_status": 401,
+          "description": "No cookie, browser User-Agent; the product answers with its challenge."
+        },
+        "allowed_static": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 186786.9238721377,
+          "requests_per_second_min": 185214.5621712819,
+          "requests_per_second_max": 187366.40423632142,
+          "latency_us_p50_median": 218,
+          "latency_us_p99_median": 434,
+          "cpu_us_per_request_median": 19.421945961783976,
+          "cores_busy_median": 3.6390201781316067,
+          "peak_rss_kib_max": 14032,
+          "errors_total": {
+            "connect": 0,
+            "read": 576,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 952564,
+            "requests_per_second": 186786.9238721377,
+            "latency_us": {
+              "p50": 216,
+              "p90": 286,
+              "p99": 434,
+              "max": 2735,
+              "mean": 215.5
+            },
+            "errors": {
+              "connect": 0,
+              "read": 192,
+              "write": 0,
+              "status": 0,
+              "timeout": 0
+            },
+            "cpu_seconds": 18.47,
+            "cores_busy": 3.6217561065906154,
+            "cpu_us_per_request": 19.389773285574513,
+            "origin_cpu_seconds": null,
+            "peak_rss_kib": 14032
+          },
+          "samples": [
+            {
+              "requests": 952564,
+              "requests_per_second": 186786.9238721377,
+              "latency_us": {
+                "p50": 216,
+                "p90": 286,
+                "p99": 434,
+                "max": 2735,
+                "mean": 215.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.47,
+              "cores_busy": 3.6217561065906154,
+              "cpu_us_per_request": 19.389773285574513,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 14032
+            },
+            {
+              "requests": 944545,
+              "requests_per_second": 185214.5621712819,
+              "latency_us": {
+                "p50": 219,
+                "p90": 288,
+                "p99": 501,
+                "max": 31168,
+                "mean": 310.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.680000000000007,
+              "cores_busy": 3.6629361452969915,
+              "cpu_us_per_request": 19.776717890624596,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 14032
+            },
+            {
+              "requests": 955620,
+              "requests_per_second": 187366.40423632142,
+              "latency_us": {
+                "p50": 218,
+                "p90": 285,
+                "p99": 431,
+                "max": 923,
+                "mean": 215.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.560000000000002,
+              "cores_busy": 3.6390201781316067,
+              "cpu_us_per_request": 19.421945961783976,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 14032
+            }
+          ],
+          "path": "/robots.txt",
+          "status": 200,
+          "expected_status": 200,
+          "description": "Non-browser client on a path both products allow without a challenge."
+        },
+        "attack": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 179261.5831062136,
+          "requests_per_second_min": 176419.4377481212,
+          "requests_per_second_max": 182214.59219389543,
+          "latency_us_p50_median": 237,
+          "latency_us_p99_median": 506,
+          "cpu_us_per_request_median": 21.37266311695246,
+          "cores_busy_median": 3.8312974255406793,
+          "peak_rss_kib_max": 14032,
+          "errors_total": {
+            "connect": 0,
+            "read": 576,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 914252,
+            "requests_per_second": 179261.5831062136,
+            "latency_us": {
+              "p50": 238,
+              "p90": 343,
+              "p99": 506,
+              "max": 8334,
+              "mean": 243.0
+            },
+            "errors": {
+              "connect": 0,
+              "read": 192,
+              "write": 0,
+              "status": 0,
+              "timeout": 0
+            },
+            "cpu_seconds": 19.54000000000002,
+            "cores_busy": 3.8312974255406793,
+            "cpu_us_per_request": 21.37266311695246,
+            "origin_cpu_seconds": null,
+            "peak_rss_kib": 14032
+          },
+          "samples": [
+            {
+              "requests": 929352,
+              "requests_per_second": 182214.59219389543,
+              "latency_us": {
+                "p50": 232,
+                "p90": 342,
+                "p99": 503,
+                "max": 6799,
+                "mean": 238.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 19.47,
+              "cores_busy": 3.8174105290731,
+              "cpu_us_per_request": 20.950081347003074,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 14032
+            },
+            {
+              "requests": 884777,
+              "requests_per_second": 176419.4377481212,
+              "latency_us": {
+                "p50": 237,
+                "p90": 364,
+                "p99": 21180,
+                "max": 62313,
+                "mean": 733.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 19.75999999999999,
+              "cores_busy": 3.9400301882879796,
+              "cpu_us_per_request": 22.333311105510194,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 14032
+            },
+            {
+              "requests": 914252,
+              "requests_per_second": 179261.5831062136,
+              "latency_us": {
+                "p50": 238,
+                "p90": 343,
+                "p99": 506,
+                "max": 8334,
+                "mean": 243.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 19.54000000000002,
+              "cores_busy": 3.8312974255406793,
+              "cpu_us_per_request": 21.37266311695246,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 14032
+            }
+          ],
+          "path": "/search?q=%27%20OR%201%3D1--",
+          "status": 200,
+          "expected_status": 200,
+          "description": "Valid session plus an SQL injection query; only an inspecting product refuses it."
+        }
+      },
+      "rss_kib_after_workload": 7888
+    },
+    {
+      "product": "sibuna-shield",
+      "mode": "forward_auth",
+      "workers": 4,
+      "binary_bytes": 3298840,
+      "idle_rss_kib": 6288,
+      "workloads": {
+        "admitted": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 171547.56911744145,
+          "requests_per_second_min": 171438.8729981996,
+          "requests_per_second_max": 173459.5773846026,
+          "latency_us_p50_median": 234,
+          "latency_us_p99_median": 554,
+          "cpu_us_per_request_median": 21.900256055735298,
+          "cores_busy_median": 3.7545552165672547,
+          "peak_rss_kib_max": 14144,
+          "errors_total": {
+            "connect": 0,
+            "read": 576,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 874889,
+            "requests_per_second": 171547.56911744145,
+            "latency_us": {
+              "p50": 250,
+              "p90": 372,
+              "p99": 553,
+              "max": 8811,
+              "mean": 257.0
+            },
+            "errors": {
+              "connect": 0,
+              "read": 192,
+              "write": 0,
+              "status": 0,
+              "timeout": 0
+            },
+            "cpu_seconds": 19.949999999999996,
+            "cores_busy": 3.9117808132151124,
+            "cpu_us_per_request": 22.802892709818043,
+            "origin_cpu_seconds": null,
+            "peak_rss_kib": 14144
+          },
+          "samples": [
+            {
+              "requests": 884784,
+              "requests_per_second": 173459.5773846026,
+              "latency_us": {
+                "p50": 229,
+                "p90": 379,
+                "p99": 561,
+                "max": 7784,
+                "mean": 246.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.94,
+              "cores_busy": 3.7131372127709965,
+              "cpu_us_per_request": 21.40635454529015,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 14128
+            },
+            {
+              "requests": 874419,
+              "requests_per_second": 171438.8729981996,
+              "latency_us": {
+                "p50": 234,
+                "p90": 376,
+                "p99": 554,
+                "max": 8268,
+                "mean": 247.1
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 19.150000000000002,
+              "cores_busy": 3.7545552165672547,
+              "cpu_us_per_request": 21.900256055735298,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 14144
+            },
+            {
+              "requests": 874889,
+              "requests_per_second": 171547.56911744145,
+              "latency_us": {
+                "p50": 250,
+                "p90": 372,
+                "p99": 553,
+                "max": 8811,
+                "mean": 257.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 19.949999999999996,
+              "cores_busy": 3.9117808132151124,
+              "cpu_us_per_request": 22.802892709818043,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 14144
+            }
+          ],
+          "path": "/private",
+          "status": 200,
+          "expected_status": 200,
+          "description": "Valid session cookie; the request is admitted (and proxied to the origin)."
+        },
+        "challenged": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 177793.9693782674,
+          "requests_per_second_min": 177635.66798855437,
+          "requests_per_second_max": 178442.86696390508,
+          "latency_us_p50_median": 220,
+          "latency_us_p99_median": 453,
+          "cpu_us_per_request_median": 20.898676159848943,
+          "cores_busy_median": 3.7156585892105096,
+          "peak_rss_kib_max": 12128,
+          "errors_total": {
+            "connect": 0,
+            "read": 576,
+            "write": 0,
+            "status": 2722777,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 906756,
+            "requests_per_second": 177793.9693782674,
+            "latency_us": {
+              "p50": 221,
+              "p90": 295,
+              "p99": 453,
+              "max": 6132,
+              "mean": 224.4
+            },
+            "errors": {
+              "connect": 0,
+              "read": 192,
+              "write": 0,
+              "status": 906756,
+              "timeout": 0
+            },
+            "cpu_seconds": 18.94999999999999,
+            "cores_busy": 3.7156585892105096,
+            "cpu_us_per_request": 20.898676159848943,
+            "origin_cpu_seconds": null,
+            "peak_rss_kib": 12128
+          },
+          "samples": [
+            {
+              "requests": 910029,
+              "requests_per_second": 178442.86696390508,
+              "latency_us": {
+                "p50": 220,
+                "p90": 300,
+                "p99": 466,
+                "max": 6788,
+                "mean": 223.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 910029,
+                "timeout": 0
+              },
+              "cpu_seconds": 19.029999999999994,
+              "cores_busy": 3.731494005491158,
+              "cpu_us_per_request": 20.91142150414986,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 12128
+            },
+            {
+              "requests": 905992,
+              "requests_per_second": 177635.66798855437,
+              "latency_us": {
+                "p50": 220,
+                "p90": 294,
+                "p99": 449,
+                "max": 913,
+                "mean": 223.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 905992,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.80000000000001,
+              "cores_busy": 3.6860706917774375,
+              "cpu_us_per_request": 20.75073510582876,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 12128
+            },
+            {
+              "requests": 906756,
+              "requests_per_second": 177793.9693782674,
+              "latency_us": {
+                "p50": 221,
+                "p90": 295,
+                "p99": 453,
+                "max": 6132,
+                "mean": 224.4
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 906756,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.94999999999999,
+              "cores_busy": 3.7156585892105096,
+              "cpu_us_per_request": 20.898676159848943,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 12128
+            }
+          ],
+          "path": "/private",
+          "status": 401,
+          "expected_status": 401,
+          "description": "No cookie, browser User-Agent; the product answers with its challenge."
+        },
+        "allowed_static": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 176413.60011325195,
+          "requests_per_second_min": 175234.34346088173,
+          "requests_per_second_max": 177523.82700391163,
+          "latency_us_p50_median": 220,
+          "latency_us_p99_median": 449,
+          "cpu_us_per_request_median": 20.850630131383443,
+          "cores_busy_median": 3.6783347261072006,
+          "peak_rss_kib_max": 14176,
+          "errors_total": {
+            "connect": 0,
+            "read": 576,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 899733,
+            "requests_per_second": 176413.60011325195,
+            "latency_us": {
+              "p50": 220,
+              "p90": 297,
+              "p99": 454,
+              "max": 3857,
+              "mean": 224.2
+            },
+            "errors": {
+              "connect": 0,
+              "read": 192,
+              "write": 0,
+              "status": 0,
+              "timeout": 0
+            },
+            "cpu_seconds": 18.76000000000002,
+            "cores_busy": 3.6783347261072006,
+            "cpu_us_per_request": 20.850630131383443,
+            "origin_cpu_seconds": null,
+            "peak_rss_kib": 14176
+          },
+          "samples": [
+            {
+              "requests": 899733,
+              "requests_per_second": 176413.60011325195,
+              "latency_us": {
+                "p50": 220,
+                "p90": 297,
+                "p99": 454,
+                "max": 3857,
+                "mean": 224.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.76000000000002,
+              "cores_busy": 3.6783347261072006,
+              "cpu_us_per_request": 20.850630131383443,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 14176
+            },
+            {
+              "requests": 893750,
+              "requests_per_second": 175234.34346088173,
+              "latency_us": {
+                "p50": 218,
+                "p90": 301,
+                "p99": 449,
+                "max": 3454,
+                "mean": 222.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.17999999999998,
+              "cores_busy": 3.5644871206923927,
+              "cpu_us_per_request": 20.341258741258716,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 14176
+            },
+            {
+              "requests": 905314,
+              "requests_per_second": 177523.82700391163,
+              "latency_us": {
+                "p50": 221,
+                "p90": 290,
+                "p99": 445,
+                "max": 839,
+                "mean": 224.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 19.28,
+              "cores_busy": 3.7806323382112907,
+              "cpu_us_per_request": 21.29647834894854,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 14176
+            }
+          ],
+          "path": "/robots.txt",
+          "status": 200,
+          "expected_status": 200,
+          "description": "Non-browser client on a path both products allow without a challenge."
+        },
+        "attack": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 174787.12889825812,
+          "requests_per_second_min": 173216.05500980312,
+          "requests_per_second_max": 175299.07821025842,
+          "latency_us_p50_median": 232,
+          "latency_us_p99_median": 476,
+          "cpu_us_per_request_median": 21.45162404076147,
+          "cores_busy_median": 3.7295923939845737,
+          "peak_rss_kib_max": 12192,
+          "errors_total": {
+            "connect": 0,
+            "read": 576,
+            "write": 0,
+            "status": 2668847,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 891482,
+            "requests_per_second": 174787.12889825812,
+            "latency_us": {
+              "p50": 235,
+              "p90": 312,
+              "p99": 470,
+              "max": 9021,
+              "mean": 237.0
+            },
+            "errors": {
+              "connect": 0,
+              "read": 192,
+              "write": 0,
+              "status": 891482,
+              "timeout": 0
+            },
+            "cpu_seconds": 19.28,
+            "cores_busy": 3.780105313577186,
+            "cpu_us_per_request": 21.626908900011443,
+            "origin_cpu_seconds": null,
+            "peak_rss_kib": 12192
+          },
+          "samples": [
+            {
+              "requests": 893982,
+              "requests_per_second": 175299.07821025842,
+              "latency_us": {
+                "p50": 230,
+                "p90": 313,
+                "p99": 476,
+                "max": 1398,
+                "mean": 231.7
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 893982,
+                "timeout": 0
+              },
+              "cpu_seconds": 19.02000000000001,
+              "cores_busy": 3.7295923939845737,
+              "cpu_us_per_request": 21.27559615294269,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 12144
+            },
+            {
+              "requests": 883383,
+              "requests_per_second": 173216.05500980312,
+              "latency_us": {
+                "p50": 232,
+                "p90": 325,
+                "p99": 583,
+                "max": 29982,
+                "mean": 330.4
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 883383,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.94999999999999,
+              "cores_busy": 3.715765689894154,
+              "cpu_us_per_request": 21.45162404076147,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 12192
+            },
+            {
+              "requests": 891482,
+              "requests_per_second": 174787.12889825812,
+              "latency_us": {
+                "p50": 235,
+                "p90": 312,
+                "p99": 470,
+                "max": 9021,
+                "mean": 237.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 891482,
+                "timeout": 0
+              },
+              "cpu_seconds": 19.28,
+              "cores_busy": 3.780105313577186,
+              "cpu_us_per_request": 21.626908900011443,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 12192
+            }
+          ],
+          "path": "/search?q=%27%20OR%201%3D1--",
+          "status": 403,
+          "expected_status": 403,
+          "description": "Valid session plus an SQL injection query; only an inspecting product refuses it."
+        }
+      },
+      "rss_kib_after_workload": 8096
+    },
+    {
+      "product": "anubis",
+      "mode": "forward_auth",
+      "workers": 4,
+      "binary_bytes": 36793042,
+      "idle_rss_kib": 32176,
+      "workloads": {
+        "admitted": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 33010.32363062383,
+          "requests_per_second_min": 32945.004138469805,
+          "requests_per_second_max": 33471.147053650886,
+          "latency_us_p50_median": 1863,
+          "latency_us_p99_median": 5678,
+          "cpu_us_per_request_median": 109.4142594935581,
+          "cores_busy_median": 3.6118001156874087,
+          "peak_rss_kib_max": 49232,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 168351,
+            "requests_per_second": 33010.32363062383,
+            "latency_us": {
+              "p50": 1863,
+              "p90": 3885,
+              "p99": 5732,
+              "max": 9868,
+              "mean": 2014.1
+            },
+            "errors": {
+              "connect": 0,
+              "read": 0,
+              "write": 0,
+              "status": 0,
+              "timeout": 0
+            },
+            "cpu_seconds": 18.419999999999998,
+            "cores_busy": 3.6118001156874087,
+            "cpu_us_per_request": 109.4142594935581,
+            "origin_cpu_seconds": null,
+            "peak_rss_kib": 48048
+          },
+          "samples": [
+            {
+              "requests": 170715,
+              "requests_per_second": 33471.147053650886,
+              "latency_us": {
+                "p50": 1835,
+                "p90": 3831,
+                "p99": 5647,
+                "max": 10638,
+                "mean": 1985.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.419999999999998,
+              "cores_busy": 3.6115076515142155,
+              "cpu_us_per_request": 107.89913012916264,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 46192
+            },
+            {
+              "requests": 168351,
+              "requests_per_second": 33010.32363062383,
+              "latency_us": {
+                "p50": 1863,
+                "p90": 3885,
+                "p99": 5732,
+                "max": 9868,
+                "mean": 2014.1
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.419999999999998,
+              "cores_busy": 3.6118001156874087,
+              "cpu_us_per_request": 109.4142594935581,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 48048
+            },
+            {
+              "requests": 168010,
+              "requests_per_second": 32945.004138469805,
+              "latency_us": {
+                "p50": 1871,
+                "p90": 3886,
+                "p99": 5678,
+                "max": 10010,
+                "mean": 2014.1
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.42,
+              "cores_busy": 3.611969384147455,
+              "cpu_us_per_request": 109.63633117076364,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 49232
+            }
+          ],
+          "path": "/.within.website/x/cmd/anubis/api/check",
+          "status": 200,
+          "expected_status": 200,
+          "description": "Valid session cookie; the request is admitted (and proxied to the origin)."
+        },
+        "challenged": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 103667.09353116943,
+          "requests_per_second_min": 103558.93775589296,
+          "requests_per_second_max": 104572.04308243087,
+          "latency_us_p50_median": 414,
+          "latency_us_p99_median": 2321,
+          "cpu_us_per_request_median": 34.76258818450679,
+          "cores_busy_median": 3.607521289767285,
+          "peak_rss_kib_max": 49552,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 1590219,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 528700,
+            "requests_per_second": 103667.09353116943,
+            "latency_us": {
+              "p50": 414,
+              "p90": 1219,
+              "p99": 2321,
+              "max": 4616,
+              "mean": 574.6
+            },
+            "errors": {
+              "connect": 0,
+              "read": 0,
+              "write": 0,
+              "status": 528700,
+              "timeout": 0
+            },
+            "cpu_seconds": 18.42,
+            "cores_busy": 3.611779577915909,
+            "cpu_us_per_request": 34.84017401172688,
+            "origin_cpu_seconds": null,
+            "peak_rss_kib": 49552
+          },
+          "samples": [
+            {
+              "requests": 533365,
+              "requests_per_second": 104572.04308243087,
+              "latency_us": {
+                "p50": 411,
+                "p90": 1207,
+                "p99": 2303,
+                "max": 5008,
+                "mean": 569.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 533365,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.4,
+              "cores_busy": 3.607521289767285,
+              "cpu_us_per_request": 34.49795168411875,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 49424
+            },
+            {
+              "requests": 528154,
+              "requests_per_second": 103558.93775589296,
+              "latency_us": {
+                "p50": 414,
+                "p90": 1220,
+                "p99": 2330,
+                "max": 4972,
+                "mean": 574.4
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 528154,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.36,
+              "cores_busy": 3.5999767060330785,
+              "cpu_us_per_request": 34.76258818450679,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 49488
+            },
+            {
+              "requests": 528700,
+              "requests_per_second": 103667.09353116943,
+              "latency_us": {
+                "p50": 414,
+                "p90": 1219,
+                "p99": 2321,
+                "max": 4616,
+                "mean": 574.6
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 528700,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.42,
+              "cores_busy": 3.611779577915909,
+              "cpu_us_per_request": 34.84017401172688,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 49552
+            }
+          ],
+          "path": "/.within.website/x/cmd/anubis/api/check",
+          "status": 401,
+          "expected_status": 401,
+          "description": "No cookie, browser User-Agent; the product answers with its challenge."
+        },
+        "allowed_static": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 88555.46619728085,
+          "requests_per_second_min": 88538.76846759408,
+          "requests_per_second_max": 88561.52224183852,
+          "latency_us_p50_median": 484,
+          "latency_us_p99_median": 2836,
+          "cpu_us_per_request_median": 40.6589585903123,
+          "cores_busy_median": 3.5998941207611566,
+          "peak_rss_kib_max": 50464,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 451683,
+            "requests_per_second": 88555.46619728085,
+            "latency_us": {
+              "p50": 481,
+              "p90": 1504,
+              "p99": 2815,
+              "max": 5372,
+              "mean": 697.1
+            },
+            "errors": {
+              "connect": 0,
+              "read": 0,
+              "write": 0,
+              "status": 0,
+              "timeout": 0
+            },
+            "cpu_seconds": 18.430000000000007,
+            "cores_busy": 3.6133244820280743,
+            "cpu_us_per_request": 40.80295251315637,
+            "origin_cpu_seconds": null,
+            "peak_rss_kib": 50464
+          },
+          "samples": [
+            {
+              "requests": 451561,
+              "requests_per_second": 88538.76846759408,
+              "latency_us": {
+                "p50": 484,
+                "p90": 1502,
+                "p99": 2836,
+                "max": 5914,
+                "mean": 697.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.360000000000014,
+              "cores_busy": 3.5998941207611566,
+              "cpu_us_per_request": 40.6589585903123,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 50128
+            },
+            {
+              "requests": 451720,
+              "requests_per_second": 88561.52224183852,
+              "latency_us": {
+                "p50": 488,
+                "p90": 1510,
+                "p99": 2858,
+                "max": 5612,
+                "mean": 701.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.20999999999998,
+              "cores_busy": 3.5701437173998887,
+              "cpu_us_per_request": 40.31258301602759,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 50288
+            },
+            {
+              "requests": 451683,
+              "requests_per_second": 88555.46619728085,
+              "latency_us": {
+                "p50": 481,
+                "p90": 1504,
+                "p99": 2815,
+                "max": 5372,
+                "mean": 697.1
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.430000000000007,
+              "cores_busy": 3.6133244820280743,
+              "cpu_us_per_request": 40.80295251315637,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 50464
+            }
+          ],
+          "path": "/robots.txt",
+          "status": 200,
+          "expected_status": 200,
+          "description": "Non-browser client on a path both products allow without a challenge."
+        },
+        "attack": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 32597.203354468704,
+          "requests_per_second_min": 32541.9512741193,
+          "requests_per_second_max": 32641.259086378857,
+          "latency_us_p50_median": 1888,
+          "latency_us_p99_median": 5771,
+          "cpu_us_per_request_median": 110.86381135707416,
+          "cores_busy_median": 3.613850203458003,
+          "peak_rss_kib_max": 53376,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 166240,
+            "requests_per_second": 32597.203354468704,
+            "latency_us": {
+              "p50": 1888,
+              "p90": 3932,
+              "p99": 5815,
+              "max": 11175,
+              "mean": 2039.5
+            },
+            "errors": {
+              "connect": 0,
+              "read": 0,
+              "write": 0,
+              "status": 0,
+              "timeout": 0
+            },
+            "cpu_seconds": 18.430000000000007,
+            "cores_busy": 3.613850203458003,
+            "cpu_us_per_request": 110.86381135707416,
+            "origin_cpu_seconds": null,
+            "peak_rss_kib": 51328
+          },
+          "samples": [
+            {
+              "requests": 166240,
+              "requests_per_second": 32597.203354468704,
+              "latency_us": {
+                "p50": 1888,
+                "p90": 3932,
+                "p99": 5815,
+                "max": 11175,
+                "mean": 2039.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.430000000000007,
+              "cores_busy": 3.613850203458003,
+              "cpu_us_per_request": 110.86381135707416,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 51328
+            },
+            {
+              "requests": 165988,
+              "requests_per_second": 32541.9512741193,
+              "latency_us": {
+                "p50": 1883,
+                "p90": 3907,
+                "p99": 5771,
+                "max": 11384,
+                "mean": 2035.7
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.44999999999999,
+              "cores_busy": 3.617122930618483,
+              "cpu_us_per_request": 111.1526134419355,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 52144
+            },
+            {
+              "requests": 166473,
+              "requests_per_second": 32641.259086378857,
+              "latency_us": {
+                "p50": 1890,
+                "p90": 3918,
+                "p99": 5749,
+                "max": 11451,
+                "mean": 2033.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.430000000000007,
+              "cores_busy": 3.613669513746749,
+              "cpu_us_per_request": 110.70864344368161,
+              "origin_cpu_seconds": null,
+              "peak_rss_kib": 53376
+            }
+          ],
+          "path": "/search?q=%27%20OR%201%3D1--",
+          "status": 200,
+          "expected_status": 200,
+          "description": "Valid session plus an SQL injection query; only an inspecting product refuses it."
+        }
+      },
+      "rss_kib_after_workload": 53408
+    },
+    {
+      "product": "sibuna-gate",
+      "mode": "reverse_proxy",
+      "workers": 4,
+      "binary_bytes": 3298840,
+      "idle_rss_kib": 6288,
+      "workloads": {
+        "admitted": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 65824.36539948829,
+          "requests_per_second_min": 64103.27756923837,
+          "requests_per_second_max": 69011.61265089511,
+          "latency_us_p50_median": 595,
+          "latency_us_p99_median": 7526,
+          "cpu_us_per_request_median": 28.159986060029,
+          "cores_busy_median": 1.9190312299914087,
+          "peak_rss_kib_max": 14128,
+          "errors_total": {
+            "connect": 0,
+            "read": 192,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 330317,
+            "requests_per_second": 65824.36539948829,
+            "latency_us": {
+              "p50": 590,
+              "p90": 2056,
+              "p99": 11777,
+              "max": 75998,
+              "mean": 1309.9
+            },
+            "errors": {
+              "connect": 0,
+              "read": 64,
+              "write": 0,
+              "status": 0,
+              "timeout": 0
+            },
+            "cpu_seconds": 9.629999999999999,
+            "cores_busy": 1.9190312299914087,
+            "cpu_us_per_request": 29.153812852502288,
+            "origin_cpu_seconds": 16.590000000000003,
+            "peak_rss_kib": 14128
+          },
+          "samples": [
+            {
+              "requests": 345841,
+              "requests_per_second": 69011.61265089511,
+              "latency_us": {
+                "p50": 596,
+                "p90": 2348,
+                "p99": 7526,
+                "max": 33134,
+                "mean": 1103.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 64,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 9.64,
+              "cores_busy": 1.9236352715688103,
+              "cpu_us_per_request": 27.874080863749526,
+              "origin_cpu_seconds": 18.08,
+              "peak_rss_kib": 13696
+            },
+            {
+              "requests": 330317,
+              "requests_per_second": 65824.36539948829,
+              "latency_us": {
+                "p50": 590,
+                "p90": 2056,
+                "p99": 11777,
+                "max": 75998,
+                "mean": 1309.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 64,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 9.629999999999999,
+              "cores_busy": 1.9190312299914087,
+              "cpu_us_per_request": 29.153812852502288,
+              "origin_cpu_seconds": 16.590000000000003,
+              "peak_rss_kib": 14128
+            },
+            {
+              "requests": 321378,
+              "requests_per_second": 64103.27756923837,
+              "latency_us": {
+                "p50": 595,
+                "p90": 1824,
+                "p99": 5204,
+                "max": 17582,
+                "mean": 909.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 64,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 9.05,
+              "cores_busy": 1.8051474027519223,
+              "cpu_us_per_request": 28.159986060029,
+              "origin_cpu_seconds": 15.979999999999997,
+              "peak_rss_kib": 14128
+            }
+          ],
+          "path": "/private",
+          "status": 200,
+          "expected_status": 200,
+          "description": "Valid session cookie; the request is admitted (and proxied to the origin)."
+        },
+        "challenged": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 168612.351171509,
+          "requests_per_second_min": 168530.9496863189,
+          "requests_per_second_max": 169969.817818683,
+          "latency_us_p50_median": 231,
+          "latency_us_p99_median": 531,
+          "cpu_us_per_request_median": 20.78788626880513,
+          "cores_busy_median": 3.5333132419443096,
+          "peak_rss_kib_max": 12080,
+          "errors_total": {
+            "connect": 0,
+            "read": 576,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 859866,
+            "requests_per_second": 168612.351171509,
+            "latency_us": {
+              "p50": 231,
+              "p90": 322,
+              "p99": 481,
+              "max": 2790,
+              "mean": 235.6
+            },
+            "errors": {
+              "connect": 0,
+              "read": 192,
+              "write": 0,
+              "status": 0,
+              "timeout": 0
+            },
+            "cpu_seconds": 18.020000000000003,
+            "cores_busy": 3.5335675187885003,
+            "cpu_us_per_request": 20.956753726743475,
+            "origin_cpu_seconds": 0.0,
+            "peak_rss_kib": 12080
+          },
+          "samples": [
+            {
+              "requests": 859522,
+              "requests_per_second": 168530.9496863189,
+              "latency_us": {
+                "p50": 230,
+                "p90": 369,
+                "p99": 531,
+                "max": 4028,
+                "mean": 250.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 17.64,
+              "cores_busy": 3.4587665614919287,
+              "cpu_us_per_request": 20.523034896139947,
+              "origin_cpu_seconds": 0.0,
+              "peak_rss_kib": 12080
+            },
+            {
+              "requests": 866851,
+              "requests_per_second": 169969.817818683,
+              "latency_us": {
+                "p50": 231,
+                "p90": 364,
+                "p99": 539,
+                "max": 6676,
+                "mean": 249.6
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.019999999999996,
+              "cores_busy": 3.5333132419443096,
+              "cpu_us_per_request": 20.78788626880513,
+              "origin_cpu_seconds": 0.0,
+              "peak_rss_kib": 12080
+            },
+            {
+              "requests": 859866,
+              "requests_per_second": 168612.351171509,
+              "latency_us": {
+                "p50": 231,
+                "p90": 322,
+                "p99": 481,
+                "max": 2790,
+                "mean": 235.6
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.020000000000003,
+              "cores_busy": 3.5335675187885003,
+              "cpu_us_per_request": 20.956753726743475,
+              "origin_cpu_seconds": 0.0,
+              "peak_rss_kib": 12080
+            }
+          ],
+          "path": "/private",
+          "status": 200,
+          "expected_status": 200,
+          "description": "No cookie, browser User-Agent; the product answers with its challenge."
+        },
+        "allowed_static": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 71258.10772115174,
+          "requests_per_second_min": 71222.98813232899,
+          "requests_per_second_max": 71999.0921271898,
+          "latency_us_p50_median": 600,
+          "latency_us_p99_median": 6074,
+          "cpu_us_per_request_median": 26.808031422528607,
+          "cores_busy_median": 1.9102895908985644,
+          "peak_rss_kib_max": 14128,
+          "errors_total": {
+            "connect": 0,
+            "read": 192,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 364070,
+            "requests_per_second": 71258.10772115174,
+            "latency_us": {
+              "p50": 600,
+              "p90": 2109,
+              "p99": 5906,
+              "max": 18559,
+              "mean": 975.3
+            },
+            "errors": {
+              "connect": 0,
+              "read": 64,
+              "write": 0,
+              "status": 0,
+              "timeout": 0
+            },
+            "cpu_seconds": 9.759999999999991,
+            "cores_busy": 1.9102895908985644,
+            "cpu_us_per_request": 26.808031422528607,
+            "origin_cpu_seconds": 18.89999999999999,
+            "peak_rss_kib": 14128
+          },
+          "samples": [
+            {
+              "requests": 356911,
+              "requests_per_second": 71222.98813232899,
+              "latency_us": {
+                "p50": 617,
+                "p90": 2056,
+                "p99": 6212,
+                "max": 21872,
+                "mean": 980.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 64,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 10.039999999999992,
+              "cores_busy": 2.0035213284224427,
+              "cpu_us_per_request": 28.130262166198275,
+              "origin_cpu_seconds": 18.1,
+              "peak_rss_kib": 14128
+            },
+            {
+              "requests": 361632,
+              "requests_per_second": 71999.0921271898,
+              "latency_us": {
+                "p50": 600,
+                "p90": 2143,
+                "p99": 6074,
+                "max": 24560,
+                "mean": 987.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 64,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 9.52000000000001,
+              "cores_busy": 1.8953835862170592,
+              "cpu_us_per_request": 26.32510397309975,
+              "origin_cpu_seconds": 18.799999999999997,
+              "peak_rss_kib": 14128
+            },
+            {
+              "requests": 364070,
+              "requests_per_second": 71258.10772115174,
+              "latency_us": {
+                "p50": 600,
+                "p90": 2109,
+                "p99": 5906,
+                "max": 18559,
+                "mean": 975.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 64,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 9.759999999999991,
+              "cores_busy": 1.9102895908985644,
+              "cpu_us_per_request": 26.808031422528607,
+              "origin_cpu_seconds": 18.89999999999999,
+              "peak_rss_kib": 14128
+            }
+          ],
+          "path": "/robots.txt",
+          "status": 200,
+          "expected_status": 200,
+          "description": "Non-browser client on a path both products allow without a challenge."
+        },
+        "attack": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 69281.85067563807,
+          "requests_per_second_min": 69145.87187469508,
+          "requests_per_second_max": 69713.97510541817,
+          "latency_us_p50_median": 611,
+          "latency_us_p99_median": 6292,
+          "cpu_us_per_request_median": 27.265293900866034,
+          "cores_busy_median": 1.8889900206671864,
+          "peak_rss_kib_max": 14160,
+          "errors_total": {
+            "connect": 0,
+            "read": 192,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 347328,
+            "requests_per_second": 69281.85067563807,
+            "latency_us": {
+              "p50": 611,
+              "p90": 2228,
+              "p99": 6014,
+              "max": 15823,
+              "mean": 1007.2
+            },
+            "errors": {
+              "connect": 0,
+              "read": 64,
+              "write": 0,
+              "status": 0,
+              "timeout": 0
+            },
+            "cpu_seconds": 9.469999999999999,
+            "cores_busy": 1.8889900206671864,
+            "cpu_us_per_request": 27.265293900866034,
+            "origin_cpu_seconds": 18.819999999999993,
+            "peak_rss_kib": 14160
+          },
+          "samples": [
+            {
+              "requests": 346517,
+              "requests_per_second": 69145.87187469508,
+              "latency_us": {
+                "p50": 651,
+                "p90": 2400,
+                "p99": 6945,
+                "max": 23194,
+                "mean": 1088.4
+              },
+              "errors": {
+                "connect": 0,
+                "read": 64,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 10.260000000000005,
+              "cores_busy": 2.0473357596723156,
+              "cpu_us_per_request": 29.608936935273032,
+              "origin_cpu_seconds": 18.440000000000012,
+              "peak_rss_kib": 14160
+            },
+            {
+              "requests": 349105,
+              "requests_per_second": 69713.97510541817,
+              "latency_us": {
+                "p50": 592,
+                "p90": 2278,
+                "p99": 6292,
+                "max": 16007,
+                "mean": 1021.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 64,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 9.250000000000014,
+              "cores_busy": 1.8471642334687817,
+              "cpu_us_per_request": 26.4963263201616,
+              "origin_cpu_seconds": 19.17,
+              "peak_rss_kib": 14160
+            },
+            {
+              "requests": 347328,
+              "requests_per_second": 69281.85067563807,
+              "latency_us": {
+                "p50": 611,
+                "p90": 2228,
+                "p99": 6014,
+                "max": 15823,
+                "mean": 1007.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 64,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 9.469999999999999,
+              "cores_busy": 1.8889900206671864,
+              "cpu_us_per_request": 27.265293900866034,
+              "origin_cpu_seconds": 18.819999999999993,
+              "peak_rss_kib": 14160
+            }
+          ],
+          "path": "/search?q=%27%20OR%201%3D1--",
+          "status": 200,
+          "expected_status": 200,
+          "description": "Valid session plus an SQL injection query; only an inspecting product refuses it."
+        }
+      },
+      "rss_kib_after_workload": 8016
+    },
+    {
+      "product": "sibuna-shield",
+      "mode": "reverse_proxy",
+      "workers": 4,
+      "binary_bytes": 3298840,
+      "idle_rss_kib": 6304,
+      "workloads": {
+        "admitted": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 68871.62542210252,
+          "requests_per_second_min": 68779.12153286567,
+          "requests_per_second_max": 69605.91964115846,
+          "latency_us_p50_median": 637,
+          "latency_us_p99_median": 6104,
+          "cpu_us_per_request_median": 28.766651521246516,
+          "cores_busy_median": 1.9812060482194456,
+          "peak_rss_kib_max": 14048,
+          "errors_total": {
+            "connect": 0,
+            "read": 192,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 345539,
+            "requests_per_second": 68871.62542210252,
+            "latency_us": {
+              "p50": 637,
+              "p90": 2136,
+              "p99": 6104,
+              "max": 26498,
+              "mean": 1007.3
+            },
+            "errors": {
+              "connect": 0,
+              "read": 64,
+              "write": 0,
+              "status": 0,
+              "timeout": 0
+            },
+            "cpu_seconds": 9.94,
+            "cores_busy": 1.9812060482194456,
+            "cpu_us_per_request": 28.766651521246516,
+            "origin_cpu_seconds": 18.47,
+            "peak_rss_kib": 14000
+          },
+          "samples": [
+            {
+              "requests": 349029,
+              "requests_per_second": 69605.91964115846,
+              "latency_us": {
+                "p50": 605,
+                "p90": 2297,
+                "p99": 6459,
+                "max": 16030,
+                "mean": 1034.7
+              },
+              "errors": {
+                "connect": 0,
+                "read": 64,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 9.63,
+              "cores_busy": 1.9204851348866598,
+              "cpu_us_per_request": 27.590830561357365,
+              "origin_cpu_seconds": 18.879999999999995,
+              "peak_rss_kib": 13648
+            },
+            {
+              "requests": 345539,
+              "requests_per_second": 68871.62542210252,
+              "latency_us": {
+                "p50": 637,
+                "p90": 2136,
+                "p99": 6104,
+                "max": 26498,
+                "mean": 1007.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 64,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 9.94,
+              "cores_busy": 1.9812060482194456,
+              "cpu_us_per_request": 28.766651521246516,
+              "origin_cpu_seconds": 18.47,
+              "peak_rss_kib": 14000
+            },
+            {
+              "requests": 344527,
+              "requests_per_second": 68779.12153286567,
+              "latency_us": {
+                "p50": 660,
+                "p90": 2182,
+                "p99": 5973,
+                "max": 16688,
+                "mean": 1019.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 64,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 10.120000000000001,
+              "cores_busy": 2.0202907461899953,
+              "cpu_us_per_request": 29.37360497145362,
+              "origin_cpu_seconds": 18.319999999999993,
+              "peak_rss_kib": 14048
+            }
+          ],
+          "path": "/private",
+          "status": 200,
+          "expected_status": 200,
+          "description": "Valid session cookie; the request is admitted (and proxied to the origin)."
+        },
+        "challenged": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 165902.2355663506,
+          "requests_per_second_min": 164470.26202156805,
+          "requests_per_second_max": 167548.5005361563,
+          "latency_us_p50_median": 239,
+          "latency_us_p99_median": 501,
+          "cpu_us_per_request_median": 21.865544629349472,
+          "cores_busy_median": 3.6275427358848877,
+          "peak_rss_kib_max": 12096,
+          "errors_total": {
+            "connect": 0,
+            "read": 576,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 846080,
+            "requests_per_second": 165902.2355663506,
+            "latency_us": {
+              "p50": 239,
+              "p90": 336,
+              "p99": 501,
+              "max": 5540,
+              "mean": 243.1
+            },
+            "errors": {
+              "connect": 0,
+              "read": 192,
+              "write": 0,
+              "status": 0,
+              "timeout": 0
+            },
+            "cpu_seconds": 18.5,
+            "cores_busy": 3.6275427358848877,
+            "cpu_us_per_request": 21.865544629349472,
+            "origin_cpu_seconds": 0.0,
+            "peak_rss_kib": 12096
+          },
+          "samples": [
+            {
+              "requests": 838836,
+              "requests_per_second": 164470.26202156805,
+              "latency_us": {
+                "p50": 236,
+                "p90": 326,
+                "p99": 479,
+                "max": 6001,
+                "mean": 240.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 17.849999999999998,
+              "cores_busy": 3.499842850193589,
+              "cpu_us_per_request": 21.279487289529772,
+              "origin_cpu_seconds": 0.0,
+              "peak_rss_kib": 12096
+            },
+            {
+              "requests": 854842,
+              "requests_per_second": 167548.5005361563,
+              "latency_us": {
+                "p50": 244,
+                "p90": 334,
+                "p99": 528,
+                "max": 7358,
+                "mean": 255.6
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 19.190000000000005,
+              "cores_busy": 3.7612280693845648,
+              "cpu_us_per_request": 22.44859283937851,
+              "origin_cpu_seconds": 0.0,
+              "peak_rss_kib": 12096
+            },
+            {
+              "requests": 846080,
+              "requests_per_second": 165902.2355663506,
+              "latency_us": {
+                "p50": 239,
+                "p90": 336,
+                "p99": 501,
+                "max": 5540,
+                "mean": 243.1
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.5,
+              "cores_busy": 3.6275427358848877,
+              "cpu_us_per_request": 21.865544629349472,
+              "origin_cpu_seconds": 0.0,
+              "peak_rss_kib": 12096
+            }
+          ],
+          "path": "/private",
+          "status": 200,
+          "expected_status": 200,
+          "description": "No cookie, browser User-Agent; the product answers with its challenge."
+        },
+        "allowed_static": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 71218.97511981607,
+          "requests_per_second_min": 71078.51651324314,
+          "requests_per_second_max": 71239.42779992541,
+          "latency_us_p50_median": 604,
+          "latency_us_p99_median": 8100,
+          "cpu_us_per_request_median": 28.21806291956172,
+          "cores_busy_median": 2.0102386560118695,
+          "peak_rss_kib_max": 14208,
+          "errors_total": {
+            "connect": 0,
+            "read": 192,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 356805,
+            "requests_per_second": 71218.97511981607,
+            "latency_us": {
+              "p50": 586,
+              "p90": 2212,
+              "p99": 6419,
+              "max": 17153,
+              "mean": 1003.8
+            },
+            "errors": {
+              "connect": 0,
+              "read": 64,
+              "write": 0,
+              "status": 0,
+              "timeout": 0
+            },
+            "cpu_seconds": 9.679999999999993,
+            "cores_busy": 1.932146912626838,
+            "cpu_us_per_request": 27.12966466277096,
+            "origin_cpu_seconds": 18.450000000000017,
+            "peak_rss_kib": 14208
+          },
+          "samples": [
+            {
+              "requests": 356033,
+              "requests_per_second": 71078.51651324314,
+              "latency_us": {
+                "p50": 632,
+                "p90": 2148,
+                "p99": 9041,
+                "max": 66674,
+                "mean": 1258.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 64,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 10.700000000000003,
+              "cores_busy": 2.136150656516957,
+              "cpu_us_per_request": 30.053393926967455,
+              "origin_cpu_seconds": 17.810000000000002,
+              "peak_rss_kib": 14144
+            },
+            {
+              "requests": 356805,
+              "requests_per_second": 71218.97511981607,
+              "latency_us": {
+                "p50": 586,
+                "p90": 2212,
+                "p99": 6419,
+                "max": 17153,
+                "mean": 1003.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 64,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 9.679999999999993,
+              "cores_busy": 1.932146912626838,
+              "cpu_us_per_request": 27.12966466277096,
+              "origin_cpu_seconds": 18.450000000000017,
+              "peak_rss_kib": 14208
+            },
+            {
+              "requests": 357218,
+              "requests_per_second": 71239.42779992541,
+              "latency_us": {
+                "p50": 604,
+                "p90": 2338,
+                "p99": 8100,
+                "max": 38780,
+                "mean": 1122.1
+              },
+              "errors": {
+                "connect": 0,
+                "read": 64,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 10.079999999999998,
+              "cores_busy": 2.0102386560118695,
+              "cpu_us_per_request": 28.21806291956172,
+              "origin_cpu_seconds": 18.539999999999992,
+              "peak_rss_kib": 14208
+            }
+          ],
+          "path": "/robots.txt",
+          "status": 200,
+          "expected_status": 200,
+          "description": "Non-browser client on a path both products allow without a challenge."
+        },
+        "attack": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 170490.87822264992,
+          "requests_per_second_min": 170238.85078389244,
+          "requests_per_second_max": 171061.95495548646,
+          "latency_us_p50_median": 245,
+          "latency_us_p99_median": 490,
+          "cpu_us_per_request_median": 21.687332960771077,
+          "cores_busy_median": 3.709877574040059,
+          "peak_rss_kib_max": 12176,
+          "errors_total": {
+            "connect": 0,
+            "read": 576,
+            "write": 0,
+            "status": 2593170,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 869549,
+            "requests_per_second": 170490.87822264992,
+            "latency_us": {
+              "p50": 245,
+              "p90": 330,
+              "p99": 502,
+              "max": 4489,
+              "mean": 245.1
+            },
+            "errors": {
+              "connect": 0,
+              "read": 192,
+              "write": 0,
+              "status": 869549,
+              "timeout": 0
+            },
+            "cpu_seconds": 18.73999999999998,
+            "cores_busy": 3.674317442596629,
+            "cpu_us_per_request": 21.55140193364604,
+            "origin_cpu_seconds": 0.0,
+            "peak_rss_kib": 12176
+          },
+          "samples": [
+            {
+              "requests": 868283,
+              "requests_per_second": 170238.85078389244,
+              "latency_us": {
+                "p50": 248,
+                "p90": 325,
+                "p99": 485,
+                "max": 2649,
+                "mean": 246.4
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 868283,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.960000000000008,
+              "cores_busy": 3.7173693494662476,
+              "cpu_us_per_request": 21.836198566596384,
+              "origin_cpu_seconds": 0.0,
+              "peak_rss_kib": 12176
+            },
+            {
+              "requests": 869549,
+              "requests_per_second": 170490.87822264992,
+              "latency_us": {
+                "p50": 245,
+                "p90": 330,
+                "p99": 502,
+                "max": 4489,
+                "mean": 245.1
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 869549,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.73999999999998,
+              "cores_busy": 3.674317442596629,
+              "cpu_us_per_request": 21.55140193364604,
+              "origin_cpu_seconds": 0.0,
+              "peak_rss_kib": 12176
+            },
+            {
+              "requests": 855338,
+              "requests_per_second": 171061.95495548646,
+              "latency_us": {
+                "p50": 245,
+                "p90": 324,
+                "p99": 490,
+                "max": 3266,
+                "mean": 244.1
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 855338,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.55000000000001,
+              "cores_busy": 3.709877574040059,
+              "cpu_us_per_request": 21.687332960771077,
+              "origin_cpu_seconds": 0.0,
+              "peak_rss_kib": 12176
+            }
+          ],
+          "path": "/search?q=%27%20OR%201%3D1--",
+          "status": 403,
+          "expected_status": 403,
+          "description": "Valid session plus an SQL injection query; only an inspecting product refuses it."
+        }
+      },
+      "rss_kib_after_workload": 8080
+    },
+    {
+      "product": "anubis",
+      "mode": "reverse_proxy",
+      "workers": 4,
+      "binary_bytes": 36793042,
+      "idle_rss_kib": 32864,
+      "workloads": {
+        "admitted": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 6223.61099585537,
+          "requests_per_second_min": 6081.124899688991,
+          "requests_per_second_max": 6270.43778521424,
+          "latency_us_p50_median": 5499,
+          "latency_us_p99_median": 239782,
+          "cpu_us_per_request_median": 302.48768945449893,
+          "cores_busy_median": 1.8825657101999043,
+          "peak_rss_kib_max": 50000,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 6101,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 31274,
+            "requests_per_second": 6223.61099585537,
+            "latency_us": {
+              "p50": 5464,
+              "p90": 90543,
+              "p99": 239782,
+              "max": 335600,
+              "mean": 30583.9
+            },
+            "errors": {
+              "connect": 0,
+              "read": 0,
+              "write": 0,
+              "status": 1950,
+              "timeout": 0
+            },
+            "cpu_seconds": 9.46,
+            "cores_busy": 1.8825657101999043,
+            "cpu_us_per_request": 302.48768945449893,
+            "origin_cpu_seconds": 2.5599999999999454,
+            "peak_rss_kib": 50000
+          },
+          "samples": [
+            {
+              "requests": 30569,
+              "requests_per_second": 6081.124899688991,
+              "latency_us": {
+                "p50": 5861,
+                "p90": 76654,
+                "p99": 267514,
+                "max": 488350,
+                "mean": 29851.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1934,
+                "timeout": 0
+              },
+              "cpu_seconds": 9.76,
+              "cores_busy": 1.9415675691375103,
+              "cpu_us_per_request": 319.27769963034444,
+              "origin_cpu_seconds": 2.759999999999991,
+              "peak_rss_kib": 48192
+            },
+            {
+              "requests": 31532,
+              "requests_per_second": 6270.43778521424,
+              "latency_us": {
+                "p50": 5499,
+                "p90": 69500,
+                "p99": 148850,
+                "max": 299774,
+                "mean": 24482.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 2217,
+                "timeout": 0
+              },
+              "cpu_seconds": 9.45,
+              "cores_busy": 1.8792222843547683,
+              "cpu_us_per_request": 299.69554738043894,
+              "origin_cpu_seconds": 2.580000000000041,
+              "peak_rss_kib": 49680
+            },
+            {
+              "requests": 31274,
+              "requests_per_second": 6223.61099585537,
+              "latency_us": {
+                "p50": 5464,
+                "p90": 90543,
+                "p99": 239782,
+                "max": 335600,
+                "mean": 30583.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1950,
+                "timeout": 0
+              },
+              "cpu_seconds": 9.46,
+              "cores_busy": 1.8825657101999043,
+              "cpu_us_per_request": 302.48768945449893,
+              "origin_cpu_seconds": 2.5599999999999454,
+              "peak_rss_kib": 50000
+            }
+          ],
+          "path": "/private",
+          "status": 200,
+          "expected_status": 200,
+          "description": "Valid session cookie; the request is admitted (and proxied to the origin)."
+        },
+        "challenged": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 35220.412110917074,
+          "requests_per_second_min": 34966.048202083046,
+          "requests_per_second_max": 35476.67493509516,
+          "latency_us_p50_median": 1751,
+          "latency_us_p99_median": 5713,
+          "cpu_us_per_request_median": 102.81731695233218,
+          "cores_busy_median": 3.6213421160519568,
+          "peak_rss_kib_max": 730384,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 179639,
+            "requests_per_second": 35220.412110917074,
+            "latency_us": {
+              "p50": 1751,
+              "p90": 3590,
+              "p99": 7232,
+              "max": 27410,
+              "mean": 1962.8
+            },
+            "errors": {
+              "connect": 0,
+              "read": 0,
+              "write": 0,
+              "status": 0,
+              "timeout": 0
+            },
+            "cpu_seconds": 18.47,
+            "cores_busy": 3.6212682751999195,
+            "cpu_us_per_request": 102.81731695233218,
+            "origin_cpu_seconds": 0.0,
+            "peak_rss_kib": 479488
+          },
+          "samples": [
+            {
+              "requests": 180964,
+              "requests_per_second": 35476.67493509516,
+              "latency_us": {
+                "p50": 1736,
+                "p90": 3588,
+                "p99": 5679,
+                "max": 17602,
+                "mean": 1884.7
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.51,
+              "cores_busy": 3.628750762851238,
+              "cpu_us_per_request": 102.28553745496342,
+              "origin_cpu_seconds": 0.0,
+              "peak_rss_kib": 281872
+            },
+            {
+              "requests": 179639,
+              "requests_per_second": 35220.412110917074,
+              "latency_us": {
+                "p50": 1751,
+                "p90": 3590,
+                "p99": 7232,
+                "max": 27410,
+                "mean": 1962.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.47,
+              "cores_busy": 3.6212682751999195,
+              "cpu_us_per_request": 102.81731695233218,
+              "origin_cpu_seconds": 0.0,
+              "peak_rss_kib": 479488
+            },
+            {
+              "requests": 178338,
+              "requests_per_second": 34966.048202083046,
+              "latency_us": {
+                "p50": 1766,
+                "p90": 3599,
+                "p99": 5713,
+                "max": 30194,
+                "mean": 1950.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 18.47,
+              "cores_busy": 3.6213421160519568,
+              "cpu_us_per_request": 103.5673832834281,
+              "origin_cpu_seconds": 0.0,
+              "peak_rss_kib": 730384
+            }
+          ],
+          "path": "/private",
+          "status": 200,
+          "expected_status": 200,
+          "description": "No cookie, browser User-Agent; the product answers with its challenge."
+        },
+        "allowed_static": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 5743.475061592559,
+          "requests_per_second_min": 5708.825427425644,
+          "requests_per_second_max": 5964.481135076669,
+          "latency_us_p50_median": 3755,
+          "latency_us_p99_median": 383661,
+          "cpu_us_per_request_median": 247.83017881417913,
+          "cores_busy_median": 1.4275943246166585,
+          "peak_rss_kib_max": 875984,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 6956,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 28919,
+            "requests_per_second": 5743.475061592559,
+            "latency_us": {
+              "p50": 3755,
+              "p90": 125411,
+              "p99": 345833,
+              "max": 568751,
+              "mean": 41572.8
+            },
+            "errors": {
+              "connect": 0,
+              "read": 0,
+              "write": 0,
+              "status": 2108,
+              "timeout": 0
+            },
+            "cpu_seconds": 7.200000000000003,
+            "cores_busy": 1.4299602490911318,
+            "cpu_us_per_request": 248.97126456654803,
+            "origin_cpu_seconds": 1.740000000000009,
+            "peak_rss_kib": 853392
+          },
+          "samples": [
+            {
+              "requests": 29998,
+              "requests_per_second": 5964.481135076669,
+              "latency_us": {
+                "p50": 3784,
+                "p90": 112359,
+                "p99": 411550,
+                "max": 589523,
+                "mean": 42196.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 2403,
+                "timeout": 0
+              },
+              "cpu_seconds": 7.180000000000007,
+              "cores_busy": 1.4275943246166585,
+              "cpu_us_per_request": 239.34928995266372,
+              "origin_cpu_seconds": 1.7800000000000296,
+              "peak_rss_kib": 822432
+            },
+            {
+              "requests": 28919,
+              "requests_per_second": 5743.475061592559,
+              "latency_us": {
+                "p50": 3755,
+                "p90": 125411,
+                "p99": 345833,
+                "max": 568751,
+                "mean": 41572.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 2108,
+                "timeout": 0
+              },
+              "cpu_seconds": 7.200000000000003,
+              "cores_busy": 1.4299602490911318,
+              "cpu_us_per_request": 248.97126456654803,
+              "origin_cpu_seconds": 1.740000000000009,
+              "peak_rss_kib": 853392
+            },
+            {
+              "requests": 28689,
+              "requests_per_second": 5708.825427425644,
+              "latency_us": {
+                "p50": 3308,
+                "p90": 112297,
+                "p99": 383661,
+                "max": 536011,
+                "mean": 40706.7
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 2445,
+                "timeout": 0
+              },
+              "cpu_seconds": 7.109999999999985,
+              "cores_busy": 1.41481922649783,
+              "cpu_us_per_request": 247.83017881417913,
+              "origin_cpu_seconds": 1.6999999999999886,
+              "peak_rss_kib": 875984
+            }
+          ],
+          "path": "/robots.txt",
+          "status": 200,
+          "expected_status": 200,
+          "description": "Non-browser client on a path both products allow without a challenge."
+        },
+        "attack": {
+          "failed": false,
+          "failures": [],
+          "requests_per_second_median": 5949.3575008006765,
+          "requests_per_second_min": 5888.4183501491,
+          "requests_per_second_max": 6101.020296764795,
+          "latency_us_p50_median": 4909,
+          "latency_us_p99_median": 214262,
+          "cpu_us_per_request_median": 292.38789012898485,
+          "cores_busy_median": 1.7395200872821601,
+          "peak_rss_kib_max": 879536,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 7155,
+            "timeout": 0
+          },
+          "median_sample": {
+            "requests": 29926,
+            "requests_per_second": 5949.3575008006765,
+            "latency_us": {
+              "p50": 4729,
+              "p90": 90352,
+              "p99": 214262,
+              "max": 336143,
+              "mean": 30294.9
+            },
+            "errors": {
+              "connect": 0,
+              "read": 0,
+              "write": 0,
+              "status": 2254,
+              "timeout": 0
+            },
+            "cpu_seconds": 8.75,
+            "cores_busy": 1.7395200872821601,
+            "cpu_us_per_request": 292.38789012898485,
+            "origin_cpu_seconds": 2.3000000000000114,
+            "peak_rss_kib": 879536
+          },
+          "samples": [
+            {
+              "requests": 29610,
+              "requests_per_second": 5888.4183501491,
+              "latency_us": {
+                "p50": 4909,
+                "p90": 99815,
+                "p99": 273038,
+                "max": 386567,
+                "mean": 33898.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 2089,
+                "timeout": 0
+              },
+              "cpu_seconds": 8.690000000000012,
+              "cores_busy": 1.7281443925294073,
+              "cpu_us_per_request": 293.4819317798045,
+              "origin_cpu_seconds": 2.3999999999999773,
+              "peak_rss_kib": 879536
+            },
+            {
+              "requests": 29926,
+              "requests_per_second": 5949.3575008006765,
+              "latency_us": {
+                "p50": 4729,
+                "p90": 90352,
+                "p99": 214262,
+                "max": 336143,
+                "mean": 30294.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 2254,
+                "timeout": 0
+              },
+              "cpu_seconds": 8.75,
+              "cores_busy": 1.7395200872821601,
+              "cpu_us_per_request": 292.38789012898485,
+              "origin_cpu_seconds": 2.3000000000000114,
+              "peak_rss_kib": 879536
+            },
+            {
+              "requests": 30681,
+              "requests_per_second": 6101.020296764795,
+              "latency_us": {
+                "p50": 5032,
+                "p90": 63946,
+                "p99": 140662,
+                "max": 271853,
+                "mean": 23491.6
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 2812,
+                "timeout": 0
+              },
+              "cpu_seconds": 8.810000000000002,
+              "cores_busy": 1.7518982045727927,
+              "cpu_us_per_request": 287.148398031355,
+              "origin_cpu_seconds": 2.419999999999959,
+              "peak_rss_kib": 879536
+            }
+          ],
+          "path": "/search?q=%27%20OR%201%3D1--",
+          "status": 200,
+          "expected_status": 200,
+          "description": "Valid session plus an SQL injection query; only an inspecting product refuses it."
+        }
+      },
+      "rss_kib_after_workload": 857312
+    }
+  ],
+  "not_measured": [
+    {
+      "product": "safeline-ce",
+      "version_checked": "9.x community edition (chaitin/SafeLine, September 2026)",
+      "reason": "Ships only as a Docker Compose stack (tengine, detector, mgt, luigi, fvm, chaos, postgres); no Docker daemon on this host and the detector image is not an open-source build that can be compiled here.",
+      "published": {
+        "minimum_host": "Linux x86_64 or arm64 with SSSE3, 1 CPU core, 1 GB RAM, 5 GB disk, Docker 20.10.14+ and Compose 2.0+",
+        "false_positive_rate": "0.07% (balance) / 0.22% (strict), vendor-reported",
+        "detection_rate": "71.65% (balance) / 76.17% (strict), vendor-reported"
+      }
+    },
+    {
+      "product": "cloudflare-waf",
+      "version_checked": "developers.cloudflare.com/waf, September 2026",
+      "reason": "Hosted service on Cloudflare's network; it cannot be installed on a host, and any loopback measurement would measure the network path, not the WAF.",
+      "published": {
+        "custom_rules": "Free 5, Pro 20, Business 100, Enterprise 1000",
+        "rate_limiting_rules": "Free 1, Pro 2, Business 5, Enterprise 100",
+        "managed_rulesets": "Free Managed Ruleset on all plans; Cloudflare Managed and OWASP Core rulesets from Pro; Sensitive Data Detection on Enterprise"
+      }
+    }
+  ],
+  "limitations": [
+    "One host, loopback; wrk shares the CPU with the product and the origin stub.",
+    "Origin is `caddy respond`; reverse-proxy figures include its cost, forward-auth figures have no origin.",
+    "Hashcash work matched at 8 zero bits for Sibuna and 2 zero hex digits for Anubis; both use one signing secret, browser solve time is not measured.",
+    "CPU time is ps accumulated user+system time of the product process; memory is the peak resident set sampled every 100 ms.",
+    "Sibuna closes proxied connections after each response; Anubis keeps them open. The reverse-proxy rows measure that difference as well as admission cost.",
+    "Anubis binary built or downloaded from its official release outside this repository; its origin transport runs with Go's default idle-connection limits (no flags were changed).",
+    "A workload whose load generator could not connect (ephemeral ports exhausted by the product's own origin churn) is recorded as failed with the error text, not skipped.",
+    "No TLS, no WAN, no real browsers; a ranking on this host is not a ranking on yours."
+  ]
+}
