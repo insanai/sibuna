@@ -7,6 +7,8 @@ pub const Modules = struct {
     policy: *std.Build.Module,
     challenge: *std.Build.Module,
     store: *std.Build.Module,
+    crypto_pow: *std.Build.Module,
+    crypto_posw: *std.Build.Module,
 };
 
 pub fn build(b: *std.Build) void {
@@ -72,6 +74,17 @@ fn addModules(
     challenge.addImport("crypto", crypto);
     challenge.addImport("store", store);
 
+    const crypto_pow = b.createModule(.{
+        .root_source_file = b.path("libs/crypto/src/pow.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    const crypto_posw = b.createModule(.{
+        .root_source_file = b.path("libs/crypto/src/posw.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
     return .{
         .core = core,
         .crypto = crypto,
@@ -79,6 +92,8 @@ fn addModules(
         .policy = policy,
         .challenge = challenge,
         .store = store,
+        .crypto_pow = crypto_pow,
+        .crypto_posw = crypto_posw,
     };
 }
 
@@ -93,12 +108,28 @@ fn addWasmSolver(b: *std.Build) *std.Build.Step.Compile {
         }),
     });
 
+    // The solver imports the exact server-side hashcash and PoSW sources so
+    // the browser prover and the native verifier are one implementation.
+    const wasm_pow_mod = b.createModule(.{
+        .root_source_file = b.path("libs/crypto/src/pow.zig"),
+        .target = wasm_target,
+        .optimize = .ReleaseSmall,
+    });
+    const wasm_posw_mod = b.createModule(.{
+        .root_source_file = b.path("libs/crypto/src/posw.zig"),
+        .target = wasm_target,
+        .optimize = .ReleaseSmall,
+    });
     const wasm_pow = b.addExecutable(.{
         .name = "sibuna-pow",
         .root_module = b.createModule(.{
             .root_source_file = b.path("apps/wasm-pow/src/entry.zig"),
             .target = wasm_target,
             .optimize = .ReleaseSmall,
+            .imports = &.{
+                .{ .name = "pow", .module = wasm_pow_mod },
+                .{ .name = "posw", .module = wasm_posw_mod },
+            },
         }),
     });
     wasm_pow.entry = .disabled;
@@ -162,6 +193,16 @@ fn addTests(b: *std.Build, modules: Modules) void {
     const policy_tests = b.addTest(.{ .root_module = modules.policy });
     const challenge_tests = b.addTest(.{ .root_module = modules.challenge });
     const store_tests = b.addTest(.{ .root_module = modules.store });
+    const solver_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("apps/wasm-pow/src/entry.zig"),
+            .target = b.graph.host,
+            .imports = &.{
+                .{ .name = "pow", .module = modules.crypto_pow },
+                .{ .name = "posw", .module = modules.crypto_posw },
+            },
+        }),
+    });
 
     test_step.dependOn(&b.addRunArtifact(core_tests).step);
     test_step.dependOn(&b.addRunArtifact(crypto_tests).step);
@@ -169,6 +210,7 @@ fn addTests(b: *std.Build, modules: Modules) void {
     test_step.dependOn(&b.addRunArtifact(policy_tests).step);
     test_step.dependOn(&b.addRunArtifact(challenge_tests).step);
     test_step.dependOn(&b.addRunArtifact(store_tests).step);
+    test_step.dependOn(&b.addRunArtifact(solver_tests).step);
 }
 
 fn addBenchmarks(
