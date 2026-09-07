@@ -555,8 +555,8 @@ fn writeChallengeResponse(ctx: *RequestContext) !void {
 }
 
 /// Hands an admitted request to the origin (reverse proxy) or answers the
-/// ingress (forward auth). Proxied connections close afterwards because the
-/// origin's framing is streamed through untouched.
+/// ingress (forward auth). A framed origin response keeps the client
+/// connection open; a close-delimited one closes it after streaming.
 fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule_hash: u64) !bool {
     const st = ctx.state();
     Metrics.bump(&st.metrics.allowed);
@@ -586,13 +586,32 @@ fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule
     };
     const host = cfg.upstream_host;
     const port = cfg.upstream_port;
-    net.proxy.streamProxy(c.stream, c.reader, c.io, host, port, ctx.req, audit) catch |err| {
+    const keep = ctx.keep_alive;
+    const relay = net.proxy.streamProxy(
+        c.writer,
+        c.reader,
+        c.io,
+        host,
+        port,
+        ctx.req,
+        audit,
+        keep,
+    );
+    return relay catch |err| {
         Metrics.bump(&st.metrics.upstream_errors);
-        if (err == error.UpstreamUnreachable) {
-            try net.response.write502(ctx.writer(), "Bad Gateway: upstream unreachable");
+        switch (err) {
+            error.UpstreamUnreachable => try net.response.write502(
+                ctx.writer(),
+                "Bad Gateway: upstream unreachable",
+            ),
+            error.UpstreamReadFailed => try net.response.write502(
+                ctx.writer(),
+                "Bad Gateway: malformed upstream response",
+            ),
+            else => {},
         }
+        return false;
     };
-    return false;
 }
 
 fn handleInternal(ctx: *RequestContext) !void {

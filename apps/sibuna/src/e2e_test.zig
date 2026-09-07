@@ -463,6 +463,22 @@ test "keep-alive serves multiple internal requests on one connection" {
     try std.testing.expect(resp.contains("Connection: close"));
 }
 
+test "proxied responses keep the client connection open for the next request" {
+    boot_once.call();
+    const raw = "GET /robots.txt HTTP/1.1\r\nHost: t\r\nX-Forwarded-For: 203.0.113.61\r\n\r\n" ++
+        "GET /robots.txt HTTP/1.1\r\nHost: t\r\nX-Forwarded-For: 203.0.113.61\r\n" ++
+        "Connection: close\r\n\r\n";
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    try roundTrip(proxy_fixture.port, raw, resp);
+    const t = resp.text();
+    const first = std.mem.indexOf(u8, t, "ORIGIN|GET /robots.txt").?;
+    try std.testing.expect(std.mem.indexOfPos(u8, t, first + 1, "ORIGIN|GET /robots.txt") != null);
+    try std.testing.expect(std.mem.indexOf(u8, t, "Connection: keep-alive") != null);
+    try std.testing.expect(std.mem.indexOf(u8, t, "Connection: close") != null);
+    try std.testing.expect(std.mem.indexOf(u8, t, "X-Origin: stub") != null);
+}
+
 test "malformed, smuggled, oversized, and unknown requests are rejected cleanly" {
     boot_once.call();
     const p = proxy_fixture.port;
