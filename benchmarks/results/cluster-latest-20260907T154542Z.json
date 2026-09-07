@@ -1,0 +1,1253 @@
+{
+  "meta": {
+    "zaxonlite": {
+      "url": "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.6.1.tar.gz",
+      "hash": "zaxonlite-0.6.1-o9bF7AoyGwA_Sia-N5hzepceMrM2r4Fn3rVHWGancpp4"
+    },
+    "source_sha256": "d8609ef4f25286e175d67ec954ded42c458bec810ee07d0d79fba630f11846a6",
+    "daemon_sha256": "c2ebcbf07baba91e9a0549a92c6131137ea02c8587807fc54a7257fb591974ed",
+    "date": "2026-09-07T15:42:11.509894+00:00",
+    "host": "Vikrants-M1-MacBook-air.local",
+    "cpu": "Apple M1",
+    "os": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "git": "7c41d59ab56a652042d5dfdfa128844156e19c7d",
+    "dirty": true,
+    "zig": "0.16.0"
+  },
+  "load": {
+    "threads": 2,
+    "connections": 32,
+    "seconds": 4,
+    "repetitions": 2
+  },
+  "wrk": "wrk 4.2.0 [kqueue] Copyright (C) 2012 Will Glozer",
+  "binary_bytes": 3792456,
+  "cases": [
+    {
+      "case": "single, no storage",
+      "nodes": 1,
+      "storage": false,
+      "clustered": false,
+      "tls": false,
+      "workers_per_node": 2,
+      "idle": {
+        "seconds": 10,
+        "cpu_cores_per_node": [
+          0.001
+        ],
+        "rss_kib_per_node": [
+          6656
+        ]
+      },
+      "checks": {
+        "cross_node_session": true,
+        "waf_denial_with_session": true,
+        "storage_chain_log_clean": true
+      },
+      "per_node": {
+        "admitted": {
+          "failed": false,
+          "requests_per_second_median": 176673.7588050575,
+          "requests_per_second_min": 176024.31215329593,
+          "requests_per_second_max": 177323.2054568191,
+          "latency_us_p50_median": 121.0,
+          "latency_us_p99_median": 347.0,
+          "cpu_us_per_request_median": 20.267345103442512,
+          "cores_busy_total_median": 3.5806412526704756,
+          "peak_rss_kib_per_node_max": [
+            10640
+          ],
+          "non_2xx_3xx_total": 0,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 727020,
+              "requests_per_second": 177323.2054568191,
+              "latency_us_p50_max_over_targets": 122,
+              "latency_us_p99_max_over_targets": 314,
+              "non_2xx_3xx": 0,
+              "cpu_seconds_per_node": [
+                14.66
+              ],
+              "cpu_us_per_request": 20.16450716624027,
+              "cores_busy_total": 3.575635047174724,
+              "peak_rss_kib_per_node": [
+                10608
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 721643,
+              "requests_per_second": 176024.31215329593,
+              "latency_us_p50_max_over_targets": 120,
+              "latency_us_p99_max_over_targets": 380,
+              "non_2xx_3xx": 0,
+              "cpu_seconds_per_node": [
+                14.700000000000001
+              ],
+              "cpu_us_per_request": 20.370183040644754,
+              "cores_busy_total": 3.585647458166227,
+              "peak_rss_kib_per_node": [
+                10640
+              ]
+            }
+          ]
+        },
+        "challenged": {
+          "failed": false,
+          "requests_per_second_median": 183815.74316957776,
+          "requests_per_second_min": 182679.69504196857,
+          "requests_per_second_max": 184951.79129718695,
+          "latency_us_p50_median": 121.5,
+          "latency_us_p99_median": 318.0,
+          "cpu_us_per_request_median": 19.307254356563977,
+          "cores_busy_total_median": 3.5489785002859593,
+          "peak_rss_kib_per_node_max": [
+            9616
+          ],
+          "non_2xx_3xx_total": 1507205,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 748982,
+              "requests_per_second": 182679.69504196857,
+              "latency_us_p50_max_over_targets": 120,
+              "latency_us_p99_max_over_targets": 367,
+              "non_2xx_3xx": 748982,
+              "cpu_seconds_per_node": [
+                14.459999999999997
+              ],
+              "cpu_us_per_request": 19.306204955526297,
+              "cores_busy_total": 3.5268516336932865,
+              "peak_rss_kib_per_node": [
+                9616
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 758223,
+              "requests_per_second": 184951.79129718695,
+              "latency_us_p50_max_over_targets": 123,
+              "latency_us_p99_max_over_targets": 269,
+              "non_2xx_3xx": 758223,
+              "cpu_seconds_per_node": [
+                14.64
+              ],
+              "cpu_us_per_request": 19.308303757601657,
+              "cores_busy_total": 3.571105366878632,
+              "peak_rss_kib_per_node": [
+                9616
+              ]
+            }
+          ]
+        },
+        "attack": {
+          "failed": false,
+          "requests_per_second_median": 182983.09161878875,
+          "requests_per_second_min": 182926.94526424998,
+          "requests_per_second_max": 183039.23797332752,
+          "latency_us_p50_median": 123.5,
+          "latency_us_p99_median": 286.5,
+          "cpu_us_per_request_median": 19.827057998263328,
+          "cores_busy_total_median": 3.6280389118187397,
+          "peak_rss_kib_per_node_max": [
+            9616
+          ],
+          "non_2xx_3xx_total": 1500467,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 750425,
+              "requests_per_second": 183039.23797332752,
+              "latency_us_p50_max_over_targets": 126,
+              "latency_us_p99_max_over_targets": 289,
+              "non_2xx_3xx": 750425,
+              "cpu_seconds_per_node": [
+                15.180000000000007
+              ],
+              "cpu_us_per_request": 20.22853716227472,
+              "cores_busy_total": 3.7026160274979016,
+              "peak_rss_kib_per_node": [
+                9616
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 750042,
+              "requests_per_second": 182926.94526424998,
+              "latency_us_p50_max_over_targets": 121,
+              "latency_us_p99_max_over_targets": 284,
+              "non_2xx_3xx": 750042,
+              "cpu_seconds_per_node": [
+                14.569999999999993
+              ],
+              "cpu_us_per_request": 19.42557883425194,
+              "cores_busy_total": 3.553461796139578,
+              "peak_rss_kib_per_node": [
+                9616
+              ]
+            }
+          ]
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "case": "single, embedded storage",
+      "nodes": 1,
+      "storage": true,
+      "clustered": false,
+      "tls": false,
+      "workers_per_node": 2,
+      "idle": {
+        "seconds": 10,
+        "cpu_cores_per_node": [
+          0.0019999999999999996
+        ],
+        "rss_kib_per_node": [
+          19008
+        ]
+      },
+      "checks": {
+        "cross_node_session": true,
+        "waf_denial_with_session": true,
+        "storage_chain_log_clean": true
+      },
+      "per_node": {
+        "admitted": {
+          "failed": false,
+          "requests_per_second_median": 176775.45524264144,
+          "requests_per_second_min": 175509.36094474254,
+          "requests_per_second_max": 178041.54954054038,
+          "latency_us_p50_median": 124.5,
+          "latency_us_p99_median": 299.0,
+          "cpu_us_per_request_median": 20.65064352130195,
+          "cores_busy_total_median": 3.651109552244305,
+          "peak_rss_kib_per_node_max": [
+            24176
+          ],
+          "non_2xx_3xx_total": 0,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 719647,
+              "requests_per_second": 175509.36094474254,
+              "latency_us_p50_max_over_targets": 123,
+              "latency_us_p99_max_over_targets": 306,
+              "non_2xx_3xx": 0,
+              "cpu_seconds_per_node": [
+                14.530000000000001
+              ],
+              "cpu_us_per_request": 20.190454486713627,
+              "cores_busy_total": 3.5436137641470182,
+              "peak_rss_kib_per_node": [
+                24176
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 729957,
+              "requests_per_second": 178041.54954054038,
+              "latency_us_p50_max_over_targets": 126,
+              "latency_us_p99_max_over_targets": 292,
+              "non_2xx_3xx": 0,
+              "cpu_seconds_per_node": [
+                15.409999999999998
+              ],
+              "cpu_us_per_request": 21.110832555890276,
+              "cores_busy_total": 3.7586053403415915,
+              "peak_rss_kib_per_node": [
+                24176
+              ]
+            }
+          ]
+        },
+        "challenged": {
+          "failed": false,
+          "requests_per_second_median": 185485.10266750903,
+          "requests_per_second_min": 185294.0172190922,
+          "requests_per_second_max": 185676.18811592585,
+          "latency_us_p50_median": 120.5,
+          "latency_us_p99_median": 262.0,
+          "cpu_us_per_request_median": 18.95558162816046,
+          "cores_busy_total_median": 3.51597322813986,
+          "peak_rss_kib_per_node_max": [
+            23216
+          ],
+          "non_2xx_3xx_total": 1520926,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 761202,
+              "requests_per_second": 185676.18811592585,
+              "latency_us_p50_max_over_targets": 120,
+              "latency_us_p99_max_over_targets": 268,
+              "non_2xx_3xx": 761202,
+              "cpu_seconds_per_node": [
+                14.410000000000004
+              ],
+              "cpu_us_per_request": 18.930586099353395,
+              "cores_busy_total": 3.514959065728272,
+              "peak_rss_kib_per_node": [
+                23216
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 759724,
+              "requests_per_second": 185294.0172190922,
+              "latency_us_p50_max_over_targets": 121,
+              "latency_us_p99_max_over_targets": 256,
+              "non_2xx_3xx": 759724,
+              "cpu_seconds_per_node": [
+                14.419999999999995
+              ],
+              "cpu_us_per_request": 18.980577156967524,
+              "cores_busy_total": 3.5169873905514484,
+              "peak_rss_kib_per_node": [
+                23216
+              ]
+            }
+          ]
+        },
+        "attack": {
+          "failed": false,
+          "requests_per_second_median": 181399.6905202813,
+          "requests_per_second_min": 181102.75979003555,
+          "requests_per_second_max": 181696.62125052704,
+          "latency_us_p50_median": 124.5,
+          "latency_us_p99_median": 294.5,
+          "cpu_us_per_request_median": 20.118854329661076,
+          "cores_busy_total_median": 3.6494767776720103,
+          "peak_rss_kib_per_node_max": [
+            33456
+          ],
+          "non_2xx_3xx_total": 1471582,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 729142,
+              "requests_per_second": 181696.62125052704,
+              "latency_us_p50_max_over_targets": 123,
+              "latency_us_p99_max_over_targets": 310,
+              "non_2xx_3xx": 729142,
+              "cpu_seconds_per_node": [
+                14.480000000000004
+              ],
+              "cpu_us_per_request": 19.858957514448495,
+              "cores_busy_total": 3.608305481933056,
+              "peak_rss_kib_per_node": [
+                30128
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 742440,
+              "requests_per_second": 181102.75979003555,
+              "latency_us_p50_max_over_targets": 126,
+              "latency_us_p99_max_over_targets": 279,
+              "non_2xx_3xx": 742440,
+              "cpu_seconds_per_node": [
+                15.129999999999995
+              ],
+              "cpu_us_per_request": 20.378751144873654,
+              "cores_busy_total": 3.6906480734109652,
+              "peak_rss_kib_per_node": [
+                33456
+              ]
+            }
+          ]
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "case": "cluster of 3, PSK",
+      "nodes": 3,
+      "storage": true,
+      "clustered": true,
+      "tls": false,
+      "workers_per_node": 2,
+      "idle": {
+        "seconds": 10,
+        "cpu_cores_per_node": [
+          0.018,
+          0.008,
+          0.009000000000000001
+        ],
+        "rss_kib_per_node": [
+          21472,
+          19952,
+          19952
+        ]
+      },
+      "checks": {
+        "cross_node_session": true,
+        "waf_denial_with_session": true,
+        "cross_node_solution_replay_status": 400,
+        "solution_replay_rejected_on_other_node": true,
+        "ban_propagation_ms": 76.862167,
+        "storage_chain_log_clean": true
+      },
+      "per_node": {
+        "admitted": {
+          "failed": false,
+          "requests_per_second_median": 172680.9393240473,
+          "requests_per_second_min": 172138.944076141,
+          "requests_per_second_max": 173222.93457195358,
+          "latency_us_p50_median": 123.0,
+          "latency_us_p99_median": 701.5,
+          "cpu_us_per_request_median": 20.459546078983507,
+          "cores_busy_total_median": 3.5328280138486505,
+          "peak_rss_kib_per_node_max": [
+            27696,
+            20592,
+            20800
+          ],
+          "non_2xx_3xx_total": 0,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 705801,
+              "requests_per_second": 172138.944076141,
+              "latency_us_p50_max_over_targets": 124,
+              "latency_us_p99_max_over_targets": 1100,
+              "non_2xx_3xx": 0,
+              "cpu_seconds_per_node": [
+                14.61,
+                0.010000000000000009,
+                0.010000000000000009
+              ],
+              "cpu_us_per_request": 20.728222260948904,
+              "cores_busy_total": 3.5681342925753046,
+              "peak_rss_kib_per_node": [
+                27664,
+                20592,
+                20800
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 710222,
+              "requests_per_second": 173222.93457195358,
+              "latency_us_p50_max_over_targets": 122,
+              "latency_us_p99_max_over_targets": 303,
+              "non_2xx_3xx": 0,
+              "cpu_seconds_per_node": [
+                14.31,
+                0.01999999999999999,
+                0.010000000000000009
+              ],
+              "cpu_us_per_request": 20.190869897018114,
+              "cores_busy_total": 3.4975217351219965,
+              "peak_rss_kib_per_node": [
+                27696,
+                20592,
+                20800
+              ]
+            }
+          ]
+        },
+        "challenged": {
+          "failed": false,
+          "requests_per_second_median": 181532.4881658808,
+          "requests_per_second_min": 181252.16002567761,
+          "requests_per_second_max": 181812.81630608393,
+          "latency_us_p50_median": 121.0,
+          "latency_us_p99_median": 1007.5,
+          "cpu_us_per_request_median": 19.500378209852755,
+          "cores_busy_total_median": 3.5400999058144516,
+          "peak_rss_kib_per_node_max": [
+            26672,
+            20592,
+            20800
+          ],
+          "non_2xx_3xx_total": 1488626,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 743146,
+              "requests_per_second": 181252.16002567761,
+              "latency_us_p50_max_over_targets": 120,
+              "latency_us_p99_max_over_targets": 283,
+              "non_2xx_3xx": 743146,
+              "cpu_seconds_per_node": [
+                14.07,
+                0.010000000000000009,
+                0.01999999999999999
+              ],
+              "cpu_us_per_request": 18.97339150045886,
+              "cores_busy_total": 3.438968192471001,
+              "peak_rss_kib_per_node": [
+                26672,
+                20592,
+                20800
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 745480,
+              "requests_per_second": 181812.81630608393,
+              "latency_us_p50_max_over_targets": 122,
+              "latency_us_p99_max_over_targets": 1732,
+              "non_2xx_3xx": 745480,
+              "cpu_seconds_per_node": [
+                14.909999999999997,
+                0.010000000000000009,
+                0.010000000000000009
+              ],
+              "cpu_us_per_request": 20.027364919246654,
+              "cores_busy_total": 3.6412316191579017,
+              "peak_rss_kib_per_node": [
+                26672,
+                20592,
+                20800
+              ]
+            }
+          ]
+        },
+        "attack": {
+          "failed": false,
+          "requests_per_second_median": 179015.5860016868,
+          "requests_per_second_min": 178562.87337507898,
+          "requests_per_second_max": 179468.29862829467,
+          "latency_us_p50_median": 121.5,
+          "latency_us_p99_median": 305.0,
+          "cpu_us_per_request_median": 19.989007496287336,
+          "cores_busy_total_median": 3.578326619213273,
+          "peak_rss_kib_per_node_max": [
+            37872,
+            21136,
+            21408
+          ],
+          "non_2xx_3xx_total": 1467814,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 732006,
+              "requests_per_second": 178562.87337507898,
+              "latency_us_p50_max_over_targets": 123,
+              "latency_us_p99_max_over_targets": 308,
+              "non_2xx_3xx": 732006,
+              "cpu_seconds_per_node": [
+                14.5,
+                0.08000000000000002,
+                0.08000000000000002
+              ],
+              "cpu_us_per_request": 20.02715824733677,
+              "cores_busy_total": 3.5761069221818644,
+              "peak_rss_kib_per_node": [
+                35696,
+                20976,
+                21360
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 735808,
+              "requests_per_second": 179468.29862829467,
+              "latency_us_p50_max_over_targets": 120,
+              "latency_us_p99_max_over_targets": 302,
+              "non_2xx_3xx": 735808,
+              "cpu_seconds_per_node": [
+                14.52000000000001,
+                0.07999999999999996,
+                0.07999999999999996
+              ],
+              "cpu_us_per_request": 19.950856745237903,
+              "cores_busy_total": 3.5805463162446824,
+              "peak_rss_kib_per_node": [
+                37872,
+                21136,
+                21408
+              ]
+            }
+          ]
+        }
+      },
+      "all_nodes": {
+        "admitted": {
+          "failed": false,
+          "requests_per_second_median": 177706.91463529938,
+          "requests_per_second_min": 176129.44487829323,
+          "requests_per_second_max": 179284.38439230554,
+          "latency_us_p50_median": 253.0,
+          "latency_us_p99_median": 5035.0,
+          "cpu_us_per_request_median": 16.69271388451673,
+          "cores_busy_total_median": 2.965805101986078,
+          "peak_rss_kib_per_node_max": [
+            39952,
+            25424,
+            25680
+          ],
+          "non_2xx_3xx_total": 0,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 722626,
+              "requests_per_second": 176129.44487829323,
+              "latency_us_p50_max_over_targets": 253,
+              "latency_us_p99_max_over_targets": 5546,
+              "non_2xx_3xx": 0,
+              "cpu_seconds_per_node": [
+                4.309999999999988,
+                3.97,
+                4.06
+              ],
+              "cpu_us_per_request": 17.076606709418133,
+              "cores_busy_total": 3.007693260134753,
+              "peak_rss_kib_per_node": [
+                39952,
+                25312,
+                25600
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 720469,
+              "requests_per_second": 179284.38439230554,
+              "latency_us_p50_max_over_targets": 253,
+              "latency_us_p99_max_over_targets": 4524,
+              "non_2xx_3xx": 0,
+              "cpu_seconds_per_node": [
+                4.019999999999996,
+                3.84,
+                3.8900000000000006
+              ],
+              "cpu_us_per_request": 16.30882105961533,
+              "cores_busy_total": 2.923916943837402,
+              "peak_rss_kib_per_node": [
+                39952,
+                25424,
+                25680
+              ]
+            }
+          ]
+        },
+        "challenged": {
+          "failed": false,
+          "requests_per_second_median": 183968.2878127211,
+          "requests_per_second_min": 183877.98499863775,
+          "requests_per_second_max": 184058.59062680448,
+          "latency_us_p50_median": 267.5,
+          "latency_us_p99_median": 4840.5,
+          "cpu_us_per_request_median": 15.444883923103415,
+          "cores_busy_total_median": 2.841365584783497,
+          "peak_rss_kib_per_node_max": [
+            38928,
+            24416,
+            24800
+          ],
+          "non_2xx_3xx_total": 1476868,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 739192,
+              "requests_per_second": 184058.59062680448,
+              "latency_us_p50_max_over_targets": 265,
+              "latency_us_p99_max_over_targets": 5001,
+              "non_2xx_3xx": 739192,
+              "cpu_seconds_per_node": [
+                3.910000000000011,
+                3.7200000000000006,
+                3.76
+              ],
+              "cpu_us_per_request": 15.408716544551362,
+              "cores_busy_total": 2.836106650558049,
+              "peak_rss_kib_per_node": [
+                38928,
+                24400,
+                24656
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 737676,
+              "requests_per_second": 183877.98499863775,
+              "latency_us_p50_max_over_targets": 270,
+              "latency_us_p99_max_over_targets": 4680,
+              "non_2xx_3xx": 737676,
+              "cpu_seconds_per_node": [
+                3.8299999999999983,
+                3.7799999999999994,
+                3.8100000000000005
+              ],
+              "cpu_us_per_request": 15.481051301655468,
+              "cores_busy_total": 2.8466245190089454,
+              "peak_rss_kib_per_node": [
+                38928,
+                24416,
+                24800
+              ]
+            }
+          ]
+        },
+        "attack": {
+          "failed": false,
+          "requests_per_second_median": 176954.10947046377,
+          "requests_per_second_min": 176419.8212290067,
+          "requests_per_second_max": 177488.39771192087,
+          "latency_us_p50_median": 245.5,
+          "latency_us_p99_median": 8952.5,
+          "cpu_us_per_request_median": 17.98488945832282,
+          "cores_busy_total_median": 3.182510813872934,
+          "peak_rss_kib_per_node_max": [
+            43104,
+            29344,
+            29712
+          ],
+          "non_2xx_3xx_total": 1438995,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 723636,
+              "requests_per_second": 176419.8212290067,
+              "latency_us_p50_max_over_targets": 250,
+              "latency_us_p99_max_over_targets": 9337,
+              "non_2xx_3xx": 723636,
+              "cpu_seconds_per_node": [
+                5.240000000000009,
+                3.9700000000000006,
+                3.790000000000001
+              ],
+              "cpu_us_per_request": 17.964833148157375,
+              "cores_busy_total": 3.1693526524068574,
+              "peak_rss_kib_per_node": [
+                40704,
+                27136,
+                27040
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 715359,
+              "requests_per_second": 177488.39771192087,
+              "latency_us_p50_max_over_targets": 241,
+              "latency_us_p99_max_over_targets": 8568,
+              "non_2xx_3xx": 715359,
+              "cpu_seconds_per_node": [
+                5.659999999999997,
+                3.509999999999998,
+                3.7099999999999973
+              ],
+              "cpu_us_per_request": 18.00494576848826,
+              "cores_busy_total": 3.195668975339011,
+              "peak_rss_kib_per_node": [
+                43104,
+                29344,
+                29712
+              ]
+            }
+          ]
+        }
+      },
+      "failover": {
+        "stopped_leader_node": 1,
+        "leader_found_in_logs": true,
+        "admitted_all_survivors": {
+          "failed": false,
+          "requests_per_second_median": 174707.32673432148,
+          "requests_per_second_min": 173045.17543164562,
+          "requests_per_second_max": 176369.47803699735,
+          "latency_us_p50_median": 225.5,
+          "latency_us_p99_median": 1784.5,
+          "cpu_us_per_request_median": 19.242616011062225,
+          "cores_busy_total_median": 3.361210536543798,
+          "peak_rss_kib_per_node_max": [
+            40288,
+            32256
+          ],
+          "non_2xx_3xx_total": 0,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 709737,
+              "requests_per_second": 173045.17543164562,
+              "latency_us_p50_max_over_targets": 228,
+              "latency_us_p99_max_over_targets": 1631,
+              "non_2xx_3xx": 0,
+              "cpu_seconds_per_node": [
+                7.720000000000002,
+                6.199999999999999
+              ],
+              "cpu_us_per_request": 19.612898862536408,
+              "cores_busy_total": 3.3939175243907354,
+              "peak_rss_kib_per_node": [
+                39104,
+                32256
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 723281,
+              "requests_per_second": 176369.47803699735,
+              "latency_us_p50_max_over_targets": 223,
+              "latency_us_p99_max_over_targets": 1938,
+              "non_2xx_3xx": 0,
+              "cpu_seconds_per_node": [
+                6.66,
+                6.990000000000002
+              ],
+              "cpu_us_per_request": 18.872333159588045,
+              "cores_busy_total": 3.328503548696861,
+              "peak_rss_kib_per_node": [
+                40288,
+                32256
+              ]
+            }
+          ]
+        },
+        "post_failover_ban_propagation_ms": 176.125666
+      },
+      "status": "passed"
+    },
+    {
+      "case": "cluster of 3, mutual TLS",
+      "nodes": 3,
+      "storage": true,
+      "clustered": true,
+      "tls": true,
+      "workers_per_node": 2,
+      "idle": {
+        "seconds": 10,
+        "cpu_cores_per_node": [
+          0.01,
+          0.020999999999999998,
+          0.01
+        ],
+        "rss_kib_per_node": [
+          25088,
+          26768,
+          25040
+        ]
+      },
+      "checks": {
+        "cross_node_session": true,
+        "waf_denial_with_session": true,
+        "cross_node_solution_replay_status": 400,
+        "solution_replay_rejected_on_other_node": true,
+        "ban_propagation_ms": 99.843666,
+        "storage_chain_log_clean": true
+      },
+      "per_node": {
+        "admitted": {
+          "failed": false,
+          "requests_per_second_median": 174997.8016020027,
+          "requests_per_second_min": 174647.43518595988,
+          "requests_per_second_max": 175348.1680180455,
+          "latency_us_p50_median": 116.0,
+          "latency_us_p99_median": 307.5,
+          "cpu_us_per_request_median": 19.386141838475893,
+          "cores_busy_total_median": 3.3925907814100604,
+          "peak_rss_kib_per_node_max": [
+            29648,
+            28784,
+            25824
+          ],
+          "non_2xx_3xx_total": 0,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 715960,
+              "requests_per_second": 174647.43518595988,
+              "latency_us_p50_max_over_targets": 119,
+              "latency_us_p99_max_over_targets": 298,
+              "non_2xx_3xx": 0,
+              "cpu_seconds_per_node": [
+                13.719999999999999,
+                0.030000000000000027,
+                0.010000000000000009
+              ],
+              "cpu_us_per_request": 19.218950779373145,
+              "cores_busy_total": 3.3565404605827247,
+              "peak_rss_kib_per_node": [
+                29648,
+                28752,
+                25824
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 719059,
+              "requests_per_second": 175348.1680180455,
+              "latency_us_p50_max_over_targets": 113,
+              "latency_us_p99_max_over_targets": 317,
+              "non_2xx_3xx": 0,
+              "cpu_seconds_per_node": [
+                14.02,
+                0.02999999999999997,
+                0.009999999999999981
+              ],
+              "cpu_us_per_request": 19.55333289757864,
+              "cores_busy_total": 3.4286411022373957,
+              "peak_rss_kib_per_node": [
+                29648,
+                28784,
+                25824
+              ]
+            }
+          ]
+        },
+        "challenged": {
+          "failed": false,
+          "requests_per_second_median": 182958.01641747175,
+          "requests_per_second_min": 182811.8483470117,
+          "requests_per_second_max": 183104.18448793178,
+          "latency_us_p50_median": 121.5,
+          "latency_us_p99_median": 310.0,
+          "cpu_us_per_request_median": 19.11673629949228,
+          "cores_busy_total_median": 3.4976126229571114,
+          "peak_rss_kib_per_node_max": [
+            28624,
+            28832,
+            25824
+          ],
+          "non_2xx_3xx_total": 1500235,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 750679,
+              "requests_per_second": 183104.18448793178,
+              "latency_us_p50_max_over_targets": 123,
+              "latency_us_p99_max_over_targets": 272,
+              "non_2xx_3xx": 750679,
+              "cpu_seconds_per_node": [
+                14.559999999999999,
+                0.040000000000000036,
+                0.020000000000000018
+              ],
+              "cpu_us_per_request": 19.475701331727677,
+              "cores_busy_total": 3.5660824096765227,
+              "peak_rss_kib_per_node": [
+                28624,
+                28832,
+                25824
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 749556,
+              "requests_per_second": 182811.8483470117,
+              "latency_us_p50_max_over_targets": 120,
+              "latency_us_p99_max_over_targets": 348,
+              "non_2xx_3xx": 749556,
+              "cpu_seconds_per_node": [
+                14.010000000000005,
+                0.02999999999999997,
+                0.020000000000000018
+              ],
+              "cpu_us_per_request": 18.75777126725689,
+              "cores_busy_total": 3.4291428362377,
+              "peak_rss_kib_per_node": [
+                26176,
+                28832,
+                25824
+              ]
+            }
+          ]
+        },
+        "attack": {
+          "failed": false,
+          "requests_per_second_median": 175252.41240937886,
+          "requests_per_second_min": 173869.23124080585,
+          "requests_per_second_max": 176635.5935779519,
+          "latency_us_p50_median": 121.0,
+          "latency_us_p99_median": 4026.5,
+          "cpu_us_per_request_median": 20.55330668539084,
+          "cores_busy_total_median": 3.6013218907110875,
+          "peak_rss_kib_per_node_max": [
+            33408,
+            28848,
+            25824
+          ],
+          "non_2xx_3xx_total": 1424679,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 724151,
+              "requests_per_second": 176635.5935779519,
+              "latency_us_p50_max_over_targets": 121,
+              "latency_us_p99_max_over_targets": 340,
+              "non_2xx_3xx": 724151,
+              "cpu_seconds_per_node": [
+                14.21,
+                0.22999999999999998,
+                0.07999999999999996
+              ],
+              "cpu_us_per_request": 20.05106669741532,
+              "cores_busy_total": 3.541732067969059,
+              "peak_rss_kib_per_node": [
+                30768,
+                28832,
+                25824
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 700528,
+              "requests_per_second": 173869.23124080585,
+              "latency_us_p50_max_over_targets": 121,
+              "latency_us_p99_max_over_targets": 7713,
+              "non_2xx_3xx": 700528,
+              "cpu_seconds_per_node": [
+                14.36999999999999,
+                0.30000000000000004,
+                0.08000000000000002
+              ],
+              "cpu_us_per_request": 21.05554667336636,
+              "cores_busy_total": 3.660911713453116,
+              "peak_rss_kib_per_node": [
+                33408,
+                28848,
+                23952
+              ]
+            }
+          ]
+        }
+      },
+      "all_nodes": {
+        "admitted": {
+          "failed": false,
+          "requests_per_second_median": 177405.08521439295,
+          "requests_per_second_min": 176723.75971781055,
+          "requests_per_second_max": 178086.41071097535,
+          "latency_us_p50_median": 240.0,
+          "latency_us_p99_median": 20110.5,
+          "cpu_us_per_request_median": 16.956065358749,
+          "cores_busy_total_median": 3.007973942614533,
+          "peak_rss_kib_per_node_max": [
+            35072,
+            34736,
+            28016
+          ],
+          "non_2xx_3xx_total": 0,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 723374,
+              "requests_per_second": 178086.41071097535,
+              "latency_us_p50_max_over_targets": 244,
+              "latency_us_p99_max_over_targets": 18613,
+              "non_2xx_3xx": 0,
+              "cpu_seconds_per_node": [
+                4.040000000000006,
+                4.24,
+                3.86
+              ],
+              "cpu_us_per_request": 16.782466607868137,
+              "cores_busy_total": 2.9887292410720345,
+              "peak_rss_kib_per_node": [
+                34976,
+                34736,
+                27888
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 725058,
+              "requests_per_second": 176723.75971781055,
+              "latency_us_p50_max_over_targets": 236,
+              "latency_us_p99_max_over_targets": 21608,
+              "non_2xx_3xx": 0,
+              "cpu_seconds_per_node": [
+                4.1000000000000085,
+                4.1,
+                4.22
+              ],
+              "cpu_us_per_request": 17.129664109629864,
+              "cores_busy_total": 3.0272186441570312,
+              "peak_rss_kib_per_node": [
+                35072,
+                34736,
+                28016
+              ]
+            }
+          ]
+        },
+        "challenged": {
+          "failed": false,
+          "requests_per_second_median": 183738.69349006808,
+          "requests_per_second_min": 183294.4480380867,
+          "requests_per_second_max": 184182.93894204948,
+          "latency_us_p50_median": 266.5,
+          "latency_us_p99_median": 16298.0,
+          "cpu_us_per_request_median": 15.886921955171623,
+          "cores_busy_total_median": 2.9189318678313185,
+          "peak_rss_kib_per_node_max": [
+            34048,
+            33792,
+            27088
+          ],
+          "non_2xx_3xx_total": 1507593,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 755833,
+              "requests_per_second": 184182.93894204948,
+              "latency_us_p50_max_over_targets": 256,
+              "latency_us_p99_max_over_targets": 11235,
+              "non_2xx_3xx": 755833,
+              "cpu_seconds_per_node": [
+                4.019999999999982,
+                3.860000000000001,
+                3.9400000000000013
+              ],
+              "cpu_us_per_request": 15.638375143715589,
+              "cores_busy_total": 2.8803218942478326,
+              "peak_rss_kib_per_node": [
+                34048,
+                33792,
+                27088
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 751760,
+              "requests_per_second": 183294.4480380867,
+              "latency_us_p50_max_over_targets": 277,
+              "latency_us_p99_max_over_targets": 21361,
+              "non_2xx_3xx": 751760,
+              "cpu_seconds_per_node": [
+                4.070000000000007,
+                4.08,
+                3.9800000000000004
+              ],
+              "cpu_us_per_request": 16.135468766627657,
+              "cores_busy_total": 2.9575418414148045,
+              "peak_rss_kib_per_node": [
+                34048,
+                33792,
+                27088
+              ]
+            }
+          ]
+        },
+        "attack": {
+          "failed": false,
+          "requests_per_second_median": 175108.0872961398,
+          "requests_per_second_min": 173721.47344721024,
+          "requests_per_second_max": 176494.70114506932,
+          "latency_us_p50_median": 240.5,
+          "latency_us_p99_median": 13142.5,
+          "cpu_us_per_request_median": 18.12043934285076,
+          "cores_busy_total_median": 3.172283310473098,
+          "peak_rss_kib_per_node_max": [
+            35824,
+            41168,
+            31616
+          ],
+          "non_2xx_3xx_total": 1428808,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 724201,
+              "requests_per_second": 176494.70114506932,
+              "latency_us_p50_max_over_targets": 248,
+              "latency_us_p99_max_over_targets": 11106,
+              "non_2xx_3xx": 724201,
+              "cpu_seconds_per_node": [
+                3.780000000000001,
+                5.099999999999998,
+                3.849999999999998
+              ],
+              "cpu_us_per_request": 17.57799285005129,
+              "cores_busy_total": 3.102422594799968,
+              "peak_rss_kib_per_node": [
+                35360,
+                39360,
+                29488
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 704607,
+              "requests_per_second": 173721.47344721024,
+              "latency_us_p50_max_over_targets": 233,
+              "latency_us_p99_max_over_targets": 15179,
+              "non_2xx_3xx": 704607,
+              "cpu_seconds_per_node": [
+                3.5799999999999983,
+                5.920000000000002,
+                3.650000000000002
+              ],
+              "cpu_us_per_request": 18.66288583565023,
+              "cores_busy_total": 3.2421440261462275,
+              "peak_rss_kib_per_node": [
+                35824,
+                41168,
+                31616
+              ]
+            }
+          ]
+        }
+      },
+      "failover": {
+        "stopped_leader_node": 2,
+        "leader_found_in_logs": true,
+        "admitted_all_survivors": {
+          "failed": false,
+          "requests_per_second_median": 172095.63440248213,
+          "requests_per_second_min": 170094.36445345628,
+          "requests_per_second_max": 174096.90435150798,
+          "latency_us_p50_median": 232.5,
+          "latency_us_p99_median": 1258.5,
+          "cpu_us_per_request_median": 19.227989580531563,
+          "cores_busy_total_median": 3.307189093914184,
+          "peak_rss_kib_per_node_max": [
+            44480,
+            33776
+          ],
+          "non_2xx_3xx_total": 0,
+          "rounds": [
+            {
+              "failed": false,
+              "requests": 697938,
+              "requests_per_second": 170094.36445345628,
+              "latency_us_p50_max_over_targets": 226,
+              "latency_us_p99_max_over_targets": 1626,
+              "non_2xx_3xx": 0,
+              "cpu_seconds_per_node": [
+                7.8300000000000125,
+                6.239999999999998
+              ],
+              "cpu_us_per_request": 20.159383784806117,
+              "cores_busy_total": 3.4289975726499082,
+              "peak_rss_kib_per_node": [
+                42544,
+                33776
+              ]
+            },
+            {
+              "failed": false,
+              "requests": 713794,
+              "requests_per_second": 174096.90435150798,
+              "latency_us_p50_max_over_targets": 239,
+              "latency_us_p99_max_over_targets": 891,
+              "non_2xx_3xx": 0,
+              "cpu_seconds_per_node": [
+                6.599999999999994,
+                6.460000000000001
+              ],
+              "cpu_us_per_request": 18.296595376257006,
+              "cores_busy_total": 3.1853806151784596,
+              "peak_rss_kib_per_node": [
+                44480,
+                33776
+              ]
+            }
+          ]
+        },
+        "post_failover_ban_propagation_ms": 110.617125
+      },
+      "status": "passed"
+    }
+  ],
+  "limitations": [
+    "One host, loopback, forward-auth Shield; all nodes, wrk, and the harness share eight cores.",
+    "Workers per node are fixed at two so three nodes and the load generator fit on the host; single-node cases use the same setting for parity, so their absolute throughput is below the four-worker figures in tools-comparison-latest.json.",
+    "Per-node rows drive node 1 only; all-node rows run one wrk process per node at once and sum requests, with CPU summed over nodes and latency the worst of the three.",
+    "Idle CPU is the ps user+system time over a quiet interval and includes storage polling at --storage-poll-ms 100 and consensus heartbeats.",
+    "Sessions are shared by seed; challenge verification is issuer-bound; rate limits and spent sets stay local to each node.",
+    "Replication and TLS costs here are loopback costs; WAN latency changes propagation times."
+  ]
+}
