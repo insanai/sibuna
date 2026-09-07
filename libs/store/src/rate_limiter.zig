@@ -4,7 +4,7 @@
 //! virtual-scheduling form of the leaky bucket). Each client is one 16-byte
 //! cell holding a key and a *theoretical arrival time* (TAT). An arrival at
 //! time `t` conforms when `TAT <= t + tau`, after which `TAT = max(TAT, t) + T`
-//! where `T = window / rate` is the emission interval and `tau = window - T`
+//! where `T = max(1, ceil(window / rate))` is the emission interval and `tau = (rate - 1) * T`
 //! the burst tolerance. The guarantee is the token-bucket bound: in any
 //! interval of length `L` at most `rate + floor(L / T)` requests conform, so
 //! an idle client may burst `rate` requests and is then paced at one per
@@ -27,7 +27,7 @@ pub const SpinLock = struct {
 
     pub fn lock(self: *SpinLock) void {
         while (self.locked.cmpxchgWeak(false, true, .acquire, .monotonic) != null) {
-            std.atomic.spinLoopHint();
+            while (self.locked.load(.monotonic)) std.atomic.spinLoopHint();
         }
     }
 
@@ -42,11 +42,14 @@ pub const Limits = struct {
     window_ms: u64 = 10_000,
 
     pub fn emissionInterval(self: Limits) u64 {
-        return if (self.rate == 0) self.window_ms else @max(1, self.window_ms / self.rate);
+        if (self.rate == 0) return @max(1, self.window_ms);
+        const rounded = self.window_ms / self.rate +
+            @intFromBool(self.window_ms % self.rate != 0);
+        return @max(1, rounded);
     }
 
     pub fn burstTolerance(self: Limits) u64 {
-        return self.window_ms -| self.emissionInterval();
+        return self.emissionInterval() *| (self.rate -| 1);
     }
 };
 
@@ -64,26 +67,22 @@ pub const Cell = struct {
 };
 
 const Shard = struct {
-    lock: SpinLock = .{},
+    lock: SpinLock align(64) = .{},
     cells: [SLOTS_PER_SHARD]Cell = [_]Cell{.{}} ** SLOTS_PER_SHARD,
 
-    /// Finds the cell for `key`, or claims a free, drained, or least
-    /// recently active slot within the probe window.
-    fn locate(self: *Shard, key: u64, now_ms: u64, tau: u64) *Cell {
+    /// Claims only free or fully drained cells; saturation fails closed.
+    fn locate(self: *Shard, key: u64, now_ms: u64, tau: u64) ?*Cell {
         const home = @as(usize, @intCast((key >> 8) % SLOTS_PER_SHARD));
         var free: ?*Cell = null;
-        var oldest: *Cell = &self.cells[home];
         var probe: usize = 0;
         while (probe < MAX_PROBE) : (probe += 1) {
             const cell = &self.cells[(home + probe) % SLOTS_PER_SHARD];
             if (cell.key == key) return cell;
-            if (cell.key == 0 or cell.tat_ms + tau < now_ms) {
+            if (cell.key == 0 or cell.tat_ms +| tau < now_ms) {
                 if (free == null) free = cell;
-            } else if (cell.tat_ms < oldest.tat_ms) {
-                oldest = cell;
             }
         }
-        const victim = free orelse oldest;
+        const victim = free orelse return null;
         victim.* = .{ .key = key, .tat_ms = 0 };
         return victim;
     }
@@ -93,16 +92,20 @@ const Shard = struct {
         const tau = limits.burstTolerance();
         self.lock.lock();
         defer self.lock.unlock();
-        const cell = self.locate(key, now_ms, tau);
+        const cell = self.locate(key, now_ms, tau) orelse return .{
+            .limited = true,
+            .retry_after_ms = interval,
+            .remaining = 0,
+        };
         const tat = @max(cell.tat_ms, now_ms);
-        if (tat > now_ms + tau) {
+        if (tat > now_ms +| tau) {
             return .{ .limited = true, .retry_after_ms = tat - tau - now_ms, .remaining = 0 };
         }
-        cell.tat_ms = tat + interval;
-        const remaining: u32 = if (cell.tat_ms > now_ms + tau)
+        cell.tat_ms = tat +| interval;
+        const remaining: u32 = if (cell.tat_ms > now_ms +| tau)
             0
         else
-            @intCast(@min((now_ms + tau - cell.tat_ms) / interval + 1, limits.rate));
+            @intCast(@min((now_ms +| tau - cell.tat_ms) / interval + 1, limits.rate));
         return .{ .limited = false, .retry_after_ms = 0, .remaining = remaining };
     }
 };
@@ -117,7 +120,11 @@ pub const RateLimiter = struct {
     /// Records one arrival from `ip` at `now_ms` and reports conformance.
     pub fn check(self: *RateLimiter, ip: []const u8, now_ms: u64, limits: Limits) Decision {
         // Key zero marks an empty slot, so a hash of zero is nudged to one.
-        const hash = std.hash.Wyhash.hash(0x6a09_e667, ip) | 1;
+        const raw_hash = std.hash.Wyhash.hash(0x6a09_e667, ip);
+        const hash = if (raw_hash == 0) 1 else raw_hash;
+        if (limits.rate == 0) {
+            return .{ .limited = true, .retry_after_ms = limits.window_ms, .remaining = 0 };
+        }
         return self.shards[hash % NUM_SHARDS].check(hash, now_ms, limits);
     }
 
@@ -184,13 +191,36 @@ test "clients are independent and drained cells are reclaimed" {
     try std.testing.expect(!limiter.check("a", 0, limits).limited);
     try std.testing.expect(limiter.check("a", 0, limits).limited);
     try std.testing.expect(!limiter.check("b", 0, limits).limited);
-    // Flood many distinct keys much later; earlier cells are drained and
-    // reused without any explicit expiry pass.
+    // Advance beyond the window between new identities so old cells are
+    // reclaimed without a sweeper; saturation is tested separately.
     var buf: [16]u8 = undefined;
     var n: u32 = 0;
     while (n < NUM_SHARDS * SLOTS_PER_SHARD * 2) : (n += 1) {
         const key = std.fmt.bufPrint(&buf, "ip{d}", .{n}) catch unreachable;
-        try std.testing.expect(!limiter.check(key, 100_000, limits).limited);
+        try std.testing.expect(!limiter.check(key, 100_000 + @as(u64, n) * 2000, limits).limited);
     }
     try std.testing.expect(!limiter.isRateLimited("c", 200, 3, 10));
+}
+
+test "non-divisible windows preserve burst and do not exceed sustained rate" {
+    var limiter = RateLimiter.init();
+    const limits = Limits{ .rate = 3, .window_ms = 1000 };
+    for (0..3) |_| try std.testing.expect(!limiter.check("x", 100, limits).limited);
+    try std.testing.expect(limiter.check("x", 100, limits).limited);
+    try std.testing.expect(limiter.check("x", 433, limits).limited);
+    try std.testing.expect(!limiter.check("x", 434, limits).limited);
+    try std.testing.expect(limiter.check("y", 100, .{ .rate = 0 }).limited);
+}
+
+test "saturation cannot evict an active client and reset its quota" {
+    var shard = Shard{};
+    const limits = Limits{ .rate = 1, .window_ms = 1000 };
+    // All keys share the same home and occupy exactly the probe window.
+    for (1..MAX_PROBE + 1) |key| {
+        try std.testing.expect(!shard.check(key, 100, limits).limited);
+    }
+    try std.testing.expect(shard.check(MAX_PROBE + 1, 100, limits).limited);
+    for (1..MAX_PROBE + 1) |key| {
+        try std.testing.expect(shard.check(key, 100, limits).limited);
+    }
 }

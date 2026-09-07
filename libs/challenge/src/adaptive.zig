@@ -6,7 +6,7 @@
 //! capped at `max_bump`: doubling the observed rate above the baseline adds
 //! one bit, i.e. doubles each client's expected work. The rate is an
 //! exponentially weighted moving average over one-second buckets, held in
-//! two atomics so the hot path never takes a lock.
+//! three atomics so the hot path never takes a lock.
 
 const std = @import("std");
 
@@ -43,9 +43,12 @@ pub const Adaptive = struct {
 
     /// Extra difficulty bits implied by the current smoothed rate.
     pub fn bump(self: *const Adaptive) u32 {
-        const rate = self.rate_256.load(.acquire) / 256;
-        if (rate <= self.baseline_per_second) return 0;
-        const ratio = 1 + rate / self.baseline_per_second;
+        const rate = self.rate_256.load(.acquire);
+        const baseline = @as(u64, @max(1, self.baseline_per_second)) * 256;
+        if (rate <= baseline) return 0;
+        // ceil(log2(x)) == ceil(log2(ceil(x))). Do not floor the
+        // ratio first: 15/s over a 10/s baseline requires two bits.
+        const ratio = 1 + rate / baseline + @intFromBool(rate % baseline != 0);
         const bits = std.math.log2_int_ceil(u64, ratio);
         return @min(@as(u32, bits), self.max_bump);
     }
@@ -58,8 +61,8 @@ test "adaptive difficulty grows with load and is capped" {
     var i: u32 = 0;
     while (i < 15) : (i += 1) ctl.observe(t);
     t = 1000;
-    ctl.observe(t); // rolls bucket: 15/s => ratio 1 + 15/10 = 2 => 1 bit
-    try std.testing.expectEqual(@as(u32, 1), ctl.bump());
+    ctl.observe(t); // rolls bucket: 15/s => ratio 2.5 => ceil(log2(2.5)) = 2 bits
+    try std.testing.expectEqual(@as(u32, 2), ctl.bump());
     i = 0;
     while (i < 159) : (i += 1) ctl.observe(t);
     t = 2000;

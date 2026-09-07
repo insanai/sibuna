@@ -148,6 +148,18 @@ pub const Coordinator = struct {
         };
     }
 
+    /// Keep admission tokens cluster-wide, but bind challenges to their
+    /// issuer because the spent set is local. Run once during startup.
+    pub fn bindNode(self: *Coordinator, node_id: u32) void {
+        std.debug.assert(node_id != 0);
+        var h = Blake3.init(.{ .key = self.keys.challenge });
+        h.update("sibuna/challenge-node/v1");
+        var encoded: [4]u8 = undefined;
+        std.mem.writeInt(u32, &encoded, node_id, .little);
+        h.update(&encoded);
+        h.final(&self.keys.challenge);
+    }
+
     pub fn fingerprint(
         self: *const Coordinator,
         client_ip: []const u8,

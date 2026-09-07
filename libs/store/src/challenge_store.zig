@@ -45,7 +45,7 @@ pub const SpinLock = struct {
 
     pub fn lock(self: *SpinLock) void {
         while (self.locked.cmpxchgWeak(false, true, .acquire, .monotonic) != null) {
-            std.atomic.spinLoopHint();
+            while (self.locked.load(.monotonic)) std.atomic.spinLoopHint();
         }
     }
 
@@ -55,7 +55,7 @@ pub const SpinLock = struct {
 };
 
 const Shard = struct {
-    lock: SpinLock = .{},
+    lock: SpinLock align(64) = .{},
     entries: [SHARD_CAPACITY]Entry = [_]Entry{.{}} ** SHARD_CAPACITY,
     live: u32 = 0,
 
@@ -77,7 +77,24 @@ const Shard = struct {
         return null;
     }
 
+    /// Simulate displacement before modifying live entries. A failed bounded
+    /// insertion must not evict an already spent tag and permit its replay.
+    fn canInsert(self: *const Shard, tag: *const Tag, now: u64) bool {
+        var idx = home(tag);
+        var dist: u8 = 0;
+        var probes: usize = 0;
+        while (dist < MAX_PROBE and probes < SHARD_CAPACITY) : (probes += 1) {
+            const e = &self.entries[idx];
+            if (!e.occupied or (e.expired(now) and dist >= e.dist)) return true;
+            if (dist > e.dist) dist = e.dist;
+            idx = (idx + 1) % SHARD_CAPACITY;
+            dist += 1;
+        }
+        return false;
+    }
+
     fn insert(self: *Shard, tag: *const Tag, expires_at: u64, now: u64) StoreError!void {
+        if (!self.canInsert(tag, now)) return error.StoreFull;
         var carry = Entry{ .tag = tag.*, .expires_at = expires_at, .dist = 0, .occupied = true };
         var idx = home(tag);
         while (carry.dist < MAX_PROBE) {
@@ -195,4 +212,24 @@ test "robin hood shards stay correct under load and reclaim expired slots" {
         try std.testing.expect(store.isSpent(&tag, now + 300));
     }
     try std.testing.expect(!store.isSpent(&tagFrom(3), now + 300));
+}
+
+test "failed insertion leaves all live spent tags reachable" {
+    const shard = try std.testing.allocator.create(Shard);
+    defer std.testing.allocator.destroy(shard);
+    shard.* = .{};
+    // A home-zero insertion displaces the home-one chain before hitting
+    // the probe limit. Previously the last displaced live tag was lost.
+    var tags: [MAX_PROBE + 1]Tag = undefined;
+    for (&tags, 0..) |*tag, i| {
+        tag.* = [_]u8{0} ** 16;
+        std.mem.writeInt(u64, tag[0..8], i, .little);
+        std.mem.writeInt(u64, tag[8..16], if (i == 0) 0 else 1, .little);
+        try shard.insert(tag, 1000, 0);
+    }
+    var incoming = [_]u8{0} ** 16;
+    incoming[0] = 255;
+    try std.testing.expectError(error.StoreFull, shard.insert(&incoming, 1000, 0));
+    for (&tags) |*tag| try std.testing.expect(shard.find(tag) != null);
+    try std.testing.expect(shard.find(&incoming) == null);
 }

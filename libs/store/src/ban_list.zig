@@ -1,8 +1,8 @@
 //! Sibuna Dynamic Ban Table
 //!
 //! Temporary bans raised by honeypot hits, WAF violations, and cluster
-//! reputation records. Reads are lock-free (two atomic loads per probe) so
-//! the hot path pays nothing for the table; writes are rare and take a
+//! reputation records. Readers use versioned atomic snapshots and retry
+//! concurrent replacements; writes are rare and take a
 //! spinlock. Entries are open-addressed by keyed hash with a small probe
 //! window and expire by timestamp, so no sweeper runs.
 
@@ -12,6 +12,7 @@ pub const CAPACITY: usize = 4096;
 pub const MAX_PROBE: usize = 8;
 
 const Slot = struct {
+    version: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
     key: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
     until: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
 };
@@ -21,7 +22,8 @@ pub const BanList = struct {
     write_lock: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
 
     fn keyFor(ip: []const u8) u64 {
-        return std.hash.Wyhash.hash(0xba11_ba11, ip) | 1;
+        const hash = std.hash.Wyhash.hash(0xba11_ba11, ip);
+        return if (hash == 0) 1 else hash;
     }
 
     /// Bans `ip` until `until` (seconds). Overwrites an expired or
@@ -45,10 +47,12 @@ pub const BanList = struct {
             if (slot.until.load(.monotonic) < now) victim = slot;
             if (slot.until.load(.monotonic) < victim.until.load(.monotonic)) victim = slot;
         }
-        // Publish the expiry before the key so a concurrent reader never
-        // sees a fresh key paired with a stale expiry.
-        victim.until.store(until, .release);
-        victim.key.store(key, .release);
+        // A key and expiry are one logical value: bracket replacement so
+        // readers cannot combine an old key with the next key's expiry.
+        _ = victim.version.fetchAdd(1, .seq_cst);
+        victim.until.store(until, .seq_cst);
+        victim.key.store(key, .seq_cst);
+        _ = victim.version.fetchAdd(1, .seq_cst);
     }
 
     pub fn isBanned(self: *const BanList, ip: []const u8, now: u64) bool {
@@ -57,9 +61,19 @@ pub const BanList = struct {
         var probe: usize = 0;
         while (probe < MAX_PROBE) : (probe += 1) {
             const slot = &self.slots[(home + probe) % CAPACITY];
-            const k = slot.key.load(.acquire);
-            if (k == 0) return false;
-            if (k == key) return slot.until.load(.acquire) >= now;
+            while (true) {
+                const before = slot.version.load(.seq_cst);
+                if (before & 1 != 0) {
+                    std.atomic.spinLoopHint();
+                    continue;
+                }
+                const k = slot.key.load(.seq_cst);
+                const until = slot.until.load(.seq_cst);
+                if (before != slot.version.load(.seq_cst)) continue;
+                if (k == 0) return false;
+                if (k == key) return until != 0 and until >= now;
+                break;
+            }
         }
         return false;
     }
