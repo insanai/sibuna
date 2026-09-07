@@ -18,6 +18,7 @@ pub const Kernel = struct {
     mutex: Io.Mutex = .init,
     slots: [80]Slot = @splat(.{}),
     stopping: std.atomic.Value(bool) = .init(false),
+    subscribers: std.atomic.Value(u16) = .init(0),
     acceptor: ?std.Thread = null,
     watchdog: ?std.Thread = null,
 
@@ -38,12 +39,12 @@ pub const Kernel = struct {
             .handler = handler,
         };
         errdefer self.listener.deinit(io);
-        self.watchdog = try std.Thread.spawn(.{}, watch, .{self});
+        self.watchdog = try std.Thread.spawn(.{ .stack_size = 256 * 1024 }, watch, .{self});
         errdefer {
             self.stopping.store(true, .release);
             self.watchdog.?.join();
         }
-        self.acceptor = try std.Thread.spawn(.{}, accept, .{self});
+        self.acceptor = try std.Thread.spawn(.{ .stack_size = 256 * 1024 }, accept, .{self});
         return self;
     }
 
@@ -146,6 +147,8 @@ pub const Kernel = struct {
             .request = &request,
             .io = self.io,
             .peer = stream.socket.address,
+            .stream = stream,
+            .subscribers = &self.subscribers,
             .deadline = &slot.deadline,
         };
         self.handler(self.application, &context) catch |err| switch (err) {

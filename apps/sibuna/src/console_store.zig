@@ -9,7 +9,7 @@ const auth = @import("console_store_auth.zig");
 
 pub fn tick(owner: *Persistent) void {
     // Cap work per tick so console saturation cannot starve incidents and policy reload.
-    for (0..4) |_| {
+    for (0..16) |_| {
         const work = owner.console_mailbox.take(owner.io) orelse return;
         const result = execute(owner, work.request) catch |err| result: {
             std.log.warn("console storage operation failed: {t}", .{err});

@@ -155,3 +155,19 @@ test "owned payload boundaries and pagination reject unbounded input" {
     try t.expect(!Role.viewer.allows(.control_node));
     try t.expect(!Role.operator.allows(.manage_users));
 }
+
+pub const StatsSnapshot = struct {
+    requests: u64,
+    admitted: u64,
+    challenged: u64,
+    denied: u64,
+    origin_4xx: u64,
+    origin_5xx: u64,
+    incidents: u64,
+    incidents_dropped: u64,
+    sample_loss: u64,
+    sample_probability: []const u8 = "1/64",
+    geoip_available: bool = false,
+    unknown_samples: u64,
+    timestamp: u64,
+};

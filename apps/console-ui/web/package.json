@@ -1,0 +1,11 @@
+{
+  "name": "sibuna-console-assets",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {"build": "tailwindcss -i tailwind.css -o assets/console.css --minify"},
+  "devDependencies": {
+    "tailwindcss": "4.1.13",
+    "@tailwindcss/cli": "4.1.13",
+    "daisyui": "5.1.13"
+  }
+}

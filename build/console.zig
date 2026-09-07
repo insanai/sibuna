@@ -27,7 +27,11 @@ pub fn add(
         .optimize = optimize,
     });
     console.addImport("serve", serve);
+    addUi(b, protocol, console);
+    addAssets(b);
     const step = b.step("console-test", "Test console contracts and bounded ownership");
+    step.dependOn(&b.top_level_steps.get("console-render-test").?.step);
+    step.dependOn(&b.top_level_steps.get("console-assets-check").?.step);
     for ([_]*std.Build.Module{ protocol, console, serve }) |module| {
         const tests = b.addTest(.{ .root_module = module });
         step.dependOn(&b.addRunArtifact(tests).step);
@@ -43,4 +47,54 @@ pub fn add(
     });
     step.dependOn(&wasm.step);
     return .{ .protocol = protocol, .console = console };
+}
+
+fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module) void {
+    const target = b.resolveTargetQuery(.{ .cpu_arch = .wasm32, .os_tag = .freestanding });
+    const wasm_protocol = b.createModule(.{
+        .root_source_file = b.path("libs/console-protocol/src/root.zig"),
+        .target = target,
+        .optimize = .ReleaseSmall,
+    });
+    const wasm = b.addExecutable(.{
+        .name = "console",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("apps/console-ui/src/main.zig"),
+            .target = target,
+            .optimize = .ReleaseSmall,
+            .imports = &.{.{ .name = "console_protocol", .module = wasm_protocol }},
+        }),
+    });
+    wasm.entry = .disabled;
+    wasm.rdynamic = true;
+    wasm.stack_size = 256 * 1024;
+    console.addAnonymousImport("console_wasm", .{ .root_source_file = wasm.getEmittedBin() });
+    const paths = .{ "shell.html", "glue.js", "assets/console.css" };
+    const names = .{ "console_shell", "console_glue", "console_css" };
+    inline for (paths, names) |path, name| {
+        console.addAnonymousImport(name, .{
+            .root_source_file = b.path("apps/console-ui/web/" ++ path),
+        });
+    }
+    const tests = b.addTest(.{ .root_module = b.createModule(.{
+        .root_source_file = b.path("apps/console-ui/src/main.zig"),
+        .target = b.graph.host,
+        .imports = &.{.{ .name = "console_protocol", .module = protocol }},
+    }) });
+    const step = b.step("console-ui", "Build the Zig console WebAssembly interface");
+    step.dependOn(&wasm.step);
+    const render_step = b.step("console-render-test", "Test native console rendering");
+    render_step.dependOn(&b.addRunArtifact(tests).step);
+}
+
+fn addAssets(b: *std.Build) void {
+    const assets = b.step(
+        "console-assets",
+        "Regenerate pinned console CSS and digests (needs npm)",
+    );
+    const build = b.addSystemCommand(&.{ "python3", "tools/console_assets.py", "build" });
+    assets.dependOn(&build.step);
+    const check = b.step("console-assets-check", "Verify committed console assets without npm");
+    const verify = b.addSystemCommand(&.{ "python3", "tools/console_assets.py", "check" });
+    check.dependOn(&verify.step);
 }

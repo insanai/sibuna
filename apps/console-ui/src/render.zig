@@ -1,0 +1,213 @@
+const std = @import("std");
+const State = @import("state.zig").State;
+const Writer = std.Io.Writer;
+
+pub fn render(state: *const State, w: *Writer) Writer.Error!void {
+    if (state.phase != .dashboard) return authentication(state, w);
+    try w.writeAll("<div class=\"sb-shell\">" ++
+        "<nav class=\"sb-nav\" aria-label=\"Main navigation\">" ++
+        "<div><a class=\"sb-brand\" href=\"/console/\">SIBUNA</a>" ++
+        "<p class=\"sb-caption\">SECURITY CONSOLE</p></div>" ++
+        "<button class=\"btn btn-ghost\" aria-current=\"page\">Statistics</button>" ++
+        "<button class=\"btn btn-ghost\" data-action=\"account\">Account</button>" ++
+        "<button class=\"btn btn-ghost\" data-action=\"logout\">Sign out</button></nav>" ++
+        "<main class=\"sb-main\"><header class=\"sb-header\"><div>" ++
+        "<p class=\"sb-subtitle\">SINGLE NODE / STATISTICS</p><h1>Traffic overview</h1>" ++
+        "<p class=\"sb-subtitle\">Know what is reaching your applications.</p></div>" ++
+        "<div class=\"sb-status\"><span class=\"badge badge-outline\">");
+    try w.writeAll(if (state.paused) "Paused" else if (state.stale) "Disconnected" else "Live");
+    try w.writeAll("</span><button class=\"btn btn-sm\" data-action=\"pause\">");
+    try w.writeAll(if (state.paused) "Resume" else "Pause");
+    try w.writeAll("</button><button class=\"btn btn-sm\" data-action=\"theme\">Theme</button>" ++
+        "</div></header>");
+    try message(state, w);
+    try tiles(state, w);
+    try w.writeAll("<section class=\"sb-panels\"><article class=\"sb-panel\">" ++
+        "<h2>Live earth globe</h2><svg viewBox=\"0 0 400 280\" role=\"img\" " ++
+        "aria-label=\"Earth outline. Country data unavailable.\">" ++
+        "<circle cx=\"200\" cy=\"135\" r=\"110\" fill=\"#e7f1fc\" stroke=\"#94b6d5\"/>" ++
+        "<ellipse cx=\"200\" cy=\"135\" rx=\"55\" ry=\"110\" fill=\"none\" stroke=\"#bdd3e8\"/>" ++
+        "<ellipse cx=\"200\" cy=\"135\" rx=\"110\" ry=\"35\" fill=\"none\" stroke=\"#bdd3e8\"/>" ++
+        "</svg><p class=\"sb-note\">GeoIP unavailable. Traffic is counted as Unknown; " ++
+        "no locations are inferred.</p></article><article class=\"sb-panel\">" ++
+        "<h2>Request timeline</h2>");
+    try timeline(state, w);
+    try w.writeAll("<p class=\"sb-note\">External request outcomes per observed interval. " ++
+        "Internal endpoints are excluded. Gaps remain unobserved.</p>" ++
+        "<h2 class=\"mt-6\">Coverage</h2><table class=\"table\"><tbody>");
+    try coverage(state, w);
+    try w.writeAll("</tbody></table></article></section><footer class=\"sb-footer sb-note\">" ++
+        "<span>Sibuna Console · single-node view</span>" ++
+        "<span>All-time totals since this boot</span>" ++
+        "</footer></main></div>");
+}
+
+fn authentication(state: *const State, w: *Writer) Writer.Error!void {
+    try w.writeAll("<main class=\"sb-auth\"><section class=\"sb-auth-card\">" ++
+        "<a class=\"sb-brand\" href=\"/console/\">SIBUNA</a>");
+    const title = switch (state.phase) {
+        .loading => "Connecting securely",
+        .setup => "Set up your console",
+        .password => "Change your password",
+        else => "Welcome back",
+    };
+    try w.print("<h1>{s}</h1>", .{title});
+    try w.writeAll("<p class=\"sb-subtitle\">Your firewall. Your infrastructure.</p>");
+    try message(state, w);
+    if (state.phase == .loading) {
+        try w.writeAll("<p role=\"status\" class=\"mt-6\">Checking your session…</p>" ++
+            "</section></main>");
+        return;
+    }
+    const form = switch (state.phase) {
+        .setup => "setup",
+        .password => "password",
+        else => "login",
+    };
+    try w.print("<form id=\"{s}\">", .{form});
+    if (state.phase == .setup) {
+        try field(w, "setup_key", "One-time setup key", "password", "", "off");
+    }
+    if (state.phase != .password) {
+        try field(
+            w,
+            "username",
+            "Username",
+            "text",
+            state.username.slice(),
+            "username",
+        );
+    } else try field(
+        w,
+        "old_password",
+        "Current password",
+        "password",
+        "",
+        "current-password",
+    );
+    try field(
+        w,
+        "password",
+        if (state.phase == .login) "Password" else "New password (12+ characters)",
+        "password",
+        "",
+        if (state.phase == .login) "current-password" else "new-password",
+    );
+    try w.writeAll("<button class=\"btn btn-primary\" type=\"submit\"");
+    if (state.busy) try w.writeAll(" disabled aria-busy=\"true\"");
+    try w.print(
+        "> {s}</button></form>",
+        .{if (state.busy) "Please wait…" else switch (state.phase) {
+            .setup => "Create administrator",
+            .password => "Update password",
+            else => "Sign in",
+        }},
+    );
+    if (state.phase == .setup) try w.writeAll("<p class=\"sb-note mt-4\">" ++
+        "The setup key is printed once when the console starts for the first time.</p>");
+    try w.writeAll("<p class=\"sb-note mt-6\">Protected with Argon2id and secure sessions.</p>" ++
+        "</section></main>");
+}
+
+fn field(
+    w: *Writer,
+    id: []const u8,
+    label: []const u8,
+    kind: []const u8,
+    value: []const u8,
+    autocomplete: []const u8,
+) Writer.Error!void {
+    try w.print(
+        "<label for=\"{s}\">{s}</label><input class=\"input input-bordered\" " ++
+            "id=\"{s}\" name=\"{s}\" type=\"{s}\" autocomplete=\"{s}\" required value=\"",
+        .{ id, label, id, id, kind, autocomplete },
+    );
+    try escape(w, value);
+    try w.writeAll("\">");
+}
+
+fn message(state: *const State, w: *Writer) Writer.Error!void {
+    if (state.message.len == 0) return;
+    try w.writeAll("<p class=\"sb-error\" role=\"status\">");
+    try escape(w, state.message.slice());
+    try w.writeAll("</p>");
+}
+
+fn tiles(state: *const State, w: *Writer) Writer.Error!void {
+    try w.writeAll("<section class=\"sb-tiles\" aria-label=\"Request summary\">");
+    const labels = [_][]const u8{
+        "Requests", "Admitted", "Challenged", "Denied", "Origin 4xx", "Origin 5xx",
+    };
+    const keys = .{ "requests", "admitted", "challenged", "denied", "origin_4xx", "origin_5xx" };
+    inline for (keys, labels) |key, label| {
+        try w.print(
+            "<article class=\"sb-tile\"><span class=\"sb-subtitle\">{s}</span><strong>",
+            .{label},
+        );
+        if (state.stats) |stats| {
+            try w.print("{d}", .{@field(stats, key)});
+        } else try w.writeAll("—");
+        try w.writeAll("</strong></article>");
+    }
+    try w.writeAll("</section>");
+}
+
+fn coverage(state: *const State, w: *Writer) Writer.Error!void {
+    const stats = state.stats orelse {
+        try w.writeAll("<tr><td>Waiting for a snapshot</td></tr>");
+        return;
+    };
+    try w.print(
+        "<tr><th>Unknown country samples / 60 s</th><td>{d}</td></tr>" ++
+            "<tr><th>Sample probability</th><td>1/64</td></tr>" ++
+            "<tr><th>Lost samples</th><td>{d}</td></tr>" ++
+            "<tr><th>Recorded incidents</th><td>{d}</td></tr>" ++
+            "<tr><th>Dropped incidents</th><td>{d}</td></tr>",
+        .{ stats.unknown_samples, stats.sample_loss, stats.incidents, stats.incidents_dropped },
+    );
+}
+
+fn timeline(state: *const State, w: *Writer) Writer.Error!void {
+    try w.writeAll("<svg viewBox=\"0 0 480 180\" role=\"img\" aria-label=\"Request timeline\">" ++
+        "<path d=\"M0 150H480 M0 100H480 M0 50H480\" fill=\"none\" stroke=\"#d7e3ee\"/>");
+    if (state.stats) |stats| {
+        var maximum: u64 = 1;
+        for (state.points) |point| maximum = @max(maximum, point.count);
+        for (0..60) |i| {
+            const second = stats.timestamp -| (59 - i);
+            const point = state.points[@intCast(second % 60)];
+            if (point.second != second) continue;
+            const height = @as(f64, @floatFromInt(point.count)) /
+                @as(f64, @floatFromInt(maximum)) * 140;
+            try w.print(
+                "<rect x=\"{d}\" y=\"{d:.1}\" width=\"5\" height=\"{d:.1}\" " ++
+                    "fill=\"#0284c7\"/>",
+                .{ i * 8, 150 - height, height },
+            );
+        }
+    }
+    try w.writeAll("</svg>");
+}
+
+pub fn escape(w: *Writer, value: []const u8) Writer.Error!void {
+    for (value) |byte| switch (byte) {
+        '&' => try w.writeAll("&amp;"),
+        '<' => try w.writeAll("&lt;"),
+        '>' => try w.writeAll("&gt;"),
+        '"' => try w.writeAll("&quot;"),
+        '\'' => try w.writeAll("&#39;"),
+        else => try w.writeByte(byte),
+    };
+}
+
+test "authentication renders no geographic or telemetry element and escapes input" {
+    var state: State = .{ .phase = .login };
+    state.username = try @import("console_protocol").Bytes(64).init("<script>\"");
+    var buffer: [8192]u8 = undefined;
+    var writer: Writer = .fixed(&buffer);
+    try render(&state, &writer);
+    const html = writer.buffered();
+    try std.testing.expect(std.mem.indexOf(u8, html, "<svg") == null);
+    try std.testing.expect(std.mem.indexOf(u8, html, "world-110m") == null);
+    try std.testing.expect(std.mem.indexOf(u8, html, "&lt;script&gt;&quot;") != null);
+}

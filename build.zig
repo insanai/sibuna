@@ -42,6 +42,8 @@ pub fn build(b: *std.Build) void {
     const console_modules = console_build.add(b, target, optimize);
 
     const modules = addModules(b, target, optimize);
+    console_modules.console.addImport("core", modules.core);
+    console_modules.console.addImport("store", modules.store);
     const wasm_pow = addWasmSolver(b);
     const app = addServer(
         b,

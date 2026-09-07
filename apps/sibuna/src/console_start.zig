@@ -68,7 +68,13 @@ pub const Runtime = struct {
         try config.validate(true);
         // Off-loopback is fail-closed until the TOTP enrollment/verification route is wired.
         if (config.behind_proxy) return error.ConsoleTotpRequired;
-        const app = try console.App.init(gpa, io, config, &owner.console_mailbox);
+        const app = try console.App.init(
+            gpa,
+            io,
+            config,
+            &owner.console_mailbox,
+            &owner.state.metrics,
+        );
         errdefer app.deinit();
         const host = if (config.host.len == 0) "127.0.0.1" else config.host.slice();
         const kernel = try console.Kernel.start(
@@ -78,6 +84,7 @@ pub const Runtime = struct {
             app,
             console.App.handle,
         );
+        owner.state.telemetry = app.telemetry;
         if (app.setup_required) std.debug.print(
             "Console setup key (one-time bootstrap): {s}\n",
             .{std.fmt.bytesToHex(app.bootstrap_key, .lower)},
@@ -87,6 +94,7 @@ pub const Runtime = struct {
     }
 
     pub fn stop(self: Runtime) void {
+        self.app.mailbox.stop(self.app.io);
         self.kernel.stop();
         self.app.deinit();
     }

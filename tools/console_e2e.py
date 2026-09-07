@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import console_ws_test
 
 
 def port():
@@ -87,9 +88,11 @@ def check(binary):
                 assert "HttpOnly" in headers["Set-Cookie"]
                 csrf = json.loads(body)["csrf"]
                 assert request(console_port, "GET", "/console/api/session", cookie=cookie)[0] == 200
+                stream = console_ws_test.delivery(console_port, cookie)
                 assert request(console_port, "POST", "/console/api/logout", cookie=cookie)[0] == 400
                 assert request(console_port, "POST", "/console/api/logout",
                                cookie=cookie, csrf=csrf)[0] == 200
+                console_ws_test.revoked(stream)
                 assert request(console_port, "GET", "/console/api/session", cookie=cookie)[0] == 401
             finally:
                 stop(proc)
@@ -100,7 +103,7 @@ def check(binary):
                 assert request(console_port, "POST", "/console/api/login", credentials)[0] == 200
             finally:
                 stop(proc)
-    print("console-e2e: bootstrap, login, CSRF, sign-out, restart persistence passed")
+    print("console-e2e: bootstrap, login, CSRF, stream delivery/revocation, restart persistence passed")
 
 
 if __name__ == "__main__":

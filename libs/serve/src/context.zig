@@ -4,6 +4,8 @@ pub const Context = struct {
     request: *std.http.Server.Request,
     io: std.Io,
     peer: std.Io.net.IpAddress,
+    stream: std.Io.net.Stream,
+    subscribers: *std.atomic.Value(u16),
     deadline: *std.atomic.Value(i64),
     pub const Error = std.http.Server.Request.ExpectContinueError || error{
         TooLarge,

@@ -1,4 +1,7 @@
 const std = @import("std");
+const core = @import("core");
+const store = @import("store");
+const Stats = @import("stats.zig").Stats;
 const serve = @import("serve");
 const p = @import("console_protocol");
 const Mailbox = @import("mailbox.zig").Mailbox;
@@ -18,16 +21,30 @@ pub const App = struct {
     bootstrap_key: [32]u8,
     dummy_hash: p.Bytes(255),
     setup_required: bool,
+    telemetry: *store.ConsoleTelemetry,
+    metrics: *const core.Metrics,
+    stats: Stats = .{},
 
-    pub fn init(gpa: std.mem.Allocator, io: std.Io, cfg: Config, mailbox: *Mailbox) !*App {
+    pub fn init(
+        gpa: std.mem.Allocator,
+        io: std.Io,
+        cfg: Config,
+        mailbox: *Mailbox,
+        metrics: *const core.Metrics,
+    ) !*App {
         const self = try gpa.create(App);
         errdefer gpa.destroy(self);
+        const telemetry = try gpa.create(store.ConsoleTelemetry);
+        errdefer gpa.destroy(telemetry);
+        telemetry.* = store.ConsoleTelemetry.init();
         self.* = .{
             .gpa = gpa,
             .io = io,
             .config = cfg,
             .mailbox = mailbox,
             .passwords = try Password.init(gpa),
+            .telemetry = telemetry,
+            .metrics = metrics,
             .bootstrap_key = undefined,
             .dummy_hash = .{},
             .setup_required = false,
@@ -54,6 +71,7 @@ pub const App = struct {
     /// Called only after the kernel has joined all handlers and streams.
     pub fn deinit(self: *App) void {
         self.passwords.deinit();
+        self.gpa.destroy(self.telemetry);
         std.crypto.secureZero(u8, &self.bootstrap_key);
         self.gpa.destroy(self);
     }
@@ -96,6 +114,7 @@ pub const App = struct {
 
     fn dispatch(self: *App, context: *http.Context) !void {
         const path = context.request.head.target;
+        if (try @import("assets.zig").serve(context, path)) return;
         const method = context.request.head.method;
         if (method == .POST) {
             const origin = try context.header("Origin") orelse return error.InvalidRequest;
@@ -122,6 +141,18 @@ pub const App = struct {
                 .expires = identity.expires,
                 .csrf = @as([]const u8, &csrf),
             }, &.{});
+        }
+        if (std.mem.eql(u8, path, "/console/stream") and method == .GET)
+            return @import("stream.zig").handle(self, context);
+        if (std.mem.eql(u8, path, "/console/api/stats") and method == .GET) {
+            const identity = try self.principal(context) orelse return;
+            if (identity.must_change) return http.fail(context, .forbidden, "CONSOLE403");
+            return http.json(context, self.stats.snapshot(
+                self.io,
+                self.telemetry,
+                self.metrics,
+                self.now(),
+            ), &.{});
         }
         if (std.mem.eql(u8, path, "/console/api/password") and method == .POST)
             return auth.password(self, context);
@@ -150,7 +181,4 @@ pub const App = struct {
     }
 };
 
-const shell = "<!doctype html><html lang=\"en\"><meta charset=\"utf-8\">" ++
-    "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" ++
-    "<title>Sibuna Console</title><body><main><h1>Sibuna Console</h1>" ++
-    "<p>Authentication service is running.</p></main></body></html>";
+const shell = @embedFile("console_shell");
