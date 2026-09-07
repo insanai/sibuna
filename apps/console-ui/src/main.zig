@@ -310,6 +310,7 @@ fn setMessage(message: []const u8) void {
 
 test {
     _ = @import("render.zig");
+    _ = @import("geography.zig");
 }
 
 test "required password changes cannot open subscriptions through navigation" {

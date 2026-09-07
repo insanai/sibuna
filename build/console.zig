@@ -76,6 +76,9 @@ fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module)
             .root_source_file = b.path("apps/console-ui/web/" ++ path),
         });
     }
+    console.addAnonymousImport("console_world", .{
+        .root_source_file = b.path("apps/console-ui/web/assets/world-110m.bin"),
+    });
     const tests = b.addTest(.{ .root_module = b.createModule(.{
         .root_source_file = b.path("apps/console-ui/src/main.zig"),
         .target = b.graph.host,

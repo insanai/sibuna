@@ -74,6 +74,7 @@ def check(binary):
                 assert status == 200 and b"Sibuna Console" in shell
                 assert b"world-110m" not in shell and b"WebSocket(" not in shell
                 assert request(console_port, "GET", "/console/api/session")[0] == 401
+                assert request(console_port, "GET", "/console/assets/world-110m.bin")[0] == 401
                 key = re.search(r"Console setup key .*: ([0-9a-f]{64})", logpath.read_text())[1]
                 credentials = {"username": "admin", "password": "first long test passphrase"}
                 assert request(console_port, "POST", "/console/api/setup",
@@ -88,6 +89,9 @@ def check(binary):
                 assert "HttpOnly" in headers["Set-Cookie"]
                 csrf = json.loads(body)["csrf"]
                 assert request(console_port, "GET", "/console/api/session", cookie=cookie)[0] == 200
+                geometry = request(console_port, "GET", "/console/assets/world-110m.bin",
+                                   cookie=cookie)
+                assert geometry[0] == 200 and geometry[2].startswith(b"SBG1")
                 stream = console_ws_test.delivery(console_port, cookie)
                 assert request(console_port, "POST", "/console/api/logout", cookie=cookie)[0] == 400
                 assert request(console_port, "POST", "/console/api/logout",

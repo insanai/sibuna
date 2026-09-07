@@ -1,14 +1,18 @@
 # Console asset input/output digests
 
 ```text
-c86796df73cdb42dc87ec2a21ac21a253db4acc4227239e8c1da222ce8558da4  apps/console-ui/src/main.zig
+619e216d5ea26d3d79c153fc752952c1c3f0cb14a75644835229aeb5fe146f2b  apps/console-ui/src/geography.zig
+86501eafde560d4bb0eeed90eb0b444e0862088a953b6f265946718712ef10ea  apps/console-ui/src/main.zig
 59bca529ba052c3710f35e0d359897c071d2bb80ae553acaebe3cfd7d259a139  apps/console-ui/src/render.zig
 78f5cc9cf973148ce502c276c27166eacf72e67eed550f0013e277edb2714b1e  apps/console-ui/src/state.zig
-ce526950c97c87b636d082d7c0a52e4801eebb3ad4b5408ff747849988e2b7dc  apps/console-ui/web/assets/console.css
+b17e5558ea8a90169548e096c9110ce2e8d4dd812d8f46aff495a4cfa2171525  apps/console-ui/web/assets/GEOGRAPHY.md
+1d28e8c36315482b36a9c81fe64b63c04a47db864e3b7000d0a232067c103ec8  apps/console-ui/web/assets/console.css
+eaf07eda8d9a6d4afae3bbaf837b018abab95e57dc2049f8d80a46431f2dabf1  apps/console-ui/web/assets/world-110m.bin
 5eb9ac6da94c5dfa23e694ad0c4d1063a9052f23b57b8c79499e58d893045161  apps/console-ui/web/glue.js
 de19ed3c281af27df160c0184b9dc6e368f0dcc64236020887257dbf202986a0  apps/console-ui/web/package-lock.json
 b337b6d0d37776b3cd099a24feb055f54113818d49ed7426ca79292baa331c2c  apps/console-ui/web/package.json
 e0440a0fe29eae188efc04927cb094f4ac77db5a7dd07771abf35589272aa9fa  apps/console-ui/web/shell.html
 504b6e5719e8feae63fd50160a446ef88164b5ad686865667682917c2cb0071c  apps/console-ui/web/tailwind.css
-b3af31f6ab34e792b8420767d0f8290199aad7665db515fbcb5e8e3a698582c2  tools/console_assets.py
+63b55c827eb18ffa945bdb13eb143b100735edefb42cbcbcd843bc27aac2368b  tools/console_assets.py
+ebcf76187f15b58f30b6891d55ec8eec11070584726b0972d0e78ee7a3cbf333  tools/console_geometry.py
 ```

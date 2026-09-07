@@ -13,8 +13,9 @@ MANIFEST = WEB / "assets/MANIFEST.md"
 def manifest():
     files = sorted((ROOT / "apps/console-ui/src").glob("*.zig"))
     files += [WEB / name for name in ("tailwind.css", "package.json", "package-lock.json",
-                                      "shell.html", "glue.js", "assets/console.css")]
-    files += [Path(__file__).resolve()]
+                                      "shell.html", "glue.js", "assets/console.css",
+                                      "assets/world-110m.bin", "assets/GEOGRAPHY.md")]
+    files += [Path(__file__).resolve(), ROOT / "tools/console_geometry.py"]
     lines = ["# Console asset input/output digests", "", "```text"]
     for path in sorted(files):
         lines.append(f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.relative_to(ROOT)}")

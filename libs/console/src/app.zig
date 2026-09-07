@@ -130,6 +130,17 @@ pub const App = struct {
 
     fn dispatch(self: *App, context: *http.Context) !void {
         const path = context.request.head.target;
+        if (std.mem.eql(u8, path, "/console/assets/world-110m.bin")) {
+            const user = try self.principal(context) orelse return;
+            if (user.must_change) return http.fail(context, .forbidden, "CONSOLE403");
+            if (context.request.head.method != .GET) return error.InvalidRequest;
+            return context.respond(
+                .ok,
+                "application/octet-stream",
+                @embedFile("console_world"),
+                &.{},
+            );
+        }
         if (try @import("assets.zig").serve(context, path)) return;
         const method = context.request.head.method;
         if (method == .POST) {
