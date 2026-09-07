@@ -14,9 +14,10 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     const modules = addModules(b, target, optimize);
-    addWasmSolver(b);
-    addServer(b, target, optimize, modules);
+    const wasm_pow = addWasmSolver(b);
+    addServer(b, target, optimize, modules, wasm_pow);
     addTests(b, modules);
+
     addFormatting(b);
     addShd(b);
 }
@@ -53,6 +54,13 @@ fn addModules(
     });
     policy.addImport("core", core);
 
+    const store = b.addModule("sibuna-store", .{
+        .root_source_file = b.path("libs/store/src/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    store.addImport("core", core);
+
     const challenge = b.addModule("sibuna-challenge", .{
         .root_source_file = b.path("libs/challenge/src/root.zig"),
         .target = target,
@@ -60,13 +68,7 @@ fn addModules(
     });
     challenge.addImport("core", core);
     challenge.addImport("crypto", crypto);
-
-    const store = b.addModule("sibuna-store", .{
-        .root_source_file = b.path("libs/store/src/root.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    store.addImport("core", core);
+    challenge.addImport("store", store);
 
     return .{
         .core = core,
@@ -78,10 +80,15 @@ fn addModules(
     };
 }
 
-fn addWasmSolver(b: *std.Build) void {
+fn addWasmSolver(b: *std.Build) *std.Build.Step.Compile {
     const wasm_target = b.resolveTargetQuery(.{
         .cpu_arch = .wasm32,
         .os_tag = .freestanding,
+        .cpu_features_add = std.Target.wasm.featureSet(&.{
+            .bulk_memory,
+            .mutable_globals,
+            .sign_ext,
+        }),
     });
 
     const wasm_pow = b.addExecutable(.{
@@ -93,11 +100,13 @@ fn addWasmSolver(b: *std.Build) void {
         }),
     });
     wasm_pow.entry = .disabled;
+    wasm_pow.rdynamic = true;
     const install_wasm = b.addInstallArtifact(wasm_pow, .{
         .dest_dir = .{ .override = .{ .custom = "web/wasm" } },
     });
     const wasm_step = b.step("wasm", "Build the browser WebAssembly proof-of-work solver");
     wasm_step.dependOn(&install_wasm.step);
+    return wasm_pow;
 }
 
 fn addServer(
@@ -105,6 +114,7 @@ fn addServer(
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
     modules: Modules,
+    wasm_pow: *std.Build.Step.Compile,
 ) void {
     const exe = b.addExecutable(.{
         .name = "sibuna",
@@ -114,6 +124,16 @@ fn addServer(
             .optimize = optimize,
         }),
     });
+    exe.root_module.addAnonymousImport("wasm_solver", .{
+        .root_source_file = wasm_pow.getEmittedBin(),
+    });
+    exe.root_module.addAnonymousImport("challenge_html", .{
+        .root_source_file = b.path("apps/web/src/challenge.html"),
+    });
+    exe.root_module.addAnonymousImport("worker_js", .{
+        .root_source_file = b.path("apps/web/src/worker.js"),
+    });
+
     exe.root_module.addImport("core", modules.core);
     exe.root_module.addImport("crypto", modules.crypto);
     exe.root_module.addImport("net", modules.net);
@@ -136,8 +156,17 @@ fn addTests(b: *std.Build, modules: Modules) void {
     const test_step = b.step("test", "Run all unit tests");
     const core_tests = b.addTest(.{ .root_module = modules.core });
     const crypto_tests = b.addTest(.{ .root_module = modules.crypto });
+    const net_tests = b.addTest(.{ .root_module = modules.net });
+    const policy_tests = b.addTest(.{ .root_module = modules.policy });
+    const challenge_tests = b.addTest(.{ .root_module = modules.challenge });
+    const store_tests = b.addTest(.{ .root_module = modules.store });
+
     test_step.dependOn(&b.addRunArtifact(core_tests).step);
     test_step.dependOn(&b.addRunArtifact(crypto_tests).step);
+    test_step.dependOn(&b.addRunArtifact(net_tests).step);
+    test_step.dependOn(&b.addRunArtifact(policy_tests).step);
+    test_step.dependOn(&b.addRunArtifact(challenge_tests).step);
+    test_step.dependOn(&b.addRunArtifact(store_tests).step);
 }
 
 fn addFormatting(b: *std.Build) void {
