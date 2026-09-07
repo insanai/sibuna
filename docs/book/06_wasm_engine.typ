@@ -131,3 +131,85 @@ Sibuna orchestrates all cryptographic solving inside a dedicated background *Web
 
 The human user experiences a brief, elegant interstitial lasting less than a quarter of a second,
 after which all subsequent navigation across the domain occurs with zero friction.
+
+#v(4mm)
+
+= Universal Client Resilience: Fallbacks and Honeypot Traps
+
+#objectives([
+  Understand how Sibuna guarantees 100% universal browser accessibility even when WebAssembly is
+  restricted, examine the bit-level difficulty scaling mechanism, and analyze the automated
+  crawler honeypot trap.
+])
+
+== Fine-Grained Bit-Level Difficulty Scaling
+
+Traditional Proof-of-Work systems measure difficulty by counting leading hexadecimal zeros. Because each hexadecimal character represents 4 bits, each incremental step in difficulty multiplies the expected hashing work by a factor of 16 ($2^4 = 16$). 
+
+In a high-security reverse proxy, $16times$ scaling creates an acute operational dilemma:
+- A difficulty of 4 requires on average $16^4 = 65,536$ hashes (approx 30 ms on desktop, 150 ms on mobile).
+- A difficulty of 5 requires on average $16^5 = 1,048,576$ hashes (approx 480 ms on desktop, 2.4 seconds on mobile).
+
+Sibuna implements bit-level difficulty scaling (`verifyHashcashBits`), allowing operators to increment difficulty in fine-grained 1-bit steps ($2times$ multiplier):
+
+```zig
+pub fn checkDifficultyBits(digest: [32]u8, bits: u32) bool {
+    const full_bytes = bits / 8;
+    const rem_bits = bits % 8;
+    for (digest[0..full_bytes]) |b| {
+        if (b != 0) return false;
+    }
+    if (rem_bits > 0) {
+        const shift: u3 = @intCast(8 - rem_bits);
+        const mask = @as(u8, 0xff) << shift;
+        if ((digest[full_bytes] & mask) != 0) return false;
+    }
+    return true;
+}
+```
+
+This allows precise tuning: an operator facing an active crawl can shift difficulty from 16 bits ($65,536$ hashes) to 17 bits ($131,072$ hashes) or 18 bits ($262,144$ hashes), precisely tuning adversary friction without inducing mobile timeouts.
+
+== Pure JavaScript Fallback Solver
+
+While WebAssembly is supported in over 97% of modern browsers, certain security-conscious configurations disable it:
+- Corporate endpoint policies restricting JIT and WASM code execution.
+- Browser privacy extensions such as JShelter.
+- Embedded webviews on legacy IoT devices.
+
+If an anti-crawler firewall relies strictly on WebAssembly, users with WASM disabled will encounter a broken interstitial and fail authentication.
+
+To solve this, Sibuna's `worker.js` incorporates an automatic fallback hierarchy:
+1. The worker attempts to instantiate `sibuna-pow.wasm`.
+2. If `WebAssembly.instantiate` throws an error or is blocked by policy, the worker catches the exception and immediately invokes an embedded pure-JavaScript SHA-256 solver.
+3. The JavaScript solver executes at over 670,000 hashes per second, finding standard difficulty-4 solutions in under 100 milliseconds.
+
+== Jittered Exponential Backoff & Flaky Network Retries
+
+Mobile browsers frequently traverse transient packet loss or network transitions (e.g. switching from 5G to Wi-Fi). In `challenge.html`, all network transactions (`/__sibuna/challenge.json` and `POST /__sibuna/verify`) are wrapped in `fetchWithRetry()` with randomized jittered exponential backoff:
+
+```javascript
+async function fetchWithRetry(url, options = {}, retries = 3, backoff = 500) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const res = await fetch(url, options);
+            if (res.ok) return res;
+        } catch (e) {
+            if (i === retries - 1) throw e;
+        }
+        const jitter = Math.random() * 200;
+        await new Promise(r => setTimeout(r, backoff * Math.pow(1.5, i) + jitter));
+    }
+    throw new Error('Network request failed after retries');
+}
+```
+
+== Invisible Honeypot Crawler Traps
+
+Dumb web scrapers and automated AI crawlers frequently scrape all HTML `<a>` links without executing JavaScript. Sibuna embeds an invisible honeypot anchor tag directly in the challenge interstitial:
+
+```html
+<a href="/__sibuna/honeypot" style="position:absolute;left:-9999px;top:-9999px;opacity:0;pointer-events:none;" tabindex="-1" rel="nofollow" aria-hidden="true">Direct Bypass Gateway</a>
+```
+
+A legitimate browser running JavaScript renders the card and computes the PoW in the Web Worker without ever clicking or following off-screen links. In contrast, blind recursive scrapers scan the DOM for href targets and issue requests to `/__sibuna/honeypot`. The Sibuna daemon detects this path, immediately responds with HTTP 403 Forbidden, and records the adversary IP in the dynamic deny-list.

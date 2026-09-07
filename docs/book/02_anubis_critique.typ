@@ -148,6 +148,18 @@ As we shall see in Part V, Sibuna replaces this linear iteration with an Aho-Cor
 that scans all 40+ signatures simultaneously in a single pass in *59.6 nanoseconds*—a *28x
 algorithmic speedup*.
 
+== The 1-Year Wasm Migration Ordeal: Toolchain Fragmentation
+
+In February 2026, the author of Anubis published a candid retrospective titled _"It took a year to ship WebAssembly in Anubis"_. The post laid bare the grueling operational friction encountered when retrofitting WebAssembly into an existing Go codebase:
+
+1. *The Runtime Bloat Dilemma:* Compiling Go code to WebAssembly via standard `GOOS=js GOARCH=wasm` generates massive 2 MB to 15 MB binaries because the entire Go runtime, garbage collector, and scheduler must be bundled into the output. TinyGo was evaluated, but lacked complete standard library fidelity and cryptographic guarantees.
+2. *Multi-Language Toolchain Fragmentation:* To obtain a lightweight solver, the team was forced to rewrite the client solver in *Rust*, requiring `cargo`, `rustc`, and `wasm-pack`. To avoid forcing all Go contributors to maintain a full Rust toolchain, the project had to check precompiled `.wasm` binaries directly into Git and vendor pre-built `wasm-opt` and `wasm2js` binaries.
+3. *V8/Browser Proposal Incompatibilities:* When compiling Rust with aggressive LLVM optimization flags, the generated Wasm bytecode included non-MVP instructions (such as sign-extension and bulk-memory operations) that triggered verification bugs in older V8 engines and strict browser profiles.
+4. *Coarse Hex Difficulty Scaling:* Early Anubis releases evaluated Proof-of-Work difficulty by counting leading hexadecimal nibbles. Each difficulty step multiplied computational cost by $16times$ ($2^4$). This made difficulty tuning impossibly coarse: a step of 4 took 150 ms on a laptop, but a step of 5 took over 2.4 seconds, causing mobile devices to freeze. They were forced to re-engineer their entire PoW verification pipeline to support fine-grained bit-level difficulty ($2times$ scaling per bit).
+5. *Host/Guest Wasm Virtualization:* To verify solutions server-side using identical logic, Anubis ran an in-process `wazero` Wasm virtual machine on the Go server, creating massive memory virtualization and context-switching penalties.
+
+As we demonstrate in the following chapters, Sibuna bypasses this entire ordeal by design: a single toolchain (`zig build`) compiles both the high-performance native server and the freestanding 6.9 KB browser WebAssembly solver without any external dependencies.
+
 #exercise([2.1], [
   Calculate the total memory allocated by Anubis during a 60-second scraper flood delivering
   25,000 unauthenticated requests per second, assuming an average of 4,200 bytes allocated per
