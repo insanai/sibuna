@@ -2,7 +2,7 @@
 
 > A web firewall and anti-crawler daemon in pure Zig 0.16: zero-allocation classification,
 > proof of sequential work for admission, keyed-hash sessions, a semantic WAF, and an embedded
-> replicated store, in one static binary.
+> replicated store, in one executable.
 
 Sibuna sits in front of an origin (as a reverse proxy) or beside an ingress (as a forward-auth
 subrequest engine). Every request is parsed and classified from a single per-connection stack
@@ -14,15 +14,20 @@ reach the origin.
 
 ---
 
-## Three surfaces, one binary
+## Two surfaces, one binary
 
-| Surface | Flag | What runs | Full classification cost |
-|---|---|---|---|
-| **Gate** | `--gate` | Proof-of-work admission, declarative rules, bot signatures, reputation trie | 295 ns |
-| **Shield** | `--shield` (default) | Gate + semantic WAF (SQLi, XSS, traversal, RCE), GCRA rate limiting, honeypot, ban table | 1.46 µs |
-| **Edge** | `--data-dir`, `--cluster-*` | Shield + Zaxonlite store: dynamic policies, replicated IP reputation, incident forensics with full-text and vector search | off the request path |
+| Capability | Gate (`--gate`) | Shield (`--shield`, default) |
+|---|---|---|
+| Proof-of-work admission and sessions | Yes | Yes |
+| Declarative policy, bot signatures, CIDR reputation | Yes | Yes |
+| Local GCRA limits, honeypot, bans | Yes | Yes |
+| Semantic payload inspection | Disabled | SQLi, XSS, traversal, command injection |
+| Reverse proxy / forward auth | Both | Both |
+| Optional persistent and distributed deployment | Yes | Yes |
 
-Numbers are medians measured on an Apple M1 in `ReleaseFast` (`benchmarks/results/latest.json`).
+`--data-dir` enables storage; `--cluster-*` enables replicated policy and reputation with a
+cluster build. Distributed edge deployment is an option, not a third surface. Valid sessions
+still undergo policy denial checks and, in Shield, WAF inspection.
 
 ## Research foundations
 
@@ -30,11 +35,11 @@ Every mechanism was chosen for a published security or complexity argument, not 
 popularity. The mathematics is in **SID 0006**; the engineering contracts are in SID 0002–0005.
 
 - **Proof of Sequential Work** (Cohen–Pietrzak, EUROCRYPT 2018; quantum security by
-  Blocki–Lee–Zhou, ITC 2021): non-parallelisable, deterministic solve time, `O(log N)` client
+  Blocki–Lee–Zhou, ITC 2021): non-parallelisable, deterministic solve time, `O(2^m + log N)` retained client
   memory, `t(n+1)` hashes to verify. Default tier. Hashcash (bit-level) is the second tier.
   Argon2id, HashX, and Equihash were evaluated and rejected (see SID 0002 and SID 0006).
 - **Keyed BLAKE3 MAC tokens and stateless challenges**: issuer and verifier share one seed, so
-  a 16-byte tag replaces a 64-byte signature; verification is 134 ns, and only *solved*
+  a 16-byte tag replaces a 64-byte signature; only *solved*
   challenges occupy memory (Robin Hood spent set, Celis 1986).
 - **GCRA rate limiting** (ATM Forum TM 4.0): one integer per client, exact `N + L/T` bound.
 - **Aho–Corasick automata** (1975) for bot and attack signatures, one pass per field, plus
@@ -46,7 +51,7 @@ popularity. The mathematics is in **SID 0006**; the engineering contracts are in
 
 ```sh
 zig build -Doptimize=ReleaseFast          # daemon, benchmark, and WASM solver
-zig build test                            # 81 unit, end-to-end, and storage tests
+zig build test                            # unit, end-to-end, and storage tests
 ./zig-out/bin/sibuna --port 8080 --upstream-port 3000 --secret-file /run/sibuna.seed
 ```
 
@@ -115,32 +120,42 @@ by cosine similarity of feature-hashed trigram embeddings. Query the data direct
 
 Build options: `-Dstorage=false` builds the pure in-memory daemon (no libc); `-Dcluster=true`
 links OpenSSL 3 for Zaxonlite's mutual TLS. The dependency is the official
-[`insanai/zaxonlite`](https://github.com/insanai/zaxonlite) v0.6.0 release pinned in
+[`insanai/zaxonlite`](https://github.com/insanai/zaxonlite) v0.6.1 release pinned in
 `build.zig.zon`.
 
 ## Measured performance
 
-From `benchmarks/results/latest.json` (Apple M1, Zig 0.16.0, `ReleaseFast`, zero heap
-allocation in every row). The `anubis-model` rows in that file are *reference models* of a
-Go challenge proxy taken from public profiling; they were not measured on this host and the book
-labels them as such.
+Current results: [primitive measurements](benchmarks/results/latest.json) and
+[distributed measurements](benchmarks/results/distributed-latest.json).
 
-| Workload | ns / op |
-|---|---|
-| Hashcash verification (16 bits) | 62.6 |
-| PoSW verification (depth 13, 16 openings) | 16,920 |
-| Bot automaton, 40 signatures | 85.3 |
-| IPv4 / IPv6 trie lookup | 45.2 / 79.9 |
-| BLAKE3 MAC token verification | 134.1 |
-| Ed25519 token verification | 52,778 |
-| Robin Hood spend + lookup | 22.8 |
-| GCRA rate check | 4.8 |
-| HTTP parse + cookie lookup | 732.5 |
-| Full classification: Gate / Shield | 295 / 1,460 |
-| Semantic scan of an 8 KB body | 23,702 |
+```sh
+sh benchmarks/run-all.sh
+python3 benchmarks/distributed.py
+```
 
-Static: binary 4.25 MB, WASM solver 8,831 bytes, idle RSS 7.6 MB (12–14.5 MB with the store
-open). Browser solve times under V8: PoSW depth 13 in 15 ms, depth 16 in 138 ms.
+Both harnesses run outside the daemon. Primitive operations are timed in seven batches,
+with warmup and state reset outside the timer. There are no per-operation clock reads or
+benchmark hooks in server code. Source/API review establishes allocation-free primitives;
+the harness does not instrument allocator activity. Production metrics and concurrency
+controls still cost atomics.
+
+The distributed run uses three local daemon processes and six external load clients. It
+checks successful HTTP responses, shared sessions, authenticated WAF denial, issuer-bound
+challenge rejection, replicated bans, and continued service after one node stops. Results
+include client and loopback costs, not WAN or client-facing TLS costs.
+
+The engine and signature-table sizes are emitted using `@sizeOf`. Comparison with alternative
+products requires actual pinned binaries and matched workloads; unsupported fixed competitor
+cost models have been removed.
+
+## Deployment limits
+
+Cluster challenge keys are issuer-bound; route challenge fetching and solution submission
+to the same node. Session tokens remain valid across members sharing a seed. Rate limits and
+spent sets are local, and spent entries do not survive restarts. Shield inspects only the
+first 8 KB of a body; large encoded fields, excluded structural headers and ingress-omitted
+bodies remain coverage limits. This is a heuristic WAF, not a full language parser. Native
+TLS termination, HTTP/2, global quotas and volumetric network mitigation are not implemented.
 
 ## Shibuna Discussions (SID)
 

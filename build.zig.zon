@@ -5,14 +5,15 @@
     .minimum_zig_version = "0.16.0",
     .dependencies = .{
         .zaxonlite = .{
-            .url = "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.6.0.tar.gz",
-            .hash = "zaxonlite-0.6.0-o9bF7Dq-GgB7Om9QDMglwd6amKHErcxCbcOamgPCDZy0",
+            .url = "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.6.1.tar.gz",
+            .hash = "zaxonlite-0.6.1-o9bF7AoyGwA_Sia-N5hzepceMrM2r4Fn3rVHWGancpp4",
         },
     },
     .paths = .{
         "build.zig",
         "build.zig.zon",
         "apps",
+        "benchmarks",
         "libs",
         "tools",
         "docs",
