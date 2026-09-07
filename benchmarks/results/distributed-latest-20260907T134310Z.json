@@ -1,0 +1,204 @@
+{
+  "meta": {
+    "zaxonlite": {
+      "url": "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.6.1.tar.gz",
+      "hash": "zaxonlite-0.6.1-o9bF7AoyGwA_Sia-N5hzepceMrM2r4Fn3rVHWGancpp4"
+    },
+    "source_sha256": "f0be0e74b16a1e7f9b540dff488bd7f807e74c18959355889d12df0a1c204880",
+    "daemon_sha256": "16a8ea2bc0b2602863fa11d4cb1d809544d4772c011991980d6dfbd673c31cf2",
+    "date": "2026-09-07T13:43:04.580676+00:00",
+    "host": "Vikrants-M1-MacBook-air.local",
+    "cpu": "Apple M1",
+    "os": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "git": "10bb70928a86025591ec93fe77de6bc41d620fde",
+    "dirty": true,
+    "zig": "0.16.0"
+  },
+  "runs": [
+    {
+      "profile": "gate",
+      "clustered": false,
+      "nodes": 3,
+      "workers_per_node": 2,
+      "transport": null,
+      "cross_node_session": "passed",
+      "authenticated_waf": "passed",
+      "cross_node_solution_replay_status": 200,
+      "replay_scope": "issuer-bound in cluster mode; verification requires sticky routing",
+      "rss_kb": [
+        6832,
+        6816,
+        6832
+      ],
+      "admitted": {
+        "path": "/private",
+        "expected_status": 200,
+        "batches": 7,
+        "requests_per_batch": 1200,
+        "requests_per_second_median": 45383.491066808165,
+        "requests_per_second_min": 31128.673562861128,
+        "requests_per_second_max": 45768.55414276928,
+        "slowest_client_ns_per_request_median": 129107.5
+      },
+      "challenged": {
+        "path": "/private",
+        "expected_status": 401,
+        "batches": 7,
+        "requests_per_batch": 1200,
+        "requests_per_second_median": 48835.65820232117,
+        "requests_per_second_min": 46983.894351701936,
+        "requests_per_second_max": 49725.131902128014,
+        "slowest_client_ns_per_request_median": 119515.415
+      },
+      "storage_chain_log_check": "passed",
+      "status": "passed"
+    },
+    {
+      "profile": "shield",
+      "clustered": false,
+      "nodes": 3,
+      "workers_per_node": 2,
+      "transport": null,
+      "cross_node_session": "passed",
+      "authenticated_waf": "passed",
+      "cross_node_solution_replay_status": 200,
+      "replay_scope": "issuer-bound in cluster mode; verification requires sticky routing",
+      "rss_kb": [
+        6800,
+        6800,
+        6768
+      ],
+      "admitted": {
+        "path": "/private",
+        "expected_status": 200,
+        "batches": 7,
+        "requests_per_batch": 1200,
+        "requests_per_second_median": 44853.106077595876,
+        "requests_per_second_min": 26826.63268507297,
+        "requests_per_second_max": 45207.60064841262,
+        "slowest_client_ns_per_request_median": 130745.415
+      },
+      "challenged": {
+        "path": "/private",
+        "expected_status": 401,
+        "batches": 7,
+        "requests_per_batch": 1200,
+        "requests_per_second_median": 49099.75195623641,
+        "requests_per_second_min": 47773.5533570874,
+        "requests_per_second_max": 49479.85947060179,
+        "slowest_client_ns_per_request_median": 119337.915
+      },
+      "storage_chain_log_check": "passed",
+      "status": "passed"
+    },
+    {
+      "profile": "shield",
+      "clustered": true,
+      "nodes": 3,
+      "workers_per_node": 2,
+      "transport": "loopback PSK",
+      "cross_node_session": "passed",
+      "authenticated_waf": "passed",
+      "cross_node_solution_replay_status": 400,
+      "replay_scope": "issuer-bound in cluster mode; verification requires sticky routing",
+      "rss_kb": [
+        21168,
+        19664,
+        19648
+      ],
+      "admitted": {
+        "path": "/private",
+        "expected_status": 200,
+        "batches": 7,
+        "requests_per_batch": 1200,
+        "requests_per_second_median": 44373.98020735591,
+        "requests_per_second_min": 27895.92087712586,
+        "requests_per_second_max": 45755.90179639577,
+        "slowest_client_ns_per_request_median": 131823.125
+      },
+      "challenged": {
+        "path": "/private",
+        "expected_status": 401,
+        "batches": 7,
+        "requests_per_batch": 1200,
+        "requests_per_second_median": 48730.222382400265,
+        "requests_per_second_min": 48202.28958465413,
+        "requests_per_second_max": 50113.80008769915,
+        "slowest_client_ns_per_request_median": 119546.665
+      },
+      "ban_propagation_ms": 51.515333,
+      "stopped_leader_node": 1,
+      "one_node_down": {
+        "path": "/private",
+        "expected_status": 200,
+        "batches": 7,
+        "requests_per_batch": 800,
+        "requests_per_second_median": 39547.51121826949,
+        "requests_per_second_min": 36122.885541250645,
+        "requests_per_second_max": 40492.319796396514,
+        "slowest_client_ns_per_request_median": 98116.665
+      },
+      "post_failover_ban_propagation_ms": 411.48075,
+      "storage_chain_log_check": "passed",
+      "status": "passed"
+    },
+    {
+      "profile": "shield",
+      "clustered": true,
+      "nodes": 3,
+      "workers_per_node": 2,
+      "transport": "loopback mTLS",
+      "cross_node_session": "passed",
+      "authenticated_waf": "passed",
+      "cross_node_solution_replay_status": 400,
+      "replay_scope": "issuer-bound in cluster mode; verification requires sticky routing",
+      "rss_kb": [
+        26608,
+        25152,
+        24784
+      ],
+      "admitted": {
+        "path": "/private",
+        "expected_status": 200,
+        "batches": 7,
+        "requests_per_batch": 1200,
+        "requests_per_second_median": 44479.10684767341,
+        "requests_per_second_min": 31601.36604278372,
+        "requests_per_second_max": 45053.289594098016,
+        "slowest_client_ns_per_request_median": 131471.46
+      },
+      "challenged": {
+        "path": "/private",
+        "expected_status": 401,
+        "batches": 7,
+        "requests_per_batch": 1200,
+        "requests_per_second_median": 48870.71387040049,
+        "requests_per_second_min": 47994.96052914444,
+        "requests_per_second_max": 49365.11119121058,
+        "slowest_client_ns_per_request_median": 119263.125
+      },
+      "ban_propagation_ms": 124.435375,
+      "stopped_leader_node": 1,
+      "one_node_down": {
+        "path": "/private",
+        "expected_status": 200,
+        "batches": 7,
+        "requests_per_batch": 800,
+        "requests_per_second_median": 39406.19785605655,
+        "requests_per_second_min": 27975.451541272534,
+        "requests_per_second_max": 39981.50855229457,
+        "slowest_client_ns_per_request_median": 98805.0
+      },
+      "post_failover_ban_propagation_ms": 594.197417,
+      "storage_chain_log_check": "passed",
+      "status": "passed"
+    }
+  ],
+  "limitations": [
+    "One host, loopback, forward-auth; excludes origin proxy and client-facing TLS/WAN costs",
+    "External Python clients; batch throughput includes client and IPC overhead",
+    "No per-request benchmark clocks, allocations, or hooks in the daemon",
+    "Rate limits and spent sets are local; cluster challenges require issuer routing",
+    "Existing policy continues on quorum loss; fresh policy needs consensus"
+  ]
+}

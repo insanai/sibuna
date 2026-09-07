@@ -1,0 +1,170 @@
+{
+  "meta": {
+    "zaxonlite": {
+      "url": "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.6.1.tar.gz",
+      "hash": "zaxonlite-0.6.1-o9bF7AoyGwA_Sia-N5hzepceMrM2r4Fn3rVHWGancpp4"
+    },
+    "source_sha256": "ae9329b0d99deb3605b83d79ddc251c31a5ca1500250678fb93df6dcba06b382",
+    "daemon_sha256": "9dc332952456cc104044194f2df4aec148088dc8e66b232e152cb0767070d292",
+    "date": "2026-09-07T14:07:15.703293+00:00",
+    "host": "Vikrants-M1-MacBook-air.local",
+    "cpu": "Apple M1",
+    "os": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "git": "10bb70928a86025591ec93fe77de6bc41d620fde",
+    "dirty": true,
+    "zig": "0.16.0"
+  },
+  "anubis_version": "Anubis 1.27.0",
+  "runs": [
+    {
+      "product": "sibuna",
+      "token_scheme": "blake3",
+      "binary_sha256": "9dc332952456cc104044194f2df4aec148088dc8e66b232e152cb0767070d292",
+      "binary_bytes": 3297560,
+      "valid_session": {
+        "operations_per_second_median": 12121.24297528515,
+        "operations_per_second_batches": [
+          12121.24297528515
+        ],
+        "slowest_client_ns_per_operation_median": 133935.41,
+        "batches": 1,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "unauthenticated_check": {
+        "operations_per_second_median": 17216.27175265176,
+        "operations_per_second_batches": [
+          17216.27175265176
+        ],
+        "slowest_client_ns_per_operation_median": 112188.34,
+        "batches": 1,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "challenge_bootstrap": {
+        "operations_per_second_median": 12988.278079033673,
+        "operations_per_second_batches": [
+          12988.278079033673
+        ],
+        "slowest_client_ns_per_operation_median": 150352.08,
+        "batches": 1,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "proof_verification": {
+        "operations_per_second_median": 19824.214968831067,
+        "operations_per_second_batches": [
+          19824.214968831067
+        ],
+        "slowest_client_ns_per_operation_median": 88592.4375,
+        "batches": 1,
+        "operations_per_batch": 64,
+        "clients": 2
+      },
+      "rss_kib_after_workload": 6400
+    },
+    {
+      "product": "anubis",
+      "token_scheme": "ed25519",
+      "binary_sha256": "544f8b488d3e215ad0b7ce4ef9019b44d21eecac5962efdb2cace4d41540fa0b",
+      "binary_bytes": 36793042,
+      "valid_session": {
+        "operations_per_second_median": 8831.955356938619,
+        "operations_per_second_batches": [
+          8831.955356938619
+        ],
+        "slowest_client_ns_per_operation_median": 219437.5,
+        "batches": 1,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "unauthenticated_check": {
+        "operations_per_second_median": 19628.610977418462,
+        "operations_per_second_batches": [
+          19628.610977418462
+        ],
+        "slowest_client_ns_per_operation_median": 97502.08,
+        "batches": 1,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "challenge_bootstrap": {
+        "operations_per_second_median": 10338.856005582982,
+        "operations_per_second_batches": [
+          10338.856005582982
+        ],
+        "slowest_client_ns_per_operation_median": 189152.92,
+        "batches": 1,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "proof_verification": {
+        "operations_per_second_median": 12589.751155699812,
+        "operations_per_second_batches": [
+          12589.751155699812
+        ],
+        "slowest_client_ns_per_operation_median": 144679.6875,
+        "batches": 1,
+        "operations_per_batch": 64,
+        "clients": 2
+      },
+      "rss_kib_after_workload": 36288
+    },
+    {
+      "product": "anubis",
+      "token_scheme": "hs512",
+      "binary_sha256": "544f8b488d3e215ad0b7ce4ef9019b44d21eecac5962efdb2cace4d41540fa0b",
+      "binary_bytes": 36793042,
+      "valid_session": {
+        "operations_per_second_median": 11674.372336127128,
+        "operations_per_second_batches": [
+          11674.372336127128
+        ],
+        "slowest_client_ns_per_operation_median": 164602.92,
+        "batches": 1,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "unauthenticated_check": {
+        "operations_per_second_median": 14566.907627597007,
+        "operations_per_second_batches": [
+          14566.907627597007
+        ],
+        "slowest_client_ns_per_operation_median": 133136.67,
+        "batches": 1,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "challenge_bootstrap": {
+        "operations_per_second_median": 10599.231810075333,
+        "operations_per_second_batches": [
+          10599.231810075333
+        ],
+        "slowest_client_ns_per_operation_median": 183806.67,
+        "batches": 1,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "proof_verification": {
+        "operations_per_second_median": 13008.5716324111,
+        "operations_per_second_batches": [
+          13008.5716324111
+        ],
+        "slowest_client_ns_per_operation_median": 138944.03125,
+        "batches": 1,
+        "operations_per_batch": 64,
+        "clients": 2
+      },
+      "rss_kib_after_workload": 36992
+    }
+  ],
+  "limitations": [
+    "Two clients, two Sibuna workers, GOMAXPROCS=2; loopback HTTP forward-auth, no origin or TLS.",
+    "Hashcash work matched at 8 zero bits / 2 zero hex digits; same UA and client IP.",
+    "Default Anubis Ed25519 and optional HS512 are both tested; Sibuna uses its default MAC.",
+    "Bootstrap includes HTML plus JSON for Sibuna and HTML with embedded puzzle for Anubis; static assets excluded.",
+    "Fresh proofs are prepared outside timed verification; browser solve and network latency are not measured.",
+    "External Python/IPC costs limit throughput; sequential runs are not a universal product ranking.",
+    "Downloads/builds are supplied externally and must not be committed."
+  ]
+}

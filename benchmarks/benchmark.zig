@@ -1,13 +1,5 @@
-//! Sibuna Bare-Metal Benchmark Suite
-//!
-//! Measures every hot-path primitive on the host it runs on, in
-//! `ReleaseFast`, over seven independent batches. Rows with `measured =
-//! true` are wall-clock results from this binary. Rows with `measured =
-//! false` are *reference models* of a Go Anubis deployment: fixed per-call
-//! costs taken from public profiling of the Wazero VM boundary, Go `regexp`
-//! scans, `net.IPNet` slices, `golang-jwt` parsing, mutex-guarded maps, and
-//! `net/http` request allocation. They are printed alongside so the book can
-//! state the comparison, and they are labelled as models everywhere.
+//! Standalone primitive benchmarks: batch timing only, no daemon hooks.
+//! Results are local measurements, not competitor estimates or HTTP throughput.
 
 const std = @import("std");
 const crypto = @import("crypto");
@@ -25,7 +17,6 @@ pub const Run = struct {
     ns_per_op_min: f64,
     ns_per_op_max: f64,
     ops_per_sec: u64,
-    alloc_bytes: u64,
     bytes_per_op: u64 = 0,
 };
 
@@ -60,14 +51,22 @@ const Timer = struct {
     }
 };
 
+fn resetContext(ctx: anytype) void {
+    if (@TypeOf(ctx) == *store.ChallengeStore) ctx.* = .{};
+    if (@TypeOf(ctx) == *store.RateLimiter) ctx.* = store.RateLimiter.init();
+}
+
 /// Runs `body` seven times over `iters` operations and reduces the batch
 /// timings to per-operation statistics. Percentiles over single operations
 /// would require timing each call, which perturbs sub-100 ns work, so the
 /// spread reported is across batches.
 fn measure(io: std.Io, iters: u64, ctx: anytype, comptime body: fn (@TypeOf(ctx), u64) u64) Run {
+    resetContext(ctx);
+    std.mem.doNotOptimizeAway(body(ctx, @min(iters, 1000)));
     var samples: [batches]u64 = undefined;
     var sink: u64 = 0;
     for (&samples) |*s| {
+        resetContext(ctx);
         const t = Timer.begin(io);
         sink +%= body(ctx, iters);
         s.* = t.lap();
@@ -86,22 +85,6 @@ fn measure(io: std.Io, iters: u64, ctx: anytype, comptime body: fn (@TypeOf(ctx)
         .ns_per_op_min = @as(f64, @floatFromInt(samples[0])) / f,
         .ns_per_op_max = @as(f64, @floatFromInt(samples[batches - 1])) / f,
         .ops_per_sec = if (median > 0) @intFromFloat(1_000_000_000.0 / median) else 0,
-        .alloc_bytes = 0,
-    };
-}
-
-fn model(subsystem: []const u8, workload: []const u8, ns: f64, alloc: u64) Run {
-    return .{
-        .impl = "anubis-model",
-        .subsystem = subsystem,
-        .workload = workload,
-        .measured = false,
-        .iterations = 0,
-        .ns_per_op_median = ns,
-        .ns_per_op_min = ns,
-        .ns_per_op_max = ns,
-        .ops_per_sec = @intFromFloat(1_000_000_000.0 / ns),
-        .alloc_bytes = alloc,
     };
 }
 
@@ -120,6 +103,7 @@ fn hashcashBody(ctx: PowCtx, iters: u64) u64 {
     var ok: u64 = 0;
     var i: u64 = 0;
     while (i < iters) : (i += 1) {
+        std.mem.doNotOptimizeAway(&ctx);
         if (crypto.verifyHashcashBits(ctx.challenge, ctx.nonce, 16)) ok += 1;
     }
     return ok;
@@ -131,6 +115,7 @@ fn poswBody(ctx: PoswCtx, iters: u64) u64 {
     var ok: u64 = 0;
     var i: u64 = 0;
     while (i < iters) : (i += 1) {
+        std.mem.doNotOptimizeAway(&ctx);
         if (crypto.posw.verify(ctx.challenge, ctx.params, ctx.proof)) ok += 1;
     }
     return ok;
@@ -151,7 +136,6 @@ fn benchProofOfWork(io: std.Io, gpa: std.mem.Allocator, runs: *Runs) !void {
     const proof = try crypto.posw.solve(challenge, params, ws);
     const ctx = PoswCtx{ .challenge = challenge, .params = params, .proof = proof };
     try runs.append(tag(measure(io, 20_000, ctx, poswBody), "pow_verify", "posw_depth13_t16"));
-    try runs.append(model("pow_verify", "hashcash_16_bits", 12_500.0, 4096));
 }
 
 // ---------------------------------------------------------------- matching
@@ -169,7 +153,8 @@ fn botBody(ac: *const policy.aho_corasick.BotMatcher, iters: u64) u64 {
     var hits: u64 = 0;
     var i: u64 = 0;
     while (i < iters) : (i += 1) {
-        if (ac.findFirst(test_uas[i % test_uas.len])) |p| hits +%= p.len;
+        std.mem.doNotOptimizeAway(ac);
+        hits += @intFromBool(ac.findFirst(test_uas[i % test_uas.len]) != null);
     }
     return hits;
 }
@@ -179,12 +164,16 @@ fn naiveBody(_: void, iters: u64) u64 {
     var i: u64 = 0;
     while (i < iters) : (i += 1) {
         const ua = test_uas[i % test_uas.len];
-        for (policy.bot_signatures.AI_SCRAPERS) |bot| {
-            if (std.ascii.indexOfIgnoreCase(ua, bot) != null) hits += 1;
-        }
-        for (policy.bot_signatures.SCRAPER_LIBRARIES) |lib| {
-            if (std.ascii.indexOfIgnoreCase(ua, lib) != null) hits += 1;
-        }
+        const found = blk: {
+            for (policy.bot_signatures.AI_SCRAPERS ++
+                policy.bot_signatures.SCRAPER_LIBRARIES ++
+                policy.bot_signatures.SEARCH_CRAWLERS) |pattern|
+            {
+                if (std.ascii.indexOfIgnoreCase(ua, pattern) != null) break :blk true;
+            }
+            break :blk false;
+        };
+        hits += @intFromBool(found);
     }
     return hits;
 }
@@ -209,7 +198,6 @@ fn benchBotMatcher(io: std.Io, gpa: std.mem.Allocator, runs: *Runs) !void {
     );
     naive.impl = "sibuna-naive";
     try runs.append(naive);
-    try runs.append(model("bot_matcher", "aho_corasick_40_signatures", 1_700.0, 512));
 }
 
 // ------------------------------------------------------------ ip filtering
@@ -258,7 +246,6 @@ fn benchIpFilter(io: std.Io, gpa: std.mem.Allocator, runs: *Runs) !void {
         "ip_filter",
         "ipv6_cidr_classification",
     ));
-    try runs.append(model("ip_filter", "ipv4_cidr_classification", 380.0, 64));
 }
 
 // ------------------------------------------------------------------ tokens
@@ -274,6 +261,7 @@ fn macBody(ctx: *const MacCtx, iters: u64) u64 {
     var ok: u64 = 0;
     var i: u64 = 0;
     while (i < iters) : (i += 1) {
+        std.mem.doNotOptimizeAway(ctx);
         if (crypto.MacToken.verify(&ctx.key, &ctx.token, ctx.now, ctx.fp)) |t| {
             ok +%= t.expiry;
         } else |_| {}
@@ -292,6 +280,7 @@ fn edBody(ctx: *const EdCtx, iters: u64) u64 {
     var ok: u64 = 0;
     var i: u64 = 0;
     while (i < iters) : (i += 1) {
+        std.mem.doNotOptimizeAway(ctx);
         if (crypto.Token.verify(ctx.public_key, &ctx.token, ctx.now, ctx.fp)) |t| {
             ok +%= t.expiry;
         } else |_| {}
@@ -327,7 +316,6 @@ fn benchTokens(io: std.Io, runs: *Runs) !void {
         "token_auth",
         "ed25519_compact_token",
     ));
-    try runs.append(model("token_auth", "blake3_mac_token", 62_500.0, 1536));
 }
 
 // ------------------------------------------------------------------- state
@@ -339,7 +327,7 @@ fn spentBody(s: *store.ChallengeStore, iters: u64) u64 {
         var t: store.ChallengeTag = undefined;
         std.mem.writeInt(u64, t[0..8], std.hash.Wyhash.hash(1, std.mem.asBytes(&i)), .little);
         std.mem.writeInt(u64, t[8..16], std.hash.Wyhash.hash(2, std.mem.asBytes(&i)), .little);
-        s.markSpent(&t, 200_000, 100) catch {};
+        s.markSpent(&t, 200_000, 100) catch @panic("spent benchmark insertion failed");
         if (s.isSpent(&t, 150)) n += 1;
     }
     return n;
@@ -365,7 +353,6 @@ fn benchState(io: std.Io, gpa: std.mem.Allocator, runs: *Runs) !void {
         "challenge_store",
         "robin_hood_spend_and_lookup",
     ));
-    try runs.append(model("challenge_store", "robin_hood_spend_and_lookup", 2_100.0, 256));
     const l = try gpa.create(store.RateLimiter);
     defer gpa.destroy(l);
     l.* = store.RateLimiter.init();
@@ -389,6 +376,7 @@ fn parseBody(_: void, iters: u64) u64 {
     var n: u64 = 0;
     var i: u64 = 0;
     while (i < iters) : (i += 1) {
+        std.mem.doNotOptimizeAway(&raw_req);
         const req = net.parseRequest(raw_req) catch continue;
         if (req.getCookie("__sibuna_token")) |c| n +%= c.len;
     }
@@ -404,6 +392,7 @@ fn policyBody(engine: *const policy.Engine, iters: u64) u64 {
         hdrs[idx] = .{ .name = h.name, .value = h.value };
     }
     while (i < iters) : (i += 1) {
+        std.mem.doNotOptimizeAway(engine);
         const d = engine.evaluateRequest(.{
             .path = req.path,
             .query = req.query,
@@ -422,6 +411,7 @@ fn wafBodyScan(ctx: BodyCtx, iters: u64) u64 {
     var n: u64 = 0;
     var i: u64 = 0;
     while (i < iters) : (i += 1) {
+        std.mem.doNotOptimizeAway(&ctx);
         const d = ctx.engine.evaluateRequest(.{
             .path = "/submit",
             .client_ip = "203.0.113.7",
@@ -439,7 +429,6 @@ fn benchHttpAndPolicy(io: std.Io, gpa: std.mem.Allocator, runs: *Runs) !void {
         "http_parser",
         "zero_copy_request_and_cookie",
     ));
-    try runs.append(model("http_parser", "zero_copy_request_and_cookie", 3_500.0, 4200));
     const engine = try gpa.create(policy.Engine);
     defer gpa.destroy(engine);
     engine.initInPlace(16);
@@ -476,18 +465,26 @@ fn printJson(io: std.Io, runs: []const Run) !void {
     var w = std.Io.File.stdout().writerStreaming(io, &buffer);
     const out = &w.interface;
     const zig_version = @import("builtin").zig_version_string;
-    try out.print("{{\"meta\":{{\"zig\":\"{s}\"}},\"runs\":[\n", .{zig_version});
+    try out.print("{{\"meta\":{{\"zig\":\"{s}\",\"engine_bytes\":{d}," ++
+        "\"bot_table_bytes\":{d},\"waf_table_bytes\":{d}," ++
+        "\"allocation_measurement\":\"not instrumented; API/source audit only\"}}," ++
+        "\"runs\":[\n", .{
+        zig_version,
+        @sizeOf(policy.Engine),
+        @sizeOf(policy.aho_corasick.BotMatcher),
+        @sizeOf(policy.waf.Signatures),
+    });
     for (runs, 0..) |r, idx| {
         const comma: []const u8 = if (idx + 1 < runs.len) "," else "";
         try out.print(
             "{{\"impl\":\"{s}\",\"subsystem\":\"{s}\",\"workload\":\"{s}\"," ++
                 "\"measured\":{},\"iterations\":{d},\"ns_per_op_median\":{d:.2}," ++
                 "\"ns_per_op_min\":{d:.2},\"ns_per_op_max\":{d:.2},\"ops_per_sec\":{d}," ++
-                "\"alloc_bytes\":{d},\"bytes_per_op\":{d}}}{s}\n",
+                "\"alloc_bytes\":null,\"bytes_per_op\":{d}}}{s}\n",
             .{
                 r.impl,        r.subsystem,        r.workload,      r.measured,
                 r.iterations,  r.ns_per_op_median, r.ns_per_op_min, r.ns_per_op_max,
-                r.ops_per_sec, r.alloc_bytes,      r.bytes_per_op,  comma,
+                r.ops_per_sec, r.bytes_per_op,     comma,
             },
         );
     }
@@ -497,13 +494,13 @@ fn printJson(io: std.Io, runs: []const Run) !void {
 
 fn printSummary(runs: []const Run) void {
     std.debug.print("\n=== Sibuna Benchmark Summary ===\n" ++
-        "(sibuna rows are wall-clock; anubis-model rows are reference models)\n\n", .{});
+        "(local wall-clock measurements; allocation counts are not instrumented)\n\n", .{});
     std.debug.print("{s:<13} | {s:<16} | {s:<36} | {s:>10} | {s:>12} | {s:>8}\n", .{
         "Impl", "Subsystem", "Workload", "ns/op", "ops/sec", "Alloc",
     });
     for (runs) |r| {
-        std.debug.print("{s:<13} | {s:<16} | {s:<36} | {d:>10.1} | {d:>12} | {d:>6} B\n", .{
-            r.impl, r.subsystem, r.workload, r.ns_per_op_median, r.ops_per_sec, r.alloc_bytes,
+        std.debug.print("{s:<13} | {s:<16} | {s:<36} | {d:>10.1} | {d:>12} | {s:>8}\n", .{
+            r.impl, r.subsystem, r.workload, r.ns_per_op_median, r.ops_per_sec, "n/a",
         });
     }
     std.debug.print("\n", .{});

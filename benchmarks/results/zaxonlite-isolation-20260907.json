@@ -1,0 +1,74 @@
+{
+  "note": "3-node loopback cluster, ReleaseFast, sequential single client; indicative numbers from the machine that last ran `zig build bench-cluster -- --record ...`",
+  "runs": [
+    {
+      "mode": "psk",
+      "sync": "full",
+      "writes": 300,
+      "payload_bytes": 256,
+      "write_ops_s": 65,
+      "write_p50_us": 15153,
+      "write_p95_us": 18044,
+      "write_p99_us": 22099,
+      "write_max_us": 27045,
+      "reads": 300,
+      "read_leader_ops_s": 12699,
+      "read_leader_p50_us": 73,
+      "read_linearizable_ops_s": 10304,
+      "read_linearizable_p50_us": 92,
+      "max_node_rss_mib": 12,
+      "max_node_cpu_ms": 800
+    },
+    {
+      "mode": "tls",
+      "sync": "full",
+      "writes": 300,
+      "payload_bytes": 256,
+      "write_ops_s": 63,
+      "write_p50_us": 15857,
+      "write_p95_us": 17968,
+      "write_p99_us": 23365,
+      "write_max_us": 29931,
+      "reads": 300,
+      "read_leader_ops_s": 10333,
+      "read_leader_p50_us": 91,
+      "read_linearizable_ops_s": 8608,
+      "read_linearizable_p50_us": 111,
+      "max_node_rss_mib": 17,
+      "max_node_cpu_ms": 850
+    }
+  ],
+  "meta": {
+    "dependency": "insanai/zaxonlite v0.6.0",
+    "zig": "0.16.0",
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "cpu": "Apple M1",
+    "date": "2026-09-07",
+    "command": "zig build bench-cluster -- --sync full <tls|psk> 300 300",
+    "limitations": "Sequential 256-byte writes, one client, three loopback processes; not Sibuna incident ingestion capacity or a transport comparison."
+  },
+  "reproduction": {
+    "uses_sibuna": false,
+    "transport": "plaintext loopback (test flags only)",
+    "sync": "full",
+    "first_failure_round_zero_based": 4,
+    "acknowledged_writes_on_failed_round": [
+      0,
+      1,
+      0
+    ],
+    "logs": [
+      "\nzaxon node 1\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n1\n  listen      127.0.0.1:51558\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 1: connected to peer 3\ninfo: node 1: connected to peer 2\ninfo: node 1: became leader; writes are ready\nwarning: step failure: ChainMismatch\n",
+      "\nzaxon node 2\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n2\n  listen      127.0.0.1:51559\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 2: connected to peer 1\ninfo: node 2: connected to peer 3\ninfo: node 2: leader is node 1; follower is ready\nwarning: step failure: ChainMismatch\n",
+      "\nzaxon node 3\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n3\n  listen      127.0.0.1:51560\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 3: connected to peer 2\ninfo: node 3: connected to peer 1\ninfo: node 3: leader is node 1; follower is ready\nwarning: step failure: ChainMismatch\n"
+    ],
+    "source_sha256": "7cb241350d790f54d2ae47b46e375a4c06c793d47cf4d322df0be871d02124b7",
+    "note": "Original reproduction: four passing fresh clusters, then failure on all three nodes. Test is scheduling dependent; frequency is not estimated.",
+    "validation": {
+      "script": "benchmarks/repro_zaxonlite.py",
+      "sha256": "f43c8ab031303a2e224ca1dbd9fdc3b398fd4b82b053042c3c104cd0a5c78cbd",
+      "rounds": 10,
+      "failures_observed": 0
+    }
+  }
+}

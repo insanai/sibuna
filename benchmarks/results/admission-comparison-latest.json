@@ -1,0 +1,242 @@
+{
+  "meta": {
+    "zaxonlite": {
+      "url": "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.6.1.tar.gz",
+      "hash": "zaxonlite-0.6.1-o9bF7AoyGwA_Sia-N5hzepceMrM2r4Fn3rVHWGancpp4"
+    },
+    "source_sha256": "ae9329b0d99deb3605b83d79ddc251c31a5ca1500250678fb93df6dcba06b382",
+    "daemon_sha256": "9dc332952456cc104044194f2df4aec148088dc8e66b232e152cb0767070d292",
+    "date": "2026-09-07T14:07:32.379543+00:00",
+    "host": "Vikrants-M1-MacBook-air.local",
+    "cpu": "Apple M1",
+    "os": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "git": "10bb70928a86025591ec93fe77de6bc41d620fde",
+    "dirty": true,
+    "zig": "0.16.0"
+  },
+  "anubis_version": "Anubis 1.27.0",
+  "runs": [
+    {
+      "product": "sibuna",
+      "token_scheme": "blake3",
+      "binary_sha256": "9dc332952456cc104044194f2df4aec148088dc8e66b232e152cb0767070d292",
+      "binary_bytes": 3297560,
+      "valid_session": {
+        "operations_per_second_median": 23430.633726007323,
+        "operations_per_second_batches": [
+          11098.881992968525,
+          13828.03114764016,
+          18818.511732354094,
+          23921.181620255786,
+          24798.51208927464,
+          23430.633726007323,
+          23990.28201656073
+        ],
+        "slowest_client_ns_per_operation_median": 82225.42,
+        "batches": 7,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "unauthenticated_check": {
+        "operations_per_second_median": 26232.804069022706,
+        "operations_per_second_batches": [
+          25869.73398928631,
+          27420.894831545218,
+          26112.360442489615,
+          26232.804069022706,
+          26655.11611634958,
+          26470.930021714103,
+          26121.309450794244
+        ],
+        "slowest_client_ns_per_operation_median": 73211.25,
+        "batches": 7,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "challenge_bootstrap": {
+        "operations_per_second_median": 13563.881337197954,
+        "operations_per_second_batches": [
+          13448.768597125325,
+          13563.881337197954,
+          13609.647280132405,
+          13543.904020853279,
+          13640.664785982744,
+          13707.549432850143,
+          13304.359100085168
+        ],
+        "slowest_client_ns_per_operation_median": 144320.42,
+        "batches": 7,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "proof_verification": {
+        "operations_per_second_median": 20998.518948210432,
+        "operations_per_second_batches": [
+          18234.917016881544,
+          19468.420852503896,
+          21011.162179908075,
+          20998.518948210432,
+          21483.4236923896,
+          20750.863511519485,
+          21087.022848448225
+        ],
+        "slowest_client_ns_per_operation_median": 86022.125,
+        "batches": 7,
+        "operations_per_batch": 64,
+        "clients": 2
+      },
+      "rss_kib_after_workload": 6400
+    },
+    {
+      "product": "anubis",
+      "token_scheme": "ed25519",
+      "binary_sha256": "544f8b488d3e215ad0b7ce4ef9019b44d21eecac5962efdb2cace4d41540fa0b",
+      "binary_bytes": 36793042,
+      "valid_session": {
+        "operations_per_second_median": 12143.936001457272,
+        "operations_per_second_batches": [
+          11311.737341458931,
+          12198.74810347588,
+          12143.936001457272,
+          11767.618714091112,
+          12681.805572068322,
+          12083.557558848284,
+          12266.394941485923
+        ],
+        "slowest_client_ns_per_operation_median": 161011.67,
+        "batches": 7,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "unauthenticated_check": {
+        "operations_per_second_median": 20759.18196782721,
+        "operations_per_second_batches": [
+          20767.892837672956,
+          21671.21238405766,
+          20292.806940627,
+          21006.013706634003,
+          20485.942955662682,
+          20083.178500395086,
+          20759.18196782721
+        ],
+        "slowest_client_ns_per_operation_median": 92492.5,
+        "batches": 7,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "challenge_bootstrap": {
+        "operations_per_second_median": 10550.957829140427,
+        "operations_per_second_batches": [
+          10550.494190423127,
+          9892.358771121731,
+          11432.73621104831,
+          10550.957829140427,
+          10576.857022416962,
+          11492.43654020198,
+          10469.742261643361
+        ],
+        "slowest_client_ns_per_operation_median": 186046.25,
+        "batches": 7,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "proof_verification": {
+        "operations_per_second_median": 13619.800295421981,
+        "operations_per_second_batches": [
+          12397.995011744195,
+          13619.800295421981,
+          13331.597448248926,
+          12123.127024230722,
+          13651.02976756349,
+          14198.164221735393,
+          13910.775417051567
+        ],
+        "slowest_client_ns_per_operation_median": 134867.1875,
+        "batches": 7,
+        "operations_per_batch": 64,
+        "clients": 2
+      },
+      "rss_kib_after_workload": 40448
+    },
+    {
+      "product": "anubis",
+      "token_scheme": "hs512",
+      "binary_sha256": "544f8b488d3e215ad0b7ce4ef9019b44d21eecac5962efdb2cace4d41540fa0b",
+      "binary_bytes": 36793042,
+      "valid_session": {
+        "operations_per_second_median": 16708.43776106934,
+        "operations_per_second_batches": [
+          16216.54405337708,
+          16240.412675382246,
+          16208.056992714965,
+          17105.409004013614,
+          16708.43776106934,
+          17991.20787662277,
+          16926.499721728345
+        ],
+        "slowest_client_ns_per_operation_median": 115340.41,
+        "batches": 7,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "unauthenticated_check": {
+        "operations_per_second_median": 20693.58053056892,
+        "operations_per_second_batches": [
+          20693.58053056892,
+          20445.716622367614,
+          21513.472812348733,
+          19834.3022555271,
+          20803.084348497847,
+          21070.930018173676,
+          19757.23299951842
+        ],
+        "slowest_client_ns_per_operation_median": 93460.42,
+        "batches": 7,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "challenge_bootstrap": {
+        "operations_per_second_median": 10671.266978719414,
+        "operations_per_second_batches": [
+          10560.056838449927,
+          10671.266978719414,
+          11357.586512866015,
+          10642.75594165109,
+          10623.01767850733,
+          11233.29945370218,
+          11024.92741601224
+        ],
+        "slowest_client_ns_per_operation_median": 183614.59,
+        "batches": 7,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "proof_verification": {
+        "operations_per_second_median": 15682.1118315898,
+        "operations_per_second_batches": [
+          13517.911972624539,
+          15152.713306402542,
+          15766.133065177686,
+          13783.820164221295,
+          15682.1118315898,
+          16305.387682247738,
+          16208.005437785825
+        ],
+        "slowest_client_ns_per_operation_median": 115604.15625,
+        "batches": 7,
+        "operations_per_batch": 64,
+        "clients": 2
+      },
+      "rss_kib_after_workload": 41328
+    }
+  ],
+  "limitations": [
+    "Two clients, two Sibuna workers, GOMAXPROCS=2; loopback HTTP forward-auth, no origin or TLS.",
+    "Hashcash work matched at 8 zero bits / 2 zero hex digits; same UA and client IP.",
+    "Default Anubis Ed25519 and optional HS512 are both tested; Sibuna uses its default MAC.",
+    "Bootstrap includes HTML plus JSON for Sibuna and HTML with embedded puzzle for Anubis; static assets excluded.",
+    "Fresh proofs are prepared outside timed verification; browser solve and network latency are not measured.",
+    "External Python/IPC costs limit throughput; sequential runs are not a universal product ranking.",
+    "Downloads/builds are supplied externally and must not be committed."
+  ]
+}

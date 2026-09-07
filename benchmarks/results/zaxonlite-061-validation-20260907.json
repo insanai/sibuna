@@ -1,0 +1,156 @@
+{
+  "date": "2026-09-07T13:44:43.940377+00:00",
+  "dependency": "Zaxonlite v0.6.1",
+  "command": "python3 benchmarks/repro_zaxonlite.py --zaxon <v0.6.1 CLI> --rounds 10",
+  "binary_sha256": "f28c9ce64bb114f21950b80840d2a8823154dbfda19f2988befc6cae96de73ee",
+  "script_sha256": "f43c8ab031303a2e224ca1dbd9fdc3b398fd4b82b053042c3c104cd0a5c78cbd",
+  "rounds": [
+    {
+      "round": 0,
+      "writes": [
+        43,
+        42,
+        41
+      ],
+      "ChainMismatch": false,
+      "node_logs": [
+        "\nzaxon node 1\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n1\n  listen      127.0.0.1:59619\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 1: connected to peer 2\ninfo: node 1: connected to peer 3\ninfo: node 1: leader is node 3; follower is ready\n",
+        "\nzaxon node 2\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n2\n  listen      127.0.0.1:59620\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 2: connected to peer 3\ninfo: node 2: connected to peer 1\ninfo: node 2: leader is node 3; follower is ready\n",
+        "\nzaxon node 3\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n3\n  listen      127.0.0.1:59621\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 3: connected to peer 2\ninfo: node 3: connected to peer 1\ninfo: node 3: became leader; writes are ready\n"
+      ]
+    },
+    {
+      "round": 1,
+      "writes": [
+        89,
+        90,
+        90
+      ],
+      "ChainMismatch": false,
+      "node_logs": [
+        "\nzaxon node 1\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n1\n  listen      127.0.0.1:60714\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 1: connected to peer 2\ninfo: node 1: connected to peer 3\ninfo: node 1: became leader; writes are ready\n",
+        "\nzaxon node 2\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n2\n  listen      127.0.0.1:60715\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 2: connected to peer 1\ninfo: node 2: connected to peer 3\ninfo: node 2: leader is node 1; follower is ready\n",
+        "\nzaxon node 3\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n3\n  listen      127.0.0.1:60716\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 3: connected to peer 1\ninfo: node 3: connected to peer 2\ninfo: node 3: leader is node 1; follower is ready\n"
+      ]
+    },
+    {
+      "round": 2,
+      "writes": [
+        90,
+        89,
+        89
+      ],
+      "ChainMismatch": false,
+      "node_logs": [
+        "\nzaxon node 1\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n1\n  listen      127.0.0.1:61807\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 1: connected to peer 2\ninfo: node 1: connected to peer 3\ninfo: node 1: leader is node 3; follower is ready\n",
+        "\nzaxon node 2\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n2\n  listen      127.0.0.1:61808\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 2: connected to peer 1\ninfo: node 2: connected to peer 3\ninfo: node 2: leader is node 3; follower is ready\n",
+        "\nzaxon node 3\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n3\n  listen      127.0.0.1:61809\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 3: connected to peer 1\ninfo: node 3: connected to peer 2\ninfo: node 3: became leader; writes are ready\n"
+      ]
+    },
+    {
+      "round": 3,
+      "writes": [
+        88,
+        90,
+        90
+      ],
+      "ChainMismatch": false,
+      "node_logs": [
+        "\nzaxon node 1\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n1\n  listen      127.0.0.1:62900\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 1: connected to peer 2\ninfo: node 1: connected to peer 3\ninfo: node 1: became leader; writes are ready\n",
+        "\nzaxon node 2\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n2\n  listen      127.0.0.1:62901\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 2: connected to peer 1\ninfo: node 2: connected to peer 3\ninfo: node 2: leader is node 1; follower is ready\n",
+        "\nzaxon node 3\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n3\n  listen      127.0.0.1:62902\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 3: connected to peer 1\ninfo: node 3: connected to peer 2\ninfo: node 3: leader is node 1; follower is ready\n"
+      ]
+    },
+    {
+      "round": 4,
+      "writes": [
+        89,
+        91,
+        91
+      ],
+      "ChainMismatch": false,
+      "node_logs": [
+        "\nzaxon node 1\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n1\n  listen      127.0.0.1:63994\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 1: connected to peer 2\ninfo: node 1: connected to peer 3\ninfo: node 1: became leader; writes are ready\n",
+        "\nzaxon node 2\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n2\n  listen      127.0.0.1:63995\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 2: connected to peer 1\ninfo: node 2: connected to peer 3\ninfo: node 2: leader is node 1; follower is ready\n",
+        "\nzaxon node 3\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n3\n  listen      127.0.0.1:63996\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 3: connected to peer 1\ninfo: node 3: connected to peer 2\ninfo: node 3: leader is node 1; follower is ready\n"
+      ]
+    },
+    {
+      "round": 5,
+      "writes": [
+        89,
+        90,
+        90
+      ],
+      "ChainMismatch": false,
+      "node_logs": [
+        "\nzaxon node 1\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n1\n  listen      127.0.0.1:65088\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 1: connected to peer 3\ninfo: node 1: connected to peer 2\ninfo: node 1: became leader; writes are ready\n",
+        "\nzaxon node 2\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n2\n  listen      127.0.0.1:65089\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 2: connected to peer 1\ninfo: node 2: connected to peer 3\ninfo: node 2: leader is node 1; follower is ready\n",
+        "\nzaxon node 3\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n3\n  listen      127.0.0.1:65090\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 3: connected to peer 1\ninfo: node 3: connected to peer 2\ninfo: node 3: leader is node 1; follower is ready\n"
+      ]
+    },
+    {
+      "round": 6,
+      "writes": [
+        88,
+        89,
+        88
+      ],
+      "ChainMismatch": false,
+      "node_logs": [
+        "\nzaxon node 1\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n1\n  listen      127.0.0.1:49797\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 1: connected to peer 3\ninfo: node 1: connected to peer 2\ninfo: node 1: became leader; writes are ready\n",
+        "\nzaxon node 2\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n2\n  listen      127.0.0.1:49798\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 2: connected to peer 1\ninfo: node 2: connected to peer 3\ninfo: node 2: leader is node 1; follower is ready\n",
+        "\nzaxon node 3\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n3\n  listen      127.0.0.1:49799\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 3: connected to peer 1\ninfo: node 3: connected to peer 2\ninfo: node 3: leader is node 1; follower is ready\n"
+      ]
+    },
+    {
+      "round": 7,
+      "writes": [
+        90,
+        90,
+        90
+      ],
+      "ChainMismatch": false,
+      "node_logs": [
+        "\nzaxon node 1\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n1\n  listen      127.0.0.1:50901\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 1: connected to peer 2\ninfo: node 1: connected to peer 3\ninfo: node 1: became leader; writes are ready\n",
+        "\nzaxon node 2\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n2\n  listen      127.0.0.1:50902\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 2: connected to peer 1\ninfo: node 2: connected to peer 3\ninfo: node 2: leader is node 1; follower is ready\n",
+        "\nzaxon node 3\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n3\n  listen      127.0.0.1:50903\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 3: connected to peer 1\ninfo: node 3: connected to peer 2\ninfo: node 3: leader is node 1; follower is ready\n"
+      ]
+    },
+    {
+      "round": 8,
+      "writes": [
+        90,
+        90,
+        90
+      ],
+      "ChainMismatch": false,
+      "node_logs": [
+        "\nzaxon node 1\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n1\n  listen      127.0.0.1:51997\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 1: connected to peer 3\ninfo: node 1: connected to peer 2\ninfo: node 1: leader is node 2; follower is ready\n",
+        "\nzaxon node 2\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n2\n  listen      127.0.0.1:51998\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 2: connected to peer 1\ninfo: node 2: connected to peer 3\ninfo: node 2: became leader; writes are ready\n",
+        "\nzaxon node 3\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n3\n  listen      127.0.0.1:51999\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 3: connected to peer 1\ninfo: node 3: connected to peer 2\ninfo: node 3: leader is node 2; follower is ready\n"
+      ]
+    },
+    {
+      "round": 9,
+      "writes": [
+        91,
+        91,
+        91
+      ],
+      "ChainMismatch": false,
+      "node_logs": [
+        "\nzaxon node 1\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n1\n  listen      127.0.0.1:53089\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 1: connected to peer 2\ninfo: node 1: connected to peer 3\ninfo: node 1: became leader; writes are ready\n",
+        "\nzaxon node 2\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n2\n  listen      127.0.0.1:53090\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 2: connected to peer 1\ninfo: node 2: connected to peer 3\ninfo: node 2: leader is node 1; follower is ready\n",
+        "\nzaxon node 3\n  state       starting; waiting for a leader\n  role        data-voter\n  data        <temporary-directory>/n3\n  listen      127.0.0.1:53091\n  transport   INSECURE TEST TCP\n  cluster     3 member(s), configuration 1\n  durability  full sync\n\ninfo: node 3: connected to peer 1\ninfo: node 3: connected to peer 2\ninfo: node 3: leader is node 1; follower is ready\n"
+      ]
+    }
+  ],
+  "acknowledged_writes": 2549,
+  "limitations": "Scheduling-dependent startup stress; no failures in ten rounds is not a proof over all schedules. Write acknowledgements are counted, not durable row uniqueness.",
+  "upstream_cluster_regression": {
+    "command": "zig build test-cluster -Doptimize=ReleaseFast --summary all",
+    "exit_code": 0,
+    "log": "=== cluster run 1/1\n== start three nodes\n== wait for one leader\n== reject a client with the wrong transport secret\n== create schema\n== create multimodal search schema and rows (ZDS 0009)\n== open sessions\n== submit requests 1..100 through all three endpoints\n== verify linearizable count = 100\n== verify session sequences occur exactly once\n== stream and verify an authenticated remote backup\n== stop one follower\n== insert 101..150 through the leader\n== restart follower and wait for catch-up\n== compare logical database hashes on all three nodes\n== hybrid search answers identically on every endpoint\n== typed search op round-trips on every endpoint\n== status reports the search capability manifest\n== arm leader failpoint: after quorum choice, before client reply\n== submit session write; leader dies before replying\n== retry the same session sequence at the new leader\n== assert session sequence applied exactly once\n== restart the killed leader\n== state anchor with a stopped follower (journal catch-up)\n== conservative trim advances once every data replica reported\n== delete a follower image; node rebuilds from anchor plus suffix\n== stop all nodes without graceful shutdown\n== restart all from the same directories\n== assert every acknowledged write is present exactly once\n== run integrity checks and compare logical hashes\n== stop cluster\nscenario complete\n=== takeover run 1/1\n== start two data voters and a slow witness\n== three clients write concurrently through the first election\n== seed table t and wait for both data voters to apply it\n== arm the leader to die after its own vote, before the decision\n== submit a write the crash leaves accepted but undecided\n== write at the new leader while the inherited slot is still open\nfirst write after takeover took 4144 ms\n== the recovered write and the new write are both visible once\n== restart the crashed leader and compare the data voters\n== stop cluster\ntakeover scenario complete\ncluster test: all 1 run(s) passed\nBuild Summary: 10/10 steps succeeded\ntest-cluster success\n+- run exe zaxon-cluster-test success 27s\n   +- compile exe zaxon-cluster-test ReleaseFast native success 8s MaxRSS:411M\n   |  +- WriteFile cached\n   |  +- compile lib sqlite3 ReleaseFast native cached 57ms MaxRSS:34M\n   |  +- compile lib sqlite3 ReleaseFast native (reused)\n   |  +- translate-c cached 46ms MaxRSS:33M\n   +- compile exe zaxon ReleaseFast native cached 72ms MaxRSS:35M\n      +- WriteFile (reused)\n      +- compile lib sqlite3 ReleaseFast native (reused)\n      +- compile lib sqlite3 ReleaseFast native (reused)\n      +- translate-c (reused)\n      +- run exe uucode_generate (tables.zig) cached\n      |  +- compile exe uucode_generate Debug native cached 57ms MaxRSS:35M\n      |     +- WriteFile build_config.zig cached\n      +- WriteFile build_config.zig (reused)\n\n"
+  }
+}

@@ -1,0 +1,153 @@
+{
+  "meta": {
+    "source_sha256": "5177642454d0147f819d885fdb0ad85ca64ac4984a63c8a03d9dcc0914f203d4",
+    "daemon_sha256": "9b3f4596873aece78a483330b4ed79edfb3956827cb1c2b3d07f9f6b7971833a",
+    "date": "2026-09-07T10:57:50.963208+00:00",
+    "host": "Vikrants-M1-MacBook-air.local",
+    "cpu": "Apple M1",
+    "os": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "git": "10bb70928a86025591ec93fe77de6bc41d620fde",
+    "dirty": true,
+    "zig": "0.16.0"
+  },
+  "runs": [
+    {
+      "profile": "gate",
+      "clustered": false,
+      "nodes": 3,
+      "workers_per_node": 2,
+      "transport": null,
+      "cross_node_session": "passed",
+      "authenticated_waf": "passed",
+      "cross_node_solution_replay_status": 200,
+      "replay_scope": "issuer-bound in cluster mode; verification requires sticky routing",
+      "rss_kb": [
+        6816,
+        6800,
+        6816
+      ],
+      "admitted": {
+        "path": "/private",
+        "expected_status": 200,
+        "batches": 7,
+        "requests_per_batch": 1200,
+        "requests_per_second_median": 45533.52369634771,
+        "requests_per_second_min": 32823.467269217996,
+        "requests_per_second_max": 46667.63890914394,
+        "slowest_client_ns_per_request_median": 128900.625
+      },
+      "challenged": {
+        "path": "/private",
+        "expected_status": 401,
+        "batches": 7,
+        "requests_per_batch": 1200,
+        "requests_per_second_median": 49830.78296617736,
+        "requests_per_second_min": 48935.649620748714,
+        "requests_per_second_max": 50089.221425664466,
+        "slowest_client_ns_per_request_median": 117991.045
+      },
+      "status": "passed"
+    },
+    {
+      "profile": "shield",
+      "clustered": false,
+      "nodes": 3,
+      "workers_per_node": 2,
+      "transport": null,
+      "cross_node_session": "passed",
+      "authenticated_waf": "passed",
+      "cross_node_solution_replay_status": 200,
+      "replay_scope": "issuer-bound in cluster mode; verification requires sticky routing",
+      "rss_kb": [
+        6832,
+        6768,
+        6768
+      ],
+      "admitted": {
+        "path": "/private",
+        "expected_status": 200,
+        "batches": 7,
+        "requests_per_batch": 1200,
+        "requests_per_second_median": 45011.60399150901,
+        "requests_per_second_min": 35199.604638040706,
+        "requests_per_second_max": 45724.446121684865,
+        "slowest_client_ns_per_request_median": 130565.0
+      },
+      "challenged": {
+        "path": "/private",
+        "expected_status": 401,
+        "batches": 7,
+        "requests_per_batch": 1200,
+        "requests_per_second_median": 49433.14803180479,
+        "requests_per_second_min": 48384.65803134922,
+        "requests_per_second_max": 49852.69152812084,
+        "slowest_client_ns_per_request_median": 118258.955
+      },
+      "status": "passed"
+    },
+    {
+      "profile": "shield",
+      "clustered": true,
+      "nodes": 3,
+      "workers_per_node": 2,
+      "transport": "loopback PSK",
+      "cross_node_session": "passed",
+      "authenticated_waf": "passed",
+      "cross_node_solution_replay_status": 400,
+      "replay_scope": "issuer-bound in cluster mode; verification requires sticky routing",
+      "rss_kb": [
+        22048,
+        19728,
+        19792
+      ],
+      "admitted": {
+        "path": "/private",
+        "expected_status": 200,
+        "batches": 7,
+        "requests_per_batch": 1200,
+        "requests_per_second_median": 45528.054292204746,
+        "requests_per_second_min": 29285.286005838167,
+        "requests_per_second_max": 45850.08931215314,
+        "slowest_client_ns_per_request_median": 128908.955
+      },
+      "challenged": {
+        "path": "/private",
+        "expected_status": 401,
+        "batches": 7,
+        "requests_per_batch": 1200,
+        "requests_per_second_median": 48758.85156001508,
+        "requests_per_second_min": 47503.743591893435,
+        "requests_per_second_max": 49795.88872693698,
+        "slowest_client_ns_per_request_median": 119769.165
+      },
+      "ban_propagation_ms": 162.775208,
+      "stopped_leader_node": 1,
+      "one_node_down": {
+        "path": "/private",
+        "expected_status": 200,
+        "batches": 7,
+        "requests_per_batch": 800,
+        "requests_per_second_median": 33949.913268580945,
+        "requests_per_second_min": 22887.714304106197,
+        "requests_per_second_max": 40257.22758135382,
+        "slowest_client_ns_per_request_median": 114602.92
+      },
+      "post_failover_ban_propagation_ms": 499.705958,
+      "status": "passed"
+    },
+    {
+      "profile": "shield",
+      "clustered": true,
+      "tls": true,
+      "status": "failed",
+      "error": "daemon exited with 1\nnode 1 log:\ninfo: node 1: connected to peer 3\ninfo: node 1: connected to peer 2\ninfo: node 1: leader is node 2; follower is ready\nstorage: startup retry 1: RemoteOperationFailed\nwarning: step failure: ChainMismatch\nstorage: startup retry 2: RemoteOperationFailed\nstorage: startup retry 3: RemoteOperationFailed\nstorage: startup retry 4: RemoteOperationFailed\nstorage: startup retry 5: RemoteOperationFailed\nstorage: startup retry 6: RemoteOperationFailed\nstorage: startup retry 7: RemoteOperationFailed\nstorage: startup retry 8: RemoteOperationFailed\nstorage: startup retry 9: RemoteOperationFailed\nstorage: startup retry 10: RemoteOperationFailed\nstorage: startup retry 11: RemoteOperationFailed\nstorage: startup retry 12: RemoteOperationFailed\nstorage: startup retry 13: RemoteOperationFailed\nstorage: startup retry 14: RemoteOperationFailed\nstorage: startup retry 15: RemoteOperationFailed\nstorage: startup retry 16: RemoteOperationFailed\nstorage: startup retry 17: RemoteOperationFailed\nstorage: startup retry 18: RemoteOperationFailed\nstorage: startup retry 19: RemoteOperationFailed\nstorage: startup retry 20: RemoteOperationFailed\nstorage: startup retry 21: RemoteOperationFailed\nstorage: startup retry 22: RemoteOperationFailed\nstorage: startup retry 23: RemoteOperationFailed\nstorage: startup retry 24: RemoteOperationFailed\nstorage: startup retry 25: RemoteOperationFailed\nstorage: startup retry 26: RemoteOperationFailed\nstorage: startup retry 27: RemoteOperationFailed\nstorage: startup retry 28: RemoteOperationFailed\nstorage: startup retry 29: RemoteOperationFailed\ninfo: node 1: shutting down\ninfo: node 1: stopped\nFailed to start persistent storage: RemoteOperationFailed\n\nnode 2 log:\ninfo: node 2: connected to peer 1\ninfo: node 2: connected to peer 3\ninfo: node 2: became leader; writes are ready\nwarning: step failure: ChainMismatch\nstorage: startup retry 1: RemoteOperationFailed\nstorage: startup retry 2: RemoteOperationFailed\nstorage: startup retry 3: RemoteOperationFailed\nstorage: startup retry 4: RemoteOperationFailed\nstorage: startup retry 5: RemoteOperationFailed\nstorage: startup retry 6: RemoteOperationFailed\nstorage: startup retry 7: RemoteOperationFailed\nstorage: startup retry 8: RemoteOperationFailed\nstorage: startup retry 9: RemoteOperationFailed\nstorage: startup retry 10: RemoteOperationFailed\nstorage: startup retry 11: RemoteOperationFailed\nstorage: startup retry 12: RemoteOperationFailed\nstorage: startup retry 13: RemoteOperationFailed\nstorage: startup retry 14: RemoteOperationFailed\nstorage: startup retry 15: RemoteOperationFailed\nstorage: startup retry 16: RemoteOperationFailed\nstorage: startup retry 17: RemoteOperationFailed\nstorage: startup retry 18: RemoteOperationFailed\nstorage: startup retry 19: RemoteOperationFailed\nstorage: startup retry 20: RemoteOperationFailed\nstorage: startup retry 21: RemoteOperationFailed\nstorage: startup retry 22: RemoteOperationFailed\nstorage: startup retry 23: RemoteOperationFailed\nstorage: startup retry 24: RemoteOperationFailed\nstorage: startup retry 25: RemoteOperationFailed\nstorage: startup retry 26: RemoteOperationFailed\nstorage: startup retry 27: RemoteOperationFailed\nstorage: startup retry 28: RemoteOperationFailed\nstorage: startup retry 29: RemoteOperationFailed\ninfo: node 2: shutting down\n\nnode 3 log:\ninfo: node 3: connected to peer 2\ninfo: node 3: connected to peer 1\ninfo: node 3: leader is node 2; follower is ready\nstorage: startup retry 1: RemoteOperationFailed\nwarning: step failure: ChainMismatch\nstorage: startup retry 2: RemoteOperationFailed\nstorage: startup retry 3: RemoteOperationFailed\nstorage: startup retry 4: RemoteOperationFailed\nstorage: startup retry 5: RemoteOperationFailed\nstorage: startup retry 6: RemoteOperationFailed\nstorage: startup retry 7: RemoteOperationFailed\nstorage: startup retry 8: RemoteOperationFailed\nstorage: startup retry 9: RemoteOperationFailed\nstorage: startup retry 10: RemoteOperationFailed\nstorage: startup retry 11: RemoteOperationFailed\nstorage: startup retry 12: RemoteOperationFailed\nstorage: startup retry 13: RemoteOperationFailed\nstorage: startup retry 14: RemoteOperationFailed\nstorage: startup retry 15: RemoteOperationFailed\nstorage: startup retry 16: RemoteOperationFailed\nstorage: startup retry 17: RemoteOperationFailed\nstorage: startup retry 18: RemoteOperationFailed\nstorage: startup retry 19: RemoteOperationFailed\nstorage: startup retry 20: RemoteOperationFailed\nstorage: startup retry 21: RemoteOperationFailed\nstorage: startup retry 22: RemoteOperationFailed\nstorage: startup retry 23: RemoteOperationFailed\nstorage: startup retry 24: RemoteOperationFailed\nstorage: startup retry 25: RemoteOperationFailed\nstorage: startup retry 26: RemoteOperationFailed\nstorage: startup retry 27: RemoteOperationFailed\nstorage: startup retry 28: RemoteOperationFailed\nstorage: startup retry 29: RemoteOperationFailed\ninfo: node 3: shutting down\ninfo: node 3: stopped\nFailed to start persistent storage: RemoteOperationFailed\n"
+    }
+  ],
+  "limitations": [
+    "One host, loopback, forward-auth; excludes origin proxy and client-facing TLS/WAN costs",
+    "External Python clients; batch throughput includes client and IPC overhead",
+    "No per-request benchmark clocks, allocations, or hooks in the daemon",
+    "Rate limits and spent sets are local; cluster challenges require issuer routing",
+    "Existing policy continues on quorum loss; fresh policy needs consensus"
+  ]
+}
