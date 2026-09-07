@@ -17,6 +17,7 @@ pub const App = struct {
     config: Config,
     mailbox: *Mailbox,
     passwords: Password,
+    totp_key: ?[32]u8,
     limiter: Limiter = .{},
     bootstrap_key: [32]u8,
     dummy_hash: p.Bytes(255),
@@ -35,6 +36,7 @@ pub const App = struct {
         cfg: Config,
         mailbox: *Mailbox,
         metrics: *const core.Metrics,
+        totp_key: ?[32]u8,
     ) !*App {
         const self = try gpa.create(App);
         errdefer gpa.destroy(self);
@@ -43,6 +45,7 @@ pub const App = struct {
         telemetry.* = store.ConsoleTelemetry.init();
         self.* = .{
             .gpa = gpa,
+            .totp_key = totp_key,
             .io = io,
             .config = cfg,
             .mailbox = mailbox,
@@ -53,7 +56,10 @@ pub const App = struct {
             .dummy_hash = .{},
             .setup_required = false,
         };
-        errdefer self.passwords.deinit();
+        errdefer {
+            self.passwords.deinit();
+            if (self.totp_key) |*key| std.crypto.secureZero(u8, key);
+        }
         io.random(&self.bootstrap_key);
         self.dummy_hash = try self.passwords.hash(io, "dummy password never grants access");
         const status = try self.request(.setup_status);
@@ -87,6 +93,7 @@ pub const App = struct {
         if (self.collector) |thread| thread.join();
         self.geo.deinit();
         self.passwords.deinit();
+        if (self.totp_key) |*key| std.crypto.secureZero(u8, key);
         self.gpa.destroy(self.telemetry);
         std.crypto.secureZero(u8, &self.bootstrap_key);
         self.gpa.destroy(self);
@@ -152,7 +159,7 @@ pub const App = struct {
         const self: *App = @ptrCast(@alignCast(raw));
         self.dispatch(context) catch |err| switch (err) {
             error.WriteFailed, error.ReadFailed, error.EndOfStream => return,
-            error.InvalidRequest, error.TooLarge, error.InvalidPassword => {
+            error.InvalidRequest, error.InvalidLimit, error.TooLarge, error.InvalidPassword => {
                 try http.fail(context, .bad_request, "CONSOLE002");
             },
             error.Busy => try http.fail(context, .too_many_requests, "CONSOLE003"),
@@ -182,6 +189,10 @@ pub const App = struct {
             const origin = try context.header("Origin") orelse return error.InvalidRequest;
             if (!std.mem.eql(u8, origin, self.config.origin.slice())) return error.InvalidRequest;
         }
+        if (std.mem.eql(u8, path, "/console/api/totp") or
+            std.mem.eql(u8, path, "/console/api/totp/enroll") or
+            std.mem.eql(u8, path, "/console/api/totp/confirm"))
+            return @import("totp_routes.zig").handle(self, context, path);
         if (std.mem.eql(u8, path, "/console/api/geoip"))
             return @import("geoip_routes.zig").handle(self, context);
         if (std.mem.eql(u8, path, "/console/api/setup")) {

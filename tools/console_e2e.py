@@ -36,11 +36,11 @@ def request(console_port, method, path, body=None, cookie=None, csrf=None):
         conn.close()
 
 
-def start(binary, directory, console_port, logfile):
+def start(binary, directory, console_port, logfile, key_file=None):
     proc = subprocess.Popen([
         binary, "--data-dir", directory, "--host", "127.0.0.1",
         "--port", str(port()), "--workers", "1", "--console", f"127.0.0.1:{console_port}",
-    ], stdout=logfile, stderr=logfile)
+    ] + (["--console-key-file", key_file] if key_file else []), stdout=logfile, stderr=logfile)
     deadline = time.monotonic() + 30
     while time.monotonic() < deadline:
         if proc.poll() is not None:
@@ -138,6 +138,8 @@ def check(binary):
                 assert json.loads(metadata[2])["ranges"] == 200
             finally:
                 stop(proc)
+    import console_totp_test
+    console_totp_test.check(binary, sys.modules[__name__])
     print("console-e2e: bootstrap, login, CSRF, stream delivery/revocation, restart persistence passed")
 
 

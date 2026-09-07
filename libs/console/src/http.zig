@@ -5,6 +5,7 @@ pub const digest = std.crypto.hash.sha2.Sha256.hash;
 
 pub fn json(context: *Context, value: anytype, extra: []const std.http.Header) Context.Error!void {
     var buffer: [16 * 1024]u8 = undefined;
+    defer std.crypto.secureZero(u8, &buffer);
     var writer: std.Io.Writer = .fixed(&buffer);
     std.json.Stringify.value(value, .{}, &writer) catch return error.TooLarge;
     try context.respond(.ok, "application/json", writer.buffered(), extra);

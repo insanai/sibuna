@@ -34,6 +34,9 @@ pub fn parse(args: []const []const u8, remaining: [][]const u8) !Parsed {
             if (config.enabled) return error.DuplicateConsole;
             try endpoint(&config, value);
             config.enabled = true;
+        } else if (std.mem.eql(u8, flag, "--console-key-file")) {
+            if (config.key_file.len != 0) return error.DuplicateConsoleKey;
+            config.key_file = try console.protocol.Bytes(1024).init(value);
         } else if (std.mem.eql(u8, flag, "--console-origin")) {
             if (config.origin.len != 0) return error.DuplicateOrigin;
             config.origin = try console.protocol.Bytes(255).init(value);
@@ -72,12 +75,17 @@ pub const Runtime = struct {
         try config.validate(true);
         // Off-loopback is fail-closed until the TOTP enrollment/verification route is wired.
         if (config.behind_proxy) return error.ConsoleTotpRequired;
+        var key: ?[32]u8 = null;
+        if (config.key_file.len != 0)
+            key = try @import("console_key.zig").read(io, config.key_file.slice());
+        defer if (key) |*bytes| std.crypto.secureZero(u8, bytes);
         const app = try console.App.init(
             gpa,
             io,
             config,
             &owner.console_mailbox,
             &owner.state.metrics,
+            key,
         );
         errdefer app.deinit();
         const host = if (config.host.len == 0) "127.0.0.1" else config.host.slice();

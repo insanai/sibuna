@@ -147,11 +147,19 @@ pub fn Bytes(comptime capacity: usize) type {
 
 pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
     switch (request) {
+        inline .geo_begin, .geo_activate, .totp_begin => |input| {
+            if (input.expected_revision >= std.math.maxInt(i64)) return error.InvalidLimit;
+        },
+        .totp_confirm => |input| {
+            if (input.expected_revision >= std.math.maxInt(i64) or
+                input.step > std.math.maxInt(i64)) return error.InvalidLimit;
+        },
         .incidents => |page| {
             if (page.limit == 0 or page.limit > max_page_rows) return error.InvalidLimit;
         },
         .policy_edit => |edit| {
             if (edit.document.len > max_message) return error.TooLarge;
+            if (edit.expected_revision >= std.math.maxInt(i64)) return error.InvalidLimit;
         },
         else => {},
     }

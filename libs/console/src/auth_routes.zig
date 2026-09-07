@@ -7,9 +7,10 @@ const Credentials = struct {
     username: []const u8,
     password: []const u8,
     setup_key: []const u8 = "",
+    code: []const u8 = "",
 };
 
-fn allowed(app: *App, context: *Context, username: []const u8) bool {
+pub fn allowed(app: *App, context: *Context, username: []const u8) bool {
     var hash = std.crypto.hash.sha2.Sha256.init(.{});
     hash.update("sibuna-console-address-v1");
     switch (context.peer) {
@@ -76,10 +77,15 @@ pub fn login(app: *App, context: *Context) !void {
         return http.fail(context, .unauthorized, "CONSOLE401");
     };
     if (result != .auth_user) return http.fail(context, .unauthorized, "CONSOLE401");
-    try establish(app, context, result.auth_user);
+    const factor = @import("totp_routes.zig").factor(
+        app,
+        result.auth_user,
+        input.value.code,
+    ) catch return http.fail(context, .unauthorized, "CONSOLE401");
+    try establish(app, context, result.auth_user, factor);
 }
 
-fn establish(app: *App, context: *Context, user: p.AuthUser) !void {
+fn establish(app: *App, context: *Context, user: p.AuthUser, factor: p.auth.Factor) !void {
     var raw: [32]u8 = undefined;
     app.io.random(&raw);
     var digest: [32]u8 = undefined;
@@ -89,6 +95,7 @@ fn establish(app: *App, context: *Context, user: p.AuthUser) !void {
     http.digest(&csrf, &csrf_digest, .{});
     const now = app.now();
     const result = try app.request(.{ .session_create = .{
+        .factor = factor,
         .user = user.id,
         .revision = user.revision,
         .digest = digest,

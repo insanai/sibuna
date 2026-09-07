@@ -206,6 +206,7 @@ fn loadCustomPolicy(
 fn printHelp() void {
     if (build_options.console) std.debug.print(
         "Console: --console <host:port> (requires --data-dir); " ++
+            "--console-key-file <path> (64 hex characters, owner-only permissions); " ++
             "--console-origin <https-origin>; --console-behind-proxy; " ++
             "--console-trusted-proxy <CIDR> (repeatable).\n",
         .{},
