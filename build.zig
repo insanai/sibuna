@@ -219,8 +219,14 @@ fn addServer(
 fn wireApp(b: *std.Build, root: *std.Build.Module, app: AppModules) void {
     for (app.imports) |imp| root.addImport(imp.name, imp.module);
     root.addAnonymousImport("wasm_solver", .{ .root_source_file = app.wasm_bin });
-    root.addAnonymousImport("challenge_html", .{ .root_source_file = b.path("apps/web/src/challenge.html") });
-    root.addAnonymousImport("worker_js", .{ .root_source_file = b.path("apps/web/src/worker.js") });
+    root.addAnonymousImport(
+        "challenge_html",
+        .{ .root_source_file = b.path("apps/web/src/challenge.html") },
+    );
+    root.addAnonymousImport(
+        "worker_js",
+        .{ .root_source_file = b.path("apps/web/src/worker.js") },
+    );
     root.addOptions("build_options", app.options);
     if (app.zaxonlite) |z| root.addImport("zaxonlite", z);
 }
