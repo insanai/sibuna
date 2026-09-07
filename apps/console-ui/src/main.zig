@@ -97,6 +97,8 @@ fn finish() void {
         command(.{ .op = "timer", .id = "age", .delay_ms = 1000 }) catch unreachable;
     command_writer.writeByte(']') catch unreachable;
     commands_length = command_writer.buffered().len;
+    // Enrollment markup contains a seed or recovery values; erase its old buffer tail.
+    std.crypto.secureZero(u8, html[0..html_length]);
     var writer: std.Io.Writer = .fixed(&html);
     render.render(&state, &writer) catch {
         html_length = 0;
@@ -177,6 +179,8 @@ fn action(value: std.json.Value) !void {
         return refresh();
     }
     if (equal(name, "account")) {
+        state.totp_secret = .{};
+        state.totp_uri = .{};
         state.phase = .password;
         state.stats_busy = false;
         try command(.{ .op = "disconnect" });
@@ -443,6 +447,7 @@ fn setMessage(message: []const u8) void {
 test {
     _ = @import("render.zig");
     _ = @import("geography.zig");
+    _ = @import("qr.zig");
 }
 
 test "required password changes cannot open subscriptions through navigation" {
@@ -465,6 +470,7 @@ test "required password changes cannot open subscriptions through navigation" {
 fn securityAction(name: []const u8, fields: std.json.Value) !bool {
     if (equal(name, "recovery-saved")) {
         state.totp_secret = .{};
+        state.totp_uri = .{};
         state.recovery_codes = @splat(.{});
         state.recovery_count = 0;
         state.csrf = .{};
@@ -475,6 +481,7 @@ fn securityAction(name: []const u8, fields: std.json.Value) !bool {
         state.phase = .security;
         state.message = .{};
         state.totp_secret = .{};
+        state.totp_uri = .{};
         state.stats_busy = false;
         try command(.{ .op = "disconnect" });
         try get("totp", "/console/api/totp");
@@ -516,6 +523,7 @@ fn securityResponse(id: []const u8, status: i64, body: std.json.Value) !void {
         state.totp_revision = number(body, "revision");
     } else if (equal(id, "totp-enroll")) {
         state.totp_secret = try p.Bytes(32).init(string(body, "secret"));
+        state.totp_uri = try p.Bytes(134).init(string(body, "uri"));
         state.totp_revision = number(body, "revision");
     } else if (equal(id, "totp-confirm")) {
         const codes = field(body, "recovery_codes") orelse return error.InvalidResponse;
@@ -526,6 +534,7 @@ fn securityResponse(id: []const u8, status: i64, body: std.json.Value) !void {
         }
         state.recovery_count = 10;
         state.totp_secret = .{};
+        state.totp_uri = .{};
         state.csrf = .{};
         state.geometry = null;
         state.stats = null;

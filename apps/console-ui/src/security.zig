@@ -35,6 +35,9 @@ pub fn page(state: *const State, w: *Writer) Writer.Error!void {
 fn enrollment(state: *const State, w: *Writer) Writer.Error!void {
     const pending = state.totp_secret.len != 0;
     if (pending) {
+        var qr = @import("qr.zig").encode(state.totp_uri.slice()) catch unreachable;
+        defer std.crypto.secureZero(u8, std.mem.asBytes(&qr));
+        try qr.svg(w);
         try w.writeAll("<p>Add this key to your authenticator: Sibuna, six digits, " ++
             "30 seconds, SHA-1.</p><p><code>");
         try render.escape(w, state.totp_secret.slice());

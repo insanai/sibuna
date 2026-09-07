@@ -59,3 +59,5 @@ button, input, select, textarea { font: inherit; }
 .sb-panel a { text-decoration: underline; text-underline-offset: 3px; }
 
 .sb-auth code { font-size: 13px; overflow-wrap: anywhere; }
+
+.sb-qr { display: block; width: 245px; max-width: 100%; margin: 18px auto; }

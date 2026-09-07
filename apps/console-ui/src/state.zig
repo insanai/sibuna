@@ -29,6 +29,7 @@ pub const State = struct {
     totp_enabled: bool = false,
     totp_revision: u64 = 0,
     totp_secret: p.Bytes(32) = .{},
+    totp_uri: p.Bytes(134) = .{},
     recovery_codes: [10]p.Bytes(32) = @splat(.{}),
     recovery_count: usize = 0,
     stats: ?p.StatsSnapshot = null,
