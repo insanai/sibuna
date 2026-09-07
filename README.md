@@ -29,6 +29,29 @@ reach the origin.
 cluster build. Distributed edge deployment is an option, not a third surface. Valid sessions
 still undergo policy denial checks and, in Shield, WAF inspection.
 
+## How Sibuna compares
+
+Facts about other products were read from their public documentation and release artefacts
+in September 2026 (Anubis 1.27.0, SafeLine community edition 9.x, Cloudflare WAF developer
+docs); the book's Part II carries the full table with sources.
+
+| | Sibuna | Anubis | SafeLine CE | Cloudflare WAF |
+|---|---|---|---|---|
+| Runs as | One static binary, reverse proxy or forward auth | One Go binary | Seven Docker containers | Hosted network |
+| Proof-of-work admission | Hashcash and Cohen–Pietrzak sequential work, WASM + JS | SHA-256 Hashcash (JS), meta-refresh, preact | JS anti-bot challenge, CAPTCHA | Managed challenge, Turnstile |
+| Challenge state on server | None until solved | Store: memory, bbolt, Valkey, S3 | Managed by the stack | Managed |
+| Session token | Keyed BLAKE3 tag (Ed25519 optional) | Ed25519 JWT (HS512 optional) | Cookie | `cf_clearance` |
+| SQLi / XSS / RCE inspection | Shield: automaton + structural tokenizers | — | Semantic engine | Managed rulesets (Pro+) |
+| Rate limiting | GCRA per client | — | Per IP, path, session | 1 / 2 / 5 / 100 rules by plan |
+| Reputation, bans | Honeypot; cluster-replicated trie | DNSBL; ASN/GeoIP via paid Thoth | IP groups; threat intel (Pro) | IP lists; bot score (Enterprise) |
+| Forensics | Embedded SQLite, FTS5, vector campaigns | Metrics only | PostgreSQL log + console | Security Events |
+| Multi-node | Multi-Paxos replication, shared seed | Shared key + Valkey | One stack per host | Global anycast |
+| Host footprint | 3.3 MB binary, ~7 MB idle | 37 MB binary, ~40 MB under load | 1 core, 1 GB RAM, 5 GB disk min. | none on premises |
+| Measured here | Yes | Yes | No (Docker only) | No (hosted) |
+
+Sibuna does not terminate TLS, ship a console, look up geography, or score bots with a model;
+an ingress or a hosted edge does those.
+
 ## Research foundations
 
 Every mechanism was chosen for a published security or complexity argument, not for
@@ -126,13 +149,25 @@ links OpenSSL 3 for Zaxonlite's mutual TLS. The dependency is the official
 
 ## Measured performance
 
-Current results: [primitive measurements](benchmarks/results/latest.json) and
+Current results: [primitive measurements](benchmarks/results/latest.json),
+[whole-product comparison](benchmarks/results/tools-comparison-latest.json),
+[admission comparison](benchmarks/results/admission-comparison-latest.json), and
 [distributed measurements](benchmarks/results/distributed-latest.json).
 
 ```sh
-sh benchmarks/run-all.sh
-python3 benchmarks/distributed.py
+sh benchmarks/run-all.sh                               # primitives
+python3 benchmarks/tools.py --anubis /path/to/anubis   # whole products under wrk
+python3 benchmarks/compare.py --anubis /path/to/anubis # admission operations
+python3 benchmarks/distributed.py                      # three-node runs
 ```
+
+`tools.py` starts Sibuna Gate, Sibuna Shield, and Anubis as complete processes in forward-auth
+and reverse-proxy modes, obtains a session by solving each product's challenge, and drives
+four workloads with `wrk` (admitted, challenged, allowed static path, SQL injection with a
+valid session). It records requests per second, p50/p99 latency, CPU microseconds per
+request, and peak resident memory of the product process. SafeLine and Cloudflare are listed
+as not measured with the published facts that stand in; the Anubis binary is supplied from its
+official release and never committed.
 
 Both harnesses run outside the daemon. Primitive operations are timed in seven batches,
 with warmup and state reset outside the timer. There are no per-operation clock reads or

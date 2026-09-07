@@ -74,6 +74,17 @@
   not proofs of optimality or deployment capacity.
 ])
 
+#callout([Whole-product measurement — 2026-09-07, later the same day], [
+  Driving the daemon with an external load generator (`benchmarks/tools.py`, results in
+  `tools-comparison-latest.json`) exposed three limits invisible to the primitive suite:
+  accept threads served one connection to completion (tail latency over 100 ms at 64
+  clients), every proxied response closed the client connection, and every proxied request
+  opened a new origin connection (about 1,400 requests per second before ephemeral-port
+  exhaustion). The request contract below now describes bounded per-connection threads with a
+  `503` overload path, origin response framing, and a pooled origin connection with one safe
+  retry.
+])
+
 = Decision
 
 Sibuna provides two product surfaces from one Zig binary. Persistent storage and distributed
@@ -93,8 +104,13 @@ edge deployment are options for these surfaces, not a third product.
 
 = Request contract
 
-The server runs bounded blocking accept threads. Each active connection owns a 64 KB read
-buffer, with a 16 KB head limit, and bounded write buffers. HTTP/1.0 and HTTP/1.1 are supported.
+The server runs bounded blocking accept threads (`--workers`, one per CPU by default). Each
+accepted connection is served on its own thread with a one-megabyte stack, so a slow or idle
+peer never delays another connection; the number of connection threads is bounded by
+`--max-connections` (1,024 by default), beyond which the accept loop answers `503` and closes
+the socket without spawning, counting the event in `sibuna_overloaded_total`. The idle reaper
+closes connections silent for longer than `--idle-timeout`. Each active connection owns a
+64 KB read buffer, with a 16 KB head limit, and bounded write buffers. HTTP/1.0 and HTTP/1.1 are supported.
 Transfer-Encoding is rejected: chunked request decoding is not implemented. Invalid header
 names, request-line control bytes, conflicting lengths, and invalid decimal lengths are refused.
 Truncated bodies fail closed. Requests whose declared body exceeds the buffered prefix do not
@@ -109,6 +125,12 @@ The response path applies these checks in order:
   bot signatures and default admission.
 + A valid session satisfies an admission challenge; it never overrides a denial or WAF finding.
 + An admitted reverse-proxy request streams to the origin; forward auth returns a verdict.
+  The proxy reads the origin's response head (at most 16 KB), classifies the body framing
+  by RFC 9112 (no body, `Content-Length`, chunked, or close-delimited), relays it exactly, and
+  keeps the client connection open unless the response was close-delimited. Origin sockets
+  left at a clean boundary by a persistent response return to a fixed pool of 256; a pooled
+  socket the origin has closed is retried once on a fresh connection before any byte reaches
+  the client, and only when the request body was fully buffered.
 
 The server's primitive parsing, evaluation and verification routines take no allocator.
 This is a source/API contract, not a claim that the networking runtime, thread creation,
