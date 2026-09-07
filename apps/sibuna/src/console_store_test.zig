@@ -207,3 +207,94 @@ test "GeoIP publication rejects incomplete generations and audits the pointer co
     fx.owner.console_initialized = false;
     try t.expectEqual(@as(u64, 1), (try fx.run(.geo_metadata)).geo_metadata.revision);
 }
+
+test "authentication migration rolls back completely and refuses future schemas" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try Fixture.open(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/console-migrate",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try fx.owner.db.exec(t.allocator, @import("console").schema.sql);
+    // Force a failure after ALTERs: the original marker and session columns must survive.
+    try fx.owner.db.exec(t.allocator, "CREATE TABLE console_totp(dummy INTEGER)");
+    if (@import("console_migrations.zig").run(fx.owner)) |_| {
+        return error.ExpectedMigrationFailure;
+    } else |_| {}
+    var columns = try db.query(
+        fx.owner.db,
+        t.allocator,
+        "PRAGMA table_info(console_sessions)",
+        &.{},
+    );
+    defer columns.deinit();
+    try t.expectEqual(6, columns.rows.len);
+    try fx.owner.db.exec(t.allocator, "DROP TABLE console_totp");
+    try @import("console_migrations.zig").run(fx.owner);
+    fx.owner.console_initialized = false;
+    try @import("console_migrations.zig").run(fx.owner);
+    try fx.owner.db.exec(
+        t.allocator,
+        "DROP TABLE console_schema;CREATE TABLE console_schema(version INTEGER);" ++
+            "INSERT INTO console_schema VALUES(3)",
+    );
+    fx.owner.console_initialized = false;
+    try t.expectError(
+        error.UnsupportedConsoleSchema,
+        @import("console_migrations.zig").run(fx.owner),
+    );
+}
+
+test "session idle activity never revives expiry or extends the absolute lifetime" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try geoFixture(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/console-idle",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    _ = try fx.run(.{ .session_create = .{
+        .user = 1,
+        .revision = 1,
+        .digest = @splat(3),
+        .csrf_digest = @splat(4),
+        .now = 100,
+        .expires = 43300,
+    } });
+    // Passive stream checks do not keep an unattended dashboard authorized forever.
+    try t.expect((try fx.run(.{ .authorize = .{
+        .session_digest = @splat(3),
+        .now = 1899,
+    } })) == .authorized);
+    try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .authorize = .{
+        .session_digest = @splat(3),
+        .now = 1900,
+        .touch = true,
+    } })).failed);
+    _ = try fx.run(.{ .session_create = .{
+        .user = 1,
+        .revision = 1,
+        .digest = @splat(5),
+        .csrf_digest = @splat(6),
+        .now = 100,
+        .expires = 43300,
+    } });
+    var now: u64 = 100;
+    while (now < 43300) : (now += 900) {
+        try t.expect((try fx.run(.{ .authorize = .{
+            .session_digest = @splat(5),
+            .now = now,
+            .touch = true,
+        } })) == .authorized);
+    }
+    try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .authorize = .{
+        .session_digest = @splat(5),
+        .now = 43300,
+        .touch = true,
+    } })).failed);
+}

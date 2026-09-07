@@ -8,7 +8,8 @@ const Persistent = @import("persistent.zig").Persistent;
 const util = @import("console_store.zig");
 const authorized =
     "SELECT u.id FROM console_users u JOIN console_sessions s ON s.user_id=u.id " ++
-    "WHERE s.digest=? AND s.csrf_digest=? AND s.expires>? AND s.revision=u.revision " ++
+    "WHERE s.digest=? AND s.csrf_digest=? AND MIN(s.expires,s.idle_expires)>? " ++
+    "AND s.revision=u.revision " ++
     "AND u.disabled=0 AND u.must_change=0 AND u.role='admin'";
 
 fn text(value: []const u8) zx.Value {

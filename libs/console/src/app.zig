@@ -236,6 +236,7 @@ pub const App = struct {
         const result = try self.request(.{ .authorize = .{
             .session_digest = digest,
             .now = self.now(),
+            .touch = true,
         } });
         if (result != .authorized) {
             try http.fail(context, .unauthorized, "CONSOLE401");

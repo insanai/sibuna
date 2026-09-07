@@ -22,34 +22,8 @@ pub fn tick(owner: *Persistent) void {
     }
 }
 
-fn migrate(owner: *Persistent) !void {
-    var tables = try db.query(
-        owner.db,
-        owner.gpa,
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='console_schema' LIMIT 1",
-        &.{},
-    );
-    defer tables.deinit();
-    if (tables.rows.len != 0) {
-        var versions = try db.query(
-            owner.db,
-            owner.gpa,
-            "SELECT version FROM console_schema LIMIT 2",
-            &.{},
-        );
-        defer versions.deinit();
-        if (versions.rows.len != 1 or try number(versions.rows[0][0]) != console.schema.version)
-            return error.UnsupportedConsoleSchema;
-    }
-    try owner.db.exec(
-        owner.gpa,
-        console.schema.sql,
-    );
-    owner.console_initialized = true;
-}
-
 pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
-    if (!owner.console_initialized) try migrate(owner);
+    if (!owner.console_initialized) try @import("console_migrations.zig").run(owner);
     return switch (request) {
         .geo_prune => |now| @import("console_store_geo.zig").prune(owner, now),
         .geo_metadata => @import("console_store_geo.zig").metadata(owner),
@@ -75,7 +49,10 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
         ),
         .auth_user => |username| auth.user(owner, username.slice()),
         .session_create => |input| auth.session(owner, input),
-        .authorize => |input| authorize(owner, input.session_digest, input.now),
+        .authorize => |input| blk: {
+            if (input.touch) try auth.touch(owner, input.session_digest, input.now);
+            break :blk try authorize(owner, input.session_digest, input.now);
+        },
         .logout => |digest| auth.logout(owner, digest),
         .password_change => |input| auth.password(owner, input),
         else => .{ .failed = .invalid_input },
@@ -89,9 +66,9 @@ pub fn authorize(owner: *Persistent, digest: [32]u8, now: u64) !p.StorageResult 
         owner.gpa,
         "SELECT u.id,u.role,u.revision,s.expires,s.csrf_digest,u.must_change,u.username " ++
             "FROM console_sessions s JOIN console_users u ON u.id=s.user_id " ++
-            "WHERE s.digest=? AND s.expires>? AND s.revision=u.revision " ++
+            "WHERE s.digest=? AND s.expires>? AND s.idle_expires>? AND s.revision=u.revision " ++
             "AND u.disabled=0 LIMIT 1",
-        &.{ text(&hex), integer(now) },
+        &.{ text(&hex), integer(now), integer(now) },
     );
     defer result.deinit();
     if (result.rows.len != 1) return .{ .failed = .unauthorized };

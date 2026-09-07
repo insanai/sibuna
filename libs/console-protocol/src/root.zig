@@ -85,7 +85,7 @@ pub const StorageRequest = union(enum) {
         password_hash: Bytes(255),
         now: u64,
     },
-    authorize: struct { session_digest: [32]u8, now: u64 },
+    authorize: struct { session_digest: [32]u8, now: u64, touch: bool = false },
     incidents: struct { before_id: ?u64, limit: u16 },
     policy_edit: struct {
         actor: u64,

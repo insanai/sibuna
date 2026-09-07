@@ -94,7 +94,7 @@ fn establish(app: *App, context: *Context, user: p.AuthUser) !void {
         .digest = digest,
         .csrf_digest = csrf_digest,
         .now = now,
-        .expires = now + 86400,
+        .expires = now + 43200,
     } });
     if (result != .command_recorded) return http.fail(context, .conflict, "CONSOLE409");
     const encoded = std.fmt.bytesToHex(raw, .lower);
@@ -102,7 +102,7 @@ fn establish(app: *App, context: *Context, user: p.AuthUser) !void {
     var cookie: [256]u8 = undefined;
     const value = try std.fmt.bufPrint(
         &cookie,
-        "__sibuna_console={s}; HttpOnly; SameSite=Strict; Path=/console; Max-Age=86400{s}",
+        "__sibuna_console={s}; HttpOnly; SameSite=Strict; Path=/console; Max-Age=43200{s}",
         .{ encoded, if (app.config.behind_proxy or app.config.cookie_secure) "; Secure" else "" },
     );
     try http.json(context, .{

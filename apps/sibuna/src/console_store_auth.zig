@@ -48,7 +48,7 @@ pub fn user(owner: *Persistent, username: []const u8) !p.StorageResult {
 }
 
 pub fn session(owner: *Persistent, input: anytype) !p.StorageResult {
-    if (input.expires <= input.now or input.expires - input.now > 86400)
+    if (input.expires <= input.now or input.expires - input.now > 43200)
         return .{ .failed = .invalid_input };
     const digest = std.fmt.bytesToHex(input.digest, .lower);
     const csrf = std.fmt.bytesToHex(input.csrf_digest, .lower);
@@ -57,14 +57,16 @@ pub fn session(owner: *Persistent, input: anytype) !p.StorageResult {
     const changes = try db.exec(
         owner.db,
         owner.gpa,
-        "INSERT INTO console_sessions(digest,user_id,revision,csrf_digest,created_at,expires) " ++
-            "SELECT ?,id,revision,?,?,? FROM console_users WHERE id=? AND revision=? " ++
+        "INSERT INTO console_sessions(digest,user_id,revision,csrf_digest,created_at,expires," ++
+            "idle_expires) SELECT ?,id,revision,?,?,?,? FROM console_users " ++
+            "WHERE id=? AND revision=? " ++
             "AND disabled=0 AND (SELECT COUNT(*) FROM console_sessions WHERE expires>?)<4096",
         &.{
             text(&digest),
             text(&csrf),
             integer(input.now),
             integer(input.expires),
+            integer(@min(input.expires, input.now + 1800)),
             integer(input.user),
             integer(input.revision),
             integer(input.now),
@@ -93,15 +95,30 @@ pub fn password(owner: *Persistent, input: anytype) !p.StorageResult {
         "UPDATE console_users SET password_hash=?,revision=revision+1,must_change=0," ++
             "modified_at=?,modified_by=id WHERE disabled=0 AND id=(SELECT user_id " ++
             "FROM console_sessions WHERE digest=? AND csrf_digest=? AND expires>? " ++
-            "AND revision=console_users.revision)",
+            "AND idle_expires>? AND revision=console_users.revision)",
         &.{
             text(input.password_hash.slice()),
             integer(input.now),
             text(&digest),
             text(&csrf),
             integer(input.now),
+            integer(input.now),
         },
     );
     // The user-update trigger audits and deletes every old session in the same commit.
     return if (changes == 0) .{ .failed = .unauthorized } else .command_recorded;
+}
+
+/// Only authenticated HTTP activity refreshes idle lifetime. Subscription heartbeats
+/// recheck authorization without touching it; absolute expiry is never extended.
+pub fn touch(owner: *Persistent, digest: [32]u8, now: u64) !void {
+    const hex = std.fmt.bytesToHex(digest, .lower);
+    _ = try db.exec(
+        owner.db,
+        owner.gpa,
+        "UPDATE console_sessions SET idle_expires=MIN(expires,?) WHERE digest=? " ++
+            "AND MIN(expires,idle_expires)>? AND EXISTS(SELECT 1 FROM console_users u " ++
+            "WHERE u.id=user_id AND u.revision=console_sessions.revision AND u.disabled=0)",
+        &.{ integer(now + 1800), text(&hex), integer(now) },
+    );
 }
