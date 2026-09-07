@@ -74,3 +74,16 @@
 #document("pdf/sid-0005-zaxonlite-storage-architecture.pdf")[
   #include "records/0005-zaxonlite-storage-architecture.typ"
 ]
+
+#document(
+  "sid/0006-mathematical-foundations.html",
+  title: [SID 0006: Mathematical Foundations of Sibuna: Sequential Work, Symmetric Authentication, Bounded State, and Linear-Time Inspection],
+  author: ("Sibuna Contributors",),
+  description: [Proofs, lemmas, and citations for every Sibuna hot-path primitive and their pure-Zig realisation.],
+)[
+  #include "records/0006-mathematical-foundations.typ"
+]
+
+#document("pdf/sid-0006-mathematical-foundations.pdf")[
+  #include "records/0006-mathematical-foundations.typ"
+]
