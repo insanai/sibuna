@@ -211,6 +211,8 @@ Design records are Typst papers under `docs/sid/records/`:
 - **SID 0005** Zaxonlite storage: dynamic policies, replicated reputation, forensics (Edge)
 - **SID 0006** Mathematical foundations: proofs of sequential work, keyed authentication,
   rate limiting, hashing, and inspection automata
+- **SID 0007** The Sibuna Console: a real-time management interface for nodes and clusters
+  in pure Zig (proposed)
 
 ```sh
 zig build sid                 # all SID PDFs into docs/build/
