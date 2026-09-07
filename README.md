@@ -71,7 +71,8 @@ Common flags (`--help` lists all of them):
 | `--rate-limit`, `--rate-window` | `100`, `10` | GCRA burst and window (seconds) |
 | `--idle-timeout` | `15` | Seconds before an idle connection is reaped (slowloris guard) |
 | `--policy-file <json>` | none | Declarative rules (SID 0003) |
-| `--workers <n>` | CPU count | Accept threads |
+| `--workers <n>` | CPU count | Accept threads; each connection is then served on its own thread |
+| `--max-connections <n>` | `1024` | Concurrent connections; further ones are answered 503 |
 | `--trust-forwarded` | auto in forward-auth | Honour `X-Forwarded-For` / `X-Real-IP` |
 | `--data-dir <path>` | none | Enable the Zaxonlite store (Edge) |
 

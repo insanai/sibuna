@@ -84,8 +84,11 @@ pub const Config = struct {
     /// Trust `X-Forwarded-For` / `X-Real-IP` from the peer. Defaults to on
     /// in forward-auth mode, where the ingress is the only peer.
     trust_forwarded: ?bool = null,
-    /// Accept worker threads; zero means one per CPU.
+    /// Accept threads; zero means one per CPU. Each accepted connection is
+    /// then served on its own thread up to `max_connections`.
     workers: u16 = 0,
+    /// Connections served concurrently; further ones are answered 503.
+    max_connections: u32 = 1024,
     /// Socket read/write timeout; bounds how long an idle or trickling
     /// connection can hold a worker thread.
     idle_timeout_seconds: u32 = 15,
@@ -183,6 +186,8 @@ pub const Config = struct {
             cfg.policy_file = v;
         } else if (eqlAny(arg, "--workers", "-w")) {
             cfg.workers = std.fmt.parseInt(u16, v, 10) catch cfg.workers;
+        } else if (eqlAny(arg, "--max-connections", "--max-connections")) {
+            cfg.max_connections = std.fmt.parseInt(u32, v, 10) catch cfg.max_connections;
         } else if (eqlAny(arg, "--idle-timeout", "--idle-timeout")) {
             cfg.idle_timeout_seconds = std.fmt.parseInt(u32, v, 10) catch cfg.idle_timeout_seconds;
         } else if (eqlAny(arg, "--rate-limit", "--rate-limit")) {
@@ -238,23 +243,24 @@ test "config defaults and arg parsing" {
     try std.testing.expect(!cfg.trustsForwarded());
 
     const args = [_][]const u8{
-        "--port",          "9090",
-        "--upstream-port", "8000",
-        "--difficulty",    "18",
-        "--mode",          "forward_auth",
-        "--policy-file",   "/etc/sibuna/policy.json",
-        "--algorithm",     "hashcash",
-        "--token-scheme",  "ed25519",
-        "--workers",       "3",
-        "--rate-limit",    "20",
-        "--idle-timeout",  "7",
-        "--rate-window",   "5",
-        "--no-waf",        "--secret-file",
-        "/run/secret",     "--data-dir",
-        "/var/lib/sibuna", "--cluster-node",
-        "2",               "--cluster-peer",
-        "1@10.0.0.1:9901", "--cluster-peer",
-        "3@10.0.0.3:9901", "--verbose",
+        "--port",            "9090",
+        "--upstream-port",   "8000",
+        "--difficulty",      "18",
+        "--mode",            "forward_auth",
+        "--policy-file",     "/etc/sibuna/policy.json",
+        "--algorithm",       "hashcash",
+        "--token-scheme",    "ed25519",
+        "--workers",         "3",
+        "--rate-limit",      "20",
+        "--idle-timeout",    "7",
+        "--max-connections", "500",
+        "--rate-window",     "5",
+        "--no-waf",          "--secret-file",
+        "/run/secret",       "--data-dir",
+        "/var/lib/sibuna",   "--cluster-node",
+        "2",                 "--cluster-peer",
+        "1@10.0.0.1:9901",   "--cluster-peer",
+        "3@10.0.0.3:9901",   "--verbose",
     };
     const parsed = Config.parseArgs(&args);
     try std.testing.expectEqual(@as(u16, 9090), parsed.listen_port);
@@ -268,6 +274,7 @@ test "config defaults and arg parsing" {
     try std.testing.expectEqual(@as(u16, 3), parsed.workers);
     try std.testing.expectEqual(@as(u32, 20), parsed.rate_limit);
     try std.testing.expectEqual(@as(u32, 7), parsed.idle_timeout_seconds);
+    try std.testing.expectEqual(@as(u32, 500), parsed.max_connections);
     try std.testing.expectEqual(@as(u64, 5), parsed.rate_window_seconds);
     try std.testing.expect(!parsed.waf);
     try std.testing.expectEqualStrings("/run/secret", parsed.secret_file.?);

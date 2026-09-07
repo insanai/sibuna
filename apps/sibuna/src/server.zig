@@ -41,6 +41,7 @@ pub const Metrics = struct {
     proxied: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
     upstream_errors: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
     parse_errors: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
+    overloaded: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
 
     fn bump(counter: *std.atomic.Value(u64)) void {
         _ = counter.fetchAdd(1, .monotonic);
@@ -90,6 +91,8 @@ pub const AppState = struct {
     rate_limiter: store.RateLimiter = store.RateLimiter.init(),
     bans: store.BanList = .{},
     idle: IdleTable = .{},
+    /// Connections currently served on their own threads.
+    connections: std.atomic.Value(u32) = .init(0),
     coordinator: challenge.Coordinator,
     metrics: Metrics = .{},
     hooks: Hooks = .{},
@@ -153,14 +156,52 @@ pub fn runServer(server: *Io.net.Server, io: Io, state: *AppState) void {
     workerLoop(server, io, state);
 }
 
+/// Stack of one connection thread: the 64 KB request buffer, the 16 KB
+/// writer, proxy relay buffers, and inspection scratch all live on it.
+const connection_stack_size = 1024 * 1024;
+
+/// Accepts connections and serves each on its own bounded thread, so a slow
+/// or idle client never delays the others. Beyond `max_connections` new
+/// connections are answered 503 and closed without allocating a thread.
 pub fn workerLoop(server: *Io.net.Server, io: Io, state: *AppState) void {
     while (true) {
         const client_stream = server.accept(io) catch |err| switch (err) {
             error.Canceled, error.SocketNotListening => return,
             else => continue,
         };
-        handleConnection(client_stream, io, state);
+        if (state.connections.fetchAdd(1, .monotonic) >= state.config.max_connections) {
+            _ = state.connections.fetchSub(1, .monotonic);
+            Metrics.bump(&state.metrics.overloaded);
+            rejectOverloaded(client_stream, io);
+            continue;
+        }
+        const thread = std.Thread.spawn(
+            .{ .stack_size = connection_stack_size },
+            connectionThread,
+            .{ client_stream, io, state },
+        ) catch {
+            connectionThread(client_stream, io, state);
+            continue;
+        };
+        thread.detach();
     }
+}
+
+fn connectionThread(stream: Io.net.Stream, io: Io, state: *AppState) void {
+    defer _ = state.connections.fetchSub(1, .monotonic);
+    handleConnection(stream, io, state);
+}
+
+fn rejectOverloaded(stream: Io.net.Stream, io: Io) void {
+    defer stream.close(io);
+    var buf: [512]u8 = undefined;
+    var writer = stream.writer(io, &buf);
+    net.response.writeText(
+        &writer.interface,
+        .service_unavailable,
+        "Service Unavailable: connection limit reached",
+        false,
+    ) catch {};
 }
 
 const Connection = struct {

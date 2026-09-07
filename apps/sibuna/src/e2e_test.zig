@@ -479,6 +479,23 @@ test "proxied responses keep the client connection open for the next request" {
     try std.testing.expect(std.mem.indexOf(u8, t, "X-Origin: stub") != null);
 }
 
+test "connections beyond the configured limit are answered 503 and closed" {
+    boot_once.call();
+    const st = &proxy_fixture.state;
+    const saved = st.config.max_connections;
+    st.config.max_connections = 0;
+    defer st.config.max_connections = saved;
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    try roundTrip(proxy_fixture.port, "GET /__sibuna/health HTTP/1.1\r\nHost: t\r\n\r\n", resp);
+    try std.testing.expectEqual(@as(u16, 503), resp.status());
+    try std.testing.expect(resp.contains("connection limit"));
+    st.config.max_connections = saved;
+    try roundTrip(proxy_fixture.port, "GET /__sibuna/health HTTP/1.1\r\nHost: t\r\n\r\n", resp);
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+    try std.testing.expect(std.mem.indexOf(u8, resp.text(), "sibuna_overloaded_total") == null);
+}
+
 test "malformed, smuggled, oversized, and unknown requests are rejected cleanly" {
     boot_once.call();
     const p = proxy_fixture.port;

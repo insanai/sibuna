@@ -184,6 +184,7 @@ fn printHelp() void {
         \\  --upstream-port, -u <port>   Upstream origin port (default: 3000)
         \\  --mode, -m <mode>            reverse_proxy | forward_auth (default: reverse_proxy)
         \\  --workers, -w <n>            Accept threads (default: one per CPU)
+        \\  --max-connections <n>        Concurrent connections served (default: 1024)
         \\  --trust-forwarded            Honour X-Forwarded-For / X-Real-IP from the peer
         \\  --idle-timeout <s>           Socket idle timeout in seconds (default: 15)
         \\
