@@ -88,18 +88,42 @@ pub fn parseRequest(data: []const u8) !Request {
         req.path = uri_str;
     }
 
+    var has_content_length = false;
+    var content_length_val: []const u8 = "";
+    var has_transfer_encoding = false;
+
     while (line_it.next()) |line| {
         if (line.len == 0) break;
+        if (std.mem.indexOfScalar(u8, line, 0) != null) return error.NullByteInHeader;
+
         const colon_idx = std.mem.indexOfScalar(u8, line, ':') orelse
             return error.InvalidHeader;
         const name = line[0..colon_idx];
+        if (name.len > 0 and (name[name.len - 1] == ' ' or name[name.len - 1] == '\t')) {
+            return error.InvalidHeaderWhitespace;
+        }
+
         var value = line[colon_idx + 1 ..];
         if (value.len > 0 and value[0] == ' ') value = value[1..];
+
+        if (std.ascii.eqlIgnoreCase(name, "content-length")) {
+            if (has_content_length and !std.mem.eql(u8, content_length_val, value)) {
+                return error.DuplicateContentLength;
+            }
+            has_content_length = true;
+            content_length_val = value;
+        } else if (std.ascii.eqlIgnoreCase(name, "transfer-encoding")) {
+            has_transfer_encoding = true;
+        }
 
         if (req.header_count < MAX_HEADERS) {
             req.headers[req.header_count] = .{ .name = name, .value = value };
             req.header_count += 1;
         }
+    }
+
+    if (has_content_length and has_transfer_encoding) {
+        return error.RequestSmugglingAttempt;
     }
 
     const header_end = std.mem.indexOf(u8, data, "\r\n\r\n");
@@ -124,4 +148,28 @@ test "parseRequest parses method, path, headers, cookies zero-copy" {
     try std.testing.expectEqualStrings("tab=security", req.query);
     try std.testing.expectEqualStrings("localhost:8080", req.getHeader("host").?);
     try std.testing.expectEqualStrings("tok123", req.getCookie("__sibuna_token").?);
+}
+
+test "parseRequest rejects HTTP request smuggling and malformed headers" {
+    // TE.CL smuggling
+    const te_cl =
+        "POST /submit HTTP/1.1\r\n" ++
+        "Host: localhost\r\n" ++
+        "Content-Length: 5\r\n" ++
+        "Transfer-Encoding: chunked\r\n\r\n0\r\n\r\n";
+    try std.testing.expectError(error.RequestSmugglingAttempt, parseRequest(te_cl));
+
+    // Conflicting Content-Length headers
+    const dup_cl =
+        "POST /submit HTTP/1.1\r\n" ++
+        "Host: localhost\r\n" ++
+        "Content-Length: 5\r\n" ++
+        "Content-Length: 10\r\n\r\nhello";
+    try std.testing.expectError(error.DuplicateContentLength, parseRequest(dup_cl));
+
+    // Whitespace before colon
+    const ws_colon =
+        "GET / HTTP/1.1\r\n" ++
+        "Host : localhost\r\n\r\n";
+    try std.testing.expectError(error.InvalidHeaderWhitespace, parseRequest(ws_colon));
 }

