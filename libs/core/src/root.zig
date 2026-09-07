@@ -13,10 +13,16 @@ pub const time = struct {
 
 pub const diagnostic = @import("diagnostic.zig");
 pub const explainError = @import("errors.zig").explainError;
+pub const config = @import("config.zig");
+pub const Config = config.Config;
+pub const Mode = config.Mode;
+pub const log = @import("log.zig");
 
 test {
     _ = @import("diagnostic.zig");
     _ = @import("errors.zig");
+    _ = @import("config.zig");
+    _ = @import("log.zig");
 }
 
 test "core sanity" {

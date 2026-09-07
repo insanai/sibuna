@@ -11,6 +11,7 @@ pub fn explainError(err: anyerror) []const u8 {
         error.InvalidNonce,
         error.DifficultyNotMet,
         error.DoubleSpendAttempt,
+        error.FingerprintMismatch,
         => explainChallengeError(err),
 
         error.InvalidTokenSignature,
@@ -77,6 +78,13 @@ fn explainChallengeError(err: anyerror) []const u8 {
         \\This challenge has already been marked as spent by a previous verification pass.
         \\
         \\Hint: Challenges are single-use; request a new challenge for new verification runs.
+        ,
+        error.FingerprintMismatch =>
+        \\-- CLIENT FINGERPRINT MISMATCH --------------------------------------------------
+        \\
+        \\The client IP address or User-Agent does not match the issued challenge binding.
+        \\
+        \\Hint: Ensure the same browser or HTTP client submits the solver response.
         ,
         else => unreachable,
     };
