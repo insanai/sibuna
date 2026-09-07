@@ -45,12 +45,21 @@ pub fn main(init: std.process.Init) !u8 {
 
     const cfg = core.Config.parseArgs(args_buf[0..arg_count]);
 
+    var arena = std.heap.ArenaAllocator.init(init.gpa);
+    defer arena.deinit();
+
     var state = AppState{
         .config = cfg,
-        .policy_engine = policy.Engine.init(cfg.default_difficulty),
+        .policy_engine = undefined,
         .challenge_store = store.ChallengeStore{},
         .coordinator = undefined,
     };
+    state.policy_engine.initInPlace(cfg.default_difficulty);
+
+    if (cfg.policy_file) |pfile| {
+        loadCustomPolicy(io, arena.allocator(), pfile, &state.policy_engine);
+    }
+
     state.coordinator = challenge.Coordinator.init(
         &state.challenge_store,
         cfg.secret_seed,
@@ -109,6 +118,28 @@ fn printBanner(cfg: core.Config) void {
     });
 }
 
+fn loadCustomPolicy(
+    io: std.Io,
+    allocator: std.mem.Allocator,
+    path: []const u8,
+    engine: *policy.Engine,
+) void {
+    const file = std.Io.Dir.openFile(.cwd(), io, path, .{}) catch |err| {
+        std.debug.print("Warning: unable to open policy file {s}: {any}\n", .{ path, err });
+        return;
+    };
+    defer file.close(io);
+    var buf: [64 * 1024]u8 = undefined;
+    var reader = file.reader(io, &buf);
+    const content = reader.interface.peekGreedy(1) catch |err| {
+        std.debug.print("Warning: failed to read policy file {s}: {any}\n", .{ path, err });
+        return;
+    };
+    engine.loadFromJsonInto(allocator, content) catch |err| {
+        std.debug.print("Warning: failed to parse policy file {s}: {any}\n", .{ path, err });
+    };
+}
+
 fn printHelp() void {
     std.debug.print(
         \\Usage: sibuna [options]
@@ -120,6 +151,7 @@ fn printHelp() void {
         \\  --upstream-port, -u <port>  Upstream target port (default: 3000)
         \\  --mode, -m <mode>           Mode: reverse_proxy | forward_auth (default: reverse_proxy)
         \\  --difficulty, -d <diff>     PoW difficulty leading hex zeros (default: 4)
+        \\  --policy-file, -P <path>    Declarative JSON policy file path
         \\  --verbose, -v               Enable verbose diagnostic logging
         \\  --help                      Show this help message
         \\
@@ -214,7 +246,26 @@ fn handleInternalRoutes(
         return true;
     }
     if (std.mem.eql(u8, req.path, "/__sibuna/challenge.json")) {
-        const ch = try state.coordinator.createChallenge(client_ip, user_agent, now);
+        var policy_hdrs: [net.MAX_HEADERS]policy.Header = undefined;
+        for (req.headers[0..req.header_count], 0..) |h, idx| {
+            policy_hdrs[idx] = .{ .name = h.name, .value = h.value };
+        }
+        const dec = state.policy_engine.evaluateWithHeaders(
+            req.path,
+            client_ip,
+            user_agent,
+            policy_hdrs[0..req.header_count],
+        );
+        const diff = if (dec.difficulty > 0)
+            dec.difficulty
+        else
+            state.config.default_difficulty;
+        const ch = try state.coordinator.createChallengeWithDifficulty(
+            client_ip,
+            user_agent,
+            now,
+            diff,
+        );
         var json_buf: [256]u8 = undefined;
         const json = try std.fmt.bufPrint(
             &json_buf,
@@ -306,8 +357,17 @@ fn handleFirewallTraffic(
         } else |_| {}
     }
 
-    // 2. Evaluate bot and IP reputation policies
-    const decision = state.policy_engine.evaluate(req.path, client_ip, user_agent);
+    // 2. Evaluate bot, IP, and header reputation policies
+    var policy_hdrs: [net.MAX_HEADERS]policy.Header = undefined;
+    for (req.headers[0..req.header_count], 0..) |h, idx| {
+        policy_hdrs[idx] = .{ .name = h.name, .value = h.value };
+    }
+    const decision = state.policy_engine.evaluateWithHeaders(
+        req.path,
+        client_ip,
+        user_agent,
+        policy_hdrs[0..req.header_count],
+    );
     switch (decision.action) {
         .allow => {
             if (state.config.mode == .forward_auth) {

@@ -35,6 +35,7 @@ pub const Config = struct {
     challenge_ttl_seconds: u64 = 600,
     cookie_name: []const u8 = "__sibuna_token",
     secret_seed: [32]u8 = [_]u8{42} ** 32,
+    policy_file: ?[]const u8 = null,
     verbose: bool = false,
 
     pub fn default() Config {
@@ -81,6 +82,13 @@ pub const Config = struct {
                     cfg.default_difficulty = std.fmt.parseInt(u32, args[i], 10) catch
                         cfg.default_difficulty;
                 }
+            } else if (std.mem.eql(u8, arg, "--policy-file") or
+                std.mem.eql(u8, arg, "-P"))
+            {
+                if (i + 1 < args.len) {
+                    i += 1;
+                    cfg.policy_file = args[i];
+                }
             } else if (std.mem.eql(u8, arg, "--verbose") or
                 std.mem.eql(u8, arg, "-v"))
             {
@@ -101,6 +109,7 @@ test "config defaults and arg parsing" {
         "--upstream-port", "8000",
         "--difficulty",    "5",
         "--mode",          "forward_auth",
+        "--policy-file",   "/etc/sibuna/policy.json",
         "--verbose",
     };
     const parsed = Config.parseArgs(&args);
@@ -108,5 +117,6 @@ test "config defaults and arg parsing" {
     try std.testing.expectEqual(@as(u16, 8000), parsed.upstream_port);
     try std.testing.expectEqual(@as(u32, 5), parsed.default_difficulty);
     try std.testing.expectEqual(Mode.forward_auth, parsed.mode);
+    try std.testing.expectEqualStrings("/etc/sibuna/policy.json", parsed.policy_file.?);
     try std.testing.expect(parsed.verbose);
 }

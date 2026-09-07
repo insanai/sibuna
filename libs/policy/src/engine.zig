@@ -1,14 +1,20 @@
 //! Sibuna Policy Evaluation Engine
 //!
-//! Evaluates incoming request paths, client IP addresses, and User-Agent headers
-//! in sub-microsecond time with zero dynamic heap allocations.
+//! Evaluates incoming request paths, client IP addresses, User-Agent headers,
+//! and arbitrary HTTP headers against declarative rules in sub-microsecond time
+//! with zero dynamic heap allocations on the hot path.
 
 const std = @import("std");
 const aho = @import("aho_corasick.zig");
 const radix = @import("radix_trie.zig");
 const bots = @import("bot_signatures.zig");
+const rule = @import("rule.zig");
+const loader = @import("loader.zig");
 
-pub const Action = radix.Action;
+pub const Action = rule.Action;
+pub const Header = rule.Header;
+pub const PolicyRule = rule.PolicyRule;
+pub const MAX_RULES: usize = 128;
 
 pub const Decision = struct {
     action: Action,
@@ -17,16 +23,40 @@ pub const Decision = struct {
 };
 
 pub const Engine = struct {
+    rules: [MAX_RULES]PolicyRule = undefined,
+    rule_count: usize = 0,
+    default_action: Action = .allow,
+    default_difficulty: u32 = 4,
     bot_matcher: aho.Matcher = aho.Matcher.init(),
     ip_trie: radix.Trie = radix.Trie.init(),
-    default_difficulty: u32 = 4,
 
     pub fn init(default_diff: u32) Engine {
+        return initDefault(default_diff);
+    }
+
+    pub fn initInPlace(self: *Engine, default_diff: u32) void {
+        self.rule_count = 0;
+        self.default_action = .allow;
+        self.default_difficulty = default_diff;
+        self.bot_matcher = aho.Matcher.init();
+        self.ip_trie = radix.Trie.init();
+        self.initSignatures();
+        self.initAnubisParityRules();
+    }
+
+    pub fn initDefault(default_diff: u32) Engine {
         var engine = Engine{
             .default_difficulty = default_diff,
         };
         engine.initSignatures();
+        engine.initAnubisParityRules();
         return engine;
+    }
+
+    pub fn addRule(self: *Engine, r: PolicyRule) !void {
+        if (self.rule_count >= MAX_RULES) return error.TooManyRules;
+        self.rules[self.rule_count] = r;
+        self.rule_count += 1;
     }
 
     fn initSignatures(self: *Engine) void {
@@ -37,6 +67,43 @@ pub const Engine = struct {
             _ = self.bot_matcher.addPattern(lib) catch {};
         }
         self.bot_matcher.build();
+    }
+
+    fn initAnubisParityRules(self: *Engine) void {
+        _ = self.addRule(.{
+            .name = "well-known",
+            .path_pattern = "^/.well-known/.*$",
+            .action = .allow,
+        }) catch {};
+        _ = self.addRule(.{
+            .name = "favicon",
+            .path_pattern = "^/favicon.ico$",
+            .action = .allow,
+        }) catch {};
+        _ = self.addRule(.{
+            .name = "robots-txt",
+            .path_pattern = "^/robots.txt$",
+            .action = .allow,
+        }) catch {};
+        _ = self.addRule(.{
+            .name = "sibuna-internal",
+            .path_pattern = "/__sibuna/*",
+            .action = .allow,
+        }) catch {};
+
+        var cf_worker = PolicyRule{
+            .name = "cloudflare-workers",
+            .action = .deny,
+        };
+        cf_worker.headers[0] = .{ .name = "CF-Worker", .pattern = ".*" };
+        cf_worker.header_count = 1;
+        _ = self.addRule(cf_worker) catch {};
+
+        _ = self.addRule(.{
+            .name = "amazonbot",
+            .ua_pattern = "Amazonbot",
+            .action = .deny,
+        }) catch {};
     }
 
     pub fn isBypassPath(path: []const u8) bool {
@@ -53,7 +120,32 @@ pub const Engine = struct {
         client_ip: []const u8,
         user_agent: []const u8,
     ) Decision {
-        // 1. Bypass check
+        return self.evaluateWithHeaders(path, client_ip, user_agent, &.{});
+    }
+
+    pub fn evaluateWithHeaders(
+        self: *const Engine,
+        path: []const u8,
+        client_ip: []const u8,
+        user_agent: []const u8,
+        headers: []const Header,
+    ) Decision {
+        // 1. Evaluate declarative rules in order (first-match-wins)
+        for (self.rules[0..self.rule_count]) |r| {
+            if (r.matches(path, client_ip, user_agent, headers)) {
+                const diff = r.difficulty orelse (if (r.action == .challenge)
+                    self.default_difficulty
+                else
+                    0);
+                return .{
+                    .action = r.action,
+                    .rule_name = r.name,
+                    .difficulty = diff,
+                };
+            }
+        }
+
+        // 2. Fallback bypass check
         if (isBypassPath(path)) {
             return .{
                 .action = .allow,
@@ -62,7 +154,7 @@ pub const Engine = struct {
             };
         }
 
-        // 2. IP CIDR check
+        // 3. IP CIDR Trie check
         if (self.ip_trie.matchIpStr(client_ip)) |ip_action| {
             return .{
                 .action = ip_action,
@@ -71,7 +163,7 @@ pub const Engine = struct {
             };
         }
 
-        // 3. Bot User-Agent multi-pattern check
+        // 4. Bot User-Agent multi-pattern check
         if (self.bot_matcher.findFirst(user_agent)) |matched_bot| {
             return .{
                 .action = .challenge,
@@ -80,23 +172,50 @@ pub const Engine = struct {
             };
         }
 
-        // 4. Default: Standard browser traffic or unclassified request
+        // 5. Default action
         return .{
-            .action = .allow,
+            .action = self.default_action,
             .rule_name = "default/allow",
             .difficulty = 0,
         };
     }
+
+    pub fn loadFromJsonInto(
+        self: *Engine,
+        allocator: std.mem.Allocator,
+        json_text: []const u8,
+    ) !void {
+        return loader.parseJsonPolicyInto(allocator, json_text, self);
+    }
+
+    pub fn createFromJson(
+        allocator: std.mem.Allocator,
+        json_text: []const u8,
+        default_diff: u32,
+    ) !*Engine {
+        return loader.createJsonPolicy(allocator, json_text, default_diff);
+    }
 };
 
-test "engine evaluates paths, ip, and bot user agents" {
+test "engine evaluates declarative rules, bypass, ip, and bot user agents" {
     const engine = Engine.init(4);
 
-    // Bypass
+    // Bypass via default rule
     const d1 = engine.evaluate("/robots.txt", "1.2.3.4", "GPTBot");
     try std.testing.expectEqual(Action.allow, d1.action);
 
-    // Bot challenge
+    // Anubis denial rule: Amazonbot
+    const d_amz = engine.evaluate("/index.html", "1.2.3.4", "Mozilla/5.0 Amazonbot/0.1");
+    try std.testing.expectEqual(Action.deny, d_amz.action);
+    try std.testing.expectEqualStrings("amazonbot", d_amz.rule_name);
+
+    // Header-based denial: CF-Worker
+    const hdrs = [_]Header{.{ .name = "CF-Worker", .value = "worker-1" }};
+    const d_cf = engine.evaluateWithHeaders("/api/data", "1.2.3.4", "curl", &hdrs);
+    try std.testing.expectEqual(Action.deny, d_cf.action);
+    try std.testing.expectEqualStrings("cloudflare-workers", d_cf.rule_name);
+
+    // Bot challenge via Aho-Corasick
     const d2 = engine.evaluate("/api/data", "1.2.3.4", "Python-Requests/2.28");
     try std.testing.expectEqual(Action.challenge, d2.action);
     try std.testing.expectEqualStrings("python-requests", d2.rule_name);

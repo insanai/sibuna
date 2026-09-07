@@ -3,13 +3,9 @@
 //! Provides bitwise prefix tree traversal for IPv4 CIDR matching in <= 40ns.
 
 const std = @import("std");
+const rule = @import("rule.zig");
 
-pub const Action = enum {
-    allow,
-    deny,
-    challenge,
-    weigh,
-};
+pub const Action = rule.Action;
 
 pub const MAX_NODES = 4096;
 

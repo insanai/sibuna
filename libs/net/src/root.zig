@@ -13,6 +13,7 @@ pub const proxy = @import("proxy.zig");
 pub const Method = http.Method;
 pub const Header = http.Header;
 pub const Request = http.Request;
+pub const MAX_HEADERS = http.MAX_HEADERS;
 pub const parseRequest = http.parseRequest;
 pub const streamProxy = proxy.streamProxy;
 

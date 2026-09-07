@@ -50,6 +50,21 @@ pub const Coordinator = struct {
         user_agent: []const u8,
         now: u64,
     ) !ChallengePayload {
+        return self.createChallengeWithDifficulty(
+            client_ip,
+            user_agent,
+            now,
+            self.default_difficulty,
+        );
+    }
+
+    pub fn createChallengeWithDifficulty(
+        self: *Coordinator,
+        client_ip: []const u8,
+        user_agent: []const u8,
+        now: u64,
+        diff: u32,
+    ) !ChallengePayload {
         const count = self.counter.fetchAdd(1, .monotonic);
         const h1 = std.hash.Wyhash.hash(count, client_ip);
         const h2 = std.hash.Wyhash.hash(now, user_agent);
@@ -60,7 +75,7 @@ pub const Coordinator = struct {
         const fp = crypto.computeFingerprint(client_ip, user_agent);
         try self.challenge_store.put(
             &hex_id,
-            self.default_difficulty,
+            diff,
             now,
             self.challenge_ttl,
             fp,
@@ -68,7 +83,7 @@ pub const Coordinator = struct {
 
         return .{
             .id = hex_id,
-            .difficulty = self.default_difficulty,
+            .difficulty = diff,
             .algorithm = "sha256",
         };
     }
