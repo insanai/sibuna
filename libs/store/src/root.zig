@@ -6,8 +6,11 @@
 const std = @import("std");
 const core = @import("core");
 
-pub const StoreError = error{
-    KeyNotFound,
-    Expired,
-    StoreFull,
-};
+pub const challenge_store = @import("challenge_store.zig");
+pub const ChallengeStore = challenge_store.ChallengeStore;
+pub const ChallengeRecord = challenge_store.ChallengeRecord;
+pub const StoreError = challenge_store.StoreError;
+
+test {
+    _ = @import("challenge_store.zig");
+}
