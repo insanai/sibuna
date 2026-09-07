@@ -26,9 +26,14 @@ def change(h, port, temporary, permanent):
         assert h.request(port, "GET", path, cookie=cookie)[0] == 403
     body = {"old_password": temporary["password"], "password": permanent}
     assert h.request(port, "POST", "/console/api/password", body, cookie)[0] == 400
-    status, _, result = h.request(port, "POST", "/console/api/password",
+    status, replacement_headers, result = h.request(port, "POST", "/console/api/password",
                                  body, cookie, login["csrf"])
     assert status == 200, result
+    replacement = replacement_headers["Set-Cookie"].split(";", 1)[0]
+    assert replacement != cookie
+    assert json.loads(result)["csrf"] != login["csrf"]
+    assert not json.loads(result)["must_change"]
+    assert h.request(port, "GET", "/console/api/session", cookie=replacement)[0] == 200
     assert h.request(port, "GET", "/console/api/session", cookie=cookie)[0] == 401
     return {"username": temporary["username"], "password": permanent}
 

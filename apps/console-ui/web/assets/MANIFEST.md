@@ -4,7 +4,7 @@
 b470c53ec296d4620f4b4be1a16ba4337620afcfa9e42726fb1ff75ee565daff  apps/console-ui/src/geography.zig
 3e79eaeeba364c75c1df683e4feb0d90e86722e7d3e042c6d011efea56c0a53a  apps/console-ui/src/geoip_page.zig
 cc51ce2b276c68c19bbe478d9cc180fa7c78e8ca1474bd19e4b466c1627ad502  apps/console-ui/src/globe.zig
-41a29db29d971291b5de8eb59c8f6d5f69f2cc1d9f19ccb617f0d60e1c5d7042  apps/console-ui/src/main.zig
+8cc09c51f2aeb93935d3fa0abf86e60d4083fcd721b4d2a154649803ad9ec321  apps/console-ui/src/main.zig
 0ff91580006b7eb739dc276187dff3fdecb8e4085d23892f6c5f3bd9afb0ea92  apps/console-ui/src/qr.zig
 3f8d6734735ad1ac76f220898604945a0f70b6a1a566670e498887da47f1ed20  apps/console-ui/src/render.zig
 ec6868075d9c6e1bbb96d65c58cb4736b52fa4ec16425d5e9badcc3c8272fa65  apps/console-ui/src/security.zig

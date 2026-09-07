@@ -234,3 +234,16 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
   old-password rejection, authenticated geometry, TOTP and trusted-proxy restrictions.
   Password replacement currently revokes old sessions and requires another login; atomic
   replacement-session issuance remains the next authentication change.
+
+### Atomic credential replacement (2026-09-08)
+
+- Schema v4 commits password replacement, revision increment, old-session revocation,
+  replacement-session insertion and redacted audit rows together. The owner rechecks the
+  password-verification revision and current session/CSRF authorization inside that transaction.
+  A failed replacement insertion rolls back the password and preserves the existing session.
+- Password changes now return a new cookie and CSRF token. The UI continues through required
+  TOTP enrollment or the dashboard using the replacement session. Reusing the same password
+  is rejected. The previous re-login limitation above is resolved.
+- All 144 unit tests, live console E2E tests, formatting and SID generation passed. Chrome
+  verified the empty-instance notice, local initialization, restricted temporary login,
+  forced password change and immediate live dashboard access at 390 px width.

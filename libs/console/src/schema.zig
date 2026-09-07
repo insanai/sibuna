@@ -1,5 +1,6 @@
 //! Versioned additive schema. The owner serializes migration before serving console work.
-pub const version = 3;
+pub const version = 4;
+pub const rotation_v4 = @import("schema_rotation.zig").sql;
 pub const bootstrap_v3 = @import("schema_bootstrap.zig").sql;
 pub const auth_v2 = @import("schema_auth.zig").sql;
 pub const sql = @import("geo_schema.zig").sql ++

@@ -33,7 +33,11 @@ pub fn run(owner: *Persistent) !void {
         try owner.db.exec(owner.gpa, console.schema.sql);
         version = try current(owner);
     }
-    const migrations = .{ console.schema.auth_v2, console.schema.bootstrap_v3 };
+    const migrations = .{
+        console.schema.auth_v2,
+        console.schema.bootstrap_v3,
+        console.schema.rotation_v4,
+    };
     inline for (migrations, 2..) |sql, target| {
         if (version == target - 1) {
             owner.db.exec(owner.gpa, sql) catch |err| {

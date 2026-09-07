@@ -94,6 +94,9 @@ pub const StorageRequest = union(enum) {
     },
     logout: struct { digest: [32]u8, now: u64 },
     password_change: struct {
+        expected_revision: u64,
+        replacement_digest: [32]u8,
+        replacement_csrf: [32]u8,
         session_digest: [32]u8,
         csrf_digest: [32]u8,
         password_hash: Bytes(255),

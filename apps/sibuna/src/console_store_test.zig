@@ -77,6 +77,9 @@ test "console storage ticks bootstrap, audit, authenticate and revoke atomically
         .now = 200,
     } })).failed);
     try t.expect((try fx.run(.{ .password_change = .{
+        .expected_revision = user.revision,
+        .replacement_digest = @splat(3),
+        .replacement_csrf = @splat(4),
         .session_digest = @splat(1),
         .csrf_digest = @splat(2),
         .password_hash = try p.Bytes(255).init("replacement-test-hash"),
@@ -94,7 +97,7 @@ test "console storage ticks bootstrap, audit, authenticate and revoke atomically
         &.{},
     );
     defer audit.deinit();
-    try t.expectEqual(@as(usize, 3), audit.rows.len);
+    try t.expectEqual(@as(usize, 4), audit.rows.len);
     fx.owner.console_initialized = false;
     try t.expect(!(try fx.run(.setup_status)).setup_required);
 }
@@ -451,6 +454,9 @@ test "temporary bootstrap expires and password replacement consumes its credenti
     session.session_create.expires = 200;
     try t.expect((try fx.run(session)) == .command_recorded);
     _ = try fx.run(.{ .password_change = .{
+        .expected_revision = user.revision,
+        .replacement_digest = @splat(3),
+        .replacement_csrf = @splat(4),
         .session_digest = @splat(1),
         .csrf_digest = @splat(2),
         .password_hash = try p.Bytes(255).init("permanent-test-hash"),
@@ -488,4 +494,57 @@ test "explicit sign-out commits its redacted audit record with revocation" {
         .session_digest = @splat(1),
         .now = 111,
     } })).failed);
+}
+
+test "password rotation rolls back revocation on failed replacement and checks revision" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var buffer: [160]u8 = undefined;
+    const fx = try geoFixture(try std.fmt.bufPrint(
+        &buffer,
+        ".zig-cache/tmp/{s}/rotation",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    const user = (try fx.run(.{ .auth_user = try p.Bytes(64).init("geo-admin") })).auth_user;
+    var operation: p.StorageRequest = .{ .password_change = .{
+        .expected_revision = user.revision + 1,
+        .replacement_digest = @splat(3),
+        .replacement_csrf = @splat(4),
+        .session_digest = @splat(1),
+        .csrf_digest = @splat(2),
+        .password_hash = try p.Bytes(255).init("replacement-test-hash"),
+        .now = 110,
+    } };
+    try t.expectEqual(p.Failure.unauthorized, (try fx.run(operation)).failed);
+    operation.password_change.expected_revision = user.revision;
+    try fx.owner.db.exec(
+        t.allocator,
+        "CREATE TRIGGER reject_rotation BEFORE INSERT ON console_sessions " ++
+            "BEGIN SELECT RAISE(ABORT,'test replacement failure'); END;",
+    );
+    try t.expect((try fx.run(operation)) == .failed);
+    const unchanged = (try fx.run(.{ .auth_user = user.username })).auth_user;
+    try t.expectEqual(user.revision, unchanged.revision);
+    try t.expectEqualStrings(user.password_hash.slice(), unchanged.password_hash.slice());
+    try t.expect((try fx.run(.{ .authorize = .{
+        .session_digest = @splat(1),
+        .now = 111,
+    } })) == .authorized);
+    try fx.owner.db.exec(t.allocator, "DROP TRIGGER reject_rotation;");
+    try t.expect((try fx.run(operation)) == .command_recorded);
+    try t.expectEqual(p.Failure.unauthorized, (try fx.run(operation)).failed);
+    const rotated = (try fx.run(.{ .authorize = .{
+        .session_digest = @splat(3),
+        .now = 112,
+    } })).authorized;
+    try t.expectEqual(user.revision + 1, rotated.revision);
+    var staging = try db.query(
+        fx.owner.db,
+        t.allocator,
+        "SELECT id FROM console_password_rotation LIMIT 2",
+        &.{},
+    );
+    defer staging.deinit();
+    try t.expectEqual(@as(usize, 0), staging.rows.len);
 }

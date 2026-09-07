@@ -72,24 +72,29 @@ pub fn logout(owner: *Persistent, input: anytype) !p.StorageResult {
 pub fn password(owner: *Persistent, input: anytype) !p.StorageResult {
     const digest = std.fmt.bytesToHex(input.session_digest, .lower);
     const csrf = std.fmt.bytesToHex(input.csrf_digest, .lower);
+    const replacement = std.fmt.bytesToHex(input.replacement_digest, .lower);
+    const replacement_csrf = std.fmt.bytesToHex(input.replacement_csrf, .lower);
     const changes = try db.exec(
         owner.db,
         owner.gpa,
-        "UPDATE console_users SET password_hash=?,revision=revision+1,must_change=0," ++
-            "password_expires=0," ++
-            "modified_at=?,modified_by=id WHERE disabled=0 AND id=(SELECT user_id " ++
-            "FROM console_sessions WHERE digest=? AND csrf_digest=? AND expires>? " ++
-            "AND idle_expires>? AND revision=console_users.revision)",
+        "INSERT INTO console_password_rotation " ++
+            "SELECT 1,u.id,?,?,?,? FROM console_users u " ++
+            "JOIN console_sessions s ON s.user_id=u.id " ++
+            "WHERE u.disabled=0 AND u.revision=? AND s.revision=u.revision " ++
+            "AND s.digest=? AND s.csrf_digest=? AND MIN(s.expires,s.idle_expires)>?",
         &.{
             text(input.password_hash.slice()),
+            text(&replacement),
+            text(&replacement_csrf),
             integer(input.now),
+            integer(input.expected_revision),
             text(&digest),
             text(&csrf),
             integer(input.now),
-            integer(input.now),
         },
     );
-    // The user-update trigger audits and deletes every old session in the same commit.
+    // Insertion, old-session revocation, replacement and audit either all commit or roll back.
+
     return if (changes == 0) .{ .failed = .unauthorized } else .command_recorded;
 }
 

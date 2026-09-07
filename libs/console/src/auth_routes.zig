@@ -74,6 +74,17 @@ fn establish(app: *App, context: *Context, user: p.AuthUser, factor: p.auth.Fact
         .expires = expires,
     } });
     if (result != .command_recorded) return http.fail(context, .conflict, "CONSOLE409");
+    try sessionResponse(app, context, user, raw, csrf, expires - now);
+}
+
+fn sessionResponse(
+    app: *App,
+    context: *Context,
+    user: p.AuthUser,
+    raw: [32]u8,
+    csrf: [32]u8,
+    lifetime: u64,
+) !void {
     const encoded = std.fmt.bytesToHex(raw, .lower);
     const csrf_hex = std.fmt.bytesToHex(csrf, .lower);
     var cookie: [256]u8 = undefined;
@@ -82,7 +93,7 @@ fn establish(app: *App, context: *Context, user: p.AuthUser, factor: p.auth.Fact
         "__sibuna_console={s}; HttpOnly; SameSite=Strict; Path=/console; Max-Age={d}{s}",
         .{
             encoded,
-            expires - now,
+            lifetime,
             if (app.config.behind_proxy or app.config.cookie_secure) "; Secure" else "",
         },
     );
@@ -136,13 +147,28 @@ pub fn password(app: *App, context: *Context, principal: p.Principal) !void {
         if (err == error.Busy) return err;
         return http.fail(context, .unauthorized, "CONSOLE401");
     };
+    if (std.mem.eql(u8, input.value.old_password, input.value.password))
+        return error.InvalidRequest;
     const hash = try app.passwords.hash(app.io, input.value.password);
+    var raw: [32]u8 = undefined;
+    app.io.random(&raw);
+    defer std.crypto.secureZero(u8, &raw);
+    var digest: [32]u8 = undefined;
+    http.digest(&raw, &digest, .{});
+    const csrf = http.csrfToken(raw);
+    var csrf_digest: [32]u8 = undefined;
+    http.digest(&csrf, &csrf_digest, .{});
     const result = try app.request(.{ .password_change = .{
+        .expected_revision = account.auth_user.revision,
+        .replacement_digest = digest,
+        .replacement_csrf = csrf_digest,
         .session_digest = session_digest,
         .csrf_digest = principal.csrf_digest,
         .password_hash = hash,
         .now = app.now(),
     } });
     if (result != .command_recorded) return http.fail(context, .conflict, "CONSOLE409");
-    try http.json(context, .{ .password_changed = true, .sign_in_required = true }, &.{});
+    var changed = account.auth_user;
+    changed.must_change = false;
+    try sessionResponse(app, context, changed, raw, csrf, 43200);
 }

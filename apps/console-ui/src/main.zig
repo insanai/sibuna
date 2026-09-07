@@ -236,7 +236,7 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
             .login;
         return;
     }
-    if (equal(id, "session") or equal(id, "login")) {
+    if (equal(id, "session") or equal(id, "login") or equal(id, "password")) {
         state.csrf = try p.Bytes(64).init(string(body, "csrf"));
         state.role = try p.Bytes(16).init(string(body, "role"));
         const change = field(body, "must_change");
@@ -252,14 +252,13 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
         if (state.phase == .security) try get("totp", "/console/api/totp");
         return;
     }
-    if (equal(id, "logout") or equal(id, "password")) {
+    if (equal(id, "logout")) {
         state.phase = .login;
         state.stats_busy = false;
         state.stats = null;
         state.geometry = null;
         state.csrf = .{};
         try command(.{ .op = "disconnect" });
-        if (equal(id, "password")) setMessage("Password updated. Sign in with your new password.");
     }
 }
 
