@@ -362,7 +362,7 @@ Zaxonlite store open.
 #milestone(
   "Phase 1: Network and proxy layer",
   "Zero-copy HTTP/1.1 parser with smuggling defences, keep-alive connection loop, streaming proxy with audit headers and chunked body relay, forward-auth mode.",
-  "Nine end-to-end HTTP scenarios pass against the live daemon and a stub origin.",
+  "Ten end-to-end HTTP scenarios pass against the live daemon and a stub origin.",
 )
 #milestone(
   "Phase 2: Pattern matcher and policy engine",
@@ -396,8 +396,8 @@ Zaxonlite store open.
 
 = Verification gates
 
-`zig build test` runs 80 tests: unit tests in every library, the WASM entry tests on the host,
-the server helpers, nine end-to-end HTTP scenarios (interstitial and static bypass; Hashcash
+`zig build test` runs 81 tests: unit tests in every library, the WASM entry tests on the host,
+the server helpers, ten end-to-end HTTP scenarios (idle-connection reaping; interstitial and static bypass; Hashcash
 issue/solve/verify/cookie/proxy with replay and binding rejection; PoSW through forward-auth with
 Ed25519 tokens; policy and WAF denials, honeypot bans, and rate limiting; keep-alive; malformed,
 smuggled, oversized, and unknown requests; asset serving), and the Zaxonlite storage test (schema,

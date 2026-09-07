@@ -46,7 +46,7 @@ popularity. The mathematics is in **SID 0006**; the engineering contracts are in
 
 ```sh
 zig build -Doptimize=ReleaseFast          # daemon, benchmark, and WASM solver
-zig build test                            # 80 unit, end-to-end, and storage tests
+zig build test                            # 81 unit, end-to-end, and storage tests
 ./zig-out/bin/sibuna --port 8080 --upstream-port 3000 --secret-file /run/sibuna.seed
 ```
 
@@ -64,6 +64,7 @@ Common flags (`--help` lists all of them):
 | `--token-scheme mac\|ed25519` | `mac` | Session token construction |
 | `--gate` / `--shield` | shield | Surface |
 | `--rate-limit`, `--rate-window` | `100`, `10` | GCRA burst and window (seconds) |
+| `--idle-timeout` | `15` | Seconds before an idle connection is reaped (slowloris guard) |
 | `--policy-file <json>` | none | Declarative rules (SID 0003) |
 | `--workers <n>` | CPU count | Accept threads |
 | `--trust-forwarded` | auto in forward-auth | Honour `X-Forwarded-For` / `X-Real-IP` |
