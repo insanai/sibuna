@@ -16,6 +16,8 @@ const policy = @import("policy");
 const server = @import("server.zig");
 
 const io = std.testing.io;
+const console_enabled = @import("build_options").console;
+const telemetry_store = @import("store");
 
 const Fixture = struct {
     engine: policy.Engine = undefined,
@@ -23,6 +25,8 @@ const Fixture = struct {
     state: server.AppState = undefined,
     listener: Io.net.Server = undefined,
     port: u16 = 0,
+    telemetry: if (console_enabled) telemetry_store.ConsoleTelemetry else void =
+        if (console_enabled) undefined else {},
 };
 
 var origin_port: u16 = 0;
@@ -98,6 +102,10 @@ fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
     f.slot = .{ .engine = &f.engine };
     const seed = [_]u8{0x5a} ** 32;
     f.state.init(cfg, &f.slot, &seed);
+    if (console_enabled) {
+        f.telemetry = telemetry_store.ConsoleTelemetry.init();
+        f.state.telemetry = &f.telemetry;
+    }
     const addr = Io.net.IpAddress.parse("127.0.0.1", 0) catch unreachable;
     f.listener = addr.listen(io, .{ .reuse_address = true }) catch unreachable;
     f.port = f.listener.socket.address.ip4.port;
@@ -604,4 +612,56 @@ test "an idle connection is closed after the socket timeout" {
 
 test {
     _ = @import("storage.zig");
+}
+
+test "accepted client timing is observational and rejection causes cover parsed submissions" {
+    if (!console_enabled) return;
+    boot_once.call();
+    const p = proxy_fixture.port;
+    const ip = "203.0.113.181";
+    const metrics = &proxy_fixture.telemetry.challenges;
+    const cm = telemetry_store.challenge_metrics;
+    const bin = &metrics.bins[cm.index(.hashcash, 8, 0)];
+    const submitted = metrics.submitted.load(.monotonic);
+    const accepted = bin.accepted.load(.monotonic);
+    const missing = bin.missing.load(.monotonic);
+    const invalid = bin.invalid.load(.monotonic);
+    const bucket = bin.buckets[4].load(.monotonic);
+    const replay = metrics.causes[@intFromEnum(cm.Cause.replay)].load(.monotonic);
+    const missing_id = metrics.causes[@intFromEnum(cm.Cause.missing_id)].load(.monotonic);
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    const metadata = [_][]const u8{
+        ",\"elapsed_ms\":8,\"solver\":\"wasm\"",
+        ",\"elapsed_ms\":-1",
+        "",
+    };
+    for (metadata, 0..) |extra, i| {
+        var path_buf: [64]u8 = undefined;
+        const path = try std.fmt.bufPrint(&path_buf, "/timing/{d}", .{i});
+        const ch = try fetchChallenge(p, ip, browser_ua, path);
+        const nonce = crypto.pow.solveHashcashBits(ch.idSlice(), ch.difficulty, 1 << 24).?;
+        var body_buf: [512]u8 = undefined;
+        const body = try std.fmt.bufPrint(
+            &body_buf,
+            "{{\"challenge_id\":\"{s}\",\"nonce\":\"{d}\"{s}}}",
+            .{ ch.idSlice(), nonce, extra },
+        );
+        try post(p, "/__sibuna/verify", ip, browser_ua, body, resp);
+        try std.testing.expectEqual(@as(u16, 200), resp.status());
+        try post(p, "/__sibuna/verify", ip, browser_ua, body, resp);
+        try std.testing.expectEqual(@as(u16, 400), resp.status());
+    }
+    try post(p, "/__sibuna/verify", ip, browser_ua, "{}", resp);
+    try std.testing.expectEqual(@as(u16, 400), resp.status());
+    try std.testing.expectEqual(submitted + 7, metrics.submitted.load(.monotonic));
+    try std.testing.expectEqual(accepted + 3, bin.accepted.load(.monotonic));
+    try std.testing.expectEqual(missing + 1, bin.missing.load(.monotonic));
+    try std.testing.expectEqual(invalid + 1, bin.invalid.load(.monotonic));
+    try std.testing.expectEqual(bucket + 1, bin.buckets[4].load(.monotonic));
+    try std.testing.expectEqual(replay + 3, metrics.causes[@intFromEnum(cm.Cause.replay)].load(
+        .monotonic,
+    ));
+    const missing_counter = &metrics.causes[@intFromEnum(cm.Cause.missing_id)];
+    try std.testing.expectEqual(missing_id + 1, missing_counter.load(.monotonic));
 }

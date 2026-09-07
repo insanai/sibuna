@@ -122,6 +122,8 @@
             const tier = spec.algorithm === 'posw' ? 'sequential-work proof' : 'hashcash proof';
             statusEl.textContent = 'Computing ' + tier + ' (WASM)...';
             const worker = new Worker('/__sibuna/worker.js');
+            const solveStarted = performance.now();
+            let solver = "wasm";
             worker.postMessage({
                 challenge: spec.id,
                 algorithm: spec.algorithm,
@@ -131,12 +133,17 @@
 
             worker.onmessage = async function(e) {
                 if (e.data.type === 'fallback') {
+                    solver = 'javascript';
                     statusEl.textContent = 'Computing ' + tier + ' (JS fallback)...';
                 } else if (e.data.type === 'progress') {
                     statusEl.textContent = 'Computing... (' + e.data.iterations + ' steps)';
                 } else if (e.data.type === 'solved') {
                     statusEl.textContent = 'Verifying solution with firewall...';
-                    const body = Object.assign({ challenge_id: e.data.challenge }, e.data.solution);
+                    const body = Object.assign({
+                        challenge_id: e.data.challenge,
+                        elapsed_ms: performance.now() - solveStarted,
+                        solver: solver
+                    }, e.data.solution);
                     const verifyResp = await fetchWithRetry('/__sibuna/verify', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },

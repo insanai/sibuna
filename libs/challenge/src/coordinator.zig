@@ -86,6 +86,9 @@ pub const Solution = union(enum) {
 pub const VerifiedResult = struct {
     token: [crypto.Token.encoded_size]u8,
     token_len: usize,
+    algorithm: Algorithm = .hashcash,
+    difficulty: u8 = 0,
+    challenges: u8 = 0,
     ttl_seconds: u64,
 
     pub fn slice(self: *const VerifiedResult) []const u8 {
@@ -319,7 +322,11 @@ pub const Coordinator = struct {
             error.DoubleSpendAttempt => return error.DoubleSpendAttempt,
             else => return error.StoreFull,
         };
-        return self.mintToken(now, decoded.rule_hash, decoded.fingerprint);
+        var result = self.mintToken(now, decoded.rule_hash, decoded.fingerprint);
+        result.algorithm = decoded.algorithm;
+        result.difficulty = decoded.difficulty;
+        result.challenges = decoded.challenges;
+        return result;
     }
 
     fn mintToken(self: *const Coordinator, now: u64, rule_hash: u64, fp: u64) VerifiedResult {

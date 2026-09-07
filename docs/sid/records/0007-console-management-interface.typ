@@ -633,7 +633,7 @@ fixed-capacity counters keyed by rule id and applied revision; incident counts c
 exact allow/WEIGH hits. Distinguish category findings from the one final outcome per request.
 
 Accept optional `elapsed_ms` and solver metadata in the existing data-plane verify request;
-the interstitial does not send them today. Measure solver time before verification, validate
+the interstitial now sends them. Measure solver time before verification, validate
 finite nonnegative bounds, and record only accepted solutions. Client timing is untrusted
 telemetry, never an admission or difficulty input. Use 16 buckets: [0,1) ms, powers-of-two
 intervals [1,2) through [8192,16384), and [16384,+infinity), with separate missing/invalid

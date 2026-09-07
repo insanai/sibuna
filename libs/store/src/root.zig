@@ -8,6 +8,7 @@
 const std = @import("std");
 const core = @import("core");
 
+pub const challenge_metrics = @import("challenge_metrics.zig");
 pub const challenge_store = @import("challenge_store.zig");
 pub const ChallengeStore = challenge_store.ChallengeStore;
 pub const ChallengeTag = challenge_store.Tag;

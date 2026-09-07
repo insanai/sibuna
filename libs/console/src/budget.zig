@@ -18,7 +18,7 @@ pub const Budget = struct {
     pub const import_bytes = 16 * 1024 * 1024 + 40 * 1024;
     pub const auth_bytes = @import("password.zig").Password.workspace_bytes;
     pub const topic_bytes = 10 * 1024 * 1024;
-    pub const traffic_bytes = 1024 * 1024;
+    pub const traffic_bytes = @sizeOf(@import("store").ConsoleTelemetry);
     pub const query_bytes = @sizeOf(@import("query_budget.zig").Budget);
 
     pub fn validate(self: Budget) Error!void {

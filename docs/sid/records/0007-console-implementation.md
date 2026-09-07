@@ -303,3 +303,20 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
   full-page export successfully. Export feedback preserves button focus and uses status styling.
 - Rich versioned evidence, rule/address actions, campaign-member and nearest-incident navigation,
   and the remaining policy/cluster/operational work still block full SID acceptance.
+
+### Challenge observation foundation (2026-09-08)
+
+- Console-owned atomic counters cover parsed verification submissions, early malformed/banned
+  rejections, exhaustive verifier failures, issued and accepted authenticated parameter bins.
+  Existing Prometheus counter meanings and proof/token formats remain unchanged. Console-off
+  builds eliminate producers; console-disabled runtime work avoids parsing timing metadata.
+- The interstitial sends solve duration measured before verification and an untrusted solver
+  label. Only accepted proofs contribute timing: 16 bounded histogram buckets, separate missing
+  and invalid counts, and finite nonnegative durations capped at one hour. A fixed scanner arena
+  rejects ambiguous metadata without changing admission. Parameter bins use authenticated proof
+  fields; client fields cannot select them. Reservation accounting includes these fixed counters.
+- Required formatting, repository/live tests and SID generation passed. Live proof tests cover
+  valid, missing and invalid timing, replay and missing challenge IDs. A storage-free,
+  console-disabled daemon build passed. Benchmark regeneration follows for this measured change.
+- Authenticated challenge presentation, historical windows and per-address observations remain
+  pending; this foundation does not close the challenge or performance acceptance gates.

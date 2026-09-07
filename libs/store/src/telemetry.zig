@@ -25,6 +25,7 @@ pub fn seed(value: u64) void {
 }
 
 pub const ConsoleTelemetry = struct {
+    challenges: @import("challenge_metrics.zig").Metrics = .{},
     admitted: std.atomic.Value(u64) = .init(0),
     challenged: std.atomic.Value(u64) = .init(0),
     denied: std.atomic.Value(u64) = .init(0),

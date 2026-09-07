@@ -14,6 +14,7 @@ const net = @import("net");
 const policy = @import("policy");
 const challenge = @import("challenge");
 const store = @import("store");
+const observation = @import("challenge_observe.zig");
 const build_options = @import("build_options");
 
 pub const wasm_bytes = @embedFile("wasm_solver");
@@ -459,7 +460,11 @@ fn resolveClientIp(c: *Connection, req: *const net.Request) []const u8 {
 fn dispatch(ctx: *RequestContext) !bool {
     const st = ctx.state();
     Metrics.bump(&st.metrics.requests);
+    const submission = ctx.req.method == .POST and
+        std.mem.eql(u8, ctx.req.path, "/__sibuna/verify");
+    if (submission) observation.submit(st);
     if (st.bans.isBanned(ctx.client_ip, ctx.now)) {
+        if (submission) observation.reject(st, .address_banned);
         Metrics.bump(&st.metrics.banned);
         recordOutcome(ctx, .denied);
         try net.response.writeText(
@@ -795,6 +800,7 @@ fn handleChallengeJson(ctx: *RequestContext) !void {
         rule_hash,
     );
     Metrics.bump(&st.metrics.challenges_issued);
+    observation.issue(st, ch.algorithm, ch.difficulty, ch.challenges);
 
     var json_buf: [320]u8 = undefined;
     const json = try std.fmt.bufPrint(
@@ -836,11 +842,13 @@ fn handleVerifySolution(ctx: *RequestContext) !void {
     const w = ctx.writer();
     const body = ctx.req.body;
     if (body.len < ctx.declared_body) {
+        observation.reject(st, .body_too_large);
         const text = "Solution body exceeds 64 KB";
         try net.response.writeText(w, .payload_too_large, text, ctx.keep_alive);
         return;
     }
     const cid = extractJsonString(body, "challenge_id") orelse {
+        observation.reject(st, .missing_id);
         try net.response.writeText(w, .bad_request, "Missing challenge_id field", ctx.keep_alive);
         return;
     };
@@ -848,6 +856,7 @@ fn handleVerifySolution(ctx: *RequestContext) !void {
     const solution = switch (parseSolution(body, &proof_buf)) {
         .ok => |s| s,
         .err => |message| {
+            observation.reject(st, .malformed_solution);
             try net.response.writeText(w, .bad_request, message, ctx.keep_alive);
             return;
         },
@@ -856,10 +865,12 @@ fn handleVerifySolution(ctx: *RequestContext) !void {
     const ip = ctx.client_ip;
     const res = coord.verifyAndMint(cid, solution, ip, ctx.user_agent, ctx.now) catch |err| {
         Metrics.bump(&st.metrics.solutions_rejected);
+        observation.verificationFailure(st, err);
         try net.response.writeText(w, .bad_request, core.explainError(err), ctx.keep_alive);
         return;
     };
     Metrics.bump(&st.metrics.solutions_accepted);
+    observation.accept(st, res, body);
     var cookie_buf: [512]u8 = undefined;
     const cookie = try net.response.cookieHeader(
         &cookie_buf,
