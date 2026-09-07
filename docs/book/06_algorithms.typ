@@ -7,7 +7,7 @@
   the declarative policy engine with WEIGH scoring.
 ])
 
-= Single-Pass Multi-Pattern Matching
+== Single-Pass Multi-Pattern Matching
 
 #objectives([
   By the end of this chapter, you should be able to derive the Aho–Corasick automaton's
@@ -15,7 +15,7 @@
   why a SIMD literal engine was not adopted.
 ])
 
-== Aho–Corasick as a Dense DFA
+=== Aho–Corasick as a Dense DFA
 
 Sibuna has two literal-pattern sets: about forty bot signatures and about a hundred attack
 signatures. Scanning a field against $N$ patterns one at a time is $O(N M)$; the automaton of Aho
@@ -39,17 +39,18 @@ fn findFirstImpl(self: anytype, haystack: []const u8) ?Match {
 
 #book_figure([Trie states and failure edges for two signatures], aho_corasick_graph())
 
-The automaton is generic over its state budget, `Automaton(1024)` for bots (512 KB) and
-`Automaton(2048)` for attack signatures (1 MB), and each pattern carries an 8-bit tag so the WAF
-learns the attack category from the match. Case folding goes through a 256-byte comptime table
-rather than a branch. Forty signatures over a browser User-Agent cost 85 ns; the same scan by
-sequential substring search costs 4.2 µs on the same host.
+The automaton is generic over its state budget. The implementation reserves at most one
+root plus the sum of all signature lengths, a safe upper bound on trie states. This avoids
+historically oversized fixed tables while retaining a dense transition for every byte. Each
+pattern carries an 8-bit category tag; case folding uses a 256-byte compile-time table.
+Exact engine sizes and the comparison with sequential substring search are recorded in
+chapter 8. The latter uses the same patterns and any-match semantics.
 
-== Regular Expressions, SIMD Engines, and the Choice
+=== Regular Expressions, SIMD Engines, and the Choice
 
 Three families were weighed for the signature stage:
 
-- *Backtracking regular expressions* (the ModSecurity rule-set style) run hundreds of patterns
+- *Backtracking regular expressions* (a backtracking rule-set style) run hundreds of patterns
   per request and allocate per match; they are the slowest option and the most prone to false
   positives.
 - *SIMD literal engines* (Hyperscan, Vectorscan) prefilter blocks of 16–32 bytes with
@@ -60,11 +61,11 @@ Three families were weighed for the signature stage:
 - *Dense Aho–Corasick plus small structural tokenizers*, the libinjection lineage, gives exact
   linear-time behaviour in a fixed table and needs nothing outside the binary.
 
-Sibuna's fields are short, so the third family wins on both memory and speed; Part VIII records
+Sibuna's fields are short, so the third family wins on both memory and speed; chapter 8 records
 2.9 ns per byte on an 8 KB body, the one workload where a SIMD prefilter would pay, and SID 0006
 keeps that as an open item.
 
-= The Radix Trie for IPv4 and IPv6
+== The Radix Trie for IPv4 and IPv6
 
 #objectives([
   Trace a longest-prefix lookup through the 128-bit trie, explain the IPv4 root shortcut, and
@@ -91,7 +92,7 @@ IPv4 lookups cost 45 ns and IPv6 lookups 80 ns. The engine consults the trie twi
 `allow`/`deny` verdicts before the rule table, so a cluster-wide ban beats every rule, and
 `challenge` verdicts after it.
 
-= The Semantic Firewall
+== The Semantic Firewall
 
 #objectives([
   Understand the byte-class pre-scan, the tagged signature automaton, the SQL tokenizer with
@@ -99,7 +100,7 @@ IPv4 lookups cost 45 ns and IPv6 lookups 80 ns. The engine consults the trie twi
   false-positive discipline that a real browser request must pass untouched.
 ])
 
-== A Lesson in False Positives
+=== A Lesson in False Positives
 
 The first version of the WAF matched a flat substring list against every header. The list
 contained `/*`, and every browser sends `Accept: text/html,…,*/*;q=0.8`. Every real browser was
@@ -108,7 +109,7 @@ only on *structure*, and the test suite now passes a complete Chrome request, in
 comment body containing `select`, `--`, and an apostrophe, through the engine and asserts it
 comes out clean.
 
-== Byte Classes in One Pass
+=== Byte Classes in One Pass
 
 Each inspected field is scanned once to collect which byte classes occur: quotes, `=`, `<`,
 shell separators, `%`, NUL, canonicalisation triggers, and double spaces. Every detector consults
@@ -130,7 +131,7 @@ fn scanClasses(text: []const u8) Classes {
 }
 ```
 
-== Detectors
+=== Detectors
 
 - *Signatures.* All strong signatures of every category live in one tagged automaton; a hit
   is a terminal `deny` named `waf:sqli`, `waf:xss`, `waf:path-traversal`, or `waf:rce`.
@@ -149,17 +150,19 @@ fn scanClasses(text: []const u8) Classes {
 Structural headers whose grammar legitimately contains quotes and stars (`Accept*`,
 `Content-Type`, `Sec-*`, `If-*`, …) are skipped; the path, query, User-Agent, other headers,
 and the first 8 KB of the body are inspected, and fields with percent escapes, plus signs,
-comment openers, or collapsible whitespace are canonicalised into a 2 KB stack buffer and
+comment openers, or collapsible whitespace are canonicalised into an 8 KB stack buffer and
 inspected again, so `1%27/**/UnIoN/**/SeLeCt` and `%252e%252e/` collapse onto the raw
 signatures.
 
-== Cost
+=== Cost
 
-A full browser request classifies in 1.46 µs on the Shield surface and 295 ns on the Gate
-surface (no WAF), both without allocation. The difference, about 1.2 µs, is the semantic
-firewall's price for seven header fields.
+The inspection cost depends on the fields and bytes presented to the engine, not just the
+number of requests. The benchmark chapter reports separate Gate, Shield, and 8 KB body cases.
+The 8 KB bound is an inspection limit, not a claim that the rest of an upload is safe. An
+ingress using forward-auth must pass the relevant request information; omitted bytes cannot
+be inspected by this process.
 
-= The Declarative Policy Engine
+== The Declarative Policy Engine
 
 #objectives([
   Read the rule model, the evaluation order, WEIGH scoring with thresholds, and the JSON policy
@@ -190,11 +193,13 @@ string is free to forge, so admitting it would make the gate decorative.
   "thresholds": { "challenge_at": 10, "deny_at": 40, "bits_step": 5 },
   "ip_rules": { "10.0.0.0/8": "ALLOW", "2001:db8::/32": "DENY" },
   "rules": [
-    { "name": "internal-api", "path": "/api/*", "headers": { "X-Api-Key": ".*" }, "action": "ALLOW" },
+    { "name": "internal-api", "path": "/api/*", "headers": { "X-Api-Key": ".*" },
+    "action": "ALLOW" },
     { "name": "checkout", "path": "/checkout/*", "action": "CHALLENGE",
       "challenge": { "difficulty": 20, "algorithm": "posw" } },
     { "name": "headless", "user_agent": "Headless", "action": "WEIGH", "weight": 30 },
-    { "name": "no-language", "headers": { "Accept-Language": "" }, "action": "WEIGH", "weight": -5 }
+    { "name": "no-language", "headers": { "Accept-Language": "" },
+    "action": "WEIGH", "weight": -5 }
   ]
 }
 ```
@@ -208,3 +213,20 @@ string is free to forge, so admitting it would make the gate decorative.
   Explain to a reviewer why `Accept: */*` was a false positive, what structural property the
   new SQL detector requires, and how the automaton and the tokenizer divide the work.
 ])
+
+=== Worked trace: an encoded attack with a valid session
+
+Consider `GET /search?q=%2527%2520OR%25201%253D1` from a client holding a valid session.
+First the HTTP parser separates the path and query without copying their bytes. Local limits
+run, then Shield inspects the request. The percent sign marks the field for canonicalization.
+One decoding pass exposes `%27%20OR%201%3D1`; a second exposes `' OR 1=1`.
+
+The tokenizer now sees a quote, the keyword `OR`, and equal literal operands. A denial is a
+terminal policy result. The valid session does not turn it into an allow: the session check
+only resolves a challenge decision. The storage hook copies a bounded incident record; SQL
+runs later. The response path need not hold the engine snapshot while an origin connection
+is idle.
+
+#exercise("6.1", [Replace the payload with `O'Reilly` and then with `order=1`. Why should
+neither alone establish SQL injection? Give an example of a false positive a substring-only
+detector could produce.])

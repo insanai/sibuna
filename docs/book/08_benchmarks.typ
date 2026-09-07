@@ -6,12 +6,12 @@
   and trace each number to the mechanism that produces it.
 ])
 
-= Methodology
+== Methodology
 
 #objectives([
   By the end of this chapter, you should be able to reproduce every number in this part,
   explain what the spread column means, and say precisely which figures are measurements and
-  which are reference models.
+  which are source-audited expectations.
 ])
 
 The suite in `benchmarks/benchmark.zig` is built in `ReleaseFast` and run by
@@ -26,61 +26,51 @@ every single operation would perturb work that costs tens of nanoseconds, so no 
 percentiles are reported; earlier drafts that derived "p99" figures from a multiplier have been
 removed.
 
-#callout([Reference models are not measurements], [
-  Rows labelled `anubis-model` are fixed per-call constants for a Go Anubis deployment, taken
-  from public profiling of the Wazero VM boundary, Go `regexp` scans, `net.IPNet` slices, JWT
-  parsing, mutex-guarded maps, and `net/http` request allocation. They give the reader a sense of
-  scale; they were not run on this host and must not be quoted as Sibuna's measurements of
-  Anubis.
+#callout([Measurement scope], [
+  Only local measurements are emitted. Earlier fixed competitor models had no reproducible
+  provenance and were removed. Timers surround batches; state resets and warmup are untimed.
+  Allocation counts are not instrumented: the allocation-free primitive contract is based on
+  API and source review. The harness is a separate executable, with no hooks in the daemon.
 ], kind: "warning")
 
 #v(4mm)
 #benchmark_results_table()
 #v(6mm)
 
-= Reading the Numbers
+== Reading the Numbers
 
 #objectives([
   Trace each measured latency to its mechanism.
 ])
 
-== Proof-of-Work Verification
+=== Proof-of-Work Verification
 
-Hashcash verification is one SHA-256 evaluation of a 70-byte challenge plus a nonce: the
-hardware SHA extensions of the host run it in about 62 ns. The sequential-work verifier
-recomputes $t(n + 1) = 224$ compressions for depth 13 with sixteen openings, about 17 µs, well
-inside the 50 µs budget of the performance contract and still 300 times cheaper than the
-prover's 15–20 ms in a browser.
+Hashcash verification hashes a challenge, separator and decimal nonce. The sequential-work
+verifier checks graph openings; hash invocations and SHA-256 compression counts differ because
+inputs vary in length. The table above gives current measurements without treating hardware
+results as mathematical constants.
 
-== Signature Matching and Classification
+=== Matching, State, and Memory
 
-The dense automaton scans a browser User-Agent against forty signatures in 85 ns; the
-sequential substring scan of the same signatures on the same host, included as `sibuna-naive`,
-costs 4.2 µs. Full classification of a seven-header browser request costs 295 ns on the Gate
-surface and 1.46 µs on the Shield surface; the difference is the semantic firewall inspecting
-each non-structural field once plus the byte-class pass. An 8 KB body scans at about 2.9 ns
-per byte.
+Dense Aho–Corasick and sequential substring search now use identical patterns and any-match
+semantics. State benchmarks reset before every batch, so spent-set measurements include real
+insertions rather than duplicate rejection. Fixed-capacity structures need no allocator on
+these primitive APIs; the harness records unknown allocation counts rather than fabricating
+measurements. Engine/table byte counts come directly from `@sizeOf`. Resident memory includes
+runtime and thread costs and is measured separately from the primitives.
 
-== Tokens, State, and Parsing
+=== Distributed HTTP Measurement
 
-The keyed BLAKE3 token verifies in 134 ns against 52.8 µs for the Ed25519 alternative, the
-400-fold difference that motivated Part III's choice of primitive. A Robin Hood spend-and-lookup
-pair costs 23 ns, a GCRA check 4.8 ns, and parsing a request with seven headers plus a cookie
-lookup about 730 ns, most of it the header loop over the zero-copy buffer.
+`python3 benchmarks/distributed.py` starts three real daemons, first Gate and Shield without
+replication, then Shield with replicated storage. Six external client processes generate
+keep-alive forward-auth requests. Seven batches report throughput including client and loopback
+costs; response statuses are checked. Session portability, WAF denial with a valid session,
+issuer-bound challenge rejection, replicated ban propagation and one-member-loss serving are
+checked separately. Results are in `benchmarks/results/distributed-latest.json`.
 
-== Memory and Size
-
-The daemon's idle resident set after start is rendered in the tile above from the committed
-file (7.6 MB on the reference host with storage off). With Zaxonlite storage active, the live
-daemon measured 12–14.5 MB resident while serving requests and writing incidents. The
-`ReleaseFast` binary is 4.2 MB with storage compiled in, and the browser module 8,831 bytes.
-
-#callout([Design expectations, not measurements], [
-  Sibuna's architecture is intended to keep tail latency flat under floods because no request
-  allocates, no lock is held longer than tens of instructions, and every table is bounded. That
-  expectation has not yet been measured with a load generator against a running daemon; a
-  `wrk`-style throughput gate remains open work and is listed as such in SID 0002.
-])
+The harness adds no per-request instrumentation to Sibuna. It does not remove the daemon's
+production metrics, locks, snapshot atomics or incident enqueue costs. Both development PSK and mutual TLS are exercised on loopback. WAN behavior, global quotas, durable replay state,
+reverse-proxy origin latency and sustained overload remain outside these measurements.
 
 #exercise([8.1], [
   Run `sh benchmarks/run-all.sh` on your machine, rebuild the book, and compare the

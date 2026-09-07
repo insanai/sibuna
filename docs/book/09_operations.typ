@@ -2,11 +2,11 @@
 #import "figures.typ": *
 
 #part_page("IX", [Operations and Deployment], [
-  We cover the three surfaces, every command-line flag, forward-auth recipes, policy files,
+  We cover the two surfaces, every command-line flag, forward-auth recipes, policy files,
   persistent storage and clustering with Zaxonlite, and packaging.
 ])
 
-= Surfaces and Configuration
+== Surfaces and Configuration
 
 #objectives([
   By the end of this chapter, you should be able to run Sibuna as a reverse proxy or a
@@ -14,15 +14,15 @@
   manage the master secret.
 ])
 
-== Choosing a Surface
+=== Choosing a Surface
 
 - *Gate* (`--gate`, alias `--no-waf`): proof-of-work admission, sessions, declarative rules,
-  reputation, bans. 295 ns per classification.
-- *Shield* (default, `--shield`): Gate plus the semantic firewall and GCRA rate limits.
-- *Edge*: Shield plus `--data-dir` (persistent policies, reputation, forensics) and, with a
+  reputation, GCRA limits, bans.
+- *Shield* (default, `--shield`): Gate plus the semantic firewall.
+- *Distributed deployment* (an option for either surface): `--data-dir` (persistent policies, reputation, forensics) and, with a
   cluster build, `--cluster-*` flags for replication.
 
-== Command-Line Reference
+=== Command-Line Reference
 
 #table(
   columns: (1.6fr, 0.8fr, 2fr),
@@ -65,13 +65,13 @@
   `head -c 32 /dev/urandom | xxd -p -c 64 > /etc/sibuna/secret` and mode 0600.
 ])
 
-= Deployment Topologies
+== Deployment Topologies
 
 #objectives([
   Deploy the autonomous reverse proxy and the forward-auth validator behind Nginx or Caddy.
 ])
 
-== Reverse Proxy
+=== Reverse Proxy
 
 #book_figure([Request routing on the Shield surface], pipeline_flow())
 
@@ -83,7 +83,7 @@ sibuna --port 80 --upstream-host 127.0.0.1 --upstream-port 3000 \
 Admitted requests reach the origin with `X-Forwarded-For`, `X-Real-IP`, `X-Sibuna-Status`, and
 `X-Sibuna-Rule` headers; hop-by-hop headers and any incoming forwarded-for value are stripped.
 
-== Forward Auth Behind an Ingress
+=== Forward Auth Behind an Ingress
 
 In `--mode forward_auth` the daemon answers the ingress's subrequest with `200` (plus the audit
 headers), `401` for a challenge, `403` for a denial, or `429` when rate limited. The ingress
@@ -108,7 +108,8 @@ server {
         proxy_set_header Cookie $http_cookie;
     }
     location @sibuna_challenge { proxy_pass http://127.0.0.1:8080; }
-    location /__sibuna/ { proxy_pass http://127.0.0.1:8080; proxy_set_header X-Forwarded-For $remote_addr; }
+    location /__sibuna/ { proxy_pass http://127.0.0.1:8080;
+    proxy_set_header X-Forwarded-For $remote_addr; }
 }
 ```
 
@@ -126,7 +127,7 @@ example.com {
 The `/__sibuna/*` namespace (interstitial, challenge, verify, solver assets) must reach the
 daemon directly in both recipes.
 
-= Declarative Policy
+== Declarative Policy
 
 #objectives([
   Write a policy file with rules, weights, thresholds, IP rules, and the WAF switch.
@@ -141,11 +142,13 @@ daemon directly in both recipes.
   "rules": [
     { "name": "deny-cf-workers", "headers": { "CF-Worker": ".*" }, "action": "DENY" },
     { "name": "deny-amazonbot", "user_agent": "Amazonbot", "action": "DENY" },
-    { "name": "api-with-key", "path": "/api/*", "headers": { "X-Api-Key": ".*" }, "action": "ALLOW" },
+    { "name": "api-with-key", "path": "/api/*", "headers": { "X-Api-Key": ".*" },
+    "action": "ALLOW" },
     { "name": "protect-checkout", "path": "/checkout/*", "action": "CHALLENGE",
       "challenge": { "difficulty": 20, "algorithm": "posw" } },
     { "name": "headless", "user_agent": "Headless", "action": "WEIGH", "weight": 30 },
-    { "name": "internal-vpc", "remote_addresses": ["10.0.0.0/8", "fd00::/8"], "action": "ALLOW" }
+    { "name": "internal-vpc", "remote_addresses": ["10.0.0.0/8", "fd00::/8"],
+    "action": "ALLOW" }
   ]
 }
 ```
@@ -153,7 +156,7 @@ daemon directly in both recipes.
 `rules` replaces the built-in table when present; `ip_rules` feeds the reputation trie, which
 scales to thousands of prefixes; `waf: false` selects the Gate surface from the file.
 
-= Persistent Storage and Clustering
+== Persistent Storage and Clustering
 
 #objectives([
   Enable Zaxonlite storage, add a dynamic policy and a ban with SQL, query incident forensics,
@@ -167,38 +170,37 @@ SQLite image in one directory) and starts the storage thread. On start and whene
 `policies` or `ip_reputation` tables change, the thread rebuilds the spare engine slot from the
 policy file plus the database and publishes it; requests never wait on SQL.
 
-== Schema
+=== Schema
 
-```sql
-CREATE TABLE policies (id TEXT PRIMARY KEY, name TEXT NOT NULL, priority INTEGER NOT NULL DEFAULT 100,
-  path_pattern TEXT, ua_pattern TEXT, action TEXT NOT NULL, difficulty INTEGER, algorithm TEXT,
-  header_matchers TEXT, cidr_matchers TEXT, weight INTEGER NOT NULL DEFAULT 0,
-  enabled INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);
-CREATE TABLE ip_reputation (ip_or_cidr TEXT PRIMARY KEY, reputation_score INTEGER NOT NULL,
-  banned_until INTEGER, trigger_rule TEXT, hits INTEGER NOT NULL DEFAULT 1, last_seen INTEGER NOT NULL);
-CREATE TABLE security_incidents (id INTEGER PRIMARY KEY, node_id INTEGER NOT NULL, client_ip TEXT NOT NULL,
-  user_agent TEXT NOT NULL, method TEXT NOT NULL, path TEXT NOT NULL, violation_category TEXT NOT NULL,
-  offending_payload TEXT NOT NULL, campaign_id INTEGER, recorded_at INTEGER NOT NULL);
-CREATE VIRTUAL TABLE incidents_fts USING fts5(path, offending_payload,
-  content='security_incidents', content_rowid='id');
-CREATE VIRTUAL TABLE incidents_vec USING vec0(item_id INTEGER PRIMARY KEY,
-  embedding float[64] distance_metric=cosine, embedding_coarse bit[64]);
-```
+#table(columns: (1fr, 2.3fr),
+  table.header([Table], [Purpose and key]),
+  [`policies`], [Ordered dynamic rules, keyed by `id`.],
+  [`ip_reputation`], [Scores, hit counts and expiry, keyed by address or prefix.],
+  [`security_incidents`], [One bounded event record, keyed by issuer and sequence.],
+  [`incidents_fts`], [Full-text index over paths and payloads.],
+  [`incidents_vec`], [64-component embeddings for nearest-campaign lookup.],
+  [`sibuna_meta`], [Policy revision and per-issuer incident commit receipts.],
+)
 
-== Operating It
+The complete schema is `apps/sibuna/src/persistent.zig`. Runtime migrations and indexes are
+part of the same storage transaction; an abbreviated printed schema is not an upgrade script.
+
+
+=== Operating It
 
 Use the `zaxon` CLI from the Zaxonlite release, or any SQLite client on the materialised
 `current.db` for reads:
 
 ```sql
--- Add a dynamic rule; every node picks it up within --storage-poll-ms.
+-- Add a dynamic rule; healthy nodes poll after committed changes.
 INSERT INTO policies (id, name, priority, path_pattern, action, difficulty, algorithm,
   header_matchers, cidr_matchers, weight, enabled, created_at, updated_at)
 VALUES ('p-checkout', 'protect-checkout', 10, '/checkout/*', 'CHALLENGE', 20, 'posw',
   '{"X-Api": "v2"}', '["10.0.0.0/8"]', 0, 1, unixepoch(), unixepoch());
 
 -- Ban an address cluster-wide for a day.
-INSERT INTO ip_reputation (ip_or_cidr, reputation_score, banned_until, trigger_rule, hits, last_seen)
+INSERT INTO ip_reputation (ip_or_cidr, reputation_score, banned_until,
+  trigger_rule, hits, last_seen)
 VALUES ('198.51.100.7', -100, unixepoch() + 86400, 'analyst', 1, unixepoch());
 
 -- Forensics: full-text search over recorded payloads.
@@ -211,16 +213,41 @@ Scores at or below $-50$ become `deny` prefixes in the trie, scores at or above 
 `allow`, and `banned_until` bounds the ban. Honeypot hits insert a $-100$ record automatically,
 so a trap sprung on one node bans the address on all of them.
 
-== Campaign Clustering
+=== A transaction receipt makes retry safe
+
+The storage thread collects at most 32 pending records and builds one SQL transaction. The
+transaction inserts incidents, updates the text and vector indexes, and applies honeypot
+reputation changes. Each issuer has a monotonically increasing cursor in `sibuna_meta`.
+Every data-changing statement is guarded by that cursor; the transaction advances it last.
+
+#definition([Worked example: the acknowledgement disappears], [
+  Suppose issuer 2 prepares sequences 101 through 132, ending at cursor 133. The leader commits
+  all records and cursor 133, then disappears before replying. The storage thread retains the
+  exact SQL and retries. The receipt already equals 133, so the guarded writes do nothing:
+  neither incidents nor honeypot hit counts are doubled. If the original transaction rolled
+  back, the old cursor remains and the retry applies all writes once.
+])
+
+A failed commit retains the pending batch in memory and increments
+`incident_write_failures`. The tick still attempts policy polling. A full 512-record queue
+counts `incidents_dropped`; it never blocks an HTTP response waiting for disk. The pending
+batch adds space for 32 records. Process death before commit can lose queued data: this is a
+bounded asynchronous forensic path, not a durable message queue at enqueue time.
+
+#exercise("9.1", [Move the receipt update outside the data transaction. Construct one crash
+schedule that duplicates a reputation effect and another that loses an incident.])
+
+=== Campaign Clustering
 
 Each incident payload is embedded as a 64-dimensional unit vector by the hashing trick over
 byte trigrams (digits folded, case folded) and stored in `incidents_vec`. Before insertion the
-storage thread asks the vector table for the nearest existing incident; if its cosine distance
+transaction queries the vector table for the nearest existing incident, including earlier
+records in the same batch; if its cosine distance
 is below $0.35$ the new incident joins that incident's `campaign_id`, otherwise it starts a
-campaign. Two SQL injections with different target columns land in one campaign; a honeypot hit
-does not. No model runs and nothing is trained.
+campaign. Similarity is a heuristic: the regression examples group related SQL payloads, but that
+is not a guarantee that every pair of attacks shares a campaign. No model runs and nothing is trained.
 
-== Clustering
+=== Clustering
 
 Build with `-Dcluster=true` (links OpenSSL 3 for Zaxonlite's mutual TLS) and start each member
 with the full static membership:
@@ -237,13 +264,13 @@ elected leader and replicate as SQLite page images by Multi-Paxos; each node's s
 sees the committed change and rebuilds its engine. For local experiments a loopback cluster may
 use `--cluster-secret-file` (a pre-shared key) instead of certificates.
 
-= Packaging
+== Packaging
 
 #objectives([
   Build the binary for a target, package it, and run it under systemd.
 ])
 
-- `zig build -Doptimize=ReleaseFast` produces a 4.2 MB binary with storage compiled in (it links
+- `zig build -Doptimize=ReleaseFast` produces a binary with storage compiled in (it links
   libc for SQLite).
 - `zig build -Doptimize=ReleaseFast -Dstorage=false` produces a fully static binary with no libc
   dependency, suitable for a `scratch` container image; `--data-dir` is then refused at start.
@@ -277,3 +304,15 @@ WantedBy=multi-user.target
   Explain to an operator why adding a row to `policies` takes effect without a restart and
   without a request ever waiting, in terms of the storage thread and the engine slots.
 ])
+
+=== Cluster challenge routing
+
+Challenge keys are bound to `--cluster-node`; keep challenge issuance and verification on the
+same member. Tokens use the shared seed and work on other members. Local rate quotas do not
+become global quotas, and process restarts clear spent sets. See the distributed benchmark
+results for loopback throughput, replicated ban propagation and one-member-loss coverage.
+
+The storage transport authenticates each node certificate using the common name
+`zaxon-node-<id>` (matching `--cluster-node`), signed by the configured CA. A certificate
+with an arbitrary common name does not authenticate a storage member. The distributed
+harness creates temporary CA-signed identities and exercises this mutual-TLS transport.

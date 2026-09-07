@@ -5,6 +5,7 @@
 
 #include "book/00_front.typ"
 #include "book/00_learning.typ"
+#counter(heading).update(0)
 #include "book/01_foundations.typ"
 #include "book/02_prior_art.typ"
 #include "book/03_cryptography.typ"
@@ -15,3 +16,4 @@
 #include "book/08_benchmarks.typ"
 #include "book/09_operations.typ"
 #include "book/10_reference.typ"
+#include "book/11_solutions.typ"

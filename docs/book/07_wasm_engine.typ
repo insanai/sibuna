@@ -6,7 +6,7 @@
   verifiers, the Web Worker protocol, the JavaScript fallback provers, and the interstitial.
 ])
 
-= One Source, Two Targets
+== One Source, Two Targets
 
 #objectives([
   By the end of this chapter, you should be able to explain how the browser module is built
@@ -14,7 +14,7 @@
   memory the sequential-work prover needs in a tab.
 ])
 
-== Build Wiring
+=== Build Wiring
 
 The browser solver imports the exact files the server verifies with. `build.zig` creates
 `wasm32-freestanding` modules from `libs/crypto/src/pow.zig` and `libs/crypto/src/posw.zig` and
@@ -38,7 +38,7 @@ const wasm_pow = b.addExecutable(.{
 There is no second implementation to drift. The module measures 8,831 bytes with both tiers
 and is served from the daemon with a one-hour cache header.
 
-== Exports
+=== Exports
 
 #table(
   columns: (1.6fr, 2.4fr),
@@ -52,7 +52,7 @@ and is served from the daemon with a one-hour cache header.
 The prover's workspace, the retained top levels, the sibling stack, and the proof, is a static
 90 KB region; no allocator is linked.
 
-== Prefix Pre-Hashing
+=== Prefix Pre-Hashing
 
 The Hashcash inner loop absorbs the challenge and the colon once and copies the SHA-256 state
 per nonce, so each candidate costs one compression rather than two:
@@ -73,7 +73,7 @@ while (step < max_steps) : (step += 1) {
 The sequential-work prover uses the same trick with the statement $chi$ absorbed once in
 `baseHasher`.
 
-= The Worker Protocol
+== The Worker Protocol
 
 #objectives([
   Read the message protocol, understand the fallback hierarchy, and see the sentinel bug that
@@ -84,7 +84,8 @@ The page posts one message and receives progress, fallback, and result messages:
 
 ```javascript
 // page -> worker
-{ challenge: spec.id, algorithm: spec.algorithm, difficulty: spec.difficulty, challenges: spec.challenges }
+{ challenge: spec.id, algorithm: spec.algorithm, difficulty: spec.difficulty,
+    challenges: spec.challenges }
 
 // worker -> page
 { type: 'progress', iterations: 40000 }
@@ -109,31 +110,30 @@ guarantee that every browser can pass.
   normalised.
 ])
 
-= Calibration
+== Calibration
 
 #objectives([
   Relate difficulty settings to wall-clock time in a browser engine and on native silicon.
 ])
 
-Measured under V8 (the engine of Chrome and Node.js) on an Apple M1, with the shipped module:
+Do not choose a difficulty from one laptop's average solve. Hashcash has a geometric tail;
+browser clocks include scheduling, thermal state, startup and compilation. A deployment
+calibration should record the browser version, device, algorithm, parameters, and a distribution
+of repeated solves. Keep module fetch and compilation separate from steady-state hashing.
 
-#table(
-  columns: (1.2fr, 1fr, 1fr, 1fr),
-  table.header([*Work bits*], [*Hashcash (WASM)*], [*PoSW depth*], [*PoSW (WASM)*]),
-  [15], [$approx 10$ ms], [12], [17.8 ms],
-  [16], [$approx 20$ ms], [13], [15.4 ms],
-  [17], [$approx 40$ ms], [14], [32.0 ms],
-  [18], [$approx 80$ ms], [15], [66.4 ms],
-  [19], [$approx 160$ ms], [16], [137.9 ms],
-  [20], [$approx 320$ ms], [17], [285.1 ms],
-)
+#definition([Worked calibration plan], [
+  Hold $b$ fixed, warm the module, and solve at least 100 independently issued puzzles on
+  each target device class. Record median and high-percentile durations, failures and proof
+  sizes. Repeat at $b+1$. Expected trial count doubles; an individual sample need not. Choose
+  a setting against the slow-device budget, then test the complete fetch–solve–verify flow.
+])
 
-Hashcash costs about 0.3 µs per hash in WebAssembly; the sequential prover at depth $n$
-costs about $2^(n+3)$ compressions, which is why depth is work bits minus three. The default of
-16 work bits is a 15–20 ms interstitial on a laptop and a few hundred milliseconds on a
-low-end phone; an operator under attack raises it, or lets the adaptive controller do so.
+The repository's native primitive measurements are not evidence for a promised phone or
+browser solve time. A WASM module can run the same arithmetic while having different startup,
+execution, and memory costs. The worker's messages form the boundary at which those costs can
+be measured without adding a timer to the server's request handler.
 
-= The Interstitial
+== The Interstitial
 
 The page is a single embedded HTML file with a card, an indeterminate progress bar, and a
 status line. It requests the challenge for its own location (`?path=`), spawns the worker,

@@ -16,35 +16,47 @@
 
 #let fit(body, pct) = scale(x: pct, y: pct, reflow: true, body)
 
-#let pipeline_flow() = fit(diagram(
-  spacing: (12mm, 10mm),
-  node-stroke: 0.8pt + blue,
+#let probability_contours() = cetz.canvas(length: 1cm, {
+  import cetz.draw: *
+  line((0,0),(9,0), stroke: 0.7pt + gray)
+  line((0,0),(0,3.4), stroke: 0.7pt + gray)
+  for i in range(5) {
+    let x = i * 2.1
+    line((x,0),(x,3), stroke: 0.3pt + rule)
+    content((x,-0.3), text(size: 8pt)[#i])
+  }
+  for (value,label) in ((1,[1.0]),(0.5,[0.5]),(0,[0])) {
+    content((-0.45,value*3), text(size: 8pt)[#label])
+  }
+  let points = ()
+  for k in range(101) {
+    let x = k / 25
+    points.push((x*2.1,calc.exp(-x)*3))
+  }
+  line(..points, stroke: 1.5pt + blue)
+  circle((2.1,calc.exp(-1)*3), radius: 0.06, fill: amber, stroke: none)
+  content((4.9,2.2), text(size: 9pt)[$P(K>x E[K]) approx e^(-x)$])
+  content((4.2,-0.8), text(size: 8pt)[Trials / expected trials])
+})
+
+#let pipeline_flow() = diagram(
+  spacing: (13mm, 12mm),
   edge-stroke: 0.8pt + gray,
-  node((0, 0), [Request #linebreak() (64 KB buffer)], ..node_style),
-  node((1, 0), [Ban table #linebreak() lock-free read], ..node_style),
-  node((2, 0), [GCRA #linebreak() rate limiter], ..node_style),
-  node((3, 0), [Session cookie #linebreak() keyed MAC], ..warn_style),
-  node((4, 0), [Proxy with #linebreak() audit headers], ..good_style),
-  node((0, 1), [Semantic WAF #linebreak() automaton], ..node_style),
-  node((1, 1), [Reputation trie #linebreak() allow / deny], ..node_style),
-  node((2, 1), [Rules + WEIGH #linebreak() first terminal], ..node_style),
-  node((3, 1), [Bypass paths, #linebreak() bot automaton], ..node_style),
-  node((4, 1), [Interstitial #linebreak() or 401 JSON], ..warn_style),
-  node((1, 2), [403 Forbidden], ..bad_style),
-  edge((0, 0), (1, 0), "-|>"),
-  edge((1, 0), (2, 0), "-|>"),
-  edge((2, 0), (3, 0), "-|>"),
-  edge((3, 0), (4, 0), "-|>", [valid]),
-  edge((3, 0), (0, 1), "-|>", [none], bend: 25deg),
-  edge((0, 1), (1, 1), "-|>", [clean]),
-  edge((1, 1), (2, 1), "-|>"),
-  edge((2, 1), (3, 1), "-|>"),
-  edge((3, 1), (4, 1), "-|>", [challenge]),
-  edge((3, 1), (4, 0), "-|>", [allow], bend: -20deg),
-  edge((0, 1), (1, 2), "-|>", [violation]),
-  edge((1, 1), (1, 2), "-|>", [banned]),
-  edge((2, 0), (1, 2), "-|>", [429], bend: 20deg),
-), 78%)
+  node((0,0), [Request], ..node_style),
+  node((1,0), [Local bans #linebreak() and rate limit], ..node_style),
+  node((2,0), [Inspection #linebreak() and policy], ..node_style),
+  node((0,1), [Origin / auth #linebreak() success], ..good_style),
+  node((1,1), [Session MAC #linebreak() if challenged], ..warn_style),
+  node((2,1), [Deny], ..bad_style),
+  node((1,2), [Issue puzzle], ..warn_style),
+  edge((0,0),(1,0), "-|>"),
+  edge((1,0),(2,0), "-|>", [within limits]),
+  edge((2,0),(2,1), "-|>", [DENY]),
+  edge((2,0),(1,1), "-|>", [CHALLENGE]),
+  edge((1,1),(0,1), "-|>", [valid]),
+  edge((1,1),(1,2), "-|>", [missing / invalid]),
+  edge((2,0),(0,1), "-|>", [ALLOW], bend: -35deg),
+)
 
 #let challenge_round_trip() = fit(diagram(
   spacing: (14mm, 11mm),
@@ -289,7 +301,7 @@
   let items = benchmark_rows().map(((label, sub, wl, has_model)) => (
     label,
     bench_find(data, "sibuna", sub, wl),
-    if has_model { bench_find(data, "anubis-model", sub, wl) } else { none },
+    none,
   ))
   cetz.canvas(length: 1cm, {
     import cetz.draw: *
@@ -313,8 +325,6 @@
     }
     rect((x0, 1.0), (x0 + 0.35, 0.8), fill: blue, stroke: none)
     content((x0 + 0.45, 0.9), anchor: "west", text(size: 7.2pt, weight: "bold", fill: blue)[Sibuna, measured on this host])
-    rect((x0 + 5.0, 1.0), (x0 + 5.35, 0.8), fill: red, stroke: none)
-    content((x0 + 5.45, 0.9), anchor: "west", text(size: 7.2pt, weight: "bold", fill: red)[Anubis reference model, not measured])
     for (i, (label, sib, model)) in items.enumerate() {
       let y = -(i + 0.5) * row_h
       content((x0 - 0.15, y), anchor: "east", text(size: 7pt, weight: "bold")[#label])
@@ -338,14 +348,12 @@
   let dirty_tag = if "dirty" in meta and meta.dirty { [ · modified tree] } else { [] }
   let rows = benchmark_rows().map(((label, sub, wl, has_model)) => {
     let sib = bench_find(data, "sibuna", sub, wl)
-    let model = if has_model { bench_find(data, "anubis-model", sub, wl) } else { none }
+    let model = none
     (
       [#label],
       [#fmt_ns(if sib != none { sib.ns_per_op_median } else { none })],
       [#fmt_ns(if sib != none { sib.ns_per_op_min } else { none }) – #fmt_ns(if sib != none { sib.ns_per_op_max } else { none })],
       [#if sib != none { sib.ops_per_sec } else { [-] }],
-      [#if model != none { fmt_ns(model.ns_per_op_median) } else { text(fill: gray)[n/a] }],
-      [#if model != none and sib != none { [#calc.round(model.ns_per_op_median / sib.ns_per_op_median, digits: 1)×] } else { text(fill: gray)[-] }],
     )
   }).flatten()
   let naive = bench_find(data, "sibuna-naive", "bot_matcher", "sequential_substring_40_signatures")
@@ -365,18 +373,18 @@
         [Keyed BLAKE3, 64-character cookie], fill: green_light, stroke: green),
       stat_tile([#calc.round(meta.idle_rss_kb / 1024, digits: 1) MB], [Idle resident memory],
         [Daemon after start, storage off], fill: amber_light, stroke: amber),
-      stat_tile([#calc.round(meta.binary_bytes / 1048576, digits: 1) MB], [Static binary],
+      stat_tile([#calc.round(meta.binary_bytes / 1048576, digits: 1) MB], [Daemon binary],
         [WASM solver #meta.wasm_bytes bytes], fill: rgb("f5f3ff"), stroke: rgb("7c3aed")),
     )
     #v(8pt)
     #block(width: 100%, inset: 10pt, radius: 5pt, fill: blue_light, stroke: 0.5pt + rule)[
       #text(size: 11pt, weight: "bold")[Measured latency per operation]
       #linebreak()
-      #text(size: 8pt, fill: gray)[The "reference model" column is a fixed per-call cost taken from public profiling of a Go Anubis deployment; it is a model, not a measurement on this host.]
+      #text(size: 8pt, fill: gray)[Only measured primitive latencies are shown. Allocation activity is not instrumented.]
       #v(5pt)
       #table(
-        columns: (1.6fr, 0.8fr, 1fr, 0.8fr, 0.9fr, 0.6fr),
-        table.header([*Workload*], [*Median*], [*Spread*], [*ops/s*], [*Reference model*], [*Ratio*]),
+        columns: (1.6fr, 0.8fr, 1fr, 0.8fr),
+        table.header([*Workload*], [*Median*], [*Spread*], [*ops/s*]),
         ..rows,
       )
       #v(4pt)

@@ -7,7 +7,7 @@
   allocation on the request path.
 ])
 
-= The Connection Loop
+== The Connection Loop
 
 #objectives([
   By the end of this chapter, you should be able to explain how one 64 KB buffer serves an
@@ -15,7 +15,7 @@
   proxied requests close the connection while internal routes keep it open.
 ])
 
-== One Buffer per Connection
+=== One Buffer per Connection
 
 Every dynamic allocation on a request path is a denial-of-service lever: fragmentation over
 days, allocator lock contention across threads, and amplification by attackers who craft
@@ -46,7 +46,7 @@ routes are length-delimited and keep the connection open. Proxied requests strea
 response until it closes, so the daemon closes the client too: correct framing without parsing
 the origin's response.
 
-== The Proxy Head Rewrite
+=== The Proxy Head Rewrite
 
 The head is not forwarded verbatim. `writeHead` re-emits the request line and each header,
 dropping hop-by-hop fields (`Connection`, `Transfer-Encoding`, any incoming `X-Forwarded-For`)
@@ -69,23 +69,23 @@ drops a spoofed `X-Forwarded-For` and injects the audit fields.
   by `relayBody`, and why the proxy must write the head to the origin *before* relaying.
 ])
 
-= Concurrent State Without Allocation
+== Concurrent State Without Allocation
 
 #objectives([
   Analyse the spinlock, the Robin Hood spent set, the GCRA limiter, the lock-free ban table,
   the MPSC incident ring, and the read-copy-update engine slot.
 ])
 
-== Spinlocks and Sharding
+=== Spinlocks and Sharding
 
 The critical sections in Sibuna's tables are tens of instructions long, far shorter than a
 kernel futex round trip, so shards are guarded by a two-state atomic spinlock with
 `spinLoopHint` in the wait loop. Tables are split into 16 shards by key hash so two operations
 contend with probability $1/16$.
 
-== The Robin Hood Spent Set
+=== The Robin Hood Spent Set
 
-Only solved challenges are stored (Part III, Lemma 4). Each shard is an open-addressed array of
+Only accepted proofs enter the spent set (chapter 3). Each shard is an open-addressed array of
 4096 entries of `{tag: [16]u8, expires_at: u64, dist: u8, occupied: bool}`. Robin Hood insertion
 (Celis, 1986) displaces any occupant closer to its home than the incoming key, which keeps probe
 lengths tightly clustered; lookups stop as soon as they meet an entry nearer its home than they
@@ -93,7 +93,9 @@ are to theirs.
 
 ```zig
 fn insert(self: *Shard, tag: *const Tag, expires_at: u64, now: u64) StoreError!void {
-    var carry = Entry{ .tag = tag.*, .expires_at = expires_at, .dist = 0, .occupied = true };
+    if (!self.canInsert(tag, now)) return error.StoreFull;
+    var carry = Entry{ .tag = tag.*, .expires_at = expires_at, .dist = 0,
+    .occupied = true };
     var idx = home(tag);
     while (carry.dist < MAX_PROBE) {
         const e = &self.entries[idx];
@@ -116,13 +118,13 @@ fn insert(self: *Shard, tag: *const Tag, expires_at: u64, now: u64) StoreError!v
 The expired-slot rule is the subtle part: an expired entry may be overwritten in place only by a
 key at least as far from its home, otherwise a later key that probes past the slot would stop
 early and be lost. Expired entries that get displaced are simply dropped. No sweeper thread is
-needed. A spend-and-lookup pair costs 22.8 ns.
+needed. Insertion first checks that bounded displacement can succeed without losing a live tag.
 
-== GCRA: Rate Limiting in One Integer
+=== GCRA: Rate Limiting in One Integer
 
 The Generic Cell Rate Algorithm (ATM Forum, 1996) is the virtual-scheduling form of the leaky
 bucket. Per client it stores one *theoretical arrival time* (TAT). With emission interval
-$T = W / N$ for a limit of $N$ per window $W$, and burst tolerance $tau = W - T$:
+$T = max(1, ceil(W / N))$ for a positive limit $N$ per window $W$, and burst tolerance $tau = (N - 1) T$:
 
 $ "arrival at" t "conforms" <=> "TAT" <= t + tau, quad "then" "TAT" <- max("TAT", t) + T. $
 
@@ -141,38 +143,43 @@ fn check(self: *Shard, key: u64, now_ms: u64, limits: Limits) Decision {
     const tau = limits.burstTolerance();
     self.lock.lock();
     defer self.lock.unlock();
-    const cell = self.locate(key, now_ms, tau);
+    const cell = self.locate(key, now_ms, tau) orelse return .{
+        .limited = true, .retry_after_ms = interval, .remaining = 0,
+    };
     const tat = @max(cell.tat_ms, now_ms);
-    if (tat > now_ms + tau) {
+    if (tat > now_ms +| tau) {
         return .{ .limited = true, .retry_after_ms = tat - tau - now_ms, .remaining = 0 };
     }
-    cell.tat_ms = tat + interval;
+    cell.tat_ms = tat +| interval;
     // ... remaining = floor((t + tau - TAT) / T) + 1
 }
 ```
 
 Cells are 16 bytes in 16 shards of 512 slots with a 16-slot probe window; a cell whose TAT is
 older than $t - tau$ has drained and is reclaimed on the spot. The `Retry-After` header is
-computed from the same arithmetic. A check costs 4.8 ns.
+computed from the same arithmetic. Saturated probe windows refuse new clients rather than
+evicting active quota state; a zero configured rate refuses requests.
 
-== The Lock-Free Ban Table
+=== The Versioned Ban Table
 
-Bans are rare writes and constant reads, so the table is optimised for readers: 4096 slots of
-two atomics (`key`, `until`) probed within a window of eight. Readers perform two acquire loads
-per probe and take no lock; writers serialise on a spinlock and publish `until` before `key` so
-no reader pairs a fresh key with a stale expiry.
+Bans use 4096 slots with atomic key, expiry and version fields. A writer brackets updates with
+version increments; readers accept only a stable even version and retry concurrent changes.
+Sequential consistency prevents mixing an old identity with a replacement expiry. Readers
+take no mutex, but can wait for a writer and are not wait-free. These atomic operations have
+real cost, measured indirectly in the HTTP harness rather than assumed free.
 
-== The MPSC Incident Ring
+=== The MPSC Incident Ring
 
 When the Shield surface denies a request or the honeypot fires, the incident is copied into a
 fixed 1.3 KB record and pushed onto a bounded multi-producer single-consumer ring (Vyukov's
 sequence-stamped design, 512 slots). Producers are worker threads; the consumer is the storage
-thread. A full ring drops the newest record rather than blocking a response, the correct trade
-for forensics under a flood.
+thread. A full ring drops the newest record rather than blocking a response, an explicit loss policy rather than a durability guarantee. The drop counter makes that loss
+observable. After moving a record into a pending batch, the storage thread retains it until
+commit is confirmed; it does not silently discard it on a database error.
 
-== Read-Copy-Update Engine Slots
+=== Read-Copy-Update Engine Slots
 
-The policy engine is several megabytes of automaton tables and is rebuilt off the hot path when
+The policy engine has fixed-capacity automaton tables and is rebuilt off the hot path when
 policies change. Workers must never observe a half-built engine, and the builder must never
 overwrite an engine a request is still reading. Sibuna uses two slots with reader counts:
 
@@ -181,20 +188,22 @@ overwrite an engine a request is still reading. Sibuna uses two slots with reade
 ```zig
 pub fn acquireEngine(self: *AppState) *EngineSlot {
     while (true) {
-        const slot = self.slot.load(.acquire);
-        _ = slot.readers.fetchAdd(1, .acq_rel);
-        if (self.slot.load(.acquire) == slot) return slot;
-        _ = slot.readers.fetchSub(1, .acq_rel);
+        const slot = self.slot.load(.seq_cst);
+        _ = slot.readers.fetchAdd(1, .seq_cst);
+        if (self.slot.load(.seq_cst) == slot) return slot;
+        _ = slot.readers.fetchSub(1, .seq_cst);
     }
 }
 
 pub fn publishEngine(self: *AppState, fresh: *EngineSlot) *EngineSlot {
-    const old = self.slot.swap(fresh, .acq_rel);
-    while (old.readers.load(.acquire) != 0) std.atomic.spinLoopHint();
+    const old = self.slot.swap(fresh, .seq_cst);
+    while (old.readers.load(.seq_cst) != 0) std.atomic.spinLoopHint();
     return old;
 }
 ```
 
+Sequentially consistent pointer and reader-count operations establish one total order
+across the two atomics. Merely using acquire/release on separate objects is insufficient.
 The re-check after incrementing closes the race in which a writer swaps between the reader's
 load and its increment and observes zero readers: the reader notices the pointer changed,
 releases, and retries on the new slot. The test suite includes a scenario that deadlocked when a
@@ -210,3 +219,7 @@ test held a slot across a rebuild, which is exactly the guarantee working as des
   Explain why an expired Robin Hood entry can be overwritten only by a key with a distance at
   least as large, using a three-slot example.
 ])
+
+Each physical slot owns its own allocation arena. Pinning and publication use sequentially
+consistent atomics. Response rule names are copied into a bounded buffer, then the reader
+releases its slot before proxy I/O. This prevents a slow origin from stalling publication.

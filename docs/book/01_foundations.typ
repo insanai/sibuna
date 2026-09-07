@@ -1,135 +1,103 @@
 #import "theme.typ": *
 #import "figures.typ": *
 
-#part_page("I", [Foundations of Asymmetric Web Defense], [
-  We explore the economics of automated web scraping, explain why the traditional
-  defensive boundaries fail, and establish verifiable computation as the friction that
-  restores the balance between requester and server.
+#part_page("I", [The cost of a request], [
+  Before choosing an algorithm, identify the resource it is meant to protect.
 ])
 
-= The AI Scraping Arms Race
+== Admission is an economic decision
 
-#objectives([
-  By the end of this chapter, you should be able to quantify the economic asymmetry between web
-  scrapers and origin servers, articulate why IP reputation lists cannot stop distributed
-  harvesting, and explain why cognitive tests such as CAPTCHAs no longer separate humans from
-  machines.
+Suppose an origin performs a database lookup and renders a page for each admitted request.
+Let $c_o$ be that work, $c_g$ the gate's work per request, and $r$ the arrival rate. With no gate,
+the origin must sustain $r c_o$ units of work per second. A gate that admits fraction $a$ changes
+that demand to $r a c_o$, while spending $r c_g$ itself. The gate is useful only when the saved
+origin work exceeds its own cost and the cost it imposes on legitimate visitors.
+
+$ r c_g + r a c_o < r c_o quad arrow.l.r.double quad c_g < (1-a)c_o. $
+
+This is a capacity model, not a measurement. It omits bandwidth, connection state, storage,
+and client delay. Its value is that every missing term is visible. A cache hit may make $c_o$
+small; a costly query may make it large. There is no universal requester-to-server cost ratio.
+
+#definition([Worked example: when a gate pays for itself], [
+  Choose $c_o=100$ work units and $c_g=1$. If half the requests are rejected, the gated system
+  spends $1+0.5 times 100=51$ units per arrival instead of 100. If only one in a thousand is
+  rejected, it spends $100.9$: the gate costs more than it saves in this model. These selected
+  numbers are not timings. They show why the workload belongs in every performance claim.
 ])
 
-== The Economics of Automated Data Extraction
+== What a proof of work establishes
 
-The demand for training text, code, and media has turned the public web into a quarry. Model
-builders, data brokers, and autonomous agents run extraction pipelines against every reachable
-site, continuously. Under ordinary HTTP the cost of an interaction falls almost entirely on the
-*server*:
+A client puzzle establishes that somebody found an input satisfying a public verification
+rule. It does not establish humanity, identity, or good intent. A requester can rent compute,
+reuse a valid session within its lifetime, or distribute work across machines. The puzzle
+changes the admission cost; policy and inspection still decide what admitted requests may do.
 
-#table(
-  columns: (1fr, 1.2fr, 1.2fr),
-  table.header([*Actor*], [*Action*], [*Computational Cost*]),
-  [Scraper Client],
-  [Emits HTTP GET over an existing TCP connection],
-  [$approx 0.0001$ ms CPU time],
+Address-based limits are complementary. They constrain one address, but shared addresses can
+represent many people and one requester can use many addresses. Neither a puzzle nor an
+address is an identity oracle. Sibuna therefore keeps admission, inspection, and reputation
+as distinct decisions.
 
-  [Origin Web Server],
-  [Accepts socket, TLS termination, routing, database query, template rendering, response serialization],
-  [$5$ to $50$ ms CPU time, plus database I/O and bandwidth],
-)
+== Hash search as a random variable
 
-The asymmetry favours the requester by at least $10,000 : 1$. A bot on a five-dollar virtual
-machine can saturate an origin backed by a fleet of database replicas.
+For an ideal 256-bit digest, requiring $b$ leading zero bits gives success probability
+$p=2^(-b)$ for each independent trial. Let $K$ count trials through the first success. Then
 
-== The Collapse of Legacy Defenses
+$ P(K=k)=(1-p)^(k-1)p, quad P(K>k)=(1-p)^k, quad E[K]=1/p=2^b. $
 
-#warning([The Failure of Convention], [
-  Relying on `robots.txt` against a harvesting fleet is locking a vault with a paper ribbon.
-  Commercial scrapers disguise their User-Agent, present browser headers, and ignore crawling
-  directives entirely.
+The expectation follows from the tail sum:
+$ E[K]=sum_(k=0)^infinity P(K>k)=sum_(k=0)^infinity (1-p)^k=1/p. $
+
+A difficulty step doubles expected trials. It does not promise that every puzzle takes twice
+as long. Some succeed on the first trial; some take far longer than the mean. A client that
+measures only one solve has mostly measured this randomness.
+
+#book_figure([Survival probability of hash search. The horizontal axis is trials divided by
+expected trials; the continuous curves use the large-work approximation $P(K>x/p) approx e^(-x)$.], probability_contours())
+
+#definition([Worked example: expectation is not a deadline], [
+  At $b=16$, the expected work is 65,536 hashes. The probability of still searching after that
+  many trials is approximately $e^(-1)=0.368$. The 95th-percentile trial count is
+  $ceil(ln(0.05)/ln(1-2^(-16))) approx 196327$, nearly three times the mean. A user interface
+  should tolerate that spread rather than announcing failure at the expected completion time.
 ])
 
-=== The Residential Proxy Revolution
+== Sessions amortize work
 
-Firewalls used to block crawlers with IP reputation lists and per-address rate limits.
-Residential proxy pools defeated both: traffic is routed through millions of consumer routers
-and devices so that a fleet can issue a hundred thousand requests a minute, each from a fresh,
-previously unseen address. A token bucket keyed by client address sees one request per bucket.
+Suppose a session permits $m$ requests before expiry, a puzzle costs $c_p$, verification costs
+$c_v$, and a session check costs $c_s$. Ignoring unsuccessful attempts, the amortized gate cost
+per request is $c_v/m+c_s$, while the client's puzzle cost is $c_p/m$. Increasing the session
+lifetime helps people and automated clients alike. Choosing it is a policy decision, not a
+cryptographic optimization.
 
-=== The Death of the CAPTCHA
+#exercise("1.1", [A client gets 100 requests per session and performs a puzzle costing
+one million trials. What is the amortized work per request? What changes if it shares the
+session with a second process?], hint: [Distinguish the accounting model from the token's actual bindings.])
 
-CAPTCHAs replaced identity with cognition: distorted letters, audio puzzles, image grids.
-Multimodal models now solve them faster and more reliably than people, while users with visual
-impairments or small screens fail them at rates between $15%$ and $30%$. The test punishes the
-humans and admits the machines.
+== Bounded state is a second budget
 
-== What Remains: Verifiable Cost
+Moving work off the request path does not make it disappear. Let incidents arrive at rate
+$lambda$, let the storage thread persist them at average rate $mu$, and let the queue hold
+$Q$ records. When $lambda>mu$, a fluid approximation gives
 
-The one resource a requester cannot borrow from a proxy pool is *its own computation*. If
-admission requires a proof that a known amount of work was done, and the server can check that
-proof in nanoseconds, the economics invert. The idea is old, Dwork and Naor proposed "pricing via
-processing" in 1992 and Back's Hashcash followed in 1997, but the engineering that makes it usable
-at the edge is recent: hardware hash instructions, WebAssembly in every browser, and constructions
-with proofs of sequentiality. Sibuna is built on that engineering.
+$ t_"fill" approx Q/(lambda-mu). $
 
-#v(4mm)
+A larger queue buys time; it does not create throughput. Batching amortizes transaction cost,
+but retained records still need memory and eventual service. Under overload Sibuna drops new
+incident records and counts them. It continues making request decisions from in-memory state.
+The operator must monitor the lost evidence as well as the HTTP success rate.
 
-= Proof of Work as a Thermodynamic Barrier
+#exercise("1.2", [A queue holds 512 records. Arrival rate is 1,000/s and drain rate is 600/s.
+How long can an initially empty queue absorb the excess? Why is the answer only an approximation?],
+  hint: [Use the difference of rates, then consider bursts and batch commits.])
 
-#objectives([
-  Derive the mechanics of a bit-level Hashcash puzzle, calculate expected work as a function of
-  difficulty, and see how computational friction removes the profit from mass scraping while
-  staying imperceptible to a person.
-])
+== The invariants we will carry forward
 
-== The Hashcash Paradigm
+1. Untrusted requests cannot create unbounded server state.
+2. A valid admission token does not bypass an application denial.
+3. A buffer remains alive for every slice borrowed from it.
+4. A durable retry cannot multiply an incident or its reputation effect.
+5. A published policy snapshot is immutable until its last reader releases it.
 
-Given a server-issued challenge string $C$ and a difficulty $b$ in *bits*, the client must find
-a nonce $N$ such that
-
-$ "SHA-256"(C || ":" || N) < 2^(256 - b), $
-
-that is, the digest begins with $b$ zero bits. Sibuna measures difficulty in bits rather than in
-hexadecimal digits so that each step doubles the work instead of multiplying it by sixteen; the
-operational difference is the gap between a 20 ms and a 320 ms interstitial on a phone.
-
-=== Probability and Geometric Distribution
-
-SHA-256 behaves as a random oracle, so each trial succeeds independently with probability
-$p = 2^(-b)$. The number of trials $X$ is geometric:
-
-$ E[X] = 2^b, quad "Var"[X] = (1 - p) / p^2 approx 2^(2b), quad P[X > k dot 2^b] approx e^(-k). $
-
-The distribution has a long tail: one client in twenty needs three times the expected work. Part
-III shows how the sequential-work tier removes this variance entirely.
-
-#table(
-  columns: (0.8fr, 1.2fr, 1.4fr, 1.4fr),
-  table.header([*Bits $b$*], [*Expected hashes*], [*V8 WebAssembly (0.3 µs/hash)*], [*Native, hardware SHA (52 ns/hash)*]),
-  [12], [4,096], [$approx 1$ ms], [$approx 0.2$ ms],
-  [16], [65,536], [$approx 20$ ms], [$approx 3.4$ ms],
-  [18], [262,144], [$approx 80$ ms], [$approx 14$ ms],
-  [20], [1,048,576], [$approx 320$ ms], [$approx 55$ ms],
-)
-
-The WebAssembly column is measured with the shipped solver under V8 on an Apple M1; the native
-column is the same solver compiled for the host.
-
-== Reversing the Asymmetry
-
-The server verifies a solution with exactly one SHA-256 evaluation, 62.6 ns on the reference
-host. At $b = 16$ the asymmetry is therefore
-
-$ "Asymmetry" = frac(E["Hashes"_"client"], 1) = 65,536 : 1, $
-
-and a single core verifies sixteen million solutions per second. No submission flood can outpace
-verification; the attacker's cost is bounded below by the honest client's cost, which Part III
-makes precise.
-
-#exercise([1.1], [
-  A crawler botnet attempts to scrape 10,000,000 pages protected by Sibuna at $b = 16$. If
-  each worker core hashes at 3,000,000 hashes per second (a fast native solver) and consumes
-  15 W, calculate the core-hours and kilowatt-hours needed. Repeat for $b = 18$.
-], hint: [Total hashes $= 10^7 times 2^b$. Divide by the hash rate for seconds.])
-
-#teach_back([
-  Explain why a puzzle whose verification costs one hash deters a harvesting fleet but not a
-  reader who opens five articles in an evening.
-])
+The rest of the book derives the mechanisms that make these statements true, and the tests
+that would reveal a violation. A fast path is useful only while those statements remain true.

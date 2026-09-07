@@ -7,7 +7,7 @@
   session cookie.
 ])
 
-= The Challenge Round Trip
+== The Challenge Round Trip
 
 #objectives([
   By the end of this chapter, you should be able to trace a browser from its first request to a
@@ -51,7 +51,7 @@
   rule hash into the token, where `X-Sibuna-Rule-Hash` reports it upstream.
 ])
 
-= The Stateless Challenge Record
+== The Stateless Challenge Record
 
 #objectives([
   Read the challenge encoder, understand every field's purpose, and see how the per-challenge
@@ -64,7 +64,8 @@
 ], source: "libs/challenge/src/coordinator.zig")
 
 ```zig
-pub fn createChallengeWithSpec(self: *Coordinator, client_ip: []const u8, user_agent: []const u8,
+pub fn createChallengeWithSpec(self: *Coordinator, client_ip: []const u8,
+    user_agent: []const u8,
     now: u64, spec: ChallengeSpec, rule_hash: u64) ChallengePayload {
     self.adaptive.observe(now * 1000);
     var effective = spec;
@@ -93,7 +94,7 @@ pub fn createChallengeWithSpec(self: *Coordinator, client_ip: []const u8, user_a
 Three details deserve attention:
 
 - *Adaptive difficulty.* The coordinator keeps an exponentially weighted moving average of the
-  challenge issue rate in two atomics. Above a baseline of 50 challenges per second, each
+  challenge issue rate in three atomics. Above a baseline of 50 challenges per second, each
   doubling of the rate adds one work bit, capped at six. A flood pays exponentially more while
   quiet traffic keeps the base cost.
 - *The nonce is a PRF output*, keyed by the challenge key over a counter, the clock, and the
@@ -103,7 +104,7 @@ Three details deserve attention:
 - *Difficulty travels inside the tag.* A client cannot lower the difficulty by editing the
   record: the tag would fail before any proof is examined.
 
-= Verification Order and Single Use
+== Verification Order and Single Use
 
 #objectives([
   Understand why the cheap checks run before the proof, why the challenge is marked spent only
@@ -144,7 +145,7 @@ Errors surface to the client as `400` with an Elm-style diagnostic (Part X): the
 tests assert on `DOUBLE SPEND`, `FINGERPRINT MISMATCH`, `WRONG SOLUTION TYPE`, and
 `MALFORMED CHALLENGE` in the response body.
 
-= The Session Cookie
+== The Session Cookie
 
 #objectives([
   Read the keyed-hash token, understand the cookie attributes, and explain the client binding.
@@ -162,7 +163,8 @@ pub fn verify(key: *const [32]u8, token_str: []const u8, now: u64,
     var raw: [raw_size]u8 = undefined;
     b64.Decoder.decode(&raw, token_str) catch return error.InvalidEncoding;
     const expected = tag(key, raw[0..payload_size]);
-    if (!std.crypto.timing_safe.eql([tag_size]u8, expected, raw[payload_size..raw_size].*)) {
+    if (!std.crypto.timing_safe.eql([tag_size]u8, expected,
+    raw[payload_size..raw_size].*)) {
         return error.InvalidTokenSignature;
     }
     const payload = Payload.deserialize(raw[0..payload_size]);
@@ -174,7 +176,8 @@ pub fn verify(key: *const [32]u8, token_str: []const u8, now: u64,
 The cookie is emitted as
 
 ```
-Set-Cookie: __sibuna_token=<64 chars>; Path=/; Max-Age=86400; HttpOnly; SameSite=Lax[; Secure]
+Set-Cookie: __sibuna_token=<64 chars>; Path=/; Max-Age=86400; HttpOnly;
+    SameSite=Lax[; Secure]
 ```
 
 `HttpOnly` keeps it out of page scripts, `SameSite=Lax` stops cross-site replay while allowing

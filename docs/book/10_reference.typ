@@ -5,7 +5,7 @@
   Endpoints, metrics, error catalog, policy schema, and storage tables in one place.
 ])
 
-= Endpoints
+== Endpoints
 
 #objectives([
   Know every route under `/__sibuna/` and what each returns.
@@ -28,13 +28,13 @@ Challenge responses carry `X-Sibuna-Status: CHALLENGE`; admitted requests carry
 `X-Sibuna-Status: PASS` and `X-Sibuna-Rule` upstream (and `X-Sibuna-Rule-Hash` in forward-auth
 replies).
 
-= Metrics
+== Metrics
 
 Counters exposed as `sibuna_<name>_total`:
 `requests`, `allowed`, `denied`, `challenged`, `challenges_issued`, `solutions_accepted`,
 `solutions_rejected`, `rate_limited`, `banned`, `proxied`, `upstream_errors`, `parse_errors`.
 
-= Status Codes
+== Status Codes
 
 #table(
   columns: (0.6fr, 2.4fr),
@@ -50,7 +50,7 @@ Counters exposed as `sibuna_<name>_total`:
   [502], [Origin unreachable],
 )
 
-= Error Catalog
+== Error Catalog
 
 #api_anchor([`core.explainError`], [
   Maps every domain error to a boundary line, an explanation, and a `Hint:`.
@@ -73,7 +73,7 @@ Counters exposed as `sibuna_<name>_total`:
   [`TokenBoundAddressMismatch`], [Cookie presented from a different client identity], [Cookies cannot be shared],
 )
 
-= Policy Schema
+== Policy Schema
 
 ```
 {
@@ -100,13 +100,13 @@ Pattern grammar: `.*` or `*` match anything; `^…$` anchors an exact path; a tr
 or `.*` is a prefix; a pattern starting with `/` is an exact path; anything else is a
 case-insensitive substring.
 
-= Storage Tables
+== Storage Tables
 
 `policies`, `ip_reputation`, `security_incidents`, `incidents_fts` (FTS5 over path and payload),
 `incidents_vec` (vec0, 64-float cosine embeddings), and `sibuna_meta`. Incident ids are
 `node_id << 40 | sequence`, unique across a cluster without coordination.
 
-= Build Targets
+== Build Targets
 
 #table(
   columns: (1fr, 2fr),
@@ -131,3 +131,11 @@ case-insensitive substring.
   Without looking, list the endpoints a reverse proxy in front of Sibuna must route to the
   daemon rather than to the origin, and say why each is needed.
 ])
+
+== Incident counters
+
+`incidents_persisted` counts records whose commit the storage thread confirmed;
+`incident_batches` counts confirmed transactions. `incidents_dropped` counts rejected queue
+pushes, and `incident_write_failures` counts failed commit attempts. Their Prometheus names
+carry the `sibuna_` prefix and `_total` suffix. A retry can increment failures without losing
+records. Monitor increments over an interval; totals alone are not a queue depth gauge.

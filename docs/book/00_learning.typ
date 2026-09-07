@@ -1,66 +1,39 @@
 #import "theme.typ": *
 
-= Learning Paths and Reading Guide
+#pagebreak()
+#{
+  set text(size: 9pt)
+  set par(leading: 0.28em, spacing: 0.1em)
+  outline(title: [Contents], depth: 2, indent: 1em)
+}
+#pagebreak()
+#heading(numbering: none)[How to read this book]
 
-#objectives([
-  By the end of this introductory chapter, you should be able to identify which reading
-  path aligns with your technical background, understand how code anchors connect to the
-  monorepo source files, and anticipate the empirical evaluation criteria applied in Part VIII.
-])
+Begin with a single question: what is the cheapest safe decision the server can make now?
+Keep that question beside you through the protocol and implementation chapters. A cheap
+operation that admits the wrong request is a defect; a correct operation with unbounded
+cost is another kind of defect.
 
-The book is organized into ten sequential parts. Depending on your primary engineering focus,
-you may navigate the material through one of five specialized routes.
+For a first reading, follow chapters 1–4, then trace the worked request in chapter 6.
+Return to chapter 5 when the trace reaches a shared table or a borrowed slice. Operators can
+then read chapters 8–10, while implementers should include the browser engine in chapter 7.
 
-#v(4mm)
-
-== Five Reader Routes
-
-#table(
-  columns: (1.1fr, 1.3fr, 1.8fr),
-  table.header([*Role*], [*Primary Parts*], [*Key Takeaways*]),
-  [Cryptography Researcher],
-  [Parts I, III, IV, VIII],
-  [Cost models of Hashcash and sequential work, the soundness argument, why symmetric MACs replace signatures, the spent-set bound, calibration data.],
-
-  [Security Architect],
-  [Parts I, III, IV, VI, IX],
-  [Challenge binding and replay resistance, the semantic WAF's detector structure and its false-positive discipline, reputation and bans, cluster-wide propagation.],
-
-  [Systems Engineer],
-  [Parts V, VI, VII, VIII],
-  [The 64 KB connection buffer, byte-class scanning, Robin Hood hashing, GCRA, lock-free rings, read-copy-update slots, memory residency.],
-
-  [Reverse Proxy Operator],
-  [Parts I, IX, X],
-  [Surfaces and flags, forward-auth recipes for Nginx and Caddy, policy JSON, storage and cluster deployment, diagnostics.],
-
-  [Web / Frontend Engineer],
-  [Parts IV, VII, X],
-  [The 8.8 KB WebAssembly module, the Web Worker protocol, the JavaScript fallback provers, the interstitial page.],
+#table(columns: (1fr, 2.5fr),
+  table.header([Question], [Where the answer develops]),
+  [What does a puzzle buy?], [Chapters 1–3: cost, probability, and the limits of proof.],
+  [What does a session mean?], [Chapter 4: bindings, verification order, expiry, and replay.],
+  [Where does the memory go?], [Chapters 5–6: buffers, tables, automata, and publication.],
+  [How does the browser solve?], [Chapter 7: worker messages, memory, and calibration.],
+  [How do we know it works?], [Chapters 8–10: experiments, deployment, and diagnostics.],
 )
 
-== Visual and Typographical Conventions
+A *worked example* shows the intermediate states, not just the answer. An *exercise* asks you
+to change one assumption. Hints suggest a first step; selected solutions at the end of the book
+make the reasoning checkable. Diagrams distinguish the request path from background work.
+A source anchor names the implementation to inspect when prose and code appear to disagree.
 
-Throughout the book, specific pedagogical callouts highlight critical insights, trade-offs,
-and exercises:
-
-- *Learning Contracts (#text(fill: green)[Green]):* Concrete objectives stated at the beginning
-  of every part and chapter.
-- *Warnings (#text(fill: red)[Red]):* Security hazards, denial-of-service vulnerabilities, and
-  common operational anti-patterns.
-- *Exercises (#text(fill: amber)[Amber]):* Conceptual puzzles, mathematical derivations, and code
-  modifications with hints.
-- *API Anchors:* Explicit cross-references linking textual discussions directly to source code
-  symbols within the `apps/` and `libs/` directories.
-- *Teach It Back:* Formative assessment prompts challenging you to explain an invariant or
-  algorithmic decision in your own words before advancing.
-
-Code excerpts are copied from the repository at the revision named in Part VIII. When a listing
-has been shortened for the page, the omission is marked with an ellipsis comment.
-
-#callout([Empirical Integrity Rule], [
-  This book does not cite unmeasured figures as measurements. Every performance number in
-  Part VIII is rendered at compile time from the committed result file
-  `benchmarks/results/latest.json`, which records the host, CPU, revision, and the spread across
-  seven batches. Reference values for other systems are labelled as models wherever they appear.
-])
+In equations, $b$ is Hashcash difficulty in bits, $p$ is success probability per trial, $K$ is
+the number of trials, $T$ is a rate limiter's emission interval, and $Q$ is a queue capacity.
+A symbol is local to its section unless stated otherwise. Nanoseconds in the benchmark chapter
+are measurements from a named run. Numbers in worked examples are chosen inputs, not benchmark
+claims. Statistical models state their assumptions before drawing conclusions.
