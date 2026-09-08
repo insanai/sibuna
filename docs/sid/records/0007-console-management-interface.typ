@@ -2233,6 +2233,15 @@ query/body payloads. Desktop navigation remained present; mobile navigation used
 menu and the form fit a 390-pixel viewport without horizontal overflow. This closes
 the category-mode workflow, not the broader policy or interface release gates.
 
+Required benchmark regeneration completed from clean commit `2f3cd50` with the
+review daemon stopped: `benchmarks/results/latest-20260908T064243Z.json`, source
+SHA-256 `41579936ef6331b69280ac5534ab81f702647b62a8f307b188a51b35b240785f`.
+Median full request classification was 1,441.5 ns; the 8 KiB all-enforce scan was
+23,253.7 ns and SQL-audit/other-enforce scan was 113,144.1 ns. Mixed modes currently
+pay for category selection passes (about 4.9 times this body-scan workload).
+Idle RSS was 9,808 KiB with storage compiled but inactive. These primitive results
+do not measure active dashboard/storage contention or pass the isolation gate.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
