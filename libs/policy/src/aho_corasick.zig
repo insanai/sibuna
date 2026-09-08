@@ -51,6 +51,24 @@ pub fn Automaton(comptime max_states: u16) type {
             return findFirstImpl(self, haystack);
         }
 
+        /// Selected-category inspection must also consider suffix outputs when a
+        /// different category owns the state's first match. Failure links strictly
+        /// shorten the prefix; fixed automaton capacity bounds this additional walk.
+        pub fn findFirstTaggedAs(self: *const Self, haystack: []const u8, tag: u8) ?Match {
+            var state: u16 = 0;
+            for (haystack) |byte| {
+                state = self.transitions[state][toLower(byte)];
+                var candidate = state;
+                while (candidate != 0) : (candidate = self.fail[candidate]) {
+                    const pid = self.match_id[candidate];
+                    if (pid == no_match) break;
+                    if (self.pattern_tags[pid] == tag)
+                        return .{ .name = self.pattern_names[pid], .tag = tag };
+                }
+            }
+            return null;
+        }
+
         pub fn findFirst(self: *const Self, haystack: []const u8) ?[]const u8 {
             const m = findFirstImpl(self, haystack) orelse return null;
             return m.name;
@@ -59,6 +77,17 @@ pub fn Automaton(comptime max_states: u16) type {
 }
 
 const no_match: u16 = std.math.maxInt(u16);
+
+test "tag selection retains overlapping suffix matches and skips unselected outputs" {
+    var matcher: Automaton(16) = .{};
+    _ = try matcher.addPatternTagged("aab", 1);
+    _ = try matcher.addPatternTagged("ab", 2);
+    _ = try matcher.addPatternTagged("cd", 3);
+    matcher.build();
+    try std.testing.expectEqualStrings("ab", matcher.findFirstTaggedAs("AABcd", 2).?.name);
+    try std.testing.expectEqualStrings("cd", matcher.findFirstTaggedAs("aabcd", 3).?.name);
+    try std.testing.expect(matcher.findFirstTaggedAs("aabcd", 4) == null);
+}
 
 const to_lower_table: [256]u8 = blk: {
     var table: [256]u8 = undefined;

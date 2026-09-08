@@ -15,6 +15,7 @@ pub const management = @import("management.zig");
 pub const candidate = @import("candidate.zig");
 pub const engine = @import("engine.zig");
 pub const waf = @import("waf.zig");
+pub const inspection = @import("inspection.zig");
 pub const normalizer = @import("normalizer.zig");
 pub const embedding = @import("embedding.zig");
 

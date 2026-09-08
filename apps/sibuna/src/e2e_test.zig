@@ -32,6 +32,8 @@ const Fixture = struct {
 var origin_port: u16 = 0;
 var proxy_fixture: Fixture = .{};
 var auth_fixture: Fixture = .{};
+var audit_fixture: Fixture = .{};
+var audited_requests: std.atomic.Value(u64) = .init(0);
 /// Minimal once-guard: the first caller boots the fixtures, later callers
 /// spin until it has finished.
 const BootOnce = struct {
@@ -99,9 +101,14 @@ fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
     cfg.ban_seconds = 60;
     f.engine.initInPlace(cfg.default_difficulty);
     f.engine.waf_enabled = cfg.waf;
+    if (f == &audit_fixture) {
+        f.engine.inspection_modes = .{ .sqli = .audit, .path_traversal = .disabled };
+        f.engine.ip_trie.insertCidr("203.0.113.223/32", .deny) catch unreachable;
+    }
     f.slot = .{ .engine = &f.engine };
     const seed = [_]u8{0x5a} ** 32;
     f.state.init(cfg, &f.slot, &seed);
+    if (f == &audit_fixture) f.state.hooks = .{ .record_incident = captureAudit };
     if (console_enabled) {
         f.telemetry = telemetry_store.ConsoleTelemetry.init();
         f.state.telemetry = &f.telemetry;
@@ -139,6 +146,38 @@ fn bootAll() void {
     auth_cfg.posw_challenges = 4;
     auth_cfg.token_scheme = .ed25519;
     bootFixture(&auth_fixture, auth_cfg);
+    bootFixture(&audit_fixture, proxy_cfg);
+}
+
+fn captureAudit(_: ?*anyopaque, incident: server.Incident) void {
+    if (!std.mem.eql(u8, incident.category, "audit:sqli")) return;
+    std.debug.assert(incident.payload.len == 0 and incident.evidence.version == 0);
+    _ = audited_requests.fetchAdd(1, .monotonic);
+}
+
+test "audit inspection records findings while other inspection, rules and reputation still deny" {
+    boot_once.call();
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    const port = audit_fixture.port;
+    try get(port, "/robots.txt?q=union%20select", "203.0.113.220", "curl", "", resp);
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+    try get(
+        port,
+        "/robots.txt?q=union%20select%20%3Cscript%3E",
+        "203.0.113.221",
+        "curl",
+        "",
+        resp,
+    );
+    try std.testing.expectEqual(@as(u16, 403), resp.status());
+    try get(port, "/?q=union%20select", "203.0.113.222", "Amazonbot", "", resp);
+    try std.testing.expectEqual(@as(u16, 403), resp.status());
+    try get(port, "/robots.txt?q=union%20select", "203.0.113.223", "curl", "", resp);
+    try std.testing.expectEqual(@as(u16, 403), resp.status());
+    try get(port, "/../../etc/passwd", "203.0.113.224", "curl", "", resp);
+    try std.testing.expectEqual(@as(u16, 401), resp.status());
+    try std.testing.expectEqual(@as(u64, 4), audited_requests.load(.monotonic));
 }
 
 const Response = struct {

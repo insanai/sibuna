@@ -478,6 +478,38 @@ fn inspectSequential(text: []const u8) ?Violation {
     return null;
 }
 
+/// Mixed modes use the same category detectors and canonicalization as the all-enforce
+/// path. Inspecting categories separately prevents an audited first match hiding a deny.
+pub fn inspectCategory(
+    sigs: *const Signatures,
+    comptime category: AttackCategory,
+    text: []const u8,
+) ?Violation {
+    if (text.len == 0) return null;
+    if (inspectRawCategory(sigs, category, text)) |hit| return hit;
+    if (text.len > MAX_CANONICAL or !needsCanonical(scanClasses(text))) return null;
+    var buffer: [MAX_CANONICAL]u8 = undefined;
+    const normalized = normalizer.canonicalize(text, &buffer);
+    if (normalized.len == 0 or std.mem.eql(u8, normalized, text)) return null;
+    return inspectRawCategory(sigs, category, normalized);
+}
+
+fn inspectRawCategory(
+    sigs: *const Signatures,
+    comptime category: AttackCategory,
+    text: []const u8,
+) ?Violation {
+    if (sigs.findFirstTaggedAs(text, @intFromEnum(category))) |match|
+        return Violation.of(category, match.name);
+    const classes = scanClasses(text);
+    return switch (category) {
+        .path_traversal => checkNullByte(text, classes),
+        .sqli => checkSqliStructure(text, classes),
+        .xss => checkXssStructure(text, classes),
+        .rce => checkRceStructure(text, classes),
+    };
+}
+
 /// Headers whose grammar legitimately contains `*/*`, `;q=`, quotes, and
 /// slashes. Their values are machine-generated content negotiation, not
 /// user-controlled input, so scanning them yields only false positives.

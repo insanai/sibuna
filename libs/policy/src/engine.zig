@@ -14,6 +14,7 @@ const bots = @import("bot_signatures.zig");
 const rule = @import("rule.zig");
 const loader = @import("loader.zig");
 const waf = @import("waf.zig");
+const inspection = @import("inspection.zig");
 
 pub const Action = rule.Action;
 pub const Header = rule.Header;
@@ -41,6 +42,8 @@ pub const Decision = struct {
     algorithm: ?[]const u8 = null,
     /// Accumulated WEIGH score that contributed to the decision.
     score: i32 = 0,
+    /// Category bits are findings, independent of the single terminal outcome.
+    audited: u8 = 0,
 };
 
 /// WEIGH scoring: negative totals vouch for a client and allow it; totals
@@ -63,6 +66,7 @@ pub const Engine = struct {
     default_difficulty: u32 = 16,
     thresholds: WeighThresholds = .{},
     waf_enabled: bool = true,
+    inspection_modes: inspection.Modes = .{},
     bot_matcher: aho.BotMatcher = aho.BotMatcher.init(),
     waf_signatures: waf.Signatures = waf.Signatures.init(),
     ip_trie: radix.Trie = radix.Trie.init(),
@@ -79,6 +83,7 @@ pub const Engine = struct {
         self.default_difficulty = default_diff;
         self.thresholds = .{};
         self.waf_enabled = true;
+        self.inspection_modes = .{};
         self.bot_matcher = aho.BotMatcher.init();
         self.ip_trie = radix.Trie.init();
         self.initSignatures();
@@ -234,7 +239,23 @@ pub const Engine = struct {
     /// else terminates); accumulated score; static bypass paths; a trie
     /// challenge verdict; bot signatures; the default action.
     pub fn evaluateRequest(self: *const Engine, req: RequestView) Decision {
+        var findings: inspection.Findings = .{};
         if (self.waf_enabled) {
+            findings = self.inspect(req);
+            if (findings.denied) |violation| return .{
+                .action = .deny,
+                .rule_name = violation.rule_name,
+                .difficulty = 0,
+                .audited = findings.audited,
+            };
+        }
+        var decision = self.evaluateAdmission(req);
+        decision.audited = findings.audited;
+        return decision;
+    }
+
+    fn inspect(self: *const Engine, req: RequestView) inspection.Findings {
+        if (self.inspection_modes.allEnforcing()) {
             const hit = waf.inspectRequest(
                 &self.waf_signatures,
                 req.path,
@@ -243,10 +264,20 @@ pub const Engine = struct {
                 req.headers,
                 req.body,
             );
-            if (hit) |violation| {
-                return .{ .action = .deny, .rule_name = violation.rule_name, .difficulty = 0 };
-            }
+            return .{ .denied = hit };
         }
+        return inspection.inspect(
+            &self.waf_signatures,
+            self.inspection_modes,
+            req.path,
+            req.query,
+            req.user_agent,
+            req.headers,
+            req.body,
+        );
+    }
+
+    fn evaluateAdmission(self: *const Engine, req: RequestView) Decision {
         const ip_verdict = self.ip_trie.matchIpStr(req.client_ip);
         if (ip_verdict) |v| {
             if (v == .deny or v == .allow) return self.ipDecision(v, 0);

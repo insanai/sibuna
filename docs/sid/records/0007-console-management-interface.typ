@@ -2163,6 +2163,31 @@ This records seven-batch primitive timings and 9,696 KiB idle RSS with storage
 compiled but inactive. It does not measure active console storage contention or
 satisfy the dashboard throughput and p99 gates.
 
+== Per-category inspection engine (2026-09-08)
+
+Immutable policy snapshots now carry disabled/audit/enforce modes for path traversal,
+SQL injection, cross-site scripting and command injection. The existing WAF boolean
+remains the master switch. The policy-file `inspection` object accepts partial mode
+defaults and rejects unknown categories or mode values. Private candidates retain
+these settings. Applied-policy and tester responses expose modes and audit-category
+bits independently of the terminal request decision.
+
+The all-enforce path retains the combined automaton. Mixed modes select category
+outputs from the same automaton, including failure-link suffix matches, and use the
+same structural detectors and canonicalization. Disabled detectors are skipped;
+audited categories record at most one finding per request and do not terminate
+evaluation. Findings enter the existing bounded incident queue under explicit
+`audit:` categories before session admission, without raw query/body payloads or
+fabricated response evidence. They do not trigger automatic reputation bans.
+
+Native automaton tests cover a rejected longer output hiding an enabled suffix.
+Engine/candidate tests cover encoded enforcing matches after audit, disabled
+categories, file fallback and strict invalid settings. Live daemon requests verified
+that audit preserves enforcing-category, rule and reputation denials while allowing
+normal admission to continue. Formatting and full regression tests passed. A separate
+mixed-mode 8 KiB benchmark workload now records the cost of category selection;
+this increment does not establish the console-impact release gate.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

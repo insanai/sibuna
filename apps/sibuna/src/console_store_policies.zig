@@ -40,7 +40,7 @@ pub fn query(owner: *Persistent, input: p.policies.Query) !p.StorageResult {
     var output: p.Bytes(p.max_message) = .{};
     var writer: std.Io.Writer = .fixed(&output.data);
     try writer.print("{{\"committed\":\"{d}\",\"applied\":\"{d}\",\"total\":{d}," ++
-        "\"waf\":{},\"default_difficulty\":{d},\"default_algorithm\":\"{s}\",\"rows\":[", .{
+        "\"waf\":{},\"default_difficulty\":{d},\"default_algorithm\":\"{s}\",", .{
         revision,
         owner.version,
         engine.rule_count,
@@ -48,6 +48,9 @@ pub fn query(owner: *Persistent, input: p.policies.Query) !p.StorageResult {
         engine.default_difficulty,
         @tagName(owner.cfg.algorithm),
     });
+    try writer.writeAll("\"inspection\":");
+    try std.json.Stringify.value(engine.inspection_modes, .{}, &writer);
+    try writer.writeAll(",\"rows\":[");
     var index: usize = input.offset;
     while (index < engine.rule_count and index < @as(usize, input.offset) + 8) : (index += 1) {
         var scratch: [2048]u8 = undefined;
@@ -159,6 +162,7 @@ fn evaluate(
         .difficulty = result.difficulty,
         .algorithm = result.algorithm orelse @tagName(owner.cfg.algorithm),
         .score = result.score,
+        .audited_categories = result.audited,
     }, .{}, &writer);
     output.len = writer.buffered().len;
     return .{ .page = output };

@@ -456,6 +456,14 @@ fn benchHttpAndPolicy(io: std.Io, gpa: std.mem.Allocator, runs: *Runs) !void {
     );
     scan.bytes_per_op = body.len;
     try runs.append(scan);
+    engine.inspection_modes = .{ .sqli = .audit };
+    var mixed = tag(
+        measure(io, 5_000, BodyCtx{ .engine = engine, .body = body }, wafBodyScan),
+        "waf_inspect",
+        "8kb_body_sqli_audit_other_enforce",
+    );
+    mixed.bytes_per_op = body.len;
+    try runs.append(mixed);
 }
 
 // ------------------------------------------------------------------ output

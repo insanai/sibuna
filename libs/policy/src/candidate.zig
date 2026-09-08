@@ -102,6 +102,39 @@ fn before(_: void, left: management.Document, right: management.Document) bool {
     return std.mem.order(u8, left.id, right.id) == .lt;
 }
 
+test "private candidates retain file inspection modes and reject invalid settings" {
+    const t = std.testing;
+    var candidate = try Candidate.init(t.allocator, .{
+        .default_difficulty = 16,
+        .waf = true,
+        .file = "{\"inspection\":{\"sqli\":\"audit\",\"xss\":\"disabled\"}}",
+    }, &.{}, &.{});
+    defer candidate.deinit();
+    const decision = candidate.engine.evaluateRequest(.{
+        .path = "/robots.txt",
+        .query = "union select <script>",
+        .client_ip = "8.8.8.8",
+    });
+    try t.expectEqual(rule.Action.allow, decision.action);
+    try t.expectEqual(@import("inspection.zig").bit(.sqli), decision.audited);
+    candidate.engine.waf_enabled = false;
+    try t.expectEqual(@as(u8, 0), candidate.engine.evaluateRequest(.{
+        .path = "/robots.txt",
+        .query = "union select",
+        .client_ip = "8.8.8.8",
+    }).audited);
+    try t.expectError(error.UnknownField, Candidate.init(t.allocator, .{
+        .default_difficulty = 16,
+        .waf = true,
+        .file = "{\"inspection\":{\"sql\":\"audit\"}}",
+    }, &.{}, &.{}));
+    try t.expectError(error.InvalidEnumTag, Candidate.init(t.allocator, .{
+        .default_difficulty = 16,
+        .waf = true,
+        .file = "{\"inspection\":{\"sqli\":\"ignore\"}}",
+    }, &.{}, &.{}));
+}
+
 test "candidate owns inputs and composes ordered rules, file settings and reputation" {
     var document = ("{\"id\":\"deny\",\"name\":\"Deny\",\"action\":\"deny\"," ++
         "\"path\":\"/private\"}").*;

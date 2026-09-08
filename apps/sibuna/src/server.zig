@@ -541,6 +541,7 @@ fn applyPolicy(ctx: *RequestContext) !bool {
     const st = ctx.state();
     var name: [policy.engine.MAX_RULE_NAME]u8 = undefined;
     const decision = requestDecision(ctx, &name);
+    recordAuditFindings(ctx, decision.audited);
     // A session clears admission challenges, never WAF or explicit denials.
     if (decision.action != .deny) {
         if (ctx.req.getCookie(st.config.cookie_name)) |cookie| {
@@ -585,6 +586,25 @@ fn recordOutcome(ctx: *RequestContext, outcome: store.telemetry.Outcome) void {
     const telemetry = ctx.state().telemetry orelse return;
     if (std.mem.startsWith(u8, ctx.req.path, "/__sibuna/")) return;
     telemetry.record(outcome, ctx.now, ctx.client_ip, ctx.req.path, ctx.user_agent);
+}
+
+fn recordAuditFindings(ctx: *RequestContext, findings: u8) void {
+    if (findings == 0) return;
+    const st = ctx.state();
+    const hook = st.hooks.record_incident orelse return;
+    inline for (comptime std.meta.tags(policy.waf.AttackCategory)) |category| {
+        if (findings & policy.inspection.bit(category) != 0) hook(st.hooks.context, .{
+            .client_ip = ctx.client_ip,
+            .user_agent = ctx.user_agent,
+            .method = @tagName(ctx.req.method),
+            .path = ctx.req.path,
+            .category = policy.inspection.auditName(category),
+            // An audit finding is not a response outcome. Retain no raw query/body
+            // payload and do not fabricate response evidence before session admission.
+            .payload = "",
+            .now = ctx.now,
+        });
+    }
 }
 
 fn recordIncident(ctx: *RequestContext, category: []const u8) void {

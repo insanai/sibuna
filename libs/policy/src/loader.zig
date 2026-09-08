@@ -28,6 +28,13 @@ pub fn parseJsonPolicyInto(
     if (root.object.get("waf")) |waf_val| {
         if (waf_val == .bool) engine.waf_enabled = waf_val.bool;
     }
+    if (root.object.get("inspection")) |value|
+        engine.inspection_modes = try std.json.parseFromValueLeaky(
+            @import("inspection.zig").Modes,
+            allocator,
+            value,
+            .{},
+        );
     if (root.object.get("thresholds")) |th| {
         if (th == .object) parseThresholds(th.object, engine);
     }
