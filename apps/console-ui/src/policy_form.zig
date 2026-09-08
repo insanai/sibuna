@@ -18,6 +18,9 @@ pub const Form = struct {
     enabled: p.Bytes(5) = .{},
     headers: p.Bytes(4096) = .{},
     cidrs: p.Bytes(512) = .{},
+    limit_rate: p.Bytes(10) = .{},
+    limit_window: p.Bytes(10) = .{},
+    limit_ban: p.Bytes(10) = .{},
 
     pub fn capture(self: *Form, fields: std.json.Value) !void {
         inline for (@typeInfo(Form).@"struct".fields) |field| {
@@ -53,6 +56,7 @@ pub const Form = struct {
         result.enabled = try p.Bytes(5).init(if (enabled.bool) "true" else "false");
         result.headers = try matchers.loadHeaders(root);
         result.cidrs = try matchers.loadNetworks(root);
+        try @import("policy_limits.zig").load(&result, root);
         return result;
     }
 
@@ -83,6 +87,7 @@ pub const Form = struct {
                 @as(i32, 0),
             .headers = try matchers.headers(self.headers.slice(), arena.allocator()),
             .cidrs = try matchers.networks(self.cidrs.slice(), arena.allocator()),
+            .limits = try @import("policy_limits.zig").document(self),
         }, .{}, &writer);
         output.len = writer.buffered().len;
         return output;
@@ -142,6 +147,7 @@ pub fn render(w: *Writer, form: *const Form, existing: bool) Writer.Error!void {
         .difficulty = form.difficulty.slice(),
     });
     try matchers.render(w, form.headers.slice(), form.cidrs.slice());
+    try @import("policy_limits.zig").render(w, form);
     try w.writeAll("</div>");
 }
 

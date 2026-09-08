@@ -1232,7 +1232,7 @@ detail-wire("Policy", [Policy · Rules / Inspection / Limits / IP groups], [Insp
 
   *Limits* · target node: node 2 ▾\
   Current GCRA: rate / window / ban duration\
-  Per-rule overrides require new implementation.
+  Terminal rules own additional node-local quotas.
 
   Review changes → Save expected revision 17
 ], [IP groups and country action], [
@@ -1677,7 +1677,7 @@ are historical; the acceptance gates below govern delivery.
 
 - #text("Verified: Per-category inspection modes, revision-controlled editing and finding capture; native, live-daemon and browser tests verify audit cannot bypass enforcement. See the dated inspection evidence.")
 
-- #text("Pending: Terminal-rule GCRA before session bypass, global limiter retained; reject WEIGH limits.")
+- #text("Verified: Terminal-rule GCRA before session bypass, global limiter retained, WEIGH limits rejected; storage, live HTTP and browser evidence appears in the dated quota implementation note.")
 
 - #text("Pending: Reputation/group/country actions reject overflow/conflict without partial application.")
 
@@ -2241,6 +2241,62 @@ Median full request classification was 1,441.5 ns; the 8 KiB all-enforce scan wa
 pay for category selection passes (about 4.9 times this body-scan workload).
 Idle RSS was 9,808 KiB with storage compiled but inactive. These primitive results
 do not measure active dashboard/storage contention or pass the isolation gate.
+
+== Terminal-rule quota implementation (2026-09-08)
+
+Terminal Allow, Deny and Challenge rules may now carry a bounded `limits` object:
+`rate` (1–1,000,000 requests), `window_seconds` (1–86,400) and optional
+`ban_seconds` (0–86,400, default zero). This is an additional GCRA quota per
+client and selected terminal rule. The existing global limiter still runs first.
+WEIGH rules cannot own quotas. A rule selected before another terminal rule owns
+the request, preserving the existing ordered policy semantics.
+
+The daemon checks this quota before session admission. Excess requests return 429
+and a rounded-up Retry-After. A positive ban duration additionally places the
+address in this node's existing ban table, affecting subsequent requests to other
+paths. Exhausted limiter capacity refuses the current request without banning the
+address. Quota cells use a separate fixed 8,192-cell table with 16 shards and a
+16-probe bound; cells are reclaimed only after draining. No request-path allocation,
+SQL, policy mutation or console callback is introduced.
+
+Managed rule IDs provide stable quota identity through renames, ordering and
+unrelated revisions. File rules use their name and ordinal. Settings changes create
+a new scope; reverting the same settings can reuse its still-active cell. Node
+restart resets transient quotas, as for the existing global limiter. Quotas and
+local bans are not replicated or multiplied into a cluster-wide allowance.
+
+An additive base policy-format migration installs `limit_config` independently of
+console compilation and refuses newer known format versions. Console schema 11
+extends the existing atomic policy/history/audit commit. Legacy rules have no
+additional quota. Stored documents, private candidates and history restoration
+retain the complete quota; invalid stored settings prevent engine replacement.
+The editor retains all three fields through import, preview, save and reload,
+rejects partial settings, and explains the global and node-local behavior. Tester
+results expose configured quotas without consuming quota or simulating cookies,
+existing local bans or the global limiter.
+
+Native tests exercise burst/pace bounds, scope separation, saturated probe windows,
+strict file/management validation, valid-cookie admission ordering, global-limiter
+precedence and cross-path local bans. Deterministic storage ticks cover legacy
+column upgrade, replay, console-off publication, future-format refusal, unrelated
+revisions, document/history restoration, restart, atomic audit failure and retention
+of the previous engine after an invalid stored quota. Live-console tests verify
+that previews do not consume quota and unrelated edits do not reset it.
+
+Browser review saved a two-request/60-second Challenge quota at revision 160;
+actual requests returned 401, 401 and 429 with Retry-After 30. Reload retained
+all fields. A WEIGH save was refused while preserving the draft. The form fit a
+390-pixel viewport with 300-pixel inputs and 16-pixel text, without horizontal
+overflow. The temporary rule was disabled at committed/applied revision 161.
+Specific `POLICY007` recovery guidance replaces the generic form error for invalid
+quotas. The interface remains below its unchanged 300 KiB Wasm limit.
+
+The release build exposed a pre-existing by-value copy of all telemetry geography
+buckets on the 256 KiB HTTP worker stack, causing a SIGBUS during a statistics
+request. Snapshot iteration now borrows locked buckets instead. Release-mode
+console end-to-end tests and the live dashboard passed after this fix. Full tests,
+formatting, SID generation and storage-off/console-off/cluster build checks passed;
+the broader three-node and console-impact acceptance gates remain pending.
 
 = References
 

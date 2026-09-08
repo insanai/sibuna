@@ -95,6 +95,7 @@ fn policyRow(w: *Writer, row: Row) Writer.Error!void {
     if (row.difficulty) |difficulty| {
         try w.print("<p>Configured difficulty override: {d}</p>", .{difficulty});
     } else try w.writeAll("<p>Difficulty: inherit</p>");
+    try @import("policy_limits.zig").summary(w, row.limits);
     if (row.truncated) try w.writeAll("<p class=\"sb-note\">Display shortened or invalid text " ++
         "replaced. Evaluation uses the full applied matchers.</p>");
     try w.writeAll("</article>");
@@ -122,6 +123,9 @@ pub fn decision(w: *Writer, model: *const Model, allocator: std.mem.Allocator) W
         .score = result.score,
     });
     try @import("inspection_form.zig").findings(w, result.audited);
+    try @import("policy_limits.zig").summary(w, result.limits);
+    try w.writeAll("<p class=\"sb-note\">This preview does not consume quota or simulate " ++
+        "session cookies, existing local bans or global rate limits.</p>");
 }
 
 fn button(w: *Writer, action: []const u8, label: []const u8, disabled: bool) Writer.Error!void {

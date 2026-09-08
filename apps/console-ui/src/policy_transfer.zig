@@ -45,8 +45,22 @@ fn validateFields(source: []const u8) !void {
     while (keys.next()) |entry| {
         const key = entry.key_ptr.*;
         var known = false;
-        inline for (@typeInfo(Form).@"struct".fields) |field| {
-            if (std.mem.eql(u8, key, field.name)) known = true;
+        inline for (.{
+            "id",
+            "name",
+            "action",
+            "priority",
+            "enabled",
+            "path",
+            "user_agent",
+            "algorithm",
+            "difficulty",
+            "weight",
+            "headers",
+            "cidrs",
+            "limits",
+        }) |field| {
+            if (std.mem.eql(u8, key, field)) known = true;
         }
         if (!known) return error.UnknownField;
     }

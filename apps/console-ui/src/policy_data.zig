@@ -1,4 +1,5 @@
 const std = @import("std");
+const limits = @import("policy_limits.zig");
 pub const Page = struct {
     committed: []const u8,
     applied: []const u8,
@@ -10,6 +11,7 @@ pub const Page = struct {
     next: ?u8,
 };
 pub const Row = struct {
+    limits: ?limits.Limits,
     index: u8,
     name: []const u8,
     action: []const u8,
@@ -23,6 +25,7 @@ pub const Row = struct {
     weight: i32,
 };
 pub const Decision = struct {
+    limits: ?limits.Limits,
     audited: ?u8,
     preview: bool,
     committed: ?[]const u8,
@@ -79,6 +82,7 @@ pub fn page(value: std.json.Value, rows: *[8]Row) Error!Page {
 
 fn row(value: std.json.Value) Error!Row {
     return .{
+        .limits = limits.read(value) catch return error.InvalidPolicy,
         .index = try number(u8, value, "index"),
         .name = try text(value, "name"),
         .action = try text(value, "action"),
@@ -112,6 +116,7 @@ pub fn decision(value: std.json.Value) Error!Decision {
     if (audited) |mask| if (mask > 15) return error.InvalidPolicy;
     return .{
         .audited = audited,
+        .limits = limits.read(value) catch return error.InvalidPolicy,
         .preview = preview,
         .committed = if (preview) try text(value, "committed") else null,
         .applied = try text(value, "applied"),

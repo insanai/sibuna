@@ -1354,16 +1354,22 @@ fn managedDocument(fields: std.json.Value) !?p.Bytes(4096) {
         setMessage("An existing rule's ID cannot change. Create a new rule for a different ID.");
         return null;
     }
-    return manager.form.document() catch {
-        setMessage("Check numbers, headers and networks. Rule documents must fit within 4 KiB.");
+    return manager.form.document() catch |err| {
+        setMessage(if (err == error.InvalidRuleLimit)
+            @import("policy_limits.zig").invalid_message
+        else
+            "Check numbers, headers and networks. Rule documents must fit within 4 KiB.");
         try command(.{ .op = "focus", .selector = "#console-message" });
         return null;
     };
 }
 
 fn policyTransfer(name: []const u8, fields: std.json.Value) !bool {
-    const result = @import("policy_transfer.zig").apply(&state, name, fields) catch {
-        setMessage("Check the rule JSON, field types and ID. No rule was imported or saved.");
+    const result = @import("policy_transfer.zig").apply(&state, name, fields) catch |err| {
+        setMessage(if (err == error.InvalidRuleLimit)
+            @import("policy_limits.zig").invalid_message
+        else
+            "Check the rule JSON, field types and ID. No rule was imported or saved.");
         try command(.{ .op = "focus", .selector = "#console-message" });
         return true;
     };
