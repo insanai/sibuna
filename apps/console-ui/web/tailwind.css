@@ -3,7 +3,7 @@
 @source "../src/snippets/**/*.html";
 @plugin "daisyui" {
   themes: light --default, dark --prefersdark;
-  include: button, input, card, badge, alert, table, tabs, menu, navbar, select, textarea, checkbox;
+  include: button, input, card, badge, alert, table, tabs, menu, navbar, select, textarea, checkbox, join;
 }
 :root { font-family: ui-sans-serif, system-ui, sans-serif; color-scheme: light; }
 body { margin: 0; min-width: 320px; color: var(--color-base-content); background: var(--color-base-200); }
@@ -63,6 +63,7 @@ button, input, select, textarea { font: inherit; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 
 .sb-globe-controls { display: flex; flex-wrap: wrap; gap: 8px; }
+.sb-globe-mode [aria-pressed="true"] { background: var(--color-primary); color: var(--color-primary-content); }
 .sb-settings-form { display: grid; gap: 12px; max-width: 640px; margin-top: 24px; }
 .sb-settings-form .input, .sb-settings-form .textarea { width: 100%; }
 .sb-policy-form { max-width: none; }

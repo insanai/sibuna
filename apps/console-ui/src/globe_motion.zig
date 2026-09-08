@@ -9,7 +9,13 @@ pub const Motion = struct {
 pub var output: [512 * 1024]u8 = undefined;
 
 pub fn action(state: *State, name: []const u8) bool {
-    if (std.mem.eql(u8, name, "globe-motion")) {
+    if (std.mem.eql(u8, name, "globe-traffic")) {
+        state.globe_attacks = false;
+    } else if (std.mem.eql(u8, name, "globe-attacks")) {
+        state.globe_attacks = true;
+    } else if (std.mem.eql(u8, name, "globe-coverage")) {
+        state.globe_coverage = !state.globe_coverage;
+    } else if (std.mem.eql(u8, name, "globe-motion")) {
         state.motion.rotating = !state.motion.rotating;
         state.motion.last_ms = 0;
     } else if (std.mem.eql(u8, name, "rotate-left")) {

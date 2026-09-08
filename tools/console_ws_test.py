@@ -41,7 +41,7 @@ class Stream:
         length = head[1] & 127
         if length == 126:
             length = struct.unpack("!H", self.file.read(2))[0]
-        assert length <= 4096
+        assert length <= 8192
         body = self.file.read(length)
         assert len(body) == length
         return head[0] & 15, body

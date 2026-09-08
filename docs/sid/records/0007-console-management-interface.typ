@@ -2684,6 +2684,36 @@ Native checks exercise copied input, queue saturation and disablement, SQL failu
 ambiguous commit replay, event-time cutoffs, Unknown and expiration without subscribers.
 This foundation does not claim cross-node deduplication or incident-history replay.
 
+== Traffic and Attacks globe delivery (2026-09-08)
+
+The signed-in globe now switches between sampled Traffic and locally recorded Attacks
+without another stream or another geometry load. Both modes borrow their own accepted
+snapshot list and reuse projection, clipping, rotating country markers, at most sixteen
+animated inbound connections, keyboard centering and the flat-map fallback. Labels say
+samples or findings consistently. Missing or unsupported incident geography displays
+unavailable and never falls back to traffic counts. Incomplete coverage remains visible;
+expandable details show observation start in UTC and queue, expired, future and upstream
+incident loss. Native rendering checks preserve the disclosure's accessible target and
+verify Unknown even when GeoIP is unavailable.
+
+The real-daemon suite now checks fifteen findings with no GeoIP, imports a generation,
+then checks five unsampled US findings through HTTP and a new authenticated WebSocket.
+Earlier Unknown observations remain Unknown after import. Native tests also round-trip
+full-width incident counters and both complete 32-country lists within the stream's
+8 KiB payload budget. Required formatting, tests, SID compilation and console checks
+passed, as did storage-off, console-off and clustered builds.
+
+Browser review on the local daemon verified five real honeypot findings as US while
+sampled external traffic remained zero, independent Traffic/Attacks selection, visible
+inbound arrows and changing projected paths, expiration, restart without historical
+replay, the disclosure, and the flat-map fallback. At 390 px both the globe and expanded
+coverage kept document width at 390 px. DaisyUI's joined buttons retain keyboard focus
+and expose the selected mode through aria-pressed. Applied and managed policy screens
+also decoded correctly after the shared object-reader change, along with mobile events,
+challenges and account navigation. The final UI module measured 295,283 bytes; its
+existing 300 KiB gate remains enforced. This does not close cluster aggregation or
+impact acceptance.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

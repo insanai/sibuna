@@ -217,6 +217,15 @@ test "statistics encode UTF-8 boot bytes as an array and preserve full-width cou
     const t = std.testing;
     const maximum = std.math.maxInt(u64);
     const snapshot: p.StatsSnapshot = .{
+        .incident_geo = .{
+            .countries = @splat(.{ .code = 0x5553, .samples = maximum }),
+            .unknown = maximum,
+            .other = maximum,
+            .dropped = maximum,
+            .expired = maximum,
+            .future = maximum,
+            .started_at = maximum,
+        },
         .outcomes_version = 1,
         .retention_failures = maximum,
         .boot = @splat('a'),
@@ -234,7 +243,7 @@ test "statistics encode UTF-8 boot bytes as an array and preserve full-width cou
         .timestamp = 100,
         .countries = @splat(.{ .code = 0x5553, .samples = maximum }),
     };
-    var buffer: [4096]u8 = undefined;
+    var buffer: [8192]u8 = undefined;
     var writer: std.Io.Writer = .fixed(&buffer);
     try std.json.Stringify.value(snapshot, .{}, &writer);
     const parsed = try std.json.parseFromSlice(
@@ -250,6 +259,10 @@ test "statistics encode UTF-8 boot bytes as an array and preserve full-width cou
     try t.expectEqual(maximum, restored.requests);
     try t.expectEqual(@as(?u64, maximum), restored.retention_failures);
     try t.expectEqual(maximum, restored.countries[0].samples);
+    try t.expectEqual(maximum, restored.incident_geo.?.countries[0].samples);
+    try t.expectEqual(maximum, restored.incident_geo.?.unknown);
+    // Keep headroom for the WebSocket envelope within its fixed 8 KiB payload buffer.
+    try t.expect(writer.buffered().len + 256 < buffer.len);
     try t.expectEqualSlices(u8, &snapshot.boot, &restored.boot);
     try t.expectError(error.InvalidResponse, decode(u64, .{ .string = "+1" }, t.allocator));
     try t.expectError(error.InvalidResponse, decode(u64, .{ .string = "1e3" }, t.allocator));

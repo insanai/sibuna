@@ -8,11 +8,12 @@ const Point = struct { x: f64, y: f64 };
 
 pub fn render(state: *const State, bytes: []const u8, w: *Writer) Writer.Error!void {
     const stats = state.stats orelse return;
+    const selected = @import("globe_data.zig").view(state) orelse return;
     if (!stats.geoip_available or state.stale or state.paused or
         state.browser_time -| state.received_at > 5) return;
     var drawn: usize = 0;
     const hub: Point = .{ .x = 363, .y = 29 };
-    for (stats.countries, 0..) |country, index| {
+    for (selected.countries, 0..) |country, index| {
         if (country.samples == 0 or drawn == 16) continue;
         const location = geo.center(bytes, country.code) orelse continue;
         const projected = geo.project(location, state.globe);
@@ -25,8 +26,9 @@ pub fn render(state: *const State, bytes: []const u8, w: *Writer) Writer.Error!v
         const code = [_]u8{ @intCast(country.code >> 8), @intCast(country.code & 255) };
         try w.print("<path d=\"M{d:.1},{d:.1}Q{d:.1},{d:.1} {d:.1},{d:.1}\" " ++
             "fill=\"none\" stroke=\"#7c5cdb\" stroke-opacity=\".55\" stroke-width=\".8\">" ++
-            "<title>{s} → Sibuna: {d} samples / 60 s</title></path>", .{
-            start.x, start.y, control.x, control.y, hub.x, hub.y, code, country.samples,
+            "<title>{s} → Sibuna: {d} {s} / 60 s</title></path>", .{
+            start.x, start.y,         control.x,     control.y, hub.x, hub.y,
+            code,    country.samples, selected.unit,
         });
         const phase = @mod(state.motion.flow + @as(f64, @floatFromInt(index)) * 0.137, 1);
         try arrow(w, start, control, hub, phase);
@@ -68,6 +70,15 @@ test "connection arcs require observed countries and disappear when data is stal
     state.stats.?.countries[0] = .{ .code = 0x5553, .samples = 4 };
     try render(&state, world, &writer);
     try t.expect(std.mem.indexOf(u8, writer.buffered(), "US → Sibuna: 4 samples") != null);
+    state.globe_attacks = true;
+    writer = .fixed(&buffer);
+    try render(&state, world, &writer);
+    try t.expectEqual(@as(usize, 0), writer.buffered().len);
+    state.stats.?.incident_geo = .{};
+    state.stats.?.incident_geo.?.countries[0] = .{ .code = 0x5553, .samples = 2 };
+    try render(&state, world, &writer);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "US → Sibuna: 2 findings") != null);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "4 samples") == null);
     state.stale = true;
     writer = .fixed(&buffer);
     try render(&state, world, &writer);

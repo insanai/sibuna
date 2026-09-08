@@ -113,6 +113,8 @@ def check(binary, h):
                     assert b"hidden-value" not in body
                 assert h.request(port, "POST", "/console/api/events/export",
                                  grouped, cookie, csrf)[0] == 429
+                import console_incident_geo_test
+                console_incident_geo_test.check(h, port, data_port, cookie, csrf)
                 import console_policy_test
                 console_policy_test.check(h, port, data_port, cookie, csrf)
                 import console_inspection_test

@@ -1,0 +1,10 @@
+<table id="incident-geo-coverage" class="table">
+    <caption>Incident geography coverage since observation started</caption>
+    <tbody>
+        <tr><th>Observation started</th><td>{{ started }}</td></tr>
+        <tr><th>Geography queue loss</th><td>{{ dropped }}</td></tr>
+        <tr><th>Expired findings discarded</th><td>{{ expired }}</td></tr>
+        <tr><th>Future-dated findings discarded</th><td>{{ future }}</td></tr>
+        <tr><th>Incidents dropped before persistence</th><td>{{ storage_loss }}</td></tr>
+    </tbody>
+</table>
