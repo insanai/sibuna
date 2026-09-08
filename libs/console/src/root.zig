@@ -21,6 +21,7 @@ test {
     _ = @import("auth_secrets.zig");
     _ = @import("stats.zig");
     _ = @import("space_saving.zig");
+    _ = @import("rankings_archive.zig");
     _ = @import("geoip.zig");
     _ = @import("geoip_generation.zig");
     _ = @import("geoip_gzip.zig");

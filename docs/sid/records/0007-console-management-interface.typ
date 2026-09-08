@@ -2089,6 +2089,19 @@ challenge data, policy reads and dashboard recovery; a stalled-asset fixture
 produced the visible retry message. Formatting, console checks, full regression
 tests, SID generation and the daemon build passed. No request-path code changed.
 
+== Complete ranking archive encoding (2026-09-08)
+
+The bounded SBR1 archive format encodes a collector minute with explicit
+little-endian fields: node and boot identity, minute index, first/last sample times,
+truncation and rejection counts, queue-loss boundaries, retained N, sampling
+denominator and every occupied counter with its full key, estimate and error.
+The maximum record is 37,468 bytes. Counter sums must equal N for original local
+minutes; serializing only display winners is rejected. Decoding rejects unknown
+versions, trailing or truncated bytes, duplicate keys, invalid intervals and bounds.
+Native tests exercise the maximum 256-counter record and incomplete archives.
+This codec is a storage prerequisite; durable publication and recovery are not yet
+implemented by this increment.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
