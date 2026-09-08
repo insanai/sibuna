@@ -1,4 +1,4 @@
-//! Fixed-window investigation budgets are separate from password verification limits.
+//! Fixed-window management budgets are separate from password verification limits.
 //! Live slots cannot be evicted to reset an allowance; all counters advance under one lock.
 const std = @import("std");
 pub const Kind = enum { query, export_page, mutation };
@@ -66,7 +66,7 @@ test "investigation budgets isolate sessions and exports and bound global work" 
     try std.testing.expect(!budget.allow(io, @splat(3), 70, .query));
 }
 
-test "account mutations have an independent sixty-per-minute session allowance" {
+test "management mutations have an independent sixty-per-minute session allowance" {
     const t = std.testing;
     const budget = try t.allocator.create(Budget);
     defer t.allocator.destroy(budget);

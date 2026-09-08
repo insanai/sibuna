@@ -2932,6 +2932,19 @@ All 289 native tests and live scenarios pass. Storage-off, console-off and clust
 pass; disabled binaries refuse the command. The optional MaxMind adapter and scoped tokens
 remain pending, together with the broader SID acceptance gates.
 
+== Shared management mutation allowance (2026-09-08)
+
+Authenticated management POST routes now consume one shared allowance of sixty mutations
+per session per minute, including account, policy, inspection and GeoIP changes. Dispatch
+checks current access and CSRF before spending the allowance, then counts the submission
+before parsing or expensive work. Invalid authorized input counts; missing credentials or
+CSRF cannot spend another session's allowance. Existing query/global ceilings still bound
+aggregate work. Account and policy handlers no longer charge the same mutation twice.
+The stable `CONSOLEMUTATION` diagnostic reports HTTP 429 with a one-minute recovery hint.
+A live-daemon check alternates sixty invalid writes across the four workflows, verifies
+shared refusal on each route, and checks that reads and a different session retain capacity.
+Password verification and enrollment keep their separate limits.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

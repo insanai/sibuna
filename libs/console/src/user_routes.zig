@@ -6,8 +6,7 @@ pub const Kind = enum { query, create, change };
 
 pub fn handle(app: *App, context: *http.Context, principal: p.Principal, kind: Kind) !void {
     const digest = try http.session(context);
-    const budget: @import("query_budget.zig").Kind = if (kind == .query) .query else .mutation;
-    if (!app.query_budget.allow(app.io, digest, app.now(), budget))
+    if (kind == .query and !app.query_budget.allow(app.io, digest, app.now(), .query))
         return http.fail(context, .too_many_requests, "CONSOLEQUERY");
     const auth: p.users.Auth = .{
         .session_digest = digest,

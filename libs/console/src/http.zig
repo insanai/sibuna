@@ -15,11 +15,17 @@ pub fn fail(context: *Context, status: std.http.Status, code: []const u8) Contex
     var buffer: [256]u8 = undefined;
     const body = std.fmt.bufPrint(
         &buffer,
-        "{{\"error\":\"{s}\",\"hint\":\"Check your input or sign in again.\"}}",
-        .{code},
+        "{{\"error\":\"{s}\",\"hint\":\"{s}\"}}",
+        .{ code, failureHint(code) },
     ) catch
         return error.TooLarge;
     try context.respond(status, "application/json", body, &.{});
+}
+
+fn failureHint(code: []const u8) []const u8 {
+    if (std.mem.eql(u8, code, "CONSOLEMUTATION"))
+        return "Wait up to one minute; a session permits sixty management mutations per minute.";
+    return "Check your input or sign in again.";
 }
 
 pub fn token(text: []const u8) error{InvalidRequest}![32]u8 {

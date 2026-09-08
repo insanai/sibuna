@@ -67,8 +67,6 @@ pub fn query(app: *App, context: *http.Context, testing: bool) !void {
 
 pub fn edit(app: *App, context: *http.Context, identity: p.Principal, inspection: bool) !void {
     const digest = try http.session(context);
-    if (!app.query_budget.allow(app.io, digest, app.now(), .query))
-        return http.fail(context, .too_many_requests, "CONSOLEQUERY");
     var body: [8192]u8 = undefined;
     var memory: [16384]u8 = undefined;
     var fixed = std.heap.FixedBufferAllocator.init(&memory);

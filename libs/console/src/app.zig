@@ -247,7 +247,16 @@ pub const App = struct {
             if ((route.access == .full and self.restricted(identity.?)) or
                 !identity.?.role.allows(route.action))
                 return http.fail(context, .forbidden, "CONSOLE403");
-            if (method == .POST) try http.csrf(context, identity.?.csrf_digest);
+            if (method == .POST) {
+                try http.csrf(context, identity.?.csrf_digest);
+                // Count every authorized mutation once, before parsing or expensive work.
+                if (route.action != .read and !self.query_budget.allow(
+                    self.io,
+                    try http.session(context),
+                    self.now(),
+                    .mutation,
+                )) return http.fail(context, .too_many_requests, "CONSOLEMUTATION");
+            }
         }
         return self.executeRoute(context, route, identity);
     }
