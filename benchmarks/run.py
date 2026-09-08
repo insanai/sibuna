@@ -59,25 +59,38 @@ def stop(proc):
             proc.wait()
 
 
+def source_paths():
+    """Track build inputs and assets without hashing generated dependencies or prior results."""
+    names = subprocess.check_output(
+        ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z", "--",
+         "build.zig", "build.zig.zon", "build", "apps", "libs", "benchmarks", "tools"],
+        cwd=ROOT,
+    )
+    paths = {pathlib.Path(name.decode()) for name in names.split(b"\0") if name}
+    return [ROOT / path for path in sorted(paths)
+            if path.parts[:2] != ("benchmarks", "results") and (ROOT / path).is_file()]
+
+
 def metadata():
     manifest = (ROOT / "build.zig.zon").read_text()
     cpu = platform.processor()
     if platform.system() == "Darwin":
         cpu = command("sysctl", "-n", "machdep.cpu.brand_string")
     source = hashlib.sha256()
-    paths = [ROOT / "build.zig", ROOT / "build.zig.zon"]
-    for directory in ("apps", "libs", "benchmarks"):
-        paths.extend(p for p in (ROOT / directory).rglob("*")
-                     if p.suffix in {".zig", ".py", ".sh", ".js", ".html"})
-    for path in sorted(paths):
+    paths = source_paths()
+    for path in paths:
+        content = path.read_bytes()
         source.update(str(path.relative_to(ROOT)).encode() + b"\0")
-        source.update(path.read_bytes())
+        source.update(len(content).to_bytes(8, "big"))
+        source.update(content)
     return {
         "zaxonlite": {
             "url": re.search(r'\.url\s*=\s*"([^"]+)"', manifest).group(1),
             "hash": re.search(r'\.hash\s*=\s*"([^"]+)"', manifest).group(1),
         },
         "source_sha256": source.hexdigest(),
+        "source_manifest_version": 2,
+        "source_file_count": len(paths),
         "daemon_sha256": hashlib.sha256((ROOT / "zig-out/bin/sibuna").read_bytes()).hexdigest(),
         "date": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "host": socket.gethostname(), "cpu": cpu, "os": platform.platform(),

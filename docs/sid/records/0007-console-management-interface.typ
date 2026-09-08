@@ -2611,6 +2611,17 @@ Full cluster/runtime impact and
 broader SID acceptance remain pending; these size and correctness checks do not establish
 latency, throughput or memory-impact targets.
 
+== Benchmark source manifest (2026-09-08)
+
+Source manifest version 2 hashes tracked and unignored source/build/asset files under
+build, apps, libs, tools and benchmarks, plus the root Zig build files. It includes the
+build-helper directory and committed CSS/geographic assets, excludes previous benchmark
+results and ignored generated dependencies, and prefixes each file's contents with its
+byte length. This avoids environment-dependent node_modules inputs and incomplete asset
+provenance. The record includes the manifest version and file count; version-1 and
+version-2 source digests are not directly comparable. The daemon digest remains separate.
+Manifest validation found 276 inputs and confirmed the required inclusion/exclusion cases.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
