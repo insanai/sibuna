@@ -45,7 +45,7 @@ pub fn read(owner: *Persistent, user: u64) !p.StorageResult {
     return .{ .totp = output };
 }
 
-pub fn begin(owner: *Persistent, input: p.auth.Enrollment) !p.StorageResult {
+pub fn begin(owner: *Persistent, input: p.auth.Enrollment, now: u64) !p.StorageResult {
     const session = std.fmt.bytesToHex(input.auth.session_digest, .lower);
     const csrf = std.fmt.bytesToHex(input.auth.csrf_digest, .lower);
     const envelope = std.fmt.bytesToHex(input.envelope, .lower);
@@ -65,11 +65,11 @@ pub fn begin(owner: *Persistent, input: p.auth.Enrollment) !p.StorageResult {
         &.{
             text(&envelope),
             text(&key),
-            integer(input.auth.now + 600),
-            integer(input.auth.now),
+            integer(now + 600),
+            integer(now),
             text(&session),
             text(&csrf),
-            integer(input.auth.now),
+            integer(now),
             integer(input.expected_revision),
             integer(input.expected_revision),
         },
@@ -77,8 +77,8 @@ pub fn begin(owner: *Persistent, input: p.auth.Enrollment) !p.StorageResult {
     return if (changes == 0) .{ .failed = .conflict } else .command_recorded;
 }
 
-pub fn confirm(owner: *Persistent, input: p.auth.Confirmation) !p.StorageResult {
-    const current = input.auth.now / 30;
+pub fn confirm(owner: *Persistent, input: p.auth.Confirmation, now: u64) !p.StorageResult {
+    const current = now / 30;
     if (input.step < current -| 1 or input.step > current + 1)
         return .{ .failed = .invalid_input };
     const session = std.fmt.bytesToHex(input.auth.session_digest, .lower);
@@ -96,11 +96,11 @@ pub fn confirm(owner: *Persistent, input: p.auth.Confirmation) !p.StorageResult 
         &.{
             integer(input.step),
             text(&digests),
-            integer(input.auth.now),
+            integer(now),
             text(&session),
             text(&csrf),
-            integer(input.auth.now),
-            integer(input.auth.now),
+            integer(now),
+            integer(now),
             integer(input.expected_revision),
         },
     );

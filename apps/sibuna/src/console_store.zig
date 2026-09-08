@@ -5,7 +5,6 @@ const console = @import("console");
 const p = console.protocol;
 const Persistent = @import("persistent.zig").Persistent;
 const db = @import("console_database.zig");
-const auth = @import("console_store_auth.zig");
 
 pub fn tick(owner: *Persistent) void {
     // Cap work per tick so console saturation cannot starve incidents and policy reload.
@@ -64,44 +63,36 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
         .policies_test => |input| @import("console_store_policies.zig").testRequest(owner, input),
         .events_similar => |input| @import("console_similarity.zig").query(owner, input),
         .events_query => |input| @import("console_store_events.zig").query(owner, input),
-        .totp_read => |user| @import("console_store_totp.zig").read(owner, user),
-        .totp_begin => |input| @import("console_store_totp.zig").begin(owner, input),
-        .totp_confirm => |input| @import("console_store_totp.zig").confirm(owner, input),
         .geo_prune => |now| @import("console_store_geo.zig").prune(owner, now),
         .geo_metadata => @import("console_store_geo.zig").metadata(owner),
         .geo_begin => |input| geo.begin(owner, input, owner.nowSeconds()),
         .geo_batch => |input| geo.batch(owner, input, owner.nowSeconds()),
         .geo_activate => |input| geo.activate(owner, input, owner.nowSeconds()),
         .geo_read => |input| @import("console_store_geo.zig").read(owner, input),
-        .setup_status => blk: {
-            var result = try db.query(
-                owner.db,
-                owner.gpa,
-                "SELECT id FROM console_users LIMIT 1",
-                &.{},
-            );
-            defer result.deinit();
-            break :blk .{ .setup_required = result.rows.len == 0 };
-        },
-        .bootstrap => |input| auth.bootstrap(owner, input),
-        .auth_user => |username| auth.user(owner, username.slice()),
-        .session_create => |input| @import("console_store_session.zig").create(owner, input),
-        .authorize => |input| authorizeRequest(owner, input),
-        .logout => |input| auth.logout(owner, input),
-        .password_change => |input| auth.password(owner, input),
+        .setup_status => setupStatus(owner),
+        .bootstrap,
+        .auth_user,
+        .session_create,
+        .authorize,
+        .logout,
+        .password_change,
+        .totp_read,
+        .totp_begin,
+        .totp_confirm,
+        => @import("console_auth_commands.zig").execute(owner, request),
         else => .{ .failed = .invalid_input },
     };
 }
 
-fn authorizeRequest(owner: *Persistent, input: p.AuthorizationCheck) !p.StorageResult {
-    const now = owner.nowSeconds();
-    if (input.touch and input.kind == .session) try auth.touch(owner, input.session_digest, now);
-    return @import("console_store_identity.zig").authorize(
-        owner,
-        input.session_digest,
-        now,
-        input.kind,
+fn setupStatus(owner: *Persistent) !p.StorageResult {
+    var result = try db.query(
+        owner.db,
+        owner.gpa,
+        "SELECT id FROM console_users LIMIT 1",
+        &.{},
     );
+    defer result.deinit();
+    return .{ .setup_required = result.rows.len == 0 };
 }
 
 pub fn authorize(owner: *Persistent, digest: [32]u8, now: u64) !p.StorageResult {

@@ -111,7 +111,7 @@ test "minute pages separate boots and nodes, reject revoked readers and prune bo
     try t.expectEqual(@as(u64, 4), try count(fx));
     _ = try fx.run(.{ .minutes_prune = 91 * 86400 });
     try t.expectEqual(@as(u64, 0), try count(fx));
-    _ = try fx.run(.{ .logout = .{ .digest = @splat(1), .now = 301 } });
+    _ = try fx.run(.{ .logout = .{ .digest = @splat(1) } });
     const denied = try fx.run(.{ .minutes_query = .{
         .session_digest = @splat(1),
         .now = 302,

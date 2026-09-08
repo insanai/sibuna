@@ -1,9 +1,9 @@
 //! Owned authentication data crossing the storage mailbox. Secrets are never serialized
 //! into ordinary user/session responses. Factor consumption belongs to session creation.
+const p = @import("root.zig");
 pub const Authorization = struct {
     session_digest: [32]u8,
     csrf_digest: [32]u8,
-    now: u64,
 };
 pub const Totp = struct {
     user: u64,
@@ -32,4 +32,29 @@ pub const Factor = union(enum) {
     none,
     totp: struct { revision: u64, step: u64 },
     recovery: struct { revision: u64, slot: u8, digest: [32]u8 },
+};
+
+// Deadlines are absolute bounds, not authorization clocks. Persistent stamps execution.
+pub const Bootstrap = struct {
+    username: p.Bytes(64),
+    password_hash: p.Bytes(255),
+    must_change: bool = false,
+    password_expires: u64 = 0,
+};
+pub const Session = struct {
+    factor: Factor = .none,
+    user: u64,
+    revision: u64,
+    digest: [32]u8,
+    csrf_digest: [32]u8,
+    expires: u64,
+};
+pub const Logout = struct { digest: [32]u8 };
+pub const PasswordChange = struct {
+    expected_revision: u64,
+    replacement_digest: [32]u8,
+    replacement_csrf: [32]u8,
+    session_digest: [32]u8,
+    csrf_digest: [32]u8,
+    password_hash: p.Bytes(255),
 };

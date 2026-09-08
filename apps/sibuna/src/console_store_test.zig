@@ -51,6 +51,25 @@ pub const Fixture = struct {
         );
     }
 
+    /// Numerical SQL tests call synchronous helpers with an explicit instant. Mailbox
+    /// tests use run(); production commands have no timestamp field or clock override.
+    pub fn authenticationAt(self: *Fixture, request: p.StorageRequest, now: u64) !p.StorageResult {
+        if (!self.owner.console_initialized) try @import("console_migrations.zig").run(self.owner);
+        const auth = @import("console_store_auth.zig");
+        const factor = @import("console_store_totp.zig");
+        const session = @import("console_store_session.zig");
+        const result = switch (request) {
+            .bootstrap => |input| auth.bootstrap(self.owner, input, now),
+            .session_create => |input| session.create(self.owner, input, now),
+            .password_change => |input| auth.password(self.owner, input, now),
+            .logout => |input| auth.logout(self.owner, input, now),
+            .totp_begin => |input| factor.begin(self.owner, input, now),
+            .totp_confirm => |input| factor.confirm(self.owner, input, now),
+            else => return error.InvalidTestRequest,
+        };
+        return result catch .{ .failed = .unavailable };
+    }
+
     pub fn run(self: *Fixture, request: p.StorageRequest) !p.StorageResult {
         const ticket = try self.owner.console_mailbox.submit(t.io, request, .urgent);
         try self.owner.tick();
@@ -63,7 +82,6 @@ pub fn policySession(fx: *Fixture) !void {
     _ = try fx.run(.{ .bootstrap = .{
         .username = try p.Bytes(64).init("policy-admin"),
         .password_hash = try p.Bytes(255).init("test-only-hash"),
-        .now = now,
     } });
     const user = (try fx.run(.{ .auth_user = try p.Bytes(64).init("policy-admin") })).auth_user;
     _ = try fx.run(.{ .session_create = .{
@@ -71,7 +89,6 @@ pub fn policySession(fx: *Fixture) !void {
         .revision = user.revision,
         .digest = @splat(1),
         .csrf_digest = @splat(2),
-        .now = now,
         .expires = now + 1000,
     } });
 }
@@ -113,7 +130,7 @@ test "policy inspection pins applied revisions and includes file and database ru
     try t.expect(std.mem.indexOf(u8, decision.slice(), "waf:xss") != null);
     request.query.applied = fx.owner.version + 1;
     try t.expectEqual(p.Failure.conflict, (try fx.run(.{ .policies_test = request })).failed);
-    _ = try fx.run(.{ .logout = .{ .digest = @splat(1), .now = 102 } });
+    _ = try fx.run(.{ .logout = .{ .digest = @splat(1) } });
     try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .policies_query = input })).failed);
 }
 
@@ -162,7 +179,7 @@ test "private policy previews preserve live rules and reject invalid neighbors" 
     );
     request.committed = stamp + 1;
     try t.expectEqual(p.Failure.invalid_input, (try fx.run(.{ .policies_test = request })).failed);
-    _ = try fx.run(.{ .logout = .{ .digest = @splat(1), .now = 102 } });
+    _ = try fx.run(.{ .logout = .{ .digest = @splat(1) } });
     try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .policies_test = request })).failed);
 }
 
@@ -299,7 +316,7 @@ test "policy edits enforce owner-side role and CSRF checks" {
     try fx.owner.db.exec(t.allocator, "UPDATE console_users SET role='operator'");
     try policySession(fx);
     try t.expectEqual(@as(u64, 1), (try fx.run(.{ .policy_edit = input })).revision.committed);
-    _ = try fx.run(.{ .logout = .{ .digest = @splat(1), .now = 102 } });
+    _ = try fx.run(.{ .logout = .{ .digest = @splat(1) } });
     try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .policy_edit = input })).failed);
 }
 
@@ -382,7 +399,7 @@ test "first managed edit preserves the existing database rule as a baseline" {
     try @import("console_migrations.zig").run(fx.owner);
 }
 
-test "console storage ticks bootstrap, audit, authenticate and revoke atomically" {
+test "console authentication commits audit and revocation atomically" {
     var tmp = t.tmpDir(.{});
     defer tmp.cleanup();
     var path: [160]u8 = undefined;
@@ -396,10 +413,9 @@ test "console storage ticks bootstrap, audit, authenticate and revoke atomically
     const bootstrap: p.StorageRequest = .{ .bootstrap = .{
         .username = try p.Bytes(64).init("admin' OR 1=1 --"),
         .password_hash = try p.Bytes(255).init("test-only-opaque-hash"),
-        .now = 100,
     } };
-    try t.expect((try fx.run(bootstrap)) == .command_recorded);
-    try t.expectEqual(p.Failure.conflict, (try fx.run(bootstrap)).failed);
+    try t.expect((try fx.authenticationAt(bootstrap, 100)) == .command_recorded);
+    try t.expectEqual(p.Failure.conflict, (try fx.authenticationAt(bootstrap, 100)).failed);
     try t.expect(!(try fx.run(.setup_status)).setup_required);
     const user = (try fx.run(.{ .auth_user = bootstrap.bootstrap.username })).auth_user;
     try t.expectEqual(p.Role.admin, user.role);
@@ -408,10 +424,9 @@ test "console storage ticks bootstrap, audit, authenticate and revoke atomically
         .revision = user.revision,
         .digest = @splat(1),
         .csrf_digest = @splat(2),
-        .now = 100,
         .expires = 200,
     } };
-    try t.expect((try fx.run(session)) == .command_recorded);
+    try t.expect((try fx.authenticationAt(session, 100)) == .command_recorded);
     const principal = (try fx.authorizeAt(.{
         .session_digest = @splat(1),
         .now = 101,
@@ -421,20 +436,19 @@ test "console storage ticks bootstrap, audit, authenticate and revoke atomically
         .session_digest = @splat(1),
         .now = 200,
     })).failed);
-    try t.expect((try fx.run(.{ .password_change = .{
+    try t.expect((try fx.authenticationAt(.{ .password_change = .{
         .expected_revision = user.revision,
         .replacement_digest = @splat(3),
         .replacement_csrf = @splat(4),
         .session_digest = @splat(1),
         .csrf_digest = @splat(2),
         .password_hash = try p.Bytes(255).init("replacement-test-hash"),
-        .now = 110,
-    } })) == .command_recorded);
+    } }, 110)) == .command_recorded);
     try t.expectEqual(p.Failure.unauthorized, (try fx.authorizeAt(.{
         .session_digest = @splat(1),
         .now = 111,
     })).failed);
-    try t.expectEqual(p.Failure.conflict, (try fx.run(session)).failed);
+    try t.expectEqual(p.Failure.conflict, (try fx.authenticationAt(session, 100)).failed);
     var audit = try db.query(
         fx.owner.db,
         t.allocator,
@@ -474,19 +488,17 @@ test "console SQL VM budget interrupts a recursive query" {
 fn geoFixture(path: []const u8) !*Fixture {
     const fx = try Fixture.open(path);
     errdefer fx.close();
-    _ = try fx.run(.{ .bootstrap = .{
+    _ = try fx.authenticationAt(.{ .bootstrap = .{
         .username = try p.Bytes(64).init("geo-admin"),
         .password_hash = try p.Bytes(255).init("test-only-hash"),
-        .now = 100,
-    } });
-    _ = try fx.run(.{ .session_create = .{
+    } }, 100);
+    _ = try fx.authenticationAt(.{ .session_create = .{
         .user = 1,
         .revision = 1,
         .digest = @splat(1),
         .csrf_digest = @splat(2),
-        .now = 100,
         .expires = 1000,
-    } });
+    } }, 100);
     return fx;
 }
 
@@ -616,14 +628,13 @@ test "session idle activity never revives expiry or extends the absolute lifetim
         .{tmp.sub_path},
     ));
     defer fx.close();
-    _ = try fx.run(.{ .session_create = .{
+    _ = try fx.authenticationAt(.{ .session_create = .{
         .user = 1,
         .revision = 1,
         .digest = @splat(3),
         .csrf_digest = @splat(4),
-        .now = 100,
         .expires = 43300,
-    } });
+    } }, 100);
     // Passive stream checks do not keep an unattended dashboard authorized forever.
     try t.expect((try fx.authorizeAt(.{
         .session_digest = @splat(3),
@@ -634,14 +645,13 @@ test "session idle activity never revives expiry or extends the absolute lifetim
         .now = 1900,
         .touch = true,
     })).failed);
-    _ = try fx.run(.{ .session_create = .{
+    _ = try fx.authenticationAt(.{ .session_create = .{
         .user = 1,
         .revision = 1,
         .digest = @splat(5),
         .csrf_digest = @splat(6),
-        .now = 100,
         .expires = 43300,
-    } });
+    } }, 100);
     var now: u64 = 100;
     while (now < 43300) : (now += 900) {
         try t.expect((try fx.authorizeAt(.{
@@ -661,7 +671,6 @@ fn enrollTotp(fx: *Fixture) ![10][32]u8 {
     const auth: p.auth.Authorization = .{
         .session_digest = @splat(1),
         .csrf_digest = @splat(2),
-        .now = 110,
     };
     const begin: p.StorageRequest = .{ .totp_begin = .{
         .auth = auth,
@@ -669,8 +678,8 @@ fn enrollTotp(fx: *Fixture) ![10][32]u8 {
         .envelope = @splat(3),
         .key_id = @splat(4),
     } };
-    try t.expect((try fx.run(begin)) == .command_recorded);
-    try t.expectEqual(p.Failure.conflict, (try fx.run(begin)).failed);
+    try t.expect((try fx.authenticationAt(begin, 110)) == .command_recorded);
+    try t.expectEqual(p.Failure.conflict, (try fx.authenticationAt(begin, 110)).failed);
     const pending = (try fx.run(.{ .totp_read = 1 })).totp;
     try t.expect(!pending.enabled);
     var digests: [10][32]u8 = undefined;
@@ -681,8 +690,8 @@ fn enrollTotp(fx: *Fixture) ![10][32]u8 {
         .step = 3,
         .recovery_digests = digests,
     } };
-    try t.expect((try fx.run(confirm)) == .command_recorded);
-    try t.expectEqual(p.Failure.conflict, (try fx.run(confirm)).failed);
+    try t.expect((try fx.authenticationAt(confirm, 110)) == .command_recorded);
+    try t.expectEqual(p.Failure.conflict, (try fx.authenticationAt(confirm, 110)).failed);
     try t.expectEqual(p.Failure.unauthorized, (try fx.authorizeAt(.{
         .session_digest = @splat(1),
         .now = 110,
@@ -692,16 +701,20 @@ fn enrollTotp(fx: *Fixture) ![10][32]u8 {
     return digests;
 }
 
-fn factorSession(factor: p.auth.Factor, digest_byte: u8, now: u64) p.StorageRequest {
-    return .{ .session_create = .{
+fn factorSession(
+    fx: *Fixture,
+    factor: p.auth.Factor,
+    digest_byte: u8,
+    now: u64,
+) !p.StorageResult {
+    return fx.authenticationAt(.{ .session_create = .{
         .user = 1,
         .revision = 2,
         .factor = factor,
         .digest = @splat(digest_byte),
         .csrf_digest = @splat(8),
-        .now = now,
         .expires = now + 1800,
-    } };
+    } }, now);
 }
 
 test "TOTP enrollment revokes sessions and each step or recovery value commits once" {
@@ -715,29 +728,29 @@ test "TOTP enrollment revokes sessions and each step or recovery value commits o
     ));
     defer fx.close();
     const digests = try enrollTotp(fx);
-    try t.expectEqual(p.Failure.conflict, (try fx.run(factorSession(.none, 5, 130))).failed);
+    try t.expectEqual(p.Failure.conflict, (try factorSession(fx, .none, 5, 130)).failed);
     const totp: p.auth.Factor = .{ .totp = .{ .revision = 1, .step = 4 } };
-    try t.expect((try fx.run(factorSession(totp, 5, 130))) == .command_recorded);
-    try t.expectEqual(p.Failure.conflict, (try fx.run(factorSession(totp, 6, 130))).failed);
+    try t.expect((try factorSession(fx, totp, 5, 130)) == .command_recorded);
+    try t.expectEqual(p.Failure.conflict, (try factorSession(fx, totp, 6, 130)).failed);
     const next: p.auth.Factor = .{ .totp = .{ .revision = 1, .step = 5 } };
     // A duplicate session digest aborts the insert and must not consume its fresh step.
-    try t.expectEqual(p.Failure.unavailable, (try fx.run(factorSession(next, 5, 150))).failed);
+    try t.expectEqual(p.Failure.unavailable, (try factorSession(fx, next, 5, 150)).failed);
     try t.expectEqual(4, (try fx.run(.{ .totp_read = 1 })).totp.last_step.?);
-    try t.expect((try fx.run(factorSession(next, 6, 150))) == .command_recorded);
+    try t.expect((try factorSession(fx, next, 6, 150)) == .command_recorded);
     const recovery: p.auth.Factor = .{ .recovery = .{
         .revision = 1,
         .slot = 0,
         .digest = digests[0],
     } };
-    try t.expect((try fx.run(factorSession(recovery, 7, 150))) == .command_recorded);
-    try t.expectEqual(p.Failure.conflict, (try fx.run(factorSession(recovery, 8, 150))).failed);
+    try t.expect((try factorSession(fx, recovery, 7, 150)) == .command_recorded);
+    try t.expectEqual(p.Failure.conflict, (try factorSession(fx, recovery, 8, 150)).failed);
     try t.expectEqual(1, (try fx.run(.{ .totp_read = 1 })).totp.recovery_used);
     const stale: p.auth.Factor = .{ .recovery = .{
         .revision = 2,
         .slot = 1,
         .digest = digests[1],
     } };
-    try t.expectEqual(p.Failure.conflict, (try fx.run(factorSession(stale, 9, 150))).failed);
+    try t.expectEqual(p.Failure.conflict, (try factorSession(fx, stale, 9, 150)).failed);
     try t.expectEqual(1, (try fx.run(.{ .totp_read = 1 })).totp.recovery_used);
 }
 
@@ -758,14 +771,13 @@ test "console storage reopens after sealed journal rotation" {
         const fx = try geoFixture(path);
         defer fx.close();
         for (3..35) |index| {
-            try t.expect((try fx.run(.{ .session_create = .{
+            try t.expect((try fx.authenticationAt(.{ .session_create = .{
                 .user = 1,
                 .revision = 1,
                 .digest = @splat(@intCast(index)),
                 .csrf_digest = @splat(2),
-                .now = 100,
                 .expires = 1000,
-            } })) == .command_recorded);
+            } }, 100)) == .command_recorded);
         }
     }
     const restored = try Fixture.open(path);
@@ -787,13 +799,12 @@ test "temporary bootstrap expires and password replacement consumes its credenti
         .{tmp.sub_path},
     ));
     defer fx.close();
-    _ = try fx.run(.{ .bootstrap = .{
+    _ = try fx.authenticationAt(.{ .bootstrap = .{
         .username = try p.Bytes(64).init("temporary-admin"),
         .password_hash = try p.Bytes(255).init("opaque-test-hash"),
-        .now = 100,
         .must_change = true,
         .password_expires = 200,
-    } });
+    } }, 100);
     const user = (try fx.run(.{ .auth_user = try p.Bytes(64).init("temporary-admin") })).auth_user;
     try t.expect(user.must_change and user.password_expires == 200);
     var session: p.StorageRequest = .{ .session_create = .{
@@ -801,25 +812,22 @@ test "temporary bootstrap expires and password replacement consumes its credenti
         .revision = 1,
         .digest = @splat(1),
         .csrf_digest = @splat(2),
-        .now = 200,
         .expires = 300,
     } };
-    try t.expectEqual(p.Failure.conflict, (try fx.run(session)).failed);
-    session.session_create.now = 110;
+    try t.expectEqual(p.Failure.conflict, (try fx.authenticationAt(session, 200)).failed);
     session.session_create.expires = 200;
-    try t.expect((try fx.run(session)) == .command_recorded);
-    _ = try fx.run(.{ .password_change = .{
+    try t.expect((try fx.authenticationAt(session, 110)) == .command_recorded);
+    _ = try fx.authenticationAt(.{ .password_change = .{
         .expected_revision = user.revision,
         .replacement_digest = @splat(3),
         .replacement_csrf = @splat(4),
         .session_digest = @splat(1),
         .csrf_digest = @splat(2),
         .password_hash = try p.Bytes(255).init("permanent-test-hash"),
-        .now = 120,
-    } });
+    } }, 120);
     const changed = (try fx.run(.{ .auth_user = user.username })).auth_user;
     try t.expect(!changed.must_change and changed.password_expires == 0);
-    try t.expectEqual(p.Failure.conflict, (try fx.run(session)).failed);
+    try t.expectEqual(p.Failure.conflict, (try fx.authenticationAt(session, 110)).failed);
 }
 
 test "explicit sign-out commits its redacted audit record with revocation" {
@@ -832,9 +840,9 @@ test "explicit sign-out commits its redacted audit record with revocation" {
         .{tmp.sub_path},
     ));
     defer fx.close();
-    const operation: p.StorageRequest = .{ .logout = .{ .digest = @splat(1), .now = 110 } };
-    try t.expect((try fx.run(operation)) == .command_recorded);
-    try t.expect((try fx.run(operation)) == .command_recorded);
+    const operation: p.StorageRequest = .{ .logout = .{ .digest = @splat(1) } };
+    try t.expect((try fx.authenticationAt(operation, 110)) == .command_recorded);
+    try t.expect((try fx.authenticationAt(operation, 110)) == .command_recorded);
     var audit = try db.query(
         fx.owner.db,
         t.allocator,
@@ -869,16 +877,15 @@ test "password rotation rolls back revocation on failed replacement and checks r
         .session_digest = @splat(1),
         .csrf_digest = @splat(2),
         .password_hash = try p.Bytes(255).init("replacement-test-hash"),
-        .now = 110,
     } };
-    try t.expectEqual(p.Failure.unauthorized, (try fx.run(operation)).failed);
+    try t.expectEqual(p.Failure.unauthorized, (try fx.authenticationAt(operation, 110)).failed);
     operation.password_change.expected_revision = user.revision;
     try fx.owner.db.exec(
         t.allocator,
         "CREATE TRIGGER reject_rotation BEFORE INSERT ON console_sessions " ++
             "BEGIN SELECT RAISE(ABORT,'test replacement failure'); END;",
     );
-    try t.expect((try fx.run(operation)) == .failed);
+    try t.expect((try fx.authenticationAt(operation, 110)) == .failed);
     const unchanged = (try fx.run(.{ .auth_user = user.username })).auth_user;
     try t.expectEqual(user.revision, unchanged.revision);
     try t.expectEqualStrings(user.password_hash.slice(), unchanged.password_hash.slice());
@@ -887,8 +894,8 @@ test "password rotation rolls back revocation on failed replacement and checks r
         .now = 111,
     })) == .authorized);
     try fx.owner.db.exec(t.allocator, "DROP TRIGGER reject_rotation;");
-    try t.expect((try fx.run(operation)) == .command_recorded);
-    try t.expectEqual(p.Failure.unauthorized, (try fx.run(operation)).failed);
+    try t.expect((try fx.authenticationAt(operation, 110)) == .command_recorded);
+    try t.expectEqual(p.Failure.unauthorized, (try fx.authenticationAt(operation, 110)).failed);
     const rotated = (try fx.authorizeAt(.{
         .session_digest = @splat(3),
         .now = 112,
@@ -952,7 +959,7 @@ test "incident pages bound bytes, paginate tied timestamps and redact historical
     input.category = try p.Bytes(32).init("attack' OR 1=1 --");
     const empty = try fx.run(.{ .events_query = input });
     try t.expectEqualStrings("{\"rows\":[],\"next\":null}", empty.page.slice());
-    _ = try fx.run(.{ .logout = .{ .digest = @splat(1), .now = 251 } });
+    _ = try fx.run(.{ .logout = .{ .digest = @splat(1) } });
     try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .events_query = input })).failed);
 }
 
@@ -1157,6 +1164,6 @@ test "incremental similarity scans yield at 64 rows and recheck authorization" {
     try t.expectEqual(@as(usize, 3), parts);
     try t.expectEqual(@as(u8, 10), best.count);
     for (best.rows) |row| try t.expect(row.distance < 0.00001);
-    _ = try fx.run(.{ .logout = .{ .digest = @splat(1), .now = 501 } });
+    _ = try fx.run(.{ .logout = .{ .digest = @splat(1) } });
     try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .events_similar = input })).failed);
 }

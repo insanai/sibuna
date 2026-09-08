@@ -83,7 +83,6 @@ pub fn handle(app: *App, context: *Context, path: []const u8, principal: p.Princ
     const authorization: p.auth.Authorization = .{
         .session_digest = session_digest,
         .csrf_digest = principal.csrf_digest,
-        .now = app.now(),
     };
     if (enrolling)
         return enroll(app, context, principal.actor, authorization, parsed.value.revision);
@@ -133,7 +132,7 @@ fn confirm(
         return http.fail(context, .conflict, "CONSOLE409");
     var seed = try decrypt(app, record.totp);
     defer std.crypto.secureZero(u8, &seed);
-    const step = totp.verify(seed, input.code, grant.now, null) catch
+    const step = totp.verify(seed, input.code, app.now(), null) catch
         return http.fail(context, .unauthorized, "CONSOLE401");
     var codes: [10][32]u8 = undefined;
     defer std.crypto.secureZero(u8, std.mem.asBytes(&codes));

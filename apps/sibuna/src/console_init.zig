@@ -44,7 +44,6 @@ pub fn run(gpa: std.mem.Allocator, io: std.Io, cfg: core.Config, username: []con
     const result = try request(owner, .{ .bootstrap = .{
         .username = try p.Bytes(64).init(username),
         .password_hash = hash,
-        .now = now,
         .must_change = true,
         .password_expires = now + 3600,
     } });

@@ -10,8 +10,8 @@ const text = store.text;
 const integer = store.integer;
 const nil: zx.Value = .null_value;
 
-pub fn create(owner: *Persistent, input: anytype) !p.StorageResult {
-    if (input.expires <= input.now or input.expires - input.now > 43200)
+pub fn create(owner: *Persistent, input: p.auth.Session, now: u64) !p.StorageResult {
+    if (input.expires <= now or input.expires - now > 43200)
         return .{ .failed = .invalid_input };
     const digest = std.fmt.bytesToHex(input.digest, .lower);
     const csrf = std.fmt.bytesToHex(input.csrf_digest, .lower);
@@ -35,8 +35,8 @@ pub fn create(owner: *Persistent, input: anytype) !p.StorageResult {
         },
     }
     const changes = try db.exec(owner.db, owner.gpa, sql, &.{
-        text(&digest),       text(&csrf),             integer(input.now), integer(input.expires),
-        integer(input.user), integer(input.revision), revision,           step,
+        text(&digest),       text(&csrf),             integer(now), integer(input.expires),
+        integer(input.user), integer(input.revision), revision,     step,
         slot,                recovery,
     });
     return if (changes == 0) .{ .failed = .conflict } else .command_recorded;

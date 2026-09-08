@@ -3168,6 +3168,16 @@ This increment does not complete historical metadata capture, policy diff/revert
 audit, command intent/completion or cluster audit coverage. Those remain part of the
 Proposed SID's outstanding implementation and release gates.
 
+== Authentication execution clock (2026-09-09)
+
+Authentication mailbox contracts no longer carry an authorization timestamp. Persistent
+uses its execution clock for bootstrap deadlines, session issuance and factor replay
+windows, password rotation, TOTP enrollment/confirmation, and sign-out audit timestamps.
+Absolute credential deadlines remain bounded inputs; they cannot extend authorization.
+Numerical SQL tests call explicit synchronous helpers. Production dispatch exposes no
+clock override. Queued regressions expire a password, cookie or enrollment after submission
+and reject a previously verified TOTP step outside the current window.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

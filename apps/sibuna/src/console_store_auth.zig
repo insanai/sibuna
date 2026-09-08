@@ -7,11 +7,11 @@ const text = store.text;
 const integer = store.integer;
 const number = store.number;
 
-pub fn bootstrap(owner: *Persistent, input: anytype) !p.StorageResult {
+pub fn bootstrap(owner: *Persistent, input: p.auth.Bootstrap, now: u64) !p.StorageResult {
     const username = input.username.slice();
     const password_hash = input.password_hash.slice();
-    if (input.password_expires != 0 and (input.password_expires <= input.now or
-        input.password_expires - input.now > 3600)) return .{ .failed = .invalid_input };
+    if (input.password_expires != 0 and (input.password_expires <= now or
+        input.password_expires - now > 3600)) return .{ .failed = .invalid_input };
     if (username.len == 0 or password_hash.len == 0) return .{ .failed = .invalid_input };
     // Conditional insert plus its audit trigger commit as one replicated transaction.
     // Concurrent initializers cannot create a second bootstrap administrator.
@@ -24,7 +24,7 @@ pub fn bootstrap(owner: *Persistent, input: anytype) !p.StorageResult {
         &.{
             text(username),
             text(password_hash),
-            integer(input.now),
+            integer(now),
             integer(@intFromBool(input.must_change)),
             integer(input.password_expires),
         },
@@ -58,18 +58,18 @@ pub fn user(owner: *Persistent, username: []const u8) !p.StorageResult {
     } };
 }
 
-pub fn logout(owner: *Persistent, input: anytype) !p.StorageResult {
+pub fn logout(owner: *Persistent, input: p.auth.Logout, now: u64) !p.StorageResult {
     const hex = std.fmt.bytesToHex(input.digest, .lower);
     _ = try db.exec(
         owner.db,
         owner.gpa,
         "UPDATE console_sessions SET ended_at=? WHERE digest=?",
-        &.{ integer(input.now), text(&hex) },
+        &.{ integer(now), text(&hex) },
     );
     return .command_recorded;
 }
 
-pub fn password(owner: *Persistent, input: anytype) !p.StorageResult {
+pub fn password(owner: *Persistent, input: p.auth.PasswordChange, now: u64) !p.StorageResult {
     const digest = std.fmt.bytesToHex(input.session_digest, .lower);
     const csrf = std.fmt.bytesToHex(input.csrf_digest, .lower);
     const replacement = std.fmt.bytesToHex(input.replacement_digest, .lower);
@@ -86,11 +86,11 @@ pub fn password(owner: *Persistent, input: anytype) !p.StorageResult {
             text(input.password_hash.slice()),
             text(&replacement),
             text(&replacement_csrf),
-            integer(input.now),
+            integer(now),
             integer(input.expected_revision),
             text(&digest),
             text(&csrf),
-            integer(input.now),
+            integer(now),
         },
     );
     // Insertion, old-session revocation, replacement and audit either all commit or roll back.

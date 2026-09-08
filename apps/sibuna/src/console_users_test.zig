@@ -13,14 +13,12 @@ fn setup(path: []const u8) !*Fixture {
     _ = try fx.run(.{ .bootstrap = .{
         .username = try p.Bytes(64).init("admin"),
         .password_hash = try p.Bytes(255).init("test-only-hash"),
-        .now = now,
     } });
     _ = try fx.run(.{ .session_create = .{
         .user = 1,
         .revision = 1,
         .digest = credentials.session_digest,
         .csrf_digest = credentials.csrf_digest,
-        .now = now,
         .expires = now + 1000,
     } });
     return fx;
@@ -132,7 +130,6 @@ test "user edits reject conflicts and self-demotion and revoke sessions atomical
         .revision = 1,
         .digest = @splat(3),
         .csrf_digest = @splat(4),
-        .now = now,
         .expires = now + 1000,
     } });
     var input: u.Change = .{

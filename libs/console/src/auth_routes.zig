@@ -70,7 +70,6 @@ fn establish(app: *App, context: *Context, user: p.AuthUser, factor: p.auth.Fact
         .revision = user.revision,
         .digest = digest,
         .csrf_digest = csrf_digest,
-        .now = now,
         .expires = expires,
     } });
     if (result != .command_recorded) return http.fail(context, .conflict, "CONSOLE409");
@@ -109,7 +108,6 @@ fn sessionResponse(
 pub fn logout(app: *App, context: *Context) !void {
     const result = try app.request(.{ .logout = .{
         .digest = try http.session(context),
-        .now = app.now(),
     } });
     if (result != .command_recorded) return error.StorageUnavailable;
     const cookie = if (app.config.behind_proxy or app.config.cookie_secure)
@@ -165,7 +163,6 @@ pub fn password(app: *App, context: *Context, principal: p.Principal) !void {
         .session_digest = session_digest,
         .csrf_digest = principal.csrf_digest,
         .password_hash = hash,
-        .now = app.now(),
     } });
     if (result != .command_recorded) return http.fail(context, .conflict, "CONSOLE409");
     var changed = account.auth_user;
