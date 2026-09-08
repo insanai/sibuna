@@ -26,6 +26,7 @@ pub fn add(
         .target = target,
         .optimize = optimize,
     });
+    const html = htmlModule(b, target, optimize);
     console.addImport("serve", serve);
     addUi(b, protocol, console);
     addAssets(b);
@@ -33,7 +34,7 @@ pub fn add(
     const step = b.step("console-test", "Test console contracts and bounded ownership");
     step.dependOn(&b.top_level_steps.get("console-render-test").?.step);
     step.dependOn(&b.top_level_steps.get("console-assets-check").?.step);
-    for ([_]*std.Build.Module{ protocol, console, serve }) |module| {
+    for ([_]*std.Build.Module{ protocol, console, serve, html }) |module| {
         const tests = b.addTest(.{ .root_module = module });
         step.dependOn(&b.addRunArtifact(tests).step);
     }
@@ -66,6 +67,7 @@ fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module)
             .imports = &.{.{ .name = "console_protocol", .module = wasm_protocol }},
         }),
     });
+    wasm.root_module.addImport("html", htmlModule(b, target, .ReleaseSmall));
     wasm.entry = .disabled;
     wasm.rdynamic = true;
     wasm.stack_size = 256 * 1024;
@@ -85,10 +87,23 @@ fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module)
         .target = b.graph.host,
         .imports = &.{.{ .name = "console_protocol", .module = protocol }},
     }) });
+    tests.root_module.addImport("html", htmlModule(b, b.graph.host, .Debug));
     const step = b.step("console-ui", "Build the Zig console WebAssembly interface");
     step.dependOn(&wasm.step);
     const render_step = b.step("console-render-test", "Test native console rendering");
     render_step.dependOn(&b.addRunArtifact(tests).step);
+}
+
+fn htmlModule(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+) *std.Build.Module {
+    return b.createModule(.{
+        .root_source_file = b.path("libs/html/src/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
 }
 
 fn addAssets(b: *std.Build) void {
