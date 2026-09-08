@@ -2298,6 +2298,15 @@ console end-to-end tests and the live dashboard passed after this fix. Full test
 formatting, SID generation and storage-off/console-off/cluster build checks passed;
 the broader three-node and console-impact acceptance gates remain pending.
 
+Benchmark regeneration from clean commit `bef3336` produced
+`benchmarks/results/latest-20260908T072137Z.json`, source SHA-256
+`e46d9294c2318c60bfb66cb7c9dd4648d286911ac1a674661eb577593cba586c`.
+Seven-batch medians were 5.9 ns for the existing global GCRA workload, 6.2 ns
+for four rule scopes and 1,450.4 ns for full policy classification. Idle RSS was
+9,904 KiB with storage compiled but inactive and the review daemon stopped.
+These primitive measurements do not establish throughput/p99 isolation under
+active dashboards, storage contention or cluster traffic.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
