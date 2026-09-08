@@ -34,6 +34,7 @@ pub const State = struct {
     phase: Phase = .loading,
     navigation_open: bool = false,
     policies: @import("policies_page.zig").Model = .{},
+    rankings: @import("rankings_panel.zig").Model = .{},
     similarity: @import("similarity_state.zig").Model = .{},
     challenges: @import("challenges_page.zig").Model = .{},
     events: @import("events_state.zig").Model = .{},
@@ -78,7 +79,9 @@ pub const State = struct {
     /// full initialized State image just to clear bounded page buffers on sign-out.
     pub fn reset(self: *State) void {
         inline for (@typeInfo(State).@"struct".fields) |field| {
-            @field(self, field.name) = field.defaultValue().?;
+            if (comptime @import("std").mem.eql(u8, field.name, "rankings")) {
+                self.rankings.clear();
+            } else @field(self, field.name) = field.defaultValue().?;
         }
     }
 

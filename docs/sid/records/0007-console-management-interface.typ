@@ -2056,6 +2056,24 @@ ranking kinds, or complete the ranking interface and retention gates. The endpoi
 reports only the current partial minute; first and last sample times are null when
 there are no retained samples.
 
+== Current-minute ranking interface (2026-09-08)
+
+The signed-in Statistics page now renders path-prefix estimates and lower bounds,
+retained/truncated/rejected sample counts, boot-scoped queue loss, captured UTC
+minute and age. It refreshes every ten seconds while dashboard statistics arrive;
+paused or disconnected values remain visibly stale. A separate controller correlates
+requests across session resets. Bounded decoding copies keys and commits a complete
+replacement only after validation. Native tests cover excess rows, ownership,
+escaping, erasure and delayed responses from a previous session.
+
+Formatting, full tests, console checks, SID generation and the daemon build passed.
+The Wasm artifact is 307,119 bytes, within its unchanged 300 KiB bound. Browser
+verification observed 26 retained samples (19 and 7 for two actual paths), no query
+secrets, minute rollover, unchanged paused rows with increasing age, and a 390-pixel
+mobile viewport without horizontal overflow. Desktop review retained the sidebar
+and rendered the ranking table below the globe and timeline. Durable history,
+additional ranking kinds and cluster aggregation remain pending.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

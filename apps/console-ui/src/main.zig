@@ -272,6 +272,8 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
     if (status_value != .integer) return;
     const status = status_value.integer;
     const body = field(value, "body") orelse return;
+    if (std.mem.startsWith(u8, id, "rankings-"))
+        return rankingResponse(id, status, body, alloc);
     if (std.mem.startsWith(u8, id, "policies-") or
         std.mem.startsWith(u8, id, "policy-test-") or std.mem.startsWith(u8, id, "managed-"))
         return policyResponse(id, status, body);
@@ -413,6 +415,7 @@ fn statsResponse(status: i64, body: std.json.Value, alloc: std.mem.Allocator) !v
     }
     state.stats = snapshot;
     state.received_at = state.browser_time;
+    try refreshRankings();
     if (state.fullAccess() and state.geometry == null and !state.geometry_busy and
         state.browser_time >= state.geometry_retry_at)
     {
@@ -420,6 +423,24 @@ fn statsResponse(status: i64, body: std.json.Value, alloc: std.mem.Allocator) !v
         try command(.{ .op = "geometry", .path = "/console/assets/world-110m.bin" });
     }
     state.message = .{};
+}
+
+fn refreshRankings() !void {
+    const id = @import("rankings_controller.zig").request(&state) orelse return;
+    try get(id.slice(), "/console/api/rankings");
+}
+
+fn rankingResponse(
+    id: []const u8,
+    status: i64,
+    body: std.json.Value,
+    alloc: std.mem.Allocator,
+) !void {
+    const result = @import("rankings_controller.zig").response(&state, id, status, body, alloc);
+    if (result != .expired) return;
+    resetState(.login);
+    setMessage("Your session ended. Sign in to continue.");
+    try command(.{ .op = "disconnect" });
 }
 
 fn geographicAction(name: []const u8, fields: std.json.Value) !bool {

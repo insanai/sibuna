@@ -4,6 +4,7 @@ const std = @import("std");
 pub const similarity = @import("similarity.zig");
 pub const policies = @import("policies.zig");
 pub const challenges = @import("challenges.zig");
+pub const rankings = @import("rankings.zig");
 pub const events = @import("events.zig");
 pub const auth = @import("auth.zig");
 pub const geo = @import("geo.zig");

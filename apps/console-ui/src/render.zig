@@ -46,7 +46,14 @@ fn page(state: *const State, w: *Writer) Writer.Error!void {
         "Internal endpoints are excluded. Gaps remain unobserved.</p>" ++
         "<h2 class=\"mt-6\">Coverage</h2><table class=\"table\"><tbody>");
     try coverage(state, w);
-    try w.writeAll("</tbody></table></article></section><footer class=\"sb-footer sb-note\">" ++
+    try w.writeAll("</tbody></table></article></section>");
+    try @import("rankings_panel.zig").render(
+        &state.rankings,
+        w,
+        state.browser_time,
+        state.paused or state.stale,
+    );
+    try w.writeAll("<footer class=\"sb-footer sb-note\">" ++
         "<span>Sibuna Console · single-node view</span>" ++
         "<span>All-time totals since this boot</span>" ++
         "</footer></main>");

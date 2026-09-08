@@ -10,7 +10,7 @@
 b4cd7761cf2e2fa4c284b33305d4bb210715d80dd9a5b3614391a962833261da  apps/console-ui/src/globe.zig
 0345262c9a67933fa4f68959921b1ab4284c58f404294e29dcd2a6e15d437b07  apps/console-ui/src/globe_connections.zig
 61bce4fa84d58705050ce86feca5c539c18f2f0703e2453c25b9a728883aec18  apps/console-ui/src/globe_motion.zig
-15b4e04ff535f6aed198705d61802e3faf4873cb1e81effb41b8ee6b8e03100a  apps/console-ui/src/main.zig
+4ce4d54a59e471db0daf119189b4f3a11a12d15349f52d0c390cfd3c2d56217a  apps/console-ui/src/main.zig
 fa1d1db249c4a55fd2c4c5ebb2b5fb4d5723add759f8d2278b0ffeac6230d88a  apps/console-ui/src/policies_page.zig
 757f5c69083a55010b04672b36762c785e20d0aca44456dcc4bf499db19a7b39  apps/console-ui/src/policy_data.zig
 7d9cc1afc96babe6055248f6060c9aa3d053b1c1d19b27f61b8850ecb62da106  apps/console-ui/src/policy_form.zig
@@ -18,7 +18,9 @@ fa1d1db249c4a55fd2c4c5ebb2b5fb4d5723add759f8d2278b0ffeac6230d88a  apps/console-u
 b7be835cecc82ed865c2fb695634892e2a16231014e59abd1e6a343cb6e417df  apps/console-ui/src/policy_matchers.zig
 e8ffddd805dbef52de13970ac86ef80fecfd7f8164df0a3d908565686aa8768a  apps/console-ui/src/policy_transfer.zig
 0ff91580006b7eb739dc276187dff3fdecb8e4085d23892f6c5f3bd9afb0ea92  apps/console-ui/src/qr.zig
-e8f7bbbe0388863ef40f7c9c1493a2dd3b60026fa534eedcbe4a8cf1112bdd52  apps/console-ui/src/render.zig
+3e808c9347b0d9318b796df5902d8d559f45626610b40bb8ef679ba282beefb5  apps/console-ui/src/rankings_controller.zig
+fe4a3468e9ff400c418a5f90c61af65593c80ccf336ba85ace0cd0bf473a2f09  apps/console-ui/src/rankings_panel.zig
+403525f10405f2ca74a0d5bd6cdcb35c38d07d452976015992d3b4ccddc58b6c  apps/console-ui/src/render.zig
 ab854a83d0cc3b4e448f60b7ec9e86ac8d0c8bc8fe51b4ff0ec7eb4353df71ce  apps/console-ui/src/request_headers.zig
 e30b2f8f617558a641214ccceb921d1e8cbd3bc4393db546d2d47ef9a3f61d08  apps/console-ui/src/security.zig
 b4d42db6b4b4c7cc9b7b78dad229a6df49b1eac67018524b1909b9ce1134bade  apps/console-ui/src/shell.zig
@@ -48,6 +50,7 @@ aa84ff512aa24259753142de5a0512c57ab10bcae63fe3410aa0421f804d18ae  apps/console-u
 602e5afa7206494a704ca0fef9bf9bab412ed91fa5a8d8e0733f8d8d24bbd114  apps/console-ui/src/snippets/policy-preview-fields.html
 483786c04c1a76698069f027290eb5d8d0e14d6089b7fd01f247427426d99480  apps/console-ui/src/snippets/policy-restore-notice.html
 c796c94ea4680efd8a831a58ddaa8e4e16e7a390310600e573bfb18a3f5f425e  apps/console-ui/src/snippets/policy-select.html
+5bcd33e6783bf1d9a14506d522d844aca3099e170b50ecea6584f1f71cb28b47  apps/console-ui/src/snippets/ranking-row.html
 fb6bf93b0672e8120ee605b28086c1727b84c574ff8e1f558dd72eb641b5da60  apps/console-ui/src/snippets/shell-content.html
 07934962be47c2d4c52a9a3ce9a3331e1b14e0e11ba9f32f95d41eee0be06044  apps/console-ui/src/snippets/shell-header.html
 b1d88f75b7d0bac6efd134422d8885478adf539d4c5816d51dc97193f2ea7512  apps/console-ui/src/snippets/shell-item.html
@@ -56,9 +59,9 @@ b1d88f75b7d0bac6efd134422d8885478adf539d4c5816d51dc97193f2ea7512  apps/console-u
 ee4a0f3cf66ca7cd6c6ec5531c13ccde41ae239038a639c8469fa247c103b428  apps/console-ui/src/snippets/similarity-header.html
 094c31e5e813ddaef55594757020967a737d35802dd4ff60caae8565a39e55dd  apps/console-ui/src/snippets/similarity-match.html
 60fd32a348ecd004c6d79760ea31d58a764d9372d7773a4f37739c0dc363b07b  apps/console-ui/src/snippets/similarity-status.html
-b44af401eb4e1092b6a908dc1c0a781a9ab14c853e14b23dd9b4945ce885ca65  apps/console-ui/src/state.zig
+c42426b8f6061374cf44ee95911beccde95f3db8237c0a181bb172d031f7c548  apps/console-ui/src/state.zig
 09f75faaeb382969e4a52bcf1f14cfb636be906c644cdd92a395d0e21b083d4c  apps/console-ui/web/assets/GEOGRAPHY.md
-727a1acac4c30f3743fe2d6365c24207f8313ea5f45a8f98f5065b1e207f9b80  apps/console-ui/web/assets/console.css
+03340f2d7ad6f4a0f2d06ee35784b4036da121fa43dcf2cebbaa9b82a67d9982  apps/console-ui/web/assets/console.css
 50b2fa3e78ea67eb1a72a9e22cb325ec884b8e83432c3f66808ee190835b4686  apps/console-ui/web/assets/world-110m.bin
 72034b28ca7ac19c712093f734bb35e7442a493ba5e015012b5f7240a644228e  apps/console-ui/web/glue.js
 de19ed3c281af27df160c0184b9dc6e368f0dcc64236020887257dbf202986a0  apps/console-ui/web/package-lock.json
