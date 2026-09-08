@@ -25,6 +25,7 @@ pub fn tick(owner: *Persistent) void {
 pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
     if (!owner.console_initialized) try @import("console_migrations.zig").run(owner);
     return switch (request) {
+        .policy_read => |input| @import("console_policy_read.zig").read(owner, input),
         .policy_edit => |input| @import("console_policy_write.zig").edit(owner, input),
         .policies_query => |input| @import("console_store_policies.zig").query(owner, input),
         .policies_test => |input| @import("console_store_policies.zig").testRequest(owner, input),

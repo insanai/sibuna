@@ -182,6 +182,18 @@ test "draft snapshots page database rules and retain header and CIDR matchers" {
     request.ip = try p.Bytes(48).init("8.8.4.4");
     const missed = (try fx.run(.{ .policies_test = request })).page;
     try t.expect(std.mem.indexOf(u8, missed.slice(), "\"rule\":\"Rule 9\"") == null);
+    var catalog: p.policies.Read = .{
+        .session_digest = @splat(1),
+        .now = 101,
+        .committed = fx.owner.version,
+        .selection = .{ .catalog = .{} },
+    };
+    const first = (try fx.run(.{ .policy_read = catalog })).page;
+    try t.expect(std.mem.indexOf(u8, first.slice(), "\"next\":\"rule-8\"") != null);
+    catalog.selection = .{ .catalog = try p.Bytes(128).init("rule-8") };
+    const second = (try fx.run(.{ .policy_read = catalog })).page;
+    try t.expect(std.mem.indexOf(u8, second.slice(), "\"id\":\"rule-9\"") != null);
+    try t.expect(std.mem.indexOf(u8, second.slice(), "\"next\":null") != null);
 }
 
 test "policy edits commit revision history and audit atomically and reject stale saves" {

@@ -28,6 +28,33 @@ pub const Edit = struct {
     expected_revision: u64,
     document: Bytes(4096),
 };
+pub const Read = struct {
+    session_digest: [32]u8,
+    now: u64,
+    committed: ?u64 = null,
+    selection: union(enum) {
+        catalog: Bytes(128),
+        document: struct { id: Bytes(128), revision: ?u64 = null },
+        history: struct { id: Bytes(128), before: ?u64 = null },
+    },
+};
+pub const Document = struct { revision: u64, document: Bytes(4096) };
+
+pub fn validateRead(input: Read) error{InvalidLimit}!void {
+    if (input.now > std.math.maxInt(i64) or
+        (input.committed orelse 0) > std.math.maxInt(i64)) return error.InvalidLimit;
+    switch (input.selection) {
+        .catalog => |after| if (after.len > 128) return error.InvalidLimit,
+        .document => |document| {
+            if (document.id.len == 0 or document.id.len > 128 or
+                (document.revision orelse 0) > std.math.maxInt(i64)) return error.InvalidLimit;
+        },
+        .history => |history| {
+            if (history.id.len == 0 or history.id.len > 128 or
+                (history.before orelse 0) > std.math.maxInt(i64)) return error.InvalidLimit;
+        },
+    }
+}
 
 pub fn validate(query: Query) error{InvalidLimit}!void {
     if (query.offset > 128 or query.now > std.math.maxInt(i64) or

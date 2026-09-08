@@ -521,3 +521,14 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
   `benchmarks/results/latest-20260908T014358Z.json`. This regeneration does not establish the
   separate console impact acceptance gate. Managed-rule browsing, editor forms and history/
   revert controls remain pending.
+
+### Managed-rule and history reads (2026-09-08)
+
+- Added authenticated, CSRF-protected catalog, complete-document and history reads. Catalogs
+  and histories return at most eight rows and 4 KiB, with keyset cursors and revision checks
+  around storage reads. Complete documents use a dedicated owned result rather than silently
+  clipping editable fields to fit a summary. Historical documents retain their original content.
+- Storage tests verify catalog page boundaries. Live daemon tests verify authorization, CSRF,
+  complete-document round-trips, history reads, stale revisions, restoring an older document
+  through the validated save transaction and restoring the current version afterward.
+  Formatting, tests and SID checks passed. User-facing editor and history controls follow.

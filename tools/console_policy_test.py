@@ -108,3 +108,38 @@ def check_edit(h, port, data_port, cookie, csrf):
     source.update(expected_revision=page["committed"], document=json.dumps(document))
     status, _, body = h.request(port, "POST", edit, source, cookie, csrf)
     assert status == 200, (status, body)
+    check_history(h, port, cookie, csrf)
+
+
+def check_history(h, port, cookie, csrf):
+    read = "/console/api/policies/read"
+    assert h.request(port, "POST", read, {})[0] == 401
+    assert h.request(port, "POST", read, {}, cookie)[0] == 400
+    status, _, body = h.request(port, "POST", read, {}, cookie, csrf)
+    assert status == 200 and len(body) <= 4096
+    catalog = json.loads(body)
+    assert any(row["id"] == "live-edit" for row in catalog["rows"])
+    request = {"kind": "document", "id": "live-edit", "committed": catalog["committed"]}
+    status, _, body = h.request(port, "POST", read, request, cookie, csrf)
+    assert status == 200
+    current = json.loads(json.loads(body)["document"])
+    request["kind"] = "history"
+    status, _, body = h.request(port, "POST", read, request, cookie, csrf)
+    assert status == 200 and len(body) <= 4096
+    history = json.loads(body)
+    assert history["rows"] and history["rows"][0]["kind"] == "edit"
+    request.update(kind="document", revision=history["rows"][-1]["revision"])
+    status, _, body = h.request(port, "POST", read, request, cookie, csrf)
+    assert status == 200
+    historical = json.loads(json.loads(body)["document"])
+    assert historical["id"] == current["id"] and historical["name"] == current["name"]
+    request["committed"] = "9223372036854775807"
+    assert h.request(port, "POST", read, request, cookie, csrf)[0] == 409
+    status, _, body = h.request(port, "POST", "/console/api/policies/edit", {
+        "expected_revision": catalog["committed"], "document": json.dumps(historical)}, cookie, csrf)
+    assert status == 200, (status, body)
+    reverted = json.loads(body)
+    assert int(reverted["committed"]) == int(catalog["committed"]) + 1
+    status, _, body = h.request(port, "POST", "/console/api/policies/edit", {
+        "expected_revision": reverted["committed"], "document": json.dumps(current)}, cookie, csrf)
+    assert status == 200, (status, body)

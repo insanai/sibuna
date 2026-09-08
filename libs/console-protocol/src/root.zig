@@ -113,10 +113,12 @@ pub const StorageRequest = union(enum) {
     policies_query: policies.Query,
     policies_test: policies.Test,
     policy_edit: policies.Edit,
+    policy_read: policies.Read,
     control_intent: ControlRequest,
     control_complete: struct { id: u64, succeeded: bool },
 };
 pub const StorageResult = union(enum) {
+    policy_document: policies.Document,
     similarity: similarity.Part,
     setup_required: bool,
     geo_metadata: geo.Metadata,
@@ -162,6 +164,7 @@ pub fn Bytes(comptime capacity: usize) type {
 
 pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
     switch (request) {
+        .policy_read => |input| try policies.validateRead(input),
         .policies_query => |query| try policies.validate(query),
         .policies_test => |input| try policies.validateTest(input),
         .events_query => |query| try events.validate(query),
