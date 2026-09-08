@@ -1675,7 +1675,7 @@ are historical; the acceptance gates below govern delivery.
 
 - #text("Pending: Rule edit/order/import/export, private-engine tester with config/file fallbacks, revisions/revert and complete candidate validation.")
 
-- #text("Pending: Per-category inspection: audit continues evaluation and cannot bypass enforcement.")
+- #text("Verified: Per-category inspection modes, revision-controlled editing and finding capture; native, live-daemon and browser tests verify audit cannot bypass enforcement. See the dated inspection evidence.")
 
 - #text("Pending: Terminal-rule GCRA before session bypass, global limiter retained; reject WEIGH limits.")
 
@@ -2207,6 +2207,31 @@ then restore the original matrix. Full regression and formatting checks passed.
 Storage-off and cluster builds passed. A direct storage test, also run with the
 console compiled out, verifies override publication and restoration of file defaults
 after removing the override; these checks do not establish three-node acceptance.
+
+== Inspection interface and bounded browser decoding (2026-09-08)
+
+The applied-policy page now includes four labelled daisyUI selectors, explicit
+review of enforcement effects, and a revision-bound save. It retains submitted
+selections through pending/error states, distinguishes saved from applied settings,
+and requires refresh after conflicts or a successful save. Editing is disabled while
+the applied revision lags the committed one. The policy tester names audited
+categories independently of the final verdict; older responses say not recorded.
+
+Browser responses now decode from the existing JSON tree through a bounded typed
+reader. Strings borrow the event arena and retained models copy them before erasure;
+variable incident/similarity rows are capped at ten before allocation, histogram
+arrays require their exact lengths, and numeric narrowing/nonfinite values fail.
+This replaces repeated general-purpose value decoders without changing browser glue.
+The completed interface is 291,192 bytes, below the unchanged 300 KiB limit.
+
+Full regression and console checks passed. Browser review exercised login, dashboard
+and globe, incident details, unavailable similarity, challenge observations, mode
+save/refresh, named tester findings and restoration of enforcement. Actual requests
+after the browser edit returned challenge for SQL audit, denial for encoded XSS,
+and denial for Amazonbot. Persisted audit incidents omitted response evidence and
+query/body payloads. Desktop navigation remained present; mobile navigation used its
+menu and the form fit a 390-pixel viewport without horizontal overflow. This closes
+the category-mode workflow, not the broader policy or interface release gates.
 
 = References
 

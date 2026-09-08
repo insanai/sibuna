@@ -215,6 +215,7 @@ fn action(value: std.json.Value) !void {
     }
     const fields = field(value, "fields") orelse .null;
     if (try policyTransfer(name, fields)) return;
+    if (try inspectionAction(name, fields)) return;
     if (try managedAction(name, fields)) return;
     if (try policyAction(name, fields)) return;
     if (try similarityAction(name)) return;
@@ -402,9 +403,7 @@ fn statsResponse(status: i64, body: std.json.Value, alloc: std.mem.Allocator) !v
         setMessage("Connection lost. Showing the last received values.");
         return;
     }
-    const parsed = try std.json.parseFromValue(p.StatsSnapshot, alloc, body, .{});
-    defer parsed.deinit();
-    var snapshot = parsed.value;
+    var snapshot = try @import("json_value.zig").decode(p.StatsSnapshot, body, alloc);
     snapshot.sample_probability = "1/64";
     if (state.stats) |previous| {
         if (snapshot.timestamp > previous.timestamp and snapshot.requests >= previous.requests)
@@ -862,21 +861,15 @@ fn boundedEnvelope(value: std.json.Value, alloc: std.mem.Allocator) !bool {
         body: p.challenges.Snapshot,
         browser_time: u64 = 0,
     };
-    const parsed = std.json.parseFromValue(
-        Envelope,
-        alloc,
-        value,
-        .{ .ignore_unknown_fields = true },
-    ) catch {
+    const parsed = @import("json_value.zig").decode(Envelope, value, alloc) catch {
         state.challenges.busy = false;
         state.challenges.stale = true;
         setMessage("Could not read challenge observations. Try refreshing.");
         return true;
     };
-    defer parsed.deinit();
-    state.browser_time = parsed.value.browser_time;
+    state.browser_time = parsed.browser_time;
     const previous = state.phase;
-    challengeResponse(parsed.value.status, parsed.value.body);
+    challengeResponse(parsed.status, parsed.body);
     if (state.phase != previous) try command(.{
         .op = "focus",
         .selector = "main h1",
@@ -910,20 +903,14 @@ fn eventEnvelope(value: std.json.Value, alloc: std.mem.Allocator) !bool {
         body: @import("events_state.zig").WirePage,
         browser_time: u64 = 0,
     };
-    const parsed = std.json.parseFromValue(
-        Envelope,
-        alloc,
-        value,
-        .{ .ignore_unknown_fields = true },
-    ) catch {
+    const parsed = @import("json_value.zig").decode(Envelope, value, alloc) catch {
         state.events.busy = false;
         setMessage("Could not read incidents. Narrow the filters and try again.");
         return true;
     };
-    defer parsed.deinit();
-    state.browser_time = parsed.value.browser_time;
+    state.browser_time = parsed.browser_time;
     const previous = state.phase;
-    eventResponse(parsed.value.status, parsed.value.body) catch {
+    eventResponse(parsed.status, parsed.body) catch {
         state.events.busy = false;
         setMessage("Could not read incident fields. Please try again.");
     };
@@ -1036,20 +1023,14 @@ fn similarityEnvelope(value: std.json.Value, id: []const u8, alloc: std.mem.Allo
         body: @import("similarity_state.zig").WirePart,
         browser_time: u64 = 0,
     };
-    const parsed = std.json.parseFromValue(
-        Envelope,
-        alloc,
-        value,
-        .{ .ignore_unknown_fields = true },
-    ) catch {
+    const parsed = @import("json_value.zig").decode(Envelope, value, alloc) catch {
         state.similarity.busy = false;
         state.similarity.running = false;
         setMessage("Could not read similarity results. Resume to retry this part.");
         return true;
     };
-    defer parsed.deinit();
-    state.browser_time = parsed.value.browser_time;
-    try similarityResponse(parsed.value.status, parsed.value.body);
+    state.browser_time = parsed.browser_time;
+    try similarityResponse(parsed.status, parsed.body);
     return true;
 }
 
@@ -1141,6 +1122,7 @@ fn policyAction(name: []const u8, fields: std.json.Value) !bool {
         if (state.phase == .policies and (model.busy or model.testing)) return true;
         model.testing = false;
         model.manager.active = false;
+        model.inspection_draft = null;
         state.phase = .policies;
         state.message = .{};
         model.offset = 0;
@@ -1401,6 +1383,23 @@ fn policyTransfer(name: []const u8, fields: std.json.Value) !bool {
     return true;
 }
 
+fn inspectionAction(name: []const u8, fields: std.json.Value) !bool {
+    if (!equal(name, "inspection-save")) return false;
+    const model = &state.policies;
+    if (state.phase != .policies or !state.allows(.manage_policy) or
+        model.busy or model.testing or model.stale) return true;
+    const draft = @import("inspection_form.zig").submit(model.page.slice(), fields) catch {
+        setMessage("Refresh the applied revision, choose all four modes and confirm your review.");
+        return true;
+    };
+    model.inspection_draft = draft.modes;
+    try managedPost("inspection", .{
+        .expected_revision = draft.revision.slice(),
+        .document = draft.document.slice(),
+    });
+    return true;
+}
+
 fn managedPost(kind: []const u8, body: anytype) !void {
     policy_generation +%= 1;
     var buffer: [48]u8 = undefined;
@@ -1408,7 +1407,10 @@ fn managedPost(kind: []const u8, body: anytype) !void {
     state.policies.busy = true;
     try post(
         id,
-        if (equal(kind, "save")) "/console/api/policies/edit" else "/console/api/policies/read",
+        if (equal(kind, "save")) "/console/api/policies/edit" else if (equal(kind, "inspection"))
+            "/console/api/inspection/edit"
+        else
+            "/console/api/policies/read",
         body,
     );
 }
@@ -1420,6 +1422,12 @@ fn managedResponse(id: []const u8, body: std.json.Value) !void {
     _ = try std.fmt.parseInt(u64, revision, 10);
     manager.committed = try p.Bytes(20).init(revision);
     model.stale = false;
+    if (std.mem.startsWith(u8, id, "managed-inspection-")) {
+        model.stale = true;
+        setMessage("Inspection modes saved. Refresh to review this node's applied settings.");
+        state.message_success = true;
+        return command(.{ .op = "focus", .selector = "#console-message" });
+    }
     if (std.mem.startsWith(u8, id, "managed-save-")) {
         manager.id = manager.form.id;
         manager.historical = .{};

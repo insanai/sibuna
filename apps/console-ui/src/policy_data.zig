@@ -23,6 +23,7 @@ pub const Row = struct {
     weight: i32,
 };
 pub const Decision = struct {
+    audited: ?u8,
     preview: bool,
     committed: ?[]const u8,
     applied: []const u8,
@@ -99,11 +100,18 @@ fn row(value: std.json.Value) Error!Row {
 }
 
 pub fn decision(value: std.json.Value) Error!Decision {
-    const preview = if (value == .object and value.object.contains("preview"))
+    if (value != .object) return error.InvalidPolicy;
+    const preview = if (value.object.contains("preview"))
         try boolean(value, "preview")
     else
         false;
+    const audited = if (value.object.contains("audited_categories"))
+        try number(u8, value, "audited_categories")
+    else
+        null;
+    if (audited) |mask| if (mask > 15) return error.InvalidPolicy;
     return .{
+        .audited = audited,
         .preview = preview,
         .committed = if (preview) try text(value, "committed") else null,
         .applied = try text(value, "applied"),

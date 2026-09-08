@@ -4,6 +4,7 @@ const html = @import("html");
 const Writer = std.Io.Writer;
 
 pub const Model = struct {
+    inspection_draft: ?@import("inspection_form.zig").Modes = null,
     manager: @import("policy_manager.zig").Model = .{},
     path: p.Bytes(512) = .{},
     ip: p.Bytes(48) = .{},
@@ -63,6 +64,7 @@ pub fn render(state: *const @import("state.zig").State, w: *Writer) Writer.Error
     try button(w, "policies-next", "Next rules", state.policies.busy or
         state.policies.stale or page.next == null);
     try w.writeAll("</div>");
+    try @import("inspection_form.zig").render(state, parsed.value, w, fixed.allocator());
     try html.render(w, @embedFile("snippets/policies-test.html"), .{
         .path = if (state.policies.path.len == 0) "/" else state.policies.path.slice(),
         .ip = if (state.policies.ip.len == 0) "8.8.8.8" else state.policies.ip.slice(),
@@ -119,6 +121,7 @@ pub fn decision(w: *Writer, model: *const Model, allocator: std.mem.Allocator) W
         .algorithm = result.algorithm,
         .score = result.score,
     });
+    try @import("inspection_form.zig").findings(w, result.audited);
 }
 
 fn button(w: *Writer, action: []const u8, label: []const u8, disabled: bool) Writer.Error!void {
