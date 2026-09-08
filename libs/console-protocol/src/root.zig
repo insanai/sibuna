@@ -119,6 +119,7 @@ pub const StorageRequest = union(enum) {
     policies_query: policies.Query,
     policies_test: policies.Test,
     policy_edit: policies.Edit,
+    inspection_edit: policies.Edit,
     policy_read: policies.Read,
     control_intent: ControlRequest,
     control_complete: struct { id: u64, succeeded: bool },
@@ -188,7 +189,7 @@ pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
         .incidents => |page| {
             if (page.limit == 0 or page.limit > max_page_rows) return error.InvalidLimit;
         },
-        .policy_edit => |edit| {
+        .policy_edit, .inspection_edit => |edit| {
             if (edit.document.len == 0 or edit.document.len > max_message) return error.TooLarge;
             if (edit.expected_revision >= std.math.maxInt(i64) or
                 edit.now > std.math.maxInt(i64)) return error.InvalidLimit;

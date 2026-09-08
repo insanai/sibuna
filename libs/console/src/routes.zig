@@ -7,6 +7,7 @@ pub const Handler = enum {
     policies,
     policies_test,
     policy_edit,
+    inspection_edit,
     policy_read,
     setup_status,
     login,
@@ -31,6 +32,13 @@ pub const Route = struct {
     handler: Handler,
 };
 const table = [_]Route{
+    .{
+        .path = "/console/api/inspection/edit",
+        .method = .POST,
+        .access = .full,
+        .action = .manage_policy,
+        .handler = .inspection_edit,
+    },
     .{
         .path = "/console/api/rankings",
         .method = .GET,

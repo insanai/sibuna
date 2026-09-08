@@ -37,7 +37,7 @@ pub const Fixture = struct {
     }
 };
 
-fn policySession(fx: *Fixture) !void {
+pub fn policySession(fx: *Fixture) !void {
     _ = try fx.run(.{ .bootstrap = .{
         .username = try p.Bytes(64).init("policy-admin"),
         .password_hash = try p.Bytes(255).init("test-only-hash"),

@@ -31,6 +31,7 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
         .rankings_prune => |now| @import("console_store_rankings.zig").prune(owner, now),
         .policy_read => |input| @import("console_policy_read.zig").read(owner, input),
         .policy_edit => |input| @import("console_policy_write.zig").edit(owner, input),
+        .inspection_edit => |input| @import("console_inspection.zig").edit(owner, input),
         .policies_query => |input| @import("console_store_policies.zig").query(owner, input),
         .policies_test => |input| @import("console_store_policies.zig").testRequest(owner, input),
         .events_similar => |input| @import("console_similarity.zig").query(owner, input),

@@ -115,6 +115,8 @@ def check(binary, h):
                                  grouped, cookie, csrf)[0] == 429
                 import console_policy_test
                 console_policy_test.check(h, port, data_port, cookie, csrf)
+                import console_inspection_test
+                console_inspection_test.check(h, port, data_port, cookie, csrf)
                 import console_rankings_test
                 console_rankings_test.check(h, port, data_port, cookie)
             finally:

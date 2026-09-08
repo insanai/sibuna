@@ -2188,6 +2188,23 @@ normal admission to continue. Formatting and full regression tests passed. A sep
 mixed-mode 8 KiB benchmark workload now records the cost of category selection;
 this increment does not establish the console-impact release gate.
 
+== Transactional inspection settings (2026-09-08)
+
+Storage now owns a replicated singleton mode override, separate from file fallback.
+It participates in the existing policy revision triggers and is loaded into every
+rebuilt engine, including storage-enabled builds with the console compiled out.
+Console schema 10 adds a staging trigger that commits the complete matrix, previous
+and next mode documents, history and audit together. Management requires all four
+categories explicitly; omission cannot silently restore a category to enforcement.
+
+The authenticated edit route checks role, CSRF and expected revision, validates a
+complete private candidate, and repeats authorization/revision predicates in the
+conditional commit. Replies distinguish committed and locally applied revisions.
+Deterministic tests cover invalid/partial modes, stale edits, CSRF refusal, injected
+history failure with complete rollback, migration replay and restart recovery.
+Live-console tests compare audit findings and terminal decisions with real requests,
+then restore the original matrix. Full regression and formatting checks passed.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

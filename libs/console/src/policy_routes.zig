@@ -65,7 +65,7 @@ pub fn query(app: *App, context: *http.Context, testing: bool) !void {
     return fail(context, result.failed);
 }
 
-pub fn edit(app: *App, context: *http.Context, identity: p.Principal) !void {
+pub fn edit(app: *App, context: *http.Context, identity: p.Principal, inspection: bool) !void {
     const digest = try http.session(context);
     if (!app.query_budget.allow(app.io, digest, app.now(), .query))
         return http.fail(context, .too_many_requests, "CONSOLEQUERY");
@@ -77,14 +77,18 @@ pub fn edit(app: *App, context: *http.Context, identity: p.Principal) !void {
         document: []const u8,
     }, context, &body, fixed.allocator());
     defer parsed.deinit();
-    const result = try app.request(.{ .policy_edit = .{
+    const input: p.policies.Edit = .{
         .session_digest = digest,
         .csrf_digest = identity.csrf_digest,
         .now = app.now(),
         .expected_revision = std.fmt.parseInt(u64, parsed.value.expected_revision, 10) catch
             return error.InvalidRequest,
         .document = try p.Bytes(4096).init(parsed.value.document),
-    } });
+    };
+    const result = try app.request(if (inspection)
+        .{ .inspection_edit = input }
+    else
+        .{ .policy_edit = input });
     if (result != .revision) return fail(context, result.failed);
     var committed: [20]u8 = undefined;
     var applied: [20]u8 = undefined;

@@ -26,14 +26,33 @@ pub fn build(
     source: []const u8,
     now: u64,
 ) !candidates.Candidate {
+    return compose(owner, expected, source, now);
+}
+
+pub fn current(owner: *Persistent, expected: u64, now: u64) !candidates.Candidate {
+    return compose(owner, expected, null, now);
+}
+
+fn compose(
+    owner: *Persistent,
+    expected: u64,
+    source: ?[]const u8,
+    now: u64,
+) !candidates.Candidate {
     if (try revision(owner) != expected) return error.Conflict;
     const memory = try owner.gpa.alloc(u8, source_budget);
     defer owner.gpa.free(memory);
     var arena = std.heap.FixedBufferAllocator.init(memory);
     const allocator = arena.allocator();
-    const replacement = try policy.management.parse(allocator, source);
+    const replacement = if (source) |text| try policy.management.parse(allocator, text) else null;
     var sources: [policy.engine.MAX_RULES][]const u8 = undefined;
-    const count = try documents(owner, allocator, &sources, replacement.id, source);
+    const count = try documents(
+        owner,
+        allocator,
+        &sources,
+        if (replacement) |document| document.id else "",
+        source,
+    );
     const reputation = try reputations(owner, allocator, now);
     var candidate = try candidates.Candidate.init(owner.gpa, .{
         .default_difficulty = owner.cfg.default_difficulty,
@@ -41,6 +60,7 @@ pub fn build(
         .file = owner.policy_text,
     }, sources[0..count], reputation);
     errdefer candidate.deinit();
+    try @import("policy_inspection.zig").apply(owner, candidate.engine);
     // Includes reputation mutations. A caller must check again before any conditional commit.
     if (try revision(owner) != expected) return error.Conflict;
     return candidate;
@@ -51,7 +71,7 @@ fn documents(
     allocator: std.mem.Allocator,
     output: *[policy.engine.MAX_RULES][]const u8,
     replace_id: []const u8,
-    replacement: []const u8,
+    replacement: ?[]const u8,
 ) !usize {
     var cursor: []const u8 = "";
     var count: usize = 0;
@@ -70,7 +90,7 @@ fn documents(
             if (count == output.len) return error.TooManyDocuments;
             const id = row[0] orelse return error.InvalidStoredPolicy;
             if (std.mem.eql(u8, id, replace_id)) {
-                output[count] = replacement;
+                output[count] = replacement.?;
                 replaced = true;
             } else {
                 const document = try encode(row);
@@ -81,9 +101,9 @@ fn documents(
         }
         if (rows.rows.len < 8) break;
     }
-    if (!replaced) {
+    if (!replaced and replacement != null) {
         if (count == output.len) return error.TooManyDocuments;
-        output[count] = replacement;
+        output[count] = replacement.?;
         count += 1;
     }
     return count;

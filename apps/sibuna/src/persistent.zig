@@ -22,6 +22,7 @@ const store = @import("store");
 const server = @import("server.zig");
 
 pub const schema = [_][]const u8{
+    @import("policy_inspection.zig").table_sql,
     "CREATE TABLE IF NOT EXISTS sibuna_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)",
     "CREATE TABLE IF NOT EXISTS policies (" ++
         "id TEXT PRIMARY KEY, name TEXT NOT NULL, priority INTEGER NOT NULL DEFAULT 100, " ++
@@ -317,7 +318,7 @@ pub const Persistent = struct {
             "INSERT OR IGNORE INTO sibuna_meta(key,value) VALUES ('policy_version','0');",
         );
         // Triggers also cover direct SQL writes and updates within one second.
-        inline for (.{ "policies", "ip_reputation" }) |table| {
+        inline for (.{ "policies", "ip_reputation", "policy_inspection" }) |table| {
             inline for (.{ "INSERT", "UPDATE", "DELETE" }) |event| {
                 try w.writeAll("CREATE TRIGGER IF NOT EXISTS version_" ++
                     table ++ "_" ++ event ++ " AFTER " ++ event ++ " ON " ++ table ++
@@ -568,6 +569,7 @@ pub const Persistent = struct {
         engine.initInPlace(self.cfg.default_difficulty);
         engine.waf_enabled = self.cfg.waf;
         if (self.policy_text) |text| try engine.loadFromJsonInto(arena, text);
+        try @import("policy_inspection.zig").apply(self, engine);
         try self.loadDbPolicies(engine, arena);
         try self.loadReputation(engine);
         self.spare = self.state.publishEngine(self.spare);
@@ -908,6 +910,7 @@ test {
     if (build_options.console) {
         _ = @import("console_store_test.zig");
         _ = @import("console_rankings_test.zig");
+        _ = @import("console_inspection_test.zig");
         _ = @import("console_start.zig");
     }
 }

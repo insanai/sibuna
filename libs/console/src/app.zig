@@ -246,7 +246,12 @@ pub const App = struct {
             .events_similar => return @import("similarity_routes.zig").query(self, context),
             .policies => return @import("policy_routes.zig").query(self, context, false),
             .policies_test => return @import("policy_routes.zig").query(self, context, true),
-            .policy_edit => return @import("policy_routes.zig").edit(self, context, identity.?),
+            .policy_edit, .inspection_edit => return @import("policy_routes.zig").edit(
+                self,
+                context,
+                identity.?,
+                route.handler == .inspection_edit,
+            ),
             .policy_read => return @import("policy_read_routes.zig").read(self, context),
             .events => return @import("event_routes.zig").query(self, context, false),
             .events_export => return @import("event_routes.zig").query(self, context, true),
