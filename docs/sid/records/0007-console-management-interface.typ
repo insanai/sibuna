@@ -2812,6 +2812,23 @@ Storage-off, console-off and clustered builds pass; this does not establish
 cluster-management acceptance. CLI account commands, API tokens, audit investigation and
 the remaining operational workflows still require implementation and their own gates.
 
+== Account-workflow benchmark regeneration (2026-09-08)
+
+The required primitive baseline was regenerated from a clean, isolated checkout of
+`e809b846fc3331cc8a40c833c0d982d6c136afed` with review daemons stopped. Its 302-input,
+version-2 source manifest is
+`76edbcc8c790f7a364901defe066296b9c1273b51feec6d52bc5707cb7c51a3d`;
+the daemon digest is
+`a10eb4168066711e5fb418d0e0cbf4309ad3351ff89adeecdef06117ec61c520`.
+The result `latest-20260908T124907Z.json` and `latest.json` share SHA-256
+`099efc024b6edaca7a4b57b13a9b36ac3961b0ba86ef8a033c8318a773e63e8d`.
+
+Full classification measured 1,462.51 ns median (1,455.50–1,467.56 ns across seven
+batches). Idle RSS was 9,904 KiB with two workers, storage compiled but inactive.
+The reported 8,831-byte Wasm artifact is the proof solver, not the console interface.
+These primitive and idle measurements do not exercise active dashboards or storage
+contention and do not satisfy the console-impact acceptance gate.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
