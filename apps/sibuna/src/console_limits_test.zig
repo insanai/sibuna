@@ -90,7 +90,6 @@ fn edit(revision: u64, document: []const u8) !p.policies.Edit {
     return .{
         .session_digest = @splat(1),
         .csrf_digest = @splat(2),
-        .now = 110,
         .expected_revision = revision,
         .document = try p.Bytes(4096).init(document),
     };

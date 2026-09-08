@@ -38,10 +38,11 @@ pub const Fixture = struct {
 };
 
 pub fn policySession(fx: *Fixture) !void {
+    const now = fx.owner.nowSeconds();
     _ = try fx.run(.{ .bootstrap = .{
         .username = try p.Bytes(64).init("policy-admin"),
         .password_hash = try p.Bytes(255).init("test-only-hash"),
-        .now = 100,
+        .now = now,
     } });
     const user = (try fx.run(.{ .auth_user = try p.Bytes(64).init("policy-admin") })).auth_user;
     _ = try fx.run(.{ .session_create = .{
@@ -49,8 +50,8 @@ pub fn policySession(fx: *Fixture) !void {
         .revision = user.revision,
         .digest = @splat(1),
         .csrf_digest = @splat(2),
-        .now = 100,
-        .expires = 1000,
+        .now = now,
+        .expires = now + 1000,
     } });
 }
 
@@ -210,7 +211,6 @@ test "policy edits commit revision history and audit atomically and reject stale
     var input: p.policies.Edit = .{
         .session_digest = @splat(1),
         .csrf_digest = @splat(2),
-        .now = 101,
         .expected_revision = fx.owner.version,
         .document = try p.Bytes(4096).init(
             "{\"id\":\"edit\",\"name\":\"Deny\",\"action\":\"deny\",\"path\":\"/edit\"}",
@@ -265,7 +265,6 @@ test "policy edits enforce owner-side role and CSRF checks" {
     var input: p.policies.Edit = .{
         .session_digest = @splat(1),
         .csrf_digest = @splat(3),
-        .now = 101,
         .expected_revision = 0,
         .document = try p.Bytes(4096).init(
             "{\"id\":\"edit\",\"name\":\"Deny\",\"action\":\"deny\"}",
@@ -297,7 +296,6 @@ test "committed policy edits retain their revision when later engine publication
     const input: p.policies.Edit = .{
         .session_digest = @splat(1),
         .csrf_digest = @splat(2),
-        .now = 101,
         .expected_revision = 0,
         .document = try p.Bytes(4096).init(
             "{\"id\":\"edit\",\"name\":\"Deny\",\"action\":\"deny\",\"path\":\"/edit\"}",
@@ -340,7 +338,6 @@ test "first managed edit preserves the existing database rule as a baseline" {
     const result = try fx.run(.{ .policy_edit = .{
         .session_digest = @splat(1),
         .csrf_digest = @splat(2),
-        .now = 101,
         .expected_revision = 1,
         .document = try p.Bytes(4096).init(
             "{\"id\":\"existing\",\"name\":\"Updated\",\"action\":\"deny\"}",

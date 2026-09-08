@@ -78,7 +78,7 @@ pub fn edit(app: *App, context: *http.Context, identity: p.Principal, inspection
     const input: p.policies.Edit = .{
         .session_digest = digest,
         .csrf_digest = identity.csrf_digest,
-        .now = app.now(),
+        .require_totp = app.config.behind_proxy,
         .expected_revision = std.fmt.parseInt(u64, parsed.value.expected_revision, 10) catch
             return error.InvalidRequest,
         .document = try p.Bytes(4096).init(parsed.value.document),

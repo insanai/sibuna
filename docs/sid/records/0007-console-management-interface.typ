@@ -2959,6 +2959,19 @@ Idle RSS was 9,952 KiB, two workers, storage compiled but inactive.
 The 8,831-byte Wasm artifact is the proof solver, not the console. These measurements do
 not exercise imports, active dashboards or storage contention and do not pass console-impact.
 
+== Policy execution-time authorization (2026-09-08)
+
+Policy and inspection edit contracts now carry credentials and the required-factor flag,
+with no caller authorization timestamp. A shared owner-side check rejects expired sessions,
+missing mandatory administrator MFA, wrong roles and mismatched CSRF before candidate
+construction. After candidate validation the conditional SQL mutation uses a fresh owner
+clock and repeats the same predicate, so a queued edit cannot extend its caller's session.
+The audit timestamp comes from that commit attempt. Candidate reputation evaluation also
+uses the owner clock; revision conflicts still leave the candidate unpublished.
+Deterministic storage ticks cover session expiry after queuing for both edit kinds and
+refuse missing required MFA without advancing policy or audit. Operators retain their
+specified policy authority; only administrators require the off-loopback factor.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

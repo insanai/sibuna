@@ -46,6 +46,7 @@ test "queued GeoIP writes and immutable replays recheck expiry and mandatory MFA
         .bytes = try p.Bytes(3400).init(&bytes),
     };
     var activate: p.geo.Activate = .{ .auth = auth, .expected_revision = 0, .digest = digest };
+    try expires(fx, now);
     try t.expect((try fx.run(.{ .geo_begin = begin })) == .failed);
     try expires(fx, now + 1000);
     try t.expect((try fx.run(.{ .geo_begin = begin })) == .command_recorded);

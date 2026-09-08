@@ -215,8 +215,7 @@ pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
         },
         .policy_edit, .inspection_edit => |edit| {
             if (edit.document.len == 0 or edit.document.len > max_message) return error.TooLarge;
-            if (edit.expected_revision >= std.math.maxInt(i64) or
-                edit.now > std.math.maxInt(i64)) return error.InvalidLimit;
+            if (edit.expected_revision >= std.math.maxInt(i64)) return error.InvalidLimit;
         },
         else => {},
     }

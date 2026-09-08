@@ -19,7 +19,6 @@ test "inspection settings commit with audit and history, survive restart and rej
     var input: p.policies.Edit = .{
         .session_digest = @splat(1),
         .csrf_digest = @splat(2),
-        .now = 110,
         .expected_revision = fx.owner.version,
         .document = try p.Bytes(4096).init(audit_document),
     };
@@ -70,7 +69,6 @@ test "failed inspection audit rolls back settings and revision without partial p
     const input: p.policies.Edit = .{
         .session_digest = @splat(1),
         .csrf_digest = @splat(2),
-        .now = 110,
         .expected_revision = fx.owner.version,
         .document = try p.Bytes(4096).init(audit_document),
     };

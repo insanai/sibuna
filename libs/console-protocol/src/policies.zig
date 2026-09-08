@@ -24,7 +24,7 @@ pub const Header = struct { name: Bytes(64) = .{}, value: Bytes(256) = .{} };
 pub const Edit = struct {
     session_digest: [32]u8,
     csrf_digest: [32]u8,
-    now: u64,
+    require_totp: bool = false,
     expected_revision: u64,
     document: Bytes(4096),
 };

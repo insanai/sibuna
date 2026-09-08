@@ -998,6 +998,7 @@ test {
         _ = @import("console_incidents_test.zig");
         _ = @import("console_users_test.zig");
         _ = @import("console_geo_auth_test.zig");
+        _ = @import("console_policy_auth_test.zig");
         _ = @import("console_inspection_test.zig");
         _ = @import("console_limits_test.zig");
         _ = @import("console_start.zig");
