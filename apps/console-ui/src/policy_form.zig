@@ -24,7 +24,7 @@ pub const Form = struct {
         }
     }
 
-    pub fn load(source: []const u8) !Form {
+    pub noinline fn load(source: []const u8) !Form {
         var memory: [65536]u8 = undefined;
         var arena = std.heap.FixedBufferAllocator.init(&memory);
         const root = try std.json.parseFromSliceLeaky(
@@ -34,7 +34,8 @@ pub const Form = struct {
             .{},
         );
         if (root != .object) return error.InvalidDocument;
-        var result: Form = .{};
+        var result: Form = undefined;
+        result.clear();
         inline for (.{ "id", "name", "path", "user_agent", "action", "algorithm" }) |field| {
             @field(result, field) = try @TypeOf(@field(result, field)).init(text(root, field));
         }
@@ -49,7 +50,7 @@ pub const Form = struct {
         return result;
     }
 
-    pub fn document(self: *const Form) !p.Bytes(4096) {
+    pub noinline fn document(self: *const Form) !p.Bytes(4096) {
         var memory: [65536]u8 = undefined;
         var arena = std.heap.FixedBufferAllocator.init(&memory);
         const action = fallback(self.action.slice(), "deny");
@@ -89,6 +90,12 @@ pub const Form = struct {
         }, .{}, &writer);
         output.len = writer.buffered().len;
         return output;
+    }
+
+    pub fn clear(self: *Form) void {
+        // Form consists only of byte buffers and integer lengths, all initially zero.
+        // Initialize padding too, avoiding a large constant image in Wasm.
+        @memset(std.mem.asBytes(self), 0);
     }
 };
 

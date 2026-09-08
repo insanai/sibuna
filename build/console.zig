@@ -71,6 +71,8 @@ fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module)
     wasm.entry = .disabled;
     wasm.rdynamic = true;
     wasm.stack_size = 256 * 1024;
+    wasm.initial_memory = 4 * 1024 * 1024;
+    wasm.max_memory = 4 * 1024 * 1024;
     console.addAnonymousImport("console_wasm", .{ .root_source_file = wasm.getEmittedBin() });
     const paths = .{ "shell.html", "glue.js", "assets/console.css" };
     const names = .{ "console_shell", "console_glue", "console_css" };

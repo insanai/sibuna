@@ -1,0 +1,11 @@
+<details class="mt-6">
+    <summary class="cursor-pointer font-bold">Import a rule document</summary>
+    <p class="sb-note">Paste one exported JSON rule (up to 4 KiB). Import fills the draft only.
+        Review and preview it before saving. To import a different ID, choose New rule.</p>
+    <form id="managed-import" class="sb-settings-form">
+        <label for="import-document">Rule document</label>
+        <textarea id="import-document" class="textarea" name="document" rows="6"
+                  maxlength="4096" required>{{ document }}</textarea>
+        <button class="btn" type="submit">Import into draft</button>
+    </form>
+</details>

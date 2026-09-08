@@ -150,7 +150,9 @@ pub fn Bytes(comptime capacity: usize) type {
 
         pub fn init(value: []const u8) error{TooLarge}!@This() {
             if (value.len > capacity) return error.TooLarge;
-            var result: @This() = .{ .len = value.len };
+            var result: @This() = undefined;
+            @memset(&result.data, 0);
+            result.len = value.len;
             @memcpy(result.data[0..value.len], value);
             return result;
         }

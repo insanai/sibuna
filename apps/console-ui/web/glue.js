@@ -47,7 +47,14 @@ function flush() {
   for (const command of commands) run(command);
 }
 async function run(command) {
-  if (command.op === "download") {
+  if (command.op === "save-text") {
+    const url = URL.createObjectURL(new Blob([command.text], {type: "application/json"}));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = command.filename;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } else if (command.op === "download") {
     await download(command);
   } else if (command.op === "request") {
     const headers = {};

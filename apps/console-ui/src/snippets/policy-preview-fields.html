@@ -12,3 +12,6 @@
 <input class="input" id="draft-query" name="query" value="{{ query }}" maxlength="512">
 <label for="draft-body">Request body (up to 2 KiB)</label>
 <textarea class="textarea" id="draft-body" name="body" rows="3" maxlength="2048">{{ body }}</textarea>
+<label for="draft-headers">Request headers (one Name: value per line, up to eight)</label>
+<textarea class="textarea" id="draft-headers" name="headers" rows="3"
+          maxlength="2048">{{ headers }}</textarea>

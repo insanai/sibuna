@@ -571,3 +571,20 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
   Formatting, full repository tests and SID generation pass. Browser verification after a
   restart and policy round-trip received 768 new requests, US/Australia samples and Unknown
   local samples through the reconnected stream.
+
+### Policy document transfer and complete request headers (2026-09-08)
+
+- Both applied and private policy testers accept up to eight request headers from bounded
+  line-based input. Invalid names, control characters, repeated names and overflow are rejected
+  while retaining entered text. Browser checks matched the built-in CF-Worker rule and rejected
+  case-insensitive duplicate headers.
+- Rule documents can be imported into an unsaved editor draft and exported as JSON downloads.
+  Imports reject unknown fields, invalid field types and changes to an existing rule ID. Saving
+  still requires the normal full candidate validation and expected revision. Export remains
+  available after conflicts so an operator can retain a draft. Browser checks imported a new
+  header rule, previewed its denial at unchanged committed revision 154 and exercised export.
+  This supports individual documents; atomic bulk policy-set import/export is still required.
+- Shared JSON-tree decoding replaces repeated typed scanners. A fixed 512 KiB scratch region
+  is cleared after each event; large challenge, incident and similarity response regressions
+  pass. The Wasm module is 293,413 bytes, within its existing gate, and now declares both initial
+  and maximum memory of 4 MiB. Full tests, formatting, SID generation and asset checks pass.

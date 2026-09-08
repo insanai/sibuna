@@ -10,6 +10,7 @@ pub const Model = struct {
     user_agent: p.Bytes(256) = .{},
     query_string: p.Bytes(512) = .{},
     body: p.Bytes(2048) = .{},
+    headers: p.Bytes(2048) = .{},
     page: p.Bytes(4096) = .{},
     decision: p.Bytes(1024) = .{},
     applied: p.Bytes(20) = .{},
@@ -68,6 +69,7 @@ pub fn render(state: *const @import("state.zig").State, w: *Writer) Writer.Error
         .query = state.policies.query_string.slice(),
         .user_agent = state.policies.user_agent.slice(),
         .body = state.policies.body.slice(),
+        .headers = state.policies.headers.slice(),
     });
     try button(w, "policy-run", "Evaluate policy", state.policies.testing or
         state.policies.busy or state.policies.stale);

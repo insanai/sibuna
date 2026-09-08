@@ -9,6 +9,9 @@ var initialized: bool = false;
 var similarity_generation: u32 = 0;
 var policy_generation: u32 = 0;
 var input: [16 * 1024]u8 = undefined;
+// Browser events execute serially. A fixed scratch region keeps large JSON arrays
+// off the Wasm stack and is erased after every event, including parser failures.
+var event_memory: [512 * 1024]u8 = undefined;
 var html: [512 * 1024]u8 = undefined;
 var geometry: [@import("geography.zig").max_bytes]u8 = undefined;
 var html_length: usize = 0;
@@ -70,14 +73,9 @@ export fn sb_init() void {
 export fn sb_event(kind: u32, length: usize) void {
     if (!initialized or length > input.len) return;
     begin();
-    var memory: [64 * 1024]u8 = undefined;
-    defer std.crypto.secureZero(u8, &memory);
+    defer std.crypto.secureZero(u8, &event_memory);
     defer std.crypto.secureZero(u8, input[0..length]);
-    var fixed = std.heap.FixedBufferAllocator.init(&memory);
-    if (kind == 2 and (boundedEnvelope(input[0..length], fixed.allocator()) catch false)) {
-        finish();
-        return;
-    }
+    var fixed = std.heap.FixedBufferAllocator.init(&event_memory);
     const parsed = std.json.parseFromSlice(
         std.json.Value,
         fixed.allocator(),
@@ -89,6 +87,10 @@ export fn sb_event(kind: u32, length: usize) void {
         return;
     };
     defer parsed.deinit();
+    if (kind == 2 and (boundedEnvelope(parsed.value, fixed.allocator()) catch false)) {
+        finish();
+        return;
+    }
     const previous_phase = state.phase;
     dispatch(kind, parsed.value, fixed.allocator()) catch {
         setMessage("Could not complete the action. Please try again.");
@@ -199,6 +201,7 @@ fn action(value: std.json.Value) !void {
         }
     }
     const fields = field(value, "fields") orelse .null;
+    if (try policyTransfer(name, fields)) return;
     if (try managedAction(name, fields)) return;
     if (try policyAction(name, fields)) return;
     if (try similarityAction(name)) return;
@@ -804,20 +807,13 @@ fn challengeResponse(status: i64, snapshot: p.challenges.Snapshot) void {
     state.challenges.stale = false;
 }
 
-/// Large fixed arrays bypass the generic Value tree, whose growth would consume the
-/// event arena despite a small wire response. Unknown fields are skipped without a tree.
-fn boundedEnvelope(bytes: []const u8, alloc: std.mem.Allocator) !bool {
-    const header = try std.json.parseFromSlice(
-        struct { id: []const u8 = "" },
-        alloc,
-        bytes,
-        .{ .ignore_unknown_fields = true },
-    );
-    defer header.deinit();
-    if (std.mem.startsWith(u8, header.value.id, "similarity-"))
-        return similarityEnvelope(bytes, header.value.id, alloc);
-    if (equal(header.value.id, "events")) return eventEnvelope(bytes, alloc);
-    if (!equal(header.value.id, "challenges")) return false;
+/// Decode one shared JSON tree, then validate bounded response types from that tree.
+/// This avoids duplicating scanner/parser machinery for every management response.
+fn boundedEnvelope(value: std.json.Value, alloc: std.mem.Allocator) !bool {
+    const id = string(value, "id");
+    if (std.mem.startsWith(u8, id, "similarity-")) return similarityEnvelope(value, id, alloc);
+    if (equal(id, "events")) return eventEnvelope(value, alloc);
+    if (!equal(id, "challenges")) return false;
     if (state.phase != .challenges) return true;
     const Envelope = struct {
         id: []const u8,
@@ -825,10 +821,10 @@ fn boundedEnvelope(bytes: []const u8, alloc: std.mem.Allocator) !bool {
         body: p.challenges.Snapshot,
         browser_time: u64 = 0,
     };
-    const parsed = std.json.parseFromSlice(
+    const parsed = std.json.parseFromValue(
         Envelope,
         alloc,
-        bytes,
+        value,
         .{ .ignore_unknown_fields = true },
     ) catch {
         state.challenges.busy = false;
@@ -865,7 +861,7 @@ test "complete challenge browser response fits the fixed event arena and release
     try std.testing.expectEqual(@as(u64, 100), state.challenges.received_at);
 }
 
-fn eventEnvelope(bytes: []const u8, alloc: std.mem.Allocator) !bool {
+fn eventEnvelope(value: std.json.Value, alloc: std.mem.Allocator) !bool {
     if (state.phase != .events) return true;
     const Envelope = struct {
         id: []const u8,
@@ -873,10 +869,10 @@ fn eventEnvelope(bytes: []const u8, alloc: std.mem.Allocator) !bool {
         body: @import("events_state.zig").WirePage,
         browser_time: u64 = 0,
     };
-    const parsed = std.json.parseFromSlice(
+    const parsed = std.json.parseFromValue(
         Envelope,
         alloc,
-        bytes,
+        value,
         .{ .ignore_unknown_fields = true },
     ) catch {
         state.events.busy = false;
@@ -989,7 +985,7 @@ fn similarityQuery() !void {
     );
 }
 
-fn similarityEnvelope(bytes: []const u8, id: []const u8, alloc: std.mem.Allocator) !bool {
+fn similarityEnvelope(value: std.json.Value, id: []const u8, alloc: std.mem.Allocator) !bool {
     const generation = try std.fmt.parseInt(u32, id["similarity-".len..], 10);
     if (state.phase != .similarity or generation != state.similarity.generation or
         !state.similarity.running) return true;
@@ -999,10 +995,10 @@ fn similarityEnvelope(bytes: []const u8, id: []const u8, alloc: std.mem.Allocato
         body: @import("similarity_state.zig").WirePart,
         browser_time: u64 = 0,
     };
-    const parsed = std.json.parseFromSlice(
+    const parsed = std.json.parseFromValue(
         Envelope,
         alloc,
-        bytes,
+        value,
         .{ .ignore_unknown_fields = true },
     ) catch {
         state.similarity.busy = false;
@@ -1133,6 +1129,16 @@ fn policyAction(name: []const u8, fields: std.json.Value) !bool {
         model.query_string = try p.Bytes(512).init(string(fields, "query"));
         model.user_agent = try p.Bytes(256).init(string(fields, "user_agent"));
         model.body = try p.Bytes(2048).init(string(fields, "body"));
+        model.headers = try p.Bytes(2048).init(string(fields, "headers"));
+        var headers: [8]@import("request_headers.zig").Header = undefined;
+        const request_headers = @import("request_headers.zig").parse(
+            model.headers.slice(),
+            &headers,
+        ) catch {
+            setMessage("Use up to eight unique request headers, one Name: value per line.");
+            try command(.{ .op = "focus", .selector = "#console-message" });
+            return true;
+        };
         model.testing = true;
         model.decision = .{};
         state.message = .{};
@@ -1145,6 +1151,7 @@ fn policyAction(name: []const u8, fields: std.json.Value) !bool {
             .query = model.query_string.slice(),
             .user_agent = model.user_agent.slice(),
             .body = model.body.slice(),
+            .headers = request_headers,
         });
     } else return false;
     return true;
@@ -1259,7 +1266,7 @@ fn managedAction(name: []const u8, fields: std.json.Value) !bool {
         try managedPost("catalog", .{ .kind = "catalog" });
     } else if (equal(name, "managed-new")) {
         if (!state.allows(.manage_policy) or manager.committed.len == 0) return true;
-        manager.form = .{};
+        manager.form.clear();
         manager.id = .{};
         manager.historical = .{};
         manager.view = .editor;
@@ -1329,6 +1336,28 @@ fn managedDocument(fields: std.json.Value) !?p.Bytes(4096) {
         try command(.{ .op = "focus", .selector = "#console-message" });
         return null;
     };
+}
+
+fn policyTransfer(name: []const u8, fields: std.json.Value) !bool {
+    const result = @import("policy_transfer.zig").apply(&state, name, fields) catch {
+        setMessage("Check the rule JSON, field types and ID. No rule was imported or saved.");
+        try command(.{ .op = "focus", .selector = "#console-message" });
+        return true;
+    };
+    switch (result) {
+        .ignored => return false,
+        .imported => {
+            setMessage("Draft imported. Review and preview it before saving.");
+            state.message_success = true;
+            try command(.{ .op = "focus", .selector = "#managed-editor", .top = true });
+        },
+        .exported => |document| try command(.{
+            .op = "save-text",
+            .filename = "sibuna-rule.json",
+            .text = document.slice(),
+        }),
+    }
+    return true;
 }
 
 fn managedPost(kind: []const u8, body: anytype) !void {

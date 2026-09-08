@@ -4,7 +4,7 @@
   <p class="sb-note">Evaluate the applied policy snapshot without sending traffic or changing rules.
     This includes inspection, reputation, file rules and database rules. Session admission,
     local rate limits, bans outside the engine and origin responses are separate stages.
-    The supplied fields are not saved. This form sends no custom headers.</p>
+    The supplied fields are not saved.</p>
   <form id="policy-run" class="sb-settings-form">
     <label for="policy-path">Path</label>
     <input class="input" id="policy-path" name="path" value="{{ path }}" required maxlength="512">
@@ -17,3 +17,6 @@
     <label for="policy-body">Body (up to 2 KiB)</label>
     <textarea class="textarea" id="policy-body" name="body" rows="3"
               maxlength="2048">{{ body }}</textarea>
+    <label for="policy-headers">Request headers (one Name: value per line, up to eight)</label>
+    <textarea class="textarea" id="policy-headers" name="headers" rows="3"
+              maxlength="2048">{{ headers }}</textarea>

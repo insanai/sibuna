@@ -11,6 +11,7 @@ pub const Model = struct {
     next: p.Bytes(128) = .{},
     id: p.Bytes(128) = .{},
     historical: p.Bytes(20) = .{},
+    import_text: p.Bytes(4096) = .{},
     form: Form = .{},
 };
 
@@ -92,12 +93,15 @@ fn editor(state: *const @import("state.zig").State, w: *Writer) Writer.Error!voi
     const disabled = state.policies.busy or state.policies.testing or state.policies.stale;
     if (state.allows(.manage_policy))
         try button(w, "managed-save", "Save rule", disabled);
+    try button(w, "managed-export", "Export draft JSON", state.policies.busy or
+        state.policies.testing);
     try html.render(w, @embedFile("snippets/policy-preview-fields.html"), .{
         .path = if (state.policies.path.len == 0) "/" else state.policies.path.slice(),
         .ip = if (state.policies.ip.len == 0) "8.8.8.8" else state.policies.ip.slice(),
         .user_agent = state.policies.user_agent.slice(),
         .query = state.policies.query_string.slice(),
         .body = state.policies.body.slice(),
+        .headers = state.policies.headers.slice(),
     });
     try w.print("<button type=\"submit\" class=\"btn\"{s}>Preview draft</button></form>", .{
         if (disabled) " disabled" else "",
@@ -105,6 +109,7 @@ fn editor(state: *const @import("state.zig").State, w: *Writer) Writer.Error!voi
     var memory: [16384]u8 = undefined;
     var arena = std.heap.FixedBufferAllocator.init(&memory);
     try @import("policies_page.zig").decision(w, &state.policies, arena.allocator());
+    try @import("policy_transfer.zig").render(state, w);
     try w.writeAll("</section>");
 }
 
