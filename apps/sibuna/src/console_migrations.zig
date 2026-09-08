@@ -40,6 +40,7 @@ pub fn run(owner: *Persistent) !void {
         console.schema.events_v5,
         console.schema.evidence_v6,
         console.schema.campaign_v7,
+        console.schema.policy_v8,
     };
     inline for (migrations, 2..) |sql, target| {
         if (version == target - 1) {

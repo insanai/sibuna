@@ -1,5 +1,6 @@
 """Compare bounded console policy evaluation with real denied requests."""
 import json
+import time
 
 
 def check(h, port, data_port, cookie, csrf):
@@ -41,6 +42,7 @@ def check(h, port, data_port, cookie, csrf):
     source.update(applied=None, ip="invalid address")
     assert h.request(port, "POST", test, source, cookie, csrf)[0] == 400
     check_preview(h, port, cookie, csrf)
+    check_edit(h, port, data_port, cookie, csrf)
 
 
 def check_preview(h, port, cookie, csrf):
@@ -70,3 +72,39 @@ def check_preview(h, port, cookie, csrf):
     status, _, body = h.request(port, "POST", test, source, cookie, csrf)
     assert status == 200 and json.loads(body)["action"] == "allow"
     assert not json.loads(body)["preview"]
+
+
+def check_edit(h, port, data_port, cookie, csrf):
+    query = "/console/api/policies/query"
+    edit = "/console/api/policies/edit"
+    test = "/console/api/policies/test"
+    status, _, body = h.request(port, "POST", query, {}, cookie, csrf)
+    assert status == 200
+    page = json.loads(body)
+    document = {"id": "live-edit", "name": "Live edit", "action": "deny",
+                "path": "/console-policy-edit-review"}
+    source = {"expected_revision": page["committed"], "document": json.dumps(document)}
+    assert h.request(port, "POST", edit, source)[0] == 401
+    assert h.request(port, "POST", edit, source, cookie)[0] == 400
+    status, _, body = h.request(port, "POST", edit, source, cookie, csrf)
+    assert status == 200, (status, body)
+    saved = json.loads(body)
+    assert int(saved["committed"]) == int(page["committed"]) + 1
+    assert h.request(port, "POST", edit, source, cookie, csrf)[0] == 409
+    for _ in range(30):
+        status, _, body = h.request(port, "POST", query, {}, cookie, csrf)
+        assert status == 200
+        page = json.loads(body)
+        if int(page["applied"]) >= int(saved["committed"]):
+            break
+        time.sleep(0.1)
+    assert int(page["applied"]) >= int(saved["committed"])
+    request = {"path": document["path"], "ip": "8.8.9.5", "user_agent": "Mozilla"}
+    status, _, body = h.request(port, "POST", test, request, cookie, csrf)
+    assert status == 200 and json.loads(body)["rule"] == "Live edit"
+    assert h.request(data_port, "GET", document["path"], extra_headers={
+        "User-Agent": "Mozilla", "X-Forwarded-For": request["ip"]})[0] == 403
+    document["enabled"] = False
+    source.update(expected_revision=page["committed"], document=json.dumps(document))
+    status, _, body = h.request(port, "POST", edit, source, cookie, csrf)
+    assert status == 200, (status, body)

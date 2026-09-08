@@ -232,6 +232,7 @@ pub const App = struct {
             .events_similar => return @import("similarity_routes.zig").query(self, context),
             .policies => return @import("policy_routes.zig").query(self, context, false),
             .policies_test => return @import("policy_routes.zig").query(self, context, true),
+            .policy_edit => return @import("policy_routes.zig").edit(self, context, identity.?),
             .events => return @import("event_routes.zig").query(self, context, false),
             .events_export => return @import("event_routes.zig").query(self, context, true),
             .login => return auth.login(self, context),

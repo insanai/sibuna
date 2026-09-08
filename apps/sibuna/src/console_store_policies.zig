@@ -116,7 +116,7 @@ fn testDraft(owner: *Persistent, input: p.policies.Test) !p.StorageResult {
     return evaluate(owner, input, candidate.engine);
 }
 
-fn draftFailure(err: anyerror) p.Failure {
+pub fn draftFailure(err: anyerror) p.Failure {
     if (err == error.Conflict) return .conflict;
     if (err == error.OutOfMemory) return .unavailable;
     if (err == error.InvalidStoredPolicy or err == error.WriteFailed) return .invalid_input;

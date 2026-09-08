@@ -21,6 +21,13 @@ pub const Test = struct {
     committed: ?u64 = null,
 };
 pub const Header = struct { name: Bytes(64) = .{}, value: Bytes(256) = .{} };
+pub const Edit = struct {
+    session_digest: [32]u8,
+    csrf_digest: [32]u8,
+    now: u64,
+    expected_revision: u64,
+    document: Bytes(4096),
+};
 
 pub fn validate(query: Query) error{InvalidLimit}!void {
     if (query.offset > 128 or query.now > std.math.maxInt(i64) or

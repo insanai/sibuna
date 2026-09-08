@@ -112,12 +112,7 @@ pub const StorageRequest = union(enum) {
     events_similar: similarity.Query,
     policies_query: policies.Query,
     policies_test: policies.Test,
-    policy_edit: struct {
-        actor: u64,
-        authorization_revision: u64,
-        expected_revision: u64,
-        document: Bytes(max_message),
-    },
+    policy_edit: policies.Edit,
     control_intent: ControlRequest,
     control_complete: struct { id: u64, succeeded: bool },
 };
@@ -182,8 +177,9 @@ pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
             if (page.limit == 0 or page.limit > max_page_rows) return error.InvalidLimit;
         },
         .policy_edit => |edit| {
-            if (edit.document.len > max_message) return error.TooLarge;
-            if (edit.expected_revision >= std.math.maxInt(i64)) return error.InvalidLimit;
+            if (edit.document.len == 0 or edit.document.len > max_message) return error.TooLarge;
+            if (edit.expected_revision >= std.math.maxInt(i64) or
+                edit.now > std.math.maxInt(i64)) return error.InvalidLimit;
         },
         else => {},
     }

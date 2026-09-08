@@ -576,7 +576,7 @@ pub const Persistent = struct {
     fn loadDbPolicies(self: *Persistent, engine: *policy.Engine, arena: std.mem.Allocator) !void {
         const sql = "SELECT name, path_pattern, ua_pattern, action, difficulty, algorithm, " ++
             "header_matchers, cidr_matchers, weight FROM policies WHERE enabled = 1 " ++
-            "ORDER BY priority, name";
+            "ORDER BY priority, name, id";
         var result = try self.db.query(self.gpa, sql);
         defer result.deinit();
         // Dynamic rules precede file/default rules so generic admission

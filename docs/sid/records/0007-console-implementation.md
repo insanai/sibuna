@@ -500,3 +500,24 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
   daemon tests verify a draft denial over an applied allowance, invalid input, missing revision,
   conflicts and the unchanged applied decision afterward. Formatting, tests and SID checks pass.
   Editor controls and transactional writes remain subsequent work.
+
+### Atomic policy saves and revision history (2026-09-08)
+
+- Schema 8 adds policy history, a redacted audit target, a deterministic ordering index and a
+  temporary staging table. A conditional prepared statement rechecks session, CSRF, role and
+  expected revision; its trigger commits the rule, history and audit together and clears staging.
+  First edits preserve an encodable pre-existing database rule as a baseline. Invalid legacy
+  rules without an encodable baseline can be repaired without inventing prior history.
+- Operators and administrators can save validated documents through the authenticated edit
+  endpoint. Candidate validation includes all neighboring policies, file settings and reputation.
+  Responses distinguish the committed revision from the previously applied engine; publication
+  occurs on the storage tick and failed rebuilds retain the old applied revision for retry.
+  Priority/name/ID ordering now agrees between private candidates and published database rules.
+- Tests cover stale edits, owner-side CSRF and role enforcement, revoked sessions, audit failure
+  rollback, baseline preservation, migration replay and recovery after failed publication. Live
+  daemon tests verify an edited denial against actual traffic and subsequently disable that rule.
+  Formatting, repository tests and SID compilation passed.
+- Regenerated primitive benchmarks with other review/test daemons stopped; the snapshot is
+  `benchmarks/results/latest-20260908T014358Z.json`. This regeneration does not establish the
+  separate console impact acceptance gate. Managed-rule browsing, editor forms and history/
+  revert controls remain pending.

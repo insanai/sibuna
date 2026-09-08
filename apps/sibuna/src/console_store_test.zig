@@ -184,6 +184,174 @@ test "draft snapshots page database rules and retain header and CIDR matchers" {
     try t.expect(std.mem.indexOf(u8, missed.slice(), "\"rule\":\"Rule 9\"") == null);
 }
 
+test "policy edits commit revision history and audit atomically and reject stale saves" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try Fixture.open(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/policy-writes",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try policySession(fx);
+    var input: p.policies.Edit = .{
+        .session_digest = @splat(1),
+        .csrf_digest = @splat(2),
+        .now = 101,
+        .expected_revision = fx.owner.version,
+        .document = try p.Bytes(4096).init(
+            "{\"id\":\"edit\",\"name\":\"Deny\",\"action\":\"deny\",\"path\":\"/edit\"}",
+        ),
+    };
+    const saved = (try fx.run(.{ .policy_edit = input })).revision;
+    try t.expectEqual(@as(u64, 1), saved.committed);
+    try t.expectEqual(@as(u64, 0), saved.applied);
+    try t.expectEqual(saved.committed, fx.owner.version);
+    try t.expectEqual(p.Failure.conflict, (try fx.run(.{ .policy_edit = input })).failed);
+    input.expected_revision = saved.committed;
+    input.document = try p.Bytes(4096).init(
+        "{\"id\":\"edit\",\"name\":\"Allow\",\"action\":\"allow\",\"path\":\"/edit\"}",
+    );
+    try fx.owner.db.exec(
+        t.allocator,
+        "CREATE TRIGGER fail_policy_audit BEFORE INSERT ON console_audit " ++
+            "WHEN NEW.action='policy.edit' BEGIN SELECT RAISE(ABORT,'test audit failure'); END",
+    );
+    try t.expectEqual(p.Failure.unavailable, (try fx.run(.{ .policy_edit = input })).failed);
+    try t.expectEqual(saved.committed, fx.owner.version);
+    var counts = try db.query(
+        fx.owner.db,
+        t.allocator,
+        "SELECT (SELECT count(*) FROM console_policy_history)," ++
+            "(SELECT count(*) FROM console_audit WHERE action='policy.edit')," ++
+            "(SELECT count(*) FROM console_policy_stage),(SELECT action FROM policies)",
+        &.{},
+    );
+    defer counts.deinit();
+    try t.expectEqualStrings("1", counts.rows[0][0].?);
+    try t.expectEqualStrings("1", counts.rows[0][1].?);
+    try t.expectEqualStrings("0", counts.rows[0][2].?);
+    try t.expectEqualStrings("deny", counts.rows[0][3].?);
+    try fx.owner.db.exec(t.allocator, "DROP TRIGGER fail_policy_audit");
+    const changed = (try fx.run(.{ .policy_edit = input })).revision;
+    try t.expectEqual(@as(u64, 2), changed.committed);
+    try t.expectEqual(@as(u64, 1), changed.applied);
+}
+
+test "policy edits enforce owner-side role and CSRF checks" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try Fixture.open(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/policy-write-auth",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try policySession(fx);
+    var input: p.policies.Edit = .{
+        .session_digest = @splat(1),
+        .csrf_digest = @splat(3),
+        .now = 101,
+        .expected_revision = 0,
+        .document = try p.Bytes(4096).init(
+            "{\"id\":\"edit\",\"name\":\"Deny\",\"action\":\"deny\"}",
+        ),
+    };
+    try t.expectEqual(p.Failure.forbidden, (try fx.run(.{ .policy_edit = input })).failed);
+    input.csrf_digest = @splat(2);
+    try fx.owner.db.exec(t.allocator, "UPDATE console_users SET role='viewer'");
+    try policySession(fx);
+    try t.expectEqual(p.Failure.forbidden, (try fx.run(.{ .policy_edit = input })).failed);
+    try fx.owner.db.exec(t.allocator, "UPDATE console_users SET role='operator'");
+    try policySession(fx);
+    try t.expectEqual(@as(u64, 1), (try fx.run(.{ .policy_edit = input })).revision.committed);
+    _ = try fx.run(.{ .logout = .{ .digest = @splat(1), .now = 102 } });
+    try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .policy_edit = input })).failed);
+}
+
+test "committed policy edits retain their revision when later engine publication fails" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try Fixture.open(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/policy-write-publication",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try policySession(fx);
+    const input: p.policies.Edit = .{
+        .session_digest = @splat(1),
+        .csrf_digest = @splat(2),
+        .now = 101,
+        .expected_revision = 0,
+        .document = try p.Bytes(4096).init(
+            "{\"id\":\"edit\",\"name\":\"Deny\",\"action\":\"deny\",\"path\":\"/edit\"}",
+        ),
+    };
+    const ticket = try fx.owner.console_mailbox.submit(t.io, .{ .policy_edit = input }, .urgent);
+    @import("console_store.zig").tick(fx.owner);
+    const result = (try fx.owner.console_mailbox.poll(t.io, ticket)).?.revision;
+    try t.expectEqual(@as(u64, 1), result.committed);
+    try t.expectEqual(@as(u64, 0), result.applied);
+    fx.owner.policy_text = "invalid JSON";
+    if (fx.owner.tick()) |_| return error.ExpectedFailedRebuild else |_| {}
+    try t.expectEqual(@as(u64, 0), fx.owner.version);
+    try t.expectEqual(@as(u64, 1), try @import("console_policy_candidate.zig").revision(fx.owner));
+    fx.owner.policy_text = null;
+    try fx.owner.tick();
+    try t.expectEqual(@as(u64, 1), fx.owner.version);
+    const slot = fx.state.acquireEngine();
+    defer server.AppState.releaseEngine(slot);
+    try t.expectEqualStrings("Deny", slot.engine.rules[0].name);
+}
+
+test "first managed edit preserves the existing database rule as a baseline" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try Fixture.open(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/policy-write-baseline",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try policySession(fx);
+    try fx.owner.db.exec(
+        t.allocator,
+        "INSERT INTO policies(id,name,action,created_at,updated_at) " ++
+            "VALUES('existing','Original','ALLOW',50,50)",
+    );
+    try fx.owner.tick();
+    const result = try fx.run(.{ .policy_edit = .{
+        .session_digest = @splat(1),
+        .csrf_digest = @splat(2),
+        .now = 101,
+        .expected_revision = 1,
+        .document = try p.Bytes(4096).init(
+            "{\"id\":\"existing\",\"name\":\"Updated\",\"action\":\"deny\"}",
+        ),
+    } });
+    try t.expectEqual(@as(u64, 2), result.revision.committed);
+    var history = try db.query(
+        fx.owner.db,
+        t.allocator,
+        "SELECT revision,kind,document FROM console_policy_history " ++
+            "WHERE policy_id='existing' ORDER BY revision LIMIT 3",
+        &.{},
+    );
+    defer history.deinit();
+    try t.expectEqual(@as(usize, 2), history.rows.len);
+    try t.expectEqualStrings("baseline", history.rows[0][1].?);
+    try t.expect(std.mem.indexOf(u8, history.rows[0][2].?, "Original") != null);
+    try t.expectEqualStrings("edit", history.rows[1][1].?);
+    try t.expect(std.mem.indexOf(u8, history.rows[1][2].?, "Updated") != null);
+    fx.owner.console_initialized = false;
+    try @import("console_migrations.zig").run(fx.owner);
+}
+
 test "console storage ticks bootstrap, audit, authenticate and revoke atomically" {
     var tmp = t.tmpDir(.{});
     defer tmp.cleanup();

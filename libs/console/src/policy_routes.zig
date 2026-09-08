@@ -62,7 +62,40 @@ pub fn query(app: *App, context: *http.Context, testing: bool) !void {
     if (result == .page) {
         return context.respond(.ok, "application/json", result.page.slice(), &.{});
     }
-    return http.fail(context, switch (result.failed) {
+    return fail(context, result.failed);
+}
+
+pub fn edit(app: *App, context: *http.Context, identity: p.Principal) !void {
+    const digest = try http.session(context);
+    if (!app.query_budget.allow(app.io, digest, app.now(), .query))
+        return http.fail(context, .too_many_requests, "CONSOLEQUERY");
+    var body: [8192]u8 = undefined;
+    var memory: [16384]u8 = undefined;
+    var fixed = std.heap.FixedBufferAllocator.init(&memory);
+    const parsed = try http.parse(struct {
+        expected_revision: []const u8,
+        document: []const u8,
+    }, context, &body, fixed.allocator());
+    defer parsed.deinit();
+    const result = try app.request(.{ .policy_edit = .{
+        .session_digest = digest,
+        .csrf_digest = identity.csrf_digest,
+        .now = app.now(),
+        .expected_revision = std.fmt.parseInt(u64, parsed.value.expected_revision, 10) catch
+            return error.InvalidRequest,
+        .document = try p.Bytes(4096).init(parsed.value.document),
+    } });
+    if (result != .revision) return fail(context, result.failed);
+    var committed: [20]u8 = undefined;
+    var applied: [20]u8 = undefined;
+    return http.json(context, .{
+        .committed = try std.fmt.bufPrint(&committed, "{d}", .{result.revision.committed}),
+        .applied = try std.fmt.bufPrint(&applied, "{d}", .{result.revision.applied}),
+    }, &.{});
+}
+
+fn fail(context: *http.Context, reason: p.Failure) !void {
+    return http.fail(context, switch (reason) {
         .unauthorized => .unauthorized,
         .forbidden => .forbidden,
         .conflict => .conflict,

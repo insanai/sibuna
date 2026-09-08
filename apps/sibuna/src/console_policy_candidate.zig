@@ -89,7 +89,21 @@ fn documents(
     return count;
 }
 
+pub fn readDocument(owner: *Persistent, id: []const u8) !?p.Bytes(4096) {
+    var rows = try db.query(
+        owner.db,
+        owner.gpa,
+        "SELECT id,name,priority,enabled,path_pattern,ua_pattern,action,difficulty," ++
+            "algorithm,weight,header_matchers,cidr_matchers FROM policies WHERE id=? LIMIT 1",
+        &.{util.text(id)},
+    );
+    defer rows.deinit();
+    if (rows.rows.len == 0) return null;
+    return try encode(rows.rows[0]);
+}
+
 fn encode(row: []const ?[]const u8) !p.Bytes(4096) {
+    std.debug.assert(row.len == 12);
     var output: p.Bytes(4096) = .{};
     var writer: std.Io.Writer = .fixed(&output.data);
     const action = policy.Action.parse(row[6] orelse return error.InvalidStoredPolicy) orelse
