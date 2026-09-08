@@ -1,0 +1,22 @@
+<div class="sb-rule-field">
+<label for="rule-difficulty">Challenge difficulty (blank inherits)</label>
+<input class="input" id="rule-difficulty" name="rule_difficulty" type="number"
+       min="0" max="64" value="{{ difficulty }}">
+</div>
+<div class="sb-rule-field">
+<label for="rule-weight">Weight (WEIGH actions only)</label>
+<input class="input" id="rule-weight" name="rule_weight" type="number"
+       min="-2147483648" max="2147483647" value="{{ weight }}" required>
+</div>
+<div class="sb-rule-field">
+<label for="rule-headers">Header matchers (JSON object, up to four)</label>
+<textarea class="textarea font-mono" id="rule-headers" name="rule_headers" rows="3"
+          maxlength="4096">{{ headers }}</textarea>
+</div>
+<div class="sb-rule-field">
+<label for="rule-cidrs">Client networks (JSON array, up to eight)</label>
+<textarea class="textarea font-mono" id="rule-cidrs" name="rule_cidrs" rows="3"
+          maxlength="512">{{ cidrs }}</textarea>
+</div>
+<p class="sb-note sb-rule-wide">Challenge settings apply only to CHALLENGE. Weight applies only to WEIGH.
+  Save validates all matchers and the complete candidate engine before committing.</p>

@@ -1,0 +1,10 @@
+<article class="border border-base-300 rounded-box p-4 my-3">
+  <h3 class="font-bold">{{ name }}</h3>
+  <p class="sb-note">ID: {{ id }} · Priority {{ priority }}</p>
+  <p><span class="badge badge-outline">{{ action }}</span>
+     <span class="badge badge-ghost">{{ enabled }}</span></p>
+  <div class="flex flex-wrap gap-2 mt-3">
+    <button class="btn btn-sm" data-action="managed-open:{{ id }}">Open rule</button>
+    <button class="btn btn-sm btn-ghost" data-action="managed-history:{{ id }}">History</button>
+  </div>
+</article>

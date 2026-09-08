@@ -38,6 +38,7 @@ pub const State = struct {
     challenges: @import("challenges_page.zig").Model = .{},
     events: @import("events_state.zig").Model = .{},
     message: p.Bytes(256) = .{},
+    message_success: bool = false,
     username: p.Bytes(64) = .{},
     csrf: p.Bytes(64) = .{},
     role: p.Bytes(16) = .{},
@@ -82,5 +83,13 @@ pub const State = struct {
 
     pub fn fullAccess(self: *const State) bool {
         return self.csrf.len != 0 and !self.must_change and !self.totp_required;
+    }
+
+    pub fn allows(self: *const State, action: p.Action) bool {
+        if (!self.fullAccess()) return false;
+        const role = @import("std").meta.stringToEnum(p.Role, self.role.slice()) orelse {
+            return false;
+        };
+        return role.allows(action);
     }
 };

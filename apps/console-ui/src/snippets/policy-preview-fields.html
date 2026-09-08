@@ -1,0 +1,14 @@
+<h3 class="font-bold mt-6">Preview request</h3>
+<p class="sb-note">Includes inspection, managed rules, file fallbacks and reputation.
+  Session admission, local limiters and origin responses are separate stages.
+  These request fields are not saved.</p>
+<label for="draft-path">Request path</label>
+<input class="input" id="draft-path" name="path" value="{{ path }}" maxlength="512">
+<label for="draft-ip">Client IP</label>
+<input class="input" id="draft-ip" name="ip" value="{{ ip }}" maxlength="48">
+<label for="draft-agent">Request user agent</label>
+<input class="input" id="draft-agent" name="user_agent" value="{{ user_agent }}" maxlength="256">
+<label for="draft-query">Query string (without ?)</label>
+<input class="input" id="draft-query" name="query" value="{{ query }}" maxlength="512">
+<label for="draft-body">Request body (up to 2 KiB)</label>
+<textarea class="textarea" id="draft-body" name="body" rows="3" maxlength="2048">{{ body }}</textarea>

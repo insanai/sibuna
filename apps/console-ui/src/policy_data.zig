@@ -23,6 +23,8 @@ pub const Row = struct {
     weight: i32,
 };
 pub const Decision = struct {
+    preview: bool,
+    committed: ?[]const u8,
     applied: []const u8,
     action: []const u8,
     rule: []const u8,
@@ -97,7 +99,13 @@ fn row(value: std.json.Value) Error!Row {
 }
 
 pub fn decision(value: std.json.Value) Error!Decision {
+    const preview = if (value == .object and value.object.contains("preview"))
+        try boolean(value, "preview")
+    else
+        false;
     return .{
+        .preview = preview,
+        .committed = if (preview) try text(value, "committed") else null,
         .applied = try text(value, "applied"),
         .action = try text(value, "action"),
         .rule = try text(value, "rule"),

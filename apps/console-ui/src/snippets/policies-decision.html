@@ -1,7 +1,7 @@
 <div id="policy-result" tabindex="-1" class="alert alert-info mt-6" role="status">
   <div>
-    <h3 class="font-bold">Policy decision: {{ action }}</h3>
-    <p>Rule: {{ rule }} · Applied revision {{ applied }} · Score {{ score }}</p>
+    <h3 class="font-bold">{{ kind }}: {{ action }}</h3>
+    <p>Rule: {{ rule }} · {{ revision_label }} {{ revision }} · Score {{ score }}</p>
     <p>Configured challenge difficulty: {{ difficulty }} · Algorithm: {{ algorithm }}</p>
     <p class="sb-note">Difficulty is zero for non-challenge decisions. PoSW converts configured
       difficulty to depth during issuance; this result is not a proof or an origin response.</p>

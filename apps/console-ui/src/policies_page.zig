@@ -4,6 +4,7 @@ const html = @import("html");
 const Writer = std.Io.Writer;
 
 pub const Model = struct {
+    manager: @import("policy_manager.zig").Model = .{},
     path: p.Bytes(512) = .{},
     ip: p.Bytes(48) = .{},
     user_agent: p.Bytes(256) = .{},
@@ -22,6 +23,7 @@ const data = @import("policy_data.zig");
 const Row = data.Row;
 
 pub fn render(state: *const @import("state.zig").State, w: *Writer) Writer.Error!void {
+    if (state.policies.manager.active) return @import("policy_manager.zig").render(state, w);
     try html.render(w, @embedFile("snippets/policies-header.html"), .{});
     try @import("render.zig").message(state, w);
     if (state.policies.page.len == 0) {
@@ -94,7 +96,7 @@ fn policyRow(w: *Writer, row: Row) Writer.Error!void {
     try w.writeAll("</article>");
 }
 
-fn decision(w: *Writer, model: *const Model, allocator: std.mem.Allocator) Writer.Error!void {
+pub fn decision(w: *Writer, model: *const Model, allocator: std.mem.Allocator) Writer.Error!void {
     if (model.decision.len == 0) return;
     const parsed = std.json.parseFromSlice(
         std.json.Value,
@@ -106,9 +108,11 @@ fn decision(w: *Writer, model: *const Model, allocator: std.mem.Allocator) Write
     const result = data.decision(parsed.value) catch
         return w.writeAll("<p>Invalid evaluation result. Please retry.</p>");
     try html.render(w, @embedFile("snippets/policies-decision.html"), .{
+        .kind = if (result.preview) "Draft decision" else "Policy decision",
+        .revision_label = if (result.preview) "Draft committed revision" else "Applied revision",
         .action = result.action,
         .rule = result.rule,
-        .applied = result.applied,
+        .revision = result.committed orelse result.applied,
         .difficulty = result.difficulty,
         .algorithm = result.algorithm,
         .score = result.score,

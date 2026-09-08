@@ -65,6 +65,12 @@ button, input, select, textarea { font: inherit; }
 .sb-globe-controls { display: flex; flex-wrap: wrap; gap: 8px; }
 .sb-settings-form { display: grid; gap: 12px; max-width: 640px; margin-top: 24px; }
 .sb-settings-form .input, .sb-settings-form .textarea { width: 100%; }
+.sb-policy-form { max-width: none; }
+.sb-rule-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
+.sb-rule-field { min-width: 0; display: grid; align-content: start; gap: 8px; }
+.sb-rule-field .select { width: 100%; }
+.sb-rule-wide { grid-column: 1 / -1; }
+@media (max-width: 700px) { .sb-rule-grid { grid-template-columns: minmax(0, 1fr); } }
 .sb-settings-form label { display: block; margin-top: 8px; font-size: 14px; }
 .sb-panel a { text-decoration: underline; text-underline-offset: 3px; }
 

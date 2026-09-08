@@ -160,6 +160,7 @@ pub fn message(state: *const State, w: *Writer) Writer.Error!void {
     if (state.message.len == 0) return;
     try @import("html").render(w, @embedFile("snippets/message.html"), .{
         .message = state.message.slice(),
+        .tone = if (state.message_success) "alert alert-success mb-4" else "sb-error",
     });
 }
 

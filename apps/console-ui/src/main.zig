@@ -3,7 +3,9 @@ const std = @import("std");
 const p = @import("console_protocol");
 const State = @import("state.zig").State;
 const render = @import("render.zig");
-var state: State = .{};
+// Startup initializes every owned field; avoid shipping a duplicate state image in Wasm data.
+var state: State = undefined;
+var initialized: bool = false;
 var similarity_generation: u32 = 0;
 var policy_generation: u32 = 0;
 var input: [16 * 1024]u8 = undefined;
@@ -41,6 +43,7 @@ export fn sb_geometry_capacity() usize {
     return geometry.len;
 }
 export fn sb_geometry_loaded(length: usize) void {
+    if (!initialized) return;
     begin();
     state.geometry_busy = false;
     if (state.phase != .dashboard or !state.fullAccess() or length > geometry.len) {
@@ -58,13 +61,14 @@ export fn sb_geometry_loaded(length: usize) void {
 
 export fn sb_init() void {
     state.reset();
+    initialized = true;
     begin();
     get("session", "/console/api/session") catch unreachable;
     finish();
 }
 
 export fn sb_event(kind: u32, length: usize) void {
-    if (length > input.len) return;
+    if (!initialized or length > input.len) return;
     begin();
     var memory: [64 * 1024]u8 = undefined;
     defer std.crypto.secureZero(u8, &memory);
@@ -189,6 +193,7 @@ fn action(value: std.json.Value) !void {
         }
     }
     const fields = field(value, "fields") orelse .null;
+    if (try managedAction(name, fields)) return;
     if (try policyAction(name, fields)) return;
     if (try similarityAction(name)) return;
     if (try challengeAction(name, fields)) return;
@@ -246,7 +251,7 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
     const status = status_value.integer;
     const body = field(value, "body") orelse return;
     if (std.mem.startsWith(u8, id, "policies-") or
-        std.mem.startsWith(u8, id, "policy-test-"))
+        std.mem.startsWith(u8, id, "policy-test-") or std.mem.startsWith(u8, id, "managed-"))
         return policyResponse(id, status, body);
     if (std.mem.startsWith(u8, id, "totp")) return securityResponse(id, status, body);
     if (equal(id, "stats")) return statsResponse(status, body, alloc);
@@ -486,6 +491,7 @@ fn equal(a: []const u8, b: []const u8) bool {
     return std.mem.eql(u8, a, b);
 }
 fn setMessage(message: []const u8) void {
+    state.message_success = false;
     state.message = p.Bytes(256).init(message) catch unreachable;
 }
 
@@ -515,6 +521,7 @@ test "authenticated earth remains bounded without a GeoIP provider" {
 }
 
 test "geometry failures delay retries and cannot publish after revocation" {
+    sb_init();
     state = .{ .phase = .dashboard, .browser_time = 100 };
     state.csrf = try p.Bytes(64).init("test");
     sb_geometry_loaded(0);
@@ -1068,6 +1075,7 @@ fn policyAction(name: []const u8, fields: std.json.Value) !bool {
     if (equal(name, "policies") or equal(name, "policies-refresh")) {
         if (state.phase == .policies and (model.busy or model.testing)) return true;
         model.testing = false;
+        model.manager.active = false;
         state.phase = .policies;
         state.message = .{};
         model.offset = 0;
@@ -1086,7 +1094,12 @@ fn policyAction(name: []const u8, fields: std.json.Value) !bool {
             .applied = model.applied.slice(),
         });
     } else if (equal(name, "policy-run") and state.phase == .policies) {
-        if (model.testing or model.busy or model.stale or model.applied.len == 0) return true;
+        if (model.testing or model.busy or model.stale) return true;
+        if (!model.manager.active and model.applied.len == 0) return true;
+        const draft = if (model.manager.active)
+            (try managedDocument(fields)) orelse return true
+        else
+            null;
         model.path = try p.Bytes(512).init(string(fields, "path"));
         model.ip = try p.Bytes(48).init(string(fields, "ip"));
         model.query_string = try p.Bytes(512).init(string(fields, "query"));
@@ -1096,7 +1109,9 @@ fn policyAction(name: []const u8, fields: std.json.Value) !bool {
         model.decision = .{};
         state.message = .{};
         try policyPost(true, .{
-            .applied = model.applied.slice(),
+            .applied = if (model.manager.active) null else model.applied.slice(),
+            .draft = if (draft) |*document| document.slice() else null,
+            .committed = if (model.manager.active) model.manager.committed.slice() else null,
             .path = model.path.slice(),
             .ip = model.ip.slice(),
             .query = model.query_string.slice(),
@@ -1123,13 +1138,14 @@ fn policyResponse(id: []const u8, status: i64, body: std.json.Value) !void {
     if (status != 200) {
         model.stale = status != 400 and status != 429;
         setMessage(switch (status) {
-            400 => "Check the request fields and client IP, then try again.",
-            409 => "The applied policy changed. Refresh policies before continuing.",
+            400 => "Check the request, rule settings and matcher JSON, then try again.",
+            409 => "Policy or reputation changed. Refresh and review the current rules.",
             429 => "Too many queries. Wait a minute before trying again.",
             else => "Policy data is unavailable. Refresh to retry; previous data may be stale.",
         });
         return command(.{ .op = "focus", .selector = "#console-message" });
     }
+    if (std.mem.startsWith(u8, id, "managed-")) return managedResponse(id, body);
     if (std.mem.startsWith(u8, id, "policies-")) {
         const applied = string(body, "applied");
         _ = try std.fmt.parseInt(u64, applied, 10);
@@ -1164,6 +1180,7 @@ fn policyPost(testing: bool, body: anytype) !void {
 }
 
 test "policy navigation ignores superseded responses and retains a revision conflict" {
+    sb_init();
     state = .{};
     state.csrf = try p.Bytes(64).init("test");
     begin();
@@ -1196,4 +1213,150 @@ fn resetState(phase: @import("state.zig").Phase) void {
     state.reset();
     state.phase = phase;
     state.dark = dark;
+}
+
+fn managedAction(name: []const u8, fields: std.json.Value) !bool {
+    if (!state.fullAccess() or state.phase != .policies or
+        !std.mem.startsWith(u8, name, "managed-")) return false;
+    const model = &state.policies;
+    const manager = &model.manager;
+    if (model.busy or model.testing) return true;
+    manager.active = true;
+    state.message = .{};
+    model.decision = .{};
+    if (equal(name, "managed-refresh")) {
+        manager.view = .catalog;
+        manager.snapshot = .{};
+        manager.next = .{};
+        try managedPost("catalog", .{ .kind = "catalog" });
+    } else if (equal(name, "managed-new")) {
+        if (!state.allows(.manage_policy) or manager.committed.len == 0) return true;
+        manager.form = .{};
+        manager.id = .{};
+        manager.historical = .{};
+        manager.view = .editor;
+        try command(.{ .op = "focus", .selector = "#managed-editor", .top = true });
+    } else if (equal(name, "managed-next")) {
+        if (model.stale or manager.next.len == 0) return true;
+        if (manager.view == .catalog) {
+            try managedPost("catalog", .{
+                .kind = "catalog",
+                .after = manager.next.slice(),
+                .committed = manager.committed.slice(),
+            });
+        } else try managedPost("history", .{
+            .kind = "history",
+            .id = manager.id.slice(),
+            .before = manager.next.slice(),
+            .committed = manager.committed.slice(),
+        });
+    } else if (equal(name, "managed-save")) {
+        if (!state.allows(.manage_policy) or model.stale) return true;
+        const document = (try managedDocument(fields)) orelse return true;
+        try managedPost("save", .{
+            .expected_revision = manager.committed.slice(),
+            .document = document.slice(),
+        });
+    } else if (std.mem.startsWith(u8, name, "managed-open:")) {
+        manager.id = try p.Bytes(128).init(name[13..]);
+        manager.historical = .{};
+        try managedPost("document", .{
+            .kind = "document",
+            .id = manager.id.slice(),
+            .committed = manager.committed.slice(),
+        });
+    } else if (std.mem.startsWith(u8, name, "managed-history:")) {
+        manager.id = try p.Bytes(128).init(name[16..]);
+        manager.historical = .{};
+        try managedPost("history", .{
+            .kind = "history",
+            .id = manager.id.slice(),
+            .committed = manager.committed.slice(),
+        });
+    } else if (std.mem.startsWith(u8, name, "managed-version:")) {
+        manager.historical = try p.Bytes(20).init(name[16..]);
+        try managedPost("document", .{
+            .kind = "document",
+            .id = manager.id.slice(),
+            .revision = manager.historical.slice(),
+            .committed = manager.committed.slice(),
+        });
+    }
+    return true;
+}
+
+fn managedDocument(fields: std.json.Value) !?p.Bytes(4096) {
+    const manager = &state.policies.manager;
+    manager.form.capture(fields) catch {
+        setMessage("A rule field is too long. Shorten it and try again.");
+        try command(.{ .op = "focus", .selector = "#console-message" });
+        return null;
+    };
+    if (manager.id.len != 0 and !equal(manager.id.slice(), manager.form.id.slice())) {
+        setMessage("An existing rule's ID cannot change. Create a new rule for a different ID.");
+        return null;
+    }
+    return manager.form.document() catch {
+        setMessage("Check numbers and matcher JSON. Rule documents must fit within 4 KiB.");
+        try command(.{ .op = "focus", .selector = "#console-message" });
+        return null;
+    };
+}
+
+fn managedPost(kind: []const u8, body: anytype) !void {
+    policy_generation +%= 1;
+    var buffer: [48]u8 = undefined;
+    const id = try std.fmt.bufPrint(&buffer, "managed-{s}-{d}", .{ kind, policy_generation });
+    state.policies.busy = true;
+    try post(
+        id,
+        if (equal(kind, "save")) "/console/api/policies/edit" else "/console/api/policies/read",
+        body,
+    );
+}
+
+fn managedResponse(id: []const u8, body: std.json.Value) !void {
+    const model = &state.policies;
+    const manager = &model.manager;
+    const revision = string(body, "committed");
+    _ = try std.fmt.parseInt(u64, revision, 10);
+    manager.committed = try p.Bytes(20).init(revision);
+    model.stale = false;
+    if (std.mem.startsWith(u8, id, "managed-save-")) {
+        manager.id = manager.form.id;
+        manager.historical = .{};
+        setMessage("Rule saved. Check Applied rules for this node's loaded revision.");
+        state.message_success = true;
+        return command(.{ .op = "focus", .selector = "#console-message" });
+    }
+    if (std.mem.startsWith(u8, id, "managed-document-")) {
+        manager.form = try @import("policy_form.zig").Form.load(string(body, "document"));
+        manager.id = manager.form.id;
+        manager.view = .editor;
+    } else {
+        var writer: std.Io.Writer = .fixed(&manager.snapshot.data);
+        try std.json.Stringify.value(body, .{}, &writer);
+        manager.snapshot.len = writer.buffered().len;
+        manager.next = try p.Bytes(128).init(string(body, "next"));
+        manager.view = if (std.mem.startsWith(u8, id, "managed-history-")) .history else .catalog;
+    }
+    state.message = .{};
+    try command(.{
+        .op = "focus",
+        .top = true,
+        .selector = if (manager.view == .editor) "#managed-editor" else "main h1",
+    });
+}
+
+test "browser callbacks cannot read application state before explicit startup" {
+    initialized = false;
+    state = undefined;
+    sb_event(1, 0);
+    sb_geometry_loaded(0);
+    try std.testing.expect(!initialized);
+    sb_init();
+    try std.testing.expect(initialized);
+    try std.testing.expectEqual(.loading, state.phase);
+    try std.testing.expectEqual(@as(usize, 0), state.csrf.len);
+    try std.testing.expect(!state.policies.manager.active);
 }

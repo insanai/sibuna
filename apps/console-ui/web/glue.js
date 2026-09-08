@@ -122,7 +122,9 @@ root.addEventListener("submit", e => {
 });
 root.addEventListener("click", e => {
   const button = e.target.closest("[data-action]");
-  if (button) event(1, {action: button.dataset.action, fields: {}});
+  if (button?.dataset.validate === "true" && button.form && !button.form.reportValidity()) return;
+  if (button) event(1, {action: button.dataset.action,
+    fields: button.form ? Object.fromEntries(new FormData(button.form)) : {}});
 });
 document.addEventListener("visibilitychange", () => event(5, {hidden: document.hidden}));
 wasm.sb_init();

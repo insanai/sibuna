@@ -532,3 +532,30 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
   complete-document round-trips, history reads, stale revisions, restoring an older document
   through the validated save transaction and restoring the current version afterward.
   Formatting, tests and SID checks passed. User-facing editor and history controls follow.
+
+### Managed-rule editor and history interface (2026-09-08)
+
+- Added structured rule forms, catalog/history pagination, private draft previews and saving
+  historical documents as new validated revisions. Inputs survive validation and revision
+  conflicts; existing IDs are read-only. Operator controls follow protocol permissions.
+- HTML snippets render through Zig with escaped values. A responsive two-column form becomes
+  one column on mobile. The browser bridge collects form fields; Zig owns document construction
+  and application behavior. Successful saves use the daisyUI success alert treatment.
+- Removed the initialized global Wasm state image, initializing explicitly before events, to
+  keep the expanded editor inside the startup bundle gate. Native initialization and document
+  ownership/validation tests pass along with formatting, repository tests and SID compilation.
+- Live browser checks covered private denial previews, malformed matcher JSON, save/disable,
+  historical restore and stale-save rejection with draft retention. Actual firewall requests
+  followed the saved denial. Desktop and 390-pixel mobile layouts were inspected; the shared
+  navigation remains accessible and the mobile form has no horizontal overflow.
+
+### CLI country database loading (2026-09-08)
+
+- Added `tools/console_geoip.py` with hidden password/TOTP prompts, HTTPS or literal loopback
+  HTTP, bounded responses, monthly imports, optional compressed-file checksums, progress and
+  status inspection. It uses the authenticated console service and never opens storage itself.
+  Repeated requests for an already active month skip importing and verify any supplied digest.
+- Downloaded September 2026 DB-IP data into the review instance: 717,152 known-country ranges.
+  Verified durable restoration after restart and live US/Australia markers, country rankings,
+  Unknown local-address samples and the flat-map fallback. Usage is in `docs/console-geoip.md`.
+  This verifies development data loading, not the remaining SID telemetry or cluster gates.
