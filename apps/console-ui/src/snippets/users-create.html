@@ -1,0 +1,25 @@
+<section class="sb-panel">
+    <h2>Create an account</h2>
+    <form class="sb-settings-form" id="users-create" data-change="users-draft">
+        <fieldset{{ busy }}>
+            <label for="users-name">Username</label>
+            <input id="users-name" class="input input-bordered" name="username" maxlength="64"
+                required autocomplete="off" value="{{ username }}" pattern="[A-Za-z0-9_.\-]+"
+                title="Use letters, digits, dots, underscores or hyphens.">
+            <label for="users-role">Role</label>
+            <select id="users-role" class="select select-bordered" name="role">
+                <option value="viewer"{{ viewer }}>viewer</option>
+                <option value="operator"{{ operator }}>operator</option>
+                <option value="admin"{{ admin }}>admin</option>
+            </select>
+            <p class="sb-note">Sibuna will show a temporary password once. It expires in one hour
+                and must be replaced at first sign-in. Deliver it privately
+                to the account owner.</p>
+            <label><input class="checkbox checkbox-sm" type="checkbox"
+            id="users-create-confirmed" name="confirmed"
+                required{{ confirmed }}> I reviewed the role and will deliver the password
+                privately.</label>
+            <button class="btn btn-primary" type="submit">Create user</button>
+        </fieldset>
+    </form>
+</section>

@@ -106,6 +106,7 @@ export fn sb_event(kind: u32, length: usize) void {
         state.busy = false;
     };
     if (state.phase != previous_phase) {
+        if (previous_phase == .users) state.users.clearSecret();
         state.navigation_open = false;
         command(.{ .op = "focus", .selector = "main h1", .top = true }) catch unreachable;
     }
@@ -135,9 +136,7 @@ fn finish() void {
 }
 
 fn command(value: anytype) !void {
-    if (command_count > 0) try command_writer.writeByte(',');
-    try std.json.Stringify.value(value, .{}, &command_writer);
-    command_count += 1;
+    try outbox().emit(value);
     // Every navigation path that closes transport must release its subscription guard.
     // Keep the old snapshot visibly stale until a new subscription supplies fresh data.
     if (equal(value.op, "disconnect")) {
@@ -151,25 +150,15 @@ fn get(id: []const u8, path: []const u8) !void {
 }
 
 fn post(id: []const u8, path: []const u8, body: anytype) !void {
-    var json = try requestPrefix(id, path);
-    try json.write(body);
-    try json.endObject();
-    command_count += 1;
+    try outbox().post(id, path, body);
 }
 
-/// Share the transport envelope across typed request bodies to bound generated Wasm code.
-noinline fn requestPrefix(id: []const u8, path: []const u8) !std.json.Stringify {
-    if (command_count > 0) try command_writer.writeByte(',');
-    var json: std.json.Stringify = .{ .writer = &command_writer };
-    try json.beginObject();
-    const names = .{ "op", "method", "id", "path", "csrf" };
-    const values = .{ "request", "POST", id, path, state.csrf.slice() };
-    inline for (names, values) |name, value| {
-        try json.objectField(name);
-        try json.write(value);
-    }
-    try json.objectField("body");
-    return json;
+fn requestPrefix(id: []const u8, path: []const u8) !std.json.Stringify {
+    return outbox().prefix(id, path);
+}
+
+fn outbox() @import("transport.zig").Outbox {
+    return .{ .writer = &command_writer, .count = &command_count, .csrf = state.csrf.slice() };
 }
 
 fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
@@ -213,18 +202,12 @@ fn action(value: std.json.Value) !void {
         state.navigation_open = !state.navigation_open;
         return;
     }
-    if (state.navigation_open) {
-        const destinations = .{
-            "dashboard", "events", "challenges", "policies", "geoip", "account",
-        };
-        inline for (destinations) |destination| {
-            if (equal(name, destination)) {
-                state.navigation_open = false;
-                try command(.{ .op = "focus", .selector = "main h1", .top = true });
-            }
-        }
+    if (state.navigation_open and @import("shell.zig").destination(name)) {
+        state.navigation_open = false;
+        try command(.{ .op = "focus", .selector = "main h1", .top = true });
     }
     const fields = field(value, "fields") orelse .null;
+    if (try @import("users_controller.zig").action(&state, name, fields, outbox())) return;
     if (try policyTransfer(name, fields)) return;
     if (try inspectionAction(name, fields)) return;
     if (try managedAction(name, fields)) return;
@@ -284,6 +267,8 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
     if (status_value != .integer) return;
     const status = status_value.integer;
     const body = field(value, "body") orelse return;
+    if (std.mem.startsWith(u8, id, "users-"))
+        return @import("users_controller.zig").response(&state, id, status, body, alloc, outbox());
     if (std.mem.startsWith(u8, id, "rankings-") or std.mem.startsWith(u8, id, "timeline-") or
         std.mem.startsWith(u8, id, "minutes-"))
         return observationResponse(id, status, body, alloc);
@@ -317,6 +302,11 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
         return;
     }
     if (equal(id, "session") or equal(id, "login") or equal(id, "password")) {
+        state.user_id = try @import("json_value.zig").decode(
+            u64,
+            field(body, "user") orelse return error.InvalidResponse,
+            alloc,
+        );
         state.csrf = try p.Bytes(64).init(string(body, "csrf"));
         state.role = try p.Bytes(16).init(string(body, "role"));
         const change = field(body, "must_change");
@@ -591,7 +581,7 @@ test "geometry failures delay retries and cannot publish after revocation" {
 test "required password changes cannot open subscriptions through navigation" {
     sb_init();
     const login =
-        \\{"id":"session","status":200,"body":{"csrf":"test","role":"admin",
+        \\{"id":"session","status":200,"body":{"user":1,"csrf":"test","role":"admin",
         \\"must_change":true}}
     ;
     @memcpy(input[0..login.len], login);
@@ -704,7 +694,7 @@ fn securityResponse(id: []const u8, status: i64, body: std.json.Value) !void {
 test "required authenticator enrollment cannot open dashboard data or geometry" {
     sb_init();
     const login =
-        \\{"id":"login","status":200,"body":{"csrf":"test","role":"admin",
+        \\{"id":"login","status":200,"body":{"user":1,"csrf":"test","role":"admin",
         \\"must_change":false,"totp_required":true}}
     ;
     @memcpy(input[0..login.len], login);

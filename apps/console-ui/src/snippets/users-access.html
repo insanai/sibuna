@@ -1,0 +1,19 @@
+<form class="sb-settings-form" id="users-access" data-change="users-draft">
+    <fieldset{{ busy }}>
+        <legend>Role and enabled state</legend>
+        <label for="users-role">Role</label>
+        <select id="users-role" class="select select-bordered" name="role">
+            <option value="viewer"{{ viewer }}>viewer</option>
+            <option value="operator"{{ operator }}>operator</option>
+            <option value="admin"{{ admin }}>admin</option>
+        </select>
+        <label><input class="checkbox checkbox-sm" type="checkbox"
+            id="users-disabled" name="disabled"{{ disabled }}>
+            Disable this account</label>
+        <label><input class="checkbox checkbox-sm" type="checkbox"
+            id="users-access-confirmed" name="confirmed"
+            required{{ confirmed }}> I reviewed these access changes
+            and session revocation.</label>
+        <button class="btn btn-primary" type="submit">Save account access</button>
+    </fieldset>
+</form>

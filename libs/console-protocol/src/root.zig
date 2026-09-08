@@ -317,6 +317,29 @@ pub fn writeCounter(writer: *std.json.Stringify, value: u64) std.json.Stringify.
     try writer.write(text);
 }
 
+pub const Counter = struct {
+    value: u64,
+    pub fn jsonStringify(
+        self: Counter,
+        writer: *std.json.Stringify,
+    ) std.json.Stringify.Error!void {
+        return writeCounter(writer, self.value);
+    }
+};
+
+test "session account identifiers retain their complete range across browser JSON" {
+    var buffer: [128]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&buffer);
+    try std.json.Stringify.value(.{
+        .small = Counter{ .value = 1 },
+        .large = Counter{ .value = 9007199254740993 },
+    }, .{}, &writer);
+    try std.testing.expectEqualStrings(
+        "{\"small\":1,\"large\":\"9007199254740993\"}",
+        writer.buffered(),
+    );
+}
+
 pub fn validUsername(username: []const u8) bool {
     if (username.len == 0 or username.len > 64) return false;
     for (username) |byte| {

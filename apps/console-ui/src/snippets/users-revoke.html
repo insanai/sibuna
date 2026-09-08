@@ -1,0 +1,10 @@
+<form class="sb-settings-form" id="{{ action }}">
+    <fieldset{{ busy }}>
+        <legend>{{ title }}</legend>
+        <p class="sb-note">{{ explanation }}</p>
+        <label><input class="checkbox checkbox-sm" type="checkbox"
+            id="{{ action }}-confirmed" name="confirmed" required>
+            I understand this ends the account's sessions.</label>
+        <button class="btn btn-outline" type="submit">{{ title }}</button>
+    </fieldset>
+</form>

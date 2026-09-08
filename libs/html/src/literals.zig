@@ -2,15 +2,60 @@
 //! NUL introduces a dictionary index; literal NUL falls back to the original bytes.
 const std = @import("std");
 const Writer = std.Io.Writer;
-const dictionary = [_][]const u8{
-    " type=\"checkbox\"", " type=\"button\"", " type=\"submit\"", " placeholder=\"",
-    " data-action=\"",    " aria-label=\"",   " type=\"text\"",   "</textarea>",
-    " tabindex=\"",       "</section>",       "</article>",       "<textarea",
-    "</button>",          "</option>",        "</select>",        " class=\"",
-    "<section",           "<article",         "</label>",         "<button",
-    " name=\"",           "</span>",          "<option",          "<select",
-    " value=\"",          "<label",           "</div>",           "<input",
-    " id=\"",             "<span",            "<div",             "</p>",
+pub const dictionary = [_][]const u8{
+    "\n                ",
+    "\n            ",
+    "\n        ",
+    "\n    ",
+    "btn btn-primary",
+    "btn btn-outline",
+    "btn btn-sm",
+    "input input-bordered",
+    "checkbox checkbox-sm",
+    "select select-bordered",
+    "textarea textarea-bordered",
+    "sb-settings-form",
+    "sb-rule-field",
+    "sb-subtitle",
+    "sb-header",
+    "sb-panel",
+    "sb-note",
+    "border border-base-300",
+    "bg-base-100",
+    "font-bold",
+    " type=\"number\"",
+    " type=\"checkbox\"",
+    " type=\"button\"",
+    " type=\"submit\"",
+    " placeholder=\"",
+    " data-action=\"",
+    " aria-label=\"",
+    " type=\"text\"",
+    "</textarea>",
+    " tabindex=\"",
+    "</section>",
+    "</article>",
+    "<textarea",
+    "</button>",
+    "</option>",
+    "</select>",
+    " class=\"",
+    "<section",
+    "<article",
+    "</label>",
+    "<button",
+    " name=\"",
+    "</span>",
+    "<option",
+    "<select",
+    " value=\"",
+    "<label",
+    "</div>",
+    "<input",
+    " id=\"",
+    "<span",
+    "<div",
+    "</p>",
 };
 
 pub fn write(w: *Writer, comptime source: []const u8) Writer.Error!void {
@@ -29,7 +74,7 @@ fn raw(w: *Writer, comptime source: []const u8) Writer.Error!void {
     return w.writeAll(&bytes);
 }
 
-fn match(source: []const u8) ?u8 {
+pub fn match(source: []const u8) ?u8 {
     for (dictionary, 0..) |entry, i| {
         if (std.mem.startsWith(u8, source, entry)) return @intCast(i);
     }

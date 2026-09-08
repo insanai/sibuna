@@ -11,6 +11,7 @@ pub const Phase = enum {
     challenges,
     similarity,
     policies,
+    users,
 };
 
 test "session reset wipes retained credentials and request bodies and restores defaults" {
@@ -43,6 +44,8 @@ pub const State = struct {
     username: p.Bytes(64) = .{},
     csrf: p.Bytes(64) = .{},
     role: p.Bytes(16) = .{},
+    user_id: u64 = 0,
+    users: @import("users_state.zig").Model = .{},
     busy: bool = false,
     must_change: bool = false,
     totp_required: bool = false,
@@ -93,6 +96,8 @@ pub const State = struct {
                 self.minute_history.clear();
             } else if (comptime @import("std").mem.eql(u8, field.name, "events")) {
                 self.events.clear();
+            } else if (comptime @import("std").mem.eql(u8, field.name, "users")) {
+                self.users.clear();
             } else @field(self, field.name) = field.defaultValue().?;
         }
     }

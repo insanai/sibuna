@@ -20,6 +20,8 @@ pub fn render(w: *Writer, comptime source: []const u8, values: anytype) Writer.E
             @compileError("HTML002: unsupported tag; use Zig control flow and composition");
         }
     }
+    if (comptime @import("text_template.zig").supports(@TypeOf(values)))
+        return @import("text_template.zig").render(w, source, values);
     comptime var cursor: usize = 0;
     comptime var slots: usize = 0;
     inline while (comptime std.mem.indexOfPos(u8, source, cursor, "{{")) |start| {
@@ -43,7 +45,7 @@ pub fn render(w: *Writer, comptime source: []const u8, values: anytype) Writer.E
     try @import("literals.zig").write(w, source[cursor..]);
 }
 
-fn validateName(comptime name: []const u8) void {
+pub fn validateName(comptime name: []const u8) void {
     if (name.len == 0) @compileError("HTML006: empty placeholder; supply a field name");
     for (name, 0..) |byte, i| {
         const valid = std.ascii.isAlphabetic(byte) or byte == '_' or
@@ -102,4 +104,35 @@ test "escaping expansion respects the caller's fixed output capacity" {
     try std.testing.expectError(error.WriteFailed, render(&writer, "{{ text }}", .{
         .text = "&&",
     }));
+}
+
+test "compiled text slots preserve repeated names, whitespace, literal NUL and injected syntax" {
+    var buffer: [512]u8 = undefined;
+    var writer: Writer = .fixed(&buffer);
+    try render(&writer, "<p>\n    {{ second }} / {{ first }} / {{ second }}\x00</p>", .{
+        .first = "世界<&",
+        .second = "{{ first }}\"'",
+    });
+    try std.testing.expectEqualStrings(
+        "<p>\n    {{ first }}&quot;&#39; / 世界&lt;&amp; / {{ first }}&quot;&#39;\x00</p>",
+        writer.buffered(),
+    );
+    writer = .fixed(&buffer);
+    try render(&writer, "<p>no slots</p>", .{});
+    try std.testing.expectEqualStrings("<p>no slots</p>", writer.buffered());
+}
+
+test "shared scalar formatting preserves signed minima, unsigned maxima and booleans" {
+    var buffer: [128]u8 = undefined;
+    var writer: Writer = .fixed(&buffer);
+    try render(&writer, "{{ low }} {{ high }} {{ yes }} {{ no }}", .{
+        .low = @as(i64, std.math.minInt(i64)),
+        .high = @as(u64, std.math.maxInt(u64)),
+        .yes = true,
+        .no = false,
+    });
+    try std.testing.expectEqualStrings(
+        "-9223372036854775808 18446744073709551615 true false",
+        writer.buffered(),
+    );
 }

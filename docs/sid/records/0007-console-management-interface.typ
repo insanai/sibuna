@@ -2766,6 +2766,52 @@ role change, WebSocket/session revocation, password reset, disable/enable and re
 persistence. It preserves the production password-verification rate limit by separating
 its phases with a restart. This API foundation does not complete the users UI or CLI gates.
 
+
+== Account-management interface and shared snippet execution (2026-09-08)
+
+The authenticated Users page now provides bounded account browsing, creation, role and
+enabled-state editing, password reset and explicit session revocation. Viewers receive a
+read-only catalog. Administrator mutations carry the selected account revision; rejected
+or uncertain outcomes remain visible, and refresh obtains current records. A failed page
+request cannot relabel the previous page's rows. Request tickets are never reused after
+navigation, so delayed replies cannot overwrite a newer view or end a different session.
+
+Temporary credentials appear in a labelled, read-only field only after the acknowledged
+mutation. The page erases its retained credential on dismissal, navigation and session
+reset. Creation/reset requires delivery confirmation; access changes and revocation have
+explicit confirmation controls. Self access/password changes are omitted in favor of the
+Account workflow and a different administrator; self-revocation explicitly signs out the
+current session. Account IDs retain full 64-bit precision through authentication responses
+and decimal-string mutation fields. Last-login values remain “Not recorded” for historical
+accounts without an observation.
+
+The HTML source remains ordinary first-party snippets. Their build-time compiler now
+encodes literal dictionary entries and escaped text/scalar slots in a compact immutable
+program. Runtime execution accepts only compiler-produced instructions and borrowed values:
+no runtime template source, raw HTML values, allocation or browser application logic was
+introduced. Tests cover repeated slots, exact whitespace and NUL preservation, UTF-8,
+escaping, output exhaustion and signed/unsigned integer limits. A concrete flat-object
+JSON writer shares simple command encoding while nested contracts retain the standard
+serializer; byte-for-byte tests cover quoting, null, optional values, enums and integer bounds.
+Navigation also uses one bounded rendering loop instead of expanding every item.
+
+The complete interface is 307,031 bytes, within the unchanged 300 KiB gate and 4 MiB linear
+memory bound. Account-controller tests cover late responses, authentication restrictions,
+revision conflicts, exact IDs, preservation of unrelated access drafts and credential
+erasure. Render tests protect self-management boundaries, read-only roles and the bridge's
+form-ID submission contract. Browser review caught an initial data-submit/form-ID mismatch;
+the forms now use the existing bridge contract and stable focus IDs. The running daemon
+passed browser creation, password reset, forced rotation, viewer access, role change,
+disablement and self-revocation. Account buttons identify their target and rows have clear
+separation. Pagination moves focus to the results; acknowledged credentials receive focus
+for copying. Browser checks confirmed two-page navigation, result focus and no horizontal
+overflow at 390 pixels with a 64-character account name. Native username validation
+describes the accepted characters. The required
+repository run passed all 283 tests, live daemon scenarios, formatting and SID generation.
+Storage-off, console-off and clustered builds pass; this does not establish
+cluster-management acceptance. CLI account commands, API tokens, audit investigation and
+the remaining operational workflows still require implementation and their own gates.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

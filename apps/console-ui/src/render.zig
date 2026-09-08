@@ -11,6 +11,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
 }
 
 fn page(state: *const State, w: *Writer) Writer.Error!void {
+    if (state.phase == .users) return @import("users_page.zig").render(state, w);
     if (state.phase == .policies) return @import("policies_page.zig").render(state, w);
     if (state.phase == .similarity) return @import("similarity_page.zig").render(state, w);
     if (state.phase == .challenges) return @import("challenges_page.zig").render(state, w);
@@ -279,10 +280,10 @@ test "authentication renders no geographic or telemetry element and escapes inpu
 
 test "authenticated pages share one navigation landmark with the correct active section" {
     const phases = [_]@import("state.zig").Phase{
-        .dashboard, .events, .similarity, .challenges, .geoip, .password, .security,
+        .dashboard, .events, .similarity, .challenges, .geoip, .password, .security, .users,
     };
     const actions = [_][]const u8{
-        "dashboard", "events", "events", "challenges", "geoip", "account", "account",
+        "dashboard", "events", "events", "challenges", "geoip", "account", "account", "users",
     };
     for (phases, 0..) |phase, i| {
         var state: State = .{ .phase = phase };

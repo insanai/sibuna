@@ -313,7 +313,7 @@ pub const App = struct {
                 const raw = try http.sessionToken(context);
                 const csrf = std.fmt.bytesToHex(http.csrfToken(raw), .lower);
                 return http.json(context, .{
-                    .user = user.actor,
+                    .user = p.Counter{ .value = user.actor },
                     .role = @tagName(user.role),
                     .must_change = user.must_change,
                     .expires = user.expires,
