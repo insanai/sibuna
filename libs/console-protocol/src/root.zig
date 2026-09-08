@@ -5,6 +5,7 @@ pub const similarity = @import("similarity.zig");
 pub const policies = @import("policies.zig");
 pub const challenges = @import("challenges.zig");
 pub const rankings = @import("rankings.zig");
+pub const ranking_storage = @import("ranking_storage.zig");
 pub const events = @import("events.zig");
 pub const auth = @import("auth.zig");
 pub const geo = @import("geo.zig");
@@ -70,6 +71,10 @@ pub const Principal = struct {
     totp_enabled: bool = false,
 };
 pub const StorageRequest = union(enum) {
+    rankings_begin: ranking_storage.Begin,
+    rankings_chunk: ranking_storage.Chunk,
+    rankings_finish: ranking_storage.Finish,
+    rankings_prune: u64,
     setup_status,
     totp_read: u64,
     totp_begin: auth.Enrollment,

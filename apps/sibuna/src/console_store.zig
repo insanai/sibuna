@@ -25,6 +25,10 @@ pub fn tick(owner: *Persistent) void {
 pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
     if (!owner.console_initialized) try @import("console_migrations.zig").run(owner);
     return switch (request) {
+        .rankings_begin => |input| @import("console_store_rankings.zig").begin(owner, input),
+        .rankings_chunk => |input| @import("console_store_rankings.zig").chunk(owner, input),
+        .rankings_finish => |input| @import("console_store_rankings.zig").finish(owner, input),
+        .rankings_prune => |now| @import("console_store_rankings.zig").prune(owner, now),
         .policy_read => |input| @import("console_policy_read.zig").read(owner, input),
         .policy_edit => |input| @import("console_policy_write.zig").edit(owner, input),
         .policies_query => |input| @import("console_store_policies.zig").query(owner, input),

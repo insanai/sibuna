@@ -2102,6 +2102,28 @@ Native tests exercise the maximum 256-counter record and incomplete archives.
 This codec is a storage prerequisite; durable publication and recovery are not yet
 implemented by this increment.
 
+== Transactional ranking archive storage (2026-09-08)
+
+Console schema version 9 adds bounded staging, immutable 2 KiB chunks and a unique
+node/boot/minute archive index. Publication verifies all chunks, the SHA-256 digest
+and the complete SBR1 record before inserting the index. Identical retries succeed;
+conflicting chunks or archive identities preserve the published record. Each query
+stays within the prepared native and supported replicated-facade bounds. Only the
+existing Persistent owner executes these typed internal operations.
+
+Staging admits at most 64 records and reserves against a 512 MiB charged retention
+budget, including conservative chunk/index allowances. This is a retained-data
+reservation, not the shared database file's physical size. Cleanup removes at most
+two ten-minute-old staging records and two expired or quota-pressure archives per
+invocation; normal ranking retention is seven days. Triggers release reservations
+and remove corresponding chunks atomically with each deletion.
+
+Deterministic storage ticks verified copied input ownership, incomplete publication,
+chunk conflicts, checksums, unique archive conflicts, quota and staging exhaustion,
+bounded cleanup, migration replay and restart recovery. Full formatting, test and
+SID checks passed. The collector publisher and historical query interface remain
+pending; these internal operations are not browser ingestion endpoints.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

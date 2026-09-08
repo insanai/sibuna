@@ -1,5 +1,6 @@
 //! Versioned additive schema. The owner serializes migration before serving console work.
-pub const version = 8;
+pub const version = 9;
+pub const rankings_v9 = @import("schema_rankings.zig").sql;
 pub const policy_v8 = @import("schema_policy.zig").sql;
 pub const campaign_v7 = @import("schema_campaign.zig").sql;
 pub const evidence_v6 = @import("schema_evidence.zig").sql;

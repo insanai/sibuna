@@ -13,6 +13,7 @@ test {
 
 pub const geoip_gzip = @import("geoip_gzip.zig");
 pub const geoip = @import("geoip.zig");
+pub const rankings_archive = @import("rankings_archive.zig");
 pub const schema = @import("schema.zig");
 pub const Password = @import("password.zig").Password;
 test {

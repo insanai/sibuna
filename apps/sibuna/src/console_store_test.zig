@@ -7,13 +7,13 @@ const p = @import("console").protocol;
 const db = @import("console_database.zig");
 const t = std.testing;
 
-const Fixture = struct {
+pub const Fixture = struct {
     engine: policy.Engine,
     slot: server.EngineSlot,
     state: server.AppState,
     owner: *Persistent,
 
-    fn open(path: []const u8) !*Fixture {
+    pub fn open(path: []const u8) !*Fixture {
         const self = try t.allocator.create(Fixture);
         errdefer t.allocator.destroy(self);
         var cfg = core.Config.default();
@@ -25,12 +25,12 @@ const Fixture = struct {
         return self;
     }
 
-    fn close(self: *Fixture) void {
+    pub fn close(self: *Fixture) void {
         self.owner.stop();
         t.allocator.destroy(self);
     }
 
-    fn run(self: *Fixture, request: p.StorageRequest) !p.StorageResult {
+    pub fn run(self: *Fixture, request: p.StorageRequest) !p.StorageResult {
         const ticket = try self.owner.console_mailbox.submit(t.io, request, .urgent);
         try self.owner.tick();
         return (try self.owner.console_mailbox.poll(t.io, ticket)).?;
