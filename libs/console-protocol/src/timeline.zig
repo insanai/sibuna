@@ -32,6 +32,7 @@ pub const Bucket = struct {
     observations: u32 = 0,
     /// A delayed collector or wall-clock discontinuity prevents per-second attribution.
     gap: bool = false,
+    partial: bool = false,
     counts: Counts = .{},
 
     pub fn jsonStringify(self: Bucket, writer: *std.json.Stringify) std.json.Stringify.Error!void {

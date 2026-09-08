@@ -74,6 +74,7 @@ pub const State = struct {
     recovery_count: usize = 0,
     stats: ?p.StatsSnapshot = null,
     timeline_open: bool = false,
+    timeline: @import("timeline_panel.zig").Model = .{},
     points: [60]@import("stats_series.zig").Point = @splat(.{}),
 
     /// Reset owned fields individually so the Wasm binary does not carry a second
@@ -82,6 +83,10 @@ pub const State = struct {
         inline for (@typeInfo(State).@"struct".fields) |field| {
             if (comptime @import("std").mem.eql(u8, field.name, "rankings")) {
                 self.rankings.clear();
+            } else if (comptime @import("std").mem.eql(u8, field.name, "timeline")) {
+                self.timeline.clear();
+            } else if (comptime @import("std").mem.eql(u8, field.name, "events")) {
+                self.events.clear();
             } else @field(self, field.name) = field.defaultValue().?;
         }
     }

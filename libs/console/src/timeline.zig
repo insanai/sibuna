@@ -92,6 +92,7 @@ pub const Timeline = struct {
                 break;
             }
             output[count] = self.slots[sequence % p.capacity];
+            output[count].partial = sequence == newest;
             count += 1;
         }
         return .{

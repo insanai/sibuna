@@ -2390,8 +2390,31 @@ unconfirmed cleanup attempts have a separate since-boot coverage counter. Determ
 tests exercise in-flight completion after timeout, pacing and shutdown cancellation.
 The optimized live-daemon test exercises authentication/CSRF, invalid limits, retained
 outcome counts before any subscriber connects, pagination and restart cursor rejection.
-Durable minute history, metric families beyond outcomes, full retained-history UI and
-the active-console impact gate remain pending.
+The dashboard's expandable retained-values table requests ten rows per page. Latest
+refreshes every ten seconds while visible; Older holds its selected page through live
+statistics refreshes. Counts, actual elapsed milliseconds, observed rate and gap status
+remain accessible in a keyboard-scrollable table. The newest interval is explicitly
+labelled Collecting until a later monotonic bucket closes it. Boot/epoch conflicts require Latest;
+failed reads preserve old values with an unavailable notice. Request generations survive
+session resets without retaining credentials, so an old response cannot expire a new
+session. The 60-second chart still reflects consecutive browser observations; a full
+3,600-point server-history chart, durable minute history and metric families beyond
+outcomes remain pending.
+
+The additional interface initially exceeded the 300 KiB Wasm gate. Removing duplicate
+event-row initialization images across reset, navigation and decoder paths reduced
+the final module to 299,213 bytes. Tests compare all semantic defaults and confirm
+owned incident display buffers are erased; campaign time boundaries and exact IDs
+retain their previous behavior. The bundle limit was not raised. Active-console impact
+and the full SID browser acceptance gate remain pending.
+
+The final browser review observed six real denied requests in a retained interval,
+checked that Older stays fixed through live updates, and verified Latest refresh,
+the Collecting label, keyboard scrolling and unwrapped timestamps at 390 px. At
+1,440 px the persistent navigation remained present across Statistics, Events and
+Policies; incident pagination remained functional after the initialization change.
+Neither viewport acquired document-level horizontal overflow. Formatting, native
+console/UI tests, full repository tests and SID generation passed.
 
 = References
 

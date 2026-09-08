@@ -44,7 +44,7 @@ fn page(state: *const State, w: *Writer) Writer.Error!void {
     try timeline(state, w);
     try w.writeAll("<p class=\"sb-note\">External requests per second, using observed " ++
         "monotonic elapsed time. Restarts, clock changes and gaps remain unobserved.</p>");
-    try @import("stats_series.zig").table(state, w);
+    try @import("timeline_panel.zig").table(state, w);
     try w.writeAll("<h2 class=\"mt-6\">Coverage</h2><table class=\"table\"><tbody>");
     try coverage(state, w);
     try w.writeAll("</tbody></table></article></section>");

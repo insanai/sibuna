@@ -25,6 +25,7 @@ test "four counter observations conserve outcomes and monotonic duration within 
     try t.expectEqual(@as(u64, 800), bucket.observed_ms);
     try t.expectEqual(@as(u32, 4), bucket.observations);
     try t.expect(!bucket.gap);
+    try t.expect(bucket.partial);
     // Zero elapsed observations must not discard counts or divide by zero.
     totals.admitted += 2;
     timeline.observe(100, 800, totals);
@@ -32,6 +33,7 @@ test "four counter observations conserve outcomes and monotonic duration within 
     const next = try timeline.page(.{}, 7, boot, &rows);
     try t.expectEqual(@as(u64, 2), next.rows[0].counts.admitted);
     try t.expectEqual(@as(u64, 200), next.rows[0].observed_ms);
+    try t.expect(next.rows[0].partial and !next.rows[1].partial);
 }
 
 test "retention and keyset pagination are bounded and cursors cannot cross a reset" {

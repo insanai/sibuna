@@ -11,7 +11,7 @@ pub fn act(state: *State, name: []const u8, fields: std.json.Value) !bool {
     if (std.mem.eql(u8, name, "events")) {
         state.phase = .events;
         state.stats_busy = false;
-        model.* = .{};
+        model.clear();
         model.until = state.browser_time;
     } else {
         if (state.phase != .events or model.busy) return false;
@@ -109,13 +109,14 @@ fn campaign(state: *State, name: []const u8) !bool {
     const id = if (clear) 0 else try std.fmt.parseInt(u64, name[prefix.len..], 10);
     if (id > std.math.maxInt(i64) or (!clear and id == 0)) return error.InvalidRequest;
     // Candidate membership spans addresses and nodes; retain only the reader's time boundary.
-    model.* = .{
-        .campaign = id,
-        .until = model.until,
-        .hours = model.hours,
-        .busy = true,
-        .focus_results = true,
-    };
+    const until = model.until;
+    const hours = model.hours;
+    model.clear();
+    model.campaign = id;
+    model.until = until;
+    model.hours = hours;
+    model.busy = true;
+    model.focus_results = true;
     state.message = .{};
     return true;
 }
@@ -142,7 +143,10 @@ fn incident(state: *State, name: []const u8) !bool {
     if (!clear and !std.mem.startsWith(u8, name, prefix)) return false;
     const id = if (clear) 0 else try std.fmt.parseInt(u64, name[prefix.len..], 10);
     if (id > std.math.maxInt(i64) or (!clear and id == 0)) return error.InvalidRequest;
-    state.events = .{ .incident = id, .until = state.browser_time, .busy = true };
+    state.events.clear();
+    state.events.incident = id;
+    state.events.until = state.browser_time;
+    state.events.busy = true;
     state.phase = .events;
     state.similarity.running = false;
     state.message = .{};

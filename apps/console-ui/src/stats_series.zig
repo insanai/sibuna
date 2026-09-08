@@ -30,38 +30,6 @@ pub fn rate(point: Point) f64 {
         @as(f64, @floatFromInt(point.duration_ms));
 }
 
-pub fn table(state: *const State, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-    const stats = state.stats orelse return;
-    try writer.print("<button type=\"button\" class=\"btn btn-sm\" " ++
-        "data-action=\"timeline-values\" aria-expanded=\"{}\" " ++
-        "aria-controls=\"timeline-values\">Observed timeline values</button>", .{
-        state.timeline_open,
-    });
-    if (!state.timeline_open) return writer.writeAll("<div id=\"timeline-values\" hidden></div>");
-    try writer.writeAll("<div id=\"timeline-values\" data-preserve-scroll " ++
-        "class=\"overflow-x-auto\" tabindex=\"0\" role=\"region\" " ++
-        "aria-label=\"Scrollable timeline values\">" ++
-        "<table class=\"table\"><caption>Last ten available intervals</caption><thead><tr>" ++
-        "<th>Ending at</th><th>Requests</th><th>Milliseconds</th><th>Requests/s</th>" ++
-        "</tr></thead><tbody>");
-    var rows: usize = 0;
-    for (0..60) |offset| {
-        const second = stats.timestamp -| offset;
-        const point = state.points[@intCast(second % 60)];
-        if (point.second != second or point.duration_ms == 0) continue;
-        try writer.writeAll("<tr><td>");
-        try @import("events_page.zig").timestamp(writer, second);
-        try writer.print("</td><td>{d}</td><td>{d}</td><td>{d:.2}</td></tr>", .{
-            point.count, point.duration_ms, rate(point),
-        });
-        rows += 1;
-        if (rows == 10) break;
-    }
-    if (rows == 0) try writer.writeAll("<tr><td colspan=\"4\">No consecutive observations " ++
-        "with known boot and timing.</td></tr>");
-    try writer.writeAll("</tbody></table></div>");
-}
-
 test "live deltas reject restarts, clock discontinuities, unknown boots and missing intervals" {
     const t = std.testing;
     const initial: p.StatsSnapshot = .{

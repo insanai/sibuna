@@ -21,9 +21,17 @@ pub const Model = struct {
     hours: u32 = 0,
     until: u64 = 0,
 
+    pub fn clear(self: *Model) void {
+        @memset(std.mem.asBytes(self), 0);
+        self.next = null;
+        for (&self.cursors) |*cursor| cursor.* = null;
+        for (&self.rows) |*row| clearRow(row);
+    }
+
     pub fn decode(self: *Model, value: WirePage) !void {
         if (value.rows.len > self.rows.len) return error.InvalidResponse;
-        var parsed: [10]p.events.Row = @splat(.{});
+        var parsed: [10]p.events.Row = undefined;
+        for (&parsed) |*row| clearRow(row);
         for (value.rows, 0..) |row, i| {
             if (row.capture) |capture| {
                 if (capture.version != 1) return error.InvalidResponse;
@@ -57,6 +65,31 @@ pub const Model = struct {
         self.loaded = true;
     }
 };
+
+/// Keep per-row initialization out of the caller so the optimizer cannot replace the
+/// loop with a duplicate multi-kilobyte default row array in the Wasm data segment.
+noinline fn clearRow(row: *p.events.Row) void {
+    @memset(std.mem.asBytes(row), 0);
+    row.capture = null;
+    row.campaign = null;
+    row.count = 1;
+}
+
+test "event reset restores every default and erases retained evidence display buffers" {
+    const t = std.testing;
+    var model: Model = .{ .loaded = true, .count = 1, .next = .{ .time = 10, .id = 8 } };
+    model.rows[0].path = try p.Bytes(256).init("private incident path");
+    model.rows[0].capture = .{
+        .selected_status = 403,
+        .query_bytes = 1,
+        .body_bytes = 2,
+        .declared_body_bytes = 2,
+        .truncated = 0,
+    };
+    model.clear();
+    try t.expectEqualDeep(Model{}, model);
+    try t.expect(std.mem.allEqual(u8, &model.rows[0].path.data, 0));
+}
 
 pub fn field(value: std.json.Value, key: []const u8) ?std.json.Value {
     return if (value == .object) value.object.get(key) else null;

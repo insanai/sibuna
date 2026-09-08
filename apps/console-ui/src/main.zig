@@ -273,8 +273,8 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
     if (status_value != .integer) return;
     const status = status_value.integer;
     const body = field(value, "body") orelse return;
-    if (std.mem.startsWith(u8, id, "rankings-"))
-        return rankingResponse(id, status, body, alloc);
+    if (std.mem.startsWith(u8, id, "rankings-") or std.mem.startsWith(u8, id, "timeline-"))
+        return observationResponse(id, status, body, alloc);
     if (std.mem.startsWith(u8, id, "policies-") or
         std.mem.startsWith(u8, id, "policy-test-") or std.mem.startsWith(u8, id, "managed-"))
         return policyResponse(id, status, body);
@@ -414,6 +414,7 @@ fn statsResponse(status: i64, body: std.json.Value, alloc: std.mem.Allocator) !v
     state.stats = snapshot;
     state.received_at = state.browser_time;
     try refreshRankings();
+    try refreshTimeline(false);
     if (state.fullAccess() and state.geometry == null and !state.geometry_busy and
         state.browser_time >= state.geometry_retry_at)
     {
@@ -428,14 +429,22 @@ fn refreshRankings() !void {
     try get(id.slice(), "/console/api/rankings");
 }
 
-fn rankingResponse(
+fn refreshTimeline(force: bool) !void {
+    const request = @import("timeline_panel.zig").request(&state, force) orelse return;
+    try post(request.id.slice(), "/console/api/timeline", request.body);
+}
+
+fn observationResponse(
     id: []const u8,
     status: i64,
     body: std.json.Value,
     alloc: std.mem.Allocator,
 ) !void {
-    const result = @import("rankings_controller.zig").response(&state, id, status, body, alloc);
-    if (result != .expired) return;
+    const expired = if (std.mem.startsWith(u8, id, "timeline-"))
+        @import("timeline_panel.zig").response(&state, id, status, body, alloc)
+    else
+        @import("rankings_controller.zig").response(&state, id, status, body, alloc) == .expired;
+    if (!expired) return;
     resetState(.login);
     setMessage("Your session ended. Sign in to continue.");
     try command(.{ .op = "disconnect" });
@@ -462,30 +471,13 @@ fn geographicAction(name: []const u8, fields: std.json.Value) !bool {
     if (state.phase != .dashboard) return false;
     if (equal(name, "timeline-values")) {
         state.timeline_open = !state.timeline_open;
-    } else if (equal(name, "globe-motion")) {
-        state.motion.rotating = !state.motion.rotating;
-        state.motion.last_ms = 0;
-    } else if (equal(name, "rotate-left")) {
-        state.motion.rotating = false;
-        state.globe.lon -= 20;
-    } else if (equal(name, "rotate-right")) {
-        state.motion.rotating = false;
-        state.globe.lon += 20;
-    } else if (equal(name, "reset-globe")) {
-        state.globe = .{};
-        state.motion.rotating = true;
-    } else if (equal(name, "flat-map")) {
-        state.globe.flat = !state.globe.flat;
-    } else if (std.mem.startsWith(u8, name, "country-")) {
-        state.motion.rotating = false;
-        const code = std.fmt.parseInt(u16, name[8..], 10) catch return false;
-        if (state.geometry) |bytes| {
-            if (@import("geography.zig").center(bytes, code)) |position|
-                state.globe = .{ .lon = position.lon, .lat = position.lat };
+        try refreshTimeline(false);
+    } else if (equal(name, "timeline-latest") or equal(name, "timeline-older")) {
+        if (!state.timeline.busy and !state.paused) {
+            state.timeline.before = if (equal(name, "timeline-latest")) 0 else state.timeline.next;
+            try refreshTimeline(true);
         }
-    } else return false;
-    if (state.globe.lon > 180) state.globe.lon -= 360;
-    if (state.globe.lon < -180) state.globe.lon += 360;
+    } else return @import("globe_motion.zig").action(&state, name);
     return true;
 }
 
@@ -762,7 +754,7 @@ fn eventResponse(status: i64, body: ?@import("events_state.zig").WirePage) !void
     if (state.phase != .events) return;
     state.events.busy = false;
     if (status == 401 or status == 403) {
-        state.events = .{};
+        state.events.clear();
         state.csrf = .{};
         state.phase = .login;
         setMessage("Your access changed. Sign in again to view incidents.");

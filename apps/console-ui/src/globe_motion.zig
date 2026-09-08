@@ -8,6 +8,34 @@ pub const Motion = struct {
 };
 pub var output: [512 * 1024]u8 = undefined;
 
+pub fn action(state: *State, name: []const u8) bool {
+    if (std.mem.eql(u8, name, "globe-motion")) {
+        state.motion.rotating = !state.motion.rotating;
+        state.motion.last_ms = 0;
+    } else if (std.mem.eql(u8, name, "rotate-left")) {
+        state.motion.rotating = false;
+        state.globe.lon -= 20;
+    } else if (std.mem.eql(u8, name, "rotate-right")) {
+        state.motion.rotating = false;
+        state.globe.lon += 20;
+    } else if (std.mem.eql(u8, name, "reset-globe")) {
+        state.globe = .{};
+        state.motion.rotating = true;
+    } else if (std.mem.eql(u8, name, "flat-map")) {
+        state.globe.flat = !state.globe.flat;
+    } else if (std.mem.startsWith(u8, name, "country-")) {
+        state.motion.rotating = false;
+        const code = std.fmt.parseInt(u16, name[8..], 10) catch return false;
+        if (state.geometry) |bytes| {
+            if (@import("geography.zig").center(bytes, code)) |position|
+                state.globe = .{ .lon = position.lon, .lat = position.lat };
+        }
+    } else return false;
+    if (state.globe.lon > 180) state.globe.lon -= 360;
+    if (state.globe.lon < -180) state.globe.lon += 360;
+    return true;
+}
+
 pub fn advance(state: *State, milliseconds: f64) bool {
     const motion = &state.motion;
     if (!state.fullAccess() or state.phase != .dashboard or state.geometry == null or
