@@ -209,7 +209,10 @@ pub const App = struct {
     }
 
     pub fn restricted(self: *App, identity: p.Principal) bool {
-        return identity.must_change or self.needsTotp(identity.role, identity.totp_enabled);
+        return identity.must_change or self.needsTotp(
+            identity.account_role orelse identity.role,
+            identity.totp_enabled,
+        );
     }
 
     fn dispatch(self: *App, context: *http.Context) !void {
@@ -340,7 +343,6 @@ pub const App = struct {
         };
         const result = try self.request(.{ .authorize = .{
             .session_digest = digest,
-            .now = self.now(),
             .touch = true,
         } });
         if (result != .authorized) {

@@ -90,7 +90,7 @@ const Stream = struct {
                 break;
             }
             if (now -| last_auth >= 5) {
-                if (!self.authorize(now)) break;
+                if (!self.authorize()) break;
                 last_auth = now;
             }
             if (self.subscribed.load(.acquire) and now != last_data) {
@@ -126,10 +126,9 @@ const Stream = struct {
         self.stopped.store(true, .release);
     }
 
-    fn authorize(self: *Stream, now: u64) bool {
+    fn authorize(self: *Stream) bool {
         const result = self.app.request(.{ .authorize = .{
             .session_digest = self.digest,
-            .now = now,
         } }) catch {
             self.close(1013);
             return false;

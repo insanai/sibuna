@@ -43,7 +43,8 @@ pub fn check(owner: *Persistent, input: p.policies.Edit) !?p.Failure {
     if (identity != .authorized or identity.authorized.must_change) return .unauthorized;
     const actor = identity.authorized;
     if (!actor.role.allows(.manage_policy)) return .forbidden;
-    if (input.require_totp and actor.role == .admin and !actor.totp_enabled) return .forbidden;
+    const account_role = actor.account_role orelse actor.role;
+    if (input.require_totp and account_role == .admin and !actor.totp_enabled) return .forbidden;
     if (!std.crypto.timing_safe.eql([32]u8, input.csrf_digest, actor.csrf_digest))
         return .forbidden;
     return null;

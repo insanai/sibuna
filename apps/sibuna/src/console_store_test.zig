@@ -30,6 +30,27 @@ pub const Fixture = struct {
         t.allocator.destroy(self);
     }
 
+    // Numerical lifetime tests use explicit times against the synchronous storage helper.
+    // Production mailbox authorization obtains its time only from Persistent's clock.
+    pub fn authorizeAt(self: *Fixture, input: struct {
+        session_digest: [32]u8,
+        now: u64,
+        touch: bool = false,
+    }) !p.StorageResult {
+        if (!self.owner.console_initialized) try @import("console_migrations.zig").run(self.owner);
+        if (input.touch) try @import("console_store_auth.zig").touch(
+            self.owner,
+            input.session_digest,
+            input.now,
+        );
+        return @import("console_store_identity.zig").authorize(
+            self.owner,
+            input.session_digest,
+            input.now,
+            .session,
+        );
+    }
+
     pub fn run(self: *Fixture, request: p.StorageRequest) !p.StorageResult {
         const ticket = try self.owner.console_mailbox.submit(t.io, request, .urgent);
         try self.owner.tick();
@@ -391,15 +412,15 @@ test "console storage ticks bootstrap, audit, authenticate and revoke atomically
         .expires = 200,
     } };
     try t.expect((try fx.run(session)) == .command_recorded);
-    const principal = (try fx.run(.{ .authorize = .{
+    const principal = (try fx.authorizeAt(.{
         .session_digest = @splat(1),
         .now = 101,
-    } })).authorized;
+    })).authorized;
     try t.expectEqual(user.id, principal.actor);
-    try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .authorize = .{
+    try t.expectEqual(p.Failure.unauthorized, (try fx.authorizeAt(.{
         .session_digest = @splat(1),
         .now = 200,
-    } })).failed);
+    })).failed);
     try t.expect((try fx.run(.{ .password_change = .{
         .expected_revision = user.revision,
         .replacement_digest = @splat(3),
@@ -409,10 +430,10 @@ test "console storage ticks bootstrap, audit, authenticate and revoke atomically
         .password_hash = try p.Bytes(255).init("replacement-test-hash"),
         .now = 110,
     } })) == .command_recorded);
-    try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .authorize = .{
+    try t.expectEqual(p.Failure.unauthorized, (try fx.authorizeAt(.{
         .session_digest = @splat(1),
         .now = 111,
-    } })).failed);
+    })).failed);
     try t.expectEqual(p.Failure.conflict, (try fx.run(session)).failed);
     var audit = try db.query(
         fx.owner.db,
@@ -604,15 +625,15 @@ test "session idle activity never revives expiry or extends the absolute lifetim
         .expires = 43300,
     } });
     // Passive stream checks do not keep an unattended dashboard authorized forever.
-    try t.expect((try fx.run(.{ .authorize = .{
+    try t.expect((try fx.authorizeAt(.{
         .session_digest = @splat(3),
         .now = 1899,
-    } })) == .authorized);
-    try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .authorize = .{
+    })) == .authorized);
+    try t.expectEqual(p.Failure.unauthorized, (try fx.authorizeAt(.{
         .session_digest = @splat(3),
         .now = 1900,
         .touch = true,
-    } })).failed);
+    })).failed);
     _ = try fx.run(.{ .session_create = .{
         .user = 1,
         .revision = 1,
@@ -623,17 +644,17 @@ test "session idle activity never revives expiry or extends the absolute lifetim
     } });
     var now: u64 = 100;
     while (now < 43300) : (now += 900) {
-        try t.expect((try fx.run(.{ .authorize = .{
+        try t.expect((try fx.authorizeAt(.{
             .session_digest = @splat(5),
             .now = now,
             .touch = true,
-        } })) == .authorized);
+        })) == .authorized);
     }
-    try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .authorize = .{
+    try t.expectEqual(p.Failure.unauthorized, (try fx.authorizeAt(.{
         .session_digest = @splat(5),
         .now = 43300,
         .touch = true,
-    } })).failed);
+    })).failed);
 }
 
 fn enrollTotp(fx: *Fixture) ![10][32]u8 {
@@ -662,10 +683,10 @@ fn enrollTotp(fx: *Fixture) ![10][32]u8 {
     } };
     try t.expect((try fx.run(confirm)) == .command_recorded);
     try t.expectEqual(p.Failure.conflict, (try fx.run(confirm)).failed);
-    try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .authorize = .{
+    try t.expectEqual(p.Failure.unauthorized, (try fx.authorizeAt(.{
         .session_digest = @splat(1),
         .now = 110,
-    } })).failed);
+    })).failed);
     const user = (try fx.run(.{ .auth_user = try p.Bytes(64).init("geo-admin") })).auth_user;
     try t.expect(user.totp_enabled and user.revision == 2);
     return digests;
@@ -750,10 +771,10 @@ test "console storage reopens after sealed journal rotation" {
     const restored = try Fixture.open(path);
     defer restored.close();
     try t.expect(!(try restored.run(.setup_status)).setup_required);
-    try t.expect((try restored.run(.{ .authorize = .{
+    try t.expect((try restored.authorizeAt(.{
         .session_digest = @splat(34),
         .now = 101,
-    } })) == .authorized);
+    })) == .authorized);
 }
 
 test "temporary bootstrap expires and password replacement consumes its credential" {
@@ -824,10 +845,10 @@ test "explicit sign-out commits its redacted audit record with revocation" {
     try t.expectEqual(1, audit.rows.len);
     try t.expectEqualStrings("1", audit.rows[0][0].?);
     try t.expectEqualStrings("110", audit.rows[0][1].?);
-    try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .authorize = .{
+    try t.expectEqual(p.Failure.unauthorized, (try fx.authorizeAt(.{
         .session_digest = @splat(1),
         .now = 111,
-    } })).failed);
+    })).failed);
 }
 
 test "password rotation rolls back revocation on failed replacement and checks revision" {
@@ -861,17 +882,17 @@ test "password rotation rolls back revocation on failed replacement and checks r
     const unchanged = (try fx.run(.{ .auth_user = user.username })).auth_user;
     try t.expectEqual(user.revision, unchanged.revision);
     try t.expectEqualStrings(user.password_hash.slice(), unchanged.password_hash.slice());
-    try t.expect((try fx.run(.{ .authorize = .{
+    try t.expect((try fx.authorizeAt(.{
         .session_digest = @splat(1),
         .now = 111,
-    } })) == .authorized);
+    })) == .authorized);
     try fx.owner.db.exec(t.allocator, "DROP TRIGGER reject_rotation;");
     try t.expect((try fx.run(operation)) == .command_recorded);
     try t.expectEqual(p.Failure.unauthorized, (try fx.run(operation)).failed);
-    const rotated = (try fx.run(.{ .authorize = .{
+    const rotated = (try fx.authorizeAt(.{
         .session_digest = @splat(3),
         .now = 112,
-    } })).authorized;
+    })).authorized;
     try t.expectEqual(user.revision + 1, rotated.revision);
     var staging = try db.query(
         fx.owner.db,

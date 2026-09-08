@@ -1,5 +1,6 @@
 //! Versioned additive schema. The owner serializes migration before serving console work.
-pub const version = 14;
+pub const version = 15;
+pub const tokens_v15 = @import("schema_tokens.zig").sql;
 pub const users_v14 = @import("schema_users.zig").sql;
 pub const retention_v13 = @import("schema_retention.zig").sql;
 pub const minutes_v12 = @import("schema_minutes.zig").sql;

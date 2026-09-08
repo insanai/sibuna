@@ -26,7 +26,11 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
     if (!owner.console_initialized) try @import("console_migrations.zig").run(owner);
     const retention = @import("console_store_retention.zig");
     const geo = @import("console_store_geo.zig");
+    const tokens = @import("console_store_tokens.zig");
     return switch (request) {
+        .tokens_query => |input| tokens.query(owner, input),
+        .tokens_create => |input| tokens.create(owner, input),
+        .tokens_revoke => |input| tokens.revoke(owner, input),
         .users_query => |input| @import("console_store_users.zig").query(
             owner,
             input,
@@ -80,43 +84,26 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
         .bootstrap => |input| auth.bootstrap(owner, input),
         .auth_user => |username| auth.user(owner, username.slice()),
         .session_create => |input| @import("console_store_session.zig").create(owner, input),
-        .authorize => |input| blk: {
-            if (input.touch) try auth.touch(owner, input.session_digest, input.now);
-            break :blk try authorize(owner, input.session_digest, input.now);
-        },
+        .authorize => |input| authorizeRequest(owner, input),
         .logout => |input| auth.logout(owner, input),
         .password_change => |input| auth.password(owner, input),
         else => .{ .failed = .invalid_input },
     };
 }
 
-pub fn authorize(owner: *Persistent, digest: [32]u8, now: u64) !p.StorageResult {
-    const hex = std.fmt.bytesToHex(digest, .lower);
-    var result = try db.query(
-        owner.db,
-        owner.gpa,
-        "SELECT u.id,u.role,u.revision,s.expires,s.csrf_digest,u.must_change,u.username," ++
-            "EXISTS(SELECT 1 FROM console_totp m WHERE m.user_id=u.id AND m.enabled=1) " ++
-            "FROM console_sessions s JOIN console_users u ON u.id=s.user_id " ++
-            "WHERE s.digest=? AND s.expires>? AND s.idle_expires>? AND s.revision=u.revision " ++
-            "AND u.disabled=0 LIMIT 1",
-        &.{ text(&hex), integer(now), integer(now) },
+fn authorizeRequest(owner: *Persistent, input: p.AuthorizationCheck) !p.StorageResult {
+    const now = owner.nowSeconds();
+    if (input.touch and input.kind == .session) try auth.touch(owner, input.session_digest, now);
+    return @import("console_store_identity.zig").authorize(
+        owner,
+        input.session_digest,
+        now,
+        input.kind,
     );
-    defer result.deinit();
-    if (result.rows.len != 1) return .{ .failed = .unauthorized };
-    const row = result.rows[0];
-    var csrf: [32]u8 = undefined;
-    _ = try std.fmt.hexToBytes(&csrf, row[4] orelse return error.InvalidStoredValue);
-    return .{ .authorized = .{
-        .actor = try number(row[0]),
-        .username = try p.Bytes(64).init(row[6].?),
-        .role = std.meta.stringToEnum(p.Role, row[1].?) orelse return error.InvalidStoredValue,
-        .revision = try number(row[2]),
-        .expires = try number(row[3]),
-        .csrf_digest = csrf,
-        .must_change = try number(row[5]) != 0,
-        .totp_enabled = try number(row[7]) != 0,
-    } };
+}
+
+pub fn authorize(owner: *Persistent, digest: [32]u8, now: u64) !p.StorageResult {
+    return @import("console_store_identity.zig").authorize(owner, digest, now, null);
 }
 
 pub fn number(cell: ?[]const u8) !u64 {

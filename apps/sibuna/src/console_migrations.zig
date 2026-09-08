@@ -47,6 +47,7 @@ pub fn run(owner: *Persistent) !void {
         console.schema.minutes_v12,
         console.schema.retention_v13,
         console.schema.users_v14,
+        console.schema.tokens_v15,
     };
     inline for (migrations, 2..) |sql, target| {
         if (version == target - 1) {

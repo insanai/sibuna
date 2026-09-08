@@ -2972,6 +2972,37 @@ Deterministic storage ticks cover session expiry after queuing for both edit kin
 refuse missing required MFA without advancing policy or audit. Operators retain their
 specified policy authority; only administrators require the off-loopback factor.
 
+== Bounded token storage and credential kinds (2026-09-08)
+
+Schema 15 adds immutable token authority, eight-row keyset pages and a 1,024-record limit.
+Tokens select explicit statistics, event, policy, GeoIP and user read/write capabilities;
+role validation rejects capabilities beyond the chosen role. The token store holds only
+SHA-256 digests of 256-bit opaque values. Printable numeric IDs use a non-reusing sequence.
+Optional expiry is an absolute deadline. Administrator cookie sessions with completed
+required MFA manage tokens; tokens cannot issue or manage other tokens. Revocation and
+explicit removal of inactive metadata require expected revisions. Removing metadata
+retains its redacted audit history and permits reclamation within the record bound.
+
+The existing session table also serves as the credential registry, distinguished by a
+nullable token reference. This preserves atomic revocation on user revision changes while
+preventing bearer values from authenticating as cookies or cookies as bearer values.
+The principal separates the effective token role from its issuing account role, so mandatory
+administrator MFA applies consistently to the issuer even for a viewer/operator token.
+Token entries share the 4,096-live-credential bound and retain their absolute deadline;
+HTTP activity does not turn them into idle-limited browser sessions. Minting does not
+record a browser login or consume a second factor. Registry insertion and the token audit
+commit together; failed audit writes roll back both. Authority, creator revision, role,
+scopes and expiry cannot be edited after issuance.
+
+Queued authorization checks now obtain time only from Persistent, including subscription
+checks and idle renewal. Explicit-time numerical tests use the synchronous owner helper;
+no production clock override or caller timestamp extends a session. Storage-tick coverage
+includes late expiry, required MFA, credential-kind separation, expected-revision conflicts,
+non-reused IDs, audit rollback, creator revocation, capacity and restart pagination.
+This increment supplies persistence and authorization contracts. Public bearer routes,
+token CLI commands and the token interface remain to be connected and verified before
+the token workflow is complete.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

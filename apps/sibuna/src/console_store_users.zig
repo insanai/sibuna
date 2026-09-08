@@ -47,7 +47,8 @@ fn identity(owner: *Persistent, input: u.Auth, now: u64, manage: bool) !p.Storag
     if (result != .authorized or result.authorized.must_change)
         return .{ .failed = .unauthorized };
     const actor = result.authorized;
-    if (input.require_totp and actor.role == .admin and !actor.totp_enabled)
+    const account_role = actor.account_role orelse actor.role;
+    if (input.require_totp and account_role == .admin and !actor.totp_enabled)
         return .{ .failed = .forbidden };
     if (manage and (!actor.role.allows(.manage_users) or
         !std.crypto.timing_safe.eql([32]u8, input.csrf_digest, actor.csrf_digest)))

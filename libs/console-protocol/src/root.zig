@@ -11,6 +11,7 @@ pub const ranking_storage = @import("ranking_storage.zig");
 pub const events = @import("events.zig");
 pub const auth = @import("auth.zig");
 pub const users = @import("users.zig");
+pub const tokens = @import("tokens.zig");
 pub const geo = @import("geo.zig");
 pub const version: u16 = 1;
 pub const max_message = 4096;
@@ -63,7 +64,11 @@ pub const AuthUser = struct {
     totp_enabled: bool = false,
     password_expires: u64 = 0,
 };
+pub const CredentialKind = enum { session, bearer };
 pub const Principal = struct {
+    account_role: ?Role = null,
+    token_id: ?u64 = null,
+    scopes: u32 = tokens.known_scopes,
     actor: u64,
     username: Bytes(64),
     role: Role,
@@ -74,7 +79,15 @@ pub const Principal = struct {
     totp_enabled: bool = false,
 };
 pub const retention = @import("retention.zig");
+pub const AuthorizationCheck = struct {
+    session_digest: [32]u8,
+    touch: bool = false,
+    kind: CredentialKind = .session,
+};
 pub const StorageRequest = union(enum) {
+    tokens_query: tokens.Query,
+    tokens_create: tokens.Create,
+    tokens_revoke: tokens.Revoke,
     users_query: users.Query,
     users_create: users.Create,
     users_change: users.Change,
@@ -124,7 +137,7 @@ pub const StorageRequest = union(enum) {
         password_hash: Bytes(255),
         now: u64,
     },
-    authorize: struct { session_digest: [32]u8, now: u64, touch: bool = false },
+    authorize: AuthorizationCheck,
     incidents: struct { before_id: ?u64, limit: u16 },
     events_query: events.Query,
     events_similar: similarity.Query,
@@ -137,6 +150,8 @@ pub const StorageRequest = union(enum) {
     control_complete: struct { id: u64, succeeded: bool },
 };
 pub const StorageResult = union(enum) {
+    tokens_page: tokens.Page,
+    token_saved: u64,
     // Storage acknowledgement carries the exact durable activation timestamp.
     geo_activated: u64,
     users_saved: u64,
@@ -192,6 +207,13 @@ pub fn Bytes(comptime capacity: usize) type {
 
 pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
     switch (request) {
+        .tokens_query => |input| try users.validateQuery(.{
+            .auth = input.auth,
+            .after = input.after,
+            .limit = input.limit,
+        }),
+        .tokens_create => |input| try tokens.validateCreate(input),
+        .tokens_revoke => |input| try tokens.validateRevoke(input),
         .users_query => |input| try users.validateQuery(input),
         .users_create => |input| try users.validateCreate(input),
         .users_change => |input| try users.validateChange(input),
@@ -219,6 +241,10 @@ pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
         },
         else => {},
     }
+}
+
+test {
+    _ = tokens;
 }
 
 test "owned payload boundaries and pagination reject unbounded input" {

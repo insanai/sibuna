@@ -145,13 +145,12 @@ test "user edits reject conflicts and self-demotion and revoke sessions atomical
         "ON console_audit WHEN NEW.action='user.disable' " ++
         "BEGIN SELECT RAISE(ABORT,'injected failure'); END;");
     try t.expectError(error.SqliteError, storage.change(fx.owner, input, now));
-    try t.expect(try fx.run(.{ .authorize = .{ .session_digest = @splat(3), .now = now } }) ==
+    try t.expect(try fx.run(.{ .authorize = .{ .session_digest = @splat(3) } }) ==
         .authorized);
     try fx.owner.db.exec(t.allocator, "DROP TRIGGER fail_user_audit");
     try t.expect(try fx.run(.{ .users_change = input }) == .users_saved);
     try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .authorize = .{
         .session_digest = @splat(3),
-        .now = now,
     } })).failed);
     try t.expectEqual(p.Failure.conflict, (try fx.run(.{ .users_change = input })).failed);
     input.target = 1;

@@ -106,7 +106,8 @@ pub fn touch(owner: *Persistent, digest: [32]u8, now: u64) !void {
         owner.db,
         owner.gpa,
         "UPDATE console_sessions SET idle_expires=MIN(expires,?) WHERE digest=? " ++
-            "AND MIN(expires,idle_expires)>? AND EXISTS(SELECT 1 FROM console_users u " ++
+            "AND token_id IS NULL AND MIN(expires,idle_expires)>? " ++
+            "AND EXISTS(SELECT 1 FROM console_users u " ++
             "WHERE u.id=user_id AND u.revision=console_sessions.revision AND u.disabled=0)",
         &.{ integer(now + 1800), text(&hex), integer(now) },
     );
