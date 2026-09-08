@@ -39,7 +39,6 @@ pub fn handle(app: *App, context: *http.Context, user: p.Principal) !void {
         .auth = .{
             .session_digest = digest,
             .csrf_digest = user.csrf_digest,
-            .now = app.now(),
             .require_totp = app.config.behind_proxy,
         },
         .expected_revision = input.value.expected_revision,

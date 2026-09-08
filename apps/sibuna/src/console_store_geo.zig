@@ -147,7 +147,7 @@ pub fn activate(owner: *Persistent, input: p.geo.Activate, now: u64) !p.StorageR
             integer(@intFromBool(input.auth.require_totp)),
         },
     );
-    return if (changed > 0) .command_recorded else .{ .failed = .conflict };
+    return if (changed > 0) .{ .geo_activated = now } else .{ .failed = .conflict };
 }
 
 pub fn read(owner: *Persistent, input: p.geo.Read) !p.StorageResult {

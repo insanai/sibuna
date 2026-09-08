@@ -2,7 +2,6 @@ const p = @import("root.zig");
 pub const Authorization = struct {
     session_digest: [32]u8,
     csrf_digest: [32]u8,
-    now: u64,
     require_totp: bool = false,
 };
 pub const Metadata = struct {

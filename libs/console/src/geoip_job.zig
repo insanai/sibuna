@@ -113,7 +113,7 @@ pub const Job = struct {
         const digest = try p.Bytes(64).init(&digest_hex);
         self.status.store(.storing, .release);
         const begin = try self.app.background(.{ .geo_begin = .{
-            .auth = self.authorization(),
+            .auth = self.input.auth,
             .expected_revision = self.input.expected_revision,
             .digest = digest,
             .source_version = self.input.source_version,
@@ -121,13 +121,12 @@ pub const Job = struct {
         } });
         if (begin != .command_recorded) return error.ImportConflict;
         try self.storeRanges(digest, staged.ranges);
-        const now = self.app.now();
         const result = try self.app.background(.{ .geo_activate = .{
-            .auth = self.authorization(),
+            .auth = self.input.auth,
             .expected_revision = self.input.expected_revision,
             .digest = digest,
         } });
-        if (result != .command_recorded) return error.ActivationRejected;
+        if (result != .geo_activated) return error.ActivationRejected;
         try self.app.geo.activate(self.app.io, staged, self.input.expected_revision);
         transferred = true;
         self.mutex.lockUncancelable(self.app.io);
@@ -136,16 +135,10 @@ pub const Job = struct {
             .digest = digest,
             .source_version = self.input.source_version,
             .ranges = @intCast(staged.ranges.len),
-            .loaded_at = now,
+            .loaded_at = result.geo_activated,
         };
         self.mutex.unlock(self.app.io);
         self.status.store(.applied, .release);
-    }
-
-    fn authorization(self: *Job) p.geo.Authorization {
-        var auth = self.input.auth;
-        auth.now = self.app.now();
-        return auth;
     }
 
     fn storeRanges(self: *Job, digest: p.Bytes(64), ranges: []const geo.Range) !void {
@@ -162,7 +155,7 @@ pub const Job = struct {
                 @memcpy(out[32..34], &range.country);
             }
             const result = try self.app.background(.{ .geo_batch = .{
-                .auth = self.authorization(),
+                .auth = self.input.auth,
                 .digest = digest,
                 .ordinal = ordinal,
                 .bytes = bytes,

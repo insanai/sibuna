@@ -137,6 +137,8 @@ pub const StorageRequest = union(enum) {
     control_complete: struct { id: u64, succeeded: bool },
 };
 pub const StorageResult = union(enum) {
+    // Storage acknowledgement carries the exact durable activation timestamp.
+    geo_activated: u64,
     users_saved: u64,
     users_page: users.Page,
     retention_lease: retention.Lease,

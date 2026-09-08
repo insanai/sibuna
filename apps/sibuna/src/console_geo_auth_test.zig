@@ -29,7 +29,6 @@ test "queued GeoIP writes and immutable replays recheck expiry and mandatory MFA
     const auth: p.geo.Authorization = .{
         .session_digest = @splat(1),
         .csrf_digest = @splat(2),
-        .now = 110,
     };
     var begin: p.geo.Begin = .{
         .auth = auth,
@@ -69,7 +68,8 @@ test "queued GeoIP writes and immutable replays recheck expiry and mandatory MFA
     try t.expect((try fx.run(.{ .geo_activate = activate })) == .failed);
     try t.expectEqual(@as(u64, 0), (try fx.run(.geo_metadata)).geo_metadata.revision);
     activate.auth.require_totp = false;
-    try t.expect((try fx.run(.{ .geo_activate = activate })) == .command_recorded);
+    const acknowledged = (try fx.run(.{ .geo_activate = activate })).geo_activated;
+    try t.expectEqual(acknowledged, (try fx.run(.geo_metadata)).geo_metadata.loaded_at);
     var audit = try fx.owner.db.query(
         t.allocator,
         "SELECT count(*) FROM console_audit WHERE action='geoip.activate'",

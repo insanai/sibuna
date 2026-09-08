@@ -482,7 +482,7 @@ test "GeoIP publication rejects incomplete generations and audits the pointer co
         .{tmp.sub_path},
     ));
     defer fx.close();
-    // The owner checks execution time, even when the queued credential timestamp is old.
+    // Keep credentials live according to the storage owner clock.
     _ = try db.exec(
         fx.owner.db,
         t.allocator,
@@ -495,7 +495,6 @@ test "GeoIP publication rejects incomplete generations and audits the pointer co
     const auth: p.geo.Authorization = .{
         .session_digest = @splat(1),
         .csrf_digest = @splat(2),
-        .now = 110,
     };
     const digest = try p.Bytes(64).init(&(@as([64]u8, @splat('a'))));
     const begin: p.geo.Begin = .{
@@ -529,7 +528,8 @@ test "GeoIP publication rejects incomplete generations and audits the pointer co
     conflict.bytes.data[32] = 'D';
     conflict.bytes.data[33] = 'E';
     try t.expect((try fx.run(.{ .geo_batch = conflict })) == .failed);
-    try t.expect((try fx.run(.{ .geo_activate = activate })) == .command_recorded);
+    const acknowledged = (try fx.run(.{ .geo_activate = activate })).geo_activated;
+    try t.expectEqual(acknowledged, (try fx.run(.geo_metadata)).geo_metadata.loaded_at);
     try t.expect((try fx.run(.{ .geo_activate = activate })) == .failed);
     const metadata = (try fx.run(.geo_metadata)).geo_metadata;
     try t.expectEqual(@as(u64, 1), metadata.revision);
