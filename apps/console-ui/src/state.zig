@@ -10,10 +10,30 @@ pub const Phase = enum {
     events,
     challenges,
     similarity,
+    policies,
 };
+
+test "session reset wipes retained credentials and request bodies and restores defaults" {
+    const t = @import("std").testing;
+    var state: State = .{ .phase = .policies, .navigation_open = true, .reconnect_ms = 8000 };
+    state.csrf = try p.Bytes(64).init("private csrf");
+    state.totp_secret = try p.Bytes(32).init("private seed");
+    state.recovery_codes[0] = try p.Bytes(32).init("private recovery");
+    state.policies.body = try p.Bytes(2048).init("private request body");
+    state.reset();
+    try t.expectEqual(Phase.loading, state.phase);
+    try t.expect(!state.navigation_open);
+    try t.expectEqual(@as(u32, 1000), state.reconnect_ms);
+    try t.expectEqual(@as(f64, 15), state.globe.lat);
+    try t.expectEqualSlices(u8, &@as([64]u8, @splat(0)), &state.csrf.data);
+    try t.expectEqualSlices(u8, &@as([32]u8, @splat(0)), &state.totp_secret.data);
+    try t.expectEqualSlices(u8, &@as([32]u8, @splat(0)), &state.recovery_codes[0].data);
+    try t.expectEqualSlices(u8, &@as([2048]u8, @splat(0)), &state.policies.body.data);
+}
 pub const State = struct {
     phase: Phase = .loading,
     navigation_open: bool = false,
+    policies: @import("policies_page.zig").Model = .{},
     similarity: @import("similarity_state.zig").Model = .{},
     challenges: @import("challenges_page.zig").Model = .{},
     events: @import("events_state.zig").Model = .{},
@@ -51,6 +71,14 @@ pub const State = struct {
     recovery_count: usize = 0,
     stats: ?p.StatsSnapshot = null,
     points: [60]struct { second: u64 = 0, count: u64 = 0 } = @splat(.{}),
+
+    /// Reset owned fields individually so the Wasm binary does not carry a second
+    /// full initialized State image just to clear bounded page buffers on sign-out.
+    pub fn reset(self: *State) void {
+        inline for (@typeInfo(State).@"struct".fields) |field| {
+            @field(self, field.name) = field.defaultValue().?;
+        }
+    }
 
     pub fn fullAccess(self: *const State) bool {
         return self.csrf.len != 0 and !self.must_change and !self.totp_required;

@@ -5,6 +5,7 @@ const State = @import("state.zig").State;
 const render = @import("render.zig");
 var state: State = .{};
 var similarity_generation: u32 = 0;
+var policy_generation: u32 = 0;
 var input: [16 * 1024]u8 = undefined;
 var html: [512 * 1024]u8 = undefined;
 var geometry: [@import("geography.zig").max_bytes]u8 = undefined;
@@ -56,7 +57,7 @@ export fn sb_geometry_loaded(length: usize) void {
 }
 
 export fn sb_init() void {
-    state = .{};
+    state.reset();
     begin();
     get("session", "/console/api/session") catch unreachable;
     finish();
@@ -177,7 +178,9 @@ fn action(value: std.json.Value) !void {
         return;
     }
     if (state.navigation_open) {
-        const destinations = .{ "dashboard", "events", "challenges", "geoip", "account" };
+        const destinations = .{
+            "dashboard", "events", "challenges", "policies", "geoip", "account",
+        };
         inline for (destinations) |destination| {
             if (equal(name, destination)) {
                 state.navigation_open = false;
@@ -186,6 +189,7 @@ fn action(value: std.json.Value) !void {
         }
     }
     const fields = field(value, "fields") orelse .null;
+    if (try policyAction(name, fields)) return;
     if (try similarityAction(name)) return;
     if (try challengeAction(name, fields)) return;
     if (try eventAction(name, fields)) return;
@@ -241,6 +245,9 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
     if (status_value != .integer) return;
     const status = status_value.integer;
     const body = field(value, "body") orelse return;
+    if (std.mem.startsWith(u8, id, "policies-") or
+        std.mem.startsWith(u8, id, "policy-test-"))
+        return policyResponse(id, status, body);
     if (std.mem.startsWith(u8, id, "totp")) return securityResponse(id, status, body);
     if (equal(id, "stats")) return statsResponse(status, body, alloc);
     if (equal(id, "events-export")) return eventExportResponse(status);
@@ -747,7 +754,7 @@ fn challengeResponse(status: i64, snapshot: p.challenges.Snapshot) void {
     if (state.phase != .challenges) return;
     state.challenges.busy = false;
     if (status == 401 or status == 403) {
-        state = .{ .phase = .login, .dark = state.dark };
+        resetState(.login);
         setMessage("Your access changed. Sign in again to view challenges.");
         return;
     }
@@ -978,7 +985,7 @@ fn similarityResponse(status: i64, part: @import("similarity_state.zig").WirePar
     const model = &state.similarity;
     model.busy = false;
     if (status == 401 or status == 403) {
-        state = .{ .phase = .login, .dark = state.dark };
+        resetState(.login);
         setMessage("Your access changed. Sign in again to investigate incidents.");
         return command(.{ .op = "focus", .selector = "main h1", .top = true });
     }
@@ -1053,4 +1060,140 @@ test "inspecting a match preserves similarity results for return navigation" {
     try std.testing.expectEqual(.similarity, state.phase);
     try std.testing.expectEqual(@as(u8, 1), state.similarity.best.count);
     try std.testing.expect(state.similarity.complete);
+}
+
+fn policyAction(name: []const u8, fields: std.json.Value) !bool {
+    if (!state.fullAccess()) return false;
+    const model = &state.policies;
+    if (equal(name, "policies") or equal(name, "policies-refresh")) {
+        if (state.phase == .policies and (model.busy or model.testing)) return true;
+        model.testing = false;
+        state.phase = .policies;
+        state.message = .{};
+        model.offset = 0;
+        model.applied = .{};
+        model.decision = .{};
+        model.busy = true;
+        try command(.{ .op = "disconnect" });
+        try policyPost(false, .{ .offset = @as(u8, 0) });
+    } else if (equal(name, "policies-next") and state.phase == .policies) {
+        if (model.busy or model.testing or model.stale) return true;
+        const offset = model.next orelse return true;
+        model.offset = offset;
+        model.busy = true;
+        try policyPost(false, .{
+            .offset = offset,
+            .applied = model.applied.slice(),
+        });
+    } else if (equal(name, "policy-run") and state.phase == .policies) {
+        if (model.testing or model.busy or model.stale or model.applied.len == 0) return true;
+        model.path = try p.Bytes(512).init(string(fields, "path"));
+        model.ip = try p.Bytes(48).init(string(fields, "ip"));
+        model.query_string = try p.Bytes(512).init(string(fields, "query"));
+        model.user_agent = try p.Bytes(256).init(string(fields, "user_agent"));
+        model.body = try p.Bytes(2048).init(string(fields, "body"));
+        model.testing = true;
+        model.decision = .{};
+        state.message = .{};
+        try policyPost(true, .{
+            .applied = model.applied.slice(),
+            .path = model.path.slice(),
+            .ip = model.ip.slice(),
+            .query = model.query_string.slice(),
+            .user_agent = model.user_agent.slice(),
+            .body = model.body.slice(),
+        });
+    } else return false;
+    return true;
+}
+
+fn policyResponse(id: []const u8, status: i64, body: std.json.Value) !void {
+    const separator = std.mem.lastIndexOfScalar(u8, id, '-') orelse return;
+    const generation = std.fmt.parseInt(u32, id[separator + 1 ..], 10) catch return;
+    if (generation != policy_generation) return;
+    const model = &state.policies;
+    model.busy = false;
+    model.testing = false;
+    if (state.phase != .policies) return;
+    if (status == 401 or status == 403) {
+        resetState(.login);
+        try command(.{ .op = "disconnect" });
+        return;
+    }
+    if (status != 200) {
+        model.stale = status != 400 and status != 429;
+        setMessage(switch (status) {
+            400 => "Check the request fields and client IP, then try again.",
+            409 => "The applied policy changed. Refresh policies before continuing.",
+            429 => "Too many queries. Wait a minute before trying again.",
+            else => "Policy data is unavailable. Refresh to retry; previous data may be stale.",
+        });
+        return command(.{ .op = "focus", .selector = "#console-message" });
+    }
+    if (std.mem.startsWith(u8, id, "policies-")) {
+        const applied = string(body, "applied");
+        _ = try std.fmt.parseInt(u64, applied, 10);
+        const next = field(body, "next") orelse return error.InvalidResponse;
+        if (next != .null and (next != .integer or next.integer < 0 or next.integer > 128))
+            return error.InvalidResponse;
+        var output: p.Bytes(4096) = .{};
+        var writer: std.Io.Writer = .fixed(&output.data);
+        try std.json.Stringify.value(body, .{}, &writer);
+        output.len = writer.buffered().len;
+        model.page = output;
+        model.applied = try p.Bytes(20).init(applied);
+        model.next = if (next == .integer) @intCast(next.integer) else null;
+        model.stale = false;
+    } else {
+        var writer: std.Io.Writer = .fixed(&model.decision.data);
+        try std.json.Stringify.value(body, .{}, &writer);
+        model.decision.len = writer.buffered().len;
+        try command(.{ .op = "focus", .selector = "#policy-result" });
+    }
+    state.message = .{};
+}
+
+fn policyPost(testing: bool, body: anytype) !void {
+    policy_generation +%= 1;
+    var id_buffer: [32]u8 = undefined;
+    const id = try std.fmt.bufPrint(&id_buffer, "{s}-{d}", .{
+        if (testing) "policy-test" else "policies", policy_generation,
+    });
+    const path = if (testing) "/console/api/policies/test" else "/console/api/policies/query";
+    try post(id, path, body);
+}
+
+test "policy navigation ignores superseded responses and retains a revision conflict" {
+    state = .{};
+    state.csrf = try p.Bytes(64).init("test");
+    begin();
+    try std.testing.expect(try policyAction("policies", .null));
+    try std.testing.expect(std.mem.indexOf(
+        u8,
+        command_writer.buffered(),
+        "\"body\":{\"offset\":0}",
+    ) != null);
+    var old_buffer: [32]u8 = undefined;
+    const old_id = try std.fmt.bufPrint(&old_buffer, "policies-{d}", .{policy_generation});
+    state.phase = .events;
+    try std.testing.expect(try policyAction("policies", .null));
+    try policyResponse(old_id, 401, .null);
+    try std.testing.expectEqual(.policies, state.phase);
+    try std.testing.expect(state.policies.busy);
+    var current_buffer: [32]u8 = undefined;
+    const current_id = try std.fmt.bufPrint(
+        &current_buffer,
+        "policies-{d}",
+        .{policy_generation},
+    );
+    try policyResponse(current_id, 409, .null);
+    try std.testing.expect(!state.policies.busy and state.policies.stale);
+    try std.testing.expect(std.mem.indexOf(u8, state.message.slice(), "changed") != null);
+}
+
+fn resetState(phase: @import("state.zig").Phase) void {
+    const dark = state.dark;
+    state.reset();
+    state.phase = phase;
+    state.dark = dark;
 }

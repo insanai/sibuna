@@ -1,0 +1,10 @@
+<section class="card bg-base-100 border border-base-300 p-6 mt-6">
+  <h2 class="font-bold">Applied configuration</h2>
+  <p>Committed revision {{ committed }} · Applied revision {{ applied }} · {{ total }} rules</p>
+  <p>Inspection: {{ waf }} · Default algorithm: {{ algorithm }}</p>
+  <p>Configured default difficulty: {{ difficulty }}. This is not a measured solve time.</p>
+  <p class="sb-note">Rules include database configuration and file or built-in fallbacks.
+    Inspection and terminal reputation decisions run before this ordered rule list.
+    Header and CIDR matcher values are omitted from this summary; their counts are shown.</p>
+</section>
+<section class="card bg-base-100 border border-base-300 p-6 mt-6" aria-label="Applied rules">

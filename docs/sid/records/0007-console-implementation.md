@@ -441,3 +441,31 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
   reset, unavailable coverage and the flat-map layout at 390 pixels without horizontal overflow.
 - No Three.js dependency is needed for the current globe. Pointer gestures and richer traffic/
   attacks overlays remain separate work; existing keyboard-operable rotation controls remain.
+
+### Applied policy inspection and evaluation (2026-09-08)
+
+- Added authenticated, CSRF-protected owner-mailbox reads of the published policy engine and
+  bounded request evaluation. Pages contain at most eight summaries and 4 KiB of JSON; pagination
+  and tests can pin an applied revision. Committed storage stamps and applied engine stamps are
+  reported separately. Pins never survive an operation or block publication across a tick.
+- Summaries include file/default and database rules in effective order, with explicit omission
+  of header/CIDR values and display truncation metadata. Tests include inspection, reputation
+  and complete applied matchers. They do not simulate sessions, local limiters or origin replies.
+  Operator-supplied request bodies and headers are not persisted by this read-only operation.
+- Deterministic storage ticks verify file/database composition, inspection precedence, stale
+  revision rejection and session revocation. Live daemon tests compare Amazonbot and XSS denials
+  with actual traffic and verify authentication, CSRF, invalid input and revision conflicts.
+- The Policies UI uses HTML snippets and shared navigation, preserves submitted fields, rejects
+  late response generations, and provides error/result focus and a direct tester link. Browser
+  checks verified deny and allow cases, revision 146 becoming stale after a synthetic incident,
+  refresh to revision 147, invalid-IP recovery, and a 390-pixel layout without overflow.
+- The initial browser query exposed empty tuple serialization as an array; it now sends an
+  explicit offset object and has regression coverage. The bridge compares successive Wasm HTML
+  outputs rather than browser-normalized innerHTML, avoiding needless form replacement on no-op
+  events. Browser keyboard clearing and re-evaluation were verified.
+- Reusing the existing JSON decoder and resetting owned State fields individually kept the
+  interface below the 300 KiB gate (287,701 bytes before the final small navigation additions).
+  A native regression verifies credential/body erasure and default restoration during reset.
+  Required repository tests, formatting and SID compilation passed; subsequent UI refinements
+  passed console-specific checks and browser review. Policy edits, history and candidate-engine
+  validation remain pending and are not represented as implemented by this read/test view.

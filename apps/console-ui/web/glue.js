@@ -7,6 +7,7 @@ const wasm = module.instance.exports;
 let socket;
 let geometryController;
 let pendingFocus;
+let renderedHtml;
 const timers = new Map();
 function read(pointer, length) {
   return decoder.decode(new Uint8Array(wasm.memory.buffer, pointer, length));
@@ -26,7 +27,10 @@ function flush() {
   const activeAction = focus?.dataset?.action;
   const submitForm = focus?.type === "submit" ? focus.closest("form")?.id : null;
   const selection = typeof focus?.selectionStart === "number" ? focus.selectionStart : null;
-  if (html !== root.innerHTML) {
+  // Compare renderer output with its previous output. Browser serialization normalizes
+  // markup, so comparing innerHTML would replace forms even for unchanged state.
+  if (html !== renderedHtml) {
+    renderedHtml = html;
     root.innerHTML = html;
     root.setAttribute("aria-busy", "false");
     const target = (activeId && `#${CSS.escape(activeId)}`) ||

@@ -11,6 +11,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
 }
 
 fn page(state: *const State, w: *Writer) Writer.Error!void {
+    if (state.phase == .policies) return @import("policies_page.zig").render(state, w);
     if (state.phase == .similarity) return @import("similarity_page.zig").render(state, w);
     if (state.phase == .challenges) return @import("challenges_page.zig").render(state, w);
     if (state.phase == .events) return @import("events_page.zig").render(state, w);

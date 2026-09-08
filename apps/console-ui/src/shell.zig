@@ -9,8 +9,8 @@ pub fn begin(state: *const State, w: *Writer) Writer.Error!void {
         .open = state.navigation_open,
     });
     const active = section(state.phase);
-    const actions = .{ "dashboard", "events", "challenges", "geoip", "account" };
-    const labels = .{ "Statistics", "Events", "Challenges", "GeoIP", "Account" };
+    const actions = .{ "dashboard", "events", "challenges", "policies", "geoip", "account" };
+    const labels = .{ "Statistics", "Events", "Challenges", "Policies", "GeoIP", "Account" };
     inline for (actions, labels) |action, label| {
         try html.render(w, @embedFile("snippets/shell-item.html"), .{
             .action = action,
@@ -32,6 +32,7 @@ fn section(phase: Phase) []const u8 {
     return switch (phase) {
         .events, .similarity => "events",
         .challenges => "challenges",
+        .policies => "policies",
         .geoip => "geoip",
         .password, .security => "account",
         else => "dashboard",

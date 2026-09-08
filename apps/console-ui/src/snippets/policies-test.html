@@ -1,0 +1,19 @@
+<section id="policy-tester" tabindex="-1"
+         class="card bg-base-100 border border-base-300 p-6 mt-6">
+  <h2 class="font-bold">Evaluate a request</h2>
+  <p class="sb-note">Evaluate the applied policy snapshot without sending traffic or changing rules.
+    This includes inspection, reputation, file rules and database rules. Session admission,
+    local rate limits, bans outside the engine and origin responses are separate stages.
+    The supplied fields are not saved. This form sends no custom headers.</p>
+  <form id="policy-run" class="sb-settings-form">
+    <label for="policy-path">Path</label>
+    <input class="input" id="policy-path" name="path" value="{{ path }}" required maxlength="512">
+    <label for="policy-ip">Client IP</label>
+    <input class="input" id="policy-ip" name="ip" value="{{ ip }}" required maxlength="48">
+    <label for="policy-agent">User agent</label>
+    <input class="input" id="policy-agent" name="user_agent" value="{{ user_agent }}" maxlength="256">
+    <label for="policy-query">Query string (without ?)</label>
+    <input class="input" id="policy-query" name="query" value="{{ query }}" maxlength="512">
+    <label for="policy-body">Body (up to 2 KiB)</label>
+    <textarea class="textarea" id="policy-body" name="body" rows="3"
+              maxlength="2048">{{ body }}</textarea>
