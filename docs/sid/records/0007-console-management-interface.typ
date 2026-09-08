@@ -2425,6 +2425,32 @@ was stopped. Many unchanged primitives also slowed substantially relative to the
 earlier run on this host. These uncontrolled runs do not isolate the cause of that
 variation and cannot establish console overhead or pass the throughput/p99 gate.
 
+== Durable minute record format and storage (2026-09-08)
+
+Additive console schema 12 introduces counter minutes keyed by node, random boot,
+observation epoch and UTC ending-minute label. The 152-byte `SBM1` encoding fixes
+little-endian field order, preserves all eight unsigned 64-bit outcome/origin counters,
+and validates reserved bits, actual monotonic duration, observation count and coverage
+flags. Complete records must be sealed and have no gap. This is a sample-aligned
+interval representation; UTC labels do not imply exact attribution to wall-clock
+minute boundaries. Stored payloads do not rely on native struct layout or SQLite
+signed-integer conversion of counters.
+
+The sole storage owner accepts typed, owned writes and reads. Partial upserts retain
+their original start and monotonically advance counters and endpoints. Identical and
+older partial retries cannot downgrade newer records; a sealed record is immutable.
+Sealing may advance the status at the same endpoint. Expected previous payload bytes
+fence competing replicated updates between read and write. Native tests exercise owned
+queue input, full-width counts, idempotence, sealing, conflicting updates, restart and
+migration replay. A failing update trigger leaves the previous payload intact.
+
+History queries recheck the session on the storage owner, return at most eight records,
+and use node/time or time indexes with compound keyset cursors. Separate node and boot
+records are never implicitly summed. Reads exclude records outside the 90-day window
+even if cleanup lags; each retention operation removes at most 64 indexed records.
+Collector publication and the HTTP/history UI are the next integration increment;
+these storage handlers alone do not constitute durable live telemetry acceptance.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

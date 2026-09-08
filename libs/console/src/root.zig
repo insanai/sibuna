@@ -14,6 +14,7 @@ test {
 pub const geoip_gzip = @import("geoip_gzip.zig");
 pub const geoip = @import("geoip.zig");
 pub const rankings_archive = @import("rankings_archive.zig");
+pub const minute_archive = @import("minute_archive.zig");
 pub const schema = @import("schema.zig");
 pub const Password = @import("password.zig").Password;
 test {
@@ -22,6 +23,7 @@ test {
     _ = @import("auth_secrets.zig");
     _ = @import("stats.zig");
     _ = @import("timeline_test.zig");
+    _ = @import("minute_archive.zig");
     _ = @import("geoip_maintenance.zig");
     _ = @import("space_saving.zig");
     _ = @import("rankings_archive.zig");

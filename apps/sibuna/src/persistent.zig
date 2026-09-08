@@ -914,6 +914,7 @@ test {
     if (build_options.console) {
         _ = @import("console_store_test.zig");
         _ = @import("console_rankings_test.zig");
+        _ = @import("console_minutes_test.zig");
         _ = @import("console_inspection_test.zig");
         _ = @import("console_limits_test.zig");
         _ = @import("console_start.zig");

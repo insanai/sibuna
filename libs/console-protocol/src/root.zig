@@ -6,6 +6,7 @@ pub const policies = @import("policies.zig");
 pub const challenges = @import("challenges.zig");
 pub const rankings = @import("rankings.zig");
 pub const timeline = @import("timeline.zig");
+pub const minutes = @import("minutes.zig");
 pub const ranking_storage = @import("ranking_storage.zig");
 pub const events = @import("events.zig");
 pub const auth = @import("auth.zig");
@@ -72,6 +73,9 @@ pub const Principal = struct {
     totp_enabled: bool = false,
 };
 pub const StorageRequest = union(enum) {
+    minutes_write: minutes.Write,
+    minutes_query: minutes.Query,
+    minutes_prune: u64,
     rankings_begin: ranking_storage.Begin,
     rankings_chunk: ranking_storage.Chunk,
     rankings_finish: ranking_storage.Finish,
@@ -126,6 +130,7 @@ pub const StorageRequest = union(enum) {
     control_complete: struct { id: u64, succeeded: bool },
 };
 pub const StorageResult = union(enum) {
+    minute_page: minutes.Page,
     ranking_inventory: rankings.Inventory,
     policy_document: policies.Document,
     similarity: similarity.Part,
@@ -175,6 +180,7 @@ pub fn Bytes(comptime capacity: usize) type {
 
 pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
     switch (request) {
+        .minutes_query => |query| try minutes.validate(query),
         .policy_read => |input| try policies.validateRead(input),
         .policies_query => |query| try policies.validate(query),
         .policies_test => |input| try policies.validateTest(input),
