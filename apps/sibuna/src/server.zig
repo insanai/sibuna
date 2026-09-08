@@ -52,6 +52,7 @@ pub const AppState = struct {
     slot: std.atomic.Value(*EngineSlot),
     spent: store.ChallengeStore = .{},
     rate_limiter: store.RateLimiter = store.RateLimiter.init(),
+    rule_rate_limiter: store.RateLimiter = store.RateLimiter.init(),
     bans: store.BanList = .{},
     idle: IdleTable = .{},
     /// Connections currently served on their own threads.
@@ -484,25 +485,29 @@ fn dispatch(ctx: *RequestContext) !bool {
         .window_ms = st.config.rate_window_seconds * 1000,
     };
     const rate = st.rate_limiter.check(ctx.client_ip, ctx.now_ms, limits);
-    if (rate.limited) {
-        Metrics.bump(&st.metrics.rate_limited);
-        recordOutcome(ctx, .denied);
-        var hdr: [64]u8 = undefined;
-        const retry = try std.fmt.bufPrint(
-            &hdr,
-            "Retry-After: {d}\r\n",
-            .{(rate.retry_after_ms + 999) / 1000},
-        );
-        try net.response.write(
-            ctx.writer(),
-            .too_many_requests,
-            "text/plain; charset=utf-8",
-            "Rate limit exceeded",
-            .{ .headers = retry, .keep_alive = ctx.keep_alive },
-        );
-        return ctx.keep_alive;
-    }
+    if (rate.limited) return rateLimited(ctx, rate, 0);
     return applyPolicy(ctx);
+}
+
+fn rateLimited(ctx: *RequestContext, rate: store.rate_limiter.Decision, ban_seconds: u32) !bool {
+    const st = ctx.state();
+    Metrics.bump(&st.metrics.rate_limited);
+    recordOutcome(ctx, .denied);
+    // Capacity pressure refuses this request, but must not become an address-wide ban.
+    const ban = if (rate.capacity_exhausted) 0 else ban_seconds;
+    if (ban != 0) st.bans.ban(ctx.client_ip, ctx.now +| ban, ctx.now);
+    const retry_seconds = @max(ban, rate.retry_after_ms / 1000 +
+        @intFromBool(rate.retry_after_ms % 1000 != 0));
+    var buffer: [64]u8 = undefined;
+    const headers = try std.fmt.bufPrint(&buffer, "Retry-After: {d}\r\n", .{retry_seconds});
+    try net.response.write(
+        ctx.writer(),
+        .too_many_requests,
+        "text/plain; charset=utf-8",
+        "Rate limit exceeded",
+        .{ .headers = headers, .keep_alive = ctx.keep_alive },
+    );
+    return ctx.keep_alive;
 }
 
 fn policyHeaders(
@@ -542,6 +547,15 @@ fn applyPolicy(ctx: *RequestContext) !bool {
     var name: [policy.engine.MAX_RULE_NAME]u8 = undefined;
     const decision = requestDecision(ctx, &name);
     recordAuditFindings(ctx, decision.audited);
+    if (decision.limits) |limits| {
+        const rate = st.rule_rate_limiter.checkScoped(
+            ctx.client_ip,
+            decision.limit_scope,
+            ctx.now_ms,
+            .{ .rate = limits.rate, .window_ms = @as(u64, limits.window_seconds) * 1000 },
+        );
+        if (rate.limited) return rateLimited(ctx, rate, limits.ban_seconds);
+    }
     // A session clears admission challenges, never WAF or explicit denials.
     if (decision.action != .deny) {
         if (ctx.req.getCookie(st.config.cookie_name)) |cookie| {

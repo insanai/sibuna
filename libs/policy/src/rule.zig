@@ -74,6 +74,9 @@ pub const MAX_RULE_CIDRS: usize = 8;
 
 pub const PolicyRule = struct {
     name: []const u8,
+    limits: ?@import("rule_limits.zig").Limits = null,
+    limit_identity: u64 = 0,
+    limit_scope: u64 = 0,
     path_pattern: ?[]const u8 = null,
     ua_pattern: ?[]const u8 = null,
     headers: [MAX_RULE_HEADERS]HeaderMatcher = undefined,

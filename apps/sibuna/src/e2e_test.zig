@@ -33,6 +33,7 @@ var origin_port: u16 = 0;
 var proxy_fixture: Fixture = .{};
 var auth_fixture: Fixture = .{};
 var audit_fixture: Fixture = .{};
+var quota_fixture: Fixture = .{};
 var audited_requests: std.atomic.Value(u64) = .init(0);
 /// Minimal once-guard: the first caller boots the fixtures, later callers
 /// spin until it has finished.
@@ -101,6 +102,7 @@ fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
     cfg.ban_seconds = 60;
     f.engine.initInPlace(cfg.default_difficulty);
     f.engine.waf_enabled = cfg.waf;
+    if (f == &quota_fixture) configureQuotas(&f.engine);
     if (f == &audit_fixture) {
         f.engine.inspection_modes = .{ .sqli = .audit, .path_traversal = .disabled };
         f.engine.ip_trie.insertCidr("203.0.113.223/32", .deny) catch unreachable;
@@ -147,6 +149,81 @@ fn bootAll() void {
     auth_cfg.token_scheme = .ed25519;
     bootFixture(&auth_fixture, auth_cfg);
     bootFixture(&audit_fixture, proxy_cfg);
+    bootFixture(&quota_fixture, proxy_cfg);
+}
+
+fn configureQuotas(engine: *policy.Engine) void {
+    // A controlled explicit policy replaces defaults, as a startup rules array does.
+    engine.rule_count = 0;
+    inline for (.{
+        .{ "/quota", policy.Action.challenge, 1, 0 },
+        .{ "/quota-other", policy.Action.challenge, 1, 0 },
+        .{ "/quota-ban", policy.Action.allow, 1, 60 },
+        .{ "/quota-global", policy.Action.allow, 1000, 0 },
+    }) |row| engine.addRule(.{
+        .name = row[0],
+        .path_pattern = row[0],
+        .action = row[1],
+        .limits = .{ .rate = row[2], .window_seconds = 60, .ban_seconds = row[3] },
+    }) catch unreachable;
+}
+
+test "terminal quota runs before a valid session and keeps clients and rules independent" {
+    boot_once.call();
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    const port = quota_fixture.port;
+    const ip = "203.0.113.230";
+    const selected = quota_fixture.engine.evaluate("/quota", ip, browser_ua);
+    try std.testing.expectEqualStrings("/quota", selected.rule_name);
+    try std.testing.expect(selected.limits != null);
+    var cookie: [256]u8 = undefined;
+    const value = try quotaCookie(port, ip, resp, &cookie);
+    var header: [512]u8 = undefined;
+    const fields = try std.fmt.bufPrint(&header, "Cookie: {s}\r\n", .{value});
+    try get(port, "/quota", ip, browser_ua, fields, resp);
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+    try std.testing.expect(resp.contains("X-Sibuna-Rule: session"));
+    try get(port, "/quota", ip, browser_ua, fields, resp);
+    try std.testing.expectEqual(@as(u16, 429), resp.status());
+    try std.testing.expect(resp.header("retry-after") != null);
+    try get(port, "/quota-other", ip, browser_ua, fields, resp);
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+    try get(port, "/quota", "203.0.113.231", browser_ua, "", resp);
+    try std.testing.expectEqual(@as(u16, 401), resp.status());
+    try get(port, "/quota", "203.0.113.231", browser_ua, "", resp);
+    try std.testing.expectEqual(@as(u16, 429), resp.status());
+}
+
+fn quotaCookie(port: u16, ip: []const u8, resp: *Response, buffer: *[256]u8) ![]const u8 {
+    const ch = try fetchChallenge(port, ip, browser_ua, "/quota");
+    const nonce = crypto.pow.solveHashcashBits(ch.idSlice(), ch.difficulty, 1 << 24).?;
+    var body: [256]u8 = undefined;
+    try post(port, "/__sibuna/verify", ip, browser_ua, try std.fmt.bufPrint(
+        &body,
+        "{{\"challenge_id\":\"{s}\",\"nonce\":\"{d}\"}}",
+        .{ ch.idSlice(), nonce },
+    ), resp);
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+    return extractCookie(resp, buffer);
+}
+
+test "rule quotas preserve the global limiter and configured bans block other local paths" {
+    boot_once.call();
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    const port = quota_fixture.port;
+    for (0..9) |index| {
+        try get(port, "/quota-global", "203.0.113.232", "curl", "", resp);
+        try std.testing.expectEqual(@as(u16, if (index < 8) 200 else 429), resp.status());
+    }
+    try get(port, "/quota-ban", "203.0.113.233", "curl", "", resp);
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+    try get(port, "/quota-ban", "203.0.113.233", "curl", "", resp);
+    try std.testing.expectEqual(@as(u16, 429), resp.status());
+    try std.testing.expectEqualStrings("60", resp.header("retry-after").?);
+    try get(port, "/robots.txt", "203.0.113.233", "curl", "", resp);
+    try std.testing.expectEqual(@as(u16, 403), resp.status());
 }
 
 fn captureAudit(_: ?*anyopaque, incident: server.Incident) void {

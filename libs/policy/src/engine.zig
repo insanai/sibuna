@@ -15,6 +15,7 @@ const rule = @import("rule.zig");
 const loader = @import("loader.zig");
 const waf = @import("waf.zig");
 const inspection = @import("inspection.zig");
+const rule_limits = @import("rule_limits.zig");
 
 pub const Action = rule.Action;
 pub const Header = rule.Header;
@@ -34,6 +35,8 @@ pub const RequestView = struct {
 };
 
 pub const Decision = struct {
+    limits: ?@import("rule_limits.zig").Limits = null,
+    limit_scope: u64 = 0,
     action: Action,
     rule_name: []const u8,
     /// Challenge difficulty in work bits; zero when not challenging.
@@ -104,6 +107,15 @@ pub const Engine = struct {
         if (r.name.len == 0 or r.name.len > MAX_RULE_NAME) return error.InvalidRuleName;
         for (r.name) |c| if (c < 32 or c == 127) return error.InvalidRuleName;
         self.rules[self.rule_count] = r;
+        if (r.limits) |limits| {
+            if (r.action == .weigh) return error.InvalidRuleLimit;
+            try limits.validate();
+            const id = if (r.limit_identity != 0) r.limit_identity else rule_limits.fileIdentity(
+                r.name,
+                self.rule_count,
+            );
+            self.rules[self.rule_count].limit_scope = limits.scope(id);
+        }
         self.rule_count += 1;
     }
 
@@ -176,6 +188,8 @@ pub const Engine = struct {
 
     fn challengeDecision(self: *const Engine, r: *const PolicyRule, score: i32) Decision {
         return .{
+            .limits = r.limits,
+            .limit_scope = r.limit_scope,
             .action = r.action,
             .rule_name = r.name,
             .difficulty = if (r.action == .challenge)

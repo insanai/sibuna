@@ -16,6 +16,7 @@ pub const Error = error{
     TooManyCidrs,
     InvalidChallenge,
     InvalidWeight,
+    InvalidRuleLimit,
 };
 pub const ParseError = Error || std.json.ParseError(std.json.Scanner);
 pub const Document = struct {
@@ -39,6 +40,7 @@ const Wire = struct {
     difficulty: ?u32 = null,
     algorithm: ?enum { hashcash, posw } = null,
     weight: i32 = 0,
+    limits: ?@import("rule_limits.zig").Limits = null,
 };
 
 pub fn parse(allocator: std.mem.Allocator, source: []const u8) ParseError!Document {
@@ -59,6 +61,8 @@ pub fn parse(allocator: std.mem.Allocator, source: []const u8) ParseError!Docume
         .difficulty = wire.difficulty,
         .algorithm = if (wire.algorithm) |algorithm| @tagName(algorithm) else null,
         .weight = wire.weight,
+        .limits = wire.limits,
+        .limit_identity = @import("rule_limits.zig").managedIdentity(wire.id),
     };
     for ([_]?[]const u8{ wire.path, wire.user_agent }) |optional| {
         if (optional) |pattern| {
@@ -70,6 +74,10 @@ pub fn parse(allocator: std.mem.Allocator, source: []const u8) ParseError!Docume
     }
     if (wire.algorithm != null and wire.action != .challenge) return error.InvalidChallenge;
     if (wire.weight != 0 and wire.action != .weigh) return error.InvalidWeight;
+    if (wire.limits) |limits| {
+        if (wire.action == .weigh) return error.InvalidRuleLimit;
+        try limits.validate();
+    }
     try headers(wire.headers, &value);
     if (wire.cidrs.len > rule.MAX_RULE_CIDRS) return error.TooManyCidrs;
     for (wire.cidrs, 0..) |cidr, i| {
@@ -175,4 +183,36 @@ test "management document bounds reject exhaustion and invalid identifiers" {
     var empty: [0]u8 = .{};
     var exhausted = std.heap.FixedBufferAllocator.init(&empty);
     try std.testing.expectError(error.OutOfMemory, parse(exhausted.allocator(), input));
+}
+
+test "terminal quota validation rejects WEIGH, partial and out-of-range settings" {
+    const t = std.testing;
+    const prefix = "{\"id\":\"a\",\"name\":\"A\",\"action\":\"allow\",\"limits\":";
+    inline for (.{
+        "{\"rate\":0,\"window_seconds\":1}",
+        "{\"rate\":1000001,\"window_seconds\":1}",
+        "{\"rate\":1,\"window_seconds\":0}",
+        "{\"rate\":1,\"window_seconds\":86401}",
+        "{\"rate\":1,\"window_seconds\":1,\"ban_seconds\":86401}",
+    }) |limits| {
+        var arena = std.heap.ArenaAllocator.init(t.allocator);
+        defer arena.deinit();
+        try t.expectError(error.InvalidRuleLimit, parse(
+            arena.allocator(),
+            prefix ++ limits ++ "}",
+        ));
+    }
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    try t.expectError(error.MissingField, parse(arena.allocator(), prefix ++ "{\"rate\":1}}"));
+    try t.expectError(error.UnknownField, parse(arena.allocator(), prefix ++
+        "{\"rate\":1,\"window_seconds\":1,\"typo\":0}}"));
+    try t.expectError(error.InvalidRuleLimit, parse(
+        arena.allocator(),
+        "{\"id\":\"a\",\"name\":\"A\",\"action\":\"weigh\"," ++
+            "\"limits\":{\"rate\":1,\"window_seconds\":1}}",
+    ));
+    const maximum = try parse(arena.allocator(), prefix ++
+        "{\"rate\":1000000,\"window_seconds\":86400,\"ban_seconds\":86400}}");
+    try t.expectEqual(@as(u32, 1_000_000), maximum.value.limits.?.rate);
 }

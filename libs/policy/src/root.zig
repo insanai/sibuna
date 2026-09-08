@@ -10,6 +10,7 @@ pub const aho_corasick = @import("aho_corasick.zig");
 pub const radix_trie = @import("radix_trie.zig");
 pub const bot_signatures = @import("bot_signatures.zig");
 pub const rule = @import("rule.zig");
+pub const rule_limits = @import("rule_limits.zig");
 pub const loader = @import("loader.zig");
 pub const management = @import("management.zig");
 pub const candidate = @import("candidate.zig");

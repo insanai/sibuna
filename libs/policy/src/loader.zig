@@ -91,6 +91,7 @@ pub fn createJsonPolicy(
     default_diff: u32,
 ) !*engine_mod.Engine {
     const engine = try allocator.create(engine_mod.Engine);
+    errdefer allocator.destroy(engine);
     engine.initInPlace(default_diff);
     try parseJsonPolicyInto(allocator, json_text, engine);
     return engine;
@@ -119,6 +120,12 @@ fn parseRule(
     if (obj.get("weight")) |w| {
         if (w == .integer) r.weight = @intCast(std.math.clamp(w.integer, -1000, 1000));
     }
+    if (obj.get("limits")) |value| r.limits = try std.json.parseFromValueLeaky(
+        ?@import("rule_limits.zig").Limits,
+        allocator,
+        value,
+        .{},
+    );
 
     return r;
 }
@@ -241,4 +248,29 @@ test "loader parses json policy into engine rules" {
     try std.testing.expectEqualStrings("protect-checkout", eng.rules[1].name);
     try std.testing.expectEqual(rule.Action.challenge, eng.rules[1].action);
     try std.testing.expectEqual(@as(?u32, 8), eng.rules[1].difficulty);
+}
+
+test "file quotas compile stable scopes and reject nonterminal or incomplete settings" {
+    const t = std.testing;
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const input = "{\"rules\":[{\"name\":\"Checkout\",\"path\":\"/checkout\"," ++
+        "\"action\":\"CHALLENGE\",\"limits\":{\"rate\":2,\"window_seconds\":60}}]}";
+    const first = try createJsonPolicy(arena.allocator(), input, 8);
+    const second = try createJsonPolicy(arena.allocator(), input, 8);
+    try t.expectEqual(first.rules[0].limit_scope, second.rules[0].limit_scope);
+    const decision = first.evaluateRequest(.{ .path = "/checkout", .client_ip = "8.8.8.8" });
+    try t.expectEqual(@as(u32, 2), decision.limits.?.rate);
+    try t.expectEqual(first.rules[0].limit_scope, decision.limit_scope);
+    try t.expectError(error.InvalidRuleLimit, createJsonPolicy(
+        arena.allocator(),
+        "{\"rules\":[{\"name\":\"Weight\",\"action\":\"WEIGH\"," ++
+            "\"limits\":{\"rate\":2,\"window_seconds\":60}}]}",
+        8,
+    ));
+    try t.expectError(error.MissingField, createJsonPolicy(
+        arena.allocator(),
+        "{\"rules\":[{\"name\":\"Partial\",\"action\":\"ALLOW\",\"limits\":{\"rate\":2}}]}",
+        8,
+    ));
 }

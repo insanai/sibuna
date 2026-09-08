@@ -344,6 +344,20 @@ fn gcraBody(l: *store.RateLimiter, iters: u64) u64 {
     return limited;
 }
 
+fn scopedGcraBody(l: *store.RateLimiter, iters: u64) u64 {
+    var limited: u64 = 0;
+    for (0..iters) |i| {
+        const result = l.checkScoped(
+            test_ips[i % test_ips.len],
+            1 + (i / test_ips.len) % 4,
+            10_000 + i,
+            .{ .rate = 100, .window_ms = 10_000 },
+        );
+        if (result.limited) limited += 1;
+    }
+    return limited;
+}
+
 fn benchState(io: std.Io, gpa: std.mem.Allocator, runs: *Runs) !void {
     const s = try gpa.create(store.ChallengeStore);
     defer gpa.destroy(s);
@@ -360,6 +374,12 @@ fn benchState(io: std.Io, gpa: std.mem.Allocator, runs: *Runs) !void {
         measure(io, 200_000, l, gcraBody),
         "rate_limiter",
         "gcra_check",
+    ));
+    l.* = store.RateLimiter.init();
+    try runs.append(tag(
+        measure(io, 200_000, l, scopedGcraBody),
+        "rate_limiter",
+        "gcra_four_rule_scopes",
     ));
 }
 

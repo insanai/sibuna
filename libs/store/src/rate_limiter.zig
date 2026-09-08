@@ -54,6 +54,7 @@ pub const Limits = struct {
 };
 
 pub const Decision = struct {
+    capacity_exhausted: bool = false,
     limited: bool,
     /// Milliseconds until the next request would conform.
     retry_after_ms: u64,
@@ -93,6 +94,7 @@ const Shard = struct {
         self.lock.lock();
         defer self.lock.unlock();
         const cell = self.locate(key, now_ms, tau) orelse return .{
+            .capacity_exhausted = true,
             .limited = true,
             .retry_after_ms = interval,
             .remaining = 0,
@@ -119,8 +121,19 @@ pub const RateLimiter = struct {
 
     /// Records one arrival from `ip` at `now_ms` and reports conformance.
     pub fn check(self: *RateLimiter, ip: []const u8, now_ms: u64, limits: Limits) Decision {
+        return self.checkScoped(ip, 0x6a09_e667, now_ms, limits);
+    }
+
+    /// A separate caller-owned limiter can share the algorithm across stable rule scopes.
+    pub fn checkScoped(
+        self: *RateLimiter,
+        ip: []const u8,
+        scope: u64,
+        now_ms: u64,
+        limits: Limits,
+    ) Decision {
         // Key zero marks an empty slot, so a hash of zero is nudged to one.
-        const raw_hash = std.hash.Wyhash.hash(0x6a09_e667, ip);
+        const raw_hash = std.hash.Wyhash.hash(scope, ip);
         const hash = if (raw_hash == 0) 1 else raw_hash;
         if (limits.rate == 0) {
             return .{ .limited = true, .retry_after_ms = limits.window_ms, .remaining = 0 };
@@ -220,7 +233,19 @@ test "saturation cannot evict an active client and reset its quota" {
         try std.testing.expect(!shard.check(key, 100, limits).limited);
     }
     try std.testing.expect(shard.check(MAX_PROBE + 1, 100, limits).limited);
+    try std.testing.expect(shard.check(MAX_PROBE + 1, 100, limits).capacity_exhausted);
     for (1..MAX_PROBE + 1) |key| {
         try std.testing.expect(shard.check(key, 100, limits).limited);
     }
+}
+
+test "scoped GCRA keeps clients and rules independent across repeated snapshot reads" {
+    var limiter: RateLimiter = .{};
+    const limits: Limits = .{ .rate = 1, .window_ms = 1000 };
+    try std.testing.expect(!limiter.checkScoped("client-a", 1, 100, limits).limited);
+    try std.testing.expect(limiter.checkScoped("client-a", 1, 100, limits).limited);
+    try std.testing.expect(!limiter.checkScoped("client-a", 2, 100, limits).limited);
+    try std.testing.expect(!limiter.checkScoped("client-b", 1, 100, limits).limited);
+    try std.testing.expect(limiter.checkScoped("client-a", 1, 500, limits).limited);
+    try std.testing.expect(!limiter.checkScoped("client-a", 1, 1100, limits).limited);
 }
