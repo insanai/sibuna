@@ -2,6 +2,7 @@
 //! do not expose them through richer panels until redaction and capture metadata exist.
 const std = @import("std");
 const p = @import("console").protocol;
+const access = @import("console_read_authorize.zig");
 const Persistent = @import("persistent.zig").Persistent;
 const db = @import("console_database.zig");
 const store = @import("console_store.zig");
@@ -10,9 +11,8 @@ const integer = store.integer;
 
 pub fn query(owner: *Persistent, input: p.events.Query) !p.StorageResult {
     try p.events.validate(input);
-    const identity = try store.authorize(owner, input.session_digest, input.now);
-    if (identity != .authorized or identity.authorized.must_change)
-        return .{ .failed = .unauthorized };
+    if (try access.check(owner, input.session_digest, input.require_totp, .events_read)) |reason|
+        return .{ .failed = reason };
     const before = input.before orelse p.events.Cursor{
         .time = std.math.maxInt(i64),
         .id = std.math.maxInt(i64),
@@ -57,11 +57,14 @@ pub fn query(owner: *Persistent, input: p.events.Query) !p.StorageResult {
     output.len = writer.buffered().len;
     if (input.export_page and !try auditExport(owner, input))
         return .{ .failed = .unauthorized };
+    if (try access.check(owner, input.session_digest, input.require_totp, .events_read)) |reason|
+        return .{ .failed = reason };
     return .{ .page = output };
 }
 
 fn auditExport(owner: *Persistent, input: p.events.Query) !bool {
     const digest = std.fmt.bytesToHex(input.session_digest, .lower);
+    const now = owner.nowSeconds();
     // Export preparation is recorded before returning bytes. This does not claim delivery.
     const changes = try db.exec(
         owner.db,
@@ -71,7 +74,7 @@ fn auditExport(owner: *Persistent, input: p.events.Query) !bool {
             "JOIN console_users u ON u.id=s.user_id WHERE s.digest=? " ++
             "AND s.revision=u.revision AND u.disabled=0 AND u.must_change=0 " ++
             "AND MIN(s.expires,s.idle_expires)>?",
-        &.{ integer(input.now), text(&digest), integer(input.now) },
+        &.{ integer(now), text(&digest), integer(now) },
     );
     return changes == 1;
 }

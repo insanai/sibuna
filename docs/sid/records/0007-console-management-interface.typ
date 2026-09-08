@@ -3178,6 +3178,21 @@ Numerical SQL tests call explicit synchronous helpers. Production dispatch expos
 clock override. Queued regressions expire a password, cookie or enrollment after submission
 and reject a previously verified TOTP step outside the current window.
 
+== Investigation execution authority (2026-09-09)
+
+Policy snapshots, private previews, managed documents/history, incident pages/exports,
+similarity partitions and durable minute pages recheck current authority on their storage
+owner before work and before releasing results. A queue delay cannot retain an earlier
+session instant. Current password restrictions, required administrator MFA (including the
+issuer of a restricted token), and endpoint-specific token capabilities are enforced there.
+The frozen minute-history observation boundary selects data and never supplies authority.
+
+Deterministic queue tests change expiry or password restrictions after submitting all seven
+read paths. Scope coverage verifies that a statistics-only bearer can read minute history
+but cannot inspect policies or incidents, and cannot bypass its issuer's required MFA.
+These checks close the older read-contract timestamp gap; they do not establish cluster
+runtime, complete audit metadata or impact acceptance.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

@@ -24,7 +24,7 @@ fn record() p.minutes.Record {
 fn page(fx: *Fixture, before: ?p.minutes.Cursor) !p.minutes.Page {
     const result = try fx.run(.{ .minutes_query = .{
         .session_digest = @splat(1),
-        .now = 300,
+        .observed_at = 300,
         .from_minute = 0,
         .until_minute = 5,
         .before = before,
@@ -114,7 +114,7 @@ test "minute pages separate boots and nodes, reject revoked readers and prune bo
     _ = try fx.run(.{ .logout = .{ .digest = @splat(1) } });
     const denied = try fx.run(.{ .minutes_query = .{
         .session_digest = @splat(1),
-        .now = 302,
+        .observed_at = 302,
         .from_minute = 0,
         .until_minute = 5,
     } });
@@ -161,7 +161,7 @@ test "a failed minute update rolls back and a node filter preserves both retaine
     _ = try fx.run(.{ .minutes_write = .{ .record = input, .now = 200 } });
     var query: p.minutes.Query = .{
         .session_digest = @splat(1),
-        .now = 300,
+        .observed_at = 300,
         .from_minute = 0,
         .until_minute = 5,
         .node = 7,

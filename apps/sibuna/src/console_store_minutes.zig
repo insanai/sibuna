@@ -5,6 +5,7 @@ const p = console.protocol;
 const codec = console.minute_archive;
 const db = @import("console_database.zig");
 const util = @import("console_store.zig");
+const access = @import("console_read_authorize.zig");
 const Persistent = @import("persistent.zig").Persistent;
 const text = util.text;
 const integer = util.integer;
@@ -108,10 +109,10 @@ pub fn prune(owner: *Persistent, now: u64) !p.StorageResult {
 
 pub fn query(owner: *Persistent, input: p.minutes.Query) !p.StorageResult {
     p.minutes.validate(input) catch return .{ .failed = .invalid_input };
-    if ((try util.authorize(owner, input.session_digest, input.now)) != .authorized)
-        return .{ .failed = .unauthorized };
+    if (try access.check(owner, input.session_digest, input.require_totp, .stats_read)) |reason|
+        return .{ .failed = reason };
     var bounded = input;
-    const cutoff = input.now / 60 -| (p.minutes.retention_days * 1440);
+    const cutoff = input.observed_at / 60 -| (p.minutes.retention_days * 1440);
     bounded.from_minute = @max(input.from_minute, cutoff);
     if (bounded.from_minute > bounded.until_minute) return .{ .minute_page = .{} };
     var result = try readQuery(owner, bounded);
@@ -121,6 +122,8 @@ pub fn query(owner: *Persistent, input: p.minutes.Query) !p.StorageResult {
     for (result.rows[0..page.count], 0..) |row, i|
         page.rows[i] = try decode(row[0] orelse return error.InvalidStoredValue);
     if (result.rows.len > input.limit) page.next = page.rows[page.count - 1].cursor();
+    if (try access.check(owner, input.session_digest, input.require_totp, .stats_read)) |reason|
+        return .{ .failed = reason };
     return .{ .minute_page = page };
 }
 

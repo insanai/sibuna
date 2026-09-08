@@ -64,7 +64,9 @@ pub const Reply = struct {
 };
 pub const Query = struct {
     session_digest: [32]u8,
-    now: u64,
+    // A frozen range boundary, never the authority clock.
+    observed_at: u64,
+    require_totp: bool = false,
     from_minute: u64,
     until_minute: u64,
     node: ?u32 = null,
@@ -90,8 +92,8 @@ pub const Status = struct {
 };
 
 pub fn validate(query: Query) error{InvalidLimit}!void {
-    if (query.limit == 0 or query.limit > max_rows or query.now > std.math.maxInt(i64) or
-        query.from_minute > query.until_minute or query.until_minute > query.now / 60 or
+    if (query.limit == 0 or query.limit > max_rows or query.observed_at > std.math.maxInt(i64) or
+        query.from_minute > query.until_minute or query.until_minute > query.observed_at / 60 or
         query.until_minute - query.from_minute > retention_days * 1440)
         return error.InvalidLimit;
     if (query.before) |cursor| {

@@ -31,7 +31,7 @@ pub fn query(app: *App, context: *http.Context, export_page: bool) !void {
         .session_digest = digest,
         .grouped = fields.view == .source,
         .export_page = export_page,
-        .now = app.now(),
+        .require_totp = app.config.behind_proxy,
         .limit = fields.limit,
         .from = fields.from,
         .until = fields.until orelse std.math.maxInt(i64),

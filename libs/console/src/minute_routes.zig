@@ -17,7 +17,8 @@ pub fn handle(app: *App, context: *http.Context) !void {
     const until = request.value.until_minute orelse now / 60;
     const query: p.minutes.Query = .{
         .session_digest = digest,
-        .now = now,
+        .observed_at = now,
+        .require_totp = app.config.behind_proxy,
         .from_minute = request.value.from_minute orelse (until -| 60),
         .until_minute = until,
         .node = request.value.node,
@@ -27,6 +28,10 @@ pub fn handle(app: *App, context: *http.Context) !void {
     const result = try app.request(.{ .minutes_query = query });
     if (result == .failed and result.failed == .unauthorized)
         return http.fail(context, .unauthorized, "CONSOLE401");
+    if (result == .failed and result.failed == .forbidden)
+        return http.fail(context, .forbidden, "CONSOLE403");
+    if (result == .failed and result.failed == .invalid_input)
+        return http.fail(context, .bad_request, "CONSOLE400");
     if (result != .minute_page) return context.respond(
         .service_unavailable,
         "application/json",

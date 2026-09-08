@@ -4,7 +4,7 @@ const Bytes = @import("root.zig").Bytes;
 pub const Cursor = struct { time: u64, id: u64 };
 pub const Query = struct {
     session_digest: [32]u8,
-    now: u64,
+    require_totp: bool = false,
     grouped: bool = false,
     export_page: bool = false,
     before: ?Cursor = null,

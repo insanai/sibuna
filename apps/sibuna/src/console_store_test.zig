@@ -113,7 +113,7 @@ test "policy inspection pins applied revisions and includes file and database ru
             "VALUES('test','database-deny',1,'/from-db','DENY',100,100)",
     );
     try fx.owner.tick();
-    var input: p.policies.Query = .{ .session_digest = @splat(1), .now = 101 };
+    var input: p.policies.Query = .{ .session_digest = @splat(1) };
     const result = (try fx.run(.{ .policies_query = input })).page;
     try t.expect(std.mem.indexOf(u8, result.slice(), "database-deny") != null);
     try t.expect(std.mem.indexOf(u8, result.slice(), "file-allow") != null);
@@ -153,7 +153,7 @@ test "private policy previews preserve live rules and reject invalid neighbors" 
     try fx.owner.tick();
     const stamp = fx.owner.version;
     var request: p.policies.Test = .{
-        .query = .{ .session_digest = @splat(1), .now = 101 },
+        .query = .{ .session_digest = @splat(1) },
         .path = try p.Bytes(512).init("/draft"),
         .ip = try p.Bytes(48).init("8.8.8.8"),
         .committed = stamp,
@@ -203,7 +203,7 @@ test "draft snapshots page database rules and retain header and CIDR matchers" {
     );
     try fx.owner.tick();
     var request: p.policies.Test = .{
-        .query = .{ .session_digest = @splat(1), .now = 101 },
+        .query = .{ .session_digest = @splat(1) },
         .path = try p.Bytes(512).init("/rule-9"),
         .ip = try p.Bytes(48).init("8.8.8.8"),
         .committed = fx.owner.version,
@@ -223,7 +223,6 @@ test "draft snapshots page database rules and retain header and CIDR matchers" {
     try t.expect(std.mem.indexOf(u8, missed.slice(), "\"rule\":\"Rule 9\"") == null);
     var catalog: p.policies.Read = .{
         .session_digest = @splat(1),
-        .now = 101,
         .committed = fx.owner.version,
         .selection = .{ .catalog = .{} },
     };
@@ -915,14 +914,14 @@ test "incident pages bound bytes, paginate tied timestamps and redact historical
     var tmp = t.tmpDir(.{});
     defer tmp.cleanup();
     var buffer: [160]u8 = undefined;
-    const fx = try geoFixture(try std.fmt.bufPrint(
+    const fx = try readFixture(try std.fmt.bufPrint(
         &buffer,
         ".zig-cache/tmp/{s}/event-pages",
         .{tmp.sub_path},
     ));
     defer fx.close();
     try insertEvents(fx.owner);
-    var input: p.events.Query = .{ .session_digest = @splat(1), .now = 250 };
+    var input: p.events.Query = .{ .session_digest = @splat(1) };
     var seen: [31]bool = @splat(false);
     var count: usize = 0;
     while (true) {
@@ -980,7 +979,7 @@ test "source groups report exact filtered counts and audit bounded export prepar
     var tmp = t.tmpDir(.{});
     defer tmp.cleanup();
     var buffer: [160]u8 = undefined;
-    const fx = try geoFixture(try std.fmt.bufPrint(
+    const fx = try readFixture(try std.fmt.bufPrint(
         &buffer,
         ".zig-cache/tmp/{s}/event-groups",
         .{tmp.sub_path},
@@ -989,7 +988,6 @@ test "source groups report exact filtered counts and audit bounded export prepar
     try insertEvents(fx.owner);
     const input: p.events.Query = .{
         .session_digest = @splat(1),
-        .now = 250,
         .grouped = true,
         .export_page = true,
         .from = 201,
@@ -1025,7 +1023,7 @@ test "versioned incident metadata commits with forensics and survives migration 
     var tmp = t.tmpDir(.{});
     defer tmp.cleanup();
     var path: [160]u8 = undefined;
-    const fx = try geoFixture(try std.fmt.bufPrint(
+    const fx = try readFixture(try std.fmt.bufPrint(
         &path,
         ".zig-cache/tmp/{s}/evidence",
         .{tmp.sub_path},
@@ -1069,7 +1067,6 @@ test "versioned incident metadata commits with forensics and survives migration 
     try @import("console_migrations.zig").run(fx.owner);
     const result = (try fx.run(.{ .events_query = .{
         .session_digest = @splat(1),
-        .now = 110,
     } })).page;
     try t.expect(std.mem.indexOf(u8, result.slice(), "private-body-value") == null);
     const parsed = try std.json.parseFromSlice(std.json.Value, t.allocator, result.slice(), .{});
@@ -1086,7 +1083,7 @@ test "candidate membership preserves large IDs and excludes unrelated rows under
     var tmp = t.tmpDir(.{});
     defer tmp.cleanup();
     var path: [160]u8 = undefined;
-    const fx = try geoFixture(try std.fmt.bufPrint(
+    const fx = try readFixture(try std.fmt.bufPrint(
         &path,
         ".zig-cache/tmp/{s}/candidate",
         .{tmp.sub_path},
@@ -1103,7 +1100,6 @@ test "candidate membership preserves large IDs and excludes unrelated rows under
     );
     const input: p.events.Query = .{
         .session_digest = @splat(1),
-        .now = 250,
         .campaign = 9007199254740993,
     };
     const result = (try fx.run(.{ .events_query = input })).page;
@@ -1121,7 +1117,7 @@ test "incremental similarity scans yield at 64 rows and recheck authorization" {
     var tmp = t.tmpDir(.{});
     defer tmp.cleanup();
     var path: [160]u8 = undefined;
-    const fx = try geoFixture(try std.fmt.bufPrint(
+    const fx = try readFixture(try std.fmt.bufPrint(
         &path,
         ".zig-cache/tmp/{s}/similarity",
         .{tmp.sub_path},
@@ -1140,7 +1136,6 @@ test "incremental similarity scans yield at 64 rows and recheck authorization" {
     for (0..5) |_| try fx.owner.tick();
     var input: p.similarity.Query = .{
         .session_digest = @splat(1),
-        .now = 500,
         .source = (1 << 40) | 1,
         .until = 400,
     };
@@ -1166,4 +1161,11 @@ test "incremental similarity scans yield at 64 rows and recheck authorization" {
     for (best.rows) |row| try t.expect(row.distance < 0.00001);
     _ = try fx.run(.{ .logout = .{ .digest = @splat(1) } });
     try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .events_similar = input })).failed);
+}
+
+fn readFixture(path: []const u8) !*Fixture {
+    const fx = try Fixture.open(path);
+    errdefer fx.close();
+    try policySession(fx);
+    return fx;
 }

@@ -22,7 +22,7 @@ pub fn read(app: *App, context: *http.Context) !void {
     const input = parsed.value;
     const result = try app.request(.{ .policy_read = .{
         .session_digest = digest,
-        .now = app.now(),
+        .require_totp = app.config.behind_proxy,
         .committed = try number(input.committed),
         .selection = switch (input.kind) {
             .catalog => .{ .catalog = try p.Bytes(128).init(input.after) },

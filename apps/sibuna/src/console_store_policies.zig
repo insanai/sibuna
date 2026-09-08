@@ -3,6 +3,7 @@
 const std = @import("std");
 const policy = @import("policy");
 const p = @import("console").protocol;
+const access = @import("console_read_authorize.zig");
 const Persistent = @import("persistent.zig").Persistent;
 const AppState = @import("server.zig").AppState;
 const store = @import("console_store.zig");
@@ -11,8 +12,8 @@ const candidates = @import("console_policy_candidate.zig");
 
 fn authorize(owner: *Persistent, input: p.policies.Query) !?p.Failure {
     try p.policies.validate(input);
-    const identity = try store.authorize(owner, input.session_digest, input.now);
-    if (identity != .authorized or identity.authorized.must_change) return .unauthorized;
+    if (try access.check(owner, input.session_digest, input.require_totp, .policy_read)) |reason|
+        return reason;
     if (input.applied) |expected| {
         if (expected != owner.version) return .conflict;
     }
@@ -66,6 +67,8 @@ pub fn query(owner: *Persistent, input: p.policies.Query) !p.StorageResult {
     } else try writer.writeAll("null");
     try writer.writeByte('}');
     output.len = writer.buffered().len;
+    if (try access.check(owner, input.session_digest, input.require_totp, .policy_read)) |reason|
+        return .{ .failed = reason };
     return .{ .page = output };
 }
 
@@ -104,7 +107,9 @@ pub fn testRequest(owner: *Persistent, input: p.policies.Test) !p.StorageResult 
     if (input.draft != null) return testDraft(owner, input);
     const slot = owner.state.acquireEngine();
     defer AppState.releaseEngine(slot);
-    return evaluate(owner, input, slot.engine);
+    const result = try evaluate(owner, input, slot.engine);
+    if (try authorize(owner, input.query)) |failure| return .{ .failed = failure };
+    return result;
 }
 
 fn testDraft(owner: *Persistent, input: p.policies.Test) !p.StorageResult {
@@ -112,12 +117,13 @@ fn testDraft(owner: *Persistent, input: p.policies.Test) !p.StorageResult {
         owner,
         input.committed.?,
         input.draft.?.slice(),
-        input.query.now,
+        owner.nowSeconds(),
     ) catch |err| return .{ .failed = draftFailure(err) };
     defer candidate.deinit();
-    // Recheck session revocation after bounded reads and compilation, including remote reads.
+    const result = try evaluate(owner, input, candidate.engine);
+    // Recheck after bounded reads and compilation, including remote reads.
     if (try authorize(owner, input.query)) |failure| return .{ .failed = failure };
-    return evaluate(owner, input, candidate.engine);
+    return result;
 }
 
 pub fn draftFailure(err: anyerror) p.Failure {

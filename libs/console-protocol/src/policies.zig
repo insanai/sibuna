@@ -3,7 +3,7 @@ const Bytes = @import("root.zig").Bytes;
 
 pub const Query = struct {
     session_digest: [32]u8,
-    now: u64,
+    require_totp: bool = false,
     offset: u8 = 0,
     applied: ?u64 = null,
 };
@@ -30,7 +30,7 @@ pub const Edit = struct {
 };
 pub const Read = struct {
     session_digest: [32]u8,
-    now: u64,
+    require_totp: bool = false,
     committed: ?u64 = null,
     selection: union(enum) {
         catalog: Bytes(128),
@@ -41,8 +41,7 @@ pub const Read = struct {
 pub const Document = struct { revision: u64, document: Bytes(4096) };
 
 pub fn validateRead(input: Read) error{InvalidLimit}!void {
-    if (input.now > std.math.maxInt(i64) or
-        (input.committed orelse 0) > std.math.maxInt(i64)) return error.InvalidLimit;
+    if ((input.committed orelse 0) > std.math.maxInt(i64)) return error.InvalidLimit;
     switch (input.selection) {
         .catalog => |after| if (after.len > 128) return error.InvalidLimit,
         .document => |document| {
@@ -57,7 +56,7 @@ pub fn validateRead(input: Read) error{InvalidLimit}!void {
 }
 
 pub fn validate(query: Query) error{InvalidLimit}!void {
-    if (query.offset > 128 or query.now > std.math.maxInt(i64) or
+    if (query.offset > 128 or
         (query.applied orelse 0) > std.math.maxInt(i64)) return error.InvalidLimit;
 }
 

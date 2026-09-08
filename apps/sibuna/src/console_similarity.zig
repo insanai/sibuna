@@ -2,15 +2,22 @@
 const std = @import("std");
 const p = @import("console").protocol;
 const embedding = @import("policy").embedding;
+const access = @import("console_read_authorize.zig");
 const Persistent = @import("persistent.zig").Persistent;
 const db = @import("console_database.zig");
 const store = @import("console_store.zig");
 
 pub fn query(owner: *Persistent, input: p.similarity.Query) !p.StorageResult {
     try p.similarity.validate(input);
-    const identity = try store.authorize(owner, input.session_digest, input.now);
-    if (identity != .authorized or identity.authorized.must_change)
-        return .{ .failed = .unauthorized };
+    if (try access.check(owner, input.session_digest, input.require_totp, .events_read)) |reason|
+        return .{ .failed = reason };
+    const result = try scan(owner, input);
+    if (try access.check(owner, input.session_digest, input.require_totp, .events_read)) |reason|
+        return .{ .failed = reason };
+    return result;
+}
+
+fn scan(owner: *Persistent, input: p.similarity.Query) !p.StorageResult {
     var source = try db.query(
         owner.db,
         owner.gpa,

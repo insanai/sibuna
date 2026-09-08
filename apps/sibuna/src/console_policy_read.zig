@@ -1,6 +1,7 @@
 //! Bounded managed-rule and history reads. Documents are complete; summaries are display-only.
 const std = @import("std");
 const p = @import("console").protocol;
+const access = @import("console_read_authorize.zig");
 const Persistent = @import("persistent.zig").Persistent;
 const db = @import("console_database.zig");
 const util = @import("console_store.zig");
@@ -8,9 +9,8 @@ const candidates = @import("console_policy_candidate.zig");
 
 pub fn read(owner: *Persistent, input: p.policies.Read) !p.StorageResult {
     try p.policies.validateRead(input);
-    const identity = try util.authorize(owner, input.session_digest, input.now);
-    if (identity != .authorized or identity.authorized.must_change)
-        return .{ .failed = .unauthorized };
+    if (try access.check(owner, input.session_digest, input.require_totp, .policy_read)) |reason|
+        return .{ .failed = reason };
     const revision = try candidates.revision(owner);
     if (input.committed) |expected| if (expected != revision) return .{ .failed = .conflict };
     const result = switch (input.selection) {
@@ -19,6 +19,8 @@ pub fn read(owner: *Persistent, input: p.policies.Read) !p.StorageResult {
         .history => |history| try readHistory(owner, revision, history),
     };
     if (try candidates.revision(owner) != revision) return .{ .failed = .conflict };
+    if (try access.check(owner, input.session_digest, input.require_totp, .policy_read)) |reason|
+        return .{ .failed = reason };
     return result;
 }
 

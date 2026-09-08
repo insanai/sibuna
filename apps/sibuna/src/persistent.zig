@@ -1002,6 +1002,7 @@ test {
         _ = @import("console_tokens_test.zig");
         _ = @import("console_audit_test.zig");
         _ = @import("console_auth_clock_test.zig");
+        _ = @import("console_read_clock_test.zig");
         _ = @import("console_inspection_test.zig");
         _ = @import("console_limits_test.zig");
         _ = @import("console_start.zig");

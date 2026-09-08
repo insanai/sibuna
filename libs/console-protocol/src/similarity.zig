@@ -4,7 +4,7 @@ const std = @import("std");
 const events = @import("events.zig");
 pub const Query = struct {
     session_digest: [32]u8,
-    now: u64,
+    require_totp: bool = false,
     source: u64,
     from: u64 = 0,
     until: u64,

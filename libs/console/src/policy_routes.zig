@@ -26,7 +26,7 @@ pub fn query(app: *App, context: *http.Context, testing: bool) !void {
     const fields = parsed.value;
     const request: p.policies.Query = .{
         .session_digest = digest,
-        .now = app.now(),
+        .require_totp = app.config.behind_proxy,
         .offset = fields.offset,
         .applied = if (fields.applied) |revision|
             std.fmt.parseInt(u64, revision, 10) catch return error.InvalidRequest

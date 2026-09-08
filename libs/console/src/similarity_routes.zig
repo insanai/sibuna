@@ -21,7 +21,7 @@ pub fn query(app: *App, context: *http.Context) !void {
     const input = parsed.value;
     var request: p.similarity.Query = .{
         .session_digest = digest,
-        .now = app.now(),
+        .require_totp = app.config.behind_proxy,
         .source = std.fmt.parseInt(u64, input.source, 10) catch return error.InvalidRequest,
         .from = input.from,
         .until = input.until,
