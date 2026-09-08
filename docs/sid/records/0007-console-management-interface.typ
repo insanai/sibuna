@@ -2714,6 +2714,21 @@ challenges and account navigation. The final UI module measured 295,283 bytes; i
 existing 300 KiB gate remains enforced. This does not close cluster aggregation or
 impact acceptance.
 
+== Incident geography benchmark regeneration (2026-09-08)
+
+`latest-20260908T112129Z.json` records clean source
+`caca893d1d87ff648508d936e3061e7e3b439173`, source-manifest version 2 with 284
+inputs, and result SHA-256
+`04379d49894c70e5cd3e2b83ba0602ebe9263a2dd55a54fb5d5da533cbc74caf`.
+Review daemons were stopped and no code edits occurred during measurement. Seven-batch
+medians were 1,439.0 ns for full policy classification, 289.1 ns for Gate, 5.8 ns for
+global GCRA, 6.1 ns for four rule scopes, 23,166.4 ns for enforcing 8 KiB inspection,
+and 112,750.0 ns for mixed audit/enforcing inspection. The mixed scan ranged from
+112,615.72 to 115,173.36 ns. Idle RSS was 9,936 KiB with storage compiled but inactive
+and two workers. These primitive measurements remain close to the preceding baseline;
+they do not measure active incident collection, eight dashboards, p99 latency or storage
+contention, and do not satisfy the separate console-impact acceptance gate.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
