@@ -3109,6 +3109,20 @@ the 307,200-byte cap; 127 console tests and 308 combined repository tests pass. 
 console-off and clustered build configurations remain functional. Cluster runtime,
 operational pages and the complete impact matrix remain outstanding acceptance work.
 
+== Token interface and native CLI benchmark regeneration (2026-09-09)
+
+A clean isolated `f7e2d0856a90fa16251b47667a3e7e088273c94e` run regenerated the primitive
+baseline with review daemons stopped and heavy verification outside the timed run. The
+version-2 manifest covers 337 inputs, SHA-256
+`61dcb5d4447ea10014bc6cde8a9653cc12951427337886c99fbbe37d4e09bd59`;
+the daemon digest is `deae1beb9d12b2f2652dff46ad2a1d44f32acdd25f00d8107978bd3b350972cb`.
+`latest-20260908T162352Z.json` and `latest.json` share SHA-256
+`3878c35f3c144efb69885f1d2f2104bbf1f7e517140d77c778db6fda8e988267`.
+Full classification measured 1,461.73 ns median (1,461.00–1,465.03 across seven batches).
+Idle RSS was 9,936 KiB with two workers and storage compiled but inactive. The recorded
+8,831-byte Wasm artifact is the proof solver. These measurements do not exercise active
+dashboards or storage contention and do not satisfy console-impact acceptance.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
