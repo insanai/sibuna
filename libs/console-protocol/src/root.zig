@@ -48,13 +48,8 @@ pub const Coverage = struct {
     age_ms: u64,
 };
 pub const Revision = struct { committed: u64, applied: u64 };
-pub const ControlRequest = struct {
-    id: u64,
-    actor: u64,
-    authorization_revision: u64,
-    node: u32,
-    command: union(enum) { drain: bool, clear_local_bans },
-};
+pub const nodes = @import("nodes.zig");
+pub const ControlRequest = nodes.Command;
 pub const AuthUser = struct {
     id: u64,
     username: Bytes(64),
@@ -127,10 +122,13 @@ pub const StorageRequest = union(enum) {
     policy_edit: policies.Edit,
     inspection_edit: policies.Edit,
     policy_read: policies.Read,
-    control_intent: ControlRequest,
-    control_complete: struct { id: u64, succeeded: bool },
+    node_status: users.Auth,
+    node_command: nodes.Command,
+    node_command_read: nodes.Read,
 };
 pub const StorageResult = union(enum) {
+    node_status: nodes.Status,
+    node_receipt: nodes.Receipt,
     audit_page: audit.Page,
     audit_detail: audit.Detail,
     tokens_page: tokens.Page,
@@ -199,6 +197,7 @@ pub fn Bytes(comptime capacity: usize) type {
 
 pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
     switch (request) {
+        .node_command => |input| try nodes.validate(input),
         .audit_query => |input| try audit.validate(input),
         .audit_read => |input| {
             if (input.id == 0 or input.id > audit.last_id) return error.InvalidLimit;

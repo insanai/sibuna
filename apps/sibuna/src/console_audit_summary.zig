@@ -42,13 +42,15 @@ pub fn copy(output: *p.Bytes(1024), source: []const u8, coverage: *Coverage) !vo
 }
 
 fn textField(key: []const u8) bool {
-    for ([_][]const u8{ "username", "label", "role" }) |name|
+    for ([_][]const u8{ "username", "label", "role", "command", "state" }) |name|
         if (std.mem.eql(u8, key, name)) return true;
     return false;
 }
 
 fn numberField(key: []const u8) bool {
-    for ([_][]const u8{ "disabled", "must_change", "revision", "scopes", "expires" }) |name|
+    for ([_][]const u8{
+        "disabled", "must_change", "revision", "scopes", "expires", "cleared_entries",
+    }) |name|
         if (std.mem.eql(u8, key, name)) return true;
     return false;
 }

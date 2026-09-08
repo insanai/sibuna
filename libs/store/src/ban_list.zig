@@ -81,6 +81,40 @@ pub const BanList = struct {
     pub fn lift(self: *BanList, ip: []const u8) void {
         self.ban(ip, 0, 0);
     }
+
+    /// Control-thread snapshot of occupied, unexpired entries. Keys are hashed addresses,
+    /// so this is an entry count, not a claim to enumerate distinct historical addresses.
+    pub fn activeCount(self: *BanList, now: u64) u32 {
+        while (self.write_lock.cmpxchgWeak(false, true, .acquire, .monotonic) != null) {
+            std.atomic.spinLoopHint();
+        }
+        defer self.write_lock.store(false, .release);
+        var count: u32 = 0;
+        for (&self.slots) |*slot| {
+            const until = slot.until.load(.monotonic);
+            if (slot.key.load(.monotonic) != 0 and until != 0 and until >= now) count += 1;
+        }
+        return count;
+    }
+
+    /// Serialize with ban writers; a ban installed after completion remains in effect.
+    /// Keep keys in place: an empty slot could hide a colliding key later in a probe chain.
+    /// Readers can observe progress, but no previously active entry survives completion.
+    pub fn clear(self: *BanList, now: u64) u32 {
+        while (self.write_lock.cmpxchgWeak(false, true, .acquire, .monotonic) != null) {
+            std.atomic.spinLoopHint();
+        }
+        defer self.write_lock.store(false, .release);
+        var count: u32 = 0;
+        for (&self.slots) |*slot| {
+            const until = slot.until.load(.monotonic);
+            if (slot.key.load(.monotonic) != 0 and until != 0 and until >= now) count += 1;
+            _ = slot.version.fetchAdd(1, .seq_cst);
+            slot.until.store(0, .seq_cst);
+            _ = slot.version.fetchAdd(1, .seq_cst);
+        }
+        return count;
+    }
 };
 
 test "ban list bans, expires, lifts, and survives overflow" {
@@ -110,4 +144,24 @@ test "ban list bans, expires, lifts, and survives overflow" {
     }
     list.ban("198.51.100.7", 1000, 500);
     try std.testing.expect(list.isBanned("198.51.100.7", 600));
+}
+
+test "control clear counts only active entries and permits subsequent bans" {
+    const t = std.testing;
+    const list = try t.allocator.create(BanList);
+    defer t.allocator.destroy(list);
+    list.* = .{};
+    list.ban("8.8.8.8", 200, 100);
+    list.ban("8.8.4.4", 150, 100);
+    list.ban("1.1.1.1", 199, 100);
+    list.lift("8.8.4.4");
+    try t.expectEqual(@as(u32, 1), list.activeCount(200));
+    try t.expectEqual(@as(u32, 1), list.clear(200));
+    try t.expectEqual(@as(u32, 0), list.activeCount(200));
+    try t.expect(!list.isBanned("8.8.8.8", 200));
+    // Expired entries cannot reappear after a backward wall-clock adjustment.
+    try t.expect(!list.isBanned("1.1.1.1", 100));
+    list.ban("8.8.8.8", 300, 200);
+    try t.expect(list.isBanned("8.8.8.8", 250));
+    try t.expectEqual(@as(u32, 1), list.activeCount(250));
 }

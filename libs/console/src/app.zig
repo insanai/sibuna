@@ -44,6 +44,7 @@ pub const App = struct {
         incidents: *store.ConsoleIncidents,
         metrics: *const core.Metrics,
         totp_key: ?[32]u8,
+        boot: [16]u8,
     ) !*App {
         const self = try gpa.create(App);
         errdefer gpa.destroy(self);
@@ -83,7 +84,8 @@ pub const App = struct {
         }
         self.geo_job.app = self;
         self.history.node = cfg.node_id;
-        while (std.mem.allEqual(u8, &self.history.boot, 0)) io.random(&self.history.boot);
+        std.debug.assert(!std.mem.allEqual(u8, &boot, 0));
+        self.history.boot = boot;
         self.minutes.node = cfg.node_id;
         self.minutes.boot = self.history.boot;
         self.retention.holder = .{ .node = cfg.node_id, .boot = self.history.boot };
@@ -296,6 +298,9 @@ pub const App = struct {
     ) !void {
         const access = @import("access_routes.zig");
         switch (route.handler) {
+            .node_status,
+            .node_command,
+            .node_command_read,
             .audit_query,
             .audit_read,
             .audit_export,

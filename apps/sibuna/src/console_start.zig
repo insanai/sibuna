@@ -101,6 +101,7 @@ pub const Runtime = struct {
             &owner.console_incidents,
             &owner.state.metrics,
             key,
+            owner.console_node.boot,
         );
         errdefer app.deinit();
         const spec = owner.state.coordinator.default_spec;

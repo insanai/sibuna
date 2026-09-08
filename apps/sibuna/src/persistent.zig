@@ -109,6 +109,8 @@ pub const Persistent = struct {
     console_mailbox: if (build_options.console) console.Mailbox else void =
         if (build_options.console) .{} else {},
     console_initialized: bool = false,
+    console_node: if (build_options.console) @import("console_node_state.zig").State else void =
+        if (build_options.console) .{} else {},
     gpa: std.mem.Allocator,
     io: Io,
     cfg: core.Config,
@@ -176,6 +178,9 @@ pub const Persistent = struct {
             .arenas = .{ std.heap.ArenaAllocator.init(gpa), std.heap.ArenaAllocator.init(gpa) },
             .node_id = if (cfg.cluster_node == 0) 1 else cfg.cluster_node,
         };
+        if (build_options.console) {
+            self.console_node = @import("console_node_state.zig").State.init(io);
+        }
         self.db = try openDb(self);
         errdefer self.db.close();
         errdefer {
@@ -1003,6 +1008,7 @@ test {
         _ = @import("console_audit_test.zig");
         _ = @import("console_auth_clock_test.zig");
         _ = @import("console_read_clock_test.zig");
+        _ = @import("console_nodes_test.zig");
         _ = @import("console_inspection_test.zig");
         _ = @import("console_limits_test.zig");
         _ = @import("console_start.zig");

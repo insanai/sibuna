@@ -3203,6 +3203,36 @@ The snapshot is `latest-20260908T171917Z.json`. Idle RSS was 9,936 KiB with two 
 and storage compiled but inactive. This covers the current audit and authorization source
 baseline, not the active-console throughput/p99/contention acceptance matrix.
 
+== Local node control and durable receipts (2026-09-09)
+
+The serving node exposes authenticated status, drain/resume and clear-local-bans through
+bounded storage/control commands. Its status reports the boot, control revision, current
+connections, active local ban-table entries, uptime, committed/applied policy revisions and
+pending completion. The count describes hashed table entries, not historical distinct IPs.
+A fresh operation identifier accompanies each status snapshot for confirmation and retries.
+The same process boot now identifies console telemetry, minute/ranking journals and controls.
+
+A command binds its node, boot, expected control revision and random operation identifier.
+The owner checks current cookie/CSRF, role and required MFA, conditionally commits an audit
+intent, rechecks authorization and its thirty-second execution deadline, applies the local
+effect and commits completion separately. Drain rejects new data-plane connections with 503
+while existing connections finish and the console remains reachable. Resume restores new
+admission. Clearing affects only the local temporary ban table; replicated policy/reputation
+can still deny requests. Ban writers serialize with the bounded clear and readers retain
+versioned snapshots throughout it.
+
+A failed completion retains one owned result and prevents new effects until it is recorded.
+Repeating the identifier returns that result without reapplying a clear. Completion retries
+also tolerate an acknowledgment lost after commit, with no duplicate completion audit.
+Unresolved intents after restart remain uncertain and are never replayed automatically;
+drain is boot-local and resets on restart. Receipts retain thirty days, at most 4,096 per
+node, with at most sixteen expired rows pruned per new command. Capacity exhaustion causes
+no effect. Audit intent/completion metadata uses the existing 365-day audit retention.
+
+This increment is the serving-node control foundation. The Nodes interface, authenticated
+peer management transport, missing-member coverage and three-node failover acceptance remain
+separate required work; it does not complete the Cluster Management phase.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

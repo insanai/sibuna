@@ -6,6 +6,15 @@ const Handler = @import("routes.zig").Handler;
 
 pub fn dispatch(app: *App, context: *http.Context, principal: p.Principal, kind: Handler) !void {
     switch (kind) {
+        .node_status,
+        .node_command,
+        .node_command_read,
+        => return @import("node_routes.zig").dispatch(
+            app,
+            context,
+            principal,
+            kind,
+        ),
         .audit_query, .audit_read, .audit_export => try @import("audit_routes.zig").handle(
             app,
             context,

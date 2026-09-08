@@ -58,6 +58,8 @@ pub const AppState = struct {
     /// Connections currently served on their own threads.
     connections: std.atomic.Value(u32) = .init(0),
     stopping: std.atomic.Value(bool) = .init(false),
+    draining: if (build_options.console) std.atomic.Value(bool) else void =
+        if (build_options.console) .init(false) else {},
     tasks: @import("connection_tasks.zig").Pool = .{},
     /// Idle keep-alive connections to the origin.
     upstream: net.proxy.Pool = .{},
@@ -164,6 +166,10 @@ pub fn workerLoop(server: *Io.net.Server, io: Io, state: *AppState) void {
             client_stream.close(io);
             return;
         }
+        if (build_options.console) if (state.draining.load(.acquire)) {
+            rejectDraining(client_stream, io);
+            continue;
+        };
         if (state.connections.fetchAdd(1, .monotonic) >= state.config.max_connections) {
             _ = state.connections.fetchSub(1, .monotonic);
             Metrics.bump(&state.metrics.overloaded);
@@ -189,6 +195,18 @@ fn connectionThread(stream: Io.net.Stream, io: Io, context: *anyopaque) void {
     }
     defer _ = state.connections.fetchSub(1, .monotonic);
     handleConnection(stream, io, state);
+}
+
+fn rejectDraining(stream: Io.net.Stream, io: Io) void {
+    defer stream.close(io);
+    var buffer: [512]u8 = undefined;
+    var writer = stream.writer(io, &buffer);
+    net.response.writeText(
+        &writer.interface,
+        .service_unavailable,
+        "Service Unavailable: node is draining",
+        false,
+    ) catch {};
 }
 
 fn rejectOverloaded(stream: Io.net.Stream, io: Io) void {

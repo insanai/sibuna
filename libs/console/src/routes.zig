@@ -4,6 +4,9 @@ const std = @import("std");
 const p = @import("console_protocol");
 pub const Access = enum { public, account, full };
 pub const Handler = enum {
+    node_status,
+    node_command,
+    node_command_read,
     audit_query,
     audit_read,
     audit_export,
@@ -46,6 +49,26 @@ pub const Route = struct {
     handler: Handler,
 };
 const table = [_]Route{
+    .{
+        .path = "/console/api/nodes/local",
+        .method = .GET,
+        .access = .full,
+        .handler = .node_status,
+    },
+    .{
+        .path = "/console/api/nodes/command",
+        .method = .POST,
+        .access = .full,
+        .action = .control_node,
+        .handler = .node_command,
+        .mutation = true,
+    },
+    .{
+        .path = "/console/api/nodes/command/read",
+        .method = .POST,
+        .access = .full,
+        .handler = .node_command_read,
+    },
     .{
         .path = "/console/api/audit/query",
         .method = .POST,

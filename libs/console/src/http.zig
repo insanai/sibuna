@@ -24,6 +24,9 @@ pub fn fail(context: *Context, status: std.http.Status, code: []const u8) Contex
 }
 
 fn failureHint(code: []const u8) []const u8 {
+    if (std.mem.eql(u8, code, "CONSOLENODE"))
+        return "Refresh the node state and inspect the operation receipt before retrying. " ++
+            "A pending completion does not mean the local effect failed.";
     if (std.mem.eql(u8, code, "CONSOLEAUDIT404"))
         return "This audit record is unavailable. Refresh; retention may have removed it.";
     if (std.mem.eql(u8, code, "CONSOLEAUDIT"))
