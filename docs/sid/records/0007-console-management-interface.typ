@@ -2622,6 +2622,24 @@ provenance. The record includes the manifest version and file count; version-1 a
 version-2 source digests are not directly comparable. The daemon digest remains separate.
 Manifest validation found 276 inputs and confirmed the required inclusion/exclusion cases.
 
+== Retention and history benchmark baseline (2026-09-08)
+
+`benchmarks/results/latest-20260908T104534Z.json` and `latest.json` were regenerated
+from clean commit `f41937a36590aefafb9f901ae2db62b62df583bf` with the review daemon stopped.
+The version-2 source manifest covers 276 inputs. The timestamped result SHA-256 is
+`0331965bac5852f89c154b70e9fa82065c0c750e85b4093278f79f3e6a0906f4`.
+Seven-batch medians were 1,438.96 ns for full classification, 288.54 ns for Gate,
+5.78 ns for global GCRA and 6.06 ns for four terminal-rule scopes. Full classification
+ranged from 1,437.70 to 1,454.20 ns within this run. The 8 KiB inspection medians were
+23,213.10 ns for all-enforce and 112,770.30 ns for mixed SQL audit/other enforcement.
+Idle RSS was 9,888 KiB with storage compiled but inactive.
+
+These results are near the earlier 08:02 baseline across multiple primitives. The broad
+slowdown observed in the 08:42 run therefore remains uncontrolled host variation; no
+console speedup is inferred. This primitive baseline does not exercise active storage,
+GeoIP, retention, subscribers or peer telemetry and does not pass the required console
+throughput/p99/memory contention matrix. Those acceptance measurements remain pending.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
