@@ -88,7 +88,26 @@ test "maintenance errors are visible and shutdown releases pending tickets" {
     try mailbox.complete(t.io, work.ticket, .{ .failed = .unavailable });
     journal.tick(t.io, mailbox, 180, 250);
     try t.expectEqual(@as(u64, 1), journal.status(t.io).maintenance_failures_since_boot);
-    journal.tick(t.io, mailbox, 185, 5000);
+    journal.tick(t.io, mailbox, 185, 5250);
     journal.stop(t.io, mailbox);
     try t.expect(mailbox.take(t.io) == null);
+}
+
+test "a slow pruning acknowledgement leaves room for queued ranking publication" {
+    const mailbox = try t.allocator.create(Mailbox);
+    defer t.allocator.destroy(mailbox);
+    mailbox.* = .{};
+    var journal: Journal = .{ .boot = @splat(1) };
+    defer journal.stop(t.io, mailbox);
+    const source = try minute();
+    journal.offer(&source, 0);
+    journal.tick(t.io, mailbox, 180, 0);
+    const pruning = mailbox.take(t.io).?;
+    try t.expect(pruning.request == .rankings_prune);
+    try mailbox.complete(t.io, pruning.ticket, .{ .ranking_inventory = .{} });
+    journal.tick(t.io, mailbox, 190, 10000);
+    journal.tick(t.io, mailbox, 190, 10250);
+    const publish_work = mailbox.take(t.io).?;
+    try t.expect(publish_work.request == .rankings_begin);
+    try mailbox.complete(t.io, publish_work.ticket, .command_recorded);
 }

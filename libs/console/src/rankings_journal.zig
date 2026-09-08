@@ -62,6 +62,7 @@ pub const Journal = struct {
             if (result) |done| {
                 self.ticket = null;
                 if (self.pruning) {
+                    self.prune_at = ms +| 5000;
                     if (done == .ranking_inventory) {
                         self.inventory_mutex.lockUncancelable(io);
                         self.inventory = done.ranking_inventory;
@@ -77,7 +78,10 @@ pub const Journal = struct {
                 self.ticket = null;
                 if (!self.pruning) {
                     self.retry(ms);
-                } else _ = self.maintenance_failures.fetchAdd(1, .monotonic);
+                } else {
+                    self.prune_at = ms +| 5000;
+                    _ = self.maintenance_failures.fetchAdd(1, .monotonic);
+                }
             }
             return;
         }

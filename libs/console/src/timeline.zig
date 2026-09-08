@@ -9,10 +9,12 @@ pub const Timeline = struct {
     slots: [p.capacity]p.Bucket = undefined,
     present: [p.capacity]bool = @splat(false),
     previous: ?Observation = null,
+    last_interval: ?p.Bucket = null,
     epoch: u32 = 1,
     discarded: u64 = 0,
 
     pub fn observe(self: *Timeline, utc: u64, ms: u64, totals: Totals) void {
+        self.last_interval = null;
         const next: Observation = .{ .utc = utc, .ms = ms, .counts = totals };
         const previous = self.previous orelse {
             self.previous = next;
@@ -49,6 +51,17 @@ pub const Timeline = struct {
         bucket.gap = bucket.gap or elapsed > 1000 or clock_gap;
         inline for (@typeInfo(p.Counts).@"struct".fields) |field|
             @field(bucket.counts, field.name) += @field(counts, field.name);
+        self.last_interval = .{
+            .sequence = sequence,
+            .utc_start = previous.utc,
+            .utc_end = utc,
+            .start_ms = previous.ms,
+            .end_ms = ms,
+            .observed_ms = elapsed,
+            .observations = 1,
+            .gap = elapsed > 1000 or clock_gap,
+            .counts = counts,
+        };
     }
 
     fn reset(self: *Timeline) void {

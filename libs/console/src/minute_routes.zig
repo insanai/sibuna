@@ -1,0 +1,45 @@
+//! The HTTP reader owns its decoded request and returned page; Persistent owns database access.
+const std = @import("std");
+const p = @import("console_protocol");
+const App = @import("app.zig").App;
+const http = @import("http.zig");
+
+pub fn handle(app: *App, context: *http.Context) !void {
+    const digest = try http.session(context);
+    const now = app.now();
+    if (!app.query_budget.allow(app.io, digest, now, .query))
+        return http.fail(context, .too_many_requests, "CONSOLE429");
+    var body: [1024]u8 = undefined;
+    var arena: [2048]u8 = undefined;
+    var fixed = std.heap.FixedBufferAllocator.init(&arena);
+    const request = try http.parse(p.minutes.Request, context, &body, fixed.allocator());
+    defer request.deinit();
+    const until = request.value.until_minute orelse now / 60;
+    const query: p.minutes.Query = .{
+        .session_digest = digest,
+        .now = now,
+        .from_minute = request.value.from_minute orelse (until -| 60),
+        .until_minute = until,
+        .node = request.value.node,
+        .before = request.value.before,
+        .limit = request.value.limit,
+    };
+    const result = try app.request(.{ .minutes_query = query });
+    if (result == .failed and result.failed == .unauthorized)
+        return http.fail(context, .unauthorized, "CONSOLE401");
+    if (result != .minute_page) return context.respond(
+        .service_unavailable,
+        "application/json",
+        "{\"error\":\"MINUTES001\",\"hint\":\"Minute history unavailable. Retry after " ++
+            "storage recovers.\"}",
+        &.{},
+    );
+    const page = &result.minute_page;
+    return http.json(context, p.minutes.Reply{
+        .from_minute = @max(query.from_minute, now / 60 -| (p.minutes.retention_days * 1440)),
+        .until_minute = until,
+        .observed_at = now,
+        .rows = page.rows[0..page.count],
+        .next = page.next,
+    }, &.{});
+}

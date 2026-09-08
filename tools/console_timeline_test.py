@@ -35,6 +35,7 @@ def check(h, proc, port, cookie, csrf):
         assert row["sequence"] < cursor["before"]
     wrong = dict(cursor, boot="f" * 32)
     assert h.request(port, "POST", endpoint, wrong, cookie, csrf)[0] == 409
+    saved(h, port, cookie, csrf, cursor["boot"])
     return cursor
 
 
@@ -44,3 +45,27 @@ def restarted(h, port, cookie, csrf, cursor):
     assert status == 200
     for row in json.loads(body)["rows"]:
         assert all(value == 0 for value in row["counts"].values())
+    saved(h, port, cookie, csrf, cursor["boot"])
+
+
+def saved(h, port, cookie, csrf, boot):
+    endpoint = "/console/api/minutes"
+    assert h.request(port, "POST", endpoint, {})[0] == 401
+    assert h.request(port, "POST", endpoint, {}, cookie)[0] == 400
+    assert h.request(port, "POST", endpoint, {"limit": 9}, cookie, csrf)[0] == 400
+    names = ("admitted", "challenged", "denied", "banned", "rate_limited", "other")
+    expected_boot = list(bytes.fromhex(boot))
+    deadline = time.monotonic() + 12
+    while time.monotonic() < deadline:
+        status, _, body = h.request(port, "POST", endpoint, {}, cookie, csrf)
+        assert status == 200, (status, body)
+        reply = json.loads(body)
+        assert reply["version"] == 1 and reply["retention_days"] == 90
+        own = [row for row in reply["rows"] if row["boot"] == expected_boot]
+        if sum(int(row["counts"][name]) for row in own for name in names) == 5:
+            for row in own:
+                assert row["end_ms"] - row["start_ms"] == row["observed_ms"] > 0
+                assert not row["complete"] or (row["sealed"] and not row["gap"])
+            return
+        time.sleep(0.25)
+    raise AssertionError("the five external outcomes did not survive in durable minute history")

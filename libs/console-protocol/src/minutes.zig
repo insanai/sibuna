@@ -46,6 +46,22 @@ pub const Cursor = struct {
     }
 };
 pub const Write = struct { record: Record, now: u64 };
+pub const Request = struct {
+    from_minute: ?u64 = null,
+    until_minute: ?u64 = null,
+    node: ?u32 = null,
+    before: ?Cursor = null,
+    limit: u8 = max_rows,
+};
+pub const Reply = struct {
+    version: u8 = 1,
+    retention_days: u16 = retention_days,
+    from_minute: u64,
+    until_minute: u64,
+    observed_at: u64,
+    rows: []const Record,
+    next: ?Cursor,
+};
 pub const Query = struct {
     session_digest: [32]u8,
     now: u64,
@@ -59,6 +75,18 @@ pub const Page = struct {
     rows: [max_rows]Record = undefined,
     count: u8 = 0,
     next: ?Cursor = null,
+};
+pub const Status = struct {
+    available: bool = false,
+    pending: u32 = 0,
+    saved_snapshots: u64 = 0,
+    unconfirmed_snapshots: u64 = 0,
+    retention_failures: u64 = 0,
+    last_saved_end_ms: u64 = 0,
+
+    pub fn jsonStringify(self: Status, w: *std.json.Stringify) std.json.Stringify.Error!void {
+        return fields(self, w);
+    }
 };
 
 pub fn validate(query: Query) error{InvalidLimit}!void {

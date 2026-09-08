@@ -4,6 +4,7 @@ const store = @import("store");
 const Geo = @import("geoip_generation.zig").Registry;
 const geoip = @import("geoip.zig");
 const p = @import("console_protocol");
+const MinuteJournal = @import("minute_journal.zig").Journal;
 
 pub const Snapshot = @import("console_protocol").StatsSnapshot;
 
@@ -24,6 +25,15 @@ pub const Stats = struct {
     geo_available: bool = false,
     rankings: @import("rankings.zig").Rankings = .{},
     timeline: @import("timeline.zig").Timeline = .{},
+    minute_status: p.minutes.Status = .{},
+
+    pub fn journal(self: *Stats, io: std.Io, minutes: *MinuteJournal) void {
+        self.mutex.lockUncancelable(io);
+        defer self.mutex.unlock(io);
+        minutes.observe(self.timeline.epoch, self.timeline.last_interval);
+        self.timeline.last_interval = null;
+        self.minute_status = minutes.status();
+    }
 
     pub fn collect(
         self: *Stats,
@@ -102,6 +112,7 @@ pub const Stats = struct {
         const totals = telemetry.totals();
         const ranked = rank(&countries);
         return .{
+            .minute_history = self.minute_status,
             .outcomes_version = 1,
             .node = self.node,
             .boot = self.boot,

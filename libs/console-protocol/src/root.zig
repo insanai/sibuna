@@ -237,6 +237,7 @@ pub const CountryCount = struct {
     }
 };
 pub const StatsSnapshot = struct {
+    minute_history: minutes.Status = .{},
     /// Version zero denotes the older combined-denial counters and unknown boot identity.
     outcomes_version: u8 = 0,
     node: u32 = 0,

@@ -25,7 +25,9 @@ pub const Budget = struct {
         @alignOf(@import("core").IncidentEvidence));
     pub const query_bytes = @sizeOf(@import("query_budget.zig").Budget);
     pub const collector_bytes = @sizeOf(@import("stats.zig").Stats) +
-        @sizeOf(@import("rankings_journal.zig").Journal);
+        @sizeOf(@import("rankings_journal.zig").Journal) +
+        @sizeOf(@import("minute_journal.zig").Journal) +
+        @sizeOf(@import("geoip_maintenance.zig").Maintenance);
 
     pub fn validate(self: Budget) Error!void {
         if (self.slots < 16 or self.slots > 256) return error.InvalidBudget;

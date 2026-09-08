@@ -26,6 +26,7 @@ pub const App = struct {
     metrics: *const core.Metrics,
     stats: Stats = .{},
     history: @import("rankings_journal.zig").Journal = .{},
+    minutes: @import("minute_journal.zig").Journal = .{},
     challenge_defaults: p.challenges.Defaults = .{},
     geo: @import("geoip_generation.zig").Registry = .{},
     geo_job: @import("geoip_job.zig").Job = .{},
@@ -79,6 +80,8 @@ pub const App = struct {
         self.geo_job.app = self;
         self.history.node = cfg.node_id;
         while (std.mem.allEqual(u8, &self.history.boot, 0)) io.random(&self.history.boot);
+        self.minutes.node = cfg.node_id;
+        self.minutes.boot = self.history.boot;
         try self.geo_job.restore();
         errdefer self.geo.deinit();
         self.stats.boot = self.history.boot;
@@ -99,6 +102,7 @@ pub const App = struct {
         if (self.collector) |thread| thread.join();
         self.geo_maintenance.stop(self.io, self.mailbox);
         self.history.stop(self.io, self.mailbox);
+        self.minutes.stop(self.io, self.mailbox);
         self.geo.deinit();
         self.passwords.deinit();
         if (self.totp_key) |*key| std.crypto.secureZero(u8, key);
@@ -119,6 +123,8 @@ pub const App = struct {
                 std.time.ns_per_ms,
             )));
             self.history.tick(self.io, self.mailbox, second, ms);
+            self.stats.journal(self.io, &self.minutes);
+            self.minutes.tick(self.io, self.mailbox, second, ms);
             if (self.geo_maintenance.tick(
                 self.io,
                 self.mailbox,
@@ -248,6 +254,7 @@ pub const App = struct {
             .challenges => return @import("challenge_routes.zig").handle(self, context),
             .rankings => return @import("ranking_routes.zig").handle(self, context),
             .timeline => return @import("timeline_routes.zig").handle(self, context),
+            .minutes => return @import("minute_routes.zig").handle(self, context),
             .events_similar => return @import("similarity_routes.zig").query(self, context),
             .policies => return @import("policy_routes.zig").query(self, context, false),
             .policies_test => return @import("policy_routes.zig").query(self, context, true),

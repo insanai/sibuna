@@ -24,6 +24,7 @@ test {
     _ = @import("stats.zig");
     _ = @import("timeline_test.zig");
     _ = @import("minute_archive.zig");
+    _ = @import("minute_journal_test.zig");
     _ = @import("geoip_maintenance.zig");
     _ = @import("space_saving.zig");
     _ = @import("rankings_archive.zig");

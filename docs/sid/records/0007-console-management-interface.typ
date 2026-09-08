@@ -2448,8 +2448,48 @@ History queries recheck the session on the storage owner, return at most eight r
 and use node/time or time indexes with compound keyset cursors. Separate node and boot
 records are never implicitly summed. Reads exclude records outside the 90-day window
 even if cleanup lags; each retention operation removes at most 64 indexed records.
-Collector publication and the HTTP/history UI are the next integration increment;
-these storage handlers alone do not constitute durable live telemetry acceptance.
+The following integration connects the collector and HTTP reader; storage handlers
+alone do not constitute durable live telemetry acceptance.
+
+== Minute publication and restart recovery (2026-09-08)
+
+The same observed deltas feed the retained second buckets and the minute journal.
+The journal publishes partial snapshots every five seconds, seals a minute at its
+next boundary and retains at most two queued snapshots. Coalescing updates only queued
+copies and preserves the minute's retry count and backoff; an in-flight acknowledgement
+belongs to its original copy. Eight failed attempts exhaust a minute's retry budget.
+Timeout abandons the caller without claiming SQL rollback. Counters report pending,
+confirmed and unconfirmed snapshots separately from retention failures; confirmed
+snapshots are not a distinct-minute count. Shutdown joins the collector before abandoning
+its ticket, so the latest durable record may honestly remain partial.
+
+Completeness describes an uninterrupted sample-aligned minute with a known preceding
+boundary, no observation gap and 59–61 seconds of monotonic coverage, sealed by a
+contiguous following minute. Startup, reset, short windows and delayed observations
+remain incomplete. Actual endpoints and elapsed time are retained independently of
+this flag. Counter wraps reset the observation epoch; no unsigned subtraction spans
+the reset. These records currently cover external outcomes and origin response classes,
+not country, challenge, CPU or memory history.
+
+`POST /console/api/minutes` enforces full authentication, CSRF and investigation budgets,
+then rechecks the session on the storage owner. It supports bounded UTC minute ranges,
+optional node selection and compound keyset paging. The optimized daemon test generated
+five external requests without a statistics subscriber, waited for confirmed minute
+storage, restarted the process and read those same counts under their original boot.
+The new boot's live counters remained zero. Deterministic journal tests also verify
+ownership after timeout, pending coalescing, bounded retries and shutdown.
+
+Both minute and ranking maintenance now schedule the next cleanup from completion or
+timeout, leaving a publication opportunity even when cleanup took longer than its normal
+period. A focused test reproduces delayed cleanup before checking queued publication.
+The minute journal and GeoIP maintenance state are included in the capacity reservation
+estimate. Historical UI, other metric families and full performance/cluster acceptance
+remain pending.
+
+Verification passed formatting, full repository and console tests, SID generation,
+console-disabled tests, the storage-disabled build and the clustered build. The
+clustered build verifies facade compatibility; it does not replace the pending
+three-node failover, quorum, management-peer and revocation acceptance scenarios.
 
 = References
 
