@@ -2871,6 +2871,19 @@ binaries refuse native management commands without starting a daemon; the cluste
 also compiles. Native GeoIP/token commands,
 scoped bearer authorization and the remaining SID phases remain separate work.
 
+== Native account CLI benchmark regeneration (2026-09-08)
+
+The primitive baseline was regenerated from clean isolated commit `5331a37c8f29fb30d58eaedb5bfc13b6ebb4896c`,
+with review daemons stopped. The version-2 manifest covers 308 inputs
+and has SHA-256 `b07952224c6f82f5adc67cb38df3a8cf957873bbb3f125ee9e31d302a4bd2027`; the daemon digest is
+`99578370786d731efd47cc7b2d15c19f0894ec40807276673b20eff8c3e13c34`. `latest-20260908T132625Z.json` and `latest.json` share SHA-256
+`2788bc7bc7640006176bac1879bd3a475fcb9f79fdd078b8e8bf1576fc008b10`.
+Full classification measured 1,441.18 ns median
+(1,438.52–1,448.91 ns across seven batches).
+Idle RSS was 9,936 KiB with two workers and storage compiled but inactive.
+The 8,831-byte Wasm artifact is the proof solver. These measurements do not exercise
+active dashboards, imports or storage contention and do not pass console-impact acceptance.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
