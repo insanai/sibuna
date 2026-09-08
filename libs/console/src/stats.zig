@@ -76,7 +76,9 @@ pub const Stats = struct {
         defer self.mutex.unlock(io);
         var unknown: u64 = 0;
         var countries: [676]u64 = @splat(0);
-        for (self.buckets) |bucket| {
+        // Borrow buckets under the mutex. Iterating the array by value can materialize
+        // a roughly 160 KiB temporary on a bounded HTTP worker stack in optimized builds.
+        for (&self.buckets) |*bucket| {
             if (bucket.second > now or now - bucket.second >= 60) continue;
             unknown += bucket.samples;
             for (bucket.countries, &countries) |count, *total| total.* += count;
