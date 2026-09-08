@@ -35,6 +35,8 @@ pub fn add(
     step.dependOn(&b.top_level_steps.get("console-ui").?.step);
     step.dependOn(&b.top_level_steps.get("console-render-test").?.step);
     step.dependOn(&b.top_level_steps.get("console-assets-check").?.step);
+    const abi_test = b.addSystemCommand(&.{ "python3", "tools/console_wasm_check_test.py" });
+    step.dependOn(&abi_test.step);
     for ([_]*std.Build.Module{ protocol, console, serve, html }) |module| {
         const tests = b.addTest(.{ .root_module = module });
         step.dependOn(&b.addRunArtifact(tests).step);
@@ -59,7 +61,7 @@ fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module)
         .target = target,
         .optimize = .ReleaseSmall,
     });
-    const wasm = b.addExecutable(.{
+    const wasm = b.addObject(.{
         .name = "console",
         .root_module = b.createModule(.{
             .root_source_file = b.path("apps/console-ui/src/main.zig"),
@@ -69,12 +71,9 @@ fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module)
         }),
     });
     wasm.root_module.addImport("html", htmlModule(b, target, .ReleaseSmall));
-    wasm.entry = .disabled;
-    wasm.rdynamic = true;
-    wasm.stack_size = 256 * 1024;
-    wasm.initial_memory = 4 * 1024 * 1024;
-    wasm.max_memory = 4 * 1024 * 1024;
-    console.addAnonymousImport("console_wasm", .{ .root_source_file = wasm.getEmittedBin() });
+    wasm.bundle_compiler_rt = true;
+    const artifact = linkUi(b, wasm);
+    console.addAnonymousImport("console_wasm", .{ .root_source_file = artifact });
     const paths = .{ "shell.html", "glue.js", "assets/console.css" };
     const names = .{ "console_shell", "console_glue", "console_css" };
     inline for (paths, names) |path, name| {
@@ -96,10 +95,33 @@ fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module)
     });
     const step = b.step("console-ui", "Build the Zig console WebAssembly interface");
     const size = b.addSystemCommand(&.{ "python3", "tools/console_wasm_check.py" });
-    size.addFileArg(wasm.getEmittedBin());
+    size.addFileArg(artifact);
     step.dependOn(&size.step);
     const render_step = b.step("console-render-test", "Test native console rendering");
     render_step.dependOn(&b.addRunArtifact(tests).step);
+}
+
+fn linkUi(b: *std.Build, object: *std.Build.Step.Compile) std.Build.LazyPath {
+    // Zig's bundled linker removes reserved relocation padding after resolving symbols.
+    // Use the pinned toolchain, and keep the runtime's stack and memory bounds explicit.
+    const link = b.addSystemCommand(&.{
+        b.graph.zig_exe,
+        "wasm-ld",
+        "--no-entry",
+        "--export-dynamic",
+        "--export-memory",
+        "--compress-relocations",
+        "--strip-all",
+        "--stack-first",
+        "-z",
+        "stack-size=262144",
+        "--initial-memory=4194304",
+        "--max-memory=4194304",
+        "-o",
+    });
+    const artifact = link.addOutputFileArg("console.wasm");
+    link.addFileArg(object.getEmittedBin());
+    return artifact;
 }
 
 fn htmlModule(

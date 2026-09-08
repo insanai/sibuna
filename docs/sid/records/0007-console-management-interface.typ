@@ -7,7 +7,7 @@
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
 #let sid-status = "Proposed"
-#let sid-last-updated = "2026-09-08"
+#let sid-last-updated = "2026-09-09"
 
 #import "../../shared/sid.typ": sid-document
 #import "@preview/cetz:0.5.2" as cetz
@@ -3242,6 +3242,21 @@ the daemon digest is `4cc90c0bdc2389f6ff2bace4b2264138e5621f462dcd952eabf6b18a3d
 Idle RSS was 9,968 KiB with two workers and storage compiled but inactive. Review daemons
 were stopped and subsequent verification ran outside the timed measurement. Active drain,
 clear-command contention, dashboards and clustered impact still require the release matrix.
+
+== Compact Wasm linking and browser ABI gate (2026-09-09)
+
+The UI build now emits a Zig object with its compiler runtime and links it with the
+pinned Zig 0.16.0 toolchain's bundled `wasm-ld`. `--compress-relocations` removes reserved
+operand padding after symbol resolution; it does not rewrite application logic. This
+requires no additional package, npm invocation or JavaScript renderer in ordinary builds.
+The same final artifact is embedded by the server and checked by `console-ui` and
+`console-test`. The 300 KiB artifact gate, 256 KiB stack and fixed 4 MiB memory remain.
+
+The asset check now also requires an unshared memory with both bounds, the exact fourteen
+browser bridge exports, and no host imports. Metadata regressions reject missing bounds,
+unexpected exports, host imports, duplicate sections and truncation. Native UI rendering
+and live browser execution remain separate behavioral checks. Linker compaction creates
+headroom for additional workflows; it does not satisfy the active-console impact gate.
 
 = References
 
