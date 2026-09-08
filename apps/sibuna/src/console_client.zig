@@ -24,6 +24,9 @@ pub const Endpoint = enum {
     users_change,
     geo_status,
     geo_update,
+    tokens_query,
+    tokens_create,
+    tokens_revoke,
 };
 pub const Reply = struct { status: std.http.Status, length: usize };
 const Outcome = union(enum) { reply: Error!Reply, deadline: Error!void };
@@ -34,6 +37,7 @@ pub const Session = struct {
     origin: p.Bytes(255),
     cookie: p.Bytes(81) = .{},
     csrf: p.Bytes(64) = .{},
+    bearer: p.Bytes(71) = .{},
 
     pub fn init(allocator: std.mem.Allocator, io: std.Io, origin: []const u8) Error!Session {
         try validateOrigin(origin);
@@ -47,6 +51,7 @@ pub const Session = struct {
     pub fn deinit(self: *Session) void {
         std.crypto.secureZero(u8, std.mem.asBytes(&self.cookie));
         std.crypto.secureZero(u8, std.mem.asBytes(&self.csrf));
+        std.crypto.secureZero(u8, std.mem.asBytes(&self.bearer));
     }
 
     pub fn request(
@@ -127,11 +132,17 @@ fn exchange(
         .write_buffer_size = 4096,
     };
     defer client.deinit();
-    const headers = [_]std.http.Header{
+    var headers = [_]std.http.Header{
         .{ .name = "Origin", .value = session.origin.slice() },
         .{ .name = "Cookie", .value = session.cookie.slice() },
         .{ .name = "X-Console-CSRF", .value = session.csrf.slice() },
     };
+    if (session.bearer.len != 0) {
+        std.debug.assert(session.cookie.len == 0 and session.csrf.len == 0);
+        headers[1] = .{ .name = "Authorization", .value = session.bearer.slice() };
+    }
+    const authenticated_headers: usize = if (session.bearer.len != 0) 2 else 3;
+    const header_count: usize = if (endpoint == .login) 1 else authenticated_headers;
     var request = client.request(if (endpoint == .geo_status) .GET else .POST, uri, .{
         .keep_alive = false,
         .redirect_behavior = .not_allowed,
@@ -139,7 +150,7 @@ fn exchange(
             .content_type = .{ .override = "application/json" },
             .accept_encoding = .{ .override = "identity" },
         },
-        .extra_headers = headers[0..if (endpoint == .login) 1 else 3],
+        .extra_headers = headers[0..header_count],
     }) catch |err| return transportError(err);
     defer request.deinit();
     if (endpoint == .geo_status) {
@@ -186,6 +197,9 @@ fn path(endpoint: Endpoint) []const u8 {
         .users_create => "/console/api/users/create",
         .users_change => "/console/api/users/change",
         .geo_status, .geo_update => "/console/api/geoip",
+        .tokens_query => "/console/api/tokens/query",
+        .tokens_create => "/console/api/tokens/create",
+        .tokens_revoke => "/console/api/tokens/revoke",
     };
 }
 

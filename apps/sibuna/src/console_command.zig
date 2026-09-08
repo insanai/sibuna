@@ -33,7 +33,8 @@ pub fn execute(allocator: std.mem.Allocator, io: std.Io, argv: []const []const u
     output.interface.flush() catch {
         std.debug.print(
             "CONSOLECLIWRITE: output was not delivered. " ++
-                "Hint: query current state; reset an acknowledged temporary password if needed.\n",
+                "Hint: query current state; reset a temporary password " ++
+                "or revoke an undisclosed token if needed.\n",
             .{},
         );
         return 1;
@@ -50,7 +51,11 @@ fn run(
     var session = try client.Session.init(allocator, io, args.origin);
     defer session.deinit();
     defer close(&session);
-    try login(&session, args);
+    if (args.token_file) |path| {
+        try @import("console_command_token.zig").authenticate(&session, path);
+    } else try login(&session, args);
+    if (args.kind.managesTokens())
+        return @import("console_command_token.zig").run(&session, args, writer);
     if (args.kind == .geo_status or args.kind == .geo_update)
         return @import("console_command_geo.zig").run(&session, args, writer);
     var payload: [2048]u8 = undefined;
@@ -177,8 +182,8 @@ fn diagnose(err: Error) void {
         error.Canceled, error.OutOfMemory => unknown,
         error.Conflict => "Refresh the resource: capacity or the expected revision conflicted.",
         error.ImportFailed => "Inspect GeoIP status and daemon diagnostics before retrying.",
-        error.Forbidden => "Use an administrator; manage your own password through Account.",
-        error.Unauthorized => "Check the account password and authenticator or recovery code.",
+        error.Forbidden => "Check role and scope; token management requires administrator login.",
+        error.Unauthorized => "Check credential expiry, revocation, password and second factor.",
         error.PasswordChangeRequired => "Change the temporary password in the browser first.",
         error.FactorEnrollmentRequired => "Complete required two-factor enrollment in Account.",
         error.RateLimited => "Wait a minute before another login or management operation.",
@@ -195,4 +200,5 @@ test {
     _ = @import("console_client.zig");
     _ = @import("console_command_reply.zig");
     _ = @import("console_command_geo.zig");
+    _ = @import("console_command_token.zig");
 }

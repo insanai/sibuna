@@ -228,7 +228,7 @@ fn loadCustomPolicy(
     return owned;
 }
 
-fn printHelp() void {
+fn printConsoleHelp() void {
     if (build_options.console) std.debug.print(
         "Local bootstrap: sibuna init-admin <username> --data-dir <path>\n" ++
             "Console: --console <host:port> (requires --data-dir); " ++
@@ -243,11 +243,22 @@ fn printHelp() void {
             "GeoIP CLI: sibuna console geoip status\n" ++
             "  sibuna console geoip update --month <YYYY-MM> " ++
             "[--checksum <sha256>] [--timeout <seconds, default 1200>]\n" ++
-            "  Required: --origin <origin> --username <name> --password-file <path>;\n" ++
+            "Token CLI: sibuna console tokens [--after <id>]\n" ++
+            "  sibuna console mint-token <label> --scope <scope> (repeatable) " ++
+            "[--role <role>] [--expires <unix-seconds>]\n" ++
+            "  sibuna console revoke-token|remove-token <id> --revision <n>\n" ++
+            "  Scopes: stats_read, events_read, policy_read, policy_write, " ++
+            "geoip_read, geoip_write, users_read, users_write.\n" ++
+            "  Required: --origin <origin>; --username <name> --password-file <path>;\n" ++
+            "  or --token-file <path> for account/GeoIP operations only.\n" ++
             "  optional --factor-file <path>. Credential files must be private regular files.\n" ++
             "  HTTPS is required except for literal loopback HTTP; redirects are refused.\n",
         .{},
     );
+}
+
+fn printHelp() void {
+    printConsoleHelp();
     std.debug.print(
         \\Usage: sibuna [options]
         \\

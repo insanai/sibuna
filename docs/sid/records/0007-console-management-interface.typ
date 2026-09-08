@@ -516,12 +516,20 @@ sibuna console geoip status --origin https://console.example \
 sibuna console geoip update --month 2026-09 --origin https://console.example \
   --username admin --password-file /run/private/console-password
 # Optional: --checksum <compressed-source-sha256> --timeout <seconds>.
-# Scoped token subcommands remain pending.
+sibuna console mint-token monitoring --scope stats_read --scope geoip_read \
+  --origin https://console.example --username admin --password-file /run/private/password
+sibuna console tokens --origin https://console.example \
+  --username admin --password-file /run/private/password
+sibuna console revoke-token 42 --revision 1 --origin https://console.example \
+  --username admin --password-file /run/private/password
+sibuna console geoip status --origin https://console.example --token-file /run/private/token
+# mint-token: optional --role and --expires <absolute Unix seconds>.
+# remove-token explicitly removes inactive metadata, retaining the audit trail.
 ```
 
 `--console` requires `--data-dir` and storage support (`-Dconsole=true` with `-Dstorage=false` is a build error; the console default follows storage): users, sessions, and statistics live in the database, and a
 console without persistence would lose its administrator on restart. The console listens on
-loopback by default; binding elsewhere without `--console-behind-proxy` (which requires an explicit trusted-proxy CIDR list and canonical HTTPS console origin) is refused. Only allowlisted socket peers may supply forwarded address or scheme headers; the ingress strips client-supplied copies. Proxy mode enables `Secure` cookies. HTTP on loopback is development-only. The shown account and GeoIP commands are implemented; other proposed management commands remain gated. Offline bootstrap takes an exclusive data-directory lock; commands against a running node use the authenticated console API, never a second embedded node over the same directory. In a cluster every member may run a console; each shows the whole cluster, because the
+loopback by default; binding elsewhere without `--console-behind-proxy` (which requires an explicit trusted-proxy CIDR list and canonical HTTPS console origin) is refused. Only allowlisted socket peers may supply forwarded address or scheme headers; the ingress strips client-supplied copies. Proxy mode enables `Secure` cookies. HTTP on loopback is development-only. The shown account, token and GeoIP commands are implemented; other proposed management commands remain gated. Offline bootstrap takes an exclusive data-directory lock; commands against a running node use the authenticated console API, never a second embedded node over the same directory. In a cluster every member may run a console; each shows the whole cluster, because the
 tables it reads are replicated, and each probes the others' health endpoints directly.
 
 = The Serve Kernel
@@ -3034,6 +3042,27 @@ credentials, origin checks, policy and inspection commits, GeoIP activation, cat
 pagination, expiry, conflict/revocation, creator revision changes and restart persistence.
 The combined native suite passes 298 tests. Native token commands and the token interface
 remain pending; this HTTP increment does not complete those acceptance gates.
+
+== Native token commands (2026-09-08)
+
+The first-party CLI now implements `tokens`, `mint-token`, `revoke-token` and
+`remove-token`. Minting requires explicit nonempty, distinct scopes within the selected
+role and accepts an optional absolute expiry. Token-management commands always use an
+administrator password/factor login. Account and GeoIP commands also accept a private
+64-hex-character `--token-file`, mutually exclusive with password/factor options. Bearer
+requests send neither Cookie nor CSRF headers and create no ephemeral login session.
+GeoIP updates require both GeoIP read and write scopes for status, CAS and completion polling.
+
+Private regular-file permissions, strict origin validation, certificate-validated HTTPS,
+redirect refusal, bounded replies and joined I/O deadlines apply to both credential kinds.
+Output validation preserves full-width identifiers and rejects unknown catalog fields,
+invalid roles/scopes, contradictory state and malformed one-time values. A lost issuance
+response is an unknown outcome: list the catalog and revoke the undisclosed token.
+The live suite covers scoped account/GeoIP reads, account creation, expected-revision
+conflicts, inactive removal, creator revocation and restart. Controlled peers verify
+bearer headers, no login/logout, deadline, oversize, redirects and sensitive-field refusal.
+The combined native suite passes 301 tests. The Tokens browser interface is a separate
+increment and remains subject to its rendering, size and live browser checks.
 
 = References
 
