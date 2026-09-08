@@ -23,6 +23,7 @@ pub const App = struct {
     dummy_hash: p.Bytes(255),
     setup_required: bool,
     telemetry: *store.ConsoleTelemetry,
+    incidents: *store.ConsoleIncidents,
     metrics: *const core.Metrics,
     stats: Stats = .{},
     history: @import("rankings_journal.zig").Journal = .{},
@@ -40,6 +41,7 @@ pub const App = struct {
         io: std.Io,
         cfg: Config,
         mailbox: *Mailbox,
+        incidents: *store.ConsoleIncidents,
         metrics: *const core.Metrics,
         totp_key: ?[32]u8,
     ) !*App {
@@ -54,6 +56,7 @@ pub const App = struct {
             .io = io,
             .config = cfg,
             .mailbox = mailbox,
+            .incidents = incidents,
             .passwords = try Password.init(gpa),
             .telemetry = telemetry,
             .metrics = metrics,
@@ -89,6 +92,9 @@ pub const App = struct {
         self.stats.boot = self.history.boot;
         self.stats.node = cfg.node_id;
         self.stats.started_ms = @import("stats.zig").monotonicMs(io);
+        self.stats.incident_geo.started_at = self.now();
+        incidents.enabled.store(true, .release);
+        errdefer incidents.enabled.store(false, .release);
         self.collector = try std.Thread.spawn(
             .{ .stack_size = 256 * 1024 },
             collect,
@@ -99,6 +105,7 @@ pub const App = struct {
 
     /// Called only after the kernel has joined all handlers and streams.
     pub fn deinit(self: *App) void {
+        self.incidents.enabled.store(false, .release);
         self.stopping.store(true, .release);
         self.geo_job.stop();
         if (self.collector) |thread| thread.join();
@@ -121,6 +128,7 @@ pub const App = struct {
                 self.history.offer(&minute, self.telemetry.dropped.load(.monotonic));
             }
             self.stats.collect(self.io, self.telemetry, second, &self.geo);
+            self.stats.collectIncidents(self.io, self.incidents, &self.geo, second);
             const ms: u64 = @intCast(@max(0, @divTrunc(
                 std.Io.Clock.awake.now(self.io).nanoseconds,
                 std.time.ns_per_ms,

@@ -22,6 +22,7 @@ test {
     _ = @import("totp.zig");
     _ = @import("auth_secrets.zig");
     _ = @import("stats.zig");
+    _ = @import("incident_geo.zig");
     _ = @import("timeline_test.zig");
     _ = @import("minute_archive.zig");
     _ = @import("minute_journal_test.zig");

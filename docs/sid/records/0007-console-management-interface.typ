@@ -2655,6 +2655,35 @@ objects and allocation-free fixed fields. The ReleaseSmall interface decreased f
 304,210 to 291,012 bytes, leaving headroom under the existing 300 KiB module limit.
 This code-size result does not establish browser runtime or console-impact acceptance.
 
+== Recorded-incident geography foundation (2026-09-08)
+
+Locally acknowledged incident batches publish owned timestamp/address records into a
+1,024-slot storage-owned queue. The console borrows this queue until its collector has
+joined; the storage owner outlives that borrower. An atomic runtime gate disables
+publication without the console, and console-disabled builds omit the field and producer.
+No request-path instrumentation, SQL, callback, formatting or GeoIP lookup is added.
+The existing commit receipt makes a retried batch publish once after acknowledgement,
+including an ambiguous earlier commit. A process crash can lose this live projection;
+it is not a replay of durable incident history.
+
+A separate 60-second collector window records known countries and Unknown by original
+event time. At most 1,024 findings drain per collector tick. Expired, future-dated and
+overflowed records have separate boot-local counters. Findings are unsampled, but cover
+only local persisted incidents, including audit findings and possible multiple findings
+per request. They are neither unique attacks nor all blocked requests. Geographic
+coverage is therefore explicitly incomplete even with zero queue loss. The capacity
+estimate includes both the queue and additional country buckets.
+
+Snapshots expose this optional, versioned series separately from sampled traffic.
+The stream reserves an 8 KiB payload buffer for the two bounded country lists; readers
+and serialized writers remain independent. Console identity now uses Persistent's
+issuer ID (1 for a non-clustered node), matching incident identity. Existing history
+labelled node 0 is retained as recorded; no historical identities are rewritten.
+
+Native checks exercise copied input, queue saturation and disablement, SQL failure,
+ambiguous commit replay, event-time cutoffs, Unknown and expiration without subscribers.
+This foundation does not claim cross-node deduplication or incident-history replay.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

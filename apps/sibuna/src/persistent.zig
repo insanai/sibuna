@@ -105,6 +105,7 @@ const Db = @import("database.zig").Db;
 const console = if (build_options.console) @import("console") else struct {};
 
 pub const Persistent = struct {
+    console_incidents: if (build_options.console) store.ConsoleIncidents else void,
     console_mailbox: if (build_options.console) console.Mailbox else void =
         if (build_options.console) .{} else {},
     console_initialized: bool = false,
@@ -169,6 +170,7 @@ pub const Persistent = struct {
             .policy_text = policy_text,
             .db = undefined,
             .queue = IncidentQueue.init(),
+            .console_incidents = if (build_options.console) store.ConsoleIncidents.init() else {},
             .spare = spare,
             .owned_slot = spare,
             .arenas = .{ std.heap.ArenaAllocator.init(gpa), std.heap.ArenaAllocator.init(gpa) },
@@ -430,6 +432,8 @@ pub const Persistent = struct {
             self.pending_sql = try self.gpa.dupe(u8, sql.written());
         }
         try self.db.exec(self.gpa, self.pending_sql.?);
+        if (build_options.console) for (self.pending[0..self.pending_len]) |*record|
+            self.console_incidents.publish(record.now, record.ip[0..record.ip_len]);
         _ = self.state.metrics.incidents_persisted.fetchAdd(self.pending_len, .monotonic);
         _ = self.state.metrics.incident_batches.fetchAdd(1, .monotonic);
         self.next_incident += self.pending_len;
@@ -991,6 +995,7 @@ test {
         _ = @import("console_rankings_test.zig");
         _ = @import("console_minutes_test.zig");
         _ = @import("console_retention_test.zig");
+        _ = @import("console_incidents_test.zig");
         _ = @import("console_inspection_test.zig");
         _ = @import("console_limits_test.zig");
         _ = @import("console_start.zig");

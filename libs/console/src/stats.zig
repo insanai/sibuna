@@ -27,6 +27,19 @@ pub const Stats = struct {
     rankings: @import("rankings.zig").Rankings = .{},
     timeline: @import("timeline.zig").Timeline = .{},
     minute_status: p.minutes.Status = .{},
+    incident_geo: @import("incident_geo.zig").Window = .{},
+
+    pub fn collectIncidents(
+        self: *Stats,
+        io: std.Io,
+        feed: *store.ConsoleIncidents,
+        geo: *Geo,
+        now: u64,
+    ) void {
+        self.mutex.lockUncancelable(io);
+        defer self.mutex.unlock(io);
+        self.incident_geo.collect(io, feed, geo, now);
+    }
 
     pub fn journal(self: *Stats, io: std.Io, minutes: *MinuteJournal) void {
         self.mutex.lockUncancelable(io);
@@ -113,6 +126,7 @@ pub const Stats = struct {
         const totals = telemetry.totals();
         const ranked = rank(&countries);
         return .{
+            .incident_geo = self.incident_geo.snapshot(now),
             .minute_history = self.minute_status,
             .outcomes_version = 1,
             .node = self.node,
@@ -185,7 +199,7 @@ test "ranking minute seals only after the entire late-sample horizon has expired
 }
 
 const Ranked = struct { top: [32]p.CountryCount = @splat(.{}), other: u64 = 0 };
-fn rank(counts: *const [676]u64) Ranked {
+pub fn rank(counts: *const [676]u64) Ranked {
     var result: Ranked = .{};
     for (counts, 0..) |count, index| {
         if (count == 0) continue;

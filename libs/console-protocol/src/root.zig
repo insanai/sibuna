@@ -243,6 +243,7 @@ pub const CountryCount = struct {
     }
 };
 pub const StatsSnapshot = struct {
+    incident_geo: ?@import("incident_geo.zig").Snapshot = null,
     minute_history: minutes.Status = .{},
     /// Version zero denotes the older combined-denial counters and unknown boot identity.
     outcomes_version: u8 = 0,
@@ -296,6 +297,8 @@ pub const StatsSnapshot = struct {
         try writer.endObject();
     }
 };
+
+pub const incident_geo = @import("incident_geo.zig");
 
 pub fn writeCounter(writer: *std.json.Stringify, value: u64) std.json.Stringify.Error!void {
     if (value < (1 << 53)) return writer.write(value);

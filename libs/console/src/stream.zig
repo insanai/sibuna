@@ -94,7 +94,7 @@ const Stream = struct {
                 last_auth = now;
             }
             if (self.subscribed.load(.acquire) and now != last_data) {
-                var buffer: [4096]u8 = undefined;
+                var buffer: [8192]u8 = undefined;
                 var writer: std.Io.Writer = .fixed(&buffer);
                 std.json.Stringify.value(.{
                     .op = if (sequence == 0) "snapshot" else "delta",
@@ -143,7 +143,7 @@ const Stream = struct {
     }
 
     fn send(self: *Stream, opcode: ws.Opcode, payload: []const u8) bool {
-        var buffer: [4110]u8 = undefined;
+        var buffer: [8206]u8 = undefined;
         const frame = ws.encode(&buffer, opcode, true, payload, .server, null) catch return false;
         self.context.extend(10);
         self.context.request.server.out.writeAll(frame) catch return false;

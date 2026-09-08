@@ -34,6 +34,8 @@ test {
 
 pub const telemetry = @import("telemetry.zig");
 pub const ConsoleTelemetry = telemetry.ConsoleTelemetry;
+pub const ConsoleIncidents = @import("console_incidents.zig").ConsoleIncidents;
 test {
     _ = @import("telemetry.zig");
+    _ = @import("console_incidents.zig");
 }

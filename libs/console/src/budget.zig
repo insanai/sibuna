@@ -18,7 +18,8 @@ pub const Budget = struct {
     pub const import_bytes = 16 * 1024 * 1024 + 40 * 1024;
     pub const auth_bytes = @import("password.zig").Password.workspace_bytes;
     pub const topic_bytes = 10 * 1024 * 1024;
-    pub const traffic_bytes = @sizeOf(@import("store").ConsoleTelemetry);
+    pub const traffic_bytes = @sizeOf(@import("store").ConsoleTelemetry) +
+        @sizeOf(@import("store").ConsoleIncidents);
     // Incremental evidence metadata in the existing 512-slot incident queue and 32-row batch.
     // Include alignment slack without importing daemon record or ownership types.
     pub const evidence_bytes = 544 * (@sizeOf(@import("core").IncidentEvidence) +
