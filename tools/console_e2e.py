@@ -137,6 +137,9 @@ def check(binary):
                                    cookie=cookie)
                 assert geometry[0] == 200 and geometry[2][:4] in (b"SBG1", b"SBG2")
                 geo_import(console_port, cookie, csrf)
+                import console_timeline_test
+                timeline_cursor = console_timeline_test.check(
+                    sys.modules[__name__], proc, console_port, cookie, csrf)
                 console_ws_test.idle_delivery(console_port, cookie)
                 stream = console_ws_test.delivery(console_port, cookie)
                 before_restart = json.loads(request(
@@ -159,6 +162,8 @@ def check(binary):
                     console_port, "GET", "/console/api/stats", cookie=cookie)[2])
                 assert before_restart["boot"] != after_restart["boot"]
                 assert any(after_restart["boot"]) and after_restart["requests"] == 0
+                console_timeline_test.restarted(sys.modules[__name__], console_port, cookie,
+                                               json.loads(login[2])["csrf"], timeline_cursor)
                 metadata = request(console_port, "GET", "/console/api/geoip", cookie=cookie)
                 assert json.loads(metadata[2])["ranges"] == 200
             finally:

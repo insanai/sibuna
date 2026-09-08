@@ -14,6 +14,7 @@ pub const Stats = struct {
     started_ms: u64 = 0,
     expired_samples: u64 = 0,
     future_samples: u64 = 0,
+    geo_maintenance_failures: std.atomic.Value(u64) = .init(0),
     mutex: std.Io.Mutex = .init,
     buckets: [60]struct {
         second: u64 = 0,
@@ -22,6 +23,7 @@ pub const Stats = struct {
     } = @splat(.{}),
     geo_available: bool = false,
     rankings: @import("rankings.zig").Rankings = .{},
+    timeline: @import("timeline.zig").Timeline = .{},
 
     pub fn collect(
         self: *Stats,
@@ -32,6 +34,8 @@ pub const Stats = struct {
     ) void {
         self.mutex.lockUncancelable(io);
         defer self.mutex.unlock(io);
+        const elapsed = if (self.started_ms == 0) 0 else monotonicMs(io) -| self.started_ms;
+        self.timeline.observe(now, elapsed, telemetry.totals());
         self.geo_available = geo.loaded.load(.acquire);
         // One bounded drain per observation; input beyond capacity has explicit loss counters.
         for (0..4096) |_| {
@@ -119,6 +123,7 @@ pub const Stats = struct {
             .sample_loss = telemetry.dropped.load(.monotonic),
             .expired_samples = self.expired_samples,
             .future_samples = self.future_samples,
+            .geo_maintenance_failures = self.geo_maintenance_failures.load(.monotonic),
             .unknown_samples = unknown,
             .timestamp = now,
         };

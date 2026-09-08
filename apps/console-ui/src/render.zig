@@ -219,8 +219,9 @@ fn coverage(state: *const State, w: *Writer) Writer.Error!void {
     );
     if (stats.outcomes_version == 1) try w.print(
         "<tr><th>Expired samples discarded</th><td>{d}</td></tr>" ++
-            "<tr><th>Future-dated samples discarded</th><td>{d}</td></tr>",
-        .{ stats.expired_samples, stats.future_samples },
+            "<tr><th>Future-dated samples discarded</th><td>{d}</td></tr>" ++
+            "<tr><th>GeoIP cleanup attempts failed or unconfirmed</th><td>{d}</td></tr>",
+        .{ stats.expired_samples, stats.future_samples, stats.geo_maintenance_failures },
     );
 }
 

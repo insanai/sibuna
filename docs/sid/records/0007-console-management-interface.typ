@@ -2340,7 +2340,8 @@ seconds. Restarts, backward clocks and counter resets clear the baseline; missin
 observations leave gaps. Rates divide the observed count by monotonic elapsed time.
 An accessible, horizontally scrollable table exposes the last ten observed counts,
 durations and rates. This is the live observation view; the specified 3,600 server
-buckets, durable 90-day minute history and historical query interface remain pending.
+buckets and their bounded query API are added in the following increment. Durable
+90-day minute history and its historical query interface remain pending.
 
 Verification passed native tests, console tests, formatting and SID generation,
 console-disabled tests, storage-disabled and clustered builds, and live console
@@ -2359,6 +2360,38 @@ Seven-batch medians include 1,439.8 ns full policy classification, 287.4 ns Gate
 5.8 ns global GCRA and 6.1 ns for four rule scopes. Idle RSS was 9,888 KiB with
 storage compiled but inactive and the review daemon stopped. No active-console
 throughput or p99 conclusion follows from these primitive measurements.
+
+== Retained counter intervals and collector progress (2026-09-08)
+
+The console collector now retains 3,600 monotonic ending-second buckets independently
+of subscribers. Each bucket sums its observed counter deltas, records actual monotonic
+start/end and duration, UTC start/end labels and observation count. Initial baselines
+do not invent deltas. Zero-duration reads leave their counts for the next timed read.
+A delayed interval keeps its entire count and actual duration in the ending bucket;
+intervening seconds remain absent and the bucket has an explicit gap flag. UTC jumps
+that monotonic time cannot explain also flag gaps. A backward clock or decreasing
+counter invalidates retained intervals, advances a cursor epoch and increments the
+discarded-interval count. Individual counter loads are still not simultaneous.
+
+`POST /console/api/timeline` requires full authentication and CSRF and shares the
+bounded investigation query allowance. It copies at most 16 rows under the collector
+mutex, then releases the mutex before serialization or network writes. Cursor identity
+includes boot and epoch; a changed identity returns `TIMELINE001` with HTTP 409 and a
+reload hint. At most 3,600 slots are inspected, including for arbitrary cursor values.
+An all-maximum-counter page fits the existing 16 KiB response buffer and preserves
+unsigned 64-bit values through the browser JSON bridge. These are observed intervals,
+not a claim that all requests happened within their ending UTC second or minute.
+
+GeoIP cleanup previously waited synchronously on the storage mailbox from the collector.
+It now owns at most one background ticket, polls without waiting, spaces attempts by
+five monotonic seconds and abandons its caller after ten seconds without claiming SQL
+cancellation. Shutdown joins the collector before abandoning that ticket. Failed or
+unconfirmed cleanup attempts have a separate since-boot coverage counter. Deterministic
+tests exercise in-flight completion after timeout, pacing and shutdown cancellation.
+The optimized live-daemon test exercises authentication/CSRF, invalid limits, retained
+outcome counts before any subscriber connects, pagination and restart cursor rejection.
+Durable minute history, metric families beyond outcomes, full retained-history UI and
+the active-console impact gate remain pending.
 
 = References
 

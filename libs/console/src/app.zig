@@ -29,6 +29,7 @@ pub const App = struct {
     challenge_defaults: p.challenges.Defaults = .{},
     geo: @import("geoip_generation.zig").Registry = .{},
     geo_job: @import("geoip_job.zig").Job = .{},
+    geo_maintenance: @import("geoip_maintenance.zig").Maintenance = .{},
     collector: ?std.Thread = null,
     stopping: std.atomic.Value(bool) = .init(false),
 
@@ -96,6 +97,7 @@ pub const App = struct {
         self.stopping.store(true, .release);
         self.geo_job.stop();
         if (self.collector) |thread| thread.join();
+        self.geo_maintenance.stop(self.io, self.mailbox);
         self.history.stop(self.io, self.mailbox);
         self.geo.deinit();
         self.passwords.deinit();
@@ -105,7 +107,6 @@ pub const App = struct {
     }
 
     fn collect(self: *App) void {
-        var last_prune: u64 = 0;
         while (!self.stopping.load(.acquire)) {
             const second = self.now();
             for (0..2) |_| {
@@ -118,14 +119,14 @@ pub const App = struct {
                 std.time.ns_per_ms,
             )));
             self.history.tick(self.io, self.mailbox, second, ms);
-            if (self.geo.loaded.load(.acquire) and !self.geo_job.running.load(.acquire) and
-                second -| last_prune >= 5)
-            {
-                _ = self.background(.{ .geo_prune = second }) catch |err| {
-                    std.log.warn("console GeoIP maintenance: {t}", .{err});
-                };
-                last_prune = second;
-            }
+            if (self.geo_maintenance.tick(
+                self.io,
+                self.mailbox,
+                second,
+                ms,
+                self.geo.loaded.load(.acquire) and !self.geo_job.running.load(.acquire),
+            ))
+                _ = self.stats.geo_maintenance_failures.fetchAdd(1, .monotonic);
             std.Io.sleep(self.io, std.Io.Duration.fromMilliseconds(250), .awake) catch return;
         }
     }
@@ -246,6 +247,7 @@ pub const App = struct {
             },
             .challenges => return @import("challenge_routes.zig").handle(self, context),
             .rankings => return @import("ranking_routes.zig").handle(self, context),
+            .timeline => return @import("timeline_routes.zig").handle(self, context),
             .events_similar => return @import("similarity_routes.zig").query(self, context),
             .policies => return @import("policy_routes.zig").query(self, context, false),
             .policies_test => return @import("policy_routes.zig").query(self, context, true),

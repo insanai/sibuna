@@ -5,6 +5,7 @@ pub const similarity = @import("similarity.zig");
 pub const policies = @import("policies.zig");
 pub const challenges = @import("challenges.zig");
 pub const rankings = @import("rankings.zig");
+pub const timeline = @import("timeline.zig");
 pub const ranking_storage = @import("ranking_storage.zig");
 pub const events = @import("events.zig");
 pub const auth = @import("auth.zig");
@@ -249,6 +250,7 @@ pub const StatsSnapshot = struct {
     sample_loss: u64,
     expired_samples: u64 = 0,
     future_samples: u64 = 0,
+    geo_maintenance_failures: u64 = 0,
     sample_probability: []const u8 = "1/64",
     geoip_available: bool = false,
     countries: [32]CountryCount = @splat(.{}),
@@ -277,7 +279,7 @@ pub const StatsSnapshot = struct {
     }
 };
 
-fn writeCounter(writer: *std.json.Stringify, value: u64) std.json.Stringify.Error!void {
+pub fn writeCounter(writer: *std.json.Stringify, value: u64) std.json.Stringify.Error!void {
     if (value < (1 << 53)) return writer.write(value);
     // Fixed browser glue passes through JSON.parse; decimal strings preserve large counts.
     var buffer: [20]u8 = undefined;

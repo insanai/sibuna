@@ -21,6 +21,8 @@ test {
     _ = @import("totp.zig");
     _ = @import("auth_secrets.zig");
     _ = @import("stats.zig");
+    _ = @import("timeline_test.zig");
+    _ = @import("geoip_maintenance.zig");
     _ = @import("space_saving.zig");
     _ = @import("rankings_archive.zig");
     _ = @import("rankings_journal_test.zig");

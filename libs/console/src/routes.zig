@@ -15,6 +15,7 @@ pub const Handler = enum {
     logout,
     password,
     stats,
+    timeline,
     rankings,
     challenges,
     events,
@@ -32,6 +33,12 @@ pub const Route = struct {
     handler: Handler,
 };
 const table = [_]Route{
+    .{
+        .path = "/console/api/timeline",
+        .method = .POST,
+        .access = .full,
+        .handler = .timeline,
+    },
     .{
         .path = "/console/api/inspection/edit",
         .method = .POST,
