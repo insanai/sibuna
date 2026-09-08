@@ -42,9 +42,10 @@ fn page(state: *const State, w: *Writer) Writer.Error!void {
     try @import("globe.zig").render(state, w);
     try w.writeAll("</article><article class=\"sb-panel\"><h2>Request timeline</h2>");
     try timeline(state, w);
-    try w.writeAll("<p class=\"sb-note\">External request outcomes per observed interval. " ++
-        "Internal endpoints are excluded. Gaps remain unobserved.</p>" ++
-        "<h2 class=\"mt-6\">Coverage</h2><table class=\"table\"><tbody>");
+    try w.writeAll("<p class=\"sb-note\">External requests per second, using observed " ++
+        "monotonic elapsed time. Restarts, clock changes and gaps remain unobserved.</p>");
+    try @import("stats_series.zig").table(state, w);
+    try w.writeAll("<h2 class=\"mt-6\">Coverage</h2><table class=\"table\"><tbody>");
     try coverage(state, w);
     try w.writeAll("</tbody></table></article></section>");
     try @import("rankings_panel.zig").render(
@@ -174,20 +175,33 @@ pub fn message(state: *const State, w: *Writer) Writer.Error!void {
 fn tiles(state: *const State, w: *Writer) Writer.Error!void {
     try w.writeAll("<section class=\"sb-tiles\" aria-label=\"Request summary\">");
     const labels = [_][]const u8{
-        "Requests", "Admitted", "Challenged", "Denied", "Origin 4xx", "Origin 5xx",
+        "Requests", "Admitted",   "Challenged", "Policy denied", "Banned", "Rate limited",
+        "Other",    "Origin 4xx", "Origin 5xx",
     };
-    const keys = .{ "requests", "admitted", "challenged", "denied", "origin_4xx", "origin_5xx" };
+    const keys = .{
+        "requests",   "admitted",   "challenged", "denied", "banned", "rate_limited", "other",
+        "origin_4xx", "origin_5xx",
+    };
     inline for (keys, labels) |key, label| {
         try w.print(
             "<article class=\"sb-tile\"><span class=\"sb-subtitle\">{s}</span><strong>",
             .{label},
         );
         if (state.stats) |stats| {
-            try w.print("{d}", .{@field(stats, key)});
+            const separated = comptime std.mem.eql(u8, key, "denied") or
+                std.mem.eql(u8, key, "banned") or std.mem.eql(u8, key, "rate_limited") or
+                std.mem.eql(u8, key, "other");
+            if (separated and stats.outcomes_version != 1)
+                try w.writeAll("Not recorded")
+            else
+                try w.print("{d}", .{@field(stats, key)});
         } else try w.writeAll("—");
         try w.writeAll("</strong></article>");
     }
     try w.writeAll("</section>");
+    try w.writeAll("<p class=\"sb-note\">Outcomes count parsed external requests once. " ++
+        "Banned counts requests, not distinct addresses. Origin 4xx/5xx overlap admitted " ++
+        "traffic. Counter loads are not simultaneous.</p>");
 }
 
 fn coverage(state: *const State, w: *Writer) Writer.Error!void {
@@ -203,20 +217,27 @@ fn coverage(state: *const State, w: *Writer) Writer.Error!void {
             "<tr><th>Dropped incidents</th><td>{d}</td></tr>",
         .{ stats.unknown_samples, stats.sample_loss, stats.incidents, stats.incidents_dropped },
     );
+    if (stats.outcomes_version == 1) try w.print(
+        "<tr><th>Expired samples discarded</th><td>{d}</td></tr>" ++
+            "<tr><th>Future-dated samples discarded</th><td>{d}</td></tr>",
+        .{ stats.expired_samples, stats.future_samples },
+    );
 }
 
 fn timeline(state: *const State, w: *Writer) Writer.Error!void {
     try w.writeAll("<svg viewBox=\"0 0 480 180\" role=\"img\" aria-label=\"Request timeline\">" ++
         "<path d=\"M0 150H480 M0 100H480 M0 50H480\" fill=\"none\" stroke=\"#d7e3ee\"/>");
     if (state.stats) |stats| {
-        var maximum: u64 = 1;
-        for (state.points) |point| maximum = @max(maximum, point.count);
+        var maximum: f64 = 1;
+        for (state.points) |point| {
+            if (point.second > stats.timestamp or stats.timestamp - point.second >= 60) continue;
+            maximum = @max(maximum, @import("stats_series.zig").rate(point));
+        }
         for (0..60) |i| {
             const second = stats.timestamp -| (59 - i);
             const point = state.points[@intCast(second % 60)];
-            if (point.second != second) continue;
-            const height = @as(f64, @floatFromInt(point.count)) /
-                @as(f64, @floatFromInt(maximum)) * 140;
+            if (point.second != second or point.duration_ms == 0) continue;
+            const height = @import("stats_series.zig").rate(point) / maximum * 140;
             try w.print(
                 "<rect x=\"{d}\" y=\"{d:.1}\" width=\"5\" height=\"{d:.1}\" " ++
                     "fill=\"#0284c7\"/>",

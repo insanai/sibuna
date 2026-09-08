@@ -73,7 +73,8 @@ pub const State = struct {
     recovery_codes: [10]p.Bytes(32) = @splat(.{}),
     recovery_count: usize = 0,
     stats: ?p.StatsSnapshot = null,
-    points: [60]struct { second: u64 = 0, count: u64 = 0 } = @splat(.{}),
+    timeline_open: bool = false,
+    points: [60]@import("stats_series.zig").Point = @splat(.{}),
 
     /// Reset owned fields individually so the Wasm binary does not carry a second
     /// full initialized State image just to clear bounded page buffers on sign-out.

@@ -597,8 +597,12 @@ Current `requests` includes internal routes; `banned` counts requests rejected b
 ban table, not distinct banned addresses. `denied`, `challenged`, `allowed`, `rate_limited`
 and verification counters describe different branches; issued/accepted are separate requests,
 and malformed submissions may not increment `solutions_rejected`. Never stack them as an
-exhaustive partition. A new external-request outcome counter family must assign exactly one
+exhaustive partition. The console external-request outcome counter family assigns exactly one
 outcome (admitted, challenged, denied, banned, rate-limited, other) per external request.
+Here external means a successfully parsed request head outside `/__sibuna/`; incomplete
+external bodies count as other. Unparseable heads and pre-admission connection rejections
+cannot be classified by route and remain separate transport observations. Each selected
+outcome is recorded before attempting response delivery, so it does not prove receipt.
 Origin 4xx/5xx counts require response instrumentation; upstream errors are not their proxy.
 Distinct active bans need a control-thread snapshot, not the existing `banned` counter.
 
@@ -2306,6 +2310,47 @@ for four rule scopes and 1,450.4 ns for full policy classification. Idle RSS was
 9,904 KiB with storage compiled but inactive and the review daemon stopped.
 These primitive measurements do not establish throughput/p99 isolation under
 active dashboards, storage contention or cluster traffic.
+
+== Exact outcomes and boot-aware live intervals (2026-09-08)
+
+Console-only counters now distinguish admitted, challenged, policy-denied, banned,
+rate-limited and other requests without changing Prometheus counter meanings.
+One recorded-outcome guard covers parsed external dispatch, and incomplete external
+bodies contribute one other outcome. Incomplete verification POSTs contribute one
+submission and malformed-solution observation, without entering external totals.
+Internal endpoints, including blocked ones, remain excluded. Origin response classes
+are independent observations associated with admitted requests, not extra outcomes.
+
+Statistics snapshots carry a versioned outcome contract, node ID, the same random
+boot ID used by ranking persistence, and monotonic elapsed time since console
+observation began. The UI displays the six outcomes separately and labels banned
+request counts explicitly; they are not distinct addresses. Older snapshots show
+unrecorded breakdown fields, and newer unsupported formats leave a stale view.
+Boot bytes always serialize as an array, including byte sequences that happen to
+be valid UTF-8. Counters at or above 2^53 serialize as decimal strings so the fixed
+JavaScript JSON bridge cannot round them; the Wasm decoder validates decimal syntax
+and the full unsigned range. Country sample counts use the same representation.
+The collector separately counts samples discarded as expired or future-dated;
+those no longer disappear silently from coverage. These are cumulative observation
+losses since boot, separate from producer queue saturation and Unknown geography.
+
+Live timeline intervals require the same nonzero boot and node, nondecreasing
+counters, adjacent UTC labels and positive monotonic elapsed time of at most two
+seconds. Restarts, backward clocks and counter resets clear the baseline; missing
+observations leave gaps. Rates divide the observed count by monotonic elapsed time.
+An accessible, horizontally scrollable table exposes the last ten observed counts,
+durations and rates. This is the live observation view; the specified 3,600 server
+buckets, durable 90-day minute history and historical query interface remain pending.
+
+Verification passed native tests, console tests, formatting and SID generation,
+console-disabled tests, storage-disabled and clustered builds, and live console
+end-to-end tests in Debug and ReleaseFast. Browser review exercised real denied,
+challenged, rate-limited, banned, admitted and incomplete-body requests, then restored
+the review policy. Restart changed the boot ID and reset the live baseline without
+a spike. At 390 px and 1440 px the document stayed within the viewport. The values
+table remains open through refreshes; its bounded browser scroll coordinates survive
+replacement while the Wasm model owns visibility. These checks do not replace the
+pending whole-process console impact or complete browser acceptance gates.
 
 = References
 

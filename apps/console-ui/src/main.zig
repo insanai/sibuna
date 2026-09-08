@@ -404,14 +404,13 @@ fn statsResponse(status: i64, body: std.json.Value, alloc: std.mem.Allocator) !v
         return;
     }
     var snapshot = try @import("json_value.zig").decode(p.StatsSnapshot, body, alloc);
-    snapshot.sample_probability = "1/64";
-    if (state.stats) |previous| {
-        if (snapshot.timestamp > previous.timestamp and snapshot.requests >= previous.requests)
-            state.points[@intCast(snapshot.timestamp % 60)] = .{
-                .second = snapshot.timestamp,
-                .count = snapshot.requests - previous.requests,
-            };
+    if (snapshot.outcomes_version > 1) {
+        state.stale = true;
+        setMessage("This statistics format needs a newer interface. Reload after upgrading.");
+        return;
     }
+    snapshot.sample_probability = "1/64";
+    @import("stats_series.zig").accept(&state, snapshot);
     state.stats = snapshot;
     state.received_at = state.browser_time;
     try refreshRankings();
@@ -461,7 +460,9 @@ fn geographicAction(name: []const u8, fields: std.json.Value) !bool {
         return true;
     }
     if (state.phase != .dashboard) return false;
-    if (equal(name, "globe-motion")) {
+    if (equal(name, "timeline-values")) {
+        state.timeline_open = !state.timeline_open;
+    } else if (equal(name, "globe-motion")) {
         state.motion.rotating = !state.motion.rotating;
         state.motion.last_ms = 0;
     } else if (equal(name, "rotate-left")) {

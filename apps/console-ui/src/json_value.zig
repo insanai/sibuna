@@ -40,6 +40,11 @@ fn integer(comptime T: type, value: std.json.Value) Error!T {
     if (value == .integer) return std.math.cast(T, value.integer) orelse error.InvalidResponse;
     if (value == .number_string)
         return std.fmt.parseInt(T, value.number_string, 10) catch error.InvalidResponse;
+    if (@typeInfo(T).int.bits > 53 and value == .string) {
+        if (value.string.len == 0 or value.string.len > 20) return error.InvalidResponse;
+        for (value.string) |byte| if (!std.ascii.isDigit(byte)) return error.InvalidResponse;
+        return std.fmt.parseInt(T, value.string, 10) catch error.InvalidResponse;
+    }
     return error.InvalidResponse;
 }
 
@@ -115,4 +120,45 @@ test "wire decoder preserves integer bounds, requires fields and bounds rows bef
         arena.allocator(),
     ));
     try t.expectEqual(@as(usize, 0), arena.end_index);
+}
+
+test "statistics encode UTF-8 boot bytes as an array and preserve full-width counters" {
+    const p = @import("console_protocol");
+    const t = std.testing;
+    const maximum = std.math.maxInt(u64);
+    const snapshot: p.StatsSnapshot = .{
+        .outcomes_version = 1,
+        .boot = @splat('a'),
+        .uptime_ms = maximum,
+        .requests = maximum,
+        .admitted = maximum,
+        .challenged = 0,
+        .denied = 0,
+        .origin_4xx = 0,
+        .origin_5xx = 0,
+        .incidents = 0,
+        .incidents_dropped = 0,
+        .sample_loss = 0,
+        .unknown_samples = 0,
+        .timestamp = 100,
+        .countries = @splat(.{ .code = 0x5553, .samples = maximum }),
+    };
+    var buffer: [4096]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&buffer);
+    try std.json.Stringify.value(snapshot, .{}, &writer);
+    const parsed = try std.json.parseFromSlice(
+        std.json.Value,
+        t.allocator,
+        writer.buffered(),
+        .{},
+    );
+    defer parsed.deinit();
+    try t.expect(parsed.value.object.get("requests").? == .string);
+    try t.expect(parsed.value.object.get("boot").? == .array);
+    const restored = try decode(p.StatsSnapshot, parsed.value, t.allocator);
+    try t.expectEqual(maximum, restored.requests);
+    try t.expectEqual(maximum, restored.countries[0].samples);
+    try t.expectEqualSlices(u8, &snapshot.boot, &restored.boot);
+    try t.expectError(error.InvalidResponse, decode(u64, .{ .string = "+1" }, t.allocator));
+    try t.expectError(error.InvalidResponse, decode(u64, .{ .string = "1e3" }, t.allocator));
 }

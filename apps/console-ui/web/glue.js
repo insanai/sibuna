@@ -30,8 +30,15 @@ function flush() {
   // Compare renderer output with its previous output. Browser serialization normalizes
   // markup, so comparing innerHTML would replace forms even for unchanged state.
   if (html !== renderedHtml) {
+    // Keep browser-owned scrolling across replacement; visibility remains Wasm state.
+    const scrolling = [...root.querySelectorAll("[data-preserve-scroll][id]")].slice(0, 16)
+      .map(node => ({id: node.id, left: node.scrollLeft, top: node.scrollTop}));
     renderedHtml = html;
     root.innerHTML = html;
+    for (const position of scrolling) {
+      const region = root.querySelector(`#${CSS.escape(position.id)}[data-preserve-scroll]`);
+      if (region) { region.scrollLeft = position.left; region.scrollTop = position.top; }
+    }
     root.setAttribute("aria-busy", "false");
     const target = (activeId && `#${CSS.escape(activeId)}`) ||
       (activeAction && `[data-action="${CSS.escape(activeAction)}"]`) ||

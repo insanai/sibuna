@@ -30,7 +30,7 @@ button, input, select, textarea { font: inherit; }
 .sb-tile { padding: 22px; background: var(--color-base-100); border: 1px solid var(--color-base-300); border-radius: 12px; }
 .sb-tile strong { display: block; font-size: 30px; font-variant-numeric: tabular-nums; margin-top: 8px; }
 .sb-panels { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; }
-.sb-panel { background: var(--color-base-100); border: 1px solid var(--color-base-300); border-radius: 12px; padding: 24px; }
+.sb-panel { min-width: 0; background: var(--color-base-100); border: 1px solid var(--color-base-300); border-radius: 12px; padding: 24px; }
 .sb-panel h2 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
 .sb-panel svg { width: 100%; height: auto; }
 .sb-note { font-size: 12px; opacity: .65; line-height: 1.7; }
@@ -51,7 +51,7 @@ button, input, select, textarea { font: inherit; }
  .sb-nav-brand { display: none; }
  .sb-nav-footer { padding-top: 16px; }
  .sb-main { min-width: 0; padding: 20px; }
- .sb-panels { grid-template-columns: 1fr; }
+ .sb-panels { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 520px) {
  .sb-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
