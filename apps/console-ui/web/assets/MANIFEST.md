@@ -8,7 +8,7 @@
 01dff96c7b62da102ec8ae28a37112ba031ecf7c23132a53b2c173b4b37686cb  apps/console-ui/src/geography.zig
 393ca6fcd10e137aa781fc7b4047a7ce20393e63daadadcc125c323f36610023  apps/console-ui/src/geoip_page.zig
 ecf70b5a84e5294cf31f873f778e7d3ceaf055ad21136d626068a84d4d4eea5c  apps/console-ui/src/globe.zig
-85a4d66aa5e9472114ce3455bae319d036993985aeb57a4f49cca71f19be01ac  apps/console-ui/src/main.zig
+1ba0c76e912577d3c3106365aeb8cde029137789c1337f4610700fd395fdae39  apps/console-ui/src/main.zig
 089ad03968ccb90dc7bbebb96d8fe648cf63b20dc93ca953b02a0750a4b60134  apps/console-ui/src/policies_page.zig
 757f5c69083a55010b04672b36762c785e20d0aca44456dcc4bf499db19a7b39  apps/console-ui/src/policy_data.zig
 e5a80bff77f6617c8f785ea7b1b309199a0aa7c0804d1cca93956b03b51a140e  apps/console-ui/src/policy_form.zig

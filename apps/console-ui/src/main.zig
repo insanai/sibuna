@@ -127,6 +127,12 @@ fn command(value: anytype) !void {
     if (command_count > 0) try command_writer.writeByte(',');
     try std.json.Stringify.value(value, .{}, &command_writer);
     command_count += 1;
+    // Every navigation path that closes transport must release its subscription guard.
+    // Keep the old snapshot visibly stale until a new subscription supplies fresh data.
+    if (equal(value.op, "disconnect")) {
+        state.stats_busy = false;
+        state.stale = true;
+    }
 }
 
 fn get(id: []const u8, path: []const u8) !void {
@@ -552,6 +558,28 @@ test "required password changes cannot open subscriptions through navigation" {
     sb_event(1, action_json.len);
     try std.testing.expectEqual(.password, state.phase);
     try std.testing.expect(std.mem.indexOf(u8, html[0..html_length], "<svg") == null);
+}
+
+test "returning from policy navigation reconnects a previously active dashboard" {
+    sb_init();
+    state.phase = .dashboard;
+    state.csrf = try p.Bytes(64).init("test");
+    state.stats_busy = true;
+    const policies = "{\"action\":\"policies\",\"fields\":{}}";
+    @memcpy(input[0..policies.len], policies);
+    sb_event(1, policies.len);
+    try std.testing.expectEqual(.policies, state.phase);
+    try std.testing.expect(!state.stats_busy and state.stale);
+    const dashboard = "{\"action\":\"dashboard\",\"fields\":{}}";
+    @memcpy(input[0..dashboard.len], dashboard);
+    sb_event(1, dashboard.len);
+    try std.testing.expectEqual(.dashboard, state.phase);
+    try std.testing.expect(state.stats_busy and state.stale);
+    try std.testing.expect(std.mem.indexOf(
+        u8,
+        commands[0..commands_length],
+        "\"op\":\"connect\"",
+    ) != null);
 }
 
 fn securityAction(name: []const u8, fields: std.json.Value) !bool {

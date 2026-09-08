@@ -559,3 +559,15 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
   Verified durable restoration after restart and live US/Australia markers, country rankings,
   Unknown local-address samples and the flat-map fallback. Usage is in `docs/console-geoip.md`.
   This verifies development data loading, not the remaining SID telemetry or cluster gates.
+
+### Dashboard reconnection after management navigation (2026-09-08)
+
+- Browser verification with the full country database found that policy navigation disconnected
+  transport without releasing the dashboard's busy guard. Returning to Statistics consequently
+  kept old values labelled Live. Disconnect commands now consistently clear that guard and mark
+  retained data stale until a fresh subscription snapshot arrives.
+- A native regression exercises an active dashboard, policy navigation and return, checking
+  both the emitted connection command and the stale state while waiting for new data.
+  Formatting, full repository tests and SID generation pass. Browser verification after a
+  restart and policy round-trip received 768 new requests, US/Australia samples and Unknown
+  local samples through the reconnected stream.
