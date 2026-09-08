@@ -40,3 +40,33 @@ def check(h, port, data_port, cookie, csrf):
     assert h.request(port, "POST", test, source, cookie, csrf)[0] == 409
     source.update(applied=None, ip="invalid address")
     assert h.request(port, "POST", test, source, cookie, csrf)[0] == 400
+    check_preview(h, port, cookie, csrf)
+
+
+def check_preview(h, port, cookie, csrf):
+    query = "/console/api/policies/query"
+    test = "/console/api/policies/test"
+    status, _, body = h.request(port, "POST", query, {}, cookie, csrf)
+    assert status == 200
+    page = json.loads(body)
+    source = {"path": "/robots.txt", "ip": "8.8.9.4", "user_agent": "Mozilla"}
+    status, _, body = h.request(port, "POST", test, source, cookie, csrf)
+    assert status == 200 and json.loads(body)["action"] == "allow"
+    source.update(committed=page["committed"], draft=json.dumps({
+        "id": "preview-only", "name": "Preview denial", "action": "deny", "path": "/robots.txt"}))
+    status, _, body = h.request(port, "POST", test, source, cookie, csrf)
+    assert status == 200, (status, body)
+    result = json.loads(body)
+    assert result["preview"] and result["action"] == "deny"
+    assert result["committed"] == page["committed"]
+    source["committed"] = "9223372036854775807"
+    assert h.request(port, "POST", test, source, cookie, csrf)[0] == 409
+    source["committed"] = page["committed"]
+    source["draft"] = '{"id":"invalid","name":"Invalid","action":"allow","cidrs":["bad"]}'
+    assert h.request(port, "POST", test, source, cookie, csrf)[0] == 400
+    del source["committed"]
+    assert h.request(port, "POST", test, source, cookie, csrf)[0] == 400
+    del source["draft"]
+    status, _, body = h.request(port, "POST", test, source, cookie, csrf)
+    assert status == 200 and json.loads(body)["action"] == "allow"
+    assert not json.loads(body)["preview"]

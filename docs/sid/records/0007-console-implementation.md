@@ -483,3 +483,20 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
   deterministic order, disabled rules, fallback capacity and file/reputation composition.
   This is library support for upcoming management operations; no draft is published and no
   policy write endpoint is exposed by this change.
+
+### Revision-bound draft preview service (2026-09-08)
+
+- The policy test endpoint accepts an optional owned draft document and a required committed
+  revision. The storage owner replaces the matching database ID, or inserts a new candidate,
+  without writing or publishing it. Results explicitly distinguish previews and their committed
+  basis from the currently applied revision.
+- Snapshot reads use prepared query limits, eight-rule pages and 64-reputation pages. Source
+  staging has a fixed 2 MiB budget, in addition to the private candidate's engine and 2 MiB
+  parser budget. Revisions are checked before and after composition, and authorization is
+  rechecked before returning the result. Existing malformed neighboring rules reject the draft;
+  replacing a malformed rule itself allows it to be repaired.
+- Storage tests cover replacement without publication, stale revisions, revoked sessions,
+  invalid disabled neighbors and complete header/CIDR matchers across page boundaries. Live
+  daemon tests verify a draft denial over an applied allowance, invalid input, missing revision,
+  conflicts and the unchanged applied decision afterward. Formatting, tests and SID checks pass.
+  Editor controls and transactional writes remain subsequent work.

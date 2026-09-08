@@ -95,6 +95,95 @@ test "policy inspection pins applied revisions and includes file and database ru
     try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .policies_query = input })).failed);
 }
 
+test "private policy previews preserve live rules and reject invalid neighbors" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try Fixture.open(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/policy-drafts",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try policySession(fx);
+    try fx.owner.db.exec(
+        t.allocator,
+        "INSERT INTO policies(id,name,path_pattern,action,created_at,updated_at) " ++
+            "VALUES('test','Original','/draft','DENY',100,100)",
+    );
+    try fx.owner.tick();
+    const stamp = fx.owner.version;
+    var request: p.policies.Test = .{
+        .query = .{ .session_digest = @splat(1), .now = 101 },
+        .path = try p.Bytes(512).init("/draft"),
+        .ip = try p.Bytes(48).init("8.8.8.8"),
+        .committed = stamp,
+        .draft = try p.Bytes(4096).init(
+            "{\"id\":\"test\",\"name\":\"Replacement\",\"path\":\"/draft\",\"action\":\"allow\"}",
+        ),
+    };
+    const preview = (try fx.run(.{ .policies_test = request })).page;
+    try t.expect(std.mem.indexOf(u8, preview.slice(), "\"action\":\"allow\"") != null);
+    try t.expect(std.mem.indexOf(u8, preview.slice(), "\"preview\":true") != null);
+    try t.expectEqual(stamp, fx.owner.version);
+    var live = request;
+    live.draft = null;
+    live.committed = null;
+    const actual = (try fx.run(.{ .policies_test = live })).page;
+    try t.expect(std.mem.indexOf(u8, actual.slice(), "\"rule\":\"Original\"") != null);
+    request.committed = stamp + 1;
+    try t.expectEqual(p.Failure.conflict, (try fx.run(.{ .policies_test = request })).failed);
+    try fx.owner.db.exec(
+        t.allocator,
+        "INSERT INTO policies(id,name,action,enabled,cidr_matchers,created_at,updated_at) " ++
+            "VALUES('invalid','Invalid','DENY',0,'[\"bad-network\"]',100,100)",
+    );
+    request.committed = stamp + 1;
+    try t.expectEqual(p.Failure.invalid_input, (try fx.run(.{ .policies_test = request })).failed);
+    _ = try fx.run(.{ .logout = .{ .digest = @splat(1), .now = 102 } });
+    try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .policies_test = request })).failed);
+}
+
+test "draft snapshots page database rules and retain header and CIDR matchers" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try Fixture.open(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/policy-draft-pages",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try policySession(fx);
+    try fx.owner.db.exec(
+        t.allocator,
+        "WITH RECURSIVE n(x) AS (VALUES(1) UNION ALL SELECT x+1 FROM n WHERE x<9) " ++
+            "INSERT INTO policies(id,name,path_pattern,action,header_matchers,cidr_matchers," ++
+            "created_at,updated_at) SELECT 'rule-'||x,'Rule '||x,'/rule-'||x,'DENY'," ++
+            "'{\"X-Preview\":\"yes\"}','[\"8.8.8.0/24\"]',100,100 FROM n",
+    );
+    try fx.owner.tick();
+    var request: p.policies.Test = .{
+        .query = .{ .session_digest = @splat(1), .now = 101 },
+        .path = try p.Bytes(512).init("/rule-9"),
+        .ip = try p.Bytes(48).init("8.8.8.8"),
+        .committed = fx.owner.version,
+        .draft = try p.Bytes(4096).init(
+            "{\"id\":\"off\",\"name\":\"Off\",\"action\":\"deny\",\"enabled\":false}",
+        ),
+        .header_count = 1,
+    };
+    request.headers[0] = .{
+        .name = try p.Bytes(64).init("x-preview"),
+        .value = try p.Bytes(256).init("yes"),
+    };
+    const matched = (try fx.run(.{ .policies_test = request })).page;
+    try t.expect(std.mem.indexOf(u8, matched.slice(), "\"rule\":\"Rule 9\"") != null);
+    request.ip = try p.Bytes(48).init("8.8.4.4");
+    const missed = (try fx.run(.{ .policies_test = request })).page;
+    try t.expect(std.mem.indexOf(u8, missed.slice(), "\"rule\":\"Rule 9\"") == null);
+}
+
 test "console storage ticks bootstrap, audit, authenticate and revoke atomically" {
     var tmp = t.tmpDir(.{});
     defer tmp.cleanup();

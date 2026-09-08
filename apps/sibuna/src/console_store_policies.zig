@@ -7,6 +7,7 @@ const Persistent = @import("persistent.zig").Persistent;
 const AppState = @import("server.zig").AppState;
 const store = @import("console_store.zig");
 const db = @import("console_database.zig");
+const candidates = @import("console_policy_candidate.zig");
 
 fn authorize(owner: *Persistent, input: p.policies.Query) !?p.Failure {
     try p.policies.validate(input);
@@ -96,13 +97,45 @@ pub fn testRequest(owner: *Persistent, input: p.policies.Test) !p.StorageResult 
     if (try authorize(owner, input.query)) |failure| return .{ .failed = failure };
     if (policy.radix_trie.parseIp(input.ip.slice()) == null)
         return .{ .failed = .invalid_input };
+    if (input.draft != null) return testDraft(owner, input);
     const slot = owner.state.acquireEngine();
     defer AppState.releaseEngine(slot);
+    return evaluate(owner, input, slot.engine);
+}
+
+fn testDraft(owner: *Persistent, input: p.policies.Test) !p.StorageResult {
+    var candidate = candidates.build(
+        owner,
+        input.committed.?,
+        input.draft.?.slice(),
+        input.query.now,
+    ) catch |err| return .{ .failed = draftFailure(err) };
+    defer candidate.deinit();
+    // Recheck session revocation after bounded reads and compilation, including remote reads.
+    if (try authorize(owner, input.query)) |failure| return .{ .failed = failure };
+    return evaluate(owner, input, candidate.engine);
+}
+
+fn draftFailure(err: anyerror) p.Failure {
+    if (err == error.Conflict) return .conflict;
+    if (err == error.OutOfMemory) return .unavailable;
+    if (err == error.InvalidStoredPolicy or err == error.WriteFailed) return .invalid_input;
+    inline for (@typeInfo(policy.candidate.Error).error_set.?) |field| {
+        if (err == @field(anyerror, field.name)) return .invalid_input;
+    }
+    return .unavailable;
+}
+
+fn evaluate(
+    owner: *Persistent,
+    input: p.policies.Test,
+    engine: *const policy.Engine,
+) !p.StorageResult {
     var headers: [8]policy.Header = undefined;
     for (input.headers[0..input.header_count], 0..) |*header, i| {
         headers[i] = .{ .name = header.name.slice(), .value = header.value.slice() };
     }
-    const result = slot.engine.evaluateRequest(.{
+    const result = engine.evaluateRequest(.{
         .path = input.path.slice(),
         .query = input.query_string.slice(),
         .client_ip = input.ip.slice(),
@@ -113,8 +146,14 @@ pub fn testRequest(owner: *Persistent, input: p.policies.Test) !p.StorageResult 
     var output: p.Bytes(p.max_message) = .{};
     var writer: std.Io.Writer = .fixed(&output.data);
     var revision: [20]u8 = undefined;
+    var committed_revision: [20]u8 = undefined;
     try std.json.Stringify.value(.{
         .applied = try std.fmt.bufPrint(&revision, "{d}", .{owner.version}),
+        .preview = input.draft != null,
+        .committed = if (input.committed) |value|
+            try std.fmt.bufPrint(&committed_revision, "{d}", .{value})
+        else
+            null,
         .action = @tagName(result.action),
         .rule = result.rule_name,
         .difficulty = result.difficulty,

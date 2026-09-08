@@ -18,6 +18,8 @@ pub fn query(app: *App, context: *http.Context, testing: bool) !void {
         ip: []const u8 = "",
         user_agent: []const u8 = "",
         body: []const u8 = "",
+        draft: ?[]const u8 = null,
+        committed: ?[]const u8 = null,
         headers: []const struct { name: []const u8, value: []const u8 } = &.{},
     }, context, &body, fixed.allocator());
     defer parsed.deinit();
@@ -40,6 +42,11 @@ pub fn query(app: *App, context: *http.Context, testing: bool) !void {
             .ip = try p.Bytes(48).init(fields.ip),
             .user_agent = try p.Bytes(256).init(fields.user_agent),
             .body = try p.Bytes(2048).init(fields.body),
+            .draft = if (fields.draft) |draft| try p.Bytes(4096).init(draft) else null,
+            .committed = if (fields.committed) |revision|
+                std.fmt.parseInt(u64, revision, 10) catch return error.InvalidRequest
+            else
+                null,
         };
         if (fields.headers.len > input.headers.len) return error.InvalidRequest;
         for (fields.headers, 0..) |header, i| {
