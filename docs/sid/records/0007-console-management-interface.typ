@@ -3003,6 +3003,20 @@ This increment supplies persistence and authorization contracts. Public bearer r
 token CLI commands and the token interface remain to be connected and verified before
 the token workflow is complete.
 
+== Token-storage benchmark regeneration (2026-09-08)
+
+The primitive baseline was regenerated from clean isolated commit `585e5dd218fca8d5416ef4cf649789275a19e146`,
+with review daemons stopped and heavy checks outside the timed run. The version-2 manifest
+covers 319 inputs, SHA-256 `aa1c5673691caf5d50c0ecb940b6804abdb1ee0b1055a177be462e663e6fa986`;
+the daemon digest is `901778f29765166313e902a70753088d5d8b7756f16b80f0839f4dc9b48ce7ca`.
+`latest-20260908T144429Z.json` and `latest.json` share SHA-256
+`05e674796996bc2161761d90db482d90650139b2e5a71b39870e4e2b486ebe7f`.
+Full classification measured 1,465.50 ns median
+(1,464.70–1,466.16 ns across seven batches).
+Idle RSS was 9,920 KiB with two workers and storage compiled but inactive.
+The 8,831-byte Wasm artifact is the proof solver. These primitive measurements do not
+exercise active credentials, dashboards or storage contention and do not pass console-impact.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
