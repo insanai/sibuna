@@ -824,7 +824,10 @@ policies: pin the generation and require a reviewed diff to refresh them.
 The front-page focal panel is a real-time earth globe showing traffic by country whenever
 GeoIP is loaded. A pinned, attributed low-resolution world-boundary asset supplies geometry;
 country-centroid markers are representative positions, not measured client coordinates.
-Do not draw city-level locations or source-to-destination arcs from country-only data.
+Do not infer city-level locations or geographic destination coordinates from country-only data.
+Animate aggregate inbound arrows from observed countries to a clearly labelled, non-geographic
+Sibuna service hub until a node location is explicitly configured. These arrows illustrate the
+rolling sample window, not individual packets or invented country-to-country connections.
 Zig generates an orthographic SVG projection with a configurable center $(lambda_0, phi_0)$:
 $x = cos(phi) sin(lambda-lambda_0)$,
 $y = cos(phi_0) sin(phi)-sin(phi_0) cos(phi) cos(lambda-lambda_0)$,
@@ -839,8 +842,9 @@ last update and node coverage visible; switching to persisted incidents explicit
 that incomplete incident population. Use marker area proportional to count (radius grows
 with the square root of count, capped), and discrete intensity classes on country fills.
 A ranked country table next to the globe contains *all* hemispheres and offers keyboard
-selection to center the globe and open filtered events. No automatic rotation: provide
-Rotate left/right, reset, pause/live and a flat-map alternative. Hidden tabs suspend visual
+selection to center the globe and open filtered events. Provide continuous rotation with a
+separate animation pause, Rotate left/right, reset, pause/live and a flat-map alternative.
+Manual country selection pauses automatic rotation for inspection. Hidden tabs suspend visual
 updates and resnapshot on return. A globe is one panel, not a replacement for totals.
 
 Without GeoIP, keep the earth outline and show “GeoIP unavailable”, Unknown totals and an
@@ -848,6 +852,14 @@ administrator setup link; no synthetic country markers. With zero traffic say �
 this window”. On disconnection freeze the last good state and label its age; never animate
 stale traffic. Use accessible text/table equivalents; user-driven rotation honors reduced
 motion. The same globe component serves desktop, responsive and kiosk views.
+
+The lightweight implementation caps animation at 24 frames per second and 16 visible arcs.
+Only the SVG globe region is replaced per frame; statistics retain their independent 1 Hz
+subscription cadence. Geometry and animation state remain in Zig, while the browser bridge
+supplies frame timestamps and the reduced-motion preference. Reduced motion disables automatic
+rotation and moving arrows. Curves use bounded quadratic paths with directional arrowheads.
+The inspiration is #link("https://github.blog/engineering/engineering-principles/how-we-built-the-github-globe/")[GitHub’s globe]; its connection endpoints come from actual pull-request location pairs,
+whereas Sibuna currently has country-only source observations and a logical service endpoint.
 
 
 = Cluster Management
@@ -1986,6 +1998,19 @@ are historical; the acceptance gates below govern delivery.
 - #text("Rule documents can be imported into an unsaved editor draft and exported as JSON downloads. Imports reject unknown fields, invalid field types and changes to an existing rule ID. Saving still requires the normal full candidate validation and expected revision. Export remains available after conflicts so an operator can retain a draft. Browser checks imported a new header rule, previewed its denial at unchanged committed revision 154 and exercised export. This supports individual documents; atomic bulk policy-set import/export is still required.")
 
 - #text("Shared JSON-tree decoding replaces repeated typed scanners. A fixed 512 KiB scratch region is cleared after each event; large challenge, incident and similarity response regressions pass. The Wasm module is 293,413 bytes, within its existing gate, and now declares both initial and maximum memory of 4 MiB. Full tests, formatting, SID generation and asset checks pass.")
+
+== Animated globe implementation (2026-09-08)
+
+- Added a bounded 24 Hz browser frame bridge and an isolated SVG scene update. Zig owns rotation,
+  curve geometry and arrow progress; the frame loop does not replace the sidebar, tables or forms.
+  Manual rotation and country selection pause automatic movement. A separate motion control,
+  reduced-motion preference, hidden-tab suspension and stale-data guards constrain animation.
+- Up to 16 visible arcs represent observed country aggregates flowing to a non-geographic Sibuna
+  hub. Unknown samples produce no invented locations. No arcs appear without country samples,
+  after disconnection or while live updates are paused. Existing horizon clipping remains intact.
+- Native tests cover authentication, bounded clock progression, reduced motion, pause and stale
+  arcs. Browser checks observed continuous geometry movement, actual US/Australia sample arcs,
+  and pause/resume behavior. Full tests, formatting and builds passed; the module is 297,208 bytes.
 
 = References
 

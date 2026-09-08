@@ -59,6 +59,7 @@ pub const State = struct {
     geometry_busy: bool = false,
     geometry_retry_at: u64 = 0,
     globe: @import("geography.zig").View = .{},
+    motion: @import("globe_motion.zig").Motion = .{},
     geo: p.geo.Metadata = .{},
     geo_status: p.Bytes(16) = .{},
     geo_progress: u32 = 0,

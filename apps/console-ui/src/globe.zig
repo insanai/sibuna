@@ -3,8 +3,8 @@ const State = @import("state.zig").State;
 const geography = @import("geography.zig");
 const Writer = std.Io.Writer;
 
-pub fn render(state: *const State, w: *Writer) Writer.Error!void {
-    try w.writeAll("<h2>Live earth globe</h2><svg viewBox=\"0 0 400 280\" role=\"img\" " ++
+pub fn scene(state: *const State, w: *Writer) Writer.Error!void {
+    try w.writeAll("<svg viewBox=\"0 0 400 280\" role=\"img\" " ++
         "aria-label=\"Earth and country traffic. See coverage and the country table below.\">");
     try @import("html").render(w, @embedFile("snippets/globe-definitions.html"), .{});
     if (state.globe.flat) {
@@ -20,7 +20,20 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         if (available) try markers(state, bytes, w);
     }
     if (!state.globe.flat) try w.writeAll("</g>");
-    try w.writeAll("</svg><div class=\"sb-globe-controls\">");
+    if (state.geometry) |bytes| try @import("globe_connections.zig").render(state, bytes, w);
+    try w.writeAll("</svg>");
+}
+
+pub fn render(state: *const State, w: *Writer) Writer.Error!void {
+    try w.writeAll("<h2>Live earth globe</h2><div id=\"globe-scene\">");
+    try scene(state, w);
+    try w.writeAll("</div><div class=\"sb-globe-controls\">");
+    if (state.geometry != null and !state.motion.reduced) {
+        try w.print("<button class=\"btn btn-sm\" data-action=\"globe-motion\">{s}</button>", .{
+            if (state.motion.rotating) "Pause animation" else "Start animation",
+        });
+    }
+    const available = if (state.stats) |stats| stats.geoip_available else false;
     if (state.geometry != null) try w.writeAll(
         "<button id=\"rotate-left\" class=\"btn btn-sm\" " ++
             "data-action=\"rotate-left\">Rotate left</button>" ++
@@ -46,6 +59,8 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     }
     try w.writeAll("<p class=\"sb-note\">Sampled traffic over 60 seconds. " ++
         "Markers show representative country positions, not client coordinates. " ++
+        "Arrows illustrate sampled inbound flow to Sibuna over this window; " ++
+        "the service hub is not a geographic destination. " ++
         "<a href=\"https://db-ip.com\">IP Geolocation by DB-IP</a>.</p>");
     try rankings(state, w);
 }

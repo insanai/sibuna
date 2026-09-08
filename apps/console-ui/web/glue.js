@@ -136,6 +136,22 @@ root.addEventListener("click", e => {
 document.addEventListener("visibilitychange", () => event(5, {hidden: document.hidden}));
 wasm.sb_init();
 flush();
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+const motionPreference = () => event(7, {reduced_motion: reducedMotion.matches});
+reducedMotion.addEventListener("change", motionPreference);
+motionPreference();
+let lastFrame = 0;
+function animate(now) {
+  // Zig owns projection, timing and scene state. Only the globe region changes per frame.
+  if (!document.hidden && now - lastFrame >= 1000 / 24) {
+    lastFrame = now;
+    const length = wasm.sb_frame(now);
+    const scene = document.getElementById("globe-scene");
+    if (length && scene) scene.innerHTML = read(wasm.sb_frame_html(), length);
+  }
+  requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
 
 
 async function download(command) {

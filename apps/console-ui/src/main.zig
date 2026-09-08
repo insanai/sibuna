@@ -20,6 +20,15 @@ var command_writer: std.Io.Writer = undefined;
 var command_count: usize = 0;
 var commands_length: usize = 0;
 
+export fn sb_frame(milliseconds: f64) usize {
+    if (!initialized) return 0;
+    return @import("globe_motion.zig").frame(&state, milliseconds);
+}
+
+export fn sb_frame_html() [*]const u8 {
+    return &@import("globe_motion.zig").output;
+}
+
 export fn sb_input() [*]u8 {
     return &input;
 }
@@ -164,6 +173,10 @@ fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
             if (state.phase == .similarity) try similarityQuery();
         },
         4 => try streamEvent(value, alloc),
+        7 => {
+            const reduced = field(value, "reduced_motion") orelse return;
+            if (reduced == .bool) state.motion.reduced = reduced.bool;
+        },
         5 => {
             const hidden = field(value, "hidden") orelse return;
             if (hidden != .bool) return;
@@ -428,15 +441,22 @@ fn geographicAction(name: []const u8, fields: std.json.Value) !bool {
         return true;
     }
     if (state.phase != .dashboard) return false;
-    if (equal(name, "rotate-left")) {
+    if (equal(name, "globe-motion")) {
+        state.motion.rotating = !state.motion.rotating;
+        state.motion.last_ms = 0;
+    } else if (equal(name, "rotate-left")) {
+        state.motion.rotating = false;
         state.globe.lon -= 20;
     } else if (equal(name, "rotate-right")) {
+        state.motion.rotating = false;
         state.globe.lon += 20;
     } else if (equal(name, "reset-globe")) {
         state.globe = .{};
+        state.motion.rotating = true;
     } else if (equal(name, "flat-map")) {
         state.globe.flat = !state.globe.flat;
     } else if (std.mem.startsWith(u8, name, "country-")) {
+        state.motion.rotating = false;
         const code = std.fmt.parseInt(u16, name[8..], 10) catch return false;
         if (state.geometry) |bytes| {
             if (@import("geography.zig").center(bytes, code)) |position|
