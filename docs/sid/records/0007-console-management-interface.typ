@@ -3091,6 +3091,24 @@ real submit-button attributes, header/network round trips, duplicate-header reje
 invalid imports, quota settings and output bounds. Browser review exercises the existing
 structured matcher editor and its shared navigation.
 
+== Scoped token interface (2026-09-09)
+
+The administrator Tokens page shares the authenticated navigation shell and provides
+bounded catalog pages, explicit role/scope selection, seven/thirty/ninety-day or unlimited
+expiry, one-time issuance, revision-checked revocation and inactive-entry removal. Role
+changes clear scopes outside the chosen authority. Decimal-string request fields preserve
+full-width IDs and expiry values. Mutation confirmation precedes submission.
+
+The interface erases the disclosed credential on dismissal, navigation and session reset;
+dismissal remains available during a pending catalog refresh. Late response tickets cannot
+modify another view. Opening a token editor and dismissing its secret restore keyboard
+focus. Native coverage includes authorization boundaries, stale replies, output escaping,
+large identifiers and owned secret erasure. Browser checks verify issuance, catalog state,
+revocation/removal and the persistent sidebar. The final interface is 297,424 bytes against
+the 307,200-byte cap; 127 console tests and 308 combined repository tests pass. Storage-off,
+console-off and clustered build configurations remain functional. Cluster runtime,
+operational pages and the complete impact matrix remain outstanding acceptance work.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
