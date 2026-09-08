@@ -294,21 +294,18 @@ pub const App = struct {
         route: @import("routes.zig").Route,
         identity: ?p.Principal,
     ) !void {
-        const users = @import("user_routes.zig");
-        const tokens = @import("token_routes.zig");
+        const access = @import("access_routes.zig");
         switch (route.handler) {
-            .users_query, .users_create, .users_change => return users.dispatch(
-                self,
-                context,
-                identity.?,
-                route.handler,
-            ),
-            .tokens_query, .tokens_create, .tokens_revoke => return tokens.handle(
-                self,
-                context,
-                identity.?,
-                route.handler,
-            ),
+            .audit_query,
+            .audit_read,
+            .audit_export,
+            .users_query,
+            .users_create,
+            .users_change,
+            .tokens_query,
+            .tokens_create,
+            .tokens_revoke,
+            => return access.dispatch(self, context, identity.?, route.handler),
             .setup_status => {
                 const status = try self.request(.setup_status);
                 if (status != .setup_required) return error.StorageUnavailable;

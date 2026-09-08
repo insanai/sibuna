@@ -28,6 +28,8 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
     const geo = @import("console_store_geo.zig");
     const tokens = @import("console_store_tokens.zig");
     return switch (request) {
+        .audit_query => |input| @import("console_store_audit.zig").query(owner, input),
+        .audit_read => |input| @import("console_store_audit.zig").read(owner, input),
         .tokens_query => |input| tokens.query(owner, input),
         .tokens_create => |input| tokens.create(owner, input),
         .tokens_revoke => |input| tokens.revoke(owner, input),

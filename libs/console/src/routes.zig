@@ -4,6 +4,9 @@ const std = @import("std");
 const p = @import("console_protocol");
 pub const Access = enum { public, account, full };
 pub const Handler = enum {
+    audit_query,
+    audit_read,
+    audit_export,
     tokens_query,
     tokens_create,
     tokens_revoke,
@@ -43,6 +46,25 @@ pub const Route = struct {
     handler: Handler,
 };
 const table = [_]Route{
+    .{
+        .path = "/console/api/audit/query",
+        .method = .POST,
+        .access = .full,
+        .handler = .audit_query,
+    },
+    .{
+        .path = "/console/api/audit/read",
+        .method = .POST,
+        .access = .full,
+        .handler = .audit_read,
+    },
+    .{
+        .path = "/console/api/audit/export",
+        .method = .POST,
+        .access = .full,
+        .handler = .audit_export,
+    },
+
     .{
         .path = "/console/api/tokens/query",
         .method = .POST,

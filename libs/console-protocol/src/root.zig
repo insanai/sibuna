@@ -11,6 +11,7 @@ pub const ranking_storage = @import("ranking_storage.zig");
 pub const events = @import("events.zig");
 pub const auth = @import("auth.zig");
 pub const users = @import("users.zig");
+pub const audit = @import("audit.zig");
 pub const tokens = @import("tokens.zig");
 pub const geo = @import("geo.zig");
 pub const version: u16 = 1;
@@ -85,6 +86,8 @@ pub const AuthorizationCheck = struct {
     kind: CredentialKind = .session,
 };
 pub const StorageRequest = union(enum) {
+    audit_query: audit.Query,
+    audit_read: audit.Read,
     tokens_query: tokens.Query,
     tokens_create: tokens.Create,
     tokens_revoke: tokens.Revoke,
@@ -150,6 +153,8 @@ pub const StorageRequest = union(enum) {
     control_complete: struct { id: u64, succeeded: bool },
 };
 pub const StorageResult = union(enum) {
+    audit_page: audit.Page,
+    audit_detail: audit.Detail,
     tokens_page: tokens.Page,
     token_saved: u64,
     // Storage acknowledgement carries the exact durable activation timestamp.
@@ -216,6 +221,10 @@ pub fn Bytes(comptime capacity: usize) type {
 
 pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
     switch (request) {
+        .audit_query => |input| try audit.validate(input),
+        .audit_read => |input| {
+            if (input.id == 0 or input.id > audit.last_id) return error.InvalidLimit;
+        },
         .tokens_query => |input| try users.validateQuery(.{
             .auth = input.auth,
             .after = input.after,

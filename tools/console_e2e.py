@@ -189,6 +189,8 @@ def check(binary):
     console_token_test.check(binary, sys.modules[__name__])
     import console_token_cli_test
     console_token_cli_test.check(binary, sys.modules[__name__])
+    import console_audit_test
+    console_audit_test.check(binary, sys.modules[__name__])
     import console_shutdown_test
     console_shutdown_test.check(binary, sys.modules[__name__])
     import console_totp_test

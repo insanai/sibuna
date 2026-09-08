@@ -24,6 +24,10 @@ pub fn fail(context: *Context, status: std.http.Status, code: []const u8) Contex
 }
 
 fn failureHint(code: []const u8) []const u8 {
+    if (std.mem.eql(u8, code, "CONSOLEAUDIT404"))
+        return "This audit record is unavailable. Refresh; retention may have removed it.";
+    if (std.mem.eql(u8, code, "CONSOLEAUDIT"))
+        return "Narrow the audit filters or sign in again, then retry.";
     if (std.mem.eql(u8, code, "CONSOLEMUTATION"))
         return "Wait up to one minute; a session permits sixty management mutations per minute.";
     if (std.mem.eql(u8, code, "CONSOLETOKENFULL"))

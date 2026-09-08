@@ -3123,6 +3123,28 @@ Idle RSS was 9,936 KiB with two workers and storage compiled but inactive. The r
 8,831-byte Wasm artifact is the proof solver. These measurements do not exercise active
 dashboards or storage contention and do not satisfy console-impact acceptance.
 
+== Bounded audit investigation API (2026-09-09)
+
+Authenticated cookie sessions can query eight-row descending audit pages by action, actor
+and UTC interval, inspect one record and export one filtered metadata page. Full-width
+identifiers use decimal request strings and bounded owned native/Wasm results. Filters
+use prepared parameters and the existing 100-row/64-KiB/100,000-step query ceilings;
+exhaustion returns an unavailable response with a hint to narrow the filters.
+
+Persistent rechecks current session revision, expiry, CSRF and mandatory administrator MFA
+before and after reads. Bearer credentials have no audit capability. Export creates a
+conditional audit receipt before disclosing its result; a failed receipt releases no page.
+Historical role and summary values remain absent. Summary JSON exposes only supported
+account/token metadata, removes unknown fields and controls, and reports redaction and
+UTF-8-safe truncation. Raw hashes, sessions and arbitrary stored documents are never returned.
+
+Storage ticks verify descending cursors beyond JavaScript's exact integer range, filters,
+missing history, secret removal, queued expiry and export rollback. Live-daemon tests cover
+role access, cookie/CSRF boundaries, malformed filters, export receipts, revocation and
+restart. The combined suite passes 311 tests. The Audit interface, richer mutation capture,
+command intent/completion, audit-driven policy comparison/revert and streaming are separate
+remaining increments; this API does not imply those acceptance gates have passed.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
