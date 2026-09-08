@@ -1193,7 +1193,7 @@ fn policyResponse(id: []const u8, status: i64, body: std.json.Value) !void {
     if (status != 200) {
         model.stale = status != 400 and status != 429;
         setMessage(switch (status) {
-            400 => "Check the request, rule settings and matcher JSON, then try again.",
+            400 => "Check the request, rule settings, headers and networks, then try again.",
             409 => "Policy or reputation changed. Refresh and review the current rules.",
             429 => "Too many queries. Wait a minute before trying again.",
             else => "Policy data is unavailable. Refresh to retry; previous data may be stale.",
@@ -1352,7 +1352,7 @@ fn managedDocument(fields: std.json.Value) !?p.Bytes(4096) {
         return null;
     }
     return manager.form.document() catch {
-        setMessage("Check numbers and matcher JSON. Rule documents must fit within 4 KiB.");
+        setMessage("Check numbers, headers and networks. Rule documents must fit within 4 KiB.");
         try command(.{ .op = "focus", .selector = "#console-message" });
         return null;
     };

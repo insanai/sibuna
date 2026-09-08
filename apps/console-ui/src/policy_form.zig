@@ -3,6 +3,7 @@ const std = @import("std");
 const p = @import("console_protocol");
 const html = @import("html");
 const Writer = std.Io.Writer;
+const matchers = @import("policy_matchers.zig");
 
 pub const Form = struct {
     id: p.Bytes(128) = .{},
@@ -20,8 +21,13 @@ pub const Form = struct {
 
     pub fn capture(self: *Form, fields: std.json.Value) !void {
         inline for (@typeInfo(Form).@"struct".fields) |field| {
-            @field(self, field.name) = try field.type.init(text(fields, "rule_" ++ field.name));
+            if (comptime !std.mem.eql(u8, field.name, "headers")) {
+                @field(self, field.name) = try field.type.init(
+                    text(fields, "rule_" ++ field.name),
+                );
+            }
         }
+        self.headers = try matchers.capture(fields);
     }
 
     pub noinline fn load(source: []const u8) !Form {
@@ -45,8 +51,8 @@ pub const Form = struct {
         const enabled = root.object.get("enabled") orelse std.json.Value{ .bool = true };
         if (enabled != .bool) return error.InvalidDocument;
         result.enabled = try p.Bytes(5).init(if (enabled.bool) "true" else "false");
-        result.headers = try jsonField(4096, root, "headers", "{}");
-        result.cidrs = try jsonField(512, root, "cidrs", "[]");
+        result.headers = try matchers.loadHeaders(root);
+        result.cidrs = try matchers.loadNetworks(root);
         return result;
     }
 
@@ -75,18 +81,8 @@ pub const Form = struct {
                 try std.fmt.parseInt(i32, fallback(self.weight.slice(), "0"), 10)
             else
                 @as(i32, 0),
-            .headers = try std.json.parseFromSliceLeaky(
-                std.json.Value,
-                arena.allocator(),
-                fallback(self.headers.slice(), "{}"),
-                .{},
-            ),
-            .cidrs = try std.json.parseFromSliceLeaky(
-                std.json.Value,
-                arena.allocator(),
-                fallback(self.cidrs.slice(), "[]"),
-                .{},
-            ),
+            .headers = try matchers.headers(self.headers.slice(), arena.allocator()),
+            .cidrs = try matchers.networks(self.cidrs.slice(), arena.allocator()),
         }, .{}, &writer);
         output.len = writer.buffered().len;
         return output;
@@ -144,9 +140,8 @@ pub fn render(w: *Writer, form: *const Form, existing: bool) Writer.Error!void {
     try html.render(w, @embedFile("snippets/policy-extra-fields.html"), .{
         .weight = fallback(form.weight.slice(), "0"),
         .difficulty = form.difficulty.slice(),
-        .headers = fallback(form.headers.slice(), "{}"),
-        .cidrs = fallback(form.cidrs.slice(), "[]"),
     });
+    try matchers.render(w, form.headers.slice(), form.cidrs.slice());
     try w.writeAll("</div>");
 }
 
@@ -165,7 +160,12 @@ fn select(
         try w.print("<option value=\"{s}\"{s}>{s}</option>", .{
             value,
             if (std.mem.eql(u8, value, selected)) " selected" else "",
-            if (value.len == 0) "Inherit" else value,
+            if (std.mem.eql(u8, name, "enabled"))
+                (if (std.mem.eql(u8, value, "true")) "Enabled" else "Disabled")
+            else if (value.len == 0)
+                "Inherit"
+            else
+                value,
         });
     }
     try w.writeAll("</select></div>");
@@ -199,21 +199,6 @@ fn numeric(
     if (value == .null) return output;
     if (value != .integer) return error.InvalidDocument;
     output.len = (try std.fmt.bufPrint(&output.data, "{d}", .{value.integer})).len;
-    return output;
-}
-
-fn jsonField(
-    comptime size: usize,
-    root: std.json.Value,
-    key: []const u8,
-    default: []const u8,
-) !p.Bytes(size) {
-    const value = root.object.get(key) orelse return p.Bytes(size).init(default);
-    if (value == .null) return p.Bytes(size).init(default);
-    var output: p.Bytes(size) = .{};
-    var writer: Writer = .fixed(&output.data);
-    try std.json.Stringify.value(value, .{}, &writer);
-    output.len = writer.buffered().len;
     return output;
 }
 

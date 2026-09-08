@@ -2012,6 +2012,22 @@ are historical; the acceptance gates below govern delivery.
   arcs. Browser checks observed continuous geometry movement, actual US/Australia sample arcs,
   and pause/resume behavior. Full tests, formatting and builds passed; the module is 297,208 bytes.
 
+== Structured policy matchers (2026-09-08)
+
+The rule editor presents four labelled header name/pattern pairs and up to eight
+client networks, entered one CIDR per line. Its internal draft preserves duplicate
+and incomplete header rows; document validation rejects them before a request is
+sent. Imports and exports retain the existing bounded JSON wire contract.
+
+Native console tests pass (68 tests), including duplicate preservation and IPv4/IPv6
+network conversion. The full formatting, test and SID build passed for this change;
+assets were regenerated and the final console checks and daemon build passed.
+Browser verification imported a header/network rule, rejected a duplicate header
+without discarding input, then previewed a denial and saved revision 155. Live
+requests returned 403 for a matching header and 401 from the fallback challenge
+for a nonmatching header. These checks cover this editor increment, not the
+remaining policy and release acceptance gates.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

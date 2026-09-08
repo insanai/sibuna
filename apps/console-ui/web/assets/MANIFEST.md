@@ -10,11 +10,12 @@
 b4cd7761cf2e2fa4c284b33305d4bb210715d80dd9a5b3614391a962833261da  apps/console-ui/src/globe.zig
 0345262c9a67933fa4f68959921b1ab4284c58f404294e29dcd2a6e15d437b07  apps/console-ui/src/globe_connections.zig
 61bce4fa84d58705050ce86feca5c539c18f2f0703e2453c25b9a728883aec18  apps/console-ui/src/globe_motion.zig
-f12bbf28d4912838eb5d79378d1b7ddd2f4fae808770d0edc41109583cf8378a  apps/console-ui/src/main.zig
+15b4e04ff535f6aed198705d61802e3faf4873cb1e81effb41b8ee6b8e03100a  apps/console-ui/src/main.zig
 fa1d1db249c4a55fd2c4c5ebb2b5fb4d5723add759f8d2278b0ffeac6230d88a  apps/console-ui/src/policies_page.zig
 757f5c69083a55010b04672b36762c785e20d0aca44456dcc4bf499db19a7b39  apps/console-ui/src/policy_data.zig
-ef7fa73ad2852b16ae43ed7931677adc373e7cc914b6d7abcdc4d496c5e8341d  apps/console-ui/src/policy_form.zig
+7d9cc1afc96babe6055248f6060c9aa3d053b1c1d19b27f61b8850ecb62da106  apps/console-ui/src/policy_form.zig
 9c2fb0e6ee526470b225841bcc598aedfc6441fecfc2edc779533964db65c447  apps/console-ui/src/policy_manager.zig
+b7be835cecc82ed865c2fb695634892e2a16231014e59abd1e6a343cb6e417df  apps/console-ui/src/policy_matchers.zig
 e8ffddd805dbef52de13970ac86ef80fecfd7f8164df0a3d908565686aa8768a  apps/console-ui/src/policy_transfer.zig
 0ff91580006b7eb739dc276187dff3fdecb8e4085d23892f6c5f3bd9afb0ea92  apps/console-ui/src/qr.zig
 e8f7bbbe0388863ef40f7c9c1493a2dd3b60026fa534eedcbe4a8cf1112bdd52  apps/console-ui/src/render.zig
@@ -32,8 +33,9 @@ f2af6c077013495a82f4a566a12ecfe8d7de0ed870ba694131ec204e2b472766  apps/console-u
 67f6093088d79ddca5e2675fdc38f848f2e0ef41016506b41ece9e13a6830751  apps/console-ui/src/snippets/policies-summary.html
 3bc7a05d83c0f0bfae98f52fac9aed09a1526b5f6ce827c51009fd5f247680db  apps/console-ui/src/snippets/policies-test.html
 5f05b91418563bc1d021c773fa49a8760b7db5c132b3902cc61a407051b701e8  apps/console-ui/src/snippets/policy-editor-header.html
-04f31ea0891243009b40b741005e31213e124a58ef3e89e8b4b6d80d344208de  apps/console-ui/src/snippets/policy-extra-fields.html
+da788ccfb15743defd37e914cc3e191f49fbade738208d9976d5167503b0a6c4  apps/console-ui/src/snippets/policy-extra-fields.html
 e6863954d80fa685f27aecf9b86d7608d54dab9a5cbc8983c4050da203c70f4e  apps/console-ui/src/snippets/policy-form.html
+24f9a4d5ca5151bb64280911f754607b8015a994850b3fea103f5cd3b67d2f0f  apps/console-ui/src/snippets/policy-header-fields.html
 c4c3b18a3446d722146705cece0395bbf8d84691e400868ed1dc7e5734f7c158  apps/console-ui/src/snippets/policy-history-row.html
 9e880789c15e85a9adcd7b8f3497e1ed62dc91a2884df73dbfd9dab4313db2de  apps/console-ui/src/snippets/policy-id-existing.html
 7f3a634503ee9618eaf0de2bca1780329f2055cfbf9038bf6987bfd760024561  apps/console-ui/src/snippets/policy-id-new.html
@@ -42,6 +44,7 @@ b7af6597467a787657bc422283de2fefb23af04b4dea845cb771cbe574d724c2  apps/console-u
 05367fd47b000052c5c1c36422006d7f989a13ec06a75cedc4d9c4f66bb5d830  apps/console-ui/src/snippets/policy-manager-header.html
 fdb89fb3d337638d516ade592c019fadd570f14d3b6bd074b411e0f6ae7f9a97  apps/console-ui/src/snippets/policy-manager-summary.html
 0920e818c0230d666d2628836656f220585c2f78849c49f7004af85b213005c7  apps/console-ui/src/snippets/policy-name.html
+aa84ff512aa24259753142de5a0512c57ab10bcae63fe3410aa0421f804d18ae  apps/console-ui/src/snippets/policy-network-fields.html
 602e5afa7206494a704ca0fef9bf9bab412ed91fa5a8d8e0733f8d8d24bbd114  apps/console-ui/src/snippets/policy-preview-fields.html
 483786c04c1a76698069f027290eb5d8d0e14d6089b7fd01f247427426d99480  apps/console-ui/src/snippets/policy-restore-notice.html
 c796c94ea4680efd8a831a58ddaa8e4e16e7a390310600e573bfb18a3f5f425e  apps/console-ui/src/snippets/policy-select.html
@@ -55,7 +58,7 @@ ee4a0f3cf66ca7cd6c6ec5531c13ccde41ae239038a639c8469fa247c103b428  apps/console-u
 60fd32a348ecd004c6d79760ea31d58a764d9372d7773a4f37739c0dc363b07b  apps/console-ui/src/snippets/similarity-status.html
 b44af401eb4e1092b6a908dc1c0a781a9ab14c853e14b23dd9b4945ce885ca65  apps/console-ui/src/state.zig
 09f75faaeb382969e4a52bcf1f14cfb636be906c644cdd92a395d0e21b083d4c  apps/console-ui/web/assets/GEOGRAPHY.md
-3d69dfe02d0c4872e62086450c5c4594da6b158d0215c5f75f19fd7b630046a8  apps/console-ui/web/assets/console.css
+727a1acac4c30f3743fe2d6365c24207f8313ea5f45a8f98f5065b1e207f9b80  apps/console-ui/web/assets/console.css
 50b2fa3e78ea67eb1a72a9e22cb325ec884b8e83432c3f66808ee190835b4686  apps/console-ui/web/assets/world-110m.bin
 72034b28ca7ac19c712093f734bb35e7442a493ba5e015012b5f7240a644228e  apps/console-ui/web/glue.js
 de19ed3c281af27df160c0184b9dc6e368f0dcc64236020887257dbf202986a0  apps/console-ui/web/package-lock.json

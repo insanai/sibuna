@@ -1,0 +1,10 @@
+<div class="sb-rule-field">
+    <label for="header-name-{{ index }}">Header {{ number }} name</label>
+    <input class="input" id="header-name-{{ index }}" name="rule_header_name_{{ index }}"
+           value="{{ name }}" maxlength="64" placeholder="X-Api-Key">
+</div>
+<div class="sb-rule-field">
+    <label for="header-pattern-{{ index }}">Header {{ number }} pattern</label>
+    <input class="input" id="header-pattern-{{ index }}" name="rule_header_pattern_{{ index }}"
+           value="{{ pattern }}" maxlength="256" placeholder="Pattern to match">
+</div>
