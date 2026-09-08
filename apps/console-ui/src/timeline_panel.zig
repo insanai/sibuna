@@ -78,7 +78,7 @@ pub const Request = struct { id: p.Bytes(32), body: p.timeline.Query };
 pub fn request(state: *State, force: bool) ?Request {
     const model = &state.timeline;
     if (!state.fullAccess() or state.phase != .dashboard or !state.timeline_open or
-        state.paused or state.hidden or model.busy) return null;
+        state.history_minutes or state.paused or state.hidden or model.busy) return null;
     if (!force and (model.before != 0 or (model.generation != 0 and
         state.browser_time -| model.requested_at < 10))) return null;
     generation +%= 1;
@@ -110,7 +110,8 @@ pub fn response(
     const model = &state.timeline;
     if (ticket == 0 or ticket != model.generation) return false;
     model.busy = false;
-    if (!state.fullAccess() or state.phase != .dashboard or state.paused) return false;
+    if (!state.fullAccess() or state.phase != .dashboard or state.paused or
+        state.history_minutes) return false;
     if (status == 401 or status == 403) return true;
     model.failed = true;
     model.conflict = status == 409;
@@ -121,13 +122,9 @@ pub fn response(
 }
 
 pub fn table(state: *const State, w: *Writer) Writer.Error!void {
+    if (!try header(state, w)) return;
+    if (state.history_minutes) return @import("minute_panel.zig").table(state, w);
     const model = &state.timeline;
-    try w.print("<button type=\"button\" class=\"btn btn-sm\" " ++
-        "data-action=\"timeline-values\" aria-expanded=\"{}\" " ++
-        "aria-controls=\"timeline-values\">Retained timeline values</button>", .{
-        state.timeline_open,
-    });
-    if (!state.timeline_open) return w.writeAll("<div id=\"timeline-values\" hidden></div>");
     try w.writeAll("<p class=\"sb-note\">Server observations retained for one hour. " ++
         "UTC labels describe interval endings; gaps are not zero traffic.</p>");
     if (model.failed) try w.writeAll(if (model.conflict)
@@ -171,6 +168,26 @@ pub fn table(state: *const State, w: *Writer) Writer.Error!void {
     if (model.count == 0) try w.writeAll("<tr><td colspan=\"5\">No retained observations " ++
         "on this page.</td></tr>");
     try w.writeAll("</tbody></table></div>");
+}
+
+fn header(state: *const State, w: *Writer) Writer.Error!bool {
+    try w.print("<button type=\"button\" class=\"btn btn-sm\" " ++
+        "data-action=\"timeline-values\" aria-expanded=\"{}\" " ++
+        "aria-controls=\"timeline-values\">Retained timeline values</button>", .{
+        state.timeline_open,
+    });
+    if (!state.timeline_open) {
+        try w.writeAll("<div id=\"timeline-values\" hidden></div>");
+        return false;
+    }
+    try w.print("<div class=\"join my-3\" role=\"group\" aria-label=\"History source\">" ++
+        "<button class=\"btn btn-sm join-item\" data-action=\"timeline-seconds\" " ++
+        "aria-pressed=\"{}\">Seconds</button>" ++
+        "<button class=\"btn btn-sm join-item\" data-action=\"timeline-minutes\" " ++
+        "aria-pressed=\"{}\">Minute history</button></div>", .{
+        !state.history_minutes, state.history_minutes,
+    });
+    return true;
 }
 
 test "retained history owns decoded rows, preserves large counts and refuses invalid intervals" {

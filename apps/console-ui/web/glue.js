@@ -138,6 +138,11 @@ root.addEventListener("submit", e => {
   e.preventDefault();
   event(1, {action: e.target.id, fields: Object.fromEntries(new FormData(e.target))});
 });
+root.addEventListener("change", e => {
+  const form = e.target.closest("form[data-change]");
+  if (form) event(1, {action: form.dataset.change,
+    fields: Object.fromEntries(new FormData(form))});
+});
 root.addEventListener("click", e => {
   const button = e.target.closest("[data-action]");
   if (button?.dataset.validate === "true" && button.form && !button.form.reportValidity()) return;

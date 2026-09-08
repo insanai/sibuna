@@ -151,14 +151,25 @@ fn get(id: []const u8, path: []const u8) !void {
 }
 
 fn post(id: []const u8, path: []const u8, body: anytype) !void {
-    try command(.{
-        .op = "request",
-        .id = id,
-        .method = "POST",
-        .path = path,
-        .body = body,
-        .csrf = state.csrf.slice(),
-    });
+    var json = try requestPrefix(id, path);
+    try json.write(body);
+    try json.endObject();
+    command_count += 1;
+}
+
+/// Share the transport envelope across typed request bodies to bound generated Wasm code.
+noinline fn requestPrefix(id: []const u8, path: []const u8) !std.json.Stringify {
+    if (command_count > 0) try command_writer.writeByte(',');
+    var json: std.json.Stringify = .{ .writer = &command_writer };
+    try json.beginObject();
+    const names = .{ "op", "method", "id", "path", "csrf" };
+    const values = .{ "request", "POST", id, path, state.csrf.slice() };
+    inline for (names, values) |name, value| {
+        try json.objectField(name);
+        try json.write(value);
+    }
+    try json.objectField("body");
+    return json;
 }
 
 fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
@@ -273,7 +284,8 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
     if (status_value != .integer) return;
     const status = status_value.integer;
     const body = field(value, "body") orelse return;
-    if (std.mem.startsWith(u8, id, "rankings-") or std.mem.startsWith(u8, id, "timeline-"))
+    if (std.mem.startsWith(u8, id, "rankings-") or std.mem.startsWith(u8, id, "timeline-") or
+        std.mem.startsWith(u8, id, "minutes-"))
         return observationResponse(id, status, body, alloc);
     if (std.mem.startsWith(u8, id, "policies-") or
         std.mem.startsWith(u8, id, "policy-test-") or std.mem.startsWith(u8, id, "managed-"))
@@ -430,6 +442,10 @@ fn refreshRankings() !void {
 }
 
 fn refreshTimeline(force: bool) !void {
+    if (state.history_minutes) {
+        const request = @import("minute_panel.zig").request(&state, force) orelse return;
+        return post(request.id.slice(), "/console/api/minutes", request.body);
+    }
     const request = @import("timeline_panel.zig").request(&state, force) orelse return;
     try post(request.id.slice(), "/console/api/timeline", request.body);
 }
@@ -440,7 +456,9 @@ fn observationResponse(
     body: std.json.Value,
     alloc: std.mem.Allocator,
 ) !void {
-    const expired = if (std.mem.startsWith(u8, id, "timeline-"))
+    const expired = if (std.mem.startsWith(u8, id, "minutes-"))
+        @import("minute_panel.zig").response(&state, id, status, body, alloc)
+    else if (std.mem.startsWith(u8, id, "timeline-"))
         @import("timeline_panel.zig").response(&state, id, status, body, alloc)
     else
         @import("rankings_controller.zig").response(&state, id, status, body, alloc) == .expired;
@@ -469,15 +487,11 @@ fn geographicAction(name: []const u8, fields: std.json.Value) !bool {
         return true;
     }
     if (state.phase != .dashboard) return false;
-    if (equal(name, "timeline-values")) {
-        state.timeline_open = !state.timeline_open;
-        try refreshTimeline(false);
-    } else if (equal(name, "timeline-latest") or equal(name, "timeline-older")) {
-        if (!state.timeline.busy and !state.paused) {
-            state.timeline.before = if (equal(name, "timeline-latest")) 0 else state.timeline.next;
-            try refreshTimeline(true);
-        }
-    } else return @import("globe_motion.zig").action(&state, name);
+    switch (try @import("history_controls.zig").action(&state, name, fields)) {
+        .none => return @import("globe_motion.zig").action(&state, name),
+        .changed => {},
+        .query => try refreshTimeline(true),
+    }
     return true;
 }
 
@@ -522,13 +536,8 @@ fn number(value: std.json.Value, key: []const u8) u64 {
     return if (item == .integer and item.integer >= 0) @intCast(item.integer) else 0;
 }
 
-fn field(value: std.json.Value, key: []const u8) ?std.json.Value {
-    return if (value == .object) value.object.get(key) else null;
-}
-fn string(value: std.json.Value, key: []const u8) []const u8 {
-    const item = field(value, key) orelse return "";
-    return if (item == .string) item.string else "";
-}
+const field = @import("events_state.zig").field;
+const string = @import("events_state.zig").string;
 fn equal(a: []const u8, b: []const u8) bool {
     return std.mem.eql(u8, a, b);
 }

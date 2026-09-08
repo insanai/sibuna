@@ -223,6 +223,16 @@ fn coverage(state: *const State, w: *Writer) Writer.Error!void {
             "<tr><th>GeoIP cleanup attempts failed or unconfirmed</th><td>{d}</td></tr>",
         .{ stats.expired_samples, stats.future_samples, stats.geo_maintenance_failures },
     );
+    const minutes = stats.minute_history;
+    if (minutes.available) try w.print(
+        "<tr><th>Minute snapshots confirmed / unconfirmed</th><td>{d} / {d}</td></tr>" ++
+            "<tr><th>Minute snapshots pending</th><td>{d}</td></tr>" ++
+            "<tr><th>Minute retention attempts failed or unconfirmed</th><td>{d}</td></tr>",
+        .{
+            minutes.saved_snapshots, minutes.unconfirmed_snapshots,
+            minutes.pending,         minutes.retention_failures,
+        },
+    );
 }
 
 fn timeline(state: *const State, w: *Writer) Writer.Error!void {

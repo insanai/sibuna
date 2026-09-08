@@ -74,6 +74,8 @@ pub const State = struct {
     recovery_count: usize = 0,
     stats: ?p.StatsSnapshot = null,
     timeline_open: bool = false,
+    history_minutes: bool = false,
+    minute_history: @import("minute_panel.zig").Model = .{},
     timeline: @import("timeline_panel.zig").Model = .{},
     points: [60]@import("stats_series.zig").Point = @splat(.{}),
 
@@ -85,6 +87,8 @@ pub const State = struct {
                 self.rankings.clear();
             } else if (comptime @import("std").mem.eql(u8, field.name, "timeline")) {
                 self.timeline.clear();
+            } else if (comptime @import("std").mem.eql(u8, field.name, "minute_history")) {
+                self.minute_history.clear();
             } else if (comptime @import("std").mem.eql(u8, field.name, "events")) {
                 self.events.clear();
             } else @field(self, field.name) = field.defaultValue().?;

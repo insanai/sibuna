@@ -76,9 +76,10 @@ fn slice(comptime T: type, value: std.json.Value, allocator: std.mem.Allocator) 
     const info = @typeInfo(T).pointer;
     if (info.size != .slice or !info.is_const) @compileError("Wire slices must be const");
     if (info.child == u8) return if (value == .string) value.string else error.InvalidResponse;
-    // Only incident/similarity response rows are variable-length. Reject their capacity
-    // before allocation; fixed histogram arrays have their own exact type-level bound.
-    if (value != .array or value.array.items.len > 10) return error.InvalidResponse;
+    // Reject response row capacity before allocating; fixed arrays have exact bounds.
+    const minutes = @import("console_protocol").minutes;
+    const capacity = if (info.child == minutes.Record) minutes.max_rows else 10;
+    if (value != .array or value.array.items.len > capacity) return error.InvalidResponse;
     const result = try allocator.alloc(info.child, value.array.items.len);
     for (value.array.items, result) |item, *output| output.* = try decode(
         info.child,

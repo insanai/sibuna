@@ -2491,6 +2491,39 @@ console-disabled tests, the storage-disabled build and the clustered build. The
 clustered build verifies facade compatibility; it does not replace the pending
 three-node failover, quorum, management-peer and revocation acceptance scenarios.
 
+== Persisted minute history interface (2026-09-08)
+
+The authenticated dashboard now switches between retained second observations and
+persisted outcome minutes. Minute windows cover one hour, 24 hours, seven days or
+90 days; queries select the serving node or all stored nodes. Eight-row keyset pages
+retain separate node, boot and observation-epoch identities. Earlier pages pin their
+range and scope while current statistics continue; missing intervals are unobserved.
+Coverage distinguishes complete, partial, unsealed and delayed intervals, and publication
+status reports confirmed/unconfirmed snapshots rather than distinct-minute counts.
+
+The Wasm decoder validates ordered cursors, duration/coverage consistency, bounded ranges,
+node scope and exact full-width outcome sums. Oversized arrays fail before allocation;
+invalid replies preserve the previous owned model. Authentication, inactive sources,
+pause/visibility, request correlation and session reset constrain history requests.
+Shared request-envelope serialization keeps the expanded module at 306,743 bytes within
+the existing 307,200-byte gate; the gate was not increased.
+
+A live browser review found that periodic rendering reset a filter before its submit
+button was pressed. These selectors now apply native change events immediately through
+the fixed browser bridge; Zig owns the resulting filters. Stable element IDs preserve
+focus. The corrected interface retained its 90-day/all-node selection through live
+updates. Eight-row paging found an earlier interval containing exactly seven real policy
+denials after a daemon restart; the original and replacement boots remained separate.
+Desktop and 390-pixel mobile layouts retained navigation and had no document overflow.
+The ending startup interval remained partial, and the interrupted boot's latest stored
+interval remained explicitly unsealed. Native render/decoder/controller tests and the
+release build passed. The full repository suite passed all 255 tests after the interaction
+correction; a formatting violation in the separate cursor-recovery test was corrected
+and the subsequent formatting, SID and console checks passed.
+
+The full server-retained history chart, other minute metric families, historical ranking
+queries, cluster management and the complete impact/acceptance matrix remain pending.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
