@@ -2416,6 +2416,15 @@ Policies; incident pagination remained functional after the initialization chang
 Neither viewport acquired document-level horizontal overflow. Formatting, native
 console/UI tests, full repository tests and SID generation passed.
 
+The subsequent required regeneration is `latest-20260908T084254Z.json`, from clean
+source `2e5cad8c0de4bd64a820c0152e237a5f9633c556`, artifact SHA-256
+`9b2741a191a76d585cd55ed038d6b4b27460c5a081693e18bbc537690a08d29c`.
+Seven-batch medians were 2,355.2 ns full policy, 476.2 ns Gate, 9.5 ns global GCRA
+and 9.9 ns for four rule scopes; idle RSS remained 9,888 KiB. The review daemon
+was stopped. Many unchanged primitives also slowed substantially relative to the
+earlier run on this host. These uncontrolled runs do not isolate the cause of that
+variation and cannot establish console overhead or pass the throughput/p99 gate.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
