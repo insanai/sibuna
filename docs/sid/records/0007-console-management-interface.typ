@@ -3077,6 +3077,20 @@ Both `console-ui` and `console-test` now validate the emitted Wasm header and en
 Native checks cover overlap, overflow, optional false versus null, integer extrema and
 escaping. This size check does not replace runtime impact or browser acceptance.
 
+== Caller-owned policy forms and shared page rendering (2026-09-09)
+
+Policy load, matcher capture, document serialization and import/export now write into
+caller-owned bounded outputs. A candidate form replaces the active draft only after full
+validation. Header pairs and CIDR lists use concrete bounded structs rather than dynamic
+JSON object/array results. This removes large error-union payload images from the Wasm
+artifact while retaining editor limits and private-test behavior.
+
+Console pages reuse the escaped scalar HTML executor for trusted literals and text slots.
+SVG projection and numeric precision remain unchanged. Native rendering checks cover
+real submit-button attributes, header/network round trips, duplicate-header rejection,
+invalid imports, quota settings and output bounds. Browser review exercises the existing
+structured matcher editor and its shared navigation.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

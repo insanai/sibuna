@@ -1,4 +1,5 @@
 //! Historical rows remain separate by node and boot. Missing intervals never become zero traffic.
+const html = @import("html");
 const std = @import("std");
 const p = @import("console_protocol");
 const State = @import("state.zig").State;
@@ -155,73 +156,101 @@ pub fn response(
 pub fn table(state: *const State, w: *Writer) Writer.Error!void {
     const model = &state.minute_history;
     if (state.stats == null or !state.stats.?.minute_history.available)
-        return w.writeAll("<div id=\"timeline-values\" role=\"status\">" ++
-            "Minute history is unavailable on this node.</div>");
+        return html.render(w, "<div id=\"timeline-values\" role=\"status\">" ++
+            "Minute history is unavailable on this node.</div>", .{});
     try controls(state, w);
-    try w.writeAll("<p class=\"sb-note\">Stored outcome intervals, retained for 90 days. " ++
+    try html.render(w, "<p class=\"sb-note\">Stored outcome intervals, retained for 90 days. " ++
         "Each node and boot stays separate. Missing history is unobserved, not zero traffic. " ++
-        "Minute labels describe sample-aligned intervals.</p>");
-    if (model.failed) try w.writeAll("<p role=\"status\">Minute history unavailable. " ++
-        "Displayed records may be stale. Retry Latest after storage recovers.</p>");
-    if (!model.loaded) return w.writeAll("<div id=\"timeline-values\" role=\"status\">" ++
-        "Waiting for stored minute history.</div>");
-    try w.print("<p class=\"sb-note\">{s} · Updated {d} seconds ago. ", .{
-        if (model.busy) "Loading" else if (state.paused) "Paused" else if (model.before != null)
-            "Earlier records"
-        else
-            "Latest · refreshes every 10 seconds",
-        state.browser_time -| model.received_at,
-    });
+        "Minute labels describe sample-aligned intervals.</p>", .{});
+    if (model.failed) try html.render(w, "<p role=\"status\">Minute history unavailable. " ++
+        "Displayed records may be stale. Retry Latest after storage recovers.</p>", .{});
+    if (!model.loaded) return html.render(w, "<div id=\"timeline-values\" role=\"status\">" ++
+        "Waiting for stored minute history.</div>", .{});
+    try html.render(
+        w,
+        "<p class=\"sb-note\">{{ v0 }} · Updated {{ v1 }} seconds ago. ",
+        .{
+            .v0 = if (model.busy) "Loading" else if (state.paused)
+                "Paused"
+            else if (model.before != null)
+                "Earlier records"
+            else
+                "Latest · refreshes every 10 seconds",
+            .v1 = state.browser_time -| model.received_at,
+        },
+    );
     if (model.scope_node) |node| {
-        try w.print("Node {d}.</p>", .{node});
-    } else try w.writeAll("All nodes.</p>");
-    try w.writeAll("<div id=\"timeline-values\" data-preserve-scroll class=\"overflow-x-auto\" " ++
-        "tabindex=\"0\" role=\"region\" aria-label=\"Scrollable minute history\">" ++
-        "<table class=\"table\"><caption>Up to eight stored intervals</caption><thead><tr>" ++
-        "<th>Minute (UTC)</th><th>Node / boot</th><th>Requests</th><th>Elapsed ms</th>" ++
-        "<th>Coverage</th></tr></thead><tbody>");
+        try html.render(w, "Node {{ v0 }}.</p>", .{
+            .v0 = node,
+        });
+    } else try html.render(w, "All nodes.</p>", .{});
+    try html.render(
+        w,
+        "<div id=\"timeline-values\" data-preserve-scroll " ++
+            "class=\"overflow-x-auto\" " ++
+            "tabindex=\"0\" role=\"region\" aria-label=\"Scrollable minute history\">" ++
+            "<table class=\"table\"><caption>Up to eight stored intervals</caption><thead><tr>" ++
+            "<th>Minute (UTC)</th><th>Node / boot</th><th>Requests</th><th>Elapsed ms</th>" ++
+            "<th>Coverage</th></tr></thead><tbody>",
+        .{},
+    );
     for (model.rows[0..model.count]) |row| {
-        try w.writeAll("<tr><td class=\"whitespace-nowrap\">");
+        try html.render(w, "<tr><td class=\"whitespace-nowrap\">", .{});
         try @import("events_page.zig").timestamp(w, row.minute * 60);
         const boot = std.fmt.bytesToHex(row.boot, .lower);
-        try w.print("</td><td class=\"whitespace-nowrap\">{d} / " ++
-            "<abbr title=\"{s}\">{s}</abbr></td><td>{d}</td><td>{d}</td><td>{s}</td></tr>", .{
-            row.node, boot, boot[0..8], row.count, row.ms,
-            switch (row.coverage) {
-                .observed => "Complete interval",
-                .partial => "Partial interval",
-                .collecting => "Unsealed interval",
-                .gap => "Gap / delayed",
+        try html.render(
+            w,
+            "</td><td class=\"whitespace-nowrap\">{{ v0 }} / " ++
+                "<abbr title=\"{{ v1 }}\">{{ v2 }}</abbr></td><td>{{ v3 " ++
+                "}}</td><td>{{ v4 }}</td><td>{{ v5 }}</td></tr>",
+            .{
+                .v0 = row.node,
+                .v1 = boot,
+                .v2 = boot[0..8],
+                .v3 = row.count,
+                .v4 = row.ms,
+                .v5 = switch (row.coverage) {
+                    .observed => "Complete interval",
+                    .partial => "Partial interval",
+                    .collecting => "Unsealed interval",
+                    .gap => "Gap / delayed",
+                },
             },
-        });
+        );
     }
-    if (model.count == 0) try w.writeAll("<tr><td colspan=\"5\">No stored intervals in " ++
-        "this page and time window.</td></tr>");
-    try w.writeAll("</tbody></table></div>");
+    if (model.count == 0) try html.render(w, "<tr><td colspan=\"5\">No stored intervals in " ++
+        "this page and time window.</td></tr>", .{});
+    try html.render(w, "</tbody></table></div>", .{});
 }
 
 fn controls(state: *const State, w: *Writer) Writer.Error!void {
     const model = &state.minute_history;
-    try w.print("<form id=\"minute-window\" data-change=\"minute-window\">" ++
-        "<fieldset class=\"sb-settings-form my-3\"{s}>" ++
+    try html.render(w, "<form id=\"minute-window\" data-change=\"minute-window\">" ++
+        "<fieldset class=\"sb-settings-form my-3\"{{ v0 }}>" ++
         "<label class=\"sb-field\"><span>History window</span>" ++
         "<select id=\"minute-hours\" name=\"hours\" class=\"select\">", .{
-        if (model.busy or state.paused) " disabled" else "",
+        .v0 = if (model.busy or state.paused) " disabled" else "",
     });
     const hours = [_]u16{ 1, 24, 168, 2160 };
     const labels = [_][]const u8{ "Last hour", "Last 24 hours", "Last 7 days", "Last 90 days" };
-    for (hours, labels) |hour, label| try w.print("<option value=\"{d}\"{s}>{s}</option>", .{
-        hour, if (model.hours == hour) " selected" else "", label,
-    });
-    try w.print("</select></label><label><input type=\"checkbox\" class=\"checkbox\" " ++
-        "id=\"minute-all-nodes\" name=\"all_nodes\" value=\"true\"{s}> All nodes</label>" ++
+    for (hours, labels) |hour, label| try html.render(
+        w,
+        "<option value=\"{{ v0 }}\"{{ v1 }}>{{ v2 }}</option>",
+        .{
+            .v0 = hour,
+            .v1 = if (model.hours == hour) " selected" else "",
+            .v2 = label,
+        },
+    );
+    try html.render(w, "</select></label><label><input type=\"checkbox\" class=\"checkbox\" " ++
+        "id=\"minute-all-nodes\" name=\"all_nodes\" value=\"true\"{{ v0 }}> All nodes</label>" ++
         "</fieldset></form>" ++
         "<div class=\"flex flex-wrap gap-2\"><button class=\"btn btn-sm\" " ++
-        "data-action=\"minute-latest\"{s}>Latest</button><button class=\"btn btn-sm\" " ++
-        "data-action=\"minute-older\"{s}>Older</button></div>", .{
-        if (model.all_nodes) " checked" else "",
-        if (model.busy or state.paused) " disabled" else "",
-        if (model.busy or state.paused or model.next == null) " disabled" else "",
+        "data-action=\"minute-latest\"{{ v1 }}>Latest</button><button class=\"btn btn-sm\" " ++
+        "data-action=\"minute-older\"{{ v2 }}>Older</button></div>", .{
+        .v0 = if (model.all_nodes) " checked" else "",
+        .v1 = if (model.busy or state.paused) " disabled" else "",
+        .v2 = if (model.busy or state.paused or model.next == null) " disabled" else "",
     });
 }
 

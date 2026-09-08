@@ -34,7 +34,7 @@ pub fn begin(state: *const State, w: *Writer) Writer.Error!void {
 }
 
 pub fn end(w: *Writer) Writer.Error!void {
-    try w.writeAll("</div></div>");
+    try html.render(w, "</div></div>", .{});
 }
 
 fn section(phase: Phase) []const u8 {

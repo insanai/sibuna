@@ -1,4 +1,5 @@
 //! Retained server intervals remain available when a browser reconnects or opens later.
+const html = @import("html");
 const std = @import("std");
 const p = @import("console_protocol");
 const State = @import("state.zig").State;
@@ -125,30 +126,55 @@ pub fn table(state: *const State, w: *Writer) Writer.Error!void {
     if (!try header(state, w)) return;
     if (state.history_minutes) return @import("minute_panel.zig").table(state, w);
     const model = &state.timeline;
-    try w.writeAll("<p class=\"sb-note\">Server observations retained for one hour. " ++
-        "UTC labels describe interval endings; gaps are not zero traffic.</p>");
+    try html.render(w, "<p class=\"sb-note\">Server observations retained for one hour. " ++
+        "UTC labels describe interval endings; gaps are not zero traffic.</p>", .{});
     if (model.failed) try w.writeAll(if (model.conflict)
         "<p role=\"status\">History changed. Reload the latest page.</p>"
     else
         "<p role=\"status\">History unavailable. Displayed values may be stale.</p>");
-    try w.print("<div class=\"flex flex-wrap gap-2\">" ++
-        "<button class=\"btn btn-sm\" data-action=\"timeline-latest\"{s}>Latest</button>" ++
-        "<button class=\"btn btn-sm\" data-action=\"timeline-older\"{s}>Older</button></div>", .{
-        if (model.busy or state.paused) " disabled" else "",
-        if (model.busy or state.paused or model.next == 0 or model.conflict) " disabled" else "",
-    });
-    if (model.loaded) try w.print("<p class=\"sb-note\">{s} · Updated {d} seconds ago.</p>", .{
-        if (model.busy) "Loading" else if (state.paused) "Paused" else if (model.before == 0)
-            "Latest · refreshes every 10 seconds"
-        else
-            "Earlier observations",
-        state.browser_time -| model.received_at,
-    }) else try w.writeAll("<p role=\"status\">Waiting for retained observations.</p>");
-    try w.writeAll("<div id=\"timeline-values\" data-preserve-scroll class=\"overflow-x-auto\" " ++
-        "tabindex=\"0\" role=\"region\" aria-label=\"Scrollable timeline values\">" ++
-        "<table class=\"table\"><caption>Up to ten retained intervals</caption><thead><tr>" ++
-        "<th>Ending at</th><th>Requests</th><th>Milliseconds</th><th>Requests/s</th>" ++
-        "<th>Coverage</th></tr></thead><tbody>");
+    try html.render(
+        w,
+        "<div class=\"flex flex-wrap gap-2\">" ++
+            "<button class=\"btn btn-sm\" " ++
+            "data-action=\"timeline-latest\"{{ v0 }}>Latest</button>" ++
+            "<button class=\"btn btn-sm\" data-action=\"timeline-older\"{{ " ++
+            "v1 }}>Older</button></div>",
+        .{
+            .v0 = if (model.busy or state.paused) " disabled" else "",
+            .v1 = if (model.busy or state.paused or model.next == 0 or model.conflict)
+                " disabled"
+            else
+                "",
+        },
+    );
+    if (model.loaded) try html.render(
+        w,
+        "<p class=\"sb-note\">{{ v0 }} · Updated {{ v1 }} seconds " ++
+            "ago.</p>",
+        .{
+            .v0 = if (model.busy) "Loading" else if (state.paused)
+                "Paused"
+            else if (model.before == 0)
+                "Latest · refreshes every 10 seconds"
+            else
+                "Earlier observations",
+            .v1 = state.browser_time -| model.received_at,
+        },
+    ) else try html.render(w, "<p role=\"status\">Waiting for retained observations.</p>", .{});
+    try html.render(
+        w,
+        "<div id=\"timeline-values\" data-preserve-scroll " ++
+            "class=\"overflow-x-auto\" " ++
+            "tabindex=\"0\" role=\"region\" aria-label=\"Scrollable timeline values\">" ++
+            "<table class=\"table\"><caption>Up to ten retained intervals</caption><thead><tr>" ++
+            "<th>Ending at</th><th>Requests</th><th>Milliseconds</th><th>Requests/s</th>" ++
+            "<th>Coverage</th></tr></thead><tbody>",
+        .{},
+    );
+    try values(model, w);
+}
+
+fn values(model: *const Model, w: *Writer) Writer.Error!void {
     for (model.rows[0..model.count]) |row| {
         try w.writeAll("<tr><td class=\"whitespace-nowrap\">");
         try @import("events_page.zig").timestamp(w, row.utc);
@@ -177,7 +203,7 @@ fn header(state: *const State, w: *Writer) Writer.Error!bool {
         state.timeline_open,
     });
     if (!state.timeline_open) {
-        try w.writeAll("<div id=\"timeline-values\" hidden></div>");
+        try html.render(w, "<div id=\"timeline-values\" hidden></div>", .{});
         return false;
     }
     try w.print("<div class=\"join my-3\" role=\"group\" aria-label=\"History source\">" ++

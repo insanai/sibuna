@@ -22,22 +22,36 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         .label = if (model.running) "Pause search" else "Resume search",
     });
     if (model.unavailable) {
-        try w.writeAll("<p class=\"sb-note mt-4\">The source has no usable retained vector. " ++
-            "Choose another incident.</p></main>");
+        try html.render(
+            w,
+            "<p class=\"sb-note mt-4\">The source has no usable retained " ++
+                "vector. " ++
+                "Choose another incident.</p></main>",
+            .{},
+        );
         return;
     }
-    try w.writeAll("<section class=\"sb-panel mt-6\"><h2>Closest matches</h2>");
-    if (!model.complete) try w.writeAll("<p class=\"sb-note\">Partial results while scanning. " ++
-        "Each read examines at most 64 records and yields to other console work.</p>");
-    if (model.best.count == 0) try w.writeAll("<p>No comparable incidents found so far.</p>");
+    try html.render(w, "<section class=\"sb-panel mt-6\"><h2>Closest matches</h2>", .{});
+    if (!model.complete) try html.render(
+        w,
+        "<p class=\"sb-note\">Partial results while scanning. " ++
+            "Each read examines at most 64 records and yields to other console work.</p>",
+        .{},
+    );
+    if (model.best.count == 0) try html.render(
+        w,
+        "<p>No comparable incidents found so far.</p>",
+        .{},
+    );
     for (model.best.rows[0..model.best.count]) |row| try match(w, row);
     try html.render(w, @embedFile("snippets/similarity-footer.html"), .{});
 }
 
 fn match(w: *Writer, row: @import("console_protocol").similarity.Match) Writer.Error!void {
     var distance_buffer: [32]u8 = undefined;
+    // Validated cosine distances are finite and in [0, 2].
     const distance = std.fmt.bufPrint(&distance_buffer, "{d:.5}", .{row.distance}) catch
-        unreachable; // Validated cosine distances are finite and in [0, 2].
+        unreachable;
     var time_buffer: [64]u8 = undefined;
     var time_writer: Writer = .fixed(&time_buffer);
     try @import("events_page.zig").timestamp(&time_writer, row.time);

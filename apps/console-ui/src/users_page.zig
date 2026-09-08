@@ -25,7 +25,9 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
             .expires = writer.buffered(),
         });
     }
-    if (model.busy) try w.writeAll("<p role=\"status\">Account request in progress…</p>");
+    if (model.busy) {
+        try html.render(w, "<p role=\"status\">Account request in progress…</p>", .{});
+    }
     if (model.loaded) try catalog(state, w);
     if (state.allows(.manage_users) and model.temporary.len == 0) {
         if (model.selected) |index| {
@@ -41,13 +43,13 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
             });
         }
     }
-    try w.writeAll("</main>");
+    try html.render(w, "</main>", .{});
 }
 
 fn catalog(state: *const State, w: *Writer) Writer.Error!void {
     const model = &state.users;
-    try w.writeAll("<section id=\"users-catalog\" tabindex=\"-1\" " ++
-        "class=\"sb-panel sb-users\" aria-label=\"Account catalog\">");
+    try html.render(w, "<section id=\"users-catalog\" tabindex=\"-1\" " ++
+        "class=\"sb-panel sb-users\" aria-label=\"Account catalog\">", .{});
     for (model.rows[0..model.count], 0..) |*row, index| {
         try html.render(w, "<article><h2>{{ name }}</h2><p>{{ role }} · {{ status }}</p>", .{
             .name = row.username.slice(),
@@ -100,8 +102,8 @@ fn editor(state: *const State, w: *Writer, row: *const p.users.Row) Writer.Error
         .disabled = if (model.disabled) " checked" else "",
         .confirmed = if (model.confirmed) " checked" else "",
     });
-    if (own) try w.writeAll("<p>Use Account to change your password. " ++
-        "Another administrator must change your role or disable your account.</p>");
+    if (own) try html.render(w, "<p>Use Account to change your password. " ++
+        "Another administrator must change your role or disable your account.</p>", .{});
     if (!own) try html.render(w, @embedFile("snippets/users-revoke.html"), .{
         .action = "users-password",
         .title = "Reset password",
@@ -109,15 +111,16 @@ fn editor(state: *const State, w: *Writer, row: *const p.users.Row) Writer.Error
         .explanation = "Generate a one-hour temporary password. Existing sessions end; " ++
             "enabled state, role and enrolled two-factor authentication remain in effect.",
     });
-    const self_note = "This includes your current session. You will be signed out.";
-    const other_note = "End all existing sessions. The account owner can sign in again.";
+    const self_note = "End your sessions and API tokens, including this session. " ++
+        "You will be signed out.";
+    const other_note = "End all existing sessions and API tokens. The owner can sign in again.";
     try html.render(w, @embedFile("snippets/users-revoke.html"), .{
         .action = "users-revoke",
         .title = "Revoke sessions",
         .busy = if (model.busy) " disabled" else "",
         .explanation = if (own) self_note else other_note,
     });
-    try w.writeAll("</section>");
+    try html.render(w, "</section>", .{});
 }
 
 test "account forms bind to bridge IDs and protect self access and read-only roles" {

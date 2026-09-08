@@ -25,15 +25,13 @@ pub const Form = struct {
     pub fn capture(self: *Form, fields: std.json.Value) !void {
         inline for (@typeInfo(Form).@"struct".fields) |field| {
             if (comptime !std.mem.eql(u8, field.name, "headers")) {
-                @field(self, field.name) = try field.type.init(
-                    text(fields, "rule_" ++ field.name),
-                );
+                try @field(self, field.name).set(text(fields, "rule_" ++ field.name));
             }
         }
-        self.headers = try matchers.capture(fields);
+        try matchers.capture(fields, &self.headers);
     }
 
-    pub noinline fn load(source: []const u8) !Form {
+    pub noinline fn load(result: *Form, source: []const u8) !void {
         var memory: [65536]u8 = undefined;
         var arena = std.heap.FixedBufferAllocator.init(&memory);
         const root = try std.json.parseFromSliceLeaky(
@@ -43,10 +41,10 @@ pub const Form = struct {
             .{},
         );
         if (root != .object) return error.InvalidDocument;
-        var result: Form = undefined;
         result.clear();
+        errdefer result.clear();
         inline for (.{ "id", "name", "path", "user_agent", "action", "algorithm" }) |field| {
-            @field(result, field) = try @TypeOf(@field(result, field)).init(text(root, field));
+            try @field(result, field).set(text(root, field));
         }
         result.priority = try numeric(12, root, "priority", 100);
         result.weight = try numeric(12, root, "weight", 0);
@@ -54,19 +52,19 @@ pub const Form = struct {
         const enabled = root.object.get("enabled") orelse std.json.Value{ .bool = true };
         if (enabled != .bool) return error.InvalidDocument;
         result.enabled = try p.Bytes(5).init(if (enabled.bool) "true" else "false");
-        result.headers = try matchers.loadHeaders(root);
-        result.cidrs = try matchers.loadNetworks(root);
-        try @import("policy_limits.zig").load(&result, root);
-        return result;
+        try matchers.loadHeaders(root, &result.headers);
+        try matchers.loadNetworks(root, &result.cidrs);
+        try @import("policy_limits.zig").load(result, root);
     }
 
-    pub noinline fn document(self: *const Form) !p.Bytes(4096) {
+    pub noinline fn document(self: *const Form, output: *p.Bytes(4096)) !void {
         var memory: [65536]u8 = undefined;
         var arena = std.heap.FixedBufferAllocator.init(&memory);
         const action = fallback(self.action.slice(), "deny");
         const challenge = std.mem.eql(u8, action, "challenge");
         const weigh = std.mem.eql(u8, action, "weigh");
-        var output: p.Bytes(4096) = .{};
+        output.len = 0;
+        errdefer @memset(&output.data, 0);
         var writer: Writer = .fixed(&output.data);
         try std.json.Stringify.value(.{
             .id = self.id.slice(),
@@ -86,11 +84,10 @@ pub const Form = struct {
             else
                 @as(i32, 0),
             .headers = try matchers.headers(self.headers.slice(), arena.allocator()),
-            .cidrs = try matchers.networks(self.cidrs.slice(), arena.allocator()),
+            .cidrs = try matchers.networks(self.cidrs.slice()),
             .limits = try @import("policy_limits.zig").document(self),
         }, .{}, &writer);
         output.len = writer.buffered().len;
-        return output;
     }
 
     pub fn clear(self: *Form) void {
@@ -101,8 +98,8 @@ pub const Form = struct {
 };
 
 pub fn render(w: *Writer, form: *const Form, existing: bool) Writer.Error!void {
-    try w.writeAll("<div class=\"sb-rule-grid\"><div class=\"sb-rule-field\">" ++
-        "<label for=\"rule-id\">Rule ID</label>");
+    try html.render(w, "<div class=\"sb-rule-grid\"><div class=\"sb-rule-field\">" ++
+        "<label for=\"rule-id\">Rule ID</label>", .{});
     if (existing) {
         try html.render(
             w,
@@ -112,7 +109,7 @@ pub fn render(w: *Writer, form: *const Form, existing: bool) Writer.Error!void {
     } else {
         try html.render(w, @embedFile("snippets/policy-id-new.html"), .{ .id = form.id.slice() });
     }
-    try w.writeAll("</div>");
+    try html.render(w, "</div>", .{});
     try html.render(w, @embedFile("snippets/policy-name.html"), .{
         .name = form.name.slice(),
     });
@@ -148,7 +145,7 @@ pub fn render(w: *Writer, form: *const Form, existing: bool) Writer.Error!void {
     });
     try matchers.render(w, form.headers.slice(), form.cidrs.slice());
     try @import("policy_limits.zig").render(w, form);
-    try w.writeAll("</div>");
+    try html.render(w, "</div>", .{});
 }
 
 fn select(
@@ -163,10 +160,10 @@ fn select(
         .label = label,
     });
     for (values) |value| {
-        try w.print("<option value=\"{s}\"{s}>{s}</option>", .{
-            value,
-            if (std.mem.eql(u8, value, selected)) " selected" else "",
-            if (std.mem.eql(u8, name, "enabled"))
+        try html.render(w, "<option value=\"{{ v0 }}\"{{ v1 }}>{{ v2 }}</option>", .{
+            .v0 = value,
+            .v1 = if (std.mem.eql(u8, value, selected)) " selected" else "",
+            .v2 = if (std.mem.eql(u8, name, "enabled"))
                 (if (std.mem.eql(u8, value, "true")) "Enabled" else "Disabled")
             else if (value.len == 0)
                 "Inherit"
@@ -174,7 +171,7 @@ fn select(
                 value,
         });
     }
-    try w.writeAll("</select></div>");
+    try html.render(w, "</select></div>", .{});
 }
 
 fn text(value: std.json.Value, name: []const u8) []const u8 {
@@ -213,19 +210,24 @@ test "editor round-trips all matchers and clears settings owned by another actio
         "\"path\":\"/checkout/*\",\"user_agent\":\"Browser*\",\"priority\":-5," ++
         "\"difficulty\":16,\"algorithm\":\"posw\",\"enabled\":false," ++
         "\"headers\":{\"X-Api\":\"v2\"},\"cidrs\":[\"8.8.8.0/24\"]}";
-    var form = try Form.load(source);
-    const document = try form.document();
-    const restored = try Form.load(document.slice());
+    var form: Form = undefined;
+    try form.load(source);
+    var document: p.Bytes(4096) = undefined;
+    try form.document(&document);
+    var restored: Form = undefined;
+    try restored.load(document.slice());
     try std.testing.expectEqualStrings(form.headers.slice(), restored.headers.slice());
     try std.testing.expectEqualStrings(form.cidrs.slice(), restored.cidrs.slice());
     try std.testing.expectEqualStrings("-5", restored.priority.slice());
     try std.testing.expectEqualStrings("false", restored.enabled.slice());
     form.action = try p.Bytes(16).init("allow");
-    const allowance = try form.document();
-    const allowed = try Form.load(allowance.slice());
+    var allowance: p.Bytes(4096) = undefined;
+    try form.document(&allowance);
+    var allowed: Form = undefined;
+    try allowed.load(allowance.slice());
     try std.testing.expectEqual(@as(usize, 0), allowed.difficulty.len);
     try std.testing.expectEqual(@as(usize, 0), allowed.algorithm.len);
     form.headers = try p.Bytes(4096).init("invalid JSON");
-    if (form.document()) |_| return error.ExpectedInvalidDocument else |_| {}
+    if (form.document(&document)) return error.ExpectedInvalidDocument else |_| {}
     try std.testing.expectEqualStrings("invalid JSON", form.headers.slice());
 }

@@ -19,13 +19,15 @@ pub fn render(state: *const @import("state.zig").State, w: *Writer) Writer.Error
     const model = &state.policies.manager;
     try html.render(w, @embedFile("snippets/policy-manager-header.html"), .{});
     try @import("render.zig").message(state, w);
-    if (state.policies.busy) try w.writeAll("<p role=\"status\">Loading policy data…</p>");
+    if (state.policies.busy) {
+        try html.render(w, "<p role=\"status\">Loading policy data…</p>", .{});
+    }
     if (model.view == .editor) {
         try editor(state, w);
     } else {
         try listing(state, w);
     }
-    try w.writeAll("</main>");
+    try html.render(w, "</main>", .{});
 }
 
 fn listing(state: *const @import("state.zig").State, w: *Writer) Writer.Error!void {
@@ -38,10 +40,12 @@ fn listing(state: *const @import("state.zig").State, w: *Writer) Writer.Error!vo
         arena.allocator(),
         model.snapshot.slice(),
         .{},
-    ) catch return w.writeAll("<p>Could not read managed policies. Refresh to retry.</p>");
+    ) catch {
+        return html.render(w, "<p>Could not read managed policies. Refresh to retry.</p>", .{});
+    };
     const rows = if (root == .object) root.object.get("rows") else null;
     if (rows == null or rows.? != .array or rows.?.array.items.len > 8)
-        return w.writeAll("<p>Invalid managed-policy response. Refresh to retry.</p>");
+        return html.render(w, "<p>Invalid managed-policy response. Refresh to retry.</p>", .{});
     try html.render(w, @embedFile("snippets/policy-manager-summary.html"), .{
         .revision = model.committed.slice(),
         .title = if (model.view == .history) "Revision history" else "Managed rules",
@@ -49,7 +53,7 @@ fn listing(state: *const @import("state.zig").State, w: *Writer) Writer.Error!vo
     if (model.view == .catalog and state.allows(.manage_policy))
         try button(w, "managed-new", "New rule", state.policies.busy);
     if (rows.?.array.items.len == 0) {
-        try w.writeAll("<p class=\"my-4\">No records to display.</p>");
+        try html.render(w, "<p class=\"my-4\">No records to display.</p>", .{});
     }
     for (rows.?.array.items) |row| {
         if (model.view == .catalog) {
@@ -70,12 +74,12 @@ fn listing(state: *const @import("state.zig").State, w: *Writer) Writer.Error!vo
                 w,
                 @intCast(@max(0, integer(row, "recorded_at"))),
             );
-            try w.writeAll("</article>");
+            try html.render(w, "</article>", .{});
         }
     }
     try button(w, "managed-next", "Next page", model.next.len == 0 or
         state.policies.busy or state.policies.stale);
-    try w.writeAll("</section>");
+    try html.render(w, "</section>", .{});
 }
 
 fn editor(state: *const @import("state.zig").State, w: *Writer) Writer.Error!void {
@@ -88,7 +92,7 @@ fn editor(state: *const @import("state.zig").State, w: *Writer) Writer.Error!voi
             .revision = model.historical.slice(),
         });
     }
-    try w.writeAll("<form id=\"policy-run\" class=\"sb-settings-form sb-policy-form\">");
+    try html.render(w, "<form id=\"policy-run\" class=\"sb-settings-form sb-policy-form\">", .{});
     try @import("policy_form.zig").render(w, &model.form, model.id.len != 0);
     const disabled = state.policies.busy or state.policies.testing or state.policies.stale;
     if (state.allows(.manage_policy))
@@ -103,27 +107,34 @@ fn editor(state: *const @import("state.zig").State, w: *Writer) Writer.Error!voi
         .body = state.policies.body.slice(),
         .headers = state.policies.headers.slice(),
     });
-    try w.print("<button type=\"submit\" class=\"btn\"{s}>Preview draft</button></form>", .{
-        if (disabled) " disabled" else "",
-    });
+    try html.render(
+        w,
+        "<button type=\"submit\" class=\"btn\"{{ v0 }}>Preview " ++
+            "draft</button></form>",
+        .{
+            .v0 = if (disabled) " disabled" else "",
+        },
+    );
     var memory: [16384]u8 = undefined;
     var arena = std.heap.FixedBufferAllocator.init(&memory);
     try @import("policies_page.zig").decision(w, &state.policies, arena.allocator());
     try @import("policy_transfer.zig").render(state, w);
-    try w.writeAll("</section>");
+    try html.render(w, "</section>", .{});
 }
 
 fn button(w: *Writer, action: []const u8, label: []const u8, disabled: bool) Writer.Error!void {
     if (std.mem.eql(u8, action, "managed-save")) {
-        try w.print("<button type=\"button\" class=\"btn btn-primary my-3\" " ++
-            "data-action=\"managed-save\" data-validate=\"true\"{s}>Save rule</button>", .{
-            if (disabled) " disabled" else "",
+        try html.render(w, "<button type=\"button\" class=\"btn btn-primary my-3\" " ++
+            "data-action=\"managed-save\" data-validate=\"true\"{{ v0 }}>Save rule</button>", .{
+            .v0 = if (disabled) " disabled" else "",
         });
         return;
     }
-    try w.print("<button type=\"button\" class=\"btn my-3\" " ++
-        "data-action=\"{s}\"{s}>{s}</button>", .{
-        action, if (disabled) " disabled" else "", label,
+    try html.render(w, "<button type=\"button\" class=\"btn my-3\" " ++
+        "data-action=\"{{ v0 }}\"{{ v1 }}>{{ v2 }}</button>", .{
+        .v0 = action,
+        .v1 = if (disabled) " disabled" else "",
+        .v2 = label,
     });
 }
 

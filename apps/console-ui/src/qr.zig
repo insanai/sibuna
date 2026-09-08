@@ -1,6 +1,7 @@
 //! Bounded QR Model 2 provisioning: version 6, level L, byte mode, explicit mask 0.
 //! A 130-byte maximum otpauth URI fits the 134-byte capacity. Native matrix fixtures
 //! are checked against Project Nayuki's independent QR encoder with identical parameters.
+const html = @import("html");
 const std = @import("std");
 pub const size = 41;
 pub const max_bytes = 134;
@@ -81,15 +82,15 @@ pub const Qr = struct {
     }
 
     pub fn svg(self: *const Qr, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-        try writer.writeAll("<svg class=\"sb-qr\" viewBox=\"0 0 49 49\" role=\"img\" " ++
+        try html.render(writer, "<svg class=\"sb-qr\" viewBox=\"0 0 49 49\" role=\"img\" " ++
             "aria-label=\"Authenticator enrollment QR code\" shape-rendering=\"crispEdges\">" ++
-            "<rect width=\"49\" height=\"49\" fill=\"white\"/><path fill=\"black\" d=\"");
+            "<rect width=\"49\" height=\"49\" fill=\"white\"/><path fill=\"black\" d=\"", .{});
         for (self.pixels, 0..) |dark, index| {
             if (dark) try writer.print("M{d} {d}h1v1h-1z", .{
                 index % size + 4, index / size + 4,
             });
         }
-        try writer.writeAll("\"/></svg>");
+        try html.render(writer, "\"/></svg>", .{});
     }
 };
 

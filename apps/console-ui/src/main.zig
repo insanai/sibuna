@@ -1135,16 +1135,14 @@ fn policyAction(name: []const u8, fields: std.json.Value) !bool {
     } else if (equal(name, "policy-run") and state.phase == .policies) {
         if (model.testing or model.busy or model.stale) return true;
         if (!model.manager.active and model.applied.len == 0) return true;
-        const draft = if (model.manager.active)
-            (try managedDocument(fields)) orelse return true
-        else
-            null;
-        model.path = try p.Bytes(512).init(string(fields, "path"));
+        var draft: p.Bytes(4096) = undefined;
+        if (model.manager.active and !try managedDocument(fields, &draft)) return true;
+        try model.path.set(string(fields, "path"));
         model.ip = try p.Bytes(48).init(string(fields, "ip"));
-        model.query_string = try p.Bytes(512).init(string(fields, "query"));
+        try model.query_string.set(string(fields, "query"));
         model.user_agent = try p.Bytes(256).init(string(fields, "user_agent"));
-        model.body = try p.Bytes(2048).init(string(fields, "body"));
-        model.headers = try p.Bytes(2048).init(string(fields, "headers"));
+        try model.body.set(string(fields, "body"));
+        try model.headers.set(string(fields, "headers"));
         var headers: [8]@import("request_headers.zig").Header = undefined;
         const request_headers = @import("request_headers.zig").parse(
             model.headers.slice(),
@@ -1159,7 +1157,7 @@ fn policyAction(name: []const u8, fields: std.json.Value) !bool {
         state.message = .{};
         try policyPost(true, .{
             .applied = if (model.manager.active) null else model.applied.slice(),
-            .draft = if (draft) |*document| document.slice() else null,
+            .draft = if (model.manager.active) draft.slice() else null,
             .committed = if (model.manager.active) model.manager.committed.slice() else null,
             .path = model.path.slice(),
             .ip = model.ip.slice(),
@@ -1302,7 +1300,8 @@ fn managedAction(name: []const u8, fields: std.json.Value) !bool {
         });
     } else if (equal(name, "managed-save")) {
         if (!state.allows(.manage_policy) or model.stale) return true;
-        const document = (try managedDocument(fields)) orelse return true;
+        var document: p.Bytes(4096) = undefined;
+        if (!try managedDocument(fields, &document)) return true;
         try managedPost("save", .{
             .expected_revision = manager.committed.slice(),
             .document = document.slice(),
@@ -1335,29 +1334,32 @@ fn managedAction(name: []const u8, fields: std.json.Value) !bool {
     return true;
 }
 
-fn managedDocument(fields: std.json.Value) !?p.Bytes(4096) {
+fn managedDocument(fields: std.json.Value, output: *p.Bytes(4096)) !bool {
     const manager = &state.policies.manager;
     manager.form.capture(fields) catch {
         setMessage("A rule field is too long. Shorten it and try again.");
         try command(.{ .op = "focus", .selector = "#console-message" });
-        return null;
+        return false;
     };
     if (manager.id.len != 0 and !equal(manager.id.slice(), manager.form.id.slice())) {
         setMessage("An existing rule's ID cannot change. Create a new rule for a different ID.");
-        return null;
+        return false;
     }
-    return manager.form.document() catch |err| {
+    manager.form.document(output) catch |err| {
         setMessage(if (err == error.InvalidRuleLimit)
             @import("policy_limits.zig").invalid_message
         else
             "Check numbers, headers and networks. Rule documents must fit within 4 KiB.");
         try command(.{ .op = "focus", .selector = "#console-message" });
-        return null;
+        return false;
     };
+    return true;
 }
 
 fn policyTransfer(name: []const u8, fields: std.json.Value) !bool {
-    const result = @import("policy_transfer.zig").apply(&state, name, fields) catch |err| {
+    var document: p.Bytes(4096) = undefined;
+    const transfer = @import("policy_transfer.zig");
+    const result = transfer.apply(&state, name, fields, &document) catch |err| {
         setMessage(if (err == error.InvalidRuleLimit)
             @import("policy_limits.zig").invalid_message
         else
@@ -1372,7 +1374,7 @@ fn policyTransfer(name: []const u8, fields: std.json.Value) !bool {
             state.message_success = true;
             try command(.{ .op = "focus", .selector = "#managed-editor", .top = true });
         },
-        .exported => |document| try command(.{
+        .exported => try command(.{
             .op = "save-text",
             .filename = "sibuna-rule.json",
             .text = document.slice(),
@@ -1434,7 +1436,9 @@ fn managedResponse(id: []const u8, body: std.json.Value) !void {
         return command(.{ .op = "focus", .selector = "#console-message" });
     }
     if (std.mem.startsWith(u8, id, "managed-document-")) {
-        manager.form = try @import("policy_form.zig").Form.load(string(body, "document"));
+        var candidate: @import("policy_form.zig").Form = undefined;
+        try candidate.load(string(body, "document"));
+        manager.form = candidate;
         manager.id = manager.form.id;
         manager.view = .editor;
     } else {

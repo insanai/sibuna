@@ -14,14 +14,14 @@ const labels = .{
 };
 
 pub fn findings(w: *Writer, optional: ?u8) Writer.Error!void {
-    try w.writeAll("<p>Audit findings: ");
+    try html.render(w, "<p>Audit findings: ", .{});
     if (optional) |mask| {
         if (mask == 0) try w.writeAll("None.");
         inline for (labels, 0..) |label, index| {
             if (mask & (@as(u8, 1) << index) != 0) try w.writeAll(label ++ ". ");
         }
     } else try w.writeAll("Not recorded.");
-    try w.writeAll("</p>");
+    try html.render(w, "</p>", .{});
 }
 
 pub fn submit(page: []const u8, fields: std.json.Value) !Draft {
@@ -58,7 +58,7 @@ pub fn render(
 ) Writer.Error!void {
     const source = data.field(snapshot, "inspection") orelse return;
     const applied_modes = @import("json_value.zig").decode(Modes, source, allocator) catch
-        return w.writeAll("<p>Inspection modes unavailable. Refresh to retry.</p>");
+        return html.render(w, "<p>Inspection modes unavailable. Refresh to retry.</p>", .{});
     const modes = state.policies.inspection_draft orelse applied_modes;
     const pending = !std.mem.eql(
         u8,
@@ -68,26 +68,31 @@ pub fn render(
     const disabled = state.policies.busy or state.policies.testing or state.policies.stale or
         pending or !state.allows(.manage_policy);
     try html.render(w, @embedFile("snippets/inspection-header.html"), .{});
-    if (pending) try w.writeAll("<p role=\"status\">Waiting for this node to apply " ++
-        "the committed revision. Refresh before editing.</p>");
+    if (pending) try html.render(w, "<p role=\"status\">Waiting for this node to apply " ++
+        "the committed revision. Refresh before editing.</p>", .{});
     inline for (@typeInfo(Modes).@"struct".fields, labels) |field, label| {
-        try w.print("<label class=\"form-control\" for=\"inspection-{s}\">{s}" ++
-            "<select class=\"select\" id=\"inspection-{s}\" name=\"{s}\"{s}>", .{
-            field.name, label, field.name, field.name, if (disabled) " disabled" else "",
+        try html.render(w, "<label class=\"form-control\" for=\"inspection-{{ v0 }}\">{{ v1 }}" ++
+            "<select class=\"select\" id=\"inspection-{{ v2 }}\" name=\"{{ v3 }}\"{{ v4 }}>", .{
+            .v0 = field.name,
+            .v1 = label,
+            .v2 = field.name,
+            .v3 = field.name,
+            .v4 = if (disabled) " disabled" else "",
         });
-        inline for (comptime std.meta.tags(Mode)) |mode| try w.print(
-            "<option value=\"{s}\"{s}>{s}</option>",
+        inline for (comptime std.meta.tags(Mode)) |mode| try html.render(
+            w,
+            "<option value=\"{{ v0 }}\"{{ v1 }}>{{ v2 }}</option>",
             .{
-                @tagName(mode),
-                if (@field(modes, field.name) == mode) " selected" else "",
-                switch (mode) {
+                .v0 = @tagName(mode),
+                .v1 = if (@field(modes, field.name) == mode) " selected" else "",
+                .v2 = switch (mode) {
                     .disabled => "Disabled",
                     .audit => "Audit",
                     .enforce => "Enforce",
                 },
             },
         );
-        try w.writeAll("</select></label>");
+        try html.render(w, "</select></label>", .{});
     }
     try html.render(w, @embedFile("snippets/inspection-footer.html"), .{
         .disabled = if (disabled) "disabled" else "",

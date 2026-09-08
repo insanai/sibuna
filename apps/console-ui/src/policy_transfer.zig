@@ -3,9 +3,14 @@ const p = @import("console_protocol");
 const html = @import("html");
 const Form = @import("policy_form.zig").Form;
 const State = @import("state.zig").State;
-pub const Result = union(enum) { ignored, imported, exported: p.Bytes(4096) };
+pub const Result = enum { ignored, imported, exported };
 
-pub fn apply(state: *State, name: []const u8, fields: std.json.Value) !Result {
+pub fn apply(
+    state: *State,
+    name: []const u8,
+    fields: std.json.Value,
+    output: *p.Bytes(4096),
+) !Result {
     const importing = std.mem.eql(u8, name, "managed-import");
     const exporting = std.mem.eql(u8, name, "managed-export");
     if (!importing and !exporting) return .ignored;
@@ -19,14 +24,16 @@ pub fn apply(state: *State, name: []const u8, fields: std.json.Value) !Result {
         try manager.form.capture(fields);
         if (manager.id.len != 0 and
             !std.mem.eql(u8, manager.id.slice(), manager.form.id.slice())) return error.InvalidId;
-        return .{ .exported = try manager.form.document() };
+        try manager.form.document(output);
+        return .exported;
     }
     const document = fields.object.get("document") orelse return error.InvalidDocument;
     if (document != .string) return error.InvalidDocument;
-    manager.import_text = try p.Bytes(4096).init(document.string);
+    try manager.import_text.set(document.string);
     try validateFields(document.string);
-    const form = try Form.load(document.string);
-    _ = try form.document();
+    var form: Form = undefined;
+    try form.load(document.string);
+    try form.document(output);
     if (manager.id.len != 0 and !std.mem.eql(u8, manager.id.slice(), form.id.slice()))
         return error.InvalidId;
     // Replace only after parsing succeeds. Import never submits a storage mutation.
@@ -98,15 +105,16 @@ test "import rejects ignored fields and preserves the old draft on ID mismatch" 
     try t.expectError(error.UnknownField, validateFields(
         "{\"id\":\"a\",\"name\":\"a\",\"action\":\"deny\",\"typo\":true}",
     ));
+    var output: p.Bytes(4096) = undefined;
     var fields = std.json.Value{ .object = .{} };
     defer fields.object.deinit(t.allocator);
     try fields.object.put(t.allocator, "document", .{
         .string = "{\"id\":\"new\",\"name\":\"Imported\",\"action\":\"deny\"}",
     });
-    try t.expectError(error.InvalidId, apply(&state, "managed-import", fields));
+    try t.expectError(error.InvalidId, apply(&state, "managed-import", fields, &output));
     try t.expectEqual(@as(usize, 0), state.policies.manager.form.name.len);
     state.policies.manager.id = .{};
-    try t.expectEqual(.imported, try apply(&state, "managed-import", fields));
+    try t.expectEqual(.imported, try apply(&state, "managed-import", fields, &output));
     try t.expectEqualStrings("Imported", state.policies.manager.form.name.slice());
     try t.expect(!state.policies.busy);
 }

@@ -74,9 +74,11 @@ pub fn render(writer: *std.Io.Writer, form: *const Form) std.Io.Writer.Error!voi
 
 pub fn summary(writer: *std.Io.Writer, value: ?Limits) std.Io.Writer.Error!void {
     const limits = value orelse return;
-    try writer.print("<p>Rule quota: burst {d}, paced over {d} seconds. " ++
-        "Local ban on excess: {d} seconds.</p>", .{
-        limits.rate, limits.window_seconds, limits.ban_seconds,
+    try html.render(writer, "<p>Rule quota: burst {{ v0 }}, paced over {{ v1 }} seconds. " ++
+        "Local ban on excess: {{ v2 }} seconds.</p>", .{
+        .v0 = limits.rate,
+        .v1 = limits.window_seconds,
+        .v2 = limits.ban_seconds,
     });
 }
 
@@ -84,19 +86,22 @@ test "rate-limit drafts round-trip and reject partial, unknown and WEIGH setting
     const t = std.testing;
     const source = "{\"id\":\"a\",\"name\":\"A\",\"action\":\"allow\"," ++
         "\"limits\":{\"rate\":2,\"window_seconds\":60,\"ban_seconds\":3}}";
-    var form = try Form.load(source);
-    const encoded = try form.document();
-    const restored = try Form.load(encoded.slice());
+    var form: Form = undefined;
+    try form.load(source);
+    var encoded: p.Bytes(4096) = undefined;
+    try form.document(&encoded);
+    var restored: Form = undefined;
+    try restored.load(encoded.slice());
     try t.expectEqualStrings("2", restored.limit_rate.slice());
     try t.expectEqualStrings("60", restored.limit_window.slice());
     try t.expectEqualStrings("3", restored.limit_ban.slice());
     form.action = try p.Bytes(16).init("weigh");
-    try t.expectError(error.InvalidRuleLimit, form.document());
+    try t.expectError(error.InvalidRuleLimit, form.document(&encoded));
     form.action = try p.Bytes(16).init("deny");
     form.limit_rate = .{};
-    try t.expectError(error.InvalidRuleLimit, form.document());
-    try t.expectError(error.InvalidRuleLimit, Form.load("{\"limits\":{\"rate\":1}}"));
-    try t.expectError(error.InvalidRuleLimit, Form.load(
+    try t.expectError(error.InvalidRuleLimit, form.document(&encoded));
+    try t.expectError(error.InvalidRuleLimit, form.load("{\"limits\":{\"rate\":1}}"));
+    try t.expectError(error.InvalidRuleLimit, form.load(
         "{\"limits\":{\"rate\":1,\"window_seconds\":60,\"typo\":1}}",
     ));
 }

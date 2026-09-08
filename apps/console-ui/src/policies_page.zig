@@ -43,12 +43,12 @@ pub fn render(state: *const @import("state.zig").State, w: *Writer) Writer.Error
         state.policies.page.slice(),
         .{},
     ) catch {
-        return w.writeAll("<p>Could not read policies. Refresh to retry.</p></main>");
+        return html.render(w, "<p>Could not read policies. Refresh to retry.</p></main>", .{});
     };
     defer parsed.deinit();
     var rows: [8]Row = undefined;
     const page = data.page(parsed.value, &rows) catch {
-        return w.writeAll("<p>Invalid policy snapshot. Refresh to retry.</p></main>");
+        return html.render(w, "<p>Invalid policy snapshot. Refresh to retry.</p></main>", .{});
     };
     try html.render(w, @embedFile("snippets/policies-summary.html"), .{
         .committed = page.committed,
@@ -59,11 +59,11 @@ pub fn render(state: *const @import("state.zig").State, w: *Writer) Writer.Error
         .algorithm = page.default_algorithm,
     });
     for (page.rows) |row| try policyRow(w, row);
-    try w.writeAll("</section><div class=\"flex flex-wrap gap-3 my-4\">");
+    try html.render(w, "</section><div class=\"flex flex-wrap gap-3 my-4\">", .{});
     try button(w, "policies-refresh", "First page / refresh", state.policies.busy);
     try button(w, "policies-next", "Next rules", state.policies.busy or
         state.policies.stale or page.next == null);
-    try w.writeAll("</div>");
+    try html.render(w, "</div>", .{});
     try @import("inspection_form.zig").render(state, parsed.value, w, fixed.allocator());
     try html.render(w, @embedFile("snippets/policies-test.html"), .{
         .path = if (state.policies.path.len == 0) "/" else state.policies.path.slice(),
@@ -75,9 +75,9 @@ pub fn render(state: *const @import("state.zig").State, w: *Writer) Writer.Error
     });
     try button(w, "policy-run", "Evaluate policy", state.policies.testing or
         state.policies.busy or state.policies.stale);
-    try w.writeAll("</form>");
+    try html.render(w, "</form>", .{});
     try decision(w, &state.policies, fixed.allocator());
-    try w.writeAll("</section></main>");
+    try html.render(w, "</section></main>", .{});
 }
 
 fn policyRow(w: *Writer, row: Row) Writer.Error!void {
@@ -93,12 +93,18 @@ fn policyRow(w: *Writer, row: Row) Writer.Error!void {
         .algorithm = row.algorithm orelse "Inherit",
     });
     if (row.difficulty) |difficulty| {
-        try w.print("<p>Configured difficulty override: {d}</p>", .{difficulty});
-    } else try w.writeAll("<p>Difficulty: inherit</p>");
+        try html.render(w, "<p>Configured difficulty override: {{ v0 }}</p>", .{
+            .v0 = difficulty,
+        });
+    } else try html.render(w, "<p>Difficulty: inherit</p>", .{});
     try @import("policy_limits.zig").summary(w, row.limits);
-    if (row.truncated) try w.writeAll("<p class=\"sb-note\">Display shortened or invalid text " ++
-        "replaced. Evaluation uses the full applied matchers.</p>");
-    try w.writeAll("</article>");
+    if (row.truncated) try html.render(
+        w,
+        "<p class=\"sb-note\">Display shortened or invalid text " ++
+            "replaced. Evaluation uses the full applied matchers.</p>",
+        .{},
+    );
+    try html.render(w, "</article>", .{});
 }
 
 pub fn decision(w: *Writer, model: *const Model, allocator: std.mem.Allocator) Writer.Error!void {
@@ -108,10 +114,10 @@ pub fn decision(w: *Writer, model: *const Model, allocator: std.mem.Allocator) W
         allocator,
         model.decision.slice(),
         .{},
-    ) catch return w.writeAll("<p>Could not read the evaluation result.</p>");
+    ) catch return html.render(w, "<p>Could not read the evaluation result.</p>", .{});
     defer parsed.deinit();
     const result = data.decision(parsed.value) catch
-        return w.writeAll("<p>Invalid evaluation result. Please retry.</p>");
+        return html.render(w, "<p>Invalid evaluation result. Please retry.</p>", .{});
     try html.render(w, @embedFile("snippets/policies-decision.html"), .{
         .kind = if (result.preview) "Draft decision" else "Policy decision",
         .revision_label = if (result.preview) "Draft committed revision" else "Applied revision",
@@ -124,15 +130,29 @@ pub fn decision(w: *Writer, model: *const Model, allocator: std.mem.Allocator) W
     });
     try @import("inspection_form.zig").findings(w, result.audited);
     try @import("policy_limits.zig").summary(w, result.limits);
-    try w.writeAll("<p class=\"sb-note\">This preview does not consume quota or simulate " ++
-        "session cookies, existing local bans or global rate limits.</p>");
+    try html.render(w, "<p class=\"sb-note\">This preview does not consume quota or simulate " ++
+        "session cookies, existing local bans or global rate limits.</p>", .{});
 }
 
 fn button(w: *Writer, action: []const u8, label: []const u8, disabled: bool) Writer.Error!void {
-    try w.print("<button class=\"btn\" {s}", .{
-        if (std.mem.eql(u8, action, "policy-run")) "type=\"submit\"" else "type=\"button\"",
+    const submit = std.mem.eql(u8, action, "policy-run");
+    try html.render(w, "<button class=\"btn\" type=\"{{ kind }}\"", .{
+        .kind = if (submit) "submit" else "button",
     });
-    if (!std.mem.eql(u8, action, "policy-run")) try w.print(" data-action=\"{s}\"", .{action});
+    if (!submit) try html.render(w, " data-action=\"{{ action }}\"", .{ .action = action });
     if (disabled) try w.writeAll(" disabled");
-    try w.print(">{s}</button>", .{label});
+    try html.render(w, ">{{ label }}</button>", .{ .label = label });
+}
+
+test "policy controls retain their button types under escaped template substitution" {
+    const t = std.testing;
+    var buffer: [512]u8 = undefined;
+    var writer: Writer = .fixed(&buffer);
+    try button(&writer, "policy-run", "Evaluate", false);
+    try button(&writer, "policies", "Refresh", true);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "type=\"submit\"") != null);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "type=\"button\"") != null);
+    const navigation = "data-action=\"policies\" disabled";
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), navigation) != null);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "&quot;") == null);
 }

@@ -82,19 +82,19 @@ fn unsigned(value: std.json.Value, key: []const u8) !u64 {
 }
 
 pub fn render(model: *const Model, w: *Writer, now: u64, paused: bool) Writer.Error!void {
-    try w.writeAll("<section class=\"sb-panel mt-6\" aria-labelledby=\"ranking-heading\">" ++
+    try html.render(w, "<section class=\"sb-panel mt-6\" aria-labelledby=\"ranking-heading\">" ++
         "<h2 id=\"ranking-heading\">Sampled request paths</h2>" ++
         "<p class=\"sb-note\">Partial UTC minute · updates every 10 seconds. " ++
         "Counts show samples at 1/64 probability. " ++
         "128-byte path prefixes. " ++
-        "Sample counts lie between the bounds.</p>");
+        "Sample counts lie between the bounds.</p>", .{});
     if (!model.loaded) {
-        try w.writeAll("<p role=\"status\">");
+        try html.render(w, "<p role=\"status\">", .{});
         try w.writeAll(if (model.generation != 0 and !model.busy)
             "Rankings unavailable. Retrying."
         else
             "Waiting for live path samples.");
-        try w.writeAll("</p></section>");
+        try html.render(w, "</p></section>", .{});
         return;
     }
     const stale = model.stale or paused or now -| model.received_at > 20;
@@ -107,22 +107,29 @@ pub fn render(model: *const Model, w: *Writer, now: u64, paused: bool) Writer.Er
         '0' + minute / 10,
         '0' + minute % 10,
     };
-    try w.print("<p class=\"sb-note\">Minute {s} UTC · " ++
-        "Up to 12 of 256 tracked prefixes.</p>", .{time});
-    try w.print("<p class=\"sb-note\">{s} · Updated {d} seconds ago · " ++
-        "{d} retained samples · {d} truncated sample records · {d} rejected samples · " ++
-        "{d} lost queue samples since boot.</p>", .{
-        if (stale) "Stale or paused" else "Live",
-        now -| model.received_at,
-        model.retained,
-        model.truncated,
-        model.rejected,
-        model.queue_loss,
+    try html.render(w, "<p class=\"sb-note\">Minute {{ v0 }} UTC · " ++
+        "Up to 12 of 256 tracked prefixes.</p>", .{
+        .v0 = time,
     });
-    try w.writeAll("<div class=\"overflow-x-auto\"><table class=\"table\">" ++
+    try html.render(
+        w,
+        "<p class=\"sb-note\">{{ v0 }} · Updated {{ v1 }} seconds ago · " ++
+            "{{ v2 }} retained samples · {{ v3 }} truncated sample records · " ++
+            "{{ v4 }} rejected samples · " ++
+            "{{ v5 }} lost queue samples since boot.</p>",
+        .{
+            .v0 = if (stale) "Stale or paused" else "Live",
+            .v1 = now -| model.received_at,
+            .v2 = model.retained,
+            .v3 = model.truncated,
+            .v4 = model.rejected,
+            .v5 = model.queue_loss,
+        },
+    );
+    try html.render(w, "<div class=\"overflow-x-auto\"><table class=\"table\">" ++
         "<caption class=\"sb-note\">Sample count bounds</caption>" ++
         "<thead><tr><th>Path prefix</th><th>Estimate</th><th>Lower bound</th></tr></thead>" ++
-        "<tbody>");
+        "<tbody>", .{});
     for (model.rows[0..model.count]) |*row| try html.render(
         w,
         @embedFile("snippets/ranking-row.html"),
@@ -136,7 +143,7 @@ pub fn render(model: *const Model, w: *Writer, now: u64, paused: bool) Writer.Er
     if (model.count == 0) try w.writeAll(
         "<tr><td colspan=\"3\">No path samples this minute.</td></tr>",
     );
-    try w.writeAll("</tbody></table></div></section>");
+    try html.render(w, "</tbody></table></div></section>", .{});
 }
 
 test "ranking decoder owns keys, rejects excess rows atomically and escapes rendered paths" {
