@@ -2352,6 +2352,14 @@ table remains open through refreshes; its bounded browser scroll coordinates sur
 replacement while the Wasm model owns visibility. These checks do not replace the
 pending whole-process console impact or complete browser acceptance gates.
 
+The required primitive regeneration is `latest-20260908T080201Z.json`, measured from
+clean source `4119f960035628613c5c9d581a833bc82408eb47`; artifact SHA-256
+`5141f60a6b4a3208b5ec6f5ba1688b38fdaefeaeeb0483c8f318774bbf1a2c01`.
+Seven-batch medians include 1,439.8 ns full policy classification, 287.4 ns Gate,
+5.8 ns global GCRA and 6.1 ns for four rule scopes. Idle RSS was 9,888 KiB with
+storage compiled but inactive and the review daemon stopped. No active-console
+throughput or p99 conclusion follows from these primitive measurements.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
