@@ -25,15 +25,70 @@ pub fn decode(comptime T: type, value: std.json.Value, allocator: std.mem.Alloca
 }
 
 fn structure(comptime T: type, value: std.json.Value, allocator: std.mem.Allocator) Error!T {
-    if (value != .object) return error.InvalidResponse;
     var result: T = undefined;
-    inline for (@typeInfo(T).@"struct".fields) |field| {
-        @field(result, field.name) = if (value.object.get(field.name)) |item|
-            try decode(field.type, item, allocator)
-        else
-            field.defaultValue() orelse return error.InvalidResponse;
+    try object(&result, value, allocator, comptime &fields(T));
+    return result;
+}
+
+const Field = struct {
+    name: []const u8,
+    offset: usize,
+    default: ?*const anyopaque,
+    read: *const fn (*anyopaque, ?std.json.Value, std.mem.Allocator, ?*const anyopaque) Error!void,
+};
+
+/// All offsets, defaults and typed readers come from the compiler's own struct metadata.
+/// Neither wire input nor callers can construct a descriptor or choose a destination.
+fn fields(comptime T: type) [@typeInfo(T).@"struct".fields.len]Field {
+    const members = @typeInfo(T).@"struct".fields;
+    var result: [members.len]Field = undefined;
+    for (members, &result) |member, *field| {
+        if (member.is_comptime) @compileError("Wire fields must have runtime storage");
+        const offset = @offsetOf(T, member.name);
+        std.debug.assert(offset + @sizeOf(member.type) <= @sizeOf(T));
+        field.* = .{
+            .name = member.name,
+            .offset = offset,
+            .default = member.default_value_ptr,
+            .read = Reader(member.type).read,
+        };
     }
     return result;
+}
+
+// One loop handles every bounded object; otherwise every field expands a lookup/decoder
+// into the Wasm module. Each concrete field type still owns its assignment and alignment.
+noinline fn object(
+    destination: *anyopaque,
+    value: std.json.Value,
+    allocator: std.mem.Allocator,
+    members: []const Field,
+) Error!void {
+    if (value != .object) return error.InvalidResponse;
+    const bytes: [*]u8 = @ptrCast(destination);
+    for (members) |field| try field.read(
+        bytes + field.offset,
+        value.object.get(field.name),
+        allocator,
+        field.default,
+    );
+}
+
+fn Reader(comptime T: type) type {
+    return struct {
+        fn read(
+            destination: *anyopaque,
+            value: ?std.json.Value,
+            allocator: std.mem.Allocator,
+            default: ?*const anyopaque,
+        ) Error!void {
+            const typed: *T = @ptrCast(@alignCast(destination));
+            typed.* = if (value) |item| try decode(T, item, allocator) else if (default) |pointer|
+                @as(*const T, @ptrCast(@alignCast(pointer))).*
+            else
+                return error.InvalidResponse;
+        }
+    };
 }
 
 fn integer(comptime T: type, value: std.json.Value) Error!T {
@@ -87,6 +142,40 @@ fn slice(comptime T: type, value: std.json.Value, allocator: std.mem.Allocator) 
         allocator,
     );
     return result;
+}
+
+test "object descriptors preserve defaults, nested alignment and required nullable fields" {
+    const t = std.testing;
+    const Child = struct { wide: u128, flag: bool = true };
+    const Wire = struct {
+        small: u8 = 7,
+        child: Child,
+        nullable: ?u64,
+        optional: ?u8 = 9,
+        empty: struct {} = .{},
+    };
+    const parsed = try std.json.parseFromSlice(
+        std.json.Value,
+        t.allocator,
+        "{\"child\":{\"wide\":123},\"nullable\":null,\"ignored\":42}",
+        .{},
+    );
+    defer parsed.deinit();
+    var empty: [0]u8 = .{};
+    var arena = std.heap.FixedBufferAllocator.init(&empty);
+    const decoded = try decode(Wire, parsed.value, arena.allocator());
+    try t.expectEqual(@as(u8, 7), decoded.small);
+    try t.expectEqual(@as(u128, 123), decoded.child.wide);
+    try t.expect(decoded.child.flag);
+    try t.expectEqual(@as(?u64, null), decoded.nullable);
+    try t.expectEqual(@as(?u8, 9), decoded.optional);
+    try t.expectEqual(@as(usize, 0), arena.end_index);
+    try t.expectError(error.InvalidResponse, decode(
+        struct { missing_nullable: ?u64 },
+        parsed.value,
+        arena.allocator(),
+    ));
+    try t.expectError(error.InvalidResponse, decode(Wire, .null, arena.allocator()));
 }
 
 test "wire decoder preserves integer bounds, requires fields and bounds rows before allocation" {

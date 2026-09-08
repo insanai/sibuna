@@ -2640,6 +2640,21 @@ console speedup is inferred. This primitive baseline does not exercise active st
 GeoIP, retention, subscribers or peer telemetry and does not pass the required console
 throughput/p99/memory contention matrix. Those acceptance measurements remain pending.
 
+== Typed browser object decoding (2026-09-08)
+
+The browser decoder now shares one object-field loop across wire structs. Private
+descriptors contain compiler-derived names, offsets, defaults and concrete typed
+readers; no response can supply a descriptor or destination. Lookup remains bounded
+by the parsed response and field count. Nested fields retain their own alignment,
+integer checks, fixed-array lengths and pre-allocation row limits. Strings borrow
+only the dispatch arena, so models still copy retained values.
+
+Native rendering and decoder tests cover absent required nullable fields, explicit
+null, defaults, nested wide-integer alignment, empty structs, extra fields, malformed
+objects and allocation-free fixed fields. The ReleaseSmall interface decreased from
+304,210 to 291,012 bytes, leaving headroom under the existing 300 KiB module limit.
+This code-size result does not establish browser runtime or console-impact acceptance.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
