@@ -49,8 +49,10 @@ docs); the book's Part II carries the full table with sources.
 | Host footprint | 3.3 MB binary, ~7 MB idle | 37 MB binary, ~40 MB under load | 1 core, 1 GB RAM, 5 GB disk min. | none on premises |
 | Measured here | Yes | Yes | No (Docker only) | No (hosted) |
 
-Sibuna does not terminate TLS, ship a console, look up geography, or score bots with a model;
-an ingress or a hosted edge does those.
+Sibuna does not terminate ingress TLS or score bots with a model. Its opt-in console preview
+includes authenticated dashboards and country enrichment; SID 0007 remains proposed while
+the remaining management features and acceptance gates are implemented. See
+[loading country data from the CLI](docs/console-geoip.md) for DB-IP setup.
 
 ## Research foundations
 
