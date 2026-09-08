@@ -1,13 +1,15 @@
-//! Route account and automation workflows without coupling either page to its sibling.
+//! Route console management workflows without coupling their page state.
 const std = @import("std");
 const State = @import("state.zig").State;
 const Outbox = @import("transport.zig").Outbox;
 const users = @import("users_controller.zig");
 const tokens = @import("tokens_controller.zig");
+const audit = @import("audit_controller.zig");
 
 pub fn action(state: *State, name: []const u8, fields: std.json.Value, out: Outbox) !bool {
     if (try users.action(state, name, fields, out)) return true;
-    return tokens.action(state, name, fields, out);
+    if (try tokens.action(state, name, fields, out)) return true;
+    return audit.action(state, name, fields, out);
 }
 
 pub fn response(
@@ -22,6 +24,8 @@ pub fn response(
         try tokens.response(state, id, status, body, alloc, out);
     } else if (std.mem.startsWith(u8, id, "users-")) {
         try users.response(state, id, status, body, alloc, out);
+    } else if (std.mem.startsWith(u8, id, "audit-")) {
+        try audit.response(state, id, status, body, alloc, out);
     } else return false;
     return true;
 }

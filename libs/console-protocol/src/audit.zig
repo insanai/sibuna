@@ -89,8 +89,14 @@ pub fn validate(input: Query) error{InvalidLimit}!void {
     if (input.before > last_id or input.since > input.until or input.until > last_id or
         input.action.len > 48) return error.InvalidLimit;
     if (input.actor) |actor| if (actor > last_id) return error.InvalidLimit;
-    for (input.action.slice()) |byte| {
+    if (!validAction(input.action.slice())) return error.InvalidLimit;
+}
+
+pub fn validAction(value: []const u8) bool {
+    if (value.len > 48) return false;
+    for (value) |byte| {
         if (!std.ascii.isLower(byte) and !std.ascii.isDigit(byte) and byte != '.' and byte != '_')
-            return error.InvalidLimit;
+            return false;
     }
+    return true;
 }

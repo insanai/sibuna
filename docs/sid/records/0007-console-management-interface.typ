@@ -3145,6 +3145,29 @@ restart. The combined suite passes 312 tests. The Audit interface, richer mutati
 command intent/completion, audit-driven policy comparison/revert and streaming are separate
 remaining increments; this API does not imply those acceptance gates have passed.
 
+== Audit investigation interface (2026-09-09)
+
+The Audit page now shares the authenticated navigation and exposes period, actor and exact
+action filters, eight-record pages, metadata export, and recorded before/after summaries.
+Pagination retains a fixed UTC window; refresh deliberately obtains new records. Invalid
+filter input cannot relabel the preceding page. Detail requests match the selected ID and
+current request ticket, and malformed or late responses cannot replace another view.
+Absent historical roles and summaries display “Not recorded”; redaction and truncation
+remain visible. An unavailable record can be refreshed after retention removes it.
+
+The typed JSON decoder now writes nested structs, arrays and optional payloads into
+caller-owned buffers and publishes only a validated candidate. Existing by-value callers
+retain a compatibility wrapper. This keeps the complete current interface within its
+unchanged 307,200-byte bound: 306,574 bytes after the focus fixes. Native console checks
+pass 130 tests; the combined repository suite passes 315. Browser checks cover actual
+revocation summaries, action filtering, invalid full-width actor input, export receipts,
+pagination, persistent navigation and visible keyboard focus. Audit and token detail focus
+now scrolls to the selected content rather than the page header.
+
+This increment does not complete historical metadata capture, policy diff/revert from
+audit, command intent/completion or cluster audit coverage. Those remain part of the
+Proposed SID's outstanding implementation and release gates.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

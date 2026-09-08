@@ -4,10 +4,12 @@ const Phase = @import("state.zig").Phase;
 const html = @import("html");
 const Writer = std.Io.Writer;
 const actions = [_][]const u8{
-    "dashboard", "events", "challenges", "policies", "geoip", "users", "tokens", "account",
+    "dashboard", "events", "challenges", "policies", "geoip", "users", "tokens", "audit",
+    "account",
 };
 const labels = [_][]const u8{
-    "Statistics", "Events", "Challenges", "Policies", "GeoIP", "Users", "Tokens", "Account",
+    "Statistics", "Events", "Challenges", "Policies", "GeoIP", "Users", "Tokens", "Audit",
+    "Account",
 };
 
 pub fn destination(name: []const u8) bool {
@@ -46,6 +48,7 @@ fn section(phase: Phase) []const u8 {
         .geoip => "geoip",
         .users => "users",
         .tokens => "tokens",
+        .audit => "audit",
         .password, .security => "account",
         else => "dashboard",
     };

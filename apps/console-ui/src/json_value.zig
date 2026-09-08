@@ -4,30 +4,40 @@ const std = @import("std");
 pub const Error = error{ InvalidResponse, OutOfMemory };
 
 pub fn decode(comptime T: type, value: std.json.Value, allocator: std.mem.Allocator) Error!T {
-    return switch (@typeInfo(T)) {
-        .@"struct" => structure(T, value, allocator),
-        .optional => |optional| if (value == .null) null else try decode(
-            optional.child,
-            value,
-            allocator,
-        ),
-        .bool => if (value == .bool) value.bool else error.InvalidResponse,
-        .int => integer(T, value),
-        .float => floating(T, value),
-        .@"enum" => if (value == .string)
-            std.meta.stringToEnum(T, value.string) orelse error.InvalidResponse
-        else
-            error.InvalidResponse,
-        .array => array(T, value, allocator),
-        .pointer => slice(T, value, allocator),
-        else => @compileError("Unsupported browser wire type: " ++ @typeName(T)),
-    };
+    var result: T = undefined;
+    try into(&result, value, allocator);
+    return result;
 }
 
-fn structure(comptime T: type, value: std.json.Value, allocator: std.mem.Allocator) Error!T {
-    var result: T = undefined;
-    try object(&result, value, allocator, comptime &fields(T));
-    return result;
+/// Typed caller-owned decoding avoids large error-union payload images. On error the
+/// output can be partial and must be discarded; retained state publishes a complete candidate.
+pub fn into(output: anytype, value: std.json.Value, allocator: std.mem.Allocator) Error!void {
+    const T = @typeInfo(@TypeOf(output)).pointer.child;
+    switch (@typeInfo(T)) {
+        .@"struct" => try object(output, value, allocator, comptime &fields(T)),
+        .optional => |optional| {
+            if (value == .null) {
+                output.* = null;
+            } else {
+                var child: optional.child = undefined;
+                try into(&child, value, allocator);
+                output.* = child;
+            }
+        },
+        .array => |info| {
+            if (value != .array or value.array.items.len != info.len) return error.InvalidResponse;
+            for (value.array.items, output) |item, *child| try into(child, item, allocator);
+        },
+        .bool => output.* = if (value == .bool) value.bool else return error.InvalidResponse,
+        .int => output.* = try integer(T, value),
+        .float => output.* = try floating(T, value),
+        .@"enum" => output.* = if (value == .string)
+            std.meta.stringToEnum(T, value.string) orelse return error.InvalidResponse
+        else
+            return error.InvalidResponse,
+        .pointer => output.* = try slice(T, value, allocator),
+        else => @compileError("Unsupported browser wire type: " ++ @typeName(T)),
+    }
 }
 
 const Default = union(enum) {
@@ -122,7 +132,7 @@ fn Reader(comptime T: type) type {
         ) Error!void {
             const typed: *T = @ptrCast(@alignCast(destination));
             if (value) |item| {
-                typed.* = try decode(T, item, allocator);
+                try into(typed, item, allocator);
                 return;
             }
             switch (default) {
@@ -161,18 +171,6 @@ fn floating(comptime T: type, value: std.json.Value) Error!T {
     return result;
 }
 
-fn array(comptime T: type, value: std.json.Value, allocator: std.mem.Allocator) Error!T {
-    const info = @typeInfo(T).array;
-    if (value != .array or value.array.items.len != info.len) return error.InvalidResponse;
-    var result: T = undefined;
-    for (value.array.items, &result) |item, *output| output.* = try decode(
-        info.child,
-        item,
-        allocator,
-    );
-    return result;
-}
-
 fn slice(comptime T: type, value: std.json.Value, allocator: std.mem.Allocator) Error!T {
     const info = @typeInfo(T).pointer;
     if (info.size != .slice or !info.is_const) @compileError("Wire slices must be const");
@@ -182,11 +180,7 @@ fn slice(comptime T: type, value: std.json.Value, allocator: std.mem.Allocator) 
     const capacity = if (info.child == minutes.Record) minutes.max_rows else 10;
     if (value != .array or value.array.items.len > capacity) return error.InvalidResponse;
     const result = try allocator.alloc(info.child, value.array.items.len);
-    for (value.array.items, result) |item, *output| output.* = try decode(
-        info.child,
-        item,
-        allocator,
-    );
+    for (value.array.items, result) |item, *output| try into(output, item, allocator);
     return result;
 }
 

@@ -208,8 +208,8 @@ fn action(value: std.json.Value) !void {
         try command(.{ .op = "focus", .selector = "main h1", .top = true });
     }
     const fields = field(value, "fields") orelse .null;
-    const credentials = @import("credentials_controller.zig");
-    if (try credentials.action(&state, name, fields, outbox())) return;
+    const management = @import("management_controller.zig");
+    if (try management.action(&state, name, fields, outbox())) return;
     if (try policyTransfer(name, fields)) return;
     if (try inspectionAction(name, fields)) return;
     if (try managedAction(name, fields)) return;
@@ -269,8 +269,8 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
     if (status_value != .integer) return;
     const status = status_value.integer;
     const body = field(value, "body") orelse return;
-    const credentials = @import("credentials_controller.zig");
-    if (try credentials.response(&state, id, status, body, alloc, outbox())) return;
+    const management = @import("management_controller.zig");
+    if (try management.response(&state, id, status, body, alloc, outbox())) return;
     if (std.mem.startsWith(u8, id, "rankings-") or std.mem.startsWith(u8, id, "timeline-") or
         std.mem.startsWith(u8, id, "minutes-"))
         return observationResponse(id, status, body, alloc);
@@ -407,7 +407,8 @@ fn statsResponse(status: i64, body: std.json.Value, alloc: std.mem.Allocator) !v
         setMessage("Connection lost. Showing the last received values.");
         return;
     }
-    var snapshot = try @import("json_value.zig").decode(p.StatsSnapshot, body, alloc);
+    var snapshot: p.StatsSnapshot = undefined;
+    try @import("json_value.zig").into(&snapshot, body, alloc);
     if (snapshot.outcomes_version > 1) {
         state.stale = true;
         setMessage("This statistics format needs a newer interface. Reload after upgrading.");

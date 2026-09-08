@@ -48,7 +48,7 @@ pub fn action(state: *State, name: []const u8, fields: std.json.Value, out: Outb
         model.selected = index;
         model.confirmed = false;
         state.message = .{};
-        try out.emit(.{ .op = "focus", .selector = "#tokens-editor", .top = true });
+        try out.emit(.{ .op = "focus", .selector = "#tokens-editor" });
     } else if (equal(u8, name, "tokens-draft")) {
         try draft(state, fields);
     } else if (equal(u8, name, "tokens-create")) {
@@ -187,7 +187,6 @@ pub fn response(
         return out.emit(.{
             .op = "focus",
             .selector = if (model.secret.len != 0) "#tokens-secret" else "#tokens-catalog",
-            .top = true,
         });
     }
     try saved(state, body, allocator);
