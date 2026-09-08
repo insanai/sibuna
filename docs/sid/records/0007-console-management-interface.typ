@@ -2204,6 +2204,9 @@ Deterministic tests cover invalid/partial modes, stale edits, CSRF refusal, inje
 history failure with complete rollback, migration replay and restart recovery.
 Live-console tests compare audit findings and terminal decisions with real requests,
 then restore the original matrix. Full regression and formatting checks passed.
+Storage-off and cluster builds passed. A direct storage test, also run with the
+console compiled out, verifies override publication and restoration of file defaults
+after removing the override; these checks do not establish three-node acceptance.
 
 = References
 
