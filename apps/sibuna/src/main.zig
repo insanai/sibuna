@@ -18,9 +18,17 @@ pub fn main(init: std.process.Init) !u8 {
 
     var args_buf: [96][]const u8 = undefined;
     const arg_count = readArgs(init.minimal.args, &args_buf) orelse return 0;
+    const argv = args_buf[0..arg_count];
+    const subcommand = argv.len != 0 and std.mem.eql(u8, argv[0], "console");
+    if (subcommand) {
+        if (!build_options.console) return consoleNotCompiled();
+        if (argv.len < 2 or !std.mem.eql(u8, argv[1], "init-admin"))
+            return @import("console_command.zig").execute(gpa, io, argv[1..]);
+    }
+    const daemon_args = if (subcommand) argv[1..] else argv;
     var data_args: [96][]const u8 = undefined;
     const parsed = if (build_options.console)
-        console_start.parse(args_buf[0..arg_count], &data_args) catch |err| {
+        console_start.parse(daemon_args, &data_args) catch |err| {
             std.debug.print("CONSOLE002: invalid console options ({t}). " ++
                 "Hint: check --console host:port and proxy settings.\n", .{err});
             return 1;
@@ -29,7 +37,7 @@ pub fn main(init: std.process.Init) !u8 {
     var cfg = core.Config.parseArgs(if (build_options.console)
         parsed.data_args
     else
-        args_buf[0..arg_count]);
+        daemon_args);
     if (build_options.console and !console_start.validate(parsed.config, cfg.data_dir != null))
         return 1;
     if (build_options.console) if (parsed.initial_admin) |username| {
@@ -78,6 +86,12 @@ pub fn main(init: std.process.Init) !u8 {
     printBanner(cfg, persistent != null);
 
     return runListener(io, cfg, state);
+}
+
+fn consoleNotCompiled() u8 {
+    std.debug.print("CONSOLEBUILD: console support is not compiled. " ++
+        "Hint: build with storage and console enabled.\n", .{});
+    return 1;
 }
 
 fn readArgs(args: std.process.Args, output: [][]const u8) ?usize {
@@ -220,7 +234,15 @@ fn printHelp() void {
             "Console: --console <host:port> (requires --data-dir); " ++
             "--console-key-file <path> (64 hex characters, owner-only permissions); " ++
             "--console-origin <https-origin>; --console-behind-proxy; " ++
-            "--console-trusted-proxy <CIDR> (repeatable).\n",
+            "--console-trusted-proxy <CIDR> (repeatable).\n" ++
+            "Account CLI: sibuna console users [--after <id>]\n" ++
+            "  sibuna console add-user <name> [--role viewer|operator|admin]\n" ++
+            "  sibuna console set-user <id> --revision <n> " ++
+            "--role <role> --disabled true|false\n" ++
+            "  sibuna console reset-password|revoke-sessions <id> --revision <n>\n" ++
+            "  Required: --origin <origin> --username <name> --password-file <path>;\n" ++
+            "  optional --factor-file <path>. Credential files must be private regular files.\n" ++
+            "  HTTPS is required except for literal loopback HTTP; redirects are refused.\n",
         .{},
     );
     std.debug.print(

@@ -173,7 +173,11 @@ def check(binary):
     import console_events_test
     console_events_test.check(binary, sys.modules[__name__])
     import console_users_test
+    import console_cli_test
+    import console_client_test
     console_users_test.check(binary, sys.modules[__name__])
+    console_cli_test.check(binary, sys.modules[__name__])
+    console_client_test.check(binary)
     import console_shutdown_test
     console_shutdown_test.check(binary, sys.modules[__name__])
     import console_totp_test

@@ -91,6 +91,8 @@ def check(binary, h):
                                                 dict(credentials, code=value))
                 assert login(recovery[0])[0] == 401
                 assert login(recovery[1])[0] == 200
+                import console_cli_test
+                console_cli_test.factor_input(binary, port, credentials, recovery[2], root)
             finally:
                 h.stop(proc)
     print("console-e2e: encrypted TOTP, session revocation, replay and recovery persistence passed")

@@ -498,7 +498,7 @@ active dashboards. Measure admitted, challenge, denied/incident-heavy and policy
 workloads, including authentication and GeoIP reload contention. Use repeated interleaved
 runs on a declared host, fixed warm-up/duration and traffic mix, and report uncertainty.
 Throughput loss must be ≤ 1% and p99 increase ≤ 10% relative to the corresponding baseline;
-inconclusive/noisy runs do not establish compliance. No console benchmark has yet run.
+inconclusive/noisy runs do not establish compliance. The active-console impact matrix has not yet run.
 
 
 == Startup from the command line
@@ -506,15 +506,18 @@ inconclusive/noisy runs do not establish compliance. No console benchmark has ye
 ```
 sibuna --console 127.0.0.1:9443 --data-dir /var/lib/sibuna --secret-file /etc/sibuna/secret
 sibuna --console 0.0.0.0:9443 --console-behind-proxy --console-cookie-secure ...
-sibuna console init-admin --data-dir /var/lib/sibuna         # first user, prints a one-time password
-sibuna console add-user --role viewer alice --data-dir ...
-sibuna console geoip update --data-dir ...                    # fetch and load the country database
-sibuna console token create --role operator ci --data-dir ... # API token for automation
+sibuna console init-admin admin --data-dir /var/lib/sibuna
+sibuna console add-user alice --role viewer --origin https://console.example \
+  --username admin --password-file /run/private/console-password
+sibuna console users --origin https://console.example \
+  --username admin --password-file /run/private/console-password
+# GeoIP download/import is currently available through tools/console_geoip.py.
+# Native GeoIP and scoped token subcommands remain pending.
 ```
 
 `--console` requires `--data-dir` and storage support (`-Dconsole=true` with `-Dstorage=false` is a build error; the console default follows storage): users, sessions, and statistics live in the database, and a
 console without persistence would lose its administrator on restart. The console listens on
-loopback by default; binding elsewhere without `--console-behind-proxy` (which requires an explicit trusted-proxy CIDR list and canonical HTTPS console origin) is refused. Only allowlisted socket peers may supply forwarded address or scheme headers; the ingress strips client-supplied copies. Proxy mode enables `Secure` cookies. HTTP on loopback is development-only. CLI examples are proposed. Offline bootstrap takes an exclusive data-directory lock; commands against a running node use the authenticated console API, never a second embedded node over the same directory. In a cluster every member may run a console; each shows the whole cluster, because the
+loopback by default; binding elsewhere without `--console-behind-proxy` (which requires an explicit trusted-proxy CIDR list and canonical HTTPS console origin) is refused. Only allowlisted socket peers may supply forwarded address or scheme headers; the ingress strips client-supplied copies. Proxy mode enables `Secure` cookies. HTTP on loopback is development-only. The shown account commands are implemented; other proposed management commands remain gated. Offline bootstrap takes an exclusive data-directory lock; commands against a running node use the authenticated console API, never a second embedded node over the same directory. In a cluster every member may run a console; each shows the whole cluster, because the
 tables it reads are replicated, and each probes the others' health endpoints directly.
 
 = The Serve Kernel
@@ -2828,6 +2831,45 @@ batches). Idle RSS was 9,904 KiB with two workers, storage compiled but inactive
 The reported 8,831-byte Wasm artifact is the proof solver, not the console interface.
 These primitive and idle measurements do not exercise active dashboards or storage
 contention and do not satisfy the console-impact acceptance gate.
+
+
+== Native account CLI (2026-09-08)
+
+`sibuna console` now supports `users`, `add-user`, `set-user`, `reset-password` and
+`revoke-sessions`. `console init-admin` aliases the existing exclusive local initializer.
+Running-node commands require an explicit origin, login username and private password
+file; an optional private factor file supplies a TOTP or recovery value. No command-line
+password, persistent session file, second embedded storage owner or shell/Python dispatch
+was added. Credential files are bounded regular files; POSIX group/other permissions are
+refused, and final CR/LF is removed. Caller-owned credential, response and JSON scratch
+buffers are erased. Creation/reset prints the acknowledged temporary credential as JSON;
+failed and incompatible replies do not print server bodies.
+
+The client permits HTTP only for literal loopback addresses and otherwise uses the
+standard library's certificate- and hostname-validated HTTPS. Authorities cannot contain
+credentials, paths, fragments, queries or encoded hosts. Redirects are refused. Each
+request has a twenty-second deadline, a 16 KiB response limit and owned headers; canceling
+joins outstanding I/O before borrowed buffers are released. Queries return eight rows and
+a next cursor. Edits require exact decimal target IDs and expected revisions; role/enabled
+changes require both fields. Temporary-password or mandatory-MFA accounts must finish
+those browser workflows before issuing management commands.
+
+Each command logs in, performs one bounded operation and closes that session, including
+validation/error paths. A closure failure is reported separately. Transport loss, deadline,
+invalid acknowledgments and unavailable storage remain unknown outcomes; operators must
+query current revisions before retrying. The client does not interpret a timeout as SQL
+cancellation or rollback. Production login and mutation limits are unchanged.
+
+Focused live tests pass private-file permissions, the bootstrap alias, creation, forced
+rotation refusal, read-only role refusal, expected-revision conflicts, revocation, reset
+and restart. Controlled peers verify redirects are not followed, oversized and unexpected
+sensitive replies produce no stdout, success and validation failure close sessions, and a
+stalled request is canceled within the deadline. All 287 native tests, live daemon scenarios, formatting and SID generation pass. A
+private recovery-code file authenticates successfully; missing and replayed factors fail
+without leaking the credential or leaving the CLI session open. Storage-off and console-off
+binaries refuse native management commands without starting a daemon; the clustered build
+also compiles. Native GeoIP/token commands,
+scoped bearer authorization and the remaining SID phases remain separate work.
 
 = References
 
