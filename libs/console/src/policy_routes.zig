@@ -1,0 +1,65 @@
+const std = @import("std");
+const p = @import("console_protocol");
+const App = @import("app.zig").App;
+const http = @import("http.zig");
+
+pub fn query(app: *App, context: *http.Context, testing: bool) !void {
+    const digest = try http.session(context);
+    if (!app.query_budget.allow(app.io, digest, app.now(), .query))
+        return http.fail(context, .too_many_requests, "CONSOLEQUERY");
+    var body: [8192]u8 = undefined;
+    var memory: [16384]u8 = undefined;
+    var fixed = std.heap.FixedBufferAllocator.init(&memory);
+    const parsed = try http.parse(struct {
+        offset: u8 = 0,
+        applied: ?[]const u8 = null,
+        path: []const u8 = "",
+        query: []const u8 = "",
+        ip: []const u8 = "",
+        user_agent: []const u8 = "",
+        body: []const u8 = "",
+        headers: []const struct { name: []const u8, value: []const u8 } = &.{},
+    }, context, &body, fixed.allocator());
+    defer parsed.deinit();
+    const fields = parsed.value;
+    const request: p.policies.Query = .{
+        .session_digest = digest,
+        .now = app.now(),
+        .offset = fields.offset,
+        .applied = if (fields.applied) |revision|
+            std.fmt.parseInt(u64, revision, 10) catch return error.InvalidRequest
+        else
+            null,
+    };
+    var operation: p.StorageRequest = .{ .policies_query = request };
+    if (testing) {
+        var input: p.policies.Test = .{
+            .query = request,
+            .path = try p.Bytes(512).init(fields.path),
+            .query_string = try p.Bytes(512).init(fields.query),
+            .ip = try p.Bytes(48).init(fields.ip),
+            .user_agent = try p.Bytes(256).init(fields.user_agent),
+            .body = try p.Bytes(2048).init(fields.body),
+        };
+        if (fields.headers.len > input.headers.len) return error.InvalidRequest;
+        for (fields.headers, 0..) |header, i| {
+            input.headers[i] = .{
+                .name = try p.Bytes(64).init(header.name),
+                .value = try p.Bytes(256).init(header.value),
+            };
+        }
+        input.header_count = @intCast(fields.headers.len);
+        operation = .{ .policies_test = input };
+    }
+    const result = try app.request(operation);
+    if (result == .page) {
+        return context.respond(.ok, "application/json", result.page.slice(), &.{});
+    }
+    return http.fail(context, switch (result.failed) {
+        .unauthorized => .unauthorized,
+        .forbidden => .forbidden,
+        .conflict => .conflict,
+        .invalid_input => .bad_request,
+        else => .service_unavailable,
+    }, "CONSOLEPOLICY");
+}

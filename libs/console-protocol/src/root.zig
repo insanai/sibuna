@@ -2,6 +2,7 @@
 const std = @import("std");
 
 pub const similarity = @import("similarity.zig");
+pub const policies = @import("policies.zig");
 pub const challenges = @import("challenges.zig");
 pub const events = @import("events.zig");
 pub const auth = @import("auth.zig");
@@ -109,6 +110,8 @@ pub const StorageRequest = union(enum) {
     incidents: struct { before_id: ?u64, limit: u16 },
     events_query: events.Query,
     events_similar: similarity.Query,
+    policies_query: policies.Query,
+    policies_test: policies.Test,
     policy_edit: struct {
         actor: u64,
         authorization_revision: u64,
@@ -164,6 +167,8 @@ pub fn Bytes(comptime capacity: usize) type {
 
 pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
     switch (request) {
+        .policies_query => |query| try policies.validate(query),
+        .policies_test => |input| try policies.validateTest(input),
         .events_query => |query| try events.validate(query),
         .events_similar => |query| try similarity.validate(query),
         inline .geo_begin, .geo_activate, .totp_begin => |input| {

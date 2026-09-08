@@ -37,6 +37,64 @@ const Fixture = struct {
     }
 };
 
+fn policySession(fx: *Fixture) !void {
+    _ = try fx.run(.{ .bootstrap = .{
+        .username = try p.Bytes(64).init("policy-admin"),
+        .password_hash = try p.Bytes(255).init("test-only-hash"),
+        .now = 100,
+    } });
+    const user = (try fx.run(.{ .auth_user = try p.Bytes(64).init("policy-admin") })).auth_user;
+    _ = try fx.run(.{ .session_create = .{
+        .user = user.id,
+        .revision = user.revision,
+        .digest = @splat(1),
+        .csrf_digest = @splat(2),
+        .now = 100,
+        .expires = 1000,
+    } });
+}
+
+test "policy inspection pins applied revisions and includes file and database rules" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try Fixture.open(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/policies",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try policySession(fx);
+    fx.owner.policy_text =
+        \\{"rules":[{"name":"file-allow","action":"ALLOW","path":"/from-file"}]}
+    ;
+    try fx.owner.db.exec(
+        t.allocator,
+        "INSERT INTO policies(id,name,priority,path_pattern,action,created_at,updated_at) " ++
+            "VALUES('test','database-deny',1,'/from-db','DENY',100,100)",
+    );
+    try fx.owner.tick();
+    var input: p.policies.Query = .{ .session_digest = @splat(1), .now = 101 };
+    const result = (try fx.run(.{ .policies_query = input })).page;
+    try t.expect(std.mem.indexOf(u8, result.slice(), "database-deny") != null);
+    try t.expect(std.mem.indexOf(u8, result.slice(), "file-allow") != null);
+    input.applied = fx.owner.version;
+    var request: p.policies.Test = .{
+        .query = input,
+        .path = try p.Bytes(512).init("/from-file"),
+        .ip = try p.Bytes(48).init("8.8.8.8"),
+    };
+    var decision = (try fx.run(.{ .policies_test = request })).page;
+    try t.expect(std.mem.indexOf(u8, decision.slice(), "\"action\":\"allow\"") != null);
+    request.query_string = try p.Bytes(512).init("q=<script>alert(1)</script>");
+    decision = (try fx.run(.{ .policies_test = request })).page;
+    try t.expect(std.mem.indexOf(u8, decision.slice(), "waf:xss") != null);
+    request.query.applied = fx.owner.version + 1;
+    try t.expectEqual(p.Failure.conflict, (try fx.run(.{ .policies_test = request })).failed);
+    _ = try fx.run(.{ .logout = .{ .digest = @splat(1), .now = 102 } });
+    try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .policies_query = input })).failed);
+}
+
 test "console storage ticks bootstrap, audit, authenticate and revoke atomically" {
     var tmp = t.tmpDir(.{});
     defer tmp.cleanup();

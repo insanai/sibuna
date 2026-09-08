@@ -4,6 +4,8 @@ const std = @import("std");
 const p = @import("console_protocol");
 pub const Access = enum { public, account, full };
 pub const Handler = enum {
+    policies,
+    policies_test,
     setup_status,
     login,
     session,
@@ -26,6 +28,18 @@ pub const Route = struct {
     handler: Handler,
 };
 const table = [_]Route{
+    .{
+        .path = "/console/api/policies/query",
+        .method = .POST,
+        .access = .full,
+        .handler = .policies,
+    },
+    .{
+        .path = "/console/api/policies/test",
+        .method = .POST,
+        .access = .full,
+        .handler = .policies_test,
+    },
     .{
         .path = "/console/api/events/similar",
         .method = .POST,

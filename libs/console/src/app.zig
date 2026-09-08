@@ -230,6 +230,8 @@ pub const App = struct {
             },
             .challenges => return @import("challenge_routes.zig").handle(self, context),
             .events_similar => return @import("similarity_routes.zig").query(self, context),
+            .policies => return @import("policy_routes.zig").query(self, context, false),
+            .policies_test => return @import("policy_routes.zig").query(self, context, true),
             .events => return @import("event_routes.zig").query(self, context, false),
             .events_export => return @import("event_routes.zig").query(self, context, true),
             .login => return auth.login(self, context),

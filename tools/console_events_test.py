@@ -113,6 +113,8 @@ def check(binary, h):
                     assert b"hidden-value" not in body
                 assert h.request(port, "POST", "/console/api/events/export",
                                  grouped, cookie, csrf)[0] == 429
+                import console_policy_test
+                console_policy_test.check(h, port, data_port, cookie, csrf)
             finally:
                 h.stop(proc)
     print("console-e2e: real incident queries, filtering, pagination and privacy boundaries passed")
