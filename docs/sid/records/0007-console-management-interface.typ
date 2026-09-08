@@ -880,7 +880,12 @@ API request the module described and post the result back), `ws` (send a frame),
 same module natively and assert rendered HTML strings.
 
 - *Rendering.* Pages render into a fixed 512 KB output buffer with a bounded HTML writer that
-  escapes by construction. A page re-renders only the panels whose inputs changed (each panel
+  escapes by construction. First-party HTML snippets use `{{ field }}` placeholders expanded
+  at build time by the native/Wasm-compatible `libs/html` renderer; Zig supplies runtime values.
+  Text is always escaped, unknown fields fail compilation, and templates cannot request raw
+  output. Snippets are capped at 32 KiB and 128 placeholders; caller-owned output remains bounded.
+  Conditions, bounded loops and snippet composition stay in Zig. This is separate from the
+  constrained operator-editable data-plane page templates. A page re-renders only the panels whose inputs changed (each panel
   is a function of a slice of state with an explicit version), so a one-second stats delta
   patches four tiles and one chart, not the document.
 - *Charts* are inline SVG produced by `charts.zig`: an external-outcome timeline (admitted, challenged, denied, banned, rate-limited and other), sparklines, horizontal bars, a donut, a histogram, and the orthographic earth globe and country table generated from the committed `world-110m.bin` (bounded longitude/latitude polygon vertices keyed by ISO code, projected to SVG at runtime; a flat-map SVG alone cannot supply rotating globe geometry). Decimate long timelines to the visible pixel width and enforce the output bound; output size depends on series and coordinate encoding, not just point count;

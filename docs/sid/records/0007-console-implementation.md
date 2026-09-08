@@ -394,3 +394,25 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
 - Deterministic storage tests scan 130 records in three parts, verify closest-match merging and
   per-part revocation. Live API tests cover CSRF/authentication, missing source vectors, exact
   IDs, bounded output and incident drill-down. UI progress and browser acceptance follow below.
+
+### Similarity interface and HTML snippets (2026-09-08)
+
+- The interface merges successive parts, exposes partial/complete coverage, and supports pause,
+  resume and exact incident inspection. Generation checks reject delayed responses after pause
+  or a replacement search. Returning from an incident preserves the previous search results.
+- Browser checks on the isolated daemon scanned 146 retained records with zero missing vectors,
+  rendered ten closest matches, opened the exact selected incident and restored completed results.
+  The 390-pixel layout had no horizontal overflow; desktop rendering was inspected at 1280 pixels.
+- Evaluated the sibling Kynetica ZMPL engine. Although used by its static generator, that engine
+  parses and renders at runtime, with CMS inheritance, filters, maps and allocator-owned output.
+  Sibuna instead adopts its strict lookup and escaping ideas in a small first-party renderer:
+  trusted HTML snippets with build-time placeholder expansion and runtime typed Zig values.
+- `libs/html` builds natively and for Wasm, allocates no memory, and writes to caller-owned output.
+  It has no raw HTML path or runtime template interpreter. Conditions and bounded loops stay in
+  Zig. Shared form fields, messages and the similarity page now use ordinary `.html` snippets;
+  Tailwind scanning and committed input digests include those files. Other pages can migrate
+  incrementally. Operator-editable data-plane templates require their separate constrained design.
+- Required `zig build fmt test sid` passed, including native render and live daemon tests. Six
+  compile-rejection probes verified missing fields, unclosed/invalid placeholders, unsupported
+  tags, source-size limits and placeholder-count limits. Runtime tests cover escaping expansion,
+  fixed-output exhaustion and exact 64-bit IDs. No measured data-plane subsystem changed.

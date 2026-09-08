@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @source "../src/**/*.zig";
+@source "../src/snippets/**/*.html";
 @plugin "daisyui" {
   themes: light --default, dark --prefersdark;
   include: button, input, card, badge, alert, table, tabs, menu, navbar, select, textarea, checkbox;

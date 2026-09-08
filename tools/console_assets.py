@@ -12,6 +12,8 @@ MANIFEST = WEB / "assets/MANIFEST.md"
 
 def manifest():
     files = sorted((ROOT / "apps/console-ui/src").glob("*.zig"))
+    files += sorted((ROOT / "apps/console-ui/src/snippets").glob("*.html"))
+    files += sorted((ROOT / "libs/html/src").glob("*.zig"))
     files += [WEB / name for name in ("tailwind.css", "package.json", "package-lock.json",
                                       "shell.html", "glue.js", "assets/console.css",
                                       "assets/world-110m.bin", "assets/GEOGRAPHY.md")]

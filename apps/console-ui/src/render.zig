@@ -148,20 +148,20 @@ pub fn field(
     value: []const u8,
     autocomplete: []const u8,
 ) Writer.Error!void {
-    try w.print(
-        "<label for=\"{s}\">{s}</label><input class=\"input input-bordered\" " ++
-            "id=\"{s}\" name=\"{s}\" type=\"{s}\" autocomplete=\"{s}\" required value=\"",
-        .{ id, label, id, id, kind, autocomplete },
-    );
-    try escape(w, value);
-    try w.writeAll("\">");
+    try @import("html").render(w, @embedFile("snippets/field.html"), .{
+        .id = id,
+        .label = label,
+        .kind = kind,
+        .value = value,
+        .autocomplete = autocomplete,
+    });
 }
 
 pub fn message(state: *const State, w: *Writer) Writer.Error!void {
     if (state.message.len == 0) return;
-    try w.writeAll("<p class=\"sb-error\" role=\"status\">");
-    try escape(w, state.message.slice());
-    try w.writeAll("</p>");
+    try @import("html").render(w, @embedFile("snippets/message.html"), .{
+        .message = state.message.slice(),
+    });
 }
 
 fn tiles(state: *const State, w: *Writer) Writer.Error!void {
@@ -220,16 +220,7 @@ fn timeline(state: *const State, w: *Writer) Writer.Error!void {
     try w.writeAll("</svg>");
 }
 
-pub fn escape(w: *Writer, value: []const u8) Writer.Error!void {
-    for (value) |byte| switch (byte) {
-        '&' => try w.writeAll("&amp;"),
-        '<' => try w.writeAll("&lt;"),
-        '>' => try w.writeAll("&gt;"),
-        '"' => try w.writeAll("&quot;"),
-        '\'' => try w.writeAll("&#39;"),
-        else => try w.writeByte(byte),
-    };
-}
+pub const escape = @import("html").escape;
 
 test "authentication renders no geographic or telemetry element and escapes input" {
     var state: State = .{ .phase = .login };
