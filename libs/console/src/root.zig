@@ -8,6 +8,7 @@ test {
     _ = @import("budget.zig");
     _ = @import("config.zig");
     _ = @import("ingress.zig");
+    _ = @import("bearer.zig");
     _ = @import("mailbox.zig");
 }
 

@@ -3017,6 +3017,24 @@ Idle RSS was 9,920 KiB with two workers and storage compiled but inactive.
 The 8,831-byte Wasm artifact is the proof solver. These primitive measurements do not
 exercise active credentials, dashboards or storage contention and do not pass console-impact.
 
+== Scoped bearer HTTP operations (2026-09-08)
+
+The native listener accepts opaque bearer credentials only on explicitly scoped statistics,
+event, policy, GeoIP and user routes. Each request validates the credential kind, current
+issuer authority, effective role and exact capability. Bearer calls can omit Origin and
+CSRF; a supplied Origin must still match the configured origin. Simultaneous Cookie and
+Authorization headers fail closed. Browser authentication, account-factor operations,
+geometry, subscriptions and token management remain cookie-session operations. Token
+catalogs use eight-row pages; creation discloses a value only in the acknowledged response,
+and revision-checked revocation/removal returns only the printable identifier. The shared
+mutation budget includes token writes while catalog reads retain their query allowance.
+
+The live daemon suite verifies all eight capabilities, cookie/bearer separation, malformed
+credentials, origin checks, policy and inspection commits, GeoIP activation, catalog
+pagination, expiry, conflict/revocation, creator revision changes and restart persistence.
+The combined native suite passes 298 tests. Native token commands and the token interface
+remain pending; this HTTP increment does not complete those acceptance gates.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

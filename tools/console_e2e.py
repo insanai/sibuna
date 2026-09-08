@@ -185,6 +185,8 @@ def check(binary):
     console_geo_cli_test.controlled(binary)
     import console_mutation_test
     console_mutation_test.check(binary, sys.modules[__name__])
+    import console_token_test
+    console_token_test.check(binary, sys.modules[__name__])
     import console_shutdown_test
     console_shutdown_test.check(binary, sys.modules[__name__])
     import console_totp_test

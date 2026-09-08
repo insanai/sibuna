@@ -4,6 +4,9 @@ const std = @import("std");
 const p = @import("console_protocol");
 pub const Access = enum { public, account, full };
 pub const Handler = enum {
+    tokens_query,
+    tokens_create,
+    tokens_revoke,
     users_query,
     users_create,
     users_change,
@@ -34,14 +37,41 @@ pub const Route = struct {
     method: std.http.Method,
     access: Access,
     action: p.Action = .read,
+    token_scope: ?p.tokens.Scope = null,
+    // Administrator-only reads do not consume the management mutation allowance.
+    mutation: bool = false,
     handler: Handler,
 };
 const table = [_]Route{
+    .{
+        .path = "/console/api/tokens/query",
+        .method = .POST,
+        .access = .full,
+        .action = .manage_users,
+        .handler = .tokens_query,
+    },
+    .{
+        .path = "/console/api/tokens/create",
+        .method = .POST,
+        .access = .full,
+        .action = .manage_users,
+        .handler = .tokens_create,
+        .mutation = true,
+    },
+    .{
+        .path = "/console/api/tokens/revoke",
+        .method = .POST,
+        .access = .full,
+        .action = .manage_users,
+        .handler = .tokens_revoke,
+        .mutation = true,
+    },
     .{
         .path = "/console/api/users/query",
         .method = .POST,
         .access = .full,
         .handler = .users_query,
+        .token_scope = .users_read,
     },
     .{
         .path = "/console/api/users/create",
@@ -49,6 +79,8 @@ const table = [_]Route{
         .access = .full,
         .action = .manage_users,
         .handler = .users_create,
+        .mutation = true,
+        .token_scope = .users_write,
     },
     .{
         .path = "/console/api/users/change",
@@ -56,18 +88,22 @@ const table = [_]Route{
         .access = .full,
         .action = .manage_users,
         .handler = .users_change,
+        .mutation = true,
+        .token_scope = .users_write,
     },
     .{
         .path = "/console/api/minutes",
         .method = .POST,
         .access = .full,
         .handler = .minutes,
+        .token_scope = .stats_read,
     },
     .{
         .path = "/console/api/timeline",
         .method = .POST,
         .access = .full,
         .handler = .timeline,
+        .token_scope = .stats_read,
     },
     .{
         .path = "/console/api/inspection/edit",
@@ -75,18 +111,22 @@ const table = [_]Route{
         .access = .full,
         .action = .manage_policy,
         .handler = .inspection_edit,
+        .mutation = true,
+        .token_scope = .policy_write,
     },
     .{
         .path = "/console/api/rankings",
         .method = .GET,
         .access = .full,
         .handler = .rankings,
+        .token_scope = .stats_read,
     },
     .{
         .path = "/console/api/policies/read",
         .method = .POST,
         .access = .full,
         .handler = .policy_read,
+        .token_scope = .policy_read,
     },
     .{
         .path = "/console/api/policies/edit",
@@ -94,42 +134,50 @@ const table = [_]Route{
         .access = .full,
         .action = .manage_policy,
         .handler = .policy_edit,
+        .mutation = true,
+        .token_scope = .policy_write,
     },
     .{
         .path = "/console/api/policies/query",
         .method = .POST,
         .access = .full,
         .handler = .policies,
+        .token_scope = .policy_read,
     },
     .{
         .path = "/console/api/policies/test",
         .method = .POST,
         .access = .full,
         .handler = .policies_test,
+        .token_scope = .policy_read,
     },
     .{
         .path = "/console/api/events/similar",
         .method = .POST,
         .access = .full,
         .handler = .events_similar,
+        .token_scope = .events_read,
     },
     .{
         .path = "/console/api/challenges",
         .method = .POST,
         .access = .full,
         .handler = .challenges,
+        .token_scope = .stats_read,
     },
     .{
         .path = "/console/api/events/export",
         .method = .POST,
         .access = .full,
         .handler = .events_export,
+        .token_scope = .events_read,
     },
     .{
         .path = "/console/api/events/query",
         .method = .POST,
         .access = .full,
         .handler = .events,
+        .token_scope = .events_read,
     },
     .{
         .path = "/console/api/setup",
@@ -166,6 +214,7 @@ const table = [_]Route{
         .method = .GET,
         .access = .full,
         .handler = .stats,
+        .token_scope = .stats_read,
     },
     .{
         .path = "/console/stream",
@@ -178,6 +227,7 @@ const table = [_]Route{
         .method = .GET,
         .access = .full,
         .handler = .geoip,
+        .token_scope = .geoip_read,
     },
     .{
         .path = "/console/api/geoip",
@@ -185,6 +235,8 @@ const table = [_]Route{
         .access = .full,
         .action = .manage_settings,
         .handler = .geoip,
+        .token_scope = .geoip_write,
+        .mutation = true,
     },
     .{
         .path = "/console/api/totp",

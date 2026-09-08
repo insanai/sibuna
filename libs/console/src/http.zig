@@ -1,5 +1,6 @@
 const std = @import("std");
 const serve = @import("serve");
+const p = @import("console_protocol");
 pub const Context = serve.Context;
 pub const digest = std.crypto.hash.sha2.Sha256.hash;
 
@@ -25,6 +26,14 @@ pub fn fail(context: *Context, status: std.http.Status, code: []const u8) Contex
 fn failureHint(code: []const u8) []const u8 {
     if (std.mem.eql(u8, code, "CONSOLEMUTATION"))
         return "Wait up to one minute; a session permits sixty management mutations per minute.";
+    if (std.mem.eql(u8, code, "CONSOLETOKENFULL"))
+        return "Revoke unused credentials or remove inactive tokens, then retry.";
+    if (std.mem.eql(u8, code, "CONSOLETOKEN409"))
+        return "Refresh the token list and expected revision before retrying.";
+    if (std.mem.eql(u8, code, "CONSOLETOKEN403"))
+        return "Use an administrator session and complete required two-factor setup.";
+    if (std.mem.eql(u8, code, "CONSOLETOKENS"))
+        return "Outcome unknown. Query the token list before retrying.";
     return "Check your input or sign in again.";
 }
 
@@ -71,11 +80,23 @@ pub fn parse(
     return std.json.parseFromSlice(T, allocator, body, .{}) catch error.InvalidRequest;
 }
 
-pub fn session(context: *Context) error{InvalidRequest}![32]u8 {
-    const raw = try sessionToken(context);
+pub const Credential = struct { digest: [32]u8, kind: p.CredentialKind };
+
+pub fn credential(context: *Context) error{InvalidRequest}!Credential {
+    if (try context.header("Authorization")) |header| {
+        if (try context.header("Cookie") != null) return error.InvalidRequest;
+        return .{ .digest = try @import("bearer.zig").parse(header), .kind = .bearer };
+    }
+    var raw = try sessionToken(context);
+    defer std.crypto.secureZero(u8, &raw);
     var hashed: [32]u8 = undefined;
     digest(&raw, &hashed, .{});
-    return hashed;
+    return .{ .digest = hashed, .kind = .session };
+}
+
+// Compatibility name for management handlers; both kinds use the credential registry.
+pub fn session(context: *Context) error{InvalidRequest}![32]u8 {
+    return (try credential(context)).digest;
 }
 
 pub fn csrfToken(raw: [32]u8) [32]u8 {

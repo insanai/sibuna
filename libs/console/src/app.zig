@@ -226,7 +226,8 @@ pub const App = struct {
         const method = context.request.head.method;
         if (method == .GET and std.mem.eql(u8, path, "/console/assets/world-110m.bin")) {
             const identity = try self.principal(context) orelse return;
-            if (self.restricted(identity)) return http.fail(context, .forbidden, "CONSOLE403");
+            if (self.restricted(identity) or identity.token_id != null)
+                return http.fail(context, .forbidden, "CONSOLE403");
             return context.respond(
                 .ok,
                 "application/octet-stream",
@@ -240,28 +241,51 @@ pub const App = struct {
             return context.respond(.ok, "text/html; charset=utf-8", shell, &.{});
         const route = @import("routes.zig").find(path, method) orelse
             return http.fail(context, .not_found, "CONSOLE404");
+        const automation = try context.header("Authorization") != null;
+        if (automation and route.token_scope == null)
+            return http.fail(context, .forbidden, "CONSOLE403");
         if (method == .POST) {
-            const origin = try context.header("Origin") orelse return error.InvalidRequest;
-            if (!std.mem.eql(u8, origin, self.config.origin.slice())) return error.InvalidRequest;
+            if (try context.header("Origin")) |origin| {
+                if (!std.mem.eql(u8, origin, self.config.origin.slice())) {
+                    return error.InvalidRequest;
+                }
+            } else if (!automation) return error.InvalidRequest;
         }
         var identity: ?p.Principal = null;
         if (route.access != .public) {
-            identity = try self.principal(context) orelse return;
-            if ((route.access == .full and self.restricted(identity.?)) or
-                !identity.?.role.allows(route.action))
-                return http.fail(context, .forbidden, "CONSOLE403");
-            if (method == .POST) {
-                try http.csrf(context, identity.?.csrf_digest);
-                // Count every authorized mutation once, before parsing or expensive work.
-                if (route.action != .read and !self.query_budget.allow(
-                    self.io,
-                    try http.session(context),
-                    self.now(),
-                    .mutation,
-                )) return http.fail(context, .too_many_requests, "CONSOLEMUTATION");
-            }
+            identity = try self.routePrincipal(context, route) orelse return;
         }
         return self.executeRoute(context, route, identity);
+    }
+
+    fn routePrincipal(
+        self: *App,
+        context: *http.Context,
+        route: @import("routes.zig").Route,
+    ) !?p.Principal {
+        const identity = try self.principal(context) orelse return null;
+        const access_restricted = route.access == .full and self.restricted(identity);
+        const scope_missing = if (identity.token_id != null)
+            route.token_scope == null or identity.scopes & route.token_scope.?.bit() == 0
+        else
+            false;
+        if (access_restricted or scope_missing or !identity.role.allows(route.action)) {
+            try http.fail(context, .forbidden, "CONSOLE403");
+            return null;
+        }
+        if (context.request.head.method == .POST) {
+            if (identity.token_id == null) try http.csrf(context, identity.csrf_digest);
+            if (route.mutation and !self.query_budget.allow(
+                self.io,
+                try http.session(context),
+                self.now(),
+                .mutation,
+            )) {
+                try http.fail(context, .too_many_requests, "CONSOLEMUTATION");
+                return null;
+            }
+        }
+        return identity;
     }
 
     fn executeRoute(
@@ -270,17 +294,20 @@ pub const App = struct {
         route: @import("routes.zig").Route,
         identity: ?p.Principal,
     ) !void {
+        const users = @import("user_routes.zig");
+        const tokens = @import("token_routes.zig");
         switch (route.handler) {
-            .users_query, .users_create, .users_change => return @import("user_routes.zig").handle(
+            .users_query, .users_create, .users_change => return users.dispatch(
                 self,
                 context,
                 identity.?,
-                switch (route.handler) {
-                    .users_query => .query,
-                    .users_create => .create,
-                    .users_change => .change,
-                    else => unreachable,
-                },
+                route.handler,
+            ),
+            .tokens_query, .tokens_create, .tokens_revoke => return tokens.handle(
+                self,
+                context,
+                identity.?,
+                route.handler,
             ),
             .setup_status => {
                 const status = try self.request(.setup_status);
@@ -337,12 +364,13 @@ pub const App = struct {
     }
 
     pub fn principal(self: *App, context: *http.Context) !?p.Principal {
-        const digest = http.session(context) catch {
+        const credential = http.credential(context) catch {
             try http.fail(context, .unauthorized, "CONSOLE401");
             return null;
         };
         const result = try self.request(.{ .authorize = .{
-            .session_digest = digest,
+            .session_digest = credential.digest,
+            .kind = credential.kind,
             .touch = true,
         } });
         if (result != .authorized) {

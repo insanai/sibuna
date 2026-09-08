@@ -4,6 +4,20 @@ const App = @import("app.zig").App;
 const http = @import("http.zig");
 pub const Kind = enum { query, create, change };
 
+pub fn dispatch(
+    app: *App,
+    context: *http.Context,
+    principal: p.Principal,
+    route: @import("routes.zig").Handler,
+) !void {
+    return handle(app, context, principal, switch (route) {
+        .users_query => .query,
+        .users_create => .create,
+        .users_change => .change,
+        else => unreachable,
+    });
+}
+
 pub fn handle(app: *App, context: *http.Context, principal: p.Principal, kind: Kind) !void {
     const digest = try http.session(context);
     if (kind == .query and !app.query_budget.allow(app.io, digest, app.now(), .query))
