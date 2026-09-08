@@ -1,7 +1,23 @@
 //! Allocation-free console producers. The daemon compiles all references out without console.
 const std = @import("std");
 const Queue = @import("ring.zig").BoundedQueue;
-pub const Outcome = enum(u8) { admitted, challenged, denied };
+pub const Outcome = enum(u8) { admitted, challenged, denied, banned, rate_limited, other };
+/// Monotonic loads form a bounded observation, not a simultaneous multi-counter snapshot.
+pub const Totals = struct {
+    admitted: u64 = 0,
+    challenged: u64 = 0,
+    denied: u64 = 0,
+    banned: u64 = 0,
+    rate_limited: u64 = 0,
+    other: u64 = 0,
+    origin_4xx: u64 = 0,
+    origin_5xx: u64 = 0,
+
+    pub fn requests(self: Totals) u64 {
+        return self.admitted +% self.challenged +% self.denied +%
+            self.banned +% self.rate_limited +% self.other;
+    }
+};
 pub const Record = struct {
     second: u64,
     outcome: Outcome,
@@ -29,6 +45,9 @@ pub const ConsoleTelemetry = struct {
     admitted: std.atomic.Value(u64) = .init(0),
     challenged: std.atomic.Value(u64) = .init(0),
     denied: std.atomic.Value(u64) = .init(0),
+    banned: std.atomic.Value(u64) = .init(0),
+    rate_limited: std.atomic.Value(u64) = .init(0),
+    other: std.atomic.Value(u64) = .init(0),
     origin_4xx: std.atomic.Value(u64) = .init(0),
     origin_5xx: std.atomic.Value(u64) = .init(0),
     dropped: std.atomic.Value(u64) = .init(0),
@@ -36,6 +55,13 @@ pub const ConsoleTelemetry = struct {
 
     pub fn init() ConsoleTelemetry {
         return .{ .queue = Queue(Record, 4096).init() };
+    }
+
+    pub fn totals(self: *const ConsoleTelemetry) Totals {
+        var result: Totals = .{};
+        inline for (@typeInfo(Totals).@"struct".fields) |field|
+            @field(result, field.name) = @field(self, field.name).load(.monotonic);
+        return result;
     }
 
     pub fn record(
@@ -50,6 +76,9 @@ pub const ConsoleTelemetry = struct {
             .admitted => &self.admitted,
             .challenged => &self.challenged,
             .denied => &self.denied,
+            .banned => &self.banned,
+            .rate_limited => &self.rate_limited,
+            .other => &self.other,
         };
         _ = counter.fetchAdd(1, .monotonic);
         // xorshift64*: private state avoids a contended sampling counter. Masking a
@@ -91,4 +120,19 @@ test "exact outcomes remain complete when the bounded sample queue overflows" {
     telemetry.origin(200);
     try t.expectEqual(@as(u64, 1), telemetry.origin_4xx.load(.monotonic));
     try t.expectEqual(@as(u64, 1), telemetry.origin_5xx.load(.monotonic));
+}
+
+test "external outcomes partition traffic independently of origin response classes" {
+    const t = std.testing;
+    const telemetry = try t.allocator.create(ConsoleTelemetry);
+    defer t.allocator.destroy(telemetry);
+    telemetry.* = ConsoleTelemetry.init();
+    inline for (comptime std.meta.tags(Outcome)) |outcome|
+        telemetry.record(outcome, 1, "8.8.8.8", "/", "test");
+    telemetry.origin(404);
+    telemetry.origin(503);
+    const snapshot = telemetry.totals();
+    try t.expectEqual(@as(u64, 6), snapshot.requests());
+    inline for (comptime std.meta.tags(Outcome)) |outcome|
+        try t.expectEqual(@as(u64, 1), @field(snapshot, @tagName(outcome)));
 }

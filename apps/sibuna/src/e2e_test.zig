@@ -213,6 +213,7 @@ test "rule quotas preserve the global limiter and configured bans block other lo
     const resp = try std.testing.allocator.create(Response);
     defer std.testing.allocator.destroy(resp);
     const port = quota_fixture.port;
+    const before = if (console_enabled) quota_fixture.telemetry.totals() else {};
     for (0..9) |index| {
         try get(port, "/quota-global", "203.0.113.232", "curl", "", resp);
         try std.testing.expectEqual(@as(u16, if (index < 8) 200 else 429), resp.status());
@@ -224,12 +225,59 @@ test "rule quotas preserve the global limiter and configured bans block other lo
     try std.testing.expectEqualStrings("60", resp.header("retry-after").?);
     try get(port, "/robots.txt", "203.0.113.233", "curl", "", resp);
     try std.testing.expectEqual(@as(u16, 403), resp.status());
+    if (console_enabled) {
+        const after = quota_fixture.telemetry.totals();
+        try std.testing.expectEqual(@as(u64, 12), after.requests() - before.requests());
+        try std.testing.expectEqual(@as(u64, 9), after.admitted - before.admitted);
+        try std.testing.expectEqual(@as(u64, 2), after.rate_limited - before.rate_limited);
+        try std.testing.expectEqual(@as(u64, 1), after.banned - before.banned);
+        try std.testing.expectEqual(before.denied, after.denied);
+    }
 }
 
 fn captureAudit(_: ?*anyopaque, incident: server.Incident) void {
     if (!std.mem.eql(u8, incident.category, "audit:sqli")) return;
     std.debug.assert(incident.payload.len == 0 and incident.evidence.version == 0);
     _ = audited_requests.fetchAdd(1, .monotonic);
+}
+
+test "incomplete external bodies have one other outcome while internal and invalid heads do not" {
+    if (!console_enabled) return;
+    boot_once.call();
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    const telemetry = &proxy_fixture.telemetry;
+    const before = telemetry.totals();
+    try roundTrip(
+        proxy_fixture.port,
+        "POST /incomplete HTTP/1.1\r\nHost: t\r\nContent-Length: 20\r\n\r\nshort",
+        resp,
+    );
+    try std.testing.expectEqual(@as(u16, 400), resp.status());
+    const counted = telemetry.totals();
+    try std.testing.expectEqual(before.other + 1, counted.other);
+    try std.testing.expectEqual(before.requests() + 1, counted.requests());
+    try roundTrip(
+        proxy_fixture.port,
+        "POST /__sibuna/unknown HTTP/1.1\r\nHost: t\r\nContent-Length: 20\r\n\r\nshort",
+        resp,
+    );
+    try std.testing.expectEqual(@as(u16, 400), resp.status());
+    try roundTrip(proxy_fixture.port, "NOT HTTP\r\n\r\n", resp);
+    try std.testing.expectEqual(@as(u16, 400), resp.status());
+    try std.testing.expectEqual(counted.requests(), telemetry.totals().requests());
+    const submitted = telemetry.challenges.submitted.load(.monotonic);
+    const cause = @intFromEnum(telemetry_store.challenge_metrics.Cause.malformed_solution);
+    const rejected = telemetry.challenges.causes[cause].load(.monotonic);
+    try roundTrip(
+        proxy_fixture.port,
+        "POST /__sibuna/verify HTTP/1.1\r\nHost: t\r\nContent-Length: 20\r\n\r\nshort",
+        resp,
+    );
+    try std.testing.expectEqual(@as(u16, 400), resp.status());
+    try std.testing.expectEqual(submitted + 1, telemetry.challenges.submitted.load(.monotonic));
+    try std.testing.expectEqual(rejected + 1, telemetry.challenges.causes[cause].load(.monotonic));
+    try std.testing.expectEqual(counted.requests(), telemetry.totals().requests());
 }
 
 test "audit inspection records findings while other inspection, rules and reputation still deny" {

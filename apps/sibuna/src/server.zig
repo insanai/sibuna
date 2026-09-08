@@ -396,6 +396,13 @@ fn serveOne(c: *Connection) !bool {
     const fits = @min(declared, max_request_bytes - head_len);
     if (fits > 0) {
         c.reader.fill(head_len + fits) catch {
+            // The head identifies an external request even when its body is incomplete.
+            var incomplete = RequestContext.init(c, &req, declared);
+            recordOutcome(&incomplete, .other);
+            if (req.method == .POST and std.mem.eql(u8, req.path, "/__sibuna/verify")) {
+                observation.submit(c.state);
+                observation.reject(c.state, .malformed_solution);
+            }
             try net.response.write400(c.writer, "Truncated request body");
             return false;
         };
@@ -410,6 +417,8 @@ fn serveOne(c: *Connection) !bool {
 }
 
 const RequestContext = struct {
+    outcome_recorded: if (build_options.console) bool else void =
+        if (build_options.console) false else {},
     c: *Connection,
     req: *net.Request,
     declared_body: usize,
@@ -459,6 +468,11 @@ fn resolveClientIp(c: *Connection, req: *const net.Request) []const u8 {
 }
 
 fn dispatch(ctx: *RequestContext) !bool {
+    // Every parsed external request gets one selected outcome, even on an early error.
+    // Unparseable heads cannot be classified as external and remain parse_errors only.
+    defer if (build_options.console) {
+        if (!ctx.outcome_recorded) recordOutcome(ctx, .other);
+    };
     const st = ctx.state();
     Metrics.bump(&st.metrics.requests);
     const submission = ctx.req.method == .POST and
@@ -467,7 +481,7 @@ fn dispatch(ctx: *RequestContext) !bool {
     if (st.bans.isBanned(ctx.client_ip, ctx.now)) {
         if (submission) observation.reject(st, .address_banned);
         Metrics.bump(&st.metrics.banned);
-        recordOutcome(ctx, .denied);
+        recordOutcome(ctx, .banned);
         try net.response.writeText(
             ctx.writer(),
             .forbidden,
@@ -492,7 +506,7 @@ fn dispatch(ctx: *RequestContext) !bool {
 fn rateLimited(ctx: *RequestContext, rate: store.rate_limiter.Decision, ban_seconds: u32) !bool {
     const st = ctx.state();
     Metrics.bump(&st.metrics.rate_limited);
-    recordOutcome(ctx, .denied);
+    recordOutcome(ctx, .rate_limited);
     // Capacity pressure refuses this request, but must not become an address-wide ban.
     const ban = if (rate.capacity_exhausted) 0 else ban_seconds;
     if (ban != 0) st.bans.ban(ctx.client_ip, ctx.now +| ban, ctx.now);
@@ -599,6 +613,8 @@ fn recordOutcome(ctx: *RequestContext, outcome: store.telemetry.Outcome) void {
     if (!build_options.console) return;
     const telemetry = ctx.state().telemetry orelse return;
     if (std.mem.startsWith(u8, ctx.req.path, "/__sibuna/")) return;
+    std.debug.assert(!ctx.outcome_recorded);
+    ctx.outcome_recorded = true;
     telemetry.record(outcome, ctx.now, ctx.client_ip, ctx.req.path, ctx.user_agent);
 }
 
