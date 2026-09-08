@@ -80,6 +80,9 @@ pub const App = struct {
         while (std.mem.allEqual(u8, &self.history.boot, 0)) io.random(&self.history.boot);
         try self.geo_job.restore();
         errdefer self.geo.deinit();
+        self.stats.boot = self.history.boot;
+        self.stats.node = cfg.node_id;
+        self.stats.started_ms = @import("stats.zig").monotonicMs(io);
         self.collector = try std.Thread.spawn(
             .{ .stack_size = 256 * 1024 },
             collect,

@@ -72,6 +72,13 @@ def delivery(port, cookie):
         assert messages[1]["op"] == "delta" and messages[1]["seq"] == 1
         assert messages[0]["epoch"] == messages[1]["epoch"]
         assert messages[1]["data"]["timestamp"] > messages[0]["data"]["timestamp"]
+        before, after = (message["data"] for message in messages[:2])
+        assert before["boot"] == after["boot"] and any(before["boot"])
+        assert after["uptime_ms"] > before["uptime_ms"]
+        assert before["outcomes_version"] == after["outcomes_version"] == 1
+        for data in (before, after):
+            assert data["requests"] == sum(data[key] for key in (
+                "admitted", "challenged", "denied", "banned", "rate_limited", "other"))
         return stream
     except BaseException:
         stream.close()

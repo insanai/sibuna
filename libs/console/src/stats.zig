@@ -9,6 +9,11 @@ pub const Snapshot = @import("console_protocol").StatsSnapshot;
 
 /// The collector owns the single queue consumer; HTTP and streaming writers copy a snapshot.
 pub const Stats = struct {
+    node: u32 = 0,
+    boot: [16]u8 = @splat(0),
+    started_ms: u64 = 0,
+    expired_samples: u64 = 0,
+    future_samples: u64 = 0,
     mutex: std.Io.Mutex = .init,
     buckets: [60]struct {
         second: u64 = 0,
@@ -31,7 +36,14 @@ pub const Stats = struct {
         // One bounded drain per observation; input beyond capacity has explicit loss counters.
         for (0..4096) |_| {
             const record = telemetry.queue.pop() orelse break;
-            if (record.second > now or now - record.second >= 60) continue;
+            if (record.second > now) {
+                self.future_samples +|= 1;
+                continue;
+            }
+            if (now - record.second >= 60) {
+                self.expired_samples +|= 1;
+                continue;
+            }
             self.rankings.add(&record);
             const bucket = &self.buckets[record.second % 60];
             if (bucket.second != record.second) bucket.* = .{ .second = record.second };
@@ -83,28 +95,42 @@ pub const Stats = struct {
             unknown += bucket.samples;
             for (bucket.countries, &countries) |count, *total| total.* += count;
         }
-        const admitted = telemetry.admitted.load(.monotonic);
-        const challenged = telemetry.challenged.load(.monotonic);
-        const denied = telemetry.denied.load(.monotonic);
+        const totals = telemetry.totals();
         const ranked = rank(&countries);
         return .{
+            .outcomes_version = 1,
+            .node = self.node,
+            .boot = self.boot,
+            .uptime_ms = if (self.started_ms == 0) 0 else monotonicMs(io) -| self.started_ms,
             .geoip_available = self.geo_available,
             .countries = ranked.top,
             .other_country_samples = ranked.other,
-            .requests = admitted +% challenged +% denied,
-            .admitted = admitted,
-            .challenged = challenged,
-            .denied = denied,
-            .origin_4xx = telemetry.origin_4xx.load(.monotonic),
-            .origin_5xx = telemetry.origin_5xx.load(.monotonic),
+            .requests = totals.requests(),
+            .admitted = totals.admitted,
+            .challenged = totals.challenged,
+            .denied = totals.denied,
+            .banned = totals.banned,
+            .rate_limited = totals.rate_limited,
+            .other = totals.other,
+            .origin_4xx = totals.origin_4xx,
+            .origin_5xx = totals.origin_5xx,
             .incidents = metrics.incidents_persisted.load(.monotonic),
             .incidents_dropped = metrics.incidents_dropped.load(.monotonic),
             .sample_loss = telemetry.dropped.load(.monotonic),
+            .expired_samples = self.expired_samples,
+            .future_samples = self.future_samples,
             .unknown_samples = unknown,
             .timestamp = now,
         };
     }
 };
+
+pub fn monotonicMs(io: std.Io) u64 {
+    return @intCast(@max(0, @divTrunc(
+        std.Io.Clock.awake.now(io).nanoseconds,
+        std.time.ns_per_ms,
+    )));
+}
 
 test "collector excludes expired and future samples independently of subscribers" {
     const t = std.testing;
@@ -121,6 +147,8 @@ test "collector excludes expired and future samples independently of subscribers
     var geo: Geo = .{};
     stats.collect(t.io, telemetry, 100, &geo);
     try t.expectEqual(@as(u64, 2), stats.snapshot(t.io, telemetry, &metrics, 100).unknown_samples);
+    try t.expectEqual(@as(u64, 2), stats.snapshot(t.io, telemetry, &metrics, 100).expired_samples);
+    try t.expectEqual(@as(u64, 1), stats.snapshot(t.io, telemetry, &metrics, 100).future_samples);
     try t.expectEqual(@as(u64, 1), stats.snapshot(t.io, telemetry, &metrics, 101).unknown_samples);
     try t.expectEqual(@as(u64, 0), stats.snapshot(t.io, telemetry, &metrics, 160).unknown_samples);
     try t.expect(telemetry.queue.pop() == null);

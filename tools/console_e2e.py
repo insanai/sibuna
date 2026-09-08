@@ -139,6 +139,8 @@ def check(binary):
                 geo_import(console_port, cookie, csrf)
                 console_ws_test.idle_delivery(console_port, cookie)
                 stream = console_ws_test.delivery(console_port, cookie)
+                before_restart = json.loads(request(
+                    console_port, "GET", "/console/api/stats", cookie=cookie)[2])
                 assert request(console_port, "POST", "/console/api/logout", cookie=cookie)[0] == 400
                 assert request(console_port, "POST", "/console/api/logout",
                                cookie=cookie, csrf=csrf)[0] == 200
@@ -153,6 +155,10 @@ def check(binary):
                 login = request(console_port, "POST", "/console/api/login", credentials)
                 assert login[0] == 200
                 cookie = login[1]["Set-Cookie"].split(";", 1)[0]
+                after_restart = json.loads(request(
+                    console_port, "GET", "/console/api/stats", cookie=cookie)[2])
+                assert before_restart["boot"] != after_restart["boot"]
+                assert any(after_restart["boot"]) and after_restart["requests"] == 0
                 metadata = request(console_port, "GET", "/console/api/geoip", cookie=cookie)
                 assert json.loads(metadata[2])["ranges"] == 200
             finally:

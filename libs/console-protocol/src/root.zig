@@ -213,24 +213,77 @@ test "owned payload boundaries and pagination reject unbounded input" {
     try t.expect(!Role.operator.allows(.manage_users));
 }
 
-pub const CountryCount = struct { code: u16 = 0, samples: u64 = 0 };
+pub const CountryCount = struct {
+    code: u16 = 0,
+    samples: u64 = 0,
+
+    pub fn jsonStringify(
+        self: CountryCount,
+        writer: *std.json.Stringify,
+    ) std.json.Stringify.Error!void {
+        try writer.beginObject();
+        try writer.objectField("code");
+        try writer.write(self.code);
+        try writer.objectField("samples");
+        try writeCounter(writer, self.samples);
+        try writer.endObject();
+    }
+};
 pub const StatsSnapshot = struct {
+    /// Version zero denotes the older combined-denial counters and unknown boot identity.
+    outcomes_version: u8 = 0,
+    node: u32 = 0,
+    boot: [16]u8 = @splat(0),
+    uptime_ms: u64 = 0,
     requests: u64,
     admitted: u64,
     challenged: u64,
     denied: u64,
+    banned: u64 = 0,
+    rate_limited: u64 = 0,
+    other: u64 = 0,
     origin_4xx: u64,
     origin_5xx: u64,
     incidents: u64,
     incidents_dropped: u64,
     sample_loss: u64,
+    expired_samples: u64 = 0,
+    future_samples: u64 = 0,
     sample_probability: []const u8 = "1/64",
     geoip_available: bool = false,
     countries: [32]CountryCount = @splat(.{}),
     other_country_samples: u64 = 0,
     unknown_samples: u64,
     timestamp: u64,
+
+    pub fn jsonStringify(
+        self: StatsSnapshot,
+        writer: *std.json.Stringify,
+    ) std.json.Stringify.Error!void {
+        try writer.beginObject();
+        inline for (@typeInfo(StatsSnapshot).@"struct".fields) |field| {
+            try writer.objectField(field.name);
+            if (comptime std.mem.eql(u8, field.name, "boot")) {
+                // Random bytes can be valid UTF-8. Always emit an array, never an accidental
+                // string selected by the standard serializer's byte-slice convenience rule.
+                try writer.beginArray();
+                for (self.boot) |byte| try writer.write(byte);
+                try writer.endArray();
+            } else if (field.type == u64) {
+                try writeCounter(writer, @field(self, field.name));
+            } else try writer.write(@field(self, field.name));
+        }
+        try writer.endObject();
+    }
 };
+
+fn writeCounter(writer: *std.json.Stringify, value: u64) std.json.Stringify.Error!void {
+    if (value < (1 << 53)) return writer.write(value);
+    // Fixed browser glue passes through JSON.parse; decimal strings preserve large counts.
+    var buffer: [20]u8 = undefined;
+    const text = std.fmt.bufPrint(&buffer, "{d}", .{value}) catch unreachable;
+    try writer.write(text);
+}
 
 pub fn validUsername(username: []const u8) bool {
     if (username.len == 0 or username.len > 64) return false;
