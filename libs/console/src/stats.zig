@@ -52,6 +52,19 @@ pub const Stats = struct {
         return self.rankings.snapshot(now);
     }
 
+    pub fn takeClosedRanking(self: *Stats, io: std.Io, now: u64) ?@import("rankings.zig").Minute {
+        self.mutex.lockUncancelable(io);
+        defer self.mutex.unlock(io);
+        for (&self.rankings.minutes) |*slot| {
+            const minute = slot.minute orelse continue;
+            if (minute >= now / 60 or now / 60 - minute < 2) continue;
+            const result = slot.*;
+            slot.minute = null;
+            return result;
+        }
+        return null;
+    }
+
     pub fn snapshot(
         self: *Stats,
         io: std.Io,
@@ -109,6 +122,18 @@ test "collector excludes expired and future samples independently of subscribers
     try t.expectEqual(@as(u64, 1), stats.snapshot(t.io, telemetry, &metrics, 101).unknown_samples);
     try t.expectEqual(@as(u64, 0), stats.snapshot(t.io, telemetry, &metrics, 160).unknown_samples);
     try t.expect(telemetry.queue.pop() == null);
+}
+
+test "ranking minute seals only after the entire late-sample horizon has expired" {
+    var stats: Stats = .{};
+    var record = std.mem.zeroes(store.telemetry.Record);
+    record.second = 119;
+    stats.rankings.add(&record);
+    try std.testing.expect(stats.takeClosedRanking(std.testing.io, 179) == null);
+    const minute = stats.takeClosedRanking(std.testing.io, 180).?;
+    try std.testing.expectEqual(@as(u64, 1), minute.minute.?);
+    try std.testing.expectEqual(@as(u64, 1), minute.paths.samples);
+    try std.testing.expect(stats.takeClosedRanking(std.testing.io, 180) == null);
 }
 
 const Ranked = struct { top: [32]p.CountryCount = @splat(.{}), other: u64 = 0 };

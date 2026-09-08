@@ -25,6 +25,7 @@ pub const App = struct {
     telemetry: *store.ConsoleTelemetry,
     metrics: *const core.Metrics,
     stats: Stats = .{},
+    history: @import("rankings_journal.zig").Journal = .{},
     challenge_defaults: p.challenges.Defaults = .{},
     geo: @import("geoip_generation.zig").Registry = .{},
     geo_job: @import("geoip_job.zig").Job = .{},
@@ -75,6 +76,8 @@ pub const App = struct {
             ));
         }
         self.geo_job.app = self;
+        self.history.node = cfg.node_id;
+        while (std.mem.allEqual(u8, &self.history.boot, 0)) io.random(&self.history.boot);
         try self.geo_job.restore();
         errdefer self.geo.deinit();
         self.collector = try std.Thread.spawn(
@@ -90,6 +93,7 @@ pub const App = struct {
         self.stopping.store(true, .release);
         self.geo_job.stop();
         if (self.collector) |thread| thread.join();
+        self.history.stop(self.io, self.mailbox);
         self.geo.deinit();
         self.passwords.deinit();
         if (self.totp_key) |*key| std.crypto.secureZero(u8, key);
@@ -101,7 +105,16 @@ pub const App = struct {
         var last_prune: u64 = 0;
         while (!self.stopping.load(.acquire)) {
             const second = self.now();
+            for (0..2) |_| {
+                const minute = self.stats.takeClosedRanking(self.io, second) orelse break;
+                self.history.offer(&minute, self.telemetry.dropped.load(.monotonic));
+            }
             self.stats.collect(self.io, self.telemetry, second, &self.geo);
+            const ms: u64 = @intCast(@max(0, @divTrunc(
+                std.Io.Clock.awake.now(self.io).nanoseconds,
+                std.time.ns_per_ms,
+            )));
+            self.history.tick(self.io, self.mailbox, second, ms);
             if (self.geo.loaded.load(.acquire) and !self.geo_job.running.load(.acquire) and
                 second -| last_prune >= 5)
             {

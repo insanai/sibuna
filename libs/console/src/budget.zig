@@ -24,6 +24,8 @@ pub const Budget = struct {
     pub const evidence_bytes = 544 * (@sizeOf(@import("core").IncidentEvidence) +
         @alignOf(@import("core").IncidentEvidence));
     pub const query_bytes = @sizeOf(@import("query_budget.zig").Budget);
+    pub const collector_bytes = @sizeOf(@import("stats.zig").Stats) +
+        @sizeOf(@import("rankings_journal.zig").Journal);
 
     pub fn validate(self: Budget) Error!void {
         if (self.slots < 16 or self.slots > 256) return error.InvalidBudget;
@@ -44,7 +46,7 @@ pub const Budget = struct {
         const stacks = (connections + self.subscribers + self.peers + 3) * self.stack_bytes;
         return stacks + connections * 2 * socket_buffer_bytes +
             @as(u64, self.slots) * body_bytes + import_bytes + auth_bytes +
-            topic_bytes + traffic_bytes + query_bytes + evidence_bytes +
+            topic_bytes + traffic_bytes + query_bytes + evidence_bytes + collector_bytes +
             2 * @as(u64, self.geoip_generation_bytes);
     }
 };

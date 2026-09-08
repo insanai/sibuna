@@ -124,6 +124,7 @@ pub const StorageRequest = union(enum) {
     control_complete: struct { id: u64, succeeded: bool },
 };
 pub const StorageResult = union(enum) {
+    ranking_inventory: rankings.Inventory,
     policy_document: policies.Document,
     similarity: similarity.Part,
     setup_required: bool,

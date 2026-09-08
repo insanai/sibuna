@@ -27,6 +27,7 @@ pub fn handle(app: *App, context: *http.Context) !void {
         };
     }
     return http.json(context, p.Page{
+        .archive = app.history.status(app.io),
         .kind = "path_prefix",
         .minute_start = now / 60 * 60,
         .snapshot_at = now,

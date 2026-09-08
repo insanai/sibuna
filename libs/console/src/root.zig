@@ -23,6 +23,7 @@ test {
     _ = @import("stats.zig");
     _ = @import("space_saving.zig");
     _ = @import("rankings_archive.zig");
+    _ = @import("rankings_journal_test.zig");
     _ = @import("geoip.zig");
     _ = @import("geoip_generation.zig");
     _ = @import("geoip_gzip.zig");

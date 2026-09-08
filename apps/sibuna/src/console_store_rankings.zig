@@ -195,5 +195,29 @@ pub fn prune(owner: *Persistent, now: u64) !p.StorageResult {
             integer(wire.quota_bytes - wire.charge(wire.max_bytes)),
         },
     );
-    return .command_recorded;
+    return .{ .ranking_inventory = try inventory(owner, now) };
+}
+
+fn inventory(owner: *Persistent, now: u64) !p.rankings.Inventory {
+    var result = try db.query(
+        owner.db,
+        owner.gpa,
+        "SELECT (SELECT count(*) FROM console_rank_archives)," ++
+            "(SELECT minute FROM console_rank_archives ORDER BY minute,digest LIMIT 1)," ++
+            "(SELECT minute FROM console_rank_archives " ++
+            "ORDER BY minute DESC,digest DESC LIMIT 1)," ++
+            "(SELECT bytes FROM console_rank_usage WHERE id=1)",
+        &.{},
+    );
+    defer result.deinit();
+    if (result.rows.len != 1) return error.InvalidInventory;
+    const row = result.rows[0];
+    return .{
+        .available = true,
+        .archives = try util.number(row[0]),
+        .first_minute = if (row[1] != null) try util.number(row[1]) else null,
+        .last_minute = if (row[2] != null) try util.number(row[2]) else null,
+        .reserved_bytes = try util.number(row[3]),
+        .observed_at = now,
+    };
 }

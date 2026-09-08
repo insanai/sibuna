@@ -2124,6 +2124,45 @@ bounded cleanup, migration replay and restart recovery. Full formatting, test an
 SID checks passed. The collector publisher and historical query interface remain
 pending; these internal operations are not browser ingestion endpoints.
 
+== Nonblocking ranking publication (2026-09-08)
+
+The collector now seals sampled minutes after the late-sample horizon and hands
+complete archives to a two-job journal. One background mailbox ticket advances
+publication without waiting for storage. Ten-second monotonic deadlines abandon
+caller ownership safely; idempotent retries use bounded exponential backoff and
+stop after eight failures. Unconfirmed writes remain explicitly labelled because
+a timeout cannot prove that a database mutation failed. Shutdown joins the collector,
+abandons its outstanding ticket and erases queued archive buffers before storage
+is released. The console budget includes journal and collector memory.
+
+Bounded retention maintenance runs every five seconds and caches durable inventory
+for dashboard readers, avoiding a history query per dashboard. Stored inventory is
+distinct from boot-local saved, pending, unconfirmed and maintenance-failure counts.
+SBR1 queue-loss boundaries currently describe zero through cumulative boot loss at
+sealing, not loss attributable to an individual minute. Empty unsampled minutes
+are not archived; missing archives do not establish zero traffic or full coverage.
+
+Deterministic tests cover queue exhaustion, acknowledgement ordering, executing
+timeouts, retry identity, retry exhaustion, cancellation and maintenance failures.
+Formatting, console checks, full regression tests, SID generation and the daemon
+build passed. A live 1,024-request run published minute 29,814,050 with 9,216 bytes
+of charged reservation and no unconfirmed writes or maintenance failures. Restart
+retained that archive while resetting the boot-local saved count to zero. Historical
+queries and their interface, other ranking kinds, and exact outcome/country minute
+persistence remain pending.
+
+The storage-off default, storage-enabled console-off, and cluster-enabled console
+builds passed in separate output directories. Explicit console-on with storage-off
+was rejected with CONSOLE001 as required. These are compilation checks, not the
+three-node management or console-impact acceptance tests.
+
+Required primitive benchmark regeneration completed with the review daemon stopped:
+`benchmarks/results/latest-20260908T050301Z.json`, source SHA-256
+`4266b025d0ccc7e370c0312d31d041f1db8dccd224a30f9e6622dbe032a79fe7`.
+This records seven-batch primitive timings and 9,696 KiB idle RSS with storage
+compiled but inactive. It does not measure active console storage contention or
+satisfy the dashboard throughput and p99 gates.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

@@ -91,10 +91,12 @@ pub const Runtime = struct {
         if (config.key_file.len != 0)
             key = try @import("console_key.zig").read(io, config.key_file.slice());
         defer if (key) |*bytes| std.crypto.secureZero(u8, bytes);
+        var composed = config;
+        composed.node_id = owner.state.config.cluster_node;
         const app = try console.App.init(
             gpa,
             io,
-            config,
+            composed,
             &owner.console_mailbox,
             &owner.state.metrics,
             key,
