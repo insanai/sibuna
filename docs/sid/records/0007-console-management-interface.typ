@@ -3233,6 +3233,16 @@ This increment is the serving-node control foundation. The Nodes interface, auth
 peer management transport, missing-member coverage and three-node failover acceptance remain
 separate required work; it does not complete the Cluster Management phase.
 
+== Local node control benchmark regeneration (2026-09-09)
+
+Clean isolated revision `15925bcfdffd54b548fb9c3bdee853729d3a2fdb` regenerated the
+primitive baseline in `latest-20260908T174752Z.json`. Manifest version 2 covers 365 inputs,
+SHA-256 `5aaa059623d3e94124bdeabd06ed5f045f05f83e6f0d5671127f8d7f898f2665`;
+the daemon digest is `4cc90c0bdc2389f6ff2bace4b2264138e5621f462dcd952eabf6b18a3d231673`.
+Idle RSS was 9,968 KiB with two workers and storage compiled but inactive. Review daemons
+were stopped and subsequent verification ran outside the timed measurement. Active drain,
+clear-command contention, dashboards and clustered impact still require the release matrix.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
