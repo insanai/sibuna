@@ -10,6 +10,7 @@ pub const minutes = @import("minutes.zig");
 pub const ranking_storage = @import("ranking_storage.zig");
 pub const events = @import("events.zig");
 pub const auth = @import("auth.zig");
+pub const users = @import("users.zig");
 pub const geo = @import("geo.zig");
 pub const version: u16 = 1;
 pub const max_message = 4096;
@@ -74,6 +75,9 @@ pub const Principal = struct {
 };
 pub const retention = @import("retention.zig");
 pub const StorageRequest = union(enum) {
+    users_query: users.Query,
+    users_create: users.Create,
+    users_change: users.Change,
     retention_acquire: retention.Holder,
     retention_prune: retention.Prune,
     minutes_write: minutes.Write,
@@ -133,6 +137,8 @@ pub const StorageRequest = union(enum) {
     control_complete: struct { id: u64, succeeded: bool },
 };
 pub const StorageResult = union(enum) {
+    users_saved: u64,
+    users_page: users.Page,
     retention_lease: retention.Lease,
     minute_page: minutes.Page,
     ranking_inventory: rankings.Inventory,
@@ -184,6 +190,9 @@ pub fn Bytes(comptime capacity: usize) type {
 
 pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
     switch (request) {
+        .users_query => |input| try users.validateQuery(input),
+        .users_create => |input| try users.validateCreate(input),
+        .users_change => |input| try users.validateChange(input),
         .retention_acquire => |holder| holder.validate() catch return error.InvalidLimit,
         .retention_prune => |input| input.lease.validate() catch return error.InvalidLimit,
         .minutes_query => |query| try minutes.validate(query),

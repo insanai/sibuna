@@ -259,6 +259,17 @@ pub const App = struct {
         identity: ?p.Principal,
     ) !void {
         switch (route.handler) {
+            .users_query, .users_create, .users_change => return @import("user_routes.zig").handle(
+                self,
+                context,
+                identity.?,
+                switch (route.handler) {
+                    .users_query => .query,
+                    .users_create => .create,
+                    .users_change => .change,
+                    else => unreachable,
+                },
+            ),
             .setup_status => {
                 const status = try self.request(.setup_status);
                 if (status != .setup_required) return error.StorageUnavailable;

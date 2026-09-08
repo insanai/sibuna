@@ -2729,6 +2729,43 @@ and two workers. These primitive measurements remain close to the preceding base
 they do not measure active incident collection, eight dashboards, p99 latency or storage
 contention, and do not satisfy the separate console-impact acceptance gate.
 
+== Account-management storage and API (2026-09-08)
+
+Account administration now has owned native/Wasm contracts, eight-row keyset pages and
+a 1,024-account creation limit. Viewers can inspect names, roles, enabled state, required
+password change, two-factor state and last login; creation, access changes, password
+reset and session revocation require a full administrator session and CSRF. User routes
+share the global query budget and add a sixty-mutation per-session minute limit. Password
+hashing uses the existing single Argon2 workspace rather than another verifier pool.
+
+Each creation/reset generates a 256-bit temporary password in the service, stores only
+its hash, requires a password change, expires it after one hour and returns the plaintext
+only after storage acknowledges the mutation. A lost reply is an unknown outcome, not
+proof of rollback. Reset preserves enabled state, role and enrolled TOTP. Account
+operations never accept a caller-supplied database handle or store plaintext credentials.
+
+Persistent stamps execution time, checks current authorization, then repeats session,
+CSRF, role, expiry, revision and required-TOTP conditions in the conditional SQL statement.
+Edits require the target's expected revision. Access/password changes require an actor
+distinct from the target; because that actor must still be an enabled administrator in
+the same statement, an administrator survives each such change and competing actors
+cannot disable each other. Self-revocation is allowed and immediately ends the caller's
+sessions. All affected sessions are removed atomically with the revision and redacted audit.
+
+Schema 14 records subsequent last-login observations in a separate table so that login
+activity cannot trigger account revocation. Historical missing timestamps remain NULL.
+User audit records now carry actor role and bounded before/after account summaries,
+excluding hashes, passwords and factors. Existing summaries remain NULL. Address capture,
+token revocation and the broader audit-investigation interface remain separate work.
+
+Storage-tick tests passed for pagination, account capacity, temporary-password metadata,
+audit privacy and rollback, conflicts, self-demotion refusal, expiry, missing MFA, CSRF,
+queued caller revocation and removal of 4,095 target sessions at the global session bound.
+The live daemon scenario passed creation, forced password rotation, viewer refusal,
+role change, WebSocket/session revocation, password reset, disable/enable and restart
+persistence. It preserves the production password-verification rate limit by separating
+its phases with a restart. This API foundation does not complete the users UI or CLI gates.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

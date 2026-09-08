@@ -1,13 +1,14 @@
 //! Fixed-window investigation budgets are separate from password verification limits.
 //! Live slots cannot be evicted to reset an allowance; all counters advance under one lock.
 const std = @import("std");
-pub const Kind = enum { query, export_page };
+pub const Kind = enum { query, export_page, mutation };
 pub const Budget = struct {
     const Slot = struct {
         digest: [32]u8 = @splat(0),
         until: u64 = 0,
         queries: u16 = 0,
         exports: u16 = 0,
+        mutations: u16 = 0,
     };
     slots: [4096]Slot = @splat(.{}),
     mutex: std.Io.Mutex = .init,
@@ -38,8 +39,10 @@ pub const Budget = struct {
         const slot = found orelse free orelse return false;
         if (found == null) slot.* = .{ .digest = digest, .until = now + 60 };
         if (slot.queries >= 120 or (exporting and slot.exports >= 6)) return false;
+        if (kind == .mutation and slot.mutations >= 60) return false;
         slot.queries += 1;
         self.queries += 1;
+        if (kind == .mutation) slot.mutations += 1;
         if (exporting) {
             slot.exports += 1;
             self.exports += 1;
@@ -61,4 +64,16 @@ test "investigation budgets isolate sessions and exports and bound global work" 
     try std.testing.expect(budget.allow(io, @splat(1), 70, .export_page));
     budget.queries = 1200;
     try std.testing.expect(!budget.allow(io, @splat(3), 70, .query));
+}
+
+test "account mutations have an independent sixty-per-minute session allowance" {
+    const t = std.testing;
+    const budget = try t.allocator.create(Budget);
+    defer t.allocator.destroy(budget);
+    budget.* = .{};
+    for (0..60) |_| try t.expect(budget.allow(t.io, @splat(1), 10, .mutation));
+    try t.expect(!budget.allow(t.io, @splat(1), 69, .mutation));
+    try t.expect(budget.allow(t.io, @splat(1), 69, .query));
+    try t.expect(budget.allow(t.io, @splat(2), 69, .mutation));
+    try t.expect(budget.allow(t.io, @splat(1), 70, .mutation));
 }
