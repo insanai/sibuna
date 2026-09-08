@@ -2074,6 +2074,21 @@ mobile viewport without horizontal overflow. Desktop review retained the sidebar
 and rendered the ranking table below the globe and timeline. Durable history,
 additional ranking kinds and cluster aggregation remain pending.
 
+== Bounded browser fetches (2026-09-08)
+
+The fixed browser bridge now applies a fifteen-second deadline to API responses,
+geographic geometry, exports and initial Wasm loading. Reads count bytes before
+retaining chunks, skip empty chunks, cancel excess bodies, and release reader locks.
+API payload limits reserve space for the Wasm event envelope. A visible startup
+message becomes a retry instruction when the console asset cannot load. Browser
+timeouts do not cancel an executing database operation or prove a mutation failed.
+
+Focused transport checks verified abort propagation, timer cleanup, capacity
+cancellation and chunk assembly. Browser review verified startup, geometry,
+challenge data, policy reads and dashboard recovery; a stalled-asset fixture
+produced the visible retry message. Formatting, console checks, full regression
+tests, SID generation and the daemon build passed. No request-path code changed.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

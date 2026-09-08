@@ -2,7 +2,7 @@
 const root = document.getElementById("app");
 const decoder = new TextDecoder();
 const encoder = new TextEncoder();
-const module = await WebAssembly.instantiateStreaming(fetch("/console/assets/console.wasm"), {});
+const module = await loadConsole();
 const wasm = module.instance.exports;
 let socket;
 let geometryController;
@@ -60,34 +60,38 @@ async function run(command) {
     const headers = {};
     if (command.body) headers["Content-Type"] = "application/json";
     if (command.csrf) headers["X-Console-CSRF"] = command.csrf;
+    const deadline = fetchDeadline();
     try {
       const response = await fetch(command.path, {
         method: command.method, credentials: "same-origin", headers,
         body: command.body ? JSON.stringify(command.body) : undefined,
+        signal: deadline.signal,
       });
-      const body = await response.json();
+      // Reserve room for the event envelope before copying into the bounded Wasm input.
+      const bytes = await readBounded(response, wasm.sb_input_capacity() - 256);
+      const body = JSON.parse(new TextDecoder("utf-8", {fatal: true}).decode(bytes));
       event(2, {id: command.id, status: response.status, body});
     } catch {
       event(2, {id: command.id, status: 0, body: {}});
-    }
+    } finally { deadline.clear(); }
   } else if (command.op === "geometry") {
     geometryController?.abort();
     const controller = new AbortController();
     geometryController = controller;
+    const deadline = fetchDeadline(controller);
     try {
       const response = await fetch(command.path, {
         credentials: "same-origin", signal: controller.signal,
       });
       if (!response.ok) throw new Error("Geometry unavailable");
-      const bytes = new Uint8Array(await response.arrayBuffer());
-      if (bytes.length > wasm.sb_geometry_capacity()) throw new Error("Geometry too large");
+      const bytes = await readBounded(response, wasm.sb_geometry_capacity());
       if (geometryController !== controller) return;
       new Uint8Array(wasm.memory.buffer, wasm.sb_geometry_input(), bytes.length).set(bytes);
       wasm.sb_geometry_loaded(bytes.length);
     } catch {
       if (geometryController !== controller) return;
       wasm.sb_geometry_loaded(0);
-    }
+    } finally { deadline.clear(); }
     flush();
   } else if (command.op === "timer") {
     clearTimeout(timers.get(command.id));
@@ -155,34 +159,22 @@ requestAnimationFrame(animate);
 
 
 async function download(command) {
+  const deadline = fetchDeadline();
   try {
     const response = await fetch(command.path, {
       method: command.method, credentials: "same-origin",
       headers: {"Content-Type": "application/json", "X-Console-CSRF": command.csrf},
       body: JSON.stringify(command.body),
+      signal: deadline.signal,
     });
     if (!response.ok) {
       await response.body?.cancel();
       event(2, {id: command.id, status: response.status, body: {}});
       return;
     }
-    const reader = response.body.getReader();
-    const chunks = [];
-    let length = 0;
-    try {
-      while (true) {
-        const part = await reader.read();
-        if (part.done) break;
-        length += part.value.length;
-        if (length > 4096) {
-          await reader.cancel();
-          throw new Error("Export capacity exceeded");
-        }
-        chunks.push(part.value);
-      }
-    } finally { reader.releaseLock(); }
+    const bytes = await readBounded(response, 4096);
     const type = response.headers.get("Content-Type") || "application/octet-stream";
-    const url = URL.createObjectURL(new Blob(chunks, {type}));
+    const url = URL.createObjectURL(new Blob([bytes], {type}));
     const anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = command.filename;
@@ -190,4 +182,48 @@ async function download(command) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     event(2, {id: command.id, status: 200, body: {}});
   } catch { event(2, {id: command.id, status: 0, body: {}}); }
+  finally { deadline.clear(); }
+}
+
+// This deadline bounds browser work only. A timed-out mutation may still commit on the server.
+function fetchDeadline(controller = new AbortController()) {
+  const timer = setTimeout(() => controller.abort(), 15000);
+  return {signal: controller.signal, clear: () => clearTimeout(timer)};
+}
+
+async function readBounded(response, limit) {
+  if (!response.body) return new Uint8Array();
+  const reader = response.body.getReader();
+  const chunks = [];
+  let length = 0;
+  try {
+    while (true) {
+      const part = await reader.read();
+      if (part.done) break;
+      if (part.value.length === 0) continue;
+      length += part.value.length;
+      if (length > limit) {
+        await reader.cancel();
+        throw new Error("Response capacity exceeded");
+      }
+      chunks.push(part.value);
+    }
+  } finally { reader.releaseLock(); }
+  const bytes = new Uint8Array(length);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
+  return bytes;
+}
+
+async function loadConsole() {
+  const deadline = fetchDeadline();
+  try {
+    const response = await fetch("/console/assets/console.wasm", {signal: deadline.signal});
+    if (!response.ok) throw new Error("Console asset unavailable");
+    return await WebAssembly.instantiate(await readBounded(response, 300 * 1024), {});
+  } catch (error) {
+    root.textContent = "Console could not load. Reload this page to retry.";
+    root.setAttribute("aria-busy", "false");
+    throw error;
+  } finally { deadline.clear(); }
 }
