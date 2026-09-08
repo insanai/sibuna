@@ -2945,6 +2945,20 @@ A live-daemon check alternates sixty invalid writes across the four workflows, v
 shared refusal on each route, and checks that reads and a different session retain capacity.
 Password verification and enrollment keep their separate limits.
 
+== Native GeoIP benchmark regeneration (2026-09-08)
+
+The primitive baseline was regenerated from clean isolated commit `69c0374f67d106ff16a9dee1a598eb8aae5f44c8`,
+with review daemons stopped and heavy verification outside the timed run. The version-2
+manifest covers 311 inputs, SHA-256 `d261b2bd39868f0cae17498cb9fbb4b66ba78973127dff2b95461136dd92a3c0`;
+the daemon digest is `fb30d723e566d41e31385e6fa57d0effbda6a02fccf9bc9238299d70775282ae`.
+`latest-20260908T135102Z.json` and `latest.json` share SHA-256
+`0686edf5f3c5d0283836314419e3afc7a7b2ecd3f54936f6166c9f5583366b5f`.
+Full classification measured 1,450.28 ns median
+(1,445.58–1,470.86 ns across seven batches).
+Idle RSS was 9,952 KiB, two workers, storage compiled but inactive.
+The 8,831-byte Wasm artifact is the proof solver, not the console. These measurements do
+not exercise imports, active dashboards or storage contention and do not pass console-impact.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
