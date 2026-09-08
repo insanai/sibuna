@@ -30,7 +30,7 @@ pub fn render(w: *Writer, comptime source: []const u8, values: anytype) Writer.E
         if (comptime !@hasField(@TypeOf(values), name)) {
             @compileError("HTML004: missing value '" ++ name ++ "'; supply the named field");
         }
-        try w.writeAll(source[cursor..start]);
+        try @import("literals.zig").write(w, source[cursor..start]);
         try writeValue(w, @field(values, name));
         comptime {
             cursor = end + 2;
@@ -40,7 +40,7 @@ pub fn render(w: *Writer, comptime source: []const u8, values: anytype) Writer.E
             }
         }
     }
-    try w.writeAll(source[cursor..]);
+    try @import("literals.zig").write(w, source[cursor..]);
 }
 
 fn validateName(comptime name: []const u8) void {

@@ -27,6 +27,7 @@ pub const App = struct {
     stats: Stats = .{},
     history: @import("rankings_journal.zig").Journal = .{},
     minutes: @import("minute_journal.zig").Journal = .{},
+    retention: @import("retention_job.zig").Job = .{},
     challenge_defaults: p.challenges.Defaults = .{},
     geo: @import("geoip_generation.zig").Registry = .{},
     geo_job: @import("geoip_job.zig").Job = .{},
@@ -82,6 +83,7 @@ pub const App = struct {
         while (std.mem.allEqual(u8, &self.history.boot, 0)) io.random(&self.history.boot);
         self.minutes.node = cfg.node_id;
         self.minutes.boot = self.history.boot;
+        self.retention.holder = .{ .node = cfg.node_id, .boot = self.history.boot };
         try self.geo_job.restore();
         errdefer self.geo.deinit();
         self.stats.boot = self.history.boot;
@@ -103,6 +105,7 @@ pub const App = struct {
         self.geo_maintenance.stop(self.io, self.mailbox);
         self.history.stop(self.io, self.mailbox);
         self.minutes.stop(self.io, self.mailbox);
+        self.retention.stop(self.io, self.mailbox);
         self.geo.deinit();
         self.passwords.deinit();
         if (self.totp_key) |*key| std.crypto.secureZero(u8, key);
@@ -125,6 +128,8 @@ pub const App = struct {
             self.history.tick(self.io, self.mailbox, second, ms);
             self.stats.journal(self.io, &self.minutes);
             self.minutes.tick(self.io, self.mailbox, second, ms);
+            if (self.retention.tick(self.io, self.mailbox, ms))
+                _ = self.stats.retention_failures.fetchAdd(1, .monotonic);
             if (self.geo_maintenance.tick(
                 self.io,
                 self.mailbox,

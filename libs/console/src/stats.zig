@@ -16,6 +16,7 @@ pub const Stats = struct {
     expired_samples: u64 = 0,
     future_samples: u64 = 0,
     geo_maintenance_failures: std.atomic.Value(u64) = .init(0),
+    retention_failures: std.atomic.Value(u64) = .init(0),
     mutex: std.Io.Mutex = .init,
     buckets: [60]struct {
         second: u64 = 0,
@@ -135,6 +136,7 @@ pub const Stats = struct {
             .expired_samples = self.expired_samples,
             .future_samples = self.future_samples,
             .geo_maintenance_failures = self.geo_maintenance_failures.load(.monotonic),
+            .retention_failures = self.retention_failures.load(.monotonic),
             .unknown_samples = unknown,
             .timestamp = now,
         };

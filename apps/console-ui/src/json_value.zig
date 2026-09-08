@@ -129,6 +129,7 @@ test "statistics encode UTF-8 boot bytes as an array and preserve full-width cou
     const maximum = std.math.maxInt(u64);
     const snapshot: p.StatsSnapshot = .{
         .outcomes_version = 1,
+        .retention_failures = maximum,
         .boot = @splat('a'),
         .uptime_ms = maximum,
         .requests = maximum,
@@ -158,6 +159,7 @@ test "statistics encode UTF-8 boot bytes as an array and preserve full-width cou
     try t.expect(parsed.value.object.get("boot").? == .array);
     const restored = try decode(p.StatsSnapshot, parsed.value, t.allocator);
     try t.expectEqual(maximum, restored.requests);
+    try t.expectEqual(@as(?u64, maximum), restored.retention_failures);
     try t.expectEqual(maximum, restored.countries[0].samples);
     try t.expectEqualSlices(u8, &snapshot.boot, &restored.boot);
     try t.expectError(error.InvalidResponse, decode(u64, .{ .string = "+1" }, t.allocator));

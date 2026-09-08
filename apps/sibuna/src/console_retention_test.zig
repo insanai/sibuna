@@ -147,3 +147,39 @@ fn kindCount(fx: *Fixture, kind: r.Kind, expected: u64) !void {
     defer rows.deinit();
     try t.expectEqual(expected, try std.fmt.parseInt(u64, rows.rows[0][0].?, 10));
 }
+
+test "collector scheduling and owner ticks retire history without changing lifetime metrics" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var buffer: [160]u8 = undefined;
+    const path = try std.fmt.bufPrint(&buffer, ".zig-cache/tmp/{s}/scheduled", .{tmp.sub_path});
+    const fx = try Fixture.open(path);
+    defer fx.close();
+    _ = try fx.run(.setup_status);
+    fx.state.hooks.record_incident.?(fx.state.hooks.context, .{
+        .client_ip = "198.51.100.1",
+        .user_agent = "test",
+        .method = "GET",
+        .path = "/trap",
+        .category = "honeypot",
+        .payload = "retainedneedle",
+        .now = 1,
+        .evidence = .{ .version = 1, .selected_status = 403 },
+    });
+    try fx.owner.tick();
+    try counts(fx, 1);
+    try fx.owner.db.exec(
+        t.allocator,
+        "INSERT INTO console_audit(actor,action,subject,recorded_at) VALUES(1,'test',1,0)",
+    );
+    var job: @import("console").RetentionJob = .{ .holder = holder };
+    defer job.stop(t.io, &fx.owner.console_mailbox);
+    for (0..80) |i| {
+        try t.expect(!job.tick(t.io, &fx.owner.console_mailbox, i * 250));
+        try fx.owner.tick();
+    }
+    try counts(fx, 0);
+    try kindCount(fx, .audit, 0);
+    try t.expectEqual(@as(u64, 1), fx.state.metrics.incidents_persisted.load(.monotonic));
+    try t.expectEqual(@as(u64, 2), fx.owner.next_incident);
+}

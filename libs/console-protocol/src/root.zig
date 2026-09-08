@@ -264,6 +264,7 @@ pub const StatsSnapshot = struct {
     expired_samples: u64 = 0,
     future_samples: u64 = 0,
     geo_maintenance_failures: u64 = 0,
+    retention_failures: ?u64 = null,
     sample_probability: []const u8 = "1/64",
     geoip_available: bool = false,
     countries: [32]CountryCount = @splat(.{}),
@@ -286,6 +287,10 @@ pub const StatsSnapshot = struct {
                 try writer.endArray();
             } else if (field.type == u64) {
                 try writeCounter(writer, @field(self, field.name));
+            } else if (field.type == ?u64) {
+                if (@field(self, field.name)) |value| {
+                    try writeCounter(writer, value);
+                } else try writer.write(null);
             } else try writer.write(@field(self, field.name));
         }
         try writer.endObject();

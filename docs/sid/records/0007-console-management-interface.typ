@@ -2570,6 +2570,47 @@ automatic deletion by itself. Full repository/console tests, formatting, SID gen
 console-disabled tests and the clustered facade build passed. Three-node lease failover
 remains an acceptance scenario, not a claim from the single-owner fencing tests.
 
+== Retention scheduling and compact HTML literals (2026-09-08)
+
+The collector now schedules incident, audit and expired-session cleanup through one
+owned background mailbox ticket. It renews the 30-second lease on a ten-second monotonic
+schedule and spaces completed cleanup attempts by five seconds. A failed acquisition
+backs off; a competing holder is normal standby. Cleanup failures and ten-second caller
+timeouts move to the next category so a damaged forensic index cannot indefinitely starve
+audit or session cleanup. Shutdown joins the collector before abandoning its ticket;
+executing SQL can still complete and remains protected by the database fence.
+
+Dashboard coverage reports failed/unconfirmed attempts. The optional counter remains
+absent for older servers and preserves full-width values through JSON decimal strings.
+Capacity accounting includes the job state. Deterministic scheduler tests cover standby,
+renewal, slow operations and cancellation ownership; composed owner-tick tests delete
+expired forensic/audit data while preserving lifetime incident metrics and the durable
+next sequence. Repository and console tests, formatting, SID generation and the release
+build passed with scheduling enabled.
+
+Trusted snippet literals now use a fixed 32-entry HTML dictionary at compile time.
+Each token replaces a matching literal span with two bytes; the decoder scans bounded
+compiled bytes and writes the original text directly to the caller's Writer. Templates
+remain ordinary reviewed HTML, and runtime values still go through the existing escaping
+path. Unprofitable spans and literal NUL bytes retain a raw exact-sized copy. Retaining
+only that span avoids pinning the entire original embedded template alongside packed
+fragments. No untrusted encoded input, runtime allocation or general template parser is
+introduced. With a fixed dictionary, construction is linear in source length times the
+fixed matching bound; decoding is linear in encoded plus emitted bytes. The existing
+32 KiB snippet/output bounds and Writer failures still apply.
+
+Native tests preserve UTF-8, overlapping prefixes, literal NUL, field escaping and output
+exhaustion. The final Wasm artifact is 304,210 bytes. The storage-disabled and clustered
+builds passed; those builds do not constitute three-node operational acceptance.
+Live browser checks preserved the shared navigation, policy summaries and editor fields,
+and a private preview returned the expected deny at committed revision 163. Retained events,
+challenge panels, the 717,152-range DB-IP generation and account forms rendered correctly.
+The mobile account view stayed within 390 pixels, and cleanup-health observations stayed
+at zero failed/unconfirmed attempts during review.
+Full cluster/runtime impact and
+broader SID acceptance remain pending; these size and correctness checks do not establish
+latency, throughput or memory-impact targets.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

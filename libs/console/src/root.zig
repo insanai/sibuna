@@ -26,6 +26,7 @@ test {
     _ = @import("minute_archive.zig");
     _ = @import("minute_journal_test.zig");
     _ = @import("geoip_maintenance.zig");
+    _ = @import("retention_job.zig");
     _ = @import("space_saving.zig");
     _ = @import("rankings_archive.zig");
     _ = @import("rankings_journal_test.zig");
@@ -34,5 +35,6 @@ test {
     _ = @import("geoip_gzip.zig");
 }
 
+pub const RetentionJob = @import("retention_job.zig").Job;
 pub const App = @import("app.zig").App;
 pub const Kernel = @import("serve").Kernel;

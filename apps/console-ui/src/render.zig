@@ -223,6 +223,10 @@ fn coverage(state: *const State, w: *Writer) Writer.Error!void {
             "<tr><th>GeoIP cleanup attempts failed or unconfirmed</th><td>{d}</td></tr>",
         .{ stats.expired_samples, stats.future_samples, stats.geo_maintenance_failures },
     );
+    if (stats.retention_failures) |failures| try w.print(
+        "<tr><th>Retention attempts failed or unconfirmed</th><td>{d}</td></tr>",
+        .{failures},
+    );
     const minutes = stats.minute_history;
     if (minutes.available) try w.print(
         "<tr><th>Minute snapshots confirmed / unconfirmed</th><td>{d} / {d}</td></tr>" ++
