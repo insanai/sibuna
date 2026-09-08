@@ -62,10 +62,13 @@ fn commit(
     var cidr_buffer: [512]u8 = undefined;
     var cidrs: std.Io.Writer = .fixed(&cidr_buffer);
     try std.json.Stringify.value(document.cidrs, .{}, &cidrs);
+    var limit_buffer: [256]u8 = undefined;
+    var limits: std.Io.Writer = .fixed(&limit_buffer);
+    try std.json.Stringify.value(document.value.limits, .{}, &limits);
     return db.exec(
         owner.db,
         owner.gpa,
-        "INSERT INTO console_policy_stage SELECT 1,u.id,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,? " ++
+        "INSERT INTO console_policy_stage SELECT 1,u.id,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,? " ++
             "FROM console_users u JOIN console_sessions s ON s.user_id=u.id " ++
             "WHERE s.digest=? AND s.csrf_digest=? AND MIN(s.expires,s.idle_expires)>? " ++
             "AND u.disabled=0 AND u.must_change=0 AND u.role IN ('operator','admin') " ++
@@ -88,6 +91,7 @@ fn commit(
             .{ .integer = document.value.weight },
             util.text(headers),
             util.text(cidrs.buffered()),
+            util.text(limits.buffered()),
             util.text(&digest),
             util.text(&csrf),
             util.integer(input.now),

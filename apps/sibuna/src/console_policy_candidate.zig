@@ -81,7 +81,7 @@ fn documents(
             owner.db,
             owner.gpa,
             "SELECT id,name,priority,enabled,path_pattern,ua_pattern,action,difficulty," ++
-                "algorithm,weight,header_matchers,cidr_matchers FROM policies " ++
+                "algorithm,weight,header_matchers,cidr_matchers,limit_config FROM policies " ++
                 "WHERE id>=? AND (?='' OR id>?) ORDER BY id LIMIT 8",
             &.{ util.text(cursor), util.text(cursor), util.text(cursor) },
         );
@@ -114,7 +114,8 @@ pub fn readDocument(owner: *Persistent, id: []const u8) !?p.Bytes(4096) {
         owner.db,
         owner.gpa,
         "SELECT id,name,priority,enabled,path_pattern,ua_pattern,action,difficulty," ++
-            "algorithm,weight,header_matchers,cidr_matchers FROM policies WHERE id=? LIMIT 1",
+            "algorithm,weight,header_matchers,cidr_matchers,limit_config " ++
+            "FROM policies WHERE id=? LIMIT 1",
         &.{util.text(id)},
     );
     defer rows.deinit();
@@ -123,7 +124,7 @@ pub fn readDocument(owner: *Persistent, id: []const u8) !?p.Bytes(4096) {
 }
 
 fn encode(row: []const ?[]const u8) !p.Bytes(4096) {
-    std.debug.assert(row.len == 12);
+    std.debug.assert(row.len == 13);
     var output: p.Bytes(4096) = .{};
     var writer: std.Io.Writer = .fixed(&output.data);
     const action = policy.Action.parse(row[6] orelse return error.InvalidStoredPolicy) orelse
@@ -145,6 +146,7 @@ fn encode(row: []const ?[]const u8) !p.Bytes(4096) {
     writer.end -= 1;
     try matcher(&writer, "headers", row[10]);
     try matcher(&writer, "cidrs", row[11]);
+    try matcher(&writer, "limits", row[12]);
     try writer.writeByte('}');
     output.len = writer.buffered().len;
     return output;

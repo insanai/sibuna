@@ -117,6 +117,8 @@ def check(binary, h):
                 console_policy_test.check(h, port, data_port, cookie, csrf)
                 import console_inspection_test
                 console_inspection_test.check(h, port, data_port, cookie, csrf)
+                import console_limits_test
+                console_limits_test.check(h, port, data_port, cookie, csrf)
                 import console_rankings_test
                 console_rankings_test.check(h, port, data_port, cookie)
             finally:

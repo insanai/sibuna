@@ -29,7 +29,7 @@ pub const schema = [_][]const u8{
         "path_pattern TEXT, ua_pattern TEXT, action TEXT NOT NULL, difficulty INTEGER, " ++
         "algorithm TEXT, header_matchers TEXT, cidr_matchers TEXT, " ++
         "weight INTEGER NOT NULL DEFAULT 0, enabled INTEGER NOT NULL DEFAULT 1, " ++
-        "created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)",
+        "created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL,limit_config TEXT)",
     "CREATE TABLE IF NOT EXISTS ip_reputation (" ++
         "ip_or_cidr TEXT PRIMARY KEY, reputation_score INTEGER NOT NULL, banned_until INTEGER, " ++
         "trigger_rule TEXT, hits INTEGER NOT NULL DEFAULT 1, last_seen INTEGER NOT NULL)",
@@ -327,6 +327,7 @@ pub const Persistent = struct {
             }
         }
         try self.db.exec(self.gpa, sql.written());
+        try @import("policy_limits.zig").migrate(self);
     }
 
     /// Incident ids are `node_id << 40 | sequence`, unique across a
@@ -577,7 +578,8 @@ pub const Persistent = struct {
 
     fn loadDbPolicies(self: *Persistent, engine: *policy.Engine, arena: std.mem.Allocator) !void {
         const sql = "SELECT name, path_pattern, ua_pattern, action, difficulty, algorithm, " ++
-            "header_matchers, cidr_matchers, weight FROM policies WHERE enabled = 1 " ++
+            "header_matchers,cidr_matchers,weight,id,limit_config " ++
+            "FROM policies WHERE enabled = 1 " ++
             "ORDER BY priority, name, id";
         var result = try self.db.query(self.gpa, sql);
         defer result.deinit();
@@ -589,6 +591,8 @@ pub const Persistent = struct {
             const name = row[0] orelse continue;
             const action = policy.Action.parse(row[3] orelse continue) orelse continue;
             var r = policy.PolicyRule{ .name = try arena.dupe(u8, name), .action = action };
+            r.limit_identity = policy.rule_limits.managedIdentity(row[9].?);
+            if (row[10]) |text| r.limits = try @import("policy_limits.zig").parse(arena, text);
             if (row[1]) |p| r.path_pattern = try arena.dupe(u8, p);
             if (row[2]) |u| r.ua_pattern = try arena.dupe(u8, u);
             if (row[4]) |d| r.difficulty = std.fmt.parseInt(u32, d, 10) catch null;
@@ -911,6 +915,7 @@ test {
         _ = @import("console_store_test.zig");
         _ = @import("console_rankings_test.zig");
         _ = @import("console_inspection_test.zig");
+        _ = @import("console_limits_test.zig");
         _ = @import("console_start.zig");
     }
 }

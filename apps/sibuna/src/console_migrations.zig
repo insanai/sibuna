@@ -43,6 +43,7 @@ pub fn run(owner: *Persistent) !void {
         console.schema.policy_v8,
         console.schema.rankings_v9,
         console.schema.inspection_v10,
+        console.schema.limits_v11,
     };
     inline for (migrations, 2..) |sql, target| {
         if (version == target - 1) {

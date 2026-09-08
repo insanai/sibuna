@@ -85,6 +85,7 @@ fn summary(w: *std.Io.Writer, rule: *const policy.PolicyRule, index: usize) !voi
         .difficulty = rule.difficulty,
         .algorithm = rule.algorithm,
         .weight = rule.weight,
+        .limits = rule.limits,
     }, .{}, w);
 }
 
@@ -163,6 +164,7 @@ fn evaluate(
         .algorithm = result.algorithm orelse @tagName(owner.cfg.algorithm),
         .score = result.score,
         .audited_categories = result.audited,
+        .limits = result.limits,
     }, .{}, &writer);
     output.len = writer.buffered().len;
     return .{ .page = output };
