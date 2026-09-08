@@ -2524,6 +2524,21 @@ and the subsequent formatting, SID and console checks passed.
 The full server-retained history chart, other minute metric families, historical ranking
 queries, cluster management and the complete impact/acceptance matrix remain pending.
 
+== Incident identity after retention (2026-09-08)
+
+Startup now restores the next incident sequence from the maximum of retained rows and
+the durable per-node commit receipt. The receipt is committed with incident, FTS,
+vector and reputation mutations. Ignoring it after deleting old incidents could reuse
+identities and cause the replay guard to suppress new batches while reporting success.
+Malformed, zero and out-of-range receipts fail startup; the exhausted sequence remains
+exhausted. Stores without a receipt retain their legacy row-derived starting point.
+
+A real-store regression writes an incident, removes its forensic rows and search indexes,
+reopens the owner, and verifies the next incident is present under a new identity. It also
+checks legacy receipt absence, exhaustion and invalid receipts. Full repository tests,
+formatting and SID generation passed together, and console-disabled tests passed. This
+fix is a prerequisite for bounded incident retention, whose cleanup job remains pending.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

@@ -330,20 +330,33 @@ pub const Persistent = struct {
         try @import("policy_limits.zig").migrate(self);
     }
 
-    /// Incident ids are `node_id << 40 | sequence`, unique across a
-    /// cluster with no coordination.
+    /// The receipt survives retention. Deriving identity only from remaining rows could
+    /// reuse IDs and make the replay guard silently suppress future committed batches.
     fn loadIncidentCounter(self: *Persistent) !void {
         const sql = try std.fmt.allocPrint(
             self.gpa,
-            "SELECT COALESCE(MAX(id), 0) FROM security_incidents WHERE id >> 40 = {d}",
-            .{self.node_id},
+            "SELECT COALESCE(MAX(id),0),COALESCE((SELECT value FROM sibuna_meta " ++
+                "WHERE key='incident_cursor_{d}'),'1') " ++
+                "FROM security_incidents WHERE id >> 40 = {d}",
+            .{ self.node_id, self.node_id },
         );
         defer self.gpa.free(sql);
         var result = try self.db.query(self.gpa, sql);
         defer result.deinit();
-        const cell = if (result.rows.len > 0) result.rows[0][0] else null;
-        const max = if (cell) |text| std.fmt.parseInt(u64, text, 10) catch 0 else 0;
-        self.next_incident = (max & 0xff_ffff_ffff) + 1;
+        if (result.rows.len != 1) return error.InvalidIncidentCursor;
+        const row = result.rows[0];
+        const max = try std.fmt.parseInt(
+            u64,
+            row[0] orelse return error.InvalidIncidentCursor,
+            10,
+        );
+        const receipt = try std.fmt.parseInt(
+            u64,
+            row[1] orelse return error.InvalidIncidentCursor,
+            10,
+        );
+        if (receipt == 0 or receipt > 0x100_0000_0000) return error.InvalidIncidentCursor;
+        self.next_incident = @max((max & 0xff_ffff_ffff) + 1, receipt);
     }
 
     fn worker(self: *Persistent) void {
@@ -724,6 +737,68 @@ const TestFixture = struct {
     slot: server.EngineSlot = undefined,
     state: server.AppState = undefined,
 };
+
+test "incident identity survives removal of all rows and rejects exhausted or corrupt receipts" {
+    const t = std.testing;
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [128]u8 = undefined;
+    const fx = try t.allocator.create(TestFixture);
+    defer t.allocator.destroy(fx);
+    var cfg = core.Config.default();
+    cfg.data_dir = try std.fmt.bufPrint(&path, ".zig-cache/tmp/{s}/cursor", .{tmp.sub_path});
+    fx.engine.initInPlace(cfg.default_difficulty);
+    fx.slot = .{ .engine = &fx.engine };
+    fx.state.init(cfg, &fx.slot, &@as([32]u8, @splat(1)));
+    const event: server.Incident = .{
+        .client_ip = "198.51.100.99",
+        .user_agent = "test",
+        .method = "GET",
+        .path = "/trap",
+        .category = "honeypot",
+        .payload = "repeat",
+        .now = 100,
+    };
+    {
+        const owner = try Persistent.open(t.allocator, t.io, cfg, &fx.state, null);
+        defer owner.stop();
+        Persistent.recordIncidentHook(owner, event);
+        try owner.tick();
+        try t.expectEqual(@as(u64, 2), owner.next_incident);
+        // Simulate retention's removal without changing the durable receipt.
+        const remove = "INSERT INTO incidents_fts(incidents_fts,rowid,path," ++
+            "offending_payload) SELECT 'delete',id,path,offending_payload " ++
+            "FROM security_incidents;" ++
+            "DELETE FROM incidents_vec; DELETE FROM security_incidents;";
+        try owner.db.exec(t.allocator, remove);
+    }
+    // Reset the caller-owned engine pointer before reopening the store.
+    fx.slot = .{ .engine = &fx.engine };
+    fx.state.init(cfg, &fx.slot, &@as([32]u8, @splat(1)));
+    const owner = try Persistent.open(t.allocator, t.io, cfg, &fx.state, null);
+    defer owner.stop();
+    try t.expectEqual(@as(u64, 2), owner.next_incident);
+    Persistent.recordIncidentHook(owner, event);
+    try owner.tick();
+    var rows = try owner.db.query(t.allocator, "SELECT COUNT(*),MIN(id & 1099511627775) " ++
+        "FROM security_incidents");
+    defer rows.deinit();
+    try t.expectEqualStrings("1", rows.rows[0][0].?);
+    try t.expectEqualStrings("2", rows.rows[0][1].?);
+    try owner.db.exec(t.allocator, "DELETE FROM sibuna_meta WHERE key='incident_cursor_1'");
+    try owner.loadIncidentCounter();
+    try t.expectEqual(@as(u64, 3), owner.next_incident);
+    try owner.db.exec(t.allocator, "INSERT INTO sibuna_meta VALUES " ++
+        "('incident_cursor_1','1099511627776')");
+    try owner.loadIncidentCounter();
+    Persistent.recordIncidentHook(owner, event);
+    try t.expectError(error.IncidentIdExhausted, owner.drain());
+    // The exhausted fixture cannot flush; the production shutdown reports this failure.
+    owner.pending_len = 0;
+    try owner.db.exec(t.allocator, "UPDATE sibuna_meta SET value='0' " ++
+        "WHERE key='incident_cursor_1'");
+    try t.expectError(error.InvalidIncidentCursor, owner.loadIncidentCounter());
+}
 
 test "persistent store: policy reload, reputation, forensics, campaigns" {
     const io = std.testing.io;
