@@ -16,6 +16,7 @@ pub const Stats = struct {
         countries: [676]u32 = @splat(0),
     } = @splat(.{}),
     geo_available: bool = false,
+    rankings: @import("rankings.zig").Rankings = .{},
 
     pub fn collect(
         self: *Stats,
@@ -31,6 +32,7 @@ pub const Stats = struct {
         for (0..4096) |_| {
             const record = telemetry.queue.pop() orelse break;
             if (record.second > now or now - record.second >= 60) continue;
+            self.rankings.add(&record);
             const bucket = &self.buckets[record.second % 60];
             if (bucket.second != record.second) bucket.* = .{ .second = record.second };
             const address = geoip.address(record.ip[0..record.ip_len]) catch {
@@ -42,6 +44,12 @@ pub const Stats = struct {
                 bucket.countries[index] +|= 1;
             } else bucket.samples += 1;
         }
+    }
+
+    pub fn rankingSnapshot(self: *Stats, io: std.Io, now: u64) @import("rankings.zig").Minute {
+        self.mutex.lockUncancelable(io);
+        defer self.mutex.unlock(io);
+        return self.rankings.snapshot(now);
     }
 
     pub fn snapshot(

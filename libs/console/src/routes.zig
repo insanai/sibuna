@@ -14,6 +14,7 @@ pub const Handler = enum {
     logout,
     password,
     stats,
+    rankings,
     challenges,
     events,
     events_similar,
@@ -30,6 +31,12 @@ pub const Route = struct {
     handler: Handler,
 };
 const table = [_]Route{
+    .{
+        .path = "/console/api/rankings",
+        .method = .GET,
+        .access = .full,
+        .handler = .rankings,
+    },
     .{
         .path = "/console/api/policies/read",
         .method = .POST,

@@ -1,0 +1,31 @@
+"""Current-minute rankings must come from traffic and exclude query-string secrets."""
+import json
+import time
+
+
+def check(h, port, data_port, cookie):
+    endpoint = "/console/api/rankings"
+    assert h.request(port, "GET", endpoint)[0] == 401
+    # A boundary may fall between generation and reading. Retry a bounded population;
+    # do not infer an exact count from probabilistic sampling or sleep for a minute.
+    for attempt in range(3):
+        for index in range(512):
+            h.request(data_port, "GET", "/rank-review?token=not-for-the-console",
+                      extra_headers={"X-Forwarded-For": f"9.{attempt}.{index // 256}.{index % 256}"})
+        time.sleep(0.3)
+        status, _, body = h.request(port, "GET", endpoint, cookie=cookie)
+        assert status == 200 and len(body) <= 16384
+        assert b"not-for-the-console" not in body
+        page = json.loads(body)
+        assert page["sampling_probability"] == "1/64"
+        assert page["counter_capacity"] == 256
+        assert len(page["rows"]) <= 12
+        assert page["minute_start"] <= page["snapshot_at"] < page["minute_start"] + 60
+        rows = [row for row in page["rows"] if row["key"] == "/rank-review"]
+        if not rows:
+            continue
+        assert rows[0]["encoding"] == "utf8"
+        assert rows[0]["estimate"] > 0 and rows[0]["error_bound"] == 0
+        assert page["retained_samples"] >= rows[0]["estimate"]
+        return
+    raise AssertionError("live sample generation did not populate current-minute rankings")

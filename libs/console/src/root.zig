@@ -20,6 +20,7 @@ test {
     _ = @import("totp.zig");
     _ = @import("auth_secrets.zig");
     _ = @import("stats.zig");
+    _ = @import("space_saving.zig");
     _ = @import("geoip.zig");
     _ = @import("geoip_generation.zig");
     _ = @import("geoip_gzip.zig");

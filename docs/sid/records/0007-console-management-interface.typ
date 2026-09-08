@@ -2028,6 +2028,34 @@ requests returned 403 for a matching header and 401 from the fallback challenge
 for a nonmatching header. These checks cover this editor increment, not the
 remaining policy and release acceptance gates.
 
+== Bounded ranking collection (2026-09-08)
+
+Path-prefix samples now feed collector-owned 256-counter Space-Saving summaries.
+Two minute slots separate current and late preceding-minute samples. Each retains
+all counters and errors; the authenticated, rate-limited rankings endpoint returns
+at most twelve display rows, retained sample count, sampling probability, truncation
+and rejected-record counts, and explicitly boot-scoped queue losses. Invalid UTF-8
+keys use a labelled hexadecimal encoding. No request producer work was added.
+
+Cross-window merging follows Algorithms 3 and 4 of
+#link("https://arxiv.org/abs/1401.0702")[Cafaro, Pulimeno and Tempesta,
+A Parallel Space Saving Algorithm for Frequent Items]. Common keys add estimates
+and errors; absent keys add the other summary's minimum (zero if not full), then
+the largest 256 estimates survive. Native tests compare repeated merges against
+exact populations, including heavy-hitter retention, error bounds, empty inputs,
+overflow rejection and a global winner below each local winner. Callers must merge
+only disjoint populations and retain sampling and coverage metadata separately.
+
+Formatting, native tests, live-daemon end-to-end tests, SID generation and the
+daemon build passed. Live requests populated the path ranking without exposing
+query-string secrets. Anonymous and required-password-change sessions could not
+read the endpoint.
+
+This increment does not persist minute sketches, combine peer data, provide other
+ranking kinds, or complete the ranking interface and retention gates. The endpoint
+reports only the current partial minute; first and last sample times are null when
+there are no retained samples.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
@@ -2036,7 +2064,7 @@ remaining policy and release acceptance gates.
 - Krug, Steve. _Don't Make Me Think, Revisited_, 2014; Kahneman, Daniel. _Thinking, Fast
   and Slow_, 2011. Interface heuristics, not guarantees of operator performance.
 - Metwally, A., Agrawal, D., and El Abbadi, A. “Efficient computation of frequent and top-k
-  elements in data streams.” _ICDT_, 2005. See also #link("https://dimacs.rutgers.edu/~graham/pubs/papers/freq.pdf")[Cormode and Hadjieleftheriou, Finding Frequent Items in Data Streams] for Space-Saving bounds.
+  elements in data streams.” _ICDT_, 2005. See also #link("https://hadjieleftheriou.com/papers/vldb08-2.pdf")[Cormode and Hadjieleftheriou, Finding Frequent Items in Data Streams] for Space-Saving bounds.
 - zenfmt ZDS 0016, “The zenfmt Server: REST, Streaming, and the Administered Service”
   (`zenfmt/docs/zds/records/0016-server.typ`, reviewed from the sibling checkout): service,
   UI/glue and vendored-style patterns. Sibuna defines its own asset build and peer protocol.

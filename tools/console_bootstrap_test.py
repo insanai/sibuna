@@ -21,7 +21,7 @@ def change(h, port, temporary, permanent):
     login = json.loads(body)
     assert login["must_change"]
     cookie = headers["Set-Cookie"].split(";", 1)[0]
-    for path in ("/console/api/stats", "/console/api/geoip",
+    for path in ("/console/api/stats", "/console/api/geoip", "/console/api/rankings",
                  "/console/assets/world-110m.bin", "/console/stream"):
         assert h.request(port, "GET", path, cookie=cookie)[0] == 403
     assert h.request(port, "POST", "/console/api/challenges", {},
