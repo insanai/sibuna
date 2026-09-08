@@ -55,6 +55,10 @@ def checks(h, port, admin):
     assert len(exported["rows"]) == 1
     receipt = call(h, port, admin, "query", {"action": "audit.export"})
     assert len(receipt["rows"]) == 1 and int(receipt["rows"][0]["subject"]) == 1
+    for _ in range(5):
+        call(h, port, admin, "export", {"action": "token.create"})
+    call(h, port, admin, "export", expected=429)
+    assert call(h, port, admin, "query")["rows"]
     viewer = rotate(h, port, {"username": "audit-viewer-0", "password": temporary},
                     "audit viewer permanent passphrase")
     assert call(h, port, viewer, "read", {"id": str(selected["id"])}) == detail

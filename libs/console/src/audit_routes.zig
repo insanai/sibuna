@@ -6,7 +6,9 @@ const Handler = @import("routes.zig").Handler;
 
 pub fn handle(app: *App, context: *http.Context, principal: p.Principal, kind: Handler) !void {
     const digest = try http.session(context);
-    if (!app.query_budget.allow(app.io, digest, app.now(), .query))
+    const budget_kind: @import("query_budget.zig").Kind =
+        if (kind == .audit_export) .export_page else .query;
+    if (!app.query_budget.allow(app.io, digest, app.now(), budget_kind))
         return http.fail(context, .too_many_requests, "CONSOLEQUERY");
     const auth: p.users.Auth = .{
         .session_digest = digest,
