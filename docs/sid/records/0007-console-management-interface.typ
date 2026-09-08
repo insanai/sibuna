@@ -2539,6 +2539,37 @@ checks legacy receipt absence, exhaustion and invalid receipts. Full repository 
 formatting and SID generation passed together, and console-disabled tests passed. This
 fix is a prerequisite for bounded incident retention, whose cleanup job remains pending.
 
+== Fenced retention storage operations (2026-09-08)
+
+Additive console schema 13 adds the retention lease and the indexed session deadline.
+Its deletion trigger removes the external-content FTS entry, vector entry and evidence
+sidecar in the same transaction as the forensic row. Bounded prepared commands select
+at most 16 expired rows: incidents older than 30 days, audit records older than 365 days,
+and sessions whose absolute or idle deadline has passed. Incident commit receipts,
+policies, reputation and current records remain intact.
+
+Lease holders identify a node and random boot. Renewal by the current unexpired holder
+keeps the fence; expiry or takeover increases it without wraparound. Every DELETE checks
+the stored holder, fence and deadline in its own write transaction. Storage-owner time,
+not the collector's queued timestamp, chooses the cutoff and lease expiry. Clock skew
+can change takeover timing, but cannot permit an older fence to write after replacement.
+This is a database-side fence and makes no atomicity claim about external effects.
+
+The underlying mutation count includes trigger and vector/FTS shadow-table writes;
+completion therefore acknowledges the bounded command rather than inventing a deleted-row
+count. Tests inspect actual forensic, FTS, vector and evidence contents, including rollback
+after an injected sidecar deletion failure. Separate cases cover competing holders, renewal,
+expiry, stale commands, fence exhaustion, audit/session deadlines and owned mailbox inputs.
+
+Retention-capable stores set the existing base storage-format guard to 2. Older
+console-disabled binaries check that guard even though they do not read console_schema,
+so they cannot reopen a retained store and revert to row-derived incident identities.
+The current binary accepts base formats 1 and 2 and rejects newer values. Runtime scheduling
+and visible cleanup health are the next increment; this storage increment does not start
+automatic deletion by itself. Full repository/console tests, formatting, SID generation,
+console-disabled tests and the clustered facade build passed. Three-node lease failover
+remains an acceptance scenario, not a claim from the single-owner fencing tests.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

@@ -554,7 +554,7 @@ pub const Persistent = struct {
         try self.db.exec(self.gpa, sql.written());
     }
 
-    fn nowSeconds(self: *const Persistent) u64 {
+    pub fn nowSeconds(self: *const Persistent) u64 {
         return @intCast(@max(
             0,
             @divTrunc(Io.Clock.real.now(self.io).nanoseconds, std.time.ns_per_s),
@@ -990,6 +990,7 @@ test {
         _ = @import("console_store_test.zig");
         _ = @import("console_rankings_test.zig");
         _ = @import("console_minutes_test.zig");
+        _ = @import("console_retention_test.zig");
         _ = @import("console_inspection_test.zig");
         _ = @import("console_limits_test.zig");
         _ = @import("console_start.zig");

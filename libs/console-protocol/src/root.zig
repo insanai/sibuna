@@ -72,7 +72,10 @@ pub const Principal = struct {
     must_change: bool,
     totp_enabled: bool = false,
 };
+pub const retention = @import("retention.zig");
 pub const StorageRequest = union(enum) {
+    retention_acquire: retention.Holder,
+    retention_prune: retention.Prune,
     minutes_write: minutes.Write,
     minutes_query: minutes.Query,
     minutes_prune: u64,
@@ -130,6 +133,7 @@ pub const StorageRequest = union(enum) {
     control_complete: struct { id: u64, succeeded: bool },
 };
 pub const StorageResult = union(enum) {
+    retention_lease: retention.Lease,
     minute_page: minutes.Page,
     ranking_inventory: rankings.Inventory,
     policy_document: policies.Document,
@@ -180,6 +184,8 @@ pub fn Bytes(comptime capacity: usize) type {
 
 pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
     switch (request) {
+        .retention_acquire => |holder| holder.validate() catch return error.InvalidLimit,
+        .retention_prune => |input| input.lease.validate() catch return error.InvalidLimit,
         .minutes_query => |query| try minutes.validate(query),
         .policy_read => |input| try policies.validateRead(input),
         .policies_query => |query| try policies.validate(query),

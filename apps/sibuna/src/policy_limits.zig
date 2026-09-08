@@ -11,7 +11,7 @@ pub fn migrate(owner: *Persistent) !void {
     defer version.deinit();
     if (version.rows.len != 0) {
         const value = version.rows[0][0] orelse return error.UnsupportedPolicyFormat;
-        if (try std.fmt.parseInt(u64, value, 10) > 1) return error.UnsupportedPolicyFormat;
+        if (try std.fmt.parseInt(u64, value, 10) > 2) return error.UnsupportedPolicyFormat;
     }
     if (!try hasColumn(owner)) owner.db.exec(
         owner.gpa,
@@ -95,5 +95,7 @@ test "additive policy format migrates legacy rows once and rejects unsupported v
     const result = limited.engine.evaluateRequest(.{ .path = "/legacy", .client_ip = "8.8.8.8" });
     try t.expectEqual(@as(u32, 1), result.limits.?.rate);
     try owner.db.exec(t.allocator, "UPDATE sibuna_meta SET value='2' WHERE key='policy_format'");
+    try migrate(owner);
+    try owner.db.exec(t.allocator, "UPDATE sibuna_meta SET value='3' WHERE key='policy_format'");
     try t.expectError(error.UnsupportedPolicyFormat, migrate(owner));
 }
