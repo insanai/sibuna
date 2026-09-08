@@ -166,6 +166,9 @@ def check(binary):
                                                json.loads(login[2])["csrf"], timeline_cursor)
                 metadata = request(console_port, "GET", "/console/api/geoip", cookie=cookie)
                 assert json.loads(metadata[2])["ranges"] == 200
+                import console_geo_cli_test
+                console_geo_cli_test.live(binary, sys.modules[__name__], console_port,
+                                          credentials, root)
             finally:
                 stop(proc)
     import console_bootstrap_test
@@ -178,6 +181,8 @@ def check(binary):
     console_users_test.check(binary, sys.modules[__name__])
     console_cli_test.check(binary, sys.modules[__name__])
     console_client_test.check(binary)
+    import console_geo_cli_test
+    console_geo_cli_test.controlled(binary)
     import console_shutdown_test
     console_shutdown_test.check(binary, sys.modules[__name__])
     import console_totp_test

@@ -511,13 +511,17 @@ sibuna console add-user alice --role viewer --origin https://console.example \
   --username admin --password-file /run/private/console-password
 sibuna console users --origin https://console.example \
   --username admin --password-file /run/private/console-password
-# GeoIP download/import is currently available through tools/console_geoip.py.
-# Native GeoIP and scoped token subcommands remain pending.
+sibuna console geoip status --origin https://console.example \
+  --username admin --password-file /run/private/console-password
+sibuna console geoip update --month 2026-09 --origin https://console.example \
+  --username admin --password-file /run/private/console-password
+# Optional: --checksum <compressed-source-sha256> --timeout <seconds>.
+# Scoped token subcommands remain pending.
 ```
 
 `--console` requires `--data-dir` and storage support (`-Dconsole=true` with `-Dstorage=false` is a build error; the console default follows storage): users, sessions, and statistics live in the database, and a
 console without persistence would lose its administrator on restart. The console listens on
-loopback by default; binding elsewhere without `--console-behind-proxy` (which requires an explicit trusted-proxy CIDR list and canonical HTTPS console origin) is refused. Only allowlisted socket peers may supply forwarded address or scheme headers; the ingress strips client-supplied copies. Proxy mode enables `Secure` cookies. HTTP on loopback is development-only. The shown account commands are implemented; other proposed management commands remain gated. Offline bootstrap takes an exclusive data-directory lock; commands against a running node use the authenticated console API, never a second embedded node over the same directory. In a cluster every member may run a console; each shows the whole cluster, because the
+loopback by default; binding elsewhere without `--console-behind-proxy` (which requires an explicit trusted-proxy CIDR list and canonical HTTPS console origin) is refused. Only allowlisted socket peers may supply forwarded address or scheme headers; the ingress strips client-supplied copies. Proxy mode enables `Secure` cookies. HTTP on loopback is development-only. The shown account and GeoIP commands are implemented; other proposed management commands remain gated. Offline bootstrap takes an exclusive data-directory lock; commands against a running node use the authenticated console API, never a second embedded node over the same directory. In a cluster every member may run a console; each shows the whole cluster, because the
 tables it reads are replicated, and each probes the others' health endpoints directly.
 
 = The Serve Kernel
@@ -2887,13 +2891,46 @@ active dashboards, imports or storage contention and do not pass console-impact 
 == GeoIP execution-time authorization (2026-09-08)
 
 Generation begin, chunk insertion, exact immutable retries and activation now authorize
-against Persistent's execution clock. A caller timestamp cannot extend an expired queued
+against Persistent's execution clock. Authorization carries no caller timestamp that could extend an expired queued
 session. Off-loopback imports carry the mandatory-factor requirement into each conditional
 SQL write and replay query, together with session revision, CSRF, role and password-change
 checks. Expiry or missing required MFA leaves the active generation and audit unchanged.
 A deterministic storage-tick test queues a chunk, expires its session before execution,
 and verifies refusal; it also checks both immutable retries and activation, followed by
-one authorized activation and exactly one audit record.
+one authorized activation and exactly one audit record. The activation acknowledgment
+returns the durable storage timestamp, so live GeoIP metadata and restart metadata agree
+even when a queued activation spans a clock tick.
+
+== Native GeoIP CLI and publisher review (2026-09-08)
+
+`sibuna console geoip status` reads active database metadata through an ephemeral authenticated
+session. `geoip update --month YYYY-MM` reads the current revision and submits a conditional
+DB-IP import. Private password/factor files and the native client's origin, TLS, redirect,
+response-size and session-closure rules also apply. An optional 64-hex checksum pins the
+compressed publisher source. A matching active month is a no-op; a mismatched checksum or
+concurrent revision fails without overwriting the active database.
+
+The command waits for an acknowledged active generation, preserving exact decimal revisions
+above JavaScript's integer range. The polling budget defaults to 1,200 seconds and accepts
+1–86,400 seconds; each HTTP wait is limited by both the remaining budget and twenty seconds.
+Login and session closure have separate twenty-second request bounds. Progress uses stderr;
+stdout contains only validated final metadata. No caller-selected download URL, inline CSV,
+raw database connection or subprocess downloader is exposed by the native command. Polling
+expiry, transport failure or an incompatible acknowledgment leaves the outcome uncertain;
+session closure is not evidence of import cancellation or rollback.
+
+Controlled peers pass exact-revision submission, no-op and checksum handling, concurrent
+activation, failed imports, unexpected sensitive fields, a stalled polling deadline and
+session closure. Real-daemon tests cover restored status, no-op and checksum conflict.
+A fresh native command downloaded September 2026 DB-IP Lite and activated 717,152 ranges
+in 81.28 seconds on the review host. Its compressed-source SHA-256 was
+`a32bb3c384bd3de60ad9024596aa5b395a6dd5beaa27a7223407cc2edc681d0b`.
+A matching repeat made no change, and restart preserved revision, digest, source month,
+range count and activation time. The source remains DB-IP IP to Country Lite, CC BY 4.0,
+with DB-IP attribution. This functional import duration is not an impact benchmark.
+All 289 native tests and live scenarios pass. Storage-off, console-off and clustered builds
+pass; disabled binaries refuse the command. The optional MaxMind adapter and scoped tokens
+remain pending, together with the broader SID acceptance gates.
 
 = References
 

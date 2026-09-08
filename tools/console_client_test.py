@@ -50,8 +50,8 @@ class Peer(http.server.BaseHTTPRequestHandler):
 
 
 @contextlib.contextmanager
-def peer(mode):
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Peer)
+def peer(mode, handler=Peer):
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
     server.mode = mode
     server.requests = []
     server.release = threading.Event()

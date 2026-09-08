@@ -240,6 +240,9 @@ fn printHelp() void {
             "  sibuna console set-user <id> --revision <n> " ++
             "--role <role> --disabled true|false\n" ++
             "  sibuna console reset-password|revoke-sessions <id> --revision <n>\n" ++
+            "GeoIP CLI: sibuna console geoip status\n" ++
+            "  sibuna console geoip update --month <YYYY-MM> " ++
+            "[--checksum <sha256>] [--timeout <seconds, default 1200>]\n" ++
             "  Required: --origin <origin> --username <name> --password-file <path>;\n" ++
             "  optional --factor-file <path>. Credential files must be private regular files.\n" ++
             "  HTTPS is required except for literal loopback HTTP; redirects are refused.\n",

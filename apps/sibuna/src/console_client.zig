@@ -16,7 +16,15 @@ pub const Error = error{
     CredentialPermissions,
     InvalidCredential,
 };
-pub const Endpoint = enum { login, logout, users_query, users_create, users_change };
+pub const Endpoint = enum {
+    login,
+    logout,
+    users_query,
+    users_create,
+    users_change,
+    geo_status,
+    geo_update,
+};
 pub const Reply = struct { status: std.http.Status, length: usize };
 const Outcome = union(enum) { reply: Error!Reply, deadline: Error!void };
 
@@ -47,11 +55,25 @@ pub const Session = struct {
         body: []u8,
         output: *[max_response + 1]u8,
     ) Error!Reply {
+        return self.requestWithin(endpoint, body, output, 20 * std.time.ns_per_s);
+    }
+
+    pub fn requestWithin(
+        self: *Session,
+        endpoint: Endpoint,
+        body: []u8,
+        output: *[max_response + 1]u8,
+        timeout_ns: u64,
+    ) Error!Reply {
         std.debug.assert(body.len <= 2048);
+        std.debug.assert(timeout_ns <= 20 * std.time.ns_per_s);
+        if (timeout_ns == 0) return error.Deadline;
         var results: [2]Outcome = undefined;
         var select: std.Io.Select(Outcome) = .init(self.io, &results);
         defer select.cancelDiscard();
-        select.concurrent(.deadline, deadline, .{self.io}) catch return error.Transport;
+        select.concurrent(.deadline, deadline, .{ self.io, timeout_ns }) catch {
+            return error.Transport;
+        };
         select.concurrent(.reply, exchange, .{ self, endpoint, body, output }) catch
             return error.Transport;
         return switch (select.await() catch return error.Canceled) {
@@ -110,7 +132,7 @@ fn exchange(
         .{ .name = "Cookie", .value = session.cookie.slice() },
         .{ .name = "X-Console-CSRF", .value = session.csrf.slice() },
     };
-    var request = client.request(.POST, uri, .{
+    var request = client.request(if (endpoint == .geo_status) .GET else .POST, uri, .{
         .keep_alive = false,
         .redirect_behavior = .not_allowed,
         .headers = .{
@@ -120,7 +142,10 @@ fn exchange(
         .extra_headers = headers[0..if (endpoint == .login) 1 else 3],
     }) catch |err| return transportError(err);
     defer request.deinit();
-    request.sendBodyComplete(body) catch return error.Transport;
+    if (endpoint == .geo_status) {
+        std.debug.assert(body.len == 0);
+        request.sendBodiless() catch return error.Transport;
+    } else request.sendBodyComplete(body) catch return error.Transport;
     var response = request.receiveHead(&.{}) catch |err| return transportError(err);
     const status = response.head.status;
     if (response.head.content_encoding != .identity) return error.InvalidResponse;
@@ -160,11 +185,12 @@ fn path(endpoint: Endpoint) []const u8 {
         .users_query => "/console/api/users/query",
         .users_create => "/console/api/users/create",
         .users_change => "/console/api/users/change",
+        .geo_status, .geo_update => "/console/api/geoip",
     };
 }
 
-fn deadline(io: std.Io) Error!void {
-    std.Io.sleep(io, .fromSeconds(20), .awake) catch return error.Canceled;
+fn deadline(io: std.Io, timeout_ns: u64) Error!void {
+    std.Io.sleep(io, .fromNanoseconds(timeout_ns), .awake) catch return error.Canceled;
 }
 
 fn transportError(err: anyerror) Error {

@@ -5,7 +5,8 @@ const p = @import("console").protocol;
 const arguments = @import("console_command_args.zig");
 const client = @import("console_client.zig");
 const Writer = std.Io.Writer;
-const Error = client.Error || error{
+pub const Error = client.Error || error{
+    ImportFailed,
     Unauthorized,
     Forbidden,
     Conflict,
@@ -18,8 +19,8 @@ const Error = client.Error || error{
 
 pub fn execute(allocator: std.mem.Allocator, io: std.Io, argv: []const []const u8) u8 {
     const args = arguments.parse(argv) catch |err| {
-        std.debug.print("CONSOLECLI002: invalid account command ({t}). " ++
-            "Hint: use sibuna --help for account commands and required options.\n", .{err});
+        std.debug.print("CONSOLECLI002: invalid management command ({t}). " ++
+            "Hint: use sibuna --help for management commands and required options.\n", .{err});
         return 1;
     };
     var buffer: [4096]u8 = undefined;
@@ -30,8 +31,11 @@ pub fn execute(allocator: std.mem.Allocator, io: std.Io, argv: []const []const u
         return 1;
     };
     output.interface.flush() catch {
-        std.debug.print("CONSOLECLIWRITE: output was not delivered. " ++
-            "Hint: refresh users; reset an acknowledged temporary password if needed.\n", .{});
+        std.debug.print(
+            "CONSOLECLIWRITE: output was not delivered. " ++
+                "Hint: query current state; reset an acknowledged temporary password if needed.\n",
+            .{},
+        );
         return 1;
     };
     return 0;
@@ -47,6 +51,8 @@ fn run(
     defer session.deinit();
     defer close(&session);
     try login(&session, args);
+    if (args.kind == .geo_status or args.kind == .geo_update)
+        return @import("console_command_geo.zig").run(&session, args, writer);
     var payload: [2048]u8 = undefined;
     defer std.crypto.secureZero(u8, &payload);
     var body: Writer = .fixed(&payload);
@@ -103,7 +109,8 @@ fn login(session: *client.Session, args: arguments.Args) Error!void {
     session.csrf = p.Bytes(64).init(parsed.value.csrf) catch return error.InvalidResponse;
     if (parsed.value.must_change) return error.PasswordChangeRequired;
     if (parsed.value.totp_required) return error.FactorEnrollmentRequired;
-    if (args.kind != .users and parsed.value.role != .admin) return error.Forbidden;
+    const read_only = args.kind == .users or args.kind == .geo_status;
+    if (!read_only and parsed.value.role != .admin) return error.Forbidden;
 }
 
 fn operation(args: arguments.Args, writer: *Writer) Error!client.Endpoint {
@@ -150,7 +157,7 @@ fn closeFailed() void {
         "Hint: revoke sessions through Users if necessary.\n", .{});
 }
 
-fn requireOk(status: std.http.Status) Error!void {
+pub fn requireOk(status: std.http.Status) Error!void {
     return switch (status) {
         .ok => {},
         .unauthorized => error.Unauthorized,
@@ -163,27 +170,29 @@ fn requireOk(status: std.http.Status) Error!void {
 }
 
 fn diagnose(err: Error) void {
-    const unknown = "Outcome unknown. Query users before retrying.";
+    const unknown = "Outcome unknown. Query the affected resource before retrying.";
     const hint = switch (err) {
         error.Transport, error.Deadline, error.Unavailable => unknown,
         error.InvalidResponse, error.ResponseTooLarge => unknown,
         error.Canceled, error.OutOfMemory => unknown,
-        error.Conflict => "Refresh users: the name, capacity or expected revision conflicted.",
+        error.Conflict => "Refresh the resource: capacity or the expected revision conflicted.",
+        error.ImportFailed => "Inspect GeoIP status and daemon diagnostics before retrying.",
         error.Forbidden => "Use an administrator; manage your own password through Account.",
         error.Unauthorized => "Check the account password and authenticator or recovery code.",
         error.PasswordChangeRequired => "Change the temporary password in the browser first.",
         error.FactorEnrollmentRequired => "Complete required two-factor enrollment in Account.",
-        error.RateLimited => "Wait a minute before another login or account operation.",
+        error.RateLimited => "Wait a minute before another login or management operation.",
         error.CredentialPermissions => "Remove group and other permissions from credential files.",
         error.CredentialFile, error.InvalidCredential => "Use private regular credential files.",
         error.InvalidOrigin, error.InsecureOrigin => "Use HTTPS or literal loopback HTTP.",
         else => "Check origin, input bounds and server compatibility before retrying.",
     };
-    std.debug.print("CONSOLECLI: account command failed ({t}). Hint: {s}\n", .{ err, hint });
+    std.debug.print("CONSOLECLI: management command failed ({t}). Hint: {s}\n", .{ err, hint });
 }
 
 test {
     _ = @import("console_command_args.zig");
     _ = @import("console_client.zig");
     _ = @import("console_command_reply.zig");
+    _ = @import("console_command_geo.zig");
 }
