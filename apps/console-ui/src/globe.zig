@@ -5,25 +5,23 @@ const Writer = std.Io.Writer;
 
 pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     try w.writeAll("<h2>Live earth globe</h2><svg viewBox=\"0 0 400 280\" role=\"img\" " ++
-        "aria-label=\"Country traffic. Representative country positions; see the table below.\">");
+        "aria-label=\"Earth and country traffic. See coverage and the country table below.\">");
+    try @import("html").render(w, @embedFile("snippets/globe-definitions.html"), .{});
     if (state.globe.flat) {
         try w.writeAll("<rect x=\"20\" y=\"45\" width=\"360\" height=\"180\" " ++
-            "fill=\"#e7f1fc\" stroke=\"#94b6d5\"/>");
+            "fill=\"url(#ocean)\" stroke=\"#94b6d5\"/>");
     } else try w.writeAll("<circle cx=\"200\" cy=\"135\" r=\"110\" " ++
-        "fill=\"#e7f1fc\" stroke=\"#94b6d5\"/>");
+        "fill=\"url(#ocean)\" stroke=\"#94b6d5\"/>");
     const available = if (state.stats) |stats| stats.geoip_available else false;
-    if (available) {
-        if (!state.globe.flat) try w.writeAll("<defs><clipPath id=\"globe-clip\">" ++
-            "<circle cx=\"200\" cy=\"135\" r=\"110\"/></clipPath></defs>" ++
-            "<g clip-path=\"url(#globe-clip)\">");
-        if (state.geometry) |bytes| {
-            try geography.render(bytes, state.globe, w);
-            try markers(state, bytes, w);
-        }
-        if (!state.globe.flat) try w.writeAll("</g>");
+    if (!state.globe.flat) try w.writeAll("<g clip-path=\"url(#globe-clip)\">");
+    try geography.graticule(state.globe, w);
+    if (state.geometry) |bytes| {
+        try geography.render(bytes, state.globe, w);
+        if (available) try markers(state, bytes, w);
     }
+    if (!state.globe.flat) try w.writeAll("</g>");
     try w.writeAll("</svg><div class=\"sb-globe-controls\">");
-    if (available) try w.writeAll(
+    if (state.geometry != null) try w.writeAll(
         "<button id=\"rotate-left\" class=\"btn btn-sm\" " ++
             "data-action=\"rotate-left\">Rotate left</button>" ++
             "<button id=\"rotate-right\" class=\"btn btn-sm\" " ++
@@ -34,6 +32,12 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
             "data-action=\"flat-map\">Globe / flat map</button>",
     );
     try w.writeAll("</div>");
+    try w.writeAll("<p class=\"sb-note\"><a href=\"https://www.naturalearthdata.com\">" ++
+        "Made with Natural Earth</a>. Boundaries provide geographic context.</p>");
+    if (state.geometry == null) try w.writeAll(if (state.geometry_busy)
+        "<p class=\"sb-note\" role=\"status\">Loading world boundaries…</p>"
+    else
+        "<p class=\"sb-note\" role=\"status\">World boundaries unavailable. Retrying soon.</p>");
     if (!available) {
         try w.writeAll("<p class=\"sb-note\">GeoIP unavailable. Traffic is counted as Unknown; " ++
             "no locations are inferred.</p><button class=\"btn btn-sm\" " ++
@@ -42,8 +46,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     }
     try w.writeAll("<p class=\"sb-note\">Sampled traffic over 60 seconds. " ++
         "Markers show representative country positions, not client coordinates. " ++
-        "<a href=\"https://db-ip.com\">IP Geolocation by DB-IP</a> · " ++
-        "<a href=\"https://www.naturalearthdata.com\">Made with Natural Earth</a>.</p>");
+        "<a href=\"https://db-ip.com\">IP Geolocation by DB-IP</a>.</p>");
     try rankings(state, w);
 }
 

@@ -427,3 +427,17 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
   disclosure and restores heading focus. A skip link bypasses repeated navigation.
 - Required formatting, tests and SID compilation passed. Browser checks traversed all current
   desktop sections and verified mobile disclosure, selection, focus and no overflow at 390 px.
+
+### Authenticated earth without a GeoIP dependency (2026-09-08)
+
+- The custom Zig/SVG orthographic earth now draws authenticated Natural Earth boundaries even
+  when no GeoIP generation exists. No traffic locations are inferred: the unavailable notice
+  and Unknown coverage remain explicit. Added ocean shading and a bounded geographic grid.
+- Geometry requests remain behind full authentication and retry no more often than every 30
+  seconds after failure. Superseded browser downloads cannot publish over a newer request.
+- Native tests render the complete committed geography in four rotations and flat mode within
+  the existing 512 KiB output budget, and reject geometry publication after authorization loss.
+  Required formatting, tests and SID compilation passed. Browser review verified rotation,
+  reset, unavailable coverage and the flat-map layout at 390 pixels without horizontal overflow.
+- No Three.js dependency is needed for the current globe. Pointer gestures and richer traffic/
+  attacks overlays remain separate work; existing keyboard-operable rotation controls remain.

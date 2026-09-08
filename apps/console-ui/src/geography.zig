@@ -153,6 +153,28 @@ fn segment(a: Point, b: Point, view: View, w: *std.Io.Writer) std.Io.Writer.Erro
     });
 }
 
+/// Fixed 30-degree grid uses the same horizon/seam clipping as country boundaries.
+/// Five-degree segments bound output and avoid drawing through the rear hemisphere.
+pub fn graticule(view: View, w: *std.Io.Writer) std.Io.Writer.Error!void {
+    try w.writeAll("<path fill=\"none\" stroke=\"#6b8ba4\" stroke-opacity=\".25\" " ++
+        "stroke-width=\".4\" d=\"");
+    for (0..12) |meridian| {
+        const lon = @as(f64, @floatFromInt(meridian)) * 30 - 180;
+        for (0..36) |step| {
+            const lat = @as(f64, @floatFromInt(step)) * 5 - 90;
+            try segment(.{ .lon = lon, .lat = lat }, .{ .lon = lon, .lat = lat + 5 }, view, w);
+        }
+    }
+    for (0..5) |parallel| {
+        const lat = @as(f64, @floatFromInt(parallel)) * 30 - 60;
+        for (0..72) |step| {
+            const lon = @as(f64, @floatFromInt(step)) * 5 - 180;
+            try segment(.{ .lon = lon, .lat = lat }, .{ .lon = lon + 5, .lat = lat }, view, w);
+        }
+    }
+    try w.writeAll("\"/>");
+}
+
 test "orthographic horizon, poles and antimeridian do not expose the rear hemisphere" {
     const t = std.testing;
     const origin = project(.{ .lon = 0, .lat = 0 }, .{ .lat = 0 });

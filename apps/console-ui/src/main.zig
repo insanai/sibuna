@@ -42,14 +42,15 @@ export fn sb_geometry_capacity() usize {
 export fn sb_geometry_loaded(length: usize) void {
     begin();
     state.geometry_busy = false;
-    if (state.phase != .dashboard or state.must_change or length > geometry.len) {
+    if (state.phase != .dashboard or !state.fullAccess() or length > geometry.len) {
         finish();
         return;
     }
     if (@import("geography.zig").validate(geometry[0..length])) |_| {
         state.geometry = geometry[0..length];
+        state.geometry_retry_at = 0;
     } else |_| {
-        setMessage("World boundaries are unavailable. Country totals remain available below.");
+        state.geometry_retry_at = state.browser_time +| 30;
     }
     finish();
 }
@@ -378,7 +379,9 @@ fn statsResponse(status: i64, body: std.json.Value, alloc: std.mem.Allocator) !v
     }
     state.stats = snapshot;
     state.received_at = state.browser_time;
-    if (snapshot.geoip_available and state.geometry == null and !state.geometry_busy) {
+    if (state.fullAccess() and state.geometry == null and !state.geometry_busy and
+        state.browser_time >= state.geometry_retry_at)
+    {
         state.geometry_busy = true;
         try command(.{ .op = "geometry", .path = "/console/assets/world-110m.bin" });
     }
@@ -483,6 +486,41 @@ test {
     _ = @import("render.zig");
     _ = @import("geography.zig");
     _ = @import("qr.zig");
+}
+
+test "authenticated earth remains bounded without a GeoIP provider" {
+    const world = @embedFile("console_world");
+    try @import("geography.zig").validate(world);
+    var model: State = .{ .phase = .dashboard, .geometry = world };
+    model.csrf = try p.Bytes(64).init("test");
+    const buffer = try std.testing.allocator.alloc(u8, 512 * 1024);
+    defer std.testing.allocator.free(buffer);
+    for (0..5) |view| {
+        model.globe = .{ .lon = @as(f64, @floatFromInt(view)) * 90, .flat = view == 4 };
+        var writer: std.Io.Writer = .fixed(buffer);
+        try render.render(&model, &writer);
+        const output = writer.buffered();
+        try std.testing.expect(std.mem.indexOf(u8, output, "GeoIP unavailable") != null);
+        try std.testing.expect(std.mem.indexOf(u8, output, "Rotate left") != null);
+        const unavailable = std.mem.indexOf(u8, output, "World boundaries unavailable");
+        try std.testing.expect(unavailable == null);
+    }
+}
+
+test "geometry failures delay retries and cannot publish after revocation" {
+    state = .{ .phase = .dashboard, .browser_time = 100 };
+    state.csrf = try p.Bytes(64).init("test");
+    sb_geometry_loaded(0);
+    try std.testing.expectEqual(@as(u64, 130), state.geometry_retry_at);
+    const world = @embedFile("console_world");
+    @memcpy(geometry[0..world.len], world);
+    state.csrf = .{};
+    sb_geometry_loaded(world.len);
+    try std.testing.expect(state.geometry == null);
+    state.csrf = try p.Bytes(64).init("test");
+    sb_geometry_loaded(world.len);
+    try std.testing.expect(state.geometry != null);
+    try std.testing.expectEqual(@as(u64, 0), state.geometry_retry_at);
 }
 
 test "required password changes cannot open subscriptions through navigation" {

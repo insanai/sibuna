@@ -60,18 +60,23 @@ async function run(command) {
       event(2, {id: command.id, status: 0, body: {}});
     }
   } else if (command.op === "geometry") {
+    geometryController?.abort();
+    const controller = new AbortController();
+    geometryController = controller;
     try {
-      geometryController?.abort();
-      geometryController = new AbortController();
       const response = await fetch(command.path, {
-        credentials: "same-origin", signal: geometryController.signal,
+        credentials: "same-origin", signal: controller.signal,
       });
       if (!response.ok) throw new Error("Geometry unavailable");
       const bytes = new Uint8Array(await response.arrayBuffer());
       if (bytes.length > wasm.sb_geometry_capacity()) throw new Error("Geometry too large");
+      if (geometryController !== controller) return;
       new Uint8Array(wasm.memory.buffer, wasm.sb_geometry_input(), bytes.length).set(bytes);
       wasm.sb_geometry_loaded(bytes.length);
-    } catch { wasm.sb_geometry_loaded(0); }
+    } catch {
+      if (geometryController !== controller) return;
+      wasm.sb_geometry_loaded(0);
+    }
     flush();
   } else if (command.op === "timer") {
     clearTimeout(timers.get(command.id));

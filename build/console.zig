@@ -88,6 +88,9 @@ fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module)
         .imports = &.{.{ .name = "console_protocol", .module = protocol }},
     }) });
     tests.root_module.addImport("html", htmlModule(b, b.graph.host, .Debug));
+    tests.root_module.addAnonymousImport("console_world", .{
+        .root_source_file = b.path("apps/console-ui/web/assets/world-110m.bin"),
+    });
     const step = b.step("console-ui", "Build the Zig console WebAssembly interface");
     step.dependOn(&wasm.step);
     const render_step = b.step("console-render-test", "Test native console rendering");

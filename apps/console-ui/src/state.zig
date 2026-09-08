@@ -36,6 +36,7 @@ pub const State = struct {
     dark: bool = false,
     geometry: ?[]const u8 = null,
     geometry_busy: bool = false,
+    geometry_retry_at: u64 = 0,
     globe: @import("geography.zig").View = .{},
     geo: p.geo.Metadata = .{},
     geo_status: p.Bytes(16) = .{},
