@@ -8,7 +8,8 @@ const Program = struct { bytes: [64 * 1024]u8 = undefined, len: usize = 0 };
 
 pub fn supports(comptime T: type) bool {
     for (@typeInfo(T).@"struct".fields) |field| {
-        if (@typeInfo(field.type) == .bool) continue;
+        if (@typeInfo(field.type) == .bool or @typeInfo(field.type) == .comptime_int) continue;
+        if (@typeInfo(field.type) == .array and @typeInfo(field.type).array.child == u8) continue;
         if (@typeInfo(field.type) == .int and @typeInfo(field.type).int.bits <= 64) continue;
         if (@typeInfo(field.type) != .pointer) return false;
         const pointer = @typeInfo(field.type).pointer;
@@ -19,24 +20,27 @@ pub fn supports(comptime T: type) bool {
     return @typeInfo(T).@"struct".fields.len <= 128;
 }
 
+const Scalar = union(enum) { text: []const u8, unsigned: u64, signed: i64 };
+
 pub fn render(w: *Writer, comptime source: []const u8, values: anytype) Writer.Error!void {
     const fields = @typeInfo(@TypeOf(values)).@"struct".fields;
-    var text: [fields.len][]const u8 = undefined;
-    var numbers: [fields.len][20]u8 = undefined;
-    inline for (fields, &text, &numbers) |field, *value, *buffer| {
-        const item = @field(values, field.name);
-        value.* = switch (@typeInfo(field.type)) {
-            .bool => if (item) "true" else "false",
+    var items: [fields.len]Scalar = undefined;
+    inline for (fields, &items) |field, *item| {
+        const value = @field(values, field.name);
+        item.* = switch (@typeInfo(field.type)) {
+            .bool => .{ .text = if (value) "true" else "false" },
+            .array => .{ .text = &@field(values, field.name) },
+            .comptime_int => if (value < 0) .{ .signed = value } else .{ .unsigned = value },
             .int => |info| if (info.signedness == .signed)
-                try number(buffer, @abs(item), item < 0)
+                .{ .signed = value }
             else
-                try number(buffer, item, false),
-            else => item,
+                .{ .unsigned = value },
+            else => .{ .text = value },
         };
     }
     const program = comptime compile(source, @TypeOf(values));
     const bytes = comptime program.bytes[0..program.len].*;
-    return execute(w, &bytes, &text);
+    return execute(w, &bytes, &items);
 }
 
 // NUL + a dictionary index names an entry, the next 128 indexes a slot, and 255 a literal
@@ -81,7 +85,7 @@ fn compile(comptime source: []const u8, comptime T: type) Program {
     return program;
 }
 
-noinline fn execute(w: *Writer, bytes: []const u8, values: []const []const u8) Writer.Error!void {
+noinline fn execute(w: *Writer, bytes: []const u8, values: []const Scalar) Writer.Error!void {
     var cursor: usize = 0;
     while (std.mem.indexOfScalarPos(u8, bytes, cursor, 0)) |marker| {
         try w.writeAll(bytes[cursor..marker]);
@@ -94,7 +98,13 @@ noinline fn execute(w: *Writer, bytes: []const u8, values: []const []const u8) W
         } else {
             const slot = index - literals.dictionary.len;
             std.debug.assert(slot < values.len);
-            try root.escape(w, values[slot]);
+            var buffer: [20]u8 = undefined;
+            const text = switch (values[slot]) {
+                .text => |value| value,
+                .unsigned => |value| try number(buffer[0..20], value, false),
+                .signed => |value| try number(buffer[0..20], @abs(value), value < 0),
+            };
+            try root.escape(w, text);
         }
         cursor = marker + 2;
     }

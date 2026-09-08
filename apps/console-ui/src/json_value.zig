@@ -30,11 +30,17 @@ fn structure(comptime T: type, value: std.json.Value, allocator: std.mem.Allocat
     return result;
 }
 
+const Default = union(enum) {
+    required,
+    absent,
+    zero,
+    stored: *const anyopaque,
+};
 const Field = struct {
     name: []const u8,
     offset: usize,
-    default: ?*const anyopaque,
-    read: *const fn (*anyopaque, ?std.json.Value, std.mem.Allocator, ?*const anyopaque) Error!void,
+    default: Default,
+    read: *const fn (*anyopaque, ?std.json.Value, std.mem.Allocator, Default) Error!void,
 };
 
 /// All offsets, defaults and typed readers come from the compiler's own struct metadata.
@@ -49,11 +55,43 @@ fn fields(comptime T: type) [@typeInfo(T).@"struct".fields.len]Field {
         field.* = .{
             .name = member.name,
             .offset = offset,
-            .default = member.default_value_ptr,
+            .default = defaultValue(member.type, member.default_value_ptr),
             .read = Reader(member.type).read,
         };
     }
     return result;
+}
+
+// Null optional payloads and zero-filled arrays need no initialized data image in Wasm.
+// The private descriptor distinguishes optional null from a zero representation (which
+// would be wrong for niche-encoded optionals such as ?bool). Other defaults retain values.
+fn defaultValue(comptime T: type, pointer: ?*const anyopaque) Default {
+    @setEvalBranchQuota(100_000);
+    const source = pointer orelse return .required;
+    const value = @as(*const T, @ptrCast(@alignCast(source))).*;
+    if (@typeInfo(T) == .optional and value == null) return .absent;
+    if (zeroValue(T, value)) return .zero;
+    return .{ .stored = source };
+}
+
+fn zeroValue(comptime T: type, value: T) bool {
+    @setEvalBranchQuota(100_000);
+    return switch (@typeInfo(T)) {
+        .bool => !value,
+        .int => value == 0,
+        .@"enum" => @intFromEnum(value) == 0,
+        .array => |info| array: {
+            for (value) |item| if (!zeroValue(info.child, item)) break :array false;
+            break :array true;
+        },
+        .@"struct" => structure: {
+            inline for (@typeInfo(T).@"struct".fields) |field| {
+                if (!zeroValue(field.type, @field(value, field.name))) break :structure false;
+            }
+            break :structure true;
+        },
+        else => false,
+    };
 }
 
 // One loop handles every bounded object; otherwise every field expands a lookup/decoder
@@ -80,13 +118,21 @@ fn Reader(comptime T: type) type {
             destination: *anyopaque,
             value: ?std.json.Value,
             allocator: std.mem.Allocator,
-            default: ?*const anyopaque,
+            default: Default,
         ) Error!void {
             const typed: *T = @ptrCast(@alignCast(destination));
-            typed.* = if (value) |item| try decode(T, item, allocator) else if (default) |pointer|
-                @as(*const T, @ptrCast(@alignCast(pointer))).*
-            else
-                return error.InvalidResponse;
+            if (value) |item| {
+                typed.* = try decode(T, item, allocator);
+                return;
+            }
+            switch (default) {
+                .required => return error.InvalidResponse,
+                .absent => if (@typeInfo(T) == .optional) {
+                    typed.* = null;
+                } else unreachable,
+                .zero => @memset(std.mem.asBytes(typed), 0),
+                .stored => |pointer| typed.* = @as(*const T, @ptrCast(@alignCast(pointer))).*,
+            }
         }
     };
 }
@@ -266,4 +312,26 @@ test "statistics encode UTF-8 boot bytes as an array and preserve full-width cou
     try t.expectEqualSlices(u8, &snapshot.boot, &restored.boot);
     try t.expectError(error.InvalidResponse, decode(u64, .{ .string = "+1" }, t.allocator));
     try t.expectError(error.InvalidResponse, decode(u64, .{ .string = "1e3" }, t.allocator));
+}
+
+test "shared defaults preserve optional false, null, nonzero values and bounded zero arrays" {
+    const Wire = struct {
+        missing: ?bool = null,
+        present: ?bool = false,
+        flags: [1024]u64 = @splat(0),
+        count: u64 = 7,
+    };
+    const t = std.testing;
+    const empty: std.json.Value = .{ .object = .{} };
+    const value = try decode(Wire, empty, t.allocator);
+    try t.expect(value.missing == null);
+    try t.expectEqual(@as(?bool, false), value.present);
+    try t.expectEqual(@as(u64, 7), value.count);
+    try t.expect(std.mem.allEqual(u64, &value.flags, 0));
+    const descriptors = comptime fields(Wire);
+    try t.expect(descriptors[0].default == .absent);
+    try t.expect(descriptors[1].default == .stored);
+    try t.expect(descriptors[2].default == .zero);
+    try t.expect(descriptors[3].default == .stored);
+    try t.expectError(error.InvalidResponse, decode(struct { required: u64 }, empty, t.allocator));
 }

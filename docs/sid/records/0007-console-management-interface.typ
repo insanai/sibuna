@@ -3064,6 +3064,19 @@ bearer headers, no login/logout, deadline, oversize, redirects and sensitive-fie
 The combined native suite passes 301 tests. The Tokens browser interface is a separate
 increment and remains subject to its rendering, size and live browser checks.
 
+== Bounded UI helpers and standalone artifact gate (2026-09-09)
+
+Owned byte buffers now support bounded in-place assignment, including overlapping source
+slices and erasure of truncated tails. Oversize input preserves the previous value. The
+shared HTML executor formats scalar slots in one bounded buffer and accepts owned country
+code arrays. JSON field descriptors represent null and zero defaults without embedding
+large initialized payloads; typed nonzero defaults remain intact.
+
+Both `console-ui` and `console-test` now validate the emitted Wasm header and enforce the
+300 KiB artifact limit. The server asset assertion remains an additional integration gate.
+Native checks cover overlap, overflow, optional false versus null, integer extrema and
+escaping. This size check does not replace runtime impact or browser acceptance.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

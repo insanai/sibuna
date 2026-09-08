@@ -32,6 +32,7 @@ pub fn add(
     addAssets(b);
     addGeoCheck(b, console);
     const step = b.step("console-test", "Test console contracts and bounded ownership");
+    step.dependOn(&b.top_level_steps.get("console-ui").?.step);
     step.dependOn(&b.top_level_steps.get("console-render-test").?.step);
     step.dependOn(&b.top_level_steps.get("console-assets-check").?.step);
     for ([_]*std.Build.Module{ protocol, console, serve, html }) |module| {
@@ -94,7 +95,9 @@ fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module)
         .root_source_file = b.path("apps/console-ui/web/assets/world-110m.bin"),
     });
     const step = b.step("console-ui", "Build the Zig console WebAssembly interface");
-    step.dependOn(&wasm.step);
+    const size = b.addSystemCommand(&.{ "python3", "tools/console_wasm_check.py" });
+    size.addFileArg(wasm.getEmittedBin());
+    step.dependOn(&size.step);
     const render_step = b.step("console-render-test", "Test native console rendering");
     render_step.dependOn(&b.addRunArtifact(tests).step);
 }

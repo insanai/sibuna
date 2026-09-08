@@ -190,12 +190,21 @@ pub fn Bytes(comptime capacity: usize) type {
         len: usize = 0,
 
         pub fn init(value: []const u8) error{TooLarge}!@This() {
-            if (value.len > capacity) return error.TooLarge;
             var result: @This() = undefined;
-            @memset(&result.data, 0);
-            result.len = value.len;
-            @memcpy(result.data[0..value.len], value);
+            try result.set(value);
             return result;
+        }
+
+        /// Caller-owned outputs avoid large error-union copies. Oversize input leaves
+        /// the previous value intact; overlapping slices are moved before tail erasure.
+        pub fn set(self: *@This(), value: []const u8) error{TooLarge}!void {
+            if (value.len > capacity) return error.TooLarge;
+            const output = self.data[0..value.len];
+            if (@intFromPtr(output.ptr) <= @intFromPtr(value.ptr)) {
+                std.mem.copyForwards(u8, output, value);
+            } else std.mem.copyBackwards(u8, output, value);
+            @memset(self.data[value.len..], 0);
+            self.len = value.len;
         }
 
         pub fn slice(self: *const @This()) []const u8 {
@@ -374,4 +383,17 @@ pub fn validUsername(username: []const u8) bool {
             return false;
     }
     return true;
+}
+
+test "owned byte updates preserve oversize state, support overlap and erase truncated tails" {
+    const t = std.testing;
+    var buffer = try Bytes(16).init("private value");
+    try buffer.set(buffer.slice()[8..]);
+    try t.expectEqualStrings("value", buffer.slice());
+    try t.expect(std.mem.allEqual(u8, buffer.data[buffer.len..], 0));
+    try t.expectError(error.TooLarge, buffer.set("x" ** 17));
+    try t.expectEqualStrings("value", buffer.slice());
+    try buffer.set("");
+    try t.expectEqual(@as(usize, 0), buffer.len);
+    try t.expect(std.mem.allEqual(u8, &buffer.data, 0));
 }
