@@ -25,6 +25,7 @@ pub fn tick(owner: *Persistent) void {
 pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
     if (!owner.console_initialized) try @import("console_migrations.zig").run(owner);
     const retention = @import("console_store_retention.zig");
+    const geo = @import("console_store_geo.zig");
     return switch (request) {
         .users_query => |input| @import("console_store_users.zig").query(
             owner,
@@ -62,9 +63,9 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
         .totp_confirm => |input| @import("console_store_totp.zig").confirm(owner, input),
         .geo_prune => |now| @import("console_store_geo.zig").prune(owner, now),
         .geo_metadata => @import("console_store_geo.zig").metadata(owner),
-        .geo_begin => |input| @import("console_store_geo.zig").begin(owner, input),
-        .geo_batch => |input| @import("console_store_geo.zig").batch(owner, input),
-        .geo_activate => |input| @import("console_store_geo.zig").activate(owner, input),
+        .geo_begin => |input| geo.begin(owner, input, owner.nowSeconds()),
+        .geo_batch => |input| geo.batch(owner, input, owner.nowSeconds()),
+        .geo_activate => |input| geo.activate(owner, input, owner.nowSeconds()),
         .geo_read => |input| @import("console_store_geo.zig").read(owner, input),
         .setup_status => blk: {
             var result = try db.query(

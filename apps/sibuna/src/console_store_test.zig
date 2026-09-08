@@ -482,6 +482,16 @@ test "GeoIP publication rejects incomplete generations and audits the pointer co
         .{tmp.sub_path},
     ));
     defer fx.close();
+    // The owner checks execution time, even when the queued credential timestamp is old.
+    _ = try db.exec(
+        fx.owner.db,
+        t.allocator,
+        "UPDATE console_sessions SET expires=?,idle_expires=?",
+        &.{
+            .{ .integer = @intCast(fx.owner.nowSeconds() + 1000) },
+            .{ .integer = @intCast(fx.owner.nowSeconds() + 1000) },
+        },
+    );
     const auth: p.geo.Authorization = .{
         .session_digest = @splat(1),
         .csrf_digest = @splat(2),

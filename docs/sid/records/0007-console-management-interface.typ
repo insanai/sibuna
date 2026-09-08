@@ -2884,6 +2884,17 @@ Idle RSS was 9,936 KiB with two workers and storage compiled but inactive.
 The 8,831-byte Wasm artifact is the proof solver. These measurements do not exercise
 active dashboards, imports or storage contention and do not pass console-impact acceptance.
 
+== GeoIP execution-time authorization (2026-09-08)
+
+Generation begin, chunk insertion, exact immutable retries and activation now authorize
+against Persistent's execution clock. A caller timestamp cannot extend an expired queued
+session. Off-loopback imports carry the mandatory-factor requirement into each conditional
+SQL write and replay query, together with session revision, CSRF, role and password-change
+checks. Expiry or missing required MFA leaves the active generation and audit unchanged.
+A deterministic storage-tick test queues a chunk, expires its session before execution,
+and verifies refusal; it also checks both immutable retries and activation, followed by
+one authorized activation and exactly one audit record.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

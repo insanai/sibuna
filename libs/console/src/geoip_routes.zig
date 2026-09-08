@@ -36,7 +36,12 @@ pub fn handle(app: *App, context: *http.Context, user: p.Principal) !void {
     defer input.deinit();
     if (input.value.expected_revision >= std.math.maxInt(i64)) return error.InvalidLimit;
     try job.start(.{
-        .auth = .{ .session_digest = digest, .csrf_digest = user.csrf_digest, .now = app.now() },
+        .auth = .{
+            .session_digest = digest,
+            .csrf_digest = user.csrf_digest,
+            .now = app.now(),
+            .require_totp = app.config.behind_proxy,
+        },
         .expected_revision = input.value.expected_revision,
         .source_version = try p.Bytes(7).init(input.value.source_version),
         .checksum = try p.Bytes(64).init(input.value.checksum),

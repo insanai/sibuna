@@ -1,5 +1,6 @@
 //! Every entry executes only on Persistent's owner thread. Generation chunks are bounded
 //! and immutable. Neither incomplete chunks nor a stale authorization may publish data.
+//! Authorization uses the owner clock at execution, never the caller submission timestamp.
 const std = @import("std");
 const p = @import("console").protocol;
 const zx = @import("zaxonlite");
@@ -10,7 +11,8 @@ const authorized =
     "SELECT u.id FROM console_users u JOIN console_sessions s ON s.user_id=u.id " ++
     "WHERE s.digest=? AND s.csrf_digest=? AND MIN(s.expires,s.idle_expires)>? " ++
     "AND s.revision=u.revision " ++
-    "AND u.disabled=0 AND u.must_change=0 AND u.role='admin'";
+    "AND u.disabled=0 AND u.must_change=0 AND u.role='admin' " ++
+    "AND (?=0 OR EXISTS(SELECT 1 FROM console_totp t WHERE t.user_id=u.id AND t.enabled=1))";
 
 fn text(value: []const u8) zx.Value {
     return .{ .text = value };
@@ -45,7 +47,7 @@ pub fn metadata(owner: *Persistent) !p.StorageResult {
     } };
 }
 
-pub fn begin(owner: *Persistent, input: p.geo.Begin) !p.StorageResult {
+pub fn begin(owner: *Persistent, input: p.geo.Begin, now: u64) !p.StorageResult {
     if (!validDigest(input.digest) or input.ranges == 0 or input.ranges > 1024 * 1024)
         return .{ .failed = .invalid_input };
     if (input.source_version.len > 7) return .{ .failed = .invalid_input };
@@ -68,18 +70,19 @@ pub fn begin(owner: *Persistent, input: p.geo.Begin) !p.StorageResult {
             text(input.digest.slice()),
             text(date),
             integer(input.ranges),
-            integer(input.auth.now),
+            integer(now),
             text(&digest),
             text(&csrf),
-            integer(input.auth.now),
+            integer(now),
+            integer(@intFromBool(input.auth.require_totp)),
             integer(input.expected_revision),
         },
     );
     if (changed > 0) return .command_recorded;
-    return replayBegin(owner, input);
+    return replayBegin(owner, input, now);
 }
 
-pub fn batch(owner: *Persistent, input: p.geo.Batch) !p.StorageResult {
+pub fn batch(owner: *Persistent, input: p.geo.Batch, now: u64) !p.StorageResult {
     if (!validDigest(input.digest) or input.bytes.len == 0 or input.bytes.len > 3400 or
         input.bytes.len % 34 != 0 or input.ordinal >= 10486) return .{ .failed = .invalid_input };
     if (!validBatch(input.bytes.slice())) return .{ .failed = .invalid_input };
@@ -106,17 +109,18 @@ pub fn batch(owner: *Persistent, input: p.geo.Batch) !p.StorageResult {
             text(input.digest.slice()),
             text(&digest),
             text(&csrf),
-            integer(input.auth.now),
+            integer(now),
+            integer(@intFromBool(input.auth.require_totp)),
             integer(input.ordinal),
             integer(input.ordinal),
             integer(1024 * 1024),
         },
     );
     if (changed > 0) return .command_recorded;
-    return replayBatch(owner, input, encoded[0 .. input.bytes.len * 2]);
+    return replayBatch(owner, input, encoded[0 .. input.bytes.len * 2], now);
 }
 
-pub fn activate(owner: *Persistent, input: p.geo.Activate) !p.StorageResult {
+pub fn activate(owner: *Persistent, input: p.geo.Activate, now: u64) !p.StorageResult {
     if (!validDigest(input.digest)) return .{ .failed = .invalid_input };
     const digest = std.fmt.bytesToHex(input.auth.session_digest, .lower);
     const csrf = std.fmt.bytesToHex(input.auth.csrf_digest, .lower);
@@ -129,10 +133,18 @@ pub fn activate(owner: *Persistent, input: p.geo.Activate) !p.StorageResult {
             authorized ++ ") AND g.ranges=(SELECT sum(length(payload)/68) " ++
             "FROM console_geo_chunks WHERE digest=g.digest))",
         &.{
-            text(input.digest.slice()), integer(input.auth.now), text(&digest),
-            text(&csrf),                integer(input.auth.now), integer(input.expected_revision),
-            text(input.digest.slice()), text(&digest),           text(&csrf),
-            integer(input.auth.now),
+            text(input.digest.slice()),
+            integer(now),
+            text(&digest),
+            text(&csrf),
+            integer(now),
+            integer(@intFromBool(input.auth.require_totp)),
+            integer(input.expected_revision),
+            text(input.digest.slice()),
+            text(&digest),
+            text(&csrf),
+            integer(now),
+            integer(@intFromBool(input.auth.require_totp)),
         },
     );
     return if (changed > 0) .command_recorded else .{ .failed = .conflict };
@@ -211,7 +223,7 @@ pub fn prune(owner: *Persistent, now: u64) !p.StorageResult {
     return .command_recorded;
 }
 
-fn replayBegin(owner: *Persistent, input: p.geo.Begin) !p.StorageResult {
+fn replayBegin(owner: *Persistent, input: p.geo.Begin, now: u64) !p.StorageResult {
     const digest = std.fmt.bytesToHex(input.auth.session_digest, .lower);
     const csrf = std.fmt.bytesToHex(input.auth.csrf_digest, .lower);
     var result = try db.query(
@@ -227,7 +239,8 @@ fn replayBegin(owner: *Persistent, input: p.geo.Begin) !p.StorageResult {
             integer(input.expected_revision),
             text(&digest),
             text(&csrf),
-            integer(input.auth.now),
+            integer(now),
+            integer(@intFromBool(input.auth.require_totp)),
         },
     );
     defer result.deinit();
@@ -236,7 +249,12 @@ fn replayBegin(owner: *Persistent, input: p.geo.Begin) !p.StorageResult {
 
 /// After restart a validated same-digest import may replay immutable chunks. Accept only an
 /// exact byte match under fresh authorization; a conflicting retry never overwrites a chunk.
-fn replayBatch(owner: *Persistent, input: p.geo.Batch, encoded: []const u8) !p.StorageResult {
+fn replayBatch(
+    owner: *Persistent,
+    input: p.geo.Batch,
+    encoded: []const u8,
+    now: u64,
+) !p.StorageResult {
     const digest = std.fmt.bytesToHex(input.auth.session_digest, .lower);
     const csrf = std.fmt.bytesToHex(input.auth.csrf_digest, .lower);
     var result = try db.query(
@@ -247,8 +265,9 @@ fn replayBatch(owner: *Persistent, input: p.geo.Batch, encoded: []const u8) !p.S
             "AND g.digest<>(SELECT digest FROM console_geo_active WHERE id=1) " ++
             "AND g.actor IN (" ++ authorized ++ ") LIMIT 1",
         &.{
-            text(input.digest.slice()), integer(input.ordinal), text(encoded),
-            text(&digest),              text(&csrf),            integer(input.auth.now),
+            text(input.digest.slice()),                     integer(input.ordinal), text(encoded),
+            text(&digest),                                  text(&csrf),            integer(now),
+            integer(@intFromBool(input.auth.require_totp)),
         },
     );
     defer result.deinit();
