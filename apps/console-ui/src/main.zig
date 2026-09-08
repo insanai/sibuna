@@ -88,8 +88,10 @@ export fn sb_event(kind: u32, length: usize) void {
         setMessage("Could not complete the action. Please try again.");
         state.busy = false;
     };
-    if (state.phase != previous_phase)
+    if (state.phase != previous_phase) {
+        state.navigation_open = false;
         command(.{ .op = "focus", .selector = "main h1", .top = true }) catch unreachable;
+    }
     finish();
 }
 
@@ -169,6 +171,19 @@ fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
 
 fn action(value: std.json.Value) !void {
     const name = string(value, "action");
+    if (equal(name, "navigation-toggle") and state.fullAccess()) {
+        state.navigation_open = !state.navigation_open;
+        return;
+    }
+    if (state.navigation_open) {
+        const destinations = .{ "dashboard", "events", "challenges", "geoip", "account" };
+        inline for (destinations) |destination| {
+            if (equal(name, destination)) {
+                state.navigation_open = false;
+                try command(.{ .op = "focus", .selector = "main h1", .top = true });
+            }
+        }
+    }
     const fields = field(value, "fields") orelse .null;
     if (try similarityAction(name)) return;
     if (try challengeAction(name, fields)) return;

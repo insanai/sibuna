@@ -416,3 +416,14 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
   compile-rejection probes verified missing fields, unclosed/invalid placeholders, unsupported
   tags, source-size limits and placeholder-count limits. Runtime tests cover escaping expansion,
   fixed-output exhaustion and exact 64-bit IDs. No measured data-plane subsystem changed.
+
+### Consistent authenticated navigation (2026-09-08)
+
+- Moved the sidebar out of the Statistics renderer into a shared authenticated shell. Every
+  full-access view, including similarity and account security, now has one navigation landmark
+  and the correct active section. Required password/TOTP gates retain the authentication shell.
+- Uses the pinned daisyUI menu/navbar components, theme tokens, sticky desktop navigation and a
+  Wasm-owned mobile disclosure with `aria-controls`/`aria-expanded`. Page selection closes the
+  disclosure and restores heading focus. A skip link bypasses repeated navigation.
+- Required formatting, tests and SID compilation passed. Browser checks traversed all current
+  desktop sections and verified mobile disclosure, selection, focus and no overflow at 390 px.

@@ -3,23 +3,21 @@ const State = @import("state.zig").State;
 const Writer = std.Io.Writer;
 
 pub fn render(state: *const State, w: *Writer) Writer.Error!void {
+    const shell = @import("shell.zig");
+    const authenticated = state.fullAccess();
+    if (authenticated) try shell.begin(state, w);
+    try page(state, w);
+    if (authenticated) try shell.end(w);
+}
+
+fn page(state: *const State, w: *Writer) Writer.Error!void {
     if (state.phase == .similarity) return @import("similarity_page.zig").render(state, w);
     if (state.phase == .challenges) return @import("challenges_page.zig").render(state, w);
     if (state.phase == .events) return @import("events_page.zig").render(state, w);
     if (state.phase == .security) return @import("security.zig").page(state, w);
     if (state.phase == .geoip) return @import("geoip_page.zig").render(state, w);
     if (state.phase != .dashboard) return authentication(state, w);
-    try w.writeAll("<div class=\"sb-shell\">" ++
-        "<nav class=\"sb-nav\" aria-label=\"Main navigation\">" ++
-        "<div><a class=\"sb-brand\" href=\"/console/\">SIBUNA</a>" ++
-        "<p class=\"sb-caption\">SECURITY CONSOLE</p></div>" ++
-        "<button class=\"btn btn-ghost\" aria-current=\"page\">Statistics</button>" ++
-        "<button class=\"btn btn-ghost\" data-action=\"events\">Events</button>" ++
-        "<button class=\"btn btn-ghost\" data-action=\"challenges\">Challenges</button>" ++
-        "<button class=\"btn btn-ghost\" data-action=\"geoip\">GeoIP</button>" ++
-        "<button class=\"btn btn-ghost\" data-action=\"account\">Account</button>" ++
-        "<button class=\"btn btn-ghost\" data-action=\"logout\">Sign out</button></nav>" ++
-        "<main class=\"sb-main\"><header class=\"sb-header\"><div>" ++
+    try w.writeAll("<main class=\"sb-main\"><header class=\"sb-header\"><div>" ++
         "<p class=\"sb-subtitle\">SINGLE NODE / STATISTICS</p>" ++
         "<h1 id=\"page-heading\" tabindex=\"-1\">Traffic overview</h1>" ++
         "<p class=\"sb-subtitle\">Know what is reaching your applications.</p></div>" ++
@@ -50,7 +48,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     try w.writeAll("</tbody></table></article></section><footer class=\"sb-footer sb-note\">" ++
         "<span>Sibuna Console · single-node view</span>" ++
         "<span>All-time totals since this boot</span>" ++
-        "</footer></main></div>");
+        "</footer></main>");
 }
 
 fn authentication(state: *const State, w: *Writer) Writer.Error!void {
@@ -232,4 +230,35 @@ test "authentication renders no geographic or telemetry element and escapes inpu
     try std.testing.expect(std.mem.indexOf(u8, html, "<svg") == null);
     try std.testing.expect(std.mem.indexOf(u8, html, "world-110m") == null);
     try std.testing.expect(std.mem.indexOf(u8, html, "&lt;script&gt;&quot;") != null);
+}
+
+test "authenticated pages share one navigation landmark with the correct active section" {
+    const phases = [_]@import("state.zig").Phase{
+        .dashboard, .events, .similarity, .challenges, .geoip, .password, .security,
+    };
+    const actions = [_][]const u8{
+        "dashboard", "events", "events", "challenges", "geoip", "account", "account",
+    };
+    for (phases, 0..) |phase, i| {
+        var state: State = .{ .phase = phase };
+        state.csrf = try @import("console_protocol").Bytes(64).init("test");
+        var buffer: [32 * 1024]u8 = undefined;
+        var writer: Writer = .fixed(&buffer);
+        try render(&state, &writer);
+        const output = writer.buffered();
+        try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, output, "<nav "));
+        try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, output, "<main "));
+        const active = actions[i];
+        var expected_buffer: [128]u8 = undefined;
+        const expected = try std.fmt.bufPrint(
+            &expected_buffer,
+            "data-action=\"{s}\"\n            aria-current=\"page\"",
+            .{active},
+        );
+        try std.testing.expect(std.mem.indexOf(u8, output, expected) != null);
+        state.must_change = true;
+        writer = .fixed(&buffer);
+        try render(&state, &writer);
+        try std.testing.expect(std.mem.indexOf(u8, writer.buffered(), "<nav ") == null);
+    }
 }

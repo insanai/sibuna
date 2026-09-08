@@ -13,6 +13,7 @@ pub const Phase = enum {
 };
 pub const State = struct {
     phase: Phase = .loading,
+    navigation_open: bool = false,
     similarity: @import("similarity_state.zig").Model = .{},
     challenges: @import("challenges_page.zig").Model = .{},
     events: @import("events_state.zig").Model = .{},
