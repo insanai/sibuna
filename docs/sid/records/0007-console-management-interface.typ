@@ -3193,6 +3193,16 @@ but cannot inspect policies or incidents, and cannot bypass its issuer's require
 These checks close the older read-contract timestamp gap; they do not establish cluster
 runtime, complete audit metadata or impact acceptance.
 
+== Audit and execution-authority benchmark regeneration (2026-09-09)
+
+An isolated clean `c629e0ae49e70bdf25916ff80132227ae6400b1e` checkout regenerated the
+primitive baseline with review daemons stopped. Manifest version 2 covers 356 inputs,
+SHA-256 `e9441f46ae7517541ae5063808828566bc747de4f8b646502aac92a00af50649`;
+the daemon digest is `fb1040e38c4f2cf094ed1ba29c5c1e36ac8b7251d888246f25a256e3b9bf73c1`.
+The snapshot is `latest-20260908T171917Z.json`. Idle RSS was 9,936 KiB with two workers
+and storage compiled but inactive. This covers the current audit and authorization source
+baseline, not the active-console throughput/p99/contention acceptance matrix.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
