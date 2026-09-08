@@ -469,3 +469,17 @@ stages remain required; these commits do not deliver the complete SID 0007 conso
   Required repository tests, formatting and SID compilation passed; subsequent UI refinements
   passed console-specific checks and browser review. Policy edits, history and candidate-engine
   validation remain pending and are not represented as implemented by this read/test view.
+
+### Strict management documents and private candidates (2026-09-08)
+
+- Added a separate management document compiler with owned strings, a 4 KiB input bound,
+  strict field validation, and rejection of excess or ambiguous matchers. Existing startup
+  file parsing remains compatible. Disabled documents receive the same validation.
+- Private candidates own their engine and a fixed 2 MiB string/parser budget, include current
+  file settings and fallbacks, and insert validated dynamic rules in priority/name/ID order.
+  Their 128-rule limit includes fallbacks; reputation insertion rejects invalid actions,
+  malformed networks and trie exhaustion. Failure releases the entire private candidate.
+- Tests cover input ownership, allocator exhaustion, duplicate fields/IDs, matcher limits,
+  deterministic order, disabled rules, fallback capacity and file/reputation composition.
+  This is library support for upcoming management operations; no draft is published and no
+  policy write endpoint is exposed by this change.

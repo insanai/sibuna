@@ -11,6 +11,8 @@ pub const radix_trie = @import("radix_trie.zig");
 pub const bot_signatures = @import("bot_signatures.zig");
 pub const rule = @import("rule.zig");
 pub const loader = @import("loader.zig");
+pub const management = @import("management.zig");
+pub const candidate = @import("candidate.zig");
 pub const engine = @import("engine.zig");
 pub const waf = @import("waf.zig");
 pub const normalizer = @import("normalizer.zig");
@@ -27,6 +29,8 @@ test {
     _ = @import("radix_trie.zig");
     _ = @import("rule.zig");
     _ = @import("loader.zig");
+    _ = @import("management.zig");
+    _ = @import("candidate.zig");
     _ = @import("engine.zig");
     _ = @import("waf.zig");
     _ = @import("normalizer.zig");
