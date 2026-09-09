@@ -85,6 +85,7 @@ pub const Principal = struct {
 };
 pub const retention = @import("retention.zig");
 pub const kiosk = @import("kiosk.zig");
+pub const notifications = @import("notifications.zig");
 pub const AuthorizationCheck = struct {
     session_digest: [32]u8,
     touch: bool = false,
@@ -139,6 +140,16 @@ pub const StorageRequest = union(enum) {
     node_advertise: Bytes(nodes.max_url),
     kiosk_grant: kiosk.Grant,
     kiosk_exchange: kiosk.Exchange,
+    settings_query: users.Auth,
+    settings_change: notifications.SettingChange,
+    notifications_query: notifications.Query,
+    notifications_save: notifications.Save,
+    notifications_remove: notifications.Remove,
+    notifications_read: notifications.Read,
+    notifier_acquire: retention.Holder,
+    notifications_enqueue: notifications.Enqueue,
+    notifications_claim: notifications.Claim,
+    notifications_record: notifications.Record,
 };
 pub const StorageResult = union(enum) {
     node_status: nodes.Status,
@@ -146,6 +157,12 @@ pub const StorageResult = union(enum) {
     nodes_page: nodes.Page,
     kiosk_granted: kiosk.Granted,
     kiosk_session: kiosk.Session,
+    settings_page: notifications.SettingsPage,
+    notifications_page: notifications.Page,
+    notification_saved: u64,
+    notification_secret: notifications.Secret,
+    notifier_lease: retention.Lease,
+    notification_batch: notifications.Batch,
     audit_page: audit.Page,
     audit_detail: audit.Detail,
     tokens_page: tokens.Page,
@@ -236,6 +253,7 @@ pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
         .policy_read => |input| try policies.validateRead(input),
         .policies_query => |query| try policies.validate(query),
         .policies_test => |input| try policies.validateTest(input),
+        .notifications_save => |input| try notifications.validateSave(input),
         .events_query => |query| try events.validate(query),
         .events_similar => |query| try similarity.validate(query),
         inline .geo_begin, .geo_activate, .totp_begin => |input| {
