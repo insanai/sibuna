@@ -10,6 +10,7 @@ pub const Snapshot = @import("console_protocol").StatsSnapshot;
 
 /// The collector owns the single queue consumer; HTTP and streaming writers copy a snapshot.
 pub const Stats = struct {
+    proxy_mode: p.ProxyMode = .reverse_proxy,
     server_location: ?p.Location = null,
     node: u32 = 0,
     boot: [16]u8 = @splat(0),
@@ -129,6 +130,7 @@ pub const Stats = struct {
         const totals = telemetry.totals();
         const ranked = rank(&countries);
         return .{
+            .proxy_mode = self.proxy_mode,
             .server_location = self.server_location,
             .incident_geo = self.incident_geo.snapshot(now),
             .minute_history = self.minute_status,

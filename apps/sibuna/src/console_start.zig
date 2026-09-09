@@ -114,6 +114,10 @@ pub const Runtime = struct {
         defer if (key) |*bytes| std.crypto.secureZero(u8, bytes);
         var composed = config;
         composed.node_id = owner.node_id;
+        composed.proxy_mode = switch (owner.state.config.mode) {
+            .reverse_proxy => .reverse_proxy,
+            .forward_auth => .forward_auth,
+        };
         composed.version = @import("server.zig").version;
         const app = try console.App.init(
             gpa,

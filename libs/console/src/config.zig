@@ -4,6 +4,8 @@ const Budget = @import("budget.zig").Budget;
 
 pub const ConsoleConfig = struct {
     node_id: u32 = 0,
+    /// Supplied by daemon composition, never inferred from an HTTP request or CLI console flag.
+    proxy_mode: protocol.ProxyMode = .reverse_proxy,
     enabled: bool = false,
     host: protocol.Bytes(45) = .{},
     port: u16 = 9443,

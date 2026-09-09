@@ -41,6 +41,7 @@ pub const Action = enum {
     open_kiosk,
 };
 pub const Topic = enum(u8) { stats, events, nodes, challenges, audit };
+pub const ProxyMode = enum { reverse_proxy, forward_auth };
 pub const Cursor = struct { epoch: u64, sequence: u64 };
 pub const Subscription = union(enum) {
     subscribe: struct { topic: Topic, after: ?Cursor = null },
@@ -366,6 +367,8 @@ pub const CountryCount = struct {
     }
 };
 pub const StatsSnapshot = struct {
+    /// Absent on older snapshots. Authorization subrequests cannot observe origin replies.
+    proxy_mode: ?ProxyMode = null,
     /// This console node's declared position, never a client IP or a cluster aggregate.
     server_location: ?Location = null,
     incident_geo: ?@import("incident_geo.zig").Snapshot = null,

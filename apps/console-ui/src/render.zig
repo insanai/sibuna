@@ -232,10 +232,13 @@ fn tiles(state: *const State, w: *Writer) Writer.Error!void {
             },
         );
         if (state.stats) |stats| {
+            const origin = comptime std.mem.startsWith(u8, key, "origin_");
             const separated = comptime std.mem.eql(u8, key, "denied") or
                 std.mem.eql(u8, key, "banned") or std.mem.eql(u8, key, "rate_limited") or
                 std.mem.eql(u8, key, "other");
-            if (separated and stats.outcomes_version != 1)
+            if (origin and stats.proxy_mode != .reverse_proxy)
+                try w.writeAll("Not observed")
+            else if (separated and stats.outcomes_version != 1)
                 try w.writeAll("Not recorded")
             else
                 try w.print("{d}", .{@field(stats, key)});
@@ -243,6 +246,11 @@ fn tiles(state: *const State, w: *Writer) Writer.Error!void {
         try html.render(w, "</strong></article>", .{});
     }
     try html.render(w, "</section>", .{});
+    if (state.stats) |stats| if (stats.proxy_mode == .forward_auth) try w.writeAll(
+        "<p class=\"sb-note\">Forward auth: admitted counts authorization approvals. " ++
+            "The ingress carries uploads, WebSockets and origin responses. " ++
+            "Bodies omitted from authorization requests are not inspected.</p>",
+    );
     try html.render(w, "<p class=\"sb-note\">Outcomes count parsed external requests once. " ++
         "Banned counts requests, not distinct addresses. Origin 4xx/5xx overlap admitted " ++
         "traffic. Counter loads are not simultaneous.</p>", .{});
@@ -323,6 +331,27 @@ fn timeline(state: *const State, w: *Writer) Writer.Error!void {
 }
 
 pub const escape = @import("html").escape;
+
+test "forward auth and older snapshots never present unobserved origin errors as zero" {
+    const t = std.testing;
+    const state = try t.allocator.create(State);
+    defer t.allocator.destroy(state);
+    state.* = .{ .phase = .dashboard };
+    state.stats = std.mem.zeroes(@import("console_protocol").StatsSnapshot);
+    state.stats.?.origin_4xx = 4;
+    state.stats.?.origin_5xx = 9;
+    var buffer: [8192]u8 = undefined;
+    for ([_]?@import("console_protocol").ProxyMode{ .forward_auth, null, .reverse_proxy }) |mode| {
+        state.stats.?.proxy_mode = mode;
+        var writer: Writer = .fixed(&buffer);
+        try tiles(state, &writer);
+        const output = writer.buffered();
+        const missing: usize = if (mode == .reverse_proxy) 0 else 2;
+        try t.expectEqual(missing, std.mem.count(u8, output, "Not observed"));
+        if (mode == .forward_auth)
+            try t.expect(std.mem.indexOf(u8, output, "authorization approvals") != null);
+    }
+}
 
 test "authentication renders no geographic or telemetry element and escapes input" {
     var state: State = .{ .phase = .login };
