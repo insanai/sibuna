@@ -379,7 +379,13 @@ their reputation rows automatically. Preview the country action to compare added
 removed prefixes, using **Next diff page** to inspect the complete bounded replacement. Applying
 the review replaces only that country’s own rows. A changed generation or policy revision
 requires another preview; independently managed prefixes are preserved and conflicts refused. Events retain WAF findings and honeypot incidents, not a complete request access log.
-Management pages use explicit requests; only dashboard statistics currently stream live.
+One authenticated WebSocket carries statistics, events, node status, policy revisions,
+challenges and audit updates across navigation. Incident and audit pages keep rows in place
+while you read; use **Load latest records** to include newer records. Policy updates show the
+current revision without replacing an open draft. Selected non-default challenge timing
+partitions remain explicit snapshots. Mutations and historical/detail queries use HTTP.
+`zig build console-ui-e2e` runs the shipped Wasm against a real daemon using Node; Chrome
+review separately checks the browser DOM, layout and accessibility.
 
 For an HTTPS reverse proxy, configure `--console-origin`, `--console-behind-proxy` and explicit
 `--console-trusted-proxy` CIDRs. Supply a persistent `--console-key-file` containing 64 hex

@@ -167,13 +167,17 @@ page through the reviewed diff before applying it. The replacement removes obsol
 by that country and preserves independently managed prefixes. A changed generation or policy
 revision requires a fresh preview, and overlapping independent edits are refused. The Events page
 contains retained WAF findings and honeypot incidents; it is not a complete access log.
-Statistics use the live stream; management pages issue explicit requests and refreshes.
+One authenticated WebSocket survives navigation and carries statistics, incident summaries,
+node status, policy revisions, challenges and audit summaries. New incident and audit records
+wait behind *Load latest records* so the table stays in place while it is read. Policy updates
+show current committed and applied revisions without replacing an open draft. Flow counters
+update live; refresh a selected non-default challenge timing partition explicitly. Historical
+queries, detail reads and mutations remain HTTP requests.
 
 SID 0007 remains Proposed. The interface is available, with ongoing review corrections
 and acceptance work recorded in the SID. Earlier impact runs are inconclusive. The corrected
 harness includes each dashboard's stream, rankings and retained-timeline queries; a full
-acceptance run requires a production GeoIP snapshot and documented host conditions. Multi-topic streams
-and dedicated peer management transport remain implementation work; current node discovery
+acceptance run requires a production GeoIP snapshot and documented host conditions. Dedicated peer management transport remains implementation work; current node discovery
 uses replicated membership and configured health probes.
 
 == Deployment Topologies

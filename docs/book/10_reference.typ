@@ -20,7 +20,7 @@
   [`/__sibuna/wasm/sibuna-pow.wasm`], [GET], [The 8,831-byte solver module, cacheable],
   [`/__sibuna/worker.js`], [GET], [The Web Worker with WASM and JavaScript provers, cacheable],
   [`/__sibuna/honeypot`], [GET], [Bans the caller for `--ban-seconds` and records an incident; `403`],
-  [`/__sibuna/health`], [GET], [`{"status":"ok","engine":"sibuna","version","mode","algorithm"}`],
+  [`/__sibuna/health`], [GET], [JSON liveness status with engine name, version, proxy mode and proof algorithm],
   [`/__sibuna/metrics`], [GET], [Prometheus text format],
 )
 
@@ -30,8 +30,9 @@ replies).
 
 The separate opt-in management listener serves `/console/`. Initialize its administrator
 locally with `sibuna init-admin`, then replace the temporary password on first sign-in.
-`/console/api/stats` and `/console/stream` require an authenticated session; the current
-WebSocket protocol carries statistics only. Origin error counters are not observed in
+`/console/api/stats` and `/console/ws` require an authenticated session. The WebSocket
+multiplexes statistics, events, nodes, policy, challenges and audit with bounded snapshots,
+deltas and gap recovery. `/console/stream` retains the earlier statistics-only protocol. Origin error counters are not observed in
 forward-auth mode. Part IX documents the console's workflows, HTTPS deployment and current
 SID 0007 limits.
 

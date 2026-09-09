@@ -729,15 +729,23 @@ One WebSocket per browser tab at `/console/ws`, opened after login. Frames are J
   [Server → client], [Unauthorized], [`error`: close the subscription and return to sign-in.],
 )
 
-Example subscription and response (separate JSON messages; production snapshots include
-coverage and a watermark). `epoch` changes on reconnect, filter replacement or server restart.
+Example subscription and initial unavailable snapshot (separate JSON messages). `epoch`
+changes on reconnect, filter replacement or server restart. The initial view becomes visible
+only after `snapshot_end`; subsequent patches replace unavailable state with observations.
+Historical time windows use the bounded HTTP timeline/minute APIs, alongside the live stream.
 
 ```json
-{"op":"sub","topic":"stats","args":{"window":"1h"}}
-{
-  "topic":"stats", "epoch":"node1-boot7-sub4", "seq":0,
-  "snapshot":true, "data":{"requests":1832,"coverage":1.0}
-}
+{"op":"sub","topic":"stats","args":{}}
+{"op":"snapshot_begin","topic":"stats",
+ "epoch":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:1","seq":0,
+ "snapshot":true,"watermark":0,"parts":1}
+{"op":"snapshot_chunk","topic":"stats",
+ "epoch":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:1","seq":1,
+ "snapshot":true,"watermark":0,"part":0,"parts":1,
+ "data":"{\"available\":false}"}
+{"op":"snapshot_end","topic":"stats",
+ "epoch":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:1","seq":2,
+ "snapshot":true,"watermark":0}
 ```
 
 The hub keeps one bounded ring per topic (1,024 entries of at most 2 KB) and a cursor per
@@ -1497,7 +1505,7 @@ configured slots, queues and optional GeoIP dataset. Record active peak RSS sepa
 #table(
   columns: (1.6fr, 1fr, 2fr),
   table.header([*Quantity*], [*Bound*], [*Mechanism*]),
-  [Console resident memory, idle], [Target to size and measure], [Five topic rings already cost 10 MiB; add 1 MiB traffic queue, slot buffers/stacks, SQL results, GeoIP generations, and 19 MiB per active Argon2 verifier],
+  [Console resident memory, idle], [Target to size and measure], [Six topic rings reserve 12 MiB of payload plus metadata and cached views; add connection queues, snapshot buffers, traffic queue, service stacks, SQL results, GeoIP generations, and the 19 MiB Argon2 workspace],
   [Console CPU, idle], [≤ 2 % of one core], [4 Hz sampler, 1 Hz coalescing, 5 s probes],
   [Data-plane throughput with 8 live dashboards], [within 1 % of no console], [I1, I2, I5; measured by `console-impact`],
   [Data-plane p99 with 8 live dashboards], [within 10 %], [Same],
@@ -1650,10 +1658,12 @@ identifies the following concrete gaps; the status remains Proposed.
 #table(
   columns: (1fr, 2.8fr),
   table.header([*Gate*], [*Current implementation and missing work*]),
-  [Real-time protocol], [The implemented `/console/stream` route accepts only a statistics
-    subscription. `libs/console/src/stream.zig` sends complete statistics under snapshot/delta
-    labels. The specified `/console/ws` multi-topic protocol, filtered event/audit/node streams,
-    per-topic rings, chunk watermarks and gap/resynchronization contracts are not delivered.],
+  [Real-time protocol], [The `/console/ws` server now serves stats, events, nodes, policy, challenges and audit
+    through bounded topic rings and connection queues, with filtered event/audit/node views,
+    chunk watermarks and gap barriers. The interface uses that connection across navigation,
+    with transactional Wasm reassembly and jittered reconnect. The shipped-Wasm live test
+    passes; Chrome acceptance of the new transport remains open. `/console/stream` retains
+    compatibility for earlier statistics clients.],
   [Live cluster transport], [Membership and applied revisions use replicated rows; configured
     HTTP probes provide health. The dedicated authenticated TLS peer WebSocket transport and
     live peer node/boot/sequence deduplication remain deferred, not verified by the membership tests.],
@@ -1662,9 +1672,9 @@ identifies the following concrete gaps; the status remains Proposed.
     action, expiry, generation and expected policy revision to the preview. The version 26
     transaction removes obsolete country-owned rows and records the redacted audit together;
     independent ownership conflicts are refused. GeoIP imports do not silently alter policy.],
-  [Interface state], [The bridge replaces the complete application markup when its rendered
-    string changes; only animation patches the globe separately. Per-panel rendering,
-    browser-history routing, system/persisted theme and density preferences remain absent.
+  [Interface state], [The bridge now patches nodes and preserves unsent form values while
+    adjacent observations update. Browser-history routing, system/persisted theme and density
+    preferences remain absent.
     Country selection centers the globe but does not open country-filtered events. The
     separate Security overview and configurable retention forms in the wireframes are not
     present; retention runs with the implemented defaults.],
@@ -1807,7 +1817,7 @@ Native data-plane HTTP/2 is separately deferred by the operator and is not a con
 
 - #text("Not passed (2026-09-09): the verdict is inconclusive on the development host. Point estimates stay within ±2 % throughput and +6 % p99 with peak RSS reported per configuration, but the compiled-out baseline's own spread (20–46 %) exceeds the 1 % rule and every bootstrap interval straddles the gate; the record says so rather than rounding to a pass. A quiet host is required.")
 
-- #text("Pending after the 2026-09-10 review: multi-topic real-time subscriptions, dedicated peer management transport, reviewed country-generation replacement, the interface-state gaps listed above and comprehensive browser acceptance. Notification retries/leases and the dashboard workload harness have dated implementation evidence; the corrected impact matrix still needs a controlled-host acceptance run. The record stays Proposed and the console stays opt-in.")
+- #text("Pending after the 2026-09-10 review: dedicated peer management transport, the interface-state gaps listed above and comprehensive browser acceptance. Notification retries/leases and the dashboard workload harness have dated implementation evidence; the corrected impact matrix still needs a controlled-host acceptance run. The record stays Proposed and the console stays opt-in.")
 
 == Implementation evidence
 
@@ -4241,6 +4251,87 @@ limits. The live daemon imports a second generation, refuses the old review and 
 action, pages the diff, then verifies both newly denied and retired ranges on real requests.
 The UI test checks frozen expiry/action/revision and an empty-set apply. Chrome reconnection
 is pending; this entry does not claim browser acceptance or close the other delivery gates.
+
+== Multi-topic server transport (2026-09-10)
+
+`/console/ws` now implements stats, events, nodes, policy, challenges and audit. Each topic
+has 1,024 records of at most 2 KiB, and each connection has a 64-frame outbox. One feeder
+performs bounded background mailbox reads and 1 Hz fan-out, never socket writes. A stalled
+writer cannot block the producer. Overflow removes the affected topic's queued frames,
+reserves a gap notice and pauses its subscription until a fresh epoch is requested.
+Both stream endpoints share the 64-browser quota, leaving sixteen HTTP slots available.
+
+Snapshots use `snapshot_begin`, `snapshot_chunk` and `snapshot_end`, carrying the same
+captured ring watermark at begin and end. The chunk payload is an escaped JSON text fragment
+of at most 512 bytes; clients bound reassembly to 64 KiB and commit it only after the end.
+Delta fragments carry an update identifier, part index/count, epoch and consecutive
+subscription sequence. A patch contains top-level `set` and `remove` fields; unchanged
+fields are omitted. A row delta contains a bounded event or audit summary, with detail
+remaining on the authenticated HTTP API. Filter replacement starts a new epoch and clears
+the old topic's queued output. Supported filters are event node/category/IP/path prefix,
+audit actor/action and node identity. The policy topic distinguishes committed and applied
+revisions; challenge snapshots use the configured timing partition.
+
+The owner reads incidents with an independent durable sequence cursor for each issuer.
+Pagination stays below a captured watermark even when newer rows commit during a read.
+Missing retained IDs, producer loss when locally observable, source boot and replica
+observation/quorum metadata remain explicit. Source polling refreshes coverage even when
+no new row arrives. Summary snapshots retain at most sixty-four recent arrivals and are
+further bounded by encoded size; they do not claim complete historical coverage.
+
+Schema version 27 preserves a durable audit cursor so retention cannot cause ID reuse.
+The receipt and inserted audit row commit together. Zaxonlite reports trigger-inclusive
+change counts; audit and event exports now accept a positive count from their unique,
+authorization-checked insert instead of incorrectly requiring exactly one change.
+
+Verification: 445 native/UI tests and all twenty-two live console scenarios passed. The
+focused live transport case additionally fills the quota with one legacy and sixty-three
+multi-topic streams, verifies the 65th upgrade returns 503 and confirms authenticated HTTP
+still succeeds. It exercises all six topics, actual traffic, committed incident summaries,
+node/event/audit filters, policy publication, application heartbeat and revocation. Native
+checks cover overwrite/contention gaps, connection queue overflow, recycled handles,
+watermark pagination, retention and audit cursor replay. The shared native/Wasm receiver
+has separate transactional reassembly tests; the following increment wires it into the interface.
+The live peer transport, remaining interface requirements and impact acceptance are still
+open. No Chrome acceptance is claimed by these socket tests.
+
+
+== Multi-topic Wasm interface (2026-09-10)
+
+The signed-in interface now uses `/console/ws`. Statistics stay subscribed across navigation;
+the current investigation or management view adds its own topic on the same connection.
+Hidden tabs disconnect, resuming with fresh snapshots. Kiosk sessions request only statistics.
+Sign-out and revocation erase the receiver's owned buffers and private page state. Reconnect
+uses exponential backoff with browser-supplied random jitter, capped at thirty seconds.
+Malformed chunks, sequence gaps and invalid reconstructed state retain the last good view
+and request a fresh epoch. A filter change waits for an in-flight snapshot to complete and
+never publishes that snapshot under the newer filter's label.
+
+Incident and audit summaries update a reader-controlled indicator; historical rows retain
+their query boundary until *Load latest records*. The indicator exposes its sixty-four-summary
+bound, source observation age and unavailable source IDs. Policy events show current
+committed/applied revisions and preserve a draft's expected revision. Node membership and
+health update live; local control requests retain their separate receipt workflow. Challenge
+flow counters update live; a selected non-default timing partition remains an explicitly
+aged HTTP snapshot until refreshed.
+
+The browser bridge patches nodes by stable identity instead of replacing the whole root.
+Unchanged form defaults preserve unsent input, focus, selection and scrolling while adjacent
+observations update. Geometry remains a separately authenticated asset, with its animation
+owned by Wasm. Native UI tests cover navigation on one connection, filter changes during a
+snapshot, retained policy drafts, revocation and jittered resubscription. All ninety-five
+native UI tests pass. The earlier full run passed 448 native/UI tests; after the sign-out
+correction, the console matrix passes 208 native tests and twenty-two live console scenarios.
+The linked artifact is 392,333 bytes within the 393,216-byte budget,
+with initial and maximum memory fixed at 4 MiB.
+
+`zig build console-ui-e2e` adds an optional Node-based browser-capability fixture. It loads
+the exact Wasm served by a real daemon and exercises all six topics, navigation, malformed
+message recovery and sign-out through the exported browser ABI. The check passed; it does
+not inspect a DOM or replace Chrome acceptance. The impact harness now uses the same
+multi-topic endpoint, reconstructs complete updates and verifies each subscriber separately.
+Dedicated peer transport, remaining interface requirements, Chrome review and controlled-host
+performance acceptance remain open. The record stays Proposed.
 
 = References
 
