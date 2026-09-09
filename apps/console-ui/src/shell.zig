@@ -4,12 +4,12 @@ const Phase = @import("state.zig").Phase;
 const html = @import("html");
 const Writer = std.Io.Writer;
 const actions = [_][]const u8{
-    "dashboard", "events",  "challenges", "policies", "geoip", "users", "tokens", "audit",
-    "nodes",     "account",
+    "dashboard", "events",   "challenges", "policies", "geoip", "users", "tokens", "audit",
+    "nodes",     "settings", "account",
 };
 const labels = [_][]const u8{
-    "Statistics", "Events",  "Challenges", "Policies", "GeoIP", "Users", "Tokens", "Audit",
-    "Nodes",      "Account",
+    "Statistics", "Events",   "Challenges", "Policies", "GeoIP", "Users", "Tokens", "Audit",
+    "Nodes",      "Settings", "Account",
 };
 
 pub fn destination(name: []const u8) bool {
@@ -24,6 +24,7 @@ pub fn begin(state: *const State, w: *Writer) Writer.Error!void {
     const active = section(state.phase);
     for (actions, labels) |action, label| {
         if (std.mem.eql(u8, action, "tokens") and !state.allows(.manage_users)) continue;
+        if (std.mem.eql(u8, action, "settings") and !state.allows(.manage_settings)) continue;
         try html.render(w, @embedFile("snippets/shell-item.html"), .{
             .action = action,
             .label = label,
@@ -50,6 +51,7 @@ fn section(phase: Phase) []const u8 {
         .tokens => "tokens",
         .audit => "audit",
         .nodes => "nodes",
+        .settings => "settings",
         .password, .security => "account",
         else => "dashboard",
     };

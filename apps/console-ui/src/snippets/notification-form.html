@@ -1,0 +1,27 @@
+<form id="settings-save" class="sb-settings-form mt-4"><h3>{{ heading }}</h3>
+    <label for="destination-kind">Kind</label>
+    <select id="destination-kind" name="kind" class="select select-bordered">
+        <option value="webhook"{{ webhook }}>Webhook (HTTPS POST)</option>
+        <option value="syslog"{{ syslog }}>Syslog (host:port)</option></select>
+    <label for="destination-label">Label</label>
+    <input id="destination-label" name="label" class="input input-bordered" maxlength="64" required value="{{ label }}">
+    <label for="destination-target">Target</label>
+    <input id="destination-target" name="target" class="input input-bordered" maxlength="256" required value="{{ target }}">
+    <label for="destination-secret">Secret</label>
+    <input id="destination-secret" name="secret" type="password" class="input input-bordered" maxlength="64" autocomplete="off">
+    <p class="sb-note">{{ secret_note }}</p>
+    <label><input type="checkbox" name="clear_secret" class="checkbox"> Clear stored secret</label>
+    <fieldset><legend>Events</legend>
+    <label><input type="checkbox" name="denial_spike" class="checkbox"{{ spike }}> Denial spike</label>
+    <label><input type="checkbox" name="ban" class="checkbox"{{ ban }}> Ban issued</label>
+    <label><input type="checkbox" name="node_unhealthy" class="checkbox"{{ unhealthy }}> Node unhealthy</label>
+    <label><input type="checkbox" name="leader_change" class="checkbox"{{ leader }}> Leader change</label>
+    </fieldset>
+    <label for="destination-cooldown">Cooldown (seconds)</label>
+    <input id="destination-cooldown" name="cooldown_seconds" class="input input-bordered" inputmode="numeric" value="{{ cooldown }}">
+    <label><input type="checkbox" name="enabled" class="checkbox"{{ enabled }}> Enabled</label>
+    <div class="flex flex-wrap gap-2 mt-3">
+    <button class="btn btn-primary" type="submit"{{ busy }}>Save destination</button>
+    <button class="btn" type="button" data-action="settings-test"{{ existing }}{{ busy }}>Test delivery</button>
+    <button class="btn btn-outline btn-error" type="button" data-action="settings-remove"{{ existing }}{{ busy }}>Remove</button>
+    </div></form>

@@ -14,6 +14,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
 
 fn page(state: *const State, w: *Writer) Writer.Error!void {
     if (state.phase == .nodes) return @import("nodes_page.zig").render(state, w);
+    if (state.phase == .settings) return @import("settings_page.zig").render(state, w);
     if (state.phase == .audit) return @import("audit_page.zig").render(state, w);
     if (state.phase == .tokens) return @import("tokens_page.zig").render(state, w);
     if (state.phase == .users) return @import("users_page.zig").render(state, w);

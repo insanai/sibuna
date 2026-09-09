@@ -15,6 +15,7 @@ pub const Phase = enum {
     tokens,
     audit,
     nodes,
+    settings,
 };
 
 test "session reset wipes retained credentials and request bodies and restores defaults" {
@@ -50,6 +51,7 @@ pub const State = struct {
     user_id: u64 = 0,
     users: @import("users_state.zig").Model = .{},
     tokens: @import("tokens_state.zig").Model = .{},
+    settings: @import("settings_state.zig").Model = .{},
     audit: @import("audit_state.zig").Model = .{},
     nodes: @import("nodes_state.zig").Model = .{},
     busy: bool = false,
@@ -110,6 +112,8 @@ pub const State = struct {
                 self.users.clear();
             } else if (comptime @import("std").mem.eql(u8, field.name, "tokens")) {
                 self.tokens.clear();
+            } else if (comptime @import("std").mem.eql(u8, field.name, "settings")) {
+                self.settings.clear();
             } else if (comptime @import("std").mem.eql(u8, field.name, "audit")) {
                 self.audit.clear();
             } else @field(self, field.name) = field.defaultValue().?;
