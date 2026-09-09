@@ -67,6 +67,59 @@
   `head -c 32 /dev/urandom | xxd -p -c 64 > /etc/sibuna/secret` and mode 0600.
 ])
 
+== Console Preview
+
+The console is composed into the daemon when storage is compiled in, but starts only with
+`--console`. Use `-Dconsole=false` to compile it out; storage-off builds default it off too.
+Bootstrap locally while the daemon is stopped:
+
+```bash
+sibuna init-admin admin --data-dir ./data
+sibuna --data-dir ./data --console 127.0.0.1:19446
+```
+
+Open `http://127.0.0.1:19446/console/` and replace the generated temporary password. The
+signed-in navigation provides the animated country globe, request and challenge statistics,
+incident investigation, policy and inspection editors, users, scoped API tokens, audit and
+serving-node controls. The authentication shell loads no globe geometry or telemetry.
+Committed CSS and the Zig/Wasm interface ship with ordinary builds; npm is needed only when
+regenerating style assets.
+
+Policy previews build a private candidate including configured file rules. Saves compare the
+expected revision; committed and locally applied revisions are distinct. Audit details retain
+bounded decision changes and the effective acting role. Matcher values are redacted and old
+records with missing context remain explicitly absent. Drain, resume and clear-local-bans
+require a command preview. Inspect the durable receipt after a lost response before retrying;
+a committed intent alone does not establish that the runtime effect finished.
+
+For remote operation, use an HTTPS proxy and configure `--console-origin`,
+`--console-behind-proxy`, explicit `--console-trusted-proxy` CIDRs, and
+`--console-key-file`. The key file contains 64 hexadecimal characters, has owner-only
+permissions and protects stored second-factor secrets; retain it across restarts separately
+from the challenge seed. The configured HTTPS origin and proxy allowlist are mandatory for
+off-loopback access.
+
+The native CLI accesses the running console through the same authorization and storage
+contracts. It reads credentials from private files, not command-line values:
+
+```bash
+sibuna console geoip update --month 2026-09 \
+    --origin http://127.0.0.1:19446 --username admin \
+    --password-file ./admin-password
+```
+
+Use an owner-only password file, complete password setup first, and add `--factor-file` for
+an authenticator or recovery code when required. `geoip status` reads the active generation.
+Updates download the free DB-IP country archive, validate bounded ranges, persist the new
+generation and activate it locally. Failed updates preserve the previous generation. A CLI
+timeout stops waiting; it does not cancel submitted storage work. DB-IP Lite requires
+CC BY 4.0 attribution. Unknown addresses, sample loss and stale data remain visible; importing
+country data does not create traffic or enrich already expired samples.
+
+SID 0007 remains Proposed. Cluster management WebSockets, full peer coverage, notifications,
+constrained page templates, kiosk sessions and the console performance impact gates remain
+unfinished. The working local workflows do not establish those acceptance results.
+
 == Deployment Topologies
 
 #objectives([

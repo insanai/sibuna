@@ -51,7 +51,7 @@
       [Shared signing key; shared Valkey store], [One stack per host], [Global anycast],
     [Metrics], [Prometheus at `/__sibuna/metrics`], [Prometheus on a separate port], [Console dashboards], [Dashboard and analytics],
     [TLS termination], [#no (ingress)], [#no (ingress)], [#yes], [#yes],
-    [Management console], [#no (files and SQL)], [#no], [#yes], [#yes],
+    [Management console], [Opt-in preview; SID 0007 Proposed], [#no], [#yes], [#yes],
     [Measured on the benchmark host], [#yes], [#yes], [#no (Docker only)], [#no (hosted)],
   )
 }

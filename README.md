@@ -50,8 +50,9 @@ docs); the book's Part II carries the full table with sources.
 | Measured here | Yes | Yes | No (Docker only) | No (hosted) |
 
 Sibuna does not terminate ingress TLS or score bots with a model. Its opt-in console preview
-includes authenticated dashboards and country enrichment; SID 0007 remains proposed while
-the remaining management features and acceptance gates are implemented. See
+includes the animated country globe, incident investigation, policy editing, users, scoped API
+tokens, audit browsing and local node controls. SID 0007 remains proposed while cluster
+management, operational settings and the remaining acceptance gates are implemented. See
 [loading country data from the CLI](#loading-country-data) for DB-IP setup.
 
 ## Research foundations
@@ -254,6 +255,35 @@ zig build wasm                # solver only
 sh benchmarks/run-all.sh      # regenerate benchmarks/results/latest.json
 ```
 
+## Console preview
+
+Bootstrap an administrator while the daemon is stopped, then start its separate loopback
+management listener:
+
+```sh
+./zig-out/bin/sibuna init-admin admin --data-dir ./data
+./zig-out/bin/sibuna --data-dir ./data --console 127.0.0.1:19446
+```
+
+Open `http://127.0.0.1:19446/console/` and replace the temporary password before using the
+interface. Ordinary builds include committed CSS and the Zig/Wasm UI without requiring npm.
+`-Dconsole=false` removes console integration; `-Dstorage=false` also defaults the console off.
+The console listener starts only when `--console` is supplied.
+
+The signed-in interface keeps navigation across dashboards, policy and inspection editors,
+events, users, tokens, audit and node controls. Policy previews evaluate a private candidate;
+saves use expected revisions and show committed and locally applied revisions separately.
+Audit detail shows recorded before/after settings and marks missing historical data or redacted
+selectors. The Nodes page controls only the serving node: drain, resume and clear local bans
+require a preview and produce durable command receipts. Peer health and cluster commands remain
+unfinished.
+
+For an HTTPS reverse proxy, configure `--console-origin`, `--console-behind-proxy` and explicit
+`--console-trusted-proxy` CIDRs. Supply a persistent `--console-key-file` containing 64 hex
+characters with owner-only permissions; it protects stored second-factor secrets. Keep this
+key separate from the firewall's challenge secret. Remote management requires a valid HTTPS
+origin and a trusted proxy; the browser loads globe geometry and telemetry only after login.
+
 ## Loading country data
 
 Start Sibuna with storage and its opt-in console, then finish administrator bootstrap and
@@ -263,6 +293,17 @@ password setup. The CLI prompts for the password without putting it in shell his
 python3 tools/console_geoip.py --origin http://127.0.0.1:19446 \
     --username admin --month 2026-09
 ```
+
+The daemon also provides a native command for scripts with an owner-only password file:
+
+```sh
+./zig-out/bin/sibuna console geoip update --month 2026-09 \
+    --origin http://127.0.0.1:19446 --username admin \
+    --password-file ./admin-password
+```
+
+Use `console geoip status` to inspect the generation and `--factor-file` when a second factor
+is required. The native update requires an explicit month; the Python helper can select it.
 
 The port must match your `--console` listener. Omit `--month` to use the current month.
 Add `--totp` to prompt for an authenticator or recovery code. Use `--status` to inspect

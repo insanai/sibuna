@@ -125,12 +125,13 @@ Three differences carry most of the weight in a selection decision.
   host with at least one core, one gigabyte of memory, and five gigabytes of disk; Cloudflare
   is a DNS change and a subscription.
 
-#callout([What Sibuna deliberately does not do], [
-  It does not terminate TLS, ship a management console, look up geography or autonomous
-  systems, score bots with a trained model, or publish signatures for a fee. Each of those is
-  either a separate concern that an ingress already handles well, or a service that would
-  contradict the self-hosted, allocation-free design. The comparison table shows them as
-  dashes rather than hiding them.
+#callout([Current product boundary], [
+  Sibuna leaves ingress TLS termination to the deployment proxy and does not score bots with
+  a trained model or publish paid signatures. Its opt-in console preview now provides
+  authenticated dashboards, DB-IP country enrichment, policy editing and local management.
+  Country lookup and storage work run outside request classification. SID 0007 remains
+  Proposed: cluster management and the full operational and performance acceptance gates
+  are still unfinished.
 ], kind: "warning")
 
 #exercise([2.1], [
