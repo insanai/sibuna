@@ -100,14 +100,19 @@ fn leaderChanged(owner: *Persistent, from: u32, to: u32, now: u64) void {
     var text: [64]u8 = undefined;
     const detail = std.fmt.bufPrint(&text, "leader {d} -> {d}", .{ from, to }) catch "leader";
     owner.console_node.event_sequence += 1;
-    _ = @import("console_store_notifications.zig").enqueue(owner, .{
+    const result = @import("console_store_deliveries.zig").enqueue(owner, .{
         .node = owner.node_id,
         .boot = owner.console_node.boot,
         .sequence = owner.console_node.event_sequence,
         .event = .leader_change,
         .raised_at = now,
         .detail = p.Bytes(p.notifications.max_detail).init(detail) catch .{},
-    }) catch {};
+    }) catch |err| {
+        std.log.warn("console leader-change notification failed: {t}", .{err});
+        return;
+    };
+    if (result == .failed)
+        std.log.warn("console leader-change notification rejected: {t}", .{result.failed});
 }
 
 fn parseRole(text: []const u8) p.nodes.Role {
