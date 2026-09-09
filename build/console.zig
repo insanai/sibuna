@@ -79,7 +79,11 @@ fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module)
     wasm.root_module.addImport("html", htmlModule(b, target, .ReleaseSmall));
     wasm.bundle_compiler_rt = true;
     const artifact = linkUi(b, wasm);
-    console.addAnonymousImport("console_wasm", .{ .root_source_file = artifact });
+    const size = b.addSystemCommand(&.{ "python3", "tools/console_wasm_check.py" });
+    size.addFileArg(artifact);
+    const checked = size.addOutputFileArg("console.wasm");
+    // Every embedding build consumes verified bytes, including ordinary daemon builds.
+    console.addAnonymousImport("console_wasm", .{ .root_source_file = checked });
     const paths = .{ "shell.html", "glue.js", "assets/console.css" };
     const names = .{ "console_shell", "console_glue", "console_css" };
     inline for (paths, names) |path, name| {
@@ -100,8 +104,6 @@ fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module)
         .root_source_file = b.path("apps/console-ui/web/assets/world-110m.bin"),
     });
     const step = b.step("console-ui", "Build the Zig console WebAssembly interface");
-    const size = b.addSystemCommand(&.{ "python3", "tools/console_wasm_check.py" });
-    size.addFileArg(artifact);
     step.dependOn(&size.step);
     const render_step = b.step("console-render-test", "Test native console rendering");
     render_step.dependOn(&b.addRunArtifact(tests).step);

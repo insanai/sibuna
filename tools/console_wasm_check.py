@@ -84,18 +84,24 @@ def contract(data):
         raise ValueError("missing memory or exports")
 
 
-def check(path):
+def check(path, output=None):
     size = path.stat().st_size
     if size > MAX_BYTES:
         raise SystemExit(f"console-ui: {size} bytes exceeds the {MAX_BYTES}-byte Wasm budget")
+    with path.open("rb") as source:
+        data = source.read(MAX_BYTES + 1)
+    if len(data) > MAX_BYTES:
+        raise SystemExit("console-ui: input changed beyond the Wasm budget")
     try:
-        contract(path.read_bytes())
+        contract(data)
     except (ValueError, UnicodeDecodeError) as error:
         raise SystemExit(f"console-ui: {error}") from error
-    print(f"console-ui: {size} / {MAX_BYTES} bytes")
+    if output is not None:
+        output.write_bytes(data)
+    print(f"console-ui: {len(data)} / {MAX_BYTES} bytes")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        raise SystemExit("usage: console_wasm_check.py <console.wasm>")
-    check(Path(sys.argv[1]))
+    if len(sys.argv) not in (2, 3):
+        raise SystemExit("usage: console_wasm_check.py <console.wasm> [checked-output.wasm]")
+    check(Path(sys.argv[1]), Path(sys.argv[2]) if len(sys.argv) == 3 else None)

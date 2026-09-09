@@ -1,6 +1,10 @@
 """Exercise the ABI gate against missing bounds, host imports and malformed metadata."""
 import unittest
-from console_wasm_check import contract, EXPORTS
+import contextlib
+import io
+from pathlib import Path
+import tempfile
+from console_wasm_check import contract, check, EXPORTS, MAX_BYTES
 
 
 def integer(value):
@@ -24,6 +28,21 @@ def exports(values):
 
 
 class ContractTest(unittest.TestCase):
+    def test_only_validated_bytes_are_published_for_embedding(self):
+        valid = (b"\x00asm\x01\x00\x00\x00" + section(5, bytes([1, 1, 64, 64])) +
+                 exports(EXPORTS))
+        with tempfile.TemporaryDirectory(prefix="sibuna-wasm-gate-") as directory:
+            source, output = Path(directory) / "input.wasm", Path(directory) / "output.wasm"
+            source.write_bytes(valid)
+            with contextlib.redirect_stdout(io.StringIO()):
+                check(source, output)
+            self.assertEqual(output.read_bytes(), valid)
+            for invalid in (valid[:-1], b"x" * (MAX_BYTES + 1)):
+                source.write_bytes(invalid)
+                with self.assertRaises(SystemExit):
+                    check(source, output)
+                self.assertEqual(output.read_bytes(), valid)
+
     def test_linker_contract_is_required_and_bounded(self):
         # These are metadata fixtures, not executable modules. The live UI exercises code.
         header = b"\x00asm\x01\x00\x00\x00"
