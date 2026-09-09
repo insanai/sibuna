@@ -44,7 +44,8 @@ pub const Detector = struct {
         }
         if (second <= self.last_second) return null;
         const delta = denied_total -| self.last_total;
-        var gap = second - self.last_second;
+        var gap = @min(second - self.last_second, self.deltas.len);
+        if (second - self.last_second >= self.deltas.len) @memset(&self.deltas, 0);
         while (gap > 1) : (gap -= 1) self.deltas[(second - gap + 1) % 120] = 0;
         self.deltas[second % 120] = delta;
         self.last_second = second;
@@ -52,8 +53,8 @@ pub const Detector = struct {
         var current: u64 = 0;
         var previous: u64 = 0;
         for (0..60) |back| {
-            current += self.deltas[(second -% back) % 120];
-            previous += self.deltas[(second -% back -% 60) % 120];
+            current +|= self.deltas[(second -% back) % 120];
+            previous +|= self.deltas[(second -% back -% 60) % 120];
         }
         const threshold = @max(self.minimum, self.factor *| previous);
         if (current > threshold) {
@@ -130,4 +131,12 @@ test "the event ring is bounded and counts what it drops" {
     var taken: usize = 1;
     while (ring.take() != null) taken += 1;
     try t.expectEqual(@as(usize, capacity), taken);
+}
+
+test "a long observation gap clears history in bounded work" {
+    var detector: Detector = .{};
+    _ = detector.observe(100, 0);
+    _ = detector.observe(101, 200);
+    try std.testing.expect(detector.observe(std.math.maxInt(u64) - 1, 200) == null);
+    try std.testing.expect(detector.armed);
 }

@@ -792,7 +792,8 @@ Migrations are numbered and version-gated in `schema.zig`. The authoritative wri
   [`console_audit`], [`id`, `at`, `actor`, `role`, `action`, `subject`, `before`, `after`, `client_ip`; append-only],
   [`console_settings`], [`key` (primary), `value` (≤ 1 KiB, never a secret), `revision`, `updated_at`, `updated_by`; the denial-spike minimum and factor today; every change is audited with its before and after value],
   [`console_notifications`], [`id`, `kind` (`webhook` or `syslog`), `label`, `target`, `target_host`, `secret_envelope` (sealed under the console key and bound to the target), `events` bitmask (denial spike, ban, node unhealthy, leader change), `cooldown_seconds`, `enabled`, `revision`, created/modified actor and time, last attempt, outcome and detail; at most eight rows; audit summaries carry kind, label, events, cooldown, enabled state, whether a secret is set and the host only],
-  [`console_notification_events`], [`node`, `boot`, `sequence` (unique per node and boot), `event`, `raised_at`, `detail` (≤ 128), `delivered_at`, `attempts`; every node enqueues what it observed, at most 256 undelivered rows are kept],
+  [`console_notification_events`], [`node`, `boot`, `sequence` (unique per node and boot), `event`, `raised_at`, `detail`, completion time; every node enqueues what it observed, at most 256 pending and 4,096 total rows; completed history expires after seven days. The legacy event-wide attempts column is no longer authoritative],
+  [`console_notification_deliveries`], [One event/destination pair and pinned destination revision; pending/sending/delivered/failed/skipped state, at most three attempts, next due time, claim fence/expiry and redacted outcome. Destination edits invalidate queued work; parent completion and outcome audit commit with each transition],
   [`console_job_leases`], [`job` (`retention` or `notifier`), `node`, `boot`, `fence`, `expires`; one fenced singleton lease per job name],
   [`console_pages`], [`kind` (primary: `challenge`, `denied`, `rate_limited`, `banned`, `overloaded`), `html` (≤ 16 KiB, validated before staging), `sha256`, `revision`, `updated_at`, `updated_by`; a one-row stage table commits the page, its audit record (`page.edit` or `page.reset` with digests and sizes only) and a policy-version bump together so the next tick rebuilds the snapshot],
   [`ip_reputation` (added columns)], [`source` (`console`, `console:country:XX`, or empty for data-plane rows), `note` (≤ 128), `geo_generation` (the GeoIP generation digest a country block was computed from); one-row stage tables `console_policy_order_stage`, `console_reputation_stage`, `console_country_commit` and `console_policy_import_commit` commit each workflow with its history rows, audit record and an explicit policy-version bump; `console_country_stage` and `console_policy_import_stage` hold chunked prefixes and canonical documents for ten minutes],
@@ -3856,6 +3857,37 @@ of being recorded as success. Live regression cases verify both small and 9,000-
 500 responses, alongside signed successful delivery. `zig build fmt test console-test sid`
 passes all 62 steps and 401 native tests, including the live console scenarios. Notification
 scheduling and lease corrections remain separate acceptance work.
+
+== Durable notification scheduling correction (2026-09-09)
+
+Schema 24 replaces event-wide retry accounting with one durable delivery per eligible
+destination, pinned to the destination revision when an event enters the queue. Successful
+destinations are finished independently; cooldowns postpone only the affected destination.
+Each claim spends one of three attempts. Retry delays of two and eight seconds are stored
+as due times, so no retry sleeps through a lease. The notifier renews before each attempt,
+and every claim, recovery and completion rechecks the fence inside its SQL mutation.
+Network deadlines include secret retrieval and are capped by a monotonic budget measured
+before lease acquisition; a late storage reply cannot extend that budget.
+
+A disconnected or expired holder leaves an uncertain attempt. Recovery preserves the spent
+attempt, and webhooks carry a stable event/destination/revision idempotency key. External
+receivers can suppress repeated effects; Sibuna does not claim exactly-once network delivery.
+Legacy pending events acquire destination records during migration; their past per-destination
+outcomes cannot be reconstructed from the old aggregate counter. Completed legacy events
+are not resent. A changed or removed destination skips its queued work and cannot supply a
+new secret to an old revision's request.
+
+The local ring retains an owned event until storage acknowledges enqueue, and logs cumulative
+capacity loss. Completed event and child delivery history is limited to seven days and 4,096
+events, with bounded sixteen-row cleanup and a migration-time bound for older stores.
+Outcome, redacted audit and parent completion commit together. A long clock jump in spike
+detection clears the fixed window in bounded work.
+
+Native tests exercise independent cooldowns, saturation and replay, lease expiry and takeover,
+three-attempt recovery, retargeting, transactional audit failure and child-row retention.
+The live regression generates two distinct bans: fast and delayed destinations each receive
+two successful deliveries, while an HTTP 500 destination receives exactly three attempts per
+event with stable idempotency keys. Audit investigation follows pagination to all ten outcomes.
 
 = References
 

@@ -8,10 +8,10 @@ const Persistent = @import("persistent.zig").Persistent;
 const db = @import("console_database.zig");
 const util = @import("console_store.zig");
 const settings = @import("console_store_settings.zig");
-const columns = "id,revision,kind,label,target,target_host,secret_envelope IS NOT NULL," ++
+pub const columns = "id,revision,kind,label,target,target_host,secret_envelope IS NOT NULL," ++
     "events,cooldown_seconds,enabled,last_attempt_at,last_outcome,last_detail";
 
-fn row(cells: []const ?[]const u8) !n.Destination {
+pub fn row(cells: []const ?[]const u8) !n.Destination {
     return .{
         .id = try util.number(cells[0]),
         .revision = try util.number(cells[1]),
@@ -155,15 +155,12 @@ pub fn remove(owner: *Persistent, input: n.Remove, now: u64) !p.StorageResult {
 /// The sealed secret for a delivery or a test.
 pub fn read(owner: *Persistent, input: n.Read, now: u64) !p.StorageResult {
     if (!try authorized(owner, input.auth, input.lease, now)) return .{ .failed = .forbidden };
-    return secret(owner, input.id);
-}
-
-pub fn secret(owner: *Persistent, id: u64) !p.StorageResult {
     var rows = try db.query(
         owner.db,
         owner.gpa,
-        "SELECT kind,target,secret_envelope FROM console_notifications WHERE id=? LIMIT 1",
-        &.{util.integer(id)},
+        "SELECT kind,target,secret_envelope FROM console_notifications " ++
+            "WHERE id=? AND revision=? LIMIT 1",
+        &.{ util.integer(input.id), util.integer(input.revision) },
     );
     defer rows.deinit();
     if (rows.rows.len != 1) return .{ .failed = .conflict };
@@ -175,80 +172,7 @@ pub fn secret(owner: *Persistent, id: u64) !p.StorageResult {
     } };
 }
 
-pub fn enqueue(owner: *Persistent, input: n.Enqueue) !p.StorageResult {
-    const boot = std.fmt.bytesToHex(input.boot, .lower);
-    _ = db.exec(
-        owner.db,
-        owner.gpa,
-        "INSERT INTO console_notification_events(node,boot,sequence,event,raised_at,detail) " ++
-            "VALUES(?,?,?,?,?,?) ON CONFLICT(node,boot,sequence) DO NOTHING",
-        &.{
-            util.integer(input.node),      util.text(&boot),
-            util.integer(input.sequence),  util.text(@tagName(input.event)),
-            util.integer(input.raised_at), util.text(input.detail.slice()),
-        },
-    ) catch return .{ .failed = .capacity };
-    return .command_recorded;
-}
-
-/// Oldest undelivered events for the lease holder; each claim counts one attempt.
-pub fn claim(owner: *Persistent, input: n.Claim, now: u64) !p.StorageResult {
-    input.lease.validate() catch return .{ .failed = .invalid_input };
-    if (!try leased(owner, input.lease, now)) return .{ .failed = .conflict };
-    var batch: n.Batch = .{};
-    var rows = try db.query(
-        owner.db,
-        owner.gpa,
-        "SELECT id,node,event,raised_at,detail,attempts FROM console_notification_events " ++
-            "WHERE delivered_at IS NULL AND attempts<8 ORDER BY id LIMIT 8",
-        &.{},
-    );
-    defer rows.deinit();
-    for (rows.rows) |cells| {
-        batch.events[batch.count] = .{
-            .id = try util.number(cells[0]),
-            .node = @intCast(try util.number(cells[1])),
-            .event = std.meta.stringToEnum(n.Event, cells[2].?) orelse
-                return error.InvalidStoredValue,
-            .raised_at = try util.number(cells[3]),
-            .detail = try p.Bytes(n.max_detail).init(cells[4] orelse ""),
-            .attempts = @intCast(try util.number(cells[5])),
-        };
-        batch.count += 1;
-    }
-    return .{ .notification_batch = batch };
-}
-
-pub fn record(owner: *Persistent, input: n.Record, now: u64) !p.StorageResult {
-    input.lease.validate() catch return .{ .failed = .invalid_input };
-    if (!try leased(owner, input.lease, now)) return .{ .failed = .conflict };
-    _ = try db.exec(
-        owner.db,
-        owner.gpa,
-        "UPDATE console_notifications SET last_attempt_at=?,last_outcome=?,last_detail=? " ++
-            "WHERE id=?",
-        &.{
-            util.integer(now),
-            util.text(if (input.delivered) "delivered" else "failed"),
-            util.text(input.detail.slice()),
-            util.integer(input.destination),
-        },
-    );
-    _ = try db.exec(
-        owner.db,
-        owner.gpa,
-        "UPDATE console_notification_events SET attempts=attempts+1,delivered_at=CASE WHEN ?=1 " ++
-            "THEN ? ELSE delivered_at END WHERE id=? AND delivered_at IS NULL",
-        &.{
-            util.integer(@intFromBool(input.finished)),
-            util.integer(now),
-            util.integer(input.event_id),
-        },
-    );
-    return .command_recorded;
-}
-
-fn leased(owner: *Persistent, lease: p.retention.Lease, now: u64) !bool {
+pub fn leased(owner: *Persistent, lease: p.retention.Lease, now: u64) !bool {
     const boot = std.fmt.bytesToHex(lease.holder.boot, .lower);
     var rows = try db.query(
         owner.db,
@@ -274,6 +198,7 @@ fn optional(value: ?[]const u8) @import("zaxonlite").Value {
 pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
     const now = owner.nowSeconds();
     const retention = @import("console_store_retention.zig");
+    const queue = @import("console_store_deliveries.zig");
     return switch (request) {
         .settings_query => |auth| settings.query(owner, auth, now),
         .settings_change => |input| settings.change(owner, input, now),
@@ -282,9 +207,9 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
         .notifications_remove => |input| remove(owner, input, now),
         .notifications_read => |input| read(owner, input, now),
         .notifier_acquire => |holder| retention.acquireJob(owner, "notifier", holder, now),
-        .notifications_enqueue => |input| enqueue(owner, input),
-        .notifications_claim => |input| claim(owner, input, now),
-        .notifications_record => |input| record(owner, input, now),
+        .notifications_enqueue => |input| queue.enqueue(owner, input),
+        .notifications_claim => |input| queue.claim(owner, input, now),
+        .notifications_record => |input| queue.record(owner, input, now),
         else => unreachable,
     };
 }

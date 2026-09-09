@@ -13,44 +13,56 @@ const net = @import("net");
 pub const deadline_ns = 10 * std.time.ns_per_s;
 const Result = union(enum) { delivery: anyerror!u16, deadline: anyerror!void };
 
-pub fn deliver(
-    app: *App,
-    dest: n.Destination,
+pub const Input = struct {
+    destination: n.Destination,
     event: n.Pending,
-    detail: *p.Bytes(n.max_detail),
     read: n.Read,
-) bool {
-    const outcome = attempt(app, dest, event, read) catch |err| {
-        detail.set(@errorName(err)) catch {};
-        return false;
+    not_after: ?i96 = null,
+};
+pub const Report = struct { delivered: bool = false, detail: p.Bytes(n.max_detail) = .{} };
+
+pub fn deliver(app: *App, input: Input) Report {
+    var report: Report = .{};
+    const outcome = attempt(app, input) catch |err| {
+        report.detail.set(@errorName(err)) catch unreachable;
+        return report;
     };
     var text: [n.max_detail]u8 = undefined;
-    const written = std.fmt.bufPrint(&text, "status {d}", .{outcome}) catch "status";
-    detail.set(written) catch {};
-    return outcome >= 200 and outcome < 300;
+    const written = std.fmt.bufPrint(&text, "status {d}", .{outcome}) catch unreachable;
+    report.detail.set(written) catch unreachable;
+    report.delivered = outcome >= 200 and outcome < 300;
+    return report;
 }
 
-fn attempt(app: *App, dest: n.Destination, event: n.Pending, read: n.Read) !u16 {
-    // The secret is opened under the storage bound before the network deadline starts.
-    const secret: ?Secret = if (dest.kind == .webhook and dest.secret_set)
-        try openSecret(app, read)
-    else
-        null;
+fn attempt(app: *App, input: Input) !u16 {
+    const now = std.Io.Clock.awake.now(app.io).nanoseconds;
+    const expires = @min(now + deadline_ns, input.not_after orelse (now + deadline_ns));
+    if (expires <= now or app.stopping.load(.acquire)) return error.DeliveryDeadline;
     var results: [2]Result = undefined;
     var select: std.Io.Select(Result) = .init(app.io, &results);
     defer select.cancelDiscard();
-    try select.concurrent(.deadline, deadline, .{app});
-    try select.concurrent(.delivery, send, .{ app, dest, event, secret });
+    try select.concurrent(.deadline, deadline, .{ app, expires });
+    try select.concurrent(.delivery, authenticatedSend, .{ app, input, expires });
     return switch (try select.await()) {
         .delivery => |status| try status,
         .deadline => error.DeliveryDeadline,
     };
 }
 
-fn deadline(app: *App) anyerror!void {
-    const start = std.Io.Clock.awake.now(app.io).nanoseconds;
+fn authenticatedSend(app: *App, input: Input, expires: i96) !u16 {
+    const dest = input.destination;
+    const secret: ?Secret = if (dest.kind == .webhook and dest.secret_set)
+        try openSecret(app, input.read)
+    else
+        null;
+    if (std.Io.Clock.awake.now(app.io).nanoseconds >= expires or app.stopping.load(.acquire))
+        return error.DeliveryDeadline;
+    return send(app, dest, input.event, secret);
+}
+
+fn deadline(app: *App, expires: i96) anyerror!void {
     while (!app.stopping.load(.acquire)) {
-        if (std.Io.Clock.awake.now(app.io).nanoseconds - start >= deadline_ns) return;
+        if (std.Io.Clock.awake.now(app.io).nanoseconds >= expires) return;
         try std.Io.sleep(app.io, std.Io.Duration.fromMilliseconds(50), .awake);
     }
 }
@@ -84,8 +96,13 @@ fn webhook(app: *App, dest: n.Destination, event: n.Pending, secret: ?Secret) an
     var payload: [1024]u8 = undefined;
     const json = try body(&payload, app, event);
     var signature: [80]u8 = undefined;
-    var headers: [2]std.http.Header = undefined;
-    var count: usize = 1;
+    var identity: [64]u8 = undefined;
+    const key = try std.fmt.bufPrint(&identity, "sibuna/{d}/{d}/{d}", .{
+        event.id, dest.id, dest.revision,
+    });
+    var headers: [3]std.http.Header = undefined;
+    var count: usize = if (event.id == 0) 1 else 2;
+    headers[1] = .{ .name = "Idempotency-Key", .value = key };
     headers[0] = .{ .name = "X-Sibuna-Event", .value = @tagName(event.event) };
     if (secret) |shared| {
         var mac: [32]u8 = undefined;

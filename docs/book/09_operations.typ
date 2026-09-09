@@ -135,6 +135,10 @@ statistics and expires within twelve hours.
 
 Notification destinations (signed webhooks and syslog for denial spikes, bans, unreachable
 members and leader changes) live under Settings; webhook secrets need `--console-key-file`.
+Each destination has its own cooldown and three-attempt retry budget. Delivery audit records
+show outcomes; completed queue history is bounded to seven days and 4,096 events. Webhooks
+include a stable `Idempotency-Key` so receivers can suppress repeated effects after uncertain
+network completion.
 
 Response pages (challenge, denied, rate limited, banned, overloaded) are editable under
 Settings as bounded HTML with fixed placeholders; drafts preview in a sandboxed tab and

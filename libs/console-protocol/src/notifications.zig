@@ -1,5 +1,5 @@
 //! Notification destinations, queued events and operator settings. Results stay within the
-//! fixed storage envelope: destination pages carry four rows, event claims eight events.
+//! fixed storage envelope: destination pages carry four rows; claims own one delivery.
 //! Secret values never cross this boundary in the clear except inside a sealed envelope.
 const std = @import("std");
 const p = @import("root.zig");
@@ -19,7 +19,10 @@ pub const Outcome = enum { delivered, failed };
 pub const capacity = 8;
 pub const page_rows = 4;
 pub const queue_capacity = 256;
-pub const claim_rows = 8;
+pub const max_attempts = 3;
+pub const history_capacity = 4096;
+pub const history_days = 7;
+pub const claim_margin_seconds = 12;
 pub const max_label = 64;
 pub const max_target = 256;
 pub const max_host = 128;
@@ -83,7 +86,12 @@ pub const Save = struct {
     enabled: bool,
 };
 pub const Remove = struct { auth: p.users.Auth, id: u64, expected_revision: u64 };
-pub const Read = struct { auth: p.users.Auth, id: u64, lease: ?p.retention.Lease = null };
+pub const Read = struct {
+    auth: p.users.Auth,
+    id: u64,
+    revision: u64,
+    lease: ?p.retention.Lease = null,
+};
 pub const Secret = struct {
     kind: Kind,
     target: p.Bytes(max_target),
@@ -105,16 +113,19 @@ pub const Pending = struct {
     detail: p.Bytes(max_detail),
     attempts: u32,
 };
-pub const Batch = struct { events: [claim_rows]Pending = undefined, count: u8 = 0 };
+/// A claim owns all inputs. Retargeting invalidates the revision before another attempt.
+pub const Claimed = struct {
+    delivery_id: u64,
+    event: Pending,
+    destination: Destination,
+};
 pub const Claim = struct { lease: p.retention.Lease };
 pub const Record = struct {
     lease: p.retention.Lease,
-    event_id: u64,
-    destination: u64,
+    delivery_id: u64,
+    attempt: u32,
     delivered: bool,
     detail: p.Bytes(max_detail),
-    /// True once every enabled destination has an outcome for this event.
-    finished: bool,
 };
 pub const Setting = struct {
     key: p.Bytes(max_setting_key),

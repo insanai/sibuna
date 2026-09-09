@@ -185,17 +185,20 @@ fn testDestination(app: *App, context: *http.Context, auth: p.users.Auth) !void 
     const destination = for (rows) |row| {
         if (row.id == parsed.value.id) break row;
     } else return http.fail(context, .not_found, "CONSOLESETTINGS");
-    var detail: p.Bytes(n.max_detail) = .{};
-    const delivered = @import("notify_delivery.zig").deliver(app, destination, .{
-        .id = 0,
-        .node = app.config.node_id,
-        .event = .denial_spike,
-        .raised_at = app.now(),
-        .detail = try p.Bytes(n.max_detail).init("test delivery from the console"),
-        .attempts = 0,
-    }, &detail, .{ .auth = auth, .id = parsed.value.id });
+    const outcome = @import("notify_delivery.zig").deliver(app, .{
+        .destination = destination,
+        .event = .{
+            .id = 0,
+            .node = app.config.node_id,
+            .event = .denial_spike,
+            .raised_at = app.now(),
+            .detail = try p.Bytes(n.max_detail).init("test delivery from the console"),
+            .attempts = 0,
+        },
+        .read = .{ .auth = auth, .id = parsed.value.id, .revision = destination.revision },
+    });
     return http.json(context, .{
-        .delivered = delivered,
-        .detail = detail.slice(),
+        .delivered = outcome.delivered,
+        .detail = outcome.detail.slice(),
     }, &.{});
 }

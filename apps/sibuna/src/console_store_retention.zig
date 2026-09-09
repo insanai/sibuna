@@ -66,6 +66,7 @@ pub fn prune(owner: *Persistent, input: r.Prune, now: u64) !p.StorageResult {
     const seconds: u64 = switch (input.kind) {
         .incidents => r.incident_days * std.time.s_per_day,
         .audit => r.audit_days * std.time.s_per_day,
+        .notification_history => p.notifications.history_days * std.time.s_per_day,
         .sessions, .kiosk_grants => 0,
         .stages, .import_stages => p.workflows.stage_seconds,
     };
@@ -95,6 +96,9 @@ fn statement(kind: r.Kind) []const u8 {
         .kiosk_grants => "DELETE FROM console_kiosk_grants WHERE digest IN(SELECT digest " ++
             "FROM console_kiosk_grants WHERE use_by<=? OR consumed_at IS NOT NULL " ++
             "ORDER BY use_by,digest LIMIT 16)" ++ guard,
+        .notification_history => "DELETE FROM console_notification_events WHERE id IN(" ++
+            "SELECT id FROM console_notification_events WHERE delivered_at<? " ++
+            "ORDER BY delivered_at,id LIMIT 16)" ++ guard,
         // Abandoned country and import chunks; a commit deletes its own rows.
         .stages => "DELETE FROM console_country_stage WHERE digest IN(SELECT digest " ++
             "FROM console_country_stage WHERE recorded_at<? LIMIT 16)" ++ guard,

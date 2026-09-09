@@ -68,7 +68,8 @@ pub const Job = struct {
             .sessions => .kiosk_grants,
             .kiosk_grants => .stages,
             .stages => .import_stages,
-            .import_stages => .incidents,
+            .import_stages => .notification_history,
+            .notification_history => .incidents,
         };
     }
 

@@ -176,7 +176,7 @@ pub const StorageResult = union(enum) {
     notification_saved: u64,
     notification_secret: notifications.Secret,
     notifier_lease: retention.Lease,
-    notification_batch: notifications.Batch,
+    notification_claimed: ?notifications.Claimed,
     page_document: pages.Document,
     replay_summary: workflows.ReplaySummary,
     reputation_page: workflows.ReputationPage,
