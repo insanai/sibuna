@@ -189,11 +189,11 @@ the database, but it never enters a request thread, never allocates on one, and 
 lock a worker needs; a proposed benchmark gate checks that the console's presence degrades data-plane
 throughput by at most one percent and p99 latency by at most ten percent under the specified workloads. These are proposed acceptance targets, not measured results.
 
-#callout("Review and implementation boundary · 2026-09-08")[
-  This is a *proposed* console, not a delivery record. The implementation checklist records
-  the initial contract modules and tests. The live listener, authenticated UI and management
-  workflows are not yet implemented.
-  Present-tense requirements below describe intended behavior unless explicitly called current.
+#callout("Review and implementation boundary · 2026-09-09")[
+  The live listener, authenticated Wasm interface and management workflows are implemented.
+  This record remains *Proposed*: the dated implementation evidence records verified
+  increments, while the release checklist tracks unresolved review and acceptance work.
+  Requirements below are not claims that every gate has passed.
   Evidence was checked against `build.zig`, `build.zig.zon`, `apps/sibuna/src/server.zig`,
   `persistent.zig`, `libs/policy/src/engine.zig`, `waf.zig`, `radix_trie.zig`, and the browser solver.
   The toolchain is Zig 0.16.0; Zaxonlite is pinned to 0.6.2. First-party service and UI logic
@@ -498,7 +498,7 @@ active dashboards. Measure admitted, challenge, denied/incident-heavy and policy
 workloads, including authentication and GeoIP reload contention. Use repeated interleaved
 runs on a declared host, fixed warm-up/duration and traffic mix, and report uncertainty.
 Throughput loss must be ≤ 1% and p99 increase ≤ 10% relative to the corresponding baseline;
-inconclusive/noisy runs do not establish compliance. The active-console impact matrix has not yet run.
+inconclusive/noisy runs do not establish compliance. The recorded impact runs are inconclusive; the reviewed harness also needs the dashboard HTTP workload before a new acceptance run.
 
 
 == Startup from the command line
@@ -1766,11 +1766,11 @@ are historical; the acceptance gates below govern delivery.
 
 - #text("Verified (2026-09-09): the primitive baseline was regenerated from clean commit e528f7e after the response-page change on the request path; see the acceptance benchmark regeneration entry.")
 
-- #text("Measured (2026-09-09): the matrix ran with all four configurations and all four workloads for seven rounds, and the clustered variant for three rounds; the eight dashboards received at least 0.99 frames per second each. See the acceptance run entry.")
+- #text("Measured (2026-09-09): the matrix ran with all four configurations and all four workloads for seven rounds, and the clustered variant for three rounds; the aggregate stream frame count averaged at least 0.99 frames per second per dashboard; this does not establish each subscriber’s individual coverage. See the acceptance run entry.")
 
 - #text("Not passed (2026-09-09): the verdict is inconclusive on the development host. Point estimates stay within ±2 % throughput and +6 % p99 with peak RSS reported per configuration, but the compiled-out baseline's own spread (20–46 %) exceeds the 1 % rule and every bootstrap interval straddles the gate; the record says so rather than rounding to a pass. A quiet host is required.")
 
-- #text("Pending: every functional gate is verified; the performance gate is inconclusive on the development host, so the record stays Proposed and the console stays opt-in at runtime.")
+- #text("Pending after implementation review: notification scheduling and lease regressions, multi-topic real-time subscriptions, dedicated peer management transport and comprehensive browser acceptance. The impact harness must represent the full dashboard workload and run on a sufficiently quiet host. The record stays Proposed and the console stays opt-in.")
 
 == Implementation evidence
 

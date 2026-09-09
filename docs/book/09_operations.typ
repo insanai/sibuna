@@ -145,10 +145,11 @@ inspection findings, manage IP groups and country blocks pinned to the active Ge
 generation, and export or atomically import the managed set (also `sibuna console policies
 export` and `sibuna console policies import --file <set.json>`).
 
-SID 0007 remains Proposed. Every functional gate is verified; the console-impact gate
-measured inconclusive on the development host (the baseline's own spread exceeds the 1 %
-rule), so the performance claim waits for a quiet host, and direct peer telemetry sockets
-remain a deferred design.
+SID 0007 remains Proposed. The interface is available, with ongoing review corrections
+and acceptance work recorded in the SID. The impact runs are inconclusive, and the harness
+needs to include dashboard HTTP queries before another acceptance run. Multi-topic streams
+and dedicated peer management transport remain implementation work; current node discovery
+uses replicated membership and configured health probes.
 
 == Deployment Topologies
 
