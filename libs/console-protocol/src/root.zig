@@ -87,6 +87,7 @@ pub const retention = @import("retention.zig");
 pub const kiosk = @import("kiosk.zig");
 pub const notifications = @import("notifications.zig");
 pub const pages = @import("pages.zig");
+pub const workflows = @import("workflows.zig");
 pub const AuthorizationCheck = struct {
     session_digest: [32]u8,
     touch: bool = false,
@@ -153,6 +154,16 @@ pub const StorageRequest = union(enum) {
     notifications_record: notifications.Record,
     page_read: pages.Read,
     page_edit: pages.Edit,
+    policy_order: workflows.Order,
+    policy_replay: workflows.Replay,
+    reputation_query: workflows.ReputationQuery,
+    reputation_edit: workflows.ReputationEdit,
+    reputation_remove: workflows.ReputationRemove,
+    country_chunk: workflows.CountryChunk,
+    country_preflight: workflows.CountryPreflight,
+    country_apply: workflows.CountryApply,
+    import_chunk: workflows.ImportChunk,
+    import_commit: workflows.ImportCommit,
 };
 pub const StorageResult = union(enum) {
     node_status: nodes.Status,
@@ -167,6 +178,9 @@ pub const StorageResult = union(enum) {
     notifier_lease: retention.Lease,
     notification_batch: notifications.Batch,
     page_document: pages.Document,
+    replay_summary: workflows.ReplaySummary,
+    reputation_page: workflows.ReputationPage,
+    country_summary: workflows.CountrySummary,
     audit_page: audit.Page,
     audit_detail: audit.Detail,
     tokens_page: tokens.Page,
@@ -276,6 +290,24 @@ pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
         .policies_test => |input| try policies.validateTest(input),
         .notifications_save => |input| try notifications.validateSave(input),
         .page_edit => |input| try pages.validateEdit(input),
+        .policy_order => |input| try workflows.validateOrder(input),
+        .policy_replay => |input| try workflows.validateReplay(input),
+        .reputation_edit => |input| try workflows.validateReputationEdit(input),
+        .reputation_remove => |input| if (input.prefix.len == 0 or
+            input.expected_revision >= std.math.maxInt(i64)) return error.InvalidLimit,
+        .country_chunk => |input| if (input.count == 0 or
+            input.count > workflows.chunk_prefixes) return error.InvalidLimit,
+        .country_preflight => |input| try workflows.validateCountry(
+            input.count,
+            input.expected_revision,
+        ),
+        .country_apply => |input| try workflows.validateCountry(
+            input.count,
+            input.expected_revision,
+        ),
+        .import_chunk => |input| if (input.document.len == 0 or
+            input.ordinal >= 128) return error.InvalidLimit,
+        .import_commit => |input| try workflows.validateImportCommit(input),
         .events_query => |query| try events.validate(query),
         .events_similar => |query| try similarity.validate(query),
         inline .geo_begin, .geo_activate, .totp_begin => |input| {
