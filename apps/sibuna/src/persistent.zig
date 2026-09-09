@@ -1056,6 +1056,7 @@ test {
         _ = @import("console_notifications_test.zig");
         _ = @import("console_pages_load.zig");
         _ = @import("console_pages_test.zig");
+        _ = @import("console_workflows_test.zig");
         _ = @import("console_node_storage.zig");
         _ = @import("console_inspection_test.zig");
         _ = @import("console_limits_test.zig");
