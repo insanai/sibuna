@@ -78,8 +78,10 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     try html.render(w, "<p class=\"sb-note\">" ++
         "Markers show representative country positions, not client coordinates. " ++
         "Arrows illustrate recorded inbound activity over this window; " ++
-        "the service hub is not a geographic destination. " ++
-        "<a href=\"https://db-ip.com\">IP Geolocation by DB-IP</a>.</p>", .{});
+        "the service hub is not a geographic destination.", .{});
+    const attribution = if (state.stats) |stats| stats.geoip_attribution else false;
+    if (attribution) try w.writeAll(" <a href=\"https://db-ip.com\">IP Geolocation by DB-IP</a>.");
+    try w.writeAll("</p>");
     try rankings(state, w);
 }
 

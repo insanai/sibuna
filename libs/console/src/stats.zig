@@ -24,6 +24,7 @@ pub const Stats = struct {
         countries: [676]u32 = @splat(0),
     } = @splat(.{}),
     geo_available: bool = false,
+    geo_attribution: bool = false,
     rankings: @import("rankings.zig").Rankings = .{},
     timeline: @import("timeline.zig").Timeline = .{},
     minute_status: p.minutes.Status = .{},
@@ -61,6 +62,7 @@ pub const Stats = struct {
         const elapsed = if (self.started_ms == 0) 0 else monotonicMs(io) -| self.started_ms;
         self.timeline.observe(now, elapsed, telemetry.totals());
         self.geo_available = geo.loaded.load(.acquire);
+        self.geo_attribution = self.geo_available and geo.attributionRequired(io);
         // One bounded drain per observation; input beyond capacity has explicit loss counters.
         for (0..4096) |_| {
             const record = telemetry.queue.pop() orelse break;
@@ -133,6 +135,7 @@ pub const Stats = struct {
             .boot = self.boot,
             .uptime_ms = if (self.started_ms == 0) 0 else monotonicMs(io) -| self.started_ms,
             .geoip_available = self.geo_available,
+            .geoip_attribution = self.geo_attribution,
             .countries = ranked.top,
             .other_country_samples = ranked.other,
             .requests = totals.requests(),

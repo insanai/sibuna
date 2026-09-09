@@ -300,6 +300,8 @@ pub const StatsSnapshot = struct {
     retention_failures: ?u64 = null,
     sample_probability: []const u8 = "1/64",
     geoip_available: bool = false,
+    /// Whether the active country provider's licence requires visible attribution.
+    geoip_attribution: bool = false,
     countries: [32]CountryCount = @splat(.{}),
     other_country_samples: u64 = 0,
     unknown_samples: u64,

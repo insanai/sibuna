@@ -477,7 +477,7 @@ fn geographicAction(name: []const u8, fields: std.json.Value) !bool {
     if (equal(name, "geo-import") and state.phase == .geoip and !state.geo_importing) {
         state.geo_importing = true;
         try post("geo-import", "/console/api/geoip", .{
-            .provider = "dbip",
+            .provider = string(fields, "provider"),
             .source_version = string(fields, "source_version"),
             .expected_revision = state.geo.revision,
             .checksum = string(fields, "checksum"),
