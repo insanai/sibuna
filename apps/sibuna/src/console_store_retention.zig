@@ -9,6 +9,16 @@ const integer = value.integer;
 const text = value.text;
 
 pub fn acquire(owner: *Persistent, holder: r.Holder, now: u64) !p.StorageResult {
+    return acquireJob(owner, "retention", holder, now);
+}
+
+/// One fenced lease per singleton job name; the notifier shares the table and the rules.
+pub fn acquireJob(
+    owner: *Persistent,
+    job: []const u8,
+    holder: r.Holder,
+    now: u64,
+) !p.StorageResult {
     holder.validate() catch return .{ .failed = .invalid_input };
     if (now > std.math.maxInt(i64) - r.lease_seconds) return .{ .failed = .invalid_input };
     const boot = std.fmt.bytesToHex(holder.boot, .lower);
@@ -16,7 +26,7 @@ pub fn acquire(owner: *Persistent, holder: r.Holder, now: u64) !p.StorageResult 
         owner.db,
         owner.gpa,
         "INSERT INTO console_job_leases(job,node,boot,fence,expires) " ++
-            "VALUES('retention',?,?,1,?) ON CONFLICT(job) DO UPDATE SET " ++
+            "VALUES(?,?,?,1,?) ON CONFLICT(job) DO UPDATE SET " ++
             "node=excluded.node,boot=excluded.boot,expires=excluded.expires," ++
             "fence=console_job_leases.fence+CASE WHEN console_job_leases.expires<=? " ++
             "OR console_job_leases.node!=excluded.node " ++
@@ -25,17 +35,17 @@ pub fn acquire(owner: *Persistent, holder: r.Holder, now: u64) !p.StorageResult 
             "AND (console_job_leases.expires<=? OR (console_job_leases.node=excluded.node " ++
             "AND console_job_leases.boot=excluded.boot))",
         &.{
-            integer(holder.node), text(&boot),  integer(now + r.lease_seconds),
-            integer(now),         integer(now),
+            text(job),    integer(holder.node), text(&boot), integer(now + r.lease_seconds),
+            integer(now), integer(now),
         },
     );
     // A takeover between commit and read is a normal standby result, not ownership.
     var rows = try db.query(
         owner.db,
         owner.gpa,
-        "SELECT fence,expires FROM console_job_leases WHERE job='retention' " ++
+        "SELECT fence,expires FROM console_job_leases WHERE job=? " ++
             "AND node=? AND boot=? AND expires>? LIMIT 1",
-        &.{ integer(holder.node), text(&boot), integer(now) },
+        &.{ text(job), integer(holder.node), text(&boot), integer(now) },
     );
     defer rows.deinit();
     if (rows.rows.len != 1) return .{ .failed = .conflict };
@@ -46,6 +56,7 @@ pub fn acquire(owner: *Persistent, holder: r.Holder, now: u64) !p.StorageResult 
     };
     try lease.validate();
     if (changed == 0) return .{ .failed = .capacity };
+    if (std.mem.eql(u8, job, "notifier")) return .{ .notifier_lease = lease };
     return .{ .retention_lease = lease };
 }
 

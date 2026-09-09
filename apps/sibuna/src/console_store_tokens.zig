@@ -14,7 +14,7 @@ const active = "(t.disabled=0 AND (t.expires_at IS NULL OR t.expires_at>?) AND "
     "WHERE r.token_id=t.id AND r.digest=t.digest AND r.revision=u.revision " ++
     "AND MIN(r.expires,r.idle_expires)>? " ++
     "AND u.revision=t.auth_revision AND u.disabled=0 AND u.must_change=0 AND u.role='admin'))";
-const authority = "WITH a AS (SELECT u.id,u.revision FROM console_users u " ++
+pub const authority = "WITH a AS (SELECT u.id,u.revision FROM console_users u " ++
     "JOIN console_sessions s ON s.user_id=u.id WHERE s.digest=? AND s.csrf_digest=? " ++
     "AND s.token_id IS NULL AND MIN(s.expires,s.idle_expires)>? " ++
     "AND u.revision=s.revision AND u.disabled=0 AND u.must_change=0 AND u.role='admin' " ++

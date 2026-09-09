@@ -32,6 +32,7 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
     const geo = @import("console_store_geo.zig");
     const tokens = @import("console_store_tokens.zig");
     const kiosk = @import("console_store_kiosk.zig");
+    const users = @import("console_store_users.zig");
     return switch (request) {
         .node_status => |auth| @import("console_node_read.zig").status(owner, auth),
         .node_command_read => |input| @import("console_node_read.zig").read(owner, input),
@@ -40,26 +41,25 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
         .node_advertise => |url| @import("console_node_read.zig").advertise(owner, url),
         .kiosk_grant => |input| kiosk.grant(owner, input, owner.nowSeconds()),
         .kiosk_exchange => |input| kiosk.exchange(owner, input, owner.nowSeconds()),
+        .settings_query,
+        .settings_change,
+        .notifications_query,
+        .notifications_save,
+        .notifications_remove,
+        .notifications_read,
+        .notifier_acquire,
+        .notifications_enqueue,
+        .notifications_claim,
+        .notifications_record,
+        => @import("console_store_notifications.zig").execute(owner, request),
         .audit_query => |input| @import("console_store_audit.zig").query(owner, input),
         .audit_read => |input| @import("console_store_audit.zig").read(owner, input),
         .tokens_query => |input| tokens.query(owner, input),
         .tokens_create => |input| tokens.create(owner, input),
         .tokens_revoke => |input| tokens.revoke(owner, input),
-        .users_query => |input| @import("console_store_users.zig").query(
-            owner,
-            input,
-            owner.nowSeconds(),
-        ),
-        .users_create => |input| @import("console_store_users.zig").create(
-            owner,
-            input,
-            owner.nowSeconds(),
-        ),
-        .users_change => |input| @import("console_store_users.zig").change(
-            owner,
-            input,
-            owner.nowSeconds(),
-        ),
+        .users_query => |input| users.query(owner, input, owner.nowSeconds()),
+        .users_create => |input| users.create(owner, input, owner.nowSeconds()),
+        .users_change => |input| users.change(owner, input, owner.nowSeconds()),
         .retention_acquire => |input| retention.acquire(owner, input, owner.nowSeconds()),
         .retention_prune => |input| retention.prune(owner, input, owner.nowSeconds()),
         .minutes_write => |input| @import("console_store_minutes.zig").write(owner, input),
