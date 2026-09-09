@@ -21,6 +21,17 @@ CA-signed node certificates. WAN performance, reverse-proxy origin costs and
 sustained forensic backlog capacity are not measured here. Rate quotas remain local. Cluster
 challenges require issuer routing; spent state is not durable across restarts.
 
+`console-impact-latest.json` is written by `zig build console-impact` (`benchmarks/console_impact.py`).
+It builds a console-free and a console binary, runs four daemons at once (console compiled
+out, compiled in but disabled, idle with an initialized administrator, and serving eight live
+WebSocket dashboards), and interleaves wrk rounds in rotating order over admitted, challenged,
+denied and policy-reload workloads. Each configuration is compared with the compiled-out
+baseline by median throughput and median p99 with a bootstrap interval; the gate is at most
+1% throughput loss and 10% p99 increase. A baseline whose own spread exceeds 1%, or an interval
+that straddles the gate, is reported as inconclusive and fails the run rather than passing.
+`--cluster` repeats the matrix with three PSK nodes and load on node 1. Peak RSS is sampled
+from `ps` every 100 ms. The host must be declared with `--host-label` and left quiet.
+
 No benchmark hook or timer is linked into request handling. Production metrics, local locks,
 reader-count atomics and incident enqueue still have real costs. These tests cannot establish
 zero total request overhead, universally optimal algorithms, or global network-edge equivalence.

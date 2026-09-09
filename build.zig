@@ -259,6 +259,14 @@ fn addServer(
         check.addArtifactArg(exe);
         console_e2e.dependOn(&check.step);
     } else console_e2e.dependOn(&b.addFail("console-e2e requires -Dconsole=true").step);
+    // The isolation gate builds its own ReleaseFast binaries (with and without the
+    // console) into a temporary prefix; `-- --quick` runs the short CI matrix.
+    const impact = b.step("console-impact", "Measure data-plane cost of the console");
+    if (console != null) {
+        const measure = b.addSystemCommand(&.{ "python3", "benchmarks/console_impact.py" });
+        if (b.args) |args| measure.addArgs(args);
+        impact.dependOn(&measure.step);
+    } else impact.dependOn(&b.addFail("console-impact requires -Dconsole=true").step);
 
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
