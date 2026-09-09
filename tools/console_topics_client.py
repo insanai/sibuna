@@ -5,7 +5,7 @@ from console_ws_test import Stream
 
 
 class Client:
-    def __init__(self, port, cookie):
+    def __init__(self, port, cookie, record_messages=True):
         self.stream = Stream(port, cookie, "/console/ws")
         self.states = {}
         self.epochs = {}
@@ -13,6 +13,7 @@ class Client:
         self.pending = {}
         self.gaps = []
         self.messages = []
+        self.record_messages = record_messages
 
     def command(self, op, topic=None, args=None):
         message = {"op": op}
@@ -31,8 +32,9 @@ class Client:
             return {"closed": True, "code": int.from_bytes(body[:2], "big")}
         assert opcode == 1 and len(body) <= 2048, (opcode, body)
         message = json.loads(body)
-        self.messages.append(message)
-        assert len(self.messages) <= 10000, "fixture received an unbounded message flood"
+        if self.record_messages:
+            self.messages.append(message)
+            assert len(self.messages) <= 10000, "fixture received an unbounded message flood"
         op = message.get("op")
         if op == "pong" or "error" in message:
             return message

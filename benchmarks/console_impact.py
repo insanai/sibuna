@@ -396,7 +396,7 @@ def main():
             "wrk": subprocess.run(["wrk", "--version"], capture_output=True, text=True,
                                   check=False).stdout.split("\n")[0],
             "gate": GATE, "dashboards": dashboards, **results,
-            "dashboard_workload": {"stats_hz": 1, "rankings_interval_seconds": 10,
+            "dashboard_workload": {"endpoint": "/console/ws", "stats_hz": 1, "rankings_interval_seconds": 10,
                                    "timeline_interval_seconds": 10, "timeline_limit": 10,
                                    "geometry": "loaded once before warmup",
                                    "client": "network emulation; rendering measured separately"},

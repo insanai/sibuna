@@ -8,7 +8,7 @@ import math
 import socket
 import threading
 import time
-from console_ws_test import Stream
+from console_topics_client import Client
 
 
 class Dashboard:
@@ -29,10 +29,10 @@ class Dashboard:
             return dict(self.totals)
 
     def connect(self):
-        stream = Stream(self.port, self.cookie)
-        stream.send(1, b'{"op":"subscribe","topics":["stats"]}')
-        stream.sock.settimeout(None)
-        return stream
+        self.client = Client(self.port, self.cookie, record_messages=False)
+        self.client.command("sub", "stats")
+        self.client.stream.sock.settimeout(None)
+        return self.client.stream
 
     def start(self):
         code, _, body = self.helper.request(self.port, "GET", "/console/assets/world-110m.bin",
@@ -47,18 +47,21 @@ class Dashboard:
     def read(self):
         while not self.stopping.is_set():
             try:
-                opcode, payload = self.stream.receive()
-                if opcode == 9:
-                    self.stream.send(10, payload)
-                elif opcode == 1:
-                    value = json.loads(payload)
-                    if value.get("topic") == "stats" and value.get("op") in ("snapshot", "delta"):
-                        self.increment("frames")
-                elif opcode == 8:
-                    code = int.from_bytes(payload[:2], "big") if len(payload) >= 2 else 0
+                value = self.client.receive()
+                if value is None:
+                    continue
+                if value.get("closed"):
+                    code = value["code"]
                     with self.lock:
                         self.closes[code] = self.closes.get(code, 0) + 1
                     raise ConnectionError("stream closed")
+                if value.get("op") == "gap" or "error" in value:
+                    raise ConnectionError("subscription requires a fresh snapshot")
+                complete = value.get("op") == "snapshot_end" or (
+                    value.get("op") == "delta" and value["part"] + 1 == value["parts"])
+                if value.get("topic") == "stats" and complete:
+                    assert "timestamp" in self.client.states["stats"]
+                    self.increment("frames")
             except (OSError, ValueError, AssertionError):
                 if self.stopping.is_set():
                     return
