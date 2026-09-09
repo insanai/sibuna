@@ -13,6 +13,22 @@ pub const default = blk: {
     break :blk challenge_html[0..start] ++ "{{ challenge }}" ++ challenge_html[end..];
 };
 
+/// Only the fixed solver script is executable; edited page markup cannot acquire authority
+/// by sharing the protected application's origin. Worker and verification URLs stay local.
+pub const security_policy = blk: {
+    @setEvalBranchQuota(1_000_000);
+    const start = std.mem.indexOf(u8, challenge_html, solver_start).? + solver_start.len;
+    const end = std.mem.indexOfPos(u8, challenge_html, start, solver_end).?;
+    var digest: [32]u8 = undefined;
+    std.crypto.hash.sha2.Sha256.hash(challenge_html[start..end], &digest, .{});
+    var encoded: [44]u8 = undefined;
+    _ = std.base64.standard.Encoder.encode(&encoded, &digest);
+    break :blk "Content-Security-Policy: default-src 'none'; base-uri 'none'; " ++
+        "form-action 'none'; frame-ancestors 'none'; style-src 'unsafe-inline'; " ++
+        "img-src 'self'; connect-src 'self'; worker-src 'self'; script-src 'sha256-" ++
+        encoded ++ "'\r\n";
+};
+
 pub fn solverBlock() []const u8 {
     const start = std.mem.indexOf(u8, challenge_html, solver_start).?;
     const end = std.mem.indexOfPos(u8, challenge_html, start, solver_end).? + solver_end.len;

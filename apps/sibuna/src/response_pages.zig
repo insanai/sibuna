@@ -9,6 +9,9 @@ const page_template = policy.page_template;
 const server = @import("server.zig");
 const solver = @import("challenge_page.zig").solverBlock;
 
+const security_policy = "Content-Security-Policy: default-src 'none'; base-uri 'none'; " ++
+    "form-action 'none'; frame-ancestors 'none'; style-src 'unsafe-inline'; img-src 'self'\r\n";
+
 pub const Extra = struct {
     retry_after: u32 = 0,
     reason: []const u8 = "",
@@ -53,17 +56,22 @@ pub fn respond(
         .node = ctx.state().config.cluster_node,
         .challenge = if (kind == .challenge) solver() else "",
     };
+    const csp = if (kind == .challenge)
+        @import("challenge_page.zig").security_policy
+    else
+        security_policy;
     const length = page_template.measure(&template, values);
     const w = ctx.writer();
     try w.print(
         "HTTP/1.1 {d} {s}\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {d}\r\n" ++
             "Connection: {s}\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\n" ++
-            "{s}\r\n",
+            "{s}{s}\r\n",
         .{
             @intFromEnum(status),
             status.reason(),
             length,
             if (ctx.keep_alive) "keep-alive" else "close",
+            csp,
             extra.headers,
         },
     );
@@ -90,7 +98,7 @@ pub fn rejectRaw(st: *server.AppState, writer: *std.Io.Writer, text: []const u8)
     writer.print(
         "HTTP/1.1 503 Service Unavailable\r\nContent-Type: text/html; charset=utf-8\r\n" ++
             "Content-Length: {d}\r\nConnection: close\r\nCache-Control: no-store\r\n" ++
-            "X-Content-Type-Options: nosniff\r\nRetry-After: 5\r\n\r\n",
+            "X-Content-Type-Options: nosniff\r\nRetry-After: 5\r\n" ++ security_policy ++ "\r\n",
         .{length},
     ) catch return;
     page_template.write(&template, writer, values) catch return;

@@ -45,20 +45,11 @@ pub const Values = struct {
     /// The fixed solver block for challenge pages; never escaped, never operator-supplied.
     challenge: []const u8 = "",
 };
-const forbidden = [_][]const u8{
-    "<script",     "<iframe", "<object", "<embed",    "<base", "<link",
-    "javascript:", "<form",   "data:",   "vbscript:", "url(",  "@import",
-    "expression(", "<!--",
-};
-const url_attributes = [_][]const u8{
-    "src", "href", "srcset", "action", "formaction", "xlink:href", "poster",
-};
-
 pub fn compile(kind: Kind, source: []const u8, out: *Template) Error!void {
     if (source.len > max_bytes) return error.TooLarge;
     if (!std.unicode.utf8ValidateSlice(source) or std.mem.indexOfScalar(u8, source, 0) != null)
         return error.InvalidUtf8;
-    try validateMarkup(source);
+    try @import("page_markup.zig").validate(source);
     out.len = @intCast(source.len);
     @memcpy(out.bytes[0..source.len], source);
     out.count = 0;
@@ -102,40 +93,6 @@ fn insideTag(source: []const u8, at: usize) bool {
     const open = std.mem.lastIndexOfScalar(u8, source[0..at], '<') orelse return false;
     const close = std.mem.lastIndexOfScalar(u8, source[0..at], '>') orelse return true;
     return open > close;
-}
-
-/// One bounded pass: forbidden tokens anywhere (ASCII case-insensitive), event handler
-/// attributes, and resource attributes that are not same-origin paths or fragments.
-fn validateMarkup(source: []const u8) Error!void {
-    for (forbidden) |token| {
-        if (std.ascii.indexOfIgnoreCase(source, token) != null) return error.ForbiddenContent;
-    }
-    var cursor: usize = 0;
-    while (std.mem.indexOfScalarPos(u8, source, cursor, '<')) |open| {
-        const close = std.mem.indexOfScalarPos(u8, source, open, '>') orelse
-            return error.ForbiddenContent;
-        try validateTag(source[open + 1 .. close]);
-        cursor = close + 1;
-    }
-}
-
-fn validateTag(tag: []const u8) Error!void {
-    var tokens = std.mem.tokenizeAny(u8, std.mem.trimEnd(u8, tag, "/ \t\r\n"), " \t\r\n");
-    _ = tokens.next();
-    while (tokens.next()) |token| {
-        const equals = std.mem.indexOfScalar(u8, token, '=') orelse token.len;
-        const name = token[0..equals];
-        if (name.len >= 3 and std.ascii.eqlIgnoreCase(name[0..2], "on"))
-            return error.ForbiddenAttribute;
-        // Refresh/redirect and policy pragmas are executable in effect.
-        if (std.ascii.eqlIgnoreCase(name, "http-equiv")) return error.ForbiddenAttribute;
-        for (url_attributes) |attribute| {
-            if (!std.ascii.eqlIgnoreCase(name, attribute)) continue;
-            const value = std.mem.trim(u8, token[@min(equals + 1, token.len)..], "\"'");
-            if (value.len == 0 or (value[0] != '/' and value[0] != '#') or
-                std.mem.startsWith(u8, value, "//")) return error.ExternalReference;
-        }
-    }
 }
 
 pub fn measure(t: *const Template, values: Values) usize {

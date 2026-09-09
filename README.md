@@ -300,7 +300,8 @@ cluster member delivers at a time under a fenced lease.
 Administrators can also edit the five browser-facing response pages (challenge, denied,
 rate limited, banned, overloaded) under Settings: bounded HTML with fixed placeholders, no
 scripts or external resources, previewed in a sandboxed tab and served from the next policy
-snapshot. Clients that do not accept HTML keep the plain-text replies.
+snapshot. Attributes use quoted values; URLs must be literal local paths or fragments. A
+restrictive Content Security Policy permits only the fixed solver on challenge pages. Clients that do not accept HTML keep the plain-text replies.
 
 Policy workflows: rules can be reordered from the managed list, a draft can be replayed
 against retained inspection findings before saving, IP groups (reputation prefixes with a

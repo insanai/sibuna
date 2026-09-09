@@ -3822,6 +3822,25 @@ measured 1,461.28 ns median (1,445.89–1,499.61 ns); idle RSS was 10,064 KiB. T
 dependency is not on the measured request path, and the figures match the previous
 record within run to run variation.
 
+== Response-template validation correction (2026-09-09)
+
+The implementation review found that whitespace splitting accepted browser-recognized event
+attributes adjacent to quoted values and after a tag-name slash. `page_markup.zig` now parses
+an explicit bounded subset of HTML, requiring separated names and quoted values, refusing
+foreign-content integration elements, event attributes, URL entities/backslashes and CSS
+escapes. Style and title bodies cannot conceal the fixed solver placeholder. Common layout,
+accessibility attributes, local images, inline styling and the built-in shield icon remain
+supported. Invalid historical templates retain the existing safe-default fallback.
+
+Served response pages also send a restrictive Content Security Policy. Challenge pages allow
+only the SHA-256 hash of the embedded solver script, local workers and local verification;
+other response pages permit no scripts. This is independent of the existing sandboxed console
+preview. Native parser vectors and live save/preview refusal tests cover the discovered forms.
+Chrome completed the hashcash solver and reached the local origin under the new CSP, with
+no warning/error logs; the console refused the unsafe draft while retaining it in the editor
+and leaving the stored revision at zero.
+This correction does not close the outstanding notification, real-time or impact review items.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
