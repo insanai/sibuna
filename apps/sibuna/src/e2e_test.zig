@@ -101,11 +101,21 @@ fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
     cfg.idle_timeout_seconds = 1;
     cfg.ban_seconds = 60;
     f.engine.initInPlace(cfg.default_difficulty);
+    policy.page_template.defaults(&f.engine.pages, @import("challenge_page.zig").default);
     f.engine.waf_enabled = cfg.waf;
     if (f == &quota_fixture) configureQuotas(&f.engine);
     if (f == &audit_fixture) {
         f.engine.inspection_modes = .{ .sqli = .audit, .path_traversal = .disabled };
         f.engine.ip_trie.insertCidr("203.0.113.223/32", .deny) catch unreachable;
+        // A customized denial page: the request path renders it from the snapshot.
+        const denied = &f.engine.pages.entries[@intFromEnum(policy.page_template.Kind.denied)];
+        policy.page_template.compile(
+            .denied,
+            "<!doctype html><title>Custom</title><p>Custom denial: {{ reason }} " ++
+                "({{ status }}) ref {{ request_id }}</p>",
+            denied,
+        ) catch unreachable;
+        denied.customized = true;
     }
     f.slot = .{ .engine = &f.engine };
     const seed = [_]u8{0x5a} ** 32;
@@ -303,6 +313,34 @@ test "audit inspection records findings while other inspection, rules and reputa
     try get(port, "/../../etc/passwd", "203.0.113.224", "curl", "", resp);
     try std.testing.expectEqual(@as(u16, 401), resp.status());
     try std.testing.expectEqual(@as(u64, 4), audited_requests.load(.monotonic));
+}
+
+test "snapshot templates render for browsers while other clients keep plain text" {
+    boot_once.call();
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    const port = audit_fixture.port;
+    try get(port, "/pages", "203.0.113.223", "curl", "Accept: text/html\r\n", resp);
+    try std.testing.expectEqual(@as(u16, 403), resp.status());
+    try std.testing.expectEqualStrings("text/html; charset=utf-8", resp.header("content-type").?);
+    const body = resp.body();
+    try std.testing.expect(std.mem.startsWith(u8, body, "<!doctype html><title>Custom</title>"));
+    const marker = "Custom denial: ip/cidr-trie (403) ref ";
+    try std.testing.expect(std.mem.indexOf(u8, body, marker) != null);
+    const length = try std.fmt.parseInt(usize, resp.header("content-length").?, 10);
+    try std.testing.expectEqual(body.len, length);
+    try get(port, "/pages", "203.0.113.223", "curl", "", resp);
+    try std.testing.expectEqual(@as(u16, 403), resp.status());
+    try std.testing.expectEqualStrings("text/plain; charset=utf-8", resp.header("content-type").?);
+    try std.testing.expectEqualStrings("Forbidden: blocked by Sibuna policy", resp.body());
+    // The library default for rate limiting keeps Retry-After and answers as HTML.
+    const quota = quota_fixture.port;
+    try get(quota, "/quota-ban", "203.0.113.240", "curl", "", resp);
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+    try get(quota, "/quota-ban", "203.0.113.240", "curl", "Accept: text/html\r\n", resp);
+    try std.testing.expectEqual(@as(u16, 429), resp.status());
+    try std.testing.expectEqualStrings("60", resp.header("retry-after").?);
+    try std.testing.expect(std.mem.indexOf(u8, resp.body(), "Retry after 60 seconds") != null);
 }
 
 const Response = struct {

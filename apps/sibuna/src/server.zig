@@ -167,13 +167,13 @@ pub fn workerLoop(server: *Io.net.Server, io: Io, state: *AppState) void {
             return;
         }
         if (build_options.console) if (state.draining.load(.acquire)) {
-            rejectDraining(client_stream, io);
+            rejectRaw(client_stream, io, state, "Service Unavailable: node is draining");
             continue;
         };
         if (state.connections.fetchAdd(1, .monotonic) >= state.config.max_connections) {
             _ = state.connections.fetchSub(1, .monotonic);
             Metrics.bump(&state.metrics.overloaded);
-            rejectOverloaded(client_stream, io);
+            rejectRaw(client_stream, io, state, "Service Unavailable: connection limit reached");
             continue;
         }
         state.tasks.launch(io, client_stream, state, connectionThread) catch {
@@ -197,28 +197,13 @@ fn connectionThread(stream: Io.net.Stream, io: Io, context: *anyopaque) void {
     handleConnection(stream, io, state);
 }
 
-fn rejectDraining(stream: Io.net.Stream, io: Io) void {
+/// Accept-loop rejections happen before any request is parsed: a customized overload
+/// template is served as HTML, the built-in reply stays plain text.
+fn rejectRaw(stream: Io.net.Stream, io: Io, st: *AppState, text: []const u8) void {
     defer stream.close(io);
-    var buffer: [512]u8 = undefined;
+    var buffer: [4096]u8 = undefined;
     var writer = stream.writer(io, &buffer);
-    net.response.writeText(
-        &writer.interface,
-        .service_unavailable,
-        "Service Unavailable: node is draining",
-        false,
-    ) catch {};
-}
-
-fn rejectOverloaded(stream: Io.net.Stream, io: Io) void {
-    defer stream.close(io);
-    var buf: [512]u8 = undefined;
-    var writer = stream.writer(io, &buf);
-    net.response.writeText(
-        &writer.interface,
-        .service_unavailable,
-        "Service Unavailable: connection limit reached",
-        false,
-    ) catch {};
+    @import("response_pages.zig").rejectRaw(st, &writer.interface, text);
 }
 
 const Connection = struct {
@@ -434,7 +419,7 @@ fn serveOne(c: *Connection) !bool {
     return dispatch(&ctx);
 }
 
-const RequestContext = struct {
+pub const RequestContext = struct {
     outcome_recorded: if (build_options.console) bool else void =
         if (build_options.console) false else {},
     c: *Connection,
@@ -461,11 +446,11 @@ const RequestContext = struct {
         };
     }
 
-    fn state(self: *RequestContext) *AppState {
+    pub fn state(self: *RequestContext) *AppState {
         return self.c.state;
     }
 
-    fn writer(self: *RequestContext) *Io.Writer {
+    pub fn writer(self: *RequestContext) *Io.Writer {
         return self.c.writer;
     }
 };
@@ -500,11 +485,12 @@ fn dispatch(ctx: *RequestContext) !bool {
         if (submission) observation.reject(st, .address_banned);
         Metrics.bump(&st.metrics.banned);
         recordOutcome(ctx, .banned);
-        try net.response.writeText(
-            ctx.writer(),
+        try @import("response_pages.zig").respond(
+            ctx,
+            .banned,
             .forbidden,
             "Forbidden: address is banned",
-            ctx.keep_alive,
+            .{},
         );
         return ctx.keep_alive;
     }
@@ -535,12 +521,12 @@ fn rateLimited(ctx: *RequestContext, rate: store.rate_limiter.Decision, ban_seco
         @intFromBool(rate.retry_after_ms % 1000 != 0));
     var buffer: [64]u8 = undefined;
     const headers = try std.fmt.bufPrint(&buffer, "Retry-After: {d}\r\n", .{retry_seconds});
-    try net.response.write(
-        ctx.writer(),
+    try @import("response_pages.zig").respond(
+        ctx,
+        .rate_limited,
         .too_many_requests,
-        "text/plain; charset=utf-8",
         "Rate limit exceeded",
-        .{ .headers = headers, .keep_alive = ctx.keep_alive },
+        .{ .headers = headers, .retry_after = @intCast(retry_seconds) },
     );
     return ctx.keep_alive;
 }
@@ -613,11 +599,12 @@ fn applyPolicy(ctx: *RequestContext) !bool {
                 ctx,
                 decision.rule_name,
             );
-            try net.response.writeText(
-                ctx.writer(),
+            try @import("response_pages.zig").respond(
+                ctx,
+                .denied,
                 .forbidden,
                 "Forbidden: blocked by Sibuna policy",
-                ctx.keep_alive,
+                .{ .reason = decision.rule_name },
             );
             return ctx.keep_alive;
         },
@@ -694,8 +681,9 @@ fn writeChallengeResponse(ctx: *RequestContext) !void {
         return;
     }
     if (ctx.req.acceptsHtml()) {
-        try net.response.write(w, .ok, "text/html; charset=utf-8", challenge_html, extra);
-        return;
+        return @import("response_pages.zig").respond(ctx, .challenge, .ok, "", .{
+            .headers = "X-Sibuna-Status: CHALLENGE\r\n",
+        });
     }
     const json = "{\"error\":\"challenge_required\",\"challenge\":\"/__sibuna/challenge.json\"}";
     try net.response.write(w, .unauthorized, "application/json", json, extra);
@@ -806,11 +794,12 @@ fn handleInternal(ctx: *RequestContext) !void {
         Metrics.bump(&st.metrics.bans_issued);
         st.bans.ban(ctx.client_ip, ctx.now + st.config.ban_seconds, ctx.now);
         recordIncident(ctx, "honeypot");
-        try net.response.writeText(
-            w,
+        try @import("response_pages.zig").respond(
+            ctx,
+            .banned,
             .forbidden,
             "Access Denied: automated scraper honeypot triggered",
-            keep,
+            .{ .reason = "honeypot" },
         );
     } else if (std.mem.eql(u8, path, "/__sibuna/health")) {
         var buf: [256]u8 = undefined;

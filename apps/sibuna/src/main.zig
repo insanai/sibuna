@@ -51,6 +51,7 @@ pub fn main(init: std.process.Init) !u8 {
     const engine = try gpa.create(policy.Engine);
     defer gpa.destroy(engine);
     engine.initInPlace(cfg.default_difficulty);
+    policy.page_template.defaults(&engine.pages, @import("challenge_page.zig").default);
     engine.waf_enabled = cfg.waf;
     const policy_text = if (cfg.policy_file) |pfile| loadCustomPolicy(
         io,
