@@ -336,11 +336,7 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
         return;
     }
     if (equal(id, "logout")) {
-        state.phase = .login;
-        state.stats_busy = false;
-        state.stats = null;
-        state.geometry = null;
-        state.csrf = .{};
+        resetState(.login);
         try command(.{ .op = "disconnect" });
     }
 }
@@ -1345,4 +1341,19 @@ test "browser callbacks cannot read application state before explicit startup" {
 
 fn managed() @import("managed_controller.zig").Controller {
     return .{ .state = &state, .out = outbox(), .generation = &policy_generation };
+}
+
+test "successful sign-out erases retained management drafts and one-time credentials" {
+    sb_init();
+    state.phase = .policies;
+    try state.csrf.set("test");
+    try state.policies.body.set("private draft");
+    try state.users.temporary.set("private one-time password");
+    const reply = "{\"id\":\"logout\",\"status\":200,\"body\":{}}";
+    @memcpy(input[0..reply.len], reply);
+    sb_event(2, reply.len);
+    try std.testing.expectEqual(.login, state.phase);
+    try std.testing.expectEqual(@as(usize, 0), state.csrf.len);
+    try std.testing.expect(std.mem.allEqual(u8, &state.policies.body.data, 0));
+    try std.testing.expect(std.mem.allEqual(u8, &state.users.temporary.data, 0));
 }
