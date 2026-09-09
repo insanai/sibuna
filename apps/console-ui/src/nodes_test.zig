@@ -267,3 +267,64 @@ test "member pages beyond the bound or with unsafe links are rejected" {
     try t.expectError(error.InvalidResponse, decoded);
     try t.expect(!state.nodes.peers.loaded);
 }
+
+test "direct peer observations decode owned values and remain stale while the browser waits" {
+    var state = signedIn();
+    const observations = [_]p.nodes.Peer{
+        .{ .node = 2, .status = .unobserved },
+        .{
+            .node = 3,
+            .status = .current,
+            .boot = try p.Bytes(32).init("01" ** 16),
+            .requests = 9007199254740993,
+            .age_seconds = 1,
+            .clock_skew_seconds = 2,
+            .sample_loss = 4,
+        },
+    };
+    var bytes: [4096]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&bytes);
+    try std.json.Stringify.value(.{
+        .page = .{
+            .self = 1,
+            .committed = 0,
+            .storage = p.nodes.Storage{},
+            .members = [_]p.nodes.Member{},
+        },
+        .probes = [_]p.nodes.Probe{},
+        .peers = observations,
+        .observed_at = 100,
+    }, .{}, &writer);
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const parsed = try std.json.parseFromSlice(
+        std.json.Value,
+        arena.allocator(),
+        writer.buffered(),
+        .{},
+    );
+    try state.nodes.membersValue(parsed.value, arena.allocator());
+    state.nodes.peers.received_at = 100;
+    state.browser_time = 111;
+    try t.expectEqual(@as(u8, 2), state.nodes.peers.direct_count);
+    try t.expectEqual(@as(?u64, 9007199254740993), state.nodes.peers.direct[1].requests);
+    writer = .fixed(&bytes);
+    try @import("peer_page.zig").render(&state, &writer);
+    for ([_][]const u8{
+        "Node 2 · unobserved",
+        "Requests: not observed",
+        "Node 3 · stale",
+        "9007199254740993",
+        "Observation age (s): 12",
+    }) |text|
+        try t.expect(std.mem.indexOf(u8, writer.buffered(), text) != null);
+}
+
+test "an empty replicated membership page renders without an invalid sort range" {
+    var state = signedIn();
+    state.nodes.peers.loaded = true;
+    var bytes: [16384]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&bytes);
+    try @import("nodes_page.zig").render(&state, &writer);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "0 member rows") != null);
+}

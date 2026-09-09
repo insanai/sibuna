@@ -4,6 +4,7 @@ const std = @import("std");
 const root = @import("root.zig");
 const literals = @import("literals.zig");
 const Writer = std.Io.Writer;
+const instructions = @import("instructions.zig");
 const Program = struct { bytes: [64 * 1024]u8 = undefined, len: usize = 0 };
 
 pub fn supports(comptime T: type) bool {
@@ -43,8 +44,8 @@ pub fn render(w: *Writer, comptime source: []const u8, values: anytype) Writer.E
     return execute(w, &bytes, &items);
 }
 
-// NUL + a dictionary index names an entry, the next 128 indexes a slot, and 255 a literal
-// NUL. The program is private compiler output, never accepted from a client or file.
+// Dictionary indexes precede at most 128 value slots. The program is private compiler
+// output, never accepted from a client or file; escaping affects literals only.
 fn compile(comptime source: []const u8, comptime T: type) Program {
     @setEvalBranchQuota(10_000_000);
     std.debug.assert(literals.dictionary.len <= 127);
@@ -62,23 +63,19 @@ fn compile(comptime source: []const u8, comptime T: type) Program {
             } else @compileError(
                 "HTML004: missing value '" ++ name ++ "'; supply the named field",
             );
-            program.bytes[program.len..][0..2].* = .{ 0, slot + literals.dictionary.len };
-            program.len += 2;
+            program.len += instructions.index(
+                program.bytes[program.len..],
+                slot + literals.dictionary.len,
+            );
             cursor = end + 2;
             slots += 1;
             if (slots > 128)
                 @compileError("HTML005: more than 128 placeholders; split the snippet");
         } else if (literals.match(source[cursor..])) |index| {
-            program.bytes[program.len..][0..2].* = .{ 0, index };
-            program.len += 2;
+            program.len += instructions.index(program.bytes[program.len..], index);
             cursor += literals.dictionary[index].len;
         } else {
-            program.bytes[program.len] = source[cursor];
-            program.len += 1;
-            if (source[cursor] == 0) {
-                program.bytes[program.len] = 255;
-                program.len += 1;
-            }
+            program.len += instructions.literal(program.bytes[program.len..], source[cursor]);
             cursor += 1;
         }
     }
@@ -87,28 +84,28 @@ fn compile(comptime source: []const u8, comptime T: type) Program {
 
 noinline fn execute(w: *Writer, bytes: []const u8, values: []const Scalar) Writer.Error!void {
     var cursor: usize = 0;
-    while (std.mem.indexOfScalarPos(u8, bytes, cursor, 0)) |marker| {
-        try w.writeAll(bytes[cursor..marker]);
-        std.debug.assert(marker + 1 < bytes.len);
-        const index = bytes[marker + 1];
-        if (index == 255) {
-            try w.writeByte(0);
-        } else if (index < literals.dictionary.len) {
-            try w.writeAll(literals.dictionary[index]);
-        } else {
-            const slot = index - literals.dictionary.len;
-            std.debug.assert(slot < values.len);
-            var buffer: [20]u8 = undefined;
-            const text = switch (values[slot]) {
-                .text => |value| value,
-                .unsigned => |value| try number(buffer[0..20], value, false),
-                .signed => |value| try number(buffer[0..20], @abs(value), value < 0),
-            };
-            try root.escape(w, text);
+    while (instructions.next(bytes, cursor)) |item| {
+        try w.writeAll(bytes[cursor..item.start]);
+        switch (item.token) {
+            .literal => |byte| try w.writeByte(byte),
+            .index => |index| try writeSlot(w, index, values),
         }
-        cursor = marker + 2;
+        cursor = item.end;
     }
     try w.writeAll(bytes[cursor..]);
+}
+
+fn writeSlot(w: *Writer, index: u8, values: []const Scalar) Writer.Error!void {
+    if (index < literals.dictionary.len) return w.writeAll(literals.dictionary[index]);
+    const slot = index - literals.dictionary.len;
+    std.debug.assert(slot < values.len);
+    var buffer: [20]u8 = undefined;
+    const text = switch (values[slot]) {
+        .text => |value| value,
+        .unsigned => |value| try number(&buffer, value, false),
+        .signed => |value| try number(&buffer, @abs(value), value < 0),
+    };
+    try root.escape(w, text);
 }
 
 noinline fn number(buffer: *[20]u8, magnitude: u64, negative: bool) Writer.Error![]const u8 {

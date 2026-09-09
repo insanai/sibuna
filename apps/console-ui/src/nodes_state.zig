@@ -19,6 +19,7 @@ pub const Wire = struct {
     },
     probes: []const p.nodes.Probe,
     observed_at: u64,
+    peers: []const p.nodes.Peer = &.{},
 };
 pub const Peers = struct {
     self: u32 = 0,
@@ -28,6 +29,8 @@ pub const Peers = struct {
     count: u8 = 0,
     probes: [p.nodes.max_probes]p.nodes.Probe = undefined,
     probe_count: u8 = 0,
+    direct: [p.nodes.max_probes]p.nodes.Peer = undefined,
+    direct_count: u8 = 0,
     received_at: u64 = 0,
     loaded: bool = false,
     ticket: p.Bytes(32) = .{},
@@ -73,7 +76,8 @@ pub const Model = struct {
         var wire: Wire = undefined;
         try @import("json_value.zig").into(&wire, body, alloc);
         if (wire.page.self == 0 or wire.page.members.len > p.nodes.max_members or
-            wire.probes.len > p.nodes.max_probes) return error.InvalidResponse;
+            wire.probes.len > p.nodes.max_probes or
+            wire.peers.len > p.nodes.max_probes) return error.InvalidResponse;
         var peers: Peers = .{
             .self = wire.page.self,
             .committed = wire.page.committed,
@@ -95,6 +99,17 @@ pub const Model = struct {
             if (probe.node == 0) return error.InvalidResponse;
             peers.probes[peers.probe_count] = probe;
             peers.probe_count += 1;
+        }
+        for (wire.peers) |direct| {
+            if (direct.node == 0 or direct.node == peers.self or
+                (direct.boot == null) != (direct.requests == null) or
+                (direct.requests == null) != (direct.age_seconds == null))
+                return error.InvalidResponse;
+            if (direct.boot) |boot| if (!identifier(boot.slice())) return error.InvalidResponse;
+            for (peers.direct[0..peers.direct_count]) |seen|
+                if (seen.node == direct.node) return error.InvalidResponse;
+            peers.direct[peers.direct_count] = direct;
+            peers.direct_count += 1;
         }
         self.peers = peers;
     }

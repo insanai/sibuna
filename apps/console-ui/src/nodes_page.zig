@@ -27,6 +27,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     if (model.pending) |pending| try confirmation(state, pending.kind, w);
     if (model.receipt) |receipt| try result(receipt, w);
     try members(state, w);
+    try @import("peer_page.zig").render(state, w);
     try html.render(w, "</main>", .{});
 }
 
@@ -75,7 +76,7 @@ fn members(state: *const State, w: *Writer) Writer.Error!void {
     var order: [p.nodes.max_members]u8 = undefined;
     for (0..peers.count) |i| order[i] = @intCast(i);
     // Insertion sort over at most nine rows.
-    for (1..peers.count) |i| {
+    for (0..peers.count) |i| {
         var j = i;
         while (j > 0 and before(
             rank(peers, peers.members[order[j]]),

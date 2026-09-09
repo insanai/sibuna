@@ -136,3 +136,22 @@ test "shared scalar formatting preserves signed minima, unsigned maxima and bool
         writer.buffered(),
     );
 }
+
+test {
+    _ = @import("instructions.zig");
+}
+
+test "extended snippet value indexes retain escaping and literal control bytes" {
+    const Values = comptime blk: {
+        @setEvalBranchQuota(100_000);
+        var names: [128][:0]const u8 = undefined;
+        for (&names, 0..) |*name, i| name.* = std.fmt.comptimePrint("f{d}", .{i});
+        break :blk @Struct(.auto, null, &names, &@splat([]const u8), &@splat(.{}));
+    };
+    var values: Values = undefined;
+    inline for (@typeInfo(Values).@"struct".fields) |field| @field(values, field.name) = "<&";
+    var buffer: [128]u8 = undefined;
+    var writer: Writer = .fixed(&buffer);
+    try render(&writer, "\x00\x7f世界{{ f0 }}|{{ f127 }}", values);
+    try std.testing.expectEqualStrings("\x00\x7f世界&lt;&amp;|&lt;&amp;", writer.buffered());
+}

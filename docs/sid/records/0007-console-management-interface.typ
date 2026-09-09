@@ -4437,6 +4437,26 @@ bounded error names instead of being discarded. Every test-owned member is stopp
 The reusable Python subscription client can attach to an already authenticated transport,
 so peer acceptance uses the same strict chunk/gap checks as browser-protocol tests.
 
+== Compact snippet instructions (2026-09-10)
+
+The new peer panel exceeded the fixed 384 KiB Wasm budget under the previous snippet
+encoding. The shared `libs/html` interpreter now stores common dictionary and value indexes
+in one byte, retaining the same authored HTML and escaped runtime values. ASCII bytes 0–126
+are literal; 127 introduces one literal byte; 128–254 represent indexes 0–126; and 255
+introduces one extended index. Dictionary entries precede value slots and the highest
+permitted combined index is 254. Source NUL, DEL and every UTF-8 byte remain representable.
+
+The encoding is unambiguous because the four leading-byte sets are disjoint and each prefix
+fixes its instruction length. Each source byte emits at most two program bytes; placeholders
+emit at most two bytes while consuming a longer source token. A 32 KiB snippet therefore
+fits the existing 64 KiB compile-time program bound. The decoder consumes at least one byte
+per iteration, with no backreferences or jumps: runtime cost is linear in program bytes plus
+emitted output. Caller-owned output capacity still bounds escaping expansion and failure.
+Only compiler-generated programs reach the interpreter; operator or HTTP input cannot supply
+instructions or raw HTML slots. Exhaustive literal/index tests and an extended value-slot
+test verify the byte mapping, and the existing injection, scalar-bound and output-limit tests
+verify compatibility. This changes neither template syntax nor the console's memory limit.
+
 #pagebreak(weak: true)
 
 = References

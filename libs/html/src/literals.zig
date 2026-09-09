@@ -1,7 +1,8 @@
 //! Fixed-dictionary substitution for trusted HTML literals. No runtime allocation or parser.
-//! NUL introduces a dictionary index; literal NUL falls back to the original bytes.
+//! Compact instruction indexes refer only to this compile-time dictionary.
 const std = @import("std");
 const Writer = std.Io.Writer;
+const instructions = @import("instructions.zig");
 pub const dictionary = [_][]const u8{
     "\n                ",
     "\n            ",
@@ -60,7 +61,6 @@ pub const dictionary = [_][]const u8{
 
 pub fn write(w: *Writer, comptime source: []const u8) Writer.Error!void {
     @setEvalBranchQuota(10_000_000);
-    if (comptime std.mem.indexOfScalar(u8, source, 0) != null) return raw(w, source);
     const size = comptime packedLength(source);
     if (comptime size >= source.len) return raw(w, source);
     const bytes = comptime pack(source, size);
@@ -87,10 +87,10 @@ fn packedLength(source: []const u8) usize {
     while (i < source.len) {
         if (match(source[i..])) |index| {
             i += dictionary[index].len;
-            length += 2;
+            length += instructions.indexSize(index);
         } else {
+            length += instructions.literalSize(source[i]);
             i += 1;
-            length += 1;
         }
     }
     return length;
@@ -102,12 +102,10 @@ fn pack(source: []const u8, comptime size: usize) [size]u8 {
     var out: usize = 0;
     while (i < source.len) {
         if (match(source[i..])) |index| {
-            result[out..][0..2].* = .{ 0, index };
-            out += 2;
+            out += instructions.index(result[out..], index);
             i += dictionary[index].len;
         } else {
-            result[out] = source[i];
-            out += 1;
+            out += instructions.literal(result[out..], source[i]);
             i += 1;
         }
     }
@@ -118,13 +116,16 @@ fn pack(source: []const u8, comptime size: usize) [size]u8 {
 // Only compile-time pack() output reaches this decoder. Values are escaped elsewhere.
 noinline fn unpack(w: *Writer, bytes: []const u8) Writer.Error!void {
     var i: usize = 0;
-    while (std.mem.indexOfScalarPos(u8, bytes, i, 0)) |marker| {
-        try w.writeAll(bytes[i..marker]);
-        std.debug.assert(marker + 1 < bytes.len);
-        const index = bytes[marker + 1];
-        std.debug.assert(index < dictionary.len);
-        try w.writeAll(dictionary[index]);
-        i = marker + 2;
+    while (instructions.next(bytes, i)) |item| {
+        try w.writeAll(bytes[i..item.start]);
+        switch (item.token) {
+            .literal => |byte| try w.writeByte(byte),
+            .index => |index| {
+                std.debug.assert(index < dictionary.len);
+                try w.writeAll(dictionary[index]);
+            },
+        }
+        i = item.end;
     }
     try w.writeAll(bytes[i..]);
 }
