@@ -8,7 +8,7 @@ const p = @import("console_protocol");
 pub fn handle(app: *App, context: *Context, principal: p.Principal) !void {
     const origin = try context.header("Origin") orelse return error.InvalidRequest;
     if (!std.mem.eql(u8, origin, app.config.origin.slice())) return error.InvalidRequest;
-    const key = try upgradeKey(context);
+    const key = try @import("serve").websocket_upgrade.key(context);
     const digest = try http.session(context);
     if (context.subscribers.fetchAdd(1, .acq_rel) >= 64) {
         _ = context.subscribers.fetchSub(1, .release);
@@ -44,27 +44,6 @@ pub fn handle(app: *App, context: *Context, principal: p.Principal) !void {
         else => std.log.warn("console stream shutdown: {t}", .{err}),
     };
     reader.join();
-}
-
-fn upgradeKey(context: *Context) ![]const u8 {
-    const version = try context.header("Sec-WebSocket-Version") orelse return error.InvalidRequest;
-    if (!std.mem.eql(u8, version, "13")) return error.InvalidRequest;
-    const upgrade = try context.header("Upgrade") orelse return error.InvalidRequest;
-    if (!std.ascii.eqlIgnoreCase(upgrade, "websocket")) return error.InvalidRequest;
-    const connection = try context.header("Connection") orelse return error.InvalidRequest;
-    var tokens = std.mem.splitScalar(u8, connection, ',');
-    var found = false;
-    while (tokens.next()) |token| {
-        if (std.ascii.eqlIgnoreCase(std.mem.trim(u8, token, " "), "upgrade")) found = true;
-    }
-    if (!found or context.request.head.content_length != null or
-        context.request.head.transfer_encoding != .none) return error.InvalidRequest;
-    const key = try context.header("Sec-WebSocket-Key") orelse return error.InvalidRequest;
-    const decoder = std.base64.standard.Decoder;
-    if (try decoder.calcSizeForSlice(key) != 16) return error.InvalidRequest;
-    var bytes: [16]u8 = undefined;
-    try decoder.decode(&bytes, key);
-    return key;
 }
 
 const Stream = struct {
@@ -254,22 +233,11 @@ const Stream = struct {
     }
 
     fn receive(self: *Stream, receiver: *ws.Receiver) !ws.Event {
-        const reader = self.context.request.server.reader.in;
-        const prefix = try reader.peek(2);
-        try validateHeader(prefix);
-        const marker = prefix[1] & 127;
-        const extended: usize = if (marker == 126) 2 else if (marker == 127) 8 else 0;
-        const header_size = 6 + extended;
-        const header = try reader.peek(header_size);
-        try validateHeader(header);
-        const length: usize = if (marker == 126)
-            std.mem.readInt(u16, header[2..4], .big)
-        else if (marker == 127)
-            return error.TooLarge
-        else
-            marker;
-        const bytes = try reader.take(header_size + length);
-        return receiver.accept(try ws.decode(bytes, .server));
+        return @import("serve").websocket_io.receive(
+            self.context.request.server.reader.in,
+            receiver,
+            .server,
+        );
     }
 
     fn command(
@@ -310,9 +278,3 @@ const Stream = struct {
         return true;
     }
 };
-
-fn validateHeader(header: []const u8) !void {
-    if (ws.decode(header, .server)) |_| {} else |err| {
-        if (err != error.NeedMore) return err;
-    }
-}

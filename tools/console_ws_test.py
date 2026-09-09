@@ -115,3 +115,17 @@ def idle_delivery(port, cookie):
         assert opcode == 1 and json.loads(body)["op"] == "snapshot"
     finally:
         stream.close()
+
+
+def reject_invalid_upgrades(port, cookie):
+    for protocol, key in (("HTTP/1.0", "AAAAAAAAAAAAAAAAAAAAAA=="),
+                          ("HTTP/1.1", "!!!!!!!!!!!!!!!!!!!!!!==")):
+        with socket.create_connection(("127.0.0.1", port), timeout=5) as sock:
+            sock.sendall((f"GET /console/ws {protocol}\r\nHost: 127.0.0.1:{port}\r\n"
+                          f"Origin: http://127.0.0.1:{port}\r\nCookie: {cookie}\r\n"
+                          "Connection: Upgrade\r\nUpgrade: websocket\r\n"
+                          f"Sec-WebSocket-Version: 13\r\nSec-WebSocket-Key: {key}\r\n\r\n")
+                         .encode())
+            with sock.makefile("rb") as stream:
+                status = stream.readline(256)
+                assert b" 400 " in status, (protocol, status)

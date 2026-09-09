@@ -5,11 +5,12 @@ import tempfile
 import console_bootstrap_test as bootstrap
 from console_users_test import login
 from console_topics_client import Client
-from console_ws_test import Stream
+from console_ws_test import Stream, reject_invalid_upgrades
 from console_workflows_test import save
 
 
 def exercise(h, port, data_port, admin):
+    reject_invalid_upgrades(port, admin[0])
     client = Client(port, admin[0])
     try:
         topics = ("stats", "events", "nodes", "policy", "challenges", "audit")
