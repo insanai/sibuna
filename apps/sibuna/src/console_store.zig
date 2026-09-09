@@ -90,9 +90,23 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
 /// Templates, setup and authentication; unknown requests fail closed.
 fn executeMore(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
     const pages = @import("console_store_pages.zig");
+    const reputation = @import("console_reputation.zig");
+    const country = @import("console_country.zig");
+    const import_set = @import("console_policy_import.zig");
+    const now = owner.nowSeconds();
     return switch (request) {
-        .page_read => |input| pages.read(owner, input, owner.nowSeconds()),
-        .page_edit => |input| pages.edit(owner, input, owner.nowSeconds()),
+        .page_read => |input| pages.read(owner, input, now),
+        .page_edit => |input| pages.edit(owner, input, now),
+        .policy_order => |input| @import("console_policy_order.zig").order(owner, input, now),
+        .policy_replay => |input| @import("console_policy_replay.zig").replay(owner, input, now),
+        .reputation_query => |input| reputation.query(owner, input, now),
+        .reputation_edit => |input| reputation.edit(owner, input, now),
+        .reputation_remove => |input| reputation.remove(owner, input, now),
+        .country_chunk => |input| country.chunk(owner, input, now),
+        .country_preflight => |input| country.preflight(owner, input, now),
+        .country_apply => |input| country.apply(owner, input, now),
+        .import_chunk => |input| import_set.chunk(owner, input, now),
+        .import_commit => |input| import_set.commit(owner, input, now),
         .setup_status => setupStatus(owner),
         .bootstrap,
         .auth_user,

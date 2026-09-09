@@ -109,6 +109,51 @@ fn documents(
     return count;
 }
 
+/// A candidate built from the given documents only (plus the file, reputation and
+/// inspection settings), for a set import that replaces every managed rule.
+pub fn fromSources(
+    owner: *Persistent,
+    expected: u64,
+    sources: []const []const u8,
+    now: u64,
+) !candidates.Candidate {
+    if (try revision(owner) != expected) return error.Conflict;
+    const memory = try owner.gpa.alloc(u8, 256 * 1024);
+    defer owner.gpa.free(memory);
+    var arena = std.heap.FixedBufferAllocator.init(memory);
+    const reputation = try reputations(owner, arena.allocator(), now);
+    var candidate = try candidates.Candidate.init(owner.gpa, .{
+        .default_difficulty = owner.cfg.default_difficulty,
+        .waf = owner.cfg.waf,
+        .file = owner.policy_text,
+    }, sources, reputation);
+    errdefer candidate.deinit();
+    try @import("policy_inspection.zig").apply(owner, candidate.engine);
+    if (try revision(owner) != expected) return error.Conflict;
+    return candidate;
+}
+
+/// The stored document with its priority replaced; used by ordering to write history.
+pub fn documentWithPriority(owner: *Persistent, id: []const u8, priority: i32) !?p.Bytes(4096) {
+    var rows = try db.query(
+        owner.db,
+        owner.gpa,
+        "SELECT id,name,priority,enabled,path_pattern,ua_pattern,action,difficulty," ++
+            "algorithm,weight,header_matchers,cidr_matchers,limit_config " ++
+            "FROM policies WHERE id=? LIMIT 1",
+        &.{util.text(id)},
+    );
+    defer rows.deinit();
+    if (rows.rows.len == 0) return null;
+    var buffer: [12]u8 = undefined;
+    var cells = rows.rows[0];
+    var patched: [13]?[]const u8 = undefined;
+    @memcpy(&patched, cells[0..13]);
+    patched[2] = try std.fmt.bufPrint(&buffer, "{d}", .{priority});
+    cells = &patched;
+    return try encode(cells);
+}
+
 pub fn readDocument(owner: *Persistent, id: []const u8) !?p.Bytes(4096) {
     var rows = try db.query(
         owner.db,

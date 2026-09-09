@@ -142,6 +142,8 @@ fn kindCount(fx: *Fixture, kind: r.Kind, expected: u64) !void {
         .audit => "SELECT COUNT(*) FROM console_audit WHERE action='test'",
         .sessions => "SELECT COUNT(*) FROM console_sessions",
         .kiosk_grants => "SELECT COUNT(*) FROM console_kiosk_grants",
+        .stages => "SELECT COUNT(*) FROM console_country_stage",
+        .import_stages => "SELECT COUNT(*) FROM console_policy_import_stage",
         .incidents => unreachable,
     };
     var rows = try fx.owner.db.query(t.allocator, sql);

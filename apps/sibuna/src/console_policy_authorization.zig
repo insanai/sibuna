@@ -34,6 +34,15 @@ pub const Credentials = struct {
         };
     }
 
+    pub fn fromAuth(input: p.users.Auth, now: u64) Credentials {
+        return .{
+            .digest = std.fmt.bytesToHex(input.session_digest, .lower),
+            .csrf = std.fmt.bytesToHex(input.csrf_digest, .lower),
+            .now = now,
+            .require_totp = input.require_totp,
+        };
+    }
+
     // Bindings borrow the synchronous commit's owned credential buffers.
     pub fn values(self: *const Credentials) [4]zx.Value {
         return .{
@@ -46,6 +55,16 @@ pub const Credentials = struct {
 };
 
 pub fn check(owner: *Persistent, input: p.policies.Edit) !?p.Failure {
+    return checkAuth(owner, .{
+        .session_digest = input.session_digest,
+        .csrf_digest = input.csrf_digest,
+        .require_totp = input.require_totp,
+    });
+}
+
+/// The same contract for every policy-writing workflow: an operator or administrator
+/// session (or a policy-write token) with a matching CSRF digest and the proxy TOTP rule.
+pub fn checkAuth(owner: *Persistent, input: p.users.Auth) !?p.Failure {
     const identity = try util.authorize(owner, input.session_digest, owner.nowSeconds());
     if (identity != .authorized or identity.authorized.must_change) return .unauthorized;
     const actor = identity.authorized;
