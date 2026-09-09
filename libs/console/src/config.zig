@@ -7,6 +7,8 @@ pub const ConsoleConfig = struct {
     enabled: bool = false,
     host: protocol.Bytes(45) = .{},
     port: u16 = 9443,
+    /// Daemon version text shown on the About panel; the daemon sets it at composition.
+    version: []const u8 = "",
     behind_proxy: bool = false,
     cookie_secure: bool = false,
     key_file: protocol.Bytes(1024) = .{},

@@ -432,8 +432,26 @@ pub const App = struct {
             .import_chunk,
             .import_commit,
             => @import("workflow_routes.zig").handle(self, context, identity, route.handler),
+            .about => self.aboutReply(context),
             else => unreachable,
         };
+    }
+
+    /// Version, node identity, binding and proxy facts; never secrets or key material.
+    fn aboutReply(self: *App, context: *http.Context) !void {
+        const cfg = &self.config;
+        return http.json(context, .{
+            .version = cfg.version,
+            .node = cfg.node_id,
+            .schema = @import("schema.zig").version,
+            .origin = cfg.origin.slice(),
+            .advertise = cfg.advertise.slice(),
+            .behind_proxy = cfg.behind_proxy,
+            .trusted_proxies = cfg.trusted_proxy_count,
+            .probes = cfg.probe_count,
+            .cookie_secure = cfg.cookie_secure or cfg.behind_proxy,
+            .key_file = cfg.key_file.len != 0,
+        }, &.{});
     }
 
     fn setupReply(self: *App, context: *http.Context) !void {

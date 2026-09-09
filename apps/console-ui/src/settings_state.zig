@@ -1,7 +1,7 @@
 const std = @import("std");
 const p = @import("console_protocol");
 const n = p.notifications;
-pub const Kind = enum { query, save, remove, testing, settings, setting_change };
+pub const Kind = enum { query, save, remove, testing, settings, setting_change, about };
 const WireRow = struct {
     id: u64,
     revision: u64,
@@ -58,6 +58,7 @@ pub const Model = struct {
     ticket: p.Bytes(40) = .{},
     result: p.Bytes(n.max_detail) = .{},
     result_ok: bool = false,
+    about: p.Bytes(512) = .{},
 
     pub fn clear(self: *Model) void {
         @memset(std.mem.asBytes(self), 0);

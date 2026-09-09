@@ -49,7 +49,57 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     try form(state, w);
     try thresholds(state, w);
     try pages(state, w);
+    try about(state, w);
     try html.render(w, "</main>", .{});
+}
+
+fn about(state: *const State, w: *Writer) Writer.Error!void {
+    const source = state.settings.about.slice();
+    if (source.len == 0) return;
+    var memory: [8192]u8 = undefined;
+    var arena = std.heap.FixedBufferAllocator.init(&memory);
+    const parsed = std.json.parseFromSliceLeaky(
+        std.json.Value,
+        arena.allocator(),
+        source,
+        .{},
+    ) catch return;
+    const string = @import("events_state.zig").string;
+    const field = @import("events_state.zig").field;
+    const flag = struct {
+        fn of(value: std.json.Value, key: []const u8) []const u8 {
+            const item = field(value, key) orelse return "no";
+            return if (item == .bool and item.bool) "yes" else "no";
+        }
+    };
+    const number = struct {
+        fn of(value: std.json.Value, key: []const u8) i64 {
+            const item = field(value, key) orelse return 0;
+            return if (item == .integer) item.integer else 0;
+        }
+    };
+    try html.render(w, "<section class=\"sb-panel\"><h2>About</h2><dl class=\"sb-facts\">" ++
+        "<dt>Version</dt><dd>{{ version }}</dd><dt>Node</dt><dd>{{ node }}</dd>" ++
+        "<dt>Console schema</dt><dd>{{ schema }}</dd><dt>Origin</dt><dd>{{ origin }}</dd>" ++
+        "<dt>Advertised console</dt><dd>{{ advertise }}</dd>" ++
+        "<dt>Behind a trusted proxy</dt><dd>{{ proxy }} ({{ proxies }} trusted ranges)</dd>" ++
+        "<dt>Secure cookies</dt><dd>{{ secure }}</dd>" ++
+        "<dt>Console key file</dt><dd>{{ key }}</dd>" ++
+        "<dt>Configured peer probes</dt><dd>{{ probes }}</dd></dl></section>", .{
+        .version = string(parsed, "version"),
+        .node = number.of(parsed, "node"),
+        .schema = number.of(parsed, "schema"),
+        .origin = string(parsed, "origin"),
+        .advertise = if (string(parsed, "advertise").len == 0)
+            "same as origin"
+        else
+            string(parsed, "advertise"),
+        .proxy = flag.of(parsed, "behind_proxy"),
+        .proxies = number.of(parsed, "trusted_proxies"),
+        .secure = flag.of(parsed, "cookie_secure"),
+        .key = flag.of(parsed, "key_file"),
+        .probes = number.of(parsed, "probes"),
+    });
 }
 
 fn eventsText(mask: u8) []const u8 {

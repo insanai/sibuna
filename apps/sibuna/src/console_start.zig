@@ -111,6 +111,7 @@ pub const Runtime = struct {
         defer if (key) |*bytes| std.crypto.secureZero(u8, bytes);
         var composed = config;
         composed.node_id = owner.node_id;
+        composed.version = @import("server.zig").version;
         const app = try console.App.init(
             gpa,
             io,

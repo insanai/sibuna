@@ -59,6 +59,7 @@ pub const Handler = enum {
     country_apply,
     import_chunk,
     import_commit,
+    about,
 };
 pub const Route = struct {
     path: []const u8,
@@ -469,6 +470,13 @@ const table = [_]Route{
         .access = .account,
         .kiosk = true,
         .handler = .session,
+    },
+    .{
+        .path = "/console/api/about",
+        .method = .GET,
+        .access = .full,
+        .action = .manage_settings,
+        .handler = .about,
     },
     .{
         .path = "/console/api/logout",

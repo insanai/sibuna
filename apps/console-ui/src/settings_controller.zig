@@ -80,7 +80,14 @@ fn ticket(state: *State, kind: Kind) !void {
 fn query(state: *State, out: Outbox, kind: Kind) !void {
     try ticket(state, kind);
     errdefer state.settings.busy = false;
-    if (kind == .settings) {
+    if (kind == .about) {
+        try out.emit(.{
+            .op = "request",
+            .id = state.settings.ticket.slice(),
+            .method = "GET",
+            .path = "/console/api/about",
+        });
+    } else if (kind == .settings) {
         try out.post(state.settings.ticket.slice(), "/console/api/settings/query", .{});
     } else {
         try out.post(state.settings.ticket.slice(), "/console/api/notifications/query", .{
@@ -180,7 +187,15 @@ pub fn response(
             try model.decode(body, alloc);
             try query(state, out, .settings);
         },
-        .settings => try model.decodeSettings(body, alloc),
+        .settings => {
+            try model.decodeSettings(body, alloc);
+            if (model.about.len == 0) try query(state, out, .about);
+        },
+        .about => {
+            var writer: std.Io.Writer = .fixed(&model.about.data);
+            try std.json.Stringify.value(body, .{}, &writer);
+            model.about.len = writer.buffered().len;
+        },
         .testing => {
             const delivered = @import("events_state.zig").field(body, "delivered");
             model.result_ok = delivered != null and delivered.? == .bool and delivered.?.bool;
