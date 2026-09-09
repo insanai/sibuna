@@ -183,11 +183,15 @@ show current committed and applied revisions without replacing an open draft. Fl
 update live; refresh a selected non-default challenge timing partition explicitly. Historical
 queries, detail reads and mutations remain HTTP requests.
 
+Page fragments can be bookmarked; Back and Forward reopen authenticated pages. The sidebar
+also remembers theme and spacing choices in this browser, with System as the default theme.
 SID 0007 remains Proposed. The interface is available, with ongoing review corrections
 and acceptance work recorded in the SID. Earlier impact runs are inconclusive. The corrected
 harness includes each dashboard's stream, rankings and retained-timeline queries; a full
 acceptance run requires a production GeoIP snapshot and documented host conditions. Direct TLS peer transport has live-daemon verification; cluster-wide dashboard integration,
 interface review and browser acceptance remain tracked separately in SID 0007.
+
+#pagebreak(weak: true)
 
 == Deployment Topologies
 
@@ -197,7 +201,7 @@ interface review and browser acceptance remain tracked separately in SID 0007.
 
 === Reverse Proxy
 
-#book_figure([Request routing on the Shield surface], pipeline_flow())
+#book_figure([Request routing on the Shield surface], pipeline_flow(), placement: none)
 
 ```bash
 sibuna --port 80 --upstream-host 127.0.0.1 --upstream-port 3000 \

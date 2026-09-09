@@ -17,6 +17,8 @@ class Interface:
     def __init__(self, port, cookie, wasm):
         self.port, self.cookie = port, cookie
         self.stream, self.connections, self.html = None, 0, ""
+        self.history = []
+        self.appearance = None
         self.proc = subprocess.Popen(["node", "tools/console_ui_driver.mjs", str(wasm)],
                                      stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
 
@@ -37,7 +39,11 @@ class Interface:
 
     def command(self, command):
         op = command["op"]
-        if op == "connect":
+        if op == "appearance":
+            self.appearance = command
+        elif op == "history":
+            self.history.append(command)
+        elif op == "connect":
             assert self.stream is None, "second connection opened without closing the first"
             assert command["path"] == "/console/ws"
             self.stream = Stream(self.port, self.cookie, command["path"])
@@ -97,6 +103,15 @@ class Interface:
 def exercise(ui):
     ui.event(init=True)
     ui.topic("stats")
+    ui.event(9, {"theme": "system", "density": "compact", "system_dark": True})
+    assert ui.appearance["theme"] == "dark" and not ui.appearance["persist"]
+    assert "Theme: system" in ui.html and "Spacing: compact" in ui.html
+    ui.event(1, {"action": "theme", "fields": {}})
+    assert ui.appearance["theme"] == "light" and ui.appearance["persist"]
+    ui.event(10, {"system_dark": True})
+    assert ui.appearance["theme"] == "light"
+    ui.event(1, {"action": "density", "fields": {}})
+    assert ui.appearance["density"] == "comfortable" and ui.appearance["persist"]
     assert "Traffic overview" in ui.html and "console-navigation" in ui.html
     for page, topic in (("events", "events"), ("policies", "policy"), ("nodes", "nodes"),
                         ("challenges", "challenges"), ("audit", "audit")):
@@ -104,8 +119,13 @@ def exercise(ui):
         ui.topic(topic)
         assert "console-navigation" in ui.html, page
         assert ui.connections == 1, (page, ui.connections)
-    ui.event(1, {"action": "dashboard", "fields": {}})
+    assert ui.history[-1] == {"op": "history", "value": "audit", "replace": False}
+    ui.event(8, {"route": "nodes"})
+    ui.topic("nodes")
+    assert ui.history[-1] == {"op": "history", "value": "nodes", "replace": True}
+    ui.event(8, {"route": "unknown-page"})
     ui.topic("stats")
+    assert ui.history[-1] == {"op": "history", "value": "dashboard", "replace": True}
     ui.event(4, {"state": "invalid", "entropy": 12345})
     assert ui.stream is None and "Disconnected" in ui.html
     ui.event(3, {"id": "live-retry"})
@@ -114,6 +134,10 @@ def exercise(ui):
     ui.event(1, {"action": "logout", "fields": {}})
     assert ui.stream is None and "Welcome back" in ui.html
     assert "console-navigation" not in ui.html and "globe-scene" not in ui.html
+    ui.event(10, {"system_dark": True})
+    assert ui.appearance["theme"] == "light"
+    ui.event(8, {"route": "nodes"})
+    assert ui.stream is None and "Welcome back" in ui.html
 
 
 def check(binary):

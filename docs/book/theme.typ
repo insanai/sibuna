@@ -216,8 +216,8 @@
   #block(width: 100%, inset: 8pt)[#body]
 ]
 
-#let book_figure(caption, body) = figure(
-  placement: auto,
+#let book_figure(caption, body, placement: auto) = figure(
+  placement: placement,
   layout(size => {
     let natural = measure(body).width
     let factor = calc.min(1, size.width / natural)

@@ -4,6 +4,23 @@ const std = @import("std");
 const Writer = std.Io.Writer;
 const instructions = @import("instructions.zig");
 pub const dictionary = [_][]const u8{
+    "<p class=\"sb-note\">",
+    "<th scope=\"row\">",
+    "<h1 id=\"page-heading\" tabindex=\"-1\">",
+    "<div class=\"flex flex-wrap gap-2 mt-3\">",
+    " maxlength=\"512\"",
+    "</fieldset>",
+    "<p class=\"sb-subtitle\">",
+    " maxlength=\"64\"",
+    "<header class=\"sb-header\">",
+    "</header>",
+    "</form>",
+    " inputmode=\"numeric\"",
+    "<main class=\"sb-main\">",
+    " class=\"checkbox\"",
+    "<div class=\"sb-rule-field\">",
+    "<code class=\"break-all\">",
+    " maxlength=\"256\"",
     "\n                ",
     "\n            ",
     "\n        ",

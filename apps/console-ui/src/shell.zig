@@ -3,7 +3,7 @@ const State = @import("state.zig").State;
 const Phase = @import("state.zig").Phase;
 const html = @import("html");
 const Writer = std.Io.Writer;
-const actions = [_][]const u8{
+pub const actions = [_][]const u8{
     "dashboard", "events",   "challenges", "policies", "geoip", "users", "tokens", "audit",
     "nodes",     "settings", "account",
 };
@@ -34,6 +34,8 @@ pub fn begin(state: *const State, w: *Writer) Writer.Error!void {
     }
     try html.render(w, @embedFile("snippets/shell-content.html"), .{
         .role = state.role.slice(),
+        .theme = @tagName(state.appearance.theme),
+        .density = @tagName(state.appearance.density),
     });
 }
 
@@ -41,7 +43,7 @@ pub fn end(w: *Writer) Writer.Error!void {
     try html.render(w, "</div></div>", .{});
 }
 
-fn section(phase: Phase) []const u8 {
+pub fn section(phase: Phase) []const u8 {
     return switch (phase) {
         .events, .similarity => "events",
         .challenges => "challenges",

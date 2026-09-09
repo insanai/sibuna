@@ -4,6 +4,7 @@ const p = @import("console_protocol");
 const State = @import("state.zig").State;
 const render = @import("render.zig");
 const live = @import("live_controller.zig");
+const routing = @import("routing.zig");
 // Startup initializes every owned field; avoid shipping a duplicate state image in Wasm data.
 var state: State = undefined;
 var initialized: bool = false;
@@ -107,6 +108,9 @@ export fn sb_event(kind: u32, length: usize) void {
         setMessage("Could not complete the action. Please try again.");
         state.busy = false;
     };
+    if (routing.take(&state)) |name| actionName(name, .null) catch {
+        setMessage("Could not open this page. Please try again.");
+    };
     if (state.phase != previous_phase) {
         if (previous_phase == .users) state.users.clearSecret();
         if (previous_phase == .tokens) state.tokens.clearSecret();
@@ -125,6 +129,7 @@ fn begin() void {
 
 fn finish() void {
     @import("kiosk_grant.zig").retain(&state);
+    routing.sync(&state, outbox()) catch unreachable;
     live.sync(&state, outbox()) catch setMessage("Live connection unavailable. Reload to retry.");
     if (state.fullAccess() and !state.hidden)
         command(.{ .op = "timer", .id = "age", .delay_ms = 1000 }) catch unreachable;
@@ -171,7 +176,14 @@ fn outbox() @import("transport.zig").Outbox {
 fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
     state.browser_time = number(value, "browser_time");
     switch (kind) {
-        1 => try action(value),
+        1 => try actionName(string(value, "action"), field(value, "fields") orelse .null),
+        8 => routing.request(&state.route, string(value, "route")),
+        9, 10 => try @import("appearance.zig").environment(
+            &state.appearance,
+            value,
+            kind == 9,
+            outbox(),
+        ),
         2 => try response(value, alloc),
         3 => {
             if (state.hidden) return;
@@ -210,8 +222,7 @@ fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
     }
 }
 
-fn action(value: std.json.Value) !void {
-    const name = string(value, "action");
+fn actionName(name: []const u8, fields: std.json.Value) !void {
     if (equal(name, "navigation-toggle") and state.fullAccess()) {
         state.navigation_open = !state.navigation_open;
         return;
@@ -220,7 +231,6 @@ fn action(value: std.json.Value) !void {
         state.navigation_open = false;
         try command(.{ .op = "focus", .selector = "main h1", .top = true });
     }
-    const fields = field(value, "fields") orelse .null;
     const management = @import("management_controller.zig");
     if (try managed().fromAudit(name)) return;
     if (try management.action(&state, name, fields, outbox())) return;
@@ -233,10 +243,7 @@ fn action(value: std.json.Value) !void {
     if (try eventAction(name, fields)) return;
     if (try securityAction(name, fields)) return;
     if (try geographicAction(name, fields)) return;
-    if (equal(name, "theme")) {
-        state.dark = !state.dark;
-        return command(.{ .op = "theme", .value = if (state.dark) "dark" else "light" });
-    }
+    if (try @import("appearance.zig").action(&state.appearance, name, outbox())) return;
     if (equal(name, "pause")) {
         state.paused = !state.paused;
         if (state.paused) {
@@ -1320,10 +1327,10 @@ test "policy navigation ignores superseded responses and retains a revision conf
 }
 
 fn resetState(phase: @import("state.zig").Phase) void {
-    const dark = state.dark;
+    const appearance = state.appearance;
     state.reset();
     state.phase = phase;
-    state.dark = dark;
+    state.appearance = appearance;
 }
 
 test "browser callbacks cannot read application state before explicit startup" {
@@ -1356,4 +1363,31 @@ test "successful sign-out erases retained management drafts and one-time credent
     try std.testing.expectEqual(@as(usize, 0), state.csrf.len);
     try std.testing.expect(std.mem.allEqual(u8, &state.policies.body.data, 0));
     try std.testing.expect(std.mem.allEqual(u8, &state.users.temporary.data, 0));
+}
+
+test "a bookmarked page dispatches only after the session completes authentication" {
+    const t = std.testing;
+    sb_init();
+    const route = "{\"route\":\"nodes\"}";
+    @memcpy(input[0..route.len], route);
+    sb_event(8, route.len);
+    try t.expectEqual(.loading, state.phase);
+    const required =
+        \\{"id":"login","status":200,"body":{"user":1,"csrf":"test","role":"admin",
+        \\ "must_change":true}}
+    ;
+    @memcpy(input[0..required.len], required);
+    sb_event(2, required.len);
+    try t.expectEqual(.password, state.phase);
+    try t.expect(std.mem.indexOf(u8, commands[0..commands_length], "connect") == null);
+    try t.expect(std.mem.indexOf(u8, commands[0..commands_length], "/console/api/nodes") == null);
+    const admitted =
+        \\{"id":"password","status":200,"body":{"user":1,"csrf":"test","role":"admin",
+        \\ "must_change":false}}
+    ;
+    @memcpy(input[0..admitted.len], admitted);
+    sb_event(2, admitted.len);
+    try t.expectEqual(.nodes, state.phase);
+    try t.expect(std.mem.indexOf(u8, commands[0..commands_length], "/console/api/nodes") != null);
+    try t.expect(std.mem.indexOf(u8, commands[0..commands_length], "\"replace\":true") != null);
 }

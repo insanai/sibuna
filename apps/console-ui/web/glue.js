@@ -188,8 +188,26 @@ async function run(command) {
       if (command.top) window.scrollTo({top: 0});
       else element.scrollIntoView({block: "start"});
     }
-  } else if (command.op === "theme") {
-    document.documentElement.dataset.theme = command.value;
+  } else if (command.op === "history") {
+    const url = new URL(location.href);
+    url.hash = command.value;
+    if (url.href !== location.href) {
+      if (command.replace) history.replaceState(null, "", url);
+      else history.pushState(null, "", url);
+    }
+  } else if (command.op === "appearance") {
+    document.documentElement.dataset.theme = `sibuna-${command.theme}`;
+    document.documentElement.dataset.density = command.density;
+    if (command.persist) {
+      try {
+        localStorage.setItem("sibuna.appearance", JSON.stringify({
+          theme: command.preference, density: command.density,
+        }));
+      } catch {
+        // Restricted browser storage keeps the current Wasm preference for this tab only.
+        document.documentElement.dataset.appearanceStorage = "unavailable";
+      }
+    }
   }
 }
 root.addEventListener("submit", e => {
@@ -210,6 +228,23 @@ root.addEventListener("click", e => {
 document.addEventListener("visibilitychange", () => event(5, {hidden: document.hidden}));
 wasm.sb_init();
 flush();
+const routeChanged = () => event(8, {route: location.hash.slice(1, 65)});
+window.addEventListener("hashchange", routeChanged);
+routeChanged();
+const systemTheme = matchMedia("(prefers-color-scheme: dark)");
+function loadAppearance() {
+  let saved = {};
+  try {
+    const text = localStorage.getItem("sibuna.appearance");
+    if (text && text.length <= 128) saved = JSON.parse(text) || {};
+  } catch { /* Unavailable or malformed browser preferences use Wasm defaults. */ }
+  event(9, {theme: saved.theme, density: saved.density, system_dark: systemTheme.matches});
+}
+loadAppearance();
+systemTheme.addEventListener("change", () => event(10, {system_dark: systemTheme.matches}));
+window.addEventListener("storage", e => {
+  if (e.key === "sibuna.appearance" || e.key === null) loadAppearance();
+});
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 const motionPreference = () => event(7, {reduced_motion: reducedMotion.matches});
 reducedMotion.addEventListener("change", motionPreference);

@@ -1675,8 +1675,8 @@ identifies the following concrete gaps; the status remains Proposed.
     transaction removes obsolete country-owned rows and records the redacted audit together;
     independent ownership conflicts are refused. GeoIP imports do not silently alter policy.],
   [Interface state], [The bridge now patches nodes and preserves unsent form values while
-    adjacent observations update. Browser-history routing, system/persisted theme and density
-    preferences remain absent.
+    adjacent observations update. Page fragments now support bookmark and browser-history navigation behind authentication;
+    system/persisted theme and density preferences are implemented in the Wasm model.
     Country selection centers the globe but does not open country-filtered events. The
     separate Security overview and configurable retention forms in the wireframes are not
     present; retention runs with the implemented defaults.],
@@ -4436,6 +4436,42 @@ module extraction. It now calls `console_store_deliveries.enqueue`; failures are
 bounded error names instead of being discarded. Every test-owned member is stopped and joined.
 The reusable Python subscription client can attach to an already authenticated transport,
 so peer acceptance uses the same strict chunk/gap checks as browser-protocol tests.
+
+== Browser page history (2026-09-10)
+
+The Wasm router interns fragment identifiers against the shared navigation catalog. A
+bookmark or Back/Forward event remains pending until the session passes password-change
+and two-factor requirements. Tokens and Settings apply their administrator permission
+before dispatch; kiosk sessions ignore account routes. Unknown fragments resolve to the
+statistics landing page. History stores page names only; private drafts, selected records,
+filters and authentication values are not serialized into URLs.
+
+Ordinary page changes push a history entry; initial authentication and restored routes
+replace the current entry. The browser bridge applies those commands and reports hash
+changes. Subscriptions continue through the same page controllers, keeping their existing
+cancellation, correlation and stale-state checks. Returning to a page reloads its bounded
+view; unsaved form state is preserved during live patches, not promised across navigation.
+
+== Browser appearance preferences (2026-09-10)
+
+The shared sidebar exposes System, Light and Dark theme choices and comfortable/compact
+spacing. Wasm validates the saved enum values, resolves system changes and emits appearance
+commands. The bridge applies the selected daisyUI `sibuna-light` or `sibuna-dark` tokens,
+reads and writes only the bounded `sibuna.appearance` preference, and reports cross-tab and
+system changes. Invalid preferences use defaults; restricted storage leaves the choice
+in the current tab. Session reset preserves this presentation model and erases private data.
+
+The theme catalog supplies component colours, input/card radii and the shared type scale.
+Authentication uses the same surface and text tokens. Compact spacing changes gaps and
+padding, keeping text sizes and mobile controls of at least 44 pixels. Geometry and live
+updates remain governed by authentication and reduced-motion state, not by preferences.
+
+Verification: 101 native UI tests and the served-Wasm live scenario pass route deferral,
+role restrictions, history restoration, preference resolution and sign-out preservation.
+The complete `fmt test console-test console-ui-e2e sid book` run passed 469 tests and the
+live scenarios. Shared literal deduplication keeps the combined interface at 392,860 of
+393,216 bytes and the existing 4 MiB memory limit. Theme text/background token pairs
+exceed 4.5:1 contrast; Chrome layout, persistence and accessibility acceptance remains open.
 
 == Compact snippet instructions (2026-09-10)
 
