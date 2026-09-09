@@ -15,7 +15,9 @@ pub const Budget = struct {
     pub const Error = error{InvalidBudget};
     pub const socket_buffer_bytes = 16 * 1024;
     pub const body_bytes = 1024 * 1024;
-    pub const import_bytes = 16 * 1024 * 1024 + 40 * 1024;
+    // One 32 MiB source buffer for uncompressed providers (or 16 MiB compressed) plus the
+    // download/checksum stack scratch; the staged generation is counted separately.
+    pub const import_bytes = 32 * 1024 * 1024 + 40 * 1024;
     pub const auth_bytes = @import("password.zig").Password.workspace_bytes;
     pub const topic_bytes = 10 * 1024 * 1024;
     pub const traffic_bytes = @sizeOf(@import("store").ConsoleTelemetry) +

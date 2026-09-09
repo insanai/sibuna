@@ -107,14 +107,41 @@ pub const Job = struct {
         const source = self.sourceProvider();
         if (self.input.csv.len != 0)
             return geoip.fromCsv(self.app.gpa, source, version, self.input.csv.slice());
-        if (source.compression() != .gzip) return error.Unsupported;
+        if (source.compression() == .gzip) return self.stageArchive(source, version);
+        return self.stageFiles(source, version);
+    }
+
+    fn stageArchive(self: *Job, source: geoip.Provider, version: []const u8) !geoip.Database {
         self.status.store(.downloading, .release);
         const buffer = try self.app.gpa.alloc(u8, geoip.gzip.max_compressed_bytes);
         defer self.app.gpa.free(buffer);
-        const bytes = try download.fetch(self.app, version, buffer);
+        const bytes = try download.fetch(self.app, source, 0, version, buffer);
         self.status.store(.validating, .release);
         const stopping = &self.app.stopping;
         return geoip.gzip.decode(self.app.gpa, self.app.io, source, version, bytes, stopping);
+    }
+
+    /// Uncompressed providers publish one file per family with a digest file each. Every
+    /// file is verified against its publisher digest before a row enters the loader.
+    fn stageFiles(self: *Job, source: geoip.Provider, version: []const u8) !geoip.Database {
+        const buffer = try self.app.gpa.alloc(u8, download.max_source_bytes);
+        defer self.app.gpa.free(buffer);
+        var loader = try geoip.Loader.init(self.app.gpa);
+        errdefer loader.abandon();
+        var file: u8 = 0;
+        while (file < source.fileCount()) : (file += 1) {
+            self.status.store(.downloading, .release);
+            const expected = try download.fetchChecksum(self.app, source, file, version);
+            const bytes = try download.fetch(self.app, source, file, version, buffer);
+            var digest: [32]u8 = undefined;
+            std.crypto.hash.sha2.Sha256.hash(bytes, &digest, .{});
+            if (!std.mem.eql(u8, &digest, &expected)) return error.ChecksumMismatch;
+            self.status.store(.validating, .release);
+            try loader.feed(bytes);
+            try loader.endFile();
+            self.progress.store(@intCast(loader.builder.count), .release);
+        }
+        return loader.finish(source, version);
     }
 
     fn execute(self: *Job) !void {
