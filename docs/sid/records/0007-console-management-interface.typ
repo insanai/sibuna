@@ -1641,6 +1641,33 @@ No unmeasured target in this record is a release claim.
 The dated notes describe the state at each implementation step. Earlier pending-work statements
 are historical; the acceptance gates below govern delivery.
 
+== Current completeness review (2026-09-10)
+
+*SID 0007 is not completely implemented.* The Zaxonlite upgrade and passing scenario
+suites do not close requirements that those tests do not exercise. The current review
+identifies the following concrete gaps; the status remains Proposed.
+
+#table(
+  columns: (1fr, 2.8fr),
+  table.header([*Gate*], [*Current implementation and missing work*]),
+  [Real-time protocol], [The implemented `/console/stream` route accepts only a statistics
+    subscription. `libs/console/src/stream.zig` sends complete statistics under snapshot/delta
+    labels. The specified `/console/ws` multi-topic protocol, filtered event/audit/node streams,
+    per-topic rings, chunk watermarks and gap/resynchronization contracts are not delivered.],
+  [Live cluster transport], [Membership and applied revisions use replicated rows; configured
+    HTTP probes provide health. The dedicated authenticated TLS peer WebSocket transport and
+    live peer node/boot/sequence deduplication remain deferred, not verified by the membership tests.],
+  [Country rule maintenance], [Country actions pin a GeoIP generation. Existing country-derived
+    reputation rows are not refreshed when a later generation becomes active; see the workflow entry.],
+  [Acceptance], [The corrected dashboard workload harness has only an inconclusive smoke result.
+    Full controlled-host impact acceptance and comprehensive browser acceptance remain open.
+    Earlier browser evidence covers the named scenarios, not every feature and error state.],
+)
+
+Notification retry/lease fixes and the fuller dashboard workload harness were implemented in
+the subsequent dated corrections; they must not remain described as wholly unimplemented.
+Native data-plane HTTP/2 is separately deferred by the operator and is not a console UI claim.
+
 #text("Status: Proposed. This checklist records implementation, not acceptance by assertion. Unchecked gates block delivery. The daemon composes the console; application libraries must never import daemon code or acquire the database handle. Existing data-plane and proof semantics remain unchanged unless a stage explicitly extends them.")
 
 == 1. Contracts, build integration and lifecycle
@@ -1771,7 +1798,7 @@ are historical; the acceptance gates below govern delivery.
 
 - #text("Not passed (2026-09-09): the verdict is inconclusive on the development host. Point estimates stay within ±2 % throughput and +6 % p99 with peak RSS reported per configuration, but the compiled-out baseline's own spread (20–46 %) exceeds the 1 % rule and every bootstrap interval straddles the gate; the record says so rather than rounding to a pass. A quiet host is required.")
 
-- #text("Pending after implementation review: notification scheduling and lease regressions, multi-topic real-time subscriptions, dedicated peer management transport and comprehensive browser acceptance. The impact harness must represent the full dashboard workload and run on a sufficiently quiet host. The record stays Proposed and the console stays opt-in.")
+- #text("Pending after the 2026-09-10 review: multi-topic real-time subscriptions, dedicated peer management transport, GeoIP-driven country rule refresh and comprehensive browser acceptance. Notification retries/leases and the dashboard workload harness have dated implementation evidence; the corrected impact matrix still needs a controlled-host acceptance run. The record stays Proposed and the console stays opt-in.")
 
 == Implementation evidence
 
@@ -4061,6 +4088,54 @@ These values are substantially slower than the preceding record. Unchanged PoSW,
 verification and GCRA primitives also slowed by approximately the same factor of 1.6.
 The cause has not been isolated by a paired run under controlled host conditions, so this
 record neither establishes a code regression nor satisfies the console impact gate.
+
+== CLI mode and ingress integration review (2026-09-10)
+
+The documented `--mode` and `-m` selections are exercised through real listeners. Reverse
+proxy mode carries admitted application requests and upgraded connections; forward-auth
+mode returns an authorization result while the ingress carries the application exchange.
+Invalid, missing and duplicate mode selections now fail with `SIBUNAMODE` instead of silently
+retaining reverse proxy mode. The default remains reverse proxy.
+
+Forward-auth previously returned a plain-text challenge to browsers. It now returns the
+configured solver page with 401, which cannot be mistaken for an authorization success.
+Non-HTML clients receive challenge JSON. Nginx's error handler serves the internal challenge
+route without a second admission or rate-limit decision; that route uses the configured
+page and its solver CSP too. Trusted original request metadata is restored before outcomes
+are recorded, while immutable internal-route identity prevents metadata from dispatching
+an internal handler or hiding a parsed authorization request from counters.
+
+The book's Caddy snippet previously failed to parse because of its inline handler block.
+The corrected Caddy and Nginx recipes replace client-supplied Sibuna audit headers with
+the authorization result. Nginx explicitly translates auth-module errors caused by 429
+back to 429 with Retry-After and refuses other authorization failures with 503. Both
+ingresses preserve original application targets, uploads and admitted WebSockets.
+
+The authenticated statistics contract now carries the daemon's configured proxy mode.
+The interface shows origin error counters as Not observed for forward-auth and older
+snapshots without mode metadata. It explains that admission counts authorization approvals
+and that the ingress's omitted bodies cannot be inspected. Historical minute rows retain
+their existing counter schema; they do not acquire inferred origin-response coverage.
+
+`tools/ingress_e2e.py` tests both CLI spellings, solver responses, session admission, WAF
+and policy denial, per-rule limits before session bypass, multipart bytes, WebSocket frames,
+audit-header replacement, omitted-body coverage and failure of the authorization service.
+Optional Caddy/Nginx checks execute the book's actual snippets with temporary loopback
+addresses. Nginx 1.30.4 was built locally for this review from the official archive with
+SHA-256 `4261dc90e9e47c1c4041276e9aaa3d48ebe2e664f728e14fa95ae6c67d57a08b`;
+its source and executable remain outside the committed package. A live console regression
+restarts the same database under both modes and verifies HTTP and streamed mode metadata,
+origin counters and external authorization accounting. This work does not close the
+multi-topic, peer-transport, country-refresh or performance gates listed above.
+
+After disk capacity was restored, `zig build -j1 fmt test console-test sid book` passed
+all 68 build steps, 422 native/UI tests and twenty-one live console scenarios. The Wasm
+UI is 373,279 bytes against its 393,216-byte bound. The storage/console-disabled matrix
+passed 134 tests and installation; the storage-enabled, console-disabled build also
+installed successfully. The final daemon passed direct reverse-proxy and forward-auth
+checks and both real ingress recipes, using Caddy 2.11.4 and Nginx 1.30.4. Chrome was
+closed during this run; browser interaction remains unverified pending permission to
+launch it. These results establish the tested mode behavior, not full SID acceptance.
 
 = References
 

@@ -103,6 +103,31 @@ Common flags (`--help` lists all of them):
 | `--trust-forwarded` | auto in forward-auth | Trust ingress client address, scheme and original authorization URL |
 | `--data-dir <path>` | none | Enable the Zaxonlite store (Edge) |
 
+`--mode` and `-m` select the same two modes:
+
+Invalid, missing or repeated mode selections stop startup with `SIBUNAMODE` rather than
+silently selecting a different mode.
+
+| Mode | Application traffic | Inspection and console coverage |
+|---|---|---|
+| `reverse_proxy` (default) | Sibuna forwards admitted requests to the configured upstream and relays admitted WebSockets. | Request metadata, the bounded body prefix, and observed origin responses. |
+| `forward_auth` | Sibuna answers ingress authorization subrequests; the ingress forwards uploads, responses and WebSockets. | Metadata supplied by the ingress; omitted bodies and origin responses are not observed. |
+
+For forward-auth, bind Sibuna privately (`--host 127.0.0.1` for a same-host ingress) and
+use the book's Caddy/Nginx recipes. A 200 means permission to continue; challenges return
+401, denials 403 and limits 429. Browser challenges include the solver page; API clients
+receive challenge JSON and should obtain a session before sending uploads or opening a
+WebSocket. The recipes route `/__sibuna/*` directly and handle Nginx's auth-error translation.
+The console, policy management and local controls remain available in either mode.
+
+`zig build proxy-e2e` checks both CLI modes. To test the book's actual ingress recipes:
+
+```bash
+python3 tools/ingress_e2e.py zig-out/bin/sibuna --caddy /path/to/caddy --nginx /path/to/nginx
+```
+
+These optional checks use temporary loopback listeners; Nginx needs its auth-request module.
+
 Internal routes: `/__sibuna/challenge.json`, `/__sibuna/verify`, `/__sibuna/worker.js`,
 `/__sibuna/wasm/sibuna-pow.wasm` (8,831 bytes), `/__sibuna/health`, `/__sibuna/metrics`
 (Prometheus), `/__sibuna/honeypot`.
