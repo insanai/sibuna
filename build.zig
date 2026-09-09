@@ -255,6 +255,10 @@ fn addServer(
     wireApp(b, root, app);
     const exe = b.addExecutable(.{ .name = "sibuna", .root_module = root });
     b.installArtifact(exe);
+    const proxy_e2e = b.step("proxy-e2e", "Verify HTTP and WebSocket proxy compatibility");
+    const proxy_check = b.addSystemCommand(&.{ "python3", "tools/proxy_e2e.py" });
+    proxy_check.addArtifactArg(exe);
+    proxy_e2e.dependOn(&proxy_check.step);
     const console_e2e = b.step("console-e2e", "Exercise authentication through a real daemon");
     if (console != null) {
         const check = b.addSystemCommand(&.{ "python3", "tools/console_e2e.py" });
@@ -299,6 +303,7 @@ fn wireApp(b: *std.Build, root: *std.Build.Module, app: AppModules) void {
 
 fn addTests(b: *std.Build, modules: Modules, app: AppModules) void {
     const test_step = b.step("test", "Run all unit and end-to-end tests");
+    test_step.dependOn(&b.top_level_steps.get("proxy-e2e").?.step);
     const e2e_root = b.createModule(.{
         .root_source_file = b.path("apps/sibuna/src/e2e_test.zig"),
         .target = b.graph.host,

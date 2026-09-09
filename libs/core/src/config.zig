@@ -92,6 +92,8 @@ pub const Config = struct {
     /// Socket read/write timeout; bounds how long an idle or trickling
     /// connection can hold a worker thread.
     idle_timeout_seconds: u32 = 15,
+    /// An admitted WebSocket has its own idle deadline, refreshed by traffic either way.
+    websocket_idle_timeout_seconds: u32 = 300,
     rate_limit: u32 = 100,
     rate_window_seconds: u64 = 10,
     ban_seconds: u64 = 3600,
@@ -190,6 +192,9 @@ pub const Config = struct {
             cfg.max_connections = std.fmt.parseInt(u32, v, 10) catch cfg.max_connections;
         } else if (eqlAny(arg, "--idle-timeout", "--idle-timeout")) {
             cfg.idle_timeout_seconds = std.fmt.parseInt(u32, v, 10) catch cfg.idle_timeout_seconds;
+        } else if (eqlAny(arg, "--websocket-idle-timeout", "--websocket-idle-timeout")) {
+            cfg.websocket_idle_timeout_seconds = std.fmt.parseInt(u32, v, 10) catch
+                cfg.websocket_idle_timeout_seconds;
         } else if (eqlAny(arg, "--rate-limit", "--rate-limit")) {
             cfg.rate_limit = std.fmt.parseInt(u32, v, 10) catch cfg.rate_limit;
         } else if (eqlAny(arg, "--rate-window", "--rate-window")) {

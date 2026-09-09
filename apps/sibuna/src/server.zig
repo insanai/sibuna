@@ -212,6 +212,7 @@ const Connection = struct {
     state: *AppState,
     reader: *Io.Reader,
     writer: *Io.Writer,
+    activity: *net.duplex.Activity,
     peer_buf: [48]u8 = undefined,
     peer: []const u8 = "",
 
@@ -247,7 +248,7 @@ pub const IdleTable = struct {
         lock: store.rate_limiter.SpinLock = .{},
         active: bool = false,
         stream: Io.net.Stream = undefined,
-        last_active_ms: u64 = 0,
+        activity: net.duplex.Activity = .{},
     };
 
     slots: [capacity]Slot = [_]Slot{.{}} ** capacity,
@@ -264,7 +265,8 @@ pub const IdleTable = struct {
             if (!slot.active) {
                 slot.active = true;
                 slot.stream = stream;
-                slot.last_active_ms = now_ms;
+                slot.activity.at_ms.store(now_ms, .monotonic);
+                slot.activity.timeout_ms.store(0, .monotonic);
                 return idx;
             }
         }
@@ -275,7 +277,7 @@ pub const IdleTable = struct {
         const slot = &self.slots[idx];
         slot.lock.lock();
         defer slot.lock.unlock();
-        slot.last_active_ms = now_ms;
+        slot.activity.at_ms.store(now_ms, .monotonic);
     }
 
     fn unregister(self: *IdleTable, idx: u32) void {
@@ -300,7 +302,9 @@ pub const IdleTable = struct {
         for (&self.slots) |*slot| {
             slot.lock.lock();
             defer slot.lock.unlock();
-            if (slot.active and now_ms > slot.last_active_ms + timeout_ms) {
+            const override = slot.activity.timeout_ms.load(.monotonic);
+            const timeout = if (override == 0) timeout_ms else override;
+            if (slot.active and now_ms -| slot.activity.at_ms.load(.monotonic) > timeout) {
                 slot.stream.shutdown(io, .both) catch {};
                 // Keep ownership until unregister; an old worker must not clear a reused slot.
                 reaped += 1;
@@ -348,6 +352,7 @@ pub fn handleConnection(stream: Io.net.Stream, io: Io, state: *AppState) void {
         .state = state,
         .reader = &reader.interface,
         .writer = &writer.interface,
+        .activity = &state.idle.slots[idle_slot].activity,
     };
     conn.formatPeer();
     var served: u32 = 0;
@@ -725,23 +730,27 @@ fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule
         .rule = rule_name,
         .response_status = if (build_options.console) &origin_status else null,
     };
-    const host = cfg.upstream_host;
-    const port = cfg.upstream_port;
-    const keep = ctx.keep_alive;
-    const relay = net.proxy.streamProxy(
-        &st.upstream,
-        c.writer,
-        c.reader,
-        c.io,
-        host,
-        port,
-        ctx.req,
-        audit,
-        keep,
-    );
+    const relay = net.proxy.streamProxy(&st.upstream, .{
+        .io = c.io,
+        .client = .{
+            .stream = c.stream,
+            .reader = c.reader,
+            .writer = c.writer,
+            .relay = .{
+                .activity = c.activity,
+                .idle_timeout_seconds = cfg.websocket_idle_timeout_seconds,
+            },
+        },
+        .upstream_host = cfg.upstream_host,
+        .upstream_port = cfg.upstream_port,
+        .request = ctx.req,
+        .audit = audit,
+        .keep_alive = ctx.keep_alive,
+    });
     return relay catch |err| {
         Metrics.bump(&st.metrics.upstream_errors);
         switch (err) {
+            error.InvalidUpgrade => try net.response.write400(ctx.writer(), "Invalid upgrade"),
             error.UpstreamUnreachable => try net.response.write502(
                 ctx.writer(),
                 "Bad Gateway: upstream unreachable",

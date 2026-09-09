@@ -3927,6 +3927,38 @@ opened Settings correctly. At 390 × 844, Settings had no horizontal page overfl
 opened, and Sign out returned to the authentication-only shell. No warning/error logs were
 reported during that verification; the temporary viewport was reset afterward.
 
+== Application WebSocket proxy correction (2026-09-10)
+
+Acceptance review found that the data-plane reverse proxy stripped Upgrade and treated a 101
+response as an ordinary bodyless response. The console's own WebSocket implementation did
+not cover application connections. The proxy now validates the offered WebSocket handshake
+and the origin's matching nonce before switching to a bounded bidirectional byte relay.
+Cookies, subprotocols and extensions remain end-to-end. Two 16 KiB buffers preserve bytes
+already read after each HTTP head, apply backpressure, handle half-closes and retain socket
+ownership until shutdown. No additional worker thread or request-path allocation is needed.
+An exchange struct replaces repeated lists of reader, writer, origin and lifecycle arguments.
+
+Upgraded connections have a separate 300-second idle deadline, configurable with
+`--websocket-idle-timeout`; progress in either direction updates the connection owner's
+activity record. The existing connection quota, shutdown registry and policy-snapshot
+release ordering remain in effect. The relay does not inspect WebSocket payloads.
+Origin informational responses are bounded and precede the final response. Hop-by-hop fields
+named by Connection are removed; conflicting lengths, invalid coding order and invalid
+upgrade acceptance are refused. Bodyless response semantics take precedence over transfer
+coding, and chunked responses do not retain a conflicting Content-Length.
+Pooled-origin retries are limited to buffered GET, HEAD and OPTIONS requests. A lost reply
+does not prove that an origin failed to commit a mutation; a live POST regression verifies
+that Sibuna returns 502 after that failure without submitting the operation twice.
+
+Live acceptance exercises admission refusal before reaching the origin, path/header/cookie
+and redirect preservation, a streamed upload, 103 followed by 200, fragmented text with an
+interleaved ping, a two-megabyte binary frame, prefetched bytes, half-close, independent idle
+expiry and daemon shutdown with an active upgrade. A real Caddy ingress passes HTTPS/WSS
+using a test-local trusted certificate and normal hostname validation. Chrome solved the
+admission challenge, loaded the origin application and received an unsolicited origin message
+and a browser echo through the proxy. This correction does not provide native TLS termination,
+HTTP/2 support or claim that every application protocol is covered by these cases.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

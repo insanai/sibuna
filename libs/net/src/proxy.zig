@@ -17,11 +17,13 @@
 //! origin is willing to keep returns the socket to a fixed-capacity pool, and
 //! the next proxied request takes it instead of connecting. A pooled socket
 //! the origin has since closed is detected before any byte reaches the
-//! client, and the request is retried once on a fresh connection.
+//! client; a safe, buffered request may be retried once on a fresh connection.
 
 const std = @import("std");
 const Io = std.Io;
 const http = @import("http.zig");
+const upgrade = @import("proxy_upgrade.zig");
+const duplex = @import("duplex.zig");
 
 pub const Audit = struct {
     client_ip: []const u8,
@@ -31,11 +33,29 @@ pub const Audit = struct {
 };
 
 pub const ProxyError = error{
+    InvalidUpgrade,
     UpstreamUnreachable,
     UpstreamWriteFailed,
     UpstreamReadFailed,
     UpstreamClosed,
     ClientWriteFailed,
+};
+
+pub const Client = struct {
+    stream: Io.net.Stream,
+    reader: *Io.Reader,
+    writer: *Io.Writer,
+    relay: duplex.Options = .{},
+};
+/// Borrowed exchange inputs live until HTTP completion or the upgraded relay ends.
+pub const Exchange = struct {
+    io: Io,
+    client: Client,
+    upstream_host: []const u8,
+    upstream_port: u16,
+    request: *const http.Request,
+    audit: Audit,
+    keep_alive: bool,
 };
 
 /// Two-state spinlock; the pool's critical sections are a few instructions.
@@ -131,9 +151,10 @@ pub const max_response_head = 16 * 1024;
 
 fn isHopByHop(name: []const u8) bool {
     const hop = [_][]const u8{
-        "connection", "keep-alive",      "proxy-connection", "transfer-encoding",
-        "te",         "trailer",         "upgrade",          "x-forwarded-for",
-        "x-real-ip",  "x-sibuna-status", "x-sibuna-rule",
+        "connection",          "keep-alive",         "proxy-connection", "transfer-encoding",
+        "te",                  "trailer",            "upgrade",          "x-forwarded-for",
+        "x-real-ip",           "x-sibuna-status",    "x-sibuna-rule",    "content-length",
+        "proxy-authorization", "proxy-authenticate",
     };
     for (hop) |h| {
         if (std.ascii.eqlIgnoreCase(name, h)) return true;
@@ -141,7 +162,7 @@ fn isHopByHop(name: []const u8) bool {
     return false;
 }
 
-fn writeHead(w: *Io.Writer, req: *const http.Request, audit: Audit) !void {
+fn writeHead(w: *Io.Writer, req: *const http.Request, audit: Audit, switching: bool) !void {
     const method = req.method_text;
     if (req.query.len > 0) {
         try w.print("{s} {s}?{s} HTTP/1.1\r\n", .{ method, req.path, req.query });
@@ -149,12 +170,17 @@ fn writeHead(w: *Io.Writer, req: *const http.Request, audit: Audit) !void {
         try w.print("{s} {s} HTTP/1.1\r\n", .{ method, req.path });
     }
     for (req.headers[0..req.header_count]) |h| {
-        if (isHopByHop(h.name)) continue;
+        if (isHopByHop(h.name) or upgrade.nominated(req, h.name)) continue;
         try w.print("{s}: {s}\r\n", .{ h.name, h.value });
     }
+    // Reconstruct framing even if a client tried to nominate Content-Length as hop-by-hop.
+    if (req.contentLength()) |length| try w.print("Content-Length: {d}\r\n", .{length});
+    try w.writeAll(if (switching)
+        "Connection: Upgrade\r\nUpgrade: websocket\r\n"
+    else
+        "Connection: keep-alive\r\n");
     try w.print(
-        "Connection: keep-alive\r\n" ++
-            "X-Forwarded-For: {s}\r\n" ++
+        "X-Forwarded-For: {s}\r\n" ++
             "X-Real-IP: {s}\r\n" ++
             "X-Sibuna-Status: {s}\r\n" ++
             "X-Sibuna-Rule: {s}\r\n\r\n",
@@ -203,28 +229,48 @@ fn headerLine(line: []const u8, name: []const u8) ?[]const u8 {
 /// and 304 responses carry no body. HTTP/1.1 persists unless the origin says
 /// `close`; HTTP/1.0 persists only when it says `keep-alive`.
 pub fn parseResponseHead(head: []const u8, head_request: bool) ?ResponseHead {
-    if (head.len < 12 or !std.mem.startsWith(u8, head, "HTTP/1.")) return null;
+    if (head.len < 13 or !std.mem.startsWith(u8, head, "HTTP/1.") or
+        (head[7] != '0' and head[7] != '1') or head[8] != ' ' or head[12] != ' ')
+        return null;
     const status = std.fmt.parseInt(u16, head[9..12], 10) catch return null;
+    if (status < 100) return null;
     var framing: Framing = .until_close;
     var chunked = false;
+    var encoded = false;
     var keep_alive = head[7] == '1';
+    var closing = false;
     var lines = std.mem.splitSequence(u8, head, "\r\n");
     _ = lines.first();
     while (lines.next()) |line| {
         if (line.len == 0) break;
+        const colon = std.mem.indexOfScalar(u8, line, ':') orelse return null;
+        if (!http.validToken(line[0..colon])) return null;
+        for (line[colon + 1 ..]) |byte| {
+            if ((byte < 32 and byte != '\t') or byte == 127) return null;
+        }
         if (headerLine(line, "transfer-encoding")) |value| {
-            if (std.ascii.indexOfIgnoreCase(value, "chunked") != null) chunked = true;
+            if (chunked) return null;
+            encoded = true;
+            var codings = std.mem.splitScalar(u8, value, ',');
+            while (codings.next()) |coding| {
+                if (chunked or std.mem.trim(u8, coding, " \t").len == 0) return null;
+                chunked = std.ascii.eqlIgnoreCase(std.mem.trim(u8, coding, " \t"), "chunked");
+            }
         } else if (headerLine(line, "content-length")) |value| {
             const n = std.fmt.parseInt(u64, value, 10) catch return null;
+            if (framing == .length and framing.length != n) return null;
             framing = .{ .length = n };
         } else if (headerLine(line, "connection")) |value| {
-            if (std.ascii.indexOfIgnoreCase(value, "close") != null) keep_alive = false;
-            if (std.ascii.indexOfIgnoreCase(value, "keep-alive") != null) keep_alive = true;
+            closing = closing or upgrade.token(value, "close");
+            if (upgrade.token(value, "keep-alive")) keep_alive = true;
         }
     }
-    if (head_request or status / 100 == 1 or status == 204 or status == 304) framing = .none;
-    if (chunked) framing = .chunked;
-    if (framing == .until_close) keep_alive = false;
+    if (head_request or status / 100 == 1 or status == 204 or status == 304) {
+        framing = .none;
+    } else if (encoded) framing = if (chunked) .chunked else .until_close;
+    if (framing == .until_close or closing) keep_alive = false;
+    if (upgrade.responseNominated(head, "content-length") or
+        upgrade.responseNominated(head, "transfer-encoding")) return null;
     return .{ .status = status, .framing = framing, .keep_alive = keep_alive };
 }
 
@@ -242,7 +288,10 @@ fn readResponseHead(up: *Io.Reader) ProxyError!usize {
 }
 
 fn isConnectionHeader(line: []const u8) bool {
-    const names = [_][]const u8{ "connection", "keep-alive", "proxy-connection" };
+    const names = [_][]const u8{
+        "connection",         "keep-alive",          "proxy-connection", "upgrade",
+        "proxy-authenticate", "proxy-authorization",
+    };
     for (names) |name| {
         if (headerLine(line, name) != null) return true;
     }
@@ -252,16 +301,33 @@ fn isConnectionHeader(line: []const u8) bool {
 /// Re-emits the origin head to the client with Sibuna's own connection
 /// semantics; every other header passes through unchanged.
 fn writeClientHead(w: *Io.Writer, head: []const u8, keep_alive: bool) ProxyError!void {
+    try writeResponseFields(w, head);
+    const tail = if (keep_alive) "Connection: keep-alive\r\n\r\n" else "Connection: close\r\n\r\n";
+    w.writeAll(tail) catch return error.ClientWriteFailed;
+}
+
+fn writeResponseFields(w: *Io.Writer, head: []const u8) ProxyError!void {
     var lines = std.mem.splitSequence(u8, head, "\r\n");
     const status_line = lines.first();
     w.print("{s}\r\n", .{status_line}) catch return error.ClientWriteFailed;
     while (lines.next()) |line| {
         if (line.len == 0) break;
         if (isConnectionHeader(line)) continue;
+        if (headerLine(line, "content-length") != null and hasTransferEncoding(head)) continue;
+        const colon = std.mem.indexOfScalar(u8, line, ':') orelse return error.UpstreamReadFailed;
+        if (upgrade.responseNominated(head, line[0..colon])) continue;
         w.print("{s}\r\n", .{line}) catch return error.ClientWriteFailed;
     }
-    const tail = if (keep_alive) "Connection: keep-alive\r\n\r\n" else "Connection: close\r\n\r\n";
-    w.writeAll(tail) catch return error.ClientWriteFailed;
+}
+
+fn hasTransferEncoding(head: []const u8) bool {
+    var lines = std.mem.splitSequence(u8, head, "\r\n");
+    _ = lines.first();
+    while (lines.next()) |line| {
+        if (line.len == 0) break;
+        if (headerLine(line, "transfer-encoding") != null) return true;
+    }
+    return false;
 }
 
 fn chunkSize(line: []const u8) ?u64 {
@@ -303,9 +369,10 @@ fn relayResponse(
     client_keep_alive: bool,
     response_status: ?*u16,
 ) ProxyError!Relayed {
-    const head_len = try readResponseHead(up);
+    const head_len = try finalResponseHead(up, w);
     const head = up.buffered()[0..head_len];
     const parsed = parseResponseHead(head, head_request) orelse return error.UpstreamReadFailed;
+    if (parsed.status == 101) return error.UpstreamReadFailed;
     if (response_status) |output| output.* = parsed.status;
     const framed = parsed.framing != .until_close;
     const keep = client_keep_alive and framed;
@@ -323,36 +390,83 @@ fn relayResponse(
     return .{ .client_keep = keep, .origin_reusable = parsed.keep_alive };
 }
 
+/// Informational responses precede the final response and cannot return an origin socket
+/// to the pool. Bound their count as well as each head, including unsolicited 100/103.
+fn finalResponseHead(up: *Io.Reader, w: *Io.Writer) ProxyError!usize {
+    for (0..9) |index| {
+        const length = try readResponseHead(up);
+        const head = up.buffered()[0..length];
+        const parsed = parseResponseHead(head, false) orelse return error.UpstreamReadFailed;
+        if (parsed.status == 101 or parsed.status >= 200) return length;
+        if (parsed.status < 100 or index == 8) return error.UpstreamReadFailed;
+        try writeClientHead(w, head, true);
+        up.toss(length);
+        w.flush() catch return error.ClientWriteFailed;
+    }
+    unreachable;
+}
+
 /// One request/response exchange over an origin socket.
 fn exchange(
     upstream_stream: Io.net.Stream,
-    client_writer: *Io.Writer,
-    client_reader: *Io.Reader,
-    io: Io,
-    req: *const http.Request,
-    audit: Audit,
-    client_keep_alive: bool,
+    input: *const Exchange,
+    handshake: ?upgrade.Handshake,
 ) ProxyError!Relayed {
+    const req = input.request;
     var up_writer_buf: [8192]u8 = undefined;
-    var up_writer = upstream_stream.writer(io, &up_writer_buf);
-    writeHead(&up_writer.interface, req, audit) catch return error.UpstreamWriteFailed;
+    var up_writer = upstream_stream.writer(input.io, &up_writer_buf);
+    writeHead(&up_writer.interface, req, input.audit, handshake != null) catch
+        return error.UpstreamWriteFailed;
     up_writer.interface.writeAll(req.body) catch return error.UpstreamWriteFailed;
     const declared = req.contentLength() orelse req.body.len;
     if (declared > req.body.len) {
-        try relayBody(client_reader, &up_writer.interface, declared - req.body.len);
+        try relayBody(input.client.reader, &up_writer.interface, declared - req.body.len);
     }
     up_writer.interface.flush() catch return error.UpstreamWriteFailed;
 
     var up_reader_buf: [max_response_head]u8 = undefined;
-    var up_reader = upstream_stream.reader(io, &up_reader_buf);
+    var up_reader = upstream_stream.reader(input.io, &up_reader_buf);
+    if (handshake) |offered| {
+        const length = try finalResponseHead(&up_reader.interface, input.client.writer);
+        const head = up_reader.interface.buffered()[0..length];
+        const parsed = parseResponseHead(head, false) orelse return error.UpstreamReadFailed;
+        if (parsed.status == 101) return relayUpgrade(
+            input,
+            upstream_stream,
+            &up_reader.interface,
+            head,
+            offered,
+        );
+    }
     const head_request = req.method == .HEAD;
     return relayResponse(
         &up_reader.interface,
-        client_writer,
+        input.client.writer,
         head_request,
-        client_keep_alive,
-        audit.response_status,
+        input.keep_alive,
+        input.audit.response_status,
     );
+}
+
+fn relayUpgrade(
+    input: *const Exchange,
+    origin: Io.net.Stream,
+    reader: *Io.Reader,
+    head: []const u8,
+    handshake: upgrade.Handshake,
+) ProxyError!Relayed {
+    if (!upgrade.accepted(handshake, head)) return error.UpstreamReadFailed;
+    try writeResponseFields(input.client.writer, head);
+    input.client.writer.writeAll("Connection: Upgrade\r\nUpgrade: websocket\r\n\r\n") catch
+        return error.ClientWriteFailed;
+    input.client.writer.flush() catch return error.ClientWriteFailed;
+    if (input.audit.response_status) |status| status.* = 101;
+    reader.toss(head.len);
+    duplex.relay(input.io, .{
+        .{ .stream = input.client.stream, .reader = input.client.reader },
+        .{ .stream = origin, .reader = reader },
+    }, input.client.relay) catch return error.ClientWriteFailed;
+    return .{ .client_keep = false, .origin_reusable = false };
 }
 
 fn connectUpstream(io: Io, host: []const u8, port: u16) ProxyError!Io.net.Stream {
@@ -362,41 +476,33 @@ fn connectUpstream(io: Io, host: []const u8, port: u16) ProxyError!Io.net.Stream
 
 /// Proxies one request through a pooled origin connection. Returns whether
 /// the client connection may serve another request afterwards. A pooled
-/// socket the origin already closed is retried once on a fresh connection,
-/// which is safe because nothing has reached the client yet and the request
-/// body is still buffered.
+/// socket the origin already closed is retried once only for a safe, buffered request.
+/// A missing reply is not evidence that an origin did not commit a POST or other mutation.
 pub fn streamProxy(
     pool: *Pool,
-    client_writer: *Io.Writer,
-    client_reader: *Io.Reader,
-    io: Io,
-    upstream_host: []const u8,
-    upstream_port: u16,
-    req: *const http.Request,
-    audit: Audit,
-    client_keep_alive: bool,
+    input: Exchange,
 ) ProxyError!bool {
+    const io = input.io;
+    const req = input.request;
+    const handshake = try upgrade.offered(req);
     const declared = req.contentLength() orelse req.body.len;
-    const retryable = declared <= req.body.len;
+    const safe = req.method == .GET or req.method == .HEAD or req.method == .OPTIONS;
+    const retryable = safe and declared <= req.body.len;
     var attempt: u8 = 0;
     while (true) : (attempt += 1) {
         // A retry always connects afresh: after an idle period every pooled
         // socket may be stale, and a second stale one would fail the request.
         const pooled = if (attempt == 0) pool.take() else null;
-        const stream = pooled orelse try connectUpstream(io, upstream_host, upstream_port);
+        const stream = pooled orelse try connectUpstream(
+            io,
+            input.upstream_host,
+            input.upstream_port,
+        );
         const active = pool.track(stream) orelse {
             stream.close(io);
             return error.UpstreamUnreachable;
         };
-        const outcome = exchange(
-            stream,
-            client_writer,
-            client_reader,
-            io,
-            req,
-            audit,
-            client_keep_alive,
-        );
+        const outcome = exchange(stream, &input, handshake);
         pool.untrack(active);
         if (outcome) |relayed| {
             if (relayed.origin_reusable) pool.give(io, stream) else stream.close(io);
@@ -421,6 +527,7 @@ test "proxy head rewrite drops hop-by-hop headers and injects audit fields" {
         &w,
         &req,
         .{ .client_ip = "203.0.113.4", .status = "PASS", .rule = "default/allow" },
+        false,
     );
     const out = w.buffered();
     try std.testing.expect(std.mem.startsWith(u8, out, "POST /api?x=1 HTTP/1.1\r\n"));
@@ -518,4 +625,26 @@ test "framed origin responses are relayed exactly and keep the client open" {
         &out,
         true,
     ));
+}
+
+test "response framing honors bodyless replies and rejects ambiguous origin headers" {
+    const t = std.testing;
+    const encoded = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n";
+    try t.expect(parseResponseHead(encoded, true).?.framing == .none);
+    try t.expect(parseResponseHead("HTTP/1.1 103 Early Hints\r\n" ++
+        "Transfer-Encoding: chunked\r\n\r\n", false).?.framing == .none);
+    try t.expect(parseResponseHead("HTTP/1.1 200 OK\r\nContent-Length: 1\r\n" ++
+        "Content-Length: 2\r\n\r\n", false) == null);
+    try t.expect(parseResponseHead("HTTP/1.1 200 OK\r\nConnection: Content-Length\r\n" ++
+        "Content-Length: 1\r\n\r\n", false) == null);
+    try t.expect(parseResponseHead("HTTP/1.1 200 OK\r\n" ++
+        "Transfer-Encoding: chunked, gzip\r\n\r\n", false) == null);
+    var output: [512]u8 = undefined;
+    const relayed = try relayFixed("HTTP/1.1 200 OK\r\nContent-Length: 99\r\n" ++
+        "Transfer-Encoding: chunked\r\nConnection: close, X-Hop\r\nX-Hop: omit\r\n" ++
+        "X-App: preserve\r\n\r\n1\r\na\r\n0\r\n\r\n", &output, true);
+    try t.expect(!relayed.reusable);
+    try t.expect(std.mem.indexOf(u8, output[0..relayed.len], "Content-Length") == null);
+    try t.expect(std.mem.indexOf(u8, output[0..relayed.len], "X-Hop") == null);
+    try t.expect(std.mem.indexOf(u8, output[0..relayed.len], "X-App: preserve") != null);
 }

@@ -286,7 +286,8 @@ fn printHelp() void {
         \\  --workers, -w <n>            Accept threads (default: one per CPU)
         \\  --max-connections <n>        Concurrent connections served (default: 1024)
         \\  --trust-forwarded            Honour X-Forwarded-For / X-Real-IP from the peer
-        \\  --idle-timeout <s>           Socket idle timeout in seconds (default: 15)
+        \\  --idle-timeout <s>           HTTP socket idle timeout in seconds (default: 15)
+        \\  --websocket-idle-timeout <s> WebSocket idle timeout in seconds (default: 300)
         \\
         \\Proof of work and sessions:
         \\  --algorithm, -a <alg>        posw | hashcash (default: posw)

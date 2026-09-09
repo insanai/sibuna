@@ -95,7 +95,8 @@ Common flags (`--help` lists all of them):
 | `--token-scheme mac\|ed25519` | `mac` | Session token construction |
 | `--gate` / `--shield` | shield | Surface |
 | `--rate-limit`, `--rate-window` | `100`, `10` | GCRA burst and window (seconds) |
-| `--idle-timeout` | `15` | Seconds before an idle connection is reaped (slowloris guard) |
+| `--idle-timeout` | `15` | HTTP connection idle timeout in seconds |
+| `--websocket-idle-timeout` | `300` | Upgraded connection idle timeout; traffic in either direction refreshes it |
 | `--policy-file <json>` | none | Declarative rules (SID 0003) |
 | `--workers <n>` | CPU count | Accept threads; each connection is then served on its own thread |
 | `--max-connections <n>` | `1024` | Concurrent connections; further ones are answered 503 |
@@ -105,6 +106,15 @@ Common flags (`--help` lists all of them):
 Internal routes: `/__sibuna/challenge.json`, `/__sibuna/verify`, `/__sibuna/worker.js`,
 `/__sibuna/wasm/sibuna-pow.wasm` (8,831 bytes), `/__sibuna/health`, `/__sibuna/metrics`
 (Prometheus), `/__sibuna/honeypot`.
+
+For HTTPS, terminate TLS at an ingress such as Caddy or Nginx and forward HTTP/1.1 to
+Sibuna on a private listener. Admitted WebSocket upgrades retain their handshake, cookies,
+subprotocols and extensions, then relay bytes in both directions with bounded buffers.
+WebSocket applications need admission before opening their connection, just like other
+protected requests. The relay does not inspect WebSocket message payloads or terminate TLS.
+`zig build proxy-e2e` tests HTTP preservation, upgrades, idle expiry and shutdown; an optional
+`python3 tools/proxy_e2e.py zig-out/bin/sibuna --caddy /path/to/caddy` also checks HTTPS/WSS
+through a real ingress with certificate verification enabled.
 
 ## Policy file
 

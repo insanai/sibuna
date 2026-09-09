@@ -105,7 +105,7 @@ pub const ParseError = error{
     InvalidContentLength,
 };
 
-fn validToken(text: []const u8) bool {
+pub fn validToken(text: []const u8) bool {
     if (text.len == 0) return false;
     for (text) |c| {
         if (!std.ascii.isAlphanumeric(c) and

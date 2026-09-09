@@ -176,6 +176,15 @@ sibuna --port 80 --upstream-host 127.0.0.1 --upstream-port 3000 \
 Admitted requests reach the origin with `X-Forwarded-For`, `X-Real-IP`, `X-Sibuna-Status`, and
 `X-Sibuna-Rule` headers; hop-by-hop headers and any incoming forwarded-for value are stripped.
 
+HTTP/1.1 WebSocket upgrades pass through admission and policy checks before the origin's
+handshake is accepted. Subprotocol and extension negotiation remains end-to-end; two fixed
+16 KiB buffers relay bytes in both directions, including prefetched bytes and half-closes.
+Upgraded sockets remain within the normal connection quota and shutdown registry, but use
+`--websocket-idle-timeout` (300 seconds by default) independently of the HTTP idle deadline.
+Traffic in either direction refreshes that bound. Frames after the handshake are not WAF
+inspection inputs. HTTPS/WSS uses a TLS-terminating ingress in front of Sibuna's private
+HTTP/1.1 listener; Sibuna does not terminate browser TLS itself.
+
 === Forward Auth Behind an Ingress
 
 In `--mode forward_auth` the daemon answers the ingress's subrequest with `200` (plus the audit

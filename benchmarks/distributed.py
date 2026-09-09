@@ -29,8 +29,8 @@ def headers(ip="203.0.113.30", cookie=None):
     return result
 
 
-def session(port):
-    status, _, body = request(port, "/__sibuna/challenge.json?path=/private", headers())
+def session(port, ip="203.0.113.30"):
+    status, _, body = request(port, "/__sibuna/challenge.json?path=/private", headers(ip))
     assert status == 200, (status, body)
     challenge = json.loads(body)
     bits = int(challenge["difficulty"])
@@ -41,7 +41,7 @@ def session(port):
     else:
         raise RuntimeError("no solution within benchmark limit")
     solution = json.dumps({"challenge_id": challenge["id"], "nonce": str(nonce)})
-    status, reply, body = request(port, "/__sibuna/verify", headers(), "POST", solution)
+    status, reply, body = request(port, "/__sibuna/verify", headers(ip), "POST", solution)
     assert status == 200, (status, body)
     cookie = next(v for k, v in reply.items() if k.lower() == "set-cookie").split(";", 1)[0]
     return cookie, solution
