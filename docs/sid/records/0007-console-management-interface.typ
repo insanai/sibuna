@@ -3331,6 +3331,18 @@ the path matcher and preserved historical records as not recorded. Chrome report
 warnings or errors during this audit review. The book and README now document the usable
 console, native country-import command and explicit remaining feature boundaries.
 
+== Policy audit benchmark regeneration (2026-09-09)
+
+The primitive baseline was regenerated from clean revision `6e4f7be` with Zig 0.16.0 and
+Zaxonlite 0.6.1 after review daemons and concurrent compilers stopped. Manifest v2 covers
+375 inputs with SHA-256
+`5630b2e082b8435e321c5b30a41479f765fcc5e5a6ec7df4b0d1eaeaaa5a7021`.
+The daemon is 7,370,808 bytes and its SHA-256 is
+`9d3c80e3d72d847c22ff336b8111591cb0a4ff8e8a2c491997b7c9250c1825c9`.
+Idle RSS was 9,936 KiB with two workers and storage compiled but inactive. Results are in
+`latest-20260909T003841Z.json`. The harness stopped its temporary daemon after measurement.
+This baseline does not establish the separate console-impact throughput/p99 acceptance gate.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
