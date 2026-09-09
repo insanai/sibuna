@@ -73,7 +73,7 @@ pub fn main(init: std.process.Init) !u8 {
             return 1;
         };
     }
-    defer if (persistent) |p| p.stop();
+    defer if (persistent) |p| if (!p.shutdown()) abandonedStorageExit();
 
     const runtime = if (build_options.console and parsed.config.enabled)
         try console_start.Runtime.start(gpa, io, parsed.config, persistent.?)
@@ -86,6 +86,13 @@ pub fn main(init: std.process.Init) !u8 {
     printBanner(cfg, persistent != null);
 
     return runListener(io, cfg, state);
+}
+
+/// Threads left blocked inside the consensus library cannot be joined; the process
+/// exits without the remaining teardown. Acknowledged writes are already durable.
+fn abandonedStorageExit() noreturn {
+    std.log.warn("storage: exiting with an abandoned cluster member", .{});
+    std.process.exit(0);
 }
 
 fn consoleNotCompiled() u8 {

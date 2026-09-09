@@ -18,9 +18,13 @@ const Rpc = struct {
     durable_state_slot: u64 = 0,
 };
 
+pub const interval_seconds = 5;
+
 pub fn refresh(owner: *Persistent, now: u64) void {
     const state = &owner.console_node;
-    if (now == state.storage.observed_at) return;
+    // Never start a status call once shutdown has begun; the owner thread must stay joinable.
+    if (owner.stopping.load(.acquire)) return;
+    if (now -| state.storage.observed_at < interval_seconds) return;
     switch (owner.db) {
         .node => |node| {
             // A single Zaxonlite node leads itself; report it as the one-member case.

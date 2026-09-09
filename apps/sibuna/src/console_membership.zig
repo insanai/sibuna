@@ -12,8 +12,9 @@ const retry_seconds = 30;
 const coalesce_seconds = 2;
 
 pub fn tick(owner: *Persistent) void {
-    // Announcements start with the console's first storage request, which runs migrations.
-    if (!owner.console_initialized) return;
+    // Announcements start with the console's first storage request, which runs migrations,
+    // and stop as soon as shutdown begins so the owner thread never blocks on a late write.
+    if (!owner.console_initialized or owner.stopping.load(.acquire)) return;
     const state = &owner.console_node;
     const now = owner.nowSeconds();
     const since = now -| state.last_heartbeat;

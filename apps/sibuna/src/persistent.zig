@@ -137,6 +137,7 @@ pub const Persistent = struct {
     node_id: u32 = 1,
     thread: ?std.Thread = null,
     stopping: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
+    worker_done: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
 
     pub fn start(
         gpa: std.mem.Allocator,
@@ -198,9 +199,19 @@ pub const Persistent = struct {
     }
 
     pub fn stop(self: *Persistent) void {
+        _ = self.shutdown();
+    }
+
+    /// Stops the storage thread and closes the store. Returns false when the cluster
+    /// member could not be closed within its bound (see `Db.closeBounded`); the caller
+    /// must then exit without touching the store again.
+    pub fn shutdown(self: *Persistent) bool {
         if (build_options.console) self.console_mailbox.stop(self.io);
         self.stopping.store(true, .release);
-        if (self.thread) |t| t.join();
+        if (self.thread) |t| {
+            self.interruptWorker();
+            t.join();
+        }
         if (build_options.console) @import("console_node_storage.zig").close(self);
         self.state.hooks = .{};
         // Producers have stopped. Flush every bounded batch, then account
@@ -214,7 +225,7 @@ pub const Persistent = struct {
             if (self.pending_len == 0) break;
         }
         if (self.pending_sql) |sql| self.gpa.free(sql);
-        self.db.close();
+        const clean = self.db.closeBounded(self.io);
         // Make sure the caller's slot is live again before the owned one
         // is freed, so no worker can still be pinned on freed memory.
         if (self.state.slot.load(.acquire) == self.owned_slot) {
@@ -225,6 +236,20 @@ pub const Persistent = struct {
         self.gpa.destroy(self.owned_slot.engine);
         self.gpa.destroy(self.owned_slot);
         self.gpa.destroy(self);
+        return clean;
+    }
+
+    /// A cluster call has no deadline of its own: a member that is stopping (or that
+    /// stopped mid-handshake) would hold the worker forever. Cancel whatever call is
+    /// in flight until the worker has observed `stopping` and returned.
+    fn interruptWorker(self: *Persistent) void {
+        while (!self.worker_done.load(.acquire)) {
+            switch (self.db) {
+                .node => return,
+                .embedded => |e| if (build_options.cluster) e.cluster.cancelCurrent(),
+            }
+            Io.sleep(self.io, .fromMilliseconds(25), .awake) catch {};
+        }
     }
 
     fn openDb(self: *Persistent) !Db {
@@ -373,13 +398,15 @@ pub const Persistent = struct {
     }
 
     fn worker(self: *Persistent) void {
+        defer self.worker_done.store(true, .release);
         const interval: u64 = @max(50, self.cfg.storage_poll_ms);
         var next_tick: i96 = 0;
         while (!self.stopping.load(.acquire)) {
             const now = Io.Clock.awake.now(self.io).nanoseconds;
             if (now >= next_tick) {
                 self.tick() catch |err| {
-                    std.debug.print("storage: tick failed: {t}\n", .{err});
+                    if (!self.stopping.load(.acquire))
+                        std.debug.print("storage: tick failed: {t}\n", .{err});
                 };
                 next_tick = now + @as(i96, interval) * std.time.ns_per_ms;
             } else if (build_options.console) @import("console_store.zig").tick(self);

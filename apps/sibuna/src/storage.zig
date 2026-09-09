@@ -21,6 +21,9 @@ else
             return error.StorageDisabled;
         }
         pub fn stop(_: *Persistent) void {}
+        pub fn shutdown(_: *Persistent) bool {
+            return true;
+        }
     };
 
 test {
