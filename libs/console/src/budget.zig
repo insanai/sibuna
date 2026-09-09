@@ -31,6 +31,7 @@ pub const Budget = struct {
         @sizeOf(@import("rankings_journal.zig").Journal) +
         @sizeOf(@import("minute_journal.zig").Journal) +
         @sizeOf(@import("geoip_maintenance.zig").Maintenance) +
+        @sizeOf(@import("cluster_probe.zig").Probe) +
         @sizeOf(@import("retention_job.zig").Job);
 
     pub fn validate(self: Budget) Error!void {
@@ -48,8 +49,9 @@ pub const Budget = struct {
     pub fn reservedBytes(self: Budget) Error!u64 {
         try self.validate();
         const connections: u64 = @as(u64, self.slots) + self.peers;
-        // Every streaming connection reserves both a reader and a writer task stack.
-        const stacks = (connections + self.subscribers + self.peers + 3) * self.stack_bytes;
+        // Every streaming connection reserves both a reader and a writer task stack; the
+        // fixed extra stacks are the acceptor, collector, importer and peer probe threads.
+        const stacks = (connections + self.subscribers + self.peers + 4) * self.stack_bytes;
         return stacks + connections * 2 * socket_buffer_bytes +
             @as(u64, self.slots) * body_bytes + import_bytes + auth_bytes +
             topic_bytes + traffic_bytes + query_bytes + evidence_bytes + collector_bytes +
