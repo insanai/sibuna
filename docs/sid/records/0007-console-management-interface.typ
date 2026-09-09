@@ -3296,6 +3296,17 @@ stale age and disabled all node mutations; polling recovered automatically after
 the new boot and control revision zero. These checks do not complete peer management,
 cluster coverage, all-page acceptance or the impact matrix; SID 0007 remains Proposed.
 
+== Nodes UI benchmark regeneration (2026-09-09)
+
+Clean isolated revision `9eb2a68a7736977fd6c7699e685d382da70d9892` regenerated
+`latest-20260909T001059Z.json`. Manifest version 2 covers 373 source inputs with SHA-256
+`0e0521d23e4df8297f9b538f476ccc950c49a629bcbe3478afc74176e53ab55c`;
+the daemon digest is `e0961a8c5347bc1c2643012ae2637af31e7accdf36e9a15b2a95ba2a6f611958`.
+Idle RSS was 9,920 KiB with two workers and storage compiled but inactive. The 8,831-byte
+Wasm measurement is the proof solver. Browser sessions were signed out and both review
+servers stopped before timing. This primitive baseline does not measure active dashboards,
+storage contention or the SID's console-impact acceptance thresholds.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
