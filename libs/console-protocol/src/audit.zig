@@ -19,8 +19,21 @@ pub const Row = struct {
     subject: u64 = 0,
     recorded_at: u64 = 0,
     action: p.Bytes(48) = .{},
-    target: ?p.Bytes(64) = null,
+    target: ?p.Bytes(128) = null,
     actor_role: ?p.Role = null,
+
+    /// Only complete, valid policy identifiers can become navigation targets. The returned
+    /// value owns its bytes, so changing the selected audit row cannot retarget a request.
+    pub fn policyRevision(self: *const Row) ?PolicyRevision {
+        if (!std.mem.eql(u8, self.action.slice(), "policy.edit") or
+            self.subject == 0 or self.subject > last_id) return null;
+        const target = self.target orelse return null;
+        if (target.len == 0) return null;
+        for (target.slice()) |byte| {
+            if (!std.ascii.isAlphanumeric(byte) and byte != '-' and byte != '_') return null;
+        }
+        return .{ .id = target, .revision = self.subject };
+    }
 
     pub fn jsonStringify(self: Row, json: *std.json.Stringify) !void {
         try json.beginObject();
@@ -31,13 +44,15 @@ pub const Row = struct {
                 try p.writeCounter(json, value);
             } else if (field.type == p.Bytes(48)) {
                 try json.write(value.slice());
-            } else if (field.type == ?p.Bytes(64)) {
+            } else if (field.type == ?p.Bytes(128)) {
                 if (value) |text| try json.write(text.slice()) else try json.write(null);
             } else try json.write(value);
         }
         try json.endObject();
     }
 };
+pub const PolicyRevision = struct { id: p.Bytes(128), revision: u64 };
+
 pub const Page = struct {
     rows: [page_rows]Row = @splat(.{}),
     count: usize = 0,
@@ -99,4 +114,25 @@ pub fn validAction(value: []const u8) bool {
             return false;
     }
     return true;
+}
+
+test "audit navigation requires an exact policy action, complete identifier and valid revision" {
+    const t = std.testing;
+    var row: Row = .{
+        .action = try p.Bytes(48).init("policy.edit"),
+        .target = try p.Bytes(128).init("policy-" ++ "a" ** 121),
+        .subject = last_id,
+    };
+    const reference = row.policyRevision().?;
+    try row.target.?.set("different");
+    try t.expectEqual(@as(usize, 128), reference.id.len);
+    try t.expectEqual(@as(u64, last_id), reference.revision);
+    try row.action.set("user.update");
+    try t.expect(row.policyRevision() == null);
+    try row.action.set("policy.edit");
+    row.subject = 0;
+    try t.expect(row.policyRevision() == null);
+    row.subject = 1;
+    try row.target.?.set("<script>");
+    try t.expect(row.policyRevision() == null);
 }
