@@ -162,5 +162,6 @@ test "reloading after a conflict keeps the reviewed draft and requires the new r
     try t.expect(std.mem.indexOf(u8, writer.buffered(), "103") != null);
     try t.expect(std.mem.indexOf(u8, writer.buffered(), "101") != null);
     try action(&state, "managed-confirm", .null, &commands, &generation);
-    try t.expect(std.mem.indexOf(u8, commands.writer.buffered(), "\"expected_revision\":\"8\"") != null);
+    const sent = commands.writer.buffered();
+    try t.expect(std.mem.indexOf(u8, sent, "\"expected_revision\":\"8\"") != null);
 }
