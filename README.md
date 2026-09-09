@@ -53,7 +53,7 @@ Sibuna does not terminate ingress TLS or score bots with a model. Its opt-in con
 includes the animated country globe, incident investigation, policy editing, users, scoped API
 tokens, audit browsing and local node controls. SID 0007 remains proposed while cluster
 management, operational settings and the remaining acceptance gates are implemented. See
-[loading country data from the CLI](#loading-country-data) for DB-IP setup.
+[loading country data from the CLI](#loading-country-data) for country data setup.
 
 ## Research foundations
 
@@ -288,50 +288,69 @@ origin and a trusted proxy; the browser loads globe geometry and telemetry only 
 
 ## Loading country data
 
+Country lookup is provided by the first-party `libs/geoip` library (see its README). The
+default provider is the public-domain `user-country` dataset from
+[ip-location-db](https://github.com/sapics/ip-location-db) (PDDL 1.0, no attribution,
+rebuilt daily from RIR statistics, BGP archives and geofeeds). DB-IP IP to Country Lite
+(CC BY 4.0, monthly) remains selectable with `--provider dbip`.
+
 Start Sibuna with storage and its opt-in console, then finish administrator bootstrap and
 password setup. The CLI prompts for the password without putting it in shell history:
 
 ```sh
-python3 tools/console_geoip.py --origin http://127.0.0.1:19446 \
-    --username admin --month 2026-09
+python3 tools/console_geoip.py --origin http://127.0.0.1:19446 --username admin
 ```
 
 The daemon also provides a native command for scripts with an owner-only password file:
 
 ```sh
-./zig-out/bin/sibuna console geoip update --month 2026-09 \
+./zig-out/bin/sibuna console geoip update --version 2026-09-09 \
     --origin http://127.0.0.1:19446 --username admin \
     --password-file ./admin-password
 ```
 
 Use `console geoip status` to inspect the generation and `--factor-file` when a second factor
-is required. The native update requires an explicit month; the Python helper can select it.
+is required. The native update requires an explicit version; the Python helper defaults to
+today. Versions are `YYYY-MM-DD` for `user-country` and `YYYY-MM` for `dbip`; `--month` is
+the DB-IP alias (`--month 2026-09` means `--provider dbip --version 2026-09`).
 
-The port must match your `--console` listener. Omit `--month` to use the current month.
-Add `--totp` to prompt for an authenticator or recovery code. Use `--status` to inspect
-the active generation without importing. Remote consoles require HTTPS with a valid
-certificate; HTTP is restricted to literal loopback addresses.
+The port must match your `--console` listener. Add `--totp` to prompt for an authenticator
+or recovery code. Use `--status` to inspect the active generation without importing. Remote
+consoles require HTTPS with a valid certificate; HTTP is restricted to literal loopback
+addresses.
 
-The command authenticates to the running console, requests its fixed DB-IP HTTPS download,
-and waits for durable storage and local activation. It never opens the database directly.
-Downloads and imports remain bounded by the daemon's existing limits. An invalid download
-retains the previous generation. Interrupting the CLI or reaching `--timeout` stops polling;
-it does not cancel a submitted import. The CLI signs out its own session when it exits.
-Repeating the command for the active month succeeds without importing it again. A supplied
-checksum must match that active generation.
+The command authenticates to the running console, which downloads the provider's fixed
+HTTPS files (following exactly one redirect to the publisher's asset host), verifies the
+publisher's SHA-256 file for each source file, validates every row, and waits for durable
+storage and local activation. It never opens the database directly. Downloads and imports
+remain bounded by the daemon's existing limits. An invalid download retains the previous
+generation. Interrupting the CLI or reaching `--timeout` stops polling; it does not cancel a
+submitted import. The CLI signs out its own session when it exits. Repeating the command
+for the active provider and version succeeds without importing it again. A supplied checksum
+must match that active generation.
 
-Use `--checksum` with an independently obtained SHA-256 of the published **compressed
-`.csv.gz` file** to require a particular download. No checksum is required for the normal
-certificate-validated HTTPS download. The resulting digest is printed with the active
-revision, source month and range count.
+Use `--checksum` with an independently obtained SHA-256 of the **source bytes in provider
+file order** (for `user-country`: `cat user-country-ipv4.csv user-country-ipv6.csv |
+sha256sum`; for `dbip`: the compressed `.csv.gz`) to require a particular dataset. The
+resulting digest is printed with the active revision, provider, version and range count.
 
-The free [DB-IP IP to Country Lite](https://db-ip.com/db/lite.php) dataset requires
-CC BY 4.0 attribution, which the console displays. Country mapping is approximate.
-Local/private addresses remain Unknown when absent from the dataset. The globe uses sampled
-requests from a rolling 60-second window, so loading the database does not invent traffic
-or retroactively locate old samples. Send requests through the firewall to see live countries.
+Country mapping is approximate. Local/private addresses remain Unknown when absent from the
+dataset. The globe uses sampled requests from a rolling 60-second window, so loading the
+database does not invent traffic or retroactively locate old samples. Send requests through
+the firewall to see live countries. When DB-IP data is active the console shows the CC BY
+4.0 attribution; `user-country` requires none.
 
-The September 2026 dataset was loaded into the development review instance with 717,152
-known-country ranges and compressed SHA-256
-`a32bb3c384bd3de60ad9024596aa5b395a6dd5beaa27a7223407cc2edc681d0b`.
+To validate a download offline or to prepare an embedded snapshot, use the library tool:
+
+```sh
+zig build geoip-snapshot -- --provider user-country --version 2026-09-09 \
+    user-country-ipv4.csv user-country-ipv6.csv --snapshot-out geoip.bin
+zig build -Dgeoip-data=geoip.bin
+```
+
+A build with `-Dgeoip-data` serves lookups from the embedded snapshot (about 5.6 MB for the
+full dataset) at revision 0 until the first durable import replaces it. The September 9,
+2026 `user-country` dataset was loaded into the development review instance with 559,667
+known-country ranges and generation SHA-256
+`cd52619878ee0f7592f1c9eb45b03383722a38b443408348743ba27e18a23ce0`.
 Dataset files and the populated development database are not committed to Git.

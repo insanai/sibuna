@@ -128,7 +128,7 @@ Three differences carry most of the weight in a selection decision.
 #callout([Current product boundary], [
   Sibuna leaves ingress TLS termination to the deployment proxy and does not score bots with
   a trained model or publish paid signatures. Its opt-in console preview now provides
-  authenticated dashboards, DB-IP country enrichment, policy editing and local management.
+  authenticated dashboards, country enrichment, policy editing and local management.
   Country lookup and storage work run outside request classification. SID 0007 remains
   Proposed: cluster management and the full operational and performance acceptance gates
   are still unfinished.

@@ -105,18 +105,22 @@ The native CLI accesses the running console through the same authorization and s
 contracts. It reads credentials from private files, not command-line values:
 
 ```bash
-sibuna console geoip update --month 2026-09 \
+sibuna console geoip update --version 2026-09-09 \
     --origin http://127.0.0.1:19446 --username admin \
     --password-file ./admin-password
 ```
 
 Use an owner-only password file, complete password setup first, and add `--factor-file` for
 an authenticator or recovery code when required. `geoip status` reads the active generation.
-Updates download the free DB-IP country archive, validate bounded ranges, persist the new
-generation and activate it locally. Failed updates preserve the previous generation. A CLI
-timeout stops waiting; it does not cancel submitted storage work. DB-IP Lite requires
-CC BY 4.0 attribution. Unknown addresses, sample loss and stale data remain visible; importing
-country data does not create traffic or enrich already expired samples.
+Updates download the selected provider's published files over HTTPS (the public-domain
+`user-country` dataset by default, or DB-IP Lite with `--provider dbip --version YYYY-MM`),
+verify the publisher's checksums, validate bounded ranges through `libs/geoip`, persist the
+new generation and activate it locally. Failed updates preserve the previous generation. A
+CLI timeout stops waiting; it does not cancel submitted storage work. DB-IP Lite requires
+CC BY 4.0 attribution, shown only while its data is active. A build with `-Dgeoip-data`
+embeds a validated snapshot until the first durable import. Unknown addresses, sample loss
+and stale data remain visible; importing country data does not create traffic or enrich
+already expired samples.
 
 SID 0007 remains Proposed. Cluster management WebSockets, full peer coverage, notifications,
 constrained page templates, kiosk sessions and the console performance impact gates remain

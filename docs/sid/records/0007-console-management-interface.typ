@@ -812,12 +812,25 @@ Existing tables are read, and two are written: `policies` (rule editor) and `ip_
 
 = GeoIP
 
-Country enrichment runs only off the request path. DB-IP IP to Country Lite supplies
-monthly CC BY 4.0 data with attribution. MaxMind GeoLite2 Country is an optional separately
-licensed provider requiring account/license-key setup and its own CSV parser (network blocks
-join location records); it is not a drop-in DB-IP start/end/country CSV. Retain source,
-version, licence and checksum; show provider-specific attribution. Unknown, private,
-reserved and unmapped addresses stay in “Unknown” and never acquire an invented country.
+Country enrichment runs only off the request path. The first-party library `libs/geoip`
+(standard library only; never imported by the data plane) owns address normalization, row
+validation, the immutable sorted generation with binary-search lookup, the compact
+`SBGEOIP1` snapshot format and every provider fact. The default provider is the
+`user-country` dataset of #link("https://github.com/sapics/ip-location-db")[ip-location-db]:
+public domain under the PDDL 1.0 (no attribution), rebuilt daily from RIR delegated
+statistics, public BGP archives and RFC 8805 geofeeds, published as two uncompressed
+`start,end,country` CSV files with a SHA-256 file each. DB-IP IP to Country Lite remains
+selectable as a second provider: monthly, CC BY 4.0, one gzip archive, attribution shown
+wherever its data is displayed. MaxMind GeoLite2 is not offered; its licence requires an
+account and its CSV joins network blocks to location records. The generation digest is the
+SHA-256 of the source bytes in provider file order; per-file publisher digests are recorded
+and enforced when the provider publishes them, and an operator checksum pins the
+generation. A GitHub release download is followed through exactly one HTTPS redirect to an
+allowlisted asset host; any other hop fails. An optional `-Dgeoip-data=<snapshot>` build
+flag embeds a validated snapshot that serves lookups at revision 0 until the first durable
+import replaces it. Unknown, private, reserved and unmapped addresses stay in “Unknown” and
+never acquire an invented country; the transitionally reserved codes `AN` and `FX` that
+RIR-derived data still carries are accepted.
 
 The loader bounds download/compressed and expanded sizes, row count, string lengths and
 transaction sizes. HTTPS and an operator/publisher checksum when available protect transfer;
@@ -1274,12 +1287,12 @@ detail-wire("Policy", [Policy · Rules / Inspection / Limits / IP groups], [Insp
 #figure-box([GeoIP is a complete source/import workflow, with validation, attribution,
 progress, failure recovery and policy-generation pinning.],
 detail-wire("GeoIP", [GeoIP · country enrichment], [Current database], [
-  Provider: DB-IP IP to Country Lite ▾\
-  Source publication: 2026-09 (example)\
+  Provider: ip-location-db user-country ▾\
+  Source version: 2026-09-09 (example, daily)\
   Active generation: 7 · Loaded: 12:00 UTC\
   IPv4 / IPv6 ranges: counts from loader\
   SHA-256: copy digest\
-  Licence: CC BY 4.0 · Attribution: DB-IP
+  Licence: PDDL 1.0 · Attribution: none (DB-IP: CC BY 4.0)
 
   Country only; no individual coordinates.\
   Private/reserved/unmapped addresses: Unknown
@@ -1295,8 +1308,8 @@ detail-wire("GeoIP", [GeoIP · country enrichment], [Current database], [
   Errors keep the prior generation active.\
   Retry / View diagnostic
 
-  Optional MaxMind: account credentials\
-  Stored secret masked · separate format parser
+  Publisher SHA-256 files verified per source file\
+  One HTTPS redirect hop to the fixed asset host
 
   Update data / Review affected country policies\
   Policy prefixes stay pinned until approved.
@@ -1674,7 +1687,7 @@ are historical; the acceptance gates below govern delivery.
 
 - #text("Pending: Space-Saving summaries with error bounds and tested cross-window merge.")
 
-- #text("Pending: DB-IP import then optional MaxMind; bounded downloads/ranges, immutable activation; failed updates retain the active generation.")
+- #text("Verified (2026-09-09): user-country (default, PDDL) and DB-IP imports through libs/geoip; bounded downloads/ranges, publisher checksums, immutable activation; failed updates retain the active generation; optional embedded snapshot. See the GeoIP library evidence.")
 
 - #text("Pending: Authenticated Zig dashboard: live orthographic globe, Traffic/Attacks, country ranks, timeline, summary panels; geometry separate from authentication bundle.")
 
@@ -3408,6 +3421,47 @@ SHA-256 is `c3fce86cc7d4067c474921c45b0c729d9fb01d8256927e3244fc9c0cfc384b01`. F
 classification measured 1,470.09 ns median (1,467.85–1,476.77 ns across seven batches).
 Idle RSS was 9,920 KiB with two workers and storage compiled but inactive. These primitive
 measurements do not satisfy the console-impact acceptance gate.
+
+== GeoIP library, public-domain provider and embedded snapshots (2026-09-09)
+
+Country lookup moved into the standard-library-only `libs/geoip` (address normalization,
+ISO validation, `start,end,country` parsing, the sorted generation with binary search, a
+streaming two-file loader that hashes source bytes, the gzip path, the 34-byte storage row
+codec shared with the storage owner, the `SBGEOIP1` snapshot format and every provider
+fact). The console, its tools and its tests import the library; the data plane does not.
+The default provider is now ip-location-db `user-country` (PDDL 1.0, no attribution, daily,
+two uncompressed CSV files with publisher SHA-256 files); DB-IP Lite remains selectable.
+The MaxMind option is withdrawn. The real September 9, 2026 files contain 252 country codes
+including the transitionally reserved `FX` (2 rows) and `AN` (1 row); both are accepted.
+
+Snapshot rows use a canonical tagged width class (IPv4, /64-aligned IPv6, or full) with an
+adjacency flag; the decoder rejects non-canonical, unordered, overlapping or unknown rows
+and verifies the payload digest. The full dataset encodes to 5,649,713 bytes. Console
+schema 18 records the provider and per-file digests; the protocol carries a 12-byte provider
+name, a 10-byte version and a `hex` or `hex:hex` digest text. GitHub release downloads
+follow exactly one HTTPS redirect to an allowlisted asset host; the publisher checksum file
+is fetched and enforced for every source file before a row enters the loader.
+
+Evidence: the library's 19 native tests and the offline tool validated the real files
+(559,667 known ranges; generation SHA-256
+`cd52619878ee0f7592f1c9eb45b03383722a38b443408348743ba27e18a23ce0` equal to the
+concatenated files; per-file digests equal to the publisher's `.sha256` files), and 64
+random addresses (15 outside any range) agreed with an independent Python bisect. The
+review daemon downloaded both files through the redirect, verified both publisher digests,
+stored 559,667 ranges in 66.8 seconds and restored the provider, version and file digests
+after restart. A build with `-Dgeoip-data` reported the snapshot as `embedded snapshot` at
+revision 0 with 559,667 ranges; a pasted import at expected revision 0 replaced it with
+revision 1, and the native CLI read both states. `-Dconsole=false -Dgeoip-data`, a missing
+file and a file without the magic are refused at build time with GEOIP001/GEOIP002.
+
+Interface changes (provider selector, daily version input, provider-dependent attribution,
+the DB-IP globe credit only while DB-IP data is active) moved the module from 306,856 to
+307,994 bytes. The reductions considered before raising the gate (three page-local button
+helpers with different markup; six authorization-failure branches with distinct messages)
+would have recovered well under one kilobyte each, so the gate was raised to 384 KiB
+(393,216 bytes) with this ledger rather than by unifying behaviour. Formatting, full
+repository tests, console tests, the live console suite (default and embedded builds), SID
+and book generation pass; the console-off, storage-off and cluster builds compile.
 
 = References
 
