@@ -9,11 +9,11 @@ import time
 
 
 class Stream:
-    def __init__(self, port, cookie):
+    def __init__(self, port, cookie, path="/console/stream"):
         self.sock = socket.create_connection(("127.0.0.1", port), timeout=10)
         self.file = self.sock.makefile("rb")
         key = base64.b64encode(os.urandom(16)).decode()
-        head = (f"GET /console/stream HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\n"
+        head = (f"GET {path} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\n"
                 f"Origin: http://127.0.0.1:{port}\r\nCookie: {cookie}\r\n"
                 "Connection: keep-alive, Upgrade\r\nUpgrade: websocket\r\n"
                 f"Sec-WebSocket-Version: 13\r\nSec-WebSocket-Key: {key}\r\n\r\n")
@@ -29,9 +29,14 @@ class Stream:
         assert headers["sec-websocket-accept"] == expected
 
     def send(self, opcode, payload, final=True):
-        assert len(payload) < 126
+        assert len(payload) <= 4096
         mask = os.urandom(4)
-        frame = bytes([(128 if final else 0) | opcode, 128 | len(payload)]) + mask
+        length = len(payload)
+        frame = bytes([(128 if final else 0) | opcode,
+                       128 | (length if length < 126 else 126)])
+        if length >= 126:
+            frame += struct.pack("!H", length)
+        frame += mask
         self.sock.sendall(frame + bytes(byte ^ mask[i % 4] for i, byte in enumerate(payload)))
 
     def receive(self):

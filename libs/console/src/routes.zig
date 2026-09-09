@@ -500,6 +500,13 @@ const table = [_]Route{
         .token_scope = .stats_read,
     },
     .{
+        .path = "/console/ws",
+        .method = .GET,
+        .access = .full,
+        .kiosk = true,
+        .handler = .stream,
+    },
+    .{
         .path = "/console/stream",
         .method = .GET,
         .access = .full,

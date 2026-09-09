@@ -15,6 +15,11 @@ pub fn handle(app: *App, context: *Context, principal: p.Principal) !void {
         return http.fail(context, .service_unavailable, "CONSOLE503");
     }
     defer _ = context.subscribers.fetchSub(1, .release);
+    const channel = if (std.mem.eql(u8, context.request.head.target, "/console/ws"))
+        try app.hub.attach()
+    else
+        null;
+    defer if (channel) |handle_id| app.hub.detach(handle_id);
     _ = try context.request.respondWebSocket(.{ .key = key });
     try context.request.server.out.flush();
     var stream: Stream = .{
@@ -22,6 +27,8 @@ pub fn handle(app: *App, context: *Context, principal: p.Principal) !void {
         .context = context,
         .digest = digest,
         .principal = principal,
+        .channel = channel,
+        .kiosk = principal.kiosk,
         .last_read = .init(app.now()),
     };
     // Every connection has one reader and exactly one writer; a blocked reader never
@@ -66,6 +73,10 @@ const Stream = struct {
     context: *Context,
     digest: [32]u8,
     principal: p.Principal,
+    channel: ?@import("subscription_hub.zig").Handle = null,
+    kiosk: bool,
+    command_second: u64 = 0,
+    command_count: u8 = 0,
     subscribed: std.atomic.Value(bool) = .init(false),
     stopped: std.atomic.Value(bool) = .init(false),
     close_code: std.atomic.Value(u16) = .init(0),
@@ -93,22 +104,10 @@ const Stream = struct {
                 if (!self.authorize()) break;
                 last_auth = now;
             }
-            if (self.subscribed.load(.acquire) and now != last_data) {
-                var buffer: [8192]u8 = undefined;
-                var writer: std.Io.Writer = .fixed(&buffer);
-                std.json.Stringify.value(.{
-                    .op = if (sequence == 0) "snapshot" else "delta",
-                    .epoch = @as([]const u8, &epoch_hex),
-                    .seq = sequence,
-                    .topic = "stats",
-                    .data = self.app.stats.snapshot(
-                        self.app.io,
-                        self.app.telemetry,
-                        self.app.metrics,
-                        now,
-                    ),
-                }, .{}, &writer) catch break;
-                if (!self.send(.text, writer.buffered())) break;
+            if (self.channel) |handle_id| {
+                if (!self.deliver(handle_id)) break;
+            } else if (self.subscribed.load(.acquire) and now != last_data) {
+                if (!self.statistics(&epoch_hex, sequence, now)) break;
                 sequence += 1;
                 last_data = now;
             }
@@ -126,6 +125,48 @@ const Stream = struct {
         self.stopped.store(true, .release);
     }
 
+    fn statistics(self: *Stream, epoch: []const u8, sequence: u64, now: u64) bool {
+        var buffer: [8192]u8 = undefined;
+        var writer: std.Io.Writer = .fixed(&buffer);
+        std.json.Stringify.value(.{
+            .op = if (sequence == 0) "snapshot" else "delta",
+            .epoch = epoch,
+            .seq = sequence,
+            .topic = "stats",
+            .data = self.app.stats.snapshot(
+                self.app.io,
+                self.app.telemetry,
+                self.app.metrics,
+                now,
+            ),
+        }, .{}, &writer) catch return false;
+        return self.send(.text, writer.buffered());
+    }
+
+    fn deliver(self: *Stream, handle_id: @import("subscription_hub.zig").Handle) bool {
+        for (0..p.subscriptions.messages_per_second) |_| {
+            const item = self.app.hub.take(handle_id) orelse return true;
+            if (item == .frame) {
+                if (!self.send(.text, item.frame.bytes.slice())) return false;
+                continue;
+            }
+            var buffer: [512]u8 = undefined;
+            var epoch: [64]u8 = undefined;
+            const text = std.fmt.bufPrint(&epoch, "{s}:{d}", .{
+                self.app.hub.boot, item.gap.epoch,
+            }) catch return false;
+            var writer: std.Io.Writer = .fixed(&buffer);
+            std.json.Stringify.value(.{
+                .op = "gap",
+                .topic = item.gap.topic,
+                .epoch = text,
+                .dropped = p.Counter{ .value = item.gap.dropped },
+            }, .{}, &writer) catch return false;
+            if (!self.send(.text, writer.buffered())) return false;
+        }
+        return true;
+    }
+
     fn authorize(self: *Stream) bool {
         const result = self.app.request(.{ .authorize = .{
             .session_digest = self.digest,
@@ -134,6 +175,7 @@ const Stream = struct {
             return false;
         };
         if (result != .authorized or self.app.restricted(result.authorized)) {
+            if (self.channel != null) _ = self.send(.text, "{\"error\":\"unauthorized\"}");
             self.close(1008);
             return false;
         }
@@ -230,7 +272,27 @@ const Stream = struct {
         return receiver.accept(try ws.decode(bytes, .server));
     }
 
+    fn command(
+        self: *Stream,
+        handle_id: @import("subscription_hub.zig").Handle,
+        payload: []const u8,
+    ) bool {
+        const now = self.app.now();
+        if (now != self.command_second) {
+            self.command_second = now;
+            self.command_count = 0;
+        }
+        if (self.command_count == 64) return false;
+        self.command_count += 1;
+        const input = p.subscriptions.parse(payload) catch return false;
+        if (input.op == .ping) return self.enqueue(.text, "{\"op\":\"pong\"}");
+        if (self.kiosk and input.topic != .stats) return false;
+        self.app.hub.command(handle_id, input) catch return false;
+        return true;
+    }
+
     fn subscribe(self: *Stream, payload: []const u8) bool {
+        if (self.channel) |handle_id| return self.command(handle_id, payload);
         var buffer: [8192]u8 = undefined;
         var fixed = std.heap.FixedBufferAllocator.init(&buffer);
         const parsed = std.json.parseFromSlice(struct {

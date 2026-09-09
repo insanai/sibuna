@@ -19,21 +19,21 @@ pub fn handle(app: *App, context: *http.Context) !void {
     );
     defer request.deinit();
     const cfg = app.challenge_defaults;
-    const algorithm: cm.Algorithm = switch (cfg.algorithm) {
-        .hashcash => .hashcash,
-        .posw => .posw,
-    };
-    const selected = request.value.bin orelse @as(u8, @intCast(cm.index(
-        algorithm,
-        cfg.parameter,
-        cfg.openings,
-    )));
+    const selected = request.value.bin orelse configuredBin(cfg);
     return http.json(context, snapshot(
         &app.telemetry.challenges,
         cfg,
         selected,
         app.now(),
     ), &.{});
+}
+
+pub fn configuredBin(cfg: p.challenges.Defaults) u8 {
+    const algorithm: cm.Algorithm = switch (cfg.algorithm) {
+        .hashcash => .hashcash,
+        .posw => .posw,
+    };
+    return @intCast(cm.index(algorithm, cfg.parameter, cfg.openings));
 }
 
 pub fn snapshot(

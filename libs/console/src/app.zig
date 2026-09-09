@@ -26,6 +26,8 @@ pub const App = struct {
     incidents: *store.ConsoleIncidents,
     metrics: *const core.Metrics,
     stats: Stats = .{},
+    hub: *@import("subscription_hub.zig").Hub,
+    subscriptions: @import("subscription_job.zig").Job = .{},
     history: @import("rankings_journal.zig").Journal = .{},
     minutes: @import("minute_journal.zig").Journal = .{},
     retention: @import("retention_job.zig").Job = .{},
@@ -56,6 +58,8 @@ pub const App = struct {
         const telemetry = try gpa.create(store.ConsoleTelemetry);
         errdefer gpa.destroy(telemetry);
         telemetry.* = store.ConsoleTelemetry.init();
+        const hub = try @import("subscription_hub.zig").Hub.init(gpa, io, boot);
+        errdefer hub.deinit();
         self.* = .{
             .gpa = gpa,
             .totp_key = totp_key,
@@ -65,6 +69,7 @@ pub const App = struct {
             .incidents = incidents,
             .passwords = try Password.init(gpa),
             .telemetry = telemetry,
+            .hub = hub,
             .metrics = metrics,
             .dummy_hash = .{},
             .setup_required = false,
@@ -87,6 +92,14 @@ pub const App = struct {
                 .{ if (ipv6) "[" else "", host, if (ipv6) "]" else "", cfg.port },
             ));
         }
+        try self.startServices(boot);
+        return self;
+    }
+
+    fn startServices(self: *App, boot: [16]u8) !void {
+        const cfg = self.config;
+        const io = self.io;
+        const incidents = self.incidents;
         self.geo_job.app = self;
         self.history.node = cfg.node_id;
         std.debug.assert(!std.mem.allEqual(u8, &boot, 0));
@@ -112,18 +125,21 @@ pub const App = struct {
         self.notifier.holder = .{ .node = cfg.node_id, .boot = self.history.boot };
         try self.notifier.start();
         errdefer self.notifier.stop();
+        try self.subscriptions.start(self);
+        errdefer self.subscriptions.stop();
         self.collector = try std.Thread.spawn(
             .{ .stack_size = 256 * 1024 },
             collect,
             .{self},
         );
-        return self;
     }
 
     /// Called only after the kernel has joined all handlers and streams.
     pub fn deinit(self: *App) void {
         self.incidents.enabled.store(false, .release);
         self.stopping.store(true, .release);
+        self.hub.stop();
+        self.subscriptions.stop();
         self.cluster.stop();
         self.notifier.stop();
         self.geo_job.stop();
@@ -135,6 +151,7 @@ pub const App = struct {
         self.geo.deinit();
         self.passwords.deinit();
         if (self.totp_key) |*key| std.crypto.secureZero(u8, key);
+        self.hub.deinit();
         self.gpa.destroy(self.telemetry);
         self.gpa.destroy(self);
     }
