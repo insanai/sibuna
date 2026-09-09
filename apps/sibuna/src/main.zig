@@ -37,7 +37,7 @@ pub fn main(init: std.process.Init) !u8 {
     var cfg = core.Config.parseArgs(if (build_options.console)
         parsed.data_args
     else
-        daemon_args);
+        daemon_args) catch |err| return invalidMode(err);
     if (build_options.console and !console_start.validate(parsed.config, cfg.data_dir != null))
         return 1;
     if (build_options.console) if (parsed.initial_admin) |username| {
@@ -99,6 +99,12 @@ fn abandonedStorageExit() noreturn {
 fn consoleNotCompiled() u8 {
     std.debug.print("CONSOLEBUILD: console support is not compiled. " ++
         "Hint: build with storage and console enabled.\n", .{});
+    return 1;
+}
+
+fn invalidMode(err: core.Config.ModeError) u8 {
+    std.debug.print("SIBUNAMODE: invalid mode option ({t}). " ++
+        "Hint: supply --mode reverse_proxy or --mode forward_auth once.\n", .{err});
     return 1;
 }
 

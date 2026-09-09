@@ -489,6 +489,8 @@ pub const RequestContext = struct {
     now: u64,
     now_ms: u64,
     keep_alive: bool,
+    /// Route identity precedes any trusted authorization-target rewrite.
+    internal: bool,
 
     fn init(c: *Connection, req: *net.Request, declared_body: usize) RequestContext {
         const ts = Io.Clock.real.now(c.io);
@@ -502,6 +504,7 @@ pub const RequestContext = struct {
             .now = now_ms / 1000,
             .now_ms = now_ms,
             .keep_alive = req.wantsKeepAlive() and declared_body <= req.body.len,
+            .internal = std.mem.startsWith(u8, req.path, "/__sibuna/"),
         };
     }
 
@@ -537,7 +540,8 @@ fn dispatch(ctx: *RequestContext) !bool {
     };
     const st = ctx.state();
     Metrics.bump(&st.metrics.requests);
-    const submission = ctx.req.method == .POST and
+    if (!ctx.internal and !try restoreAuthorizationTarget(ctx)) return false;
+    const submission = ctx.internal and ctx.req.method == .POST and
         std.mem.eql(u8, ctx.req.path, "/__sibuna/verify");
     if (submission) observation.submit(st);
     if (st.bans.isBanned(ctx.client_ip, ctx.now)) {
@@ -553,7 +557,7 @@ fn dispatch(ctx: *RequestContext) !bool {
         );
         return ctx.keep_alive;
     }
-    if (std.mem.startsWith(u8, ctx.req.path, "/__sibuna/")) {
+    if (ctx.internal) {
         try handleInternal(ctx);
         return ctx.keep_alive;
     }
@@ -624,7 +628,6 @@ fn requestDecision(ctx: *RequestContext, name: *[policy.engine.MAX_RULE_NAME]u8)
 
 fn applyPolicy(ctx: *RequestContext) !bool {
     const st = ctx.state();
-    if (!try restoreAuthorizationTarget(ctx)) return false;
     var name: [policy.engine.MAX_RULE_NAME]u8 = undefined;
     const decision = requestDecision(ctx, &name);
     recordAuditFindings(ctx, decision.audited);
@@ -677,7 +680,7 @@ fn applyPolicy(ctx: *RequestContext) !bool {
     }
 }
 
-/// Restore ingress metadata after internal-route dispatch, only for authorization requests.
+/// Restore ingress metadata for external authorization requests before any decision is recorded.
 /// Header slices stay owned by this connection until the authorization reply has completed.
 fn restoreAuthorizationTarget(ctx: *RequestContext) !bool {
     const cfg = ctx.state().config;
@@ -693,7 +696,7 @@ fn restoreAuthorizationTarget(ctx: *RequestContext) !bool {
 fn recordOutcome(ctx: *RequestContext, outcome: store.telemetry.Outcome) void {
     if (!build_options.console) return;
     const telemetry = ctx.state().telemetry orelse return;
-    if (std.mem.startsWith(u8, ctx.req.path, "/__sibuna/")) return;
+    if (ctx.internal) return;
     std.debug.assert(!ctx.outcome_recorded);
     ctx.outcome_recorded = true;
     telemetry.record(outcome, ctx.now, ctx.client_ip, ctx.req.path, ctx.user_agent);
@@ -742,19 +745,23 @@ fn recordIncident(ctx: *RequestContext, category: []const u8) void {
 }
 
 fn writeChallengeResponse(ctx: *RequestContext) !void {
-    const st = ctx.state();
+    // A forward-auth success admits the original request. Keep the interstitial at 401
+    // so ingresses return its HTML without accidentally forwarding an unverified request.
+    const status: net.response.Status = if (ctx.state().config.mode == .forward_auth)
+        .unauthorized
+    else
+        .ok;
+    return writeChallenge(ctx, status);
+}
+
+fn writeChallenge(ctx: *RequestContext, status: net.response.Status) !void {
     const extra = net.response.Extra{
         .headers = "X-Sibuna-Status: CHALLENGE\r\n",
         .keep_alive = ctx.keep_alive,
     };
     const w = ctx.writer();
-    if (st.config.mode == .forward_auth) {
-        const text = "Proof-of-work challenge required";
-        try net.response.write(w, .unauthorized, "text/plain", text, extra);
-        return;
-    }
     if (ctx.req.acceptsHtml()) {
-        return @import("response_pages.zig").respond(ctx, .challenge, .ok, "", .{
+        return @import("response_pages.zig").respond(ctx, .challenge, status, "", .{
             .headers = "X-Sibuna-Status: CHALLENGE\r\n",
         });
     }
@@ -856,13 +863,9 @@ fn handleInternal(ctx: *RequestContext) !void {
             .{ .keep_alive = keep, .cache = true },
         );
     } else if (std.mem.eql(u8, path, "/__sibuna/challenge")) {
-        try net.response.write(
-            w,
-            .ok,
-            "text/html; charset=utf-8",
-            challenge_html,
-            .{ .keep_alive = keep },
-        );
+        // The ingress error handler can serve the page without a second authorization
+        // decision. The browser retains its original URL for issuance and reload.
+        try writeChallenge(ctx, .ok);
     } else if (std.mem.eql(u8, path, "/__sibuna/challenge.json")) {
         try handleChallengeJson(ctx);
     } else if (std.mem.eql(u8, path, "/__sibuna/verify") and ctx.req.method == .POST) {

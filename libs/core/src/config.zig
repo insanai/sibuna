@@ -120,12 +120,24 @@ pub const Config = struct {
         return self.trust_forwarded orelse (self.mode == .forward_auth);
     }
 
-    pub fn parseArgs(args: []const []const u8) Config {
+    pub const ModeError = error{ InvalidMode, MissingMode, DuplicateMode };
+
+    pub fn parseArgs(args: []const []const u8) ModeError!Config {
         var cfg = Config.default();
+        var mode_seen = false;
         var i: usize = 0;
         while (i < args.len) : (i += 1) {
             const arg = args[i];
             const value: ?[]const u8 = if (i + 1 < args.len) args[i + 1] else null;
+            if (std.mem.startsWith(u8, arg, "--mode=")) return error.InvalidMode;
+            if (eqlAny(arg, "--mode", "-m")) {
+                if (mode_seen) return error.DuplicateMode;
+                cfg.mode = Mode.parse(value orelse return error.MissingMode) orelse
+                    return error.InvalidMode;
+                mode_seen = true;
+                i += 1;
+                continue;
+            }
             if (applyFlag(&cfg, arg)) continue;
             if (value) |v| {
                 if (applyOption(&cfg, arg, v)) i += 1;
@@ -162,8 +174,6 @@ pub const Config = struct {
             cfg.upstream_host = v;
         } else if (eqlAny(arg, "--upstream-port", "-u")) {
             cfg.upstream_port = std.fmt.parseInt(u16, v, 10) catch cfg.upstream_port;
-        } else if (eqlAny(arg, "--mode", "-m")) {
-            if (Mode.parse(v)) |m| cfg.mode = m;
         } else if (eqlAny(arg, "--difficulty", "-d")) {
             cfg.default_difficulty = std.fmt.parseInt(u32, v, 10) catch cfg.default_difficulty;
         } else if (eqlAny(arg, "--algorithm", "-a")) {
@@ -267,7 +277,7 @@ test "config defaults and arg parsing" {
         "1@10.0.0.1:9901",   "--cluster-peer",
         "3@10.0.0.3:9901",   "--verbose",
     };
-    const parsed = Config.parseArgs(&args);
+    const parsed = try Config.parseArgs(&args);
     try std.testing.expectEqual(@as(u16, 9090), parsed.listen_port);
     try std.testing.expectEqual(@as(u16, 8000), parsed.upstream_port);
     try std.testing.expectEqual(@as(u32, 18), parsed.default_difficulty);

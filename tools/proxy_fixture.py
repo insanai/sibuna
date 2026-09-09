@@ -71,6 +71,8 @@ class Origin(http.server.BaseHTTPRequestHandler):
             return self.upgrade()
         if self.path == "/browser":
             return self.reply(200, BROWSER.encode(), "text/html")
+        if self.path == "/origin-error":
+            return self.reply(500, b"controlled origin failure", "text/plain")
         if self.path == "/redirect":
             self.send_response(302)
             self.send_header("Location", "https://application.example/login?next=%2Fprivate")

@@ -259,6 +259,9 @@ fn addServer(
     const proxy_check = b.addSystemCommand(&.{ "python3", "tools/proxy_e2e.py" });
     proxy_check.addArtifactArg(exe);
     proxy_e2e.dependOn(&proxy_check.step);
+    const modes_check = b.addSystemCommand(&.{ "python3", "tools/ingress_e2e.py" });
+    modes_check.addArtifactArg(exe);
+    proxy_e2e.dependOn(&modes_check.step);
     const console_e2e = b.step("console-e2e", "Exercise authentication through a real daemon");
     if (console != null) {
         const check = b.addSystemCommand(&.{ "python3", "tools/console_e2e.py" });

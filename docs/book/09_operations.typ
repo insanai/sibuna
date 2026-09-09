@@ -235,11 +235,20 @@ server {
     listen 443 ssl;
     location / {
         auth_request /__sibuna_auth;
+        auth_request_set $sibuna_auth_status $upstream_status;
+        auth_request_set $sibuna_retry_after $upstream_http_retry_after;
+        auth_request_set $sibuna_status $upstream_http_x_sibuna_status;
+        auth_request_set $sibuna_rule $upstream_http_x_sibuna_rule;
+        auth_request_set $sibuna_rule_hash $upstream_http_x_sibuna_rule_hash;
         error_page 401 = @sibuna_challenge;
+        error_page 500 = @sibuna_auth_error;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $sibuna_connection_upgrade;
         proxy_set_header Host $host;
+        proxy_set_header X-Sibuna-Status $sibuna_status;
+        proxy_set_header X-Sibuna-Rule $sibuna_rule;
+        proxy_set_header X-Sibuna-Rule-Hash $sibuna_rule_hash;
         proxy_read_timeout 300s;
         proxy_pass http://127.0.0.1:3000;
     }
@@ -257,26 +266,36 @@ server {
         proxy_set_header Cookie $http_cookie;
     }
     location @sibuna_challenge {
+        rewrite ^ /__sibuna/challenge break;
         proxy_pass http://127.0.0.1:8080;
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Original-URI $request_uri;
-        proxy_set_header X-Forwarded-Uri "";
-        proxy_set_header X-Forwarded-Method $request_method;
     }
-    location /__sibuna/ { proxy_pass http://127.0.0.1:8080;
-    proxy_set_header X-Forwarded-For $remote_addr; }
+    location @sibuna_auth_error {
+        add_header Retry-After $sibuna_retry_after always;
+        if ($sibuna_auth_status = 429) { return 429; }
+        return 503;
+    }
+    location /__sibuna/ {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header X-Forwarded-For $remote_addr;
+    }
 }
 ```
 
 ```caddyfile
 example.com {
-    handle /__sibuna/* { reverse_proxy localhost:8080 }
+    handle /__sibuna/* {
+        reverse_proxy localhost:8080
+    }
     handle {
         forward_auth localhost:8080 {
             uri /
             header_up X-Forwarded-For {remote_host}
             header_up -X-Original-URI
+            copy_headers X-Sibuna-Status X-Sibuna-Rule X-Sibuna-Rule-Hash
         }
         reverse_proxy localhost:3000
     }
@@ -288,6 +307,13 @@ daemon directly in both recipes.
 Caddy supplies original URI/method metadata itself. The exclusive `handle` blocks ensure
 that challenge and verification routes do not enter the forward-auth precheck. Nginx requires
 the explicit Upgrade/Connection headers shown above for application WebSockets.
+The Nginx error handler renders the internal challenge route without making a second
+authorization decision or consuming the upload body. Its auth module accepts only 2xx,
+401 and 403 directly, so the example translates a rate-limited auth error back to 429
+with Retry-After; other authorization failures remain closed with 503. Nginx supplies its
+own 403 body, whereas Caddy forwards Sibuna's denial page. Both recipes replace incoming
+Sibuna audit headers with the actual authorization response. Configure normal TLS certificates
+and application upload/deadline limits at the ingress; the examples show the routing logic.
 
 == Declarative Policy
 

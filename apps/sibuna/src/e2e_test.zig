@@ -594,6 +594,8 @@ test "posw flow through forward-auth mode with ed25519 tokens" {
     try get(p, "/private", ip, browser_ua, browser_accept, resp);
     try std.testing.expectEqual(@as(u16, 401), resp.status());
     try std.testing.expectEqualStrings("CHALLENGE", resp.header("x-sibuna-status").?);
+    try std.testing.expect(std.mem.startsWith(u8, resp.header("content-type").?, "text/html"));
+    try std.testing.expect(std.mem.indexOf(u8, resp.body(), "new Worker(") != null);
 
     const ch = try fetchChallenge(p, ip, browser_ua, "/private");
     try std.testing.expectEqualStrings("posw", ch.algorithm[0..ch.alg_len]);
