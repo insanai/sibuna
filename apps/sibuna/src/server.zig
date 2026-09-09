@@ -304,7 +304,9 @@ pub const IdleTable = struct {
             defer slot.lock.unlock();
             const override = slot.activity.timeout_ms.load(.monotonic);
             const timeout = if (override == 0) timeout_ms else override;
-            if (slot.active and now_ms -| slot.activity.at_ms.load(.monotonic) > timeout) {
+            if (slot.active and timeout != 0 and
+                now_ms -| slot.activity.at_ms.load(.monotonic) > timeout)
+            {
                 slot.stream.shutdown(io, .both) catch {};
                 // Keep ownership until unregister; an old worker must not clear a reused slot.
                 reaped += 1;
@@ -320,21 +322,34 @@ fn nowMs(io: Io) u64 {
 
 fn reaperLoop(io: Io, state: *AppState) void {
     const timeout_ms = @as(u64, state.config.idle_timeout_seconds) * 1000;
-    var next_reap = nowMs(io) + @max(200, timeout_ms / 4);
+    const interval = reaperInterval(state.config) orelse return;
+    var next_reap = nowMs(io) + interval;
     while (!state.stopping.load(.acquire)) {
         const pause = Io.Duration.fromMilliseconds(200);
         Io.sleep(io, pause, .awake) catch return;
         const now = nowMs(io);
         if (now < next_reap) continue;
         _ = state.idle.reap(io, now, timeout_ms);
-        next_reap = now + @max(200, timeout_ms / 4);
+        next_reap = now + interval;
     }
 }
 
 /// Starts the idle reaper when a timeout is configured.
 pub fn startReaper(io: Io, state: *AppState) ?std.Thread {
-    if (state.config.idle_timeout_seconds == 0) return null;
+    if (reaperInterval(state.config) == null) return null;
     return std.Thread.spawn(.{}, reaperLoop, .{ io, state }) catch null;
+}
+
+/// A disabled or very long HTTP timeout must not disable an independent upgrade deadline.
+fn reaperInterval(config: core.Config) ?u64 {
+    const http_seconds = config.idle_timeout_seconds;
+    const websocket_seconds = config.websocket_idle_timeout_seconds;
+    if (http_seconds == 0 and websocket_seconds == 0) return null;
+    const shortest = if (http_seconds == 0) websocket_seconds else if (websocket_seconds == 0)
+        http_seconds
+    else
+        @min(http_seconds, websocket_seconds);
+    return std.math.clamp(@as(u64, shortest) * 250, 200, 1000);
 }
 
 pub fn handleConnection(stream: Io.net.Stream, io: Io, state: *AppState) void {
@@ -1036,7 +1051,9 @@ test "reaped idle slots remain owned until the original connection unregisters" 
     const stream = try listener.accept(io);
     defer stream.close(io);
     const old = table.register(stream, 0).?;
-    try std.testing.expectEqual(@as(u32, 1), table.reap(io, 200, 100));
+    try std.testing.expectEqual(@as(u32, 0), table.reap(io, 200, 0));
+    table.slots[old].activity.timeout_ms.store(100, .monotonic);
+    try std.testing.expectEqual(@as(u32, 1), table.reap(io, 200, 0));
     table.cursor.store(old, .monotonic);
     // The same socket is sufficient to check registry ownership; neither registration closes it.
     const fresh = table.register(stream, 200).?;
@@ -1044,4 +1061,20 @@ test "reaped idle slots remain owned until the original connection unregisters" 
     table.unregister(old);
     try std.testing.expect(table.slots[fresh].active);
     table.unregister(fresh);
+}
+
+test "WebSocket deadlines remain scheduled with disabled or longer HTTP deadlines" {
+    const t = std.testing;
+    try t.expectEqual(@as(?u64, 750), reaperInterval(.{
+        .idle_timeout_seconds = 0,
+        .websocket_idle_timeout_seconds = 3,
+    }));
+    try t.expectEqual(@as(?u64, 750), reaperInterval(.{
+        .idle_timeout_seconds = 3600,
+        .websocket_idle_timeout_seconds = 3,
+    }));
+    try t.expect(reaperInterval(.{
+        .idle_timeout_seconds = 0,
+        .websocket_idle_timeout_seconds = 0,
+    }) == null);
 }
