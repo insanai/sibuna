@@ -15,6 +15,7 @@ pub const Metrics = struct {
     solutions_rejected: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
     rate_limited: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
     banned: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
+    bans_issued: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
     proxied: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
     upstream_errors: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),
     parse_errors: std.atomic.Value(u64) = std.atomic.Value(u64).init(0),

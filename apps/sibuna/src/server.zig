@@ -527,7 +527,10 @@ fn rateLimited(ctx: *RequestContext, rate: store.rate_limiter.Decision, ban_seco
     recordOutcome(ctx, .rate_limited);
     // Capacity pressure refuses this request, but must not become an address-wide ban.
     const ban = if (rate.capacity_exhausted) 0 else ban_seconds;
-    if (ban != 0) st.bans.ban(ctx.client_ip, ctx.now +| ban, ctx.now);
+    if (ban != 0) {
+        st.bans.ban(ctx.client_ip, ctx.now +| ban, ctx.now);
+        Metrics.bump(&st.metrics.bans_issued);
+    }
     const retry_seconds = @max(ban, rate.retry_after_ms / 1000 +
         @intFromBool(rate.retry_after_ms % 1000 != 0));
     var buffer: [64]u8 = undefined;
@@ -800,6 +803,7 @@ fn handleInternal(ctx: *RequestContext) !void {
         try handleVerifySolution(ctx);
     } else if (std.mem.eql(u8, path, "/__sibuna/honeypot")) {
         Metrics.bump(&st.metrics.banned);
+        Metrics.bump(&st.metrics.bans_issued);
         st.bans.ban(ctx.client_ip, ctx.now + st.config.ban_seconds, ctx.now);
         recordIncident(ctx, "honeypot");
         try net.response.writeText(
