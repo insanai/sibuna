@@ -64,24 +64,24 @@
   content((4.2,-0.8), text(size: 8pt)[Trials / expected trials])
 })
 
-#let pipeline_flow() = diagram(
-  spacing: (13mm, 12mm),
+#let pipeline_flow() = fit(diagram(
+  spacing: (24mm, 18mm),
   edge-stroke: 0.8pt + gray,
   node((0,0), [Request], ..node_style),
   node((1,0), [Local bans #linebreak() and rate limit], ..node_style),
   node((2,0), [Inspection #linebreak() and policy], ..node_style),
-  node((0,1), [Origin / auth #linebreak() success], ..good_style),
-  node((1,1), [Session MAC #linebreak() if challenged], ..warn_style),
-  node((2,1), [Deny], ..bad_style),
-  node((1,2), [Issue puzzle], ..warn_style),
+  node((3,0), [Deny], ..bad_style),
+  node((1,1), [Origin / auth #linebreak() success], ..good_style),
+  node((2,1), [Session MAC #linebreak() if challenged], ..warn_style),
+  node((2,2), [Issue puzzle], ..warn_style),
   edge((0,0),(1,0), "-|>"),
   edge((1,0),(2,0), "-|>", [within limits]),
-  edge((2,0),(2,1), "-|>", [DENY]),
-  edge((2,0),(1,1), "-|>", [CHALLENGE]),
-  edge((1,1),(0,1), "-|>", [valid]),
-  edge((1,1),(1,2), "-|>", [missing / invalid]),
-  edge((2,0),(0,1), "-|>", [ALLOW], bend: -35deg),
-)
+  edge((2,0),(3,0), "-|>", [DENY]),
+  edge((2,0),(2,1), "-|>", [CHALLENGE], label-side: left),
+  edge((2,1),(1,1), "-|>", [valid]),
+  edge((2,1),(2,2), "-|>", [missing / invalid], label-side: right),
+  edge((2,0),(1,1), "-|>", [ALLOW], bend: 15deg),
+), 85%)
 
 #let challenge_round_trip() = fit(diagram(
   spacing: (14mm, 11mm),
