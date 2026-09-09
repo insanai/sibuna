@@ -1666,8 +1666,9 @@ identifies the following concrete gaps; the status remains Proposed.
   [Live cluster transport], [Membership and applied revisions use replicated rows; configured
     HTTP probes provide health. Direct TLS peer WebSockets now authenticate configured nodes,
     exchange local-only statistics and fence boot/sequence/watermark changes. The live TLS fixture
-    verifies authentication, certificate rejection, stale recovery and shutdown. Three-node
-    transport and cluster-wide dashboard composition remain acceptance work.],
+    verifies authentication, certificate rejection, stale recovery and shutdown. Three real TLS
+    peers pass local-only accounting, quorum isolation and restart; cluster-wide dashboard
+    composition remains interface work.],
   [Country rule maintenance], [Country actions pin a GeoIP generation. Reviewed replacement now compares added,
     retained and removed prefixes, with a bounded eight-row diff page. Apply binds the country,
     action, expiry, generation and expected policy revision to the preview. The version 26
@@ -4418,6 +4419,23 @@ untrusted CA fail. Every fixture daemon stops with status zero within ten second
 active links and failed reconnects. The scenario is part of `console-e2e` and requires OpenSSL
 only to generate its temporary test certificate. Three-node TLS transport and full browser/
 performance acceptance remain separate gates.
+
+== Three-node TLS peer acceptance (2026-09-10)
+
+The full `zig build -Dcluster=true console-e2e` matrix passes, including the existing edit,
+failover, quorum-loss, rejoin, revocation and drain scenarios and the new direct TLS test.
+Three actual Sibuna nodes connect through certificate-validating test ingresses. Traffic sent
+to node 2 appears at both observers, while node 3's own contribution stays unchanged. Stopped
+members retain stale values; rejoined members establish new boot IDs and fresh counter origins.
+With two consensus members stopped, an authenticated TLS management subscriber continues
+receiving node 1's actual traffic and advancing snapshots beyond the authorization/storage
+wait interval. This confirms that the peer stream does not depend on consensus progress.
+
+The clustered build also exposed a stale leader-change notification call after the queue
+module extraction. It now calls `console_store_deliveries.enqueue`; failures are logged with
+bounded error names instead of being discarded. Every test-owned member is stopped and joined.
+The reusable Python subscription client can attach to an already authenticated transport,
+so peer acceptance uses the same strict chunk/gap checks as browser-protocol tests.
 
 #pagebreak(weak: true)
 

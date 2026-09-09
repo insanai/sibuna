@@ -6,7 +6,16 @@ from console_ws_test import Stream
 
 class Client:
     def __init__(self, port, cookie, record_messages=True):
-        self.stream = Stream(port, cookie, "/console/ws")
+        self._initialize(Stream(port, cookie, "/console/ws"), record_messages)
+
+    @classmethod
+    def from_stream(cls, stream):
+        client = cls.__new__(cls)
+        client._initialize(stream, True)
+        return client
+
+    def _initialize(self, stream, record_messages):
+        self.stream = stream
         self.states = {}
         self.epochs = {}
         self.sequences = {}
