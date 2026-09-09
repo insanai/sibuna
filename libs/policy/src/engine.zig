@@ -16,6 +16,7 @@ const loader = @import("loader.zig");
 const waf = @import("waf.zig");
 const inspection = @import("inspection.zig");
 const rule_limits = @import("rule_limits.zig");
+const page_template = @import("page_template.zig");
 
 pub const Action = rule.Action;
 pub const Header = rule.Header;
@@ -70,6 +71,9 @@ pub const Engine = struct {
     thresholds: WeighThresholds = .{},
     waf_enabled: bool = true,
     inspection_modes: inspection.Modes = .{},
+    /// Operator page templates published with the snapshot. `initInPlace` installs the
+    /// library defaults; the daemon replaces the challenge page with its interstitial.
+    pages: page_template.Pages = undefined,
     bot_matcher: aho.BotMatcher = aho.BotMatcher.init(),
     waf_signatures: waf.Signatures = waf.Signatures.init(),
     ip_trie: radix.Trie = radix.Trie.init(),
@@ -87,6 +91,7 @@ pub const Engine = struct {
         self.thresholds = .{};
         self.waf_enabled = true;
         self.inspection_modes = .{};
+        page_template.defaults(&self.pages, page_template.default_challenge_minimal);
         self.bot_matcher = aho.BotMatcher.init();
         self.ip_trie = radix.Trie.init();
         self.initSignatures();
