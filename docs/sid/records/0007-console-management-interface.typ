@@ -7,7 +7,7 @@
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
 #let sid-status = "Proposed"
-#let sid-last-updated = "2026-09-09"
+#let sid-last-updated = "2026-09-10"
 
 #import "../../shared/sid.typ": sid-document
 #import "@preview/cetz:0.5.2" as cetz
@@ -3958,6 +3958,22 @@ using a test-local trusted certificate and normal hostname validation. Chrome so
 admission challenge, loaded the origin application and received an unsolicited origin message
 and a browser echo through the proxy. This correction does not provide native TLS termination,
 HTTP/2 support or claim that every application protocol is covered by these cases.
+
+== Original authorization target correction (2026-09-10)
+
+The ingress recipes previously supplied an original URL that the forward-auth handler did
+not consume. Path policy could therefore evaluate the authorization endpoint instead of the
+application resource. A bounded borrowed-metadata helper now restores the original path,
+query and method only for trusted forward-auth requests, after internal-route dispatch.
+Conflicting aliases, duplicate fields, absolute URLs and malformed methods are rejected.
+Reverse proxy requests retain their actual URI and Host; a canonical X-Forwarded-Proto is
+derived from the configured ingress trust boundary. Alternate Forwarded/host/port headers
+are removed so client-supplied metadata cannot override that boundary in the origin.
+
+Live regression cases exercise original-path denials through both supported header names,
+untrusted metadata, conflicting URLs, internal-route isolation and origin scheme/Host
+preservation. The book's Caddy recipe now uses exclusive handlers to bypass authorization
+for challenge routes, and its Nginx recipe explicitly forwards WebSocket upgrades.
 
 = References
 

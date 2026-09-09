@@ -570,6 +570,7 @@ fn requestDecision(ctx: *RequestContext, name: *[policy.engine.MAX_RULE_NAME]u8)
 
 fn applyPolicy(ctx: *RequestContext) !bool {
     const st = ctx.state();
+    if (!try restoreAuthorizationTarget(ctx)) return false;
     var name: [policy.engine.MAX_RULE_NAME]u8 = undefined;
     const decision = requestDecision(ctx, &name);
     recordAuditFindings(ctx, decision.audited);
@@ -620,6 +621,19 @@ fn applyPolicy(ctx: *RequestContext) !bool {
             return ctx.keep_alive;
         },
     }
+}
+
+/// Restore ingress metadata after internal-route dispatch, only for authorization requests.
+/// Header slices stay owned by this connection until the authorization reply has completed.
+fn restoreAuthorizationTarget(ctx: *RequestContext) !bool {
+    const cfg = ctx.state().config;
+    if (cfg.mode != .forward_auth) return true;
+    const target = net.forwarded.target(ctx.req, cfg.trustsForwarded()) catch {
+        try net.response.write400(ctx.writer(), "Invalid forwarded request metadata");
+        return false;
+    };
+    if (target) |original| original.apply(ctx.req);
+    return true;
 }
 
 fn recordOutcome(ctx: *RequestContext, outcome: store.telemetry.Outcome) void {
@@ -726,6 +740,7 @@ fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule
     };
     const audit = net.ProxyAudit{
         .client_ip = ctx.client_ip,
+        .scheme = net.forwarded.scheme(ctx.req, cfg.trustsForwarded()),
         .status = status,
         .rule = rule_name,
         .response_status = if (build_options.console) &origin_status else null,

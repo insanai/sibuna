@@ -29,6 +29,7 @@ pub const Audit = struct {
     client_ip: []const u8,
     status: []const u8,
     rule: []const u8,
+    scheme: []const u8 = "http",
     response_status: ?*u16 = null,
 };
 
@@ -154,7 +155,8 @@ fn isHopByHop(name: []const u8) bool {
         "connection",          "keep-alive",         "proxy-connection", "transfer-encoding",
         "te",                  "trailer",            "upgrade",          "x-forwarded-for",
         "x-real-ip",           "x-sibuna-status",    "x-sibuna-rule",    "content-length",
-        "proxy-authorization", "proxy-authenticate",
+        "proxy-authorization", "proxy-authenticate", "forwarded",        "x-forwarded-proto",
+        "x-forwarded-host",    "x-forwarded-port",
     };
     for (hop) |h| {
         if (std.ascii.eqlIgnoreCase(name, h)) return true;
@@ -181,10 +183,11 @@ fn writeHead(w: *Io.Writer, req: *const http.Request, audit: Audit, switching: b
         "Connection: keep-alive\r\n");
     try w.print(
         "X-Forwarded-For: {s}\r\n" ++
+            "X-Forwarded-Proto: {s}\r\n" ++
             "X-Real-IP: {s}\r\n" ++
             "X-Sibuna-Status: {s}\r\n" ++
             "X-Sibuna-Rule: {s}\r\n\r\n",
-        .{ audit.client_ip, audit.client_ip, audit.status, audit.rule },
+        .{ audit.client_ip, audit.scheme, audit.client_ip, audit.status, audit.rule },
     );
 }
 

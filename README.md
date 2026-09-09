@@ -100,7 +100,7 @@ Common flags (`--help` lists all of them):
 | `--policy-file <json>` | none | Declarative rules (SID 0003) |
 | `--workers <n>` | CPU count | Accept threads; each connection is then served on its own thread |
 | `--max-connections <n>` | `1024` | Concurrent connections; further ones are answered 503 |
-| `--trust-forwarded` | auto in forward-auth | Honour `X-Forwarded-For` / `X-Real-IP` |
+| `--trust-forwarded` | auto in forward-auth | Trust ingress client address, scheme and original authorization URL |
 | `--data-dir <path>` | none | Enable the Zaxonlite store (Edge) |
 
 Internal routes: `/__sibuna/challenge.json`, `/__sibuna/verify`, `/__sibuna/worker.js`,
@@ -115,6 +115,11 @@ protected requests. The relay does not inspect WebSocket message payloads or ter
 `zig build proxy-e2e` tests HTTP preservation, upgrades, idle expiry and shutdown; an optional
 `python3 tools/proxy_e2e.py zig-out/bin/sibuna --caddy /path/to/caddy` also checks HTTPS/WSS
 through a real ingress with certificate verification enabled.
+Forward-auth evaluates the trusted ingress's `X-Forwarded-Uri` (Caddy) or `X-Original-URI`
+(Nginx), including its query, and `X-Forwarded-Method`. Bind that listener privately so only
+your ingress can supply these fields. Reverse proxy mode preserves the application Host and
+reconstructs `X-Forwarded-Proto` from trusted ingress metadata, or `http` for a direct request.
+It removes alternate forwarded host/port fields; applications should use the preserved Host.
 
 ## Policy file
 

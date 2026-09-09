@@ -189,14 +189,27 @@ HTTP/1.1 listener; Sibuna does not terminate browser TLS itself.
 
 In `--mode forward_auth` the daemon answers the ingress's subrequest with `200` (plus the audit
 headers), `401` for a challenge, `403` for a denial, or `429` when rate limited. The ingress
-must forward the client address; forward-auth mode trusts it by default.
+must forward the client address and original URL; forward-auth mode trusts them by default.
+Bind this listener privately so only the ingress can connect. `X-Forwarded-Uri` (Caddy) or
+`X-Original-URI` (Nginx), and `X-Forwarded-Method`, restore the application request for policy
+evaluation. Duplicate or conflicting original-URL fields are rejected. Internal daemon routes
+always use the actual request URI. Forward-auth does not inspect a body the ingress omits.
 
 ```nginx
+map $http_upgrade $sibuna_connection_upgrade {
+    default upgrade;
+    '' close;
+}
 server {
     listen 443 ssl;
     location / {
         auth_request /__sibuna_auth;
         error_page 401 = @sibuna_challenge;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $sibuna_connection_upgrade;
+        proxy_set_header Host $host;
+        proxy_read_timeout 300s;
         proxy_pass http://127.0.0.1:3000;
     }
     location = /__sibuna_auth {
@@ -205,11 +218,21 @@ server {
         proxy_pass_request_body off;
         proxy_set_header Content-Length "";
         proxy_set_header X-Original-URI $request_uri;
+        proxy_set_header X-Forwarded-Method $request_method;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Uri "";
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header User-Agent $http_user_agent;
         proxy_set_header Cookie $http_cookie;
     }
-    location @sibuna_challenge { proxy_pass http://127.0.0.1:8080; }
+    location @sibuna_challenge {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Original-URI $request_uri;
+        proxy_set_header X-Forwarded-Uri "";
+        proxy_set_header X-Forwarded-Method $request_method;
+    }
     location /__sibuna/ { proxy_pass http://127.0.0.1:8080;
     proxy_set_header X-Forwarded-For $remote_addr; }
 }
@@ -217,17 +240,23 @@ server {
 
 ```caddyfile
 example.com {
-    forward_auth localhost:8080 {
-        uri /
-        header_up X-Forwarded-For {remote_host}
-    }
     handle /__sibuna/* { reverse_proxy localhost:8080 }
-    reverse_proxy localhost:3000
+    handle {
+        forward_auth localhost:8080 {
+            uri /
+            header_up X-Forwarded-For {remote_host}
+            header_up -X-Original-URI
+        }
+        reverse_proxy localhost:3000
+    }
 }
 ```
 
 The `/__sibuna/*` namespace (interstitial, challenge, verify, solver assets) must reach the
 daemon directly in both recipes.
+Caddy supplies original URI/method metadata itself. The exclusive `handle` blocks ensure
+that challenge and verification routes do not enter the forward-auth precheck. Nginx requires
+the explicit Upgrade/Connection headers shown above for application WebSockets.
 
 == Declarative Policy
 
