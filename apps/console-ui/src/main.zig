@@ -214,9 +214,9 @@ fn action(value: std.json.Value) !void {
     const fields = field(value, "fields") orelse .null;
     const management = @import("management_controller.zig");
     if (try management.action(&state, name, fields, outbox())) return;
-    if (try policyTransfer(name, fields)) return;
-    if (try inspectionAction(name, fields)) return;
-    if (try managedAction(name, fields)) return;
+    if (try managed().transfer(name, fields)) return;
+    if (try managed().inspection(name, fields)) return;
+    if (try managed().action(name, fields)) return;
     if (try policyAction(name, fields)) return;
     if (try similarityAction(name)) return;
     if (try challengeAction(name, fields)) return;
@@ -1142,8 +1142,9 @@ fn policyAction(name: []const u8, fields: std.json.Value) !bool {
     } else if (equal(name, "policy-run") and state.phase == .policies) {
         if (model.testing or model.busy or model.stale) return true;
         if (!model.manager.active and model.applied.len == 0) return true;
+        if (model.manager.review.len != 0) return true;
         var draft: p.Bytes(4096) = undefined;
-        if (model.manager.active and !try managedDocument(fields, &draft)) return true;
+        if (model.manager.active and !try managed().captureDocument(fields, &draft)) return true;
         try model.path.set(string(fields, "path"));
         model.ip = try p.Bytes(48).init(string(fields, "ip"));
         try model.query_string.set(string(fields, "query"));
@@ -1200,7 +1201,7 @@ fn policyResponse(id: []const u8, status: i64, body: std.json.Value) !void {
         });
         return command(.{ .op = "focus", .selector = "#console-message" });
     }
-    if (std.mem.startsWith(u8, id, "managed-")) return managedResponse(id, body);
+    if (std.mem.startsWith(u8, id, "managed-")) return managed().response(id, body);
     if (std.mem.startsWith(u8, id, "policies-")) {
         const applied = string(body, "applied");
         _ = try std.fmt.parseInt(u64, applied, 10);
@@ -1270,199 +1271,6 @@ fn resetState(phase: @import("state.zig").Phase) void {
     state.dark = dark;
 }
 
-fn managedAction(name: []const u8, fields: std.json.Value) !bool {
-    if (!state.fullAccess() or state.phase != .policies or
-        !std.mem.startsWith(u8, name, "managed-")) return false;
-    const model = &state.policies;
-    const manager = &model.manager;
-    if (model.busy or model.testing) return true;
-    manager.active = true;
-    state.message = .{};
-    model.decision = .{};
-    if (equal(name, "managed-refresh")) {
-        manager.view = .catalog;
-        manager.snapshot = .{};
-        manager.next = .{};
-        try managedPost("catalog", .{ .kind = "catalog" });
-    } else if (equal(name, "managed-new")) {
-        if (!state.allows(.manage_policy) or manager.committed.len == 0) return true;
-        manager.form.clear();
-        manager.id = .{};
-        manager.historical = .{};
-        manager.view = .editor;
-        try command(.{ .op = "focus", .selector = "#managed-editor", .top = true });
-    } else if (equal(name, "managed-next")) {
-        if (model.stale or manager.next.len == 0) return true;
-        if (manager.view == .catalog) {
-            try managedPost("catalog", .{
-                .kind = "catalog",
-                .after = manager.next.slice(),
-                .committed = manager.committed.slice(),
-            });
-        } else try managedPost("history", .{
-            .kind = "history",
-            .id = manager.id.slice(),
-            .before = manager.next.slice(),
-            .committed = manager.committed.slice(),
-        });
-    } else if (equal(name, "managed-save")) {
-        if (!state.allows(.manage_policy) or model.stale) return true;
-        var document: p.Bytes(4096) = undefined;
-        if (!try managedDocument(fields, &document)) return true;
-        try managedPost("save", .{
-            .expected_revision = manager.committed.slice(),
-            .document = document.slice(),
-        });
-    } else if (std.mem.startsWith(u8, name, "managed-open:")) {
-        manager.id = try p.Bytes(128).init(name[13..]);
-        manager.historical = .{};
-        try managedPost("document", .{
-            .kind = "document",
-            .id = manager.id.slice(),
-            .committed = manager.committed.slice(),
-        });
-    } else if (std.mem.startsWith(u8, name, "managed-history:")) {
-        manager.id = try p.Bytes(128).init(name[16..]);
-        manager.historical = .{};
-        try managedPost("history", .{
-            .kind = "history",
-            .id = manager.id.slice(),
-            .committed = manager.committed.slice(),
-        });
-    } else if (std.mem.startsWith(u8, name, "managed-version:")) {
-        manager.historical = try p.Bytes(20).init(name[16..]);
-        try managedPost("document", .{
-            .kind = "document",
-            .id = manager.id.slice(),
-            .revision = manager.historical.slice(),
-            .committed = manager.committed.slice(),
-        });
-    }
-    return true;
-}
-
-fn managedDocument(fields: std.json.Value, output: *p.Bytes(4096)) !bool {
-    const manager = &state.policies.manager;
-    manager.form.capture(fields) catch {
-        setMessage("A rule field is too long. Shorten it and try again.");
-        try command(.{ .op = "focus", .selector = "#console-message" });
-        return false;
-    };
-    if (manager.id.len != 0 and !equal(manager.id.slice(), manager.form.id.slice())) {
-        setMessage("An existing rule's ID cannot change. Create a new rule for a different ID.");
-        return false;
-    }
-    manager.form.document(output) catch |err| {
-        setMessage(if (err == error.InvalidRuleLimit)
-            @import("policy_limits.zig").invalid_message
-        else
-            "Check numbers, headers and networks. Rule documents must fit within 4 KiB.");
-        try command(.{ .op = "focus", .selector = "#console-message" });
-        return false;
-    };
-    return true;
-}
-
-fn policyTransfer(name: []const u8, fields: std.json.Value) !bool {
-    var document: p.Bytes(4096) = undefined;
-    const transfer = @import("policy_transfer.zig");
-    const result = transfer.apply(&state, name, fields, &document) catch |err| {
-        setMessage(if (err == error.InvalidRuleLimit)
-            @import("policy_limits.zig").invalid_message
-        else
-            "Check the rule JSON, field types and ID. No rule was imported or saved.");
-        try command(.{ .op = "focus", .selector = "#console-message" });
-        return true;
-    };
-    switch (result) {
-        .ignored => return false,
-        .imported => {
-            setMessage("Draft imported. Review and preview it before saving.");
-            state.message_success = true;
-            try command(.{ .op = "focus", .selector = "#managed-editor", .top = true });
-        },
-        .exported => try command(.{
-            .op = "save-text",
-            .filename = "sibuna-rule.json",
-            .text = document.slice(),
-        }),
-    }
-    return true;
-}
-
-fn inspectionAction(name: []const u8, fields: std.json.Value) !bool {
-    if (!equal(name, "inspection-save")) return false;
-    const model = &state.policies;
-    if (state.phase != .policies or !state.allows(.manage_policy) or
-        model.busy or model.testing or model.stale) return true;
-    const draft = @import("inspection_form.zig").submit(model.page.slice(), fields) catch {
-        setMessage("Refresh the applied revision, choose all four modes and confirm your review.");
-        return true;
-    };
-    model.inspection_draft = draft.modes;
-    try managedPost("inspection", .{
-        .expected_revision = draft.revision.slice(),
-        .document = draft.document.slice(),
-    });
-    return true;
-}
-
-fn managedPost(kind: []const u8, body: anytype) !void {
-    policy_generation +%= 1;
-    var buffer: [48]u8 = undefined;
-    const id = try std.fmt.bufPrint(&buffer, "managed-{s}-{d}", .{ kind, policy_generation });
-    state.policies.busy = true;
-    try post(
-        id,
-        if (equal(kind, "save")) "/console/api/policies/edit" else if (equal(kind, "inspection"))
-            "/console/api/inspection/edit"
-        else
-            "/console/api/policies/read",
-        body,
-    );
-}
-
-fn managedResponse(id: []const u8, body: std.json.Value) !void {
-    const model = &state.policies;
-    const manager = &model.manager;
-    const revision = string(body, "committed");
-    _ = try std.fmt.parseInt(u64, revision, 10);
-    manager.committed = try p.Bytes(20).init(revision);
-    model.stale = false;
-    if (std.mem.startsWith(u8, id, "managed-inspection-")) {
-        model.stale = true;
-        setMessage("Inspection modes saved. Refresh to review this node's applied settings.");
-        state.message_success = true;
-        return command(.{ .op = "focus", .selector = "#console-message" });
-    }
-    if (std.mem.startsWith(u8, id, "managed-save-")) {
-        manager.id = manager.form.id;
-        manager.historical = .{};
-        setMessage("Rule saved. Check Applied rules for this node's loaded revision.");
-        state.message_success = true;
-        return command(.{ .op = "focus", .selector = "#console-message" });
-    }
-    if (std.mem.startsWith(u8, id, "managed-document-")) {
-        var candidate: @import("policy_form.zig").Form = undefined;
-        try candidate.load(string(body, "document"));
-        manager.form = candidate;
-        manager.id = manager.form.id;
-        manager.view = .editor;
-    } else {
-        var writer: std.Io.Writer = .fixed(&manager.snapshot.data);
-        try std.json.Stringify.value(body, .{}, &writer);
-        manager.snapshot.len = writer.buffered().len;
-        manager.next = try p.Bytes(128).init(string(body, "next"));
-        manager.view = if (std.mem.startsWith(u8, id, "managed-history-")) .history else .catalog;
-    }
-    state.message = .{};
-    try command(.{
-        .op = "focus",
-        .top = true,
-        .selector = if (manager.view == .editor) "#managed-editor" else "main h1",
-    });
-}
-
 test "browser callbacks cannot read application state before explicit startup" {
     initialized = false;
     state = undefined;
@@ -1474,4 +1282,8 @@ test "browser callbacks cannot read application state before explicit startup" {
     try std.testing.expectEqual(.loading, state.phase);
     try std.testing.expectEqual(@as(usize, 0), state.csrf.len);
     try std.testing.expect(!state.policies.manager.active);
+}
+
+fn managed() @import("managed_controller.zig").Controller {
+    return .{ .state = &state, .out = outbox(), .generation = &policy_generation };
 }

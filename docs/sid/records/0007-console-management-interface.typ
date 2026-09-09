@@ -3353,6 +3353,29 @@ existing spacing warnings; figure geometry remains embedded. The updated console
 book pages were also rendered and inspected. This closes the document-rendering check only;
 SID 0007 remains Proposed and its unfinished feature and performance checks remain open.
 
+== Reviewed policy saves and historical comparisons (2026-09-09)
+
+Managed-policy actions, imports, inspection submissions and responses now share one
+controller with a dispatch-local borrowed context for state, transport and request generation.
+The Wasm entry point composes it without passing repeated callback signatures or retaining
+browser buffers. Native policy and node controller tests share a caller-owned command fixture.
+
+Saving a rule first captures a bounded, owned document and presents changed editor fields in
+a before/after table. Confirm save submits that exact document with the reviewed revision;
+Back to editor preserves the draft. Unchanged reviews disable confirmation. While a review
+is open, draft import and request-preview actions cannot replace its inputs. Historical
+selection first reads the current document at the pinned revision, then reads the chosen
+historical document using the same revision. A revert is a new policy edit and audit record.
+
+Formatting, full tests, console tests and SID compilation pass with 345 tests; storage-off,
+console-off and cluster builds also pass. The UI is 303,740 bytes within its 307,200-byte cap.
+Real Chrome checks covered cancellation, confirmation, unchanged drafts, focus, persistent
+navigation, a historical revert and the 390-pixel mobile layout without horizontal overflow.
+The disabled fixture rule was restored and the review daemon stopped. Chrome reported no
+warnings or errors. Audit-to-policy navigation, preserving and comparing a draft after a
+concurrent edit, recent-event match previews, and the other unfinished SID features remain
+separate work; this increment does not close the overall Policy or Console acceptance gates.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

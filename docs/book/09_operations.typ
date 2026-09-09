@@ -86,7 +86,9 @@ Committed CSS and the Zig/Wasm interface ship with ordinary builds; npm is neede
 regenerating style assets.
 
 Policy previews build a private candidate including configured file rules. Saves compare the
-expected revision; committed and locally applied revisions are distinct. Audit details retain
+expected revision and require confirmation of a field comparison. Historical reverts compare
+against the current rule and create a new revision. Committed and locally applied revisions
+are distinct. Audit details retain
 bounded decision changes and the effective acting role. Matcher values are redacted and old
 records with missing context remain explicitly absent. Drain, resume and clear-local-bans
 require a command preview. Inspect the durable receipt after a lost response before retrying;

@@ -17,7 +17,8 @@ pub fn apply(
     const model = &state.policies;
     const manager = &model.manager;
     if (!state.fullAccess() or state.phase != .policies or !manager.active or
-        manager.view != .editor or model.busy or model.testing) return error.Unavailable;
+        manager.view != .editor or manager.review.len != 0 or
+        model.busy or model.testing) return error.Unavailable;
     if (importing and !state.allows(.manage_policy)) return error.Unavailable;
     if (fields != .object) return error.InvalidDocument;
     if (exporting) {

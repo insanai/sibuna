@@ -11,6 +11,8 @@ pub const Model = struct {
     next: p.Bytes(128) = .{},
     id: p.Bytes(128) = .{},
     historical: p.Bytes(20) = .{},
+    baseline: p.Bytes(4096) = .{},
+    review: p.Bytes(4096) = .{},
     import_text: p.Bytes(4096) = .{},
     form: Form = .{},
 };
@@ -91,6 +93,11 @@ fn editor(state: *const @import("state.zig").State, w: *Writer) Writer.Error!voi
         try html.render(w, @embedFile("snippets/policy-restore-notice.html"), .{
             .revision = model.historical.slice(),
         });
+    }
+    if (model.review.len != 0) {
+        try @import("policy_changes.zig").render(w, model, state.policies.busy or
+            state.policies.testing or state.policies.stale);
+        return html.render(w, "</section>", .{});
     }
     try html.render(w, "<form id=\"policy-run\" class=\"sb-settings-form sb-policy-form\">", .{});
     try @import("policy_form.zig").render(w, &model.form, model.id.len != 0);

@@ -32,17 +32,7 @@ fn signedIn() State {
     };
 }
 
-const Harness = struct {
-    memory: [8192]u8 = undefined,
-    writer: std.Io.Writer = undefined,
-    count: usize = 0,
-
-    fn out(self: *Harness) @import("transport.zig").Outbox {
-        self.writer = .fixed(&self.memory);
-        self.count = 0;
-        return .{ .writer = &self.writer, .count = &self.count, .csrf = "test csrf" };
-    }
-};
+const Harness = @import("test_transport.zig").Commands;
 
 fn reply(state: *State, value: anytype, h: *Harness) !void {
     var bytes: [4096]u8 = undefined;

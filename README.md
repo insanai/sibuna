@@ -272,7 +272,9 @@ The console listener starts only when `--console` is supplied.
 
 The signed-in interface keeps navigation across dashboards, policy and inspection editors,
 events, users, tokens, audit and node controls. Policy previews evaluate a private candidate;
-saves use expected revisions and show committed and locally applied revisions separately.
+saves show a field comparison and require confirmation with an expected revision. Historical
+reverts compare against the current rule and create a new revision. Committed and locally
+applied revisions remain separate.
 Audit detail shows recorded before/after settings and marks missing historical data or redacted
 selectors. The Nodes page controls only the serving node: drain, resume and clear local bans
 require a preview and produce durable command receipts. Peer health and cluster commands remain
