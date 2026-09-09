@@ -145,8 +145,10 @@ inspection findings, manage IP groups and country blocks pinned to the active Ge
 generation, and export or atomically import the managed set (also `sibuna console policies
 export` and `sibuna console policies import --file <set.json>`).
 
-SID 0007 remains Proposed. Direct peer telemetry sockets remain unfinished, and the impact
-gate must pass on a declared quiet host before the record advances.
+SID 0007 remains Proposed. Every functional gate is verified; the console-impact gate
+measured inconclusive on the development host (the baseline's own spread exceeds the 1 %
+rule), so the performance claim waits for a quiet host, and direct peer telemetry sockets
+remain a deferred design.
 
 == Deployment Topologies
 

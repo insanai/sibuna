@@ -283,7 +283,8 @@ named by `--console-probe <node-id>=<http://ip:port>`; `--console-advertise <ori
 the link peers show. Drain, resume and clear local bans still act only on the serving node,
 require a preview and produce durable command receipts. Under `-Dcluster=true`,
 `zig build console-e2e` also runs a three-node membership, failover and quorum-loss scenario,
-and `zig build console-impact` measures the console's cost to the data plane.
+and `zig build console-impact` measures the console's cost to the data plane (the latest
+record measured inconclusive on a busy development host; the gate needs a quiet machine).
 
 A wall display signs in with a one-time kiosk code: an operator mints it from the console
 (`POST /console/api/kiosk/token`), the display pastes it into the sign-in page and receives a
