@@ -146,5 +146,5 @@
     label(x+4,160,c.at(1),size:6pt,color:muted)
   }
   label(42,171,[Geo sample p = 1/64 · loss 0 · known country 96% · blue: traffic / red: attacks · table includes hidden hemisphere],size:5.6pt,color:muted)
-  label(42,176,[Wireframe only · illustrative traffic and simplified geography · no live console is implemented yet],size:5pt,color:muted)
+  label(42,176,[Wireframe only · illustrative traffic and simplified geography · example data],size:5pt,color:muted)
 })

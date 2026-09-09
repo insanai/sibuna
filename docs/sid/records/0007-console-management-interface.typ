@@ -1726,7 +1726,7 @@ are historical; the acceptance gates below govern delivery.
 
 - #text("Pending: Native UI render tests and browser auth/update/accessibility/responsive/reconnect tests.")
 
-- #text("Pending: Typst PDF/PNGs regenerated; every wireframe visually inspected; HTML embeds figures.")
+- #text("Verified (2026-09-09): Typst PDF/PNGs regenerated; all 18 wireframes visually inspected; HTML retains all 20 inline SVG figures.")
 
 - #text("Verified: SID 0007 has no removed-product references; book comparisons preserved.")
 
@@ -3342,6 +3342,16 @@ The daemon is 7,370,808 bytes and its SHA-256 is
 Idle RSS was 9,936 KiB with two workers and storage compiled but inactive. Results are in
 `latest-20260909T003841Z.json`. The harness stopped its temporary daemon after measurement.
 This baseline does not establish the separate console-impact throughput/p99 acceptance gate.
+
+== Document rendering acceptance (2026-09-09)
+
+Typst regenerated the PDF and every page PNG at 110 ppi. All 18 wireframes (Figures 3–20,
+pages 25–34) were visually inspected for panel, label and caption clipping. The stale landing
+illustration label now identifies example data without claiming no console exists. The HTML
+bundle contains 20 figure elements and 20 inline SVGs. Typst's experimental HTML export emits
+existing spacing warnings; figure geometry remains embedded. The updated console operations
+book pages were also rendered and inspected. This closes the document-rendering check only;
+SID 0007 remains Proposed and its unfinished feature and performance checks remain open.
 
 = References
 
