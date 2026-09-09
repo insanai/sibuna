@@ -4333,6 +4333,48 @@ multi-topic endpoint, reconstructs complete updates and verifies each subscriber
 Dedicated peer transport, remaining interface requirements, Chrome review and controlled-host
 performance acceptance remain open. The record stays Proposed.
 
+
+== Peer transport primitives and upgrade validation (2026-09-10)
+
+Peer authentication uses the standard HMAC-SHA256 construction in
+#link("https://www.rfc-editor.org/rfc/rfc2104.html")[RFC 2104]. A separately provisioned
+32-byte master derives the application key under `sibuna-console-peer-v1/key`. The client
+proof uses the distinct `sibuna-console-peer-v1/client` domain followed by a fixed 64-byte
+transcript: source and destination node IDs (two big-endian u32), Unix time (big-endian u64),
+a 32-byte nonce and the decoded 16-byte WebSocket key. The server proof uses the `server`
+domain, the same transcript, its 16-byte boot identifier and a fresh 32-byte nonce.
+Proofs retain all 256 bits and comparisons take constant time.
+
+Fixed widths make the encoding unambiguous; role domains prevent reflection between request
+and response proofs. Subject to HMAC's authentication assumption, modifying an identity,
+time, nonce, WebSocket key or server boot requires a new valid proof. TLS must independently
+validate the configured server name and certificate chain; the MAC does not provide encryption
+or replace certificate validation. Shared-key members are trusted to report their own
+observations: this design does not tolerate a malicious key-holding member impersonating
+another configured identity. Rotation requires coordinated provisioning and restart.
+
+Authenticated requests admit at most thirty seconds of clock skew. The bounded replay cache
+has 256 receipts, retained for sixty-one seconds, covering even a future-dated accepted proof.
+Invalid proofs consume no receipt; exhaustion fails closed without evicting live receipts.
+The configured membership allows at most eight other nodes and one incoming connection per
+node. The ephemeral observation store fences connection generations, rejects mismatched node
+or boot identity, and deduplicates sequence, ring watermark and monotonic observation interval.
+A restart increments reset metadata; stale or failed links retain their last observed values.
+Copied snapshots own all their data, including replacing the parser's sampling-text slice.
+
+These are tested primitives, not an enabled peer listener or an acceptance claim for cluster
+telemetry. TLS dialing, signed upgrade headers, shutdown integration and interface coverage
+remain the next transport increment. Native tests include independent HMAC transcript vectors,
+replay saturation/expiry, explicit HTTPS configuration, duplicate inbound links, reconnects,
+boot replacement and late results from an old connection.
+
+Browser and peer transports now share role-aware frame reading and upgrade validation under
+`libs/serve`. Reads enforce capacity before calling buffered I/O, and the RFC 6455 acceptance
+vector passes. HTTP/1.0 upgrades and malformed base64 keys return 400; they no longer reach a
+standard-library assertion or a generic service error. The real six-topic scenario checks
+both refusals before continuing on the same daemon. The console matrix and shipped-Wasm
+scenario pass after this extraction; Chrome remains a separate acceptance gate.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

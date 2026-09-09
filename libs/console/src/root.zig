@@ -38,6 +38,9 @@ test {
     _ = @import("geoip_generation.zig");
     _ = @import("geoip_embedded.zig");
     _ = @import("cluster_probe.zig");
+    _ = @import("peer_auth.zig");
+    _ = @import("peer_config.zig");
+    _ = @import("peer_store_test.zig");
     _ = @import("notify_target.zig");
     _ = @import("notify_syslog.zig");
     _ = @import("notify_events.zig");
