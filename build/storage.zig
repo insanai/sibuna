@@ -1,7 +1,8 @@
 const std = @import("std");
 
-/// Preserve the pinned dependency and all of its C/TLS/import configuration. Only the
-/// generated Zig source tree receives the reviewed sealed-journal iterator correction.
+/// The pinned Zaxonlite dependency with its C/TLS/import configuration. Release 0.6.2
+/// carries the sealed-journal iterator correction upstream, so no generated-source patch
+/// is applied any more.
 pub fn add(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
@@ -13,17 +14,5 @@ pub fn add(
         .optimize = optimize,
         .tls = cluster,
     });
-    const module = dependency.module("zaxonlite");
-    const patch = b.addSystemCommand(&.{"python3"});
-    patch.addFileArg(b.path("tools/patch_zaxonlite.py"));
-    patch.addFileArg(dependency.path("src/journal.zig"));
-    patch.addFileArg(b.path("build/patches/zaxonlite-0.6.1-journal.patch"));
-    const journal = patch.addOutputFileArg("journal.zig");
-    const sources = b.addWriteFiles();
-    const directory = sources.addCopyDirectory(dependency.path("src"), "src", .{
-        .exclude_extensions = &.{"journal.zig"},
-    });
-    _ = sources.addCopyFile(journal, "src/journal.zig");
-    module.root_source_file = directory.path(b, "root.zig");
-    return module;
+    return dependency.module("zaxonlite");
 }
