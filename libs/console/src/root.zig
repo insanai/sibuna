@@ -32,6 +32,7 @@ test {
     _ = @import("rankings_archive.zig");
     _ = @import("rankings_journal_test.zig");
     _ = @import("geoip_generation.zig");
+    _ = @import("geoip_embedded.zig");
 }
 
 pub const RetentionJob = @import("retention_job.zig").Job;

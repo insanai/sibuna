@@ -9,6 +9,7 @@ pub fn handle(app: *App, context: *http.Context, user: p.Principal) !void {
     if (context.request.head.method == .GET) {
         job.mutex.lockUncancelable(app.io);
         const metadata = job.metadata;
+        const embedded = job.embedded;
         job.mutex.unlock(app.io);
         const provider = geoip.Provider.parse(metadata.provider.slice()) orelse .user_country;
         return http.json(context, .{
@@ -21,7 +22,7 @@ pub fn handle(app: *App, context: *http.Context, user: p.Principal) !void {
             .loaded_at = metadata.loaded_at,
             .status = @tagName(job.status.load(.acquire)),
             .processed_ranges = job.progress.load(.acquire),
-            .source = provider.title(),
+            .source = if (embedded) "embedded snapshot" else provider.title(),
             .license = provider.license(),
             .attribution = provider.attribution() orelse "",
         }, &.{});

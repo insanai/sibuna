@@ -71,6 +71,10 @@ def stop(proc):
 
 
 def geo_import(console_port, cookie, csrf):
+    before = json.loads(request(console_port, "GET", "/console/api/geoip", cookie=cookie)[2])
+    # A build may embed a snapshot; it serves at revision 0 until the first durable import.
+    assert before["revision"] == 0, before
+    assert before["ranges"] == 0 or before["source"] == "embedded snapshot", before
     source = {"provider": "dbip", "source_version": "2026-09", "expected_revision": 0,
               "csv": "".join(f"8.8.{i}.0,8.8.{i}.255,US\n" for i in range(200))}
     assert request(console_port, "POST", "/console/api/geoip", source, cookie, csrf)[0] == 200
@@ -79,6 +83,8 @@ def geo_import(console_port, cookie, csrf):
         metadata = json.loads(request(console_port, "GET", "/console/api/geoip", cookie=cookie)[2])
         if metadata["status"] == "applied":
             assert metadata["ranges"] == 200 and metadata["revision"] == 1
+            assert metadata["source"] == "DB-IP IP to Country Lite", metadata
+            assert metadata["provider"] == "dbip" and metadata["license"] == "CC BY 4.0"
             break
         assert metadata["status"] != "failed", metadata
         time.sleep(0.02)

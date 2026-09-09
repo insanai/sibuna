@@ -9,6 +9,7 @@ pub fn add(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
+    geoip_data: ?[]const u8,
 ) Modules {
     const protocol = b.addModule("console-protocol", .{
         .root_source_file = b.path("libs/console-protocol/src/root.zig"),
@@ -30,6 +31,9 @@ pub fn add(
     const geoip = @import("geoip.zig").add(b, target, optimize);
     console.addImport("serve", serve);
     console.addImport("geoip", geoip);
+    console.addAnonymousImport("geoip_snapshot", .{
+        .root_source_file = @import("geoip.zig").snapshot(b, geoip_data),
+    });
     addUi(b, protocol, console);
     addAssets(b);
     @import("geoip.zig").addTools(b, geoip);

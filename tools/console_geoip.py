@@ -66,7 +66,7 @@ PROVIDERS = {
 def import_country(console, provider, version, checksum, timeout):
     before = console.request("GET", "geoip")
     active = before["provider"] == provider and before["source_version"] == version
-    if active and before["ranges"] > 0:
+    if active and before["ranges"] > 0 and before["revision"] > 0:
         if checksum and before["digest"].lower() != checksum.lower():
             raise RuntimeError("Active version has a different checksum; inspect GeoIP status")
         print("Requested version is already active; no import needed")

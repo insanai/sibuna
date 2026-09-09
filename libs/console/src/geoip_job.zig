@@ -23,13 +23,15 @@ pub const Job = struct {
     progress: std.atomic.Value(u32) = .init(0),
     input: Input = undefined,
     metadata: p.geo.Metadata = .{},
+    /// True while an embedded build snapshot serves lookups in place of a durable generation.
+    embedded: bool = false,
 
     /// Startup restores only the durable active pointer; incomplete staging is invisible.
     pub fn restore(self: *Job) !void {
         const result = try self.app.background(.geo_metadata);
         if (result != .geo_metadata) return error.StorageUnavailable;
         const metadata = result.geo_metadata;
-        if (metadata.ranges == 0) return;
+        if (metadata.ranges == 0) return self.restoreEmbedded(metadata.revision);
         if (metadata.ranges > geoip.max_ranges or metadata.digest.len != 64)
             return error.InvalidGeneration;
         const ranges = try self.app.gpa.alloc(geoip.Range, metadata.ranges);
@@ -62,6 +64,27 @@ pub const Job = struct {
         self.app.geo.revision = metadata.revision;
         self.app.geo.loaded.store(true, .release);
         self.metadata = metadata;
+    }
+
+    /// Without a durable generation, an embedded build snapshot serves lookups until the
+    /// first import. It keeps storage's revision, so any import replaces it.
+    fn restoreEmbedded(self: *Job, revision: u64) !void {
+        const embedded = @import("geoip_embedded.zig");
+        if (!embedded.present) return;
+        const database = (try embedded.load(self.app.gpa)) orelse return;
+        self.app.geo.active = database;
+        self.app.geo.revision = revision;
+        self.app.geo.loaded.store(true, .release);
+        self.embedded = true;
+        self.metadata = .{
+            .revision = revision,
+            .digest = try p.Bytes(64).init(&std.fmt.bytesToHex(database.digest, .lower)),
+            .provider = try p.Bytes(p.geo.max_provider).init(database.provider.name()),
+            .source_version = try p.Bytes(p.geo.max_version).init(database.version.slice()),
+            .source_digests = try sourceDigests(&database),
+            .ranges = @intCast(database.ranges.len),
+            .loaded_at = 0,
+        };
     }
 
     pub fn start(self: *Job, input: Input) !void {
@@ -175,6 +198,7 @@ pub const Job = struct {
         try self.app.geo.activate(self.app.io, staged, self.input.expected_revision);
         transferred = true;
         self.mutex.lockUncancelable(self.app.io);
+        self.embedded = false;
         self.metadata = .{
             .revision = self.input.expected_revision + 1,
             .digest = digest,

@@ -39,7 +39,20 @@ pub fn build(b: *std.Build) void {
         );
         b.invalid_user_input = true;
     }
-    const console_modules = console_build.add(b, target, optimize);
+    const geoip_data = b.option(
+        []const u8,
+        "geoip-data",
+        "Embed a validated GeoIP snapshot from zig build geoip-snapshot (default: none)",
+    );
+    if (geoip_data != null and !console_enabled) {
+        std.log.err(
+            "GEOIP001: an embedded GeoIP snapshot requires console support. " ++
+                "Use -Dconsole=true or omit -Dgeoip-data.",
+            .{},
+        );
+        b.invalid_user_input = true;
+    }
+    const console_modules = console_build.add(b, target, optimize, geoip_data);
 
     const modules = addModules(b, target, optimize);
     console_modules.console.addImport("core", modules.core);

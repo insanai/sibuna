@@ -155,16 +155,18 @@ fn parse(bytes: []const u8) Error!Metadata {
     if (wire.revision > std.math.maxInt(i64) or wire.ranges > 1024 * 1024 or
         wire.processed_ranges > 1024 * 1024) return error.InvalidResponse;
     const provider = geoip.Provider.parse(wire.provider) orelse return error.InvalidResponse;
-    if (!std.mem.eql(u8, wire.source, provider.title()) or
+    // An embedded build snapshot reports revision 0 with a populated generation.
+    const embedded = wire.revision == 0 and std.mem.eql(u8, wire.source, "embedded snapshot");
+    if ((!embedded and !std.mem.eql(u8, wire.source, provider.title())) or
         !std.mem.eql(u8, wire.license, provider.license()) or
         !std.mem.eql(u8, wire.attribution, provider.attribution() orelse "") or
         !p.geo.validSourceDigests(wire.source_digests)) return error.InvalidResponse;
-    if (wire.revision == 0) {
+    if (wire.revision == 0 and !embedded) {
         if (wire.digest.len != 0 or wire.source_version.len != 0 or
             wire.ranges != 0 or wire.loaded_at != 0) return error.InvalidResponse;
     } else {
         if (wire.digest.len != 64 or !provider.versionValid(wire.source_version) or
-            wire.ranges == 0 or wire.loaded_at == 0) return error.InvalidResponse;
+            wire.ranges == 0 or (wire.loaded_at == 0) != embedded) return error.InvalidResponse;
         for (wire.digest) |byte| if (!std.ascii.isHex(byte)) return error.InvalidResponse;
     }
     return .{
