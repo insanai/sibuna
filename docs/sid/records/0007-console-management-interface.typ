@@ -4137,6 +4137,13 @@ checks and both real ingress recipes, using Caddy 2.11.4 and Nginx 1.30.4. Chrom
 closed during this run; browser interaction remains unverified pending permission to
 launch it. These results establish the tested mode behavior, not full SID acceptance.
 
+The required primitive baseline was regenerated from clean commit `b141c46` with Zig
+0.16.0 and Zaxonlite 0.6.2. Full classification measured 2,384.70 ns, enforcing 8 KiB
+inspection 37,998.93 ns and mixed-mode inspection 184,973.91 ns; idle RSS was 10,192 KiB.
+These medians are close to the preceding upload-correction record. Seven batches provide
+per-operation minima and maxima, but this is not the paired dashboard impact experiment
+and does not resolve the earlier host-performance uncertainty or close its acceptance gate.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
