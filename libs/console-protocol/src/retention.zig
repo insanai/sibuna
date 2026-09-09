@@ -23,5 +23,5 @@ pub const Lease = struct {
             self.expires > std.math.maxInt(i64)) return error.InvalidLease;
     }
 };
-pub const Kind = enum { incidents, audit, sessions };
+pub const Kind = enum { incidents, audit, sessions, kiosk_grants };
 pub const Prune = struct { lease: Lease, kind: Kind };

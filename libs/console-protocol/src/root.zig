@@ -26,12 +26,19 @@ pub const Role = enum(u8) {
     pub fn allows(self: Role, action: Action) bool {
         return switch (action) {
             .read => true,
-            .manage_policy, .control_node => self != .viewer,
+            .manage_policy, .control_node, .open_kiosk => self != .viewer,
             .manage_users, .manage_settings => self == .admin,
         };
     }
 };
-pub const Action = enum { read, manage_policy, control_node, manage_users, manage_settings };
+pub const Action = enum {
+    read,
+    manage_policy,
+    control_node,
+    manage_users,
+    manage_settings,
+    open_kiosk,
+};
 pub const Topic = enum(u8) { stats, events, nodes, challenges, audit };
 pub const Cursor = struct { epoch: u64, sequence: u64 };
 pub const Subscription = union(enum) {
@@ -73,8 +80,11 @@ pub const Principal = struct {
     csrf_digest: [32]u8,
     must_change: bool,
     totp_enabled: bool = false,
+    /// A read-only wall-display session: viewer role, statistics scope, no mutations.
+    kiosk: bool = false,
 };
 pub const retention = @import("retention.zig");
+pub const kiosk = @import("kiosk.zig");
 pub const AuthorizationCheck = struct {
     session_digest: [32]u8,
     touch: bool = false,
@@ -127,11 +137,15 @@ pub const StorageRequest = union(enum) {
     node_command_read: nodes.Read,
     nodes_query: users.Auth,
     node_advertise: Bytes(nodes.max_url),
+    kiosk_grant: kiosk.Grant,
+    kiosk_exchange: kiosk.Exchange,
 };
 pub const StorageResult = union(enum) {
     node_status: nodes.Status,
     node_receipt: nodes.Receipt,
     nodes_page: nodes.Page,
+    kiosk_granted: kiosk.Granted,
+    kiosk_session: kiosk.Session,
     audit_page: audit.Page,
     audit_detail: audit.Detail,
     tokens_page: tokens.Page,
