@@ -200,3 +200,5 @@ if __name__ == "__main__":
     check(str(Path(args.binary).resolve()), args.caddy)
     from forwarded_e2e import check as forwarded_check
     forwarded_check(str(Path(args.binary).resolve()))
+    from proxy_upload_test import check as upload_check
+    upload_check(str(Path(args.binary).resolve()))

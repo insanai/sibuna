@@ -416,9 +416,11 @@ fn serveOne(c: *Connection) !bool {
         return false;
     };
     const declared = req.contentLength() orelse 0;
+    if (!try expectContinue(c, &req, declared)) return false;
     const fits = @min(declared, max_request_bytes - head_len);
     if (fits > 0) {
         c.reader.fill(head_len + fits) catch {
+            req = refreshedRequest(c, head_len);
             // The head identifies an external request even when its body is incomplete.
             var incomplete = RequestContext.init(c, &req, declared);
             recordOutcome(&incomplete, .other);
@@ -429,6 +431,9 @@ fn serveOne(c: *Connection) !bool {
             try net.response.write400(c.writer, "Truncated request body");
             return false;
         };
+        // fill can compact prefetched pipelined input. Re-establish every borrowed slice
+        // before policy evaluation; stale pointers can otherwise point into the upload.
+        req = refreshedRequest(c, head_len);
     }
     const buffered = c.reader.buffered();
     const body_end = @min(buffered.len, head_len + fits);
@@ -437,6 +442,40 @@ fn serveOne(c: *Connection) !bool {
 
     var ctx = RequestContext.init(c, &req, declared);
     return dispatch(&ctx);
+}
+
+fn refreshedRequest(c: *Connection, head_len: usize) net.Request {
+    std.debug.assert(c.reader.buffered().len >= head_len);
+    return net.parseRequest(c.reader.buffered()[0..head_len]) catch unreachable;
+}
+
+/// A client can wait for 100 before sending any bytes. Complete that exchange locally;
+/// policy still checks the bounded prefix before any body reaches the origin.
+fn expectContinue(c: *Connection, req: *net.Request, declared: usize) !bool {
+    var count: usize = 0;
+    var supported = true;
+    for (req.headers[0..req.header_count]) |header| {
+        if (!std.ascii.eqlIgnoreCase(header.name, "expect")) continue;
+        count += 1;
+        supported = supported and std.ascii.eqlIgnoreCase(header.value, "100-continue");
+    }
+    if (count == 0) return true;
+    if (!supported or count != 1 or !std.mem.eql(u8, req.version, "HTTP/1.1")) {
+        var rejected = RequestContext.init(c, req, declared);
+        recordOutcome(&rejected, .other);
+        try net.response.writeText(
+            c.writer,
+            .expectation_failed,
+            "Unsupported expectation",
+            false,
+        );
+        return false;
+    }
+    if (declared != 0) {
+        try c.writer.writeAll("HTTP/1.1 100 Continue\r\n\r\n");
+        try c.writer.flush();
+    }
+    return true;
 }
 
 pub const RequestContext = struct {

@@ -156,7 +156,7 @@ fn isHopByHop(name: []const u8) bool {
         "te",                  "trailer",            "upgrade",          "x-forwarded-for",
         "x-real-ip",           "x-sibuna-status",    "x-sibuna-rule",    "content-length",
         "proxy-authorization", "proxy-authenticate", "forwarded",        "x-forwarded-proto",
-        "x-forwarded-host",    "x-forwarded-port",
+        "x-forwarded-host",    "x-forwarded-port",   "expect",
     };
     for (hop) |h| {
         if (std.ascii.eqlIgnoreCase(name, h)) return true;

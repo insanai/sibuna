@@ -7,8 +7,26 @@ import os
 import socket
 import struct
 import threading
+from email import policy as email_policy
+from email.parser import BytesParser
 
 GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+
+
+def http_response(reader):
+    line = reader.readline(16385)
+    status = int(line.split()[1])
+    headers, length = {}, len(line)
+    while (line := reader.readline(16385)) != b"\r\n":
+        length += len(line)
+        assert line and length <= 16384, "invalid fixture response head"
+        name, value = line.decode().split(":", 1)
+        headers[name.lower()] = value.strip()
+    size = int(headers.get("content-length", "0"))
+    assert 0 <= size <= 4 * 1024 * 1024
+    body = reader.read(size)
+    assert len(body) == size
+    return status, headers, body
 
 
 def frame(opcode, payload, masked=False, final=True):
@@ -71,7 +89,19 @@ class Origin(http.server.BaseHTTPRequestHandler):
         if self.path == "/drop-after-post":
             self.close_connection = True
             return
-        return self.reply(200, body, "application/octet-stream")
+        if self.path == "/multipart":
+            prefix = f"Content-Type: {self.headers['Content-Type']}\r\nMIME-Version: 1.0\r\n\r\n"
+            message = BytesParser(policy=email_policy.default).parsebytes(prefix.encode() + body)
+            assert message.is_multipart() and not message.defects
+            parts = []
+            for part in message.iter_parts():
+                payload = part.get_payload(decode=True)
+                parts.append({"name": part.get_param("name", header="content-disposition"),
+                              "filename": part.get_filename(), "type": part.get_content_type(),
+                              "bytes": len(payload),
+                              "sha256": hashlib.sha256(payload).hexdigest()})
+            return self.reply(200, json.dumps(parts).encode())
+        return self.reply(200, body, self.headers.get("Content-Type", "application/octet-stream"))
 
     def reply(self, status, body, content_type="application/json"):
         self.send_response(status)
