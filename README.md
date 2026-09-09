@@ -51,8 +51,9 @@ docs); the book's Part II carries the full table with sources.
 
 Sibuna does not terminate ingress TLS or score bots with a model. Its opt-in console preview
 includes the animated country globe, incident investigation, policy editing, users, scoped API
-tokens, audit browsing and local node controls. SID 0007 remains proposed while cluster
-management, operational settings and the remaining acceptance gates are implemented. See
+tokens, audit browsing and local node controls. SID 0007 remains proposed: multi-topic
+subscriptions, dedicated peer transport, reviewed country-rule refresh and release acceptance
+remain open. See
 [loading country data from the CLI](#loading-country-data) for country data setup.
 
 ## Research foundations
@@ -344,10 +345,12 @@ timeline queries, one configuration at a time. Full runs require
 `-- --geoip-data <production.snapshot> --host-label <conditions>`; `-- --quick` checks the
 harness and always reports inconclusive. Both throughput and p99 confidence intervals must pass.
 
-A wall display signs in with a one-time kiosk code: an operator mints it from the console
-(`POST /console/api/kiosk/token`), the display pastes it into the sign-in page and receives a
-read-only, statistics-only session that expires within twelve hours. Codes never appear in
-URLs.
+A wall display signs in with a one-time kiosk code. Under Account, an operator supplies a
+display label and selects **Create display code**. Paste that code into the display's sign-in
+page within ten minutes to obtain read-only statistics access for up to twelve hours.
+Leaving or hiding the account page erases its displayed code; this does not revoke an unused
+grant. The same workflow is available through `POST /console/api/kiosk/token`. Codes never
+appear in URLs.
 
 Administrators configure notification destinations under Settings: webhooks (`https`, or
 `http` to loopback) signed with `X-Sibuna-Signature: sha256=HMAC(secret, body)` when a
@@ -361,7 +364,8 @@ Administrators can also edit the five browser-facing response pages (challenge, 
 rate limited, banned, overloaded) under Settings: bounded HTML with fixed placeholders, no
 scripts or external resources, previewed in a sandboxed tab and served from the next policy
 snapshot. Attributes use quoted values; URLs must be literal local paths or fragments. A
-restrictive Content Security Policy permits only the fixed solver on challenge pages. Clients that do not accept HTML keep the plain-text replies.
+restrictive Content Security Policy permits only the fixed solver on challenge pages.
+Non-HTML challenges return JSON; other non-HTML refusal responses remain plain text.
 
 Policy workflows: rules can be reordered from the managed list, a draft can be replayed
 against retained inspection findings before saving, IP groups (reputation prefixes with a
@@ -369,6 +373,11 @@ note, expiry and a thirty-second undo) and country blocks computed from the acti
 generation live under the applied policies, and the whole managed set can be exported and
 re-imported atomically from the interface or with `sibuna console policies export` and
 `sibuna console policies import --file <set.json>`.
+
+Country actions are snapshots of the active GeoIP generation. A later import does not refresh
+their reputation rows automatically; review the existing prefixes before replacing a country
+action. Events retain WAF findings and honeypot incidents, not a complete request access log.
+Management pages use explicit requests; only dashboard statistics currently stream live.
 
 For an HTTPS reverse proxy, configure `--console-origin`, `--console-behind-proxy` and explicit
 `--console-trusted-proxy` CIDRs. Supply a persistent `--console-key-file` containing 64 hex

@@ -137,9 +137,11 @@ peers whose data-plane listeners this console should health-check and
 per node. `zig build console-impact` runs the data-plane isolation matrix (`-- --quick` for
 a smoke run) and writes `benchmarks/results/console-impact-latest.json`.
 
-Wall displays use kiosk sessions: an operator mints a one-time code in the console, the
-display pastes it into the sign-in form, and the resulting session is read-only, limited to
-statistics and expires within twelve hours.
+Wall displays use kiosk sessions. Under Account, an operator names the display and selects
+Create display code. The display pastes the one-time code into the sign-in form within ten
+minutes; its session is read-only, limited to statistics and expires within twelve hours.
+The account page erases the displayed code on navigation or when hidden. Hiding does not
+revoke an unused grant; the exchange deadline still applies. Codes never belong in URLs.
 
 Notification destinations (signed webhooks and syslog for denial spikes, bans, unreachable
 members and leader changes) live under Settings; webhook secrets need `--console-key-file`.
@@ -159,12 +161,17 @@ Policy workflows on the Policies page: reorder managed rules, replay a draft aga
 inspection findings, manage IP groups and country blocks pinned to the active GeoIP
 generation, and export or atomically import the managed set (also `sibuna console policies
 export` and `sibuna console policies import --file <set.json>`).
+Importing a later GeoIP generation does not automatically refresh existing country-derived
+reputation rows. Review the old prefixes before replacing a country action. The Events page
+contains retained WAF findings and honeypot incidents; it is not a complete access log.
+Statistics use the live stream; management pages issue explicit requests and refreshes.
 
 SID 0007 remains Proposed. The interface is available, with ongoing review corrections
 and acceptance work recorded in the SID. Earlier impact runs are inconclusive. The corrected
 harness includes each dashboard's stream, rankings and retained-timeline queries; a full
 acceptance run requires a production GeoIP snapshot and documented host conditions. Multi-topic streams
-and dedicated peer management transport remain implementation work; current node discovery
+and dedicated peer management transport, along with reviewed country-rule refresh, remain
+implementation work; current node discovery
 uses replicated membership and configured health probes.
 
 == Deployment Topologies

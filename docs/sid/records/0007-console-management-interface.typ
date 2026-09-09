@@ -1657,8 +1657,17 @@ identifies the following concrete gaps; the status remains Proposed.
   [Live cluster transport], [Membership and applied revisions use replicated rows; configured
     HTTP probes provide health. The dedicated authenticated TLS peer WebSocket transport and
     live peer node/boot/sequence deduplication remain deferred, not verified by the membership tests.],
-  [Country rule maintenance], [Country actions pin a GeoIP generation. Existing country-derived
-    reputation rows are not refreshed when a later generation becomes active; see the workflow entry.],
+  [Country rule maintenance], [Country actions pin a GeoIP generation, as required. A reviewed
+    replacement workflow that compares a new generation and removes obsolete country-owned
+    prefixes is missing. Silent automatic refresh is not required and would contradict the
+    GeoIP contract. Reapplying a country currently upserts its new prefixes without retiring
+    the old ones; see `console_country.zig` and the country commit trigger.],
+  [Interface state], [The bridge replaces the complete application markup when its rendered
+    string changes; only animation patches the globe separately. Per-panel rendering,
+    browser-history routing, system/persisted theme and density preferences remain absent.
+    Country selection centers the globe but does not open country-filtered events. The
+    separate Security overview and configurable retention forms in the wireframes are not
+    present; retention runs with the implemented defaults.],
   [Acceptance], [The corrected dashboard workload harness has only an inconclusive smoke result.
     Full controlled-host impact acceptance and comprehensive browser acceptance remain open.
     Earlier browser evidence covers the named scenarios, not every feature and error state.],
@@ -1798,7 +1807,7 @@ Native data-plane HTTP/2 is separately deferred by the operator and is not a con
 
 - #text("Not passed (2026-09-09): the verdict is inconclusive on the development host. Point estimates stay within ±2 % throughput and +6 % p99 with peak RSS reported per configuration, but the compiled-out baseline's own spread (20–46 %) exceeds the 1 % rule and every bootstrap interval straddles the gate; the record says so rather than rounding to a pass. A quiet host is required.")
 
-- #text("Pending after the 2026-09-10 review: multi-topic real-time subscriptions, dedicated peer management transport, GeoIP-driven country rule refresh and comprehensive browser acceptance. Notification retries/leases and the dashboard workload harness have dated implementation evidence; the corrected impact matrix still needs a controlled-host acceptance run. The record stays Proposed and the console stays opt-in.")
+- #text("Pending after the 2026-09-10 review: multi-topic real-time subscriptions, dedicated peer management transport, reviewed country-generation replacement, the interface-state gaps listed above and comprehensive browser acceptance. Notification retries/leases and the dashboard workload harness have dated implementation evidence; the corrected impact matrix still needs a controlled-host acceptance run. The record stays Proposed and the console stays opt-in.")
 
 == Implementation evidence
 
@@ -4143,6 +4152,72 @@ inspection 37,998.93 ns and mixed-mode inspection 184,973.91 ns; idle RSS was 10
 These medians are close to the preceding upload-correction record. Seven batches provide
 per-operation minima and maxima, but this is not the paired dashboard impact experiment
 and does not resolve the earlier host-performance uncertainty or close its acceptance gate.
+
+== Chrome and operator-guide review (2026-09-10)
+
+Chrome exercised an isolated daemon and temporary store, not an operator's deployment.
+Real browser challenges and unsolicited/bidirectional application WebSocket messages passed
+in reverse-proxy mode and forward-auth through Caddy. Failed console login stayed on the
+authentication shell; successful login loaded current statistics and attributed test-country
+activity. Comparing rendered SVG frames confirmed motion. Pause, centering, flat projection,
+navigation back to a live stream and a 390-pixel mobile menu were exercised. The configured
+server marker remained visible when the daemon stopped, with a disconnected label and
+increasing snapshot age.
+
+The browser-created policy was privately previewed, reviewed as a field comparison, committed
+and shown in revision history. The live data listener then returned 403 for its matching path.
+Generated SQL-injection incidents appeared with redacted evidence and bounded similarity
+results. Nodes showed separate committed/applied revisions; current drain and resume previews
+produced persisted completion receipts, with application responses changing to 503 and back.
+An expired preview was refused. A local notification destination reported delivered status
+204. A constrained denial template saved in Settings was served on an actual 403 response.
+Users, token scopes, GeoIP metadata, audit and account forms were inspected. These observations
+are scenario evidence, not proof of every role, error, retention or cluster combination.
+
+Two-factor status previously rendered an absent-key explanation before its request completed.
+Availability is now optional until confirmed: loading, request failure with retry, configured
+and absent-key states are distinct. Invalid status fields do not become an absent-key claim.
+
+The API already supported one-time kiosk grants, but the interface offered only their exchange.
+Account now lets an operator label a display and create its code through the existing CSRF-bound
+API. The bounded controller fences late replies and duplicate pending submissions, validates
+the code and deadlines, and erases its copy on navigation, hiding, expiry or session reset.
+Hiding is not revocation; an unused server grant retains its ten-minute exchange deadline.
+The display session remains statistics-only and expires within twelve hours. Native tests
+cover access, duplicate submission, late responses and code erasure.
+
+Exercising the exchange in Chrome exposed another boundary error: the dashboard requested
+path rankings, whose route correctly rejects kiosk sessions, and treated that rejection as
+session expiry. Kiosk entry now clears the prior account's retained models and selects only
+display-scoped requests. It never queries path rankings or minute history, and its retained
+timeline offers the permitted second-level observations without a minute-history selector.
+The transition regression checks emitted requests, account-state erasure and the rendered
+selector; live route tests retain the denied ranking and minute-history boundaries.
+
+Chrome confirmed the corrected kiosk session remains Live across updates and restart, with
+the permitted retained timeline populated and no account navigation or minute-history control.
+Creating and exchanging a fresh code, exiting the display and rejecting reuse also passed.
+The normal dashboard also recovered automatically after a stopped daemon: its stale SVG
+frame stayed unchanged until the new stream arrived, then current traffic resumed.
+
+The book's quick-reference card still contained obsolete partial ingress recipes and a stale
+test count. It now points to the complete live-tested recipes in Part IX, includes console
+bootstrap and describes the two mode boundaries. The README, operations chapter and desk
+reference distinguish streamed statistics, retained incident coverage and country-generation
+pinning. The prior review's automatic-refresh wording was incorrect: the specification
+requires reviewed replacement, including obsolete-prefix removal, rather than silent changes
+on GeoIP import. The current completeness table records that actual missing workflow.
+
+Verification passed `zig build -j1 fmt test console-test sid book install`: 427 native/UI
+tests and twenty-one live console scenarios, including the CLI-mode regression. The final
+kiosk artifact is 376,812 bytes within the 393,216-byte bound; its served bytes were checked
+before the final Chrome exchange. The book and SID PDFs were regenerated and their changed
+pages inspected, including all eighteen SID wireframes. The HTML bundle retains twenty
+inline SVG figures and its embedded raster image. SID 0007 contains no comparison-product
+reference; the book's comparison material remains. These changes affect console account
+rendering and request selection, not the measured admission primitives, so their existing
+baseline is retained. This review does not close the controlled dashboard-impact gate or
+the implementation gaps in the current completeness table.
 
 = References
 

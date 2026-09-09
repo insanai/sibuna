@@ -28,6 +28,13 @@ Challenge responses carry `X-Sibuna-Status: CHALLENGE`; admitted requests carry
 `X-Sibuna-Status: PASS` and `X-Sibuna-Rule` upstream (and `X-Sibuna-Rule-Hash` in forward-auth
 replies).
 
+The separate opt-in management listener serves `/console/`. Initialize its administrator
+locally with `sibuna init-admin`, then replace the temporary password on first sign-in.
+`/console/api/stats` and `/console/stream` require an authenticated session; the current
+WebSocket protocol carries statistics only. Origin error counters are not observed in
+forward-auth mode. Part IX documents the console's workflows, HTTPS deployment and current
+SID 0007 limits.
+
 == Metrics
 
 Counters exposed as `sibuna_<name>_total` in Prometheus text format:
@@ -62,6 +69,7 @@ batch is retained. Monitor increments over an interval; totals alone are not a q
   [401], [Challenge required for a client that does not accept HTML, or in forward-auth mode],
   [403], [Policy or WAF denial, banned address, honeypot],
   [413], [Solution body larger than the 64 KB connection buffer],
+  [417], [Unsupported request expectation; `100-continue` is handled locally],
   [429], [GCRA limit exceeded; `Retry-After` in seconds],
   [431], [Request head over 16 KB],
   [502], [Origin unreachable, or its response head was malformed or larger than 16 KB],
@@ -69,6 +77,9 @@ batch is retained. Monitor increments over an interval; totals alone are not a q
 )
 
 == Error Catalog
+
+`SIBUNAMODE` stops startup for an invalid, missing or duplicate mode selection. Supply
+`--mode reverse_proxy` or `--mode forward_auth` once; `-m` is the equivalent short option.
 
 #api_anchor([`core.explainError`], [
   Maps every domain error to a boundary line, an explanation, and a `Hint:`.

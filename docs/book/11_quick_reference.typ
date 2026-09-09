@@ -1,7 +1,7 @@
 #import "theme.typ": *
 
 #part_page("XI", [Quick Reference Card], [
-  Two pages to keep beside a terminal: build, run, configure, route, observe, and diagnose.
+  Keep beside a terminal: build, run, configure, route, observe, and diagnose.
   Part X holds the full tables; this card holds what an operator types.
 ])
 
@@ -22,7 +22,8 @@
   zig build -Doptimize=ReleaseFast          # daemon + storage
   zig build -Doptimize=ReleaseFast -Dstorage=false   # static, no libc
   zig build -Dcluster=true                  # Multi-Paxos, needs OpenSSL 3
-  zig build test        # 90 tests incl. end-to-end
+  zig build test        # native, UI and live daemon tests
+  zig build console-test # console workflows through a live daemon
   zig build fmt         # zig fmt + 70-line / 99-column gate
   zig build book sid    # this book, the SID records
   zig build benchmark   # primitives -> results/latest.json
@@ -37,11 +38,23 @@
   # Gate: PoW only
   sibuna --gate -p 8080 -u 3000 -s /etc/sibuna/secret
   # Forward auth behind Nginx/Caddy (trusts X-Forwarded-For)
-  sibuna --mode forward_auth -p 8080 -s /etc/sibuna/secret
+  sibuna -m forward_auth --host 127.0.0.1 -p 8080 -s /etc/sibuna/secret
   # Edge: persistent policies, reputation, forensics
   sibuna -D /var/lib/sibuna -s /etc/sibuna/secret
   head -c 32 /dev/urandom | xxd -p -c 64 > /etc/sibuna/secret
   ```
+])
+#v(4pt)
+#card([Console (opt-in preview)], [
+  ```sh
+  # Initialize while the daemon is stopped, then start the console
+  sibuna init-admin admin --data-dir ./data
+  sibuna --data-dir ./data --console 127.0.0.1:19446
+  ```
+  Open `http://127.0.0.1:19446/console/` and replace the temporary password.
+  Add `--console-location 1.3521,103.8198` to place the node on the globe.
+  Remote access requires an HTTPS proxy, an explicit origin and trusted-proxy CIDRs;
+  follow Part IX. SID 0007 remains Proposed; the interface is not full acceptance evidence.
 ])
 #v(4pt)
 #grid(columns: (1fr, 1fr), gutter: 5pt,
@@ -86,6 +99,7 @@
       [401], [challenge required: non-HTML client or forward auth],
       [403], [policy or WAF denial, ban, honeypot],
       [413], [solution body over the 64 KB buffer],
+      [417], [unsupported request expectation],
       [429], [GCRA limit, `Retry-After` seconds],
       [431], [head over 16 KB],
       [502], [origin unreachable or malformed],
@@ -160,20 +174,14 @@
   ]),
 )
 #v(4pt)
-#card([Ingress snippets], [
-  ```nginx
-  location / { auth_request /__sibuna_auth;
-    error_page 401 = @sibuna_challenge; proxy_pass http://origin; }
-  location = /__sibuna_auth { internal; proxy_pass http://127.0.0.1:8080/;
-    proxy_pass_request_body off; proxy_set_header Content-Length "";
-    proxy_set_header X-Forwarded-For $remote_addr;
-    proxy_set_header User-Agent $http_user_agent;
-    proxy_set_header Cookie $http_cookie; }
-  location @sibuna_challenge { proxy_pass http://127.0.0.1:8080; }
-  location /__sibuna/ { proxy_pass http://127.0.0.1:8080; }
-  ```
-  ```caddyfile
-  forward_auth localhost:8080 { uri / ; header_up X-Forwarded-For {remote_host} }
-  handle /__sibuna/* { reverse_proxy localhost:8080 }
-  ```
+#card([Ingress routing], [
+  Use the complete, live-tested Nginx or Caddy recipe in Part IX, Forward Auth Behind an
+  Ingress. Route `/__sibuna/*` directly; authorize application requests with the original
+  URI, method and trusted client address. Replace incoming Sibuna audit headers with the
+  authorization result. Nginx needs explicit challenge, 429 and unavailable-auth handling.
+
+  `reverse_proxy` carries admitted HTTP/1.1 bodies and WebSockets; `forward_auth` grants
+  admission and the ingress carries them. Omitted auth bodies and origin responses cannot
+  be inspected or counted by Sibuna. TLS terminates at the ingress; native HTTP/2 is deferred.
+  Uploads use Content-Length; inspection sees at most an 8 KiB prefix, with file bytes opaque.
 ])
