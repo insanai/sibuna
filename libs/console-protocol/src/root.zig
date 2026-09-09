@@ -40,7 +40,11 @@ pub const Action = enum {
     manage_settings,
     open_kiosk,
 };
-pub const Topic = enum(u8) { stats, events, nodes, challenges, audit };
+pub const Topic = enum(u8) { stats, events, nodes, policy, challenges, audit };
+pub const subscription_client = @import("subscription_client.zig");
+pub const subscription_feed = @import("subscription_feed.zig");
+pub const subscriptions = @import("subscriptions.zig");
+pub const json_delta = @import("json_delta.zig");
 pub const ProxyMode = enum { reverse_proxy, forward_auth };
 pub const Cursor = struct { epoch: u64, sequence: u64 };
 pub const Subscription = union(enum) {
@@ -96,6 +100,9 @@ pub const AuthorizationCheck = struct {
     kind: CredentialKind = .session,
 };
 pub const StorageRequest = union(enum) {
+    subscription_read: subscription_feed.Request,
+    subscription_nodes,
+    subscription_policy,
     audit_query: audit.Query,
     audit_read: audit.Read,
     tokens_query: tokens.Query,
@@ -169,6 +176,7 @@ pub const StorageRequest = union(enum) {
     import_commit: workflows.ImportCommit,
 };
 pub const StorageResult = union(enum) {
+    subscription_page: subscription_feed.Page,
     node_status: nodes.Status,
     node_receipt: nodes.Receipt,
     nodes_page: nodes.Page,
@@ -270,6 +278,7 @@ pub fn releaseResult(result: StorageResult, gpa: std.mem.Allocator) void {
 
 pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
     switch (request) {
+        .subscription_read => |input| try subscription_feed.validate(input),
         .node_command => |input| try nodes.validate(input),
         .audit_query => |input| try audit.validate(input),
         .audit_read => |input| {
@@ -332,6 +341,10 @@ pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
 }
 
 test {
+    _ = subscriptions;
+    _ = subscription_feed;
+    _ = subscription_client;
+    _ = json_delta;
     _ = tokens;
 }
 

@@ -19,7 +19,9 @@ pub const Budget = struct {
     // download/checksum stack scratch; the staged generation is counted separately.
     pub const import_bytes = 32 * 1024 * 1024 + 40 * 1024;
     pub const auth_bytes = @import("password.zig").Password.workspace_bytes;
-    pub const topic_bytes = 10 * 1024 * 1024;
+    pub const topic_bytes = @import("console_protocol").subscriptions.topic_count *
+        @sizeOf(@import("topic_store.zig").Store) +
+        @sizeOf(@import("subscription_hub.zig").Hub) + 640 * 1024;
     pub const traffic_bytes = @sizeOf(@import("store").ConsoleTelemetry) +
         @sizeOf(@import("store").ConsoleIncidents);
     // Incremental evidence metadata in the existing 512-slot incident queue and 32-row batch.
@@ -49,11 +51,13 @@ pub const Budget = struct {
     pub fn reservedBytes(self: Budget) Error!u64 {
         try self.validate();
         const connections: u64 = @as(u64, self.slots) + self.peers;
-        // Every streaming connection reserves both a reader and a writer task stack; the
-        // fixed extra stacks are the acceptor, collector, importer and peer probe threads.
-        const stacks = (connections + self.subscribers + self.peers + 4) * self.stack_bytes;
+        // Include both stream tasks, acceptor/watchdog, collector, importer, probe and hub.
+        // The notifier explicitly uses a larger stack than the other service threads.
+        const stacks = (connections + self.subscribers + self.peers + 6) * self.stack_bytes +
+            512 * 1024;
         return stacks + connections * 2 * socket_buffer_bytes +
             @as(u64, self.slots) * body_bytes + import_bytes + auth_bytes +
+            @as(u64, self.subscribers) * @sizeOf(@import("subscriber.zig").Subscriber) +
             topic_bytes + traffic_bytes + query_bytes + evidence_bytes + collector_bytes +
             2 * @as(u64, self.geoip_generation_bytes);
     }

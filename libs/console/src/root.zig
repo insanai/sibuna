@@ -10,6 +10,10 @@ test {
     _ = @import("ingress.zig");
     _ = @import("bearer.zig");
     _ = @import("mailbox.zig");
+    _ = @import("topic_ring.zig");
+    _ = @import("topic_store.zig");
+    _ = @import("subscription_hub_test.zig");
+    _ = @import("subscription_queue.zig");
 }
 
 pub const geoip = @import("geoip");
