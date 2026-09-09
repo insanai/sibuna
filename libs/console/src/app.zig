@@ -382,9 +382,7 @@ pub const App = struct {
                 identity,
             ),
             .logout => return auth.logout(self, context),
-            .pages_read, .pages_edit, .pages_preview, .pages_preview_get => return @import(
-                "page_routes.zig",
-            ).handle(self, context, identity.?, route),
+            else => return self.managementRoute(context, route, identity.?),
             .settings_query,
             .settings_change,
             .notifications_query,
@@ -410,6 +408,32 @@ pub const App = struct {
             ), &.{}),
             .session => return self.sessionReply(context, identity.?),
         }
+    }
+
+    /// Settings-owned pages and the policy workflows: every handler the route table can
+    /// name is listed here or in `executeRoute`; an unlisted one is a programming error.
+    fn managementRoute(
+        self: *App,
+        context: *http.Context,
+        route: @import("routes.zig").Route,
+        identity: p.Principal,
+    ) !void {
+        return switch (route.handler) {
+            .pages_read, .pages_edit, .pages_preview, .pages_preview_get => @import(
+                "page_routes.zig",
+            ).handle(self, context, identity, route),
+            .policy_order,
+            .policy_replay,
+            .reputation_query,
+            .reputation_edit,
+            .reputation_remove,
+            .country_preview,
+            .country_apply,
+            .import_chunk,
+            .import_commit,
+            => @import("workflow_routes.zig").handle(self, context, identity, route.handler),
+            else => unreachable,
+        };
     }
 
     fn setupReply(self: *App, context: *http.Context) !void {
