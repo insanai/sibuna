@@ -86,6 +86,7 @@ pub const Principal = struct {
 pub const retention = @import("retention.zig");
 pub const kiosk = @import("kiosk.zig");
 pub const notifications = @import("notifications.zig");
+pub const pages = @import("pages.zig");
 pub const AuthorizationCheck = struct {
     session_digest: [32]u8,
     touch: bool = false,
@@ -150,6 +151,8 @@ pub const StorageRequest = union(enum) {
     notifications_enqueue: notifications.Enqueue,
     notifications_claim: notifications.Claim,
     notifications_record: notifications.Record,
+    page_read: pages.Read,
+    page_edit: pages.Edit,
 };
 pub const StorageResult = union(enum) {
     node_status: nodes.Status,
@@ -163,6 +166,7 @@ pub const StorageResult = union(enum) {
     notification_secret: notifications.Secret,
     notifier_lease: retention.Lease,
     notification_batch: notifications.Batch,
+    page_document: pages.Document,
     audit_page: audit.Page,
     audit_detail: audit.Detail,
     tokens_page: tokens.Page,
@@ -230,6 +234,23 @@ pub fn Bytes(comptime capacity: usize) type {
     };
 }
 
+/// Frees the heap payload a request carries, if any. The mailbox owns a submitted request's
+/// payload until the owner has executed it; a rejected submission stays with the caller.
+pub fn releaseRequest(request: StorageRequest, gpa: std.mem.Allocator) void {
+    switch (request) {
+        .page_edit => |input| if (input.html) |html| gpa.destroy(html),
+        else => {},
+    }
+}
+
+/// Frees the heap payload a result carries, if any; the receiver of a polled result owns it.
+pub fn releaseResult(result: StorageResult, gpa: std.mem.Allocator) void {
+    switch (result) {
+        .page_document => |document| gpa.destroy(document.html),
+        else => {},
+    }
+}
+
 pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
     switch (request) {
         .node_command => |input| try nodes.validate(input),
@@ -254,6 +275,7 @@ pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
         .policies_query => |query| try policies.validate(query),
         .policies_test => |input| try policies.validateTest(input),
         .notifications_save => |input| try notifications.validateSave(input),
+        .page_edit => |input| try pages.validateEdit(input),
         .events_query => |query| try events.validate(query),
         .events_similar => |query| try similarity.validate(query),
         inline .geo_begin, .geo_activate, .totp_begin => |input| {

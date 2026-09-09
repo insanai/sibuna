@@ -31,6 +31,9 @@ pub const Mailbox = struct {
 
     wake: std.Io.Event = .unset,
     mutex: std.Io.Mutex = .init,
+    /// Frees request and result payloads that no party will receive (abandoned, discarded
+    /// at stop, or left at shutdown). Set by the storage owner before the first submission.
+    gpa: ?std.mem.Allocator = null,
     slots: [capacity]Slot = @splat(.{}),
     next_id: u64 = 1,
     urgent_streak: u8 = 0,
@@ -97,6 +100,7 @@ pub const Mailbox = struct {
         defer self.mutex.unlock(io);
         const slot = try self.lookup(ticket);
         if (slot.state == .abandoned) {
+            if (self.gpa) |gpa| protocol.releaseResult(result, gpa);
             slot.* = .{};
             return;
         }
@@ -126,7 +130,29 @@ pub const Mailbox = struct {
         if (slot.waiter) return error.WaiterActive;
         if (slot.state == .executing or slot.state == .abandoned) {
             slot.state = .abandoned;
-        } else slot.* = .{};
+            return;
+        }
+        if (slot.state == .queued) {
+            if (self.gpa) |gpa| protocol.releaseRequest(slot.request, gpa);
+        } else if (slot.state == .completed) {
+            if (self.gpa) |gpa| protocol.releaseResult(slot.result, gpa);
+        }
+        slot.* = .{};
+    }
+
+    /// Releases every payload still held after the owner has stopped executing.
+    pub fn deinit(self: *Self, io: std.Io) void {
+        self.mutex.lockUncancelable(io);
+        defer self.mutex.unlock(io);
+        const gpa = self.gpa orelse return;
+        for (&self.slots) |*slot| {
+            switch (slot.state) {
+                .queued => protocol.releaseRequest(slot.request, gpa),
+                .completed => protocol.releaseResult(slot.result, gpa),
+                else => {},
+            }
+            slot.* = .{};
+        }
     }
 
     /// Stop admission and discard queued work. The owner must still join execution
@@ -139,6 +165,7 @@ pub const Mailbox = struct {
         for (&self.slots) |*slot| {
             switch (slot.state) {
                 .queued => {
+                    if (self.gpa) |gpa| protocol.releaseRequest(slot.request, gpa);
                     slot.result = .{ .failed = .cancelled };
                     slot.state = .completed;
                     slot.completion.set(io);
