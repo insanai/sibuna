@@ -97,6 +97,10 @@ pub fn edit(app: *App, context: *http.Context, identity: p.Principal, inspection
 }
 
 fn fail(context: *http.Context, reason: p.Failure) !void {
+    // Storage that cannot commit (lost quorum, unavailable replica) is named separately so
+    // an operator does not read it as an input or authorization problem.
+    if (reason == .unavailable)
+        return http.fail(context, .service_unavailable, "CONSOLEQUORUM");
     return http.fail(context, switch (reason) {
         .unauthorized => .unauthorized,
         .forbidden => .forbidden,

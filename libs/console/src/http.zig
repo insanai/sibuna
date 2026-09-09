@@ -24,6 +24,9 @@ pub fn fail(context: *Context, status: std.http.Status, code: []const u8) Contex
 }
 
 fn failureHint(code: []const u8) []const u8 {
+    if (std.mem.eql(u8, code, "CONSOLEQUORUM"))
+        return "Storage could not commit; the cluster may have lost quorum. Reads and the " ++
+            "data plane continue from the last applied state. Retry when a majority is up.";
     if (std.mem.eql(u8, code, "CONSOLENODE"))
         return "Refresh the node state and inspect the operation receipt before retrying. " ++
             "A pending completion does not mean the local effect failed.";

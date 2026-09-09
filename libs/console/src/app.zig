@@ -165,6 +165,9 @@ pub const App = struct {
         return self.requestAt(operation, .background);
     }
 
+    /// Longest wait for the storage owner before a request is answered as unknown.
+    pub const storage_wait_seconds = 10;
+
     fn requestAt(
         self: *App,
         operation: p.StorageRequest,
@@ -178,10 +181,10 @@ pub const App = struct {
         while (true) {
             if (try self.mailbox.poll(self.io, ticket)) |result| return result;
             if (std.Io.Clock.awake.now(self.io).nanoseconds - start.nanoseconds >
-                10 * std.time.ns_per_s) return error.StorageTimeout;
+                storage_wait_seconds * std.time.ns_per_s) return error.StorageTimeout;
             self.mailbox.waitFor(self.io, ticket, .{ .deadline = .{
                 .clock = .awake,
-                .raw = start.addDuration(.fromSeconds(10)),
+                .raw = start.addDuration(.fromSeconds(storage_wait_seconds)),
             } }) catch |err| switch (err) {
                 error.Timeout => {},
                 else => return err,
@@ -204,6 +207,9 @@ pub const App = struct {
                 try http.fail(context, .bad_request, "CONSOLE002");
             },
             error.Busy => try http.fail(context, .too_many_requests, "CONSOLE003"),
+            // The storage owner did not answer within its deadline: a lost quorum or a
+            // stalled store. The operation's outcome is unknown, not proven failed.
+            error.StorageTimeout => try http.fail(context, .service_unavailable, "CONSOLEQUORUM"),
             else => {
                 std.log.warn("console application request failed: {t}", .{err});
                 try http.fail(context, .service_unavailable, "CONSOLE004");
@@ -229,6 +235,9 @@ pub const App = struct {
             null;
         if (!@import("ingress.zig").accepts(&self.config, context.peer, forwarded))
             return http.fail(context, .forbidden, "CONSOLE403");
+        // The head has arrived, so the slow-read bound no longer applies; the request may
+        // now wait the storage deadline (a lost quorum answers late, not never) and reply.
+        context.extend(storage_wait_seconds + 2);
         const path = context.request.head.target;
         const method = context.request.head.method;
         if (method == .GET and std.mem.eql(u8, path, "/console/assets/world-110m.bin")) {
@@ -381,6 +390,12 @@ pub const App = struct {
             .kind = credential.kind,
             .touch = true,
         } });
+        if (result == .failed and result.failed == .unavailable) {
+            // Storage could not answer (lost quorum or an unavailable replica): the
+            // credential is unknown rather than rejected, so never answer 401 here.
+            try http.fail(context, .service_unavailable, "CONSOLEQUORUM");
+            return null;
+        }
         if (result != .authorized) {
             try http.fail(context, .unauthorized, "CONSOLE401");
             return null;
