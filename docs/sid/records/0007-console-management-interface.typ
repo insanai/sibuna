@@ -1764,7 +1764,7 @@ are historical; the acceptance gates below govern delivery.
 
 - #text("Verified: SID 0007 has no removed-product references; book comparisons preserved.")
 
-- #text("Pending: Regenerate benchmark results when measured subsystems change.")
+- #text("Verified (2026-09-09): the primitive baseline was regenerated from clean commit e528f7e after the response-page change on the request path; see the acceptance benchmark regeneration entry.")
 
 - #text("Measured (2026-09-09): the matrix ran with all four configurations and all four workloads for seven rounds, and the clustered variant for three rounds; the eight dashboards received at least 0.99 frames per second each. See the acceptance run entry.")
 
@@ -3774,6 +3774,21 @@ Peak resident memory of node 1 stayed between 28 and 34 MiB in every configurati
 challenged baseline's 4.7 ms p99 is a single slow round; the clustered verdict is also
 inconclusive, with baseline spreads of 4–13 % and every interval straddling the gate.
 Both harness runs exit non-zero, as the SID requires for an inconclusive measurement.
+
+== Acceptance benchmark regeneration (2026-09-09)
+
+The primitive baseline was regenerated from clean commit
+`e528f7e8c8cbd4e98e76cd487cf85ea3357d1146` with every daemon stopped, covering the
+request-path change that renders response pages from snapshot templates. The version-2
+manifest covers 465 inputs and has SHA-256
+`7d5afa83348353356e74011163458fe49f12663133bdd316040d5c2878c15389`; the daemon digest is
+`e65102ede23f4f41c9e6cf6807d994da67cc3d495df08d232c550b08fd36cb0d`.
+`latest-20260909T090902Z.json` and `latest.json` share SHA-256
+`36fa027744ab9fc909c3f693de9c5566e7ae98bcbecae7258866dfa27ac39f88`. Full classification
+measured 1,462.87 ns median (1,458.81–1,468.22 ns across seven batches), within the run to
+run variation of the previous 1,441.18 ns record. Idle RSS was 10,048 KiB with two workers and storage compiled but inactive. The 8,831-byte Wasm artifact is
+the proof solver. The console-impact matrix is recorded separately in the acceptance run
+entry and remains inconclusive on this host.
 
 = References
 
