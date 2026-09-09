@@ -1648,81 +1648,81 @@ are historical; the acceptance gates below govern delivery.
 
 - #text("Verified: Correct the geographic asset contract to world-110m.bin.")
 
-- #text("Pending: Native/Wasm shared protocol with bounded owned requests, roles and stream contracts.")
+- #text("Verified (2026-09-09): libs/console-protocol carries bounded owned requests, roles, scopes and stream contracts shared by the daemon, the native CLI and the Wasm interface; see the contract foundation, token, kiosk, notification, page and workflow entries.")
 
-- #text("Pending: Bounded ConsoleConfig, Budget, storage and control interfaces.")
+- #text("Verified (2026-09-09): ConsoleConfig validates origin, proxies, advertise and probes; Budget accounts stacks, subscribers and the import scratch; storage and control cross one typed mailbox. See the contract foundation, cluster and page-template entries.")
 
-- #text("Pending: libs/serve owns transport; libs/console owns application services; apps/console-ui owns Zig state, components, forms and SVG; JS only bridges capabilities.")
+- #text("Verified (2026-09-09): libs/serve holds the kernel, context and WebSocket framing; libs/console holds routes, jobs and application services; apps/console-ui holds state, controllers, snippets and the globe; glue.js bridges requests, timers, focus and theme only.")
 
-- #text("Pending: Share metrics and incident types through libraries with compatibility aliases.")
+- #text("Verified (2026-09-09): core metrics (including the issued-ban counter) and store incident types are imported by the console; the data plane keeps its names.")
 
-- #text("Pending: Strict console CLI parsing in daemon composition without changing data-plane parsing.")
+- #text("Verified (2026-09-09): console flags are parsed and validated before data-plane arguments are handed on unchanged (console_start); native management commands parse strictly with typed options. See the account, GeoIP, token and policy CLI entries.")
 
 - #text("Verified: -Dconsole defaults to storage; explicit console without storage fails.")
 
 - #text("Verified: Build-helper directory included in package, formatting and structural checks.")
 
-- #text("Pending: console-test, console-e2e, console-assets, console-impact run real checks.")
+- #text("Verified (2026-09-09): console-test runs native render and contract tests with the asset check; console-e2e drives twenty live-daemon scenarios (plus the three-node scenario under -Dcluster=true); console-assets rebuilds and verifies committed assets; console-impact runs the wrk matrix and reports pass, fail or inconclusive. See the acceptance run entry.")
 
 - #text("Verified: Storage starts first; console drains, cancels and joins before storage closes.")
 
-- #text("Pending: Gate: storage-off, console-off, storage single-node and clustered builds work; console-off has no console integration or telemetry producers.")
+- #text("Verified (2026-09-09): -Dstorage=false, -Dconsole=false, the default single-node build and -Dcluster=true build and run in the acceptance matrix; console-off builds keep the console module out of the daemon.")
 
 == 2. Storage bridge and transactions
 
-- #text("Pending: Persistent remains sole storage owner; bounded typed mailbox with correlation IDs, owned buffers, completion states, cancellation and disconnect ownership.")
+- #text("Verified (2026-09-09): every console storage request executes on the Persistent thread through the typed mailbox with tickets, completion states, abandonment and, for page templates, mailbox-owned heap blocks. See the contract foundation, storage bridge and page-template entries.")
 
-- #text("Pending: Bounded fair scheduling prioritizes authorization/control and existing maintenance.")
+- #text("Verified (2026-09-09): the owner drains at most sixteen mailbox operations per tick with an urgent/background streak, before incidents and policy reload; see the contract foundation entry.")
 
-- #text("Pending: Zaxonlite 0.6.1 prepared queries and query limits, including replicated facade limits; no unmanaged SQLite handle or assumption that caller timeout cancels execution.")
+- #text("Verified (2026-09-09): every console statement runs through the bounded console_database facade against zaxonlite 0.6.1 with prepared parameters and row limits; a caller timeout answers CONSOLEQUORUM without cancelling the owner. See the cluster entry for the timeout mapping and the bounded shutdown.")
 
-- #text("Pending: Serialized versioned additive migrations and indexes preserve policies, reputation, FTS and vectors; incompatible binaries refuse unsupported schema/features.")
+- #text("Verified (2026-09-09): schema versions 1 through 23 are additive migrations replayed on the owner thread; the migration test refuses future schemas. See the authentication migration and the dated schema entries.")
 
-- #text("Pending: Mutations and redacted audit commit together; expected revisions reject conflicts; committed and per-node applied revisions remain distinct.")
+- #text("Verified (2026-09-09): every mutation stages through a table whose trigger commits the change and its redacted audit row together under an expected revision; committed and applied revisions are reported separately. See the policy audit, workflow and page-template entries.")
 
 - #text("Verified: Local commands record intent and completion separately from runtime effects. See the local-control storage, live-daemon and browser evidence below.")
 
-- #text("Pending: Gate: deterministic storage ticks cover saturation, bounded queries, migration replay, conflicts, failed rebuilds and cancellation ownership.")
+- #text("Verified (2026-09-09): the storage-tick suites (console_store_test and its siblings for policies, audit, tokens, nodes, kiosk, notifications, pages and workflows) cover saturation, bounded reads, migration replay, conflicts, failed rebuilds and abandonment.")
 
 == 3. HTTP, authentication and real-time transport
 
-- #text("Pending: Listener, routing, deadlines, static assets, reserved HTTP slots and separate peer quota.")
+- #text("Verified (2026-09-09): the serve kernel owns the listener, slot deadlines (extended once a head arrives), static assets and reserved slots; the peer quota remains with the deferred peer transport. See the cluster entry.")
 
-- #text("Pending: RFC 6455 framing, fragmentation, masking direction, UTF-8, controls and close handling; reader makes progress independently of a serialized bounded writer.")
+- #text("Verified (2026-09-09): libs/serve websocket tests and the live stream scenarios cover framing, masking, controls and close; the stream reader and writer are separate tasks. See the contract foundation and live stream entries.")
 
-- #text("Pending: Bootstrap, forced password change, Argon2id, session digests, roles, CSRF, TOTP/recovery and independent password-verification concurrency bounds.")
+- #text("Verified (2026-09-09): bootstrap, forced change, Argon2id, digest-only sessions, roles, CSRF, encrypted TOTP with recovery codes and the verification bound are exercised by the live authentication scenarios. See the authentication entries.")
 
-- #text("Pending: Off-loopback requires canonical HTTPS origin and explicit trusted-proxy allowlist.")
+- #text("Verified (2026-09-09): ConsoleConfig refuses off-loopback without an HTTPS origin and trusted proxies; the trusted-ingress scenario verifies mandatory administrator TOTP behind a proxy.")
 
-- #text("Pending: Authoritative authorization recheck for mutations and subscriptions.")
+- #text("Verified (2026-09-09): the storage owner rechecks the credential at execution time for every mutation and read, and subscriptions are revoked on the owner clock. See the execution-time authorization entries.")
 
-- #text("Pending: Snapshots, epochs, deltas, gaps, bounded fan-out and reconnect.")
+- #text("Verified (2026-09-09): the stats stream delivers snapshots and deltas with boot-aware intervals to at most 64 subscribers, and the interface reconnects with visible stale state. See the live interval and stream entries.")
 
-- #text("Pending: Authentication shell loads no geometry, GeoIP or telemetry before full authentication.")
+- #text("Verified (2026-09-09): geometry, GeoIP and telemetry routes answer 403 until the session is fully authenticated (bootstrap scenario); the kiosk exchange is the only other entry and yields a statistics-only session.")
 
-- #text("Pending: Gate: live daemon bootstrap/login/subscribe/expiry/sign-out, slow clients and revocation.")
+- #text("Verified (2026-09-09): the bootstrap, expiry, shutdown and revocation scenarios in console-e2e cover the gate.")
 
 == 4. Single-node dashboard and globe
 
-- #text("Pending: Exact external outcomes, bounded allocation-free sampling, boot-aware buckets, persisted minutes, visible loss and coverage; preserve Prometheus meanings.")
+- #text("Verified (2026-09-09): see the exact outcomes, retained counter intervals, durable minute record and minute publication entries.")
 
-- #text("Pending: Space-Saving summaries with error bounds and tested cross-window merge.")
+- #text("Verified (2026-09-09): see the bounded ranking collection and ranking archive entries.")
 
 - #text("Verified (2026-09-09): user-country (default, PDDL) and DB-IP imports through libs/geoip; bounded downloads/ranges, publisher checksums, immutable activation; failed updates retain the active generation; optional embedded snapshot. See the GeoIP library evidence.")
 
-- #text("Pending: Authenticated Zig dashboard: live orthographic globe, Traffic/Attacks, country ranks, timeline, summary panels; geometry separate from authentication bundle.")
+- #text("Verified (2026-09-09): see the animated globe, Traffic and Attacks globe delivery and current-minute ranking interface entries.")
 
-- #text("Pending: Rolling 60-second geography updated at 1 Hz; Unknown, loss, incident coverage and age.")
+- #text("Verified (2026-09-09): see the recorded-incident geography and globe delivery entries.")
 
 - #text("Verified (2026-09-09): the kiosk layout reuses the globe, tiles and timeline components with rotation, pause and reset; flat map and accessible tables were verified earlier.")
 
-- #text("Pending: Gate: actual traffic updates the dashboard; unauthenticated loads remain zero; unavailable GeoIP and disconnected streams display honest unavailable/stale states.")
+- #text("Verified (2026-09-09): live stream scenarios and the Chrome checks recorded in the globe, nodes and kiosk entries cover the gate.")
 
 == 5. Events, challenges and policy
 
-- #text("Pending: Grouped/raw incidents, filters, bounded pagination/export, campaigns and similarity; absent history says “not recorded”.")
+- #text("Verified (2026-09-09): see the incident query, similarity and export entries and the events live scenario.")
 
-- #text("Pending: Versioned bounded evidence capture with redaction and truncation metadata.")
+- #text("Verified (2026-09-09): the version-1 evidence envelope records query, body and truncation bits; the replay workflow consumes it. See the audit inspection and workflow entries.")
 
 - #text("Verified: Challenge submissions/rejections and optional untrusted timing on existing POST; configured/effective difficulty separate, PoSW conversion and proof format unchanged.")
 
@@ -1744,21 +1744,21 @@ are historical; the acceptance gates below govern delivery.
 
 - #text("Verified (2026-09-09): Missing members render as unobserved, never zero; each node writes only its own row. Node/boot/sequence deduplication applies to the deferred peer stream.")
 
-- #text("Pending: Preserve issuer-bound challenge verification and local rate limits.")
+- #text("Verified (2026-09-09): challenge verification stays issuer-bound and rate limits stay local; the cluster scenario changes only replicated policy. See the cluster entry.")
 
-- #text("Verified (2026-09-09): users, scoped API tokens, audit investigation, kiosk, notifications and constrained templates. Pending: About.")
+- #text("Verified (2026-09-09): users, scoped API tokens, audit investigation, kiosk, notifications, constrained templates and the About panel (version, node, schema, origin, proxy and key facts).")
 
 - #text("Verified (2026-09-09): the notifier runs under a fenced singleton lease shared with retention; destinations (8), retries (3, 1/4/16 s), the local ring (64) and the replicated queue (256) are bounded.")
 
-- #text("Pending: Retention: minutes 90 days, ranks 7 days/512 MiB, incidents 30 days, audit 365 days.")
+- #text("Verified (2026-09-09): see the fenced retention storage and retention scheduling entries; kiosk grants and workflow stage rows joined the cycle.")
 
-- #text("Pending: Gate: three-node edit/failover/lost quorum/stale peer/revocation/local command/restart.")
+- #text("Verified (2026-09-09): tools/console_cluster_test.py under -Dcluster=true; see the cluster entry.")
 
 == Release verification
 
-- #text("Pending: zig build fmt, zig build test, zig build sid, console checks and build matrix.")
+- #text("Verified (2026-09-09): zig build fmt test console-test sid, console-e2e in the default and cluster builds, and the storage-off, console-off and cluster builds pass in the acceptance run entry.")
 
-- #text("Pending: Native UI render tests and browser auth/update/accessibility/responsive/reconnect tests.")
+- #text("Verified (2026-09-09): native render tests run under console-test; browser checks at 1440 and 390 pixels are recorded in the nodes, settings, template, kiosk and workflow entries, with reconnect and stale states covered by the stream scenarios.")
 
 - #text("Verified (2026-09-09): Typst PDF/PNGs regenerated; all 18 wireframes visually inspected; HTML retains all 20 inline SVG figures.")
 
