@@ -19,6 +19,7 @@ pub fn tick(owner: *Persistent) void {
             std.log.warn("console storage operation failed: {t}", .{err});
             break :result p.StorageResult{ .failed = .unavailable };
         };
+        p.releaseRequest(work.request, owner.gpa);
         owner.console_mailbox.complete(owner.io, work.ticket, result) catch |err| {
             // A ticket cannot disappear while executing, even after disconnect/shutdown.
             std.debug.panic("console mailbox invariant: {t}", .{err});
@@ -82,6 +83,16 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
         .geo_batch => |input| geo.batch(owner, input, owner.nowSeconds()),
         .geo_activate => |input| geo.activate(owner, input, owner.nowSeconds()),
         .geo_read => |input| @import("console_store_geo.zig").read(owner, input),
+        else => executeMore(owner, request),
+    };
+}
+
+/// Templates, setup and authentication; unknown requests fail closed.
+fn executeMore(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
+    const pages = @import("console_store_pages.zig");
+    return switch (request) {
+        .page_read => |input| pages.read(owner, input, owner.nowSeconds()),
+        .page_edit => |input| pages.edit(owner, input, owner.nowSeconds()),
         .setup_status => setupStatus(owner),
         .bootstrap,
         .auth_user,

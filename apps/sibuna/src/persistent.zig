@@ -179,6 +179,7 @@ pub const Persistent = struct {
             .db = undefined,
             .queue = IncidentQueue.init(),
             .console_incidents = if (build_options.console) store.ConsoleIncidents.init() else {},
+            .console_mailbox = if (build_options.console) .{ .gpa = gpa } else {},
             .spare = spare,
             .owned_slot = spare,
             .arenas = .{ std.heap.ArenaAllocator.init(gpa), std.heap.ArenaAllocator.init(gpa) },
@@ -212,6 +213,7 @@ pub const Persistent = struct {
             self.interruptWorker();
             t.join();
         }
+        if (build_options.console) self.console_mailbox.deinit(self.io);
         if (build_options.console) @import("console_node_storage.zig").close(self);
         self.state.hooks = .{};
         // Producers have stopped. Flush every bounded batch, then account
@@ -630,6 +632,10 @@ pub const Persistent = struct {
         try @import("policy_inspection.zig").apply(self, engine);
         try self.loadDbPolicies(engine, arena);
         try self.loadReputation(engine);
+        if (build_options.console)
+            try @import("console_pages_load.zig").install(self, &engine.pages)
+        else
+            policy.page_template.defaults(&engine.pages, @import("challenge_page.zig").default);
         self.spare = self.state.publishEngine(self.spare);
     }
 
@@ -1048,6 +1054,8 @@ test {
         _ = @import("console_membership_test.zig");
         _ = @import("console_kiosk_test.zig");
         _ = @import("console_notifications_test.zig");
+        _ = @import("console_pages_load.zig");
+        _ = @import("console_pages_test.zig");
         _ = @import("console_node_storage.zig");
         _ = @import("console_inspection_test.zig");
         _ = @import("console_limits_test.zig");
