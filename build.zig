@@ -58,6 +58,8 @@ pub fn build(b: *std.Build) void {
     console_modules.console.addImport("core", modules.core);
     console_modules.console.addImport("store", modules.store);
     console_modules.console.addImport("net", modules.net);
+    // Template previews compile drafts with the same validator the storage owner uses.
+    console_modules.console.addImport("policy", modules.policy);
     const wasm_pow = addWasmSolver(b);
     const app = addServer(
         b,

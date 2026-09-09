@@ -52,6 +52,31 @@ pub const Context = struct {
         self.deadline.store(now + seconds, .release);
     }
 
+    /// A reply that must never share the console's origin or run operator content under
+    /// the console's policy: sandboxed, no script, no network, no framing, never cached.
+    pub fn respondIsolated(
+        self: *Context,
+        status: std.http.Status,
+        content_type: []const u8,
+        content: []const u8,
+    ) Error!void {
+        const headers = [_]std.http.Header{
+            .{ .name = "Content-Type", .value = content_type },
+            .{ .name = "Cache-Control", .value = "no-store" },
+            .{ .name = "X-Content-Type-Options", .value = "nosniff" },
+            .{ .name = "Referrer-Policy", .value = "no-referrer" },
+            .{
+                .name = "Content-Security-Policy",
+                .value = "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src 'self'",
+            },
+        };
+        self.extend(30);
+        self.request.respond(content, .{
+            .status = status,
+            .extra_headers = &headers,
+        }) catch return error.WriteFailed;
+    }
+
     pub fn respond(
         self: *Context,
         status: std.http.Status,

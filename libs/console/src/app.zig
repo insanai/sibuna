@@ -35,6 +35,7 @@ pub const App = struct {
     geo_maintenance: @import("geoip_maintenance.zig").Maintenance = .{},
     cluster: @import("cluster_probe.zig").Probe = .{},
     notifier: @import("notifier_job.zig").Job = .{},
+    drafts: @import("page_routes.zig").Drafts = .{},
     detector: @import("notify_events.zig").Detector = .{},
     bans_seen: u64 = 0,
     collector: ?std.Thread = null,
@@ -203,7 +204,10 @@ pub const App = struct {
         operation: p.StorageRequest,
         priority: Mailbox.Priority,
     ) !p.StorageResult {
-        const ticket = try self.mailbox.submit(self.io, operation, priority);
+        const ticket = self.mailbox.submit(self.io, operation, priority) catch |err| {
+            p.releaseRequest(operation, self.gpa);
+            return err;
+        };
         errdefer self.mailbox.abandon(self.io, ticket) catch |err| {
             std.log.err("console request cancellation: {t}", .{err});
         };
@@ -358,11 +362,7 @@ pub const App = struct {
             .tokens_create,
             .tokens_revoke,
             => return access.dispatch(self, context, identity.?, route.handler),
-            .setup_status => {
-                const status = try self.request(.setup_status);
-                if (status != .setup_required) return error.StorageUnavailable;
-                return http.json(context, .{ .setup_required = status.setup_required }, &.{});
-            },
+            .setup_status => return self.setupReply(context),
             .challenges => return @import("challenge_routes.zig").handle(self, context),
             .rankings => return @import("ranking_routes.zig").handle(self, context),
             .timeline => return @import("timeline_routes.zig").handle(self, context),
@@ -382,6 +382,9 @@ pub const App = struct {
                 identity,
             ),
             .logout => return auth.logout(self, context),
+            .pages_read, .pages_edit, .pages_preview, .pages_preview_get => return @import(
+                "page_routes.zig",
+            ).handle(self, context, identity.?, route),
             .settings_query,
             .settings_change,
             .notifications_query,
@@ -407,6 +410,12 @@ pub const App = struct {
             ), &.{}),
             .session => return self.sessionReply(context, identity.?),
         }
+    }
+
+    fn setupReply(self: *App, context: *http.Context) !void {
+        const status = try self.request(.setup_status);
+        if (status != .setup_required) return error.StorageUnavailable;
+        return http.json(context, .{ .setup_required = status.setup_required }, &.{});
     }
 
     fn sessionReply(self: *App, context: *http.Context, user: p.Principal) !void {
