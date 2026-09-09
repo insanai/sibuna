@@ -85,6 +85,14 @@ serving-node controls. The authentication shell loads no globe geometry or telem
 Committed CSS and the Zig/Wasm interface ship with ordinary builds; npm is needed only when
 regenerating style assets.
 
+The optional `--console-location <latitude,longitude>` declares this node's position, for
+example `1.3521,103.8198` for a deployment in Singapore. The globe initially centers there;
+Center Sibuna returns to that point after rotation. Country activity follows animated
+great-circle arcs toward the node, with rear-hemisphere and flat-map dateline clipping.
+Country positions are representative centroids, and arrows represent the observed sixty-second
+window rather than individual connections. An unset server position stays explicitly unknown.
+The configured marker remains visible through telemetry outages; stale traffic does not animate.
+
 Policy previews build a private candidate including configured file rules. Saves compare the
 expected revision and require confirmation of a field comparison. Historical reverts compare
 against the current rule and create a new revision. Committed and locally applied revisions

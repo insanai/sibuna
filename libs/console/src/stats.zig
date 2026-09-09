@@ -10,6 +10,7 @@ pub const Snapshot = @import("console_protocol").StatsSnapshot;
 
 /// The collector owns the single queue consumer; HTTP and streaming writers copy a snapshot.
 pub const Stats = struct {
+    server_location: ?p.Location = null,
     node: u32 = 0,
     boot: [16]u8 = @splat(0),
     started_ms: u64 = 0,
@@ -128,6 +129,7 @@ pub const Stats = struct {
         const totals = telemetry.totals();
         const ranked = rank(&countries);
         return .{
+            .server_location = self.server_location,
             .incident_geo = self.incident_geo.snapshot(now),
             .minute_history = self.minute_status,
             .outcomes_version = 1,

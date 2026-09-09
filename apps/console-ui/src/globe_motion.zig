@@ -27,6 +27,12 @@ pub fn action(state: *State, name: []const u8) bool {
     } else if (std.mem.eql(u8, name, "reset-globe")) {
         state.globe = .{};
         state.motion.rotating = true;
+    } else if (std.mem.eql(u8, name, "center-server")) {
+        const stats = state.stats orelse return false;
+        const location = stats.server_location orelse return false;
+        if (!location.valid()) return false;
+        state.globe = .{ .lat = location.lat, .lon = location.lon };
+        state.motion.rotating = false;
     } else if (std.mem.eql(u8, name, "flat-map")) {
         state.globe.flat = !state.globe.flat;
     } else if (std.mem.startsWith(u8, name, "country-")) {

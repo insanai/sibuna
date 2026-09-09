@@ -449,6 +449,13 @@ fn statsResponse(status: i64, body: std.json.Value, alloc: std.mem.Allocator) !v
         return;
     }
     snapshot.sample_probability = "1/64";
+    if (snapshot.server_location) |location| {
+        if (!location.valid()) snapshot.server_location = null;
+    }
+    if (state.stats == null and state.geometry == null) {
+        if (snapshot.server_location) |location|
+            state.globe = .{ .lat = location.lat, .lon = location.lon };
+    }
     @import("stats_series.zig").accept(&state, snapshot);
     state.stats = snapshot;
     state.received_at = state.browser_time;

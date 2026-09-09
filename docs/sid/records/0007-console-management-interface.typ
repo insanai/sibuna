@@ -3975,6 +3975,31 @@ untrusted metadata, conflicting URLs, internal-route isolation and origin scheme
 preservation. The book's Caddy recipe now uses exclusive handlers to bypass authorization
 for challenge routes, and its Nginx recipe explicitly forwards WebSocket upgrades.
 
+== Geographic server destination correction (2026-09-10)
+
+The earlier animated flow ended at a non-geographic screen-corner hub. The console now accepts
+an explicit per-node `--console-location latitude,longitude`, validated through the shared
+native/Wasm location contract. The authenticated statistics snapshot carries that optional
+coordinate. It is deployment configuration, independent of sampled country lookups, and
+does not invent a public location from the listener address. Without it, the interface explains
+how to configure the destination and still shows the available country activity.
+
+The Natural Earth globe places the Sibuna marker at the declared coordinate and initially
+centers the view there. Center Sibuna restores that view. Up to sixteen observed country flows
+use great-circle interpolation with forty-eight bounded segments and moving directional arrows.
+Coincident and antipodal endpoints have finite deterministic handling; each projected segment
+clips independently at the rear hemisphere or the flat map's antimeridian. Unknown-country
+counts have no geographic route. Stale data hides flows while retaining the configured marker.
+These are aggregate country-to-node illustrations, not individual connection or client positions.
+
+Verification: the complete formatting, native/UI, live console, proxy and SID build passed
+416 tests. The UI artifact is 372,477 bytes of its 393,216-byte budget. Chrome verified the
+declared Singapore fixture marker, changing route/arrow coordinates, Center Sibuna, pause,
+flat-map clipping and a 390-pixel layout without horizontal overflow. The same browser
+previewed a structured denial rule, reviewed its field comparison, saved revision 1, and a
+real request to that path returned 403. These checks do not close the remaining multi-topic,
+peer-transport or performance acceptance gates.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

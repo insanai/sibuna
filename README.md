@@ -285,6 +285,12 @@ interface. Ordinary builds include committed CSS and the Zig/Wasm UI without req
 `-Dconsole=false` removes console integration; `-Dstorage=false` also defaults the console off.
 The console listener starts only when `--console` is supplied.
 
+Set `--console-location <latitude,longitude>` to place this node on the globe, for example
+`--console-location 1.3521,103.8198` for a deployment in Singapore. The signed-in globe starts
+at that position and animates observed country activity toward it; **Center Sibuna** returns
+to the server. Coordinates are operator-declared, not inferred from private addresses.
+Without them, country activity remains visible but no destination or connection arcs are invented.
+
 The signed-in interface keeps navigation across dashboards, policy and inspection editors,
 events, users, tokens, audit and node controls. Policy previews evaluate a private candidate;
 saves show a field comparison and require confirmation with an expected revision. Historical

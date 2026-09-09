@@ -108,7 +108,8 @@ def check(binary):
         logpath = Path(root) / "daemon.log"
         with logpath.open("wb") as log:
             console_port = port()
-            proc = start(binary, str(Path(root) / "data"), console_port, log)
+            proc = start(binary, str(Path(root) / "data"), console_port, log,
+                         extra=("--console-location", "1.3521,103.8198"))
             try:
                 status, _, shell = request(console_port, "GET", "/console/")
                 assert status == 200 and b"Sibuna Console" in shell
@@ -150,6 +151,7 @@ def check(binary):
                 stream = console_ws_test.delivery(console_port, cookie)
                 before_restart = json.loads(request(
                     console_port, "GET", "/console/api/stats", cookie=cookie)[2])
+                assert before_restart["server_location"] == {"lat": 1.3521, "lon": 103.8198}
                 assert request(console_port, "POST", "/console/api/logout", cookie=cookie)[0] == 400
                 assert request(console_port, "POST", "/console/api/logout",
                                cookie=cookie, csrf=csrf)[0] == 200
@@ -166,6 +168,7 @@ def check(binary):
                 cookie = login[1]["Set-Cookie"].split(";", 1)[0]
                 after_restart = json.loads(request(
                     console_port, "GET", "/console/api/stats", cookie=cookie)[2])
+                assert after_restart["server_location"] is None
                 assert before_restart["boot"] != after_restart["boot"]
                 assert any(after_restart["boot"]) and after_restart["requests"] == 0
                 console_timeline_test.restarted(sys.modules[__name__], console_port, cookie,

@@ -28,6 +28,7 @@ pub fn scene(state: *const State, w: *Writer) Writer.Error!void {
     }
     if (!state.globe.flat) try html.render(w, "</g>", .{});
     if (state.geometry) |bytes| try @import("globe_connections.zig").render(state, bytes, w);
+    try @import("globe_connections.zig").marker(state, w);
     try html.render(w, "</svg>", .{});
 }
 
@@ -62,6 +63,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
             "data-action=\"flat-map\">Globe / flat map</button>",
     );
     try html.render(w, "</div>", .{});
+    try serverLocation(state, w);
     try html.render(w, "<p class=\"sb-note\"><a href=\"https://www.naturalearthdata.com\">" ++
         "Made with Natural Earth</a>. Boundaries provide geographic context.</p>", .{});
     if (state.geometry == null) try w.writeAll(if (state.geometry_busy)
@@ -77,12 +79,25 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     }
     try html.render(w, "<p class=\"sb-note\">" ++
         "Markers show representative country positions, not client coordinates. " ++
-        "Arrows illustrate recorded inbound activity over this window; " ++
-        "the service hub is not a geographic destination.", .{});
+        "Arrows illustrate recorded inbound activity over this window toward " ++
+        "this console node's configured location. They are not individual live connections.", .{});
     const attribution = if (state.stats) |stats| stats.geoip_attribution else false;
     if (attribution) try w.writeAll(" <a href=\"https://db-ip.com\">IP Geolocation by DB-IP</a>.");
     try w.writeAll("</p>");
     try rankings(state, w);
+}
+
+fn serverLocation(state: *const State, w: *Writer) Writer.Error!void {
+    if (@import("globe_connections.zig").destination(state)) |location| {
+        try w.print(
+            "<p class=\"sb-note\">Sibuna server: {d:.4}, {d:.4} (configured). " ++
+                "<button class=\"btn btn-sm\" data-action=\"center-server\">" ++
+                "Center Sibuna</button></p>",
+            .{ location.lat, location.lon },
+        );
+    } else try w.writeAll("<p class=\"sb-note\">Server location not configured. " ++
+        "Set <code>--console-location latitude,longitude</code> on this node " ++
+        "to show its destination marker and inbound arrows.</p>");
 }
 
 fn description(state: *const State, w: *Writer) Writer.Error!void {

@@ -98,6 +98,7 @@ pub const App = struct {
         errdefer self.geo.deinit();
         self.stats.boot = self.history.boot;
         self.stats.node = cfg.node_id;
+        self.stats.server_location = cfg.server_location;
         self.stats.started_ms = @import("stats.zig").monotonicMs(io);
         self.stats.incident_geo.started_at = self.now();
         incidents.enabled.store(true, .release);

@@ -63,6 +63,9 @@ pub fn parse(args: []const []const u8, remaining: [][]const u8) !Parsed {
             config.advertise = try console.protocol.Bytes(255).init(value);
         } else if (std.mem.eql(u8, flag, "--console-probe")) {
             try probe(&config, value);
+        } else if (std.mem.eql(u8, flag, "--console-location")) {
+            if (config.server_location != null) return error.DuplicateLocation;
+            config.server_location = try console.protocol.Location.parse(value);
         } else return error.UnknownConsoleOption;
     }
     if (initial_admin != null and options_seen) return error.UnexpectedConsoleOptions;
@@ -201,4 +204,20 @@ pub fn validate(config: console.ConsoleConfig, has_storage: bool) bool {
         return false;
     };
     return true;
+}
+
+test "console location is explicit, bounded and separate from data-plane arguments" {
+    const t = std.testing;
+    var remaining: [8][]const u8 = undefined;
+    const parsed = try parse(&.{
+        "--console", "127.0.0.1:9443", "--console-location", "1.3521,103.8198", "--gate",
+    }, &remaining);
+    try t.expectEqual(@as(f64, 103.8198), parsed.config.server_location.?.lon);
+    try t.expectEqualStrings("--gate", parsed.data_args[0]);
+    try t.expectError(error.InvalidLocation, parse(&.{
+        "--console", "127.0.0.1:9443", "--console-location", "nan,0",
+    }, &remaining));
+    try t.expectError(error.DuplicateLocation, parse(&.{
+        "--console", "127.0.0.1:9443", "--console-location", "0,0", "--console-location", "0,0",
+    }, &remaining));
 }

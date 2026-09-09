@@ -9,6 +9,7 @@ pub const ConsoleConfig = struct {
     port: u16 = 9443,
     /// Daemon version text shown on the About panel; the daemon sets it at composition.
     version: []const u8 = "",
+    server_location: ?protocol.Location = null,
     behind_proxy: bool = false,
     cookie_secure: bool = false,
     key_file: protocol.Bytes(1024) = .{},
@@ -35,10 +36,11 @@ pub const ConsoleConfig = struct {
         InvalidAdvertise,
         InvalidProbe,
         DuplicateProbe,
-    } || Budget.Error;
+    } || Budget.Error || protocol.Location.Error;
 
     pub fn validate(self: *const ConsoleConfig, has_storage: bool) Error!void {
         try self.budget.validate();
+        if (self.server_location) |location| if (!location.valid()) return error.InvalidLocation;
         if (!self.enabled) return;
         if (!has_storage) return error.StorageRequired;
         if (self.port == 0 or self.host.len > self.host.data.len) return error.InvalidAddress;

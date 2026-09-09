@@ -244,6 +244,7 @@ fn printConsoleHelp() void {
             "--console-origin <https-origin>; --console-behind-proxy; " ++
             "--console-trusted-proxy <CIDR> (repeatable); " ++
             "--console-advertise <origin> (link peers show for this console); " ++
+            "--console-location <latitude,longitude> (declared server position on globe); " ++
             "--console-probe <node-id>=<http://ip:port> (repeatable peer data-plane " ++
             "listeners to health-probe).\n" ++
             "Account CLI: sibuna console users [--after <id>]\n" ++

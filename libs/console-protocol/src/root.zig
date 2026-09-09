@@ -14,6 +14,7 @@ pub const users = @import("users.zig");
 pub const audit = @import("audit.zig");
 pub const tokens = @import("tokens.zig");
 pub const geo = @import("geo.zig");
+pub const Location = @import("location.zig").Location;
 pub const version: u16 = 1;
 pub const max_message = 4096;
 pub const max_page_rows = 100;
@@ -365,6 +366,8 @@ pub const CountryCount = struct {
     }
 };
 pub const StatsSnapshot = struct {
+    /// This console node's declared position, never a client IP or a cluster aggregate.
+    server_location: ?Location = null,
     incident_geo: ?@import("incident_geo.zig").Snapshot = null,
     minute_history: minutes.Status = .{},
     /// Version zero denotes the older combined-denial counters and unknown boot identity.
