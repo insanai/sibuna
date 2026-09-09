@@ -3307,6 +3307,30 @@ Wasm measurement is the proof solver. Browser sessions were signed out and both 
 servers stopped before timing. This primitive baseline does not measure active dashboards,
 storage contention or the SID's console-impact acceptance thresholds.
 
+== Transactional policy audit context (2026-09-09)
+
+Schema 17 adds the effective actor role and bounded before/after decision summaries to
+policy and inspection edits in their existing commit triggers. A token records its attenuated
+role; both the owner check and final conditional mutation require the policy-write scope.
+Policy summaries retain action, enabled state, priority, challenge settings, weight and local
+limiter settings. Names, paths, user-agent patterns, header values and CIDRs are omitted;
+selector coverage is explicitly marked redacted. Inspection summaries retain exactly the four
+validated modes. Historical audit absence remains NULL rather than inferred from current state.
+
+The console schema library owns one ordered migration catalog, shared by the storage owner
+and historical-schema tests. Verification covers upgrade from schema 16, replay, preservation
+of existing policy/history/audit records, token attenuation, missing write scope, transaction
+rollback on audit failure, and live policy edits with redacted audit detail. Request IP and
+user-agent capture, audit-driven policy comparison/revert, cluster audit coverage and the
+remaining acceptance gates are still unfinished. SID 0007 remains Proposed.
+
+The required formatting, full tests, console tests and SID build pass: 341 tests. A real
+Chrome session edited and restored the priority of a disabled review rule. Its new audit
+record showed administrator role and priority 101 → 100, marked selectors redacted, omitted
+the path matcher and preserved historical records as not recorded. Chrome reported no
+warnings or errors during this audit review. The book and README now document the usable
+console, native country-import command and explicit remaining feature boundaries.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

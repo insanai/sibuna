@@ -108,6 +108,7 @@ def check_edit(h, port, data_port, cookie, csrf):
     source.update(expected_revision=page["committed"], document=json.dumps(document))
     status, _, body = h.request(port, "POST", edit, source, cookie, csrf)
     assert status == 200, (status, body)
+    check_audit(h, port, cookie, csrf)
     check_history(h, port, cookie, csrf)
 
 
@@ -143,3 +144,19 @@ def check_history(h, port, cookie, csrf):
     status, _, body = h.request(port, "POST", "/console/api/policies/edit", {
         "expected_revision": reverted["committed"], "document": json.dumps(current)}, cookie, csrf)
     assert status == 200, (status, body)
+
+
+def check_audit(h, port, cookie, csrf):
+    from console_audit_test import call
+    session = (cookie, csrf)
+    page = call(h, port, session, "query", {"action": "policy.edit"})
+    assert len(page["rows"]) == 2
+    updated = call(h, port, session, "read", {"id": str(page["rows"][0]["id"])})
+    created = call(h, port, session, "read", {"id": str(page["rows"][1]["id"])})
+    assert updated["row"]["actor_role"] == created["row"]["actor_role"] == "admin"
+    assert created["before"] is None
+    assert json.loads(updated["before"])["enabled"] == 1
+    assert json.loads(updated["after"])["enabled"] == 0
+    assert updated["before_redacted"] and updated["after_redacted"]
+    assert not updated["before_truncated"] and not updated["after_truncated"]
+    assert "/console-policy-edit-review" not in json.dumps(updated)

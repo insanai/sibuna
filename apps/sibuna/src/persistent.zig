@@ -1004,6 +1004,7 @@ test {
         _ = @import("console_users_test.zig");
         _ = @import("console_geo_auth_test.zig");
         _ = @import("console_policy_auth_test.zig");
+        _ = @import("console_policy_audit_test.zig");
         _ = @import("console_tokens_test.zig");
         _ = @import("console_audit_test.zig");
         _ = @import("console_auth_clock_test.zig");

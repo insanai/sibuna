@@ -33,24 +33,7 @@ pub fn run(owner: *Persistent) !void {
         try owner.db.exec(owner.gpa, console.schema.sql);
         version = try current(owner);
     }
-    const migrations = .{
-        console.schema.auth_v2,
-        console.schema.bootstrap_v3,
-        console.schema.rotation_v4,
-        console.schema.events_v5,
-        console.schema.evidence_v6,
-        console.schema.campaign_v7,
-        console.schema.policy_v8,
-        console.schema.rankings_v9,
-        console.schema.inspection_v10,
-        console.schema.limits_v11,
-        console.schema.minutes_v12,
-        console.schema.retention_v13,
-        console.schema.users_v14,
-        console.schema.tokens_v15,
-        console.schema.nodes_v16,
-    };
-    inline for (migrations, 2..) |sql, target| {
+    inline for (console.schema.migrations, 2..) |sql, target| {
         if (version == target - 1) {
             owner.db.exec(owner.gpa, sql) catch |err| {
                 // Another node may have committed this upgrade after our read.

@@ -18,6 +18,14 @@ pub const sql =
 
 /// The false branch preserves migration 8 exactly; later schema versions extend the stage.
 pub fn commit(comptime limits: bool) []const u8 {
+    return versionedCommit(limits, false);
+}
+
+pub fn auditedCommit() []const u8 {
+    return versionedCommit(true, true);
+}
+
+fn versionedCommit(comptime limits: bool, comptime audit: bool) []const u8 {
     return "CREATE TRIGGER console_policy_commit AFTER INSERT ON console_policy_stage BEGIN " ++
         "INSERT INTO console_policy_history SELECT NEW.policy_id,NEW.expected_revision,0," ++
         "NEW.recorded_at,NEW.previous_document,'baseline' " ++
@@ -42,7 +50,11 @@ pub fn commit(comptime limits: bool) []const u8 {
         "INSERT INTO console_policy_history VALUES(" ++
         "NEW.policy_id,NEW.expected_revision+1,NEW.actor," ++
         "NEW.recorded_at,NEW.document,'edit');" ++
-        "INSERT INTO console_audit(actor,action,subject,recorded_at,target) " ++
-        "VALUES(NEW.actor,'policy.edit',NEW.expected_revision+1,NEW.recorded_at,NEW.policy_id);" ++
+        (if (audit) @import("schema_policy_audit.zig").policy_record else legacy_record) ++
         "DELETE FROM console_policy_stage WHERE id=NEW.id; END;";
 }
+
+const legacy_record =
+    "INSERT INTO console_audit(actor,action,subject,recorded_at,target) " ++
+    "VALUES(NEW.actor,'policy.edit',NEW.expected_revision+1," ++
+    "NEW.recorded_at,NEW.policy_id);";

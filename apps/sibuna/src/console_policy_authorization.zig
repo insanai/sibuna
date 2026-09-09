@@ -10,7 +10,14 @@ pub const predicate =
     "s.digest=? AND s.csrf_digest=? AND MIN(s.expires,s.idle_expires)>? " ++
     "AND u.disabled=0 AND u.must_change=0 AND u.role IN ('operator','admin') " ++
     "AND u.revision=s.revision AND (?=0 OR u.role!='admin' OR " ++
-    "EXISTS(SELECT 1 FROM console_totp t WHERE t.user_id=u.id AND t.enabled=1)) ";
+    "EXISTS(SELECT 1 FROM console_totp t WHERE t.user_id=u.id AND t.enabled=1)) " ++
+    "AND (s.token_id IS NULL OR EXISTS(SELECT 1 FROM console_tokens t WHERE t.id=s.token_id " ++
+    "AND t.disabled=0 AND t.role IN ('operator','admin') AND (t.scopes & " ++
+    std.fmt.comptimePrint("{d}", .{p.tokens.Scope.policy_write.bit()}) ++ ")!=0)) ";
+
+// Capture the effective credential role, including token attenuation, at the commit itself.
+pub const role = "CASE WHEN s.token_id IS NULL THEN u.role ELSE " ++
+    "(SELECT role FROM console_tokens WHERE id=s.token_id) END";
 
 pub const Credentials = struct {
     digest: [64]u8,
@@ -42,7 +49,8 @@ pub fn check(owner: *Persistent, input: p.policies.Edit) !?p.Failure {
     const identity = try util.authorize(owner, input.session_digest, owner.nowSeconds());
     if (identity != .authorized or identity.authorized.must_change) return .unauthorized;
     const actor = identity.authorized;
-    if (!actor.role.allows(.manage_policy)) return .forbidden;
+    if (!actor.role.allows(.manage_policy) or
+        actor.scopes & p.tokens.Scope.policy_write.bit() == 0) return .forbidden;
     const account_role = actor.account_role orelse actor.role;
     if (input.require_totp and account_role == .admin and !actor.totp_enabled) return .forbidden;
     if (!std.crypto.timing_safe.eql([32]u8, input.csrf_digest, actor.csrf_digest))

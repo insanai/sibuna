@@ -1,5 +1,6 @@
 //! Versioned additive schema. The owner serializes migration before serving console work.
-pub const version = 16;
+pub const version = 17;
+pub const policy_audit_v17 = @import("schema_policy_audit.zig").sql;
 pub const nodes_v16 = @import("schema_nodes.zig").sql;
 pub const tokens_v15 = @import("schema_tokens.zig").sql;
 pub const users_v14 = @import("schema_users.zig").sql;
@@ -44,3 +45,27 @@ pub const sql = @import("geo_schema.zig").sql ++
     "AFTER INSERT ON console_sessions BEGIN " ++
     "INSERT INTO console_audit(actor,action,subject,recorded_at) " ++
     "VALUES(NEW.user_id,'session.create',NEW.user_id,NEW.created_at); END;";
+
+// One ordered catalog serves owner upgrades and historical migration fixtures.
+pub const migrations = [_][]const u8{
+    auth_v2,
+    bootstrap_v3,
+    rotation_v4,
+    events_v5,
+    evidence_v6,
+    campaign_v7,
+    policy_v8,
+    rankings_v9,
+    inspection_v10,
+    limits_v11,
+    minutes_v12,
+    retention_v13,
+    users_v14,
+    tokens_v15,
+    nodes_v16,
+    policy_audit_v17,
+};
+
+comptime {
+    if (migrations.len + 1 != version) @compileError("Incomplete console migration catalog");
+}

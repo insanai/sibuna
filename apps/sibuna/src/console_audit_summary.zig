@@ -25,6 +25,8 @@ pub fn copy(output: *p.Bytes(1024), source: []const u8, coverage: *Coverage) !vo
     while (fields.next()) |field| {
         const key = field.key_ptr.*;
         const value = field.value_ptr.*;
+        if (std.mem.eql(u8, key, "selectors_redacted") and
+            value == .integer and value.integer != 0) coverage.redacted = true;
         if (textField(key) and value == .string) {
             var buffer: [64]u8 = undefined;
             const text = bounded(&buffer, value.string, coverage);
@@ -42,14 +44,19 @@ pub fn copy(output: *p.Bytes(1024), source: []const u8, coverage: *Coverage) !vo
 }
 
 fn textField(key: []const u8) bool {
-    for ([_][]const u8{ "username", "label", "role", "command", "state" }) |name|
+    for ([_][]const u8{
+        "username",       "label", "role", "command", "state", "action", "algorithm",
+        "path_traversal", "sqli",  "xss",  "rce",
+    }) |name|
         if (std.mem.eql(u8, key, name)) return true;
     return false;
 }
 
 fn numberField(key: []const u8) bool {
     for ([_][]const u8{
-        "disabled", "must_change", "revision", "scopes", "expires", "cleared_entries",
+        "disabled",    "must_change",        "revision",   "scopes", "expires", "cleared_entries",
+        "enabled",     "priority",           "difficulty", "weight", "rate",    "window_seconds",
+        "ban_seconds", "selectors_redacted", "algorithm",
     }) |name|
         if (std.mem.eql(u8, key, name)) return true;
     return false;
