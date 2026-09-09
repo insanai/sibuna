@@ -3372,9 +3372,42 @@ console-off and cluster builds also pass. The UI is 303,740 bytes within its 307
 Real Chrome checks covered cancellation, confirmation, unchanged drafts, focus, persistent
 navigation, a historical revert and the 390-pixel mobile layout without horizontal overflow.
 The disabled fixture rule was restored and the review daemon stopped. Chrome reported no
-warnings or errors. Audit-to-policy navigation, preserving and comparing a draft after a
-concurrent edit, recent-event match previews, and the other unfinished SID features remain
-separate work; this increment does not close the overall Policy or Console acceptance gates.
+warnings or errors. At that commit, audit-to-policy navigation, preserving and comparing a
+draft after a concurrent edit, recent-event match previews, and the other unfinished SID
+features remained separate work; the following entry records the first two.
+
+== Audit-to-policy navigation and conflict rebase (2026-09-09)
+
+Audit rows now retain the complete policy identifier as a 128-byte target, and the protocol
+extracts an owned identifier/revision pair only from complete, valid targets, so changing
+the selected audit row cannot retarget a request. An audit detail with a policy target
+offers a review action that opens the managed editor at the audited revision. While a
+reviewed save is open and the catalog has become stale, the review shows a rebase control:
+reloading fetches the current rule at its committed revision, keeps the reviewed draft, and
+re-renders the before/after comparison against the current document. A draft without a
+loadable baseline explains that export and re-import is the recovery path.
+
+Native controller tests cover the rebase path, the retained draft, the recomputed
+comparison and the exact expected revision sent on confirmation. A server test verifies
+that full policy identifiers survive audit recording. Against a running daemon, an edit
+produced an audit row whose target was the rule identifier and whose subject was the new
+revision; reading the document at that revision succeeded, the history read listed the
+edit, and a repeated edit with the stale expected revision was refused with 409. One
+formatting violation from these commits (a 105-character test line) was corrected; the
+regenerated asset manifest, formatting, console tests, full repository tests, the live
+console suite and SID generation pass. Chrome interaction for this increment remains to be
+recorded by an operator sign-in; the native and live checks above do not replace it.
+
+== Audit-navigation benchmark regeneration (2026-09-09)
+
+`latest-20260909T010316Z.json` and `latest.json` were regenerated from clean commit
+`cc99ee6` with review daemons stopped. Manifest version 2 covers 381 inputs with SHA-256
+`7d24323b335b1b0ce2c780829ffafef67a28a7a6fcce8c19064749e2a655e9a7`; the daemon digest is
+`031b7804948a977a2d41ca1007ebc5d12125fdd228c79a063f41d3d15089b070` and the result file
+SHA-256 is `c3fce86cc7d4067c474921c45b0c729d9fb01d8256927e3244fc9c0cfc384b01`. Full
+classification measured 1,470.09 ns median (1,467.85–1,476.77 ns across seven batches).
+Idle RSS was 9,920 KiB with two workers and storage compiled but inactive. These primitive
+measurements do not satisfy the console-impact acceptance gate.
 
 = References
 
