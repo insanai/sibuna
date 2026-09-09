@@ -87,7 +87,8 @@ def http_checks(port, hdrs):
     status, _, received = exchange(port, "/upload", hdrs, "POST", body)
     assert status == 200 and received == body, (status, len(received), received[:96])
     status, reply, _ = exchange(port, "/redirect", hdrs)
-    assert status == 302 and reply["Location"] == "https://application.example/login?next=%2Fprivate"
+    assert status == 302
+    assert reply["Location"] == "https://application.example/login?next=%2Fprivate"
     assert reply["Set-Cookie"] == "application=opaque; HttpOnly; Secure; SameSite=Lax"
     with socket.create_connection(("127.0.0.1", port), timeout=5) as connection:
         head = "GET /early HTTP/1.1\r\nHost: example\r\nConnection: close\r\n"
@@ -106,7 +107,8 @@ def https_checks(caddy, root, backend):
                    check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     port = helper.port()
     config = {"admin": {"disabled": True}, "apps": {
-        "tls": {"certificates": {"load_files": [{"certificate": str(certificate), "key": str(key)}]}},
+        "tls": {"certificates": {"load_files": [
+            {"certificate": str(certificate), "key": str(key)}]}},
         "http": {"servers": {"review": {"listen": [f"127.0.0.1:{port}"],
             "automatic_https": {"disable": True}, "tls_connection_policies": [{}],
             "routes": [{"handle": [{"handler": "reverse_proxy",

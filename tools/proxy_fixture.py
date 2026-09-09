@@ -62,7 +62,8 @@ class Origin(http.server.BaseHTTPRequestHandler):
             return
         if self.path == "/early":
             self.wfile.write(b'HTTP/1.1 103 Early Hints\r\nLink: </app.css>; rel=preload\r\n\r\n')
-        return self.reply(200, json.dumps({"path": self.path, "headers": dict(self.headers)}).encode())
+        body = json.dumps({"path": self.path, "headers": dict(self.headers)}).encode()
+        return self.reply(200, body)
 
     def do_POST(self):
         body = self.rfile.read(int(self.headers.get("Content-Length", "0")))
@@ -168,9 +169,13 @@ document.querySelector('#run').onclick = () => {
   const socket = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://')
     + location.host + '/ws', 'chat');
   let greeted = false;
-  const timeout = setTimeout(() => { result.textContent = 'FAIL: timeout'; socket.close(); }, 5000);
+  const timeout = setTimeout(() => {
+    result.textContent = 'FAIL: timeout'; socket.close();
+  }, 5000);
   socket.onmessage = event => {
-    if (event.data === 'origin ready') { greeted = true; socket.send('Chrome bidirectional echo'); }
+    if (event.data === 'origin ready') {
+      greeted = true; socket.send('Chrome bidirectional echo');
+    }
     else if (greeted && event.data === 'Chrome bidirectional echo') {
       clearTimeout(timeout);
       result.textContent = 'PASS: unsolicited origin message and browser echo through Sibuna';
