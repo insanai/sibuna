@@ -91,6 +91,24 @@ pub fn refresh(state: *State, out: Outbox) !void {
         .method = "GET",
         .path = "/console/api/nodes/local",
     });
+    try members(state, out);
+}
+
+/// Membership rides its own ticket so a slow or failed peer page never fences commands.
+fn members(state: *State, out: Outbox) !void {
+    const peers = &state.nodes.peers;
+    if (peers.busy or generation == std.math.maxInt(u64)) return;
+    generation += 1;
+    const text = try std.fmt.bufPrint(&peers.ticket.data, "nodes-m-{d}", .{generation});
+    peers.ticket.len = text.len;
+    peers.busy = true;
+    errdefer peers.busy = false;
+    try out.emit(.{
+        .op = "request",
+        .id = peers.ticket.slice(),
+        .method = "GET",
+        .path = "/console/api/nodes",
+    });
 }
 
 fn submit(state: *State, out: Outbox) !void {
@@ -120,6 +138,8 @@ pub fn response(
     out: Outbox,
 ) !void {
     const model = &state.nodes;
+    if (state.phase == .nodes and std.mem.eql(u8, id, model.peers.ticket.slice()))
+        return membersResponse(state, status, body, alloc);
     if (state.phase != .nodes or !std.mem.eql(u8, id, model.ticket.slice())) return;
     const kind = model.busy;
     model.busy = .idle;
@@ -154,6 +174,20 @@ pub fn response(
         if (model.pending == null) try refresh(state, out);
         try out.emit(.{ .op = "focus", .selector = "#nodes-receipt" });
     }
+}
+
+fn membersResponse(
+    state: *State,
+    status: i64,
+    body: std.json.Value,
+    alloc: std.mem.Allocator,
+) !void {
+    const peers = &state.nodes.peers;
+    if (!peers.busy) return;
+    peers.busy = false;
+    if (status != 200) return;
+    state.nodes.membersValue(body, alloc) catch return;
+    peers.received_at = state.browser_time;
 }
 
 pub fn tick(state: *State, out: Outbox) !void {

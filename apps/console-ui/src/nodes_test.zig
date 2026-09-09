@@ -144,7 +144,7 @@ test "node rendering keeps navigation, full-width revisions and explicit impact 
     const document = writer.buffered();
     for ([_][]const u8{
         "data-action=\"audit\"", "data-action=\"nodes\"", "9007199254740993",
-        "Confirm change",        "Replicated policy",     "Peer coverage is unavailable",
+        "Confirm change",        "Replicated policy",     "Cluster membership not loaded",
     }) |text| try t.expect(std.mem.indexOf(u8, document, text) != null);
     state.reset();
     try t.expect(state.nodes.pending == null and state.nodes.receipt == null);
@@ -197,4 +197,73 @@ test "pending durable completion and exhausted revisions refuse new local effect
     state.nodes.status.?.control_revision = std.math.maxInt(i64);
     _ = try Controller.action(&state, "nodes-select-drain", h.out());
     try t.expect(state.nodes.pending == null and h.count == 0);
+}
+
+fn member(node: u32, url: []const u8, seen: u64) p.nodes.Member {
+    return .{
+        .node = node,
+        .console_url = p.Bytes(p.nodes.max_url).init(url) catch unreachable,
+        .version = p.Bytes(32).init("0.2.0") catch unreachable,
+        .boot = p.Bytes(32).init("33333333333333333333333333333333") catch unreachable,
+        .last_seen = seen,
+        .applied_revision = 9007199254740992,
+    };
+}
+
+test "member rendering orders unhealthy first, marks the leader once and never invents zero" {
+    var state = signedIn();
+    var peers = &state.nodes.peers;
+    peers.* = .{ .self = 1, .committed = 9007199254740993, .loaded = true, .received_at = 100 };
+    peers.storage = .{ .role = .follower, .leader = 3, .quorum = true, .observed_at = 100 };
+    peers.members[0] = member(1, "http://127.0.0.1:9443", 100);
+    peers.members[1] = member(2, "", 100);
+    peers.members[2] = member(3, "https://console.example", 100);
+    peers.count = 3;
+    peers.probes[0] = .{ .node = 2, .health = .down, .observed_at = 100 };
+    peers.probes[1] = .{ .node = 3, .health = .healthy, .latency_ms = 4, .observed_at = 100 };
+    peers.probes[2] = .{ .node = 4, .health = .unknown };
+    peers.probe_count = 3;
+    var buffer: [24576]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&buffer);
+    try @import("render.zig").render(&state, &writer);
+    const document = writer.buffered();
+    errdefer std.debug.print("{s}\n", .{document});
+    const down = std.mem.indexOf(u8, document, "Node 2 · unreachable") orelse return error.Down;
+    const healthy = std.mem.indexOf(u8, document, "Node 3 · healthy · leader") orelse
+        return error.Healthy;
+    const own = std.mem.indexOf(u8, document, "Node 1 · serving this console") orelse
+        return error.Own;
+    try t.expect(down < healthy and healthy < own);
+    try t.expectEqual(@as(usize, 1), std.mem.count(u8, document, " · leader</h2>"));
+    try t.expectEqual(@as(usize, 1), std.mem.count(u8, document, "Open console"));
+    try t.expect(std.mem.indexOf(u8, document, "href=\"https://console.example\"") != null);
+    try t.expect(std.mem.indexOf(u8, document, "Node 4 · unobserved") != null);
+    try t.expect(std.mem.indexOf(u8, document, "unavailable, not zero") != null);
+    try t.expect(std.mem.indexOf(u8, document, "behind committed") != null);
+    try t.expect(std.mem.indexOf(u8, document, "Drain node") != null);
+}
+
+test "member pages beyond the bound or with unsafe links are rejected" {
+    var state = signedIn();
+    var bytes: [8192]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&bytes);
+    try writer.writeAll("{\"page\":{\"self\":1,\"committed\":\"1\",\"storage\":{\"role\":" ++
+        "\"single\",\"leader\":null,\"term\":\"0\",\"decided\":\"0\",\"applied\":\"0\"," ++
+        "\"durable\":\"0\",\"quorum\":true,\"observed_at\":\"1\"},\"members\":[");
+    for (0..10) |index| {
+        if (index != 0) try writer.writeByte(',');
+        try writer.print("{{\"node\":{d},\"address\":\"local\",\"console_url\":\"\"," ++
+            "\"version\":\"0.2.0\",\"boot\":\"3\",\"first_seen\":\"1\",\"last_seen\":\"1\"," ++
+            "\"applied_revision\":\"1\",\"control_revision\":\"0\",\"applied_slot\":\"0\"," ++
+            "\"decided_slot\":\"0\",\"draining\":false}}", .{index + 1});
+    }
+    try writer.writeAll("]},\"probes\":[],\"observed_at\":\"1\"}");
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const text = writer.buffered();
+    const parsed = try std.json.parseFromSlice(std.json.Value, t.allocator, text, .{});
+    defer parsed.deinit();
+    const decoded = state.nodes.membersValue(parsed.value, arena.allocator());
+    try t.expectError(error.InvalidResponse, decoded);
+    try t.expect(!state.nodes.peers.loaded);
 }

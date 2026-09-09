@@ -1,6 +1,38 @@
 const std = @import("std");
 const p = @import("console_protocol");
 pub const Kind = enum { idle, status, command, receipt };
+/// Decoded `/console/api/nodes` reply: replicated member rows plus this console's probes.
+pub const Members = struct {
+    self: u32,
+    committed: u64,
+    storage: p.nodes.Storage,
+    members: []const p.nodes.Member,
+    probes: []const p.nodes.Probe,
+    observed_at: u64,
+};
+pub const Wire = struct {
+    page: struct {
+        self: u32,
+        committed: u64,
+        storage: p.nodes.Storage,
+        members: []const p.nodes.Member,
+    },
+    probes: []const p.nodes.Probe,
+    observed_at: u64,
+};
+pub const Peers = struct {
+    self: u32 = 0,
+    committed: u64 = 0,
+    storage: p.nodes.Storage = .{},
+    members: [p.nodes.max_members]p.nodes.Member = undefined,
+    count: u8 = 0,
+    probes: [p.nodes.max_probes]p.nodes.Probe = undefined,
+    probe_count: u8 = 0,
+    received_at: u64 = 0,
+    loaded: bool = false,
+    ticket: p.Bytes(32) = .{},
+    busy: bool = false,
+};
 pub const Input = struct {
     id: p.Bytes(32),
     boot: p.Bytes(32),
@@ -18,6 +50,7 @@ pub const Model = struct {
     last_attempt: u64 = 0,
     ticket: p.Bytes(32) = .{},
     busy: Kind = .idle,
+    peers: Peers = .{},
 
     pub fn fresh(self: *const Model, now: u64) bool {
         return self.loaded and now >= self.received_at and now - self.received_at <= 10;
@@ -32,6 +65,38 @@ pub const Model = struct {
             return error.InvalidResponse;
         self.status = candidate;
         self.loaded = true;
+    }
+
+    /// Publishes a member page only after every row and probe validates; a rejected reply
+    /// keeps the previous page so a transient decode failure cannot blank the cluster view.
+    pub fn membersValue(self: *Model, body: std.json.Value, alloc: std.mem.Allocator) !void {
+        var wire: Wire = undefined;
+        try @import("json_value.zig").into(&wire, body, alloc);
+        if (wire.page.self == 0 or wire.page.members.len > p.nodes.max_members or
+            wire.probes.len > p.nodes.max_probes) return error.InvalidResponse;
+        var peers: Peers = .{
+            .self = wire.page.self,
+            .committed = wire.page.committed,
+            .storage = wire.page.storage,
+            .received_at = 0,
+            .loaded = true,
+            .ticket = self.peers.ticket,
+        };
+        for (wire.page.members) |member| {
+            if (member.node == 0 or (member.console_url.len != 0 and
+                !p.nodes.safeUrl(member.console_url.slice()))) return error.InvalidResponse;
+            for (peers.members[0..peers.count]) |seen| {
+                if (seen.node == member.node) return error.InvalidResponse;
+            }
+            peers.members[peers.count] = member;
+            peers.count += 1;
+        }
+        for (wire.probes) |probe| {
+            if (probe.node == 0) return error.InvalidResponse;
+            peers.probes[peers.probe_count] = probe;
+            peers.probe_count += 1;
+        }
+        self.peers = peers;
     }
 
     pub fn receiptValue(self: *Model, body: std.json.Value, alloc: std.mem.Allocator) !void {

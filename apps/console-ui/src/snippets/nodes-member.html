@@ -1,0 +1,12 @@
+<section class="sb-panel" aria-labelledby="node-{{ node }}-heading">
+    <h2 id="node-{{ node }}-heading">Node {{ node }} · {{ health }}{{ leader }}</h2>
+    <p role="status">{{ summary }}</p>
+    <div class="overflow-x-auto"><table class="table">
+        <caption class="sr-only">Member {{ node }}</caption><tbody>
+        <tr><th scope="row">Consensus address</th><td><code class="break-all">{{ address }}</code></td></tr>
+        <tr><th scope="row">Version</th><td>{{ version }}</td></tr>
+        <tr><th scope="row">Policy revision applied</th><td>{{ applied }} ({{ ack }})</td></tr>
+        <tr><th scope="row">Log slots: applied / decided</th><td>{{ slots }}</td></tr>
+        <tr><th scope="row">Last announcement</th><td>{{ seen }}</td></tr>
+        <tr><th scope="row">Probe</th><td>{{ probe }}</td></tr>
+        </tbody></table></div>

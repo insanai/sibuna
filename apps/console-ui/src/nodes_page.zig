@@ -26,7 +26,123 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     });
     if (model.pending) |pending| try confirmation(state, pending.kind, w);
     if (model.receipt) |receipt| try result(receipt, w);
+    try members(state, w);
     try html.render(w, "</main>", .{});
+}
+
+const Rank = struct { health: p.nodes.Health, observed: bool, leader: bool, node: u32 };
+
+fn rank(peers: *const @import("nodes_state.zig").Peers, value: p.nodes.Member) Rank {
+    // The serving node is never probed; it is the live node rendering this page.
+    var health: p.nodes.Health = if (value.node == peers.self) .healthy else .unknown;
+    for (peers.probes[0..peers.probe_count]) |probe| {
+        if (probe.node == value.node) health = probe.health;
+    }
+    const leader = peers.storage.leader != null and peers.storage.leader.? == value.node;
+    return .{
+        .health = health,
+        .observed = value.last_seen != 0,
+        .leader = leader,
+        .node = value.node,
+    };
+}
+
+/// Unhealthy members first, then unobserved, then healthy; the leader leads its group.
+fn before(a: Rank, b: Rank) bool {
+    const order = [_]u8{ 2, 3, 1, 0 }; // unknown, healthy, degraded, down → rank
+    const ra = order[@intFromEnum(a.health)];
+    const rb = order[@intFromEnum(b.health)];
+    if (ra != rb) return ra < rb;
+    if (a.observed != b.observed) return !a.observed;
+    if (a.leader != b.leader) return a.leader;
+    return a.node < b.node;
+}
+
+fn members(state: *const State, w: *Writer) Writer.Error!void {
+    const peers = &state.nodes.peers;
+    if (!peers.loaded) return html.render(w, "<p class=\"sb-note\">Cluster membership " ++
+        "not loaded yet.</p>", .{});
+    const observed = state.browser_time -| peers.received_at;
+    try html.render(w, "<h2>Members</h2><p role=\"status\">{{ count }} member rows · " ++
+        "{{ probes }} probed peers · leader {{ leader }} · quorum {{ quorum }} · " ++
+        "page age {{ age }} s</p>", .{
+        .count = peers.count,
+        .probes = peers.probe_count,
+        .leader = peers.storage.leader orelse 0,
+        .quorum = if (peers.storage.quorum) "available" else "not established",
+        .age = observed,
+    });
+    var order: [p.nodes.max_members]u8 = undefined;
+    for (0..peers.count) |i| order[i] = @intCast(i);
+    // Insertion sort over at most nine rows.
+    for (1..peers.count) |i| {
+        var j = i;
+        while (j > 0 and before(
+            rank(peers, peers.members[order[j]]),
+            rank(peers, peers.members[order[j - 1]]),
+        )) {
+            std.mem.swap(u8, &order[j], &order[j - 1]);
+            j -= 1;
+        }
+    }
+    for (order[0..peers.count]) |index| try renderMember(state, peers.members[index], w);
+    for (peers.probes[0..peers.probe_count]) |probe| {
+        var known = false;
+        for (peers.members[0..peers.count]) |m| known = known or m.node == probe.node;
+        if (!known) try html.render(w, "<section class=\"sb-panel\"><h2>Node {{ node }} · " ++
+            "unobserved</h2><p>Configured for probing but no membership row has been " ++
+            "replicated. Counters are unavailable, not zero.</p></section>", .{
+            .node = probe.node,
+        });
+    }
+}
+
+fn renderMember(state: *const State, value: p.nodes.Member, w: *Writer) Writer.Error!void {
+    const peers = &state.nodes.peers;
+    const info = rank(peers, value);
+    var probe_text: [96]u8 = undefined;
+    var probe: []const u8 = "not configured";
+    for (peers.probes[0..peers.probe_count]) |entry| {
+        if (entry.node != value.node) continue;
+        probe = std.fmt.bufPrint(&probe_text, "{s}, {d} ms, {d} requests since last probe", .{
+            @tagName(entry.health), entry.latency_ms, entry.requests,
+        }) catch "probe summary unavailable";
+    }
+    const behind = value.applied_revision < peers.committed;
+    var slots: [48]u8 = undefined;
+    try html.render(w, @embedFile("snippets/nodes-member.html"), .{
+        .node = value.node,
+        .health = if (value.node == peers.self) "serving this console" else switch (info.health) {
+            .healthy => "healthy",
+            .degraded => "degraded (draining)",
+            .down => "unreachable",
+            .unknown => "not probed",
+        },
+        .leader = if (info.leader) " · leader" else "",
+        .summary = if (value.draining)
+            "Draining: new connections are refused."
+        else if (value.node == peers.self)
+            "This node."
+        else
+            "Announced through replicated storage.",
+        .address = value.address.slice(),
+        .version = value.version.slice(),
+        .applied = value.applied_revision,
+        .ack = if (behind) "behind committed" else "applied",
+        .slots = std.fmt.bufPrint(&slots, "{d} / {d}", .{
+            value.applied_slot,
+            value.decided_slot,
+        }) catch "?",
+        .seen = if (value.last_seen == 0) "never" else "recorded",
+        .probe = probe,
+    });
+    if (value.console_url.len != 0 and value.node != peers.self) try html.render(
+        w,
+        "<a class=\"btn btn-sm\" href=\"{{ url }}\" rel=\"noopener noreferrer\" " ++
+            "target=\"_blank\">Open console</a>",
+        .{ .url = value.console_url.slice() },
+    );
+    try html.render(w, "</section>", .{});
 }
 
 fn status(state: *const State, node: p.nodes.Status, w: *Writer) Writer.Error!void {
