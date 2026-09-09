@@ -97,8 +97,8 @@ pub fn load(owner: *Persistent, id: [16]u8) !?p.nodes.Receipt {
         owner.db,
         owner.gpa,
         "SELECT id,node,boot,kind,expected_revision,state,requested_at,completed_at," ++
-            "applied_revision,cleared_entries FROM console_commands WHERE id=? AND node=? LIMIT 1",
-        &.{ util.text(&hex), util.integer(owner.node_id) },
+            "applied_revision,cleared_entries FROM console_commands WHERE id=? LIMIT 1",
+        &.{util.text(&hex)},
     );
     defer rows.deinit();
     if (rows.rows.len == 0) return null;
