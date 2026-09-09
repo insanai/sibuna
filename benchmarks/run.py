@@ -71,8 +71,9 @@ def source_paths():
             if path.parts[:2] != ("benchmarks", "results") and (ROOT / path).is_file()]
 
 
-def metadata():
+def metadata(binary=None):
     manifest = (ROOT / "build.zig.zon").read_text()
+    artifact = pathlib.Path(binary) if binary else ROOT / "zig-out/bin/sibuna"
     cpu = platform.processor()
     if platform.system() == "Darwin":
         cpu = command("sysctl", "-n", "machdep.cpu.brand_string")
@@ -91,7 +92,7 @@ def metadata():
         "source_sha256": source.hexdigest(),
         "source_manifest_version": 2,
         "source_file_count": len(paths),
-        "daemon_sha256": hashlib.sha256((ROOT / "zig-out/bin/sibuna").read_bytes()).hexdigest(),
+        "daemon_sha256": hashlib.sha256(artifact.read_bytes()).hexdigest(),
         "date": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "host": socket.gethostname(), "cpu": cpu, "os": platform.platform(),
         "git": command("git", "rev-parse", "HEAD"),
@@ -110,8 +111,8 @@ def record(data, name):
 
 
 def main():
-    subprocess.run(["zig", "build", "wasm", "-Doptimize=ReleaseFast"], cwd=ROOT, check=True)
-    subprocess.run(["zig", "build", "-Doptimize=ReleaseFast"], cwd=ROOT, check=True)
+    subprocess.run(["zig", "build", "-j1", "wasm", "-Doptimize=ReleaseFast"], cwd=ROOT, check=True)
+    subprocess.run(["zig", "build", "-j1", "-Doptimize=ReleaseFast"], cwd=ROOT, check=True)
     data = json.loads(command(str(ROOT / "zig-out/bin/sibuna-benchmark")))
     data["meta"].update(metadata())
     data["meta"].update({

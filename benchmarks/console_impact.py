@@ -5,10 +5,11 @@ challenged, denied and policy-reload workloads. Rounds interleave configurations
 order; a noisy baseline yields "inconclusive", never a pass.
 
     python3 benchmarks/console_impact.py [--quick] [--rounds N] [--seconds S]
-        [--host-label TEXT] [--cluster]
+        [--host-label TEXT] [--cluster] [--geoip-data SNAPSHOT]
 """
 import argparse
 import json
+import math
 import os
 from pathlib import Path
 import random
@@ -26,19 +27,21 @@ from distributed import headers, session
 sys.path.insert(0, str(ROOT / "tools"))
 import console_bootstrap_test as bootstrap  # noqa: E402
 import console_e2e  # noqa: E402
-from console_ws_test import Stream  # noqa: E402
+from console_dashboard import Dashboard, covered, difference  # noqa: E402
 
 CONFIGURATIONS = ("compiled_out", "disabled", "idle", "active")
 GATE = {"throughput_loss_max": 0.01, "p99_increase_max": 0.10, "baseline_spread_max": 0.01}
 DASHBOARDS = 8
 
 
-def build(prefix, console, cluster):
-    args = ["zig", "build", "-Doptimize=ReleaseFast", "-p", str(prefix)]
+def build(prefix, console, cluster, geoip=None):
+    args = ["zig", "build", "-j1", "-Doptimize=ReleaseFast", "-p", str(prefix)]
     if not console:
         args.append("-Dconsole=false")
     if cluster:
         args.append("-Dcluster=true")
+    if console and geoip:
+        args.append(f"-Dgeoip-data={geoip}")
     subprocess.run(args, cwd=ROOT, check=True)
     binary = prefix / "bin/sibuna"
     return {"path": str(binary), "bytes": binary.stat().st_size,
@@ -54,10 +57,7 @@ class Daemon:
         self.seed, self.psk = seed, psk
         self.port = free_port()
         self.console_port = free_port() if name in ("idle", "active") else None
-        self.procs, self.logs, self.streams, self.readers = [], [], [], []
-        self.frames = 0
-        self.reconnects, self.closes = 0, {}
-        self.stopping = threading.Event()
+        self.procs, self.logs, self.clients = [], [], []
 
     def args(self, index, data, peers):
         args = [self.binary, "--host", "127.0.0.1", "--port", str(data[index]), "--workers", "2",
@@ -126,57 +126,34 @@ class Daemon:
                                         credentials)
         assert status == 200, body
         self.cookie = reply["Set-Cookie"].split(";", 1)[0]
+        self.csrf = json.loads(body)["csrf"]
+        code, _, body = h.request(self.console_port, "GET", "/console/api/geoip",
+                                  cookie=self.cookie)
+        assert code == 200, ("geoip", code)
+        self.geoip = json.loads(body)
         if self.name != "active":
             return
-        for index in range(DASHBOARDS):
-            self.streams.append(self.subscribe())
-            reader = threading.Thread(target=self.read, args=(index,), daemon=True)
-            reader.start()
-            self.readers.append(reader)
-
-    def subscribe(self):
-        stream = Stream(self.console_port, self.cookie)
-        stream.send(1, b'{"op":"subscribe","topics":["stats"]}')
-        return stream
-
-    def read(self, index):
-        # Blocking reads only: a socket timeout on a buffered file discards bytes and
-        # desynchronizes the frame parser. stop_all closes the socket to end the thread.
-        # A closed stream is reopened after a second, as the browser dashboard does; the
-        # close codes are recorded so a saturated console shows in the record.
-        while not self.stopping.is_set():
-            try:
-                opcode, payload = self.streams[index].receive()
-            except (OSError, ValueError, AssertionError):
-                opcode, payload = 8, b""
-            if opcode == 9:
-                self.streams[index].send(10, payload)
-            elif opcode == 1:
-                self.frames += 1
-            elif opcode == 8:
-                code = int.from_bytes(payload[:2], "big") if len(payload) >= 2 else 0
-                self.closes[code] = self.closes.get(code, 0) + 1
-                if self.stopping.wait(1):
-                    return
-                try:
-                    self.streams[index] = self.subscribe()
-                except (OSError, AssertionError):
-                    continue
-                self.reconnects += 1
+        for _ in range(DASHBOARDS):
+            client = Dashboard(h, self.console_port, self.cookie, self.csrf)
+            self.clients.append(client)
+            client.start()
 
     def stop_all(self):
-        self.stopping.set()
-        for stream in self.streams:
+        failures = []
+        for client in self.clients:
             try:
-                stream.close()
-            except OSError:
-                pass
-        for reader in self.readers:
-            reader.join(timeout=5)
+                client.stop()
+            except (OSError, RuntimeError) as error:
+                failures.append(error)
         for proc in self.procs:
-            stop(proc)
+            try:
+                stop(proc)
+            except (OSError, RuntimeError, subprocess.TimeoutExpired) as error:
+                failures.append(error)
         for log in self.logs:
             log.close()
+        if failures:
+            raise RuntimeError("impact fixture cleanup failed") from failures[0]
 
 
 def sample(daemon, path, hdrs, load, script):
@@ -184,17 +161,21 @@ def sample(daemon, path, hdrs, load, script):
     wrk(daemon.port, path, hdrs, {**load, "seconds": load["warmup_seconds"]}, script)
     tracker = PeakRss(daemon.procs[0].pid)
     cpu_before = cpu_seconds(daemon.procs[0].pid)
-    frames_before = daemon.frames
+    before = [client.snapshot() for client in daemon.clients]
     tracker.start()
-    result = wrk(daemon.port, path, hdrs, load, script)
-    tracker.stopping.set()
-    tracker.join()
+    try:
+        result = wrk(daemon.port, path, hdrs, load, script)
+    finally:
+        tracker.stopping.set()
+        tracker.join()
     wall = result["duration_us"] / 1e6
-    return {"requests": result["requests"], "requests_per_second": result["requests"] / wall,
+    return {"requests": result["requests"],
+            "requests_per_second": result["requests"] / wall if wall > 0 else 0,
             "latency_us": result["latency_us"], "errors": result["errors"],
             "cpu_seconds": cpu_seconds(daemon.procs[0].pid) - cpu_before,
             "peak_rss_kib": tracker.peak,
-            "dashboard_frames": daemon.frames - frames_before, "wall_seconds": wall}
+            "dashboards": difference(before, [client.snapshot() for client in daemon.clients]),
+            "wall_seconds": wall}
 
 
 class Reloader(threading.Thread):
@@ -217,22 +198,24 @@ class Reloader(threading.Thread):
 
 
 def workloads(cookie):
-    with_cookie = headers(cookie=cookie)
+    with_cookie = headers("8.8.8.8", cookie=cookie)
     return {
         "admitted": ("/private", with_cookie, 200),
-        "challenged": ("/private", headers(), 401),
+        "challenged": ("/private", headers("8.8.8.8"), 401),
         "denied": (ATTACK, with_cookie, 403),
         "policy_reload": ("/private", with_cookie, 200),
     }
 
 
-def bootstrap_ci(baseline, candidate, resamples=1000):
+def bootstrap_ci(baseline, candidate, resamples=2000, increase=False):
+    assert len(baseline) == len(candidate) and baseline
     rng = random.Random(7)
     ratios = []
     for _ in range(resamples):
-        b = statistics.median(rng.choice(baseline) for _ in baseline)
-        c = statistics.median(rng.choice(candidate) for _ in candidate)
-        ratios.append(1 - c / b)
+        indices = [rng.randrange(len(baseline)) for _ in baseline]
+        b = statistics.median(baseline[i] for i in indices)
+        c = statistics.median(candidate[i] for i in indices)
+        ratios.append(c / b - 1 if increase else 1 - c / b)
     ratios.sort()
     return [ratios[int(0.025 * resamples)], ratios[int(0.975 * resamples) - 1]]
 
@@ -242,76 +225,103 @@ def summarize(samples):
     p99 = [s["latency_us"]["p99"] for s in samples]
     return {"samples": samples, "requests_per_second_median": statistics.median(rates),
             "requests_per_second_min": min(rates), "requests_per_second_max": max(rates),
-            "spread": (max(rates) - min(rates)) / statistics.median(rates),
+            "spread": ((max(rates) - min(rates)) / statistics.median(rates)
+                       if statistics.median(rates) > 0 else None),
+            "valid_measurements": all(math.isfinite(value) and value > 0
+                                      for sample in samples for value in (
+                                          sample["requests_per_second"],
+                                          sample["latency_us"]["p99"], sample["wall_seconds"])),
             "latency_us_p99_median": statistics.median(p99),
             "peak_rss_kib_max": max(s["peak_rss_kib"] for s in samples),
-            "errors_total": {k: sum(s["errors"][k] for s in samples) for k in samples[0]["errors"]},
+            "errors_total": {k: sum(s["errors"][k] for s in samples)
+                             for k in samples[0]["errors"]},
             "dashboard_frames_per_second_min": min(
-                s["dashboard_frames"] / s["wall_seconds"] for s in samples)}
+                (client["frames"] / sample["wall_seconds"]
+                 for sample in samples if sample["wall_seconds"] > 0
+                 for client in sample["dashboards"]), default=0)}
 
 
 def verdict(baseline, candidate):
+    if (not baseline["valid_measurements"] or not candidate["valid_measurements"] or
+            len(baseline["samples"]) != len(candidate["samples"])):
+        return {"verdict": "inconclusive", "reason": "missing, invalid or unpaired measurements"}
     loss = 1 - candidate["requests_per_second_median"] / baseline["requests_per_second_median"]
     p99 = candidate["latency_us_p99_median"] / baseline["latency_us_p99_median"] - 1
     ci = bootstrap_ci([s["requests_per_second"] for s in baseline["samples"]],
                       [s["requests_per_second"] for s in candidate["samples"]])
-    result = {"throughput_loss": loss, "p99_increase": p99, "bootstrap_ci_95_loss": ci}
-    if baseline["spread"] > GATE["baseline_spread_max"] or (
-            ci[0] <= GATE["throughput_loss_max"] <= ci[1]):
+    latency_ci = bootstrap_ci([s["latency_us"]["p99"] for s in baseline["samples"]],
+                              [s["latency_us"]["p99"] for s in candidate["samples"]],
+                              increase=True)
+    result = {"throughput_loss": loss, "p99_increase": p99, "bootstrap_ci_95_loss": ci,
+              "bootstrap_ci_95_p99_increase": latency_ci}
+    transport_errors = any(
+        value for group in (baseline, candidate)
+        for key, value in group["errors_total"].items() if key != "status")
+    if (transport_errors or baseline["spread"] > GATE["baseline_spread_max"] or
+            len(baseline["samples"]) < 5):
         result["verdict"] = "inconclusive"
-    elif loss > GATE["throughput_loss_max"] or p99 > GATE["p99_increase_max"]:
+    elif ci[0] > GATE["throughput_loss_max"] or latency_ci[0] > GATE["p99_increase_max"]:
         result["verdict"] = "fail"
-    else:
+    elif ci[1] <= GATE["throughput_loss_max"] and latency_ci[1] <= GATE["p99_increase_max"]:
         result["verdict"] = "pass"
+    else:
+        result["verdict"] = "inconclusive"
     return result
 
 
 def matrix(binaries, temp, load, rounds, cluster, names, seed, psk, script):
-    daemons = {name: Daemon(name, binaries["console" if name != "compiled_out" else
-                                           "compiled_out"]["path"], temp, cluster, seed, psk)
-               for name in CONFIGURATIONS}
-    reloaders = {}
-    try:
-        for daemon in daemons.values():
-            daemon.start()
-        cookies = {name: session(daemon.port)[0] for name, daemon in daemons.items()}
-        results = {name: {cfg: [] for cfg in CONFIGURATIONS} for name in names}
-        for round_index in range(rounds):
-            for workload in names:
-                order = CONFIGURATIONS[round_index % 4:] + CONFIGURATIONS[:round_index % 4]
-                for position, cfg in enumerate(order):
-                    daemon = daemons[cfg]
-                    path, hdrs, expected = workloads(cookies[cfg])[workload]
+    results = {name: {cfg: [] for cfg in CONFIGURATIONS} for name in names}
+    clients, geoip = [], []
+    for round_index in range(rounds):
+        order = CONFIGURATIONS[round_index % 4:] + CONFIGURATIONS[:round_index % 4]
+        for position, cfg in enumerate(order):
+            # Exactly one measured configuration is alive. An active console's polling,
+            # collectors and storage cannot contaminate a compiled-out baseline round.
+            directory = temp / f"round-{round_index}-{cfg}"
+            directory.mkdir()
+            binary = binaries["compiled_out" if cfg == "compiled_out" else "console"]["path"]
+            daemon = Daemon(cfg, binary, directory, cluster, seed, psk)
+            try:
+                daemon.start()
+                cookie = session(daemon.port, "8.8.8.8")[0]
+                offset = round_index % len(names)
+                for workload in names[offset:] + names[:offset]:
+                    path, hdrs, expected = workloads(cookie)[workload]
                     status = request(daemon.port, path, hdrs)[0]
                     assert status == expected, (cfg, workload, status, expected)
-                    if workload == "policy_reload":
-                        reloaders[cfg] = Reloader(daemon.port)
-                        reloaders[cfg].start()
+                    reloader = Reloader(daemon.port) if workload == "policy_reload" else None
+                    if reloader:
+                        reloader.start()
                     try:
                         entry = sample(daemon, path, hdrs, load, script)
                     finally:
-                        if workload == "policy_reload":
-                            reloaders[cfg].stopping.set()
-                            reloaders[cfg].join()
-                            entry["policy_reloads_triggered"] = reloaders[cfg].count
+                        if reloader:
+                            reloader.stopping.set()
+                            reloader.join()
+                    if reloader:
+                        entry["policy_reloads_triggered"] = reloader.count
                     entry.update(round=round_index + 1, position=position)
                     results[workload][cfg].append(entry)
                     print(f"  round {round_index + 1} {workload:14s} {cfg:13s} "
                           f"{entry['requests_per_second']:9.0f} req/s "
                           f"p99 {entry['latency_us']['p99'] / 1000:6.2f} ms", flush=True)
-        frames = sum(s["dashboard_frames"] for w in results.values() for s in w["active"])
-        active = daemons["active"]
-        # The active configuration is only evidence if every dashboard kept receiving.
-        return finish(results, names), {"subscribers": DASHBOARDS, "frames_total": frames,
-                                        "reconnects": active.reconnects,
-                                        "close_codes": active.closes,
-                                        "frames_per_second_per_subscriber_min": min(
-                                            summarize(results[w]["active"])
-                                            ["dashboard_frames_per_second_min"] / DASHBOARDS
-                                            for w in names)}
-    finally:
-        for daemon in daemons.values():
-            daemon.stop_all()
+                clients.extend(client.snapshot() for client in daemon.clients)
+                if daemon.clients:
+                    geoip.append(daemon.geoip)
+            finally:
+                daemon.stop_all()
+    samples = [sample for workload in results.values() for sample in workload["active"]]
+    return finish(results, names), {
+        "subscribers": DASHBOARDS, "delivered": covered(samples, DASHBOARDS),
+        "geoip": geoip, "geoip_available": bool(geoip) and all(g["ranges"] > 0 for g in geoip),
+        "frames_total": sum(client["frames"] for client in clients),
+        "reconnects": sum(client["reconnects"] for client in clients),
+        "http_errors": sum(client["http_errors"] for client in clients),
+        "stream_errors": sum(client["stream_errors"] for client in clients),
+        "frames_per_second_per_subscriber_min": min((
+            client["frames"] / sample["wall_seconds"]
+            for sample in samples if sample["wall_seconds"] > 0
+            for client in sample["dashboards"]), default=0)}
 
 
 def finish(results, names):
@@ -333,14 +343,22 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--quick", action="store_true", help="two workloads, two short rounds")
     parser.add_argument("--rounds", type=int, default=5)
-    parser.add_argument("--seconds", type=int, default=5)
+    parser.add_argument("--seconds", type=int, default=15)
     parser.add_argument("--warmup", type=int, default=2)
     parser.add_argument("--threads", type=int, default=2)
     parser.add_argument("--connections", type=int, default=32)
     parser.add_argument("--host-label", default="undeclared host",
                         help="Declare the measuring host and its quiet state for the record")
     parser.add_argument("--cluster", action="store_true", help="three PSK nodes, console on 1")
+    parser.add_argument("--geoip-data", type=Path,
+                        help="Validated production country snapshot; required for acceptance")
     args = parser.parse_args()
+    if not args.quick and args.geoip_data is None:
+        parser.error("a full impact run needs --geoip-data; use --quick only for smoke checks")
+    if min(args.rounds, args.seconds, args.threads, args.connections) <= 0 or args.warmup < 0:
+        parser.error("rounds, seconds, threads and connections must be positive")
+    if args.geoip_data:
+        args.geoip_data = args.geoip_data.resolve(strict=True)
     if args.quick:
         args.rounds, args.seconds, args.warmup = 2, 2, 1
     names = ("admitted", "denied") if args.quick else (
@@ -350,7 +368,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix="sibuna-console-impact-") as directory:
         temp = Path(directory)
         binaries = {"compiled_out": build(temp / "out-a", False, args.cluster),
-                    "console": build(temp / "out-b", True, args.cluster)}
+                    "console": build(temp / "out-b", True, args.cluster, args.geoip_data)}
         script = temp / "wrk.lua"
         script.write_text(WRK_LUA)
         seed = temp / "seed"
@@ -361,25 +379,35 @@ def main():
         started = time.monotonic()
         results, dashboards = matrix(binaries, temp, load, args.rounds, args.cluster, names,
                                      seed, psk, script)
+        provenance = metadata(binaries["console"]["path"])
     # Eight dashboards that stopped receiving frames would make "active" an idle daemon.
-    dashboards["delivered"] = dashboards["frames_per_second_per_subscriber_min"] >= 0.8
-    if not dashboards["delivered"]:
+    if (not dashboards["delivered"] or not dashboards["geoip_available"] or args.quick or
+            args.host_label == "undeclared host"):
         results["verdict"] = "inconclusive"
-    data = {"meta": {**metadata(), "binaries": binaries, "host_label": args.host_label,
+    data = {"meta": {**provenance, "binaries": binaries, "host_label": args.host_label,
                      "quick": args.quick, "cluster": args.cluster,
+                     "geoip_snapshot": ({"bytes": args.geoip_data.stat().st_size,
+                                         "sha256": __import__("hashlib").sha256(
+                                             args.geoip_data.read_bytes()).hexdigest()}
+                                        if args.geoip_data else None),
                      "elapsed_seconds": time.monotonic() - started},
-            "load": {**load, "rounds": args.rounds, "order": "rotating"},
+            "load": {**load, "rounds": args.rounds,
+                     "order": "rotating configurations and workloads; one configuration alive"},
             "wrk": subprocess.run(["wrk", "--version"], capture_output=True, text=True,
                                   check=False).stdout.split("\n")[0],
             "gate": GATE, "dashboards": dashboards, **results,
+            "dashboard_workload": {"stats_hz": 1, "rankings_interval_seconds": 10,
+                                   "timeline_interval_seconds": 10, "timeline_limit": 10,
+                                   "geometry": "loaded once before warmup",
+                                   "client": "network emulation; rendering measured separately"},
             "limitations": [
                 "Loopback wrk shares the host with the daemons; inconclusive results are "
                 "reported, never rounded to a pass.",
                 "Peak RSS is sampled every 100 ms from ps; short spikes can be missed.",
                 "The cluster case loads node 1 only; replication cost lands on all nodes."]
             + ([] if dashboards["delivered"] else [
-                "Dashboard subscribers received fewer than 0.8 frames per second; the active "
-                "configuration was not exercised and the verdict is inconclusive."])}
+                "At least one subscriber lacked required frames or successful rankings/timeline "
+                "queries during a sample; the active workload is inconclusive."])}
     record(data, "console-impact-cluster-latest" if args.cluster else "console-impact-latest")
     print(f"console-impact verdict: {results['verdict']}", flush=True)
     return 0 if results["verdict"] == "pass" else 1

@@ -269,7 +269,11 @@ fn addServer(
     // console) into a temporary prefix; `-- --quick` runs the short CI matrix.
     const impact = b.step("console-impact", "Measure data-plane cost of the console");
     if (console != null) {
+        const acceptance = b.addSystemCommand(&.{
+            "python3", "benchmarks/console_impact_test.py",
+        });
         const measure = b.addSystemCommand(&.{ "python3", "benchmarks/console_impact.py" });
+        measure.step.dependOn(&acceptance.step);
         if (b.args) |args| measure.addArgs(args);
         impact.dependOn(&measure.step);
     } else impact.dependOn(&b.addFail("console-impact requires -Dconsole=true").step);

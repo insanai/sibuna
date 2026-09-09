@@ -161,8 +161,9 @@ generation, and export or atomically import the managed set (also `sibuna consol
 export` and `sibuna console policies import --file <set.json>`).
 
 SID 0007 remains Proposed. The interface is available, with ongoing review corrections
-and acceptance work recorded in the SID. The impact runs are inconclusive, and the harness
-needs to include dashboard HTTP queries before another acceptance run. Multi-topic streams
+and acceptance work recorded in the SID. Earlier impact runs are inconclusive. The corrected
+harness includes each dashboard's stream, rankings and retained-timeline queries; a full
+acceptance run requires a production GeoIP snapshot and documented host conditions. Multi-topic streams
 and dedicated peer management transport remain implementation work; current node discovery
 uses replicated membership and configured health probes.
 

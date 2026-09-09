@@ -498,7 +498,7 @@ active dashboards. Measure admitted, challenge, denied/incident-heavy and policy
 workloads, including authentication and GeoIP reload contention. Use repeated interleaved
 runs on a declared host, fixed warm-up/duration and traffic mix, and report uncertainty.
 Throughput loss must be ≤ 1% and p99 increase ≤ 10% relative to the corresponding baseline;
-inconclusive/noisy runs do not establish compliance. The recorded impact runs are inconclusive; the reviewed harness also needs the dashboard HTTP workload before a new acceptance run.
+inconclusive/noisy runs do not establish compliance. The recorded impact runs are inconclusive; the corrected harness includes dashboard HTTP work, and a new full acceptance run remains required.
 
 
 == Startup from the command line
@@ -3999,6 +3999,30 @@ flat-map clipping and a 390-pixel layout without horizontal overflow. The same b
 previewed a structured denial rule, reviewed its field comparison, saved revision 1, and a
 real request to that path returned 403. These checks do not close the remaining multi-topic,
 peer-transport or performance acceptance gates.
+
+== Dashboard impact workload correction (2026-09-10)
+
+The reviewed impact harness measured statistics streams without the dashboard's HTTP work.
+It now runs eight independent clients, each with a one-hertz statistics stream and successful
+rankings and retained-timeline queries every ten seconds. Geometry loads before warmup.
+Every sample checks each subscriber's delivery, HTTP results and stream errors; dividing an
+aggregate frame count by eight cannot hide an idle or disconnected client. This emulates
+browser network work; browser rendering remains a separate measurement.
+
+Only one configuration is alive during each sample. Rounds rotate the compiled-out,
+compiled-in disabled, idle and active configurations and workloads. Throughput and p99 each
+use paired bootstrap confidence intervals, with at least five rounds and the existing one-percent
+baseline-spread gate. Missing, nonfinite or zero measurements, transport errors, insufficient
+dashboard work or undeclared host conditions make the result inconclusive. Full acceptance
+requires an explicit production GeoIP snapshot, whose size and hash join the binary hashes
+and active-provider metadata. The daemon digest identifies the measured binary, not an
+unrelated previous installation. A quick smoke run can never satisfy the performance gate.
+
+The quick matrix completed sixteen samples across two rounds and both smoke workloads,
+with eight subscribers and no HTTP or stream errors. The measured binary digest matches
+the recorded artifact. Six harness tests cover confidence intervals, individual subscriber
+coverage, invalid measurements, transport errors and binary provenance. The smoke record
+is explicitly inconclusive; it supplies no replacement for a full quiet-host acceptance run.
 
 = References
 
