@@ -262,12 +262,7 @@ fn addServer(
     const modes_check = b.addSystemCommand(&.{ "python3", "tools/ingress_e2e.py" });
     modes_check.addArtifactArg(exe);
     proxy_e2e.dependOn(&modes_check.step);
-    const console_e2e = b.step("console-e2e", "Exercise authentication through a real daemon");
-    if (console != null) {
-        const check = b.addSystemCommand(&.{ "python3", "tools/console_e2e.py" });
-        check.addArtifactArg(exe);
-        console_e2e.dependOn(&check.step);
-    } else console_e2e.dependOn(&b.addFail("console-e2e requires -Dconsole=true").step);
+    addConsoleLiveChecks(b, exe, console != null);
     // The isolation gate builds its own ReleaseFast binaries (with and without the
     // console) into a temporary prefix; `-- --quick` runs the short CI matrix.
     const impact = b.step("console-impact", "Measure data-plane cost of the console");
@@ -555,4 +550,23 @@ fn addSidTool(b: *std.Build) void {
         "Assign next number to draft and register: zig build sid-promote -- <slug>",
     );
     promote_step.dependOn(&promote_run.step);
+}
+
+fn addConsoleLiveChecks(b: *std.Build, exe: *std.Build.Step.Compile, enabled: bool) void {
+    const scenarios = .{
+        .{ "console-e2e", "tools/console_e2e.py", "Test live daemon authentication" },
+        .{
+            "console-ui-e2e",
+            "tools/console_ui_live_test.py",
+            "Test shipped UI against daemon (Node)",
+        },
+    };
+    inline for (scenarios) |scenario| {
+        const step = b.step(scenario[0], scenario[2]);
+        if (enabled) {
+            const check = b.addSystemCommand(&.{ "python3", scenario[1] });
+            check.addArtifactArg(exe);
+            step.dependOn(&check.step);
+        } else step.dependOn(&b.addFail("console live checks require -Dconsole=true").step);
+    }
 }
