@@ -14,6 +14,7 @@ function read(pointer, length) {
 }
 function event(kind, value) {
   value.browser_time = Math.floor(Date.now() / 1000);
+  if (kind === 4) value.entropy = crypto.getRandomValues(new Uint32Array(1))[0];
   const bytes = encoder.encode(JSON.stringify(value));
   if (bytes.length > wasm.sb_input_capacity()) return;
   new Uint8Array(wasm.memory.buffer, wasm.sb_input(), bytes.length).set(bytes);
@@ -26,7 +27,8 @@ function flush() {
   const activeId = focus?.id;
   const activeAction = focus?.dataset?.action;
   const submitForm = focus?.type === "submit" ? focus.closest("form")?.id : null;
-  const selection = typeof focus?.selectionStart === "number" ? focus.selectionStart : null;
+  const selection = typeof focus?.selectionStart === "number" ?
+    [focus.selectionStart, focus.selectionEnd, focus.selectionDirection] : null;
   // Compare renderer output with its previous output. Browser serialization normalizes
   // markup, so comparing innerHTML would replace forms even for unchanged state.
   if (html !== renderedHtml) {
@@ -34,7 +36,9 @@ function flush() {
     const scrolling = [...root.querySelectorAll("[data-preserve-scroll][id]")].slice(0, 16)
       .map(node => ({id: node.id, left: node.scrollLeft, top: node.scrollTop}));
     renderedHtml = html;
-    root.innerHTML = html;
+    const template = document.createElement("template");
+    template.innerHTML = html;
+    patchChildren(root, template.content);
     for (const position of scrolling) {
       const region = root.querySelector(`#${CSS.escape(position.id)}[data-preserve-scroll]`);
       if (region) { region.scrollLeft = position.left; region.scrollTop = position.top; }
@@ -45,14 +49,68 @@ function flush() {
       (submitForm && `#${CSS.escape(submitForm)} [type=submit]`) || pendingFocus;
     const next = target && root.querySelector(target);
     pendingFocus = next?.disabled ? target : undefined;
-    if (next && !next.disabled) {
+    if (next && next !== focus && !next.disabled) {
       next.focus({preventScroll: true});
-      if (selection !== null && next.setSelectionRange) next.setSelectionRange(selection, selection);
+      if (selection !== null && next.setSelectionRange) next.setSelectionRange(...selection);
     }
   }
   const commands = JSON.parse(read(wasm.sb_commands(), wasm.sb_commands_length()) || "[]");
   for (const command of commands) run(command);
 }
+
+// Patch browser nodes by stable identity. Unchanged form defaults leave the browser's
+// unsent value, selection, focus and scroll intact while adjacent live regions update.
+function patchChildren(parent, source) {
+  const keyed = new Map([...parent.children].filter(node => node.id)
+    .map(node => [node.id, node]));
+  let cursor = parent.firstChild;
+  for (const desired of [...source.childNodes]) {
+    let current = desired.nodeType === 1 && desired.id ? keyed.get(desired.id) : cursor;
+    if (!compatible(current, desired)) current = undefined;
+    if (!current) {
+      current = desired.cloneNode(true);
+      parent.insertBefore(current, cursor);
+    } else {
+      if (current !== cursor) parent.insertBefore(current, cursor);
+      patchNode(current, desired);
+    }
+    cursor = current.nextSibling;
+  }
+  while (cursor) {
+    const next = cursor.nextSibling;
+    cursor.remove();
+    cursor = next;
+  }
+}
+function compatible(current, desired) {
+  return current && current.nodeType === desired.nodeType &&
+    (current.nodeType !== 1 || (current.localName === desired.localName &&
+      current.namespaceURI === desired.namespaceURI && current.id === desired.id));
+}
+function patchNode(current, desired) {
+  if (current.nodeType !== 1) {
+    if (current.nodeValue !== desired.nodeValue) current.nodeValue = desired.nodeValue;
+    return;
+  }
+  const valueChanged = current.getAttribute("value") !== desired.getAttribute("value");
+  const checkedChanged = current.hasAttribute("checked") !== desired.hasAttribute("checked");
+  const selectedChanged = current.hasAttribute("selected") !== desired.hasAttribute("selected");
+  const textChanged = current.localName === "textarea" &&
+    current.textContent !== desired.textContent;
+  for (const attribute of [...current.attributes]) {
+    if (!desired.hasAttribute(attribute.name)) current.removeAttribute(attribute.name);
+  }
+  for (const attribute of desired.attributes) {
+    if (current.getAttribute(attribute.name) !== attribute.value)
+      current.setAttribute(attribute.name, attribute.value);
+  }
+  patchChildren(current, desired);
+  if (current.localName === "input" && valueChanged) current.value = desired.value;
+  if (current.localName === "input" && checkedChanged) current.checked = desired.checked;
+  if (textChanged) current.value = desired.value;
+  if (current.localName === "option" && selectedChanged) current.selected = desired.selected;
+}
+
 async function run(command) {
   if (command.op === "save-text") {
     const url = URL.createObjectURL(new Blob([command.text], {type: "application/json"}));

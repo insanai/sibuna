@@ -10,6 +10,7 @@ pub const Model = struct {
     busy: bool = false,
     stale: bool = false,
     received_at: u64 = 0,
+    timing_received_at: u64 = 0,
 };
 
 pub fn render(state: *const State, w: *Writer) Writer.Error!void {
@@ -43,8 +44,8 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         return;
     };
     try html.render(w, "<p class=\"sb-note mt-4\">{{ v0 }} · Received {{ v1 }} seconds ago. " ++
-        "Totals since this boot; refresh to update.</p>", .{
-        .v0 = if (model.stale) "Disconnected / stale" else "Snapshot",
+        "Totals since this boot; live flow updates.</p>", .{
+        .v0 = if (model.stale) "Disconnected / stale" else "Live",
         .v1 = state.browser_time -| model.received_at,
     });
     try html.render(w, "<div class=\"sb-panels\">" ++
@@ -66,6 +67,10 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     );
     try parameters(&snapshot, w);
     try html.render(w, "</div><div class=\"sb-panels\">", .{});
+    try html.render(w, "<p class=\"sb-note\">Timing partition last observed {{ age }} " ++
+        "seconds ago. Refresh observations to update a selected non-default partition.</p>", .{
+        .age = state.browser_time -| model.timing_received_at,
+    });
     try timing(&snapshot, model.busy, w);
     try rejection(&snapshot, w);
     try html.render(w, "</div></main>", .{});

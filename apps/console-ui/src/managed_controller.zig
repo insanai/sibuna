@@ -33,7 +33,6 @@ pub const Controller = struct {
             .{selected.revision},
         );
         manager.historical.len = revision.len;
-        try self.out.emit(.{ .op = "disconnect" });
         // Obtain today's document and revision before requesting the immutable history row.
         try self.post("baseline", .{ .kind = "document", .id = manager.id.slice() });
         return true;

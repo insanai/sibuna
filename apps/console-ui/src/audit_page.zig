@@ -29,6 +29,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         .month = if (model.days == 30) " selected" else "",
         .year = if (model.days == 365) " selected" else "",
     });
+    try @import("live_status.zig").render(state, .audit, w);
     if (model.busy) try html.render(w, "<p role=\"status\">Loading audit records…</p>", .{});
     if (model.loaded) try catalog(state, w);
     if (model.has_detail) try detail(state, w);

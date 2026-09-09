@@ -38,6 +38,7 @@ test "session reset wipes retained credentials and request bodies and restores d
 pub const State = struct {
     phase: Phase = .loading,
     navigation_open: bool = false,
+    live: @import("live_state.zig").Model = .{},
     policies: @import("policies_page.zig").Model = .{},
     rankings: @import("rankings_panel.zig").Model = .{},
     similarity: @import("similarity_state.zig").Model = .{},

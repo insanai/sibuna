@@ -22,6 +22,7 @@ pub fn render(state: *const @import("state.zig").State, w: *Writer) Writer.Error
     const model = &state.policies.manager;
     try html.render(w, @embedFile("snippets/policy-manager-header.html"), .{});
     try @import("render.zig").message(state, w);
+    try @import("live_status.zig").render(state, .policy, w);
     if (state.policies.busy) {
         try html.render(w, "<p role=\"status\">Loading policy data…</p>", .{});
     }

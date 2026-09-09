@@ -3,6 +3,7 @@ const std = @import("std");
 const p = @import("console_protocol");
 const State = @import("state.zig").State;
 const render = @import("render.zig");
+const live = @import("live_controller.zig");
 // Startup initializes every owned field; avoid shipping a duplicate state image in Wasm data.
 var state: State = undefined;
 var initialized: bool = false;
@@ -72,6 +73,7 @@ export fn sb_geometry_loaded(length: usize) void {
 }
 
 export fn sb_init() void {
+    live.init();
     state.reset();
     initialized = true;
     begin();
@@ -123,9 +125,8 @@ fn begin() void {
 
 fn finish() void {
     @import("kiosk_grant.zig").retain(&state);
-    if ((state.phase == .dashboard or state.phase == .challenges or state.phase == .nodes or
-        state.kiosk_grant.code.len != 0) and
-        !state.hidden)
+    live.sync(&state, outbox()) catch setMessage("Live connection unavailable. Reload to retry.");
+    if (state.fullAccess() and !state.hidden)
         command(.{ .op = "timer", .id = "age", .delay_ms = 1000 }) catch unreachable;
     command_writer.writeByte(']') catch unreachable;
     commands_length = command_writer.buffered().len;
@@ -140,7 +141,9 @@ fn finish() void {
 }
 
 fn command(value: anytype) !void {
-    try outbox().emit(value);
+    if (equal(value.op, "disconnect")) {
+        try live.stop(outbox());
+    } else try outbox().emit(value);
     // Every navigation path that closes transport must release its subscription guard.
     // Keep the old snapshot visibly stale until a new subscription supplies fresh data.
     if (equal(value.op, "disconnect")) {
@@ -172,6 +175,7 @@ fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
         2 => try response(value, alloc),
         3 => {
             if (state.hidden) return;
+            if (equal(string(value, "id"), "live-retry")) live.timer();
             @import("kiosk_page.zig").cycle(&state);
             if (state.phase == .nodes)
                 return @import("nodes_controller.zig").tick(&state, outbox());
@@ -237,7 +241,6 @@ fn action(value: std.json.Value) !void {
         state.paused = !state.paused;
         if (state.paused) {
             state.stats_busy = false;
-            try command(.{ .op = "disconnect" });
         } else try refresh();
         return;
     }
@@ -251,7 +254,6 @@ fn action(value: std.json.Value) !void {
         state.totp_uri = .{};
         state.phase = .password;
         state.stats_busy = false;
-        try command(.{ .op = "disconnect" });
         return;
     }
     if (state.busy) return;
@@ -270,7 +272,7 @@ fn action(value: std.json.Value) !void {
     });
     if (equal(name, "change-password")) return post("password", "/console/api/password", fields);
     if (equal(name, "logout")) {
-        try command(.{ .op = "disconnect" });
+        try live.signOut(outbox());
         return post(name, "/console/api/logout", .null);
     }
     state.busy = false;
@@ -311,6 +313,7 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
     if (equal(id, "setup")) return setupResponse(body);
     if (equal(id, "kiosk-exchange")) return kioskOpened(body);
     if (equal(id, "session") or equal(id, "login") or equal(id, "password")) {
+        live.authenticated();
         kioskFlag(body);
         state.user_id = try @import("json_value.zig").decode(
             u64,
@@ -421,59 +424,12 @@ test "kiosk exchange clears account history and requests only display-scoped obs
 }
 
 fn refresh() !void {
-    if (state.stats_busy or state.paused or state.hidden or state.totp_required) return;
-    state.stats_busy = true;
-    state.epoch = .{};
-    try command(.{ .op = "connect", .path = "/console/stream" });
+    try live.sync(&state, outbox());
 }
 
 fn streamEvent(value: std.json.Value, alloc: std.mem.Allocator) !void {
-    if (state.phase != .dashboard or state.paused) return;
-    const event = string(value, "state");
-    if (equal(event, "open")) return command(.{
-        .op = "send",
-        .body = .{ .op = "subscribe", .topics = .{"stats"} },
-    });
-    if (equal(event, "message")) {
-        const body = field(value, "body") orelse return error.InvalidMessage;
-        const op = string(body, "op");
-        const epoch = string(body, "epoch");
-        const seq = field(body, "seq") orelse return error.InvalidMessage;
-        if (seq != .integer or seq.integer < 0) return error.InvalidMessage;
-        const sequence: u64 = @intCast(seq.integer);
-        const snapshot = equal(op, "snapshot") and sequence == 0 and epoch.len == 32;
-        const delta = equal(op, "delta") and equal(epoch, state.epoch.slice()) and
-            sequence == state.sequence + 1;
-        if ((!snapshot and !delta) or !equal(string(body, "topic"), "stats")) {
-            try command(.{ .op = "disconnect" });
-            return reconnect();
-        }
-        if (snapshot) {
-            state.epoch = try p.Bytes(32).init(epoch);
-            state.points = @splat(.{});
-            state.stats = null;
-        }
-        state.sequence = sequence;
-        state.reconnect_ms = 1000;
-        try statsResponse(200, field(body, "data") orelse return error.InvalidMessage, alloc);
-        state.stats_busy = true;
-        return;
-    }
-    if (equal(event, "closed")) {
-        const code = field(value, "code");
-        if (code != null and code.? == .integer and code.?.integer == 1008)
-            return statsResponse(401, .null, alloc);
-    }
-    try command(.{ .op = "disconnect" });
-    try reconnect();
-}
-
-fn reconnect() !void {
-    state.stats_busy = false;
-    state.stale = true;
-    setMessage("Connection lost. Showing the last received values while reconnecting.");
-    try command(.{ .op = "timer", .id = "stats", .delay_ms = state.reconnect_ms });
-    state.reconnect_ms = @min(30000, state.reconnect_ms * 2);
+    if (try live.event(&state, value, alloc, outbox())) |body|
+        statsResponse(200, body, alloc) catch try live.failed(&state, value, outbox());
 }
 
 fn statsResponse(status: i64, body: std.json.Value, alloc: std.mem.Allocator) !void {
@@ -558,7 +514,6 @@ fn geographicAction(name: []const u8, fields: std.json.Value) !bool {
     if (equal(name, "geoip") and state.fullAccess()) {
         state.phase = .geoip;
         state.stats_busy = false;
-        try command(.{ .op = "disconnect" });
         try get("geoip", "/console/api/geoip");
         return true;
     }
@@ -694,26 +649,33 @@ test "required password changes cannot open subscriptions through navigation" {
     try std.testing.expect(std.mem.indexOf(u8, html[0..html_length], "<svg") == null);
 }
 
-test "returning from policy navigation reconnects a previously active dashboard" {
+test "policy navigation retains the authenticated connection when returning to the dashboard" {
     sb_init();
     state.phase = .dashboard;
     state.csrf = try p.Bytes(64).init("test");
-    state.stats_busy = true;
+    begin();
+    try refresh();
+    const opened = "{\"state\":\"open\"}";
+    @memcpy(input[0..opened.len], opened);
+    sb_event(4, opened.len);
     const policies = "{\"action\":\"policies\",\"fields\":{}}";
     @memcpy(input[0..policies.len], policies);
     sb_event(1, policies.len);
     try std.testing.expectEqual(.policies, state.phase);
-    try std.testing.expect(!state.stats_busy and state.stale);
+    try std.testing.expect(std.mem.indexOf(
+        u8,
+        commands[0..commands_length],
+        "connect",
+    ) == null);
     const dashboard = "{\"action\":\"dashboard\",\"fields\":{}}";
     @memcpy(input[0..dashboard.len], dashboard);
     sb_event(1, dashboard.len);
     try std.testing.expectEqual(.dashboard, state.phase);
-    try std.testing.expect(state.stats_busy and state.stale);
     try std.testing.expect(std.mem.indexOf(
         u8,
         commands[0..commands_length],
-        "\"op\":\"connect\"",
-    ) != null);
+        "connect",
+    ) == null);
 }
 
 fn securityAction(name: []const u8, fields: std.json.Value) !bool {
@@ -732,7 +694,6 @@ fn securityAction(name: []const u8, fields: std.json.Value) !bool {
         state.totp_secret = .{};
         state.totp_uri = .{};
         state.stats_busy = false;
-        try command(.{ .op = "disconnect" });
         try securityStatus();
         return true;
     }
@@ -815,7 +776,6 @@ test "required authenticator enrollment cannot open dashboard data or geometry" 
 }
 
 fn eventQuery(export_page: bool, csv: bool) !void {
-    try command(.{ .op = "disconnect" });
     const model = &state.events;
     var id: [20]u8 = undefined;
     var campaign_id: [20]u8 = undefined;
@@ -921,7 +881,6 @@ fn challengeAction(name: []const u8, fields: std.json.Value) !bool {
     state.message = .{};
     state.challenges.busy = true;
     state.stats_busy = false;
-    try command(.{ .op = "disconnect" });
     try post("challenges", "/console/api/challenges", .{ .bin = state.challenges.selected });
     return true;
 }
@@ -942,6 +901,7 @@ fn challengeResponse(status: i64, snapshot: p.challenges.Snapshot) void {
     state.challenges.snapshot = snapshot;
     state.challenges.selected = snapshot.selected;
     state.challenges.received_at = state.browser_time;
+    state.challenges.timing_received_at = state.browser_time;
     state.challenges.stale = false;
 }
 
@@ -1053,7 +1013,6 @@ fn similarityAction(name: []const u8) !bool {
     if (equal(name, "similarity-return") and state.similarity.source != 0) {
         state.phase = .similarity;
         state.message = .{};
-        try command(.{ .op = "disconnect" });
         return true;
     }
     const prefix = "events-similar-";
@@ -1082,7 +1041,6 @@ fn similarityAction(name: []const u8) !bool {
     state.similarity.generation = similarity_generation;
     state.similarity.busy = false;
     state.message = .{};
-    try command(.{ .op = "disconnect" });
     try similarityQuery();
     return true;
 }
@@ -1227,7 +1185,6 @@ fn policyAction(name: []const u8, fields: std.json.Value) !bool {
         model.applied = .{};
         model.decision = .{};
         model.busy = true;
-        try command(.{ .op = "disconnect" });
         try policyPost(false, .{ .offset = @as(u8, 0) });
         state.reputation.clear();
         try @import("reputation_controller.zig").refresh(&state, outbox());

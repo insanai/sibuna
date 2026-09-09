@@ -46,6 +46,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         });
         try button(w, "events-clear-campaign", "Clear campaign filter", model.busy);
     }
+    try @import("live_status.zig").render(state, .events, w);
     try filters(model, w);
     try html.render(w, "<section id=\"incident-results\" tabindex=\"-1\" " ++
         "class=\"sb-panel mt-6\" aria-label=\"Incident results\">", .{});

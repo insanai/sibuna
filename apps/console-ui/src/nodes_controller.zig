@@ -13,7 +13,6 @@ pub fn action(state: *State, name: []const u8, out: Outbox) !bool {
         state.stale = true;
         model.busy = .idle;
         if (!model.attempted) model.pending = null;
-        try out.emit(.{ .op = "disconnect" });
         try refresh(state, out);
         return true;
     }

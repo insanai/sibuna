@@ -28,6 +28,7 @@ pub fn render(state: *const @import("state.zig").State, w: *Writer) Writer.Error
     if (state.policies.manager.active) return @import("policy_manager.zig").render(state, w);
     try html.render(w, @embedFile("snippets/policies-header.html"), .{});
     try @import("render.zig").message(state, w);
+    try @import("live_status.zig").render(state, .policy, w);
     if (state.policies.page.len == 0) {
         try w.writeAll(if (state.policies.busy)
             "<p role=\"status\">Loading applied policies…</p></main>"

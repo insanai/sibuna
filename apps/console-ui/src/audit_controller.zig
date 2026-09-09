@@ -14,7 +14,6 @@ pub fn action(state: *State, name: []const u8, fields: std.json.Value, out: Outb
         state.stats_busy = false;
         state.stale = true;
         window(state);
-        try out.emit(.{ .op = "disconnect" });
         try query(state, out, .query);
         return true;
     }
