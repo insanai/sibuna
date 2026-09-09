@@ -296,6 +296,11 @@ secret is set, and RFC 5424 syslog over UDP or framed TCP, for denial spikes, is
 unreachable members and leader changes. Secrets are sealed under `--console-key-file`; one
 cluster member delivers at a time under a fenced lease.
 
+Administrators can also edit the five browser-facing response pages (challenge, denied,
+rate limited, banned, overloaded) under Settings: bounded HTML with fixed placeholders, no
+scripts or external resources, previewed in a sandboxed tab and served from the next policy
+snapshot. Clients that do not accept HTML keep the plain-text replies.
+
 For an HTTPS reverse proxy, configure `--console-origin`, `--console-behind-proxy` and explicit
 `--console-trusted-proxy` CIDRs. Supply a persistent `--console-key-file` containing 64 hex
 characters with owner-only permissions; it protects stored second-factor secrets. Keep this

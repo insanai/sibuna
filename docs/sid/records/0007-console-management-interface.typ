@@ -794,6 +794,7 @@ Migrations are numbered and version-gated in `schema.zig`. The authoritative wri
   [`console_notifications`], [`id`, `kind` (`webhook` or `syslog`), `label`, `target`, `target_host`, `secret_envelope` (sealed under the console key and bound to the target), `events` bitmask (denial spike, ban, node unhealthy, leader change), `cooldown_seconds`, `enabled`, `revision`, created/modified actor and time, last attempt, outcome and detail; at most eight rows; audit summaries carry kind, label, events, cooldown, enabled state, whether a secret is set and the host only],
   [`console_notification_events`], [`node`, `boot`, `sequence` (unique per node and boot), `event`, `raised_at`, `detail` (≤ 128), `delivered_at`, `attempts`; every node enqueues what it observed, at most 256 undelivered rows are kept],
   [`console_job_leases`], [`job` (`retention` or `notifier`), `node`, `boot`, `fence`, `expires`; one fenced singleton lease per job name],
+  [`console_pages`], [`kind` (primary: `challenge`, `denied`, `rate_limited`, `banned`, `overloaded`), `html` (≤ 16 KiB, validated before staging), `sha256`, `revision`, `updated_at`, `updated_by`; a one-row stage table commits the page, its audit record (`page.edit` or `page.reset` with digests and sizes only) and a policy-version bump together so the next tick rebuilds the snapshot],
   [`traffic_minutes`], [`node_id`, `boot_id`, `minute` (epoch/60), coverage, completeness, counters from “The sampler”, `rss_last_kib`, `rss_max_kib`, `cpu_delta_seconds`; primary key (`node_id`, `boot_id`, `minute`)],
   [`challenge_minutes`], [`node_id`, `boot_id`, `minute`, algorithm/parameter bin, submitted/issued/accepted, rejected by exhaustive cause, missing/invalid timing, coverage, `solve_ms_buckets` (16 integers)],
   [`topk_minutes`], [`node_id`, `boot_id`, `minute`, `kind`, `key`, estimate and error; all bounded sketch counters plus N, probability, losses and coverage metadata],
@@ -1745,7 +1746,7 @@ are historical; the acceptance gates below govern delivery.
 
 - #text("Pending: Preserve issuer-bound challenge verification and local rate limits.")
 
-- #text("Verified (2026-09-09): users, scoped API tokens, audit investigation, kiosk and notifications. Pending: constrained templates and About.")
+- #text("Verified (2026-09-09): users, scoped API tokens, audit investigation, kiosk, notifications and constrained templates. Pending: About.")
 
 - #text("Verified (2026-09-09): the notifier runs under a fenced singleton lease shared with retention; destinations (8), retries (3, 1/4/16 s), the local ring (64) and the replicated queue (256) are bounded.")
 
@@ -3615,6 +3616,54 @@ revision 1 while the open destination stayed selected, the destination was remov
 the page laid out at 1440 and 390 pixels without console errors. The interface module grew
 from 317,663 to 334,978 bytes. Formatting, full repository tests, console tests, the live
 suite, SID and book generation pass; console-off, storage-off and cluster builds compile.
+
+== Operator page templates and the preview isolation decision (2026-09-09)
+
+The five browser-facing pages (challenge, denied, rate limited, banned, overloaded) are
+compiled into the immutable engine snapshot as bounded templates: at most 16 KiB and 32
+segments, UTF-8 without NUL, placeholders only for status, reason, retry-after, request id,
+node and, for the challenge page exactly once, the fixed solver block that the daemon
+supplies and no operator can alter. The validator refuses scripts, frames, objects, embeds,
+base, link, form and comment markup, `javascript:`, `vbscript:`, `data:`, `url(`,
+`@import` and `expression(` anywhere, every `on*` attribute, `meta http-equiv`, and any
+`src`, `href`, `srcset`, `action`, `formaction`, `xlink:href` or `poster` that does not start
+with a single `/` or `#`; placeholders inside tags and unknown placeholders are refused. The
+request path pins the slot only to copy the template to the connection stack, then renders
+segments with escaped values and an exact `Content-Length`; browsers (by `Accept`) receive
+the template, every other client keeps the plain-text bodies this daemon always sent, 429
+keeps `Retry-After`, and the accept-loop overload and drain rejections serve a customized
+overload page as HTML. Schema 22 stores edited pages with a stage-and-trigger commit; the
+loader installs defaults, then compiles each stored row, and a row that no longer validates
+keeps the default as a marked fallback with a warning rather than failing the rebuild. The
+challenge default is the embedded interstitial with its solver script replaced by the slot.
+
+Template bytes cross the storage boundary in a heap block owned by the mailbox between
+submission and completion (freed on execution, abandonment, stop and shutdown) so the storage
+request and result envelopes stay small; the first by-value attempt overflowed the collector
+thread's stack. Preview isolation follows the decision recorded for this increment: a draft
+is compiled and stored per session in a bounded LRU on the console, and `GET
+/console/api/pages/preview/<kind>` renders it with sample values under `Content-Security-
+Policy: sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src 'self'` in a new
+tab, so operator markup never runs under the console's own policy or origin; the console's
+own CSP is unchanged. The Settings page gained a tab strip for the five kinds, the committed
+markup with revision and customized/default state, save, preview (the draft survives the
+round trip and a refused save) and reset.
+
+Evidence: the library's tests cover compilation, escaping, every refused shape, the
+challenge slot rule and that defaults compile; the e2e daemon test serves a customized
+denial page to a browser with the escaped rule name and matching length, plain text without
+`Accept: text/html`, and a rate-limit page that keeps `Retry-After: 60`; storage-tick tests
+cover validation refusals, commit with digest-only audit, stale revisions, reset, loading
+into a rebuilt snapshot and the fallback for a corrupted row. `tools/console_pages_test.py`
+(in `console-e2e`) verified through the live daemon that the default reads at revision 0, a
+script is refused with 400, a save commits revision 1 and a stale save answers 409, a deny
+rule then renders the custom page to a browser only, a preview renders under the sandbox
+policy with sample values while `//evil/` markup is refused with a diagnostic, reset restores
+the default, and audit rows carry digests but never the markup. In Chrome through the
+cookie-injecting proxy the editor loaded the default, previewed a draft in a sandboxed tab,
+saved it as revision 1 and reset it, without console errors. The interface module grew from
+334,978 to 342,159 bytes. Formatting, full repository tests, console tests, the live suite,
+SID and book generation pass; console-off, storage-off and cluster builds compile.
 
 = References
 

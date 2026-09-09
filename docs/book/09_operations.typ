@@ -136,9 +136,12 @@ statistics and expires within twelve hours.
 Notification destinations (signed webhooks and syslog for denial spikes, bans, unreachable
 members and leader changes) live under Settings; webhook secrets need `--console-key-file`.
 
-SID 0007 remains Proposed. Direct peer telemetry sockets and constrained page templates
-remain unfinished, and the impact gate must pass on a declared quiet host before the
-record advances.
+Response pages (challenge, denied, rate limited, banned, overloaded) are editable under
+Settings as bounded HTML with fixed placeholders; drafts preview in a sandboxed tab and
+saved pages are served from the next policy snapshot.
+
+SID 0007 remains Proposed. Direct peer telemetry sockets remain unfinished, and the impact
+gate must pass on a declared quiet host before the record advances.
 
 == Deployment Topologies
 
