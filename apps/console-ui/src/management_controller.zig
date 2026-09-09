@@ -4,12 +4,14 @@ const State = @import("state.zig").State;
 const Outbox = @import("transport.zig").Outbox;
 const users = @import("users_controller.zig");
 const tokens = @import("tokens_controller.zig");
+const nodes = @import("nodes_controller.zig");
 const audit = @import("audit_controller.zig");
 
 pub fn action(state: *State, name: []const u8, fields: std.json.Value, out: Outbox) !bool {
     if (try users.action(state, name, fields, out)) return true;
     if (try tokens.action(state, name, fields, out)) return true;
-    return audit.action(state, name, fields, out);
+    if (try audit.action(state, name, fields, out)) return true;
+    return nodes.action(state, name, out);
 }
 
 pub fn response(
@@ -20,7 +22,9 @@ pub fn response(
     alloc: std.mem.Allocator,
     out: Outbox,
 ) !bool {
-    if (std.mem.startsWith(u8, id, "tokens-")) {
+    if (std.mem.startsWith(u8, id, "nodes-")) {
+        try nodes.response(state, id, status, body, alloc, out);
+    } else if (std.mem.startsWith(u8, id, "tokens-")) {
         try tokens.response(state, id, status, body, alloc, out);
     } else if (std.mem.startsWith(u8, id, "users-")) {
         try users.response(state, id, status, body, alloc, out);

@@ -167,6 +167,7 @@ pub const Failure = enum {
 /// callers must not serialize the unused tail or rely on native struct layout as a wire format.
 pub fn Bytes(comptime capacity: usize) type {
     return struct {
+        pub const byte_capacity = capacity;
         data: [capacity]u8 = @splat(0),
         len: usize = 0,
 

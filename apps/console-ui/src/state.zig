@@ -14,6 +14,7 @@ pub const Phase = enum {
     users,
     tokens,
     audit,
+    nodes,
 };
 
 test "session reset wipes retained credentials and request bodies and restores defaults" {
@@ -50,6 +51,7 @@ pub const State = struct {
     users: @import("users_state.zig").Model = .{},
     tokens: @import("tokens_state.zig").Model = .{},
     audit: @import("audit_state.zig").Model = .{},
+    nodes: @import("nodes_state.zig").Model = .{},
     busy: bool = false,
     must_change: bool = false,
     totp_required: bool = false,

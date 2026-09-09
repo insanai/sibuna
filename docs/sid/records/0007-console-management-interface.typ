@@ -1646,7 +1646,7 @@ are historical; the acceptance gates below govern delivery.
 
 - #text("Pending: Mutations and redacted audit commit together; expected revisions reject conflicts; committed and per-node applied revisions remain distinct.")
 
-- #text("Pending: Local commands record intent and completion separately from runtime effects.")
+- #text("Verified: Local commands record intent and completion separately from runtime effects. See the local-control storage, live-daemon and browser evidence below.")
 
 - #text("Pending: Gate: deterministic storage ticks cover saturation, bounded queries, migration replay, conflicts, failed rebuilds and cancellation ownership.")
 
@@ -3257,6 +3257,44 @@ browser bridge exports, and no host imports. Metadata regressions reject missing
 unexpected exports, host imports, duplicate sections and truncation. Native UI rendering
 and live browser execution remain separate behavioral checks. Linker compaction creates
 headroom for additional workflows; it does not satisfy the active-console impact gate.
+
+== Nodes interface and Chrome verification (2026-09-09)
+
+Nodes joins the persistent navigation shell and exposes the serving node's admission state,
+connections, local ban entries, committed/applied policy stamps, boot, uptime and control
+revision. Peer coverage is explicitly unavailable. Snapshots refresh every five seconds;
+mutations require a snapshot received within ten seconds and pause while a preview is open.
+Drain, resume and ban clearing show their effects and current counts before confirmation.
+Viewers cannot mutate, and an exhausted revision or outstanding durable completion disables
+new commands.
+
+The model retains the exact operation identity across navigation and uncertain responses.
+Operators can inspect its receipt or retry that operation; late responses cannot consume a
+newer request. Receipts validate identity and consistent effect/completion fields before
+publication, distinguish unpersisted effects, and show revision, timestamps and cleared count.
+Unknown outcomes survive until a matching completion or explicit uncertainty acknowledgment.
+Session loss erases retained state. Owned protocol strings use bounded decoding and do not
+borrow the event arena.
+
+`zig build fmt test console-test sid` passed 337 native tests and the live-daemon suite.
+The final UI is 297,740 bytes. Storage-disabled, console-disabled and clustered builds passed.
+Native cases cover stale previews, permissions, retry identity, late replies, contradictory
+receipts, polling, navigation and full-width counters. The shared navigation regression now
+includes Nodes, Policies, Audit and Tokens with the appropriate administrator fixture.
+
+The in-app browser verified login, drain/resume, real 503/200 admission, durable receipts,
+keyboard focus and a persistent sidebar. Chrome additionally verified clearing a real local
+ban, redacted command audit detail, account pagination and scoped token creation/revocation.
+At 390 pixels, Nodes and Statistics had no horizontal overflow and the navigation disclosure
+closed after selection. Real traffic produced 512 requests, 400 challenges and 112 rate-limit
+responses, with sampled countries and animated connection arrows. Geometry changed during
+animation and remained fixed after pausing. A new isolated policy draft named its matched
+rule, saved successfully and produced a live 403; disabling it restored the fallback challenge.
+The temporary rule remains disabled and the temporary token revoked. No Chrome console errors
+were observed before the deliberate disconnect. Stopping the review daemon exposed increasing
+stale age and disabled all node mutations; polling recovered automatically after restart with
+the new boot and control revision zero. These checks do not complete peer management,
+cluster coverage, all-page acceptance or the impact matrix; SID 0007 remains Proposed.
 
 = References
 

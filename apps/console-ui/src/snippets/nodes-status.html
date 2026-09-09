@@ -1,0 +1,14 @@
+<section class="sb-panel" aria-labelledby="nodes-status-heading">
+    <h2 id="nodes-status-heading">Node {{ node }} · {{ admission }}</h2>
+    <p role="status">{{ freshness }} · Snapshot age: {{ age }} s</p>
+    <div class="overflow-x-auto"><table class="table">
+        <caption class="sr-only">Current local node state</caption><tbody>
+        <tr><th scope="row">Open connections</th><td>{{ connections }}</td></tr>
+        <tr><th scope="row">Active local ban entries</th><td>{{ bans }}</td></tr>
+        <tr><th scope="row">Policy revisions: committed / applied</th>
+            <td>{{ committed }} / {{ applied }}</td></tr>
+        <tr><th scope="row">Control revision</th><td>{{ revision }}</td></tr>
+        <tr><th scope="row">Uptime</th><td>{{ uptime }} s</td></tr>
+        <tr><th scope="row">Boot</th><td><code class="break-all">{{ boot }}</code></td></tr>
+        </tbody></table></div>
+    <p class="sb-note">{{ pending }}</p>

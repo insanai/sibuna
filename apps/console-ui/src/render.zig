@@ -12,6 +12,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
 }
 
 fn page(state: *const State, w: *Writer) Writer.Error!void {
+    if (state.phase == .nodes) return @import("nodes_page.zig").render(state, w);
     if (state.phase == .audit) return @import("audit_page.zig").render(state, w);
     if (state.phase == .tokens) return @import("tokens_page.zig").render(state, w);
     if (state.phase == .users) return @import("users_page.zig").render(state, w);
@@ -321,13 +322,16 @@ test "authentication renders no geographic or telemetry element and escapes inpu
 test "authenticated pages share one navigation landmark with the correct active section" {
     const phases = [_]@import("state.zig").Phase{
         .dashboard, .events, .similarity, .challenges, .geoip, .password, .security, .users,
+        .tokens,    .audit,  .nodes,      .policies,
     };
     const actions = [_][]const u8{
         "dashboard", "events", "events", "challenges", "geoip", "account", "account", "users",
+        "tokens",    "audit",  "nodes",  "policies",
     };
     for (phases, 0..) |phase, i| {
         var state: State = .{ .phase = phase };
         state.csrf = try @import("console_protocol").Bytes(64).init("test");
+        try state.role.set("admin");
         var buffer: [32 * 1024]u8 = undefined;
         var writer: Writer = .fixed(&buffer);
         try render(&state, &writer);

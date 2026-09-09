@@ -13,6 +13,13 @@ pub fn decode(comptime T: type, value: std.json.Value, allocator: std.mem.Alloca
 /// output can be partial and must be discarded; retained state publishes a complete candidate.
 pub fn into(output: anytype, value: std.json.Value, allocator: std.mem.Allocator) Error!void {
     const T = @typeInfo(@TypeOf(output)).pointer.child;
+    if (comptime @typeInfo(T) == .@"struct") {
+        if (comptime @hasDecl(T, "byte_capacity")) {
+            if (value != .string) return error.InvalidResponse;
+            output.set(value.string) catch return error.InvalidResponse;
+            return;
+        }
+    }
     switch (@typeInfo(T)) {
         .@"struct" => try object(output, value, allocator, comptime &fields(T)),
         .optional => |optional| {
@@ -328,4 +335,26 @@ test "shared defaults preserve optional false, null, nonzero values and bounded 
     try t.expect(descriptors[2].default == .zero);
     try t.expect(descriptors[3].default == .stored);
     try t.expectError(error.InvalidResponse, decode(struct { required: u64 }, empty, t.allocator));
+}
+
+test "owned wire bytes enforce capacity, erase old tails and survive their input arena" {
+    const Bytes = @import("console_protocol").Bytes(8);
+    var source = [_]u8{ 'o', 'w', 'n', 'e', 'd' };
+    var output: Bytes = undefined;
+    try into(&output, .{ .string = &source }, std.testing.allocator);
+    @memset(&source, 0);
+    try std.testing.expectEqualStrings("owned", output.slice());
+    try std.testing.expectError(error.InvalidResponse, into(
+        &output,
+        .{ .string = "too large" },
+        std.testing.allocator,
+    ));
+    try std.testing.expectEqualStrings("owned", output.slice());
+    try into(&output, .{ .string = "x" }, std.testing.allocator);
+    try std.testing.expect(std.mem.allEqual(u8, output.data[1..], 0));
+    try std.testing.expectError(error.InvalidResponse, into(
+        &output,
+        .{ .integer = 1 },
+        std.testing.allocator,
+    ));
 }

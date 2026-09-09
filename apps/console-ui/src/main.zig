@@ -122,7 +122,8 @@ fn begin() void {
 }
 
 fn finish() void {
-    if ((state.phase == .dashboard or state.phase == .challenges) and !state.hidden)
+    if ((state.phase == .dashboard or state.phase == .challenges or state.phase == .nodes) and
+        !state.hidden)
         command(.{ .op = "timer", .id = "age", .delay_ms = 1000 }) catch unreachable;
     command_writer.writeByte(']') catch unreachable;
     commands_length = command_writer.buffered().len;
@@ -168,7 +169,10 @@ fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
         1 => try action(value),
         2 => try response(value, alloc),
         3 => {
-            if (equal(string(value, "id"), "age") or state.hidden) return;
+            if (state.hidden) return;
+            if (state.phase == .nodes)
+                return @import("nodes_controller.zig").tick(&state, outbox());
+            if (equal(string(value, "id"), "age")) return;
             if (state.phase == .dashboard and !state.paused) try refresh();
             if (state.phase == .geoip) try get("geoip", "/console/api/geoip");
             if (state.phase == .similarity) try similarityQuery();
