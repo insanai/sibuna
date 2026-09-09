@@ -204,6 +204,8 @@ def check(binary):
     import console_totp_test
     console_totp_test.check(binary, sys.modules[__name__])
     console_totp_test.check_proxy(binary, sys.modules[__name__])
+    import console_kiosk_test
+    console_kiosk_test.check(binary, sys.modules[__name__])
     import console_cluster_test
     console_cluster_test.check(binary, sys.modules[__name__])
     print("console-e2e: bootstrap, login, CSRF, stream delivery/revocation, restart persistence passed")
