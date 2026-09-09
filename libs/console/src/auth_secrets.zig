@@ -78,3 +78,54 @@ test "seed envelopes reject tampering, owner substitution and a different provis
     try t.expect(!std.mem.eql(u8, &recoveryDigest(42, raw), &recoveryDigest(43, raw)));
     try t.expectError(error.InvalidCode, parseRecovery("001122"));
 }
+
+const bytes_domain = "sibuna-console-notify-secret-v1";
+pub const max_sealed = 64;
+pub const sealed_prefix = 24 + 1;
+
+fn associatedBytes(subject: u64, id: KeyId) [bytes_domain.len + 40]u8 {
+    var output: [bytes_domain.len + 40]u8 = undefined;
+    @memcpy(output[0..bytes_domain.len], bytes_domain);
+    std.mem.writeInt(u64, output[bytes_domain.len..][0..8], subject, .big);
+    @memcpy(output[bytes_domain.len + 8 ..], &id);
+    return output;
+}
+
+/// Seals up to 64 bytes under the console key, bound to a subject id. Layout: 24-byte
+/// nonce, one length byte, 64 ciphertext bytes (zero padded before sealing), 16-byte tag.
+pub fn sealBytes(io: std.Io, plaintext: []const u8, key: [32]u8, subject: u64) ![105]u8 {
+    if (plaintext.len == 0 or plaintext.len > max_sealed) return error.InvalidLength;
+    var padded: [max_sealed]u8 = @splat(0);
+    @memcpy(padded[0..plaintext.len], plaintext);
+    var output: [105]u8 = undefined;
+    io.random(output[0..24]);
+    output[24] = @intCast(plaintext.len);
+    const ad = associatedBytes(subject, keyId(key));
+    Aead.encrypt(output[25..89], output[89..105], &padded, &ad, output[0..24].*, key);
+    std.crypto.secureZero(u8, &padded);
+    return output;
+}
+
+/// Opens a `sealBytes` envelope into `out`; returns the plaintext length.
+pub fn openBytes(envelope: []const u8, key: [32]u8, subject: u64, out: *[max_sealed]u8) !u8 {
+    if (envelope.len != 105) return error.AuthenticationFailed;
+    const length = envelope[24];
+    if (length == 0 or length > max_sealed) return error.AuthenticationFailed;
+    const ad = associatedBytes(subject, keyId(key));
+    try Aead.decrypt(out, envelope[25..89], envelope[89..105].*, &ad, envelope[0..24].*, key);
+    return length;
+}
+
+test "byte envelopes bind the subject and refuse tampering" {
+    const t = std.testing;
+    const key = [_]u8{5} ** 32;
+    const sealed = try sealBytes(t.io, "hook secret", key, 7);
+    var out: [max_sealed]u8 = undefined;
+    try t.expectEqual(@as(u8, 11), try openBytes(&sealed, key, 7, &out));
+    try t.expectEqualStrings("hook secret", out[0..11]);
+    try t.expectError(error.AuthenticationFailed, openBytes(&sealed, key, 8, &out));
+    var altered = sealed;
+    altered[30] ^= 1;
+    try t.expectError(error.AuthenticationFailed, openBytes(&altered, key, 7, &out));
+    try t.expectError(error.InvalidLength, sealBytes(t.io, "", key, 7));
+}
