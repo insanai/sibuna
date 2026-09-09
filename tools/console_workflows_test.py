@@ -116,9 +116,12 @@ def check_country(h, port, data_port, admin):
     assert preview["prefixes"] == 200 and preview["overlaps"] == 0, preview
     assert preview["nodes_after"] > preview["nodes_before"] and len(preview["generation"]) == 64
     assert "8.8.0.0/24" in preview["sample"], preview
+    post(h, port, admin, "/console/api/geoip/country/preview",
+         {"country": "US", "expected_revision": committed(h, port, admin),
+          "until": str(2 ** 63)}, 400)
     applied = post(h, port, admin, "/console/api/geoip/country/apply",
                    {"country": "US", "expected_revision": committed(h, port, admin),
-                    "action": "deny"})
+                    "action": "deny", "review": preview["review"]})
     wait_applied(h, port, admin, applied["committed"])
     deadline = time.monotonic() + 15
     while time.monotonic() < deadline and fetch(h, data_port, "/anything", "8.8.5.1") != 403:
@@ -126,6 +129,44 @@ def check_country(h, port, data_port, admin):
     assert fetch(h, data_port, "/anything", "8.8.5.1") == 403
     page = post(h, port, admin, "/console/api/reputation/query", {"after": "8.8.4"})
     assert any(row["source"] == "console:country:US" for row in page["rows"]), page
+    check_country_refresh(h, port, data_port, admin)
+
+
+def check_country_refresh(h, port, data_port, admin):
+    base = {"country": "US", "expected_revision": committed(h, port, admin)}
+    previous = post(h, port, admin, "/console/api/geoip/country/preview", base)
+    source = {"provider": "dbip", "source_version": "2026-10", "expected_revision": 1,
+              "csv": "".join(f"8.8.{i}.0,8.8.{i}.255,US\n" for i in range(100, 250))}
+    post(h, port, admin, "/console/api/geoip", source)
+    deadline = time.monotonic() + 15
+    while time.monotonic() < deadline:
+        status = json.loads(h.request(port, "GET", "/console/api/geoip", cookie=admin[0])[2])
+        if status["revision"] == 2 and status["status"] == "applied":
+            break
+        assert status["status"] != "failed", status
+        time.sleep(0.05)
+    else:
+        raise AssertionError("Country refresh generation failed to activate")
+    # Import alone never changes policy. The old ranges still deny until a reviewed commit.
+    assert fetch(h, data_port, "/anything", "8.8.5.1") == 403
+    post(h, port, admin, "/console/api/geoip/country/apply",
+         dict(base, review=previous["review"]), 409)
+    reviewed = post(h, port, admin, "/console/api/geoip/country/preview", base)
+    assert (reviewed["added"], reviewed["removed"], reviewed["retained"]) == (50, 100, 100)
+    assert reviewed["previous_generation"] == previous["generation"]
+    assert reviewed["generation"] != previous["generation"]
+    first = {row["prefix"] for row in reviewed["changes"]}
+    following = post(h, port, admin, "/console/api/geoip/country/preview",
+                     dict(base, review=reviewed["review"], offset=reviewed["next_offset"]))
+    assert following["review"] == reviewed["review"]
+    assert not first.intersection(row["prefix"] for row in following["changes"])
+    post(h, port, admin, "/console/api/geoip/country/apply",
+         dict(base, action="allow", review=reviewed["review"]), 409)
+    result = post(h, port, admin, "/console/api/geoip/country/apply",
+                  dict(base, review=reviewed["review"]))
+    wait_applied(h, port, admin, result["committed"])
+    assert fetch(h, data_port, "/anything", "8.8.5.1") != 403
+    assert fetch(h, data_port, "/anything", "8.8.220.1") == 403
 
 
 def check_import(h, port, admin):

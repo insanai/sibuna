@@ -37,8 +37,11 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     try html.render(w, "</div></form>", .{});
     try html.render(w, @embedFile("snippets/country-form.html"), .{
         .busy = busy,
-        .apply = if (model.busy or model.summary_prefixes == 0) " disabled" else "",
+        .apply = if (model.busy or model.country_review.len == 0) " disabled" else "",
         .prefixes = model.summary_prefixes,
+        .country = model.country.slice(),
+        .action = model.country_action.slice(),
+        .next = if (model.busy or model.country_next == null) " disabled" else "",
     });
     try countrySummary(model.summary(), w);
     try html.render(w, "</form>", .{});
@@ -93,14 +96,52 @@ fn countrySummary(summary: []const u8, w: *Writer) Writer.Error!void {
     else
         "";
     try html.render(w, "<p role=\"status\" class=\"sb-note mt-3\">{{ prefixes }} prefixes; " ++
+        "{{ added }} added, {{ removed }} removed, {{ retained }} retained. " ++
         "trie nodes {{ before }} → {{ after }}; {{ overlaps }} already listed; " ++
         "first {{ first }}; " ++
-        "generation {{ generation }}.</p>", .{
-        .prefixes = string(parsed, "prefixes"),
-        .before = string(parsed, "nodes_before"),
-        .after = string(parsed, "nodes_after"),
-        .overlaps = string(parsed, "overlaps"),
+        "generation {{ old }} → {{ generation }}.</p>", .{
+        .prefixes = number(parsed, "prefixes"),
+        .added = number(parsed, "added"),
+        .removed = number(parsed, "removed"),
+        .retained = number(parsed, "retained"),
+        .old = string(parsed, "previous_generation"),
+        .before = number(parsed, "nodes_before"),
+        .after = number(parsed, "nodes_after"),
+        .overlaps = number(parsed, "overlaps"),
         .first = first,
         .generation = string(parsed, "generation")[0..@min(string(parsed, "generation").len, 12)],
     });
+    try removedPrefixes(parsed, w);
+    try changeTable(parsed, w);
+}
+
+fn removedPrefixes(value: std.json.Value, w: *Writer) Writer.Error!void {
+    const items = field(value, "removed_sample") orelse return;
+    if (items != .array or items.array.items.len == 0) return;
+    try w.writeAll("<p>First obsolete prefixes to remove (up to eight):</p><ul>");
+    for (items.array.items) |row| {
+        if (row != .string) continue;
+        try html.render(w, "<li>{{ prefix }}</li>", .{ .prefix = row.string });
+    }
+    try w.writeAll("</ul>");
+}
+
+fn changeTable(value: std.json.Value, w: *Writer) Writer.Error!void {
+    const items = field(value, "changes") orelse return;
+    if (items != .array) return;
+    try w.writeAll("<table class=\"table\"><caption>Reviewed prefix changes " ++
+        "(eight per page)</caption><thead><tr><th>Prefix</th><th>Change</th></tr>" ++
+        "</thead><tbody>");
+    for (items.array.items) |row| try html.render(
+        w,
+        "<tr><td>{{ prefix }}</td><td>{{ kind }}</td></tr>",
+        .{ .prefix = string(row, "prefix"), .kind = string(row, "kind") },
+    );
+    try w.writeAll("</tbody></table>");
+}
+
+fn number(value: std.json.Value, key: []const u8) u16 {
+    const item = field(value, key) orelse return 0;
+    if (item != .integer or item.integer < 0 or item.integer > 65535) return 0;
+    return @intCast(item.integer);
 }

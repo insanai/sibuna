@@ -35,7 +35,7 @@ pub fn action(state: *State, name: []const u8, fields: std.json.Value, out: Outb
             .prefix = string(fields, "prefix"),
             .action = string(fields, "action"),
             .note = string(fields, "note"),
-            .hours = hours(fields),
+            .hours = try hours(fields),
         });
     } else if (std.mem.startsWith(u8, name, "reputation-remove:")) {
         try remove(state, out, name["reputation-remove:".len..]);
@@ -52,17 +52,21 @@ pub fn action(state: *State, name: []const u8, fields: std.json.Value, out: Outb
         } else try remove(state, out, undo.prefix.slice());
     } else if (equal(u8, name, "country-preview")) {
         try country(state, out, fields, .preview);
-    } else if (equal(u8, name, "country-apply") and model.summary_prefixes != 0) {
+    } else if (equal(u8, name, "country-next") and model.country_next != null) {
+        try country(state, out, fields, .preview_page);
+    } else if (equal(u8, name, "country-apply") and model.country_review.len != 0) {
         try country(state, out, fields, .apply);
     }
     return true;
 }
 
 /// A blank duration keeps the row until removed; otherwise hours become an absolute time.
-fn hours(fields: std.json.Value) u64 {
+fn hours(fields: std.json.Value) error{InvalidInput}!u64 {
     const text = string(fields, "hours");
     if (text.len == 0) return 0;
-    return std.fmt.parseInt(u64, text, 10) catch 0;
+    const value = std.fmt.parseInt(u64, text, 10) catch return error.InvalidInput;
+    if (value == 0 or value > 87600) return error.InvalidInput;
+    return value;
 }
 
 fn ticket(state: *State, kind: Kind) !void {
@@ -161,26 +165,38 @@ fn rowUndo(model: *const Model, prefix: []const u8) !Undo {
 
 fn country(state: *State, out: Outbox, fields: std.json.Value, kind: Kind) !void {
     const model = &state.reputation;
-    const code = string(fields, "country");
-    if (code.len != 2) {
-        try state.message.set("Enter a two-letter country code.");
-        return;
+    if (kind == .preview) {
+        model.clearSummary();
+        const code = string(fields, "country");
+        if (code.len != 2) {
+            try state.message.set("Enter a two-letter country code.");
+            return;
+        }
+        const upper: [2]u8 = .{ std.ascii.toUpper(code[0]), std.ascii.toUpper(code[1]) };
+        model.country = try p.Bytes(2).init(&upper);
+        model.country_action = try p.Bytes(8).init(string(fields, "action"));
+        const duration = try hours(fields);
+        model.country_until = if (duration == 0) 0 else state.browser_time + duration * 3600;
+        model.country_revision = model.committed;
     }
-    var upper: [2]u8 = .{ std.ascii.toUpper(code[0]), std.ascii.toUpper(code[1]) };
     try ticket(state, kind);
     errdefer model.busy = false;
-    model.country = try p.Bytes(2).init(&upper);
-    model.country_action = try p.Bytes(8).init(string(fields, "action"));
-    model.country_until = hours(fields);
     var buffer: [20]u8 = undefined;
+    const expiry = if (model.country_until == 0) null else try std.fmt.bufPrint(
+        &buffer,
+        "{d}",
+        .{model.country_until},
+    );
     try out.post(model.ticket.slice(), if (kind == .apply)
         "/console/api/geoip/country/apply"
     else
         "/console/api/geoip/country/preview", .{
-        .country = @as([]const u8, &upper),
-        .expected_revision = model.committed.slice(),
+        .country = model.country.slice(),
+        .expected_revision = model.country_revision.slice(),
         .action = model.country_action.slice(),
-        .until = try until(state, &buffer, model.country_until),
+        .until = expiry,
+        .review = model.country_review.slice(),
+        .offset = if (kind == .preview_page) model.country_next.? else @as(u16, 0),
     });
 }
 
@@ -202,13 +218,15 @@ pub fn response(
     }
     if (status != 200) {
         model.undo = .{};
+        if (kind == .apply or kind == .preview or kind == .preview_page) model.clearSummary();
         const code = string(body, "error");
         try state.message.set(if (equal(u8, code, "CONSOLEGEOIP"))
             "No GeoIP generation is active. Import country data before building a block."
         else if (equal(u8, code, "CONSOLECAPACITY"))
             "Refused: the address trie would exceed its capacity."
         else switch (status) {
-            409 => "Reputation or policy changed. Reload the IP groups and retry.",
+            409 => "Policy, GeoIP or ownership changed. Reload and preview again; " ++
+                "independently managed prefixes cannot be overwritten by a country action.",
             400 => "The prefix or country was refused. Check the value and try again.",
             else => "The change could not be saved. Check the connection and try again.",
         });
@@ -238,8 +256,13 @@ pub fn response(
             model.after = .{};
             try query(state, out);
         },
-        .preview => {
+        .preview, .preview_page => {
             try model.setSummary(body);
+            try model.country_review.set(string(body, "review"));
+            if (model.country_review.len != 64) return error.InvalidResponse;
+            const next = field(body, "next_offset") orelse .null;
+            model.country_next = if (next == .integer and next.integer >= 0 and
+                next.integer <= 2048) @intCast(next.integer) else null;
             const prefixes = field(body, "prefixes") orelse .null;
             model.summary_prefixes = if (prefixes == .integer)
                 @intCast(@max(0, @min(prefixes.integer, 65535)))
@@ -252,4 +275,8 @@ pub fn response(
 /// The undo window closed; the button disappears on the next render.
 pub fn tick(state: *State) void {
     if (state.reputation.undo.expires_at <= state.browser_time) state.reputation.undo = .{};
+}
+
+test {
+    _ = @import("reputation_controller_test.zig");
 }

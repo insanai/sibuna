@@ -39,8 +39,7 @@ pub fn chunk(owner: *Persistent, input: w.CountryChunk, now: u64) !p.StorageResu
 pub fn preflight(owner: *Persistent, input: w.CountryPreflight, now: u64) !p.StorageResult {
     try p.validate(.{ .country_preflight = input });
     if (try auth.checkAuth(owner, input.auth)) |reason| return .{ .failed = reason };
-    const expected = input.expected_revision;
-    const summary = check(owner, input.digest, input.count, expected, .deny, now) catch |err|
+    const summary = check(owner, input, now) catch |err|
         return .{ .failed = mapped(err) };
     return .{ .country_summary = summary };
 }
@@ -51,8 +50,14 @@ pub fn apply(owner: *Persistent, input: w.CountryApply, now: u64) !p.StorageResu
     const valid_country = @import("console").geoip.country.valid(&input.country);
     if (!valid_country or input.geo_generation.len != 64) return .{ .failed = .invalid_input };
     if (input.until) |until| if (until <= now) return .{ .failed = .invalid_input };
-    const action: policy.Action = if (input.action == .deny) .deny else .allow;
-    _ = check(owner, input.digest, input.count, input.expected_revision, action, now) catch |err|
+    _ = check(owner, .{
+        .auth = input.auth,
+        .digest = input.digest,
+        .count = input.count,
+        .expected_revision = input.expected_revision,
+        .country = input.country,
+        .action = input.action,
+    }, now) catch |err|
         return .{ .failed = mapped(err) };
     const credentials = auth.Credentials.fromAuth(input.auth, now);
     const digest = std.fmt.bytesToHex(input.digest, .lower);
@@ -97,28 +102,22 @@ fn mapped(err: anyerror) p.Failure {
 /// capacity refusal, and a moved revision is a conflict.
 fn check(
     owner: *Persistent,
-    raw_digest: [32]u8,
-    count: u16,
-    expected: u64,
-    action: policy.Action,
+    input: w.CountryPreflight,
     now: u64,
 ) !w.CountrySummary {
-    const digest = std.fmt.bytesToHex(raw_digest, .lower);
-    var summary: w.CountrySummary = .{ .prefixes = count };
-    var counts = try db.query(
-        owner.db,
-        owner.gpa,
-        "SELECT COUNT(*),(SELECT COUNT(*) FROM console_country_stage c JOIN ip_reputation r " ++
-            "ON r.ip_or_cidr=c.prefix WHERE c.digest=?) FROM console_country_stage WHERE digest=?",
-        &.{ util.text(&digest), util.text(&digest) },
-    );
-    defer counts.deinit();
-    if (counts.rows.len != 1 or try util.number(counts.rows[0][0]) != count)
-        return error.IncompleteStage;
-    summary.overlaps = @intCast(@min(try util.number(counts.rows[0][1]), std.math.maxInt(u16)));
-    var candidate = try candidates.current(owner, expected, now);
+    if (!@import("console").geoip.country.valid(&input.country)) return error.InvalidCidr;
+    const digest = std.fmt.bytesToHex(input.digest, .lower);
+    var source = "console:country:XX".*;
+    @memcpy(source[16..], &input.country);
+    var summary = try @import("console_country_diff.zig").describe(owner, input, &source);
+    {
+        var before = try candidates.current(owner, input.expected_revision, now);
+        defer before.deinit();
+        summary.nodes_before = before.engine.ip_trie.node_count;
+    }
+    var candidate = try candidates.withoutSource(owner, input.expected_revision, now, &source);
     defer candidate.deinit();
-    summary.nodes_before = candidate.engine.ip_trie.node_count;
+    const action: policy.Action = if (input.action == .deny) .deny else .allow;
     var ordinal: u64 = 0;
     while (true) {
         var rows = try db.query(
@@ -141,5 +140,6 @@ fn check(
         if (rows.rows.len < 64) break;
     }
     summary.nodes_after = candidate.engine.ip_trie.node_count;
+    if (try candidates.revision(owner) != input.expected_revision) return error.Conflict;
     return summary;
 }

@@ -94,6 +94,9 @@ pub const CountryPreflight = struct {
     expected_revision: u64,
     digest: [32]u8,
     count: u16,
+    country: [2]u8,
+    action: ReputationAction = .deny,
+    diff_offset: u16 = 0,
 };
 pub const CountryApply = struct {
     auth: p.users.Auth,
@@ -106,10 +109,24 @@ pub const CountryApply = struct {
     geo_generation: p.Bytes(64),
 };
 pub const CountrySummary = struct {
+    pub const Change = struct {
+        prefix: p.Bytes(max_prefix) = .{},
+        kind: enum { added, retained, removed } = .added,
+    };
     prefixes: u16 = 0,
     nodes_before: u16 = 0,
     nodes_after: u16 = 0,
     overlaps: u16 = 0,
+    previous: u16 = 0,
+    added: u16 = 0,
+    removed: u16 = 0,
+    retained: u16 = 0,
+    previous_generation: p.Bytes(64) = .{},
+    removed_sample: [8]p.Bytes(max_prefix) = @splat(.{}),
+    removed_count: u8 = 0,
+    changes: [8]Change = @splat(.{}),
+    change_count: u8 = 0,
+    next_offset: ?u16 = null,
     sample: [8]p.Bytes(max_prefix) = @splat(.{}),
     sample_count: u8 = 0,
 };
@@ -145,7 +162,7 @@ pub fn validateReputationEdit(input: ReputationEdit) error{InvalidLimit}!void {
 }
 
 pub fn validateCountry(count: u16, revision: u64) error{InvalidLimit}!void {
-    if (count == 0 or count > max_country_prefixes) return error.InvalidLimit;
+    if (count > max_country_prefixes) return error.InvalidLimit;
     if (revision >= std.math.maxInt(i64)) return error.InvalidLimit;
 }
 

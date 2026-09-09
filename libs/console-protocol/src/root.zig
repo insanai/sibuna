@@ -304,10 +304,10 @@ pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
             input.count,
             input.expected_revision,
         ),
-        .country_apply => |input| try workflows.validateCountry(
-            input.count,
-            input.expected_revision,
-        ),
+        .country_apply => |input| {
+            try workflows.validateCountry(input.count, input.expected_revision);
+            if ((input.until orelse 0) > std.math.maxInt(i64)) return error.InvalidLimit;
+        },
         .import_chunk => |input| if (input.document.len == 0 or
             input.ordinal >= 128) return error.InvalidLimit,
         .import_commit => |input| try workflows.validateImportCommit(input),

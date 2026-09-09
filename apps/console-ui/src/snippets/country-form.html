@@ -1,5 +1,5 @@
 <form id="country-preview" class="sb-settings-form mt-6"><h3>Block or allow a country</h3>
-    <p class="sb-note">Every prefix of the country in the active GeoIP generation becomes a reputation row pinned to that generation. Preview shows the trie cost before anything applies; sets larger than 1,024 prefixes are refused rather than truncated.</p>
+    <p class="sb-note">Preview replaces this country's owned prefixes with the active GeoIP generation, including removal of obsolete ranges. Separately managed prefixes are preserved; exact ownership conflicts must be resolved first. The complete candidate must fit 1,024 prefixes and the trie capacity. Apply uses the reviewed country, action and expiry even if the form changes afterward.</p>
     <label for="country-code">Country code</label>
     <input id="country-code" name="country" class="input input-bordered" maxlength="2" pattern="[A-Za-z]{2}" required{{ busy }}>
     <label for="country-action">Action</label>
@@ -9,4 +9,5 @@
     <input id="country-hours" name="hours" class="input input-bordered" inputmode="numeric" maxlength="5"{{ busy }}>
     <div class="flex flex-wrap gap-2 mt-3">
     <button class="btn" type="submit"{{ busy }}>Preview country block</button>
-    <button class="btn btn-primary" type="button" data-action="country-apply"{{ apply }}>Apply to {{ prefixes }} prefixes</button></div>
+    <button class="btn" type="button" data-action="country-next"{{ next }}>Next diff page</button>
+    <button class="btn btn-primary" type="button" data-action="country-apply"{{ apply }}>Apply reviewed {{ country }} {{ action }}: {{ prefixes }} prefixes</button></div>

@@ -162,7 +162,10 @@ inspection findings, manage IP groups and country blocks pinned to the active Ge
 generation, and export or atomically import the managed set (also `sibuna console policies
 export` and `sibuna console policies import --file <set.json>`).
 Importing a later GeoIP generation does not automatically refresh existing country-derived
-reputation rows. Review the old prefixes before replacing a country action. The Events page
+reputation rows. Preview the country action to compare added, retained and removed prefixes;
+page through the reviewed diff before applying it. The replacement removes obsolete rows owned
+by that country and preserves independently managed prefixes. A changed generation or policy
+revision requires a fresh preview, and overlapping independent edits are refused. The Events page
 contains retained WAF findings and honeypot incidents; it is not a complete access log.
 Statistics use the live stream; management pages issue explicit requests and refreshes.
 
@@ -170,8 +173,7 @@ SID 0007 remains Proposed. The interface is available, with ongoing review corre
 and acceptance work recorded in the SID. Earlier impact runs are inconclusive. The corrected
 harness includes each dashboard's stream, rankings and retained-timeline queries; a full
 acceptance run requires a production GeoIP snapshot and documented host conditions. Multi-topic streams
-and dedicated peer management transport, along with reviewed country-rule refresh, remain
-implementation work; current node discovery
+and dedicated peer management transport remain implementation work; current node discovery
 uses replicated membership and configured health probes.
 
 == Deployment Topologies

@@ -52,7 +52,7 @@ docs); the book's Part II carries the full table with sources.
 Sibuna does not terminate ingress TLS or score bots with a model. Its opt-in console preview
 includes the animated country globe, incident investigation, policy editing, users, scoped API
 tokens, audit browsing and local node controls. SID 0007 remains proposed: multi-topic
-subscriptions, dedicated peer transport, reviewed country-rule refresh and release acceptance
+subscriptions, dedicated peer transport and release acceptance
 remain open. See
 [loading country data from the CLI](#loading-country-data) for country data setup.
 
@@ -375,8 +375,10 @@ re-imported atomically from the interface or with `sibuna console policies expor
 `sibuna console policies import --file <set.json>`.
 
 Country actions are snapshots of the active GeoIP generation. A later import does not refresh
-their reputation rows automatically; review the existing prefixes before replacing a country
-action. Events retain WAF findings and honeypot incidents, not a complete request access log.
+their reputation rows automatically. Preview the country action to compare added, retained and
+removed prefixes, using **Next diff page** to inspect the complete bounded replacement. Applying
+the review replaces only that country’s own rows. A changed generation or policy revision
+requires another preview; independently managed prefixes are preserved and conflicts refused. Events retain WAF findings and honeypot incidents, not a complete request access log.
 Management pages use explicit requests; only dashboard statistics currently stream live.
 
 For an HTTPS reverse proxy, configure `--console-origin`, `--console-behind-proxy` and explicit

@@ -26,11 +26,22 @@ pub fn build(
     source: []const u8,
     now: u64,
 ) !candidates.Candidate {
-    return compose(owner, expected, source, now);
+    return compose(owner, expected, source, now, "");
 }
 
 pub fn current(owner: *Persistent, expected: u64, now: u64) !candidates.Candidate {
-    return compose(owner, expected, null, now);
+    return compose(owner, expected, null, now, "");
+}
+
+/// Replacement preflights omit the old owned rows before inserting the new complete set.
+pub fn withoutSource(
+    owner: *Persistent,
+    expected: u64,
+    now: u64,
+    source: []const u8,
+) !candidates.Candidate {
+    std.debug.assert(source.len != 0);
+    return compose(owner, expected, null, now, source);
 }
 
 fn compose(
@@ -38,6 +49,7 @@ fn compose(
     expected: u64,
     source: ?[]const u8,
     now: u64,
+    omit_source: []const u8,
 ) !candidates.Candidate {
     if (try revision(owner) != expected) return error.Conflict;
     const memory = try owner.gpa.alloc(u8, source_budget);
@@ -53,7 +65,7 @@ fn compose(
         if (replacement) |document| document.id else "",
         source,
     );
-    const reputation = try reputations(owner, allocator, now);
+    const reputation = try reputations(owner, allocator, now, omit_source);
     var candidate = try candidates.Candidate.init(owner.gpa, .{
         .default_difficulty = owner.cfg.default_difficulty,
         .waf = owner.cfg.waf,
@@ -121,7 +133,7 @@ pub fn fromSources(
     const memory = try owner.gpa.alloc(u8, 256 * 1024);
     defer owner.gpa.free(memory);
     var arena = std.heap.FixedBufferAllocator.init(memory);
-    const reputation = try reputations(owner, arena.allocator(), now);
+    const reputation = try reputations(owner, arena.allocator(), now, "");
     var candidate = try candidates.Candidate.init(owner.gpa, .{
         .default_difficulty = owner.cfg.default_difficulty,
         .waf = owner.cfg.waf,
@@ -211,6 +223,7 @@ fn reputations(
     owner: *Persistent,
     allocator: std.mem.Allocator,
     now: u64,
+    omit_source: []const u8,
 ) ![]const candidates.Reputation {
     const entries = try allocator.alloc(candidates.Reputation, policy.radix_trie.MAX_NODES);
     var count: usize = 0;
@@ -222,8 +235,12 @@ fn reputations(
             "SELECT ip_or_cidr,reputation_score FROM ip_reputation WHERE ip_or_cidr>? " ++
                 "AND (banned_until IS NULL OR banned_until>?) " ++
                 "AND (reputation_score<=-50 OR reputation_score>=50) " ++
+                "AND (?='' OR source<>?) " ++
                 "ORDER BY ip_or_cidr LIMIT 64",
-            &.{ util.text(cursor), util.integer(now) },
+            &.{
+                util.text(cursor),      util.integer(now),
+                util.text(omit_source), util.text(omit_source),
+            },
         );
         defer rows.deinit();
         for (rows.rows) |row| {

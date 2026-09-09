@@ -6,6 +6,10 @@ const fixture = @import("console_store_test.zig");
 const db = @import("console_database.zig");
 const auth: p.users.Auth = .{ .session_digest = @splat(1), .csrf_digest = @splat(2) };
 
+test {
+    _ = @import("console_country_test.zig");
+}
+
 fn open(sub: []const u8, buffer: *[160]u8, tmp: *std.testing.TmpDir) !*fixture.Fixture {
     const fx = try fixture.Fixture.open(
         try std.fmt.bufPrint(buffer, ".zig-cache/tmp/{s}/{s}", .{ tmp.sub_path, sub }),
@@ -250,6 +254,7 @@ test "country prefixes stage in chunks, preflight in a candidate and apply pinne
         .expected_revision = fx.owner.version,
         .digest = digest,
         .count = 4,
+        .country = "ZZ".*,
     } });
     try t.expect(short == .failed and short.failed == .invalid_input);
     const preview = try fx.run(.{ .country_preflight = .{
@@ -257,6 +262,7 @@ test "country prefixes stage in chunks, preflight in a candidate and apply pinne
         .expected_revision = fx.owner.version,
         .digest = digest,
         .count = 3,
+        .country = "ZZ".*,
     } });
     try t.expect(preview == .country_summary);
     try t.expectEqual(@as(u16, 3), preview.country_summary.prefixes);

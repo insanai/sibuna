@@ -1657,11 +1657,11 @@ identifies the following concrete gaps; the status remains Proposed.
   [Live cluster transport], [Membership and applied revisions use replicated rows; configured
     HTTP probes provide health. The dedicated authenticated TLS peer WebSocket transport and
     live peer node/boot/sequence deduplication remain deferred, not verified by the membership tests.],
-  [Country rule maintenance], [Country actions pin a GeoIP generation, as required. A reviewed
-    replacement workflow that compares a new generation and removes obsolete country-owned
-    prefixes is missing. Silent automatic refresh is not required and would contradict the
-    GeoIP contract. Reapplying a country currently upserts its new prefixes without retiring
-    the old ones; see `console_country.zig` and the country commit trigger.],
+  [Country rule maintenance], [Country actions pin a GeoIP generation. Reviewed replacement now compares added,
+    retained and removed prefixes, with a bounded eight-row diff page. Apply binds the country,
+    action, expiry, generation and expected policy revision to the preview. The version 26
+    transaction removes obsolete country-owned rows and records the redacted audit together;
+    independent ownership conflicts are refused. GeoIP imports do not silently alter policy.],
   [Interface state], [The bridge replaces the complete application markup when its rendered
     string changes; only animation patches the globe separately. Per-panel rendering,
     browser-history routing, system/persisted theme and density preferences remain absent.
@@ -4218,6 +4218,29 @@ reference; the book's comparison material remains. These changes affect console 
 rendering and request selection, not the measured admission primitives, so their existing
 baseline is retained. This review does not close the controlled dashboard-impact gate or
 the implementation gaps in the current completeness table.
+
+== Reviewed country replacement (2026-09-10)
+
+Country preview now shows added, retained and removed prefixes, the old and new GeoIP
+fingerprints, trie usage and eight-row pages of the full bounded diff. Apply uses the reviewed
+country, action, absolute expiry and committed revision even if the operator subsequently
+edits the form. A changed GeoIP generation or policy revision invalidates the review.
+A zero-prefix replacement can remove the country's previous set; an independently managed
+exact-prefix overlap is refused without transferring ownership.
+
+Additive schema version 26 changes the country commit trigger to remove obsolete rows owned
+by that country and commit its redacted before/after audit in the same statement. A private
+candidate omits the old owned set before validating the complete replacement, preserving
+file fallbacks and unrelated policy. A membership index keeps replacement probes within the
+existing query work bound; the live 200-prefix case exposed the missing index before release.
+
+Verification: `zig build -j1 test console-test` passed 433 native/UI tests and twenty-one
+live console scenarios. The country cases exercise failed-audit rollback, revision and
+ownership conflicts, an empty replacement, and a 1,024-prefix replacement within query
+limits. The live daemon imports a second generation, refuses the old review and a changed
+action, pages the diff, then verifies both newly denied and retired ranges on real requests.
+The UI test checks frozen expiry/action/revision and an empty-set apply. Chrome reconnection
+is pending; this entry does not claim browser acceptance or close the other delivery gates.
 
 = References
 

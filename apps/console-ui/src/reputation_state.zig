@@ -2,7 +2,7 @@
 //! server's JSON page; the last successful mutation keeps an inverse for thirty seconds.
 const std = @import("std");
 const p = @import("console_protocol");
-pub const Kind = enum { query, edit, remove, preview, apply };
+pub const Kind = enum { query, edit, remove, preview, preview_page, apply };
 pub const Undo = struct {
     prefix: p.Bytes(48) = .{},
     /// Restore a removed row with this action, or remove an added one.
@@ -16,7 +16,7 @@ pub const Undo = struct {
 /// segment does not carry their zeros.
 var page_bytes: [4096]u8 = undefined;
 var page_len: u16 = 0;
-var summary_bytes: [1024]u8 = undefined;
+var summary_bytes: [2048]u8 = undefined;
 var summary_len: u16 = 0;
 
 pub const Model = struct {
@@ -27,6 +27,9 @@ pub const Model = struct {
     country: p.Bytes(2) = .{},
     country_action: p.Bytes(8) = .{},
     country_until: u64 = 0,
+    country_review: p.Bytes(64) = .{},
+    country_revision: p.Bytes(20) = .{},
+    country_next: ?u16 = null,
     undo: Undo = .{},
     busy: bool = false,
     loaded: bool = false,
@@ -59,7 +62,9 @@ pub const Model = struct {
         summary_len = @intCast(writer.buffered().len);
     }
 
-    pub fn clearSummary(_: *Model) void {
+    pub fn clearSummary(self: *Model) void {
         summary_len = 0;
+        self.country_review = .{};
+        self.country_next = null;
     }
 };
