@@ -276,9 +276,14 @@ saves show a field comparison and require confirmation with an expected revision
 reverts compare against the current rule and create a new revision. Committed and locally
 applied revisions remain separate.
 Audit detail shows recorded before/after settings and marks missing historical data or redacted
-selectors. The Nodes page controls only the serving node: drain, resume and clear local bans
-require a preview and produce durable command receipts. Peer health and cluster commands remain
-unfinished.
+selectors. The Nodes page lists every cluster member from the replicated membership table
+(applied policy revision, log frontiers, draining state, a link to that member's advertised
+console) together with this console's own health probes of the peer data-plane listeners
+named by `--console-probe <node-id>=<http://ip:port>`; `--console-advertise <origin>` sets
+the link peers show. Drain, resume and clear local bans still act only on the serving node,
+require a preview and produce durable command receipts. Under `-Dcluster=true`,
+`zig build console-e2e` also runs a three-node membership, failover and quorum-loss scenario,
+and `zig build console-impact` measures the console's cost to the data plane.
 
 For an HTTPS reverse proxy, configure `--console-origin`, `--console-behind-proxy` and explicit
 `--console-trusted-proxy` CIDRs. Supply a persistent `--console-key-file` containing 64 hex

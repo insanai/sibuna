@@ -122,9 +122,16 @@ embeds a validated snapshot until the first durable import. Unknown addresses, s
 and stale data remain visible; importing country data does not create traffic or enrich
 already expired samples.
 
-SID 0007 remains Proposed. Cluster management WebSockets, full peer coverage, notifications,
-constrained page templates, kiosk sessions and the console performance impact gates remain
-unfinished. The working local workflows do not establish those acceptance results.
+Cluster members announce themselves through the replicated membership table and appear on
+every console's Nodes page; configure `--console-probe <node-id>=<http://ip:port>` for the
+peers whose data-plane listeners this console should health-check and
+`--console-advertise <origin>` for the link other consoles show. Local commands remain
+per node. `zig build console-impact` runs the data-plane isolation matrix (`-- --quick` for
+a smoke run) and writes `benchmarks/results/console-impact-latest.json`.
+
+SID 0007 remains Proposed. Direct peer telemetry sockets, notifications, constrained page
+templates and kiosk sessions remain unfinished, and the impact gate must pass on a declared
+quiet host before the record advances.
 
 == Deployment Topologies
 

@@ -445,7 +445,7 @@ scale(72%, reflow: true, fit-diagram()))
   columns: (1.2fr, 2.6fr),
   table.header([*Path*], [*Contents*]),
   [`libs/serve/src/`], [`kernel.zig` (listener, connection slots, deadlines, drain), `router.zig` (comptime route table), `context.zig` (request context, response helpers), `websocket.zig` (upgrade, frame loop, per-connection send queue), `assets.zig` (embedded files with content-addressed paths), `json.zig` (bounded writer and reader), `ratelimit.zig`, `log.zig`],
-  [`libs/console/src/`], [`app.zig` (composition and `handle`), `auth.zig` (Argon2id, sessions, roles, tokens, CSRF), `api/` (`stats.zig`, `events.zig`, `policy.zig`, `reputation.zig`, `nodes.zig`, `challenges.zig`, `settings.zig`, `users.zig`, `audit.zig`, `geoip.zig`), `telemetry/` (`sampler.zig`, `minutes.zig`, `funnel.zig`), `hub.zig` (topics, ring, subscribers), `geoip/` (`loader.zig`, `ranges.zig`, `lookup.zig`), `cluster/` (`members.zig`, `probe.zig`), `schema.zig`, `retention.zig`],
+  [`libs/console/src/`], [`app.zig` (composition and `handle`), `auth.zig` (Argon2id, sessions, roles, tokens, CSRF), `api/` (`stats.zig`, `events.zig`, `policy.zig`, `reputation.zig`, `nodes.zig`, `challenges.zig`, `settings.zig`, `users.zig`, `audit.zig`, `geoip.zig`), `telemetry/` (`sampler.zig`, `minutes.zig`, `funnel.zig`), `hub.zig` (topics, ring, subscribers), country lookup through `libs/geoip` (`geoip_job.zig`, `geoip_download.zig`, `geoip_generation.zig`), `cluster_probe.zig` (peer health probes; membership and the storage status snapshot live with the storage owner in `apps/sibuna/src/console_membership.zig` and `console_node_storage.zig`), `schema.zig`, `retention_job.zig`],
   [`apps/console-ui/src/`], [`main.zig` (ABI, state, event dispatch), `render/` (one file per page, plus `components.zig` for the `sb-*` components and `charts.zig` for SVG), `protocol.zig` (frames shared with `libs/console` by import), `main_test.zig` (golden renders)],
   [`apps/console-ui/web/`], [`shell.html`, `glue.js`, `tailwind.css` (source), `package.json`, `assets/console.css` (built, committed with digest), `assets/world-110m.bin` (committed)],
   [`apps/sibuna/src/console_start.zig`], [Flag parsing for `--console*`, the `sibuna console` subcommands, thread start and stop],
@@ -506,6 +506,8 @@ inconclusive/noisy runs do not establish compliance. The active-console impact m
 ```
 sibuna --console 127.0.0.1:9443 --data-dir /var/lib/sibuna --secret-file /etc/sibuna/secret
 sibuna --console 0.0.0.0:9443 --console-behind-proxy --console-cookie-secure ...
+sibuna --console 127.0.0.1:9443 --console-advertise https://console-1.example \
+  --console-probe 2=http://10.0.0.2:8080 --console-probe 3=http://10.0.0.3:8080 ...
 sibuna console init-admin admin --data-dir /var/lib/sibuna
 sibuna console add-user alice --role viewer --origin https://console.example \
   --username admin --password-file /run/private/console-password
@@ -702,10 +704,11 @@ only from storage/control code; failed rebuilds retain the prior snapshot and su
 
 Minute history sums disjoint node/boot intervals; exclude overlapping live seconds already
 covered by persisted minutes. Report node coverage, clock skew, reset/gap and stale values.
-Live tiles consume authenticated direct peer snapshots/deltas, tagged by node id, boot id,
-sequence and interval; never forward received totals as a node's own contribution. Only
-nodes running telemetry contribute; label a partial cluster rather than treating missing
-members as zero. Applied policy revision is a per-node acknowledgment, not evidence inferred
+Cross-node live tiles are served from replicated minute rows and the probe results above
+in this increment; direct authenticated peer snapshot streams (tagged by node id, boot id,
+sequence and interval, never forwarding received totals as a node's own contribution)
+remain the designed later transport. Only nodes running telemetry contribute; label a
+partial cluster rather than treating missing members as zero. Applied policy revision is a per-node acknowledgment, not evidence inferred
 from a committed row. Client dashboards do not connect directly to data-plane listeners.
 
 
@@ -793,7 +796,7 @@ Migrations are numbered and version-gated in `schema.zig`. The authoritative wri
   [`console_pages`], [`kind` (challenge, denied, rate_limited, banned, overloaded), `html`, `updated_at`, `updated_by`; operator-edited templates the data plane loads at engine rebuild],
   [`geoip_ranges`], [`generation`, `start` (16-byte address as blob), `end`, `country` (ISO 3166-1 alpha-2); one row per range from the source CSV],
   [`geoip_meta`], [`generation`, `active`, `source`, `licence`, `published`, `loaded_at`, `ranges`, `sha256`],
-  [`nodes`], [`node_id`, `address`, `console_url`, `version`, `first_seen`, `last_seen`; written by each node at start and every minute],
+  [`console_nodes`], [`node` (primary), `address` (the member's consensus endpoint, or `local`), `console_url` (the advertised console origin, rendered only as a plain-origin link), `version`, `boot`, `first_seen`, `last_seen`, `applied_revision`, `control_revision`, `applied_slot`, `decided_slot`, `draining`; each node writes only its own row from the storage owner: at start, every minute, and after every successfully applied policy rebuild],
 )
 
 Additional migrations are required for `console_recovery_codes` (digest and consumed state),
@@ -896,13 +899,20 @@ whereas Sibuna currently has country-only source observations and a logical serv
 
 = Cluster Management
 
-The `nodes` page shows every member known from the `nodes` table and the cluster
-configuration: id, address, role (leader or follower, through a proposed storage-owned status snapshot), version, uptime, last replicated commit, the sampler's live
-request rate, resident memory, CPU, and the health of its data-plane listener. Health is
-probed by each console over explicitly configured management addresses (never arbitrary browser-supplied URLs) (`GET /__sibuna/health` and `/__sibuna/metrics` every
-5 seconds, bounded to 2 s per probe) so a console can show a member whose storage has
-failed but whose data plane still serves from its last snapshot, the failure mode SID 0005
-documents.
+The `nodes` page shows every member known from the replicated `console_nodes` table and
+from this console's probe configuration: id, consensus address, version, boot, the policy
+revision that node has applied against the committed revision, its log frontiers, and the
+health of its data-plane listener. Role, leader, ballot term and quorum availability come
+from a storage-owned snapshot the owner thread refreshes at most once per second: a single
+node reads its own status; a cluster member asks its own Zaxonlite endpoint over the local
+status RPC. Health is probed by each console over explicitly configured data-plane
+addresses given as `--console-probe <node-id>=<http://ip:port>` (numeric hosts only, never
+an address read from replicated data or a browser) with `GET /__sibuna/health` and
+`/__sibuna/metrics` every 5 seconds, bounded to 2 s per probe, on one console-owned thread.
+A member configured for probing but without a replicated row renders as unobserved with
+its counters unavailable, never zero. `--console-advertise <origin>` names the link peers
+show for this console. This lets a console show a member whose storage has failed but whose
+data plane still serves from its last snapshot, the failure mode SID 0005 documents.
 
 Operations offered per node: drain (set a flag the node's accept loop reads, so it answers
 `503` to new connections while finishing current ones, for maintenance), clear local bans (a control command; a replicated reputation denial can still apply),
@@ -1446,7 +1456,7 @@ concern layout), wired by the existing `AppModules` helper.
   [Digest gate (in `zig build test`)], [`tools/console_assets.py check` hashes both build inputs (render sources, HTML snippets, the snippet renderer, CSS configuration, package lock and scripts) and outputs against `MANIFEST.md`; output digests alone cannot detect stale CSS. A plain `zig build` therefore needs no npm; only `console-assets` does, and CI runs it and checks the tree is clean.],
   [`zig build console-test`], [Golden tests of the interface module compiled natively (rendered HTML per page and per event), protocol round-trip tests, and the kernel's HTTP and WebSocket tests with an in-process client.],
   [`zig build console-e2e`], [Boots a daemon with `--console` on loopback, runs setup, login, a WebSocket subscription, a policy edit, and asserts the engine rebuild and the audit row; part of `zig build test` when console support is enabled.],
-  [`zig build console-impact`], [The isolation gate in “Process model and the isolation contract” through `benchmarks/tools.py --console`.],
+  [`zig build console-impact`], [The isolation gate in “Process model and the isolation contract” through `benchmarks/console_impact.py`: builds a console-free and a console binary, runs compiled-out, disabled, idle and eight-dashboard daemons concurrently, interleaves wrk rounds in rotating order over admitted, challenged, denied and policy-reload workloads, and reports pass, fail or inconclusive with a bootstrap interval; `-- --quick` for a smoke run, `-- --cluster` for the three-node case.],
 )
 
 `package.json` pins exact compatible versions of `tailwindcss` 4, `@tailwindcss/cli` 4 and `daisyui` 5;
@@ -1533,7 +1543,10 @@ The status remains *Proposed* until all release gates pass.
 - *End-to-end.* The `console-e2e` scenario above, plus: session expiry, role refusal, rate
   limit on login, a slow subscriber receiving `dropped`, a stateless policy tester result agreeing with
   a live request's `X-Sibuna-Rule` under controlled identical inputs and configuration, a country block appearing in the trie, and a cluster run
-  in which a rule saved on node 1's console changes node 3's decision.
+  in which a rule saved on node 1's console changes node 3's decision
+  (`tools/console_cluster_test.py`, run by `console-e2e` under `-Dcluster=true`: membership,
+  probes, leader loss, lost quorum answering `CONSOLEQUORUM`, rejoin, cross-node revocation
+  and local-command isolation).
 - *Impact.* The `console-impact` gate on every change to `libs/serve` or `libs/console`.
 - *Principles.* The golden tests assert the mechanical rules: every page passes the trunk
   test (product, cluster and node, page, section, way back present in the rendered shell,
@@ -1576,7 +1589,9 @@ typst compile --root docs docs/sid/figures/0007-console-landing-preview.typ docs
 The former open questions are resolved as follows; implementation must verify the stated
 bounds rather than reopen the architecture implicitly.
 
-+ *Live cluster transport:* use direct authenticated management WebSockets on a separate
++ *Live cluster transport:* deferred, design retained. Membership, applied revisions and
+  probe health need no peer socket because `console_nodes` and minute rows replicate; the
+  later live-tile transport uses direct authenticated management WebSockets on a separate
   `/console/peer` route and bounded peer quota. Authenticate node identity against configured
   membership, using mTLS terminated by a trusted management ingress or a domain-separated
   HMAC challenge over TLS. The consensus PSK is not a browser bearer token. Never use a
@@ -1717,11 +1732,11 @@ are historical; the acceptance gates below govern delivery.
 
 == 6. Cluster and operations
 
-- #text("Pending: Node health/coverage/applied revisions/drain/clear-local-bans via control interface.")
+- #text("Verified (2026-09-09): Node health via configured probes, membership coverage and per-node applied revisions through replicated rows, drain/clear-local-bans via the control interface. See the cluster membership evidence.")
 
-- #text("Pending: Dedicated TLS management WebSockets with certificate validation and separate domain-separated peer HMAC key; telemetry outside consensus.")
+- #text("Deferred (design retained): Dedicated TLS management WebSockets with certificate validation and separate domain-separated peer HMAC key; telemetry outside consensus. Membership and health need no peer socket in the delivered increment.")
 
-- #text("Pending: Deduplicate node/boot/sequence/interval; missing nodes are unknown; no aggregate re-sums.")
+- #text("Verified (2026-09-09): Missing members render as unobserved, never zero; each node writes only its own row. Node/boot/sequence deduplication applies to the deferred peer stream.")
 
 - #text("Pending: Preserve issuer-bound challenge verification and local rate limits.")
 
@@ -3462,6 +3477,57 @@ would have recovered well under one kilobyte each, so the gate was raised to 384
 (393,216 bytes) with this ledger rather than by unifying behaviour. Formatting, full
 repository tests, console tests, the live console suite (default and embedded builds), SID
 and book generation pass; the console-off, storage-off and cluster builds compile.
+
+== Cluster membership, probes, failover gate and impact harness (2026-09-09)
+
+Each node writes its own row of the replicated `console_nodes` table from the storage
+owner tick (at start, every 60 seconds, and after every successful rebuild, coalesced to
+two seconds, or thirty while quorum is unavailable): consensus address, advertised console
+origin, version, boot, applied and control revisions, decided and applied log slots, and
+the drain flag. Role, leader, ballot term, frontiers and quorum availability come from a
+storage-owned snapshot refreshed at most every five seconds (a single node reads its own
+status and reports `single`; a member asks its own Zaxonlite endpoint over the local status
+RPC). A console-owned probe thread checks the configured `--console-probe` data-plane
+addresses every five seconds, two seconds per probe, and the request-rate delta from
+`/__sibuna/metrics`. `GET /console/api/nodes` returns the page and the probes; the Nodes
+page ranks members unreachable, degraded, unobserved, healthy, leader first, renders an
+unobserved member with dashes rather than zeros, and offers peers only a plain link to their
+advertised console. A storage request that times out or fails as unavailable, including the
+authorization read at the start of every route, answers `503 CONSOLEQUORUM` so an operator
+sees lost quorum rather than a sign-out. Command receipts are readable from any console.
+
+Two shutdown defects surfaced under the failover scenario. A cluster call has no deadline
+of its own, so a storage thread blocked in a handshake to a member that stopped mid-call
+could never be joined; `Persistent.shutdown` now cancels the in-flight call until the
+worker returns. Zaxonlite 0.6.1 stops ticking as soon as `stop` is accepted while a peer
+request already waiting on consensus is woken and deadline-checked only by ticks, so the
+leader's serve thread can wait for that handler forever; `Db.closeBounded` abandons the
+close after 15 seconds with a warning and the process exits with durable data (every
+acknowledged write was synced before its reply). The upstream fix is to keep advancing the
+tick counter and waking waiters until the handler count reaches zero; until it lands, the
+bound is the honest behaviour rather than a hung service manager.
+
+Evidence: `tools/console_cluster_test.py` (run by `console-e2e` under `-Dcluster=true`)
+starts three PSK loopback nodes with consoles, bootstraps the administrator through node 1
+into the replicated store, and verified in order: all three members observed with one
+agreed leader; a rule saved on console 1 enforced by node 3 with every node's applied
+revision reaching the committed revision; the leader stopped with exit status 0, the
+survivor answering, the stopped member unreachable, a new leader elected and a mutation
+accepted with two of three nodes; the second node stopped, the last console answering
+`503 CONSOLEQUORUM` to a mutation and to a session read while its data plane still
+returned 200 and enforced the rule; both nodes restarted with new boots and the restarted
+node enforcing a rule saved during the outage; a logout on one console rejecting the
+session on another; a drain on one node lowering only that node's health with its receipt
+readable from another console; and every node stopped with exit status 0 and no chain
+mismatch or leak report. `tools/console_nodes_test.py` adds the single-node membership,
+probe and drained-degraded checks. `benchmarks/console_impact.py` (`zig build
+console-impact`) builds console-free and console binaries, runs compiled-out, disabled,
+idle and eight-dashboard daemons, interleaves wrk rounds over admitted, challenged, denied
+and policy-reload workloads and reports pass, fail or inconclusive; its measured verdict is
+recorded in the acceptance entry, not here. The Nodes members view moved the interface
+module from 307,994 to 315,781 bytes (gate 393,216). Formatting, full repository tests,
+console tests, the live console suite in the default and cluster builds, SID and book
+generation pass; the console-off and storage-off builds compile.
 
 = References
 
