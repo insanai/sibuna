@@ -37,6 +37,7 @@ test {
     _ = @import("notify_target.zig");
     _ = @import("notify_syslog.zig");
     _ = @import("notify_events.zig");
+    _ = @import("geoip_cidr.zig");
 }
 
 pub const RetentionJob = @import("retention_job.zig").Job;

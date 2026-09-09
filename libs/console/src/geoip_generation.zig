@@ -49,6 +49,22 @@ pub const Registry = struct {
     }
 
     /// Whether the active provider's licence requires attribution in the interface.
+    /// Every prefix of one country in the active generation, and the generation digest.
+    /// Held under the registry lock; the output is bounded by the caller's buffer.
+    pub fn country(
+        self: *Registry,
+        io: std.Io,
+        code: [2]u8,
+        out: []@import("geoip_cidr.zig").Prefix,
+        digest: *[32]u8,
+    ) error{ NoGeneration, TooManyPrefixes }!usize {
+        self.mutex.lockUncancelable(io);
+        defer self.mutex.unlock(io);
+        const active = self.active orelse return error.NoGeneration;
+        digest.* = active.digest;
+        return @import("geoip_cidr.zig").country(&active, code, out);
+    }
+
     pub fn attributionRequired(self: *Registry, io: std.Io) bool {
         self.mutex.lockUncancelable(io);
         defer self.mutex.unlock(io);
