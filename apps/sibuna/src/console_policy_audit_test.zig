@@ -172,7 +172,10 @@ test "policy audit migration preserves old records and replays without duplicate
     );
     defer rows.deinit();
     try t.expectEqual(@as(usize, 1), rows.rows.len);
-    try t.expectEqualStrings("17", rows.rows[0][0].?);
+    var expected: [8]u8 = undefined;
+    const catalog = @import("console").schema.version;
+    const version = try std.fmt.bufPrint(&expected, "{d}", .{catalog});
+    try t.expectEqualStrings(version, rows.rows[0][0].?);
     try t.expect(rows.rows[0][1] == null and rows.rows[0][2] == null and rows.rows[0][3] == null);
     try t.expectEqualStrings("Historical", rows.rows[0][4].?);
     try t.expectEqualStrings("1", rows.rows[0][5].?);

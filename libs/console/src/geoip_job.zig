@@ -8,7 +8,8 @@ const download = @import("geoip_download.zig");
 pub const Input = struct {
     auth: p.geo.Authorization,
     expected_revision: u64,
-    source_version: p.Bytes(7),
+    provider: p.Bytes(p.geo.max_provider),
+    source_version: p.Bytes(p.geo.max_version),
     checksum: p.Bytes(64) = .{},
     csv: p.Bytes(8192) = .{},
 };
@@ -47,15 +48,16 @@ pub const Job = struct {
         }
         var digest: [32]u8 = undefined;
         _ = try std.fmt.hexToBytes(&digest, metadata.digest.slice());
+        const provider = geoip.Provider.parse(metadata.provider.slice()) orelse .dbip;
         self.app.geo.active = .{
             .allocator = self.app.gpa,
             .ranges = ranges,
             .allocation = ranges,
             .digest = digest,
-            .provider = .dbip,
+            .provider = provider,
             .version = geoip.Version.init(metadata.source_version.slice()) catch .{},
-            .file_digests = .{ digest, @splat(0) },
-            .files = 1,
+            .file_digests = try fileDigests(metadata.source_digests.slice(), digest),
+            .files = provider.fileCount(),
         };
         self.app.geo.revision = metadata.revision;
         self.app.geo.loaded.store(true, .release);
@@ -63,8 +65,9 @@ pub const Job = struct {
     }
 
     pub fn start(self: *Job, input: Input) !void {
-        if (!geoip.Provider.dbip.versionValid(input.source_version.slice()))
+        const provider = geoip.Provider.parse(input.provider.slice()) orelse
             return error.InvalidRequest;
+        if (!provider.versionValid(input.source_version.slice())) return error.InvalidRequest;
         if (input.checksum.len != 0 and input.checksum.len != 64) return error.InvalidRequest;
         self.mutex.lockUncancelable(self.app.io);
         defer self.mutex.unlock(self.app.io);
@@ -95,17 +98,23 @@ pub const Job = struct {
         };
     }
 
+    fn sourceProvider(self: *const Job) geoip.Provider {
+        return geoip.Provider.parse(self.input.provider.slice()) orelse .dbip;
+    }
+
     fn stage(self: *Job) !geoip.Database {
         const version = self.input.source_version.slice();
+        const source = self.sourceProvider();
         if (self.input.csv.len != 0)
-            return geoip.fromCsv(self.app.gpa, .dbip, version, self.input.csv.slice());
+            return geoip.fromCsv(self.app.gpa, source, version, self.input.csv.slice());
+        if (source.compression() != .gzip) return error.Unsupported;
         self.status.store(.downloading, .release);
         const buffer = try self.app.gpa.alloc(u8, geoip.gzip.max_compressed_bytes);
         defer self.app.gpa.free(buffer);
         const bytes = try download.fetch(self.app, version, buffer);
         self.status.store(.validating, .release);
         const stopping = &self.app.stopping;
-        return geoip.gzip.decode(self.app.gpa, self.app.io, .dbip, version, bytes, stopping);
+        return geoip.gzip.decode(self.app.gpa, self.app.io, source, version, bytes, stopping);
     }
 
     fn execute(self: *Job) !void {
@@ -117,12 +126,15 @@ pub const Job = struct {
             !std.ascii.eqlIgnoreCase(self.input.checksum.slice(), &digest_hex))
             return error.ChecksumMismatch;
         const digest = try p.Bytes(64).init(&digest_hex);
+        const source_digests = try sourceDigests(&staged);
         self.status.store(.storing, .release);
         const begin = try self.app.background(.{ .geo_begin = .{
             .auth = self.input.auth,
             .expected_revision = self.input.expected_revision,
             .digest = digest,
+            .provider = self.input.provider,
             .source_version = self.input.source_version,
+            .source_digests = source_digests,
             .ranges = @intCast(staged.ranges.len),
         } });
         if (begin != .command_recorded) return error.ImportConflict;
@@ -139,7 +151,9 @@ pub const Job = struct {
         self.metadata = .{
             .revision = self.input.expected_revision + 1,
             .digest = digest,
+            .provider = self.input.provider,
             .source_version = self.input.source_version,
+            .source_digests = source_digests,
             .ranges = @intCast(staged.ranges.len),
             .loaded_at = result.geo_activated,
         };
@@ -167,3 +181,24 @@ pub const Job = struct {
         }
     }
 };
+
+/// "hex" or "hex:hex" for the generation's source files, in provider file order.
+fn sourceDigests(db: *const geoip.Database) !p.Bytes(p.geo.max_source_digests) {
+    var text: p.Bytes(p.geo.max_source_digests) = .{};
+    for (db.file_digests[0..db.files], 0..) |digest, index| {
+        if (index != 0) text.data[text.len] = ':';
+        if (index != 0) text.len += 1;
+        const hex = std.fmt.bytesToHex(digest, .lower);
+        @memcpy(text.data[text.len..][0..64], &hex);
+        text.len += 64;
+    }
+    return text;
+}
+
+fn fileDigests(text: []const u8, fallback: [32]u8) ![2][32]u8 {
+    var digests: [2][32]u8 = .{ fallback, @splat(0) };
+    if (!p.geo.validSourceDigests(text)) return error.InvalidGeneration;
+    if (text.len >= 64) _ = try std.fmt.hexToBytes(&digests[0], text[0..64]);
+    if (text.len == p.geo.max_source_digests) _ = try std.fmt.hexToBytes(&digests[1], text[65..]);
+    return digests;
+}

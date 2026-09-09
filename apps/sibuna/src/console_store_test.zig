@@ -530,7 +530,8 @@ test "GeoIP publication rejects incomplete generations and audits the pointer co
         .auth = auth,
         .expected_revision = 0,
         .digest = digest,
-        .source_version = try p.Bytes(7).init("2026-09"),
+        .provider = try p.Bytes(12).init("dbip"),
+        .source_version = try p.Bytes(10).init("2026-09"),
         .ranges = 1,
     };
     const activate: p.geo.Activate = .{

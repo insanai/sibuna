@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Import monthly DB-IP country data through Sibuna's authenticated storage owner."""
+"""Import published country data through Sibuna's authenticated storage owner."""
 import argparse
 import datetime
 import getpass
@@ -57,17 +57,24 @@ class Console:
             connection.close()
 
 
-def import_country(console, month, checksum, timeout):
+PROVIDERS = {
+    "user-country": (r"20\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])", "%Y-%m-%d"),
+    "dbip": (r"20\d{2}-(0[1-9]|1[0-2])", "%Y-%m"),
+}
+
+
+def import_country(console, provider, version, checksum, timeout):
     before = console.request("GET", "geoip")
-    if before["source_version"] == month and before["ranges"] > 0:
+    active = before["provider"] == provider and before["source_version"] == version
+    if active and before["ranges"] > 0:
         if checksum and before["digest"].lower() != checksum.lower():
-            raise RuntimeError("Active month has a different checksum; inspect GeoIP status")
-        print("Requested month is already active; no import needed")
+            raise RuntimeError("Active version has a different checksum; inspect GeoIP status")
+        print("Requested version is already active; no import needed")
         print(json.dumps(before, indent=2))
         return
     console.request("POST", "geoip", {
-        "source_version": month, "expected_revision": before["revision"],
-        "checksum": checksum,
+        "provider": provider, "source_version": version,
+        "expected_revision": before["revision"], "checksum": checksum,
     })
     deadline = time.monotonic() + timeout
     last = None
@@ -79,7 +86,8 @@ def import_country(console, month, checksum, timeout):
             last = progress
         if metadata["status"] == "applied":
             if (metadata["revision"] != before["revision"] + 1
-                    or metadata["source_version"] != month):
+                    or metadata["provider"] != provider
+                    or metadata["source_version"] != version):
                 raise RuntimeError("Another import changed the generation; inspect GeoIP status")
             print(json.dumps(metadata, indent=2))
             return
@@ -93,14 +101,24 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--origin", required=True, help="Console origin, without /console/")
     parser.add_argument("--username", required=True)
-    parser.add_argument("--month", default=datetime.date.today().strftime("%Y-%m"))
-    parser.add_argument("--checksum", default="", help="Optional expected .csv.gz SHA-256")
+    parser.add_argument("--provider", choices=sorted(PROVIDERS), default="user-country",
+                        help="user-country (public domain, daily) or dbip (CC BY 4.0, monthly)")
+    parser.add_argument("--version", help="Publisher version: YYYY-MM-DD or YYYY-MM (today)")
+    parser.add_argument("--month", help="DB-IP alias for --provider dbip --version YYYY-MM")
+    parser.add_argument("--checksum", default="",
+                        help="Optional expected SHA-256 of the source bytes in file order")
     parser.add_argument("--totp", action="store_true", help="Prompt for TOTP or recovery code")
     parser.add_argument("--status", action="store_true", help="Read active generation only")
     parser.add_argument("--timeout", type=int, default=1200, help="Polling deadline in seconds")
     args = parser.parse_args()
-    if not re.fullmatch(r"20\d{2}-(0[1-9]|1[0-2])", args.month):
-        parser.error("month must be YYYY-MM (2000–2099)")
+    if args.month:
+        if args.version or args.provider not in ("user-country", "dbip"):
+            parser.error("--month is the DB-IP alias; do not combine it with --version")
+        args.provider, args.version = "dbip", args.month
+    pattern, strftime = PROVIDERS[args.provider]
+    args.version = args.version or datetime.date.today().strftime(strftime)
+    if not re.fullmatch(pattern, args.version):
+        parser.error(f"version for {args.provider} must match {strftime} (2000–2099)")
     if args.checksum and not re.fullmatch(r"[0-9a-fA-F]{64}", args.checksum):
         parser.error("checksum must contain 64 hexadecimal characters")
     if not 1 <= args.timeout <= 86400:
@@ -117,7 +135,7 @@ def main():
         if args.status:
             print(json.dumps(console.request("GET", "geoip"), indent=2))
         else:
-            import_country(console, args.month, args.checksum, args.timeout)
+            import_country(console, args.provider, args.version, args.checksum, args.timeout)
     finally:
         if console.cookie:
             try:

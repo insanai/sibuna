@@ -120,7 +120,7 @@ def geography(port, tokens):
     writer = tokens["geoip_write"]["token"]
     assert bearer(port, "GET", "/console/api/geoip", reader)[0] == 200
     assert bearer(port, "GET", "/console/api/geoip", writer)[0] == 403
-    source = {"source_version": "2026-09", "expected_revision": 0,
+    source = {"provider": "dbip", "source_version": "2026-09", "expected_revision": 0,
               "csv": "8.8.8.0,8.8.8.255,US\n"}
     assert bearer(port, "POST", "/console/api/geoip", reader, source)[0] == 403
     assert bearer(port, "POST", "/console/api/geoip", writer, source)[0] == 200

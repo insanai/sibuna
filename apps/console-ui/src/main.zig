@@ -477,6 +477,7 @@ fn geographicAction(name: []const u8, fields: std.json.Value) !bool {
     if (equal(name, "geo-import") and state.phase == .geoip and !state.geo_importing) {
         state.geo_importing = true;
         try post("geo-import", "/console/api/geoip", .{
+            .provider = "dbip",
             .source_version = string(fields, "source_version"),
             .expected_revision = state.geo.revision,
             .checksum = string(fields, "checksum"),
@@ -516,7 +517,9 @@ fn geoResponse(id: []const u8, status: i64, body: std.json.Value) !void {
     state.geo = .{
         .revision = number(body, "revision"),
         .digest = try p.Bytes(64).init(string(body, "digest")),
-        .source_version = try p.Bytes(7).init(string(body, "source_version")),
+        .provider = try p.Bytes(12).init(string(body, "provider")),
+        .source_version = try p.Bytes(10).init(string(body, "source_version")),
+        .source_digests = try p.Bytes(129).init(string(body, "source_digests")),
         .ranges = @intCast(number(body, "ranges")),
         .loaded_at = number(body, "loaded_at"),
     };

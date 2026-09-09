@@ -2,6 +2,7 @@
 //! accepted on the command line; private files keep it out of process listings.
 const std = @import("std");
 const p = @import("console").protocol;
+const geoip = @import("console").geoip;
 pub const Error = error{
     InvalidArguments,
     UnknownCommand,
@@ -61,7 +62,9 @@ pub const Args = struct {
     after: u64 = 0,
     role: p.Role = .viewer,
     disabled: bool = false,
-    month: []const u8 = "",
+    provider: []const u8 = "user-country",
+    version: []const u8 = "",
+    month_alias: bool = false,
     checksum: []const u8 = "",
     timeout: u32 = 1200,
 };
@@ -80,6 +83,8 @@ const Option = enum {
     token_file,
     scope,
     expires,
+    provider,
+    version,
 };
 
 pub fn parse(args: []const []const u8) Error!Args {
@@ -114,7 +119,7 @@ pub fn parse(args: []const []const u8) Error!Args {
         return error.AccessFieldsRequired;
     if (kind.needsRevision() and result.revision == 0)
         return error.RevisionRequired;
-    if (kind == .geo_update and result.month.len == 0) return error.MissingValue;
+    if (kind == .geo_update) try geographicVersion(result);
     return result;
 }
 
@@ -123,7 +128,7 @@ fn optionName(name: []const u8) Error!Option {
         "--origin", "--username", "--password-file", "--factor-file",
         "--role",   "--disabled", "--revision",      "--after",
         "--month",  "--checksum", "--timeout",       "--token-file",
-        "--scope",  "--expires",
+        "--scope",  "--expires",  "--provider",      "--version",
     };
     inline for (names, 0..) |value, index| {
         if (equal(name, value)) return @enumFromInt(index);
@@ -161,7 +166,7 @@ fn assign(args: *Args, option: Option, value: []const u8) Error!void {
             args.revision = try number(value, false);
             if (args.revision == std.math.maxInt(i64)) return error.InvalidNumber;
         },
-        .month, .checksum, .timeout => try geographic(args, option, value),
+        .month, .checksum, .timeout, .provider, .version => try geographic(args, option, value),
         .after => {
             if (args.kind != .users and args.kind != .tokens) return error.UnexpectedOption;
             args.after = try number(value, true);
@@ -227,8 +232,15 @@ fn geographic(args: *Args, option: Option, value: []const u8) Error!void {
     if (args.kind != .geo_update) return error.UnexpectedOption;
     switch (option) {
         .month => {
-            if (!validMonth(value)) return error.InvalidValue;
-            args.month = value;
+            if (!geoip.Provider.dbip.versionValid(value)) return error.InvalidValue;
+            args.version = value;
+            args.provider = "dbip";
+            args.month_alias = true;
+        },
+        .version => args.version = value,
+        .provider => {
+            if (geoip.Provider.parse(value) == null) return error.InvalidValue;
+            args.provider = value;
         },
         .checksum => {
             if (value.len != 64) return error.InvalidValue;
@@ -244,17 +256,15 @@ fn geographic(args: *Args, option: Option, value: []const u8) Error!void {
     }
 }
 
-pub fn validMonth(value: []const u8) bool {
-    if (value.len != 7 or value[4] != '-') return false;
-    for (value, 0..) |byte, index| {
-        if (index != 4 and !std.ascii.isDigit(byte)) return false;
-    }
-    const year = std.fmt.parseInt(u16, value[0..4], 10) catch return false;
-    const month = std.fmt.parseInt(u8, value[5..7], 10) catch return false;
-    return year >= 2000 and month >= 1 and month <= 12;
+/// `--month` is the DB-IP alias; it cannot be combined with another provider.
+fn geographicVersion(args: Args) Error!void {
+    if (args.version.len == 0) return error.MissingValue;
+    const provider = geoip.Provider.parse(args.provider) orelse return error.InvalidValue;
+    if (args.month_alias and provider != .dbip) return error.InvalidValue;
+    if (!provider.versionValid(args.version)) return error.InvalidValue;
 }
 
-test "GeoIP CLI requires a bounded explicit publisher month and scoped options" {
+test "GeoIP CLI requires a bounded explicit publisher version and scoped options" {
     const t = std.testing;
     const auth = [_][]const u8{
         "--origin", "http://127.0.0.1:9443", "--username", "admin", "--password-file", "private",
@@ -268,6 +278,21 @@ test "GeoIP CLI requires a bounded explicit publisher month and scoped options" 
     try t.expectError(error.MissingValue, parse(&(.{ "geoip", "update" } ++ auth)));
     try t.expectError(error.InvalidValue, parse(&(.{ "geoip", "update" } ++ auth ++ .{
         "--month", "2026-13",
+    })));
+    const daily = try parse(&(.{ "geoip", "update" } ++ auth ++ .{
+        "--provider", "user-country", "--version", "2026-09-09",
+    }));
+    try t.expectEqualStrings("user-country", daily.provider);
+    try t.expectEqualStrings("2026-09-09", daily.version);
+    try t.expectEqualStrings("dbip", args.provider);
+    try t.expectError(error.InvalidValue, parse(&(.{ "geoip", "update" } ++ auth ++ .{
+        "--version", "2026-09",
+    })));
+    try t.expectError(error.InvalidValue, parse(&(.{ "geoip", "update" } ++ auth ++ .{
+        "--month", "2026-09", "--provider", "user-country",
+    })));
+    try t.expectError(error.InvalidValue, parse(&(.{ "geoip", "update" } ++ auth ++ .{
+        "--provider", "maxmind", "--version", "2026-09-09",
     })));
     try t.expectError(error.UnexpectedOption, parse(&(.{"users"} ++ auth ++ .{
         "--month", "2026-09",

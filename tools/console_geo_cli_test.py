@@ -25,6 +25,7 @@ class GeoPeer(Peer):
         revision = 9007199254740993
         submitted = any(r[2] and "source_version" in r[2] for r in self.server.requests)
         result = {"revision": str(revision), "digest": "a" * 64, "source_version": "2026-08",
+                  "provider": "dbip", "source_digests": "a" * 64,
                   "ranges": 200, "loaded_at": 100, "status": "idle", "processed_ranges": 0,
                   "source": "DB-IP IP to Country Lite", "license": "CC BY 4.0",
                   "attribution": "https://db-ip.com"}
@@ -51,8 +52,8 @@ class GeoPeer(Peer):
         assert 0 < length <= 2048
         body = json.loads(self.rfile.read(length))
         self.server.requests.append((self.path, dict(self.headers), body))
-        assert body == {"source_version": "2026-09", "expected_revision": "9007199254740993",
-                        "checksum": "a" * 64}
+        assert body == {"provider": "dbip", "source_version": "2026-09",
+                        "expected_revision": "9007199254740993", "checksum": "a" * 64}
         self.send({"accepted": True})
 
 

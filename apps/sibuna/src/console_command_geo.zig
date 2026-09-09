@@ -3,6 +3,7 @@
 //! that a timed-out import rolled back: activation may have committed before response loss.
 const std = @import("std");
 const p = @import("console").protocol;
+const geoip = @import("console").geoip;
 const client = @import("console_client.zig");
 const command = @import("console_command.zig");
 const arguments = @import("console_command_args.zig");
@@ -11,14 +12,17 @@ const Status = enum { idle, downloading, validating, storing, applied, failed };
 const Metadata = struct {
     revision: u64,
     digest: p.Bytes(64),
-    month: p.Bytes(7),
+    provider: p.Bytes(p.geo.max_provider),
+    version: p.Bytes(p.geo.max_version),
     status: Status,
     progress: u32,
 };
 const Wire = struct {
     revision: u64,
     digest: []const u8,
+    provider: []const u8,
     source_version: []const u8,
+    source_digests: []const u8,
     ranges: u32,
     loaded_at: u64,
     status: Status,
@@ -75,8 +79,8 @@ pub fn run(session: *client.Session, args: arguments.Args, writer: *std.Io.Write
 }
 
 fn alreadyActive(metadata: Metadata, args: arguments.Args) Error!bool {
-    if (metadata.revision == 0 or !std.mem.eql(u8, metadata.month.slice(), args.month))
-        return false;
+    if (metadata.revision == 0 or !std.mem.eql(u8, metadata.version.slice(), args.version) or
+        !std.mem.eql(u8, metadata.provider.slice(), args.provider)) return false;
     if (args.checksum.len != 0 and
         !std.ascii.eqlIgnoreCase(metadata.digest.slice(), args.checksum)) return error.Conflict;
     return true;
@@ -115,7 +119,8 @@ fn submit(
     var revision_buffer: [20]u8 = undefined;
     const expected = std.fmt.bufPrint(&revision_buffer, "{d}", .{revision}) catch unreachable;
     try std.json.Stringify.value(.{
-        .source_version = args.month,
+        .provider = args.provider,
+        .source_version = args.version,
         .expected_revision = expected,
         .checksum = args.checksum,
     }, .{}, &body);
@@ -149,21 +154,26 @@ fn parse(bytes: []const u8) Error!Metadata {
     const wire = parsed.value;
     if (wire.revision > std.math.maxInt(i64) or wire.ranges > 1024 * 1024 or
         wire.processed_ranges > 1024 * 1024) return error.InvalidResponse;
-    if (!std.mem.eql(u8, wire.source, "DB-IP IP to Country Lite") or
-        !std.mem.eql(u8, wire.license, "CC BY 4.0") or
-        !std.mem.eql(u8, wire.attribution, "https://db-ip.com")) return error.InvalidResponse;
+    const provider = geoip.Provider.parse(wire.provider) orelse return error.InvalidResponse;
+    if (!std.mem.eql(u8, wire.source, provider.title()) or
+        !std.mem.eql(u8, wire.license, provider.license()) or
+        !std.mem.eql(u8, wire.attribution, provider.attribution() orelse "") or
+        !p.geo.validSourceDigests(wire.source_digests)) return error.InvalidResponse;
     if (wire.revision == 0) {
         if (wire.digest.len != 0 or wire.source_version.len != 0 or
             wire.ranges != 0 or wire.loaded_at != 0) return error.InvalidResponse;
     } else {
-        if (wire.digest.len != 64 or !arguments.validMonth(wire.source_version) or
+        if (wire.digest.len != 64 or !provider.versionValid(wire.source_version) or
             wire.ranges == 0 or wire.loaded_at == 0) return error.InvalidResponse;
         for (wire.digest) |byte| if (!std.ascii.isHex(byte)) return error.InvalidResponse;
     }
     return .{
         .revision = wire.revision,
         .digest = p.Bytes(64).init(wire.digest) catch return error.InvalidResponse,
-        .month = p.Bytes(7).init(wire.source_version) catch return error.InvalidResponse,
+        .provider = p.Bytes(p.geo.max_provider).init(wire.provider) catch
+            return error.InvalidResponse,
+        .version = p.Bytes(p.geo.max_version).init(wire.source_version) catch
+            return error.InvalidResponse,
         .status = wire.status,
         .progress = wire.processed_ranges,
     };

@@ -34,7 +34,8 @@ test "queued GeoIP writes and immutable replays recheck expiry and mandatory MFA
         .auth = auth,
         .expected_revision = 0,
         .digest = digest,
-        .source_version = try p.Bytes(7).init("2026-09"),
+        .provider = try p.Bytes(12).init("dbip"),
+        .source_version = try p.Bytes(10).init("2026-09"),
         .ranges = 1,
     };
     const geo = @import("console").geoip;

@@ -30,7 +30,8 @@ pub fn metadata(owner: *Persistent) !p.StorageResult {
     var result = try db.query(
         owner.db,
         owner.gpa,
-        "SELECT a.revision,a.digest,a.loaded_at,g.source_version,g.ranges " ++
+        "SELECT a.revision,a.digest,a.loaded_at,g.source_version,g.ranges," ++
+            "g.provider,g.source_digests " ++
             "FROM console_geo_active a LEFT JOIN console_geo_generations g " ++
             "ON g.digest=a.digest WHERE a.id=1 LIMIT 1",
         &.{},
@@ -42,35 +43,39 @@ pub fn metadata(owner: *Persistent) !p.StorageResult {
         .revision = try util.number(row[0]),
         .digest = try p.Bytes(64).init(row[1] orelse return error.InvalidRow),
         .loaded_at = try util.number(row[2]),
-        .source_version = if (row[3]) |version| try p.Bytes(7).init(version) else .{},
+        .source_version = if (row[3]) |version| try p.Bytes(10).init(version) else .{},
         .ranges = if (row[4] == null) 0 else @intCast(try util.number(row[4])),
+        .provider = if (row[5]) |provider| try p.Bytes(12).init(provider) else .{},
+        .source_digests = if (row[6]) |digests| try p.Bytes(129).init(digests) else .{},
     } };
 }
 
 pub fn begin(owner: *Persistent, input: p.geo.Begin, now: u64) !p.StorageResult {
     if (!validDigest(input.digest) or input.ranges == 0 or input.ranges > 1024 * 1024)
         return .{ .failed = .invalid_input };
-    if (input.source_version.len > 7) return .{ .failed = .invalid_input };
-    const date = input.source_version.slice();
-    if (date.len != 7 or date[4] != '-') return .{ .failed = .invalid_input };
-    const year = std.fmt.parseInt(u16, date[0..4], 10) catch return .{ .failed = .invalid_input };
-    const month = std.fmt.parseInt(u8, date[5..7], 10) catch return .{ .failed = .invalid_input };
-    if (year < 2000 or month == 0 or month > 12) return .{ .failed = .invalid_input };
+    const geoip = @import("console").geoip;
+    const provider = geoip.Provider.parse(input.provider.slice()) orelse
+        return .{ .failed = .invalid_input };
+    const version = input.source_version.slice();
+    if (!provider.versionValid(version) or !p.geo.validSourceDigests(input.source_digests.slice()))
+        return .{ .failed = .invalid_input };
     const digest = std.fmt.bytesToHex(input.auth.session_digest, .lower);
     const csrf = std.fmt.bytesToHex(input.auth.csrf_digest, .lower);
     const changed = try db.exec(
         owner.db,
         owner.gpa,
-        "INSERT INTO console_geo_generations(digest,source_version,ranges,actor,created_at) " ++
-            "SELECT ?,?,?,u.id,? FROM (" ++ authorized ++ ") u " ++
+        "INSERT INTO console_geo_generations(digest,source_version,ranges,actor,created_at," ++
+            "provider,source_digests) SELECT ?,?,?,u.id,?,?,? FROM (" ++ authorized ++ ") u " ++
             "WHERE (SELECT revision FROM console_geo_active WHERE id=1)=? " ++
             "AND (SELECT count(*) FROM console_geo_generations)<2 " ++
             "ON CONFLICT(digest) DO NOTHING",
         &.{
             text(input.digest.slice()),
-            text(date),
+            text(version),
             integer(input.ranges),
             integer(now),
+            text(provider.name()),
+            text(input.source_digests.slice()),
             text(&digest),
             text(&csrf),
             integer(now),
@@ -220,12 +225,14 @@ fn replayBegin(owner: *Persistent, input: p.geo.Begin, now: u64) !p.StorageResul
         owner.db,
         owner.gpa,
         "SELECT g.digest FROM console_geo_generations g,console_geo_active a WHERE a.id=1 " ++
-            "AND g.digest=? AND g.source_version=? AND g.ranges=? AND a.revision=? " ++
-            "AND g.digest<>a.digest AND g.actor IN (" ++ authorized ++ ") LIMIT 1",
+            "AND g.digest=? AND g.source_version=? AND g.ranges=? AND g.provider=? " ++
+            "AND a.revision=? AND g.digest<>a.digest AND g.actor IN (" ++ authorized ++
+            ") LIMIT 1",
         &.{
             text(input.digest.slice()),
             text(input.source_version.slice()),
             integer(input.ranges),
+            text(input.provider.slice()),
             integer(input.expected_revision),
             text(&digest),
             text(&csrf),

@@ -241,8 +241,9 @@ fn printConsoleHelp() void {
             "--role <role> --disabled true|false\n" ++
             "  sibuna console reset-password|revoke-sessions <id> --revision <n>\n" ++
             "GeoIP CLI: sibuna console geoip status\n" ++
-            "  sibuna console geoip update --month <YYYY-MM> " ++
-            "[--checksum <sha256>] [--timeout <seconds, default 1200>]\n" ++
+            "  sibuna console geoip update --version <YYYY-MM-DD|YYYY-MM> " ++
+            "[--provider user-country|dbip] [--month <YYYY-MM>, DB-IP alias]\n" ++
+            "    [--checksum <sha256>] [--timeout <seconds, default 1200>]\n" ++
             "Token CLI: sibuna console tokens [--after <id>]\n" ++
             "  sibuna console mint-token <label> --scope <scope> (repeatable) " ++
             "[--role <role>] [--expires <unix-seconds>]\n" ++

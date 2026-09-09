@@ -71,7 +71,7 @@ def stop(proc):
 
 
 def geo_import(console_port, cookie, csrf):
-    source = {"source_version": "2026-09", "expected_revision": 0,
+    source = {"provider": "dbip", "source_version": "2026-09", "expected_revision": 0,
               "csv": "".join(f"8.8.{i}.0,8.8.{i}.255,US\n" for i in range(200))}
     assert request(console_port, "POST", "/console/api/geoip", source, cookie, csrf)[0] == 200
     deadline = time.monotonic() + 10
