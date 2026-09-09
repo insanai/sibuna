@@ -91,7 +91,7 @@ fn optionalText(value: ?[]const u8) zx.Value {
     return if (value) |text| util.text(text) else .null_value;
 }
 
-fn headerJson(buffer: []u8, value: policy.PolicyRule) ![]const u8 {
+pub fn headerJson(buffer: []u8, value: policy.PolicyRule) ![]const u8 {
     var writer: std.Io.Writer = .fixed(buffer);
     try writer.writeByte('{');
     for (value.headers[0..value.header_count], 0..) |header, i| {
