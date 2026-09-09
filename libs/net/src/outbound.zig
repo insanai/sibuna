@@ -3,7 +3,7 @@
 //! Callers provide a cancellable deadline scope. Never used on a data-plane request path.
 const std = @import("std");
 const Io = std.Io;
-pub const Policy = enum { public_only, loopback_allowed };
+pub const Policy = enum { public_only, loopback_allowed, configured_management };
 pub const max_addresses = 16;
 pub const Error = error{
     InvalidHost,
@@ -136,6 +136,14 @@ fn mapError(err: anyerror, fallback: Error) Error {
 }
 
 pub fn allowed(address: Io.net.IpAddress, policy: Policy) bool {
+    // Private networks are allowed only for administrator-configured management origins.
+    // Keep unspecified, multicast, link-local and mapped IPv6 destinations excluded.
+    if (policy == .configured_management) return switch (address) {
+        .ip4 => |a| a.bytes[0] != 0 and a.bytes[0] < 224 and
+            !(a.bytes[0] == 169 and a.bytes[1] == 254),
+        .ip6 => |a| a.isLoopBack() or a.bytes[0] & 0xfe == 0xfc or
+            a.bytes[0] & 0xe0 == 0x20,
+    };
     return switch (address) {
         .ip4 => |a| blk: {
             const b = a.bytes;
@@ -173,4 +181,16 @@ test "all DNS answers are checked before connecting and results have a fixed bou
         try Io.net.IpAddress.parse("::ffff:127.0.0.1", 443),
         .public_only,
     ));
+}
+
+test "only explicit management targets may reach private networks" {
+    const t = std.testing;
+    for ([_][]const u8{ "10.0.0.1", "172.16.0.1", "192.168.1.1", "fd00::1" }) |host| {
+        const address = try Io.net.IpAddress.parse(host, 443);
+        try t.expect(allowed(address, .configured_management));
+        try t.expect(!allowed(address, .public_only));
+        try t.expect(!allowed(address, .loopback_allowed));
+    }
+    for ([_][]const u8{ "0.0.0.0", "169.254.169.254", "224.0.0.1", "::", "fe80::1" }) |host|
+        try t.expect(!allowed(try Io.net.IpAddress.parse(host, 443), .configured_management));
 }
