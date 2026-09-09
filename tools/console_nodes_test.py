@@ -3,6 +3,7 @@ import http.client
 import json
 from pathlib import Path
 import tempfile
+import time
 import console_bootstrap_test as bootstrap
 from console_users_test import login, rotate
 from console_token_test import mint, bearer
@@ -14,6 +15,12 @@ def status(h, port, session):
     result = json.loads(body)
     assert len(result["operation_id"]) == 32 and int(result["operation_id"], 16) != 0
     return result
+
+
+def members(h, port, session):
+    code, _, body = h.request(port, "GET", "/console/api/nodes", cookie=session[0])
+    assert code == 200, code
+    return json.loads(body)
 
 
 def command(h, port, session, fields, expected=200):
@@ -33,6 +40,25 @@ def checks(h, port, data_port, admin):
     assert h.request(port, "GET", local)[0] == 401
     node = status(h, port, admin)
     assert not node["draining"] and len(node["boot"]) == 32
+    # Membership: this node's own replicated row, a single-node storage role, and one
+    # configured but unreachable probe target that must read as down, never as zero.
+    # The first announcement can precede the advertised origin by one tick; wait for both.
+    deadline = time.monotonic() + 15
+    while True:
+        page = members(h, port, admin)
+        rows = page["page"]["members"]
+        if rows and rows[0]["console_url"] and any(p["health"] == "down"
+                                                    for p in page["probes"]):
+            break
+        assert time.monotonic() < deadline, page
+        time.sleep(0.25)
+    assert page["page"]["self"] == node["node"] and len(rows) == 1
+    assert rows[0]["node"] == node["node"] and rows[0]["boot"] == node["boot"]
+    assert int(rows[0]["applied_revision"]) == int(node["applied"])
+    assert rows[0]["console_url"] == f"http://127.0.0.1:{port}"
+    assert page["page"]["storage"]["role"] == "single" and page["page"]["storage"]["quorum"]
+    assert [p["node"] for p in page["probes"]] == [9]
+    assert h.request(port, "GET", "/console/api/nodes")[0] == 401
     request = operation(node, "drain")
     assert h.request(port, "POST", mutate, request, cookie=admin[0])[0] == 400
     invalid = dict(request, boot="0" * 32)
@@ -99,7 +125,8 @@ def check(binary, h):
         temporary = bootstrap.initialize(binary, str(root / "data"), "admin")
         with (root / "daemon.log").open("w+") as log:
             port = h.port()
-            proc = h.start(binary, str(root / "data"), port, log, extra=("--trust-forwarded",))
+            proc = h.start(binary, str(root / "data"), port, log, extra=(
+                "--trust-forwarded", "--console-probe", "9=http://127.0.0.1:1"))
             try:
                 credentials = bootstrap.change(h, port, temporary, "node admin private passphrase")
                 cookie, csrf, _ = login(h, port, credentials)
