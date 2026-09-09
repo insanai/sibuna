@@ -285,6 +285,11 @@ require a preview and produce durable command receipts. Under `-Dcluster=true`,
 `zig build console-e2e` also runs a three-node membership, failover and quorum-loss scenario,
 and `zig build console-impact` measures the console's cost to the data plane.
 
+A wall display signs in with a one-time kiosk code: an operator mints it from the console
+(`POST /console/api/kiosk/token`), the display pastes it into the sign-in page and receives a
+read-only, statistics-only session that expires within twelve hours. Codes never appear in
+URLs.
+
 For an HTTPS reverse proxy, configure `--console-origin`, `--console-behind-proxy` and explicit
 `--console-trusted-proxy` CIDRs. Supply a persistent `--console-key-file` containing 64 hex
 characters with owner-only permissions; it protects stored second-factor secrets. Keep this

@@ -129,9 +129,13 @@ peers whose data-plane listeners this console should health-check and
 per node. `zig build console-impact` runs the data-plane isolation matrix (`-- --quick` for
 a smoke run) and writes `benchmarks/results/console-impact-latest.json`.
 
-SID 0007 remains Proposed. Direct peer telemetry sockets, notifications, constrained page
-templates and kiosk sessions remain unfinished, and the impact gate must pass on a declared
-quiet host before the record advances.
+Wall displays use kiosk sessions: an operator mints a one-time code in the console, the
+display pastes it into the sign-in form, and the resulting session is read-only, limited to
+statistics and expires within twelve hours.
+
+SID 0007 remains Proposed. Direct peer telemetry sockets, notifications and constrained page
+templates remain unfinished, and the impact gate must pass on a declared quiet host before
+the record advances.
 
 == Deployment Topologies
 

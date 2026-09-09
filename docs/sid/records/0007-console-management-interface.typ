@@ -786,7 +786,8 @@ Migrations are numbered and version-gated in `schema.zig`. The authoritative wri
   columns: (1fr, 2.8fr),
   table.header([*Table*], [*Columns and purpose*]),
   [`console_users`], [`id`, `name` (unique), `role`, `password_phc`, `must_change`, `disabled`, `auth_revision`, `last_login`, `totp_ciphertext`, `totp_key_id`, `totp_last_step`, `created_at`, `updated_at`],
-  [`console_sessions`], [`digest` (primary), `user_id`, `role`, `client_ip`, `user_agent_hash`, `csrf`, `issued_at`, `last_seen`, `expires_at`, `auth_revision`; expired rows are purged by retention],
+  [`console_sessions`], [`digest` (primary), `user_id`, `role`, `client_ip`, `user_agent_hash`, `csrf`, `issued_at`, `last_seen`, `expires_at`, `auth_revision`, `kind` (`browser` or `kiosk`); expired rows are purged by retention],
+  [`console_kiosk_grants`], [`digest` (primary; SHA-256 of the one-time code), `user_id`, `revision`, `label`, `created_at`, `use_by` (ten minutes), `expires` (twelve hours), `consumed_at`; at most 64 outstanding; audit `kiosk.grant` and `kiosk.exchange` never carry the code; retention removes consumed and unusable rows],
   [`console_tokens`], [`id` (printable), `digest`, `label`, `role`, `scopes`, `auth_revision`, `created_by`, `created_at`, `expires_at`, `disabled`],
   [`console_audit`], [`id`, `at`, `actor`, `role`, `action`, `subject`, `before`, `after`, `client_ip`; append-only],
   [`console_settings`], [`key`, `value`, `updated_at`, `updated_by`; retention days, GeoIP source, notification webhooks],
@@ -973,7 +974,7 @@ explicitly unavailable; none of the wireframe examples establishes current captu
   [Setup and login], [First-run password change; login form with the optional one-time code; session expiry notices.],
   [Statistics · Traffic], [Period selector (live, 1 h, 24 h, 7 d, 30 d) and node selector; tiles (requests, admitted, challenged, denied, banned addresses, origin 4xx and 5xx with rates, nodes healthy); live timeline of disjoint external outcomes; queries-per-second, request-status and blocking-status sparklines; live orthographic earth globe with a ranked country table, 60-second sampled traffic window, manual rotation, pause and flat-map fallback (“Live earth globe on the landing page”); top-five panels: client operating systems, browsers, response status, referring hosts, popular paths, all marked as sampled.],
   [Statistics · Security], [Tiles per module (inspection, reputation, rate limiting, challenges, bans, honeypot); a trend chart per module with its top source addresses; the live event feed; attack-category donut; attacked paths; rule hits.],
-  [Kiosk], [The traffic and security panels in a full-screen, read-only, optionally auto-cycling layout (off with reduced motion) for a wall display, reached by exchanging a short-lived, read-only scoped token for a kiosk session; never put bearer credentials in URLs or local storage.],
+  [Kiosk], [The traffic and security panels in a full-screen, read-only, optionally auto-cycling layout (off with reduced motion) for a wall display. An operator or administrator mints a one-time code (`POST /console/api/kiosk/token`, shown once, usable for ten minutes); the display pastes it into a second form on the sign-in page and receives a viewer cookie session scoped to statistics that expires with the grant (twelve hours) and with the granting user's revision. Codes and sessions never travel in URLs, fragments or local storage.],
   [Attack events], [Grouped view (source address, country, node, attack count, first and last seen) and raw view (action, URL, category, rule, address, time, detail); filter bar (node, category, rule, address, country, path, period); export; detail modal (category chip, URL, address with country and "ban", "allow", "add to group", "address info" actions, JA4 only after trusted-ingress capture is implemented, payload location and decoded value with the matched structure highlighted, rule and score, campaign and its members, similar incidents, request and response heads with charset selection, "copy as cURL").],
   [Challenges], [Funnel (issued, submitted, accepted, rejected by cause); solve-time histogram by algorithm and difficulty; adaptive-difficulty bump timeline; JavaScript-fallback share; per-address records (issued, accepted, rejected, cause, duration, start); per-rule challenge parameters.],
   [Policy], [Rules table with drag ordering, enable toggle, type (allow, deny, challenge, weigh), name, match summary, hits today, creator, updated; rule editor (form and JSON); pattern tester; import and export; inspection mode matrix per category (disabled, audit, enforce); limits (rate, window, ban seconds); IP groups (reputation prefixes with score, expiry, trigger, source, hits); GeoIP block builder.],
@@ -1399,8 +1400,9 @@ wire(170, 98, H => {
   panel(H,8,87,154,8,[Authentication only: no globe assets, telemetry connection, country data, cluster health or traffic on the sign-in page.],bg:blue-light,size:6pt)
 }))
 
-#figure-box([Kiosk after scoped authentication: full-screen live globe, coverage and traffic/
-attack summaries. Expired access returns to sign-in; no mutation controls are present.],
+#figure-box([Kiosk after a one-time code is entered in the sign-in form: full-screen live
+globe, coverage and traffic/attack summaries. Expired access returns to sign-in; no
+mutation controls are present.],
 wire(170, 95, H => {
   import cetz.draw: *
   panel(H,3,3,164,9,[SIBUNA · edge-eu · Traffic / Attacks · 3/3 reporting · live · last update 1 s],bg:blue-light,size:7pt)
@@ -1708,7 +1710,7 @@ are historical; the acceptance gates below govern delivery.
 
 - #text("Pending: Rolling 60-second geography updated at 1 Hz; Unknown, loss, incident coverage and age.")
 
-- #text("Pending: Desktop/mobile/kiosk reuse, rotation/pause/reset, flat map, accessible tables.")
+- #text("Verified (2026-09-09): the kiosk layout reuses the globe, tiles and timeline components with rotation, pause and reset; flat map and accessible tables were verified earlier.")
 
 - #text("Pending: Gate: actual traffic updates the dashboard; unauthenticated loads remain zero; unavailable GeoIP and disconnected streams display honest unavailable/stale states.")
 
@@ -1740,7 +1742,7 @@ are historical; the acceptance gates below govern delivery.
 
 - #text("Pending: Preserve issuer-bound challenge verification and local rate limits.")
 
-- #text("Pending: Users, scoped API tokens, audit investigation, kiosk, constrained templates, notifications and About.")
+- #text("Verified (2026-09-09): users, scoped API tokens, audit investigation and kiosk. Pending: constrained templates, notifications and About.")
 
 - #text("Pending: Fenced singleton job leases; bounded destinations/retries/queues.")
 
@@ -3528,6 +3530,37 @@ recorded in the acceptance entry, not here. The Nodes members view moved the int
 module from 307,994 to 315,781 bytes (gate 393,216). Formatting, full repository tests,
 console tests, the live console suite in the default and cluster builds, SID and book
 generation pass; the console-off and storage-off builds compile.
+
+== Kiosk sessions and the form-exchange decision (2026-09-09)
+
+A wall display signs in by pasting a one-time code into a second form on the sign-in page,
+never through a URL, fragment or stored bearer credential; the earlier wording "exchanging
+a short-lived scoped token" is revised to this form exchange. An operator or administrator
+mints the code (`POST /console/api/kiosk/token`, mutation-budgeted, CSRF-bound, TOTP required
+behind a proxy); only its SHA-256 is stored with the granting user's id and revision, a label,
+a ten-minute use-by and a twelve-hour expiry, at most 64 outstanding. `POST
+/console/api/kiosk/exchange` is public, limited like a login, and consumes the grant in one
+statement before inserting a `kind = 'kiosk'` session bound to the same revision, so a lost
+reply can cost a code but never yields two sessions. A kiosk principal is a viewer with the
+statistics scope only; every route except statistics, the live stream, the session read,
+logout and the timeline answers 403, and the route table marks that opt-in explicitly. The
+existing user-revision trigger revokes kiosk sessions with every other session. Schema 20
+adds the session kind and the grant table; retention gains a `kiosk_grants` kind. The
+interface renders a shell-free layout (globe, outcome tiles, request timeline, expiry
+countdown, pause, theme and exit) and alternates Traffic and Attacks every 30 seconds on its
+own clock unless paused, stale or under reduced motion.
+
+Evidence: storage-tick tests cover CSRF mismatch, unknown code, exchange once and replay,
+the kiosk identity (viewer, statistics scope, cannot mint), an expired grant, revocation by
+user revision and the 64-grant bound. `tools/console_kiosk_test.py` (in `console-e2e`)
+verified through the live daemon that a viewer cannot mint, a missing CSRF answers 400, the
+exchange sets an `HttpOnly; SameSite=Strict; Path=/console` cookie, replay answers 401, the
+session read reports `kiosk`, statistics and globe geometry answer 200, eight other routes
+answer 403 with a valid CSRF header, the stream delivers a snapshot, four bad codes are
+followed by 429, logout ends the session, both audit actions are recorded without the code,
+and a consumed grant stays consumed across restart. The interface module grew from 315,781
+to 317,663 bytes. Formatting, full repository tests, console tests, the live suite, SID and
+book generation pass; console-off, storage-off and cluster builds compile.
 
 = References
 
