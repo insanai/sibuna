@@ -3841,6 +3841,22 @@ no warning/error logs; the console refused the unsafe draft while retaining it i
 and leaving the stored revision at zero.
 This correction does not close the outstanding notification, real-time or impact review items.
 
+== Outbound-delivery correction (2026-09-09)
+
+Management connections share `libs/net/src/outbound.zig`: bounded owned hostnames and DNS
+answers, address validation before connecting, and a pinned numeric socket destination.
+TLS retains the original hostname for SNI and certificate validation. The resolver drains
+its bounded result queue concurrently and refuses a private answer or excess capacity;
+delivery does not resolve the hostname a second time. Percent-encoded URI hostnames no
+longer escape a temporary parsing buffer.
+
+Webhook delivery reads the bounded response head and closes its one-shot connection without
+buffering the body. An oversized error response now retains its actual HTTP status instead
+of being recorded as success. Live regression cases verify both small and 9,000-byte HTTP
+500 responses, alongside signed successful delivery. `zig build fmt test console-test sid`
+passes all 62 steps and 401 native tests, including the live console scenarios. Notification
+scheduling and lease corrections remain separate acceptance work.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

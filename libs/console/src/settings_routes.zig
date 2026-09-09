@@ -131,7 +131,7 @@ fn saveDestination(app: *App, context: *http.Context, auth: p.users.Auth) !void 
             return http.fail(context, .bad_request, "CONSOLESETTINGS"),
         .target = p.Bytes(n.max_target).init(form.target) catch
             return http.fail(context, .bad_request, "CONSOLESETTINGS"),
-        .target_host = p.Bytes(n.max_host).init(host) catch
+        .target_host = p.Bytes(n.max_host).init(host.slice()) catch
             return http.fail(context, .bad_request, "CONSOLESETTINGS"),
         .secret_envelope = envelope,
         .clear_secret = form.clear_secret,
@@ -141,10 +141,12 @@ fn saveDestination(app: *App, context: *http.Context, auth: p.users.Auth) !void 
     } }));
 }
 
-fn validTarget(kind: n.Kind, text: []const u8) ?[]const u8 {
+fn validTarget(kind: n.Kind, text: []const u8) ?@import("net").outbound.Host {
     return switch (kind) {
         .webhook => (target.validateWebhook(text) catch return null).host,
-        .syslog => (target.validateSyslog(text) catch return null).host,
+        .syslog => @import("net").outbound.Host.init(
+            (target.validateSyslog(text) catch return null).host,
+        ) catch return null,
     };
 }
 

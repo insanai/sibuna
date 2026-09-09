@@ -74,33 +74,13 @@ fn body(out: *[1024]u8, app: *App, event: n.Pending) ![]const u8 {
     return writer.buffered();
 }
 
-/// Every address a name resolves to must be public (loopback only for HTTP webhooks). The
-/// HTTP client resolves again when connecting; a name that changes between the two lookups
-/// is a residual risk this check narrows but cannot close.
-fn resolveAllowed(io: std.Io, host: []const u8, port: u16, loopback_ok: bool) !void {
-    if (std.Io.net.IpAddress.parse(host, port)) |literal| {
-        return if (target.addressAllowed(literal, loopback_ok)) {} else error.TargetRejected;
-    } else |_| {}
-    const name = std.Io.net.HostName.init(host) catch return error.HostUnresolved;
-    var buffer: [16]std.Io.net.HostName.LookupResult = undefined;
-    var queue = std.Io.Queue(std.Io.net.HostName.LookupResult).init(&buffer);
-    name.lookup(io, &queue, .{ .port = port }) catch return error.HostUnresolved;
-    var count: usize = 0;
-    while (queue.getOne(io)) |result| {
-        switch (result) {
-            .address => |address| {
-                if (!target.addressAllowed(address, loopback_ok)) return error.TargetRejected;
-                count += 1;
-            },
-            .canonical_name => {},
-        }
-    } else |_| {}
-    if (count == 0) return error.HostUnresolved;
-}
-
 fn webhook(app: *App, dest: n.Destination, event: n.Pending, secret: ?Secret) anyerror!u16 {
     const parsed = try target.validateWebhook(dest.target.slice());
-    try resolveAllowed(app.io, parsed.host, parsed.port, parsed.scheme == .http);
+    const policy: net.outbound.Policy = if (parsed.scheme == .http)
+        .loopback_allowed
+    else
+        .public_only;
+    const addresses = try net.outbound.resolve(app.io, parsed.host.slice(), parsed.port, policy);
     var payload: [1024]u8 = undefined;
     const json = try body(&payload, app, event);
     var signature: [80]u8 = undefined;
@@ -115,24 +95,17 @@ fn webhook(app: *App, dest: n.Destination, event: n.Pending, secret: ?Secret) an
         headers[count] = .{ .name = "X-Sibuna-Signature", .value = value };
         count += 1;
     }
-    var client: std.http.Client = .{ .allocator = app.gpa, .io = app.io };
-    defer client.deinit();
-    var sink: [4096]u8 = undefined;
-    var writer: std.Io.Writer = .fixed(&sink);
-    const result = client.fetch(.{
-        .location = .{ .url = dest.target.slice() },
-        .method = .POST,
+    return net.outbound.post(app.io, app.gpa, .{
+        .pinned = .{
+            .address = addresses.items[0],
+            .host = parsed.host,
+            .secure = parsed.scheme == .https,
+            .policy = policy,
+        },
+        .url = dest.target.slice(),
         .payload = json,
-        .redirect_behavior = .not_allowed,
-        .keep_alive = false,
-        .headers = .{ .content_type = .{ .override = "application/json" } },
-        .extra_headers = headers[0..count],
-        .response_writer = &writer,
-    }) catch |err| switch (err) {
-        error.WriteFailed => return 200,
-        else => return err,
-    };
-    return @intFromEnum(result.status);
+        .headers = headers[0..count],
+    });
 }
 
 const Secret = struct {
@@ -157,9 +130,13 @@ fn openSecret(app: *App, read: n.Read) !Secret {
 
 fn sysLog(app: *App, dest: n.Destination, event: n.Pending) anyerror!u16 {
     const endpoint = try target.validateSyslog(dest.target.slice());
-    try resolveAllowed(app.io, endpoint.host, endpoint.port, true);
-    const address = firstAddress(app.io, endpoint.host, endpoint.port) catch
-        return error.HostUnresolved;
+    const addresses = try net.outbound.resolve(
+        app.io,
+        endpoint.host,
+        endpoint.port,
+        .loopback_allowed,
+    );
+    const address = addresses.items[0];
     var line: [syslog.max_message]u8 = undefined;
     var host: [64]u8 = undefined;
     const origin = std.fmt.bufPrint(&host, "node-{d}", .{event.node}) catch "node";
@@ -188,17 +165,4 @@ fn sysLog(app: *App, dest: n.Destination, event: n.Pending) anyerror!u16 {
     defer socket.close(app.io);
     try socket.send(app.io, &address, message);
     return 200;
-}
-
-fn firstAddress(io: std.Io, host: []const u8, port: u16) !std.Io.net.IpAddress {
-    if (std.Io.net.IpAddress.parse(host, port)) |literal| return literal else |_| {}
-    const name = try std.Io.net.HostName.init(host);
-    var buffer: [16]std.Io.net.HostName.LookupResult = undefined;
-    var queue = std.Io.Queue(std.Io.net.HostName.LookupResult).init(&buffer);
-    try name.lookup(io, &queue, .{ .port = port });
-    var found: ?std.Io.net.IpAddress = null;
-    while (queue.getOne(io)) |result| {
-        if (result == .address and found == null) found = result.address;
-    } else |_| {}
-    return found orelse error.HostUnresolved;
 }

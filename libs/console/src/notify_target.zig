@@ -2,9 +2,10 @@
 //! Webhooks are HTTPS to public hosts (HTTP only to a loopback literal); syslog is
 //! `host:port`. Resolved addresses are re-checked so a name cannot point at private space.
 const std = @import("std");
+const outbound = @import("net").outbound;
 pub const Error = error{InvalidTarget};
 pub const Scheme = enum { https, http };
-pub const Webhook = struct { scheme: Scheme, host: []const u8, port: u16, path: []const u8 };
+pub const Webhook = struct { scheme: Scheme, host: outbound.Host, port: u16, path: []const u8 };
 pub const Endpoint = struct { host: []const u8, port: u16 };
 
 /// Associated data for a sealed secret: the destination target, so an envelope copied
@@ -49,7 +50,7 @@ pub fn validateWebhook(url: []const u8) Error!Webhook {
     // The caller re-derives the path from the stored URL; only its bounds matter here.
     return .{
         .scheme = scheme,
-        .host = host,
+        .host = outbound.Host.init(bare) catch return error.InvalidTarget,
         .port = port,
         .path = if (raw_path.len == 0) "/" else url[url.len - remainder(url, raw_path) ..],
     };
@@ -82,24 +83,7 @@ pub fn validateSyslog(text: []const u8) Error!Endpoint {
 /// Public unicast only; loopback is admitted when the caller allows it (HTTP webhooks and
 /// syslog collectors on the same host). Private, link-local and metadata ranges never are.
 pub fn addressAllowed(address: std.Io.net.IpAddress, loopback_ok: bool) bool {
-    switch (address) {
-        .ip4 => |a| {
-            const b = a.bytes;
-            if (b[0] == 127) return loopback_ok;
-            if (b[0] == 10 or b[0] == 0 or b[0] >= 224) return false;
-            if (b[0] == 172 and b[1] >= 16 and b[1] <= 31) return false;
-            if (b[0] == 192 and b[1] == 168) return false;
-            if (b[0] == 100 and b[1] >= 64 and b[1] <= 127) return false;
-            return !linkLocalOrMetadata(address);
-        },
-        .ip6 => |a| {
-            const b = a.bytes;
-            if (std.mem.eql(u8, &b, &(.{0} ** 15 ++ .{1}))) return loopback_ok;
-            if (b[0] & 0xfe == 0xfc) return false;
-            if (b[0] & 0xe0 != 0x20) return false;
-            return !linkLocalOrMetadata(address);
-        },
-    }
+    return outbound.allowed(address, if (loopback_ok) .loopback_allowed else .public_only);
 }
 
 fn linkLocalOrMetadata(address: std.Io.net.IpAddress) bool {
@@ -112,7 +96,7 @@ fn linkLocalOrMetadata(address: std.Io.net.IpAddress) bool {
 test "webhook targets are https to public hosts or http to loopback literals" {
     const t = std.testing;
     const ok = try validateWebhook("https://hooks.example/notify?team=ops");
-    try t.expectEqualStrings("hooks.example", ok.host);
+    try t.expectEqualStrings("hooks.example", ok.host.slice());
     try t.expectEqual(@as(u16, 443), ok.port);
     try t.expectEqualStrings("/notify?team=ops", ok.path);
     const local = try validateWebhook("http://127.0.0.1:8099/hook");
@@ -133,4 +117,11 @@ test "syslog endpoints need a host and port and never link-local space" {
     try t.expectEqualStrings("::1", (try validateSyslog("[::1]:1514")).host);
     for ([_][]const u8{ "logs.example", ":514", "169.254.1.1:514", "a b:514", "x:0" }) |bad|
         try t.expectError(error.InvalidTarget, validateSyslog(bad));
+}
+
+test "decoded webhook hostnames are owned after parsing" {
+    const encoded = try validateWebhook("https://%68ooks.example/notify");
+    var copy = encoded;
+    @memset(&copy.host.data, 0);
+    try std.testing.expectEqualStrings("hooks.example", encoded.host.slice());
 }

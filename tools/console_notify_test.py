@@ -18,8 +18,14 @@ class Receiver(http.server.BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", "0"))
         body = self.rfile.read(length)
         self.server.deliveries.append((dict(self.headers), body))
-        self.send_response(204)
+        response = b"error" * (1800 if self.path == "/large-error" else 1)
+        failed = self.path in ("/small-error", "/large-error")
+        self.send_response(500 if failed else 204)
+        if failed:
+            self.send_header("Content-Length", str(len(response)))
         self.end_headers()
+        if failed:
+            self.wfile.write(response)
 
     def log_message(self, *args):
         pass
@@ -62,6 +68,16 @@ def checks(h, port, data_port, admin, key_file):
         digest = hmac.new(b"shared hook secret", body, hashlib.sha256).hexdigest()
         assert headers.get("X-Sibuna-Signature") == f"sha256={digest}", headers
         assert json.loads(body)["event"] == "denial_spike"
+        # Neither a small nor oversized 500 response is a successful delivery.
+        for path in ("/small-error", "/large-error"):
+            error_hook = call(h, port, admin, "save", {
+                "kind": "webhook", "label": "failure probe",
+                "target": f"http://127.0.0.1:{server.server_port}{path}",
+                "events": 1, "cooldown_seconds": 0})
+            result = call(h, port, admin, "test", {"id": int(error_hook["id"])})
+            assert not result["delivered"] and result["detail"] == "status 500", result
+            call(h, port, admin, "remove", {"id": int(error_hook["id"]),
+                                             "expected_revision": 1})
         # A real ban raises an event that the notifier delivers to both destinations.
         assert h.request(data_port, "GET", "/__sibuna/honeypot", extra_headers={
             "X-Forwarded-For": "203.0.113.77", "User-Agent": "Mozilla/5.0"})[0] == 403
@@ -78,7 +94,7 @@ def checks(h, port, data_port, admin, key_file):
         call(h, port, admin, "remove", {"id": webhook_id, "expected_revision": 1})
         code, _, body = h.request(port, "POST", "/console/api/audit/query",
                                   {"action": "notification.create"}, *admin)
-        assert code == 200 and len(json.loads(body)["rows"]) == 2
+        assert code == 200 and len(json.loads(body)["rows"]) == 4
         assert b"shared hook secret" not in body and b"hook" not in body.lower().replace(b"webhook", b"")
     finally:
         server.shutdown()
