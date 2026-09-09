@@ -1,0 +1,1643 @@
+{
+  "meta": {
+    "zaxonlite": {
+      "url": "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.6.1.tar.gz",
+      "hash": "zaxonlite-0.6.1-o9bF7AoyGwA_Sia-N5hzepceMrM2r4Fn3rVHWGancpp4"
+    },
+    "source_sha256": "7d5afa83348353356e74011163458fe49f12663133bdd316040d5c2878c15389",
+    "source_manifest_version": 2,
+    "source_file_count": 465,
+    "daemon_sha256": "e65102ede23f4f41c9e6cf6807d994da67cc3d495df08d232c550b08fd36cb0d",
+    "date": "2026-09-09T09:07:10.169538+00:00",
+    "host": "Vikrants-M1-MacBook-air.local",
+    "cpu": "Apple M1",
+    "os": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "git": "f78d2d65e33f8d081094f63ec405b7f5cae32f1b",
+    "dirty": true,
+    "zig": "0.16.0",
+    "binaries": {
+      "compiled_out": {
+        "path": "/var/folders/d_/nhqt8l112d13r8fs1n188dc00000gn/T/sibuna-console-impact-kg086rr0/out-a/bin/sibuna",
+        "bytes": 4587960,
+        "sha256": "505d1aa7cf6163e732207edbb233f6563c798ed481d99347b318b9cd467402db",
+        "build": "-Doptimize=ReleaseFast -p /var/folders/d_/nhqt8l112d13r8fs1n188dc00000gn/T/sibuna-console-impact-kg086rr0/out-a -Dconsole=false -Dcluster=true"
+      },
+      "console": {
+        "path": "/var/folders/d_/nhqt8l112d13r8fs1n188dc00000gn/T/sibuna-console-impact-kg086rr0/out-b/bin/sibuna",
+        "bytes": 8521464,
+        "sha256": "7fbba8e061152c7cc88d1f726fa67310e0e57142f03c8d4cddc6ee001239c449",
+        "build": "-Doptimize=ReleaseFast -p /var/folders/d_/nhqt8l112d13r8fs1n188dc00000gn/T/sibuna-console-impact-kg086rr0/out-b -Dcluster=true"
+      }
+    },
+    "host_label": "Apple Silicon MacBook Pro, other applications open",
+    "quick": false,
+    "cluster": true,
+    "elapsed_seconds": 360.06985600001644
+  },
+  "load": {
+    "threads": 2,
+    "connections": 32,
+    "seconds": 5,
+    "warmup_seconds": 2,
+    "rounds": 3,
+    "order": "rotating"
+  },
+  "wrk": "wrk 4.2.0 [kqueue] Copyright (C) 2012 Will Glozer",
+  "gate": {
+    "throughput_loss_max": 0.01,
+    "p99_increase_max": 0.1,
+    "baseline_spread_max": 0.01
+  },
+  "dashboards": {
+    "subscribers": 8,
+    "frames_total": 489,
+    "reconnects": 0,
+    "close_codes": {},
+    "frames_per_second_per_subscriber_min": 0.9802676052140826,
+    "delivered": true
+  },
+  "workloads": {
+    "admitted": {
+      "configurations": {
+        "compiled_out": {
+          "samples": [
+            {
+              "requests": 904303,
+              "requests_per_second": 177332.25557723094,
+              "latency_us": {
+                "p50": 118,
+                "p90": 196,
+                "p99": 332,
+                "max": 13824,
+                "mean": 157.4
+              },
+              "errors": {
+                "connect": 0,
+                "read": 195,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.020000000000000004,
+              "peak_rss_kib": 22000,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.099484,
+              "round": 1,
+              "position": 0
+            },
+            {
+              "requests": 870024,
+              "requests_per_second": 170591.40250891855,
+              "latency_us": {
+                "p50": 125,
+                "p90": 200,
+                "p99": 290,
+                "max": 2783,
+                "mean": 132.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.010000000000000009,
+              "peak_rss_kib": 23872,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.100046,
+              "round": 2,
+              "position": 3
+            },
+            {
+              "requests": 850696,
+              "requests_per_second": 166740.29904808424,
+              "latency_us": {
+                "p50": 125,
+                "p90": 210,
+                "p99": 2124,
+                "max": 16873,
+                "mean": 208.6
+              },
+              "errors": {
+                "connect": 0,
+                "read": 191,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.020000000000000018,
+              "peak_rss_kib": 18480,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.101922,
+              "round": 3,
+              "position": 2
+            }
+          ],
+          "requests_per_second_median": 170591.40250891855,
+          "requests_per_second_min": 166740.29904808424,
+          "requests_per_second_max": 177332.25557723094,
+          "spread": 0.06208962687080875,
+          "latency_us_p99_median": 332,
+          "peak_rss_kib_max": 23872,
+          "errors_total": {
+            "connect": 0,
+            "read": 578,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0.0
+        },
+        "disabled": {
+          "samples": [
+            {
+              "requests": 915817,
+              "requests_per_second": 179575.05933435715,
+              "latency_us": {
+                "p50": 115,
+                "p90": 194,
+                "p99": 286,
+                "max": 1309,
+                "mean": 123.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 206,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.01999999999999999,
+              "peak_rss_kib": 27952,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.099912,
+              "round": 1,
+              "position": 1
+            },
+            {
+              "requests": 867780,
+              "requests_per_second": 170146.4355774632,
+              "latency_us": {
+                "p50": 120,
+                "p90": 199,
+                "p99": 300,
+                "max": 10301,
+                "mean": 134.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.020000000000000018,
+              "peak_rss_kib": 29184,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.100195,
+              "round": 2,
+              "position": 0
+            },
+            {
+              "requests": 859758,
+              "requests_per_second": 168591.2063566578,
+              "latency_us": {
+                "p50": 127,
+                "p90": 203,
+                "p99": 296,
+                "max": 7224,
+                "mean": 139.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.020000000000000018,
+              "peak_rss_kib": 25200,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.099661,
+              "round": 3,
+              "position": 3
+            }
+          ],
+          "requests_per_second_median": 170146.4355774632,
+          "requests_per_second_min": 168591.2063566578,
+          "requests_per_second_max": 179575.05933435715,
+          "spread": 0.06455529285947738,
+          "latency_us_p99_median": 296,
+          "peak_rss_kib_max": 29184,
+          "errors_total": {
+            "connect": 0,
+            "read": 590,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0.0,
+          "versus_compiled_out": {
+            "throughput_loss": 0.0026083784112863606,
+            "p99_increase": -0.10843373493975905,
+            "bootstrap_ci_95_loss": [
+              -0.07697455479896709,
+              0.04929193051833858
+            ],
+            "verdict": "inconclusive"
+          }
+        },
+        "idle": {
+          "samples": [
+            {
+              "requests": 905124,
+              "requests_per_second": 177473.06700464938,
+              "latency_us": {
+                "p50": 117,
+                "p90": 195,
+                "p99": 327,
+                "max": 20363,
+                "mean": 171.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 203,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.050000000000000044,
+              "peak_rss_kib": 32128,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.100064,
+              "round": 1,
+              "position": 2
+            },
+            {
+              "requests": 872707,
+              "requests_per_second": 171117.0064665906,
+              "latency_us": {
+                "p50": 123,
+                "p90": 203,
+                "p99": 348,
+                "max": 10221,
+                "mean": 154.6
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.040000000000000036,
+              "peak_rss_kib": 34416,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.10006,
+              "round": 2,
+              "position": 1
+            },
+            {
+              "requests": 856057,
+              "requests_per_second": 167832.1664611709,
+              "latency_us": {
+                "p50": 128,
+                "p90": 204,
+                "p99": 290,
+                "max": 3368,
+                "mean": 135.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.07000000000000028,
+              "peak_rss_kib": 28528,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.100673,
+              "round": 3,
+              "position": 0
+            }
+          ],
+          "requests_per_second_median": 171117.0064665906,
+          "requests_per_second_min": 167832.1664611709,
+          "requests_per_second_max": 177473.06700464938,
+          "spread": 0.05634098411697485,
+          "latency_us_p99_median": 327,
+          "peak_rss_kib_max": 34416,
+          "errors_total": {
+            "connect": 0,
+            "read": 587,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0.0,
+          "versus_compiled_out": {
+            "throughput_loss": -0.0030810694439573627,
+            "p99_increase": -0.015060240963855387,
+            "bootstrap_ci_95_loss": [
+              -0.06436817024941299,
+              0.05357225669484922
+            ],
+            "verdict": "inconclusive"
+          }
+        },
+        "active": {
+          "samples": [
+            {
+              "requests": 934697,
+              "requests_per_second": 183283.8045188711,
+              "latency_us": {
+                "p50": 119,
+                "p90": 188,
+                "p99": 275,
+                "max": 8734,
+                "mean": 128.1
+              },
+              "errors": {
+                "connect": 0,
+                "read": 222,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.02999999999999997,
+              "peak_rss_kib": 28496,
+              "dashboard_frames": 41,
+              "wall_seconds": 5.099725,
+              "round": 1,
+              "position": 3
+            },
+            {
+              "requests": 872889,
+              "requests_per_second": 171174.03847964006,
+              "latency_us": {
+                "p50": 128,
+                "p90": 200,
+                "p99": 282,
+                "max": 2138,
+                "mean": 133.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.029999999999999805,
+              "peak_rss_kib": 29680,
+              "dashboard_frames": 40,
+              "wall_seconds": 5.099424,
+              "round": 2,
+              "position": 2
+            },
+            {
+              "requests": 857061,
+              "requests_per_second": 168066.10469518174,
+              "latency_us": {
+                "p50": 126,
+                "p90": 203,
+                "p99": 313,
+                "max": 10236,
+                "mean": 143.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.020000000000000018,
+              "peak_rss_kib": 25808,
+              "dashboard_frames": 40,
+              "wall_seconds": 5.099547,
+              "round": 3,
+              "position": 1
+            }
+          ],
+          "requests_per_second_median": 171174.03847964006,
+          "requests_per_second_min": 168066.10469518174,
+          "requests_per_second_max": 183283.8045188711,
+          "spread": 0.08890191502667265,
+          "latency_us_p99_median": 282,
+          "peak_rss_kib_max": 29680,
+          "errors_total": {
+            "connect": 0,
+            "read": 606,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 7.843833971919466,
+          "versus_compiled_out": {
+            "throughput_loss": -0.0034153888305774593,
+            "p99_increase": -0.1506024096385542,
+            "bootstrap_ci_95_loss": [
+              -0.09921719923277861,
+              0.052253048109533906
+            ],
+            "verdict": "inconclusive"
+          }
+        }
+      }
+    },
+    "challenged": {
+      "configurations": {
+        "compiled_out": {
+          "samples": [
+            {
+              "requests": 965714,
+              "requests_per_second": 189373.80674856732,
+              "latency_us": {
+                "p50": 117,
+                "p90": 179,
+                "p99": 266,
+                "max": 5447,
+                "mean": 124.7
+              },
+              "errors": {
+                "connect": 0,
+                "read": 223,
+                "write": 0,
+                "status": 965714,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.020000000000000018,
+              "peak_rss_kib": 22016,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.099512,
+              "round": 1,
+              "position": 0
+            },
+            {
+              "requests": 900809,
+              "requests_per_second": 176514.41209707333,
+              "latency_us": {
+                "p50": 125,
+                "p90": 191,
+                "p99": 7775,
+                "max": 44251,
+                "mean": 367.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 900809,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.019999999999999907,
+              "peak_rss_kib": 23872,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.103317,
+              "round": 2,
+              "position": 3
+            },
+            {
+              "requests": 891579,
+              "requests_per_second": 174666.39030747183,
+              "latency_us": {
+                "p50": 132,
+                "p90": 192,
+                "p99": 4725,
+                "max": 30360,
+                "mean": 276.4
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 891579,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.020000000000000018,
+              "peak_rss_kib": 18144,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.104468,
+              "round": 3,
+              "position": 2
+            }
+          ],
+          "requests_per_second_median": 176514.41209707333,
+          "requests_per_second_min": 174666.39030747183,
+          "requests_per_second_max": 189373.80674856732,
+          "spread": 0.08332133487778448,
+          "latency_us_p99_median": 4725,
+          "peak_rss_kib_max": 23872,
+          "errors_total": {
+            "connect": 0,
+            "read": 607,
+            "write": 0,
+            "status": 2758102,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0.0
+        },
+        "disabled": {
+          "samples": [
+            {
+              "requests": 960039,
+              "requests_per_second": 188263.90860786062,
+              "latency_us": {
+                "p50": 114,
+                "p90": 187,
+                "p99": 4134,
+                "max": 39385,
+                "mean": 295.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 224,
+                "write": 0,
+                "status": 960039,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.020000000000000018,
+              "peak_rss_kib": 27984,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.099432,
+              "round": 1,
+              "position": 1
+            },
+            {
+              "requests": 888918,
+              "requests_per_second": 175148.87056979272,
+              "latency_us": {
+                "p50": 125,
+                "p90": 193,
+                "p99": 26371,
+                "max": 78051,
+                "mean": 728.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 888918,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.010000000000000009,
+              "peak_rss_kib": 29184,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.075214,
+              "round": 2,
+              "position": 0
+            },
+            {
+              "requests": 903140,
+              "requests_per_second": 177074.74729096066,
+              "latency_us": {
+                "p50": 129,
+                "p90": 188,
+                "p99": 269,
+                "max": 1865,
+                "mean": 130.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 903140,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.019999999999999796,
+              "peak_rss_kib": 24784,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.100332,
+              "round": 3,
+              "position": 3
+            }
+          ],
+          "requests_per_second_median": 177074.74729096066,
+          "requests_per_second_min": 175148.87056979272,
+          "requests_per_second_max": 188263.90860786062,
+          "spread": 0.07406498238011264,
+          "latency_us_p99_median": 4134,
+          "peak_rss_kib_max": 29184,
+          "errors_total": {
+            "connect": 0,
+            "read": 608,
+            "write": 0,
+            "status": 2752097,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0.0,
+          "versus_compiled_out": {
+            "throughput_loss": -0.0031744444390136017,
+            "p99_increase": -0.12507936507936512,
+            "bootstrap_ci_95_loss": [
+              -0.07784851038859042,
+              0.07511564784490565
+            ],
+            "verdict": "inconclusive"
+          }
+        },
+        "idle": {
+          "samples": [
+            {
+              "requests": 967405,
+              "requests_per_second": 189707.30436020592,
+              "latency_us": {
+                "p50": 106,
+                "p90": 181,
+                "p99": 286,
+                "max": 10300,
+                "mean": 130.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 223,
+                "write": 0,
+                "status": 967405,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.039999999999999925,
+              "peak_rss_kib": 29760,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.099461,
+              "round": 1,
+              "position": 2
+            },
+            {
+              "requests": 915321,
+              "requests_per_second": 179484.31357207947,
+              "latency_us": {
+                "p50": 123,
+                "p90": 186,
+                "p99": 279,
+                "max": 8275,
+                "mean": 132.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 208,
+                "write": 0,
+                "status": 915321,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.040000000000000036,
+              "peak_rss_kib": 34416,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.099727,
+              "round": 2,
+              "position": 1
+            },
+            {
+              "requests": 909918,
+              "requests_per_second": 178430.7231272351,
+              "latency_us": {
+                "p50": 133,
+                "p90": 187,
+                "p99": 269,
+                "max": 3516,
+                "mean": 133.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 208,
+                "write": 0,
+                "status": 909918,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.04999999999999982,
+              "peak_rss_kib": 28528,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.099559,
+              "round": 3,
+              "position": 0
+            }
+          ],
+          "requests_per_second_median": 179484.31357207947,
+          "requests_per_second_min": 178430.7231272351,
+          "requests_per_second_max": 189707.30436020592,
+          "spread": 0.0628276700539751,
+          "latency_us_p99_median": 279,
+          "peak_rss_kib_max": 34416,
+          "errors_total": {
+            "connect": 0,
+            "read": 639,
+            "write": 0,
+            "status": 2792644,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0.0,
+          "versus_compiled_out": {
+            "throughput_loss": -0.01682526338627155,
+            "p99_increase": -0.940952380952381,
+            "bootstrap_ci_95_loss": [
+              -0.0861122396029197,
+              0.05778562415372157
+            ],
+            "verdict": "inconclusive"
+          }
+        },
+        "active": {
+          "samples": [
+            {
+              "requests": 977193,
+              "requests_per_second": 191616.23925925637,
+              "latency_us": {
+                "p50": 116,
+                "p90": 185,
+                "p99": 285,
+                "max": 20549,
+                "mean": 158.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 224,
+                "write": 0,
+                "status": 977193,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.030000000000000027,
+              "peak_rss_kib": 28512,
+              "dashboard_frames": 40,
+              "wall_seconds": 5.09974,
+              "round": 1,
+              "position": 3
+            },
+            {
+              "requests": 916103,
+              "requests_per_second": 179642.72765047653,
+              "latency_us": {
+                "p50": 128,
+                "p90": 188,
+                "p99": 280,
+                "max": 9839,
+                "mean": 135.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 206,
+                "write": 0,
+                "status": 916103,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.030000000000000027,
+              "peak_rss_kib": 29680,
+              "dashboard_frames": 40,
+              "wall_seconds": 5.099583,
+              "round": 2,
+              "position": 2
+            },
+            {
+              "requests": 899859,
+              "requests_per_second": 176446.2625178827,
+              "latency_us": {
+                "p50": 128,
+                "p90": 185,
+                "p99": 266,
+                "max": 2634,
+                "mean": 130.1
+              },
+              "errors": {
+                "connect": 0,
+                "read": 197,
+                "write": 0,
+                "status": 899859,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.040000000000000036,
+              "peak_rss_kib": 25824,
+              "dashboard_frames": 40,
+              "wall_seconds": 5.099904,
+              "round": 3,
+              "position": 1
+            }
+          ],
+          "requests_per_second_median": 179642.72765047653,
+          "requests_per_second_min": 176446.2625178827,
+          "requests_per_second_max": 191616.23925925637,
+          "spread": 0.08444525943120439,
+          "latency_us_p99_median": 280,
+          "peak_rss_kib_max": 29680,
+          "errors_total": {
+            "connect": 0,
+            "read": 627,
+            "write": 0,
+            "status": 2793155,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 7.8432848932058326,
+          "versus_compiled_out": {
+            "throughput_loss": -0.017722720293699368,
+            "p99_increase": -0.9407407407407408,
+            "bootstrap_ci_95_loss": [
+              -0.09704127349255387,
+              0.06826469009966418
+            ],
+            "verdict": "inconclusive"
+          }
+        }
+      }
+    },
+    "denied": {
+      "configurations": {
+        "compiled_out": {
+          "samples": [
+            {
+              "requests": 936075,
+              "requests_per_second": 183537.3519564377,
+              "latency_us": {
+                "p50": 119,
+                "p90": 187,
+                "p99": 276,
+                "max": 2303,
+                "mean": 124.1
+              },
+              "errors": {
+                "connect": 0,
+                "read": 213,
+                "write": 0,
+                "status": 936075,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.10999999999999999,
+              "peak_rss_kib": 23536,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.100188,
+              "round": 1,
+              "position": 0
+            },
+            {
+              "requests": 862325,
+              "requests_per_second": 169097.19267186997,
+              "latency_us": {
+                "p50": 130,
+                "p90": 203,
+                "p99": 355,
+                "max": 25419,
+                "mean": 197.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 862325,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.1299999999999999,
+              "peak_rss_kib": 19680,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.099582,
+              "round": 2,
+              "position": 3
+            },
+            {
+              "requests": 821096,
+              "requests_per_second": 160989.27223122492,
+              "latency_us": {
+                "p50": 131,
+                "p90": 210,
+                "p99": 311,
+                "max": 10328,
+                "mean": 145.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 821096,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.13000000000000012,
+              "peak_rss_kib": 18496,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.100315,
+              "round": 3,
+              "position": 2
+            }
+          ],
+          "requests_per_second_median": 169097.19267186997,
+          "requests_per_second_min": 160989.27223122492,
+          "requests_per_second_max": 183537.3519564377,
+          "spread": 0.13334390340215113,
+          "latency_us_p99_median": 311,
+          "peak_rss_kib_max": 23536,
+          "errors_total": {
+            "connect": 0,
+            "read": 597,
+            "write": 0,
+            "status": 2619496,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0.0
+        },
+        "disabled": {
+          "samples": [
+            {
+              "requests": 917873,
+              "requests_per_second": 179978.20354547296,
+              "latency_us": {
+                "p50": 117,
+                "p90": 197,
+                "p99": 2335,
+                "max": 15776,
+                "mean": 194.7
+              },
+              "errors": {
+                "connect": 0,
+                "read": 208,
+                "write": 0,
+                "status": 917873,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.12,
+              "peak_rss_kib": 28944,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.099912,
+              "round": 1,
+              "position": 1
+            },
+            {
+              "requests": 856641,
+              "requests_per_second": 167972.6111471141,
+              "latency_us": {
+                "p50": 127,
+                "p90": 200,
+                "p99": 293,
+                "max": 2158,
+                "mean": 132.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 856641,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.1399999999999999,
+              "peak_rss_kib": 29600,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.099885,
+              "round": 2,
+              "position": 0
+            },
+            {
+              "requests": 807565,
+              "requests_per_second": 158326.45836829633,
+              "latency_us": {
+                "p50": 130,
+                "p90": 214,
+                "p99": 342,
+                "max": 23198,
+                "mean": 180.6
+              },
+              "errors": {
+                "connect": 0,
+                "read": 191,
+                "write": 0,
+                "status": 807565,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.1299999999999999,
+              "peak_rss_kib": 25216,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.100632,
+              "round": 3,
+              "position": 3
+            }
+          ],
+          "requests_per_second_median": 167972.6111471141,
+          "requests_per_second_min": 158326.45836829633,
+          "requests_per_second_max": 179978.20354547296,
+          "spread": 0.1289004500752421,
+          "latency_us_p99_median": 342,
+          "peak_rss_kib_max": 29600,
+          "errors_total": {
+            "connect": 0,
+            "read": 591,
+            "write": 0,
+            "status": 2582079,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0.0,
+          "versus_compiled_out": {
+            "throughput_loss": 0.006650503813733333,
+            "p99_increase": 0.09967845659163976,
+            "bootstrap_ci_95_loss": [
+              -0.1179515321180824,
+              0.13736110562456594
+            ],
+            "verdict": "inconclusive"
+          }
+        },
+        "idle": {
+          "samples": [
+            {
+              "requests": 919869,
+              "requests_per_second": 180384.3321740682,
+              "latency_us": {
+                "p50": 121,
+                "p90": 191,
+                "p99": 276,
+                "max": 3599,
+                "mean": 126.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 217,
+                "write": 0,
+                "status": 919869,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.5,
+              "peak_rss_kib": 34176,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.099495,
+              "round": 1,
+              "position": 2
+            },
+            {
+              "requests": 857195,
+              "requests_per_second": 168090.3708677216,
+              "latency_us": {
+                "p50": 126,
+                "p90": 203,
+                "p99": 314,
+                "max": 6204,
+                "mean": 141.7
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 857195,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.8700000000000001,
+              "peak_rss_kib": 35136,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.099608,
+              "round": 2,
+              "position": 1
+            },
+            {
+              "requests": 812864,
+              "requests_per_second": 159380.28537961794,
+              "latency_us": {
+                "p50": 133,
+                "p90": 212,
+                "p99": 305,
+                "max": 10288,
+                "mean": 146.7
+              },
+              "errors": {
+                "connect": 0,
+                "read": 179,
+                "write": 0,
+                "status": 812864,
+                "timeout": 0
+              },
+              "cpu_seconds": 1.9000000000000004,
+              "peak_rss_kib": 28688,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.100154,
+              "round": 3,
+              "position": 0
+            }
+          ],
+          "requests_per_second_median": 168090.3708677216,
+          "requests_per_second_min": 159380.28537961794,
+          "requests_per_second_max": 180384.3321740682,
+          "spread": 0.1249568710332572,
+          "latency_us_p99_median": 305,
+          "peak_rss_kib_max": 35136,
+          "errors_total": {
+            "connect": 0,
+            "read": 588,
+            "write": 0,
+            "status": 2589928,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0.0,
+          "versus_compiled_out": {
+            "throughput_loss": 0.005954101237517828,
+            "p99_increase": -0.019292604501607746,
+            "bootstrap_ci_95_loss": [
+              -0.1204742382771109,
+              0.13161934788376695
+            ],
+            "verdict": "inconclusive"
+          }
+        },
+        "active": {
+          "samples": [
+            {
+              "requests": 913166,
+              "requests_per_second": 179029.4095965846,
+              "latency_us": {
+                "p50": 118,
+                "p90": 194,
+                "p99": 290,
+                "max": 3912,
+                "mean": 126.6
+              },
+              "errors": {
+                "connect": 0,
+                "read": 208,
+                "write": 0,
+                "status": 913166,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.1499999999999999,
+              "peak_rss_kib": 29472,
+              "dashboard_frames": 40,
+              "wall_seconds": 5.100648,
+              "round": 1,
+              "position": 3
+            },
+            {
+              "requests": 852234,
+              "requests_per_second": 167106.40971241274,
+              "latency_us": {
+                "p50": 127,
+                "p90": 205,
+                "p99": 330,
+                "max": 11295,
+                "mean": 153.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 852234,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.1499999999999999,
+              "peak_rss_kib": 25744,
+              "dashboard_frames": 40,
+              "wall_seconds": 5.099948,
+              "round": 2,
+              "position": 2
+            },
+            {
+              "requests": 811151,
+              "requests_per_second": 159045.34870132568,
+              "latency_us": {
+                "p50": 132,
+                "p90": 213,
+                "p99": 316,
+                "max": 2793,
+                "mean": 140.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 811151,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.20000000000000018,
+              "peak_rss_kib": 26320,
+              "dashboard_frames": 40,
+              "wall_seconds": 5.100124,
+              "round": 3,
+              "position": 1
+            }
+          ],
+          "requests_per_second_median": 167106.40971241274,
+          "requests_per_second_min": 159045.34870132568,
+          "requests_per_second_max": 179029.4095965846,
+          "spread": 0.11958883521973296,
+          "latency_us_p99_median": 316,
+          "peak_rss_kib_max": 29472,
+          "errors_total": {
+            "connect": 0,
+            "read": 592,
+            "write": 0,
+            "status": 2576551,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 7.842140841712661,
+          "versus_compiled_out": {
+            "throughput_loss": 0.011773010113303894,
+            "p99_increase": 0.016077170418006492,
+            "bootstrap_ci_95_loss": [
+              -0.11205800930293708,
+              0.13344424442238412
+            ],
+            "verdict": "inconclusive"
+          }
+        }
+      }
+    },
+    "policy_reload": {
+      "configurations": {
+        "compiled_out": {
+          "samples": [
+            {
+              "requests": 892135,
+              "requests_per_second": 174915.53563894113,
+              "latency_us": {
+                "p50": 121,
+                "p90": 196,
+                "p99": 283,
+                "max": 5673,
+                "mean": 129.7
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.06000000000000005,
+              "peak_rss_kib": 23808,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.100376,
+              "policy_reloads_triggered": 29,
+              "round": 1,
+              "position": 0
+            },
+            {
+              "requests": 862239,
+              "requests_per_second": 169056.32720860277,
+              "latency_us": {
+                "p50": 128,
+                "p90": 208,
+                "p99": 553,
+                "max": 23325,
+                "mean": 211.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.010000000000000009,
+              "peak_rss_kib": 18464,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.100306,
+              "policy_reloads_triggered": 28,
+              "round": 2,
+              "position": 3
+            },
+            {
+              "requests": 855316,
+              "requests_per_second": 167706.9150504778,
+              "latency_us": {
+                "p50": 121,
+                "p90": 203,
+                "p99": 301,
+                "max": 2733,
+                "mean": 130.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.020000000000000018,
+              "peak_rss_kib": 18304,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.100064,
+              "policy_reloads_triggered": 29,
+              "round": 3,
+              "position": 2
+            }
+          ],
+          "requests_per_second_median": 169056.32720860277,
+          "requests_per_second_min": 167706.9150504778,
+          "requests_per_second_max": 174915.53563894113,
+          "spread": 0.04264034779111479,
+          "latency_us_p99_median": 301,
+          "peak_rss_kib_max": 23808,
+          "errors_total": {
+            "connect": 0,
+            "read": 576,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0.0
+        },
+        "disabled": {
+          "samples": [
+            {
+              "requests": 851699,
+              "requests_per_second": 170038.2202126309,
+              "latency_us": {
+                "p50": 120,
+                "p90": 202,
+                "p99": 2214,
+                "max": 24796,
+                "mean": 229.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.06999999999999995,
+              "peak_rss_kib": 29104,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.008868,
+              "policy_reloads_triggered": 28,
+              "round": 1,
+              "position": 1
+            },
+            {
+              "requests": 852110,
+              "requests_per_second": 167085.86339984072,
+              "latency_us": {
+                "p50": 123,
+                "p90": 202,
+                "p99": 294,
+                "max": 5433,
+                "mean": 134.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.030000000000000027,
+              "peak_rss_kib": 25200,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.099833,
+              "policy_reloads_triggered": 29,
+              "round": 2,
+              "position": 0
+            },
+            {
+              "requests": 845583,
+              "requests_per_second": 165811.86994487664,
+              "latency_us": {
+                "p50": 127,
+                "p90": 208,
+                "p99": 314,
+                "max": 6923,
+                "mean": 140.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.020000000000000018,
+              "peak_rss_kib": 25200,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.099653,
+              "policy_reloads_triggered": 29,
+              "round": 3,
+              "position": 3
+            }
+          ],
+          "requests_per_second_median": 167085.86339984072,
+          "requests_per_second_min": 165811.86994487664,
+          "requests_per_second_max": 170038.2202126309,
+          "spread": 0.025294481422647307,
+          "latency_us_p99_median": 314,
+          "peak_rss_kib_max": 29104,
+          "errors_total": {
+            "connect": 0,
+            "read": 576,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0.0,
+          "versus_compiled_out": {
+            "throughput_loss": 0.011655664365230467,
+            "p99_increase": 0.04318936877076407,
+            "bootstrap_ci_95_loss": [
+              -0.013901067594328964,
+              0.05204606703921477
+            ],
+            "verdict": "inconclusive"
+          }
+        },
+        "idle": {
+          "samples": [
+            {
+              "requests": 868589,
+              "requests_per_second": 170306.05872555106,
+              "latency_us": {
+                "p50": 121,
+                "p90": 203,
+                "p99": 305,
+                "max": 10249,
+                "mean": 135.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.17000000000000015,
+              "peak_rss_kib": 34416,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.100165,
+              "policy_reloads_triggered": 29,
+              "round": 1,
+              "position": 2
+            },
+            {
+              "requests": 853998,
+              "requests_per_second": 167464.74064769005,
+              "latency_us": {
+                "p50": 128,
+                "p90": 208,
+                "p99": 370,
+                "max": 13327,
+                "mean": 166.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.04999999999999982,
+              "peak_rss_kib": 28528,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.099569,
+              "policy_reloads_triggered": 29,
+              "round": 2,
+              "position": 1
+            },
+            {
+              "requests": 850667,
+              "requests_per_second": 166814.7866346895,
+              "latency_us": {
+                "p50": 129,
+                "p90": 204,
+                "p99": 291,
+                "max": 2329,
+                "mean": 135.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.049999999999998934,
+              "peak_rss_kib": 28704,
+              "dashboard_frames": 0,
+              "wall_seconds": 5.09947,
+              "policy_reloads_triggered": 29,
+              "round": 3,
+              "position": 0
+            }
+          ],
+          "requests_per_second_median": 167464.74064769005,
+          "requests_per_second_min": 166814.7866346895,
+          "requests_per_second_max": 170306.05872555106,
+          "spread": 0.020847804005539664,
+          "latency_us_p99_median": 305,
+          "peak_rss_kib_max": 34416,
+          "errors_total": {
+            "connect": 0,
+            "read": 576,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0.0,
+          "versus_compiled_out": {
+            "throughput_loss": 0.00941453412121529,
+            "p99_increase": 0.013289036544850585,
+            "bootstrap_ci_95_loss": [
+              -0.015498130618471828,
+              0.04631234712606158
+            ],
+            "verdict": "inconclusive"
+          }
+        },
+        "active": {
+          "samples": [
+            {
+              "requests": 870669,
+              "requests_per_second": 170715.66271485802,
+              "latency_us": {
+                "p50": 123,
+                "p90": 206,
+                "p99": 302,
+                "max": 3703,
+                "mean": 132.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.11999999999999988,
+              "peak_rss_kib": 29680,
+              "dashboard_frames": 40,
+              "wall_seconds": 5.100112,
+              "policy_reloads_triggered": 29,
+              "round": 1,
+              "position": 3
+            },
+            {
+              "requests": 852666,
+              "requests_per_second": 167184.29789206447,
+              "latency_us": {
+                "p50": 126,
+                "p90": 199,
+                "p99": 285,
+                "max": 2899,
+                "mean": 132.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.029999999999999805,
+              "peak_rss_kib": 25792,
+              "dashboard_frames": 48,
+              "wall_seconds": 5.100156,
+              "policy_reloads_triggered": 29,
+              "round": 2,
+              "position": 2
+            },
+            {
+              "requests": 842824,
+              "requests_per_second": 165260.02909419182,
+              "latency_us": {
+                "p50": 129,
+                "p90": 204,
+                "p99": 291,
+                "max": 3134,
+                "mean": 135.4
+              },
+              "errors": {
+                "connect": 0,
+                "read": 192,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 0.08000000000000007,
+              "peak_rss_kib": 26304,
+              "dashboard_frames": 40,
+              "wall_seconds": 5.099987,
+              "policy_reloads_triggered": 29,
+              "round": 3,
+              "position": 1
+            }
+          ],
+          "requests_per_second_median": 167184.29789206447,
+          "requests_per_second_min": 165260.02909419182,
+          "requests_per_second_max": 170715.66271485802,
+          "spread": 0.032632452266470595,
+          "latency_us_p99_median": 291,
+          "peak_rss_kib_max": 29680,
+          "errors_total": {
+            "connect": 0,
+            "read": 576,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 7.8429650172388365,
+          "versus_compiled_out": {
+            "throughput_loss": 0.011073405813604165,
+            "p99_increase": -0.03322259136212624,
+            "bootstrap_ci_95_loss": [
+              -0.01794051046419054,
+              0.05520096605186697
+            ],
+            "verdict": "inconclusive"
+          }
+        }
+      }
+    }
+  },
+  "verdict": "inconclusive",
+  "limitations": [
+    "Loopback wrk shares the host with the daemons; inconclusive results are reported, never rounded to a pass.",
+    "Peak RSS is sampled every 100 ms from ps; short spikes can be missed.",
+    "The cluster case loads node 1 only; replication cost lands on all nodes."
+  ]
+}
