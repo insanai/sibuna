@@ -48,6 +48,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     });
     try form(state, w);
     try thresholds(state, w);
+    try pages(state, w);
     try html.render(w, "</main>", .{});
 }
 
@@ -123,4 +124,54 @@ fn thresholds(state: *const State, w: *Writer) Writer.Error!void {
 
 fn defaultValue(key: []const u8) []const u8 {
     return if (std.mem.eql(u8, key, "notify.spike_factor")) "3" else "100";
+}
+
+fn pages(state: *const State, w: *Writer) Writer.Error!void {
+    const model = &state.pages;
+    const busy = if (model.busy or !model.loaded) " disabled" else "";
+    try html.render(w, "<section class=\"sb-panel\"><h2>Response pages</h2>" ++
+        "<p class=\"sb-note\">" ++
+        "Bounded HTML served to browsers for challenges, denials, rate limits, bans and " ++
+        "overload. Placeholders: {{ placeholders }}. Scripts, external resources, forms and " ++
+        "event handlers are refused; the challenge page must contain the solver slot exactly " ++
+        "once.</p><div class=\"flex flex-wrap gap-2\" role=\"tablist\">", .{
+        .placeholders = "{{ status }}, {{ reason }}, {{ retry_after }}, {{ request_id }}, " ++
+            "{{ node }} and, for the challenge page only, {{ challenge }}",
+    });
+    inline for (@typeInfo(p.pages.Kind).@"enum".fields) |field| {
+        const active = std.mem.eql(u8, field.name, @tagName(model.kind));
+        try html.render(w, "<button class=\"btn btn-sm{{ active }}\" role=\"tab\" " ++
+            "aria-selected=\"{{ selected }}\" data-action=\"pages-open-{{ name }}\"{{ busy }}>" ++
+            "{{ name }}</button>", .{
+            .active = if (active) " btn-active" else "",
+            .selected = if (active) "true" else "false",
+            .name = field.name,
+            .busy = busy,
+        });
+    }
+    try html.render(w, "</div>", .{});
+    try html.render(w, @embedFile("snippets/page-editor.html"), .{
+        .kind = @tagName(model.kind),
+        .revision = model.revision,
+        .state = if (!model.loaded)
+            "loading"
+        else if (model.customized)
+            "customized"
+        else
+            "default",
+        .html = model.html(),
+        .busy = busy,
+        .reset = if (model.customized) "" else " disabled",
+    });
+    if (model.preview_path.len != 0) try html.render(w, "<a class=\"btn btn-outline\" " ++
+        "href=\"{{ path }}\" target=\"_blank\" rel=\"noopener\">Open preview</a>", .{
+        .path = model.preview_path.slice(),
+    });
+    try html.render(w, "</div>", .{});
+    if (model.result.len != 0) try html.render(w, "<p role=\"status\" class=\"{{ tone }}\">" ++
+        "{{ text }}</p>", .{
+        .tone = if (model.result_ok) "alert alert-success mt-3" else "sb-error",
+        .text = model.result.slice(),
+    });
+    try html.render(w, "</form></section>", .{});
 }

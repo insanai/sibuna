@@ -19,6 +19,8 @@ pub fn action(state: *State, name: []const u8, fields: std.json.Value, out: Outb
         state.stale = true;
         try out.emit(.{ .op = "disconnect" });
         try query(state, out, .query);
+        state.pages.clear();
+        try @import("pages_controller.zig").read(state, out);
         return true;
     }
     if (!std.mem.startsWith(u8, name, "settings-")) return false;

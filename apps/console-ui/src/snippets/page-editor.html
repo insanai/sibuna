@@ -1,0 +1,8 @@
+<form id="pages-save" class="sb-settings-form mt-4">
+    <p>{{ kind }} · revision {{ revision }} · {{ state }}</p>
+    <label for="page-html">Markup (at most 16 KiB)</label>
+    <textarea id="page-html" name="html" class="textarea textarea-bordered font-mono" rows="14" maxlength="16384" spellcheck="false"{{ busy }}>{{ html }}</textarea>
+    <div class="flex flex-wrap gap-2 mt-3">
+    <button class="btn btn-primary" type="submit"{{ busy }}>Save page</button>
+    <button class="btn" type="button" data-action="pages-preview"{{ busy }}>Preview draft</button>
+    <button class="btn btn-outline btn-error" type="button" data-action="pages-reset"{{ reset }}{{ busy }}>Reset to default</button>
