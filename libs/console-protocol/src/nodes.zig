@@ -7,6 +7,95 @@ pub const command_seconds = 30;
 pub const receipt_days = 30;
 pub const command_capacity = 4096;
 pub const State = enum { intent, applied, rejected, uncertain };
+pub const max_members = 9;
+pub const max_probes = 8;
+/// Bounded so a full page stays within the fixed storage-result envelope.
+pub const max_address = 64;
+pub const max_url = 128;
+pub const Role = enum { unknown, single, leader, follower, candidate };
+pub const Health = enum { unknown, healthy, degraded, down };
+/// Storage-owned view of the local member's consensus state; stale values keep their
+/// last observation and `quorum` becomes false rather than inventing progress.
+pub const Storage = struct {
+    role: Role = .unknown,
+    leader: ?u32 = null,
+    term: u64 = 0,
+    decided: u64 = 0,
+    applied: u64 = 0,
+    durable: u64 = 0,
+    quorum: bool = false,
+    observed_at: u64 = 0,
+
+    pub fn jsonStringify(self: Storage, w: *std.json.Stringify) std.json.Stringify.Error!void {
+        return fields(self, w);
+    }
+};
+pub const Member = struct {
+    node: u32,
+    address: p.Bytes(max_address) = .{},
+    console_url: p.Bytes(max_url) = .{},
+    version: p.Bytes(32) = .{},
+    boot: p.Bytes(32) = .{},
+    first_seen: u64 = 0,
+    last_seen: u64 = 0,
+    applied_revision: u64 = 0,
+    control_revision: u64 = 0,
+    applied_slot: u64 = 0,
+    decided_slot: u64 = 0,
+    draining: bool = false,
+
+    pub fn jsonStringify(self: Member, w: *std.json.Stringify) std.json.Stringify.Error!void {
+        return fields(self, w);
+    }
+};
+/// One configured peer's most recent data-plane probe. `requests` is the counter delta
+/// between the last two successful probes, not a rate; zero means not yet observed twice.
+pub const Probe = struct {
+    node: u32,
+    health: Health = .unknown,
+    latency_ms: u32 = 0,
+    last_seen: u64 = 0,
+    observed_at: u64 = 0,
+    draining: bool = false,
+    requests: u64 = 0,
+
+    pub fn jsonStringify(self: Probe, w: *std.json.Stringify) std.json.Stringify.Error!void {
+        return fields(self, w);
+    }
+};
+pub const Page = struct {
+    self: u32,
+    committed: u64,
+    storage: Storage,
+    members: [max_members]Member = undefined,
+    count: u8 = 0,
+
+    pub fn jsonStringify(self: Page, w: *std.json.Stringify) std.json.Stringify.Error!void {
+        try w.beginObject();
+        try w.objectField("self");
+        try w.write(self.self);
+        try w.objectField("committed");
+        try p.writeCounter(w, self.committed);
+        try w.objectField("storage");
+        try w.write(self.storage);
+        try w.objectField("members");
+        try w.beginArray();
+        for (self.members[0..self.count]) |member| try w.write(member);
+        try w.endArray();
+        try w.endObject();
+    }
+};
+
+/// Console links rendered from replicated rows must be plain http(s) origins.
+pub fn safeUrl(text: []const u8) bool {
+    if (text.len == 0 or text.len > max_url) return false;
+    if (!std.mem.startsWith(u8, text, "https://") and !std.mem.startsWith(u8, text, "http://"))
+        return false;
+    for (text) |byte| if (byte <= 32 or byte >= 127 or byte == '"' or byte == '\'' or byte == '<')
+        return false;
+    return true;
+}
+
 pub const Command = struct {
     auth: p.users.Auth,
     id: [16]u8,
@@ -67,7 +156,9 @@ fn fields(value: anytype, w: *std.json.Stringify) std.json.Stringify.Error!void 
     inline for (@typeInfo(@TypeOf(value)).@"struct".fields) |field| {
         try w.objectField(field.name);
         const item = @field(value, field.name);
-        if (field.type == p.Bytes(32)) {
+        if (field.type == p.Bytes(32) or field.type == p.Bytes(max_address) or
+            field.type == p.Bytes(max_url))
+        {
             try w.write(item.slice());
         } else if (field.type == u64) {
             try p.writeCounter(w, item);
@@ -76,4 +167,13 @@ fn fields(value: anytype, w: *std.json.Stringify) std.json.Stringify.Error!void 
         } else try w.write(item);
     }
     try w.endObject();
+}
+
+test "console links from replicated rows are restricted to plain origins" {
+    const t = std.testing;
+    try t.expect(safeUrl("https://console.example:9443"));
+    try t.expect(safeUrl("http://127.0.0.1:9443"));
+    try t.expect(!safeUrl("javascript:alert(1)"));
+    try t.expect(!safeUrl("https://a\"b"));
+    try t.expect(!safeUrl(""));
 }

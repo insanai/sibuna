@@ -111,6 +111,11 @@ pub const Persistent = struct {
     console_initialized: bool = false,
     console_node: if (build_options.console) @import("console_node_state.zig").State else void =
         if (build_options.console) .{} else {},
+    /// Owner-thread link to the local cluster member for status snapshots.
+    status_link: if (build_options.console and build_options.cluster)
+        ?*zx.client.Connection
+    else
+        void = if (build_options.console and build_options.cluster) null else {},
     gpa: std.mem.Allocator,
     io: Io,
     cfg: core.Config,
@@ -196,6 +201,7 @@ pub const Persistent = struct {
         if (build_options.console) self.console_mailbox.stop(self.io);
         self.stopping.store(true, .release);
         if (self.thread) |t| t.join();
+        if (build_options.console) @import("console_node_storage.zig").close(self);
         self.state.hooks = .{};
         // Producers have stopped. Flush every bounded batch, then account
         // records whose commit could not be confirmed before shutdown.
@@ -402,6 +408,8 @@ pub const Persistent = struct {
             try self.rebuild();
             // A failed rebuild must be retried; never acknowledge it early.
             self.version = stamp;
+            // The applied revision is a per-node acknowledgment written by that node only.
+            if (build_options.console) self.console_node.announce = true;
         }
     }
 
@@ -1010,6 +1018,8 @@ test {
         _ = @import("console_auth_clock_test.zig");
         _ = @import("console_read_clock_test.zig");
         _ = @import("console_nodes_test.zig");
+        _ = @import("console_membership_test.zig");
+        _ = @import("console_node_storage.zig");
         _ = @import("console_inspection_test.zig");
         _ = @import("console_limits_test.zig");
         _ = @import("console_start.zig");

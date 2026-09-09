@@ -125,10 +125,13 @@ pub const StorageRequest = union(enum) {
     node_status: users.Auth,
     node_command: nodes.Command,
     node_command_read: nodes.Read,
+    nodes_query: users.Auth,
+    node_advertise: Bytes(nodes.max_url),
 };
 pub const StorageResult = union(enum) {
     node_status: nodes.Status,
     node_receipt: nodes.Receipt,
+    nodes_page: nodes.Page,
     audit_page: audit.Page,
     audit_detail: audit.Detail,
     tokens_page: tokens.Page,

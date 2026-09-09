@@ -58,11 +58,29 @@ pub fn parse(args: []const []const u8, remaining: [][]const u8) !Parsed {
             config.trusted_proxies[config.trusted_proxy_count] =
                 try console.protocol.Bytes(49).init(value);
             config.trusted_proxy_count += 1;
+        } else if (std.mem.eql(u8, flag, "--console-advertise")) {
+            if (config.advertise.len != 0) return error.DuplicateAdvertise;
+            config.advertise = try console.protocol.Bytes(255).init(value);
+        } else if (std.mem.eql(u8, flag, "--console-probe")) {
+            try probe(&config, value);
         } else return error.UnknownConsoleOption;
     }
     if (initial_admin != null and options_seen) return error.UnexpectedConsoleOptions;
     if (options_seen and !config.enabled) return error.ConsoleRequired;
     return .{ .config = config, .data_args = remaining[0..count], .initial_admin = initial_admin };
+}
+
+/// `<node-id>=<http://ip:port>`: the peer's data-plane listener, never a discovered address.
+fn probe(config: *console.ConsoleConfig, value: []const u8) !void {
+    if (config.probe_count == config.probes.len) return error.TooManyProbes;
+    const equals = std.mem.indexOfScalar(u8, value, '=') orelse return error.InvalidProbe;
+    const node = std.fmt.parseInt(u32, value[0..equals], 10) catch return error.InvalidProbe;
+    if (node == 0) return error.InvalidProbe;
+    config.probes[config.probe_count] = .{
+        .node = node,
+        .url = try console.protocol.Bytes(255).init(value[equals + 1 ..]),
+    };
+    config.probe_count += 1;
 }
 
 fn endpoint(config: *console.ConsoleConfig, value: []const u8) !void {
@@ -126,6 +144,12 @@ pub const Runtime = struct {
             console.App.handle,
         );
         owner.state.telemetry = app.telemetry;
+        const advertised = if (config.advertise.len != 0) config.advertise else app.config.origin;
+        const url = console.protocol.Bytes(console.protocol.nodes.max_url).init(
+            advertised.slice(),
+        ) catch return error.ConsoleAdvertiseTooLong;
+        const recorded = try app.request(.{ .node_advertise = url });
+        if (recorded != .command_recorded) return error.StorageUnavailable;
         if (app.setup_required) std.debug.print(
             "Console is uninitialized. Stop Sibuna and run init-admin locally.\n",
             .{},
@@ -156,6 +180,17 @@ test "console parsing preserves data-plane arguments and rejects unknown flags" 
         parse(&.{ "--console-mistake", "1" }, &remaining),
     );
     try std.testing.expectError(error.MissingValue, parse(&.{"--console"}, &remaining));
+    const peers = try parse(&.{
+        "--console",             "127.0.0.1:9443",      "--console-advertise",
+        "http://127.0.0.1:9443", "--console-probe",     "2=http://127.0.0.1:8082",
+        "--console-probe",       "3=http://[::1]:8083",
+    }, &remaining);
+    try std.testing.expectEqual(@as(u8, 2), peers.config.probe_count);
+    try std.testing.expectEqual(@as(u32, 3), peers.config.probes[1].node);
+    try std.testing.expectEqualStrings("http://127.0.0.1:9443", peers.config.advertise.slice());
+    try std.testing.expectError(error.InvalidProbe, parse(&.{
+        "--console", "127.0.0.1:9443", "--console-probe", "x=http://127.0.0.1:1",
+    }, &remaining));
 }
 
 pub fn validate(config: console.ConsoleConfig, has_storage: bool) bool {

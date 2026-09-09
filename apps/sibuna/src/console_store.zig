@@ -10,6 +10,8 @@ pub fn tick(owner: *Persistent) void {
     @import("console_node_commands.zig").flush(owner) catch |err| {
         std.log.warn("console command completion pending: {t}", .{err});
     };
+    @import("console_node_storage.zig").refresh(owner, owner.nowSeconds());
+    @import("console_membership.zig").tick(owner);
     // Cap work per tick so console saturation cannot starve incidents and policy reload.
     for (0..16) |_| {
         const work = owner.console_mailbox.take(owner.io) orelse return;
@@ -33,6 +35,8 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
         .node_status => |auth| @import("console_node_read.zig").status(owner, auth),
         .node_command_read => |input| @import("console_node_read.zig").read(owner, input),
         .node_command => |input| @import("console_node_commands.zig").execute(owner, input),
+        .nodes_query => |auth| @import("console_node_read.zig").members(owner, auth),
+        .node_advertise => |url| @import("console_node_read.zig").advertise(owner, url),
         .audit_query => |input| @import("console_store_audit.zig").query(owner, input),
         .audit_read => |input| @import("console_store_audit.zig").read(owner, input),
         .tokens_query => |input| tokens.query(owner, input),

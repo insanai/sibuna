@@ -7,6 +7,12 @@ pub const State = struct {
     started_ns: i96 = 0,
     revision: u64 = 0,
     pending: ?p.nodes.Receipt = null,
+    /// Membership announcement: set after each applied rebuild; heartbeats otherwise.
+    announce: bool = false,
+    announce_failed: bool = false,
+    last_heartbeat: u64 = 0,
+    advertise: p.Bytes(p.nodes.max_url) = .{},
+    storage: p.nodes.Storage = .{},
 
     pub fn init(io: std.Io) State {
         var state: State = .{ .started_ns = std.Io.Clock.awake.now(io).nanoseconds };

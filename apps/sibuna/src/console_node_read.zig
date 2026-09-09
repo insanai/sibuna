@@ -31,6 +31,57 @@ pub fn status(owner: *Persistent, auth: p.users.Auth) !p.StorageResult {
     return .{ .node_status = result };
 }
 
+/// Every replicated member row plus this member's storage snapshot. Rows are facts written
+/// by their own node; a console link is rendered only when it is a plain origin.
+pub fn members(owner: *Persistent, auth: p.users.Auth) !p.StorageResult {
+    if (try access.check(owner, auth, false)) |reason| return .{ .failed = reason };
+    var page: p.nodes.Page = .{
+        .self = owner.node_id,
+        .committed = try @import("console_policy_candidate.zig").revision(owner),
+        .storage = owner.console_node.storage,
+    };
+    var rows = try db.query(
+        owner.db,
+        owner.gpa,
+        "SELECT node,address,console_url,version,boot,first_seen,last_seen," ++
+            "applied_revision,control_revision,applied_slot,decided_slot,draining " ++
+            "FROM console_nodes ORDER BY node LIMIT 9",
+        &.{},
+    );
+    defer rows.deinit();
+    for (rows.rows) |row| {
+        const url = row[2] orelse "";
+        page.members[page.count] = .{
+            .node = @intCast(try util.number(row[0])),
+            .address = try p.Bytes(p.nodes.max_address).init(row[1] orelse ""),
+            .console_url = try p.Bytes(p.nodes.max_url).init(
+                if (p.nodes.safeUrl(url)) url else "",
+            ),
+            .version = try p.Bytes(32).init(row[3] orelse ""),
+            .boot = try p.Bytes(32).init(row[4] orelse ""),
+            .first_seen = try util.number(row[5]),
+            .last_seen = try util.number(row[6]),
+            .applied_revision = try util.number(row[7]),
+            .control_revision = try util.number(row[8]),
+            .applied_slot = try util.number(row[9]),
+            .decided_slot = try util.number(row[10]),
+            .draining = (try util.number(row[11])) != 0,
+        };
+        page.count += 1;
+    }
+    if (try access.check(owner, auth, false)) |reason| return .{ .failed = reason };
+    return .{ .nodes_page = page };
+}
+
+/// The console's advertised origin reaches the owner thread through the mailbox so the
+/// membership writer never reads a field another thread may still be initializing.
+pub fn advertise(owner: *Persistent, url: p.Bytes(p.nodes.max_url)) !p.StorageResult {
+    if (url.len != 0 and !p.nodes.safeUrl(url.slice())) return .{ .failed = .invalid_input };
+    owner.console_node.advertise = url;
+    owner.console_node.announce = true;
+    return .command_recorded;
+}
+
 pub fn read(owner: *Persistent, input: p.nodes.Read) !p.StorageResult {
     if (try access.check(owner, input.auth, false)) |reason| return .{ .failed = reason };
     const result = try load(owner, input.id) orelse return .{ .failed = .conflict };

@@ -1,5 +1,6 @@
 //! Versioned additive schema. The owner serializes migration before serving console work.
-pub const version = 18;
+pub const version = 19;
+pub const members_v19 = @import("schema_members.zig").sql;
 pub const geo_provider_v18 = @import("schema_geo_provider.zig").sql;
 pub const policy_audit_v17 = @import("schema_policy_audit.zig").sql;
 pub const nodes_v16 = @import("schema_nodes.zig").sql;
@@ -66,6 +67,7 @@ pub const migrations = [_][]const u8{
     nodes_v16,
     policy_audit_v17,
     geo_provider_v18,
+    members_v19,
 };
 
 comptime {
