@@ -34,6 +34,9 @@ pub const App = struct {
     geo_job: @import("geoip_job.zig").Job = .{},
     geo_maintenance: @import("geoip_maintenance.zig").Maintenance = .{},
     cluster: @import("cluster_probe.zig").Probe = .{},
+    notifier: @import("notifier_job.zig").Job = .{},
+    detector: @import("notify_events.zig").Detector = .{},
+    bans_seen: u64 = 0,
     collector: ?std.Thread = null,
     stopping: std.atomic.Value(bool) = .init(false),
 
@@ -99,8 +102,13 @@ pub const App = struct {
         incidents.enabled.store(true, .release);
         errdefer incidents.enabled.store(false, .release);
         try self.cluster.init(io, &self.config);
+        self.cluster.notifier = &self.notifier;
         try self.cluster.start();
         errdefer self.cluster.stop();
+        self.notifier.app = self;
+        self.notifier.holder = .{ .node = cfg.node_id, .boot = self.history.boot };
+        try self.notifier.start();
+        errdefer self.notifier.stop();
         self.collector = try std.Thread.spawn(
             .{ .stack_size = 256 * 1024 },
             collect,
@@ -114,6 +122,7 @@ pub const App = struct {
         self.incidents.enabled.store(false, .release);
         self.stopping.store(true, .release);
         self.cluster.stop();
+        self.notifier.stop();
         self.geo_job.stop();
         if (self.collector) |thread| thread.join();
         self.geo_maintenance.stop(self.io, self.mailbox);
@@ -136,6 +145,7 @@ pub const App = struct {
             }
             self.stats.collect(self.io, self.telemetry, second, &self.geo);
             self.stats.collectIncidents(self.io, self.incidents, &self.geo, second);
+            self.observeEvents(second);
             const ms: u64 = @intCast(@max(0, @divTrunc(
                 std.Io.Clock.awake.now(self.io).nanoseconds,
                 std.time.ns_per_ms,
@@ -154,6 +164,26 @@ pub const App = struct {
             ))
                 _ = self.stats.geo_maintenance_failures.fetchAdd(1, .monotonic);
             std.Io.sleep(self.io, std.Io.Duration.fromMilliseconds(250), .awake) catch return;
+        }
+    }
+
+    /// Denial spikes and issued bans become notification events; both are counted from
+    /// atomics already maintained by the data plane, so nothing here touches a request.
+    fn observeEvents(self: *App, second: u64) void {
+        const totals = self.telemetry.totals();
+        if (self.detector.observe(second, totals.denied)) |denied| {
+            var text: [64]u8 = undefined;
+            const detail = std.fmt.bufPrint(&text, "denied {d} in 60 s", .{denied}) catch "";
+            self.notifier.raise(.denial_spike, second, detail);
+        }
+        const issued = self.metrics.bans_issued.load(.monotonic);
+        if (issued != self.bans_seen) {
+            var text: [64]u8 = undefined;
+            const detail = std.fmt.bufPrint(&text, "{d} local bans issued", .{
+                issued - self.bans_seen,
+            }) catch "";
+            self.notifier.raise(.ban, second, detail);
+            self.bans_seen = issued;
         }
     }
 
@@ -352,6 +382,18 @@ pub const App = struct {
                 identity,
             ),
             .logout => return auth.logout(self, context),
+            .settings_query,
+            .settings_change,
+            .notifications_query,
+            .notifications_save,
+            .notifications_remove,
+            .notifications_test,
+            => return @import("settings_routes.zig").handle(
+                self,
+                context,
+                identity.?,
+                route.handler,
+            ),
             .password => return auth.password(self, context, identity.?),
             .geoip => return @import("geoip_routes.zig").handle(self, context, identity.?),
             .totp => return @import("totp_routes.zig")
@@ -363,21 +405,22 @@ pub const App = struct {
                 self.metrics,
                 self.now(),
             ), &.{}),
-            .session => {
-                const user = identity.?;
-                const raw = try http.sessionToken(context);
-                const csrf = std.fmt.bytesToHex(http.csrfToken(raw), .lower);
-                return http.json(context, .{
-                    .user = p.Counter{ .value = user.actor },
-                    .role = @tagName(user.role),
-                    .must_change = user.must_change,
-                    .expires = user.expires,
-                    .totp_required = self.needsTotp(user.role, user.totp_enabled),
-                    .kiosk = user.kiosk,
-                    .csrf = @as([]const u8, &csrf),
-                }, &.{});
-            },
+            .session => return self.sessionReply(context, identity.?),
         }
+    }
+
+    fn sessionReply(self: *App, context: *http.Context, user: p.Principal) !void {
+        const raw = try http.sessionToken(context);
+        const csrf = std.fmt.bytesToHex(http.csrfToken(raw), .lower);
+        return http.json(context, .{
+            .user = p.Counter{ .value = user.actor },
+            .role = @tagName(user.role),
+            .must_change = user.must_change,
+            .expires = user.expires,
+            .totp_required = self.needsTotp(user.role, user.totp_enabled),
+            .kiosk = user.kiosk,
+            .csrf = @as([]const u8, &csrf),
+        }, &.{});
     }
 
     pub fn principal(self: *App, context: *http.Context) !?p.Principal {
