@@ -206,6 +206,8 @@ def check(binary):
     console_totp_test.check_proxy(binary, sys.modules[__name__])
     import console_notify_test
     console_notify_test.check(binary, sys.modules[__name__])
+    import console_pages_test
+    console_pages_test.check(binary, sys.modules[__name__])
     import console_kiosk_test
     console_kiosk_test.check(binary, sys.modules[__name__])
     import console_cluster_test
