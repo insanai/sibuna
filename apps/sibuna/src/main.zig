@@ -234,7 +234,10 @@ fn printConsoleHelp() void {
             "Console: --console <host:port> (requires --data-dir); " ++
             "--console-key-file <path> (64 hex characters, owner-only permissions); " ++
             "--console-origin <https-origin>; --console-behind-proxy; " ++
-            "--console-trusted-proxy <CIDR> (repeatable).\n" ++
+            "--console-trusted-proxy <CIDR> (repeatable); " ++
+            "--console-advertise <origin> (link peers show for this console); " ++
+            "--console-probe <node-id>=<http://ip:port> (repeatable peer data-plane " ++
+            "listeners to health-probe).\n" ++
             "Account CLI: sibuna console users [--after <id>]\n" ++
             "  sibuna console add-user <name> [--role viewer|operator|admin]\n" ++
             "  sibuna console set-user <id> --revision <n> " ++
