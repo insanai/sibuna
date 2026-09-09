@@ -1,4 +1,5 @@
-//! Management destinations are fixed: this increment operates only on the serving node.
+//! Local commands act only on the serving node. Membership combines replicated rows with
+//! this console's own probes of explicitly configured peer listeners.
 const std = @import("std");
 const p = @import("console_protocol");
 const App = @import("app.zig").App;
@@ -17,6 +18,7 @@ pub fn dispatch(app: *App, context: *http.Context, actor: p.Principal, kind: Han
         app.now(),
         .query,
     )) return http.fail(context, .too_many_requests, "CONSOLEQUERY");
+    if (kind == .nodes_members) return members(app, context, auth);
     const result = try app.request(switch (kind) {
         .node_status => .{ .node_status = auth },
         .node_command => .{ .node_command = try command(context, auth, app.now()) },
@@ -31,6 +33,27 @@ pub fn dispatch(app: *App, context: *http.Context, actor: p.Principal, kind: Han
             .forbidden => .forbidden,
             .invalid_input => .bad_request,
             .conflict => .conflict,
+            else => .service_unavailable,
+        }, "CONSOLENODE"),
+        else => return error.StorageUnavailable,
+    }
+}
+
+fn members(app: *App, context: *http.Context, auth: p.users.Auth) !void {
+    const result = try app.request(.{ .nodes_query = auth });
+    switch (result) {
+        .nodes_page => |page| {
+            var probes: [p.nodes.max_probes]p.nodes.Probe = undefined;
+            const count = app.cluster.snapshot(&probes);
+            return http.json(context, .{
+                .page = page,
+                .probes = probes[0..count],
+                .observed_at = app.now(),
+            }, &.{});
+        },
+        .failed => |reason| return http.fail(context, switch (reason) {
+            .unauthorized => .unauthorized,
+            .forbidden => .forbidden,
             else => .service_unavailable,
         }, "CONSOLENODE"),
         else => return error.StorageUnavailable,

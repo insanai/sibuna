@@ -33,6 +33,7 @@ pub const App = struct {
     geo: @import("geoip_generation.zig").Registry = .{},
     geo_job: @import("geoip_job.zig").Job = .{},
     geo_maintenance: @import("geoip_maintenance.zig").Maintenance = .{},
+    cluster: @import("cluster_probe.zig").Probe = .{},
     collector: ?std.Thread = null,
     stopping: std.atomic.Value(bool) = .init(false),
 
@@ -97,6 +98,9 @@ pub const App = struct {
         self.stats.incident_geo.started_at = self.now();
         incidents.enabled.store(true, .release);
         errdefer incidents.enabled.store(false, .release);
+        try self.cluster.init(io, &self.config);
+        try self.cluster.start();
+        errdefer self.cluster.stop();
         self.collector = try std.Thread.spawn(
             .{ .stack_size = 256 * 1024 },
             collect,
@@ -109,6 +113,7 @@ pub const App = struct {
     pub fn deinit(self: *App) void {
         self.incidents.enabled.store(false, .release);
         self.stopping.store(true, .release);
+        self.cluster.stop();
         self.geo_job.stop();
         if (self.collector) |thread| thread.join();
         self.geo_maintenance.stop(self.io, self.mailbox);
@@ -299,6 +304,7 @@ pub const App = struct {
         const access = @import("access_routes.zig");
         switch (route.handler) {
             .node_status,
+            .nodes_members,
             .node_command,
             .node_command_read,
             .audit_query,

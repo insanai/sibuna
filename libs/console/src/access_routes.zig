@@ -7,6 +7,7 @@ const Handler = @import("routes.zig").Handler;
 pub fn dispatch(app: *App, context: *http.Context, principal: p.Principal, kind: Handler) !void {
     switch (kind) {
         .node_status,
+        .nodes_members,
         .node_command,
         .node_command_read,
         => return @import("node_routes.zig").dispatch(

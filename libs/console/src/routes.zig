@@ -5,6 +5,7 @@ const p = @import("console_protocol");
 pub const Access = enum { public, account, full };
 pub const Handler = enum {
     node_status,
+    nodes_members,
     node_command,
     node_command_read,
     audit_query,
@@ -54,6 +55,13 @@ const table = [_]Route{
         .method = .GET,
         .access = .full,
         .handler = .node_status,
+    },
+    .{
+        .path = "/console/api/nodes",
+        .method = .GET,
+        .access = .full,
+        .token_scope = .stats_read,
+        .handler = .nodes_members,
     },
     .{
         .path = "/console/api/nodes/command",
