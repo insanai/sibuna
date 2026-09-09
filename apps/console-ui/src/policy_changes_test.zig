@@ -84,13 +84,83 @@ test "policy change table escapes values, omits unchanged fields and disables no
     try manager.review.set("{\"id\":\"a\",\"name\":\"<script>\",\"action\":\"deny\"}");
     var buffer: [8192]u8 = undefined;
     var writer: std.Io.Writer = .fixed(&buffer);
-    try @import("policy_changes.zig").render(&writer, manager, false);
+    try @import("policy_changes.zig").render(&writer, &state);
     try t.expect(std.mem.indexOf(u8, writer.buffered(), "&lt;script&gt;") != null);
     try t.expect(std.mem.indexOf(u8, writer.buffered(), "<script>") == null);
     try t.expect(std.mem.indexOf(u8, writer.buffered(), "scope=\"row\">Priority") == null);
     try manager.review.set(baseline);
     writer = .fixed(&buffer);
-    try @import("policy_changes.zig").render(&writer, manager, false);
+    try @import("policy_changes.zig").render(&writer, &state);
     try t.expect(std.mem.indexOf(u8, writer.buffered(), "No field changes") != null);
     try t.expect(std.mem.indexOf(u8, writer.buffered(), "disabled>Confirm save") != null);
+}
+
+test "audit policy selection owns its target and respects operator authorization" {
+    var state: State = undefined;
+    try setup(&state);
+    state.phase = .audit;
+    state.audit.has_detail = true;
+    state.audit.detail = .{ .row = .{
+        .id = 19,
+        .subject = 3,
+        .action = try p.Bytes(48).init("policy.edit"),
+        .target = try p.Bytes(128).init("a"),
+    } };
+    var commands: Commands = .{};
+    var generation: u32 = 0;
+    var controller: Controller = .{
+        .state = &state,
+        .out = commands.out(),
+        .generation = &generation,
+    };
+    try state.role.set("viewer");
+    try t.expect(try controller.fromAudit("audit-policy-review"));
+    try t.expectEqual(.audit, state.phase);
+    try t.expectEqual(@as(usize, 0), commands.writer.buffered().len);
+    try state.role.set("operator");
+    controller.out = commands.out();
+    try t.expect(try controller.fromAudit("audit-policy-review"));
+    try t.expectEqual(.policies, state.phase);
+    try state.audit.detail.row.target.?.set("different");
+    try t.expectEqualStrings("a", state.policies.manager.id.slice());
+    try t.expectEqualStrings("3", state.policies.manager.historical.slice());
+    try t.expect(state.policies.busy and state.policies.manager.active);
+    try t.expect(std.mem.indexOf(u8, commands.writer.buffered(), "managed-baseline-") != null);
+    try t.expect(std.mem.indexOf(u8, commands.writer.buffered(), "expected_revision") == null);
+}
+
+test "reloading after a conflict keeps the reviewed draft and requires the new revision" {
+    var state: State = undefined;
+    try setup(&state);
+    var commands: Commands = .{};
+    var generation: u32 = 0;
+    const parsed = try std.json.parseFromSlice(std.json.Value, t.allocator, fields, .{});
+    defer parsed.deinit();
+    try action(&state, "managed-save", parsed.value, &commands, &generation);
+    const reviewed = state.policies.manager.review;
+    state.policies.stale = true;
+    try action(&state, "managed-rebase", .null, &commands, &generation);
+    try t.expect(std.mem.indexOf(u8, commands.writer.buffered(), "managed-rebase-") != null);
+    const response = "{\"committed\":\"8\",\"document\":" ++
+        "\"{\\\"id\\\":\\\"a\\\",\\\"name\\\":\\\"A\\\",\\\"action\\\":\\\"deny\\\"," ++
+        "\\\"priority\\\":103}\"}";
+    const reply = try std.json.parseFromSlice(std.json.Value, t.allocator, response, .{});
+    defer reply.deinit();
+    const controller: Controller = .{
+        .state = &state,
+        .out = commands.out(),
+        .generation = &generation,
+    };
+    state.policies.busy = false;
+    try controller.response("managed-rebase-2", reply.value);
+    try t.expect(!state.policies.stale);
+    try t.expectEqualStrings(reviewed.slice(), state.policies.manager.review.slice());
+    try t.expectEqualStrings("8", state.policies.manager.committed.slice());
+    var output: [8192]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&output);
+    try @import("policy_changes.zig").render(&writer, &state);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "103") != null);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "101") != null);
+    try action(&state, "managed-confirm", .null, &commands, &generation);
+    try t.expect(std.mem.indexOf(u8, commands.writer.buffered(), "\"expected_revision\":\"8\"") != null);
 }

@@ -95,8 +95,7 @@ fn editor(state: *const @import("state.zig").State, w: *Writer) Writer.Error!voi
         });
     }
     if (model.review.len != 0) {
-        try @import("policy_changes.zig").render(w, model, state.policies.busy or
-            state.policies.testing or state.policies.stale);
+        try @import("policy_changes.zig").render(w, state);
         return html.render(w, "</section>", .{});
     }
     try html.render(w, "<form id=\"policy-run\" class=\"sb-settings-form sb-policy-form\">", .{});

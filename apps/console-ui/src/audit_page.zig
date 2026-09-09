@@ -31,7 +31,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     });
     if (model.busy) try html.render(w, "<p role=\"status\">Loading audit records…</p>", .{});
     if (model.loaded) try catalog(state, w);
-    if (model.has_detail) try detail(&model.detail, w);
+    if (model.has_detail) try detail(state, w);
     try html.render(w, "</main>", .{});
 }
 
@@ -84,7 +84,8 @@ fn catalog(state: *const State, w: *Writer) Writer.Error!void {
     try html.render(w, "</section>", .{});
 }
 
-fn detail(value: *const p.audit.Detail, w: *Writer) Writer.Error!void {
+fn detail(state: *const State, w: *Writer) Writer.Error!void {
+    const value = &state.audit.detail;
     try html.render(w, @embedFile("snippets/audit-detail.html"), .{
         .id = value.row.id,
         .action = value.row.action.slice(),
@@ -112,5 +113,12 @@ fn detail(value: *const p.audit.Detail, w: *Writer) Writer.Error!void {
             );
         try html.render(w, "</article>", .{});
     }
-    try html.render(w, "</div></section>", .{});
+    try html.render(w, "</div>", .{});
+    if (state.allows(.manage_policy) and value.row.policyRevision() != null) try html.render(
+        w,
+        "<button class=\"btn my-3\" data-action=\"audit-policy-review\">" ++
+            "Review policy revision</button>",
+        .{},
+    );
+    try html.render(w, "</section>", .{});
 }

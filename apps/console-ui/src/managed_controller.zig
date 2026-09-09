@@ -8,6 +8,37 @@ pub const Controller = struct {
     out: @import("transport.zig").Outbox,
     generation: *u32,
 
+    pub fn fromAudit(self: Controller, name: []const u8) !bool {
+        if (!equal(name, "audit-policy-review")) return false;
+        const state = self.state;
+        if (state.phase != .audit or !state.allows(.manage_policy) or
+            state.audit.busy or !state.audit.has_detail) return true;
+        const selected = state.audit.detail.row.policyRevision() orelse return true;
+        const model = &state.policies;
+        const manager = &model.manager;
+        state.phase = .policies;
+        state.message = .{};
+        model.busy = false;
+        model.testing = false;
+        model.decision = .{};
+        manager.active = true;
+        manager.view = .history;
+        manager.snapshot = .{};
+        manager.baseline = .{};
+        manager.review = .{};
+        manager.id = selected.id;
+        const revision = try std.fmt.bufPrint(
+            &manager.historical.data,
+            "{d}",
+            .{selected.revision},
+        );
+        manager.historical.len = revision.len;
+        try self.out.emit(.{ .op = "disconnect" });
+        // Obtain today's document and revision before requesting the immutable history row.
+        try self.post("baseline", .{ .kind = "document", .id = manager.id.slice() });
+        return true;
+    }
+
     pub fn action(self: Controller, name: []const u8, fields: std.json.Value) !bool {
         const state = self.state;
         if (!state.fullAccess() or state.phase != .policies or
@@ -16,7 +47,8 @@ pub const Controller = struct {
         const manager = &model.manager;
         if (model.busy or model.testing) return true;
         if (manager.review.len != 0 and !equal(name, "managed-confirm") and
-            !equal(name, "managed-back") and !equal(name, "managed-refresh")) return true;
+            !equal(name, "managed-back") and !equal(name, "managed-refresh") and
+            !equal(name, "managed-rebase")) return true;
         manager.active = true;
         state.message = .{};
         model.decision = .{};
@@ -82,6 +114,10 @@ pub const Controller = struct {
         } else if (equal(name, "managed-back")) {
             manager.review = .{};
             try self.out.emit(.{ .op = "focus", .selector = "#managed-editor", .top = true });
+        } else if (equal(name, "managed-rebase")) {
+            if (!state.allows(.manage_policy) or !model.stale or
+                manager.review.len == 0 or manager.baseline.len == 0) return true;
+            try self.post("rebase", .{ .kind = "document", .id = manager.id.slice() });
         } else if (equal(name, "managed-confirm")) {
             if (!state.allows(.manage_policy) or model.stale or
                 manager.review.len == 0) return true;
@@ -214,6 +250,13 @@ pub const Controller = struct {
         _ = try std.fmt.parseInt(u64, revision, 10);
         manager.committed = try p.Bytes(20).init(revision);
         model.stale = false;
+        if (std.mem.startsWith(u8, id, "managed-rebase-")) {
+            try manager.baseline.set(string(body, "document"));
+            self.message(
+                "Current rule reloaded. Review the updated comparison before confirming.",
+            );
+            return self.out.emit(.{ .op = "focus", .selector = "#policy-change-review" });
+        }
         if (std.mem.startsWith(u8, id, "managed-baseline-")) {
             try manager.baseline.set(string(body, "document"));
             return self.post("document", .{

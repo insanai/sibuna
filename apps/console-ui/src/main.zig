@@ -213,6 +213,7 @@ fn action(value: std.json.Value) !void {
     }
     const fields = field(value, "fields") orelse .null;
     const management = @import("management_controller.zig");
+    if (try managed().fromAudit(name)) return;
     if (try management.action(&state, name, fields, outbox())) return;
     if (try managed().transfer(name, fields)) return;
     if (try managed().inspection(name, fields)) return;

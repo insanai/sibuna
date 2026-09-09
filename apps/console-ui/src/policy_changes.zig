@@ -4,7 +4,7 @@ const std = @import("std");
 const html = @import("html");
 const Form = @import("policy_form.zig").Form;
 const Writer = std.Io.Writer;
-const Model = @import("policy_manager.zig").Model;
+const State = @import("state.zig").State;
 const Change = struct { label: []const u8, before: []const u8, after: []const u8 };
 const fields = .{
     "id",
@@ -54,7 +54,10 @@ fn changes(before: ?*const Form, after: *const Form, output: *[fields.len]Change
     return output[0..count];
 }
 
-pub fn render(w: *Writer, model: *const Model, disabled: bool) Writer.Error!void {
+pub fn render(w: *Writer, state: *const State) Writer.Error!void {
+    const model = &state.policies.manager;
+    const busy = state.policies.busy or state.policies.testing;
+    const disabled = busy or state.policies.stale or !state.allows(.manage_policy);
     var before: Form = undefined;
     var after: Form = undefined;
     after.load(model.review.slice()) catch return unavailable(w);
@@ -80,9 +83,23 @@ pub fn render(w: *Writer, model: *const Model, disabled: bool) Writer.Error!void
         "<tr><td colspan=\"3\">No field changes. Return to the editor to make a change.</td></tr>",
         .{},
     );
+    try html.render(w, "</tbody></table></div>", .{});
+    if (state.policies.stale and state.allows(.manage_policy)) {
+        if (model.baseline.len != 0) {
+            try html.render(w, @embedFile("snippets/policy-change-rebase.html"), .{
+                .busy = if (busy) " disabled" else "",
+            });
+        } else try html.render(
+            w,
+            "<p>Return to the editor and export this new draft before refreshing " ++
+                "Managed rules. " ++
+                "Re-import it after reviewing the current catalog.</p>",
+            .{},
+        );
+    }
     try html.render(w, @embedFile("snippets/policy-change-actions.html"), .{
         .confirm = if (disabled or changed.len == 0) " disabled" else "",
-        .back = if (disabled) " disabled" else "",
+        .back = if (busy) " disabled" else "",
     });
 }
 
