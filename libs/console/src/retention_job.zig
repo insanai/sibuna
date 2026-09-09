@@ -65,7 +65,8 @@ pub const Job = struct {
         self.kind = switch (self.kind) {
             .incidents => .audit,
             .audit => .sessions,
-            .sessions => .incidents,
+            .sessions => .kiosk_grants,
+            .kiosk_grants => .incidents,
         };
     }
 

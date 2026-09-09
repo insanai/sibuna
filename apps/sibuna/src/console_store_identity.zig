@@ -35,10 +35,13 @@ fn principal(row: []const ?[]const u8) !p.Principal {
     if (scopes > p.tokens.known_scopes or
         (token_id != null and !p.tokens.validScopes(@intCast(scopes), role)))
         return error.InvalidStoredValue;
+    const kiosk = std.mem.eql(u8, row[11] orelse return error.InvalidStoredValue, "kiosk");
+    if (kiosk and token_id != null) return error.InvalidStoredValue;
     return .{
         .actor = try util.number(row[0]),
         .username = try p.Bytes(64).init(row[6].?),
-        .role = role,
+        .role = if (kiosk) .viewer else role,
+        .kiosk = kiosk,
         .account_role = std.meta.stringToEnum(p.Role, row[10].?) orelse
             return error.InvalidStoredValue,
         .revision = try util.number(row[2]),
@@ -47,7 +50,7 @@ fn principal(row: []const ?[]const u8) !p.Principal {
         .must_change = try util.number(row[5]) != 0,
         .totp_enabled = try util.number(row[7]) != 0,
         .token_id = token_id,
-        .scopes = @intCast(scopes),
+        .scopes = if (kiosk) p.tokens.Scope.stats_read.bit() else @intCast(scopes),
     };
 }
 
@@ -55,7 +58,7 @@ const sql =
     "SELECT u.id,COALESCE(t.role,u.role),u.revision,s.expires,s.csrf_digest," ++
     "u.must_change,u.username," ++
     "EXISTS(SELECT 1 FROM console_totp m WHERE m.user_id=u.id AND m.enabled=1)," ++
-    "s.token_id,CASE WHEN s.token_id IS NULL THEN ? ELSE t.scopes END,u.role " ++
+    "s.token_id,CASE WHEN s.token_id IS NULL THEN ? ELSE t.scopes END,u.role,s.kind " ++
     "FROM console_sessions s JOIN console_users u ON u.id=s.user_id " ++
     "LEFT JOIN console_tokens t ON t.id=s.token_id " ++
     "WHERE s.digest=? AND s.expires>? AND s.idle_expires>? AND s.revision=u.revision " ++

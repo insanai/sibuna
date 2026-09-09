@@ -31,12 +31,15 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
     const retention = @import("console_store_retention.zig");
     const geo = @import("console_store_geo.zig");
     const tokens = @import("console_store_tokens.zig");
+    const kiosk = @import("console_store_kiosk.zig");
     return switch (request) {
         .node_status => |auth| @import("console_node_read.zig").status(owner, auth),
         .node_command_read => |input| @import("console_node_read.zig").read(owner, input),
         .node_command => |input| @import("console_node_commands.zig").execute(owner, input),
         .nodes_query => |auth| @import("console_node_read.zig").members(owner, auth),
         .node_advertise => |url| @import("console_node_read.zig").advertise(owner, url),
+        .kiosk_grant => |input| kiosk.grant(owner, input, owner.nowSeconds()),
+        .kiosk_exchange => |input| kiosk.exchange(owner, input, owner.nowSeconds()),
         .audit_query => |input| @import("console_store_audit.zig").query(owner, input),
         .audit_read => |input| @import("console_store_audit.zig").read(owner, input),
         .tokens_query => |input| tokens.query(owner, input),

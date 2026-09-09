@@ -141,6 +141,7 @@ fn kindCount(fx: *Fixture, kind: r.Kind, expected: u64) !void {
     const sql = switch (kind) {
         .audit => "SELECT COUNT(*) FROM console_audit WHERE action='test'",
         .sessions => "SELECT COUNT(*) FROM console_sessions",
+        .kiosk_grants => "SELECT COUNT(*) FROM console_kiosk_grants",
         .incidents => unreachable,
     };
     var rows = try fx.owner.db.query(t.allocator, sql);

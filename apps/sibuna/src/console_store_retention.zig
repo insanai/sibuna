@@ -55,7 +55,7 @@ pub fn prune(owner: *Persistent, input: r.Prune, now: u64) !p.StorageResult {
     const seconds: u64 = switch (input.kind) {
         .incidents => r.incident_days * std.time.s_per_day,
         .audit => r.audit_days * std.time.s_per_day,
-        .sessions => 0,
+        .sessions, .kiosk_grants => 0,
     };
     const cutoff = now -| seconds;
     const boot = std.fmt.bytesToHex(input.lease.holder.boot, .lower);
@@ -80,5 +80,8 @@ fn statement(kind: r.Kind) []const u8 {
         .sessions => "DELETE FROM console_sessions WHERE digest IN(SELECT digest " ++
             "FROM console_sessions WHERE MIN(expires,idle_expires)<=? " ++
             "ORDER BY MIN(expires,idle_expires),digest LIMIT 16)" ++ guard,
+        .kiosk_grants => "DELETE FROM console_kiosk_grants WHERE digest IN(SELECT digest " ++
+            "FROM console_kiosk_grants WHERE use_by<=? OR consumed_at IS NOT NULL " ++
+            "ORDER BY use_by,digest LIMIT 16)" ++ guard,
     };
 }
