@@ -152,6 +152,7 @@ pub const StorageRequest = union(enum) {
     notifications_enqueue: notifications.Enqueue,
     notifications_claim: notifications.Claim,
     notifications_record: notifications.Record,
+    notifications_test_audit: notifications.TestAudit,
     page_read: pages.Read,
     page_edit: pages.Edit,
     policy_order: workflows.Order,

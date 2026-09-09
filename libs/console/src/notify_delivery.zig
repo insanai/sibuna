@@ -165,7 +165,7 @@ fn sysLog(app: *App, dest: n.Destination, event: n.Pending) anyerror!u16 {
         @tagName(event.event),
         event.detail.slice(),
     );
-    if (std.mem.endsWith(u8, dest.label.slice(), "tcp")) {
+    if (dest.transport == .tcp) {
         const started = std.Io.Clock.awake.now(app.io).nanoseconds;
         const stream = try net.connect.boundedDeadline(app.io, address, started + deadline_ns);
         defer stream.close(app.io);

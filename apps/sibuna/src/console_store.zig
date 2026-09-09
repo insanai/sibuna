@@ -52,6 +52,7 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
         .notifications_enqueue,
         .notifications_claim,
         .notifications_record,
+        .notifications_test_audit,
         => @import("console_store_notifications.zig").execute(owner, request),
         .audit_query => |input| @import("console_store_audit.zig").query(owner, input),
         .audit_read => |input| @import("console_store_audit.zig").read(owner, input),

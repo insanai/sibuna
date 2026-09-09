@@ -127,6 +127,10 @@ fn save(state: *State, fields: std.json.Value, out: Outbox) !void {
         else
             "0",
         .kind = string(fields, "kind"),
+        .transport = if (equal(u8, string(fields, "kind"), "syslog"))
+            string(fields, "transport")
+        else
+            "udp",
         .label = string(fields, "label"),
         .target = string(fields, "target"),
         .secret = string(fields, "secret"),
@@ -199,7 +203,17 @@ pub fn response(
         .testing => {
             const delivered = @import("events_state.zig").field(body, "delivered");
             model.result_ok = delivered != null and delivered.? == .bool and delivered.?.bool;
-            try model.result.set(string(body, "detail"));
+            const audited = @import("events_state.zig").field(body, "audit_recorded");
+            if (audited != null and audited.? == .bool and audited.?.bool) {
+                try model.result.set(string(body, "detail"));
+            } else {
+                try model.result.set(if (model.result_ok)
+                    "Delivered; the audit completion is unconfirmed. Check Audit before retrying."
+                else
+                    "Delivery failed; the audit completion is unconfirmed.");
+                model.result_ok = false;
+            }
+            try query(state, out, .query);
         },
         .save, .remove, .setting_change => {
             // A threshold save keeps the open destination; saves and removals close it.

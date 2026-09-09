@@ -93,6 +93,7 @@ const Form = struct {
     id: ?u64 = null,
     expected_revision: u64 = 0,
     kind: n.Kind,
+    transport: n.Transport = .udp,
     label: []const u8,
     target: []const u8,
     secret: []const u8 = "",
@@ -127,6 +128,7 @@ fn saveDestination(app: *App, context: *http.Context, auth: p.users.Auth) !void 
         .id = form.id,
         .expected_revision = form.expected_revision,
         .kind = form.kind,
+        .transport = form.transport,
         .label = p.Bytes(n.max_label).init(form.label) catch
             return http.fail(context, .bad_request, "CONSOLESETTINGS"),
         .target = p.Bytes(n.max_target).init(form.target) catch
@@ -168,8 +170,7 @@ fn removeDestination(app: *App, context: *http.Context, auth: p.users.Auth) !voi
     } }));
 }
 
-/// Delivers a synthetic event now and reports the outcome; the audit row is written by
-/// the owner as part of the destination's last-attempt update.
+/// Record intent before the external request, then report completion separately.
 fn testDestination(app: *App, context: *http.Context, auth: p.users.Auth) !void {
     var body: [256]u8 = undefined;
     var memory: [512]u8 = undefined;
@@ -185,6 +186,15 @@ fn testDestination(app: *App, context: *http.Context, auth: p.users.Auth) !void 
     const destination = for (rows) |row| {
         if (row.id == parsed.value.id) break row;
     } else return http.fail(context, .not_found, "CONSOLESETTINGS");
+    var audit: n.TestAudit = .{
+        .auth = auth,
+        .destination = destination.id,
+        .revision = destination.revision,
+        .operation = undefined,
+    };
+    app.io.random(&audit.operation);
+    const intent = try app.request(.{ .notifications_test_audit = audit });
+    if (intent != .command_recorded) return reply(context, intent);
     const outcome = @import("notify_delivery.zig").deliver(app, .{
         .destination = destination,
         .event = .{
@@ -197,8 +207,13 @@ fn testDestination(app: *App, context: *http.Context, auth: p.users.Auth) !void 
         },
         .read = .{ .auth = auth, .id = parsed.value.id, .revision = destination.revision },
     });
+    audit.outcome = if (outcome.delivered) .delivered else .failed;
+    audit.detail = outcome.detail;
+    const completion: ?p.StorageResult =
+        app.request(.{ .notifications_test_audit = audit }) catch null;
     return http.json(context, .{
         .delivered = outcome.delivered,
         .detail = outcome.detail.slice(),
+        .audit_recorded = completion != null and completion.? == .command_recorded,
     }, &.{});
 }

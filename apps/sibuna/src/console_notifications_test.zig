@@ -321,7 +321,7 @@ test "v23 queue migration preserves completed events and replays without duplica
         t.allocator,
         "INSERT INTO console_notifications(kind,label,target,target_host,events," ++
             "cooldown_seconds,created_by,created_at,modified_by,modified_at) " ++
-            "VALUES('webhook','ops','https://hooks.example/','hooks.example',15,0,1,100,1,100);" ++
+            "VALUES('syslog','ops-tcp','127.0.0.1:1514','127.0.0.1',15,0,1,100,1,100);" ++
             "INSERT INTO console_notification_events(node,boot,sequence,event,raised_at," ++
             "detail,attempts,delivered_at) " ++
             "VALUES(1,printf('%032x',3),1,'ban',100,'old',8,NULL)," ++
@@ -344,6 +344,7 @@ test "v23 queue migration preserves completed events and replays without duplica
     const lease = try acquire(fx, 102);
     const migrated = (try claim(fx, lease, 102)).?;
     try t.expectEqualStrings("old", migrated.event.detail.slice());
+    try t.expectEqual(n.Transport.tcp, migrated.destination.transport);
     try t.expect((try record(fx, lease, migrated, true, 102)) == .command_recorded);
     try t.expect(try claim(fx, lease, 102) == null);
 }

@@ -43,7 +43,8 @@ pub fn validateWebhook(url: []const u8) Error!Webhook {
     if (literal) |address| {
         if (!addressAllowed(address, scheme == .http)) return error.InvalidTarget;
     } else if (scheme == .http) return error.InvalidTarget;
-    if (scheme == .https and port != 443 and port != 8443 and port < 1024)
+    if ((scheme == .https and port != 443 and port != 8443) or
+        (scheme == .http and port < 1024))
         return error.InvalidTarget;
     var path_buffer: [256]u8 = undefined;
     const raw_path = uri.path.toRaw(&path_buffer) catch return error.InvalidTarget;
@@ -75,7 +76,7 @@ pub fn validateSyslog(text: []const u8) Error!Endpoint {
     const port = std.fmt.parseInt(u16, text[colon + 1 ..], 10) catch return error.InvalidTarget;
     if (port == 0) return error.InvalidTarget;
     if (std.Io.net.IpAddress.parse(host, port) catch null) |address| {
-        if (linkLocalOrMetadata(address)) return error.InvalidTarget;
+        if (!addressAllowed(address, true)) return error.InvalidTarget;
     }
     return .{ .host = host, .port = port };
 }
@@ -84,13 +85,6 @@ pub fn validateSyslog(text: []const u8) Error!Endpoint {
 /// syslog collectors on the same host). Private, link-local and metadata ranges never are.
 pub fn addressAllowed(address: std.Io.net.IpAddress, loopback_ok: bool) bool {
     return outbound.allowed(address, if (loopback_ok) .loopback_allowed else .public_only);
-}
-
-fn linkLocalOrMetadata(address: std.Io.net.IpAddress) bool {
-    return switch (address) {
-        .ip4 => |a| a.bytes[0] == 169 and a.bytes[1] == 254,
-        .ip6 => |a| a.bytes[0] == 0xfe and a.bytes[1] & 0xc0 == 0x80,
-    };
 }
 
 test "webhook targets are https to public hosts or http to loopback literals" {
@@ -103,9 +97,17 @@ test "webhook targets are https to public hosts or http to loopback literals" {
     try t.expectEqual(Scheme.http, local.scheme);
     try t.expectEqual(@as(u16, 8099), local.port);
     for ([_][]const u8{
-        "http://hooks.example/x",   "https://user@hooks.example/x", "https://10.0.0.1/x",
-        "https://169.254.169.254/", "ftp://hooks.example/x",        "https://hooks.example:22/x",
-        "https://[fe80::1]/x",      "https://hooks.example/x#frag", "",
+        "http://hooks.example/x",
+        "https://user@hooks.example/x",
+        "https://10.0.0.1/x",
+        "https://169.254.169.254/",
+        "ftp://hooks.example/x",
+        "https://hooks.example:22/x",
+        "https://[fe80::1]/x",
+        "https://hooks.example/x#frag",
+        "",
+        "https://hooks.example:9443/x",
+        "http://127.0.0.1:80/hook",
     }) |bad| try t.expectError(error.InvalidTarget, validateWebhook(bad));
 }
 
@@ -115,7 +117,14 @@ test "syslog endpoints need a host and port and never link-local space" {
     try t.expectEqualStrings("logs.example", endpoint.host);
     try t.expectEqual(@as(u16, 514), endpoint.port);
     try t.expectEqualStrings("::1", (try validateSyslog("[::1]:1514")).host);
-    for ([_][]const u8{ "logs.example", ":514", "169.254.1.1:514", "a b:514", "x:0" }) |bad|
+    for ([_][]const u8{
+        "logs.example",
+        ":514",
+        "169.254.1.1:514",
+        "a b:514",
+        "x:0",
+        "10.0.0.1:514",
+    }) |bad|
         try t.expectError(error.InvalidTarget, validateSyslog(bad));
 }
 

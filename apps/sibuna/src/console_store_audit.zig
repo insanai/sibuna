@@ -65,6 +65,7 @@ pub fn read(owner: *Persistent, input: a.Read) !p.StorageResult {
                 &@field(detail, field).?,
                 source,
                 &coverage,
+                detail.row.action.slice(),
             );
             @field(detail, field ++ "_truncated") = coverage.truncated;
             @field(detail, field ++ "_redacted") = coverage.redacted;

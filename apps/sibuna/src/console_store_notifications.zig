@@ -9,7 +9,7 @@ const db = @import("console_database.zig");
 const util = @import("console_store.zig");
 const settings = @import("console_store_settings.zig");
 pub const columns = "id,revision,kind,label,target,target_host,secret_envelope IS NOT NULL," ++
-    "events,cooldown_seconds,enabled,last_attempt_at,last_outcome,last_detail";
+    "events,cooldown_seconds,enabled,last_attempt_at,last_outcome,last_detail,transport";
 
 pub fn row(cells: []const ?[]const u8) !n.Destination {
     return .{
@@ -26,6 +26,8 @@ pub fn row(cells: []const ?[]const u8) !n.Destination {
         .last_attempt_at = if (cells[10] != null) try util.number(cells[10]) else null,
         .last_outcome = if (cells[11]) |value| std.meta.stringToEnum(n.Outcome, value) else null,
         .last_detail = try p.Bytes(n.max_detail).init(cells[12] orelse ""),
+        .transport = std.meta.stringToEnum(n.Transport, cells[13].?) orelse
+            return error.InvalidStoredValue,
     };
 }
 
@@ -75,7 +77,8 @@ pub fn save(owner: *Persistent, input: n.Save, now: u64) !p.StorageResult {
             owner.db,
             owner.gpa,
             // An envelope is bound to its target: a retarget without a new secret drops it.
-            "UPDATE console_notifications SET kind=?,label=?,target=?,target_host=?," ++
+            "UPDATE console_notifications SET kind=?,transport=?,label=?," ++
+                "target=?,target_host=?," ++
                 "secret_envelope=CASE WHEN ?=1 THEN NULL WHEN ? IS NULL THEN " ++
                 "(CASE WHEN target=excluded_target.value THEN secret_envelope ELSE NULL END) " ++
                 "ELSE ? END,events=?,cooldown_seconds=?,enabled=?,revision=revision+1," ++
@@ -83,6 +86,7 @@ pub fn save(owner: *Persistent, input: n.Save, now: u64) !p.StorageResult {
                 "WHERE id=? AND revision=?",
             &.{
                 util.text(@tagName(input.kind)),
+                util.text(@tagName(input.transport)),
                 util.text(input.label.slice()),
                 util.text(input.target.slice()),
                 util.text(input.target_host.slice()),
@@ -105,16 +109,18 @@ pub fn save(owner: *Persistent, input: n.Save, now: u64) !p.StorageResult {
     _ = db.exec(
         owner.db,
         owner.gpa,
-        "INSERT INTO console_notifications(kind,label,target,target_host,secret_envelope," ++
+        "INSERT INTO console_notifications(kind,transport,label,target,target_host," ++
+            "secret_envelope," ++
             "events,cooldown_seconds,enabled,created_by,created_at,modified_by,modified_at) " ++
-            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
         &.{
-            util.text(@tagName(input.kind)),      util.text(input.label.slice()),
-            util.text(input.target.slice()),      util.text(input.target_host.slice()),
-            optional(envelope),                   util.integer(input.events),
-            util.integer(input.cooldown_seconds), util.integer(@intFromBool(input.enabled)),
-            util.integer(actor),                  util.integer(now),
-            util.integer(actor),                  util.integer(now),
+            util.text(@tagName(input.kind)),           util.text(@tagName(input.transport)),
+            util.text(input.label.slice()),            util.text(input.target.slice()),
+            util.text(input.target_host.slice()),      optional(envelope),
+            util.integer(input.events),                util.integer(input.cooldown_seconds),
+            util.integer(@intFromBool(input.enabled)), util.integer(actor),
+            util.integer(now),                         util.integer(actor),
+            util.integer(now),
         },
     ) catch return .{ .failed = .capacity };
     var rows = try db.query(
@@ -210,6 +216,39 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
         .notifications_enqueue => |input| queue.enqueue(owner, input),
         .notifications_claim => |input| queue.claim(owner, input, now),
         .notifications_record => |input| queue.record(owner, input, now),
+        .notifications_test_audit => |input| testAudit(owner, input, now),
         else => unreachable,
     };
+}
+
+/// A network test is not atomic with storage. Keep separate correlated intent and outcome
+/// rows; an unconfirmed completion leaves the intent available for investigation.
+fn testAudit(owner: *Persistent, input: n.TestAudit, now: u64) !p.StorageResult {
+    if (input.revision == 0 or input.revision > std.math.maxInt(i64) or
+        input.destination > std.math.maxInt(i64) or
+        std.mem.allEqual(u8, &input.operation, 0)) return .{ .failed = .invalid_input };
+    const actor = try settings.admin(owner, input.auth, now) orelse
+        return .{ .failed = .forbidden };
+    const operation = std.fmt.bytesToHex(input.operation, .lower);
+    const outcome = if (input.outcome) |value| @tagName(value) else "started";
+    const action = if (input.outcome == null) "notification.test" else "notification.test_result";
+    const changed = try db.exec(
+        owner.db,
+        owner.gpa,
+        "INSERT INTO console_audit(actor,actor_role,action,subject,target,recorded_at," ++
+            "after_summary) SELECT ?,'admin',?,id,label,?,json_object('operation',?," ++
+            "'revision',revision,'outcome',?,'detail',?) FROM console_notifications " ++
+            "WHERE id=? AND revision=?",
+        &.{
+            util.integer(actor),
+            util.text(action),
+            util.integer(now),
+            util.text(&operation),
+            util.text(outcome),
+            util.text(input.detail.slice()),
+            util.integer(input.destination),
+            util.integer(input.revision),
+        },
+    );
+    return if (changed == 0) .{ .failed = .conflict } else .command_recorded;
 }

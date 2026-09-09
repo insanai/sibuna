@@ -3,6 +3,11 @@
     <select id="destination-kind" name="kind" class="select select-bordered">
         <option value="webhook"{{ webhook }}>Webhook (HTTPS POST)</option>
         <option value="syslog"{{ syslog }}>Syslog (host:port)</option></select>
+    <label for="destination-transport">Syslog transport</label>
+    <select id="destination-transport" name="transport" class="select select-bordered">
+        <option value="udp"{{ udp }}>UDP datagrams</option>
+        <option value="tcp"{{ tcp }}>TCP (octet framed)</option></select>
+    <p class="sb-note">For outbound syslog notifications only. Webhooks use HTTPS (local HTTP for testing). This does not change protected web traffic.</p>
     <label for="destination-label">Label</label>
     <input id="destination-label" name="label" class="input input-bordered" maxlength="64" required value="{{ label }}">
     <label for="destination-target">Target</label>

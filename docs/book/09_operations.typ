@@ -139,6 +139,9 @@ Each destination has its own cooldown and three-attempt retry budget. Delivery a
 show outcomes; completed queue history is bounded to seven days and 4,096 events. Webhooks
 include a stable `Idempotency-Key` so receivers can suppress repeated effects after uncertain
 network completion.
+Syslog's UDP/TCP selection applies only to outbound notifications, independently of protected
+web traffic. Manual tests record intent and completion in Audit and refresh the destination
+outcome; an unconfirmed audit completion is shown explicitly before an operator retries.
 
 Response pages (challenge, denied, rate limited, banned, overloaded) are editable under
 Settings as bounded HTML with fixed placeholders; drafts preview in a sandboxed tab and

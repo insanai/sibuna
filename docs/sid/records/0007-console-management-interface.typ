@@ -3599,6 +3599,9 @@ as `X-Sibuna-Signature: sha256=HMAC(secret, body)`; syslog lines follow RFC 5424
 facility local0 and the node as the host. `POST /console/api/notifications/test` delivers
 synchronously with the administrator's authority and reports the outcome.
 
+The scheduling and manual-test behavior above is historical. The schema 24 and 25
+corrections below replace batch retries, label-derived transport and unaudited test delivery.
+
 Evidence: unit tests cover target validation (each rejected shape), the syslog formatter
 and framing, the detector (minimum, factor, gap handling, re-arming) and the sealed
 envelope (wrong subject and altered bytes fail). Storage-tick tests cover destination
@@ -3888,6 +3891,31 @@ three-attempt recovery, retargeting, transactional audit failure and child-row r
 The live regression generates two distinct bans: fast and delayed destinations each receive
 two successful deliveries, while an HTTP 500 destination receives exactly three attempts per
 event with stable idempotency keys. Audit investigation follows pagination to all ten outcomes.
+
+== Explicit notification transport and test receipts (2026-09-09)
+
+Schema 25 stores syslog transport independently of its label. The Settings form offers UDP
+and octet-framed TCP; changing a label cannot change transport. Migration preserves the old
+case-sensitive `tcp` suffix convention once for existing destinations. Destination create
+and change audit summaries include the selected transport without disclosing secrets.
+Webhook validation enforces the specified HTTPS ports 443/8443 and unprivileged loopback
+HTTP ports; syslog validation refuses private non-loopback literals before storage.
+
+Manual test delivery first commits a redacted intent under administrator authorization and
+the destination revision. Completion uses the same opaque operation identifier, rechecks
+authorization and revision, and updates the destination outcome in the audit transaction.
+The network effect remains separate: if completion cannot be recorded, the response and
+interface explicitly report an unconfirmed audit completion. Refreshing the table after a
+test exposes the latest recorded outcome. Live regression coverage includes signed webhook
+success, bounded handling of both small and oversized HTTP 500 bodies, UDP delivery despite
+a label ending in `tcp`, TCP octet framing with an unrelated label, and correlated test audit
+records. Migration replay preserves existing delivery history and transports.
+
+Chrome verified a real local webhook test returning status 204, the refreshed destination
+outcome and the intent/completion rows. That investigation exposed another omission: the
+audit summary allowlist hid correlation and outcome fields. Notification-specific fields
+now survive the bounded redacted view; live tests follow both records and compare operation
+identifiers. Unknown fields and secret envelopes remain omitted.
 
 = References
 

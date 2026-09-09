@@ -20,7 +20,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     try html.render(w, "<section class=\"sb-panel\"><h2>Notification destinations</h2>" ++
         "<p class=\"sb-note\">At most eight destinations. Webhooks receive a JSON body " ++
         "with an HMAC-SHA256 signature when a secret is set; syslog receives RFC 5424 lines " ++
-        "over UDP (label ending in “tcp” selects framed TCP). Secrets are stored sealed " ++
+        "over UDP or framed TCP, selected explicitly below. Secrets are stored sealed " ++
         "and never shown again.</p>" ++
         "<div class=\"overflow-x-auto\"><table class=\"table\"><thead><tr><th>Label</th>" ++
         "<th>Kind</th><th>Target</th><th>Events</th><th>Last outcome</th><th></th></tr>" ++
@@ -30,7 +30,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         @embedFile("snippets/notification-row.html"),
         .{
             .label = row.label.slice(),
-            .kind = @tagName(row.kind),
+            .kind = kindLabel(row.kind, row.transport),
             .target = row.target.slice(),
             .events = eventsText(row.events),
             .outcome = if (row.last_outcome) |outcome| @tagName(outcome) else "never",
@@ -102,6 +102,11 @@ fn about(state: *const State, w: *Writer) Writer.Error!void {
     });
 }
 
+fn kindLabel(kind: n.Kind, transport: n.Transport) []const u8 {
+    if (kind == .webhook) return "webhook";
+    return if (transport == .tcp) "syslog / TCP" else "syslog / UDP";
+}
+
 fn eventsText(mask: u8) []const u8 {
     return switch (mask) {
         n.all_events => "all",
@@ -124,6 +129,8 @@ fn form(state: *const State, w: *Writer) Writer.Error!void {
         .heading = if (model.selected == null) "New destination" else "Edit destination",
         .webhook = if (row.kind == .webhook) " selected" else "",
         .syslog = if (row.kind == .syslog) " selected" else "",
+        .udp = if (row.transport == .udp) " selected" else "",
+        .tcp = if (row.transport == .tcp) " selected" else "",
         .label = row.label.slice(),
         .target = row.target.slice(),
         .secret_note = if (row.secret_set)

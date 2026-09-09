@@ -293,9 +293,11 @@ URLs.
 
 Administrators configure notification destinations under Settings: webhooks (`https`, or
 `http` to loopback) signed with `X-Sibuna-Signature: sha256=HMAC(secret, body)` when a
-secret is set, and RFC 5424 syslog over UDP or framed TCP, for denial spikes, issued bans,
+secret is set, and RFC 5424 syslog with an explicit UDP or framed TCP selection, for denial spikes, issued bans,
 unreachable members and leader changes. Secrets are sealed under `--console-key-file`; one
-cluster member delivers at a time under a fenced lease.
+cluster member delivers at a time under a fenced lease. Test delivery records intent and
+completion in Audit and refreshes the destination's last outcome. If completion cannot be
+recorded, the interface reports it as unconfirmed so operators can investigate before retrying.
 
 Administrators can also edit the five browser-facing response pages (challenge, denied,
 rate limited, banned, overloaded) under Settings: bounded HTML with fixed placeholders, no

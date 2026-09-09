@@ -15,6 +15,7 @@ pub const Event = enum(u2) {
 };
 pub const all_events: u8 = 15;
 pub const Kind = enum { webhook, syslog };
+pub const Transport = enum { udp, tcp };
 pub const Outcome = enum { delivered, failed };
 pub const capacity = 8;
 pub const page_rows = 4;
@@ -37,6 +38,7 @@ pub const Destination = struct {
     id: u64,
     revision: u64,
     kind: Kind,
+    transport: Transport = .udp,
     label: p.Bytes(max_label),
     target: p.Bytes(max_target),
     target_host: p.Bytes(max_host),
@@ -76,6 +78,7 @@ pub const Save = struct {
     id: ?u64,
     expected_revision: u64,
     kind: Kind,
+    transport: Transport = .udp,
     label: p.Bytes(max_label),
     target: p.Bytes(max_target),
     target_host: p.Bytes(max_host),
@@ -84,6 +87,16 @@ pub const Save = struct {
     events: u8,
     cooldown_seconds: u32,
     enabled: bool,
+};
+/// Test intent and completion share an opaque operation id. Network success is separate
+/// from confirmation that its completion record reached storage.
+pub const TestAudit = struct {
+    auth: p.users.Auth,
+    destination: u64,
+    revision: u64,
+    operation: [16]u8,
+    outcome: ?Outcome = null,
+    detail: p.Bytes(max_detail) = .{},
 };
 pub const Remove = struct { auth: p.users.Auth, id: u64, expected_revision: u64 };
 pub const Read = struct {
@@ -167,6 +180,7 @@ pub fn validateSave(input: Save) error{InvalidLimit}!void {
     if (input.events == 0 or input.events > all_events or input.cooldown_seconds > 86400 or
         input.label.len == 0 or input.target.len == 0 or
         input.expected_revision >= std.math.maxInt(i64)) return error.InvalidLimit;
+    if (input.kind == .webhook and input.transport != .udp) return error.InvalidLimit;
     if (input.secret_envelope != null and input.clear_secret) return error.InvalidLimit;
 }
 
