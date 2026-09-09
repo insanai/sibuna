@@ -38,7 +38,8 @@ test "queued GeoIP writes and immutable replays recheck expiry and mandatory MFA
         .ranges = 1,
     };
     const geo = @import("console").geoip;
-    const bytes = (try geo.address("8.8.8.0")) ++ (try geo.address("8.8.8.255")) ++ "US".*;
+    const bytes = (try geo.parseAddress("8.8.8.0")) ++
+        (try geo.parseAddress("8.8.8.255")) ++ "US".*;
     var batch: p.geo.Batch = .{
         .auth = auth,
         .digest = digest,

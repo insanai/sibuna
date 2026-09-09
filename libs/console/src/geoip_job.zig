@@ -3,10 +3,8 @@
 const std = @import("std");
 const App = @import("app.zig").App;
 const p = @import("console_protocol");
-const geo = @import("geoip.zig");
-const generations = @import("geoip_generation.zig");
+const geoip = @import("geoip");
 const download = @import("geoip_download.zig");
-const gzip = @import("geoip_gzip.zig");
 pub const Input = struct {
     auth: p.geo.Authorization,
     expected_revision: u64,
@@ -31,9 +29,9 @@ pub const Job = struct {
         if (result != .geo_metadata) return error.StorageUnavailable;
         const metadata = result.geo_metadata;
         if (metadata.ranges == 0) return;
-        if (metadata.ranges > generations.max_ranges or metadata.digest.len != 64)
+        if (metadata.ranges > geoip.max_ranges or metadata.digest.len != 64)
             return error.InvalidGeneration;
-        const ranges = try self.app.gpa.alloc(geo.Range, metadata.ranges);
+        const ranges = try self.app.gpa.alloc(geoip.Range, metadata.ranges);
         errdefer self.app.gpa.free(ranges);
         var count: usize = 0;
         var ordinal: u32 = 0;
@@ -44,7 +42,8 @@ pub const Job = struct {
             } });
             if (chunk != .geo_bytes or chunk.geo_bytes.len == 0 or chunk.geo_bytes.len % 34 != 0)
                 return error.InvalidGeneration;
-            try decodeRanges(ranges, &count, chunk.geo_bytes.slice());
+            geoip.wire.decodeRows(ranges, &count, chunk.geo_bytes.slice()) catch
+                return error.InvalidGeneration;
         }
         var digest: [32]u8 = undefined;
         _ = try std.fmt.hexToBytes(&digest, metadata.digest.slice());
@@ -53,6 +52,10 @@ pub const Job = struct {
             .ranges = ranges,
             .allocation = ranges,
             .digest = digest,
+            .provider = .dbip,
+            .version = geoip.Version.init(metadata.source_version.slice()) catch .{},
+            .file_digests = .{ digest, @splat(0) },
+            .files = 1,
         };
         self.app.geo.revision = metadata.revision;
         self.app.geo.loaded.store(true, .release);
@@ -60,7 +63,8 @@ pub const Job = struct {
     }
 
     pub fn start(self: *Job, input: Input) !void {
-        if (!download.validVersion(input.source_version.slice())) return error.InvalidRequest;
+        if (!geoip.Provider.dbip.versionValid(input.source_version.slice()))
+            return error.InvalidRequest;
         if (input.checksum.len != 0 and input.checksum.len != 64) return error.InvalidRequest;
         self.mutex.lockUncancelable(self.app.io);
         defer self.mutex.unlock(self.app.io);
@@ -91,15 +95,17 @@ pub const Job = struct {
         };
     }
 
-    fn stage(self: *Job) !generations.Generation {
+    fn stage(self: *Job) !geoip.Database {
+        const version = self.input.source_version.slice();
         if (self.input.csv.len != 0)
-            return generations.Generation.fromCsv(self.app.gpa, self.input.csv.slice());
+            return geoip.fromCsv(self.app.gpa, .dbip, version, self.input.csv.slice());
         self.status.store(.downloading, .release);
-        const buffer = try self.app.gpa.alloc(u8, gzip.max_compressed_bytes);
+        const buffer = try self.app.gpa.alloc(u8, geoip.gzip.max_compressed_bytes);
         defer self.app.gpa.free(buffer);
-        const bytes = try download.fetch(self.app, self.input.source_version.slice(), buffer);
+        const bytes = try download.fetch(self.app, version, buffer);
         self.status.store(.validating, .release);
-        return gzip.decode(self.app.gpa, self.app.io, bytes, &self.app.stopping);
+        const stopping = &self.app.stopping;
+        return geoip.gzip.decode(self.app.gpa, self.app.io, .dbip, version, bytes, stopping);
     }
 
     fn execute(self: *Job) !void {
@@ -141,19 +147,14 @@ pub const Job = struct {
         self.status.store(.applied, .release);
     }
 
-    fn storeRanges(self: *Job, digest: p.Bytes(64), ranges: []const geo.Range) !void {
+    fn storeRanges(self: *Job, digest: p.Bytes(64), ranges: []const geoip.Range) !void {
         var offset: usize = 0;
         var ordinal: u32 = 0;
         while (offset < ranges.len) : (ordinal += 1) {
             if (self.app.stopping.load(.acquire)) return error.Canceled;
-            const count: usize = @min(100, ranges.len - offset);
-            var bytes: p.Bytes(3400) = .{ .len = count * 34 };
-            for (ranges[offset..][0..count], 0..) |range, index| {
-                const out = bytes.data[index * 34 ..][0..34];
-                @memcpy(out[0..16], &range.first);
-                @memcpy(out[16..32], &range.last);
-                @memcpy(out[32..34], &range.country);
-            }
+            const count: usize = @min(geoip.wire.batch_rows, ranges.len - offset);
+            var bytes: p.Bytes(geoip.wire.batch_bytes) = .{};
+            bytes.len = geoip.wire.encodeBatch(ranges[offset..][0..count], &bytes.data);
             const result = try self.app.background(.{ .geo_batch = .{
                 .auth = self.input.auth,
                 .digest = digest,
@@ -166,22 +167,3 @@ pub const Job = struct {
         }
     }
 };
-
-fn decodeRanges(ranges: []geo.Range, count: *usize, bytes: []const u8) !void {
-    var offset: usize = 0;
-    while (offset < bytes.len) : (offset += 34) {
-        if (count.* == ranges.len) return error.InvalidGeneration;
-        const value = &ranges[count.*];
-        value.* = .{
-            .first = bytes[offset..][0..16].*,
-            .last = bytes[offset + 16 ..][0..16].*,
-            .country = bytes[offset + 32 ..][0..2].*,
-        };
-        if (!geo.countryValid(&value.country) or
-            std.mem.order(u8, &value.first, &value.last) == .gt) return error.InvalidGeneration;
-        if (count.* != 0 and
-            std.mem.order(u8, &ranges[count.* - 1].last, &value.first) != .lt)
-            return error.InvalidGeneration;
-        count.* += 1;
-    }
-}

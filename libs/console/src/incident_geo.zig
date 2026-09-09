@@ -37,7 +37,7 @@ pub const Window = struct {
             }
             const bucket = &self.buckets[record.second % 60];
             if (bucket.second != record.second) bucket.* = .{ .second = record.second };
-            const address = @import("geoip.zig").address(record.ip[0..record.ip_len]) catch {
+            const address = @import("geoip").parseAddress(record.ip[0..record.ip_len]) catch {
                 bucket.unknown +|= 1;
                 continue;
             };
@@ -76,7 +76,12 @@ test "incident geography uses event time, keeps unknowns and expires without sub
     var window: Window = .{ .started_at = 90 };
     var registry: geo.Registry = .{};
     defer registry.deinit();
-    const generation = try geo.Generation.fromCsv(t.allocator, "8.8.8.0,8.8.8.255,US\n");
+    const generation = try @import("geoip").fromCsv(
+        t.allocator,
+        .dbip,
+        "2026-09",
+        "8.8.8.0,8.8.8.255,US\n",
+    );
     try registry.begin();
     try registry.activate(t.io, generation, 0);
     registry.end();

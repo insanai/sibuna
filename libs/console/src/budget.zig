@@ -9,8 +9,8 @@ pub const Budget = struct {
     peers: u16 = 16,
     stack_bytes: u32 = 256 * 1024,
     auth_verifiers: u8 = 1,
-    geoip_generation_bytes: u32 = @import("geoip_generation.zig").max_ranges *
-        @sizeOf(@import("geoip.zig").Range),
+    geoip_generation_bytes: u32 = @import("geoip").max_ranges *
+        @sizeOf(@import("geoip").Range),
 
     pub const Error = error{InvalidBudget};
     pub const socket_buffer_bytes = 16 * 1024;

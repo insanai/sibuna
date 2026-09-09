@@ -2,7 +2,7 @@ const std = @import("std");
 const core = @import("core");
 const store = @import("store");
 const Geo = @import("geoip_generation.zig").Registry;
-const geoip = @import("geoip.zig");
+const geoip = @import("geoip");
 const p = @import("console_protocol");
 const MinuteJournal = @import("minute_journal.zig").Journal;
 
@@ -75,7 +75,7 @@ pub const Stats = struct {
             self.rankings.add(&record);
             const bucket = &self.buckets[record.second % 60];
             if (bucket.second != record.second) bucket.* = .{ .second = record.second };
-            const address = geoip.address(record.ip[0..record.ip_len]) catch {
+            const address = geoip.parseAddress(record.ip[0..record.ip_len]) catch {
                 bucket.samples += 1;
                 continue;
             };

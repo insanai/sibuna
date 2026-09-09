@@ -542,7 +542,8 @@ test "GeoIP publication rejects incomplete generations and audits the pointer co
     try t.expect((try fx.run(.{ .geo_activate = activate })) == .failed);
     try t.expectEqual(@as(u64, 0), (try fx.run(.geo_metadata)).geo_metadata.revision);
     const geo = @import("console").geoip;
-    const bytes = (try geo.address("8.8.8.0")) ++ (try geo.address("8.8.8.255")) ++ "US".*;
+    const bytes = (try geo.parseAddress("8.8.8.0")) ++
+        (try geo.parseAddress("8.8.8.255")) ++ "US".*;
     const batch: p.geo.Batch = .{
         .auth = auth,
         .digest = digest,

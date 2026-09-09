@@ -2,11 +2,13 @@
 //! redirects, credentials or proxy headers enter the download request.
 const std = @import("std");
 const App = @import("app.zig").App;
-const max_bytes = @import("geoip_gzip.zig").max_compressed_bytes;
+const geoip = @import("geoip");
+const max_bytes = geoip.gzip.max_compressed_bytes;
 const Result = union(enum) { download: anyerror!usize, deadline: anyerror!void };
 
 pub fn fetch(app: *App, version: []const u8, output: []u8) ![]const u8 {
-    if (output.len != max_bytes or !validVersion(version)) return error.InvalidInput;
+    if (output.len != max_bytes or !geoip.Provider.dbip.versionValid(version))
+        return error.InvalidInput;
     var writer: std.Io.Writer = .fixed(output);
     var results: [2]Result = undefined;
     var select: std.Io.Select(Result) = .init(app.io, &results);
@@ -17,15 +19,6 @@ pub fn fetch(app: *App, version: []const u8, output: []u8) ![]const u8 {
         .download => |length| output[0..try length],
         .deadline => error.DownloadDeadline,
     };
-}
-
-pub fn validVersion(version: []const u8) bool {
-    if (version.len != 7 or version[4] != '-') return false;
-    for (version[0..4]) |byte| if (!std.ascii.isDigit(byte)) return false;
-    for (version[5..7]) |byte| if (!std.ascii.isDigit(byte)) return false;
-    const year = std.fmt.parseInt(u16, version[0..4], 10) catch return false;
-    const month = std.fmt.parseInt(u8, version[5..7], 10) catch return false;
-    return year >= 2000 and month >= 1 and month <= 12;
 }
 
 fn download(app: *App, version: []const u8, writer: *std.Io.Writer) anyerror!usize {
@@ -55,11 +48,4 @@ fn deadline(app: *App) anyerror!void {
         if (elapsed >= 60 * std.time.ns_per_s) return;
         try std.Io.sleep(app.io, std.Io.Duration.fromMilliseconds(100), .awake);
     }
-}
-
-test "publisher versions cannot introduce paths, alternate hosts or invalid months" {
-    const t = std.testing;
-    try t.expect(validVersion("2026-09"));
-    for ([_][]const u8{ "../evil", "2026-13", "2026-00", "2026- 1", "//a.b/c" }) |value|
-        try t.expect(!validVersion(value));
 }

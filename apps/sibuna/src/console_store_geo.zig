@@ -168,17 +168,7 @@ pub fn read(owner: *Persistent, input: p.geo.Read) !p.StorageResult {
 }
 
 fn validBatch(bytes: []const u8) bool {
-    const geo = @import("console").geoip;
-    var offset: usize = 0;
-    while (offset < bytes.len) : (offset += 34) {
-        const first = bytes[offset..][0..16];
-        const last = bytes[offset + 16 ..][0..16];
-        if (std.mem.order(u8, first, last) == .gt) return false;
-        if (!geo.countryValid(bytes[offset + 32 ..][0..2])) return false;
-        if (offset != 0 and std.mem.order(u8, first, bytes[offset - 18 ..][0..16]) != .gt)
-            return false;
-    }
-    return true;
+    return @import("console").geoip.wire.validBatch(bytes);
 }
 
 fn orderedBatch(owner: *Persistent, input: p.geo.Batch) !bool {

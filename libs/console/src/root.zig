@@ -12,8 +12,7 @@ test {
     _ = @import("mailbox.zig");
 }
 
-pub const geoip_gzip = @import("geoip_gzip.zig");
-pub const geoip = @import("geoip.zig");
+pub const geoip = @import("geoip");
 pub const rankings_archive = @import("rankings_archive.zig");
 pub const minute_archive = @import("minute_archive.zig");
 pub const schema = @import("schema.zig");
@@ -32,9 +31,7 @@ test {
     _ = @import("space_saving.zig");
     _ = @import("rankings_archive.zig");
     _ = @import("rankings_journal_test.zig");
-    _ = @import("geoip.zig");
     _ = @import("geoip_generation.zig");
-    _ = @import("geoip_gzip.zig");
 }
 
 pub const RetentionJob = @import("retention_job.zig").Job;
