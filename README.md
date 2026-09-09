@@ -108,7 +108,8 @@ Internal routes: `/__sibuna/challenge.json`, `/__sibuna/verify`, `/__sibuna/work
 (Prometheus), `/__sibuna/honeypot`.
 
 For HTTPS, terminate TLS at an ingress such as Caddy or Nginx and forward HTTP/1.1 to
-Sibuna on a private listener. Admitted WebSocket upgrades retain their handshake, cookies,
+Sibuna on a private listener. The ingress can serve HTTP/2 to browsers; native HTTP/2 in
+Sibuna is deferred to a later update. Admitted WebSocket upgrades retain their handshake, cookies,
 subprotocols and extensions, then relay bytes in both directions with bounded buffers.
 WebSocket applications need admission before opening their connection, just like other
 protected requests. The relay does not inspect WebSocket message payloads or terminate TLS.
@@ -120,6 +121,13 @@ Forward-auth evaluates the trusted ingress's `X-Forwarded-Uri` (Caddy) or `X-Ori
 your ingress can supply these fields. Reverse proxy mode preserves the application Host and
 reconstructs `X-Forwarded-Proto` from trusted ingress metadata, or `http` for a direct request.
 It removes alternate forwarded host/port fields; applications should use the preserved Host.
+
+Content-Length uploads stream to the backend with their MIME headers and bytes preserved,
+including multipart forms and repeated file fields. WAF body inspection covers the first
+8 KiB: text fields and upload metadata are inspected; file payloads and recognized binary
+MIME bodies remain opaque. Fields beyond that prefix are not inspected. The backend must
+validate accepted MIME types and uploaded files; Sibuna does not scan files for malware.
+Chunked request bodies are currently rejected. `Expect: 100-continue` is handled locally.
 
 ## Policy file
 

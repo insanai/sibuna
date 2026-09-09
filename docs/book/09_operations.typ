@@ -194,6 +194,28 @@ Traffic in either direction refreshes that bound. Frames after the handshake are
 inspection inputs. HTTPS/WSS uses a TLS-terminating ingress in front of Sibuna's private
 HTTP/1.1 listener; Sibuna does not terminate browser TLS itself.
 
+The ingress can negotiate HTTP/2 with browsers and forward HTTP/1.1 to Sibuna. Native
+HTTP/2 support in Sibuna is deferred to a later update; this arrangement does not provide
+end-to-end HTTP/2 semantics for applications such as native gRPC.
+
+Content-Length request bodies stream through fixed buffers, preserving bytes and MIME
+headers. Multipart uploads retain boundaries, repeated field names, filenames and part types.
+The WAF examines at most the first 8 KiB of the body: multipart metadata and non-file fields
+remain text inspection inputs, while file payloads are opaque. Recognized binary top-level
+MIME types (images except SVG, audio, video, PDF, ZIP, gzip, 7z, protobuf and octet-stream)
+are opaque too. JSON, XML, SVG, URL-encoded forms and unknown types retain text inspection.
+Ambiguous or malformed MIME metadata falls back to text inspection. Multipart parsing is
+bounded to 32 parts and 2 KiB of headers per part within that same prefix.
+
+This is upload compatibility, not file validation or malware scanning. The backend must
+enforce accepted media types rather than trust a client's Content-Type declaration. Fields
+after the inspection prefix, including those after a large uploaded file, are not inspected.
+Compressed payloads are not decompressed for inspection. Uploads still pass admission, path,
+query and header checks and remain subject to connection deadlines. Request transfer coding
+is currently unsupported, so send Content-Length rather than chunked request bodies.
+Clients waiting for `100-continue` receive it locally before sending the body; unsupported
+expectations receive 417. The Expect header is consumed before forwarding to the backend.
+
 === Forward Auth Behind an Ingress
 
 In `--mode forward_auth` the daemon answers the ingress's subrequest with `200` (plus the audit

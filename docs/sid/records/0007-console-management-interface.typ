@@ -4024,6 +4024,36 @@ the recorded artifact. Six harness tests cover confidence intervals, individual 
 coverage, invalid measurements, transport errors and binary provenance. The smoke record
 is explicitly inconclusive; it supplies no replacement for a full quiet-host acceptance run.
 
+== Upload compatibility correction (2026-09-10)
+
+Live review reproduced binary multipart uploads denied by the text WAF's NUL signature.
+The shared borrowed request view now supplies both enforcing and mixed-mode inspection;
+bounded MIME and multipart parsers select text fields and file metadata from the existing
+8 KiB prefix. File payloads and recognized binary top-level MIME bodies are opaque. Unknown
+or ambiguous metadata falls back to text inspection. No allocations or callbacks are added
+to the request path. Multipart parsing has explicit 32-part and 2 KiB part-header bounds.
+
+The backend still owns MIME validation and file safety. Client-declared media types are not
+proof of a file's format. Fields outside the prefix, compressed contents and file payloads
+are not inspected. The book and README state these limits, including the existing rejection
+of chunked request bodies. Native HTTP/2 is explicitly deferred to a later update at the
+operator's request; an HTTPS ingress can provide browser-facing HTTP/2 today.
+
+The review also reproduced a pipelined upload resetting its connection: filling the body
+could compact the input buffer and invalidate borrowed request-head slices. The server now
+rebinds them before evaluation, including the truncated-body error path. It handles
+100-continue locally before waiting for an upload, rejects unsupported expectations with
+417, and removes Expect from the forwarded request to avoid duplicate interim responses.
+
+The storage/console-disabled build passed 134 native tests and the live proxy scenarios.
+The full formatting, native/UI, console and SID matrix passed 421 tests and all twenty
+live console scenarios. Focused parser tests also cover malformed media-type syntax.
+The origin parses actual multipart forms and verifies field names, filenames, MIME types,
+byte lengths and hashes, including repeated files and a two-megabyte binary payload.
+Cases cover quoted boundaries, common MIME bodies, malicious fields and filenames,
+keepalive, prefetched pipelined uploads and clients waiting for 100-continue. These tests
+do not claim full-body inspection or close the remaining console acceptance gates.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
