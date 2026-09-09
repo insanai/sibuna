@@ -3811,6 +3811,17 @@ returning within its bound and status 0), and the `-Dconsole=false` and `-Dstora
 builds all pass. Wire protocol 9 and journal format 2 are unchanged, so existing data
 directories open without migration.
 
+The primitive baseline was regenerated from clean commit
+`ef5dafbff9ae9e852d32020b3ba4221fa737aa88` so the record's dependency pin matches the tag:
+manifest v2 covers 462 inputs with SHA-256
+`18bf0d234e1d09ee817f50d3d6d40687a2261745d1f435d9a3a595560b3d17f5`, the daemon digest is
+`2d115f856293171ae60d7cf6d7cd74621009f1b550110a0e9ea23821882fd2ef`, and
+`latest-20260909T131836Z.json` and `latest.json` share SHA-256
+`87ec136cd2d7b6e5b411d77f0aa3add4b60be980b12900bba77302d9647527a0`. Full classification
+measured 1,461.28 ns median (1,445.89–1,499.61 ns); idle RSS was 10,064 KiB. The storage
+dependency is not on the measured request path, and the figures match the previous
+record within run to run variation.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
