@@ -56,6 +56,7 @@ class Daemon:
         self.console_port = free_port() if name in ("idle", "active") else None
         self.procs, self.logs, self.streams, self.readers = [], [], [], []
         self.frames = 0
+        self.reconnects, self.closes = 0, {}
         self.stopping = threading.Event()
 
     def args(self, index, data, peers):
@@ -75,20 +76,45 @@ class Daemon:
                     args += ["--cluster-peer", f"{j + 1}@127.0.0.1:{peers[j]}"]
         return args
 
+    def cluster_args(self, index, peers):
+        args = ["--data-dir", str(self.temp / f"{self.name}-node{index}"),
+                "--storage-poll-ms", "100", "--cluster-node", str(index + 1),
+                "--cluster-listen", f"127.0.0.1:{peers[index]}",
+                "--cluster-secret-file", str(self.psk)]
+        for j in range(len(peers)):
+            if j != index:
+                args += ["--cluster-peer", f"{j + 1}@127.0.0.1:{peers[j]}"]
+        return args
+
+    def launch(self, index, data, peers):
+        log = open(self.temp / f"{self.name}-node{index}.log", "w+")
+        self.logs.append(log)
+        self.procs.append(subprocess.Popen(self.args(index, data, peers),
+                                           stdout=log, stderr=log))
+
     def start(self):
         count = 3 if self.cluster else 1
         data = [self.port] + [free_port() for _ in range(count - 1)]
         peers = [free_port() for _ in range(count)]
+        # A replicated store needs quorum before the administrator can be bootstrapped:
+        # peers start first, then init-admin runs with node 1's cluster identity.
+        for index in range(1, count):
+            self.launch(index, data, peers)
         if self.console_port:
-            self.credentials = bootstrap.initialize(
-                self.binary, str(self.temp / f"{self.name}-node0"), "admin")
-        for index in range(count):
-            log = open(self.temp / f"{self.name}-node{index}.log", "w+")
-            self.logs.append(log)
-            self.procs.append(subprocess.Popen(self.args(index, data, peers),
-                                               stdout=log, stderr=log))
-        for proc, port in zip(self.procs, data):
-            ready(proc, port, timeout=120)
+            if self.cluster:
+                result = subprocess.run(
+                    [self.binary, "init-admin", "admin"] + self.cluster_args(0, peers),
+                    capture_output=True, text=True, timeout=120)
+                assert result.returncode == 0, result.stderr
+                match = re.search(r"Temporary console password .*: ([0-9a-f]{48})",
+                                  result.stderr)
+                self.credentials = {"username": "admin", "password": match[1]}
+            else:
+                self.credentials = bootstrap.initialize(
+                    self.binary, str(self.temp / f"{self.name}-node0"), "admin")
+        self.launch(0, data, peers)
+        for proc in self.procs:
+            ready(proc, int(proc.args[proc.args.index("--port") + 1]), timeout=120)
         if self.console_port:
             self.dashboards()
 
@@ -102,28 +128,41 @@ class Daemon:
         self.cookie = reply["Set-Cookie"].split(";", 1)[0]
         if self.name != "active":
             return
-        for _ in range(DASHBOARDS):
-            stream = Stream(self.console_port, self.cookie)
-            stream.send(1, b'{"op":"subscribe","topics":["stats"]}')
-            self.streams.append(stream)
-            reader = threading.Thread(target=self.read, args=(stream,), daemon=True)
+        for index in range(DASHBOARDS):
+            self.streams.append(self.subscribe())
+            reader = threading.Thread(target=self.read, args=(index,), daemon=True)
             reader.start()
             self.readers.append(reader)
 
-    def read(self, stream):
+    def subscribe(self):
+        stream = Stream(self.console_port, self.cookie)
+        stream.send(1, b'{"op":"subscribe","topics":["stats"]}')
+        return stream
+
+    def read(self, index):
         # Blocking reads only: a socket timeout on a buffered file discards bytes and
         # desynchronizes the frame parser. stop_all closes the socket to end the thread.
+        # A closed stream is reopened after a second, as the browser dashboard does; the
+        # close codes are recorded so a saturated console shows in the record.
         while not self.stopping.is_set():
             try:
-                opcode, payload = stream.receive()
+                opcode, payload = self.streams[index].receive()
             except (OSError, ValueError, AssertionError):
-                return
+                opcode, payload = 8, b""
             if opcode == 9:
-                stream.send(10, payload)
+                self.streams[index].send(10, payload)
             elif opcode == 1:
                 self.frames += 1
             elif opcode == 8:
-                return
+                code = int.from_bytes(payload[:2], "big") if len(payload) >= 2 else 0
+                self.closes[code] = self.closes.get(code, 0) + 1
+                if self.stopping.wait(1):
+                    return
+                try:
+                    self.streams[index] = self.subscribe()
+                except (OSError, AssertionError):
+                    continue
+                self.reconnects += 1
 
     def stop_all(self):
         self.stopping.set()
@@ -261,8 +300,11 @@ def matrix(binaries, temp, load, rounds, cluster, names, seed, psk, script):
                           f"{entry['requests_per_second']:9.0f} req/s "
                           f"p99 {entry['latency_us']['p99'] / 1000:6.2f} ms", flush=True)
         frames = sum(s["dashboard_frames"] for w in results.values() for s in w["active"])
+        active = daemons["active"]
         # The active configuration is only evidence if every dashboard kept receiving.
         return finish(results, names), {"subscribers": DASHBOARDS, "frames_total": frames,
+                                        "reconnects": active.reconnects,
+                                        "close_codes": active.closes,
                                         "frames_per_second_per_subscriber_min": min(
                                             summarize(results[w]["active"])
                                             ["dashboard_frames_per_second_min"] / DASHBOARDS
@@ -338,7 +380,7 @@ def main():
             + ([] if dashboards["delivered"] else [
                 "Dashboard subscribers received fewer than 0.8 frames per second; the active "
                 "configuration was not exercised and the verdict is inconclusive."])}
-    record(data, "console-impact-latest")
+    record(data, "console-impact-cluster-latest" if args.cluster else "console-impact-latest")
     print(f"console-impact verdict: {results['verdict']}", flush=True)
     return 0 if results["verdict"] == "pass" else 1
 

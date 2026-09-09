@@ -29,8 +29,9 @@ denied and policy-reload workloads. Each configuration is compared with the comp
 baseline by median throughput and median p99 with a bootstrap interval; the gate is at most
 1% throughput loss and 10% p99 increase. A baseline whose own spread exceeds 1%, or an interval
 that straddles the gate, is reported as inconclusive and fails the run rather than passing.
-`--cluster` repeats the matrix with three PSK nodes and load on node 1. Peak RSS is sampled
-from `ps` every 100 ms. The host must be declared with `--host-label` and left quiet.
+`--cluster` repeats the matrix with three PSK nodes and load on node 1 and writes
+`console-impact-cluster-latest.json` instead. Peak RSS is sampled from `ps` every 100 ms. The
+host must be declared with `--host-label` and left quiet.
 
 No benchmark hook or timer is linked into request handling. Production metrics, local locks,
 reader-count atomics and incident enqueue still have real costs. These tests cannot establish
