@@ -129,14 +129,15 @@ fn authentication(state: *const State, w: *Writer) Writer.Error!void {
     if (state.phase == .password and state.fullAccess()) {
         try html.render(w, "<button class=\"btn btn-ghost\" " ++
             "data-action=\"dashboard\">Back to dashboard</button>", .{});
+        try @import("kiosk_grant.zig").render(state, w);
     }
-    if (state.phase == .login) try html.render(w, "</form><form id=\"kiosk-exchange\" " ++
+    if (state.phase == .login) try html.render(w, "<form id=\"kiosk-exchange\" " ++
         "class=\"mt-6\"><h2>Wall display</h2><p class=\"sb-note\">Paste the one-time code " ++
         "an operator minted. The display becomes read-only and shows statistics only.</p>" ++
         "<label for=\"kiosk-code\">Kiosk code</label><input id=\"kiosk-code\" name=\"code\" " ++
         "class=\"input input-bordered\" autocomplete=\"off\" maxlength=\"64\" " ++
         "pattern=\"[0-9a-f]{64}\" required><button class=\"btn\" type=\"submit\"{{ busy }}>" ++
-        "Open wall display</button>", .{ .busy = if (state.busy) " disabled" else "" });
+        "Open wall display</button></form>", .{ .busy = if (state.busy) " disabled" else "" });
     try html.render(
         w,
         "<p class=\"sb-note mt-6\">Protected with Argon2id and secure " ++

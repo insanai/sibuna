@@ -106,7 +106,7 @@ pub const Request = struct { id: p.Bytes(32), body: p.minutes.Request };
 pub fn request(state: *State, force: bool) ?Request {
     const model = &state.minute_history;
     const stats = state.stats orelse return null;
-    if (!state.fullAccess() or state.phase != .dashboard or !state.timeline_open or
+    if (!state.fullAccess() or state.kiosk or state.phase != .dashboard or !state.timeline_open or
         !state.history_minutes or state.paused or state.hidden or model.busy or
         !stats.minute_history.available) return null;
     if (!force and (model.before != null or (model.generation != 0 and
@@ -143,7 +143,7 @@ pub fn response(
     const model = &state.minute_history;
     if (ticket == 0 or ticket != model.generation) return false;
     model.busy = false;
-    if (!state.fullAccess() or state.phase != .dashboard or state.paused or
+    if (!state.fullAccess() or state.kiosk or state.phase != .dashboard or state.paused or
         !state.history_minutes) return false;
     if (status == 401 or status == 403) return true;
     model.failed = true;

@@ -206,6 +206,7 @@ fn header(state: *const State, w: *Writer) Writer.Error!bool {
         try html.render(w, "<div id=\"timeline-values\" hidden></div>", .{});
         return false;
     }
+    if (state.kiosk) return true;
     try w.print("<div class=\"join my-3\" role=\"group\" aria-label=\"History source\">" ++
         "<button class=\"btn btn-sm join-item\" data-action=\"timeline-seconds\" " ++
         "aria-pressed=\"{}\">Seconds</button>" ++

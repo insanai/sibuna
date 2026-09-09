@@ -56,6 +56,7 @@ pub const State = struct {
     reputation: @import("reputation_state.zig").Model = .{},
     audit: @import("audit_state.zig").Model = .{},
     nodes: @import("nodes_state.zig").Model = .{},
+    kiosk_grant: @import("kiosk_grant.zig").Model = .{},
     busy: bool = false,
     must_change: bool = false,
     totp_required: bool = false,
@@ -80,7 +81,8 @@ pub const State = struct {
     geo_status: p.Bytes(16) = .{},
     geo_progress: u32 = 0,
     geo_importing: bool = false,
-    totp_available: bool = false,
+    /// Null until the current status request confirms encryption-key availability.
+    totp_available: ?bool = null,
     totp_enabled: bool = false,
     totp_revision: u64 = 0,
     totp_secret: p.Bytes(32) = .{},
@@ -122,6 +124,8 @@ pub const State = struct {
                 self.reputation.clear();
             } else if (comptime @import("std").mem.eql(u8, field.name, "audit")) {
                 self.audit.clear();
+            } else if (comptime @import("std").mem.eql(u8, field.name, "kiosk_grant")) {
+                self.kiosk_grant.clear();
             } else @field(self, field.name) = field.defaultValue().?;
         }
     }

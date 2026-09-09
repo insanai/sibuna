@@ -47,6 +47,7 @@ def checks(h, port, admin):
     for method, path in (("POST", "/console/api/events/query"), ("POST", "/console/api/policies/query"),
                          ("POST", "/console/api/users/query"), ("POST", "/console/api/tokens/create"),
                          ("GET", "/console/api/nodes/local"), ("GET", "/console/api/geoip"),
+                         ("GET", "/console/api/rankings"), ("POST", "/console/api/minutes"),
                          ("POST", "/console/api/kiosk/token"), ("POST", "/console/api/audit/query")):
         assert h.request(port, method, path, {} if method == "POST" else None, kiosk,
                          reply["csrf"])[0] == 403, path

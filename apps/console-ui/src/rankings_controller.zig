@@ -6,7 +6,8 @@ var generation: u32 = 0;
 
 pub fn request(state: *State) ?p.Bytes(32) {
     const model = &state.rankings;
-    if (!state.fullAccess() or state.phase != .dashboard or state.paused or state.hidden)
+    if (!state.fullAccess() or state.kiosk or state.phase != .dashboard or
+        state.paused or state.hidden)
         return null;
     if (model.busy or (model.generation != 0 and
         state.browser_time -| model.requested_at < 10)) return null;
@@ -33,7 +34,8 @@ pub fn response(
     const model = &state.rankings;
     if (ticket == 0 or ticket != model.generation) return .retained;
     model.busy = false;
-    if (!state.fullAccess() or state.phase != .dashboard or state.paused) return .retained;
+    if (!state.fullAccess() or state.kiosk or state.phase != .dashboard or state.paused)
+        return .retained;
     if (status == 401 or status == 403) return .expired;
     model.stale = true;
     if (status != 200) return .retained;

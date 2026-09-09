@@ -122,7 +122,9 @@ fn begin() void {
 }
 
 fn finish() void {
-    if ((state.phase == .dashboard or state.phase == .challenges or state.phase == .nodes) and
+    @import("kiosk_grant.zig").retain(&state);
+    if ((state.phase == .dashboard or state.phase == .challenges or state.phase == .nodes or
+        state.kiosk_grant.code.len != 0) and
         !state.hidden)
         command(.{ .op = "timer", .id = "age", .delay_ms = 1000 }) catch unreachable;
     command_writer.writeByte(']') catch unreachable;
@@ -327,7 +329,7 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
             .dashboard;
         state.message = .{};
         if (state.phase == .dashboard) try refresh();
-        if (state.phase == .security) try get("totp", "/console/api/totp");
+        if (state.phase == .security) try securityStatus();
         return;
     }
     if (equal(id, "logout")) {
@@ -350,6 +352,14 @@ fn setupResponse(body: std.json.Value) void {
 
 /// A wall display signs in with a one-time code: viewer role, statistics only, no shell.
 fn kioskOpened(body: std.json.Value) !void {
+    // A code exchange changes principal; no account queries or retained private rows survive.
+    const browser_time = state.browser_time;
+    const motion = state.motion;
+    const hidden = state.hidden;
+    resetState(.dashboard);
+    state.browser_time = browser_time;
+    state.motion = motion;
+    state.hidden = hidden;
     state.csrf = try p.Bytes(64).init(string(body, "csrf"));
     state.role = try p.Bytes(16).init("viewer");
     state.kiosk = true;
@@ -366,6 +376,48 @@ fn kioskFlag(body: std.json.Value) void {
     const kiosk = field(body, "kiosk");
     state.kiosk = kiosk != null and kiosk.? == .bool and kiosk.?.bool;
     state.kiosk_expires = if (state.kiosk) number(body, "expires") else 0;
+}
+
+test "kiosk exchange clears account history and requests only display-scoped observations" {
+    const t = std.testing;
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const alloc = arena.allocator();
+    sb_init();
+    state.browser_time = 100;
+    state.history_minutes = true;
+    state.rankings.busy = true;
+    const grant = try std.json.parseFromSliceLeaky(
+        std.json.Value,
+        alloc,
+        "{\"csrf\":\"display-session\",\"expires\":43300}",
+        .{},
+    );
+    begin();
+    try kioskOpened(grant);
+    try t.expect(state.kiosk and !state.history_minutes and !state.rankings.busy);
+    try t.expectEqual(@as(u64, 100), state.browser_time);
+    state.timeline_open = true;
+    const snapshot = try std.json.parseFromSliceLeaky(std.json.Value, alloc,
+        \\{"timestamp":100,"requests":1,"admitted":1,"challenged":0,"denied":0,
+        \\ "origin_4xx":0,"origin_5xx":0,"incidents":0,"incidents_dropped":0,
+        \\ "sample_loss":0,"unknown_samples":0}
+    , .{});
+    begin();
+    try statsResponse(200, snapshot, alloc);
+    const emitted = command_writer.buffered();
+    try t.expect(state.phase == .dashboard and state.stats != null);
+    try t.expect(std.mem.indexOf(u8, emitted, "/console/api/rankings") == null);
+    try t.expect(std.mem.indexOf(u8, emitted, "/console/api/minutes") == null);
+    try t.expect(std.mem.indexOf(u8, emitted, "/console/api/timeline") != null);
+    state.history_minutes = true;
+    state.stats.?.minute_history.available = true;
+    try t.expect(@import("minute_panel.zig").request(&state, true) == null);
+    state.history_minutes = false;
+    var markup: [16384]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&markup);
+    try @import("timeline_panel.zig").table(&state, &writer);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "Minute history") == null);
 }
 
 fn refresh() !void {
@@ -681,7 +733,7 @@ fn securityAction(name: []const u8, fields: std.json.Value) !bool {
         state.totp_uri = .{};
         state.stats_busy = false;
         try command(.{ .op = "disconnect" });
-        try get("totp", "/console/api/totp");
+        try securityStatus();
         return true;
     }
     if (state.phase != .security or state.busy) return false;
@@ -701,6 +753,12 @@ fn securityAction(name: []const u8, fields: std.json.Value) !bool {
     return true;
 }
 
+fn securityStatus() !void {
+    state.totp_available = null;
+    state.busy = true;
+    try get("totp", "/console/api/totp");
+}
+
 fn securityResponse(id: []const u8, status: i64, body: std.json.Value) !void {
     state.busy = false;
     if (state.phase != .security) return;
@@ -715,8 +773,9 @@ fn securityResponse(id: []const u8, status: i64, body: std.json.Value) !void {
     if (equal(id, "totp")) {
         const available = field(body, "available") orelse .null;
         const enabled = field(body, "enabled") orelse .null;
-        state.totp_available = available == .bool and available.bool;
-        state.totp_enabled = enabled == .bool and enabled.bool;
+        if (available != .bool or enabled != .bool) return error.InvalidResponse;
+        state.totp_available = available.bool;
+        state.totp_enabled = enabled.bool;
         state.totp_revision = number(body, "revision");
     } else if (equal(id, "totp-enroll")) {
         state.totp_secret = try p.Bytes(32).init(string(body, "secret"));

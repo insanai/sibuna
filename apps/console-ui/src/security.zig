@@ -25,7 +25,9 @@ pub fn page(state: *const State, w: *Writer) Writer.Error!void {
         );
         return;
     }
-    if (!state.totp_available) {
+    if (state.totp_available == null) {
+        try status(state, w);
+    } else if (!state.totp_available.?) {
         try html.render(w, "<p>The console encryption key has not been provisioned. " ++
             "Ask your administrator to configure two-factor authentication.</p>", .{});
     } else if (state.totp_enabled) {
@@ -36,6 +38,14 @@ pub fn page(state: *const State, w: *Writer) Writer.Error!void {
     }
     try html.render(w, "<button class=\"btn btn-ghost\" data-action=\"account\">" ++
         "Back to account</button></section></main>", .{});
+}
+
+fn status(state: *const State, w: *Writer) Writer.Error!void {
+    if (state.busy) return w.writeAll(
+        "<p role=\"status\">Checking two-factor configuration…</p>",
+    );
+    try w.writeAll("<p>Two-factor configuration could not be loaded.</p>" ++
+        "<button class=\"btn\" data-action=\"security\">Retry configuration</button>");
 }
 
 fn enrollment(state: *const State, w: *Writer) Writer.Error!void {
@@ -60,4 +70,22 @@ fn enrollment(state: *const State, w: *Writer) Writer.Error!void {
     try html.render(w, ">{{ v0 }}</button></form>", .{
         .v0 = if (pending) "Enable two-factor authentication" else "Set up authenticator",
     });
+}
+
+test "unconfirmed two-factor status never claims that the encryption key is absent" {
+    const t = std.testing;
+    var state: State = .{ .phase = .security, .busy = true };
+    var buffer: [8192]u8 = undefined;
+    for ([_]?bool{ null, null, false, true }, 0..) |available, index| {
+        state.totp_available = available;
+        state.busy = index == 0;
+        var writer: Writer = .fixed(&buffer);
+        try page(&state, &writer);
+        const output = writer.buffered();
+        try t.expectEqual(index == 0, std.mem.indexOf(u8, output, "Checking two-factor") != null);
+        try t.expectEqual(index == 1, std.mem.indexOf(u8, output, "Retry configuration") != null);
+        const missing_key = std.mem.indexOf(u8, output, "has not been provisioned") != null;
+        try t.expectEqual(index == 2, missing_key);
+        try t.expectEqual(index == 3, std.mem.indexOf(u8, output, "Set up authenticator") != null);
+    }
 }
