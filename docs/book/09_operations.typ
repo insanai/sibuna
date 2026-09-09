@@ -140,6 +140,11 @@ Response pages (challenge, denied, rate limited, banned, overloaded) are editabl
 Settings as bounded HTML with fixed placeholders; drafts preview in a sandboxed tab and
 saved pages are served from the next policy snapshot.
 
+Policy workflows on the Policies page: reorder managed rules, replay a draft against retained
+inspection findings, manage IP groups and country blocks pinned to the active GeoIP
+generation, and export or atomically import the managed set (also `sibuna console policies
+export` and `sibuna console policies import --file <set.json>`).
+
 SID 0007 remains Proposed. Direct peer telemetry sockets remain unfinished, and the impact
 gate must pass on a declared quiet host before the record advances.
 

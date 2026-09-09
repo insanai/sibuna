@@ -301,6 +301,13 @@ rate limited, banned, overloaded) under Settings: bounded HTML with fixed placeh
 scripts or external resources, previewed in a sandboxed tab and served from the next policy
 snapshot. Clients that do not accept HTML keep the plain-text replies.
 
+Policy workflows: rules can be reordered from the managed list, a draft can be replayed
+against retained inspection findings before saving, IP groups (reputation prefixes with a
+note, expiry and a thirty-second undo) and country blocks computed from the active GeoIP
+generation live under the applied policies, and the whole managed set can be exported and
+re-imported atomically from the interface or with `sibuna console policies export` and
+`sibuna console policies import --file <set.json>`.
+
 For an HTTPS reverse proxy, configure `--console-origin`, `--console-behind-proxy` and explicit
 `--console-trusted-proxy` CIDRs. Supply a persistent `--console-key-file` containing 64 hex
 characters with owner-only permissions; it protects stored second-factor secrets. Keep this

@@ -795,10 +795,10 @@ Migrations are numbered and version-gated in `schema.zig`. The authoritative wri
   [`console_notification_events`], [`node`, `boot`, `sequence` (unique per node and boot), `event`, `raised_at`, `detail` (≤ 128), `delivered_at`, `attempts`; every node enqueues what it observed, at most 256 undelivered rows are kept],
   [`console_job_leases`], [`job` (`retention` or `notifier`), `node`, `boot`, `fence`, `expires`; one fenced singleton lease per job name],
   [`console_pages`], [`kind` (primary: `challenge`, `denied`, `rate_limited`, `banned`, `overloaded`), `html` (≤ 16 KiB, validated before staging), `sha256`, `revision`, `updated_at`, `updated_by`; a one-row stage table commits the page, its audit record (`page.edit` or `page.reset` with digests and sizes only) and a policy-version bump together so the next tick rebuilds the snapshot],
+  [`ip_reputation` (added columns)], [`source` (`console`, `console:country:XX`, or empty for data-plane rows), `note` (≤ 128), `geo_generation` (the GeoIP generation digest a country block was computed from); one-row stage tables `console_policy_order_stage`, `console_reputation_stage`, `console_country_commit` and `console_policy_import_commit` commit each workflow with its history rows, audit record and an explicit policy-version bump; `console_country_stage` and `console_policy_import_stage` hold chunked prefixes and canonical documents for ten minutes],
   [`traffic_minutes`], [`node_id`, `boot_id`, `minute` (epoch/60), coverage, completeness, counters from “The sampler”, `rss_last_kib`, `rss_max_kib`, `cpu_delta_seconds`; primary key (`node_id`, `boot_id`, `minute`)],
   [`challenge_minutes`], [`node_id`, `boot_id`, `minute`, algorithm/parameter bin, submitted/issued/accepted, rejected by exhaustive cause, missing/invalid timing, coverage, `solve_ms_buckets` (16 integers)],
   [`topk_minutes`], [`node_id`, `boot_id`, `minute`, `kind`, `key`, estimate and error; all bounded sketch counters plus N, probability, losses and coverage metadata],
-  [`console_pages`], [`kind` (challenge, denied, rate_limited, banned, overloaded), `html`, `updated_at`, `updated_by`; operator-edited templates the data plane loads at engine rebuild],
   [`geoip_ranges`], [`generation`, `start` (16-byte address as blob), `end`, `country` (ISO 3166-1 alpha-2); one row per range from the source CSV],
   [`geoip_meta`], [`generation`, `active`, `source`, `licence`, `published`, `loaded_at`, `ranges`, `sha256`],
   [`console_nodes`], [`node` (primary), `address` (the member's consensus endpoint, or `local`), `console_url` (the advertised console origin, rendered only as a plain-origin link), `version`, `boot`, `first_seen`, `last_seen`, `applied_revision`, `control_revision`, `applied_slot`, `decided_slot`, `draining`; each node writes only its own row from the storage owner: at start, every minute, and after every successfully applied policy rebuild],
@@ -1726,15 +1726,15 @@ are historical; the acceptance gates below govern delivery.
 
 - #text("Verified: Challenge submissions/rejections and optional untrusted timing on existing POST; configured/effective difficulty separate, PoSW conversion and proof format unchanged.")
 
-- #text("Pending: Rule edit/order/import/export, private-engine tester with config/file fallbacks, revisions/revert and complete candidate validation.")
+- #text("Verified (2026-09-09): rule edit, ordering, set export and import through the API, the interface and the native CLI; the private-engine tester with file fallbacks, revisions and revert, and complete candidate validation were verified in earlier entries.")
 
 - #text("Verified: Per-category inspection modes, revision-controlled editing and finding capture; native, live-daemon and browser tests verify audit cannot bypass enforcement. See the dated inspection evidence.")
 
 - #text("Verified: Terminal-rule GCRA before session bypass, global limiter retained, WEIGH limits rejected; storage, live HTTP and browser evidence appears in the dated quota implementation note.")
 
-- #text("Pending: Reputation/group/country actions reject overflow/conflict without partial application.")
+- #text("Verified (2026-09-09): reputation prefixes and country blocks preflight in a private candidate; a full trie answers capacity, a moved revision conflicts, an incomplete chunk set is refused, and a rejected import leaves every rule untouched.")
 
-- #text("Pending: Gate: live decisions agree with controlled tester, audit preserves other denials, country operations respect rule/trie limits.")
+- #text("Verified (2026-09-09): live decisions follow the committed order after rebuild, replay agrees with retained inspection findings, and country operations count trie nodes and refuse more than 1,024 prefixes.")
 
 == 6. Cluster and operations
 
@@ -3664,6 +3664,58 @@ cookie-injecting proxy the editor loaded the default, previewed a draft in a san
 saved it as revision 1 and reset it, without console errors. The interface module grew from
 334,978 to 342,159 bytes. Formatting, full repository tests, console tests, the live suite,
 SID and book generation pass; console-off, storage-off and cluster builds compile.
+
+== Policy workflows: ordering, replay, reputation prefixes, country blocks and set import (2026-09-09)
+
+Five workflows complete the policy surface, each as one revision-checked mutation staged
+through a one-row table whose commit trigger writes the change, its history rows and its
+audit record and sets the policy version to the expected revision plus one explicitly (the
+base row triggers would bump it once per touched row). Ordering moves a rule past its
+neighbour in `(priority, name, id)` order: different priorities swap, equal priorities are
+nudged by one, both rules gain a history row and the audit names the moved rule. Replay
+evaluates the last 64 retained incidents of a window against the live engine or a draft
+candidate and counts matches for a named rule (or any non-allow decision); only incidents
+whose evidence envelope shows no query bytes, no body bytes and no truncation are
+conclusive, because the request path's rate, ban and session state is never reproduced.
+Reputation prefixes are listed with their provenance (`source`, `note`, hits, expiry) and
+edited or removed per revision after a private-candidate preflight that refuses a full
+trie as capacity; the interface keeps a thirty-second undo that posts the inverse as a
+new mutation. The country builder decomposes every range of a country in the active GeoIP
+generation into aligned prefixes (at most 1,024, never truncated), stages them in chunks,
+preflights them in a private candidate (trie nodes before and after, overlaps with
+existing rows, a sample) and applies them in one revision with `source =
+console:country:XX` and the generation digest pinned on every row. Set import stages
+canonical documents in chunks under a session key, validates the whole set as one
+candidate (a duplicate id or an invalid rule refuses everything) and replaces every
+managed rule atomically with history rows and a `policy.import` audit record; `sibuna
+console policies export` prints the managed set as a JSON array and `sibuna console
+policies import --file` replays it against the revision observed at the start.
+Refreshing country rows after a later GeoIP generation is recorded as remaining work:
+rows keep the generation they were computed from and are not recomputed automatically.
+
+Evidence: storage-tick tests cover the ordering swap, tie nudge, edge and stale cases with
+their audit and history rows; reputation validation, a filled trie answering capacity,
+removal and audit; replay counts against the live engine and a draft with a stale draft
+conflicting; chunked country staging, an incomplete set refused, preflight node counts and
+a pinned apply; and an import that replaces the set, refuses a bad document and rolls back
+a duplicate id. `tools/console_workflows_test.py` (in `console-e2e`) verified through the
+live daemon that reordering flips a path from allowed to denied on the data plane after
+rebuild, that traversal probes replay conclusively while an XSS probe with a query is
+inconclusive and a draft matches nothing, that a denied prefix answers 403 and its removal
+restores 200 with a stale removal answering 409, that a two-hundred-range country previews
+200 prefixes with trie counts and applies so a covered address is denied, that a chunked
+import drops one rule while the audit carries every workflow action, and that the CLI
+export and import round trip replaces the set and a broken file is refused. In Chrome
+through the cookie-injecting proxy the managed list showed Up and Down on every rule and a
+move swapped two priorities, the editor's replay rendered its summary table, the IP groups
+panel saved a prefix with a note and offered a thirty-second undo that removed it again, the
+country builder reported that no GeoIP generation was active, and the replace-all review
+listed two documents and replaced the managed set after confirmation, without console
+errors. Schema 23 carries the tables; the interface module grew from 342,159 to 363,977
+bytes (a non-zero default inside the state struct had briefly moved the whole struct into
+the data segment, which is why staged documents and replay text live outside it).
+Formatting, full repository tests, console tests, the live suite, SID and book generation
+pass; console-off, storage-off and cluster builds compile.
 
 = References
 
