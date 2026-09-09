@@ -170,6 +170,7 @@ fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
         2 => try response(value, alloc),
         3 => {
             if (state.hidden) return;
+            @import("kiosk_page.zig").cycle(&state);
             if (state.phase == .nodes)
                 return @import("nodes_controller.zig").tick(&state, outbox());
             if (equal(string(value, "id"), "age")) return;
@@ -260,6 +261,9 @@ fn action(value: std.json.Value) !void {
             fields,
         );
     }
+    if (equal(name, "kiosk-exchange")) return post(name, "/console/api/kiosk/exchange", .{
+        .code = string(fields, "code"),
+    });
     if (equal(name, "change-password")) return post("password", "/console/api/password", fields);
     if (equal(name, "logout")) {
         try command(.{ .op = "disconnect" });
@@ -300,15 +304,10 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
         setMessage(message);
         return;
     }
-    if (equal(id, "setup")) {
-        const required = field(body, "setup_required");
-        state.phase = if (required != null and required.? == .bool and required.?.bool)
-            .setup
-        else
-            .login;
-        return;
-    }
+    if (equal(id, "setup")) return setupResponse(body);
+    if (equal(id, "kiosk-exchange")) return kioskOpened(body);
     if (equal(id, "session") or equal(id, "login") or equal(id, "password")) {
+        kioskFlag(body);
         state.user_id = try @import("json_value.zig").decode(
             u64,
             field(body, "user") orelse return error.InvalidResponse,
@@ -337,6 +336,34 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
         state.csrf = .{};
         try command(.{ .op = "disconnect" });
     }
+}
+
+fn setupResponse(body: std.json.Value) void {
+    const required = field(body, "setup_required");
+    state.phase = if (required != null and required.? == .bool and required.?.bool)
+        .setup
+    else
+        .login;
+}
+
+/// A wall display signs in with a one-time code: viewer role, statistics only, no shell.
+fn kioskOpened(body: std.json.Value) !void {
+    state.csrf = try p.Bytes(64).init(string(body, "csrf"));
+    state.role = try p.Bytes(16).init("viewer");
+    state.kiosk = true;
+    state.kiosk_expires = number(body, "expires");
+    state.kiosk_cycled_at = state.browser_time;
+    state.must_change = false;
+    state.totp_required = false;
+    state.phase = .dashboard;
+    state.message = .{};
+    return refresh();
+}
+
+fn kioskFlag(body: std.json.Value) void {
+    const kiosk = field(body, "kiosk");
+    state.kiosk = kiosk != null and kiosk.? == .bool and kiosk.?.bool;
+    state.kiosk_expires = if (state.kiosk) number(body, "expires") else 0;
 }
 
 fn refresh() !void {

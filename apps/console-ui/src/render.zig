@@ -5,6 +5,7 @@ const Writer = std.Io.Writer;
 
 pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     const shell = @import("shell.zig");
+    if (state.kiosk and state.fullAccess()) return @import("kiosk_page.zig").render(state, w);
     const authenticated = state.fullAccess();
     if (authenticated) try shell.begin(state, w);
     try page(state, w);
@@ -128,6 +129,13 @@ fn authentication(state: *const State, w: *Writer) Writer.Error!void {
         try html.render(w, "<button class=\"btn btn-ghost\" " ++
             "data-action=\"dashboard\">Back to dashboard</button>", .{});
     }
+    if (state.phase == .login) try html.render(w, "</form><form id=\"kiosk-exchange\" " ++
+        "class=\"mt-6\"><h2>Wall display</h2><p class=\"sb-note\">Paste the one-time code " ++
+        "an operator minted. The display becomes read-only and shows statistics only.</p>" ++
+        "<label for=\"kiosk-code\">Kiosk code</label><input id=\"kiosk-code\" name=\"code\" " ++
+        "class=\"input input-bordered\" autocomplete=\"off\" maxlength=\"64\" " ++
+        "pattern=\"[0-9a-f]{64}\" required><button class=\"btn\" type=\"submit\"{{ busy }}>" ++
+        "Open wall display</button>", .{ .busy = if (state.busy) " disabled" else "" });
     try html.render(
         w,
         "<p class=\"sb-note mt-6\">Protected with Argon2id and secure " ++
@@ -135,6 +143,14 @@ fn authentication(state: *const State, w: *Writer) Writer.Error!void {
             "</section></main>",
         .{},
     );
+}
+
+pub fn tilesPublic(state: *const State, w: *Writer) Writer.Error!void {
+    return tiles(state, w);
+}
+
+pub fn messagePublic(state: *const State, w: *Writer) Writer.Error!void {
+    return message(state, w);
 }
 
 fn authenticationFields(state: *const State, w: *Writer) Writer.Error!void {

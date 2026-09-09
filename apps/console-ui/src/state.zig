@@ -84,6 +84,10 @@ pub const State = struct {
     recovery_codes: [10]p.Bytes(32) = @splat(.{}),
     recovery_count: usize = 0,
     stats: ?p.StatsSnapshot = null,
+    /// Wall-display session: read-only, statistics only, auto-cycling globe modes.
+    kiosk: bool = false,
+    kiosk_expires: u64 = 0,
+    kiosk_cycled_at: u64 = 0,
     timeline_open: bool = false,
     history_minutes: bool = false,
     minute_history: @import("minute_panel.zig").Model = .{},
