@@ -27,6 +27,10 @@ pub const Endpoint = enum {
     tokens_query,
     tokens_create,
     tokens_revoke,
+    policies_query,
+    policies_read,
+    policies_import_chunk,
+    policies_import_commit,
 };
 pub const Reply = struct { status: std.http.Status, length: usize };
 const Outcome = union(enum) { reply: Error!Reply, deadline: Error!void };
@@ -200,6 +204,10 @@ fn path(endpoint: Endpoint) []const u8 {
         .tokens_query => "/console/api/tokens/query",
         .tokens_create => "/console/api/tokens/create",
         .tokens_revoke => "/console/api/tokens/revoke",
+        .policies_query => "/console/api/policies/query",
+        .policies_read => "/console/api/policies/read",
+        .policies_import_chunk => "/console/api/policies/import/chunk",
+        .policies_import_commit => "/console/api/policies/import/commit",
     };
 }
 

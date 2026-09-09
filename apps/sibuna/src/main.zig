@@ -255,6 +255,9 @@ fn printConsoleHelp() void {
             "  sibuna console geoip update --version <YYYY-MM-DD|YYYY-MM> " ++
             "[--provider user-country|dbip] [--month <YYYY-MM>, DB-IP alias]\n" ++
             "    [--checksum <sha256>] [--timeout <seconds, default 1200>]\n" ++
+            "Policy CLI: sibuna console policies export (JSON array to stdout)\n" ++
+            "  sibuna console policies import --file <exported.json> " ++
+            "(replaces every managed rule atomically)\n" ++
             "Token CLI: sibuna console tokens [--after <id>]\n" ++
             "  sibuna console mint-token <label> --scope <scope> (repeatable) " ++
             "[--role <role>] [--expires <unix-seconds>]\n" ++

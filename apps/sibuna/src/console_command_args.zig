@@ -32,6 +32,8 @@ pub const Kind = enum {
     mint_token,
     revoke_token,
     remove_token,
+    policies_export,
+    policies_import,
 
     pub fn managesTokens(self: Kind) bool {
         return switch (self) {
@@ -67,6 +69,7 @@ pub const Args = struct {
     month_alias: bool = false,
     checksum: []const u8 = "",
     timeout: u32 = 1200,
+    file: []const u8 = "",
 };
 const Option = enum {
     origin,
@@ -85,13 +88,15 @@ const Option = enum {
     expires,
     provider,
     version,
+    file,
 };
 
 pub fn parse(args: []const []const u8) Error!Args {
     if (args.len == 0 or args.len > 32) return error.InvalidArguments;
     const kind = try command(args);
     var result: Args = .{ .kind = kind };
-    var index: usize = if (kind == .geo_status or kind == .geo_update) 2 else 1;
+    var index: usize = if (kind == .geo_status or kind == .geo_update or
+        kind == .policies_export or kind == .policies_import) 2 else 1;
     if (kind == .add or kind == .mint_token or kind.needsRevision()) {
         if (args.len < 2) return error.MissingTarget;
         if (kind == .add or kind == .mint_token) {
@@ -101,11 +106,11 @@ pub fn parse(args: []const []const u8) Error!Args {
         } else result.target = try number(args[1], false);
         index += 1;
     }
-    var seen: u16 = 0;
+    var seen: u32 = 0;
     while (index < args.len) : (index += 2) {
         if (index + 1 == args.len) return error.MissingValue;
         const option = try optionName(args[index]);
-        const bit = @as(u16, 1) << @intFromEnum(option);
+        const bit = @as(u32, 1) << @intFromEnum(option);
         if (seen & bit != 0 and option != .scope) return error.DuplicateOption;
         seen |= bit;
         try assign(&result, option, args[index + 1]);
@@ -113,13 +118,14 @@ pub fn parse(args: []const []const u8) Error!Args {
     try authentication(result);
     if (kind == .mint_token and !p.tokens.validScopes(result.scopes, result.role))
         return error.InvalidValue;
-    const access_fields = (@as(u16, 1) << @intFromEnum(Option.role)) |
-        (@as(u16, 1) << @intFromEnum(Option.disabled));
+    const access_fields = (@as(u32, 1) << @intFromEnum(Option.role)) |
+        (@as(u32, 1) << @intFromEnum(Option.disabled));
     if (kind == .access and seen & access_fields != access_fields)
         return error.AccessFieldsRequired;
     if (kind.needsRevision() and result.revision == 0)
         return error.RevisionRequired;
     if (kind == .geo_update) try geographicVersion(result);
+    if (kind == .policies_import and result.file.len == 0) return error.MissingTarget;
     return result;
 }
 
@@ -129,6 +135,7 @@ fn optionName(name: []const u8) Error!Option {
         "--role",   "--disabled", "--revision",      "--after",
         "--month",  "--checksum", "--timeout",       "--token-file",
         "--scope",  "--expires",  "--provider",      "--version",
+        "--file",
     };
     inline for (names, 0..) |value, index| {
         if (equal(name, value)) return @enumFromInt(index);
@@ -170,6 +177,10 @@ fn assign(args: *Args, option: Option, value: []const u8) Error!void {
         .after => {
             if (args.kind != .users and args.kind != .tokens) return error.UnexpectedOption;
             args.after = try number(value, true);
+        },
+        .file => {
+            if (args.kind != .policies_import) return error.UnexpectedOption;
+            args.file = value;
         },
     }
 }
@@ -214,6 +225,12 @@ fn command(args: []const []const u8) Error!Kind {
         if (args.len < 2) return error.MissingTarget;
         if (equal(args[1], "status")) return .geo_status;
         if (equal(args[1], "update")) return .geo_update;
+        return error.UnknownCommand;
+    }
+    if (equal(args[0], "policies")) {
+        if (args.len < 2) return error.MissingTarget;
+        if (equal(args[1], "export")) return .policies_export;
+        if (equal(args[1], "import")) return .policies_import;
         return error.UnknownCommand;
     }
     const names = .{

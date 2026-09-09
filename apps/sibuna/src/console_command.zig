@@ -58,6 +58,8 @@ fn run(
         return @import("console_command_token.zig").run(&session, args, writer);
     if (args.kind == .geo_status or args.kind == .geo_update)
         return @import("console_command_geo.zig").run(&session, args, writer);
+    if (args.kind == .policies_export or args.kind == .policies_import)
+        return @import("console_command_policies.zig").run(&session, args, writer);
     var payload: [2048]u8 = undefined;
     defer std.crypto.secureZero(u8, &payload);
     var body: Writer = .fixed(&payload);
@@ -114,8 +116,10 @@ fn login(session: *client.Session, args: arguments.Args) Error!void {
     session.csrf = p.Bytes(64).init(parsed.value.csrf) catch return error.InvalidResponse;
     if (parsed.value.must_change) return error.PasswordChangeRequired;
     if (parsed.value.totp_required) return error.FactorEnrollmentRequired;
-    const read_only = args.kind == .users or args.kind == .geo_status;
-    if (!read_only and parsed.value.role != .admin) return error.Forbidden;
+    const read_only = args.kind == .users or args.kind == .geo_status or
+        args.kind == .policies_export;
+    const operator_ok = args.kind == .policies_import and parsed.value.role == .operator;
+    if (!read_only and !operator_ok and parsed.value.role != .admin) return error.Forbidden;
 }
 
 fn operation(args: arguments.Args, writer: *Writer) Error!client.Endpoint {
