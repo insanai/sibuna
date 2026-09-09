@@ -183,3 +183,34 @@ test "policy audit migration preserves old records and replays without duplicate
     try t.expectEqual(p.Role.admin, detail.row.actor_role.?);
     try contains(detail.after.?.slice(), "\"action\":\"deny\"");
 }
+
+test "audit records preserve the full supported policy identifier and bounded page encoding" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try setup(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/audit-long-id",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    const id = "a" ** 128;
+    const document = "{\"id\":\"" ++ id ++ "\",\"name\":\"A\",\"action\":\"deny\"}";
+    _ = (try fx.run(.{ .policy_edit = try edit(document, 0) })).revision;
+    const detail = try latest(fx, "policy.edit");
+    try t.expectEqualStrings(id, detail.row.target.?.slice());
+    const target = detail.row.policyRevision().?;
+    try t.expectEqualStrings(id, target.id.slice());
+    try t.expectEqual(@as(u64, 1), target.revision);
+    var page: p.audit.Page = .{ .rows = @splat(detail.row), .count = p.audit.page_rows };
+    for (&page.rows, 0..) |*row, index| {
+        row.id = p.audit.last_id - index;
+        row.actor = p.audit.last_id;
+        row.subject = p.audit.last_id;
+        row.recorded_at = p.audit.last_id;
+    }
+    var bytes: [4096]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&bytes);
+    try std.json.Stringify.value(page, .{}, &writer);
+    try t.expect(writer.buffered().len <= bytes.len);
+}
