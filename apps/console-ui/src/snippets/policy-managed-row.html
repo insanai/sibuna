@@ -6,5 +6,7 @@
   <div class="flex flex-wrap gap-2 mt-3">
     <button class="btn btn-sm" data-action="managed-open:{{ id }}">Open rule</button>
     <button class="btn btn-sm btn-ghost" data-action="managed-history:{{ id }}">History</button>
+    <button class="btn btn-sm btn-ghost" data-action="managed-up:{{ id }}" aria-label="Move {{ name }} up"{{ order }}>▲ Up</button>
+    <button class="btn btn-sm btn-ghost" data-action="managed-down:{{ id }}" aria-label="Move {{ name }} down"{{ order }}>▼ Down</button>
   </div>
 </article>

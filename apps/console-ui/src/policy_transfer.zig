@@ -93,6 +93,29 @@ pub fn render(state: *const State, writer: *std.Io.Writer) std.Io.Writer.Error!v
     try html.render(writer, @embedFile("snippets/policy-import.html"), .{
         .document = state.policies.manager.import_text.slice(),
     });
+    const import_all = &state.policies.manager.import_all;
+    try html.render(writer, @embedFile("snippets/policy-import-all.html"), .{
+        .open = if (import_all.stage != .idle) " open" else "",
+        .busy = if (state.policies.busy or import_all.stage != .idle) " disabled" else "",
+    });
+    if (import_all.stage != .idle) try html.render(writer, "<div class=\"sb-panel mt-3\">" ++
+        "<p role=\"status\">{{ count }} rule documents (batch {{ digest }}), replacing every " ++
+        "managed rule at revision {{ revision }}. {{ progress }}</p><div class=\"flex gap-2\">" ++
+        "<button class=\"btn btn-primary\" data-action=\"managed-import-confirm\"{{ busy }}>" ++
+        "Replace all rules</button><button class=\"btn\" data-action=\"managed-import-cancel\"" ++
+        "{{ busy }}>Cancel</button></div></div>", .{
+        .count = import_all.count,
+        .digest = @as([]const u8, &import_all.digest),
+        .revision = import_all.expected.slice(),
+        .progress = switch (import_all.stage) {
+            .review => "Nothing has been sent yet.",
+            .sending => "Sending documents…",
+            .committing => "Committing…",
+            .idle => "",
+        },
+        .busy = if (import_all.stage != .review) " disabled" else "",
+    });
+    try html.render(writer, "</details>", .{});
 }
 
 test "import rejects ignored fields and preserves the old draft on ID mismatch" {

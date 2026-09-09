@@ -174,6 +174,8 @@ fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
             if (state.phase == .nodes)
                 return @import("nodes_controller.zig").tick(&state, outbox());
             if (equal(string(value, "id"), "age")) return;
+            if (equal(string(value, "id"), "reputation-undo"))
+                return @import("reputation_controller.zig").tick(&state);
             if (state.phase == .dashboard and !state.paused) try refresh();
             if (state.phase == .geoip) try get("geoip", "/console/api/geoip");
             if (state.phase == .similarity) try similarityQuery();
@@ -1161,6 +1163,8 @@ fn policyAction(name: []const u8, fields: std.json.Value) !bool {
         model.busy = true;
         try command(.{ .op = "disconnect" });
         try policyPost(false, .{ .offset = @as(u8, 0) });
+        state.reputation.clear();
+        try @import("reputation_controller.zig").refresh(&state, outbox());
     } else if (equal(name, "policies-next") and state.phase == .policies) {
         if (model.busy or model.testing or model.stale) return true;
         const offset = model.next orelse return true;
@@ -1224,6 +1228,7 @@ fn policyResponse(id: []const u8, status: i64, body: std.json.Value) !void {
     }
     if (status != 200) {
         model.stale = status != 400 and status != 429;
+        @import("workflow_controller.zig").failed(managed(), id);
         setMessage(switch (status) {
             400 => "Check the request, rule settings, headers and networks, then try again.",
             409 => "Policy or reputation changed. Refresh and review the current rules.",

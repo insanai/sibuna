@@ -53,6 +53,7 @@ pub const State = struct {
     tokens: @import("tokens_state.zig").Model = .{},
     settings: @import("settings_state.zig").Model = .{},
     pages: @import("pages_state.zig").Model = .{},
+    reputation: @import("reputation_state.zig").Model = .{},
     audit: @import("audit_state.zig").Model = .{},
     nodes: @import("nodes_state.zig").Model = .{},
     busy: bool = false,
@@ -117,6 +118,8 @@ pub const State = struct {
                 self.settings.clear();
             } else if (comptime @import("std").mem.eql(u8, field.name, "pages")) {
                 self.pages.clear();
+            } else if (comptime @import("std").mem.eql(u8, field.name, "reputation")) {
+                self.reputation.clear();
             } else if (comptime @import("std").mem.eql(u8, field.name, "audit")) {
                 self.audit.clear();
             } else @field(self, field.name) = field.defaultValue().?;

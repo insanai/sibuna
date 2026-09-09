@@ -77,7 +77,9 @@ pub fn render(state: *const @import("state.zig").State, w: *Writer) Writer.Error
         state.policies.busy or state.policies.stale);
     try html.render(w, "</form>", .{});
     try decision(w, &state.policies, fixed.allocator());
-    try html.render(w, "</section></main>", .{});
+    try html.render(w, "</section>", .{});
+    try @import("reputation_panel.zig").render(state, w);
+    try html.render(w, "</main>", .{});
 }
 
 fn policyRow(w: *Writer, row: Row) Writer.Error!void {

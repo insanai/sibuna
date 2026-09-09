@@ -53,6 +53,7 @@ pub const Controller = struct {
         state.message = .{};
         model.decision = .{};
         if (try self.reviewAction(name, fields)) return true;
+        if (try @import("workflow_controller.zig").action(self, name, fields)) return true;
         if (equal(name, "managed-refresh")) {
             manager.review = .{};
             manager.view = .catalog;
@@ -236,6 +237,14 @@ pub const Controller = struct {
                 "/console/api/policies/edit"
             else if (equal(kind, "inspection"))
                 "/console/api/inspection/edit"
+            else if (equal(kind, "order"))
+                "/console/api/policies/order"
+            else if (equal(kind, "replay"))
+                "/console/api/policies/replay"
+            else if (equal(kind, "import-chunk"))
+                "/console/api/policies/import/chunk"
+            else if (equal(kind, "import-commit"))
+                "/console/api/policies/import/commit"
             else
                 "/console/api/policies/read",
             body,
@@ -246,6 +255,7 @@ pub const Controller = struct {
         const state = self.state;
         const model = &state.policies;
         const manager = &model.manager;
+        if (try @import("workflow_controller.zig").response(self, id, body)) return;
         const revision = string(body, "committed");
         _ = try std.fmt.parseInt(u64, revision, 10);
         manager.committed = try p.Bytes(20).init(revision);
@@ -310,7 +320,7 @@ pub const Controller = struct {
         });
     }
 
-    fn message(self: Controller, text: []const u8) void {
+    pub fn message(self: Controller, text: []const u8) void {
         self.state.message_success = false;
         self.state.message = p.Bytes(256).init(text) catch unreachable;
     }

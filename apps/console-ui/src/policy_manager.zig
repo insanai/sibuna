@@ -10,6 +10,7 @@ pub const Model = struct {
     committed: p.Bytes(20) = .{},
     next: p.Bytes(128) = .{},
     id: p.Bytes(128) = .{},
+    import_all: @import("workflow_controller.zig").Import = .{},
     historical: p.Bytes(20) = .{},
     baseline: p.Bytes(4096) = .{},
     review: p.Bytes(4096) = .{},
@@ -65,6 +66,10 @@ fn listing(state: *const @import("state.zig").State, w: *Writer) Writer.Error!vo
                 .action = text(row, "action"),
                 .priority = integer(row, "priority"),
                 .enabled = if (boolean(row, "enabled")) "Enabled" else "Disabled",
+                .order = if (state.policies.busy or !state.allows(.manage_policy))
+                    " disabled"
+                else
+                    "",
             });
         } else {
             try html.render(w, @embedFile("snippets/policy-history-row.html"), .{
@@ -105,6 +110,8 @@ fn editor(state: *const @import("state.zig").State, w: *Writer) Writer.Error!voi
         try button(w, "managed-save", "Save rule", disabled);
     try button(w, "managed-export", "Export draft JSON", state.policies.busy or
         state.policies.testing);
+    if (state.allows(.manage_policy))
+        try button(w, "managed-replay", "Replay recent events", disabled);
     try html.render(w, @embedFile("snippets/policy-preview-fields.html"), .{
         .path = if (state.policies.path.len == 0) "/" else state.policies.path.slice(),
         .ip = if (state.policies.ip.len == 0) "8.8.8.8" else state.policies.ip.slice(),
@@ -124,6 +131,7 @@ fn editor(state: *const @import("state.zig").State, w: *Writer) Writer.Error!voi
     var memory: [16384]u8 = undefined;
     var arena = std.heap.FixedBufferAllocator.init(&memory);
     try @import("policies_page.zig").decision(w, &state.policies, arena.allocator());
+    try @import("policy_replay.zig").render(w, @import("workflow_controller.zig").replay());
     try @import("policy_transfer.zig").render(state, w);
     try html.render(w, "</section>", .{});
 }

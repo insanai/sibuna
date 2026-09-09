@@ -1,0 +1,8 @@
+<details class="mt-6"{{ open }}>
+    <summary class="cursor-pointer font-bold">Replace all rules from a file</summary>
+    <p class="sb-note">Paste an exported policy set (a JSON array of rule documents, at most 128 rules and 64 KiB). The whole set is validated as one candidate and replaces every managed rule in a single revision, or nothing changes.</p>
+    <form id="managed-import-all" class="sb-settings-form">
+        <label for="import-set">Policy set</label>
+        <textarea id="import-set" class="textarea font-mono" name="documents" rows="6" maxlength="65536" required{{ busy }}></textarea>
+        <button class="btn" type="submit"{{ busy }}>Review the set</button>
+    </form>

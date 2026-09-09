@@ -1,0 +1,12 @@
+<form id="country-preview" class="sb-settings-form mt-6"><h3>Block or allow a country</h3>
+    <p class="sb-note">Every prefix of the country in the active GeoIP generation becomes a reputation row pinned to that generation. Preview shows the trie cost before anything applies; sets larger than 1,024 prefixes are refused rather than truncated.</p>
+    <label for="country-code">Country code</label>
+    <input id="country-code" name="country" class="input input-bordered" maxlength="2" pattern="[A-Za-z]{2}" required{{ busy }}>
+    <label for="country-action">Action</label>
+    <select id="country-action" name="action" class="select select-bordered"{{ busy }}>
+        <option value="deny">Deny</option><option value="allow">Allow</option></select>
+    <label for="country-hours">Duration in hours (blank keeps it until removed)</label>
+    <input id="country-hours" name="hours" class="input input-bordered" inputmode="numeric" maxlength="5"{{ busy }}>
+    <div class="flex flex-wrap gap-2 mt-3">
+    <button class="btn" type="submit"{{ busy }}>Preview country block</button>
+    <button class="btn btn-primary" type="button" data-action="country-apply"{{ apply }}>Apply to {{ prefixes }} prefixes</button></div>
