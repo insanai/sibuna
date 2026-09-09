@@ -133,7 +133,16 @@ already expired samples.
 Cluster members announce themselves through the replicated membership table and appear on
 every console's Nodes page; configure `--console-probe <node-id>=<http://ip:port>` for the
 peers whose data-plane listeners this console should health-check and
-`--console-advertise <origin>` for the link other consoles show. Local commands remain
+`--console-advertise <origin>` for the link other consoles show. Direct live telemetry uses
+`--console-peer <node-id>=<https://origin>` (repeatable, at most eight) and a dedicated
+`--console-peer-key-file`. Both endpoints must list each other and use trusted HTTPS ingress.
+The peer key is an owner-only file containing 64 hex characters, provisioned independently of
+console encryption, challenge and consensus keys. `--console-peer-ca-file` optionally supplies
+PEM trust anchors for a private management PKI; otherwise the client uses system roots.
+Certificate hostname validation always applies. Key rotation requires coordinated restart.
+The Nodes API and its subscription report receipt age, clock skew, boot changes and sampling
+loss. Missing observations remain unavailable and disconnected values remain stale; received
+statistics never become another node's own contribution. Local commands remain
 per node. `zig build console-impact` runs the data-plane isolation matrix (`-- --quick` for
 a smoke run) and writes `benchmarks/results/console-impact-latest.json`.
 
@@ -177,8 +186,8 @@ queries, detail reads and mutations remain HTTP requests.
 SID 0007 remains Proposed. The interface is available, with ongoing review corrections
 and acceptance work recorded in the SID. Earlier impact runs are inconclusive. The corrected
 harness includes each dashboard's stream, rankings and retained-timeline queries; a full
-acceptance run requires a production GeoIP snapshot and documented host conditions. Dedicated peer management transport remains implementation work; current node discovery
-uses replicated membership and configured health probes.
+acceptance run requires a production GeoIP snapshot and documented host conditions. Direct TLS peer transport has live-daemon verification; cluster-wide dashboard integration,
+interface review and browser acceptance remain tracked separately in SID 0007.
 
 == Deployment Topologies
 

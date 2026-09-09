@@ -51,9 +51,8 @@ docs); the book's Part II carries the full table with sources.
 
 Sibuna does not terminate ingress TLS or score bots with a model. Its opt-in console preview
 includes the animated country globe, incident investigation, policy editing, users, scoped API
-tokens, audit browsing and local node controls. SID 0007 remains proposed: multi-topic
-subscriptions, dedicated peer transport and release acceptance
-remain open. See
+tokens, audit browsing, local node controls and authenticated multi-topic subscriptions.
+SID 0007 remains proposed while peer transport, interface and release acceptance are completed. See
 [loading country data from the CLI](#loading-country-data) for country data setup.
 
 ## Research foundations
@@ -335,7 +334,24 @@ selectors. The Nodes page lists every cluster member from the replicated members
 (applied policy revision, log frontiers, draining state, a link to that member's advertised
 console) together with this console's own health probes of the peer data-plane listeners
 named by `--console-probe <node-id>=<http://ip:port>`; `--console-advertise <origin>` sets
-the link peers show. Drain, resume and clear local bans still act only on the serving node,
+the link peers show. Direct live telemetry uses separately configured management peers:
+
+```sh
+--console-peer 2=https://console-2.example \
+--console-peer-key-file /run/secrets/console-peer.key \
+--console-peer-ca-file /etc/sibuna/management-ca.pem
+```
+
+Repeat `--console-peer` for each other node (at most eight). Both nodes must list each other,
+use trusted HTTPS ingress and share a dedicated, owner-only 64-hex peer key. The optional PEM
+file supplies private trust anchors; omitting it uses system roots. Certificate hostname
+checks remain mandatory. Provision the peer key independently of console encryption, challenge
+and consensus keys. Rotation takes effect after restarting the nodes. The Nodes API and
+`nodes` subscription report live peer state, receipt age, clock skew, boot changes and sampling
+loss; missing observations remain null. Peer streams publish only their own node's statistics,
+keep telemetry outside consensus and retain stale observations when disconnected.
+
+Drain, resume and clear local bans still act only on the serving node,
 require a preview and produce durable command receipts. Under `-Dcluster=true`,
 `zig build console-e2e` also runs a three-node membership, failover and quorum-loss scenario,
 and `zig build console-impact` measures the console's cost to the data plane (the latest

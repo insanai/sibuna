@@ -540,7 +540,7 @@ tables it reads are replicated, and each probes the others' health endpoints dir
 console's HTTP substrate, not an OS kernel, and is written to be reusable by a future service; it knows nothing
 about firewalls.
 
-- *Listener and slots.* One acceptor thread; `max_slots` (default 80, at most 256; reserve at least 16 slots for HTTP and control traffic) connection
+- *Listener and slots.* One acceptor thread; `max_slots` (default 96, at most 256; reserve at least 16 slots for HTTP and control traffic) connection
   threads with fixed 16 KB receive and send buffers. A head larger than the receive buffer is
   `431`; a full slot table is `503` with `Retry-After`. Deadlines (head 10 s, idle 60 s, body
   30 s) are enforced by a watchdog thread that shuts down expired sockets, the same mechanism
@@ -704,10 +704,10 @@ only from storage/control code; failed rebuilds retain the prior snapshot and su
 
 Minute history sums disjoint node/boot intervals; exclude overlapping live seconds already
 covered by persisted minutes. Report node coverage, clock skew, reset/gap and stale values.
-Cross-node live tiles are served from replicated minute rows and the probe results above
-in this increment; direct authenticated peer snapshot streams (tagged by node id, boot id,
-sequence and interval, never forwarding received totals as a node's own contribution)
-remain the designed later transport. Only nodes running telemetry contribute; label a
+Replicated minute rows and configured probes provide historical coverage and health. Direct
+TLS peer snapshots now supply each node's local statistics, tagged by node, boot, sequence and
+observation interval. Received totals are never forwarded as a node's own contribution.
+Cluster-wide live dashboard composition remains an interface acceptance requirement. Only nodes running telemetry contribute; label a
 partial cluster rather than treating missing members as zero. Applied policy revision is a per-node acknowledgment, not evidence inferred
 from a committed row. Client dashboards do not connect directly to data-plane listeners.
 
@@ -1604,12 +1604,11 @@ typst compile --root docs docs/sid/figures/0007-console-landing-preview.typ docs
 The former open questions are resolved as follows; implementation must verify the stated
 bounds rather than reopen the architecture implicitly.
 
-+ *Live cluster transport:* deferred, design retained. Membership, applied revisions and
-  probe health need no peer socket because `console_nodes` and minute rows replicate; the
-  later live-tile transport uses direct authenticated management WebSockets on a separate
++ *Live cluster transport:* direct authenticated TLS management streams. Membership, applied
+  revisions and probe health use replicated rows and explicit probes; ephemeral node statistics
+  use direct authenticated management WebSockets on a separate
   `/console/peer` route and bounded peer quota. Authenticate node identity against configured
-  membership, using mTLS terminated by a trusted management ingress or a domain-separated
-  HMAC challenge over TLS. The consensus PSK is not a browser bearer token. Never use a
+  membership, using the domain-separated HMAC transcript over certificate-validated TLS. The consensus PSK is not a browser bearer token. Never use a
   server-only masked-frame reader as the outbound client: peer clients must mask writes and
   accept unmasked server frames. Keep ephemeral statistics out of consensus and require
   fresh epoch/sequence metadata; disconnected peers become stale, never healthy zeros.
@@ -1665,8 +1664,10 @@ identifies the following concrete gaps; the status remains Proposed.
     passes; Chrome acceptance of the new transport remains open. `/console/stream` retains
     compatibility for earlier statistics clients.],
   [Live cluster transport], [Membership and applied revisions use replicated rows; configured
-    HTTP probes provide health. The dedicated authenticated TLS peer WebSocket transport and
-    live peer node/boot/sequence deduplication remain deferred, not verified by the membership tests.],
+    HTTP probes provide health. Direct TLS peer WebSockets now authenticate configured nodes,
+    exchange local-only statistics and fence boot/sequence/watermark changes. The live TLS fixture
+    verifies authentication, certificate rejection, stale recovery and shutdown. Three-node
+    transport and cluster-wide dashboard composition remain acceptance work.],
   [Country rule maintenance], [Country actions pin a GeoIP generation. Reviewed replacement now compares added,
     retained and removed prefixes, with a bounded eight-row diff page. Apply binds the country,
     action, expiry, generation and expected policy revision to the preview. The version 26
@@ -1733,7 +1734,7 @@ Native data-plane HTTP/2 is separately deferred by the operator and is not a con
 
 == 3. HTTP, authentication and real-time transport
 
-- #text("Verified (2026-09-09): the serve kernel owns the listener, slot deadlines (extended once a head arrives), static assets and reserved slots; the peer quota remains with the deferred peer transport. See the cluster entry.")
+- #text("Verified (2026-09-09): the serve kernel owns the listener, slot deadlines (extended once a head arrives), static assets and reserved slots; the integrated peer quota is separate from the browser quota. See the cluster entry.")
 
 - #text("Verified (2026-09-09): libs/serve websocket tests and the live stream scenarios cover framing, masking, controls and close; the stream reader and writer are separate tasks. See the contract foundation and live stream entries.")
 
@@ -1787,9 +1788,9 @@ Native data-plane HTTP/2 is separately deferred by the operator and is not a con
 
 - #text("Verified (2026-09-09): Node health via configured probes, membership coverage and per-node applied revisions through replicated rows, drain/clear-local-bans via the control interface. See the cluster membership evidence.")
 
-- #text("Deferred (design retained): Dedicated TLS management WebSockets with certificate validation and separate domain-separated peer HMAC key; telemetry outside consensus. Membership and health need no peer socket in the delivered increment.")
+- #text("Verified (2026-09-10): Dedicated TLS management WebSockets use certificate/hostname validation and an independent domain-separated HMAC key. The live peer fixture checks mutual proofs, role boundaries, stale recovery and cancellation; three-node transport and cluster dashboard acceptance remain separate.")
 
-- #text("Verified (2026-09-09): Missing members render as unobserved, never zero; each node writes only its own row. Node/boot/sequence deduplication applies to the deferred peer stream.")
+- #text("Verified (2026-09-09): Missing members render as unobserved, never zero; each node writes only its own row. The direct peer stream now additionally fences node, boot, sequence and observation interval.")
 
 - #text("Verified (2026-09-09): challenge verification stays issuer-bound and rate limits stay local; the cluster scenario changes only replicated policy. See the cluster entry.")
 
@@ -4374,6 +4375,51 @@ vector passes. HTTP/1.0 upgrades and malformed base64 keys return 400; they no l
 standard-library assertion or a generic service error. The real six-topic scenario checks
 both refusals before continuing on the same daemon. The console matrix and shipped-Wasm
 scenario pass after this extraction; Chrome remains a separate acceptance gate.
+
+== Direct TLS peer transport (2026-09-10)
+
+The daemon now composes `peer_job.zig`, `peer_client.zig` and the authenticated `/console/peer`
+route. Configuration explicitly lists up to eight `--console-peer <node-id>=<https://origin>`
+destinations. `--console-peer-key-file` supplies a separately provisioned owner-only 64-hex key;
+`--console-peer-ca-file` optionally supplies a PEM trust bundle of at most 128 KiB. Otherwise
+system roots apply. Neither redirects nor certificate-verification bypasses are supported.
+DNS answers are bounded to sixteen and pinned before dialing; only this explicit management
+policy admits private networks. Notification destination policy is unchanged.
+
+Signed upgrade headers use `X-Sibuna-Peer` for the hex-encoded 64-byte request transcript or
+48-byte reply identity and `X-Sibuna-Proof` for the 32-byte HMAC. The WebSocket key is bound to
+the request proof and the standard accept key is checked independently. Duplicate security
+headers, unexpected extensions/subprotocols and response bodies are rejected. Peer credentials
+grant only local `stats` subscriptions and ping handling, never browser roles or management APIs.
+
+Each configured peer owns one outbound worker and admits one inbound connection. Browser and
+peer subscriptions have disjoint hub partitions (64 and 16); the kernel now has 96 physical
+slots so their quotas preserve sixteen HTTP slots. Each outbound attempt owns at most 6 MiB
+for TLS, trust anchors, reassembly and parsing. A ten-second monotonic deadline covers dialing,
+authentication and advancing complete snapshots. Duplicate observations do not refresh it.
+Reconnect backoff grows from one to thirty seconds with bounded jitter; connections renew
+after one hour. Cancellation joins both deadline and connection tasks before buffers are freed.
+Shutdown stops and joins outgoing peers before closing the kernel and storage.
+
+The Nodes API and `nodes` subscription include bounded peer reports: node, status, boot,
+receipt age, clock skew, sequence, watermark, boot resets, request count and sampling loss.
+Absent observations stay null; disconnected peers retain their last values. The shared protocol
+serializes boot IDs as hex strings and counters beyond the JavaScript integer range as decimal
+strings. Local statistics remain local when streamed to a peer, avoiding recursive aggregation.
+Cluster-wide live dashboard composition and the remaining interface requirements still need
+implementation and acceptance; this entry does not close those gates.
+
+Verification: 212 console native/UI tests pass. The full `fmt test sid console-ui-e2e`
+run passes 460 tests, the live console scenarios and the shipped-Wasm workflow. A real daemon connected to a certificate-validating
+TLS fixture passes unsolicited snapshots/deltas, masked client frames, mutual HMAC verification,
+replay and duplicate-link rejection, peer-only topic authorization, stale retention, reconnect
+and boot replacement. Forged server proofs, valid certificates for the wrong hostname and an
+untrusted CA fail. Every fixture daemon stops with status zero within ten seconds, including
+active links and failed reconnects. The scenario is part of `console-e2e` and requires OpenSSL
+only to generate its temporary test certificate. Three-node TLS transport and full browser/
+performance acceptance remain separate gates.
+
+#pagebreak(weak: true)
 
 = References
 
