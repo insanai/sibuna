@@ -1,7 +1,6 @@
 //! Category modes belong to an immutable engine snapshot, never to a console callback.
 const std = @import("std");
 const waf = @import("waf.zig");
-const rule = @import("rule.zig");
 
 pub const Mode = enum { disabled, audit, enforce };
 pub const Modes = struct {
@@ -44,23 +43,23 @@ pub fn auditName(category: waf.AttackCategory) []const u8 {
 pub fn inspect(
     sigs: *const waf.Signatures,
     modes: Modes,
-    path: []const u8,
-    query: []const u8,
-    user_agent: []const u8,
-    headers: []const rule.Header,
-    body: []const u8,
+    request: @import("request.zig").View,
 ) Findings {
     var result: Findings = .{};
-    for ([_][]const u8{ path, query, user_agent }) |text| {
+    for ([_][]const u8{ request.path, request.query, request.user_agent }) |text| {
         inspectField(sigs, modes, text, &result);
         if (result.denied != null) return result;
     }
-    for (headers) |header| {
+    for (request.headers) |header| {
         if (waf.isStructuralHeader(header.name)) continue;
         inspectField(sigs, modes, header.value, &result);
         if (result.denied != null) return result;
     }
-    inspectField(sigs, modes, body[0..@min(body.len, waf.MAX_BODY_INSPECT)], &result);
+    var fields = @import("body_fields.zig").Fields.init(request.headers, request.body);
+    while (fields.next()) |text| {
+        inspectField(sigs, modes, text, &result);
+        if (result.denied != null) return result;
+    }
     return result;
 }
 
@@ -93,12 +92,36 @@ test "audit findings do not hide enforcing categories in the same or later field
     defer t.allocator.destroy(sigs);
     waf.buildSignatures(sigs);
     const modes: Modes = .{ .sqli = .audit, .path_traversal = .disabled };
-    const mixed = inspect(sigs, modes, "/", "union select 1; %3Cscript%3E", "", &.{}, "");
+    const mixed = inspect(sigs, modes, .{ .path = "/", .query = "union select 1; %3Cscript%3E" });
     try t.expectEqual(waf.AttackCategory.xss, mixed.denied.?.category);
     try t.expectEqual(bit(.sqli), mixed.audited);
-    const later = inspect(sigs, modes, "/../../etc/passwd", "union select", "", &.{}, "; /bin/sh");
+    const later = inspect(sigs, modes, .{
+        .path = "/../../etc/passwd",
+        .query = "union select",
+        .body = "; /bin/sh",
+    });
     try t.expectEqual(waf.AttackCategory.rce, later.denied.?.category);
     try t.expectEqual(bit(.sqli), later.audited);
-    const ignored = inspect(sigs, .{ .sqli = .disabled }, "/", "union select", "", &.{}, "");
+    const ignored = inspect(sigs, .{ .sqli = .disabled }, .{
+        .path = "/",
+        .query = "union select",
+    });
     try t.expectEqualDeep(@as(Findings, .{}), ignored);
+}
+
+test "mixed category modes inspect multipart fields after an opaque file" {
+    const t = std.testing;
+    const sigs = try t.allocator.create(waf.Signatures);
+    defer t.allocator.destroy(sigs);
+    waf.buildSignatures(sigs);
+    const body = "--b\r\nContent-Disposition: form-data; name=\"f\"; filename=\"x\"\r\n\r\n" ++
+        "binary\x00file\r\n--b\r\nContent-Disposition: form-data; name=\"text\"\r\n\r\n" ++
+        "1 UNION SELECT password <script>alert(1)</script>\r\n--b--\r\n";
+    const result = inspect(sigs, .{ .sqli = .audit }, .{
+        .path = "/upload",
+        .headers = &.{.{ .name = "Content-Type", .value = "multipart/form-data; boundary=b" }},
+        .body = body,
+    });
+    try t.expectEqual(bit(.sqli), result.audited);
+    try t.expectEqual(waf.AttackCategory.xss, result.denied.?.category);
 }

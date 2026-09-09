@@ -26,14 +26,7 @@ pub const MAX_RULE_NAME: usize = 128;
 
 /// Everything the engine looks at for one request; all slices borrow the
 /// connection buffer.
-pub const RequestView = struct {
-    path: []const u8,
-    query: []const u8 = "",
-    client_ip: []const u8,
-    user_agent: []const u8 = "",
-    headers: []const Header = &.{},
-    body: []const u8 = "",
-};
+pub const RequestView = @import("request.zig").View;
 
 pub const Decision = struct {
     limits: ?@import("rule_limits.zig").Limits = null,
@@ -275,25 +268,10 @@ pub const Engine = struct {
 
     fn inspect(self: *const Engine, req: RequestView) inspection.Findings {
         if (self.inspection_modes.allEnforcing()) {
-            const hit = waf.inspectRequest(
-                &self.waf_signatures,
-                req.path,
-                req.query,
-                req.user_agent,
-                req.headers,
-                req.body,
-            );
+            const hit = waf.inspectRequest(&self.waf_signatures, req);
             return .{ .denied = hit };
         }
-        return inspection.inspect(
-            &self.waf_signatures,
-            self.inspection_modes,
-            req.path,
-            req.query,
-            req.user_agent,
-            req.headers,
-            req.body,
-        );
+        return inspection.inspect(&self.waf_signatures, self.inspection_modes, req);
     }
 
     fn evaluateAdmission(self: *const Engine, req: RequestView) Decision {

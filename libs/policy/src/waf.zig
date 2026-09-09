@@ -15,6 +15,7 @@ const std = @import("std");
 const rule = @import("rule.zig");
 const normalizer = @import("normalizer.zig");
 const aho = @import("aho_corasick.zig");
+const body_fields = @import("body_fields.zig");
 
 pub const AttackCategory = enum(u8) {
     path_traversal,
@@ -54,7 +55,7 @@ pub const Violation = struct {
 /// Bodies larger than this are inspected only over their prefix; attack
 /// payloads beyond the prefix can evade this layer. The bound limits cost,
 /// not application parser input; deployments must account for this limit.
-pub const MAX_BODY_INSPECT: usize = 8 * 1024;
+pub const MAX_BODY_INSPECT: usize = body_fields.max_prefix;
 
 /// Longest input that is canonicalised (percent-decoded, comment-stripped)
 /// before the second inspection pass. Inputs beyond this are inspected raw.
@@ -154,8 +155,8 @@ fn scanClasses(text: []const u8) Classes {
     };
 }
 
-/// A null byte truncates C string paths; inside a request it has no
-/// legitimate use and always signals an attempt to cut off a suffix.
+/// A null byte can truncate application text. Opaque binary bodies and multipart file
+/// payloads are selected out before text inspection; NUL is normal in those contents.
 fn checkNullByte(text: []const u8, classes: Classes) ?Violation {
     if (classes.nul or (classes.percent and std.mem.indexOf(u8, text, "%00") != null)) {
         return Violation.of(.path_traversal, "%00");
@@ -533,23 +534,17 @@ pub fn isStructuralHeader(name: []const u8) bool {
 
 pub fn inspectRequest(
     sigs: *const Signatures,
-    path: []const u8,
-    query: []const u8,
-    user_agent: []const u8,
-    headers: []const rule.Header,
-    body: []const u8,
+    request: @import("request.zig").View,
 ) ?Violation {
-    if (inspectTextWith(sigs, path)) |v| return v;
-    if (inspectTextWith(sigs, query)) |v| return v;
-    if (inspectTextWith(sigs, user_agent)) |v| return v;
-    for (headers) |h| {
+    if (inspectTextWith(sigs, request.path)) |v| return v;
+    if (inspectTextWith(sigs, request.query)) |v| return v;
+    if (inspectTextWith(sigs, request.user_agent)) |v| return v;
+    for (request.headers) |h| {
         if (isStructuralHeader(h.name)) continue;
         if (inspectTextWith(sigs, h.value)) |v| return v;
     }
-    if (body.len > 0) {
-        const limit = @min(body.len, MAX_BODY_INSPECT);
-        if (inspectTextWith(sigs, body[0..limit])) |v| return v;
-    }
+    var fields = body_fields.Fields.init(request.headers, request.body);
+    while (fields.next()) |text| if (inspectTextWith(sigs, text)) |v| return v;
     return null;
 }
 
@@ -640,9 +635,13 @@ test "inspectRequest passes a real browser request untouched" {
     const ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " ++
         "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
     const body = "{\"comment\":\"I'd select the second option -- it's cheaper\"}";
-    try std.testing.expect(
-        inspectRequest(sigs, "/blog/post-1", "tag=c%2B%2B&page=2", ua, &headers, body) == null,
-    );
+    try std.testing.expect(inspectRequest(sigs, .{
+        .path = "/blog/post-1",
+        .query = "tag=c%2B%2B&page=2",
+        .user_agent = ua,
+        .headers = &headers,
+        .body = body,
+    }) == null);
 }
 
 test "inspectRequest still catches attacks in custom headers and bodies" {
@@ -651,18 +650,14 @@ test "inspectRequest still catches attacks in custom headers and bodies" {
     const headers = [_]rule.Header{
         .{ .name = "X-Query", .value = "<script>alert(1)</script>" },
     };
-    const v = inspectRequest(sigs, "/search", "", "Mozilla", &headers, "").?;
+    const v = inspectRequest(sigs, .{ .path = "/search", .headers = &headers }).?;
     try std.testing.expectEqual(AttackCategory.xss, v.category);
-    const b = inspectRequest(sigs, "/submit", "", "Mozilla", &.{}, "cmd=test; /bin/sh").?;
+    const b = inspectRequest(sigs, .{ .path = "/submit", .body = "cmd=test; /bin/sh" }).?;
     try std.testing.expectEqual(AttackCategory.rce, b.category);
-    const q = inspectRequest(
-        sigs,
-        "/search",
-        "q=1%27%20union%20select%20null--",
-        "Mozilla",
-        &.{},
-        "",
-    ).?;
+    const q = inspectRequest(sigs, .{
+        .path = "/search",
+        .query = "q=1%27%20union%20select%20null--",
+    }).?;
     try std.testing.expectEqual(AttackCategory.sqli, q.category);
 }
 
