@@ -1766,11 +1766,11 @@ are historical; the acceptance gates below govern delivery.
 
 - #text("Pending: Regenerate benchmark results when measured subsystems change.")
 
-- #text("Pending: Impact matrix: compiled out, disabled, idle, eight dashboards; admitted, challenged, incident-heavy and policy reload workloads, including clustered runs.")
+- #text("Measured (2026-09-09): the matrix ran with all four configurations and all four workloads for seven rounds, and the clustered variant for three rounds; the eight dashboards received at least 0.99 frames per second each. See the acceptance run entry.")
 
-- #text("Pending: Throughput degradation <=1%, p99 increase <=10%, with uncertainty, peak memory and storage contention reported. Inconclusive measurements fail acceptance.")
+- #text("Not passed (2026-09-09): the verdict is inconclusive on the development host. Point estimates stay within ±2 % throughput and +6 % p99 with peak RSS reported per configuration, but the compiled-out baseline's own spread (20–46 %) exceeds the 1 % rule and every bootstrap interval straddles the gate; the record says so rather than rounding to a pass. A quiet host is required.")
 
-- #text("Pending: All gates passed before advancing Proposed or enabling console by default at runtime.")
+- #text("Pending: every functional gate is verified; the performance gate is inconclusive on the development host, so the record stays Proposed and the console stays opt-in at runtime.")
 
 == Implementation evidence
 
@@ -3716,6 +3716,64 @@ bytes (a non-zero default inside the state struct had briefly moved the whole st
 the data segment, which is why staged documents and replay text live outside it).
 Formatting, full repository tests, console tests, the live suite, SID and book generation
 pass; console-off, storage-off and cluster builds compile.
+
+== Acceptance run (2026-09-09)
+
+The full matrix ran on the committed tree: `zig build fmt test console-test sid` (twenty
+live-daemon scenarios in `console-e2e`, the storage-tick suites and the native render
+tests), `zig build -Dcluster=true console-e2e` (the three-node membership, edit, failover,
+quorum-loss, rejoin, revocation and drain scenario), and the `-Dconsole=false` and
+`-Dstorage=false` builds; every step passed. `zig build console-impact -- --rounds 7
+--seconds 8` on an Apple Silicon MacBook Pro with other applications open measured the
+four configurations under the four workloads with wrk at two threads and thirty-two
+connections. The first run showed that the eight dashboard subscribers had received no
+frames: the harness read the sockets through a buffered file with a one-second timeout,
+which discards bytes on every timeout, so the "active" daemon had been idle. The reader now
+blocks, and a run whose dashboards receive fewer than 0.8 frames per second each is
+reported as inconclusive with a limitation line. The corrected run delivered 1,837 frames
+(at least 0.99 per second per subscriber) and reported:
+
+#table(
+  columns: (auto, auto, auto, auto, auto),
+  align: (left, right, right, right, left),
+  [Workload], [Baseline req/s (spread)], [Console idle], [Eight dashboards], [95 % CI of loss, active],
+  [admitted], [147,680 (34.5 %)], [−0.7 % loss, −0.9 % p99], [−0.7 % loss, +0.3 % p99], [−15.1 % to +12.2 %],
+  [challenged], [154,255 (27.4 %)], [+1.5 % gain, −1.0 % p99], [+1.5 % gain, −4.3 % p99], [−13.0 % to +11.3 %],
+  [denied], [125,595 (46.2 %)], [−0.4 % loss, +0.3 % p99], [−2.0 % loss, +6.3 % p99], [−31.5 % to +25.3 %],
+  [policy reload], [147,195 (19.5 %)], [+0.2 % gain, +6.2 % p99], [−0.6 % loss, +3.1 % p99], [−14.4 % to +10.4 %],
+)
+
+Peak resident memory was 77–83 MiB with the console compiled in but disabled, 103–114 MiB
+idle and 111–115 MiB with eight dashboards, against 30–80 MiB compiled out. Every
+configuration's verdict is inconclusive: the compiled-out baseline's own spread across
+rounds is between 19 % and 46 %, far above the 1 % rule, and every bootstrap interval
+straddles the 1 % gate. The point estimates are consistent with the isolation contract, but
+this host cannot establish it, and the record says so.
+`benchmarks/results/console-impact-latest.json` and its timestamped copy carry the
+measurement.
+
+The clustered variant (`--cluster --rounds 3`, three PSK nodes with load on node 1) writes
+its own record, `console-impact-cluster-latest.json`. Its first run lost the dashboards in
+the last round: the streams ended and the harness never reopened them, so the final two
+samples measured an idle daemon. Subscribers now reopen a closed stream after a second, as
+the browser does, and the record carries the reconnect count and close codes; the rerun
+delivered every sample (at least 0.98 frames per second per subscriber, no reconnects) and
+reported:
+
+#table(
+  columns: (auto, auto, auto, auto, auto),
+  align: (left, right, right, right, left),
+  [Workload], [Baseline req/s (spread)], [Console idle], [Eight dashboards], [95 % CI of loss, active],
+  [admitted], [170,591 (6.2 %)], [+0.3 % gain, −1.5 % p99], [+0.3 % gain, −15.1 % p99], [−9.9 % to +5.2 %],
+  [challenged], [176,514 (8.3 %)], [+1.7 % gain, −94.1 % p99], [+1.8 % gain, −94.1 % p99], [−9.7 % to +6.8 %],
+  [denied], [169,097 (13.3 %)], [−0.6 % loss, −1.9 % p99], [−1.2 % loss, +1.6 % p99], [−11.2 % to +13.3 %],
+  [policy reload], [169,056 (4.3 %)], [−0.9 % loss, +1.3 % p99], [−1.1 % loss, −3.3 % p99], [−1.8 % to +5.5 %],
+)
+
+Peak resident memory of node 1 stayed between 28 and 34 MiB in every configuration. The
+challenged baseline's 4.7 ms p99 is a single slow round; the clustered verdict is also
+inconclusive, with baseline spreads of 4–13 % and every interval straddling the gate.
+Both harness runs exit non-zero, as the SID requires for an inconclusive measurement.
 
 = References
 
