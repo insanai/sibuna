@@ -34,12 +34,11 @@ pub const Db = union(enum) {
         }
     }
 
-    /// Closes the store, bounding a cluster member's stop. zaxonlite 0.6.1 stops
-    /// ticking as soon as `stop` is accepted, but a peer request still waiting on
-    /// consensus is only woken and deadline-checked by ticks, so the serve thread
-    /// can wait for that handler forever. Returns false when the close was
-    /// abandoned after `close_bound_ms`; every acknowledged write is durable
-    /// either way.
+    /// Closes the store, bounding a cluster member's stop. Zaxonlite 0.6.2 bounds
+    /// its own shutdown (0.6.1 could wait forever for a handler still parked on
+    /// consensus); the bound stays as a safety net so a service manager never
+    /// sees a hung stop. Returns false when the close was abandoned after
+    /// `close_bound_ms`; every acknowledged write is durable either way.
     pub fn closeBounded(self: Db, io: std.Io) bool {
         switch (self) {
             .node => |n| n.close(),

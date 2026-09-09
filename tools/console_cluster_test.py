@@ -152,6 +152,10 @@ def check(binary, h):
                 log.seek(0)
                 text = log.read()
                 assert "ChainMismatch" not in text and "leaked" not in text, text[-800:]
+                # Zaxonlite 0.6.2 bounds its own shutdown; Sibuna's 15 s safety net must
+                # never trigger.
+                assert "did not stop within" not in text, text[-800:]
+                assert "abandoned cluster member" not in text, text[-800:]
     print("console-e2e: three-node membership, edit, failover, quorum loss, rejoin passed")
 
 
