@@ -65,7 +65,7 @@
 #callout([Revision note (2026-09-07)], [
   Revised after the implementation review of 2026-09-07, at which point the storage layer
   existed only as a design. All three phases are now implemented in `apps/sibuna/src/persistent.zig`
-  against the official `insanai/zaxonlite` v0.6.1 release. This record describes the code as
+  against the official `insanai/zaxonlite` release (v0.6.2 since 2026-09-09). This record describes the code as
   built and lists what remains unexercised.
 ], fill: amber-light, stroke: amber)
 
@@ -89,7 +89,7 @@ request path.
    proceeds; the SQLite file is a materialised cache rebuildable from the durable anchor plus
    the journal suffix.
 3. *Embedded.* Zaxonlite compiles into the Sibuna binary from `build.zig.zon`
-   (`https://github.com/insanai/zaxonlite/archive/refs/tags/v0.6.1.tar.gz`, hash pinned). The
+   (`https://github.com/insanai/zaxonlite/archive/refs/tags/v0.6.2.tar.gz`, hash pinned). The
    single-node `Node` needs no transport; the cluster `Embedded` facade adds a TCP listener,
    peers, and either mTLS or the loopback development PSK.
 

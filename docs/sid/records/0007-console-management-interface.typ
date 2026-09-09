@@ -196,7 +196,7 @@ throughput by at most one percent and p99 latency by at most ten percent under t
   Present-tense requirements below describe intended behavior unless explicitly called current.
   Evidence was checked against `build.zig`, `build.zig.zon`, `apps/sibuna/src/server.zig`,
   `persistent.zig`, `libs/policy/src/engine.zig`, `waf.zig`, `radix_trie.zig`, and the browser solver.
-  The toolchain is Zig 0.16.0; Zaxonlite is pinned to 0.6.1. First-party service and UI logic
+  The toolchain is Zig 0.16.0; Zaxonlite is pinned to 0.6.2. First-party service and UI logic
   is Zig, with browser JavaScript glue and CSS assets. The storage-enabled daemon links
   SQLite and libc (SID 0005); this is native software for a host OS, not a freestanding
   bare-metal kernel. Only the browser modules target `wasm32-freestanding`.
@@ -1840,7 +1840,7 @@ are historical; the acceptance gates below govern delivery.
 
 - #text("Live-daemon tests cover enrollment, password-only rejection for an enrolled account, replayed codes, recovery use, and recovery rejection after restarting. Chrome exercised enrollment, recovery delivery, recovery login, sign-out and rejection of the consumed code. The mobile review found a minimum-content card width issue; recovery text now wraps and the card can shrink. QR provisioning and complete account-management workflows remain open.")
 
-- #text("The full country-data fixture crossed a journal rotation boundary and exposed a pinned Zaxonlite 0.6.1 iterator defect on restart. The manifest and segment checksums were valid. A reviewed one-line generated-source patch selects the sealed-segment reader, preserving trailer validation. The downloaded dependency and on-disk format are unchanged. A new deterministic regression writes across multiple rotations and authorizes after reopening. See build/patches/README.md for the patch bounds and removal condition.")
+- #text("The full country-data fixture crossed a journal rotation boundary and exposed a pinned Zaxonlite 0.6.1 iterator defect on restart. The manifest and segment checksums were valid. A reviewed one-line generated-source patch selects the sealed-segment reader, preserving trailer validation. The downloaded dependency and on-disk format are unchanged. A new deterministic regression writes across multiple rotations and authorizes after reopening. The patch was retired on 2026-09-09 when Zaxonlite 0.6.2 shipped the same correction upstream; the rotation regression still passes.")
 
 - #text("A copy of the exact failed full-size fixture reopened with the sealed-reader fix in 16.2 seconds and retained revision 1 with all 717,152 known ranges. The original fixture remains untouched. Storage-off and console-off test builds and the clustered TLS build passed. These observations close this regression, not the broader cluster/release gates.")
 
@@ -3509,9 +3509,10 @@ worker returns. Zaxonlite 0.6.1 stops ticking as soon as `stop` is accepted whil
 request already waiting on consensus is woken and deadline-checked only by ticks, so the
 leader's serve thread can wait for that handler forever; `Db.closeBounded` abandons the
 close after 15 seconds with a warning and the process exits with durable data (every
-acknowledged write was synced before its reply). The upstream fix is to keep advancing the
-tick counter and waking waiters until the handler count reaches zero; until it lands, the
-bound is the honest behaviour rather than a hung service manager.
+acknowledged write was synced before its reply). The defect was reported upstream as
+insanai/zaxonlite issue 7 and fixed in Zaxonlite 0.6.2, which Sibuna pins since the same
+day (see the 0.6.2 entry); the bound stays as a safety net rather than a hung service
+manager.
 
 Evidence: `tools/console_cluster_test.py` (run by `console-e2e` under `-Dcluster=true`)
 starts three PSK loopback nodes with consoles, bootstraps the administrator through node 1
@@ -3789,6 +3790,26 @@ measured 1,462.87 ns median (1,458.81–1,468.22 ns across seven batches), withi
 run variation of the previous 1,441.18 ns record. Idle RSS was 10,048 KiB with two workers and storage compiled but inactive. The 8,831-byte Wasm artifact is
 the proof solver. The console-impact matrix is recorded separately in the acceptance run
 entry and remains inconclusive on this host.
+
+== Zaxonlite 0.6.2 upgrade (2026-09-09)
+
+The shutdown defect found by the failover scenario was reported as insanai/zaxonlite
+issue 7 and fixed in release 0.6.2, which also bounds client connection establishment and
+embedded startup with monotonic deadlines and carries the sealed-journal iterator
+correction upstream. `build.zig.zon` now pins v0.6.2 (hash
+`zaxonlite-0.6.2-o9bF7GoWHABw0T60ff1rkNCGUQKggxd6AcDozCgZ2v06`). The generated-source
+patch, its review script and `build/patches` are removed; `build/storage.zig` returns the
+dependency module unchanged. `Db.closeBounded` and the worker cancellation stay as a
+safety net, and the failover test now asserts that no node log contains the abandoned
+close warning, so a clean member stop is verified rather than tolerated. No first-party
+call site changed: the API surface Sibuna uses is unchanged between 0.6.1 and 0.6.2.
+
+Evidence: `zig build fmt test console-test sid` (native tests, the rotation and restart
+regression, twenty live scenarios), `zig build -Dcluster=true console-e2e` (three-node
+membership, edit, failover, quorum loss, rejoin, revocation and drain with every stop
+returning within its bound and status 0), and the `-Dconsole=false` and `-Dstorage=false`
+builds all pass. Wire protocol 9 and journal format 2 are unchanged, so existing data
+directories open without migration.
 
 = References
 

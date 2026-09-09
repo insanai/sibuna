@@ -147,7 +147,7 @@ by cosine similarity of feature-hashed trigram embeddings. Query the data direct
 
 Build options: `-Dstorage=false` builds the pure in-memory daemon (no libc); `-Dcluster=true`
 links OpenSSL 3 for Zaxonlite's mutual TLS. The dependency is the official
-[`insanai/zaxonlite`](https://github.com/insanai/zaxonlite) v0.6.1 release pinned in
+[`insanai/zaxonlite`](https://github.com/insanai/zaxonlite) v0.6.2 release pinned in
 `build.zig.zon`.
 
 ## Measured performance
