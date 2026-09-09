@@ -285,7 +285,9 @@ pub const App = struct {
             route.token_scope == null or identity.scopes & route.token_scope.?.bit() == 0
         else
             false;
-        if (access_restricted or scope_missing or !identity.role.allows(route.action)) {
+        if (access_restricted or scope_missing or !identity.role.allows(route.action) or
+            (identity.kiosk and !route.kiosk))
+        {
             try http.fail(context, .forbidden, "CONSOLE403");
             return null;
         }
@@ -338,25 +340,22 @@ pub const App = struct {
             .events_similar => return @import("similarity_routes.zig").query(self, context),
             .policies => return @import("policy_routes.zig").query(self, context, false),
             .policies_test => return @import("policy_routes.zig").query(self, context, true),
-            .policy_edit, .inspection_edit => return @import("policy_routes.zig").edit(
-                self,
-                context,
-                identity.?,
-                route.handler == .inspection_edit,
-            ),
+            .policy_edit, .inspection_edit => return @import("policy_routes.zig")
+                .edit(self, context, identity.?, route.handler == .inspection_edit),
             .policy_read => return @import("policy_read_routes.zig").read(self, context),
             .events => return @import("event_routes.zig").query(self, context, false),
             .events_export => return @import("event_routes.zig").query(self, context, true),
             .login => return auth.login(self, context),
+            .kiosk_token, .kiosk_exchange => return @import("kiosk_routes.zig").handle(
+                self,
+                context,
+                identity,
+            ),
             .logout => return auth.logout(self, context),
             .password => return auth.password(self, context, identity.?),
             .geoip => return @import("geoip_routes.zig").handle(self, context, identity.?),
-            .totp => return @import("totp_routes.zig").handle(
-                self,
-                context,
-                route.path,
-                identity.?,
-            ),
+            .totp => return @import("totp_routes.zig")
+                .handle(self, context, route.path, identity.?),
             .stream => return @import("stream.zig").handle(self, context, identity.?),
             .stats => return http.json(context, self.stats.snapshot(
                 self.io,
@@ -374,6 +373,7 @@ pub const App = struct {
                     .must_change = user.must_change,
                     .expires = user.expires,
                     .totp_required = self.needsTotp(user.role, user.totp_enabled),
+                    .kiosk = user.kiosk,
                     .csrf = @as([]const u8, &csrf),
                 }, &.{});
             },

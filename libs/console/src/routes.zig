@@ -38,6 +38,8 @@ pub const Handler = enum {
     stream,
     geoip,
     totp,
+    kiosk_token,
+    kiosk_exchange,
 };
 pub const Route = struct {
     path: []const u8,
@@ -47,6 +49,8 @@ pub const Route = struct {
     token_scope: ?p.tokens.Scope = null,
     // Administrator-only reads do not consume the management mutation allowance.
     mutation: bool = false,
+    // Read-only kiosk sessions may reach only the routes that opt in.
+    kiosk: bool = false,
     handler: Handler,
 };
 const table = [_]Route{
@@ -155,6 +159,7 @@ const table = [_]Route{
         .path = "/console/api/timeline",
         .method = .POST,
         .access = .full,
+        .kiosk = true,
         .handler = .timeline,
         .token_scope = .stats_read,
     },
@@ -233,6 +238,20 @@ const table = [_]Route{
         .token_scope = .events_read,
     },
     .{
+        .path = "/console/api/kiosk/token",
+        .method = .POST,
+        .access = .full,
+        .action = .open_kiosk,
+        .handler = .kiosk_token,
+        .mutation = true,
+    },
+    .{
+        .path = "/console/api/kiosk/exchange",
+        .method = .POST,
+        .access = .public,
+        .handler = .kiosk_exchange,
+    },
+    .{
         .path = "/console/api/setup",
         .method = .GET,
         .access = .public,
@@ -248,12 +267,14 @@ const table = [_]Route{
         .path = "/console/api/session",
         .method = .GET,
         .access = .account,
+        .kiosk = true,
         .handler = .session,
     },
     .{
         .path = "/console/api/logout",
         .method = .POST,
         .access = .account,
+        .kiosk = true,
         .handler = .logout,
     },
     .{
@@ -266,6 +287,7 @@ const table = [_]Route{
         .path = "/console/api/stats",
         .method = .GET,
         .access = .full,
+        .kiosk = true,
         .handler = .stats,
         .token_scope = .stats_read,
     },
@@ -273,6 +295,7 @@ const table = [_]Route{
         .path = "/console/stream",
         .method = .GET,
         .access = .full,
+        .kiosk = true,
         .handler = .stream,
     },
     .{
