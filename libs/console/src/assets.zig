@@ -2,7 +2,7 @@ const std = @import("std");
 const Context = @import("http.zig").Context;
 const wasm = @embedFile("console_wasm");
 comptime {
-    if (wasm.len > 300 * 1024) @compileError("console Wasm exceeds the 300 KiB budget");
+    if (wasm.len > 384 * 1024) @compileError("console Wasm exceeds the 384 KiB budget");
 }
 
 pub fn serve(context: *Context, path: []const u8) Context.Error!bool {

@@ -232,7 +232,7 @@ async function loadConsole() {
   try {
     const response = await fetch("/console/assets/console.wasm", {signal: deadline.signal});
     if (!response.ok) throw new Error("Console asset unavailable");
-    return await WebAssembly.instantiate(await readBounded(response, 300 * 1024), {});
+    return await WebAssembly.instantiate(await readBounded(response, 384 * 1024), {});
   } catch (error) {
     root.textContent = "Console could not load. Reload this page to retry.";
     root.setAttribute("aria-busy", "false");

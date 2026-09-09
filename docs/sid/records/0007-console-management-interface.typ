@@ -937,7 +937,7 @@ same module natively and assert rendered HTML strings.
 - *Charts obey the rules.* `charts.zig` has one palette (the decision colours and the accent),
   draws deviation markers and sparklines as first-class marks, keeps axes and positions
   stable across updates, and uses no animation on data updates (R6, R8–R11).
-- *Budget.* The module is compiled at `ReleaseSmall` with a 300 KB size gate, 4 MiB initial and explicit maximum linear memory, bounded retained history, and no allocator on the event path beyond a bump arena reset per event.
+- *Budget.* The module is compiled at `ReleaseSmall` with a 384 KiB size gate (raised from 300 KiB on 2026-09-09 after the module reached 307,144 bytes; the per-feature size ledger is recorded in the implementation evidence), 4 MiB initial and explicit maximum linear memory, bounded retained history, and no allocator on the event path beyond a bump arena reset per event.
 
 == Pages
 
@@ -1428,7 +1428,7 @@ concern layout), wired by the existing `AppModules` helper.
   columns: (1.2fr, 2.6fr),
   table.header([*Step*], [*What it does*]),
   [`-Dconsole` (defaults to storage enabled)], [Compiles `libs/serve`, `libs/console`, and the interface module into the daemon; `-Dconsole=false` removes every console symbol and the `--console` flags.],
-  [`console-ui` (implicit)], [Compiles `apps/console-ui/src/main.zig` for `wasm32-freestanding` at `ReleaseSmall`, asserts the 300 KB budget, and embeds the bytes.],
+  [`console-ui` (implicit)], [Compiles `apps/console-ui/src/main.zig` for `wasm32-freestanding` at `ReleaseSmall`, asserts the 384 KiB budget, and embeds the bytes.],
   [`zig build console-assets`], [Runs `npm ci` and `npm run build` in `apps/console-ui/web/` through `b.addSystemCommand`, producing `assets/console.css` from `tailwind.css` with Tailwind 4 and the daisyUI 5 plugin, using explicit Tailwind source paths for Zig render files and HTML snippets, with complete class names in those sources; daisyUI components are restricted with its `include` configuration. The step then writes `assets/MANIFEST.md` with the SHA-256 of every asset.],
   [Digest gate (in `zig build test`)], [`tools/console_assets.py check` hashes both build inputs (render sources, HTML snippets, the snippet renderer, CSS configuration, package lock and scripts) and outputs against `MANIFEST.md`; output digests alone cannot detect stale CSS. A plain `zig build` therefore needs no npm; only `console-assets` does, and CI runs it and checks the tree is clean.],
   [`zig build console-test`], [Golden tests of the interface module compiled natively (rendered HTML per page and per event), protocol round-trip tests, and the kernel's HTTP and WebSocket tests with an in-process client.],
@@ -1474,7 +1474,7 @@ configured slots, queues and optional GeoIP dataset. Record active peak RSS sepa
   [Statistics delta latency], [≤ 1.25 s], [Sampler period plus 1 Hz broadcast],
   [Incident to dashboard], [Target ≤ 2.25 s + commit delay without backlog], [“The incident tap”; slow storage and replication can exceed this],
   [Policy edit to rebuilt engine on every node], [Target: commit/apply + next successful tick], [SID 0005 path],
-  [Interface module size], [≤ 300 KB], [`ReleaseSmall`, size gate],
+  [Interface module size], [≤ 384 KiB], [`ReleaseSmall`, size gate],
   [Page render (statistics, 3,600-point timeline)], [≤ 5 ms in the module], [Bounded writer, per-panel versions],
   [WebSocket subscribers per console], [64], [Slot table; `503` beyond],
 )

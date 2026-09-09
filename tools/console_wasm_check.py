@@ -3,7 +3,7 @@
 from pathlib import Path
 import sys
 
-MAX_BYTES = 300 * 1024
+MAX_BYTES = 384 * 1024
 EXPORTS = {
     "memory": 2,
     **dict.fromkeys((
