@@ -27,17 +27,19 @@ pub fn add(
         .optimize = optimize,
     });
     const html = htmlModule(b, target, optimize);
+    const geoip = @import("geoip.zig").add(b, target, optimize);
     console.addImport("serve", serve);
+    console.addImport("geoip", geoip);
     addUi(b, protocol, console);
     addAssets(b);
-    addGeoCheck(b, console);
+    @import("geoip.zig").addTools(b, geoip);
     const step = b.step("console-test", "Test console contracts and bounded ownership");
     step.dependOn(&b.top_level_steps.get("console-ui").?.step);
     step.dependOn(&b.top_level_steps.get("console-render-test").?.step);
     step.dependOn(&b.top_level_steps.get("console-assets-check").?.step);
     const abi_test = b.addSystemCommand(&.{ "python3", "tools/console_wasm_check_test.py" });
     step.dependOn(&abi_test.step);
-    for ([_]*std.Build.Module{ protocol, console, serve, html }) |module| {
+    for ([_]*std.Build.Module{ protocol, console, serve, html, geoip }) |module| {
         const tests = b.addTest(.{ .root_module = module });
         step.dependOn(&b.addRunArtifact(tests).step);
     }
@@ -146,19 +148,4 @@ fn addAssets(b: *std.Build) void {
     const check = b.step("console-assets-check", "Verify committed console assets without npm");
     const verify = b.addSystemCommand(&.{ "python3", "tools/console_assets.py", "check" });
     check.dependOn(&verify.step);
-}
-
-fn addGeoCheck(b: *std.Build, console: *std.Build.Module) void {
-    const executable = b.addExecutable(.{
-        .name = "console-geoip-check",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("tools/console_geoip_check.zig"),
-            .target = b.graph.host,
-            .optimize = .ReleaseSafe,
-            .imports = &.{.{ .name = "console", .module = console }},
-        }),
-    });
-    const run = b.addRunArtifact(executable);
-    if (b.args) |args| run.addArgs(args);
-    b.step("console-geoip-check", "Validate a downloaded DB-IP country gzip").dependOn(&run.step);
 }
