@@ -111,14 +111,13 @@ class Daemon:
             self.readers.append(reader)
 
     def read(self, stream):
-        stream.sock.settimeout(1)
+        # Blocking reads only: a socket timeout on a buffered file discards bytes and
+        # desynchronizes the frame parser. stop_all closes the socket to end the thread.
         while not self.stopping.is_set():
             try:
                 opcode, payload = stream.receive()
-            except (OSError, ValueError):
-                if self.stopping.is_set():
-                    return
-                continue
+            except (OSError, ValueError, AssertionError):
+                return
             if opcode == 9:
                 stream.send(10, payload)
             elif opcode == 1:
@@ -262,6 +261,7 @@ def matrix(binaries, temp, load, rounds, cluster, names, seed, psk, script):
                           f"{entry['requests_per_second']:9.0f} req/s "
                           f"p99 {entry['latency_us']['p99'] / 1000:6.2f} ms", flush=True)
         frames = sum(s["dashboard_frames"] for w in results.values() for s in w["active"])
+        # The active configuration is only evidence if every dashboard kept receiving.
         return finish(results, names), {"subscribers": DASHBOARDS, "frames_total": frames,
                                         "frames_per_second_per_subscriber_min": min(
                                             summarize(results[w]["active"])
@@ -319,6 +319,10 @@ def main():
         started = time.monotonic()
         results, dashboards = matrix(binaries, temp, load, args.rounds, args.cluster, names,
                                      seed, psk, script)
+    # Eight dashboards that stopped receiving frames would make "active" an idle daemon.
+    dashboards["delivered"] = dashboards["frames_per_second_per_subscriber_min"] >= 0.8
+    if not dashboards["delivered"]:
+        results["verdict"] = "inconclusive"
     data = {"meta": {**metadata(), "binaries": binaries, "host_label": args.host_label,
                      "quick": args.quick, "cluster": args.cluster,
                      "elapsed_seconds": time.monotonic() - started},
@@ -330,7 +334,10 @@ def main():
                 "Loopback wrk shares the host with the daemons; inconclusive results are "
                 "reported, never rounded to a pass.",
                 "Peak RSS is sampled every 100 ms from ps; short spikes can be missed.",
-                "The cluster case loads node 1 only; replication cost lands on all nodes."]}
+                "The cluster case loads node 1 only; replication cost lands on all nodes."]
+            + ([] if dashboards["delivered"] else [
+                "Dashboard subscribers received fewer than 0.8 frames per second; the active "
+                "configuration was not exercised and the verdict is inconclusive."])}
     record(data, "console-impact-latest")
     print(f"console-impact verdict: {results['verdict']}", flush=True)
     return 0 if results["verdict"] == "pass" else 1
