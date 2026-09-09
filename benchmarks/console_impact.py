@@ -236,7 +236,7 @@ def matrix(binaries, temp, load, rounds, cluster, names, seed, psk, script):
     try:
         for daemon in daemons.values():
             daemon.start()
-        cookies = {name: session(daemon.port) for name, daemon in daemons.items()}
+        cookies = {name: session(daemon.port)[0] for name, daemon in daemons.items()}
         results = {name: {cfg: [] for cfg in CONFIGURATIONS} for name in names}
         for round_index in range(rounds):
             for workload in names:
