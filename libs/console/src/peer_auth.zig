@@ -19,7 +19,17 @@ pub const Request = struct {
             return error.ClockSkew;
     }
 
-    fn encode(self: Request) [64]u8 {
+    pub fn decode(bytes: [64]u8) Request {
+        return .{
+            .from = std.mem.readInt(u32, bytes[0..4], .big),
+            .to = std.mem.readInt(u32, bytes[4..8], .big),
+            .timestamp = std.mem.readInt(u64, bytes[8..16], .big),
+            .nonce = bytes[16..48].*,
+            .websocket_key = bytes[48..64].*,
+        };
+    }
+
+    pub fn encode(self: Request) [64]u8 {
         var bytes: [64]u8 = undefined;
         std.mem.writeInt(u32, bytes[0..4], self.from, .big);
         std.mem.writeInt(u32, bytes[4..8], self.to, .big);

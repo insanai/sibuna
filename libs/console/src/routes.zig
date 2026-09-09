@@ -36,6 +36,7 @@ pub const Handler = enum {
     events_similar,
     events_export,
     stream,
+    peer,
     geoip,
     totp,
     kiosk_token,
@@ -74,6 +75,7 @@ pub const Route = struct {
     handler: Handler,
 };
 const table = [_]Route{
+    .{ .path = "/console/peer", .method = .GET, .access = .public, .handler = .peer },
     .{
         .path = "/console/api/nodes/local",
         .method = .GET,

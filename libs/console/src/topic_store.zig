@@ -180,6 +180,7 @@ pub const Store = struct {
         const members = page.object.getPtr("members") orelse return error.InvalidState;
         filterNodes(members, args.node.?);
         if (value.object.getPtr("probes")) |probes| filterNodes(probes, args.node.?);
+        if (value.object.getPtr("peers")) |peers| filterNodes(peers, args.node.?);
         try std.json.Stringify.value(value, .{}, output);
     }
 

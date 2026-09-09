@@ -42,35 +42,54 @@ pub fn parse(args: []const []const u8, remaining: [][]const u8) !Parsed {
         i += 1;
         if (i == args.len or std.mem.startsWith(u8, args[i], "--")) return error.MissingValue;
         const value = args[i];
-        if (std.mem.eql(u8, flag, "--console")) {
-            if (config.enabled) return error.DuplicateConsole;
-            try endpoint(&config, value);
-            config.enabled = true;
-        } else if (std.mem.eql(u8, flag, "--console-key-file")) {
-            if (config.key_file.len != 0) return error.DuplicateConsoleKey;
-            config.key_file = try console.protocol.Bytes(1024).init(value);
-        } else if (std.mem.eql(u8, flag, "--console-origin")) {
-            if (config.origin.len != 0) return error.DuplicateOrigin;
-            config.origin = try console.protocol.Bytes(255).init(value);
-        } else if (std.mem.eql(u8, flag, "--console-trusted-proxy")) {
-            if (config.trusted_proxy_count == config.trusted_proxies.len)
-                return error.TooManyProxies;
-            config.trusted_proxies[config.trusted_proxy_count] =
-                try console.protocol.Bytes(49).init(value);
-            config.trusted_proxy_count += 1;
-        } else if (std.mem.eql(u8, flag, "--console-advertise")) {
-            if (config.advertise.len != 0) return error.DuplicateAdvertise;
-            config.advertise = try console.protocol.Bytes(255).init(value);
-        } else if (std.mem.eql(u8, flag, "--console-probe")) {
-            try probe(&config, value);
-        } else if (std.mem.eql(u8, flag, "--console-location")) {
-            if (config.server_location != null) return error.DuplicateLocation;
-            config.server_location = try console.protocol.Location.parse(value);
-        } else return error.UnknownConsoleOption;
+        try option(&config, flag, value);
     }
     if (initial_admin != null and options_seen) return error.UnexpectedConsoleOptions;
     if (options_seen and !config.enabled) return error.ConsoleRequired;
     return .{ .config = config, .data_args = remaining[0..count], .initial_admin = initial_admin };
+}
+
+fn option(config: *console.ConsoleConfig, flag: []const u8, value: []const u8) !void {
+    if (std.mem.eql(u8, flag, "--console")) {
+        if (config.enabled) return error.DuplicateConsole;
+        try endpoint(config, value);
+        config.enabled = true;
+    } else if (std.mem.eql(u8, flag, "--console-key-file")) {
+        if (config.key_file.len != 0) return error.DuplicateConsoleKey;
+        config.key_file = try console.protocol.Bytes(1024).init(value);
+    } else if (std.mem.eql(u8, flag, "--console-origin")) {
+        if (config.origin.len != 0) return error.DuplicateOrigin;
+        config.origin = try console.protocol.Bytes(255).init(value);
+    } else if (std.mem.eql(u8, flag, "--console-trusted-proxy")) {
+        if (config.trusted_proxy_count == config.trusted_proxies.len)
+            return error.TooManyProxies;
+        config.trusted_proxies[config.trusted_proxy_count] =
+            try console.protocol.Bytes(49).init(value);
+        config.trusted_proxy_count += 1;
+    } else if (std.mem.eql(u8, flag, "--console-advertise")) {
+        if (config.advertise.len != 0) return error.DuplicateAdvertise;
+        config.advertise = try console.protocol.Bytes(255).init(value);
+    } else if (std.mem.eql(u8, flag, "--console-probe")) {
+        try probe(config, value);
+    } else if (std.mem.eql(u8, flag, "--console-location")) {
+        if (config.server_location != null) return error.DuplicateLocation;
+        config.server_location = try console.protocol.Location.parse(value);
+    } else if (std.mem.eql(u8, flag, "--console-peer")) {
+        const peers = &config.peers;
+        if (peers.count == peers.targets.len) return error.TooManyPeers;
+        const at = std.mem.indexOfScalar(u8, value, '=') orelse return error.InvalidPeer;
+        peers.targets[peers.count] = .{
+            .node = std.fmt.parseInt(u32, value[0..at], 10) catch return error.InvalidPeer,
+            .origin = try console.protocol.Bytes(255).init(value[at + 1 ..]),
+        };
+        peers.count += 1;
+    } else if (std.mem.eql(u8, flag, "--console-peer-key-file")) {
+        if (config.peers.key_file.len != 0) return error.DuplicatePeerKey;
+        try config.peers.key_file.set(value);
+    } else if (std.mem.eql(u8, flag, "--console-peer-ca-file")) {
+        if (config.peers.ca_file.len != 0) return error.DuplicatePeerTrust;
+        try config.peers.ca_file.set(value);
+    } else return error.UnknownConsoleOption;
 }
 
 /// `<node-id>=<http://ip:port>`: the peer's data-plane listener, never a discovered address.
@@ -119,16 +138,18 @@ pub const Runtime = struct {
             .forward_auth => .forward_auth,
         };
         composed.version = @import("server.zig").version;
-        const app = try console.App.init(
-            gpa,
-            io,
-            composed,
-            &owner.console_mailbox,
-            &owner.console_incidents,
-            &owner.state.metrics,
-            key,
-            owner.console_node.boot,
-        );
+        try composed.validate(true);
+        var peer_key = try peerKey(io, composed, owner);
+        defer if (peer_key) |*bytes| std.crypto.secureZero(u8, bytes);
+        const app = try console.App.init(gpa, io, .{
+            .config = composed,
+            .mailbox = &owner.console_mailbox,
+            .incidents = &owner.console_incidents,
+            .metrics = &owner.state.metrics,
+            .totp_key = key,
+            .peer_key = peer_key,
+            .boot = owner.console_node.boot,
+        });
         errdefer app.deinit();
         const spec = owner.state.coordinator.default_spec;
         app.challenge_defaults = .{
@@ -151,7 +172,9 @@ pub const Runtime = struct {
             app,
             console.App.handle,
         );
+        errdefer kernel.stop();
         owner.state.telemetry = app.telemetry;
+        errdefer owner.state.telemetry = null;
         const advertised = if (config.advertise.len != 0) config.advertise else app.config.origin;
         const url = console.protocol.Bytes(console.protocol.nodes.max_url).init(
             advertised.slice(),
@@ -172,11 +195,35 @@ pub const Runtime = struct {
     }
 
     pub fn stop(self: Runtime) void {
+        self.app.stopping.store(true, .release);
+        self.app.peers.stop();
+        self.app.peer_job.stop();
         self.app.mailbox.stop(self.app.io);
         self.kernel.stop();
         self.app.deinit();
     }
 };
+
+/// Reject file aliases and equal secret material for the two local console key domains.
+fn peerKey(io: std.Io, config: console.ConsoleConfig, owner: *Persistent) !?[32]u8 {
+    if (config.peers.count == 0) return null;
+    const path = config.peers.key_file.slice();
+    const core = owner.state.config;
+    const paths = [_]?[]const u8{
+        config.key_file.slice(), core.secret_file, core.cluster_secret_file,
+    };
+    for (paths) |p| {
+        if (p) |other| if (std.mem.eql(u8, path, other)) return error.PeerKeyReused;
+    }
+    var key = try @import("console_key.zig").read(io, path);
+    errdefer std.crypto.secureZero(u8, &key);
+    if (config.key_file.len != 0) {
+        var other = try @import("console_key.zig").read(io, config.key_file.slice());
+        defer std.crypto.secureZero(u8, &other);
+        if (std.crypto.timing_safe.eql([32]u8, key, other)) return error.PeerKeyReused;
+    }
+    return key;
+}
 
 test "console parsing preserves data-plane arguments and rejects unknown flags" {
     var remaining: [16][]const u8 = undefined;
@@ -223,5 +270,29 @@ test "console location is explicit, bounded and separate from data-plane argumen
     }, &remaining));
     try t.expectError(error.DuplicateLocation, parse(&.{
         "--console", "127.0.0.1:9443", "--console-location", "0,0", "--console-location", "0,0",
+    }, &remaining));
+}
+
+test "management peer parsing owns origins and rejects self identity after composition" {
+    const t = std.testing;
+    var remaining: [16][]const u8 = undefined;
+    var parsed = try parse(&.{
+        "--console",               "127.0.0.1:9443",
+        "--console-behind-proxy",  "--console-origin",
+        "https://console.test",    "--console-trusted-proxy",
+        "127.0.0.1/32",            "--console-peer",
+        "2=https://peer.test:443", "--console-peer-key-file",
+        "peer.key",                "--console-peer-ca-file",
+        "ca.pem",                  "--gate",
+    }, &remaining);
+    try t.expectEqualStrings("--gate", parsed.data_args[0]);
+    try t.expectEqualStrings("ca.pem", parsed.config.peers.ca_file.slice());
+    parsed.config.node_id = 1;
+    try parsed.config.validate(true);
+    parsed.config.node_id = 2;
+    try t.expectError(error.InvalidPeer, parsed.config.validate(true));
+    try t.expectError(error.DuplicatePeerKey, parse(&.{
+        "--console",               "127.0.0.1:9443", "--console-peer-key-file", "a",
+        "--console-peer-key-file", "b",
     }, &remaining));
 }

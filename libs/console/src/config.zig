@@ -23,6 +23,7 @@ pub const ConsoleConfig = struct {
     advertise: protocol.Bytes(255) = .{},
     probes: [max_probes]Probe = @splat(.{}),
     probe_count: u8 = 0,
+    peers: @import("peer_config.zig").Config = .{},
     budget: Budget = .{},
 
     pub const max_probes = 8;
@@ -38,7 +39,7 @@ pub const ConsoleConfig = struct {
         InvalidAdvertise,
         InvalidProbe,
         DuplicateProbe,
-    } || Budget.Error || protocol.Location.Error;
+    } || Budget.Error || protocol.Location.Error || @import("peer_config.zig").Error;
 
     pub fn validate(self: *const ConsoleConfig, has_storage: bool) Error!void {
         try self.budget.validate();
@@ -55,6 +56,7 @@ pub const ConsoleConfig = struct {
         };
         try self.validateAdvertise();
         try self.validateProbes();
+        try self.peers.validate(self.node_id, self.behind_proxy);
         if (!loopback and !self.behind_proxy) return error.TrustedProxyRequired;
         if (!self.behind_proxy) return;
         try self.validateProxy();

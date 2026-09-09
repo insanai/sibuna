@@ -114,3 +114,35 @@ test "peer admission is membership-bound, replay-safe and limited to one inbound
         100,
     ));
 }
+
+test "peer reports preserve unavailable values, boot text, exact counters and stale age" {
+    var store = try fixture();
+    defer store.deinit();
+    var reports: [config.max_peers]peers.Report = undefined;
+    try t.expectEqual(@as(u8, 1), store.reports(100, &reports));
+    try t.expect(reports[0].requests == null and reports[0].age_seconds == null);
+    const handle = try store.activate(0, @splat(1));
+    const value = observation(handle.boot, 9007199254740993);
+    try t.expect(try store.publish(handle, .{
+        .value = &value,
+        .watermark = 1,
+        .sequence = 2,
+        .received_at = 103,
+    }));
+    _ = store.reports(113, &reports);
+    try t.expectEqual(.stale, reports[0].status);
+    try t.expectEqual(@as(?u64, 10), reports[0].age_seconds);
+    try t.expectEqual(@as(?u64, 3), reports[0].clock_skew_seconds);
+    var bytes: [1024]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&bytes);
+    try std.json.Stringify.value(reports[0], .{}, &writer);
+    const parsed = try std.json.parseFromSlice(
+        std.json.Value,
+        t.allocator,
+        writer.buffered(),
+        .{},
+    );
+    defer parsed.deinit();
+    try t.expectEqualStrings("01" ** 16, parsed.value.object.get("boot").?.string);
+    try t.expectEqualStrings("9007199254740993", parsed.value.object.get("requests").?.string);
+}

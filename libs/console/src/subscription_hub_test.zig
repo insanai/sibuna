@@ -115,3 +115,18 @@ test "hub filters retained summaries and recycled handles cannot change another 
     try t.expectEqual(@as(i64, 2), rows[0].object.get("node").?.integer);
     try message(hub, handle, "snapshot_end", 2);
 }
+
+test "peer and browser hub partitions cannot consume each other's quota" {
+    const hub = try Hub.init(t.allocator, t.io, @splat(3));
+    defer hub.deinit();
+    var browsers: [64]Handle = undefined;
+    var peers: [16]Handle = undefined;
+    for (&browsers) |*handle| handle.* = try hub.attach();
+    defer for (browsers) |handle| hub.detach(handle);
+    try t.expectError(error.Full, hub.attach());
+    for (&peers) |*handle| handle.* = try hub.attachPeer();
+    defer for (peers) |handle| hub.detach(handle);
+    try t.expectError(error.Full, hub.attachPeer());
+    for (browsers) |handle| try t.expect(handle.index < 64);
+    for (peers) |handle| try t.expect(handle.index >= 64);
+}

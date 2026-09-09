@@ -4,7 +4,7 @@ const std = @import("std");
 /// are separate from browser slots, so neither peer nor browser streams consume HTTP reserve.
 pub const Admission = struct {
     pub const Kind = enum { http, browser, peer };
-    max_slots: u16 = 80,
+    max_slots: u16 = 96,
     http_reserved: u16 = 16,
     max_browsers: u16 = 64,
     max_peers: u16 = 16,
@@ -18,25 +18,27 @@ pub const Admission = struct {
         if (self.http_reserved < 16 or self.http_reserved > self.max_slots)
             return error.InvalidCapacity;
         if (self.max_browsers > 64 or
-            self.max_browsers > self.max_slots - self.http_reserved or self.max_peers > 64)
+            @as(u32, self.max_browsers) + self.max_peers >
+                self.max_slots - self.http_reserved or self.max_peers > 64)
             return error.InvalidCapacity;
     }
 
     pub fn acquire(self: *Admission, kind: Kind) error{ Full, Stopping }!void {
-        std.debug.assert(self.http + self.browsers <= self.max_slots);
+        std.debug.assert(self.http + self.browsers + self.peers <= self.max_slots);
         if (self.stopping) return error.Stopping;
         switch (kind) {
             .peer => {
-                if (self.peers == self.max_peers) return error.Full;
+                if (self.peers == self.max_peers or
+                    self.http + self.browsers + self.peers == self.max_slots) return error.Full;
                 self.peers += 1;
             },
             .http => {
-                if (self.http + self.browsers == self.max_slots) return error.Full;
+                if (self.http + self.browsers + self.peers == self.max_slots) return error.Full;
                 self.http += 1;
             },
             .browser => {
                 if (self.browsers == self.max_browsers or
-                    self.http + self.browsers == self.max_slots) return error.Full;
+                    self.http + self.browsers + self.peers == self.max_slots) return error.Full;
                 self.browsers += 1;
             },
         }

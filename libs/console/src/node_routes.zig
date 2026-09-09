@@ -45,9 +45,12 @@ fn members(app: *App, context: *http.Context, auth: p.users.Auth) !void {
         .nodes_page => |page| {
             var probes: [p.nodes.max_probes]p.nodes.Probe = undefined;
             const count = app.cluster.snapshot(&probes);
+            var peers: [8]@import("peer_store.zig").Report = undefined;
+            const peer_count = app.peers.reports(app.now(), &peers);
             return http.json(context, .{
                 .page = page,
                 .probes = probes[0..count],
+                .peers = peers[0..peer_count],
                 .observed_at = app.now(),
             }, &.{});
         },

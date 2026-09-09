@@ -3,7 +3,7 @@ const std = @import("std");
 /// Capacity accounting is a reservation estimate, not measured process RSS. Database/cache
 /// memory and allocator overhead must be measured separately by the impact harness.
 pub const Budget = struct {
-    slots: u16 = 80,
+    slots: u16 = 96,
     http_reserved: u16 = 16,
     subscribers: u16 = 64,
     peers: u16 = 16,
@@ -40,7 +40,7 @@ pub const Budget = struct {
         if (self.slots < 16 or self.slots > 256) return error.InvalidBudget;
         if (self.http_reserved < 16 or self.http_reserved > self.slots)
             return error.InvalidBudget;
-        if (self.subscribers > self.slots - self.http_reserved)
+        if (@as(u32, self.subscribers) + self.peers > self.slots - self.http_reserved)
             return error.InvalidBudget;
         if (self.subscribers > 64 or self.peers > 64) return error.InvalidBudget;
         if (self.auth_verifiers != 1) return error.InvalidBudget;
@@ -57,7 +57,10 @@ pub const Budget = struct {
             512 * 1024;
         return stacks + connections * 2 * socket_buffer_bytes +
             @as(u64, self.slots) * body_bytes + import_bytes + auth_bytes +
-            @as(u64, self.subscribers) * @sizeOf(@import("subscriber.zig").Subscriber) +
+            (@as(u64, self.subscribers) + self.peers) *
+                @sizeOf(@import("subscriber.zig").Subscriber) +
+            // Each outbound peer owns reassembly, a bounded JSON arena and TLS buffers.
+            @as(u64, self.peers) * @import("peer_client.zig").allocation_bytes +
             topic_bytes + traffic_bytes + query_bytes + evidence_bytes + collector_bytes +
             2 * @as(u64, self.geoip_generation_bytes);
     }

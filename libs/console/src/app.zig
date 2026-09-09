@@ -27,6 +27,8 @@ pub const App = struct {
     metrics: *const core.Metrics,
     stats: Stats = .{},
     hub: *@import("subscription_hub.zig").Hub,
+    peers: @import("peer_store.zig").Store,
+    peer_job: @import("peer_job.zig").Job = .{},
     subscriptions: @import("subscription_job.zig").Job = .{},
     history: @import("rankings_journal.zig").Journal = .{},
     minutes: @import("minute_journal.zig").Journal = .{},
@@ -43,16 +45,19 @@ pub const App = struct {
     collector: ?std.Thread = null,
     stopping: std.atomic.Value(bool) = .init(false),
 
-    pub fn init(
-        gpa: std.mem.Allocator,
-        io: std.Io,
-        cfg: Config,
+    pub const Input = struct {
+        config: Config,
         mailbox: *Mailbox,
         incidents: *store.ConsoleIncidents,
         metrics: *const core.Metrics,
         totp_key: ?[32]u8,
+        peer_key: ?[32]u8 = null,
         boot: [16]u8,
-    ) !*App {
+    };
+
+    pub fn init(gpa: std.mem.Allocator, io: std.Io, input: Input) !*App {
+        const cfg = input.config;
+        const boot = input.boot;
         const self = try gpa.create(App);
         errdefer gpa.destroy(self);
         const telemetry = try gpa.create(store.ConsoleTelemetry);
@@ -62,19 +67,21 @@ pub const App = struct {
         errdefer hub.deinit();
         self.* = .{
             .gpa = gpa,
-            .totp_key = totp_key,
+            .totp_key = input.totp_key,
             .io = io,
             .config = cfg,
-            .mailbox = mailbox,
-            .incidents = incidents,
+            .mailbox = input.mailbox,
+            .incidents = input.incidents,
             .passwords = try Password.init(gpa),
             .telemetry = telemetry,
             .hub = hub,
-            .metrics = metrics,
+            .peers = .init(io, cfg.peers, cfg.node_id, input.peer_key),
+            .metrics = input.metrics,
             .dummy_hash = .{},
             .setup_required = false,
         };
         errdefer {
+            self.peers.deinit();
             self.passwords.deinit();
             if (self.totp_key) |*key| std.crypto.secureZero(u8, key);
         }
@@ -127,6 +134,8 @@ pub const App = struct {
         errdefer self.notifier.stop();
         try self.subscriptions.start(self);
         errdefer self.subscriptions.stop();
+        try self.peer_job.start(&self.peers, self.gpa);
+        errdefer self.peer_job.stop();
         self.collector = try std.Thread.spawn(
             .{ .stack_size = 256 * 1024 },
             collect,
@@ -138,6 +147,9 @@ pub const App = struct {
     pub fn deinit(self: *App) void {
         self.incidents.enabled.store(false, .release);
         self.stopping.store(true, .release);
+        self.peers.stop();
+        self.peer_job.stop();
+        self.peers.deinit();
         self.hub.stop();
         self.subscriptions.stop();
         self.cluster.stop();
@@ -418,6 +430,7 @@ pub const App = struct {
             .geoip => return @import("geoip_routes.zig").handle(self, context, identity.?),
             .totp => return @import("totp_routes.zig")
                 .handle(self, context, route.path, identity.?),
+            .peer => return @import("stream.zig").peer(self, context),
             .stream => return @import("stream.zig").handle(self, context, identity.?),
             .stats => return http.json(context, self.stats.snapshot(
                 self.io,

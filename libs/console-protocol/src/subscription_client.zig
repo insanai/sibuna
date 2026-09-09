@@ -35,6 +35,15 @@ pub const Client = struct {
         return self.slots[@intFromEnum(topic)].current.slice();
     }
 
+    pub const Position = struct { sequence: u64, watermark: u64 };
+
+    /// Only completed, gap-free views have a position that consumers may acknowledge.
+    pub fn position(self: *const Client, topic: p.Topic) ?Position {
+        const slot = &self.slots[@intFromEnum(topic)];
+        if (slot.pending or slot.blocked) return null;
+        return .{ .sequence = slot.sequence, .watermark = slot.watermark };
+    }
+
     pub fn receive(
         self: *Client,
         value: std.json.Value,

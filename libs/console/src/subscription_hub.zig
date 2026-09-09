@@ -14,7 +14,7 @@ pub const Hub = struct {
     io: std.Io,
     boot: [32]u8,
     stores: [s.topic_count]*topics.Store,
-    slots: [64]Slot = @splat(.{}),
+    slots: [80]Slot = @splat(.{}),
     mutex: std.Io.Mutex = .init,
     next_id: u64 = 1,
     next_epoch: u64 = 1,
@@ -58,11 +58,19 @@ pub const Hub = struct {
     }
 
     pub fn attach(self: *Hub) !Handle {
+        return self.attachRange(0, 64);
+    }
+
+    pub fn attachPeer(self: *Hub) !Handle {
+        return self.attachRange(64, self.slots.len);
+    }
+
+    fn attachRange(self: *Hub, start: usize, end: usize) !Handle {
         self.mutex.lockUncancelable(self.io);
         defer self.mutex.unlock(self.io);
         if (self.stopping) return error.Stopping;
         if (self.next_id == std.math.maxInt(u64)) return error.IdExhausted;
-        for (&self.slots, 0..) |*slot, index| {
+        for (self.slots[start..end], start..) |*slot, index| {
             if (slot.value != null) continue;
             const value = try self.gpa.create(Subscriber);
             value.* = .{};

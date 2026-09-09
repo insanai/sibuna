@@ -11,7 +11,7 @@ pub const Error = auth.Error || error{
     GenerationExhausted,
     InvalidObservation,
 };
-pub const Status = enum { unobserved, connecting, current, stale, rejected };
+pub const Status = p.nodes.PeerStatus;
 pub const Handle = struct { index: u8, generation: u64, boot: [16]u8 };
 pub const Update = struct {
     /// Borrowed only during publish; Store copies the complete accepted snapshot.
@@ -36,6 +36,7 @@ const Slot = struct {
     boot: [16]u8 = @splat(0),
     observation: Observation = .{},
 };
+pub const Report = p.nodes.Peer;
 pub const Store = struct {
     io: std.Io,
     config: config.Config,
@@ -150,6 +151,33 @@ pub const Store = struct {
         defer self.mutex.unlock(self.io);
         for (output[0..self.config.count], self.slots[0..self.config.count]) |*to, from|
             to.* = from.observation;
+        return self.config.count;
+    }
+
+    /// A missing sample stays null. Wall-clock skew is displayed separately from receipt age.
+    pub fn reports(self: *Store, now: u64, output: *[config.max_peers]Report) u8 {
+        self.mutex.lockUncancelable(self.io);
+        defer self.mutex.unlock(self.io);
+        for (output[0..self.config.count], 0..) |*report, index| {
+            const sample = &self.slots[index].observation;
+            report.* = .{ .node = self.config.targets[index].node, .status = sample.status };
+            if (!sample.has_value) continue;
+            const age = now -| sample.received_at;
+            if (age >= 10 and report.status == .current) report.status = .stale;
+            report.boot = p.Bytes(32).init(&std.fmt.bytesToHex(sample.value.boot, .lower)) catch
+                unreachable;
+            report.age_seconds = age;
+            report.clock_skew_seconds = @max(
+                sample.value.timestamp -| sample.received_at,
+                sample.received_at -| sample.value.timestamp,
+            );
+            report.sequence = sample.sequence;
+            report.watermark = sample.watermark;
+            report.resets = sample.resets;
+            report.requests = sample.value.requests;
+            report.sample_loss = sample.value.sample_loss;
+            report.geoip_available = sample.value.geoip_available;
+        }
         return self.config.count;
     }
 

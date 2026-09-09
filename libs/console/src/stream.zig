@@ -31,27 +31,51 @@ pub fn handle(app: *App, context: *Context, principal: p.Principal) !void {
         .kiosk = principal.kiosk,
         .last_read = .init(app.now()),
     };
-    // Every connection has one reader and exactly one writer; a blocked reader never
-    // suppresses unsolicited delivery. Both tasks borrow this handler's lifetime.
-    const reader = std.Thread.spawn(
-        .{ .stack_size = 256 * 1024 },
-        Stream.read,
-        .{&stream},
-    ) catch return;
-    stream.write();
-    context.stream.shutdown(app.io, .both) catch |err| switch (err) {
-        error.SocketUnconnected => {},
-        else => std.log.warn("console stream shutdown: {t}", .{err}),
+    stream.run();
+}
+
+/// Management streams use an independent admission quota and never acquire browser roles.
+pub fn peer(app: *App, context: *Context) !void {
+    const wire = @import("peer_wire.zig");
+    if (!app.config.behind_proxy or app.config.peers.count == 0)
+        return http.fail(context, .not_found, "CONSOLE404");
+    const input = try wire.readRequest(context);
+    const index = app.peers.admit(input.transcript, input.proof, app.now()) catch
+        return http.fail(context, .forbidden, "CONSOLEPEER");
+    defer app.peers.release(index);
+    const channel = try app.hub.attachPeer();
+    defer app.hub.detach(channel);
+    var nonce: [32]u8 = undefined;
+    app.io.random(&nonce);
+    const reply = wire.ReplyHeaders.init(app.peers.key.?, input.transcript, .{
+        .boot = app.history.boot,
+        .nonce = nonce,
+    });
+    _ = try context.request.respondWebSocket(.{
+        .key = input.websocket_key,
+        .extra_headers = &reply.headers(),
+    });
+    try context.request.server.out.flush();
+    var stream: Stream = .{
+        .app = app,
+        .context = context,
+        .channel = channel,
+        .kiosk = true,
+        .peer_node = input.transcript.from,
+        .peer_expires = app.now() + 3600,
+        .last_read = .init(app.now()),
     };
-    reader.join();
+    stream.run();
 }
 
 const Stream = struct {
     const Control = struct { opcode: ws.Opcode, len: u8, bytes: [125]u8 = undefined };
     app: *App,
     context: *Context,
-    digest: [32]u8,
-    principal: p.Principal,
+    digest: [32]u8 = @splat(0),
+    principal: p.Principal = undefined,
+    peer_node: ?u32 = null,
+    peer_expires: u64 = 0,
     channel: ?@import("subscription_hub.zig").Handle = null,
     kiosk: bool,
     command_second: u64 = 0,
@@ -64,6 +88,21 @@ const Stream = struct {
     controls: [8]Control = undefined,
     control_len: usize = 0,
 
+    // Both tasks borrow this handler; shutdown wakes the reader before its owner returns.
+    fn run(self: *Stream) void {
+        const reader = std.Thread.spawn(
+            .{ .stack_size = 256 * 1024 },
+            Stream.read,
+            .{self},
+        ) catch return;
+        self.write();
+        self.context.stream.shutdown(self.app.io, .both) catch |err| switch (err) {
+            error.SocketUnconnected => {},
+            else => std.log.warn("console stream shutdown: {t}", .{err}),
+        };
+        reader.join();
+    }
+
     fn write(self: *Stream) void {
         var epoch: [16]u8 = undefined;
         self.app.io.random(&epoch);
@@ -75,7 +114,11 @@ const Stream = struct {
         while (!self.stopped.load(.acquire)) {
             if (!self.flushControls()) break;
             const now = self.app.now();
-            if (now >= self.principal.expires or now -| self.last_read.load(.acquire) >= 60) {
+            const expires = if (self.peer_node != null)
+                self.peer_expires
+            else
+                self.principal.expires;
+            if (now >= expires or now -| self.last_read.load(.acquire) >= 60) {
                 self.close(1008);
                 break;
             }
@@ -147,6 +190,12 @@ const Stream = struct {
     }
 
     fn authorize(self: *Stream) bool {
+        if (self.peer_node) |node| {
+            if (!self.app.stopping.load(.acquire) and self.app.config.peers.contains(node))
+                return true;
+            self.close(1008);
+            return false;
+        }
         const result = self.app.request(.{ .authorize = .{
             .session_digest = self.digest,
         } }) catch {

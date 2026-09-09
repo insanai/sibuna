@@ -115,9 +115,12 @@ pub const Job = struct {
                     try self.addMember(member.node);
                 var probes: [p.nodes.max_probes]p.nodes.Probe = undefined;
                 const count = self.app.cluster.snapshot(&probes);
+                var peers: [8]@import("peer_store.zig").Report = undefined;
+                const peer_count = self.app.peers.reports(self.app.now(), &peers);
                 try self.state(.nodes, .{
                     .page = result.nodes_page,
                     .probes = probes[0..count],
+                    .peers = peers[0..peer_count],
                     .observed_at = p.Counter{ .value = self.app.now() },
                 });
             },

@@ -16,7 +16,7 @@ pub const Kernel = struct {
     handler: Handler,
     application: *anyopaque,
     mutex: Io.Mutex = .init,
-    slots: [80]Slot = @splat(.{}),
+    slots: [96]Slot = @splat(.{}),
     stopping: std.atomic.Value(bool) = .init(false),
     subscribers: std.atomic.Value(u16) = .init(0),
     acceptor: ?std.Thread = null,

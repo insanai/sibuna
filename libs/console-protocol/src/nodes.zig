@@ -63,6 +63,25 @@ pub const Probe = struct {
         return fields(self, w);
     }
 };
+/// Direct local-only telemetry received over an authenticated management connection.
+pub const PeerStatus = enum { unobserved, connecting, current, stale, rejected };
+pub const Peer = struct {
+    node: u32,
+    status: PeerStatus,
+    boot: ?p.Bytes(32) = null,
+    age_seconds: ?u64 = null,
+    clock_skew_seconds: ?u64 = null,
+    sequence: u64 = 0,
+    watermark: u64 = 0,
+    resets: u64 = 0,
+    requests: ?u64 = null,
+    sample_loss: ?u64 = null,
+    geoip_available: bool = false,
+
+    pub fn jsonStringify(self: Peer, w: *std.json.Stringify) std.json.Stringify.Error!void {
+        return fields(self, w);
+    }
+};
 pub const Page = struct {
     self: u32,
     committed: u64,
@@ -160,6 +179,8 @@ fn fields(value: anytype, w: *std.json.Stringify) std.json.Stringify.Error!void 
             field.type == p.Bytes(max_url))
         {
             try w.write(item.slice());
+        } else if (field.type == ?p.Bytes(32)) {
+            if (item) |text| try w.write(text.slice()) else try w.write(null);
         } else if (field.type == u64) {
             try p.writeCounter(w, item);
         } else if (field.type == ?u64) {
