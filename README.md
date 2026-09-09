@@ -290,6 +290,12 @@ A wall display signs in with a one-time kiosk code: an operator mints it from th
 read-only, statistics-only session that expires within twelve hours. Codes never appear in
 URLs.
 
+Administrators configure notification destinations under Settings: webhooks (`https`, or
+`http` to loopback) signed with `X-Sibuna-Signature: sha256=HMAC(secret, body)` when a
+secret is set, and RFC 5424 syslog over UDP or framed TCP, for denial spikes, issued bans,
+unreachable members and leader changes. Secrets are sealed under `--console-key-file`; one
+cluster member delivers at a time under a fenced lease.
+
 For an HTTPS reverse proxy, configure `--console-origin`, `--console-behind-proxy` and explicit
 `--console-trusted-proxy` CIDRs. Supply a persistent `--console-key-file` containing 64 hex
 characters with owner-only permissions; it protects stored second-factor secrets. Keep this

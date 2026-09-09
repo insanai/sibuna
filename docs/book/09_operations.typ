@@ -133,9 +133,12 @@ Wall displays use kiosk sessions: an operator mints a one-time code in the conso
 display pastes it into the sign-in form, and the resulting session is read-only, limited to
 statistics and expires within twelve hours.
 
-SID 0007 remains Proposed. Direct peer telemetry sockets, notifications and constrained page
-templates remain unfinished, and the impact gate must pass on a declared quiet host before
-the record advances.
+Notification destinations (signed webhooks and syslog for denial spikes, bans, unreachable
+members and leader changes) live under Settings; webhook secrets need `--console-key-file`.
+
+SID 0007 remains Proposed. Direct peer telemetry sockets and constrained page templates
+remain unfinished, and the impact gate must pass on a declared quiet host before the
+record advances.
 
 == Deployment Topologies
 

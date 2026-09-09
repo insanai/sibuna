@@ -790,7 +790,10 @@ Migrations are numbered and version-gated in `schema.zig`. The authoritative wri
   [`console_kiosk_grants`], [`digest` (primary; SHA-256 of the one-time code), `user_id`, `revision`, `label`, `created_at`, `use_by` (ten minutes), `expires` (twelve hours), `consumed_at`; at most 64 outstanding; audit `kiosk.grant` and `kiosk.exchange` never carry the code; retention removes consumed and unusable rows],
   [`console_tokens`], [`id` (printable), `digest`, `label`, `role`, `scopes`, `auth_revision`, `created_by`, `created_at`, `expires_at`, `disabled`],
   [`console_audit`], [`id`, `at`, `actor`, `role`, `action`, `subject`, `before`, `after`, `client_ip`; append-only],
-  [`console_settings`], [`key`, `value`, `updated_at`, `updated_by`; retention days, GeoIP source, notification webhooks],
+  [`console_settings`], [`key` (primary), `value` (≤ 1 KiB, never a secret), `revision`, `updated_at`, `updated_by`; the denial-spike minimum and factor today; every change is audited with its before and after value],
+  [`console_notifications`], [`id`, `kind` (`webhook` or `syslog`), `label`, `target`, `target_host`, `secret_envelope` (sealed under the console key and bound to the target), `events` bitmask (denial spike, ban, node unhealthy, leader change), `cooldown_seconds`, `enabled`, `revision`, created/modified actor and time, last attempt, outcome and detail; at most eight rows; audit summaries carry kind, label, events, cooldown, enabled state, whether a secret is set and the host only],
+  [`console_notification_events`], [`node`, `boot`, `sequence` (unique per node and boot), `event`, `raised_at`, `detail` (≤ 128), `delivered_at`, `attempts`; every node enqueues what it observed, at most 256 undelivered rows are kept],
+  [`console_job_leases`], [`job` (`retention` or `notifier`), `node`, `boot`, `fence`, `expires`; one fenced singleton lease per job name],
   [`traffic_minutes`], [`node_id`, `boot_id`, `minute` (epoch/60), coverage, completeness, counters from “The sampler”, `rss_last_kib`, `rss_max_kib`, `cpu_delta_seconds`; primary key (`node_id`, `boot_id`, `minute`)],
   [`challenge_minutes`], [`node_id`, `boot_id`, `minute`, algorithm/parameter bin, submitted/issued/accepted, rejected by exhaustive cause, missing/invalid timing, coverage, `solve_ms_buckets` (16 integers)],
   [`topk_minutes`], [`node_id`, `boot_id`, `minute`, `kind`, `key`, estimate and error; all bounded sketch counters plus N, probability, losses and coverage metadata],
@@ -1742,9 +1745,9 @@ are historical; the acceptance gates below govern delivery.
 
 - #text("Pending: Preserve issuer-bound challenge verification and local rate limits.")
 
-- #text("Verified (2026-09-09): users, scoped API tokens, audit investigation and kiosk. Pending: constrained templates, notifications and About.")
+- #text("Verified (2026-09-09): users, scoped API tokens, audit investigation, kiosk and notifications. Pending: constrained templates and About.")
 
-- #text("Pending: Fenced singleton job leases; bounded destinations/retries/queues.")
+- #text("Verified (2026-09-09): the notifier runs under a fenced singleton lease shared with retention; destinations (8), retries (3, 1/4/16 s), the local ring (64) and the replicated queue (256) are bounded.")
 
 - #text("Pending: Retention: minutes 90 days, ranks 7 days/512 MiB, incidents 30 days, audit 365 days.")
 
@@ -3561,6 +3564,57 @@ followed by 429, logout ends the session, both audit actions are recorded withou
 and a consumed grant stays consumed across restart. The interface module grew from 315,781
 to 317,663 bytes. Formatting, full repository tests, console tests, the live suite, SID and
 book generation pass; console-off, storage-off and cluster builds compile.
+
+== Notification destinations, sealed secrets and the fenced notifier (2026-09-09)
+
+Administrators manage up to eight destinations, each a webhook (`https`, or `http` to a
+loopback literal) or a syslog endpoint (UDP, or TCP with RFC 6587 octet framing), with a
+label, an event mask over denial spike, ban, node unhealthy and leader change, a cooldown
+and an enabled flag. Targets are validated in a standard-library-only module: no user
+information or fragment, no private, link-local or metadata literals, ports 443 and 8443 or
+loopback ports above 1023, and the resolved addresses are checked again before every
+connection so a public name cannot resolve into the private network. A webhook secret is
+sealed with XChaCha20-Poly1305 under the console key with the target as associated data, so
+an envelope copied to a different target cannot be opened and a retarget without a new
+secret drops it; saving a secret without a console key answers `CONSOLEKEYREQUIRED`. Pages
+and audit rows report only whether a secret is set. Schema 21 adds `console_settings`,
+`console_notifications`, `console_notification_events` and widens the job-lease check to a
+`notifier` job.
+
+Events are observed without touching a request: the collector feeds the cumulative denied
+counter to a detector once per second (spike when the current 60 s window exceeds the
+larger of the settings minimum and factor times the previous window, re-armed below the
+threshold), the data plane counts issued bans in one atomic that both ban sites bump, the
+probe thread raises node unhealthy on a healthy-to-unreachable transition, and the storage
+owner writes leader changes itself from its status snapshot. Raised events enter a 64-entry
+ring and are moved to the replicated queue by the notifier thread; the lease holder claims
+eight events at a time, fans out to enabled destinations whose mask and cooldown allow it,
+delivers with a 10 s deadline and at most three attempts (1, 4 and 16 s apart), records
+each outcome under the fence, and marks an event delivered once every eligible destination
+has an outcome. Webhook bodies are JSON with the event, node, boot, time and detail, signed
+as `X-Sibuna-Signature: sha256=HMAC(secret, body)`; syslog lines follow RFC 5424 with
+facility local0 and the node as the host. `POST /console/api/notifications/test` delivers
+synchronously with the administrator's authority and reports the outcome.
+
+Evidence: unit tests cover target validation (each rejected shape), the syslog formatter
+and framing, the detector (minimum, factor, gap handling, re-arming) and the sealed
+envelope (wrong subject and altered bytes fail). Storage-tick tests cover destination
+capacity, secret masking in pages and audit, stale revision conflicts, lease-fenced
+claims and records, and the queue bound. `tools/console_notify_test.py` (in `console-e2e`)
+verified through the live daemon that five unsafe targets answer 400, a loopback webhook
+and a UDP syslog destination save with the secret masked everywhere, a test delivery
+reaches the receiver with a valid HMAC, a honeypot ban raises an event that the notifier
+delivers to the webhook and the syslog socket within 30 seconds, a stale revision answers
+409, and the audit export carries no secret bytes. The Settings page (administrators
+only; a destination table with edit, a bounded form with kind, label, target, secret,
+clear-secret, event checkboxes, cooldown and enabled, test delivery with its outcome
+inline, remove, and the two spike thresholds with revisions) was checked in Chrome through
+a loopback cookie-injecting proxy so no credential was typed into the browser: a syslog
+destination saved and listed, test delivery reported status 200, a threshold saved at
+revision 1 while the open destination stayed selected, the destination was removed, and
+the page laid out at 1440 and 390 pixels without console errors. The interface module grew
+from 317,663 to 334,978 bytes. Formatting, full repository tests, console tests, the live
+suite, SID and book generation pass; console-off, storage-off and cluster builds compile.
 
 = References
 
