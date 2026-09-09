@@ -107,7 +107,7 @@ aad362c982b4451d8c0c224f99418172adf34445395bd65304ca591d25185704  apps/console-u
 cfbc671fe0613051795c9cce8c6696564dff1c532126da88cd3e91aac765d9c5  apps/console-ui/src/snippets/setting-row.html
 a274f8f73e699619f1076e9d5ffb4b0ea6e685b64e48c95b6df905873c7f4458  apps/console-ui/src/snippets/settings-header.html
 fb6bf93b0672e8120ee605b28086c1727b84c574ff8e1f558dd72eb641b5da60  apps/console-ui/src/snippets/shell-content.html
-07934962be47c2d4c52a9a3ce9a3331e1b14e0e11ba9f32f95d41eee0be06044  apps/console-ui/src/snippets/shell-header.html
+c9b6676d4fcaa0e72fd6e5408d513fac25c54327cdb67324fbee33ac51308285  apps/console-ui/src/snippets/shell-header.html
 b1d88f75b7d0bac6efd134422d8885478adf539d4c5816d51dc97193f2ea7512  apps/console-ui/src/snippets/shell-item.html
 3b2bdd49c55bcb77d1b4028d8fbd22bbbbbe1a8169c9ccacb801eeed3c2ffd4c  apps/console-ui/src/snippets/similarity-control.html
 000660970733726f1e4e3faf33aecf81954a12371c4230ce90602917cff18d8b  apps/console-ui/src/snippets/similarity-footer.html

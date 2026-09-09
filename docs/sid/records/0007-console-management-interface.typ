@@ -3917,6 +3917,16 @@ audit summary allowlist hid correlation and outcome fields. Notification-specifi
 now survive the bounded redacted view; live tests follow both records and compare operation
 identifiers. Unknown fields and secret envelopes remain omitted.
 
+== Navigation scroll preservation (2026-09-09)
+
+The main navigation now uses the browser bridge's existing bounded scroll-preservation
+mechanism. Replacing the Wasm-rendered shell during globe animation previously reset the
+sidebar scroll position, allowing an in-progress click to land on another navigation item.
+Chrome at 1100 × 600 retained the sidebar's bottom scroll position across live redraws and
+opened Settings correctly. At 390 × 844, Settings had no horizontal page overflow, the menu
+opened, and Sign out returned to the authentication-only shell. No warning/error logs were
+reported during that verification; the temporary viewport was reset afterward.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
