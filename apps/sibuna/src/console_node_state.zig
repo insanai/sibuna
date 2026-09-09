@@ -13,6 +13,8 @@ pub const State = struct {
     last_heartbeat: u64 = 0,
     advertise: p.Bytes(p.nodes.max_url) = .{},
     storage: p.nodes.Storage = .{},
+    /// Owner-thread notification sequence; the notifier thread numbers its own ring.
+    event_sequence: u64 = 1 << 40,
 
     pub fn init(io: std.Io) State {
         var state: State = .{ .started_ns = std.Io.Clock.awake.now(io).nanoseconds };

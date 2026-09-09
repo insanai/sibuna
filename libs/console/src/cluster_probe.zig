@@ -21,6 +21,7 @@ pub const Probe = struct {
     requests: [max_targets]u64 = @splat(0),
     thread: ?std.Thread = null,
     stopping: std.atomic.Value(bool) = .init(false),
+    notifier: ?*@import("notifier_job.zig").Job = null,
 
     pub fn init(self: *Probe, io: std.Io, config: *const Config) !void {
         self.io = io;
@@ -63,8 +64,16 @@ pub const Probe = struct {
                 if (self.stopping.load(.acquire)) return;
                 const observed = self.probeOne(target, index);
                 self.mutex.lockUncancelable(self.io);
+                const previous = self.results[index].health;
                 self.results[index] = observed;
                 self.mutex.unlock(self.io);
+                if (self.notifier) |job| if (previous == .healthy and observed.health == .down) {
+                    var text: [48]u8 = undefined;
+                    const detail = std.fmt.bufPrint(&text, "node {d} unreachable", .{
+                        target.node,
+                    }) catch "";
+                    job.raise(.node_unhealthy, observed.observed_at, detail);
+                };
             }
             const budget: i96 = interval_ms * std.time.ns_per_ms;
             while (!self.stopping.load(.acquire) and

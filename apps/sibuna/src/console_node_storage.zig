@@ -80,6 +80,9 @@ fn remote(owner: *Persistent, embedded: *zx.Embedded, now: u64) !void {
     defer parsed.deinit();
     const status = parsed.value;
     if (status.node_id != owner.node_id) return error.WrongMember;
+    const previous = owner.console_node.storage.leader;
+    if (previous != null and status.leader != null and previous.? != status.leader.?)
+        leaderChanged(owner, previous.?, status.leader.?, now);
     owner.console_node.storage = .{
         .role = parseRole(status.role),
         .leader = status.leader,
@@ -90,6 +93,21 @@ fn remote(owner: *Persistent, embedded: *zx.Embedded, now: u64) !void {
         .quorum = status.quorum_available,
         .observed_at = now,
     };
+}
+
+/// The owner thread writes the event itself: no mailbox and no console callback.
+fn leaderChanged(owner: *Persistent, from: u32, to: u32, now: u64) void {
+    var text: [64]u8 = undefined;
+    const detail = std.fmt.bufPrint(&text, "leader {d} -> {d}", .{ from, to }) catch "leader";
+    owner.console_node.event_sequence += 1;
+    _ = @import("console_store_notifications.zig").enqueue(owner, .{
+        .node = owner.node_id,
+        .boot = owner.console_node.boot,
+        .sequence = owner.console_node.event_sequence,
+        .event = .leader_change,
+        .raised_at = now,
+        .detail = p.Bytes(p.notifications.max_detail).init(detail) catch .{},
+    }) catch {};
 }
 
 fn parseRole(text: []const u8) p.nodes.Role {
