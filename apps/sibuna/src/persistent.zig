@@ -1042,6 +1042,7 @@ test {
         _ = @import("console_minutes_test.zig");
         _ = @import("console_retention_test.zig");
         _ = @import("console_incidents_test.zig");
+        _ = @import("console_subscription_feed_test.zig");
         _ = @import("console_users_test.zig");
         _ = @import("console_geo_auth_test.zig");
         _ = @import("console_policy_auth_test.zig");

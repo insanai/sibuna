@@ -35,6 +35,13 @@ pub fn status(owner: *Persistent, auth: p.users.Auth) !p.StorageResult {
 /// by their own node; a console link is rendered only when it is a plain origin.
 pub fn members(owner: *Persistent, auth: p.users.Auth) !p.StorageResult {
     if (try access.check(owner, auth, false)) |reason| return .{ .failed = reason };
+    const page = try memberSnapshot(owner);
+    if (try access.check(owner, auth, false)) |reason| return .{ .failed = reason };
+    return .{ .nodes_page = page };
+}
+
+/// Shared with the internal hub feeder; public callers still authorize before and after.
+pub fn memberSnapshot(owner: *Persistent) !p.nodes.Page {
     var page: p.nodes.Page = .{
         .self = owner.node_id,
         .committed = try @import("console_policy_candidate.zig").revision(owner),
@@ -69,8 +76,7 @@ pub fn members(owner: *Persistent, auth: p.users.Auth) !p.StorageResult {
         };
         page.count += 1;
     }
-    if (try access.check(owner, auth, false)) |reason| return .{ .failed = reason };
-    return .{ .nodes_page = page };
+    return page;
 }
 
 /// The console's advertised origin reaches the owner thread through the mailbox so the

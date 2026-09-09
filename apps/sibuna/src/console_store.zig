@@ -35,6 +35,13 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
     const kiosk = @import("console_store_kiosk.zig");
     const users = @import("console_store_users.zig");
     return switch (request) {
+        .subscription_read => |input| @import("console_subscription_feed.zig").read(owner, input),
+        .subscription_nodes => .{ .nodes_page = try @import("console_node_read.zig")
+            .memberSnapshot(owner) },
+        .subscription_policy => .{ .revision = .{
+            .committed = try @import("console_policy_candidate.zig").revision(owner),
+            .applied = owner.version,
+        } },
         .node_status => |auth| @import("console_node_read.zig").status(owner, auth),
         .node_command_read => |input| @import("console_node_read.zig").read(owner, input),
         .node_command => |input| @import("console_node_commands.zig").execute(owner, input),

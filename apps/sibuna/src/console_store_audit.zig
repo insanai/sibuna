@@ -74,7 +74,7 @@ pub fn read(owner: *Persistent, input: a.Read) !p.StorageResult {
     return .{ .audit_detail = detail };
 }
 
-fn decode(row: []const ?[]const u8, output: *a.Row) !void {
+pub fn decode(row: []const ?[]const u8, output: *a.Row) !void {
     output.* = .{
         .id = try util.number(row[0]),
         .actor = try util.number(row[1]),
@@ -114,5 +114,7 @@ fn exportAudit(owner: *Persistent, auth: p.users.Auth, count: usize) !bool {
             util.integer(@intFromBool(auth.require_totp)),
         },
     );
-    return changes == 1;
+    // Zaxonlite includes trigger writes in its change count. The unique session join
+    // inserts at most one audit row; zero alone means authorization did not match.
+    return changes > 0;
 }

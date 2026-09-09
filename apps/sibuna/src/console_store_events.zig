@@ -76,7 +76,9 @@ fn auditExport(owner: *Persistent, input: p.events.Query) !bool {
             "AND MIN(s.expires,s.idle_expires)>?",
         &.{ integer(now), text(&digest), integer(now) },
     );
-    return changes == 1;
+    // Zaxonlite includes trigger writes in its change count. The unique session join
+    // inserts at most one audit row; zero alone means authorization did not match.
+    return changes > 0;
 }
 
 fn decode(row: []const ?[]const u8) !p.events.Row {
@@ -114,7 +116,7 @@ fn narrow(comptime T: type, value: ?[]const u8) !T {
     return std.math.cast(T, try store.number(value)) orelse error.InvalidStoredValue;
 }
 
-fn copy(
+pub fn copy(
     comptime size: usize,
     output: *p.Bytes(size),
     source: []const u8,
