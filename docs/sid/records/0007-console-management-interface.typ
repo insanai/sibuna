@@ -4054,6 +4054,14 @@ Cases cover quoted boundaries, common MIME bodies, malicious fields and filename
 keepalive, prefetched pipelined uploads and clients waiting for 100-continue. These tests
 do not claim full-body inspection or close the remaining console acceptance gates.
 
+The required primitive baseline was regenerated from clean commit `812f64d` on Zaxonlite
+0.6.2. Full classification measured 2,388.85 ns, with 38,094.03 ns for the enforcing
+8 KiB body scan and 184,971.52 ns for mixed-mode inspection; idle RSS was 10,224 KiB.
+These values are substantially slower than the preceding record. Unchanged PoSW, token
+verification and GCRA primitives also slowed by approximately the same factor of 1.6.
+The cause has not been isolated by a paired run under controlled host conditions, so this
+record neither establishes a code regression nor satisfies the console impact gate.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
