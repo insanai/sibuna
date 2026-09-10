@@ -62,6 +62,7 @@ function flush() {
 
 // Patch browser nodes by stable identity. Unchanged form defaults leave the browser's
 // unsent value, selection, focus and scroll intact while adjacent live regions update.
+const disclosureDefaults = new WeakMap();
 function patchChildren(parent, source) {
   const keyed = new Map([...parent.children].filter(node => node.id)
     .map(node => [node.id, node]));
@@ -71,6 +72,7 @@ function patchChildren(parent, source) {
     if (!compatible(current, desired)) current = undefined;
     if (!current) {
       current = desired.cloneNode(true);
+      rememberDisclosures(current);
       parent.insertBefore(current, cursor);
     } else {
       if (current !== cursor) parent.insertBefore(current, cursor);
@@ -84,6 +86,14 @@ function patchChildren(parent, source) {
     cursor = next;
   }
 }
+// Native disclosure state belongs to the reader until the application changes its
+// rendered default. Weak keys release metadata when a page or fragment is removed.
+function rememberDisclosures(node) {
+  if (node.nodeType !== 1) return;
+  if (node.localName === "details") disclosureDefaults.set(node, node.hasAttribute("open"));
+  for (const detail of node.querySelectorAll("details"))
+    disclosureDefaults.set(detail, detail.hasAttribute("open"));
+}
 function compatible(current, desired) {
   return current && current.nodeType === desired.nodeType &&
     (current.nodeType !== 1 || (current.localName === desired.localName &&
@@ -94,15 +104,21 @@ function patchNode(current, desired) {
     if (current.nodeValue !== desired.nodeValue) current.nodeValue = desired.nodeValue;
     return;
   }
+  const disclosure = current.localName === "details";
+  const keepDisclosure = disclosure &&
+    disclosureDefaults.get(current) === desired.hasAttribute("open");
+  if (disclosure) disclosureDefaults.set(current, desired.hasAttribute("open"));
   const valueChanged = current.getAttribute("value") !== desired.getAttribute("value");
   const checkedChanged = current.hasAttribute("checked") !== desired.hasAttribute("checked");
   const selectedChanged = current.hasAttribute("selected") !== desired.hasAttribute("selected");
   const textChanged = current.localName === "textarea" &&
     current.textContent !== desired.textContent;
   for (const attribute of [...current.attributes]) {
+    if (keepDisclosure && attribute.name === "open") continue;
     if (!desired.hasAttribute(attribute.name)) current.removeAttribute(attribute.name);
   }
   for (const attribute of desired.attributes) {
+    if (keepDisclosure && attribute.name === "open") continue;
     if (current.getAttribute(attribute.name) !== attribute.value)
       current.setAttribute(attribute.name, attribute.value);
   }

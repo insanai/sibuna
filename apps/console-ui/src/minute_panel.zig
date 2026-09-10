@@ -98,7 +98,7 @@ pub const Model = struct {
     }
 };
 
-fn precedes(a: p.minutes.Cursor, b: p.minutes.Cursor) bool {
+pub fn precedes(a: p.minutes.Cursor, b: p.minutes.Cursor) bool {
     if (a.minute != b.minute) return a.minute < b.minute;
     if (a.node != b.node) return a.node < b.node;
     const order = std.mem.order(u8, &a.boot, &b.boot);

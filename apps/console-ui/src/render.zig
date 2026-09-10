@@ -61,6 +61,7 @@ fn page(state: *const State, w: *Writer) Writer.Error!void {
     }
     try @import("dashboard_scope.zig").render(state, w);
     try tiles(state, w);
+    try @import("comparison_page.zig").render(state, w);
     try html.render(w, "<section class=\"sb-panels\"><article class=\"sb-panel\">", .{});
     try @import("globe.zig").render(state, w);
     try html.render(w, "</article><article class=\"sb-panel\"><h2>Request timeline</h2>", .{});

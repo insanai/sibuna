@@ -1,0 +1,7 @@
+<main class="sb-auth"><section class="sb-auth-card"><a class="sb-brand" href="/console/">SIBUNA</a><h1 id="page-heading" tabindex="-1">Welcome back</h1><p class="sb-subtitle">Your firewall. Your infrastructure.</p><form id="login"><label for="username">Username</label>
+<input class="input input-bordered" id="username" name="username"
+       type="text" autocomplete="username" required value="">
+<label for="password">Password</label>
+<input class="input input-bordered" id="password" name="password"
+       type="password" autocomplete="current-password" required value="">
+<label for="code">Authenticator or recovery code (if enabled)</label><input class="input input-bordered" id="code" name="code" autocomplete="one-time-code" maxlength="32"><button class="btn btn-primary" type="submit"> Sign in</button></form><form id="kiosk-exchange" class="mt-6"><h2>Wall display</h2><p class="sb-note">Paste the one-time code an operator minted. The display becomes read-only and shows statistics only.</p><label for="kiosk-code">Kiosk code</label><input id="kiosk-code" name="code" class="input input-bordered" autocomplete="off" maxlength="64" pattern="[0-9a-f]{64}" required><button class="btn" type="submit">Open wall display</button></form><p class="sb-note mt-6">Protected with Argon2id and secure sessions.</p></section></main>

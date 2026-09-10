@@ -1,0 +1,68 @@
+<div class="sb-shell" data-navigation-open="false">
+  <a class="sb-skip btn btn-primary" href="#page-heading">Skip to content</a>
+  <header class="navbar sb-mobile-header bg-base-100 border-b border-base-300">
+    <span class="sb-brand grow">SIBUNA</span>
+    <button id="navigation-toggle" class="btn btn-ghost" data-action="navigation-toggle"
+            aria-controls="console-navigation" aria-expanded="false">Menu</button>
+  </header>
+  <nav id="console-navigation" class="sb-nav bg-base-100 border-r border-base-300"
+       aria-label="Main navigation" data-preserve-scroll>
+    <div class="sb-nav-brand">
+      <a class="sb-brand" href="/console/">SIBUNA</a>
+      <p class="sb-caption">SECURITY CONSOLE</p>
+    </div>
+    <ul class="menu menu-md w-full gap-1">
+<li><button class="" data-action="dashboard"
+            aria-current="false">Statistics</button></li>
+<li><button class="menu-active" data-action="events"
+            aria-current="page">Events</button></li>
+<li><button class="" data-action="challenges"
+            aria-current="false">Challenges</button></li>
+<li><button class="" data-action="policies"
+            aria-current="false">Policies</button></li>
+<li><button class="" data-action="geoip"
+            aria-current="false">GeoIP</button></li>
+<li><button class="" data-action="users"
+            aria-current="false">Users</button></li>
+<li><button class="" data-action="tokens"
+            aria-current="false">Tokens</button></li>
+<li><button class="" data-action="audit"
+            aria-current="false">Audit</button></li>
+<li><button class="" data-action="nodes"
+            aria-current="false">Nodes</button></li>
+<li><button class="" data-action="settings"
+            aria-current="false">Settings</button></li>
+<li><button class="" data-action="account"
+            aria-current="false">Account</button></li>
+    </ul>
+    <div class="sb-nav-footer">
+      <span class="badge badge-outline">admin</span>
+      <ul class="menu menu-md w-full gap-1 mt-4">
+        <li><button data-action="theme">Theme: system</button></li>
+        <li><button data-action="density">Spacing: comfortable</button></li>
+        <li><button data-action="logout">Sign out</button></li>
+      </ul>
+    </div>
+  </nav>
+  <div class="sb-content">
+<main class="sb-main min-h-screen">
+  <header class="sb-header">
+    <div>
+      <p class="sb-subtitle">INVESTIGATION / SIMILARITY SEARCH</p>
+      <h1 id="page-heading" tabindex="-1">Similar incidents</h1>
+    </div>
+    <button class="btn" data-action="events">Back to events</button>
+  </header>
+  <p class="mt-4">Source incident #0. Searching the selected time range across nodes.</p>
+  <p class="sb-note">Cosine distance between stored 64-dimensional payload fingerprints:
+    lower means more similar. This heuristic is not attribution or proof of a common attacker.
+    Raw payloads are not returned.</p>
+<p class="mt-4" role="status">Paused: 0 records scanned,
+  0 missing or invalid vectors.</p>
+<button class="btn mt-3" data-action="similarity-resume">Resume search</button>
+<section class="sb-panel mt-6"><h2>Closest matches</h2><p class="sb-note">Partial results while scanning. Each read examines at most 64 records and yields to other console work.</p><p>No comparable incidents found so far.</p>    <p class="sb-note mt-4">The time boundary stays fixed during the search.
+      Records removed by retention while scanning may be absent. Missing vectors remain
+      visible in coverage; the result is not a transactional snapshot.</p>
+  </section>
+</main>
+</div></div>

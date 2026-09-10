@@ -609,6 +609,7 @@ fn setMessage(message: []const u8) void {
 }
 
 test {
+    _ = @import("golden.zig");
     _ = @import("render.zig");
     _ = @import("geography.zig");
     _ = @import("qr.zig");

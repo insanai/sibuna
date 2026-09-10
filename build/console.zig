@@ -40,6 +40,7 @@ pub fn add(
     const step = b.step("console-test", "Test console contracts and bounded ownership");
     step.dependOn(&b.top_level_steps.get("console-ui").?.step);
     step.dependOn(&b.top_level_steps.get("console-render-test").?.step);
+    step.dependOn(&b.top_level_steps.get("console-golden-check").?.step);
     step.dependOn(&b.top_level_steps.get("console-assets-check").?.step);
     const abi_test = b.addSystemCommand(&.{ "python3", "tools/console_wasm_check_test.py" });
     step.dependOn(&abi_test.step);
@@ -106,7 +107,11 @@ fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module)
     const step = b.step("console-ui", "Build the Zig console WebAssembly interface");
     step.dependOn(&size.step);
     const render_step = b.step("console-render-test", "Test native console rendering");
-    render_step.dependOn(&b.addRunArtifact(tests).step);
+    const render_check = b.addRunArtifact(tests);
+    render_check.setCwd(b.path("."));
+    render_check.setEnvironmentVariable("SIBUNA_UPDATE_CONSOLE_GOLDENS", "");
+    render_step.dependOn(&render_check.step);
+    addGolden(b, tests, render_step);
 }
 
 fn linkUi(b: *std.Build, object: *std.Build.Step.Compile) std.Build.LazyPath {
@@ -154,4 +159,18 @@ fn addAssets(b: *std.Build) void {
     const check = b.step("console-assets-check", "Verify committed console assets without npm");
     const verify = b.addSystemCommand(&.{ "python3", "tools/console_assets.py", "check" });
     check.dependOn(&verify.step);
+}
+
+fn addGolden(b: *std.Build, tests: *std.Build.Step.Compile, render: *std.Build.Step) void {
+    b.step("console-golden-check", "Verify reviewed native console HTML").dependOn(render);
+    const step = b.step("console-golden", "Review native HTML (-- --update to regenerate)");
+    const args = b.args orelse &.{};
+    if (args.len == 0) return step.dependOn(render);
+    if (args.len != 1 or !std.mem.eql(u8, args[0], "--update"))
+        return step.dependOn(&b.addFail("console-golden accepts only -- --update").step);
+    // Reuse the native renderer test artifact; no second full UI compilation is needed.
+    const update = b.addRunArtifact(tests);
+    update.setCwd(b.path("."));
+    update.setEnvironmentVariable("SIBUNA_UPDATE_CONSOLE_GOLDENS", "1");
+    step.dependOn(&update.step);
 }

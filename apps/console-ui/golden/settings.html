@@ -1,0 +1,137 @@
+<div class="sb-shell" data-navigation-open="false">
+  <a class="sb-skip btn btn-primary" href="#page-heading">Skip to content</a>
+  <header class="navbar sb-mobile-header bg-base-100 border-b border-base-300">
+    <span class="sb-brand grow">SIBUNA</span>
+    <button id="navigation-toggle" class="btn btn-ghost" data-action="navigation-toggle"
+            aria-controls="console-navigation" aria-expanded="false">Menu</button>
+  </header>
+  <nav id="console-navigation" class="sb-nav bg-base-100 border-r border-base-300"
+       aria-label="Main navigation" data-preserve-scroll>
+    <div class="sb-nav-brand">
+      <a class="sb-brand" href="/console/">SIBUNA</a>
+      <p class="sb-caption">SECURITY CONSOLE</p>
+    </div>
+    <ul class="menu menu-md w-full gap-1">
+<li><button class="" data-action="dashboard"
+            aria-current="false">Statistics</button></li>
+<li><button class="" data-action="events"
+            aria-current="false">Events</button></li>
+<li><button class="" data-action="challenges"
+            aria-current="false">Challenges</button></li>
+<li><button class="" data-action="policies"
+            aria-current="false">Policies</button></li>
+<li><button class="" data-action="geoip"
+            aria-current="false">GeoIP</button></li>
+<li><button class="" data-action="users"
+            aria-current="false">Users</button></li>
+<li><button class="" data-action="tokens"
+            aria-current="false">Tokens</button></li>
+<li><button class="" data-action="audit"
+            aria-current="false">Audit</button></li>
+<li><button class="" data-action="nodes"
+            aria-current="false">Nodes</button></li>
+<li><button class="menu-active" data-action="settings"
+            aria-current="page">Settings</button></li>
+<li><button class="" data-action="account"
+            aria-current="false">Account</button></li>
+    </ul>
+    <div class="sb-nav-footer">
+      <span class="badge badge-outline">admin</span>
+      <ul class="menu menu-md w-full gap-1 mt-4">
+        <li><button data-action="theme">Theme: system</button></li>
+        <li><button data-action="density">Spacing: comfortable</button></li>
+        <li><button data-action="logout">Sign out</button></li>
+      </ul>
+    </div>
+  </nav>
+  <div class="sb-content">
+<main class="sb-main">
+    <header class="sb-header"><div>
+        <p class="sb-subtitle">CONSOLE / SETTINGS</p>
+        <h1 id="page-heading" tabindex="-1">Settings</h1>
+        <p class="sb-subtitle">Notifications, retention and response pages.</p>
+    </div><button class="btn btn-sm" data-action="settings-refresh">Refresh</button>
+    </header>
+<section class="sb-panel"><h2>Notification destinations</h2><p class="sb-note">At most eight destinations. Webhooks receive a JSON body with an HMAC-SHA256 signature when a secret is set; syslog receives RFC 5424 lines over UDP or framed TCP, selected explicitly below. Secrets are stored sealed and never shown again.</p><div class="overflow-x-auto"><table class="table"><thead><tr><th>Label</th><th>Kind</th><th>Target</th><th>Events</th><th>Last outcome</th><th></th></tr></thead><tbody></tbody></table></div><div class="flex flex-wrap gap-2 mt-3"><button class="btn btn-sm" data-action="settings-new">New destination</button><button class="btn btn-sm" data-action="settings-next" disabled>Next page</button></div><form id="settings-save" class="sb-settings-form mt-4"><h3>New destination</h3>
+    <label for="destination-kind">Kind</label>
+    <select id="destination-kind" name="kind" class="select select-bordered">
+        <option value="webhook" selected>Webhook (HTTPS POST)</option>
+        <option value="syslog">Syslog (host:port)</option></select>
+    <label for="destination-transport">Syslog transport</label>
+    <select id="destination-transport" name="transport" class="select select-bordered">
+        <option value="udp" selected>UDP datagrams</option>
+        <option value="tcp">TCP (octet framed)</option></select>
+    <p class="sb-note">For outbound syslog notifications only. Webhooks use HTTPS (local HTTP for testing). This does not change protected web traffic.</p>
+    <label for="destination-label">Label</label>
+    <input id="destination-label" name="label" class="input input-bordered" maxlength="64" required value="">
+    <label for="destination-target">Target</label>
+    <input id="destination-target" name="target" class="input input-bordered" maxlength="256" required value="">
+    <label for="destination-secret">Secret</label>
+    <input id="destination-secret" name="secret" type="password" class="input input-bordered" maxlength="64" autocomplete="off">
+    <p class="sb-note">Optional shared secret for the webhook signature (at most 64 bytes).</p>
+    <label><input type="checkbox" name="clear_secret" class="checkbox"> Clear stored secret</label>
+    <fieldset><legend>Events</legend>
+    <label><input type="checkbox" name="denial_spike" class="checkbox" checked> Denial spike</label>
+    <label><input type="checkbox" name="ban" class="checkbox" checked> Ban issued</label>
+    <label><input type="checkbox" name="node_unhealthy" class="checkbox" checked> Node unhealthy</label>
+    <label><input type="checkbox" name="leader_change" class="checkbox" checked> Leader change</label>
+    </fieldset>
+    <label for="destination-cooldown">Cooldown (seconds)</label>
+    <input id="destination-cooldown" name="cooldown_seconds" class="input input-bordered" inputmode="numeric" value="0">
+    <label><input type="checkbox" name="enabled" class="checkbox" checked> Enabled</label>
+    <div class="flex flex-wrap gap-2 mt-3">
+    <button class="btn btn-primary" type="submit">Save destination</button>
+    <button class="btn" type="button" data-action="settings-test" disabled>Test delivery</button>
+    <button class="btn btn-outline btn-error" type="button" data-action="settings-remove" disabled>Remove</button>
+    </div></form>
+</section><section class="sb-panel"><h2>Denial spike thresholds</h2><p class="sb-note">A spike is raised when denials in the last 60 seconds exceed both the minimum and the factor times the previous 60 seconds; it re-arms below that threshold.</p><form id="settings-change-notify.spike_factor" class="flex flex-wrap items-end gap-2 mt-2" data-submit="settings-thresholds">
+    <input type="hidden" name="key" value="notify.spike_factor">
+    <label class="grow">Spike multiplier (revision 0)
+    <input name="value" type="number" min="1" max="1000000" required class="input input-bordered w-full" inputmode="numeric" value="3">
+    <span class="sb-note">1–1000000; default 3</span></label>
+    <label hidden><input class="checkbox checkbox-sm" type="checkbox" name="confirmed"> I understand older records will be permanently deleted.</label>
+    <button class="btn btn-sm" type="submit">Save</button></form>
+<form id="settings-change-notify.spike_minimum" class="flex flex-wrap items-end gap-2 mt-2" data-submit="settings-thresholds">
+    <input type="hidden" name="key" value="notify.spike_minimum">
+    <label class="grow">Minimum denials (revision 0)
+    <input name="value" type="number" min="1" max="1000000" required class="input input-bordered w-full" inputmode="numeric" value="100">
+    <span class="sb-note">1–1000000; default 100</span></label>
+    <label hidden><input class="checkbox checkbox-sm" type="checkbox" name="confirmed"> I understand older records will be permanently deleted.</label>
+    <button class="btn btn-sm" type="submit">Save</button></form>
+</section><section class="sb-panel"><h2>Retention</h2><p class="sb-note">Choose retention within the displayed limits. Cleanup deletes older records in bounded batches. A higher value cannot restore deleted history. Rankings also have a fixed 512 MiB quota and may expire sooner.</p><form id="settings-change-retention.minutes" class="flex flex-wrap items-end gap-2 mt-2" data-submit="settings-thresholds">
+    <input type="hidden" name="key" value="retention.minutes">
+    <label class="grow">Minute history (days) (revision 0)
+    <input name="value" type="number" min="1" max="90" required class="input input-bordered w-full" inputmode="numeric" value="90">
+    <span class="sb-note">1–90; default 90</span></label>
+    <label><input class="checkbox checkbox-sm" type="checkbox" name="confirmed" required> I understand older records will be permanently deleted.</label>
+    <button class="btn btn-sm" type="submit">Save</button></form>
+<form id="settings-change-retention.rankings" class="flex flex-wrap items-end gap-2 mt-2" data-submit="settings-thresholds">
+    <input type="hidden" name="key" value="retention.rankings">
+    <label class="grow">Rankings (days) (revision 0)
+    <input name="value" type="number" min="1" max="7" required class="input input-bordered w-full" inputmode="numeric" value="7">
+    <span class="sb-note">1–7; default 7</span></label>
+    <label><input class="checkbox checkbox-sm" type="checkbox" name="confirmed" required> I understand older records will be permanently deleted.</label>
+    <button class="btn btn-sm" type="submit">Save</button></form>
+<form id="settings-change-retention.incidents" class="flex flex-wrap items-end gap-2 mt-2" data-submit="settings-thresholds">
+    <input type="hidden" name="key" value="retention.incidents">
+    <label class="grow">Incidents (days) (revision 0)
+    <input name="value" type="number" min="1" max="30" required class="input input-bordered w-full" inputmode="numeric" value="30">
+    <span class="sb-note">1–30; default 30</span></label>
+    <label><input class="checkbox checkbox-sm" type="checkbox" name="confirmed" required> I understand older records will be permanently deleted.</label>
+    <button class="btn btn-sm" type="submit">Save</button></form>
+<form id="settings-change-retention.audit" class="flex flex-wrap items-end gap-2 mt-2" data-submit="settings-thresholds">
+    <input type="hidden" name="key" value="retention.audit">
+    <label class="grow">Audit (days) (revision 0)
+    <input name="value" type="number" min="1" max="365" required class="input input-bordered w-full" inputmode="numeric" value="365">
+    <span class="sb-note">1–365; default 365</span></label>
+    <label><input class="checkbox checkbox-sm" type="checkbox" name="confirmed" required> I understand older records will be permanently deleted.</label>
+    <button class="btn btn-sm" type="submit">Save</button></form>
+</section><section class="sb-panel"><h2>Response pages</h2><p class="sb-note">Bounded HTML served to browsers for challenges, denials, rate limits, bans and overload. Placeholders: {{ status }}, {{ reason }}, {{ retry_after }}, {{ request_id }}, {{ node }} and, for the challenge page only, {{ challenge }}. Scripts, external resources, forms and event handlers are refused; the challenge page must contain the solver slot exactly once.</p><div class="flex flex-wrap gap-2" role="tablist"><button class="btn btn-sm" role="tab" aria-selected="false" data-action="pages-open-challenge" disabled>challenge</button><button class="btn btn-sm btn-active" role="tab" aria-selected="true" data-action="pages-open-denied" disabled>denied</button><button class="btn btn-sm" role="tab" aria-selected="false" data-action="pages-open-rate_limited" disabled>rate_limited</button><button class="btn btn-sm" role="tab" aria-selected="false" data-action="pages-open-banned" disabled>banned</button><button class="btn btn-sm" role="tab" aria-selected="false" data-action="pages-open-overloaded" disabled>overloaded</button></div><form id="pages-save" class="sb-settings-form mt-4">
+    <p>denied · revision 0 · loading</p>
+    <label for="page-html">Markup (at most 16 KiB)</label>
+    <textarea id="page-html" name="html" class="textarea textarea-bordered font-mono" rows="14" maxlength="16384" spellcheck="false" disabled></textarea>
+    <div class="flex flex-wrap gap-2 mt-3">
+    <button class="btn btn-primary" type="submit" disabled>Save page</button>
+    <button class="btn" type="button" data-action="pages-preview" disabled>Preview draft</button>
+    <button class="btn btn-outline btn-error" type="button" data-action="pages-reset" disabled disabled>Reset to default</button>
+</div></form></section></main></div></div>

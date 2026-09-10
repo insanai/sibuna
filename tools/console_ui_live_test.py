@@ -102,6 +102,23 @@ class Interface:
             self.proc.stdout.close()
 
 
+def comparison_view(ui):
+    ui.event(1, {"action": "compare-toggle", "fields": {}})
+    assert 'Compare periods and nodes' in ui.html
+    start = len(ui.requests)
+    ui.event(1, {"action": "compare-start", "fields": {
+        "minutes": "5", "offset": "0", "node": "1", "mode": "yesterday"}})
+    queries = [r for r in ui.requests[start:] if r["id"].startswith("compare-")]
+    assert len(queries) == 2, queries
+    first, previous = [r["body"] for r in queries]
+    assert int(first["until_minute"]) - int(previous["until_minute"]) == 1440
+    assert 'Incomplete coverage' in ui.html and 'Not available' in ui.html
+    assert '↑ New' not in ui.html
+    assert all(r["node"] == 1 for r in (first, previous))
+    ui.event(1, {"action": "compare-toggle", "fields": {}})
+    assert 'Compare periods and nodes' not in ui.html
+
+
 def exercise(ui):
     ui.event(init=True)
     ui.topic("stats")
@@ -115,6 +132,7 @@ def exercise(ui):
     ui.event(1, {"action": "density", "fields": {}})
     assert ui.appearance["density"] == "comfortable" and ui.appearance["persist"]
     assert "Traffic overview" in ui.html and "console-navigation" in ui.html
+    comparison_view(ui)
     security_view(ui)
     for page, topic in (("events", "events"), ("policies", "policy"), ("nodes", "nodes"),
                         ("challenges", "challenges"), ("audit", "audit")):

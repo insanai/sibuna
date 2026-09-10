@@ -360,6 +360,13 @@ second intervals and current-minute path rankings. Remote views use the same aut
 peer connection; unavailable peers remain unavailable, and a restart invalidates old history
 cursors. Minute history has its own node selection and keeps per-node rows distinct.
 
+**Compare retained traffic** places two closed minute windows side by side: the same window
+yesterday, the previous period, or another node. Choose the duration and how many minutes ago
+the window ended. Large scans continue in bounded batches. Counts, elapsed coverage and missing
+history remain visible; percentages require complete matching coverage. These period counts
+are separate from the live boot totals, and historical origin-response observation mode is not
+recorded by the minute format.
+
 Drain, resume and clear local bans still act only on the serving node,
 require a preview and produce durable command receipts. Under `-Dcluster=true`,
 `zig build console-e2e` also runs a three-node membership, failover and quorum-loss scenario,

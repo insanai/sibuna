@@ -11,7 +11,9 @@ MANIFEST = WEB / "assets/MANIFEST.md"
 
 
 def manifest():
-    files = sorted((ROOT / "apps/console-ui/src").glob("*.zig"))
+    # The native golden runner does not contribute browser styles or Wasm code.
+    files = sorted(path for path in (ROOT / "apps/console-ui/src").glob("*.zig")
+                   if path.name != "golden.zig")
     files += sorted((ROOT / "apps/console-ui/src/snippets").glob("*.html"))
     files += sorted((ROOT / "libs/html/src").glob("*.zig"))
     files += [WEB / name for name in ("tailwind.css", "package.json", "package-lock.json",

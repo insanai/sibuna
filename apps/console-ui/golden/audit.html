@@ -1,0 +1,89 @@
+<div class="sb-shell" data-navigation-open="false">
+  <a class="sb-skip btn btn-primary" href="#page-heading">Skip to content</a>
+  <header class="navbar sb-mobile-header bg-base-100 border-b border-base-300">
+    <span class="sb-brand grow">SIBUNA</span>
+    <button id="navigation-toggle" class="btn btn-ghost" data-action="navigation-toggle"
+            aria-controls="console-navigation" aria-expanded="false">Menu</button>
+  </header>
+  <nav id="console-navigation" class="sb-nav bg-base-100 border-r border-base-300"
+       aria-label="Main navigation" data-preserve-scroll>
+    <div class="sb-nav-brand">
+      <a class="sb-brand" href="/console/">SIBUNA</a>
+      <p class="sb-caption">SECURITY CONSOLE</p>
+    </div>
+    <ul class="menu menu-md w-full gap-1">
+<li><button class="" data-action="dashboard"
+            aria-current="false">Statistics</button></li>
+<li><button class="" data-action="events"
+            aria-current="false">Events</button></li>
+<li><button class="" data-action="challenges"
+            aria-current="false">Challenges</button></li>
+<li><button class="" data-action="policies"
+            aria-current="false">Policies</button></li>
+<li><button class="" data-action="geoip"
+            aria-current="false">GeoIP</button></li>
+<li><button class="" data-action="users"
+            aria-current="false">Users</button></li>
+<li><button class="" data-action="tokens"
+            aria-current="false">Tokens</button></li>
+<li><button class="menu-active" data-action="audit"
+            aria-current="page">Audit</button></li>
+<li><button class="" data-action="nodes"
+            aria-current="false">Nodes</button></li>
+<li><button class="" data-action="settings"
+            aria-current="false">Settings</button></li>
+<li><button class="" data-action="account"
+            aria-current="false">Account</button></li>
+    </ul>
+    <div class="sb-nav-footer">
+      <span class="badge badge-outline">admin</span>
+      <ul class="menu menu-md w-full gap-1 mt-4">
+        <li><button data-action="theme">Theme: system</button></li>
+        <li><button data-action="density">Spacing: comfortable</button></li>
+        <li><button data-action="logout">Sign out</button></li>
+      </ul>
+    </div>
+  </nav>
+  <div class="sb-content">
+<main class="sb-main">
+    <header class="sb-header"><div>
+        <p class="sb-subtitle">CONSOLE / AUDIT</p>
+        <h1 id="page-heading" tabindex="-1">Audit history</h1>
+        <p class="sb-subtitle">Investigate recorded console actions and changes.</p>
+    </div><button class="btn btn-sm" data-action="audit-refresh">Refresh audit</button>
+    </header>
+    <p class="sb-note">Refresh to see new records. Pagination keeps the selected time window.
+        History is retained for 365 days; absent older fields are not reconstructed.
+        A committed change and its application on a node are separate outcomes.</p>
+<form id="audit-filter" class="sb-panel sb-filters mt-6">
+    <fieldset><legend class="font-bold mb-4">Filter recorded activity</legend>
+        <div class="sb-filter-grid sb-filter-three">
+            <div class="sb-filter-field">
+                <label for="audit-actor">Actor ID</label>
+                <input id="audit-actor" class="input input-bordered" name="actor"
+                    inputmode="numeric" pattern="[0-9]*" maxlength="19" value=""
+                    placeholder="All actors">
+            </div>
+            <div class="sb-filter-field">
+                <label for="audit-action">Action</label>
+                <input id="audit-action" class="input input-bordered" name="action" maxlength="48"
+                    pattern="[a-z0-9._]*" placeholder="e.g. user.create" value="">
+            </div>
+            <div class="sb-filter-field">
+                <label for="audit-days">Period</label>
+                <select id="audit-days" class="select select-bordered" name="days">
+                    <option value="1">Last 24 hours</option>
+                    <option value="7" selected>Last 7 days</option>
+                    <option value="30">Last 30 days</option>
+                    <option value="365">Last 365 days</option>
+                </select>
+            </div>
+        </div>
+        <p class="sb-note mt-4">Leave actor and action blank to include all values.
+            Actions match the exact recorded name.</p>
+        <div class="sb-filter-actions">
+            <button class="btn btn-primary" type="submit">Apply audit filters</button>
+        </div>
+    </fieldset>
+</form>
+<section class="sb-note my-4" aria-label="Live updates"><p>Waiting for live updates · Last update 0 seconds ago.</p><p>0 recent summaries newer than this page. Rows stay in place while you read. <button class="btn btn-sm" data-action="audit-refresh">Load latest records</button></p><p>At most 64 summaries retained in the live feed; this is not a total count. 0 unavailable source IDs, including expired history. Storage observation age: 0 seconds.</p></section></main></div></div>

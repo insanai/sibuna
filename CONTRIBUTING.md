@@ -48,6 +48,12 @@ helpers, the end-to-end suite in `apps/sibuna/src/e2e_test.zig`, and the storage
 - Storage tests drive `Persistent.tick()` directly instead of relying on the background thread,
   and must release any pinned `EngineSlot` before a tick that can rebuild.
 
+Console changes also run `zig build console-test` and `zig build console-ui-e2e`.
+`console-test` compares native page fixtures byte-for-byte with `apps/console-ui/golden/`.
+When markup intentionally changes, run `zig build console-golden -- --update`, inspect the HTML
+diff and verify the affected workflow in Chrome. Golden fixtures complement behavioral tests;
+they do not prove responsive layout, accessibility or operator comprehension.
+
 ### 4. Benchmarks
 
 `benchmarks/benchmark.zig` measures Sibuna rows over seven batches and reports the median, min,
