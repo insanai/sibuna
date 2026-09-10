@@ -168,6 +168,9 @@ test "peer geography accepts packed publisher codes and rejects invalid or dupli
         try t.expectError(error.InvalidObservation, store.publish(handle, update));
     }
     value.countries[0].code = 0x5553;
+    value.incident_geo.?.version = 2;
+    try t.expectError(error.InvalidObservation, store.publish(handle, update));
+    value.incident_geo.?.version = 1;
     value.incident_geo.?.countries[0].code = 675;
     try t.expectError(error.InvalidObservation, store.publish(handle, update));
     var copied: [config.max_peers]peers.Observation = undefined;

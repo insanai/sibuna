@@ -5,6 +5,7 @@ pub const similarity = @import("similarity.zig");
 pub const policies = @import("policies.zig");
 pub const challenges = @import("challenges.zig");
 pub const settings = @import("settings.zig");
+pub const dashboard = @import("dashboard.zig");
 pub const rankings = @import("rankings.zig");
 pub const timeline = @import("timeline.zig");
 pub const minutes = @import("minutes.zig");
@@ -429,6 +430,15 @@ pub const StatsSnapshot = struct {
         writer: *std.json.Stringify,
     ) std.json.Stringify.Error!void {
         try writer.beginObject();
+        try self.writeFields(writer);
+        try writer.endObject();
+    }
+
+    /// Dashboard envelopes reuse the local contract without enlarging peer snapshots.
+    pub fn writeFields(
+        self: *const StatsSnapshot,
+        writer: *std.json.Stringify,
+    ) std.json.Stringify.Error!void {
         inline for (@typeInfo(StatsSnapshot).@"struct".fields) |field| {
             try writer.objectField(field.name);
             if (comptime std.mem.eql(u8, field.name, "boot")) {
@@ -445,7 +455,6 @@ pub const StatsSnapshot = struct {
                 } else try writer.write(null);
             } else try writer.write(@field(self, field.name));
         }
-        try writer.endObject();
     }
 };
 

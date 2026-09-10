@@ -120,7 +120,10 @@ pub const Store = struct {
             if (!location.valid()) return error.InvalidObservation;
         }
         try validateCountries(&value.countries);
-        if (value.incident_geo) |incidents| try validateCountries(&incidents.countries);
+        if (value.incident_geo) |incidents| {
+            if (incidents.version != 1) return error.InvalidObservation;
+            try validateCountries(&incidents.countries);
+        }
         const previous = &slot.observation;
         if (previous.has_value) {
             if (std.mem.eql(u8, &previous.value.boot, &value.boot)) {
