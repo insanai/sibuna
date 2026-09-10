@@ -87,6 +87,7 @@ fn filters(model: *const Model, w: *Writer) Writer.Error!void {
     try html.render(w, "<section class=\"sb-panel mt-6\"><h2>Filter incidents</h2>" ++
         "<form id=\"events-filter\" class=\"grid gap-3 sm:grid-cols-2 lg:grid-cols-6\">", .{});
     try input(w, "category", "Category (exact)", model.category.slice(), 32);
+    try input(w, "country", "Country code, unknown or not_recorded", model.country.slice(), 12);
     try input(w, "ip", "Client address (exact)", model.ip.slice(), 48);
     try input(w, "path_prefix", "Path starts with", model.path.slice(), 256);
     var node: [10]u8 = undefined;
@@ -148,7 +149,9 @@ fn incident(row: *const p.events.Row, w: *Writer) Writer.Error!void {
             .v1 = id,
         });
     } else try w.writeAll("Not recorded");
-    try html.render(w, "</dd><dt>Country, delivered response status and matched rule</dt>" ++
+    try html.render(w, "</dd><dt>Country at persistence</dt><dd>", .{});
+    try geography(&row.geography, w);
+    try html.render(w, "</dd><dt>Delivered response status and matched rule</dt>" ++
         "<dd>Not recorded</dd></dl>", .{});
     try evidence(row, w);
     try html.render(w, "<button class=\"btn mt-3\" data-action=\"events-similar-{{ v0 }}\">" ++
@@ -184,11 +187,27 @@ fn source(row: *const p.events.Row, w: *Writer) Writer.Error!void {
     try timestamp(w, row.first_seen);
     try html.render(w, "</p><p>Last seen: ", .{});
     try timestamp(w, row.time);
-    try html.render(w, "</p><p class=\"sb-note\">Historical country: Not recorded</p>" ++
+    try html.render(w, "</p><p class=\"sb-note\">Country at persistence: ", .{});
+    try geography(&row.geography, w);
+    try html.render(w, "</p>" ++
         "<button class=\"btn mt-3\" data-action=\"events-source-", .{});
     try w.print("{d}/", .{row.node});
     try escape(w, row.ip.slice());
     try html.render(w, "\">Inspect source incidents</button></article>", .{});
+}
+
+fn geography(value: *const p.events.country.Mapping, w: *Writer) Writer.Error!void {
+    if (value.mixed) return w.writeAll("Mixed recorded countries or mapping coverage");
+    if (value.code.len != 0) {
+        try escape(w, value.code.slice());
+    } else if (value.recorded) {
+        try w.writeAll("Unknown (address not mapped)");
+    } else return w.writeAll("Not recorded");
+    if (value.generation.len != 0) {
+        try html.render(w, " <span class=\"break-all\">· GeoIP generation {{ v0 }}</span>", .{
+            .v0 = value.generation.slice(),
+        });
+    } else try w.writeAll(" · Multiple GeoIP generations");
 }
 
 fn input(

@@ -816,6 +816,7 @@ fn eventQuery(export_page: bool, csv: bool) !void {
             .incident = incident,
             .before = before,
             .category = model.category.slice(),
+            .country = model.country.slice(),
             .ip = model.ip.slice(),
             .path_prefix = model.path.slice(),
             .until = model.until,

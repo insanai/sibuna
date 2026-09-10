@@ -3,8 +3,40 @@ const p = @import("console_protocol");
 const State = @import("state.zig").State;
 const values = @import("events_state.zig");
 
+fn country(state: *State, name: []const u8) !bool {
+    const prefix = "events-country-";
+    if (!std.mem.startsWith(u8, name, prefix) or state.kiosk) return false;
+    const code = name[prefix.len..];
+    if (code.len == 0 or !p.events.country.validFilter(code)) return error.InvalidRequest;
+    const model = &state.events;
+    model.clear();
+    model.country = try p.events.country.Filter.init(code);
+    model.node = state.dashboard_node orelse 0;
+    model.until = state.browser_time;
+    model.hours = 1;
+    model.busy = true;
+    state.phase = .events;
+    state.stats_busy = false;
+    state.message = .{};
+    return true;
+}
+
+test "country investigation keeps selected node and cannot escape kiosk scope" {
+    const t = std.testing;
+    var state: State = .{ .phase = .dashboard, .dashboard_node = 7, .browser_time = 200 };
+    state.csrf = try p.Bytes(64).init("test");
+    try t.expect(try act(&state, "events-country-US", .null));
+    try t.expectEqualStrings("US", state.events.country.slice());
+    try t.expectEqual(@as(u32, 7), state.events.node);
+    try t.expectEqual(@as(u64, 200), state.events.until);
+    try t.expectEqual(@as(u32, 1), state.events.hours);
+    state.kiosk = true;
+    try t.expect(!try act(&state, "events-country-DE", .null));
+}
+
 pub fn act(state: *State, name: []const u8, fields: std.json.Value) !bool {
     if (!state.fullAccess()) return false;
+    if (try country(state, name)) return true;
     if (try incident(state, name)) return true;
     if (try campaign(state, name)) return true;
     const model = &state.events;
@@ -17,6 +49,9 @@ pub fn act(state: *State, name: []const u8, fields: std.json.Value) !bool {
         if (state.phase != .events or model.busy) return false;
         if (std.mem.eql(u8, name, "events-filter")) {
             model.category = try p.Bytes(32).init(values.string(fields, "category"));
+            const code = values.string(fields, "country");
+            if (!p.events.country.validFilter(code)) return error.InvalidRequest;
+            model.country = try p.events.country.Filter.init(code);
             model.ip = try p.Bytes(48).init(values.string(fields, "ip"));
             model.path = try p.Bytes(256).init(values.string(fields, "path_prefix"));
             const hours = try std.fmt.parseInt(u32, values.string(fields, "hours"), 10);

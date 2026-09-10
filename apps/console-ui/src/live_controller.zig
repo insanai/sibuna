@@ -95,6 +95,7 @@ fn desired(state: *const State, topic: p.Topic) ?Args {
             state.events.campaign == 0 and state.events.incident == 0) .{
             .node = if (state.events.node == 0) null else state.events.node,
             .category = state.events.category,
+            .country = state.events.country,
             .ip = state.events.ip,
             .path_prefix = p.Bytes(128).init(state.events.path.slice()) catch unreachable,
         } else null,

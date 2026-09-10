@@ -16,6 +16,7 @@ pub const Model = struct {
     cursors: [64]?p.events.Cursor = @splat(null),
     page: usize = 0,
     category: p.Bytes(32) = .{},
+    country: p.events.country.Filter = .{},
     ip: p.Bytes(48) = .{},
     path: p.Bytes(256) = .{},
     hours: u32 = 0,
@@ -51,6 +52,7 @@ pub const Model = struct {
                 .query_redacted = row.query_redacted,
                 .display_truncated = row.display_truncated,
                 .capture = row.capture,
+                .geography = try p.events.country.Mapping.decode(row.geography),
             };
             if (row.campaign) |id| parsed[i].campaign = try std.fmt.parseInt(u64, id, 10);
         }
@@ -104,6 +106,7 @@ pub const WirePage = struct {
     next: ?struct { time: u64, id: []const u8 } = null,
 };
 pub const WireRow = struct {
+    geography: p.events.country.Wire = .{},
     id: []const u8,
     grouped: bool = false,
     count: u64 = 1,

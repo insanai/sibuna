@@ -201,7 +201,7 @@ fn rankings(state: *const State, w: *Writer) Writer.Error!void {
                 "btn-sm\" " ++
                 "data-action=\"country-{{ v1 }}\" aria-label=\"Center country {{ " ++
                 "v2 }}\">{{ v3 }}</button>" ++
-                "</td><td>{{ v4 }}</td></tr>",
+                "</td><td>{{ v4 }}",
             .{
                 .v0 = country.code,
                 .v1 = country.code,
@@ -210,6 +210,10 @@ fn rankings(state: *const State, w: *Writer) Writer.Error!void {
                 .v4 = country.samples,
             },
         );
+        if (!state.kiosk) try html.render(w, " <button class=\"btn btn-ghost btn-sm\" " ++
+            "data-action=\"events-country-{{ v0 }}\" aria-label=\"View events from {{ v1 }}\">" ++
+            "View events</button>", .{ .v0 = code, .v1 = code });
+        try w.writeAll("</td></tr>");
     }
     if (!any) {
         try w.writeAll(
