@@ -16,6 +16,20 @@ pub fn tone(metric: Metric) []const u8 {
     };
 }
 
+pub fn name(metric: Metric) []const u8 {
+    return switch (metric) {
+        .requests => "Requests",
+        .admitted => "Admitted",
+        .challenged => "Challenged",
+        .denied => "Denied",
+        .banned => "Banned",
+        .rate_limited => "Rate limited",
+        .other => "Other",
+        .origin_4xx => "Origin 4xx",
+        .origin_5xx => "Origin 5xx",
+    };
+}
+
 pub fn values(state: *const State, metric: Metric) [60]?f64 {
     var result: [60]?f64 = @splat(null);
     const stats = state.stats orelse return result;

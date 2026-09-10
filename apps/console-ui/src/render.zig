@@ -271,6 +271,12 @@ fn coverage(state: *const State, w: *Writer) Writer.Error!void {
     );
 }
 
+const series = @import("stats_series.zig");
+const sparkline = @import("outcome_sparkline.zig");
+const outcomes = [_]sparkline.Metric{
+    .admitted, .challenged, .denied, .banned, .rate_limited, .other,
+};
+
 pub fn timeline(state: *const State, w: *Writer) Writer.Error!void {
     try w.writeAll(
         "<svg viewBox=\"0 0 480 180\" role=\"img\" aria-label=\"Request timeline\">" ++
@@ -280,22 +286,45 @@ pub fn timeline(state: *const State, w: *Writer) Writer.Error!void {
         var maximum: f64 = 1;
         for (state.points) |point| {
             if (point.second > stats.timestamp or stats.timestamp - point.second >= 60) continue;
-            maximum = @max(maximum, @import("stats_series.zig").rate(point));
+            maximum = @max(maximum, series.rate(point));
         }
         for (0..60) |i| {
             const second = stats.timestamp -| (59 - i);
             const point = state.points[@intCast(second % 60)];
             if (point.second != second or point.duration_ms == 0) continue;
-            const height = @import("stats_series.zig").rate(point) / maximum * 140;
-            try w.print(
-                "<rect x=\"{d}\" y=\"{d:.1}\" width=\"5\" height=\"{d:.1}\" " ++
-                    "fill=\"#0284c7\"/>",
-                .{ i * 8, 150 - height, height },
-            );
+            try bar(w, i * 8, point, maximum);
         }
     }
-    try w.writeAll(
-        "</svg>",
+    try w.writeAll("</svg><p class=\"sb-note\">Stacked by outcome:");
+    for (outcomes) |key| try html.render(w, " <span class=\"sb-legend {{ tone }}\">" ++
+        "{{ label }}</span>", .{ .tone = sparkline.tone(key), .label = sparkline.name(key) });
+    try w.writeAll(".</p>");
+}
+
+/// Disjoint outcomes stack from the baseline in decision colours (R8); an interval
+/// without an outcome split draws its combined rate in the informational tone.
+fn bar(w: *Writer, x: usize, point: series.Point, maximum: f64) Writer.Error!void {
+    const rates = point.outcome_rates orelse {
+        const height = series.rate(point) / maximum * 140;
+        return segment(w, x, 150 - height, height, sparkline.tone(.requests));
+    };
+    var top: f64 = 150;
+    for (outcomes) |key| {
+        const rate = switch (key) {
+            inline else => |tag| @field(rates, @tagName(tag)),
+        };
+        const height = rate / maximum * 140;
+        if (!(height > 0)) continue;
+        top -= height;
+        try segment(w, x, top, height, sparkline.tone(key));
+    }
+}
+
+fn segment(w: *Writer, x: usize, y: f64, height: f64, tone: []const u8) Writer.Error!void {
+    try w.print(
+        "<rect class=\"sb-outcome-chart {s}\" x=\"{d}\" y=\"{d:.1}\" width=\"5\" " ++
+            "height=\"{d:.1}\" fill=\"currentColor\"/>",
+        .{ tone, x, y, height },
     );
 }
 
