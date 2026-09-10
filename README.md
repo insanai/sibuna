@@ -378,6 +378,12 @@ history remain visible; percentages require complete matching coverage. These pe
 are independent of the primary period selection, and historical origin-response observation mode is not
 recorded by the minute format.
 
+**Compare retained path rankings** compares sampled paths across two closed windows or nodes.
+Node 0 includes all retained nodes, including retired members. Each action validates and merges
+up to sixteen complete archives; Continue preserves the windows and cursor. The table shows
+lower and upper sample-count bounds, truncation, queue-loss warnings and partial scans.
+Missing archives do not imply zero traffic. Retention and the ranking quota can shorten history.
+
 Drain, resume and clear local bans still act only on the serving node,
 require a preview and produce durable command receipts. Under `-Dcluster=true`,
 `zig build console-e2e` also runs a three-node membership, failover and quorum-loss scenario,

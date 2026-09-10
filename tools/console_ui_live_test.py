@@ -130,6 +130,31 @@ def comparison_view(ui):
     assert 'Compare periods and nodes' not in ui.html
 
 
+def ranking_history_view(ui):
+    ui.event(1, {"action": "rank-history-toggle", "fields": {}})
+    assert 'id="ranking-history"' in ui.html
+    start = len(ui.requests)
+    ui.event(1, {"action": "rank-history-start", "fields": {
+        "minutes": "5", "offset": "0", "node": "1", "other_node": "1",
+        "mode": "yesterday"}})
+    queries = [r for r in ui.requests[start:] if r["id"].startswith("rank-history-")]
+    assert len(queries) == 2, queries
+    assert all(r["path"] == "/console/api/rankings/history" for r in queries)
+    first, previous = [r["body"] for r in queries]
+    assert int(first["until_minute"]) - int(previous["until_minute"]) == 1440
+    assert 'Not available' in ui.html
+    for invalid in ({**first, "node": 0}, {**first, "until_minute": 2**63},
+                    {**first, "before": {"minute": first["until_minute"],
+                                        "digest": "a" * 65}}):
+        status, _, body = h.request(ui.port, "POST", "/console/api/rankings/history",
+                                    invalid, ui.cookie, queries[0]["csrf"])
+        assert status == 400 and b"RANKHISTORY" in body, (status, body)
+    status, _, _ = h.request(ui.port, "POST", "/console/api/rankings/history", first)
+    assert status == 401
+    ui.event(1, {"action": "rank-history-toggle", "fields": {}})
+    assert 'id="ranking-history"' not in ui.html
+
+
 def exercise(ui):
     ui.event(init=True)
     ui.topic("stats")
@@ -145,6 +170,9 @@ def exercise(ui):
     assert "Traffic overview" in ui.html and "console-navigation" in ui.html
     assert "Console node 1" in ui.html
     comparison_view(ui)
+    ranking_history_view(ui)
+    import console_ranking_ui_test
+    console_ranking_ui_test.check(ui)
     security_view(ui)
     for page, topic in (("events", "events"), ("policies", "policy"), ("nodes", "nodes"),
                         ("challenges", "challenges"), ("audit", "audit")):

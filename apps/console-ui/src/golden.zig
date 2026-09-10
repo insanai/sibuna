@@ -31,6 +31,7 @@ fn run(io: std.Io, alloc: std.mem.Allocator, update: bool) !void {
         "kiosk-security-recorded",
         "traffic-period",
         "traffic-period-partial",
+        "ranking-history",
     };
     inline for (variants, 0..) |name, i| {
         configure(&state, .dashboard);
@@ -106,6 +107,19 @@ fn variant(state: *State, index: usize) void {
             state.security_overview.request = .{ .from = 169200, .until = 172800 };
             state.security_overview.modules[0].trend[0] = 1234;
             state.security_overview.modules[0].total = 1234;
+        },
+        11 => {
+            state.ranking_history = .{ .open = true, .started = true };
+            for (&state.ranking_history.windows, 0..) |*window, side| {
+                window.query = .{
+                    .from_minute = 2800 - side * 60,
+                    .until_minute = 2859 - side * 60,
+                    .node = 1,
+                };
+                window.finished = true;
+                window.archives = 1;
+                window.summary.add("/search?<&>") catch unreachable;
+            }
         },
         else => {},
     }

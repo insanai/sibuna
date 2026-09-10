@@ -74,6 +74,7 @@ fn page(state: *const State, w: *Writer) Writer.Error!void {
     try coverage(state, w);
     try html.render(w, "</tbody></table></article></section>", .{});
     try @import("rankings_controller.zig").render(state, w);
+    try @import("ranking_history_page.zig").render(state, w);
     try html.render(w, "<footer class=\"sb-footer sb-note\">" ++
         "<span>Sibuna Console · selected live view</span>" ++
         "<span>Each panel states its observation window</span>" ++

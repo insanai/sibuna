@@ -106,6 +106,7 @@ pub const State = struct {
     timeline_open: bool = false,
     history_minutes: bool = false,
     traffic_period: @import("traffic_period_state.zig").Model = .{},
+    ranking_history: @import("ranking_history_state.zig").Model = .{},
     comparison: @import("comparison_controller.zig").Model = .{},
     minute_history: @import("minute_panel.zig").Model = .{},
     timeline: @import("timeline_panel.zig").Model = .{},
@@ -119,6 +120,7 @@ pub const State = struct {
             // Dispatch by the compiler's field enum, avoiding repeated name comparisons.
             switch (@as(Field, @enumFromInt(index))) {
                 .rankings,
+                .ranking_history,
                 .timeline,
                 .minute_history,
                 .events,

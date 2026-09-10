@@ -173,6 +173,14 @@ The primary Traffic period remains independent.
 The minute format does not record historical proxy mode, so origin-response comparisons remain
 unavailable rather than interpreting forward-auth zeros as observed responses.
 
+*Compare retained path rankings* selects two closed windows or nodes. Node 0 includes all
+retained nodes, including retired members. An action reads at most sixteen immutable archives,
+checks their identities and checksums, and merges every counter before selecting display rows.
+Archives seal after the 60-second late-sample window, so the newest closed minute may still
+be pending. Continue preserves the original windows and cursor. Bounds describe sampled path prefixes,
+not exact request totals. The page shows partial scans, truncation, retention boundaries and
+reported queue loss; missing archives cannot establish zero traffic or complete coverage.
+
 Security opens on the last 24 hours and uses sixty equal time buckets over the selected period.
 Charts share a scale;
 expand Trend values for the UTC interval starts and exact grouped counts. These are retained

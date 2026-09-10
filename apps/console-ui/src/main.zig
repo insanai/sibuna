@@ -11,7 +11,7 @@ var state: State = undefined;
 var initialized: bool = false;
 var similarity_generation: u32 = 0;
 var policy_generation: u32 = 0;
-var input: [16 * 1024]u8 = undefined;
+var input: [p.ranking_history.event_bytes]u8 = undefined;
 // Browser events execute serially. A fixed scratch region keeps large JSON arrays
 // off the Wasm stack and is erased after every event, including parser failures.
 var event_memory: [512 * 1024]u8 = undefined;

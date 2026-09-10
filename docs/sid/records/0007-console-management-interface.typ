@@ -171,8 +171,8 @@
 
 = Abstract
 
-Sibuna is operated today through command-line flags, a JSON policy file, and SQL against the
-embedded Zaxonlite database. Operators of an application firewall expect a web console: a
+Command-line flags, JSON policy files and the embedded Zaxonlite store support Sibuna
+deployment and automation. Operators also need a web console: a
 statistics overview with live traffic and attack charts, an attack-event browser with payload
 detail, rule editors, address groups, and system settings. This record specifies the Sibuna
 Console: a proposed first-party Zig module, compiled into the same binary
@@ -1675,6 +1675,19 @@ through repeated merges; archive identity and cursor ordering supply deduplicati
 Repeated cumulative queue-loss observations cannot be summed into an exact interval loss.
 Missing archives, restart overlaps and quota-shortened history remain visible.
 
+Retained ranking reads return one full archive plus a descending minute/digest cursor.
+An indexed two-row lookahead and at most two ten-row chunk queries fit the storage facade's
+row and byte limits. The mailbox owns each bounded archive payload until transfer or release;
+read authorization and retention are checked before and after materialization. Native and
+Wasm consumers share the codec and merge arithmetic. Explicit comparison actions read at most
+sixteen archives total, with one outstanding request. Continuation keeps both windows frozen;
+invalid archives never partially update a displayed population. Node 0 includes retired nodes.
+Display rows show lower–upper sample bounds and cannot imply exact counts or complete coverage.
+The browser event buffer is derived from the maximum hex archive plus metadata and envelope
+headroom. Complete decoding and merge candidates live in caller-owned event scratch, not the
+Wasm call stack; native consumers may use the same codec and arithmetic with stack workspaces.
+The four-MiB browser memory ceiling is independent of the artifact-size review threshold.
+
 == Management consistency
 
 The Persistent storage owner executes typed, owned mailbox operations. Handlers receive no
@@ -1718,8 +1731,9 @@ Committed status. Test entry points are `zig build test`, `console-test`, `conso
 HTML builds verify structural and documentation contracts. Exact test history belongs in git;
 measured records under `benchmarks/results/` carry source identity, conditions and uncertainty.
 
-The remaining functional questions are historical ranking query/render workflows and per-rule
-hit history across edits. They are requirements under R16, not host-performance limitations.
+Per-rule hit history across edits remains an implementation question under R16, independent
+of host-performance acceptance. Retained ranking comparisons follow the bounded archive
+read and merge contract above.
 Conditional panels without captured fields must remain unavailable. Browser review must cover
 all defined workflows and failure states, accessibility, representative device conditions and
 the two operator-comprehension tasks; an automated mechanical check cannot prove comprehension.

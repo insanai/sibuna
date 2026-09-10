@@ -10,9 +10,11 @@ const settings = @import("settings_controller.zig");
 const pages = @import("pages_controller.zig");
 const reputation = @import("reputation_controller.zig");
 const security = @import("security_overview_controller.zig");
+const ranking_history = @import("ranking_history_controller.zig");
 const kiosk = @import("kiosk_grant.zig");
 
 pub fn action(state: *State, name: []const u8, fields: std.json.Value, out: Outbox) !bool {
+    if (try ranking_history.action(state, name, fields, out)) return true;
     if (try @import("traffic_period_controller.zig").action(state, name, fields)) return true;
     if (try @import("comparison_controller.zig").action(state, name, fields, out)) return true;
     if (try security.action(state, name, fields, out))
@@ -35,7 +37,9 @@ pub fn response(
     alloc: std.mem.Allocator,
     out: Outbox,
 ) !bool {
-    if (std.mem.startsWith(u8, id, "traffic-period-")) {
+    if (std.mem.startsWith(u8, id, "rank-history-")) {
+        try ranking_history.response(state, id, status, body, alloc, out);
+    } else if (std.mem.startsWith(u8, id, "traffic-period-")) {
         try @import("traffic_period_controller.zig").response(state, id, status, body, alloc, out);
     } else if (std.mem.startsWith(u8, id, "compare-")) {
         try @import("comparison_controller.zig").response(state, id, status, body, alloc, out);
