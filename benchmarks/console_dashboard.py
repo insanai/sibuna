@@ -9,6 +9,7 @@ import socket
 import threading
 import time
 from console_topics_client import Client
+from console_ws_test import Stream
 
 
 class Dashboard:
@@ -29,7 +30,10 @@ class Dashboard:
             return dict(self.totals)
 
     def connect(self):
-        self.client = Client(self.port, self.cookie, record_messages=False)
+        factory = getattr(self.helper, "stream", None)
+        stream = factory(self.port, self.cookie) if factory else Stream(
+            self.port, self.cookie, "/console/ws")
+        self.client = Client.from_stream(stream, record_messages=False)
         self.client.command("sub", "stats")
         self.client.stream.sock.settimeout(None)
         return self.client.stream

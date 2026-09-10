@@ -78,5 +78,23 @@ class Acceptance(unittest.TestCase):
         self.assertFalse(covered(invalid, 8))
 
 
+class PeerCoverage(unittest.TestCase):
+    def test_requires_all_directions_fresh_boots_and_advancing_watermarks(self):
+        from console_peer_impact import coverage
+        before = [{"observer": observer, "node": node, "status": "current", "boot": str(node),
+                   "resets": 0, "watermark": 10, "age_seconds": 0, "clock_skew_seconds": 0,
+                   "geoip_available": True}
+                  for observer in (1, 2, 3) for node in (1, 2, 3) if observer != node]
+        after = [dict(row, watermark=25) for row in before]
+        self.assertTrue(coverage(before, after, 15))
+        self.assertFalse(coverage(before, after[:-1], 15))
+        for field, value in (("status", "stale"), ("boot", "restarted"), ("resets", 1),
+                             ("watermark", 10), ("age_seconds", 3),
+                             ("clock_skew_seconds", 3), ("geoip_available", False)):
+            changed = [dict(row) for row in after]
+            changed[0][field] = value
+            self.assertFalse(coverage(before, changed, 15), field)
+
+
 if __name__ == "__main__":
     unittest.main()

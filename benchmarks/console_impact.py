@@ -28,6 +28,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 import console_bootstrap_test as bootstrap  # noqa: E402
 import console_e2e  # noqa: E402
 from console_dashboard import Dashboard, covered, difference  # noqa: E402
+import console_peer_impact as peer_impact  # noqa: E402
 
 CONFIGURATIONS = ("compiled_out", "disabled", "idle", "active")
 GATE = {"throughput_loss_max": 0.01, "p99_increase_max": 0.10, "baseline_spread_max": 0.01}
@@ -58,6 +59,11 @@ class Daemon:
         self.port = free_port()
         self.console_port = free_port() if name in ("idle", "active") else None
         self.procs, self.logs, self.clients = [], [], []
+        self.target_proc = None
+        self.consoles = ([self.console_port] + [free_port() for _ in range(2 if cluster else 0)]
+                         if self.console_port else [])
+        self.mesh = peer_impact.Mesh(temp, self.consoles) if cluster and self.consoles else None
+        self.helper = self.mesh or console_e2e
 
     def args(self, index, data, peers):
         args = [self.binary, "--host", "127.0.0.1", "--port", str(data[index]), "--workers", "2",
@@ -66,8 +72,10 @@ class Daemon:
                 "--idle-timeout", "5", "--trust-forwarded",
                 "--data-dir", str(self.temp / f"{self.name}-node{index}"),
                 "--storage-poll-ms", "100"]
-        if self.console_port and index == 0:
-            args += ["--console", f"127.0.0.1:{self.console_port}"]
+        if self.consoles:
+            args += ["--console", f"127.0.0.1:{self.consoles[index]}"]
+            if self.mesh:
+                args += self.mesh.args(index)
         if self.cluster:
             args += ["--cluster-node", str(index + 1), "--cluster-listen",
                      f"127.0.0.1:{peers[index]}", "--cluster-secret-file", str(self.psk)]
@@ -91,6 +99,8 @@ class Daemon:
         self.logs.append(log)
         self.procs.append(subprocess.Popen(self.args(index, data, peers),
                                            stdout=log, stderr=log))
+        if index == 0:
+            self.target_proc = self.procs[-1]
 
     def start(self):
         count = 3 if self.cluster else 1
@@ -119,14 +129,17 @@ class Daemon:
             self.dashboards()
 
     def dashboards(self):
-        h = console_e2e
+        h = self.helper
         permanent = "console impact private passphrase"
-        credentials = bootstrap.change(h, self.console_port, self.credentials, permanent)
+        credentials = (self.mesh.credentials(self.credentials) if self.mesh else
+                       bootstrap.change(h, self.console_port, self.credentials, permanent))
         status, reply, body = h.request(self.console_port, "POST", "/console/api/login",
                                         credentials)
         assert status == 200, body
         self.cookie = reply["Set-Cookie"].split(";", 1)[0]
         self.csrf = json.loads(body)["csrf"]
+        if self.mesh:
+            self.mesh.ready(self.cookie)
         code, _, body = h.request(self.console_port, "GET", "/console/api/geoip",
                                   cookie=self.cookie)
         assert code == 200, ("geoip", code)
@@ -150,6 +163,11 @@ class Daemon:
                 stop(proc)
             except (OSError, RuntimeError, subprocess.TimeoutExpired) as error:
                 failures.append(error)
+        if self.mesh:
+            try:
+                self.mesh.close()
+            except (OSError, RuntimeError) as error:
+                failures.append(error)
         for log in self.logs:
             log.close()
         if failures:
@@ -159,22 +177,29 @@ class Daemon:
 def sample(daemon, path, hdrs, load, script):
     drain_time_wait()
     wrk(daemon.port, path, hdrs, {**load, "seconds": load["warmup_seconds"]}, script)
-    tracker = PeakRss(daemon.procs[0].pid)
-    cpu_before = cpu_seconds(daemon.procs[0].pid)
+    peers_before = daemon.mesh.snapshot(daemon.cookie) if daemon.mesh else []
+    tracker = PeakRss(daemon.target_proc.pid)
+    cpu_before = cpu_seconds(daemon.target_proc.pid)
     before = [client.snapshot() for client in daemon.clients]
     tracker.start()
     try:
         result = wrk(daemon.port, path, hdrs, load, script)
+        after = [client.snapshot() for client in daemon.clients]
     finally:
         tracker.stopping.set()
         tracker.join()
     wall = result["duration_us"] / 1e6
+    cpu_used = cpu_seconds(daemon.target_proc.pid) - cpu_before
+    peers_after = daemon.mesh.snapshot(daemon.cookie) if daemon.mesh else []
     return {"requests": result["requests"],
             "requests_per_second": result["requests"] / wall if wall > 0 else 0,
             "latency_us": result["latency_us"], "errors": result["errors"],
-            "cpu_seconds": cpu_seconds(daemon.procs[0].pid) - cpu_before,
+            "cpu_seconds": cpu_used,
             "peak_rss_kib": tracker.peak,
-            "dashboards": difference(before, [client.snapshot() for client in daemon.clients]),
+            "dashboards": difference(before, after),
+            "peers": {"before": peers_before, "after": peers_after,
+                      "covered": peer_impact.coverage(peers_before, peers_after, wall)
+                      if daemon.mesh else None},
             "wall_seconds": wall}
 
 
@@ -311,8 +336,12 @@ def matrix(binaries, temp, load, rounds, cluster, names, seed, psk, script):
             finally:
                 daemon.stop_all()
     samples = [sample for workload in results.values() for sample in workload["active"]]
+    peer_samples = [sample for workload in results.values() for cfg in ("idle", "active")
+                    for sample in workload[cfg]]
     return finish(results, names), {
         "subscribers": DASHBOARDS, "delivered": covered(samples, DASHBOARDS),
+        "peers_covered": all(sample["peers"]["covered"] for sample in peer_samples)
+                         if cluster else None,
         "geoip": geoip, "geoip_available": bool(geoip) and all(g["ranges"] > 0 for g in geoip),
         "frames_total": sum(client["frames"] for client in clients),
         "reconnects": sum(client["reconnects"] for client in clients),
@@ -349,7 +378,7 @@ def main():
     parser.add_argument("--connections", type=int, default=32)
     parser.add_argument("--host-label", default="undeclared host",
                         help="Declare the measuring host and its quiet state for the record")
-    parser.add_argument("--cluster", action="store_true", help="three PSK nodes, console on 1")
+    parser.add_argument("--cluster", action="store_true", help="three PSK nodes with TLS console peers")
     parser.add_argument("--geoip-data", type=Path,
                         help="Validated production country snapshot; required for acceptance")
     args = parser.parse_args()
@@ -382,10 +411,14 @@ def main():
         provenance = metadata(binaries["console"]["path"])
     # Eight dashboards that stopped receiving frames would make "active" an idle daemon.
     if (not dashboards["delivered"] or not dashboards["geoip_available"] or args.quick or
-            args.host_label == "undeclared host"):
+            args.host_label == "undeclared host" or
+            (args.cluster and not dashboards["peers_covered"])):
         results["verdict"] = "inconclusive"
     data = {"meta": {**provenance, "binaries": binaries, "host_label": args.host_label,
                      "quick": args.quick, "cluster": args.cluster,
+                     "management_peers": 6 if args.cluster else 0,
+                     "resource_target_node": 1,
+                     "peer_coverage": "current before and after each sample; advancing watermarks",
                      "geoip_snapshot": ({"bytes": args.geoip_data.stat().st_size,
                                          "sha256": __import__("hashlib").sha256(
                                              args.geoip_data.read_bytes()).hexdigest()}
@@ -401,6 +434,11 @@ def main():
                                    "geometry": "loaded once before warmup",
                                    "client": "network emulation; rendering measured separately"},
             "limitations": [
+                "Cluster idle/active configurations run three consoles and six authenticated "
+                "TLS peer directions. Boundary checks require fresh observations, stable "
+                "boots and advancing watermarks; they do not measure every peer frame.",
+                "CPU and peak RSS describe the traffic-serving node 1. Cluster TLS ingress "
+                "fixtures share the load-generator host; their memory is separate.",
                 "Loopback wrk shares the host with the daemons; inconclusive results are "
                 "reported, never rounded to a pass.",
                 "Peak RSS is sampled every 100 ms from ps; short spikes can be missed.",

@@ -9,9 +9,9 @@ class Client:
         self._initialize(Stream(port, cookie, "/console/ws"), record_messages)
 
     @classmethod
-    def from_stream(cls, stream):
+    def from_stream(cls, stream, record_messages=True):
         client = cls.__new__(cls)
-        client._initialize(stream, True)
+        client._initialize(stream, record_messages)
         return client
 
     def _initialize(self, stream, record_messages):
