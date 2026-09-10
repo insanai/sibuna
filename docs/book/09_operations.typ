@@ -85,6 +85,63 @@ serving-node controls. The authentication shell loads no globe geometry or telem
 Committed CSS and the Zig/Wasm interface ship with ordinary builds; npm is needed only when
 regenerating style assets.
 
+=== A Tour of the Console
+
+The screenshots below come from the built console on one loopback node fed with synthetic
+traffic (addresses from documentation ranges, a honeypot and injection probes), so every
+number is illustrative. Each page answers one question stated in its title and carries the
+product, the serving node, the page and the way back in the same place.
+
+#book_figure([Sign-in. The public shell loads no globe geometry, GeoIP data or telemetry;
+the second form exchanges a wall-display code for a read-only statistics session.],
+image("images/console-sign-in.png"))
+
+#book_figure([Statistics · Traffic. Tiles show retained closed-minute counts with a
+deviation against the same window yesterday and a live 60-second sparkline; decision colours
+(admitted green, challenged amber, denied red, banned dark red) are the same in every panel.],
+image("images/console-traffic.png"))
+
+#book_figure([Statistics · Security. One tile per module, findings over sixty equal buckets,
+the live event feed, attack categories and attacked paths; values that are not recorded say
+so instead of showing zero.],
+image("images/console-security.png"))
+
+#book_figure([Events. Each recorded incident opens inline with its evidence: the selected
+local response, byte lengths, campaign candidate, and explicit “not recorded” entries for
+the matched rule, score terms and JA4 fingerprint. Deny and allow actions open the IP
+groups form with the address drafted.],
+image("images/console-events.png"))
+
+#book_figure([Challenges. Issued, submitted, accepted and rejected counts by cause, the
+configured and most recently issued parameters, and the accepted solve-time histogram
+partitioned by algorithm and parameter bin.],
+image("images/console-challenges.png"))
+
+#book_figure([Policies. The applied engine names its surface and node-local limits, then
+lists rules in evaluation order with hits today, followed by the inspection mode matrix, the
+request tester and IP groups.],
+image("images/console-policies.png"))
+
+#book_figure([Reviewing a rule edit before saving (dark theme). Only changed fields are
+listed; confirming validates the whole candidate and creates a new revision.],
+image("images/console-policy-review.jpg"))
+
+#book_figure([Nodes. The serving node's status and commands, then every announced member
+with its applied revision, log slots, replication lag and probe result.],
+image("images/console-nodes.png"))
+
+#book_figure([GeoIP. Provider, licence, active generation digest, load time and the import
+form; a failed import never replaces the active generation.],
+image("images/console-geoip.png"))
+
+#book_figure([Settings. Notification destinations, denial-spike thresholds, retention with
+an explicit acknowledgement per window, response-page templates and About.],
+image("images/console-settings.png"))
+
+#book_figure([Audit. Append-only history with actor and role, action, subject and a detail
+view with redacted before and after summaries; refused sign-ins are recorded too.],
+image("images/console-audit.png"))
+
 The optional `--console-location <latitude,longitude>` declares this node's position, for
 example `1.3521,103.8198` for a deployment in Singapore. The globe initially centers there;
 Center Sibuna returns to that point after rotation. Country activity follows animated
