@@ -156,7 +156,7 @@ cb282d01b282c08949b5154fe4e58160b2937f2df6390ef9cd35d3a2e45591a3  apps/console-u
 09f75faaeb382969e4a52bcf1f14cfb636be906c644cdd92a395d0e21b083d4c  apps/console-ui/web/assets/GEOGRAPHY.md
 dad8b8cc280407dc997df47c83c4ca75958ba50f1c3f3e26ef19da9e909241dd  apps/console-ui/web/assets/console.css
 50b2fa3e78ea67eb1a72a9e22cb325ec884b8e83432c3f66808ee190835b4686  apps/console-ui/web/assets/world-110m.bin
-c3100ba4845ea84d35dddecf8de2452301af6f3a3bd6dc7a017acb8ade06979c  apps/console-ui/web/glue.js
+cb1b3d2e110726bc200dc66e612c0baacb48a5ff11efc124b505f680971dfd97  apps/console-ui/web/glue.js
 de19ed3c281af27df160c0184b9dc6e368f0dcc64236020887257dbf202986a0  apps/console-ui/web/package-lock.json
 b337b6d0d37776b3cd099a24feb055f54113818d49ed7426ca79292baa331c2c  apps/console-ui/web/package.json
 6f92e4d93da61526befcbe5fcb3f99371b5edef299bc151d313202d32c4c868a  apps/console-ui/web/shell.html

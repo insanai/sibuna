@@ -1,8 +1,10 @@
 const std = @import("std");
 const Context = @import("http.zig").Context;
 const wasm = @embedFile("console_wasm");
+// The contract test checks the same bound in the build verifier and browser loader.
+const max_wasm_bytes = 512 * 1024;
 comptime {
-    if (wasm.len > 384 * 1024) @compileError("console Wasm exceeds the 384 KiB budget");
+    if (wasm.len > max_wasm_bytes) @compileError("console Wasm exceeds the 512 KiB budget");
 }
 
 pub fn serve(context: *Context, path: []const u8) Context.Error!bool {

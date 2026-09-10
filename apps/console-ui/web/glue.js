@@ -1,4 +1,6 @@
 // Fixed browser capability bridge. Routing, forms, application state and markup live in Zig.
+// Kept in sync with the embedding and artifact gates by console_wasm_check_test.py.
+const maxWasmBytes = 512 * 1024;
 const root = document.getElementById("app");
 const decoder = new TextDecoder();
 const encoder = new TextEncoder();
@@ -325,7 +327,7 @@ async function loadConsole() {
   try {
     const response = await fetch("/console/assets/console.wasm", {signal: deadline.signal});
     if (!response.ok) throw new Error("Console asset unavailable");
-    return await WebAssembly.instantiate(await readBounded(response, 384 * 1024), {});
+    return await WebAssembly.instantiate(await readBounded(response, maxWasmBytes), {});
   } catch (error) {
     root.textContent = "Console could not load. Reload this page to retry.";
     root.setAttribute("aria-busy", "false");

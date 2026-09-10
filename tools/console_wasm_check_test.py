@@ -2,6 +2,7 @@
 import unittest
 import contextlib
 import io
+import re
 from pathlib import Path
 import tempfile
 from console_wasm_check import contract, check, EXPORTS, MAX_BYTES, WARN_BYTES
@@ -42,6 +43,17 @@ class ContractTest(unittest.TestCase):
                 with self.assertRaises(SystemExit):
                     check(source, output)
                 self.assertEqual(output.read_bytes(), valid)
+
+    def test_embedding_and_browser_loader_share_the_artifact_ceiling(self):
+        root = Path(__file__).resolve().parents[1]
+        for path, name in (("libs/console/src/assets.zig", "max_wasm_bytes"),
+                           ("apps/console-ui/web/glue.js", "maxWasmBytes")):
+            source = (root / path).read_text()
+            match = re.search(rf"const {name} = (\d+) \* 1024;", source)
+            self.assertIsNotNone(match, path)
+            self.assertEqual(MAX_BYTES, int(match[1]) * 1024, path)
+        glue = (root / "apps/console-ui/web/glue.js").read_text()
+        self.assertIn("readBounded(response, maxWasmBytes)", glue)
 
     def test_review_threshold_warns_without_rejecting_valid_artifacts(self):
         valid = (b"\x00asm\x01\x00\x00\x00" + section(5, bytes([1, 1, 64, 64])) +
