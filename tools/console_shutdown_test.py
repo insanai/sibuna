@@ -61,6 +61,11 @@ def check(binary, h):
                 assert status == 200 and not json.loads(body)["must_change"]
             finally:
                 h.stop(proc)
+            # Console readiness can precede data-plane readiness. A stop in that window
+            # must survive startup and complete normal ownership teardown.
+            for _ in range(4):
+                proc = h.start(binary, directory, port, log, workers=4, extra=extra)
+                h.stop(proc)
             log.seek(0)
             assert "leaked" not in log.read().lower()
     print("console-e2e: graceful multi-worker shutdown, active streams and restart passed")

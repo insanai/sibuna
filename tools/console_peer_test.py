@@ -202,9 +202,11 @@ def check(binary, h):
             print("fixture failures:", peer.errors)
             raise
         finally:
-            if proc is not None:
-                h.stop(proc)
-            peer.close()
+            try:
+                if proc is not None and proc.poll() is None:
+                    h.stop(proc)
+            finally:
+                peer.close()
     print("console-e2e: TLS peer proof, masking, quota, replay, stale, boot and cancellation passed")
 
 

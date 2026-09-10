@@ -44,6 +44,8 @@ pub fn main(init: std.process.Init) !u8 {
         return @import("console_init.zig").execute(gpa, io, cfg, username.slice());
     };
     const seed = resolveSecret(io, init.environ_map, &cfg) orelse return 1;
+    const signals = @import("shutdown.zig").Signals.init();
+    defer signals.deinit();
 
     var arena = std.heap.ArenaAllocator.init(gpa);
     defer arena.deinit();
@@ -127,6 +129,7 @@ fn readArgs(args: std.process.Args, output: [][]const u8) ?usize {
 }
 
 fn runListener(io: std.Io, cfg: core.Config, state: *server.AppState) u8 {
+    if (@import("shutdown.zig").wasRequested()) return 0;
     const addr = std.Io.net.IpAddress.parse(cfg.listen_host, cfg.listen_port) catch |err| {
         std.debug.print(
             "Failed to parse listen address {s}:{d}: {t}\n",
