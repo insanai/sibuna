@@ -58,6 +58,21 @@ pub fn user(owner: *Persistent, username: []const u8) !p.StorageResult {
     } };
 }
 
+/// A refused sign-in is audited against the named account when it exists and otherwise
+/// against subject 0; the attempted name is the target and no credential is recorded.
+pub fn denied(owner: *Persistent, username: []const u8, now: u64) !p.StorageResult {
+    if (username.len == 0 or username.len > 64) return .{ .failed = .invalid_input };
+    _ = try db.exec(
+        owner.db,
+        owner.gpa,
+        "INSERT INTO console_audit(actor,action,subject,target,recorded_at) " ++
+            "VALUES(0,'session.denied'," ++
+            "COALESCE((SELECT id FROM console_users WHERE username=?),0),?,?)",
+        &.{ text(username), text(username), integer(now) },
+    );
+    return .command_recorded;
+}
+
 pub fn logout(owner: *Persistent, input: p.auth.Logout, now: u64) !p.StorageResult {
     const hex = std.fmt.bytesToHex(input.digest, .lower);
     _ = try db.exec(

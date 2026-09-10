@@ -4,6 +4,7 @@ from pathlib import Path
 import re
 import subprocess
 import tempfile
+import time
 
 
 def initialize(binary, directory, username):
@@ -66,7 +67,37 @@ def check(binary, h):
                 status, headers, body = h.request(port, "POST", "/console/api/login", credentials)
                 assert status == 200 and not json.loads(body)["must_change"]
                 cookie = headers["Set-Cookie"].split(";", 1)[0]
+                csrf = json.loads(body)["csrf"]
                 assert h.request(port, "GET", "/console/api/stats", cookie=cookie)[0] == 200
+                refused(h, port, cookie, csrf)
             finally:
                 h.stop(proc)
     print("console-e2e: local initialization, required change and temporary credential removal passed")
+
+
+def refused(h, port, cookie, csrf):
+    """Wrong passwords and unknown accounts are audited; the address limit answers 429."""
+    wrong = {"username": "local-admin", "password": "not the permanent passphrase"}
+    unknown = {"username": "nobody-here", "password": "not the permanent passphrase"}
+    statuses = [h.request(port, "POST", "/console/api/login", body)[0]
+                for body in (wrong, unknown, wrong, unknown, wrong, wrong)]
+    assert 401 in statuses and statuses[-1] == 429, statuses
+    assert all(status in (401, 429) for status in statuses), statuses
+    # The expired temporary credential above was refused too; refusals are recorded
+    # in the background, so allow a few polls within the per-session query budget.
+    for attempt in range(20):
+        status, _, body = h.request(port, "POST", "/console/api/audit/query",
+                                    {"action": "session.denied"}, cookie, csrf)
+        assert status == 200, body
+        rows = json.loads(body)["rows"]
+        if len(rows) >= statuses.count(401) + 1:
+            break
+        time.sleep(0.1)
+    else:
+        raise AssertionError(rows)
+    assert {row["subject"] for row in rows} <= {1, 0} and 1 in {row["subject"] for row in rows}
+    assert all(row["actor"] == 0 for row in rows)
+    detail = json.loads(h.request(port, "POST", "/console/api/audit/read",
+                                  {"id": str(rows[0]["id"])}, cookie, csrf)[2])
+    assert detail["row"]["target"] in ("local-admin", "nobody-here"), detail
+    assert "passphrase" not in json.dumps(detail)

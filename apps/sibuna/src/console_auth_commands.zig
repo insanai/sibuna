@@ -9,6 +9,7 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
     return switch (request) {
         .bootstrap => |input| auth.bootstrap(owner, input, now),
         .auth_user => |username| auth.user(owner, username.slice()),
+        .login_denied => |username| auth.denied(owner, username.slice(), now),
         .session_create => |input| @import("console_store_session.zig").create(owner, input, now),
         .password_change => |input| auth.password(owner, input, now),
         .logout => |input| auth.logout(owner, input, now),

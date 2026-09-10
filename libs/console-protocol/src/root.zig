@@ -145,6 +145,7 @@ pub const StorageRequest = union(enum) {
     geo_read: geo.Read,
     bootstrap: auth.Bootstrap,
     auth_user: Bytes(64),
+    login_denied: Bytes(64),
     session_create: auth.Session,
     logout: auth.Logout,
     password_change: auth.PasswordChange,

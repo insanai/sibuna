@@ -133,6 +133,7 @@ fn executeMore(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
         .setup_status => setupStatus(owner),
         .bootstrap,
         .auth_user,
+        .login_denied,
         .session_create,
         .authorize,
         .logout,

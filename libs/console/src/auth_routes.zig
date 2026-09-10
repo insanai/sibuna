@@ -36,19 +36,29 @@ pub fn login(app: *App, context: *Context) !void {
     if (!p.validUsername(input.value.username)) return error.InvalidRequest;
     if (!allowed(app, context, input.value.username))
         return http.fail(context, .too_many_requests, "CONSOLE003");
-    const result = try app.request(.{ .auth_user = try p.Bytes(64).init(input.value.username) });
+    const username = try p.Bytes(64).init(input.value.username);
+    const result = try app.request(.{ .auth_user = username });
     const hash = if (result == .auth_user) result.auth_user.password_hash else app.dummy_hash;
     app.passwords.verify(app.io, input.value.password, hash.slice()) catch |err| {
         if (err == error.Busy) return err;
-        return http.fail(context, .unauthorized, "CONSOLE401");
+        return refuse(app, context, username);
     };
-    if (result != .auth_user) return http.fail(context, .unauthorized, "CONSOLE401");
+    if (result != .auth_user) return refuse(app, context, username);
     const factor = @import("totp_routes.zig").factor(
         app,
         result.auth_user,
         input.value.code,
-    ) catch return http.fail(context, .unauthorized, "CONSOLE401");
+    ) catch return refuse(app, context, username);
     try establish(app, context, result.auth_user, factor);
+}
+
+/// Every refusal leaves an audit row so credential guessing is visible; the reply stays
+/// identical whether the account, the password or the second factor was wrong.
+fn refuse(app: *App, context: *Context, username: p.Bytes(64)) !void {
+    _ = app.background(.{ .login_denied = username }) catch |err| {
+        std.log.warn("console sign-in refusal audit: {t}", .{err});
+    };
+    return http.fail(context, .unauthorized, "CONSOLE401");
 }
 
 fn establish(app: *App, context: *Context, user: p.AuthUser, factor: p.auth.Factor) !void {
