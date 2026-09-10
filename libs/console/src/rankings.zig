@@ -1,16 +1,8 @@
 //! Collector-owned path prefixes. Fixed minute slots retain every sketch counter.
 const std = @import("std");
-const Summary = @import("space_saving.zig").Summary;
 const Record = @import("store").telemetry.Record;
 
-pub const Minute = struct {
-    minute: ?u64 = null,
-    first_second: u64 = 0,
-    last_second: u64 = 0,
-    truncated_records: u64 = 0,
-    rejected_records: u64 = 0,
-    paths: Summary = .{},
-};
+pub const Minute = @import("console_protocol").ranking_storage.Minute;
 
 pub const Rankings = struct {
     minutes: [2]Minute = @splat(.{}),

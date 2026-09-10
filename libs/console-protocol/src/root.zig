@@ -6,6 +6,9 @@ pub const policies = @import("policies.zig");
 pub const challenges = @import("challenges.zig");
 pub const settings = @import("settings.zig");
 pub const dashboard = @import("dashboard.zig");
+pub const space_saving = @import("space_saving.zig");
+pub const rankings_archive = @import("rankings_archive.zig");
+pub const ranking_history = @import("ranking_history.zig");
 pub const rankings = @import("rankings.zig");
 pub const timeline = @import("timeline.zig");
 pub const minute_summary = @import("minute_summary.zig");
@@ -121,6 +124,7 @@ pub const StorageRequest = union(enum) {
     minutes_query: minutes.Query,
     minutes_summary: minutes.Query,
     minutes_prune: u64,
+    rankings_query: ranking_history.Query,
     rankings_begin: ranking_storage.Begin,
     rankings_chunk: ranking_storage.Chunk,
     rankings_finish: ranking_storage.Finish,
@@ -210,6 +214,7 @@ pub const StorageResult = union(enum) {
     retention_lease: retention.Lease,
     minute_page: minutes.Page,
     minute_summary: minute_summary.Part,
+    ranking_history: ranking_history.Page,
     ranking_inventory: rankings.Inventory,
     policy_document: policies.Document,
     similarity: similarity.Part,
@@ -287,6 +292,7 @@ pub fn releaseRequest(request: StorageRequest, gpa: std.mem.Allocator) void {
 pub fn releaseResult(result: StorageResult, gpa: std.mem.Allocator) void {
     switch (result) {
         .page_document => |document| gpa.destroy(document.html),
+        .ranking_history => |page| gpa.destroy(page.payload),
         else => {},
     }
 }
@@ -313,6 +319,7 @@ pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
         .retention_prune => |input| input.lease.validate() catch return error.InvalidLimit,
         .minutes_query => |query| try minutes.validate(query),
         .minutes_summary => |query| try minute_summary.validate(query),
+        .rankings_query => |query| try ranking_history.validate(query),
         .policy_read => |input| try policies.validateRead(input),
         .policies_query => |query| try policies.validate(query),
         .policies_test => |input| try policies.validateTest(input),
