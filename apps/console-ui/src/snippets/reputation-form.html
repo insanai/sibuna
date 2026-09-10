@@ -1,9 +1,9 @@
 <form id="reputation-edit" class="sb-settings-form mt-4"><h3>Add or update a prefix</h3>
     <label for="reputation-prefix">Address or CIDR</label>
-    <input id="reputation-prefix" name="prefix" class="input input-bordered font-mono" maxlength="48" required{{ busy }}>
+    <input id="reputation-prefix" name="prefix" class="input input-bordered font-mono" maxlength="48" required value="{{ prefix }}"{{ busy }}>
     <label for="reputation-action">Action</label>
     <select id="reputation-action" name="action" class="select select-bordered"{{ busy }}>
-        <option value="deny">Deny</option><option value="allow">Allow</option></select>
+        <option value="deny"{{ deny }}>Deny</option><option value="allow"{{ allow }}>Allow</option></select>
     <label for="reputation-hours">Duration in hours (blank keeps it until removed)</label>
     <input id="reputation-hours" name="hours" class="input input-bordered" inputmode="numeric" maxlength="5"{{ busy }}>
     <label for="reputation-note">Note</label>

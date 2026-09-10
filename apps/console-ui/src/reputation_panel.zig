@@ -31,7 +31,12 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         .load = if (model.loaded) "Reload" else "Load IP groups",
         .next = if (model.busy or model.next.len == 0) " disabled" else "",
     });
-    try html.render(w, @embedFile("snippets/reputation-form.html"), .{ .busy = busy });
+    try html.render(w, @embedFile("snippets/reputation-form.html"), .{
+        .busy = busy,
+        .prefix = model.draft_prefix.slice(),
+        .deny = if (model.draft_deny) " selected" else "",
+        .allow = if (model.draft_deny) "" else " selected",
+    });
     if (model.undo.expires_at > state.browser_time) try html.render(w, "<button " ++
         "class=\"btn btn-outline\" type=\"button\" data-action=\"reputation-undo\">Undo " ++
         "({{ left }} s)</button>", .{ .left = model.undo.expires_at - state.browser_time });

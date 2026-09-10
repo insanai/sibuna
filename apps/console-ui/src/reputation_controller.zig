@@ -106,6 +106,7 @@ fn edit(state: *State, out: Outbox, input: EditInput) !void {
     }
     try ticket(state, .edit);
     errdefer model.busy = false;
+    model.draft_prefix = .{};
     model.undo = .{
         .prefix = try p.Bytes(48).init(prefix),
         .restore = false,

@@ -31,6 +31,9 @@ pub const Model = struct {
     country_revision: p.Bytes(20) = .{},
     country_next: ?u16 = null,
     undo: Undo = .{},
+    /// An address carried from an incident into the prefix form; never submitted by itself.
+    draft_prefix: p.Bytes(48) = .{},
+    draft_deny: bool = true,
     busy: bool = false,
     loaded: bool = false,
     kind: Kind = .query,

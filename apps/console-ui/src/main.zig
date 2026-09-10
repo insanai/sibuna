@@ -254,6 +254,7 @@ fn actionName(name: []const u8, fields: std.json.Value) !void {
     if (try managed().transfer(name, fields)) return;
     if (try managed().inspection(name, fields)) return;
     if (try managed().action(name, fields)) return;
+    if (try addressAction(name)) return;
     if (try policy_controller.action(managed(), name, fields)) return;
     if (try similarityAction(name)) return;
     if (try challengeAction(name, fields)) return;
@@ -788,6 +789,23 @@ fn eventResponse(status: i64, body: ?@import("events_state.zig").WirePage) !void
     });
 }
 
+/// An incident's address opens the IP groups form prefilled; nothing is submitted until
+/// the operator chooses a duration and saves.
+fn addressAction(name: []const u8) !bool {
+    const deny = std.mem.startsWith(u8, name, "events-deny-");
+    const allow = std.mem.startsWith(u8, name, "events-allow-");
+    if (!(deny or allow)) return false;
+    if (state.kiosk or !state.allows(.manage_policy)) return true;
+    const address = name[if (deny) "events-deny-".len else "events-allow-".len..];
+    if (address.len == 0 or address.len > 48) return error.InvalidRequest;
+    const draft = try p.Bytes(48).init(address);
+    _ = try policy_controller.action(managed(), "policies", .null);
+    state.reputation.draft_prefix = draft;
+    state.reputation.draft_deny = deny;
+    try command(.{ .op = "focus", .selector = "#reputation-prefix" });
+    return true;
+}
+
 fn eventAction(name: []const u8, fields: std.json.Value) !bool {
     const exporting = equal(name, "events-export") or equal(name, "events-export-csv");
     if (exporting and state.phase == .events and state.fullAccess()) {
@@ -1068,6 +1086,25 @@ fn similarityResponse(status: i64, part: @import("similarity_state.zig").WirePar
         .id = "similarity",
         .delay_ms = 250,
     });
+}
+
+test "an incident address opens the prefix form drafted, never submitted" {
+    sb_init();
+    state.phase = .events;
+    state.csrf = try p.Bytes(64).init("test");
+    state.role = try p.Bytes(16).init("operator");
+    const open = "{\"action\":\"events-deny-203.0.113.9\",\"browser_time\":200}";
+    @memcpy(input[0..open.len], open);
+    sb_event(1, open.len);
+    try std.testing.expectEqual(.policies, state.phase);
+    try std.testing.expectEqualStrings("203.0.113.9", state.reputation.draft_prefix.slice());
+    try std.testing.expect(state.reputation.draft_deny);
+    try std.testing.expect(!state.reputation.busy or state.reputation.kind == .query);
+    state.kiosk = true;
+    const allow = "{\"action\":\"events-allow-203.0.113.9\",\"browser_time\":200}";
+    @memcpy(input[0..allow.len], allow);
+    sb_event(1, allow.len);
+    try std.testing.expect(state.reputation.draft_deny);
 }
 
 test "paused similarity rejects delayed parts and resumes with a fresh generation" {

@@ -54,7 +54,8 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     if (model.busy) try html.render(w, "<p role=\"status\">Loading incidents…</p>", .{});
     if (!model.busy and model.loaded and model.count == 0)
         try html.render(w, "<p>No recorded incidents match these filters.</p>", .{});
-    for (model.rows[0..model.count]) |*row| try incident(row, w);
+    const manage = state.allows(.manage_policy) and !state.kiosk;
+    for (model.rows[0..model.count]) |*row| try incident(row, manage, w);
     try footer(model, w);
 }
 
@@ -153,11 +154,23 @@ fn filters(model: *const Model, w: *Writer) Writer.Error!void {
     });
 }
 
-fn incident(row: *const p.events.Row, w: *Writer) Writer.Error!void {
+/// Findings colour by the decision they record (R8): honeypot hits ban, audit findings
+/// only inform, and every other recorded category denied the request.
+fn categoryTone(category: []const u8) []const u8 {
+    const sparkline = @import("outcome_sparkline.zig");
+    if (std.mem.eql(u8, category, "honeypot")) return sparkline.tone(.banned);
+    if (std.mem.startsWith(u8, category, "audit:")) return sparkline.tone(.other);
+    return sparkline.tone(.denied);
+}
+
+fn incident(row: *const p.events.Row, manage: bool, w: *Writer) Writer.Error!void {
     if (row.grouped) return source(row, w);
-    try html.render(w, "<article class=\"border-b border-base-300 py-4\"><h2>", .{});
+    try html.render(w, "<article class=\"border-b border-base-300 py-4\"><h2>" ++
+        "<span class=\"badge badge-outline sb-chip {{ tone }}\">", .{
+        .tone = categoryTone(row.category.slice()),
+    });
     try escape(w, row.category.slice());
-    try html.render(w, " <span class=\"sb-note\">#{{ v0 }}</span></h2><p>", .{
+    try html.render(w, "</span> <span class=\"sb-note\">#{{ v0 }}</span></h2><p>", .{
         .v0 = row.id,
     });
     try timestamp(w, row.time);
@@ -183,13 +196,22 @@ fn incident(row: *const p.events.Row, w: *Writer) Writer.Error!void {
     } else try w.writeAll("Not recorded");
     try html.render(w, "</dd><dt>Country at persistence</dt><dd>", .{});
     try geography(&row.geography, w);
-    try html.render(w, "</dd><dt>Delivered response status and matched rule</dt>" ++
-        "<dd>Not recorded</dd></dl>", .{});
+    try html.render(w, "</dd><dt>Response</dt><dd>", .{});
+    if (row.capture) |capture| {
+        try html.render(w, "Local denial: status {{ v0 }} selected; no origin response. " ++
+            "Delivery is not recorded.", .{ .v0 = capture.selected_status });
+    } else try w.writeAll("Not recorded");
+    try html.render(w, "</dd><dt>Matched rule and score terms</dt><dd>Not recorded</dd>" ++
+        "<dt>JA4 fingerprint</dt><dd>Not recorded: requires bounded capture at a trusted " ++
+        "ingress that overwrites spoofed headers.</dd></dl>", .{});
     try evidence(row, w);
-    try html.render(w, "<button class=\"btn mt-3\" data-action=\"events-similar-{{ v0 }}\">" ++
+    try html.render(w, "<div class=\"flex flex-wrap gap-2 mt-3\">" ++
+        "<button class=\"btn\" data-action=\"events-similar-{{ v0 }}\">" ++
         "Find similar incidents</button>", .{
         .v0 = row.id,
     });
+    if (manage) try addressActions(row, w);
+    try w.writeAll("</div>");
     if (row.query_redacted) try html.render(
         w,
         "<p class=\"sb-note\">Query string removed.</p>",
@@ -201,6 +223,19 @@ fn incident(row: *const p.events.Row, w: *Writer) Writer.Error!void {
         .{},
     );
     try html.render(w, "</details></article>", .{});
+}
+
+/// Address actions open the IP groups form with this address; the operator chooses the
+/// duration there and the saved prefix keeps its thirty-second undo (R18).
+fn addressActions(row: *const p.events.Row, w: *Writer) Writer.Error!void {
+    const actions = [_][]const u8{ "deny", "allow" };
+    const labels = [_][]const u8{ "Deny address…", "Allow address…" };
+    for (actions, labels) |action, label| {
+        try html.render(w, "<button class=\"btn btn-outline\" " ++
+            "data-action=\"events-{{ action }}-", .{ .action = action });
+        try escape(w, row.ip.slice());
+        try html.render(w, "\">{{ label }}</button>", .{ .label = label });
+    }
 }
 
 fn source(row: *const p.events.Row, w: *Writer) Writer.Error!void {
@@ -286,6 +321,30 @@ test "historical incident rendering escapes stored markup and names absent field
     try std.testing.expect(std.mem.indexOf(u8, output, "9007199254740993") != null);
     try std.testing.expect(std.mem.indexOf(u8, output, "Not recorded") != null);
     try std.testing.expect(std.mem.indexOf(u8, output, "1970-01-01 00:00:00 UTC") != null);
+    try std.testing.expect(std.mem.indexOf(u8, output, "JA4 fingerprint") != null);
+    try std.testing.expect(std.mem.indexOf(u8, output, "events-deny-") == null);
+    state.csrf = try p.Bytes(64).init("test");
+    state.role = try p.Bytes(16).init("operator");
+    state.events.rows[0].ip = try p.Bytes(48).init("203.0.113.9");
+    state.events.rows[0].category = try p.Bytes(32).init("honeypot");
+    state.events.rows[0].capture = .{
+        .selected_status = 403,
+        .query_bytes = 0,
+        .body_bytes = 0,
+        .declared_body_bytes = 0,
+        .truncated = 0,
+    };
+    writer = .fixed(&buffer);
+    try render(&state, &writer);
+    const managed = writer.buffered();
+    try std.testing.expect(std.mem.indexOf(u8, managed, "events-deny-203.0.113.9") != null);
+    try std.testing.expect(std.mem.indexOf(u8, managed, "events-allow-203.0.113.9") != null);
+    try std.testing.expect(std.mem.indexOf(u8, managed, "sb-chip sb-decision-banned") != null);
+    try std.testing.expect(std.mem.indexOf(u8, managed, "Local denial: status 403") != null);
+    state.kiosk = true;
+    writer = .fixed(&buffer);
+    try render(&state, &writer);
+    try std.testing.expect(std.mem.indexOf(u8, writer.buffered(), "events-deny-") == null);
 }
 
 fn evidence(row: *const p.events.Row, w: *Writer) Writer.Error!void {
