@@ -84,11 +84,24 @@ pub const Context = struct {
         content: []const u8,
         extra: []const std.http.Header,
     ) Error!void {
+        return self.respondCached(status, content_type, content, "no-store", extra);
+    }
+
+    /// Sensitive replies are never stored; the shell revalidates, and content-addressed
+    /// assets are immutable for a year because a new build names them differently.
+    pub fn respondCached(
+        self: *Context,
+        status: std.http.Status,
+        content_type: []const u8,
+        content: []const u8,
+        cache_control: []const u8,
+        extra: []const std.http.Header,
+    ) Error!void {
         std.debug.assert(extra.len <= 4);
         var headers: [10]std.http.Header = undefined;
         const common = [_]std.http.Header{
             .{ .name = "Content-Type", .value = content_type },
-            .{ .name = "Cache-Control", .value = "no-store" },
+            .{ .name = "Cache-Control", .value = cache_control },
             .{ .name = "X-Content-Type-Options", .value = "nosniff" },
             .{ .name = "Referrer-Policy", .value = "no-referrer" },
             .{ .name = "X-Frame-Options", .value = "DENY" },

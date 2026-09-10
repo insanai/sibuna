@@ -2,6 +2,7 @@
 """Run the shipped Wasm against a live daemon. Chrome separately verifies the real DOM."""
 import base64
 import json
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -257,8 +258,12 @@ def check(binary):
             try:
                 credentials = bootstrap.change(h, port, temporary, "wasm live test passphrase")
                 cookie, _, _ = login(h, port, credentials)
-                status, _, body = h.request(port, "GET", "/console/assets/console.wasm")
-                assert status == 200
+                status, headers, shell = h.request(port, "GET", "/console/")
+                assert status == 200 and headers["Cache-Control"] == "no-cache"
+                path = re.search(rb'name="sibuna-console-wasm" content="([^"]+)"', shell)[1]
+                status, headers, body = h.request(port, "GET", path.decode())
+                assert status == 200 and "immutable" in headers["Cache-Control"]
+                assert h.request(port, "GET", "/console/assets/console.wasm")[0] == 404
                 wasm = root / "console.wasm"
                 wasm.write_bytes(body)
                 ui = Interface(port, cookie, wasm)

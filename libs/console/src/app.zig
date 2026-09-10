@@ -22,6 +22,7 @@ pub const App = struct {
     query_budget: @import("query_budget.zig").Budget = .{},
     dummy_hash: p.Bytes(255),
     setup_required: bool,
+    assets: @import("assets.zig").Assets,
     telemetry: *store.ConsoleTelemetry,
     incidents: *store.ConsoleIncidents,
     metrics: *const core.Metrics,
@@ -82,6 +83,7 @@ pub const App = struct {
             .geo = input.geo,
             .dummy_hash = .{},
             .setup_required = false,
+            .assets = .init(),
         };
         errdefer {
             self.peers.deinit();
@@ -317,10 +319,16 @@ pub const App = struct {
                 &.{},
             );
         }
-        if (try @import("assets.zig").serve(context, path)) return;
+        if (try self.assets.serve(context, path)) return;
         if (method == .GET and (std.mem.eql(u8, path, "/console") or
             std.mem.eql(u8, path, "/console/")))
-            return context.respond(.ok, "text/html; charset=utf-8", shell, &.{});
+            return context.respondCached(
+                .ok,
+                "text/html; charset=utf-8",
+                self.assets.shell(),
+                "no-cache",
+                &.{},
+            );
         const route = @import("routes.zig").find(path, method) orelse
             return http.fail(context, .not_found, "CONSOLE404");
         const automation = try context.header("Authorization") != null;
@@ -542,5 +550,3 @@ pub const App = struct {
         return result.authorized;
     }
 };
-
-const shell = @embedFile("console_shell");

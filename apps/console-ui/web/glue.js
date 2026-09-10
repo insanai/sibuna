@@ -341,7 +341,10 @@ async function readBounded(response, limit) {
 async function loadConsole() {
   const deadline = fetchDeadline();
   try {
-    const response = await fetch("/console/assets/console.wasm", {signal: deadline.signal});
+    // The shell names the module by content digest so a new build is never served stale.
+    const meta = document.querySelector('meta[name="sibuna-console-wasm"]');
+    if (!meta) throw new Error("Console asset name missing");
+    const response = await fetch(meta.content, {signal: deadline.signal});
     if (!response.ok) throw new Error("Console asset unavailable");
     return await WebAssembly.instantiate(await readBounded(response, maxWasmBytes), {});
   } catch (error) {
