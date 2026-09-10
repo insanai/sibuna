@@ -22,6 +22,7 @@ pub fn query(app: *App, context: *http.Context, export_page: bool) !void {
         campaign: []const u8 = "",
         incident: []const u8 = "",
         category: []const u8 = "",
+        country: []const u8 = "",
         ip: []const u8 = "",
         path_prefix: []const u8 = "",
     }, context, &body, fixed.allocator());
@@ -39,6 +40,7 @@ pub fn query(app: *App, context: *http.Context, export_page: bool) !void {
         .campaign = try campaignId(fields.campaign),
         .incident = try campaignId(fields.incident),
         .category = try p.Bytes(32).init(fields.category),
+        .country = try p.events.country.Filter.init(fields.country),
         .ip = try p.Bytes(48).init(fields.ip),
         .path_prefix = try p.Bytes(256).init(fields.path_prefix),
     };

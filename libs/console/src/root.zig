@@ -17,6 +17,7 @@ test {
 }
 
 pub const geoip = @import("geoip");
+pub const GeoRegistry = @import("geoip_generation.zig").Registry;
 pub const rankings_archive = @import("rankings_archive.zig");
 pub const minute_archive = @import("minute_archive.zig");
 pub const schema = @import("schema.zig");

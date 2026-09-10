@@ -12,6 +12,7 @@ pub const Request = struct {
     through: ?u64 = null,
 };
 pub const Event = struct {
+    geography: p.events.country.Mapping = .{},
     id: u64 = 0,
     node: u32 = 0,
     time: u64 = 0,
@@ -29,6 +30,8 @@ pub const Event = struct {
             const value = @field(self, field.name);
             if (field.type == u64) {
                 try p.writeCounter(json, value);
+            } else if (field.type == p.events.country.Mapping) {
+                try json.write(value);
             } else if (@typeInfo(field.type) == .@"struct") {
                 try json.write(value.slice());
             } else try json.write(value);

@@ -1,6 +1,7 @@
 //! Keyset cursors use time and id; ids cross the browser boundary as decimal strings.
 const std = @import("std");
 const Bytes = @import("root.zig").Bytes;
+pub const country = @import("event_country.zig");
 pub const Cursor = struct { time: u64, id: u64 };
 pub const Query = struct {
     session_digest: [32]u8,
@@ -15,6 +16,7 @@ pub const Query = struct {
     campaign: u64 = 0,
     incident: u64 = 0,
     category: Bytes(32) = .{},
+    country: country.Filter = .{},
     ip: Bytes(48) = .{},
     path_prefix: Bytes(256) = .{},
 };
@@ -27,6 +29,7 @@ pub const Capture = struct {
     truncated: u16,
 };
 pub const Row = struct {
+    geography: country.Mapping = .{},
     capture: ?Capture = null,
     id: u64 = 0,
     grouped: bool = false,
@@ -68,7 +71,8 @@ pub const Row = struct {
             .query_redacted = self.query_redacted,
             .evidence_version = if (self.capture) |c| @as(?u16, c.version) else null,
             .capture = self.capture,
-            .country = @as(?[]const u8, null),
+            .country = self.geography.wire().code,
+            .geography = self.geography,
             .response_status = @as(?u16, null),
             .matched_rule = @as(?[]const u8, null),
         }, .{}, w);
@@ -76,6 +80,7 @@ pub const Row = struct {
 };
 
 pub fn validate(query: Query) error{InvalidLimit}!void {
+    if (!country.validFilter(query.country.slice())) return error.InvalidLimit;
     if (query.limit == 0 or query.limit > 10 or query.from > query.until or
         query.until > std.math.maxInt(i64) or query.campaign > std.math.maxInt(i64) or
         query.incident > std.math.maxInt(i64))

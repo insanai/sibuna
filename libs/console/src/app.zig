@@ -34,7 +34,8 @@ pub const App = struct {
     minutes: @import("minute_journal.zig").Journal = .{},
     retention: @import("retention_job.zig").Job = .{},
     challenge_defaults: p.challenges.Defaults = .{},
-    geo: @import("geoip_generation.zig").Registry = .{},
+    /// The composing storage owner outlives every console task and incident flush.
+    geo: *@import("geoip_generation.zig").Registry,
     geo_job: @import("geoip_job.zig").Job = .{},
     geo_maintenance: @import("geoip_maintenance.zig").Maintenance = .{},
     cluster: @import("cluster_probe.zig").Probe = .{},
@@ -50,6 +51,7 @@ pub const App = struct {
         mailbox: *Mailbox,
         incidents: *store.ConsoleIncidents,
         metrics: *const core.Metrics,
+        geo: *@import("geoip_generation.zig").Registry,
         totp_key: ?[32]u8,
         peer_key: ?[32]u8 = null,
         boot: [16]u8,
@@ -77,6 +79,7 @@ pub const App = struct {
             .hub = hub,
             .peers = .init(io, cfg.peers, cfg.node_id, input.peer_key),
             .metrics = input.metrics,
+            .geo = input.geo,
             .dummy_hash = .{},
             .setup_required = false,
         };
@@ -115,7 +118,6 @@ pub const App = struct {
         self.minutes.boot = self.history.boot;
         self.retention.holder = .{ .node = cfg.node_id, .boot = self.history.boot };
         try self.geo_job.restore();
-        errdefer self.geo.deinit();
         self.stats.boot = self.history.boot;
         self.stats.node = cfg.node_id;
         self.stats.proxy_mode = cfg.proxy_mode;
@@ -160,7 +162,6 @@ pub const App = struct {
         self.history.stop(self.io, self.mailbox);
         self.minutes.stop(self.io, self.mailbox);
         self.retention.stop(self.io, self.mailbox);
-        self.geo.deinit();
         self.passwords.deinit();
         if (self.totp_key) |*key| std.crypto.secureZero(u8, key);
         self.hub.deinit();
@@ -175,8 +176,8 @@ pub const App = struct {
                 const minute = self.stats.takeClosedRanking(self.io, second) orelse break;
                 self.history.offer(&minute, self.telemetry.dropped.load(.monotonic));
             }
-            self.stats.collect(self.io, self.telemetry, second, &self.geo);
-            self.stats.collectIncidents(self.io, self.incidents, &self.geo, second);
+            self.stats.collect(self.io, self.telemetry, second, self.geo);
+            self.stats.collectIncidents(self.io, self.incidents, self.geo, second);
             self.observeEvents(second);
             const ms: u64 = @intCast(@max(0, @divTrunc(
                 std.Io.Clock.awake.now(self.io).nanoseconds,

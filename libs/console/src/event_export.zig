@@ -17,6 +17,7 @@ const Row = struct {
     count: u64 = 0,
     first_seen: u64 = 0,
     country: ?[]const u8 = null,
+    geography: @import("console_protocol").events.country.Wire = .{},
     response_status: ?u16 = null,
     matched_rule: ?[]const u8 = null,
     evidence_version: ?u16 = null,
@@ -44,9 +45,13 @@ pub fn csv(source: []const u8, output: *[4096]u8) Error![]const u8 {
     }
     writer.writeAll("\r\n") catch return error.TooLarge;
     for (rows) |row| {
+        var display = row;
+        if (row.geography.mixed) {
+            display.country = "Mixed";
+        } else if (row.country == null and row.geography.recorded) display.country = "Unknown";
         inline for (std.meta.fields(Row), 0..) |column, i| {
             if (i != 0) writer.writeByte(',') catch return error.TooLarge;
-            try value(&writer, @field(row, column.name));
+            try value(&writer, @field(display, column.name));
         }
         writer.writeAll("\r\n") catch return error.TooLarge;
     }

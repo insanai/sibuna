@@ -4,6 +4,7 @@ const std = @import("std");
 const geoip = @import("geoip");
 pub const max_csv_bytes = geoip.max_csv_bytes;
 pub const max_ranges = geoip.max_ranges;
+pub const Mapping = struct { country: ?[2]u8, generation: [32]u8 };
 
 pub const Registry = struct {
     mutex: std.Io.Mutex = .init,
@@ -11,6 +12,17 @@ pub const Registry = struct {
     importing: std.atomic.Value(bool) = .init(false),
     active: ?geoip.Database = null,
     revision: u64 = 0,
+
+    /// The storage worker can already be flushing incidents during console startup.
+    /// Publish the fully restored database under the same lock as later imports.
+    pub fn restore(self: *Registry, io: std.Io, database: geoip.Database, revision: u64) void {
+        self.mutex.lockUncancelable(io);
+        defer self.mutex.unlock(io);
+        std.debug.assert(self.active == null and !self.importing.load(.acquire));
+        self.active = database;
+        self.revision = revision;
+        self.loaded.store(true, .release);
+    }
 
     pub fn begin(self: *Registry) error{Busy}!void {
         if (self.importing.cmpxchgStrong(false, true, .acquire, .monotonic) != null)
@@ -46,6 +58,19 @@ pub const Registry = struct {
         defer self.mutex.unlock(io);
         const active = self.active orelse return null;
         return active.lookup(address);
+    }
+
+    /// Persistence captures both values under one lock. No generation pointer escapes;
+    /// the storage owner's retry buffer preserves the mapping across an import or retry.
+    pub fn map(self: *Registry, io: std.Io, address: []const u8) ?Mapping {
+        self.mutex.lockUncancelable(io);
+        defer self.mutex.unlock(io);
+        const active = self.active orelse return null;
+        const parsed = geoip.parseAddress(address) catch return .{
+            .country = null,
+            .generation = active.digest,
+        };
+        return .{ .country = active.lookup(parsed), .generation = active.digest };
     }
 
     /// Whether the active provider's licence requires attribution in the interface.

@@ -146,6 +146,7 @@ pub const Runtime = struct {
             .mailbox = &owner.console_mailbox,
             .incidents = &owner.console_incidents,
             .metrics = &owner.state.metrics,
+            .geo = &owner.console_geo,
             .totp_key = key,
             .peer_key = peer_key,
             .boot = owner.console_node.boot,

@@ -12,6 +12,7 @@ pub const Op = enum { sub, unsub, filter, ping };
 pub const Args = struct {
     node: ?u32 = null,
     category: p.Bytes(32) = .{},
+    country: p.events.country.Filter = .{},
     ip: p.Bytes(48) = .{},
     path_prefix: p.Bytes(128) = .{},
     actor: ?u64 = null,
@@ -38,6 +39,7 @@ pub const Command = struct { op: Op, topic: ?p.Topic = null, args: Args = .{} };
 const WireArgs = struct {
     node: ?u32 = null,
     category: []const u8 = "",
+    country: []const u8 = "",
     ip: []const u8 = "",
     path_prefix: []const u8 = "",
     actor: ?u64 = null,
@@ -61,6 +63,8 @@ pub fn parse(bytes: []const u8) error{InvalidCommand}!Command {
         .node = wire.args.node,
         .actor = wire.args.actor,
         .category = p.Bytes(32).init(wire.args.category) catch return error.InvalidCommand,
+        .country = p.events.country.Filter.init(wire.args.country) catch
+            return error.InvalidCommand,
         .ip = p.Bytes(48).init(wire.args.ip) catch return error.InvalidCommand,
         .path_prefix = p.Bytes(128).init(wire.args.path_prefix) catch return error.InvalidCommand,
         .action = p.Bytes(48).init(wire.args.action) catch return error.InvalidCommand,
@@ -71,7 +75,9 @@ pub fn parse(bytes: []const u8) error{InvalidCommand}!Command {
 
 pub fn validate(command: Command) error{InvalidCommand}!void {
     const args = command.args;
-    const event = args.category.len != 0 or args.ip.len != 0 or args.path_prefix.len != 0;
+    if (!p.events.country.validFilter(args.country.slice())) return error.InvalidCommand;
+    const event = args.category.len != 0 or args.ip.len != 0 or args.path_prefix.len != 0 or
+        args.country.len != 0;
     const audit = args.actor != null or args.action.len != 0;
     if (args.node == 0 or args.actor == 0) return error.InvalidCommand;
     if (args.actor) |actor| if (actor > std.math.maxInt(i64)) return error.InvalidCommand;

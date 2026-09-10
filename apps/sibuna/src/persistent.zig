@@ -105,6 +105,10 @@ const Db = @import("database.zig").Db;
 const console = if (build_options.console) @import("console") else struct {};
 
 pub const Persistent = struct {
+    /// Empty until the opt-in console restores GeoIP. The console borrows this registry;
+    /// shutdown joins its readers/importers before storage flushes and destroys it.
+    console_geo: if (build_options.console) console.GeoRegistry else void =
+        if (build_options.console) .{} else {},
     console_incidents: if (build_options.console) store.ConsoleIncidents else void,
     console_mailbox: if (build_options.console) console.Mailbox else void =
         if (build_options.console) .{} else {},
@@ -227,6 +231,7 @@ pub const Persistent = struct {
             if (self.pending_len == 0) break;
         }
         if (self.pending_sql) |sql| self.gpa.free(sql);
+        if (build_options.console) self.console_geo.deinit();
         const clean = self.db.closeBounded(self.io);
         // Make sure the caller's slot is live again before the owned one
         // is freed, so no worker can still be pinned on freed memory.
@@ -565,6 +570,12 @@ pub const Persistent = struct {
             try @import("console_evidence.zig").append(w, id, rec.evidence);
             try self.receiptGuard(w);
             try w.writeAll("; ");
+        };
+        if (build_options.console) if (self.console_initialized) {
+            if (try @import("console_event_country.zig").append(self, w, id, rec)) {
+                try self.receiptGuard(w);
+                try w.writeAll("; ");
+            }
         };
     }
 
@@ -1043,6 +1054,7 @@ test {
         _ = @import("console_retention_test.zig");
         _ = @import("console_settings_retention_test.zig");
         _ = @import("console_incidents_test.zig");
+        _ = @import("console_event_country_test.zig");
         _ = @import("console_subscription_feed_test.zig");
         _ = @import("console_users_test.zig");
         _ = @import("console_geo_auth_test.zig");

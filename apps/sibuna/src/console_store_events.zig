@@ -24,6 +24,7 @@ pub fn query(owner: *Persistent, input: p.events.Query) !p.StorageResult {
         text(input.category.slice()),    text(input.category.slice()),
         text(input.ip.slice()),          text(input.ip.slice()),
         text(input.path_prefix.slice()), text(input.path_prefix.slice()),
+        text(input.country.slice()),     text(input.country.slice()),
         integer(input.campaign),         integer(input.campaign),
         integer(input.incident),         integer(input.incident),
         integer(before.time),            integer(before.time),
@@ -90,6 +91,12 @@ fn decode(row: []const ?[]const u8) !p.events.Row {
         .campaign = if (row[8] != null) try store.number(row[8]) else null,
         .count = try store.number(row[9]),
         .first_seen = try store.number(row[10]),
+        .geography = try p.events.country.Mapping.decode(.{
+            .code = row[17],
+            .generation = row[18],
+            .mixed = try store.number(row[19]) != 0,
+            .recorded = try store.number(row[20]) != 0,
+        }),
     };
     copy(48, &result.ip, row[3] orelse "", &result.display_truncated);
     copy(8, &result.method, row[4] orelse "", &result.display_truncated);
@@ -145,9 +152,12 @@ pub fn copy(
 
 const base_filters =
     " FROM security_incidents LEFT JOIN console_incident_evidence e ON e.incident_id=id " ++
+    "LEFT JOIN console_incident_country c ON c.incident_id=id " ++
     "WHERE recorded_at BETWEEN ? AND ? " ++
     "AND (?=0 OR node_id=?) AND (?='' OR violation_category=?) AND (?='' OR client_ip=?) " ++
-    "AND substr(path,1,length(?))=? ";
+    "AND substr(path,1,length(?))=? AND (?='' OR " ++
+    "CASE WHEN c.generation IS NULL THEN 'not_recorded' " ++
+    "ELSE COALESCE(c.country,'unknown') END=?) ";
 const filters = base_filters ++ "AND (?=0 OR campaign_id=?) ";
 const id_filter = "AND (?=0 OR id=?) ";
 const exact_id = "AND id=? AND ?!=0 ";
@@ -155,13 +165,17 @@ const campaign_filters = base_filters ++ "AND campaign_id=? AND ?!=0 ";
 const raw_select =
     "SELECT id,node_id,recorded_at,client_ip,method,path,violation_category,user_agent," ++
     "campaign_id,1,recorded_at,e.version,e.selected_status,e.query_bytes,e.body_bytes," ++
-    "e.declared_body_bytes,e.truncated";
+    "e.declared_body_bytes,e.truncated,c.country,c.generation,0,c.generation IS NOT NULL";
 const raw_order =
     "AND (recorded_at<? OR (recorded_at=? AND id<?)) " ++
     "ORDER BY recorded_at DESC,id DESC LIMIT ?";
 const group_select =
     "SELECT MAX(id),node_id,MAX(recorded_at),client_ip,'','','','',NULL," ++
-    "COUNT(*),MIN(recorded_at),NULL,NULL,NULL,NULL,NULL,NULL";
+    "COUNT(*),MIN(recorded_at),NULL,NULL,NULL,NULL,NULL,NULL," ++
+    "CASE WHEN COUNT(DISTINCT COALESCE(c.country,''))=1 THEN MIN(c.country) END," ++
+    "CASE WHEN COUNT(DISTINCT COALESCE(c.generation,''))=1 THEN MIN(c.generation) END," ++
+    "COUNT(DISTINCT CASE WHEN c.generation IS NULL THEN 'not_recorded' " ++
+    "ELSE COALESCE(c.country,'unknown') END)>1,COUNT(c.generation)=COUNT(*)";
 const group_order =
     "GROUP BY node_id,client_ip HAVING MAX(recorded_at)<? OR " ++
     "(MAX(recorded_at)=? AND MAX(id)<?) ORDER BY MAX(recorded_at) DESC,MAX(id) DESC LIMIT ?";

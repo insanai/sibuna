@@ -350,6 +350,7 @@ pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
 }
 
 test {
+    _ = events.country;
     _ = subscriptions;
     _ = subscription_feed;
     _ = subscription_client;

@@ -45,6 +45,7 @@ def check(h, port, data_port, cookie, csrf):
     assert after["geoip_available"] and after["incidents"] == 20
     # Earlier findings keep their original attribution: an import never relocates them.
     assert after["incident_geo"]["unknown"] == (0 if embedded else 15)
+    check_events(h, port, cookie, csrf)
     stream = Stream(port, cookie)
     try:
         stream.send(1, b'{"op":"subscribe","topics":["stats"]}')
@@ -56,3 +57,28 @@ def check(h, port, data_port, cookie, csrf):
         assert message["data"]["incident_geo"]["countries"][0]["samples"] == expected
     finally:
         stream.close()
+
+
+def check_events(h, port, cookie, csrf):
+    from console_topics_client import Client
+    endpoint = "/console/api/events/query"
+    assert h.request(port, "POST", endpoint, {"country": "us"}, cookie, csrf)[0] == 400
+    query = {"country": "US", "ip": "8.8.18.1"}
+    status, _, body = h.request(port, "POST", endpoint, query, cookie, csrf)
+    assert status == 200
+    row, = json.loads(body)["rows"]
+    assert row["country"] == row["geography"]["code"] == "US"
+    assert row["geography"]["recorded"] and len(row["geography"]["generation"]) == 64
+    query["country"] = "DE"
+    assert json.loads(h.request(port, "POST", endpoint, query, cookie, csrf)[2])["rows"] == []
+    client = Client(port, cookie)
+    try:
+        client.command("sub", "events", {"country": "US"})
+        client.until(lambda: "events" in client.states and len(client.states["events"]["rows"]) >= 5)
+        assert all(row["geography"]["code"] == "US" for row in client.states["events"]["rows"])
+        epoch = client.epochs["events"]
+        client.command("filter", "events", {"country": "DE"})
+        client.until(lambda: client.epochs["events"] != epoch and "events" not in client.pending)
+        assert client.states["events"]["rows"] == []
+    finally:
+        client.close()

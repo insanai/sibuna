@@ -33,8 +33,10 @@ pub fn read(owner: *Persistent, input: f.Request) !p.StorageResult {
     };
     var rows = try db.query(owner.db, owner.gpa, switch (input.kind) {
         .events => "SELECT i.id,node_id,recorded_at,client_ip,method,path,violation_category," ++
-            "e.version,e.query_bytes FROM security_incidents i LEFT JOIN " ++
+            "e.version,e.query_bytes,c.country,c.generation FROM security_incidents i " ++
+            "LEFT JOIN " ++
             "console_incident_evidence e ON e.incident_id=i.id " ++
+            "LEFT JOIN console_incident_country c ON c.incident_id=i.id " ++
             "WHERE i.id>? AND i.id<=? ORDER BY i.id LIMIT 9",
         .audit => "SELECT id,actor,subject,recorded_at,action,target,actor_role " ++
             "FROM console_audit WHERE id>? AND id<=? ORDER BY id LIMIT 9",
@@ -96,6 +98,10 @@ fn event(cells: []const ?[]const u8) !f.Event {
         .node = std.math.cast(u32, try util.number(cells[1])) orelse
             return error.InvalidStoredValue,
         .time = try util.number(cells[2]),
+        .geography = try p.events.country.Mapping.decode(.{
+            .code = cells[9],
+            .generation = cells[10],
+        }),
     };
     if (result.id >> 40 != result.node) return error.InvalidStoredValue;
     copy(48, &result.ip, cells[3] orelse "", &result.display_truncated);

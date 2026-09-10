@@ -51,7 +51,7 @@ pub const Job = struct {
         var digest: [32]u8 = undefined;
         _ = try std.fmt.hexToBytes(&digest, metadata.digest.slice());
         const provider = geoip.Provider.parse(metadata.provider.slice()) orelse .dbip;
-        self.app.geo.active = .{
+        self.app.geo.restore(self.app.io, .{
             .allocator = self.app.gpa,
             .ranges = ranges,
             .allocation = ranges,
@@ -60,9 +60,7 @@ pub const Job = struct {
             .version = geoip.Version.init(metadata.source_version.slice()) catch .{},
             .file_digests = try fileDigests(metadata.source_digests.slice(), digest),
             .files = provider.fileCount(),
-        };
-        self.app.geo.revision = metadata.revision;
-        self.app.geo.loaded.store(true, .release);
+        }, metadata.revision);
         self.metadata = metadata;
     }
 
@@ -72,9 +70,7 @@ pub const Job = struct {
         const embedded = @import("geoip_embedded.zig");
         if (!embedded.present) return;
         const database = (try embedded.load(self.app.gpa)) orelse return;
-        self.app.geo.active = database;
-        self.app.geo.revision = revision;
-        self.app.geo.loaded.store(true, .release);
+        self.app.geo.restore(self.app.io, database, revision);
         self.embedded = true;
         self.metadata = .{
             .revision = revision,

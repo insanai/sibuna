@@ -11,6 +11,7 @@ pub const Metadata = struct {
     node: u32 = 0,
     actor: u64 = 0,
     category: p.Bytes(32) = .{},
+    country: p.events.country.Filter = .{},
     ip: p.Bytes(48) = .{},
     path: p.Bytes(128) = .{},
     action: p.Bytes(48) = .{},
@@ -19,6 +20,7 @@ pub const Metadata = struct {
         return (args.node == null or args.node.? == self.node) and
             (args.actor == null or args.actor.? == self.actor) and
             match(args.category.slice(), self.category.slice()) and
+            match(args.country.slice(), self.country.slice()) and
             match(args.ip.slice(), self.ip.slice()) and
             match(args.action.slice(), self.action.slice()) and
             std.mem.startsWith(u8, self.path.slice(), args.path_prefix.slice());
@@ -92,6 +94,10 @@ pub const Store = struct {
                 record.metadata.ip = event.ip;
                 record.metadata.path = event.path;
                 record.metadata.category = event.category;
+                const geo = event.geography;
+                const absent = if (geo.recorded) "unknown" else "not_recorded";
+                const code = if (geo.code.len != 0) geo.code.slice() else absent;
+                try record.metadata.country.set(code);
                 try std.json.Stringify.value(event, .{}, &output);
             },
             .audit => |audit| {
