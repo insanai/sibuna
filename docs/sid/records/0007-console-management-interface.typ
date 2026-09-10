@@ -4603,6 +4603,12 @@ uncompressed module. A trial of additional literal substitutions saved only 560 
 and was removed. No new dictionary encoding, page fragmentation or field-decoder complexity
 is justified solely to recover those few kilobytes.
 
+The existing shared snippet compiler remains: authors still write ordinary HTML with named,
+escaped values. Its private, compiler-generated instruction format has bounded output and
+linear decoding, and does not constrain component boundaries or require dictionary-aware
+markup. The size review does not justify expanding that encoding or changing otherwise
+clear page code. Review its compile and render cost separately if it becomes a bottleneck.
+
 The complete administration application now has a 448 KiB warning and 512 KiB hard ceiling.
 This leaves about 124.5 KiB beyond the measured candidate for investigation, security and
 cluster workflows without forcing unrelated components to share behaviour. At 4 Mbit/s,
@@ -4677,6 +4683,12 @@ to; it is not recorded as a successful HTTPS browser test. Both review daemons w
 after testing. These functional checks do not establish cold-load timing, mobile field
 percentiles, complete cluster browser coverage or the data-plane impact gate.
 The subsequent status-label correction builds to 398,385 bytes with the same memory bounds.
+
+The required primitive baseline was regenerated from clean commit `20f8d0e` and saved as
+`latest-20260910T022053Z.json`, with Zig 0.16.0 and Zaxonlite 0.6.2. This seven-batch primitive
+run measures the existing data-plane operations with storage inactive; it is not the
+eight-dashboard console-impact matrix and does not close that acceptance gate. Console-off
+and storage-off builds pass, as do the final status-label native and shipped-Wasm checks.
 
 #pagebreak(weak: true)
 
