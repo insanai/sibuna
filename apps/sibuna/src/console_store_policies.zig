@@ -41,13 +41,19 @@ pub fn query(owner: *Persistent, input: p.policies.Query) !p.StorageResult {
     var output: p.Bytes(p.max_message) = .{};
     var writer: std.Io.Writer = .fixed(&output.data);
     try writer.print("{{\"committed\":\"{d}\",\"applied\":\"{d}\",\"total\":{d}," ++
-        "\"waf\":{},\"default_difficulty\":{d},\"default_algorithm\":\"{s}\",", .{
+        "\"waf\":{},\"default_difficulty\":{d},\"default_algorithm\":\"{s}\"," ++
+        "\"surface\":\"{s}\",\"rate_limit\":{d},\"rate_window_seconds\":{d}," ++
+        "\"ban_seconds\":{d},", .{
         revision,
         owner.version,
         engine.rule_count,
         engine.waf_enabled,
         engine.default_difficulty,
         @tagName(owner.cfg.algorithm),
+        @as([]const u8, if (owner.cfg.waf) "shield" else "gate"),
+        owner.cfg.rate_limit,
+        owner.cfg.rate_window_seconds,
+        owner.cfg.ban_seconds,
     });
     try writer.writeAll("\"inspection\":");
     try std.json.Stringify.value(engine.inspection_modes, .{}, &writer);

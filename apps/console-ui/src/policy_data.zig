@@ -7,6 +7,10 @@ pub const Page = struct {
     waf: bool,
     default_difficulty: u32,
     default_algorithm: []const u8,
+    surface: ?[]const u8,
+    rate_limit: ?u32,
+    rate_window_seconds: ?u64,
+    ban_seconds: ?u64,
     rows: []const Row,
     next: ?u8,
 };
@@ -77,6 +81,10 @@ pub fn page(value: std.json.Value, rows: *[8]Row) Error!Page {
         .waf = try boolean(value, "waf"),
         .default_difficulty = try number(u32, value, "default_difficulty"),
         .default_algorithm = try text(value, "default_algorithm"),
+        .surface = try optionalValue([]const u8, value, "surface"),
+        .rate_limit = try optionalValue(u32, value, "rate_limit"),
+        .rate_window_seconds = try optionalValue(u64, value, "rate_window_seconds"),
+        .ban_seconds = try optionalValue(u64, value, "ban_seconds"),
         .rows = rows[0..items.array.items.len],
         .next = if (try field(value, "next") == .null) null else try number(u8, value, "next"),
     };

@@ -65,8 +65,10 @@ fn listing(state: *const @import("state.zig").State, w: *Writer) Writer.Error!vo
                 .id = text(row, "id"),
                 .name = text(row, "name"),
                 .action = text(row, "action"),
+                .tone = @import("policies_page.zig").actionTone(text(row, "action")),
                 .priority = integer(row, "priority"),
                 .enabled = if (boolean(row, "enabled")) "Enabled" else "Disabled",
+                .dim = if (boolean(row, "enabled")) "" else " opacity-60",
                 .order = if (state.policies.busy or !state.allows(.manage_policy))
                     " disabled"
                 else

@@ -53,13 +53,16 @@ pub fn render(state: *const @import("state.zig").State, w: *Writer) Writer.Error
     const page = data.page(parsed, &rows) catch {
         return html.render(w, "<p>Invalid policy snapshot. Refresh to retry.</p></main>", .{});
     };
+    var limits_text: [128]u8 = undefined;
     try html.render(w, @embedFile("snippets/policies-summary.html"), .{
+        .surface = surface(page.surface),
         .committed = page.committed,
         .applied = page.applied,
         .total = page.total,
         .waf = if (page.waf) "Enabled" else "Disabled",
         .difficulty = page.default_difficulty,
         .algorithm = page.default_algorithm,
+        .limits = limits(page, &limits_text),
     });
     for (page.rows) |row| try policyRow(w, row);
     try html.render(w, "</section><div class=\"flex flex-wrap gap-3 my-4\">", .{});
@@ -85,11 +88,39 @@ pub fn render(state: *const @import("state.zig").State, w: *Writer) Writer.Error
     try html.render(w, "</main>", .{});
 }
 
+/// One colour per decision (R8): rule types share the outcome palette of the tiles.
+pub fn actionTone(action: []const u8) []const u8 {
+    const sparkline = @import("outcome_sparkline.zig");
+    if (std.mem.eql(u8, action, "allow")) return sparkline.tone(.admitted);
+    if (std.mem.eql(u8, action, "deny")) return sparkline.tone(.denied);
+    if (std.mem.eql(u8, action, "challenge")) return sparkline.tone(.challenged);
+    return sparkline.tone(.other);
+}
+
+/// Sibuna vocabulary carries its plain-language gloss on first use (R3).
+fn surface(value: ?[]const u8) []const u8 {
+    const name = value orelse return "Not reported";
+    if (std.mem.eql(u8, name, "shield")) return "Shield (challenge plus semantic inspection)";
+    if (std.mem.eql(u8, name, "gate")) return "Gate (challenge only)";
+    return "Not reported";
+}
+
+fn limits(page: data.Page, buffer: *[128]u8) []const u8 {
+    const limit = page.rate_limit orelse return "Not reported";
+    const window = page.rate_window_seconds orelse return "Not reported";
+    const ban = page.ban_seconds orelse return "Not reported";
+    return std.fmt.bufPrint(buffer, "{d} requests per {d} s per client address; honeypot " ++
+        "ban {d} s. Per-rule limits below override the global limiter on this node.", .{
+        limit, window, ban,
+    }) catch "Not reported";
+}
+
 fn policyRow(w: *Writer, row: Row) Writer.Error!void {
     try html.render(w, @embedFile("snippets/policies-row.html"), .{
         .index = @as(u16, row.index) + 1,
         .name = row.name,
         .action = row.action,
+        .tone = actionTone(row.action),
         .path = if (row.path.len == 0) "Any path" else row.path,
         .user_agent = if (row.user_agent.len == 0) "Any user agent" else row.user_agent,
         .headers = row.header_count,
@@ -171,7 +202,9 @@ test "a full applied rule page renders all hourly cohorts within its fixed scrat
     state.* = .{ .phase = .policies };
     var json: Writer = .fixed(&state.policies.page.data);
     try json.writeAll("{\"committed\":\"2\",\"applied\":\"2\",\"total\":9," ++
-        "\"waf\":true,\"default_difficulty\":8,\"default_algorithm\":\"hashcash\",\"rows\":[");
+        "\"waf\":true,\"default_difficulty\":8,\"default_algorithm\":\"hashcash\"," ++
+        "\"surface\":\"shield\",\"rate_limit\":100,\"rate_window_seconds\":10," ++
+        "\"ban_seconds\":3600,\"rows\":[");
     for (0..8) |index| {
         if (index != 0) try json.writeByte(',');
         try std.json.Stringify.value(.{
@@ -202,4 +235,31 @@ test "a full applied rule page renders all hourly cohorts within its fixed scrat
     try t.expect(std.mem.indexOf(u8, rendered, "Invalid policy snapshot") == null);
     try t.expectEqual(@as(usize, 8), std.mem.count(u8, rendered, "Compare rule hits"));
     try t.expectEqual(@as(usize, 8), std.mem.count(u8, rendered, "Recorded UTC hourly cohorts"));
+    const gloss = "Shield (challenge plus semantic inspection)";
+    try t.expect(std.mem.indexOf(u8, rendered, gloss) != null);
+    try t.expect(std.mem.indexOf(u8, rendered, "100 requests per 10 s per client") != null);
+    try t.expectEqual(@as(usize, 8), std.mem.count(u8, rendered, "sb-chip sb-decision-denied"));
+}
+
+test "older snapshots without surface or limit fields stay honest" {
+    var buffer: [128]u8 = undefined;
+    const page: data.Page = .{
+        .committed = "1",
+        .applied = "1",
+        .total = 0,
+        .waf = false,
+        .default_difficulty = 8,
+        .default_algorithm = "posw",
+        .surface = null,
+        .rate_limit = null,
+        .rate_window_seconds = null,
+        .ban_seconds = null,
+        .rows = &.{},
+        .next = null,
+    };
+    try std.testing.expectEqualStrings("Not reported", surface(page.surface));
+    try std.testing.expectEqualStrings("Not reported", limits(page, &buffer));
+    try std.testing.expectEqualStrings("Gate (challenge only)", surface("gate"));
+    try std.testing.expectEqualStrings("sb-decision-admitted", actionTone("allow"));
+    try std.testing.expectEqualStrings("sb-decision-info", actionTone("weigh"));
 }
