@@ -85,19 +85,26 @@ pub fn requestTiles(state: *const State, w: *Writer) Writer.Error!void {
         "Challenges", "Bans",       "Honeypot",
     };
     inline for (keys, labels, 0..) |key, label, index| {
-        try html.render(w, "<article class=\"sb-tile\"><h3>{{ label }}</h3><strong>", .{
+        try html.render(w, "<article class=\"sb-tile {{ tone }}\"><h3>{{ label }}</h3><strong>", .{
             .label = label,
+            .tone = @import("outcome_sparkline.zig").tone(switch (index) {
+                2 => .rate_limited,
+                3 => .challenged,
+                4 => .banned,
+                else => .requests,
+            }),
         });
         if (index == 0 or index == 5) {
             if (state.security_overview.loaded[0]) {
                 const module: usize = if (index == 0) 0 else 1;
-                try w.print("{d}", .{state.security_overview.modules[module].total});
+                const total = state.security_overview.modules[module].total;
+                try @import("count_display.zig").write(w, total);
             } else try w.writeAll("Unavailable");
         } else if (index == 1) {
             try w.writeAll("Not recorded");
         } else if (state.stats) |stats| {
             if (stats.outcomes_version == 1) {
-                try w.print("{d}", .{@field(stats, key)});
+                try @import("count_display.zig").write(w, @field(stats, key));
             } else try w.writeAll("Not recorded");
         } else try w.writeAll("Unavailable");
         try html.render(w, "</strong><p class=\"sb-note\">{{ population }}</p></article>", .{

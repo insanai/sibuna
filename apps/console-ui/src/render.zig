@@ -215,53 +215,7 @@ pub fn message(state: *const State, w: *Writer) Writer.Error!void {
 }
 
 fn tiles(state: *const State, w: *Writer) Writer.Error!void {
-    try html.render(w, "<section class=\"sb-tiles\" aria-label=\"Request summary\">", .{});
-    const labels = [_][]const u8{
-        "Requests", "Admitted",   "Challenged", "Policy denied", "Banned", "Rate limited",
-        "Other",    "Origin 4xx", "Origin 5xx",
-    };
-    const keys = .{
-        "requests",   "admitted",   "challenged", "denied", "banned", "rate_limited", "other",
-        "origin_4xx", "origin_5xx",
-    };
-    inline for (keys, labels) |key, label| {
-        try html.render(
-            w,
-            "<article class=\"sb-tile\"><span class=\"sb-subtitle\">{{ v0 " ++
-                "}}</span><strong>",
-            .{
-                .v0 = label,
-            },
-        );
-        if (state.stats) |stats| {
-            const origin = comptime std.mem.startsWith(u8, key, "origin_");
-            const separated = comptime std.mem.eql(u8, key, "denied") or
-                std.mem.eql(u8, key, "banned") or std.mem.eql(u8, key, "rate_limited") or
-                std.mem.eql(u8, key, "other");
-            if (origin and stats.proxy_mode != .reverse_proxy)
-                try w.writeAll(
-                    "Not observed",
-                )
-            else if (separated and stats.outcomes_version != 1)
-                try w.writeAll(
-                    "Not recorded",
-                )
-            else
-                try w.print("{d}", .{@field(stats, key)});
-        } else try w.writeAll(
-            "—",
-        );
-        try html.render(w, "</strong></article>", .{});
-    }
-    try html.render(w, "</section>", .{});
-    if (state.stats) |stats| if (stats.proxy_mode == .forward_auth) try w.writeAll(
-        "<p class=\"sb-note\">Forward auth: admitted counts authorization approvals. " ++
-            "The ingress carries uploads, WebSockets and origin responses. " ++
-            "Bodies omitted from authorization requests are not inspected.</p>",
-    );
-    try html.render(w, "<p class=\"sb-note\">Outcomes count parsed external requests once. " ++
-        "Banned counts requests, not distinct addresses. Origin 4xx/5xx overlap admitted " ++
-        "traffic. Counter loads are not simultaneous.</p>", .{});
+    return @import("traffic_tiles.zig").render(state, w);
 }
 
 fn coverage(state: *const State, w: *Writer) Writer.Error!void {
@@ -314,7 +268,7 @@ fn coverage(state: *const State, w: *Writer) Writer.Error!void {
     );
 }
 
-fn timeline(state: *const State, w: *Writer) Writer.Error!void {
+pub fn timeline(state: *const State, w: *Writer) Writer.Error!void {
     try w.writeAll(
         "<svg viewBox=\"0 0 480 180\" role=\"img\" aria-label=\"Request timeline\">" ++
             "<path d=\"M0 150H480 M0 100H480 M0 50H480\" fill=\"none\" stroke=\"#d7e3ee\"/>",

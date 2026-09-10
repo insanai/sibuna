@@ -21,9 +21,14 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         "Gaps remain unobserved; each contributing node uses its own elapsed time.</p>" ++
         "<section class=\"sb-tiles\">", .{ .maximum = maximum_text });
     inline for (keys, labels) |key, label| {
-        try html.render(w, "<article class=\"sb-panel\"><h3>{{ label }}</h3>" ++
-            "<svg viewBox=\"0 0 360 90\" role=\"img\" " ++
-            "aria-label=\"{{ label }} requests per second; values below\">", .{ .label = label });
+        try html.render(w, "<article class=\"sb-panel {{ tone }}\"><h3>{{ label }}</h3>" ++
+            "<svg class=\"sb-outcome-chart\" viewBox=\"0 0 360 90\" role=\"img\" " ++
+            "aria-label=\"{{ label }} requests per second; values below\">", .{
+            .label = label,
+            .tone = @import("outcome_sparkline.zig").tone(
+                @field(@import("outcome_sparkline.zig").Metric, key),
+            ),
+        });
         for (0..60) |index| {
             const second = now -| (59 - index);
             const point = state.points[@intCast(second % 60)];

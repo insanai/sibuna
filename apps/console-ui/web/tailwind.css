@@ -93,7 +93,7 @@ button, input, select, textarea { font: inherit; }
 .sb-subtitle { color: var(--color-base-content); opacity: .8; font-size: 14px; }
 .sb-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 24px 0; }
 .sb-tile { padding: 22px; background: var(--color-base-100); border: 1px solid var(--color-base-300); border-radius: 8px; }
-.sb-tile strong { display: block; font-size: 28px; font-variant-numeric: tabular-nums; margin-top: 8px; }
+.sb-tile strong { display: block; font-size: 28px; font-variant-numeric: tabular-nums; margin-top: 8px; overflow-wrap: anywhere; }
 .sb-panels { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; }
 .sb-panel { min-width: 0; background: var(--color-base-100); border: 1px solid var(--color-base-300); border-radius: 8px; padding: 24px; }
 .sb-panel h2 {
@@ -210,3 +210,13 @@ button, input, select, textarea { font: inherit; }
  .sb-filter-actions .btn, .sb-filter-toolbar > .btn { width: 100%; }
  .sb-filter-toolbar .sb-filter-field { flex-basis: 100%; }
 }
+
+/* Decision colours apply to the same outcome in tiles and time series in both themes. */
+.sb-decision-admitted { --sb-decision: var(--color-success-content); }
+.sb-decision-challenged { --sb-decision: var(--color-warning-content); }
+.sb-decision-denied { --sb-decision: var(--color-error-content); }
+.sb-decision-banned { --sb-decision: #b91c1c; }
+[data-theme="sibuna-dark"] .sb-decision-banned { --sb-decision: #f87171; }
+.sb-decision-info { --sb-decision: var(--color-primary); }
+.sb-tile strong, .sb-sparkline, .sb-outcome-chart { color: var(--sb-decision, inherit); }
+.sb-sparkline { display: block; width: 100%; height: 34px; margin-top: 8px; }

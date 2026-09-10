@@ -44,6 +44,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     try html.render(w, "<section class=\"sb-panels\"><article class=\"sb-panel\">", .{});
     try @import("globe.zig").render(state, w);
     try html.render(w, "</article><article class=\"sb-panel\"><h2>Request timeline</h2>", .{});
+    try @import("render.zig").timeline(state, w);
     try @import("timeline_panel.zig").table(state, w);
     try html.render(w, "<p class=\"sb-note\">Read-only display. " ++
         "Optional cycling changes panels every " ++
