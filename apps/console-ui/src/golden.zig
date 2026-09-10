@@ -176,6 +176,7 @@ fn check(
     var buffer: [512 * 1024]u8 = undefined;
     var writer: std.Io.Writer = .fixed(&buffer);
     try @import("render.zig").render(state, &writer);
+    try principles(name, writer.buffered());
     var path_buffer: [128]u8 = undefined;
     const path = try std.fmt.bufPrint(&path_buffer, "apps/console-ui/golden/{s}.html", .{name});
     if (update) return std.Io.Dir.cwd().writeFile(io, .{
@@ -211,4 +212,54 @@ fn period(state: *State, partial: bool) void {
         .completed_at = state.browser_time - 1,
     };
     model.completed_at = state.browser_time - 1;
+}
+
+/// The mechanical half of the principle audit: rules a renderer can violate silently.
+/// Judgement rules (R1, R5, R7) remain a human review of the same reviewed HTML.
+fn principles(name: []const u8, html: []const u8) !void {
+    const t = std.testing;
+    const count = std.mem.count;
+    const has = struct {
+        fn f(haystack: []const u8, needle: []const u8) bool {
+            return std.mem.indexOf(u8, haystack, needle) != null;
+        }
+    }.f;
+    errdefer std.log.err("principle check failed for {s}", .{name});
+    // R2 trunk test: product, node, page heading, active section and the way back are
+    // present on every authenticated page.
+    if (has(html, "<nav ")) {
+        try t.expect(has(html, "SIBUNA"));
+        try t.expect(has(html, "Console node ") or has(html, "Node not reported"));
+        try t.expect(has(html, "id=\"page-heading\""));
+        try t.expect(has(html, "aria-current=\"page\""));
+        try t.expect(has(html, "href=\"/console/\""));
+    }
+    // R8: decision colours reach markup only through the semantic classes; series never
+    // carry literal fills.
+    try t.expectEqual(@as(usize, 0), count(u8, html, "fill=\"#"));
+    var rest = html;
+    while (std.mem.indexOf(u8, rest, "sb-decision-")) |index| {
+        rest = rest[index + "sb-decision-".len ..];
+        const names = [_][]const u8{ "admitted", "challenged", "denied", "banned", "info" };
+        var known = false;
+        for (names) |tone| known = known or std.mem.startsWith(u8, rest, tone);
+        try t.expect(known);
+    }
+    // R9 and R11: every traffic tile carries a sparkline, and a retained window carries a
+    // deviation marker per tile.
+    const traffic = [_][]const u8{ "dashboard", "traffic-period", "traffic-comparison" };
+    for (traffic) |traffic_name| if (std.mem.eql(u8, name, traffic_name)) {
+        const tiles = count(u8, html, "<article class=\"sb-tile ");
+        try t.expectEqual(@as(usize, 9), tiles);
+        try t.expectEqual(tiles, count(u8, html, "class=\"sb-sparkline\""));
+        try t.expectEqual(tiles, count(u8, html, "<p class=\"sb-note\">Yesterday: "));
+    };
+    if (std.mem.eql(u8, name, "traffic-live")) {
+        try t.expectEqual(@as(usize, 9), count(u8, html, "class=\"sb-sparkline\""));
+        // R12: counts render with thousands separators.
+        try t.expect(has(html, "12,345"));
+    }
+    // R18: permanent deletion needs an explicit acknowledgement per retention window.
+    if (std.mem.eql(u8, name, "settings"))
+        try t.expectEqual(@as(usize, 4), count(u8, html, "name=\"confirmed\" required"));
 }
