@@ -4,7 +4,7 @@ import contextlib
 import io
 from pathlib import Path
 import tempfile
-from console_wasm_check import contract, check, EXPORTS, MAX_BYTES
+from console_wasm_check import contract, check, EXPORTS, MAX_BYTES, WARN_BYTES
 
 
 def integer(value):
@@ -42,6 +42,23 @@ class ContractTest(unittest.TestCase):
                 with self.assertRaises(SystemExit):
                     check(source, output)
                 self.assertEqual(output.read_bytes(), valid)
+
+    def test_review_threshold_warns_without_rejecting_valid_artifacts(self):
+        valid = (b"\x00asm\x01\x00\x00\x00" + section(5, bytes([1, 1, 64, 64])) +
+                 exports(EXPORTS))
+        with tempfile.TemporaryDirectory(prefix="sibuna-wasm-budget-") as directory:
+            source, output = Path(directory) / "input.wasm", Path(directory) / "output.wasm"
+            # A custom section holds inert padding; the ABI remains unchanged at each size.
+            for total, warned in ((WARN_BYTES, False), (WARN_BYTES + 1, True), (MAX_BYTES, True)):
+                padding = total - len(valid) - 4
+                data = valid + section(0, b"\0" * padding)
+                self.assertEqual(total, len(data))
+                source.write_bytes(data)
+                warning = io.StringIO()
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(warning):
+                    check(source, output)
+                self.assertEqual(warned, "warning:" in warning.getvalue())
+                self.assertEqual(data, output.read_bytes())
 
     def test_linker_contract_is_required_and_bounded(self):
         # These are metadata fixtures, not executable modules. The live UI exercises code.

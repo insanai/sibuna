@@ -3,7 +3,10 @@
 from pathlib import Path
 import sys
 
-MAX_BYTES = 384 * 1024
+# Project guardrails, not WebAssembly engine limits. See SID 0007's budget review.
+# Loading and interaction acceptance remain independent of this artifact check.
+WARN_BYTES = 448 * 1024
+MAX_BYTES = 512 * 1024
 EXPORTS = {
     "memory": 2,
     **dict.fromkeys((
@@ -96,6 +99,9 @@ def check(path, output=None):
         contract(data)
     except (ValueError, UnicodeDecodeError) as error:
         raise SystemExit(f"console-ui: {error}") from error
+    if len(data) > WARN_BYTES:
+        print(f"console-ui: warning: {len(data)} bytes exceeds the {WARN_BYTES}-byte "
+              "review threshold; assess browser loading before adding dependencies", file=sys.stderr)
     if output is not None:
         output.write_bytes(data)
     print(f"console-ui: {len(data)} / {MAX_BYTES} bytes")

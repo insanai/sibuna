@@ -974,7 +974,12 @@ same module natively and assert rendered HTML strings.
 - *Charts obey the rules.* `charts.zig` has one palette (the decision colours and the accent),
   draws deviation markers and sparklines as first-class marks, keeps axes and positions
   stable across updates, and uses no animation on data updates (R6, R8–R11).
-- *Budget.* The module is compiled at `ReleaseSmall` with a 384 KiB size gate (raised from 300 KiB on 2026-09-09 after the module reached 307,144 bytes; the per-feature size ledger is recorded in the implementation evidence), 4 MiB initial and explicit maximum linear memory, bounded retained history, and no allocator on the event path beyond a bump arena reset per event.
+- *Budget.* The module is compiled at `ReleaseSmall`, with a 448 KiB artifact review warning
+  and 512 KiB uncompressed ceiling. These project guardrails cover the complete console;
+  they are not WebAssembly limits or substitutes for browser performance acceptance.
+  The 2026-09-10 budget review below records the rationale and supersedes the earlier
+  384 KiB cap. Linear memory remains 4 MiB initial and explicit maximum, with bounded
+  retained history and a bump arena reset after each event.
 
 == Pages
 
@@ -1466,7 +1471,7 @@ concern layout), wired by the existing `AppModules` helper.
   columns: (1.2fr, 2.6fr),
   table.header([*Step*], [*What it does*]),
   [`-Dconsole` (defaults to storage enabled)], [Compiles `libs/serve`, `libs/console`, and the interface module into the daemon; `-Dconsole=false` removes every console symbol and the `--console` flags.],
-  [`console-ui` (implicit)], [Compiles `apps/console-ui/src/main.zig` for `wasm32-freestanding` at `ReleaseSmall`, asserts the 384 KiB budget, and embeds the bytes.],
+  [`console-ui` (implicit)], [Compiles `apps/console-ui/src/main.zig` for `wasm32-freestanding` at `ReleaseSmall`, warns above 448 KiB, enforces the 512 KiB artifact ceiling, and embeds the bytes.],
   [`zig build console-assets`], [Runs `npm ci` and `npm run build` in `apps/console-ui/web/` through `b.addSystemCommand`, producing `assets/console.css` from `tailwind.css` with Tailwind 4 and the daisyUI 5 plugin, using explicit Tailwind source paths for Zig render files and HTML snippets, with complete class names in those sources; daisyUI components are restricted with its `include` configuration. The step then writes `assets/MANIFEST.md` with the SHA-256 of every asset.],
   [Digest gate (in `zig build test`)], [`tools/console_assets.py check` hashes both build inputs (render sources, HTML snippets, the snippet renderer, CSS configuration, package lock and scripts) and outputs against `MANIFEST.md`; output digests alone cannot detect stale CSS. A plain `zig build` therefore needs no npm; only `console-assets` does, and CI runs it and checks the tree is clean.],
   [`zig build console-test`], [Golden tests of the interface module compiled natively (rendered HTML per page and per event), protocol round-trip tests, and the kernel's HTTP and WebSocket tests with an in-process client.],
@@ -1512,7 +1517,8 @@ configured slots, queues and optional GeoIP dataset. Record active peak RSS sepa
   [Statistics delta latency], [≤ 1.25 s], [Sampler period plus 1 Hz broadcast],
   [Incident to dashboard], [Target ≤ 2.25 s + commit delay without backlog], [“The incident tap”; slow storage and replication can exceed this],
   [Policy edit to rebuilt engine on every node], [Target: commit/apply + next successful tick], [SID 0005 path],
-  [Interface module size], [≤ 384 KiB], [`ReleaseSmall`, size gate],
+  [Interface module size], [Warn above 448 KiB; ≤ 512 KiB], [`ReleaseSmall`, uncompressed artifact guardrail; review with browser timings],
+  [Browser experience], [LCP ≤ 2.5 s; INP ≤ 200 ms; CLS ≤ 0.1], [Published user-experience targets at the 75th percentile, separately for mobile and desktop; recorded lab checks do not establish field acceptance],
   [Page render (statistics, 3,600-point timeline)], [≤ 5 ms in the module], [Bounded writer, per-panel versions],
   [WebSocket subscribers per console], [64], [Slot table; `503` beyond],
 )
@@ -4584,6 +4590,47 @@ Only compiler-generated programs reach the interpreter; operator or HTTP input c
 instructions or raw HTML slots. Exhaustive literal/index tests and an extended value-slot
 test verify the byte mapping, and the existing injection, scalar-bound and output-limit tests
 verify compatibility. This changes neither template syntax nor the console's memory limit.
+
+== Console artifact budget review (2026-09-10)
+
+The former 384 KiB limit was a project allocation, not a browser or WebAssembly standard.
+The in-progress cluster dashboard reached 396,761 bytes (about 387.5 KiB), only 3,545 bytes
+above it. Its deterministic gzip-9 reference is 160,373 bytes; this is a comparison of
+compressibility, not a transfer-size claim, because the current asset handler sends the
+uncompressed module. A trial of additional literal substitutions saved only 560 raw bytes
+and was removed. No new dictionary encoding, page fragmentation or field-decoder complexity
+is justified solely to recover those few kilobytes.
+
+The complete administration application now has a 448 KiB warning and 512 KiB hard ceiling.
+This leaves about 124.5 KiB beyond the measured candidate for investigation, security and
+cluster workflows without forcing unrelated components to share behaviour. At 4 Mbit/s,
+512 KiB alone takes about 1.05 seconds to transfer before latency and other assets; this is
+an arithmetic planning assumption, not a measured load time. Both thresholds are reviewable
+project guardrails: crossing the warning prompts dependency and browser-timing review;
+changing the ceiling requires new evidence in this SID. Correctness, accessible markup and
+clear module boundaries take precedence over fitting an inherited arbitrary size.
+
+Browser acceptance assesses the whole console: a cold authentication screen, a warm reload,
+login-to-live dashboard, navigation and form interactions, and sustained globe updates on
+representative desktop and mobile conditions. Use the published experience targets of
+LCP at most 2.5 seconds, INP at most 200 milliseconds and CLS at most 0.1, evaluated at the
+75th percentile separately for mobile and desktop when field data is available. Local lab
+observations must identify hardware, cache, network, sample count and limitations; a single
+Chrome session cannot establish those field percentiles. These targets remain independent
+of the data-plane throughput and p99 impact gates.
+
+The ABI gate still rejects malformed metadata, host imports, unexpected exports and memory
+other than the explicit 4 MiB allocation. That linear-memory reservation bounds the current
+application's arrays and arena; it is neither the module file size nor total browser RSS.
+There is no evidence requiring a memory increase for this change. Boundary tests verify
+that valid artifacts at the warning and hard limits publish, the warning is nonfatal, and
+oversized or invalid artifacts cannot replace the preceding verified output.
+
+The approach follows #link("https://developer.mozilla.org/en-US/docs/Web/Performance/Guides/Performance_budgets")[MDN's performance-budget guidance]: choose budgets from the application,
+user devices and measured experience, with separate warning and error levels.
+#link("https://web.dev/articles/defining-core-web-vitals-thresholds")[The Core Web Vitals threshold rationale]
+provides the experience targets, not a universal Wasm byte allowance. SID 0007 remains
+Proposed while the remaining implementation and acceptance work proceeds.
 
 #pagebreak(weak: true)
 
