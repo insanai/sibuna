@@ -7,7 +7,7 @@
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
 #let sid-status = "Proposed"
-#let sid-last-updated = "2026-09-10"
+#let sid-last-updated = "2026-09-11"
 
 #import "../../shared/sid.typ": sid-document
 #import "@preview/cetz:0.5.2" as cetz
@@ -1771,6 +1771,36 @@ loaded geography. Throughput degradation must be at most 1%, with p99 increase a
 under the defined workload matrix. Missing delivery, unstable baselines or inconclusive
 confidence intervals do not pass. Primitive baselines and smoke runs cannot substitute for
 this gate. These criteria remain unchanged; Proposed status does not authorize reduced scope.
+
+== Implementation review (2026-09-11)
+
+A page-by-page review of the built console against this record, run through the native
+golden tests, the end-to-end suites and a browser session on a traffic-fed loopback node,
+found the following requirements unmet and closed them in the same review: the live request
+timeline now stacks the six disjoint outcomes in decision colours; the policy page names the
+surface with its gloss, the node-local limits and decision-coloured rule types, and requires
+an acknowledgement before a replace-all import; incidents show the selected local response,
+the absent matched rule, score terms and JA4 as “not recorded”, and open the IP groups form
+with the address drafted; GeoIP shows the generation digest and load time; IP groups show
+score and trigger; member cards show replication lag; browser assets are served under a
+content digest with immutable caching and a revalidated shell; refused sign-ins are audited
+and sign-in rows record the role; the golden test asserts the mechanical rules R2, R8, R9,
+R11, R12 and R18; the book carries screenshots of every page. A defect was found and fixed:
+the security aggregates shared the light per-statement step budget and became unavailable
+after roughly a thousand retained findings in the selected day; they now use a larger, still
+fixed, budget covered by a volume test.
+
+Requirements that remain open after this review, because they need data-plane or schema work
+beyond a review increment: `challenge_minutes` persistence (challenge counters are boot-local);
+the sampled client operating system, browser, response status and referring host rankings
+(only paths are sketched); RSS and CPU minute columns; a control-thread snapshot of distinct
+active bans and a nodes-healthy tile; per-address challenge records and the adaptive-difficulty
+timeline; client address and User-Agent on session and audit rows; request and response heads
+with charset selection and “copy as cURL”; the configurable serve-kernel admission model
+(`libs/serve/src/admission.zig` is unwired) and the 1 MB/8 MB body limits; revert from the
+Audit page (revert exists from Policy history); and the impact gate, which remains inconclusive
+on the laptop used so far. The interface module is within 3 KiB of its 512 KiB ceiling, so
+further page work must be paid for by size reductions first.
 
 = References
 
