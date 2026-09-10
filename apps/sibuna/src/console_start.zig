@@ -165,6 +165,8 @@ pub const Runtime = struct {
             },
             .openings = if (spec.algorithm == .posw) spec.posw_challenges else 0,
         };
+        if (try app.request(.rule_hits_start) != .command_recorded)
+            return error.StorageUnavailable;
         const host = if (config.host.len == 0) "127.0.0.1" else config.host.slice();
         const kernel = try console.Kernel.start(
             gpa,
@@ -182,6 +184,11 @@ pub const Runtime = struct {
         ) catch return error.ConsoleAdvertiseTooLong;
         const recorded = try app.request(.{ .node_advertise = url });
         if (recorded != .command_recorded) return error.StorageUnavailable;
+        try announce(app, config);
+        return .{ .app = app, .kernel = kernel };
+    }
+
+    fn announce(app: *console.App, config: console.ConsoleConfig) !void {
         if (app.setup_required) std.debug.print(
             "Console is uninitialized. Stop Sibuna and run init-admin locally.\n",
             .{},
@@ -192,7 +199,6 @@ pub const Runtime = struct {
                 "database/cache and allocator overhead are separate.\n",
             .{(try config.budget.reservedBytes()) / (1024 * 1024)},
         );
-        return .{ .app = app, .kernel = kernel };
     }
 
     pub fn stop(self: Runtime) void {

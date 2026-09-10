@@ -113,6 +113,8 @@ pub const Persistent = struct {
     console_mailbox: if (build_options.console) console.Mailbox else void =
         if (build_options.console) .{} else {},
     console_initialized: bool = false,
+    console_hits: if (build_options.console) @import("console_policy_hits.zig").State else void =
+        if (build_options.console) .{} else {},
     console_node: if (build_options.console) @import("console_node_state.zig").State else void =
         if (build_options.console) .{} else {},
     /// Owner-thread link to the local cluster member for status snapshots.
@@ -231,6 +233,7 @@ pub const Persistent = struct {
             if (self.pending_len == 0) break;
         }
         if (self.pending_sql) |sql| self.gpa.free(sql);
+        if (build_options.console) @import("console_policy_hits.zig").stop(self);
         if (build_options.console) self.console_geo.deinit();
         const clean = self.db.closeBounded(self.io);
         // Make sure the caller's slot is live again before the owned one
@@ -347,9 +350,7 @@ pub const Persistent = struct {
     fn initializeAttempt(self: *Persistent) !void {
         try self.migrate();
         try self.loadIncidentCounter();
-        const stamp = try self.policyVersion();
         try self.rebuild();
-        self.version = stamp;
     }
 
     fn migrate(self: *Persistent) !void {
@@ -440,11 +441,10 @@ pub const Persistent = struct {
         const now = self.nowSeconds();
         if (stamp != self.version or now >= self.reputation_expires) {
             try self.rebuild();
-            // A failed rebuild must be retried; never acknowledge it early.
-            self.version = stamp;
             // The applied revision is a per-node acknowledgment written by that node only.
             if (build_options.console) self.console_node.announce = true;
         }
+        if (build_options.console) @import("console_policy_hits.zig").tick(self);
     }
 
     fn fillPending(self: *Persistent) void {
@@ -633,6 +633,7 @@ pub const Persistent = struct {
     /// reputation, then publishes it. The previously live slot becomes the
     /// spare once its readers have drained.
     pub fn rebuild(self: *Persistent) !void {
+        const revision = try self.policyVersion();
         const which: usize = if (self.spare == self.owned_slot) 1 else 0;
         _ = self.arenas[which].reset(.retain_capacity);
         const arena = self.arenas[which].allocator();
@@ -647,7 +648,14 @@ pub const Persistent = struct {
             try @import("console_pages_load.zig").install(self, &engine.pages)
         else
             policy.page_template.defaults(&engine.pages, @import("challenge_page.zig").default);
+        // A replicated writer can commit between loader queries. Never label or publish
+        // a mixed candidate as an applied revision; leave the old engine live and retry.
+        if (revision != try self.policyVersion()) return error.PolicyRevisionChanged;
+        if (build_options.console)
+            try @import("console_policy_hits.zig").prepare(self, revision);
         self.spare = self.state.publishEngine(self.spare);
+        self.version = revision;
+        if (build_options.console) @import("console_policy_hits.zig").published(self);
         // Keep the old retry deadline if any candidate loader fails before publication.
         self.reputation_expires = expires;
     }

@@ -97,6 +97,7 @@ fn progress(old: *const p.minutes.Record, next: *const p.minutes.Record) enum {
 
 pub fn prune(owner: *Persistent, now: u64) !p.StorageResult {
     if (now > std.math.maxInt(i64)) return .{ .failed = .invalid_input };
+    try @import("console_store_rule_hits.zig").prune(owner, now);
     _ = try db.exec(
         owner.db,
         owner.gpa,

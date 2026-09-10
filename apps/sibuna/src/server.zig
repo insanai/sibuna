@@ -44,6 +44,8 @@ pub const Incident = core.Incident;
 /// waits until the old slot's readers drain before rebuilding into it.
 pub const EngineSlot = struct {
     engine: *policy.Engine,
+    hits: if (build_options.console) @import("policy_hit_state.zig").Slot else void =
+        if (build_options.console) .{} else {},
     readers: std.atomic.Value(u32) align(64) = std.atomic.Value(u32).init(0),
 };
 
@@ -534,14 +536,23 @@ fn requestDecision(ctx: *RequestContext, name: *[policy.engine.MAX_RULE_NAME]u8)
     const headers = policyHeaders(ctx.req, &hdr_buf);
     const slot = st.acquireEngine();
     defer AppState.releaseEngine(slot);
-    var decision = slot.engine.evaluateRequest(.{
+    const view: policy.engine.RequestView = .{
         .path = ctx.req.path,
         .query = ctx.req.query,
         .client_ip = ctx.client_ip,
         .user_agent = ctx.user_agent,
         .headers = headers,
         .body = ctx.req.body,
-    });
+    };
+    // Embedders may attach request telemetry without a Persistent rule generation.
+    var decision = if (build_options.console and st.telemetry != null and
+        slot.hits.counters.generation != 0)
+    observed: {
+        var matches: policy.engine.RuleMatches = undefined;
+        const result = slot.engine.evaluateRequestWithMatches(view, &matches);
+        slot.hits.counters.record(&matches);
+        break :observed result;
+    } else slot.engine.evaluateRequest(view);
     @memcpy(name[0..decision.rule_name.len], decision.rule_name);
     decision.rule_name = name[0..decision.rule_name.len];
     decision.algorithm = null; // Only challenge issuance uses the algorithm override.

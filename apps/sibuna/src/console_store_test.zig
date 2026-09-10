@@ -1171,3 +1171,7 @@ fn readFixture(path: []const u8) !*Fixture {
     try policySession(fx);
     return fx;
 }
+
+test {
+    _ = @import("console_rule_hits_test.zig");
+}

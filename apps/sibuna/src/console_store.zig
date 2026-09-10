@@ -91,6 +91,7 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
 /// Retained telemetry shares background ownership without inflating management dispatch.
 fn observations(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
     return switch (request) {
+        .rule_hits_start => @import("console_policy_hits.zig").start(owner),
         .minutes_write => |input| @import("console_store_minutes.zig").write(owner, input),
         .minutes_query => |input| @import("console_store_minutes.zig").query(owner, input),
         .minutes_summary => |input| @import("console_store_minute_summary.zig")

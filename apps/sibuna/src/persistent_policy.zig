@@ -27,8 +27,16 @@ pub fn rules(self: *Persistent, engine: *policy.Engine, arena: std.mem.Allocator
             engine.rules[index .. index + fallback_count],
         );
         try engine.addRule(r);
+        if (@import("build_options").console)
+            try self.spare.hits.identify(engine, index, row[9], 0);
     }
+    const managed_count = engine.rule_count;
     engine.rule_count += fallback_count;
+    if (@import("build_options").console) {
+        for (managed_count..engine.rule_count) |index|
+            try self.spare.hits.identify(engine, index, null, index - managed_count);
+        self.spare.hits.generation.len = engine.rule_count;
+    }
 }
 
 fn decodeRule(arena: std.mem.Allocator, row: []const ?[]const u8) !policy.PolicyRule {
