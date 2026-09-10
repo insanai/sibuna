@@ -162,3 +162,35 @@ test "sixty populated buckets per module fit native and replicated query row bou
         }
     }
 }
+
+test "a day of retained incidents aggregates within the heavy statement budget" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try helpers.Fixture.open(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/security-volume",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try helpers.policySession(fx);
+    // Six thousand findings across a day from many addresses: the light budget that
+    // bounds point reads interrupted this aggregate after roughly a thousand rows.
+    try fx.owner.db.exec(
+        t.allocator,
+        "WITH RECURSIVE ticks(n) AS (VALUES(0) UNION ALL SELECT n+1 FROM ticks WHERE n<5999) " ++
+            "INSERT INTO security_incidents(id,node_id,client_ip,user_agent,method,path," ++
+            "violation_category,offending_payload,recorded_at) " ++
+            "SELECT 1+n,1,'10.0.'||(n%200)||'.'||(n%250),'','GET','/p'||(n%40)," ++
+            "CASE n%3 WHEN 0 THEN 'waf:sqli' WHEN 1 THEN 'honeypot' ELSE 'other' END,''," ++
+            "1000+n*14 FROM ticks;",
+    );
+    for ([_]p.security.View{ .modules, .categories, .paths }) |view| {
+        const result = try fx.run(.{ .security_query = .{
+            .session_digest = @splat(1),
+            .request = .{ .view = view, .node = 1, .from = 1000, .until = 1000 + 6000 * 14 },
+        } });
+        try t.expect(result == .security_page);
+        try t.expectEqual(@as(u64, 6000), result.security_page.total);
+    }
+}
