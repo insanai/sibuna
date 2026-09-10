@@ -57,24 +57,20 @@ fn changeSetting(app: *App, context: *http.Context, auth: p.users.Auth) !void {
     const parsed = try http.parse(struct {
         key: []const u8,
         value: []const u8,
+        confirmed: bool = false,
         expected_revision: u64,
     }, context, &body, arena.allocator());
     defer parsed.deinit();
     const input = parsed.value;
-    if (!n.knownSetting(input.key) or !validNumber(input.value))
+    if (!p.settings.valid(input.key, input.value))
         return http.fail(context, .bad_request, "CONSOLESETTINGS");
     return reply(context, try app.request(.{ .settings_change = .{
         .auth = auth,
+        .confirmed = input.confirmed,
         .key = try p.Bytes(n.max_setting_key).init(input.key),
         .value = try p.Bytes(n.max_setting_value).init(input.value),
         .expected_revision = input.expected_revision,
     } }));
-}
-
-/// The two known settings are small positive integers.
-fn validNumber(text: []const u8) bool {
-    const value = std.fmt.parseInt(u32, text, 10) catch return false;
-    return value >= 1 and value <= 1_000_000;
 }
 
 fn queryDestinations(app: *App, context: *http.Context, auth: p.users.Auth) !void {

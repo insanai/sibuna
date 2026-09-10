@@ -5,6 +5,7 @@ const p = console.protocol;
 const codec = console.minute_archive;
 const db = @import("console_database.zig");
 const util = @import("console_store.zig");
+const settings = @import("console_store_settings.zig");
 const access = @import("console_read_authorize.zig");
 const Persistent = @import("persistent.zig").Persistent;
 const text = util.text;
@@ -96,13 +97,13 @@ fn progress(old: *const p.minutes.Record, next: *const p.minutes.Record) enum {
 
 pub fn prune(owner: *Persistent, now: u64) !p.StorageResult {
     if (now > std.math.maxInt(i64)) return .{ .failed = .invalid_input };
-    const cutoff = now / 60 -| (p.minutes.retention_days * 1440);
     _ = try db.exec(
         owner.db,
         owner.gpa,
         "DELETE FROM console_minutes WHERE (node,boot,epoch,minute) IN " ++
-            "(SELECT node,boot,epoch,minute FROM console_minutes WHERE minute<? LIMIT 64)",
-        &.{integer(cutoff)},
+            "(SELECT node,boot,epoch,minute FROM console_minutes WHERE minute<?-" ++
+            settings.daysSql("retention.minutes") ++ "*1440 LIMIT 64)",
+        &.{integer(now / 60)},
     );
     return .command_recorded;
 }
@@ -112,18 +113,22 @@ pub fn query(owner: *Persistent, input: p.minutes.Query) !p.StorageResult {
     if (try access.check(owner, input.session_digest, input.require_totp, .stats_read)) |reason|
         return .{ .failed = reason };
     var bounded = input;
-    const cutoff = input.observed_at / 60 -| (p.minutes.retention_days * 1440);
+    const retained = try settings.retention(owner, "retention.minutes");
+    const cutoff = input.observed_at / 60 -| (@as(u64, retained.days) * 1440);
     bounded.from_minute = @max(input.from_minute, cutoff);
-    if (bounded.from_minute > bounded.until_minute) return .{ .minute_page = .{} };
+    if (bounded.from_minute > bounded.until_minute)
+        return .{ .minute_page = .{ .retention_days = retained.days } };
     var result = try readQuery(owner, bounded);
     defer result.deinit();
-    var page: p.minutes.Page = .{};
+    var page: p.minutes.Page = .{ .retention_days = retained.days };
     page.count = @intCast(@min(input.limit, result.rows.len));
     for (result.rows[0..page.count], 0..) |row, i|
         page.rows[i] = try decode(row[0] orelse return error.InvalidStoredValue);
     if (result.rows.len > input.limit) page.next = page.rows[page.count - 1].cursor();
     if (try access.check(owner, input.session_digest, input.require_totp, .stats_read)) |reason|
         return .{ .failed = reason };
+    if (!std.meta.eql(retained, try settings.retention(owner, "retention.minutes")))
+        return .{ .failed = .conflict };
     return .{ .minute_page = page };
 }
 

@@ -2,6 +2,7 @@
 const std = @import("std");
 const p = @import("console").protocol;
 const r = p.retention;
+const settings = @import("console_store_settings.zig");
 const Persistent = @import("persistent.zig").Persistent;
 const db = @import("console_database.zig");
 const value = @import("console_store.zig");
@@ -64,8 +65,7 @@ pub fn prune(owner: *Persistent, input: r.Prune, now: u64) !p.StorageResult {
     input.lease.validate() catch return .{ .failed = .invalid_input };
     if (now > std.math.maxInt(i64)) return .{ .failed = .invalid_input };
     const seconds: u64 = switch (input.kind) {
-        .incidents => r.incident_days * std.time.s_per_day,
-        .audit => r.audit_days * std.time.s_per_day,
+        .incidents, .audit => 0,
         .notification_history => p.notifications.history_days * std.time.s_per_day,
         .sessions, .kiosk_grants => 0,
         .stages, .import_stages => p.workflows.stage_seconds,
@@ -86,10 +86,12 @@ fn statement(kind: r.Kind) []const u8 {
         "AND fence=? AND node=? AND boot=? AND expires>?)";
     return switch (kind) {
         .incidents => "DELETE FROM security_incidents WHERE id IN(SELECT id " ++
-            "FROM security_incidents WHERE recorded_at<? " ++
+            "FROM security_incidents WHERE recorded_at<?-" ++
+            settings.daysSql("retention.incidents") ++ "*86400 " ++
             "ORDER BY recorded_at,id LIMIT 16)" ++ guard,
         .audit => "DELETE FROM console_audit WHERE id IN(SELECT id FROM console_audit " ++
-            "WHERE recorded_at<? ORDER BY recorded_at,id LIMIT 16)" ++ guard,
+            "WHERE recorded_at<?-" ++ settings.daysSql("retention.audit") ++
+            "*86400 ORDER BY recorded_at,id LIMIT 16)" ++ guard,
         .sessions => "DELETE FROM console_sessions WHERE digest IN(SELECT digest " ++
             "FROM console_sessions WHERE MIN(expires,idle_expires)<=? " ++
             "ORDER BY MIN(expires,idle_expires),digest LIMIT 16)" ++ guard,

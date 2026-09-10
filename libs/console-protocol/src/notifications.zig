@@ -31,8 +31,9 @@ pub const max_detail = 96;
 pub const max_secret = 64;
 pub const max_envelope = 256;
 pub const max_setting_key = 64;
-pub const max_setting_value = 1024;
-pub const known_settings = [_][]const u8{ "notify.spike_factor", "notify.spike_minimum" };
+// Numeric catalog values contain at most seven decimal digits.
+pub const max_setting_value = 7;
+pub const known_settings = p.settings.keys;
 
 pub const Destination = struct {
     id: u64,
@@ -165,6 +166,7 @@ pub const SettingsPage = struct {
     }
 };
 pub const SettingChange = struct {
+    confirmed: bool = false,
     auth: p.users.Auth,
     key: p.Bytes(max_setting_key),
     value: p.Bytes(max_setting_value),
@@ -172,8 +174,7 @@ pub const SettingChange = struct {
 };
 
 pub fn knownSetting(key: []const u8) bool {
-    for (known_settings) |name| if (std.mem.eql(u8, name, key)) return true;
-    return false;
+    return p.settings.definition(key) != null;
 }
 
 pub fn validateSave(input: Save) error{InvalidLimit}!void {

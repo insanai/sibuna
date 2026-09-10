@@ -4,6 +4,7 @@ const std = @import("std");
 pub const similarity = @import("similarity.zig");
 pub const policies = @import("policies.zig");
 pub const challenges = @import("challenges.zig");
+pub const settings = @import("settings.zig");
 pub const rankings = @import("rankings.zig");
 pub const timeline = @import("timeline.zig");
 pub const minutes = @import("minutes.zig");
@@ -257,6 +258,13 @@ pub fn Bytes(comptime capacity: usize) type {
             return self.data[0..self.len];
         }
     };
+}
+
+// Every request waiter carries this envelope. Larger documents must transfer an owned
+// heap payload rather than inflating every management call frame and mailbox slot.
+comptime {
+    if (@sizeOf(StorageResult) > max_message + 128)
+        @compileError("StorageResult exceeds its bounded inline envelope");
 }
 
 /// Frees the heap payload a request carries, if any. The mailbox owns a submitted request's

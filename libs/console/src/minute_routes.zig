@@ -41,7 +41,11 @@ pub fn handle(app: *App, context: *http.Context) !void {
     );
     const page = &result.minute_page;
     return http.json(context, p.minutes.Reply{
-        .from_minute = @max(query.from_minute, now / 60 -| (p.minutes.retention_days * 1440)),
+        .retention_days = page.retention_days,
+        .from_minute = @min(until, @max(
+            query.from_minute,
+            now / 60 -| (@as(u64, page.retention_days) * 1440),
+        )),
         .until_minute = until,
         .observed_at = now,
         .rows = page.rows[0..page.count],

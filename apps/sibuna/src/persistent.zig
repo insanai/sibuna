@@ -1041,6 +1041,7 @@ test {
         _ = @import("console_rankings_test.zig");
         _ = @import("console_minutes_test.zig");
         _ = @import("console_retention_test.zig");
+        _ = @import("console_settings_retention_test.zig");
         _ = @import("console_incidents_test.zig");
         _ = @import("console_subscription_feed_test.zig");
         _ = @import("console_users_test.zig");

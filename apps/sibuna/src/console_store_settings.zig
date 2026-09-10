@@ -21,7 +21,9 @@ pub fn query(owner: *Persistent, auth: p.users.Auth, now: u64) !p.StorageResult 
     );
     defer rows.deinit();
     for (rows.rows) |row| {
-        if (page.count == page.rows.len) break;
+        if (page.count == page.rows.len) return error.InvalidStoredValue;
+        if (!p.settings.valid(row[0] orelse "", row[1] orelse ""))
+            return error.InvalidStoredValue;
         page.rows[page.count] = .{
             .key = try p.Bytes(n.max_setting_key).init(row[0] orelse ""),
             .value = try p.Bytes(n.max_setting_value).init(row[1] orelse ""),
@@ -35,43 +37,69 @@ pub fn query(owner: *Persistent, auth: p.users.Auth, now: u64) !p.StorageResult 
 }
 
 pub fn change(owner: *Persistent, input: n.SettingChange, now: u64) !p.StorageResult {
-    if (!n.knownSetting(input.key.slice()) or input.expected_revision >= std.math.maxInt(i64))
+    const entry = p.settings.definition(input.key.slice()) orelse
         return .{ .failed = .invalid_input };
-    const actor = try admin(owner, input.auth, now) orelse return .{ .failed = .forbidden };
-    const changed = try db.exec(
+    if (!p.settings.valid(input.key.slice(), input.value.slice()) or
+        input.expected_revision >= std.math.maxInt(i64) or
+        (entry.group == .retention and !input.confirmed)) return .{ .failed = .invalid_input };
+    const digest = std.fmt.bytesToHex(input.auth.session_digest, .lower);
+    const csrf = std.fmt.bytesToHex(input.auth.csrf_digest, .lower);
+    const creating = input.expected_revision == 0;
+    const statement = if (creating)
+        authority ++ "INSERT INTO console_settings(key,value,revision,updated_at,updated_by) " ++
+            "SELECT ?,?,1,?,id FROM a WHERE NOT EXISTS(SELECT 1 FROM console_settings WHERE key=?)"
+    else
+        authority ++ "UPDATE console_settings SET value=?,updated_at=?," ++
+            "updated_by=(SELECT id FROM a),revision=revision+1 WHERE key=? AND revision=? " ++
+            "AND EXISTS(SELECT 1 FROM a)";
+    const shared = [_]@import("zaxonlite").Value{
+        util.text(&digest),                                  util.text(&csrf), util.integer(now),
+        util.integer(@intFromBool(input.auth.require_totp)),
+    };
+    const tail = if (creating) [_]@import("zaxonlite").Value{
+        util.text(input.key.slice()), util.text(input.value.slice()), util.integer(now),
+        util.text(input.key.slice()),
+    } else [_]@import("zaxonlite").Value{
+        util.text(input.value.slice()),        util.integer(now), util.text(input.key.slice()),
+        util.integer(input.expected_revision),
+    };
+    // Authority, expected revision, the setting and its audit trigger share one statement.
+    var parameters: [8]@import("zaxonlite").Value = undefined;
+    @memcpy(parameters[0..4], &shared);
+    @memcpy(parameters[4..], &tail);
+    const changed = try db.exec(owner.db, owner.gpa, statement, &parameters);
+    if (changed != 0) return .command_recorded;
+    return .{ .failed = if (try admin(owner, input.auth, now) == null) .forbidden else .conflict };
+}
+
+pub const Retention = struct { days: u16, revision: u64 = 0 };
+
+/// Readers capture one bounded setting and recheck it before publishing historical pages.
+pub fn retention(owner: *Persistent, comptime key: []const u8) !Retention {
+    const entry = comptime p.settings.definition(key).?;
+    comptime std.debug.assert(entry.group == .retention);
+    var rows = try db.query(
         owner.db,
         owner.gpa,
-        "INSERT INTO console_settings(key,value,revision,updated_at,updated_by) " ++
-            "SELECT ?,?,1,?,? WHERE ?=0 " ++
-            "ON CONFLICT(key) DO UPDATE SET value=excluded.value,revision=revision+1," ++
-            "updated_at=excluded.updated_at,updated_by=excluded.updated_by " ++
-            "WHERE console_settings.revision=?",
-        &.{
-            util.text(input.key.slice()),
-            util.text(input.value.slice()),
-            util.integer(now),
-            util.integer(actor),
-            util.integer(input.expected_revision),
-            util.integer(input.expected_revision),
-        },
+        "SELECT value,revision FROM console_settings WHERE key=? LIMIT 1",
+        &.{util.text(key)},
     );
-    if (changed == 0) {
-        // A fresh key with a nonzero expected revision or a stale revision on an
-        // existing key both end here; the update path handles existing keys.
-        const updated = try db.exec(
-            owner.db,
-            owner.gpa,
-            "UPDATE console_settings SET value=?,revision=revision+1,updated_at=?," ++
-                "updated_by=? WHERE key=? AND revision=?",
-            &.{
-                util.text(input.value.slice()),        util.integer(now),
-                util.integer(actor),                   util.text(input.key.slice()),
-                util.integer(input.expected_revision),
-            },
-        );
-        if (updated == 0) return .{ .failed = .conflict };
-    }
-    return .command_recorded;
+    defer rows.deinit();
+    if (rows.rows.len == 0) return .{ .days = @intCast(entry.maximum) };
+    const value = rows.rows[0][0] orelse return error.InvalidStoredValue;
+    if (!p.settings.valid(key, value)) return error.InvalidStoredValue;
+    return .{
+        .days = try std.fmt.parseInt(u16, value, 10),
+        .revision = try util.number(rows.rows[0][1]),
+    };
+}
+
+/// A cleanup statement reads its cutoff transactionally, including after a peer edit.
+pub inline fn daysSql(comptime key: []const u8) []const u8 {
+    const entry = comptime p.settings.definition(key).?;
+    comptime std.debug.assert(entry.group == .retention);
+    return "COALESCE((SELECT CAST(value AS INTEGER) FROM console_settings WHERE key='" ++
+        key ++ "')," ++ entry.default ++ ")";
 }
 
 /// Administrator cookie session with a matching CSRF digest; returns the actor id.

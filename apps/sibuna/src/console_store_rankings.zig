@@ -187,11 +187,12 @@ pub fn prune(owner: *Persistent, now: u64) !p.StorageResult {
         owner.db,
         owner.gpa,
         "DELETE FROM console_rank_archives WHERE digest IN " ++
-            "(SELECT digest FROM console_rank_archives WHERE minute<? OR " ++
+            "(SELECT digest FROM console_rank_archives WHERE minute<?-" ++
+            @import("console_store_settings.zig").daysSql("retention.rankings") ++ "*1440 OR " ++
             "(SELECT bytes FROM console_rank_usage WHERE id=1)>? " ++
             "ORDER BY minute,digest LIMIT 2)",
         &.{
-            integer(now / 60 -| (7 * 24 * 60)),
+            integer(now / 60),
             integer(wire.quota_bytes - wire.charge(wire.max_bytes)),
         },
     );

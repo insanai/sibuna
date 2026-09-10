@@ -74,6 +74,7 @@ pub const Query = struct {
     limit: u8 = max_rows,
 };
 pub const Page = struct {
+    retention_days: u16 = retention_days,
     rows: [max_rows]Record = undefined,
     count: u8 = 0,
     next: ?Cursor = null,
