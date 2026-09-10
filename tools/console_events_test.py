@@ -115,6 +115,8 @@ def check(binary, h):
                                  grouped, cookie, csrf)[0] == 429
                 import console_incident_geo_test
                 console_incident_geo_test.check(h, port, data_port, cookie, csrf)
+                import console_security_test
+                console_security_test.check(h, port, cookie, csrf)
                 import console_policy_test
                 console_policy_test.check(h, port, data_port, cookie, csrf)
                 import console_inspection_test

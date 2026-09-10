@@ -17,7 +17,7 @@ pub const Frame = struct {
     values: [d.max_sources]p.StatsSnapshot = undefined,
     present: [d.max_sources]bool = @splat(false),
     active: [d.max_sources]bool = @splat(false),
-    rates: [d.max_sources]?f64 = @splat(null),
+    rates: [d.max_sources]?d.Rates = @splat(null),
     observations: [8]peers.Observation = undefined,
     scope: d.Scope = .{},
     initialized: bool = false,
@@ -81,6 +81,8 @@ pub const Frame = struct {
             if (info.node != node.? or !self.present[index]) continue;
             scope.available = true;
             scope.stale = !info.contributing;
+            scope.outcome_rates = if (info.contributing) self.rates[index] else null;
+            scope.request_rate = if (scope.outcome_rates) |rates| rates.requests else null;
             return .{ .scope = scope, .value = &self.values[index] };
         }
         return .{ .scope = scope, .value = null };
@@ -120,7 +122,7 @@ pub const Frame = struct {
 
     fn record(self: *Frame, index: usize, value: *const p.StatsSnapshot, active: bool) void {
         self.rates[index] = if (self.present[index] and self.active[index] and active)
-            intervalRate(&self.values[index], value)
+            d.intervalRates(&self.values[index], value)
         else
             null;
         self.values[index] = value.*;
@@ -143,6 +145,7 @@ pub const Frame = struct {
         self.incidents = @splat(0);
         self.traffic_total = 0;
         self.incident_total = 0;
+        self.scope.outcome_rates = .{};
         self.scope.request_rate = 0;
         var identity = std.crypto.hash.sha2.Sha256.init(.{});
         identity.update("sibuna-dashboard-contributors-v1");
@@ -158,14 +161,16 @@ pub const Frame = struct {
             std.mem.writeInt(u32, &node, info.node, .big);
             identity.update(&node);
             identity.update(&value.boot);
-            if (self.scope.request_rate) |*rate| {
+            if (self.scope.outcome_rates) |*rates| {
                 if (self.rates[index]) |amount| {
-                    rate.* += amount;
-                } else self.scope.request_rate = null;
+                    inline for (@typeInfo(d.Rates).@"struct".fields) |field|
+                        @field(rates, field.name) += @field(amount, field.name);
+                } else self.scope.outcome_rates = null;
             }
             try self.add(value);
             self.scope.contributing += 1;
         }
+        self.scope.request_rate = if (self.scope.outcome_rates) |rates| rates.requests else null;
         var digest: [32]u8 = undefined;
         identity.final(&digest);
         self.combined.boot = digest[0..16].*;
@@ -250,16 +255,4 @@ fn flows(
             if (next == null) break;
         }
     }
-}
-
-// Every source contributes its own monotonic denominator. Repeated snapshots, reconnects,
-// skipped wall seconds and clock resets are gaps; they cannot become a one-second burst.
-fn intervalRate(previous: *const p.StatsSnapshot, next: *const p.StatsSnapshot) ?f64 {
-    if (previous.node != next.node or !std.mem.eql(u8, &previous.boot, &next.boot) or
-        next.timestamp <= previous.timestamp or next.timestamp - previous.timestamp != 1 or
-        next.requests < previous.requests or next.uptime_ms <= previous.uptime_ms) return null;
-    const elapsed = next.uptime_ms - previous.uptime_ms;
-    if (elapsed > 2000) return null;
-    return @as(f64, @floatFromInt(next.requests - previous.requests)) * 1000 /
-        @as(f64, @floatFromInt(elapsed));
 }

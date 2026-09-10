@@ -4,6 +4,38 @@ const std = @import("std");
 const p = @import("root.zig");
 pub const max_sources = p.nodes.max_members;
 pub const max_flows = 16;
+pub const Rates = struct {
+    requests: f64 = 0,
+    admitted: f64 = 0,
+    challenged: f64 = 0,
+    denied: f64 = 0,
+    banned: f64 = 0,
+    rate_limited: f64 = 0,
+    other: f64 = 0,
+    origin_4xx: f64 = 0,
+    origin_5xx: f64 = 0,
+};
+
+/// Pure interval arithmetic shared by native aggregation and the browser. Every rate
+/// uses its own issuer's monotonic denominator; counters from different boots never mix.
+pub fn intervalRates(previous: *const p.StatsSnapshot, next: *const p.StatsSnapshot) ?Rates {
+    if (previous.outcomes_version != 1 or next.outcomes_version != 1 or
+        previous.node != next.node or std.mem.allEqual(u8, &next.boot, 0) or
+        !std.mem.eql(u8, &previous.boot, &next.boot) or
+        next.timestamp <= previous.timestamp or next.timestamp - previous.timestamp != 1 or
+        next.uptime_ms <= previous.uptime_ms) return null;
+    const elapsed = next.uptime_ms - previous.uptime_ms;
+    if (elapsed > 2000) return null;
+    var result: Rates = .{};
+    inline for (@typeInfo(Rates).@"struct".fields) |field| {
+        const before = @field(previous, field.name);
+        const after = @field(next, field.name);
+        if (after < before) return null;
+        @field(result, field.name) = @as(f64, @floatFromInt(after - before)) * 1000 /
+            @as(f64, @floatFromInt(elapsed));
+    }
+    return result;
+}
 pub const Source = struct {
     node: u32,
     status: p.nodes.PeerStatus = .unobserved,
@@ -43,6 +75,7 @@ pub const Scope = struct {
     incident_contributing: u8 = 0,
     /// Sum of node rates only when every contributing node has a consecutive interval.
     request_rate: ?f64 = null,
+    outcome_rates: ?Rates = null,
     /// Source top lists omit some countries. Report a conservative error bound for each
     /// displayed aggregate country; omitted source rows are never assigned a country.
     traffic_uncertainty: u64 = 0,

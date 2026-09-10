@@ -10,6 +10,7 @@ pub const rankings = @import("rankings.zig");
 pub const timeline = @import("timeline.zig");
 pub const minutes = @import("minutes.zig");
 pub const ranking_storage = @import("ranking_storage.zig");
+pub const security = @import("security.zig");
 pub const events = @import("events.zig");
 pub const auth = @import("auth.zig");
 pub const users = @import("users.zig");
@@ -140,6 +141,7 @@ pub const StorageRequest = union(enum) {
     authorize: AuthorizationCheck,
     incidents: struct { before_id: ?u64, limit: u16 },
     events_query: events.Query,
+    security_query: security.Query,
     events_similar: similarity.Query,
     policies_query: policies.Query,
     policies_test: policies.Test,
@@ -330,6 +332,7 @@ pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
             input.ordinal >= 128) return error.InvalidLimit,
         .import_commit => |input| try workflows.validateImportCommit(input),
         .events_query => |query| try events.validate(query),
+        .security_query => |query| try security.validate(query),
         .events_similar => |query| try similarity.validate(query),
         inline .geo_begin, .geo_activate, .totp_begin => |input| {
             if (input.expected_revision >= std.math.maxInt(i64)) return error.InvalidLimit;
@@ -351,6 +354,7 @@ pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
 
 test {
     _ = events.country;
+    _ = security;
     _ = subscriptions;
     _ = subscription_feed;
     _ = subscription_client;

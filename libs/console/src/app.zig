@@ -405,6 +405,7 @@ pub const App = struct {
             .policy_edit, .inspection_edit => return @import("policy_routes.zig")
                 .edit(self, context, identity.?, route.handler == .inspection_edit),
             .policy_read => return @import("policy_read_routes.zig").read(self, context),
+            .security_query => return @import("security_routes.zig").query(self, context),
             .events => return @import("event_routes.zig").query(self, context, false),
             .events_export => return @import("event_routes.zig").query(self, context, true),
             .login => return auth.login(self, context),

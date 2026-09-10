@@ -17,8 +17,10 @@ pub const Metadata = struct {
     action: p.Bytes(48) = .{},
 
     pub fn matches(self: *const Metadata, args: *const s.Args) bool {
+        const module = p.security.classify(self.category.slice());
         return (args.node == null or args.node.? == self.node) and
             (args.actor == null or args.actor.? == self.actor) and
+            (args.module == null or args.module.? == module) and
             match(args.category.slice(), self.category.slice()) and
             match(args.country.slice(), self.country.slice()) and
             match(args.ip.slice(), self.ip.slice()) and

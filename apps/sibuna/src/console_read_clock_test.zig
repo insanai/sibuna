@@ -5,12 +5,17 @@ const p = @import("console").protocol;
 const fixture = @import("console_store_test.zig");
 const Fixture = fixture.Fixture;
 
-fn operations(digest: [32]u8, require_totp: bool, now: u64) ![7]p.StorageRequest {
+fn operations(digest: [32]u8, require_totp: bool, now: u64) ![8]p.StorageRequest {
     const policy: p.policies.Query = .{
         .session_digest = digest,
         .require_totp = require_totp,
     };
     return .{
+        .{ .security_query = .{
+            .session_digest = digest,
+            .require_totp = require_totp,
+            .request = .{ .from = now -| 60, .until = now },
+        } },
         .{ .events_query = .{ .session_digest = digest, .require_totp = require_totp } },
         .{ .events_query = .{
             .session_digest = digest,
@@ -61,7 +66,7 @@ test "queued investigation rejects expired and password-restricted sessions and 
         ));
         defer fx.close();
         try fixture.policySession(fx);
-        var tickets: [7]@import("console").Mailbox.Ticket = undefined;
+        var tickets: [8]@import("console").Mailbox.Ticket = undefined;
         const requests = try operations(@splat(1), index == 2, fx.owner.nowSeconds());
         for (requests, &tickets) |request, *ticket|
             ticket.* = try fx.owner.console_mailbox.submit(t.io, request, .urgent);
@@ -94,9 +99,9 @@ test "storage reads enforce bearer capabilities and the issuer MFA requirement" 
         .digest = @splat(3),
     } })).token_saved;
     const requests = try operations(@splat(3), false, fx.owner.nowSeconds());
-    for (requests, 0..) |request, index| {
+    for (requests) |request| {
         const result = try fx.run(request);
-        if (index == 6) {
+        if (request == .minutes_query) {
             try t.expect(result == .minute_page);
         } else try t.expectEqual(p.Failure.forbidden, result.failed);
     }

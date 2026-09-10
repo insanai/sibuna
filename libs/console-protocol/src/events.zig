@@ -17,6 +17,7 @@ pub const Query = struct {
     incident: u64 = 0,
     category: Bytes(32) = .{},
     country: country.Filter = .{},
+    module: ?@import("security.zig").Module = null,
     ip: Bytes(48) = .{},
     path_prefix: Bytes(256) = .{},
 };

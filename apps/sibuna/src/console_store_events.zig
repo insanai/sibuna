@@ -17,6 +17,7 @@ pub fn query(owner: *Persistent, input: p.events.Query) !p.StorageResult {
         .time = std.math.maxInt(i64),
         .id = std.math.maxInt(i64),
     };
+    const module: u64 = if (input.module) |m| @intFromEnum(m) else 3;
     const sql = statement(input.grouped, input.campaign != 0, input.incident != 0);
     var result = try db.query(owner.db, owner.gpa, sql, &.{
         integer(input.from),             integer(input.until),
@@ -25,6 +26,7 @@ pub fn query(owner: *Persistent, input: p.events.Query) !p.StorageResult {
         text(input.ip.slice()),          text(input.ip.slice()),
         text(input.path_prefix.slice()), text(input.path_prefix.slice()),
         text(input.country.slice()),     text(input.country.slice()),
+        integer(module),                 integer(module),
         integer(input.campaign),         integer(input.campaign),
         integer(input.incident),         integer(input.incident),
         integer(before.time),            integer(before.time),
@@ -157,7 +159,8 @@ const base_filters =
     "AND (?=0 OR node_id=?) AND (?='' OR violation_category=?) AND (?='' OR client_ip=?) " ++
     "AND substr(path,1,length(?))=? AND (?='' OR " ++
     "CASE WHEN c.generation IS NULL THEN 'not_recorded' " ++
-    "ELSE COALESCE(c.country,'unknown') END=?) ";
+    "ELSE COALESCE(c.country,'unknown') END=?) AND (?=3 OR " ++
+    @import("console_store_security.zig").classification ++ "=?) ";
 const filters = base_filters ++ "AND (?=0 OR campaign_id=?) ";
 const id_filter = "AND (?=0 OR id=?) ";
 const exact_id = "AND id=? AND ?!=0 ";

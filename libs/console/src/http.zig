@@ -32,6 +32,9 @@ fn failureHint(code: []const u8) []const u8 {
             "A pending completion does not mean the local effect failed.";
     if (std.mem.eql(u8, code, "CONSOLEAUDIT404"))
         return "This audit record is unavailable. Refresh; retention may have removed it.";
+    if (std.mem.eql(u8, code, "CONSOLESECURITY"))
+        return "Narrow the findings period or select one node, then retry. " ++
+            "If access changed, sign in again.";
     if (std.mem.eql(u8, code, "CONSOLEAUDIT"))
         return "Narrow the audit filters or sign in again, then retry.";
     if (std.mem.eql(u8, code, "CONSOLEMUTATION"))

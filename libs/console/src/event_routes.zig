@@ -22,6 +22,7 @@ pub fn query(app: *App, context: *http.Context, export_page: bool) !void {
         campaign: []const u8 = "",
         incident: []const u8 = "",
         category: []const u8 = "",
+        module: ?p.security.Module = null,
         country: []const u8 = "",
         ip: []const u8 = "",
         path_prefix: []const u8 = "",
@@ -39,6 +40,7 @@ pub fn query(app: *App, context: *http.Context, export_page: bool) !void {
         .node = fields.node,
         .campaign = try campaignId(fields.campaign),
         .incident = try campaignId(fields.incident),
+        .module = fields.module,
         .category = try p.Bytes(32).init(fields.category),
         .country = try p.events.country.Filter.init(fields.country),
         .ip = try p.Bytes(48).init(fields.ip),
@@ -49,8 +51,17 @@ pub fn query(app: *App, context: *http.Context, export_page: bool) !void {
         .id = std.fmt.parseInt(u64, cursor.id, 10) catch return error.InvalidRequest,
     };
     const result = try app.request(.{ .events_query = request });
+    return reply(context, result, export_page, fields.format == .csv);
+}
+
+fn reply(
+    context: *http.Context,
+    result: p.StorageResult,
+    export_page: bool,
+    csv_format: bool,
+) !void {
     if (result == .page) {
-        if (export_page and fields.format == .csv) {
+        if (export_page and csv_format) {
             var output: [4096]u8 = undefined;
             const csv = try @import("event_export.zig").csv(result.page.slice(), &output);
             return context.respond(.ok, "text/csv; charset=utf-8", csv, &.{.{

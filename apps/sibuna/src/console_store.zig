@@ -103,6 +103,7 @@ fn executeMore(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
     const import_set = @import("console_policy_import.zig");
     const now = owner.nowSeconds();
     return switch (request) {
+        .security_query => |input| @import("console_store_security.zig").query(owner, input),
         .page_read => |input| pages.read(owner, input, now),
         .page_edit => |input| pages.edit(owner, input, now),
         .policy_order => |input| @import("console_policy_order.zig").order(owner, input, now),
