@@ -4489,6 +4489,10 @@ Verification: `zig build -j1 fmt test console-test console-ui-e2e sid book` pass
 replay, revision conflicts, revoked authority and rollback on audit failure. The
 shipped-Wasm live test exercises the unique retention forms, confirmation, out-of-range
 input, stale revisions and effective minute-history metadata.
+The clustered `zig build -j1 -Dcluster=true console-e2e` run also passes all 12 steps:
+a setting saved on node 1 appears at the same revision on all three nodes, a stale edit on
+node 2 is refused, and quorum loss/rejoin retains the value. The TLS fixture carries
+packed country rows; real peers retain local-only totals and clean shutdown.
 
 == Chrome review of current interface increments (2026-09-10)
 

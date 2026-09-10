@@ -85,6 +85,24 @@ def traffic(c, node, count=16):
         assert status in (200, 302, 403, 429, 503), status
 
 
+def retention_shared(c, cookie, csrf, write=False):
+    form = {"key": "retention.minutes", "value": "1", "confirmed": True,
+            "expected_revision": "0"}
+    if write:
+        status, _, body = c.h.request(c.consoles[0], "POST", "/console/api/settings/change",
+                                      form, cookie, csrf)
+        assert status == 200, (status, body)
+        status, _, body = c.h.request(c.consoles[1], "POST", "/console/api/settings/change",
+                                      form, cookie, csrf)
+        assert status == 409, (status, body)
+    for port in c.consoles:
+        status, _, body = c.h.request(port, "POST", "/console/api/settings/query", {}, cookie, csrf)
+        rows = json.loads(body)
+        assert status == 200, (status, body)
+        saved = next(row for row in rows if row["key"] == form["key"])
+        assert saved["value"] == "1" and str(saved["revision"]) == "1", saved
+
+
 def scenario(c):
     c.start(1)
     c.start(2)
@@ -108,6 +126,8 @@ def scenario(c):
                                       dict(credentials, code=recovery[0]))
     assert status == 200, body
     cookie = headers["Set-Cookie"].split(";", 1)[0]
+    csrf = json.loads(body)["csrf"]
+    retention_shared(c, cookie, csrf, write=True)
     for i in range(3):
         peer_test.wait(lambda: all(row["status"] == "current" for row in reports(c, i, cookie).values()),
                        "all direct peers observed")
@@ -147,6 +167,7 @@ def scenario(c):
                              "rejoined peer has a new boot", 60)
     assert restored["resets"] >= 1
     assert restored["requests"] == 0, "boot changes establish a fresh counter origin"
+    retention_shared(c, cookie, csrf)
 
 
 def check(binary, h):
