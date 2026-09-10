@@ -84,7 +84,8 @@ fn unsigned(value: std.json.Value, key: []const u8) !u64 {
 pub fn render(model: *const Model, w: *Writer, now: u64, paused: bool) Writer.Error!void {
     try html.render(w, "<section class=\"sb-panel mt-6\" aria-labelledby=\"ranking-heading\">" ++
         "<h2 id=\"ranking-heading\">Sampled request paths</h2>" ++
-        "<p class=\"sb-note\">Partial UTC minute · updates every 10 seconds. " ++
+        "<p class=\"sb-note\">This console node · partial UTC minute · " ++
+        "updates every 10 seconds. " ++
         "Counts show samples at 1/64 probability. " ++
         "128-byte path prefixes. " ++
         "Sample counts lie between the bounds.</p>", .{});

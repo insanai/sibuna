@@ -231,6 +231,10 @@ fn actionName(name: []const u8, fields: std.json.Value) !void {
         state.navigation_open = false;
         try command(.{ .op = "focus", .selector = "main h1", .top = true });
     }
+    if (equal(name, "dashboard-node") and state.fullAccess()) {
+        try @import("dashboard_scope.zig").select(&state, string(fields, "node"));
+        return refresh();
+    }
     const management = @import("management_controller.zig");
     if (try managed().fromAudit(name)) return;
     if (try management.action(&state, name, fields, outbox())) return;
@@ -469,6 +473,7 @@ fn statsResponse(status: i64, body: std.json.Value, alloc: std.mem.Allocator) !v
     }
     @import("stats_series.zig").accept(&state, snapshot);
     state.stats = snapshot;
+    if (state.dashboard_scope) |scope| state.stale = scope.stale;
     state.received_at = state.browser_time;
     try refreshRankings();
     try refreshTimeline(false);
@@ -604,6 +609,7 @@ test "authenticated earth remains bounded without a GeoIP provider" {
     try @import("geography.zig").validate(world);
     var model: State = .{ .phase = .dashboard, .geometry = world };
     model.csrf = try p.Bytes(64).init("test");
+    model.stats = std.mem.zeroes(p.StatsSnapshot);
     const buffer = try std.testing.allocator.alloc(u8, 512 * 1024);
     defer std.testing.allocator.free(buffer);
     for (0..5) |view| {

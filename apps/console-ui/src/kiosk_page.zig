@@ -33,6 +33,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         "<p class=\"sb-note\" role=\"status\">Last update {{ age }} seconds ago.</p>",
         .{ .age = state.browser_time -| state.received_at },
     );
+    try @import("dashboard_scope.zig").render(state, w);
     try @import("render.zig").tilesPublic(state, w);
     try html.render(w, "<section class=\"sb-panels\"><article class=\"sb-panel\">", .{});
     try @import("globe.zig").render(state, w);

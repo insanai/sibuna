@@ -92,6 +92,8 @@ pub const State = struct {
     recovery_codes: [10]p.Bytes(32) = @splat(.{}),
     recovery_count: usize = 0,
     stats: ?p.StatsSnapshot = null,
+    dashboard_scope: ?p.dashboard.Scope = null,
+    dashboard_node: ?u32 = null,
     /// Wall-display session: read-only, statistics only, auto-cycling globe modes.
     kiosk: bool = false,
     kiosk_expires: u64 = 0,

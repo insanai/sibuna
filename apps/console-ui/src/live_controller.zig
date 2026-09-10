@@ -87,7 +87,7 @@ pub fn sync(state: *State, out: Outbox) !void {
 fn desired(state: *const State, topic: p.Topic) ?Args {
     if (state.kiosk and topic != .stats) return null;
     return switch (topic) {
-        .stats => if (state.paused) null else .{},
+        .stats => if (state.paused) null else .{ .node = state.dashboard_node },
         .policy => if (state.phase == .policies) .{} else null,
         .nodes => if (state.phase == .nodes) .{} else null,
         .challenges => if (state.phase == .challenges) .{} else null,
@@ -204,7 +204,16 @@ fn publish(state: *State, topic: p.Topic, value: std.json.Value, alloc: std.mem.
     observation.available = fields.field(value, "available") == null or
         (try decode(bool, fields.field(value, "available").?, alloc));
     switch (topic) {
-        .stats => {},
+        .stats => {
+            state.dashboard_scope = if (fields.field(value, "scope")) |scope|
+                try decode(p.dashboard.Scope, scope, alloc)
+            else
+                null;
+            if (!observation.available) {
+                state.stats = null;
+                state.points = @splat(.{});
+            }
+        },
         .nodes => if (observation.available) {
             try state.nodes.membersValue(value, alloc);
             state.nodes.peers.received_at = state.browser_time;

@@ -2,7 +2,12 @@
 const std = @import("std");
 const p = @import("console_protocol");
 const State = @import("state.zig").State;
-pub const Point = struct { second: u64 = 0, count: u64 = 0, duration_ms: u64 = 0 };
+pub const Point = struct {
+    second: u64 = 0,
+    count: u64 = 0,
+    duration_ms: u64 = 0,
+    combined_rate: ?f64 = null,
+};
 
 pub fn accept(state: *State, next: p.StatsSnapshot) void {
     const previous = state.stats orelse return;
@@ -14,6 +19,15 @@ pub fn accept(state: *State, next: p.StatsSnapshot) void {
         state.points = @splat(.{});
         return;
     }
+    if (state.dashboard_scope) |scope| if (scope.selected == 0) {
+        const value = scope.request_rate orelse return;
+        state.points[@intCast(next.timestamp % 60)] = .{
+            .second = next.timestamp,
+            .duration_ms = 1000,
+            .combined_rate = value,
+        };
+        return;
+    };
     const elapsed = next.uptime_ms - previous.uptime_ms;
     // A skipped UTC second, a stopped monotonic clock or a delayed observation leaves a gap.
     if (next.timestamp - previous.timestamp != 1 or elapsed == 0 or elapsed > 2000) return;
@@ -25,6 +39,7 @@ pub fn accept(state: *State, next: p.StatsSnapshot) void {
 }
 
 pub fn rate(point: Point) f64 {
+    if (point.combined_rate) |value| return value;
     if (point.duration_ms == 0) return 0;
     return @as(f64, @floatFromInt(point.count)) * 1000 /
         @as(f64, @floatFromInt(point.duration_ms));
@@ -78,4 +93,27 @@ test "live deltas reject restarts, clock discontinuities, unknown boots and miss
     next.uptime_ms += 1000;
     accept(&state, next);
     for (state.points) |point| try t.expectEqual(@as(u64, 0), point.duration_ms);
+}
+
+test "combined timeline uses measured source rates and leaves delayed source intervals empty" {
+    const t = std.testing;
+    var initial = std.mem.zeroes(p.StatsSnapshot);
+    initial.outcomes_version = 1;
+    initial.boot = @splat(1);
+    initial.timestamp = 100;
+    initial.uptime_ms = 1000;
+    var state: State = .{ .stats = initial, .dashboard_scope = .{ .request_rate = 6 } };
+    var next = initial;
+    next.timestamp = 101;
+    next.uptime_ms = 2000;
+    next.requests = 100;
+    accept(&state, next);
+    try t.expectEqual(@as(f64, 6), rate(state.points[101 % 60]));
+    state.stats = next;
+    state.dashboard_scope.?.request_rate = null;
+    next.timestamp = 102;
+    next.uptime_ms = 3000;
+    next.requests = 1000;
+    accept(&state, next);
+    try t.expectEqual(@as(u64, 0), state.points[102 % 60].duration_ms);
 }

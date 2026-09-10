@@ -66,12 +66,12 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     try serverLocation(state, w);
     try html.render(w, "<p class=\"sb-note\"><a href=\"https://www.naturalearthdata.com\">" ++
         "Made with Natural Earth</a>. Boundaries provide geographic context.</p>", .{});
-    if (state.geometry == null) try w.writeAll(if (state.geometry_busy)
+    if (state.stats != null and state.geometry == null) try w.writeAll(if (state.geometry_busy)
         "<p class=\"sb-note\" role=\"status\">Loading world boundaries…</p>"
     else
         "<p class=\"sb-note\" role=\"status\">World boundaries unavailable. Retrying soon.</p>");
     try description(state, w);
-    if (!available) {
+    if (!available and state.stats != null) {
         try html.render(w, "<p class=\"sb-note\">GeoIP unavailable. " ++
             "Activity is counted as Unknown; no locations are inferred.</p>" ++
             "<button class=\"btn btn-sm\" " ++
@@ -80,14 +80,27 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     try html.render(w, "<p class=\"sb-note\">" ++
         "Markers show representative country positions, not client coordinates. " ++
         "Arrows illustrate recorded inbound activity over this window toward " ++
-        "this console node's configured location. They are not individual live connections.", .{});
+        "the receiving nodes' configured locations. " ++
+        "They are not individual live connections.", .{});
     const attribution = if (state.stats) |stats| stats.geoip_attribution else false;
-    if (attribution) try w.writeAll(" <a href=\"https://db-ip.com\">IP Geolocation by DB-IP</a>.");
-    try w.writeAll("</p>");
+    if (attribution) try w.writeAll(
+        " <a href=\"https://db-ip.com\">IP Geolocation by DB-IP</a>.",
+    );
+    try w.writeAll(
+        "</p>",
+    );
     try rankings(state, w);
 }
 
 fn serverLocation(state: *const State, w: *Writer) Writer.Error!void {
+    if (state.stats == null) return;
+    if (state.dashboard_scope) |scope| if (scope.selected == 0 and scope.count > 1) {
+        try w.writeAll(
+            "<p class=\"sb-note\">Destinations use configured node locations. " ++
+                "See node coverage for missing locations.</p>",
+        );
+        return;
+    };
     if (@import("globe_connections.zig").destination(state)) |location| {
         try w.print(
             "<p class=\"sb-note\">Sibuna server: {d:.4}, {d:.4} (configured). " ++
@@ -95,9 +108,11 @@ fn serverLocation(state: *const State, w: *Writer) Writer.Error!void {
                 "Center Sibuna</button></p>",
             .{ location.lat, location.lon },
         );
-    } else try w.writeAll("<p class=\"sb-note\">Server location not configured. " ++
-        "Set <code>--console-location latitude,longitude</code> on this node " ++
-        "to show its destination marker and inbound arrows.</p>");
+    } else try w.writeAll(
+        "<p class=\"sb-note\">Server location not configured. " ++
+            "Set <code>--console-location latitude,longitude</code> on this node " ++
+            "to show its destination marker and inbound arrows.</p>",
+    );
 }
 
 fn description(state: *const State, w: *Writer) Writer.Error!void {
@@ -107,7 +122,7 @@ fn description(state: *const State, w: *Writer) Writer.Error!void {
     const stats = state.stats orelse return;
     if (stats.incident_geo) |incidents| {
         if (incidents.version == 1) {
-            try html.render(w, "<p class=\"sb-note\">Local recorded findings over 60 seconds, " ++
+            try html.render(w, "<p class=\"sb-note\">Recorded findings over 60 seconds, " ++
                 "including audit findings. Coverage is incomplete: not every blocked " ++
                 "request creates an incident, and one request can create several findings. " ++
                 "These are not unique attacks. Findings are not sampled.</p>", .{});

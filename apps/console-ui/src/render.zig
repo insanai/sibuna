@@ -26,7 +26,7 @@ fn page(state: *const State, w: *Writer) Writer.Error!void {
     if (state.phase == .geoip) return @import("geoip_page.zig").render(state, w);
     if (state.phase != .dashboard) return authentication(state, w);
     try html.render(w, "<main class=\"sb-main\"><header class=\"sb-header\"><div>" ++
-        "<p class=\"sb-subtitle\">SINGLE NODE / STATISTICS</p>" ++
+        "<p class=\"sb-subtitle\">TRAFFIC / STATISTICS</p>" ++
         "<h1 id=\"page-heading\" tabindex=\"-1\">Traffic overview</h1>" ++
         "<p class=\"sb-subtitle\">Know what is reaching your applications.</p></div>" ++
         "<div class=\"sb-status\"><span class=\"badge badge-outline\">", .{});
@@ -54,6 +54,7 @@ fn page(state: *const State, w: *Writer) Writer.Error!void {
             },
         );
     }
+    try @import("dashboard_scope.zig").render(state, w);
     try tiles(state, w);
     try html.render(w, "<section class=\"sb-panels\"><article class=\"sb-panel\">", .{});
     try @import("globe.zig").render(state, w);
@@ -72,8 +73,8 @@ fn page(state: *const State, w: *Writer) Writer.Error!void {
         state.paused or state.stale,
     );
     try html.render(w, "<footer class=\"sb-footer sb-note\">" ++
-        "<span>Sibuna Console · single-node view</span>" ++
-        "<span>All-time totals since this boot</span>" ++
+        "<span>Sibuna Console · selected live view</span>" ++
+        "<span>Totals since the contributing node boots</span>" ++
         "</footer></main>", .{});
 }
 
@@ -238,12 +239,18 @@ fn tiles(state: *const State, w: *Writer) Writer.Error!void {
                 std.mem.eql(u8, key, "banned") or std.mem.eql(u8, key, "rate_limited") or
                 std.mem.eql(u8, key, "other");
             if (origin and stats.proxy_mode != .reverse_proxy)
-                try w.writeAll("Not observed")
+                try w.writeAll(
+                    "Not observed",
+                )
             else if (separated and stats.outcomes_version != 1)
-                try w.writeAll("Not recorded")
+                try w.writeAll(
+                    "Not recorded",
+                )
             else
                 try w.print("{d}", .{@field(stats, key)});
-        } else try w.writeAll("—");
+        } else try w.writeAll(
+            "—",
+        );
         try html.render(w, "</strong></article>", .{});
     }
     try html.render(w, "</section>", .{});
@@ -308,8 +315,10 @@ fn coverage(state: *const State, w: *Writer) Writer.Error!void {
 }
 
 fn timeline(state: *const State, w: *Writer) Writer.Error!void {
-    try w.writeAll("<svg viewBox=\"0 0 480 180\" role=\"img\" aria-label=\"Request timeline\">" ++
-        "<path d=\"M0 150H480 M0 100H480 M0 50H480\" fill=\"none\" stroke=\"#d7e3ee\"/>");
+    try w.writeAll(
+        "<svg viewBox=\"0 0 480 180\" role=\"img\" aria-label=\"Request timeline\">" ++
+            "<path d=\"M0 150H480 M0 100H480 M0 50H480\" fill=\"none\" stroke=\"#d7e3ee\"/>",
+    );
     if (state.stats) |stats| {
         var maximum: f64 = 1;
         for (state.points) |point| {
@@ -328,7 +337,9 @@ fn timeline(state: *const State, w: *Writer) Writer.Error!void {
             );
         }
     }
-    try w.writeAll("</svg>");
+    try w.writeAll(
+        "</svg>",
+    );
 }
 
 pub const escape = @import("html").escape;

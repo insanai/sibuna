@@ -112,7 +112,7 @@ pub fn request(state: *State, force: bool) ?Request {
     const stats = state.stats orelse return null;
     if (!state.fullAccess() or state.kiosk or state.phase != .dashboard or !state.timeline_open or
         !state.history_minutes or state.paused or state.hidden or model.busy or
-        !stats.minute_history.available) return null;
+        !@import("dashboard_scope.zig").historyAvailable(state)) return null;
     if (!force and (model.before != null or (model.generation != 0 and
         state.browser_time -| model.requested_at < 10))) return null;
     generation +%= 1;
@@ -121,7 +121,9 @@ pub fn request(state: *State, force: bool) ?Request {
     model.requested_at = state.browser_time;
     model.busy = true;
     const until = if (model.before != null) model.until else stats.timestamp / 60;
-    model.requested_node = if (model.before != null) model.scope_node else if (model.all_nodes)
+    model.requested_node = if (model.before != null)
+        model.scope_node
+    else if (model.all_nodes or stats.node == 0)
         null
     else
         stats.node;
@@ -159,7 +161,7 @@ pub fn response(
 
 pub fn table(state: *const State, w: *Writer) Writer.Error!void {
     const model = &state.minute_history;
-    if (state.stats == null or !state.stats.?.minute_history.available)
+    if (state.stats == null or !@import("dashboard_scope.zig").historyAvailable(state))
         return html.render(w, "<div id=\"timeline-values\" role=\"status\">" ++
             "Minute history is unavailable on this node.</div>", .{});
     try controls(state, w);

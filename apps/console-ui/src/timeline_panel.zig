@@ -126,7 +126,8 @@ pub fn table(state: *const State, w: *Writer) Writer.Error!void {
     if (!try header(state, w)) return;
     if (state.history_minutes) return @import("minute_panel.zig").table(state, w);
     const model = &state.timeline;
-    try html.render(w, "<p class=\"sb-note\">Server observations retained for one hour. " ++
+    try html.render(w, "<p class=\"sb-note\">This console node’s observations, " ++
+        "retained for one hour. " ++
         "UTC labels describe interval endings; gaps are not zero traffic.</p>", .{});
     if (model.failed) try w.writeAll(if (model.conflict)
         "<p role=\"status\">History changed. Reload the latest page.</p>"
@@ -176,7 +177,9 @@ pub fn table(state: *const State, w: *Writer) Writer.Error!void {
 
 fn values(model: *const Model, w: *Writer) Writer.Error!void {
     for (model.rows[0..model.count]) |row| {
-        try w.writeAll("<tr><td class=\"whitespace-nowrap\">");
+        try w.writeAll(
+            "<tr><td class=\"whitespace-nowrap\">",
+        );
         try @import("events_page.zig").timestamp(w, row.utc);
         const coverage = if (row.gap) "Gap / delayed" else if (row.partial)
             "Collecting"
@@ -191,9 +194,13 @@ fn values(model: *const Model, w: *Writer) Writer.Error!void {
             coverage,
         });
     }
-    if (model.count == 0) try w.writeAll("<tr><td colspan=\"5\">No retained observations " ++
-        "on this page.</td></tr>");
-    try w.writeAll("</tbody></table></div>");
+    if (model.count == 0) try w.writeAll(
+        "<tr><td colspan=\"5\">No retained observations " ++
+            "on this page.</td></tr>",
+    );
+    try w.writeAll(
+        "</tbody></table></div>",
+    );
 }
 
 fn header(state: *const State, w: *Writer) Writer.Error!bool {
