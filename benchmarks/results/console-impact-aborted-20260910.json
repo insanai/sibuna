@@ -1,0 +1,338 @@
+{
+  "status": "aborted_inconclusive",
+  "source_commit": "e4efb1d341844f8123a864975dba62cd4fbfb2f5",
+  "source_tree_clean": true,
+  "date": "2026-09-10",
+  "host": "Apple M1 development Mac, 8 GiB; ambient host activity uncontrolled",
+  "requested_rounds": 5,
+  "requested_seconds": 15,
+  "warmup_seconds": 2,
+  "connections": 32,
+  "threads": 2,
+  "geoip_sha256": "e3eb77377c689dea754902988068e767c2643ef8507922ca71fcd02cb39936b8",
+  "completed_samples": [
+    {
+      "round": 1,
+      "workload": "admitted",
+      "configuration": "compiled_out",
+      "displayed_requests_per_second": 179071,
+      "displayed_p99_ms": 0.39
+    },
+    {
+      "round": 1,
+      "workload": "challenged",
+      "configuration": "compiled_out",
+      "displayed_requests_per_second": 188006,
+      "displayed_p99_ms": 0.3
+    },
+    {
+      "round": 1,
+      "workload": "denied",
+      "configuration": "compiled_out",
+      "displayed_requests_per_second": 181850,
+      "displayed_p99_ms": 0.39
+    },
+    {
+      "round": 1,
+      "workload": "policy_reload",
+      "configuration": "compiled_out",
+      "displayed_requests_per_second": 178710,
+      "displayed_p99_ms": 0.47
+    },
+    {
+      "round": 1,
+      "workload": "admitted",
+      "configuration": "disabled",
+      "displayed_requests_per_second": 180090,
+      "displayed_p99_ms": 0.34
+    },
+    {
+      "round": 1,
+      "workload": "challenged",
+      "configuration": "disabled",
+      "displayed_requests_per_second": 185649,
+      "displayed_p99_ms": 0.31
+    },
+    {
+      "round": 1,
+      "workload": "denied",
+      "configuration": "disabled",
+      "displayed_requests_per_second": 180959,
+      "displayed_p99_ms": 0.34
+    },
+    {
+      "round": 1,
+      "workload": "policy_reload",
+      "configuration": "disabled",
+      "displayed_requests_per_second": 177777,
+      "displayed_p99_ms": 0.32
+    },
+    {
+      "round": 1,
+      "workload": "admitted",
+      "configuration": "idle",
+      "displayed_requests_per_second": 176703,
+      "displayed_p99_ms": 0.32
+    },
+    {
+      "round": 1,
+      "workload": "challenged",
+      "configuration": "idle",
+      "displayed_requests_per_second": 182942,
+      "displayed_p99_ms": 0.29
+    },
+    {
+      "round": 1,
+      "workload": "denied",
+      "configuration": "idle",
+      "displayed_requests_per_second": 175174,
+      "displayed_p99_ms": 0.32
+    },
+    {
+      "round": 1,
+      "workload": "policy_reload",
+      "configuration": "idle",
+      "displayed_requests_per_second": 172452,
+      "displayed_p99_ms": 0.31
+    },
+    {
+      "round": 1,
+      "workload": "admitted",
+      "configuration": "active",
+      "displayed_requests_per_second": 173813,
+      "displayed_p99_ms": 0.33
+    },
+    {
+      "round": 1,
+      "workload": "challenged",
+      "configuration": "active",
+      "displayed_requests_per_second": 180710,
+      "displayed_p99_ms": 0.3
+    },
+    {
+      "round": 1,
+      "workload": "denied",
+      "configuration": "active",
+      "displayed_requests_per_second": 172406,
+      "displayed_p99_ms": 0.34
+    },
+    {
+      "round": 1,
+      "workload": "policy_reload",
+      "configuration": "active",
+      "displayed_requests_per_second": 170540,
+      "displayed_p99_ms": 0.33
+    },
+    {
+      "round": 2,
+      "workload": "challenged",
+      "configuration": "disabled",
+      "displayed_requests_per_second": 179603,
+      "displayed_p99_ms": 0.32
+    },
+    {
+      "round": 2,
+      "workload": "denied",
+      "configuration": "disabled",
+      "displayed_requests_per_second": 174512,
+      "displayed_p99_ms": 0.31
+    },
+    {
+      "round": 2,
+      "workload": "policy_reload",
+      "configuration": "disabled",
+      "displayed_requests_per_second": 171185,
+      "displayed_p99_ms": 0.31
+    },
+    {
+      "round": 2,
+      "workload": "admitted",
+      "configuration": "disabled",
+      "displayed_requests_per_second": 170724,
+      "displayed_p99_ms": 0.33
+    },
+    {
+      "round": 2,
+      "workload": "challenged",
+      "configuration": "idle",
+      "displayed_requests_per_second": 178591,
+      "displayed_p99_ms": 0.31
+    },
+    {
+      "round": 2,
+      "workload": "denied",
+      "configuration": "idle",
+      "displayed_requests_per_second": 171601,
+      "displayed_p99_ms": 0.33
+    },
+    {
+      "round": 2,
+      "workload": "policy_reload",
+      "configuration": "idle",
+      "displayed_requests_per_second": 168023,
+      "displayed_p99_ms": 0.37
+    },
+    {
+      "round": 2,
+      "workload": "admitted",
+      "configuration": "idle",
+      "displayed_requests_per_second": 168478,
+      "displayed_p99_ms": 0.4
+    },
+    {
+      "round": 2,
+      "workload": "challenged",
+      "configuration": "active",
+      "displayed_requests_per_second": 177946,
+      "displayed_p99_ms": 0.3
+    },
+    {
+      "round": 2,
+      "workload": "denied",
+      "configuration": "active",
+      "displayed_requests_per_second": 170569,
+      "displayed_p99_ms": 0.34
+    },
+    {
+      "round": 2,
+      "workload": "policy_reload",
+      "configuration": "active",
+      "displayed_requests_per_second": 168060,
+      "displayed_p99_ms": 0.33
+    },
+    {
+      "round": 2,
+      "workload": "admitted",
+      "configuration": "active",
+      "displayed_requests_per_second": 168726,
+      "displayed_p99_ms": 0.33
+    },
+    {
+      "round": 2,
+      "workload": "challenged",
+      "configuration": "compiled_out",
+      "displayed_requests_per_second": 177353,
+      "displayed_p99_ms": 0.33
+    },
+    {
+      "round": 2,
+      "workload": "denied",
+      "configuration": "compiled_out",
+      "displayed_requests_per_second": 167567,
+      "displayed_p99_ms": 0.33
+    },
+    {
+      "round": 2,
+      "workload": "policy_reload",
+      "configuration": "compiled_out",
+      "displayed_requests_per_second": 166906,
+      "displayed_p99_ms": 0.34
+    },
+    {
+      "round": 2,
+      "workload": "admitted",
+      "configuration": "compiled_out",
+      "displayed_requests_per_second": 166925,
+      "displayed_p99_ms": 0.34
+    },
+    {
+      "round": 3,
+      "workload": "denied",
+      "configuration": "idle",
+      "displayed_requests_per_second": 168534,
+      "displayed_p99_ms": 0.35
+    },
+    {
+      "round": 3,
+      "workload": "policy_reload",
+      "configuration": "idle",
+      "displayed_requests_per_second": 163446,
+      "displayed_p99_ms": 0.36
+    },
+    {
+      "round": 3,
+      "workload": "admitted",
+      "configuration": "idle",
+      "displayed_requests_per_second": 166078,
+      "displayed_p99_ms": 0.33
+    },
+    {
+      "round": 3,
+      "workload": "challenged",
+      "configuration": "idle",
+      "displayed_requests_per_second": 176131,
+      "displayed_p99_ms": 0.29
+    },
+    {
+      "round": 3,
+      "workload": "denied",
+      "configuration": "active",
+      "displayed_requests_per_second": 169878,
+      "displayed_p99_ms": 0.42
+    },
+    {
+      "round": 3,
+      "workload": "policy_reload",
+      "configuration": "active",
+      "displayed_requests_per_second": 164324,
+      "displayed_p99_ms": 0.34
+    },
+    {
+      "round": 3,
+      "workload": "admitted",
+      "configuration": "active",
+      "displayed_requests_per_second": 166051,
+      "displayed_p99_ms": 0.33
+    },
+    {
+      "round": 3,
+      "workload": "challenged",
+      "configuration": "active",
+      "displayed_requests_per_second": 14388,
+      "displayed_p99_ms": 0.51
+    },
+    {
+      "round": 3,
+      "workload": "denied",
+      "configuration": "compiled_out",
+      "displayed_requests_per_second": 13831,
+      "displayed_p99_ms": 0.53
+    },
+    {
+      "round": 3,
+      "workload": "policy_reload",
+      "configuration": "compiled_out",
+      "displayed_requests_per_second": 118718,
+      "displayed_p99_ms": 0.34
+    },
+    {
+      "round": 3,
+      "workload": "admitted",
+      "configuration": "compiled_out",
+      "displayed_requests_per_second": 1644,
+      "displayed_p99_ms": 0.39
+    },
+    {
+      "round": 3,
+      "workload": "challenged",
+      "configuration": "compiled_out",
+      "displayed_requests_per_second": 191931,
+      "displayed_p99_ms": 2.29
+    },
+    {
+      "round": 3,
+      "workload": "denied",
+      "configuration": "disabled",
+      "displayed_requests_per_second": 182285,
+      "displayed_p99_ms": 0.37
+    },
+    {
+      "round": 3,
+      "workload": "policy_reload",
+      "configuration": "disabled",
+      "displayed_requests_per_second": 179119,
+      "displayed_p99_ms": 0.34
+    }
+  ],
+  "reason": "Stopped with SIGINT during round 3 after the compiled-out baseline exceeded the 1% stability gate. These are rounded progress-log observations, not a completed impact result. No confidence intervals, dashboard-delivery verdict or acceptance is asserted. The cause of baseline variation was not isolated."
+}

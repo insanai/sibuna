@@ -5090,3 +5090,21 @@ single-node artifact is 12,332,952 bytes, SHA-256
 Chrome tabs were closed. Hashcash's seven-batch median is 62.32 ns, with 58.00–97.05 ns min/max;
 these local measurements retain their spread and do not establish a causal speedup or a pass
 of the separate eight-dashboard throughput/p99 gate. Zig remains 0.16.0 and Zaxonlite 0.6.2.
+
+
+== 2026-09-10 full impact attempt interrupted after baseline instability
+
+The five-round, four-workload single-node impact attempt ran against clean commit
+`e4efb1d`, with 15-second samples, 2-second warm-up, two load threads, 32 connections
+and the production country snapshot. During round three the compiled-out admitted
+baseline fell to approximately 1,644 requests/second, after earlier observations near
+180,000 requests/second. This exceeds the 1% stability gate independently of console
+overhead. The attempt was stopped with SIGINT, allowing the harness to close its owned
+daemons. The cause of the variation was not isolated; no console-overhead conclusion
+is inferred from it.
+
+`benchmarks/results/console-impact-aborted-20260910.json` preserves the rounded progress
+observations and source identity. It is explicitly an incomplete attempt, not a replacement
+for the latest completed matrix or a passing result. Full single-node and clustered impact
+acceptance remain open. Source files, builds and browser fixtures were held unchanged
+during measurement; ambient activity on the development Mac was uncontrolled.
