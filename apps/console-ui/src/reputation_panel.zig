@@ -16,8 +16,9 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         "Reputation prefixes the console manages beside the data plane's own bans. Deny " ++
         "prefixes refuse before any rule; allow prefixes bypass rules. Revision {{ revision }}" ++
         " · {{ nodes }} trie nodes of 8,192.</p><div class=\"overflow-x-auto\"><table " ++
-        "class=\"table\"><thead><tr><th>Prefix</th><th>Action</th><th>Expires</th>" ++
-        "<th>Source</th><th>Note</th><th>Hits</th><th></th></tr></thead><tbody>", .{
+        "class=\"table\"><thead><tr><th>Prefix</th><th>Action (score)</th><th>Expires</th>" ++
+        "<th>Trigger</th><th>Source</th><th>Note</th><th>Hits</th><th></th></tr></thead>" ++
+        "<tbody>", .{
         .revision = model.committed.slice(),
         .nodes = nodes(model.page()),
     });
@@ -68,10 +69,13 @@ fn rows(page: []const u8, busy: []const u8, w: *Writer) Writer.Error!void {
         const score = field(row, "score") orelse .null;
         const denied = score != .integer or score.integer < 0;
         const expires = string(row, "banned_until");
+        const trigger = string(row, "trigger");
         try html.render(w, @embedFile("snippets/reputation-row.html"), .{
             .prefix = string(row, "prefix"),
             .action = if (denied) "deny" else "allow",
+            .score = if (score == .integer) score.integer else 0,
             .expires = if (expires.len == 0) "never" else expires,
+            .trigger = if (trigger.len == 0) "console" else trigger,
             .source = string(row, "source"),
             .note = string(row, "note"),
             .hits = string(row, "hits"),
