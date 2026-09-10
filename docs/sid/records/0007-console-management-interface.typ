@@ -4785,6 +4785,77 @@ it verified the sampled process's traffic port and cleanly joined every process 
 This validates the fixture. It does not replace the full five-round impact matrix, change
 the numerical limits or close performance acceptance.
 
+
+== Recorded Security investigations (2026-09-10)
+
+Statistics now has separate Traffic and Security views within the common authenticated shell.
+The Security view displays six module summaries, live outcome rate charts, retained inspection
+and honeypot trends, an eight-record live feed, category proportions, and bounded source/path
+rankings. Reputation attribution and rule-hit history remain explicitly not recorded; no proxy
+counter substitutes for absent evidence. Kiosk access remains restricted to its granted views.
+
+The typed Security query covers at most thirty days and one selected node or all recorded
+issuers. Three independently authorized, bounded prepared queries return module trends,
+categories and paths. Counts describe retained findings, including audit records, not exact
+blocked-request populations. Category/source/path navigation carries the frozen half-open
+summary range into the incident query's inclusive endpoints. Event queries, exports and live
+subscriptions share the module predicate. Old query generations cannot replace a newer scope.
+
+The shared outcome-rate contract validates each issuer's boot, sequence interval and monotonic
+counters before summing rates calculated with that issuer's own elapsed time. Missing intervals
+remain unobserved. The Security feed shares the authenticated multi-topic stream; it does not
+load geography. The implicit local scope of a one-node dashboard remains local for retained
+investigations rather than widening to historical issuers.
+
+== Filter layout and responsibility review (2026-09-10)
+
+Incident filters previously placed a module label, selector and fixed-period note in separate
+grid cells. Field groups now keep labels with controls, the path gets a wider column, and
+notes and Apply actions sit outside the field grid. Audit uses the same responsive layout.
+Scope, period and challenge selectors share the same control alignment. Container widths
+account for the persistent sidebar; narrow layouts keep full-width inputs and touch targets.
+The components extend the committed daisyUI styles. Its tab component is included explicitly.
+
+The Wasm entry point delegates account security and policy browsing/testing to cohesive
+controllers. Policy browsing reuses the existing managed-editor context, retaining the ABI's
+state, command-buffer and request-generation ownership. The server's bounded idle registry
+owns socket lease tracking; the request loop obtains only its lease's activity pointer.
+Unregister and reap still share a lock, and shutdown joins connection workers before release.
+
+Persistent remains the storage owner and engine publisher. Policy materialization is separate
+from database lifecycle and incident maintenance. Stored headers and CIDRs now use the same
+strict policy-library validators as managed documents. Invalid, ambiguous or overflowing
+matchers reject the candidate instead of silently dropping conditions. Failed rebuilds retain
+the live engine and applied revision; a later corrected row can be applied normally.
+The next reputation-expiry deadline is published with the engine, after page loading succeeds.
+A later loader failure therefore cannot suppress an expiry-driven retry at the same revision.
+
+The affected entry files contain 1,134, 898 and 869 code lines respectively (previously
+1,330, 984 and 958), with the existing structural limits unchanged. File-wide complexity
+is not a single function's complexity; this review separates responsibilities and shares
+validation rather than treating a smaller aggregate as a correctness proof.
+
+Chrome exercised the shipped 426,172-byte Wasm against a disposable daemon with the full
+717,152-range country snapshot. At desktop widths the incident fields have equal control
+baselines and the path spans two columns; at 1,024 pixels the grid has two columns, and at
+390 pixels every input, selector and Apply button is full-width and 44 pixels high. Event
+and audit pages had no horizontal overflow. Country/module/node/period and actor/action
+submissions returned the expected retained rows. The thirty-day Security drill-down kept
+node 1 and its fixed window without disrupting alignment. Policy testing returned the
+configured denial; account security and sign-out retained their authentication boundaries.
+Chrome recorded no errors, and the fixture stopped cleanly after review.
+
+Verification passed formatting, native and console tests, shipped-Wasm navigation, both CLI
+modes, WebSocket and multipart proxy regressions, three-node membership/failover/quorum/rejoin,
+and three direct TLS peers. Console-off and storage-off builds compile. The new storage-tick
+regressions cover rejected matcher candidates, unchanged live revisions, repaired rows and an
+expiry-driven retry after a later loader failure. Book and SID PDFs render cleanly, and the
+HTML bundle retains its twenty embedded figures.
+
+These changes address review findings within the original interface and ownership requirements.
+They do not close the outstanding retained-peer-view, kiosk Security or quantitative impact
+gates, and the record remains Proposed.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic

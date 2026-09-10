@@ -412,6 +412,12 @@ GeoIP is loaded, incident writes retain the country and generation used by the s
 Imports do not relocate recorded incidents. Filter by a two-letter country code, `unknown`
 for unmapped addresses, or `not_recorded` for records without mapping data. The globe's
 **View events** action opens that country's incidents for the selected node and last hour.
+Under Statistics, **Security** combines live outcome rates with retained inspection and
+honeypot findings for the selected node and period. Category, source and path links open
+Events with that fixed investigation window. Counts include audit findings and remain distinct
+from blocked requests; unavailable reputation and rule-hit attribution is labelled explicitly.
+Event and audit filters group labels with their controls, adapt to the content width and keep
+Apply actions separate from filter fields.
 One authenticated WebSocket carries statistics, events, node status, policy revisions,
 challenges and audit updates across navigation. Incident and audit pages keep rows in place
 while you read; use **Load latest records** to include newer records. Policy updates show the

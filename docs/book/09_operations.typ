@@ -195,6 +195,13 @@ uppercase two-letter code, `unknown` for an address absent from the loaded gener
 or `not_recorded` for an incident without mapping data. Source groups report mixed countries
 or coverage explicitly. The globe's *View events* action keeps the selected node and opens
 the country's retained incidents for the last hour.
+The Statistics page's *Security* view combines live rate-limit, challenge and ban rates with
+retained inspection and honeypot findings over one hour, one day, seven days or thirty days.
+Category, source and path links open the normal incident workflow with the same node and a
+fixed time boundary. Applying incident filters starts a new period. Findings include audit
+records and are distinct from blocked-request totals; absent reputation and rule-hit attribution
+is shown as not recorded. Event and audit filters keep labels with their controls, align the
+Apply action separately and adapt their columns to the available content width.
 One authenticated WebSocket survives navigation and carries statistics, incident summaries,
 node status, policy revisions, challenges and audit summaries. New incident and audit records
 wait behind *Load latest records* so the table stays in place while it is read. Policy updates
