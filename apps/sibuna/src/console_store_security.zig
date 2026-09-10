@@ -9,11 +9,12 @@ const access = @import("console_read_authorize.zig");
 
 pub fn query(owner: *Persistent, input: p.security.Query) !p.StorageResult {
     try p.security.validate(input);
-    if (try access.check(owner, input.session_digest, input.require_totp, .events_read)) |reason|
+    const scope: p.tokens.Scope = if (input.aggregate_only) .stats_read else .events_read;
+    if (try access.check(owner, input.session_digest, input.require_totp, scope)) |reason|
         return .{ .failed = reason };
     const r = input.request;
     const sql = switch (r.view) {
-        .modules => module_sql,
+        .modules => if (input.aggregate_only) trend_sql else module_sql,
         .categories => category_sql,
         .paths => path_sql,
     };
@@ -54,7 +55,7 @@ pub fn query(owner: *Persistent, input: p.security.Query) !p.StorageResult {
             ranked += 1;
         }
     }
-    if (try access.check(owner, input.session_digest, input.require_totp, .events_read)) |reason|
+    if (try access.check(owner, input.session_digest, input.require_totp, scope)) |reason|
         return .{ .failed = reason };
     var output: p.Bytes(p.max_message) = .{};
     var writer: std.Io.Writer = .fixed(&output.data);
@@ -100,3 +101,13 @@ const path_sql = window ++
     "GROUP BY label ORDER BY n DESC,label LIMIT 5) " ++
     "SELECT 0,2,0,label,n FROM ranked UNION ALL SELECT 0,3,0,'',COUNT(*) FROM findings " ++
     "ORDER BY 2,5 DESC,4 LIMIT 6";
+
+// A kiosk query never selects addresses, paths, categories or payload evidence.
+const trend_sql = "WITH bounds(lo,hi,node,wildcard) AS (VALUES(?,?,?,?)), " ++
+    "findings AS MATERIALIZED (SELECT recorded_at," ++ classification ++
+    " AS module,lo,hi FROM security_incidents,bounds WHERE recorded_at>=lo " ++
+    "AND recorded_at<hi AND (wildcard=0 OR node_id=node)) " ++
+    "SELECT module,0,0,'',COUNT(*) FROM findings GROUP BY module UNION ALL " ++
+    "SELECT module,1,(recorded_at-lo)*12/(hi-lo),'',COUNT(*) FROM findings " ++
+    "GROUP BY module,(recorded_at-lo)*12/(hi-lo) UNION ALL " ++
+    "SELECT 0,3,0,'',COUNT(*) FROM findings ORDER BY 1,2 LIMIT 40";

@@ -64,6 +64,7 @@ test "security aggregates freeze node and time, retain audit findings and redact
     try t.expectEqualStrings("/two", ranks.value.rows[1].?.label);
     try t.expectEqual(@as(u64, 2), ranks.value.rows[1].?.count);
     try moduleEvents(fx);
+    try aggregateScope(fx);
 }
 
 fn moduleEvents(fx: *helpers.Fixture) !void {
@@ -112,4 +113,28 @@ test "security reply worst-case escaping and counter precision fit the mailbox" 
         try std.json.Stringify.value(page, .{}, &writer);
         try t.expect(std.mem.indexOf(u8, writer.buffered(), "\"18446744073709551615\"") != null);
     }
+}
+
+fn aggregateScope(fx: *helpers.Fixture) !void {
+    const result = try fx.run(.{ .security_query = .{
+        .session_digest = @splat(1),
+        .aggregate_only = true,
+        .request = .{ .node = 1, .from = 100, .until = 220 },
+    } });
+    try t.expect(result == .page);
+    const parsed = try std.json.parseFromSlice(struct {
+        total: u64,
+        modules: [3]struct { total: u64, trend: [12]u64, sources: [3]?p.security.Rank },
+        rows: [5]?p.security.Rank,
+    }, t.allocator, result.page.slice(), .{ .ignore_unknown_fields = true });
+    defer parsed.deinit();
+    try t.expectEqual(@as(u64, 3), parsed.value.total);
+    try t.expectEqual(@as(u64, 2), parsed.value.modules[0].total);
+    try t.expectEqual(@as(u64, 1), parsed.value.modules[0].trend[5]);
+    for (parsed.value.modules) |module| for (module.sources) |source| {
+        try t.expect(source == null);
+    };
+    for (parsed.value.rows) |row| try t.expect(row == null);
+    for ([_][]const u8{ "8.8.8.8", "/one", "secret", "waf:sqli" }) |private|
+        try t.expect(std.mem.indexOf(u8, result.page.slice(), private) == null);
 }

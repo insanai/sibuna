@@ -157,6 +157,9 @@ Create display code. The display pastes the one-time code into the sign-in form 
 minutes; its session is read-only, limited to statistics and expires within twelve hours.
 The account page erases the displayed code on navigation or when hidden. Hiding does not
 revoke an unused grant; the exchange deadline still applies. Codes never belong in URLs.
+Traffic and Security share the display: Security shows aggregate module trends and request
+outcomes without incident addresses or payload evidence. Automatic cycling is optional,
+off initially and suspended with reduced motion, stale data or Pause.
 
 Notification destinations (signed webhooks and syslog for denial spikes, bans, unreachable
 members and leader changes) live under Settings; webhook secrets need `--console-key-file`.

@@ -374,7 +374,9 @@ display label and selects **Create display code**. Paste that code into the disp
 page within ten minutes to obtain read-only statistics access for up to twelve hours.
 Leaving or hiding the account page erases its displayed code; this does not revoke an unused
 grant. The same workflow is available through `POST /console/api/kiosk/token`. Codes never
-appear in URLs.
+appear in URLs. The display offers Traffic and Security views; Security shows aggregate
+module trends and request outcomes without incident addresses or payload evidence. Optional
+automatic cycling is off initially and pauses with reduced motion, stale data or Pause.
 
 Administrators configure notification destinations under Settings: webhooks (`https`, or
 `http` to loopback) signed with `X-Sibuna-Signature: sha256=HMAC(secret, body)` when a

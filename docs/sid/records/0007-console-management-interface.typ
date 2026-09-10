@@ -4889,3 +4889,24 @@ acceptance retains its separate workloads, confidence intervals and original thr
 - RFC 6455 (WebSocket), RFC 9110 (HTTP semantics), RFC 6238 (TOTP).
 - #link("https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html")[OWASP password storage] and
   #link("https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html")[OWASP CSRF prevention].
+
+== Scoped kiosk Security panels (2026-09-10)
+
+Wall displays now share the Traffic and Security tabs. Security reuses the normal module
+summaries, recorded twelve-bucket trends and live outcome-rate charts. The kiosk-only
+presentation omits source addresses, paths, the live incident feed, policy controls and
+investigation links. Retained findings refresh once per minute while the view is visible
+and unpaused; the charts keep their observation age and incomplete-coverage notices.
+
+`POST /console/api/security/trends` requires statistics scope, full authentication and CSRF.
+The route chooses the aggregate-only storage operation; browser JSON cannot expand that
+operation into categories or paths. Storage rechecks current authority before and after
+its bounded query, which never selects incident addresses, paths or payloads. The existing
+Security investigation endpoint continues to require events scope and rejects kiosk sessions.
+
+Automatic cycling is optional and initially off. When enabled it moves through Traffic,
+Attacks and Security every thirty seconds, holding the current panel when paused, stale or
+under reduced motion. Display expiry, granting-user revision and sign-out still govern
+both views. The live kiosk scenario verifies the new endpoint, CSRF and scope rejection;
+storage regressions compare aggregate counts with recorded findings while checking that
+private labels are absent. These changes do not establish peer-history or impact acceptance.

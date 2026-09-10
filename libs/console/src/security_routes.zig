@@ -3,7 +3,7 @@ const p = @import("console_protocol");
 const App = @import("app.zig").App;
 const http = @import("http.zig");
 
-pub fn query(app: *App, context: *http.Context) !void {
+pub fn query(app: *App, context: *http.Context, aggregate_only: bool) !void {
     const digest = try http.session(context);
     if (!app.query_budget.allow(app.io, digest, app.now(), .query))
         return http.fail(context, .too_many_requests, "CONSOLEQUERY");
@@ -16,6 +16,7 @@ pub fn query(app: *App, context: *http.Context) !void {
         .session_digest = digest,
         .require_totp = app.config.behind_proxy,
         .request = input.value,
+        .aggregate_only = aggregate_only,
     } });
     if (result == .page)
         return context.respond(.ok, "application/json", result.page.slice(), &.{});

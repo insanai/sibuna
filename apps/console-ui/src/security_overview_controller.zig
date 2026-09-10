@@ -6,7 +6,7 @@ const fields = @import("events_state.zig");
 var serial: u64 = 0;
 
 pub fn action(state: *State, name: []const u8, value: std.json.Value, out: Outbox) !bool {
-    if (!state.fullAccess() or state.kiosk) return false;
+    if (!state.fullAccess()) return false;
     const open = std.mem.eql(u8, name, "security-overview");
     if (!open and state.phase != .security_overview) return false;
     if (!open and !std.mem.eql(u8, name, "security-window") and
@@ -23,7 +23,7 @@ pub fn action(state: *State, name: []const u8, value: std.json.Value, out: Outbo
 }
 
 pub fn refresh(state: *State, out: Outbox) !void {
-    if (!state.fullAccess() or state.kiosk or state.phase != .security_overview) return;
+    if (!state.fullAccess() or state.phase != .security_overview) return;
     const model = &state.security_overview;
     const hours = model.hours;
     model.clear();
@@ -36,7 +36,7 @@ pub fn refresh(state: *State, out: Outbox) !void {
     state.message = .{};
     // Independent pages share a frozen scope, but expose their individual observation
     // times. Serial tickets survive sign-out; an older response cannot relabel a new view.
-    for (0..3) |index| {
+    for (0..@as(usize, if (state.kiosk) 1 else 3)) |index| {
         serial = std.math.add(u64, serial, 1) catch return error.Capacity;
         model.tickets[index] = serial;
         model.busy[index] = true;
@@ -44,7 +44,10 @@ pub fn refresh(state: *State, out: Outbox) !void {
         const name = try std.fmt.bufPrint(&id, "security-view-{d}-{d}", .{ index, serial });
         var request = model.request;
         request.view = @enumFromInt(index);
-        try out.post(name, "/console/api/security/query", request);
+        try out.post(name, if (state.kiosk)
+            "/console/api/security/trends"
+        else
+            "/console/api/security/query", request);
     }
 }
 
@@ -61,7 +64,7 @@ pub fn response(
     const ticket = std.fmt.parseInt(u64, parts.next() orelse return, 10) catch return;
     const model = &state.security_overview;
     if (index >= 3 or parts.next() != null or ticket == 0 or ticket != model.tickets[index] or
-        !state.fullAccess() or state.kiosk or state.phase != .security_overview) return;
+        !state.fullAccess() or state.phase != .security_overview) return;
     model.busy[index] = false;
     if (status == 401 or status == 403) {
         try @import("live_controller.zig").stop(out);
@@ -102,4 +105,20 @@ test "security replies cannot cross query generations, view changes or sign-out"
     try t.expect(state.security_overview.tickets[0] != old);
     try response(&state, id, 200, .null, t.allocator, commands.out());
     try t.expect(!state.security_overview.loaded[0]);
+}
+
+test "kiosk Security requests only aggregate trends and cannot drill into evidence" {
+    const t = std.testing;
+    var state: State = .{ .kiosk = true, .browser_time = 3600 };
+    try state.csrf.set("kiosk");
+    var commands: @import("test_transport.zig").Commands = .{};
+    try t.expect(try action(&state, "security-overview", .null, commands.out()));
+    try t.expectEqual(@as(usize, 1), commands.count);
+    const sent = commands.writer.buffered();
+    try t.expect(std.mem.indexOf(u8, sent, "/console/api/security/trends") != null);
+    try t.expect(std.mem.indexOf(u8, sent, "/console/api/security/query") == null);
+    try t.expect(!try @import("security_investigation.zig").open(
+        &state,
+        "security-module-0",
+    ));
 }

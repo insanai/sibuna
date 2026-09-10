@@ -22,6 +22,8 @@ pub const Query = struct {
     session_digest: [32]u8,
     require_totp: bool = false,
     request: Request,
+    /// Chosen by the route, never by untrusted JSON. Statistics scope excludes evidence.
+    aggregate_only: bool = false,
 };
 pub const Rank = struct {
     label: p.Bytes(96) = .{},
@@ -83,6 +85,7 @@ pub const Page = struct {
 
 pub fn validate(query: Query) error{InvalidLimit}!void {
     const r = query.request;
+    if (query.aggregate_only and r.view != .modules) return error.InvalidLimit;
     if (r.from >= r.until or r.until > std.math.maxInt(i64) or
         r.until - r.from > 30 * 86400 or r.node >= 1 << 23) return error.InvalidLimit;
 }

@@ -189,7 +189,13 @@ fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
         3 => {
             if (state.hidden) return;
             if (equal(string(value, "id"), "live-retry")) live.timer();
+            const previous_phase = state.phase;
             @import("kiosk_page.zig").cycle(&state);
+            if (state.kiosk and state.phase == .security_overview and !state.paused and
+                (previous_phase != state.phase or
+                    (!state.security_overview.busy[0] and
+                        state.browser_time -| state.security_overview.request.until >= 60)))
+                try @import("security_overview_controller.zig").refresh(&state, outbox());
             if (state.phase == .nodes)
                 return @import("nodes_controller.zig").tick(&state, outbox());
             if (equal(string(value, "id"), "age")) return;
@@ -224,6 +230,7 @@ fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
 }
 
 fn actionName(name: []const u8, fields: std.json.Value) !void {
+    if (@import("kiosk_page.zig").action(&state, name)) return;
     if (equal(name, "navigation-toggle") and state.fullAccess()) {
         state.navigation_open = !state.navigation_open;
         return;

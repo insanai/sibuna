@@ -107,7 +107,8 @@ button, input, select, textarea { font: inherit; }
 .sb-auth label { display: block; font-size: 14px; margin-top: 18px; margin-bottom: 7px; }
 .sb-auth .input { width: 100%; background: var(--color-base-100); color: var(--color-base-content); }
 .sb-auth .btn { width: 100%; margin-top: 22px; }
-.sb-status { font-size: 14px; display: flex; align-items: center; gap: 10px; }
+.sb-status { font-size: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.sb-status > .badge { flex-shrink: 0; white-space: nowrap; }
 .sb-error { margin: 18px 0; padding: 12px; background: var(--color-error); color: var(--color-error-content); border-radius: 8px; }
 .sb-footer { display: flex; justify-content: space-between; gap: 12px; margin-top: 24px; }
 @media (max-width: 850px) {

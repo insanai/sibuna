@@ -36,6 +36,7 @@ pub const Handler = enum {
     events_similar,
     events_export,
     security_query,
+    security_trends,
     stream,
     peer,
     geoip,
@@ -231,6 +232,14 @@ const table = [_]Route{
         .access = .full,
         .handler = .policies_test,
         .token_scope = .policy_read,
+    },
+    .{
+        .path = "/console/api/security/trends",
+        .method = .POST,
+        .access = .full,
+        .handler = .security_trends,
+        .token_scope = .stats_read,
+        .kiosk = true,
     },
     .{
         .path = "/console/api/security/query",

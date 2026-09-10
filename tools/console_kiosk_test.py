@@ -44,7 +44,9 @@ def checks(h, port, admin):
     assert status == 200 and json.loads(body)["kiosk"]
     assert h.request(port, "GET", "/console/api/stats", cookie=kiosk)[0] == 200
     assert h.request(port, "GET", "/console/assets/world-110m.bin", cookie=kiosk)[0] == 200
-    for method, path in (("POST", "/console/api/events/query"), ("POST", "/console/api/policies/query"),
+    trends(h, port, kiosk, reply["csrf"])
+    for method, path in (("POST", "/console/api/security/query"),
+                         ("POST", "/console/api/events/query"), ("POST", "/console/api/policies/query"),
                          ("POST", "/console/api/users/query"), ("POST", "/console/api/tokens/create"),
                          ("GET", "/console/api/nodes/local"), ("GET", "/console/api/geoip"),
                          ("GET", "/console/api/rankings"), ("POST", "/console/api/minutes"),
@@ -71,6 +73,23 @@ def checks(h, port, admin):
                               {"action": "kiosk.exchange"}, *admin)
     assert code == 200 and len(json.loads(body)["rows"]) == 1
     return granted
+
+
+def trends(h, port, cookie, csrf):
+    path = "/console/api/security/trends"
+    end = int(time.time())
+    query = {"from": end - 3600, "until": end, "node": 1}
+    assert h.request(port, "POST", path, query)[0] == 401
+    assert h.request(port, "POST", path, query, cookie)[0] == 400
+    status, _, body = h.request(port, "POST", path, query, cookie, csrf)
+    assert status == 200, body
+    page = json.loads(body)
+    assert page["request"]["node"] == 1 and page["request"]["view"] == "modules"
+    assert all(module["sources"] == [None] * 3 for module in page["modules"])
+    assert page["rows"] == [None] * 5
+    for view in ("paths", "categories"):
+        query["view"] = view
+        assert h.request(port, "POST", path, query, cookie, csrf)[0] == 400
 
 
 def check(binary, h):

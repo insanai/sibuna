@@ -33,7 +33,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         "</article></main>", .{});
 }
 
-fn window(state: *const State, w: *Writer) Writer.Error!void {
+pub fn window(state: *const State, w: *Writer) Writer.Error!void {
     const model = &state.security_overview;
     try html.render(w, "<form id=\"security-window\" class=\"sb-filter-toolbar my-3\">" ++
         "<div class=\"sb-filter-field\">" ++
@@ -67,7 +67,7 @@ fn window(state: *const State, w: *Writer) Writer.Error!void {
     });
 }
 
-fn requestTiles(state: *const State, w: *Writer) Writer.Error!void {
+pub fn requestTiles(state: *const State, w: *Writer) Writer.Error!void {
     try html.render(w, "<p class=\"sb-note\">{{ status }} · Last update {{ age }} seconds " ++
         "ago. " ++
         "Request totals cover contributing node boots. Recorded findings cover the selected " ++
@@ -113,7 +113,7 @@ fn requestTiles(state: *const State, w: *Writer) Writer.Error!void {
         "recorded; bans count requests, not distinct addresses.</p>", .{});
 }
 
-fn findings(state: *const State, w: *Writer) Writer.Error!void {
+pub fn findings(state: *const State, w: *Writer) Writer.Error!void {
     const model = &state.security_overview;
     var maximum: u64 = 1;
     for (model.modules) |module| for (module.trend) |count| {
@@ -129,16 +129,18 @@ fn findings(state: *const State, w: *Writer) Writer.Error!void {
             try w.writeAll("</article>");
             continue;
         }
-        try html.render(w, "<p><strong>{{ total }}</strong> recorded findings</p>" ++
-            "<button class=\"btn btn-ghost h-auto w-full\" " ++
+        try html.render(w, "<p><strong>{{ total }}</strong> recorded findings</p>", .{
+            .total = module.total,
+        });
+        if (!state.kiosk) try html.render(w, "<button class=\"btn btn-ghost h-auto w-full\" " ++
             "data-action=\"security-module-{{ module }}\" " ++
             "aria-label=\"Open {{ label }} events for this period\">", .{
-            .total = module.total,
             .module = index,
             .label = label,
         });
         try chart(w, &module.trend, maximum);
-        try html.render(w, "</button><p class=\"sb-note\">12 equal time buckets. " ++
+        if (!state.kiosk) try w.writeAll("</button>");
+        try html.render(w, "<p class=\"sb-note\">12 equal time buckets. " ++
             "All finding charts share a maximum of {{ maximum }} findings per bucket.</p>" ++
             "<details><summary>Trend values</summary><table class=\"table\"><tbody>", .{
             .maximum = maximum,
@@ -149,7 +151,12 @@ fn findings(state: *const State, w: *Writer) Writer.Error!void {
                 .count = count,
             });
         }
-        try html.render(w, "</tbody></table></details><h3>Top source addresses</h3>", .{});
+        try w.writeAll("</tbody></table></details>");
+        if (state.kiosk) {
+            try w.writeAll("</article>");
+            continue;
+        }
+        try w.writeAll("<h3>Top source addresses</h3>");
         var found = false;
         for (module.sources, 0..) |entry, rank| if (entry) |row| {
             found = true;

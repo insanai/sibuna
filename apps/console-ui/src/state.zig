@@ -100,6 +100,7 @@ pub const State = struct {
     kiosk: bool = false,
     kiosk_expires: u64 = 0,
     kiosk_cycled_at: u64 = 0,
+    kiosk_cycle: bool = false,
     timeline_open: bool = false,
     history_minutes: bool = false,
     minute_history: @import("minute_panel.zig").Model = .{},

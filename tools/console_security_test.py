@@ -26,6 +26,13 @@ def check(h, port, cookie, csrf):
     assert pages["categories"]["rows"][0]["count"] == 20
     assert pages["paths"]["rows"][0]["label"] == "/__sibuna/honeypot"
     assert pages["paths"]["rows"][0]["count"] == 20
+    status, _, body = h.request(port, "POST", "/console/api/security/trends", query, cookie, csrf)
+    aggregate = json.loads(body)
+    assert status == 200 and aggregate["total"] == 20, body
+    assert aggregate["modules"][1]["trend"] == modules[1]["trend"]
+    assert all(row["sources"] == [None] * 3 for row in aggregate["modules"])
+    assert aggregate["rows"] == [None] * 5
+    assert b"/__sibuna/honeypot" not in body and b"hidden-value" not in body
     empty = h.request(port, "POST", endpoint, dict(query, node=2), cookie, csrf)
     assert empty[0] == 200 and json.loads(empty[2])["total"] == 0
     from console_topics_client import Client
