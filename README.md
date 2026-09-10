@@ -52,7 +52,8 @@ docs); the book's Part II carries the full table with sources.
 Sibuna does not terminate ingress TLS or score bots with a model. Its opt-in console preview
 includes the animated country globe, incident investigation, policy editing, users, scoped API
 tokens, audit browsing, local node controls and authenticated multi-topic subscriptions.
-SID 0007 remains proposed while interface and release acceptance are completed. See
+SID 0007 remains proposed while historical analysis, interface requirements and release
+acceptance are completed. See
 [loading country data from the CLI](#loading-country-data) for country data setup.
 
 ## Research foundations
@@ -428,6 +429,8 @@ Under Statistics, **Security** combines live outcome rates with retained inspect
 honeypot findings for the selected node and period. Category, source and path links open
 Events with that fixed investigation window. Counts include audit findings and remain distinct
 from blocked requests; unavailable reputation and rule-hit attribution is labelled explicitly.
+Finding trends contain sixty equal time buckets with a shared scale; **Trend values** shows
+UTC interval starts and exact grouped counts.
 Event and audit filters group labels with their controls, adapt to the content width and keep
 Apply actions separate from filter fields.
 One authenticated WebSocket carries statistics, events, node status, policy revisions,
@@ -437,7 +440,7 @@ current revision without replacing an open draft. Selected non-default challenge
 partitions remain explicit snapshots. Mutations and historical/detail queries use HTTP.
 `zig build console-ui-e2e` runs the shipped Wasm against a real daemon using Node; Chrome
 review separately checks the browser DOM, layout and accessibility.
-The complete UI has a 448 KiB build warning and a 512 KiB uncompressed artifact ceiling;
+The console UI has a 448 KiB build warning and a 512 KiB uncompressed artifact ceiling;
 these are reviewable project guardrails, not browser standards. Loading and interaction
 measurements remain separate acceptance checks; the rationale is recorded in SID 0007.
 

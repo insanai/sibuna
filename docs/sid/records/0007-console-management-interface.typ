@@ -1705,8 +1705,9 @@ identifies the following concrete gaps; the status remains Proposed.
     verifies authentication, certificate rejection, stale recovery and shutdown. Three real TLS
     peers pass local-only accounting, quorum isolation and restart. The live dashboard now
     composes configured sources and selects individual nodes, with explicit missing/stale
-    coverage and receiving-node globe locations. Retained seconds and path rankings remain
-    local to the serving console; broader cluster interface acceptance remains open.],
+    coverage and receiving-node globe locations. Retained seconds and current-minute path
+    rankings now query the selected issuer over the same authenticated connection, with
+    owned cursors and boot fencing; broader interface and impact acceptance remain open.],
   [Country rule maintenance], [Country actions pin a GeoIP generation. Reviewed replacement now compares added,
     retained and removed prefixes, with a bounded eight-row diff page. Apply binds the country,
     action, expiry, generation and expected policy revision to the preview. The version 26
@@ -1717,8 +1718,15 @@ identifies the following concrete gaps; the status remains Proposed.
     system/persisted theme and density preferences are implemented in the Wasm model.
     The country table now offers both centering and country-filtered incident investigation,
     with retained generation metadata and matching live subscription filters. The
-    separate Security overview remains absent. Retention forms now configure minute, ranking,
+    separate Security overview and aggregate-only kiosk panels are implemented. Retention
+    forms now configure minute, ranking,
     incident and audit days within their capacity limits, with explicit deletion confirmation.],
+  [Historical analysis], [The separate retained comparison panel supports explicit period and node comparisons.
+    Primary Traffic tiles still show boot totals; default 24-hour period tiles and their yesterday
+    deviations are not implemented. Complete ranking sketches are retained and their merge primitive
+    is tested, but historical ranking query/render workflows remain absent. Per-rule hit history
+    before and after edits is not recorded. These are implementation gaps under R1, R9 and R16,
+    not performance-host limitations.],
   [Acceptance], [The corrected dashboard workload harness has only an inconclusive smoke result.
     Full controlled-host impact acceptance and comprehensive browser acceptance remain open.
     Earlier browser evidence covers the named scenarios, not every feature and error state.],
@@ -1858,7 +1866,7 @@ Native data-plane HTTP/2 is separately deferred by the operator and is not a con
 
 - #text("Not passed (2026-09-09): the verdict is inconclusive on the development host. Point estimates stay within ±2 % throughput and +6 % p99 with peak RSS reported per configuration, but the compiled-out baseline's own spread (20–46 %) exceeds the 1 % rule and every bootstrap interval straddles the gate; the record says so rather than rounding to a pass. A quiet host is required.")
 
-- #text("Pending after the 2026-09-10 review: dedicated peer management transport, the interface-state gaps listed above and comprehensive browser acceptance. Notification retries/leases and the dashboard workload harness have dated implementation evidence; the corrected impact matrix still needs a controlled-host acceptance run. The record stays Proposed and the console stays opt-in.")
+- #text("Pending after the 2026-09-10 review: the full interface-principle audit, operator-comprehension and low-end-device checks, and comprehensive browser acceptance. Dedicated peer management transport and retained issuer queries have dated implementation and live-test evidence. Notification retries/leases and the dashboard workload harness have dated implementation evidence; the corrected impact matrix still needs a controlled-host acceptance run. The record stays Proposed and the console stays opt-in.")
 
 == Implementation evidence
 
@@ -4942,3 +4950,131 @@ local contributions during quorum loss and clean process stops. The earlier live
 its twenty-two scenarios through membership/failover before the new retained-view regression;
 the corrected focused peer scenario passes. These results close retained-peer functionality,
 not the remaining complete interface review or quantitative console-impact gate.
+
+
+== Counter presentation and retained comparisons (2026-09-10)
+
+Dashboard and kiosk request tiles now share exact integer grouping and sixty observed outcome
+points. Missing intervals break a sparkline, observed zero remains a baseline, and forward-auth
+origin outcomes remain unobserved. Admitted, challenged, denied and banned series use the same
+semantic colours in summary tiles and Security charts. Kiosk Traffic also renders the shared
+live timeline. These changes reduce the main renderer rather than duplicating its tile logic.
+
+The retained comparison panel uses the existing authorized minute mailbox operation. It freezes
+two explicit node/window scopes and reads at most eight pages per side per action, preserving
+owned cursors for continuation. The modes are yesterday, previous period and another node;
+counts and UTC bounds appear side by side. Arithmetic preserves full unsigned counters and
+rejects overflow atomically. Repeated or unordered pages cannot double count. Missing minutes,
+partial records, multiple boots in one minute and changed retention prevent a complete-coverage
+claim. A deviation compares observed rates in complete equal-duration UTC windows, normalizing
+millisecond sampler jitter; zero
+reference counts show “New” and absent coverage shows “Not available”. Changes of at least
+25 percent receive a semantic tint. The v1 minute format lacks historical proxy-mode metadata,
+so origin-response comparisons remain unavailable. Boot-total tiles are not relabelled as
+period counts, and this panel does not claim per-rule hit instrumentation.
+
+The earlier current-completeness table is corrected to reflect implemented retained peer views
+and scoped kiosk Security. This increment does not close the remaining complete interface,
+operator-comprehension, low-end-device or controlled-host impact acceptance requirements.
+
+
+== Native HTML review fixtures (2026-09-10)
+
+`console-golden-check`, included by `console-test`, compares native rendering byte for byte
+with committed HTML. The 24 initial fixtures cover every page phase plus populated and stale
+traffic, a retained comparison, both kiosk panels, required password change and incomplete
+TOTP. Fixture clocks and counters are deterministic. Intentional markup changes use
+`zig build console-golden -- --update`; their HTML diff is reviewed alongside code. This
+complements the existing state-machine tests and the shipped-Wasm live-daemon scenario.
+These fixtures do not by themselves cover every populated dialog or prove browser layout,
+accessibility, human comprehension or performance.
+
+== Reconnect and browser review corrections (2026-09-10)
+
+The complete clustered live suite exposed an observation-state bug: authenticating another peer
+connection changed retained stale data to “connecting”. Activation now keeps existing data stale
+until a fresh, fenced snapshot is accepted. Both the native snapshot/report regression and the
+focused TLS scenario pass. The full `-Dcluster=true console-e2e` suite subsequently passes,
+including membership, failover, quorum loss, retained remote queries, revocation and clean stops.
+The earlier failed run is superseded for that defect, rather than described as a pass.
+
+Chrome verified the comparison against actual retained minutes: a missing yesterday and an
+incomplete boot interval produce no percentage; an identical complete node/window reports zero
+change. The controls use the existing responsive filter system. Review found and corrected a
+repeated UTC suffix and grouped the two node selectors on the same desktop row. At 390 px, all
+five controls have equal 285 px widths and 44 px heights; the page width is 375 px. The browser
+bridge now preserves reader-controlled details across live patches, while a changed application
+default still takes effect. An expanded Security trend table and incident detail both stayed open
+through subsequent updates.
+
+A real local workload produced 1,024 external requests: 200 challenged and 824 rate-limited.
+Chrome displayed those exact grouped counts, sampled US and Australia arrows toward configured
+node 1 in Singapore, and changing geographic path coordinates while animation ran. The rule
+editor privately previewed `/browser-block` as deny under the existing “Browser verification
+deny” rule; a fresh-address live request returned 403. No rule change was needed for that check.
+The scoped kiosk showed the shared Traffic timeline and Security modules with no management
+navigation; the recorded findings route and privacy boundaries retain their live-test evidence.
+No browser console errors were observed in these checks.
+
+The standalone Debug review fixture did not finish loading its existing production-sized GeoIP
+state within its 60-second helper deadline. Its startup was terminated before readiness. The
+optimized review build starts successfully with the same data. This is not a claim of a measured
+startup budget, and desktop emulation is not evidence from a physical low-end device.
+
+
+== Serving-node context across navigation (2026-09-10)
+
+Authenticated login and session responses now include the serving console node. The interface
+owns that identity separately from its selected traffic node and renders it in the persistent
+navigation and mobile header. Choosing another telemetry issuer does not relabel the console
+that receives a local command. A missing field from an older development server displays “Node
+not reported”; sign-out clears it. The native CLI accepts the additive field and keeps it optional
+for older servers. Password-change and incomplete-factor states still render only the restricted
+authentication shell. Native fixtures carry the context across every signed-in page, and the
+identity regression checks that a traffic-node change cannot substitute the management node.
+
+
+== Sixty-point retained Security trends (2026-09-10)
+
+The Security summary's version-2 response retains sixty equal-width time buckets rather than
+twelve. The full and kiosk queries each pack one numeric bucket/count cell per module, so the
+result stays below the existing database row limits: sixteen full-view rows or seven aggregate
+rows, even when all 180 buckets contain findings. The packed cells contain no incident evidence,
+and their length, bucket indices and duplicate entries are bounded before decoding. Database
+query deadlines and VM-step limits remain unchanged.
+
+The storage bridge returns an owned typed page within its existing inline envelope. JSON
+serialization moves to the HTTP layer's existing 16 KiB buffer instead of enlarging every mailbox
+slot. The interface retains all sixty values, uses a shared chart scale and exposes UTC interval
+starts and exact grouped counts in accessible tables. Two populated Security fixtures extend the
+native HTML set to 26 pages, including the kiosk boundary. Verification includes a full populated
+bucket regression and worst-case escaped response bounds. The cluster-enabled repository suite
+and the shipped-Wasm live scenario pass, including the aggregate-only privacy checks.
+
+
+== Context, Security and browser verification (2026-09-10)
+
+The shared state reset dispatches through the compiler's field enum instead of repeatedly
+comparing field names. This preserves field-specific erasure and defaults without increasing
+Zig's compile-time branch quota. Security now opens on the specified last 24 hours; changing
+its period remains an explicit action. The populated kiosk fixture carries a valid expiry.
+
+Formatting, all 26 native HTML fixtures, native rendering, Wasm and committed-asset checks pass.
+`zig build -j1 -Dcluster=true test` passes the native storage regressions and full live suite,
+including three-node membership/failover and TLS peer queries, both CLI modes, HTTP/WebSocket
+preservation and multipart/MIME handling. The shipped-Wasm live scenario passes after the
+24-hour default change. Optimized single-node, storage-disabled and console-disabled builds pass.
+
+Chrome checks the new serving-node label in desktop navigation and the 390-pixel mobile header,
+the 24-hour Security default, sixty bars per populated finding chart and sixty UTC-labelled
+table rows. Mobile document width is 375 pixels with no horizontal page overflow. Refresh
+succeeds; Policies and Events retain navigation and node context. A new 1,024-request workload
+again yields exactly 200 challenges and 824 rate-limit responses, matching the displayed totals.
+The globe shows sampled US/Australia arrivals toward node 1 and advancing geometry. Sign-out
+returns to the authentication-only shell, with no dashboard navigation or globe. Chrome reports
+no console errors in these checks. The review supervisor joins its daemon cleanly; no review
+process is retained for benchmark measurements.
+
+These checks cover the named workflows. They do not close the historical-analysis implementation
+gaps in the current-completeness table, human-comprehension, physical low-end-device or quantitative
+impact gates. The SID remains Proposed.

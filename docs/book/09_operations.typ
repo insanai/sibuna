@@ -151,7 +151,8 @@ any contributing source lacks a consecutive interval. Select one node to inspect
 seconds and current-minute path rankings. Remote queries use the authenticated peer connection;
 missing peers stay unavailable and history cursors cannot cross a node restart. Minute history
 keeps its own node selection and per-node rows.
-Local commands remain per node. `zig build console-impact` runs the data-plane isolation matrix (`-- --quick` for
+The navigation and mobile header identify the serving console node independently of the
+selected traffic source. Local commands remain per node. `zig build console-impact` runs the data-plane isolation matrix (`-- --quick` for
 a smoke run) and writes `benchmarks/results/console-impact-latest.json`.
 
 *Compare retained traffic* displays two closed minute windows beside each other: the same
@@ -162,6 +163,11 @@ explicit. Rate percentages require complete non-overlapping intervals in equal U
 normalized by observed milliseconds; a zero reference with new traffic shows “New”. Live boot totals remain separate.
 The minute format does not record historical proxy mode, so origin-response comparisons remain
 unavailable rather than interpreting forward-auth zeros as observed responses.
+
+Security opens on the last 24 hours and uses sixty equal time buckets over the selected period.
+Charts share a scale;
+expand Trend values for the UTC interval starts and exact grouped counts. These are retained
+findings, so missing incident coverage cannot be interpreted as absence of attacks.
 
 Wall displays use kiosk sessions. Under Account, an operator names the display and selects
 Create display code. The display pastes the one-time code into the sign-in form within ten
