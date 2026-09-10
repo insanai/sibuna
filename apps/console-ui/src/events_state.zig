@@ -20,11 +20,15 @@ pub const Model = struct {
     ip: p.Bytes(48) = .{},
     path: p.Bytes(256) = .{},
     hours: u32 = 0,
+    from: ?u64 = null,
+    module: ?p.security.Module = null,
     until: u64 = 0,
 
     pub fn clear(self: *Model) void {
         @memset(std.mem.asBytes(self), 0);
         self.next = null;
+        self.from = null;
+        self.module = null;
         for (&self.cursors) |*cursor| cursor.* = null;
         for (&self.rows) |*row| clearRow(row);
     }

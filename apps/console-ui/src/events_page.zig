@@ -86,6 +86,7 @@ fn footer(model: *const Model, w: *Writer) Writer.Error!void {
 fn filters(model: *const Model, w: *Writer) Writer.Error!void {
     try html.render(w, "<section class=\"sb-panel mt-6\"><h2>Filter incidents</h2>" ++
         "<form id=\"events-filter\" class=\"grid gap-3 sm:grid-cols-2 lg:grid-cols-6\">", .{});
+    try @import("security_investigation.zig").filter(model, w);
     try input(w, "category", "Category (exact)", model.category.slice(), 32);
     try input(w, "country", "Country code, unknown or not_recorded", model.country.slice(), 12);
     try input(w, "ip", "Client address (exact)", model.ip.slice(), 48);
@@ -108,6 +109,7 @@ fn filters(model: *const Model, w: *Writer) Writer.Error!void {
         .{ 1, "Last hour" },
         .{ 24, "Last 24 hours" },
         .{ 168, "Last 7 days" },
+        .{ 720, "Last 30 days" },
     }) |option| {
         try html.render(w, "<option value=\"{{ v0 }}\"{{ v1 }}>{{ v2 }}</option>", .{
             .v0 = option[0],

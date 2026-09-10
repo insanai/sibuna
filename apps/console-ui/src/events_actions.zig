@@ -11,7 +11,7 @@ fn country(state: *State, name: []const u8) !bool {
     const model = &state.events;
     model.clear();
     model.country = try p.events.country.Filter.init(code);
-    model.node = state.dashboard_node orelse 0;
+    model.node = @import("dashboard_scope.zig").selectedNode(state) orelse 0;
     model.until = state.browser_time;
     model.hours = 1;
     model.busy = true;
@@ -36,6 +36,7 @@ test "country investigation keeps selected node and cannot escape kiosk scope" {
 
 pub fn act(state: *State, name: []const u8, fields: std.json.Value) !bool {
     if (!state.fullAccess()) return false;
+    if (try @import("security_investigation.zig").open(state, name)) return true;
     if (try country(state, name)) return true;
     if (try incident(state, name)) return true;
     if (try campaign(state, name)) return true;
@@ -48,6 +49,7 @@ pub fn act(state: *State, name: []const u8, fields: std.json.Value) !bool {
     } else {
         if (state.phase != .events or model.busy) return false;
         if (std.mem.eql(u8, name, "events-filter")) {
+            try moduleFilter(model, fields);
             model.category = try p.Bytes(32).init(values.string(fields, "category"));
             const code = values.string(fields, "country");
             if (!p.events.country.validFilter(code)) return error.InvalidRequest;
@@ -55,7 +57,8 @@ pub fn act(state: *State, name: []const u8, fields: std.json.Value) !bool {
             model.ip = try p.Bytes(48).init(values.string(fields, "ip"));
             model.path = try p.Bytes(256).init(values.string(fields, "path_prefix"));
             const hours = try std.fmt.parseInt(u32, values.string(fields, "hours"), 10);
-            if (hours != 0 and hours != 1 and hours != 24 and hours != 168)
+            if (hours != 0 and hours != 1 and hours != 24 and hours != 168 and
+                hours != 720)
                 return error.InvalidRequest;
             const node = values.string(fields, "node");
             model.node = if (node.len == 0) 0 else try std.fmt.parseInt(u32, node, 10);
@@ -88,6 +91,7 @@ pub fn act(state: *State, name: []const u8, fields: std.json.Value) !bool {
             model.page = 0;
             model.cursors = @splat(null);
             model.until = state.browser_time;
+            model.from = null;
         } else return false;
     }
     model.focus_results = !std.mem.eql(u8, name, "events");
@@ -98,6 +102,14 @@ pub fn act(state: *State, name: []const u8, fields: std.json.Value) !bool {
     model.next = null;
     state.message = .{};
     return true;
+}
+
+fn moduleFilter(model: *values.Model, fields: std.json.Value) !void {
+    const module = values.string(fields, "module");
+    const selected = std.meta.stringToEnum(p.security.Module, module);
+    if (module.len != 0 and selected == null) return error.InvalidRequest;
+    model.module = selected;
+    model.from = null;
 }
 
 test "incident navigation requires full authentication and preserves paging time bounds" {

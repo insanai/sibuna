@@ -9,9 +9,12 @@ const audit = @import("audit_controller.zig");
 const settings = @import("settings_controller.zig");
 const pages = @import("pages_controller.zig");
 const reputation = @import("reputation_controller.zig");
+const security = @import("security_overview_controller.zig");
 const kiosk = @import("kiosk_grant.zig");
 
 pub fn action(state: *State, name: []const u8, fields: std.json.Value, out: Outbox) !bool {
+    if (try security.action(state, name, fields, out))
+        return true;
     if (try kiosk.action(state, name, fields, out)) return true;
     if (try users.action(state, name, fields, out)) return true;
     if (try tokens.action(state, name, fields, out)) return true;
@@ -30,7 +33,9 @@ pub fn response(
     alloc: std.mem.Allocator,
     out: Outbox,
 ) !bool {
-    if (std.mem.startsWith(u8, id, "kiosk-grant-")) {
+    if (std.mem.startsWith(u8, id, "security-view-")) {
+        try security.response(state, id, status, body, alloc, out);
+    } else if (std.mem.startsWith(u8, id, "kiosk-grant-")) {
         try kiosk.response(state, id, status, body, alloc, out);
     } else if (std.mem.startsWith(u8, id, "nodes-")) {
         try nodes.response(state, id, status, body, alloc, out);

@@ -7,6 +7,7 @@ pub const Point = struct {
     count: u64 = 0,
     duration_ms: u64 = 0,
     combined_rate: ?f64 = null,
+    outcome_rates: ?p.dashboard.Rates = null,
 };
 
 pub fn accept(state: *State, next: p.StatsSnapshot) void {
@@ -25,6 +26,7 @@ pub fn accept(state: *State, next: p.StatsSnapshot) void {
             .second = next.timestamp,
             .duration_ms = 1000,
             .combined_rate = value,
+            .outcome_rates = scope.outcome_rates,
         };
         return;
     };
@@ -35,6 +37,7 @@ pub fn accept(state: *State, next: p.StatsSnapshot) void {
         .second = next.timestamp,
         .count = next.requests - previous.requests,
         .duration_ms = elapsed,
+        .outcome_rates = p.dashboard.intervalRates(&previous, &next),
     };
 }
 

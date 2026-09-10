@@ -33,7 +33,7 @@ pub fn render(state: *const State, topic: p.Topic, w: *std.Io.Writer) std.Io.Wri
     try w.writeAll("</section>");
 }
 
-fn status(value: @import("live_state.zig").Observation) []const u8 {
+pub fn status(value: @import("live_state.zig").Observation) []const u8 {
     if (value.received_at == 0) return "Waiting for live updates";
     if (value.stale) return "Disconnected / stale";
     if (!value.available) return "Observations unavailable";

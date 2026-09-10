@@ -233,6 +233,8 @@ fn actionName(name: []const u8, fields: std.json.Value) !void {
     }
     if (equal(name, "dashboard-node") and state.fullAccess()) {
         try @import("dashboard_scope.zig").select(&state, string(fields, "node"));
+        if (state.phase == .security_overview)
+            return @import("security_overview_controller.zig").refresh(&state, outbox());
         return refresh();
     }
     const management = @import("management_controller.zig");
@@ -441,7 +443,7 @@ fn streamEvent(value: std.json.Value, alloc: std.mem.Allocator) !void {
 
 fn statsResponse(status: i64, body: std.json.Value, alloc: std.mem.Allocator) !void {
     state.stats_busy = false;
-    if (state.phase != .dashboard) return;
+    if (state.phase != .dashboard and state.phase != .security_overview) return;
     if (status == 401 or status == 403) {
         state.phase = .login;
         state.stats_busy = false;
@@ -475,6 +477,7 @@ fn statsResponse(status: i64, body: std.json.Value, alloc: std.mem.Allocator) !v
     state.stats = snapshot;
     if (state.dashboard_scope) |scope| state.stale = scope.stale;
     state.received_at = state.browser_time;
+    if (state.phase == .security_overview) return;
     try refreshRankings();
     try refreshTimeline(false);
     if (state.fullAccess() and state.geometry == null and !state.geometry_busy and
@@ -816,11 +819,13 @@ fn eventQuery(export_page: bool, csv: bool) !void {
             .incident = incident,
             .before = before,
             .category = model.category.slice(),
+            .module = model.module,
             .country = model.country.slice(),
             .ip = model.ip.slice(),
             .path_prefix = model.path.slice(),
             .until = model.until,
-            .from = if (model.hours == 0) @as(u64, 0) else model.until -| model.hours * 3600,
+            .from = model.from orelse
+                if (model.hours == 0) @as(u64, 0) else model.until -| model.hours * 3600,
         },
     });
 }

@@ -25,6 +25,27 @@ pub fn viewName(state: *const State, buffer: *[32]u8) []const u8 {
     return "Waiting for observations";
 }
 
+/// A one-node dashboard has an implicit local selection. Retained investigations must
+/// not widen it to every historical storage issuer when no selector is displayed.
+pub fn selectedNode(state: *const State) ?u32 {
+    if (state.dashboard_node) |node| return node;
+    const scope = state.dashboard_scope orelse return null;
+    if (scope.count == 1) if (scope.sources[0]) |source| return source.node;
+    return null;
+}
+
+test "investigation scope preserves implicit local and explicit node selections" {
+    const t = std.testing;
+    var state: State = .{ .dashboard_scope = .{ .count = 1 } };
+    state.dashboard_scope.?.sources[0] = .{ .node = 7 };
+    try t.expectEqual(@as(?u32, 7), selectedNode(&state));
+    state.dashboard_node = 8;
+    try t.expectEqual(@as(?u32, 8), selectedNode(&state));
+    state.dashboard_node = null;
+    state.dashboard_scope.?.count = 2;
+    try t.expect(selectedNode(&state) == null);
+}
+
 pub fn select(state: *State, text: []const u8) !void {
     const node = try std.fmt.parseInt(u32, text, 10);
     const scope = state.dashboard_scope orelse return error.Unavailable;

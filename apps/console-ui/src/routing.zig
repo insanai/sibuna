@@ -37,7 +37,10 @@ pub fn take(state: *State) ?[]const u8 {
 pub fn sync(state: *State, out: Outbox) !void {
     if (!state.fullAccess() or state.kiosk) return;
     const model = &state.route;
-    const name = shell.section(state.phase);
+    const name = if (state.phase == .security_overview)
+        "security-overview"
+    else
+        shell.section(state.phase);
     const changed = model.current == null or !std.mem.eql(u8, model.current.?, name);
     if (changed or model.restoring) try out.emit(.{
         .op = "history",

@@ -5,6 +5,11 @@ const Writer = std.Io.Writer;
 
 pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     const shell = @import("shell.zig");
+    if (!state.fullAccess()) switch (state.phase) {
+        .loading, .setup, .login, .password => {},
+        .security => if (state.csrf.len == 0) return authentication(state, w),
+        else => return authentication(state, w),
+    };
     if (state.kiosk and state.fullAccess()) return @import("kiosk_page.zig").render(state, w);
     const authenticated = state.fullAccess();
     if (authenticated) try shell.begin(state, w);
@@ -13,6 +18,8 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
 }
 
 fn page(state: *const State, w: *Writer) Writer.Error!void {
+    if (state.phase == .security_overview)
+        return @import("security_overview_page.zig").render(state, w);
     if (state.phase == .nodes) return @import("nodes_page.zig").render(state, w);
     if (state.phase == .settings) return @import("settings_page.zig").render(state, w);
     if (state.phase == .audit) return @import("audit_page.zig").render(state, w);
@@ -40,6 +47,7 @@ fn page(state: *const State, w: *Writer) Writer.Error!void {
             "</div></header>",
         .{},
     );
+    try @import("statistics_tabs.zig").render(false, w);
     try message(state, w);
     if (state.stats != null and (state.stale or state.paused)) {
         try html.render(
@@ -174,10 +182,10 @@ fn authenticationFields(state: *const State, w: *Writer) Writer.Error!void {
     try field(
         w,
         "password",
-        if (state.phase == .login) "Password" else "New password (12+ characters)",
+        if (state.phase == .password) "New password (12+ characters)" else "Password",
         "password",
         "",
-        if (state.phase == .login) "current-password" else "new-password",
+        if (state.phase == .password) "new-password" else "current-password",
     );
     if (state.phase == .login) try w.writeAll(
         "<label for=\"code\">Authenticator or recovery code (if enabled)</label>" ++
@@ -374,20 +382,36 @@ test "authentication renders no geographic or telemetry element and escapes inpu
     try std.testing.expect(std.mem.indexOf(u8, output_html, "&lt;script&gt;&quot;") != null);
 }
 
+test "the renderer gates retained management state when authentication is no longer complete" {
+    const t = std.testing;
+    var state: State = .{ .phase = .security_overview };
+    state.security_overview.categories[0] = .{
+        .label = try @import("console_protocol").Bytes(96).init("private finding"),
+    };
+    state.security_overview.loaded = @splat(true);
+    var buffer: [8192]u8 = undefined;
+    var writer: Writer = .fixed(&buffer);
+    try render(&state, &writer);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "private finding") == null);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "<svg") == null);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "Welcome back") != null);
+}
+
 test "authenticated pages share one navigation landmark with the correct active section" {
     const phases = [_]@import("state.zig").Phase{
-        .dashboard, .events, .similarity, .challenges, .geoip, .password, .security, .users,
-        .tokens,    .audit,  .nodes,      .policies,
+        .dashboard,         .events, .similarity, .challenges, .geoip, .password,
+        .security,          .users,  .tokens,     .audit,      .nodes, .policies,
+        .security_overview,
     };
     const actions = [_][]const u8{
-        "dashboard", "events", "events", "challenges", "geoip", "account", "account", "users",
-        "tokens",    "audit",  "nodes",  "policies",
+        "dashboard", "events", "events", "challenges", "geoip",     "account", "account", "users",
+        "tokens",    "audit",  "nodes",  "policies",   "dashboard",
     };
     for (phases, 0..) |phase, i| {
         var state: State = .{ .phase = phase };
         state.csrf = try @import("console_protocol").Bytes(64).init("test");
         try state.role.set("admin");
-        var buffer: [32 * 1024]u8 = undefined;
+        var buffer: [64 * 1024]u8 = undefined;
         var writer: Writer = .fixed(&buffer);
         try render(&state, &writer);
         const output = writer.buffered();

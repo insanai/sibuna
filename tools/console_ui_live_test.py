@@ -115,6 +115,7 @@ def exercise(ui):
     ui.event(1, {"action": "density", "fields": {}})
     assert ui.appearance["density"] == "comfortable" and ui.appearance["persist"]
     assert "Traffic overview" in ui.html and "console-navigation" in ui.html
+    security_view(ui)
     for page, topic in (("events", "events"), ("policies", "policy"), ("nodes", "nodes"),
                         ("challenges", "challenges"), ("audit", "audit")):
         ui.event(1, {"action": page, "fields": {}})
@@ -141,6 +142,22 @@ def exercise(ui):
     assert ui.appearance["theme"] == "light"
     ui.event(8, {"route": "nodes"})
     assert ui.stream is None and "Welcome back" in ui.html
+
+
+def security_view(ui):
+    ui.event(1, {"action": "security-overview", "fields": {}})
+    ui.topic("events")
+    assert "Security overview" in ui.html and 'aria-label="Security modules"' in ui.html
+    assert ui.history[-1]["value"] == "security-overview"
+    assert ui.connections == 1
+    ui.event(1, {"action": "security-window", "fields": {"hours": "720"}})
+    summary = ui.requests[-1]["body"]
+    assert summary["node"] == 1 and summary["until"] - summary["from"] == 30 * 86400
+    ui.event(1, {"action": "security-module-0", "fields": {}})
+    query = ui.requests[-1]["body"]
+    assert query["module"] == "inspection" and query["node"] == 1
+    assert query["from"] == summary["from"] and query["until"] == summary["until"] - 1
+    assert '<option value="720" selected>Last 30 days</option>' in ui.html
 
 
 def retention_controls(ui):

@@ -5,6 +5,7 @@ pub const Phase = enum {
     login,
     password,
     dashboard,
+    security_overview,
     geoip,
     security,
     events,
@@ -44,6 +45,7 @@ pub const State = struct {
     rankings: @import("rankings_panel.zig").Model = .{},
     similarity: @import("similarity_state.zig").Model = .{},
     challenges: @import("challenges_page.zig").Model = .{},
+    security_overview: @import("security_overview_state.zig").Model = .{},
     events: @import("events_state.zig").Model = .{},
     message: p.Bytes(256) = .{},
     message_success: bool = false,
@@ -116,6 +118,8 @@ pub const State = struct {
                 self.minute_history.clear();
             } else if (comptime @import("std").mem.eql(u8, field.name, "events")) {
                 self.events.clear();
+            } else if (comptime @import("std").mem.eql(u8, field.name, "security_overview")) {
+                self.security_overview.clear();
             } else if (comptime @import("std").mem.eql(u8, field.name, "users")) {
                 self.users.clear();
             } else if (comptime @import("std").mem.eql(u8, field.name, "tokens")) {

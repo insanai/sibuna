@@ -91,10 +91,16 @@ fn desired(state: *const State, topic: p.Topic) ?Args {
         .policy => if (state.phase == .policies) .{} else null,
         .nodes => if (state.phase == .nodes) .{} else null,
         .challenges => if (state.phase == .challenges) .{} else null,
-        .events => if (state.phase == .events and state.events.path.len <= 128 and
+        .events => if (state.phase == .security_overview)
+            .{ .node = if (state.security_overview.request.node == 0)
+                null
+            else
+                state.security_overview.request.node }
+        else if (state.phase == .events and state.events.path.len <= 128 and
             state.events.campaign == 0 and state.events.incident == 0) .{
             .node = if (state.events.node == 0) null else state.events.node,
             .category = state.events.category,
+            .module = state.events.module,
             .country = state.events.country,
             .ip = state.events.ip,
             .path_prefix = p.Bytes(128).init(state.events.path.slice()) catch unreachable,
@@ -265,6 +271,8 @@ fn rows(state: *State, topic: p.Topic, value: std.json.Value, alloc: std.mem.All
     observation.observed_at = try number(coverage, "observed_at", alloc);
     observation.missing_ids = try number(coverage, "missing_ids", alloc);
     observation.newer = 0;
+    if (topic == .events and state.phase == .security_overview)
+        return state.security_overview.live(value, alloc);
     const items = fields.field(value, "rows") orelse return error.InvalidResponse;
     if (items != .array or items.array.items.len > 64) return error.InvalidResponse;
     const boundary = if (topic == .events) state.events.until else state.audit.until;

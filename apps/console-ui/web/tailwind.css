@@ -3,7 +3,7 @@
 @source "../src/snippets/**/*.html";
 @plugin "daisyui" {
   themes: false;
-  include: button, input, card, badge, alert, table, tabs, menu, navbar, select, textarea, checkbox, join;
+  include: button, input, card, badge, alert, table, tab, menu, navbar, select, textarea, checkbox, join;
 }
 @plugin "daisyui/theme" {
   name: "sibuna-light";
@@ -173,4 +173,13 @@ button, input, select, textarea { font: inherit; }
 }
 @media (max-width: 850px) {
  .btn, .menu :where(li > button), .input, .select { min-height: 44px; }
+}
+
+/* Six security modules share one desktop row; labels keep each population explicit. */
+.sb-security-tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+@media (max-width: 1280px) {
+ .sb-security-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+ .sb-security-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
