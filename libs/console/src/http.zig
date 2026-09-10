@@ -24,6 +24,11 @@ pub fn fail(context: *Context, status: std.http.Status, code: []const u8) Contex
 }
 
 fn failureHint(code: []const u8) []const u8 {
+    if (std.mem.eql(u8, code, "CONSOLEPEERQUERY"))
+        return "The selected node could not supply this view. Check peer health and retry. " ++
+            "Unavailable history is not zero traffic.";
+    if (std.mem.eql(u8, code, "TIMELINE001"))
+        return "History changed. Reload the latest page.";
     if (std.mem.eql(u8, code, "CONSOLEQUORUM"))
         return "Storage could not commit; the cluster may have lost quorum. Reads and the " ++
             "data plane continue from the last applied state. Retry when a majority is up.";

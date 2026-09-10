@@ -109,10 +109,18 @@ fn receive(
     client: *p.subscription_client.Client,
     arena: []u8,
 ) !void {
+    var query: @import("peer_query_client.zig").Session = .{
+        .store = input.store,
+        .handle = handle,
+    };
+    defer query.deinit();
     var frames: ws.Receiver = .{};
     var second = seconds(input.store.io);
     var count: u16 = 0;
     while (true) {
+        var command: [512]u8 = undefined;
+        var writer: std.Io.Writer = .fixed(&command);
+        if (try query.next(&writer)) try send(connection, .text, writer.buffered());
         const event = try @import("serve").websocket_io.receive(
             connection.reader(),
             &frames,
@@ -133,14 +141,14 @@ fn receive(
                 return;
             },
             .binary => return error.InvalidMessage,
-            .text => |payload| try update(input, handle, client, arena, payload),
+            .text => |payload| try update(input, &query, client, arena, payload),
         }
     }
 }
 
 fn update(
     input: Input,
-    handle: @import("peer_store.zig").Handle,
+    query: *@import("peer_query_client.zig").Session,
     client: *p.subscription_client.Client,
     memory: []u8,
     payload: []const u8,
@@ -148,6 +156,7 @@ fn update(
     var arena = std.heap.FixedBufferAllocator.init(memory);
     const gpa = arena.allocator();
     const parsed = try std.json.parseFromSlice(std.json.Value, gpa, payload, .{});
+    if (try query.receive(parsed.value, gpa)) return;
     const event = try client.receive(parsed.value, gpa);
     switch (event) {
         .none => return,
@@ -163,7 +172,7 @@ fn update(
         client.view(.stats),
         .{},
     );
-    const accepted = try input.store.publish(handle, .{
+    const accepted = try input.store.publish(query.handle, .{
         .value = &value.value,
         .watermark = position.watermark,
         .sequence = position.sequence,

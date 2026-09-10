@@ -5,14 +5,23 @@ const App = @import("app.zig").App;
 const http = @import("http.zig");
 
 pub fn handle(app: *App, context: *http.Context) !void {
-    const digest = try http.session(context);
-    if (!app.query_budget.allow(app.io, digest, app.now(), .query))
+    const credential = try http.credential(context);
+    if (!app.query_budget.allow(app.io, credential.digest, app.now(), .query))
         return http.fail(context, .too_many_requests, "CONSOLE429");
     var body: [256]u8 = undefined;
     var arena: [1024]u8 = undefined;
     var fixed = std.heap.FixedBufferAllocator.init(&arena);
     const query = try http.parse(p.Query, context, &body, fixed.allocator());
     defer query.deinit();
+    if (query.value.node) |node| if (node != app.stats.node) {
+        const cursor = try @import("peer_query.zig").Cursor.from(query.value);
+        return @import("peer_query_routes.zig").handle(app, context, .{
+            .credential = credential,
+            .node = node,
+            .kind = .timeline,
+            .cursor = cursor,
+        });
+    };
     const boot = std.fmt.bytesToHex(app.stats.boot, .lower);
     var rows: [p.max_rows]p.Bucket = undefined;
     // Copy only this page under the collector mutex; a slow HTTP writer owns its output.

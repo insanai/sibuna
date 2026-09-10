@@ -85,6 +85,35 @@ def traffic(c, node, count=16):
         assert status in (200, 302, 403, 429, 503), status
 
 
+def retained(c, cookie, csrf):
+    port = c.consoles[0]
+    query = {"node": 2, "limit": 10}
+    status, _, body = c.h.request(port, "POST", "/console/api/timeline", query, cookie, csrf)
+    assert status == 200, (status, body)
+    page = json.loads(body)
+    assert page["node"] == 2 and 0 < len(page["rows"]) <= 8, page
+    assert sum(sum(int(value) for key, value in row["counts"].items()
+                   if key not in ("origin_4xx", "origin_5xx")) for row in page["rows"]) >= 16, page
+    # A freshly restarted node can have fewer than eight seconds. Ask for one row to
+    # exercise real pagination without assuming a slow machine or sleeping through traffic.
+    query["limit"] = 1
+    status, _, body = c.h.request(port, "POST", "/console/api/timeline", query, cookie, csrf)
+    page = json.loads(body)
+    assert status == 200 and page["next_before"] is not None, page
+    cursor = dict(query, before=page["next_before"], epoch=page["epoch"], boot=page["boot"])
+    status, _, body = c.h.request(port, "POST", "/console/api/timeline", cursor, cookie, csrf)
+    older = json.loads(body)
+    assert status == 200 and older["node"] == 2 and older["boot"] == page["boot"], body
+    assert all(int(row["sequence"]) < int(cursor["before"]) for row in older["rows"])
+    status, _, body = c.h.request(port, "POST", "/console/api/rankings/query", {"node": 2},
+                                  cookie, csrf)
+    rankings = json.loads(body)
+    assert status == 200 and rankings["node"] == 2, body
+    assert bytes(rankings["boot"]).hex() == page["boot"] and len(rankings["rows"]) <= 8
+    assert c.h.request(port, "POST", "/console/api/timeline", {"node": 99}, cookie, csrf)[0] == 503
+    return cursor
+
+
 def retention_shared(c, cookie, csrf, write=False):
     form = {"key": "retention.minutes", "value": "1", "confirmed": True,
             "expected_revision": "0"}
@@ -138,10 +167,13 @@ def scenario(c):
     # Node 3 receives node 2's telemetry, but must never forward it as node 3's own traffic.
     peer_test.wait(lambda: reports(c, 2, cookie)[2]["requests"] >= 16, "second direct observer")
     assert reports(c, 0, cookie)[3]["requests"] == original[3]["requests"]
+    cursor = retained(c, cookie, csrf)
     c.stop(1)
     stale = peer_test.wait(lambda: (rows[2] if (rows := reports(c, 0, cookie))[2]["status"] == "stale"
                                    else None), "stopped member stale")
     assert stale["requests"] >= current[2]["requests"]
+    assert c.h.request(c.consoles[0], "POST", "/console/api/timeline", {"node": 2},
+                       cookie, csrf)[0] == 503
     c.stop(2)
     # No majority remains. A separately authenticated management link still receives local
     # snapshots, including beyond the browser authorization/storage wait interval.
@@ -167,6 +199,8 @@ def scenario(c):
                              "rejoined peer has a new boot", 60)
     assert restored["resets"] >= 1
     assert restored["requests"] == 0, "boot changes establish a fresh counter origin"
+    assert c.h.request(c.consoles[0], "POST", "/console/api/timeline", cursor,
+                       cookie, csrf)[0] == 409, "old boot cursor must not cross a peer restart"
     retention_shared(c, cookie, csrf)
 
 

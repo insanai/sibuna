@@ -14,6 +14,7 @@ pub const Job = struct {
         self.store = store;
         self.gpa = gpa;
         errdefer self.stop();
+        try store.startQueries(gpa);
         for (0..store.config.count) |index| {
             self.threads[index] = try std.Thread.spawn(
                 .{ .stack_size = 256 * 1024 },

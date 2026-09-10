@@ -87,6 +87,7 @@ const Stream = struct {
     mutex: std.Io.Mutex = .init,
     controls: [8]Control = undefined,
     control_len: usize = 0,
+    queries: @import("peer_query_queue.zig").Queue = .{},
 
     // Both tasks borrow this handler; shutdown wakes the reader before its owner returns.
     fn run(self: *Stream) void {
@@ -126,6 +127,7 @@ const Stream = struct {
                 if (!self.authorize()) break;
                 last_auth = now;
             }
+            if (self.peer_node != null and !self.reply()) break;
             if (self.channel) |handle_id| {
                 if (!self.deliver(handle_id)) break;
             } else if (self.subscribed.load(.acquire) and now != last_data) {
@@ -145,6 +147,14 @@ const Stream = struct {
         const code = self.close_code.load(.acquire);
         if (code != 0) self.close(code);
         self.stopped.store(true, .release);
+    }
+
+    fn reply(self: *Stream) bool {
+        const request = self.queries.take(self.app.io) orelse return true;
+        var buffer: [8192]u8 = undefined;
+        var writer: std.Io.Writer = .fixed(&buffer);
+        @import("peer_query_server.zig").respond(self.app, request, &writer) catch return false;
+        return self.send(.text, writer.buffered());
     }
 
     fn statistics(self: *Stream, epoch: []const u8, sequence: u64, now: u64) bool {
@@ -301,6 +311,9 @@ const Stream = struct {
         }
         if (self.command_count == 64) return false;
         self.command_count += 1;
+        if (self.peer_node != null) {
+            if (self.queries.accept(self.app.io, payload) catch return false) return true;
+        }
         const input = p.subscriptions.parse(payload) catch return false;
         if (input.op == .ping) return self.enqueue(.text, "{\"op\":\"pong\"}");
         if (self.kiosk and input.topic != .stats) return false;

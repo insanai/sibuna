@@ -4,6 +4,7 @@ const std = @import("std");
 const p = @import("console_protocol");
 const config = @import("peer_config.zig");
 const auth = @import("peer_auth.zig");
+const q = @import("peer_query.zig");
 pub const Error = auth.Error || error{
     UnknownPeer,
     DuplicateConnection,
@@ -46,6 +47,8 @@ pub const Store = struct {
     replay: auth.ReplayCache = .{},
     slots: [config.max_peers]Slot = @splat(.{}),
     stopping: bool = false,
+    queries: [config.max_peers]?*q.Mailbox = @splat(null),
+    query_allocator: ?std.mem.Allocator = null,
 
     /// Caller supplies a separately provisioned master and erases its copy after init.
     pub fn init(io: std.Io, options: config.Config, node: u32, master: ?[32]u8) Store {
@@ -60,6 +63,13 @@ pub const Store = struct {
     /// All inbound handlers and outbound workers must be joined before deinit.
     pub fn deinit(self: *Store) void {
         for (self.slots) |slot| std.debug.assert(!slot.incoming);
+        if (self.query_allocator) |gpa| for (&self.queries) |*queue| {
+            if (queue.*) |box| {
+                box.deinit(self.io);
+                gpa.destroy(box);
+            }
+            queue.* = null;
+        };
         if (self.key) |*key| std.crypto.secureZero(u8, key);
         self.key = null;
     }
@@ -68,6 +78,37 @@ pub const Store = struct {
         self.mutex.lockUncancelable(self.io);
         defer self.mutex.unlock(self.io);
         self.stopping = true;
+        for (self.queries) |queue| if (queue) |box| box.stop(self.io);
+    }
+
+    /// Allocate only configured peers, before any inbound handler or outbound worker starts.
+    pub fn startQueries(self: *Store, gpa: std.mem.Allocator) !void {
+        std.debug.assert(self.query_allocator == null);
+        self.query_allocator = gpa;
+        // Partially initialized stores use the same deinit path on startup failure.
+        for (self.queries[0..self.config.count]) |queue| std.debug.assert(queue == null);
+        for (self.queries[0..self.config.count]) |*queue| {
+            queue.* = try gpa.create(q.Mailbox);
+            queue.*.?.* = .{};
+        }
+    }
+
+    pub const Pending = struct { box: *q.Mailbox, ticket: q.Mailbox.Ticket };
+    pub fn submit(self: *Store, node: u32, kind: q.Kind, cursor: q.Cursor, now: u64) !Pending {
+        self.mutex.lockUncancelable(self.io);
+        defer self.mutex.unlock(self.io);
+        if (self.stopping) return error.Stopping;
+        const index = self.find(node) orelse return error.UnknownPeer;
+        const slot = &self.slots[index];
+        if (slot.observation.status != .current or now -| slot.observation.received_at >= 10)
+            return error.PeerUnavailable;
+        const box = self.queries[index] orelse return error.PeerUnavailable;
+        return .{ .box = box, .ticket = try box.submit(self.io, .{
+            .generation = slot.generation,
+            .boot = slot.boot,
+            .kind = kind,
+            .cursor = cursor,
+        }, .background) };
     }
 
     pub fn admit(self: *Store, request: auth.Request, proof: [32]u8, now: u64) Error!u8 {

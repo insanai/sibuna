@@ -197,6 +197,13 @@ const table = [_]Route{
         .token_scope = .policy_write,
     },
     .{
+        .path = "/console/api/rankings/query",
+        .method = .POST,
+        .access = .full,
+        .handler = .rankings,
+        .token_scope = .stats_read,
+    },
+    .{
         .path = "/console/api/rankings",
         .method = .GET,
         .access = .full,

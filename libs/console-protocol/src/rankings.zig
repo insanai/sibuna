@@ -23,7 +23,10 @@ pub const Row = struct {
     estimate: u64,
     error_bound: u64,
 };
+pub const Query = struct { node: ?u32 = null };
 pub const Page = struct {
+    node: u32 = 0,
+    boot: [16]u8 = @splat(0),
     archive: ArchiveStatus = .{},
     kind: []const u8 = "path_prefix",
     minute_start: u64,

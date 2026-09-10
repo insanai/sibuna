@@ -61,7 +61,8 @@ pub const Budget = struct {
             (@as(u64, self.subscribers) + self.peers) *
                 @sizeOf(@import("subscriber.zig").Subscriber) +
             // Each outbound peer owns reassembly, a bounded JSON arena and TLS buffers.
-            @as(u64, self.peers) * @import("peer_client.zig").allocation_bytes +
+            @as(u64, self.peers) * (@import("peer_client.zig").allocation_bytes +
+                @sizeOf(@import("peer_query.zig").Mailbox)) +
             topic_bytes + traffic_bytes + query_bytes + evidence_bytes + collector_bytes +
             2 * @as(u64, self.geoip_generation_bytes);
     }

@@ -3,6 +3,7 @@ const std = @import("std");
 pub const capacity = 3600;
 pub const max_rows = 16;
 pub const Query = struct {
+    node: ?u32 = null,
     before: ?u64 = null,
     epoch: ?u32 = null,
     boot: ?[]const u8 = null,

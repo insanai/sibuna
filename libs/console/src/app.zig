@@ -517,6 +517,16 @@ pub const App = struct {
             try http.fail(context, .unauthorized, "CONSOLE401");
             return null;
         };
+        return self.reauthorize(context, credential);
+    }
+
+    /// The caller captures its credential before consuming the HTTP body. Rechecks must
+    /// not iterate headers after the server reader has advanced to body processing.
+    pub fn reauthorize(
+        self: *App,
+        context: *http.Context,
+        credential: http.Credential,
+    ) !?p.Principal {
         const result = try self.request(.{ .authorize = .{
             .session_digest = credential.digest,
             .kind = credential.kind,
