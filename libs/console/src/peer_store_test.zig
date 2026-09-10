@@ -178,3 +178,35 @@ test "peer geography accepts packed publisher codes and rejects invalid or dupli
     try t.expectEqual(@as(u16, 0x5553), copied[0].value.countries[0].code);
     try t.expectEqual(@as(u16, 0x4742), copied[0].value.incident_geo.?.countries[0].code);
 }
+
+test "authenticated reconnects keep retained observations stale until a new sample" {
+    var store = try fixture();
+    defer store.deinit();
+    const first = try store.activate(0, @splat(1));
+    var value = observation(first.boot, 1000);
+    try t.expect(try store.publish(first, .{
+        .value = &value,
+        .watermark = 1,
+        .sequence = 1,
+        .received_at = 100,
+    }));
+    const replacement = try store.activate(0, first.boot);
+    var reports: [config.max_peers]peers.Report = undefined;
+    _ = store.reports(111, &reports);
+    try t.expectEqual(.stale, reports[0].status);
+    try t.expectEqual(@as(?u64, 1000), reports[0].requests);
+    try t.expectEqual(@as(?u64, 11), reports[0].age_seconds);
+    var snapshots: [config.max_peers]peers.Observation = undefined;
+    _ = store.snapshot(&snapshots);
+    try t.expectEqual(.stale, snapshots[0].status);
+    value.uptime_ms = 2000;
+    try t.expect(try store.publish(replacement, .{
+        .value = &value,
+        .watermark = 2,
+        .sequence = 1,
+        .received_at = 112,
+    }));
+    _ = store.reports(112, &reports);
+    try t.expectEqual(.current, reports[0].status);
+    try t.expectEqual(@as(?u64, 0), reports[0].age_seconds);
+}

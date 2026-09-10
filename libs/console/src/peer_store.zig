@@ -141,7 +141,8 @@ pub const Store = struct {
         if (slot.generation == std.math.maxInt(u64)) return error.GenerationExhausted;
         slot.generation += 1;
         slot.boot = boot;
-        slot.observation.status = .connecting;
+        // Authenticating a replacement connection does not refresh its retained sample.
+        slot.observation.status = if (slot.observation.has_value) .stale else .connecting;
         return .{ .index = index, .generation = slot.generation, .boot = boot };
     }
 
