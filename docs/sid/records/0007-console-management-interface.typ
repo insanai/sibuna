@@ -1688,6 +1688,28 @@ headroom. Complete decoding and merge candidates live in caller-owned event scra
 Wasm call stack; native consumers may use the same codec and arithmetic with stack workspaces.
 The four-MiB browser memory ceiling is independent of the artifact-size review threshold.
 
+== Rule observations
+
+A rule hit is a successful declarative matcher evaluation. WEIGH matches count alongside the
+first terminal match; inspection or reputation decisions that prevent rule evaluation produce
+no declarative hits. Private policy tests do not increment these counters. Match indices belong
+to a pinned immutable engine generation, so publication cannot relabel an in-flight request.
+The request path records bounded bits and increments generation-owned counters only.
+
+The storage owner samples counters once per second and seals ending-minute observations,
+using the same interval convention as Traffic history. It copies rule identities and pending
+counts before an old engine arena can be reused. Four owned pending frames and eight rows per
+storage step bound backlog and work; exhausted capacity remains visible as unconfirmed history
+and must not delay policy publication. Immutable node/boot/sequence/rule identities make retries
+idempotent. Observations and their hour/day summaries commit together; arithmetic overflow
+makes a summary unavailable rather than wrapping or rounding an exact counter.
+
+Rule history uses the minute-retention setting. Indexed reads return at most 96 observations
+plus lookahead per page, and comparisons retain their rule, node, policy-revision and UTC
+boundaries across continuation. Startup, cutover, clock changes and missing writes prevent a
+complete-coverage claim. Hits-today values and sparklines describe recorded intervals; comparing
+before and after an edit does not establish that the edit caused a change in traffic.
+
 == Management consistency
 
 The Persistent storage owner executes typed, owned mailbox operations. Handlers receive no

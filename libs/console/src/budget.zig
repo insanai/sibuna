@@ -33,6 +33,9 @@ pub const Budget = struct {
     pub const collector_bytes = @sizeOf(@import("stats.zig").Stats) +
         @sizeOf(@import("rankings_journal.zig").Journal) +
         @sizeOf(@import("minute_journal.zig").Journal) +
+        @sizeOf(@import("rule_hit_journal.zig").Journal) +
+        2 * (@sizeOf(@import("console_protocol").rule_hits.Generation) +
+            @sizeOf(@import("store").rule_hits.Counters(128))) +
         @sizeOf(@import("geoip_maintenance.zig").Maintenance) +
         @sizeOf(@import("cluster_probe.zig").Probe) +
         @sizeOf(@import("retention_job.zig").Job);

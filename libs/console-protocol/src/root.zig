@@ -9,6 +9,7 @@ pub const dashboard = @import("dashboard.zig");
 pub const space_saving = @import("space_saving.zig");
 pub const rankings_archive = @import("rankings_archive.zig");
 pub const ranking_history = @import("ranking_history.zig");
+pub const rule_hits = @import("rule_hits.zig");
 pub const rankings = @import("rankings.zig");
 pub const timeline = @import("timeline.zig");
 pub const minute_summary = @import("minute_summary.zig");
@@ -124,6 +125,7 @@ pub const StorageRequest = union(enum) {
     minutes_query: minutes.Query,
     minutes_summary: minutes.Query,
     minutes_prune: u64,
+    rule_hits_start,
     rankings_query: ranking_history.Query,
     rankings_begin: ranking_storage.Begin,
     rankings_chunk: ranking_storage.Chunk,
