@@ -10,6 +10,7 @@ import sys
 import tempfile
 import time
 import console_bootstrap_test as bootstrap
+import console_rule_hit_cluster_test as rule_history
 from console_users_test import login
 
 NODES = 3
@@ -206,6 +207,7 @@ def scenario(c, h):
     c.wait(lambda: all(int(m["applied_revision"]) >= saved
                        for m in members(h, c.consoles[0], s1)["page"]["members"]), 30,
            "every member acknowledged the revision")
+    captured_hits = rule_history.capture(c, h, s1, saved)
     # Leader loss: survivors keep serving reads and report the stopped member as down.
     lost = leader - 1
     survivor = (lost + 1) % NODES
@@ -252,6 +254,7 @@ def scenario(c, h):
     c.wait(lambda: h.request(c.data[lost], "GET", "/cluster-rule-2", extra_headers={
         "X-Forwarded-For": "8.8.9.10", "User-Agent": "Mozilla/5.0"})[0] == 403, 60,
            "restarted node enforces the second rule")
+    rule_history.recovered(c, h, survivor, s3, captured_hits)
     # Revocation on one console ends a session issued by another.
     s4 = c.session(other, credentials)
     assert h.request(c.consoles[other], "GET", "/console/api/session", cookie=s4[0])[0] == 200
