@@ -52,7 +52,7 @@ docs); the book's Part II carries the full table with sources.
 Sibuna does not terminate ingress TLS or score bots with a model. Its opt-in console preview
 includes the animated country globe, incident investigation, policy editing, users, scoped API
 tokens, audit browsing, local node controls and authenticated multi-topic subscriptions.
-SID 0007 remains proposed while peer transport, interface and release acceptance are completed. See
+SID 0007 remains proposed while interface and release acceptance are completed. See
 [loading country data from the CLI](#loading-country-data) for country data setup.
 
 ## Research foundations
@@ -351,6 +351,14 @@ and consensus keys. Rotation takes effect after restarting the nodes. The Nodes 
 loss; missing observations remain null. Peer streams publish only their own node's statistics,
 keep telemetry outside consensus and retain stale observations when disconnected.
 
+The dashboard's **Live traffic scope** selects all configured nodes or one node. Combined
+totals exclude missing, stale and clock-skewed peers; **Node coverage and locations** shows
+which nodes contributed and their observation times. Country rankings report omitted-count
+uncertainty, and globe arrows retain each receiving node's configured location. A gap in a
+source's counter interval leaves the combined rate unobserved. Retained second intervals
+and live path rankings are labelled as local to the serving console; minute history has its
+own node selection and keeps per-node rows distinct.
+
 Drain, resume and clear local bans still act only on the serving node,
 require a preview and produce durable command receipts. Under `-Dcluster=true`,
 `zig build console-e2e` also runs a three-node membership, failover and quorum-loss scenario,
@@ -406,6 +414,9 @@ current revision without replacing an open draft. Selected non-default challenge
 partitions remain explicit snapshots. Mutations and historical/detail queries use HTTP.
 `zig build console-ui-e2e` runs the shipped Wasm against a real daemon using Node; Chrome
 review separately checks the browser DOM, layout and accessibility.
+The complete UI has a 448 KiB build warning and a 512 KiB uncompressed artifact ceiling;
+these are reviewable project guardrails, not browser standards. Loading and interaction
+measurements remain separate acceptance checks; the rationale is recorded in SID 0007.
 
 For an HTTPS reverse proxy, configure `--console-origin`, `--console-behind-proxy` and explicit
 `--console-trusted-proxy` CIDRs. Supply a persistent `--console-key-file` containing 64 hex

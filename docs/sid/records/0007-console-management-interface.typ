@@ -1674,8 +1674,10 @@ identifies the following concrete gaps; the status remains Proposed.
     HTTP probes provide health. Direct TLS peer WebSockets now authenticate configured nodes,
     exchange local-only statistics and fence boot/sequence/watermark changes. The live TLS fixture
     verifies authentication, certificate rejection, stale recovery and shutdown. Three real TLS
-    peers pass local-only accounting, quorum isolation and restart; cluster-wide dashboard
-    composition remains interface work.],
+    peers pass local-only accounting, quorum isolation and restart. The live dashboard now
+    composes configured sources and selects individual nodes, with explicit missing/stale
+    coverage and receiving-node globe locations. Retained seconds and path rankings remain
+    local to the serving console; broader cluster interface acceptance remains open.],
   [Country rule maintenance], [Country actions pin a GeoIP generation. Reviewed replacement now compares added,
     retained and removed prefixes, with a bounded eight-row diff page. Apply binds the country,
     action, expiry, generation and expected policy revision to the preview. The version 26
@@ -4631,6 +4633,44 @@ user devices and measured experience, with separate warning and error levels.
 #link("https://web.dev/articles/defining-core-web-vitals-thresholds")[The Core Web Vitals threshold rationale]
 provides the experience targets, not a universal Wasm byte allowance. SID 0007 remains
 Proposed while the remaining implementation and acceptance work proceeds.
+
+== Selected live dashboard sources (2026-09-10)
+
+The subscription feeder now composes its local observation and at most eight configured
+peer observations in one owned frame. Browser statistics can select all configured nodes
+or one node. Management peers still receive only the flat local source: the peer parser
+rejects browser envelopes, and peer subscriptions refuse node selection. This prevents
+aggregated totals from being circulated and counted again.
+
+Missing, rejected, ten-second-old and clock-skewed observations do not contribute to totals.
+A selected stale node retains its last counters with visible coverage; a never-observed node
+has no counters. Checked arithmetic withholds an overflowing aggregate. Contributor boots
+form the aggregate identity, and request rates use each source's own consecutive monotonic
+interval. Repeated or delayed observations leave an unobserved rate interval instead of
+turning accumulated traffic into a one-second spike.
+
+Country rankings combine the bounded source summaries and retain omitted-count uncertainty,
+Unknown and incomplete incident-geography coverage. Their rolling windows end at each
+source's displayed observation time; they are not exact globally aligned intervals.
+At most sixteen displayed country-to-node flows retain their receiving node's declared
+location. Undeclared locations are not guessed. The selector, coverage and geography are
+shared by the normal dashboard and kiosk. Retained seconds and path rankings explicitly
+remain local to the serving console; minute queries use the replicated history service.
+
+Native tests exercise full nine-source snapshots and deltas through the actual hub and
+browser protocol client with 512 KiB decoding scratch. They preserve counters above
+JavaScript's exact integer range, keep peer totals local and fit the bounded subscriber
+views. Native rendering covers node selection, destination ownership and rate gaps. The
+shipped-Wasm test passes six-topic navigation, resynchronization and sign-out.
+
+The current module is 398,015 bytes, below the 448 KiB review warning. Chrome loaded it on
+loopback HTTP, authenticated, rendered the globe, navigated to Policies with the sidebar
+present, evaluated the known denial rule and cleared authenticated content on sign-out.
+The browser reported no errors during that sequence. The disposable HTTPS fixture reached
+Chrome's self-signed certificate interstitial, which the browser control could not attach
+to; it is not recorded as a successful HTTPS browser test. Both review daemons were joined
+after testing. These functional checks do not establish cold-load timing, mobile field
+percentiles, complete cluster browser coverage or the data-plane impact gate.
 
 #pagebreak(weak: true)
 

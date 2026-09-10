@@ -142,8 +142,14 @@ PEM trust anchors for a private management PKI; otherwise the client uses system
 Certificate hostname validation always applies. Key rotation requires coordinated restart.
 The Nodes API and its subscription report receipt age, clock skew, boot changes and sampling
 loss. Missing observations remain unavailable and disconnected values remain stale; received
-statistics never become another node's own contribution. Local commands remain
-per node. `zig build console-impact` runs the data-plane isolation matrix (`-- --quick` for
+statistics never become another node's own contribution. The dashboard's *Live traffic scope*
+selects one node or combines the configured nodes. *Node coverage and locations* identifies
+missing, stale and clock-skewed sources, observation times and configured destinations.
+Country rankings show the uncertainty from omitted source rows. Arrows retain their receiving
+node, and missing node locations are not invented. The combined rate stays unobserved when
+any contributing source lacks a consecutive interval. Retained seconds and live path rankings
+remain labelled as local; minute history keeps its own node selection and per-node rows.
+Local commands remain per node. `zig build console-impact` runs the data-plane isolation matrix (`-- --quick` for
 a smoke run) and writes `benchmarks/results/console-impact-latest.json`.
 
 Wall displays use kiosk sessions. Under Account, an operator names the display and selects
@@ -194,8 +200,12 @@ also remembers theme and spacing choices in this browser, with System as the def
 SID 0007 remains Proposed. The interface is available, with ongoing review corrections
 and acceptance work recorded in the SID. Earlier impact runs are inconclusive. The corrected
 harness includes each dashboard's stream, rankings and retained-timeline queries; a full
-acceptance run requires a production GeoIP snapshot and documented host conditions. Direct TLS peer transport has live-daemon verification; cluster-wide dashboard integration,
-interface review and browser acceptance remain tracked separately in SID 0007.
+acceptance run requires a production GeoIP snapshot and documented host conditions. Direct TLS
+peer transport and the combined dashboard have separate coverage and freshness contracts;
+interface review and browser acceptance remain tracked in SID 0007. The complete Wasm
+application warns above 448 KiB and has a 512 KiB uncompressed ceiling. These project limits
+leave room for console workflows; they do not replace browser loading and responsiveness
+measurements or change the explicit 4 MiB linear-memory allocation.
 
 #pagebreak(weak: true)
 
