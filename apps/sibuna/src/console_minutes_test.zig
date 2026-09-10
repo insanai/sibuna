@@ -173,3 +173,68 @@ test "a failed minute update rolls back and a node filter preserves both retaine
     const expired = try fx.run(.{ .minutes_write = .{ .record = input, .now = 91 * 86400 } });
     try t.expectEqual(p.Failure.invalid_input, expired.failed);
 }
+
+test "compact minute scans bound storage work and preserve page-boundary restart ambiguity" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var buffer: [160]u8 = undefined;
+    const fx = try Fixture.open(try std.fmt.bufPrint(
+        &buffer,
+        ".zig-cache/tmp/{s}/minute-summary",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try fixture.policySession(fx);
+    for (100..199) |minute| {
+        _ = try fx.run(.{ .minutes_write = .{ .record = summaryRecord(minute), .now = 12000 } });
+    }
+    var query: p.minutes.Query = .{
+        .session_digest = @splat(1),
+        .observed_at = 12000,
+        .from_minute = 100,
+        .until_minute = 198,
+        .node = 7,
+        .limit = p.minute_summary.max_rows,
+    };
+    const first = (try fx.run(.{ .minutes_summary = query })).minute_summary;
+    try t.expectEqual(@as(u64, 96), first.window.rows);
+    try t.expectEqual(@as(u64, 103), first.window.next.?.minute);
+    var window: p.minute_summary.Window = .{ .node = 7, .from = 100, .until = 198 };
+    try p.minute_summary.acceptPart(&window, first);
+    query.before = first.window.next;
+    const last = (try fx.run(.{ .minutes_summary = query })).minute_summary;
+    try p.minute_summary.acceptPart(&window, last);
+    try t.expect(window.covered());
+    try t.expectEqual(@as(u64, 99), window.counts.admitted);
+    var duplicate = summaryRecord(103);
+    duplicate.boot = @splat(2);
+    _ = try fx.run(.{ .minutes_write = .{ .record = duplicate, .now = 12000 } });
+    query.before = null;
+    const overlap = (try fx.run(.{ .minutes_summary = query })).minute_summary;
+    query.before = overlap.window.next;
+    const remainder = (try fx.run(.{ .minutes_summary = query })).minute_summary;
+    window = .{ .node = 7, .from = 100, .until = 198 };
+    try p.minute_summary.acceptPart(&window, overlap);
+    try p.minute_summary.acceptPart(&window, remainder);
+    try t.expect(window.ambiguous and !window.covered());
+    _ = try fx.run(.{ .logout = .{ .digest = @splat(1) } });
+    try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .minutes_summary = query })).failed);
+}
+
+fn summaryRecord(minute: u64) p.minutes.Record {
+    return .{
+        .node = 7,
+        .boot = @splat(1),
+        .epoch = 1,
+        .minute = minute,
+        .utc_start = minute * 60 - 60,
+        .utc_end = minute * 60,
+        .start_ms = minute * 60000 - 60000,
+        .end_ms = minute * 60000,
+        .observed_ms = 60000,
+        .observations = 240,
+        .complete = true,
+        .sealed = true,
+        .counts = .{ .admitted = 1 },
+    };
+}

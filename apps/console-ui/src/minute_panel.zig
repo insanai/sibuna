@@ -98,13 +98,7 @@ pub const Model = struct {
     }
 };
 
-pub fn precedes(a: p.minutes.Cursor, b: p.minutes.Cursor) bool {
-    if (a.minute != b.minute) return a.minute < b.minute;
-    if (a.node != b.node) return a.node < b.node;
-    const order = std.mem.order(u8, &a.boot, &b.boot);
-    if (order != .eq) return order == .lt;
-    return a.epoch < b.epoch;
-}
+pub const precedes = p.minute_summary.precedes;
 
 pub const Request = struct { id: p.Bytes(32), body: p.minutes.Request };
 pub fn request(state: *State, force: bool) ?Request {

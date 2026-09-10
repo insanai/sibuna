@@ -157,8 +157,9 @@ a smoke run) and writes `benchmarks/results/console-impact-latest.json`.
 
 *Compare retained traffic* displays two closed minute windows beside each other: the same
 window yesterday, the preceding period, or a second node. Duration and end-offset controls
-freeze both UTC ranges. Each action reads at most eight bounded pages per side; Continue
-retains those boundaries. Complete coverage, incomplete coverage and missing history remain
+freeze both UTC ranges. Each action reads at most sixteen compact pages per side, with
+96 stored records per page. This covers a 24-hour window without overlapping restarts in one
+batch; Continue retains the same boundaries for longer scans. Complete coverage, incomplete coverage and missing history remain
 explicit. Rate percentages require complete non-overlapping intervals in equal UTC windows,
 normalized by observed milliseconds; a zero reference with new traffic shows “New”. Live boot totals remain separate.
 The minute format does not record historical proxy mode, so origin-response comparisons remain

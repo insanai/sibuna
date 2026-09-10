@@ -1,5 +1,5 @@
 //! Historical comparisons reuse bounded, authorized minute pages. Each click permits
-//! eight pages per side; continuation is explicit and retains its original UTC bounds.
+//! sixteen compact pages per side; continuation is explicit and retains its original UTC bounds.
 const std = @import("std");
 const p = @import("console_protocol");
 const State = @import("state.zig").State;
@@ -45,10 +45,10 @@ pub fn action(state: *State, name: []const u8, input: std.json.Value, out: Outbo
                 "window of 1–129600 minutes. Both periods must end before the current minute.");
             return true;
         };
-        candidate.pages_left = @splat(8);
+        candidate.pages_left = @splat(16);
         model.* = candidate;
     } else if (std.mem.eql(u8, name, "compare-more") and model.started) {
-        model.pages_left = @splat(8);
+        model.pages_left = @splat(16);
         model.failed = @splat(false);
         model.error_message = .{};
     } else return true;
@@ -108,11 +108,12 @@ fn request(state: *State, side: usize, out: Outbox) !void {
     serial = std.math.add(u64, serial, 1) catch return error.Capacity;
     var bytes: [48]u8 = undefined;
     const id = try std.fmt.bufPrint(&bytes, "compare-{d}-{d}", .{ side, serial });
-    try out.post(id, "/console/api/minutes", p.minutes.Request{
+    try out.post(id, "/console/api/minutes/summary", p.minutes.Request{
         .node = window.node,
         .from_minute = window.from,
         .until_minute = window.until,
         .before = window.next,
+        .limit = p.minute_summary.max_rows,
     });
     model.tickets[side] = serial;
     model.busy[side] = true;
@@ -149,9 +150,9 @@ pub fn response(
             "COMPARISON002: History could not be read. Continue after storage recovers.");
         return;
     }
-    const page = @import("json_value.zig").decode(p.minutes.Reply, body, alloc) catch
+    const page = @import("json_value.zig").decode(p.minute_summary.Part, body, alloc) catch
         return invalid(model);
-    model.windows[side].accept(page) catch return invalid(model);
+    p.minute_summary.acceptPart(&model.windows[side], page) catch return invalid(model);
     model.failed[side] = false;
     try request(state, side, out);
 }
@@ -183,7 +184,7 @@ test "comparison freezes boundaries bounds work and discards old-session replies
     try t.expectEqual(@as(usize, 2), commands.count);
     try t.expectEqual(@as(u64, 9999), state.comparison.windows[0].until);
     try t.expectEqual(@as(u64, 8559), state.comparison.windows[1].until);
-    try t.expectEqual(@as(u8, 7), state.comparison.pages_left[0]);
+    try t.expectEqual(@as(u8, 15), state.comparison.pages_left[0]);
     const before = state.comparison;
     // Double clicks do not enqueue another scan.
     _ = try action(&state, "compare-start", parsed.value, commands.out());

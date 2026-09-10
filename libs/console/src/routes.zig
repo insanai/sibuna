@@ -30,6 +30,7 @@ pub const Handler = enum {
     stats,
     timeline,
     minutes,
+    minute_summary,
     rankings,
     challenges,
     events,
@@ -177,6 +178,13 @@ const table = [_]Route{
         .method = .POST,
         .access = .full,
         .handler = .minutes,
+        .token_scope = .stats_read,
+    },
+    .{
+        .path = "/console/api/minutes/summary",
+        .method = .POST,
+        .access = .full,
+        .handler = .minute_summary,
         .token_scope = .stats_read,
     },
     .{

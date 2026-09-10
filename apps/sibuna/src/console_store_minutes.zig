@@ -57,7 +57,7 @@ pub fn write(owner: *Persistent, input: p.minutes.Write) !p.StorageResult {
     return if (changed == 1) .command_recorded else .{ .failed = .conflict };
 }
 
-fn decode(payload: []const u8) !p.minutes.Record {
+pub fn decode(payload: []const u8) !p.minutes.Record {
     if (payload.len != codec.bytes_len * 2) return error.InvalidStoredValue;
     var bytes: [codec.bytes_len]u8 = undefined;
     _ = try std.fmt.hexToBytes(&bytes, payload);
@@ -132,7 +132,7 @@ pub fn query(owner: *Persistent, input: p.minutes.Query) !p.StorageResult {
     return .{ .minute_page = page };
 }
 
-fn readQuery(owner: *Persistent, input: p.minutes.Query) !@import("zaxonlite").QueryResult {
+pub fn readQuery(owner: *Persistent, input: p.minutes.Query) !@import("zaxonlite").QueryResult {
     var bytes: [512]u8 = undefined;
     var sql: std.Io.Writer = .fixed(&bytes);
     var values: [8]@import("zaxonlite").Value = undefined;

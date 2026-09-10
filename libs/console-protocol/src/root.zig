@@ -8,6 +8,7 @@ pub const settings = @import("settings.zig");
 pub const dashboard = @import("dashboard.zig");
 pub const rankings = @import("rankings.zig");
 pub const timeline = @import("timeline.zig");
+pub const minute_summary = @import("minute_summary.zig");
 pub const minutes = @import("minutes.zig");
 pub const ranking_storage = @import("ranking_storage.zig");
 pub const security = @import("security.zig");
@@ -118,6 +119,7 @@ pub const StorageRequest = union(enum) {
     retention_prune: retention.Prune,
     minutes_write: minutes.Write,
     minutes_query: minutes.Query,
+    minutes_summary: minutes.Query,
     minutes_prune: u64,
     rankings_begin: ranking_storage.Begin,
     rankings_chunk: ranking_storage.Chunk,
@@ -207,6 +209,7 @@ pub const StorageResult = union(enum) {
     users_page: users.Page,
     retention_lease: retention.Lease,
     minute_page: minutes.Page,
+    minute_summary: minute_summary.Part,
     ranking_inventory: rankings.Inventory,
     policy_document: policies.Document,
     similarity: similarity.Part,
@@ -309,6 +312,7 @@ pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
         .retention_acquire => |holder| holder.validate() catch return error.InvalidLimit,
         .retention_prune => |input| input.lease.validate() catch return error.InvalidLimit,
         .minutes_query => |query| try minutes.validate(query),
+        .minutes_summary => |query| try minute_summary.validate(query),
         .policy_read => |input| try policies.validateRead(input),
         .policies_query => |query| try policies.validate(query),
         .policies_test => |input| try policies.validateTest(input),

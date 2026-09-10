@@ -5108,3 +5108,32 @@ observations and source identity. It is explicitly an incomplete attempt, not a 
 for the latest completed matrix or a passing result. Full single-node and clustered impact
 acceptance remain open. Source files, builds and browser fixtures were held unchanged
 during measurement; ambient activity on the development Mac was uncontrolled.
+
+
+== Compact retained-window summaries (2026-09-10)
+
+The explicit comparison workflow now uses `/console/api/minutes/summary`, an authenticated,
+CSRF-protected read with the existing per-session and global query allowance. Each request
+selects one node and freezes its closed-minute UTC range. The storage owner performs one
+indexed query with at most 96 records plus one lookahead row: 29,488 payload bytes before
+response framing, below both existing database result envelopes. The owned summary fits
+inside the existing mailbox result; no request worker or console handler receives a database
+handle, and no global buffer or row limit is enlarged. Raw eight-record history pages remain
+available independently.
+
+Exact accumulation, ordering, coverage and deviation arithmetic now live in the shared
+native/Wasm protocol library. The first and last cursor of each compact page preserve
+restart overlaps across page boundaries. Replayed, out-of-order, overflowing or invalid
+pages leave the consumer unchanged. Missing records, changing retention, partial intervals
+and overlapping boots prevent a complete percentage. Counts above the browser's exact
+integer range keep the existing decimal-string wire representation.
+
+One explicit comparison action permits sixteen compact pages per side, up to 1,536
+records. A 24-hour window without overlapping restarts completes in that batch; longer
+scans retain their cursor and require Continue. This supersedes the earlier eight-page
+raw-record comparison bound. Observation routes have their own cohesive dispatcher so
+the application composition function remains below its structural limit.
+
+This increment addresses bounded historical comparison queries. It does not implement
+the primary Traffic tiles' default 24-hour selection, historical path-ranking queries or
+per-rule hit history, and does not close the impact or browser acceptance gates.

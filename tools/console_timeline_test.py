@@ -66,6 +66,25 @@ def saved(h, port, cookie, csrf, boot):
             for row in own:
                 assert row["end_ms"] - row["start_ms"] == row["observed_ms"] > 0
                 assert not row["complete"] or (row["sealed"] and not row["gap"])
+            summarized(h, port, cookie, csrf, reply)
             return
         time.sleep(0.25)
     raise AssertionError("the five external outcomes did not survive in durable minute history")
+
+
+def summarized(h, port, cookie, csrf, raw):
+    endpoint = "/console/api/minutes/summary"
+    assert h.request(port, "POST", endpoint, {})[0] == 401
+    assert h.request(port, "POST", endpoint, {}, cookie)[0] == 400
+    until = int(raw["observed_at"]) // 60 - 1
+    query = {"node": raw["rows"][0]["node"], "from_minute": until - 60,
+             "until_minute": until, "limit": 96}
+    for invalid in ({**query, "limit": 97}, {**query, "node": None},
+                    {**query, "until_minute": until + 2}):
+        assert h.request(port, "POST", endpoint, invalid, cookie, csrf)[0] == 400
+    status, _, body = h.request(port, "POST", endpoint, query, cookie, csrf)
+    assert status == 200, (status, body)
+    page = json.loads(body)
+    assert page["version"] == 1 and page["window"]["rows"] <= 96
+    assert page["window"]["node"] == query["node"] and len(body) < 4096
+    assert page["window"]["until"] == until

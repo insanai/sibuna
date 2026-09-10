@@ -73,6 +73,8 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
         .retention_prune => |input| retention.prune(owner, input, owner.nowSeconds()),
         .minutes_write => |input| @import("console_store_minutes.zig").write(owner, input),
         .minutes_query => |input| @import("console_store_minutes.zig").query(owner, input),
+        .minutes_summary => |input| @import("console_store_minute_summary.zig")
+            .query(owner, input),
         .minutes_prune => |now| @import("console_store_minutes.zig").prune(owner, now),
         .rankings_begin => |input| @import("console_store_rankings.zig").begin(owner, input),
         .rankings_chunk => |input| @import("console_store_rankings.zig").chunk(owner, input),

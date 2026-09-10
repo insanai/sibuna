@@ -110,6 +110,8 @@ def comparison_view(ui):
         "minutes": "5", "offset": "0", "node": "1", "mode": "yesterday"}})
     queries = [r for r in ui.requests[start:] if r["id"].startswith("compare-")]
     assert len(queries) == 2, queries
+    assert all(r["path"] == "/console/api/minutes/summary" for r in queries)
+    assert all(r["body"]["limit"] == 96 for r in queries)
     first, previous = [r["body"] for r in queries]
     assert int(first["until_minute"]) - int(previous["until_minute"]) == 1440
     assert 'Incomplete coverage' in ui.html and 'Not available' in ui.html

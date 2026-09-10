@@ -365,7 +365,9 @@ cursors. Minute history has its own node selection and keeps per-node rows disti
 
 **Compare retained traffic** places two closed minute windows side by side: the same window
 yesterday, the previous period, or another node. Choose the duration and how many minutes ago
-the window ended. Large scans continue in bounded batches. Counts, elapsed coverage and missing
+the window ended. Each batch summarizes up to 1,536 stored records per side, enough for
+a 24-hour window without overlapping restarts; larger scans use Continue. Counts, elapsed
+coverage and missing
 history remain visible; percentages require complete matching coverage. These period counts
 are separate from the live boot totals, and historical origin-response observation mode is not
 recorded by the minute format.

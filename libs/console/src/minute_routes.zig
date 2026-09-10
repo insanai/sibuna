@@ -4,7 +4,7 @@ const p = @import("console_protocol");
 const App = @import("app.zig").App;
 const http = @import("http.zig");
 
-pub fn handle(app: *App, context: *http.Context) !void {
+pub fn handle(app: *App, context: *http.Context, summarized: bool) !void {
     const digest = try http.session(context);
     const now = app.now();
     if (!app.query_budget.allow(app.io, digest, now, .query))
@@ -14,7 +14,7 @@ pub fn handle(app: *App, context: *http.Context) !void {
     var fixed = std.heap.FixedBufferAllocator.init(&arena);
     const request = try http.parse(p.minutes.Request, context, &body, fixed.allocator());
     defer request.deinit();
-    const until = request.value.until_minute orelse now / 60;
+    const until = request.value.until_minute orelse (now / 60 -| @intFromBool(summarized));
     const query: p.minutes.Query = .{
         .session_digest = digest,
         .observed_at = now,
@@ -25,7 +25,12 @@ pub fn handle(app: *App, context: *http.Context) !void {
         .before = request.value.before,
         .limit = request.value.limit,
     };
-    const result = try app.request(.{ .minutes_query = query });
+    const operation: p.StorageRequest = if (summarized)
+        .{ .minutes_summary = query }
+    else
+        .{ .minutes_query = query };
+    const result = try app.request(operation);
+    if (result == .minute_summary) return http.json(context, result.minute_summary, &.{});
     if (result == .failed and result.failed == .unauthorized)
         return http.fail(context, .unauthorized, "CONSOLE401");
     if (result == .failed and result.failed == .forbidden)
