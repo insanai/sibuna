@@ -14,11 +14,13 @@ def check(h, port, cookie, csrf):
     pages = {}
     for view in ("modules", "categories", "paths"):
         status, _, body = h.request(port, "POST", endpoint, dict(query, view=view), cookie, csrf)
-        assert status == 200 and len(body) <= 4096, (status, body)
+        assert status == 200 and len(body) <= 16384, (status, body)
         assert b"hidden-value" not in body
         pages[view] = json.loads(body)
         assert pages[view]["total"] == 20
     modules = pages["modules"]["modules"]
+    assert pages["modules"]["version"] == 2
+    assert all(len(module["trend"]) == 60 for module in modules)
     assert modules[0]["total"] == modules[2]["total"] == 0
     assert modules[1]["total"] == sum(modules[1]["trend"]) == 20
     assert all(row["count"] == 1 for row in modules[1]["sources"])

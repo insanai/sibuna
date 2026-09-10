@@ -136,9 +136,9 @@ pub fn findings(state: *const State, w: *Writer) Writer.Error!void {
             try w.writeAll("</article>");
             continue;
         }
-        try html.render(w, "<p><strong>{{ total }}</strong> recorded findings</p>", .{
-            .total = module.total,
-        });
+        try w.writeAll("<p><strong>");
+        try @import("count_display.zig").write(w, module.total);
+        try w.writeAll("</strong> recorded findings</p>");
         if (!state.kiosk) try html.render(w, "<button class=\"btn btn-ghost h-auto w-full\" " ++
             "data-action=\"security-module-{{ module }}\" " ++
             "aria-label=\"Open {{ label }} events for this period\">", .{
@@ -147,18 +147,7 @@ pub fn findings(state: *const State, w: *Writer) Writer.Error!void {
         });
         try chart(w, &module.trend, maximum);
         if (!state.kiosk) try w.writeAll("</button>");
-        try html.render(w, "<p class=\"sb-note\">12 equal time buckets. " ++
-            "All finding charts share a maximum of {{ maximum }} findings per bucket.</p>" ++
-            "<details><summary>Trend values</summary><table class=\"table\"><tbody>", .{
-            .maximum = maximum,
-        });
-        for (module.trend, 0..) |count, bucket| {
-            try html.render(w, "<tr><th>Bucket {{ bucket }}</th><td>{{ count }}</td></tr>", .{
-                .bucket = bucket + 1,
-                .count = count,
-            });
-        }
-        try w.writeAll("</tbody></table></details>");
+        try trendTable(w, model.request, &module.trend, maximum);
         if (state.kiosk) {
             try w.writeAll("</article>");
             continue;
@@ -183,13 +172,36 @@ pub fn findings(state: *const State, w: *Writer) Writer.Error!void {
     }
 }
 
-fn chart(w: *Writer, counts: *const [12]u64, maximum: u64) Writer.Error!void {
+fn trendTable(
+    w: *Writer,
+    range: p.security.Request,
+    counts: *const [p.security.buckets]u64,
+    maximum: u64,
+) Writer.Error!void {
+    try w.writeAll("<p class=\"sb-note\">60 equal time buckets. " ++
+        "All finding charts share a maximum of ");
+    try @import("count_display.zig").write(w, maximum);
+    try w.writeAll(" findings per bucket.</p><details><summary>Trend values</summary>" ++
+        "<div class=\"overflow-x-auto\" tabindex=\"0\" role=\"region\" " ++
+        "aria-label=\"Recorded finding values\"><table class=\"table\">" ++
+        "<thead><tr><th>Interval begins</th><th>Findings</th></tr></thead><tbody>");
+    for (counts, 0..) |count, bucket| {
+        try w.writeAll("<tr><th>");
+        try timestamp(w, range.from + (range.until - range.from) * bucket / counts.len);
+        try w.writeAll("</th><td>");
+        try @import("count_display.zig").write(w, count);
+        try w.writeAll("</td></tr>");
+    }
+    try w.writeAll("</tbody></table></div></details>");
+}
+
+fn chart(w: *Writer, counts: *const [p.security.buckets]u64, maximum: u64) Writer.Error!void {
     try w.writeAll("<svg viewBox=\"0 0 360 90\" role=\"img\" " ++
         "aria-label=\"Recorded findings trend; values available below\">");
     for (counts, 0..) |count, index| {
         const height = @as(f64, @floatFromInt(count)) / @as(f64, @floatFromInt(maximum)) * 80;
-        try w.print("<rect x=\"{d}\" y=\"{d:.2}\" width=\"24\" height=\"{d:.2}\" " ++
-            "fill=\"currentColor\"/>", .{ index * 30, 85 - height, height });
+        try w.print("<rect x=\"{d}\" y=\"{d:.2}\" width=\"4\" height=\"{d:.2}\" " ++
+            "fill=\"currentColor\"/>", .{ index * 6, 85 - height, height });
     }
     try w.writeAll("</svg>");
 }

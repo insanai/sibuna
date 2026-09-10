@@ -2,7 +2,7 @@
 //! Ranges are half-open, frozen by the caller, and limited to incident retention.
 const std = @import("std");
 const p = @import("root.zig");
-pub const buckets = 12;
+pub const buckets = 60;
 pub const Module = enum { inspection, honeypot, other };
 pub const View = enum { modules, categories, paths };
 
@@ -60,6 +60,7 @@ pub const Findings = struct {
     }
 };
 pub const Page = struct {
+    version: u8 = 2,
     request: Request,
     observed_at: u64,
     modules: [3]Findings = @splat(.{}),
@@ -69,6 +70,8 @@ pub const Page = struct {
 
     pub fn jsonStringify(self: Page, w: *std.json.Stringify) !void {
         try w.beginObject();
+        try w.objectField("version");
+        try w.write(self.version);
         try w.objectField("request");
         try w.write(self.request);
         try w.objectField("observed_at");

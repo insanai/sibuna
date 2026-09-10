@@ -38,7 +38,8 @@ pub const Model = struct {
     }
 
     pub fn accept(self: *Model, page: *const p.security.Page) !void {
-        if (page.request.node != self.request.node or page.request.from != self.request.from or
+        if (page.version != 2 or page.request.node != self.request.node or
+            page.request.from != self.request.from or
             page.request.until != self.request.until) return error.InvalidResponse;
         switch (page.request.view) {
             .modules => self.modules = page.modules,

@@ -168,6 +168,7 @@ def security_view(ui):
     ui.topic("events")
     assert "Security overview" in ui.html and 'aria-label="Security modules"' in ui.html
     assert ui.history[-1]["value"] == "security-overview"
+    assert "60 equal time buckets" in ui.html
     assert ui.connections == 1
     ui.event(1, {"action": "security-window", "fields": {"hours": "720"}})
     summary = ui.requests[-1]["body"]

@@ -27,6 +27,8 @@ fn run(io: std.Io, alloc: std.mem.Allocator, update: bool) !void {
         "kiosk-security",
         "required-password",
         "required-totp",
+        "security-recorded",
+        "kiosk-security-recorded",
     };
     inline for (variants, 0..) |name, i| {
         configure(&state, .dashboard);
@@ -89,6 +91,15 @@ fn variant(state: *State, index: usize) void {
         6 => {
             state.phase = .security;
             state.totp_required = true;
+        },
+        7, 8 => {
+            state.phase = .security_overview;
+            state.kiosk = index == 8;
+            state.security_overview.loaded[0] = true;
+            state.security_overview.observed_at[0] = state.browser_time - 1;
+            state.security_overview.request = .{ .from = 169200, .until = 172800 };
+            state.security_overview.modules[0].trend[0] = 1234;
+            state.security_overview.modules[0].total = 1234;
         },
         else => {},
     }

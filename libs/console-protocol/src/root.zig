@@ -180,6 +180,7 @@ pub const StorageRequest = union(enum) {
     import_commit: workflows.ImportCommit,
 };
 pub const StorageResult = union(enum) {
+    security_page: security.Page,
     subscription_page: subscription_feed.Page,
     node_status: nodes.Status,
     node_receipt: nodes.Receipt,

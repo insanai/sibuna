@@ -37,11 +37,7 @@ pub fn query(owner: *Persistent, input: p.security.Query) !p.StorageResult {
             const module = &page.modules[@intCast(index)];
             switch (kind) {
                 0 => module.total = count,
-                1 => {
-                    const bucket = try store.number(row[2]);
-                    if (bucket >= p.security.buckets) return error.InvalidStoredValue;
-                    module.trend[@intCast(bucket)] = count;
-                },
+                1 => try unpackTrend(&module.trend, row[3] orelse ""),
                 2 => {
                     if (sources[index] >= 3) return error.InvalidStoredValue;
                     module.sources[sources[index]] = rank(row[3] orelse "", count);
@@ -57,11 +53,7 @@ pub fn query(owner: *Persistent, input: p.security.Query) !p.StorageResult {
     }
     if (try access.check(owner, input.session_digest, input.require_totp, scope)) |reason|
         return .{ .failed = reason };
-    var output: p.Bytes(p.max_message) = .{};
-    var writer: std.Io.Writer = .fixed(&output.data);
-    try std.json.Stringify.value(page, .{}, &writer);
-    output.len = writer.buffered().len;
-    return .{ .page = output };
+    return .{ .security_page = page };
 }
 
 fn rank(label: []const u8, count: u64) p.security.Rank {
@@ -84,10 +76,9 @@ const module_sql = window ++
     "GROUP BY module,client_ip), ranked AS (SELECT *,ROW_NUMBER() OVER " ++
     "(PARTITION BY module ORDER BY n DESC,client_ip) AS rank FROM sources) " ++
     "SELECT module,0,0,'',COUNT(*) FROM findings GROUP BY module UNION ALL " ++
-    "SELECT module,1,(recorded_at-lo)*12/(hi-lo),'',COUNT(*) FROM findings " ++
-    "GROUP BY module,(recorded_at-lo)*12/(hi-lo) UNION ALL " ++
+    packed_trends ++ " UNION ALL " ++
     "SELECT module,2,0,client_ip,n FROM ranked WHERE rank<=3 UNION ALL " ++
-    "SELECT 0,3,0,'',COUNT(*) FROM findings ORDER BY 1,2,5 DESC,4 LIMIT 49";
+    "SELECT 0,3,0,'',COUNT(*) FROM findings ORDER BY 1,2,5 DESC,4 LIMIT 16";
 const category_sql = window ++
     ", ranked AS (SELECT violation_category AS label,COUNT(*) AS n FROM findings " ++
     "GROUP BY violation_category ORDER BY n DESC,label LIMIT 5) " ++
@@ -108,6 +99,28 @@ const trend_sql = "WITH bounds(lo,hi,node,wildcard) AS (VALUES(?,?,?,?)), " ++
     " AS module,lo,hi FROM security_incidents,bounds WHERE recorded_at>=lo " ++
     "AND recorded_at<hi AND (wildcard=0 OR node_id=node)) " ++
     "SELECT module,0,0,'',COUNT(*) FROM findings GROUP BY module UNION ALL " ++
-    "SELECT module,1,(recorded_at-lo)*12/(hi-lo),'',COUNT(*) FROM findings " ++
-    "GROUP BY module,(recorded_at-lo)*12/(hi-lo) UNION ALL " ++
-    "SELECT 0,3,0,'',COUNT(*) FROM findings ORDER BY 1,2 LIMIT 40";
+    packed_trends ++ " UNION ALL " ++
+    "SELECT 0,3,0,'',COUNT(*) FROM findings ORDER BY 1,2 LIMIT 7";
+
+// One packed cell per module keeps all 60 buckets below the replicated row limit.
+// Each item is an integer bucket/count pair, at most 23 bytes; no evidence is packed.
+const packed_trends = "SELECT module,1,0,group_concat(bucket||':'||n,','),SUM(n) FROM " ++
+    "(SELECT module,(recorded_at-lo)*60/(hi-lo) AS bucket,COUNT(*) AS n FROM findings " ++
+    "GROUP BY module,bucket) GROUP BY module";
+
+fn unpackTrend(output: *[p.security.buckets]u64, encoded: []const u8) !void {
+    if (encoded.len > p.security.buckets * 24) return error.InvalidStoredValue;
+    var seen: [p.security.buckets]bool = @splat(false);
+    var entries = std.mem.splitScalar(u8, encoded, ',');
+    while (entries.next()) |entry| {
+        var pair = std.mem.splitScalar(u8, entry, ':');
+        const bucket = std.fmt.parseInt(usize, pair.next() orelse "", 10) catch
+            return error.InvalidStoredValue;
+        const count = std.fmt.parseInt(u64, pair.next() orelse "", 10) catch
+            return error.InvalidStoredValue;
+        if (bucket >= output.len or seen[bucket] or count == 0 or pair.next() != null)
+            return error.InvalidStoredValue;
+        seen[bucket] = true;
+        output[bucket] = count;
+    }
+}

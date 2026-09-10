@@ -28,41 +28,28 @@ test "security aggregates freeze node and time, retain audit findings and redact
         .session_digest = @splat(1),
         .request = .{ .node = 1, .from = 100, .until = 220 },
     } });
-    try t.expect(result == .page);
-    const parsed = try std.json.parseFromSlice(struct {
-        total: u64,
-        modules: [3]struct {
-            total: u64,
-            trend: [12]u64,
-            sources: [3]?struct { label: []const u8, count: u64 },
-        },
-    }, t.allocator, result.page.slice(), .{ .ignore_unknown_fields = true });
-    defer parsed.deinit();
-    try t.expectEqual(@as(u64, 3), parsed.value.total);
-    const inspection = parsed.value.modules[0];
+    try t.expect(result == .security_page);
+    const page = result.security_page;
+    try t.expectEqual(@as(u64, 3), page.total);
+    const inspection = page.modules[0];
     try t.expectEqual(@as(u64, 2), inspection.total);
     try t.expectEqual(@as(u64, 1), inspection.trend[0]);
-    try t.expectEqual(@as(u64, 1), inspection.trend[5]);
-    try t.expectEqualStrings("8.8.8.8", inspection.sources[0].?.label);
+    try t.expectEqual(@as(u64, 1), inspection.trend[29]);
+    try t.expectEqualStrings("8.8.8.8", inspection.sources[0].?.label.slice());
     try t.expectEqual(@as(u64, 2), inspection.sources[0].?.count);
-    try t.expectEqual(@as(u64, 1), parsed.value.modules[1].trend[6]);
-    try t.expectEqual(@as(u64, 0), parsed.value.modules[2].total);
+    try t.expectEqual(@as(u64, 1), page.modules[1].trend[30]);
+    try t.expectEqual(@as(u64, 0), page.modules[2].total);
     const paths = try fx.run(.{ .security_query = .{
         .session_digest = @splat(1),
         .request = .{ .view = .paths, .from = 100, .until = 220 },
     } });
-    try t.expect(paths == .page);
-    try t.expect(std.mem.indexOf(u8, paths.page.slice(), "secret") == null);
-    const ranks = try std.json.parseFromSlice(struct {
-        total: u64,
-        rows: [5]?struct { label: []const u8, count: u64 },
-    }, t.allocator, paths.page.slice(), .{ .ignore_unknown_fields = true });
-    defer ranks.deinit();
-    try t.expectEqual(@as(u64, 4), ranks.value.total);
-    try t.expectEqualStrings("/one", ranks.value.rows[0].?.label);
-    try t.expectEqual(@as(u64, 2), ranks.value.rows[0].?.count);
-    try t.expectEqualStrings("/two", ranks.value.rows[1].?.label);
-    try t.expectEqual(@as(u64, 2), ranks.value.rows[1].?.count);
+    try t.expect(paths == .security_page);
+    const ranks = paths.security_page;
+    try t.expectEqual(@as(u64, 4), ranks.total);
+    try t.expectEqualStrings("/one", ranks.rows[0].?.label.slice());
+    try t.expectEqual(@as(u64, 2), ranks.rows[0].?.count);
+    try t.expectEqualStrings("/two", ranks.rows[1].?.label.slice());
+    try t.expectEqual(@as(u64, 2), ranks.rows[1].?.count);
     try moduleEvents(fx);
     try aggregateScope(fx);
 }
@@ -85,13 +72,13 @@ fn moduleEvents(fx: *helpers.Fixture) !void {
         try t.expectEqual(p.security.Module.inspection, p.security.classify(row.category));
 }
 
-test "security reply worst-case escaping and counter precision fit the mailbox" {
+test "security reply worst-case escaping and counter precision fit the HTTP response" {
     var page: p.security.Page = .{
         .request = .{ .from = 1, .until = 2 },
         .observed_at = std.math.maxInt(i64),
         .total = std.math.maxInt(u64),
     };
-    const label = [_]u8{'"'} ** 96;
+    const label = [_]u8{1} ** 96;
     const row: p.security.Rank = .{
         .label = try p.Bytes(96).init(&label),
         .count = std.math.maxInt(u64),
@@ -108,7 +95,7 @@ test "security reply worst-case escaping and counter precision fit the mailbox" 
                 module.sources = @splat(row);
             }
         } else page.rows = @splat(row);
-        var bytes: [p.max_message]u8 = undefined;
+        var bytes: [16 * 1024]u8 = undefined;
         var writer: std.Io.Writer = .fixed(&bytes);
         try std.json.Stringify.value(page, .{}, &writer);
         try t.expect(std.mem.indexOf(u8, writer.buffered(), "\"18446744073709551615\"") != null);
@@ -121,20 +108,57 @@ fn aggregateScope(fx: *helpers.Fixture) !void {
         .aggregate_only = true,
         .request = .{ .node = 1, .from = 100, .until = 220 },
     } });
-    try t.expect(result == .page);
-    const parsed = try std.json.parseFromSlice(struct {
-        total: u64,
-        modules: [3]struct { total: u64, trend: [12]u64, sources: [3]?p.security.Rank },
-        rows: [5]?p.security.Rank,
-    }, t.allocator, result.page.slice(), .{ .ignore_unknown_fields = true });
-    defer parsed.deinit();
-    try t.expectEqual(@as(u64, 3), parsed.value.total);
-    try t.expectEqual(@as(u64, 2), parsed.value.modules[0].total);
-    try t.expectEqual(@as(u64, 1), parsed.value.modules[0].trend[5]);
-    for (parsed.value.modules) |module| for (module.sources) |source| {
+    try t.expect(result == .security_page);
+    const page = result.security_page;
+    try t.expectEqual(@as(u64, 3), page.total);
+    try t.expectEqual(@as(u64, 2), page.modules[0].total);
+    try t.expectEqual(@as(u64, 1), page.modules[0].trend[29]);
+    for (page.modules) |module| for (module.sources) |source| {
         try t.expect(source == null);
     };
-    for (parsed.value.rows) |row| try t.expect(row == null);
+    for (page.rows) |row| try t.expect(row == null);
+    var bytes: [16 * 1024]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&bytes);
+    try std.json.Stringify.value(page, .{}, &writer);
     for ([_][]const u8{ "8.8.8.8", "/one", "secret", "waf:sqli" }) |private|
-        try t.expect(std.mem.indexOf(u8, result.page.slice(), private) == null);
+        try t.expect(std.mem.indexOf(u8, writer.buffered(), private) == null);
+}
+
+test "sixty populated buckets per module fit native and replicated query row bounds" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try helpers.Fixture.open(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/security-buckets",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try helpers.policySession(fx);
+    try fx.owner.db.exec(
+        t.allocator,
+        "WITH RECURSIVE ticks(n) AS (VALUES(0) UNION ALL SELECT n+1 FROM ticks WHERE n<59)," ++
+            "modules(m,category) AS (VALUES(0,'audit:xss'),(1,'honeypot'),(2,'other')) " ++
+            "INSERT INTO security_incidents(id,node_id,client_ip,user_agent,method,path," ++
+            "violation_category,offending_payload,recorded_at) " ++
+            "SELECT 1+m*60+n,1,'8.8.8.8','','GET','/test',category,'',100+n " ++
+            "FROM ticks,modules;",
+    );
+    for ([_]bool{ false, true }) |aggregate_only| {
+        const result = try fx.run(.{ .security_query = .{
+            .session_digest = @splat(1),
+            .aggregate_only = aggregate_only,
+            .request = .{ .node = 1, .from = 100, .until = 160 },
+        } });
+        try t.expect(result == .security_page);
+        const page = result.security_page;
+        try t.expectEqual(@as(u64, 180), page.total);
+        for (page.modules) |module| {
+            try t.expectEqual(@as(u64, 60), module.total);
+            try t.expectEqualSlices(u64, &@as([60]u64, @splat(1)), &module.trend);
+            if (aggregate_only) {
+                for (module.sources) |source| try t.expect(source == null);
+            } else try t.expectEqual(@as(u64, 60), module.sources[0].?.count);
+        }
+    }
 }

@@ -18,8 +18,7 @@ pub fn query(app: *App, context: *http.Context, aggregate_only: bool) !void {
         .request = input.value,
         .aggregate_only = aggregate_only,
     } });
-    if (result == .page)
-        return context.respond(.ok, "application/json", result.page.slice(), &.{});
+    if (result == .security_page) return http.json(context, result.security_page, &.{});
     const status: std.http.Status = switch (result.failed) {
         .unauthorized => .unauthorized,
         .forbidden => .forbidden,
