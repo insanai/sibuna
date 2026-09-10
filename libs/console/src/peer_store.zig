@@ -119,7 +119,8 @@ pub const Store = struct {
         if (value.server_location) |location| {
             if (!location.valid()) return error.InvalidObservation;
         }
-        for (value.countries) |country| if (country.code >= 676) return error.InvalidObservation;
+        try validateCountries(&value.countries);
+        if (value.incident_geo) |incidents| try validateCountries(&incidents.countries);
         const previous = &slot.observation;
         if (previous.has_value) {
             if (std.mem.eql(u8, &previous.value.boot, &value.boot)) {
@@ -187,3 +188,19 @@ pub const Store = struct {
         return null;
     }
 };
+
+// Wire codes pack two ASCII letters, unlike the dense 26×26 collector table index.
+// Empty slots carry no samples; Unknown has its own counter rather than a country row.
+fn validateCountries(rows: *const [32]p.CountryCount) Error!void {
+    const country = @import("geoip").country;
+    for (rows, 0..) |row, index| {
+        if (row.code == 0) {
+            if (row.samples != 0) return error.InvalidObservation;
+            continue;
+        }
+        const code = [2]u8{ @truncate(row.code >> 8), @truncate(row.code) };
+        if (!country.valid(&code) or country.isUnknown(code)) return error.InvalidObservation;
+        for (rows[0..index]) |prior|
+            if (prior.code == row.code) return error.InvalidObservation;
+    }
+}

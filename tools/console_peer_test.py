@@ -108,6 +108,9 @@ def check(binary, h):
                 cookie = response["Set-Cookie"].split(";", 1)[0]
                 peer.snapshot = json.loads(trusted.request(port, "GET", "/console/api/stats",
                                                           cookie=cookie)[2])
+                peer.snapshot["geoip_available"] = True
+                peer.snapshot["countries"][0] = {"code": 0x5553, "samples": 3}
+                peer.snapshot["incident_geo"]["countries"][0] = {"code": 0x4155, "samples": 2}
                 def report():
                     status, _, body = trusted.request(port, "GET", "/console/api/nodes", cookie=cookie)
                     assert status == 200, body
@@ -118,6 +121,7 @@ def check(binary, h):
                 current = wait(lambda: (row if (row := report())["status"] == "current" else None),
                                "certificate and HMAC verified snapshot")
                 assert current["requests"] == 12345 and current["age_seconds"] <= 2
+                assert current["geoip_available"] is True
                 mark = current["watermark"]
                 wait(lambda: report()["watermark"] > mark, "unsolicited delta")
                 admission(port, peer.key)

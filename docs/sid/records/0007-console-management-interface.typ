@@ -4438,6 +4438,21 @@ bounded error names instead of being discarded. Every test-owned member is stopp
 The reusable Python subscription client can attach to an already authenticated transport,
 so peer acceptance uses the same strict chunk/gap checks as browser-protocol tests.
 
+== Peer country-code validation correction (2026-09-10)
+
+Peer validation had compared wire country codes with the 676-slot collector bound. The
+wire packs the two ASCII letters, so a real US or Australia sample was incorrectly
+rejected even though an empty-country fixture passed. Validation now uses the existing
+GeoIP country catalog for both traffic and recorded-incident rows. It rejects malformed,
+unknown or duplicate country rows, and empty slots with nonzero samples, before replacing
+a last-good observation.
+
+The native regression accepts packed US, Australia and United Kingdom rows and rejects
+dense indices, lowercase/unassigned codes, duplicates and invalid incident rows. The TLS
+fixture now sends known-country traffic and incidents and verifies that the authenticated
+observation remains current. These cases pass in the full 474-test/native and live-daemon
+run recorded below; they do not yet implement cluster-wide dashboard composition.
+
 == Configurable retention (2026-09-10)
 
 A shared numeric catalog defines denial-spike thresholds and retention settings. The

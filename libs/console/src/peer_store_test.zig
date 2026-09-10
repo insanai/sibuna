@@ -146,3 +146,32 @@ test "peer reports preserve unavailable values, boot text, exact counters and st
     try t.expectEqualStrings("01" ** 16, parsed.value.object.get("boot").?.string);
     try t.expectEqualStrings("9007199254740993", parsed.value.object.get("requests").?.string);
 }
+
+test "peer geography accepts packed publisher codes and rejects invalid or duplicated rows" {
+    var store = try fixture();
+    defer store.deinit();
+    const handle = try store.activate(0, @splat(1));
+    var value = observation(handle.boot, 1000);
+    value.countries[0] = .{ .code = 0x5553, .samples = 3 };
+    value.countries[1] = .{ .code = 0x4155, .samples = 2 };
+    value.incident_geo = .{};
+    value.incident_geo.?.countries[0] = .{ .code = 0x4742, .samples = 1 };
+    const update: peers.Update = .{
+        .value = &value,
+        .watermark = 1,
+        .sequence = 2,
+        .received_at = 100,
+    };
+    try t.expect(try store.publish(handle, update));
+    for ([_]u16{ 0, 675, 0x4141, 0x7573, 0x5a5a, 0x4155 }) |invalid| {
+        value.countries[0].code = invalid;
+        try t.expectError(error.InvalidObservation, store.publish(handle, update));
+    }
+    value.countries[0].code = 0x5553;
+    value.incident_geo.?.countries[0].code = 675;
+    try t.expectError(error.InvalidObservation, store.publish(handle, update));
+    var copied: [config.max_peers]peers.Observation = undefined;
+    _ = store.snapshot(&copied);
+    try t.expectEqual(@as(u16, 0x5553), copied[0].value.countries[0].code);
+    try t.expectEqual(@as(u16, 0x4742), copied[0].value.incident_geo.?.countries[0].code);
+}
