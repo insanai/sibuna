@@ -4,6 +4,7 @@ const p = @import("console_protocol");
 const State = @import("state.zig").State;
 const render = @import("render.zig");
 const live = @import("live_controller.zig");
+const policy_controller = @import("policy_controller.zig");
 const routing = @import("routing.zig");
 // Startup initializes every owned field; avoid shipping a duplicate state image in Wasm data.
 var state: State = undefined;
@@ -243,11 +244,11 @@ fn actionName(name: []const u8, fields: std.json.Value) !void {
     if (try managed().transfer(name, fields)) return;
     if (try managed().inspection(name, fields)) return;
     if (try managed().action(name, fields)) return;
-    if (try policyAction(name, fields)) return;
+    if (try policy_controller.action(managed(), name, fields)) return;
     if (try similarityAction(name)) return;
     if (try challengeAction(name, fields)) return;
     if (try eventAction(name, fields)) return;
-    if (try securityAction(name, fields)) return;
+    if (try accountSecurity().action(name, fields)) return;
     if (try geographicAction(name, fields)) return;
     if (try @import("appearance.zig").action(&state.appearance, name, outbox())) return;
     if (equal(name, "pause")) {
@@ -304,8 +305,8 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
         return observationResponse(id, status, body, alloc);
     if (std.mem.startsWith(u8, id, "policies-") or
         std.mem.startsWith(u8, id, "policy-test-") or std.mem.startsWith(u8, id, "managed-"))
-        return policyResponse(id, status, body);
-    if (std.mem.startsWith(u8, id, "totp")) return securityResponse(id, status, body);
+        return policy_controller.response(managed(), id, status, body);
+    if (std.mem.startsWith(u8, id, "totp")) return accountSecurity().response(id, status, body);
     if (equal(id, "stats")) return statsResponse(status, body, alloc);
     if (equal(id, "events-export")) return eventExportResponse(status);
     if (equal(id, "geoip") or equal(id, "geo-import"))
@@ -345,7 +346,7 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
             .dashboard;
         state.message = .{};
         if (state.phase == .dashboard) try refresh();
-        if (state.phase == .security) try securityStatus();
+        if (state.phase == .security) try accountSecurity().refresh();
         return;
     }
     if (equal(id, "logout")) {
@@ -586,10 +587,7 @@ fn geoResponse(id: []const u8, status: i64, body: std.json.Value) !void {
     if (active) try command(.{ .op = "timer", .id = "geoip", .delay_ms = 1000 });
 }
 
-fn number(value: std.json.Value, key: []const u8) u64 {
-    const item = field(value, key) orelse return 0;
-    return if (item == .integer and item.integer >= 0) @intCast(item.integer) else 0;
-}
+const number = @import("json_value.zig").unsignedOrZero;
 
 const field = @import("events_state.zig").field;
 const string = @import("events_state.zig").string;
@@ -688,86 +686,6 @@ test "policy navigation retains the authenticated connection when returning to t
         commands[0..commands_length],
         "connect",
     ) == null);
-}
-
-fn securityAction(name: []const u8, fields: std.json.Value) !bool {
-    if (equal(name, "recovery-saved")) {
-        state.totp_secret = .{};
-        state.totp_uri = .{};
-        state.recovery_codes = @splat(.{});
-        state.recovery_count = 0;
-        state.csrf = .{};
-        state.phase = .login;
-        return true;
-    }
-    if (equal(name, "security") and state.csrf.len != 0) {
-        state.phase = .security;
-        state.message = .{};
-        state.totp_secret = .{};
-        state.totp_uri = .{};
-        state.stats_busy = false;
-        try securityStatus();
-        return true;
-    }
-    if (state.phase != .security or state.busy) return false;
-    if (!equal(name, "totp-enroll") and !equal(name, "totp-confirm")) return false;
-    state.busy = true;
-    state.message = .{};
-    const enroll = equal(name, "totp-enroll");
-    try post(
-        name,
-        if (enroll) "/console/api/totp/enroll" else "/console/api/totp/confirm",
-        .{
-            .password = string(fields, "password"),
-            .code = string(fields, "code"),
-            .revision = state.totp_revision,
-        },
-    );
-    return true;
-}
-
-fn securityStatus() !void {
-    state.totp_available = null;
-    state.busy = true;
-    try get("totp", "/console/api/totp");
-}
-
-fn securityResponse(id: []const u8, status: i64, body: std.json.Value) !void {
-    state.busy = false;
-    if (state.phase != .security) return;
-    if (status != 200) {
-        const message = switch (status) {
-            429 => "Too many attempts. Wait a minute and try again.",
-            else => "Could not update authentication. Check your password, code and session.",
-        };
-        setMessage(message);
-        return;
-    }
-    if (equal(id, "totp")) {
-        const available = field(body, "available") orelse .null;
-        const enabled = field(body, "enabled") orelse .null;
-        if (available != .bool or enabled != .bool) return error.InvalidResponse;
-        state.totp_available = available.bool;
-        state.totp_enabled = enabled.bool;
-        state.totp_revision = number(body, "revision");
-    } else if (equal(id, "totp-enroll")) {
-        state.totp_secret = try p.Bytes(32).init(string(body, "secret"));
-        state.totp_uri = try p.Bytes(134).init(string(body, "uri"));
-        state.totp_revision = number(body, "revision");
-    } else if (equal(id, "totp-confirm")) {
-        const codes = field(body, "recovery_codes") orelse return error.InvalidResponse;
-        if (codes != .array or codes.array.items.len != 10) return error.InvalidResponse;
-        for (codes.array.items, &state.recovery_codes) |code, *dest| {
-            if (code != .string or code.string.len != 32) return error.InvalidResponse;
-            dest.* = try p.Bytes(32).init(code.string);
-        }
-        state.recovery_count = 10;
-        state.totp_secret = .{};
-        state.totp_uri = .{};
-        state.csrf = .{};
-        state.geometry = null;
-        state.stats = null;
-    }
 }
 
 test "required authenticator enrollment cannot open dashboard data or geometry" {
@@ -1186,135 +1104,12 @@ test "inspecting a match preserves similarity results for return navigation" {
     try std.testing.expect(state.similarity.complete);
 }
 
-fn policyAction(name: []const u8, fields: std.json.Value) !bool {
-    if (!state.fullAccess()) return false;
-    const model = &state.policies;
-    if (equal(name, "policies") or equal(name, "policies-refresh")) {
-        if (state.phase == .policies and (model.busy or model.testing)) return true;
-        model.testing = false;
-        model.manager.active = false;
-        model.inspection_draft = null;
-        state.phase = .policies;
-        state.message = .{};
-        model.offset = 0;
-        model.applied = .{};
-        model.decision = .{};
-        model.busy = true;
-        try policyPost(false, .{ .offset = @as(u8, 0) });
-        state.reputation.clear();
-        try @import("reputation_controller.zig").refresh(&state, outbox());
-    } else if (equal(name, "policies-next") and state.phase == .policies) {
-        if (model.busy or model.testing or model.stale) return true;
-        const offset = model.next orelse return true;
-        model.offset = offset;
-        model.busy = true;
-        try policyPost(false, .{
-            .offset = offset,
-            .applied = model.applied.slice(),
-        });
-    } else if (equal(name, "policy-run") and state.phase == .policies) {
-        if (model.testing or model.busy or model.stale) return true;
-        if (!model.manager.active and model.applied.len == 0) return true;
-        if (model.manager.review.len != 0) return true;
-        var draft: p.Bytes(4096) = undefined;
-        if (model.manager.active and !try managed().captureDocument(fields, &draft)) return true;
-        try model.path.set(string(fields, "path"));
-        model.ip = try p.Bytes(48).init(string(fields, "ip"));
-        try model.query_string.set(string(fields, "query"));
-        model.user_agent = try p.Bytes(256).init(string(fields, "user_agent"));
-        try model.body.set(string(fields, "body"));
-        try model.headers.set(string(fields, "headers"));
-        var headers: [8]@import("request_headers.zig").Header = undefined;
-        const request_headers = @import("request_headers.zig").parse(
-            model.headers.slice(),
-            &headers,
-        ) catch {
-            setMessage("Use up to eight unique request headers, one Name: value per line.");
-            try command(.{ .op = "focus", .selector = "#console-message" });
-            return true;
-        };
-        model.testing = true;
-        model.decision = .{};
-        state.message = .{};
-        try policyPost(true, .{
-            .applied = if (model.manager.active) null else model.applied.slice(),
-            .draft = if (model.manager.active) draft.slice() else null,
-            .committed = if (model.manager.active) model.manager.committed.slice() else null,
-            .path = model.path.slice(),
-            .ip = model.ip.slice(),
-            .query = model.query_string.slice(),
-            .user_agent = model.user_agent.slice(),
-            .body = model.body.slice(),
-            .headers = request_headers,
-        });
-    } else return false;
-    return true;
-}
-
-fn policyResponse(id: []const u8, status: i64, body: std.json.Value) !void {
-    const separator = std.mem.lastIndexOfScalar(u8, id, '-') orelse return;
-    const generation = std.fmt.parseInt(u32, id[separator + 1 ..], 10) catch return;
-    if (generation != policy_generation) return;
-    const model = &state.policies;
-    model.busy = false;
-    model.testing = false;
-    if (state.phase != .policies) return;
-    if (status == 401 or status == 403) {
-        resetState(.login);
-        try command(.{ .op = "disconnect" });
-        return;
-    }
-    if (status != 200) {
-        model.stale = status != 400 and status != 429;
-        @import("workflow_controller.zig").failed(managed(), id);
-        setMessage(switch (status) {
-            400 => "Check the request, rule settings, headers and networks, then try again.",
-            409 => "Policy or reputation changed. Refresh and review the current rules.",
-            429 => "Too many queries. Wait a minute before trying again.",
-            else => "Policy data is unavailable. Refresh to retry; previous data may be stale.",
-        });
-        return command(.{ .op = "focus", .selector = "#console-message" });
-    }
-    if (std.mem.startsWith(u8, id, "managed-")) return managed().response(id, body);
-    if (std.mem.startsWith(u8, id, "policies-")) {
-        const applied = string(body, "applied");
-        _ = try std.fmt.parseInt(u64, applied, 10);
-        const next = field(body, "next") orelse return error.InvalidResponse;
-        if (next != .null and (next != .integer or next.integer < 0 or next.integer > 128))
-            return error.InvalidResponse;
-        var output: p.Bytes(4096) = .{};
-        var writer: std.Io.Writer = .fixed(&output.data);
-        try std.json.Stringify.value(body, .{}, &writer);
-        output.len = writer.buffered().len;
-        model.page = output;
-        model.applied = try p.Bytes(20).init(applied);
-        model.next = if (next == .integer) @intCast(next.integer) else null;
-        model.stale = false;
-    } else {
-        var writer: std.Io.Writer = .fixed(&model.decision.data);
-        try std.json.Stringify.value(body, .{}, &writer);
-        model.decision.len = writer.buffered().len;
-        try command(.{ .op = "focus", .selector = "#policy-result" });
-    }
-    state.message = .{};
-}
-
-fn policyPost(testing: bool, body: anytype) !void {
-    policy_generation +%= 1;
-    var id_buffer: [32]u8 = undefined;
-    const id = try std.fmt.bufPrint(&id_buffer, "{s}-{d}", .{
-        if (testing) "policy-test" else "policies", policy_generation,
-    });
-    const path = if (testing) "/console/api/policies/test" else "/console/api/policies/query";
-    try post(id, path, body);
-}
-
 test "policy navigation ignores superseded responses and retains a revision conflict" {
     sb_init();
     state = .{};
     state.csrf = try p.Bytes(64).init("test");
     begin();
-    try std.testing.expect(try policyAction("policies", .null));
+    try std.testing.expect(try policy_controller.action(managed(), "policies", .null));
     try std.testing.expect(std.mem.indexOf(
         u8,
         command_writer.buffered(),
@@ -1323,8 +1118,8 @@ test "policy navigation ignores superseded responses and retains a revision conf
     var old_buffer: [32]u8 = undefined;
     const old_id = try std.fmt.bufPrint(&old_buffer, "policies-{d}", .{policy_generation});
     state.phase = .events;
-    try std.testing.expect(try policyAction("policies", .null));
-    try policyResponse(old_id, 401, .null);
+    try std.testing.expect(try policy_controller.action(managed(), "policies", .null));
+    try policy_controller.response(managed(), old_id, 401, .null);
     try std.testing.expectEqual(.policies, state.phase);
     try std.testing.expect(state.policies.busy);
     var current_buffer: [32]u8 = undefined;
@@ -1333,7 +1128,7 @@ test "policy navigation ignores superseded responses and retains a revision conf
         "policies-{d}",
         .{policy_generation},
     );
-    try policyResponse(current_id, 409, .null);
+    try policy_controller.response(managed(), current_id, 409, .null);
     try std.testing.expect(!state.policies.busy and state.policies.stale);
     try std.testing.expect(std.mem.indexOf(u8, state.message.slice(), "changed") != null);
 }
@@ -1402,4 +1197,8 @@ test "a bookmarked page dispatches only after the session completes authenticati
     try t.expectEqual(.nodes, state.phase);
     try t.expect(std.mem.indexOf(u8, commands[0..commands_length], "/console/api/nodes") != null);
     try t.expect(std.mem.indexOf(u8, commands[0..commands_length], "\"replace\":true") != null);
+}
+
+fn accountSecurity() @import("account_security_controller.zig").Controller {
+    return .{ .state = &state, .out = outbox() };
 }

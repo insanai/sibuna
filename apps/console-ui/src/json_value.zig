@@ -358,3 +358,10 @@ test "owned wire bytes enforce capacity, erase old tails and survive their input
         std.testing.allocator,
     ));
 }
+
+/// Optional browser metadata uses zero for an absent or non-unsigned JSON number.
+pub fn unsignedOrZero(value: std.json.Value, key: []const u8) u64 {
+    if (value != .object) return 0;
+    const item = value.object.get(key) orelse return 0;
+    return if (item == .integer and item.integer >= 0) @intCast(item.integer) else 0;
+}
