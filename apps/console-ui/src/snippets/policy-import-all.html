@@ -4,5 +4,6 @@
     <form id="managed-import-all" class="sb-settings-form">
         <label for="import-set">Policy set</label>
         <textarea id="import-set" class="textarea font-mono" name="documents" rows="6" maxlength="65536" required{{ busy }}></textarea>
-        <button class="btn" type="submit"{{ busy }}>Review the set</button>
+        <label><input class="checkbox checkbox-sm" type="checkbox" name="confirmed" required{{ busy }}> I understand this replaces every managed rule in one revision.</label>
+        <button class="btn btn-error btn-outline" type="submit"{{ busy }}>Review the set</button>
     </form>

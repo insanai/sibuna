@@ -52,7 +52,13 @@ pub fn action(self: Controller, name: []const u8, fields: std.json.Value) !bool 
         });
         return true;
     }
-    if (equal(u8, name, "managed-import-all")) return review(self, string(fields, "documents"));
+    if (equal(u8, name, "managed-import-all")) {
+        if (!equal(u8, string(fields, "confirmed"), "on")) {
+            self.message("Confirm that the set replaces every managed rule before reviewing it.");
+            return true;
+        }
+        return review(self, string(fields, "documents"));
+    }
     if (equal(u8, name, "managed-import-cancel")) {
         manager.import_all = .{};
         return true;
