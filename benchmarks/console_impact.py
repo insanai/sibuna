@@ -27,7 +27,7 @@ from distributed import headers, session
 sys.path.insert(0, str(ROOT / "tools"))
 import console_bootstrap_test as bootstrap  # noqa: E402
 import console_e2e  # noqa: E402
-from console_dashboard import Dashboard, covered, difference  # noqa: E402
+from console_dashboard import Dashboard, covered, difference, stop_clients  # noqa: E402
 import console_peer_impact as peer_impact  # noqa: E402
 
 CONFIGURATIONS = ("compiled_out", "disabled", "idle", "active")
@@ -152,12 +152,7 @@ class Daemon:
             client.start()
 
     def stop_all(self):
-        failures = []
-        for client in self.clients:
-            try:
-                client.stop()
-            except (OSError, RuntimeError) as error:
-                failures.append(error)
+        failures = stop_clients(self.clients)
         for proc in self.procs:
             try:
                 stop(proc)
@@ -431,6 +426,10 @@ def main():
             "gate": GATE, "dashboards": dashboards, **results,
             "dashboard_workload": {"endpoint": "/console/ws", "stats_hz": 1, "rankings_interval_seconds": 10,
                                    "timeline_interval_seconds": 10, "timeline_limit": 10,
+                                   "details": "rankings and open timeline for a single issuer",
+                                   "period": "24 hours plus yesterday, all selected nodes",
+                                   "period_page_rows": 96,
+                                   "period_refresh_seconds_after_completion": 60,
                                    "geometry": "loaded once before warmup",
                                    "client": "network emulation; rendering measured separately"},
             "limitations": [
@@ -445,7 +444,8 @@ def main():
                 "The cluster case loads node 1 only; replication cost lands on all nodes."]
             + ([] if dashboards["delivered"] else [
                 "At least one subscriber lacked required frames or successful rankings/timeline "
-                "queries during a sample; the active workload is inconclusive."])}
+                "queries, or a recently completed retained-period scan during a sample; "
+                "the active workload is inconclusive."])}
     record(data, "console-impact-cluster-latest" if args.cluster else "console-impact-latest")
     print(f"console-impact verdict: {results['verdict']}", flush=True)
     return 0 if results["verdict"] == "pass" else 1

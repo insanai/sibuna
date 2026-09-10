@@ -10,6 +10,7 @@ import threading
 import time
 from console_topics_client import Client
 from console_ws_test import Stream
+from console_period import Period
 
 
 class Dashboard:
@@ -18,8 +19,10 @@ class Dashboard:
         self.stopping, self.lock = threading.Event(), threading.Lock()
         self.stream, self.threads = None, []
         self.totals = {"frames": 0, "rankings": 0, "timeline": 0,
-                       "http_errors": 0, "stream_errors": 0, "reconnects": 0}
+                       "http_errors": 0, "stream_errors": 0, "reconnects": 0,
+                       "period_pages": 0, "period_scans": 0}
         self.closes = {}
+        self.period = Period(helper, port, cookie, csrf, self.stopping, self.increment)
 
     def increment(self, key):
         with self.lock:
@@ -27,7 +30,7 @@ class Dashboard:
 
     def snapshot(self):
         with self.lock:
-            return dict(self.totals)
+            return {**self.totals, **self.period.snapshot()}
 
     def connect(self):
         factory = getattr(self.helper, "stream", None)
@@ -43,7 +46,7 @@ class Dashboard:
                                             cookie=self.cookie)
         assert code == 200 and body, ("geometry", code)
         self.stream = self.connect()
-        for target in (self.read, self.poll):
+        for target in (self.read, self.poll, self.period.run):
             thread = threading.Thread(target=target, daemon=True)
             self.threads.append(thread)
             thread.start()
@@ -65,6 +68,7 @@ class Dashboard:
                     value.get("op") == "delta" and value["part"] + 1 == value["parts"])
                 if value.get("topic") == "stats" and complete:
                     assert "timestamp" in self.client.states["stats"]
+                    self.period.observe(self.client.states["stats"])
                     self.increment("frames")
             except (OSError, ValueError, AssertionError):
                 if self.stopping.is_set():
@@ -87,6 +91,9 @@ class Dashboard:
     def poll(self):
         while not self.stopping.is_set():
             started = time.monotonic()
+            if not self.period.snapshot()["single_node_details"]:
+                self.stopping.wait(1)
+                continue
             for kind, method, body in (("rankings", "GET", None),
                                        ("timeline", "POST", {"limit": 10})):
                 if self.stopping.is_set():
@@ -114,6 +121,16 @@ class Dashboard:
                 raise RuntimeError("dashboard client failed to stop")
 
 
+def stop_clients(clients):
+    failures = []
+    for client in clients:
+        try:
+            client.stop()
+        except (OSError, RuntimeError) as error:
+            failures.append(error)
+    return failures
+
+
 def close(stream):
     # Wake a blocked buffered read before closing the file; no timeout corrupts framing.
     try:
@@ -125,7 +142,9 @@ def close(stream):
 
 def difference(before, after):
     assert len(before) == len(after)
-    return [{key: current[key] - previous[key] for key in current}
+    gauges = {"period_age_seconds", "single_node_details"}
+    return [{key: current[key] if key in gauges else current[key] - previous[key]
+             for key in current}
             for previous, current in zip(before, after)]
 
 
@@ -139,7 +158,11 @@ def covered(samples, subscribers):
             return False
         for client in clients:
             if (client["frames"] / sample["wall_seconds"] < 0.8 or
-                    client["rankings"] == 0 or client["timeline"] == 0 or
+                    (client.get("single_node_details", True) and
+                     (client["rankings"] == 0 or client["timeline"] == 0)) or
+                    client.get("period_age_seconds") is None or
+                    not math.isfinite(client["period_age_seconds"]) or
+                    not 0 <= client["period_age_seconds"] <= 75 or
                     client["http_errors"] != 0 or client["stream_errors"] != 0):
                 return False
     return bool(samples)

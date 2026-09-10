@@ -1729,7 +1729,8 @@ identifies the following concrete gaps; the status remains Proposed.
     before and after edits is not recorded. Historical rankings and rule comparisons remain
     implementation gaps under R16,
     not performance-host limitations.],
-  [Acceptance], [The corrected dashboard workload harness has only an inconclusive smoke result.
+  [Acceptance], [The dashboard workload now covers daily retained scans and passes its eight-client
+    live functional check. Earlier impact measurements remain inconclusive or incomplete.
     Full controlled-host impact acceptance and comprehensive browser acceptance remain open.
     Earlier browser evidence covers the named scenarios, not every feature and error state.],
 )
@@ -5186,3 +5187,21 @@ state assertions; the ReleaseFast fixture started successfully and subsequently 
 cleanly. No production startup bound is inferred from this browser fixture.
 
 Historical rankings, per-rule hit history and the remaining release gates keep SID 0007 Proposed.
+
+
+== Retained-period impact workload (2026-09-10)
+
+The impact workload now also reads both retained daily windows for the selected nodes. Its
+per-client coverage requires a completed scan no older than 75 seconds; missing, invalid or
+stale scan ages fail coverage. Rankings and an open retained second timeline are queried only
+for a single-issuer view, matching the interface’s scope boundary. HTTP scans run independently
+of the stream reader, with the same 96-record page limit and a minute between completed scans.
+Each fixture window allows sixteen pages; an invalid continuation fails instead of generating
+unbounded load. The throughput and p99 thresholds are unchanged.
+
+`python3 benchmarks/console_impact_test.py` passes all eight harness tests.
+`python3 benchmarks/console_dashboard_live.py <sibuna>` verifies eight actual clients over a
+15-second interval, including live streams, completed retained scans, rankings and timeline
+queries, followed by clean client and daemon shutdown. This is functional workload evidence,
+not a throughput measurement. These changes need a new full controlled impact run; earlier
+measurements do not establish their acceptance.

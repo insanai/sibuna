@@ -45,7 +45,8 @@ class Acceptance(unittest.TestCase):
 
     def test_coverage_is_checked_for_every_client(self):
         client = {"frames": 15, "rankings": 1, "timeline": 1,
-                  "http_errors": 0, "stream_errors": 0}
+                  "http_errors": 0, "stream_errors": 0, "period_age_seconds": 0,
+                  "single_node_details": True}
         entry = {"wall_seconds": 15, "dashboards": [dict(client) for _ in range(8)]}
         self.assertTrue(covered([entry], 8))
         entry["dashboards"][0]["frames"] = 120
@@ -55,6 +56,21 @@ class Acceptance(unittest.TestCase):
         entry["dashboards"][7]["timeline"] = 0
         self.assertFalse(covered([entry], 8))
         self.assertEqual(difference([{"frames": 4}], [{"frames": 9}]), [{"frames": 5}])
+
+    def test_period_coverage_and_cluster_hidden_details(self):
+        client = {"frames": 15, "rankings": 0, "timeline": 0, "http_errors": 0,
+                  "stream_errors": 0, "period_age_seconds": 30, "single_node_details": False}
+        entry = {"wall_seconds": 15, "dashboards": [dict(client) for _ in range(8)]}
+        self.assertTrue(covered([entry], 8))
+        entry["dashboards"][2]["period_age_seconds"] = None
+        self.assertFalse(covered([entry], 8))
+        for invalid in (76, -1, float("nan")):
+            entry["dashboards"][2]["period_age_seconds"] = invalid
+            self.assertFalse(covered([entry], 8))
+        result = difference([dict(client, frames=1)], [dict(client, frames=5)])
+        self.assertEqual(result[0]["frames"], 4)
+        self.assertEqual(result[0]["period_age_seconds"], 30)
+        self.assertFalse(result[0]["single_node_details"])
 
     def test_transport_errors_cannot_pass(self):
         baseline = summarize(samples([1000] * 7, [100] * 7))
