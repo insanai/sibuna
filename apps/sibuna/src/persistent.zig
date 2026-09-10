@@ -641,109 +641,15 @@ pub const Persistent = struct {
         engine.waf_enabled = self.cfg.waf;
         if (self.policy_text) |text| try engine.loadFromJsonInto(arena, text);
         try @import("policy_inspection.zig").apply(self, engine);
-        try self.loadDbPolicies(engine, arena);
-        try self.loadReputation(engine);
+        try @import("persistent_policy.zig").rules(self, engine, arena);
+        const expires = try @import("persistent_policy.zig").reputation(self, engine);
         if (build_options.console)
             try @import("console_pages_load.zig").install(self, &engine.pages)
         else
             policy.page_template.defaults(&engine.pages, @import("challenge_page.zig").default);
         self.spare = self.state.publishEngine(self.spare);
-    }
-
-    fn loadDbPolicies(self: *Persistent, engine: *policy.Engine, arena: std.mem.Allocator) !void {
-        const sql = "SELECT name, path_pattern, ua_pattern, action, difficulty, algorithm, " ++
-            "header_matchers,cidr_matchers,weight,id,limit_config " ++
-            "FROM policies WHERE enabled = 1 " ++
-            "ORDER BY priority, name, id";
-        var result = try self.db.query(self.gpa, sql);
-        defer result.deinit();
-        // Dynamic rules precede file/default rules so generic admission
-        // rules cannot hide an operator's live denial.
-        const fallback_count = engine.rule_count;
-        engine.rule_count = 0;
-        for (result.rows) |row| {
-            const name = row[0] orelse continue;
-            const action = policy.Action.parse(row[3] orelse continue) orelse continue;
-            var r = policy.PolicyRule{ .name = try arena.dupe(u8, name), .action = action };
-            r.limit_identity = policy.rule_limits.managedIdentity(row[9].?);
-            if (row[10]) |text| r.limits = try @import("policy_limits.zig").parse(arena, text);
-            if (row[1]) |p| r.path_pattern = try arena.dupe(u8, p);
-            if (row[2]) |u| r.ua_pattern = try arena.dupe(u8, u);
-            if (row[4]) |d| r.difficulty = std.fmt.parseInt(u32, d, 10) catch null;
-            if (row[5]) |a| r.algorithm = try arena.dupe(u8, a);
-            if (row[8]) |wt| r.weight = std.fmt.parseInt(i32, wt, 10) catch 0;
-            if (row[6]) |h| try parseHeaderMatchers(arena, h, &r);
-            if (row[7]) |c| parseCidrMatchers(c, &r);
-            if (engine.rule_count + fallback_count >= policy.engine.MAX_RULES)
-                return error.TooManyRules;
-            const index = engine.rule_count;
-            std.mem.copyBackwards(
-                policy.PolicyRule,
-                engine.rules[index + 1 .. index + 1 + fallback_count],
-                engine.rules[index .. index + fallback_count],
-            );
-            try engine.addRule(r);
-        }
-        engine.rule_count += fallback_count;
-    }
-
-    fn parseHeaderMatchers(
-        arena: std.mem.Allocator,
-        text: []const u8,
-        r: *policy.PolicyRule,
-    ) !void {
-        var parsed = std.json.parseFromSlice(std.json.Value, arena, text, .{}) catch return;
-        defer parsed.deinit();
-        if (parsed.value != .object) return;
-        var it = parsed.value.object.iterator();
-        while (it.next()) |entry| {
-            if (r.header_count >= policy.rule.MAX_RULE_HEADERS) break;
-            if (entry.value_ptr.* != .string) continue;
-            r.headers[r.header_count] = .{
-                .name = try arena.dupe(u8, entry.key_ptr.*),
-                .pattern = try arena.dupe(u8, entry.value_ptr.*.string),
-            };
-            r.header_count += 1;
-        }
-    }
-
-    fn parseCidrMatchers(text: []const u8, r: *policy.PolicyRule) void {
-        var it = std.mem.tokenizeAny(u8, text, "[]\", ");
-        while (it.next()) |cidr| {
-            if (r.cidr_count >= policy.rule.MAX_RULE_CIDRS) break;
-            if (policy.rule.CidrMatcher.parse(cidr)) |m| {
-                r.cidrs[r.cidr_count] = m;
-                r.cidr_count += 1;
-            }
-        }
-    }
-
-    fn loadReputation(self: *Persistent, engine: *policy.Engine) !void {
-        const now: u64 = @intCast(
-            @max(0, @divTrunc(Io.Clock.real.now(self.io).nanoseconds, std.time.ns_per_s)),
-        );
-        const sql = try std.fmt.allocPrint(
-            self.gpa,
-            "SELECT ip_or_cidr, reputation_score, banned_until FROM ip_reputation " ++
-                "WHERE (banned_until IS NULL OR banned_until > {d}) " ++
-                "AND (reputation_score <= -50 OR reputation_score >= 50)",
-            .{now},
-        );
-        defer self.gpa.free(sql);
-        var result = try self.db.query(self.gpa, sql);
-        defer result.deinit();
-        self.reputation_expires = std.math.maxInt(u64);
-        for (result.rows) |row| {
-            if (row[2]) |expiry| {
-                self.reputation_expires = @min(
-                    self.reputation_expires,
-                    try std.fmt.parseInt(u64, expiry, 10),
-                );
-            }
-            const cidr = row[0] orelse continue;
-            const score = std.fmt.parseInt(i32, row[1] orelse continue, 10) catch continue;
-            try engine.ip_trie.insertCidr(cidr, if (score < 0) .deny else .allow);
-        }
+        // Keep the old retry deadline if any candidate loader fails before publication.
+        self.reputation_expires = expires;
     }
 
     /// Full-text forensic search over recorded incidents.

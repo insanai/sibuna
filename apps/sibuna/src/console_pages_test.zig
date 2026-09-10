@@ -82,3 +82,29 @@ test "page templates validate, commit with audit digests, reject stale edits and
     try @import("console_pages_load.zig").install(fx.owner, pages);
     try t.expect(!pages.get(.denied).customized and pages.get(.denied).fallback);
 }
+
+test "expiry-driven rebuild retries after a later page load fails without a revision change" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try fixture.Fixture.open(
+        try std.fmt.bufPrint(&path, ".zig-cache/tmp/{s}/expiry-retry", .{tmp.sub_path}),
+    );
+    defer fx.close();
+    try @import("console_migrations.zig").run(fx.owner);
+    try fx.owner.tick();
+    const version = fx.owner.version;
+    const live = fx.state.slot.load(.acquire);
+    // Renaming the page table simulates an unavailable loader without editing policy rows.
+    try fx.owner.db.exec(t.allocator, "ALTER TABLE console_pages RENAME TO unavailable_pages");
+    fx.owner.reputation_expires = 0;
+    try t.expectError(error.SqliteError, fx.owner.tick());
+    try t.expectEqual(version, fx.owner.version);
+    try t.expectEqual(@as(u64, 0), fx.owner.reputation_expires);
+    try t.expectEqual(live, fx.state.slot.load(.acquire));
+    try fx.owner.db.exec(t.allocator, "ALTER TABLE unavailable_pages RENAME TO console_pages");
+    try fx.owner.tick();
+    try t.expectEqual(version, fx.owner.version);
+    try t.expectEqual(std.math.maxInt(u64), fx.owner.reputation_expires);
+    try t.expect(live != fx.state.slot.load(.acquire));
+}

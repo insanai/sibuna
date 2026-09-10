@@ -13,6 +13,7 @@ pub const rule = @import("rule.zig");
 pub const rule_limits = @import("rule_limits.zig");
 pub const page_template = @import("page_template.zig");
 pub const loader = @import("loader.zig");
+pub const matchers = @import("matchers.zig");
 pub const management = @import("management.zig");
 pub const candidate = @import("candidate.zig");
 pub const engine = @import("engine.zig");

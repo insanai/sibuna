@@ -3,17 +3,15 @@
 //! lifetime covers candidate validation and, after publication, the engine snapshot.
 const std = @import("std");
 const rule = @import("rule.zig");
+const matchers = @import("matchers.zig");
+const validText = matchers.validText;
 
 pub const max_document = 4096;
-pub const Error = error{
+pub const Error = matchers.Error || error{
     TooLarge,
     InvalidId,
     InvalidName,
     InvalidPattern,
-    InvalidHeader,
-    InvalidCidr,
-    TooManyHeaders,
-    TooManyCidrs,
     InvalidChallenge,
     InvalidWeight,
     InvalidRuleLimit,
@@ -78,13 +76,8 @@ pub fn parse(allocator: std.mem.Allocator, source: []const u8) ParseError!Docume
         if (wire.action == .weigh) return error.InvalidRuleLimit;
         try limits.validate();
     }
-    try headers(wire.headers, &value);
-    if (wire.cidrs.len > rule.MAX_RULE_CIDRS) return error.TooManyCidrs;
-    for (wire.cidrs, 0..) |cidr, i| {
-        if (cidr.len > 48) return error.InvalidCidr;
-        value.cidrs[i] = rule.CidrMatcher.parse(cidr) orelse return error.InvalidCidr;
-    }
-    value.cidr_count = @intCast(wire.cidrs.len);
+    try matchers.headers(wire.headers, &value);
+    try matchers.cidrs(wire.cidrs, &value);
     return .{
         .id = wire.id,
         .priority = wire.priority,
@@ -99,36 +92,6 @@ fn identifier(id: []const u8) Error!void {
     for (id) |byte| {
         if (!std.ascii.isAlphanumeric(byte) and byte != '-' and byte != '_')
             return error.InvalidId;
-    }
-}
-
-fn validText(value: []const u8) bool {
-    if (!std.unicode.utf8ValidateSlice(value)) return false;
-    for (value) |byte| if (byte < 32 or byte == 127) return false;
-    return true;
-}
-
-fn headers(value: std.json.Value, output: *rule.PolicyRule) Error!void {
-    if (value == .null) return;
-    if (value != .object) return error.InvalidHeader;
-    if (value.object.count() > rule.MAX_RULE_HEADERS) return error.TooManyHeaders;
-    var iterator = value.object.iterator();
-    while (iterator.next()) |entry| {
-        const name = entry.key_ptr.*;
-        if (name.len == 0 or name.len > 64 or entry.value_ptr.* != .string)
-            return error.InvalidHeader;
-        for (name) |byte| {
-            if (!std.ascii.isAlphanumeric(byte) and
-                std.mem.indexOfScalar(u8, "!#$%&'*+-.^_`|~", byte) == null)
-                return error.InvalidHeader;
-        }
-        const pattern = entry.value_ptr.*.string;
-        if (pattern.len > 256 or !validText(pattern)) return error.InvalidHeader;
-        for (output.headers[0..output.header_count]) |previous| {
-            if (std.ascii.eqlIgnoreCase(previous.name, name)) return error.InvalidHeader;
-        }
-        output.headers[output.header_count] = .{ .name = name, .pattern = pattern };
-        output.header_count += 1;
     }
 }
 
