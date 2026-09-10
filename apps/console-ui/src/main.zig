@@ -342,6 +342,8 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
             alloc,
         );
         state.csrf = try p.Bytes(64).init(string(body, "csrf"));
+        state.console_node = std.math.cast(u32, number(body, "node"));
+        if (state.console_node == 0) state.console_node = null;
         state.role = try p.Bytes(16).init(string(body, "role"));
         const change = field(body, "must_change");
         state.must_change = change != null and change.? == .bool and change.?.bool;

@@ -53,6 +53,8 @@ pub const State = struct {
     csrf: p.Bytes(64) = .{},
     role: p.Bytes(16) = .{},
     user_id: u64 = 0,
+    /// Serving management identity is independent of the selected telemetry issuer.
+    console_node: ?u32 = null,
     users: @import("users_state.zig").Model = .{},
     tokens: @import("tokens_state.zig").Model = .{},
     settings: @import("settings_state.zig").Model = .{},
@@ -111,32 +113,25 @@ pub const State = struct {
     /// Reset owned fields individually so the Wasm binary does not carry a second
     /// full initialized State image just to clear bounded page buffers on sign-out.
     pub fn reset(self: *State) void {
-        inline for (@typeInfo(State).@"struct".fields) |field| {
-            if (comptime @import("std").mem.eql(u8, field.name, "rankings")) {
-                self.rankings.clear();
-            } else if (comptime @import("std").mem.eql(u8, field.name, "timeline")) {
-                self.timeline.clear();
-            } else if (comptime @import("std").mem.eql(u8, field.name, "minute_history")) {
-                self.minute_history.clear();
-            } else if (comptime @import("std").mem.eql(u8, field.name, "events")) {
-                self.events.clear();
-            } else if (comptime @import("std").mem.eql(u8, field.name, "security_overview")) {
-                self.security_overview.clear();
-            } else if (comptime @import("std").mem.eql(u8, field.name, "users")) {
-                self.users.clear();
-            } else if (comptime @import("std").mem.eql(u8, field.name, "tokens")) {
-                self.tokens.clear();
-            } else if (comptime @import("std").mem.eql(u8, field.name, "settings")) {
-                self.settings.clear();
-            } else if (comptime @import("std").mem.eql(u8, field.name, "pages")) {
-                self.pages.clear();
-            } else if (comptime @import("std").mem.eql(u8, field.name, "reputation")) {
-                self.reputation.clear();
-            } else if (comptime @import("std").mem.eql(u8, field.name, "audit")) {
-                self.audit.clear();
-            } else if (comptime @import("std").mem.eql(u8, field.name, "kiosk_grant")) {
-                self.kiosk_grant.clear();
-            } else @field(self, field.name) = field.defaultValue().?;
+        const Field = @import("std").meta.FieldEnum(State);
+        inline for (@typeInfo(State).@"struct".fields, 0..) |field, index| {
+            // Dispatch by the compiler's field enum, avoiding repeated name comparisons.
+            switch (@as(Field, @enumFromInt(index))) {
+                .rankings,
+                .timeline,
+                .minute_history,
+                .events,
+                .security_overview,
+                .users,
+                .tokens,
+                .settings,
+                .pages,
+                .reputation,
+                .audit,
+                .kiosk_grant,
+                => @field(self, field.name).clear(),
+                else => @field(self, field.name) = field.defaultValue().?,
+            }
         }
     }
 

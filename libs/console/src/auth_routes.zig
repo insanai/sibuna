@@ -98,6 +98,7 @@ fn sessionResponse(
     );
     try http.json(context, .{
         .user = p.Counter{ .value = user.id },
+        .node = app.config.node_id,
         .role = @tagName(user.role),
         .must_change = user.must_change,
         .totp_required = app.needsTotp(user.role, user.totp_enabled),

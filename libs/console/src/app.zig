@@ -503,6 +503,7 @@ pub const App = struct {
         const csrf = std.fmt.bytesToHex(http.csrfToken(raw), .lower);
         return http.json(context, .{
             .user = p.Counter{ .value = user.actor },
+            .node = self.config.node_id,
             .role = @tagName(user.role),
             .must_change = user.must_change,
             .expires = user.expires,

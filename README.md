@@ -351,7 +351,9 @@ and consensus keys. Rotation takes effect after restarting the nodes. The Nodes 
 loss; missing observations remain null. Peer streams publish only their own node's statistics,
 keep telemetry outside consensus and retain stale observations when disconnected.
 
-The dashboard's **Live traffic scope** selects all configured nodes or one node. Combined
+The navigation identifies the serving console node. The dashboard's **Live traffic scope**
+selects all configured nodes or one node; it does not change which node executes local commands.
+Combined
 totals exclude missing, stale and clock-skewed peers; **Node coverage and locations** shows
 which nodes contributed and their observation times. Country rankings report omitted-count
 uncertainty, and globe arrows retain each receiving node's configured location. A gap in a

@@ -132,6 +132,7 @@ def exercise(ui):
     ui.event(1, {"action": "density", "fields": {}})
     assert ui.appearance["density"] == "comfortable" and ui.appearance["persist"]
     assert "Traffic overview" in ui.html and "console-navigation" in ui.html
+    assert "Console node 1" in ui.html
     comparison_view(ui)
     security_view(ui)
     for page, topic in (("events", "events"), ("policies", "policy"), ("nodes", "nodes"),

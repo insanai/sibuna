@@ -18,8 +18,10 @@ pub fn destination(name: []const u8) bool {
 }
 
 pub fn begin(state: *const State, w: *Writer) Writer.Error!void {
+    var context_buffer: [32]u8 = undefined;
     try html.render(w, @embedFile("snippets/shell-header.html"), .{
         .open = state.navigation_open,
+        .console_label = context(state, &context_buffer),
     });
     const active = section(state.phase);
     for (actions, labels) |action, label| {
@@ -58,4 +60,19 @@ pub fn section(phase: Phase) []const u8 {
         .password, .security => "account",
         else => "dashboard",
     };
+}
+
+fn context(state: *const State, buffer: *[32]u8) []const u8 {
+    const node = state.console_node orelse return "Node not reported";
+    return std.fmt.bufPrint(buffer, "Console node {d}", .{node}) catch unreachable;
+}
+
+test "management identity does not follow the selected traffic node" {
+    const t = std.testing;
+    var state: State = .{ .console_node = 7, .dashboard_node = 2 };
+    var buffer: [32]u8 = undefined;
+    try t.expectEqualStrings("Console node 7", context(&state, &buffer));
+    state.reset();
+    try t.expect(state.console_node == null);
+    try t.expectEqualStrings("Node not reported", context(&state, &buffer));
 }

@@ -105,6 +105,7 @@ fn login(session: *client.Session, args: arguments.Args) Error!void {
     var fixed = std.heap.FixedBufferAllocator.init(&arena);
     const parsed = std.json.parseFromSlice(struct {
         user: u64,
+        node: ?u32 = null,
         role: p.Role,
         must_change: bool,
         totp_required: bool,

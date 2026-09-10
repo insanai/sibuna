@@ -52,6 +52,7 @@ fn configure(state: *State, phase: Phase) void {
         .loading, .setup, .login, .password => {},
         else => {
             state.csrf.set("fixture-only-csrf") catch unreachable;
+            state.console_node = 1;
             state.role.set("admin") catch unreachable;
         },
     }
