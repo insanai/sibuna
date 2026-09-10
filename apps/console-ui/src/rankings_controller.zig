@@ -6,6 +6,7 @@ var generation: u32 = 0;
 
 pub fn request(state: *State) ?p.Bytes(32) {
     const model = &state.rankings;
+    if (@import("dashboard_scope.zig").needsRetainedNode(state)) return null;
     if (!state.fullAccess() or state.kiosk or state.phase != .dashboard or
         state.paused or state.hidden)
         return null;
@@ -39,6 +40,10 @@ pub fn response(
     if (status == 401 or status == 403) return .expired;
     model.stale = true;
     if (status != 200) return .retained;
+    if (@import("dashboard_scope.zig").selectedNode(state)) |node| {
+        const value = @import("events_state.zig").field(body, "node") orelse return .retained;
+        if (value != .integer or value.integer != node) return .retained;
+    }
     model.decode(body, alloc) catch return .retained;
     model.received_at = state.browser_time;
     return .retained;
@@ -65,4 +70,19 @@ test "rankings are authenticated, throttled and immune to responses from a reset
     try t.expect(request(&state) == null);
     state.browser_time = 10;
     try t.expect(request(&state) != null);
+}
+
+pub fn render(state: *const State, w: *std.Io.Writer) std.Io.Writer.Error!void {
+    if (@import("dashboard_scope.zig").needsRetainedNode(state)) {
+        try w.writeAll("<section class=\"sb-panel mt-6\"><h2>Sampled request paths</h2>" ++
+            "<p class=\"sb-note\">Select one node for current-minute path rankings. " ++
+            "Partial winner lists cannot establish a cluster-wide ranking.</p></section>");
+        return;
+    }
+    try @import("rankings_panel.zig").render(
+        &state.rankings,
+        w,
+        state.browser_time,
+        state.paused or state.stale,
+    );
 }

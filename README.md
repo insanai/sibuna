@@ -355,9 +355,10 @@ The dashboard's **Live traffic scope** selects all configured nodes or one node.
 totals exclude missing, stale and clock-skewed peers; **Node coverage and locations** shows
 which nodes contributed and their observation times. Country rankings report omitted-count
 uncertainty, and globe arrows retain each receiving node's configured location. A gap in a
-source's counter interval leaves the combined rate unobserved. Retained second intervals
-and live path rankings are labelled as local to the serving console; minute history has its
-own node selection and keeps per-node rows distinct.
+source's counter interval leaves the combined rate unobserved. Select one node for retained
+second intervals and current-minute path rankings. Remote views use the same authenticated
+peer connection; unavailable peers remain unavailable, and a restart invalidates old history
+cursors. Minute history has its own node selection and keeps per-node rows distinct.
 
 Drain, resume and clear local bans still act only on the serving node,
 require a preview and produce durable command receipts. Under `-Dcluster=true`,

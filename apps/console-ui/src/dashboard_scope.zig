@@ -34,6 +34,13 @@ pub fn selectedNode(state: *const State) ?u32 {
     return null;
 }
 
+/// Seconds and live path sketches belong to one issuer. Persisted minutes retain their
+/// independent all-node aggregation; partial top-k winner lists cannot be summed safely.
+pub fn needsRetainedNode(state: *const State) bool {
+    const scope = state.dashboard_scope orelse return false;
+    return scope.count > 1 and state.dashboard_node == null;
+}
+
 test "investigation scope preserves implicit local and explicit node selections" {
     const t = std.testing;
     var state: State = .{ .dashboard_scope = .{ .count = 1 } };
@@ -57,6 +64,8 @@ pub fn select(state: *State, text: []const u8) !void {
         if (!found) return error.UnknownNode;
     }
     state.dashboard_node = if (node == 0) null else node;
+    state.timeline.clear();
+    state.rankings.clear();
     state.stats = null;
     state.points = @splat(.{});
     state.stale = false;
@@ -193,4 +202,25 @@ test "dashboard labels distinguish missing observations from connecting and name
     state.dashboard_scope.?.stale = true;
     try t.expectEqualStrings("Stale", status(&state));
     try t.expectEqualStrings("Node 2", viewName(&state, &buffer));
+}
+
+test "changing dashboard scope discards retained cursors, rankings and outstanding tickets" {
+    const t = std.testing;
+    var state: State = .{ .dashboard_scope = .{ .count = 2 } };
+    state.dashboard_scope.?.sources[0] = .{ .node = 1 };
+    state.dashboard_scope.?.sources[1] = .{ .node = 2 };
+    state.timeline.generation = 9;
+    state.timeline.before = 100;
+    state.timeline.loaded = true;
+    state.rankings.generation = 8;
+    state.rankings.loaded = true;
+    try select(&state, "2");
+    try t.expectEqual(@as(?u32, 2), selectedNode(&state));
+    try t.expect(!needsRetainedNode(&state));
+    try t.expectEqual(@as(u32, 0), state.timeline.generation);
+    try t.expectEqual(@as(u64, 0), state.timeline.before);
+    try t.expectEqual(@as(u32, 0), state.rankings.generation);
+    try t.expect(!state.timeline.loaded and !state.rankings.loaded);
+    try select(&state, "0");
+    try t.expect(needsRetainedNode(&state));
 }

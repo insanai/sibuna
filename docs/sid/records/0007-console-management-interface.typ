@@ -4910,3 +4910,35 @@ under reduced motion. Display expiry, granting-user revision and sign-out still 
 both views. The live kiosk scenario verifies the new endpoint, CSRF and scope rejection;
 storage regressions compare aggregate counts with recorded findings while checking that
 private labels are absent. These changes do not establish peer-history or impact acceptance.
+
+== Retained node views over peer transport (2026-09-10)
+
+The live scope selector now also selects the issuer of retained seconds and current-minute
+path rankings. A peer request uses the existing certificate-validated, mutually authenticated
+management WebSocket. It never opens a database handle or forwards an aggregate. Eight owned
+mailbox slots per configured peer bound HTTP admission; one request is in flight per connection,
+with an independent five-second reply deadline. The peer reader hands owned requests to its
+serialized writer through a separate eight-entry queue, keeping control-frame progress independent.
+The existing storage mailbox ownership implementation is shared by both services.
+
+Replies carry the node and authenticated boot. Correlation ids do not wrap; queued requests
+retain their connection generation, and reconnects fail old work rather than replaying it on a
+new boot. HTTP authority is rechecked before disclosure using the credential copied before body
+parsing. Iterating HTTP headers after consuming the body is invalid; the first three-node run
+caught that mistake and the corrected test passed. Shutdown joins readers, writers and peer
+workers before freeing their queues. Reservations include the per-peer mailbox memory.
+
+Remote replies contain at most eight timeline intervals or eight path winners and a 7,800-byte
+JSON body within the 8 KiB WebSocket bound. A request for a larger local page remains supported;
+remote callers follow the returned cursor. The UI discards outstanding tickets, cursors and rows
+when scope changes and verifies each reply's node. An all-node selection asks the reader to pick
+one issuer for these views; it does not add partial winner lists or compare unrelated monotonic
+cursors. Replicated minute history retains its independent all-node selection.
+
+Native checks cover FIFO capacity, cancellation ownership, generation fencing and escaped reply
+bounds. The live three-node scenario verifies real node-2 traffic through node 1, pagination,
+remote path metadata, unavailable members, boot-conflict responses after rejoin, independent
+local contributions during quorum loss and clean process stops. The earlier live suite passed
+its twenty-two scenarios through membership/failover before the new retained-view regression;
+the corrected focused peer scenario passes. These results close retained-peer functionality,
+not the remaining complete interface review or quantitative console-impact gate.

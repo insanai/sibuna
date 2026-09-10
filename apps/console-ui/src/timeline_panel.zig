@@ -13,6 +13,7 @@ pub const Model = struct {
         gap: bool = false,
         partial: bool = false,
     };
+    node: u32 = 0,
     rows: [10]Row = @splat(.{}),
     count: usize = 0,
     boot: [32]u8 = @splat(0),
@@ -35,13 +36,14 @@ pub const Model = struct {
     fn decode(self: *Model, value: std.json.Value, alloc: std.mem.Allocator) !void {
         const page = try @import("json_value.zig").decode(p.timeline.Page, value, alloc);
         if (page.version != 1 or page.retention_seconds != 3600 or page.epoch == 0 or
-            page.boot.len != 32) return error.InvalidResponse;
+            page.boot.len != 32 or page.rows.len > self.rows.len) return error.InvalidResponse;
         for (page.boot) |byte| if (!std.ascii.isHex(byte)) return error.InvalidResponse;
         if (self.before != 0 and (page.epoch != self.epoch or
             !std.mem.eql(u8, page.boot, &self.boot))) return error.InvalidResponse;
         var replacement = self.*;
         @memcpy(&replacement.boot, page.boot);
         replacement.epoch = page.epoch;
+        replacement.node = page.node;
         replacement.next = page.next_before orelse 0;
         replacement.count = page.rows.len;
         var previous: u64 = self.before;
@@ -78,6 +80,7 @@ pub const Model = struct {
 pub const Request = struct { id: p.Bytes(32), body: p.timeline.Query };
 pub fn request(state: *State, force: bool) ?Request {
     const model = &state.timeline;
+    if (@import("dashboard_scope.zig").needsRetainedNode(state)) return null;
     if (!state.fullAccess() or state.phase != .dashboard or !state.timeline_open or
         state.history_minutes or state.paused or state.hidden or model.busy) return null;
     if (!force and (model.before != 0 or (model.generation != 0 and
@@ -92,6 +95,7 @@ pub fn request(state: *State, force: bool) ?Request {
     return .{
         .id = id,
         .body = .{
+            .node = @import("dashboard_scope.zig").selectedNode(state),
             .limit = 10,
             .before = if (model.before == 0) null else model.before,
             .epoch = if (model.before == 0) null else model.epoch,
@@ -117,6 +121,10 @@ pub fn response(
     model.failed = true;
     model.conflict = status == 409;
     if (status != 200) return false;
+    if (@import("dashboard_scope.zig").selectedNode(state)) |node| {
+        const value = @import("events_state.zig").field(body, "node") orelse return false;
+        if (value != .integer or value.integer != node) return false;
+    }
     model.decode(body, alloc) catch return false;
     model.received_at = state.browser_time;
     return false;
@@ -125,10 +133,18 @@ pub fn response(
 pub fn table(state: *const State, w: *Writer) Writer.Error!void {
     if (!try header(state, w)) return;
     if (state.history_minutes) return @import("minute_panel.zig").table(state, w);
+    if (@import("dashboard_scope.zig").needsRetainedNode(state)) {
+        try w.writeAll("<p class=\"sb-note\">Select one node for retained seconds. " ++
+            "Minute history supports all recorded nodes.</p>");
+        return;
+    }
     const model = &state.timeline;
-    try html.render(w, "<p class=\"sb-note\">This console node’s observations, " ++
+    try html.render(w, "<p class=\"sb-note\">Selected node’s observations, " ++
         "retained for one hour. " ++
         "UTC labels describe interval endings; gaps are not zero traffic.</p>", .{});
+    if (model.loaded) try html.render(w, "<p class=\"sb-note\">Node {{ node }}</p>", .{
+        .node = model.node,
+    });
     if (model.failed) try w.writeAll(if (model.conflict)
         "<p role=\"status\">History changed. Reload the latest page.</p>"
     else

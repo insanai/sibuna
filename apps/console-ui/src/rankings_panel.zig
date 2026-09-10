@@ -11,6 +11,7 @@ pub const Model = struct {
     };
     rows: [p.rankings.max_rows]Row = @splat(.{}),
     count: usize = 0,
+    node: u32 = 0,
     generation: u32 = 0,
     busy: bool = false,
     loaded: bool = false,
@@ -64,6 +65,11 @@ pub const Model = struct {
             };
         }
         replacement.count = source.array.items.len;
+        if (data.field(value, "node") != null) {
+            const node = try unsigned(value, "node");
+            if (node > std.math.maxInt(u32)) return error.InvalidResponse;
+            replacement.node = @intCast(node);
+        }
         replacement.minute_start = try unsigned(value, "minute_start");
         replacement.truncated = try unsigned(value, "truncated_records");
         replacement.rejected = try unsigned(value, "rejected_records");
@@ -84,11 +90,14 @@ fn unsigned(value: std.json.Value, key: []const u8) !u64 {
 pub fn render(model: *const Model, w: *Writer, now: u64, paused: bool) Writer.Error!void {
     try html.render(w, "<section class=\"sb-panel mt-6\" aria-labelledby=\"ranking-heading\">" ++
         "<h2 id=\"ranking-heading\">Sampled request paths</h2>" ++
-        "<p class=\"sb-note\">This console node · partial UTC minute · " ++
+        "<p class=\"sb-note\">Selected node · partial UTC minute · " ++
         "updates every 10 seconds. " ++
         "Counts show samples at 1/64 probability. " ++
         "128-byte path prefixes. " ++
         "Sample counts lie between the bounds.</p>", .{});
+    if (model.loaded) try html.render(w, "<p class=\"sb-note\">Node {{ node }}</p>", .{
+        .node = model.node,
+    });
     if (!model.loaded) {
         try html.render(w, "<p role=\"status\">", .{});
         try w.writeAll(if (model.generation != 0 and !model.busy)

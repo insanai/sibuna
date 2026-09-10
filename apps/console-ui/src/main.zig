@@ -499,7 +499,9 @@ fn statsResponse(status: i64, body: std.json.Value, alloc: std.mem.Allocator) !v
 
 fn refreshRankings() !void {
     const id = @import("rankings_controller.zig").request(&state) orelse return;
-    try get(id.slice(), "/console/api/rankings");
+    try post(id.slice(), "/console/api/rankings/query", p.rankings.Query{
+        .node = @import("dashboard_scope.zig").selectedNode(&state),
+    });
 }
 
 fn refreshTimeline(force: bool) !void {

@@ -147,8 +147,10 @@ selects one node or combines the configured nodes. *Node coverage and locations*
 missing, stale and clock-skewed sources, observation times and configured destinations.
 Country rankings show the uncertainty from omitted source rows. Arrows retain their receiving
 node, and missing node locations are not invented. The combined rate stays unobserved when
-any contributing source lacks a consecutive interval. Retained seconds and live path rankings
-remain labelled as local; minute history keeps its own node selection and per-node rows.
+any contributing source lacks a consecutive interval. Select one node to inspect its retained
+seconds and current-minute path rankings. Remote queries use the authenticated peer connection;
+missing peers stay unavailable and history cursors cannot cross a node restart. Minute history
+keeps its own node selection and per-node rows.
 Local commands remain per node. `zig build console-impact` runs the data-plane isolation matrix (`-- --quick` for
 a smoke run) and writes `benchmarks/results/console-impact-latest.json`.
 

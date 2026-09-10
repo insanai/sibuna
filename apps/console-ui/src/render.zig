@@ -71,12 +71,7 @@ fn page(state: *const State, w: *Writer) Writer.Error!void {
     try html.render(w, "<h2 class=\"mt-6\">Coverage</h2><table class=\"table\"><tbody>", .{});
     try coverage(state, w);
     try html.render(w, "</tbody></table></article></section>", .{});
-    try @import("rankings_panel.zig").render(
-        &state.rankings,
-        w,
-        state.browser_time,
-        state.paused or state.stale,
-    );
+    try @import("rankings_controller.zig").render(state, w);
     try html.render(w, "<footer class=\"sb-footer sb-note\">" ++
         "<span>Sibuna Console · selected live view</span>" ++
         "<span>Totals since the contributing node boots</span>" ++
