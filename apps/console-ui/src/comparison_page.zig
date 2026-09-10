@@ -29,7 +29,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
 fn controls(state: *const State, w: *Writer) Writer.Error!void {
     const model = &state.comparison;
     try html.render(w, "<form class=\"sb-filters\" id=\"compare-start\">" ++
-        "<fieldset class=\"sb-filter-grid\"" ++
+        "<fieldset class=\"sb-filter-grid sb-filter-three\"" ++
         "{{ disabled }}><label class=\"sb-filter-field\"><span>Compare with</span>" ++
         "<select class=\"select\" name=\"mode\">", .{
         .disabled = if (state.paused or model.busy[0] or model.busy[1]) " disabled" else "",
@@ -98,7 +98,7 @@ fn results(state: *const State, w: *Writer) Writer.Error!void {
         try @import("events_page.zig").timestamp(w, window.from * 60);
         try w.writeAll(" – ");
         try @import("events_page.zig").timestamp(w, window.until * 60);
-        try html.render(w, " UTC</p><p>{{ status }} · {{ rows }} records; " ++
+        try html.render(w, "</p><p>{{ status }} · {{ rows }} records; " ++
             "{{ complete }} complete intervals; {{ ms }} observed ms.</p></article>", .{
             .status = status(state, i),
             .rows = window.rows,
