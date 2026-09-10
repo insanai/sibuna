@@ -29,8 +29,10 @@ def check(h, port, data_port, cookie, csrf):
     assert status == 200
     decision = json.loads(body)
     assert decision["action"] == "deny" and decision["rule"] == "amazonbot"
-    assert h.request(data_port, "GET", source["path"], extra_headers={
-        "User-Agent": source["user_agent"], "X-Forwarded-For": source["ip"]})[0] == 403
+    # A denial carries no rule name to the client; X-Sibuna-Rule travels upstream only.
+    status, live_headers, _ = h.request(data_port, "GET", source["path"], extra_headers={
+        "User-Agent": source["user_agent"], "X-Forwarded-For": source["ip"]})
+    assert status == 403 and "X-Sibuna-Rule" not in live_headers, live_headers
     source.update(user_agent="Mozilla", query="q=<script>alert(1)</script>", ip="8.8.9.2")
     status, _, body = h.request(port, "POST", test, source, cookie, csrf)
     assert status == 200 and json.loads(body)["rule"] == "waf:xss"
