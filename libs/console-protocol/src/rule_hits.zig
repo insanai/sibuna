@@ -3,7 +3,6 @@ const std = @import("std");
 const p = @import("root.zig");
 pub const max_rules = 128;
 pub const batch_rows = 8;
-pub const query_rows = 96;
 pub const Key = p.Bytes(160);
 pub const Name = p.Bytes(128);
 pub const Identity = struct { key: Key = .{}, name: Name = .{} };

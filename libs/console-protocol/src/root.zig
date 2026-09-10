@@ -9,6 +9,7 @@ pub const dashboard = @import("dashboard.zig");
 pub const space_saving = @import("space_saving.zig");
 pub const rankings_archive = @import("rankings_archive.zig");
 pub const ranking_history = @import("ranking_history.zig");
+pub const rule_hit_history = @import("rule_hit_history.zig");
 pub const rule_hits = @import("rule_hits.zig");
 pub const rankings = @import("rankings.zig");
 pub const timeline = @import("timeline.zig");
@@ -126,6 +127,7 @@ pub const StorageRequest = union(enum) {
     minutes_summary: minutes.Query,
     minutes_prune: u64,
     rule_hits_start,
+    rule_hit_history: rule_hit_history.Query,
     rankings_query: ranking_history.Query,
     rankings_begin: ranking_storage.Begin,
     rankings_chunk: ranking_storage.Chunk,
@@ -216,6 +218,7 @@ pub const StorageResult = union(enum) {
     retention_lease: retention.Lease,
     minute_page: minutes.Page,
     minute_summary: minute_summary.Part,
+    rule_hit_history: rule_hit_history.Part,
     ranking_history: ranking_history.Page,
     ranking_inventory: rankings.Inventory,
     policy_document: policies.Document,
@@ -321,6 +324,7 @@ pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
         .retention_prune => |input| input.lease.validate() catch return error.InvalidLimit,
         .minutes_query => |query| try minutes.validate(query),
         .minutes_summary => |query| try minute_summary.validate(query),
+        .rule_hit_history => |query| try rule_hit_history.validate(query),
         .rankings_query => |query| try ranking_history.validate(query),
         .policy_read => |input| try policies.validateRead(input),
         .policies_query => |query| try policies.validate(query),
@@ -530,4 +534,8 @@ test "owned byte updates preserve oversize state, support overlap and erase trun
     try buffer.set("");
     try t.expectEqual(@as(usize, 0), buffer.len);
     try t.expect(std.mem.allEqual(u8, &buffer.data, 0));
+}
+
+test {
+    _ = @import("rule_hit_history_test.zig");
 }

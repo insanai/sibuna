@@ -398,6 +398,7 @@ pub const App = struct {
             .challenges,
             .rankings,
             .ranking_history,
+            .rule_hit_history,
             .timeline,
             .minutes,
             .minute_summary,

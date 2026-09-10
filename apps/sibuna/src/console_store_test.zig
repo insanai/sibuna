@@ -1174,4 +1174,5 @@ fn readFixture(path: []const u8) !*Fixture {
 
 test {
     _ = @import("console_rule_hits_test.zig");
+    _ = @import("console_rule_hit_history_test.zig");
 }

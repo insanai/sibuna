@@ -33,6 +33,7 @@ pub const Handler = enum {
     minute_summary,
     rankings,
     ranking_history,
+    rule_hit_history,
     challenges,
     events,
     events_similar,
@@ -204,6 +205,13 @@ const table = [_]Route{
         .handler = .inspection_edit,
         .mutation = true,
         .token_scope = .policy_write,
+    },
+    .{
+        .path = "/console/api/policies/hits",
+        .method = .POST,
+        .access = .full,
+        .handler = .rule_hit_history,
+        .token_scope = .policy_read,
     },
     .{
         .path = "/console/api/rankings/history",

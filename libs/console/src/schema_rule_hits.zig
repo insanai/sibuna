@@ -25,25 +25,34 @@ pub const sql =
     "CREATE INDEX console_rule_rollup_history " ++
     "ON console_rule_hit_rollups(rule_key,node,grain,bucket,boot,generation);" ++
     "CREATE INDEX console_rule_rollup_retention ON console_rule_hit_rollups(bucket,grain);" ++
-    rollup("hour", "60") ++ rollup("day", "1440") ++
+    rollup("hour", "60", false) ++ rollup("day", "1440", false) ++
     "DROP TABLE console_schema;" ++
     "CREATE TABLE console_schema(version INTEGER PRIMARY KEY CHECK(version=31));" ++
     "INSERT INTO console_schema VALUES(31);";
 
-fn rollup(comptime name: []const u8, comptime grain: []const u8) []const u8 {
+pub fn rollup(
+    comptime name: []const u8,
+    comptime grain: []const u8,
+    comptime bounded: bool,
+) []const u8 {
     return "CREATE TRIGGER console_rule_hit_" ++ name ++
         " AFTER INSERT ON console_rule_hits BEGIN " ++
         "INSERT INTO console_rule_hit_rollups VALUES(" ++ grain ++
         ",NEW.node,NEW.boot,NEW.generation,NEW.rule_key,NEW.minute/" ++ grain ++ "*" ++ grain ++
         ",NEW.revision,NEW.name,NEW.hits,NEW.observed_ms,1,NEW.complete,NEW.gap," ++
-        "NEW.unconfirmed) ON CONFLICT(grain,node,boot,generation,rule_key,bucket) " ++
+        "NEW.unconfirmed" ++ (if (bounded) ",NEW.minute" else "") ++
+        ") ON CONFLICT(grain,node,boot,generation,rule_key,bucket) " ++
         "DO UPDATE SET hits=CASE WHEN hits IS NULL OR excluded.hits IS NULL OR " ++
         "hits>9223372036854775807-excluded.hits THEN NULL ELSE hits+excluded.hits END," ++
         "observed_ms=MIN(9223372036854775807-excluded.observed_ms,observed_ms)+" ++
         "excluded.observed_ms,intervals=MIN(intervals,9223372036854775806)+1," ++
         "complete=MIN(complete,9223372036854775806)+excluded.complete," ++
         "gaps=MIN(gaps,9223372036854775806)+excluded.gaps," ++
-        "unconfirmed=MAX(unconfirmed,excluded.unconfirmed); END;";
+        "unconfirmed=MAX(unconfirmed,excluded.unconfirmed)" ++ (if (bounded)
+        ",through_minute=MAX(CASE WHEN through_minute=0 THEN bucket+grain-1 " ++
+            "ELSE through_minute END,excluded.through_minute)"
+    else
+        "") ++ "; END;";
 }
 
 /// A replay changes no data. A conflicting identity fails the entire bounded insert, including

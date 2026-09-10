@@ -54,10 +54,19 @@ pub fn query(owner: *Persistent, input: p.policies.Query) !p.StorageResult {
     try writer.writeAll(",\"rows\":[");
     var index: usize = input.offset;
     while (index < engine.rule_count and index < @as(usize, input.offset) + 8) : (index += 1) {
-        var scratch: [2048]u8 = undefined;
+        var scratch: [p.max_message]u8 = undefined;
         var row: std.Io.Writer = .fixed(&scratch);
-        try summary(&row, &engine.rules[index], index);
-        if (writer.buffered().len + row.buffered().len + 64 > output.data.len) break;
+        const identity = &slot.hits.generation.rules[index];
+        try summary(&row, .{
+            .rule = &engine.rules[index],
+            .index = index,
+            .key = identity.key.slice(),
+            .today = try @import("console_rule_hit_today.zig").read(owner, identity.key),
+        });
+        if (writer.buffered().len + row.buffered().len + 64 > output.data.len) {
+            if (index == input.offset) return error.ResultTooLarge;
+            break;
+        }
         if (index != input.offset) try writer.writeByte(',');
         try writer.writeAll(row.buffered());
     }
@@ -72,16 +81,27 @@ pub fn query(owner: *Persistent, input: p.policies.Query) !p.StorageResult {
     return .{ .page = output };
 }
 
-fn summary(w: *std.Io.Writer, rule: *const policy.PolicyRule, index: usize) !void {
+const Summary = struct {
+    rule: *const policy.PolicyRule,
+    index: usize,
+    key: []const u8,
+    today: p.rule_hit_history.Today,
+};
+
+fn summary(w: *std.Io.Writer, view: Summary) !void {
+    const rule = view.rule;
     const path = rule.path_pattern orelse "";
     const ua = rule.ua_pattern orelse "";
     try std.json.Stringify.value(.{
-        .index = index,
+        .index = view.index,
+        .history_key = view.key,
+        .today = view.today,
         .name = display(rule.name),
         .action = @tagName(rule.action),
         .path = display(path),
         .user_agent = display(ua),
-        .truncated = path.len > 128 or ua.len > 128 or !std.unicode.utf8ValidateSlice(path) or
+        .truncated = path.len > 128 or ua.len > 128 or rule.name.len > 128 or
+            !std.unicode.utf8ValidateSlice(path) or
             !std.unicode.utf8ValidateSlice(ua) or !std.unicode.utf8ValidateSlice(rule.name),
         .header_count = rule.header_count,
         .cidr_count = rule.cidr_count,
