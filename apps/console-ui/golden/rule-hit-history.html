@@ -47,30 +47,49 @@
     </div>
   </nav>
   <div class="sb-content">
-<main><header class="sb-page-header"><h1>Rule hit history</h1><button class="btn btn-sm" data-action="rule-hits-close">Back to policies</button></header><section class="sb-panel" id="rule-hit-history" tabindex="-1"><h2>Before and after</h2><p>Rule identity: <code>m:operator-rule</code></p><form id="rule-hits-start" class="sb-filters">
-  <fieldset class="sb-filter-grid sb-filter-three">
-    <label class="sb-filter-field"><span>Comparison</span>
-      <select class="select" name="mode">
-        <option value="previous" selected>Adjacent periods</option>
-        <option value="edit" disabled>Around selected edit</option>
-      </select>
-    </label>
-    <label class="sb-filter-field"><span>Maximum duration (minutes)</span>
-      <input class="input" name="minutes" type="number" min="1" max="129600" required value="5">
-    </label>
-    <label class="sb-filter-field"><span>Latest end (minutes ago)</span>
-      <input class="input" name="offset" type="number" min="0" max="129599" required value="0">
-    </label>
-    <label class="sb-filter-field"><span>Recorded node ID</span>
-      <input class="input" name="node" type="number" min="1" max="4294967295" required value="1">
-    </label>
-    <label class="sb-filter-field"><span>Before applied revision (optional)</span>
-      <input class="input" name="before_revision" inputmode="numeric" pattern="[0-9]*" maxlength="19" value="">
-    </label>
-    <label class="sb-filter-field"><span>After applied revision (optional)</span>
-      <input class="input" name="after_revision" inputmode="numeric" pattern="[0-9]*" maxlength="19" value="">
-    </label>
-    <div class="sb-filter-actions"><button class="btn btn-primary">Compare recorded hits</button></div>
-  </fieldset>
+<main class="sb-main min-h-screen">
+    <header class="sb-header">
+        <div>
+            <p class="sb-subtitle">POLICY / RULE OBSERVATIONS</p>
+            <h1 id="page-heading" tabindex="-1">Rule hit history</h1>
+            <p class="sb-subtitle">Compare recorded matches across periods and revisions.</p>
+        </div>
+        <button class="btn" data-action="rule-hits-close">Back to policies</button>
+    </header>
+    <section class="sb-panel" id="rule-hit-history" tabindex="-1">
+        <h2>Before and after</h2>
+        <p>Rule identity: <code>m:operator-rule</code></p>
+<form id="rule-hits-start" class="sb-filters">
+    <fieldset class="sb-filter-grid sb-filter-three">
+        <label class="sb-filter-field"><span>Comparison</span>
+            <select class="select" name="mode">
+                <option value="previous" selected>Adjacent periods</option>
+                <option value="edit" disabled>Around selected edit</option>
+            </select>
+        </label>
+        <label class="sb-filter-field"><span>Maximum duration (minutes)</span>
+            <input class="input" name="minutes" type="number" min="1" max="129600"
+                required value="5">
+        </label>
+        <label class="sb-filter-field"><span>Latest end (minutes ago)</span>
+            <input class="input" name="offset" type="number" min="0" max="129599"
+                required value="0">
+        </label>
+        <label class="sb-filter-field"><span>Recorded node ID</span>
+            <input class="input" name="node" type="number" min="1" max="4294967295"
+                required value="1">
+        </label>
+        <label class="sb-filter-field"><span>Before applied revision (optional)</span>
+            <input class="input" name="before_revision" inputmode="numeric" pattern="[0-9]*"
+                maxlength="19" value="">
+        </label>
+        <label class="sb-filter-field"><span>After applied revision (optional)</span>
+            <input class="input" name="after_revision" inputmode="numeric" pattern="[0-9]*"
+                maxlength="19" value="">
+        </label>
+        <div class="sb-filter-actions sb-comparison-actions">
+            <button class="btn btn-primary">Compare recorded hits</button>
+        </div>
+    </fieldset>
 </form>
 <p class="sb-note">Matches include WEIGH rules and the first matching terminal rule. Early inspection and reputation decisions do not evaluate those rules. Private tests do not count. Around an edit, the edit minute is excluded and both periods use the available closed minutes, up to the selected duration. Empty revision fields include all applied revisions. End 0 selects the last closed minute.</p><div class="sb-panels"><article><h3>Before · Node 1</h3><p>1970-01-02 23:50:00 UTC – 1970-01-02 23:55:00 UTC</p><p class="text-2xl tabular-nums">500 recorded matches</p><svg viewBox="0 0 240 48" width="240" height="48" class="max-w-full text-primary" role="img" aria-label="Recorded matches over this period; gaps have no observations"><path fill="none" stroke="currentColor" stroke-width="2" d="M4.00 4.00 L62.00 4.00 L120.00 4.00 L178.00 4.00 L236.00 4.00 "/><circle cx="4.00" cy="4.00" r="2" fill="currentColor"/><circle cx="62.00" cy="4.00" r="2" fill="currentColor"/><circle cx="120.00" cy="4.00" r="2" fill="currentColor"/><circle cx="178.00" cy="4.00" r="2" fill="currentColor"/><circle cx="236.00" cy="4.00" r="2" fill="currentColor"/></svg><p class="sb-note">Complete coverage · 5 complete intervals among 5 recorded. Retention: 90 days.</p><p>Applied revisions: 1–1</p><details><summary>Recorded values</summary><div class="overflow-x-auto"><table class="table table-sm"><caption>UTC interval cohorts, oldest first</caption><thead><tr><th scope="col">Period start</th><th scope="col">Matches</th><th scope="col">Complete / recorded</th></tr></thead><tbody><tr><th scope="row">1970-01-02 23:50:00 UTC</th><td class="tabular-nums">100</td><td>1 / 1</td></tr><tr><th scope="row">1970-01-02 23:51:00 UTC</th><td class="tabular-nums">100</td><td>1 / 1</td></tr><tr><th scope="row">1970-01-02 23:52:00 UTC</th><td class="tabular-nums">100</td><td>1 / 1</td></tr><tr><th scope="row">1970-01-02 23:53:00 UTC</th><td class="tabular-nums">100</td><td>1 / 1</td></tr><tr><th scope="row">1970-01-02 23:54:00 UTC</th><td class="tabular-nums">100</td><td>1 / 1</td></tr></tbody></table></div></details></article><article><h3>After · Node 1</h3><p>1970-01-02 23:55:00 UTC – 1970-01-03 00:00:00 UTC</p><p class="text-2xl tabular-nums">625 recorded matches</p><svg viewBox="0 0 240 48" width="240" height="48" class="max-w-full text-primary" role="img" aria-label="Recorded matches over this period; gaps have no observations"><path fill="none" stroke="currentColor" stroke-width="2" d="M4.00 4.00 L62.00 4.00 L120.00 4.00 L178.00 4.00 L236.00 4.00 "/><circle cx="4.00" cy="4.00" r="2" fill="currentColor"/><circle cx="62.00" cy="4.00" r="2" fill="currentColor"/><circle cx="120.00" cy="4.00" r="2" fill="currentColor"/><circle cx="178.00" cy="4.00" r="2" fill="currentColor"/><circle cx="236.00" cy="4.00" r="2" fill="currentColor"/></svg><p class="sb-note">Complete coverage · 5 complete intervals among 5 recorded. Retention: 90 days.</p><p>Applied revisions: 2–2</p><details><summary>Recorded values</summary><div class="overflow-x-auto"><table class="table table-sm"><caption>UTC interval cohorts, oldest first</caption><thead><tr><th scope="col">Period start</th><th scope="col">Matches</th><th scope="col">Complete / recorded</th></tr></thead><tbody><tr><th scope="row">1970-01-02 23:55:00 UTC</th><td class="tabular-nums">125</td><td>1 / 1</td></tr><tr><th scope="row">1970-01-02 23:56:00 UTC</th><td class="tabular-nums">125</td><td>1 / 1</td></tr><tr><th scope="row">1970-01-02 23:57:00 UTC</th><td class="tabular-nums">125</td><td>1 / 1</td></tr><tr><th scope="row">1970-01-02 23:58:00 UTC</th><td class="tabular-nums">125</td><td>1 / 1</td></tr><tr><th scope="row">1970-01-02 23:59:00 UTC</th><td class="tabular-nums">125</td><td>1 / 1</td></tr></tbody></table></div></details></article></div><p>Recorded matches: +25.00% from the before period.</p><button class="btn" data-action="rule-hits-more" disabled>Continue history scan</button><p class="sb-note">Each action reads at most sixteen bounded pages. Continuing preserves the original rule, node, revisions and UTC periods.</p></section></main></div></div>
