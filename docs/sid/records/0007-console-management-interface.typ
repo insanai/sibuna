@@ -4856,6 +4856,19 @@ These changes address review findings within the original interface and ownershi
 They do not close the outstanding retained-peer-view, kiosk Security or quantitative impact
 gates, and the record remains Proposed.
 
+
+== Filter and ownership review benchmark record (2026-09-10)
+
+The required primitive baseline was regenerated from clean commit `a327157`, retaining
+Zig 0.16.0 and Zaxonlite 0.6.2. The complete seven-batch record is
+`benchmarks/results/latest-20260910T053926Z.json`; `latest.json` supplies the book's figures.
+The source digest is `22864b40df2d5de2b14b21e604d3dc01aff3cca5fafca7d8a3c07f706a69014d`.
+
+The hashcash median was 65.63 ns, with a wide 57.97–120.34 ns batch range. Other primitive
+medians ranged from 0.8 to 4.9 percent below the earlier record. These single-run differences
+include host variability and establish no causal improvement or regression. Console-impact
+acceptance retains its separate workloads, confidence intervals and original thresholds.
+
 = References
 
 - SID 0002 (foundation architecture), SID 0003 (declarative policy), SID 0004 (semantic
