@@ -9,10 +9,7 @@ const counts = @import("count_display.zig");
 pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     const model = &state.rule_history;
     const input = &model.inputs;
-    try html.render(w, "<main><header class=\"sb-page-header\"><h1>Rule hit history</h1>" ++
-        "<button class=\"btn btn-sm\" data-action=\"rule-hits-close\">Back to policies</button>" ++
-        "</header><section class=\"sb-panel\" id=\"rule-hit-history\" tabindex=\"-1\">" ++
-        "<h2>Before and after</h2><p>Rule identity: <code>{{ key }}</code></p>", .{
+    try html.render(w, @embedFile("snippets/rule-hit-header.html"), .{
         .key = input.key.slice(),
     });
     try html.render(w, @embedFile("snippets/rule-hit-form.html"), .{

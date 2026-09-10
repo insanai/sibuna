@@ -1,26 +1,33 @@
 <form id="rule-hits-start" class="sb-filters">
-  <fieldset class="sb-filter-grid sb-filter-three"{{ disabled }}>
-    <label class="sb-filter-field"><span>Comparison</span>
-      <select class="select" name="mode">
-        <option value="previous"{{ previous }}>Adjacent periods</option>
-        <option value="edit"{{ edit }}{{ edit_disabled }}>Around selected edit</option>
-      </select>
-    </label>
-    <label class="sb-filter-field"><span>Maximum duration (minutes)</span>
-      <input class="input" name="minutes" type="number" min="1" max="129600" required value="{{ minutes }}">
-    </label>
-    <label class="sb-filter-field"><span>Latest end (minutes ago)</span>
-      <input class="input" name="offset" type="number" min="0" max="129599" required value="{{ offset }}">
-    </label>
-    <label class="sb-filter-field"><span>Recorded node ID</span>
-      <input class="input" name="node" type="number" min="1" max="4294967295" required value="{{ node }}">
-    </label>
-    <label class="sb-filter-field"><span>Before applied revision (optional)</span>
-      <input class="input" name="before_revision" inputmode="numeric" pattern="[0-9]*" maxlength="19" value="{{ before_revision }}">
-    </label>
-    <label class="sb-filter-field"><span>After applied revision (optional)</span>
-      <input class="input" name="after_revision" inputmode="numeric" pattern="[0-9]*" maxlength="19" value="{{ after_revision }}">
-    </label>
-    <div class="sb-filter-actions"><button class="btn btn-primary">Compare recorded hits</button></div>
-  </fieldset>
+    <fieldset class="sb-filter-grid sb-filter-three"{{ disabled }}>
+        <label class="sb-filter-field"><span>Comparison</span>
+            <select class="select" name="mode">
+                <option value="previous"{{ previous }}>Adjacent periods</option>
+                <option value="edit"{{ edit }}{{ edit_disabled }}>Around selected edit</option>
+            </select>
+        </label>
+        <label class="sb-filter-field"><span>Maximum duration (minutes)</span>
+            <input class="input" name="minutes" type="number" min="1" max="129600"
+                required value="{{ minutes }}">
+        </label>
+        <label class="sb-filter-field"><span>Latest end (minutes ago)</span>
+            <input class="input" name="offset" type="number" min="0" max="129599"
+                required value="{{ offset }}">
+        </label>
+        <label class="sb-filter-field"><span>Recorded node ID</span>
+            <input class="input" name="node" type="number" min="1" max="4294967295"
+                required value="{{ node }}">
+        </label>
+        <label class="sb-filter-field"><span>Before applied revision (optional)</span>
+            <input class="input" name="before_revision" inputmode="numeric" pattern="[0-9]*"
+                maxlength="19" value="{{ before_revision }}">
+        </label>
+        <label class="sb-filter-field"><span>After applied revision (optional)</span>
+            <input class="input" name="after_revision" inputmode="numeric" pattern="[0-9]*"
+                maxlength="19" value="{{ after_revision }}">
+        </label>
+        <div class="sb-filter-actions sb-comparison-actions">
+            <button class="btn btn-primary">Compare recorded hits</button>
+        </div>
+    </fieldset>
 </form>

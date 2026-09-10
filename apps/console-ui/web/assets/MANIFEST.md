@@ -75,7 +75,7 @@ ce19163c483f61558199b694037c0dc67428fcd8115a561aeae7554ad0f401c8  apps/console-u
 ab854a83d0cc3b4e448f60b7ec9e86ac8d0c8bc8fe51b4ff0ec7eb4353df71ce  apps/console-ui/src/request_headers.zig
 df6263576dec9a4ec09022bbb334555b1b019f0b394bc2e726a42c365b900212  apps/console-ui/src/routing.zig
 95eae3837aae53683e947cc2cbef98a42d6b17c137e0bf71b038491e20d87663  apps/console-ui/src/rule_hit_controller.zig
-1fe0b03673df6202ec766fa03ca74185a87b2325dba69f22cee1327ec6760655  apps/console-ui/src/rule_hit_page.zig
+a95f714b945d6ab831300771c1b5f4fcc3628e70f2b90a53b2a93e5684e0d4ae  apps/console-ui/src/rule_hit_page.zig
 9235b2c65888db117d1ea75d204f5ebdf3101230ad32c7bdae26f65a88d78332  apps/console-ui/src/rule_hit_state.zig
 8c1a602ddb1cd9fb543315cdd616ae39011cac6672cfe0052d9a52b3a220a5e2  apps/console-ui/src/rule_hit_today.zig
 ad00defc092ef8752fb3d1314c00aeb1ea079239daf8c3eeab7155d830271090  apps/console-ui/src/security.zig
@@ -146,7 +146,8 @@ aff6cf11830a82a1d836d4a2ce1ea0cddcb76f75d9d8b5bd1c47f3c0bf7b41a5  apps/console-u
 5bcd33e6783bf1d9a14506d522d844aca3099e170b50ecea6584f1f71cb28b47  apps/console-ui/src/snippets/ranking-row.html
 96b21be8b739a7e8c0772b2a7f42383c0de2dc7c83645f2d9afa4442d87bf18b  apps/console-ui/src/snippets/reputation-form.html
 aad362c982b4451d8c0c224f99418172adf34445395bd65304ca591d25185704  apps/console-ui/src/snippets/reputation-row.html
-0ba5c2aeebccfb1579c889a84dcd78d676b0e11972401e8f9d0c0551f9e8d5a8  apps/console-ui/src/snippets/rule-hit-form.html
+07f7ce5f63df89d1e94fac7ac5352b0bd5fb0f900bb114ce982d76d6da5729aa  apps/console-ui/src/snippets/rule-hit-form.html
+d95568be836b11d315dba29e18202eb5a7ef323e4d43ab0ab5ba37670cd1a390  apps/console-ui/src/snippets/rule-hit-header.html
 c0c10267f84495c585fb17a594ee70e5831eedcf5fca9f0a20f927531b50e01b  apps/console-ui/src/snippets/setting-row.html
 7b6fdec370b1b5439729cb3126c614a9dc01f206bd3a57ebeee5799a7ba578a5  apps/console-ui/src/snippets/settings-header.html
 3077dd934d0c2118e93c44ede002a2bb564b2680b6998721c57acb9edfb0bf92  apps/console-ui/src/snippets/shell-content.html
