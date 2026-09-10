@@ -14,6 +14,7 @@ pub const ChallengeStore = challenge_store.ChallengeStore;
 pub const ChallengeTag = challenge_store.Tag;
 pub const StoreError = challenge_store.StoreError;
 
+pub const rule_hits = @import("rule_hits.zig");
 pub const ring = @import("ring.zig");
 pub const BoundedQueue = ring.BoundedQueue;
 
@@ -30,6 +31,7 @@ test {
     _ = @import("rate_limiter.zig");
     _ = @import("ban_list.zig");
     _ = @import("ring.zig");
+    _ = rule_hits;
 }
 
 pub const telemetry = @import("telemetry.zig");

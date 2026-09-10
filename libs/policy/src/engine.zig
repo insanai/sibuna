@@ -23,6 +23,9 @@ pub const Header = rule.Header;
 pub const PolicyRule = rule.PolicyRule;
 pub const MAX_RULES: usize = 128;
 pub const MAX_RULE_NAME: usize = 128;
+/// Declarative rules that matched during this evaluation, including nonterminal WEIGH rules.
+/// Indices belong only to the immutable engine evaluated by the caller.
+pub const RuleMatches = std.StaticBitSet(MAX_RULES);
 
 /// Everything the engine looks at for one request; all slices borrow the
 /// connection buffer.
@@ -251,6 +254,26 @@ pub const Engine = struct {
     /// else terminates); accumulated score; static bypass paths; a trie
     /// challenge verdict; bot signatures; the default action.
     pub fn evaluateRequest(self: *const Engine, req: RequestView) Decision {
+        return self.evaluateObserved(req, false, {});
+    }
+
+    pub fn evaluateRequestWithMatches(
+        self: *const Engine,
+        req: RequestView,
+        matches: *RuleMatches,
+    ) Decision {
+        matches.* = RuleMatches.initEmpty();
+        return self.evaluateObserved(req, true, matches);
+    }
+
+    // Specialization removes tracing entirely from ordinary evaluations. The policy library
+    // exposes owned bits, never request callbacks or knowledge of console/storage consumers.
+    fn evaluateObserved(
+        self: *const Engine,
+        req: RequestView,
+        comptime observed: bool,
+        matches: if (observed) *RuleMatches else void,
+    ) Decision {
         var findings: inspection.Findings = .{};
         if (self.waf_enabled) {
             findings = self.inspect(req);
@@ -261,7 +284,7 @@ pub const Engine = struct {
                 .audited = findings.audited,
             };
         }
-        var decision = self.evaluateAdmission(req);
+        var decision = self.evaluateAdmission(req, observed, matches);
         decision.audited = findings.audited;
         return decision;
     }
@@ -274,7 +297,12 @@ pub const Engine = struct {
         return inspection.inspect(&self.waf_signatures, self.inspection_modes, req);
     }
 
-    fn evaluateAdmission(self: *const Engine, req: RequestView) Decision {
+    fn evaluateAdmission(
+        self: *const Engine,
+        req: RequestView,
+        comptime observed: bool,
+        matches: if (observed) *RuleMatches else void,
+    ) Decision {
         const ip_verdict = self.ip_trie.matchIpStr(req.client_ip);
         if (ip_verdict) |v| {
             if (v == .deny or v == .allow) return self.ipDecision(v, 0);
@@ -282,8 +310,9 @@ pub const Engine = struct {
 
         var score: i32 = 0;
         var weigh_rule: []const u8 = "weigh";
-        for (self.rules[0..self.rule_count]) |*r| {
+        for (self.rules[0..self.rule_count], 0..) |*r, index| {
             if (!r.matches(req.path, req.client_ip, req.user_agent, req.headers)) continue;
+            if (observed) matches.set(index);
             if (r.action == .weigh) {
                 score +|= r.weight;
                 weigh_rule = r.name;
@@ -472,4 +501,40 @@ test "engine blocks SafeLine WAF attack vectors and can disable the WAF" {
     engine.waf_enabled = false;
     const gate_only = engine.evaluate("/static/../../etc/passwd", "1.2.3.4", "Mozilla");
     try std.testing.expectEqual(Action.challenge, gate_only.action);
+}
+
+test "observed evaluation records weigh and terminal matches without changing decisions" {
+    const t = std.testing;
+    const engine = try testEngine();
+    defer t.allocator.destroy(engine);
+    engine.rule_count = 0;
+    try engine.addRule(.{ .name = "score", .action = .weigh, .weight = 7 });
+    try engine.addRule(.{ .name = "allow", .action = .allow, .path_pattern = "/public" });
+    try engine.addRule(.{ .name = "deny", .action = .deny });
+    try engine.addRule(.{ .name = "unreached", .action = .weigh, .weight = 99 });
+    var matches = RuleMatches.initFull();
+    for ([_][]const u8{ "/public", "/private" }, 0..) |path, index| {
+        const request: RequestView = .{ .path = path, .client_ip = "8.8.8.8" };
+        const decision = engine.evaluateRequestWithMatches(request, &matches);
+        try t.expectEqualDeep(engine.evaluateRequest(request), decision);
+        try t.expectEqual(@as(usize, 2), matches.count());
+        try t.expect(matches.isSet(0) and matches.isSet(index + 1));
+    }
+    try engine.ip_trie.insertCidr("8.8.8.8/32", .deny);
+    const early: RequestView = .{ .path = "/public", .client_ip = "8.8.8.8" };
+    try t.expectEqualDeep(
+        engine.evaluateRequest(early),
+        engine.evaluateRequestWithMatches(early, &matches),
+    );
+    try t.expectEqual(@as(usize, 0), matches.count());
+    const attack: RequestView = .{
+        .path = "/public",
+        .client_ip = "1.1.1.1",
+        .query = "q=<script>alert(1)</script>",
+    };
+    try t.expectEqualDeep(
+        engine.evaluateRequest(attack),
+        engine.evaluateRequestWithMatches(attack, &matches),
+    );
+    try t.expectEqual(@as(usize, 0), matches.count());
 }
