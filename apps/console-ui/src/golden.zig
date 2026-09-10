@@ -32,6 +32,8 @@ fn run(io: std.Io, alloc: std.mem.Allocator, update: bool) !void {
         "traffic-period",
         "traffic-period-partial",
         "ranking-history",
+        "rule-hit-history",
+        "rule-hit-history-partial",
     };
     inline for (variants, 0..) |name, i| {
         configure(&state, .dashboard);
@@ -85,6 +87,7 @@ fn variant(state: *State, index: usize) void {
             };
         },
         9, 10 => period(state, index == 10),
+        12, 13 => ruleHistory(state, index == 13),
         3, 4 => {
             state.kiosk = true;
             state.kiosk_expires = 176400;
@@ -122,6 +125,44 @@ fn variant(state: *State, index: usize) void {
             }
         },
         else => {},
+    }
+}
+
+fn ruleHistory(state: *State, partial: bool) void {
+    state.phase = .policies;
+    const model = &state.rule_history;
+    model.open = true;
+    model.started = true;
+    model.inputs.key.set("m:operator-rule") catch unreachable;
+    model.inputs.node = 1;
+    model.inputs.minutes = 5;
+    for (&model.windows, 0..) |*window, side| {
+        const from: u64 = 2870 + side * 5;
+        window.* = .{ .request = .{
+            .key = model.inputs.key,
+            .node = 1,
+            .from_minute = from,
+            .until_minute = from + 4,
+        }, .retention_days = 90, .finished = true };
+        for (0..5) |offset| {
+            const minute = from + 4 - offset;
+            window.add(.{ .hits = if (side == 0) 100 else 125, .span = .{
+                .node = 1,
+                .boot = @splat(1),
+                .sequence = minute,
+                .generation = side + 1,
+                .revision = side + 1,
+                .minute = minute,
+                .utc_start = minute * 60 - 1,
+                .utc_end = minute * 60 + 59,
+                .start_ms = minute * 60000 - 1000,
+                .end_ms = minute * 60000 + 59000,
+                .observed_ms = 60000,
+                .observations = 60,
+                .complete = !partial,
+                .gap = partial,
+            } }) catch unreachable;
+        }
     }
 }
 

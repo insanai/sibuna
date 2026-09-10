@@ -155,7 +155,7 @@ def ranking_history_view(ui):
     assert 'id="ranking-history"' not in ui.html
 
 
-def exercise(ui):
+def exercise(ui, data_port):
     ui.event(init=True)
     ui.topic("stats")
     ui.event(9, {"theme": "system", "density": "compact", "system_dark": True})
@@ -180,6 +180,8 @@ def exercise(ui):
         ui.topic(topic)
         assert "console-navigation" in ui.html, page
         assert ui.connections == 1, (page, ui.connections)
+    import console_rule_hit_ui_test
+    console_rule_hit_ui_test.check(ui, data_port)
     retention_controls(ui)
     assert ui.history[-1] == {"op": "history", "value": "settings", "replace": False}
     ui.event(8, {"route": "nodes"})
@@ -248,7 +250,9 @@ def check(binary):
         temporary = bootstrap.initialize(binary, str(root / "data"), "admin")
         with (root / "daemon.log").open("w+") as log:
             port = h.port()
-            proc = h.start(binary, str(root / "data"), port, log)
+            data_port = h.port()
+            proc = h.start(binary, str(root / "data"), port, log,
+                           extra=("--port", str(data_port)))
             ui = None
             try:
                 credentials = bootstrap.change(h, port, temporary, "wasm live test passphrase")
@@ -258,7 +262,7 @@ def check(binary):
                 wasm = root / "console.wasm"
                 wasm.write_bytes(body)
                 ui = Interface(port, cookie, wasm)
-                exercise(ui)
+                exercise(ui, data_port)
             finally:
                 try:
                     if ui:

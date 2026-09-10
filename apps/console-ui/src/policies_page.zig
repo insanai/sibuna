@@ -25,6 +25,7 @@ const data = @import("policy_data.zig");
 const Row = data.Row;
 
 pub fn render(state: *const @import("state.zig").State, w: *Writer) Writer.Error!void {
+    if (state.rule_history.open) return @import("rule_hit_page.zig").render(state, w);
     if (state.policies.manager.active) return @import("policy_manager.zig").render(state, w);
     try html.render(w, @embedFile("snippets/policies-header.html"), .{});
     try @import("render.zig").message(state, w);
@@ -101,6 +102,7 @@ fn policyRow(w: *Writer, row: Row) Writer.Error!void {
         });
     } else try html.render(w, "<p>Difficulty: inherit</p>", .{});
     try @import("policy_limits.zig").summary(w, row.limits);
+    try @import("rule_hit_today.zig").render(w, row.history_key, row.today);
     if (row.truncated) try html.render(
         w,
         "<p class=\"sb-note\">Display shortened or invalid text " ++

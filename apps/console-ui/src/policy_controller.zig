@@ -15,6 +15,7 @@ pub fn action(ctx: Controller, name: []const u8, fields: std.json.Value) !bool {
         if (state.phase == .policies and (model.busy or model.testing)) return true;
         model.testing = false;
         model.manager.active = false;
+        state.rule_history.clear();
         model.inspection_draft = null;
         state.phase = .policies;
         state.message = .{};

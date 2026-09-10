@@ -4,10 +4,14 @@ const p = @import("console_protocol");
 const State = @import("state.zig").State;
 const Outbox = @import("transport.zig").Outbox;
 const fields = @import("events_state.zig");
+const Context = @import("controller_context.zig").Context;
+const Response = @import("controller_context.zig").Response;
 const history = @import("ranking_history_state.zig");
 var serial: u64 = 0;
 
-pub fn action(state: *State, name: []const u8, input: std.json.Value, out: Outbox) !bool {
+pub fn action(ctx: Context, name: []const u8, input: std.json.Value) !bool {
+    const state = ctx.state;
+    const out = ctx.out;
     if (!state.fullAccess() or state.kiosk or state.phase != .dashboard or
         !std.mem.startsWith(u8, name, "rank-history-")) return false;
     const model = &state.ranking_history;
@@ -95,14 +99,13 @@ fn request(state: *State, out: Outbox) !void {
     model.remaining -= 1;
 }
 
-pub fn response(
-    state: *State,
-    id: []const u8,
-    status: i64,
-    body: std.json.Value,
-    alloc: std.mem.Allocator,
-    out: Outbox,
-) !void {
+pub fn response(ctx: Context, reply: Response) !void {
+    const state = ctx.state;
+    const out = ctx.out;
+    const id = reply.id;
+    const status = reply.status;
+    const body = reply.body;
+    const alloc = reply.allocator;
     const ticket = std.fmt.parseInt(u64, id["rank-history-".len..], 10) catch return;
     const model = &state.ranking_history;
     if (ticket == 0 or ticket != model.ticket or !model.busy or !state.fullAccess()) return;
@@ -119,11 +122,11 @@ pub fn response(
         "RANKHISTORY429: Read allowance reached. Wait one minute, then continue."
     else
         "RANKHISTORY002: History is unavailable. Check storage and access, then continue.");
-    const reply = @import("json_value.zig").decode(history.Reply, body, alloc) catch
+    const archive_reply = @import("json_value.zig").decode(history.Reply, body, alloc) catch
         return invalid(model);
     const work = try alloc.create(history.Workspace);
     defer alloc.destroy(work);
-    model.windows[model.side].accept(reply, work) catch return invalid(model);
+    model.windows[model.side].accept(archive_reply, work) catch return invalid(model);
     try request(state, out);
 }
 
@@ -137,27 +140,28 @@ test "retained ranking actions preserve scope and discard responses after sign-o
     const t = std.testing;
     var state: State = .{};
     var commands: @import("test_transport.zig").Commands = .{};
-    try t.expect(!try action(&state, "rank-history-toggle", .null, commands.out()));
+    const ctx: Context = .{ .state = &state, .out = commands.out() };
+    try t.expect(!try action(ctx, "rank-history-toggle", .null));
     state.phase = .dashboard;
     try state.csrf.set("session");
-    try t.expect(try action(&state, "rank-history-toggle", .null, commands.out()));
+    try t.expect(try action(ctx, "rank-history-toggle", .null));
     state.ranking_history.started = true;
     state.ranking_history.windows[0].query = .{
         .node = 7,
         .from_minute = 1,
         .until_minute = 2,
     };
-    try t.expect(try action(&state, "rank-history-more", .null, commands.out()));
+    try t.expect(try action(ctx, "rank-history-more", .null));
     const ticket = state.ranking_history.ticket;
     try t.expectEqual(@as(u8, 15), state.ranking_history.remaining);
     const saved = state.ranking_history.windows[0].query;
     var id: [48]u8 = undefined;
     const text = try std.fmt.bufPrint(&id, "rank-history-{d}", .{ticket});
-    try response(&state, text, 429, .null, t.allocator, commands.out());
+    try response(ctx, .{ .id = text, .status = 429, .body = .null, .allocator = t.allocator });
     try t.expect(!state.ranking_history.busy);
     try t.expectEqualDeep(saved, state.ranking_history.windows[0].query);
     state.reset();
-    try response(&state, text, 401, .null, t.allocator, commands.out());
+    try response(ctx, .{ .id = text, .status = 401, .body = .null, .allocator = t.allocator });
     try t.expectEqual(.loading, state.phase);
     try t.expect(!state.ranking_history.open);
 }

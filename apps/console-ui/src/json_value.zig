@@ -9,6 +9,14 @@ pub fn decode(comptime T: type, value: std.json.Value, allocator: std.mem.Alloca
     return result;
 }
 
+/// Fixed records decode without allocating. Borrowed strings still expire with the event;
+/// a dynamically sized child fails with OutOfMemory instead of quietly allocating.
+pub fn decodeFixed(comptime T: type, value: std.json.Value) Error!T {
+    var memory: [0]u8 = .{};
+    var fixed = std.heap.FixedBufferAllocator.init(&memory);
+    return decode(T, value, fixed.allocator());
+}
+
 /// Typed caller-owned decoding avoids large error-union payload images. On error the
 /// output can be partial and must be discarded; retained state publishes a complete candidate.
 pub fn into(output: anytype, value: std.json.Value, allocator: std.mem.Allocator) Error!void {

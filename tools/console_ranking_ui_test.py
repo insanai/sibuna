@@ -1,5 +1,5 @@
 """Full SBR1 envelopes exercise the shipped Wasm memory and stack, independently of the DOM."""
-from html.parser import HTMLParser
+from console_ui_forms import FormValues
 import hashlib
 import struct
 import time
@@ -50,28 +50,3 @@ def check(ui):
         ui.event(1, {"action": "rank-history-toggle", "fields": {}})
     finally:
         ui.command = original
-
-
-class FormValues(HTMLParser):
-    def __init__(self, form_id):
-        super().__init__()
-        self.form_id, self.active, self.select, self.values = form_id, False, None, {}
-
-    def handle_starttag(self, tag, attributes):
-        attrs = dict(attributes)
-        if tag == "form":
-            self.active = attrs.get("id") == self.form_id
-        if not self.active:
-            return
-        if tag == "input" and "name" in attrs:
-            self.values[attrs["name"]] = attrs.get("value", "")
-        elif tag == "select":
-            self.select = attrs.get("name")
-        elif tag == "option" and self.select and "selected" in attrs:
-            self.values[self.select] = attrs.get("value", "")
-
-    def handle_endtag(self, tag):
-        if tag == "form":
-            self.active = False
-        elif tag == "select":
-            self.select = None

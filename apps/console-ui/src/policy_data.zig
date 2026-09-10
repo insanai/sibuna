@@ -11,6 +11,8 @@ pub const Page = struct {
     next: ?u8,
 };
 pub const Row = struct {
+    history_key: []const u8 = "",
+    today: ?@import("console_protocol").rule_hit_history.Today = null,
     limits: ?limits.Limits,
     index: u8,
     name: []const u8,
@@ -80,8 +82,20 @@ pub fn page(value: std.json.Value, rows: *[8]Row) Error!Page {
     };
 }
 
+fn optionalValue(comptime T: type, value: std.json.Value, key: []const u8) Error!?T {
+    const item = field(value, key) catch return null;
+    if (item == .null) return null;
+    return @import("json_value.zig").decodeFixed(T, item) catch error.InvalidPolicy;
+}
+
 fn row(value: std.json.Value) Error!Row {
     return .{
+        .history_key = (try optionalValue([]const u8, value, "history_key")) orelse "",
+        .today = try optionalValue(
+            @import("console_protocol").rule_hit_history.Today,
+            value,
+            "today",
+        ),
         .limits = limits.read(value) catch return error.InvalidPolicy,
         .index = try number(u8, value, "index"),
         .name = try text(value, "name"),

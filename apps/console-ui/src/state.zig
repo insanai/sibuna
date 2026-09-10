@@ -106,6 +106,7 @@ pub const State = struct {
     timeline_open: bool = false,
     history_minutes: bool = false,
     traffic_period: @import("traffic_period_state.zig").Model = .{},
+    rule_history: @import("rule_hit_state.zig").Model = .{},
     ranking_history: @import("ranking_history_state.zig").Model = .{},
     comparison: @import("comparison_controller.zig").Model = .{},
     minute_history: @import("minute_panel.zig").Model = .{},
@@ -121,6 +122,7 @@ pub const State = struct {
             switch (@as(Field, @enumFromInt(index))) {
                 .rankings,
                 .ranking_history,
+                .rule_history,
                 .timeline,
                 .minute_history,
                 .events,

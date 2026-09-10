@@ -82,12 +82,25 @@ fn listing(state: *const @import("state.zig").State, w: *Writer) Writer.Error!vo
                 w,
                 @intCast(@max(0, integer(row, "recorded_at"))),
             );
+            try hitHistory(w, model.id.slice(), row);
             try html.render(w, "</article>", .{});
         }
     }
     try button(w, "managed-next", "Next page", model.next.len == 0 or
         state.policies.busy or state.policies.stale);
     try html.render(w, "</section>", .{});
+}
+
+fn hitHistory(w: *Writer, id: []const u8, row: std.json.Value) Writer.Error!void {
+    try html.render(w, "<form data-submit=\"rule-hits-open\" class=\"my-2\">" ++
+        "<input type=\"hidden\" name=\"key\" value=\"m:{{ id }}\">" ++
+        "<input type=\"hidden\" name=\"edit_at\" value=\"{{ time }}\">" ++
+        "<input type=\"hidden\" name=\"revision\" value=\"{{ revision }}\">" ++
+        "<button class=\"btn btn-sm\">Compare hits around this edit</button></form>", .{
+        .id = id,
+        .time = integer(row, "recorded_at"),
+        .revision = text(row, "revision"),
+    });
 }
 
 fn editor(state: *const @import("state.zig").State, w: *Writer) Writer.Error!void {

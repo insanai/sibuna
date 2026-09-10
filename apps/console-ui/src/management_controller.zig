@@ -11,10 +11,14 @@ const pages = @import("pages_controller.zig");
 const reputation = @import("reputation_controller.zig");
 const security = @import("security_overview_controller.zig");
 const ranking_history = @import("ranking_history_controller.zig");
+const controller = @import("controller_context.zig");
+const rule_hits = @import("rule_hit_controller.zig");
 const kiosk = @import("kiosk_grant.zig");
 
 pub fn action(state: *State, name: []const u8, fields: std.json.Value, out: Outbox) !bool {
-    if (try ranking_history.action(state, name, fields, out)) return true;
+    const ctx: controller.Context = .{ .state = state, .out = out };
+    if (try rule_hits.action(ctx, name, fields)) return true;
+    if (try ranking_history.action(ctx, name, fields)) return true;
     if (try @import("traffic_period_controller.zig").action(state, name, fields)) return true;
     if (try @import("comparison_controller.zig").action(state, name, fields, out)) return true;
     if (try security.action(state, name, fields, out))
@@ -37,8 +41,17 @@ pub fn response(
     alloc: std.mem.Allocator,
     out: Outbox,
 ) !bool {
-    if (std.mem.startsWith(u8, id, "rank-history-")) {
-        try ranking_history.response(state, id, status, body, alloc, out);
+    const ctx: controller.Context = .{ .state = state, .out = out };
+    const reply: controller.Response = .{
+        .id = id,
+        .status = status,
+        .body = body,
+        .allocator = alloc,
+    };
+    if (std.mem.startsWith(u8, id, "rule-hits-")) {
+        try rule_hits.response(ctx, reply);
+    } else if (std.mem.startsWith(u8, id, "rank-history-")) {
+        try ranking_history.response(ctx, reply);
     } else if (std.mem.startsWith(u8, id, "traffic-period-")) {
         try @import("traffic_period_controller.zig").response(state, id, status, body, alloc, out);
     } else if (std.mem.startsWith(u8, id, "compare-")) {
