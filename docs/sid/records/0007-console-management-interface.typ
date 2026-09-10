@@ -1654,6 +1654,35 @@ No unmeasured target in this record is a release claim.
 The dated notes describe the state at each implementation step. Earlier pending-work statements
 are historical; the acceptance gates below govern delivery.
 
+== Final completion scope (2026-09-10)
+
+The maintainer confirmed that all defined SID 0007 scope remains required. No release
+baseline amendment or deferral is approved. Earlier reports of complete implementation
+exceeded their evidence; passing a scenario suite alone does not establish every proposed
+workflow or quantitative gate. New presentation preferences must not expand this closure
+pass beyond the defined scope.
+
+The original `42ae5cd` proposal included country enrichment, per-node views on every page
+and the one-percent throughput / ten-percent p99 impact targets. The pre-implementation
+`cbfedf8` revision also explicitly included a separate Security overview and country-filtered
+events. The remaining work is therefore implementation and verification of existing
+commitments. The later Wasm budget and browser-experience guidance do not justify new
+product capabilities or weakening any original gate.
+
+Complete country-enriched event filtering and globe navigation, the separate Security
+summary with its recorded module/source evidence, and node-aware retained views. Panels
+whose source fields are not captured must retain the specification's explicit unavailable
+states; they must not synthesize evidence. Finish the peer-enabled impact harness before
+claiming a clustered impact result. The numerical thresholds remain unchanged, and noisy
+or incomplete measurements remain inconclusive.
+
+The final verification set is the native and live-daemon suites, shipped-Wasm navigation,
+three-node scenarios, console-off and storage-off builds, the documented Chrome workflow
+pass, document generation and full console-impact measurements after other workloads stop.
+Only affected checks are repeated after a verified correction. SID 0001's committed state
+requires the implementation and its defined verification gates; metadata changes follow
+that evidence, rather than the amount of development already completed.
+
 == Current completeness review (2026-09-10)
 
 *SID 0007 is not completely implemented.* The Zaxonlite upgrade and passing scenario
@@ -1686,7 +1715,8 @@ identifies the following concrete gaps; the status remains Proposed.
   [Interface state], [The bridge now patches nodes and preserves unsent form values while
     adjacent observations update. Page fragments now support bookmark and browser-history navigation behind authentication;
     system/persisted theme and density preferences are implemented in the Wasm model.
-    Country selection centers the globe but does not open country-filtered events. The
+    The country table now offers both centering and country-filtered incident investigation,
+    with retained generation metadata and matching live subscription filters. The
     separate Security overview remains absent. Retention forms now configure minute, ranking,
     incident and audit days within their capacity limits, with explicit deletion confirmation.],
   [Acceptance], [The corrected dashboard workload harness has only an inconclusive smoke result.
@@ -4691,6 +4721,69 @@ eight-dashboard console-impact matrix and does not close that acceptance gate. C
 and storage-off builds pass, as do the final status-label native and shipped-Wasm checks.
 
 #pagebreak(weak: true)
+
+== Incident country attribution and investigation (2026-09-10)
+
+Additive schema version 29 retains an incident's country and GeoIP generation in a sidecar
+written by the storage owner, in the existing incident transaction. No country lookup,
+allocation or console callback is added to request processing. The daemon owns the console's
+shared immutable GeoIP registry until all console tasks and storage flushes have finished;
+startup restoration and later activation use the same registry lock. Neither database handles
+nor borrowed generation memory cross application request boundaries.
+
+The mapping describes the generation available when the storage worker prepares its write.
+The owned SQL retry buffer retains that mapping through import changes, failed writes and
+ambiguous replies. Older incidents remain not recorded. An address absent from a loaded
+generation is Unknown, with the digest retained; pruning old import chunks does not erase
+that attribution. Source groups distinguish mixed countries or coverage and multiple
+generations. Incident retention removes the sidecar with the incident.
+
+Raw and grouped queries, exports and live event subscriptions share the country filter:
+an uppercase two-letter code, `unknown`, or `not_recorded`. The globe's *View events*
+control opens a country's retained incidents for the selected node and last hour without
+changing the country-centering control. Kiosk sessions expose neither investigation control
+nor the event subscription. All public reads retain their existing authorization, result
+size and query-work bounds.
+
+Native storage-tick tests cover atomic rollback, an import between failed write and retry,
+a committed write with a lost reply, mixed source groups, feed agreement, migration replay
+and sidecar cleanup. Live tests exercise imported-country HTTP filters and subscription
+epoch changes. The native, console and shipped-Wasm suites pass, as do formatting and
+document generation. The application module is 401,169 bytes with unchanged memory limits.
+
+Chrome loaded the new module against a disposable daemon with the 717,152-range DB-IP
+generation. Real honeypot requests from controlled US and Australian addresses produced
+the corresponding incident rows and inbound globe arrows. Separate geometry observations
+confirmed animation. *View events* opened the US filter; changing it selected Australia,
+and `not_recorded` selected the older rows without rewriting their attribution. Details
+showed the retained digest and redacted query. The country form and policy page had no
+horizontal overflow at the mobile breakpoint, and the reviewed browser sequence logged
+no errors. These checks close this workflow, not the remaining Security, retained-peer-view
+or quantitative impact gates.
+
+== Peer-enabled impact fixture correction (2026-09-10)
+
+Clustered impact configurations now start a console on all three storage nodes and connect
+all six management directions through certificate-validated TLS with a separate peer key.
+The eight dashboard clients continue to use the normal authenticated subscription and
+HTTP routes. Shared helpers supply the trusted-ingress transport; real administrator TOTP
+enrollment on a second node leaves the measured node's password-verification allowance
+available for its login. No credentials or authorization checks are bypassed.
+
+Each idle and active sample records peer status at both measurement boundaries. Acceptance
+requires all configured directions, fresh observations, stable boots and advancing
+watermarks, together with loaded geography. These boundary checks are not a measurement
+of every peer frame. A missing or stalled mesh leaves the overall result inconclusive.
+The fixture's CPU and peak-RSS sampler now follows traffic node 1 explicitly: the earlier
+array-order assumption selected the first-started peer in clustered runs. TLS ingress
+fixture memory remains separate and its shared-host cost is documented.
+
+The coverage tests reject missing directions, stale or skewed observations, restarts,
+unchanged watermarks and unloaded geography. A live three-node smoke run authenticated
+all six directions and delivered updates plus retained-view queries to all eight dashboards;
+it verified the sampled process's traffic port and cleanly joined every process and relay.
+This validates the fixture. It does not replace the full five-round impact matrix, change
+the numerical limits or close performance acceptance.
 
 = References
 

@@ -188,6 +188,13 @@ page through the reviewed diff before applying it. The replacement removes obsol
 by that country and preserves independently managed prefixes. A changed generation or policy
 revision requires a fresh preview, and overlapping independent edits are refused. The Events page
 contains retained WAF findings and honeypot incidents; it is not a complete access log.
+With GeoIP loaded, the storage worker records each incident's country and generation in
+the incident transaction. This is attribution at persistence, not a reconstructed request-time
+location. Later imports leave recorded mappings unchanged. The country filter accepts an
+uppercase two-letter code, `unknown` for an address absent from the loaded generation,
+or `not_recorded` for an incident without mapping data. Source groups report mixed countries
+or coverage explicitly. The globe's *View events* action keeps the selected node and opens
+the country's retained incidents for the last hour.
 One authenticated WebSocket survives navigation and carries statistics, incident summaries,
 node status, policy revisions, challenges and audit summaries. New incident and audit records
 wait behind *Load latest records* so the table stays in place while it is read. Policy updates

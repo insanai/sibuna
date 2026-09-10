@@ -406,7 +406,12 @@ Country actions are snapshots of the active GeoIP generation. A later import doe
 their reputation rows automatically. Preview the country action to compare added, retained and
 removed prefixes, using **Next diff page** to inspect the complete bounded replacement. Applying
 the review replaces only that country’s own rows. A changed generation or policy revision
-requires another preview; independently managed prefixes are preserved and conflicts refused. Events retain WAF findings and honeypot incidents, not a complete request access log.
+requires another preview; independently managed prefixes are preserved and conflicts refused.
+Events retain WAF findings and honeypot incidents, not a complete request access log. When
+GeoIP is loaded, incident writes retain the country and generation used by the storage worker.
+Imports do not relocate recorded incidents. Filter by a two-letter country code, `unknown`
+for unmapped addresses, or `not_recorded` for records without mapping data. The globe's
+**View events** action opens that country's incidents for the selected node and last hour.
 One authenticated WebSocket carries statistics, events, node status, policy revisions,
 challenges and audit updates across navigation. Incident and audit pages keep rows in place
 while you read; use **Load latest records** to include newer records. Policy updates show the
