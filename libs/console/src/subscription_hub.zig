@@ -7,6 +7,7 @@ const topics = @import("topic_store.zig");
 const subscriber = @import("subscriber.zig");
 const Subscriber = subscriber.Subscriber;
 const queue = @import("subscription_queue.zig");
+const Frame = @import("dashboard_stats.zig").Frame;
 pub const Handle = struct { index: usize, generation: u64 };
 const Slot = struct { generation: u64 = 0, value: ?*Subscriber = null };
 pub const Hub = struct {
@@ -14,6 +15,8 @@ pub const Hub = struct {
     io: std.Io,
     boot: [32]u8,
     stores: [s.topic_count]*topics.Store,
+    dashboard: *Frame,
+    dashboard_store: *topics.Store,
     slots: [80]Slot = @splat(.{}),
     mutex: std.Io.Mutex = .init,
     next_id: u64 = 1,
@@ -30,11 +33,19 @@ pub const Hub = struct {
         errdefer gpa.free(arena);
         const scratch = try gpa.alloc(u8, s.snapshot_bytes);
         errdefer gpa.free(scratch);
+        const dashboard = try gpa.create(Frame);
+        errdefer gpa.destroy(dashboard);
+        dashboard.* = .{};
+        const dashboard_store = try gpa.create(topics.Store);
+        errdefer gpa.destroy(dashboard_store);
+        dashboard_store.* = .{};
         self.* = .{
             .gpa = gpa,
             .io = io,
             .boot = std.fmt.bytesToHex(boot, .lower),
             .stores = undefined,
+            .dashboard = dashboard,
+            .dashboard_store = dashboard_store,
             .arena_bytes = arena,
             .scratch = scratch,
         };
@@ -52,6 +63,8 @@ pub const Hub = struct {
     pub fn deinit(self: *Hub) void {
         std.debug.assert(self.count.load(.acquire) == 0);
         for (self.stores) |store| self.gpa.destroy(store);
+        self.gpa.destroy(self.dashboard);
+        self.gpa.destroy(self.dashboard_store);
         self.gpa.free(self.arena_bytes);
         self.gpa.free(self.scratch);
         self.gpa.destroy(self);
@@ -93,6 +106,9 @@ pub const Hub = struct {
 
     pub fn command(self: *Hub, handle: Handle, input: s.Command) !void {
         try s.validate(input);
+        // Management links carry an unfiltered local source, never a browser selection.
+        if (handle.index >= 64 and (input.topic != .stats or input.args.node != null))
+            return error.InvalidCommand;
         self.mutex.lockUncancelable(self.io);
         defer self.mutex.unlock(self.io);
         if (self.stopping) return error.Stopping;
@@ -114,13 +130,20 @@ pub const Hub = struct {
     pub fn fanout(self: *Hub) void {
         if (!self.mutex.tryLock()) return;
         defer self.mutex.unlock(self.io);
-        for (self.slots) |slot| {
+        for (self.slots, 0..) |slot, slot_index| {
             const value = slot.value orelse continue;
+            const dashboard = if (slot_index < 64 and self.dashboard.initialized)
+                self.dashboard
+            else
+                null;
+            var stores = self.stores;
+            if (dashboard != null) stores[@intFromEnum(p.Topic.stats)] = self.dashboard_store;
             var fixed = std.heap.FixedBufferAllocator.init(self.arena_bytes);
             value.pump(.{
                 .io = self.io,
                 .boot = self.boot,
-                .stores = &self.stores,
+                .stores = &stores,
+                .dashboard = dashboard,
                 .arena = fixed.allocator(),
                 .scratch = self.scratch,
             }) catch |err| {

@@ -9,12 +9,14 @@ import time
 
 
 class Stream:
-    def __init__(self, port, cookie, path="/console/stream"):
+    def __init__(self, port, cookie, path="/console/stream", origin=None, extra_headers=None):
         self.sock = socket.create_connection(("127.0.0.1", port), timeout=10)
         self.file = self.sock.makefile("rb")
         key = base64.b64encode(os.urandom(16)).decode()
+        origin = origin or f"http://127.0.0.1:{port}"
+        extra = "".join(f"{key}: {value}\r\n" for key, value in (extra_headers or {}).items())
         head = (f"GET {path} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\n"
-                f"Origin: http://127.0.0.1:{port}\r\nCookie: {cookie}\r\n"
+                f"Origin: {origin}\r\nCookie: {cookie}\r\n{extra}"
                 "Connection: keep-alive, Upgrade\r\nUpgrade: websocket\r\n"
                 f"Sec-WebSocket-Version: 13\r\nSec-WebSocket-Key: {key}\r\n\r\n")
         self.sock.sendall(head.encode())

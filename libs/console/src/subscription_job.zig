@@ -159,12 +159,7 @@ pub const Job = struct {
 
     fn local(self: *Job, wanted: [s.topic_count]bool) !void {
         const app = self.app;
-        if (wanted[@intFromEnum(p.Topic.stats)]) try self.state(.stats, app.stats.snapshot(
-            app.io,
-            app.telemetry,
-            app.metrics,
-            app.now(),
-        ));
+        if (wanted[@intFromEnum(p.Topic.stats)]) try self.statistics();
         if (wanted[@intFromEnum(p.Topic.challenges)]) try self.state(
             .challenges,
             @import("challenge_routes.zig").snapshot(
@@ -176,11 +171,28 @@ pub const Job = struct {
         );
     }
 
+    fn statistics(self: *Job) !void {
+        const app = self.app;
+        const now = app.now();
+        const observed = app.stats.snapshot(app.io, app.telemetry, app.metrics, now);
+        try self.state(.stats, observed);
+        app.hub.dashboard.collect(&observed, &app.peers, now);
+        // A small journal trigger keeps gap semantics without serializing all node views.
+        // Browser subscribers compare their selected owned view; peers use the local store.
+        const store = app.hub.dashboard_store;
+        if (store.update == std.math.maxInt(u64)) return error.SequenceExhausted;
+        try self.publish(store, .{ .generation = p.Counter{ .value = store.update + 1 } });
+    }
+
     fn state(self: *Job, topic: p.Topic, value: anytype) !void {
+        try self.publish(self.app.hub.stores[@intFromEnum(topic)], value);
+    }
+
+    fn publish(self: *Job, store: *@import("topic_store.zig").Store, value: anytype) !void {
         var writer: std.Io.Writer = .fixed(self.buffer);
         try std.json.Stringify.value(value, .{}, &writer);
         var arena = std.heap.FixedBufferAllocator.init(self.app.hub.arena_bytes);
-        try self.app.hub.stores[@intFromEnum(topic)].state(
+        try store.state(
             self.app.io,
             arena.allocator(),
             writer.buffered(),

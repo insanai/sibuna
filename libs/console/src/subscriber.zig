@@ -11,6 +11,7 @@ pub const Context = struct {
     stores: *[s.topic_count]*topics.Store,
     arena: std.mem.Allocator,
     scratch: []u8,
+    dashboard: ?*const @import("dashboard_stats.zig").Frame = null,
 };
 const Phase = enum { off, waiting, streaming, live, paused };
 const State = struct {
@@ -47,6 +48,7 @@ pub const Subscriber = struct {
     states: [s.topic_count]State = @splat(.{}),
     payload: p.Bytes(s.snapshot_bytes) = .{},
     node_view: p.Bytes(16384) = .{},
+    stats_view: p.Bytes(16384) = .{},
     pending: ?Pending = null,
     next_topic: usize = 0,
 
@@ -84,10 +86,9 @@ pub const Subscriber = struct {
     fn snapshot(self: *Subscriber, context: Context, topic: p.Topic, store: *topics.Store) !void {
         const state = &self.states[@intFromEnum(topic)];
         var writer: std.Io.Writer = .fixed(&self.payload.data);
-        try store.snapshot(topic, &state.args, context.arena, &writer);
+        try snapshotView(context, topic, store, &state.args, &writer);
         self.payload.len = writer.buffered().len;
-        if (topic == .nodes and state.args.node != null)
-            try self.node_view.set(self.payload.slice());
+        if (self.filteredView(context, topic)) |view| try view.set(self.payload.slice());
         state.cursor = store.ring.watermark() + 1;
         state.phase = .streaming;
         self.pending = .{
@@ -147,8 +148,8 @@ pub const Subscriber = struct {
             self.pause(topic, 1);
             return false;
         }
-        if (topic == .nodes and state.args.node != null) {
-            if (self.pending == null) try self.filteredNodes(context, store);
+        if (self.filteredView(context, topic) != null) {
+            if (self.pending == null) try self.filteredState(context, topic, store);
             return false;
         }
         state.cursor += 1;
@@ -168,24 +169,37 @@ pub const Subscriber = struct {
         return true;
     }
 
-    fn filteredNodes(self: *Subscriber, context: Context, store: *topics.Store) !void {
-        const state = &self.states[@intFromEnum(p.Topic.nodes)];
+    fn filteredView(self: *Subscriber, context: Context, topic: p.Topic) ?*p.Bytes(16384) {
+        if (topic == .stats and context.dashboard != null) return &self.stats_view;
+        if (topic == .nodes and self.states[@intFromEnum(topic)].args.node != null)
+            return &self.node_view;
+        return null;
+    }
+
+    fn filteredState(
+        self: *Subscriber,
+        context: Context,
+        topic: p.Topic,
+        store: *topics.Store,
+    ) !void {
+        const state = &self.states[@intFromEnum(topic)];
+        const previous = self.filteredView(context, topic).?;
         var view: std.Io.Writer = .fixed(context.scratch);
-        try store.snapshot(.nodes, &state.args, context.arena, &view);
+        try snapshotView(context, topic, store, &state.args, &view);
         var writer: std.Io.Writer = .fixed(&self.payload.data);
         const changed = try p.json_delta.write(
             context.arena,
-            self.node_view.slice(),
+            previous.slice(),
             view.buffered(),
             &writer,
         );
-        try self.node_view.set(view.buffered());
+        try previous.set(view.buffered());
         state.cursor = store.ring.watermark() + 1;
         if (!changed) return;
         self.payload.len = writer.buffered().len;
         state.phase = .streaming;
         self.pending = .{
-            .topic = .nodes,
+            .topic = topic,
             .snapshot = false,
             .phase = .chunks,
             .watermark = state.cursor - 1,
@@ -240,4 +254,18 @@ fn parts(bytes: []const u8) u16 {
     var position: usize = 0;
     while (position < bytes.len) : (count += 1) position += s.fragmentLength(bytes[position..]);
     return count;
+}
+
+// The feeder owns both the copied dashboard frame and stores throughout a pump. A pending
+// fragmented message owns its serialized bytes, so later ticks cannot change its contents.
+fn snapshotView(
+    context: Context,
+    topic: p.Topic,
+    store: *topics.Store,
+    args: *const s.Args,
+    writer: *std.Io.Writer,
+) !void {
+    if (topic == .stats) if (context.dashboard) |dashboard|
+        return std.json.Stringify.value(dashboard.view(args.node), .{}, writer);
+    return store.snapshot(topic, args, context.arena, writer);
 }

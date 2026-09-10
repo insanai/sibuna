@@ -5,12 +5,45 @@ const p = @import("console_protocol");
 const peers = @import("peer_store.zig");
 
 pub fn fixture() !peers.Store {
-    var options: @import("peer_config.zig").Config = .{ .count = 2 };
-    for (options.targets[0..2], 2..) |*target, node| target.* = .{
+    return configured(2);
+}
+
+pub fn configured(count: u8) !peers.Store {
+    std.debug.assert(count <= 8);
+    var options: @import("peer_config.zig").Config = .{ .count = count };
+    for (options.targets[0..count], 2..) |*target, node| target.* = .{
         .node = @intCast(node),
         .origin = try p.Bytes(255).init("https://peer.test"),
     };
     return peers.Store.init(t.io, options, 1, null);
+}
+
+/// Fill every source and ranking slot with exact counters above JavaScript's integer range.
+pub fn maximum(store: *peers.Store) !p.StatsSnapshot {
+    var local = sample(1, 9007199254740993);
+    local.server_location = .{ .lat = -89.12345678901234, .lon = 179.12345678901234 };
+    local.incident_geo = .{};
+    var codes: [32]u16 = undefined;
+    var count: usize = 0;
+    for (0..676) |index| {
+        const code = [2]u8{ @intCast(index / 26 + 'A'), @intCast(index % 26 + 'A') };
+        if (!@import("geoip").country.valid(&code)) continue;
+        codes[count] = @as(u16, code[0]) << 8 | code[1];
+        count += 1;
+        if (count == codes.len) break;
+    }
+    try t.expectEqual(codes.len, count);
+    for (0..9) |index| {
+        var value = local;
+        value.node = @intCast(index + 1);
+        value.boot = @splat(@intCast(index + 1));
+        for (codes, 0..) |code, i| {
+            value.countries[i] = .{ .code = code, .samples = 9007199254740993 };
+            value.incident_geo.?.countries[i] = value.countries[i];
+        }
+        if (index == 0) local = value else try publish(store, &value, 100);
+    }
+    return local;
 }
 
 pub fn sample(node: u32, requests: u64) p.StatsSnapshot {

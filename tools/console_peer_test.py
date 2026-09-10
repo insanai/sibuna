@@ -13,6 +13,7 @@ import console_bootstrap_test as bootstrap
 import console_peer_fixture as fixture
 import console_totp_test as totp
 from console_ws_test import Stream
+from console_topics_client import Client
 
 
 def wait(predicate, label, seconds=35):
@@ -74,6 +75,34 @@ def admission(port, key):
     assert status == 403
 
 
+def dashboard(port, cookie):
+    client = Client.from_stream(Stream(port, cookie, "/console/ws",
+                                       origin="https://console.test",
+                                       extra_headers={"X-Forwarded-Proto": "https"}))
+    try:
+        client.command("sub", "stats")
+        client.until(lambda: client.states.get("stats", {}).get("scope", {})
+                     .get("contributing") == 2)
+        combined = client.states["stats"]
+        assert combined["node"] == 0 and combined["requests"] >= 12345, combined
+        assert combined["countries"][0] == {"code": 0x5553, "samples": 3}
+        assert combined["incident_geo"]["countries"][0] == {"code": 0x4155, "samples": 2}
+        epoch = client.epochs["stats"]
+        client.command("filter", "stats", {"node": 2})
+        client.until(lambda: client.epochs["stats"] != epoch and "stats" not in client.pending)
+        selected = client.states["stats"]
+        assert selected["node"] == 2 and selected["requests"] == 12345, selected
+        assert selected["scope"]["selected"] == 2 and not selected["scope"]["stale"]
+        epoch = client.epochs["stats"]
+        client.command("filter", "stats", {"node": 99})
+        client.until(lambda: client.epochs["stats"] != epoch and "stats" not in client.pending)
+        missing = client.states["stats"]
+        assert missing["available"] is False and "requests" not in missing, missing
+        assert not client.gaps
+    finally:
+        client.close()
+
+
 def check(binary, h):
     headers = {"Origin": "https://console.test", "X-Forwarded-Proto": "https"}
     trusted = SimpleNamespace(request=lambda *a, **kw: h.request(*a, **kw, extra_headers=headers))
@@ -124,6 +153,7 @@ def check(binary, h):
                 assert current["geoip_available"] is True
                 mark = current["watermark"]
                 wait(lambda: report()["watermark"] > mark, "unsolicited delta")
+                dashboard(port, cookie)
                 admission(port, peer.key)
                 peer.mode = "silent"
                 stale = wait(lambda: (row if (row := report())["status"] == "stale" and

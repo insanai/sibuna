@@ -19,9 +19,10 @@ pub const Budget = struct {
     // download/checksum stack scratch; the staged generation is counted separately.
     pub const import_bytes = 32 * 1024 * 1024 + 40 * 1024;
     pub const auth_bytes = @import("password.zig").Password.workspace_bytes;
-    pub const topic_bytes = @import("console_protocol").subscriptions.topic_count *
+    pub const topic_bytes = (@import("console_protocol").subscriptions.topic_count + 1) *
         @sizeOf(@import("topic_store.zig").Store) +
-        @sizeOf(@import("subscription_hub.zig").Hub) + 640 * 1024;
+        @sizeOf(@import("subscription_hub.zig").Hub) +
+        @sizeOf(@import("dashboard_stats.zig").Frame) + 640 * 1024;
     pub const traffic_bytes = @sizeOf(@import("store").ConsoleTelemetry) +
         @sizeOf(@import("store").ConsoleIncidents);
     // Incremental evidence metadata in the existing 512-slot incident queue and 32-row batch.

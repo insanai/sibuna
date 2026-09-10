@@ -130,3 +130,7 @@ test "peer and browser hub partitions cannot consume each other's quota" {
     for (browsers) |handle| try t.expect(handle.index < 64);
     for (peers) |handle| try t.expect(handle.index >= 64);
 }
+
+test {
+    _ = @import("dashboard_hub_test.zig");
+}

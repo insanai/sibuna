@@ -85,7 +85,7 @@ pub fn validate(command: Command) error{InvalidCommand}!void {
         return error.InvalidCommand;
     if (event and topic != .events) return error.InvalidCommand;
     if (audit and topic != .audit) return error.InvalidCommand;
-    if (args.node != null and topic != .events and topic != .nodes)
+    if (args.node != null and topic != .events and topic != .nodes and topic != .stats)
         return error.InvalidCommand;
 }
 
