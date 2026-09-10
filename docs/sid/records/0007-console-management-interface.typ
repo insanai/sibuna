@@ -5078,3 +5078,15 @@ process is retained for benchmark measurements.
 These checks cover the named workflows. They do not close the historical-analysis implementation
 gaps in the current-completeness table, human-comprehension, physical low-end-device or quantitative
 impact gates. The SID remains Proposed.
+
+== Required primitive baseline after the interface review (2026-09-10)
+
+`latest-20260910T091759Z.json` records clean source
+`76d8c2d4144c3e8a43674c80c8d5f1154b00c6a8` (610 source files, source digest
+`c4b2a2106373b81f23b5a21375c63e1408bdbde3e8bf253ab84a954e7fcb67ff`). The optimized
+single-node artifact is 12,332,952 bytes, SHA-256
+`adb0ae7b7398f176fdc1a61e8cb8c2b42a5e1fb3bde0d0d32d46c47207b67e55`. Idle RSS is
+10,240 KiB with storage compiled but inactive and two workers. The review daemon and agent-owned
+Chrome tabs were closed. Hashcash's seven-batch median is 62.32 ns, with 58.00–97.05 ns min/max;
+these local measurements retain their spread and do not establish a causal speedup or a pass
+of the separate eight-dashboard throughput/p99 gate. Zig remains 0.16.0 and Zaxonlite 0.6.2.
