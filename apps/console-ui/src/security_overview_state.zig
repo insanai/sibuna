@@ -12,7 +12,7 @@ pub const FeedRow = struct {
     display_truncated: bool = false,
 };
 pub const Model = struct {
-    hours: u16 = 1,
+    hours: u16 = 24,
     request: p.security.Request = .{ .from = 0, .until = 1 },
     tickets: [3]u64 = @splat(0),
     busy: [3]bool = @splat(false),
@@ -27,7 +27,7 @@ pub const Model = struct {
 
     pub fn clear(self: *Model) void {
         @memset(std.mem.asBytes(self), 0);
-        self.hours = 1;
+        self.hours = 24;
         self.request.until = 1;
         for (&self.modules) |*module| {
             for (&module.sources) |*source| source.* = null;

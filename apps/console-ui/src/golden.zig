@@ -95,6 +95,7 @@ fn variant(state: *State, index: usize) void {
         7, 8 => {
             state.phase = .security_overview;
             state.kiosk = index == 8;
+            state.kiosk_expires = 176400;
             state.security_overview.loaded[0] = true;
             state.security_overview.observed_at[0] = state.browser_time - 1;
             state.security_overview.request = .{ .from = 169200, .until = 172800 };
