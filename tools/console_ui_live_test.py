@@ -19,6 +19,7 @@ class Interface:
         self.stream, self.connections, self.html = None, 0, ""
         self.history = []
         self.appearance = None
+        self.requests = []
         self.proc = subprocess.Popen(["node", "tools/console_ui_driver.mjs", str(wasm)],
                                      stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
 
@@ -57,6 +58,7 @@ class Interface:
             assert self.stream is not None
             self.stream.send(1, json.dumps(command["body"]).encode())
         elif op == "request":
+            self.requests.append(command)
             status, _, body = h.request(self.port, command["method"], command["path"],
                                         command.get("body"), self.cookie, command.get("csrf"))
             self.event(2, {"id": command["id"], "status": status, "body": json.loads(body)})
@@ -119,7 +121,8 @@ def exercise(ui):
         ui.topic(topic)
         assert "console-navigation" in ui.html, page
         assert ui.connections == 1, (page, ui.connections)
-    assert ui.history[-1] == {"op": "history", "value": "audit", "replace": False}
+    retention_controls(ui)
+    assert ui.history[-1] == {"op": "history", "value": "settings", "replace": False}
     ui.event(8, {"route": "nodes"})
     ui.topic("nodes")
     assert ui.history[-1] == {"op": "history", "value": "nodes", "replace": True}
@@ -138,6 +141,29 @@ def exercise(ui):
     assert ui.appearance["theme"] == "light"
     ui.event(8, {"route": "nodes"})
     assert ui.stream is None and "Welcome back" in ui.html
+
+
+def retention_controls(ui):
+    ui.event(1, {"action": "settings", "fields": {}})
+    assert "Retention</h2>" in ui.html
+    keys = ("minutes", "rankings", "incidents", "audit")
+    for key in keys:
+        assert ui.html.count(f'id="settings-change-retention.{key}"') == 1
+    before = len(ui.requests)
+    form = {"key": "retention.minutes", "value": "1"}
+    ui.event(1, {"action": "settings-thresholds", "fields": form})
+    assert len(ui.requests) == before, "retention changed without confirmation"
+    ui.event(1, {"action": "settings-thresholds", "fields": {**form, "confirmed": "on"}})
+    saved = next(cmd for cmd in ui.requests[before:] if cmd["path"].endswith("/settings/change"))
+    assert saved["body"]["confirmed"] and saved["body"]["expected_revision"] == "0"
+    for value, revision, expected in (("91", "1", 400), ("2", "0", 409)):
+        status, _, _ = h.request(ui.port, "POST", "/console/api/settings/change",
+                                {**form, "value": value, "expected_revision": revision,
+                                 "confirmed": True}, ui.cookie, saved["csrf"])
+        assert status == expected, (value, status)
+    status, _, body = h.request(ui.port, "POST", "/console/api/minutes", {},
+                                ui.cookie, saved["csrf"])
+    assert status == 200 and json.loads(body)["retention_days"] == 1, (status, body)
 
 
 def check(binary):

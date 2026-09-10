@@ -167,20 +167,39 @@ fn thresholds(state: *const State, w: *Writer) Writer.Error!void {
         "<p class=\"sb-note\">A spike is raised when denials in the last 60 seconds exceed " ++
         "both the minimum and the factor times the previous 60 seconds; it re-arms below " ++
         "that threshold.</p>", .{});
-    for (n.known_settings) |key| {
-        const current = model.setting(key);
+    try settingRows(w, model, .notification);
+    try html.render(
+        w,
+        "</section><section class=\"sb-panel\"><h2>Retention</h2>" ++
+            "<p class=\"sb-note\">Choose retention within the displayed limits. " ++
+            "Cleanup deletes older records in bounded batches. A higher value cannot restore " ++
+            "deleted history. Rankings also have a fixed 512 MiB quota and may expire sooner.</p>",
+        .{},
+    );
+    try settingRows(w, model, .retention);
+    try html.render(w, "</section>", .{});
+}
+
+noinline fn settingRows(
+    w: *Writer,
+    model: *const @import("settings_state.zig").Model,
+    group: p.settings.Group,
+) Writer.Error!void {
+    for (p.settings.catalog) |entry| {
+        if (entry.group != group) continue;
+        const current = model.setting(entry.key);
         try html.render(w, @embedFile("snippets/setting-row.html"), .{
-            .key = key,
-            .value = if (current) |item| item.value.slice() else defaultValue(key),
+            .key = entry.key,
+            .label = entry.label,
+            .maximum = entry.maximum,
+            .default = entry.default,
+            .confirmation = if (group == .retention) "" else " hidden",
+            .required = if (group == .retention) " required" else "",
+            .value = if (current) |item| item.value.slice() else entry.default,
             .revision = if (current) |item| item.revision else 0,
             .busy = if (model.busy) " disabled" else "",
         });
     }
-    try html.render(w, "</section>", .{});
-}
-
-fn defaultValue(key: []const u8) []const u8 {
-    return if (std.mem.eql(u8, key, "notify.spike_factor")) "3" else "100";
 }
 
 fn pages(state: *const State, w: *Writer) Writer.Error!void {

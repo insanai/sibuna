@@ -16,6 +16,7 @@ pub const Model = struct {
     };
     rows: [p.minutes.max_rows]Row = @splat(.{}),
     count: usize = 0,
+    retention_days: u16 = p.minutes.retention_days,
     before: ?p.minutes.Cursor = null,
     next: ?p.minutes.Cursor = null,
     scope_node: ?u32 = null,
@@ -38,11 +39,13 @@ pub const Model = struct {
         self.scope_node = null;
         self.requested_node = null;
         self.hours = 1;
+        self.retention_days = p.minutes.retention_days;
     }
 
     fn decode(self: *Model, value: std.json.Value, alloc: std.mem.Allocator) !void {
         const page = try @import("json_value.zig").decode(p.minutes.Reply, value, alloc);
-        if (page.version != 1 or page.retention_days != 90 or page.rows.len > self.rows.len or
+        if (page.version != 1 or page.retention_days == 0 or
+            page.retention_days > p.minutes.retention_days or page.rows.len > self.rows.len or
             page.from_minute > page.until_minute or page.until_minute > page.observed_at / 60 or
             page.until_minute - page.from_minute > 90 * 1440)
             return error.InvalidResponse;
@@ -50,6 +53,7 @@ pub const Model = struct {
             page.from_minute < self.from)) return error.InvalidResponse;
         var replacement = self.*;
         replacement.count = page.rows.len;
+        replacement.retention_days = page.retention_days;
         replacement.next = page.next;
         replacement.from = page.from_minute;
         replacement.until = page.until_minute;
@@ -159,9 +163,10 @@ pub fn table(state: *const State, w: *Writer) Writer.Error!void {
         return html.render(w, "<div id=\"timeline-values\" role=\"status\">" ++
             "Minute history is unavailable on this node.</div>", .{});
     try controls(state, w);
-    try html.render(w, "<p class=\"sb-note\">Stored outcome intervals, retained for 90 days. " ++
+    try html.render(w, "<p class=\"sb-note\">Stored outcome intervals, retained for " ++
+        "up to {{ days }} days. " ++
         "Each node and boot stays separate. Missing history is unobserved, not zero traffic. " ++
-        "Minute labels describe sample-aligned intervals.</p>", .{});
+        "Minute labels describe sample-aligned intervals.</p>", .{ .days = model.retention_days });
     if (model.failed) try html.render(w, "<p role=\"status\">Minute history unavailable. " ++
         "Displayed records may be stale. Retry Latest after storage recovers.</p>", .{});
     if (!model.loaded) return html.render(w, "<div id=\"timeline-values\" role=\"status\">" ++

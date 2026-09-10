@@ -376,6 +376,10 @@ cluster member delivers at a time under a fenced lease. Test delivery records in
 completion in Audit and refreshes the destination's last outcome. If completion cannot be
 recorded, the interface reports it as unconfirmed so operators can investigate before retrying.
 
+Settings provides confirmed, revision-checked retention controls: 1–90 days for minute history,
+1–7 for rankings, 1–30 for incidents and 1–365 for audit. The upper limits are the defaults;
+rankings also retain their 512 MiB quota. Deleted history cannot be restored by increasing retention.
+
 Administrators can also edit the five browser-facing response pages (challenge, denied,
 rate limited, banned, overloaded) under Settings: bounded HTML with fixed placeholders, no
 scripts or external resources, previewed in a sandboxed tab and served from the next policy

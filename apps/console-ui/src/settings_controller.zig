@@ -1,4 +1,4 @@
-//! Administrator settings: notification destinations and the two spike thresholds. Every
+//! Administrator settings: destinations, spike thresholds and bounded retention. Every
 //! mutation carries an expected revision; delivery tests report their outcome inline.
 const std = @import("std");
 const p = @import("console_protocol");
@@ -143,13 +143,17 @@ fn save(state: *State, fields: std.json.Value, out: Outbox) !void {
 fn thresholds(state: *State, fields: std.json.Value, out: Outbox) !void {
     const model = &state.settings;
     const key = string(fields, "key");
-    if (!n.knownSetting(key)) return;
+    const entry = p.settings.definition(key) orelse return;
+    const confirmed = equal(u8, string(fields, "confirmed"), "on");
+    if (!p.settings.valid(key, string(fields, "value")) or
+        (entry.group == .retention and !confirmed)) return;
     const current = model.setting(key);
     try ticket(state, .setting_change);
     errdefer model.busy = false;
     var revision: [20]u8 = undefined;
     try out.post(model.ticket.slice(), "/console/api/settings/change", .{
         .key = key,
+        .confirmed = confirmed,
         .value = string(fields, "value"),
         .expected_revision = try std.fmt.bufPrint(&revision, "{d}", .{
             if (current) |item| item.revision else 0,

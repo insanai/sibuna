@@ -162,6 +162,12 @@ Syslog's UDP/TCP selection applies only to outbound notifications, independently
 web traffic. Manual tests record intent and completion in Audit and refresh the destination
 outcome; an unconfirmed audit completion is shown explicitly before an operator retries.
 
+Settings also controls retention: one to 90 days for minute history, one to seven for
+rankings, one to 30 for incidents and one to 365 for audit. The upper values are the defaults;
+rankings keep their 512 MiB quota. Saving a retention value requires confirmation because
+cleanup permanently removes older records in bounded batches. Increasing the value later
+does not restore deleted history. Stale edits are refused and successful changes appear in Audit.
+
 Response pages (challenge, denied, rate limited, banned, overloaded) are editable under
 Settings as bounded HTML with fixed placeholders; drafts preview in a sandboxed tab and
 saved pages are served from the next policy snapshot.

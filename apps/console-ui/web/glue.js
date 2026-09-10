@@ -212,7 +212,7 @@ async function run(command) {
 }
 root.addEventListener("submit", e => {
   e.preventDefault();
-  event(1, {action: e.target.id, fields: Object.fromEntries(new FormData(e.target))});
+  event(1, {action: e.target.dataset.submit || e.target.id, fields: Object.fromEntries(new FormData(e.target))});
 });
 root.addEventListener("change", e => {
   const form = e.target.closest("form[data-change]");

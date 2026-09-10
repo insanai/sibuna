@@ -798,7 +798,7 @@ Migrations are numbered and version-gated in `schema.zig`. The authoritative wri
   [`console_kiosk_grants`], [`digest` (primary; SHA-256 of the one-time code), `user_id`, `revision`, `label`, `created_at`, `use_by` (ten minutes), `expires` (twelve hours), `consumed_at`; at most 64 outstanding; audit `kiosk.grant` and `kiosk.exchange` never carry the code; retention removes consumed and unusable rows],
   [`console_tokens`], [`id` (printable), `digest`, `label`, `role`, `scopes`, `auth_revision`, `created_by`, `created_at`, `expires_at`, `disabled`],
   [`console_audit`], [`id`, `at`, `actor`, `role`, `action`, `subject`, `before`, `after`, `client_ip`; append-only],
-  [`console_settings`], [`key` (primary), `value` (≤ 1 KiB, never a secret), `revision`, `updated_at`, `updated_by`; the denial-spike minimum and factor today; every change is audited with its before and after value],
+  [`console_settings`], [`key` (primary), `value` (≤ 1 KiB, never a secret), `revision`, `updated_at`, `updated_by`; the denial-spike minimum/factor and bounded retention days; every change is audited with its before and after value],
   [`console_notifications`], [`id`, `kind` (`webhook` or `syslog`), `label`, `target`, `target_host`, `secret_envelope` (sealed under the console key and bound to the target), `events` bitmask (denial spike, ban, node unhealthy, leader change), `cooldown_seconds`, `enabled`, `revision`, created/modified actor and time, last attempt, outcome and detail; at most eight rows; audit summaries carry kind, label, events, cooldown, enabled state, whether a secret is set and the host only],
   [`console_notification_events`], [`node`, `boot`, `sequence` (unique per node and boot), `event`, `raised_at`, `detail`, completion time; every node enqueues what it observed, at most 256 pending and 4,096 total rows; completed history expires after seven days. The legacy event-wide attempts column is no longer authoritative],
   [`console_notification_deliveries`], [One event/destination pair and pinned destination revision; pending/sending/delivered/failed/skipped state, at most three attempts, next due time, claim fence/expiry and redacted outcome. Destination edits invalidate queued work; parent completion and outcome audit commit with each transition],
@@ -1661,7 +1661,8 @@ identifies the following concrete gaps; the status remains Proposed.
     through bounded topic rings and connection queues, with filtered event/audit/node views,
     chunk watermarks and gap barriers. The interface uses that connection across navigation,
     with transactional Wasm reassembly and jittered reconnect. The shipped-Wasm live test
-    passes; Chrome acceptance of the new transport remains open. `/console/stream` retains
+    passes; Chrome now verifies live updates, preserved drafts, sign-out and restart reconnect.
+    Comprehensive browser acceptance remains open. `/console/stream` retains
     compatibility for earlier statistics clients.],
   [Live cluster transport], [Membership and applied revisions use replicated rows; configured
     HTTP probes provide health. Direct TLS peer WebSockets now authenticate configured nodes,
@@ -1678,8 +1679,8 @@ identifies the following concrete gaps; the status remains Proposed.
     adjacent observations update. Page fragments now support bookmark and browser-history navigation behind authentication;
     system/persisted theme and density preferences are implemented in the Wasm model.
     Country selection centers the globe but does not open country-filtered events. The
-    separate Security overview and configurable retention forms in the wireframes are not
-    present; retention runs with the implemented defaults.],
+    separate Security overview remains absent. Retention forms now configure minute, ranking,
+    incident and audit days within their capacity limits, with explicit deletion confirmation.],
   [Acceptance], [The corrected dashboard workload harness has only an inconclusive smoke result.
     Full controlled-host impact acceptance and comprehensive browser acceptance remain open.
     Earlier browser evidence covers the named scenarios, not every feature and error state.],
@@ -4437,6 +4438,69 @@ bounded error names instead of being discarded. Every test-owned member is stopp
 The reusable Python subscription client can attach to an already authenticated transport,
 so peer acceptance uses the same strict chunk/gap checks as browser-protocol tests.
 
+== Configurable retention (2026-09-10)
+
+A shared numeric catalog defines denial-spike thresholds and retention settings. The
+initial and maximum retention values remain 90 days for minute history, seven days for
+rankings, 30 days for incidents and 365 days for audit; each can be reduced to one day.
+Ranking retention also remains subject to its fixed 512 MiB quota. These controls do not
+promise recovery of deleted records or extend the configured capacity envelope.
+
+Settings require an administrator cookie session and CSRF proof. Retention changes also
+require explicit deletion confirmation. The expected revision, current authority, setting
+write and before/after audit trigger share a single database statement. Additive schema 28
+validates retention ranges for replicated writes and fences binaries which do not apply
+these settings. Existing settings, policy and forensic data are preserved by migration.
+
+Cleanup reads its retention cutoff inside each bounded deletion statement, so a peer edit
+cannot race a borrowed cutoff. The existing incident/audit lease remains the deletion
+fence; minute and ranking maintenance preserve their bounded batches and quota ownership.
+Minute queries capture and recheck the retention revision, report the effective day limit,
+and withhold records outside that boundary even before cleanup reaches them.
+
+Numeric values reserve seven decimal bytes, matching the catalog's largest value. This
+keeps the shared mailbox result within its 4 KiB payload plus 128-byte envelope bound.
+A compile-time check rejects future inline growth; larger documents must transfer owned
+payloads. Reserving 1 KiB per setting had enlarged every result when the catalog grew,
+exhausting 256 KiB Debug worker stacks during policy and user operations.
+
+The Settings page uses one shared row renderer for notification and retention controls,
+with friendly labels, defaults, numeric bounds and deletion confirmation. Each form has a
+unique identifier; the fixed bridge dispatches its declared submit action. The minute
+history panel accepts and displays the returned retention limit.
+
+Verification: `zig build -j1 fmt test console-test console-ui-e2e sid book` passes all
+70 steps and 474 native tests, including deterministic deletion boundaries, migration
+replay, revision conflicts, revoked authority and rollback on audit failure. The
+shipped-Wasm live test exercises the unique retention forms, confirmation, out-of-range
+input, stale revisions and effective minute-history metadata.
+
+== Chrome review of current interface increments (2026-09-10)
+
+A disposable loopback instance was tested through the connected Chrome extension. Failed
+sign-in stays in the authentication shell; successful sign-in reveals the dashboard.
+Settings and Nodes retain the common sidebar. Back restores Settings, and a reload
+preserves its fragment and chosen light appearance. At 390×844, the mobile menu opens,
+closes on navigation and the Events page has no horizontal document overflow. An unsent,
+focused path filter survives a new live incident; loading the latest records acknowledges
+the pending summaries. Retention refuses a save without deletion confirmation and then
+shows the saved value with revision 1. Sign-out clears the private interface and fields.
+
+The native CLI imported the September 2026 DB-IP Lite source with SHA-256
+`a32bb3c384bd3de60ad9024596aa5b395a6dd5beaa27a7223407cc2edc681d0b`:
+717,152 known-country ranges, restored after restart. Ordinary protected-path requests
+from controlled US/Australia addresses update exact counters and sampled country rows.
+Chrome shows changing globe geometry without rotation-button input, inbound arcs and the
+configured test destination; pause and centering work. Stopping the owned daemon shows
+Disconnected with receipt age; restart reconnects without inventing fresh values.
+
+On the rebuilt daemon, the policy tester explains a traversal denial. A structured new
+rule is privately previewed, then held behind its before/after review: live requests keep
+the earlier behavior until Confirm save. Confirmation commits and applies revision 4;
+a request to the new rule's path then receives 403. Viewer-account creation also succeeds.
+These named checks supplement native and live-daemon tests; they do not establish every
+browser, accessibility, operator-comprehension or performance acceptance requirement.
+
 == Browser page history (2026-09-10)
 
 The Wasm router interns fragment identifiers against the shared navigation catalog. A
@@ -4472,6 +4536,15 @@ The complete `fmt test console-test console-ui-e2e sid book` run passed 469 test
 live scenarios. Shared literal deduplication keeps the combined interface at 392,860 of
 393,216 bytes and the existing 4 MiB memory limit. Theme text/background token pairs
 exceed 4.5:1 contrast; Chrome layout, persistence and accessibility acceptance remains open.
+
+== UI artifact gate on ordinary builds (2026-09-10)
+
+Every console-enabled embedding now depends on the size/ABI verifier's output artifact,
+including an ordinary daemon build. The verifier copies only successfully checked bytes;
+a malformed or oversized input cannot replace that output. Console-specific steps retain
+the same 384 KiB, explicit 4 MiB memory and host-import checks. Builds with console disabled
+do not acquire this dependency. A focused test covers valid publication and rejection without
+replacement of the preceding output.
 
 == Compact snippet instructions (2026-09-10)
 

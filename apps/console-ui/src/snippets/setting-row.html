@@ -1,5 +1,7 @@
-<form id="settings-thresholds" class="flex flex-wrap items-end gap-2 mt-2" data-submit="settings-thresholds">
+<form id="settings-change-{{ key }}" class="flex flex-wrap items-end gap-2 mt-2" data-submit="settings-thresholds">
     <input type="hidden" name="key" value="{{ key }}">
-    <label class="grow">{{ key }} (revision {{ revision }})
-    <input name="value" class="input input-bordered w-full" inputmode="numeric" value="{{ value }}"></label>
+    <label class="grow">{{ label }} (revision {{ revision }})
+    <input name="value" type="number" min="1" max="{{ maximum }}" required class="input input-bordered w-full" inputmode="numeric" value="{{ value }}">
+    <span class="sb-note">1–{{ maximum }}; default {{ default }}</span></label>
+    <label{{ confirmation }}><input class="checkbox checkbox-sm" type="checkbox" name="confirmed"{{ required }}> I understand older records will be permanently deleted.</label>
     <button class="btn btn-sm" type="submit"{{ busy }}>Save</button></form>
