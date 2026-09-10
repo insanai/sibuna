@@ -32,6 +32,12 @@ pub fn render(state: *const State, w: *std.Io.Writer) std.Io.Writer.Error!void {
         },
     );
     try escape(w, state.geo.source_version.slice());
+    try w.writeAll("</p><p>Generation digest: <code class=\"break-all\">");
+    try escape(w, if (state.geo.digest.len == 0) "none" else state.geo.digest.slice());
+    try w.writeAll("</code></p><p>Loaded: ");
+    if (state.geo.loaded_at == 0) {
+        try w.writeAll("never");
+    } else try @import("events_page.zig").timestamp(w, state.geo.loaded_at);
     try w.writeAll("</p><p>Status: ");
     try escape(w, state.geo_status.slice());
     try html.render(w, " · {{ v0 }} ranges processed</p>", .{
