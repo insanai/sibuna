@@ -219,6 +219,17 @@ Policy workflows on the Policies page: reorder managed rules, replay a draft aga
 inspection findings, manage IP groups and country blocks pinned to the active GeoIP
 generation, and export or atomically import the managed set (also `sibuna console policies
 export` and `sibuna console policies import --file <set.json>`).
+Applied rules show recorded hits today, hourly sparklines and an accessible table. A hit is a
+successful declarative matcher evaluation: matching WEIGH rules and the first terminal match
+count; an earlier inspection or reputation decision may prevent evaluation. Private tests do
+not increment these counters. *Compare rule hits* freezes two closed periods for one recorded
+node. Revision history offers *Compare hits around this edit*, excluding the edit minute and
+using equal available periods up to the chosen duration. Optional applied-revision filters
+keep unrelated generations out of the comparison. Startup, cutover, missing writes and
+retention leave visible coverage gaps; percentages require complete coverage on both sides.
+Rule observations and hourly/daily summaries follow the minute-retention setting. An observed
+change around an edit is a comparison, not evidence that the edit caused the traffic change.
+
 Importing a later GeoIP generation does not automatically refresh existing country-derived
 reputation rows. Preview the country action to compare added, retained and removed prefixes;
 page through the reviewed diff before applying it. The replacement removes obsolete rows owned

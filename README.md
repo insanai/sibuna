@@ -329,7 +329,12 @@ The signed-in interface keeps navigation across dashboards, policy and inspectio
 events, users, tokens, audit and node controls. Policy previews evaluate a private candidate;
 saves show a field comparison and require confirmation with an expected revision. Historical
 reverts compare against the current rule and create a new revision. Committed and locally
-applied revisions remain separate.
+applied revisions remain separate. Applied rules show recorded hits today with hourly sparklines
+and accessible values. **Compare rule hits** reads retained minute intervals; revision history
+also offers **Compare hits around this edit**. Comparisons freeze their rule, node, revisions
+and UTC periods. WEIGH matches count alongside the first matching terminal rule; private tests
+do not count. Startup, reloads and missing history remain visible, and a percentage requires
+complete coverage in both periods. Rule history follows the minute-retention setting.
 Audit detail shows recorded before/after settings and marks missing historical data or redacted
 selectors. The Nodes page lists every cluster member from the replicated membership table
 (applied policy revision, log frontiers, draining state, a link to that member's advertised

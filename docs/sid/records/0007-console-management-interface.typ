@@ -439,18 +439,19 @@ scale(72%, reflow: true, fit-diagram()))
 #table(
   columns: (1.2fr, 2.6fr),
   table.header([*Path*], [*Contents*]),
-  [`libs/serve/src/`], [`kernel.zig` (listener, connection slots, deadlines, drain), `router.zig` (comptime route table), `context.zig` (request context, response helpers), `websocket.zig` (upgrade, frame loop, per-connection send queue), `assets.zig` (embedded files with content-addressed paths), `json.zig` (bounded writer and reader), `ratelimit.zig`, `log.zig`],
-  [`libs/console/src/`], [`app.zig` (composition and `handle`), `auth.zig` (Argon2id, sessions, roles, tokens, CSRF), `api/` (`stats.zig`, `events.zig`, `policy.zig`, `reputation.zig`, `nodes.zig`, `challenges.zig`, `settings.zig`, `users.zig`, `audit.zig`, `geoip.zig`), `telemetry/` (`sampler.zig`, `minutes.zig`, `funnel.zig`), `hub.zig` (topics, ring, subscribers), country lookup through `libs/geoip` (`geoip_job.zig`, `geoip_download.zig`, `geoip_generation.zig`), `cluster_probe.zig` (peer health probes; membership and the storage status snapshot live with the storage owner in `apps/sibuna/src/console_membership.zig` and `console_node_storage.zig`), `schema.zig`, `retention_job.zig`],
-  [`apps/console-ui/src/`], [`main.zig` (ABI, state, event dispatch), `render/` (one file per page, plus `components.zig` for the `sb-*` components and `charts.zig` for SVG), `protocol.zig` (frames shared with `libs/console` by import), `main_test.zig` (golden renders)],
-  [`apps/console-ui/web/`], [`shell.html`, `glue.js`, `tailwind.css` (source), `package.json`, `assets/console.css` (built, committed with digest), `assets/world-110m.bin` (committed)],
-  [`apps/sibuna/src/console_start.zig`], [Flag parsing for `--console*`, the `sibuna console` subcommands, thread start and stop],
+  [`libs/serve/src/`], [Bounded listener and connection lifecycle in `kernel.zig`; request/response context, admission quotas, WebSocket framing, upgrade and I/O. The application supplies routes and static assets.],
+  [`libs/console-protocol/src/`], [Bounded application values, roles, storage/control operations, subscription messages, history arithmetic and browser contracts. Builds natively and for Wasm without networking, storage or daemon imports.],
+  [`libs/console/src/`], [Application routing and authentication; telemetry aggregation, subscription hub, peer transport, GeoIP activation and management services. SQL execution remains behind typed owner requests.],
+  [`apps/console-ui/src/`], [Wasm ABI, application state and controllers, page renderers, shared components and SVG charts. HTML snippets express markup through the bounded `libs/html` renderer; native golden tests exercise the same renderers.],
+  [`apps/console-ui/web/`], [Authentication shell, fixed browser bridge, Tailwind source, pinned asset tools and committed CSS/geometry. Ordinary builds consume committed assets without npm.],
+  [`apps/sibuna/src/`], [Composition, console-specific CLI parsing and subcommands, startup/shutdown, storage mailbox execution and immutable policy publication. `AppState`, engine ownership and `Persistent` remain daemon responsibilities.],
 )
 
-The two libraries and the UI module may import `core`, `crypto`, `policy`, and `store` for types they
-share with the data plane (rule structures, address parsing, the incident record), and import
-nothing from `apps/sibuna`. The daemon imports `console` and supplies narrow, library-owned interfaces for metric
-snapshots and a bounded storage-command mailbox. `Metrics` and `IncidentRecord` currently
-live in the application and must be extracted or adapted; no database-handle factory exists.
+The service kernel has no firewall or database knowledge. Console services use library-owned
+contracts and import nothing from `apps/sibuna`; the daemon composes these services and supplies
+metrics, bounded telemetry and the storage-command mailbox. Shared metrics live in `core`;
+incident samples cross a bounded `store` tap, while the daemon retains its durable incident
+queue and adapts storage results into protocol values. There is no database-handle factory.
 The storage thread remains the sole owner of `Persistent`, its allocator and database facade.
 Console SQL work is serialized through that mailbox with priorities, result-size bounds and
 per-tick quotas; it must not call `rebuild` or `publishEngine` itself. Heavy forensic queries
@@ -461,8 +462,8 @@ An arbitrary SQLite connection must not bypass Zaxonlite's commit/replication pa
 
 == Process model and the isolation contract
 
-The console runs on its own listener, its own bounded thread pool, and its own allocator
-arena. It shares the process and its CPU/cache/memory bandwidth with the data plane, plus controlled storage, metric, telemetry and command interfaces. The contract is stated as invariants and each has a test.
+The console runs on its own listener and bounded threads, with explicitly owned buffers
+and scratch arenas. It shares the process and its CPU/cache/memory bandwidth with the data plane, plus controlled storage, metric, telemetry and command interfaces. The contract is stated as invariants and each has a test.
 
 #invariant([I1], [No console code executes on a data-plane worker or connection thread. The
   daemon's `dispatch` has no console branch; console routes live on the console listener.])
@@ -744,11 +745,12 @@ Historical time windows use the bounded HTTP timeline/minute APIs, alongside the
 ```
 
 The hub keeps one bounded ring per topic (1,024 entries of at most 2 KB) and a cursor per
-subscriber; publishing never blocks and never allocates, and a slow consumer sees a `dropped`
-count rather than growing memory. This is a proposed bounded hub design informed by zenfmt's event-hub pattern.
+subscriber. Publication uses preallocated storage and never waits on network writes; a slow
+consumer sees a `dropped` count rather than growing memory. The ring and subscriber outbox are separate bounded owners.
 Fan-out runs on the hub thread, which writes into each connection's bounded send queue; a
-queue that is full drops the oldest delta for that connection and marks it, so a stalled
-tab costs one queue and nothing else. Subscribers are capped at 64 per console; the 65th
+full queue invalidates the affected topic, removes its queued frames and reserves a gap
+notice before surviving data. That topic resumes only with a new subscription epoch, so a
+stalled tab cannot complete a broken snapshot or grow an unbounded backlog. Subscribers are capped at 64 per console; the 65th
 receives a `503` at upgrade. Reserve separate HTTP/control capacity so 64 long-lived sockets cannot prevent login or API requests. Sequence numbers are per subscription with an epoch; filters start a new epoch/snapshot. A 2 KiB ring entry carries a bounded event summary, not a 64-record full-payload batch. Chunk snapshots with explicit begin/end watermarks; bound reassembly and resynchronize after a gap. Reconnect with jittered backoff, show stale age and keep the last good view.
 
 #let sequence() = cetz.canvas(length: 1mm, {
@@ -765,13 +767,13 @@ receives a `503` at upgrade. Reserve separate HTTP/control capacity so 64 long-l
     line((xa, -y), (xb, -y), mark: (end: "straight"), stroke: (paint: ink, thickness: 0.5pt, dash: if dashed { "dashed" } else { "solid" }))
     content(((xa + xb) / 2, -y + 2.2), text(size: 5.5pt, fill: ink)[#label])
   }
-  msg(9, 0, 1, [POST /console/api/session])
+  msg(9, 0, 1, [POST /console/api/login])
   msg(16, 1, 2, [read user; verify off-owner; store session])
   msg(23, 1, 0, [200 + session cookie + CSRF token], dashed: true)
-  msg(30, 0, 1, [GET /console/ws (Upgrade, same origin)])
+  msg(30, 0, 1, [GET /console/ws; then sub stats])
   msg(37, 1, 0, [snapshot, then 1 Hz stats deltas], dashed: true)
-  msg(44, 0, 1, [PUT /console/api/policies/p1 (X-Console-CSRF)])
-  msg(51, 1, 2, [UPDATE policies; INSERT console_audit (one transaction)])
+  msg(44, 0, 1, [POST /console/api/policies/edit + CSRF])
+  msg(51, 1, 2, [expected revision; policy + audit transaction])
   msg(58, 2, 3, [replicated commit; revision changed])
   msg(65, 3, 3, [tick: rebuild spare engine; publish], dashed: true)
   msg(72, 3, 1, [`policy` topic: rule p1 active on node n], dashed: true)
@@ -1474,7 +1476,7 @@ concern layout), wired by the existing `AppModules` helper.
   [Digest gate (in `zig build test`)], [`tools/console_assets.py check` hashes both build inputs (render sources, HTML snippets, the snippet renderer, CSS configuration, package lock and scripts) and outputs against `MANIFEST.md`; output digests alone cannot detect stale CSS. A plain `zig build` therefore needs no npm; only `console-assets` does, and CI runs it and checks the tree is clean.],
   [`zig build console-test`], [Golden tests of the interface module compiled natively (rendered HTML per page and per event), protocol round-trip tests, and the kernel's HTTP and WebSocket tests with an in-process client.],
   [`zig build console-e2e`], [Boots a daemon with `--console` on loopback, runs setup, login, a WebSocket subscription, a policy edit, and asserts the engine rebuild and the audit row; part of `zig build test` when console support is enabled.],
-  [`zig build console-impact`], [The isolation gate in “Process model and the isolation contract” through `benchmarks/console_impact.py`: builds a console-free and a console binary, runs compiled-out, disabled, idle and eight-dashboard daemons concurrently, interleaves wrk rounds in rotating order over admitted, challenged, denied and policy-reload workloads, and reports pass, fail or inconclusive with a bootstrap interval; `-- --quick` for a smoke run, `-- --cluster` for the three-node case.],
+  [`zig build console-impact`], [The isolation gate in “Process model and the isolation contract” through `benchmarks/console_impact.py`: builds a console-free and a console binary, runs one compiled-out, disabled, idle or eight-dashboard configuration at a time, interleaves wrk rounds in rotating order over admitted, challenged, denied and policy-reload workloads, and reports pass, fail or inconclusive with a bootstrap interval; `-- --quick` for a smoke run, `-- --cluster` for the three-node case.],
 )
 
 `package.json` pins exact compatible versions of `tailwindcss` 4, `@tailwindcss/cli` 4 and `daisyui` 5;
@@ -1542,8 +1544,8 @@ implementation, verification and benchmark gates are satisfied.
 ]
 #phase("Phase 3: Cluster")[
   The `nodes` table and page, health probes, node-to-node live buckets, leader awareness,
-  drain, per-node views on every page, and the cluster case of the impact gate on
-  `benchmarks/cluster.py`.
+  drain, per-node views on every page, and the cluster case of the impact gate through
+  `benchmarks/console_impact.py --cluster`.
 ]
 #phase("Phase 4: Operations")[
   API tokens, notification webhooks and syslog, exports, editable
@@ -1704,10 +1706,12 @@ and must not delay policy publication. Immutable node/boot/sequence/rule identit
 idempotent. Observations and their hour/day summaries commit together; arithmetic overflow
 makes a summary unavailable rather than wrapping or rounding an exact counter.
 
-Rule history uses the minute-retention setting. Indexed reads return at most 96 observations
+Rule history uses the minute-retention setting. Indexed reads return at most 48 observations
 plus lookahead per page, and comparisons retain their rule, node, policy-revision and UTC
-boundaries across continuation. Startup, cutover, clock changes and missing writes prevent a
-complete-coverage claim. Hits-today values and sparklines describe recorded intervals; comparing
+boundaries across continuation. The smaller read bound leaves room for the replicated
+transport's typed cell envelopes. Current-day summaries exclude open or future interval cohorts;
+older rollups without an exact ending minute use the bucket's end conservatively. Startup,
+cutover, clock changes and missing writes prevent a complete-coverage claim. Hits-today values and sparklines describe recorded intervals; comparing
 before and after an edit does not establish that the edit caused a change in traffic.
 
 == Management consistency
@@ -1753,9 +1757,9 @@ Committed status. Test entry points are `zig build test`, `console-test`, `conso
 HTML builds verify structural and documentation contracts. Exact test history belongs in git;
 measured records under `benchmarks/results/` carry source identity, conditions and uncertainty.
 
-Per-rule hit history across edits remains an implementation question under R16, independent
-of host-performance acceptance. Retained ranking comparisons follow the bounded archive
-read and merge contract above.
+Retained ranking and per-rule comparisons follow the bounded archive and observation
+contracts above. R16 requires frozen periods, revision-aware rule identity, visible missing
+coverage and private-tester exclusion; storage and live-daemon tests exercise these properties.
 Conditional panels without captured fields must remain unavailable. Browser review must cover
 all defined workflows and failure states, accessibility, representative device conditions and
 the two operator-comprehension tasks; an automated mechanical check cannot prove comprehension.
