@@ -1,18 +1,31 @@
-<form id="audit-filter" class="sb-settings-form sb-panel">
-    <fieldset{{ busy }}><legend class="font-bold">Filter recorded activity</legend>
-        <label for="audit-actor">Actor ID (blank for all)</label>
-        <input id="audit-actor" class="input input-bordered" name="actor"
-            inputmode="numeric" pattern="[0-9]*" maxlength="19" value="{{ actor }}">
-        <label for="audit-action">Action (exact name, blank for all)</label>
-        <input id="audit-action" class="input input-bordered" name="action" maxlength="48"
-            pattern="[a-z0-9._]*" placeholder="user.create" value="{{ action }}">
-        <label for="audit-days">Period</label>
-        <select id="audit-days" class="select select-bordered" name="days">
-            <option value="1"{{ day }}>Last 24 hours</option>
-            <option value="7"{{ week }}>Last 7 days</option>
-            <option value="30"{{ month }}>Last 30 days</option>
-            <option value="365"{{ year }}>Last 365 days</option>
-        </select>
-        <button class="btn btn-primary" type="submit">Apply audit filters</button>
+<form id="audit-filter" class="sb-panel sb-filters mt-6">
+    <fieldset{{ busy }}><legend class="font-bold mb-4">Filter recorded activity</legend>
+        <div class="sb-filter-grid sb-filter-three">
+            <div class="sb-filter-field">
+                <label for="audit-actor">Actor ID</label>
+                <input id="audit-actor" class="input input-bordered" name="actor"
+                    inputmode="numeric" pattern="[0-9]*" maxlength="19" value="{{ actor }}"
+                    placeholder="All actors">
+            </div>
+            <div class="sb-filter-field">
+                <label for="audit-action">Action</label>
+                <input id="audit-action" class="input input-bordered" name="action" maxlength="48"
+                    pattern="[a-z0-9._]*" placeholder="e.g. user.create" value="{{ action }}">
+            </div>
+            <div class="sb-filter-field">
+                <label for="audit-days">Period</label>
+                <select id="audit-days" class="select select-bordered" name="days">
+                    <option value="1"{{ day }}>Last 24 hours</option>
+                    <option value="7"{{ week }}>Last 7 days</option>
+                    <option value="30"{{ month }}>Last 30 days</option>
+                    <option value="365"{{ year }}>Last 365 days</option>
+                </select>
+            </div>
+        </div>
+        <p class="sb-note mt-4">Leave actor and action blank to include all values.
+            Actions match the exact recorded name.</p>
+        <div class="sb-filter-actions">
+            <button class="btn btn-primary" type="submit">Apply audit filters</button>
+        </div>
     </fieldset>
 </form>

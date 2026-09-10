@@ -72,7 +72,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         const label = std.fmt.bufPrint(&buffer, "Node {d}", .{source.node}) catch unreachable;
         try option(w, source.node, state.dashboard_node == source.node, label);
     };
-    try html.render(w, "</select><button class=\"btn btn-sm\">Apply view</button></form>" ++
+    try html.render(w, "</select></div><button class=\"btn\">Apply view</button></form>" ++
         "<p class=\"sb-note\">{{ contributing }} / {{ count }} nodes contribute. " ++
         "Stale, unavailable or clock-skewed nodes remain outside totals. " ++
         "Totals cover each contributing node's current boot. " ++

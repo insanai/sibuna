@@ -74,7 +74,8 @@ pub fn filter(
     w: *std.Io.Writer,
 ) std.Io.Writer.Error!void {
     const html = @import("html");
-    try html.render(w, "<label for=\"event-module\">Module</label>" ++
+    try html.render(w, "<div class=\"sb-filter-field\">" ++
+        "<label for=\"event-module\">Module</label>" ++
         "<select class=\"select select-bordered\" id=\"event-module\" name=\"module\">" ++
         "<option value=\"\">All recorded modules</option>", .{});
     for ([_]p.security.Module{ .inspection, .honeypot, .other }) |module| {
@@ -83,7 +84,14 @@ pub fn filter(
             .selected = if (model.module == module) " selected" else "",
         });
     }
-    try html.render(w, "</select>", .{});
+    try html.render(w, "</select></div>", .{});
+}
+
+pub fn period(
+    model: *const @import("events_state.zig").Model,
+    w: *std.Io.Writer,
+) std.Io.Writer.Error!void {
+    const html = @import("html");
     if (model.from) |from| {
         try html.render(w, "<p class=\"sb-note\">Security drill-down uses the fixed period ", .{});
         try @import("events_page.zig").timestamp(w, from);

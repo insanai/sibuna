@@ -132,7 +132,8 @@ button, input, select, textarea { font: inherit; }
 .sb-globe-controls { display: flex; flex-wrap: wrap; gap: 8px; }
 .sb-globe-mode [aria-pressed="true"] { background: var(--color-primary); color: var(--color-primary-content); }
 .sb-settings-form { display: grid; gap: 12px; max-width: 640px; margin-top: 24px; }
-.sb-settings-form .input, .sb-settings-form .textarea { width: 100%; }
+.sb-settings-form .input, .sb-settings-form .textarea, .sb-settings-form .select { width: 100%; }
+.sb-settings-form .sb-field { display: grid; gap: 8px; }
 .sb-policy-form { max-width: none; }
 .sb-rule-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
 .sb-rule-field { min-width: 0; display: grid; align-content: start; gap: 8px; }
@@ -182,4 +183,29 @@ button, input, select, textarea { font: inherit; }
 }
 @media (max-width: 640px) {
  .sb-security-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Field groups stay intact; container widths include the persistent navigation sidebar. */
+.sb-filters { container: filters / inline-size; }
+.sb-filter-grid { display: grid; gap: 16px 24px; }
+.sb-filter-field { display: grid; min-width: 0; gap: 8px; align-content: start; }
+.sb-filter-field label { font-size: 14px; line-height: 1.5; }
+.sb-filter-field .input, .sb-filter-field .select { width: 100%; min-width: 0; }
+.sb-filter-actions {
+ display: flex; justify-content: flex-end; margin-top: 20px; padding-top: 16px;
+ border-top: 1px solid var(--color-base-300);
+}
+.sb-filter-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.sb-filter-toolbar .sb-filter-field { flex: 0 1 320px; max-width: 100%; }
+@container filters (min-width: 32rem) {
+ .sb-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+ .sb-filter-wide { grid-column: span 2; }
+ .sb-filter-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@container filters (min-width: 52rem) {
+ .sb-filter-grid:not(.sb-filter-three) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+ .sb-filter-actions .btn, .sb-filter-toolbar > .btn { width: 100%; }
+ .sb-filter-toolbar .sb-filter-field { flex-basis: 100%; }
 }

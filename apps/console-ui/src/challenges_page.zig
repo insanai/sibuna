@@ -117,7 +117,8 @@ fn timing(snapshot: *const p.challenges.Snapshot, busy: bool, w: *Writer) Writer
     try html.render(w, "<section class=\"sb-panel mt-6\"><h2>Accepted client solve timing</h2>" ++
         "<p class=\"sb-note\">Untrusted client telemetry, measured before verification. " ++
         "Missing, invalid and over-one-hour durations are excluded from the histogram.</p>" ++
-        "<form id=\"challenges-bin\" class=\"grid gap-3 mt-4\">" ++
+        "<form id=\"challenges-bin\" class=\"sb-filter-toolbar mt-4\">" ++
+        "<div class=\"sb-filter-field\">" ++
         "<label for=\"challenge-bin\">Authenticated parameter partition</label>" ++
         "<select id=\"challenge-bin\" name=\"bin\" class=\"select w-full\">", .{});
     for (snapshot.bin_accepted, 0..) |count, i| {
@@ -131,7 +132,7 @@ fn timing(snapshot: *const p.challenges.Snapshot, busy: bool, w: *Writer) Writer
             .v0 = count,
         });
     }
-    try html.render(w, "</select><button class=\"btn\" type=\"submit\"", .{});
+    try html.render(w, "</select></div><button class=\"btn\" type=\"submit\"", .{});
     if (busy) try w.writeAll(" disabled");
     try html.render(w, ">View partition</button></form><table class=\"table mt-4\">" ++
         "<caption>Accepted durations in milliseconds</caption>" ++

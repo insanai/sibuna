@@ -5,6 +5,7 @@ const State = @import("state.zig").State;
 const escape = @import("render.zig").escape;
 const Model = @import("events_state.zig").Model;
 const Writer = std.Io.Writer;
+const filters_ui = @import("filter_form.zig");
 
 pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     const model = &state.events;
@@ -84,26 +85,50 @@ fn footer(model: *const Model, w: *Writer) Writer.Error!void {
 }
 
 fn filters(model: *const Model, w: *Writer) Writer.Error!void {
-    try html.render(w, "<section class=\"sb-panel mt-6\"><h2>Filter incidents</h2>" ++
-        "<form id=\"events-filter\" class=\"grid gap-3 sm:grid-cols-2 lg:grid-cols-6\">", .{});
+    try html.render(w, "<section class=\"sb-panel sb-filters mt-6\"><h2>Filter incidents</h2>" ++
+        "<form id=\"events-filter\"><div class=\"sb-filter-grid\">", .{});
     try @import("security_investigation.zig").filter(model, w);
-    try input(w, "category", "Category (exact)", model.category.slice(), 32);
-    try input(w, "country", "Country code, unknown or not_recorded", model.country.slice(), 12);
-    try input(w, "ip", "Client address (exact)", model.ip.slice(), 48);
-    try input(w, "path_prefix", "Path starts with", model.path.slice(), 256);
+    try filters_ui.input(w, .{
+        .name = "category",
+        .label = "Category",
+        .value = model.category.slice(),
+        .limit = 32,
+    });
+    try filters_ui.input(w, .{
+        .name = "country",
+        .label = "Country",
+        .value = model.country.slice(),
+        .limit = 12,
+        .hint = "event-filter-help",
+        .placeholder = "e.g. US",
+    });
+    try filters_ui.input(w, .{
+        .name = "ip",
+        .label = "Client address",
+        .value = model.ip.slice(),
+        .limit = 48,
+    });
+    try filters_ui.input(w, .{
+        .name = "path_prefix",
+        .label = "Path starts with",
+        .value = model.path.slice(),
+        .limit = 256,
+        .wide = true,
+    });
     var node: [10]u8 = undefined;
     const node_text = switch (model.node) {
         0 => "",
         else => std.fmt.bufPrint(&node, "{d}", .{model.node}) catch unreachable,
     };
-    try input(w, "node", "Node ID (optional)", node_text, 10);
-    try html.render(
-        w,
-        "<div class=\"grid gap-2 min-w-0\"><label for=\"hours\">Time " ++
-            "range</label>" ++
-            "<select id=\"hours\" name=\"hours\" class=\"select select-bordered w-full\">",
-        .{},
-    );
+    try filters_ui.input(w, .{
+        .name = "node",
+        .label = "Node ID",
+        .value = node_text,
+        .limit = 10,
+        .placeholder = "All nodes",
+    });
+    try html.render(w, "<div class=\"sb-filter-field\"><label for=\"hours\">Time range</label>" ++
+        "<select id=\"hours\" name=\"hours\" class=\"select select-bordered\">", .{});
     inline for (.{
         .{ 0, "All recorded time" },
         .{ 1, "Last hour" },
@@ -117,10 +142,15 @@ fn filters(model: *const Model, w: *Writer) Writer.Error!void {
             .v2 = option[1],
         });
     }
-    try html.render(w, "</select></div><button type=\"submit\" " ++
-        "class=\"btn btn-primary self-end sm:col-span-2 lg:col-span-1\"", .{});
-    if (model.busy) try w.writeAll(" disabled");
-    try html.render(w, ">Apply filters</button></form></section>", .{});
+    try html.render(w, "</select></div></div>" ++
+        "<p id=\"event-filter-help\" class=\"sb-note mt-4\">" ++
+        "Leave fields blank to include all values. Category and address match exactly. " ++
+        "Country accepts a two-letter code, unknown or not_recorded.</p>", .{});
+    try @import("security_investigation.zig").period(model, w);
+    try html.render(w, "<div class=\"sb-filter-actions\"><button type=\"submit\" " ++
+        "class=\"btn btn-primary\"{{ disabled }}>Apply filters</button></div></form></section>", .{
+        .disabled = if (model.busy) " disabled" else "",
+    });
 }
 
 fn incident(row: *const p.events.Row, w: *Writer) Writer.Error!void {
@@ -210,31 +240,6 @@ fn geography(value: *const p.events.country.Mapping, w: *Writer) Writer.Error!vo
             .v0 = value.generation.slice(),
         });
     } else try w.writeAll(" · Multiple GeoIP generations");
-}
-
-fn input(
-    w: *Writer,
-    name: []const u8,
-    label: []const u8,
-    value: []const u8,
-    limit: usize,
-) Writer.Error!void {
-    try html.render(w, "<div class=\"grid gap-2 min-w-0\">", .{});
-    try html.render(
-        w,
-        "<label for=\"{{ v0 }}\">{{ v1 }}</label><input id=\"{{ v2 }}\" " ++
-            "name=\"{{ v3 }}\" " ++
-            "class=\"input input-bordered w-full\" maxlength=\"{{ v4 }}\" value=\"",
-        .{
-            .v0 = name,
-            .v1 = label,
-            .v2 = name,
-            .v3 = name,
-            .v4 = limit,
-        },
-    );
-    try escape(w, value);
-    try html.render(w, "\"></div>", .{});
 }
 
 fn button(w: *Writer, action: []const u8, label: []const u8, disabled: bool) Writer.Error!void {

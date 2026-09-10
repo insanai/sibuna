@@ -35,7 +35,8 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
 
 fn window(state: *const State, w: *Writer) Writer.Error!void {
     const model = &state.security_overview;
-    try html.render(w, "<form id=\"security-window\" class=\"flex flex-wrap gap-2 my-3\">" ++
+    try html.render(w, "<form id=\"security-window\" class=\"sb-filter-toolbar my-3\">" ++
+        "<div class=\"sb-filter-field\">" ++
         "<label for=\"security-hours\">Recorded findings period</label>" ++
         "<select id=\"security-hours\" name=\"hours\" class=\"select select-bordered\">", .{});
     const labels = [_][]const u8{ "1 hour", "24 hours", "7 days", "30 days" };
@@ -46,7 +47,7 @@ fn window(state: *const State, w: *Writer) Writer.Error!void {
             .selected = if (hours == model.hours) " selected" else "",
         });
     }
-    try html.render(w, "</select><button class=\"btn btn-sm\">Apply period</button></form>" ++
+    try html.render(w, "</select></div><button class=\"btn\">Apply period</button></form>" ++
         "<p class=\"sb-note\">Retained findings from ", .{});
     try timestamp(w, model.request.from);
     try w.writeAll(" up to ");
