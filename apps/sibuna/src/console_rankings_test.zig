@@ -60,6 +60,18 @@ test "complete ranking publication owns queued chunks and survives restart and m
     }
     const fx = try Fixture.open(directory);
     defer fx.close();
+    try @import("console_store_test.zig").policySession(fx);
+    const query: p.ranking_history.Query = .{
+        .session_digest = @splat(1),
+        .observed_at = 400,
+        .request = .{ .from_minute = 0, .until_minute = 5, .node = 7 },
+    };
+    const history = try fx.run(.{ .rankings_query = query });
+    defer p.releaseResult(history, t.allocator);
+    try t.expectEqualSlices(u8, encoded, history.ranking_history.payload.slice());
+    try t.expect(history.ranking_history.next == null);
+    try t.expectEqual(@as(u64, 2), history.ranking_history.cursor.?.minute);
+    try canceledHistory(fx, query);
     try t.expectEqual(@as(u64, 19), try scalar(fx, "SELECT count(*) FROM console_rank_chunks"));
     try t.expectEqual(@as(u64, 0), try scalar(fx, "SELECT count(*) FROM console_rank_pending"));
     try t.expectEqual(
@@ -74,6 +86,19 @@ test "complete ranking publication owns queued chunks and survives restart and m
         @as(u64, 0),
         try scalar(fx, "SELECT bytes FROM console_rank_usage WHERE id=1"),
     );
+}
+
+fn canceledHistory(fx: *Fixture, query: p.ranking_history.Query) !void {
+    const ticket = try fx.owner.console_mailbox.submit(
+        t.io,
+        .{ .rankings_query = query },
+        .background,
+    );
+    try fx.owner.tick();
+    // Abandoning a completed result must free its full archive, not just the envelope.
+    try fx.owner.console_mailbox.abandon(t.io, ticket);
+    _ = try fx.run(.{ .logout = .{ .digest = @splat(1) } });
+    try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .rankings_query = query })).failed);
 }
 
 fn publish(fx: *Fixture, bytes: []const u8) !void {
@@ -189,4 +214,69 @@ test "a conflicting archive cannot replace the published node boot minute" {
     _ = try fx.run(.{ .rankings_prune = 1000 });
     try t.expectEqual(@as(u64, 1), try scalar(fx, "SELECT count(*) FROM console_rank_chunks"));
     try t.expectEqual(@as(u64, 9216), try scalar(fx, "SELECT bytes FROM console_rank_usage"));
+}
+
+test "ranking history pages equal minutes by digest and filters retired nodes" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try Fixture.open(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/rank-pages",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try @import("console_store_test.zig").policySession(fx);
+    for ([_]u32{ 7, 8, 9 }) |node| try publishSmall(fx, node);
+    var query: p.ranking_history.Query = .{
+        .session_digest = @splat(1),
+        .observed_at = 400,
+        .request = .{ .from_minute = 1, .until_minute = 5 },
+    };
+    var seen: u16 = 0;
+    for (0..3) |index| {
+        const result = try fx.run(.{ .rankings_query = query });
+        defer p.releaseResult(result, t.allocator);
+        const page = result.ranking_history;
+        const archive = try codec.decode(page.payload.slice());
+        const bit = @as(u16, 1) << @as(u4, @intCast(archive.identity.node));
+        try t.expect(seen & bit == 0);
+        seen |= bit;
+        try t.expectEqual(index < 2, page.next != null);
+        query.request.before = page.next;
+    }
+    try t.expectEqual(@as(u16, 0b1110000000), seen);
+    query.request.node = 8;
+    const selected = try fx.run(.{ .rankings_query = query });
+    defer p.releaseResult(selected, t.allocator);
+    try t.expectEqual(@as(u32, 8), (try codec.decode(
+        selected.ranking_history.payload.slice(),
+    )).identity.node);
+    try t.expect(selected.ranking_history.next == null);
+    query.request.node = 10;
+    const empty = try fx.run(.{ .rankings_query = query });
+    defer p.releaseResult(empty, t.allocator);
+    try t.expectEqual(@as(usize, 0), empty.ranking_history.payload.len);
+    try t.expect(empty.ranking_history.cursor == null);
+}
+
+fn publishSmall(fx: *Fixture, node: u32) !void {
+    var archive: codec.Archive = .{
+        .identity = .{ .node = node, .boot = @splat(1) },
+        .minute = .{ .minute = 2, .first_second = 120, .last_second = 120 },
+    };
+    try archive.minute.paths.add("/retained");
+    var buffer: [codec.max_bytes]u8 = undefined;
+    const bytes = try codec.encode(&archive, &buffer);
+    const id = digest(bytes);
+    try t.expect(try fx.run(.{ .rankings_begin = .{
+        .digest = id,
+        .total_bytes = @intCast(bytes.len),
+        .now = 200,
+    } }) == .command_recorded);
+    try send(fx, id, bytes, 0);
+    try t.expect(try fx.run(.{ .rankings_finish = .{
+        .digest = id,
+        .now = 201,
+    } }) == .command_recorded);
 }

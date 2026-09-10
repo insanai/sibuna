@@ -397,6 +397,7 @@ pub const App = struct {
             .setup_status => return self.setupReply(context),
             .challenges,
             .rankings,
+            .ranking_history,
             .timeline,
             .minutes,
             .minute_summary,

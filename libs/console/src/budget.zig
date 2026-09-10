@@ -64,7 +64,11 @@ pub const Budget = struct {
             @as(u64, self.peers) * (@import("peer_client.zig").allocation_bytes +
                 @sizeOf(@import("peer_query.zig").Mailbox)) +
             topic_bytes + traffic_bytes + query_bytes + evidence_bytes + collector_bytes +
-            2 * @as(u64, self.geoip_generation_bytes);
+            2 * @as(u64, self.geoip_generation_bytes) +
+            // Completed mailbox payloads and concurrent HTTP history encoders are owned.
+            (32 + @as(u64, self.slots)) *
+                @sizeOf(@import("console_protocol").ranking_history.Payload) +
+            @as(u64, self.slots) * @import("ranking_history_routes.zig").response_bytes;
     }
 };
 

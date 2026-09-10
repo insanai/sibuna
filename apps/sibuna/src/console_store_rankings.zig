@@ -10,6 +10,16 @@ const util = @import("console_store.zig");
 const text = util.text;
 const integer = util.integer;
 
+pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
+    return switch (request) {
+        .rankings_begin => |input| begin(owner, input),
+        .rankings_chunk => |input| chunk(owner, input),
+        .rankings_finish => |input| finish(owner, input),
+        .rankings_prune => |now| prune(owner, now),
+        else => unreachable,
+    };
+}
+
 pub fn begin(owner: *Persistent, input: wire.Begin) !p.StorageResult {
     if (input.total_bytes < 92 or input.total_bytes > wire.max_bytes or
         input.now > std.math.maxInt(i64)) return .{ .failed = .invalid_input };

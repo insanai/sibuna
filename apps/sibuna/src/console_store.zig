@@ -71,15 +71,6 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
         .users_change => |input| users.change(owner, input, owner.nowSeconds()),
         .retention_acquire => |input| retention.acquire(owner, input, owner.nowSeconds()),
         .retention_prune => |input| retention.prune(owner, input, owner.nowSeconds()),
-        .minutes_write => |input| @import("console_store_minutes.zig").write(owner, input),
-        .minutes_query => |input| @import("console_store_minutes.zig").query(owner, input),
-        .minutes_summary => |input| @import("console_store_minute_summary.zig")
-            .query(owner, input),
-        .minutes_prune => |now| @import("console_store_minutes.zig").prune(owner, now),
-        .rankings_begin => |input| @import("console_store_rankings.zig").begin(owner, input),
-        .rankings_chunk => |input| @import("console_store_rankings.zig").chunk(owner, input),
-        .rankings_finish => |input| @import("console_store_rankings.zig").finish(owner, input),
-        .rankings_prune => |now| @import("console_store_rankings.zig").prune(owner, now),
         .policy_read => |input| @import("console_policy_read.zig").read(owner, input),
         .policy_edit => |input| @import("console_policy_write.zig").edit(owner, input),
         .inspection_edit => |input| @import("console_inspection.zig").edit(owner, input),
@@ -93,6 +84,25 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
         .geo_batch => |input| geo.batch(owner, input, owner.nowSeconds()),
         .geo_activate => |input| geo.activate(owner, input, owner.nowSeconds()),
         .geo_read => |input| @import("console_store_geo.zig").read(owner, input),
+        else => observations(owner, request),
+    };
+}
+
+/// Retained telemetry shares background ownership without inflating management dispatch.
+fn observations(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
+    return switch (request) {
+        .minutes_write => |input| @import("console_store_minutes.zig").write(owner, input),
+        .minutes_query => |input| @import("console_store_minutes.zig").query(owner, input),
+        .minutes_summary => |input| @import("console_store_minute_summary.zig")
+            .query(owner, input),
+        .minutes_prune => |now| @import("console_store_minutes.zig").prune(owner, now),
+        .rankings_query => |input| @import("console_store_ranking_history.zig")
+            .query(owner, input),
+        .rankings_begin,
+        .rankings_chunk,
+        .rankings_finish,
+        .rankings_prune,
+        => @import("console_store_rankings.zig").execute(owner, request),
         else => executeMore(owner, request),
     };
 }

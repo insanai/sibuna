@@ -24,6 +24,9 @@ pub fn fail(context: *Context, status: std.http.Status, code: []const u8) Contex
 }
 
 fn failureHint(code: []const u8) []const u8 {
+    if (std.mem.eql(u8, code, "RANKHISTORY"))
+        return "Retained ranking read failed. Check access, period and storage health, " ++
+            "then restart the scan. Missing archives are not zero traffic.";
     if (std.mem.eql(u8, code, "CONSOLEPEERQUERY"))
         return "The selected node could not supply this view. Check peer health and retry. " ++
             "Unavailable history is not zero traffic.";
