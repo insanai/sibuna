@@ -111,6 +111,8 @@ fn renderMember(state: *const State, value: p.nodes.Member, w: *Writer) Writer.E
     }
     const behind = value.applied_revision < peers.committed;
     var slots: [48]u8 = undefined;
+    var lag_text: [64]u8 = undefined;
+    const lag = value.decided_slot -| value.applied_slot;
     try html.render(w, @embedFile("snippets/nodes-member.html"), .{
         .node = value.node,
         .health = if (value.node == peers.self) "serving this console" else switch (info.health) {
@@ -134,6 +136,12 @@ fn renderMember(state: *const State, value: p.nodes.Member, w: *Writer) Writer.E
             value.applied_slot,
             value.decided_slot,
         }) catch "?",
+        .lag = if (value.last_seen == 0)
+            "unobserved"
+        else if (lag == 0)
+            "none: every decided slot is applied"
+        else
+            std.fmt.bufPrint(&lag_text, "{d} decided slots not yet applied", .{lag}) catch "?",
         .seen = if (value.last_seen == 0) "never" else "recorded",
         .probe = probe,
     });
