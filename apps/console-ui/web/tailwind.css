@@ -224,5 +224,5 @@ button, input, select, textarea { font: inherit; }
 @layer components {
     .sb-comparison-actions { grid-column: 1 / -1; }
     .sb-comparison td { text-align: right; font-variant-numeric: tabular-nums; }
-    .sb-comparison .sb-deviation { background: color-mix(in srgb, var(--sb-decision) 8%, transparent); }
+    .sb-comparison .sb-deviation, .sb-tile.sb-deviation { background: color-mix(in srgb, var(--sb-decision) 8%, transparent); }
 }

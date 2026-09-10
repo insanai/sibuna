@@ -363,13 +363,19 @@ second intervals and current-minute path rankings. Remote views use the same aut
 peer connection; unavailable peers remain unavailable, and a restart invalidates old history
 cursors. Minute history has its own node selection and keeps per-node rows distinct.
 
+Traffic tiles default to the last 24 hours of retained closed-minute records across the
+selected nodes. Choose an hour, seven or ninety days, or **Live boot totals**. Yesterday
+arrows and percentages require complete matching coverage from every selected node; missing
+history stays unavailable. Automatic refresh retains the prior completed scan with its age
+while reading the next one. The globe and sparklines keep their independent live 60-second window.
+
 **Compare retained traffic** places two closed minute windows side by side: the same window
 yesterday, the previous period, or another node. Choose the duration and how many minutes ago
 the window ended. Each batch summarizes up to 1,536 stored records per side, enough for
 a 24-hour window without overlapping restarts; larger scans use Continue. Counts, elapsed
 coverage and missing
 history remain visible; percentages require complete matching coverage. These period counts
-are separate from the live boot totals, and historical origin-response observation mode is not
+are independent of the primary period selection, and historical origin-response observation mode is not
 recorded by the minute format.
 
 Drain, resume and clear local bans still act only on the serving node,

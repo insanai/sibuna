@@ -60,6 +60,7 @@ fn page(state: *const State, w: *Writer) Writer.Error!void {
         );
     }
     try @import("dashboard_scope.zig").render(state, w);
+    try @import("traffic_period_page.zig").controls(state, w);
     try tiles(state, w);
     try @import("comparison_page.zig").render(state, w);
     try html.render(w, "<section class=\"sb-panels\"><article class=\"sb-panel\">", .{});
@@ -75,7 +76,7 @@ fn page(state: *const State, w: *Writer) Writer.Error!void {
     try @import("rankings_controller.zig").render(state, w);
     try html.render(w, "<footer class=\"sb-footer sb-note\">" ++
         "<span>Sibuna Console · selected live view</span>" ++
-        "<span>Totals since the contributing node boots</span>" ++
+        "<span>Each panel states its observation window</span>" ++
         "</footer></main>", .{});
 }
 
@@ -305,6 +306,7 @@ test "forward auth and older snapshots never present unobserved origin errors as
     defer t.allocator.destroy(state);
     state.* = .{ .phase = .dashboard };
     state.stats = std.mem.zeroes(@import("console_protocol").StatsSnapshot);
+    state.traffic_period.hours = 0;
     state.stats.?.origin_4xx = 4;
     state.stats.?.origin_5xx = 9;
     var buffer: [8192]u8 = undefined;

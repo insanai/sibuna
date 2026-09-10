@@ -134,6 +134,9 @@ fn finish() void {
     live.sync(&state, outbox()) catch setMessage("Live connection unavailable. Reload to retry.");
     if (state.fullAccess() and !state.hidden)
         command(.{ .op = "timer", .id = "age", .delay_ms = 1000 }) catch unreachable;
+    @import("traffic_period_controller.zig").sync(&state, outbox()) catch
+        state.traffic_period.message.set("TRAFFIC001: Retained window unavailable. " ++
+            "Refresh the period after observations recover.") catch unreachable;
     command_writer.writeByte(']') catch unreachable;
     commands_length = command_writer.buffered().len;
     // Enrollment markup contains a seed or recovery values; erase its old buffer tail.

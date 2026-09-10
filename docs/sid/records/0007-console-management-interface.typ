@@ -1722,10 +1722,12 @@ identifies the following concrete gaps; the status remains Proposed.
     forms now configure minute, ranking,
     incident and audit days within their capacity limits, with explicit deletion confirmation.],
   [Historical analysis], [The separate retained comparison panel supports explicit period and node comparisons.
-    Primary Traffic tiles still show boot totals; default 24-hour period tiles and their yesterday
-    deviations are not implemented. Complete ranking sketches are retained and their merge primitive
+    Primary Traffic tiles now default to a closed-minute 24-hour window with yesterday deviations
+    gated by every selected node’s coverage. An explicit live-boot view remains available.
+    Complete ranking sketches are retained and their merge primitive
     is tested, but historical ranking query/render workflows remain absent. Per-rule hit history
-    before and after edits is not recorded. These are implementation gaps under R1, R9 and R16,
+    before and after edits is not recorded. Historical rankings and rule comparisons remain
+    implementation gaps under R16,
     not performance-host limitations.],
   [Acceptance], [The corrected dashboard workload harness has only an inconclusive smoke result.
     Full controlled-host impact acceptance and comprehensive browser acceptance remain open.
@@ -5137,3 +5139,50 @@ the application composition function remains below its structural limit.
 This increment addresses bounded historical comparison queries. It does not implement
 the primary Traffic tiles' default 24-hour selection, historical path-ranking queries or
 per-rule hit history, and does not close the impact or browser acceptance gates.
+
+
+== Default daily Traffic tiles (2026-09-10)
+
+The primary Traffic tiles now default to the selected nodes’ last 24 hours of retained
+closed-minute records. The control also offers one hour, seven days, ninety days and explicit
+live boot totals. The same exact arithmetic serves the primary tiles and the deliberate
+comparison table; arrow formatting and deviation tinting share one component. Every selected
+node contributes to the completeness check, including configured nodes without history.
+No available subset is silently presented as complete, and absent historical proxy mode
+keeps origin-response counts and deviations marked “Not recorded” or “Not available”.
+
+The controller issues one current summary read at a time and freezes both the current and
+yesterday ranges. Pages retain owned cursors and generation tickets across retries. Read
+allowance exhaustion delays continuation for a minute; storage failures retry after five
+seconds; invalid pages require explicit refresh. The primary controls reuse the existing
+responsive filter toolbar. Busy submissions cannot create another current scan. A node or
+period change invalidates old results; sign-out resets the complete retained model.
+
+After a scan finishes, another begins one minute later. The previous completed snapshot
+remains visible with its range and age until the replacement finishes. Period totals are
+therefore minute-history observations, not a claim of 1 Hz persistence; the globe, request
+timeline and sixty-point sparklines keep their live observation cadence. Long retained scans
+and rate-limit waits are visible. Native fixtures cover complete daily values and incomplete
+yesterday coverage; mathematical and controller tests cover missing nodes, overflow, old
+sessions, retry pacing and retaining the displayed snapshot during refresh.
+
+Chrome verified the ReleaseFast build against the retained disposable database. The default
+daily view and the independent 24-hour comparison both counted 5,635 requests, with incomplete
+coverage and unavailable yesterday percentages. Live boot totals and the one-hour selection
+changed the displayed scope. At a 390-pixel viewport, the period controls each measured
+350 by 44 pixels with no document overflow; event filters also retained their alignment and
+unsent country value. Policy and Events navigation kept the desktop sidebar and serving-node
+identity. Filtering Australia returned the matching retained incidents.
+
+Two 512-request local traffic batches each returned 200 policy denials and 312 rate-limit
+responses. Chrome rendered Australia and US activity toward the configured Singapore node,
+and connection and arrow geometry changed between animation frames. Sign-out returned the
+authentication-only shell with no globe or navigation. Chrome reported no warnings or errors
+during these checks. This is named-workflow evidence, not comprehensive browser acceptance.
+
+The Debug fixture exceeded its 60-second startup allowance while replaying the 674 MiB test
+directory's journal. A process sample located the work in Zaxonlite journal replay and durable
+state assertions; the ReleaseFast fixture started successfully and subsequently stopped
+cleanly. No production startup bound is inferred from this browser fixture.
+
+Historical rankings, per-rule hit history and the remaining release gates keep SID 0007 Proposed.

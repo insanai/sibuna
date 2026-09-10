@@ -29,6 +29,8 @@ fn run(io: std.Io, alloc: std.mem.Allocator, update: bool) !void {
         "required-totp",
         "security-recorded",
         "kiosk-security-recorded",
+        "traffic-period",
+        "traffic-period-partial",
     };
     inline for (variants, 0..) |name, i| {
         configure(&state, .dashboard);
@@ -62,7 +64,9 @@ fn configure(state: *State, phase: Phase) void {
 
 fn variant(state: *State, index: usize) void {
     switch (index) {
+        0 => state.traffic_period.hours = 0,
         1 => {
+            state.traffic_period.hours = 0;
             state.stale = true;
             state.received_at = 172770;
         },
@@ -79,6 +83,7 @@ fn variant(state: *State, index: usize) void {
                 .counts = .{ .admitted = if (i == 0) 1200 else 1000 },
             };
         },
+        9, 10 => period(state, index == 10),
         3, 4 => {
             state.kiosk = true;
             state.kiosk_expires = 176400;
@@ -131,4 +136,24 @@ fn check(
         );
         return error.GoldenMismatch;
     }
+}
+
+fn period(state: *State, partial: bool) void {
+    state.stats.?.minute_history.available = true;
+    const model = &state.traffic_period;
+    model.configure(&.{1}, 2879) catch unreachable;
+    for (&model.windows[0], 0..) |*window, side| {
+        window.rows = 1440;
+        window.complete_rows = 1440;
+        window.observed_ms = 86400000;
+        window.finished = true;
+        window.counts.admitted = if (side == 0) 12345 else 8230;
+    }
+    if (partial) model.windows[0][1].complete_rows -= 1;
+    model.published = .{
+        .totals = .{ model.totals(0) catch unreachable, model.totals(1) catch unreachable },
+        .until = model.until,
+        .completed_at = state.browser_time - 1,
+    };
+    model.completed_at = state.browser_time - 1;
 }

@@ -103,6 +103,15 @@ class Interface:
 
 
 def comparison_view(ui):
+    assert 'Traffic period' in ui.html
+    assert 'value="24" selected' in ui.html
+    period_queries = [r for r in ui.requests if r["id"].startswith("traffic-period-")]
+    assert period_queries and all(r["path"] == "/console/api/minutes/summary"
+                                  for r in period_queries)
+    assert 'Yesterday: Not available' in ui.html
+    ui.event(1, {"action": "traffic-period", "fields": {"hours": "0"}})
+    assert 'Live totals since the contributing node boots' in ui.html
+    ui.event(1, {"action": "traffic-period", "fields": {"hours": "24"}})
     ui.event(1, {"action": "compare-toggle", "fields": {}})
     assert 'Compare periods and nodes' in ui.html
     start = len(ui.requests)

@@ -61,7 +61,8 @@ fn controls(state: *const State, w: *Writer) Writer.Error!void {
         "<button class=\"btn btn-primary\">" ++
         "Compare</button></div></fieldset></form><p class=\"sb-note\">" ++
         "Uses closed minute intervals. End 0 means the last closed minute. " ++
-        "Each comparison freezes its UTC boundaries; boot totals above stay live.</p>");
+        "Each comparison freezes its UTC boundaries; " ++
+        "the Traffic period above is independent.</p>");
 }
 
 fn nodes(
@@ -134,11 +135,7 @@ fn metric(state: *const State, w: *Writer, key: comparison.Metric) Writer.Error!
     const origin = key == .origin_4xx or key == .origin_5xx;
     const change: comparison.Deviation = if (origin or state.comparison.failed[0] or
         state.comparison.failed[1]) .unavailable else comparison.deviation(a, b, key);
-    const tinted = switch (change) {
-        .percent => |percent| @abs(percent) >= 25,
-        .new => true,
-        .unavailable => false,
-    };
+    const tinted = @import("deviation_display.zig").tinted(change);
     try html.render(w, "<tr class=\"{{ tone }}{{ tint }}\"><th>{{ label }}</th><td>", .{
         .tone = @import("outcome_sparkline.zig").tone(key),
         .tint = if (tinted) " sb-deviation" else "",
@@ -162,14 +159,7 @@ fn metric(state: *const State, w: *Writer, key: comparison.Metric) Writer.Error!
         try w.writeAll("Not available");
     } else try format.write(w, comparison.value(b.counts, key));
     try w.writeAll("</td><td>");
-    switch (change) {
-        .unavailable => try w.writeAll("Not available"),
-        .new => try w.writeAll("↑ New"),
-        .percent => |percent| try w.print("{s} {d:.1}%", .{
-            if (percent > 0) "↑" else if (percent < 0) "↓" else "→",
-            @abs(percent),
-        }),
-    }
+    try @import("deviation_display.zig").write(w, change);
     try w.writeAll("</td></tr>");
 }
 

@@ -64,6 +64,7 @@ pub fn select(state: *State, text: []const u8) !void {
         if (!found) return error.UnknownNode;
     }
     state.dashboard_node = if (node == 0) null else node;
+    state.traffic_period.invalidate();
     state.timeline.clear();
     state.rankings.clear();
     state.stats = null;

@@ -155,13 +155,21 @@ The navigation and mobile header identify the serving console node independently
 selected traffic source. Local commands remain per node. `zig build console-impact` runs the data-plane isolation matrix (`-- --quick` for
 a smoke run) and writes `benchmarks/results/console-impact-latest.json`.
 
+Traffic tiles open on the last 24 hours of retained closed-minute records for the selected
+nodes. The period control also offers an hour, seven or ninety days, and live boot totals.
+Yesterday deviations require complete matching coverage from every selected node. The globe
+and sparklines still describe their separate live 60-second window. A retained scan refreshes
+one minute after completion, keeping its previous values and age visible until replacement;
+changing the source or period discards the old scope. Missing history never becomes zero.
+
 *Compare retained traffic* displays two closed minute windows beside each other: the same
 window yesterday, the preceding period, or a second node. Duration and end-offset controls
 freeze both UTC ranges. Each action reads at most sixteen compact pages per side, with
 96 stored records per page. This covers a 24-hour window without overlapping restarts in one
 batch; Continue retains the same boundaries for longer scans. Complete coverage, incomplete coverage and missing history remain
 explicit. Rate percentages require complete non-overlapping intervals in equal UTC windows,
-normalized by observed milliseconds; a zero reference with new traffic shows “New”. Live boot totals remain separate.
+normalized by observed milliseconds; a zero reference with new traffic shows “New”.
+The primary Traffic period remains independent.
 The minute format does not record historical proxy mode, so origin-response comparisons remain
 unavailable rather than interpreting forward-auth zeros as observed responses.
 

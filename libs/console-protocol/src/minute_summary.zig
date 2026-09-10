@@ -179,13 +179,22 @@ pub const Deviation = union(enum) { unavailable, new, percent: f64 };
 pub fn deviation(current: Window, previous: Window, key: Metric) Deviation {
     if (!current.covered() or !previous.covered() or
         current.until - current.from != previous.until - previous.from) return .unavailable;
-    const a = value(current.counts, key);
-    const b = value(previous.counts, key);
+    return rateDeviation(
+        .{ .value = value(current.counts, key), .elapsed_ms = current.observed_ms },
+        .{ .value = value(previous.counts, key), .elapsed_ms = previous.observed_ms },
+    );
+}
+
+pub const RateObservation = struct { value: u64, elapsed_ms: u64 };
+pub fn rateDeviation(current: RateObservation, previous: RateObservation) Deviation {
+    if (current.elapsed_ms == 0 or previous.elapsed_ms == 0) return .unavailable;
+    const a = current.value;
+    const b = previous.value;
     if (b == 0) return if (a == 0) .{ .percent = 0 } else .new;
     // Equal UTC windows still have millisecond sampler jitter. Compare observed rates;
     // exact wide products preserve small deltas above 2^53 before floating-point display.
-    const left = @as(u128, a) * previous.observed_ms;
-    const right = @as(u128, b) * current.observed_ms;
+    const left = @as(u128, a) * previous.elapsed_ms;
+    const right = @as(u128, b) * current.elapsed_ms;
     const difference: f64 = @floatFromInt(if (left >= right) left - right else right - left);
     return .{ .percent = difference / @as(f64, @floatFromInt(right)) *
         @as(f64, if (left >= right) 100 else -100) };
