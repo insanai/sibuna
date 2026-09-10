@@ -252,7 +252,7 @@ def check(binary):
             port = h.port()
             data_port = h.port()
             proc = h.start(binary, str(root / "data"), port, log,
-                           extra=("--port", str(data_port)))
+                           extra=("--port", str(data_port), "--shield"))
             ui = None
             try:
                 credentials = bootstrap.change(h, port, temporary, "wasm live test passphrase")

@@ -37,9 +37,11 @@ pub fn render(state: *const @import("state.zig").State, w: *Writer) Writer.Error
             "<p>No applied policy snapshot is available.</p></main>");
         return;
     }
+    // The event-local fixed arena owns this tree. Wrapping it in another arena
+    // wastes its bounded space on geometric chunk growth for eight hourly arrays.
     var memory: [64 * 1024]u8 = undefined;
     var fixed = std.heap.FixedBufferAllocator.init(&memory);
-    const parsed = std.json.parseFromSlice(
+    const parsed = std.json.parseFromSliceLeaky(
         std.json.Value,
         fixed.allocator(),
         state.policies.page.slice(),
@@ -47,9 +49,8 @@ pub fn render(state: *const @import("state.zig").State, w: *Writer) Writer.Error
     ) catch {
         return html.render(w, "<p>Could not read policies. Refresh to retry.</p></main>", .{});
     };
-    defer parsed.deinit();
     var rows: [8]Row = undefined;
-    const page = data.page(parsed.value, &rows) catch {
+    const page = data.page(parsed, &rows) catch {
         return html.render(w, "<p>Invalid policy snapshot. Refresh to retry.</p></main>", .{});
     };
     try html.render(w, @embedFile("snippets/policies-summary.html"), .{
@@ -66,7 +67,7 @@ pub fn render(state: *const @import("state.zig").State, w: *Writer) Writer.Error
     try button(w, "policies-next", "Next rules", state.policies.busy or
         state.policies.stale or page.next == null);
     try html.render(w, "</div>", .{});
-    try @import("inspection_form.zig").render(state, parsed.value, w, fixed.allocator());
+    try @import("inspection_form.zig").render(state, parsed, w, fixed.allocator());
     try html.render(w, @embedFile("snippets/policies-test.html"), .{
         .path = if (state.policies.path.len == 0) "/" else state.policies.path.slice(),
         .ip = if (state.policies.ip.len == 0) "8.8.8.8" else state.policies.ip.slice(),
@@ -160,4 +161,45 @@ test "policy controls retain their button types under escaped template substitut
     const navigation = "data-action=\"policies\" disabled";
     try t.expect(std.mem.indexOf(u8, writer.buffered(), navigation) != null);
     try t.expect(std.mem.indexOf(u8, writer.buffered(), "&quot;") == null);
+}
+
+test "a full applied rule page renders all hourly cohorts within its fixed scratch" {
+    const t = std.testing;
+    const State = @import("state.zig").State;
+    const state = try t.allocator.create(State);
+    defer t.allocator.destroy(state);
+    state.* = .{ .phase = .policies };
+    var json: Writer = .fixed(&state.policies.page.data);
+    try json.writeAll("{\"committed\":\"2\",\"applied\":\"2\",\"total\":9," ++
+        "\"waf\":true,\"default_difficulty\":8,\"default_algorithm\":\"hashcash\",\"rows\":[");
+    for (0..8) |index| {
+        if (index != 0) try json.writeByte(',');
+        try std.json.Stringify.value(.{
+            .index = index,
+            .name = "Default rule",
+            .action = "deny",
+            .path = "/private",
+            .user_agent = "",
+            .truncated = false,
+            .header_count = 0,
+            .cidr_count = 0,
+            .difficulty = @as(?u32, null),
+            .algorithm = @as(?[]const u8, null),
+            .weight = 0,
+            .limits = @as(?u8, null),
+            .history_key = "m:default",
+            .today = p.rule_hit_history.Today{ .hits = 1, .hours = @splat(1) },
+        }, .{}, &json);
+    }
+    try json.writeAll("],\"next\":8}");
+    state.policies.page.len = json.buffered().len;
+    const output = try t.allocator.alloc(u8, 128 * 1024);
+    defer t.allocator.free(output);
+    var writer: Writer = .fixed(output);
+    try render(state, &writer);
+    const rendered = writer.buffered();
+    try t.expect(std.mem.indexOf(u8, rendered, "Could not read policies") == null);
+    try t.expect(std.mem.indexOf(u8, rendered, "Invalid policy snapshot") == null);
+    try t.expectEqual(@as(usize, 8), std.mem.count(u8, rendered, "Compare rule hits"));
+    try t.expectEqual(@as(usize, 8), std.mem.count(u8, rendered, "Recorded UTC hourly cohorts"));
 }
