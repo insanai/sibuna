@@ -1510,7 +1510,7 @@ configured slots, queues and optional GeoIP dataset. Record active peak RSS sepa
 #table(
   columns: (1.6fr, 1fr, 2fr),
   table.header([*Quantity*], [*Bound*], [*Mechanism*]),
-  [Console resident memory, idle], [Target to size and measure], [Six topic rings reserve 12 MiB of payload plus metadata and cached views; add connection queues, snapshot buffers, traffic queue, service stacks, SQL results, GeoIP generations, and the 19 MiB Argon2 workspace],
+  [Console resident memory, idle], [Target to size and measure], [Six topic rings and one browser-statistics trigger ring reserve 14 MiB of payload plus metadata and cached views; add connection queues, the owned dashboard frame, snapshot buffers, traffic queue, service stacks, SQL results, GeoIP generations, and the 19 MiB Argon2 workspace],
   [Console CPU, idle], [≤ 2 % of one core], [4 Hz sampler, 1 Hz coalescing, 5 s probes],
   [Data-plane throughput with 8 live dashboards], [within 1 % of no console], [I1, I2, I5; measured by `console-impact`],
   [Data-plane p99 with 8 live dashboards], [within 10 %], [Same],
@@ -4656,14 +4656,19 @@ At most sixteen displayed country-to-node flows retain their receiving node's de
 location. Undeclared locations are not guessed. The selector, coverage and geography are
 shared by the normal dashboard and kiosk. Retained seconds and path rankings explicitly
 remain local to the serving console; minute queries use the replicated history service.
+The shared status distinguishes unavailable observations, stale sources and disconnection.
+The kiosk names the all-node view instead of presenting the aggregate sentinel as Node 0.
 
 Native tests exercise full nine-source snapshots and deltas through the actual hub and
 browser protocol client with 512 KiB decoding scratch. They preserve counters above
 JavaScript's exact integer range, keep peer totals local and fit the bounded subscriber
 views. Native rendering covers node selection, destination ownership and rate gaps. The
-shipped-Wasm test passes six-topic navigation, resynchronization and sign-out.
+shipped-Wasm test passes six-topic navigation, resynchronization and sign-out. The full
+`fmt test console-test console-ui-e2e sid book` run passes. The clustered live suite also
+passes membership, edits, failover, quorum loss, rejoin and three real TLS peers exchanging
+local-only totals across isolation and restart.
 
-The current module is 398,015 bytes, below the 448 KiB review warning. Chrome loaded it on
+The browser-reviewed module is 398,015 bytes, below the 448 KiB review warning. Chrome loaded it on
 loopback HTTP, authenticated, rendered the globe, navigated to Policies with the sidebar
 present, evaluated the known denial rule and cleared authenticated content on sign-out.
 The browser reported no errors during that sequence. The disposable HTTPS fixture reached
@@ -4671,6 +4676,7 @@ Chrome's self-signed certificate interstitial, which the browser control could n
 to; it is not recorded as a successful HTTPS browser test. Both review daemons were joined
 after testing. These functional checks do not establish cold-load timing, mobile field
 percentiles, complete cluster browser coverage or the data-plane impact gate.
+The subsequent status-label correction builds to 398,385 bytes with the same memory bounds.
 
 #pagebreak(weak: true)
 

@@ -5,6 +5,26 @@ const State = @import("state.zig").State;
 const html = @import("html");
 const Writer = std.Io.Writer;
 
+pub fn status(state: *const State) []const u8 {
+    if (state.paused) return "Paused";
+    if (state.stale) {
+        if (state.dashboard_scope) |scope| if (scope.stale) return "Stale";
+        return "Disconnected";
+    }
+    if (state.stats != null) return "Live";
+    if (state.dashboard_scope) |scope| if (!scope.available) return "Unavailable";
+    return "Connecting";
+}
+
+pub fn viewName(state: *const State, buffer: *[32]u8) []const u8 {
+    if (state.dashboard_node) |node|
+        return std.fmt.bufPrint(buffer, "Node {d}", .{node}) catch unreachable;
+    if (state.dashboard_scope) |scope| if (scope.count > 1) return "All configured nodes";
+    if (state.stats) |stats|
+        return std.fmt.bufPrint(buffer, "Node {d}", .{stats.node}) catch unreachable;
+    return "Waiting for observations";
+}
+
 pub fn select(state: *State, text: []const u8) !void {
     const node = try std.fmt.parseInt(u32, text, 10);
     const scope = state.dashboard_scope orelse return error.Unavailable;
@@ -134,4 +154,22 @@ test "node selection refuses unknown nodes and clears counters without discardin
     try t.expectEqualStrings("retained", state.geometry.?);
     try select(&state, "0");
     try t.expect(state.dashboard_node == null);
+}
+
+test "dashboard labels distinguish missing observations from connecting and name aggregate views" {
+    const t = std.testing;
+    var state: State = .{};
+    var buffer: [32]u8 = undefined;
+    try t.expectEqualStrings("Connecting", status(&state));
+    try t.expectEqualStrings("Waiting for observations", viewName(&state, &buffer));
+    state.dashboard_scope = .{ .count = 3, .available = false };
+    try t.expectEqualStrings("Unavailable", status(&state));
+    try t.expectEqualStrings("All configured nodes", viewName(&state, &buffer));
+    state.dashboard_node = 2;
+    state.stats = std.mem.zeroes(p.StatsSnapshot);
+    state.stale = true;
+    try t.expectEqualStrings("Disconnected", status(&state));
+    state.dashboard_scope.?.stale = true;
+    try t.expectEqualStrings("Stale", status(&state));
+    try t.expectEqualStrings("Node 2", viewName(&state, &buffer));
 }

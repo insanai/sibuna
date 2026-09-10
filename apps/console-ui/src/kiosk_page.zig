@@ -8,22 +8,20 @@ const Writer = std.Io.Writer;
 pub const cycle_seconds = 30;
 
 pub fn render(state: *const State, w: *Writer) Writer.Error!void {
-    const status = if (state.paused) "Paused" else if (state.stale)
-        "Stale"
-    else if (state.stats == null) "Connecting" else "Live";
-    const node: u64 = if (state.stats) |stats| stats.node else 0;
+    const scope = @import("dashboard_scope.zig");
+    var label_buffer: [32]u8 = undefined;
     try html.render(w, "<main class=\"sb-main min-h-screen\" data-kiosk=\"true\">" ++
         "<header class=\"sb-header\"><div><p class=\"sb-subtitle\">SIBUNA · WALL DISPLAY</p>" ++
-        "<h1 id=\"page-heading\" tabindex=\"-1\">Node {{ node }} · {{ mode }}</h1></div>" ++
+        "<h1 id=\"page-heading\" tabindex=\"-1\">{{ view }} · {{ mode }}</h1></div>" ++
         "<div class=\"sb-status\"><span class=\"badge badge-outline\" role=\"status\">" ++
         "{{ status }}</span><span class=\"badge badge-outline\">Expires in {{ left }} min" ++
         "</span><button class=\"btn btn-sm\" data-action=\"pause\">{{ pause }}</button>" ++
         "<button class=\"btn btn-sm\" data-action=\"theme\">Theme</button>" ++
         "<button class=\"btn btn-sm btn-outline\" data-action=\"logout\">Exit kiosk</button>" ++
         "</div></header>", .{
-        .node = node,
+        .view = scope.viewName(state, &label_buffer),
         .mode = if (state.globe_attacks) "Attacks" else "Traffic",
-        .status = status,
+        .status = scope.status(state),
         .left = (state.kiosk_expires -| state.browser_time) / 60,
         .pause = if (state.paused) "Resume" else "Pause",
     });

@@ -30,10 +30,7 @@ fn page(state: *const State, w: *Writer) Writer.Error!void {
         "<h1 id=\"page-heading\" tabindex=\"-1\">Traffic overview</h1>" ++
         "<p class=\"sb-subtitle\">Know what is reaching your applications.</p></div>" ++
         "<div class=\"sb-status\"><span class=\"badge badge-outline\">", .{});
-    const status = if (state.paused) "Paused" else if (state.stale)
-        "Disconnected"
-    else if (state.stats == null) "Connecting" else "Live";
-    try w.writeAll(status);
+    try w.writeAll(@import("dashboard_scope.zig").status(state));
     try html.render(w, "</span><button class=\"btn btn-sm\" data-action=\"pause\">", .{});
     try w.writeAll(if (state.paused) "Resume" else "Pause");
     try html.render(
