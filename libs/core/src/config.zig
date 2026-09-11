@@ -98,6 +98,9 @@ pub const Config = struct {
     rate_window_seconds: u64 = 10,
     ban_seconds: u64 = 3600,
     waf: bool = true,
+    /// SQLite virtual-machine steps one console period aggregate may spend before it fails
+    /// as unavailable; paged reads keep a fixed light budget. Bounded on both sides.
+    console_query_steps: u64 = 4_000_000,
     /// Zaxonlite data directory; null runs without persistent storage.
     data_dir: ?[]const u8 = null,
     cluster_node: u32 = 0,
@@ -211,6 +214,9 @@ pub const Config = struct {
             cfg.rate_window_seconds = std.fmt.parseInt(u64, v, 10) catch cfg.rate_window_seconds;
         } else if (eqlAny(arg, "--ban-seconds", "--ban-seconds")) {
             cfg.ban_seconds = std.fmt.parseInt(u64, v, 10) catch cfg.ban_seconds;
+        } else if (eqlAny(arg, "--console-query-steps", "--console-query-steps")) {
+            const steps = std.fmt.parseInt(u64, v, 10) catch cfg.console_query_steps;
+            if (steps >= 100_000 and steps <= 50_000_000) cfg.console_query_steps = steps;
         } else {
             return applyStorageOption(cfg, arg, v);
         }
@@ -258,26 +264,28 @@ test "config defaults and arg parsing" {
     try std.testing.expect(!cfg.trustsForwarded());
 
     const args = [_][]const u8{
-        "--port",            "9090",
-        "--upstream-port",   "8000",
-        "--difficulty",      "18",
-        "--mode",            "forward_auth",
-        "--policy-file",     "/etc/sibuna/policy.json",
-        "--algorithm",       "hashcash",
-        "--token-scheme",    "ed25519",
-        "--workers",         "3",
-        "--rate-limit",      "20",
-        "--idle-timeout",    "7",
-        "--max-connections", "500",
-        "--rate-window",     "5",
-        "--no-waf",          "--secret-file",
-        "/run/secret",       "--data-dir",
-        "/var/lib/sibuna",   "--cluster-node",
-        "2",                 "--cluster-peer",
-        "1@10.0.0.1:9901",   "--cluster-peer",
-        "3@10.0.0.3:9901",   "--verbose",
+        "--port",                "9090",
+        "--upstream-port",       "8000",
+        "--difficulty",          "18",
+        "--mode",                "forward_auth",
+        "--policy-file",         "/etc/sibuna/policy.json",
+        "--algorithm",           "hashcash",
+        "--token-scheme",        "ed25519",
+        "--workers",             "3",
+        "--rate-limit",          "20",
+        "--idle-timeout",        "7",
+        "--max-connections",     "500",
+        "--rate-window",         "5",
+        "--no-waf",              "--secret-file",
+        "/run/secret",           "--data-dir",
+        "/var/lib/sibuna",       "--cluster-node",
+        "2",                     "--cluster-peer",
+        "1@10.0.0.1:9901",       "--cluster-peer",
+        "3@10.0.0.3:9901",       "--verbose",
+        "--console-query-steps", "8000000",
     };
     const parsed = try Config.parseArgs(&args);
+    try std.testing.expectEqual(@as(u64, 8_000_000), parsed.console_query_steps);
     try std.testing.expectEqual(@as(u16, 9090), parsed.listen_port);
     try std.testing.expectEqual(@as(u16, 8000), parsed.upstream_port);
     try std.testing.expectEqual(@as(u32, 18), parsed.default_difficulty);

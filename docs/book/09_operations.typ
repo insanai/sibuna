@@ -239,7 +239,10 @@ not exact request totals. The page shows partial scans, truncation, retention bo
 reported queue loss; missing archives cannot establish zero traffic or complete coverage.
 
 Security opens on the last 24 hours and uses sixty equal time buckets over the selected period.
-Charts share a scale;
+Its aggregates run on the storage owner under a fixed SQLite step budget
+(`--console-query-steps`, default four million, which covers tens of thousands of retained
+findings per window); beyond it the page asks for a narrower period instead of stalling the
+node. Charts share a scale;
 expand Trend values for the UTC interval starts and exact grouped counts. These are retained
 findings, so missing incident coverage cannot be interpreted as absence of attacks.
 

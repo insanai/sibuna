@@ -6,19 +6,10 @@ const remote = @import("console_database_remote.zig");
 const clustered = @import("build_options").cluster;
 
 /// Every statement has a virtual-machine step budget so the storage owner never stalls.
-/// Point reads and pages stay light; a period aggregate over retained incidents may scan a
-/// day of rows and receives a larger, still fixed, allowance before it fails as unavailable.
-pub const Weight = enum {
-    light,
-    heavy,
-
-    fn steps(self: Weight) u64 {
-        return switch (self) {
-            .light => 100_000,
-            .heavy => 4_000_000,
-        };
-    }
-};
+/// Point reads and pages keep this fixed light budget; a period aggregate over retained
+/// incidents may scan a day of rows and receives the configured, still bounded, allowance
+/// (`--console-query-steps`) before it fails as unavailable.
+pub const light_steps: u64 = 100_000;
 
 pub fn query(
     db: Db,
@@ -26,21 +17,23 @@ pub fn query(
     sql: []const u8,
     values: []const zx.Value,
 ) !zx.QueryResult {
-    return queryWeighted(db, gpa, sql, values, .light);
+    return queryWithSteps(db, gpa, sql, values, light_steps);
 }
 
-pub fn queryWeighted(
+/// The clustered facade forwards to the local node's RPC, whose own server-side budget
+/// (ten million steps in Zaxonlite 0.6) bounds every statement instead.
+pub fn queryWithSteps(
     db: Db,
     gpa: std.mem.Allocator,
     sql: []const u8,
     values: []const zx.Value,
-    weight: Weight,
+    steps: u64,
 ) !zx.QueryResult {
     return switch (db) {
         .node => |node| node.queryPreparedWithLimits(gpa, sql, values, .{
             .max_rows = 100,
             .max_bytes = 65536,
-            .max_vm_steps = weight.steps(),
+            .max_vm_steps = steps,
         }),
         .embedded => |embedded| if (clustered)
             remote.query(embedded, gpa, sql, values)

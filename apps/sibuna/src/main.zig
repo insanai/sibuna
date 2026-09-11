@@ -249,6 +249,8 @@ fn printConsoleHelp() void {
     if (build_options.console) std.debug.print(
         "Local bootstrap: sibuna init-admin <username> --data-dir <path>\n" ++
             "Console: --console <host:port> (requires --data-dir); " ++
+            "--console-query-steps <n> (SQLite steps per Security aggregate, " ++
+            "100000-50000000, default 4000000); " ++
             "--console-key-file <path> (64 hex characters, owner-only permissions); " ++
             "--console-origin <https-origin>; --console-behind-proxy; " ++
             "--console-trusted-proxy <CIDR> (repeatable); " ++

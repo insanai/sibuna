@@ -18,10 +18,10 @@ pub fn query(owner: *Persistent, input: p.security.Query) !p.StorageResult {
         .categories => category_sql,
         .paths => path_sql,
     };
-    var rows = try db.queryWeighted(owner.db, owner.gpa, sql, &.{
+    var rows = try db.queryWithSteps(owner.db, owner.gpa, sql, &.{
         store.integer(r.from), store.integer(r.until),
         store.integer(r.node), store.integer(r.node),
-    }, .heavy);
+    }, owner.cfg.console_query_steps);
     defer rows.deinit();
     var page: p.security.Page = .{ .request = r, .observed_at = owner.nowSeconds() };
     var sources: [3]usize = @splat(0);
