@@ -92,7 +92,7 @@ const Stream = struct {
     // Both tasks borrow this handler; shutdown wakes the reader before its owner returns.
     fn run(self: *Stream) void {
         const reader = std.Thread.spawn(
-            .{ .stack_size = 256 * 1024 },
+            .{ .stack_size = @import("serve").stack.bytes(256 * 1024) },
             Stream.read,
             .{self},
         ) catch return;

@@ -5,12 +5,14 @@ pub const websocket_upgrade = @import("websocket_upgrade.zig");
 pub const Admission = @import("admission.zig").Admission;
 
 test {
+    _ = @import("stack.zig");
     _ = @import("websocket.zig");
     _ = @import("websocket_io.zig");
     _ = @import("websocket_upgrade.zig");
     _ = @import("admission.zig");
 }
 
+pub const stack = @import("stack.zig");
 pub const Context = @import("context.zig").Context;
 pub const Kernel = @import("kernel.zig").Kernel;
 test {

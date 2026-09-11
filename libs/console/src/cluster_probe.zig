@@ -40,7 +40,11 @@ pub const Probe = struct {
 
     pub fn start(self: *Probe) !void {
         if (self.count == 0) return;
-        self.thread = try std.Thread.spawn(.{ .stack_size = 256 * 1024 }, run, .{self});
+        self.thread = try std.Thread.spawn(
+            .{ .stack_size = @import("serve").stack.bytes(256 * 1024) },
+            run,
+            .{self},
+        );
     }
 
     pub fn stop(self: *Probe) void {

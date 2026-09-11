@@ -17,7 +17,7 @@ pub const Job = struct {
         try store.startQueries(gpa);
         for (0..store.config.count) |index| {
             self.threads[index] = try std.Thread.spawn(
-                .{ .stack_size = 256 * 1024 },
+                .{ .stack_size = @import("serve").stack.bytes(256 * 1024) },
                 run,
                 .{ self, @as(u8, @intCast(index)) },
             );

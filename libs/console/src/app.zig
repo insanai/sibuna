@@ -154,7 +154,7 @@ pub const App = struct {
         try self.peer_job.start(&self.peers, self.gpa);
         errdefer self.peer_job.stop();
         self.collector = try std.Thread.spawn(
-            .{ .stack_size = 256 * 1024 },
+            .{ .stack_size = @import("serve").stack.bytes(256 * 1024) },
             collect,
             .{self},
         );

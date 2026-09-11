@@ -30,7 +30,11 @@ pub const Job = struct {
         self.slots[audit_slot].cursor = .{ .kind = .audit };
         self.buffer = try app.gpa.alloc(u8, s.snapshot_bytes);
         errdefer app.gpa.free(self.buffer);
-        self.thread = try std.Thread.spawn(.{ .stack_size = 256 * 1024 }, run, .{self});
+        self.thread = try std.Thread.spawn(
+            .{ .stack_size = @import("serve").stack.bytes(256 * 1024) },
+            run,
+            .{self},
+        );
     }
 
     pub fn stop(self: *Job) void {

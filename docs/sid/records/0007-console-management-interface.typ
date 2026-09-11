@@ -475,7 +475,7 @@ and scratch arenas. It shares the process and its CPU/cache/memory bandwidth wit
   revision and publishes a rebuilt engine exactly as SID 0005 specifies.])
 #invariant([I4], [Console-owned memory has explicit capacity and admission bounds: the connection slots, the WebSocket ring,
   the subscriber table, the sampler's minute buffers, and the GeoIP range array have fixed
-  capacities recorded in `console.Budget`, and the sum is printed in the startup banner, including thread stacks, request bodies, authentication workspaces and double-buffered GeoIP reloads. Database/cache memory is measured separately as part of process RSS.])
+  capacities recorded in `console.Budget`, and the sum is printed in the startup banner, including thread stacks (each service thread reserves its usable 256 KiB plus the 256 KiB per-thread signal stack that glibc places in static TLS, without which Linux refuses the thread), request bodies, authentication workspaces and double-buffered GeoIP reloads. Database/cache memory is measured separately as part of process RSS.])
 #invariant([I5], [Console work is rate- and size-limited: the sampler runs at 4 Hz, broadcasts
   are coalesced to 1 Hz per topic, event fan-out is capped at 64 records per second per
   subscriber, and the GeoIP loader uses bounded batches. This does not provide a hard CPU-time bound: SQL, hashing, scheduling and shared cache/memory bandwidth still require measurement.])

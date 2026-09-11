@@ -100,7 +100,11 @@ pub const Job = struct {
         self.status.store(.validating, .release);
         self.running.store(true, .release);
         errdefer self.running.store(false, .release);
-        self.thread = try std.Thread.spawn(.{ .stack_size = 256 * 1024 }, run, .{self});
+        self.thread = try std.Thread.spawn(
+            .{ .stack_size = @import("serve").stack.bytes(256 * 1024) },
+            run,
+            .{self},
+        );
     }
 
     pub fn stop(self: *Job) void {

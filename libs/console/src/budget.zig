@@ -57,8 +57,10 @@ pub const Budget = struct {
         const connections: u64 = @as(u64, self.slots) + self.peers;
         // Include both stream tasks, acceptor/watchdog, collector, importer, probe and hub.
         // The notifier explicitly uses a larger stack than the other service threads.
-        const stacks = (connections + self.subscribers + self.peers + 6) * self.stack_bytes +
-            512 * 1024;
+        // Each thread reserves its usable stack plus the thread-local signal stack.
+        const per_thread = @import("serve").stack.bytes(self.stack_bytes);
+        const stacks = (connections + self.subscribers + self.peers + 6) * per_thread +
+            @import("serve").stack.bytes(512 * 1024);
         return stacks + connections * 2 * socket_buffer_bytes +
             @as(u64, self.slots) * body_bytes + import_bytes + auth_bytes +
             (@as(u64, self.subscribers) + self.peers) *

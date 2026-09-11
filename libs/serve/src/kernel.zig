@@ -39,12 +39,20 @@ pub const Kernel = struct {
             .handler = handler,
         };
         errdefer self.listener.deinit(io);
-        self.watchdog = try std.Thread.spawn(.{ .stack_size = 256 * 1024 }, watch, .{self});
+        self.watchdog = try std.Thread.spawn(
+            .{ .stack_size = @import("stack.zig").bytes(256 * 1024) },
+            watch,
+            .{self},
+        );
         errdefer {
             self.stopping.store(true, .release);
             self.watchdog.?.join();
         }
-        self.acceptor = try std.Thread.spawn(.{ .stack_size = 256 * 1024 }, accept, .{self});
+        self.acceptor = try std.Thread.spawn(
+            .{ .stack_size = @import("stack.zig").bytes(256 * 1024) },
+            accept,
+            .{self},
+        );
         return self;
     }
 
@@ -108,7 +116,7 @@ pub const Kernel = struct {
             const now = @divTrunc(Io.Clock.awake.now(self.io).nanoseconds, std.time.ns_per_s);
             slot.deadline.store(@intCast(now + 10), .release);
             slot.thread = std.Thread.spawn(
-                .{ .stack_size = 256 * 1024 },
+                .{ .stack_size = @import("stack.zig").bytes(256 * 1024) },
                 run,
                 .{ self, index },
             ) catch |err| {

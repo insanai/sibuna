@@ -24,7 +24,11 @@ pub const Job = struct {
     failed: std.atomic.Value(u64) = .init(0),
 
     pub fn start(self: *Job) !void {
-        self.thread = try std.Thread.spawn(.{ .stack_size = 512 * 1024 }, run, .{self});
+        self.thread = try std.Thread.spawn(
+            .{ .stack_size = @import("serve").stack.bytes(512 * 1024) },
+            run,
+            .{self},
+        );
     }
 
     pub fn stop(self: *Job) void {
