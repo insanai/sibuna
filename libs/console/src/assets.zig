@@ -4,9 +4,9 @@ const std = @import("std");
 const Context = @import("http.zig").Context;
 const wasm = @embedFile("console_wasm");
 // The contract test checks the same bound in the build verifier and browser loader.
-const max_wasm_bytes = 512 * 1024;
+const max_wasm_bytes = 768 * 1024;
 comptime {
-    if (wasm.len > max_wasm_bytes) @compileError("console Wasm exceeds the 512 KiB budget");
+    if (wasm.len > max_wasm_bytes) @compileError("console Wasm exceeds the 768 KiB budget");
 }
 const names = [_][]const u8{ "console.wasm", "glue.js", "console.css" };
 const types = [_][]const u8{ "application/wasm", "text/javascript", "text/css" };

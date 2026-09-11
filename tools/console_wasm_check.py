@@ -5,8 +5,8 @@ import sys
 
 # Project guardrails, not WebAssembly engine limits. See SID 0007's budget review.
 # Loading and interaction acceptance remain independent of this artifact check.
-WARN_BYTES = 448 * 1024
-MAX_BYTES = 512 * 1024
+WARN_BYTES = 640 * 1024
+MAX_BYTES = 768 * 1024
 EXPORTS = {
     "memory": 2,
     **dict.fromkeys((

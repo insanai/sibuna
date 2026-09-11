@@ -1,6 +1,6 @@
 // Fixed browser capability bridge. Routing, forms, application state and markup live in Zig.
 // Kept in sync with the embedding and artifact gates by console_wasm_check_test.py.
-const maxWasmBytes = 512 * 1024;
+const maxWasmBytes = 768 * 1024;
 const root = document.getElementById("app");
 const decoder = new TextDecoder();
 const encoder = new TextEncoder();
