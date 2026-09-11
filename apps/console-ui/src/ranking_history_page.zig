@@ -43,6 +43,8 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         for (&model.windows, 0..) |*window, i| try coverage(w, window, i);
         try w.writeAll("</div>");
         try table(w, &model.windows);
+        try referrerTable(w, &model.windows);
+        try familyTables(w, &model.windows);
         try html.render(w, "<button class=\"btn\" data-action=\"rank-history-more\"" ++
             "{{ disabled }}>Continue ranking scan</button>", .{
             .disabled = if (model.busy or state.paused or
@@ -130,4 +132,82 @@ fn lossNote(reported: bool) []const u8 {
 fn retentionNote(clipped: bool) []const u8 {
     if (clipped) return "Retention shortened the requested window.";
     return "The configured retention and byte quota can remove older archives.";
+}
+
+fn referrerTable(w: *Writer, windows: *const [2]Window) Writer.Error!void {
+    try w.writeAll("<div class=\"overflow-x-auto\"><table class=\"table mt-6\">" ++
+        "<caption>Sample bounds for leading retained referring hosts</caption>" ++
+        "<thead><tr><th>Referring host</th><th>Current lower–upper</th>" ++
+        "<th>Reference lower–upper</th></tr></thead><tbody>");
+    for (windows, 0..) |*window, side| {
+        for (window.referrers.counters[0..@min(window.referrers.len, 12)]) |*counter| {
+            const key = counter.key.slice();
+            if (side == 1) if (windows[0].referrers.find(key)) |i| if (i < 12) continue;
+            try html.render(w, "<tr><th><code>{{ key }}</code></th>", .{ .key = key });
+            for (windows) |*population| try referrerBounds(w, population, key);
+            try w.writeAll("</tr>");
+        }
+    }
+    if (windows[0].referrers.len == 0 and windows[1].referrers.len == 0)
+        try w.writeAll("<tr><td colspan=\"3\">No retained referring host samples loaded; " ++
+            "archives written before referrers were retained carry none.</td></tr>");
+    try w.writeAll("</tbody></table></div>");
+}
+
+fn referrerBounds(w: *Writer, population: *const Window, key: []const u8) Writer.Error!void {
+    try w.writeAll("<td>");
+    if (population.extended == 0) return w.writeAll("Not available</td>");
+    const summary = &population.referrers;
+    const Counter = p.ranking_storage.Referrers.Counter;
+    const counter = if (summary.find(key)) |i| summary.counters[i] else Counter{
+        .estimate = summary.missingBound(),
+        .error_bound = summary.missingBound(),
+    };
+    try counts.write(w, counter.estimate - counter.error_bound);
+    try w.writeAll("–");
+    try counts.write(w, counter.estimate);
+    try w.writeAll("</td>");
+}
+
+fn familyTables(w: *Writer, windows: *const [2]Window) Writer.Error!void {
+    const family = p.client_family;
+    try html.render(w, "<p class=\"sb-note\">Client families and response status are exact " ++
+        "counts over retained samples in {{ current }} current and {{ reference }} reference " ++
+        "archives that carry them.</p><div class=\"sb-panels\">", .{
+        .current = windows[0].extended,
+        .reference = windows[1].extended,
+    });
+    inline for (.{ "os", "browser", "status" }, .{
+        "Operating system", "Browser", "Response status",
+    }) |name, title| {
+        try html.render(w, "<div class=\"overflow-x-auto\"><table class=\"table\">" ++
+            "<caption>{{ title }}</caption><thead><tr><th>Label</th><th>Current</th>" ++
+            "<th>Reference</th></tr></thead><tbody>", .{ .title = title });
+        var shown: usize = 0;
+        const current = &@field(windows[0].families, name);
+        const reference = &@field(windows[1].families, name);
+        for (current, reference, 0..) |a, b, slot| {
+            if (a == 0 and b == 0) continue;
+            shown += 1;
+            var buffer: [8]u8 = undefined;
+            const label = if (comptime std.mem.eql(u8, name, "os"))
+                family.osLabel(@enumFromInt(slot))
+            else if (comptime std.mem.eql(u8, name, "browser"))
+                family.browserLabel(@enumFromInt(slot))
+            else
+                family.statusLabel(slot, &buffer);
+            try html.render(w, "<tr><th scope=\"row\">{{ label }}</th>", .{ .label = label });
+            for ([_]u64{ a, b }, windows) |count, *population| {
+                try w.writeAll("<td>");
+                if (population.extended == 0) {
+                    try w.writeAll("Not available");
+                } else try counts.write(w, count);
+                try w.writeAll("</td>");
+            }
+            try w.writeAll("</tr>");
+        }
+        if (shown == 0) try w.writeAll("<tr><td colspan=\"3\">No samples loaded.</td></tr>");
+        try w.writeAll("</tbody></table></div>");
+    }
+    try w.writeAll("</div>");
 }

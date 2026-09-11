@@ -11,6 +11,10 @@ pub const Model = struct {
     };
     rows: [p.rankings.max_rows]Row = @splat(.{}),
     count: usize = 0,
+    referrers: [p.rankings.max_rows]Row = @splat(.{}),
+    referrer_count: usize = 0,
+    referrer_retained: u64 = 0,
+    families: p.ranking_storage.Families = .{},
     node: u32 = 0,
     generation: u32 = 0,
     busy: bool = false,
@@ -46,25 +50,31 @@ pub const Model = struct {
         replacement.busy = self.busy;
         replacement.requested_at = self.requested_at;
         replacement.retained = try unsigned(value, "retained_samples");
-        for (source.array.items, 0..) |row, i| {
-            const encoding = data.string(row, "encoding");
-            const encoded = std.mem.eql(u8, encoding, "hex");
-            if (!encoded and !std.mem.eql(u8, encoding, "utf8")) return error.InvalidResponse;
-            const key = data.field(row, "key") orelse return error.InvalidResponse;
-            const limit: usize = if (encoded) 256 else 128;
-            if (key != .string or key.string.len > limit) return error.InvalidResponse;
-            const estimate = try unsigned(row, "estimate");
-            const bound = try unsigned(row, "error_bound");
-            if (bound > estimate or bound > replacement.retained / 256)
-                return error.InvalidResponse;
-            replacement.rows[i] = .{
-                .key = try p.Bytes(256).init(key.string),
-                .encoding = if (encoded) .hex else .utf8,
-                .estimate = estimate,
-                .error_bound = bound,
-            };
+        replacement.count = try rowsInto(source, &replacement.rows, replacement.retained);
+        // Older nodes answer without referrers or families; both then stay empty.
+        if (data.field(value, "referrers")) |hosts| {
+            replacement.referrer_retained = try unsigned(value, "referrer_samples");
+            if (replacement.referrer_retained > replacement.retained) return error.InvalidResponse;
+            replacement.referrer_count = try rowsInto(
+                hosts,
+                &replacement.referrers,
+                replacement.referrer_retained,
+            );
         }
-        replacement.count = source.array.items.len;
+        if (data.field(value, "families")) |families| {
+            inline for (.{ "os", "browser", "status" }) |name| {
+                const list = data.field(families, name) orelse return error.InvalidResponse;
+                const target = &@field(replacement.families, name);
+                if (list != .array or list.array.items.len != target.len)
+                    return error.InvalidResponse;
+                var total: u64 = 0;
+                for (list.array.items, target) |item, *slot| {
+                    slot.* = try unsignedValue(item);
+                    total = std.math.add(u64, total, slot.*) catch return error.InvalidResponse;
+                }
+                if (total > replacement.retained) return error.InvalidResponse;
+            }
+        }
         if (data.field(value, "node") != null) {
             const node = try unsigned(value, "node");
             if (node > std.math.maxInt(u32)) return error.InvalidResponse;
@@ -80,8 +90,35 @@ pub const Model = struct {
     }
 };
 
+fn rowsInto(source: std.json.Value, rows: *[p.rankings.max_rows]Model.Row, retained: u64) !usize {
+    const data = @import("events_state.zig");
+    if (source != .array or source.array.items.len > rows.len) return error.InvalidResponse;
+    for (source.array.items, 0..) |row, i| {
+        const encoding = data.string(row, "encoding");
+        const encoded = std.mem.eql(u8, encoding, "hex");
+        if (!encoded and !std.mem.eql(u8, encoding, "utf8")) return error.InvalidResponse;
+        const key = data.field(row, "key") orelse return error.InvalidResponse;
+        const limit: usize = if (encoded) 256 else 128;
+        if (key != .string or key.string.len > limit) return error.InvalidResponse;
+        const estimate = try unsigned(row, "estimate");
+        const bound = try unsigned(row, "error_bound");
+        if (bound > estimate or bound > retained / 256) return error.InvalidResponse;
+        rows[i] = .{
+            .key = try p.Bytes(256).init(key.string),
+            .encoding = if (encoded) .hex else .utf8,
+            .estimate = estimate,
+            .error_bound = bound,
+        };
+    }
+    return source.array.items.len;
+}
+
 fn unsigned(value: std.json.Value, key: []const u8) !u64 {
     const item = @import("events_state.zig").field(value, key) orelse return error.InvalidResponse;
+    return unsignedValue(item);
+}
+
+fn unsignedValue(item: std.json.Value) !u64 {
     if (item == .integer and item.integer >= 0) return @intCast(item.integer);
     if (item == .number_string) return std.fmt.parseInt(u64, item.number_string, 10);
     return error.InvalidResponse;
@@ -154,6 +191,79 @@ pub fn render(model: *const Model, w: *Writer, now: u64, paused: bool) Writer.Er
         "<tr><td colspan=\"3\">No path samples this minute.</td></tr>",
     );
     try html.render(w, "</tbody></table></div></section>", .{});
+    try sampled(model, w);
+}
+
+/// The other sampled panels of the same minute (SID 0007): referring hosts under the same
+/// sketch bound, and exact histograms over bounded client-family and status labels.
+fn sampled(model: *const Model, w: *Writer) Writer.Error!void {
+    try html.render(w, "<div class=\"sb-panels\"><section class=\"sb-panel mt-6\" " ++
+        "aria-labelledby=\"referrer-heading\"><h2 id=\"referrer-heading\">Sampled referring " ++
+        "hosts</h2><p class=\"sb-note\">Same minute and 1/64 sampling. Host prefixes of 24 " ++
+        "bytes; {{ with }} of {{ retained }} retained samples carried a Referer.</p>" ++
+        "<div class=\"overflow-x-auto\"><table class=\"table\">" ++
+        "<caption class=\"sb-note\">Sample count bounds</caption>" ++
+        "<thead><tr><th>Referring host</th><th>Estimate</th><th>Lower bound</th></tr></thead>" ++
+        "<tbody>", .{ .with = model.referrer_retained, .retained = model.retained });
+    for (model.referrers[0..model.referrer_count]) |*row| try html.render(
+        w,
+        @embedFile("snippets/ranking-row.html"),
+        .{
+            .key = row.key.slice(),
+            .encoding = if (row.encoding == .hex) " (hex bytes)" else "",
+            .estimate = row.estimate,
+            .lower = row.estimate - row.error_bound,
+        },
+    );
+    if (model.referrer_count == 0) try w.writeAll(
+        "<tr><td colspan=\"3\">No referring host samples this minute.</td></tr>",
+    );
+    try w.writeAll("</tbody></table></div></section>");
+    try histogram(w, "Sampled client operating systems", "Operating system", model, .os);
+    try histogram(w, "Sampled browsers", "Browser", model, .browser);
+    try histogram(w, "Sampled response status", "Status", model, .status);
+    try w.writeAll("</div>");
+}
+
+const Axis = enum { os, browser, status };
+
+fn histogram(
+    w: *Writer,
+    title: []const u8,
+    column: []const u8,
+    model: *const Model,
+    axis: Axis,
+) Writer.Error!void {
+    const family = p.client_family;
+    try html.render(w, "<section class=\"sb-panel mt-6\"><h2>{{ title }}</h2>" ++
+        "<p class=\"sb-note\">Exact counts over the minute's 1/64 samples; labels are display " ++
+        "families from the User-Agent, never an admission input.</p>" ++
+        "<div class=\"overflow-x-auto\"><table class=\"table\"><thead><tr>" ++
+        "<th>{{ column }}</th><th>Samples</th></tr></thead><tbody>", .{
+        .title = title,
+        .column = column,
+    });
+    const counts: []const u64 = switch (axis) {
+        .os => &model.families.os,
+        .browser => &model.families.browser,
+        .status => &model.families.status,
+    };
+    var shown: usize = 0;
+    for (counts, 0..) |count, slot| {
+        if (count == 0) continue;
+        shown += 1;
+        var buffer: [8]u8 = undefined;
+        try html.render(w, "<tr><th scope=\"row\">{{ label }}</th><td>{{ count }}</td></tr>", .{
+            .label = switch (axis) {
+                .os => family.osLabel(@enumFromInt(slot)),
+                .browser => family.browserLabel(@enumFromInt(slot)),
+                .status => family.statusLabel(slot, &buffer),
+            },
+            .count = count,
+        });
+    }
+    if (shown == 0) try w.writeAll("<tr><td colspan=\"2\">No samples this minute.</td></tr>");
+    try w.writeAll("</tbody></table></div></section>");
 }
 
 test "ranking decoder owns keys, rejects excess rows atomically and escapes rendered paths" {
@@ -162,7 +272,12 @@ test "ranking decoder owns keys, rejects excess rows atomically and escapes rend
         \\{"kind":"path_prefix","counter_capacity":256,"sampling_probability":"1/64",
         \\ "minute_start":120,"retained_samples":5,"truncated_records":0,
         \\ "rejected_records":0,"queue_loss_since_boot":0,
-        \\ "rows":[{"key":"/<script>","encoding":"utf8","estimate":5,"error_bound":0}]}
+        \\ "rows":[{"key":"/<script>","encoding":"utf8","estimate":5,"error_bound":0}],
+        \\ "referrer_samples":2,
+        \\ "referrers":[{"key":"news.example.test","encoding":"utf8","estimate":2,
+        \\ "error_bound":0}],
+        \\ "families":{"os":[0,0,0,0,0,5,0,0],"browser":[0,0,5,0,0,0,0,0],
+        \\ "status":[3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0]}}
     ;
     var input: [source.len]u8 = undefined;
     @memcpy(&input, source);
@@ -183,6 +298,10 @@ test "ranking decoder owns keys, rejects excess rows atomically and escapes rend
     try render(&model, &writer, 0, false);
     try t.expect(std.mem.indexOf(u8, writer.buffered(), "&lt;script&gt;") != null);
     try t.expect(std.mem.indexOf(u8, writer.buffered(), "<script>") == null);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "news.example.test") != null);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "Firefox") != null);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), ">429<") != null);
+    try t.expectEqual(@as(u64, 5), model.families.os[5]);
     model.clear();
     try t.expect(std.mem.allEqual(u8, &model.rows[0].key.data, 0));
 }

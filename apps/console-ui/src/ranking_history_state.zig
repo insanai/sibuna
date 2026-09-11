@@ -17,6 +17,10 @@ pub const Reply = struct {
 pub const Window = struct {
     query: wire.Request = .{ .from_minute = 0, .until_minute = 0 },
     summary: p.space_saving.Summary = .{},
+    referrers: p.ranking_storage.Referrers = .{},
+    families: p.ranking_storage.Families = .{},
+    /// Archives that carried referrers and families; older archives count only paths.
+    extended: u32 = 0,
     archives: u32 = 0,
     truncated: u64 = 0,
     rejected: u64 = 0,
@@ -80,6 +84,20 @@ pub const Window = struct {
             &archive.minute.paths,
             &work.candidates,
         );
+        try p.ranking_storage.Referrers.mergeInto(
+            &self.referrers,
+            &previous.referrers,
+            &archive.minute.referrers,
+            &work.referrer_candidates,
+        );
+        if (archive.minute.extended) {
+            self.extended = try std.math.add(u32, self.extended, 1);
+            inline for (.{ "os", "browser", "status" }) |name| {
+                const totals = &@field(self.families, name);
+                for (totals, @field(archive.minute.families, name)) |*total, count|
+                    total.* = try std.math.add(u64, total.*, count);
+            }
+        }
         self.truncated = try std.math.add(u64, self.truncated, archive.minute.truncated_records);
         self.rejected = try std.math.add(u64, self.rejected, archive.minute.rejected_records);
         self.archives = try std.math.add(u32, self.archives, 1);
@@ -94,6 +112,7 @@ pub const Workspace = struct {
     archive: p.rankings_archive.Archive,
     bytes: [p.ranking_storage.max_bytes]u8,
     candidates: [512]p.space_saving.Summary.Counter,
+    referrer_candidates: [512]p.ranking_storage.Referrers.Counter,
 };
 pub const Inputs = struct {
     mode: enum { previous, yesterday, node } = .previous,
