@@ -702,7 +702,14 @@ Persist all 256 counters, their errors, N, sampling probability, losses and cove
 per kind; use a tested merge procedure for cross-minute/node queries. Saving only twenty
 local winners can lose a global winner. Counts scaled by $1/p$ are sampling estimates;
 queue loss, key truncation and sketch error remain visible. Use exact small sampled
-histograms for countries and response classes instead of a top-k sketch. Country history
+histograms for countries and response classes instead of a top-k sketch.
+Each sample also carries the referring host (a 24-byte host prefix, never a path or query)
+and the status selected for the client or observed from the origin; an admitted request
+offers its sample once the origin status is known. Referring hosts use a second
+Space-Saving sketch under the same bound, while operating system, browser and status are
+exact histograms over bounded label sets from a deterministic User-Agent classifier
+(`client_family`). The SBR2 archive retains all of them beside paths; SBR1 archives stay
+readable and report those dimensions as absent, never as zero. Country history
 must survive minute folding. Visitors, page views and a complete traffic log are not inferred.
 
 == Data-plane changes this record requests
@@ -1837,9 +1844,7 @@ add `--cluster` for clustered deployment. A completed but inconclusive or failin
 not satisfy this condition. The same binary runs
 without `--console`; compiling the console in starts no console thread, listener or sampler.
 
-*Deferred to post-launch (observability):* the sampled client operating system, browser, response
-status and referring host rankings (paths are sketched);
-per-address
+*Deferred to post-launch (observability):* per-address
 challenge records and the adaptive-difficulty timeline; request and response heads with
 charset selection and “copy as cURL”.
 

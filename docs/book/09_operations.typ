@@ -101,7 +101,9 @@ deviation against the same window yesterday and a live 60-second sparkline; deci
 (admitted green, challenged amber, denied red, banned dark red) are the same in every panel.
 Two further tiles are levels rather than counts: active ban entries on contributing nodes
 and nodes healthy from this console's own probes, each with a sparkline of observed
-snapshots.],
+snapshots. Below the timeline, sampled panels rank request paths and referring hosts and
+count client operating systems, browsers and response status over the same one-in-64
+samples; retained rankings compare the same dimensions across windows.],
 image("images/console-traffic.png"))
 
 #book_figure([Statistics · Security. One tile per module, findings over sixty equal buckets,
