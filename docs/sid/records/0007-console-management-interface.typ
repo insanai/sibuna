@@ -649,8 +649,14 @@ it is not necessarily the matched substring. There is no full request/response c
 JA4, WEIGH decomposition, WAF numeric score, matched offset or rule version. Console-enabled
 capture now adds a version-1 metadata sidecar: selected firewall status, query/body byte lengths
 and capture truncation flags. Query/body values and headers are omitted from this evidence view;
-selected status does not establish delivery. Historical rows have no sidecar. Richer evidence
-still needs explicitly bounded and redacted capture before its UI ships.
+selected status does not establish delivery. Historical rows have no sidecar. Richer evidence is opt-in:
+`--console-capture-heads` stores, in the incident's own transaction (schema version 39), the
+request head redacted before capture (credential headers keep only their name, every query
+value reads “[redacted]”, 2 KiB bound with a truncation flag) and, for audited admitted
+requests, the origin response head redacted the same way (1 KiB bound); denials have no
+origin response. Heads travel hex-encoded so the Events page renders them under UTF-8 or
+Latin-1 and rebuilds an escaped “copy as cURL” command that names its redactions and the
+uncaptured body. Without the flag every incident reports its heads as not recorded.
 Show unavailable fields as “not recorded”; never reconstruct a raw request as if captured.
 Campaign similarity is the current 64-dimensional embedding/cosine heuristic (threshold
 0.35), not attribution or proof of a common attacker. A denied request has no origin response.
@@ -1848,8 +1854,6 @@ add `--cluster` for clustered deployment. A completed but inconclusive or failin
 not satisfy this condition. The same binary runs
 without `--console`; compiling the console in starts no console thread, listener or sampler.
 
-*Deferred to post-launch (observability):* request and response heads with
-charset selection and “copy as cURL”.
 
 *Accepted deviations:* the serve kernel reserves HTTP and control capacity arithmetically
 (96 slots less 64 browser and 8 peer subscribers), verified by the 64-subscriber scenario,

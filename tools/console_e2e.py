@@ -221,6 +221,8 @@ def check(binary):
     import console_workflows_test
     console_workflows_test.check(binary, sys.modules[__name__])
     import console_topics_test
+    import console_heads_test
+    console_heads_test.check(binary, sys.modules[__name__])
     console_topics_test.check(binary, sys.modules[__name__])
     import console_peer_test
     console_peer_test.check(binary, sys.modules[__name__])

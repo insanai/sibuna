@@ -113,8 +113,10 @@ image("images/console-security.png"))
 
 #book_figure([Events. Each recorded incident opens inline with its evidence: the selected
 local response, byte lengths, campaign candidate, and explicit “not recorded” entries for
-the matched rule, score terms and JA4 fingerprint. Deny and allow actions open the IP
-groups form with the address drafted.],
+the matched rule, score terms and JA4 fingerprint. With `--console-capture-heads` the
+redacted request head (and, for audited admissions, the origin response head) opens on
+request, rendered as UTF-8 or Latin-1 with a copy-as-cURL command; otherwise heads read as
+not recorded. Deny and allow actions open the IP groups form with the address drafted.],
 image("images/console-events.png"))
 
 #book_figure([Challenges. Issued, submitted, accepted and rejected counts by cause, the
