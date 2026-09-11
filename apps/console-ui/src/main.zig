@@ -457,7 +457,10 @@ fn streamEvent(value: std.json.Value, alloc: std.mem.Allocator) !void {
 
 fn statsResponse(status: i64, body: std.json.Value, alloc: std.mem.Allocator) !void {
     state.stats_busy = false;
-    if (state.phase != .dashboard and state.phase != .security_overview) return;
+    // The Nodes page reads the live snapshot too: its memory and CPU rows and sparklines
+    // follow the same one-second series as the dashboard tiles.
+    if (state.phase != .dashboard and state.phase != .security_overview and
+        state.phase != .nodes) return;
     if (status == 401 or status == 403) {
         state.phase = .login;
         state.stats_busy = false;
