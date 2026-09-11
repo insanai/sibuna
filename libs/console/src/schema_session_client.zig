@@ -1,6 +1,6 @@
 //! Version 34 records where a credential was used: sessions keep the client address and a
 //! User-Agent digest, and authentication audit rows (sign-in, sign-out, refusal) carry the
-//! client address. Other mutations leave it NULL, which readers show as not recorded.
+//! client address. Version 35 extends the column to every audited management mutation.
 pub const sql =
     "ALTER TABLE console_sessions ADD COLUMN client_ip TEXT;" ++
     "ALTER TABLE console_sessions ADD COLUMN user_agent_hash TEXT;" ++
