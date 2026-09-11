@@ -139,6 +139,7 @@ pub const Frame = struct {
         self.combined.geoip_available = false;
         self.combined.geoip_attribution = false;
         self.combined.retention_failures = 0;
+        self.combined.active_bans = 0;
         self.combined.other_country_samples = 0;
         inline for (counters) |name| @field(self.combined, name) = 0;
         self.traffic = @splat(0);
@@ -196,6 +197,11 @@ pub const Frame = struct {
             if (value.retention_failures) |count| {
                 try sum(total, count);
             } else self.combined.retention_failures = null;
+        }
+        if (self.combined.active_bans) |*total| {
+            if (value.active_bans) |count| {
+                try sum(total, count);
+            } else self.combined.active_bans = null;
         }
         try sum(&self.combined.other_country_samples, value.other_country_samples);
         try sum(&self.scope.traffic_uncertainty, value.other_country_samples);

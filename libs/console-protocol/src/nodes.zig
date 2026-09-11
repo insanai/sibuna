@@ -14,6 +14,18 @@ pub const max_address = 64;
 pub const max_url = 128;
 pub const Role = enum { unknown, single, leader, follower, candidate };
 pub const Health = enum { unknown, healthy, degraded, down };
+/// One console's view of its cluster: itself plus every configured peer probe. Peers
+/// without an observation count as unknown, never as healthy zeros.
+pub const Summary = struct {
+    healthy: u8 = 0,
+    degraded: u8 = 0,
+    down: u8 = 0,
+    unknown: u8 = 0,
+
+    pub fn total(self: Summary) u16 {
+        return @as(u16, self.healthy) + self.degraded + self.down + self.unknown;
+    }
+};
 /// Storage-owned view of the local member's consensus state; stale values keep their
 /// last observation and `quorum` becomes false rather than inventing progress.
 pub const Storage = struct {

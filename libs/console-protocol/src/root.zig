@@ -440,6 +440,11 @@ pub const StatsSnapshot = struct {
     future_samples: u64 = 0,
     geo_maintenance_failures: u64 = 0,
     retention_failures: ?u64 = null,
+    /// Occupied, unexpired entries of the local dynamic ban table at the snapshot (hashed
+    /// slots, not distinct historical addresses); null on snapshots without the gauge.
+    active_bans: ?u64 = null,
+    /// This console's probe view of configured peers plus itself; null when not observed.
+    cluster_health: ?nodes.Summary = null,
     sample_probability: []const u8 = "1/64",
     geoip_available: bool = false,
     /// Whether the active country provider's licence requires visible attribution.

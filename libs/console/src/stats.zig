@@ -31,6 +31,8 @@ pub const Stats = struct {
     timeline: @import("timeline.zig").Timeline = .{},
     minute_status: p.minutes.Status = .{},
     incident_geo: @import("incident_geo.zig").Window = .{},
+    active_bans: ?u32 = null,
+    cluster_health: ?p.nodes.Summary = null,
 
     pub fn collectIncidents(
         self: *Stats,
@@ -42,6 +44,14 @@ pub const Stats = struct {
         self.mutex.lockUncancelable(io);
         defer self.mutex.unlock(io);
         self.incident_geo.collect(io, feed, geo, now);
+    }
+
+    /// Gauges are read on the console tick, never on a request thread.
+    pub fn gauges(self: *Stats, io: std.Io, bans: ?u32, health: ?p.nodes.Summary) void {
+        self.mutex.lockUncancelable(io);
+        defer self.mutex.unlock(io);
+        self.active_bans = bans;
+        self.cluster_health = health;
     }
 
     pub fn journal(self: *Stats, io: std.Io, minutes: *MinuteJournal) void {
@@ -158,6 +168,8 @@ pub const Stats = struct {
             .future_samples = self.future_samples,
             .geo_maintenance_failures = self.geo_maintenance_failures.load(.monotonic),
             .retention_failures = self.retention_failures.load(.monotonic),
+            .active_bans = if (self.active_bans) |count| count else null,
+            .cluster_health = self.cluster_health,
             .unknown_samples = unknown,
             .timestamp = now,
         };

@@ -14,16 +14,25 @@ test "dashboard excludes missing stale and skewed nodes and fences contributor c
     defer t.allocator.destroy(frame);
     frame.* = .{};
     var local = sample(1, 10);
+    local.active_bans = 3;
     frame.collect(&local, &store, 100);
     try t.expect(frame.scope.available);
+    try t.expectEqual(@as(?u64, 3), frame.combined.active_bans);
     try t.expectEqual(@as(u8, 1), frame.scope.contributing);
     try t.expectEqual(@as(u8, 3), frame.scope.count);
     try t.expect(frame.view(2).value == null);
     const alone = frame.combined.boot;
     var remote = sample(2, 20);
+    remote.active_bans = 4;
     try publish(&store, &remote, 100);
     frame.collect(&local, &store, 100);
     try t.expectEqual(@as(u64, 30), frame.combined.requests);
+    try t.expectEqual(@as(?u64, 7), frame.combined.active_bans);
+    // One contributor without the gauge withholds the combined level entirely.
+    local.active_bans = null;
+    frame.collect(&local, &store, 100);
+    try t.expect(frame.combined.active_bans == null);
+    local.active_bans = 3;
     try t.expect(!std.mem.eql(u8, &alone, &frame.combined.boot));
     const both = frame.combined.boot;
     frame.collect(&local, &store, 109);
