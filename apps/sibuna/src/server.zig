@@ -572,6 +572,8 @@ fn applyPolicy(ctx: *RequestContext) !bool {
     var name: [policy.engine.MAX_RULE_NAME]u8 = undefined;
     const decision = requestDecision(ctx, &name);
     recordAuditFindings(ctx, decision.audited);
+    // Findings held back for the origin head are recorded on every other exit as well.
+    defer if (build_options.console) flushDeferredFindings(ctx);
     if (decision.limits) |limits| {
         const rate = st.rule_rate_limiter.checkScoped(
             ctx.client_ip,
@@ -694,6 +696,15 @@ fn recordAuditFindings(ctx: *RequestContext, findings: u8) void {
         ctx.deferred_findings = findings;
         return;
     }
+    recordFindings(ctx, findings, "", false);
+}
+
+/// Findings still held back when the request ends without an origin exchange: the response
+/// was local (challenge, denial, rate limit) or the relay never started. Recorded once.
+fn flushDeferredFindings(ctx: *RequestContext) void {
+    const findings = ctx.deferred_findings;
+    if (findings == 0) return;
+    ctx.deferred_findings = 0;
     recordFindings(ctx, findings, "", false);
 }
 
@@ -826,10 +837,12 @@ fn admittedComplete(ctx: *RequestContext, origin_status: u16, origin_head: []con
     const st = ctx.state();
     if (st.telemetry) |telemetry| telemetry.origin(origin_status);
     sampleOutcome(ctx, .admitted, if (origin_status == 0) 502 else origin_status);
-    if (ctx.deferred_findings == 0) return;
+    const findings = ctx.deferred_findings;
+    if (findings == 0) return;
+    ctx.deferred_findings = 0;
     var redacted: [core.incident_heads.response_bytes]u8 = undefined;
     const head = core.incident_heads.responseHead(origin_head, &redacted);
-    recordFindings(ctx, ctx.deferred_findings, redacted[0..head.len], head.truncated);
+    recordFindings(ctx, findings, redacted[0..head.len], head.truncated);
 }
 
 fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule_hash: u64) !bool {
