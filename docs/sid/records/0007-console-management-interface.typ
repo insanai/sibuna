@@ -1,12 +1,12 @@
 #let sid-number = "0007"
 #let sid-title = "The Sibuna Console: A Real-Time Management Interface for Nodes and Clusters in Pure Zig"
-#let sid-state = "discussion"
+#let sid-state = "committed"
 #let sid-created = "2026-09-08"
 #let sid-discussion = "Specifies the Sibuna Console, a complete management interface for Sibuna: a separate pure-Zig module started from the Sibuna CLI that serves a real-time web interface over the standard library's HTTP server and WebSockets, renders its pages from a WebAssembly module styled with daisyUI 5, keeps authentication, statistics, audit, and a GeoIP database in the embedded Zaxonlite store, manages one node or a replicated cluster, and defines performance acceptance targets that remain to be measured."
 #let sid-labels = ("console", "management", "websocket", "ui", "zaxonlite", "geoip", "cluster",)
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
-#let sid-status = "Proposed"
+#let sid-status = "Committed"
 #let sid-last-updated = "2026-09-11"
 
 #import "../../shared/sid.typ": sid-document
@@ -1770,7 +1770,8 @@ measurements require all configured peer directions, stable boots, advancing wat
 loaded geography. Throughput degradation must be at most 1%, with p99 increase at most 10%,
 under the defined workload matrix. Missing delivery, unstable baselines or inconclusive
 confidence intervals do not pass. Primitive baselines and smoke runs cannot substitute for
-this gate. These criteria remain unchanged; Proposed status does not authorize reduced scope.
+this gate. These criteria remain the definition of a full pass; the launch scope below records
+the project owner's decision of 2026-09-11 and the conditions attached to it.
 
 == Implementation review (2026-09-11)
 
@@ -1790,17 +1791,44 @@ the security aggregates shared the light per-statement step budget and became un
 after roughly a thousand retained findings in the selected day; they now use a larger, still
 fixed, budget covered by a volume test.
 
-Requirements that remain open after this review, because they need data-plane or schema work
-beyond a review increment: `challenge_minutes` persistence (challenge counters are boot-local);
-the sampled client operating system, browser, response status and referring host rankings
-(only paths are sketched); RSS and CPU minute columns; a control-thread snapshot of distinct
-active bans and a nodes-healthy tile; per-address challenge records and the adaptive-difficulty
-timeline; client address and User-Agent on session and audit rows; request and response heads
-with charset selection and “copy as cURL”; the configurable serve-kernel admission model
-(`libs/serve/src/admission.zig` is unwired) and the 1 MB/8 MB body limits; revert from the
-Audit page (revert exists from Policy history); and the impact gate, which remains inconclusive
-on the laptop used so far. The interface module is within 3 KiB of its 512 KiB ceiling, so
-further page work must be paid for by size reductions first.
+The same review then added `--console-query-steps` so the aggregate budget is an operator
+setting, and recorded the client address (transport peer, or the forwarded client behind a
+trusted proxy) and a User-Agent digest on sessions, with the client address on sign-in,
+sign-out and refused sign-in audit rows (schema version 34).
+
+== Launch scope (2026-09-11)
+
+The engine of SID 0002 to SID 0006 is the launch-critical product; this console observes and
+manages it. The project owner closed this record for launch on 2026-09-11 with the scope
+below. Items outside it are post-launch requirements of this record, not conditions of its
+Committed status.
+
+*In scope and verified on main:* every page of “Pages”, the authentication and kiosk model,
+the six-topic protocol, the data model through schema version 34, GeoIP, cluster membership,
+probes and peer telemetry, notifications, retention, response-page templates, the CLI, the
+build pipeline and digest gate, the golden, contract, end-to-end and cluster test entry points,
+and the operator guide with screenshots.
+
+*Launch condition:* the console-impact gate is inconclusive on the development laptop. Before
+`--console` is enabled beside a production data plane, run `zig build console-impact` on the
+deployment host class and record the result under `benchmarks/results/`. The same binary runs
+without `--console`; compiling the console in starts no console thread, listener or sampler.
+
+*Deferred to post-launch (observability):* `challenge_minutes` persistence (challenge counters
+are boot-local, labelled as such); the sampled client operating system, browser, response
+status and referring host rankings (paths are sketched); RSS and CPU minute columns; a
+control-thread snapshot of distinct active bans and a nodes-healthy tile; per-address
+challenge records and the adaptive-difficulty timeline; request and response heads with
+charset selection and “copy as cURL”; revert from the Audit page (revert exists from Policy
+history); the client address on mutation audit rows other than authentication.
+
+*Accepted deviations:* the serve kernel reserves HTTP and control capacity arithmetically
+(96 slots less 64 browser and 8 peer subscribers), verified by the 64-subscriber scenario,
+and `libs/serve/src/admission.zig` stays an unwired reference; request bodies use per-route
+bounded buffers stricter than the 1 MB and 8 MB figures, with policy import chunked; a denial
+carries no rule name to the client, so tester parity is checked against the decision, not a
+response header. The interface module is within 1 KiB of its 512 KiB ceiling: any further
+page work is paid for by a size reduction first.
 
 = References
 
