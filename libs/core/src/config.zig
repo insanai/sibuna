@@ -101,6 +101,9 @@ pub const Config = struct {
     /// SQLite virtual-machine steps one console period aggregate may spend before it fails
     /// as unavailable; paged reads keep a fixed light budget. Bounded on both sides.
     console_query_steps: u64 = 4_000_000,
+    /// Store redacted request heads (and, for audited admitted requests, the origin
+    /// response head) beside each incident. Off by default; console builds only.
+    console_capture_heads: bool = false,
     /// Zaxonlite data directory; null runs without persistent storage.
     data_dir: ?[]const u8 = null,
     cluster_node: u32 = 0,

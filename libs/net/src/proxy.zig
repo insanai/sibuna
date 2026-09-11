@@ -31,6 +31,10 @@ pub const Audit = struct {
     rule: []const u8,
     scheme: []const u8 = "http",
     response_status: ?*u16 = null,
+    /// Optional copy of the origin response head (status line and headers, raw) for the
+    /// caller's evidence capture; bounded by the buffer, the length reports what fit.
+    response_head: ?*[1024]u8 = null,
+    response_head_len: ?*u16 = null,
 };
 
 pub const ProxyError = error{
@@ -370,13 +374,18 @@ fn relayResponse(
     w: *Io.Writer,
     head_request: bool,
     client_keep_alive: bool,
-    response_status: ?*u16,
+    audit: *const Audit,
 ) ProxyError!Relayed {
     const head_len = try finalResponseHead(up, w);
     const head = up.buffered()[0..head_len];
     const parsed = parseResponseHead(head, head_request) orelse return error.UpstreamReadFailed;
     if (parsed.status == 101) return error.UpstreamReadFailed;
-    if (response_status) |output| output.* = parsed.status;
+    if (audit.response_status) |output| output.* = parsed.status;
+    if (audit.response_head) |buffer| {
+        const n = @min(head.len, buffer.len);
+        @memcpy(buffer[0..n], head[0..n]);
+        if (audit.response_head_len) |length| length.* = @intCast(n);
+    }
     const framed = parsed.framing != .until_close;
     const keep = client_keep_alive and framed;
     try writeClientHead(w, head, keep);
@@ -447,7 +456,7 @@ fn exchange(
         input.client.writer,
         head_request,
         input.keep_alive,
-        input.audit.response_status,
+        &input.audit,
     );
 }
 
@@ -580,7 +589,8 @@ const Fixed = struct { keep: bool, reusable: bool, len: usize };
 fn relayFixed(origin: []const u8, out: []u8, keep_alive: bool) !Fixed {
     var up = std.Io.Reader.fixed(origin);
     var w = std.Io.Writer.fixed(out);
-    const relayed = try relayResponse(&up, &w, false, keep_alive, null);
+    const audit: Audit = .{ .client_ip = "", .status = "", .rule = "" };
+    const relayed = try relayResponse(&up, &w, false, keep_alive, &audit);
     return .{
         .keep = relayed.client_keep,
         .reusable = relayed.origin_reusable,

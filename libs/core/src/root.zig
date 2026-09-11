@@ -23,6 +23,7 @@ test {
     _ = @import("diagnostic.zig");
     _ = @import("errors.zig");
     _ = @import("config.zig");
+    _ = @import("incident_heads.zig");
     _ = @import("log.zig");
 }
 
@@ -33,3 +34,4 @@ test "core sanity" {
 pub const Metrics = @import("metrics.zig").Metrics;
 pub const IncidentEvidence = @import("incident.zig").Evidence;
 pub const Incident = @import("incident.zig").Incident;
+pub const incident_heads = @import("incident_heads.zig");

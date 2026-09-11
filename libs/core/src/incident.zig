@@ -7,6 +7,11 @@ pub const Incident = struct {
     payload: []const u8,
     now: u64,
     evidence: Evidence = .{},
+    /// Redacted heads captured at the incident (see incident_heads.zig); empty when off.
+    request_head: []const u8 = "",
+    response_head: []const u8 = "",
+    request_truncated: bool = false,
+    response_truncated: bool = false,
 };
 
 /// Metadata for explicitly captured evidence. Version zero means historical/unrecorded.
