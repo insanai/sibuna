@@ -217,6 +217,9 @@ const Connection = struct {
     activity: *net.duplex.Activity,
     peer_buf: [48]u8 = undefined,
     peer: []const u8 = "",
+    /// The last request this connection may serve: its response announces the close so a
+    /// keep-alive client reconnects instead of seeing its next request fail.
+    last: bool = false,
 
     fn formatPeer(self: *Connection) void {
         self.peer = switch (self.stream.socket.address) {
@@ -296,6 +299,7 @@ pub fn handleConnection(stream: Io.net.Stream, io: Io, state: *AppState) void {
     conn.formatPeer();
     var served: u32 = 0;
     while (served < max_requests_per_connection) : (served += 1) {
+        conn.last = served + 1 == max_requests_per_connection;
         const keep = serveOne(&conn) catch break;
         if (!keep) break;
         state.idle.touch(idle_slot, nowMs(io));
@@ -435,7 +439,7 @@ pub const RequestContext = struct {
             .user_agent = req.getHeader("user-agent") orelse "",
             .now = now_ms / 1000,
             .now_ms = now_ms,
-            .keep_alive = req.wantsKeepAlive() and declared_body <= req.body.len,
+            .keep_alive = req.wantsKeepAlive() and declared_body <= req.body.len and !c.last,
             .internal = std.mem.startsWith(u8, req.path, "/__sibuna/"),
         };
     }

@@ -90,6 +90,19 @@ def http_checks(port, hdrs):
     assert status == 302
     assert reply["Location"] == "https://application.example/login?next=%2Fprivate"
     assert reply["Set-Cookie"] == "application=opaque; HttpOnly; Secure; SameSite=Lax"
+    # A connection serves a bounded number of requests; the last permitted response says
+    # so, and a keep-alive client sees an announced close rather than a failed request.
+    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=8)
+    try:
+        for index in range(4096):
+            connection.request("GET", "/keep", headers=hdrs)
+            response = connection.getresponse()
+            response.read()
+            expected = "close" if index == 4095 else "keep-alive"
+            assert response.status == 200 and response.getheader("Connection") == expected, (
+                index, response.status, response.getheader("Connection"))
+    finally:
+        connection.close()
     with socket.create_connection(("127.0.0.1", port), timeout=5) as connection:
         head = "GET /early HTTP/1.1\r\nHost: example\r\nConnection: close\r\n"
         head += "".join(f"{k}: {v}\r\n" for k, v in hdrs.items()) + "\r\n"
