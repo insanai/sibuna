@@ -30,10 +30,19 @@ const Fixture = struct {
 };
 
 var origin_port: u16 = 0;
-var proxy_fixture: Fixture = .{};
-var auth_fixture: Fixture = .{};
-var audit_fixture: Fixture = .{};
-var quota_fixture: Fixture = .{};
+// Fixtures live on the heap: `AppState` carries 64-byte-aligned fields, and the Debug
+// self-hosted x86_64 backend does not honour that alignment for globals, which trips the
+// context `@alignCast` on Linux. The page allocator always satisfies it.
+var proxy_fixture: *Fixture = undefined;
+var auth_fixture: *Fixture = undefined;
+var audit_fixture: *Fixture = undefined;
+var quota_fixture: *Fixture = undefined;
+
+fn allocateFixture() *Fixture {
+    const fixture = std.heap.page_allocator.create(Fixture) catch @panic("fixture memory");
+    fixture.* = .{};
+    return fixture;
+}
 var audited_requests: std.atomic.Value(u64) = .init(0);
 /// Minimal once-guard: the first caller boots the fixtures, later callers
 /// spin until it has finished.
@@ -103,8 +112,8 @@ fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
     f.engine.initInPlace(cfg.default_difficulty);
     policy.page_template.defaults(&f.engine.pages, @import("challenge_page.zig").default);
     f.engine.waf_enabled = cfg.waf;
-    if (f == &quota_fixture) configureQuotas(&f.engine);
-    if (f == &audit_fixture) {
+    if (f == quota_fixture) configureQuotas(&f.engine);
+    if (f == audit_fixture) {
         f.engine.inspection_modes = .{ .sqli = .audit, .path_traversal = .disabled };
         f.engine.ip_trie.insertCidr("203.0.113.223/32", .deny) catch unreachable;
         // A customized denial page: the request path renders it from the snapshot.
@@ -120,7 +129,7 @@ fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
     f.slot = .{ .engine = &f.engine };
     const seed = [_]u8{0x5a} ** 32;
     f.state.init(cfg, &f.slot, &seed);
-    if (f == &audit_fixture) f.state.hooks = .{ .record_incident = captureAudit };
+    if (f == audit_fixture) f.state.hooks = .{ .record_incident = captureAudit };
     if (console_enabled) {
         f.telemetry = telemetry_store.ConsoleTelemetry.init();
         f.state.telemetry = &f.telemetry;
@@ -146,10 +155,14 @@ fn bootAll() void {
     const t = std.Thread.spawn(.{}, originLoop, .{&origin_listener}) catch unreachable;
     t.detach();
 
+    proxy_fixture = allocateFixture();
+    auth_fixture = allocateFixture();
+    audit_fixture = allocateFixture();
+    quota_fixture = allocateFixture();
     var proxy_cfg = core.Config.default();
     proxy_cfg.default_difficulty = 8;
     proxy_cfg.algorithm = .hashcash;
-    bootFixture(&proxy_fixture, proxy_cfg);
+    bootFixture(proxy_fixture, proxy_cfg);
 
     var auth_cfg = core.Config.default();
     auth_cfg.mode = .forward_auth;
@@ -157,9 +170,9 @@ fn bootAll() void {
     auth_cfg.algorithm = .posw;
     auth_cfg.posw_challenges = 4;
     auth_cfg.token_scheme = .ed25519;
-    bootFixture(&auth_fixture, auth_cfg);
-    bootFixture(&audit_fixture, proxy_cfg);
-    bootFixture(&quota_fixture, proxy_cfg);
+    bootFixture(auth_fixture, auth_cfg);
+    bootFixture(audit_fixture, proxy_cfg);
+    bootFixture(quota_fixture, proxy_cfg);
 }
 
 fn configureQuotas(engine: *policy.Engine) void {
