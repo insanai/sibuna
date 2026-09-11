@@ -84,8 +84,8 @@ pub fn logout(owner: *Persistent, input: p.auth.Logout, now: u64) !p.StorageResu
     _ = try db.exec(
         owner.db,
         owner.gpa,
-        "UPDATE console_sessions SET ended_at=? WHERE digest=?",
-        &.{ integer(now), text(&hex) },
+        "UPDATE console_sessions SET ended_at=?,client_ip=? WHERE digest=?",
+        &.{ integer(now), optional(input.client.slice()), text(&hex) },
     );
     return .command_recorded;
 }

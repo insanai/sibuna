@@ -841,19 +841,24 @@ test "explicit sign-out commits its redacted audit record with revocation" {
         .{tmp.sub_path},
     ));
     defer fx.close();
-    const operation: p.StorageRequest = .{ .logout = .{ .digest = @splat(1) } };
+    const operation: p.StorageRequest = .{ .logout = .{
+        .digest = @splat(1),
+        .client = try p.Bytes(48).init("198.51.100.9"),
+    } };
     try t.expect((try fx.authenticationAt(operation, 110)) == .command_recorded);
     try t.expect((try fx.authenticationAt(operation, 110)) == .command_recorded);
     var audit = try db.query(
         fx.owner.db,
         t.allocator,
-        "SELECT actor,recorded_at FROM console_audit WHERE action='session.logout' LIMIT 2",
+        "SELECT actor,recorded_at,client_ip FROM console_audit " ++
+            "WHERE action='session.logout' LIMIT 2",
         &.{},
     );
     defer audit.deinit();
     try t.expectEqual(1, audit.rows.len);
     try t.expectEqualStrings("1", audit.rows[0][0].?);
     try t.expectEqualStrings("110", audit.rows[0][1].?);
+    try t.expectEqualStrings("198.51.100.9", audit.rows[0][2].?);
     try t.expectEqual(p.Failure.unauthorized, (try fx.authorizeAt(.{
         .session_digest = @splat(1),
         .now = 111,

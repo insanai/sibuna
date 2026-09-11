@@ -58,7 +58,11 @@ pub const Denied = struct {
     username: p.Bytes(64),
     client: p.Bytes(48) = .{},
 };
-pub const Logout = struct { digest: [32]u8 };
+pub const Logout = struct {
+    digest: [32]u8,
+    /// Address presenting the credential for this sign-out, not its original sign-in.
+    client: p.Bytes(48) = .{},
+};
 pub const PasswordChange = struct {
     expected_revision: u64,
     replacement_digest: [32]u8,

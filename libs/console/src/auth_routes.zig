@@ -181,8 +181,10 @@ fn sessionResponse(
 }
 
 pub fn logout(app: *App, context: *Context) !void {
+    const origin = Origin.capture(app, context);
     const result = try app.request(.{ .logout = .{
         .digest = try http.session(context),
+        .client = origin.client,
     } });
     if (result != .command_recorded) return error.StorageUnavailable;
     const cookie = if (app.config.behind_proxy or app.config.cookie_secure)
