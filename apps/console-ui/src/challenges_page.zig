@@ -73,8 +73,10 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         .age = state.browser_time -| model.timing_received_at,
     });
     try timing(&snapshot, model.busy, "challenges-bin", w);
-    try rejection(&snapshot, w);
-    try html.render(w, "</div></main>", .{});
+    try rejection(&snapshot, true, w);
+    try html.render(w, "</div>", .{});
+    try @import("challenge_records.zig").render(state, w);
+    try html.render(w, "</main>", .{});
 }
 
 pub fn row(w: *Writer, label: []const u8, count: u64) Writer.Error!void {
@@ -180,25 +182,41 @@ fn binText(bin: u8, w: *Writer) Writer.Error!void {
     }
 }
 
-pub fn rejection(snapshot: *const p.challenges.Snapshot, w: *Writer) Writer.Error!void {
-    const names = [_][]const u8{
-        "Address banned",
-        "Body too large",
-        "Missing challenge ID",
-        "Malformed solution",
-        "Malformed challenge",
-        "Invalid challenge tag",
-        "Expired challenge",
-        "Fingerprint mismatch",
-        "Difficulty not met",
-        "Invalid proof",
-        "Wrong solution type",
-        "Replay",
-        "Capacity exhausted",
-    };
+pub const cause_names = [_][]const u8{
+    "Address banned",
+    "Body too large",
+    "Missing challenge ID",
+    "Malformed solution",
+    "Malformed challenge",
+    "Invalid challenge tag",
+    "Expired challenge",
+    "Fingerprint mismatch",
+    "Difficulty not met",
+    "Invalid proof",
+    "Wrong solution type",
+    "Replay",
+    "Capacity exhausted",
+};
+
+/// With `records`, each cause links to the per-address records it produced.
+pub fn rejection(
+    snapshot: *const p.challenges.Snapshot,
+    records: bool,
+    w: *Writer,
+) Writer.Error!void {
     try html.render(w, "<section class=\"sb-panel mt-6\"><h2>Rejection causes</h2>" ++
         "<table class=\"table\"><tbody>", .{});
-    for (names, snapshot.causes) |name, count| try row(w, name, count);
+    for (cause_names, snapshot.causes, 0..) |name, count, cause| {
+        try html.render(w, "<tr><th scope=\"row\">{{ name }}</th><td>{{ count }}</td><td>", .{
+            .name = name,
+            .count = count,
+        });
+        if (records) try html.render(w, "<button class=\"btn btn-sm\" " ++
+            "data-action=\"challenges-records-cause-{{ cause }}\">Show addresses</button>", .{
+            .cause = cause,
+        });
+        try w.writeAll("</td></tr>");
+    }
     try html.render(w, "</tbody></table></section>", .{});
 }
 

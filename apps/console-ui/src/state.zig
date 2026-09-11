@@ -46,6 +46,7 @@ pub const State = struct {
     similarity: @import("similarity_state.zig").Model = .{},
     challenges: @import("challenges_page.zig").Model = .{},
     challenge_summary: @import("challenge_summary.zig").Model = .{},
+    challenge_records: @import("challenge_records.zig").Model = .{},
     security_overview: @import("security_overview_state.zig").Model = .{},
     events: @import("events_state.zig").Model = .{},
     message: p.Bytes(256) = .{},

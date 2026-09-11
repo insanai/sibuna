@@ -842,7 +842,9 @@ fn challengeAction(name: []const u8, fields: std.json.Value) !bool {
         state.phase = .challenges;
         state.challenges = .{};
         state.challenge_summary = .{};
+        state.challenge_records = .{};
         _ = try challengeWindow(null);
+        try challengeDifficulty();
     } else {
         if (state.phase != .challenges or state.challenges.busy) return false;
         if (equal(name, "challenges-period")) {
@@ -851,6 +853,7 @@ fn challengeAction(name: []const u8, fields: std.json.Value) !bool {
             state.challenge_summary.hours = hours;
             return challengeWindow(null);
         }
+        if (std.mem.startsWith(u8, name, "challenges-records-")) return challengeRecords(name);
         if (equal(name, "challenges-window-bin")) {
             state.challenge_summary.selected = try std.fmt.parseInt(u8, string(fields, "bin"), 10);
             return challengeWindow(null);
@@ -864,6 +867,82 @@ fn challengeAction(name: []const u8, fields: std.json.Value) !bool {
     state.stats_busy = false;
     try post("challenges", "/console/api/challenges", .{ .bin = state.challenges.selected });
     return true;
+}
+
+fn challengeDifficulty() !void {
+    const model = &state.challenge_records;
+    model.difficulty_busy = true;
+    model.difficulty_failed = false;
+    try post("challenges-difficulty", "/console/api/challenges/difficulty", .{
+        .hours = model.hours,
+    });
+}
+
+/// Filters come from the action name: a cause ordinal, an outcome, all, or the next page.
+fn challengeRecords(name: []const u8) !bool {
+    const model = &state.challenge_records;
+    if (model.busy) return true;
+    const rest = name["challenges-records-".len..];
+    var before: ?p.challenge_records.Cursor = null;
+    if (equal(rest, "more")) {
+        before = model.next orelse return true;
+    } else if (equal(rest, "all")) {
+        model.cause = null;
+        model.outcome = null;
+    } else if (equal(rest, "accepted")) {
+        model.cause = null;
+        model.outcome = .accepted;
+    } else if (equal(rest, "rejected")) {
+        model.cause = null;
+        model.outcome = .rejected;
+    } else if (std.mem.startsWith(u8, rest, "cause-")) {
+        model.cause = try std.fmt.parseInt(u8, rest["cause-".len..], 10);
+        model.outcome = .rejected;
+    } else return false;
+    model.busy = true;
+    model.failed = false;
+    try post("challenges-records", "/console/api/challenges/records", .{
+        .hours = model.hours,
+        .outcome = if (model.outcome) |outcome| @tagName(outcome) else null,
+        .cause = model.cause,
+        .before = before,
+    });
+    return true;
+}
+
+fn challengeRecordsResponse(
+    id: []const u8,
+    value: std.json.Value,
+    alloc: std.mem.Allocator,
+) !void {
+    const model = &state.challenge_records;
+    const status_value = field(value, "status") orelse return;
+    if (status_value != .integer) return;
+    if (field(value, "browser_time")) |time| if (time == .integer and time.integer >= 0) {
+        state.browser_time = @intCast(time.integer);
+    };
+    const body = field(value, "body") orelse std.json.Value.null;
+    if (equal(id, "challenges-difficulty")) {
+        model.difficulty_busy = false;
+        if (status_value.integer != 200) {
+            model.difficulty_failed = true;
+            return;
+        }
+        model.transitions(body, alloc) catch {
+            model.difficulty_failed = true;
+        };
+        return;
+    }
+    model.busy = false;
+    if (status_value.integer != 200) {
+        model.failed = true;
+        return;
+    }
+    model.received_at = state.browser_time;
+    model.records(body, alloc) catch {
+        model.failed = true;
+    };
+    try command(.{ .op = "focus", .selector = "#challenge-records" });
 }
 
 /// One bounded scan per request; a longer window continues from the announced cursor.
@@ -948,6 +1027,10 @@ fn boundedEnvelope(value: std.json.Value, alloc: std.mem.Allocator) !bool {
     if (equal(id, "events")) return eventEnvelope(value, alloc);
     if (equal(id, "challenges-summary")) {
         if (state.phase == .challenges) try challengeWindowResponse(value, alloc);
+        return true;
+    }
+    if (equal(id, "challenges-records") or equal(id, "challenges-difficulty")) {
+        if (state.phase == .challenges) try challengeRecordsResponse(id, value, alloc);
         return true;
     }
     if (!equal(id, "challenges")) return false;

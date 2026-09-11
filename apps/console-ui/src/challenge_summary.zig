@@ -64,7 +64,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     try html.render(w, "</tbody></table><p class=\"sb-note\">Sums of per-minute deltas across " ++
         "contributing nodes and boots. Retries and cross-window solutions prevent a cohort " ++
         "conversion rate.</p></section>", .{});
-    try page.rejection(&summary.totals, w);
+    try page.rejection(&summary.totals, false, w);
     try html.render(w, "</div><div class=\"sb-panels\">", .{});
     try page.timing(&summary.totals, model.busy, "challenges-window-bin", w);
     try html.render(w, "</div></section>", .{});
