@@ -6,6 +6,7 @@ pub const policies = @import("policies.zig");
 pub const challenges = @import("challenges.zig");
 pub const challenge_minutes = @import("challenge_minutes.zig");
 pub const client_family = @import("client_family.zig");
+pub const challenge_records = @import("challenge_records.zig");
 pub const settings = @import("settings.zig");
 pub const dashboard = @import("dashboard.zig");
 pub const space_saving = @import("space_saving.zig");
@@ -131,6 +132,10 @@ pub const StorageRequest = union(enum) {
     challenge_minutes_write: challenge_minutes.Write,
     challenge_minutes_prune: u64,
     challenge_summary: challenge_minutes.Query,
+    challenge_records_write: challenge_records.Batch,
+    challenge_transition: challenge_records.Transition,
+    challenge_records_query: challenge_records.Query,
+    challenge_difficulty_query: challenge_records.DifficultyQuery,
     rule_hits_start,
     rule_hit_history: rule_hit_history.Query,
     rankings_query: ranking_history.Query,
@@ -225,6 +230,8 @@ pub const StorageResult = union(enum) {
     minute_page: minutes.Page,
     minute_summary: minute_summary.Part,
     challenge_summary: challenge_minutes.Summary,
+    challenge_records: challenge_records.Page,
+    challenge_difficulty: challenge_records.DifficultyPage,
     rule_hit_history: rule_hit_history.Part,
     ranking_history: ranking_history.Page,
     ranking_inventory: rankings.Inventory,
@@ -332,6 +339,8 @@ pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
         .minutes_query => |query| try minutes.validate(query),
         .minutes_summary => |query| try minute_summary.validate(query),
         .challenge_summary => |query| try challenge_minutes.validate(query),
+        .challenge_records_query => |query| try challenge_records.validate(query),
+        .challenge_difficulty_query => |query| try challenge_records.validateDifficulty(query),
         .rule_hit_history => |query| try rule_hit_history.validate(query),
         .rankings_query => |query| try ranking_history.validate(query),
         .policy_read => |input| try policies.validateRead(input),
@@ -380,6 +389,7 @@ pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
 
 test {
     _ = challenge_minutes;
+    _ = challenge_records;
     _ = client_family;
     _ = events.country;
     _ = security;

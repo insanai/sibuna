@@ -11,14 +11,20 @@ pub fn submit(state: *AppState) void {
     };
 }
 
-pub fn reject(state: *AppState, cause: counters.Cause) void {
+pub fn reject(state: *AppState, ip: []const u8, now: u64, cause: counters.Cause) void {
     if (options.console) if (state.telemetry) |telemetry| {
         telemetry.challenges.reject(cause);
+        telemetry.challengeEvent(event(ip, now, 2, @intFromEnum(cause), 0, 0, 0, null));
     };
 }
 
-pub fn verificationFailure(state: *AppState, err: challenge.VerifyError) void {
-    reject(state, switch (err) {
+pub fn verificationFailure(
+    state: *AppState,
+    ip: []const u8,
+    now: u64,
+    err: challenge.VerifyError,
+) void {
+    reject(state, ip, now, switch (err) {
         error.MalformedChallenge => .malformed_challenge,
         error.InvalidChallengeTag => .invalid_tag,
         error.ChallengeExpired => .expired,
@@ -31,13 +37,34 @@ pub fn verificationFailure(state: *AppState, err: challenge.VerifyError) void {
     });
 }
 
-pub fn issue(state: *AppState, algorithm: challenge.Algorithm, parameter: u32, openings: u8) void {
+pub fn issue(
+    state: *AppState,
+    ip: []const u8,
+    now: u64,
+    algorithm: challenge.Algorithm,
+    parameter: u32,
+    openings: u8,
+) void {
     if (options.console) if (state.telemetry) |telemetry| {
         telemetry.challenges.issue(convert(algorithm), @intCast(parameter), openings);
+        telemetry.adaptive_bits.store(state.coordinator.adaptive.bump(), .monotonic);
+        telemetry.adaptive_rate_256.store(
+            state.coordinator.adaptive.rate_256.load(.monotonic),
+            .monotonic,
+        );
+        const kind: u8 = @intFromEnum(convert(algorithm));
+        const bits: u8 = @intCast(parameter);
+        telemetry.challengeEvent(event(ip, now, 0, no_cause, kind, bits, openings, null));
     };
 }
 
-pub fn accept(state: *AppState, result: challenge.VerifiedResult, body: []const u8) void {
+pub fn accept(
+    state: *AppState,
+    ip: []const u8,
+    now: u64,
+    result: challenge.VerifiedResult,
+    body: []const u8,
+) void {
     if (options.console) if (state.telemetry) |telemetry| {
         const metadata = parseMetadata(body);
         telemetry.challenges.accept(
@@ -47,7 +74,52 @@ pub fn accept(state: *AppState, result: challenge.VerifiedResult, body: []const 
             metadata.timing,
             metadata.solver,
         );
+        const duration: ?u32 = switch (metadata.timing) {
+            .milliseconds => |ms| if (std.math.isFinite(ms) and ms >= 0 and ms <= 3600000)
+                @intFromFloat(ms)
+            else
+                null,
+            else => null,
+        };
+        const kind: u8 = @intFromEnum(convert(result.algorithm));
+        telemetry.challengeEvent(event(
+            ip,
+            now,
+            1,
+            no_cause,
+            kind,
+            result.difficulty,
+            result.challenges,
+            duration,
+        ));
     };
+}
+
+const no_cause = @import("store").telemetry.no_cause;
+
+fn event(
+    ip: []const u8,
+    now: u64,
+    outcome: u8,
+    cause: u8,
+    algorithm: u8,
+    parameter: u8,
+    openings: u8,
+    duration_ms: ?u32,
+) @import("store").telemetry.ChallengeRecord {
+    var record: @import("store").telemetry.ChallengeRecord = .{
+        .second = now,
+        .duration_ms = duration_ms orelse @import("store").telemetry.no_duration,
+        .ip_len = @intCast(@min(ip.len, 48)),
+        .outcome = outcome,
+        .cause = cause,
+        .algorithm = algorithm,
+        .parameter = parameter,
+        .openings = openings,
+        .ip = undefined,
+    };
+    @memcpy(record.ip[0..record.ip_len], ip[0..record.ip_len]);
+    return record;
 }
 
 fn convert(algorithm: challenge.Algorithm) counters.Algorithm {

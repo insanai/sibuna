@@ -71,6 +71,7 @@ pub fn decode(payload: []const u8) !wire.Record {
 
 pub fn prune(owner: *Persistent, now: u64) !p.StorageResult {
     if (now > std.math.maxInt(i64)) return .{ .failed = .invalid_input };
+    try @import("console_store_challenge_records.zig").prune(owner, now);
     _ = try db.exec(
         owner.db,
         owner.gpa,

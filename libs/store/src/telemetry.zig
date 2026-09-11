@@ -39,6 +39,21 @@ pub const Record = struct {
 comptime {
     std.debug.assert(@sizeOf(Record) <= 256);
 }
+/// One per issued, accepted or rejected challenge when the console runs; the queue is
+/// bounded and losses are counted. `duration_ms` uses the maximum value for "absent".
+pub const ChallengeRecord = struct {
+    second: u64,
+    duration_ms: u32,
+    ip_len: u8,
+    outcome: u8,
+    cause: u8,
+    algorithm: u8,
+    parameter: u8,
+    openings: u8,
+    ip: [48]u8,
+};
+pub const no_cause = 255;
+pub const no_duration = std.math.maxInt(u32);
 
 threadlocal var random_state: u64 = 1;
 
@@ -59,9 +74,22 @@ pub const ConsoleTelemetry = struct {
     origin_5xx: std.atomic.Value(u64) = .init(0),
     dropped: std.atomic.Value(u64) = .init(0),
     queue: Queue(Record, 4096),
+    challenge_queue: Queue(ChallengeRecord, 4096),
+    challenge_dropped: std.atomic.Value(u64) = .init(0),
+    /// The effective adaptive bump and smoothed issue rate at the last issued challenge.
+    adaptive_bits: std.atomic.Value(u32) = .init(0),
+    adaptive_rate_256: std.atomic.Value(u64) = .init(0),
 
     pub fn init() ConsoleTelemetry {
-        return .{ .queue = Queue(Record, 4096).init() };
+        return .{
+            .queue = Queue(Record, 4096).init(),
+            .challenge_queue = Queue(ChallengeRecord, 4096).init(),
+        };
+    }
+
+    /// Every challenge event is offered; the bounded queue drops and counts under pressure.
+    pub fn challengeEvent(self: *ConsoleTelemetry, item: ChallengeRecord) void {
+        if (!self.challenge_queue.push(item)) _ = self.challenge_dropped.fetchAdd(1, .monotonic);
     }
 
     pub fn totals(self: *const ConsoleTelemetry) Totals {

@@ -34,6 +34,7 @@ pub const App = struct {
     history: @import("rankings_journal.zig").Journal = .{},
     minutes: @import("minute_journal.zig").Journal = .{},
     challenges: @import("challenge_journal.zig").Journal = .{},
+    challenge_records: @import("challenge_records_journal.zig").Journal = .{},
     retention: @import("retention_job.zig").Job = .{},
     challenge_defaults: p.challenges.Defaults = .{},
     /// The composing storage owner outlives every console task and incident flush.
@@ -128,6 +129,8 @@ pub const App = struct {
         self.minutes.boot = self.history.boot;
         self.challenges.node = cfg.node_id;
         self.challenges.boot = self.history.boot;
+        self.challenge_records.node = cfg.node_id;
+        self.challenge_records.boot = self.history.boot;
         self.retention.holder = .{ .node = cfg.node_id, .boot = self.history.boot };
         try self.geo_job.restore();
         self.stats.boot = self.history.boot;
@@ -174,6 +177,7 @@ pub const App = struct {
         self.history.stop(self.io, self.mailbox);
         self.minutes.stop(self.io, self.mailbox);
         self.challenges.stop(self.io, self.mailbox);
+        self.challenge_records.stop(self.io, self.mailbox);
         self.retention.stop(self.io, self.mailbox);
         self.passwords.deinit();
         if (self.totp_key) |*key| std.crypto.secureZero(u8, key);
@@ -202,6 +206,7 @@ pub const App = struct {
             self.minutes.tick(self.io, self.mailbox, second, ms);
             self.challenges.observe(&self.telemetry.challenges, second, ms);
             self.challenges.tick(self.io, self.mailbox, second, ms);
+            self.challenge_records.tick(self.io, self.mailbox, self.telemetry, second, ms);
             if (self.retention.tick(self.io, self.mailbox, ms))
                 _ = self.stats.retention_failures.fetchAdd(1, .monotonic);
             if (self.geo_maintenance.tick(
@@ -452,6 +457,8 @@ pub const App = struct {
             .setup_status => return self.setupReply(context),
             .challenges,
             .challenge_summary,
+            .challenge_records,
+            .challenge_difficulty,
             .rankings,
             .ranking_history,
             .rule_hit_history,

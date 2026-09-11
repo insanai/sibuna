@@ -79,6 +79,86 @@ pub fn summary(app: *App, context: *http.Context) !void {
     }, "CONSOLECHALLENGE");
 }
 
+/// Per-address records over a bounded window, filtered by outcome, cause or address.
+pub fn records(app: *App, context: *http.Context) !void {
+    const digest = try http.session(context);
+    if (!app.query_budget.allow(app.io, digest, app.now(), .query))
+        return http.fail(context, .too_many_requests, "CONSOLE429");
+    var body: [512]u8 = undefined;
+    var arena: [2048]u8 = undefined;
+    var fixed = std.heap.FixedBufferAllocator.init(&arena);
+    const request = try http.parse(struct {
+        hours: u16 = 24,
+        node: ?u32 = null,
+        outcome: ?p.challenge_records.Outcome = null,
+        cause: ?u8 = null,
+        address: []const u8 = "",
+        before: ?struct { second: u64, id: u64 } = null,
+    }, context, &body, fixed.allocator());
+    defer request.deinit();
+    const input = request.value;
+    if (input.hours != 1 and input.hours != 24 and input.hours != 168) return error.InvalidRequest;
+    const now = app.now();
+    const result = try app.request(.{ .challenge_records_query = .{
+        .session_digest = digest,
+        .require_totp = app.config.behind_proxy,
+        .observed_at = now,
+        .from = now -| (@as(u64, input.hours) * 3600),
+        .until = now,
+        .node = input.node,
+        .outcome = input.outcome,
+        .cause = input.cause,
+        .address = try p.Bytes(48).init(input.address),
+        .before = if (input.before) |cursor|
+            .{ .second = cursor.second, .id = cursor.id }
+        else
+            null,
+    } });
+    if (result == .challenge_records) return http.json(context, result.challenge_records, &.{});
+    return failure(context, result.failed);
+}
+
+/// Adaptive-difficulty transitions over a bounded window.
+pub fn difficulty(app: *App, context: *http.Context) !void {
+    const digest = try http.session(context);
+    if (!app.query_budget.allow(app.io, digest, app.now(), .query))
+        return http.fail(context, .too_many_requests, "CONSOLE429");
+    var body: [256]u8 = undefined;
+    var arena: [1024]u8 = undefined;
+    var fixed = std.heap.FixedBufferAllocator.init(&arena);
+    const request = try http.parse(
+        struct { hours: u16 = 24, node: ?u32 = null },
+        context,
+        &body,
+        fixed.allocator(),
+    );
+    defer request.deinit();
+    const input = request.value;
+    if (input.hours != 1 and input.hours != 24 and input.hours != 168) return error.InvalidRequest;
+    const now = app.now();
+    const result = try app.request(.{ .challenge_difficulty_query = .{
+        .session_digest = digest,
+        .require_totp = app.config.behind_proxy,
+        .observed_at = now,
+        .from = now -| (@as(u64, input.hours) * 3600),
+        .until = now,
+        .node = input.node,
+    } });
+    if (result == .challenge_difficulty)
+        return http.json(context, result.challenge_difficulty, &.{});
+    return failure(context, result.failed);
+}
+
+fn failure(context: *http.Context, reason: p.Failure) !void {
+    return http.fail(context, switch (reason) {
+        .unauthorized => .unauthorized,
+        .forbidden => .forbidden,
+        .invalid_input => .bad_request,
+        .conflict => .conflict,
+        else => .service_unavailable,
+    }, "CONSOLECHALLENGE");
+}
+
 pub fn configuredBin(cfg: p.challenges.Defaults) u8 {
     const algorithm: cm.Algorithm = switch (cfg.algorithm) {
         .hashcash => .hashcash,

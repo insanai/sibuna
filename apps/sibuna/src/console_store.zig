@@ -104,6 +104,14 @@ fn observations(owner: *Persistent, request: p.StorageRequest) !p.StorageResult 
             .prune(owner, now),
         .challenge_summary => |input| @import("console_store_challenge_minutes.zig")
             .summary(owner, input),
+        .challenge_records_write => |input| @import("console_store_challenge_records.zig")
+            .write(owner, input),
+        .challenge_transition => |input| @import("console_store_challenge_records.zig")
+            .transition(owner, input),
+        .challenge_records_query => |input| @import("console_store_challenge_records.zig")
+            .query(owner, input),
+        .challenge_difficulty_query => |input| @import("console_store_challenge_records.zig")
+            .difficulty(owner, input),
         .rankings_query => |input| @import("console_store_ranking_history.zig")
             .query(owner, input),
         .rankings_begin,

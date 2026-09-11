@@ -5,6 +5,8 @@ const p = @import("console_protocol");
 pub const Access = enum { public, account, full };
 pub const Handler = enum {
     challenge_summary,
+    challenge_records,
+    challenge_difficulty,
     node_status,
     nodes_members,
     node_command,
@@ -299,6 +301,20 @@ const table = [_]Route{
         .method = .POST,
         .access = .full,
         .handler = .challenge_summary,
+        .token_scope = .stats_read,
+    },
+    .{
+        .path = "/console/api/challenges/records",
+        .method = .POST,
+        .access = .full,
+        .handler = .challenge_records,
+        .token_scope = .stats_read,
+    },
+    .{
+        .path = "/console/api/challenges/difficulty",
+        .method = .POST,
+        .access = .full,
+        .handler = .challenge_difficulty,
         .token_scope = .stats_read,
     },
     .{

@@ -7,6 +7,8 @@ pub fn handle(app: *App, context: *http.Context, handler: Handler) !void {
     return switch (handler) {
         .challenges => @import("challenge_routes.zig").handle(app, context),
         .challenge_summary => @import("challenge_routes.zig").summary(app, context),
+        .challenge_records => @import("challenge_routes.zig").records(app, context),
+        .challenge_difficulty => @import("challenge_routes.zig").difficulty(app, context),
         .rule_hit_history => @import("rule_hit_history_routes.zig").handle(app, context),
         .ranking_history => @import("ranking_history_routes.zig").handle(app, context),
         .rankings => @import("ranking_routes.zig").handle(app, context),
