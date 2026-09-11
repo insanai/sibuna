@@ -6,6 +6,11 @@ order; a noisy baseline yields "inconclusive", never a pass.
 
     python3 benchmarks/console_impact.py [--quick] [--rounds N] [--seconds S]
         [--host-label TEXT] [--cluster] [--geoip-data SNAPSHOT]
+        [--mode forward_auth|reverse_proxy] [--capture-heads]
+
+Reverse-proxy runs relay to a local origin fixture. With --capture-heads the console-enabled
+configurations store redacted heads, and an "audited" workload (an XSS finding in audit mode
+admitted with a session) exercises the capture path; compiled-out and disabled never capture.
 """
 import argparse
 import json
@@ -29,8 +34,13 @@ import console_bootstrap_test as bootstrap  # noqa: E402
 import console_e2e  # noqa: E402
 from console_dashboard import Dashboard, covered, difference, stop_clients  # noqa: E402
 import console_peer_impact as peer_impact  # noqa: E402
+from proxy_fixture import origin  # noqa: E402
 
 CONFIGURATIONS = ("compiled_out", "disabled", "idle", "active")
+# An XSS finding in audit mode: admitted with a session, recorded as an incident and, with
+# capture on, stored with its heads. The policy file below sets only that category to audit.
+AUDITED = "/private?q=%3Cscript%3Ealert(1)%3C%2Fscript%3E"
+AUDIT_POLICY = {"inspection": {"xss": "audit"}}
 GATE = {"throughput_loss_max": 0.01, "p99_increase_max": 0.10, "baseline_spread_max": 0.01}
 DASHBOARDS = 8
 
@@ -53,9 +63,9 @@ def build(prefix, console, cluster, geoip=None):
 class Daemon:
     """One configuration: a daemon (or a three-node cluster) plus optional dashboards."""
 
-    def __init__(self, name, binary, temp, cluster, seed, psk):
+    def __init__(self, name, binary, temp, cluster, seed, psk, settings):
         self.name, self.binary, self.temp, self.cluster = name, binary, temp, cluster
-        self.seed, self.psk = seed, psk
+        self.seed, self.psk, self.settings = seed, psk, settings
         self.port = free_port()
         self.console_port = free_port() if name in ("idle", "active") else None
         self.procs, self.logs, self.clients = [], [], []
@@ -67,13 +77,19 @@ class Daemon:
 
     def args(self, index, data, peers):
         args = [self.binary, "--host", "127.0.0.1", "--port", str(data[index]), "--workers", "2",
-                "--mode", "forward_auth", "--algorithm", "hashcash", "--difficulty", "8",
+                "--mode", self.settings["mode"], "--algorithm", "hashcash", "--difficulty", "8",
                 "--shield", "--secret-file", str(self.seed), "--rate-limit", "100000000",
                 "--idle-timeout", "5", "--trust-forwarded",
+                "--policy-file", str(self.settings["policy"]),
                 "--data-dir", str(self.temp / f"{self.name}-node{index}"),
                 "--storage-poll-ms", "100"]
+        if self.settings["mode"] == "reverse_proxy":
+            args += ["--upstream-port", str(self.settings["upstream_port"])]
         if self.consoles:
             args += ["--console", f"127.0.0.1:{self.consoles[index]}"]
+            # Capture is a console option: only enabled consoles can store heads.
+            if self.settings["capture_heads"]:
+                args.append("--console-capture-heads")
             if self.mesh:
                 args += self.mesh.args(index)
         if self.cluster:
@@ -224,6 +240,7 @@ def workloads(cookie):
         "challenged": ("/private", headers("8.8.8.8"), 401),
         "denied": (ATTACK, with_cookie, 403),
         "policy_reload": ("/private", with_cookie, 200),
+        "audited": (AUDITED, with_cookie, 200),
     }
 
 
@@ -289,7 +306,7 @@ def verdict(baseline, candidate):
     return result
 
 
-def matrix(binaries, temp, load, rounds, cluster, names, seed, psk, script):
+def matrix(binaries, temp, load, rounds, cluster, names, seed, psk, script, settings):
     results = {name: {cfg: [] for cfg in CONFIGURATIONS} for name in names}
     clients, geoip = [], []
     for round_index in range(rounds):
@@ -300,7 +317,7 @@ def matrix(binaries, temp, load, rounds, cluster, names, seed, psk, script):
             directory = temp / f"round-{round_index}-{cfg}"
             directory.mkdir()
             binary = binaries["compiled_out" if cfg == "compiled_out" else "console"]["path"]
-            daemon = Daemon(cfg, binary, directory, cluster, seed, psk)
+            daemon = Daemon(cfg, binary, directory, cluster, seed, psk, settings)
             try:
                 daemon.start()
                 cookie = session(daemon.port, "8.8.8.8")[0]
@@ -376,6 +393,10 @@ def main():
     parser.add_argument("--cluster", action="store_true", help="three PSK nodes with TLS console peers")
     parser.add_argument("--geoip-data", type=Path,
                         help="Validated production country snapshot; required for acceptance")
+    parser.add_argument("--mode", choices=("forward_auth", "reverse_proxy"),
+                        default="forward_auth", help="data-plane mode under load")
+    parser.add_argument("--capture-heads", action="store_true",
+                        help="store redacted heads on enabled consoles and add the audited workload")
     args = parser.parse_args()
     if not args.quick and args.geoip_data is None:
         parser.error("a full impact run needs --geoip-data; use --quick only for smoke checks")
@@ -387,6 +408,8 @@ def main():
         args.rounds, args.seconds, args.warmup = 2, 2, 1
     names = ("admitted", "denied") if args.quick else (
         "admitted", "challenged", "denied", "policy_reload")
+    if args.capture_heads:
+        names += ("audited",)
     load = {"threads": args.threads, "connections": args.connections, "seconds": args.seconds,
             "warmup_seconds": args.warmup}
     with tempfile.TemporaryDirectory(prefix="sibuna-console-impact-") as directory:
@@ -400,9 +423,18 @@ def main():
         psk = temp / "psk"
         psk.write_bytes(os.urandom(32).hex().encode())
         psk.chmod(0o600)
+        policy = temp / "policy.json"
+        policy.write_text(json.dumps(AUDIT_POLICY))
+        application = origin()[0] if args.mode == "reverse_proxy" else None
+        settings = {"mode": args.mode, "capture_heads": args.capture_heads, "policy": policy,
+                    "upstream_port": application.server_port if application else None}
         started = time.monotonic()
-        results, dashboards = matrix(binaries, temp, load, args.rounds, args.cluster, names,
-                                     seed, psk, script)
+        try:
+            results, dashboards = matrix(binaries, temp, load, args.rounds, args.cluster,
+                                         names, seed, psk, script, settings)
+        finally:
+            if application:
+                application.shutdown()
         provenance = metadata(binaries["console"]["path"])
     # Eight dashboards that stopped receiving frames would make "active" an idle daemon.
     if (not dashboards["delivered"] or not dashboards["geoip_available"] or args.quick or
@@ -411,6 +443,9 @@ def main():
         results["verdict"] = "inconclusive"
     data = {"meta": {**provenance, "binaries": binaries, "host_label": args.host_label,
                      "quick": args.quick, "cluster": args.cluster,
+                     "mode": args.mode, "capture_heads": args.capture_heads,
+                     "audit_policy": AUDIT_POLICY,
+                     "origin": "local Python fixture" if args.mode == "reverse_proxy" else None,
                      "management_peers": 6 if args.cluster else 0,
                      "resource_target_node": 1,
                      "peer_coverage": "current before and after each sample; advancing watermarks",
@@ -441,7 +476,9 @@ def main():
                 "Loopback wrk shares the host with the daemons; inconclusive results are "
                 "reported, never rounded to a pass.",
                 "Peak RSS is sampled every 100 ms from ps; short spikes can be missed.",
-                "The cluster case loads node 1 only; replication cost lands on all nodes."]
+                "The cluster case loads node 1 only; replication cost lands on all nodes.",
+                "Head capture is a console option: compiled-out and disabled configurations "
+                "never capture, so the audited workload compares capture against no console."]
             + ([] if dashboards["delivered"] else [
                 "At least one subscriber lacked required frames or successful rankings/timeline "
                 "queries, or a recently completed retained-period scan during a sample; "
