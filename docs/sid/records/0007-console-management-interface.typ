@@ -655,7 +655,14 @@ Console-owned counters now add submitted, malformed and exhaustive per-cause rej
 the verification endpoint. Window totals are a flow summary, not a cohort
 conversion rate: retries, abandonment and solutions crossing windows break that interpretation.
 Per-address records, fallback share and adaptive-difficulty histories need separate bounded
-instrumentation, retention and loss accounting before display. Rule-hit totals likewise need
+instrumentation, retention and loss accounting before display. Schema version 36 retains
+`console_challenge_minutes`: the console collector attributes per-tick deltas of the
+boot-local counters to the minute they end in, keeps at most eight active parameter
+partitions per minute (further partitions are counted as dropped), seals the minute on the
+roll and journals it exactly as traffic minutes are, including partial snapshots every five
+seconds and pruning under `retention.minutes`. The Challenges page sums a one-hour, one-day
+or seven-day window on the storage owner in bounded scans and shows recorded and complete
+minute counts beside the totals, so unrecorded minutes read as coverage, never as zero. Rule-hit totals likewise need
 fixed-capacity counters keyed by rule id and applied revision; incident counts cannot supply
 exact allow/WEIGH hits. Distinguish category findings from the one final outcome per request.
 
@@ -1810,7 +1817,7 @@ below. Items outside it are post-launch requirements of this record, not conditi
 Committed status.
 
 *In scope and verified on main:* every page of “Pages”, the authentication and kiosk model,
-the six-topic protocol, the data model through schema version 35, GeoIP, cluster membership,
+the six-topic protocol, the data model through schema version 36, GeoIP, cluster membership,
 probes and peer telemetry, notifications, retention, response-page templates, the CLI, the
 build pipeline and digest gate, the golden, contract, end-to-end and cluster test entry points,
 and the operator guide with screenshots.
@@ -1823,8 +1830,7 @@ add `--cluster` for clustered deployment. A completed but inconclusive or failin
 not satisfy this condition. The same binary runs
 without `--console`; compiling the console in starts no console thread, listener or sampler.
 
-*Deferred to post-launch (observability):* `challenge_minutes` persistence (challenge counters
-are boot-local, labelled as such); the sampled client operating system, browser, response
+*Deferred to post-launch (observability):* the sampled client operating system, browser, response
 status and referring host rankings (paths are sketched); RSS and CPU minute columns;
 per-address
 challenge records and the adaptive-difficulty timeline; request and response heads with

@@ -117,7 +117,9 @@ image("images/console-events.png"))
 
 #book_figure([Challenges. Issued, submitted, accepted and rejected counts by cause, the
 configured and most recently issued parameters, and the accepted solve-time histogram
-partitioned by algorithm and parameter bin.],
+partitioned by algorithm and parameter bin. A retained window (one hour, one day or seven days) sums durable
+per-minute records and states how many minutes were recorded and complete; live totals
+since this boot stay separate.],
 image("images/console-challenges.png"))
 
 #book_figure([Policies. The applied engine names its surface and node-local limits, then
