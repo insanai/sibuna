@@ -10,6 +10,7 @@ const WireRow = struct {
     action: []const u8,
     target: ?[]const u8,
     actor_role: ?p.Role,
+    client_ip: ?[]const u8 = null,
 };
 
 pub const Model = struct {
@@ -109,5 +110,10 @@ fn owned(wire: WireRow, output: *p.audit.Row) !void {
         if (!std.unicode.utf8ValidateSlice(target)) return error.InvalidResponse;
         output.target = .{};
         try output.target.?.set(target);
+    }
+    if (wire.client_ip) |client| {
+        if (!std.unicode.utf8ValidateSlice(client)) return error.InvalidResponse;
+        output.client_ip = .{};
+        try output.client_ip.?.set(client);
     }
 }

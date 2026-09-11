@@ -21,6 +21,8 @@ pub const Row = struct {
     action: p.Bytes(48) = .{},
     target: ?p.Bytes(128) = null,
     actor_role: ?p.Role = null,
+    /// Recorded for sign-in, sign-out and refused sign-in rows; null elsewhere.
+    client_ip: ?p.Bytes(48) = null,
 
     /// Only complete, valid policy identifiers can become navigation targets. The returned
     /// value owns its bytes, so changing the selected audit row cannot retarget a request.
@@ -44,7 +46,7 @@ pub const Row = struct {
                 try p.writeCounter(json, value);
             } else if (field.type == p.Bytes(48)) {
                 try json.write(value.slice());
-            } else if (field.type == ?p.Bytes(128)) {
+            } else if (field.type == ?p.Bytes(128) or field.type == ?p.Bytes(48)) {
                 if (value) |text| try json.write(text.slice()) else try json.write(null);
             } else try json.write(value);
         }

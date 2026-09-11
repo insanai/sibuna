@@ -46,6 +46,7 @@ def start(binary, directory, console_port, logfile, key_file=None, proxy=False,
         "--console-behind-proxy", "--console-origin", "https://console.test",
         "--console-trusted-proxy", "127.0.0.1/32",
     ] if proxy else []) + list(extra), stdout=logfile, stderr=logfile)
+    proc.sibuna_log = getattr(logfile, "name", None)
     deadline = time.monotonic() + 30
     while time.monotonic() < deadline:
         if proc.poll() is not None:
@@ -67,6 +68,10 @@ def stop(proc):
         proc.kill()
         proc.wait()
         raise AssertionError("daemon failed to shut down within ten seconds")
+    if proc.returncode != 0 and getattr(proc, "sibuna_log", None):
+        # The temporary directory disappears with the failure; keep the evidence visible.
+        tail = Path(proc.sibuna_log).read_text(errors="replace").splitlines()[-60:]
+        sys.stderr.write("daemon log tail:\n" + "\n".join(tail) + "\n")
     assert proc.returncode == 0, f"daemon shutdown status {proc.returncode}"
 
 

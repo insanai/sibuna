@@ -100,4 +100,13 @@ def refused(h, port, cookie, csrf):
     detail = json.loads(h.request(port, "POST", "/console/api/audit/read",
                                   {"id": str(rows[0]["id"])}, cookie, csrf)[2])
     assert detail["row"]["target"] in ("local-admin", "nobody-here"), detail
+    assert detail["row"]["client_ip"] == "127.0.0.1", detail
     assert "passphrase" not in json.dumps(detail)
+    status, _, body = h.request(port, "POST", "/console/api/audit/query",
+                                {"action": "session.create"}, cookie, csrf)
+    created = json.loads(body)["rows"]
+    assert status == 200 and created and created[0]["client_ip"] == "127.0.0.1", created
+    assert created[0]["actor_role"] == "admin", created
+    status, _, body = h.request(port, "POST", "/console/api/audit/query",
+                                {"action": "user.create"}, cookie, csrf)
+    assert json.loads(body)["rows"][0]["client_ip"] is None

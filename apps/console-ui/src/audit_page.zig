@@ -94,6 +94,7 @@ fn detail(state: *const State, w: *Writer) Writer.Error!void {
         .role = if (value.row.actor_role) |role| @tagName(role) else "Not recorded",
         .subject = value.row.subject,
         .target = if (value.row.target) |*target| target.slice() else "Not recorded",
+        .client = if (value.row.client_ip) |*client| client.slice() else "Not recorded",
     });
     inline for (.{ "before", "after" }, .{ "Before", "After" }) |field, label| {
         try html.render(w, "<article><h3>{{ label }}</h3>", .{ .label = label });

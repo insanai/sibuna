@@ -5,7 +5,8 @@ const a = p.audit;
 const Persistent = @import("persistent.zig").Persistent;
 const db = @import("console_database.zig");
 const util = @import("console_store.zig");
-const columns = "id,actor,subject,recorded_at,action,target,actor_role";
+/// Shared by the page, detail and live-feed readers so every decoder sees one layout.
+pub const columns = "id,actor,subject,recorded_at,action,target,actor_role,client_ip";
 
 fn identity(owner: *Persistent, auth: p.users.Auth) !?p.Failure {
     const result = try util.authorize(owner, auth.session_digest, owner.nowSeconds());
@@ -56,7 +57,7 @@ pub fn read(owner: *Persistent, input: a.Read) !p.StorageResult {
     var detail: a.Detail = .{ .row = .{} };
     const row = rows.rows[0];
     try decode(row, &detail.row);
-    inline for (.{ "before", "after" }, 7..) |field, index| {
+    inline for (.{ "before", "after" }, 8..) |field, index| {
         if (row[index]) |source| {
             @field(detail, field) = .{};
             const summary = @import("console_audit_summary.zig");
@@ -89,6 +90,11 @@ pub fn decode(row: []const ?[]const u8, output: *a.Row) !void {
     }
     if (row[6]) |role| output.actor_role = std.meta.stringToEnum(p.Role, role) orelse
         return error.InvalidStoredValue;
+    if (row.len < 8) return error.InvalidStoredValue;
+    if (row[7]) |client| {
+        output.client_ip = .{};
+        try output.client_ip.?.set(client);
+    }
 }
 
 fn exportAudit(owner: *Persistent, auth: p.users.Auth, count: usize) !bool {

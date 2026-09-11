@@ -60,17 +60,23 @@ pub fn user(owner: *Persistent, username: []const u8) !p.StorageResult {
 
 /// A refused sign-in is audited against the named account when it exists and otherwise
 /// against subject 0; the attempted name is the target and no credential is recorded.
-pub fn denied(owner: *Persistent, username: []const u8, now: u64) !p.StorageResult {
-    if (username.len == 0 or username.len > 64) return .{ .failed = .invalid_input };
+pub fn denied(owner: *Persistent, input: p.auth.Denied, now: u64) !p.StorageResult {
+    const username = input.username.slice();
+    if (username.len == 0) return .{ .failed = .invalid_input };
     _ = try db.exec(
         owner.db,
         owner.gpa,
-        "INSERT INTO console_audit(actor,action,subject,target,recorded_at) " ++
+        "INSERT INTO console_audit(actor,action,subject,target,recorded_at,client_ip) " ++
             "VALUES(0,'session.denied'," ++
-            "COALESCE((SELECT id FROM console_users WHERE username=?),0),?,?)",
-        &.{ text(username), text(username), integer(now) },
+            "COALESCE((SELECT id FROM console_users WHERE username=?),0),?,?,?)",
+        &.{ text(username), text(username), integer(now), optional(input.client.slice()) },
     );
     return .command_recorded;
+}
+
+/// Empty bounded strings are stored as NULL so readers report them as not recorded.
+pub fn optional(value: []const u8) @import("zaxonlite").Value {
+    return if (value.len == 0) .null_value else text(value);
 }
 
 pub fn logout(owner: *Persistent, input: p.auth.Logout, now: u64) !p.StorageResult {

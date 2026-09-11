@@ -34,20 +34,25 @@ pub fn create(owner: *Persistent, input: p.auth.Session, now: u64) !p.StorageRes
             recovery = text(&recovery_hex);
         },
     }
+    const optional = @import("console_store_auth.zig").optional;
+    const client = optional(input.client.slice());
+    const agent = optional(input.agent_digest.slice());
     const changes = try db.exec(owner.db, owner.gpa, sql, &.{
         text(&digest),       text(&csrf),             integer(now), integer(input.expires),
         integer(input.user), integer(input.revision), revision,     step,
-        slot,                recovery,
+        slot,                recovery,                client,       agent,
     });
     return if (changes == 0) .{ .failed = .conflict } else .command_recorded;
 }
 
 const sql =
     "WITH i AS (SELECT ? digest,? csrf,? now,? expires,? uid,? revision," ++
-    "? factor_revision,? step,? slot,? recovery) " ++
+    "? factor_revision,? step,? slot,? recovery,? client,? agent) " ++
     "INSERT INTO console_sessions(digest,user_id,revision,csrf_digest,created_at,expires," ++
-    "idle_expires,mfa_step,recovery_slot) SELECT i.digest,u.id,u.revision,i.csrf,i.now," ++
-    "i.expires,MIN(i.expires,i.now+1800),i.step,i.slot FROM i JOIN console_users u " ++
+    "idle_expires,mfa_step,recovery_slot,client_ip,user_agent_hash) " ++
+    "SELECT i.digest,u.id,u.revision,i.csrf,i.now," ++
+    "i.expires,MIN(i.expires,i.now+1800),i.step,i.slot,i.client,i.agent " ++
+    "FROM i JOIN console_users u " ++
     "ON u.id=i.uid LEFT JOIN console_totp m ON m.user_id=u.id AND m.enabled=1 " ++
     "WHERE u.revision=i.revision AND u.disabled=0 " ++
     "AND (u.password_expires=0 OR u.password_expires>i.now) " ++

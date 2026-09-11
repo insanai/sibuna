@@ -25,12 +25,28 @@ pub fn allowed(app: *App, context: *Context, username: []const u8) bool {
         app.limiter.allow(app.io, account, app.now());
 }
 
+/// Where a credential was presented from. Captured before the body is read, because the
+/// head is no longer addressable once the request body has been consumed.
+const Origin = struct {
+    client: p.Bytes(48) = .{},
+    agent_digest: p.Bytes(64) = .{},
+
+    fn capture(app: *App, context: *Context) Origin {
+        var address: [48]u8 = undefined;
+        return .{
+            .client = p.Bytes(48).init(clientAddress(app, context, &address)) catch .{},
+            .agent_digest = agentDigest(context),
+        };
+    }
+};
+
 pub fn login(app: *App, context: *Context) !void {
     var body: [2048]u8 = undefined;
     var arena: [8192]u8 = undefined;
     defer std.crypto.secureZero(u8, &body);
     defer std.crypto.secureZero(u8, &arena);
     var fixed = std.heap.FixedBufferAllocator.init(&arena);
+    const origin = Origin.capture(app, context);
     const input = try http.parse(Credentials, context, &body, fixed.allocator());
     defer input.deinit();
     if (!p.validUsername(input.value.username)) return error.InvalidRequest;
@@ -41,27 +57,73 @@ pub fn login(app: *App, context: *Context) !void {
     const hash = if (result == .auth_user) result.auth_user.password_hash else app.dummy_hash;
     app.passwords.verify(app.io, input.value.password, hash.slice()) catch |err| {
         if (err == error.Busy) return err;
-        return refuse(app, context, username);
+        return refuse(app, context, username, origin);
     };
-    if (result != .auth_user) return refuse(app, context, username);
+    if (result != .auth_user) return refuse(app, context, username, origin);
     const factor = @import("totp_routes.zig").factor(
         app,
         result.auth_user,
         input.value.code,
-    ) catch return refuse(app, context, username);
-    try establish(app, context, result.auth_user, factor);
+    ) catch return refuse(app, context, username, origin);
+    try establish(app, context, result.auth_user, factor, origin);
 }
 
 /// Every refusal leaves an audit row so credential guessing is visible; the reply stays
 /// identical whether the account, the password or the second factor was wrong.
-fn refuse(app: *App, context: *Context, username: p.Bytes(64)) !void {
-    _ = app.background(.{ .login_denied = username }) catch |err| {
+fn refuse(app: *App, context: *Context, username: p.Bytes(64), origin: Origin) !void {
+    _ = app.background(.{ .login_denied = .{
+        .username = username,
+        .client = origin.client,
+    } }) catch |err| {
         std.log.warn("console sign-in refusal audit: {t}", .{err});
     };
     return http.fail(context, .unauthorized, "CONSOLE401");
 }
 
-fn establish(app: *App, context: *Context, user: p.AuthUser, factor: p.auth.Factor) !void {
+/// The transport peer, or the first forwarded address when a trusted proxy delivered the
+/// request; unparsable forwarded values fall back to the peer rather than being stored.
+pub fn clientAddress(app: *App, context: *Context, buffer: *[48]u8) []const u8 {
+    if (app.config.behind_proxy) forwarded: {
+        const header = (context.header("X-Forwarded-For") catch null) orelse break :forwarded;
+        const end = std.mem.indexOfScalar(u8, header, ',') orelse header.len;
+        const first = std.mem.trim(u8, header[0..end], " \t");
+        if (first.len == 0 or first.len > buffer.len) break :forwarded;
+        _ = std.Io.net.IpAddress.parse(first, 0) catch break :forwarded;
+        @memcpy(buffer[0..first.len], first);
+        return buffer[0..first.len];
+    }
+    // The peer formats as host:port (bracketed for IPv6); audit keeps the host only.
+    const printed = std.fmt.bufPrint(buffer, "{f}", .{context.peer}) catch return "";
+    const end = std.mem.lastIndexOfScalar(u8, printed, ':') orelse printed.len;
+    return std.mem.trim(u8, printed[0..end], "[]");
+}
+
+test "client addresses drop the transport port and keep IPv6 hosts unbracketed" {
+    const t = std.testing;
+    var buffer: [48]u8 = undefined;
+    const cases = .{ .{ "127.0.0.1", 54501 }, .{ "2001:db8::7", 443 } };
+    inline for (cases) |case| {
+        const peer = try std.Io.net.IpAddress.parse(case[0], case[1]);
+        const printed = try std.fmt.bufPrint(&buffer, "{f}", .{peer});
+        const end = std.mem.lastIndexOfScalar(u8, printed, ':') orelse printed.len;
+        try t.expectEqualStrings(case[0], std.mem.trim(u8, printed[0..end], "[]"));
+    }
+}
+
+fn agentDigest(context: *Context) p.Bytes(64) {
+    const agent = (context.header("User-Agent") catch null) orelse return .{};
+    var digest: [32]u8 = undefined;
+    std.crypto.hash.sha2.Sha256.hash(agent, &digest, .{});
+    return p.Bytes(64).init(&std.fmt.bytesToHex(digest, .lower)) catch .{};
+}
+
+fn establish(
+    app: *App,
+    context: *Context,
+    user: p.AuthUser,
+    factor: p.auth.Factor,
+    origin: Origin,
+) !void {
     var raw: [32]u8 = undefined;
     app.io.random(&raw);
     var digest: [32]u8 = undefined;
@@ -81,6 +143,8 @@ fn establish(app: *App, context: *Context, user: p.AuthUser, factor: p.auth.Fact
         .digest = digest,
         .csrf_digest = csrf_digest,
         .expires = expires,
+        .client = origin.client,
+        .agent_digest = origin.agent_digest,
     } });
     if (result != .command_recorded) return http.fail(context, .conflict, "CONSOLE409");
     try sessionResponse(app, context, user, raw, csrf, expires - now);

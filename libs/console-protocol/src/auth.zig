@@ -48,6 +48,15 @@ pub const Session = struct {
     digest: [32]u8,
     csrf_digest: [32]u8,
     expires: u64,
+    /// Transport peer, or the forwarded client behind a trusted proxy; empty when unknown.
+    client: p.Bytes(48) = .{},
+    /// SHA-256 of the User-Agent header as hex; empty when the header was absent.
+    agent_digest: p.Bytes(64) = .{},
+};
+/// A refused sign-in: the attempted name and where it came from, never the credential.
+pub const Denied = struct {
+    username: p.Bytes(64),
+    client: p.Bytes(48) = .{},
 };
 pub const Logout = struct { digest: [32]u8 };
 pub const PasswordChange = struct {

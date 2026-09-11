@@ -38,8 +38,8 @@ pub fn read(owner: *Persistent, input: f.Request) !p.StorageResult {
             "console_incident_evidence e ON e.incident_id=i.id " ++
             "LEFT JOIN console_incident_country c ON c.incident_id=i.id " ++
             "WHERE i.id>? AND i.id<=? ORDER BY i.id LIMIT 9",
-        .audit => "SELECT id,actor,subject,recorded_at,action,target,actor_role " ++
-            "FROM console_audit WHERE id>? AND id<=? ORDER BY id LIMIT 9",
+        .audit => "SELECT " ++ @import("console_store_audit.zig").columns ++
+            " FROM console_audit WHERE id>? AND id<=? ORDER BY id LIMIT 9",
     }, &.{ integer(after), integer(through) });
     defer rows.deinit();
     for (rows.rows[0..@min(f.page_rows, rows.rows.len)]) |cells| {
