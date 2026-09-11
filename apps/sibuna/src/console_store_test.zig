@@ -1195,6 +1195,7 @@ test "every audited mutation source table carries the presenting client address"
         .{tmp.sub_path},
     ));
     defer fx.close();
+    try @import("console_migrations.zig").run(fx.owner);
     const tables = [_][]const u8{
         "console_users",              "console_tokens",               "console_policy_stage",
         "console_policy_order_stage", "console_policy_import_commit", "console_reputation_stage",
