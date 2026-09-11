@@ -125,6 +125,7 @@ def check(binary, h):
                 console_limits_test.check(h, port, data_port, cookie, csrf)
                 import console_challenge_test
                 console_challenge_test.check(h, port, data_port, cookie, csrf)
+                console_challenge_test.records(h, port, data_port, cookie, csrf)
                 import console_rankings_test
                 console_rankings_test.check(h, port, data_port, cookie)
             finally:

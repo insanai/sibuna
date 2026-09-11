@@ -661,8 +661,12 @@ Existing Prometheus counters expose issued, accepted and aggregate verification 
 Console-owned counters now add submitted, malformed and exhaustive per-cause rejections at
 the verification endpoint. Window totals are a flow summary, not a cohort
 conversion rate: retries, abandonment and solutions crossing windows break that interpretation.
-Per-address records, fallback share and adaptive-difficulty histories need separate bounded
-instrumentation, retention and loss accounting before display. Schema version 36 retains
+Per-address records and adaptive-difficulty histories have their own bounded instrumentation:
+schema version 38 retains `console_challenge_records` (one row per issued, accepted or
+rejected challenge, drained from a 4,096-slot data-plane queue whose losses are counted and
+shown) and `console_challenge_difficulty` (one row per observed change of the adaptive bump,
+with the smoothed issue rate), both pruned at seven days. The fallback share remains
+unrecorded. Schema version 36 retains
 `console_challenge_minutes`: the console collector attributes per-tick deltas of the
 boot-local counters to the minute they end in, keeps at most eight active parameter
 partitions per minute (further partitions are counted as dropped), seals the minute on the
@@ -1831,7 +1835,7 @@ below. Items outside it are post-launch requirements of this record, not conditi
 Committed status.
 
 *In scope and verified on main:* every page of “Pages”, the authentication and kiosk model,
-the six-topic protocol, the data model through schema version 37, GeoIP, cluster membership,
+the six-topic protocol, the data model through schema version 38, GeoIP, cluster membership,
 probes and peer telemetry, notifications, retention, response-page templates, the CLI, the
 build pipeline and digest gate, the golden, contract, end-to-end and cluster test entry points,
 and the operator guide with screenshots.
@@ -1844,8 +1848,7 @@ add `--cluster` for clustered deployment. A completed but inconclusive or failin
 not satisfy this condition. The same binary runs
 without `--console`; compiling the console in starts no console thread, listener or sampler.
 
-*Deferred to post-launch (observability):* per-address
-challenge records and the adaptive-difficulty timeline; request and response heads with
+*Deferred to post-launch (observability):* request and response heads with
 charset selection and “copy as cURL”.
 
 *Accepted deviations:* the serve kernel reserves HTTP and control capacity arithmetically

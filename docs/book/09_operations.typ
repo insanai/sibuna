@@ -121,7 +121,8 @@ image("images/console-events.png"))
 configured and most recently issued parameters, and the accepted solve-time histogram
 partitioned by algorithm and parameter bin. A retained window (one hour, one day or seven days) sums durable
 per-minute records and states how many minutes were recorded and complete; live totals
-since this boot stay separate.],
+since this boot stay separate. Below them, adaptive-difficulty transitions and per-address
+records (with deny and allow shortcuts) cover the same window, retained seven days.],
 image("images/console-challenges.png"))
 
 #book_figure([Policies. The applied engine names its surface and node-local limits, then
