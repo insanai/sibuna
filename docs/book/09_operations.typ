@@ -240,9 +240,11 @@ reported queue loss; missing archives cannot establish zero traffic or complete 
 
 Security opens on the last 24 hours and uses sixty equal time buckets over the selected period.
 Its aggregates run on the storage owner under a fixed SQLite step budget
-(`--console-query-steps`, default four million, which covers tens of thousands of retained
-findings per window); beyond it the page asks for a narrower period instead of stalling the
-node. Charts share a scale;
+(`--console-query-steps`, 100,000 to 50,000,000, default four million). Set it alongside
+`--console`; invalid or repeated values are refused. This allowance applies to local embedded
+queries. Cluster queries use Zaxonlite’s server-side ten-million-step bound instead; changing
+this option does not change that RPC limit. Exhausted queries ask for a narrower period.
+Step counts bound query work, not elapsed time. Charts share a scale;
 expand Trend values for the UTC interval starts and exact grouped counts. These are retained
 findings, so missing incident coverage cannot be interpreted as absence of attacks.
 

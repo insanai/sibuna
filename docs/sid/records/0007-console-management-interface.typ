@@ -1526,8 +1526,9 @@ configured slots, queues and optional GeoIP dataset. Record active peak RSS sepa
 = Delivery Plan
 
 The phases define dependency order, not a progress ledger. Implementation history belongs
-in git. Under SID 0001, this discussion advances to Committed only after the defined
-implementation, verification and benchmark gates are satisfied.
+in git. SID 0001 defines completion through implementation, verification and benchmark
+gates. The dated launch scope below records the explicit exception for this launch; the
+remaining performance condition still governs enabling the console in production.
 
 #phase("Phase 1: Kernel, authentication, statistics")[
   `libs/serve` with HTTP, assets, and WebSocket; `libs/console` with auth, sessions, audit,
@@ -1751,8 +1752,9 @@ Aggregate-only kiosk Security queries cannot request source addresses, paths or 
 
 = Acceptance and Open Questions
 
-SID 0001 requires implementation on main and satisfied verification and benchmark gates before
-Committed status. Test entry points are `zig build test`, `console-test`, `console-ui-e2e`,
+SID 0001 normally requires implementation on main and satisfied verification and benchmark
+gates before Committed status. The launch-scope exception below does not establish a full
+performance pass or completion of the deferred observability requirements. Test entry points are `zig build test`, `console-test`, `console-ui-e2e`,
 `console-e2e` with clustering enabled, and `console-impact`. Formatting and the SID, book and
 HTML builds verify structural and documentation contracts. Exact test history belongs in git;
 measured records under `benchmarks/results/` carry source identity, conditions and uncertainty.
@@ -1773,28 +1775,19 @@ confidence intervals do not pass. Primitive baselines and smoke runs cannot subs
 this gate. These criteria remain the definition of a full pass; the launch scope below records
 the project owner's decision of 2026-09-11 and the conditions attached to it.
 
-== Implementation review (2026-09-11)
+== Query and authentication observation bounds
 
-A page-by-page review of the built console against this record, run through the native
-golden tests, the end-to-end suites and a browser session on a traffic-fed loopback node,
-found the following requirements unmet and closed them in the same review: the live request
-timeline now stacks the six disjoint outcomes in decision colours; the policy page names the
-surface with its gloss, the node-local limits and decision-coloured rule types, and requires
-an acknowledgement before a replace-all import; incidents show the selected local response,
-the absent matched rule, score terms and JA4 as “not recorded”, and open the IP groups form
-with the address drafted; GeoIP shows the generation digest and load time; IP groups show
-score and trigger; member cards show replication lag; browser assets are served under a
-content digest with immutable caching and a revalidated shell; refused sign-ins are audited
-and sign-in rows record the role; the golden test asserts the mechanical rules R2, R8, R9,
-R11, R12 and R18; the book carries screenshots of every page. A defect was found and fixed:
-the security aggregates shared the light per-statement step budget and became unavailable
-after roughly a thousand retained findings in the selected day; they now use a larger, still
-fixed, budget covered by a volume test.
+Security aggregates use an operator-selected local statement allowance through
+`--console-query-steps` (100,000–50,000,000 steps, default four million). Point reads retain
+their smaller budget. Cluster reads use the supported Zaxonlite RPC facade and its fixed
+ten-million-step server limit; the local option cannot override it. VM steps bound work,
+not wall-clock time, and exhaustion produces an unavailable result with a narrower-period hint.
 
-The same review then added `--console-query-steps` so the aggregate budget is an operator
-setting, and recorded the client address (transport peer, or the forwarded client behind a
-trusted proxy) and a User-Agent digest on sessions, with the client address on sign-in,
-sign-out and refused sign-in audit rows (schema version 34).
+Sessions record the sign-in client address and a SHA-256 digest of the User-Agent when
+available. Authentication audit rows record the client address at sign-in, refusal or explicit
+sign-out; a sign-out must not reuse an earlier sign-in address. Only a trusted configured
+ingress may supply forwarded client addresses. Other mutation rows without capture remain
+“not recorded”. Schema version 34 adds these fields without reconstructing historical values.
 
 == Launch scope (2026-09-11)
 
@@ -1810,8 +1803,11 @@ build pipeline and digest gate, the golden, contract, end-to-end and cluster tes
 and the operator guide with screenshots.
 
 *Launch condition:* the console-impact gate is inconclusive on the development laptop. Before
-`--console` is enabled beside a production data plane, run `zig build console-impact` on the
-deployment host class and record the result under `benchmarks/results/`. The same binary runs
+`--console` is enabled beside a production data plane, obtain a passing full impact result on
+the deployment host class and record it under `benchmarks/results/`. Run
+`zig build console-impact -- --geoip-data <validated-snapshot> --host-label <conditions>`;
+add `--cluster` for clustered deployment. A completed but inconclusive or failing run does
+not satisfy this condition. The same binary runs
 without `--console`; compiling the console in starts no console thread, listener or sampler.
 
 *Deferred to post-launch (observability):* `challenge_minutes` persistence (challenge counters
@@ -1827,8 +1823,9 @@ history); the client address on mutation audit rows other than authentication.
 and `libs/serve/src/admission.zig` stays an unwired reference; request bodies use per-route
 bounded buffers stricter than the 1 MB and 8 MB figures, with policy import chunked; a denial
 carries no rule name to the client, so tester parity is checked against the decision, not a
-response header. The interface module is within 1 KiB of its 512 KiB ceiling: any further
-page work is paid for by a size reduction first.
+response header. The interface module retains a 512 KiB ceiling and a 448 KiB review threshold. Further
+page work must pass the asset-size check; changes to the budget require a documented
+application need and a review of loading and memory costs.
 
 = References
 
