@@ -4,6 +4,7 @@
 const std = @import("std");
 const App = @import("app.zig").App;
 const http = @import("http.zig");
+const origin = @import("origin.zig");
 const p = @import("console_protocol");
 const policy = @import("policy");
 const page_template = policy.page_template;
@@ -65,11 +66,7 @@ pub const Drafts = struct {
 };
 
 fn auth(app: *App, context: *http.Context, principal: p.Principal) !p.users.Auth {
-    return .{
-        .session_digest = try http.session(context),
-        .csrf_digest = principal.csrf_digest,
-        .require_totp = app.config.behind_proxy,
-    };
+    return origin.authority(app, context, principal);
 }
 
 pub fn handle(

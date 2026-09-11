@@ -4,6 +4,7 @@
 const std = @import("std");
 const App = @import("app.zig").App;
 const http = @import("http.zig");
+const origin = @import("origin.zig");
 const p = @import("console_protocol");
 const n = p.notifications;
 const Handler = @import("routes.zig").Handler;
@@ -12,11 +13,7 @@ const secrets = @import("auth_secrets.zig");
 
 pub fn handle(app: *App, context: *http.Context, principal: p.Principal, kind: Handler) !void {
     std.debug.assert(principal.token_id == null);
-    const auth: p.users.Auth = .{
-        .session_digest = try http.session(context),
-        .csrf_digest = principal.csrf_digest,
-        .require_totp = app.config.behind_proxy,
-    };
+    const auth = try origin.authority(app, context, principal);
     return switch (kind) {
         .settings_query => reply(context, try app.request(.{ .settings_query = auth })),
         .settings_change => changeSetting(app, context, auth),

@@ -2,6 +2,7 @@ const std = @import("std");
 const p = @import("console_protocol");
 const App = @import("app.zig").App;
 const http = @import("http.zig");
+const origin = @import("origin.zig");
 
 pub fn query(app: *App, context: *http.Context, testing: bool) !void {
     const digest = try http.session(context);
@@ -67,6 +68,7 @@ pub fn query(app: *App, context: *http.Context, testing: bool) !void {
 
 pub fn edit(app: *App, context: *http.Context, identity: p.Principal, inspection: bool) !void {
     const digest = try http.session(context);
+    const seen = origin.Origin.capture(app, context);
     var body: [8192]u8 = undefined;
     var memory: [16384]u8 = undefined;
     var fixed = std.heap.FixedBufferAllocator.init(&memory);
@@ -82,6 +84,7 @@ pub fn edit(app: *App, context: *http.Context, identity: p.Principal, inspection
         .expected_revision = std.fmt.parseInt(u64, parsed.value.expected_revision, 10) catch
             return error.InvalidRequest,
         .document = try p.Bytes(4096).init(parsed.value.document),
+        .client = seen.client,
     };
     const result = try app.request(if (inspection)
         .{ .inspection_edit = input }

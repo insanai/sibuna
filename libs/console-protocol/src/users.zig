@@ -9,6 +9,8 @@ pub const Auth = struct {
     session_digest: [32]u8,
     csrf_digest: [32]u8 = @splat(0),
     require_totp: bool = false,
+    /// Address presenting the credential for this request; empty when not captured.
+    client: root.Bytes(48) = .{},
 };
 pub const Query = struct {
     auth: Auth,

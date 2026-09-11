@@ -20,6 +20,8 @@ pub const Query = struct {
     module: ?@import("security.zig").Module = null,
     ip: Bytes(48) = .{},
     path_prefix: Bytes(256) = .{},
+    /// Address presenting the credential; recorded on the export audit row only.
+    client: Bytes(48) = .{},
 };
 pub const Capture = struct {
     version: u8 = 1,

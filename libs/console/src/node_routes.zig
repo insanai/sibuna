@@ -4,14 +4,11 @@ const std = @import("std");
 const p = @import("console_protocol");
 const App = @import("app.zig").App;
 const http = @import("http.zig");
+const origin = @import("origin.zig");
 const Handler = @import("routes.zig").Handler;
 
 pub fn dispatch(app: *App, context: *http.Context, actor: p.Principal, kind: Handler) !void {
-    const auth: p.users.Auth = .{
-        .session_digest = try http.session(context),
-        .csrf_digest = actor.csrf_digest,
-        .require_totp = app.config.behind_proxy,
-    };
+    const auth = try origin.authority(app, context, actor);
     if (kind != .node_command and !app.query_budget.allow(
         app.io,
         auth.session_digest,

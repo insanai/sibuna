@@ -4,17 +4,13 @@
 const std = @import("std");
 const App = @import("app.zig").App;
 const http = @import("http.zig");
+const origin = @import("origin.zig");
 const p = @import("console_protocol");
 const w = p.workflows;
 const Handler = @import("routes.zig").Handler;
 
 pub fn handle(app: *App, context: *http.Context, principal: p.Principal, handler: Handler) !void {
-    const digest = try http.session(context);
-    const auth: p.users.Auth = .{
-        .session_digest = digest,
-        .csrf_digest = principal.csrf_digest,
-        .require_totp = app.config.behind_proxy,
-    };
+    const auth = try origin.authority(app, context, principal);
     return switch (handler) {
         .policy_order => order(app, context, auth),
         .policy_replay => replay(app, context, auth),

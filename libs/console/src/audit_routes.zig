@@ -2,6 +2,7 @@ const std = @import("std");
 const p = @import("console_protocol");
 const App = @import("app.zig").App;
 const http = @import("http.zig");
+const origin = @import("origin.zig");
 const Handler = @import("routes.zig").Handler;
 
 pub fn handle(app: *App, context: *http.Context, principal: p.Principal, kind: Handler) !void {
@@ -10,11 +11,7 @@ pub fn handle(app: *App, context: *http.Context, principal: p.Principal, kind: H
         if (kind == .audit_export) .export_page else .query;
     if (!app.query_budget.allow(app.io, digest, app.now(), budget_kind))
         return http.fail(context, .too_many_requests, "CONSOLEQUERY");
-    const auth: p.users.Auth = .{
-        .session_digest = digest,
-        .csrf_digest = principal.csrf_digest,
-        .require_totp = app.config.behind_proxy,
-    };
+    const auth = try origin.authority(app, context, principal);
     var body: [1024]u8 = undefined;
     var memory: [4096]u8 = undefined;
     var arena = std.heap.FixedBufferAllocator.init(&memory);

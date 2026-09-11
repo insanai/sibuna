@@ -13,6 +13,7 @@ pub const Exchange = struct {
     code_digest: [32]u8,
     session_digest: [32]u8,
     csrf_digest: [32]u8,
+    client: p.Bytes(48) = .{},
 };
 pub const Granted = struct { use_by: u64, expires: u64 };
 pub const Session = struct { expires: u64 };

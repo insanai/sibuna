@@ -9,6 +9,7 @@ test {
     _ = @import("config.zig");
     _ = @import("ingress.zig");
     _ = @import("bearer.zig");
+    _ = @import("origin.zig");
     _ = @import("mailbox.zig");
     _ = @import("topic_ring.zig");
     _ = @import("topic_store.zig");

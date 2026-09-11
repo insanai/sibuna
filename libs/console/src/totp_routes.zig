@@ -2,6 +2,7 @@ const std = @import("std");
 const p = @import("console_protocol");
 const App = @import("app.zig").App;
 const http = @import("http.zig");
+const origin = @import("origin.zig");
 const auth = @import("auth_routes.zig");
 const totp = @import("totp.zig");
 const secrets = @import("auth_secrets.zig");
@@ -61,6 +62,7 @@ pub fn handle(app: *App, context: *Context, path: []const u8, principal: p.Princ
     if (context.request.head.method != .POST) return error.InvalidRequest;
     // Header iteration borrows the received-head state and must finish before body reads.
     const session_digest = try http.session(context);
+    const seen = origin.Origin.capture(app, context);
     if (!auth.allowed(app, context, principal.username.slice()))
         return http.fail(context, .too_many_requests, "CONSOLE003");
     var body: [2048]u8 = undefined;
@@ -83,6 +85,7 @@ pub fn handle(app: *App, context: *Context, path: []const u8, principal: p.Princ
     const authorization: p.auth.Authorization = .{
         .session_digest = session_digest,
         .csrf_digest = principal.csrf_digest,
+        .client = seen.client,
     };
     if (enrolling)
         return enroll(app, context, principal.actor, authorization, parsed.value.revision);

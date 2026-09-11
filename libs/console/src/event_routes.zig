@@ -2,12 +2,14 @@ const std = @import("std");
 const p = @import("console_protocol");
 const App = @import("app.zig").App;
 const http = @import("http.zig");
+const origin = @import("origin.zig");
 
 pub fn query(app: *App, context: *http.Context, export_page: bool) !void {
     const digest = try http.session(context);
     const kind: @import("query_budget.zig").Kind = if (export_page) .export_page else .query;
     if (!app.query_budget.allow(app.io, digest, app.now(), kind))
         return http.fail(context, .too_many_requests, "CONSOLEQUERY");
+    const seen = origin.Origin.capture(app, context);
     var body: [2048]u8 = undefined;
     var arena: [8192]u8 = undefined;
     var fixed = std.heap.FixedBufferAllocator.init(&arena);
@@ -34,6 +36,7 @@ pub fn query(app: *App, context: *http.Context, export_page: bool) !void {
         .grouped = fields.view == .source,
         .export_page = export_page,
         .require_totp = app.config.behind_proxy,
+        .client = seen.client,
         .limit = fields.limit,
         .from = fields.from,
         .until = fields.until orelse std.math.maxInt(i64),

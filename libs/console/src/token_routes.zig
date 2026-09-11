@@ -4,15 +4,12 @@ const std = @import("std");
 const p = @import("console_protocol");
 const App = @import("app.zig").App;
 const http = @import("http.zig");
+const origin = @import("origin.zig");
 const Handler = @import("routes.zig").Handler;
 
 pub fn handle(app: *App, context: *http.Context, principal: p.Principal, kind: Handler) !void {
     std.debug.assert(principal.token_id == null and principal.role == .admin);
-    const auth: p.users.Auth = .{
-        .session_digest = try http.session(context),
-        .csrf_digest = principal.csrf_digest,
-        .require_totp = app.config.behind_proxy,
-    };
+    const auth = try origin.authority(app, context, principal);
     if (kind == .tokens_query and !app.query_budget.allow(
         app.io,
         auth.session_digest,

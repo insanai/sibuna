@@ -27,6 +27,7 @@ pub const Edit = struct {
     require_totp: bool = false,
     expected_revision: u64,
     document: Bytes(4096),
+    client: Bytes(48) = .{},
 };
 pub const Read = struct {
     session_digest: [32]u8,

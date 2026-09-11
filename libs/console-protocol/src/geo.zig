@@ -3,6 +3,7 @@ pub const Authorization = struct {
     session_digest: [32]u8,
     csrf_digest: [32]u8,
     require_totp: bool = false,
+    client: p.Bytes(48) = .{},
 };
 pub const max_provider = 12;
 pub const max_version = 10;

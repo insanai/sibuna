@@ -1,6 +1,7 @@
 const std = @import("std");
 const App = @import("app.zig").App;
 const http = @import("http.zig");
+const origin = @import("origin.zig");
 const p = @import("console_protocol");
 const geoip = @import("geoip");
 
@@ -29,6 +30,7 @@ pub fn handle(app: *App, context: *http.Context, user: p.Principal) !void {
     }
     if (context.request.head.method != .POST) return error.InvalidRequest;
     const digest = try http.session(context);
+    const seen = origin.Origin.capture(app, context);
     var body: [16384]u8 = undefined;
     var arena: [32768]u8 = undefined;
     var fixed = std.heap.FixedBufferAllocator.init(&arena);
@@ -46,6 +48,7 @@ pub fn handle(app: *App, context: *http.Context, user: p.Principal) !void {
             .session_digest = digest,
             .csrf_digest = user.csrf_digest,
             .require_totp = app.config.behind_proxy,
+            .client = seen.client,
         },
         .expected_revision = input.value.expected_revision,
         .provider = try p.Bytes(p.geo.max_provider).init(input.value.provider),

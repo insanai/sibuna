@@ -4,6 +4,7 @@ const p = @import("root.zig");
 pub const Authorization = struct {
     session_digest: [32]u8,
     csrf_digest: [32]u8,
+    client: p.Bytes(48) = .{},
 };
 pub const Totp = struct {
     user: u64,
@@ -70,4 +71,5 @@ pub const PasswordChange = struct {
     session_digest: [32]u8,
     csrf_digest: [32]u8,
     password_hash: p.Bytes(255),
+    client: p.Bytes(48) = .{},
 };

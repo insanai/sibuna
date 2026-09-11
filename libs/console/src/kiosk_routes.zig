@@ -4,6 +4,7 @@
 const std = @import("std");
 const App = @import("app.zig").App;
 const http = @import("http.zig");
+const origin = @import("origin.zig");
 const Context = http.Context;
 const p = @import("console_protocol");
 const Sha256 = std.crypto.hash.sha2.Sha256;
@@ -16,6 +17,7 @@ pub fn handle(app: *App, context: *Context, identity: ?p.Principal) !void {
 fn token(app: *App, context: *Context, principal: p.Principal) !void {
     // Headers must be read before the body consumes the request buffer.
     const session_digest = try http.session(context);
+    const seen = origin.Origin.capture(app, context);
     var body: [512]u8 = undefined;
     var memory: [1024]u8 = undefined;
     var arena = std.heap.FixedBufferAllocator.init(&memory);
@@ -35,6 +37,7 @@ fn token(app: *App, context: *Context, principal: p.Principal) !void {
             .session_digest = session_digest,
             .csrf_digest = principal.csrf_digest,
             .require_totp = app.config.behind_proxy,
+            .client = seen.client,
         },
         .code_digest = digest,
         .label = p.Bytes(p.kiosk.max_label).init(parsed.value.label) catch
@@ -73,6 +76,7 @@ fn allowed(app: *App, context: *Context) bool {
 
 fn exchange(app: *App, context: *Context) !void {
     if (!allowed(app, context)) return http.fail(context, .too_many_requests, "CONSOLE429");
+    const seen = origin.Origin.capture(app, context);
     var body: [512]u8 = undefined;
     var memory: [1024]u8 = undefined;
     var arena = std.heap.FixedBufferAllocator.init(&memory);
@@ -93,6 +97,7 @@ fn exchange(app: *App, context: *Context) !void {
     http.digest(&csrf, &csrf_digest, .{});
     const result = try app.request(.{ .kiosk_exchange = .{
         .code_digest = code_digest,
+        .client = seen.client,
         .session_digest = digest,
         .csrf_digest = csrf_digest,
     } });

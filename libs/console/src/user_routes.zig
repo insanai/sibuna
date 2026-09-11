@@ -2,6 +2,7 @@ const std = @import("std");
 const p = @import("console_protocol");
 const App = @import("app.zig").App;
 const http = @import("http.zig");
+const origin = @import("origin.zig");
 pub const Kind = enum { query, create, change };
 
 pub fn dispatch(
@@ -22,11 +23,7 @@ pub fn handle(app: *App, context: *http.Context, principal: p.Principal, kind: K
     const digest = try http.session(context);
     if (kind == .query and !app.query_budget.allow(app.io, digest, app.now(), .query))
         return http.fail(context, .too_many_requests, "CONSOLEQUERY");
-    const auth: p.users.Auth = .{
-        .session_digest = digest,
-        .csrf_digest = principal.csrf_digest,
-        .require_totp = app.config.behind_proxy,
-    };
+    const auth = try origin.authority(app, context, principal);
     var body: [2048]u8 = undefined;
     var memory: [8192]u8 = undefined;
     defer std.crypto.secureZero(u8, &body);
