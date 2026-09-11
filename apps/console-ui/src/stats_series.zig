@@ -8,6 +8,9 @@ pub const Point = struct {
     duration_ms: u64 = 0,
     combined_rate: ?f64 = null,
     outcome_rates: ?p.dashboard.Rates = null,
+    /// Gauges observed with this interval: ban entries and healthy nodes, never rates.
+    active_bans: ?u64 = null,
+    nodes_healthy: ?u8 = null,
 };
 
 pub fn accept(state: *State, next: p.StatsSnapshot) void {
@@ -27,6 +30,8 @@ pub fn accept(state: *State, next: p.StatsSnapshot) void {
             .duration_ms = 1000,
             .combined_rate = value,
             .outcome_rates = scope.outcome_rates,
+            .active_bans = next.active_bans,
+            .nodes_healthy = healthy(next),
         };
         return;
     };
@@ -38,7 +43,14 @@ pub fn accept(state: *State, next: p.StatsSnapshot) void {
         .count = next.requests - previous.requests,
         .duration_ms = elapsed,
         .outcome_rates = p.dashboard.intervalRates(&previous, &next),
+        .active_bans = next.active_bans,
+        .nodes_healthy = healthy(next),
     };
+}
+
+fn healthy(snapshot: p.StatsSnapshot) ?u8 {
+    const health = snapshot.cluster_health orelse return null;
+    return health.healthy;
 }
 
 pub fn rate(point: Point) f64 {

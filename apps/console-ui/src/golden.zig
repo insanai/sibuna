@@ -45,7 +45,14 @@ fn run(io: std.Io, alloc: std.mem.Allocator, update: bool) !void {
         state.stats.?.admitted = 12345;
         state.stats.?.outcomes_version = 1;
         state.stats.?.proxy_mode = .reverse_proxy;
-        state.points[0] = .{ .second = 172800, .outcome_rates = .{ .admitted = 3 } };
+        state.stats.?.active_bans = 12;
+        state.stats.?.cluster_health = .{ .healthy = 2, .unknown = 1 };
+        state.points[0] = .{
+            .second = 172800,
+            .outcome_rates = .{ .admitted = 3 },
+            .active_bans = 12,
+            .nodes_healthy = 2,
+        };
         variant(&state, i);
         try check(io, alloc, name, &state, update);
     }
@@ -279,12 +286,12 @@ fn principles(name: []const u8, html: []const u8) !void {
     const traffic = [_][]const u8{ "dashboard", "traffic-period", "traffic-comparison" };
     for (traffic) |traffic_name| if (std.mem.eql(u8, name, traffic_name)) {
         const tiles = count(u8, html, "<article class=\"sb-tile ");
-        try t.expectEqual(@as(usize, 9), tiles);
+        try t.expectEqual(@as(usize, 11), tiles);
         try t.expectEqual(tiles, count(u8, html, "class=\"sb-sparkline\""));
         try t.expectEqual(tiles, count(u8, html, "<p class=\"sb-note\">Yesterday: "));
     };
     if (std.mem.eql(u8, name, "traffic-live")) {
-        try t.expectEqual(@as(usize, 9), count(u8, html, "class=\"sb-sparkline\""));
+        try t.expectEqual(@as(usize, 11), count(u8, html, "class=\"sb-sparkline\""));
         // R12: counts render with thousands separators.
         try t.expect(has(html, "12,345"));
     }

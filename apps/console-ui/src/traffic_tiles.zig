@@ -15,6 +15,8 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     };
     inline for (@typeInfo(sparkline.Metric).@"enum".fields, labels) |field, label|
         try tile(state, w, @enumFromInt(field.value), label);
+    try gaugeTile(state, w, .active_bans, "Active ban entries");
+    try gaugeTile(state, w, .nodes_healthy, "Nodes healthy");
     try w.writeAll("</section>");
     if (state.stats) |stats| if (stats.proxy_mode == .forward_auth) try w.writeAll(
         "<p class=\"sb-note\">Forward auth: admitted counts authorization approvals. " ++
@@ -23,7 +25,42 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     );
     try w.writeAll("<p class=\"sb-note\">Outcomes count parsed external requests once. " ++
         "Banned counts requests, not distinct addresses. Origin 4xx/5xx overlap admitted " ++
-        "traffic. Counter loads are not simultaneous.</p>");
+        "traffic. Counter loads are not simultaneous. Active ban entries are unexpired " ++
+        "slots of the hashed ban table on contributing nodes, not distinct historical " ++
+        "addresses; nodes healthy is this console's probe of configured peers plus " ++
+        "itself, with unprobed peers counted separately.</p>");
+}
+
+/// Gauges are snapshot values with no retained daily history: the deviation marker stays
+/// explicitly unavailable rather than comparing a level with a day's total (R9, R11).
+fn gaugeTile(
+    state: *const State,
+    w: *Writer,
+    gauge: sparkline.Gauge,
+    label: []const u8,
+) Writer.Error!void {
+    try html.render(w, "<article class=\"sb-tile {{ tone }}\">" ++
+        "<span class=\"sb-subtitle\">{{ label }}</span><strong>", .{
+        .label = label,
+        .tone = sparkline.gaugeTone(gauge),
+    });
+    if (state.stats) |stats| switch (gauge) {
+        .active_bans => if (stats.active_bans) |count| {
+            try @import("count_display.zig").write(w, count);
+        } else try w.writeAll("Not recorded"),
+        .nodes_healthy => if (stats.cluster_health) |health| {
+            try w.print("{d} of {d}", .{ health.healthy, health.total() });
+            if (health.unknown != 0) try w.print(" · {d} unprobed", .{health.unknown});
+        } else try w.writeAll("Not recorded"),
+    } else try w.writeAll("—");
+    try w.writeAll("</strong>");
+    if (!state.kiosk and state.traffic_period.hours != 0) {
+        try w.writeAll("<p class=\"sb-note\">Yesterday: ");
+        try deviation.write(w, .unavailable);
+        try w.writeAll("</p>");
+    }
+    try sparkline.renderGauge(state, w, gauge, label);
+    try w.writeAll("</article>");
 }
 
 fn tile(

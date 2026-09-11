@@ -102,6 +102,9 @@ pub fn requestTiles(state: *const State, w: *Writer) Writer.Error!void {
             } else try w.writeAll("Unavailable");
         } else if (index == 1) {
             try w.writeAll("Not recorded");
+        } else if (index == 4) {
+            try bansTile(state, w);
+            continue;
         } else if (state.stats) |stats| {
             if (stats.outcomes_version == 1) {
                 try @import("count_display.zig").write(w, @field(stats, key));
@@ -117,7 +120,21 @@ pub fn requestTiles(state: *const State, w: *Writer) Writer.Error!void {
     }
     try html.render(w, "</section><p class=\"sb-note\">Reputation trends and source addresses " ++
         "are not recorded separately. Rate-limit, challenge and ban source addresses are not " ++
-        "recorded; bans count requests, not distinct addresses.</p>", .{});
+        "recorded; active ban entries are unexpired hashed table slots, not distinct " ++
+        "historical addresses.</p>", .{});
+}
+
+fn bansTile(state: *const State, w: *Writer) Writer.Error!void {
+    const stats = state.stats orelse return w.writeAll("Unavailable</strong>" ++
+        "<p class=\"sb-note\">Active entries / contributing node boots</p></article>");
+    if (stats.active_bans) |count| {
+        try @import("count_display.zig").write(w, count);
+    } else try w.writeAll("Not recorded");
+    try w.writeAll("</strong><p class=\"sb-note\">Active entries now; ");
+    if (stats.outcomes_version == 1) {
+        try @import("count_display.zig").write(w, stats.banned);
+        try w.writeAll(" requests denied by bans</p></article>");
+    } else try w.writeAll("denied requests not recorded</p></article>");
 }
 
 pub fn findings(state: *const State, w: *Writer) Writer.Error!void {
