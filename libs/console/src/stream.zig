@@ -151,7 +151,8 @@ const Stream = struct {
 
     fn reply(self: *Stream) bool {
         const request = self.queries.take(self.app.io) orelse return true;
-        var buffer: [8192]u8 = undefined;
+        // A full peer page plus its envelope must fit, or every large reply closes the stream.
+        var buffer: [@import("peer_query.zig").max_body + 512]u8 = undefined;
         var writer: std.Io.Writer = .fixed(&buffer);
         @import("peer_query_server.zig").respond(self.app, request, &writer) catch return false;
         return self.send(.text, writer.buffered());

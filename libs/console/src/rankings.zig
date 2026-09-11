@@ -38,12 +38,20 @@ pub const Rankings = struct {
         slot.families.status[family.statusSlot(record.status)] +|= 1;
     }
 
-    pub fn snapshot(self: *const Rankings, second: u64) Minute {
+    /// Copies straight into the caller's storage: a `Minute` is tens of kilobytes, and a
+    /// returned value can be duplicated per frame on a bounded thread stack.
+    pub fn snapshot(self: *const Rankings, second: u64, out: *Minute) void {
         const minute = second / 60;
         const slot = &self.minutes[minute % self.minutes.len];
-        return if (slot.minute == minute) slot.* else .{ .minute = minute };
+        if (slot.minute == minute) out.* = slot.* else out.* = .{ .minute = minute };
     }
 };
+
+fn sampled(rankings: *const Rankings, second: u64) u64 {
+    var minute: Minute = undefined;
+    rankings.snapshot(second, &minute);
+    return minute.paths.samples;
+}
 
 test "late samples remain in their original minute and slot reuse drops old populations" {
     const t = std.testing;
@@ -55,10 +63,10 @@ test "late samples remain in their original minute and slot reuse drops old popu
         record.second = second;
         rankings.add(&record);
     }
-    try t.expectEqual(@as(u64, 0), rankings.snapshot(119).paths.samples);
-    try t.expectEqual(@as(u64, 1), rankings.snapshot(120).paths.samples);
-    try t.expectEqual(@as(u64, 1), rankings.snapshot(180).paths.samples);
-    try t.expectEqual(@as(u64, 0), rankings.snapshot(240).paths.samples);
+    try t.expectEqual(@as(u64, 0), sampled(&rankings, 119));
+    try t.expectEqual(@as(u64, 1), sampled(&rankings, 120));
+    try t.expectEqual(@as(u64, 1), sampled(&rankings, 180));
+    try t.expectEqual(@as(u64, 0), sampled(&rankings, 240));
 }
 
 test "families and referring hosts are counted beside paths within the same minute" {
@@ -78,7 +86,8 @@ test "families and referring hosts are counted beside paths within the same minu
     rankings.add(&record);
     record.referer_len = 0;
     rankings.add(&record);
-    const minute = rankings.snapshot(120);
+    var minute: Minute = undefined;
+    rankings.snapshot(120, &minute);
     try t.expectEqual(@as(u64, 2), minute.families.os[@intFromEnum(family.Os.linux)]);
     try t.expectEqual(@as(u64, 2), minute.families.browser[@intFromEnum(family.Browser.firefox)]);
     try t.expectEqual(@as(u64, 2), minute.families.status[family.statusSlot(429)]);

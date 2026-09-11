@@ -5,6 +5,7 @@ const Geo = @import("geoip_generation.zig").Registry;
 const geoip = @import("geoip");
 const p = @import("console_protocol");
 const MinuteJournal = @import("minute_journal.zig").Journal;
+const RankingMinute = @import("rankings.zig").Minute;
 
 pub const Snapshot = @import("console_protocol").StatsSnapshot;
 
@@ -111,23 +112,24 @@ pub const Stats = struct {
         }
     }
 
-    pub fn rankingSnapshot(self: *Stats, io: std.Io, now: u64) @import("rankings.zig").Minute {
+    pub fn rankingSnapshot(self: *Stats, io: std.Io, now: u64, out: *RankingMinute) void {
         self.mutex.lockUncancelable(io);
         defer self.mutex.unlock(io);
-        return self.rankings.snapshot(now);
+        self.rankings.snapshot(now, out);
     }
 
-    pub fn takeClosedRanking(self: *Stats, io: std.Io, now: u64) ?@import("rankings.zig").Minute {
+    /// Moves one sealed minute into `out` and frees its slot; false when none has closed.
+    pub fn takeClosedRanking(self: *Stats, io: std.Io, now: u64, out: *RankingMinute) bool {
         self.mutex.lockUncancelable(io);
         defer self.mutex.unlock(io);
         for (&self.rankings.minutes) |*slot| {
             const minute = slot.minute orelse continue;
             if (minute >= now / 60 or now / 60 - minute < 2) continue;
-            const result = slot.*;
+            out.* = slot.*;
             slot.minute = null;
-            return result;
+            return true;
         }
-        return null;
+        return false;
     }
 
     pub fn snapshot(
@@ -223,11 +225,12 @@ test "ranking minute seals only after the entire late-sample horizon has expired
     var record = std.mem.zeroes(store.telemetry.Record);
     record.second = 119;
     stats.rankings.add(&record);
-    try std.testing.expect(stats.takeClosedRanking(std.testing.io, 179) == null);
-    const minute = stats.takeClosedRanking(std.testing.io, 180).?;
+    var minute: RankingMinute = undefined;
+    try std.testing.expect(!stats.takeClosedRanking(std.testing.io, 179, &minute));
+    try std.testing.expect(stats.takeClosedRanking(std.testing.io, 180, &minute));
     try std.testing.expectEqual(@as(u64, 1), minute.minute.?);
     try std.testing.expectEqual(@as(u64, 1), minute.paths.samples);
-    try std.testing.expect(stats.takeClosedRanking(std.testing.io, 180) == null);
+    try std.testing.expect(!stats.takeClosedRanking(std.testing.io, 180, &minute));
 }
 
 const Ranked = struct { top: [32]p.CountryCount = @splat(.{}), other: u64 = 0 };

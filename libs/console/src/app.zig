@@ -189,8 +189,9 @@ pub const App = struct {
     fn collect(self: *App) void {
         while (!self.stopping.load(.acquire)) {
             const second = self.now();
+            var minute: @import("rankings.zig").Minute = undefined;
             for (0..2) |_| {
-                const minute = self.stats.takeClosedRanking(self.io, second) orelse break;
+                if (!self.stats.takeClosedRanking(self.io, second, &minute)) break;
                 self.history.offer(&minute, self.telemetry.dropped.load(.monotonic));
             }
             self.stats.collect(self.io, self.telemetry, second, self.geo);

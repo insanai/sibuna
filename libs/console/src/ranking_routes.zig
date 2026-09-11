@@ -31,7 +31,10 @@ pub fn handle(app: *App, context: *http.Context) !void {
 pub fn write(app: *App, writer: *std.Io.Writer, limit: usize) !void {
     std.debug.assert(limit > 0 and limit <= p.max_rows);
     const now = app.now();
-    var minute = app.stats.rankingSnapshot(app.io, now);
+    // The minute is tens of kilobytes; keep it off the 256 KiB stream and request stacks.
+    const minute = try app.gpa.create(@import("rankings.zig").Minute);
+    defer app.gpa.destroy(minute);
+    app.stats.rankingSnapshot(app.io, now, minute);
     const counters = minute.paths.counters[0..minute.paths.len];
     std.mem.sort(Summary.Counter, counters, {}, Summary.before);
     var rows: [p.max_rows]p.Row = undefined;
