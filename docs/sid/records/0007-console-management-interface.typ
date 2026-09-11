@@ -1787,8 +1787,13 @@ not wall-clock time, and exhaustion produces an unavailable result with a narrow
 Sessions record the sign-in client address and a SHA-256 digest of the User-Agent when
 available. Authentication audit rows record the client address at sign-in, refusal or explicit
 sign-out; a sign-out must not reuse an earlier sign-in address. Only a trusted configured
-ingress may supply forwarded client addresses. Other mutation rows without capture remain
-“not recorded”. Schema version 34 adds these fields without reconstructing historical values.
+ingress may supply forwarded client addresses. Schema version 34 added these fields without
+reconstructing historical values. Version 35 extends the address to every audited management
+mutation: the route captures it before the request body is read, the authorization block
+carries it across the storage mailbox, the storage thread binds it into the staged or mutated
+row, and the audit trigger copies that column, so replicated statements stay deterministic.
+Rows the system writes without a request (probe results, notification deliveries, command
+completion, bootstrap) keep a NULL address, which the Audit page shows as “not recorded”.
 
 == Launch scope (2026-09-11)
 
@@ -1798,7 +1803,7 @@ below. Items outside it are post-launch requirements of this record, not conditi
 Committed status.
 
 *In scope and verified on main:* every page of “Pages”, the authentication and kiosk model,
-the six-topic protocol, the data model through schema version 34, GeoIP, cluster membership,
+the six-topic protocol, the data model through schema version 35, GeoIP, cluster membership,
 probes and peer telemetry, notifications, retention, response-page templates, the CLI, the
 build pipeline and digest gate, the golden, contract, end-to-end and cluster test entry points,
 and the operator guide with screenshots.
@@ -1817,7 +1822,7 @@ status and referring host rankings (paths are sketched); RSS and CPU minute colu
 control-thread snapshot of distinct active bans and a nodes-healthy tile; per-address
 challenge records and the adaptive-difficulty timeline; request and response heads with
 charset selection and “copy as cURL”; revert from the Audit page (revert exists from Policy
-history); the client address on mutation audit rows other than authentication.
+history).
 
 *Accepted deviations:* the serve kernel reserves HTTP and control capacity arithmetically
 (96 slots less 64 browser and 8 peer subscribers), verified by the 64-subscriber scenario,

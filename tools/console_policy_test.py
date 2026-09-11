@@ -156,6 +156,7 @@ def check_audit(h, port, cookie, csrf):
     updated = call(h, port, session, "read", {"id": str(page["rows"][0]["id"])})
     created = call(h, port, session, "read", {"id": str(page["rows"][1]["id"])})
     assert updated["row"]["actor_role"] == created["row"]["actor_role"] == "admin"
+    assert updated["row"]["client_ip"] == created["row"]["client_ip"] == "127.0.0.1"
     assert created["before"] is None
     assert json.loads(updated["before"])["enabled"] == 1
     assert json.loads(updated["after"])["enabled"] == 0

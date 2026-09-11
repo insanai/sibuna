@@ -46,15 +46,18 @@ def checks(h, port, admin):
     selected = first["rows"][0]
     detail = call(h, port, admin, "read", {"id": str(selected["id"])})
     assert detail["before"] is None and detail["row"]["actor_role"] == "admin"
+    # Management mutations record the address presenting the credential.
+    assert detail["row"]["client_ip"] == "127.0.0.1", detail["row"]
     summary = json.loads(detail["after"])
     assert summary["role"] == "viewer" and summary["must_change"] == 1
     assert not detail["after_truncated"] and not detail["after_redacted"]
     filtered = call(h, port, admin, "query", {"actor": "0", "action": "user.create"})
     assert all(int(row["actor"]) == 0 for row in filtered["rows"])
     exported = call(h, port, admin, "export", {"action": "token.create"})
-    assert len(exported["rows"]) == 1
+    assert len(exported["rows"]) == 1 and exported["rows"][0]["client_ip"] == "127.0.0.1"
     receipt = call(h, port, admin, "query", {"action": "audit.export"})
     assert len(receipt["rows"]) == 1 and int(receipt["rows"][0]["subject"]) == 1
+    assert receipt["rows"][0]["client_ip"] == "127.0.0.1"
     for _ in range(5):
         call(h, port, admin, "export", {"action": "token.create"})
     call(h, port, admin, "export", expected=429)
@@ -71,6 +74,8 @@ def checks(h, port, admin):
         "operation": "revoke",
     }, *admin)[0] == 200
     call(h, port, viewer, "query", expected=401)
+    revoked = call(h, port, admin, "query", {"action": "user.revoke"})
+    assert revoked["rows"] and revoked["rows"][0]["client_ip"] == "127.0.0.1"
     return detail
 
 
