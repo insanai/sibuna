@@ -811,7 +811,7 @@ Migrations are numbered and version-gated in `schema.zig`. The authoritative wri
 )
 
 Additional migrations are required for `console_recovery_codes` (digest and consumed state),
-`console_policy_versions` (revision and bounded before/after JSON for conflict-checked revert),
+`console_policy_history` (revision and bounded documents for conflict-checked revert),
 `console_jobs` (import/notifier/retention leases with expiry, fencing token and progress),
 `console_node_commands` (target, operation id, expiry, desired state and acknowledgment),
 `country_minutes` (node/boot/minute/country/outcome, sample count, probability and coverage),
@@ -1368,10 +1368,10 @@ detail-wire("Audit", [Audit · activity and policy history], [Activity], [
   Reason: operator description
 
   Applied: node 1 ✓ · node 2 ✓ · node 3 pending\
-  Open policy / Show diff / Revert to revision 17
+  Review policy revision / Revert this change
 
-  Revert creates revision 19 with a fresh audit.\
-  Reject if revision 18 is no longer current.\
+  Revert restores the document recorded before revision 18 as revision 19 with a fresh audit.\
+  Rejected if revision 18 is no longer current; Policy history offers compare and rebase.\
   Secrets and full token values never displayed.
 ], [Local action detail: request id, intent, target acknowledgment and failure reason; no false atomicity claim.]))
 
@@ -1821,8 +1821,7 @@ are boot-local, labelled as such); the sampled client operating system, browser,
 status and referring host rankings (paths are sketched); RSS and CPU minute columns; a
 control-thread snapshot of distinct active bans and a nodes-healthy tile; per-address
 challenge records and the adaptive-difficulty timeline; request and response heads with
-charset selection and “copy as cURL”; revert from the Audit page (revert exists from Policy
-history).
+charset selection and “copy as cURL”.
 
 *Accepted deviations:* the serve kernel reserves HTTP and control capacity arithmetically
 (96 slots less 64 browser and 8 peer subscribers), verified by the 64-subscriber scenario,

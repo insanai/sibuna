@@ -141,7 +141,9 @@ image("images/console-settings.png"))
 #book_figure([Audit. Append-only history with actor and role, action, subject and a detail
 view with redacted before and after summaries; refused sign-ins are recorded too. Every
 management mutation and authentication row records the client address that presented the
-credential; rows the system writes on its own show it as not recorded.],
+credential; rows the system writes on its own show it as not recorded. A policy record offers
+*Revert this change*, which restores the document recorded before that revision as a new,
+audited revision after a confirmation, and is refused if the rule set has moved on.],
 image("images/console-audit.png"))
 
 The optional `--console-location <latitude,longitude>` declares this node's position, for
