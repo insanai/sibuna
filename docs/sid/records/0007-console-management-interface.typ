@@ -1903,9 +1903,10 @@ inside the 64 KiB statement envelope) and continue over up to 48 statements per 
 Challenges page states, per booted node, the records dropped by the bounded queue, the batches
 whose write was not acknowledged, and the difficulty changes observed but not recorded;
 these counters are boot-local by design, like the minute journals' unconfirmed snapshots, and
-are not persisted. Expired challenge records are removed 256 at a time every five seconds,
-above the 32-records-per-second ingestion bound, so retention keeps pace without a catch-up
-job. The impact runner accepts `--mode reverse_proxy` (against a local origin fixture) and
+are not persisted. The collector ticks every 250 ms and may submit one 32-record batch per
+tick, so ingestion can reach 128 records per second; each append therefore first removes up
+to 64 expired records, and the five-second prune of 256 records remains as catch-up, so
+retention keeps pace at the ingestion bound. The impact runner accepts `--mode reverse_proxy` (against a local origin fixture) and
 `--capture-heads` (which adds an audited-admission workload); the effective values are part
 of each result's provenance.
 

@@ -1,5 +1,7 @@
 //! The storage owner appends bounded per-address challenge records and difficulty
-//! transitions, pages them for the Challenges page and prunes them at seven days.
+//! transitions, pages them for the Challenges page and prunes them at seven days. Each
+//! append first removes up to twice its batch of expired records, so retention keeps pace
+//! with ingestion (a 32-record batch every collector tick); the periodic prune is catch-up.
 const std = @import("std");
 const console = @import("console");
 const p = console.protocol;
@@ -15,6 +17,13 @@ const columns = "id,node,second,ip,outcome,cause,algorithm,parameter,openings,du
 pub fn write(owner: *Persistent, input: wire.Batch) !p.StorageResult {
     if (input.count == 0 or input.count > wire.max_batch or input.now > std.math.maxInt(i64))
         return .{ .failed = .invalid_input };
+    _ = try db.exec(
+        owner.db,
+        owner.gpa,
+        "DELETE FROM console_challenge_records WHERE id IN " ++
+            "(SELECT id FROM console_challenge_records WHERE second<? LIMIT 64)",
+        &.{integer(input.now -| wire.retention_days * 86400)},
+    );
     const boot = std.fmt.bytesToHex(input.boot, .lower);
     var sql: [4096]u8 = undefined;
     var writer: std.Io.Writer = .fixed(&sql);

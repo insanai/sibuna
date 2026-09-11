@@ -98,3 +98,63 @@ test "per-address records page by cursor, filter by cause and address, and prune
         .until = 3000,
     } })).challenge_difficulty).count);
 }
+
+fn fullBatch(second: u64, now: u64) wire.Batch {
+    var result: wire.Batch = .{ .node = 7, .boot = @splat(1), .now = now };
+    for (0..wire.max_batch) |i| result.records[i] = .{
+        .second = second,
+        .ip = p.Bytes(48).init("8.8.12.9") catch unreachable,
+        .outcome = .issued,
+        .cause = wire.no_cause,
+        .algorithm = 1,
+        .parameter = 13,
+        .openings = 16,
+        .duration_ms = null,
+    };
+    result.count = wire.max_batch;
+    return result;
+}
+
+fn rows(fx: *Fixture) !u64 {
+    var result = try @import("console_database.zig").query(
+        fx.owner.db,
+        t.allocator,
+        "SELECT COUNT(*) FROM console_challenge_records",
+        &.{},
+    );
+    defer result.deinit();
+    return std.fmt.parseInt(u64, result.rows[0][0].?, 10);
+}
+
+test "retention keeps pace with sustained full batches without the periodic prune" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try Fixture.open(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/challenge-records-pace",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try fixture.policySession(fx);
+    const now = 10 * 86400;
+    // Every batch is already expired when written; each append removes the previous one,
+    // so the table never holds more than one batch however long ingestion continues.
+    for (0..6) |_| try t.expect(try fx.run(.{
+        .challenge_records_write = fullBatch(now - 8 * 86400, now),
+    }) == .command_recorded);
+    try t.expectEqual(@as(u64, wire.max_batch), try rows(fx));
+    // A live batch replaces the last expired one; nothing expired survives it.
+    try t.expect(try fx.run(.{ .challenge_records_write = fullBatch(now, now) }) ==
+        .command_recorded);
+    try t.expectEqual(@as(u64, wire.max_batch), try rows(fx));
+    const live = try page(fx, .{
+        .session_digest = @splat(1),
+        .observed_at = now + 1,
+        .from = now - 3600,
+        .until = now + 1,
+        .limit = 4,
+    });
+    try t.expectEqual(@as(u8, 4), live.count);
+    try t.expectEqual(@as(u64, now), live.rows[0].second);
+}
