@@ -1793,7 +1793,8 @@ Aggregate-only kiosk Security queries cannot request source addresses, paths or 
 
 SID 0001 normally requires implementation on main and satisfied verification and benchmark
 gates before Committed status. The launch-scope exception below does not establish a full
-performance pass or completion of the deferred observability requirements. Test entry points are `zig build test`, `console-test`, `console-ui-e2e`,
+performance pass; the observability requirements it deferred were completed afterwards
+(see “Post-launch completion”). Test entry points are `zig build test`, `console-test`, `console-ui-e2e`,
 `console-e2e` with clustering enabled, and `console-impact`. Formatting and the SID, book and
 HTML builds verify structural and documentation contracts. Exact test history belongs in git;
 measured records under `benchmarks/results/` carry source identity, conditions and uncertainty.
@@ -1837,11 +1838,12 @@ completion, bootstrap) keep a NULL address, which the Audit page shows as “not
 
 The engine of SID 0002 to SID 0006 is the launch-critical product; this console observes and
 manages it. The project owner closed this record for launch on 2026-09-11 with the scope
-below. Items outside it are post-launch requirements of this record, not conditions of its
-Committed status.
+below. The eight observability requirements outside that scope were delivered on the same
+day in phases 1 to 8 of the post-launch plan (see “Post-launch completion”); the launch
+condition below still applies.
 
 *In scope and verified on main:* every page of “Pages”, the authentication and kiosk model,
-the six-topic protocol, the data model through schema version 38, GeoIP, cluster membership,
+the six-topic protocol, the data model through schema version 39, GeoIP, cluster membership,
 probes and peer telemetry, notifications, retention, response-page templates, the CLI, the
 build pipeline and digest gate, the golden, contract, end-to-end and cluster test entry points,
 and the operator guide with screenshots.
@@ -1863,6 +1865,23 @@ carries no rule name to the client, so tester parity is checked against the deci
 response header. The interface module has a 768 KiB ceiling and a 640 KiB review threshold
 since the budget review below. Further page work must pass the asset-size check; changes to
 the budget require a documented application need and a review of loading and memory costs.
+
+== Post-launch completion (2026-09-11)
+
+Delivered after the launch closure, each with schema, protocol, storage, interface, golden,
+contract and end-to-end coverage: the client address on every audited management mutation
+(version 35); revert from the Audit page; active ban entries and nodes-healthy gauges with
+sixty-second sparklines; durable challenge minutes and their retained window (version 36);
+resident memory and CPU gauges in the live snapshot and minute records (version 37); sampled
+referring hosts, client families and response status beside path rankings (SBR2 archives);
+per-address challenge records and adaptive-difficulty transitions (version 38); and opt-in
+redacted request and response heads with charset selection and copy-as-cURL (version 39,
+`--console-capture-heads`). Along the way two defects surfaced by the work were fixed: the
+live statistics fan-out now lands on UTC second boundaries so sparklines stay continuous, and
+the Nodes page keeps its gauges live. Still open by design: JA4 fingerprints, which the
+Events detail states as not recorded until a trusted ingress captures them; the solver split
+on the Challenges page remains self-reported by the client. The interface module measures
+619,627 bytes against the 786,432-byte ceiling after these phases.
 
 == Interface budget review (2026-09-11)
 
