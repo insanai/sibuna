@@ -15,7 +15,6 @@ import subprocess
 import tempfile
 import time
 import urllib.parse
-from http.cookies import SimpleCookie
 from run import ROOT, free_port, metadata, record, stop
 
 API = '/.within.website/x/cmd/anubis/api/'
@@ -42,11 +41,18 @@ def request(port, task):
 
 
 def cookies(headers):
-    jar = SimpleCookie()
+    """Cookie pairs from every Set-Cookie header, attributes ignored. Parsed by hand: Python's
+    SimpleCookie discards a whole header when it meets an attribute it does not know (such as
+    Anubis's `Partitioned`), which silently drops the verification cookie."""
+    jar = {}
     for key, value in headers:
-        if key.lower() == 'set-cookie':
-            jar.load(value)
-    return '; '.join(f'{key}={value.value}' for key, value in jar.items() if value.value)
+        if key.lower() != 'set-cookie':
+            continue
+        pair = value.split(';', 1)[0].strip()
+        name, _, content = pair.partition('=')
+        if name.strip():
+            jar[name.strip()] = content.strip()
+    return '; '.join(f'{name}={content}' for name, content in jar.items() if content)
 
 
 def solution(port, product):
