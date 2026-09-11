@@ -35,7 +35,8 @@ pub const Read = struct {
     committed: ?u64 = null,
     selection: union(enum) {
         catalog: Bytes(128),
-        document: struct { id: Bytes(128), revision: ?u64 = null },
+        /// With `previous`, the newest recorded revision below `revision` for this rule.
+        document: struct { id: Bytes(128), revision: ?u64 = null, previous: bool = false },
         history: struct { id: Bytes(128), before: ?u64 = null },
     },
 };

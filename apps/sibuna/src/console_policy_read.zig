@@ -68,10 +68,17 @@ fn catalog(owner: *Persistent, revision: u64, after: []const u8) !p.StorageResul
 
 fn readDocument(owner: *Persistent, revision: u64, input: anytype) !p.StorageResult {
     if (input.revision) |historical| {
+        // A revert reads the document recorded before the audited revision, whichever
+        // revision number that history row carries for this rule.
         var rows = try db.query(
             owner.db,
             owner.gpa,
-            "SELECT document FROM console_policy_history WHERE policy_id=? AND revision=? LIMIT 1",
+            if (input.previous)
+                "SELECT document FROM console_policy_history WHERE policy_id=? AND revision<? " ++
+                    "ORDER BY revision DESC LIMIT 1"
+            else
+                "SELECT document FROM console_policy_history WHERE policy_id=? AND revision=? " ++
+                    "LIMIT 1",
             &.{ util.text(input.id.slice()), util.integer(historical) },
         );
         defer rows.deinit();

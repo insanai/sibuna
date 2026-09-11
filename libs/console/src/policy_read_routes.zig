@@ -17,6 +17,7 @@ pub fn read(app: *App, context: *http.Context) !void {
         committed: ?[]const u8 = null,
         revision: ?[]const u8 = null,
         before: ?[]const u8 = null,
+        previous: bool = false,
     }, context, &body, fixed.allocator());
     defer parsed.deinit();
     const input = parsed.value;
@@ -29,6 +30,7 @@ pub fn read(app: *App, context: *http.Context) !void {
             .document => .{ .document = .{
                 .id = try p.Bytes(128).init(input.id),
                 .revision = try number(input.revision),
+                .previous = input.previous,
             } },
             .history => .{ .history = .{
                 .id = try p.Bytes(128).init(input.id),
