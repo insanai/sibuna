@@ -186,11 +186,16 @@ fn maskQuery(sink: *Sink, query: []const u8) void {
 }
 
 /// Userinfo, query values and the fragment of a URL are replaced; a value that is neither
-/// an absolute URL nor a path (nor a bare origin) is ambiguous and replaced whole.
+/// an absolute or protocol-relative URL nor a path is ambiguous and replaced whole.
 fn maskUrl(sink: *Sink, value: []const u8) void {
     var rest = value;
-    if (std.mem.indexOf(u8, rest, "://")) |scheme| {
-        const authority_start = scheme + 3;
+    const authority_at: ?usize = if (std.mem.indexOf(u8, rest, "://")) |scheme|
+        scheme + 3
+    else if (std.mem.startsWith(u8, rest, "//"))
+        2
+    else
+        null;
+    if (authority_at) |authority_start| {
         const authority_end = std.mem.indexOfAnyPos(u8, rest, authority_start, "/?#") orelse
             rest.len;
         const authority = rest[authority_start..authority_end];
@@ -312,6 +317,7 @@ test "URL-bearing values lose userinfo, query values and fragments" {
         .{ .name = "Origin", .value = "https://app.example" },
         .{ .name = "Location", .value = "/next?code=abc" },
         .{ .name = "Referer", .value = "javascript:alert(1)" },
+        .{ .name = "Referer", .value = "//alice:password@example.test/path?x=1" },
     };
     var out: [request_bytes]u8 = undefined;
     const head = requestHead(.{
@@ -321,8 +327,11 @@ test "URL-bearing values lose userinfo, query values and fragments" {
         .version = "HTTP/1.1",
         .headers = &headers,
     }, &none, &out);
-    try t.expectEqualStrings("GET / HTTP/1.1\r\n" ++
-        "Referer: https://[redacted]@news.example:8443/story?id=[redacted]&k=[redacted]" ++
-        "#[redacted]\r\nOrigin: https://app.example\r\nLocation: /next?code=[redacted]\r\n" ++
-        "Referer: [redacted]\r\n", out[0..head.len]);
+    try t.expectEqualStrings(
+        "GET / HTTP/1.1\r\n" ++
+            "Referer: https://[redacted]@news.example:8443/story?id=[redacted]&k=[redacted]" ++
+            "#[redacted]\r\nOrigin: https://app.example\r\nLocation: /next?code=[redacted]\r\n" ++
+            "Referer: [redacted]\r\nReferer: //[redacted]@example.test/path?x=[redacted]\r\n",
+        out[0..head.len],
+    );
 }
