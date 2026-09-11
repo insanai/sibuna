@@ -89,7 +89,14 @@ pub const Job = struct {
             slot.started_ms = ms;
         }
         if (ms < self.next_fanout_ms) return;
-        self.next_fanout_ms = ms +| 1000;
+        // Publish once per UTC second, on the first tick after its boundary, so consecutive
+        // browser snapshots carry consecutive timestamps. A free-running period drifts past
+        // whole seconds and breaks the sixty-second series into dashes.
+        const real_ms: u64 = @intCast(@max(0, @divTrunc(
+            std.Io.Clock.real.now(self.app.io).nanoseconds,
+            std.time.ns_per_ms,
+        )));
+        self.next_fanout_ms = ms +| (1000 - real_ms % 1000);
         self.local(wanted) catch |err| {
             std.log.warn("console subscription statistics failed: {t}", .{err});
         };
