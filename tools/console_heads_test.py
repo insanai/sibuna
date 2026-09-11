@@ -135,6 +135,13 @@ def origin_down(h, port, data_port, console):
 
 def forward_auth(h, port, data_port, console):
     audit_xss(h, port, console)
+    # A challenge is Sibuna's own answer even in forward-auth mode: the state is local, not
+    # unobserved, because the ingress never relayed anything to the origin.
+    assert h.request(data_port, "GET", "/audit-forward-challenged?" + XSS,
+                     extra_headers=client())[0] == 401
+    row = incident(h, port, console, "/audit-forward-challenged")
+    page, request, response = heads(h, port, console, row["id"])
+    assert response == "" and page["response_state"] == "local", page
     cookie, _ = session(data_port)
     assert h.request(data_port, "GET", "/audit-forwarded?" + XSS,
                      extra_headers=client(cookie))[0] == 200

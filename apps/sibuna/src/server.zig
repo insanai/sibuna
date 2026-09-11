@@ -689,19 +689,23 @@ test "referring hosts drop scheme, credentials, ports and paths" {
 fn recordAuditFindings(ctx: *RequestContext, findings: u8) void {
     if (findings == 0) return;
     const st = ctx.state();
-    // With capture on, an audited admission records once the origin head is known.
-    if (build_options.console and st.config.console_capture_heads and
-        st.config.mode == .reverse_proxy)
-    {
+    // With capture on, findings record once the response is known: after the origin head
+    // (reverse proxy), at the forward-auth approval, or at any local exit.
+    if (build_options.console and st.config.console_capture_heads) {
         ctx.deferred_findings = findings;
         return;
     }
-    // Forward auth never observes the origin's answer; the ingress relays it.
-    const state: core.incident_heads.ResponseState = if (st.config.mode == .forward_auth)
-        .unobserved
-    else
-        .local;
-    recordFindings(ctx, findings, "", false, state);
+    // Without capture no heads row is written, so the state is never stored.
+    recordFindings(ctx, findings, "", false, .local);
+}
+
+/// Forward auth approves the request for the ingress to relay; findings held back record
+/// now with the origin's response unobserved.
+fn forwardComplete(ctx: *RequestContext) void {
+    const findings = ctx.deferred_findings;
+    if (findings == 0) return;
+    ctx.deferred_findings = 0;
+    recordFindings(ctx, findings, "", false, .unobserved);
 }
 
 /// Findings still held back when the request ends without an origin exchange: the response
@@ -824,6 +828,7 @@ fn forwardAuth(
     rule_hash: u64,
 ) !bool {
     sampleOutcome(ctx, .admitted, 200);
+    if (build_options.console) forwardComplete(ctx);
     var hdr: [256]u8 = undefined;
     const headers = try std.fmt.bufPrint(
         &hdr,
