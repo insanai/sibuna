@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import tempfile
+import subprocess
 import console_bootstrap_test as bootstrap
 from console_users_test import login
 from console_ws_test import Stream
@@ -10,6 +11,7 @@ from proxy_fixture import origin
 
 
 def check(binary, h):
+    query_options(binary)
     application, worker = origin()
     try:
         with tempfile.TemporaryDirectory(prefix="sibuna-console-modes-") as directory:
@@ -26,6 +28,7 @@ def check(binary, h):
                 with (root / "daemon.log").open("w+") as log:
                     proc = h.start(binary, data, port, log, extra=(
                         "-m", mode, "--port", str(data_port),
+                        "--console-query-steps", "8000000",
                         "--policy-file", str(root / "policy.json"),
                         "--upstream-port", str(application.server_port),
                     ))
@@ -64,3 +67,13 @@ def check(binary, h):
         application.server_close()
         worker.join(timeout=5)
     print("console-e2e: both CLI modes, origin coverage, subscriptions and restart passed")
+
+
+def query_options(binary):
+    for options in (("99999",), ("50000001",), ("4M",), ("-1",), (),
+                    ("100000", "--console-query-steps", "200000")):
+        result = subprocess.run([binary, "--console", "127.0.0.1:9443",
+                                 "--console-query-steps", *options],
+                                capture_output=True, text=True, timeout=10)
+        assert result.returncode == 1, (options, result.returncode)
+        assert "CONSOLE002" in result.stderr and "Hint:" in result.stderr, result.stderr

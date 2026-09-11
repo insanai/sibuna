@@ -4,6 +4,7 @@ const console = @import("console");
 const Persistent = @import("persistent.zig").Persistent;
 pub const Parsed = struct {
     config: console.ConsoleConfig,
+    query_steps: ?u64 = null,
     data_args: []const []const u8,
     initial_admin: ?console.protocol.Bytes(64) = null,
 };
@@ -14,6 +15,7 @@ pub fn parse(args: []const []const u8, remaining: [][]const u8) !Parsed {
     var count: usize = 0;
     var i: usize = 0;
     var options_seen = false;
+    var query_steps: ?u64 = null;
     while (i < args.len) : (i += 1) {
         const flag = args[i];
         if (i == 0 and std.mem.eql(u8, flag, "init-admin")) {
@@ -42,11 +44,19 @@ pub fn parse(args: []const []const u8, remaining: [][]const u8) !Parsed {
         i += 1;
         if (i == args.len or std.mem.startsWith(u8, args[i], "--")) return error.MissingValue;
         const value = args[i];
-        try option(&config, flag, value);
+        if (std.mem.eql(u8, flag, "--console-query-steps")) {
+            if (query_steps != null) return error.DuplicateQuerySteps;
+            query_steps = try parseQuerySteps(value);
+        } else try option(&config, flag, value);
     }
     if (initial_admin != null and options_seen) return error.UnexpectedConsoleOptions;
     if (options_seen and !config.enabled) return error.ConsoleRequired;
-    return .{ .config = config, .data_args = remaining[0..count], .initial_admin = initial_admin };
+    return .{
+        .config = config,
+        .query_steps = query_steps,
+        .data_args = remaining[0..count],
+        .initial_admin = initial_admin,
+    };
 }
 
 fn option(config: *console.ConsoleConfig, flag: []const u8, value: []const u8) !void {
@@ -302,4 +312,40 @@ test "management peer parsing owns origins and rejects self identity after compo
         "--console",               "127.0.0.1:9443", "--console-peer-key-file", "a",
         "--console-peer-key-file", "b",
     }, &remaining));
+}
+
+fn parseQuerySteps(value: []const u8) error{InvalidQuerySteps}!u64 {
+    if (value.len == 0) return error.InvalidQuerySteps;
+    for (value) |byte| if (!std.ascii.isDigit(byte)) return error.InvalidQuerySteps;
+    const steps = std.fmt.parseInt(u64, value, 10) catch return error.InvalidQuerySteps;
+    if (steps < 100_000 or steps > 50_000_000) return error.InvalidQuerySteps;
+    return steps;
+}
+
+test "console query budget is bounded and never passed to the data-plane parser" {
+    const t = std.testing;
+    var remaining: [8][]const u8 = undefined;
+    for ([_][]const u8{ "100000", "4000000", "50000000" }) |value| {
+        const parsed = try parse(&.{
+            "--console", "127.0.0.1:9443", "--console-query-steps", value, "--gate",
+        }, &remaining);
+        try t.expectEqual(try std.fmt.parseInt(u64, value, 10), parsed.query_steps.?);
+        try t.expectEqualSlices([]const u8, &.{"--gate"}, parsed.data_args);
+    }
+    const invalid = [_][]const u8{
+        "99999", "50000001", "-1", "+100000", "4M", "", "18446744073709551616",
+    };
+    for (invalid) |value| {
+        try t.expectError(error.InvalidQuerySteps, parse(&.{
+            "--console", "127.0.0.1:9443", "--console-query-steps", value,
+        }, &remaining));
+    }
+    try t.expectError(error.DuplicateQuerySteps, parse(&.{
+        "--console",             "127.0.0.1:9443", "--console-query-steps", "100000",
+        "--console-query-steps", "100000",
+    }, &remaining));
+    try t.expectError(error.ConsoleRequired, parse(&.{
+        "--console-query-steps", "100000",
+    }, &remaining));
+    try t.expectError(error.MissingValue, parse(&.{"--console-query-steps"}, &remaining));
 }

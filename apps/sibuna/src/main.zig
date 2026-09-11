@@ -28,16 +28,15 @@ pub fn main(init: std.process.Init) !u8 {
     const daemon_args = if (subcommand) argv[1..] else argv;
     var data_args: [96][]const u8 = undefined;
     const parsed = if (build_options.console)
-        console_start.parse(daemon_args, &data_args) catch |err| {
-            std.debug.print("CONSOLE002: invalid console options ({t}). " ++
-                "Hint: check --console host:port and proxy settings.\n", .{err});
-            return 1;
-        }
+        console_start.parse(daemon_args, &data_args) catch |err| return invalidConsole(err)
     else {};
     var cfg = core.Config.parseArgs(if (build_options.console)
         parsed.data_args
     else
         daemon_args) catch |err| return invalidMode(err);
+    if (build_options.console) if (parsed.query_steps) |steps| {
+        cfg.console_query_steps = steps;
+    };
     if (build_options.console and !console_start.validate(parsed.config, cfg.data_dir != null))
         return 1;
     if (build_options.console) if (parsed.initial_admin) |username| {
@@ -250,7 +249,7 @@ fn printConsoleHelp() void {
         "Local bootstrap: sibuna init-admin <username> --data-dir <path>\n" ++
             "Console: --console <host:port> (requires --data-dir); " ++
             "--console-query-steps <n> (SQLite steps per Security aggregate, " ++
-            "100000-50000000, default 4000000); " ++
+            "100000-50000000, default 4000000; cluster RPC uses 10000000); " ++
             "--console-key-file <path> (64 hex characters, owner-only permissions); " ++
             "--console-origin <https-origin>; --console-behind-proxy; " ++
             "--console-trusted-proxy <CIDR> (repeatable); " ++
@@ -334,4 +333,11 @@ fn printHelp() void {
         \\  --help                       Show this help message
         \\
     , .{});
+}
+
+fn invalidConsole(err: anyerror) u8 {
+    std.debug.print("CONSOLE002: invalid console options ({t}). " ++
+        "Hint: check --console host:port, proxy settings, and query steps " ++
+        "(100000-50000000, supplied once).\n", .{err});
+    return 1;
 }
