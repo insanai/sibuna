@@ -175,6 +175,7 @@ def exercise(ui, data_port):
     import console_ranking_ui_test
     console_ranking_ui_test.check(ui)
     security_view(ui)
+    audit_revert(ui)
     for page, topic in (("events", "events"), ("policies", "policy"), ("nodes", "nodes"),
                         ("challenges", "challenges"), ("audit", "audit")):
         ui.event(1, {"action": page, "fields": {}})
@@ -203,6 +204,49 @@ def exercise(ui, data_port):
     assert ui.appearance["theme"] == "light"
     ui.event(8, {"route": "nodes"})
     assert ui.stream is None and "Welcome back" in ui.html
+
+
+def audit_revert(ui):
+    """A policy record reverts to the earlier document from the Audit page (SID 0007)."""
+    edit = "/console/api/policies/edit"
+    status, _, body = h.request(ui.port, "POST", "/console/api/policies/query", {},
+                                ui.cookie, ui.csrf)
+    assert status == 200, body
+    committed = int(json.loads(body)["committed"])
+    first = {"id": "ui-revert", "name": "UI revert", "action": "allow", "path": "/ui-revert"}
+    for document in (first, dict(first, action="deny")):
+        status, _, body = h.request(ui.port, "POST", edit, {
+            "expected_revision": str(committed), "document": json.dumps(document),
+        }, ui.cookie, ui.csrf)
+        assert status == 200, body
+        committed = int(json.loads(body)["committed"])
+    ui.event(1, {"action": "audit", "fields": {}})
+    ui.event(1, {"action": "audit-filter",
+                 "fields": {"actor": "", "action": "policy.edit", "days": "7"}})
+    ui.event(1, {"action": "audit-open-0", "fields": {}})
+    assert 'data-action="audit-revert"' in ui.html and "ui-revert" in ui.html
+    assert 'id="audit-revert-confirm"' not in ui.html
+    ui.event(1, {"action": "audit-revert", "fields": {}})
+    assert 'id="audit-revert-confirm"' in ui.html
+    # The checkbox is required; without it nothing is posted.
+    posted = len(ui.requests)
+    ui.event(1, {"action": "audit-revert-confirm", "fields": {}})
+    assert len(ui.requests) == posted and "Tick the confirmation" in ui.html
+    ui.event(1, {"action": "audit-revert-confirm", "fields": {"confirmed": "on"}})
+    assert "records the revert" in ui.html, ui.html[-1500:]
+    assert [r["path"] for r in ui.requests[posted:posted + 2]] == [
+        "/console/api/policies/read", "/console/api/policies/edit"]
+    status, _, body = h.request(ui.port, "POST", "/console/api/policies/read",
+                                {"kind": "document", "id": "ui-revert"}, ui.cookie, ui.csrf)
+    result = json.loads(body)
+    assert int(result["committed"]) == committed + 1, result
+    assert json.loads(result["document"])["action"] == "allow"
+    # A second revert of the same record is refused: the audited revision is no longer current.
+    ui.event(1, {"action": "audit-open-1", "fields": {}})
+    ui.event(1, {"action": "audit-revert", "fields": {}})
+    ui.event(1, {"action": "audit-revert-confirm", "fields": {"confirmed": "on"}})
+    assert "changed after this record" in ui.html
+    ui.event(1, {"action": "audit-close", "fields": {}})
 
 
 def security_view(ui):
@@ -257,7 +301,7 @@ def check(binary):
             ui = None
             try:
                 credentials = bootstrap.change(h, port, temporary, "wasm live test passphrase")
-                cookie, _, _ = login(h, port, credentials)
+                cookie, csrf, _ = login(h, port, credentials)
                 status, headers, shell = h.request(port, "GET", "/console/")
                 assert status == 200 and headers["Cache-Control"] == "no-cache"
                 path = re.search(rb'name="sibuna-console-wasm" content="([^"]+)"', shell)[1]
@@ -267,6 +311,7 @@ def check(binary):
                 wasm = root / "console.wasm"
                 wasm.write_bytes(body)
                 ui = Interface(port, cookie, wasm)
+                ui.csrf = csrf
                 exercise(ui, data_port)
             finally:
                 try:

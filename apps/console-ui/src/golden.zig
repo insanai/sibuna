@@ -34,6 +34,7 @@ fn run(io: std.Io, alloc: std.mem.Allocator, update: bool) !void {
         "ranking-history",
         "rule-hit-history",
         "rule-hit-history-partial",
+        "audit-detail",
     };
     inline for (variants, 0..) |name, i| {
         configure(&state, .dashboard);
@@ -65,6 +66,33 @@ fn configure(state: *State, phase: Phase) void {
     }
 }
 
+/// An opened policy record with the revert confirmation shown (R18: typed confirmation).
+fn auditDetail(state: *State) void {
+    state.phase = .audit;
+    const model = &state.audit;
+    model.clear();
+    model.loaded = true;
+    model.count = 1;
+    model.since = 0;
+    model.until = 172800;
+    model.rows[0] = .{
+        .id = 41,
+        .actor = 1,
+        .subject = 18,
+        .recorded_at = 172700,
+        .actor_role = .admin,
+        .client_ip = p.Bytes(48).init("198.51.100.7") catch unreachable,
+    };
+    model.rows[0].action.set("policy.edit") catch unreachable;
+    model.rows[0].target = p.Bytes(128).init("api-rate") catch unreachable;
+    model.selected = 41;
+    model.detail = .{ .row = model.rows[0], .after_redacted = true };
+    model.detail.before = p.Bytes(1024).init("{\"action\":\"allow\"}") catch unreachable;
+    model.detail.after = p.Bytes(1024).init("{\"action\":\"deny\"}") catch unreachable;
+    model.has_detail = true;
+    model.revert_open = true;
+}
+
 fn variant(state: *State, index: usize) void {
     switch (index) {
         0 => state.traffic_period.hours = 0,
@@ -88,6 +116,7 @@ fn variant(state: *State, index: usize) void {
         },
         9, 10 => period(state, index == 10),
         12, 13 => ruleHistory(state, index == 13),
+        14 => auditDetail(state),
         3, 4 => {
             state.kiosk = true;
             state.kiosk_expires = 176400;

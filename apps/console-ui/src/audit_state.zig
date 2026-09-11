@@ -1,7 +1,7 @@
 const std = @import("std");
 const p = @import("console_protocol");
 const decode = @import("json_value.zig").decode;
-pub const Kind = enum { query, read, export_page };
+pub const Kind = enum { query, read, export_page, revert_read, revert_edit };
 const WireRow = struct {
     id: u64,
     actor: u64,
@@ -32,6 +32,10 @@ pub const Model = struct {
     days: u16 = 7,
     since: u64 = 0,
     until: u64 = 0,
+    /// The revert confirmation is open for the selected policy record; the target owns
+    /// its bytes so a later detail response cannot retarget an in-flight revert.
+    revert_open: bool = false,
+    revert_target: p.audit.PolicyRevision = .{ .id = .{}, .revision = 0 },
 
     pub fn clear(self: *Model) void {
         std.crypto.secureZero(u8, std.mem.asBytes(self));

@@ -116,11 +116,23 @@ fn detail(state: *const State, w: *Writer) Writer.Error!void {
         try html.render(w, "</article>", .{});
     }
     try html.render(w, "</div>", .{});
-    if (state.allows(.manage_policy) and value.row.policyRevision() != null) try html.render(
-        w,
-        "<button class=\"btn my-3\" data-action=\"audit-policy-review\">" ++
-            "Review policy revision</button>",
-        .{},
-    );
+    if (state.allows(.manage_policy)) if (value.row.policyRevision()) |target| {
+        try html.render(w, "<div class=\"sb-filter-actions my-3\">" ++
+            "<button class=\"btn\" data-action=\"audit-policy-review\"{{ busy }}>" ++
+            "Review policy revision</button>" ++
+            "<button class=\"btn btn-error btn-outline\" data-action=\"audit-revert\"" ++
+            "{{ busy }}>Revert this change</button></div>", .{
+            .busy = if (state.audit.busy or state.audit.revert_open) " disabled" else "",
+        });
+        if (state.audit.revert_open) try html.render(
+            w,
+            @embedFile("snippets/audit-revert.html"),
+            .{
+                .id = target.id.slice(),
+                .revision = target.revision,
+                .busy = if (state.audit.busy) " disabled" else "",
+            },
+        );
+    };
     try html.render(w, "</section>", .{});
 }

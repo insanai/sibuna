@@ -55,9 +55,90 @@ pub fn action(state: *State, name: []const u8, fields: std.json.Value, out: Outb
         });
     } else if (equal(u8, name, "audit-close")) {
         model.has_detail = false;
+        model.revert_open = false;
         try out.emit(.{ .op = "focus", .selector = "#audit-catalog" });
+    } else if (std.mem.startsWith(u8, name, "audit-revert")) {
+        try revert(state, name, fields, out);
     }
     return true;
+}
+
+/// Reverting restores the document recorded before the audited revision as a new revision.
+/// The edit is conditional on the audited revision still being current (SID 0007), so a
+/// later change to the rule set refuses the revert instead of silently overwriting it.
+fn revert(state: *State, name: []const u8, fields: std.json.Value, out: Outbox) !void {
+    const model = &state.audit;
+    if (!state.allows(.manage_policy) or !model.has_detail) return;
+    const target = model.detail.row.policyRevision() orelse return;
+    if (equal(u8, name, "audit-revert")) {
+        model.revert_open = true;
+        return out.emit(.{ .op = "focus", .selector = "#audit-revert-heading" });
+    }
+    if (equal(u8, name, "audit-revert-cancel")) {
+        model.revert_open = false;
+        return out.emit(.{ .op = "focus", .selector = "#audit-detail" });
+    }
+    if (!equal(u8, name, "audit-revert-confirm") or !model.revert_open) return;
+    if (!equal(u8, string(fields, "confirmed"), "on")) {
+        message(state, "Tick the confirmation to revert this rule.");
+        return out.emit(.{ .op = "focus", .selector = "#console-message" });
+    }
+    model.revert_target = target;
+    try ticket(state, .revert_read);
+    errdefer model.busy = false;
+    var revision: [20]u8 = undefined;
+    try out.post(model.ticket.slice(), "/console/api/policies/read", .{
+        .kind = "document",
+        .id = target.id.slice(),
+        .revision = try std.fmt.bufPrint(&revision, "{d}", .{target.revision}),
+        .previous = true,
+    });
+}
+
+fn revertResponse(state: *State, body: std.json.Value, out: Outbox) !void {
+    const model = &state.audit;
+    if (model.kind == .revert_read) {
+        const committed = string(body, "committed");
+        if (try std.fmt.parseInt(u64, committed, 10) != model.revert_target.revision) {
+            message(state, "The rule set changed after this record. Review it in Policy history.");
+            return out.emit(.{ .op = "focus", .selector = "#console-message" });
+        }
+        try ticket(state, .revert_edit);
+        errdefer model.busy = false;
+        var revision: [20]u8 = undefined;
+        return out.post(model.ticket.slice(), "/console/api/policies/edit", .{
+            .expected_revision = try std.fmt.bufPrint(&revision, "{d}", .{
+                model.revert_target.revision,
+            }),
+            .document = string(body, "document"),
+        });
+    }
+    model.revert_open = false;
+    model.has_detail = false;
+    window(state);
+    try query(state, out, .query);
+    var text: [256]u8 = undefined;
+    message(state, std.fmt.bufPrint(
+        &text,
+        "Rule {s} reverted to the document recorded before revision {d}; revision {s} " ++
+            "records the revert.",
+        .{
+            model.revert_target.id.slice(),
+            model.revert_target.revision,
+            string(body, "committed"),
+        },
+    ) catch "Rule reverted.");
+    state.message_success = true;
+}
+
+fn revertFailure(status: i64) []const u8 {
+    return switch (status) {
+        409 => "The rule set changed after this record. Review it in Policy history.",
+        400, 404 => "No earlier revision of this rule is recorded; this change created it.",
+        403 => "Your role or second factor does not allow policy changes.",
+        429 => "Too many changes. Wait a minute, then retry.",
+        else => "Storage is unavailable. Retry later.",
+    };
 }
 
 fn capture(state: *State, fields: std.json.Value) !void {
@@ -138,6 +219,11 @@ pub fn response(
         message(state, "Your session ended. Sign in to continue.");
         return out.emit(.{ .op = "disconnect" });
     }
+    const reverting = model.kind == .revert_read or model.kind == .revert_edit;
+    if (status != 200 and reverting) {
+        message(state, revertFailure(status));
+        return out.emit(.{ .op = "focus", .selector = "#console-message" });
+    }
     if (status != 200) {
         message(state, switch (status) {
             404 => "This record is unavailable. Refresh; retention may have removed it.",
@@ -147,7 +233,9 @@ pub fn response(
         });
         return;
     }
+    if (reverting) return revertResponse(state, body, out);
     if (model.kind == .read) {
+        model.revert_open = false;
         try model.detailValue(body, allocator);
     } else {
         try model.pageValue(body, allocator);

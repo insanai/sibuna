@@ -80,3 +80,89 @@ test "audit response tickets preserve navigation and failures never relabel old 
     try t.expect(try controller.action(&state, "audit-export", .null, out));
     try t.expectEqual(before, count);
 }
+
+const policy_row =
+    \\{"id":"41","actor":1,"subject":18,"recorded_at":100,
+    \\"action":"policy.edit","target":"api-rate","actor_role":"admin"}
+;
+
+test "audit revert confirms, reads the earlier document and edits against the audited revision" {
+    var state = try signedIn();
+    state.role = try p.Bytes(16).init("admin");
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+    var buffer: [16384]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&buffer);
+    var count: usize = 0;
+    const out: Outbox = .{ .writer = &writer, .count = &count, .csrf = state.csrf.slice() };
+    // No detail: revert actions are ignored and post nothing.
+    try t.expect(try controller.action(&state, "audit-revert", .null, out));
+    try t.expect(!state.audit.revert_open and count == 0);
+    state.audit.selected = 41;
+    const detail = try std.json.parseFromSliceLeaky(std.json.Value, allocator, "{\"version\":1," ++
+        "\"row\":" ++ policy_row ++ ",\"before\":null,\"after\":null," ++
+        "\"before_truncated\":false," ++
+        "\"after_truncated\":false,\"before_redacted\":false,\"after_redacted\":false}", .{});
+    try state.audit.detailValue(detail, allocator);
+    try t.expect(try controller.action(&state, "audit-revert", .null, out));
+    try t.expect(state.audit.revert_open);
+    var rendered: [32768]u8 = undefined;
+    var page: std.Io.Writer = .fixed(&rendered);
+    try @import("render.zig").render(&state, &page);
+    try t.expect(std.mem.indexOf(u8, page.buffered(), "id=\"audit-revert-confirm\"") != null);
+    try t.expect(std.mem.indexOf(u8, page.buffered(), "name=\"confirmed\" required") != null);
+    // The checkbox is required; an unticked submission posts nothing.
+    const unticked = try std.json.parseFromSliceLeaky(std.json.Value, allocator, "{}", .{});
+    try t.expect(try controller.action(&state, "audit-revert-confirm", unticked, out));
+    try t.expect(count == 2 and !state.audit.busy);
+    const ticked = try std.json.parseFromSliceLeaky(
+        std.json.Value,
+        allocator,
+        "{\"confirmed\":\"on\"}",
+        .{},
+    );
+    try t.expect(try controller.action(&state, "audit-revert-confirm", ticked, out));
+    try t.expect(state.audit.busy and state.audit.kind == .revert_read);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "\"previous\":true") != null);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "\"revision\":\"18\"") != null);
+    const ticket = state.audit.ticket;
+    // A newer rule set refuses the revert before any edit is posted.
+    const moved = try std.json.parseFromSliceLeaky(
+        std.json.Value,
+        allocator,
+        "{\"committed\":\"19\",\"document\":\"{}\"}",
+        .{},
+    );
+    const posted = count;
+    try controller.response(&state, ticket.slice(), 200, moved, allocator, out);
+    try t.expect(!state.audit.busy and count == posted + 1);
+    try t.expect(std.mem.indexOf(u8, state.message.slice(), "changed after this record") != null);
+    try t.expect(try controller.action(&state, "audit-revert-confirm", ticked, out));
+    const read = try std.json.parseFromSliceLeaky(
+        std.json.Value,
+        allocator,
+        "{\"committed\":\"18\",\"document\":\"{\\\"id\\\":\\\"api-rate\\\"}\"}",
+        .{},
+    );
+    try controller.response(&state, state.audit.ticket.slice(), 200, read, allocator, out);
+    try t.expect(state.audit.busy and state.audit.kind == .revert_edit);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "\"expected_revision\":\"18\"") != null);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "/console/api/policies/edit") != null);
+    const conflict = state.audit.ticket;
+    try controller.response(&state, conflict.slice(), 409, .null, allocator, out);
+    try t.expect(!state.audit.busy and state.audit.revert_open);
+    try t.expect(std.mem.indexOf(u8, state.message.slice(), "Policy history") != null);
+    try t.expect(try controller.action(&state, "audit-revert-confirm", ticked, out));
+    try controller.response(&state, state.audit.ticket.slice(), 200, read, allocator, out);
+    const saved = try std.json.parseFromSliceLeaky(
+        std.json.Value,
+        allocator,
+        "{\"committed\":\"19\",\"applied\":\"19\"}",
+        .{},
+    );
+    try controller.response(&state, state.audit.ticket.slice(), 200, saved, allocator, out);
+    try t.expect(state.message_success and !state.audit.revert_open and !state.audit.has_detail);
+    try t.expect(state.audit.busy and state.audit.kind == .query);
+    try t.expect(std.mem.indexOf(u8, state.message.slice(), "revision 19 records") != null);
+}
