@@ -157,6 +157,7 @@ fn renderMember(state: *const State, value: p.nodes.Member, w: *Writer) Writer.E
 fn status(state: *const State, node: p.nodes.Status, w: *Writer) Writer.Error!void {
     const model = &state.nodes;
     const fresh = model.fresh(state.browser_time);
+    var gauge_text: [2][32]u8 = undefined;
     try html.render(w, @embedFile("snippets/nodes-status.html"), .{
         .node = node.node,
         .admission = if (node.draining) "Draining" else "Accepting connections",
@@ -168,12 +169,23 @@ fn status(state: *const State, node: p.nodes.Status, w: *Writer) Writer.Error!vo
         .applied = node.applied,
         .revision = node.control_revision,
         .uptime = node.uptime_ms / 1000,
+        .memory = memoryText(state, node.node, &gauge_text[0]),
+        .cpu = cpuText(state, node.node, &gauge_text[1]),
         .boot = node.boot.slice(),
         .pending = if (node.completion_pending)
             "A local effect is awaiting durable completion. New commands are paused."
         else
             "Status refreshes every five seconds while no confirmation is open.",
     });
+    if (state.stats) |stats| if (stats.node == node.node) {
+        const sparkline = @import("outcome_sparkline.zig");
+        try w.writeAll("<div class=\"sb-panels\"><figure>" ++
+            "<figcaption>Resident memory, KiB</figcaption>");
+        try sparkline.renderGauge(state, w, .memory, "Resident memory");
+        try w.writeAll("</figure><figure><figcaption>CPU, percent of one core</figcaption>");
+        try sparkline.renderGauge(state, w, .cpu, "CPU");
+        try w.writeAll("</figure></div>");
+    };
     if (state.allows(.control_node)) {
         const disabled = !fresh or model.busy != .idle or model.pending != null or
             node.completion_pending or node.control_revision >= std.math.maxInt(i64);
@@ -275,4 +287,21 @@ fn completion(receipt: p.nodes.Receipt) []const u8 {
     if (receipt.completion_persisted) return "Completion and audit are recorded.";
     if (receipt.state == .applied) return "Completion has not yet been persisted. Inspect again.";
     return "No completion is recorded. This command will not replay automatically.";
+}
+
+/// Gauges come from the live snapshot of the node rendering this page; another node's
+/// selection or a snapshot without the gauge reads as not recorded.
+fn memoryText(state: *const State, node: u32, buffer: *[32]u8) []const u8 {
+    const stats = state.stats orelse return "Not recorded";
+    if (stats.node != node) return "Not recorded";
+    const kib = stats.rss_kib orelse return "Not recorded";
+    return std.fmt.bufPrint(buffer, "{d} KiB", .{kib}) catch "Not recorded";
+}
+
+fn cpuText(state: *const State, node: u32, buffer: *[32]u8) []const u8 {
+    const stats = state.stats orelse return "Not recorded";
+    if (stats.node != node) return "Not recorded";
+    const permille = stats.cpu_permille orelse return "Not recorded";
+    return std.fmt.bufPrint(buffer, "{d}.{d} %", .{ permille / 10, permille % 10 }) catch
+        "Not recorded";
 }

@@ -47,11 +47,15 @@ fn run(io: std.Io, alloc: std.mem.Allocator, update: bool) !void {
         state.stats.?.proxy_mode = .reverse_proxy;
         state.stats.?.active_bans = 12;
         state.stats.?.cluster_health = .{ .healthy = 2, .unknown = 1 };
+        state.stats.?.rss_kib = 48128;
+        state.stats.?.cpu_permille = 37;
         state.points[0] = .{
             .second = 172800,
             .outcome_rates = .{ .admitted = 3 },
             .active_bans = 12,
             .nodes_healthy = 2,
+            .rss_kib = 48128,
+            .cpu_permille = 37,
         };
         variant(&state, i);
         try check(io, alloc, name, &state, update);

@@ -6,7 +6,7 @@ const State = @import("state.zig").State;
 const html = @import("html");
 pub const Metric = std.meta.FieldEnum(p.dashboard.Rates);
 /// Gauges are snapshot values, not per-second rates; they share the tile and sparkline shape.
-pub const Gauge = enum { active_bans, nodes_healthy };
+pub const Gauge = enum { active_bans, nodes_healthy, memory, cpu };
 
 pub fn tone(metric: Metric) []const u8 {
     return switch (metric) {
@@ -35,7 +35,7 @@ pub fn name(metric: Metric) []const u8 {
 pub fn gaugeTone(gauge: Gauge) []const u8 {
     return switch (gauge) {
         .active_bans => "sb-decision-banned",
-        .nodes_healthy => "sb-decision-info",
+        .nodes_healthy, .memory, .cpu => "sb-decision-info",
     };
 }
 
@@ -49,6 +49,11 @@ pub fn gaugeValues(state: *const State, gauge: Gauge) [60]?f64 {
         value.* = switch (gauge) {
             .active_bans => if (point.active_bans) |count| @floatFromInt(count) else null,
             .nodes_healthy => if (point.nodes_healthy) |count| @floatFromInt(count) else null,
+            .memory => if (point.rss_kib) |kib| @floatFromInt(kib) else null,
+            .cpu => if (point.cpu_permille) |permille|
+                @as(f64, @floatFromInt(permille)) / 10
+            else
+                null,
         };
     }
     return result;

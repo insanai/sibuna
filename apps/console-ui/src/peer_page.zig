@@ -26,7 +26,7 @@ pub fn render(state: *const State, writer: *Writer) Writer.Error!void {
 }
 
 fn row(writer: *Writer, peer: p.nodes.Peer, elapsed: u64) Writer.Error!void {
-    var buffers: [4][20]u8 = undefined;
+    var buffers: [6][20]u8 = undefined;
     const age = if (peer.age_seconds) |value| value +| elapsed else null;
     const stale = if (age) |value| value >= 10 else false;
     try html.render(writer, @embedFile("snippets/peer-observation.html"), .{
@@ -36,6 +36,8 @@ fn row(writer: *Writer, peer: p.nodes.Peer, elapsed: u64) Writer.Error!void {
         .skew = optional(&buffers[1], peer.clock_skew_seconds),
         .requests = optional(&buffers[2], peer.requests),
         .loss = optional(&buffers[3], peer.sample_loss),
+        .memory = optional(&buffers[4], peer.rss_kib),
+        .cpu = optional(&buffers[5], if (peer.cpu_permille) |value| @as(u64, value) else null),
         .boot = if (peer.boot) |boot| boot.slice() else "not observed",
         .resets = peer.resets,
         .sequence = peer.sequence,

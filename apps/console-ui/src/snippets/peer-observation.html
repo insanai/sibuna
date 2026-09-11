@@ -2,6 +2,7 @@
     <h3>Node {{ node }} · {{ status }}</h3>
     <p>Observation age (s): {{ age }} · Clock skew (s): {{ skew }}</p>
     <p>Requests: {{ requests }} · Sampling loss: {{ loss }}</p>
+    <p>Resident memory (KiB): {{ memory }} · CPU (per mille of one core): {{ cpu }}</p>
     <p class="sb-note">Boot: <code class="break-all">{{ boot }}</code><br>
         Boot resets: {{ resets }} · Sequence: {{ sequence }} · Watermark: {{ watermark }}</p>
 </article>

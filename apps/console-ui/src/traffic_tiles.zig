@@ -52,6 +52,8 @@ fn gaugeTile(
             try w.print("{d} of {d}", .{ health.healthy, health.total() });
             if (health.unknown != 0) try w.print(" · {d} unprobed", .{health.unknown});
         } else try w.writeAll("Not recorded"),
+        // Process gauges belong to the Nodes page, never to a traffic tile.
+        .memory, .cpu => unreachable,
     } else try w.writeAll("—");
     try w.writeAll("</strong>");
     if (!state.kiosk and state.traffic_period.hours != 0) {

@@ -11,6 +11,8 @@ pub const Point = struct {
     /// Gauges observed with this interval: ban entries and healthy nodes, never rates.
     active_bans: ?u64 = null,
     nodes_healthy: ?u8 = null,
+    rss_kib: ?u64 = null,
+    cpu_permille: ?u32 = null,
 };
 
 pub fn accept(state: *State, next: p.StatsSnapshot) void {
@@ -32,6 +34,8 @@ pub fn accept(state: *State, next: p.StatsSnapshot) void {
             .outcome_rates = scope.outcome_rates,
             .active_bans = next.active_bans,
             .nodes_healthy = healthy(next),
+            .rss_kib = next.rss_kib,
+            .cpu_permille = next.cpu_permille,
         };
         return;
     };
@@ -45,6 +49,8 @@ pub fn accept(state: *State, next: p.StatsSnapshot) void {
         .outcome_rates = p.dashboard.intervalRates(&previous, &next),
         .active_bans = next.active_bans,
         .nodes_healthy = healthy(next),
+        .rss_kib = next.rss_kib,
+        .cpu_permille = next.cpu_permille,
     };
 }
 
