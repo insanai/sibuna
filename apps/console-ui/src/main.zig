@@ -819,9 +819,41 @@ fn eventAction(name: []const u8, fields: std.json.Value) !bool {
         try eventQuery(true, equal(name, "events-export-csv"));
         return true;
     }
+    if (try incidentHeads(name)) return true;
     if (!try @import("events_actions.zig").act(&state, name, fields)) return false;
     try eventQuery(false, false);
     return true;
+}
+
+/// Heads load on request for one incident; the charset toggle re-renders decoded bytes.
+fn incidentHeads(name: []const u8) !bool {
+    if (!std.mem.startsWith(u8, name, "events-heads-") or state.phase != .events or
+        !state.fullAccess()) return false;
+    const model = &state.incident_heads;
+    const rest = name["events-heads-".len..];
+    if (equal(rest, "utf8") or equal(rest, "latin1")) {
+        model.charset = if (equal(rest, "utf8")) .utf8 else .latin1;
+        return true;
+    }
+    const id = std.fmt.parseInt(u64, rest, 10) catch return false;
+    if (model.busy) return true;
+    model.* = .{ .id = id, .busy = true };
+    try post("events-heads", "/console/api/events/heads", .{ .id = rest });
+    return true;
+}
+
+fn incidentHeadsResponse(value: std.json.Value, alloc: std.mem.Allocator) !void {
+    const model = &state.incident_heads;
+    model.busy = false;
+    const status_value = field(value, "status") orelse return;
+    if (status_value != .integer or status_value.integer != 200) {
+        model.failed = true;
+        return;
+    }
+    const body = field(value, "body") orelse std.json.Value.null;
+    model.set(body, alloc) catch {
+        model.failed = true;
+    };
 }
 
 fn eventExportResponse(status: i64) !void {
@@ -1031,6 +1063,10 @@ fn boundedEnvelope(value: std.json.Value, alloc: std.mem.Allocator) !bool {
     }
     if (equal(id, "challenges-records") or equal(id, "challenges-difficulty")) {
         if (state.phase == .challenges) try challengeRecordsResponse(id, value, alloc);
+        return true;
+    }
+    if (equal(id, "events-heads")) {
+        if (state.phase == .events) try incidentHeadsResponse(value, alloc);
         return true;
     }
     if (!equal(id, "challenges")) return false;

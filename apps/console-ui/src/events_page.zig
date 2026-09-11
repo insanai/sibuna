@@ -55,7 +55,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     if (!model.busy and model.loaded and model.count == 0)
         try html.render(w, "<p>No recorded incidents match these filters.</p>", .{});
     const manage = state.allows(.manage_policy) and !state.kiosk;
-    for (model.rows[0..model.count]) |*row| try incident(row, manage, w);
+    for (model.rows[0..model.count]) |*row| try incident(state, row, manage, w);
     try footer(model, w);
 }
 
@@ -163,7 +163,12 @@ fn categoryTone(category: []const u8) []const u8 {
     return sparkline.tone(.denied);
 }
 
-fn incident(row: *const p.events.Row, manage: bool, w: *Writer) Writer.Error!void {
+fn incident(
+    state: *const State,
+    row: *const p.events.Row,
+    manage: bool,
+    w: *Writer,
+) Writer.Error!void {
     if (row.grouped) return source(row, w);
     try html.render(w, "<article class=\"border-b border-base-300 py-4\"><h2>" ++
         "<span class=\"badge badge-outline sb-chip {{ tone }}\">", .{
@@ -205,6 +210,7 @@ fn incident(row: *const p.events.Row, manage: bool, w: *Writer) Writer.Error!voi
         "<dt>JA4 fingerprint</dt><dd>Not recorded: requires bounded capture at a trusted " ++
         "ingress that overwrites spoofed headers.</dd></dl>", .{});
     try evidence(row, w);
+    try @import("incident_heads.zig").render(state, row.id, w);
     try html.render(w, "<div class=\"flex flex-wrap gap-2 mt-3\">" ++
         "<button class=\"btn\" data-action=\"events-similar-{{ v0 }}\">" ++
         "Find similar incidents</button>", .{
