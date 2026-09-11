@@ -24,6 +24,7 @@ pub const Credentials = struct {
     csrf: [64]u8,
     now: u64,
     require_totp: bool,
+    client: p.Bytes(48),
 
     pub fn init(input: p.policies.Edit, now: u64) Credentials {
         return .{
@@ -31,6 +32,7 @@ pub const Credentials = struct {
             .csrf = std.fmt.bytesToHex(input.csrf_digest, .lower),
             .now = now,
             .require_totp = input.require_totp,
+            .client = input.client,
         };
     }
 
@@ -40,7 +42,13 @@ pub const Credentials = struct {
             .csrf = std.fmt.bytesToHex(input.csrf_digest, .lower),
             .now = now,
             .require_totp = input.require_totp,
+            .client = input.client,
         };
+    }
+
+    /// The presenting address for the staged row, NULL when the request carried none.
+    pub fn address(self: *const Credentials) zx.Value {
+        return util.address(&self.client);
     }
 
     // Bindings borrow the synchronous commit's owned credential buffers.

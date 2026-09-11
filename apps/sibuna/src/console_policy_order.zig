@@ -41,7 +41,7 @@ pub fn order(owner: *Persistent, input: p.workflows.Order, now: u64) !p.StorageR
         owner.db,
         owner.gpa,
         "INSERT INTO console_policy_order_stage SELECT 1,u.id," ++ auth.role ++
-            ",?,?,?,?,?,?,?,? " ++
+            ",?,?,?,?,?,?,?,?,? " ++
             "FROM console_users u JOIN console_sessions s ON s.user_id=u.id " ++
             "WHERE " ++ auth.predicate ++ "AND " ++
             "(SELECT CAST(value AS INTEGER) FROM sibuna_meta WHERE key='policy_version')=?",
@@ -54,6 +54,7 @@ pub fn order(owner: *Persistent, input: p.workflows.Order, now: u64) !p.StorageR
             util.text(other.id.slice()),
             .{ .integer = other_priority },
             util.text(other_document.slice()),
+            credentials.address(),
         } ++ credentials.values() ++ [_]zx.Value{util.integer(input.expected_revision)}),
     );
     if (changes == 0) {

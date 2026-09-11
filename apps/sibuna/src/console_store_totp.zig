@@ -55,18 +55,20 @@ pub fn begin(owner: *Persistent, input: p.auth.Enrollment, now: u64) !p.StorageR
     const changes = try db.exec(
         owner.db,
         owner.gpa,
-        "INSERT INTO console_totp(user_id,envelope,key_id,revision,expires,modified_at) " ++
-            "SELECT u.id,?,?,1,?,? FROM (" ++ authorized ++ ") u " ++
+        "INSERT INTO console_totp(user_id,envelope,key_id,revision,expires,modified_at," ++
+            "client_ip) SELECT u.id,?,?,1,?,?,? FROM (" ++ authorized ++ ") u " ++
             "WHERE ?=COALESCE((SELECT revision FROM console_totp WHERE user_id=u.id),0) " ++
             "ON CONFLICT(user_id) DO UPDATE SET envelope=excluded.envelope," ++
             "key_id=excluded.key_id,revision=console_totp.revision+1," ++
-            "expires=excluded.expires,modified_at=excluded.modified_at " ++
+            "expires=excluded.expires,modified_at=excluded.modified_at," ++
+            "client_ip=excluded.client_ip " ++
             "WHERE console_totp.enabled=0 AND console_totp.revision=?",
         &.{
             text(&envelope),
             text(&key),
             integer(now + 600),
             integer(now),
+            store.address(&input.auth.client),
             text(&session),
             text(&csrf),
             integer(now),
@@ -90,13 +92,15 @@ pub fn confirm(owner: *Persistent, input: p.auth.Confirmation, now: u64) !p.Stor
     const changes = try db.exec(
         owner.db,
         owner.gpa,
-        "UPDATE console_totp SET enabled=1,last_step=?,recovery_digests=?,modified_at=? " ++
+        "UPDATE console_totp SET enabled=1,last_step=?,recovery_digests=?,modified_at=?," ++
+            "client_ip=? " ++
             "WHERE user_id IN (" ++ authorized ++ ") AND enabled=0 AND expires>? " ++
             "AND revision=?",
         &.{
             integer(input.step),
             text(&digests),
             integer(now),
+            store.address(&input.auth.client),
             text(&session),
             text(&csrf),
             integer(now),

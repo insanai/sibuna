@@ -99,7 +99,7 @@ pub fn password(owner: *Persistent, input: p.auth.PasswordChange, now: u64) !p.S
         owner.db,
         owner.gpa,
         "INSERT INTO console_password_rotation " ++
-            "SELECT 1,u.id,?,?,?,? FROM console_users u " ++
+            "SELECT 1,u.id,?,?,?,?,? FROM console_users u " ++
             "JOIN console_sessions s ON s.user_id=u.id " ++
             "WHERE u.disabled=0 AND u.revision=? AND s.revision=u.revision " ++
             "AND s.digest=? AND s.csrf_digest=? AND MIN(s.expires,s.idle_expires)>?",
@@ -108,6 +108,7 @@ pub fn password(owner: *Persistent, input: p.auth.PasswordChange, now: u64) !p.S
             text(&replacement),
             text(&replacement_csrf),
             integer(now),
+            optional(input.client.slice()),
             integer(input.expected_revision),
             text(&digest),
             text(&csrf),

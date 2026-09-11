@@ -72,7 +72,8 @@ fn intent(owner: *Persistent, input: p.nodes.Command, now: u64) !bool {
         owner.db,
         owner.gpa,
         "INSERT INTO console_commands(id,node,boot,kind,expected_revision,requested_at," ++
-            "actor,actor_role) SELECT ?,?,?,?,?,?,u.id,u.role FROM console_sessions s " ++
+            "actor,actor_role,client_ip) SELECT ?,?,?,?,?,?,u.id,u.role,? " ++
+            "FROM console_sessions s " ++
             "JOIN console_users u ON u.id=s.user_id WHERE s.digest=? AND s.csrf_digest=? " ++
             "AND s.token_id IS NULL AND MIN(s.expires,s.idle_expires)>? " ++
             "AND u.revision=s.revision AND u.disabled=0 AND u.must_change=0 " ++
@@ -86,6 +87,7 @@ fn intent(owner: *Persistent, input: p.nodes.Command, now: u64) !bool {
             util.text(@tagName(input.kind)),
             util.integer(input.expected_revision),
             util.integer(now),
+            util.address(&input.auth.client),
             util.text(&digest),
             util.text(&csrf),
             util.integer(now),

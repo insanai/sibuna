@@ -252,6 +252,7 @@ test "policy edits commit revision history and audit atomically and reject stale
         .document = try p.Bytes(4096).init(
             "{\"id\":\"edit\",\"name\":\"Deny\",\"action\":\"deny\",\"path\":\"/edit\"}",
         ),
+        .client = try p.Bytes(48).init("203.0.113.9"),
     };
     const saved = (try fx.run(.{ .policy_edit = input })).revision;
     try t.expectEqual(@as(u64, 1), saved.committed);
@@ -274,7 +275,8 @@ test "policy edits commit revision history and audit atomically and reject stale
         t.allocator,
         "SELECT (SELECT count(*) FROM console_policy_history)," ++
             "(SELECT count(*) FROM console_audit WHERE action='policy.edit')," ++
-            "(SELECT count(*) FROM console_policy_stage),(SELECT action FROM policies)",
+            "(SELECT count(*) FROM console_policy_stage),(SELECT action FROM policies)," ++
+            "(SELECT client_ip FROM console_audit WHERE action='policy.edit')",
         &.{},
     );
     defer counts.deinit();
@@ -282,6 +284,7 @@ test "policy edits commit revision history and audit atomically and reject stale
     try t.expectEqualStrings("1", counts.rows[0][1].?);
     try t.expectEqualStrings("0", counts.rows[0][2].?);
     try t.expectEqualStrings("deny", counts.rows[0][3].?);
+    try t.expectEqualStrings("203.0.113.9", counts.rows[0][4].?);
     try fx.owner.db.exec(t.allocator, "DROP TRIGGER fail_policy_audit");
     const changed = (try fx.run(.{ .policy_edit = input })).revision;
     try t.expectEqual(@as(u64, 2), changed.committed);
@@ -1180,4 +1183,40 @@ fn readFixture(path: []const u8) !*Fixture {
 test {
     _ = @import("console_rule_hits_test.zig");
     _ = @import("console_rule_hit_history_test.zig");
+}
+
+test "every audited mutation source table carries the presenting client address" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try Fixture.open(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/mutation-client",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    const tables = [_][]const u8{
+        "console_users",              "console_tokens",               "console_policy_stage",
+        "console_policy_order_stage", "console_policy_import_commit", "console_reputation_stage",
+        "console_country_commit",     "console_inspection_stage",     "console_page_stage",
+        "console_settings",           "console_notifications",        "console_kiosk_grants",
+        "console_commands",           "console_geo_active",           "console_totp",
+        "console_password_rotation",  "console_sessions",             "console_audit",
+    };
+    for (tables) |table| {
+        var sql: [96]u8 = undefined;
+        var columns = try db.query(
+            fx.owner.db,
+            t.allocator,
+            try std.fmt.bufPrint(&sql, "PRAGMA table_info({s})", .{table}),
+            &.{},
+        );
+        defer columns.deinit();
+        var found = false;
+        for (columns.rows) |row| found = found or std.mem.eql(u8, row[1].?, "client_ip");
+        if (!found) {
+            std.debug.print("missing client_ip on {s}\n", .{table});
+            return error.MissingClientColumn;
+        }
+    }
 }

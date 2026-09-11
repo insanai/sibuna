@@ -82,7 +82,8 @@ pub fn save(owner: *Persistent, input: n.Save, now: u64) !p.StorageResult {
                 "secret_envelope=CASE WHEN ?=1 THEN NULL WHEN ? IS NULL THEN " ++
                 "(CASE WHEN target=excluded_target.value THEN secret_envelope ELSE NULL END) " ++
                 "ELSE ? END,events=?,cooldown_seconds=?,enabled=?,revision=revision+1," ++
-                "modified_by=?,modified_at=? FROM (SELECT ? AS value) AS excluded_target " ++
+                "modified_by=?,modified_at=?,client_ip=? " ++
+                "FROM (SELECT ? AS value) AS excluded_target " ++
                 "WHERE id=? AND revision=?",
             &.{
                 util.text(@tagName(input.kind)),
@@ -98,6 +99,7 @@ pub fn save(owner: *Persistent, input: n.Save, now: u64) !p.StorageResult {
                 util.integer(@intFromBool(input.enabled)),
                 util.integer(actor),
                 util.integer(now),
+                util.address(&input.auth.client),
                 util.text(input.target.slice()),
                 util.integer(id),
                 util.integer(input.expected_revision),
@@ -111,8 +113,8 @@ pub fn save(owner: *Persistent, input: n.Save, now: u64) !p.StorageResult {
         owner.gpa,
         "INSERT INTO console_notifications(kind,transport,label,target,target_host," ++
             "secret_envelope," ++
-            "events,cooldown_seconds,enabled,created_by,created_at,modified_by,modified_at) " ++
-            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "events,cooldown_seconds,enabled,created_by,created_at,modified_by,modified_at," ++
+            "client_ip) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         &.{
             util.text(@tagName(input.kind)),           util.text(@tagName(input.transport)),
             util.text(input.label.slice()),            util.text(input.target.slice()),
@@ -120,7 +122,7 @@ pub fn save(owner: *Persistent, input: n.Save, now: u64) !p.StorageResult {
             util.integer(input.events),                util.integer(input.cooldown_seconds),
             util.integer(@intFromBool(input.enabled)), util.integer(actor),
             util.integer(now),                         util.integer(actor),
-            util.integer(now),
+            util.integer(now),                         util.address(&input.auth.client),
         },
     ) catch return .{ .failed = .capacity };
     var rows = try db.query(
@@ -141,10 +143,12 @@ pub fn remove(owner: *Persistent, input: n.Remove, now: u64) !p.StorageResult {
     _ = try db.exec(
         owner.db,
         owner.gpa,
-        "UPDATE console_notifications SET modified_by=?,modified_at=? WHERE id=? AND revision=?",
+        "UPDATE console_notifications SET modified_by=?,modified_at=?,client_ip=? " ++
+            "WHERE id=? AND revision=?",
         &.{
             util.integer(actor),
             util.integer(now),
+            util.address(&input.auth.client),
             util.integer(input.id),
             util.integer(input.expected_revision),
         },
@@ -236,8 +240,8 @@ fn testAudit(owner: *Persistent, input: n.TestAudit, now: u64) !p.StorageResult 
         owner.db,
         owner.gpa,
         "INSERT INTO console_audit(actor,actor_role,action,subject,target,recorded_at," ++
-            "after_summary) SELECT ?,'admin',?,id,label,?,json_object('operation',?," ++
-            "'revision',revision,'outcome',?,'detail',?) FROM console_notifications " ++
+            "after_summary,client_ip) SELECT ?,'admin',?,id,label,?,json_object('operation',?," ++
+            "'revision',revision,'outcome',?,'detail',?),? FROM console_notifications " ++
             "WHERE id=? AND revision=?",
         &.{
             util.integer(actor),
@@ -246,6 +250,7 @@ fn testAudit(owner: *Persistent, input: n.TestAudit, now: u64) !p.StorageResult 
             util.text(&operation),
             util.text(outcome),
             util.text(input.detail.slice()),
+            util.address(&input.auth.client),
             util.integer(input.destination),
             util.integer(input.revision),
         },

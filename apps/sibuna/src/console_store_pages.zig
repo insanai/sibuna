@@ -73,8 +73,8 @@ pub fn edit(owner: *Persistent, input: p.pages.Edit, now: u64) !p.StorageResult 
         owner.db,
         owner.gpa,
         "INSERT INTO console_page_stage(id,actor,actor_role,recorded_at,kind," ++
-            "expected_revision,reset,html,sha256,bytes,previous_sha256,previous_bytes) " ++
-            "VALUES(1,?,'admin',?,?,?,?,?,?,?,?,?)",
+            "expected_revision,reset,html,sha256,bytes,previous_sha256,previous_bytes," ++
+            "client_ip) VALUES(1,?,'admin',?,?,?,?,?,?,?,?,?,?)",
         &.{
             util.integer(actor),
             util.integer(now),
@@ -86,6 +86,7 @@ pub fn edit(owner: *Persistent, input: p.pages.Edit, now: u64) !p.StorageResult 
             util.integer(html.len),
             if (current.customized) util.text(current.sha256.slice()) else nul(),
             if (current.customized) util.integer(current.html.len) else nul(),
+            util.address(&input.auth.client),
         },
     );
     if (changed == 0) return .{ .failed = .conflict };

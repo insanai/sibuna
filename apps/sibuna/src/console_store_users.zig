@@ -106,13 +106,14 @@ pub fn create(owner: *Persistent, input: u.Create, now: u64) !p.StorageResult {
         authorization ++
             "INSERT INTO console_users(username,password_hash,role,must_change," ++
             "password_expires," ++
-            "modified_at,modified_by) SELECT ?,?,?,1,?,?,a.id FROM a " ++
+            "modified_at,modified_by,client_ip) SELECT ?,?,?,1,?,?,a.id,? FROM a " ++
             "WHERE (SELECT COUNT(*) FROM console_users)<1024 " ++
             "AND NOT EXISTS(SELECT 1 FROM console_users WHERE username=?)",
         &(credentials.values(true) ++ [_]zx.Value{
             util.text(input.username.slice()), util.text(input.password_hash.slice()),
             util.text(@tagName(input.role)),   util.integer(now + u.temporary_seconds),
-            util.integer(now),                 util.text(input.username.slice()),
+            util.integer(now),                 util.address(&input.auth.client),
+            util.text(input.username.slice()),
         }),
     );
     if (changes != 0) return .{ .users_saved = now + u.temporary_seconds };
@@ -150,9 +151,10 @@ pub fn change(owner: *Persistent, input: u.Change, now: u64) !p.StorageResult {
         owner.gpa,
         change_sql,
         &(credentials.values(true) ++ [_]zx.Value{
-            util.integer(input.target), util.integer(input.expected_revision),
-            role,                       disabled,
-            password,                   util.integer(now),
+            util.integer(input.target),       util.integer(input.expected_revision),
+            role,                             disabled,
+            password,                         util.integer(now),
+            util.address(&input.auth.client),
         }),
     );
     if (changes != 0) return .{ .users_saved = if (input.operation == .password)
@@ -164,14 +166,15 @@ pub fn change(owner: *Persistent, input: u.Change, now: u64) !p.StorageResult {
 }
 
 const change_sql = authorization ++
-    ", i AS (SELECT ? target,? revision,? role,? disabled,? password_hash,? now) " ++
+    ", i AS (SELECT ? target,? revision,? role,? disabled,? password_hash,? now,? client) " ++
     "UPDATE console_users SET role=COALESCE(i.role,console_users.role)," ++
     "disabled=COALESCE(i.disabled,console_users.disabled)," ++
     "password_hash=COALESCE(i.password_hash,console_users.password_hash)," ++
     "password_expires=CASE WHEN i.password_hash IS NULL THEN console_users.password_expires " ++
     "ELSE i.now+3600 END,must_change=CASE WHEN i.password_hash IS NULL " ++
     "THEN console_users.must_change ELSE 1 END,revision=console_users.revision+1," ++
-    "modified_at=i.now,modified_by=a.id FROM a,i WHERE console_users.id=i.target " ++
+    "modified_at=i.now,modified_by=a.id,client_ip=i.client FROM a,i " ++
+    "WHERE console_users.id=i.target " ++
     "AND console_users.revision=i.revision " ++
     // An authorized admin distinct from the target survives every access/password mutation.
     // Concurrent administrators cannot disable each other: the second actor no longer matches a.

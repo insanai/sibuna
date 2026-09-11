@@ -72,12 +72,12 @@ fn auditExport(owner: *Persistent, input: p.events.Query) !bool {
     const changes = try db.exec(
         owner.db,
         owner.gpa,
-        "INSERT INTO console_audit(actor,action,subject,recorded_at) " ++
-            "SELECT u.id,'events.export_prepared',0,? FROM console_sessions s " ++
+        "INSERT INTO console_audit(actor,action,subject,recorded_at,client_ip) " ++
+            "SELECT u.id,'events.export_prepared',0,?,? FROM console_sessions s " ++
             "JOIN console_users u ON u.id=s.user_id WHERE s.digest=? " ++
             "AND s.revision=u.revision AND u.disabled=0 AND u.must_change=0 " ++
             "AND MIN(s.expires,s.idle_expires)>?",
-        &.{ integer(now), text(&digest), integer(now) },
+        &.{ integer(now), store.address(&input.client), text(&digest), integer(now) },
     );
     // Zaxonlite includes trigger writes in its change count. The unique session join
     // inserts at most one audit row; zero alone means authorization did not match.

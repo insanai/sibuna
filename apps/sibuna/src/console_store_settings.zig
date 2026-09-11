@@ -46,25 +46,30 @@ pub fn change(owner: *Persistent, input: n.SettingChange, now: u64) !p.StorageRe
     const csrf = std.fmt.bytesToHex(input.auth.csrf_digest, .lower);
     const creating = input.expected_revision == 0;
     const statement = if (creating)
-        authority ++ "INSERT INTO console_settings(key,value,revision,updated_at,updated_by) " ++
-            "SELECT ?,?,1,?,id FROM a WHERE NOT EXISTS(SELECT 1 FROM console_settings WHERE key=?)"
+        authority ++ "INSERT INTO console_settings(key,value,revision,updated_at,updated_by," ++
+            "client_ip) SELECT ?,?,1,?,id,? FROM a " ++
+            "WHERE NOT EXISTS(SELECT 1 FROM console_settings WHERE key=?)"
     else
         authority ++ "UPDATE console_settings SET value=?,updated_at=?," ++
-            "updated_by=(SELECT id FROM a),revision=revision+1 WHERE key=? AND revision=? " ++
+            "updated_by=(SELECT id FROM a),client_ip=?,revision=revision+1 " ++
+            "WHERE key=? AND revision=? " ++
             "AND EXISTS(SELECT 1 FROM a)";
     const shared = [_]@import("zaxonlite").Value{
         util.text(&digest),                                  util.text(&csrf), util.integer(now),
         util.integer(@intFromBool(input.auth.require_totp)),
     };
     const tail = if (creating) [_]@import("zaxonlite").Value{
-        util.text(input.key.slice()), util.text(input.value.slice()), util.integer(now),
-        util.text(input.key.slice()),
+        util.text(input.key.slice()),     util.text(input.value.slice()), util.integer(now),
+        util.address(&input.auth.client), util.text(input.key.slice()),
     } else [_]@import("zaxonlite").Value{
-        util.text(input.value.slice()),        util.integer(now), util.text(input.key.slice()),
+        util.text(input.value.slice()),
+        util.integer(now),
+        util.address(&input.auth.client),
+        util.text(input.key.slice()),
         util.integer(input.expected_revision),
     };
     // Authority, expected revision, the setting and its audit trigger share one statement.
-    var parameters: [8]@import("zaxonlite").Value = undefined;
+    var parameters: [9]@import("zaxonlite").Value = undefined;
     @memcpy(parameters[0..4], &shared);
     @memcpy(parameters[4..], &tail);
     const changed = try db.exec(owner.db, owner.gpa, statement, &parameters);

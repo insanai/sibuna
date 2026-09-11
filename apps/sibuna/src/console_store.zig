@@ -165,6 +165,11 @@ pub fn number(cell: ?[]const u8) !u64 {
     return std.fmt.parseInt(u64, cell orelse return error.InvalidStoredValue, 10);
 }
 
+/// Client addresses bind as text, or NULL when the request carried none.
+pub fn address(value: *const p.Bytes(48)) zx.Value {
+    return if (value.len == 0) .null_value else text(value.slice());
+}
+
 pub fn text(value: []const u8) zx.Value {
     return .{ .text = value };
 }

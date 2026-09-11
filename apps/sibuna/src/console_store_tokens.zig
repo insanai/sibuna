@@ -95,8 +95,8 @@ pub fn create(owner: *Persistent, input: token.Create) !p.StorageResult {
         owner.gpa,
         authority ++
             "INSERT INTO console_tokens(digest,label,role,scopes,auth_revision,created_by," ++
-            "created_at,expires_at,modified_by,modified_at) " ++
-            "SELECT ?,?,?,?,a.revision,a.id,?,?,a.id,? " ++
+            "created_at,expires_at,modified_by,modified_at,client_ip) " ++
+            "SELECT ?,?,?,?,a.revision,a.id,?,?,a.id,?,? " ++
             "FROM a WHERE (SELECT count(*) FROM console_tokens)<? AND " ++
             "(SELECT count(*) FROM console_sessions WHERE MIN(expires,idle_expires)>?)<4096 " ++
             "ON CONFLICT(digest) DO NOTHING",
@@ -108,6 +108,7 @@ pub fn create(owner: *Persistent, input: token.Create) !p.StorageResult {
             util.integer(credentials.now),
             if (input.expires) |expires| util.integer(expires) else .null_value,
             util.integer(credentials.now),
+            util.address(&input.auth.client),
             util.integer(token.capacity),
             util.integer(credentials.now),
         }),
@@ -142,12 +143,13 @@ pub fn revoke(owner: *Persistent, input: token.Revoke) !p.StorageResult {
         owner.gpa,
         authority ++
             "UPDATE console_tokens AS t SET disabled=1,revision=revision+1," ++
-            "modified_by=(SELECT id FROM a),modified_at=?,remove_requested=? " ++
+            "modified_by=(SELECT id FROM a),modified_at=?,remove_requested=?,client_ip=? " ++
             "WHERE EXISTS(SELECT 1 FROM a) AND t.id=? AND t.revision=? " ++
             "AND ((?=0 AND t.disabled=0) OR (?=1 AND NOT " ++ active ++ "))",
         &(credentials.values() ++ [_]zx.Value{
             util.integer(credentials.now),
             util.integer(@intFromBool(input.remove)),
+            util.address(&input.auth.client),
             util.integer(input.target),
             util.integer(input.expected_revision),
             util.integer(@intFromBool(input.remove)),

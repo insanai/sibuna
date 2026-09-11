@@ -98,7 +98,7 @@ pub fn commit(owner: *Persistent, input: w.ImportCommit, now: u64) !p.StorageRes
     const changes = try db.exec(
         owner.db,
         owner.gpa,
-        "INSERT INTO console_policy_import_commit SELECT 1,u.id," ++ auth.role ++ ",?,?,?,? " ++
+        "INSERT INTO console_policy_import_commit SELECT 1,u.id," ++ auth.role ++ ",?,?,?,?,? " ++
             "FROM console_users u JOIN console_sessions s ON s.user_id=u.id " ++
             "WHERE " ++ auth.predicate ++ "AND " ++
             "(SELECT CAST(value AS INTEGER) FROM sibuna_meta WHERE key='policy_version')=?",
@@ -107,6 +107,7 @@ pub fn commit(owner: *Persistent, input: w.ImportCommit, now: u64) !p.StorageRes
             util.integer(input.expected_revision),
             util.text(&digest),
             util.integer(input.count),
+            credentials.address(),
         } ++ credentials.values() ++ [_]zx.Value{util.integer(input.expected_revision)}),
     );
     if (changes == 0) {

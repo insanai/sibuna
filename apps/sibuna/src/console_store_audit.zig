@@ -104,8 +104,8 @@ fn exportAudit(owner: *Persistent, auth: p.users.Auth, count: usize) !bool {
     const changes = try db.exec(
         owner.db,
         owner.gpa,
-        "INSERT INTO console_audit(actor,actor_role,action,subject,recorded_at) " ++
-            "SELECT u.id,u.role,'audit.export',?,? FROM console_users u " ++
+        "INSERT INTO console_audit(actor,actor_role,action,subject,recorded_at,client_ip) " ++
+            "SELECT u.id,u.role,'audit.export',?,?,? FROM console_users u " ++
             "JOIN console_sessions s ON s.user_id=u.id WHERE s.digest=? " ++
             "AND s.csrf_digest=? AND s.token_id IS NULL AND s.revision=u.revision " ++
             "AND MIN(s.expires,s.idle_expires)>? AND u.disabled=0 AND u.must_change=0 " ++
@@ -114,6 +114,7 @@ fn exportAudit(owner: *Persistent, auth: p.users.Auth, count: usize) !bool {
         &.{
             util.integer(count),
             util.integer(owner.nowSeconds()),
+            util.address(&auth.client),
             util.text(&digest),
             util.text(&csrf),
             util.integer(owner.nowSeconds()),

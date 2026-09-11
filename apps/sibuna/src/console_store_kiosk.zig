@@ -25,7 +25,7 @@ pub fn grant(owner: *Persistent, input: p.kiosk.Grant, now: u64) !p.StorageResul
         owner.db,
         owner.gpa,
         "INSERT INTO console_kiosk_grants(digest,user_id,revision,label,created_at,use_by," ++
-            "expires) SELECT ?,u.id,u.revision,?,?,?,? FROM console_users u " ++
+            "expires,client_ip) SELECT ?,u.id,u.revision,?,?,?,?,? FROM console_users u " ++
             "WHERE u.id=? AND u.revision=? AND u.disabled=0",
         &.{
             util.text(&digest),
@@ -33,6 +33,7 @@ pub fn grant(owner: *Persistent, input: p.kiosk.Grant, now: u64) !p.StorageResul
             util.integer(now),
             util.integer(use_by),
             util.integer(expires),
+            util.address(&input.auth.client),
             util.integer(actor.actor),
             util.integer(actor.revision),
         },
@@ -47,11 +48,12 @@ pub fn exchange(owner: *Persistent, input: p.kiosk.Exchange, now: u64) !p.Storag
     const consumed = try db.exec(
         owner.db,
         owner.gpa,
-        "UPDATE console_kiosk_grants SET consumed_at=? WHERE digest=? AND consumed_at IS NULL " ++
+        "UPDATE console_kiosk_grants SET consumed_at=?,client_ip=? WHERE digest=? " ++
+            "AND consumed_at IS NULL " ++
             "AND use_by>? AND EXISTS(SELECT 1 FROM console_users u " ++
             "WHERE u.id=console_kiosk_grants.user_id " ++
             "AND u.revision=console_kiosk_grants.revision AND u.disabled=0)",
-        &.{ util.integer(now), util.text(&code), util.integer(now) },
+        &.{ util.integer(now), util.address(&input.client), util.text(&code), util.integer(now) },
     );
     if (consumed == 0) return .{ .failed = .unauthorized };
     const digest = std.fmt.bytesToHex(input.session_digest, .lower);

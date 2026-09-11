@@ -132,10 +132,11 @@ fn stage(
         owner.db,
         owner.gpa,
         "INSERT INTO console_reputation_stage SELECT 1,u.id," ++ auth.role ++
-            ",?,?,?,?,?,?,?,? " ++
+            ",?,?,?,?,?,?,?,?,? " ++
             "FROM console_users u JOIN console_sessions s ON s.user_id=u.id " ++
             "WHERE " ++ auth.predicate ++ "AND " ++
             "(SELECT CAST(value AS INTEGER) FROM sibuna_meta WHERE key='policy_version')=?",
-        &(values ++ credentials.values() ++ [_]zx.Value{util.integer(expected)}),
+        &(values ++ [_]zx.Value{credentials.address()} ++ credentials.values() ++
+            [_]zx.Value{util.integer(expected)}),
     );
 }

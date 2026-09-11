@@ -133,7 +133,7 @@ pub fn activate(owner: *Persistent, input: p.geo.Activate, now: u64) !p.StorageR
         owner.db,
         owner.gpa,
         "UPDATE console_geo_active SET digest=?,revision=revision+1,loaded_at=?," ++
-            "actor=(" ++ authorized ++ ") WHERE id=1 AND revision=? " ++
+            "actor=(" ++ authorized ++ "),client_ip=? WHERE id=1 AND revision=? " ++
             "AND EXISTS(SELECT 1 FROM console_geo_generations g WHERE g.digest=? AND g.actor=(" ++
             authorized ++ ") AND g.ranges=(SELECT sum(length(payload)/68) " ++
             "FROM console_geo_chunks WHERE digest=g.digest))",
@@ -144,6 +144,7 @@ pub fn activate(owner: *Persistent, input: p.geo.Activate, now: u64) !p.StorageR
             text(&csrf),
             integer(now),
             integer(@intFromBool(input.auth.require_totp)),
+            util.address(&input.auth.client),
             integer(input.expected_revision),
             text(input.digest.slice()),
             text(&digest),

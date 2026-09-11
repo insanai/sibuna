@@ -73,7 +73,7 @@ fn commit(
         owner.db,
         owner.gpa,
         "INSERT INTO console_inspection_stage SELECT 1,u.id,?,?,?,?,?,?,?,?," ++
-            auth.role ++ " " ++
+            auth.role ++ ",? " ++
             "FROM console_users u JOIN console_sessions s ON s.user_id=u.id " ++
             "WHERE " ++ auth.predicate ++ "AND " ++
             "(SELECT CAST(value AS INTEGER) FROM sibuna_meta WHERE key='policy_version')=?",
@@ -86,6 +86,7 @@ fn commit(
             util.text(@tagName(modes.sqli)),
             util.text(@tagName(modes.xss)),
             util.text(@tagName(modes.rce)),
+            credentials.address(),
         } ++ credentials.values() ++ [_]@import("zaxonlite").Value{
             util.integer(input.expected_revision),
         }),
