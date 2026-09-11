@@ -67,7 +67,7 @@ class Origin(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         self.server.requests.append((self.path, dict(self.headers)))
-        if self.path in ("/ws", "/bad-upgrade", "/half"):
+        if self.path.split("?", 1)[0] in ("/ws", "/bad-upgrade", "/half"):
             return self.upgrade()
         if self.path == "/browser":
             return self.reply(200, BROWSER.encode(), "text/html")
