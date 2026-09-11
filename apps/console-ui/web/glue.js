@@ -137,6 +137,13 @@ async function run(command) {
     link.download = command.filename;
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } else if (command.op === "copy") {
+    try {
+      await navigator.clipboard.writeText(command.text);
+      event(2, {id: command.id, status: 200, body: {}});
+    } catch {
+      event(2, {id: command.id, status: 0, body: {}});
+    }
   } else if (command.op === "download") {
     await download(command);
   } else if (command.op === "request") {

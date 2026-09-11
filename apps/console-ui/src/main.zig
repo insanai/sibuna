@@ -309,6 +309,10 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
     if (status_value != .integer) return;
     const status = status_value.integer;
     const body = field(value, "body") orelse return;
+    if (equal(id, "events-heads-copy")) {
+        state.incident_heads.copied = if (status == 200) .ok else .failed;
+        return;
+    }
     const management = @import("management_controller.zig");
     if (try management.response(&state, id, status, body, alloc, outbox())) return;
     if (std.mem.startsWith(u8, id, "rankings-") or std.mem.startsWith(u8, id, "timeline-") or
@@ -833,6 +837,18 @@ fn incidentHeads(name: []const u8) !bool {
     const rest = name["events-heads-".len..];
     if (equal(rest, "utf8") or equal(rest, "latin1")) {
         model.charset = if (equal(rest, "utf8")) .utf8 else .latin1;
+        return true;
+    }
+    if (equal(rest, "copy")) {
+        // The plain command (not its HTML rendering) goes to the clipboard through the host.
+        const heads = @import("incident_heads.zig");
+        var buffer: [heads.curl_bytes]u8 = undefined;
+        var writer: std.Io.Writer = .fixed(&buffer);
+        if (!model.loaded) return true;
+        const usable = heads.curl(&writer, model.requestHead(), model.request_truncated);
+        if (!(usable catch false)) return true;
+        model.copied = .none;
+        try command(.{ .op = "copy", .id = "events-heads-copy", .text = writer.buffered() });
         return true;
     }
     const id = std.fmt.parseInt(u64, rest, 10) catch return false;
