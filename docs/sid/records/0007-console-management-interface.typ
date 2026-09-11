@@ -617,7 +617,14 @@ external bodies count as other. Unparseable heads and pre-admission connection r
 cannot be classified by route and remain separate transport observations. Each selected
 outcome is recorded before attempting response delivery, so it does not prove receipt.
 Origin 4xx/5xx counts require response instrumentation; upstream errors are not their proxy.
-Distinct active bans need a control-thread snapshot, not the existing `banned` counter.
+Distinct active bans are not derivable from the `banned` counter. The console tick reads
+the dynamic ban table once per second and publishes `active_bans`, the count of occupied,
+unexpired slots of that hashed table, as a gauge on the statistics snapshot; combined
+dashboards sum it over contributing nodes and withhold it when any contributor lacks the
+gauge. The same tick publishes `cluster_health`, this console's probe view of configured
+peers plus itself (healthy, degraded, down, unprobed), so a partial cluster is labelled
+rather than counted as healthy zeros. Both are levels, not rates: their tiles carry a
+sixty-second sparkline of observed snapshots and an explicitly unavailable day deviation.
 
 == The incident tap
 
@@ -1818,8 +1825,8 @@ without `--console`; compiling the console in starts no console thread, listener
 
 *Deferred to post-launch (observability):* `challenge_minutes` persistence (challenge counters
 are boot-local, labelled as such); the sampled client operating system, browser, response
-status and referring host rankings (paths are sketched); RSS and CPU minute columns; a
-control-thread snapshot of distinct active bans and a nodes-healthy tile; per-address
+status and referring host rankings (paths are sketched); RSS and CPU minute columns;
+per-address
 challenge records and the adaptive-difficulty timeline; request and response heads with
 charset selection and “copy as cURL”.
 

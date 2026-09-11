@@ -98,7 +98,10 @@ image("images/console-sign-in.png"))
 
 #book_figure([Statistics · Traffic. Tiles show retained closed-minute counts with a
 deviation against the same window yesterday and a live 60-second sparkline; decision colours
-(admitted green, challenged amber, denied red, banned dark red) are the same in every panel.],
+(admitted green, challenged amber, denied red, banned dark red) are the same in every panel.
+Two further tiles are levels rather than counts: active ban entries on contributing nodes
+and nodes healthy from this console's own probes, each with a sparkline of observed
+snapshots.],
 image("images/console-traffic.png"))
 
 #book_figure([Statistics · Security. One tile per module, findings over sixty equal buckets,

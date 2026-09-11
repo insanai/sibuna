@@ -219,7 +219,12 @@ def scenario(c, h):
     new_leader = c.wait(lambda: (lambda l: l if l not in (None, leader) else None)(
         members(h, c.consoles[survivor], s2)["page"]["storage"]["leader"]), 45, "new leader")
     assert new_leader in (survivor + 1, other + 1)
-    assert h.request(c.consoles[survivor], "GET", "/console/api/stats", cookie=s2[0])[0] == 200
+    code, _, body = h.request(c.consoles[survivor], "GET", "/console/api/stats", cookie=s2[0])
+    assert code == 200
+    # The survivor's own probe view: itself healthy, the stopped member down.
+    c.wait(lambda: json.loads(h.request(c.consoles[survivor], "GET", "/console/api/stats",
+                                        cookie=s2[0])[2])["cluster_health"]["down"] >= 1,
+           30, "stopped member counted down in the stats gauge")
     # Two of three still commit: an edit on one survivor is enforced by the other.
     code, _, body = h.request(c.consoles[survivor], "POST", "/console/api/policies/query", {},
                               *s2)

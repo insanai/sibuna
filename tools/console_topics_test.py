@@ -32,6 +32,10 @@ def exercise(h, port, data_port, admin):
                 "X-Forwarded-For": address, "Accept": "application/json"})
         client.until(lambda: len(client.states["events"]["rows"]) == 2
                      and int(client.states["stats"]["requests"]) >= before + 2)
+        # Honeypot hits ban both forwarded addresses; the gauge counts unexpired entries.
+        client.until(lambda: int(client.states["stats"].get("active_bans") or 0) >= 2)
+        health = client.states["stats"]["cluster_health"]
+        assert health["healthy"] == 1 and health["down"] == 0, health
         assert "private-marker" not in json.dumps(client.states["events"])
         assert all(row["query_redacted"] for row in client.states["events"]["rows"])
         old_epoch = client.epochs["events"]
