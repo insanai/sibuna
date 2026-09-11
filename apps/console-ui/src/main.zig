@@ -838,8 +838,20 @@ fn challengeAction(name: []const u8, fields: std.json.Value) !bool {
     if (equal(name, "challenges")) {
         state.phase = .challenges;
         state.challenges = .{};
+        state.challenge_summary = .{};
+        _ = try challengeWindow(null);
     } else {
         if (state.phase != .challenges or state.challenges.busy) return false;
+        if (equal(name, "challenges-period")) {
+            const hours = try std.fmt.parseInt(u16, string(fields, "hours"), 10);
+            if (hours != 1 and hours != 24 and hours != 168) return error.InvalidRequest;
+            state.challenge_summary.hours = hours;
+            return challengeWindow(null);
+        }
+        if (equal(name, "challenges-window-bin")) {
+            state.challenge_summary.selected = try std.fmt.parseInt(u8, string(fields, "bin"), 10);
+            return challengeWindow(null);
+        }
         if (equal(name, "challenges-bin")) {
             state.challenges.selected = try std.fmt.parseInt(u8, string(fields, "bin"), 10);
         } else if (!equal(name, "challenges-refresh")) return false;
@@ -849,6 +861,60 @@ fn challengeAction(name: []const u8, fields: std.json.Value) !bool {
     state.stats_busy = false;
     try post("challenges", "/console/api/challenges", .{ .bin = state.challenges.selected });
     return true;
+}
+
+/// One bounded scan per request; a longer window continues from the announced cursor.
+fn challengeWindow(before: ?p.minutes.Cursor) !bool {
+    const model = &state.challenge_summary;
+    if (model.busy and before == null) return true;
+    if (before == null) {
+        model.summary = null;
+        model.continuations = 0;
+    }
+    model.busy = true;
+    model.failed = false;
+    var boot: [32]u8 = undefined;
+    try post("challenges-summary", "/console/api/challenges/summary", .{
+        .hours = model.hours,
+        .bin = model.selected,
+        .before = if (before) |cursor| .{
+            .minute = cursor.minute,
+            .node = cursor.node,
+            .boot = @as([]const u8, std.fmt.bufPrint(&boot, "{x}", .{&cursor.boot}) catch ""),
+            .epoch = cursor.epoch,
+        } else null,
+    });
+    return true;
+}
+
+fn challengeWindowResponse(value: std.json.Value, alloc: std.mem.Allocator) !void {
+    const model = &state.challenge_summary;
+    model.busy = false;
+    const Envelope = struct {
+        status: i64,
+        body: p.challenge_minutes.Summary = .{},
+        browser_time: u64 = 0,
+    };
+    const parsed = @import("json_value.zig").decode(Envelope, value, alloc) catch {
+        model.failed = true;
+        return;
+    };
+    state.browser_time = parsed.browser_time;
+    if (parsed.status != 200) {
+        model.failed = true;
+        return;
+    }
+    model.received_at = state.browser_time;
+    if (model.summary) |*current| {
+        p.challenge_minutes.merge(current, parsed.body) catch {
+            model.failed = true;
+            return;
+        };
+    } else model.summary = parsed.body;
+    const cursor = model.summary.?.coverage.next orelse return;
+    if (model.continuations == @import("challenge_summary.zig").max_continuations) return;
+    model.continuations += 1;
+    _ = try challengeWindow(cursor);
 }
 
 fn challengeResponse(status: i64, snapshot: p.challenges.Snapshot) void {
@@ -877,6 +943,10 @@ fn boundedEnvelope(value: std.json.Value, alloc: std.mem.Allocator) !bool {
     const id = string(value, "id");
     if (std.mem.startsWith(u8, id, "similarity-")) return similarityEnvelope(value, id, alloc);
     if (equal(id, "events")) return eventEnvelope(value, alloc);
+    if (equal(id, "challenges-summary")) {
+        if (state.phase == .challenges) try challengeWindowResponse(value, alloc);
+        return true;
+    }
     if (!equal(id, "challenges")) return false;
     if (state.phase != .challenges) return true;
     const Envelope = struct {

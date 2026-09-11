@@ -34,6 +34,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     try html.render(w, "<button class=\"btn mt-4\" data-action=\"challenges-refresh\"", .{});
     if (model.busy) try w.writeAll(" disabled");
     try html.render(w, ">Refresh observations</button>", .{});
+    try @import("challenge_summary.zig").render(state, w);
     const snapshot = model.snapshot orelse {
         try html.render(
             w,
@@ -71,12 +72,12 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         "seconds ago. Refresh observations to update a selected non-default partition.</p>", .{
         .age = state.browser_time -| model.timing_received_at,
     });
-    try timing(&snapshot, model.busy, w);
+    try timing(&snapshot, model.busy, "challenges-bin", w);
     try rejection(&snapshot, w);
     try html.render(w, "</div></main>", .{});
 }
 
-fn row(w: *Writer, label: []const u8, count: u64) Writer.Error!void {
+pub fn row(w: *Writer, label: []const u8, count: u64) Writer.Error!void {
     try html.render(w, "<tr><th scope=\"row\">{{ v0 }}</th><td>{{ v1 }}</td></tr>", .{
         .v0 = label,
         .v1 = count,
@@ -113,14 +114,21 @@ fn parameterText(value: p.challenges.Defaults, w: *Writer) Writer.Error!void {
     }
 }
 
-fn timing(snapshot: *const p.challenges.Snapshot, busy: bool, w: *Writer) Writer.Error!void {
+pub fn timing(
+    snapshot: *const p.challenges.Snapshot,
+    busy: bool,
+    form: []const u8,
+    w: *Writer,
+) Writer.Error!void {
     try html.render(w, "<section class=\"sb-panel mt-6\"><h2>Accepted client solve timing</h2>" ++
         "<p class=\"sb-note\">Untrusted client telemetry, measured before verification. " ++
         "Missing, invalid and over-one-hour durations are excluded from the histogram.</p>" ++
-        "<form id=\"challenges-bin\" class=\"sb-filter-toolbar mt-4\">" ++
+        "<form id=\"{{ form }}\" class=\"sb-filter-toolbar mt-4\">" ++
         "<div class=\"sb-filter-field\">" ++
-        "<label for=\"challenge-bin\">Authenticated parameter partition</label>" ++
-        "<select id=\"challenge-bin\" name=\"bin\" class=\"select w-full\">", .{});
+        "<label for=\"{{ form }}-select\">Authenticated parameter partition</label>" ++
+        "<select id=\"{{ form }}-select\" name=\"bin\" class=\"select w-full\">", .{
+        .form = form,
+    });
     for (snapshot.bin_accepted, 0..) |count, i| {
         if (count == 0 and i != snapshot.selected) continue;
         try html.render(w, "<option value=\"{{ v0 }}\"{{ v1 }}>", .{
@@ -172,7 +180,7 @@ fn binText(bin: u8, w: *Writer) Writer.Error!void {
     }
 }
 
-fn rejection(snapshot: *const p.challenges.Snapshot, w: *Writer) Writer.Error!void {
+pub fn rejection(snapshot: *const p.challenges.Snapshot, w: *Writer) Writer.Error!void {
     const names = [_][]const u8{
         "Address banned",
         "Body too large",
