@@ -92,9 +92,10 @@ test "challenge minutes upsert in-progress snapshots, seal once and sum bounded 
 }
 
 /// A record with every partition active is the widest row: 896 bytes, 1,792 hex on the wire.
+/// The base record already holds one partition; the rest fill the remaining slots.
 fn fullRecord(minute: u64) p.challenge_minutes.Record {
     var result = record(minute);
-    for (0..p.challenge_minutes.max_bins) |i| {
+    for (0..p.challenge_minutes.max_bins - 1) |i| {
         const bin = result.partition(@intCast(i * 8 + 1)) orelse unreachable;
         bin.* = .{ .bin = @intCast(i * 8 + 1), .issued = 2, .accepted = 1, .wasm = 1 };
         bin.buckets[3] = 1;
