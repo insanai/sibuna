@@ -131,8 +131,9 @@ image("images/console-policies.png"))
 listed; confirming validates the whole candidate and creates a new revision.],
 image("images/console-policy-review.jpg"))
 
-#book_figure([Nodes. The serving node's status and commands, then every announced member
-with its applied revision, log slots, replication lag and probe result.],
+#book_figure([Nodes. The serving node's status and commands, with resident memory and CPU of
+the last second and their sixty-second sparklines, then every announced member with its
+applied revision, log slots, replication lag and probe result.],
 image("images/console-nodes.png"))
 
 #book_figure([GeoIP. Provider, licence, active generation digest, load time and the import

@@ -65,6 +65,8 @@ def saved(h, port, cookie, csrf, boot):
         if sum(int(row["counts"][name]) for row in own for name in names) == 5:
             for row in own:
                 assert row["end_ms"] - row["start_ms"] == row["observed_ms"] > 0
+                # Resource gauges: CPU time and peak memory are recorded on every platform.
+                assert int(row["cpu_ms"]) >= 0 and int(row["rss_max_kib"]) > 0, row
                 assert not row["complete"] or (row["sealed"] and not row["gap"])
             summarized(h, port, cookie, csrf, reply)
             return

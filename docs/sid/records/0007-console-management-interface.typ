@@ -605,6 +605,13 @@ minute deltas with node id, boot id, coverage and completeness. Use monotonic ti
 rates and UTC minute labels; a restart resets the baseline, never unsigned-subtracts the
 old process's counters. CPU usage is delta CPU seconds / delta wall seconds, not a sum of RSS.
 RSS is a gauge with last/max aggregation. Upsert partial minutes idempotently by boot id.
+Schema version 37 carries these gauges in the minute payload (format SBM2, version-36 rows
+stay readable): the console tick samples process CPU time and resident memory once per
+second, the open minute keeps the last and peak resident size and the CPU time consumed
+within it, and the live snapshot publishes resident size and CPU per mille of one core over
+the last second for the Nodes page and peer telemetry. Current resident size comes from
+the Linux process status; other platforms record the peak only and show the level as not
+recorded.
 
 Current `requests` includes internal routes; `banned` counts requests rejected by the local
 ban table, not distinct banned addresses. `denied`, `challenged`, `allowed`, `rate_limited`
@@ -1817,7 +1824,7 @@ below. Items outside it are post-launch requirements of this record, not conditi
 Committed status.
 
 *In scope and verified on main:* every page of “Pages”, the authentication and kiosk model,
-the six-topic protocol, the data model through schema version 36, GeoIP, cluster membership,
+the six-topic protocol, the data model through schema version 37, GeoIP, cluster membership,
 probes and peer telemetry, notifications, retention, response-page templates, the CLI, the
 build pipeline and digest gate, the golden, contract, end-to-end and cluster test entry points,
 and the operator guide with screenshots.
@@ -1831,7 +1838,7 @@ not satisfy this condition. The same binary runs
 without `--console`; compiling the console in starts no console thread, listener or sampler.
 
 *Deferred to post-launch (observability):* the sampled client operating system, browser, response
-status and referring host rankings (paths are sketched); RSS and CPU minute columns;
+status and referring host rankings (paths are sketched);
 per-address
 challenge records and the adaptive-difficulty timeline; request and response heads with
 charset selection and “copy as cURL”.

@@ -36,6 +36,7 @@ def exercise(h, port, data_port, admin):
         client.until(lambda: int(client.states["stats"].get("active_bans") or 0) >= 2)
         health = client.states["stats"]["cluster_health"]
         assert health["healthy"] == 1 and health["down"] == 0, health
+        assert client.states["stats"]["cpu_permille"] is not None
         assert "private-marker" not in json.dumps(client.states["events"])
         assert all(row["query_redacted"] for row in client.states["events"]["rows"])
         old_epoch = client.epochs["events"]
