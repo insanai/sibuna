@@ -104,6 +104,8 @@ pub const Config = struct {
     /// Store redacted request heads (and, for audited admitted requests, the origin
     /// response head) beside each incident. Off by default; console builds only.
     console_capture_heads: bool = false,
+    /// Header names whose values the stored heads keep beside the built-in list.
+    console_capture_headers: @import("incident_heads.zig").Extra = .{},
     /// Zaxonlite data directory; null runs without persistent storage.
     data_dir: ?[]const u8 = null,
     cluster_node: u32 = 0,

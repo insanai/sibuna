@@ -16,14 +16,16 @@ pub fn append(
     response: []const u8,
     request_truncated: bool,
     response_truncated: bool,
+    response_state: u8,
 ) !void {
     try w.print(
         "INSERT INTO console_incident_heads(incident_id,version,request_head,response_head," ++
-            "request_truncated,response_truncated) SELECT {d},1,'{x}','{x}',{d},{d}",
+            "request_truncated,response_truncated,response_state) " ++
+            "SELECT {d},1,'{x}','{x}',{d},{d},{d}",
         .{
             id,                               request,
             response,                         @intFromBool(request_truncated),
-            @intFromBool(response_truncated),
+            @intFromBool(response_truncated), response_state,
         },
     );
 }
@@ -35,8 +37,8 @@ pub fn read(owner: *Persistent, input: wire.Read) !p.StorageResult {
     var rows = try db.query(
         owner.db,
         owner.gpa,
-        "SELECT request_head,response_head,request_truncated,response_truncated " ++
-            "FROM console_incident_heads WHERE incident_id=? AND version=1",
+        "SELECT request_head,response_head,request_truncated,response_truncated," ++
+            "response_state FROM console_incident_heads WHERE incident_id=? AND version=1",
         &.{util.integer(input.id)},
     );
     defer rows.deinit();
@@ -50,6 +52,8 @@ pub fn read(owner: *Persistent, input: wire.Read) !p.StorageResult {
         payload.response = try p.Bytes(wire.response_hex).init(row[1] orelse "");
         payload.request_truncated = (try util.number(row[2])) != 0;
         payload.response_truncated = (try util.number(row[3])) != 0;
+        const state = try util.number(row[4]);
+        payload.response_state = if (state <= 4) @enumFromInt(state) else .unknown;
     }
     if (try access.check(owner, input.session_digest, input.require_totp, .events_read)) |reason| {
         owner.gpa.destroy(payload);

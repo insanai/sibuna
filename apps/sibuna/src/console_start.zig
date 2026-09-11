@@ -6,6 +6,7 @@ pub const Parsed = struct {
     config: console.ConsoleConfig,
     query_steps: ?u64 = null,
     capture_heads: bool = false,
+    capture_headers: @import("core").incident_heads.Extra = .{},
     data_args: []const []const u8,
     initial_admin: ?console.protocol.Bytes(64) = null,
 };
@@ -18,6 +19,7 @@ pub fn parse(args: []const []const u8, remaining: [][]const u8) !Parsed {
     var options_seen = false;
     var query_steps: ?u64 = null;
     var capture_heads = false;
+    var capture_headers: @import("core").incident_heads.Extra = .{};
     while (i < args.len) : (i += 1) {
         const flag = args[i];
         if (i == 0 and std.mem.eql(u8, flag, "init-admin")) {
@@ -53,14 +55,21 @@ pub fn parse(args: []const []const u8, remaining: [][]const u8) !Parsed {
         if (std.mem.eql(u8, flag, "--console-query-steps")) {
             if (query_steps != null) return error.DuplicateQuerySteps;
             query_steps = try parseQuerySteps(value);
+        } else if (std.mem.eql(u8, flag, "--console-capture-header")) {
+            _ = capture_headers.add(value) catch |err| return switch (err) {
+                error.InvalidHeaderName => error.InvalidCaptureHeader,
+                error.TooManyHeaders => error.TooManyCaptureHeaders,
+            };
         } else try option(&config, flag, value);
     }
     if (initial_admin != null and options_seen) return error.UnexpectedConsoleOptions;
     if (options_seen and !config.enabled) return error.ConsoleRequired;
+    if (capture_headers.count != 0 and !capture_heads) return error.CaptureHeaderWithoutCapture;
     return .{
         .config = config,
         .query_steps = query_steps,
         .capture_heads = capture_heads,
+        .capture_headers = capture_headers,
         .data_args = remaining[0..count],
         .initial_admin = initial_admin,
     };
@@ -271,6 +280,13 @@ test "console parsing preserves data-plane arguments and rejects unknown flags" 
     try std.testing.expectError(error.InvalidProbe, parse(&.{
         "--console", "127.0.0.1:9443", "--console-probe", "x=http://127.0.0.1:1",
     }, &remaining));
+}
+
+/// Head capture and its kept-header additions are console options applied to core config.
+pub fn applyCapture(cfg: *@import("core").Config, parsed: Parsed) void {
+    if (!parsed.capture_heads) return;
+    cfg.console_capture_heads = true;
+    cfg.console_capture_headers = parsed.capture_headers;
 }
 
 pub fn validate(config: console.ConsoleConfig, has_storage: bool) bool {

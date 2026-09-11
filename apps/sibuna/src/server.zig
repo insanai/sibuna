@@ -696,7 +696,12 @@ fn recordAuditFindings(ctx: *RequestContext, findings: u8) void {
         ctx.deferred_findings = findings;
         return;
     }
-    recordFindings(ctx, findings, "", false);
+    // Forward auth never observes the origin's answer; the ingress relays it.
+    const state: core.incident_heads.ResponseState = if (st.config.mode == .forward_auth)
+        .unobserved
+    else
+        .local;
+    recordFindings(ctx, findings, "", false, state);
 }
 
 /// Findings still held back when the request ends without an origin exchange: the response
@@ -705,7 +710,7 @@ fn flushDeferredFindings(ctx: *RequestContext) void {
     const findings = ctx.deferred_findings;
     if (findings == 0) return;
     ctx.deferred_findings = 0;
-    recordFindings(ctx, findings, "", false);
+    recordFindings(ctx, findings, "", false, .local);
 }
 
 fn recordFindings(
@@ -713,6 +718,7 @@ fn recordFindings(
     findings: u8,
     response_head: []const u8,
     response_truncated: bool,
+    response_state: core.incident_heads.ResponseState,
 ) void {
     const st = ctx.state();
     const hook = st.hooks.record_incident orelse return;
@@ -733,6 +739,7 @@ fn recordFindings(
             .request_truncated = captured.truncated,
             .response_head = response_head,
             .response_truncated = response_truncated,
+            .response_state = response_state,
         });
     }
 }
@@ -742,14 +749,15 @@ fn requestHead(
     ctx: *RequestContext,
     out: *[core.incident_heads.request_bytes]u8,
 ) core.incident_heads.Head {
-    if (!build_options.console or !ctx.state().config.console_capture_heads) return .{};
+    const cfg = &ctx.state().config;
+    if (!build_options.console or !cfg.console_capture_heads) return .{};
     return core.incident_heads.requestHead(.{
         .method = ctx.req.method_text,
         .path = ctx.req.path,
         .query = ctx.req.query,
         .version = ctx.req.version,
         .headers = ctx.req.headers[0..ctx.req.header_count],
-    }, out);
+    }, &cfg.console_capture_headers, out);
 }
 
 fn recordIncident(ctx: *RequestContext, category: []const u8) void {
@@ -761,6 +769,7 @@ fn recordIncident(ctx: *RequestContext, category: []const u8) void {
     hook(st.hooks.context, .{
         .request_head = head[0..captured.len],
         .request_truncated = captured.truncated,
+        .response_state = .local,
         .client_ip = ctx.client_ip,
         .user_agent = ctx.user_agent,
         .method = @tagName(ctx.req.method),
@@ -833,12 +842,15 @@ fn forwardAuth(
 
 /// The origin response head redacted into its bound as soon as the relay validates it.
 const OriginHead = struct {
+    extra: *const core.incident_heads.Extra,
     bytes: [core.incident_heads.response_bytes]u8 = undefined,
     head: core.incident_heads.Head = .{},
+    seen: bool = false,
 
     fn capture(context: *anyopaque, raw: []const u8) void {
         const self: *OriginHead = @ptrCast(@alignCast(context));
-        self.head = core.incident_heads.responseHead(raw, &self.bytes);
+        self.head = core.incident_heads.responseHead(raw, self.extra, &self.bytes);
+        self.seen = true;
     }
 };
 
@@ -851,7 +863,13 @@ fn admittedComplete(ctx: *RequestContext, origin_status: u16, origin: *const Ori
     const findings = ctx.deferred_findings;
     if (findings == 0) return;
     ctx.deferred_findings = 0;
-    recordFindings(ctx, findings, origin.bytes[0..origin.head.len], origin.head.truncated);
+    recordFindings(
+        ctx,
+        findings,
+        origin.bytes[0..origin.head.len],
+        origin.head.truncated,
+        if (origin.seen) .captured else .unavailable,
+    );
 }
 
 fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule_hash: u64) !bool {
@@ -863,7 +881,7 @@ fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule
     const c = ctx.c;
     const cfg = st.config;
     var origin_status: u16 = 0;
-    var origin: OriginHead = .{};
+    var origin: OriginHead = .{ .extra = &cfg.console_capture_headers };
     defer if (build_options.console) admittedComplete(ctx, origin_status, &origin);
     const audit = net.ProxyAudit{
         .client_ip = ctx.client_ip,

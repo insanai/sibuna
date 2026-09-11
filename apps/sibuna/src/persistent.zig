@@ -72,6 +72,7 @@ pub const IncidentRecord = struct {
     request_len: u16 = 0,
     response_len: u16 = 0,
     heads_truncated: u8 = 0,
+    response_state: u8 = 0,
 
     fn copy(dst: []u8, src: []const u8) usize {
         const n = @min(dst.len, src.len);
@@ -93,6 +94,7 @@ pub const IncidentRecord = struct {
             r.response_len = @intCast(copy(&r.response_head, incident.response_head));
             r.heads_truncated = @intFromBool(incident.request_truncated) |
                 (@as(u8, @intFromBool(incident.response_truncated)) << 1);
+            r.response_state = @intFromEnum(incident.response_state);
             const lengths = [_]bool{
                 incident.client_ip.len > r.ip.len,
                 incident.user_agent.len > r.ua.len,
@@ -601,6 +603,7 @@ pub const Persistent = struct {
                 rec.response_head[0..rec.response_len],
                 rec.heads_truncated & 1 != 0,
                 rec.heads_truncated & 2 != 0,
+                rec.response_state,
             );
             try self.receiptGuard(w);
             try w.writeAll("; ");
@@ -1000,6 +1003,7 @@ test {
         _ = @import("console_rankings_test.zig");
         _ = @import("console_minutes_test.zig");
         _ = @import("console_challenge_minutes_test.zig");
+        _ = @import("console_incident_heads_test.zig");
         _ = @import("console_challenge_records_test.zig");
         _ = @import("console_retention_test.zig");
         _ = @import("console_settings_retention_test.zig");

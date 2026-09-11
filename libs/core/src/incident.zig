@@ -12,6 +12,7 @@ pub const Incident = struct {
     response_head: []const u8 = "",
     request_truncated: bool = false,
     response_truncated: bool = false,
+    response_state: @import("incident_heads.zig").ResponseState = .unknown,
 };
 
 /// Metadata for explicitly captured evidence. Version zero means historical/unrecorded.
