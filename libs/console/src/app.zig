@@ -33,6 +33,7 @@ pub const App = struct {
     subscriptions: @import("subscription_job.zig").Job = .{},
     history: @import("rankings_journal.zig").Journal = .{},
     minutes: @import("minute_journal.zig").Journal = .{},
+    challenges: @import("challenge_journal.zig").Journal = .{},
     retention: @import("retention_job.zig").Job = .{},
     challenge_defaults: p.challenges.Defaults = .{},
     /// The composing storage owner outlives every console task and incident flush.
@@ -123,6 +124,8 @@ pub const App = struct {
         self.history.boot = boot;
         self.minutes.node = cfg.node_id;
         self.minutes.boot = self.history.boot;
+        self.challenges.node = cfg.node_id;
+        self.challenges.boot = self.history.boot;
         self.retention.holder = .{ .node = cfg.node_id, .boot = self.history.boot };
         try self.geo_job.restore();
         self.stats.boot = self.history.boot;
@@ -168,6 +171,7 @@ pub const App = struct {
         self.geo_maintenance.stop(self.io, self.mailbox);
         self.history.stop(self.io, self.mailbox);
         self.minutes.stop(self.io, self.mailbox);
+        self.challenges.stop(self.io, self.mailbox);
         self.retention.stop(self.io, self.mailbox);
         self.passwords.deinit();
         if (self.totp_key) |*key| std.crypto.secureZero(u8, key);
@@ -194,6 +198,8 @@ pub const App = struct {
             self.history.tick(self.io, self.mailbox, second, ms);
             self.stats.journal(self.io, &self.minutes);
             self.minutes.tick(self.io, self.mailbox, second, ms);
+            self.challenges.observe(&self.telemetry.challenges, second, ms);
+            self.challenges.tick(self.io, self.mailbox, second, ms);
             if (self.retention.tick(self.io, self.mailbox, ms))
                 _ = self.stats.retention_failures.fetchAdd(1, .monotonic);
             if (self.geo_maintenance.tick(
@@ -428,6 +434,7 @@ pub const App = struct {
             => return access.dispatch(self, context, identity.?, route.handler),
             .setup_status => return self.setupReply(context),
             .challenges,
+            .challenge_summary,
             .rankings,
             .ranking_history,
             .rule_hit_history,

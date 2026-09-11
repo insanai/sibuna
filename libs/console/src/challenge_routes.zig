@@ -28,6 +28,57 @@ pub fn handle(app: *App, context: *http.Context) !void {
     ), &.{});
 }
 
+/// Retained window: durable minutes summed on the storage owner. The window ends at the
+/// last sealed minute before now; a longer window continues from the returned cursor.
+pub fn summary(app: *App, context: *http.Context) !void {
+    const digest = try http.session(context);
+    if (!app.query_budget.allow(app.io, digest, app.now(), .query))
+        return http.fail(context, .too_many_requests, "CONSOLE429");
+    var body: [512]u8 = undefined;
+    var arena: [2048]u8 = undefined;
+    var fixed = std.heap.FixedBufferAllocator.init(&arena);
+    const request = try http.parse(struct {
+        hours: u16 = 24,
+        node: ?u32 = null,
+        bin: ?u8 = null,
+        before: ?struct { minute: u64, node: u32, boot: []const u8, epoch: u32 } = null,
+    }, context, &body, fixed.allocator());
+    defer request.deinit();
+    const input = request.value;
+    if (input.hours != 1 and input.hours != 24 and input.hours != 168) return error.InvalidRequest;
+    const now = app.now();
+    const until = now / 60 -| 1;
+    var query: p.challenge_minutes.Query = .{
+        .session_digest = digest,
+        .require_totp = app.config.behind_proxy,
+        .observed_at = now,
+        .from_minute = until -| (@as(u64, input.hours) * 60 - 1),
+        .until_minute = until,
+        .node = input.node,
+        .selected = input.bin orelse configuredBin(app.challenge_defaults),
+    };
+    if (input.before) |cursor| {
+        var boot: [16]u8 = undefined;
+        if (cursor.boot.len != 32) return error.InvalidRequest;
+        _ = std.fmt.hexToBytes(&boot, cursor.boot) catch return error.InvalidRequest;
+        query.before = .{
+            .minute = cursor.minute,
+            .node = cursor.node,
+            .boot = boot,
+            .epoch = cursor.epoch,
+        };
+    }
+    const result = try app.request(.{ .challenge_summary = query });
+    if (result == .challenge_summary) return http.json(context, result.challenge_summary, &.{});
+    return http.fail(context, switch (result.failed) {
+        .unauthorized => .unauthorized,
+        .forbidden => .forbidden,
+        .invalid_input => .bad_request,
+        .conflict => .conflict,
+        else => .service_unavailable,
+    }, "CONSOLECHALLENGE");
+}
+
 pub fn configuredBin(cfg: p.challenges.Defaults) u8 {
     const algorithm: cm.Algorithm = switch (cfg.algorithm) {
         .hashcash => .hashcash,

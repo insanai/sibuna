@@ -22,6 +22,7 @@ pub const GeoRegistry = @import("geoip_generation.zig").Registry;
 pub const rankings_archive = @import("rankings_archive.zig");
 pub const RuleHitJournal = @import("rule_hit_journal.zig").Journal;
 pub const minute_archive = @import("minute_archive.zig");
+pub const challenge_archive = @import("challenge_archive.zig");
 pub const schema = @import("schema.zig");
 pub const Password = @import("password.zig").Password;
 test {
@@ -32,6 +33,8 @@ test {
     _ = @import("incident_geo.zig");
     _ = @import("timeline_test.zig");
     _ = @import("minute_archive.zig");
+    _ = @import("challenge_archive.zig");
+    _ = @import("challenge_journal.zig");
     _ = @import("minute_journal_test.zig");
     _ = @import("rule_hit_journal_test.zig");
     _ = @import("geoip_maintenance.zig");

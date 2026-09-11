@@ -965,6 +965,7 @@ test {
         _ = @import("console_store_test.zig");
         _ = @import("console_rankings_test.zig");
         _ = @import("console_minutes_test.zig");
+        _ = @import("console_challenge_minutes_test.zig");
         _ = @import("console_retention_test.zig");
         _ = @import("console_settings_retention_test.zig");
         _ = @import("console_incidents_test.zig");
