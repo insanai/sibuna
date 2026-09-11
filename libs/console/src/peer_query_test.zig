@@ -74,7 +74,7 @@ test "peer reader handoff is bounded and preserves FIFO ownership" {
     try t.expectError(error.InvalidRequest, queue.accept(t.io, invalid));
 }
 
-test "eight escaped ranking rows and maximum counters fit the peer reply body" {
+test "eight escaped ranking rows, eight referrers and full families fit the peer reply body" {
     const label = [_]u8{1} ** 128;
     const row: p.rankings.Row = .{
         .key = &label,
@@ -83,6 +83,18 @@ test "eight escaped ranking rows and maximum counters fit the peer reply body" {
         .error_bound = std.math.maxInt(u64),
     };
     const rows = [_]p.rankings.Row{row} ** 8;
+    const host = [_]u8{1} ** 24;
+    const referrer: p.rankings.Row = .{
+        .key = &host,
+        .encoding = .utf8,
+        .estimate = std.math.maxInt(u64),
+        .error_bound = std.math.maxInt(u64),
+    };
+    const referrers = [_]p.rankings.Row{referrer} ** 8;
+    var families: p.ranking_storage.Families = .{};
+    families.os = @splat(std.math.maxInt(u64));
+    families.browser = @splat(std.math.maxInt(u64));
+    families.status = @splat(std.math.maxInt(u64));
     var bytes: [q.max_body]u8 = undefined;
     var writer: std.Io.Writer = .fixed(&bytes);
     try std.json.Stringify.value(p.rankings.Page{
@@ -98,6 +110,10 @@ test "eight escaped ranking rows and maximum counters fit the peer reply body" {
         .queue_loss_since_boot = std.math.maxInt(u64),
         .missing_key_bound = std.math.maxInt(u64),
         .rows = &rows,
+        .referrer_missing_key_bound = std.math.maxInt(u64),
+        .referrer_samples = std.math.maxInt(u64),
+        .referrers = &referrers,
+        .families = families,
     }, .{}, &writer);
     try t.expect(writer.buffered().len < q.max_body);
 }

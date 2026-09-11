@@ -2,7 +2,9 @@
 const std = @import("std");
 const Minute = @import("ranking_storage.zig").Minute;
 const p = @import("root.zig");
-pub const max_bytes = 92 + 256 * (2 + 128 + 16);
+pub const legacy_bytes = 92 + 256 * (2 + 128 + 16);
+pub const max_bytes = legacy_bytes + 4 + 256 * (2 + 24 + 16) +
+    8 * (8 + 8 + p.client_family.status_slots);
 pub const Error = error{ InvalidArchive, TooLarge };
 pub const Identity = struct {
     node: u32,
@@ -22,7 +24,7 @@ pub fn encode(archive: *const Archive, buffer: []u8) Error![]const u8 {
 
 fn write(archive: *const Archive, w: *std.Io.Writer) std.Io.Writer.Error!void {
     const minute = &archive.minute;
-    try w.writeAll("SBR1");
+    try w.writeAll("SBR2");
     try w.writeInt(u32, archive.identity.node, .little);
     try w.writeAll(&archive.identity.boot);
     try w.writeInt(u64, minute.minute.?, .little);
@@ -38,6 +40,17 @@ fn write(archive: *const Archive, w: *std.Io.Writer) std.Io.Writer.Error!void {
         try w.writeInt(u64, counter.estimate, .little);
         try w.writeInt(u64, counter.error_bound, .little);
     }
+    try w.writeInt(u64, minute.referrers.samples, .little);
+    try w.writeInt(u16, 24, .little);
+    try w.writeInt(u16, @intCast(minute.referrers.len), .little);
+    for (minute.referrers.counters[0..minute.referrers.len]) |*counter| {
+        try w.writeInt(u16, @intCast(counter.key.len), .little);
+        try w.writeAll(counter.key.slice());
+        try w.writeInt(u64, counter.estimate, .little);
+        try w.writeInt(u64, counter.error_bound, .little);
+    }
+    inline for (.{ "os", "browser", "status" }) |name|
+        for (@field(minute.families, name)) |count| try w.writeInt(u64, count, .little);
 }
 
 pub fn decode(bytes: []const u8) Error!Archive {
@@ -56,7 +69,9 @@ pub fn decodeInto(output: *Archive, bytes: []const u8) Error!void {
 }
 
 fn read(archive: *Archive, r: *std.Io.Reader) !void {
-    if (!std.mem.eql(u8, try r.take(4), "SBR1")) return error.InvalidArchive;
+    const magic = try r.take(4);
+    const legacy = std.mem.eql(u8, magic, "SBR1");
+    if (!legacy and !std.mem.eql(u8, magic, "SBR2")) return error.InvalidArchive;
     const node = try r.takeInt(u32, .little);
     const boot = (try r.takeArray(16)).*;
     archive.* = .{ .identity = .{ .node = node, .boot = boot }, .minute = .{} };
@@ -76,6 +91,22 @@ fn read(archive: *Archive, r: *std.Io.Reader) !void {
         counter.estimate = try r.takeInt(u64, .little);
         counter.error_bound = try r.takeInt(u64, .little);
     }
+    minute.extended = !legacy;
+    if (legacy) return;
+    minute.referrers.samples = try r.takeInt(u64, .little);
+    if (try r.takeInt(u16, .little) != 24) return error.InvalidArchive;
+    minute.referrers.len = try r.takeInt(u16, .little);
+    if (minute.referrers.len > minute.referrers.counters.len) return error.InvalidArchive;
+    for (minute.referrers.counters[0..minute.referrers.len]) |*counter| {
+        const length = try r.takeInt(u16, .little);
+        if (length > 24) return error.InvalidArchive;
+        counter.key = try p.Bytes(24).init(try r.take(length));
+        counter.estimate = try r.takeInt(u64, .little);
+        counter.error_bound = try r.takeInt(u64, .little);
+    }
+    for (&minute.families.os) |*count| count.* = try r.takeInt(u64, .little);
+    for (&minute.families.browser) |*count| count.* = try r.takeInt(u64, .little);
+    for (&minute.families.status) |*count| count.* = try r.takeInt(u64, .little);
 }
 
 fn validate(archive: *const Archive) Error!void {
@@ -86,15 +117,23 @@ fn validate(archive: *const Archive) Error!void {
         archive.identity.queue_loss_end < archive.identity.queue_loss_start)
         return error.InvalidArchive;
     const summary = &minute.paths;
-    if (summary.len > summary.counters.len) return error.InvalidArchive;
     if (summary.samples == 0 and (minute.first_second != 0 or minute.last_second != 0))
         return error.InvalidArchive;
     if (summary.samples != 0 and (minute.first_second < index * 60 or
         minute.last_second >= index * 60 + 60 or minute.first_second > minute.last_second))
         return error.InvalidArchive;
+    try validateSketch(summary, 128);
+    try validateSketch(&minute.referrers, 24);
+    if (minute.referrers.samples > summary.samples) return error.InvalidArchive;
+}
+
+/// Only original collector minutes are archived. Their counter sum equals retained N;
+/// serializing local display winners instead would silently discard global candidates.
+fn validateSketch(summary: anytype, key_limit: usize) Error!void {
+    if (summary.len > summary.counters.len) return error.InvalidArchive;
     var estimates: u64 = 0;
     for (summary.counters[0..summary.len], 0..) |*counter, i| {
-        if (counter.key.len > 128 or counter.estimate == 0 or
+        if (counter.key.len > key_limit or counter.estimate == 0 or
             counter.error_bound >= counter.estimate or
             counter.error_bound > summary.samples / 256) return error.InvalidArchive;
         for (summary.counters[0..i]) |*previous| {
@@ -104,8 +143,6 @@ fn validate(archive: *const Archive) Error!void {
         estimates = std.math.add(u64, estimates, counter.estimate) catch
             return error.InvalidArchive;
     }
-    // Only original collector minutes are archived. Their counter sum equals retained N;
-    // serializing local display winners instead would silently discard global candidates.
     if (estimates != summary.samples) return error.InvalidArchive;
 }
 

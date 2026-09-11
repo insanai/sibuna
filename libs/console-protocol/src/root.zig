@@ -5,6 +5,7 @@ pub const similarity = @import("similarity.zig");
 pub const policies = @import("policies.zig");
 pub const challenges = @import("challenges.zig");
 pub const challenge_minutes = @import("challenge_minutes.zig");
+pub const client_family = @import("client_family.zig");
 pub const settings = @import("settings.zig");
 pub const dashboard = @import("dashboard.zig");
 pub const space_saving = @import("space_saving.zig");
@@ -379,6 +380,7 @@ pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
 
 test {
     _ = challenge_minutes;
+    _ = client_family;
     _ = events.country;
     _ = security;
     _ = subscriptions;

@@ -24,6 +24,18 @@ pub const Rankings = struct {
             // Overflow refuses the sample without corrupting estimates; its loss is visible.
             slot.rejected_records +|= 1;
         };
+        const host = record.referer[0..record.referer_len];
+        if (host.len != 0) slot.referrers.add(host) catch {
+            slot.rejected_records +|= 1;
+        };
+        const family = @import("console_protocol").client_family;
+        // Labels outside the shared numbering count as unknown rather than being dropped.
+        const os: usize = if (record.os < slot.families.os.len) record.os else 0;
+        const browser: usize =
+            if (record.browser < slot.families.browser.len) record.browser else 0;
+        slot.families.os[os] +|= 1;
+        slot.families.browser[browser] +|= 1;
+        slot.families.status[family.statusSlot(record.status)] +|= 1;
     }
 
     pub fn snapshot(self: *const Rankings, second: u64) Minute {
@@ -47,4 +59,29 @@ test "late samples remain in their original minute and slot reuse drops old popu
     try t.expectEqual(@as(u64, 1), rankings.snapshot(120).paths.samples);
     try t.expectEqual(@as(u64, 1), rankings.snapshot(180).paths.samples);
     try t.expectEqual(@as(u64, 0), rankings.snapshot(240).paths.samples);
+}
+
+test "families and referring hosts are counted beside paths within the same minute" {
+    const t = std.testing;
+    var rankings: Rankings = .{};
+    var record = std.mem.zeroes(Record);
+    record.second = 120;
+    record.path_len = 1;
+    record.path[0] = '/';
+    record.status = 429;
+    const family = @import("console_protocol").client_family;
+    record.os = @intFromEnum(family.Os.linux);
+    record.browser = @intFromEnum(family.Browser.firefox);
+    const host = "news.example.test";
+    @memcpy(record.referer[0..host.len], host);
+    record.referer_len = host.len;
+    rankings.add(&record);
+    record.referer_len = 0;
+    rankings.add(&record);
+    const minute = rankings.snapshot(120);
+    try t.expectEqual(@as(u64, 2), minute.families.os[@intFromEnum(family.Os.linux)]);
+    try t.expectEqual(@as(u64, 2), minute.families.browser[@intFromEnum(family.Browser.firefox)]);
+    try t.expectEqual(@as(u64, 2), minute.families.status[family.statusSlot(429)]);
+    try t.expectEqual(@as(u64, 1), minute.referrers.samples);
+    try t.expectEqualStrings(host, minute.referrers.counters[0].key.slice());
 }

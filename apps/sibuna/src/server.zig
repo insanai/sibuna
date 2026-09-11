@@ -347,7 +347,7 @@ fn serveOne(c: *Connection) !bool {
             req = refreshedRequest(c, head_len);
             // The head identifies an external request even when its body is incomplete.
             var incomplete = RequestContext.init(c, &req, declared);
-            recordOutcome(&incomplete, .other);
+            recordOutcome(&incomplete, .other, 400);
             if (req.method == .POST and std.mem.eql(u8, req.path, "/__sibuna/verify")) {
                 observation.submit(c.state);
                 observation.reject(c.state, .malformed_solution);
@@ -386,7 +386,7 @@ fn expectContinue(c: *Connection, req: *net.Request, declared: usize) !bool {
     if (count == 0) return true;
     if (!supported or count != 1 or !std.mem.eql(u8, req.version, "HTTP/1.1")) {
         var rejected = RequestContext.init(c, req, declared);
-        recordOutcome(&rejected, .other);
+        recordOutcome(&rejected, .other, 400);
         try net.response.writeText(
             c.writer,
             .expectation_failed,
@@ -460,7 +460,7 @@ fn dispatch(ctx: *RequestContext) !bool {
     // Every parsed external request gets one selected outcome, even on an early error.
     // Unparseable heads cannot be classified as external and remain parse_errors only.
     defer if (build_options.console) {
-        if (!ctx.outcome_recorded) recordOutcome(ctx, .other);
+        if (!ctx.outcome_recorded) recordOutcome(ctx, .other, 400);
     };
     const st = ctx.state();
     Metrics.bump(&st.metrics.requests);
@@ -471,7 +471,7 @@ fn dispatch(ctx: *RequestContext) !bool {
     if (st.bans.isBanned(ctx.client_ip, ctx.now)) {
         if (submission) observation.reject(st, .address_banned);
         Metrics.bump(&st.metrics.banned);
-        recordOutcome(ctx, .banned);
+        recordOutcome(ctx, .banned, 403);
         try @import("response_pages.zig").respond(
             ctx,
             .banned,
@@ -497,7 +497,7 @@ fn dispatch(ctx: *RequestContext) !bool {
 fn rateLimited(ctx: *RequestContext, rate: store.rate_limiter.Decision, ban_seconds: u32) !bool {
     const st = ctx.state();
     Metrics.bump(&st.metrics.rate_limited);
-    recordOutcome(ctx, .rate_limited);
+    recordOutcome(ctx, .rate_limited, 429);
     // Capacity pressure refuses this request, but must not become an address-wide ban.
     const ban = if (rate.capacity_exhausted) 0 else ban_seconds;
     if (ban != 0) {
@@ -590,7 +590,7 @@ fn applyPolicy(ctx: *RequestContext) !bool {
         ),
         .deny => {
             Metrics.bump(&st.metrics.denied);
-            recordOutcome(ctx, .denied);
+            recordOutcome(ctx, .denied, 403);
             if (std.mem.startsWith(u8, decision.rule_name, "waf:")) recordIncident(
                 ctx,
                 decision.rule_name,
@@ -606,7 +606,7 @@ fn applyPolicy(ctx: *RequestContext) !bool {
         },
         .challenge, .weigh => {
             Metrics.bump(&st.metrics.challenged);
-            recordOutcome(ctx, .challenged);
+            recordOutcome(ctx, .challenged, 401);
             try writeChallengeResponse(ctx);
             return ctx.keep_alive;
         },
@@ -626,13 +626,54 @@ fn restoreAuthorizationTarget(ctx: *RequestContext) !bool {
     return true;
 }
 
-fn recordOutcome(ctx: *RequestContext, outcome: store.telemetry.Outcome) void {
+fn recordOutcome(ctx: *RequestContext, outcome: store.telemetry.Outcome, status: u16) void {
+    countOutcome(ctx, outcome);
+    sampleOutcome(ctx, outcome, status);
+}
+
+fn countOutcome(ctx: *RequestContext, outcome: store.telemetry.Outcome) void {
     if (!build_options.console) return;
     const telemetry = ctx.state().telemetry orelse return;
     if (ctx.internal) return;
     std.debug.assert(!ctx.outcome_recorded);
     ctx.outcome_recorded = true;
-    telemetry.record(outcome, ctx.now, ctx.client_ip, ctx.req.path, ctx.user_agent);
+    telemetry.count(outcome);
+}
+
+/// The sample records the status actually selected or observed for the client.
+fn sampleOutcome(ctx: *RequestContext, outcome: store.telemetry.Outcome, status: u16) void {
+    if (!build_options.console) return;
+    const telemetry = ctx.state().telemetry orelse return;
+    if (ctx.internal) return;
+    // Labels come from the full agent value here; the queue never carries the agent.
+    const family = @import("console").protocol.client_family.classify(ctx.user_agent);
+    telemetry.offer(outcome, .{
+        .second = ctx.now,
+        .ip = ctx.client_ip,
+        .path = ctx.req.path,
+        .referer = refererHost(ctx.req.getHeader("referer") orelse ""),
+        .status = status,
+        .os = @intFromEnum(family.os),
+        .browser = @intFromEnum(family.browser),
+    });
+}
+
+/// The host of a Referer value: scheme and userinfo stripped, ending before the port,
+/// path, query or fragment, lower-cased. Paths and queries never reach the sample.
+fn refererHost(value: []const u8) []const u8 {
+    var rest = value;
+    if (std.mem.indexOf(u8, rest, "://")) |scheme| rest = rest[scheme + 3 ..];
+    if (std.mem.indexOfScalar(u8, rest, '@')) |userinfo| rest = rest[userinfo + 1 ..];
+    const end = std.mem.indexOfAny(u8, rest, "/?#:") orelse rest.len;
+    return rest[0..end];
+}
+
+test "referring hosts drop scheme, credentials, ports and paths" {
+    try std.testing.expectEqualStrings("news.example.test", refererHost(
+        "https://user:pw@news.example.test:8443/story?id=1#top",
+    ));
+    try std.testing.expectEqualStrings("a.example", refererHost("a.example/"));
+    try std.testing.expectEqualStrings("", refererHost(""));
 }
 
 fn recordAuditFindings(ctx: *RequestContext, findings: u8) void {
@@ -708,8 +749,9 @@ fn writeChallenge(ctx: *RequestContext, status: net.response.Status) !void {
 fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule_hash: u64) !bool {
     const st = ctx.state();
     Metrics.bump(&st.metrics.allowed);
-    recordOutcome(ctx, .admitted);
+    countOutcome(ctx, .admitted);
     if (st.config.mode == .forward_auth) {
+        sampleOutcome(ctx, .admitted, 200);
         var hdr: [256]u8 = undefined;
         const headers = try std.fmt.bufPrint(
             &hdr,
@@ -731,6 +773,8 @@ fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule
     var origin_status: u16 = 0;
     defer if (build_options.console) {
         if (st.telemetry) |telemetry| telemetry.origin(origin_status);
+        // The admitted sample waits for the origin status; a failed relay reports 502.
+        sampleOutcome(ctx, .admitted, if (origin_status == 0) 502 else origin_status);
     };
     const audit = net.ProxyAudit{
         .client_ip = ctx.client_ip,

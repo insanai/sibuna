@@ -36,18 +36,13 @@ pub fn write(app: *App, writer: *std.Io.Writer, limit: usize) !void {
     std.mem.sort(Summary.Counter, counters, {}, Summary.before);
     var rows: [p.max_rows]p.Row = undefined;
     var encoded: [p.max_rows][256]u8 = undefined;
-    const count = @min(counters.len, limit);
-    for (counters[0..count], 0..) |*counter, i| {
-        const key = counter.key.slice();
-        const utf8 = std.unicode.utf8ValidateSlice(key);
-        if (!utf8) encodeHex(&encoded[i], key);
-        rows[i] = .{
-            .key = if (utf8) key else encoded[i][0 .. key.len * 2],
-            .encoding = if (utf8) .utf8 else .hex,
-            .estimate = counter.estimate,
-            .error_bound = counter.error_bound,
-        };
-    }
+    const count = leading(counters, limit, &rows, &encoded);
+    const Referrers = @import("console_protocol").ranking_storage.Referrers;
+    const hosts = minute.referrers.counters[0..minute.referrers.len];
+    std.mem.sort(Referrers.Counter, hosts, {}, Referrers.before);
+    var referrer_rows: [p.max_rows]p.Row = undefined;
+    var referrer_encoded: [p.max_rows][256]u8 = undefined;
+    const referrer_count = leading(hosts, limit, &referrer_rows, &referrer_encoded);
     return std.json.Stringify.value(p.Page{
         .node = app.stats.node,
         .boot = app.stats.boot,
@@ -65,7 +60,33 @@ pub fn write(app: *App, writer: *std.Io.Writer, limit: usize) !void {
         .counter_capacity = 256,
         .missing_key_bound = minute.paths.missingBound(),
         .rows = rows[0..count],
+        .referrer_missing_key_bound = minute.referrers.missingBound(),
+        .referrer_samples = minute.referrers.samples,
+        .referrers = referrer_rows[0..referrer_count],
+        .families = minute.families,
     }, .{}, writer);
+}
+
+/// Sorted counters become bounded display rows; invalid UTF-8 keys are hex encoded.
+fn leading(
+    counters: anytype,
+    limit: usize,
+    rows: *[p.max_rows]p.Row,
+    encoded: *[p.max_rows][256]u8,
+) usize {
+    const count = @min(counters.len, limit);
+    for (counters[0..count], 0..) |*counter, i| {
+        const key = counter.key.slice();
+        const utf8 = std.unicode.utf8ValidateSlice(key);
+        if (!utf8) encodeHex(&encoded[i], key);
+        rows[i] = .{
+            .key = if (utf8) key else encoded[i][0 .. key.len * 2],
+            .encoding = if (utf8) .utf8 else .hex,
+            .estimate = counter.estimate,
+            .error_bound = counter.error_bound,
+        };
+    }
+    return count;
 }
 
 fn encodeHex(output: *[256]u8, input: []const u8) void {

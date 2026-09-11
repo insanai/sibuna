@@ -41,4 +41,10 @@ pub const Page = struct {
     counter_capacity: u16 = 256,
     missing_key_bound: u64,
     rows: []const Row,
+    /// Referring hosts: 24-byte host keys under the same sketch bound.
+    referrer_missing_key_bound: u64 = 0,
+    referrer_samples: u64 = 0,
+    referrers: []const Row = &.{},
+    /// Exact sampled histograms over bounded label sets.
+    families: @import("ranking_storage.zig").Families = .{},
 };

@@ -2,7 +2,9 @@
 //! owned; a timed-out HTTP caller cannot leave borrowed cursors in a worker's mailbox.
 const std = @import("std");
 const p = @import("console_protocol");
-pub const max_body = 7800;
+/// Eight escaped path rows, eight referrer rows and full family histograms at maximum
+/// counter widths fit below this bound; the reply body test keeps it honest.
+pub const max_body = 12000;
 pub const Kind = enum { timeline, rankings };
 pub const Status = enum { ok, conflict, invalid, unavailable, cancelled };
 pub const Cursor = struct {

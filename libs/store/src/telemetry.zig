@@ -23,11 +23,18 @@ pub const Record = struct {
     outcome: Outcome,
     ip_len: u8,
     path_len: u8,
-    ua_len: u8,
     truncated: bool,
+    /// The selected local status, the observed origin status, or zero when unknown.
+    status: u16,
+    referer_len: u8,
+    /// Client-family labels classified from the full User-Agent at sample time; the raw
+    /// agent never enters the queue (the console protocol's `client_family` numbering).
+    os: u8,
+    browser: u8,
     ip: [48]u8,
     path: [128]u8,
-    ua: [40]u8,
+    /// Referring host only, never a path or query; longer hosts are truncated and flagged.
+    referer: [24]u8,
 };
 comptime {
     std.debug.assert(@sizeOf(Record) <= 256);
@@ -64,14 +71,23 @@ pub const ConsoleTelemetry = struct {
         return result;
     }
 
-    pub fn record(
-        self: *ConsoleTelemetry,
-        outcome: Outcome,
+    pub const Sample = struct {
         second: u64,
         ip: []const u8,
         path: []const u8,
-        ua: []const u8,
-    ) void {
+        referer: []const u8 = "",
+        status: u16 = 0,
+        os: u8 = 0,
+        browser: u8 = 0,
+    };
+
+    pub fn record(self: *ConsoleTelemetry, outcome: Outcome, sample: Sample) void {
+        self.count(outcome);
+        self.offer(outcome, sample);
+    }
+
+    /// Exact outcome counters are recorded once per request, before delivery.
+    pub fn count(self: *ConsoleTelemetry, outcome: Outcome) void {
         const counter = switch (outcome) {
             .admitted => &self.admitted,
             .challenged => &self.challenged,
@@ -81,6 +97,12 @@ pub const ConsoleTelemetry = struct {
             .other => &self.other,
         };
         _ = counter.fetchAdd(1, .monotonic);
+    }
+
+    /// One sample in 64 enters the bounded queue; an admitted request offers its sample
+    /// once the origin status is known, so the status field describes what was sent.
+    pub fn offer(self: *ConsoleTelemetry, outcome: Outcome, sample: Sample) void {
+        const second, const ip, const path = .{ sample.second, sample.ip, sample.path };
         // xorshift64*: private state avoids a contended sampling counter. Masking a
         // multiplied output selects each request with probability 1/64.
         random_state ^= random_state >> 12;
@@ -92,11 +114,15 @@ pub const ConsoleTelemetry = struct {
         item.outcome = outcome;
         item.ip_len = @intCast(@min(ip.len, item.ip.len));
         item.path_len = @intCast(@min(path.len, item.path.len));
-        item.ua_len = @intCast(@min(ua.len, item.ua.len));
-        item.truncated = ip.len > item.ip.len or path.len > item.path.len or ua.len > item.ua.len;
+        item.referer_len = @intCast(@min(sample.referer.len, item.referer.len));
+        item.status = sample.status;
+        item.os = sample.os;
+        item.browser = sample.browser;
+        item.truncated = ip.len > item.ip.len or path.len > item.path.len or
+            sample.referer.len > item.referer.len;
         @memcpy(item.ip[0..item.ip_len], ip[0..item.ip_len]);
         @memcpy(item.path[0..item.path_len], path[0..item.path_len]);
-        @memcpy(item.ua[0..item.ua_len], ua[0..item.ua_len]);
+        @memcpy(item.referer[0..item.referer_len], sample.referer[0..item.referer_len]);
         if (!self.queue.push(item)) _ = self.dropped.fetchAdd(1, .monotonic);
     }
 
@@ -112,7 +138,13 @@ test "exact outcomes remain complete when the bounded sample queue overflows" {
     defer t.allocator.destroy(telemetry);
     telemetry.* = ConsoleTelemetry.init();
     seed(1234);
-    for (0..500000) |_| telemetry.record(.admitted, 1, "127.0.0.1", "/", "test");
+    for (0..500000) |_| telemetry.record(.admitted, .{
+        .second = 1,
+        .ip = "127.0.0.1",
+        .path = "/",
+        .referer = "news.example.test",
+        .status = 200,
+    });
     try t.expectEqual(@as(u64, 500000), telemetry.admitted.load(.monotonic));
     try t.expect(telemetry.dropped.load(.monotonic) > 0);
     telemetry.origin(404);
@@ -128,7 +160,7 @@ test "external outcomes partition traffic independently of origin response class
     defer t.allocator.destroy(telemetry);
     telemetry.* = ConsoleTelemetry.init();
     inline for (comptime std.meta.tags(Outcome)) |outcome|
-        telemetry.record(outcome, 1, "8.8.8.8", "/", "test");
+        telemetry.record(outcome, .{ .second = 1, .ip = "8.8.8.8", .path = "/" });
     telemetry.origin(404);
     telemetry.origin(503);
     const snapshot = telemetry.totals();
