@@ -57,13 +57,29 @@ pub const no_duration = std.math.maxInt(u32);
 
 threadlocal var random_state: u64 = 1;
 
+/// Per-request counters are striped so connection threads do not contend on one cache line:
+/// each connection thread picks a stripe at startup and readers sum every stripe.
+pub const stripes = 16;
+pub threadlocal var stripe: u8 = 0;
+
 /// Set once on connection-thread startup, outside request processing.
 pub fn seed(value: u64) void {
     random_state = if (value == 0) 1 else value;
+    stripe = @intCast(value % stripes);
 }
 
-pub const ConsoleTelemetry = struct {
-    challenges: @import("challenge_metrics.zig").Metrics = .{},
+/// One sample in 64: xorshift64* on private state avoids a contended sampling counter, and
+/// masking a multiplied output selects each request with probability 1/64. Callers decide
+/// before doing any per-sample work.
+pub fn selected() bool {
+    random_state ^= random_state >> 12;
+    random_state ^= random_state << 25;
+    random_state ^= random_state >> 27;
+    return (random_state *% 2685821657736338717) & 63 == 0;
+}
+
+/// One cache line of exact outcome counters for one group of connection threads.
+pub const Stripe = struct {
     admitted: std.atomic.Value(u64) = .init(0),
     challenged: std.atomic.Value(u64) = .init(0),
     denied: std.atomic.Value(u64) = .init(0),
@@ -72,6 +88,14 @@ pub const ConsoleTelemetry = struct {
     other: std.atomic.Value(u64) = .init(0),
     origin_4xx: std.atomic.Value(u64) = .init(0),
     origin_5xx: std.atomic.Value(u64) = .init(0),
+};
+comptime {
+    std.debug.assert(@sizeOf(Stripe) == 64);
+}
+
+pub const ConsoleTelemetry = struct {
+    challenges: @import("challenge_metrics.zig").Metrics = .{},
+    counts: [stripes]Stripe align(64) = @splat(.{}),
     dropped: std.atomic.Value(u64) = .init(0),
     queue: Queue(Record, 4096),
     challenge_queue: Queue(ChallengeRecord, 4096),
@@ -94,8 +118,11 @@ pub const ConsoleTelemetry = struct {
 
     pub fn totals(self: *const ConsoleTelemetry) Totals {
         var result: Totals = .{};
-        inline for (@typeInfo(Totals).@"struct".fields) |field|
-            @field(result, field.name) = @field(self, field.name).load(.monotonic);
+        inline for (@typeInfo(Totals).@"struct".fields) |field| {
+            var sum: u64 = 0;
+            for (&self.counts) |*line| sum +%= @field(line, field.name).load(.monotonic);
+            @field(result, field.name) = sum;
+        }
         return result;
     }
 
@@ -116,13 +143,14 @@ pub const ConsoleTelemetry = struct {
 
     /// Exact outcome counters are recorded once per request, before delivery.
     pub fn count(self: *ConsoleTelemetry, outcome: Outcome) void {
+        const line = &self.counts[stripe];
         const counter = switch (outcome) {
-            .admitted => &self.admitted,
-            .challenged => &self.challenged,
-            .denied => &self.denied,
-            .banned => &self.banned,
-            .rate_limited => &self.rate_limited,
-            .other => &self.other,
+            .admitted => &line.admitted,
+            .challenged => &line.challenged,
+            .denied => &line.denied,
+            .banned => &line.banned,
+            .rate_limited => &line.rate_limited,
+            .other => &line.other,
         };
         _ = counter.fetchAdd(1, .monotonic);
     }
@@ -130,13 +158,12 @@ pub const ConsoleTelemetry = struct {
     /// One sample in 64 enters the bounded queue; an admitted request offers its sample
     /// once the origin status is known, so the status field describes what was sent.
     pub fn offer(self: *ConsoleTelemetry, outcome: Outcome, sample: Sample) void {
+        if (selected()) self.push(outcome, sample);
+    }
+
+    /// A sample already selected by `selected`; callers build it only for those requests.
+    pub fn push(self: *ConsoleTelemetry, outcome: Outcome, sample: Sample) void {
         const second, const ip, const path = .{ sample.second, sample.ip, sample.path };
-        // xorshift64*: private state avoids a contended sampling counter. Masking a
-        // multiplied output selects each request with probability 1/64.
-        random_state ^= random_state >> 12;
-        random_state ^= random_state << 25;
-        random_state ^= random_state >> 27;
-        if ((random_state *% 2685821657736338717) & 63 != 0) return;
         var item: Record = undefined;
         item.second = second;
         item.outcome = outcome;
@@ -155,8 +182,9 @@ pub const ConsoleTelemetry = struct {
     }
 
     pub fn origin(self: *ConsoleTelemetry, status: u16) void {
-        if (status >= 400 and status < 500) _ = self.origin_4xx.fetchAdd(1, .monotonic);
-        if (status >= 500 and status < 600) _ = self.origin_5xx.fetchAdd(1, .monotonic);
+        const line = &self.counts[stripe];
+        if (status >= 400 and status < 500) _ = line.origin_4xx.fetchAdd(1, .monotonic);
+        if (status >= 500 and status < 600) _ = line.origin_5xx.fetchAdd(1, .monotonic);
     }
 };
 
@@ -173,13 +201,14 @@ test "exact outcomes remain complete when the bounded sample queue overflows" {
         .referer = "news.example.test",
         .status = 200,
     });
-    try t.expectEqual(@as(u64, 500000), telemetry.admitted.load(.monotonic));
+    try t.expectEqual(@as(u64, 500000), telemetry.totals().admitted);
     try t.expect(telemetry.dropped.load(.monotonic) > 0);
     telemetry.origin(404);
+    seed(77); // another stripe; totals still sum every stripe
     telemetry.origin(502);
     telemetry.origin(200);
-    try t.expectEqual(@as(u64, 1), telemetry.origin_4xx.load(.monotonic));
-    try t.expectEqual(@as(u64, 1), telemetry.origin_5xx.load(.monotonic));
+    try t.expectEqual(@as(u64, 1), telemetry.totals().origin_4xx);
+    try t.expectEqual(@as(u64, 1), telemetry.totals().origin_5xx);
 }
 
 test "external outcomes partition traffic independently of origin response classes" {

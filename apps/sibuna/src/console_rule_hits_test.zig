@@ -129,7 +129,9 @@ test "published rule generations retain identities and a failed rebuild cannot r
     try t.expectEqual(revision, fx.owner.version);
     const unchanged = fx.state.acquireEngine();
     try t.expectEqual(generation, unchanged.hits.generation.number);
-    try t.expectEqual(@as(u64, 1), unchanged.hits.counters.values[0].load(.monotonic));
+    var kept: @TypeOf(unchanged.hits.counters).Snapshot = undefined;
+    unchanged.hits.counters.read(&kept);
+    try t.expectEqual(@as(u64, 1), kept.values[0]);
     @import("server.zig").AppState.releaseEngine(unchanged);
     try fx.owner.db.exec(t.allocator, "UPDATE policies SET header_matchers=NULL,name='Renamed'");
     try fx.owner.tick();
@@ -139,5 +141,7 @@ test "published rule generations retain identities and a failed rebuild cannot r
     try t.expectEqual(fx.owner.version, replaced.hits.generation.revision);
     try t.expectEqualStrings("m:tracked", replaced.hits.generation.rules[0].key.slice());
     try t.expectEqualStrings("Renamed", replaced.hits.generation.rules[0].name.slice());
-    try t.expectEqual(@as(u64, 0), replaced.hits.counters.values[0].load(.monotonic));
+    var fresh: @TypeOf(replaced.hits.counters).Snapshot = undefined;
+    replaced.hits.counters.read(&fresh);
+    try t.expectEqual(@as(u64, 0), fresh.values[0]);
 }

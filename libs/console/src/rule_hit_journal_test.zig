@@ -63,7 +63,7 @@ test "publication, failed writes and a full queue preserve ownership and expose 
         const source = generation(number, number * 60, 1);
         journal.begin(&source);
         var counters: Counters = .{ .generation = number };
-        counters.values[0].store(number, .monotonic);
+        counters.values[0][0].store(number, .monotonic);
         var snapshot: Counters.Snapshot = undefined;
         counters.read(&snapshot);
         journal.finish(&snapshot, .{ .utc = number * 60 + 1, .ms = number * 60000 + 1000 });

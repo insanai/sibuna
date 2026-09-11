@@ -1,7 +1,10 @@
 //! Counter sets belong to immutable rule generations. Callers pin that generation while
 //! recording or reading; only a quiescent owner may reset it for reuse. No request allocation.
 const std = @import("std");
+const telemetry = @import("telemetry.zig");
 
+/// Counters are striped per connection-thread group (see `telemetry.stripe`) so recording
+/// never contends on one cache line; snapshots sum the stripes.
 pub fn Counters(comptime capacity: usize) type {
     std.debug.assert(capacity > 0 and capacity <= 128);
     return struct {
@@ -29,47 +32,45 @@ pub fn Counters(comptime capacity: usize) type {
             }
         };
         generation: u64 = 0,
-        values: [capacity]std.atomic.Value(u64) = @splat(.init(0)),
+        values: [telemetry.stripes][capacity]std.atomic.Value(u64) = @splat(@splat(.init(0))),
         overflow: std.atomic.Value(bool) = .init(false),
 
         pub fn record(self: *Self, matches: *const Matches) void {
             std.debug.assert(self.generation != 0);
+            const row = &self.values[telemetry.stripe];
             var indices = matches.iterator(.{});
             while (indices.next()) |index| {
                 std.debug.assert(index < capacity);
-                self.increment(index);
-            }
-        }
-
-        fn increment(self: *Self, index: usize) void {
-            const counter = &self.values[index];
-            var previous = counter.load(.monotonic);
-            while (true) {
-                if (previous == std.math.maxInt(u64)) {
+                // A wrapped counter is pinned at its maximum and flagged; the interval
+                // that contains it is reported as overflowed rather than complete.
+                if (row[index].fetchAdd(1, .monotonic) == std.math.maxInt(u64)) {
+                    row[index].store(std.math.maxInt(u64), .monotonic);
                     self.overflow.store(true, .monotonic);
-                    return;
                 }
-                previous = counter.cmpxchgWeak(
-                    previous,
-                    previous + 1,
-                    .monotonic,
-                    .monotonic,
-                ) orelse return;
             }
         }
 
         pub fn read(self: *const Self, output: *Snapshot) void {
             output.generation = self.generation;
-            for (&self.values, &output.values) |*counter, *value|
-                value.* = counter.load(.monotonic);
-            // Saturating increments never expose a wrapped zero while overflow is being set.
-            output.overflow = self.overflow.load(.monotonic);
+            var saturated = false;
+            for (&output.values, 0..) |*value, index| {
+                var sum: u64 = 0;
+                for (&self.values) |*row| {
+                    sum = std.math.add(u64, sum, row[index].load(.monotonic)) catch blk: {
+                        saturated = true;
+                        break :blk std.math.maxInt(u64);
+                    };
+                }
+                value.* = sum;
+            }
+            // Pinned increments never expose a wrapped zero while overflow is being set.
+            output.overflow = saturated or self.overflow.load(.monotonic);
         }
 
         pub fn reset(self: *Self, generation: u64) void {
             std.debug.assert(generation != 0);
             self.generation = generation;
-            for (&self.values) |*value| value.store(0, .monotonic);
+            for (&self.values) |*row| for (row) |*value| value.store(0, .monotonic);
             self.overflow.store(false, .monotonic);
         }
     };
@@ -115,7 +116,7 @@ test "counter wrap cannot produce an apparently complete interval" {
     var counters: C = .{ .generation = 1 };
     var before: C.Snapshot = undefined;
     counters.read(&before);
-    counters.values[0].store(std.math.maxInt(u64), .monotonic);
+    counters.values[telemetry.stripe][0].store(std.math.maxInt(u64), .monotonic);
     const matches = C.Matches.initFull();
     counters.record(&matches);
     var after: C.Snapshot = undefined;

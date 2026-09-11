@@ -659,9 +659,11 @@ fn sampleOutcome(ctx: *RequestContext, outcome: store.telemetry.Outcome, status:
     if (!build_options.console) return;
     const telemetry = ctx.state().telemetry orelse return;
     if (ctx.internal) return;
-    // Labels come from the full agent value here; the queue never carries the agent.
+    // Only the one request in 64 that is sampled pays for agent classification and referer
+    // parsing; labels come from the full agent value, the queue never carries the agent.
+    if (!store.telemetry.selected()) return;
     const family = @import("console").protocol.client_family.classify(ctx.user_agent);
-    telemetry.offer(outcome, .{
+    telemetry.push(outcome, .{
         .second = ctx.now,
         .ip = ctx.client_ip,
         .path = ctx.req.path,
