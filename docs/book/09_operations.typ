@@ -327,7 +327,7 @@ harness includes each dashboard's stream, rankings and retained-timeline queries
 acceptance run requires a production GeoIP snapshot and documented host conditions. Direct TLS
 peer transport and the combined dashboard have separate coverage and freshness contracts;
 interface review and browser acceptance remain tracked in SID 0007. The complete Wasm
-application warns above 448 KiB and has a 512 KiB uncompressed ceiling. These project limits
+application warns above 640 KiB and has a 768 KiB uncompressed ceiling. These project limits
 leave room for console workflows; they do not replace browser loading and responsiveness
 measurements or change the explicit 4 MiB linear-memory allocation.
 

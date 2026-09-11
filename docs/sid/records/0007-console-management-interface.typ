@@ -971,13 +971,14 @@ same module natively and assert rendered HTML strings.
 - *Charts obey the rules.* `charts.zig` has one palette (the decision colours and the accent),
   draws deviation markers and sparklines as first-class marks, keeps axes and positions
   stable across updates, and uses no animation on data updates (R6, R8–R11).
-- *Budget.* The module is compiled at `ReleaseSmall`, with a 448 KiB artifact review warning
-  and 512 KiB uncompressed ceiling. These project guardrails cover the complete console;
+- *Budget.* The module is compiled at `ReleaseSmall`, with a 640 KiB artifact review warning
+  and 768 KiB uncompressed ceiling (raised from 448 KiB and 512 KiB on 2026-09-11; see
+  “Interface budget review”). These project guardrails cover the complete console;
   they are not WebAssembly limits or substitutes for browser performance acceptance.
   The ceiling is a project allocation, not a WebAssembly standard. Correctness, accessibility
   and cohesive modules take precedence over recovering a few bytes through complex encoding.
   Crossing the warning requires a dependency and browser-timing review; changing the ceiling
-  requires evidence. At 4 Mbit/s, 512 KiB alone takes about 1.05 seconds before latency
+  requires evidence. At 4 Mbit/s, 768 KiB alone takes about 1.57 seconds before latency
   and other assets, an arithmetic planning assumption rather than a measured load time. Linear memory remains 4 MiB initial and explicit maximum, with bounded
   retained history and a bump arena reset after each event.
 
@@ -1517,7 +1518,7 @@ configured slots, queues and optional GeoIP dataset. Record active peak RSS sepa
   [Statistics delta latency], [≤ 1.25 s], [Sampler period plus 1 Hz broadcast],
   [Incident to dashboard], [Target ≤ 2.25 s + commit delay without backlog], [“The incident tap”; slow storage and replication can exceed this],
   [Policy edit to rebuilt engine on every node], [Target: commit/apply + next successful tick], [SID 0005 path],
-  [Interface module size], [Warn above 448 KiB; ≤ 512 KiB], [`ReleaseSmall`, uncompressed artifact guardrail; review with browser timings],
+  [Interface module size], [Warn above 640 KiB; ≤ 768 KiB], [`ReleaseSmall`, uncompressed artifact guardrail; review with browser timings],
   [Browser experience], [LCP ≤ 2.5 s; INP ≤ 200 ms; CLS ≤ 0.1], [Published user-experience targets at the 75th percentile, separately for mobile and desktop; recorded lab checks do not establish field acceptance],
   [Page render (statistics, 3,600-point timeline)], [≤ 5 ms in the module], [Bounded writer, per-panel versions],
   [WebSocket subscribers per console], [64], [Slot table; `503` beyond],
@@ -1823,9 +1824,28 @@ history); the client address on mutation audit rows other than authentication.
 and `libs/serve/src/admission.zig` stays an unwired reference; request bodies use per-route
 bounded buffers stricter than the 1 MB and 8 MB figures, with policy import chunked; a denial
 carries no rule name to the client, so tester parity is checked against the decision, not a
-response header. The interface module retains a 512 KiB ceiling and a 448 KiB review threshold. Further
-page work must pass the asset-size check; changes to the budget require a documented
-application need and a review of loading and memory costs.
+response header. The interface module has a 768 KiB ceiling and a 640 KiB review threshold
+since the budget review below. Further page work must pass the asset-size check; changes to
+the budget require a documented application need and a review of loading and memory costs.
+
+== Interface budget review (2026-09-11)
+
+The launch-scope module measured 511,570 bytes against the 524,288-byte ceiling: 370,137
+bytes of code, 140,010 bytes of data (about 46 KB of page templates, 40 KB of shorter
+strings and 52 KB of tables), and under 1.4 KB of ABI metadata (`tools/console_wasm_sections.py`
+reports the split). The eight observability requirements deferred at launch add panels to
+the Traffic, Security, Challenges, Events and Nodes pages, which cannot fit in the remaining
+2.7 KB. The project owner chose to raise the allocation rather than split the module or
+reduce existing pages, so the ceiling is 768 KiB and the review warning 640 KiB. Loading
+evidence for the change: five cold loads of the 511,570-byte module in headless Chrome
+against a loopback node reached the page heading in 74–103 ms (median 98 ms) with a 3–6 ms
+module fetch, so on that path the module cost is instantiation and first render, not
+transfer; on the 4 Mbit/s planning link a full 768 KiB module takes about 1.57 seconds,
+which stays within the LCP target only with the immutable cache path (`/console/assets/<digest>/`)
+serving repeat visits. Linear memory stays at 4 MiB initial and maximum: the module keeps a
+bump arena reset after each event and fixed buffers, and code size does not change the
+retained-history bound. Each phase that adds a page records the new module size, and
+crossing 640 KiB triggers the dependency and browser-timing review above.
 
 = References
 
