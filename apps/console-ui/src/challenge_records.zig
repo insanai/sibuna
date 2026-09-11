@@ -32,6 +32,7 @@ pub const Model = struct {
     count: u8 = 0,
     next: ?wire.Cursor = null,
     dropped: u64 = 0,
+    unconfirmed: u64 = 0,
     retention_days: u16 = wire.retention_days,
     loaded: bool = false,
     busy: bool = false,
@@ -46,6 +47,7 @@ pub const Model = struct {
             version: u8,
             retention_days: u16,
             dropped_since_boot: u64,
+            unconfirmed_since_boot: u64,
             rows: []const WireRow,
             next: ?WireCursor,
         }, value, allocator);
@@ -74,6 +76,7 @@ pub const Model = struct {
         else
             null;
         self.dropped = page.dropped_since_boot;
+        self.unconfirmed = page.unconfirmed_since_boot;
         self.retention_days = page.retention_days;
         self.loaded = true;
     }
@@ -82,6 +85,7 @@ pub const Model = struct {
         const page = try decode(struct {
             version: u8,
             current_bits: ?u8,
+            missed_since_boot: u64,
             rows: []const struct {
                 node: u32,
                 second: u64,
@@ -95,6 +99,7 @@ pub const Model = struct {
             return error.InvalidResponse;
         var result: wire.DifficultyPage = .{
             .current_bits = page.current_bits,
+            .missed_since_boot = page.missed_since_boot,
             .truncated = page.truncated,
         };
         for (page.rows, 0..) |row, i| result.rows[i] = .{
@@ -148,6 +153,9 @@ fn difficulty(state: *const State, w: *Writer) Writer.Error!void {
     try w.writeAll("</tbody></table></div>");
     if (page.truncated)
         try w.writeAll("<p class=\"sb-note\">Only the newest 32 transitions are shown.</p>");
+    if (page.missed_since_boot != 0) try html.render(w, "<p class=\"sb-note\">{{ missed }} " ++
+        "changes observed on this node since boot were not recorded; the table is not a " ++
+        "complete history.</p>", .{ .missed = page.missed_since_boot });
     try w.writeAll("</section>");
 }
 
@@ -168,9 +176,11 @@ fn records(state: *const State, w: *Writer) Writer.Error!void {
     if (!model.loaded) return w.writeAll("<p class=\"sb-note\">Choose a rejection cause above " ++
         "or a filter here to load records.</p></section>");
     try html.render(w, "<p class=\"sb-note\">{{ filter }} · {{ dropped }} records dropped " ++
-        "by the bounded queue since boot · retention {{ days }} days.</p>", .{
+        "by the bounded queue and {{ unconfirmed }} batches unconfirmed since this node " ++
+        "booted · retention {{ days }} days.</p>", .{
         .filter = filterText(model),
         .dropped = model.dropped,
+        .unconfirmed = model.unconfirmed,
         .days = model.retention_days,
     });
     try w.writeAll("<div class=\"overflow-x-auto\"><table class=\"table\"><thead><tr>" ++
@@ -242,7 +252,8 @@ test "records decode owned addresses and render durations as not recorded when a
     defer arena.deinit();
     const source =
         \\{"version":1,"retention_days":7,"observed_at":1,"from":0,"until":1,
-        \\"dropped_since_boot":3,"rows":[{"id":5,"node":1,"second":100,
+        \\"dropped_since_boot":3,"unconfirmed_since_boot":2,
+        \\"rows":[{"id":5,"node":1,"second":100,
         \\"ip":"8.8.12.1","outcome":"rejected","cause":3,"algorithm":1,
         \\"parameter":13,"openings":16,"duration_ms":null}],"next":null}
     ;
@@ -258,4 +269,5 @@ test "records decode owned addresses and render durations as not recorded when a
     try t.expect(std.mem.indexOf(u8, out, "Not recorded") != null);
     try t.expect(std.mem.indexOf(u8, out, "events-deny-8.8.12.1") != null);
     try t.expect(std.mem.indexOf(u8, out, "3 records dropped") != null);
+    try t.expect(std.mem.indexOf(u8, out, "2 batches unconfirmed") != null);
 }

@@ -114,8 +114,10 @@ pub fn records(app: *App, context: *http.Context) !void {
         else
             null,
     } });
-    if (result == .challenge_records) return http.json(context, result.challenge_records, &.{});
-    return failure(context, result.failed);
+    if (result != .challenge_records) return failure(context, result.failed);
+    var page = result.challenge_records;
+    page.unconfirmed_since_boot = app.challenge_records.unconfirmed.load(.monotonic);
+    return http.json(context, page, &.{});
 }
 
 /// Adaptive-difficulty transitions over a bounded window.
@@ -144,9 +146,10 @@ pub fn difficulty(app: *App, context: *http.Context) !void {
         .until = now,
         .node = input.node,
     } });
-    if (result == .challenge_difficulty)
-        return http.json(context, result.challenge_difficulty, &.{});
-    return failure(context, result.failed);
+    if (result != .challenge_difficulty) return failure(context, result.failed);
+    var page = result.challenge_difficulty;
+    page.missed_since_boot = app.challenge_records.missed_transitions.load(.monotonic);
+    return http.json(context, page, &.{});
 }
 
 fn failure(context: *http.Context, reason: p.Failure) !void {

@@ -84,6 +84,8 @@ def records(h, port, data_port, cookie, csrf):
             # A body without a challenge id is rejected as "missing id" (cause 2).
             assert all(row["ip"] == "8.8.12.1" and row["outcome"] == "rejected" for row in rows)
             assert rows[0]["cause"] == 2 and rows[0]["duration_ms"] is None, rows[0]
+            assert int(page["dropped_since_boot"]) == 0
+            assert int(page["unconfirmed_since_boot"]) == 0
             break
         time.sleep(5)
     else:
@@ -115,6 +117,7 @@ def records(h, port, data_port, cookie, csrf):
         page = json.loads(body)
         if any(int(row["bits"]) > int(row["previous_bits"]) for row in page["rows"]):
             assert page["current_bits"] is not None
+            assert int(page["missed_since_boot"]) >= 0
             return
         time.sleep(5)
     raise AssertionError("the issue burst recorded no adaptive-difficulty transition")

@@ -97,6 +97,8 @@ pub const Page = struct {
     from: u64 = 0,
     until: u64 = 0,
     dropped_since_boot: u64 = 0,
+    /// Batches whose write was not acknowledged as recorded; their rows may be absent.
+    unconfirmed_since_boot: u64 = 0,
     rows: [max_rows]Row = undefined,
     count: u8 = 0,
     next: ?Cursor = null,
@@ -107,7 +109,11 @@ pub const Page = struct {
         try w.write(self.version);
         try w.objectField("retention_days");
         try w.write(self.retention_days);
-        inline for (.{ "observed_at", "from", "until", "dropped_since_boot" }) |name| {
+        inline for (.{
+            "observed_at",            "from",
+            "until",                  "dropped_since_boot",
+            "unconfirmed_since_boot",
+        }) |name| {
             try w.objectField(name);
             try p.writeCounter(w, @field(self, name));
         }
@@ -173,6 +179,9 @@ pub const DifficultyPage = struct {
     until: u64 = 0,
     /// The current effective bump of the serving node, observed once per second.
     current_bits: ?u8 = null,
+    /// Changes this node observed but did not record: a previous transition was still
+    /// pending, or the write was not acknowledged. Coverage is boot-local, never zero loss.
+    missed_since_boot: u64 = 0,
     rows: [max_transitions]TransitionRow = undefined,
     count: u8 = 0,
     truncated: bool = false,
@@ -192,6 +201,8 @@ pub const DifficultyPage = struct {
         }
         try w.objectField("current_bits");
         try w.write(self.current_bits);
+        try w.objectField("missed_since_boot");
+        try p.writeCounter(w, self.missed_since_boot);
         try w.objectField("rows");
         try w.write(self.rows[0..self.count]);
         try w.objectField("truncated");

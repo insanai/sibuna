@@ -1,6 +1,7 @@
 //! Drains the data plane's bounded per-address challenge queue into owned batches and
 //! records adaptive-difficulty transitions once per second. One batch and one transition
-//! are in flight at a time; a lost acknowledgement is counted, never retried into duplicates.
+//! are in flight at a time; a lost acknowledgement is counted, never retried into duplicates,
+//! and a change observed while a transition is still pending is counted as missed.
 const std = @import("std");
 const protocol = @import("console_protocol");
 const wire = protocol.challenge_records;
@@ -18,7 +19,10 @@ pub const Journal = struct {
     last_bits: ?u8 = null,
     observed_second: u64 = 0,
     saved: std.atomic.Value(u64) = .init(0),
+    /// Record batches without a recorded acknowledgement (the rows may be absent).
     unconfirmed: std.atomic.Value(u64) = .init(0),
+    /// Transitions observed but not recorded: skipped while one was pending, or unconfirmed.
+    missed_transitions: std.atomic.Value(u64) = .init(0),
 
     pub fn tick(
         self: *Journal,
@@ -50,7 +54,11 @@ pub const Journal = struct {
         const bits: u8 = @intCast(@min(telemetry.adaptive_bits.load(.monotonic), 255));
         defer self.last_bits = bits;
         const previous = self.last_bits orelse return;
-        if (previous == bits or self.transition != null) return;
+        if (previous == bits) return;
+        if (self.transition != null) {
+            _ = self.missed_transitions.fetchAdd(1, .monotonic);
+            return;
+        }
         self.transition = .{
             .node = self.node,
             .boot = self.boot,
@@ -78,11 +86,12 @@ pub const Journal = struct {
         if (self.transition_ticket) |ticket| {
             if (mailbox.poll(io, ticket) catch @panic("challenge transition ownership")) |done| {
                 self.transition_ticket = null;
-                if (done != .command_recorded) _ = self.unconfirmed.fetchAdd(1, .monotonic);
+                if (done != .command_recorded)
+                    _ = self.missed_transitions.fetchAdd(1, .monotonic);
             } else if (ms -| self.transition_ms >= 10000) {
                 mailbox.abandon(io, ticket) catch @panic("challenge transition cancellation");
                 self.transition_ticket = null;
-                _ = self.unconfirmed.fetchAdd(1, .monotonic);
+                _ = self.missed_transitions.fetchAdd(1, .monotonic);
             }
         }
     }
@@ -153,6 +162,11 @@ test "difficulty transitions are observed once per second and records drain in b
     try t.expectEqual(@as(u8, 0), change.previous_bits);
     try t.expectEqual(@as(u8, 2), change.bits);
     try t.expectEqual(@as(u64, 300 * 256), change.rate_256);
+    // A further change while the first is still pending is counted, never silently dropped.
+    telemetry.adaptive_bits.store(3, .monotonic);
+    journal.observe(telemetry, 102);
+    try t.expectEqual(@as(u8, 2), journal.transition.?.bits);
+    try t.expectEqual(@as(u64, 1), journal.missed_transitions.load(.monotonic));
     var record = std.mem.zeroes(store.telemetry.ChallengeRecord);
     record.second = 100;
     record.ip_len = 7;
