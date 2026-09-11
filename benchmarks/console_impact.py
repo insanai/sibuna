@@ -8,7 +8,7 @@ order; a noisy baseline yields "inconclusive", never a pass.
         [--host-label TEXT] [--cluster] [--geoip-data SNAPSHOT]
         [--mode forward_auth|reverse_proxy] [--capture-heads]
 
-Reverse-proxy runs relay to a local origin fixture. With --capture-heads the console-enabled
+Reverse-proxy runs relay to a local `caddy respond` origin. With --capture-heads the console-enabled
 configurations store redacted heads, and an "audited" workload (an XSS finding in audit mode
 admitted with a session) exercises the capture path; compiled-out and disabled never capture.
 """
@@ -19,6 +19,7 @@ import os
 from pathlib import Path
 import random
 import re
+import shutil
 import statistics
 import subprocess
 import sys
@@ -34,7 +35,6 @@ import console_bootstrap_test as bootstrap  # noqa: E402
 import console_e2e  # noqa: E402
 from console_dashboard import Dashboard, covered, difference, stop_clients  # noqa: E402
 import console_peer_impact as peer_impact  # noqa: E402
-from proxy_fixture import origin  # noqa: E402
 
 CONFIGURATIONS = ("compiled_out", "disabled", "idle", "active")
 # An XSS finding in audit mode: admitted with a session, recorded as an incident and, with
@@ -425,16 +425,27 @@ def main():
         psk.chmod(0o600)
         policy = temp / "policy.json"
         policy.write_text(json.dumps(AUDIT_POLICY))
-        application = origin()[0] if args.mode == "reverse_proxy" else None
+        origin_port = free_port() if args.mode == "reverse_proxy" else None
+        application = None
+        if origin_port:
+            # The same static origin as the whole-product harness, so relay cost is bounded
+            # by a compiled server rather than by a Python fixture.
+            if shutil.which("caddy") is None:
+                parser.error("reverse-proxy runs need caddy on PATH for the origin stub")
+            application = subprocess.Popen(
+                ["caddy", "respond", "--listen", f"127.0.0.1:{origin_port}", "--body", "origin"],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            time.sleep(1)
         settings = {"mode": args.mode, "capture_heads": args.capture_heads, "policy": policy,
-                    "upstream_port": application.server_port if application else None}
+                    "upstream_port": origin_port}
         started = time.monotonic()
         try:
             results, dashboards = matrix(binaries, temp, load, args.rounds, args.cluster,
                                          names, seed, psk, script, settings)
         finally:
             if application:
-                application.shutdown()
+                application.terminate()
+                application.wait(timeout=10)
         provenance = metadata(binaries["console"]["path"])
     # Eight dashboards that stopped receiving frames would make "active" an idle daemon.
     if (not dashboards["delivered"] or not dashboards["geoip_available"] or args.quick or
@@ -445,7 +456,8 @@ def main():
                      "quick": args.quick, "cluster": args.cluster,
                      "mode": args.mode, "capture_heads": args.capture_heads,
                      "audit_policy": AUDIT_POLICY,
-                     "origin": "local Python fixture" if args.mode == "reverse_proxy" else None,
+                     "origin": ("caddy respond (static 200)" if args.mode == "reverse_proxy"
+                                else None),
                      "management_peers": 6 if args.cluster else 0,
                      "resource_target_node": 1,
                      "peer_coverage": "current before and after each sample; advancing watermarks",
