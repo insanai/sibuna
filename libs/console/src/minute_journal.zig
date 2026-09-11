@@ -10,6 +10,7 @@ pub const Journal = struct {
     node: u32 = 0,
     boot: [16]u8 = @splat(0),
     current: ?p.Record = null,
+    last_cpu_ms: ?u64 = null,
     complete_candidate: bool = false,
     jobs: [2]Job = undefined,
     head: usize = 0,
@@ -72,6 +73,21 @@ pub const Journal = struct {
         // Monotonic source counters bound each sum; a wrap resets the observation epoch.
         inline for (p.counter_fields) |name| @field(current.counts, name) +=
             @field(next.counts, name);
+    }
+
+    /// Resident memory is a level (last and peak); CPU time is attributed as the delta since
+    /// the previous sample. Samples taken while no minute is open only move the baseline.
+    pub fn gauges(self: *Journal, sample: @import("resources.zig").Sample) void {
+        defer self.last_cpu_ms = sample.cpu_ms;
+        const current = &(self.current orelse return);
+        current.rss_last_kib = sample.rss_kib;
+        var peak = current.rss_max_kib;
+        inline for (.{ sample.rss_max_kib, sample.rss_kib, current.rss_last_kib }) |value| {
+            if (value) |seen| peak = @max(peak orelse 0, seen);
+        }
+        current.rss_max_kib = peak;
+        const previous = self.last_cpu_ms orelse return;
+        current.cpu_ms = (current.cpu_ms orelse 0) +| (sample.cpu_ms -| previous);
     }
 
     pub fn offer(self: *Journal, record: p.Record) void {

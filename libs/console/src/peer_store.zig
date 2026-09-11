@@ -223,6 +223,8 @@ pub const Store = struct {
             report.requests = sample.value.requests;
             report.sample_loss = sample.value.sample_loss;
             report.geoip_available = sample.value.geoip_available;
+            report.rss_kib = sample.value.rss_kib;
+            report.cpu_permille = sample.value.cpu_permille;
         }
         return self.config.count;
     }

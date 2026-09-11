@@ -21,6 +21,12 @@ pub const Record = struct {
     complete: bool = false,
     gap: bool = false,
     counts: @import("timeline.zig").Counts = .{},
+    /// Resident memory at the last observation and its peak within the minute, in KiB,
+    /// and CPU time consumed during the minute; null on rows written before version 37
+    /// or on platforms without a source.
+    rss_last_kib: ?u64 = null,
+    rss_max_kib: ?u64 = null,
+    cpu_ms: ?u64 = null,
 
     pub fn cursor(self: Record) Cursor {
         return .{
@@ -114,6 +120,10 @@ fn fields(value: anytype, w: *std.json.Stringify) std.json.Stringify.Error!void 
             try w.endArray();
         } else if (field.type == u64) {
             try @import("root.zig").writeCounter(w, item);
+        } else if (field.type == ?u64) {
+            if (item) |number| {
+                try @import("root.zig").writeCounter(w, number);
+            } else try w.write(null);
         } else try w.write(item);
     }
     try w.endObject();

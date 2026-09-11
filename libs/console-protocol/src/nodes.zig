@@ -89,6 +89,8 @@ pub const Peer = struct {
     requests: ?u64 = null,
     sample_loss: ?u64 = null,
     geoip_available: bool = false,
+    rss_kib: ?u64 = null,
+    cpu_permille: ?u32 = null,
 
     pub fn jsonStringify(self: Peer, w: *std.json.Stringify) std.json.Stringify.Error!void {
         return fields(self, w);

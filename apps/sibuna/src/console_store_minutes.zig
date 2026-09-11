@@ -58,10 +58,11 @@ pub fn write(owner: *Persistent, input: p.minutes.Write) !p.StorageResult {
 }
 
 pub fn decode(payload: []const u8) !p.minutes.Record {
-    if (payload.len != codec.bytes_len * 2) return error.InvalidStoredValue;
+    if (payload.len != codec.bytes_len * 2 and payload.len != codec.legacy_len * 2)
+        return error.InvalidStoredValue;
     var bytes: [codec.bytes_len]u8 = undefined;
-    _ = try std.fmt.hexToBytes(&bytes, payload);
-    return codec.decode(&bytes);
+    const decoded = try std.fmt.hexToBytes(bytes[0 .. payload.len / 2], payload);
+    return codec.decode(decoded);
 }
 
 fn progress(old: *const p.minutes.Record, next: *const p.minutes.Record) enum {

@@ -35,6 +35,7 @@ test {
     _ = @import("minute_archive.zig");
     _ = @import("challenge_archive.zig");
     _ = @import("challenge_journal.zig");
+    _ = @import("resources.zig");
     _ = @import("minute_journal_test.zig");
     _ = @import("rule_hit_journal_test.zig");
     _ = @import("geoip_maintenance.zig");

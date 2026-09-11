@@ -452,6 +452,10 @@ pub const StatsSnapshot = struct {
     active_bans: ?u64 = null,
     /// This console's probe view of configured peers plus itself; null when not observed.
     cluster_health: ?nodes.Summary = null,
+    /// Resident memory in KiB and CPU of one core in per mille over the last observed second;
+    /// null where the platform offers no source or the snapshot predates the gauge.
+    rss_kib: ?u64 = null,
+    cpu_permille: ?u32 = null,
     sample_probability: []const u8 = "1/64",
     geoip_available: bool = false,
     /// Whether the active country provider's licence requires visible attribution.

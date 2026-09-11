@@ -47,6 +47,8 @@ pub const App = struct {
     bans_seen: u64 = 0,
     bans: ?*store.BanList = null,
     gauge_second: u64 = 0,
+    last_resources: ?@import("resources.zig").Sample = null,
+    last_resources_ms: u64 = 0,
     collector: ?std.Thread = null,
     stopping: std.atomic.Value(bool) = .init(false),
 
@@ -190,11 +192,11 @@ pub const App = struct {
             self.stats.collect(self.io, self.telemetry, second, self.geo);
             self.stats.collectIncidents(self.io, self.incidents, self.geo, second);
             self.observeEvents(second);
-            self.observeGauges(second);
             const ms: u64 = @intCast(@max(0, @divTrunc(
                 std.Io.Clock.awake.now(self.io).nanoseconds,
                 std.time.ns_per_ms,
             )));
+            self.observeGauges(second, ms);
             self.history.tick(self.io, self.mailbox, second, ms);
             self.stats.journal(self.io, &self.minutes);
             self.minutes.tick(self.io, self.mailbox, second, ms);
@@ -216,9 +218,19 @@ pub const App = struct {
 
     /// Once per second: active ban entries and this console's probe view of the cluster.
     /// The console itself counts as healthy because it is serving this observation.
-    fn observeGauges(self: *App, second: u64) void {
+    fn observeGauges(self: *App, second: u64, ms: u64) void {
         if (second == self.gauge_second) return;
         self.gauge_second = second;
+        const resources = @import("resources.zig").sample(self.io);
+        var cpu_permille: ?u32 = null;
+        if (self.last_resources) |previous| if (ms > self.last_resources_ms) {
+            const elapsed = ms - self.last_resources_ms;
+            const busy = (resources.cpu_ms -| previous.cpu_ms) * 1000 / elapsed;
+            cpu_permille = @intCast(@min(busy, 64000));
+        };
+        self.last_resources = resources;
+        self.last_resources_ms = ms;
+        self.minutes.gauges(resources);
         const bans: ?u32 = if (self.bans) |list| list.activeCount(second) else null;
         var probes: [@import("cluster_probe.zig").max_targets]p.nodes.Probe = undefined;
         const count = self.cluster.snapshot(&probes);
@@ -229,7 +241,12 @@ pub const App = struct {
             .down => health.down += 1,
             .unknown => health.unknown += 1,
         };
-        self.stats.gauges(self.io, bans, health);
+        self.stats.gauges(self.io, .{
+            .bans = bans,
+            .health = health,
+            .rss_kib = resources.rss_kib,
+            .cpu_permille = cpu_permille,
+        });
     }
 
     /// Denial spikes and issued bans become notification events; both are counted from

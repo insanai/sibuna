@@ -33,6 +33,8 @@ pub const Stats = struct {
     incident_geo: @import("incident_geo.zig").Window = .{},
     active_bans: ?u32 = null,
     cluster_health: ?p.nodes.Summary = null,
+    rss_kib: ?u64 = null,
+    cpu_permille: ?u32 = null,
 
     pub fn collectIncidents(
         self: *Stats,
@@ -47,11 +49,20 @@ pub const Stats = struct {
     }
 
     /// Gauges are read on the console tick, never on a request thread.
-    pub fn gauges(self: *Stats, io: std.Io, bans: ?u32, health: ?p.nodes.Summary) void {
+    pub const Gauges = struct {
+        bans: ?u32 = null,
+        health: ?p.nodes.Summary = null,
+        rss_kib: ?u64 = null,
+        cpu_permille: ?u32 = null,
+    };
+
+    pub fn gauges(self: *Stats, io: std.Io, value: Gauges) void {
         self.mutex.lockUncancelable(io);
         defer self.mutex.unlock(io);
-        self.active_bans = bans;
-        self.cluster_health = health;
+        self.active_bans = value.bans;
+        self.cluster_health = value.health;
+        self.rss_kib = value.rss_kib;
+        self.cpu_permille = value.cpu_permille;
     }
 
     pub fn journal(self: *Stats, io: std.Io, minutes: *MinuteJournal) void {
@@ -170,6 +181,8 @@ pub const Stats = struct {
             .retention_failures = self.retention_failures.load(.monotonic),
             .active_bans = if (self.active_bans) |count| count else null,
             .cluster_health = self.cluster_health,
+            .rss_kib = self.rss_kib,
+            .cpu_permille = self.cpu_permille,
             .unknown_samples = unknown,
             .timestamp = now,
         };
