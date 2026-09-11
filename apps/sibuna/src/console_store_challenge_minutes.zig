@@ -13,9 +13,9 @@ const Persistent = @import("persistent.zig").Persistent;
 const text = util.text;
 const integer = util.integer;
 const table = "console_challenge_minutes";
-/// Statements per summary request: at most 16 pages of 96 rows, each page within the
-/// 100-row / 64 KiB statement envelope; a longer window continues from `next`.
-const max_pages = 16;
+/// Statements per summary request: at most `max_pages` pages of `max_rows` rows, each page
+/// within the 100-row / 64 KiB statement envelope; a longer window continues from `next`.
+const max_pages = wire.max_pages;
 
 pub fn write(owner: *Persistent, input: wire.Write) !p.StorageResult {
     const record = &input.record;

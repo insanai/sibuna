@@ -90,3 +90,61 @@ test "challenge minutes upsert in-progress snapshots, seal once and sum bounded 
         .command_recorded);
     try t.expectEqual(@as(u64, 1), (try summary(fx, 0, 5)).coverage.rows);
 }
+
+/// A record with every partition active is the widest row: 896 bytes, 1,792 hex on the wire.
+fn fullRecord(minute: u64) p.challenge_minutes.Record {
+    var result = record(minute);
+    for (0..p.challenge_minutes.max_bins) |i| {
+        const bin = result.partition(@intCast(i * 8 + 1)) orelse unreachable;
+        bin.* = .{ .bin = @intCast(i * 8 + 1), .issued = 2, .accepted = 1, .wasm = 1 };
+        bin.buckets[3] = 1;
+    }
+    return result;
+}
+
+test "widest challenge minutes page within the statement envelope and chain on the cursor" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try Fixture.open(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/challenge-minutes-wide",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try fixture.policySession(fx);
+    const rows = p.challenge_minutes.max_pages + 8;
+    for (0..rows) |i| {
+        try t.expect(try fx.run(.{ .challenge_minutes_write = .{
+            .record = fullRecord(i + 1),
+            .now = 20000,
+        } }) == .command_recorded);
+    }
+    // Every row is wider than a hundredth of the envelope, so one statement cannot carry
+    // them all; the scan pages in bounded statements and still sums the whole window.
+    var query: p.StorageRequest = .{ .challenge_summary = .{
+        .session_digest = @splat(1),
+        .observed_at = 20000,
+        .from_minute = 1,
+        .until_minute = rows,
+        .node = 7,
+        .selected = 133,
+    } };
+    var window = (try fx.run(query)).challenge_summary;
+    try t.expectEqual(@as(u64, rows), window.coverage.rows);
+    try t.expect(window.coverage.finished and window.coverage.next == null);
+    try t.expectEqual(@as(u64, rows * 3), window.totals.submitted);
+    // One-row pages exhaust the statement budget first and hand back the cursor the next
+    // part chains on; the continuation finishes the window without repeating a row.
+    query.challenge_summary.limit = 1;
+    window = (try fx.run(query)).challenge_summary;
+    try t.expectEqual(@as(u64, p.challenge_minutes.max_pages), window.coverage.rows);
+    try t.expect(!window.coverage.finished and window.coverage.next != null);
+    query.challenge_summary.before = window.coverage.next;
+    const tail = (try fx.run(query)).challenge_summary;
+    try t.expectEqual(@as(u64, 8), tail.coverage.rows);
+    try t.expect(tail.coverage.finished);
+    var merged = window;
+    try p.challenge_minutes.merge(&merged, tail);
+    try t.expectEqual(@as(u64, rows), merged.coverage.rows);
+}

@@ -5,7 +5,11 @@
 const std = @import("std");
 const p = @import("root.zig");
 pub const max_bins = 8;
-pub const max_rows = 96;
+/// Rows per storage statement: a full record is 896 bytes, 1,792 hex on the wire, so 32
+/// rows plus the look-ahead row stay inside the 64 KiB statement envelope.
+pub const max_rows = 32;
+/// Statements one summary request may spend before it hands back a continuation cursor.
+pub const max_pages = 48;
 pub const retention_days = p.minutes.retention_days;
 pub const cause_count = 13;
 pub const bin_count = 256;
@@ -175,7 +179,7 @@ pub fn merge(into: *Summary, part: Summary) error{InvalidResponse}!void {
     const c = &into.coverage;
     const item = part.coverage;
     if (part.version != 1 or c.finished or item.node != c.node or item.from != c.from or
-        item.until != c.until or item.rows > max_rows * 16 or
+        item.until != c.until or item.rows > max_rows * max_pages or
         item.complete_rows > item.rows or item.finished != (item.next == null) or
         (item.rows == 0 and (item.first != null or item.last != null)) or
         (item.rows != 0 and (item.first == null or item.last == null)))
