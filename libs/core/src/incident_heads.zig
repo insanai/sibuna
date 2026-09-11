@@ -135,6 +135,14 @@ test "heads redact credentials and query values and flag truncation" {
         "HTTP/1.1 200 OK\r\nSet-Cookie: [redacted]\r\nContent-Type: text/html\r\n",
         response[0..tail.len],
     );
+    // A long credential value is redacted before it costs any of the bound, so a raw head
+    // wider than the buffer still fits whole; truncation follows redaction, not the input.
+    const wide = "HTTP/1.1 101 Switching Protocols\r\nSet-Cookie: " ++ ("c" ** 3000) ++
+        "\r\nUpgrade: websocket\r\n\r\n";
+    const fits = responseHead(wide, &response);
+    try t.expect(!fits.truncated);
+    try t.expectEqualStrings("HTTP/1.1 101 Switching Protocols\r\nSet-Cookie: [redacted]" ++
+        "\r\nUpgrade: websocket\r\n", response[0..fits.len]);
     const long = [_]u8{'a'} ** 4000;
     const big = [_]struct { name: []const u8, value: []const u8 }{
         .{ .name = "X-Long", .value = &long },

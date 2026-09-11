@@ -831,18 +831,27 @@ fn forwardAuth(
     return ctx.keep_alive;
 }
 
+/// The origin response head redacted into its bound as soon as the relay validates it.
+const OriginHead = struct {
+    bytes: [core.incident_heads.response_bytes]u8 = undefined,
+    head: core.incident_heads.Head = .{},
+
+    fn capture(context: *anyopaque, raw: []const u8) void {
+        const self: *OriginHead = @ptrCast(@alignCast(context));
+        self.head = core.incident_heads.responseHead(raw, &self.bytes);
+    }
+};
+
 /// After the relay: the origin status counter and sample (a failed relay reports 502), and
 /// any audit findings held back until the origin head was known.
-fn admittedComplete(ctx: *RequestContext, origin_status: u16, origin_head: []const u8) void {
+fn admittedComplete(ctx: *RequestContext, origin_status: u16, origin: *const OriginHead) void {
     const st = ctx.state();
     if (st.telemetry) |telemetry| telemetry.origin(origin_status);
     sampleOutcome(ctx, .admitted, if (origin_status == 0) 502 else origin_status);
     const findings = ctx.deferred_findings;
     if (findings == 0) return;
     ctx.deferred_findings = 0;
-    var redacted: [core.incident_heads.response_bytes]u8 = undefined;
-    const head = core.incident_heads.responseHead(origin_head, &redacted);
-    recordFindings(ctx, findings, redacted[0..head.len], head.truncated);
+    recordFindings(ctx, findings, origin.bytes[0..origin.head.len], origin.head.truncated);
 }
 
 fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule_hash: u64) !bool {
@@ -854,10 +863,8 @@ fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule
     const c = ctx.c;
     const cfg = st.config;
     var origin_status: u16 = 0;
-    var origin_head: [core.incident_heads.response_bytes]u8 = undefined;
-    var origin_head_len: u16 = 0;
-    defer if (build_options.console)
-        admittedComplete(ctx, origin_status, origin_head[0..origin_head_len]);
+    var origin: OriginHead = .{};
+    defer if (build_options.console) admittedComplete(ctx, origin_status, &origin);
     const audit = net.ProxyAudit{
         .client_ip = ctx.client_ip,
         .scheme = net.forwarded.scheme(ctx.req, cfg.trustsForwarded()),
@@ -865,10 +872,9 @@ fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule
         .rule = rule_name,
         .response_status = if (build_options.console) &origin_status else null,
         .response_head = if (build_options.console and ctx.deferred_findings != 0)
-            &origin_head
+            .{ .context = &origin, .call = OriginHead.capture }
         else
             null,
-        .response_head_len = if (build_options.console) &origin_head_len else null,
     };
     const relay = net.proxy.streamProxy(&st.upstream, .{
         .io = c.io,

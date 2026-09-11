@@ -31,10 +31,15 @@ pub const Audit = struct {
     rule: []const u8,
     scheme: []const u8 = "http",
     response_status: ?*u16 = null,
-    /// Optional copy of the origin response head (status line and headers, raw) for the
-    /// caller's evidence capture; bounded by the buffer, the length reports what fit.
-    response_head: ?*[1024]u8 = null,
-    response_head_len: ?*u16 = null,
+    /// Called once with the complete validated origin response head (status line and
+    /// headers, raw, including an accepted upgrade's 101 head) for the caller's evidence
+    /// capture; the callee bounds and redacts it, so truncation is decided after redaction.
+    response_head: ?HeadSink = null,
+};
+
+pub const HeadSink = struct {
+    context: *anyopaque,
+    call: *const fn (*anyopaque, []const u8) void,
 };
 
 pub const ProxyError = error{
@@ -381,11 +386,7 @@ fn relayResponse(
     const parsed = parseResponseHead(head, head_request) orelse return error.UpstreamReadFailed;
     if (parsed.status == 101) return error.UpstreamReadFailed;
     if (audit.response_status) |output| output.* = parsed.status;
-    if (audit.response_head) |buffer| {
-        const n = @min(head.len, buffer.len);
-        @memcpy(buffer[0..n], head[0..n]);
-        if (audit.response_head_len) |length| length.* = @intCast(n);
-    }
+    if (audit.response_head) |sink| sink.call(sink.context, head);
     const framed = parsed.framing != .until_close;
     const keep = client_keep_alive and framed;
     try writeClientHead(w, head, keep);
@@ -473,6 +474,7 @@ fn relayUpgrade(
         return error.ClientWriteFailed;
     input.client.writer.flush() catch return error.ClientWriteFailed;
     if (input.audit.response_status) |status| status.* = 101;
+    if (input.audit.response_head) |sink| sink.call(sink.context, head);
     reader.toss(head.len);
     duplex.relay(input.io, .{
         .{ .stream = input.client.stream, .reader = input.client.reader },
