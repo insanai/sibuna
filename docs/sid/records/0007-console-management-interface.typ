@@ -650,13 +650,28 @@ JA4, WEIGH decomposition, WAF numeric score, matched offset or rule version. Con
 capture now adds a version-1 metadata sidecar: selected firewall status, query/body byte lengths
 and capture truncation flags. Query/body values and headers are omitted from this evidence view;
 selected status does not establish delivery. Historical rows have no sidecar. Richer evidence is opt-in:
-`--console-capture-heads` stores, in the incident's own transaction (schema version 39), the
-request head redacted before capture (credential headers keep only their name, every query
-value reads “[redacted]”, 2 KiB bound with a truncation flag) and, for audited admitted
-requests, the origin response head redacted the same way (1 KiB bound); denials have no
-origin response. Heads travel hex-encoded so the Events page renders them under UTF-8 or
-Latin-1 and rebuilds an escaped “copy as cURL” command that names its redactions and the
-uncaptured body. Without the flag every incident reports its heads as not recorded.
+`--console-capture-heads` stores, in the incident's own transaction (schema versions 39 and
+40), the request head redacted before capture and, for audited admissions in reverse-proxy
+mode, the origin response head (an accepted WebSocket handshake included). Redaction is an
+allowlist: only the values of Host, User-Agent, Accept, Accept-Encoding, Accept-Language,
+Content-Type, Content-Length, Content-Encoding, Cache-Control, Origin, Referer, Location,
+Connection, Upgrade, Sec-WebSocket-Version, Server, Date, Retry-After and X-Forwarded-Proto
+are kept; every other header keeps only its name, credential names (Cookie, Authorization
+and the like) lose their value even when listed, URL-bearing values lose userinfo, query
+values and fragments, and every query value reads “[redacted]”. `--console-capture-header
+<name>` (repeatable, at most 16 token names of at most 64 bytes, deduplicated, rejected
+without the capture flag) adds names to the kept list. Bounds are 2 KiB and 1 KiB; the
+whole validated head is redacted first and truncation is flagged on the redacted copy, so a
+long credential never costs the bound. Findings held back for the origin head are recorded
+exactly once on every exit: a challenge, denial or rate limit records them with response
+state _local_, a relay that never produced a head with _unavailable_, a captured head with
+_captured_, and forward-auth mode with _unobserved_; rows written before version 40 read
+_unknown_, never local. Heads travel hex-encoded so the Events page renders them under UTF-8
+or Latin-1, states the response condition, copies a cURL command through the host clipboard
+(with a selectable fallback), and refuses to build a command when the request line or Host is
+incomplete. The command uses `--globoff`, omits credential placeholders, framing and
+hop-by-hop headers, and names its redactions, the uncaptured body and an assumed scheme.
+Without the flag every incident reports its heads as not recorded.
 Show unavailable fields as “not recorded”; never reconstruct a raw request as if captured.
 Campaign similarity is the current 64-dimensional embedding/cosine heuristic (threshold
 0.35), not attribution or proof of a common attacker. A denied request has no origin response.
@@ -1843,7 +1858,7 @@ day in phases 1 to 8 of the post-launch plan (see “Post-launch completion”);
 condition below still applies.
 
 *In scope and verified on main:* every page of “Pages”, the authentication and kiosk model,
-the six-topic protocol, the data model through schema version 39, GeoIP, cluster membership,
+the six-topic protocol, the data model through schema version 40, GeoIP, cluster membership,
 probes and peer telemetry, notifications, retention, response-page templates, the CLI, the
 build pipeline and digest gate, the golden, contract, end-to-end and cluster test entry points,
 and the operator guide with screenshots.
@@ -1875,13 +1890,30 @@ sixty-second sparklines; durable challenge minutes and their retained window (ve
 resident memory and CPU gauges in the live snapshot and minute records (version 37); sampled
 referring hosts, client families and response status beside path rankings (SBR2 archives);
 per-address challenge records and adaptive-difficulty transitions (version 38); and opt-in
-redacted request and response heads with charset selection and copy-as-cURL (version 39,
-`--console-capture-heads`). Along the way two defects surfaced by the work were fixed: the
-live statistics fan-out now lands on UTC second boundaries so sparklines stay continuous, and
-the Nodes page keeps its gauges live. Still open by design: JA4 fingerprints, which the
-Events detail states as not recorded until a trusted ingress captures them; the solver split
-on the Challenges page remains self-reported by the client. The interface module measures
-619,627 bytes against the 786,432-byte ceiling after these phases.
+redacted request and response heads with charset selection and copy-as-cURL (versions 39
+and 40, `--console-capture-heads`, `--console-capture-header`). Still open by design: JA4
+fingerprints, which the Events detail states as not recorded until a trusted ingress captures
+them; the solver split on the Challenges page remains self-reported by the client.
+
+Decisions taken in the correctness review that followed (2026-09-11): capture evidence uses a
+kept-value allowlist rather than a credential denylist, and the response condition is stored
+with the heads (schema version 40) so absence of a head is never read as a local answer.
+Challenge-minute summaries page at 32 rows (a full row is 1,792 hex bytes, so 33 rows stay
+inside the 64 KiB statement envelope) and continue over up to 48 statements per request. The
+Challenges page states, per booted node, the records dropped by the bounded queue, the batches
+whose write was not acknowledged, and the difficulty changes observed but not recorded;
+these counters are boot-local by design, like the minute journals' unconfirmed snapshots, and
+are not persisted. Expired challenge records are removed 256 at a time every five seconds,
+above the 32-records-per-second ingestion bound, so retention keeps pace without a catch-up
+job. The impact runner accepts `--mode reverse_proxy` (against a local origin fixture) and
+`--capture-heads` (which adds an audited-admission workload); the effective values are part
+of each result's provenance.
+
+Acceptance conditions still open: `zig build console-impact` on the deployment host class
+in both modes, with capture off and on, must show throughput loss within one percent and p99
+increase within ten percent against the compiled-out baseline; an inconclusive run does not
+pass. The interface module measures 622,941 bytes against the 786,432-byte ceiling after
+these changes.
 
 == Interface budget review (2026-09-11)
 

@@ -114,9 +114,12 @@ image("images/console-security.png"))
 #book_figure([Events. Each recorded incident opens inline with its evidence: the selected
 local response, byte lengths, campaign candidate, and explicit “not recorded” entries for
 the matched rule, score terms and JA4 fingerprint. With `--console-capture-heads` the
-redacted request head (and, for audited admissions, the origin response head) opens on
-request, rendered as UTF-8 or Latin-1 with a copy-as-cURL command; otherwise heads read as
-not recorded. Deny and allow actions open the IP groups form with the address drafted.],
+redacted request head (and, for audited admissions through the reverse proxy, the origin
+response head) opens on request, rendered as UTF-8 or Latin-1, with the response condition
+stated (captured, local, forward-auth unobserved, origin unavailable) and a copy-as-cURL
+command; only listed header values are kept, and `--console-capture-header <name>` adds to
+that list. Otherwise heads read as not recorded. Deny and allow actions open the IP groups
+form with the address drafted.],
 image("images/console-events.png"))
 
 #book_figure([Challenges. Issued, submitted, accepted and rejected counts by cause, the
@@ -225,7 +228,10 @@ missing peers stay unavailable and history cursors cannot cross a node restart. 
 keeps its own node selection and per-node rows.
 The navigation and mobile header identify the serving console node independently of the
 selected traffic source. Local commands remain per node. `zig build console-impact` runs the data-plane isolation matrix (`-- --quick` for
-a smoke run) and writes `benchmarks/results/console-impact-latest.json`.
+a smoke run, `-- --mode reverse_proxy` against a local origin, `-- --capture-heads` to
+store heads on the enabled consoles and add an audited-admission workload) and writes
+`benchmarks/results/console-impact-latest.json` with the mode and capture setting in its
+provenance.
 
 Traffic tiles open on the last 24 hours of retained closed-minute records for the selected
 nodes. The period control also offers an hour, seven or ninety days, and live boot totals.
