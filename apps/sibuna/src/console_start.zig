@@ -5,6 +5,7 @@ const Persistent = @import("persistent.zig").Persistent;
 pub const Parsed = struct {
     config: console.ConsoleConfig,
     query_steps: ?u64 = null,
+    capture_heads: bool = false,
     data_args: []const []const u8,
     initial_admin: ?console.protocol.Bytes(64) = null,
 };
@@ -16,6 +17,7 @@ pub fn parse(args: []const []const u8, remaining: [][]const u8) !Parsed {
     var i: usize = 0;
     var options_seen = false;
     var query_steps: ?u64 = null;
+    var capture_heads = false;
     while (i < args.len) : (i += 1) {
         const flag = args[i];
         if (i == 0 and std.mem.eql(u8, flag, "init-admin")) {
@@ -36,6 +38,10 @@ pub fn parse(args: []const []const u8, remaining: [][]const u8) !Parsed {
             config.behind_proxy = true;
             continue;
         }
+        if (std.mem.eql(u8, flag, "--console-capture-heads")) {
+            capture_heads = true;
+            continue;
+        }
         if (std.mem.eql(u8, flag, "--console-cookie-secure")) {
             if (config.cookie_secure) return error.DuplicateCookieSecure;
             config.cookie_secure = true;
@@ -54,6 +60,7 @@ pub fn parse(args: []const []const u8, remaining: [][]const u8) !Parsed {
     return .{
         .config = config,
         .query_steps = query_steps,
+        .capture_heads = capture_heads,
         .data_args = remaining[0..count],
         .initial_admin = initial_admin,
     };

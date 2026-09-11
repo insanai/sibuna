@@ -91,3 +91,29 @@ fn campaignId(value: []const u8) error{InvalidRequest}!u64 {
     if (value.len == 0) return 0;
     return std.fmt.parseInt(u64, value, 10) catch error.InvalidRequest;
 }
+
+/// Redacted heads for one incident; absent rows read as not recorded, never as empty.
+pub fn heads(app: *App, context: *http.Context) !void {
+    const digest = try http.session(context);
+    if (!app.query_budget.allow(app.io, digest, app.now(), .query))
+        return http.fail(context, .too_many_requests, "CONSOLEQUERY");
+    var body: [256]u8 = undefined;
+    var arena: [1024]u8 = undefined;
+    var fixed = std.heap.FixedBufferAllocator.init(&arena);
+    const input = try http.parse(struct { id: []const u8 }, context, &body, fixed.allocator());
+    defer input.deinit();
+    const id = std.fmt.parseInt(u64, input.value.id, 10) catch return error.InvalidRequest;
+    const result = try app.request(.{ .incident_heads_read = .{
+        .session_digest = digest,
+        .require_totp = app.config.behind_proxy,
+        .id = id,
+    } });
+    defer p.releaseResult(result, app.gpa);
+    if (result == .incident_heads) return http.json(context, result.incident_heads.*, &.{});
+    return http.fail(context, switch (result.failed) {
+        .unauthorized => .unauthorized,
+        .forbidden => .forbidden,
+        .invalid_input => .bad_request,
+        else => .service_unavailable,
+    }, "CONSOLEEVENTS");
+}

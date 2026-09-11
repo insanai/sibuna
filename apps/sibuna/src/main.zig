@@ -37,6 +37,7 @@ pub fn main(init: std.process.Init) !u8 {
     if (build_options.console) if (parsed.query_steps) |steps| {
         cfg.console_query_steps = steps;
     };
+    if (build_options.console and parsed.capture_heads) cfg.console_capture_heads = true;
     if (build_options.console and !console_start.validate(parsed.config, cfg.data_dir != null))
         return 1;
     if (build_options.console) if (parsed.initial_admin) |username| {
@@ -250,6 +251,8 @@ fn printConsoleHelp() void {
             "Console: --console <host:port> (requires --data-dir); " ++
             "--console-query-steps <n> (SQLite steps per Security aggregate, " ++
             "100000-50000000, default 4000000; cluster RPC uses 10000000); " ++
+            "--console-capture-heads (store redacted request and origin response heads " ++
+            "per incident; off by default); " ++
             "--console-key-file <path> (64 hex characters, owner-only permissions); " ++
             "--console-origin <https-origin>; --console-behind-proxy; " ++
             "--console-trusted-proxy <CIDR> (repeatable); " ++

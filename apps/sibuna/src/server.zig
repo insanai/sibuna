@@ -420,6 +420,9 @@ pub const RequestContext = struct {
     keep_alive: bool,
     /// Route identity precedes any trusted authorization-target rewrite.
     internal: bool,
+    /// Audit findings held back until the origin response head is known (capture only).
+    deferred_findings: if (build_options.console) u8 else void =
+        if (build_options.console) 0 else {},
 
     fn init(c: *Connection, req: *net.Request, declared_body: usize) RequestContext {
         const ts = Io.Clock.real.now(c.io);
@@ -684,7 +687,26 @@ test "referring hosts drop scheme, credentials, ports and paths" {
 fn recordAuditFindings(ctx: *RequestContext, findings: u8) void {
     if (findings == 0) return;
     const st = ctx.state();
+    // With capture on, an audited admission records once the origin head is known.
+    if (build_options.console and st.config.console_capture_heads and
+        st.config.mode == .reverse_proxy)
+    {
+        ctx.deferred_findings = findings;
+        return;
+    }
+    recordFindings(ctx, findings, "", false);
+}
+
+fn recordFindings(
+    ctx: *RequestContext,
+    findings: u8,
+    response_head: []const u8,
+    response_truncated: bool,
+) void {
+    const st = ctx.state();
     const hook = st.hooks.record_incident orelse return;
+    var head: [core.incident_heads.request_bytes]u8 = undefined;
+    const captured = requestHead(ctx, &head);
     inline for (comptime std.meta.tags(policy.waf.AttackCategory)) |category| {
         if (findings & policy.inspection.bit(category) != 0) hook(st.hooks.context, .{
             .client_ip = ctx.client_ip,
@@ -696,15 +718,38 @@ fn recordAuditFindings(ctx: *RequestContext, findings: u8) void {
             // payload and do not fabricate response evidence before session admission.
             .payload = "",
             .now = ctx.now,
+            .request_head = head[0..captured.len],
+            .request_truncated = captured.truncated,
+            .response_head = response_head,
+            .response_truncated = response_truncated,
         });
     }
+}
+
+/// The redacted request head when capture is on; an empty head otherwise.
+fn requestHead(
+    ctx: *RequestContext,
+    out: *[core.incident_heads.request_bytes]u8,
+) core.incident_heads.Head {
+    if (!build_options.console or !ctx.state().config.console_capture_heads) return .{};
+    return core.incident_heads.requestHead(.{
+        .method = ctx.req.method_text,
+        .path = ctx.req.path,
+        .query = ctx.req.query,
+        .version = ctx.req.version,
+        .headers = ctx.req.headers[0..ctx.req.header_count],
+    }, out);
 }
 
 fn recordIncident(ctx: *RequestContext, category: []const u8) void {
     const st = ctx.state();
     const hook = st.hooks.record_incident orelse return;
     const payload = if (ctx.req.query.len > 0) ctx.req.query else ctx.req.body;
+    var head: [core.incident_heads.request_bytes]u8 = undefined;
+    const captured = requestHead(ctx, &head);
     hook(st.hooks.context, .{
+        .request_head = head[0..captured.len],
+        .request_truncated = captured.truncated,
         .client_ip = ctx.client_ip,
         .user_agent = ctx.user_agent,
         .method = @tagName(ctx.req.method),
@@ -751,42 +796,66 @@ fn writeChallenge(ctx: *RequestContext, status: net.response.Status) !void {
 /// Hands an admitted request to the origin (reverse proxy) or answers the
 /// ingress (forward auth). A framed origin response keeps the client
 /// connection open; a close-delimited one closes it after streaming.
+/// Forward auth answers the ingress; the sample records the approval status.
+fn forwardAuth(
+    ctx: *RequestContext,
+    status: []const u8,
+    rule_name: []const u8,
+    rule_hash: u64,
+) !bool {
+    sampleOutcome(ctx, .admitted, 200);
+    var hdr: [256]u8 = undefined;
+    const headers = try std.fmt.bufPrint(
+        &hdr,
+        "X-Sibuna-Status: {s}\r\nX-Sibuna-Rule: {s}\r\nX-Sibuna-Rule-Hash: {x}\r\n",
+        .{ status, rule_name, rule_hash },
+    );
+    try net.response.write(
+        ctx.writer(),
+        .ok,
+        "text/plain; charset=utf-8",
+        "OK",
+        .{ .headers = headers, .keep_alive = ctx.keep_alive },
+    );
+    return ctx.keep_alive;
+}
+
+/// After the relay: the origin status counter and sample (a failed relay reports 502), and
+/// any audit findings held back until the origin head was known.
+fn admittedComplete(ctx: *RequestContext, origin_status: u16, origin_head: []const u8) void {
+    const st = ctx.state();
+    if (st.telemetry) |telemetry| telemetry.origin(origin_status);
+    sampleOutcome(ctx, .admitted, if (origin_status == 0) 502 else origin_status);
+    if (ctx.deferred_findings == 0) return;
+    var redacted: [core.incident_heads.response_bytes]u8 = undefined;
+    const head = core.incident_heads.responseHead(origin_head, &redacted);
+    recordFindings(ctx, ctx.deferred_findings, redacted[0..head.len], head.truncated);
+}
+
 fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule_hash: u64) !bool {
     const st = ctx.state();
     Metrics.bump(&st.metrics.allowed);
     countOutcome(ctx, .admitted);
-    if (st.config.mode == .forward_auth) {
-        sampleOutcome(ctx, .admitted, 200);
-        var hdr: [256]u8 = undefined;
-        const headers = try std.fmt.bufPrint(
-            &hdr,
-            "X-Sibuna-Status: {s}\r\nX-Sibuna-Rule: {s}\r\nX-Sibuna-Rule-Hash: {x}\r\n",
-            .{ status, rule_name, rule_hash },
-        );
-        try net.response.write(
-            ctx.writer(),
-            .ok,
-            "text/plain; charset=utf-8",
-            "OK",
-            .{ .headers = headers, .keep_alive = ctx.keep_alive },
-        );
-        return ctx.keep_alive;
-    }
+    if (st.config.mode == .forward_auth) return forwardAuth(ctx, status, rule_name, rule_hash);
     Metrics.bump(&st.metrics.proxied);
     const c = ctx.c;
     const cfg = st.config;
     var origin_status: u16 = 0;
-    defer if (build_options.console) {
-        if (st.telemetry) |telemetry| telemetry.origin(origin_status);
-        // The admitted sample waits for the origin status; a failed relay reports 502.
-        sampleOutcome(ctx, .admitted, if (origin_status == 0) 502 else origin_status);
-    };
+    var origin_head: [core.incident_heads.response_bytes]u8 = undefined;
+    var origin_head_len: u16 = 0;
+    defer if (build_options.console)
+        admittedComplete(ctx, origin_status, origin_head[0..origin_head_len]);
     const audit = net.ProxyAudit{
         .client_ip = ctx.client_ip,
         .scheme = net.forwarded.scheme(ctx.req, cfg.trustsForwarded()),
         .status = status,
         .rule = rule_name,
         .response_status = if (build_options.console) &origin_status else null,
+        .response_head = if (build_options.console and ctx.deferred_findings != 0)
+            &origin_head
+        else
+            null,
+        .response_head_len = if (build_options.console) &origin_head_len else null,
     };
     const relay = net.proxy.streamProxy(&st.upstream, .{
         .io = c.io,

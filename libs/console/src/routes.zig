@@ -41,6 +41,7 @@ pub const Handler = enum {
     events,
     events_similar,
     events_export,
+    events_heads,
     security_query,
     security_trends,
     stream,
@@ -287,6 +288,13 @@ const table = [_]Route{
         .method = .POST,
         .access = .full,
         .handler = .events_similar,
+        .token_scope = .events_read,
+    },
+    .{
+        .path = "/console/api/events/heads",
+        .method = .POST,
+        .access = .full,
+        .handler = .events_heads,
         .token_scope = .events_read,
     },
     .{

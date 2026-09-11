@@ -476,6 +476,7 @@ pub const App = struct {
                 .edit(self, context, identity.?, route.handler == .inspection_edit),
             .policy_read => return @import("policy_read_routes.zig").read(self, context),
             .events => return @import("event_routes.zig").query(self, context, false),
+            .events_heads => return @import("event_routes.zig").heads(self, context),
             .events_export => return @import("event_routes.zig").query(self, context, true),
             .login => return auth.login(self, context),
             .kiosk_token, .kiosk_exchange => return @import("kiosk_routes.zig").handle(

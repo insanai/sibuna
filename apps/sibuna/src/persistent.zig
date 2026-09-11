@@ -65,6 +65,13 @@ pub const IncidentRecord = struct {
     now: u64 = 0,
     evidence: if (build_options.console) core.IncidentEvidence else void =
         if (build_options.console) .{} else {},
+    request_head: if (build_options.console) [core.incident_heads.request_bytes]u8 else void =
+        if (build_options.console) undefined else {},
+    response_head: if (build_options.console) [core.incident_heads.response_bytes]u8 else void =
+        if (build_options.console) undefined else {},
+    request_len: u16 = 0,
+    response_len: u16 = 0,
+    heads_truncated: u8 = 0,
 
     fn copy(dst: []u8, src: []const u8) usize {
         const n = @min(dst.len, src.len);
@@ -82,6 +89,10 @@ pub const IncidentRecord = struct {
         r.payload_len = @intCast(copy(&r.payload, incident.payload));
         if (build_options.console) {
             r.evidence = incident.evidence;
+            r.request_len = @intCast(copy(&r.request_head, incident.request_head));
+            r.response_len = @intCast(copy(&r.response_head, incident.response_head));
+            r.heads_truncated = @intFromBool(incident.request_truncated) |
+                (@as(u8, @intFromBool(incident.response_truncated)) << 1);
             const lengths = [_]bool{
                 incident.client_ip.len > r.ip.len,
                 incident.user_agent.len > r.ua.len,
@@ -566,17 +577,40 @@ pub const Persistent = struct {
                 "trigger_rule='honeypot',last_seen=MAX(last_seen,excluded.last_seen)");
         }
         try w.writeAll("; ");
-        if (build_options.console) if (rec.evidence.version != 0) {
+        if (build_options.console) try self.appendSidecars(w, id, rec);
+    }
+
+    /// Console sidecars ride in the incident's transaction: evidence metadata, opt-in
+    /// redacted heads and the country at persistence.
+    fn appendSidecars(
+        self: *Persistent,
+        w: *Io.Writer,
+        id: u64,
+        rec: *const IncidentRecord,
+    ) !void {
+        if (rec.evidence.version != 0) {
             try @import("console_evidence.zig").append(w, id, rec.evidence);
             try self.receiptGuard(w);
             try w.writeAll("; ");
-        };
-        if (build_options.console) if (self.console_initialized) {
+        }
+        if (rec.request_len != 0 or rec.response_len != 0) {
+            try @import("console_incident_heads.zig").append(
+                w,
+                id,
+                rec.request_head[0..rec.request_len],
+                rec.response_head[0..rec.response_len],
+                rec.heads_truncated & 1 != 0,
+                rec.heads_truncated & 2 != 0,
+            );
+            try self.receiptGuard(w);
+            try w.writeAll("; ");
+        }
+        if (self.console_initialized) {
             if (try @import("console_event_country.zig").append(self, w, id, rec)) {
                 try self.receiptGuard(w);
                 try w.writeAll("; ");
             }
-        };
+        }
     }
 
     fn reputationUpsert(
