@@ -108,7 +108,10 @@ The server runs bounded blocking accept threads (`--workers`, one per CPU by def
 accepted connection is served on its own thread with a one-megabyte stack, so a slow or idle
 peer never delays another connection; the number of connection threads is bounded by
 `--max-connections` (1,024 by default), beyond which the accept loop answers `503` and closes
-the socket without spawning, counting the event in `sibuna_overloaded_total`. The idle reaper
+the socket without spawning, counting the event in `sibuna_overloaded_total`. A finished
+connection thread still owns its stack until it is joined, and it is joined when its slot is
+next taken, so slots are taken lowest first and the number of allocated stacks follows the
+connections currently open rather than the number served. The idle reaper
 closes connections silent for longer than `--idle-timeout`. Each active connection owns a
 64 KB read buffer, with a 16 KB head limit, and bounded write buffers. HTTP/1.0 and HTTP/1.1 are supported.
 Transfer-Encoding is rejected: chunked request decoding is not implemented. Invalid header
