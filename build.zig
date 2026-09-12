@@ -81,10 +81,8 @@ pub fn build(b: *std.Build) void {
         );
     }
     addBenchmarks(b, target, optimize, modules);
-    addBook(b);
-
+    addDocs(b);
     addFormatting(b);
-    addSid(b);
 }
 
 fn addModules(
@@ -381,6 +379,12 @@ fn addBenchmarks(
     run_all_step.dependOn(&run_all.step);
 }
 
+fn addDocs(b: *std.Build) void {
+    addBook(b);
+    addWhitepaper(b);
+    addSid(b);
+}
+
 fn addBook(b: *std.Build) void {
     const make_dir = b.addSystemCommand(&.{ "mkdir", "-p", "docs/build" });
     const book_cmd = b.addSystemCommand(&.{
@@ -394,6 +398,44 @@ fn addBook(b: *std.Build) void {
     book_cmd.step.dependOn(&make_dir.step);
     const book_step = b.step("book", "Build the Sibuna book PDF (docs/build/sibuna-book.pdf)");
     book_step.dependOn(&book_cmd.step);
+}
+
+fn addWhitepaper(b: *std.Build) void {
+    const make_dir = b.addSystemCommand(&.{ "mkdir", "-p", "docs/build" });
+    const whitepaper_cmd = b.addSystemCommand(&.{
+        "typst",
+        "compile",
+        "--root",
+        ".",
+        "docs/whitepaper/whitepaper.typ",
+        "docs/build/sibuna-whitepaper.pdf",
+    });
+    whitepaper_cmd.step.dependOn(&make_dir.step);
+    const whitepaper_step = b.step(
+        "whitepaper",
+        "Build the Sibuna architecture whitepaper PDF (docs/build/sibuna-whitepaper.pdf)",
+    );
+    whitepaper_step.dependOn(&whitepaper_cmd.step);
+
+    const make_site_dir = b.addSystemCommand(&.{ "mkdir", "-p", "docs/build/whitepaper-site" });
+    const html_cmd = b.addSystemCommand(&.{
+        "typst",
+        "compile",
+        "--features",
+        "html,bundle",
+        "--root",
+        ".",
+        "--format",
+        "bundle",
+        "docs/whitepaper/bundle.typ",
+        "docs/build/whitepaper-site",
+    });
+    html_cmd.step.dependOn(&make_site_dir.step);
+    const html_step = b.step(
+        "whitepaper-html",
+        "Build the Sibuna architecture whitepaper HTML site (docs/build/whitepaper-site)",
+    );
+    html_step.dependOn(&html_cmd.step);
 }
 
 fn addFormatting(b: *std.Build) void {
