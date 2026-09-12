@@ -272,49 +272,49 @@ The defender expends $10^(-2) "J"$ per request. This creates an energetic levera
     let c-posw = rgb("059669")
 
     // --- Panel 1: Traditional WAF Asymmetry ---
-    rect((0, 0), (8.1, 4.3), fill: rgb("fff5f5"), stroke: 0.8pt + rgb("fca5a5"), radius: 0.2)
-    content((4.05, 3.9), text(weight: "bold", size: 8.5pt, fill: rgb("991b1b"))[Traditional WAF: Energetic Inversion], anchor: "center")
+    rect((0, 0), (8.2, 4.4), fill: rgb("fff5f5"), stroke: 0.8pt + rgb("fca5a5"), radius: 0.2)
+    content((4.1, 4.0), text(weight: "bold", size: 8.5pt, fill: rgb("991b1b"))[Traditional WAF: Energetic Inversion], anchor: "center")
     
-    // Attacker node
-    rect((0.4, 0.9), (3.4, 3.3), fill: white, stroke: 0.8pt + c-attacker, radius: 0.15)
-    content((1.9, 2.85), text(weight: "bold", size: 8pt, fill: c-attacker)[Attacker Work], anchor: "center")
-    content((1.9, 2.3), text(size: 7.2pt)[1 HTTP SYN+Req], anchor: "center")
-    content((1.9, 1.5), text(size: 7.8pt, weight: "bold", fill: rgb("991b1b"))[$E_A approx 1 mu"J"$], anchor: "center")
+    // Attacker node (width 2.6cm: 0.5 to 3.1)
+    rect((0.5, 0.9), (3.1, 3.4), fill: white, stroke: 0.8pt + c-attacker, radius: 0.15)
+    content((1.8, 2.9), text(weight: "bold", size: 8pt, fill: c-attacker)[Attacker Work], anchor: "center")
+    content((1.8, 2.3), text(size: 7.2pt)[1 HTTP SYN+Req], anchor: "center")
+    content((1.8, 1.5), text(size: 7.8pt, weight: "bold", fill: rgb("991b1b"))[$E_A approx 1 mu"J"$], anchor: "center")
 
-    // Legacy defender node
-    rect((4.7, 0.9), (7.7, 3.3), fill: white, stroke: 0.8pt + c-legacy, radius: 0.15)
-    content((6.2, 2.85), text(weight: "bold", size: 8pt, fill: c-legacy)[Defender Burn], anchor: "center")
-    content((6.2, 2.4), text(size: 7.2pt)[PCRE Regex + GC], anchor: "center")
-    content((6.2, 2.0), text(size: 7.2pt)[Redis / Postgres], anchor: "center")
-    content((6.2, 1.45), text(size: 7.8pt, weight: "bold", fill: rgb("991b1b"))[$E_D approx 10,"000" mu"J"$], anchor: "center")
+    // Legacy defender node (width 2.6cm: 5.1 to 7.7)
+    rect((5.1, 0.9), (7.7, 3.4), fill: white, stroke: 0.8pt + c-legacy, radius: 0.15)
+    content((6.4, 2.9), text(weight: "bold", size: 8pt, fill: c-legacy)[Defender Burn], anchor: "center")
+    content((6.4, 2.4), text(size: 7.2pt)[PCRE Regex + GC], anchor: "center")
+    content((6.4, 2.0), text(size: 7.2pt)[Redis / Postgres], anchor: "center")
+    content((6.4, 1.45), text(size: 7.8pt, weight: "bold", fill: rgb("991b1b"))[$E_D approx 10,"000" mu"J"$], anchor: "center")
 
-    // Arrow
-    line((3.4, 2.1), (4.7, 2.1), mark: (end: ">"), stroke: 1.5pt + c-attacker)
-    content((4.05, 2.55), text(size: 7.2pt, weight: "bold", fill: c-attacker)[10,000 : 1], anchor: "center")
-    content((4.05, 0.4), text(size: 7.2pt, style: "italic", fill: rgb("7f1d1d"))[Defender collapses under load], anchor: "center")
+    // Arrow with 2.0cm gap (3.1 to 5.1)
+    line((3.1, 2.15), (5.1, 2.15), mark: (end: ">"), stroke: 1.5pt + c-attacker)
+    content((4.1, 2.6), text(size: 7.2pt, weight: "bold", fill: c-attacker)[10,000 : 1], anchor: "center")
+    content((4.1, 0.4), text(size: 7.2pt, style: "italic", fill: rgb("7f1d1d"))[Defender collapses under load], anchor: "center")
 
     // --- Panel 2: Sibuna Thermodynamic Breakwater ---
-    rect((8.9, 0), (17.0, 4.3), fill: rgb("f0fdf4"), stroke: 0.8pt + rgb("86efac"), radius: 0.2)
-    content((12.95, 3.9), text(weight: "bold", size: 8.5pt, fill: rgb("065f46"))[Sibuna: Thermodynamic Breakwater], anchor: "center")
+    rect((8.8, 0), (17.0, 4.4), fill: rgb("f0fdf4"), stroke: 0.8pt + rgb("86efac"), radius: 0.2)
+    content((12.9, 4.0), text(weight: "bold", size: 8.5pt, fill: rgb("065f46"))[Sibuna: Thermodynamic Breakwater], anchor: "center")
 
-    // Attacker node under PoSW
-    rect((9.3, 0.9), (12.3, 3.3), fill: white, stroke: 0.8pt + rgb("b45309"), radius: 0.15)
-    content((10.8, 2.85), text(weight: "bold", size: 8pt, fill: rgb("b45309"))[Attacker Work], anchor: "center")
-    content((10.8, 2.4), text(size: 7.2pt)[Sequential Hash Tree], anchor: "center")
-    content((10.8, 2.0), text(size: 7.2pt)[8,192 Node PoSW], anchor: "center")
-    content((10.8, 1.45), text(size: 7.8pt, weight: "bold", fill: rgb("92400e"))[$E_A approx 50,"000" mu"J"$], anchor: "center")
+    // Attacker node under PoSW (width 2.6cm: 9.3 to 11.9)
+    rect((9.3, 0.9), (11.9, 3.4), fill: white, stroke: 0.8pt + rgb("b45309"), radius: 0.15)
+    content((10.6, 2.9), text(weight: "bold", size: 8pt, fill: rgb("b45309"))[Attacker Work], anchor: "center")
+    content((10.6, 2.4), text(size: 7.2pt)[Sequential Hash Tree], anchor: "center")
+    content((10.6, 2.0), text(size: 7.2pt)[8,192 Node PoSW], anchor: "center")
+    content((10.6, 1.45), text(size: 7.8pt, weight: "bold", fill: rgb("92400e"))[$E_A approx 50,"000" mu"J"$], anchor: "center")
 
-    // Sibuna defender node
-    rect((13.6, 0.9), (16.6, 3.3), fill: white, stroke: 0.8pt + c-posw, radius: 0.15)
-    content((15.1, 2.85), text(weight: "bold", size: 8pt, fill: c-posw)[Sibuna Core], anchor: "center")
-    content((15.1, 2.4), text(size: 7.2pt)[SIMD + GCRA], anchor: "center")
-    content((15.1, 2.0), text(size: 7.2pt)[Logarithmic Verify], anchor: "center")
-    content((15.1, 1.45), text(size: 7.8pt, weight: "bold", fill: rgb("065f46"))[$E_D approx 0.05 mu"J"$], anchor: "center")
+    // Sibuna defender node (width 2.6cm: 13.9 to 16.5)
+    rect((13.9, 0.9), (16.5, 3.4), fill: white, stroke: 0.8pt + c-posw, radius: 0.15)
+    content((15.2, 2.9), text(weight: "bold", size: 8pt, fill: c-posw)[Sibuna Core], anchor: "center")
+    content((15.2, 2.4), text(size: 7.2pt)[SIMD + GCRA], anchor: "center")
+    content((15.2, 2.0), text(size: 7.2pt)[Logarithmic Verify], anchor: "center")
+    content((15.2, 1.45), text(size: 7.8pt, weight: "bold", fill: rgb("065f46"))[$E_D approx 0.05 mu"J"$], anchor: "center")
 
-    // Arrow
-    line((12.3, 2.1), (13.6, 2.1), mark: (end: ">"), stroke: 1.5pt + c-posw)
-    content((12.95, 2.55), text(size: 7.2pt, weight: "bold", fill: c-posw)[1 : 1,000,000], anchor: "center")
-    content((12.95, 0.4), text(size: 7.2pt, style: "italic", fill: rgb("14532d"))[Attacker throttled by physics], anchor: "center")
+    // Arrow with 2.0cm gap (11.9 to 13.9)
+    line((11.9, 2.15), (13.9, 2.15), mark: (end: ">"), stroke: 1.5pt + c-posw)
+    content((12.9, 2.6), text(size: 7.2pt, weight: "bold", fill: c-posw)[1 : 1,000,000], anchor: "center")
+    content((12.9, 0.4), text(size: 7.2pt, style: "italic", fill: rgb("14532d"))[Attacker throttled by physics], anchor: "center")
   })
 )
 
@@ -362,105 +362,122 @@ The following architectural diagram illustrates the wire-speed progression of a 
     let c-green-bg = rgb("ecfdf5")
     let c-red = rgb("dc2626")
     let c-red-bg = rgb("fef2f2")
-    let c-gray-border = rgb("cbd5e1")
+    let c-border = rgb("cbd5e1")
     let c-text = rgb("1e293b")
 
-    // Outer boundary card
-    rect((0, 0), (17.0, 11.2), fill: rgb("f8fafc"), stroke: 0.8pt + c-gray-border, radius: 0.3)
-    content((8.5, 10.7), text(weight: "bold", size: 10.2pt, fill: c-navy)[Sibuna Wire-Speed Request Lifecycle (Measured Zero-Allocation Hot Path)], anchor: "center")
+    // Outer card
+    rect((0, 0), (17.2, 11.6), fill: rgb("f8fafc"), stroke: 0.8pt + c-border, radius: 0.3)
+    content((8.6, 11.1), text(weight: "bold", size: 10pt, fill: c-navy)[Sibuna Wire-Speed Request Lifecycle (Measured Zero-Allocation Hot Path)], anchor: "center")
 
-    // Helper to draw a stage box
-    let stage-box(x, y, w, h, fill-col, stroke-col, title, latency, subtext) = {
-      rect((x, y), (x + w, y + h), fill: fill-col, stroke: 0.8pt + stroke-col, radius: 0.18)
-      content((x + w/2, y + h - 0.35), text(weight: "bold", size: 8pt, fill: stroke-col)[#title], anchor: "center")
-      content((x + w/2, y + h/2), text(size: 7.2pt, fill: c-text)[#subtext], anchor: "center")
-      rect((x + w/2 - 0.9, y + 0.18), (x + w/2 + 0.9, y + 0.65), fill: stroke-col, stroke: none, radius: 0.1)
-      content((x + w/2, y + 0.41), text(weight: "bold", size: 7pt, fill: white)[#latency], anchor: "center")
+    // Helper: stage-box (width 3.3cm, height 1.5cm)
+    let stage-box(x, y, fill-col, stroke-col, title, latency, subtext) = {
+      rect((x, y), (x + 3.3, y + 1.5), fill: fill-col, stroke: 0.8pt + stroke-col, radius: 0.18)
+      content((x + 1.65, y + 1.15), text(weight: "bold", size: 8pt, fill: stroke-col)[#title], anchor: "center")
+      content((x + 1.65, y + 0.75), text(size: 7.2pt, fill: c-text)[#subtext], anchor: "center")
+      rect((x + 0.75, y + 0.14), (x + 2.55, y + 0.52), fill: stroke-col, stroke: none, radius: 0.1)
+      content((x + 1.65, y + 0.33), text(weight: "bold", size: 6.8pt, fill: white)[#latency], anchor: "center")
     }
 
-    // --- Row 1 (y: 8.2 - 9.8): L4 Ingress & Filtering ---
-    rect((0.6, 8.2), (3.2, 9.8), fill: white, stroke: 0.8pt + c-navy, radius: 0.18)
-    content((1.9, 9.3), text(weight: "bold", size: 8.5pt, fill: c-navy)[TCP Ingress], anchor: "center")
-    content((1.9, 8.8), text(size: 7.5pt)[Raw Stream Buffer], anchor: "center")
-    content((1.9, 8.4), text(size: 7pt, fill: rgb("64748b"))[Zero Alloc / Ring], anchor: "center")
+    // ==========================================
+    // ROW 1: L4 INGRESS & PROTOCOL (y: 8.6 .. 10.1)
+    // ==========================================
+    // TCP Ingress (x: 0.6 .. 3.5)
+    rect((0.6, 8.6), (3.5, 10.1), fill: white, stroke: 0.8pt + c-navy, radius: 0.18)
+    content((2.05, 9.6), text(weight: "bold", size: 8.5pt, fill: c-navy)[TCP Ingress], anchor: "center")
+    content((2.05, 9.1), text(size: 7.2pt)[Raw Socket Stream], anchor: "center")
+    content((2.05, 8.7), text(size: 6.8pt, fill: rgb("64748b"))[Zero Alloc / Ring], anchor: "center")
 
-    // Stage 1: Radix Trie
-    stage-box(4.2, 8.2, 3.4, 1.6, c-blue-bg, c-blue, [1. Radix Trie CIDR], [72.59 ns], [IPv4/IPv6 Table Lookup])
+    // Stage 1: Radix Trie CIDR (x: 4.8 .. 8.1)
+    stage-box(4.8, 8.6, c-blue-bg, c-blue, [1. Radix Trie CIDR], [72.59 ns], [IPv4/IPv6 Table Lookup])
 
-    // Stage 2: 16-Shard GCRA
-    stage-box(8.6, 8.2, 3.4, 1.6, c-blue-bg, c-blue, [2. Sharded GCRA], [9.48 ns], [16 Shards · Lock-Free CAS])
+    // Stage 2: Sharded GCRA (x: 9.3 .. 12.6)
+    stage-box(9.3, 8.6, c-blue-bg, c-blue, [2. Sharded GCRA], [9.48 ns], [16 Shards · Lock-Free CAS])
 
-    // Stage 3: Zero-Copy Parser
-    stage-box(13.0, 8.2, 3.4, 1.6, c-blue-bg, c-blue, [3. Zero-Copy HTTP], [1.50 µs], [Slices Only · In-Place])
+    // Stage 3: Zero-Copy HTTP (x: 13.6 .. 16.9)
+    stage-box(13.6, 8.6, c-blue-bg, c-blue, [3. Zero-Copy HTTP], [1.50 µs], [Slices Only · In-Place])
 
-    // Arrows Row 1
-    line((3.2, 9.0), (4.2, 9.0), mark: (end: ">"), stroke: 1.2pt + c-blue)
-    line((7.6, 9.0), (8.6, 9.0), mark: (end: ">"), stroke: 1.2pt + c-blue)
-    content((8.1, 9.3), text(size: 6.5pt, fill: c-green)[Pass], anchor: "center")
-    line((12.0, 9.0), (13.0, 9.0), mark: (end: ">"), stroke: 1.2pt + c-blue)
-    content((12.5, 9.3), text(size: 6.5pt, fill: c-green)[Admit], anchor: "center")
+    // Row 1 Forward Arrows
+    line((3.5, 9.35), (4.8, 9.35), mark: (end: ">"), stroke: 1.2pt + c-blue)
+    line((8.1, 9.35), (9.3, 9.35), mark: (end: ">"), stroke: 1.2pt + c-blue)
+    content((8.7, 9.65), text(size: 6.5pt, weight: "bold", fill: c-green)[Pass], anchor: "center")
+    line((12.6, 9.35), (13.6, 9.35), mark: (end: ">"), stroke: 1.2pt + c-blue)
+    content((13.1, 9.65), text(size: 6.5pt, weight: "bold", fill: c-green)[Admit], anchor: "center")
 
-    // Row 1 to Row 2 connecting snake arrow
-    line((14.7, 8.2), (14.7, 7.3), (14.7, 6.7), mark: (end: ">"), stroke: 1.2pt + c-purple)
+    // Row 1 -> Row 2 Direct Transition (Far Right)
+    line((15.25, 8.6), (15.25, 6.4), mark: (end: ">"), stroke: 1.3pt + c-purple)
+    content((16.15, 7.5), text(size: 6.8pt, fill: c-purple, weight: "bold")[Parse OK], anchor: "center")
 
-    // --- Row 2 (y: 5.1 - 6.7): Identity, Bots & Cryptography ---
-    // Stage 4: SIMD Aho-Corasick
-    stage-box(13.0, 5.1, 3.4, 1.6, c-purple-bg, c-purple, [4. SIMD Bot Matcher], [88.96 ns], [40 Crawler Signatures])
+    // ==========================================
+    // ROW 2: IDENTIFICATION & CRYPTO (y: 4.9 .. 6.4)
+    // Reverse flow (Right to Left)
+    // ==========================================
+    // Stage 4: SIMD Bot Matcher (x: 13.6 .. 16.9)
+    stage-box(13.6, 4.9, c-purple-bg, c-purple, [4. SIMD Bot Matcher], [88.96 ns], [40 Crawler Signatures])
 
-    // Stage 5: BLAKE3 MAC Token
-    stage-box(8.6, 5.1, 3.4, 1.6, c-purple-bg, c-purple, [5. BLAKE3 Token], [212.52 ns], [Keyed MAC Authentication])
+    // Stage 5: BLAKE3 Token Auth (x: 9.3 .. 12.6)
+    stage-box(9.3, 4.9, c-purple-bg, c-purple, [5. BLAKE3 Token], [212.52 ns], [Keyed MAC Verify])
 
-    // Stage 6: PoSW Verifier
-    stage-box(4.2, 5.1, 3.4, 1.6, c-gold-bg, c-gold, [6. PoSW Verifier], [25.83 µs], [Cohen-Pietrzak Depth 13])
+    // Stage 6: PoSW Verifier (x: 4.8 .. 8.1)
+    stage-box(4.8, 4.9, c-gold-bg, c-gold, [6. PoSW Verifier], [25.83 µs], [Cohen-Pietrzak Depth 13])
 
-    // Arrows Row 2
-    line((13.0, 5.9), (12.0, 5.9), mark: (end: ">"), stroke: 1.2pt + c-purple)
-    content((12.5, 6.2), text(size: 6.5pt, fill: c-green)[Clean], anchor: "center")
+    // Stage 7: Semantic WAF (x: 0.6 .. 3.9)
+    stage-box(0.6, 4.9, c-blue-bg, c-blue, [7. Semantic WAF], [37.98 µs], [SQLi / XSS Tokenizer])
 
-    line((8.6, 5.9), (7.6, 5.9), mark: (end: ">"), stroke: 1.2pt + c-gold)
-    content((8.1, 6.25), text(size: 6.5pt, fill: c-gold)[No Token], anchor: "center")
+    // Row 2 Forward Arrows (Right to Left)
+    line((13.6, 5.65), (12.6, 5.65), mark: (end: ">"), stroke: 1.2pt + c-purple)
+    content((13.1, 5.95), text(size: 6.5pt, weight: "bold", fill: c-green)[Clean], anchor: "center")
 
-    // Fast path token bypass from BLAKE3 directly to Stage 7 (shifted text left to avoid crossing red dashed line)
-    line((10.3, 5.1), (10.3, 4.3), (2.3, 4.3), (2.3, 3.2), mark: (end: ">"), stroke: 1.2pt + c-green)
-    content((5.1, 4.55), text(size: 6.8pt, weight: "bold", fill: c-green)[Valid Token Fast-Path (Bypass PoSW)], anchor: "center")
+    line((9.3, 5.65), (8.1, 5.65), mark: (end: ">"), stroke: 1.2pt + c-gold)
+    content((8.7, 5.95), text(size: 6.5pt, weight: "bold", fill: c-gold)[No Token], anchor: "center")
 
-    // PoSW verified arrow down to Row 3
-    line((5.9, 5.1), (5.9, 3.2), mark: (end: ">"), stroke: 1.2pt + c-green)
-    content((5.2, 3.9), text(size: 6.5pt, fill: c-green)[Verified], anchor: "center")
+    line((4.8, 5.65), (3.9, 5.65), mark: (end: ">"), stroke: 1.2pt + c-green)
+    content((4.35, 5.95), text(size: 6.5pt, weight: "bold", fill: c-green)[Verified], anchor: "center")
 
-    // --- Row 3 (y: 1.6 - 3.2): Deep Semantic Inspection & Terminal Sinks ---
-    // Stage 7: Semantic WAF
-    stage-box(0.6, 1.6, 3.4, 1.6, c-blue-bg, c-blue, [7. Semantic WAF], [37.98 µs], [SQLi / XSS Tokenizer])
+    // Valid Token Fast-Path: Arcs ABOVE PoSW Verifier in open corridor (y: 7.2)
+    line((10.95, 6.4), (10.95, 7.2), (2.25, 7.2), (2.25, 6.4), mark: (end: ">"), stroke: 1.2pt + c-green)
+    content((6.6, 7.45), text(size: 6.8pt, weight: "bold", fill: c-green)[Valid Token Fast-Path (Bypass PoSW Challenge)], anchor: "center")
 
-    // Terminal Sink 1: Upstream Proxy
-    rect((4.8, 1.6), (7.8, 3.2), fill: c-green-bg, stroke: 1pt + c-green, radius: 0.18)
-    content((6.3, 2.7), text(weight: "bold", size: 8.5pt, fill: c-green)[Upstream Origin], anchor: "center")
-    content((6.3, 2.2), text(size: 7.2pt)[Reverse Proxy Keep-Alive], anchor: "center")
-    content((6.3, 1.8), text(weight: "bold", size: 7pt, fill: c-green)[HTTP 200 Admitted], anchor: "center")
+    // ==========================================
+    // ROW 3: TERMINAL DESTINATIONS (y: 0.8 .. 2.4)
+    // ==========================================
+    // Sink 1: Drop / Ban Sink (x: 0.6 .. 4.6) directly below Stage 7
+    rect((0.6, 0.8), (4.6, 2.4), fill: c-red-bg, stroke: 1.1pt + c-red, radius: 0.18)
+    content((2.6, 1.95), text(weight: "bold", size: 8.5pt, fill: c-red)[Drop / Ban Sink], anchor: "center")
+    content((2.6, 1.50), text(size: 7.2pt)[Blacklisted CIDR / Attack], anchor: "center")
+    content((2.6, 1.10), text(weight: "bold", size: 7pt, fill: c-red)[TCP Reset / 403 Forbidden], anchor: "center")
 
-    // Terminal Sink 2: Drop / Ban Sink
-    rect((9.0, 1.6), (12.2, 3.2), fill: c-red-bg, stroke: 1pt + c-red, radius: 0.18)
-    content((10.6, 2.7), text(weight: "bold", size: 8.5pt, fill: c-red)[Drop / Ban Sink], anchor: "center")
-    content((10.6, 2.2), text(size: 7.2pt)[Blacklisted CIDR / Threat], anchor: "center")
-    content((10.6, 1.8), text(weight: "bold", size: 7pt, fill: c-red)[Connection Severed], anchor: "center")
+    // Sink 2: Upstream Origin Proxy (x: 5.6 .. 11.6) directly below Stage 6
+    rect((5.6, 0.8), (11.6, 2.4), fill: c-green-bg, stroke: 1.1pt + c-green, radius: 0.18)
+    content((8.6, 1.95), text(weight: "bold", size: 8.5pt, fill: c-green)[Upstream Origin Proxy], anchor: "center")
+    content((8.6, 1.50), text(size: 7.2pt)[HTTP/1.1 Keep-Alive Connection], anchor: "center")
+    content((8.6, 1.10), text(weight: "bold", size: 7pt, fill: c-green)[HTTP 200 Admitted Clean], anchor: "center")
 
-    // Terminal Sink 3: Challenge Issuer
-    rect((13.0, 1.6), (16.4, 3.2), fill: c-gold-bg, stroke: 1pt + c-gold, radius: 0.18)
-    content((14.7, 2.7), text(weight: "bold", size: 8.5pt, fill: c-gold)[HTTP 401 Challenge], anchor: "center")
-    content((14.7, 2.2), text(size: 7.2pt)[Issue Signed PoSW Ticket], anchor: "center")
-    content((14.7, 1.8), text(weight: "bold", size: 7pt, fill: c-gold)[Zero Server State], anchor: "center")
+    // Sink 3: HTTP 401 Challenge Issuer (x: 12.6 .. 16.9) directly below Stage 4
+    rect((12.6, 0.8), (16.9, 2.4), fill: c-gold-bg, stroke: 1.1pt + c-gold, radius: 0.18)
+    content((14.75, 1.95), text(weight: "bold", size: 8.5pt, fill: c-gold)[HTTP 401 Challenge], anchor: "center")
+    content((14.75, 1.50), text(size: 7.2pt)[Issue Signed PoSW Ticket], anchor: "center")
+    content((14.75, 1.10), text(weight: "bold", size: 7pt, fill: c-gold)[Zero Server State Bounded], anchor: "center")
 
-    // Arrow Stage 7 to Upstream
-    line((4.0, 2.4), (4.8, 2.4), mark: (end: ">"), stroke: 1.5pt + c-green)
-    content((4.4, 2.7), text(size: 6.5pt, fill: c-green)[Clean], anchor: "center")
+    // --- TERMINAL ARROWS ---
+    // 1. Stage 7 (Semantic WAF) to Drop Sink: straight vertical drop!
+    line((1.5, 4.9), (1.5, 2.4), mark: (end: ">"), stroke: 1.2pt + c-red, dash: "dashed")
+    content((1.0, 3.65), text(size: 6.8pt, weight: "bold", fill: c-red)[Attack], anchor: "center")
 
-    // Cleanly routed Dropped line to Ban Sink through open channel at x: 8.0
-    line((5.9, 8.2), (5.9, 7.5), (7.8, 7.5), (7.8, 2.4), (9.0, 2.4), mark: (end: ">"), stroke: 1pt + c-red, dash: "dashed")
-    content((6.9, 7.7), text(size: 6.5pt, fill: c-red)[CIDR Banned], anchor: "center")
+    // 2. Stage 7 (Semantic WAF) to Upstream Origin: clean handoff through the gap at x: 4.35
+    line((3.9, 5.1), (4.35, 5.1), (4.35, 1.6), (5.6, 1.6), mark: (end: ">"), stroke: 1.5pt + c-green)
+    content((5.0, 3.4), text(size: 6.8pt, weight: "bold", fill: c-green)[Admit], anchor: "center")
 
-    // GCRA Exceeded arrow to Challenge through open channel at x: 12.5
-    line((10.3, 8.2), (10.3, 7.3), (12.5, 7.3), (12.5, 2.4), (13.0, 2.4), mark: (end: ">"), stroke: 1pt + c-gold, dash: "dashed")
-    content((11.4, 7.5), text(size: 6.5pt, fill: c-gold)[Rate Exceeded], anchor: "center")
+    // 3. Stage 4 (SIMD Bot Matcher) to Challenge Issuer: straight vertical drop!
+    line((14.75, 4.9), (14.75, 2.4), mark: (end: ">"), stroke: 1.2pt + c-gold, dash: "dashed")
+    content((15.7, 3.65), text(size: 6.8pt, weight: "bold", fill: c-gold)[Bot Ticket], anchor: "center")
+
+    // 4. Stage 1 (Radix Trie CIDR) to Drop Sink: along top and left perimeter
+    line((5.8, 10.1), (5.8, 10.55), (0.35, 10.55), (0.35, 1.6), (0.6, 1.6), mark: (end: ">"), stroke: 1.1pt + c-red, dash: "dashed")
+    content((3.0, 10.75), text(size: 6.5pt, weight: "bold", fill: c-red)[CIDR Banned (TCP RST)], anchor: "center")
+
+    // 5. Stage 2 (Sharded GCRA) to Challenge Issuer: along top and right perimeter
+    line((11.5, 10.1), (11.5, 10.55), (17.05, 10.55), (17.05, 1.6), (16.9, 1.6), mark: (end: ">"), stroke: 1.1pt + c-gold, dash: "dashed")
+    content((14.3, 10.75), text(size: 6.5pt, weight: "bold", fill: c-gold)[Rate Exceeded (401)], anchor: "center")
   })
 )
 
@@ -553,49 +570,50 @@ Sibuna cluster nodes maintain a replicated Write-Ahead Log (WAL). State mutation
 
     // Outer boundary card
     rect((0, 0), (17.0, 8.4), fill: rgb("fafafa"), stroke: 0.8pt + c-border, radius: 0.3)
-    content((8.5, 7.95), text(weight: "bold", size: 10.2pt, fill: c-navy)[Sibuna 3-Node Mesh: Embedded Multi-Paxos State Machine (zaxonlite)], anchor: "center")
+    content((8.5, 7.95), text(weight: "bold", size: 10pt, fill: c-navy)[Sibuna 3-Node Mesh: Embedded Multi-Paxos State Machine (zaxonlite)], anchor: "center")
 
-    // Node drawing helper
+    // Node drawing helper (width 4.2cm, height 2.7cm)
     let draw-node(x, y, is-leader, name, port, mesh-port, rss, state-text) = {
       let stroke-color = if is-leader { c-green } else { c-blue }
       let fill-color = if is-leader { c-green-bg } else { white }
-      rect((x, y), (x + 4.8, y + 2.8), fill: fill-color, stroke: 1.2pt + stroke-color, radius: 0.22)
+      rect((x, y), (x + 4.2, y + 2.7), fill: fill-color, stroke: 1.2pt + stroke-color, radius: 0.2)
       
       // Role badge
       let badge-fill = if is-leader { c-green } else { c-blue }
       let badge-title = if is-leader { "LEADER (ACTIVE)" } else { "FOLLOWER (REPLICA)" }
-      rect((x + 0.3, y + 2.18), (x + 4.5, y + 2.62), fill: badge-fill, stroke: none, radius: 0.1)
-      content((x + 2.4, y + 2.40), text(weight: "bold", size: 7.2pt, fill: white)[#badge-title], anchor: "center")
+      rect((x + 0.3, y + 2.1), (x + 3.9, y + 2.52), fill: badge-fill, stroke: none, radius: 0.1)
+      content((x + 2.1, y + 2.31), text(weight: "bold", size: 7pt, fill: white)[#badge-title], anchor: "center")
 
-      content((x + 2.4, y + 1.80), text(weight: "bold", size: 8.8pt, fill: c-navy)[#name], anchor: "center")
-      content((x + 2.4, y + 1.40), text(size: 7.5pt, fill: c-text)[HTTP : #port  ·  Mesh : #mesh-port], anchor: "center")
-      content((x + 2.4, y + 1.02), text(size: 7.2pt, fill: c-text)[WAL: #state-text], anchor: "center")
+      content((x + 2.1, y + 1.72), text(weight: "bold", size: 8.5pt, fill: c-navy)[#name], anchor: "center")
+      content((x + 2.1, y + 1.35), text(size: 7.2pt, fill: c-text)[HTTP : #port  ·  Mesh : #mesh-port], anchor: "center")
+      content((x + 2.1, y + 1.00), text(size: 7pt, fill: c-text)[WAL: #state-text], anchor: "center")
 
       // RSS Badge
-      rect((x + 1.4, y + 0.25), (x + 3.4, y + 0.68), fill: rgb("e2e8f0"), stroke: none, radius: 0.1)
-      content((x + 2.4, y + 0.46), text(weight: "bold", size: 7.2pt, fill: c-navy)[RSS: #rss], anchor: "center")
+      rect((x + 1.1, y + 0.22), (x + 3.1, y + 0.65), fill: rgb("e2e8f0"), stroke: none, radius: 0.1)
+      content((x + 2.1, y + 0.43), text(weight: "bold", size: 7pt, fill: c-navy)[RSS: #rss], anchor: "center")
     }
 
     // Leader (Top Center)
-    draw-node(6.1, 4.4, true, "Node 1", "8000", "9000", "19.7 MB", "Replicated Frame Commit")
+    draw-node(6.4, 4.4, true, "Node 1", "8000", "9000", "19.7 MB", "Replicated Frame Commit")
 
     // Follower 1 (Bottom Left)
-    draw-node(0.8, 0.5, false, "Node 2", "8001", "9001", "21.3 MB", "Phase 2 Accepted / Quorum")
+    draw-node(0.6, 0.5, false, "Node 2", "8001", "9001", "21.3 MB", "Phase 2 Accepted / Quorum")
 
     // Follower 2 (Bottom Right)
-    draw-node(11.4, 0.5, false, "Node 3", "8002", "9002", "19.6 MB", "Phase 2 Accepted / Quorum")
+    draw-node(12.2, 0.5, false, "Node 3", "8002", "9002", "19.6 MB", "Phase 2 Accepted / Quorum")
 
-    // Straight clean angled replication arrows
-    line((6.1, 4.8), (3.6, 3.3), mark: (start: ">", end: ">"), stroke: 1.5pt + c-blue)
-    content((3.6, 4.3), text(weight: "bold", size: 7pt, fill: c-blue)[Replicated WAL Frames\ (Phase 2 Accept Quorum)], anchor: "center")
+    // Left replication arrow: from Leader to Node 2
+    line((6.4, 4.9), (4.3, 3.2), mark: (start: ">", end: ">"), stroke: 1.5pt + c-blue)
+    content((3.8, 4.3), text(weight: "bold", size: 6.8pt, fill: c-blue)[Replicated WAL Frames\ (Phase 2 Accept Quorum)], anchor: "south-east")
 
-    line((10.9, 4.8), (13.4, 3.3), mark: (start: ">", end: ">"), stroke: 1.5pt + c-blue)
-    content((13.4, 4.3), text(weight: "bold", size: 7pt, fill: c-blue)[Replicated WAL Frames\ (Phase 2 Accept Quorum)], anchor: "center")
+    // Right replication arrow: from Leader to Node 3
+    line((10.6, 4.9), (12.7, 3.2), mark: (start: ">", end: ">"), stroke: 1.5pt + c-blue)
+    content((13.2, 4.3), text(weight: "bold", size: 6.8pt, fill: c-blue)[Replicated WAL Frames\ (Phase 2 Accept Quorum)], anchor: "south-west")
 
-    // Heartbeat between Node 2 and Node 3 with generous clearance
-    content((8.5, 2.45), text(weight: "bold", size: 7.2pt, fill: c-gold)[Peer Heartbeats & Lease Monotonicity (Invariant S2)], anchor: "center")
-    content((8.5, 1.9), text(size: 7.2pt, style: "italic", fill: c-text)[Cluster Ban Propagation: 155.37 ms  ·  Zero External DBs], anchor: "center")
-    line((5.6, 1.05), (11.4, 1.05), mark: (start: ">", end: ">"), stroke: 1.1pt + c-gold, dash: "dashed")
+    // Heartbeat between Node 2 and Node 3 across the 7.4cm gap
+    content((8.5, 2.3), text(weight: "bold", size: 7.2pt, fill: c-gold)[Peer Heartbeats & Lease Monotonicity (Invariant S2)], anchor: "center")
+    content((8.5, 1.75), text(size: 7pt, style: "italic", fill: c-text)[Cluster Ban Propagation: 155.37 ms  ·  Zero External DBs], anchor: "center")
+    line((4.8, 1.15), (12.2, 1.15), mark: (start: ">", end: ">"), stroke: 1.1pt + c-gold, dash: "dashed")
   })
 )
 
@@ -757,22 +775,26 @@ Sibuna resolves this hardware asymmetry through Cohen–Pietrzak Proofs of Seque
     content((4.4, 6.2), text(weight: "bold", size: 8.8pt, fill: c-red)[Classical Hashcash: Parallel ASIC Exploitation], anchor: "center")
     content((4.4, 5.6), text(size: 7.5pt, style: "italic", fill: rgb("991b1b"))[$"Find" x: H("Challenge" || x) < T$], anchor: "center")
 
-    // Cores attacking in parallel
+    // Cores attacking in parallel (width 1.7cm: 0.8 to 2.5)
     for i in range(4) {
       let y = 4.7 - i * 0.9
-      rect((1.0, y), (2.8, y + 0.65), fill: white, stroke: 0.7pt + c-red, radius: 0.1)
-      content((1.9, y + 0.32), text(size: 7pt, weight: "bold", fill: c-red)[Core #str(i+1) (ASIC)], anchor: "center")
-      line((2.8, y + 0.32), (4.4, y + 0.32), mark: (end: ">"), stroke: 0.9pt + c-red)
-      content((3.6, y + 0.52), text(size: 6.5pt)[Nonce #str(i+1)], anchor: "center")
+      rect((0.8, y), (2.5, y + 0.65), fill: white, stroke: 0.7pt + c-red, radius: 0.1)
+      content((1.65, y + 0.32), text(size: 7pt, weight: "bold", fill: c-red)[Core #str(i+1) (ASIC)], anchor: "center")
+      // Arrow stops cleanly at the left border of the red box (x: 4.6)
+      line((2.5, y + 0.32), (4.6, y + 0.32), mark: (end: ">"), stroke: 0.9pt + c-red)
+      content((3.55, y + 0.52), text(size: 6.5pt)[Nonce #str(i+1)], anchor: "center")
     }
 
-    rect((4.4, 1.8), (8.0, 4.9), fill: white, stroke: 0.8pt + c-red, radius: 0.15)
-    content((6.2, 4.25), text(weight: "bold", size: 7.8pt, fill: c-red)[Instant Parallel\ Speedup], anchor: "center")
-    content((6.2, 3.5), text(size: 7pt)[$M$ ASIC cores = $M times$ faster], anchor: "center")
-    content((6.2, 2.85), text(size: 7pt)[Ordinary browsers penalized], anchor: "center")
-    content((6.2, 2.2), text(weight: "bold", size: 7.2pt, fill: c-red)[Botnets bypass challenge], anchor: "center")
+    // Red Box (width 3.4cm: 4.6 to 8.0)
+    rect((4.6, 1.7), (8.0, 5.0), fill: white, stroke: 0.8pt + c-red, radius: 0.15)
+    content((6.3, 4.5), text(weight: "bold", size: 7.5pt, fill: c-red)[Instant Parallel], anchor: "center")
+    content((6.3, 4.1), text(weight: "bold", size: 7.5pt, fill: c-red)[Speedup Advantage], anchor: "center")
+    content((6.3, 3.45), text(size: 6.8pt)[$M$ ASIC cores = $M times$ faster], anchor: "center")
+    content((6.3, 2.90), text(size: 6.8pt)[Ordinary browsers penalized], anchor: "center")
+    content((6.3, 2.30), text(weight: "bold", size: 7pt, fill: c-red)[Botnets Bypass], anchor: "center")
+    content((6.3, 1.95), text(weight: "bold", size: 7pt, fill: c-red)[Computational Gate], anchor: "center")
 
-    content((4.4, 1.0), text(size: 7pt, fill: rgb("7f1d1d"))[Unfair to legitimate single-threaded users], anchor: "center")
+    content((4.4, 0.95), text(size: 7pt, fill: rgb("7f1d1d"))[Unfair to legitimate single-threaded users], anchor: "center")
 
     // Right Panel: Cohen-Pietrzak PoSW (Strictly Sequential)
     rect((8.8, 0.6), (16.4, 6.7), fill: rgb("f0fdf4"), stroke: 0.7pt + rgb("86efac"), radius: 0.2)
@@ -780,7 +802,7 @@ Sibuna resolves this hardware asymmetry through Cohen–Pietrzak Proofs of Seque
     content((12.6, 5.6), text(size: 7.5pt, style: "italic", fill: rgb("14532d"))[$v_i = H(v_(i-1) || v_(gamma(i)))$ (Depth $d=13$, $N=8,192$ steps)], anchor: "center")
 
     // Sequential nodes
-    let node-pos = ((9.3, 3.8), (10.6, 3.8), (11.9, 3.8), (13.2, 3.8), (14.5, 3.8), (15.7, 3.8))
+    let node-pos = ((9.3, 4.0), (10.6, 4.0), (11.9, 4.0), (13.2, 4.0), (14.5, 4.0), (15.7, 4.0))
     let labels = ($v_0$, $v_1$, $v_2$, $dots$, $v_(N-1)$, $v_N$)
     for i in range(6) {
       let p = node-pos.at(i)
@@ -793,15 +815,16 @@ Sibuna resolves this hardware asymmetry through Cohen–Pietrzak Proofs of Seque
     }
 
     // Skip edge
-    arc((10.6, 4.15), start: 180deg, stop: 0deg, radius: (1.3, 0.7), mark: (end: ">"), stroke: 0.9pt + c-blue)
-    content((11.9, 5.05), text(size: 6.5pt, fill: c-blue)[Skip Dependency $v_(gamma(i))$], anchor: "center")
+    arc((10.6, 4.35), start: 180deg, stop: 0deg, radius: (1.3, 0.65), mark: (end: ">"), stroke: 0.9pt + c-blue)
+    content((11.9, 5.2), text(size: 6.5pt, fill: c-blue)[Skip Dependency $v_(gamma(i))$], anchor: "center")
 
-    // Merkle tree root commitment below with generous padding
-    rect((9.2, 1.3), (16.0, 3.15), fill: white, stroke: 0.8pt + c-green, radius: 0.15)
-    content((12.6, 2.55), text(weight: "bold", size: 7.8pt, fill: c-green)[Merkle Tree Commitment & Logarithmic Verification], anchor: "center")
-    content((12.6, 1.9), text(size: 7.2pt)[Server verifies 16 opening paths in *25.83 µs* ($O(t dot d)$ work)], anchor: "center")
+    // Merkle tree root commitment below with generous width and padding
+    rect((9.0, 1.3), (16.2, 3.2), fill: white, stroke: 0.8pt + c-green, radius: 0.15)
+    content((12.6, 2.72), text(weight: "bold", size: 8pt, fill: c-green)[Merkle Tree Commitment], anchor: "center")
+    content((12.6, 2.25), text(weight: "bold", size: 7.5pt, fill: c-green)[& Logarithmic Verification], anchor: "center")
+    content((12.6, 1.7), text(size: 6.8pt, fill: rgb("14532d"))[Server verifies 16 opening paths in *25.83 µs* ($O(t dot d)$ work)], anchor: "center")
 
-    content((12.6, 1.0), text(size: 7pt, fill: rgb("14532d"))[Parallel ASICs get 0 speedup; hardware fairness guaranteed], anchor: "center")
+    content((12.6, 0.95), text(size: 7pt, fill: rgb("14532d"))[Parallel ASICs get 0 speedup; hardware fairness guaranteed], anchor: "center")
   })
 )
 
