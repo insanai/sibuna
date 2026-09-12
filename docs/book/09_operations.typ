@@ -342,7 +342,7 @@ queries, detail reads and mutations remain HTTP requests.
 
 Page fragments can be bookmarked; Back and Forward reopen authenticated pages. The sidebar
 also remembers theme and spacing choices in this browser, with System as the default theme.
-SID 0007 remains Proposed. The interface is available, with ongoing review corrections
+SID 0007 is Committed. The interface is available, with ongoing review corrections
 and acceptance work recorded in the SID. Earlier impact runs are inconclusive. The corrected
 harness includes each dashboard's stream, rankings and retained-timeline queries; a full
 acceptance run requires a production GeoIP snapshot and documented host conditions. Direct TLS
