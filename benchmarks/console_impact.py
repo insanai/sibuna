@@ -8,9 +8,10 @@ order; a noisy baseline yields "inconclusive", never a pass.
         [--host-label TEXT] [--cluster] [--geoip-data SNAPSHOT]
         [--mode forward_auth|reverse_proxy] [--capture-heads]
 
-Reverse-proxy runs relay to a local `caddy respond` origin. With --capture-heads the console-enabled
-configurations store redacted heads, and an "audited" workload (an XSS finding in audit mode
-admitted with a session) exercises the capture path; compiled-out and disabled never capture.
+Reverse-proxy runs relay to a local `caddy respond` origin. With --capture-heads the
+console-enabled configurations store redacted heads, and an "audited" workload (an XSS finding
+in audit mode admitted with a session) exercises the capture path; compiled-out and disabled
+never capture.
 """
 import argparse
 import json
@@ -407,13 +408,15 @@ def main():
     parser.add_argument("--connections", type=int, default=32)
     parser.add_argument("--host-label", default="undeclared host",
                         help="Declare the measuring host and its quiet state for the record")
-    parser.add_argument("--cluster", action="store_true", help="three PSK nodes with TLS console peers")
+    parser.add_argument("--cluster", action="store_true",
+                        help="three PSK nodes with TLS console peers")
     parser.add_argument("--geoip-data", type=Path,
                         help="Validated production country snapshot; required for acceptance")
     parser.add_argument("--mode", choices=("forward_auth", "reverse_proxy"),
                         default="forward_auth", help="data-plane mode under load")
     parser.add_argument("--capture-heads", action="store_true",
-                        help="store redacted heads on enabled consoles and add the audited workload")
+                        help="store redacted heads on enabled consoles, adding the audited "
+                             "workload")
     args = parser.parse_args()
     if not args.quick and args.geoip_data is None:
         parser.error("a full impact run needs --geoip-data; use --quick only for smoke checks")
@@ -488,7 +491,8 @@ def main():
             "wrk": subprocess.run(["wrk", "--version"], capture_output=True, text=True,
                                   check=False).stdout.split("\n")[0],
             "gate": GATE, "dashboards": dashboards, **results,
-            "dashboard_workload": {"endpoint": "/console/ws", "stats_hz": 1, "rankings_interval_seconds": 10,
+            "dashboard_workload": {"endpoint": "/console/ws", "stats_hz": 1,
+                                   "rankings_interval_seconds": 10,
                                    "timeline_interval_seconds": 10, "timeline_limit": 10,
                                    "details": "rankings and open timeline for a single issuer",
                                    "period": "24 hours plus yesterday, all selected nodes",
