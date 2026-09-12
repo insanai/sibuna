@@ -55,11 +55,32 @@ def cookies(headers):
     return '; '.join(f'{name}={content}' for name, content in jar.items() if content)
 
 
+# The solver below is fixed at two hex digits so Sibuna and Anubis do equal work. Sibuna's
+# adaptive controller adds bits once the challenge issue rate passes its 50/s baseline, and
+# the measured batches deliberately flood issuance, so a proof solved at 8 bits would be
+# rejected and the timed batch would measure rejections rather than verifications. Issue the
+# proof challenges below that baseline, and wait for the smoothed rate to decay first.
+BITS = 8
+ISSUE_INTERVAL = 1 / 40
+
+
+def issue(port, timeout=180):
+    deadline = time.monotonic() + timeout
+    while True:
+        time.sleep(ISSUE_INTERVAL)
+        _, body = request(port, ('GET', '/__sibuna/challenge.json?path=/private',
+                                 HEADERS, None, 200))
+        challenge = json.loads(body)
+        if challenge['difficulty'] == BITS:
+            return challenge
+        if time.monotonic() >= deadline:
+            raise AssertionError(f'adaptive difficulty stayed above {BITS} bits: {challenge}')
+        time.sleep(1)
+
+
 def solution(port, product):
     if product == 'sibuna':
-        _, body = request(port, ('GET', '/__sibuna/challenge.json?path=/private', HEADERS, None, 200))
-        challenge = json.loads(body)
-        assert challenge['difficulty'] == 8, challenge
+        challenge = issue(port)
         prefix = challenge['id'] + ':'
         challenge_id = challenge['id']
         cookie = ''
@@ -200,6 +221,9 @@ def main():
         [str(binary), '--version'], text=True).strip(), 'runs': [], 'limitations': [
         'Two clients, two Sibuna workers, GOMAXPROCS=2; loopback HTTP forward-auth, no origin or TLS.',
         'Hashcash work matched at 8 zero bits / 2 zero hex digits; same UA and client IP.',
+        'Proof challenges are issued below the 50/s adaptive baseline so the matched work '
+        'holds; the bootstrap batches above it measure issuance only, which is difficulty '
+        'independent.',
         'Default Anubis Ed25519 and optional HS512 are both tested; Sibuna uses its default MAC.',
         'Bootstrap includes HTML plus JSON for Sibuna and HTML with embedded puzzle for Anubis; static assets excluded.',
         'Fresh proofs are prepared outside timed verification; browser solve and network latency are not measured.',
