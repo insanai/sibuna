@@ -489,6 +489,14 @@ authenticated command mailbox consumed by data-plane control code. Console threa
 mutate ban-table internals. Both commands require an audit intent, operation id and completion
 record, since a local effect and a database transaction cannot be committed atomically.
 
+Enabling the console must not add shared-cache traffic to the request path. Per-request
+console telemetry is therefore striped across sixteen 64-byte counter lines: each connection
+thread selects one stripe when it seeds its sampler, the rule-hit counters are striped the same
+way, and readers sum every stripe. User-Agent classification and referer parsing run only for
+the one request in sixty-four that the sampler already selected. Without this an enabled
+console cost three to four and a half percent of throughput, through one shared atomic add per
+request, a compare-and-exchange loop per matched rule, and classification of every request.
+
 The impact gate compares console compiled out, compiled in but disabled, idle, and eight
 active dashboards. Measure admitted, challenge, denied/incident-heavy and policy-reload
 workloads, including authentication and GeoIP reload contention. Use repeated interleaved
