@@ -41,6 +41,11 @@ CONFIGURATIONS = ("compiled_out", "disabled", "idle", "active")
 # capture on, stored with its heads. The policy file below sets only that category to audit.
 AUDITED = "/private?q=%3Cscript%3Ealert(1)%3C%2Fscript%3E"
 AUDIT_POLICY = {"inspection": {"xss": "audit"}}
+# One client address per workload. A single address would share its rate-limit budget, ban
+# state and reputation across every workload run against the same daemon, so a later workload
+# would measure the limiter rather than its own traffic.
+ADDRESSES = {"admitted": "8.8.8.1", "challenged": "8.8.8.2", "denied": "8.8.8.3",
+             "policy_reload": "8.8.8.4", "audited": "8.8.8.5"}
 GATE = {"throughput_loss_max": 0.01, "p99_increase_max": 0.10, "baseline_spread_max": 0.01}
 DASHBOARDS = 8
 
@@ -78,7 +83,11 @@ class Daemon:
     def args(self, index, data, peers):
         args = [self.binary, "--host", "127.0.0.1", "--port", str(data[index]), "--workers", "2",
                 "--mode", self.settings["mode"], "--algorithm", "hashcash", "--difficulty", "8",
-                "--shield", "--secret-file", str(self.seed), "--rate-limit", "100000000",
+                "--shield", "--secret-file", str(self.seed),
+                # GCRA grants a burst of `rate` requests and then paces the address at one
+                # per emission interval. The burst must outlast a whole daemon: 10^8 is
+                # spent 167 s into a 600k req/s forward-auth sequence.
+                "--rate-limit", "2000000000",
                 "--idle-timeout", "5", "--trust-forwarded",
                 "--policy-file", str(self.settings["policy"]),
                 "--data-dir", str(self.temp / f"{self.name}-node{index}"),
@@ -233,14 +242,18 @@ class Reloader(threading.Thread):
             self.stopping.wait(0.25)
 
 
-def workloads(cookie):
-    with_cookie = headers("8.8.8.8", cookie=cookie)
+def workloads(port):
+    """Path, headers and expected status per workload, each on its own client address with
+    its own session where one is needed."""
+    def carrying(name):
+        address = ADDRESSES[name]
+        return headers(address, cookie=session(port, address)[0])
     return {
-        "admitted": ("/private", with_cookie, 200),
-        "challenged": ("/private", headers("8.8.8.8"), 401),
-        "denied": (ATTACK, with_cookie, 403),
-        "policy_reload": ("/private", with_cookie, 200),
-        "audited": (AUDITED, with_cookie, 200),
+        "admitted": ("/private", carrying("admitted"), 200),
+        "challenged": ("/private", headers(ADDRESSES["challenged"]), 401),
+        "denied": (ATTACK, carrying("denied"), 403),
+        "policy_reload": ("/private", carrying("policy_reload"), 200),
+        "audited": (AUDITED, carrying("audited"), 200),
     }
 
 
@@ -264,10 +277,12 @@ def summarize(samples):
             "requests_per_second_min": min(rates), "requests_per_second_max": max(rates),
             "spread": ((max(rates) - min(rates)) / statistics.median(rates)
                        if statistics.median(rates) > 0 else None),
-            "valid_measurements": all(math.isfinite(value) and value > 0
-                                      for sample in samples for value in (
-                                          sample["requests_per_second"],
-                                          sample["latency_us"]["p99"], sample["wall_seconds"])),
+            "valid_measurements": (
+                all(sample.get("status_verified", True) for sample in samples) and
+                all(math.isfinite(value) and value > 0
+                    for sample in samples for value in (
+                        sample["requests_per_second"],
+                        sample["latency_us"]["p99"], sample["wall_seconds"]))),
             "latency_us_p99_median": statistics.median(p99),
             "peak_rss_kib_max": max(s["peak_rss_kib"] for s in samples),
             "errors_total": {k: sum(s["errors"][k] for s in samples)
@@ -320,10 +335,10 @@ def matrix(binaries, temp, load, rounds, cluster, names, seed, psk, script, sett
             daemon = Daemon(cfg, binary, directory, cluster, seed, psk, settings)
             try:
                 daemon.start()
-                cookie = session(daemon.port, "8.8.8.8")[0]
+                plan = workloads(daemon.port)
                 offset = round_index % len(names)
                 for workload in names[offset:] + names[:offset]:
-                    path, hdrs, expected = workloads(cookie)[workload]
+                    path, hdrs, expected = plan[workload]
                     status = request(daemon.port, path, hdrs)[0]
                     assert status == expected, (cfg, workload, status, expected)
                     reloader = Reloader(daemon.port) if workload == "policy_reload" else None
@@ -337,6 +352,8 @@ def matrix(binaries, temp, load, rounds, cluster, names, seed, psk, script, sett
                             reloader.join()
                     if reloader:
                         entry["policy_reloads_triggered"] = reloader.count
+                    entry["status_verified"] = \
+                        request(daemon.port, path, hdrs)[0] == expected
                     entry.update(round=round_index + 1, position=position)
                     results[workload][cfg].append(entry)
                     print(f"  round {round_index + 1} {workload:14s} {cfg:13s} "
