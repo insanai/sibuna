@@ -1,22 +1,17 @@
 // Sibuna Architectural Whitepaper
 // Copyright (c) 2026 Sibuna Contributors
-// Grounded in verified empirical metrics and pure-Zig systems engineering.
-// Inspired by the voices and principles of Richard Feynman, Donald Knuth, and Leslie Lamport.
+// Designed with inspiration from Richard Feynman, Donald Knuth, and Leslie Lamport.
 
 #import "@preview/cetz:0.5.2" as cetz
-#import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
 
 // --- Design System & Color Palette ---
 #let ink = rgb("0f172a")          // Slate 900
-#let canvas-bg = rgb("ffffff")
-#let paper-tint = rgb("f8fafc")     // Slate 50
 #let primary = rgb("0369a1")        // Sky 700
-#let primary-light = rgb("e0f2fe")  // Sky 100
-#let accent-cyan = rgb("0891b2")   // Cyan 600
-#let accent-gold = rgb("b45309")   // Amber 700
-#let gold-light = rgb("fffbeb")    // Amber 50
+#let primary-light = rgb("f0f9ff")  // Sky 50
 #let accent-purple = rgb("6d28d9") // Violet 700
 #let purple-light = rgb("f5f3ff") // Violet 50
+#let accent-gold = rgb("b45309")   // Amber 700
+#let gold-light = rgb("fffbeb")    // Amber 50
 #let accent-green = rgb("047857")  // Emerald 700
 #let green-light = rgb("ecfdf5")  // Emerald 50
 #let accent-red = rgb("b91c1c")    // Red 700
@@ -33,7 +28,7 @@
 
 #set page(
   paper: "a4",
-  margin: (x: 19mm, top: 22mm, bottom: 22mm),
+  margin: (x: 18mm, top: 20mm, bottom: 20mm),
   header: context {
     if counter(page).get().first() > 1 {
       grid(
@@ -41,7 +36,7 @@
         align(left)[#text(size: 8pt, fill: muted, font: "New Computer Modern", weight: "bold")[SIBUNA: ARCHITECTURE & DISTRIBUTED CONSENSUS]],
         align(right)[#text(size: 8pt, fill: muted, font: "New Computer Modern", style: "italic")[Whitepaper · September 2026]]
       )
-      v(-2pt)
+      v(-3pt)
       line(length: 100%, stroke: 0.4pt + light-border)
     }
   },
@@ -60,33 +55,33 @@
 
 #set text(
   font: "New Computer Modern",
-  size: 9.8pt,
+  size: 9.6pt,
   fill: ink,
   lang: "en"
 )
 
-#set par(justify: true, leading: 0.62em, spacing: 0.78em)
+#set par(justify: true, leading: 0.60em, spacing: 0.70em)
 #set heading(numbering: "1.1")
 
-#show heading: it => block(below: 0.65em, above: 1.15em)[
+#show heading: it => block(below: 0.55em, above: 1.05em)[
   #if it.level == 1 {
     v(0.3em)
-    text(size: 15pt, weight: "bold", fill: ink)[
+    text(size: 13.5pt, weight: "bold", fill: ink)[
       #it
       #v(-0.25em)
       #line(length: 100%, stroke: 1.2pt + primary)
     ]
   } else if it.level == 2 {
-    text(size: 12pt, weight: "bold", fill: primary)[#it]
+    text(size: 11pt, weight: "bold", fill: primary)[#it]
   } else {
-    text(size: 10.2pt, weight: "bold", fill: ink)[#it]
+    text(size: 9.8pt, weight: "bold", fill: ink)[#it]
   }
 ]
 
 #set table(
   stroke: (x, y) => if y == 0 { (bottom: 1.4pt + ink) } else { 0.4pt + light-border },
   fill: (col, row) => if row == 0 { rgb("f1f5f9") } else if calc.even(row) { rgb("fafafa") } else { white },
-  inset: 5pt
+  inset: 4.5pt
 )
 
 // --- Voices of Master Thinkers ---
@@ -94,18 +89,18 @@
   width: 100%,
   stroke: (left: 3pt + accent-gold),
   fill: gold-light,
-  inset: (x: 11pt, y: 8pt),
+  inset: (x: 10pt, y: 7pt),
   radius: (right: 3pt),
   breakable: false
 )[
   #grid(
     columns: (auto, 1fr),
     gutter: 8pt,
-    text(size: 13pt)[⚡],
+    text(size: 12pt)[⚡],
     [
-      #text(weight: "bold", size: 9pt, fill: accent-gold)[Feynman's Physical Intuition: Energy Asymmetry & The Second Law]
+      #text(weight: "bold", size: 8.8pt, fill: accent-gold)[Feynman's Physical Intuition: Energy Asymmetry & The Second Law]
       #v(2pt)
-      #text(size: 9.2pt, fill: rgb("78350f"), style: "italic")[#body]
+      #text(size: 8.8pt, fill: rgb("78350f"), style: "italic")[#body]
     ]
   )
 ]
@@ -114,18 +109,18 @@
   width: 100%,
   stroke: (left: 3pt + accent-purple),
   fill: purple-light,
-  inset: (x: 11pt, y: 8pt),
+  inset: (x: 10pt, y: 7pt),
   radius: (right: 3pt),
   breakable: false
 )[
   #grid(
     columns: (auto, 1fr),
     gutter: 8pt,
-    text(size: 13pt)[📐],
+    text(size: 12pt)[📐],
     [
-      #text(weight: "bold", size: 9pt, fill: accent-purple)[Knuth's Mechanical Precision: Cache-Lines & Concrete Mathematics]
+      #text(weight: "bold", size: 8.8pt, fill: accent-purple)[Knuth's Mechanical Precision: Cache-Lines & Concrete Mathematics]
       #v(2pt)
-      #text(size: 9.2pt, fill: rgb("4c1d95"))[#body]
+      #text(size: 8.8pt, fill: rgb("4c1d95"))[#body]
     ]
   )
 ]
@@ -134,18 +129,18 @@
   width: 100%,
   stroke: (left: 3pt + primary),
   fill: primary-light,
-  inset: (x: 11pt, y: 8pt),
+  inset: (x: 10pt, y: 7pt),
   radius: (right: 3pt),
   breakable: false
 )[
   #grid(
     columns: (auto, 1fr),
     gutter: 8pt,
-    text(size: 13pt)[🏛],
+    text(size: 12pt)[🏛],
     [
-      #text(weight: "bold", size: 9pt, fill: primary)[Lamport's Distributed Invariant: Safety, Liveness & Replicated Logs]
+      #text(weight: "bold", size: 8.8pt, fill: primary)[Lamport's Distributed Invariant: Safety, Liveness & Replicated Logs]
       #v(2pt)
-      #text(size: 9.2pt, fill: rgb("0369a1"))[#body]
+      #text(size: 8.8pt, fill: rgb("0369a1"))[#body]
     ]
   )
 ]
@@ -154,63 +149,63 @@
   width: 100%,
   stroke: 0.5pt + border,
   fill: white,
-  inset: 9pt,
+  inset: 8pt,
   radius: 4pt,
   breakable: false
 )[
   #text(weight: "bold", fill: ink)[Theorem #number] (#text(style: "italic")[#title]).
   #h(4pt)
   #statement
-  #v(4pt)
-  #text(weight: "bold", size: 8.2pt, fill: muted)[PROOF.]
-  #text(size: 8.8pt, fill: rgb("334155"))[#proof]
+  #v(2.5pt)
+  #text(weight: "bold", size: 7.8pt, fill: muted)[PROOF.]
+  #text(size: 8.4pt, fill: rgb("334155"))[#proof]
   #align(right)[#text(fill: primary)[$square$]]
 ]
 
 #let metric-card(value, label, subtext) = block(
   stroke: 0.6pt + border,
   fill: white,
-  inset: 7pt,
+  inset: (x: 6pt, top: 5pt, bottom: 6pt),
   radius: 4pt,
   width: 100%
 )[
   #align(center)[
-    #text(size: 17pt, weight: "bold", fill: primary)[#value]
+    #text(size: 15.5pt, weight: "bold", fill: primary)[#value]
+    #v(-3pt)
+    #text(size: 7.5pt, weight: "bold", fill: ink)[#label]
     #v(-4pt)
-    #text(size: 7.8pt, weight: "bold", fill: ink)[#label]
-    #v(-6pt)
-    #text(size: 6.8pt, fill: muted)[#subtext]
+    #text(size: 6.6pt, fill: muted)[#subtext]
   ]
 ]
 
 // ==========================================
-// TITLE & ABSTRACT
+// TITLE & ABSTRACT (PAGE 1)
 // ==========================================
 
 #align(center)[
-  #v(6mm)
-  #text(size: 23pt, weight: "bold", fill: ink)[SIBUNA]
   #v(2mm)
-  #text(size: 13pt, weight: "medium", fill: primary)[A Zero-Allocation, Distributed Web Defense Engine]
+  #text(size: 21pt, weight: "bold", fill: ink)[SIBUNA]
   #v(1mm)
-  #text(size: 9.5pt, fill: muted)[Thermodynamic Asymmetry, Linear-Time Automata, and Embedded Consensus via zaxonlite]
-  #v(4mm)
-  #text(size: 9.5pt, weight: "bold", fill: ink)[Vikrant Rathore #h(12pt) · #h(12pt) Ronak Rathore]
-  #v(1mm)
-  #text(size: 8.5pt, fill: muted)[Insan AI Systems & Architecture Lab · Verified Release 0.16.0 Pure Zig]
-  #v(5mm)
+  #text(size: 12pt, weight: "medium", fill: primary)[A Zero-Allocation, Distributed Web Defense Engine]
+  #v(0.5mm)
+  #text(size: 8.8pt, fill: muted)[Thermodynamic Asymmetry, Linear-Time Automata, and Embedded Consensus via zaxonlite]
+  #v(3mm)
+  #text(size: 8.8pt, weight: "bold", fill: ink)[Vikrant Rathore #h(10pt) · #h(10pt) Ronak Rathore]
+  #v(0.5mm)
+  #text(size: 8pt, fill: muted)[Insan AI Systems & Architecture Lab · Pure Zig Release 0.16.0]
+  #v(3mm)
 ]
 
 #block(
   width: 100%,
-  fill: paper-tint,
-  inset: 11pt,
+  fill: rgb("f8fafc"),
+  inset: 9pt,
   radius: 5pt,
   stroke: 0.6pt + border
 )[
-  #align(center)[#text(weight: "bold", size: 9pt, fill: ink)[ABSTRACT]]
-  #v(2pt)
-  #text(size: 8.8pt, fill: rgb("334155"))[
+  #align(center)[#text(weight: "bold", size: 8.5pt, fill: ink)[ABSTRACT]]
+  #v(1pt)
+  #text(size: 8.4pt, fill: rgb("334155"))[
     Web application firewalls (WAFs) and edge defense platforms suffer from three systemic architectural dysfunctions:
     (1) *Thermodynamic inversion*, wherein defending proxies expend orders of magnitude more computational energy parsing headers, traversing regular expressions, and querying databases than automated botnets expend emitting requests;
     (2) *Runtime unpredictability*, stemming from dynamic memory allocators (`malloc`), garbage-collection stop-the-world pauses, and bloated container architectures (e.g., SafeLine's 1.5–2.5 GB footprint spanning 5–8 containers); and
@@ -223,7 +218,7 @@
   ]
 ]
 
-#v(3mm)
+#v(2mm)
 
 #grid(
   columns: (1fr, 1fr, 1fr, 1fr),
@@ -234,12 +229,12 @@
   metric-card("< 22 MB", "CLUSTER NODE RSS", "Embedded Multi-Paxos")
 )
 
-#v(4mm)
+#v(2.5mm)
 
 // ==========================================
 // 1. PROLOGUE: THE THERMODYNAMICS OF DEFENSE
 // ==========================================
-= 1. Prologue: The Thermodynamics of Web Defense
+= Prologue: The Thermodynamics of Web Defense
 
 In classical mechanics, conservation laws govern all physical interactions. Energy cannot be conjured from nothing; work performed by an agent is inextricably tied to entropy generated in the universe. Yet for thirty years, the architecture of web application defense has lived in deliberate defiance of thermodynamics.
 
@@ -257,36 +252,82 @@ When those requests reach a traditional WAF, the defending server executes:
 3. PCRE regular expression scanning, which in worst-case patterns exhibits catastrophic exponential backtracking ($O(2^N)$), converting single-character inputs into billions of CPU cycles.
 4. Synchronous network round-trips to external key-value stores (Redis) or relational databases (PostgreSQL) to read and update rate-limiting counters.
 
+
+
+// ==========================================
+// PAGE 2: THERMODYNAMICS CONTINUATION & FIGURE 1 & SECTION 2
+// ==========================================
+
 The defender expends $10^(-2) "J"$ per request. This creates an energetic leverage ratio of $10,000 : 1$ in favor of the attacker. Under such thermodynamic inversion, volumetric denial of service is not an anomalous bug; it is an inescapable physical inevitability.
 
+#v(1.5mm)
+
 #figure(
-  caption: [Energetic Leverage: Traditional Regex/Database WAF vs. Sibuna Thermodynamic Breakwater],
-  diagram(
-    node-stroke: 0.6pt + border,
-    spacing: (20mm, 10mm),
-    node((0,0), [*Attacker Energy*\ $E_A approx 1 mu"J"$\ 1 HTTP SYN+GET], fill: red-light, radius: 4pt),
-    node((1,0), [*Legacy WAF Stack*\ $E_D approx 10,"000" mu"J"$\ Malloc + Regex + Redis], fill: red-light, radius: 4pt),
-    edge((0,0), (1,0), [Asymmetric Collapse ($10^4:1$)], "->", stroke: 1.2pt + accent-red),
+  caption: [The Thermodynamic Energy Asymmetry: Traditional WAF Inversion vs. Sibuna Breakwater],
+  cetz.canvas(length: 1cm, {
+    import cetz.draw: *
+
+    let c-attacker = rgb("ef4444")
+    let c-legacy = rgb("dc2626")
+    let c-posw = rgb("059669")
+
+    // --- Panel 1: Traditional WAF Asymmetry ---
+    rect((0, 0), (8.1, 4.3), fill: rgb("fff5f5"), stroke: 0.8pt + rgb("fca5a5"), radius: 0.2)
+    content((4.05, 3.9), text(weight: "bold", size: 8.5pt, fill: rgb("991b1b"))[Traditional WAF: Energetic Inversion], anchor: "center")
     
-    node((0,1), [*Attacker Energy*\ $E_A approx 50,"000" mu"J"$\ Sequential Hash Tree], fill: gold-light, radius: 4pt),
-    node((1,1), [*Sibuna Core Engine*\ $E_D approx 0.05 mu"J"$\ SIMD + GCRA + BLAKE3], fill: green-light, radius: 4pt),
-    edge((0,1), (1,1), [Thermodynamic Breakwater ($1:10^6$)], "->", stroke: 1.2pt + accent-green)
-  )
+    // Attacker node
+    rect((0.4, 0.9), (3.4, 3.3), fill: white, stroke: 0.8pt + c-attacker, radius: 0.15)
+    content((1.9, 2.85), text(weight: "bold", size: 8pt, fill: c-attacker)[Attacker Work], anchor: "center")
+    content((1.9, 2.3), text(size: 7.2pt)[1 HTTP SYN+Req], anchor: "center")
+    content((1.9, 1.5), text(size: 7.8pt, weight: "bold", fill: rgb("991b1b"))[$E_A approx 1 mu"J"$], anchor: "center")
+
+    // Legacy defender node
+    rect((4.7, 0.9), (7.7, 3.3), fill: white, stroke: 0.8pt + c-legacy, radius: 0.15)
+    content((6.2, 2.85), text(weight: "bold", size: 8pt, fill: c-legacy)[Defender Burn], anchor: "center")
+    content((6.2, 2.4), text(size: 7.2pt)[PCRE Regex + GC], anchor: "center")
+    content((6.2, 2.0), text(size: 7.2pt)[Redis / Postgres], anchor: "center")
+    content((6.2, 1.45), text(size: 7.8pt, weight: "bold", fill: rgb("991b1b"))[$E_D approx 10,"000" mu"J"$], anchor: "center")
+
+    // Arrow
+    line((3.4, 2.1), (4.7, 2.1), mark: (end: ">"), stroke: 1.5pt + c-attacker)
+    content((4.05, 2.55), text(size: 7.2pt, weight: "bold", fill: c-attacker)[10,000 : 1], anchor: "center")
+    content((4.05, 0.4), text(size: 7.2pt, style: "italic", fill: rgb("7f1d1d"))[Defender collapses under load], anchor: "center")
+
+    // --- Panel 2: Sibuna Thermodynamic Breakwater ---
+    rect((8.9, 0), (17.0, 4.3), fill: rgb("f0fdf4"), stroke: 0.8pt + rgb("86efac"), radius: 0.2)
+    content((12.95, 3.9), text(weight: "bold", size: 8.5pt, fill: rgb("065f46"))[Sibuna: Thermodynamic Breakwater], anchor: "center")
+
+    // Attacker node under PoSW
+    rect((9.3, 0.9), (12.3, 3.3), fill: white, stroke: 0.8pt + rgb("b45309"), radius: 0.15)
+    content((10.8, 2.85), text(weight: "bold", size: 8pt, fill: rgb("b45309"))[Attacker Work], anchor: "center")
+    content((10.8, 2.4), text(size: 7.2pt)[Sequential Hash Tree], anchor: "center")
+    content((10.8, 2.0), text(size: 7.2pt)[8,192 Node PoSW], anchor: "center")
+    content((10.8, 1.45), text(size: 7.8pt, weight: "bold", fill: rgb("92400e"))[$E_A approx 50,"000" mu"J"$], anchor: "center")
+
+    // Sibuna defender node
+    rect((13.6, 0.9), (16.6, 3.3), fill: white, stroke: 0.8pt + c-posw, radius: 0.15)
+    content((15.1, 2.85), text(weight: "bold", size: 8pt, fill: c-posw)[Sibuna Core], anchor: "center")
+    content((15.1, 2.4), text(size: 7.2pt)[SIMD + GCRA], anchor: "center")
+    content((15.1, 2.0), text(size: 7.2pt)[Logarithmic Verify], anchor: "center")
+    content((15.1, 1.45), text(size: 7.8pt, weight: "bold", fill: rgb("065f46"))[$E_D approx 0.05 mu"J"$], anchor: "center")
+
+    // Arrow
+    line((12.3, 2.1), (13.6, 2.1), mark: (end: ">"), stroke: 1.5pt + c-posw)
+    content((12.95, 2.55), text(size: 7.2pt, weight: "bold", fill: c-posw)[1 : 1,000,000], anchor: "center")
+    content((12.95, 0.4), text(size: 7.2pt, style: "italic", fill: rgb("14532d"))[Attacker throttled by physics], anchor: "center")
+  })
 )
 
 Sibuna inverts this relationship. By conditioning admission upon cryptographic *Proofs of Sequential Work (PoSW)* or *Geometric Hashcash*, the energetic cost is transferred onto the challenger. Concurrently, Sibuna guarantees that verifying the challenge is logarithmic in work, bounded in memory, and accomplished with *zero heap allocations* on the defender's CPU.
 
-// ==========================================
-// 2. MECHANICAL SYMPATHY: ZERO-ALLOCATION
-// ==========================================
-= 2. Mechanical Sympathy: Zero-Allocation and Bounded State
+= Mechanical Sympathy: Zero-Allocation and Bounded State
 
 #knuth-dialogue[
   "The programmer who relies on a dynamic heap allocator during the inner loop of a real-time system is like an architect who designs a bridge and leaves the foundations to be poured by a passing stranger while the cars are already crossing.
   On modern microprocessors, an instruction cache hit takes 1 cycle. An L1 data hit takes 4 cycles. A trip to main DRAM across a fragmented heap takes 200 cycles, during which the processor sits entirely idle. If your software allocates memory while classifying an incoming packet, it is not serving traffic; it is waiting in an administrative queue. An algorithm achieves elegance only when every single byte of memory is assigned a permanent, bounded address before the system opens its first socket."
 ]
 
-== 2.1 The Zero-Allocation Hot Path Invariant
+== The Zero-Allocation Hot Path Invariant
 Virtually all legacy WAF solutions are written in high-level interpreted or garbage-collected runtimes (Go, Python, Lua, Node.js) or depend on C/C++ libraries that freely invoke `malloc()` and `free()`. Under high concurrency, dynamic heap management inflicts severe architectural damage:
 - *Virtual Memory Fragmentation*: Fragmented heaps inflate resident set sizes (RSS) into multiple gigabytes over days of continuous operation.
 - *Garbage Collection Jitter*: Go and Java runtimes incur stop-the-world GC cycles, producing multi-millisecond P99 and P99.9 latency spikes.
@@ -294,46 +335,136 @@ Virtually all legacy WAF solutions are written in high-level interpreted or garb
 
 Sibuna enforces a strict architectural contract: *the hot evaluation path shall never invoke the operating system heap allocator*. All internal data structures—sliding window buffers, Radix tries, rate-limiting shards, Aho-Corasick transition tables, and token verifiers—are statically allocated at startup or backed by fixed-capacity circular rings.
 
-== 2.2 The Complete Request Pipeline
+
+
+// ==========================================
+// PAGE 3: REQUEST PIPELINE & THEOREMS 1 & 2
+// ==========================================
+
+== The Complete Request Pipeline
 The following architectural diagram illustrates the wire-speed progression of a request through Sibuna's zero-allocation stages:
 
+#v(1mm)
+
 #figure(
-  caption: [Sibuna Wire-Speed Zero-Allocation Request Flow & Measured Stage Latencies],
-  diagram(
-    node-stroke: 0.6pt + border,
-    spacing: (15mm, 8mm),
-    node((0,0), [TCP Ingress \ Socket], fill: paper-tint, radius: 4pt),
-    node((1,0), [Radix Trie \ IPv4/6 Filter \ *72.59 ns*], fill: primary-light, radius: 4pt),
-    node((2,0), [16-Shard Atomic \ GCRA Limiter \ *9.48 ns*], fill: primary-light, radius: 4pt),
-    node((3,0), [Zero-Copy \ HTTP/1.1 Parser \ *1.50 µs*], fill: primary-light, radius: 4pt),
-    
-    node((3,1), [SIMD Aho-Corasick \ Bot Classifier \ *88.96 ns*], fill: purple-light, radius: 4pt),
-    node((2,1), [BLAKE3 Token \ Authentication \ *212.52 ns*], fill: purple-light, radius: 4pt),
-    node((1,1), [PoSW / Hashcash \ Gate Verifier \ *25.8 µs*], fill: gold-light, radius: 4pt),
-    node((0,1), [Semantic WAF \ Inspection Engine \ *37.9 µs*], fill: purple-light, radius: 4pt),
-    
-    node((0,2), [Upstream Origin \ Proxying], fill: green-light, radius: 4pt),
-    node((1,2), [Immediate Drop / \ Ban Sink], fill: red-light, radius: 4pt),
-    node((2,2), [HTTP 401 \ PoSW Challenge], fill: gold-light, radius: 4pt),
-    
-    edge((0,0), (1,0), "->"),
-    edge((1,0), (2,0), [Pass], "->"),
-    edge((1,0), (1,2), [Banned IP], "->"),
-    edge((2,0), (3,0), [Within Rate], "->"),
-    edge((2,0), (2,2), [Rate Exceeded], "->"),
-    edge((3,0), (3,1), "->"),
-    edge((3,1), (2,1), [Allow], "->"),
-    edge((3,1), (1,2), [Known Scraper], "->"),
-    edge((2,1), (0,1), [Valid Token], "->"),
-    edge((2,1), (1,1), [No Token], "->"),
-    edge((1,1), (0,1), [Verified PoW], "->"),
-    edge((1,1), (2,2), [Puzzle Missing], "->"),
-    edge((0,1), (0,2), [Clean Request], "->"),
-    edge((0,1), (1,2), [Injection Detected], "->")
-  )
+  caption: [Sibuna Wire-Speed Request Lifecycle: Measured Zero-Allocation Hot Path],
+  cetz.canvas(length: 1cm, {
+    import cetz.draw: *
+
+    let c-navy = rgb("0f172a")
+    let c-blue = rgb("0284c7")
+    let c-blue-bg = rgb("f0f9ff")
+    let c-purple = rgb("7c3aed")
+    let c-purple-bg = rgb("faf5ff")
+    let c-gold = rgb("d97706")
+    let c-gold-bg = rgb("fffbeb")
+    let c-green = rgb("059669")
+    let c-green-bg = rgb("ecfdf5")
+    let c-red = rgb("dc2626")
+    let c-red-bg = rgb("fef2f2")
+    let c-gray-border = rgb("cbd5e1")
+    let c-text = rgb("1e293b")
+
+    // Outer boundary card
+    rect((0, 0), (17.0, 11.2), fill: rgb("f8fafc"), stroke: 0.8pt + c-gray-border, radius: 0.3)
+    content((8.5, 10.7), text(weight: "bold", size: 10.2pt, fill: c-navy)[Sibuna Wire-Speed Request Lifecycle (Measured Zero-Allocation Hot Path)], anchor: "center")
+
+    // Helper to draw a stage box
+    let stage-box(x, y, w, h, fill-col, stroke-col, title, latency, subtext) = {
+      rect((x, y), (x + w, y + h), fill: fill-col, stroke: 0.8pt + stroke-col, radius: 0.18)
+      content((x + w/2, y + h - 0.35), text(weight: "bold", size: 8pt, fill: stroke-col)[#title], anchor: "center")
+      content((x + w/2, y + h/2), text(size: 7.2pt, fill: c-text)[#subtext], anchor: "center")
+      rect((x + w/2 - 0.9, y + 0.18), (x + w/2 + 0.9, y + 0.65), fill: stroke-col, stroke: none, radius: 0.1)
+      content((x + w/2, y + 0.41), text(weight: "bold", size: 7pt, fill: white)[#latency], anchor: "center")
+    }
+
+    // --- Row 1 (y: 8.2 - 9.8): L4 Ingress & Filtering ---
+    rect((0.6, 8.2), (3.2, 9.8), fill: white, stroke: 0.8pt + c-navy, radius: 0.18)
+    content((1.9, 9.3), text(weight: "bold", size: 8.5pt, fill: c-navy)[TCP Ingress], anchor: "center")
+    content((1.9, 8.8), text(size: 7.5pt)[Raw Stream Buffer], anchor: "center")
+    content((1.9, 8.4), text(size: 7pt, fill: rgb("64748b"))[Zero Alloc / Ring], anchor: "center")
+
+    // Stage 1: Radix Trie
+    stage-box(4.2, 8.2, 3.4, 1.6, c-blue-bg, c-blue, [1. Radix Trie CIDR], [72.59 ns], [IPv4/IPv6 Table Lookup])
+
+    // Stage 2: 16-Shard GCRA
+    stage-box(8.6, 8.2, 3.4, 1.6, c-blue-bg, c-blue, [2. Sharded GCRA], [9.48 ns], [16 Shards · Lock-Free CAS])
+
+    // Stage 3: Zero-Copy Parser
+    stage-box(13.0, 8.2, 3.4, 1.6, c-blue-bg, c-blue, [3. Zero-Copy HTTP], [1.50 µs], [Slices Only · In-Place])
+
+    // Arrows Row 1
+    line((3.2, 9.0), (4.2, 9.0), mark: (end: ">"), stroke: 1.2pt + c-blue)
+    line((7.6, 9.0), (8.6, 9.0), mark: (end: ">"), stroke: 1.2pt + c-blue)
+    content((8.1, 9.3), text(size: 6.5pt, fill: c-green)[Pass], anchor: "center")
+    line((12.0, 9.0), (13.0, 9.0), mark: (end: ">"), stroke: 1.2pt + c-blue)
+    content((12.5, 9.3), text(size: 6.5pt, fill: c-green)[Admit], anchor: "center")
+
+    // Row 1 to Row 2 connecting snake arrow
+    line((14.7, 8.2), (14.7, 7.3), (14.7, 6.7), mark: (end: ">"), stroke: 1.2pt + c-purple)
+
+    // --- Row 2 (y: 5.1 - 6.7): Identity, Bots & Cryptography ---
+    // Stage 4: SIMD Aho-Corasick
+    stage-box(13.0, 5.1, 3.4, 1.6, c-purple-bg, c-purple, [4. SIMD Bot Matcher], [88.96 ns], [40 Crawler Signatures])
+
+    // Stage 5: BLAKE3 MAC Token
+    stage-box(8.6, 5.1, 3.4, 1.6, c-purple-bg, c-purple, [5. BLAKE3 Token], [212.52 ns], [Keyed MAC Authentication])
+
+    // Stage 6: PoSW Verifier
+    stage-box(4.2, 5.1, 3.4, 1.6, c-gold-bg, c-gold, [6. PoSW Verifier], [25.83 µs], [Cohen-Pietrzak Depth 13])
+
+    // Arrows Row 2
+    line((13.0, 5.9), (12.0, 5.9), mark: (end: ">"), stroke: 1.2pt + c-purple)
+    content((12.5, 6.2), text(size: 6.5pt, fill: c-green)[Clean], anchor: "center")
+
+    line((8.6, 5.9), (7.6, 5.9), mark: (end: ">"), stroke: 1.2pt + c-gold)
+    content((8.1, 6.25), text(size: 6.5pt, fill: c-gold)[No Token], anchor: "center")
+
+    // Fast path token bypass from BLAKE3 directly to Stage 7 (shifted text left to avoid crossing red dashed line)
+    line((10.3, 5.1), (10.3, 4.3), (2.3, 4.3), (2.3, 3.2), mark: (end: ">"), stroke: 1.2pt + c-green)
+    content((5.1, 4.55), text(size: 6.8pt, weight: "bold", fill: c-green)[Valid Token Fast-Path (Bypass PoSW)], anchor: "center")
+
+    // PoSW verified arrow down to Row 3
+    line((5.9, 5.1), (5.9, 3.2), mark: (end: ">"), stroke: 1.2pt + c-green)
+    content((5.2, 3.9), text(size: 6.5pt, fill: c-green)[Verified], anchor: "center")
+
+    // --- Row 3 (y: 1.6 - 3.2): Deep Semantic Inspection & Terminal Sinks ---
+    // Stage 7: Semantic WAF
+    stage-box(0.6, 1.6, 3.4, 1.6, c-blue-bg, c-blue, [7. Semantic WAF], [37.98 µs], [SQLi / XSS Tokenizer])
+
+    // Terminal Sink 1: Upstream Proxy
+    rect((4.8, 1.6), (7.8, 3.2), fill: c-green-bg, stroke: 1pt + c-green, radius: 0.18)
+    content((6.3, 2.7), text(weight: "bold", size: 8.5pt, fill: c-green)[Upstream Origin], anchor: "center")
+    content((6.3, 2.2), text(size: 7.2pt)[Reverse Proxy Keep-Alive], anchor: "center")
+    content((6.3, 1.8), text(weight: "bold", size: 7pt, fill: c-green)[HTTP 200 Admitted], anchor: "center")
+
+    // Terminal Sink 2: Drop / Ban Sink
+    rect((9.0, 1.6), (12.2, 3.2), fill: c-red-bg, stroke: 1pt + c-red, radius: 0.18)
+    content((10.6, 2.7), text(weight: "bold", size: 8.5pt, fill: c-red)[Drop / Ban Sink], anchor: "center")
+    content((10.6, 2.2), text(size: 7.2pt)[Blacklisted CIDR / Threat], anchor: "center")
+    content((10.6, 1.8), text(weight: "bold", size: 7pt, fill: c-red)[Connection Severed], anchor: "center")
+
+    // Terminal Sink 3: Challenge Issuer
+    rect((13.0, 1.6), (16.4, 3.2), fill: c-gold-bg, stroke: 1pt + c-gold, radius: 0.18)
+    content((14.7, 2.7), text(weight: "bold", size: 8.5pt, fill: c-gold)[HTTP 401 Challenge], anchor: "center")
+    content((14.7, 2.2), text(size: 7.2pt)[Issue Signed PoSW Ticket], anchor: "center")
+    content((14.7, 1.8), text(weight: "bold", size: 7pt, fill: c-gold)[Zero Server State], anchor: "center")
+
+    // Arrow Stage 7 to Upstream
+    line((4.0, 2.4), (4.8, 2.4), mark: (end: ">"), stroke: 1.5pt + c-green)
+    content((4.4, 2.7), text(size: 6.5pt, fill: c-green)[Clean], anchor: "center")
+
+    // Cleanly routed Dropped line to Ban Sink through open channel at x: 8.0
+    line((5.9, 8.2), (5.9, 7.5), (7.8, 7.5), (7.8, 2.4), (9.0, 2.4), mark: (end: ">"), stroke: 1pt + c-red, dash: "dashed")
+    content((6.9, 7.7), text(size: 6.5pt, fill: c-red)[CIDR Banned], anchor: "center")
+
+    // GCRA Exceeded arrow to Challenge through open channel at x: 12.5
+    line((10.3, 8.2), (10.3, 7.3), (12.5, 7.3), (12.5, 2.4), (13.0, 2.4), mark: (end: ">"), stroke: 1pt + c-gold, dash: "dashed")
+    content((11.4, 7.5), text(size: 6.5pt, fill: c-gold)[Rate Exceeded], anchor: "center")
+  })
 )
 
-== 2.3 Mathematical Proofs of Algorithmic Primitives
+== Mathematical Proofs of Algorithmic Primitives
 
 #theorem-box(
   "1",
@@ -344,7 +475,7 @@ The following architectural diagram illustrates the wire-speed progression of a 
   Empirical verification on 40 production bot signatures yields a median evaluation time of *88.96 ns* (11,241,454 ops/sec), compared to 3,496.15 ns for standard sequential substring scanning—a *39.3× speedup*.]
 )
 
-#v(2mm)
+#v(1.5mm)
 
 #theorem-box(
   "2",
@@ -360,7 +491,11 @@ The following architectural diagram illustrates the wire-speed progression of a 
   To eradicate CPU cacheline bouncing across socket cores, Sibuna partitions the client table across *16 independent memory shards* indexed by a 4-bit hash of the client IP. On an Apple M1 core, single-scope GCRA executes in *9.48 ns* (>105 million checks/sec) with zero heap allocations.]
 )
 
-#v(2mm)
+
+
+// ==========================================
+// PAGE 4: THEOREM 3 & SECTION 3 (DISTRIBUTED STATE MACHINE)
+// ==========================================
 
 #theorem-box(
   "3",
@@ -375,10 +510,7 @@ The following architectural diagram illustrates the wire-speed progression of a 
   To prevent replay attacks within $Delta t_"valid"$, Sibuna inserts the 64-bit hash of the spent nonce into a fixed-capacity *Robin Hood hash table*. Robin Hood hashing minimizes the variance of probe sequence lengths ($D_i - "ideal"$), ensuring worst-case insertion and lookup in *45.02 ns* ($O(1)$ amortized).]
 )
 
-// ==========================================
-// 3. EMBEDDED CONSENSUS: ZAXONLITE MULTI-PAXOS
-// ==========================================
-= 3. The Distributed State Machine: Consensus via zaxonlite
+= The Distributed State Machine: Consensus via zaxonlite
 
 #lamport-dialogue[
   "A distributed system is one in which the failure of a computer you didn't even know existed can render your own computer unusable.
@@ -386,7 +518,7 @@ The following architectural diagram illustrates the wire-speed progression of a 
   A true distributed firewall cannot depend on an external oracle for truth. It must contain the state machine inside itself. Consensus must be an intrinsic property of the binary, replicated across peer nodes through an immutable log governed by rigorous mathematical invariants."
 ]
 
-== 3.1 The Architectural Pathology of Externalized State
+== The Architectural Pathology of Externalized State
 Every multi-node firewall must solve the state synchronization problem: when Node A detects an aggressive distributed denial-of-service attack from an IP range, how quickly and reliably do Node B and Node C enforce the ban?
 
 Existing market solutions rely on external databases:
@@ -394,31 +526,86 @@ Existing market solutions rely on external databases:
 - *Coraza / Anubis*: Typically paired with external Redis clusters. Every rate-limit check or ban query traverses the network stack via TCP/RESP serialization, adding 0.5–2.0 ms of network latency and introducing a catastrophic single point of failure.
 - *CrowdSec*: Runs an out-of-process daemon that reads log files from disk and communicates asynchronously with a central API. Threat updates propagate with latencies of seconds to minutes, leaving large attack windows open.
 
-== 3.2 zaxonlite: Embedded WAL-Frame Multi-Paxos
+== zaxonlite: Embedded WAL-Frame Multi-Paxos
 Sibuna solves state distribution by embedding `zaxonlite`—a high-performance, embedded distributed storage and consensus library—directly into its address space. There are zero external processes, zero sidecars, and zero database daemons.
 
+Sibuna cluster nodes maintain a replicated Write-Ahead Log (WAL). State mutations (IP bans, rate-limit threshold changes, dynamic WAF rule deployments) are proposed as log entries governed by Leslie Lamport's Multi-Paxos consensus protocol.
+
+
+
+// ==========================================
+// PAGE 5: FIGURE 3 & INVARIANTS & MARKET COMPARISON TABLE
+// ==========================================
+
 #figure(
-  caption: [Sibuna 3-Node Cluster: Multi-Paxos Replicated State Machine via zaxonlite],
-  diagram(
-    node-stroke: 0.6pt + border,
-    spacing: (25mm, 15mm),
-    node((0,0), [*Node 1 (Leader)* \ Multi-Paxos State Machine \ Port: 8000 / Mesh: 9000 \ RSS: 19.7 MB], fill: green-light, radius: 4pt),
-    node((1,1), [*Node 2 (Follower)* \ Multi-Paxos State Machine \ Port: 8001 / Mesh: 9001 \ RSS: 21.3 MB], fill: paper-tint, radius: 4pt),
-    node((0,2), [*Node 3 (Follower)* \ Multi-Paxos State Machine \ Port: 8002 / Mesh: 9002 \ RSS: 19.6 MB], fill: paper-tint, radius: 4pt),
-    
-    edge((0,0), (1,1), [Replicated WAL Frames \ Phase 2 Accept (Quorum)], "<->", stroke: 1.1pt + primary),
-    edge((0,0), (0,2), [Replicated WAL Frames \ Phase 2 Accept (Quorum)], "<->", stroke: 1.1pt + primary),
-    edge((1,1), (0,2), [Heartbeat & Term Lease \ Peer Gossip], "<->", stroke: 0.7pt + muted, dash: "dashed")
-  )
+  caption: [Sibuna 3-Node Mesh: Embedded Multi-Paxos State Machine via zaxonlite],
+  cetz.canvas(length: 1cm, {
+    import cetz.draw: *
+
+    let c-navy = rgb("0f172a")
+    let c-blue = rgb("0284c7")
+    let c-green = rgb("059669")
+    let c-green-bg = rgb("ecfdf5")
+    let c-card-bg = rgb("f8fafc")
+    let c-border = rgb("cbd5e1")
+    let c-text = rgb("334155")
+    let c-gold = rgb("d97706")
+
+    // Outer boundary card
+    rect((0, 0), (17.0, 8.4), fill: rgb("fafafa"), stroke: 0.8pt + c-border, radius: 0.3)
+    content((8.5, 7.95), text(weight: "bold", size: 10.2pt, fill: c-navy)[Sibuna 3-Node Mesh: Embedded Multi-Paxos State Machine (zaxonlite)], anchor: "center")
+
+    // Node drawing helper
+    let draw-node(x, y, is-leader, name, port, mesh-port, rss, state-text) = {
+      let stroke-color = if is-leader { c-green } else { c-blue }
+      let fill-color = if is-leader { c-green-bg } else { white }
+      rect((x, y), (x + 4.8, y + 2.8), fill: fill-color, stroke: 1.2pt + stroke-color, radius: 0.22)
+      
+      // Role badge
+      let badge-fill = if is-leader { c-green } else { c-blue }
+      let badge-title = if is-leader { "LEADER (ACTIVE)" } else { "FOLLOWER (REPLICA)" }
+      rect((x + 0.3, y + 2.18), (x + 4.5, y + 2.62), fill: badge-fill, stroke: none, radius: 0.1)
+      content((x + 2.4, y + 2.40), text(weight: "bold", size: 7.2pt, fill: white)[#badge-title], anchor: "center")
+
+      content((x + 2.4, y + 1.80), text(weight: "bold", size: 8.8pt, fill: c-navy)[#name], anchor: "center")
+      content((x + 2.4, y + 1.40), text(size: 7.5pt, fill: c-text)[HTTP : #port  ·  Mesh : #mesh-port], anchor: "center")
+      content((x + 2.4, y + 1.02), text(size: 7.2pt, fill: c-text)[WAL: #state-text], anchor: "center")
+
+      // RSS Badge
+      rect((x + 1.4, y + 0.25), (x + 3.4, y + 0.68), fill: rgb("e2e8f0"), stroke: none, radius: 0.1)
+      content((x + 2.4, y + 0.46), text(weight: "bold", size: 7.2pt, fill: c-navy)[RSS: #rss], anchor: "center")
+    }
+
+    // Leader (Top Center)
+    draw-node(6.1, 4.4, true, "Node 1", "8000", "9000", "19.7 MB", "Replicated Frame Commit")
+
+    // Follower 1 (Bottom Left)
+    draw-node(0.8, 0.5, false, "Node 2", "8001", "9001", "21.3 MB", "Phase 2 Accepted / Quorum")
+
+    // Follower 2 (Bottom Right)
+    draw-node(11.4, 0.5, false, "Node 3", "8002", "9002", "19.6 MB", "Phase 2 Accepted / Quorum")
+
+    // Straight clean angled replication arrows
+    line((6.1, 4.8), (3.6, 3.3), mark: (start: ">", end: ">"), stroke: 1.5pt + c-blue)
+    content((3.6, 4.3), text(weight: "bold", size: 7pt, fill: c-blue)[Replicated WAL Frames\ (Phase 2 Accept Quorum)], anchor: "center")
+
+    line((10.9, 4.8), (13.4, 3.3), mark: (start: ">", end: ">"), stroke: 1.5pt + c-blue)
+    content((13.4, 4.3), text(weight: "bold", size: 7pt, fill: c-blue)[Replicated WAL Frames\ (Phase 2 Accept Quorum)], anchor: "center")
+
+    // Heartbeat between Node 2 and Node 3 with generous clearance
+    content((8.5, 2.45), text(weight: "bold", size: 7.2pt, fill: c-gold)[Peer Heartbeats & Lease Monotonicity (Invariant S2)], anchor: "center")
+    content((8.5, 1.9), text(size: 7.2pt, style: "italic", fill: c-text)[Cluster Ban Propagation: 155.37 ms  ·  Zero External DBs], anchor: "center")
+    line((5.6, 1.05), (11.4, 1.05), mark: (start: ">", end: ">"), stroke: 1.1pt + c-gold, dash: "dashed")
+  })
 )
 
-Sibuna cluster nodes maintain a replicated Write-Ahead Log (WAL). State mutations (IP bans, rate-limit threshold changes, dynamic WAF rule deployments) are proposed as log entries governed by Leslie Lamport's Multi-Paxos consensus protocol.
+#v(1mm)
 
 #block(
   width: 100%,
   stroke: (left: 2.5pt + primary),
-  fill: paper-tint,
-  inset: 10pt,
+  fill: rgb("f8fafc"),
+  inset: 8pt,
   radius: 3pt
 )[
   #text(weight: "bold", fill: ink)[Invariant S1 (Consensus Safety).] No two operational nodes in a Sibuna cluster ever commit conflicting state transitions at log index $i$, regardless of packet delays, reordering, or network partitions.
@@ -428,25 +615,27 @@ Sibuna cluster nodes maintain a replicated Write-Ahead Log (WAL). State mutation
   #text(weight: "bold", fill: ink)[Invariant L1 (Bounded Ban Convergence).] If a quorum $Q = floor(N/2) + 1$ of nodes is operational, an IP ban committed at node $n_a$ propagates to all reachable nodes within bounded network delay $Delta t_"prop"$.
 ]
 
-== 3.3 Empirical Cluster Verification and Fault Injection
+== Empirical Cluster Verification and Fault Injection
 In empirical tests conducted on a 3-node cluster:
 - *Cluster-Wide Ban Propagation*: An IP ban initiated on the leader node propagated and was actively enforced across all three nodes in *155.37 ms*.
 - *Fault Tolerance under Leader Termination*: During active benchmark traffic of 45,000 requests per second, the cluster leader was abruptly terminated (`kill -9`). The remaining two nodes detected lease expiration, elected a new leader via Multi-Paxos Phase 1, and sustained *38,864 requests/sec* without a single dropped session or corrupted log entry.
 - *Memory Footprint*: In a full 3-node mesh with consensus active, node RSS remained under *21.3 MB* per instance.
 
+
+
 // ==========================================
-// 4. COMPREHENSIVE MARKET COMPARISON
+// PAGE 6: COMPREHENSIVE MARKET COMPARISON TABLE & CRITIQUE
 // ==========================================
-= 4. Comprehensive Market Comparison: Sibuna vs. Industry Solutions
+= Comprehensive Market Comparison: Sibuna vs. Industry Solutions
 
 To evaluate Sibuna's engineering trade-offs, we present an exhaustive comparison against both prominent open-source engines and proprietary enterprise cloud WAFs.
 
-#v(2mm)
+#v(1.5mm)
 
 #align(center)[
-  #text(size: 7.6pt)[
+  #text(size: 7.2pt)[
     #table(
-      columns: (1.4fr, 0.9fr, 0.9fr, 1.1fr, 1.1fr, 1.2fr, 1fr, 1fr),
+      columns: (1.5fr, 0.9fr, 0.9fr, 1.1fr, 1.2fr, 1.2fr, 1fr, 1fr),
       align: (left, center, center, center, center, center, center, center),
       table.header(
         [*System*], [*License*], [*Runtime*], [*Memory (RSS)*], [*Dependencies*], [*Consensus*], [*PoW Challenge*], [*Latency (Median)*]
@@ -465,9 +654,9 @@ To evaluate Sibuna's engineering trade-offs, we present an exhaustive comparison
   ]
 ]
 
-#v(3mm)
+#v(1.5mm)
 
-== 4.1 Detailed Architectural Critique
+== Detailed Architectural Critique
 
 === SafeLine (Chaitin Technology)
 SafeLine is marketed as a modern community WAF powered by semantic analysis. However, its architecture exhibits massive operational sprawl:
@@ -488,17 +677,19 @@ Proprietary cloud WAFs offer vast global edge networks but introduce substantial
 - *Astronomical Edge Costs*: AWS WAF charges per rule evaluated and per million requests, resulting in unexpected cost surges during volumetric attacks. Furthermore, deploying a rule change across AWS CloudFront distributions requires 1 to 2 minutes.
 - *Sibuna Difference*: Sibuna runs entirely on sovereign infrastructure. Bans propagate across the cluster in *155 ms*, with zero recurring per-request fees.
 
+
+
 // ==========================================
-// 5. EMPIRICAL BENCHMARK SUITE
+// PAGE 7: BENCHMARK SUITE & KEY TAKEAWAYS
 // ==========================================
-= 5. Empirical Benchmark Suite
+= Empirical Benchmark Suite
 
 All benchmark measurements reported in this whitepaper were gathered from automated test suites compiled in `ReleaseFast` mode under Zig 0.16.0 on an Apple M1 workstation (8 cores, 16 GB unified memory, macOS 26.6.2).
 
-== 5.1 Microbenchmark Latency Profile
+== Microbenchmark Latency Profile
 
 #table(
-  columns: (1.8fr, 2fr, 1.2fr, 1.2fr, 1fr),
+  columns: (1.5fr, 1.8fr, 1.1fr, 1.3fr, 1fr),
   align: (left, left, right, right, center),
   table.header(
     [*Subsystem*], [*Workload*], [*Median Latency*], [*Throughput*], [*Allocations*]
@@ -520,17 +711,14 @@ All benchmark measurements reported in this whitepaper were gathered from automa
   [WAF Inspector], [8 KB Body Semantic Scan], [37,988.14 ns], [26,324 ops/s], [8 KB buffer]
 )
 
-== 5.2 Key Takeaways
+== Key Takeaways
 1. *Sub-Microsecond Classification*: In the *Gate profile*, Sibuna completes full client classification in *472.92 ns*. Under full semantic inspection (*Shield profile*), classification finishes in *2.37 µs*—two to three orders of magnitude faster than conventional WAFs.
 2. *Symmetric Verification Dominance*: BLAKE3 MAC verification takes *212.52 ns*, compared to 84,557 ns for Ed25519 asymmetric signatures. Rotating symmetric epoch keys gives identical cryptographic integrity with a *397× throughput advantage*.
 3. *Strict Zero Allocation*: As proven by the zero-allocation instrumentation, all core classification and validation routines allocate *0 bytes of heap memory*.
 
-// ==========================================
-// 6. CRYPTOGRAPHIC PROOFS OF WORK
-// ==========================================
-= 6. Cryptographic Proofs of Work: Sequential vs. Parallel Work
+= Cryptographic Proofs of Work: Sequential vs. Parallel Work
 
-== 6.1 The Cohen–Pietrzak Proof of Sequential Work (PoSW)
+== The Cohen–Pietrzak Proof of Sequential Work (PoSW)
 Standard Hashcash challenges require finding a nonce $x$ such that $"Hash"("Challenge" || x) < T$. While simple, Hashcash is vulnerable to parallel hardware speedups: an attacker possessing $M$ parallel ASIC or GPU cores solves the challenge $M$ times faster than an honest user with a single browser thread.
 
 Sibuna resolves this hardware asymmetry through Cohen–Pietrzak Proofs of Sequential Work (PoSW):
@@ -541,20 +729,90 @@ Sibuna resolves this hardware asymmetry through Cohen–Pietrzak Proofs of Seque
 3. *Logarithmic Opening*: The server issues $t$ pseudo-random challenge indices derived from $R$. The client responds with opening paths of length $d$.
 4. *Server Verification*: The server verifies the opening paths in time $O(t dot d)$. For depth $d=13$ ($N = 8,192$ steps) and $t=16$ openings, Sibuna verifies the client's work in *25.83 µs* using constant stack memory.
 
+
+
 // ==========================================
-// 7. REAL-TIME MANAGEMENT: PURE ZIG CONSOLE
+// PAGE 8: FIGURE 4 & CONSOLE & CONCLUSION
 // ==========================================
-= 7. Real-Time Management: The Sibuna Console
+
+#figure(
+  caption: [Computational Defense: Parallel Hashcash ASIC Vulnerability vs. Cohen-Pietrzak Sequential DAG],
+  cetz.canvas(length: 1cm, {
+    import cetz.draw: *
+
+    let c-navy = rgb("0f172a")
+    let c-blue = rgb("0284c7")
+    let c-green = rgb("059669")
+    let c-border = rgb("cbd5e1")
+    let c-text = rgb("334155")
+    let c-gold = rgb("d97706")
+    let c-red = rgb("dc2626")
+
+    // Outer card
+    rect((0, 0), (17.0, 7.8), fill: rgb("fafafa"), stroke: 0.8pt + c-border, radius: 0.3)
+    content((8.5, 7.3), text(weight: "bold", size: 10pt, fill: c-navy)[Computational Defense: Parallel Hashcash Flaw vs. Cohen-Pietrzak Sequential DAG], anchor: "center")
+
+    // Left Panel: Hashcash (Parallel ASIC advantage)
+    rect((0.6, 0.6), (8.2, 6.7), fill: rgb("fff8f8"), stroke: 0.7pt + rgb("fca5a5"), radius: 0.2)
+    content((4.4, 6.2), text(weight: "bold", size: 8.8pt, fill: c-red)[Classical Hashcash: Parallel ASIC Exploitation], anchor: "center")
+    content((4.4, 5.6), text(size: 7.5pt, style: "italic", fill: rgb("991b1b"))[$"Find" x: H("Challenge" || x) < T$], anchor: "center")
+
+    // Cores attacking in parallel
+    for i in range(4) {
+      let y = 4.7 - i * 0.9
+      rect((1.0, y), (2.8, y + 0.65), fill: white, stroke: 0.7pt + c-red, radius: 0.1)
+      content((1.9, y + 0.32), text(size: 7pt, weight: "bold", fill: c-red)[Core #str(i+1) (ASIC)], anchor: "center")
+      line((2.8, y + 0.32), (4.4, y + 0.32), mark: (end: ">"), stroke: 0.9pt + c-red)
+      content((3.6, y + 0.52), text(size: 6.5pt)[Nonce #str(i+1)], anchor: "center")
+    }
+
+    rect((4.4, 1.8), (8.0, 4.9), fill: white, stroke: 0.8pt + c-red, radius: 0.15)
+    content((6.2, 4.25), text(weight: "bold", size: 7.8pt, fill: c-red)[Instant Parallel\ Speedup], anchor: "center")
+    content((6.2, 3.5), text(size: 7pt)[$M$ ASIC cores = $M times$ faster], anchor: "center")
+    content((6.2, 2.85), text(size: 7pt)[Ordinary browsers penalized], anchor: "center")
+    content((6.2, 2.2), text(weight: "bold", size: 7.2pt, fill: c-red)[Botnets bypass challenge], anchor: "center")
+
+    content((4.4, 1.0), text(size: 7pt, fill: rgb("7f1d1d"))[Unfair to legitimate single-threaded users], anchor: "center")
+
+    // Right Panel: Cohen-Pietrzak PoSW (Strictly Sequential)
+    rect((8.8, 0.6), (16.4, 6.7), fill: rgb("f0fdf4"), stroke: 0.7pt + rgb("86efac"), radius: 0.2)
+    content((12.6, 6.2), text(weight: "bold", size: 8.8pt, fill: c-green)[Sibuna PoSW: Unparallelizable Sequential Work], anchor: "center")
+    content((12.6, 5.6), text(size: 7.5pt, style: "italic", fill: rgb("14532d"))[$v_i = H(v_(i-1) || v_(gamma(i)))$ (Depth $d=13$, $N=8,192$ steps)], anchor: "center")
+
+    // Sequential nodes
+    let node-pos = ((9.3, 3.8), (10.6, 3.8), (11.9, 3.8), (13.2, 3.8), (14.5, 3.8), (15.7, 3.8))
+    let labels = ($v_0$, $v_1$, $v_2$, $dots$, $v_(N-1)$, $v_N$)
+    for i in range(6) {
+      let p = node-pos.at(i)
+      circle(p, radius: 0.35, fill: white, stroke: 0.9pt + c-green)
+      content(p, text(size: 7.2pt, weight: "bold", fill: c-green)[#labels.at(i)], anchor: "center")
+      if i > 0 {
+        let prev = node-pos.at(i - 1)
+        line((prev.at(0) + 0.35, prev.at(1)), (p.at(0) - 0.35, p.at(1)), mark: (end: ">"), stroke: 1.1pt + c-green)
+      }
+    }
+
+    // Skip edge
+    arc((10.6, 4.15), start: 180deg, stop: 0deg, radius: (1.3, 0.7), mark: (end: ">"), stroke: 0.9pt + c-blue)
+    content((11.9, 5.05), text(size: 6.5pt, fill: c-blue)[Skip Dependency $v_(gamma(i))$], anchor: "center")
+
+    // Merkle tree root commitment below with generous padding
+    rect((9.2, 1.3), (16.0, 3.15), fill: white, stroke: 0.8pt + c-green, radius: 0.15)
+    content((12.6, 2.55), text(weight: "bold", size: 7.8pt, fill: c-green)[Merkle Tree Commitment & Logarithmic Verification], anchor: "center")
+    content((12.6, 1.9), text(size: 7.2pt)[Server verifies 16 opening paths in *25.83 µs* ($O(t dot d)$ work)], anchor: "center")
+
+    content((12.6, 1.0), text(size: 7pt, fill: rgb("14532d"))[Parallel ASICs get 0 speedup; hardware fairness guaranteed], anchor: "center")
+  })
+)
+
+= Real-Time Management: The Sibuna Console
 
 In keeping with its self-contained architecture, Sibuna incorporates a complete administrative console without requiring external web servers or JavaScript build tools:
 - *In-Memory Lock-Free Ring Buffers*: Request telemetry, rate-limit violations, and threat incidents are recorded in pre-allocated circular buffers with sub-microsecond overhead.
 - *Embedded WebSocket Protocol*: The management daemon streams real-time threat metrics, GeoIP coordinates, and cluster consensus state to web clients at 60 FPS.
 - *Zero-Asset Footprint*: All HTML, CSS, and SVG console assets are embedded directly into the binary at compile time via Zig's `@embedFile`. Deployment requires copying a single executable file.
 
-// ==========================================
-// 8. CONCLUSION
-// ==========================================
-= 8. Conclusion
+= Conclusion
 
 Web application defense has been led astray by a culture of architectural accretion—piling layers of interpreted runtimes, complex container orchestrations, regular expression parsers, and external database clusters in front of web applications.
 
@@ -565,9 +823,9 @@ Web application defense has been led astray by a culture of architectural accret
 
 a distributed web defense engine can achieve over *100,000 requests per second per core*, propagate cluster-wide defenses in *155 milliseconds*, and operate within a minuscule *22 megabyte memory envelope*.
 
-#v(6mm)
+#v(3mm)
 #line(length: 100%, stroke: 0.4pt + light-border)
-#v(2mm)
+#v(1mm)
 #align(center)[
   #text(size: 8pt, fill: muted)[
     Sibuna Whitepaper · Produced by Insan AI Engineering · Pure Zig Systems Research \
