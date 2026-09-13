@@ -7,7 +7,7 @@
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
 #let sid-status = "Committed"
-#let sid-last-updated = "2026-09-11"
+#let sid-last-updated = "2026-09-14"
 
 #import "../../shared/sid.typ": sid-document
 #import "@preview/cetz:0.5.2" as cetz
@@ -518,7 +518,20 @@ workload with capture off; with capture on the cost appears only where heads are
 stored, about 2% on the audited workload and 1.3% to 1.9% on denied, which records incidents.
 The thresholds above are unchanged: the paired reading is a supplementary analysis of the same
 samples, which the result file supports because it retains every sample with its round and
-position. The clustered matrix remains to be measured.
+position.
+
+The clustered matrix completed on 13 September 2026 on the same host, after the storage
+engine moved to Zaxonlite 0.7.0: three nodes, 8 wrk threads, 128 connections, 5 s warm-up,
+60 s samples, five rounds. All 80 samples pass their post-sample status check, no node lost
+storage, and no trim regression or quorum error occurred; the earlier attempt on 0.6.2 wedged
+two of three nodes (Zaxonlite issue 10) and produced no result. Baseline spread between the
+compiled-out and disabled binaries is 0.94% to 1.63%. Against the compiled-out binary the idle
+and active configurations run 1.2% to 2.1% below on admitted, denied and policy reload, which
+the formal gate reports as fail; against the same binary with the console disabled the console
+costs at most 0.5% (0.2% admitted, none on challenged, 0.5% denied, 0.4% policy reload). That is
+the same paired reading as the single-node matrices and is accepted on the same basis, recorded
+here as a note with the thresholds unchanged (decision of 14 September 2026). The result is
+`benchmarks/results/console-impact-cluster-latest.json`.
 
 Each cell below is the console's runtime cost as a percentage of throughput, idle before the
 slash and eight active dashboards after it, measured against the same binary with the console
@@ -1915,12 +1928,14 @@ rather than the development laptop, recorded under `benchmarks/results/`. Across
 single-node matrices no configuration fails, and the paired reading above puts the console's
 runtime cost at or below 0.8% with capture off. The formal verdict is still inconclusive,
 because per-round drift on that container holds baseline spread a little above the one percent
-rule, and the clustered matrix has not completed. Before
-`--console` is enabled beside a production data plane, record the remaining clustered result
-under `benchmarks/results/`. Run
+rule. The clustered matrix completed on 13 September 2026 on Zaxonlite 0.7.0 and is recorded
+under `benchmarks/results/`; its formal verdict is fail on the compiled-out comparison while the
+console costs at most 0.5% against the same binary with the console disabled, and both readings
+are accepted as a note under the paired analysis above. To re-measure, run
 `zig build console-impact -- --geoip-data <validated-snapshot> --host-label <conditions>`;
-add `--cluster` for clustered deployment. A completed but inconclusive or failing run does
-not satisfy this condition. The same binary runs
+add `--cluster` for clustered deployment. A re-measurement is read the same way: the formal
+thresholds first, then the paired reading against the same binary with the console disabled,
+which is what the accepted note above rests on. The same binary runs
 without `--console`; compiling the console in starts no console thread, listener or sampler.
 
 
@@ -1962,8 +1977,9 @@ retention keeps pace at the ingestion bound. The impact runner accepts `--mode r
 `--capture-heads` (which adds an audited-admission workload); the effective values are part
 of each result's provenance.
 
-Acceptance conditions still open: the clustered matrix on the deployment host class, which
-did not complete. The four single-node matrices are measured in both modes with capture off
+Acceptance conditions: none remain open on the impact gate. The clustered matrix on the
+deployment host class completed on 13 September 2026 and is read as a note above; the four
+single-node matrices are measured in both modes with capture off
 and on; no configuration exceeds the one percent throughput or ten percent p99 rules, the
 formal verdict stays inconclusive on baseline spread alone, and the paired reading is recorded
 with the gate above. The interface module measures 622,941 bytes against the 786,432-byte
