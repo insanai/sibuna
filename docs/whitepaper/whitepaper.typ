@@ -84,6 +84,10 @@
   inset: 4.5pt
 )
 
+// --- Mathematical Symbols & Scientific Units via Typst Markup ---
+#let us = sym.mu + "s"
+#let times = sym.times
+
 // --- Voices of Master Thinkers ---
 #let feynman-dialogue(body) = block(
   width: 100%,
@@ -191,8 +195,8 @@
     (3) *Externalized state coupling*, forcing operators to deploy and manage auxiliary Redis or PostgreSQL clusters to synchronize IP reputation, token verification, and rate limits across nodes.
 
     *Sibuna* demonstrates a complete architectural reconstruction from first principles. Implemented as a standalone, zero-dependency pure Zig binary, Sibuna introduces:
-    (i) *Work-verifiable thermodynamic defense* via Cohen-Pietrzak Proof of Sequential Work (PoSW) and BLAKE3 MAC tokens, forcing attacking bots to perform unparallelizable CPU work while the defender verifies authenticity in under 24 microseconds with zero heap allocation;
-    (ii) *A strict zero-allocation hot path*, employing SIMD-accelerated Aho-Corasick automata (74.05 ns for 40 bot signatures, 12.3x faster than sequential scanning), 16-shard atomic GCRA rate limiting (6.00 ns per check, >166M ops/sec), and Robin Hood hashed nonce tracking (29.90 ns); and
+    (i) *Work-verifiable thermodynamic defense* via Cohen-Pietrzak Proof of Sequential Work (PoSW) and BLAKE3 MAC tokens, forcing attacking bots to perform unparallelizable CPU work while the defender verifies authenticity in under 24 #us with zero heap allocation;
+    (ii) *A strict zero-allocation hot path*, employing SIMD-accelerated Aho-Corasick automata (74.05 ns for 40 bot signatures, 12.3#times faster than sequential scanning), 16-shard atomic GCRA rate limiting (6.00 ns per check, >166M ops/sec), and Robin Hood hashed nonce tracking (29.90 ns); and
     (iii) *An embedded distributed consensus engine* powered by `zaxonlite`, executing WAL-frame Multi-Paxos directly within the process memory space to provide sub-105 ms cluster-wide ban propagation, 397k+ req/s leader-failover sustained throughput, and bounded memory under 27 MB RSS per node.
   ]
 ]
@@ -204,7 +208,7 @@
   gutter: 6pt,
   metric-card("6.00 ns", "GCRA RATE CHECK", "166M ops/sec | 16 Shards"),
   metric-card("74.05 ns", "SIMD BOT MATCHER", "Aho-Corasick | 40 Sigs"),
-  metric-card("23.24 us", "PoSW VERIFICATION", "Depth 13 | Bounded Stack"),
+  metric-card("23.24 " + us, "PoSW VERIFICATION", "Depth 13 | Bounded Stack"),
   metric-card("< 27 MB", "BOUNDED NODE RSS", "Lowest-Slot Stack Reuse")
 )
 
@@ -375,7 +379,7 @@ The following architectural diagram illustrates the wire-speed progression of a 
     stage-box(9.3, 8.6, c-blue-bg, c-blue, [2. Sharded GCRA], [6.00 ns], [16 Shards | Lock-Free CAS])
 
     // Stage 3: Zero-Copy HTTP (x: 13.6 .. 16.9)
-    stage-box(13.6, 8.6, c-blue-bg, c-blue, [3. Zero-Copy HTTP], [1.11 us], [Slices Only | In-Place])
+    stage-box(13.6, 8.6, c-blue-bg, c-blue, [3. Zero-Copy HTTP], [1.11 #us], [Slices Only | In-Place])
 
     // Row 1 Forward Arrows
     line((3.5, 9.35), (4.8, 9.35), mark: (end: ">"), stroke: 1.2pt + c-blue)
@@ -399,10 +403,10 @@ The following architectural diagram illustrates the wire-speed progression of a 
     stage-box(9.3, 4.9, c-purple-bg, c-purple, [5. BLAKE3 Token], [295.46 ns], [Keyed MAC Verify])
 
     // Stage 6: PoSW Verifier (x: 4.8 .. 8.1)
-    stage-box(4.8, 4.9, c-gold-bg, c-gold, [6. PoSW Verifier], [23.24 us], [Cohen-Pietrzak Depth 13])
+    stage-box(4.8, 4.9, c-gold-bg, c-gold, [6. PoSW Verifier], [23.24 #us], [Cohen-Pietrzak Depth 13])
 
     // Stage 7: Semantic WAF (x: 0.6 .. 3.9)
-    stage-box(0.6, 4.9, c-blue-bg, c-blue, [7. Semantic WAF], [18.55 us], [SQLi / XSS Tokenizer])
+    stage-box(0.6, 4.9, c-blue-bg, c-blue, [7. Semantic WAF], [18.55 #us], [SQLi / XSS Tokenizer])
 
     // Row 2 Forward Arrows (Right to Left)
     line((13.6, 5.65), (12.6, 5.65), mark: (end: ">"), stroke: 1.2pt + c-purple)
@@ -470,7 +474,7 @@ The following architectural diagram illustrates the wire-speed progression of a 
   [Given an input string $T$ of length $n$ and a dictionary of $k$ attack patterns $P = {p_1, dots, p_k}$ of aggregate length $m$, Sibuna classifies $T$ in strict worst-case time $O(n + m)$ using zero heap memory, completely eliminating Regular Expression Denial of Service (ReDoS).],
   [Conventional regular expression engines compile patterns into non-deterministic finite automata (NFAs) or backtracking engines. On malicious inputs designed with overlapping prefixes (e.g., `(a+)+$`), backtracking induces execution time $O(n dot 2^m)$.
   Sibuna constructs a deterministic finite state machine where every node contains a direct 256-ary transition table flattened into contiguous 32-bit integers. Transitions are vectorized across 128-bit/256-bit SIMD registers. Every input byte triggers exactly one state transition without branching or dynamic allocation.
-  Empirical verification on 40 production bot signatures yields a median evaluation time of *74.05 ns* (13,505,197 ops/sec), compared to 908.60 ns for standard sequential substring scanning, achieving a *12.3x speedup*.]
+  Empirical verification on 40 production bot signatures yields a median evaluation time of *74.05 ns* (13,505,197 ops/sec), compared to 908.60 ns for standard sequential substring scanning, achieving a *12.3#times speedup*.]
 )
 
 #v(1.5mm)
@@ -617,7 +621,7 @@ Sibuna cluster nodes maintain a replicated Write-Ahead Log (WAL). State mutation
 == Empirical Cluster Verification and Fault Injection
 In empirical cluster benchmarks conducted on the dedicated 32-core Linux x86_64 host:
 - *Cluster-Wide Ban Propagation*: An IP ban initiated on the leader node was replicated and enforced across all three nodes in *103.77 ms* with loopback PSK (*124.56 ms* with mutual TLS).
-- *Fault Tolerance under Leader Termination*: During active benchmark load of >550,000 requests/second across all 3 nodes (558k req/s challenged, 543k req/s admitted, p99 latency 230 to 265 us), the cluster leader was abruptly killed (`kill -9`). The surviving nodes elected a new leader and sustained *397,799 requests/sec* (PSK) / *387,909 requests/sec* (mTLS) with zero 5xx errors and post-failover ban propagation of *81.99 to 122.62 ms*.
+- *Fault Tolerance under Leader Termination*: During active benchmark load of >550,000 requests/second across all 3 nodes (558k req/s challenged, 543k req/s admitted, p99 latency 230 to 265 #us), the cluster leader was abruptly killed (`kill -9`). The surviving nodes elected a new leader and sustained *397,799 requests/sec* (PSK) / *387,909 requests/sec* (mTLS) with zero 5xx errors and post-failover ban propagation of *81.99 to 122.62 ms*.
 - *Memory Footprint*: In a full 3-node mesh with consensus active, idle RSS remained at *30.6-32.2 MB* per node (*34.6-37.0 MB* under mTLS); a standalone single node with no storage consumes only *11.3 MB*.
 
 
@@ -640,15 +644,15 @@ To evaluate Sibuna's engineering trade-offs, we present an exhaustive comparison
       table.header(
         [*System*], [*License*], [*Runtime*], [*Memory (RSS)*], [*Dependencies*], [*Consensus*], [*PoW Challenge*], [*Latency (Median)*]
       ),
-      [#text(weight: "bold", fill: primary)[Sibuna]], [Open Source], [Pure Zig], [*11-27 MB*], [*None (0)*], [*Embedded Paxos*], [*Native PoSW*], [*146 us* / 1.29 us],
+      [#text(weight: "bold", fill: primary)[Sibuna]], [Open Source], [Pure Zig], [*11-27 MB*], [*None (0)*], [*Embedded Paxos*], [*Native PoSW*], [*146 #us* / 1.29 #us],
       [SafeLine (Chaitin)], [Open/Prop], [Py/Go/C++], [1.5-2.5 GB], [Postgres, Redis, Nginx], [Central DB], [None (Captcha)], [1.5-5.0 ms],
       [Anubis (OWASP/Go)], [Open Source], [Go Runtime], [30-570 MB], [Redis / Envoy], [External Redis], [Hashcash], [1.78-3.49 ms],
-      [Coraza / ModSec], [Open Source], [Go / C++], [80-200 MB], [Host Nginx/Apache], [None], [None], [250-800 us],
+      [Coraza / ModSec], [Open Source], [Go / C++], [80-200 MB], [Host Nginx/Apache], [None], [None], [250-800 #us],
       [BunkerWeb], [Open Source], [Python/Lua], [500-1200 MB], [Nginx, Docker, Redis], [None], [Captcha only], [2.0-8.0 ms],
       [CrowdSec], [Open Source], [Go Runtime], [100-250 MB], [SQLite / Central API], [Cloud API Relay], [None], [Asynchronous],
       [Cloudflare WAF], [Proprietary], [Rust/C/Lua], [N/A (SaaS)], [Cloudflare Edge], [Global Raft/Kafka], [JS / Captcha], [1.0-5.0 ms],
       [AWS WAF], [Proprietary], [Closed Edge], [N/A (SaaS)], [AWS ALB / CloudFront], [AWS Internal], [JS Challenge], [2.0-10.0 ms],
-      [Fastly / SigSci], [Proprietary], [Go / Agent], [100-200 MB], [SaaS Cloud Relay], [Cloud Relay], [None], [500-1500 us],
+      [Fastly / SigSci], [Proprietary], [Go / Agent], [100-200 MB], [SaaS Cloud Relay], [Cloud Relay], [None], [500-1500 #us],
       [Akamai App Protect], [Proprietary], [Edge Kernel], [N/A (SaaS)], [Akamai Network], [Internal], [JS Captcha], [2.0-8.0 ms]
     )
   ]
@@ -663,12 +667,12 @@ SafeLine is marketed as a modern community WAF powered by semantic analysis. How
 - *Container Explosion*: A typical SafeLine deployment requires 5 to 8 separate Docker containers running simultaneously (`safeline-tengine`, `safeline-detector`, `safeline-mgt`, `safeline-postgres`, `safeline-redis`, etc.).
 - *Resource Waste*: SafeLine requires a minimum of *1.5 GB to 2.5 GB of RAM* merely to boot into an idle state.
 - *Fragile State Coordination*: Nodes rely on PostgreSQL for management and Redis for caching. A memory exhaustion event in Redis breaks real-time rate limiting, while a PostgreSQL failure paralyzes policy updates.
-- *Sibuna Difference*: Sibuna compiles down to a single standalone binary. A 3-node Sibuna cluster consumes *under 95 MB total RAM* across all three nodes combined, which is over 25x less memory than a single idle SafeLine instance.
+- *Sibuna Difference*: Sibuna compiles down to a single standalone binary. A 3-node Sibuna cluster consumes *under 95 MB total RAM* across all three nodes combined, which is over 25#times less memory than a single idle SafeLine instance.
 
 === Anubis & Coraza (OWASP / Go Runtime)
 Anubis and Coraza represent modern Go-based edge defenders, offering Hashcash challenges and OWASP rules:
-- *Garbage Collection & Memory Sprawl*: Under sustained high-concurrency traffic (64 connections, `wrk`), Anubis resident memory escalates to *509-570 MiB* in reverse-proxy mode due to request buffer allocation and Go heap churn, while throughput falls to *17,697 req/s* admitted (median latency 3,491 us).
-- *Sibuna Difference*: With lowest-free connection slot reuse and a zero-allocation hot path, Sibuna sustains *219,551 req/s* (forward-auth) and *109,120 req/s* (origin-bound reverse-proxy) while memory stays flat at *27-29.5 MiB* (*6.4x higher throughput*, *12x lower latency*, and *19x smaller footprint*). In direct admission benchmarks, Sibuna verifies sessions *2.18x faster* (22,010 vs 10,118 ops/s) and verifies proofs *1.77x faster* (18,272 vs 10,306 ops/s).
+- *Garbage Collection & Memory Sprawl*: Under sustained high-concurrency traffic (64 connections, `wrk`), Anubis resident memory escalates to *509-570 MiB* in reverse-proxy mode due to request buffer allocation and Go heap churn, while throughput falls to *17,697 req/s* admitted (median latency 3,491 #us).
+- *Sibuna Difference*: With lowest-free connection slot reuse and a zero-allocation hot path, Sibuna sustains *219,551 req/s* (forward-auth) and *109,120 req/s* (origin-bound reverse-proxy) while memory stays flat at *27-29.5 MiB* (*6.4#times higher throughput*, *12#times lower latency*, and *19#times smaller footprint*). In direct admission benchmarks, Sibuna verifies sessions *2.18#times faster* (22,010 vs 10,118 ops/s) and verifies proofs *1.77#times faster* (18,272 vs 10,306 ops/s).
 
 === Cloud Edge WAFs (Cloudflare & AWS WAF)
 Proprietary cloud WAFs offer vast global edge networks but introduce substantial technical and commercial liabilities:
@@ -712,8 +716,8 @@ All benchmark measurements reported in this whitepaper were gathered from automa
 )
 
 == Key Takeaways
-1. *Sub-Microsecond Classification*: In the *Gate profile*, Sibuna completes full client classification in *174.55 ns*. Under full semantic inspection (*Shield profile*), classification finishes in *1.29 us*, two to three orders of magnitude faster than conventional WAFs.
-2. *Symmetric Verification Dominance*: BLAKE3 MAC verification takes *295.46 ns*, compared to 50,089 ns for Ed25519 asymmetric signatures. Rotating symmetric epoch keys gives identical cryptographic integrity with a *170x throughput advantage*.
+1. *Sub-Microsecond Classification*: In the *Gate profile*, Sibuna completes full client classification in *174.55 ns*. Under full semantic inspection (*Shield profile*), classification finishes in *1.29 #us*, two to three orders of magnitude faster than conventional WAFs.
+2. *Symmetric Verification Dominance*: BLAKE3 MAC verification takes *295.46 ns*, compared to 50,089 ns for Ed25519 asymmetric signatures. Rotating symmetric epoch keys gives identical cryptographic integrity with a *170#times throughput advantage*.
 3. *Strict Zero Allocation*: As proven by the zero-allocation instrumentation, all core classification and validation routines allocate *0 bytes of heap memory*.
 
 = Cryptographic Proofs of Work: Sequential vs. Parallel Work
@@ -727,7 +731,7 @@ Sibuna resolves this hardware asymmetry through Cohen-Pietrzak Proofs of Sequent
    where $gamma(i)$ is a bit-reversal skip function. Parallel workers cannot compute node $i$ without the output of node $i-1$.
 2. *Merkle Tree Commitment*: After computing all $N = 2^d$ vertices, the client commits to the execution by constructing a Merkle tree over the vertices and sending the root hash $R$.
 3. *Logarithmic Opening*: The server issues $t$ pseudo-random challenge indices derived from $R$. The client responds with opening paths of length $d$.
-4. *Server Verification*: The server verifies the opening paths in time $O(t dot d)$. For depth $d=13$ ($N = 8,192$ steps) and $t=16$ openings, Sibuna verifies the client's work in *23.24 us* using constant stack memory.
+4. *Server Verification*: The server verifies the opening paths in time $O(t dot d)$. For depth $d=13$ ($N = 8,192$ steps) and $t=16$ openings, Sibuna verifies the client's work in *23.24 #us* using constant stack memory.
 
 
 
@@ -804,7 +808,7 @@ Sibuna resolves this hardware asymmetry through Cohen-Pietrzak Proofs of Sequent
     rect((9.0, 1.3), (16.2, 3.2), fill: white, stroke: 0.8pt + c-green, radius: 0.15)
     content((12.6, 2.72), text(weight: "bold", size: 8pt, fill: c-green)[Merkle Tree Commitment], anchor: "center")
     content((12.6, 2.25), text(weight: "bold", size: 7.5pt, fill: c-green)[& Logarithmic Verification], anchor: "center")
-    content((12.6, 1.7), text(size: 6.8pt, fill: rgb("14532d"))[Server verifies 16 opening paths in *23.24 us* ($O(t dot d)$ work)], anchor: "center")
+    content((12.6, 1.7), text(size: 6.8pt, fill: rgb("14532d"))[Server verifies 16 opening paths in *23.24 #us* ($O(t dot d)$ work)], anchor: "center")
 
     content((12.6, 0.95), text(size: 7pt, fill: rgb("14532d"))[Parallel ASICs get 0 speedup; hardware fairness guaranteed], anchor: "center")
   })
