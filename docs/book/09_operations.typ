@@ -343,7 +343,13 @@ queries, detail reads and mutations remain HTTP requests.
 Page fragments can be bookmarked; Back and Forward reopen authenticated pages. The sidebar
 also remembers theme and spacing choices in this browser, with System as the default theme.
 SID 0007 is Committed. The interface is available, with ongoing review corrections
-and acceptance work recorded in the SID. Earlier impact runs are inconclusive. The corrected
+and acceptance work recorded in the SID. The impact matrices below were measured on a
+dedicated Linux host: no configuration fails the one percent throughput or ten percent p99
+rules, and read paired within each round against the same binary with the console disabled,
+an enabled console costs at most 0.8% with head capture off. With capture on the cost appears
+only where heads are stored, about 2% on audited traffic. The formal verdict stays
+inconclusive because per-round processor drift on that host holds baseline spread a little
+above the one percent rule, and the clustered matrix has still to be measured. The corrected
 harness includes each dashboard's stream, rankings and retained-timeline queries; a full
 acceptance run requires a production GeoIP snapshot and documented host conditions. Direct TLS
 peer transport and the combined dashboard have separate coverage and freshness contracts;
