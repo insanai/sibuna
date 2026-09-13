@@ -196,8 +196,10 @@ by cosine similarity of feature-hashed trigram embeddings. Query the data direct
 
 Build options: `-Dstorage=false` builds the pure in-memory daemon (no libc); `-Dcluster=true`
 links OpenSSL 3 for Zaxonlite's mutual TLS. The dependency is the official
-[`insanai/zaxonlite`](https://github.com/insanai/zaxonlite) v0.6.2 release pinned in
-`build.zig.zon`.
+[`insanai/zaxonlite`](https://github.com/insanai/zaxonlite) v0.7.0 release pinned in
+`build.zig.zon`. Zaxonlite 0.7.0 changed its on-disk and wire formats with no migration:
+a data directory written by an older Sibuna build must be deleted and the cluster recreated
+with every member on the new build.
 
 ## Measured performance
 
