@@ -93,16 +93,9 @@
   radius: (right: 3pt),
   breakable: false
 )[
-  #grid(
-    columns: (auto, 1fr),
-    gutter: 8pt,
-    text(size: 12pt)[⚡],
-    [
-      #text(weight: "bold", size: 8.8pt, fill: accent-gold)[Feynman's Physical Intuition: Energy Asymmetry & The Second Law]
-      #v(2pt)
-      #text(size: 8.8pt, fill: rgb("78350f"), style: "italic")[#body]
-    ]
-  )
+  #text(weight: "bold", size: 8.8pt, fill: accent-gold)[Feynman on Physical Intuition: Energy Asymmetry and the Second Law]
+  #v(2pt)
+  #text(size: 8.8pt, fill: rgb("78350f"), style: "italic")[#body]
 ]
 
 #let knuth-dialogue(body) = block(
@@ -239,9 +232,9 @@
 In classical mechanics, conservation laws govern all physical interactions. Energy cannot be conjured from nothing; work performed by an agent is inextricably tied to entropy generated in the universe. Yet for thirty years, the architecture of web application defense has lived in deliberate defiance of thermodynamics.
 
 #feynman-dialogue[
-  "Imagine you are guarding a city gate. A mischievous boy outside throws tiny pebbles at the gate. If every time a pebble hits the wooden door, you are forced to dispatch five armored knights with tape measures to calculate the trajectory, speed, and chemical composition of the pebble, and then send a carrier pigeon to the king's palace to ask if this pebble is on the forbidden list—who runs out of energy first?
-  The boy can toss pebbles all afternoon with one pocketful of stones. Your kingdom collapses from exhaustion before sunset.
-  To stop an asymmetric onslaught, you don't build a thinking machine that burns coal to examine every pebble. You tilt the landscape so that anyone approaching the gate must haul a boulder uphill before you even open the peephole. If hauling the boulder costs them ten minutes of physical labor, and glancing at their hands costs you half a second, the boy stops throwing pebbles."
+  "Look at how a subway turnstile works. If the turnstile spins freely with a light tap of a finger, but every time someone taps it, a guard inside has to stand up, check three logbooks, call head office, and file a five-page report, who gets tired first?
+  A kid outside can stand there all afternoon tapping the turnstile with one finger without breaking a sweat. But the guard inside is running back and forth, burning paper, and collapsing from exhaustion before lunch. That is how traditional firewalls work.
+  In physics, you do not fight force with paperwork; you balance the energy equation. You hook the turnstile to a heavy water pump. If someone wants to walk through, they have to push with their own muscle to lift a gallon of water into the overhead tank. That takes three seconds of honest work. The guard inside just sits there, looks out the window to see if water spilled into the tank, and lets them pass. Looking out the window costs the guard almost zero energy, but pushing the pump costs the visitor real work. The prankster with the free finger gives up and goes home, because the laws of physics are working against him instead of for him."
 ]
 
 In contemporary computing, an automated attacker launching an HTTP flood or credential stuffing attack expends negligible marginal energy. Utilizing botnets of compromised IoT devices or cheap cloud instances, an adversary can emit hundreds of thousands of HTTP/1.1 `GET` or `POST` requests for fractions of a cent ($E_"attacker" approx 10^(-6) "J"$).
