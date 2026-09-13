@@ -57,12 +57,29 @@ class Mesh:
     def snapshot(self, cookie):
         result = []
         for observer, port in enumerate(self.ports, 1):
-            status, _, body = self.request(port, "GET", "/console/api/nodes", cookie=cookie)
-            if status != 200:
-                raise RuntimeError(f"management peer coverage unavailable: HTTP {status}")
-            rows = json.loads(body)["peers"]
+            rows = json.loads(self.peers(port, cookie))["peers"]
             result.extend(dict(row, observer=observer) for row in rows)
         return result
+
+    def peers(self, port, cookie, seconds=30):
+        """One node's peer table. A snapshot is taken immediately after a saturating sample,
+        and while its storage or quorum cannot answer the console fails the query closed with
+        503, which is its own contract rather than a measurement. Retry within a bound, say so
+        when it was needed, and report what the node actually said if it never answers."""
+        deadline, attempts, status, body = time.monotonic() + seconds, 0, None, ""
+        while time.monotonic() < deadline:
+            status, _, body = self.request(port, "GET", "/console/api/nodes", cookie=cookie)
+            attempts += 1
+            if status == 200:
+                if attempts > 1:
+                    print(f"    peer table on {port} answered after {attempts} attempts",
+                          flush=True)
+                return body
+            if status not in (429, 503):
+                break
+            time.sleep(0.5)
+        raise RuntimeError(f"management peer coverage unavailable from port {port}: "
+                           f"HTTP {status} after {attempts} attempts: {str(body)[:200]}")
 
     def ready(self, cookie):
         deadline = time.monotonic() + 45
