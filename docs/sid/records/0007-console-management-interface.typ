@@ -520,6 +520,29 @@ The thresholds above are unchanged: the paired reading is a supplementary analys
 samples, which the result file supports because it retains every sample with its round and
 position. The clustered matrix remains to be measured.
 
+Each cell below is the console's runtime cost as a percentage of throughput, idle before the
+slash and eight active dashboards after it, measured against the same binary with the console
+disabled and paired within each round. A negative figure means the console configuration ran
+faster than its own baseline. Baseline spread bounds how much of a cell to believe: it is 1.2%
+for forward auth with capture off, 2.8% and 2.6% for the next two, and 13.8% for reverse proxy
+with capture on, whose cells are therefore noise rather than signal. Head capture is a console
+option, so the audited workload exists only in the capture-on matrices.
+
+#table(
+  columns: (1.1fr, 1fr, 1fr, 1fr, 1fr),
+  table.header([*Workload*], [*forward auth, capture off*], [*forward auth, capture on*],
+    [*reverse proxy, capture off*], [*reverse proxy, capture on*]),
+  [Admitted], [+0.42 / +0.75], [-0.20 / +0.54], [-0.48 / -0.26], [-0.65 / +0.92],
+  [Challenged], [-0.31 / +0.49], [-0.13 / +0.49], [-0.18 / +0.35], [-0.70 / -0.59],
+  [Denied], [+0.28 / +0.41], [+1.31 / +1.87], [-0.40 / -1.00], [+2.21 / +1.20],
+  [Policy reload], [+0.52 / +0.49], [-0.13 / +0.22], [+0.70 / -0.09], [+1.36 / -0.10],
+  [Audited], [not run], [+1.70 / +2.01], [not run], [-0.41 / -1.85],
+)
+
+The two columns with capture on are the ones that pay for stored heads, and they pay it exactly
+where heads are written: on denied traffic, which records a WAF incident, and on the audited
+workload itself. Every other cell in the three trustworthy matrices sits inside one percent.
+
 
 == Startup from the command line
 
