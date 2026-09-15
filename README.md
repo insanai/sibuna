@@ -267,6 +267,7 @@ Design records are Typst papers under `docs/sid/records/`:
   rate limiting, hashing, and inspection automata
 - **SID 0007** The Sibuna Console: a real-time management interface for nodes and clusters
   in pure Zig (proposed)
+- **SID 0008** AI Bot Traffic Identification, Multi-Tier Verification, and Operator Console Analytics
 
 ```sh
 zig build sid                 # all SID PDFs into docs/build/

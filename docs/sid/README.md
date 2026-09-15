@@ -15,6 +15,7 @@ firewall and anti-crawler daemon in pure Zig. Each SID is a standalone Typst pap
 | 0005 | Zaxonlite storage: dynamic policies, replicated reputation, forensics (Edge) | storage |
 | 0006 | Mathematical foundations: sequential work, keyed authentication, rate limiting, hashing, automata | research |
 | 0007 | The Sibuna Console: real-time management interface for nodes and clusters (proposed) | console |
+| 0008 | AI Bot Traffic Identification, Multi-Tier Verification, and Operator Console Analytics | analytics |
 
 ## Layout
 
