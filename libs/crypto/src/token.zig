@@ -1,12 +1,14 @@
 //! Sibuna Compact Binary Session Tokens
 //!
-//! Two zero-allocation token formats share one 32-byte big-endian payload
-//! `[timestamp | expiry | rule_hash | client_fingerprint]`:
+//! Two zero-allocation token formats share one 40-byte big-endian payload
+//! `[version | algorithm | work bits | reserved 5 | timestamp | expiry | rule_hash |
+//! client_fingerprint]`. The work level records the proof the holder actually paid, so a
+//! session can admit only routes that demand no more than that.
 //!
 //! * `MacToken` (default): the payload plus a 16-byte keyed BLAKE3 tag.
 //!   Issuer and verifier are the same daemon (or a cluster sharing one
 //!   seed), so a symmetric MAC is the correct primitive: verification is a
-//!   few hundred nanoseconds, the cookie is 64 characters, and the security
+//!   few hundred nanoseconds, the cookie is 75 characters, and the security
 //!   rests only on BLAKE3 being a PRF, which is not weakened by Shor's
 //!   algorithm the way Ed25519 is.
 //! * `Token` (Ed25519): the payload plus a 64-byte signature, for
@@ -24,27 +26,49 @@ pub const TokenError = error{
     TokenBoundAddressMismatch,
 };
 
-pub const payload_size = 32;
+pub const payload_size = 40;
+pub const version: u8 = 2;
+
+/// The proof of work a token's holder paid: the mechanism and its work bits. Admission
+/// compares levels, never names, so a stronger session also covers every cheaper route.
+pub const WorkLevel = struct {
+    algorithm: u8 = 0,
+    bits: u8 = 0,
+
+    pub fn satisfies(self: WorkLevel, required: WorkLevel) bool {
+        return self.algorithm == required.algorithm and self.bits >= required.bits;
+    }
+};
 
 pub const Payload = struct {
     timestamp: u64,
     expiry: u64,
     rule_hash: u64,
     client_fingerprint: u64,
+    work: WorkLevel = .{},
 
     pub fn serialize(self: Payload, out: *[payload_size]u8) void {
-        std.mem.writeInt(u64, out[0..8], self.timestamp, .big);
-        std.mem.writeInt(u64, out[8..16], self.expiry, .big);
-        std.mem.writeInt(u64, out[16..24], self.rule_hash, .big);
-        std.mem.writeInt(u64, out[24..32], self.client_fingerprint, .big);
+        out[0] = version;
+        out[1] = self.work.algorithm;
+        out[2] = self.work.bits;
+        @memset(out[3..8], 0);
+        std.mem.writeInt(u64, out[8..16], self.timestamp, .big);
+        std.mem.writeInt(u64, out[16..24], self.expiry, .big);
+        std.mem.writeInt(u64, out[24..32], self.rule_hash, .big);
+        std.mem.writeInt(u64, out[32..40], self.client_fingerprint, .big);
     }
 
-    pub fn deserialize(data: *const [payload_size]u8) Payload {
+    /// A payload from another format version is rejected as a whole; its tag is
+    /// irrelevant because the verifier cannot know what the bytes meant.
+    pub fn deserialize(data: *const [payload_size]u8) TokenError!Payload {
+        if (data[0] != version or !std.mem.allEqual(u8, data[3..8], 0))
+            return error.InvalidEncoding;
         return .{
-            .timestamp = std.mem.readInt(u64, data[0..8], .big),
-            .expiry = std.mem.readInt(u64, data[8..16], .big),
-            .rule_hash = std.mem.readInt(u64, data[16..24], .big),
-            .client_fingerprint = std.mem.readInt(u64, data[24..32], .big),
+            .work = .{ .algorithm = data[1], .bits = data[2] },
+            .timestamp = std.mem.readInt(u64, data[8..16], .big),
+            .expiry = std.mem.readInt(u64, data[16..24], .big),
+            .rule_hash = std.mem.readInt(u64, data[24..32], .big),
+            .client_fingerprint = std.mem.readInt(u64, data[32..40], .big),
         };
     }
 
@@ -58,7 +82,7 @@ pub const Payload = struct {
 
 const b64 = std.base64.url_safe_no_pad;
 
-/// Keyed-hash token: 48 raw bytes, 64 URL-safe base64 characters.
+/// Keyed-hash token: 56 raw bytes, 75 URL-safe base64 characters.
 pub const MacToken = struct {
     pub const tag_size = 16;
     pub const raw_size = payload_size + tag_size;
@@ -78,12 +102,14 @@ pub const MacToken = struct {
         ttl_seconds: u64,
         rule_hash: u64,
         fingerprint: u64,
+        work: WorkLevel,
     ) [encoded_size]u8 {
         const payload = Payload{
             .timestamp = now,
             .expiry = now + ttl_seconds,
             .rule_hash = rule_hash,
             .client_fingerprint = fingerprint,
+            .work = work,
         };
         var raw: [raw_size]u8 = undefined;
         payload.serialize(raw[0..payload_size]);
@@ -108,18 +134,19 @@ pub const MacToken = struct {
         if (!std.crypto.timing_safe.eql([tag_size]u8, expected, raw[payload_size..raw_size].*)) {
             return error.InvalidTokenSignature;
         }
-        const payload = Payload.deserialize(raw[0..payload_size]);
+        const payload = try Payload.deserialize(raw[0..payload_size]);
         try payload.check(now, expected_fingerprint);
         return payload;
     }
 };
 
-/// Ed25519-signed token: 96 raw bytes, 128 URL-safe base64 characters.
+/// Ed25519-signed token: 104 raw bytes, 139 URL-safe base64 characters.
 pub const Token = struct {
     timestamp: u64,
     expiry: u64,
     rule_hash: u64,
     client_fingerprint: u64,
+    work: WorkLevel,
 
     pub const signature_size = 64;
     pub const raw_size = payload_size + signature_size;
@@ -131,16 +158,18 @@ pub const Token = struct {
         ttl_seconds: u64,
         rule_hash: u64,
         fingerprint: u64,
+        work: WorkLevel,
     ) [encoded_size]u8 {
         const payload = Payload{
             .timestamp = now,
             .expiry = now + ttl_seconds,
             .rule_hash = rule_hash,
             .client_fingerprint = fingerprint,
+            .work = work,
         };
         var raw: [raw_size]u8 = undefined;
         payload.serialize(raw[0..payload_size]);
-        // Signing a fixed 32-byte message with a valid key pair cannot fail;
+        // Signing a fixed 40-byte message with a valid key pair cannot fail;
         // the only error path is an invalid key, which `derive` rules out.
         const sig = key_pair.sign(raw[0..payload_size], null) catch unreachable;
         raw[payload_size..raw_size].* = sig.toBytes();
@@ -161,13 +190,14 @@ pub const Token = struct {
         const signature = Ed25519.Signature.fromBytes(raw[payload_size..raw_size].*);
         signature.verify(raw[0..payload_size], public_key) catch
             return error.InvalidTokenSignature;
-        const payload = Payload.deserialize(raw[0..payload_size]);
+        const payload = try Payload.deserialize(raw[0..payload_size]);
         try payload.check(now, expected_fingerprint);
         return .{
             .timestamp = payload.timestamp,
             .expiry = payload.expiry,
             .rule_hash = payload.rule_hash,
             .client_fingerprint = payload.client_fingerprint,
+            .work = payload.work,
         };
     }
 };
@@ -207,12 +237,26 @@ test "mac token mint, verify, tamper, fingerprint, expiry" {
     const key = [_]u8{3} ** 32;
     const fp = computeFingerprintKeyed(&key, "192.168.1.100", "Mozilla/5.0");
     const now: u64 = 1_700_000_000;
-    const tok = MacToken.mint(&key, now, 3600, ruleHash("bot/gptbot"), fp);
+    const work = WorkLevel{ .algorithm = 1, .bits = 19 };
+    const tok = MacToken.mint(&key, now, 3600, ruleHash("bot/gptbot"), fp, work);
     try std.testing.expectEqual(MacToken.encoded_size, tok.len);
+    try std.testing.expectEqual(@as(usize, 75), tok.len);
 
     const ok = try MacToken.verify(&key, &tok, now + 100, fp);
     try std.testing.expectEqual(fp, ok.client_fingerprint);
     try std.testing.expectEqual(ruleHash("bot/gptbot"), ok.rule_hash);
+    try std.testing.expectEqual(work, ok.work);
+    try std.testing.expect(ok.work.satisfies(.{ .algorithm = 1, .bits = 16 }));
+    try std.testing.expect(!ok.work.satisfies(.{ .algorithm = 1, .bits = 20 }));
+    try std.testing.expect(!ok.work.satisfies(.{ .algorithm = 0, .bits = 8 }));
+    // A payload of another version fails before its fields are trusted.
+    var old_version: [MacToken.raw_size]u8 = undefined;
+    _ = b64.Decoder.decode(&old_version, &tok) catch unreachable;
+    old_version[0] = 1;
+    var reencoded: [MacToken.encoded_size]u8 = undefined;
+    _ = b64.Encoder.encode(&reencoded, &old_version);
+    const stale = MacToken.verify(&key, &reencoded, now, fp);
+    try std.testing.expect(stale == error.InvalidTokenSignature or stale == error.InvalidEncoding);
 
     var tampered = tok;
     tampered[10] = if (tampered[10] == 'A') 'B' else 'A';
@@ -242,11 +286,13 @@ test "ed25519 token minting, verification, and expiration" {
     const key_pair = Ed25519.KeyPair.generateDeterministic(seed) catch unreachable;
     const fp = computeFingerprint("192.168.1.100", "Mozilla/5.0");
     const now: u64 = 1_700_000_000;
-    const token_chars = Token.mint(key_pair, now, 3600, 0x1234, fp);
+    const token_chars = Token.mint(key_pair, now, 3600, 0x1234, fp, .{ .bits = 12 });
+    try std.testing.expectEqual(@as(usize, 139), token_chars.len);
 
     const verified = try Token.verify(key_pair.public_key, &token_chars, now + 100, fp);
     try std.testing.expectEqual(fp, verified.client_fingerprint);
     try std.testing.expectEqual(@as(u64, 0x1234), verified.rule_hash);
+    try std.testing.expectEqual(@as(u8, 12), verified.work.bits);
 
     const bad_fp = computeFingerprint("10.0.0.1", "curl/7.88.1");
     try std.testing.expectError(

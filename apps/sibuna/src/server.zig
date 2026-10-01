@@ -567,8 +567,16 @@ fn requestDecision(ctx: *RequestContext, name: *[policy.engine.MAX_RULE_NAME]u8)
     } else slot.engine.evaluateRequest(view);
     @memcpy(name[0..decision.rule_name.len], decision.rule_name);
     decision.rule_name = name[0..decision.rule_name.len];
-    decision.algorithm = null; // Only challenge issuance uses the algorithm override.
     return decision;
+}
+
+/// The work a decision demands of a session, in the token's own unit.
+fn requiredWork(st: *const AppState, decision: policy.Decision) challenge.WorkLevel {
+    const algorithm = if (decision.algorithm) |a|
+        challengeAlgorithm(a)
+    else
+        st.coordinator.default_spec.algorithm;
+    return challenge.requiredWork(algorithm, decision.difficulty);
 }
 
 fn applyPolicy(ctx: *RequestContext) !bool {
@@ -587,11 +595,14 @@ fn applyPolicy(ctx: *RequestContext) !bool {
         );
         if (rate.limited) return rateLimited(ctx, rate, limits.ban_seconds);
     }
-    // A session clears admission challenges, never WAF or explicit denials.
-    if (decision.action != .deny) {
+    // A session clears an admission challenge whose work it already paid: the token's level
+    // must reach what this route demands. WAF and explicit denials are never cleared, and a
+    // cheaper session falls through to the stronger challenge instead of admitting.
+    if (decision.action == .challenge or decision.action == .weigh) {
         if (ctx.req.getCookie(st.config.cookie_name)) |cookie| {
             if (st.coordinator.verifyCookie(cookie, ctx.client_ip, ctx.user_agent, ctx.now)) |t| {
-                return forward(ctx, "PASS", "session", t.rule_hash);
+                if (t.work.satisfies(requiredWork(st, decision)))
+                    return forward(ctx, "PASS", "session", t.rule_hash);
             } else |_| {}
         }
     }

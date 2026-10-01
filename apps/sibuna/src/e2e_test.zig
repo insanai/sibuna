@@ -113,6 +113,14 @@ fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
     policy.page_template.defaults(&f.engine.pages, @import("challenge_page.zig").default);
     f.engine.waf_enabled = cfg.waf;
     if (f == quota_fixture) configureQuotas(&f.engine);
+    // One route demands more work than the eight-bit default, for session-level checks. It
+    // goes first because the built-in generic-browser rule would otherwise claim the path.
+    if (f == proxy_fixture) prependRule(&f.engine, .{
+        .name = "strong-route",
+        .path_pattern = "/strong/*",
+        .action = .challenge,
+        .difficulty = 12,
+    });
     if (f == audit_fixture) {
         f.engine.inspection_modes = .{ .sqli = .audit, .path_traversal = .disabled };
         f.engine.ip_trie.insertCidr("203.0.113.223/32", .deny) catch unreachable;
@@ -173,6 +181,13 @@ fn bootAll() void {
     bootFixture(auth_fixture, auth_cfg);
     bootFixture(audit_fixture, proxy_cfg);
     bootFixture(quota_fixture, proxy_cfg);
+}
+
+fn prependRule(engine: *policy.Engine, rule: policy.PolicyRule) void {
+    var index = engine.rule_count;
+    while (index > 0) : (index -= 1) engine.rules[index] = engine.rules[index - 1];
+    engine.rules[0] = rule;
+    engine.rule_count += 1;
 }
 
 fn configureQuotas(engine: *policy.Engine) void {
@@ -595,6 +610,57 @@ test "hashcash flow: challenge, solve, verify, cookie, proxied, replay and bindi
     );
     try post(p, "/__sibuna/verify", ip, browser_ua, body3, resp);
     try std.testing.expectEqual(@as(u16, 400), resp.status());
+}
+
+/// Fetches, solves and verifies a hashcash challenge for `path`, returning the cookie header.
+fn hashcashSession(port: u16, ip: []const u8, path: []const u8, out: *[512]u8) ![]const u8 {
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    const ch = try fetchChallenge(port, ip, browser_ua, path);
+    const nonce = crypto.pow.solveHashcashBits(ch.idSlice(), ch.difficulty, 1 << 26).?;
+    var body_buf: [256]u8 = undefined;
+    const body = try std.fmt.bufPrint(
+        &body_buf,
+        "{{\"challenge_id\":\"{s}\",\"nonce\":\"{d}\"}}",
+        .{ ch.idSlice(), nonce },
+    );
+    try post(port, "/__sibuna/verify", ip, browser_ua, body, resp);
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+    var cookie_buf: [256]u8 = undefined;
+    const cookie = try extractCookie(resp, &cookie_buf);
+    return std.fmt.bufPrint(out, "Cookie: {s}\r\n{s}", .{ cookie, browser_accept });
+}
+
+test "a session earned on a cheaper route does not admit a route that demands more work" {
+    boot_once.call();
+    const p = proxy_fixture.port;
+    const ip = "203.0.113.12";
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    var weak_buf: [512]u8 = undefined;
+    const weak = try hashcashSession(p, ip, "/blog/post-1", &weak_buf);
+    try get(p, "/blog/post-1", ip, browser_ua, weak, resp);
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+    try std.testing.expect(resp.contains("X-Sibuna-Rule: session"));
+    // Eight paid bits do not cover a twelve-bit route: the interstitial returns, not the origin.
+    try get(p, "/strong/data", ip, browser_ua, weak, resp);
+    try std.testing.expectEqualStrings("CHALLENGE", resp.header("x-sibuna-status").?);
+    try std.testing.expect(!resp.contains("ORIGIN|"));
+    const strong_challenge = try fetchChallenge(p, ip, browser_ua, "/strong/data");
+    try std.testing.expectEqual(@as(u32, 12), strong_challenge.difficulty);
+    var strong_buf: [512]u8 = undefined;
+    const strong = try hashcashSession(p, ip, "/strong/data", &strong_buf);
+    try get(p, "/strong/data", ip, browser_ua, strong, resp);
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+    try std.testing.expect(resp.contains("ORIGIN|GET /strong/data"));
+    try std.testing.expect(resp.contains("X-Sibuna-Rule: session"));
+    // The stronger session covers the cheaper route as well; levels are ordered, not named.
+    try get(p, "/blog/post-1", ip, browser_ua, strong, resp);
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+    try std.testing.expect(resp.contains("ORIGIN|GET /blog/post-1"));
+    // Neither session clears a WAF denial.
+    try get(p, "/search?q=1%27%20union%20select%20null--", ip, browser_ua, strong, resp);
+    try std.testing.expectEqual(@as(u16, 403), resp.status());
 }
 
 test "posw flow through forward-auth mode with ed25519 tokens" {

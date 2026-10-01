@@ -22,6 +22,7 @@ pub const verifyHashcashBits = pow.verifyHashcashBits;
 pub const Token = token.Token;
 pub const MacToken = token.MacToken;
 pub const TokenPayload = token.Payload;
+pub const WorkLevel = token.WorkLevel;
 pub const TokenError = token.TokenError;
 pub const computeFingerprint = token.computeFingerprint;
 pub const computeFingerprintKeyed = token.computeFingerprintKeyed;

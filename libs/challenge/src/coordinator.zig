@@ -39,6 +39,28 @@ pub const Algorithm = enum(u8) {
 };
 
 pub const TokenScheme = enum { mac, ed25519 };
+pub const WorkLevel = crypto.WorkLevel;
+
+/// Work bits paid for a difficulty in algorithm units: hashcash bits as given, PoSW depth
+/// plus its offset. This is the unit the session level is compared in.
+pub fn workBits(algorithm: Algorithm, difficulty: u8) u8 {
+    return switch (algorithm) {
+        .hashcash => difficulty,
+        .posw => @intCast(@min(255, @as(u32, difficulty) + ChallengeSpec.posw_depth_offset)),
+    };
+}
+
+/// What a route demands of a session: the policy difficulty mapped through the same
+/// clamping a challenge applies, without the load-adaptive bump, so a token minted for the
+/// route always satisfies it and a cheaper token never does.
+pub fn requiredWork(algorithm: Algorithm, difficulty: u32) WorkLevel {
+    const spec = ChallengeSpec{ .algorithm = algorithm, .difficulty = difficulty };
+    const units: u8 = switch (algorithm) {
+        .hashcash => @intCast(spec.hashcashBits()),
+        .posw => spec.poswDepth(),
+    };
+    return .{ .algorithm = @intFromEnum(algorithm), .bits = workBits(algorithm, units) };
+}
 
 /// What a challenge asks for. `difficulty` is in work bits: hashcash needs
 /// that many leading zero bits (2^bits expected hashes); PoSW uses a tree of
@@ -322,14 +344,23 @@ pub const Coordinator = struct {
             error.DoubleSpendAttempt => return error.DoubleSpendAttempt,
             else => return error.StoreFull,
         };
-        var result = self.mintToken(now, decoded.rule_hash, decoded.fingerprint);
+        var result = self.mintToken(now, decoded.rule_hash, decoded.fingerprint, .{
+            .algorithm = @intFromEnum(decoded.algorithm),
+            .bits = workBits(decoded.algorithm, decoded.difficulty),
+        });
         result.algorithm = decoded.algorithm;
         result.difficulty = decoded.difficulty;
         result.challenges = decoded.challenges;
         return result;
     }
 
-    fn mintToken(self: *const Coordinator, now: u64, rule_hash: u64, fp: u64) VerifiedResult {
+    fn mintToken(
+        self: *const Coordinator,
+        now: u64,
+        rule_hash: u64,
+        fp: u64,
+        work: WorkLevel,
+    ) VerifiedResult {
         var result = VerifiedResult{
             .token = undefined,
             .token_len = 0,
@@ -343,12 +374,20 @@ pub const Coordinator = struct {
                     self.token_ttl,
                     rule_hash,
                     fp,
+                    work,
                 );
                 @memcpy(result.token[0..tok.len], &tok);
                 result.token_len = tok.len;
             },
             .ed25519 => {
-                const tok = crypto.Token.mint(self.key_pair, now, self.token_ttl, rule_hash, fp);
+                const tok = crypto.Token.mint(
+                    self.key_pair,
+                    now,
+                    self.token_ttl,
+                    rule_hash,
+                    fp,
+                    work,
+                );
                 @memcpy(result.token[0..tok.len], &tok);
                 result.token_len = tok.len;
             },
@@ -378,6 +417,7 @@ pub const Coordinator = struct {
                     .expiry = tok.expiry,
                     .rule_hash = tok.rule_hash,
                     .client_fingerprint = tok.client_fingerprint,
+                    .work = tok.work,
                 };
             },
         };
@@ -425,6 +465,10 @@ test "hashcash challenge: issue, solve, verify, mint, replay, binding" {
     try std.testing.expectEqual(crypto.MacToken.encoded_size, result.token_len);
     const token = try ctx.coord.verifyCookie(result.slice(), ip, ua, now + 10);
     try std.testing.expectEqual(@as(u64, 7), token.rule_hash);
+    try std.testing.expectEqual(WorkLevel{ .algorithm = 0, .bits = 10 }, token.work);
+    try std.testing.expect(token.work.satisfies(requiredWork(.hashcash, 10)));
+    try std.testing.expect(!token.work.satisfies(requiredWork(.hashcash, 11)));
+    try std.testing.expect(!token.work.satisfies(requiredWork(.posw, 10)));
     try std.testing.expectError(
         error.TokenBoundAddressMismatch,
         ctx.coord.verifyCookie(result.slice(), "1.2.3.4", ua, now + 10),
@@ -480,6 +524,10 @@ test "posw challenge round trip and ed25519 token scheme" {
     try std.testing.expectEqual(crypto.Token.encoded_size, result.token_len);
     const token = try ctx.coord.verifyCookie(result.slice(), ip, ua, now + 2);
     try std.testing.expectEqual(@as(u64, 1), token.rule_hash);
+    // Depth 8 plus the offset: the level a route asking for 11 work bits requires.
+    try std.testing.expectEqual(WorkLevel{ .algorithm = 1, .bits = 11 }, token.work);
+    try std.testing.expect(token.work.satisfies(requiredWork(.posw, 11)));
+    try std.testing.expect(!token.work.satisfies(requiredWork(.posw, 12)));
     try std.testing.expectError(
         error.DoubleSpendAttempt,
         ctx.coord.verifyAndMint(&ch.id, .{ .proof = proof }, ip, ua, now + 3),

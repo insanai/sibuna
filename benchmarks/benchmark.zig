@@ -295,7 +295,7 @@ fn benchTokens(io: std.Io, runs: *Runs) !void {
     const fp = crypto.computeFingerprintKeyed(&keys.fingerprint, "203.0.113.195", "Chrome/128");
     const mac = MacCtx{
         .key = keys.token,
-        .token = crypto.MacToken.mint(&keys.token, now, 7200, 1, fp),
+        .token = crypto.MacToken.mint(&keys.token, now, 7200, 1, fp, .{ .bits = 16 }),
         .fp = fp,
         .now = now,
     };
@@ -307,7 +307,7 @@ fn benchTokens(io: std.Io, runs: *Runs) !void {
     const kp = try crypto.Ed25519.KeyPair.generateDeterministic(keys.ed25519_seed);
     const ed = EdCtx{
         .public_key = kp.public_key,
-        .token = crypto.Token.mint(kp, now, 7200, 1, fp),
+        .token = crypto.Token.mint(kp, now, 7200, 1, fp, .{ .bits = 16 }),
         .fp = fp,
         .now = now,
     };
