@@ -347,17 +347,14 @@ queries, detail reads and mutations remain HTTP requests.
 
 Page fragments can be bookmarked; Back and Forward reopen authenticated pages. The sidebar
 also remembers theme and spacing choices in this browser, with System as the default theme.
-SID 0007 is Committed. The interface is available, with ongoing review corrections
-and acceptance work recorded in the SID. The impact matrices below were measured on a
-dedicated Linux host: no configuration fails the one percent throughput or ten percent p99
-rules, and read paired within each round against the same binary with the console disabled,
-an enabled console costs at most 0.8% with head capture off. With capture on the cost appears
-only where heads are stored, about 2% on audited traffic. The formal verdict stays
-inconclusive because per-round processor drift on that host holds baseline spread a little
-above the one percent rule. The clustered matrix, completed on Zaxonlite 0.7.0 once the
-upstream trim regression was fixed, reads the same way: at most 0.5% against the same binary
-with the console disabled and 1.2% to 2.1% against the compiled-out build, recorded as a note
-under the same paired reading. The corrected
+SID 0007 is Committed. Its pages and management workflows passed the October Linux and
+connected Chrome review, including an actual cluster on three physical hosts. Performance
+acceptance is separate: the fresh three-host impact matrices are inconclusive, with each raw
+sample, coverage check and formal verdict retained under `benchmarks/results/`. The September
+paired reading was accepted by the owner as a historical exception, not a formal pass, and it
+does not apply automatically to the updated request path or to new measurements. These
+unprivileged containers cannot control the processor governor or other host activity; that
+limits acceptance without establishing a cause for measured throughput differences. The corrected
 harness includes each dashboard's stream, rankings and retained-timeline queries; a full
 acceptance run requires a production GeoIP snapshot and documented host conditions. Direct TLS
 peer transport and the combined dashboard have separate coverage and freshness contracts;

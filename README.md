@@ -46,16 +46,16 @@ docs); the book's Part II carries the full table with sources.
 | Reputation, bans | Honeypot; cluster-replicated trie | DNSBL; ASN/GeoIP via paid Thoth | IP groups; threat intel (Pro) | IP lists; bot score (Enterprise) |
 | Forensics | Embedded SQLite, FTS5, vector campaigns | Metrics only | PostgreSQL log + console | Security Events |
 | Multi-node | Multi-Paxos replication, shared seed | Shared key + Valkey | One stack per host | Global anycast |
-| Host footprint | 3.3 MB binary, ~7 MB idle | 37 MB binary, ~40 MB under load | 1 core, 1 GB RAM, 5 GB disk min. | none on premises |
+| Host footprint | Build and workload dependent; recorded below | Build and workload dependent; recorded below | 1 core, 1 GB RAM, 5 GB disk min. | none on premises |
 | Measured here | Yes | Yes | No (Docker only) | No (hosted) |
 
 Sibuna does not terminate ingress TLS or score bots with a model. Its opt-in console preview
 includes the animated country globe, incident investigation, policy editing, users, scoped API
 tokens, audit browsing, local node controls and authenticated multi-topic subscriptions.
-SID 0007 was committed on 2026-09-11. Its console-impact gate has measured records from a
-dedicated host, but the formal verdict there is inconclusive on baseline spread; the SID records
-a paired reading (console on versus off in the same binary) under which the console's cost is
-accepted as a note, and that note is not a formal pass. See
+SID 0007 was committed on 2026-09-11. Linux tests, actual three-host management checks and
+connected Chrome workflows passed the October review. Fresh cross-host console-impact results
+are inconclusive; the September paired exception is historical and does not establish acceptance
+for the current request path. See [benchmark evidence](benchmarks/results/README.md) and
 [loading country data from the CLI](#loading-country-data) for country data setup.
 
 ## Research foundations
@@ -404,9 +404,10 @@ Drain, resume and clear local bans still act only on the serving node,
 require a preview and produce durable command receipts. Under `-Dcluster=true`,
 `zig build console-e2e` also runs a three-node membership, failover and quorum-loss scenario,
 and `zig build console-impact` measures the console's cost to the data plane. The records under
-`benchmarks/results/` from a dedicated host carry a formal verdict of inconclusive (single node,
-baseline spread) or fail (clustered, compiled-out comparison); SID 0007 accepts the console's
-cost under a separate paired reading, which is a supplementary analysis and not a formal pass.
+`benchmarks/results/` retain each formal verdict and its uncertainty. Fresh three-host matrices
+are inconclusive; SID 0007's September paired exception is historical, not a formal pass or an
+exception for new results. The unprivileged containers cannot control the governor or other
+host activity, so these results do not isolate the cause of throughput differences.
 The impact harness checks all eight streams plus each dashboard's rankings and retained
 timeline queries, one configuration at a time. Full runs require
 `-- --geoip-data <production.snapshot> --host-label <conditions>`; `-- --quick` checks the

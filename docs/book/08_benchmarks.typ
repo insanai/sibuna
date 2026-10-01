@@ -6,9 +6,10 @@
   latencies, an admission-only comparison with Anubis, a whole-product comparison under an
   external load generator with CPU and memory accounting, distributed behavior and local
   replicated-cluster costs. The console has a separate isolation acceptance matrix.
-  Every number in this part is rendered from a results file at build time. The recorded files
-  predate the request-path changes of 1 October 2026 and describe the earlier code until the
-  harnesses are rerun.
+  Every number in this part is rendered from a results file at build time. Its header identifies
+  the tested revision and host. Historical September records predate the request-path changes
+  of 1 October 2026; the October release review regenerates records for that updated path.
+  A functional pass and an inconclusive isolation measurement answer different questions.
 ])
 
 == Methodology
@@ -42,6 +43,13 @@ the load generator's independent wall clock and histogram; CPU-accounting precis
 not change those measurements. Container permissions do not grant control over the host's
 processor governor or other tenants. Resource conditions and uncertainty belong with each
 record rather than being assumed to match a dedicated machine.
+
+The Linux admission and whole-product comparisons give every product thread the same allowed
+CPU set before warmup: two CPUs for admission and four by default for whole products. A Sibuna
+accept-thread count is not a CPU budget equivalent to Go's `GOMAXPROCS`. Each product row records
+its affinity; the origin and load generator keep native scheduling. Admission issuance reserves
+a large challenge allowance to measure successful operations rather than the production
+limiter's default exhaustion behavior. The comparison records that allowance explicitly.
 
 #callout([Measurement scope], [
   Only local measurements are emitted. Third-party products are measured only when their

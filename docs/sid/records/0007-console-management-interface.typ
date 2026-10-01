@@ -7,7 +7,7 @@
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
 #let sid-status = "Committed"
-#let sid-last-updated = "2026-09-14"
+#let sid-last-updated = "2026-10-02"
 
 #import "../../shared/sid.typ": sid-document
 #import "@preview/cetz:0.5.2" as cetz
@@ -504,57 +504,32 @@ runs on a declared host, fixed warm-up/duration and traffic mix, and report unce
 Throughput loss must be ≤ 1% and p99 increase ≤ 10% relative to the corresponding baseline;
 inconclusive/noisy runs do not establish compliance.
 
-The runs of 12 September 2026 measure four single-node matrices on a dedicated Linux host,
-each workload driving its own client address so that no sample is contaminated by the daemon's
-own rate limiter: all 360 samples pass their post-sample status check and forward-auth baseline
-spread falls below 1.3%. Eleven configurations pass, forty-three are inconclusive and none
-fail, and thirty-nine of the inconclusive ones are held there by baseline spread a little above
-the 1% rule rather than by any measured cost. The host is a container whose CPU governor cannot
-be pinned, so the residual spread is per-round drift common to all four configurations. The
-same samples are therefore also read paired within each round, and against the same binary with
-the console disabled rather than compiled out, which separates the console's runtime cost from
-the effect of compiling it in. Read that way an enabled console costs at most 0.8% on every
-workload with capture off; with capture on the cost appears only where heads are actually
-stored, about 2% on the audited workload and 1.3% to 1.9% on denied, which records incidents.
-The thresholds above are unchanged: the paired reading is a supplementary analysis of the same
-samples, which the result file supports because it retains every sample with its round and
-position.
+The owner accepted a supplementary paired reading of the September 2026 measurements
+(decision of 14 September): comparing idle and active consoles with the same binary disabled,
+within each round, suggested at most 0.8% runtime cost without capture for single nodes and
+0.5% for the local cluster. This was an exception, not a pass: the single-node formal verdicts
+were inconclusive and the clustered verdict failed against the compiled-out binary. Those
+measurements predate the request-path changes of 1 October and remain historical evidence.
+They do not establish compliance for later code or authorize an exception for new results.
 
-The clustered matrix completed on 13 September 2026 on the same host, after the storage
-engine moved to Zaxonlite 0.7.0: three nodes, 8 wrk threads, 128 connections, 5 s warm-up,
-60 s samples, five rounds. All 80 samples pass their post-sample status check, no node lost
-storage, and no trim regression or quorum error occurred; the earlier attempt on 0.6.2 wedged
-two of three nodes (Zaxonlite issue 10) and produced no result. Baseline spread between the
-compiled-out and disabled binaries is 0.94% to 1.63%. Against the compiled-out binary the idle
-and active configurations run 1.2% to 2.1% below on admitted, denied and policy reload, which
-the formal gate reports as fail; against the same binary with the console disabled the console
-costs at most 0.5% (0.2% admitted, none on challenged, 0.5% denied, 0.4% policy reload). That is
-the same paired reading as the single-node matrices and is accepted on the same basis, recorded
-here as a note with the thresholds unchanged (decision of 14 September 2026). The result is
-`benchmarks/results/console-impact-cluster-latest.json`.
+The October review measures the updated request path in unprivileged Linux containers.
+Three physical hosts run mutual-TLS consensus and certificate-validated management peers;
+the fixture verifies all six peer directions and eight dashboards, including rankings and
+retained timeline queries. The quiet forward-auth/capture-off repeat and the other three
+mode/capture matrices are selected by
+`benchmarks/results/console-impact-three-host-*-latest.json`. All have valid response states,
+dashboard delivery and peer coverage, with no transport errors, but formal verdicts are
+inconclusive. The quiet repeat's baseline spread is 2.5–3.9%; its active throughput loss is
+1.5–3.4% against compiled out and 0.9–3.5% in the supplementary paired comparison with disabled.
+The initial forward-auth/capture-off matrix is exploratory because another fixture shared
+node 3's physical host. Timestamped records preserve both runs and their provenance.
 
-Each cell below is the console's runtime cost as a percentage of throughput, idle before the
-slash and eight active dashboards after it, measured against the same binary with the console
-disabled and paired within each round. A negative figure means the console configuration ran
-faster than its own baseline. Baseline spread bounds how much of a cell to believe: it is 1.2%
-for forward auth with capture off, 2.8% and 2.6% for the next two, and 13.8% for reverse proxy
-with capture on, whose cells are therefore noise rather than signal. Head capture is a console
-option, so the audited workload exists only in the capture-on matrices.
-
-#table(
-  columns: (1.1fr, 1fr, 1fr, 1fr, 1fr),
-  table.header([*Workload*], [*forward auth, capture off*], [*forward auth, capture on*],
-    [*reverse proxy, capture off*], [*reverse proxy, capture on*]),
-  [Admitted], [+0.42 / +0.75], [-0.20 / +0.54], [-0.48 / -0.26], [-0.65 / +0.92],
-  [Challenged], [-0.31 / +0.49], [-0.13 / +0.49], [-0.18 / +0.35], [-0.70 / -0.59],
-  [Denied], [+0.28 / +0.41], [+1.31 / +1.87], [-0.40 / -1.00], [+2.21 / +1.20],
-  [Policy reload], [+0.52 / +0.49], [-0.13 / +0.22], [+0.70 / -0.09], [+1.36 / -0.10],
-  [Audited], [not run], [+1.70 / +2.01], [not run], [-0.41 / -1.85],
-)
-
-The two columns with capture on are the ones that pay for stored heads, and they pay it exactly
-where heads are written: on denied traffic, which records a WAF incident, and on the audited
-workload itself. Every other cell in the three trustworthy matrices sits inside one percent.
+These containers cannot control the processor governor or other host activity. That limits
+acceptance; it does not establish that every measured difference is noise. Linux `ps` CPU time
+is quantized to whole seconds, whereas throughput and latency use the independent load
+generator clock and histogram. The latter measurements are not explained away by coarse CPU
+accounting. The thresholds above remain the contract. Results and fixture provenance belong
+in `benchmarks/results/`; this record states their implications for the design and launch.
 
 
 == Startup from the command line
@@ -1923,20 +1898,15 @@ probes and peer telemetry, notifications, retention, response-page templates, th
 build pipeline and digest gate, the golden, contract, end-to-end and cluster test entry points,
 and the operator guide with screenshots.
 
-*Launch condition:* the console-impact gate now has a result from a dedicated Linux host
-rather than the development laptop, recorded under `benchmarks/results/`. Across the four
-single-node matrices no configuration fails, and the paired reading above puts the console's
-runtime cost at or below 0.8% with capture off. The formal verdict is still inconclusive,
-because per-round drift on that container holds baseline spread a little above the one percent
-rule. The clustered matrix completed on 13 September 2026 on Zaxonlite 0.7.0 and is recorded
-under `benchmarks/results/`; its formal verdict is fail on the compiled-out comparison while the
-console costs at most 0.5% against the same binary with the console disabled, and both readings
-are accepted as a note under the paired analysis above. To re-measure, run
+*Launch condition:* the interface and management features are available, but performance
+acceptance remains separate. The historical paired exception above is not a formal pass and
+does not cover the updated request path. Fresh October cross-host matrices are inconclusive;
+read every new result against the original thresholds and its stated uncertainty before enabling
+`--console` beside a production data plane. Reproduce a single-node matrix with
 `zig build console-impact -- --geoip-data <validated-snapshot> --host-label <conditions>`;
-add `--cluster` for clustered deployment. A re-measurement is read the same way: the formal
-thresholds first, then the paired reading against the same binary with the console disabled,
-which is what the accepted note above rests on. The same binary runs
-without `--console`; compiling the console in starts no console thread, listener or sampler.
+select `--mode forward_auth` or `--mode reverse_proxy` and repeat with `--capture-heads`.
+`--cluster` measures three local nodes; the preserved SSH fixture measures separate hosts.
+Without `--console`, the same binary starts no console thread, listener or sampler.
 
 
 *Accepted deviations:* the serve kernel reserves HTTP and control capacity arithmetically
@@ -1977,16 +1947,17 @@ retention keeps pace at the ingestion bound. The impact runner accepts `--mode r
 `--capture-heads` (which adds an audited-admission workload); the effective values are part
 of each result's provenance.
 
-Acceptance conditions: the impact gate is not formally passed. The four single-node matrices,
-measured in both modes with capture off and on, have no failing configuration and a formal
-verdict of inconclusive on baseline spread. The clustered matrix of 13 September 2026 has a
-formal verdict of fail on the compiled-out comparison. Both are accepted under the paired
-reading above as a project-owner exception, recorded as a note and never as a pass. These
-measurements predate the data-plane changes of 1 October 2026 (work-level session binding,
-the read-by-read relay, the challenge budget and the requirement ticket), so the gate must be
-rerun on the deployment host before its figures describe the current request path. The
-interface module measured 622,941 bytes against the 786,432-byte ceiling after the September
-changes.
+Acceptance conditions: the impact gate is not formally passed. Current functional evidence is
+`benchmarks/results/linux-functional-review-20261001.json`: 588 native tests, live console and
+cluster suites, shipped Wasm behavior, and actual three-host edits, failover, quorum loss,
+revocation, local commands and clean stops. The connected Chrome walkthrough is recorded in
+`benchmarks/results/chrome-release-review-20261001.json`, including evidence states, clipboard
+contents, private policy preview, mobile filters, navigation and the animated connection globe.
+These checks establish the workflows stated in those records; they do not establish field
+browser performance or console isolation acceptance. Fresh impact results and their uncertainty
+must be retained alongside the functional evidence. The interface module measured 622,941 bytes
+against the 786,432-byte ceiling after the September changes.
+
 
 == Interface budget review (2026-09-11)
 
