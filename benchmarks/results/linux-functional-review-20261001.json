@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "date_utc": "2026-10-01",
+  "application_revision": "669229c276fcbf41ad391abc05484f4713a98873",
+  "zig": "0.16.0",
+  "zaxonlite": {
+    "url": "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.7.0.tar.gz",
+    "hash": "zaxonlite-0.7.0-o9bF7IxHHQDxiixvOsdt-BvzGbI87rjtLKBJpW5LPse-"
+  },
+  "cluster_binary_sha256": "0773250ce24656695fc069dd355af64d93fc66d5c436d497784bebb33cac6f8a",
+  "cluster_build_source": {
+    "zaxonlite": {
+      "url": "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.7.0.tar.gz",
+      "hash": "zaxonlite-0.7.0-o9bF7IxHHQDxiixvOsdt-BvzGbI87rjtLKBJpW5LPse-"
+    },
+    "source_sha256": "0eaf2a232cb66a0b37cd2a6daf559461252875a24be918224cc7d64396defa61",
+    "source_manifest_version": 2,
+    "source_file_count": 696,
+    "daemon_sha256": "0773250ce24656695fc069dd355af64d93fc66d5c436d497784bebb33cac6f8a",
+    "date": "2026-10-01T13:38:39.950355+00:00",
+    "host": "paxos-zig",
+    "cpu": "",
+    "os": "Linux-7.0.0-28-generic-x86_64-with-glibc2.41",
+    "git": "669229c276fcbf41ad391abc05484f4713a98873",
+    "dirty": false,
+    "zig": "0.16.0"
+  },
+  "hosts": {
+    "linux_gates": "insan@10.175.52.18",
+    "cross_host_functional": [
+      "insan@10.175.52.19",
+      "insan@10.175.52.20",
+      "insan@10.175.52.21"
+    ]
+  },
+  "gates": [
+    {
+      "command": "zig build fmt test console-ui-e2e console-e2e -Dcluster=true -j2 --summary all",
+      "exit_status": 1,
+      "tests_passed": 588,
+      "tests_total": 588,
+      "passed_steps": [
+        "fmt",
+        "test",
+        "console-test",
+        "console-render-test",
+        "console-e2e including local three-node failover and quorum loss"
+      ],
+      "failure": "console-ui-e2e could not find Node in the container; no failing application test",
+      "log_sha256": "f7dff58842ac363b5092ad41a5f73ab3637e36a2bdef7bbe1a0d818caae93d49"
+    },
+    {
+      "command": "zig build console-ui-e2e -Dcluster=true -j2 --summary all",
+      "exit_status": 0,
+      "passed_checks": [
+        "live WEIGH and terminal hits, private test exclusion, rule history",
+        "shipped Wasm, six topics, navigation, resync and sign-out"
+      ],
+      "runtime": {
+        "artifact": "node-v22.23.3-linux-x64.tar.xz",
+        "sha256": "df450af89261115ef9f9e3830c3eeb2cc9213b63c720b1af623cb5dcbe2e02de",
+        "source": "https://nodejs.org/dist/latest-v22.x/"
+      },
+      "installation": "Checksum-verified official Node runtime in the owned test directory; no system package change",
+      "log_sha256": "790a68a2f2141feb8d9b75741b0cc792e38e5e3afbaa1b43026fa375e7a0c996"
+    }
+  ],
+  "cross_host_functional": {
+    "exit_status": 0,
+    "checks": [
+      "shared work-bound sessions, issuer-bound proofs, WAF on every node",
+      "policy CAS, replication, applied revisions, persisted rule observations",
+      "leader loss, survivor write, rejoin, advancing authenticated TLS peers",
+      "lost quorum refuses writes, cached protection and management stream continue",
+      "replicated revocation, local drain and replicated receipt",
+      "three actual host functional acceptance"
+    ],
+    "additional_assertions": [
+      "Expected revision conflict is 409",
+      "Loss of quorum refuses edits with 503 within 15 seconds; cached data-plane protection continues",
+      "Direct authenticated management stream advances for 12 seconds without quorum",
+      "All six management directions current after rejoin with a new boot",
+      "Replicated rule history survives failover and restart without duplicates",
+      "Cross-node logout invalidates the session",
+      "Drain affects only the target node; receipt can be read elsewhere",
+      "All node stops return status 0"
+    ],
+    "storage_transport": "Mutual TLS between all three physical hosts",
+    "management_transport": "Certificate-validated TLS and independent peer HMAC authentication",
+    "log_sha256": "c81fb8f08c3be059c8bb4e97c4980334a8e132790286a92249d66226b79c70f2"
+  },
+  "container_conditions": {
+    "physical_host_groups": [
+      [
+        "10.175.52.18",
+        "10.175.52.21"
+      ],
+      [
+        "10.175.52.19"
+      ],
+      [
+        "10.175.52.20"
+      ]
+    ],
+    "host_mapping_evidence": "18 and 21 expose the same Ryzen 5950X, kernel boot time and uevent sequence; 19 and 20 have distinct physical-host boot times. Tests and measurements are serialized across the shared host.",
+    "governor": "powersave; unprivileged containers cannot set host policy",
+    "cpus": {
+      "18": 32,
+      "19": 16,
+      "20": 16,
+      "21": 32
+    },
+    "readable_cpu_max": "max 100000",
+    "readable_memory_max": "max",
+    "external_host_activity": "Not controllable from the container"
+  },
+  "limitations": [
+    "Functional acceptance is separate from performance acceptance; this record does not assert an impact-gate pass.",
+    "Linux UI gate executes shipped Wasm through Node and is not a Chrome walkthrough; Chrome has a separate record.",
+    "No production ingress, user checkout or user service was modified."
+  ]
+}

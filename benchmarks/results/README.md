@@ -53,10 +53,17 @@ most 0.8% single-node and 0.5% clustered. That reading is a supplementary analys
 the project owner as a release note; it does not change a verdict and must not be cited as a
 pass of the gate.
 
-Currency: every result here was measured before the request-path changes of 1 October 2026
+Currency: the performance figures in the latest files were measured before the request-path changes of 1 October 2026
 (work-level session binding, the read-by-read proxy relay, the challenge budget and requirement
 tickets). Those changes alter admission and relay work per request, so primitive, whole-product,
 distributed and console-impact figures describe the earlier code until the harnesses are rerun.
+
+`linux-functional-review-20261001.json` records verification after those changes: 588 native
+tests, the clustered console suite, the shipped Wasm behavior test and functional checks on
+three separate physical hosts. `chrome-release-review-20261001.json` records the connected
+Chrome walkthrough of evidence states, exact clipboard contents, a private policy preview,
+navigation, mobile filters and the moving globe. These records establish the checks stated
+within them; they are separate from performance measurements and field browser targets.
 
 No benchmark hook or timer is linked into request handling. Production metrics, local locks,
 reader-count atomics and incident enqueue still have real costs. These tests cannot establish

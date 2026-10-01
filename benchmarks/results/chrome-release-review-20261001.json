@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "application_revision": "669229c276fcbf41ad391abc05484f4713a98873",
+  "binary_sha256": "5e4771919414a3d834be20495d8553034b14f4c3b7bf6c31d9f54f651a202776",
+  "browser": "Connected Google Chrome",
+  "fixture": "Disposable loopback console, existing console_heads_test scenarios in both modes, synthetic country mapping and declared Singapore node location",
+  "checks": {
+    "sign_in": true,
+    "redacted_local_response_state": true,
+    "redacted_origin_unavailable_state": true,
+    "forward_auth_unobserved_state": true,
+    "websocket_101_response_head": true,
+    "charset_toggle": true,
+    "curl_clipboard_equals_visible_command": true,
+    "incident_path_filter": true,
+    "draft_policy_preview_without_committing": true,
+    "mobile_width": 390,
+    "mobile_scroll_width": 390,
+    "mobile_menu_closes_after_navigation": true,
+    "globe_connection_arrows_rendered": true,
+    "globe_arrow_paths_change_with_animation": true,
+    "globe_pause_and_start": true,
+    "globe_reset": true,
+    "flat_map_connection_rendering": true,
+    "navigation_persists_on_all_inspected_pages": true,
+    "sign_out_reopens_authentication_shell": true,
+    "signed_out_globe_absent": true,
+    "chrome_warning_and_error_count": 0
+  },
+  "page_checks": [
+    {
+      "page": "Challenges",
+      "heading": "Challenges",
+      "navigation_visible": true,
+      "alert": ""
+    },
+    {
+      "page": "GeoIP",
+      "heading": "GeoIP",
+      "navigation_visible": true,
+      "alert": ""
+    },
+    {
+      "page": "Users",
+      "heading": "Users",
+      "navigation_visible": true,
+      "alert": ""
+    },
+    {
+      "page": "Tokens",
+      "heading": "API tokens",
+      "navigation_visible": true,
+      "alert": ""
+    },
+    {
+      "page": "Audit",
+      "heading": "Audit history",
+      "navigation_visible": true,
+      "alert": ""
+    },
+    {
+      "page": "Nodes",
+      "heading": "Nodes",
+      "navigation_visible": true,
+      "alert": ""
+    },
+    {
+      "page": "Settings",
+      "heading": "Settings",
+      "navigation_visible": true,
+      "alert": ""
+    },
+    {
+      "page": "Account",
+      "heading": "Change your password",
+      "navigation_visible": true,
+      "alert": ""
+    }
+  ],
+  "limitations": [
+    "Desktop and 390-pixel lab walkthrough, not field Core Web Vitals acceptance.",
+    "Server behavior and missing/legacy/truncation states have separate live end-to-end coverage; this walkthrough is not exhaustive UI coverage.",
+    "First native accessibility copy was followed by other native actions; the exact clipboard comparison was verified immediately through the semantic browser API."
+  ]
+}
