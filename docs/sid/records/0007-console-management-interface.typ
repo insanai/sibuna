@@ -484,7 +484,7 @@ and scratch arenas. It shares the process and its CPU/cache/memory bandwidth wit
   terminate both planes: a shared process is not a fault-isolation boundary. A separate
   console process is required if crash isolation becomes a requirement.])
 
-I3 has two explicit proposed control exceptions: drain and clear-local-bans use a bounded,
+I3 has two explicit control exceptions: drain and clear-local-bans use a bounded,
 authenticated command mailbox consumed by data-plane control code. Console threads never
 mutate ban-table internals. Both commands require an audit intent, operation id and completion
 record, since a local effect and a database transaction cannot be committed atomically.
@@ -524,6 +524,16 @@ inconclusive. The quiet repeat's baseline spread is 2.5–3.9%; its active throu
 The initial forward-auth/capture-off matrix is exploratory because another fixture shared
 node 3's physical host. Timestamped records preserve both runs and their provenance.
 
+Four current single-node matrices cover both modes with capture off and on, verifying all
+360 sample response states and eight-dashboard delivery and query coverage without transport
+or subscription errors. Their formal verdicts are inconclusive, with baseline spread of
+0.9–7.4%; even a steadier workload remains inconclusive when its uncertainty interval crosses
+the gate. All 54 non-baseline configuration comparisons in each topology are inconclusive.
+The five core benchmark families were regenerated for the same application revision and pass
+their functional checks. The combined evidence, record digests and verified cleanup are in
+`benchmarks/results/linux-launch-review-20261002.json`. None of these isolation measurements
+is a formal pass.
+
 These containers cannot control the processor governor or other host activity. That limits
 acceptance; it does not establish that every measured difference is noise. Linux `ps` CPU time
 is quantized to whole seconds, whereas throughput and latency use the independent load
@@ -562,7 +572,7 @@ sibuna console geoip status --origin https://console.example --token-file /run/p
 
 `--console` requires `--data-dir` and storage support (`-Dconsole=true` with `-Dstorage=false` is a build error; the console default follows storage): users, sessions, and statistics live in the database, and a
 console without persistence would lose its administrator on restart. The console listens on
-loopback by default; binding elsewhere without `--console-behind-proxy` (which requires an explicit trusted-proxy CIDR list and canonical HTTPS console origin) is refused. Only allowlisted socket peers may supply forwarded address or scheme headers; the ingress strips client-supplied copies. Proxy mode enables `Secure` cookies. HTTP on loopback is development-only. The shown account, token and GeoIP commands are implemented; other proposed management commands remain gated. Offline bootstrap takes an exclusive data-directory lock; commands against a running node use the authenticated console API, never a second embedded node over the same directory. In a cluster every member may run a console; each shows the whole cluster, because the
+loopback by default; binding elsewhere without `--console-behind-proxy` (which requires an explicit trusted-proxy CIDR list and canonical HTTPS console origin) is refused. Only allowlisted socket peers may supply forwarded address or scheme headers; the ingress strips client-supplied copies. Proxy mode enables `Secure` cookies. HTTP on loopback is development-only. Account, token, GeoIP and policy import/export operations have CLI clients; other management workflows use the authenticated interface or API. Offline bootstrap takes an exclusive data-directory lock; commands against a running node use the authenticated console API, never a second embedded node over the same directory. In a cluster every member may run a console; each shows the whole cluster, because the
 tables it reads are replicated, and each probes the others' health endpoints directly.
 
 = The Serve Kernel
@@ -1900,7 +1910,7 @@ and the operator guide with screenshots.
 
 *Launch condition:* the interface and management features are available, but performance
 acceptance remains separate. The historical paired exception above is not a formal pass and
-does not cover the updated request path. Fresh October cross-host matrices are inconclusive;
+does not cover the updated request path. Fresh October single-node and cross-host matrices are inconclusive;
 read every new result against the original thresholds and its stated uncertainty before enabling
 `--console` beside a production data plane. Reproduce a single-node matrix with
 `zig build console-impact -- --geoip-data <validated-snapshot> --host-label <conditions>`;

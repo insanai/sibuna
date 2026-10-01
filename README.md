@@ -57,7 +57,7 @@ Sibuna does not terminate ingress TLS or score bots with a model. Its opt-in con
 includes the animated country globe, incident investigation, policy editing, users, scoped API
 tokens, audit browsing, local node controls and authenticated multi-topic subscriptions.
 SID 0007 was committed on 2026-09-11. Linux tests, actual three-host management checks and
-connected Chrome workflows passed the October review. Fresh cross-host console-impact results
+connected Chrome workflows passed the October review. Fresh single-node and cross-host console-impact results
 are inconclusive; the September paired exception is historical and does not establish acceptance
 for the current request path. See [benchmark evidence](benchmarks/results/README.md) and
 [loading country data from the CLI](#loading-country-data) for country data setup.
@@ -408,7 +408,7 @@ Drain, resume and clear local bans still act only on the serving node,
 require a preview and produce durable command receipts. Under `-Dcluster=true`,
 `zig build console-e2e` also runs a three-node membership, failover and quorum-loss scenario,
 and `zig build console-impact` measures the console's cost to the data plane. The records under
-`benchmarks/results/` retain each formal verdict and its uncertainty. Fresh three-host matrices
+`benchmarks/results/` retain each formal verdict and its uncertainty. Fresh single-node and three-host matrices
 are inconclusive; SID 0007's September paired exception is historical, not a formal pass or an
 exception for new results. The unprivileged containers cannot control the governor or other
 host activity, so these results do not isolate the cause of throughput differences.

@@ -1,0 +1,946 @@
+{
+  "schema": 1,
+  "date": "2026-10-01T19:15:16.049895+00:00",
+  "application_revision": "669229c276fcbf41ad391abc05484f4713a98873",
+  "benchmark_revision": "54f2e6a37f97e69fcaec3341e58d0fe539d45014",
+  "application_changes_in_review": false,
+  "hosts": {
+    "benchmarks": "insan@10.175.52.18",
+    "cross_host_cluster": [
+      "insan@10.175.52.19",
+      "insan@10.175.52.20",
+      "insan@10.175.52.21"
+    ],
+    "physical_host_note": "Cluster members are on separate physical hosts; .18 and .21 share a host. Quiet repeat and subsequent runs are serialized.",
+    "constraints": "Unprivileged containers, powersave governor, no control over host activity; readable cgroups report no CPU or memory quota.",
+    "cpu_accounting": "Linux ps exposes whole CPU seconds. wrk throughput and latency have an independent clock and histogram."
+  },
+  "functional_evidence": [
+    {
+      "file": "linux-functional-review-20261001.json",
+      "sha256": "d74c3dba5f78e7b1c22cc453fc150c2e1903a01198fde53221a8bf2a033d491d"
+    },
+    {
+      "file": "chrome-release-review-20261001.json",
+      "sha256": "9d9f596102bcd9679559730adcf3a5ef35619948c91114c758c17e6b6fd90a67"
+    },
+    {
+      "file": "linux-launch-harness-20261001.json",
+      "sha256": "6fb8f143fdf5980727b72e9bf8c6c764dcb6477e18b15f62c7903d74f2db3c58"
+    }
+  ],
+  "core_benchmarks": [
+    {
+      "file": "latest.json",
+      "sha256": "e2740c1fb042dd70d453f356cca21d8eddb4ebdf64d37bfc1c8175e8c0c7aae7",
+      "meta": {
+        "zig": "0.16.0",
+        "engine_bytes": 853728,
+        "bot_table_bytes": 200952,
+        "waf_table_bytes": 465320,
+        "allocation_measurement": "not instrumented; API/source audit only",
+        "zaxonlite": {
+          "url": "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.7.0.tar.gz",
+          "hash": "zaxonlite-0.7.0-o9bF7IxHHQDxiixvOsdt-BvzGbI87rjtLKBJpW5LPse-"
+        },
+        "source_sha256": "7d3148de90aef7c8472255d1dd099b003f0dd7e5be9e2a6cfe3f71de699d4ab8",
+        "source_manifest_version": 2,
+        "source_file_count": 696,
+        "daemon_sha256": "b5de7f5d91293c3aeb0c28cc4ec63c458ecda729d4c20ae4b6bb53957a4d752b",
+        "date": "2026-10-01T17:03:42.139667+00:00",
+        "host": "paxos-zig",
+        "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+        "os": "Linux-7.0.0-28-generic-x86_64-with-glibc2.41",
+        "git": "54f2e6a37f97e69fcaec3341e58d0fe539d45014",
+        "dirty": true,
+        "binary_bytes": 34527248,
+        "wasm_bytes": 8831,
+        "storage_compiled": true,
+        "storage_active": false,
+        "workers": 2,
+        "timing": "7 batches, untimed reset and warmup; no per-operation clock reads",
+        "idle_rss_kb": 10020
+      }
+    },
+    {
+      "file": "admission-comparison-latest.json",
+      "sha256": "cd121c24ee33981acbbdc29df4e94815a374d535c7e708d1f4e8f2a738b08069",
+      "meta": {
+        "zaxonlite": {
+          "url": "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.7.0.tar.gz",
+          "hash": "zaxonlite-0.7.0-o9bF7IxHHQDxiixvOsdt-BvzGbI87rjtLKBJpW5LPse-"
+        },
+        "source_sha256": "7d3148de90aef7c8472255d1dd099b003f0dd7e5be9e2a6cfe3f71de699d4ab8",
+        "source_manifest_version": 2,
+        "source_file_count": 696,
+        "daemon_sha256": "b5de7f5d91293c3aeb0c28cc4ec63c458ecda729d4c20ae4b6bb53957a4d752b",
+        "date": "2026-10-01T17:09:46.411471+00:00",
+        "host": "paxos-zig",
+        "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+        "os": "Linux-7.0.0-28-generic-x86_64-with-glibc2.41",
+        "git": "54f2e6a37f97e69fcaec3341e58d0fe539d45014",
+        "dirty": true,
+        "zig": "0.16.0"
+      }
+    },
+    {
+      "file": "distributed-latest.json",
+      "sha256": "98b86fb3c780e8882501323de12ac65c98bbea66585b3615ccbcc0f1376cd6c6",
+      "meta": {
+        "zaxonlite": {
+          "url": "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.7.0.tar.gz",
+          "hash": "zaxonlite-0.7.0-o9bF7IxHHQDxiixvOsdt-BvzGbI87rjtLKBJpW5LPse-"
+        },
+        "source_sha256": "7d3148de90aef7c8472255d1dd099b003f0dd7e5be9e2a6cfe3f71de699d4ab8",
+        "source_manifest_version": 2,
+        "source_file_count": 696,
+        "daemon_sha256": "e25b95779f1f39c69ea3d7f32ff4617de3a8ea47397ec4890828fd44a5035d54",
+        "date": "2026-10-01T17:03:43.603598+00:00",
+        "host": "paxos-zig",
+        "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+        "os": "Linux-7.0.0-28-generic-x86_64-with-glibc2.41",
+        "git": "54f2e6a37f97e69fcaec3341e58d0fe539d45014",
+        "dirty": true,
+        "zig": "0.16.0"
+      }
+    },
+    {
+      "file": "cluster-latest.json",
+      "sha256": "851ffc631b893cb0d8d0e32c21f70136d76b40445ddcee2477f5112948ccbcbb",
+      "meta": {
+        "zaxonlite": {
+          "url": "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.7.0.tar.gz",
+          "hash": "zaxonlite-0.7.0-o9bF7IxHHQDxiixvOsdt-BvzGbI87rjtLKBJpW5LPse-"
+        },
+        "source_sha256": "7d3148de90aef7c8472255d1dd099b003f0dd7e5be9e2a6cfe3f71de699d4ab8",
+        "source_manifest_version": 2,
+        "source_file_count": 696,
+        "daemon_sha256": "e25b95779f1f39c69ea3d7f32ff4617de3a8ea47397ec4890828fd44a5035d54",
+        "date": "2026-10-01T17:04:05.435533+00:00",
+        "host": "paxos-zig",
+        "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+        "os": "Linux-7.0.0-28-generic-x86_64-with-glibc2.41",
+        "git": "54f2e6a37f97e69fcaec3341e58d0fe539d45014",
+        "dirty": true,
+        "zig": "0.16.0"
+      }
+    },
+    {
+      "file": "tools-comparison-latest.json",
+      "sha256": "e04ccdae258872e7ccf059794ad1c3638b0981ab2471a6701756ec39031bdc46",
+      "meta": {
+        "zaxonlite": {
+          "url": "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.7.0.tar.gz",
+          "hash": "zaxonlite-0.7.0-o9bF7IxHHQDxiixvOsdt-BvzGbI87rjtLKBJpW5LPse-"
+        },
+        "source_sha256": "7d3148de90aef7c8472255d1dd099b003f0dd7e5be9e2a6cfe3f71de699d4ab8",
+        "source_manifest_version": 2,
+        "source_file_count": 696,
+        "daemon_sha256": "b5de7f5d91293c3aeb0c28cc4ec63c458ecda729d4c20ae4b6bb53957a4d752b",
+        "date": "2026-10-01T17:10:08.528014+00:00",
+        "host": "paxos-zig",
+        "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+        "os": "Linux-7.0.0-28-generic-x86_64-with-glibc2.41",
+        "git": "54f2e6a37f97e69fcaec3341e58d0fe539d45014",
+        "dirty": true,
+        "zig": "0.16.0"
+      }
+    }
+  ],
+  "impact": [
+    {
+      "file": "console-impact-forward_auth-capture-off-latest.json",
+      "sha256": "ea70534b49e49e13cea8c8f9e6f1d47802bf7b4032f4790101218f33b12a0f70",
+      "topology": "single_node",
+      "mode": "forward_auth",
+      "capture_heads": false,
+      "formal_verdict": "inconclusive",
+      "workloads": {
+        "admitted": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.012908626770708254,
+            "p99_increase": -0.005780346820809301,
+            "bootstrap_ci_95_loss": [
+              -0.016991941442598968,
+              0.021952051089108915
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.02298850574712641,
+              0.041420118343195256
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.033277203312899746,
+          "supplementary_median_paired_active_loss_percent": -0.3090066596417307,
+          "active_peak_rss_kib": 128960
+        },
+        "challenged": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.0014671054746475676,
+            "p99_increase": 0.0,
+            "bootstrap_ci_95_loss": [
+              -0.02460340646371284,
+              0.02686035420315558
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.01807228915662651,
+              0.018292682926829285
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.0342212532068231,
+          "supplementary_median_paired_active_loss_percent": -1.057397377913638,
+          "active_peak_rss_kib": 128960
+        },
+        "denied": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.0003986412104757253,
+            "p99_increase": -0.02409638554216864,
+            "bootstrap_ci_95_loss": [
+              -0.04056280296968673,
+              0.01547801762357548
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.06024096385542166,
+              0.018292682926829285
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.04593030672540188,
+          "supplementary_median_paired_active_loss_percent": -1.2025376820464784,
+          "active_peak_rss_kib": 128984
+        },
+        "policy_reload": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": -0.007797522601856954,
+            "p99_increase": 0.0,
+            "bootstrap_ci_95_loss": [
+              -0.01589507598595752,
+              0.0023232587620601874
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.03977272727272729,
+              0.03508771929824572
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.03189223400372956,
+          "supplementary_median_paired_active_loss_percent": 0.8083951658603539,
+          "active_peak_rss_kib": 128960
+        }
+      }
+    },
+    {
+      "file": "console-impact-forward_auth-capture-on-latest.json",
+      "sha256": "7005c2df6c2910f7369eb5ab49228f59c05a898a37b547b9df953a88eb682e18",
+      "topology": "single_node",
+      "mode": "forward_auth",
+      "capture_heads": true,
+      "formal_verdict": "inconclusive",
+      "workloads": {
+        "admitted": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.01200791516248323,
+            "p99_increase": 0.01744186046511631,
+            "bootstrap_ci_95_loss": [
+              -0.0019354340768733547,
+              0.024228863421878244
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.023668639053254448,
+              0.02941176470588225
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.025708129981754115,
+          "supplementary_median_paired_active_loss_percent": 0.9042053974145148,
+          "active_peak_rss_kib": 128904
+        },
+        "challenged": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.005872950660586462,
+            "p99_increase": 0.011976047904191711,
+            "bootstrap_ci_95_loss": [
+              -0.02212774389600458,
+              0.03315592687269131
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.029940119760479056,
+              0.03703703703703698
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.03635517780289628,
+          "supplementary_median_paired_active_loss_percent": 1.906826898197711,
+          "active_peak_rss_kib": 128796
+        },
+        "denied": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": -0.0008505814416517321,
+            "p99_increase": -0.017857142857142905,
+            "bootstrap_ci_95_loss": [
+              -0.029158318373187386,
+              0.030848110083071423
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.029761904761904767,
+              0.018181818181818077
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.02268082437006491,
+          "supplementary_median_paired_active_loss_percent": 0.465860474003732,
+          "active_peak_rss_kib": 130160
+        },
+        "policy_reload": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": -0.001352290532192768,
+            "p99_increase": -0.023255813953488413,
+            "bootstrap_ci_95_loss": [
+              -0.010115437799111726,
+              0.012809315842208124
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.045454545454545414,
+              0.011904761904761862
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.017147122936302692,
+          "supplementary_median_paired_active_loss_percent": 0.4843988206807315,
+          "active_peak_rss_kib": 128952
+        },
+        "audited": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": -0.009211144113084435,
+            "p99_increase": 0.0,
+            "bootstrap_ci_95_loss": [
+              -0.0160460678603922,
+              0.006485960684928904
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.049180327868852514,
+              0.02857142857142847
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.03808435356585881,
+          "supplementary_median_paired_active_loss_percent": 0.4901748025595287,
+          "active_peak_rss_kib": 130332
+        }
+      }
+    },
+    {
+      "file": "console-impact-reverse_proxy-capture-off-latest.json",
+      "sha256": "02dd1a2cff1b4a81d0b679f43143b3b9870e67e6c5e8cad741c59c46a318dc71",
+      "topology": "single_node",
+      "mode": "reverse_proxy",
+      "capture_heads": false,
+      "formal_verdict": "inconclusive",
+      "workloads": {
+        "admitted": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.0028239371588059115,
+            "p99_increase": -0.0018455859735465596,
+            "bootstrap_ci_95_loss": [
+              0.0010610587891431988,
+              0.018527054533559295
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.019686250384497117,
+              0.027363184079602032
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.008595533968494721,
+          "supplementary_median_paired_active_loss_percent": -0.05201243254988608,
+          "active_peak_rss_kib": 129212
+        },
+        "challenged": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": -0.015740276367501638,
+            "p99_increase": 0.0,
+            "bootstrap_ci_95_loss": [
+              -0.03566200477902015,
+              0.03332882022699135
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.023391812865497075,
+              0.036363636363636376
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.053110754606601085,
+          "supplementary_median_paired_active_loss_percent": -0.5089171617189914,
+          "active_peak_rss_kib": 128684
+        },
+        "denied": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": -0.017456331787814028,
+            "p99_increase": 0.012269938650306678,
+            "bootstrap_ci_95_loss": [
+              -0.05314434109961663,
+              0.04333371577171308
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.04678362573099415,
+              0.01863354037267073
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.074450880625421,
+          "supplementary_median_paired_active_loss_percent": -0.6193357666936627,
+          "active_peak_rss_kib": 128888
+        },
+        "policy_reload": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.010912040278455604,
+            "p99_increase": -0.008995037220843716,
+            "bootstrap_ci_95_loss": [
+              -0.0037589501322798924,
+              0.01856378272966408
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.026564885496183188,
+              0.06689483509645311
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.01037312713136573,
+          "supplementary_median_paired_active_loss_percent": 0.6604221882494876,
+          "active_peak_rss_kib": 129204
+        }
+      }
+    },
+    {
+      "file": "console-impact-reverse_proxy-capture-on-latest.json",
+      "sha256": "82037f90be5beac4fcd3c687afbca47be5a9ea694a3843a8b24bb5c81482f66c",
+      "topology": "single_node",
+      "mode": "reverse_proxy",
+      "capture_heads": true,
+      "formal_verdict": "inconclusive",
+      "workloads": {
+        "admitted": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.011751816369656942,
+            "p99_increase": 0.028366583541147072,
+            "bootstrap_ci_95_loss": [
+              0.004793528348518206,
+              0.01738242777940513
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.010532651218778222,
+              0.05412289079910848
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.011250135472055339,
+          "supplementary_median_paired_active_loss_percent": 0.39322608291042505,
+          "active_peak_rss_kib": 130956
+        },
+        "challenged": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.003695643848210639,
+            "p99_increase": 0.012048192771084265,
+            "bootstrap_ci_95_loss": [
+              -0.016256647108193745,
+              0.04087362023386487
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.00591715976331364,
+              0.030487804878048808
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.024634752651376605,
+          "supplementary_median_paired_active_loss_percent": -0.04444728400725406,
+          "active_peak_rss_kib": 129504
+        },
+        "denied": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": -0.022281084807513007,
+            "p99_increase": 0.0,
+            "bootstrap_ci_95_loss": [
+              -0.02677512449961217,
+              0.012590020892272014
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.017857142857142905,
+              0.029761904761904656
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.052020767528105784,
+          "supplementary_median_paired_active_loss_percent": 0.7997382921562934,
+          "active_peak_rss_kib": 130060
+        },
+        "policy_reload": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.011573724384700279,
+            "p99_increase": -0.018075980392156854,
+            "bootstrap_ci_95_loss": [
+              -0.0022505504622152284,
+              0.013748116671365995
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.029105392156862697,
+              0.016492229622581567
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.02122927296812383,
+          "supplementary_median_paired_active_loss_percent": 0.7630641851782527,
+          "active_peak_rss_kib": 130828
+        },
+        "audited": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.011904835420179838,
+            "p99_increase": 0.004330343334364439,
+            "bootstrap_ci_95_loss": [
+              0.00985589409708032,
+              0.01999665593187283
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.07226506712367897,
+              0.013420724094881376
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.02543673134637146,
+          "supplementary_median_paired_active_loss_percent": 1.4054891821299598,
+          "active_peak_rss_kib": 130280
+        }
+      }
+    },
+    {
+      "file": "console-impact-three-host-forward_auth-capture-off-latest.json",
+      "sha256": "46632ff6fcd16d3d5f6defba658062888ad14743d4c11ba63a6d120a0820a150",
+      "topology": "three_host",
+      "mode": "forward_auth",
+      "capture_heads": false,
+      "formal_verdict": "inconclusive",
+      "workloads": {
+        "admitted": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.02265697136674172,
+            "p99_increase": 0.052816901408450745,
+            "bootstrap_ci_95_loss": [
+              0.02265697136674172,
+              0.034118708795841
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              0.04929577464788726,
+              0.08333333333333326
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.030445508947344775,
+          "supplementary_median_paired_active_loss_percent": 2.114673130715361,
+          "active_peak_rss_kib": 286128
+        },
+        "challenged": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.020627547598764506,
+            "p99_increase": 0.05395683453237421,
+            "bootstrap_ci_95_loss": [
+              0.020627547598764506,
+              0.03124041163752833
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              0.050724637681159424,
+              0.08896797153024916
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.027387400823227673,
+          "supplementary_median_paired_active_loss_percent": 2.3147694078486047,
+          "active_peak_rss_kib": 320224
+        },
+        "denied": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.015345975664320832,
+            "p99_increase": 0.03741496598639449,
+            "bootstrap_ci_95_loss": [
+              0.008857479026103121,
+              0.026591300486518255
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              0.027118644067796627,
+              0.04810996563573888
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.024665492813963,
+          "supplementary_median_paired_active_loss_percent": 0.8543059724353763,
+          "active_peak_rss_kib": 143340
+        },
+        "policy_reload": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.03401950093368322,
+            "p99_increase": 0.11643835616438358,
+            "bootstrap_ci_95_loss": [
+              0.03170623094935032,
+              0.0452960636539842
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              0.10135135135135132,
+              0.12676056338028174
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.03868331196668316,
+          "supplementary_median_paired_active_loss_percent": 3.458601831878838,
+          "active_peak_rss_kib": 276060
+        }
+      }
+    },
+    {
+      "file": "console-impact-three-host-forward_auth-capture-on-latest.json",
+      "sha256": "2cd49cd2d11dff09a05463286219c662b6ecd8de1ecd536daee0c1527db3d39c",
+      "topology": "three_host",
+      "mode": "forward_auth",
+      "capture_heads": true,
+      "formal_verdict": "inconclusive",
+      "workloads": {
+        "admitted": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.02657930461854574,
+            "p99_increase": 0.05594405594405605,
+            "bootstrap_ci_95_loss": [
+              0.01877213591255067,
+              0.02657930461854574
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              0.048275862068965614,
+              0.06993006993007
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.020262332794559267,
+          "supplementary_median_paired_active_loss_percent": 2.237442114393884,
+          "active_peak_rss_kib": 143816
+        },
+        "challenged": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.02668472384967424,
+            "p99_increase": 0.057347670250896154,
+            "bootstrap_ci_95_loss": [
+              0.019060361014384797,
+              0.03442537482957142
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              0.03928571428571437,
+              0.07168458781362008
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.012513278179739667,
+          "supplementary_median_paired_active_loss_percent": 2.3435267230676016,
+          "active_peak_rss_kib": 143720
+        },
+        "denied": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.023171888678042762,
+            "p99_increase": 0.023648648648648685,
+            "bootstrap_ci_95_loss": [
+              0.012914868357103426,
+              0.02989207953256212
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              0.020270270270270174,
+              0.05944055944055937
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.013364389279408053,
+          "supplementary_median_paired_active_loss_percent": 1.9306622289857356,
+          "active_peak_rss_kib": 143692
+        },
+        "policy_reload": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.027775118374150587,
+            "p99_increase": 0.08813559322033893,
+            "bootstrap_ci_95_loss": [
+              0.026389954854562192,
+              0.04176463660110208
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              0.08783783783783794,
+              0.12203389830508482
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.022524512456940468,
+          "supplementary_median_paired_active_loss_percent": 2.8916355607193966,
+          "active_peak_rss_kib": 143808
+        },
+        "audited": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.02164960378392844,
+            "p99_increase": 0.05940594059405946,
+            "bootstrap_ci_95_loss": [
+              0.016628123576292064,
+              0.023944075645677354
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              0.0462046204620461,
+              0.0629139072847682
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.013163157500760938,
+          "supplementary_median_paired_active_loss_percent": 1.663844836409989,
+          "active_peak_rss_kib": 143680
+        }
+      }
+    },
+    {
+      "file": "console-impact-three-host-reverse_proxy-capture-off-latest.json",
+      "sha256": "573b5a46395d9d70e351c1c929fbaeb243e3438876d8e214039e82f2b3549003",
+      "topology": "three_host",
+      "mode": "reverse_proxy",
+      "capture_heads": false,
+      "formal_verdict": "inconclusive",
+      "workloads": {
+        "admitted": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.035276618795715864,
+            "p99_increase": 0.112630359212051,
+            "bootstrap_ci_95_loss": [
+              0.009622560495350596,
+              0.04030228338928343
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              0.07439165701042882,
+              0.27010831988937545
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.029593889097214488,
+          "supplementary_median_paired_active_loss_percent": 2.8903940439127362,
+          "active_peak_rss_kib": 144332
+        },
+        "challenged": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.029961175475504587,
+            "p99_increase": 0.06093189964157708,
+            "bootstrap_ci_95_loss": [
+              0.0230602569048719,
+              0.03430345280057068
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              0.050000000000000044,
+              0.06909090909090909
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.021441222254238727,
+          "supplementary_median_paired_active_loss_percent": 2.5412104673654956,
+          "active_peak_rss_kib": 144016
+        },
+        "denied": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.017062408411365748,
+            "p99_increase": 0.04081632653061229,
+            "bootstrap_ci_95_loss": [
+              0.014083795211444872,
+              0.02495849644524384
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              0.027210884353741527,
+              0.05517241379310356
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.013896036655038935,
+          "supplementary_median_paired_active_loss_percent": 1.2668899866358774,
+          "active_peak_rss_kib": 143592
+        },
+        "policy_reload": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.036760995300786026,
+            "p99_increase": 0.07233502538071068,
+            "bootstrap_ci_95_loss": [
+              0.01888569385435701,
+              0.043693067704710487
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.07196969696969702,
+              0.196714223951578
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.0352655034686388,
+          "supplementary_median_paired_active_loss_percent": 3.8387107856192593,
+          "active_peak_rss_kib": 144260
+        }
+      }
+    },
+    {
+      "file": "console-impact-three-host-reverse_proxy-capture-on-latest.json",
+      "sha256": "8e98a1639ff5d92c3b9219c11077de4f726439815973a5d7425e03da2c073fbc",
+      "topology": "three_host",
+      "mode": "reverse_proxy",
+      "capture_heads": true,
+      "formal_verdict": "inconclusive",
+      "workloads": {
+        "admitted": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.02031787726919232,
+            "p99_increase": 0.12779973649538867,
+            "bootstrap_ci_95_loss": [
+              0.01898456272932303,
+              0.039371460945913817
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              0.032984714400643655,
+              0.5960264900662251
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.03249405371339602,
+          "supplementary_median_paired_active_loss_percent": 2.889473594127201,
+          "active_peak_rss_kib": 144880
+        },
+        "challenged": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.03240764374642546,
+            "p99_increase": 0.06810035842293916,
+            "bootstrap_ci_95_loss": [
+              0.025721445115462926,
+              0.03626756805001219
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              0.054151624548736566,
+              0.07194244604316546
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.013050533399732165,
+          "supplementary_median_paired_active_loss_percent": 3.175770404530198,
+          "active_peak_rss_kib": 144284
+        },
+        "denied": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.032315112042297756,
+            "p99_increase": 0.06529209621993126,
+            "bootstrap_ci_95_loss": [
+              0.021814644199506295,
+              0.04243987931057758
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              0.04026845637583887,
+              0.07216494845360821
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.01652787182481462,
+          "supplementary_median_paired_active_loss_percent": 2.7574581097852713,
+          "active_peak_rss_kib": 210720
+        },
+        "policy_reload": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.04029421667419353,
+            "p99_increase": 0.11355859709153115,
+            "bootstrap_ci_95_loss": [
+              0.02781369733223793,
+              0.04632617106435599
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              0.012407444466679962,
+              0.1929061784897026
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.014948075137044279,
+          "supplementary_median_paired_active_loss_percent": 4.484722375476736,
+          "active_peak_rss_kib": 144264
+        },
+        "audited": {
+          "formal_active_vs_compiled_out": {
+            "throughput_loss": 0.02529033725678509,
+            "p99_increase": -0.006444053895723445,
+            "bootstrap_ci_95_loss": [
+              0.01799937096047144,
+              0.02871082824939164
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.156778256546238,
+              0.26741526304845076
+            ],
+            "verdict": "inconclusive"
+          },
+          "compiled_out_spread": 0.020732034784676927,
+          "supplementary_median_paired_active_loss_percent": 2.1660261405225145,
+          "active_peak_rss_kib": 144652
+        }
+      }
+    }
+  ],
+  "cleanup": {
+    "verified": true,
+    "inventory": {
+      "18": {
+        "host": "paxos-zig",
+        "owned_processes": [],
+        "other_product_processes": [
+          {
+            "pid": 36478,
+            "program": "/usr/bin/caddy"
+          }
+        ],
+        "gate_exit_statuses": {
+          "admission": 0,
+          "cluster-local": 0,
+          "console-impact-forward_auth-capture-off": 1,
+          "console-impact-forward_auth-capture-on": 1,
+          "console-impact-reverse_proxy-capture-off": 1,
+          "console-impact-reverse_proxy-capture-on": 1,
+          "distributed": 0,
+          "primitives": 0,
+          "whole-product": 0
+        },
+        "run_complete": true
+      },
+      "19": {
+        "host": "agy01",
+        "owned_processes": [],
+        "other_product_processes": [],
+        "gate_exit_statuses": {},
+        "run_complete": false
+      },
+      "20": {
+        "host": "agy02",
+        "owned_processes": [],
+        "other_product_processes": [],
+        "gate_exit_statuses": {},
+        "run_complete": false
+      },
+      "21": {
+        "host": "agy03",
+        "owned_processes": [],
+        "other_product_processes": [],
+        "gate_exit_statuses": {},
+        "run_complete": false
+      }
+    },
+    "local_browser_fixture": "Stopped cleanly; owned Chrome tabs closed after walkthrough.",
+    "progress_monitor": "Ended normally after ALL RUNS COMPLETE.",
+    "unrelated_service_left_untouched": {
+      "host": "10.175.52.18",
+      "pid": 36478,
+      "program": "/usr/bin/caddy run --environ --config /etc/caddy/Caddyfile",
+      "started": "2026-09-11 11:13:49 (host local time)"
+    }
+  },
+  "performance_acceptance_established": false,
+  "interpretation": "Every formal verdict is retained. The historical September owner exception does not apply to these runs; container controls do not prove that all measured losses are noise.",
+  "documentation_verification": {
+    "command": "zig build fmt sid -Dsid=0007 book sid-site -j2 --summary all",
+    "exit_status": 0,
+    "steps_succeeded": 12,
+    "sid_html_inline_svg_figures": 20,
+    "visual_review": "Changed acceptance paragraphs and fresh benchmark tables rendered to PNG and inspected for clipping and readability.",
+    "existing_export_warnings": "Typst experimental HTML ignores some spacing and SID 0008 cancel notation; SID 0007 retains its 20 SVG figures."
+  }
+}

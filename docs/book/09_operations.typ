@@ -349,7 +349,7 @@ Page fragments can be bookmarked; Back and Forward reopen authenticated pages. T
 also remembers theme and spacing choices in this browser, with System as the default theme.
 SID 0007 is Committed. Its pages and management workflows passed the October Linux and
 connected Chrome review, including an actual cluster on three physical hosts. Performance
-acceptance is separate: the fresh three-host impact matrices are inconclusive, with each raw
+acceptance is separate: all eight fresh single-node and three-host impact matrices are inconclusive, with each raw
 sample, coverage check and formal verdict retained under `benchmarks/results/`. The September
 paired reading was accepted by the owner as a historical exception, not a formal pass, and it
 does not apply automatically to the updated request path or to new measurements. These

@@ -52,19 +52,25 @@ console enabled and disabled within one binary, under which the console's runtim
 most 0.8% single-node and 0.5% clustered. That reading is a supplementary analysis adopted by
 the project owner as a release note; it does not change a verdict and must not be cited as a
 pass of the gate.
+`console-impact-cluster-latest.json` retains that historical local-cluster run. Current
+cross-host measurements use the separate `console-impact-three-host-*-latest.json` names;
+they do not overwrite a file whose topology and fixture differ.
 
 Currency: all five core benchmark families were regenerated
 on 1 October 2026 after work-level session binding, the read-by-read proxy relay, the challenge
 budget and requirement tickets. The Linux benchmark checkout is `54f2e6a`; its application
 code matches `669229c`, with subsequent changes confined to harnesses and documentation.
 The recorded dirty flag reflects generated result files and is retained unchanged.
-Both single-node forward-auth matrices are also fresh and inconclusive: baseline throughput
-spread is 3.2–4.6% with capture off and 1.7–3.8% with capture on. All response and dashboard
-checks pass without transport errors. Reverse-proxy/capture-off is fresh and inconclusive,
-with 0.9–7.4% baseline spread and an uncertainty interval crossing the gate even for the
-steadier workload. Reverse-proxy/capture-on still describes September code until its fresh
-run completes. The three-host October matrices use the
-current application code. Binary sizes are those of the recorded build, including its
+All four single-node mode/capture matrices are also fresh and inconclusive. Baseline
+throughput spread ranges from 0.9% to 7.4%; a steadier baseline does not pass when its
+confidence interval crosses the gate. All 360 samples pass their post-sample response-state checks and all
+active dashboards satisfy delivery and query coverage without transport or subscription errors.
+The four selected three-host matrices likewise verify 360 samples and all six peer directions.
+All 54 non-baseline configuration comparisons in each topology remain inconclusive.
+`linux-launch-review-20261002.json` links every current record with its digest, functional
+checks, supplementary paired readings and verified process cleanup. Its performance acceptance
+field is false. The five core families and eight current impact matrices use the updated
+application code. Binary sizes are those of the recorded build, including its
 symbols and embedded assets; the 34.5 MB Linux binary is not the earlier 3.3 MB macOS artifact.
 The whole-product run verifies all 24 expected workload statuses without transport failures.
 Its four-CPU allowance applies to both products; request-rate comparisons remain specific to
