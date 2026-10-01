@@ -790,6 +790,30 @@ test "policy and WAF denials, honeypot bans, and rate limiting" {
     try std.testing.expectEqual(@as(u32, 4), limited);
 }
 
+test "challenge issuance and verification spend a budget of their own" {
+    boot_once.call();
+    const p = proxy_fixture.port;
+    const st = &proxy_fixture.state;
+    const saved = st.config.challenge_rate_limit;
+    st.config.challenge_rate_limit = 2;
+    defer st.config.challenge_rate_limit = saved;
+    const ip = "203.0.113.13";
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    _ = try fetchChallenge(p, ip, browser_ua, "/a");
+    _ = try fetchChallenge(p, ip, browser_ua, "/b");
+    try get(p, "/__sibuna/challenge.json?path=/c", ip, browser_ua, "", resp);
+    try std.testing.expectEqual(@as(u16, 429), resp.status());
+    try std.testing.expect(resp.header("retry-after") != null);
+    try post(p, "/__sibuna/verify", ip, browser_ua, "{\"nonce\":\"1\"}", resp);
+    try std.testing.expectEqual(@as(u16, 429), resp.status());
+    // Pages, assets and health answer as before: the budget covers only the work routes.
+    try get(p, "/__sibuna/health", ip, browser_ua, "", resp);
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+    try get(p, "/robots.txt", ip, browser_ua, "", resp);
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+}
+
 test "keep-alive serves multiple internal requests on one connection" {
     boot_once.call();
     const raw = "GET /__sibuna/health HTTP/1.1\r\nHost: t\r\n\r\n" ++

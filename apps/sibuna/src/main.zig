@@ -347,6 +347,7 @@ fn printHelp() void {
         \\  --shield | --waf             Bot challenge + semantic WAF (default)
         \\  --rate-limit <n>             Requests per window per client (default: 100)
         \\  --rate-window <s>            Rate window seconds (default: 10)
+        \\  --challenge-rate-limit <n>   Challenge issues and verifies per window (default: 30)
         \\  --ban-seconds <s>            Honeypot ban duration (default: 3600)
         \\  --policy-file, -P <path>     Declarative JSON policy file
         \\

@@ -512,6 +512,16 @@ fn dispatch(ctx: *RequestContext) !bool {
         return ctx.keep_alive;
     }
     if (ctx.internal) {
+        if (challengeWork(ctx)) {
+            // Issuance and verification bypass policy, so they spend a budget of their own.
+            const budget = store.RateLimits{
+                .rate = st.config.challenge_rate_limit,
+                .window_ms = st.config.rate_window_seconds * 1000,
+            };
+            const ip = ctx.client_ip;
+            const spend = st.rate_limiter.checkScoped(ip, challenge_scope, ctx.now_ms, budget);
+            if (spend.limited) return rateLimited(ctx, spend, 0);
+        }
         try handleInternal(ctx);
         return ctx.keep_alive;
     }
@@ -522,6 +532,15 @@ fn dispatch(ctx: *RequestContext) !bool {
     const rate = st.rate_limiter.check(ctx.client_ip, ctx.now_ms, limits);
     if (rate.limited) return rateLimited(ctx, rate, 0);
     return applyPolicy(ctx);
+}
+
+/// A stable scope keeps the challenge budget's buckets apart from the request limiter's.
+const challenge_scope: u64 = 0x5b_c0ff_ee00_0001;
+
+fn challengeWork(ctx: *const RequestContext) bool {
+    const path = ctx.req.path;
+    return std.mem.eql(u8, path, "/__sibuna/challenge.json") or
+        (std.mem.eql(u8, path, "/__sibuna/verify") and ctx.req.method == .POST);
 }
 
 fn rateLimited(ctx: *RequestContext, rate: store.rate_limiter.Decision, ban_seconds: u32) !bool {
