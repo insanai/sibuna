@@ -837,6 +837,10 @@ test "connections beyond the configured limit are answered 503 and closed" {
     try roundTrip(proxy_fixture.port, "", resp);
     try std.testing.expectEqual(@as(u16, 503), resp.status());
     try std.testing.expect(resp.contains("connection limit"));
+    // A client that has already sent its request receives the same answer, not a reset.
+    try roundTrip(proxy_fixture.port, "GET / HTTP/1.1\r\nHost: t\r\n\r\n", resp);
+    try std.testing.expectEqual(@as(u16, 503), resp.status());
+    try std.testing.expect(resp.contains("connection limit"));
     st.config.max_connections = saved;
     try roundTrip(proxy_fixture.port, "GET /__sibuna/health HTTP/1.1\r\nHost: t\r\n\r\n", resp);
     try std.testing.expectEqual(@as(u16, 200), resp.status());
