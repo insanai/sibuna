@@ -33,9 +33,9 @@ sustained forensic backlog capacity are not measured here. Rate quotas remain lo
 challenges require issuer routing; spent state is not durable across restarts.
 
 `console-impact-latest.json` is written by `zig build console-impact` (`benchmarks/console_impact.py`).
-It builds a console-free and a console binary, runs four daemons at once (console compiled
-out, compiled in but disabled, idle with an initialized administrator, and serving eight live
-WebSocket dashboards), and interleaves wrk rounds in rotating order over admitted, challenged,
+It builds a console-free and a console binary, runs one configuration at a time (console
+compiled out, compiled in but disabled, idle with an initialized administrator, or serving eight
+live WebSocket dashboards), and interleaves wrk rounds in rotating order over admitted, challenged,
 denied and policy-reload workloads. Each configuration is compared with the compiled-out
 baseline by median throughput and median p99 with a bootstrap interval; the gate is at most
 1% throughput loss and 10% p99 increase. A baseline whose own spread exceeds 1%, or an interval
@@ -71,7 +71,13 @@ TLS management transport. The first forward-auth/capture-off record, ending at 1
 overlapped a benchmark job in another container sharing node 3's physical host; retain it as
 exploratory, not quiet acceptance evidence. The other three matrices ran after that job stopped.
 All four have valid statuses, dashboard delivery and peer coverage, with formal verdicts of
-inconclusive. Their `meta.source_provenance` identifies the exact tested build; `meta.git` in
+inconclusive. A fifth matrix repeated forward-auth/capture-off without the overlapping job;
+it also reports inconclusive, with 2.5–3.9% baseline spread. The four
+`console-impact-three-host-*-latest.json` files select that repeat and the other three matrices.
+The repeat's active throughput loss is 1.5–3.4% versus compiled out; the supplementary paired
+loss versus disabled is 0.9–3.5%. Container CPU controls and host activity remain outside the
+fixture's control; these measurements do not isolate a cause or establish performance acceptance.
+Their `meta.source_provenance` identifies the exact tested build; `meta.git` in
 the original SSH controller identifies its checkout at record time. The supplementary
 `linux-launch-harness-20261001.json` preserves the exact fixture controllers and replay inputs
 without exporting private keys or temporary credentials.

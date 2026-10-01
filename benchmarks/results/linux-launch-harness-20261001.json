@@ -2,7 +2,7 @@
   "schema": 1,
   "purpose": "Exact fixture controllers used for the October Linux release review; replay from their original paths after provisioning isolated directories, binaries and ephemeral credentials. They reuse the committed console impact workload and verdict, and add SSH supervision and cross-host TLS transport.",
   "application_revision": "669229c276fcbf41ad391abc05484f4713a98873",
-  "benchmark_revision": "54f2e6a",
+  "benchmark_revision": "54f2e6a37f97e69fcaec3341e58d0fe539d45014",
   "remote_root": "/home/insan/sibuna-launch-20261001",
   "hosts": {
     "single_node": "insan@10.175.52.18",
@@ -67,6 +67,26 @@
       "original_path": ".zig-cache/launch-linux-control/zig",
       "sha256": "dd7f5810ff850e17bd3f413c50c049d2919a9dff2556daa1ea4d521a08cff4e0",
       "source": "#!/bin/sh\nif [ \"$1\" = build ]; then\n    shift\n    exec /usr/local/bin/zig build -j2 \"$@\"\nfi\nexec /usr/local/bin/zig \"$@\"\n"
+    },
+    {
+      "original_path": ".zig-cache/launch-linux-control/Caddyfile-19",
+      "sha256": "f6cc8fb6fe41b994887f53e835de845427de83f0f4b1fd59a97cadaefd0b8846",
+      "source": "{\n    admin off\n    auto_https off\n}\nhttps://agy01.incus:39103 {\n    bind 10.175.52.19\n    tls /home/insan/sibuna-launch-20261001/control/node.crt /home/insan/sibuna-launch-20261001/control/node.key\n    reverse_proxy 127.0.0.1:39102 {\n        header_up X-Forwarded-Proto https\n    }\n}\n"
+    },
+    {
+      "original_path": ".zig-cache/launch-linux-control/Caddyfile-20",
+      "sha256": "3f6c7173cbde9c9e24b4a1031479fc02df718c0556adb243bb1e483370d696da",
+      "source": "{\n    admin off\n    auto_https off\n}\nhttps://agy02.incus:39103 {\n    bind 10.175.52.20\n    tls /home/insan/sibuna-launch-20261001/control/node.crt /home/insan/sibuna-launch-20261001/control/node.key\n    reverse_proxy 127.0.0.1:39102 {\n        header_up X-Forwarded-Proto https\n    }\n}\n"
+    },
+    {
+      "original_path": ".zig-cache/launch-linux-control/Caddyfile-21",
+      "sha256": "103bc5269a687ccb841cd6f048c65fab0841e35cc8f37526a87d9d5639dd926c",
+      "source": "{\n    admin off\n    auto_https off\n}\nhttps://agy03.incus:39103 {\n    bind 10.175.52.21\n    tls /home/insan/sibuna-launch-20261001/control/node.crt /home/insan/sibuna-launch-20261001/control/node.key\n    reverse_proxy 127.0.0.1:39102 {\n        header_up X-Forwarded-Proto https\n    }\n}\n"
+    },
+    {
+      "original_path": ".zig-cache/launch-linux-control/wrk.lua",
+      "sha256": "a9a9e966331b8f8c789f4a15cfdd04f3cb35be14bad6792ad5ed9fa18ee310fa",
+      "source": "\ndone = function(summary, latency, requests)\n  io.write(string.format('WRKJSON {\"requests\":%d,\"duration_us\":%d,\"bytes\":%d,'\n    .. '\"errors\":{\"connect\":%d,\"read\":%d,\"write\":%d,\"status\":%d,\"timeout\":%d},'\n    .. '\"latency_us\":{\"p50\":%d,\"p90\":%d,\"p99\":%d,\"max\":%d,\"mean\":%.1f}}\\n',\n    summary.requests, summary.duration, summary.bytes, summary.errors.connect,\n    summary.errors.read, summary.errors.write, summary.errors.status, summary.errors.timeout,\n    latency:percentile(50), latency:percentile(90), latency:percentile(99),\n    latency.max, latency.mean))\nend\n"
     }
   ],
   "controller_snapshots": {
