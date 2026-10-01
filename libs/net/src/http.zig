@@ -120,6 +120,20 @@ fn validateContentLength(value: []const u8) ParseError!void {
     _ = std.fmt.parseInt(usize, value, 10) catch return error.InvalidContentLength;
 }
 
+/// A request-target split into its path and query (without the `?`).
+pub const Target = struct {
+    path: []const u8,
+    query: []const u8 = "",
+};
+
+/// The one split of a request-target used everywhere a target is read: the request line,
+/// forwarded authorization metadata and the interstitial's reported URL. Policy matches the
+/// path alone, so any reader that kept the query attached would evaluate a different request.
+pub fn splitTarget(target: []const u8) Target {
+    const mark = std.mem.indexOfScalar(u8, target, '?') orelse return .{ .path = target };
+    return .{ .path = target[0..mark], .query = target[mark + 1 ..] };
+}
+
 pub fn parseRequest(data: []const u8) ParseError!Request {
     var req = Request{};
     var line_it = std.mem.splitSequence(u8, data, "\r\n");
@@ -142,12 +156,9 @@ pub fn parseRequest(data: []const u8) ParseError!Request {
         return error.UnsupportedVersion;
     }
 
-    if (std.mem.indexOfScalar(u8, uri_str, '?')) |q_idx| {
-        req.path = uri_str[0..q_idx];
-        req.query = uri_str[q_idx + 1 ..];
-    } else {
-        req.path = uri_str;
-    }
+    const target = splitTarget(uri_str);
+    req.path = target.path;
+    req.query = target.query;
 
     var has_content_length = false;
     var content_length_val: []const u8 = "";

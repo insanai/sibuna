@@ -33,12 +33,8 @@ pub fn target(request: *const http.Request, trusted: bool) Error!?Target {
     }
     const method = (try one(request, "x-forwarded-method")) orelse request.method_text;
     if (method.len > 32 or !http.validToken(method)) return error.InvalidForwardedMetadata;
-    const split = std.mem.indexOfScalar(u8, uri, '?') orelse uri.len;
-    return .{
-        .path = uri[0..split],
-        .query = if (split < uri.len) uri[split + 1 ..] else "",
-        .method = method,
-    };
+    const split = http.splitTarget(uri);
+    return .{ .path = split.path, .query = split.query, .method = method };
 }
 
 fn one(request: *const http.Request, name: []const u8) Error!?[]const u8 {
