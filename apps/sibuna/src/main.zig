@@ -60,7 +60,7 @@ pub fn main(init: std.process.Init) !u8 {
         arena.allocator(),
         pfile,
         engine,
-    ) else null;
+    ) catch return 1 else null;
     const slot = try gpa.create(server.EngineSlot);
     defer gpa.destroy(slot);
     slot.* = .{ .engine = engine };
@@ -220,29 +220,52 @@ fn printBanner(cfg: core.Config, persistent: bool) void {
 }
 
 /// Loads the JSON policy into `engine` and returns the file text (owned by
-/// `allocator`) so the storage layer can replay it on every rebuild.
+/// `allocator`) so the storage layer can replay it on every rebuild. A named file that
+/// cannot be read or compiled stops startup: serving with a partial policy would admit
+/// traffic the operator meant to stop.
 fn loadCustomPolicy(
     io: std.Io,
     allocator: std.mem.Allocator,
     path: []const u8,
     engine: *policy.Engine,
-) ?[]const u8 {
+) ![]const u8 {
     const file = std.Io.Dir.openFile(.cwd(), io, path, .{}) catch |err| {
-        std.debug.print("Warning: unable to open policy file {s}: {t}\n", .{ path, err });
-        return null;
+        std.debug.print("POLICYFILE: unable to open policy file {s}: {t}. " ++
+            "Hint: check the path and permissions, or omit --policy-file.\n", .{ path, err });
+        return err;
     };
     defer file.close(io);
     var buf: [256 * 1024]u8 = undefined;
     var reader = file.reader(io, &buf);
     const content = reader.interface.peekGreedy(1) catch |err| {
-        std.debug.print("Warning: failed to read policy file {s}: {t}\n", .{ path, err });
-        return null;
+        std.debug.print("POLICYFILE: failed to read policy file {s}: {t}.\n", .{ path, err });
+        return err;
     };
-    const owned = allocator.dupe(u8, content) catch return null;
-    engine.loadFromJsonInto(allocator, owned) catch |err| {
-        std.debug.print("Warning: failed to parse policy file {s}: {t}\n", .{ path, err });
+    const owned = try allocator.dupe(u8, content);
+    var diagnostic: policy.loader.Diagnostic = .{};
+    policy.loader.parseDiagnosed(allocator, owned, engine, &diagnostic) catch |err| {
+        explainPolicyError(err, path, diagnostic);
+        return err;
     };
     return owned;
+}
+
+fn explainPolicyError(err: anyerror, path: []const u8, diagnostic: policy.loader.Diagnostic) void {
+    const explanation = policy.loader.explain(err);
+    var text: [1024]u8 = undefined;
+    var writer = std.Io.Writer.fixed(&text);
+    writer.print("{s}\n\nFile:   {s}\nError:  {t}\n", .{
+        explanation.message,
+        path,
+        err,
+    }) catch {};
+    if (diagnostic.rule.len != 0) writer.print("Rule:   {s}\n", .{diagnostic.rule}) catch {};
+    if (diagnostic.field.len != 0) writer.print("Field:  {s}\n", .{diagnostic.field}) catch {};
+    if (diagnostic.value.len != 0) writer.print("Value:  {s}\n", .{diagnostic.value}) catch {};
+    var block: [2048]u8 = undefined;
+    var out = std.Io.Writer.fixed(&block);
+    core.diagnostic.write(&out, explanation.title, writer.buffered(), explanation.hint) catch {};
+    std.debug.print("{s}\n", .{out.buffered()});
 }
 
 fn printConsoleHelp() void {

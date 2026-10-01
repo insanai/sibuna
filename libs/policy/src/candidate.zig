@@ -12,7 +12,7 @@ pub const Options = struct {
     file: ?[]const u8 = null,
 };
 pub const Reputation = struct { cidr: []const u8, action: rule.Action };
-pub const Error = management.ParseError || error{
+pub const Error = management.ParseError || @import("loader.zig").ParseError || error{
     TooManyRules,
     InvalidRuleName,
     TooManyDocuments,
