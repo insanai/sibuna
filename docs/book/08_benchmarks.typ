@@ -2,9 +2,10 @@
 #import "figures.typ": *
 
 #part_page("VIII", [Empirical Evaluation], [
-  We present the measurements recorded on bare metal by four committed harnesses: primitive
+  We present the measurements recorded by five committed performance harnesses: primitive
   latencies, an admission-only comparison with Anubis, a whole-product comparison under an
-  external load generator with CPU and memory accounting, and a three-node distributed run.
+  external load generator with CPU and memory accounting, distributed behavior and local
+  replicated-cluster costs. The console has a separate isolation acceptance matrix.
   Every number in this part is rendered from a results file at build time. The recorded files
   predate the request-path changes of 1 October 2026 and describe the earlier code until the
   harnesses are rerun.
@@ -18,7 +19,7 @@
   measured figure from a published one.
 ])
 
-Four harnesses live under `benchmarks/`:
+Five performance harnesses live under `benchmarks/`:
 
 #table(
   columns: (1fr, 1.6fr, 1.6fr),
@@ -27,6 +28,7 @@ Four harnesses live under `benchmarks/`:
   [`compare.py`], [Admission operations per second against a real Anubis binary over loopback HTTP: session check, unauthenticated check, challenge bootstrap, proof verification], [`results/admission-comparison-latest.json`],
   [`tools.py`], [Whole products under `wrk`: throughput, latency percentiles, CPU time per request, peak resident memory, for Sibuna Gate, Sibuna Shield, and Anubis in forward-auth and reverse-proxy modes], [`results/tools-comparison-latest.json`],
   [`distributed.py`], [Three daemons with six client processes: Gate, Shield, and replicated Shield; session portability, WAF denial with a session, ban propagation, leader loss], [`results/distributed-latest.json`],
+  [`cluster.py`], [One node and three local replicated nodes under `wrk`, including idle CPU, memory, transport and failover checks], [`results/cluster-latest.json`],
 )
 
 The primitive suite times batches of many thousand operations; per-operation percentiles are
@@ -34,6 +36,12 @@ not reported because a clock read costs as much as the work. The HTTP harnesses 
 `wrk` reports: request counts, and per-request latency percentiles that `wrk` computes from
 its own histogram. CPU time is the product process's accumulated user and system time from
 `ps`, read before and after each run; memory is the peak resident set sampled every 100 ms.
+On the Linux containers used for the release review, `ps` reports whole CPU seconds, so
+short runs cannot resolve small changes in CPU cost. Request rate and latency come from
+the load generator's independent wall clock and histogram; CPU-accounting precision does
+not change those measurements. Container permissions do not grant control over the host's
+processor governor or other tenants. Resource conditions and uncertainty belong with each
+record rather than being assumed to match a dedicated machine.
 
 #callout([Measurement scope], [
   Only local measurements are emitted. Third-party products are measured only when their
@@ -195,11 +203,12 @@ keep admitting requests and still propagate a fresh ban.
   single-node rows in the same table, not against the four-worker figures earlier in this
   part. The differences that matter to an operator are the idle CPU and resident memory
   columns, which are what replication and the embedded database add to a quiet node, and the
-  all-nodes rows. Those rows do not show three times one node: three daemons and three load
-  generators share eight cores, so the aggregate is host-bound at roughly the single-node
-  figure while the nodes together burn about three cores. The number that transfers to a
-  deployment with one host per node is CPU microseconds per request, which is the same in
-  every row, and the idle cost, which stays below a few percent of one core.
+  all-nodes rows. Three daemons and three load generators share the benchmark host's CPU,
+  memory and loopback network; the aggregate does not establish throughput on three separate
+  hosts. CPU microseconds per request and idle costs also depend on that host and the
+  accounting resolution. Read the measured rows and their provenance without assuming linear
+  scaling or identical CPU cost across transports. Cross-host acceptance additionally tests
+  the actual network, peer authentication, failover and quorum loss.
 ])
 
 == Distributed Measurement

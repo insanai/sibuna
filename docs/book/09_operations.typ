@@ -215,7 +215,11 @@ peers whose data-plane listeners this console should health-check and
 The peer key is an owner-only file containing 64 hex characters, provisioned independently of
 console encryption, challenge and consensus keys. `--console-peer-ca-file` optionally supplies
 PEM trust anchors for a private management PKI; otherwise the client uses system roots.
-Certificate hostname validation always applies. Key rotation requires coordinated restart.
+Certificate hostname validation always applies. Use a DNS name in each management origin,
+resolvable by its peers and listed in the certificate's DNS subject alternative names. The
+pinned Zig 0.16 verifier checks DNS names; an IP-only subject alternative name does not
+authenticate a numeric-IP management origin. Private certificates must also have the normal
+CA constraints, key usages and authority identifiers. Key rotation requires coordinated restart.
 The Nodes API and its subscription report receipt age, clock skew, boot changes and sampling
 loss. Missing observations remain unavailable and disconnected values remain stale; received
 statistics never become another node's own contribution. The dashboard's *Live traffic scope*
