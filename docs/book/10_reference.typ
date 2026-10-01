@@ -79,7 +79,10 @@ batch is retained. Monitor increments over an interval; totals alone are not a q
 
 == Error Catalog
 
-`SIBUNAMODE` stops startup for an invalid, missing or duplicate mode selection. Supply
+`INVALID COMMAND LINE` stops startup for any option the daemon does not recognise, any value
+outside its documented range, and an invalid, missing or duplicate mode selection. The block
+names the option, the value given, the range expected and the error (for example
+`UnknownOption`, `InvalidValue`, `InvalidMode`, `DuplicateMode`, `TooManyPeers`). Supply
 `--mode reverse_proxy` or `--mode forward_auth` once; `-m` is the equivalent short option.
 
 #api_anchor([`core.explainError`], [

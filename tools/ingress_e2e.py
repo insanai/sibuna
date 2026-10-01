@@ -74,10 +74,14 @@ def refusals(fixture, hdrs, ingress):
 
 def check(binary, kind=None, executable=None):
     if not kind:
-        for args in (("--mode", "typo"), ("-m",), ("--mode=forward_auth",),
-                     ("-m", "forward_auth", "--mode", "reverse_proxy")):
+        for args, marker in ((("--mode", "typo"), b"InvalidMode"), (("-m",), b"MissingMode"),
+                             (("--mode=forward_auth",), b"InvalidMode"),
+                             (("-m", "forward_auth", "--mode", "reverse_proxy"), b"DuplicateMode"),
+                             (("--prot", "80"), b"UnknownOption"),
+                             (("--port", "70000"), b"InvalidValue")):
             result = subprocess.run([binary, *args], capture_output=True, timeout=5)
-            assert result.returncode != 0 and b"SIBUNAMODE" in result.stderr, result.stderr
+            assert result.returncode != 0, result.stderr
+            assert b"INVALID COMMAND LINE" in result.stderr and marker in result.stderr, result.stderr
     mode = "forward_auth" if kind else "reverse_proxy"
     scenarios = [(mode, (kind, executable) if kind else None)]
     if not kind:

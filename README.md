@@ -109,8 +109,9 @@ Common flags (`--help` lists all of them):
 
 `--mode` and `-m` select the same two modes:
 
-Invalid, missing or repeated mode selections stop startup with `SIBUNAMODE` rather than
-silently selecting a different mode.
+Invalid, missing or repeated mode selections, unknown options and out-of-range values stop
+startup with an `INVALID COMMAND LINE` diagnostic naming the option, value and expected range
+rather than silently keeping a default.
 
 | Mode | Application traffic | Inspection and console coverage |
 |---|---|---|
