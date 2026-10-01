@@ -1,0 +1,5009 @@
+{
+  "meta": {
+    "zaxonlite": {
+      "url": "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.6.2.tar.gz",
+      "hash": "zaxonlite-0.6.2-o9bF7GoWHABw0T60ff1rkNCGUQKggxd6AcDozCgZ2v06"
+    },
+    "source_sha256": "66dd8a73f3903fd8c44d8aa1e659082a730ce1b9aa60a0692416e27e5e4da6b8",
+    "source_manifest_version": 2,
+    "source_file_count": 696,
+    "daemon_sha256": "0aeaa6abe1b52a7d63c22d3429240e8156cec78b1529ddc12a20217b8c1cfe33",
+    "date": "2026-09-12T14:54:04.036464+00:00",
+    "host": "paxos-zig",
+    "cpu": "",
+    "os": "Linux-7.0.0-28-generic-x86_64-with-glibc2.41",
+    "git": "41925ddb0f5d70e3edfe48a0d2fb2e8e8aeca640",
+    "dirty": true,
+    "zig": "0.16.0",
+    "binaries": {
+      "compiled_out": {
+        "path": "/tmp/sibuna-console-impact-xj595tu4/out-a/bin/sibuna",
+        "bytes": 15764416,
+        "sha256": "5df558a6eb3583321d3a5a8f62e6184c8d891cc7d62a5cae802887b6011215cc",
+        "build": "-j1 -Doptimize=ReleaseFast -p /tmp/sibuna-console-impact-xj595tu4/out-a -Dconsole=false"
+      },
+      "console": {
+        "path": "/tmp/sibuna-console-impact-xj595tu4/out-b/bin/sibuna",
+        "bytes": 40776048,
+        "sha256": "0aeaa6abe1b52a7d63c22d3429240e8156cec78b1529ddc12a20217b8c1cfe33",
+        "build": "-j1 -Doptimize=ReleaseFast -p /tmp/sibuna-console-impact-xj595tu4/out-b -Dgeoip-data=/home/insan/geoip-2026-09.bin"
+      }
+    },
+    "host_label": "Sibuna on a dedicated Linux x86_64 host (hostname paxos-zig): Ubuntu, kernel 7.0, glibc 2.41, 32 cores, 121 GiB, no other load, loopback wrk 8 threads 128 connections, 5 s warm-up, 60 s samples, container: cpufreq governor powersave (amd-pstate-epp balance_performance) not changeable",
+    "quick": false,
+    "cluster": false,
+    "mode": "reverse_proxy",
+    "capture_heads": false,
+    "audit_policy": {
+      "inspection": {
+        "xss": "audit"
+      }
+    },
+    "origin": "caddy respond (static 200)",
+    "management_peers": 0,
+    "resource_target_node": 1,
+    "peer_coverage": "current before and after each sample; advancing watermarks",
+    "geoip_snapshot": {
+      "bytes": 6465240,
+      "sha256": "e3eb77377c689dea754902988068e767c2643ef8507922ca71fcd02cb39936b8"
+    },
+    "elapsed_seconds": 6932.11028097989
+  },
+  "load": {
+    "threads": 8,
+    "connections": 128,
+    "seconds": 60,
+    "warmup_seconds": 5,
+    "rounds": 5,
+    "order": "rotating configurations and workloads; one configuration alive"
+  },
+  "wrk": "wrk debian/4.1.0-4+b1 [epoll] Copyright (C) 2012 Will Glozer",
+  "gate": {
+    "throughput_loss_max": 0.01,
+    "p99_increase_max": 0.1,
+    "baseline_spread_max": 0.01
+  },
+  "dashboards": {
+    "subscribers": 8,
+    "delivered": true,
+    "peers_covered": null,
+    "geoip": [
+      {
+        "revision": 0,
+        "digest": "a32bb3c384bd3de60ad9024596aa5b395a6dd5beaa27a7223407cc2edc681d0b",
+        "provider": "dbip",
+        "source_version": "2026-09",
+        "source_digests": "a32bb3c384bd3de60ad9024596aa5b395a6dd5beaa27a7223407cc2edc681d0b",
+        "ranges": 717152,
+        "loaded_at": 0,
+        "status": "idle",
+        "processed_ranges": 0,
+        "source": "embedded snapshot",
+        "license": "CC BY 4.0",
+        "attribution": "https://db-ip.com"
+      },
+      {
+        "revision": 0,
+        "digest": "a32bb3c384bd3de60ad9024596aa5b395a6dd5beaa27a7223407cc2edc681d0b",
+        "provider": "dbip",
+        "source_version": "2026-09",
+        "source_digests": "a32bb3c384bd3de60ad9024596aa5b395a6dd5beaa27a7223407cc2edc681d0b",
+        "ranges": 717152,
+        "loaded_at": 0,
+        "status": "idle",
+        "processed_ranges": 0,
+        "source": "embedded snapshot",
+        "license": "CC BY 4.0",
+        "attribution": "https://db-ip.com"
+      },
+      {
+        "revision": 0,
+        "digest": "a32bb3c384bd3de60ad9024596aa5b395a6dd5beaa27a7223407cc2edc681d0b",
+        "provider": "dbip",
+        "source_version": "2026-09",
+        "source_digests": "a32bb3c384bd3de60ad9024596aa5b395a6dd5beaa27a7223407cc2edc681d0b",
+        "ranges": 717152,
+        "loaded_at": 0,
+        "status": "idle",
+        "processed_ranges": 0,
+        "source": "embedded snapshot",
+        "license": "CC BY 4.0",
+        "attribution": "https://db-ip.com"
+      },
+      {
+        "revision": 0,
+        "digest": "a32bb3c384bd3de60ad9024596aa5b395a6dd5beaa27a7223407cc2edc681d0b",
+        "provider": "dbip",
+        "source_version": "2026-09",
+        "source_digests": "a32bb3c384bd3de60ad9024596aa5b395a6dd5beaa27a7223407cc2edc681d0b",
+        "ranges": 717152,
+        "loaded_at": 0,
+        "status": "idle",
+        "processed_ranges": 0,
+        "source": "embedded snapshot",
+        "license": "CC BY 4.0",
+        "attribution": "https://db-ip.com"
+      },
+      {
+        "revision": 0,
+        "digest": "a32bb3c384bd3de60ad9024596aa5b395a6dd5beaa27a7223407cc2edc681d0b",
+        "provider": "dbip",
+        "source_version": "2026-09",
+        "source_digests": "a32bb3c384bd3de60ad9024596aa5b395a6dd5beaa27a7223407cc2edc681d0b",
+        "ranges": 717152,
+        "loaded_at": 0,
+        "status": "idle",
+        "processed_ranges": 0,
+        "source": "embedded snapshot",
+        "license": "CC BY 4.0",
+        "attribution": "https://db-ip.com"
+      }
+    ],
+    "geoip_available": true,
+    "frames_total": 13740,
+    "reconnects": 0,
+    "http_errors": 0,
+    "stream_errors": 0,
+    "frames_per_second_per_subscriber_min": 0.998376174431493
+  },
+  "workloads": {
+    "admitted": {
+      "configurations": {
+        "compiled_out": {
+          "samples": [
+            {
+              "requests": 5274353,
+              "requests_per_second": 87793.96651129029,
+              "latency_us": {
+                "p50": 938,
+                "p90": 7459,
+                "p99": 18333,
+                "max": 52059,
+                "mean": 2706.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1077.0,
+              "peak_rss_kib": 59308,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.076486,
+              "status_verified": true,
+              "round": 1,
+              "position": 0
+            },
+            {
+              "requests": 5414616,
+              "requests_per_second": 90131.76450660022,
+              "latency_us": {
+                "p50": 913,
+                "p90": 7130,
+                "p99": 17296,
+                "max": 52984,
+                "mean": 2591.7
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1069.0,
+              "peak_rss_kib": 63552,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.074448,
+              "status_verified": true,
+              "round": 2,
+              "position": 3
+            },
+            {
+              "requests": 5362233,
+              "requests_per_second": 89223.99364217649,
+              "latency_us": {
+                "p50": 920,
+                "p90": 7332,
+                "p99": 18379,
+                "max": 59381,
+                "mean": 2674.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1072.0,
+              "peak_rss_kib": 63504,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.098554,
+              "status_verified": true,
+              "round": 3,
+              "position": 2
+            },
+            {
+              "requests": 5359379,
+              "requests_per_second": 89179.00234772623,
+              "latency_us": {
+                "p50": 919,
+                "p90": 7265,
+                "p99": 17808,
+                "max": 50613,
+                "mean": 2643.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1075.0,
+              "peak_rss_kib": 60480,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.096871,
+              "status_verified": true,
+              "round": 4,
+              "position": 1
+            },
+            {
+              "requests": 5339651,
+              "requests_per_second": 88887.9415027179,
+              "latency_us": {
+                "p50": 921,
+                "p90": 7264,
+                "p99": 17594,
+                "max": 56962,
+                "mean": 2638.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1082.0,
+              "peak_rss_kib": 59248,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.071714,
+              "status_verified": true,
+              "round": 5,
+              "position": 0
+            }
+          ],
+          "requests_per_second_median": 89179.00234772623,
+          "requests_per_second_min": 87793.96651129029,
+          "requests_per_second_max": 90131.76450660022,
+          "spread": 0.02621466863011541,
+          "valid_measurements": true,
+          "latency_us_p99_median": 17808,
+          "peak_rss_kib_max": 63552,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0
+        },
+        "disabled": {
+          "samples": [
+            {
+              "requests": 5312743,
+              "requests_per_second": 88400.45997751362,
+              "latency_us": {
+                "p50": 929,
+                "p90": 7451,
+                "p99": 18372,
+                "max": 57620,
+                "mean": 2706.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1078.0,
+              "peak_rss_kib": 67160,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.09859,
+              "status_verified": true,
+              "round": 1,
+              "position": 1
+            },
+            {
+              "requests": 5460542,
+              "requests_per_second": 90864.60404520348,
+              "latency_us": {
+                "p50": 907,
+                "p90": 7131,
+                "p99": 17708,
+                "max": 56704,
+                "mean": 2601.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1064.0,
+              "peak_rss_kib": 71088,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.09537,
+              "status_verified": true,
+              "round": 2,
+              "position": 0
+            },
+            {
+              "requests": 5311888,
+              "requests_per_second": 88417.18156501511,
+              "latency_us": {
+                "p50": 929,
+                "p90": 7490,
+                "p99": 18661,
+                "max": 57598,
+                "mean": 2717.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1077.0,
+              "peak_rss_kib": 71444,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.077554,
+              "status_verified": true,
+              "round": 3,
+              "position": 3
+            },
+            {
+              "requests": 5372201,
+              "requests_per_second": 89388.81486596847,
+              "latency_us": {
+                "p50": 919,
+                "p90": 7390,
+                "p99": 18388,
+                "max": 55035,
+                "mean": 2681.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1070.0,
+              "peak_rss_kib": 68848,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.099253,
+              "status_verified": true,
+              "round": 4,
+              "position": 2
+            },
+            {
+              "requests": 5483474,
+              "requests_per_second": 91245.41100049973,
+              "latency_us": {
+                "p50": 902,
+                "p90": 7151,
+                "p99": 18088,
+                "max": 55639,
+                "mean": 2611.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1061.0,
+              "peak_rss_kib": 67384,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.095888,
+              "status_verified": true,
+              "round": 5,
+              "position": 1
+            }
+          ],
+          "requests_per_second_median": 89388.81486596847,
+          "requests_per_second_min": 88400.45997751362,
+          "requests_per_second_max": 91245.41100049973,
+          "spread": 0.031826700323210465,
+          "valid_measurements": true,
+          "latency_us_p99_median": 18372,
+          "peak_rss_kib_max": 71444,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0,
+          "versus_compiled_out": {
+            "throughput_loss": -0.002352712103956156,
+            "p99_increase": 0.031671159029649676,
+            "bootstrap_ci_95_loss": [
+              -0.026521814522048937,
+              0.009042546115980987
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              0.0021273114056619136,
+              0.032569631626235385
+            ],
+            "verdict": "inconclusive"
+          }
+        },
+        "idle": {
+          "samples": [
+            {
+              "requests": 5380019,
+              "requests_per_second": 89523.12414898213,
+              "latency_us": {
+                "p50": 919,
+                "p90": 7313,
+                "p99": 18166,
+                "max": 54260,
+                "mean": 2660.1
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1071.0,
+              "peak_rss_kib": 147488,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.096417,
+              "status_verified": true,
+              "round": 1,
+              "position": 2
+            },
+            {
+              "requests": 5333208,
+              "requests_per_second": 88787.08027057876,
+              "latency_us": {
+                "p50": 927,
+                "p90": 7299,
+                "p99": 17618,
+                "max": 54660,
+                "mean": 2646.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1071.0,
+              "peak_rss_kib": 152096,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.067388,
+              "status_verified": true,
+              "round": 2,
+              "position": 1
+            },
+            {
+              "requests": 5386214,
+              "requests_per_second": 89626.02356764593,
+              "latency_us": {
+                "p50": 916,
+                "p90": 7308,
+                "p99": 18074,
+                "max": 62988,
+                "mean": 2657.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1070.0,
+              "peak_rss_kib": 151560,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.096541,
+              "status_verified": true,
+              "round": 3,
+              "position": 0
+            },
+            {
+              "requests": 5351541,
+              "requests_per_second": 89058.01933653373,
+              "latency_us": {
+                "p50": 924,
+                "p90": 7251,
+                "p99": 17906,
+                "max": 67574,
+                "mean": 2647.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1075.0,
+              "peak_rss_kib": 150688,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.090501,
+              "status_verified": true,
+              "round": 4,
+              "position": 3
+            },
+            {
+              "requests": 5509700,
+              "requests_per_second": 91685.5102297729,
+              "latency_us": {
+                "p50": 897,
+                "p90": 7021,
+                "p99": 17398,
+                "max": 52186,
+                "mean": 2559.4
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1056.0,
+              "peak_rss_kib": 147500,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.093465,
+              "status_verified": true,
+              "round": 5,
+              "position": 2
+            }
+          ],
+          "requests_per_second_median": 89523.12414898213,
+          "requests_per_second_min": 88787.08027057876,
+          "requests_per_second_max": 91685.5102297729,
+          "spread": 0.0323763271975478,
+          "valid_measurements": true,
+          "latency_us_p99_median": 17906,
+          "peak_rss_kib_max": 152096,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0,
+          "versus_compiled_out": {
+            "throughput_loss": -0.0038587760817743177,
+            "p99_increase": 0.005503144654088077,
+            "bootstrap_ci_95_loss": [
+              -0.03147298362140005,
+              0.014919093655633264
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.016595026932912593,
+              0.018617021276595702
+            ],
+            "verdict": "inconclusive"
+          }
+        },
+        "active": {
+          "samples": [
+            {
+              "requests": 5358009,
+              "requests_per_second": 89180.45199732919,
+              "latency_us": {
+                "p50": 922,
+                "p90": 7320,
+                "p99": 17990,
+                "max": 51101,
+                "mean": 2660.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1070.0,
+              "peak_rss_kib": 157332,
+              "dashboards": [
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.6134829400107265,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.628865296952426,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.609625360462815,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.606769668869674,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.607127567753196,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.607035760767758,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.606745149940252,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.606513258069754,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.080532,
+              "status_verified": true,
+              "round": 1,
+              "position": 3
+            },
+            {
+              "requests": 5342416,
+              "requests_per_second": 88898.17478735904,
+              "latency_us": {
+                "p50": 923,
+                "p90": 7368,
+                "p99": 18264,
+                "max": 55561,
+                "mean": 2678.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1075.0,
+              "peak_rss_kib": 161756,
+              "dashboards": [
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 41.878980378154665,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 41.88224856602028,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 41.88097196165472,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 41.880614842288196,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 41.87827312806621,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 41.875703510828316,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 41.875734250061214,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 41.87567817186937,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.095902,
+              "status_verified": true,
+              "round": 2,
+              "position": 2
+            },
+            {
+              "requests": 5425754,
+              "requests_per_second": 90305.43962651199,
+              "latency_us": {
+                "p50": 913,
+                "p90": 7205,
+                "p99": 17929,
+                "max": 56165,
+                "mean": 2628.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1063.0,
+              "peak_rss_kib": 161704,
+              "dashboards": [
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 33.76942341309041,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 33.76224896730855,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 33.76852062018588,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 33.7603754629381,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 33.761803299654275,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 33.76099125435576,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 33.76005839230493,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 33.76077177096158,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.08225,
+              "status_verified": true,
+              "round": 3,
+              "position": 1
+            },
+            {
+              "requests": 5383848,
+              "requests_per_second": 89621.08288296525,
+              "latency_us": {
+                "p50": 918,
+                "p90": 7181,
+                "p99": 17289,
+                "max": 48806,
+                "mean": 2605.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1069.0,
+              "peak_rss_kib": 160608,
+              "dashboards": [
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 51.78755525499582,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 51.80432851193473,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 51.78843734879047,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 51.7993477107957,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 51.798853115644306,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 51.80512729799375,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 51.787471128162,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 51.79197229305282,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.073454,
+              "status_verified": true,
+              "round": 4,
+              "position": 0
+            },
+            {
+              "requests": 5290981,
+              "requests_per_second": 88097.29799571683,
+              "latency_us": {
+                "p50": 935,
+                "p90": 7386,
+                "p99": 17878,
+                "max": 50710,
+                "mean": 2680.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1083.0,
+              "peak_rss_kib": 156824,
+              "dashboards": [
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.555958474054933,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.567293447908014,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.5628053727559745,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.556966871023178,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.553326558787376,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.5579356900416315,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.552930082194507,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.55377602390945,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.05838,
+              "status_verified": true,
+              "round": 5,
+              "position": 3
+            }
+          ],
+          "requests_per_second_median": 89180.45199732919,
+          "requests_per_second_min": 88097.29799571683,
+          "requests_per_second_max": 90305.43962651199,
+          "spread": 0.024760377205323973,
+          "valid_measurements": true,
+          "latency_us_p99_median": 17929,
+          "peak_rss_kib_max": 161756,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0.9984041840323821,
+          "versus_compiled_out": {
+            "throughput_loss": -1.625550370376594e-05,
+            "p99_increase": 0.006794699011680061,
+            "bootstrap_ci_95_loss": [
+              -0.015792491684045284,
+              0.013686514693172835
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.029144204851752065,
+              0.05596669750231276
+            ],
+            "verdict": "inconclusive"
+          }
+        }
+      }
+    },
+    "challenged": {
+      "configurations": {
+        "compiled_out": {
+          "samples": [
+            {
+              "requests": 38591716,
+              "requests_per_second": 642354.3498813312,
+              "latency_us": {
+                "p50": 91,
+                "p90": 203,
+                "p99": 3453,
+                "max": 38191,
+                "mean": 270.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 38591716,
+                "timeout": 0
+              },
+              "cpu_seconds": 797.0,
+              "peak_rss_kib": 57260,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.078547,
+              "status_verified": true,
+              "round": 1,
+              "position": 0
+            },
+            {
+              "requests": 37669352,
+              "requests_per_second": 626845.2189524645,
+              "latency_us": {
+                "p50": 92,
+                "p90": 229,
+                "p99": 3669,
+                "max": 28450,
+                "mean": 295.4
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37669352,
+                "timeout": 0
+              },
+              "cpu_seconds": 801.0,
+              "peak_rss_kib": 57308,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.093546,
+              "status_verified": true,
+              "round": 2,
+              "position": 3
+            },
+            {
+              "requests": 37842656,
+              "requests_per_second": 630075.5861148147,
+              "latency_us": {
+                "p50": 92,
+                "p90": 226,
+                "p99": 3728,
+                "max": 31801,
+                "mean": 300.4
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37842656,
+                "timeout": 0
+              },
+              "cpu_seconds": 801.0,
+              "peak_rss_kib": 61428,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.060502,
+              "status_verified": true,
+              "round": 3,
+              "position": 2
+            },
+            {
+              "requests": 38225200,
+              "requests_per_second": 636224.7517879278,
+              "latency_us": {
+                "p50": 92,
+                "p90": 210,
+                "p99": 3467,
+                "max": 30066,
+                "mean": 275.1
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 38225200,
+                "timeout": 0
+              },
+              "cpu_seconds": 800.0,
+              "peak_rss_kib": 58400,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.081284,
+              "status_verified": true,
+              "round": 4,
+              "position": 1
+            },
+            {
+              "requests": 38084404,
+              "requests_per_second": 633689.1671134119,
+              "latency_us": {
+                "p50": 92,
+                "p90": 221,
+                "p99": 3735,
+                "max": 34906,
+                "mean": 300.1
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 38084404,
+                "timeout": 0
+              },
+              "cpu_seconds": 803.0,
+              "peak_rss_kib": 57200,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.099503,
+              "status_verified": true,
+              "round": 5,
+              "position": 0
+            }
+          ],
+          "requests_per_second_median": 633689.1671134119,
+          "requests_per_second_min": 626845.2189524645,
+          "requests_per_second_max": 642354.3498813312,
+          "spread": 0.024474350728629385,
+          "valid_measurements": true,
+          "latency_us_p99_median": 3669,
+          "peak_rss_kib_max": 61428,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 190413328,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0
+        },
+        "disabled": {
+          "samples": [
+            {
+              "requests": 38245863,
+              "requests_per_second": 636513.7805993414,
+              "latency_us": {
+                "p50": 91,
+                "p90": 223,
+                "p99": 3545,
+                "max": 23029,
+                "mean": 286.4
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 38245863,
+                "timeout": 0
+              },
+              "cpu_seconds": 812.0,
+              "peak_rss_kib": 64600,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.086465,
+              "status_verified": true,
+              "round": 1,
+              "position": 1
+            },
+            {
+              "requests": 37531017,
+              "requests_per_second": 624616.9498472476,
+              "latency_us": {
+                "p50": 92,
+                "p90": 246,
+                "p99": 3811,
+                "max": 43234,
+                "mean": 315.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37531017,
+                "timeout": 0
+              },
+              "cpu_seconds": 811.0,
+              "peak_rss_kib": 64500,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.086453,
+              "status_verified": true,
+              "round": 2,
+              "position": 0
+            },
+            {
+              "requests": 37753574,
+              "requests_per_second": 628422.8575522385,
+              "latency_us": {
+                "p50": 92,
+                "p90": 238,
+                "p99": 3656,
+                "max": 35604,
+                "mean": 303.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37753574,
+                "timeout": 0
+              },
+              "cpu_seconds": 816.0,
+              "peak_rss_kib": 68856,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.076704,
+              "status_verified": true,
+              "round": 3,
+              "position": 3
+            },
+            {
+              "requests": 37512777,
+              "requests_per_second": 624280.2337121518,
+              "latency_us": {
+                "p50": 92,
+                "p90": 252,
+                "p99": 3636,
+                "max": 26564,
+                "mean": 300.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37512777,
+                "timeout": 0
+              },
+              "cpu_seconds": 814.0,
+              "peak_rss_kib": 66288,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.089644,
+              "status_verified": true,
+              "round": 4,
+              "position": 2
+            },
+            {
+              "requests": 37763143,
+              "requests_per_second": 628594.5047635208,
+              "latency_us": {
+                "p50": 92,
+                "p90": 239,
+                "p99": 3674,
+                "max": 32626,
+                "mean": 303.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37763143,
+                "timeout": 0
+              },
+              "cpu_seconds": 814.0,
+              "peak_rss_kib": 64824,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.075522,
+              "status_verified": true,
+              "round": 5,
+              "position": 1
+            }
+          ],
+          "requests_per_second_median": 628422.8575522385,
+          "requests_per_second_min": 624280.2337121518,
+          "requests_per_second_max": 636513.7805993414,
+          "spread": 0.019467062249836586,
+          "valid_measurements": true,
+          "latency_us_p99_median": 3656,
+          "peak_rss_kib_max": 68856,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 188806374,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0,
+          "versus_compiled_out": {
+            "throughput_loss": 0.008310556396541546,
+            "p99_increase": -0.0035431997819569405,
+            "bootstrap_ci_95_loss": [
+              0.0026230639608928463,
+              0.018774054360836123
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.01931330472102999,
+              0.048745312950677855
+            ],
+            "verdict": "inconclusive"
+          }
+        },
+        "idle": {
+          "samples": [
+            {
+              "requests": 37899020,
+              "requests_per_second": 630824.4264529997,
+              "latency_us": {
+                "p50": 92,
+                "p90": 226,
+                "p99": 3596,
+                "max": 30464,
+                "mean": 293.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37899020,
+                "timeout": 0
+              },
+              "cpu_seconds": 809.0,
+              "peak_rss_kib": 145096,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.078555,
+              "status_verified": true,
+              "round": 1,
+              "position": 2
+            },
+            {
+              "requests": 37615753,
+              "requests_per_second": 625890.1138995705,
+              "latency_us": {
+                "p50": 92,
+                "p90": 241,
+                "p99": 3745,
+                "max": 44308,
+                "mean": 311.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37615753,
+                "timeout": 0
+              },
+              "cpu_seconds": 815.0,
+              "peak_rss_kib": 145088,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.099612,
+              "status_verified": true,
+              "round": 2,
+              "position": 1
+            },
+            {
+              "requests": 37107914,
+              "requests_per_second": 617471.5363898212,
+              "latency_us": {
+                "p50": 93,
+                "p90": 261,
+                "p99": 3877,
+                "max": 41063,
+                "mean": 319.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37107914,
+                "timeout": 0
+              },
+              "cpu_seconds": 812.0,
+              "peak_rss_kib": 148972,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.096558,
+              "status_verified": true,
+              "round": 3,
+              "position": 0
+            },
+            {
+              "requests": 37776663,
+              "requests_per_second": 628568.4853579025,
+              "latency_us": {
+                "p50": 92,
+                "p90": 231,
+                "p99": 3665,
+                "max": 29586,
+                "mean": 296.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37776663,
+                "timeout": 0
+              },
+              "cpu_seconds": 812.0,
+              "peak_rss_kib": 148128,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.099518,
+              "status_verified": true,
+              "round": 4,
+              "position": 3
+            },
+            {
+              "requests": 37824157,
+              "requests_per_second": 629744.7433248067,
+              "latency_us": {
+                "p50": 92,
+                "p90": 229,
+                "p99": 3601,
+                "max": 33326,
+                "mean": 296.4
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37824157,
+                "timeout": 0
+              },
+              "cpu_seconds": 813.0,
+              "peak_rss_kib": 145132,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.06268,
+              "status_verified": true,
+              "round": 5,
+              "position": 2
+            }
+          ],
+          "requests_per_second_median": 628568.4853579025,
+          "requests_per_second_min": 617471.5363898212,
+          "requests_per_second_max": 630824.4264529997,
+          "spread": 0.02124333366089051,
+          "valid_measurements": true,
+          "latency_us_p99_median": 3665,
+          "peak_rss_kib_max": 148972,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 188223507,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0,
+          "versus_compiled_out": {
+            "throughput_loss": 0.00808074687284821,
+            "p99_increase": -0.0010902153175251783,
+            "bootstrap_ci_95_loss": [
+              0.0015236696779630243,
+              0.020004028092427628
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.03587684069611785,
+              0.05710989327949245
+            ],
+            "verdict": "inconclusive"
+          }
+        },
+        "active": {
+          "samples": [
+            {
+              "requests": 37333136,
+              "requests_per_second": 621302.4604289955,
+              "latency_us": {
+                "p50": 92,
+                "p90": 253,
+                "p99": 3771,
+                "max": 29818,
+                "mean": 310.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37333136,
+                "timeout": 0
+              },
+              "cpu_seconds": 811.0,
+              "peak_rss_kib": 155024,
+              "dashboards": [
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 9.856664334889501,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 9.871709533967078,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 9.852701670024544,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 9.847628857940435,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 9.848832949995995,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 9.848464562091976,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 9.847825732082129,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 9.84744715411216,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.088505,
+              "status_verified": true,
+              "round": 1,
+              "position": 3
+            },
+            {
+              "requests": 37873696,
+              "requests_per_second": 630361.1838462467,
+              "latency_us": {
+                "p50": 92,
+                "p90": 227,
+                "p99": 3531,
+                "max": 28135,
+                "mean": 287.6
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37873696,
+                "timeout": 0
+              },
+              "cpu_seconds": 811.0,
+              "peak_rss_kib": 154228,
+              "dashboards": [
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.421974529046565,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.422396088019013,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.420984616037458,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.421614549122751,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.420298964716494,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.420581446960568,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.419866037089378,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 4.418372427113354,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.082532,
+              "status_verified": true,
+              "round": 2,
+              "position": 2
+            },
+            {
+              "requests": 37616294,
+              "requests_per_second": 626200.8817950197,
+              "latency_us": {
+                "p50": 92,
+                "p90": 246,
+                "p99": 3588,
+                "max": 26937,
+                "mean": 296.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37616294,
+                "timeout": 0
+              },
+              "cpu_seconds": 818.0,
+              "peak_rss_kib": 159144,
+              "dashboards": [
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 38.989175610244274,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 38.98022678587586,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 38.985741761978716,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 38.97769788186997,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 38.980017402675,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 38.97863168362528,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 38.97747961804271,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 38.97794520482421,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.07065,
+              "status_verified": true,
+              "round": 3,
+              "position": 1
+            },
+            {
+              "requests": 37550458,
+              "requests_per_second": 624824.7101031742,
+              "latency_us": {
+                "p50": 92,
+                "p90": 257,
+                "p99": 3981,
+                "max": 53511,
+                "mean": 324.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37550458,
+                "timeout": 0
+              },
+              "cpu_seconds": 818.0,
+              "peak_rss_kib": 158052,
+              "dashboards": [
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 57.03247170103714,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 57.047004625201225,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 57.03413269110024,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 57.04539369326085,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 57.04485929803923,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 57.04720978811383,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 57.03301004366949,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 57.03838838264346,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.097588,
+              "status_verified": true,
+              "round": 4,
+              "position": 0
+            },
+            {
+              "requests": 37547771,
+              "requests_per_second": 624945.767548616,
+              "latency_us": {
+                "p50": 92,
+                "p90": 251,
+                "p99": 3719,
+                "max": 28817,
+                "mean": 306.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37547771,
+                "timeout": 0
+              },
+              "cpu_seconds": 816.0,
+              "peak_rss_kib": 154756,
+              "dashboards": [
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 9.779417570214719,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 9.791686836164445,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 9.787227360066026,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 9.778556817676872,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 9.776300200726837,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 9.779565184842795,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 9.776073256973177,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 9.77703273575753,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.081647,
+              "status_verified": true,
+              "round": 5,
+              "position": 3
+            }
+          ],
+          "requests_per_second_median": 624945.767548616,
+          "requests_per_second_min": 621302.4604289955,
+          "requests_per_second_max": 630361.1838462467,
+          "spread": 0.014495215245291565,
+          "valid_measurements": true,
+          "latency_us_p99_median": 3719,
+          "peak_rss_kib_max": 159144,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 187921355,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0.998376174431493,
+          "versus_compiled_out": {
+            "throughput_loss": 0.013797615642735295,
+            "p99_increase": 0.013627691469065173,
+            "bootstrap_ci_95_loss": [
+              -0.005608984143897322,
+              0.03277301610275507
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.03761242845461976,
+              0.1482549754831266
+            ],
+            "verdict": "inconclusive"
+          }
+        }
+      }
+    },
+    "denied": {
+      "configurations": {
+        "compiled_out": {
+          "samples": [
+            {
+              "requests": 37396719,
+              "requests_per_second": 622434.0381319568,
+              "latency_us": {
+                "p50": 94,
+                "p90": 227,
+                "p99": 3712,
+                "max": 36195,
+                "mean": 298.1
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37396719,
+                "timeout": 0
+              },
+              "cpu_seconds": 833.0,
+              "peak_rss_kib": 61572,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.081417,
+              "status_verified": true,
+              "round": 1,
+              "position": 0
+            },
+            {
+              "requests": 37442216,
+              "requests_per_second": 623096.6078574721,
+              "latency_us": {
+                "p50": 93,
+                "p90": 228,
+                "p99": 3611,
+                "max": 33155,
+                "mean": 294.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37442216,
+                "timeout": 0
+              },
+              "cpu_seconds": 837.0,
+              "peak_rss_kib": 61624,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.090547,
+              "status_verified": true,
+              "round": 2,
+              "position": 3
+            },
+            {
+              "requests": 37344392,
+              "requests_per_second": 621602.4077386024,
+              "latency_us": {
+                "p50": 94,
+                "p90": 227,
+                "p99": 3612,
+                "max": 27420,
+                "mean": 293.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37344392,
+                "timeout": 0
+              },
+              "cpu_seconds": 832.0,
+              "peak_rss_kib": 61548,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.077618,
+              "status_verified": true,
+              "round": 3,
+              "position": 2
+            },
+            {
+              "requests": 37210252,
+              "requests_per_second": 619298.3372393302,
+              "latency_us": {
+                "p50": 94,
+                "p90": 238,
+                "p99": 3772,
+                "max": 46755,
+                "mean": 312.4
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37210252,
+                "timeout": 0
+              },
+              "cpu_seconds": 837.0,
+              "peak_rss_kib": 61428,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.084534,
+              "status_verified": true,
+              "round": 4,
+              "position": 1
+            },
+            {
+              "requests": 37322142,
+              "requests_per_second": 621119.0938492368,
+              "latency_us": {
+                "p50": 94,
+                "p90": 231,
+                "p99": 3776,
+                "max": 28847,
+                "mean": 304.4
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37322142,
+                "timeout": 0
+              },
+              "cpu_seconds": 835.0,
+              "peak_rss_kib": 61516,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.088544,
+              "status_verified": true,
+              "round": 5,
+              "position": 0
+            }
+          ],
+          "requests_per_second_median": 621602.4077386024,
+          "requests_per_second_min": 619298.3372393302,
+          "requests_per_second_max": 623096.6078574721,
+          "spread": 0.006110450298865694,
+          "valid_measurements": true,
+          "latency_us_p99_median": 3712,
+          "peak_rss_kib_max": 61624,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 186715721,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0
+        },
+        "disabled": {
+          "samples": [
+            {
+              "requests": 37304449,
+              "requests_per_second": 620762.2470604007,
+              "latency_us": {
+                "p50": 93,
+                "p90": 243,
+                "p99": 3867,
+                "max": 29390,
+                "mean": 313.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37304449,
+                "timeout": 0
+              },
+              "cpu_seconds": 844.0,
+              "peak_rss_kib": 69580,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.094584,
+              "status_verified": true,
+              "round": 1,
+              "position": 1
+            },
+            {
+              "requests": 37081187,
+              "requests_per_second": 617026.6378246454,
+              "latency_us": {
+                "p50": 94,
+                "p90": 241,
+                "p99": 3845,
+                "max": 43677,
+                "mean": 313.9
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37081187,
+                "timeout": 0
+              },
+              "cpu_seconds": 837.0,
+              "peak_rss_kib": 69480,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.096574,
+              "status_verified": true,
+              "round": 2,
+              "position": 0
+            },
+            {
+              "requests": 37599109,
+              "requests_per_second": 625810.8728760582,
+              "latency_us": {
+                "p50": 93,
+                "p90": 225,
+                "p99": 3654,
+                "max": 50040,
+                "mean": 294.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37599109,
+                "timeout": 0
+              },
+              "cpu_seconds": 835.0,
+              "peak_rss_kib": 69264,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.080626,
+              "status_verified": true,
+              "round": 3,
+              "position": 3
+            },
+            {
+              "requests": 37816411,
+              "requests_per_second": 629397.7621304756,
+              "latency_us": {
+                "p50": 93,
+                "p90": 217,
+                "p99": 3553,
+                "max": 29641,
+                "mean": 285.6
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37816411,
+                "timeout": 0
+              },
+              "cpu_seconds": 837.0,
+              "peak_rss_kib": 69924,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.083485,
+              "status_verified": true,
+              "round": 4,
+              "position": 2
+            },
+            {
+              "requests": 37207051,
+              "requests_per_second": 619203.5309747126,
+              "latency_us": {
+                "p50": 93,
+                "p90": 248,
+                "p99": 3903,
+                "max": 30784,
+                "mean": 315.6
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37207051,
+                "timeout": 0
+              },
+              "cpu_seconds": 838.0,
+              "peak_rss_kib": 69804,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.088564,
+              "status_verified": true,
+              "round": 5,
+              "position": 1
+            }
+          ],
+          "requests_per_second_median": 620762.2470604007,
+          "requests_per_second_min": 617026.6378246454,
+          "requests_per_second_max": 629397.7621304756,
+          "spread": 0.019928925066582698,
+          "valid_measurements": true,
+          "latency_us_p99_median": 3845,
+          "peak_rss_kib_max": 69924,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 187008207,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0,
+          "versus_compiled_out": {
+            "throughput_loss": 0.0013516046072894472,
+            "p99_increase": 0.035829741379310276,
+            "bootstrap_ci_95_loss": [
+              -0.016307850810912905,
+              0.009741619447582117
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.05805938494167551,
+              0.06480199390750485
+            ],
+            "verdict": "pass"
+          }
+        },
+        "idle": {
+          "samples": [
+            {
+              "requests": 37781843,
+              "requests_per_second": 628883.9743195489,
+              "latency_us": {
+                "p50": 93,
+                "p90": 218,
+                "p99": 3648,
+                "max": 40845,
+                "mean": 294.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37781843,
+                "timeout": 0
+              },
+              "cpu_seconds": 837.0,
+              "peak_rss_kib": 149812,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.077605,
+              "status_verified": true,
+              "round": 1,
+              "position": 2
+            },
+            {
+              "requests": 37230624,
+              "requests_per_second": 619482.6988520278,
+              "latency_us": {
+                "p50": 94,
+                "p90": 238,
+                "p99": 3760,
+                "max": 29642,
+                "mean": 303.7
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37230624,
+                "timeout": 0
+              },
+              "cpu_seconds": 840.0,
+              "peak_rss_kib": 149696,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.099538,
+              "status_verified": true,
+              "round": 2,
+              "position": 1
+            },
+            {
+              "requests": 36996543,
+              "requests_per_second": 615966.1456016307,
+              "latency_us": {
+                "p50": 94,
+                "p90": 239,
+                "p99": 3669,
+                "max": 43703,
+                "mean": 300.6
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 36996543,
+                "timeout": 0
+              },
+              "cpu_seconds": 838.0,
+              "peak_rss_kib": 149544,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.062624,
+              "status_verified": true,
+              "round": 3,
+              "position": 0
+            },
+            {
+              "requests": 37044043,
+              "requests_per_second": 616399.3963938714,
+              "latency_us": {
+                "p50": 94,
+                "p90": 242,
+                "p99": 3750,
+                "max": 26519,
+                "mean": 306.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37044043,
+                "timeout": 0
+              },
+              "cpu_seconds": 842.0,
+              "peak_rss_kib": 150068,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.097468,
+              "status_verified": true,
+              "round": 4,
+              "position": 3
+            },
+            {
+              "requests": 37391943,
+              "requests_per_second": 622198.8032039693,
+              "latency_us": {
+                "p50": 93,
+                "p90": 231,
+                "p99": 3661,
+                "max": 30784,
+                "mean": 298.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37391943,
+                "timeout": 0
+              },
+              "cpu_seconds": 842.0,
+              "peak_rss_kib": 149732,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.096456,
+              "status_verified": true,
+              "round": 5,
+              "position": 2
+            }
+          ],
+          "requests_per_second_median": 619482.6988520278,
+          "requests_per_second_min": 615966.1456016307,
+          "requests_per_second_max": 628883.9743195489,
+          "spread": 0.02085260612097233,
+          "valid_measurements": true,
+          "latency_us_p99_median": 3669,
+          "peak_rss_kib_max": 150068,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 186444996,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0,
+          "versus_compiled_out": {
+            "throughput_loss": 0.0034100718726076673,
+            "p99_increase": -0.0115840517241379,
+            "bootstrap_ci_95_loss": [
+              -0.010362441306952963,
+              0.009067310658394168
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.03045550847457623,
+              0.04126280808640259
+            ],
+            "verdict": "pass"
+          }
+        },
+        "active": {
+          "samples": [
+            {
+              "requests": 37666942,
+              "requests_per_second": 626973.2263693757,
+              "latency_us": {
+                "p50": 93,
+                "p90": 220,
+                "p99": 3569,
+                "max": 33105,
+                "mean": 289.1
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37666942,
+                "timeout": 0
+              },
+              "cpu_seconds": 838.0,
+              "peak_rss_kib": 159912,
+              "dashboards": [
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 56.06073248805478,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 56.07570081902668,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 56.05689483880997,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 56.04973406391218,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 56.05236391117796,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 56.051160829141736,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 56.050229678396136,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 61,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 56.04949479084462,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.077433,
+              "status_verified": true,
+              "round": 1,
+              "position": 3
+            },
+            {
+              "requests": 37525587,
+              "requests_per_second": 624733.1107814362,
+              "latency_us": {
+                "p50": 93,
+                "p90": 226,
+                "p99": 3614,
+                "max": 31772,
+                "mean": 295.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37525587,
+                "timeout": 0
+              },
+              "cpu_seconds": 840.0,
+              "peak_rss_kib": 159708,
+              "dashboards": [
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 50.54540119599551,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 50.545719306916,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 50.54429894592613,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 50.545243971049786,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 50.543518238235265,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 50.54373376164585,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 50.54331550421193,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 50.543117959052324,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.066589,
+              "status_verified": true,
+              "round": 2,
+              "position": 2
+            },
+            {
+              "requests": 37192730,
+              "requests_per_second": 618872.6804440122,
+              "latency_us": {
+                "p50": 94,
+                "p90": 240,
+                "p99": 3949,
+                "max": 36368,
+                "mean": 315.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37192730,
+                "timeout": 0
+              },
+              "cpu_seconds": 843.0,
+              "peak_rss_kib": 159544,
+              "dashboards": [
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 42.41674276487902,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 42.417102893814445,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 42.4155124113895,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 42.41488830000162,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 42.414429834112525,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 42.41463279817253,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 42.414219910278916,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 42.41389877907932,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.097547,
+              "status_verified": true,
+              "round": 3,
+              "position": 1
+            },
+            {
+              "requests": 37418805,
+              "requests_per_second": 622727.490057968,
+              "latency_us": {
+                "p50": 93,
+                "p90": 235,
+                "p99": 3881,
+                "max": 38089,
+                "mean": 311.6
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37418805,
+                "timeout": 0
+              },
+              "cpu_seconds": 842.0,
+              "peak_rss_kib": 160100,
+              "dashboards": [
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 43.31419812096283,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 43.325705085881054,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 43.31613710289821,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 43.32170154619962,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 43.3248547911644,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 43.325273448601365,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 43.31474727531895,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 43.319794572889805,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.088571,
+              "status_verified": true,
+              "round": 4,
+              "position": 0
+            },
+            {
+              "requests": 37624717,
+              "requests_per_second": 626174.8793358173,
+              "latency_us": {
+                "p50": 93,
+                "p90": 225,
+                "p99": 3636,
+                "max": 38734,
+                "mean": 296.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 37624717,
+                "timeout": 0
+              },
+              "cpu_seconds": 839.0,
+              "peak_rss_kib": 159720,
+              "dashboards": [
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 56.06255712499842,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 56.07933365786448,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 56.074907078873366,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 56.065622246824205,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 56.060673414729536,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 56.062500996980816,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 56.059361536987126,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 56.06414681393653,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.086596,
+              "status_verified": true,
+              "round": 5,
+              "position": 3
+            }
+          ],
+          "requests_per_second_median": 624733.1107814362,
+          "requests_per_second_min": 618872.6804440122,
+          "requests_per_second_max": 626973.2263693757,
+          "spread": 0.012966410432818466,
+          "valid_measurements": true,
+          "latency_us_p99_median": 3636,
+          "peak_rss_kib_max": 160100,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 187428781,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0.9983768555478646,
+          "versus_compiled_out": {
+            "throughput_loss": -0.005036504048018919,
+            "p99_increase": -0.020474137931034475,
+            "bootstrap_ci_95_loss": [
+              -0.0081398004612101,
+              0.004391436166602092
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.03852370689655171,
+              0.09330011074197131
+            ],
+            "verdict": "pass"
+          }
+        }
+      }
+    },
+    "policy_reload": {
+      "configurations": {
+        "compiled_out": {
+          "samples": [
+            {
+              "requests": 5371466,
+              "requests_per_second": 89401.5122141397,
+              "latency_us": {
+                "p50": 920,
+                "p90": 7225,
+                "p99": 18158,
+                "max": 57789,
+                "mean": 2647.6
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1063.0,
+              "peak_rss_kib": 63232,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.082496,
+              "policy_reloads_triggered": 439,
+              "status_verified": true,
+              "round": 1,
+              "position": 0
+            },
+            {
+              "requests": 5326248,
+              "requests_per_second": 88614.90570405524,
+              "latency_us": {
+                "p50": 922,
+                "p90": 7420,
+                "p99": 18201,
+                "max": 58606,
+                "mean": 2686.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1081.0,
+              "peak_rss_kib": 63552,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.105554,
+              "policy_reloads_triggered": 422,
+              "status_verified": true,
+              "round": 2,
+              "position": 3
+            },
+            {
+              "requests": 5331218,
+              "requests_per_second": 88706.9253847857,
+              "latency_us": {
+                "p50": 925,
+                "p90": 7346,
+                "p99": 18078,
+                "max": 74968,
+                "mean": 2676.4
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1074.0,
+              "peak_rss_kib": 63476,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.099231,
+              "policy_reloads_triggered": 422,
+              "status_verified": true,
+              "round": 3,
+              "position": 2
+            },
+            {
+              "requests": 5295788,
+              "requests_per_second": 88133.30709642649,
+              "latency_us": {
+                "p50": 933,
+                "p90": 7331,
+                "p99": 18099,
+                "max": 54140,
+                "mean": 2674.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1085.0,
+              "peak_rss_kib": 60448,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.088384,
+              "policy_reloads_triggered": 418,
+              "status_verified": true,
+              "round": 4,
+              "position": 1
+            },
+            {
+              "requests": 5325257,
+              "requests_per_second": 88616.18239774831,
+              "latency_us": {
+                "p50": 925,
+                "p90": 7319,
+                "p99": 18153,
+                "max": 57582,
+                "mean": 2670.5
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1074.0,
+              "peak_rss_kib": 63464,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.093505,
+              "policy_reloads_triggered": 439,
+              "status_verified": true,
+              "round": 5,
+              "position": 0
+            }
+          ],
+          "requests_per_second_median": 88616.18239774831,
+          "requests_per_second_min": 88133.30709642649,
+          "requests_per_second_max": 89401.5122141397,
+          "spread": 0.014311213633881764,
+          "valid_measurements": true,
+          "latency_us_p99_median": 18153,
+          "peak_rss_kib_max": 63552,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0
+        },
+        "disabled": {
+          "samples": [
+            {
+              "requests": 5360838,
+              "requests_per_second": 89226.08339150986,
+              "latency_us": {
+                "p50": 922,
+                "p90": 7342,
+                "p99": 18231,
+                "max": 56098,
+                "mean": 2673.1
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1068.0,
+              "peak_rss_kib": 71460,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.081512,
+              "policy_reloads_triggered": 422,
+              "status_verified": true,
+              "round": 1,
+              "position": 1
+            },
+            {
+              "requests": 5384938,
+              "requests_per_second": 89594.65331552866,
+              "latency_us": {
+                "p50": 919,
+                "p90": 7313,
+                "p99": 17571,
+                "max": 55961,
+                "mean": 2639.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1064.0,
+              "peak_rss_kib": 71088,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.103341,
+              "policy_reloads_triggered": 422,
+              "status_verified": true,
+              "round": 2,
+              "position": 0
+            },
+            {
+              "requests": 5352016,
+              "requests_per_second": 89058.53742589815,
+              "latency_us": {
+                "p50": 920,
+                "p90": 7386,
+                "p99": 18015,
+                "max": 57708,
+                "mean": 2672.0
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1068.0,
+              "peak_rss_kib": 71168,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.095485,
+              "policy_reloads_triggered": 422,
+              "status_verified": true,
+              "round": 3,
+              "position": 3
+            },
+            {
+              "requests": 5369131,
+              "requests_per_second": 89340.82027415065,
+              "latency_us": {
+                "p50": 919,
+                "p90": 7356,
+                "p99": 17908,
+                "max": 54697,
+                "mean": 2662.4
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1070.0,
+              "peak_rss_kib": 68576,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.097176,
+              "policy_reloads_triggered": 418,
+              "status_verified": true,
+              "round": 4,
+              "position": 2
+            },
+            {
+              "requests": 5361640,
+              "requests_per_second": 89239.55966025173,
+              "latency_us": {
+                "p50": 919,
+                "p90": 7269,
+                "p99": 17799,
+                "max": 55994,
+                "mean": 2642.7
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1070.0,
+              "peak_rss_kib": 71412,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.081426,
+              "policy_reloads_triggered": 422,
+              "status_verified": true,
+              "round": 5,
+              "position": 1
+            }
+          ],
+          "requests_per_second_median": 89239.55966025173,
+          "requests_per_second_min": 89058.53742589815,
+          "requests_per_second_max": 89594.65331552866,
+          "spread": 0.0060076034851761495,
+          "valid_measurements": true,
+          "latency_us_p99_median": 17908,
+          "peak_rss_kib_max": 71460,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0,
+          "versus_compiled_out": {
+            "throughput_loss": -0.007034575916455399,
+            "p99_increase": -0.013496391780972838,
+            "bootstrap_ci_95_loss": [
+              -0.013700985671660115,
+              0.001962257888990071
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.03461348277567167,
+              0.00402026654917953
+            ],
+            "verdict": "inconclusive"
+          }
+        },
+        "idle": {
+          "samples": [
+            {
+              "requests": 5393118,
+              "requests_per_second": 89733.775546612,
+              "latency_us": {
+                "p50": 916,
+                "p90": 7214,
+                "p99": 17592,
+                "max": 61054,
+                "mean": 2624.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1062.0,
+              "peak_rss_kib": 151636,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.101316,
+              "policy_reloads_triggered": 427,
+              "status_verified": true,
+              "round": 1,
+              "position": 2
+            },
+            {
+              "requests": 5345122,
+              "requests_per_second": 88967.30408856434,
+              "latency_us": {
+                "p50": 927,
+                "p90": 7284,
+                "p99": 17910,
+                "max": 84266,
+                "mean": 2663.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1064.0,
+              "peak_rss_kib": 152096,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.079622,
+              "policy_reloads_triggered": 439,
+              "status_verified": true,
+              "round": 2,
+              "position": 1
+            },
+            {
+              "requests": 5289695,
+              "requests_per_second": 88041.89184872985,
+              "latency_us": {
+                "p50": 933,
+                "p90": 7533,
+                "p99": 18178,
+                "max": 60972,
+                "mean": 2714.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1076.0,
+              "peak_rss_kib": 151532,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.081569,
+              "policy_reloads_triggered": 422,
+              "status_verified": true,
+              "round": 3,
+              "position": 0
+            },
+            {
+              "requests": 5412158,
+              "requests_per_second": 90077.29378161268,
+              "latency_us": {
+                "p50": 911,
+                "p90": 7281,
+                "p99": 17821,
+                "max": 64524,
+                "mean": 2637.7
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1065.0,
+              "peak_rss_kib": 150524,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.083488,
+              "policy_reloads_triggered": 414,
+              "status_verified": true,
+              "round": 4,
+              "position": 3
+            },
+            {
+              "requests": 5320004,
+              "requests_per_second": 88549.43190089423,
+              "latency_us": {
+                "p50": 929,
+                "p90": 7426,
+                "p99": 18322,
+                "max": 59306,
+                "mean": 2694.8
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1073.0,
+              "peak_rss_kib": 151840,
+              "dashboards": [],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.079482,
+              "policy_reloads_triggered": 426,
+              "status_verified": true,
+              "round": 5,
+              "position": 2
+            }
+          ],
+          "requests_per_second_median": 88967.30408856434,
+          "requests_per_second_min": 88041.89184872985,
+          "requests_per_second_max": 90077.29378161268,
+          "spread": 0.02287808935804828,
+          "valid_measurements": true,
+          "latency_us_p99_median": 17910,
+          "peak_rss_kib_max": 152096,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0,
+          "versus_compiled_out": {
+            "throughput_loss": -0.003962275075674482,
+            "p99_increase": -0.013386217154189417,
+            "bootstrap_ci_95_loss": [
+              -0.022057344144130075,
+              0.0074969742573212095
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.031170833792267816,
+              0.009309755963201605
+            ],
+            "verdict": "inconclusive"
+          }
+        },
+        "active": {
+          "samples": [
+            {
+              "requests": 5303134,
+              "requests_per_second": 88243.34046267594,
+              "latency_us": {
+                "p50": 932,
+                "p90": 7375,
+                "p99": 18102,
+                "max": 64153,
+                "mean": 2683.7
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1073.0,
+              "peak_rss_kib": 161704,
+              "dashboards": [
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 46.38460289686918,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 46.38829205185175,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 46.3834511321038,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 46.37548651220277,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 46.38042604690418,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 46.37685236008838,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 46.37583565199748,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 46.37534391693771,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.096705,
+              "policy_reloads_triggered": 439,
+              "status_verified": true,
+              "round": 1,
+              "position": 3
+            },
+            {
+              "requests": 5476638,
+              "requests_per_second": 91137.43593394397,
+              "latency_us": {
+                "p50": 905,
+                "p90": 7113,
+                "p99": 17484,
+                "max": 52715,
+                "mean": 2589.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1055.0,
+              "peak_rss_kib": 161412,
+              "dashboards": [
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 36.68066823994741,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 36.68087689392269,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 36.67921851109713,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 36.681008741259575,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 36.6790578039363,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 36.67858024826273,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 36.67843739222735,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 36.67884768964723,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.092079,
+              "policy_reloads_triggered": 422,
+              "status_verified": true,
+              "round": 2,
+              "position": 2
+            },
+            {
+              "requests": 5375519,
+              "requests_per_second": 89454.25955532196,
+              "latency_us": {
+                "p50": 920,
+                "p90": 7308,
+                "p99": 18235,
+                "max": 54976,
+                "mean": 2661.4
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1068.0,
+              "peak_rss_kib": 161688,
+              "dashboards": [
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 28.580529497936368,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 28.580567106604576,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 28.580239937175065,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 28.5798850976862,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 28.57856622710824,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 28.57873641094193,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 28.579032971989363,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 28.578919465187937,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.092376,
+              "policy_reloads_triggered": 422,
+              "status_verified": true,
+              "round": 3,
+              "position": 1
+            },
+            {
+              "requests": 5354048,
+              "requests_per_second": 89099.62260307689,
+              "latency_us": {
+                "p50": 922,
+                "p90": 7298,
+                "p99": 17808,
+                "max": 68043,
+                "mean": 2651.2
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1071.0,
+              "peak_rss_kib": 159304,
+              "dashboards": [
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 46.65557655831799,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 46.65165562508628,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 46.65625091828406,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 46.65229074656963,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 46.65190346818417,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 46.65052457014099,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 46.64186317892745,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 46.643801510799676,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.09058,
+              "policy_reloads_triggered": 427,
+              "status_verified": true,
+              "round": 4,
+              "position": 0
+            },
+            {
+              "requests": 5367888,
+              "requests_per_second": 89321.07048810857,
+              "latency_us": {
+                "p50": 917,
+                "p90": 7340,
+                "p99": 18073,
+                "max": 58906,
+                "mean": 2668.3
+              },
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "cpu_seconds": 1071.0,
+              "peak_rss_kib": 161452,
+              "dashboards": [
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 42.257068219128996,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 42.26439888495952,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 42.265291347168386,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 42.26256316388026,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 42.2569114244543,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 42.25730192102492,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 42.256141777615994,
+                  "single_node_details": true
+                },
+                {
+                  "frames": 60,
+                  "rankings": 6,
+                  "timeline": 6,
+                  "http_errors": 0,
+                  "stream_errors": 0,
+                  "reconnects": 0,
+                  "period_pages": 2,
+                  "period_scans": 1,
+                  "period_age_seconds": 42.25977142294869,
+                  "single_node_details": true
+                }
+              ],
+              "peers": {
+                "before": [],
+                "after": [],
+                "covered": null
+              },
+              "wall_seconds": 60.096548,
+              "policy_reloads_triggered": 422,
+              "status_verified": true,
+              "round": 5,
+              "position": 3
+            }
+          ],
+          "requests_per_second_median": 89321.07048810857,
+          "requests_per_second_min": 88243.34046267594,
+          "requests_per_second_max": 91137.43593394397,
+          "spread": 0.03240103880811997,
+          "valid_measurements": true,
+          "latency_us_p99_median": 18073,
+          "peak_rss_kib_max": 161704,
+          "errors_total": {
+            "connect": 0,
+            "read": 0,
+            "write": 0,
+            "status": 0,
+            "timeout": 0
+          },
+          "dashboard_frames_per_second_min": 0.9983908435578955,
+          "versus_compiled_out": {
+            "throughput_loss": -0.007954394686022548,
+            "p99_increase": -0.0044069850713380765,
+            "bootstrap_ci_95_loss": [
+              -0.02846620678368894,
+              0.012954722160511523
+            ],
+            "bootstrap_ci_95_p99_increase": [
+              -0.03939343992088351,
+              0.008684589003208343
+            ],
+            "verdict": "inconclusive"
+          }
+        }
+      }
+    }
+  },
+  "verdict": "inconclusive",
+  "dashboard_workload": {
+    "endpoint": "/console/ws",
+    "stats_hz": 1,
+    "rankings_interval_seconds": 10,
+    "timeline_interval_seconds": 10,
+    "timeline_limit": 10,
+    "details": "rankings and open timeline for a single issuer",
+    "period": "24 hours plus yesterday, all selected nodes",
+    "period_page_rows": 96,
+    "period_refresh_seconds_after_completion": 60,
+    "geometry": "loaded once before warmup",
+    "client": "network emulation; rendering measured separately"
+  },
+  "limitations": [
+    "Cluster idle/active configurations run three consoles and six authenticated TLS peer directions. Boundary checks require fresh observations, stable boots and advancing watermarks; they do not measure every peer frame.",
+    "CPU and peak RSS describe the traffic-serving node 1. Cluster TLS ingress fixtures share the load-generator host; their memory is separate.",
+    "Loopback wrk shares the host with the daemons; inconclusive results are reported, never rounded to a pass.",
+    "Peak RSS is sampled every 100 ms from ps; short spikes can be missed.",
+    "The cluster case loads node 1 only; replication cost lands on all nodes.",
+    "Head capture is a console option: compiled-out and disabled configurations never capture, so the audited workload compares capture against no console."
+  ]
+}
