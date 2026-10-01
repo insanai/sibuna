@@ -58,10 +58,10 @@ on 1 October 2026 after work-level session binding, the read-by-read proxy relay
 budget and requirement tickets. The Linux benchmark checkout is `54f2e6a`; its application
 code matches `669229c`, with subsequent changes confined to harnesses and documentation.
 The recorded dirty flag reflects generated result files and is retained unchanged.
-The single-node forward-auth/capture-off matrix is also fresh and inconclusive, with 3.2–4.6%
-baseline throughput spread; all response and dashboard checks pass without transport errors.
-The other three single-node mode/capture latest files still describe September code until
-their fresh runs complete. The three-host October matrices described below use the
+Both single-node forward-auth matrices are also fresh and inconclusive: baseline throughput
+spread is 3.2–4.6% with capture off and 1.7–3.8% with capture on. All response and dashboard
+checks pass without transport errors. The two single-node reverse-proxy latest files still
+describe September code until their fresh runs complete. The three-host October matrices use the
 current application code. Binary sizes are those of the recorded build, including its
 symbols and embedded assets; the 34.5 MB Linux binary is not the earlier 3.3 MB macOS artifact.
 The whole-product run verifies all 24 expected workload statuses without transport failures.
