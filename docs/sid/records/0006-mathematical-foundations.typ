@@ -319,7 +319,7 @@ This theorem is the discharge of Axiom 4. In the design it replaces (SID 0002's 
 == Session tokens
 
 #definition([Token])[
-  A token is $"base64url"(Q || "Tag"_(K_t)(Q))$ with a 32-byte payload $Q = "ts"_8 || "exp"_8 || "rule"_8 || "fp"_8$ and a 16-byte tag: 64 characters.
+  A token is $"base64url"(Q || "Tag"_(K_t)(Q))$ with a 40-byte payload $Q = "ver"_1 || "alg"_1 || "bits"_1 || 0_5 || "ts"_8 || "exp"_8 || "rule"_8 || "fp"_8$ and a 16-byte tag: 75 characters. The work level $("alg", "bits")$ is what admission compares against a route's demand (amended 2026-10-01).
 ]
 
 The fingerprint binds the token to the client identity the daemon can observe (address and User-Agent, hashed under a third key with length separation so `("ab","c")` and `("a","bc")` differ), which is what defeats the solver-farm pattern in which one strong machine solves puzzles and distributes cookies.

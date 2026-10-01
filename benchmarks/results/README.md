@@ -33,6 +33,15 @@ that straddles the gate, is reported as inconclusive and fails the run rather th
 `console-impact-cluster-latest.json` instead. Peak RSS is sampled from `ps` every 100 ms. The
 host must be declared with `--host-label` and left quiet.
 
+Formal verdict versus paired reading: the `verdict` field of a result is the gate's own
+answer and is never rewritten. The console-impact records from the deployment host read
+inconclusive (single node: baseline spread above 1%) and fail (cluster: compiled-out
+comparison). SID 0007 additionally records a paired reading of the same files, comparing the
+console enabled and disabled within one binary, under which the console's runtime cost is at
+most 0.8% single-node and 0.5% clustered. That reading is a supplementary analysis adopted by
+the project owner as a release note; it does not change a verdict and must not be cited as a
+pass of the gate.
+
 No benchmark hook or timer is linked into request handling. Production metrics, local locks,
 reader-count atomics and incident enqueue still have real costs. These tests cannot establish
 zero total request overhead, universally optimal algorithms, or global network-edge equivalence.

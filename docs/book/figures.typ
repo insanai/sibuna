@@ -177,10 +177,12 @@
     ([BLAKE3 tag 16], 16 * f, green_light, green),
   ), [Challenge identifier: 36-byte payload + 16-byte keyed tag = 52 bytes, 70 URL-safe base64 characters])
   bytes_row(0.6, (
+    ([ver 1], 1 * f + 0.3, blue_light, blue), ([alg 1], 1 * f + 0.3, blue_light, blue),
+    ([bits 1], 1 * f + 0.3, blue_light, blue), ([res 5], 5 * f, blue_light, blue),
     ([timestamp 8], 8 * f, blue_light, blue), ([expiry 8], 8 * f, blue_light, blue),
     ([rule_hash 8], 8 * f, blue_light, blue), ([fingerprint 8], 8 * f, blue_light, blue),
     ([BLAKE3 tag 16], 16 * f, green_light, green),
-  ), [Session token: 32-byte payload + 16-byte keyed tag = 48 bytes, 64 URL-safe base64 characters])
+  ), [Session token: 40-byte payload + 16-byte keyed tag = 56 bytes, 75 URL-safe base64 characters])
 })
 
 // ------------------------------------------------------------------- GCRA

@@ -46,11 +46,12 @@ find a commitment with a particular acceptance probability.
 openings it has $32(1+32 times 18)=18464$ bytes. The opening bytes double; the 32-byte root
 is still sent once.
 
-*3.3.* Without `timestamp` a token could be minted "in the future" and outlive its policy;
-without `expiry` it would never die; without `rule_hash` a session earned on a cheap route
-would admit a request to an expensive one that demanded more work; without `fingerprint` a
-cookie copied to another machine would be accepted. The tag must cover all four because any
-field left outside it could be edited freely, and the verifier could not tell.
+*3.3.* Without the work level a session earned on a cheap route would admit a request to an
+expensive one that demanded more work; without `timestamp` a token could be minted "in the
+future" and outlive its policy; without `expiry` it would never die; without `rule_hash` the
+upstream could not learn which rule admitted the client; without `fingerprint` a cookie copied
+to another machine would be accepted. The tag must cover all five because any field left
+outside it could be edited freely, and the verifier could not tell.
 
 == Part IV: Protocol
 

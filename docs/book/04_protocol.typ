@@ -152,7 +152,7 @@ tests assert on `DOUBLE SPEND`, `FINGERPRINT MISMATCH`, `WRONG SOLUTION TYPE`, a
 ])
 
 #api_anchor([`MacToken.mint` and `MacToken.verify`], [
-  Serialises the 32-byte payload, appends the first 16 bytes of keyed BLAKE3 over it, and
+  Serialises the 40-byte payload, appends the first 16 bytes of keyed BLAKE3 over it, and
   verifies with a constant-time comparison.
 ], source: "libs/crypto/src/token.zig")
 
@@ -176,7 +176,7 @@ pub fn verify(key: *const [32]u8, token_str: []const u8, now: u64,
 The cookie is emitted as
 
 ```
-Set-Cookie: __sibuna_token=<64 chars>; Path=/; Max-Age=86400; HttpOnly;
+Set-Cookie: __sibuna_token=<75 chars>; Path=/; Max-Age=86400; HttpOnly;
     SameSite=Lax[; Secure]
 ```
 
@@ -185,6 +185,17 @@ top-level navigation, and `Secure` is added with `--secure-cookie` when TLS term
 of the daemon. Because the payload carries the keyed fingerprint of address and User-Agent, a
 cookie copied to another machine fails with `TokenBoundAddressMismatch`; the end-to-end test
 "the cookie is bound to the client identity" exercises exactly that path.
+
+The payload begins with a version byte and the *work level* the holder paid: the mechanism
+(Hashcash or PoSW) and the work bits actually solved, including any load-adaptive bump. A
+session clears a challenge only when its level reaches what the route demands, computed from
+the rule's difficulty through the same clamping the challenge itself applies. Levels are
+ordered, not named: a cookie earned at 24 bits also covers every 16-bit route, while a 16-bit
+cookie presented to a 24-bit route falls through to the stronger interstitial and the new
+cookie replaces the old one. `rule_hash` remains the audit identity of the rule that issued the
+challenge; it is reported upstream, never used for admission. WAF findings and explicit
+denials are never cleared by a session. The end-to-end test "a session earned on a cheaper
+route does not admit a route that demands more work" exercises both directions.
 
 #warning([Forwarded addresses], [
   Behind an ingress the client address arrives in `X-Forwarded-For`. Sibuna trusts that header

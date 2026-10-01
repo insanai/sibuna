@@ -261,8 +261,8 @@ inputs collide by concatenation, and keyed so fingerprints of other clients cann
 offline.
 
 #exercise([3.3], [
-  A token payload carries `timestamp`, `expiry`, `rule_hash`, and `fingerprint`. Explain what
-  each field prevents if it were removed, and why the tag must cover all four.
+  A token payload carries a work level, `timestamp`, `expiry`, `rule_hash`, and `fingerprint`.
+  Explain what each field prevents if it were removed, and why the tag must cover all five.
 ])
 
 #teach_back([

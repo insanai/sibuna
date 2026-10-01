@@ -111,7 +111,7 @@
     `X-Sibuna-Rule: <rule>`; hop-by-hop and incoming forwarded-for dropped. #linebreak()
     *Forward-auth reply*: `X-Sibuna-Status`, `X-Sibuna-Rule`, `X-Sibuna-Rule-Hash`. #linebreak()
     *Challenge reply*: `X-Sibuna-Status: CHALLENGE`. #linebreak()
-    *Cookie*: `__sibuna_token=<64 chars>; Path=/; Max-Age=<ttl>; HttpOnly; SameSite=Lax[; Secure]`
+    *Cookie*: `__sibuna_token=<75 chars>; Path=/; Max-Age=<ttl>; HttpOnly; SameSite=Lax[; Secure]`
   ]),
 )
 #v(4pt)
@@ -166,7 +166,7 @@
     `incidents_dropped`, `incident_write_failures` (all `sibuna_*_total`).
   ]),
   card([Numbers to remember], [
-    Challenge id 70 chars (36-byte payload + 16-byte tag) · token 64 chars (32 + 16) ·
+    Challenge id 70 chars (36-byte payload + 16-byte tag) · token 75 chars (40 + 16) ·
     proof bytes $32(1 + t(n+1))$ · PoSW depth $= "bits" - 3$, range 4–24 · request buffer
     64 KB · head limit 16 KB · body inspected 8 KB · spent set 16 × 4,096 · rate cells
     16 × 512 · bans 4,096 · incident ring 512 · batch 32 · campaign distance 0.35 ·

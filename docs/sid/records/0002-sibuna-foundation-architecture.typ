@@ -144,7 +144,9 @@ still have real atomic costs; they are not benchmark overhead.
 = Authentication and work
 
 A 32-byte master seed derives independent token, challenge, fingerprint and signing keys.
-The normal token is a 32-byte payload plus a 16-byte keyed BLAKE3 tag, URL-safe base64 encoded.
+The normal token is a 40-byte payload (version, the work level the holder solved, timestamp,
+expiry, rule hash, fingerprint) plus a 16-byte keyed BLAKE3 tag, URL-safe base64 encoded; a
+session admits only routes whose demanded work level it reaches (amended 2026-10-01).
 Ed25519 is an optional asymmetric token format. Tokens are bound to client address and
 User-Agent and expire. Trust forwarded identity only behind an ingress that overwrites it.
 

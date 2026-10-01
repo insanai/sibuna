@@ -52,8 +52,10 @@ docs); the book's Part II carries the full table with sources.
 Sibuna does not terminate ingress TLS or score bots with a model. Its opt-in console preview
 includes the animated country globe, incident investigation, policy editing, users, scoped API
 tokens, audit browsing, local node controls and authenticated multi-topic subscriptions.
-SID 0007 remains proposed while historical analysis, interface requirements and release
-acceptance are completed. See
+SID 0007 was committed on 2026-09-11. Its console-impact gate has measured records from a
+dedicated host, but the formal verdict there is inconclusive on baseline spread; the SID records
+a paired reading (console on versus off in the same binary) under which the console's cost is
+accepted as a note, and that note is not a formal pass. See
 [loading country data from the CLI](#loading-country-data) for country data setup.
 
 ## Research foundations
@@ -96,7 +98,8 @@ Common flags (`--help` lists all of them):
 | `--token-scheme mac\|ed25519` | `mac` | Session token construction |
 | `--gate` / `--shield` | shield | Surface |
 | `--rate-limit`, `--rate-window` | `100`, `10` | GCRA burst and window (seconds) |
-| `--idle-timeout` | `15` | HTTP connection idle timeout in seconds |
+| `--challenge-rate-limit` | `30` | Challenge issuances and verifications per window per client, separate from the request budget |
+| `--idle-timeout` | `15` | Longest silence in seconds: a request head must arrive within it, and during a proxied exchange it bounds the gap between relayed chunks on either socket |
 | `--websocket-idle-timeout` | `300` | Upgraded connection idle timeout; traffic in either direction refreshes it |
 | `--policy-file <json>` | none | Declarative rules (SID 0003) |
 | `--workers <n>` | CPU count | Accept threads; each connection is then served on its own thread |
@@ -175,6 +178,10 @@ Chunked request bodies are currently rejected. `Expect: 100-continue` is handled
 
 Rules match in order; `WEIGH` rules accumulate a score resolved against the thresholds; anything
 unmatched is challenged. Browsers are challenged on purpose: a User-Agent is free to forge.
+The loader fails closed: an unknown key, a misspelled action, a malformed address or an
+out-of-range number rejects the whole file with a diagnostic naming the rule and field, and the
+daemon does not start. The same holds for the command line: unknown options and out-of-range
+values stop startup instead of keeping a default.
 
 ## Storage and clusters (Edge)
 
@@ -395,8 +402,10 @@ Missing archives do not imply zero traffic. Retention and the ranking quota can 
 Drain, resume and clear local bans still act only on the serving node,
 require a preview and produce durable command receipts. Under `-Dcluster=true`,
 `zig build console-e2e` also runs a three-node membership, failover and quorum-loss scenario,
-and `zig build console-impact` measures the console's cost to the data plane (the latest
-full record measured inconclusive on a busy development host; the gate needs a quiet machine).
+and `zig build console-impact` measures the console's cost to the data plane. The records under
+`benchmarks/results/` from a dedicated host carry a formal verdict of inconclusive (single node,
+baseline spread) or fail (clustered, compiled-out comparison); SID 0007 accepts the console's
+cost under a separate paired reading, which is a supplementary analysis and not a formal pass.
 The impact harness checks all eight streams plus each dashboard's rankings and retained
 timeline queries, one configuration at a time. Full runs require
 `-- --geoip-data <production.snapshot> --host-label <conditions>`; `-- --quick` checks the

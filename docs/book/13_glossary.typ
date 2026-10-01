@@ -42,8 +42,11 @@
   challenge, solves it in a Web Worker, posts the solution, and reloads.])
 #term([Keyed BLAKE3], [The pseudorandom function behind Sibuna's key schedule, challenge tags,
   session tags, fingerprints, and challenge nonces.])
-#term([MAC token], [The default session cookie: a 32-byte payload (timestamp, expiry, rule hash,
-  fingerprint) and a 16-byte keyed BLAKE3 tag, verified in constant time.])
+#term([MAC token], [The default session cookie: a 40-byte payload (version, work level,
+  timestamp, expiry, rule hash, fingerprint) and a 16-byte keyed BLAKE3 tag, verified in
+  constant time.])
+#term([Work level], [The mechanism and work bits a session's holder actually solved, carried in
+  the token; a route admits a session only when its level reaches the route's requirement.])
 #term([Opening], [In a sequential-work proof, one leaf label plus the sibling labels along its
   path to the root; the verifier recomputes the path and compares with the commitment.])
 #term([Proof of Sequential Work (PoSW)], [Tier Two: the Cohen–Pietrzak hash graph whose labels

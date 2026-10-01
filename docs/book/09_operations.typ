@@ -34,7 +34,7 @@
   [`--mode, -m`], [`reverse_proxy`], [`reverse_proxy` or `forward_auth`],
   [`--workers, -w`], [CPU count], [Accept threads sharing the listening socket; each connection then gets its own thread],
   [`--max-connections`], [`1024`], [Connections served concurrently; further ones are answered `503`],
-  [`--idle-timeout`], [`15`], [Seconds an idle connection may hold its thread before the reaper closes it],
+  [`--idle-timeout`], [`15`], [Longest silence in seconds: a request head must arrive within it, and a proxied exchange is cut when no bytes move on either socket for that long],
   [`--trust-forwarded`], [off; on in forward-auth], [Honour `X-Forwarded-For` / `X-Real-IP` from the peer],
   [`--algorithm, -a`], [`posw`], [`posw` or `hashcash`],
   [`--difficulty, -d`], [`16`], [Work bits: Hashcash zero bits, or PoSW depth plus three],
@@ -48,6 +48,7 @@
   [`--gate` / `--shield`], [shield], [Surface selection],
   [`--rate-limit`], [`100`], [Requests per window per client (GCRA burst)],
   [`--rate-window`], [`10`], [Window in seconds],
+  [`--challenge-rate-limit`], [`30`], [Challenge issuances and verifications per window per client, separate from the request budget],
   [`--ban-seconds`], [`3600`], [Honeypot ban duration],
   [`--policy-file, -P`], [none], [Declarative JSON policy],
   [`--data-dir, -D`], [none], [Zaxonlite data directory; enables persistent storage],
@@ -537,6 +538,10 @@ and application upload/deadline limits at the ingress; the examples show the rou
 }
 ```
 
+The loader fails closed: an unknown key, a misspelled action, a malformed address or an
+out-of-range number rejects the whole file, the diagnostic names the rule and field, and the
+daemon does not start. A command line with an unknown option or an out-of-range value is
+refused the same way.
 `rules` replaces the built-in table when present; `ip_rules` feeds the reputation trie, which
 scales to thousands of prefixes; `waf: false` selects the Gate surface from the file.
 
