@@ -2,10 +2,18 @@
 // Every cell about another product was read from that product's public documentation
 // or release artefacts in September 2026; the chapter text records the sources.
 #import "theme.typ": *
+#import "figures.typ": tools_data, fmt_mib
 
 #let yes = text(fill: green, weight: "bold")[Yes]
 #let no = text(fill: gray)[—]
 #let plan(body) = text(fill: amber, size: 7.5pt)[#body]
+
+// Use the same Linux measurements as the empirical chapter, not a second baseline.
+#let host_footprint(product) = {
+  let run = tools_data().runs.filter(run => run.product == product).first()
+  [#fmt_mib(run.binary_bytes / 1024) binary; #fmt_mib(run.idle_rss_kib) idle RSS;
+    Linux fixture, console off]
+}
 
 #let feature_comparison_table() = {
   set text(size: 7.8pt)
@@ -22,8 +30,8 @@
     [Language, runtime], [Zig, no garbage collector, no libc when storage is off], [Go, garbage collected],
       [C/C++ proxy and detector, Go management, PostgreSQL], [Proprietary edge software],
     [Licence], [Source in the repository], [MIT], [GPL-3.0 management code; closed detector images], [Proprietary service],
-    [Host footprint], [3.3 MB binary, about 7 MB resident idle; 2.4 MB without storage],
-      [37 MB binary, about 40 MB resident under load], [1 CPU core, 1 GB RAM, 5 GB disk minimum, Docker 20.10+],
+    [Host footprint], host_footprint("sibuna-gate"),
+      host_footprint("anubis"), [1 CPU core, 1 GB RAM, 5 GB disk minimum, Docker 20.10+],
       [None on premises],
     [Proof-of-work admission], [Hashcash (bit-level) and Cohen–Pietrzak sequential work, chosen per rule; WebAssembly with JavaScript fallback],
       [SHA-256 Hashcash in hex nibbles (`fast`, `slow`); non-work `metarefresh` and `preact` challenges],
@@ -51,7 +59,7 @@
       [Shared signing key; shared Valkey store], [One stack per host], [Global anycast],
     [Metrics], [Prometheus at `/__sibuna/metrics`], [Prometheus on a separate port], [Console dashboards], [Dashboard and analytics],
     [TLS termination], [#no (ingress)], [#no (ingress)], [#yes], [#yes],
-    [Management console], [Opt-in preview; SID 0007 Proposed], [#no], [#yes], [#yes],
+    [Management console], [Opt-in; SID 0007 Committed], [#no], [#yes], [#yes],
     [Measured on the benchmark host], [#yes], [#yes], [#no (Docker only)], [#no (hosted)],
   )
 }

@@ -54,7 +54,8 @@
   Open `http://127.0.0.1:19446/console/` and replace the temporary password.
   Add `--console-location 1.3521,103.8198` to place the node on the globe.
   Remote access requires an HTTPS proxy, an explicit origin and trusted-proxy CIDRs;
-  follow Part IX. SID 0007 remains Proposed; the interface is not full acceptance evidence.
+  follow Part IX. SID 0007 is Committed; functional verification is complete, while the
+  console's performance isolation target remains unproved by the container measurements.
 ])
 #v(4pt)
 #grid(columns: (1fr, 1fr), gutter: 5pt,

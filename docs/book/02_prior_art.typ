@@ -127,11 +127,11 @@ Three differences carry most of the weight in a selection decision.
 
 #callout([Current product boundary], [
   Sibuna leaves ingress TLS termination to the deployment proxy and does not score bots with
-  a trained model or publish paid signatures. Its opt-in console preview now provides
-  authenticated dashboards, country enrichment, policy editing and local management.
-  Country lookup and storage work run outside request classification. SID 0007 remains
-  Proposed: cluster management and the full operational and performance acceptance gates
-  are still unfinished.
+  a trained model or publish paid signatures. Its opt-in console provides authenticated
+  dashboards, country enrichment, policy editing, investigation and cluster management.
+  Country lookup and storage work run outside request classification. SID 0007 is Committed;
+  functional verification is complete. The fresh container measurements do not establish
+  the console's strict performance isolation target; Part VIII records that distinction.
 ], kind: "warning")
 
 #exercise([2.1], [
