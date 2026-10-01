@@ -51,7 +51,8 @@ fn decodeRule(arena: std.mem.Allocator, row: []const ?[]const u8) !policy.Policy
     if (row[1]) |path| result.path_pattern = try arena.dupe(u8, path);
     if (row[2]) |ua| result.ua_pattern = try arena.dupe(u8, ua);
     if (row[4]) |value| result.difficulty = try std.fmt.parseInt(u32, value, 10);
-    if (row[5]) |algorithm| result.algorithm = try arena.dupe(u8, algorithm);
+    if (row[5]) |algorithm| result.algorithm = policy.Algorithm.parse(algorithm) orelse
+        return error.InvalidStoredPolicy;
     if (row[8]) |value| result.weight = try std.fmt.parseInt(i32, value, 10);
     if (row[6]) |text| {
         const value = try parseMatchers(std.json.Value, arena, text);

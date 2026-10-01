@@ -116,7 +116,7 @@ fn parseRule(
     try parsePatterns(allocator, obj, &r);
     try parseHeaders(allocator, obj, &r);
     parseCidrs(obj, &r);
-    try parseChallenge(allocator, obj, &r);
+    try parseChallenge(obj, &r);
     if (obj.get("weight")) |w| {
         if (w == .integer) r.weight = @intCast(std.math.clamp(w.integer, -1000, 1000));
     }
@@ -184,11 +184,7 @@ fn parseCidrs(obj: std.json.ObjectMap, r: *rule.PolicyRule) void {
     }
 }
 
-fn parseChallenge(
-    allocator: std.mem.Allocator,
-    obj: std.json.ObjectMap,
-    r: *rule.PolicyRule,
-) !void {
+fn parseChallenge(obj: std.json.ObjectMap, r: *rule.PolicyRule) !void {
     if (obj.get("challenge")) |ch_val| {
         if (ch_val == .object) {
             if (ch_val.object.get("difficulty")) |diff_val| {
@@ -198,7 +194,8 @@ fn parseChallenge(
             }
             if (ch_val.object.get("algorithm")) |alg_val| {
                 if (alg_val == .string) {
-                    r.algorithm = try allocator.dupe(u8, alg_val.string);
+                    r.algorithm = rule.Algorithm.parse(alg_val.string) orelse
+                        return error.InvalidChallenge;
                 }
             }
         }

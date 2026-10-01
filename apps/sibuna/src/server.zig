@@ -1017,6 +1017,14 @@ fn queryParam(query: []const u8, key: []const u8) ?[]const u8 {
     return null;
 }
 
+/// The policy and challenge libraries name the same two mechanisms independently.
+fn challengeAlgorithm(algorithm: policy.Algorithm) challenge.Algorithm {
+    return switch (algorithm) {
+        .hashcash => .hashcash,
+        .posw => .posw,
+    };
+}
+
 fn handleChallengeJson(ctx: *RequestContext) !void {
     const st = ctx.state();
     // The interstitial reports the path it is protecting so the rule that
@@ -1037,9 +1045,7 @@ fn handleChallengeJson(ctx: *RequestContext) !void {
 
     var spec = st.coordinator.default_spec;
     if (decision.difficulty > 0) spec.difficulty = decision.difficulty;
-    if (decision.algorithm) |alg| {
-        if (challenge.Algorithm.parse(alg)) |a| spec.algorithm = a;
-    }
+    if (decision.algorithm) |alg| spec.algorithm = challengeAlgorithm(alg);
     const rule_hash = crypto.ruleHash(decision.rule_name);
     const ch = st.coordinator.createChallengeWithSpec(
         ctx.client_ip,

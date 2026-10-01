@@ -23,6 +23,7 @@ pub const normalizer = @import("normalizer.zig");
 pub const embedding = @import("embedding.zig");
 
 pub const Action = engine.Action;
+pub const Algorithm = rule.Algorithm;
 pub const Header = engine.Header;
 pub const PolicyRule = engine.PolicyRule;
 pub const Decision = engine.Decision;

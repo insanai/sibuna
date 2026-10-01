@@ -50,7 +50,7 @@ pub fn chunk(owner: *Persistent, input: w.ImportChunk, now: u64) !p.StorageResul
             optional(document.value.ua_pattern),
             util.text(@tagName(document.value.action)),
             if (document.value.difficulty) |value| util.integer(value) else .null_value,
-            optional(document.value.algorithm),
+            optional(if (document.value.algorithm) |a| a.name() else null),
             .{ .integer = document.value.weight },
             util.text(headers),
             util.text(cidrs.buffered()),

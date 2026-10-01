@@ -869,7 +869,7 @@ test "persistent store: policy reload, reputation, forensics, campaigns" {
     try std.testing.expectEqual(policy.Action.challenge, d.action);
     try std.testing.expectEqualStrings("protect-secret", d.rule_name);
     try std.testing.expectEqual(@as(u32, 20), d.difficulty);
-    try std.testing.expectEqualStrings("posw", d.algorithm.?);
+    try std.testing.expectEqual(policy.Algorithm.posw, d.algorithm.?);
     try std.testing.expectEqual(
         policy.Action.deny,
         fresh.engine.evaluate("/", "198.51.100.7", "Mozilla").action,

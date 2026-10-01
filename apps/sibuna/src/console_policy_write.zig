@@ -78,7 +78,7 @@ fn commit(
             optionalText(document.value.ua_pattern),
             util.text(@tagName(document.value.action)),
             if (document.value.difficulty) |value| util.integer(value) else .null_value,
-            optionalText(document.value.algorithm),
+            optionalText(if (document.value.algorithm) |a| a.name() else null),
             .{ .integer = document.value.weight },
             util.text(headers),
             util.text(cidrs.buffered()),

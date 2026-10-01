@@ -112,7 +112,7 @@ fn summary(w: *std.Io.Writer, view: Summary) !void {
         .header_count = rule.header_count,
         .cidr_count = rule.cidr_count,
         .difficulty = rule.difficulty,
-        .algorithm = rule.algorithm,
+        .algorithm = if (rule.algorithm) |a| a.name() else null,
         .weight = rule.weight,
         .limits = rule.limits,
     }, .{}, w);
@@ -193,7 +193,7 @@ fn evaluate(
         .action = @tagName(result.action),
         .rule = result.rule_name,
         .difficulty = result.difficulty,
-        .algorithm = result.algorithm orelse @tagName(owner.cfg.algorithm),
+        .algorithm = if (result.algorithm) |a| a.name() else @tagName(owner.cfg.algorithm),
         .score = result.score,
         .audited_categories = result.audited,
         .limits = result.limits,

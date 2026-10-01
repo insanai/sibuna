@@ -31,6 +31,26 @@ pub const Action = enum(u8) {
     }
 };
 
+/// Proof-of-work mechanism a challenge rule may select; null inherits the daemon default.
+pub const Algorithm = enum(u8) {
+    hashcash,
+    posw,
+
+    pub fn parse(text: []const u8) ?Algorithm {
+        if (std.ascii.eqlIgnoreCase(text, "hashcash") or std.ascii.eqlIgnoreCase(text, "sha256"))
+            return .hashcash;
+        if (std.ascii.eqlIgnoreCase(text, "posw")) return .posw;
+        return null;
+    }
+
+    pub fn name(self: Algorithm) []const u8 {
+        return switch (self) {
+            .hashcash => "hashcash",
+            .posw => "posw",
+        };
+    }
+};
+
 pub const Header = struct {
     name: []const u8,
     value: []const u8,
@@ -86,8 +106,8 @@ pub const PolicyRule = struct {
     action: Action = .allow,
     /// Challenge difficulty override in work bits.
     difficulty: ?u32 = null,
-    /// `hashcash` or `posw`; null inherits the daemon default.
-    algorithm: ?[]const u8 = null,
+    /// Parsed at load time so a decision never borrows a snapshot-owned string.
+    algorithm: ?Algorithm = null,
     /// Score contributed by a WEIGH rule (negative values vouch for a client).
     weight: i32 = 0,
 

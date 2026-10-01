@@ -36,7 +36,7 @@ const Wire = struct {
     headers: std.json.Value = .null,
     cidrs: []const []const u8 = &.{},
     difficulty: ?u32 = null,
-    algorithm: ?enum { hashcash, posw } = null,
+    algorithm: ?rule.Algorithm = null,
     weight: i32 = 0,
     limits: ?@import("rule_limits.zig").Limits = null,
 };
@@ -57,7 +57,7 @@ pub fn parse(allocator: std.mem.Allocator, source: []const u8) ParseError!Docume
         .path_pattern = wire.path,
         .ua_pattern = wire.user_agent,
         .difficulty = wire.difficulty,
-        .algorithm = if (wire.algorithm) |algorithm| @tagName(algorithm) else null,
+        .algorithm = wire.algorithm,
         .weight = wire.weight,
         .limits = wire.limits,
         .limit_identity = @import("rule_limits.zig").managedIdentity(wire.id),
@@ -104,7 +104,7 @@ test "management compilation owns mailbox strings and preserves matcher semantic
     const document = try parse(arena.allocator(), &source);
     @memset(&source, 'x');
     try std.testing.expectEqualStrings("checkout", document.id);
-    try std.testing.expectEqualStrings("posw", document.value.algorithm.?);
+    try std.testing.expectEqual(rule.Algorithm.posw, document.value.algorithm.?);
     try std.testing.expect(document.value.matches("/checkout/pay", "8.8.8.8", "", &.{
         .{ .name = "x-api", .value = "v2" },
     }));

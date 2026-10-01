@@ -19,6 +19,7 @@ const rule_limits = @import("rule_limits.zig");
 const page_template = @import("page_template.zig");
 
 pub const Action = rule.Action;
+pub const Algorithm = rule.Algorithm;
 pub const Header = rule.Header;
 pub const PolicyRule = rule.PolicyRule;
 pub const MAX_RULES: usize = 128;
@@ -38,8 +39,8 @@ pub const Decision = struct {
     rule_name: []const u8,
     /// Challenge difficulty in work bits; zero when not challenging.
     difficulty: u32,
-    /// Rule-level algorithm override (`hashcash` or `posw`), if any.
-    algorithm: ?[]const u8 = null,
+    /// Rule-level algorithm override, if any; a value, never a borrowed string.
+    algorithm: ?Algorithm = null,
     /// Accumulated WEIGH score that contributed to the decision.
     score: i32 = 0,
     /// Category bits are findings, independent of the single terminal outcome.
