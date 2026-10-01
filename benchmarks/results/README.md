@@ -65,6 +65,17 @@ Chrome walkthrough of evidence states, exact clipboard contents, a private polic
 navigation, mobile filters and the moving globe. These records establish the checks stated
 within them; they are separate from performance measurements and field browser targets.
 
+The timestamped `console-impact-three-host-*-20261001*.json` records exercise three
+unprivileged containers on separate physical hosts with mutual TLS consensus and validated
+TLS management transport. The first forward-auth/capture-off record, ending at 14:41 UTC,
+overlapped a benchmark job in another container sharing node 3's physical host; retain it as
+exploratory, not quiet acceptance evidence. The other three matrices ran after that job stopped.
+All four have valid statuses, dashboard delivery and peer coverage, with formal verdicts of
+inconclusive. Their `meta.source_provenance` identifies the exact tested build; `meta.git` in
+the original SSH controller identifies its checkout at record time. The supplementary
+`linux-launch-harness-20261001.json` preserves the exact fixture controllers and replay inputs
+without exporting private keys or temporary credentials.
+
 No benchmark hook or timer is linked into request handling. Production metrics, local locks,
 reader-count atomics and incident enqueue still have real costs. These tests cannot establish
 zero total request overhead, universally optimal algorithms, or global network-edge equivalence.
