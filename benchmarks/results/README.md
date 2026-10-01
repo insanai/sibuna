@@ -60,8 +60,10 @@ code matches `669229c`, with subsequent changes confined to harnesses and docume
 The recorded dirty flag reflects generated result files and is retained unchanged.
 Both single-node forward-auth matrices are also fresh and inconclusive: baseline throughput
 spread is 3.2–4.6% with capture off and 1.7–3.8% with capture on. All response and dashboard
-checks pass without transport errors. The two single-node reverse-proxy latest files still
-describe September code until their fresh runs complete. The three-host October matrices use the
+checks pass without transport errors. Reverse-proxy/capture-off is fresh and inconclusive,
+with 0.9–7.4% baseline spread and an uncertainty interval crossing the gate even for the
+steadier workload. Reverse-proxy/capture-on still describes September code until its fresh
+run completes. The three-host October matrices use the
 current application code. Binary sizes are those of the recorded build, including its
 symbols and embedded assets; the 34.5 MB Linux binary is not the earlier 3.3 MB macOS artifact.
 The whole-product run verifies all 24 expected workload statuses without transport failures.
