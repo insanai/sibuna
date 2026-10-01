@@ -1052,12 +1052,14 @@ fn handleChallengeJson(ctx: *RequestContext) !void {
         ctx.user_agent,
         headers,
     );
-    AppState.releaseEngine(slot);
-
+    // The rule name borrows the snapshot; everything issuance needs is derived before the
+    // snapshot is released so a policy reload cannot free it underneath this request.
+    const rule_hash = crypto.ruleHash(decision.rule_name);
     var spec = st.coordinator.default_spec;
     if (decision.difficulty > 0) spec.difficulty = decision.difficulty;
     if (decision.algorithm) |alg| spec.algorithm = challengeAlgorithm(alg);
-    const rule_hash = crypto.ruleHash(decision.rule_name);
+    AppState.releaseEngine(slot);
+
     const ch = st.coordinator.createChallengeWithSpec(
         ctx.client_ip,
         ctx.user_agent,
