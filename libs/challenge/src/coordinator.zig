@@ -90,6 +90,19 @@ pub const id_raw_len = payload_len + tag_len;
 pub const id_len = b64.Encoder.calcSize(id_raw_len);
 const version: u8 = 1;
 
+/// What a challenged request demands of issuance: the challenge to issue and the identity of
+/// the rule that demanded it.
+pub const Requirement = struct {
+    spec: ChallengeSpec,
+    rule_hash: u64,
+};
+
+const ticket_version: u8 = 1;
+const ticket_payload_len = 28;
+pub const ticket_raw_len = ticket_payload_len + tag_len;
+/// 44 raw bytes, 59 URL-safe base64 characters.
+pub const ticket_len = b64.Encoder.calcSize(ticket_raw_len);
+
 pub const ChallengePayload = struct {
     id: [id_len]u8,
     algorithm: Algorithm,
@@ -216,6 +229,73 @@ pub const Coordinator = struct {
         var out: [8]u8 = undefined;
         hasher.final(&out);
         return std.mem.readInt(u64, &out, .little);
+    }
+
+    /// Seals the requirement a decision placed on one client, for one challenge lifetime.
+    /// The decision that demanded work authors it, so issuance never reconstructs the
+    /// protected request from a reported URL and the interstitial's own fetch headers. A ticket
+    /// is advisory: admission still compares the work a session paid, so a stale or replayed
+    /// ticket can only make its holder solve the wrong amount, never pass a route. The tag keeps
+    /// the requirement and rule identity server-authored.
+    pub fn requirementTicket(
+        self: *const Coordinator,
+        requirement: Requirement,
+        client_ip: []const u8,
+        user_agent: []const u8,
+        now: u64,
+    ) [ticket_len]u8 {
+        var raw: [ticket_raw_len]u8 = undefined;
+        raw[0] = ticket_version;
+        raw[1] = @intFromEnum(requirement.spec.algorithm);
+        raw[2] = @intCast(@min(requirement.spec.difficulty, 255));
+        raw[3] = requirement.spec.posw_challenges;
+        std.mem.writeInt(u64, raw[4..12], now, .little);
+        std.mem.writeInt(u64, raw[12..20], self.fingerprint(client_ip, user_agent), .little);
+        std.mem.writeInt(u64, raw[20..28], requirement.rule_hash, .little);
+        raw[ticket_payload_len..].* = self.ticketTag(raw[0..ticket_payload_len]);
+        var out: [ticket_len]u8 = undefined;
+        _ = b64.Encoder.encode(&out, &raw);
+        return out;
+    }
+
+    /// The sealed requirement, or null for anything not authored here for this client within
+    /// the challenge lifetime; callers then fall back to evaluating the reported target.
+    pub fn openTicket(
+        self: *const Coordinator,
+        text: []const u8,
+        client_ip: []const u8,
+        user_agent: []const u8,
+        now: u64,
+    ) ?Requirement {
+        if (text.len != ticket_len) return null;
+        var raw: [ticket_raw_len]u8 = undefined;
+        b64.Decoder.decode(&raw, text) catch return null;
+        const expected = self.ticketTag(raw[0..ticket_payload_len]);
+        const given: [tag_len]u8 = raw[ticket_payload_len..].*;
+        if (!std.crypto.timing_safe.eql([tag_len]u8, expected, given)) return null;
+        if (raw[0] != ticket_version or raw[1] > 1) return null;
+        if (raw[3] < crypto.posw.min_challenges or raw[3] > crypto.posw.max_challenges)
+            return null;
+        const issued = std.mem.readInt(u64, raw[4..12], .little);
+        if (issued > now + 60 or now > issued + self.challenge_ttl) return null;
+        const fingerprint_given = std.mem.readInt(u64, raw[12..20], .little);
+        if (fingerprint_given != self.fingerprint(client_ip, user_agent)) return null;
+        return .{
+            .spec = .{
+                .algorithm = @enumFromInt(raw[1]),
+                .difficulty = raw[2],
+                .posw_challenges = raw[3],
+            },
+            .rule_hash = std.mem.readInt(u64, raw[20..28], .little),
+        };
+    }
+
+    fn ticketTag(self: *const Coordinator, payload: *const [ticket_payload_len]u8) [tag_len]u8 {
+        var hasher = Blake3.init(.{ .key = self.keys.requirement });
+        hasher.update(payload);
+        var out: [32]u8 = undefined;
+        hasher.final(&out);
+        return out[0..tag_len].*;
     }
 
     pub fn createChallenge(
@@ -488,6 +568,31 @@ test "hashcash challenge: issue, solve, verify, mint, replay, binding" {
     try std.testing.expect(
         forged_result == error.InvalidChallengeTag or forged_result == error.MalformedChallenge,
     );
+}
+
+test "requirement tickets carry a decision to its client only, within the challenge lifetime" {
+    const t = std.testing;
+    const ctx = try t.allocator.create(TestCtx);
+    defer t.allocator.destroy(ctx);
+    ctx.* = .{};
+    ctx.init(.{ .algorithm = .hashcash, .difficulty = 8 });
+    const now: u64 = 1_700_000_000;
+    const ip = "203.0.113.9";
+    const ua = "Mozilla/5.0";
+    const requirement: Requirement = .{
+        .spec = .{ .algorithm = .posw, .difficulty = 19, .posw_challenges = 12 },
+        .rule_hash = 0xfeed,
+    };
+    const ticket = ctx.coord.requirementTicket(requirement, ip, ua, now);
+    try t.expectEqual(@as(usize, 59), ticket.len);
+    try t.expectEqualDeep(requirement, ctx.coord.openTicket(&ticket, ip, ua, now + 10).?);
+    // Another client, an expired ticket and a forged byte are all refused, never trusted.
+    try t.expect(ctx.coord.openTicket(&ticket, "203.0.113.10", ua, now) == null);
+    try t.expect(ctx.coord.openTicket(&ticket, ip, ua, now + 601) == null);
+    var forged = ticket;
+    forged[7] = if (forged[7] == 'A') 'B' else 'A';
+    try t.expect(ctx.coord.openTicket(&forged, ip, ua, now) == null);
+    try t.expect(ctx.coord.openTicket(ticket[0..20], ip, ua, now) == null);
 }
 
 test "posw challenge round trip and ed25519 token scheme" {

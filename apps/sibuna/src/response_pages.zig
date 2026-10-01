@@ -7,7 +7,7 @@ const net = @import("net");
 const policy = @import("policy");
 const page_template = policy.page_template;
 const server = @import("server.zig");
-const solver = @import("challenge_page.zig").solverBlock;
+const challenge_page = @import("challenge_page.zig");
 
 const security_policy = "Content-Security-Policy: default-src 'none'; base-uri 'none'; " ++
     "form-action 'none'; frame-ancestors 'none'; style-src 'unsafe-inline'; img-src 'self'\r\n";
@@ -16,6 +16,8 @@ pub const Extra = struct {
     retry_after: u32 = 0,
     reason: []const u8 = "",
     headers: []const u8 = "",
+    /// The challenged request's requirement ticket, carried in the interstitial's markup.
+    ticket: []const u8 = "",
 };
 
 fn copy(st: *server.AppState, kind: page_template.Kind, out: *page_template.Template) void {
@@ -48,13 +50,14 @@ pub fn respond(
     var template: page_template.Template = undefined;
     copy(ctx.state(), kind, &template);
     var id: [16]u8 = undefined;
+    var block: [challenge_page.block_capacity]u8 = undefined;
     const values: page_template.Values = .{
         .status = @intFromEnum(status),
         .reason = if (extra.reason.len != 0) extra.reason else text,
         .retry_after = extra.retry_after,
         .request_id = requestId(ctx, &id),
         .node = ctx.state().config.cluster_node,
-        .challenge = if (kind == .challenge) solver() else "",
+        .challenge = if (kind == .challenge) challenge_page.block(extra.ticket, &block) else "",
     };
     const csp = if (kind == .challenge)
         @import("challenge_page.zig").security_policy

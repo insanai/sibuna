@@ -20,6 +20,9 @@ pub const Keys = struct {
     ed25519_seed: [32]u8,
     /// Key that hashes client identities in stores and logs.
     fingerprint: [32]u8,
+    /// MAC key for requirement tickets, which carry a challenged request's demand to issuance.
+    /// Not node-bound: any member sharing the seed honours a ticket another member authored.
+    requirement: [32]u8,
 
     pub fn derive(seed: *const [seed_len]u8) Keys {
         return .{
@@ -27,6 +30,7 @@ pub const Keys = struct {
             .challenge = subkey(seed, "sibuna/challenge/v1"),
             .ed25519_seed = subkey(seed, "sibuna/ed25519/v1"),
             .fingerprint = subkey(seed, "sibuna/fingerprint/v1"),
+            .requirement = subkey(seed, "sibuna/requirement/v1"),
         };
     }
 };
@@ -62,6 +66,8 @@ test "derived keys are distinct per purpose and stable" {
     try std.testing.expectEqualSlices(u8, &a.token, &b.token);
     try std.testing.expect(!std.mem.eql(u8, &a.token, &a.challenge));
     try std.testing.expect(!std.mem.eql(u8, &a.challenge, &a.ed25519_seed));
+    try std.testing.expect(!std.mem.eql(u8, &a.requirement, &a.token));
+    try std.testing.expect(!std.mem.eql(u8, &a.requirement, &a.challenge));
     const other = Keys.derive(&([_]u8{8} ** 32));
     try std.testing.expect(!std.mem.eql(u8, &a.token, &other.token));
 }

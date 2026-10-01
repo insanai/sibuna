@@ -116,8 +116,14 @@
 
         try {
             statusEl.textContent = 'Acquiring proof-of-work challenge...';
+            // The requirement this page was served with decides the work; the reported URL is
+            // only the fallback for pages served without one.
+            const requirement = document.getElementById('sibuna-requirement');
+            const ticket = requirement ? requirement.getAttribute('data-ticket') : '';
             const target = encodeURIComponent(window.location.pathname + window.location.search);
-            const challengeResp = await fetchWithRetry('/__sibuna/challenge.json?path=' + target);
+            const issue = '/__sibuna/challenge.json?path=' + target +
+                (ticket ? '&need=' + encodeURIComponent(ticket) : '');
+            const challengeResp = await fetchWithRetry(issue);
             const spec = await challengeResp.json();
             const tier = spec.algorithm === 'posw' ? 'sequential-work proof' : 'hashcash proof';
             statusEl.textContent = 'Computing ' + tier + ' (WASM)...';

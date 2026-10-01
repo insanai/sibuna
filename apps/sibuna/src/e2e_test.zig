@@ -176,6 +176,25 @@ fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
         .action = .challenge,
         .difficulty = 12,
     });
+    // An exact path (the query is never part of it) and a rule on a navigation header that the
+    // interstitial's own fetch does not send: both need the requirement carried, not recomputed.
+    if (f == proxy_fixture) {
+        prependRule(&f.engine, .{
+            .name = "exact-route",
+            .path_pattern = "^/exact$",
+            .action = .challenge,
+            .difficulty = 12,
+        });
+        var navigate = policy.PolicyRule{
+            .name = "navigate-route",
+            .path_pattern = "/navigate/*",
+            .action = .challenge,
+            .difficulty = 13,
+        };
+        navigate.headers[0] = .{ .name = "Sec-Fetch-Mode", .pattern = "navigate" };
+        navigate.header_count = 1;
+        prependRule(&f.engine, navigate);
+    }
     if (f == audit_fixture) {
         f.engine.inspection_modes = .{ .sqli = .audit, .path_traversal = .disabled };
         f.engine.ip_trie.insertCidr("203.0.113.223/32", .deny) catch unreachable;
@@ -542,10 +561,16 @@ const Challenge = struct {
 };
 
 fn fetchChallenge(port: u16, ip: []const u8, ua: []const u8, path: []const u8) !Challenge {
+    var query: [256]u8 = undefined;
+    return issue(port, ip, ua, try std.fmt.bufPrint(&query, "path={s}", .{path}));
+}
+
+/// Requests a challenge with an explicit issuance query (a reported path, a ticket or both).
+fn issue(port: u16, ip: []const u8, ua: []const u8, query: []const u8) !Challenge {
     var resp = try std.testing.allocator.create(Response);
     defer std.testing.allocator.destroy(resp);
-    var url: [256]u8 = undefined;
-    const target = try std.fmt.bufPrint(&url, "/__sibuna/challenge.json?path={s}", .{path});
+    var url: [512]u8 = undefined;
+    const target = try std.fmt.bufPrint(&url, "/__sibuna/challenge.json?{s}", .{query});
     try get(port, target, ip, ua, "", resp);
     try std.testing.expectEqual(@as(u16, 200), resp.status());
     const body = resp.body();
@@ -669,9 +694,13 @@ test "hashcash flow: challenge, solve, verify, cookie, proxied, replay and bindi
 
 /// Fetches, solves and verifies a hashcash challenge for `path`, returning the cookie header.
 fn hashcashSession(port: u16, ip: []const u8, path: []const u8, out: *[512]u8) ![]const u8 {
+    return solveSession(port, ip, try fetchChallenge(port, ip, browser_ua, path), out);
+}
+
+/// Solves and verifies an issued hashcash challenge, returning the cookie header.
+fn solveSession(port: u16, ip: []const u8, ch: Challenge, out: *[512]u8) ![]const u8 {
     const resp = try std.testing.allocator.create(Response);
     defer std.testing.allocator.destroy(resp);
-    const ch = try fetchChallenge(port, ip, browser_ua, path);
     const nonce = crypto.pow.solveHashcashBits(ch.idSlice(), ch.difficulty, 1 << 26).?;
     var body_buf: [256]u8 = undefined;
     const body = try std.fmt.bufPrint(
@@ -716,6 +745,101 @@ test "a session earned on a cheaper route does not admit a route that demands mo
     // Neither session clears a WAF denial.
     try get(p, "/search?q=1%27%20union%20select%20null--", ip, browser_ua, strong, resp);
     try std.testing.expectEqual(@as(u16, 403), resp.status());
+}
+
+/// The requirement an interstitial carries, copied out as the solver script reads it.
+fn ticketOf(resp: *const Response, out: *[128]u8) ![]const u8 {
+    const marker = "data-ticket=\"";
+    const text = resp.text();
+    const start = (std.mem.indexOf(u8, text, marker) orelse return error.NoTicket) + marker.len;
+    const end = std.mem.indexOfScalarPos(u8, text, start, '"') orelse return error.NoTicket;
+    @memcpy(out[0 .. end - start], text[start..end]);
+    return out[0 .. end - start];
+}
+
+test "issuance honours the requirement the challenged request was given" {
+    boot_once.call();
+    const p = proxy_fixture.port;
+    const ip = "203.0.113.14";
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    var ticket_buf: [128]u8 = undefined;
+    var query_buf: [256]u8 = undefined;
+    var cookie_buf: [512]u8 = undefined;
+    // An exact-path rule behind a query string: admission evaluates the path alone.
+    try get(p, "/exact?view=1", ip, browser_ua, browser_accept, resp);
+    try std.testing.expectEqualStrings("CHALLENGE", resp.header("x-sibuna-status").?);
+    const ticket = try ticketOf(resp, &ticket_buf);
+    const carried = try std.fmt.bufPrint(&query_buf, "path=%2Fexact%3Fview%3D1&need={s}", .{
+        ticket,
+    });
+    const ch = try issue(p, ip, browser_ua, carried);
+    try std.testing.expectEqual(@as(u32, 12), ch.difficulty);
+    // Without a ticket the reported URL is split exactly as the request line is.
+    const reported = try issue(p, ip, browser_ua, "path=%2Fexact%3Fview%3D1");
+    try std.testing.expectEqual(@as(u32, 12), reported.difficulty);
+    const cookie = try solveSession(p, ip, ch, &cookie_buf);
+    try get(p, "/exact?view=1", ip, browser_ua, cookie, resp);
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+    try std.testing.expect(resp.contains("ORIGIN|GET /exact?view=1"));
+    // Non-browser clients receive an issuance URL that already carries the requirement.
+    try get(p, "/exact?view=1", ip, browser_ua, "Accept: application/json\r\n", resp);
+    try std.testing.expectEqual(@as(u16, 401), resp.status());
+    try std.testing.expect(resp.contains("/__sibuna/challenge.json?need="));
+}
+
+test "a requirement decided on navigation headers survives the interstitial's own fetch" {
+    boot_once.call();
+    const p = proxy_fixture.port;
+    const ip = "203.0.113.15";
+    const navigate = "Sec-Fetch-Mode: navigate\r\n" ++ browser_accept;
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    var ticket_buf: [128]u8 = undefined;
+    var query_buf: [256]u8 = undefined;
+    var cookie_buf: [512]u8 = undefined;
+    try get(p, "/navigate/home", ip, browser_ua, navigate, resp);
+    const ticket = try ticketOf(resp, &ticket_buf);
+    const carried = try std.fmt.bufPrint(&query_buf, "path=%2Fnavigate%2Fhome&need={s}", .{
+        ticket,
+    });
+    // The fetch carries no navigation header; the ticket still asks for the decided work.
+    const ch = try issue(p, ip, browser_ua, carried);
+    try std.testing.expectEqual(@as(u32, 13), ch.difficulty);
+    const session = try solveSession(p, ip, ch, &cookie_buf);
+    var header_buf: [640]u8 = undefined;
+    const headers = try std.fmt.bufPrint(&header_buf, "{s}Sec-Fetch-Mode: navigate\r\n", .{
+        session,
+    });
+    try get(p, "/navigate/home", ip, browser_ua, headers, resp);
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+    try std.testing.expect(resp.contains("ORIGIN|GET /navigate/home"));
+    // A ticket is bound to its client: another address falls back to evaluating the URL.
+    const elsewhere = try issue(p, "203.0.113.16", browser_ua, carried);
+    try std.testing.expectEqual(@as(u32, 8), elsewhere.difficulty);
+}
+
+test "an ingress error page carries the requirement of the original target" {
+    boot_once.call();
+    const p = auth_fixture.port;
+    const ip = "203.0.113.17";
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    var ticket_buf: [128]u8 = undefined;
+    var query_buf: [256]u8 = undefined;
+    const original = "X-Original-URI: /private?view=1\r\n" ++ browser_accept;
+    try get(p, "/__sibuna/challenge", ip, browser_ua, original, resp);
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+    const ticket = try ticketOf(resp, &ticket_buf);
+    const ch = try issue(p, ip, browser_ua, try std.fmt.bufPrint(&query_buf, "need={s}", .{
+        ticket,
+    }));
+    try std.testing.expectEqualStrings("posw", ch.algorithm[0..ch.alg_len]);
+    try std.testing.expectEqual(@as(u32, 6), ch.difficulty);
+    // Without the original URI the page renders with no requirement and issuance falls back.
+    try get(p, "/__sibuna/challenge", ip, browser_ua, browser_accept, resp);
+    try std.testing.expectError(error.NoTicket, ticketOf(resp, &ticket_buf));
+    try std.testing.expect(resp.contains("/__sibuna/challenge.json"));
 }
 
 test "posw flow through forward-auth mode with ed25519 tokens" {

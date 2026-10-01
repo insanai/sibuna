@@ -607,13 +607,53 @@ fn requestDecision(ctx: *RequestContext, name: *[policy.engine.MAX_RULE_NAME]u8)
     return decision;
 }
 
+/// The challenge a decision demands. Admission's session requirement, the ticket a challenged
+/// response carries and issuance's fallback all derive from this one function, so the work a
+/// session is asked for is exactly the work it is later checked against.
+fn challengeSpec(st: *const AppState, decision: policy.Decision) challenge.ChallengeSpec {
+    var spec = st.coordinator.default_spec;
+    if (decision.difficulty > 0) spec.difficulty = decision.difficulty;
+    if (decision.algorithm) |algorithm| spec.algorithm = challengeAlgorithm(algorithm);
+    return spec;
+}
+
 /// The work a decision demands of a session, in the token's own unit.
 fn requiredWork(st: *const AppState, decision: policy.Decision) challenge.WorkLevel {
-    const algorithm = if (decision.algorithm) |a|
-        challengeAlgorithm(a)
-    else
-        st.coordinator.default_spec.algorithm;
-    return challenge.requiredWork(algorithm, decision.difficulty);
+    const spec = challengeSpec(st, decision);
+    return challenge.requiredWork(spec.algorithm, spec.difficulty);
+}
+
+/// The requirement a challenged response carries to issuance, sealed for this client.
+fn requirementTicket(ctx: *RequestContext, decision: policy.Decision) [challenge.ticket_len]u8 {
+    const st = ctx.state();
+    return st.coordinator.requirementTicket(.{
+        .spec = challengeSpec(st, decision),
+        .rule_hash = crypto.ruleHash(decision.rule_name),
+    }, ctx.client_ip, ctx.user_agent, ctx.now);
+}
+
+/// Evaluates a protected request that is described rather than present (the interstitial's
+/// reported URL, an ingress error page's original URI) with this request's identity and
+/// headers. The rule name is copied out before the snapshot is released.
+fn evaluateTarget(
+    ctx: *RequestContext,
+    target: net.http.Target,
+    name: *[policy.engine.MAX_RULE_NAME]u8,
+) policy.Decision {
+    const st = ctx.state();
+    var hdr_buf: [net.MAX_HEADERS]policy.Header = undefined;
+    const slot = st.acquireEngine();
+    defer AppState.releaseEngine(slot);
+    var decision = slot.engine.evaluateRequest(.{
+        .path = target.path,
+        .query = target.query,
+        .client_ip = ctx.client_ip,
+        .user_agent = ctx.user_agent,
+        .headers = policyHeaders(ctx.req, &hdr_buf),
+    });
+    @memcpy(name[0..decision.rule_name.len], decision.rule_name);
+    decision.rule_name = name[0..decision.rule_name.len];
+    return decision;
 }
 
 fn applyPolicy(ctx: *RequestContext) !bool {
@@ -669,7 +709,8 @@ fn applyPolicy(ctx: *RequestContext) !bool {
         .challenge, .weigh => {
             Metrics.bump(&st.metrics.challenged);
             recordOutcome(ctx, .challenged, 401);
-            try writeChallengeResponse(ctx);
+            const ticket = requirementTicket(ctx, decision);
+            try writeChallengeResponse(ctx, &ticket);
             return ctx.keep_alive;
         },
     }
@@ -846,17 +887,19 @@ fn recordIncident(ctx: *RequestContext, category: []const u8) void {
     });
 }
 
-fn writeChallengeResponse(ctx: *RequestContext) !void {
+fn writeChallengeResponse(ctx: *RequestContext, ticket: []const u8) !void {
     // A forward-auth success admits the original request. Keep the interstitial at 401
     // so ingresses return its HTML without accidentally forwarding an unverified request.
     const status: net.response.Status = if (ctx.state().config.mode == .forward_auth)
         .unauthorized
     else
         .ok;
-    return writeChallenge(ctx, status);
+    return writeChallenge(ctx, status, ticket);
 }
 
-fn writeChallenge(ctx: *RequestContext, status: net.response.Status) !void {
+/// Browsers receive the interstitial with the requirement in its markup; other clients receive
+/// an issuance URL that already carries it.
+fn writeChallenge(ctx: *RequestContext, status: net.response.Status, ticket: []const u8) !void {
     const extra = net.response.Extra{
         .headers = "X-Sibuna-Status: CHALLENGE\r\n",
         .keep_alive = ctx.keep_alive,
@@ -865,10 +908,30 @@ fn writeChallenge(ctx: *RequestContext, status: net.response.Status) !void {
     if (ctx.req.acceptsHtml()) {
         return @import("response_pages.zig").respond(ctx, .challenge, status, "", .{
             .headers = "X-Sibuna-Status: CHALLENGE\r\n",
+            .ticket = ticket,
         });
     }
-    const json = "{\"error\":\"challenge_required\",\"challenge\":\"/__sibuna/challenge.json\"}";
+    var body: [192]u8 = undefined;
+    const json = try std.fmt.bufPrint(
+        &body,
+        "{{\"error\":\"challenge_required\",\"challenge\":\"/__sibuna/challenge.json{s}{s}\"}}",
+        .{ if (ticket.len == 0) "" else "?need=", ticket },
+    );
     try net.response.write(w, .unauthorized, "application/json", json, extra);
+}
+
+/// An ingress that serves the interstitial from its error handler (the nginx recipe) attaches
+/// the original URI, and the page then carries the requirement that request was given,
+/// evaluated from the same request headers. Without trusted metadata the page has none.
+fn errorPageTicket(ctx: *RequestContext, out: *[challenge.ticket_len]u8) []const u8 {
+    const trusted = ctx.state().config.trustsForwarded();
+    const original = (net.forwarded.target(ctx.req, trusted) catch return "") orelse return "";
+    var name: [policy.engine.MAX_RULE_NAME]u8 = undefined;
+    const target: net.http.Target = .{ .path = original.path, .query = original.query };
+    const decision = evaluateTarget(ctx, target, &name);
+    if (decision.action != .challenge and decision.action != .weigh) return "";
+    out.* = requirementTicket(ctx, decision);
+    return out;
 }
 
 /// Hands an admitted request to the origin (reverse proxy) or answers the
@@ -1012,7 +1075,8 @@ fn handleInternal(ctx: *RequestContext) !void {
     } else if (std.mem.eql(u8, path, "/__sibuna/challenge")) {
         // The ingress error handler can serve the page without a second authorization
         // decision. The browser retains its original URL for issuance and reload.
-        try writeChallenge(ctx, .ok);
+        var ticket: [challenge.ticket_len]u8 = undefined;
+        try writeChallenge(ctx, .ok, errorPageTicket(ctx, &ticket));
     } else if (std.mem.eql(u8, path, "/__sibuna/challenge.json")) {
         try handleChallengeJson(ctx);
     } else if (std.mem.eql(u8, path, "/__sibuna/verify") and ctx.req.method == .POST) {
@@ -1075,27 +1139,12 @@ fn challengeAlgorithm(algorithm: policy.Algorithm) challenge.Algorithm {
 
 fn handleChallengeJson(ctx: *RequestContext) !void {
     const st = ctx.state();
-    // The interstitial reports the path it is protecting so the rule that
-    // demanded the challenge decides the difficulty and algorithm.
-    var path_buf: [1024]u8 = undefined;
-    const raw_path = queryParam(ctx.req.query, "path") orelse "/";
-    const target_path = policy.normalizer.percentDecode(raw_path, &path_buf);
-    var hdr_buf: [net.MAX_HEADERS]policy.Header = undefined;
-    const headers = policyHeaders(ctx.req, &hdr_buf);
-    const slot = st.acquireEngine();
-    const decision = slot.engine.evaluateWithHeaders(
-        target_path,
-        ctx.client_ip,
-        ctx.user_agent,
-        headers,
-    );
-    // The rule name borrows the snapshot; everything issuance needs is derived before the
-    // snapshot is released so a policy reload cannot free it underneath this request.
-    const rule_hash = crypto.ruleHash(decision.rule_name);
-    var spec = st.coordinator.default_spec;
-    if (decision.difficulty > 0) spec.difficulty = decision.difficulty;
-    if (decision.algorithm) |alg| spec.algorithm = challengeAlgorithm(alg);
-    AppState.releaseEngine(slot);
+    // The challenged response's own requirement decides the work; only without a valid ticket
+    // is the interstitial's reported URL evaluated, through the same target split admission uses.
+    const requirement = ticketRequirement(ctx) orelse (try reportedRequirement(ctx)) orelse
+        return;
+    const spec = requirement.spec;
+    const rule_hash = requirement.rule_hash;
 
     const ch = st.coordinator.createChallengeWithSpec(
         ctx.client_ip,
@@ -1121,6 +1170,37 @@ fn handleChallengeJson(ctx: *RequestContext) !void {
         json,
         .{ .keep_alive = ctx.keep_alive },
     );
+}
+
+fn ticketRequirement(ctx: *RequestContext) ?challenge.Requirement {
+    const text = queryParam(ctx.req.query, "need") orelse return null;
+    return ctx.state().coordinator.openTicket(text, ctx.client_ip, ctx.user_agent, ctx.now);
+}
+
+/// Longest reported target issuance evaluates; the forwarded-metadata bound. A longer one is
+/// refused, never truncated into a different path.
+const max_reported_target = 8192;
+
+/// A client without a ticket (an API client, an expired page) reports the URL it is protecting.
+fn reportedRequirement(ctx: *RequestContext) !?challenge.Requirement {
+    const raw = queryParam(ctx.req.query, "path") orelse "/";
+    if (raw.len > max_reported_target) {
+        try net.response.writeText(
+            ctx.writer(),
+            .uri_too_long,
+            "Challenge target too long",
+            ctx.keep_alive,
+        );
+        return null;
+    }
+    var decoded: [max_reported_target]u8 = undefined;
+    const target = net.http.splitTarget(policy.normalizer.percentDecode(raw, &decoded));
+    var name: [policy.engine.MAX_RULE_NAME]u8 = undefined;
+    const decision = evaluateTarget(ctx, target, &name);
+    return .{
+        .spec = challengeSpec(ctx.state(), decision),
+        .rule_hash = crypto.ruleHash(decision.rule_name),
+    };
 }
 
 const SolutionParse = union(enum) {
