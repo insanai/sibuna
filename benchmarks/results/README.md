@@ -53,10 +53,15 @@ most 0.8% single-node and 0.5% clustered. That reading is a supplementary analys
 the project owner as a release note; it does not change a verdict and must not be cited as a
 pass of the gate.
 
-Currency: the performance figures in the latest files were measured before the request-path changes of 1 October 2026
-(work-level session binding, the read-by-read proxy relay, the challenge budget and requirement
-tickets). Those changes alter admission and relay work per request, so primitive, whole-product,
-distributed and console-impact figures describe the earlier code until the harnesses are rerun.
+Currency: primitives, admission, distributed and local-cluster latest files were regenerated
+on 1 October 2026 after work-level session binding, the read-by-read proxy relay, the challenge
+budget and requirement tickets. The Linux benchmark checkout is `54f2e6a`; its application
+code matches `669229c`, with subsequent changes confined to harnesses and documentation.
+The recorded dirty flag reflects generated result files and is retained unchanged.
+Whole-product and single-node console-impact latest files still describe the September code
+until their fresh runs complete. The three-host October matrices described below use the
+current application code. Binary sizes are those of the recorded build, including its
+symbols and embedded assets; the 34.5 MB Linux binary is not the earlier 3.3 MB macOS artifact.
 
 `linux-functional-review-20261001.json` records verification after those changes: 588 native
 tests, the clustered console suite, the shipped Wasm behavior test and functional checks on
