@@ -15,7 +15,7 @@ import subprocess
 import tempfile
 import time
 import urllib.parse
-from run import ROOT, free_port, metadata, record, stop
+from run import ROOT, free_port, metadata, pin_cpus, record, stop
 
 API = '/.within.website/x/cmd/anubis/api/'
 HEADERS = {'User-Agent': 'Mozilla/5.0 SibunaBenchmark', 'Accept': 'text/html', 'Accept-Encoding': 'gzip',
@@ -166,6 +166,7 @@ def run_case(binary, product, scheme, pool, rounds):
         with (temp / 'server.log').open('w+') as log:
             proc = subprocess.Popen(args, stdout=log, stderr=log, env=env, cwd=temp)
             try:
+                affinity = pin_cpus(proc, 2)
                 deadline = time.monotonic() + 30
                 while time.monotonic() < deadline:
                     if proc.poll() is not None:
@@ -190,7 +191,7 @@ def run_case(binary, product, scheme, pool, rounds):
                     bootstrap = [('GET', '/private', HEADERS, None, 200)]
                 result = {'product': product, 'token_scheme': scheme,
                           'binary_sha256': hashlib.sha256(binary.read_bytes()).hexdigest(),
-                          'binary_bytes': binary.stat().st_size}
+                          'binary_bytes': binary.stat().st_size, 'cpu_affinity': affinity}
                 if product == 'sibuna':
                     result['challenge_rate_limit'] = CHALLENGE_BUDGET
                 for label, group in [('valid_session', [valid]), ('unauthenticated_check', [missing]),
@@ -226,6 +227,8 @@ def main():
     data = {'meta': metadata(), 'anubis_version': subprocess.check_output(
         [str(binary), '--version'], text=True).strip(), 'runs': [], 'limitations': [
         'Two clients, two Sibuna workers, GOMAXPROCS=2; loopback HTTP forward-auth, no origin or TLS.',
+        'Linux pins every product thread to the same two allowed CPUs before warmup; '
+        'other platforms have no enforced CPU affinity.',
         'Hashcash work matched at 8 zero bits / 2 zero hex digits; same UA and client IP.',
         'Proof challenges are issued below the 50/s adaptive baseline so the matched work '
         'holds; the bootstrap batches above it measure issuance only, which is difficulty '

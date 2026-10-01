@@ -87,9 +87,12 @@ would, and drives four workloads with `wrk` over keep-alive connections:
 - *SQL injection with session*: a valid cookie plus `q=' OR 1=1--`. Only an inspecting
   product refuses it; the status column records what each product did.
 
-Both products run with four cores' worth of workers (`--workers 4`, `GOMAXPROCS=4`), matched
-Hashcash difficulty (8 zero bits; 2 zero hex digits), and one fixed signing secret. Every
-figure is the median of three five-second runs.
+Sibuna uses four accept threads (`--workers 4`) and Anubis uses `GOMAXPROCS=4`; these
+settings alone do not impose equal CPU budgets because Sibuna serves bounded connections
+on separate threads. On Linux the harness pins every product thread to the same four
+allowed logical CPUs before warmup and records the affinity. Other platforms retain native
+scheduling. Hashcash difficulty is matched (8 zero bits; 2 zero hex digits), with one fixed
+signing secret. Every figure is the median of three five-second runs.
 
 #tools_meta_line()
 

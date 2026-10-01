@@ -4,6 +4,7 @@ import datetime
 import http.client
 import hashlib
 import json
+import os
 import pathlib
 import platform
 import re
@@ -57,6 +58,33 @@ def stop(proc):
         except subprocess.TimeoutExpired:
             proc.kill()
             proc.wait()
+
+
+def pin_cpus(proc, count):
+    """Linux worker settings count acceptors or Go schedulers, not equivalent CPU limits.
+    Apply the same allowed CPU set to every startup thread before warmup. Later threads
+    inherit their creator's affinity. Other platforms retain their native scheduling.
+    """
+    if count <= 0:
+        raise ValueError("CPU budget must be positive")
+    if not hasattr(os, "sched_setaffinity"):
+        return None
+    cpus = sorted(os.sched_getaffinity(0))[:count]
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        tasks = list(pathlib.Path(f"/proc/{proc.pid}/task").iterdir())
+        for task in tasks:
+            try:
+                os.sched_setaffinity(int(task.name), cpus)
+            except ProcessLookupError:
+                pass
+        tasks = list(pathlib.Path(f"/proc/{proc.pid}/task").iterdir())
+        try:
+            if all(os.sched_getaffinity(int(task.name)) == set(cpus) for task in tasks):
+                return cpus
+        except ProcessLookupError:
+            pass
+    raise TimeoutError("process CPU affinity did not settle before warmup")
 
 
 def source_paths():

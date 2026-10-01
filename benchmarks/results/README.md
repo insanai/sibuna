@@ -17,6 +17,12 @@ so timed issuance and fresh-proof verification batches measure successful operat
 production limiter check still runs; its default allowance and exhaustion behavior are not
 measured by this comparison. The result records the fixture allowance explicitly.
 
+Linux admission and whole-product comparisons pin every product thread to the same allowed
+CPU set before warmup: two CPUs for admission, `--workers` CPUs for whole products. This
+matches CPU capacity rather than treating Sibuna accept threads as equivalent to Go's
+`GOMAXPROCS`. The origin and load generator retain native scheduling, and each product row
+records its affinity. On platforms without this API the affinity is null.
+
 Distributed results use three real daemon processes and six external Python client processes.
 Gate, Shield and clustered Shield run the same forward-auth workloads. Each response is consumed
 and status-checked; batch throughput includes client scheduling and loopback overhead. Sessions,

@@ -20,7 +20,7 @@ import tempfile
 import threading
 import time
 from compare import API, HEADERS, cookies, request, solution
-from run import ROOT, free_port, metadata, record, stop
+from run import ROOT, free_port, metadata, pin_cpus, record, stop
 
 WRK_LUA = r'''
 done = function(summary, latency, requests)
@@ -203,6 +203,7 @@ def run_case(product, mode, binary, origin_port, origin_pid, load, repetitions, 
             proc = subprocess.Popen(args, stdout=log, stderr=log, cwd=temp,
                                     env={**os.environ, **extra_env})
             try:
+                affinity = pin_cpus(proc, workers)
                 probe = API + "check" if product == "anubis" and mode == "forward_auth" \
                     else "/private"
                 wait_ready(proc, port, ("GET", probe, HEADERS, None, 401 if mode == "forward_auth"
@@ -215,7 +216,7 @@ def run_case(product, mode, binary, origin_port, origin_pid, load, repetitions, 
                 assert cookie, hdr
                 result = {"product": product, "mode": mode, "workers": workers,
                           "binary_bytes": binary.stat().st_size, "idle_rss_kib": idle,
-                          "workloads": {}}
+                          "cpu_affinity": affinity, "workloads": {}}
                 for label, path, headers, expected, description in workloads(product, mode,
                                                                              cookie):
                     drain_time_wait()
@@ -292,14 +293,16 @@ NOT_MEASURED = [
 
 LIMITATIONS = [
     "One host, loopback; wrk shares the CPU with the product and the origin stub.",
+    "Linux pins all product threads to the same allowed CPU set, sized by --workers. "
+    "Other platforms have no enforced CPU affinity. The origin and load generator are unpinned.",
     "Origin is `caddy respond`; reverse-proxy figures include its cost, forward-auth figures "
     "have no origin.",
     "Hashcash work matched at 8 zero bits for Sibuna and 2 zero hex digits for Anubis; both "
     "use one signing secret, browser solve time is not measured.",
     "CPU time is ps accumulated user+system time of the product process; memory is the peak "
     "resident set sampled every 100 ms.",
-    "Sibuna closes proxied connections after each response; Anubis keeps them open. The "
-    "reverse-proxy rows measure that difference as well as admission cost.",
+    "Both products retain client connections when HTTP framing permits; reverse-proxy rows "
+    "include each product's origin transport and admission cost.",
     "Anubis binary built or downloaded from its official release outside this repository; its "
     "origin transport runs with Go's default idle-connection limits (no flags were changed).",
     "A workload whose load generator could not connect (ephemeral ports exhausted by the "
