@@ -18,6 +18,12 @@
 //! the next proxied request takes it instead of connecting. A pooled socket
 //! the origin has since closed is detected before any byte reaches the
 //! client; a safe, buffered request may be retried once on a fresh connection.
+//!
+//! Deadlines are activity-based on both sockets: every chunk relayed in either
+//! direction refreshes the owner's activity stamp, and the origin socket is
+//! attached to that stamp for the exchange, so the idle reaper cuts a silent
+//! origin (releasing the connection slot) and leaves a slow but active
+//! response alone.
 
 const std = @import("std");
 const Io = std.Io;
@@ -56,6 +62,16 @@ pub const Client = struct {
     reader: *Io.Reader,
     writer: *Io.Writer,
     relay: duplex.Options = .{},
+};
+
+/// Liveness of the exchange in flight; a null activity (tests, embedders) records nothing.
+pub const Progress = struct {
+    io: Io,
+    activity: ?*duplex.Activity = null,
+
+    fn touch(self: Progress) void {
+        if (self.activity) |activity| activity.touch(self.io);
+    }
 };
 /// Borrowed exchange inputs live until HTTP completion or the upgraded relay ends.
 pub const Exchange = struct {
@@ -201,7 +217,12 @@ fn writeHead(w: *Io.Writer, req: *const http.Request, audit: Audit, switching: b
 }
 
 /// Relays `remaining` further body bytes from the client to upstream.
-fn relayBody(client_reader: *Io.Reader, up: *Io.Writer, remaining: usize) !void {
+fn relayBody(
+    client_reader: *Io.Reader,
+    up: *Io.Writer,
+    remaining: usize,
+    progress: Progress,
+) !void {
     var left = remaining;
     var chunk: [16 * 1024]u8 = undefined;
     while (left > 0) {
@@ -211,7 +232,34 @@ fn relayBody(client_reader: *Io.Reader, up: *Io.Writer, remaining: usize) !void 
         ) catch return error.ClientWriteFailed;
         if (got == 0) return error.ClientWriteFailed;
         up.writeAll(chunk[0..got]) catch return error.UpstreamWriteFailed;
+        progress.touch();
         left -= got;
+    }
+}
+
+/// Copies exactly `n` origin bytes to the client in bounded chunks, refreshing activity
+/// after each one so a long framed body is never mistaken for an idle connection.
+fn copyExact(up: *Io.Reader, w: *Io.Writer, n: u64, progress: Progress) ProxyError!void {
+    var left = n;
+    var chunk: [16 * 1024]u8 = undefined;
+    while (left > 0) {
+        const want: usize = @intCast(@min(left, chunk.len));
+        const got = up.readSliceShort(chunk[0..want]) catch return error.UpstreamReadFailed;
+        if (got == 0) return error.UpstreamReadFailed;
+        w.writeAll(chunk[0..got]) catch return error.ClientWriteFailed;
+        progress.touch();
+        left -= got;
+    }
+}
+
+/// Copies a close-delimited body until the origin closes.
+fn copyRemaining(up: *Io.Reader, w: *Io.Writer, progress: Progress) ProxyError!void {
+    var chunk: [16 * 1024]u8 = undefined;
+    while (true) {
+        const got = up.readSliceShort(&chunk) catch return error.ClientWriteFailed;
+        if (got == 0) return;
+        w.writeAll(chunk[0..got]) catch return error.ClientWriteFailed;
+        progress.touch();
     }
 }
 
@@ -287,7 +335,7 @@ pub fn parseResponseHead(head: []const u8, head_request: bool) ?ResponseHead {
 }
 
 /// Buffers origin bytes until the blank line; returns the head length.
-fn readResponseHead(up: *Io.Reader) ProxyError!usize {
+fn readResponseHead(up: *Io.Reader, progress: Progress) ProxyError!usize {
     while (true) {
         const buf = up.buffered();
         if (std.mem.indexOf(u8, buf, "\r\n\r\n")) |idx| return idx + 4;
@@ -296,6 +344,7 @@ fn readResponseHead(up: *Io.Reader) ProxyError!usize {
             if (err == error.EndOfStream and buf.len == 0) return error.UpstreamClosed;
             return error.UpstreamReadFailed;
         };
+        progress.touch();
     }
 }
 
@@ -351,13 +400,14 @@ fn chunkSize(line: []const u8) ?u64 {
 
 /// Copies a chunked body verbatim: size lines, chunk data with its CRLF,
 /// the terminating zero chunk, and any trailer section.
-fn relayChunked(up: *Io.Reader, w: *Io.Writer) ProxyError!void {
+fn relayChunked(up: *Io.Reader, w: *Io.Writer, progress: Progress) ProxyError!void {
     while (true) {
         const line = up.takeDelimiterInclusive('\n') catch return error.UpstreamReadFailed;
         w.writeAll(line) catch return error.ClientWriteFailed;
+        progress.touch();
         const size = chunkSize(line) orelse return error.UpstreamReadFailed;
         if (size == 0) break;
-        up.streamExact64(w, size + 2) catch return error.UpstreamReadFailed;
+        try copyExact(up, w, size + 2, progress);
     }
     while (true) {
         const line = up.takeDelimiterInclusive('\n') catch return error.UpstreamReadFailed;
@@ -380,8 +430,9 @@ fn relayResponse(
     head_request: bool,
     client_keep_alive: bool,
     audit: *const Audit,
+    progress: Progress,
 ) ProxyError!Relayed {
-    const head_len = try finalResponseHead(up, w);
+    const head_len = try finalResponseHead(up, w, progress);
     const head = up.buffered()[0..head_len];
     const parsed = parseResponseHead(head, head_request) orelse return error.UpstreamReadFailed;
     if (parsed.status == 101) return error.UpstreamReadFailed;
@@ -393,11 +444,9 @@ fn relayResponse(
     up.toss(head_len);
     switch (parsed.framing) {
         .none => {},
-        .length => |n| up.streamExact64(w, n) catch return error.UpstreamReadFailed,
-        .chunked => try relayChunked(up, w),
-        .until_close => {
-            _ = up.streamRemaining(w) catch return error.ClientWriteFailed;
-        },
+        .length => |n| try copyExact(up, w, n, progress),
+        .chunked => try relayChunked(up, w, progress),
+        .until_close => try copyRemaining(up, w, progress),
     }
     w.flush() catch return error.ClientWriteFailed;
     return .{ .client_keep = keep, .origin_reusable = parsed.keep_alive };
@@ -405,9 +454,9 @@ fn relayResponse(
 
 /// Informational responses precede the final response and cannot return an origin socket
 /// to the pool. Bound their count as well as each head, including unsolicited 100/103.
-fn finalResponseHead(up: *Io.Reader, w: *Io.Writer) ProxyError!usize {
+fn finalResponseHead(up: *Io.Reader, w: *Io.Writer, progress: Progress) ProxyError!usize {
     for (0..9) |index| {
-        const length = try readResponseHead(up);
+        const length = try readResponseHead(up, progress);
         const head = up.buffered()[0..length];
         const parsed = parseResponseHead(head, false) orelse return error.UpstreamReadFailed;
         if (parsed.status == 101 or parsed.status >= 200) return length;
@@ -426,6 +475,7 @@ fn exchange(
     handshake: ?upgrade.Handshake,
 ) ProxyError!Relayed {
     const req = input.request;
+    const progress = Progress{ .io = input.io, .activity = input.client.relay.activity };
     var up_writer_buf: [8192]u8 = undefined;
     var up_writer = upstream_stream.writer(input.io, &up_writer_buf);
     writeHead(&up_writer.interface, req, input.audit, handshake != null) catch
@@ -433,14 +483,15 @@ fn exchange(
     up_writer.interface.writeAll(req.body) catch return error.UpstreamWriteFailed;
     const declared = req.contentLength() orelse req.body.len;
     if (declared > req.body.len) {
-        try relayBody(input.client.reader, &up_writer.interface, declared - req.body.len);
+        const rest = declared - req.body.len;
+        try relayBody(input.client.reader, &up_writer.interface, rest, progress);
     }
     up_writer.interface.flush() catch return error.UpstreamWriteFailed;
 
     var up_reader_buf: [max_response_head]u8 = undefined;
     var up_reader = upstream_stream.reader(input.io, &up_reader_buf);
     if (handshake) |offered| {
-        const length = try finalResponseHead(&up_reader.interface, input.client.writer);
+        const length = try finalResponseHead(&up_reader.interface, input.client.writer, progress);
         const head = up_reader.interface.buffered()[0..length];
         const parsed = parseResponseHead(head, false) orelse return error.UpstreamReadFailed;
         if (parsed.status == 101) return relayUpgrade(
@@ -458,6 +509,7 @@ fn exchange(
         head_request,
         input.keep_alive,
         &input.audit,
+        progress,
     );
 }
 
@@ -516,7 +568,11 @@ pub fn streamProxy(
             stream.close(io);
             return error.UpstreamUnreachable;
         };
+        // The reaper may cut this socket while the exchange stalls; it is detached before
+        // the socket is closed or pooled so a reused descriptor is never touched.
+        if (input.client.relay.activity) |activity| activity.attachPeer(stream);
         const outcome = exchange(stream, &input, handshake);
+        if (input.client.relay.activity) |activity| activity.detachPeer();
         pool.untrack(active);
         if (outcome) |relayed| {
             if (relayed.origin_reusable) pool.give(io, stream) else stream.close(io);
@@ -592,7 +648,8 @@ fn relayFixed(origin: []const u8, out: []u8, keep_alive: bool) !Fixed {
     var up = std.Io.Reader.fixed(origin);
     var w = std.Io.Writer.fixed(out);
     const audit: Audit = .{ .client_ip = "", .status = "", .rule = "" };
-    const relayed = try relayResponse(&up, &w, false, keep_alive, &audit);
+    const progress = Progress{ .io = std.testing.io };
+    const relayed = try relayResponse(&up, &w, false, keep_alive, &audit, progress);
     return .{
         .keep = relayed.client_keep,
         .reusable = relayed.origin_reusable,

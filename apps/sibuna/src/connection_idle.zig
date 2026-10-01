@@ -1,4 +1,5 @@
-//! Bounded connection leases. Reaping interrupts I/O; only the owning worker releases a slot.
+//! Bounded connection leases. Reaping interrupts I/O on the client socket and on the origin
+//! socket of the exchange in flight; only the owning worker releases a slot.
 const std = @import("std");
 const Io = std.Io;
 const net = @import("net");
@@ -35,6 +36,7 @@ pub const IdleTable = struct {
                 slot.stream = stream;
                 slot.activity.at_ms.store(now_ms, .monotonic);
                 slot.activity.timeout_ms.store(0, .monotonic);
+                slot.activity.detachPeer();
                 return idx;
             }
         }
@@ -69,8 +71,9 @@ pub const IdleTable = struct {
         }
     }
 
-    /// Shuts down every connection idle longer than `timeout_ms`; the
-    /// blocked worker then sees end-of-stream and releases the thread.
+    /// Shuts down every connection idle longer than `timeout_ms`, together with the origin
+    /// socket its exchange holds; the blocked worker then sees end-of-stream on whichever
+    /// side it waits for and releases the thread and the connection slot.
     pub fn reap(self: *IdleTable, io: Io, now_ms: u64, timeout_ms: u64) u32 {
         var reaped: u32 = 0;
         for (&self.slots) |*slot| {
@@ -82,6 +85,7 @@ pub const IdleTable = struct {
                 now_ms -| slot.activity.at_ms.load(.monotonic) > timeout)
             {
                 slot.stream.shutdown(io, .both) catch {};
+                slot.activity.shutdownPeer(io);
                 // Keep ownership until unregister; an old worker must not clear a reused slot.
                 reaped += 1;
             }

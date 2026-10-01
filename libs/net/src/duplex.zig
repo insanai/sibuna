@@ -5,10 +5,49 @@ const Io = std.Io;
 const posix = std.posix;
 pub const Error = error{ ConnectionFailed, IdleTimeout };
 pub const Endpoint = struct { stream: Io.net.Stream, reader: *Io.Reader };
+/// Liveness of one client connection as the idle reaper sees it. The stamp advances whenever
+/// bytes move in either direction of the exchange in flight, so the deadline measures
+/// silence rather than response length, and the origin socket of that exchange is attached
+/// so a stall is cut on both sides and the connection slot comes back.
 pub const Activity = struct {
     at_ms: std.atomic.Value(u64) = .init(0),
     /// Zero uses the HTTP owner's default; an upgrade sets its own idle bound.
     timeout_ms: std.atomic.Value(u64) = .init(0),
+    /// Orders attach, detach and the reaper's shutdown: the owner detaches before it closes
+    /// or pools the socket, so the reaper never shuts down a reused descriptor.
+    peer_lock: std.atomic.Value(bool) = .init(false),
+    peer: ?Io.net.Stream = null,
+
+    pub fn touch(self: *Activity, io: Io) void {
+        self.at_ms.store(nowMs(io), .monotonic);
+    }
+
+    pub fn attachPeer(self: *Activity, stream: Io.net.Stream) void {
+        self.lock();
+        defer self.unlock();
+        self.peer = stream;
+    }
+
+    pub fn detachPeer(self: *Activity) void {
+        self.lock();
+        defer self.unlock();
+        self.peer = null;
+    }
+
+    /// Interrupts the attached origin socket; the owner still closes it.
+    pub fn shutdownPeer(self: *Activity, io: Io) void {
+        self.lock();
+        defer self.unlock();
+        if (self.peer) |stream| stream.shutdown(io, .both) catch {};
+    }
+
+    fn lock(self: *Activity) void {
+        while (self.peer_lock.swap(true, .acquire)) std.atomic.spinLoopHint();
+    }
+
+    fn unlock(self: *Activity) void {
+        self.peer_lock.store(false, .release);
+    }
 };
 pub const Options = struct {
     idle_timeout_seconds: u32 = 300,
@@ -151,7 +190,7 @@ fn transfer(directions: *[2]Direction, descriptors: *const [2]posix.pollfd) Erro
     return progressed;
 }
 
-fn nowMs(io: Io) u64 {
+pub fn nowMs(io: Io) u64 {
     return @intCast(@max(0, @divTrunc(Io.Clock.awake.now(io).nanoseconds, std.time.ns_per_ms)));
 }
 

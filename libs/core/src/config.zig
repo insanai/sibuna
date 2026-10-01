@@ -89,8 +89,9 @@ pub const Config = struct {
     workers: u16 = 0,
     /// Connections served concurrently; further ones are answered 503.
     max_connections: u32 = 1024,
-    /// Socket read/write timeout; bounds how long an idle or trickling
-    /// connection can hold a worker thread.
+    /// Longest silence a connection may hold a worker: a request head must arrive within
+    /// it, and during an exchange it bounds the gap between successive relayed chunks on
+    /// either socket, so a silent origin is cut while a slow active response is not.
     idle_timeout_seconds: u32 = 15,
     /// An admitted WebSocket has its own idle deadline, refreshed by traffic either way.
     websocket_idle_timeout_seconds: u32 = 300,

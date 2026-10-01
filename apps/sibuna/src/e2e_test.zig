@@ -90,6 +90,17 @@ fn originConnection(stream: Io.net.Stream) void {
         };
         const head = reader.interface.buffered()[0..end];
         seq += 1;
+        const request_line = std.mem.sliceTo(head, '\r');
+        if (std.mem.indexOf(u8, request_line, "/silent") != null) {
+            // An origin that never answers: the proxy must give up before this closes.
+            Io.sleep(io, Io.Duration.fromSeconds(4), .awake) catch {};
+            return;
+        }
+        if (std.mem.indexOf(u8, request_line, "/slow-stream") != null) {
+            slowStream(&writer.interface) catch return;
+            reader.interface.toss(end + 4);
+            continue;
+        }
         writer.interface.print(
             "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nX-Origin: stub\r\n" ++
                 "X-Origin-Seq: {d}\r\nContent-Length: {d}\r\n\r\nORIGIN|{s}",
@@ -98,6 +109,21 @@ fn originConnection(stream: Io.net.Stream) void {
         writer.interface.flush() catch return;
         reader.interface.toss(end + 4);
     }
+}
+
+/// Twelve chunks a quarter second apart: three seconds of activity against a one-second
+/// idle timeout, so only an activity-based deadline lets the whole body through.
+fn slowStream(w: *Io.Writer) !void {
+    try w.writeAll("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n" ++
+        "Transfer-Encoding: chunked\r\n\r\n");
+    try w.flush();
+    for (0..12) |_| {
+        Io.sleep(io, Io.Duration.fromMilliseconds(250), .awake) catch {};
+        try w.writeAll("5\r\nchunk\r\n");
+        try w.flush();
+    }
+    try w.writeAll("0\r\n\r\n");
+    try w.flush();
 }
 
 fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
@@ -875,6 +901,66 @@ test "assets are served with caching and the wasm module is the embedded solver"
     try std.testing.expectEqual(server.wasm_bytes.len, resp.body().len);
     try get(p, "/__sibuna/worker.js", "203.0.113.50", browser_ua, "", resp);
     try std.testing.expect(resp.contains("solvePoswJs"));
+}
+
+test "a streaming origin response outlives the idle timeout while bytes keep flowing" {
+    boot_once.call();
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    const started = Io.Clock.awake.now(io);
+    try get(proxy_fixture.port, "/.well-known/slow-stream", "203.0.113.70", browser_ua, "", resp);
+    const elapsed = started.durationTo(Io.Clock.awake.now(io)).nanoseconds;
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+    try std.testing.expect(@divTrunc(elapsed, 1_000_000) >= 2500);
+    try std.testing.expectEqual(@as(usize, 12), std.mem.count(u8, resp.body(), "chunk"));
+    try std.testing.expect(std.mem.endsWith(u8, resp.body(), "0\r\n\r\n"));
+}
+
+test "a silent origin is cut at the idle timeout and releases its connection slot" {
+    boot_once.call();
+    const st = &proxy_fixture.state;
+    const saved = st.config.max_connections;
+    st.config.max_connections = 1;
+    defer st.config.max_connections = saved;
+    const addr = try Io.net.IpAddress.parse("127.0.0.1", proxy_fixture.port);
+    const held = try addr.connect(io, .{ .mode = .stream });
+    defer held.close(io);
+    var wbuf: [512]u8 = undefined;
+    var writer = held.writer(io, &wbuf);
+    try writer.interface.writeAll("GET /.well-known/silent HTTP/1.1\r\nHost: t\r\n" ++
+        "X-Forwarded-For: 203.0.113.71\r\nUser-Agent: curl/8\r\n\r\n");
+    try writer.interface.flush();
+    Io.sleep(io, Io.Duration.fromMilliseconds(200), .awake) catch {};
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    // The stalled exchange occupies the only slot.
+    try roundTrip(proxy_fixture.port, "", resp);
+    try std.testing.expectEqual(@as(u16, 503), resp.status());
+    // Nothing moves on either socket, so the reaper cuts the exchange well before the
+    // origin's own four-second silence ends, and the worker releases the slot.
+    const started = Io.Clock.awake.now(io);
+    var rbuf: [4096]u8 = undefined;
+    var reader = held.reader(io, &rbuf);
+    var scratch: [4096]u8 = undefined;
+    while (true) {
+        const n = reader.interface.readSliceShort(&scratch) catch 0;
+        if (n == 0) break;
+    }
+    const elapsed = started.durationTo(Io.Clock.awake.now(io)).nanoseconds;
+    try std.testing.expect(@divTrunc(elapsed, 1_000_000) < 3500);
+    // The worker may still be unwinding its retry when the client sees the cut; the slot
+    // must come back well before the origin's silence ends.
+    var attempts: u32 = 0;
+    while (attempts < 20) : (attempts += 1) {
+        const health = "GET /__sibuna/health HTTP/1.1\r\nHost: t\r\n\r\n";
+        try roundTrip(proxy_fixture.port, health, resp);
+        if (resp.status() == 200) break;
+        try std.testing.expect(resp.status() == 503 or resp.len == 0);
+        Io.sleep(io, Io.Duration.fromMilliseconds(100), .awake) catch {};
+    }
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+    const total = started.durationTo(Io.Clock.awake.now(io)).nanoseconds;
+    try std.testing.expect(@divTrunc(total, 1_000_000) < 3500);
 }
 
 test "an idle connection is closed after the socket timeout" {
