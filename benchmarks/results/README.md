@@ -45,7 +45,7 @@ that straddles the gate, is reported as inconclusive and fails the run rather th
 host must be declared with `--host-label` and left quiet.
 
 Formal verdict versus paired reading: the `verdict` field of a result is the gate's own
-answer and is never rewritten. The console-impact records from the deployment host read
+answer and is never rewritten. The September console-impact records from the deployment host read
 inconclusive (single node: baseline spread above 1%) and fail (cluster: compiled-out
 comparison). SID 0007 additionally records a paired reading of the same files, comparing the
 console enabled and disabled within one binary, under which the console's runtime cost is at
@@ -53,15 +53,18 @@ most 0.8% single-node and 0.5% clustered. That reading is a supplementary analys
 the project owner as a release note; it does not change a verdict and must not be cited as a
 pass of the gate.
 
-Currency: primitives, admission, distributed and local-cluster latest files were regenerated
+Currency: all five core benchmark families were regenerated
 on 1 October 2026 after work-level session binding, the read-by-read proxy relay, the challenge
 budget and requirement tickets. The Linux benchmark checkout is `54f2e6a`; its application
 code matches `669229c`, with subsequent changes confined to harnesses and documentation.
 The recorded dirty flag reflects generated result files and is retained unchanged.
-Whole-product and single-node console-impact latest files still describe the September code
-until their fresh runs complete. The three-host October matrices described below use the
+Single-node console-impact latest files still describe the September code until their fresh
+runs complete. The three-host October matrices described below use the
 current application code. Binary sizes are those of the recorded build, including its
 symbols and embedded assets; the 34.5 MB Linux binary is not the earlier 3.3 MB macOS artifact.
+The whole-product run verifies all 24 expected workload statuses without transport failures.
+Its four-CPU allowance applies to both products; request-rate comparisons remain specific to
+the supplied Anubis version, configuration, fixture origin and declared host.
 
 `linux-functional-review-20261001.json` records verification after those changes: 588 native
 tests, the clustered console suite, the shipped Wasm behavior test and functional checks on

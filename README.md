@@ -46,8 +46,12 @@ docs); the book's Part II carries the full table with sources.
 | Reputation, bans | Honeypot; cluster-replicated trie | DNSBL; ASN/GeoIP via paid Thoth | IP groups; threat intel (Pro) | IP lists; bot score (Enterprise) |
 | Forensics | Embedded SQLite, FTS5, vector campaigns | Metrics only | PostgreSQL log + console | Security Events |
 | Multi-node | Multi-Paxos replication, shared seed | Shared key + Valkey | One stack per host | Global anycast |
-| Host footprint | Build and workload dependent; recorded below | Build and workload dependent; recorded below | 1 core, 1 GB RAM, 5 GB disk min. | none on premises |
+| Host footprint | Linux review: 32.9 MiB binary, ~10 MiB idle | Linux review: 38.1 MiB binary, ~21 MiB idle | 1 core, 1 GB RAM, 5 GB disk min. | none on premises |
 | Measured here | Yes | Yes | No (Docker only) | No (hosted) |
+
+The Linux footprints are build-specific October measurements. Sibuna's console and durable
+storage were inactive; active console, storage and load costs are recorded separately in
+[the benchmark files](benchmarks/results/README.md). They are not minimum deployment sizes.
 
 Sibuna does not terminate ingress TLS or score bots with a model. Its opt-in console preview
 includes the animated country globe, incident investigation, policy editing, users, scoped API

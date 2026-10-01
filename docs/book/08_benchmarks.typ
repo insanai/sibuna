@@ -50,6 +50,8 @@ accept-thread count is not a CPU budget equivalent to Go's `GOMAXPROCS`. Each pr
 its affinity; the origin and load generator keep native scheduling. Admission issuance reserves
 a large challenge allowance to measure successful operations rather than the production
 limiter's default exhaustion behavior. The comparison records that allowance explicitly.
+An idle CPU figure of zero over ten seconds means `ps` did not cross a whole CPU second;
+it does not prove that a node performed no background work.
 
 #callout([Measurement scope], [
   Only local measurements are emitted. Third-party products are measured only when their
