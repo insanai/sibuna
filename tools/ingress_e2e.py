@@ -82,6 +82,11 @@ def check(binary, kind=None, executable=None):
             result = subprocess.run([binary, *args], capture_output=True, timeout=5)
             assert result.returncode != 0, result.stderr
             assert b"INVALID COMMAND LINE" in result.stderr and marker in result.stderr, result.stderr
+        # A long command line keeps every argument: a fault after the old 96-slot limit is
+        # still found rather than dropped while the daemon starts.
+        long_line = ["--rate-limit", "100"] * 60 + ["--prot", "80"]
+        result = subprocess.run([binary, *long_line], capture_output=True, timeout=5)
+        assert result.returncode != 0 and b"UnknownOption" in result.stderr, result.stderr
     mode = "forward_auth" if kind else "reverse_proxy"
     scenarios = [(mode, (kind, executable) if kind else None)]
     if not kind:

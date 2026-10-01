@@ -16,9 +16,10 @@ pub fn main(init: std.process.Init) !u8 {
     const io = init.io;
     const gpa = init.gpa;
 
-    var args_buf: [96][]const u8 = undefined;
-    const arg_count = readArgs(init.minimal.args, &args_buf) orelse return 0;
-    const argv = args_buf[0..arg_count];
+    // One process-lifetime arena owns the command line and the policy text.
+    var arena = std.heap.ArenaAllocator.init(gpa);
+    defer arena.deinit();
+    const argv = try readArgs(arena.allocator(), init.minimal.args) orelse return 0;
     const subcommand = argv.len != 0 and std.mem.eql(u8, argv[0], "console");
     if (subcommand) {
         if (!build_options.console) return consoleNotCompiled();
@@ -26,9 +27,9 @@ pub fn main(init: std.process.Init) !u8 {
             return @import("console_command.zig").execute(gpa, io, argv[1..]);
     }
     const daemon_args = if (subcommand) argv[1..] else argv;
-    var data_args: [96][]const u8 = undefined;
+    const data_args = try arena.allocator().alloc([]const u8, daemon_args.len);
     const parsed = if (build_options.console)
-        console_start.parse(daemon_args, &data_args) catch |err| return invalidConsole(err)
+        console_start.parse(daemon_args, data_args) catch |err| return invalidConsole(err)
     else {};
     var cfg = dataPlaneConfig(if (build_options.console) parsed.data_args else daemon_args) orelse
         return 1;
@@ -44,9 +45,6 @@ pub fn main(init: std.process.Init) !u8 {
     const seed = resolveSecret(io, init.environ_map, &cfg) orelse return 1;
     const signals = @import("shutdown.zig").Signals.init();
     defer signals.deinit();
-
-    var arena = std.heap.ArenaAllocator.init(gpa);
-    defer arena.deinit();
 
     const engine = try gpa.create(policy.Engine);
     defer gpa.destroy(engine);
@@ -137,12 +135,14 @@ fn invalidArguments(err: core.Config.ParseError, diagnostic: core.Config.Diagnos
     return 1;
 }
 
-fn readArgs(args: std.process.Args, output: [][]const u8) ?usize {
-    var count: usize = 0;
-    var iterator = std.process.Args.Iterator.init(args);
-    defer iterator.deinit();
-    _ = iterator.next();
-    while (iterator.next()) |arg| {
+/// Storage is sized to the command line itself: no argument can fall off the end of a fixed
+/// buffer, because an option that silently disappears (a trailing `--secure-cookie`, a
+/// misspelled flag) is exactly the deployment mistake strict parsing exists to stop.
+fn readArgs(arena: std.mem.Allocator, args: std.process.Args) !?[]const []const u8 {
+    const raw = try args.toSlice(arena);
+    const given = raw[@min(raw.len, 1)..];
+    const output = try arena.alloc([]const u8, given.len);
+    for (given, output) |arg, *slot| {
         if (std.mem.eql(u8, arg, "--help")) {
             printHelp();
             return null;
@@ -151,12 +151,9 @@ fn readArgs(args: std.process.Args, output: [][]const u8) ?usize {
             std.debug.print("sibuna {s}\n", .{server.version});
             return null;
         }
-        if (count < output.len) {
-            output[count] = arg;
-            count += 1;
-        }
+        slot.* = arg;
     }
-    return count;
+    return output;
 }
 
 fn runListener(io: std.Io, cfg: core.Config, state: *server.AppState) u8 {
