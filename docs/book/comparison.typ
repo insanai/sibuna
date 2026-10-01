@@ -30,7 +30,7 @@
       [JavaScript anti-bot challenge and CAPTCHA; not work-bound], [Managed challenge, JS challenge, Turnstile; Bot Fight Mode issues a compute challenge],
     [Challenge state on the server], [None until solved; solved tags in a fixed Robin Hood table],
       [Store backend: memory, bbolt, Valkey, or S3], [Managed by the stack], [Managed by Cloudflare],
-    [Session token], [Keyed BLAKE3 tag, 64-character cookie; Ed25519 optional],
+    [Session token], [Keyed BLAKE3 tag, 75-character cookie bound to the work paid; Ed25519 optional],
       [JSON Web Token signed with Ed25519; HS512 optional], [Cookie issued by the stack], [`cf_clearance` cookie],
     [Post-quantum posture of the default token], [Symmetric: only Grover's quadratic speedup applies],
       [Ed25519: broken by Shor's algorithm], [Not documented], [Not documented],

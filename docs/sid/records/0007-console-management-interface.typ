@@ -1977,13 +1977,16 @@ retention keeps pace at the ingestion bound. The impact runner accepts `--mode r
 `--capture-heads` (which adds an audited-admission workload); the effective values are part
 of each result's provenance.
 
-Acceptance conditions: none remain open on the impact gate. The clustered matrix on the
-deployment host class completed on 13 September 2026 and is read as a note above; the four
-single-node matrices are measured in both modes with capture off
-and on; no configuration exceeds the one percent throughput or ten percent p99 rules, the
-formal verdict stays inconclusive on baseline spread alone, and the paired reading is recorded
-with the gate above. The interface module measures 622,941 bytes against the 786,432-byte
-ceiling after these changes.
+Acceptance conditions: the impact gate is not formally passed. The four single-node matrices,
+measured in both modes with capture off and on, have no failing configuration and a formal
+verdict of inconclusive on baseline spread. The clustered matrix of 13 September 2026 has a
+formal verdict of fail on the compiled-out comparison. Both are accepted under the paired
+reading above as a project-owner exception, recorded as a note and never as a pass. These
+measurements predate the data-plane changes of 1 October 2026 (work-level session binding,
+the read-by-read relay, the challenge budget and the requirement ticket), so the gate must be
+rerun on the deployment host before its figures describe the current request path. The
+interface module measured 622,941 bytes against the 786,432-byte ceiling after the September
+changes.
 
 == Interface budget review (2026-09-11)
 

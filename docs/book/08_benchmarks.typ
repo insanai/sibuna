@@ -5,7 +5,9 @@
   We present the measurements recorded on bare metal by four committed harnesses: primitive
   latencies, an admission-only comparison with Anubis, a whole-product comparison under an
   external load generator with CPU and memory accounting, and a three-node distributed run.
-  Every number in this part is rendered from a results file at build time.
+  Every number in this part is rendered from a results file at build time. The recorded files
+  predate the request-path changes of 1 October 2026 and describe the earlier code until the
+  harnesses are rerun.
 ])
 
 == Methodology

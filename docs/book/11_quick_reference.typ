@@ -79,7 +79,7 @@
   card([Endpoints under `/__sibuna/`], [
     #table(columns: (1.2fr, 1.8fr), inset: 3pt, stroke: 0.3pt + rule,
       [`challenge`], [interstitial HTML],
-      [`challenge.json?path=`], [`{id, algorithm, difficulty, challenges, expires_at}`],
+      [`challenge.json?need=&path=`], [`{id, algorithm, difficulty, challenges, expires_at}`],
       [`verify` (POST)], [`{challenge_id, nonce | proof}` → `200` + `Set-Cookie`, else `400`],
       [`wasm/sibuna-pow.wasm`], [8,831-byte solver],
       [`worker.js`], [worker with WASM and JS provers],

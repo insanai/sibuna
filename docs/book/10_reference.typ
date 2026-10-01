@@ -15,7 +15,7 @@
   columns: (1.4fr, 0.5fr, 2.2fr),
   table.header([*Endpoint*], [*Method*], [*Function*]),
   [`/__sibuna/challenge`], [GET], [The interstitial page],
-  [`/__sibuna/challenge.json?path=`], [GET], [Issues a stateless challenge for the given path: `{id, algorithm, difficulty, challenges, expires_at}`],
+  [`/__sibuna/challenge.json?need=&path=`], [GET], [Issues a stateless challenge: the requirement ticket from the challenged response decides it, otherwise the reported URL is evaluated (`414` above 8 KiB). Returns `{id, algorithm, difficulty, challenges, expires_at}`],
   [`/__sibuna/verify`], [POST], [Accepts `{"challenge_id", "nonce"}` or `{"challenge_id", "proof"}`; `200` with `Set-Cookie`, or `400` with a diagnostic],
   [`/__sibuna/wasm/sibuna-pow.wasm`], [GET], [The 8,831-byte solver module, cacheable],
   [`/__sibuna/worker.js`], [GET], [The Web Worker with WASM and JavaScript provers, cacheable],

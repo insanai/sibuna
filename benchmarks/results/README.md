@@ -42,6 +42,11 @@ most 0.8% single-node and 0.5% clustered. That reading is a supplementary analys
 the project owner as a release note; it does not change a verdict and must not be cited as a
 pass of the gate.
 
+Currency: every result here was measured before the request-path changes of 1 October 2026
+(work-level session binding, the read-by-read proxy relay, the challenge budget and requirement
+tickets). Those changes alter admission and relay work per request, so primitive, whole-product,
+distributed and console-impact figures describe the earlier code until the harnesses are rerun.
+
 No benchmark hook or timer is linked into request handling. Production metrics, local locks,
 reader-count atomics and incident enqueue still have real costs. These tests cannot establish
 zero total request overhead, universally optimal algorithms, or global network-edge equivalence.

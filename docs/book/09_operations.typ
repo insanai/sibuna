@@ -34,7 +34,7 @@
   [`--mode, -m`], [`reverse_proxy`], [`reverse_proxy` or `forward_auth`],
   [`--workers, -w`], [CPU count], [Accept threads sharing the listening socket; each connection then gets its own thread],
   [`--max-connections`], [`1024`], [Connections served concurrently; further ones are answered `503`],
-  [`--idle-timeout`], [`15`], [Longest silence in seconds: a request head must arrive within it, and a proxied exchange is cut when no bytes move on either socket for that long],
+  [`--idle-timeout`], [`15`], [Longest silence in seconds. A request head must arrive within it. An origin response refreshes it on every read, so a slow stream lives while bytes flow and a silent origin is cut on both sockets. A proxied upload must deliver 16 KiB per period (a minimum rate against slow-body attacks)],
   [`--trust-forwarded`], [off; on in forward-auth], [Honour `X-Forwarded-For` / `X-Real-IP` from the peer],
   [`--algorithm, -a`], [`posw`], [`posw` or `hashcash`],
   [`--difficulty, -d`], [`16`], [Work bits: Hashcash zero bits, or PoSW depth plus three],
@@ -467,6 +467,8 @@ server {
         proxy_pass http://127.0.0.1:8080;
         proxy_pass_request_body off;
         proxy_set_header Content-Length "";
+        proxy_set_header X-Original-URI $request_uri;
+        proxy_set_header X-Forwarded-Method $request_method;
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
@@ -500,7 +502,9 @@ example.com {
 ```
 
 The `/__sibuna/*` namespace (interstitial, challenge, verify, solver assets) must reach the
-daemon directly in both recipes.
+daemon directly in both recipes. The nginx error page passes the original URI and method so the
+interstitial carries the requirement the authorization decided; without them the page still
+works, and issuance falls back to evaluating the URL the browser reports.
 Caddy supplies original URI/method metadata itself. The exclusive `handle` blocks ensure
 that challenge and verification routes do not enter the forward-auth precheck. Nginx requires
 the explicit Upgrade/Connection headers shown above for application WebSockets.

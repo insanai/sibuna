@@ -99,7 +99,7 @@ Common flags (`--help` lists all of them):
 | `--gate` / `--shield` | shield | Surface |
 | `--rate-limit`, `--rate-window` | `100`, `10` | GCRA burst and window (seconds) |
 | `--challenge-rate-limit` | `30` | Challenge issuances and verifications per window per client, separate from the request budget |
-| `--idle-timeout` | `15` | Longest silence in seconds: a request head must arrive within it, and during a proxied exchange it bounds the gap between relayed chunks on either socket |
+| `--idle-timeout` | `15` | Longest silence in seconds: a request head must arrive within it; an origin response refreshes it on every read and a silent origin is cut on both sockets; a proxied upload must deliver 16 KiB per period |
 | `--websocket-idle-timeout` | `300` | Upgraded connection idle timeout; traffic in either direction refreshes it |
 | `--policy-file <json>` | none | Declarative rules (SID 0003) |
 | `--workers <n>` | CPU count | Accept threads; each connection is then served on its own thread |

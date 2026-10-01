@@ -20,11 +20,18 @@
 1. A navigation with no valid session reaches the policy engine and is classified `CHALLENGE`.
    Because the request accepts `text/html`, the daemon answers `200` with the interstitial
    page and the header `X-Sibuna-Status: CHALLENGE`; an API client that does not accept HTML
-   receives `401` with a JSON body naming the challenge endpoint.
-2. The interstitial fetches `GET /__sibuna/challenge.json?path=<original path>`. The server
-   re-evaluates the policy for that path with the real client headers, so the rule that demanded
-   the challenge decides the difficulty and algorithm, and the rule's hash is bound into the
-   challenge.
+   receives `401` with a JSON body whose `challenge` URL is ready to fetch. Either way the
+   response carries a *requirement ticket*: the challenge this decision demands (algorithm,
+   work bits, openings) and the rule's hash, sealed for this client with a keyed BLAKE3 tag
+   under its own derived key and valid for one challenge lifetime.
+2. The interstitial fetches `GET /__sibuna/challenge.json?path=<original URL>&need=<ticket>`.
+   A valid ticket decides the challenge: the work is fixed by the decision that demanded it,
+   not recomputed from a reported URL and the fetch's own headers, which differ from the
+   navigation's (`Accept`, `Sec-Fetch-*`). Without a valid ticket (an API client that ignores
+   the URL, a page left open past the lifetime) the server evaluates the reported URL, split
+   into path and query by the same function that reads the request line; a URL longer than
+   8 KiB is refused with `414`, never truncated. The ticket is advisory: admission still checks
+   the session's work level, so a replayed or forged ticket can only cost its holder work.
 3. The response is the challenge record:
    ```json
    {"id":"AQEND…70 chars","algorithm":"posw","difficulty":13,"challenges":16,"expires_at":1757241234}
