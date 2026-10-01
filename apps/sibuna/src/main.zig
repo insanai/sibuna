@@ -30,10 +30,8 @@ pub fn main(init: std.process.Init) !u8 {
     const parsed = if (build_options.console)
         console_start.parse(daemon_args, &data_args) catch |err| return invalidConsole(err)
     else {};
-    var cfg = core.Config.parseArgs(if (build_options.console)
-        parsed.data_args
-    else
-        daemon_args) catch |err| return invalidMode(err);
+    var cfg = dataPlaneConfig(if (build_options.console) parsed.data_args else daemon_args) orelse
+        return 1;
     if (build_options.console) if (parsed.query_steps) |steps| {
         cfg.console_query_steps = steps;
     };
@@ -104,9 +102,38 @@ fn consoleNotCompiled() u8 {
     return 1;
 }
 
-fn invalidMode(err: core.Config.ModeError) u8 {
-    std.debug.print("SIBUNAMODE: invalid mode option ({t}). " ++
-        "Hint: supply --mode reverse_proxy or --mode forward_auth once.\n", .{err});
+fn dataPlaneConfig(args: []const []const u8) ?core.Config {
+    var diagnostic: core.Config.Diagnostic = .{};
+    return core.Config.parseArgsDiagnosed(args, &diagnostic) catch |err| {
+        _ = invalidArguments(err, diagnostic);
+        return null;
+    };
+}
+
+/// A command line the daemon does not fully understand never starts: a flag that is
+/// ignored or a value that silently keeps its default is a deployment mistake nobody sees.
+fn invalidArguments(err: core.Config.ParseError, diagnostic: core.Config.Diagnostic) u8 {
+    var text: [1024]u8 = undefined;
+    var writer = std.Io.Writer.fixed(&text);
+    writer.print("The daemon cannot start with this command line.\n\nOption:   {s}\n", .{
+        diagnostic.option,
+    }) catch {};
+    if (diagnostic.value.len != 0) writer.print("Value:    {s}\n", .{diagnostic.value}) catch {};
+    if (diagnostic.expected.len != 0)
+        writer.print("Expected: {s}\n", .{diagnostic.expected}) catch {};
+    writer.print("Error:    {t}\n", .{err}) catch {};
+    const hint = switch (err) {
+        error.UnknownOption => "Check the spelling against sibuna --help; every option " ++
+            "must be recognised, and flags take no value.",
+        error.MissingValue, error.MissingMode => "Supply a value after the option.",
+        error.DuplicateMode => "Give --mode once.",
+        error.TooManyPeers => "A cluster lists at most eight peers.",
+        else => "Correct the value; see sibuna --help for each option's range.",
+    };
+    var block: [2048]u8 = undefined;
+    var out = std.Io.Writer.fixed(&block);
+    core.diagnostic.write(&out, "INVALID COMMAND LINE", writer.buffered(), hint) catch {};
+    std.debug.print("{s}\n", .{out.buffered()});
     return 1;
 }
 
@@ -118,6 +145,10 @@ fn readArgs(args: std.process.Args, output: [][]const u8) ?usize {
     while (iterator.next()) |arg| {
         if (std.mem.eql(u8, arg, "--help")) {
             printHelp();
+            return null;
+        }
+        if (std.mem.eql(u8, arg, "--version")) {
+            std.debug.print("sibuna {s}\n", .{server.version});
             return null;
         }
         if (count < output.len) {
@@ -360,6 +391,9 @@ fn printHelp() void {
         \\
         \\  --verbose, -v                Verbose logging
         \\  --help                       Show this help message
+        \\  --version                    Print the version and exit
+        \\
+        \\Unknown options and out-of-range values stop startup with a diagnostic.
         \\
     , .{});
 }

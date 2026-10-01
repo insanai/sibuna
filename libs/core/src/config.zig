@@ -134,28 +134,57 @@ pub const Config = struct {
         return self.trust_forwarded orelse (self.mode == .forward_auth);
     }
 
-    pub const ModeError = error{ InvalidMode, MissingMode, DuplicateMode };
+    pub const ParseError = error{
+        InvalidMode,
+        MissingMode,
+        DuplicateMode,
+        UnknownOption,
+        MissingValue,
+        InvalidValue,
+        TooManyPeers,
+    };
 
-    pub fn parseArgs(args: []const []const u8) ModeError!Config {
+    /// Where a rejected command line went wrong, for the operator's diagnostic.
+    pub const Diagnostic = struct {
+        option: []const u8 = "",
+        value: []const u8 = "",
+        expected: []const u8 = "",
+    };
+
+    pub fn parseArgs(args: []const []const u8) ParseError!Config {
+        var diagnostic: Diagnostic = .{};
+        return parseArgsDiagnosed(args, &diagnostic);
+    }
+
+    /// Every option is either recognised and valid or the whole command line is rejected:
+    /// a misspelled flag or an out-of-range value never silently keeps the default.
+    pub fn parseArgsDiagnosed(
+        args: []const []const u8,
+        diagnostic: *Diagnostic,
+    ) ParseError!Config {
         var cfg = Config.default();
         var mode_seen = false;
         var i: usize = 0;
         while (i < args.len) : (i += 1) {
             const arg = args[i];
-            const value: ?[]const u8 = if (i + 1 < args.len) args[i + 1] else null;
+            diagnostic.* = .{ .option = arg };
             if (std.mem.startsWith(u8, arg, "--mode=")) return error.InvalidMode;
             if (eqlAny(arg, "--mode", "-m")) {
                 if (mode_seen) return error.DuplicateMode;
-                cfg.mode = Mode.parse(value orelse return error.MissingMode) orelse
-                    return error.InvalidMode;
-                mode_seen = true;
                 i += 1;
+                if (i == args.len) return error.MissingMode;
+                diagnostic.value = args[i];
+                diagnostic.expected = "reverse_proxy or forward_auth";
+                cfg.mode = Mode.parse(args[i]) orelse return error.InvalidMode;
+                mode_seen = true;
                 continue;
             }
             if (applyFlag(&cfg, arg)) continue;
-            if (value) |v| {
-                if (applyOption(&cfg, arg, v)) i += 1;
-            }
+            if (!takesValue(arg)) return error.UnknownOption;
+            i += 1;
+            if (i == args.len) return error.MissingValue;
+            diagnostic.value = args[i];
+            try applyOption(&cfg, arg, args[i], diagnostic);
         }
         return cfg;
     }
@@ -179,88 +208,192 @@ pub const Config = struct {
         return true;
     }
 
-    fn applyOption(cfg: *Config, arg: []const u8, v: []const u8) bool {
-        if (eqlAny(arg, "--port", "-p")) {
-            cfg.listen_port = std.fmt.parseInt(u16, v, 10) catch cfg.listen_port;
-        } else if (eqlAny(arg, "--host", "-h")) {
-            cfg.listen_host = v;
-        } else if (eqlAny(arg, "--upstream-host", "--upstream-host")) {
-            cfg.upstream_host = v;
-        } else if (eqlAny(arg, "--upstream-port", "-u")) {
-            cfg.upstream_port = std.fmt.parseInt(u16, v, 10) catch cfg.upstream_port;
-        } else if (eqlAny(arg, "--difficulty", "-d")) {
-            cfg.default_difficulty = std.fmt.parseInt(u32, v, 10) catch cfg.default_difficulty;
-        } else if (eqlAny(arg, "--algorithm", "-a")) {
-            if (PowAlgorithm.parse(v)) |a| cfg.algorithm = a;
-        } else if (eqlAny(arg, "--posw-challenges", "--posw-challenges")) {
-            cfg.posw_challenges = std.fmt.parseInt(u8, v, 10) catch cfg.posw_challenges;
-        } else if (eqlAny(arg, "--token-scheme", "--token-scheme")) {
-            if (TokenScheme.parse(v)) |t| cfg.token_scheme = t;
-        } else if (eqlAny(arg, "--token-ttl", "--token-ttl")) {
-            cfg.token_ttl_seconds = std.fmt.parseInt(u64, v, 10) catch cfg.token_ttl_seconds;
-        } else if (eqlAny(arg, "--challenge-ttl", "--challenge-ttl")) {
-            cfg.challenge_ttl_seconds = std.fmt.parseInt(
-                u64,
-                v,
-                10,
-            ) catch cfg.challenge_ttl_seconds;
-        } else if (eqlAny(arg, "--cookie-name", "--cookie-name")) {
-            cfg.cookie_name = v;
-        } else if (eqlAny(arg, "--secret-file", "-s")) {
-            cfg.secret_file = v;
-        } else if (eqlAny(arg, "--policy-file", "-P")) {
-            cfg.policy_file = v;
-        } else if (eqlAny(arg, "--workers", "-w")) {
-            cfg.workers = std.fmt.parseInt(u16, v, 10) catch cfg.workers;
-        } else if (eqlAny(arg, "--max-connections", "--max-connections")) {
-            cfg.max_connections = std.fmt.parseInt(u32, v, 10) catch cfg.max_connections;
-        } else if (eqlAny(arg, "--idle-timeout", "--idle-timeout")) {
-            cfg.idle_timeout_seconds = std.fmt.parseInt(u32, v, 10) catch cfg.idle_timeout_seconds;
-        } else if (eqlAny(arg, "--websocket-idle-timeout", "--websocket-idle-timeout")) {
-            cfg.websocket_idle_timeout_seconds = std.fmt.parseInt(u32, v, 10) catch
-                cfg.websocket_idle_timeout_seconds;
-        } else if (eqlAny(arg, "--rate-limit", "--rate-limit")) {
-            cfg.rate_limit = std.fmt.parseInt(u32, v, 10) catch cfg.rate_limit;
-        } else if (eqlAny(arg, "--rate-window", "--rate-window")) {
-            cfg.rate_window_seconds = std.fmt.parseInt(u64, v, 10) catch cfg.rate_window_seconds;
-        } else if (eqlAny(arg, "--challenge-rate-limit", "--challenge-rate-limit")) {
-            cfg.challenge_rate_limit = std.fmt.parseInt(u32, v, 10) catch cfg.challenge_rate_limit;
-        } else if (eqlAny(arg, "--ban-seconds", "--ban-seconds")) {
-            cfg.ban_seconds = std.fmt.parseInt(u64, v, 10) catch cfg.ban_seconds;
-        } else {
-            return applyStorageOption(cfg, arg, v);
-        }
-        return true;
+    const valued_options = [_][]const u8{
+        "--port",
+        "-p",
+        "--host",
+        "-h",
+        "--upstream-host",
+        "--upstream-port",
+        "-u",
+        "--difficulty",
+        "-d",
+        "--algorithm",
+        "-a",
+        "--posw-challenges",
+        "--token-scheme",
+        "--token-ttl",
+        "--challenge-ttl",
+        "--cookie-name",
+        "--secret-file",
+        "-s",
+        "--policy-file",
+        "-P",
+        "--workers",
+        "-w",
+        "--max-connections",
+        "--idle-timeout",
+        "--websocket-idle-timeout",
+        "--rate-limit",
+        "--rate-window",
+        "--challenge-rate-limit",
+        "--ban-seconds",
+        "--data-dir",
+        "-D",
+        "--cluster-node",
+        "--cluster-listen",
+        "--cluster-peer",
+        "--cluster-secret-file",
+        "--cluster-tls-cert",
+        "--cluster-tls-key",
+        "--cluster-tls-ca",
+        "--storage-poll-ms",
+    };
+
+    fn takesValue(arg: []const u8) bool {
+        for (valued_options) |option| if (std.mem.eql(u8, arg, option)) return true;
+        return false;
     }
 
-    fn applyStorageOption(cfg: *Config, arg: []const u8, v: []const u8) bool {
-        if (eqlAny(arg, "--data-dir", "-D")) {
-            cfg.data_dir = v;
-        } else if (eqlAny(arg, "--cluster-node", "--cluster-node")) {
-            cfg.cluster_node = std.fmt.parseInt(u32, v, 10) catch cfg.cluster_node;
-        } else if (eqlAny(arg, "--cluster-listen", "--cluster-listen")) {
-            cfg.cluster_listen = v;
-        } else if (eqlAny(arg, "--cluster-peer", "--cluster-peer")) {
-            if (cfg.cluster_peer_count < max_cluster_peers) {
-                cfg.cluster_peers[cfg.cluster_peer_count] = v;
-                cfg.cluster_peer_count += 1;
-            }
-        } else if (eqlAny(arg, "--cluster-secret-file", "--cluster-secret-file")) {
-            cfg.cluster_secret_file = v;
-        } else if (eqlAny(arg, "--cluster-tls-cert", "--cluster-tls-cert")) {
-            cfg.cluster_tls_cert = v;
-        } else if (eqlAny(arg, "--cluster-tls-key", "--cluster-tls-key")) {
-            cfg.cluster_tls_key = v;
-        } else if (eqlAny(arg, "--cluster-tls-ca", "--cluster-tls-ca")) {
-            cfg.cluster_tls_ca = v;
-        } else if (eqlAny(arg, "--storage-poll-ms", "--storage-poll-ms")) {
-            cfg.storage_poll_ms = std.fmt.parseInt(u64, v, 10) catch cfg.storage_poll_ms;
+    /// Connections, idle leases and task slots share one 8192-entry capacity.
+    pub const max_connections_limit: u32 = 8192;
+
+    fn applyOption(
+        cfg: *Config,
+        arg: []const u8,
+        v: []const u8,
+        d: *Diagnostic,
+    ) ParseError!void {
+        if (eqlAny(arg, "--port", "-p")) {
+            cfg.listen_port = try number(u16, v, 1, 65535, "a port 1-65535", d);
+        } else if (eqlAny(arg, "--host", "-h")) {
+            cfg.listen_host = try textValue(v, "a host name or address", d);
+        } else if (eqlAny(arg, "--upstream-host", "--upstream-host")) {
+            cfg.upstream_host = try textValue(v, "a host name or address", d);
+        } else if (eqlAny(arg, "--upstream-port", "-u")) {
+            cfg.upstream_port = try number(u16, v, 1, 65535, "a port 1-65535", d);
+        } else if (eqlAny(arg, "--difficulty", "-d")) {
+            cfg.default_difficulty = try number(u32, v, 1, 64, "work bits 1-64", d);
+        } else if (eqlAny(arg, "--algorithm", "-a")) {
+            d.expected = "posw or hashcash";
+            cfg.algorithm = PowAlgorithm.parse(v) orelse return error.InvalidValue;
+        } else if (eqlAny(arg, "--posw-challenges", "--posw-challenges")) {
+            cfg.posw_challenges = try number(u8, v, 1, 32, "openings 1-32", d);
+        } else if (eqlAny(arg, "--token-scheme", "--token-scheme")) {
+            d.expected = "mac or ed25519";
+            cfg.token_scheme = TokenScheme.parse(v) orelse return error.InvalidValue;
+        } else if (eqlAny(arg, "--token-ttl", "--token-ttl")) {
+            cfg.token_ttl_seconds = try number(u64, v, 1, 31_536_000, "seconds 1-31536000", d);
+        } else if (eqlAny(arg, "--challenge-ttl", "--challenge-ttl")) {
+            cfg.challenge_ttl_seconds = try number(u64, v, 1, 86_400, "seconds 1-86400", d);
+        } else if (eqlAny(arg, "--cookie-name", "--cookie-name")) {
+            cfg.cookie_name = try cookieName(v, d);
+        } else if (eqlAny(arg, "--secret-file", "-s")) {
+            cfg.secret_file = try textValue(v, "a file path", d);
+        } else if (eqlAny(arg, "--policy-file", "-P")) {
+            cfg.policy_file = try textValue(v, "a file path", d);
         } else {
-            return false;
+            return applyServiceOption(cfg, arg, v, d);
         }
-        return true;
+    }
+
+    fn applyServiceOption(
+        cfg: *Config,
+        arg: []const u8,
+        v: []const u8,
+        d: *Diagnostic,
+    ) ParseError!void {
+        if (eqlAny(arg, "--workers", "-w")) {
+            cfg.workers = try number(u16, v, 0, 64, "0 for one per CPU, or 1-64", d);
+        } else if (eqlAny(arg, "--max-connections", "--max-connections")) {
+            cfg.max_connections = try number(u32, v, 1, max_connections_limit, "1-8192", d);
+        } else if (eqlAny(arg, "--idle-timeout", "--idle-timeout")) {
+            cfg.idle_timeout_seconds = try number(u32, v, 0, 86_400, "seconds 0-86400", d);
+        } else if (eqlAny(arg, "--websocket-idle-timeout", "--websocket-idle-timeout")) {
+            const seconds = try number(u32, v, 0, 86_400, "seconds 0-86400", d);
+            cfg.websocket_idle_timeout_seconds = seconds;
+        } else if (eqlAny(arg, "--rate-limit", "--rate-limit")) {
+            cfg.rate_limit = try number(u32, v, 1, std.math.maxInt(u32), "requests 1 or more", d);
+        } else if (eqlAny(arg, "--rate-window", "--rate-window")) {
+            cfg.rate_window_seconds = try number(u64, v, 1, 86_400, "seconds 1-86400", d);
+        } else if (eqlAny(arg, "--challenge-rate-limit", "--challenge-rate-limit")) {
+            const limit = try number(u32, v, 1, std.math.maxInt(u32), "requests 1 or more", d);
+            cfg.challenge_rate_limit = limit;
+        } else if (eqlAny(arg, "--ban-seconds", "--ban-seconds")) {
+            cfg.ban_seconds = try number(u64, v, 0, 31_536_000, "seconds 0-31536000", d);
+        } else {
+            return applyStorageOption(cfg, arg, v, d);
+        }
+    }
+
+    fn applyStorageOption(
+        cfg: *Config,
+        arg: []const u8,
+        v: []const u8,
+        d: *Diagnostic,
+    ) ParseError!void {
+        if (eqlAny(arg, "--data-dir", "-D")) {
+            cfg.data_dir = try textValue(v, "a directory path", d);
+        } else if (eqlAny(arg, "--cluster-node", "--cluster-node")) {
+            cfg.cluster_node = try number(u32, v, 0, std.math.maxInt(u32), "a node id", d);
+        } else if (eqlAny(arg, "--cluster-listen", "--cluster-listen")) {
+            cfg.cluster_listen = try textValue(v, "host:port", d);
+        } else if (eqlAny(arg, "--cluster-peer", "--cluster-peer")) {
+            d.expected = "at most 8 peers of the form id@host:port";
+            if (cfg.cluster_peer_count == max_cluster_peers) return error.TooManyPeers;
+            cfg.cluster_peers[cfg.cluster_peer_count] = try textValue(v, "id@host:port", d);
+            cfg.cluster_peer_count += 1;
+        } else if (eqlAny(arg, "--cluster-secret-file", "--cluster-secret-file")) {
+            cfg.cluster_secret_file = try textValue(v, "a file path", d);
+        } else if (eqlAny(arg, "--cluster-tls-cert", "--cluster-tls-cert")) {
+            cfg.cluster_tls_cert = try textValue(v, "a file path", d);
+        } else if (eqlAny(arg, "--cluster-tls-key", "--cluster-tls-key")) {
+            cfg.cluster_tls_key = try textValue(v, "a file path", d);
+        } else if (eqlAny(arg, "--cluster-tls-ca", "--cluster-tls-ca")) {
+            cfg.cluster_tls_ca = try textValue(v, "a file path", d);
+        } else if (eqlAny(arg, "--storage-poll-ms", "--storage-poll-ms")) {
+            cfg.storage_poll_ms = try number(u64, v, 1, 60_000, "milliseconds 1-60000", d);
+        } else {
+            return error.UnknownOption;
+        }
     }
 };
+
+fn number(
+    comptime T: type,
+    v: []const u8,
+    min: T,
+    max: T,
+    expected: []const u8,
+    d: *Config.Diagnostic,
+) Config.ParseError!T {
+    d.expected = expected;
+    const value = std.fmt.parseInt(T, v, 10) catch return error.InvalidValue;
+    if (value < min or value > max) return error.InvalidValue;
+    return value;
+}
+
+fn textValue(
+    v: []const u8,
+    expected: []const u8,
+    d: *Config.Diagnostic,
+) Config.ParseError![]const u8 {
+    d.expected = expected;
+    if (v.len == 0 or v.len > 4096) return error.InvalidValue;
+    for (v) |byte| if (byte < 32 or byte == 127) return error.InvalidValue;
+    return v;
+}
+
+/// RFC 6265 cookie names: at most 64 token characters.
+fn cookieName(v: []const u8, d: *Config.Diagnostic) Config.ParseError![]const u8 {
+    d.expected = "a cookie name of 1-64 token characters";
+    if (v.len == 0 or v.len > 64) return error.InvalidValue;
+    for (v) |byte| {
+        const punctuation = std.mem.indexOfScalar(u8, "!#$%&'*+-.^_`|~", byte) != null;
+        if (!std.ascii.isAlphanumeric(byte) and !punctuation) return error.InvalidValue;
+    }
+    return v;
+}
 
 fn eqlAny(arg: []const u8, long: []const u8, short: []const u8) bool {
     return std.mem.eql(u8, arg, long) or std.mem.eql(u8, arg, short);
@@ -316,4 +449,39 @@ test "config defaults and arg parsing" {
     try std.testing.expectEqual(@as(u8, 2), parsed.cluster_peer_count);
     try std.testing.expectEqualStrings("3@10.0.0.3:9901", parsed.cluster_peers[1]);
     try std.testing.expect(parsed.verbose);
+}
+
+test "unknown options and invalid values reject the command line and name the fault" {
+    const t = std.testing;
+    // `at` indexes the argument the diagnostic must name.
+    const cases = [_]struct { args: []const []const u8, err: anyerror, at: usize = 0 }{
+        .{ .args = &.{"--prot"}, .err = error.UnknownOption },
+        .{ .args = &.{"--port"}, .err = error.MissingValue },
+        .{ .args = &.{ "--port", "70000" }, .err = error.InvalidValue },
+        .{ .args = &.{ "--port", "eighty" }, .err = error.InvalidValue },
+        .{ .args = &.{ "-d", "0" }, .err = error.InvalidValue },
+        .{ .args = &.{ "--algorithm", "md5" }, .err = error.InvalidValue },
+        .{ .args = &.{ "--workers", "65" }, .err = error.InvalidValue },
+        .{ .args = &.{ "--rate-limit", "0" }, .err = error.InvalidValue },
+        .{ .args = &.{ "--max-connections", "9000" }, .err = error.InvalidValue },
+        .{ .args = &.{ "--cookie-name", "a b" }, .err = error.InvalidValue },
+        .{ .args = &.{ "--verbose", "yes" }, .err = error.UnknownOption, .at = 1 },
+        .{ .args = &.{ "--mode", "proxy", "-m", "auth" }, .err = error.DuplicateMode, .at = 2 },
+        .{ .args = &.{"--mode=proxy"}, .err = error.InvalidMode },
+    };
+    for (cases) |case| {
+        var diagnostic: Config.Diagnostic = .{};
+        try t.expectError(case.err, Config.parseArgsDiagnosed(case.args, &diagnostic));
+        try t.expectEqualStrings(case.args[case.at], diagnostic.option);
+    }
+    var peers: [9][]const u8 = undefined;
+    var many: [18][]const u8 = undefined;
+    for (&peers, 0..) |*peer, index| peer.* = if (index == 0) "1@h:1" else "2@h:2";
+    for (0..9) |index| {
+        many[index * 2] = "--cluster-peer";
+        many[index * 2 + 1] = peers[index];
+    }
+    try t.expectError(error.TooManyPeers, Config.parseArgs(&many));
+    const accepted = try Config.parseArgs(&.{ "--rate-limit", "100000000", "--workers", "0" });
+    try t.expectEqual(@as(u32, 100_000_000), accepted.rate_limit);
 }
