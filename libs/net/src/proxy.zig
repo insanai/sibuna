@@ -54,6 +54,9 @@ pub const ProxyError = error{
     UpstreamWriteFailed,
     UpstreamReadFailed,
     UpstreamClosed,
+    /// The origin failed after its response head was sent to the client: the exchange is
+    /// aborted by closing the connection, because a second response would corrupt the first.
+    UpstreamTruncated,
     ClientWriteFailed,
 };
 
@@ -216,6 +219,36 @@ fn writeHead(w: *Io.Writer, req: *const http.Request, audit: Audit, switching: b
     );
 }
 
+const Moved = error{ ReadFailed, WriteFailed, EndOfStream };
+
+/// The one copy step every relayed body uses. It forwards whatever the source already holds,
+/// up to `limit`. Only when the source is empty does it flush the destination, so bytes already
+/// relayed reach the peer before this side waits, and then read the socket once; that read
+/// returns as soon as any bytes arrive. A step therefore never waits for a buffer to fill: a
+/// stream of small writes is delivered as it is produced and each read is observed, while a
+/// bulk transfer still moves a full buffer per read and write, the cost of a plain copy loop.
+fn step(source: *Io.Reader, sink: *Io.Writer, limit: u64) Moved!usize {
+    if (source.bufferedLen() == 0) {
+        sink.flush() catch return error.WriteFailed;
+        source.fillMore() catch |err| return switch (err) {
+            error.EndOfStream => error.EndOfStream,
+            error.ReadFailed => error.ReadFailed,
+        };
+    }
+    const bytes = source.buffered();
+    const count: usize = @intCast(@min(bytes.len, limit));
+    sink.writeAll(bytes[0..count]) catch return error.WriteFailed;
+    source.toss(count);
+    return count;
+}
+
+/// Request bodies come from the untrusted side, so their deadline is a minimum rate rather
+/// than plain silence: activity advances once per credit of bytes received, which asks a
+/// client for at least 16 KiB per idle period (about 1 KiB/s at the 15 s default). That is the
+/// slow-body defence of minimum-rate request timeouts; a trickled upload is cut like a slow
+/// head. Origin responses refresh activity on every read instead (see `copyExact`).
+const upload_credit = 16 * 1024;
+
 /// Relays `remaining` further body bytes from the client to upstream.
 fn relayBody(
     client_reader: *Io.Reader,
@@ -224,41 +257,58 @@ fn relayBody(
     progress: Progress,
 ) !void {
     var left = remaining;
-    var chunk: [16 * 1024]u8 = undefined;
+    var credit: usize = 0;
     while (left > 0) {
-        const want = @min(left, chunk.len);
-        const got = client_reader.readSliceShort(
-            chunk[0..want],
-        ) catch return error.ClientWriteFailed;
-        if (got == 0) return error.ClientWriteFailed;
-        up.writeAll(chunk[0..got]) catch return error.UpstreamWriteFailed;
-        progress.touch();
-        left -= got;
+        const moved = step(client_reader, up, left) catch |err| return switch (err) {
+            error.WriteFailed => error.UpstreamWriteFailed,
+            error.ReadFailed, error.EndOfStream => error.ClientWriteFailed,
+        };
+        left -= moved;
+        credit += moved;
+        if (credit >= upload_credit or left == 0) {
+            progress.touch();
+            credit = 0;
+        }
     }
 }
 
-/// Copies exactly `n` origin bytes to the client in bounded chunks, refreshing activity
-/// after each one so a long framed body is never mistaken for an idle connection.
+/// Copies exactly `n` origin bytes to the client. Every read refreshes activity, so the idle
+/// deadline measures the origin's silence, never the length of the response. Once the head has
+/// been sent, a failure aborts the exchange; it never produces a second response.
 fn copyExact(up: *Io.Reader, w: *Io.Writer, n: u64, progress: Progress) ProxyError!void {
     var left = n;
-    var chunk: [16 * 1024]u8 = undefined;
     while (left > 0) {
-        const want: usize = @intCast(@min(left, chunk.len));
-        const got = up.readSliceShort(chunk[0..want]) catch return error.UpstreamReadFailed;
-        if (got == 0) return error.UpstreamReadFailed;
-        w.writeAll(chunk[0..got]) catch return error.ClientWriteFailed;
+        const moved = step(up, w, left) catch |err| return switch (err) {
+            error.WriteFailed => error.ClientWriteFailed,
+            error.ReadFailed, error.EndOfStream => error.UpstreamTruncated,
+        };
         progress.touch();
-        left -= got;
+        left -= moved;
     }
 }
 
 /// Copies a close-delimited body until the origin closes.
 fn copyRemaining(up: *Io.Reader, w: *Io.Writer, progress: Progress) ProxyError!void {
-    var chunk: [16 * 1024]u8 = undefined;
     while (true) {
-        const got = up.readSliceShort(&chunk) catch return error.ClientWriteFailed;
-        if (got == 0) return;
-        w.writeAll(chunk[0..got]) catch return error.ClientWriteFailed;
+        _ = step(up, w, std.math.maxInt(u64)) catch |err| return switch (err) {
+            error.EndOfStream => {},
+            error.WriteFailed => error.ClientWriteFailed,
+            error.ReadFailed => error.UpstreamTruncated,
+        };
+        progress.touch();
+    }
+}
+
+/// The length of the next origin line (through its LF) once it is buffered, read with the
+/// same flush-before-wait discipline as body bytes. A line longer than the read buffer is a
+/// framing error, never an unbounded wait.
+fn bufferLine(up: *Io.Reader, w: *Io.Writer, progress: Progress) ProxyError!usize {
+    while (true) {
+        const bytes = up.buffered();
+        if (std.mem.indexOfScalar(u8, bytes, '\n')) |index| return index + 1;
+        if (bytes.len == up.buffer.len) return error.UpstreamTruncated;
+        w.flush() catch return error.ClientWriteFailed;
+        up.fillMore() catch return error.UpstreamTruncated;
         progress.touch();
     }
 }
@@ -402,17 +452,21 @@ fn chunkSize(line: []const u8) ?u64 {
 /// the terminating zero chunk, and any trailer section.
 fn relayChunked(up: *Io.Reader, w: *Io.Writer, progress: Progress) ProxyError!void {
     while (true) {
-        const line = up.takeDelimiterInclusive('\n') catch return error.UpstreamReadFailed;
+        const length = try bufferLine(up, w, progress);
+        const line = up.buffered()[0..length];
+        const size = chunkSize(line) orelse return error.UpstreamTruncated;
         w.writeAll(line) catch return error.ClientWriteFailed;
-        progress.touch();
-        const size = chunkSize(line) orelse return error.UpstreamReadFailed;
+        up.toss(length);
         if (size == 0) break;
         try copyExact(up, w, size + 2, progress);
     }
     while (true) {
-        const line = up.takeDelimiterInclusive('\n') catch return error.UpstreamReadFailed;
+        const length = try bufferLine(up, w, progress);
+        const line = up.buffered()[0..length];
+        const last = std.mem.eql(u8, line, "\r\n") or std.mem.eql(u8, line, "\n");
         w.writeAll(line) catch return error.ClientWriteFailed;
-        if (std.mem.eql(u8, line, "\r\n") or std.mem.eql(u8, line, "\n")) return;
+        up.toss(length);
+        if (last) return;
     }
 }
 
@@ -692,8 +746,14 @@ test "framed origin responses are relayed exactly and keep the client open" {
     const truncated = relayFixed("HTTP/1.1 200 OK\r\n", &out, true);
     try std.testing.expectError(error.UpstreamReadFailed, truncated);
     try std.testing.expectError(error.UpstreamClosed, relayFixed("", &out, true));
-    try std.testing.expectError(error.UpstreamReadFailed, relayFixed(
+    try std.testing.expectError(error.UpstreamTruncated, relayFixed(
         "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\nzz\r\n",
+        &out,
+        true,
+    ));
+    // A body shorter than its length is cut after the head: an abort, not a second reply.
+    try std.testing.expectError(error.UpstreamTruncated, relayFixed(
+        "HTTP/1.1 200 OK\r\nContent-Length: 9\r\n\r\nshort",
         &out,
         true,
     ));

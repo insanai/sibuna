@@ -101,6 +101,21 @@ fn originConnection(stream: Io.net.Stream) void {
             reader.interface.toss(end + 4);
             continue;
         }
+        if (std.mem.indexOf(u8, request_line, "/slow-length") != null) {
+            trickle(&writer.interface, "Content-Length: 15360\r\n") catch return;
+            reader.interface.toss(end + 4);
+            continue;
+        }
+        if (std.mem.indexOf(u8, request_line, "/slow-close") != null) {
+            trickle(&writer.interface, "Connection: close\r\n") catch {};
+            return;
+        }
+        if (std.mem.indexOf(u8, request_line, "/truncated") != null) {
+            writer.interface.writeAll("HTTP/1.1 200 OK\r\nContent-Length: 100\r\n\r\n" ++
+                "0123456789") catch {};
+            writer.interface.flush() catch {};
+            return;
+        }
         writer.interface.print(
             "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nX-Origin: stub\r\n" ++
                 "X-Origin-Seq: {d}\r\nContent-Length: {d}\r\n\r\nORIGIN|{s}",
@@ -124,6 +139,20 @@ fn slowStream(w: *Io.Writer) !void {
     }
     try w.writeAll("0\r\n\r\n");
     try w.flush();
+}
+
+/// Thirty 512-byte writes 100 ms apart: 15 KiB over three seconds, less than one relay buffer,
+/// against a one-second idle timeout. Only a relay that forwards each read as it arrives keeps
+/// this exchange alive and shows the client its first bytes promptly.
+fn trickle(w: *Io.Writer, framing: []const u8) !void {
+    try w.print("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n{s}\r\n", .{framing});
+    try w.flush();
+    const piece: [512]u8 = @splat('s');
+    for (0..30) |_| {
+        Io.sleep(io, Io.Duration.fromMilliseconds(100), .awake) catch {};
+        try w.writeAll(&piece);
+        try w.flush();
+    }
 }
 
 fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
@@ -942,6 +971,69 @@ test "a streaming origin response outlives the idle timeout while bytes keep flo
     try std.testing.expect(@divTrunc(elapsed, 1_000_000) >= 2500);
     try std.testing.expectEqual(@as(usize, 12), std.mem.count(u8, resp.body(), "chunk"));
     try std.testing.expect(std.mem.endsWith(u8, resp.body(), "0\r\n\r\n"));
+}
+
+const Timed = struct { first_body_ms: i64, total_ms: i64, body: usize };
+
+/// Reads one response read by read, noting when the first body byte arrived, until the peer
+/// closes or `want` body bytes are in.
+fn timedGet(port: u16, path: []const u8, ip: []const u8, want: usize, out: *Response) !Timed {
+    const addr = try Io.net.IpAddress.parse("127.0.0.1", port);
+    const stream = try addr.connect(io, .{ .mode = .stream });
+    defer stream.close(io);
+    var wbuf: [512]u8 = undefined;
+    var writer = stream.writer(io, &wbuf);
+    try writer.interface.print("GET {s} HTTP/1.1\r\nHost: t\r\nX-Forwarded-For: {s}\r\n" ++
+        "User-Agent: curl/8\r\n\r\n", .{ path, ip });
+    try writer.interface.flush();
+    const started = Io.Clock.awake.now(io);
+    var result: Timed = .{ .first_body_ms = -1, .total_ms = 0, .body = 0 };
+    var rbuf: [4096]u8 = undefined;
+    var reader = stream.reader(io, &rbuf);
+    out.len = 0;
+    while (result.body < want) {
+        reader.interface.fillMore() catch break;
+        const bytes = reader.interface.buffered();
+        const room = @min(bytes.len, out.buf.len - out.len);
+        @memcpy(out.buf[out.len..][0..room], bytes[0..room]);
+        out.len += room;
+        reader.interface.toss(bytes.len);
+        const ms = @divTrunc(started.durationTo(Io.Clock.awake.now(io)).nanoseconds, 1_000_000);
+        const head = std.mem.indexOf(u8, out.text(), "\r\n\r\n") orelse continue;
+        result.body = out.len - head - 4;
+        if (result.body != 0 and result.first_body_ms < 0) result.first_body_ms = @intCast(ms);
+        result.total_ms = @intCast(ms);
+    }
+    return result;
+}
+
+test "small origin writes reach the client as produced and keep the exchange alive" {
+    boot_once.call();
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    // Framed by length, then delimited by close: both copies forward each read on arrival.
+    const cases = [_][]const u8{ "/.well-known/slow-length", "/.well-known/slow-close" };
+    const ips = [_][]const u8{ "203.0.113.73", "203.0.113.74" };
+    for (cases, ips) |path, ip| {
+        const timed = try timedGet(proxy_fixture.port, path, ip, 15360, resp);
+        try std.testing.expectEqual(@as(u16, 200), resp.status());
+        try std.testing.expectEqual(@as(usize, 15360), timed.body);
+        // The first 512 bytes appear after one origin write, not after a full buffer.
+        try std.testing.expect(timed.first_body_ms >= 0 and timed.first_body_ms < 800);
+        // Three seconds of activity outlive the one-second idle timeout.
+        try std.testing.expect(timed.total_ms >= 2500);
+    }
+}
+
+test "an origin that fails after its head aborts the connection without a second response" {
+    boot_once.call();
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    try get(proxy_fixture.port, "/.well-known/truncated", "203.0.113.75", "curl/8", "", resp);
+    try std.testing.expectEqual(@as(u16, 200), resp.status());
+    try std.testing.expectEqualStrings("0123456789", resp.body());
+    try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, resp.text(), "HTTP/1.1 "));
+    try std.testing.expect(!resp.contains("Bad Gateway"));
 }
 
 test "a silent origin is cut at the idle timeout and releases its connection slot" {
