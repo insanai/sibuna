@@ -99,12 +99,28 @@ def source_paths():
             if path.parts[:2] != ("benchmarks", "results") and (ROOT / path).is_file()]
 
 
+def cpu_name():
+    if platform.system() == "Darwin":
+        return command("sysctl", "-n", "machdep.cpu.brand_string")
+    cpu = platform.processor()
+    if cpu:
+        return cpu
+    # Python's processor() is often empty in Linux containers. Record the kernel's
+    # model instead of leaving the hardware provenance blank.
+    if platform.system() == "Linux":
+        try:
+            for line in pathlib.Path("/proc/cpuinfo").read_text().splitlines():
+                key, separator, value = line.partition(":")
+                if separator and key.strip() in ("model name", "Hardware"):
+                    return value.strip()
+        except OSError:
+            pass
+    return "unknown"
+
+
 def metadata(binary=None):
     manifest = (ROOT / "build.zig.zon").read_text()
     artifact = pathlib.Path(binary) if binary else ROOT / "zig-out/bin/sibuna"
-    cpu = platform.processor()
-    if platform.system() == "Darwin":
-        cpu = command("sysctl", "-n", "machdep.cpu.brand_string")
     source = hashlib.sha256()
     paths = source_paths()
     for path in paths:
@@ -122,7 +138,7 @@ def metadata(binary=None):
         "source_file_count": len(paths),
         "daemon_sha256": hashlib.sha256(artifact.read_bytes()).hexdigest(),
         "date": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "host": socket.gethostname(), "cpu": cpu, "os": platform.platform(),
+        "host": socket.gethostname(), "cpu": cpu_name(), "os": platform.platform(),
         "git": command("git", "rev-parse", "HEAD"),
         "dirty": bool(command("git", "status", "--porcelain")),
         "zig": command("zig", "version"),
