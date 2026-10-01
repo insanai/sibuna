@@ -12,6 +12,11 @@ source/API review establishes the allocation-free primitive contract. `@sizeOf` 
 engine and table sizes. RSS is separately sampled from a healthy process with two workers and
 storage compiled in but inactive. The WASM module is rebuilt before its size is recorded.
 
+The admission comparison reserves a large challenge budget (`--challenge-rate-limit 100000000`)
+so timed issuance and fresh-proof verification batches measure successful operations. The
+production limiter check still runs; its default allowance and exhaustion behavior are not
+measured by this comparison. The result records the fixture allowance explicitly.
+
 Distributed results use three real daemon processes and six external Python client processes.
 Gate, Shield and clustered Shield run the same forward-auth workloads. Each response is consumed
 and status-checked; batch throughput includes client scheduling and loopback overhead. Sessions,

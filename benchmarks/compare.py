@@ -62,6 +62,7 @@ def cookies(headers):
 # proof challenges below that baseline, and wait for the smoothed rate to decay first.
 BITS = 8
 ISSUE_INTERVAL = 1 / 40
+CHALLENGE_BUDGET = 100_000_000
 
 
 def issue(port, timeout=180):
@@ -147,7 +148,10 @@ def run_case(binary, product, scheme, pool, rounds):
         if product == 'sibuna':
             args = [str(binary), '--gate', '--mode', 'forward_auth', '--host', '127.0.0.1',
                     '--port', str(port), '--workers', '2', '--algorithm', 'hashcash',
-                    '--difficulty', '8', '--rate-limit', '100000000', '--idle-timeout', '2']
+                    '--difficulty', '8', '--rate-limit', '100000000', '--idle-timeout', '2',
+                    # Measure successful issuance/verification, retaining the limiter's
+                    # check but reserving enough budget for every timed batch.
+                    '--challenge-rate-limit', str(CHALLENGE_BUDGET)]
             check = '/private'
         else:
             policy = temp / 'policy.yaml'
@@ -187,6 +191,8 @@ def run_case(binary, product, scheme, pool, rounds):
                 result = {'product': product, 'token_scheme': scheme,
                           'binary_sha256': hashlib.sha256(binary.read_bytes()).hexdigest(),
                           'binary_bytes': binary.stat().st_size}
+                if product == 'sibuna':
+                    result['challenge_rate_limit'] = CHALLENGE_BUDGET
                 for label, group in [('valid_session', [valid]), ('unauthenticated_check', [missing]),
                                      ('challenge_bootstrap', bootstrap)]:
                     # Complete one untimed warmup before the measured batches.
@@ -224,6 +230,8 @@ def main():
         'Proof challenges are issued below the 50/s adaptive baseline so the matched work '
         'holds; the bootstrap batches above it measure issuance only, which is difficulty '
         'independent.',
+        'Sibuna reserves 100 million challenge operations per window for this fixture; '
+        'the limiter check remains, but exhaustion and production budgets are not measured.',
         'Default Anubis Ed25519 and optional HS512 are both tested; Sibuna uses its default MAC.',
         'Bootstrap includes HTML plus JSON for Sibuna and HTML with embedded puzzle for Anubis; static assets excluded.',
         'Fresh proofs are prepared outside timed verification; browser solve and network latency are not measured.',
