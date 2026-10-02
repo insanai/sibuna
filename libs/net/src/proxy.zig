@@ -671,7 +671,10 @@ fn relayUpgrade(
 
 fn connectUpstream(io: Io, host: []const u8, port: u16) ProxyError!Io.net.Stream {
     const addr = Io.net.IpAddress.parse(host, port) catch return error.UpstreamUnreachable;
-    return @import("connect.zig").bounded(io, addr);
+    const connect = @import("connect.zig");
+    const stream = try connect.bounded(io, addr);
+    connect.noDelay(stream);
+    return stream;
 }
 
 /// Proxies one request through a pooled origin connection. Returns whether

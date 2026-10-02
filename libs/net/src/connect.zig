@@ -42,6 +42,17 @@ fn waitUntil(io: Io, fd: posix.socket_t, deadline: i96) Error!void {
     return error.UpstreamUnreachable;
 }
 
+/// Disables Nagle's algorithm on a connected stream. Sibuna already coalesces each message in
+/// its writer and flushes only before it would wait (`proxy.step`), so a kernel hold-back
+/// saves no packets and delays the next small write until the peer acknowledges the last,
+/// up to its delayed-ACK timer (40 ms on Linux). Failure only leaves the default behaviour.
+pub fn noDelay(stream: Io.net.Stream) void {
+    const one: c_int = 1;
+    const bytes = std.mem.asBytes(&one);
+    const fd = stream.socket.handle;
+    _ = posix.system.setsockopt(fd, posix.IPPROTO.TCP, posix.TCP.NODELAY, bytes, bytes.len);
+}
+
 /// `bounded` with an explicit absolute awake-clock deadline in nanoseconds.
 pub fn boundedDeadline(io: Io, address: Io.net.IpAddress, deadline_ns: i96) Error!Io.net.Stream {
     const local: Io.net.IpAddress = switch (address) {

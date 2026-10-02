@@ -13,6 +13,7 @@ const Io = std.Io;
 const core = @import("core");
 const crypto = @import("crypto");
 const policy = @import("policy");
+const net = @import("net");
 const server = @import("server.zig");
 
 const io = std.testing.io;
@@ -77,6 +78,8 @@ fn originLoop(listener: *Io.net.Server) void {
 /// requests seen on this socket so tests can observe pooled reuse.
 fn originConnection(stream: Io.net.Stream) void {
     defer stream.close(io);
+    // The stub's own writes must not be held back, or it would hide the proxy's behaviour.
+    net.connect.noDelay(stream);
     var buf: [16 * 1024]u8 = undefined;
     var reader = stream.reader(io, &buf);
     var wbuf: [16 * 1024]u8 = undefined;
@@ -109,6 +112,16 @@ fn originConnection(stream: Io.net.Stream) void {
         if (std.mem.indexOf(u8, request_line, "/slow-close") != null) {
             trickle(&writer.interface, "Connection: close\r\n") catch {};
             return;
+        }
+        if (std.mem.indexOf(u8, request_line, "/split") != null) {
+            // An origin that flushes its head early (streaming rendering) and its body after.
+            writer.interface.writeAll("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\n") catch return;
+            writer.interface.flush() catch return;
+            Io.sleep(io, Io.Duration.fromMilliseconds(5), .awake) catch {};
+            writer.interface.writeAll("body") catch return;
+            writer.interface.flush() catch return;
+            reader.interface.toss(end + 4);
+            continue;
         }
         if (std.mem.indexOf(u8, request_line, "?upload") != null) {
             const framing = UploadFraming.of(head);
@@ -1304,6 +1317,34 @@ test "small origin writes reach the client as produced and keep the exchange ali
         // Three seconds of activity outlive the one-second idle timeout.
         try std.testing.expect(timed.total_ms >= 2500);
     }
+}
+
+test "a body sent after an early-flushed head is not held back by the kernel" {
+    boot_once.call();
+    const addr = try Io.net.IpAddress.parse("127.0.0.1", proxy_fixture.port);
+    const stream = try addr.connect(io, .{ .mode = .stream });
+    defer stream.close(io);
+    var wbuf: [512]u8 = undefined;
+    var writer = stream.writer(io, &wbuf);
+    var rbuf: [4096]u8 = undefined;
+    var reader = stream.reader(io, &rbuf);
+    // Delayed acknowledgement starts after the first exchanges of a connection, so several
+    // requests share one: with Nagle each body waits for the head's ACK, about 40 ms on Linux.
+    const requests = 8;
+    const started = Io.Clock.awake.now(io);
+    for (0..requests) |_| {
+        try writer.interface.writeAll("GET /.well-known/split HTTP/1.1\r\nHost: t\r\n" ++
+            "X-Forwarded-For: 203.0.113.86\r\nUser-Agent: curl/8\r\n\r\n");
+        try writer.interface.flush();
+        while (std.mem.indexOf(u8, reader.interface.buffered(), "\r\n\r\nbody") == null)
+            try reader.interface.fillMore();
+        const reply = reader.interface.buffered();
+        try std.testing.expect(std.mem.startsWith(u8, reply, "HTTP/1.1 200"));
+        reader.interface.toss(std.mem.indexOf(u8, reply, "\r\n\r\nbody").? + 8);
+    }
+    const elapsed = started.durationTo(Io.Clock.awake.now(io)).nanoseconds;
+    // Each exchange costs the origin's 5 ms pause; a held-back body would cost ~40 ms more.
+    try std.testing.expect(elapsed < requests * 25 * std.time.ns_per_ms);
 }
 
 test "an origin that fails after its head aborts the connection without a second response" {

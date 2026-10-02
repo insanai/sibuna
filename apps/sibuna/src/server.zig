@@ -178,6 +178,7 @@ pub fn workerLoop(server: *Io.net.Server, io: Io, state: *AppState) void {
             rejectRaw(client_stream, io, state, "Service Unavailable: connection limit reached");
             continue;
         }
+        net.connect.noDelay(client_stream);
         state.tasks.launch(io, client_stream, state, connectionThread) catch {
             _ = state.connections.fetchSub(1, .monotonic);
             Metrics.bump(&state.metrics.overloaded);
