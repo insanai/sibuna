@@ -29,6 +29,7 @@
 
 const std = @import("std");
 const Io = std.Io;
+const core = @import("core");
 const http = @import("http.zig");
 const upgrade = @import("proxy_upgrade.zig");
 const duplex = @import("duplex.zig");
@@ -122,24 +123,13 @@ pub const Exchange = struct {
     keep_alive: bool,
 };
 
-/// Two-state spinlock; the pool's critical sections are a few instructions.
-const SpinLock = struct {
-    locked: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
-
-    fn lock(self: *SpinLock) void {
-        while (self.locked.swap(true, .acquire)) std.atomic.spinLoopHint();
-    }
-
-    fn unlock(self: *SpinLock) void {
-        self.locked.store(false, .release);
-    }
-};
-
 /// Idle origin connections shared by every connection thread.
 pub const Pool = struct {
     pub const capacity = 256;
 
-    mutex: SpinLock = .{},
+    /// Every proxied request takes it; a holder preempted inside must not leave the other
+    /// connection threads spinning through their time slices (`core.Lock`).
+    mutex: core.Lock = .{},
     idle: [capacity]Io.net.Stream = undefined,
     count: usize = 0,
     active: [8192]?Io.net.Stream = @splat(null),
@@ -147,9 +137,9 @@ pub const Pool = struct {
     stopping: bool = false,
 
     /// Takes an idle origin socket if one is pooled.
-    pub fn take(self: *Pool) ?Io.net.Stream {
-        self.mutex.lock();
-        defer self.mutex.unlock();
+    pub fn take(self: *Pool, io: Io) ?Io.net.Stream {
+        self.mutex.lock(io);
+        defer self.mutex.unlock(io);
         if (self.count == 0) return null;
         self.count -= 1;
         return self.idle[self.count];
@@ -157,21 +147,21 @@ pub const Pool = struct {
 
     /// Returns a reusable origin socket, or closes it when the pool is full.
     pub fn give(self: *Pool, io: Io, stream: Io.net.Stream) void {
-        self.mutex.lock();
+        self.mutex.lock(io);
         if (!self.stopping and self.count < capacity) {
             self.idle[self.count] = stream;
             self.count += 1;
-            self.mutex.unlock();
+            self.mutex.unlock(io);
             return;
         }
-        self.mutex.unlock();
+        self.mutex.unlock(io);
         stream.close(io);
     }
 
     /// Active exchanges retain their slot until before closing or returning the descriptor.
-    fn track(self: *Pool, stream: Io.net.Stream) ?usize {
-        self.mutex.lock();
-        defer self.mutex.unlock();
+    fn track(self: *Pool, io: Io, stream: Io.net.Stream) ?usize {
+        self.mutex.lock(io);
+        defer self.mutex.unlock(io);
         if (self.stopping) return null;
         for (0..self.active.len) |offset| {
             const index = (self.cursor + offset) % self.active.len;
@@ -183,9 +173,9 @@ pub const Pool = struct {
         return null;
     }
 
-    fn untrack(self: *Pool, index: usize) void {
-        self.mutex.lock();
-        defer self.mutex.unlock();
+    fn untrack(self: *Pool, io: Io, index: usize) void {
+        self.mutex.lock(io);
+        defer self.mutex.unlock(io);
         std.debug.assert(self.active[index] != null);
         self.active[index] = null;
     }
@@ -193,8 +183,8 @@ pub const Pool = struct {
     /// Interrupt stalled origin reads/writes before joining request workers. Closing remains
     /// the worker's responsibility, preventing descriptor reuse while shutdown holds the lock.
     pub fn shutdown(self: *Pool, io: Io) void {
-        self.mutex.lock();
-        defer self.mutex.unlock();
+        self.mutex.lock(io);
+        defer self.mutex.unlock(io);
         self.stopping = true;
         for (self.active) |entry| {
             if (entry) |stream| stream.shutdown(io, .both) catch {};
@@ -203,8 +193,8 @@ pub const Pool = struct {
 
     /// Closes every pooled socket (shutdown or tests).
     pub fn drain(self: *Pool, io: Io) void {
-        self.mutex.lock();
-        defer self.mutex.unlock();
+        self.mutex.lock(io);
+        defer self.mutex.unlock(io);
         for (self.idle[0..self.count]) |stream| stream.close(io);
         self.count = 0;
     }
@@ -701,22 +691,22 @@ pub fn streamProxy(
     while (true) : (attempt += 1) {
         // A retry always connects afresh: after an idle period every pooled
         // socket may be stale, and a second stale one would fail the request.
-        const pooled = if (attempt == 0) pool.take() else null;
+        const pooled = if (attempt == 0) pool.take(io) else null;
         const stream = pooled orelse try connectUpstream(
             io,
             input.upstream_host,
             input.upstream_port,
         );
-        const active = pool.track(stream) orelse {
+        const active = pool.track(io, stream) orelse {
             stream.close(io);
             return error.UpstreamUnreachable;
         };
         // The reaper may cut this socket while the exchange stalls; it is detached before
         // the socket is closed or pooled so a reused descriptor is never touched.
-        if (input.client.relay.activity) |activity| activity.attachPeer(stream);
+        if (input.client.relay.activity) |activity| activity.attachPeer(io, stream);
         const outcome = exchange(stream, &input, handshake);
-        if (input.client.relay.activity) |activity| activity.detachPeer();
-        pool.untrack(active);
+        if (input.client.relay.activity) |activity| activity.detachPeer(io);
+        pool.untrack(io, active);
         if (outcome) |relayed| {
             if (relayed.origin_reusable) pool.give(io, stream) else stream.close(io);
             return relayed.client_keep;

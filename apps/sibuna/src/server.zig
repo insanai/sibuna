@@ -299,8 +299,8 @@ fn reaperInterval(config: core.Config) ?u64 {
 
 pub fn handleConnection(stream: Io.net.Stream, io: Io, state: *AppState) void {
     defer stream.close(io);
-    const idle_slot = state.idle.register(stream, nowMs(io)) orelse return;
-    defer state.idle.unregister(idle_slot);
+    const idle_slot = state.idle.register(io, stream, nowMs(io)) orelse return;
+    defer state.idle.unregister(io, idle_slot);
     if (state.stopping.load(.acquire)) return;
     var conn_buf: [max_request_bytes]u8 = undefined;
     var reader = stream.reader(io, &conn_buf);
@@ -320,7 +320,7 @@ pub fn handleConnection(stream: Io.net.Stream, io: Io, state: *AppState) void {
         conn.last = served + 1 == max_requests_per_connection;
         const keep = serveOne(&conn) catch break;
         if (!keep) break;
-        state.idle.touch(idle_slot, nowMs(io));
+        state.idle.touch(io, idle_slot, nowMs(io));
     }
 }
 
@@ -575,7 +575,8 @@ fn dispatch(ctx: *RequestContext) !bool {
                 .window_ms = st.config.rate_window_seconds * 1000,
             };
             const ip = ctx.client_ip;
-            const spend = st.rate_limiter.checkScoped(ip, challenge_scope, ctx.now_ms, budget);
+            const limiter = &st.rate_limiter;
+            const spend = limiter.checkScoped(ctx.c.io, ip, challenge_scope, ctx.now_ms, budget);
             if (spend.limited) return rateLimited(ctx, spend, 0);
         }
         try handleInternal(ctx);
@@ -585,7 +586,7 @@ fn dispatch(ctx: *RequestContext) !bool {
         .rate = st.config.rate_limit,
         .window_ms = st.config.rate_window_seconds * 1000,
     };
-    const rate = st.rate_limiter.check(ctx.client_ip, ctx.now_ms, limits);
+    const rate = st.rate_limiter.check(ctx.c.io, ctx.client_ip, ctx.now_ms, limits);
     if (rate.limited) return rateLimited(ctx, rate, 0);
     return applyPolicy(ctx);
 }
@@ -721,6 +722,7 @@ fn applyPolicy(ctx: *RequestContext) !bool {
     defer if (build_options.console) flushDeferredFindings(ctx);
     if (decision.limits) |limits| {
         const rate = st.rule_rate_limiter.checkScoped(
+            ctx.c.io,
             ctx.client_ip,
             decision.limit_scope,
             ctx.now_ms,

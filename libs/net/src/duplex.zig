@@ -3,6 +3,7 @@
 const std = @import("std");
 const Io = std.Io;
 const posix = std.posix;
+const core = @import("core");
 pub const Error = error{ ConnectionFailed, IdleTimeout };
 pub const Endpoint = struct { stream: Io.net.Stream, reader: *Io.Reader };
 /// Liveness of one client connection as the idle reaper sees it. The stamp advances whenever
@@ -15,38 +16,30 @@ pub const Activity = struct {
     timeout_ms: std.atomic.Value(u64) = .init(0),
     /// Orders attach, detach and the reaper's shutdown: the owner detaches before it closes
     /// or pools the socket, so the reaper never shuts down a reused descriptor.
-    peer_lock: std.atomic.Value(bool) = .init(false),
+    peer_lock: core.Lock = .{},
     peer: ?Io.net.Stream = null,
 
     pub fn touch(self: *Activity, io: Io) void {
         self.at_ms.store(nowMs(io), .monotonic);
     }
 
-    pub fn attachPeer(self: *Activity, stream: Io.net.Stream) void {
-        self.lock();
-        defer self.unlock();
+    pub fn attachPeer(self: *Activity, io: Io, stream: Io.net.Stream) void {
+        self.peer_lock.lock(io);
+        defer self.peer_lock.unlock(io);
         self.peer = stream;
     }
 
-    pub fn detachPeer(self: *Activity) void {
-        self.lock();
-        defer self.unlock();
+    pub fn detachPeer(self: *Activity, io: Io) void {
+        self.peer_lock.lock(io);
+        defer self.peer_lock.unlock(io);
         self.peer = null;
     }
 
     /// Interrupts the attached origin socket; the owner still closes it.
     pub fn shutdownPeer(self: *Activity, io: Io) void {
-        self.lock();
-        defer self.unlock();
+        self.peer_lock.lock(io);
+        defer self.peer_lock.unlock(io);
         if (self.peer) |stream| stream.shutdown(io, .both) catch {};
-    }
-
-    fn lock(self: *Activity) void {
-        while (self.peer_lock.swap(true, .acquire)) std.atomic.spinLoopHint();
-    }
-
-    fn unlock(self: *Activity) void {
-        self.peer_lock.store(false, .release);
     }
 };
 pub const Options = struct {

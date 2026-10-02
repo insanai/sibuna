@@ -333,21 +333,25 @@ fn spentBody(s: *store.ChallengeStore, iters: u64) u64 {
     return n;
 }
 
-fn gcraBody(l: *store.RateLimiter, iters: u64) u64 {
+/// The limiter and the Io its shard locks park on when contended.
+const Gcra = struct { limiter: *store.RateLimiter, io: std.Io };
+
+fn gcraBody(g: Gcra, iters: u64) u64 {
     var limited: u64 = 0;
     var i: u64 = 0;
     while (i < iters) : (i += 1) {
         const limits = store.RateLimits{ .rate = 100, .window_ms = 10_000 };
-        const d = l.check(test_ips[i % test_ips.len], 10_000 + i, limits);
+        const d = g.limiter.check(g.io, test_ips[i % test_ips.len], 10_000 + i, limits);
         if (d.limited) limited += 1;
     }
     return limited;
 }
 
-fn scopedGcraBody(l: *store.RateLimiter, iters: u64) u64 {
+fn scopedGcraBody(g: Gcra, iters: u64) u64 {
     var limited: u64 = 0;
     for (0..iters) |i| {
-        const result = l.checkScoped(
+        const result = g.limiter.checkScoped(
+            g.io,
             test_ips[i % test_ips.len],
             1 + (i / test_ips.len) % 4,
             10_000 + i,
@@ -371,13 +375,13 @@ fn benchState(io: std.Io, gpa: std.mem.Allocator, runs: *Runs) !void {
     defer gpa.destroy(l);
     l.* = store.RateLimiter.init();
     try runs.append(tag(
-        measure(io, 200_000, l, gcraBody),
+        measure(io, 200_000, Gcra{ .limiter = l, .io = io }, gcraBody),
         "rate_limiter",
         "gcra_check",
     ));
     l.* = store.RateLimiter.init();
     try runs.append(tag(
-        measure(io, 200_000, l, scopedGcraBody),
+        measure(io, 200_000, Gcra{ .limiter = l, .io = io }, scopedGcraBody),
         "rate_limiter",
         "gcra_four_rule_scopes",
     ));

@@ -3,10 +3,10 @@
 const std = @import("std");
 const Io = std.Io;
 const net = @import("net");
-const store = @import("store");
+const core = @import("core");
 
 /// Registry of open connections for the idle reaper. Each slot pairs a
-/// socket with its last-activity time under a tiny spinlock; the reaper
+/// socket with its last-activity time under a small lock; the reaper
 /// shuts a stale socket down while holding that lock, and a connection
 /// unregisters under the same lock before it closes, so a reused
 /// descriptor can never be shut down by mistake.
@@ -14,7 +14,7 @@ pub const IdleTable = struct {
     pub const capacity = 8192;
 
     const Slot = struct {
-        lock: store.rate_limiter.SpinLock = .{},
+        lock: core.Lock = .{},
         active: bool = false,
         stream: Io.net.Stream = undefined,
         activity: net.duplex.Activity = .{},
@@ -23,37 +23,37 @@ pub const IdleTable = struct {
     slots: [capacity]Slot = [_]Slot{.{}} ** capacity,
     cursor: std.atomic.Value(u32) = std.atomic.Value(u32).init(0),
 
-    pub fn register(self: *IdleTable, stream: Io.net.Stream, now_ms: u64) ?u32 {
+    pub fn register(self: *IdleTable, io: Io, stream: Io.net.Stream, now_ms: u64) ?u32 {
         const start = self.cursor.fetchAdd(1, .monotonic) % capacity;
         var probe: u32 = 0;
         while (probe < capacity) : (probe += 1) {
             const idx = (start + probe) % capacity;
             const slot = &self.slots[idx];
-            slot.lock.lock();
-            defer slot.lock.unlock();
+            slot.lock.lock(io);
+            defer slot.lock.unlock(io);
             if (!slot.active) {
                 slot.active = true;
                 slot.stream = stream;
                 slot.activity.at_ms.store(now_ms, .monotonic);
                 slot.activity.timeout_ms.store(0, .monotonic);
-                slot.activity.detachPeer();
+                slot.activity.detachPeer(io);
                 return idx;
             }
         }
         return null;
     }
 
-    pub fn touch(self: *IdleTable, idx: u32, now_ms: u64) void {
+    pub fn touch(self: *IdleTable, io: Io, idx: u32, now_ms: u64) void {
         const slot = &self.slots[idx];
-        slot.lock.lock();
-        defer slot.lock.unlock();
+        slot.lock.lock(io);
+        defer slot.lock.unlock(io);
         slot.activity.at_ms.store(now_ms, .monotonic);
     }
 
-    pub fn unregister(self: *IdleTable, idx: u32) void {
+    pub fn unregister(self: *IdleTable, io: Io, idx: u32) void {
         const slot = &self.slots[idx];
-        slot.lock.lock();
-        defer slot.lock.unlock();
+        slot.lock.lock(io);
+        defer slot.lock.unlock(io);
         slot.active = false;
     }
 
@@ -65,8 +65,8 @@ pub const IdleTable = struct {
 
     pub fn shutdown(self: *IdleTable, io: Io) void {
         for (&self.slots) |*slot| {
-            slot.lock.lock();
-            defer slot.lock.unlock();
+            slot.lock.lock(io);
+            defer slot.lock.unlock(io);
             if (slot.active) slot.stream.shutdown(io, .both) catch {};
         }
     }
@@ -77,8 +77,8 @@ pub const IdleTable = struct {
     pub fn reap(self: *IdleTable, io: Io, now_ms: u64, timeout_ms: u64) u32 {
         var reaped: u32 = 0;
         for (&self.slots) |*slot| {
-            slot.lock.lock();
-            defer slot.lock.unlock();
+            slot.lock.lock(io);
+            defer slot.lock.unlock(io);
             const override = slot.activity.timeout_ms.load(.monotonic);
             const timeout = if (override == 0) timeout_ms else override;
             if (slot.active and timeout != 0 and
@@ -106,15 +106,15 @@ test "reaped idle slots remain owned until the original connection unregisters" 
     defer client.close(io);
     const stream = try listener.accept(io);
     defer stream.close(io);
-    const old = table.register(stream, 0).?;
+    const old = table.register(io, stream, 0).?;
     try std.testing.expectEqual(@as(u32, 0), table.reap(io, 200, 0));
     table.slots[old].activity.timeout_ms.store(100, .monotonic);
     try std.testing.expectEqual(@as(u32, 1), table.reap(io, 200, 0));
     table.cursor.store(old, .monotonic);
     // The same socket is sufficient to check registry ownership; neither registration closes it.
-    const fresh = table.register(stream, 200).?;
+    const fresh = table.register(io, stream, 200).?;
     try std.testing.expect(old != fresh);
-    table.unregister(old);
+    table.unregister(io, old);
     try std.testing.expect(table.slots[fresh].active);
-    table.unregister(fresh);
+    table.unregister(io, fresh);
 }

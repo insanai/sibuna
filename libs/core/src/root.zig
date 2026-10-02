@@ -18,6 +18,7 @@ pub const Config = config.Config;
 pub const Mode = config.Mode;
 pub const max_cluster_peers = config.max_cluster_peers;
 pub const log = @import("log.zig");
+pub const Lock = @import("lock.zig").Lock;
 
 test {
     _ = @import("diagnostic.zig");
@@ -25,6 +26,7 @@ test {
     _ = @import("config.zig");
     _ = @import("incident_heads.zig");
     _ = @import("log.zig");
+    _ = @import("lock.zig");
 }
 
 test "core sanity" {
