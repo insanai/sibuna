@@ -113,3 +113,16 @@
 #document("pdf/sid-0008-ai-bot-traffic-monitoring.pdf")[
   #include "records/0008-ai-bot-traffic-monitoring.typ"
 ]
+
+#document(
+  "sid/0009-chunked-request-bodies.html",
+  title: [SID 0009: Chunked Request Bodies: Strict In-Place Decoding, Canonical Re-Framing, and Inspection Equivalence],
+  author: ("Sibuna Contributors",),
+  description: [Specifies how the reverse proxy accepts chunked request bodies without a heap allocation or a second buffer: a strict RFC 9112 chunk grammar that rejects every known terminator and extension ambiguity, an in-place decoder whose output never overtakes its input, Content-Length forwarding for bodies that complete within the connection buffer and canonical re-chunking for the rest, and proofs that inspection sees exactly the bytes a Content-Length request would show and that the origin cannot observe the client's framing.],
+)[
+  #include "records/0009-chunked-request-bodies.typ"
+]
+
+#document("pdf/sid-0009-chunked-request-bodies.pdf")[
+  #include "records/0009-chunked-request-bodies.typ"
+]
