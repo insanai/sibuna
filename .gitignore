@@ -5,8 +5,34 @@ docs/build/
 *.log
 zig-pkg/
 __pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+
 # Local benchmark binaries, third-party downloads and visual review scratch.
 benchmarks/vendor/
 benchmarks/tmp/
 tmp/
 output/
+scratch/
+
+# Local data directories and cluster node test directories
+data/
+n[0-9]*/
+
+# Local secret files, development PSKs, and passwords
+*.seed
+*.psk
+psk
+admin-password
+
+# Downloaded GeoIP datasets and binary snapshots
+*.bin
+*.csv
+*.csv.gz
+
+# Editor and temporary file artifacts
+*.swp
+*~
+.vscode/
+.idea/
