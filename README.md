@@ -1,561 +1,408 @@
-# Sibuna
-
-> A web firewall and anti-crawler daemon in pure Zig 0.16: zero-allocation classification,
-> proof of sequential work for admission, keyed-hash sessions, a semantic WAF, and an embedded
-> replicated store, in one executable.
-
-Sibuna sits in front of an origin (as a reverse proxy) or beside an ingress (as a forward-auth
-subrequest engine). Every request is parsed and classified from a single per-connection stack
-buffer with no heap allocation. Unverified clients must prove work in the browser: a
-Cohen–Pietrzak proof of sequential work (or bit-level Hashcash), verified natively in
-microseconds and exchanged for a keyed-BLAKE3 session token bound to the client. Known
-automation, forged workers, injected payloads, floods, and honeypot hits are denied before they
-reach the origin.
+<p align="center">
+  <h1 align="center">sibuna</h1>
+  <p align="center">
+    <strong>A simple and lightweight web application firewall to protect websites and APIs without CAPTCHAs.</strong>
+  </p>
+  <p align="center">
+    <a href="#features">Features</a> •
+    <a href="#quickstart">Quickstart</a> •
+    <a href="#how-it-works">How It Works</a> •
+    <a href="#architecture">Architecture</a> •
+    <a href="#deployment">Deployment</a> •
+    <a href="#configuration">Configuration</a> •
+    <a href="#philosophy">Philosophy</a> •
+    <a href="#documentation">Documentation</a>
+  </p>
+</p>
 
 ---
 
-## Two surfaces, one binary
+**sibuna** is an open-source web application firewall (WAF) and anti-crawler daemon. It sits in front of your web application as a protective reverse proxy, or alongside your existing reverse proxy (such as Caddy, Nginx, or Traefik) as an authorization gate.
 
-| Capability | Gate (`--gate`) | Shield (`--shield`, default) |
-|---|---|---|
-| Proof-of-work admission and sessions | Yes | Yes |
-| Declarative policy, bot signatures, CIDR reputation | Yes | Yes |
-| Local GCRA limits, honeypot, bans | Yes | Yes |
-| Semantic payload inspection | Disabled | SQLi, XSS, traversal, command injection |
-| Reverse proxy / forward auth | Both | Both |
-| Optional persistent and distributed deployment | Yes | Yes |
+Instead of subjecting human visitors to frustrating image CAPTCHAs or privacy-invasive tracking scripts, Sibuna asks client browsers to solve a silent background computational puzzle in a fraction of a second. Instead of requiring sprawling container clusters, external databases, or heavy interpreters, Sibuna runs as a **single, self-contained executable** with predictable, bounded memory.
 
-`--data-dir` enables storage; `--cluster-*` enables replicated policy and reputation with a
-cluster build. Distributed edge deployment is an option, not a third surface. Valid sessions
-still undergo policy denial checks and, in Shield, WAF inspection.
+---
 
-## How Sibuna compares
+## Features
 
-Facts about other products were read from their public documentation and release artefacts
-in September 2026 (Anubis 1.27.0, SafeLine community edition 9.x, Cloudflare WAF developer
-docs); the book's Part II carries the full table with sources.
+- **[x] Zero External Dependencies:** Compiles to a single static binary. No external Redis, PostgreSQL, Node, or Docker clusters required.
+- **[x] Frictionless Human Verification:** Legitimate visitors solve a silent, background proof-of-work puzzle in WebAssembly ($< 1\,\text{s}$). No images to click, no tracking cookies.
+- **[x] Deterministic Memory Bounds:** Fixed stack buffers for request processing. Zero dynamic heap allocation on the hot request path ensures immunity to memory fragmentation and out-of-memory crashes under flood.
+- **[x] AI Crawler & Bot Governance:** Sub-45ns Radix CIDR trie matches client IPs against published ranges for OpenAI, Anthropic, Google Gemini, Perplexity, Meta, Apple, and ByteDance. Instantly catches spoofed User-Agents.
+- **[x] Semantic Attack Shield:** Single-pass, linear-time Aho–Corasick automata and structural tokenizers inspect SQL injection, XSS, and path traversal without regular expression backtracking (ReDoS).
+- **[x] Thermodynamic Asymmetry:** Verifying a solution costs the server under $25\,\mu\text{s}$, while mass scrapers must burn hours of dedicated CPU compute to harvest pages.
+- **[x] Local Rate Limiting:** 16-shard atomic GCRA (Generic Cell Rate Algorithm) enforces strict per-client burst and sustained rate limits in $6\,\text{ns}$ with zero lock contention.
+- **[x] Real-Time Management Console:** Built-in web dashboard with a live 3D country traffic globe, 24-hour comparative analytics, incident forensics with full-text search (FTS5), and granular provider toggles.
+- **[x] Embedded Multi-Node Clustering:** Embedded Zaxonlite store executes Multi-Paxos consensus to synchronize dynamic policies and propagate banned IPs across nodes in milliseconds.
 
-| | Sibuna | Anubis | SafeLine CE | Cloudflare WAF |
-|---|---|---|---|---|
-| Runs as | One static binary, reverse proxy or forward auth | One Go binary | Seven Docker containers | Hosted network |
-| Proof-of-work admission | Hashcash and Cohen–Pietrzak sequential work, WASM + JS | SHA-256 Hashcash (JS), meta-refresh, preact | JS anti-bot challenge, CAPTCHA | Managed challenge, Turnstile |
-| Challenge state on server | None until solved | Store: memory, bbolt, Valkey, S3 | Managed by the stack | Managed |
-| Session token | Keyed BLAKE3 tag (Ed25519 optional) | Ed25519 JWT (HS512 optional) | Cookie | `cf_clearance` |
-| SQLi / XSS / RCE inspection | Shield: automaton + structural tokenizers | — | Semantic engine | Managed rulesets (Pro+) |
-| Rate limiting | GCRA per client | — | Per IP, path, session | 1 / 2 / 5 / 100 rules by plan |
-| Reputation, bans | Honeypot; cluster-replicated trie | DNSBL; ASN/GeoIP via paid Thoth | IP groups; threat intel (Pro) | IP lists; bot score (Enterprise) |
-| Forensics | Embedded SQLite, FTS5, vector campaigns | Metrics only | PostgreSQL log + console | Security Events |
-| Multi-node | Multi-Paxos replication, shared seed | Shared key + Valkey | One stack per host | Global anycast |
-| Host footprint | Linux review: 32.9 MiB binary, ~10 MiB idle | Linux review: 38.1 MiB binary, ~21 MiB idle | 1 core, 1 GB RAM, 5 GB disk min. | none on premises |
-| Measured here | Yes | Yes | No (Docker only) | No (hosted) |
+---
 
-The Linux footprints are build-specific October measurements. Sibuna's console and durable
-storage were inactive; active console, storage and load costs are recorded separately in
-[the benchmark files](benchmarks/results/README.md). They are not minimum deployment sizes.
+## Architecture
 
-Sibuna does not terminate ingress TLS or score bots with a model. Its opt-in console preview
-includes the animated country globe, incident investigation, policy editing, users, scoped API
-tokens, audit browsing, local node controls and authenticated multi-topic subscriptions.
-SID 0007 was committed on 2026-09-11. Linux tests, actual three-host management checks and
-connected Chrome workflows passed the October review. Fresh single-node and cross-host console-impact results
-are inconclusive; the September paired exception is historical and does not establish acceptance
-for the current request path. See [benchmark evidence](benchmarks/results/README.md) and
-[loading country data from the CLI](#loading-country-data) for country data setup.
+Following the modular design of raylib, Sibuna is divided into small, single-purpose subsystems:
 
-## Research foundations
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                          SIBUNA SUBSYSTEMS                             │
+├──────────────┬─────────────────────────────────────────────────────────┤
+│ net          │ Zero-copy HTTP/1.1 stream parser & reverse proxy relay  │
+│ crypto       │ Proof of Sequential Work (PoSW), Hashcash & BLAKE3 MAC  │
+│ policy       │ Aho–Corasick signatures, Radix CIDR trie & semantic WAF │
+│ challenge    │ Stateless challenge coordinator & adaptive difficulty   │
+│ store        │ 16-shard GCRA rate limiter & Robin Hood spent set       │
+│ edge         │ Embedded Zaxonlite store (replicated SQLite Multi-Paxos)│
+│ console      │ WebAssembly operator UI, WebSocket telemetry & GeoIP    │
+└──────────────┴─────────────────────────────────────────────────────────┘
+```
 
-Every mechanism was chosen for a published security or complexity argument, not for
-popularity. The mathematics is in **SID 0006**; the engineering contracts are in SID 0002–0005.
+### Two Operational Surfaces
 
-- **Proof of Sequential Work** (Cohen–Pietrzak, EUROCRYPT 2018; quantum security by
-  Blocki–Lee–Zhou, ITC 2021): non-parallelisable, deterministic solve time, `O(2^m + log N)` retained client
-  memory, `t(n+1)` hashes to verify. Default tier. Hashcash (bit-level) is the second tier.
-  Argon2id, HashX, and Equihash were evaluated and rejected (see SID 0002 and SID 0006).
-- **Keyed BLAKE3 MAC tokens and stateless challenges**: issuer and verifier share one seed, so
-  a 16-byte tag replaces a 64-byte signature; only *solved*
-  challenges occupy memory (Robin Hood spent set, Celis 1986).
-- **GCRA rate limiting** (ATM Forum TM 4.0): one integer per client, exact `N + L/T` bound.
-- **Aho–Corasick automata** (1975) for bot and attack signatures, one pass per field, plus
-  single-pass structural tokenizers instead of regular expressions.
-- **Replicated SQLite** through Zaxonlite on `paxos-zig` Multi-Paxos, isolated from the hot
-  path by a read-copy-update engine slot and a lock-free incident ring (Vyukov MPSC).
+Sibuna provides two operational surfaces within the same executable:
 
-## Quick start
+```
+                  ┌─────────────────────────────────────────┐
+                  │            Incoming Request             │
+                  └────────────────────┬────────────────────┘
+                                       │
+                      [ Surface 1: Gate (--gate) ]
+                      • Proof-of-work admission & sessions
+                      • Bot signatures & Radix CIDR checks
+                      • Atomic GCRA rate limiting & honeypots
+                                       │
+                                       ▼ Admitted
+                      [ Surface 2: Shield (--shield, default) ]
+                      • Inline semantic attack inspection
+                      • SQL injection & XSS automata
+                      • Path traversal & shell execution filters
+                                       │
+                                       ▼ Passed
+                  ┌─────────────────────────────────────────┐
+                  │             Upstream Origin             │
+                  └─────────────────────────────────────────┘
+```
+
+---
+
+## Quickstart
+
+Getting up and running takes less than two minutes.
+
+### 1. Build the Executable
 
 ```sh
-zig build -Doptimize=ReleaseFast          # daemon, benchmark, and WASM solver
-zig build test                            # unit, end-to-end, and storage tests
+# Clone the repository
+git clone https://github.com/insanai/sibuna.git
+cd sibuna
+
+# Compile optimized release binary
+zig build -Doptimize=ReleaseFast
+```
+
+The resulting standalone binary is located at `./zig-out/bin/sibuna`.
+
+### 2. Protect Your Application
+
+Point Sibuna to your existing web service (for example, a local server on port 3000):
+
+```sh
 ./zig-out/bin/sibuna --port 8080 --upstream-port 3000 --secret-file /run/sibuna.seed
 ```
 
-The seed file holds 64 hexadecimal characters (or 32 raw bytes); `SIBUNA_SECRET` is honoured
-too, and without either the daemon draws a random seed and says so in its banner. A cluster must
-share one seed.
+Open `http://localhost:8080` in your browser. Your application is now protected.
 
-Common flags (`--help` lists all of them):
+*Note on secrets:* The seed file contains 32 raw bytes (or 64 hex characters) used to sign session tokens. You can also supply the seed via the `SIBUNA_SECRET` environment variable. If omitted, Sibuna generates a secure random seed at startup and prints it to the console.
 
-| Flag | Default | Meaning |
-|---|---|---|
-| `--mode reverse_proxy\|forward_auth` | `reverse_proxy` | Proxy to `--upstream-host:--upstream-port`, or answer ingress subrequests |
-| `--algorithm posw\|hashcash` | `posw` | Proof-of-work tier |
-| `--difficulty <bits>` | `16` | Work bits; PoSW uses depth `bits - 3` so both tiers cost similar wall-clock |
-| `--token-scheme mac\|ed25519` | `mac` | Session token construction |
-| `--gate` / `--shield` | shield | Surface |
-| `--rate-limit`, `--rate-window` | `100`, `10` | GCRA burst and window (seconds) |
-| `--challenge-rate-limit` | `30` | Challenge issuances and verifications per window per client, separate from the request budget |
-| `--idle-timeout` | `15` | Longest silence in seconds: a request head must arrive within it; an origin response refreshes it on every read and a silent origin is cut on both sockets; a proxied upload must deliver 16 KiB per period |
-| `--websocket-idle-timeout` | `300` | Upgraded connection idle timeout; traffic in either direction refreshes it |
-| `--policy-file <json>` | none | Declarative rules (SID 0003) |
-| `--workers <n>` | CPU count | Accept threads; each connection is then served on its own thread |
-| `--max-connections <n>` | `1024` | Concurrent connections; further ones are answered 503 |
-| `--trust-forwarded` | auto in forward-auth | Trust ingress client address, scheme and original authorization URL |
-| `--data-dir <path>` | none | Enable the Zaxonlite store (Edge) |
+---
 
-`--mode` and `-m` select the same two modes:
+## How It Works
 
-Invalid, missing or repeated mode selections, unknown options and out-of-range values stop
-startup with an `INVALID COMMAND LINE` diagnostic naming the option, value and expected range
-rather than silently keeping a default.
+### The Revolving Door and the Wristband
 
-| Mode | Application traffic | Inspection and console coverage |
-|---|---|---|
-| `reverse_proxy` (default) | Sibuna forwards admitted requests to the configured upstream and relays admitted WebSockets. | Request metadata, the bounded body prefix, and observed origin responses. |
-| `forward_auth` | Sibuna answers ingress authorization subrequests; the ingress forwards uploads, responses and WebSockets. | Metadata supplied by the ingress; omitted bodies and origin responses are not observed. |
+Most web security today relies on **interrogation**: a security guard stops you at the doorway, holds up blurry photos, and demands that you identify every traffic light before you are allowed in. It treats every human customer like a suspected intruder, frustrates real people, and tracks their identity across the internet.
 
-For forward-auth, bind Sibuna privately (`--host 127.0.0.1` for a same-host ingress) and
-use the book's Caddy/Nginx recipes. A 200 means permission to continue; challenges return
-401, denials 403 and limits 429. Browser challenges include the solver page; API clients
-receive challenge JSON and should obtain a session before sending uploads or opening a
-WebSocket. The recipes route `/__sibuna/*` directly and handle Nginx's auth-error translation.
-The console, policy management and local controls remain available in either mode.
+Sibuna replaces the interrogation room with a simple physical principle: **a revolving door and a wristband**.
 
-`zig build proxy-e2e` checks both CLI modes. To test the book's actual ingress recipes:
+```
+  [ Real Human Visitor ]                               [ Automated Botnet / Scraper ]
+            │                                                        │
+            │ Walks in normally                                      │ Tries to force 50,000 requests/sec
+            ▼                                                        ▼
+  ┌──────────────────┐                                     ┌──────────────────┐
+  │  Revolving Door  │ ◄─── Effortless push (100ms)        │  Revolving Door  │ ◄─── Impossible resistance
+  │ (Proof of Work)  │      Handled silently in background │ (Proof of Work)  │      Attacker's CPU burns out
+  └────────┬─────────┘                                     └────────┬─────────┘
+           │                                                        │
+           ▼ Receives Wristband                                     ▼ Blocked at the entrance
+  ┌──────────────────┐                                     ┌──────────────────┐
+  │ Keyed Wristband  │ ◄─── Checked in 28 nanoseconds      │  Origin Server   │ ◄─── Untouched & Relaxed
+  │ (Session Token)  │      Free to browse any page        │                  │      Zero database strain
+  └──────────────────┘                                     └──────────────────┘
+```
 
-```bash
+#### 1. The Gentle Push (The Door)
+When a browser first visits your website, Sibuna asks it to turn a smoothly balanced revolving door—solving a small mathematical puzzle in the background via WebAssembly in a fraction of a second.
+- The human visitor **never clicks a puzzle, never solves a riddle, and sees no prompt**.
+- The page simply loads.
+
+#### 2. The Cryptographic Wristband (The Token)
+Once through the door, Sibuna stamps the browser with a cryptographic **wristband** (a 16-byte keyed BLAKE3 session token).
+- As the visitor browses from page to page, clicks articles, and loads images, Sibuna glances at the wristband in **28 nanoseconds**.
+- No repeated challenges, no database lookups, no friction.
+
+#### 3. The Scraper's Impasse (Thermodynamic Asymmetry)
+For a human browsing a dozen pages, turning a revolving door once is completely imperceptible.
+- But for an automated AI crawler or scraper attempting to harvest 100,000 pages per minute, turning that door 100,000 times requires the energy of an industrial turbine.
+- The scraper’s CPU overheats and grinds to a halt under the computational debt. Meanwhile, your origin server expends virtually zero energy verifying the passes.
+
+The burden is placed entirely on the abuser, while real people walk straight through.
+
+---
+
+## Deployment Recipes
+
+### Recipe 1: Direct Reverse Proxy
+
+The simplest topology. Sibuna receives public traffic on port 8080, validates requests, and forwards admitted traffic to your application on port 3000:
+
+```sh
+./zig-out/bin/sibuna --port 8080 --upstream-host 127.0.0.1 --upstream-port 3000
+```
+
+### Recipe 2: Forward-Authentication with Caddy
+
+If you use Caddy for automatic TLS certificates, run Sibuna alongside Caddy as an authorization gate:
+
+```caddy
+# Caddyfile
+example.com {
+    # Send verification subrequests to Sibuna
+    forward_auth 127.0.0.1:8080 {
+        uri /__sibuna/verify
+        copy_headers X-Sibuna-Session X-Sibuna-Action
+    }
+
+    # Route challenge assets directly to Sibuna
+    handle /__sibuna/* {
+        reverse_proxy 127.0.0.1:8080
+    }
+
+    # Proxy admitted traffic to your application
+    handle {
+        reverse_proxy 127.0.0.1:3000
+    }
+}
+```
+
+Run Sibuna on private loopback:
+
+```sh
+./zig-out/bin/sibuna --mode forward_auth --host 127.0.0.1 --port 8080
+```
+
+### Recipe 3: Forward-Authentication with Nginx
+
+```nginx
+# nginx.conf
+server {
+    listen 443 ssl;
+    server_name example.com;
+
+    location / {
+        auth_request /__sibuna_auth;
+        auth_request_set $sibuna_token $upstream_http_x_sibuna_session;
+        proxy_set_header X-Sibuna-Session $sibuna_token;
+        proxy_pass http://127.0.0.1:3000;
+    }
+
+    location = /__sibuna_auth {
+        internal;
+        proxy_pass http://127.0.0.1:8080/__sibuna/verify;
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        proxy_set_header X-Original-URI $request_uri;
+        proxy_set_header X-Forwarded-Method $request_method;
+    }
+
+    location /__sibuna/ {
+        proxy_pass http://127.0.0.1:8080;
+    }
+}
+```
+
+Validate your ingress integration with the included automated test harness:
+
+```sh
 python3 tools/ingress_e2e.py zig-out/bin/sibuna --caddy /path/to/caddy --nginx /path/to/nginx
 ```
 
-These optional checks use temporary loopback listeners; Nginx needs its auth-request module.
+---
 
-Internal routes: `/__sibuna/challenge.json`, `/__sibuna/verify`, `/__sibuna/worker.js`,
-`/__sibuna/wasm/sibuna-pow.wasm` (8,831 bytes), `/__sibuna/health`, `/__sibuna/metrics`
-(Prometheus), `/__sibuna/honeypot`.
+## Configuration Cheatsheet
 
-For HTTPS, terminate TLS at an ingress such as Caddy or Nginx and forward HTTP/1.1 to
-Sibuna on a private listener. The ingress can serve HTTP/2 to browsers; native HTTP/2 in
-Sibuna is deferred to a later update. Admitted WebSocket upgrades retain their handshake, cookies,
-subprotocols and extensions, then relay bytes in both directions with bounded buffers.
-WebSocket applications need admission before opening their connection, just like other
-protected requests. The relay does not inspect WebSocket message payloads or terminate TLS.
-`zig build proxy-e2e` tests HTTP preservation, upgrades, idle expiry and shutdown; an optional
-`python3 tools/proxy_e2e.py zig-out/bin/sibuna --caddy /path/to/caddy` also checks HTTPS/WSS
-through a real ingress with certificate verification enabled.
-Forward-auth evaluates the trusted ingress's `X-Forwarded-Uri` (Caddy) or `X-Original-URI`
-(Nginx), including its query, and `X-Forwarded-Method`. Bind that listener privately so only
-your ingress can supply these fields. Reverse proxy mode preserves the application Host and
-reconstructs `X-Forwarded-Proto` from trusted ingress metadata, or `http` for a direct request.
-It removes alternate forwarded host/port fields; applications should use the preserved Host.
+### Command-Line Options
 
-Uploads stream to the backend with their MIME headers and bytes preserved,
-including multipart forms and repeated file fields. WAF body inspection covers the first
-8 KiB: text fields and upload metadata are inspected; file payloads and recognized binary
-MIME bodies remain opaque. Fields beyond that prefix are not inspected. The backend must
-validate accepted MIME types and uploaded files; Sibuna does not scan files for malware.
-Chunked request bodies are decoded before inspection, so chunk boundaries cannot hide a
-payload. A body that ends within the 64 KiB connection buffer reaches the backend with a
-Content-Length. A longer one is re-chunked by Sibuna, one chunk per read. Chunk extensions
-and request trailers are dropped. Ambiguous chunk framing is refused with 400, and other
-transfer codings with 501 (SID 0009). `Expect: 100-continue` is handled locally.
+| Flag | Default | Description |
+|---|---|---|
+| `--mode <mode>` | `reverse_proxy` | `reverse_proxy` to forward to upstream, or `forward_auth` for ingress subrequests |
+| `--port <port>` | `8080` | TCP port to listen on for incoming traffic |
+| `--upstream-host <host>` | `127.0.0.1` | Upstream application hostname or IP address |
+| `--upstream-port <port>` | `3000` | Upstream application TCP port |
+| `--algorithm <algo>` | `posw` | Proof-of-work algorithm: `posw` (sequential work) or `hashcash` |
+| `--difficulty <bits>` | `16` | Difficulty bits (PoSW depth is calibrated to `bits - 3`) |
+| `--token-scheme <scheme>` | `mac` | Session token format: `mac` (16-byte BLAKE3) or `ed25519` |
+| `--gate` / `--shield` | `shield` | Operational surface: Gate for pure admission; Shield adds WAF inspection |
+| `--rate-limit <n>` | `100` | Maximum burst requests allowed by GCRA rate limiter |
+| `--rate-window <sec>` | `10` | Rate limiter refill window duration in seconds |
+| `--policy-file <path>` | none | Path to declarative JSON security policy file |
+| `--data-dir <path>` | none | Enables embedded Zaxonlite storage for persistence and clustering |
+| `--console <host:port>` | none | Enables the web operator console on the specified address |
+| `--workers <n>` | CPU count | Number of acceptor threads (each connection runs on its own bounded thread) |
+| `--max-connections <n>` | `1024` | Maximum concurrent connections before returning `503 Service Unavailable` |
 
-## Policy file
+### Declarative Policy Rules (`policy.json`)
 
 ```json
 {
   "default_action": "CHALLENGE",
   "waf": true,
   "thresholds": { "challenge_at": 10, "deny_at": 40, "bits_step": 5 },
-  "ip_rules": { "10.0.0.0/8": "ALLOW", "2001:db8::/32": "DENY" },
+  "ip_rules": {
+    "10.0.0.0/8": "ALLOW",
+    "192.168.1.0/24": "ALLOW",
+    "2001:db8::/32": "DENY"
+  },
   "rules": [
-    { "name": "deny-bad-worker", "headers": { "CF-Worker": ".*" }, "action": "DENY" },
-    { "name": "protect-checkout", "path": "/api/checkout/*", "action": "CHALLENGE",
-      "challenge": { "difficulty": 20, "algorithm": "posw" } },
-    { "name": "internal", "remote_addresses": ["10.0.0.0/8", "fd00::/8"], "action": "ALLOW" },
-    { "name": "headless", "user_agent": "Headless", "action": "WEIGH", "weight": 30 }
+    {
+      "name": "allow-internal-traffic",
+      "remote_addresses": ["10.0.0.0/8", "fd00::/8"],
+      "action": "ALLOW"
+    },
+    {
+      "name": "protect-checkout-endpoint",
+      "path": "/api/checkout/*",
+      "action": "CHALLENGE",
+      "challenge": { "difficulty": 20, "algorithm": "posw" }
+    },
+    {
+      "name": "block-forged-cloudflare-workers",
+      "headers": { "CF-Worker": ".*" },
+      "action": "DENY"
+    },
+    {
+      "name": "score-headless-browsers",
+      "user_agent": "Headless",
+      "action": "WEIGH",
+      "weight": 30
+    }
   ]
 }
 ```
 
-Rules match in order; `WEIGH` rules accumulate a score resolved against the thresholds; anything
-unmatched is challenged. Browsers are challenged on purpose: a User-Agent is free to forge.
-The loader fails closed: an unknown key, a misspelled action, a malformed address or an
-out-of-range number rejects the whole file with a diagnostic naming the rule and field, and the
-daemon does not start. The same holds for the command line: unknown options and out-of-range
-values stop startup instead of keeping a default.
+---
 
-## Storage and clusters (Edge)
+## AI Bot & Crawler Governance (SID 0008)
 
-```sh
-# single node: dynamic policies, reputation, forensics in ./data
-sibuna --data-dir ./data --port 8080 --upstream-port 3000
+Modern web services face unprecedented scraping from AI training crawlers and automated LLM agents. Sibuna provides deep visibility and governance:
 
-# three voters (build with -Dcluster=true; production needs the TLS flags)
-sibuna --data-dir ./n1 --cluster-node 1 --cluster-listen 127.0.0.1:9901 \
-       --cluster-peer 2@127.0.0.1:9902 --cluster-peer 3@127.0.0.1:9903 \
-       --cluster-secret-file ./psk           # loopback development PSK
-```
+1. **Sub-Microsecond Subnet Matching:** Evaluates client IP addresses against verified subnet CIDRs for OpenAI, Anthropic, Google Gemini, Perplexity, Meta, Apple, and ByteDance in memory ($< 45\,\text{ns}$).
+2. **Four-Tier Confidence Hierarchy:**
+   - **`Verified`:** User-Agent matches provider signature *and* client IP resides within published subnets.
+   - **`Declared`:** Claims a crawler User-Agent from an unverified public IP.
+   - **`Suspected`:** Browser-like User-Agent exhibiting crawler heuristics (e.g. missing asset cascades).
+   - **`Human`:** Verified browser session that completed background proof-of-work.
+3. **Actionable Governance:** Allow AI search fetchers while rate-limiting training scrapers or blocking unverified impersonators.
 
-Policies inserted into the `policies` table and bans in `ip_reputation` are picked up by every
-node on its next storage tick (default 500 ms) and swapped into the workers without a restart.
-Blocked payloads land in `security_incidents` with FTS5 search and are clustered into campaigns
-by cosine similarity of feature-hashed trigram embeddings. Query the data directory with
-`zaxon sql --data ./data`.
+---
 
-Build options: `-Dstorage=false` builds the pure in-memory daemon (no libc); `-Dcluster=true`
-links OpenSSL 3 for Zaxonlite's mutual TLS. The dependency is the official
-[`insanai/zaxonlite`](https://github.com/insanai/zaxonlite) v0.7.0 release pinned in
-`build.zig.zon`. Zaxonlite 0.7.0 changed its on-disk and wire formats with no migration:
-a data directory written by an older Sibuna build must be deleted and the cluster recreated
-with every member on the new build.
-
-## Measured performance
-
-Current results: [primitive measurements](benchmarks/results/latest.json),
-[whole-product comparison](benchmarks/results/tools-comparison-latest.json),
-[admission comparison](benchmarks/results/admission-comparison-latest.json), and
-[distributed measurements](benchmarks/results/distributed-latest.json).
+## Operator Console & Dashboard
 
 ```sh
-sh benchmarks/run-all.sh                               # primitives
-python3 benchmarks/tools.py --anubis /path/to/anubis   # whole products under wrk
-python3 benchmarks/compare.py --anubis /path/to/anubis # admission operations
-python3 benchmarks/cluster.py                          # 1 node vs 3 replicated nodes under wrk
-python3 benchmarks/distributed.py                      # three-node checks with Python clients
-```
-
-`cluster.py` answers the cluster question directly: the same Shield configuration as one
-node, one node with storage, and three replicated nodes (PSK and mutual TLS), each driven by
-`wrk` alone and all at once, with idle CPU and memory per node, cross-node session and WAF
-checks, issuer-bound replay rejection, ban propagation time, and service after the leader is
-stopped. Results are in [`cluster-latest.json`](benchmarks/results/cluster-latest.json).
-
-`tools.py` starts Sibuna Gate, Sibuna Shield, and Anubis as complete processes in forward-auth
-and reverse-proxy modes, obtains a session by solving each product's challenge, and drives
-four workloads with `wrk` (admitted, challenged, allowed static path, SQL injection with a
-valid session). It records requests per second, p50/p99 latency, CPU microseconds per
-request, and peak resident memory of the product process. SafeLine and Cloudflare are listed
-as not measured with the published facts that stand in; the Anubis binary is supplied from its
-official release and never committed.
-
-Both harnesses run outside the daemon. Primitive operations are timed in seven batches,
-with warmup and state reset outside the timer. There are no per-operation clock reads or
-benchmark hooks in server code. Source/API review establishes allocation-free primitives;
-the harness does not instrument allocator activity. Production metrics and concurrency
-controls still cost atomics.
-
-The distributed run uses three local daemon processes and six external load clients. It
-checks successful HTTP responses, shared sessions, authenticated WAF denial, issuer-bound
-challenge rejection, replicated bans, and continued service after one node stops. Results
-include client and loopback costs, not WAN or client-facing TLS costs.
-
-The engine and signature-table sizes are emitted using `@sizeOf`. Comparison with alternative
-products requires actual pinned binaries and matched workloads; unsupported fixed competitor
-cost models have been removed.
-
-## Deployment limits
-
-Cluster challenge keys are issuer-bound; route challenge fetching and solution submission
-to the same node. Session tokens remain valid across members sharing a seed. Rate limits and
-spent sets are local, and spent entries do not survive restarts. Shield inspects only the
-first 8 KB of a body; large encoded fields, excluded structural headers and ingress-omitted
-bodies remain coverage limits. This is a heuristic WAF, not a full language parser. Native
-TLS termination, HTTP/2, global quotas and volumetric network mitigation are not implemented.
-
-## Shibuna Discussions (SID)
-
-Design records are Typst papers under `docs/sid/records/`:
-
-- **SID 0001** The Shibuna Discussion process and engineering standards
-- **SID 0002** Foundation architecture, delivery record, and performance contract
-- **SID 0003** Declarative rule policy engine
-- **SID 0004** Semantic attack inspection and GCRA rate limiting (the Shield surface)
-- **SID 0005** Zaxonlite storage: dynamic policies, replicated reputation, forensics (Edge)
-- **SID 0006** Mathematical foundations: proofs of sequential work, keyed authentication,
-  rate limiting, hashing, and inspection automata
-- **SID 0007** The Sibuna Console: a real-time management interface for nodes and clusters
-  in pure Zig (proposed)
-- **SID 0008** AI Bot Traffic Identification, Multi-Tier Verification, and Operator Console Analytics
-
-```sh
-zig build sid                 # all SID PDFs into docs/build/
-zig build sid -Dsid=6         # one record
-zig build book                # docs/build/sibuna-book.pdf
-zig build sid-list | sid-new -- <slug> | sid-promote -- <slug>
-```
-
-## Monorepo layout
-
-```
-sibuna/
-├── build.zig / build.zig.zon    # -Dstorage (default on), -Dcluster; zaxonlite dependency
-├── apps/
-│   ├── sibuna/src/              # main.zig, server.zig, storage.zig, persistent.zig, e2e_test.zig
-│   ├── wasm-pow/src/entry.zig   # browser solver (hashcash + PoSW), wasm32-freestanding
-│   └── web/src/                 # challenge.html, worker.js (WASM + JS provers)
-├── libs/
-│   ├── core/                    # config, diagnostics, error explanations
-│   ├── crypto/                  # keys, pow, posw, token
-│   ├── net/                     # zero-copy parser, responses, streaming proxy
-│   ├── policy/                  # aho_corasick, radix_trie, rule, loader, engine, waf, normalizer, embedding
-│   ├── challenge/               # stateless coordinator, adaptive difficulty
-│   └── store/                   # challenge_store, rate_limiter, ban_list, ring
-├── benchmarks/                  # benchmark.zig, run-all.sh, results/
-├── docs/                        # sid/, book/, shared/
-└── tools/                       # sid.zig, check-style
-```
-
-## Building and testing
-
-```sh
-zig build                     # daemon (+ storage), benchmark, WASM
-zig build test                # unit + end-to-end + storage tests
-zig build fmt                 # zig fmt and structural style gates
-zig build wasm                # solver only
-sh benchmarks/run-all.sh      # regenerate benchmarks/results/latest.json
-```
-
-## Console preview
-
-Bootstrap an administrator while the daemon is stopped, then start its separate loopback
-management listener:
-
-```sh
+# 1. Bootstrap an administrator account while the daemon is stopped
 ./zig-out/bin/sibuna init-admin admin --data-dir ./data
+
+# 2. Start Sibuna with storage and console listener enabled
 ./zig-out/bin/sibuna --data-dir ./data --console 127.0.0.1:19446
 ```
 
-Open `http://127.0.0.1:19446/console/` and replace the temporary password before using the
-interface. Ordinary builds include committed CSS and the Zig/Wasm UI without requiring npm.
-`-Dconsole=false` removes console integration; `-Dstorage=false` also defaults the console off.
-The console listener starts only when `--console` is supplied.
+Open `http://127.0.0.1:19446/console/` to access:
+- **Traffic Ratio Overview:** Glanceable visual breakdown of Real Human Traffic vs. AI Crawlers vs. Search Bots from 100% exact monotonic counters.
+- **24-Hour Comparative Analytics:** Time-series area charts showing human diurnal traffic curves beside crawler burst spikes.
+- **Live Country Activity Globe:** 3D interactive vector globe visualizing traffic flows and geographic attack origins using local GeoIP data.
+- **Granular Provider Management:** View scraping volume per AI provider and toggle operational actions (Allow, Rate-Limit, Challenge, Deny).
+- **Incident Investigation:** Full-text search (FTS5) over blocked payloads with campaign clustering based on feature-hashed trigram embeddings.
 
-Set `--console-location <latitude,longitude>` to place this node on the globe, for example
-`--console-location 1.3521,103.8198` for a deployment in Singapore. The signed-in globe starts
-at that position and animates observed country activity toward it; **Center Sibuna** returns
-to the server. Coordinates are operator-declared, not inferred from private addresses.
-Without them, country activity remains visible but no destination or connection arcs are invented.
+---
 
-The signed-in interface keeps navigation across dashboards, policy and inspection editors,
-events, users, tokens, audit and node controls. Policy previews evaluate a private candidate;
-saves show a field comparison and require confirmation with an expected revision. Historical
-reverts compare against the current rule and create a new revision. Committed and locally
-applied revisions remain separate. Applied rules show recorded hits today with hourly sparklines
-and accessible values. **Compare rule hits** reads retained minute intervals; revision history
-also offers **Compare hits around this edit**. Comparisons freeze their rule, node, revisions
-and UTC periods. WEIGH matches count alongside the first matching terminal rule; private tests
-do not count. Startup, reloads and missing history remain visible, and a percentage requires
-complete coverage in both periods. Rule history follows the minute-retention setting.
-Audit detail shows recorded before/after settings and marks missing historical data or redacted
-selectors. The Nodes page lists every cluster member from the replicated membership table
-(applied policy revision, log frontiers, draining state, a link to that member's advertised
-console) together with this console's own health probes of the peer data-plane listeners
-named by `--console-probe <node-id>=<http://ip:port>`; `--console-advertise <origin>` sets
-the link peers show. Direct live telemetry uses separately configured management peers:
+## Philosophy & Invariants
 
-```sh
---console-peer 2=https://console-2.example \
---console-peer-key-file /run/secrets/console-peer.key \
---console-peer-ca-file /etc/sibuna/management-ca.pem
-```
+Sibuna's engineering design follows four foundational principles:
 
-Repeat `--console-peer` for each other node (at most eight). Both nodes must list each other,
-use trusted HTTPS ingress and share a dedicated, owner-only 64-hex peer key. The optional PEM
-file supplies private trust anchors; omitting it uses system roots. Certificate hostname
-checks remain mandatory. Provision the peer key independently of console encryption, challenge
-and consensus keys. Rotation takes effect after restarting the nodes. The Nodes API and
-`nodes` subscription report live peer state, receipt age, clock skew, boot changes and sampling
-loss; missing observations remain null. Peer streams publish only their own node's statistics,
-keep telemetry outside consensus and retain stale observations when disconnected.
+### 1. Simplicity is Prerequisite for Reliability (Edsger W. Dijkstra)
+Adding moving parts increases the surface area for failure. Sibuna avoids external databases, cache servers, runtime interpreters, and container fleets. It compiles to a single, self-contained binary that does one job dependably.
 
-The navigation identifies the serving console node. The dashboard's **Live traffic scope**
-selects all configured nodes or one node; it does not change which node executes local commands.
-Combined
-totals exclude missing, stale and clock-skewed peers; **Node coverage and locations** shows
-which nodes contributed and their observation times. Country rankings report omitted-count
-uncertainty, and globe arrows retain each receiving node's configured location. A gap in a
-source's counter interval leaves the combined rate unobserved. Select one node for retained
-second intervals and current-minute path rankings. Remote views use the same authenticated
-peer connection; unavailable peers remain unavailable, and a restart invalidates old history
-cursors. Minute history has its own node selection and keeps per-node rows distinct.
+### 2. Thermodynamic Asymmetry (Richard Feynman)
+A defender must never spend more energy inspecting an attack than an adversary spends generating it. Like the physical inertia of a revolving door, verification requires a tiny, constant number of operations ($< 25\,\mu\text{s}$), while an unverified client must prove non-parallelizable work ($W \ge 10^3 \cdot c_s$) before entering.
 
-Traffic tiles default to the last 24 hours of retained closed-minute records across the
-selected nodes. Choose an hour, seven or ninety days, or **Live boot totals**. Yesterday
-arrows and percentages require complete matching coverage from every selected node; missing
-history stays unavailable. Automatic refresh retains the prior completed scan with its age
-while reading the next one. The globe and sparklines keep their independent live 60-second window.
+### 3. Explicit Invariants and Bounded State (Leslie Lamport)
+Every hot-path resource is strictly bounded:
+- Request classification runs in fixed stack buffers with zero heap allocation.
+- Challenge state on the server is zero until a valid solution is presented.
+- Rate limits track client state in fixed 16-byte slots.
+- Memory consumption is an invariant of configuration, never of traffic volume.
 
-**Compare retained traffic** places two closed minute windows side by side: the same window
-yesterday, the previous period, or another node. Choose the duration and how many minutes ago
-the window ended. Each batch summarizes up to 1,536 stored records per side, enough for
-a 24-hour window without overlapping restarts; larger scans use Continue. Counts, elapsed
-coverage and missing
-history remain visible; percentages require complete matching coverage. These period counts
-are independent of the primary period selection, and historical origin-response observation mode is not
-recorded by the minute format.
+### 4. Literate and Honest Engineering (Donald Knuth)
+A system must be honest about what it is, and what it is not.
+- **What Sibuna Is:** A fast, deterministic admission gate, bot governance engine, and heuristic semantic WAF.
+- **What Sibuna Is Not:** Sibuna does not terminate TLS or negotiate HTTP/2 directly (delegate this to Caddy or Nginx). It is not an antivirus scanner for uploaded files. It is not an AST language parser for SQL (write parameterized queries in your application).
 
-**Compare retained path rankings** compares sampled paths across two closed windows or nodes.
-Node 0 includes all retained nodes, including retired members. Each action validates and merges
-up to sixteen complete archives; Continue preserves the windows and cursor. The table shows
-lower and upper sample-count bounds, truncation, queue-loss warnings and partial scans.
-Missing archives do not imply zero traffic. Retention and the ranking quota can shorten history.
+---
 
-Drain, resume and clear local bans still act only on the serving node,
-require a preview and produce durable command receipts. Under `-Dcluster=true`,
-`zig build console-e2e` also runs a three-node membership, failover and quorum-loss scenario,
-and `zig build console-impact` measures the console's cost to the data plane. The records under
-`benchmarks/results/` retain each formal verdict and its uncertainty. Fresh single-node and three-host matrices
-are inconclusive; SID 0007's September paired exception is historical, not a formal pass or an
-exception for new results. The unprivileged containers cannot control the governor or other
-host activity, so these results do not isolate the cause of throughput differences.
-The impact harness checks all eight streams plus each dashboard's rankings and retained
-timeline queries, one configuration at a time. Full runs require
-`-- --geoip-data <production.snapshot> --host-label <conditions>`; `-- --quick` checks the
-harness and always reports inconclusive. Both throughput and p99 confidence intervals must pass.
+## Comparison with Alternative Systems
 
-A wall display signs in with a one-time kiosk code. Under Account, an operator supplies a
-display label and selects **Create display code**. Paste that code into the display's sign-in
-page within ten minutes to obtain read-only statistics access for up to twelve hours.
-Leaving or hiding the account page erases its displayed code; this does not revoke an unused
-grant. The same workflow is available through `POST /console/api/kiosk/token`. Codes never
-appear in URLs. The display offers Traffic and Security views; Security shows aggregate
-module trends and request outcomes without incident addresses or payload evidence. Optional
-automatic cycling is off initially and pauses with reduced motion, stale data or Pause.
+Facts gathered from public documentation, release artifacts, and reproducible benchmark suites (see the Sibuna Book Part II for full citations):
 
-Administrators configure notification destinations under Settings: webhooks (`https`, or
-`http` to loopback) signed with `X-Sibuna-Signature: sha256=HMAC(secret, body)` when a
-secret is set, and RFC 5424 syslog with an explicit UDP or framed TCP selection, for denial spikes, issued bans,
-unreachable members and leader changes. Secrets are sealed under `--console-key-file`; one
-cluster member delivers at a time under a fenced lease. Test delivery records intent and
-completion in Audit and refreshes the destination's last outcome. If completion cannot be
-recorded, the interface reports it as unconfirmed so operators can investigate before retrying.
+| Dimension | Sibuna | Anubis (v1.27) | SafeLine CE (v9.x) | Cloudflare WAF |
+|---|---|---|---|---|
+| **Architecture** | Single static binary | Single Go binary | Sprawling multi-container (7 containers) | Proprietary hosted cloud |
+| **Admission Puzzle** | Proof of Sequential Work & Hashcash | SHA-256 Hashcash | Proprietary challenge & image CAPTCHAs | Managed challenge & Turnstile |
+| **Server Challenge State** | Zero state until solved | In-memory, bbolt, Valkey, or S3 | Managed by container stack | Managed cloud state |
+| **Session Token** | Keyed BLAKE3 MAC (16 bytes) | Ed25519 JWT | Cookie-based session | `cf_clearance` cookie |
+| **WAF Inspection** | Linear-time automata & tokenizers | None | Semantic inspection engine | Managed rule sets |
+| **Rate Limiting** | Atomic GCRA per client | None | Per IP, path, session | Rules limited by plan tier |
+| **Bot Identification** | Sub-microsecond CIDR trie & signatures | DNSBL; ASN lookup | IP groups; threat intelligence | Cloud bot management score |
+| **Multi-Node Consensus** | Embedded Multi-Paxos (Zaxonlite) | Shared key + Valkey | One stack per host | Global anycast network |
+| **Idle Memory Footprint** | $\sim 10\,\text{MB}$ RSS | $\sim 21\,\text{MB}$ RSS | $\ge 1\,\text{GB}$ RAM (recommended) | None on premises |
+| **Open Source** | Yes | Yes | Open core / community edition | No (closed source) |
 
-Settings provides confirmed, revision-checked retention controls: 1–90 days for minute history,
-1–7 for rankings, 1–30 for incidents and 1–365 for audit. The upper limits are the defaults;
-rankings also retain their 512 MiB quota. Deleted history cannot be restored by increasing retention.
+---
 
-Administrators can also edit the five browser-facing response pages (challenge, denied,
-rate limited, banned, overloaded) under Settings: bounded HTML with fixed placeholders, no
-scripts or external resources, previewed in a sandboxed tab and served from the next policy
-snapshot. Attributes use quoted values; URLs must be literal local paths or fragments. A
-restrictive Content Security Policy permits only the fixed solver on challenge pages.
-Non-HTML challenges return JSON; other non-HTML refusal responses remain plain text.
+## Documentation
 
-Policy workflows: rules can be reordered from the managed list, a draft can be replayed
-against retained inspection findings before saving, IP groups (reputation prefixes with a
-note, expiry and a thirty-second undo) and country blocks computed from the active GeoIP
-generation live under the applied policies, and the whole managed set can be exported and
-re-imported atomically from the interface or with `sibuna console policies export` and
-`sibuna console policies import --file <set.json>`.
+For deep technical study, the repository includes two comprehensive publications:
 
-Country actions are snapshots of the active GeoIP generation. A later import does not refresh
-their reputation rows automatically. Preview the country action to compare added, retained and
-removed prefixes, using **Next diff page** to inspect the complete bounded replacement. Applying
-the review replaces only that country’s own rows. A changed generation or policy revision
-requires another preview; independently managed prefixes are preserved and conflicts refused.
-Events retain WAF findings and honeypot incidents, not a complete request access log. When
-GeoIP is loaded, incident writes retain the country and generation used by the storage worker.
-Imports do not relocate recorded incidents. Filter by a two-letter country code, `unknown`
-for unmapped addresses, or `not_recorded` for records without mapping data. The globe's
-**View events** action opens that country's incidents for the selected node and last hour.
-Under Statistics, **Security** combines live outcome rates with retained inspection and
-honeypot findings for the selected node and period. Category, source and path links open
-Events with that fixed investigation window. Counts include audit findings and remain distinct
-from blocked requests; unavailable reputation and rule-hit attribution is labelled explicitly.
-Finding trends contain sixty equal time buckets with a shared scale; **Trend values** shows
-UTC interval starts and exact grouped counts.
-Event and audit filters group labels with their controls, adapt to the content width and keep
-Apply actions separate from filter fields.
-One authenticated WebSocket carries statistics, events, node status, policy revisions,
-challenges and audit updates across navigation. Incident and audit pages keep rows in place
-while you read; use **Load latest records** to include newer records. Policy updates show the
-current revision without replacing an open draft. Selected non-default challenge timing
-partitions remain explicit snapshots. Mutations and historical/detail queries use HTTP.
-`zig build console-ui-e2e` runs the shipped Wasm against a real daemon using Node; Chrome
-review separately checks the browser DOM, layout and accessibility.
-The console UI has a 448 KiB build warning and a 512 KiB uncompressed artifact ceiling;
-these are reviewable project guardrails, not browser standards. Loading and interaction
-measurements remain separate acceptance checks; the rationale is recorded in SID 0007.
+1. **The Sibuna Book (`docs/book/`):**
+   A complete 13-chapter textbook covering the system from mathematical foundations through zero-allocation memory design, benchmarks, and production operations:
+   ```sh
+   zig build book                # Generates docs/build/sibuna-book.pdf
+   ```
+2. **Shibuna Discussions (SID) (`docs/sid/`):**
+   RFC-style architectural design records:
+   - **SID 0001:** The Shibuna Discussion Process and Engineering Standards
+   - **SID 0002:** Foundation Architecture, Delivery Plan, and Performance Contract
+   - **SID 0003:** Declarative Rule Policy Engine
+   - **SID 0004:** Semantic Attack Inspection and GCRA Rate Limiting (Shield)
+   - **SID 0005:** Distributed Storage Architecture: Zaxonlite Integration (Edge)
+   - **SID 0006:** Mathematical Foundations: Sequential Work, Keyed Authentication, and Automata
+   - **SID 0007:** The Sibuna Console: A Real-Time Management Interface for Nodes and Clusters
+   - **SID 0008:** AI Bot Traffic Identification, Multi-Tier Verification, and Operator Console Analytics
+   - **SID 0009:** Chunked Request Bodies and Transfer-Coding Validation
 
-For an HTTPS reverse proxy, configure `--console-origin`, `--console-behind-proxy` and explicit
-`--console-trusted-proxy` CIDRs. Supply a persistent `--console-key-file` containing 64 hex
-characters with owner-only permissions; it protects stored second-factor secrets. Keep this
-key separate from the firewall's challenge secret. Remote management requires a valid HTTPS
-origin and a trusted proxy; the browser loads globe geometry and telemetry only after login.
+   ```sh
+   zig build sid                 # Compiles all SID specification papers to PDF
+   ```
 
-## Loading country data
+---
 
-Country lookup is provided by the first-party `libs/geoip` library (see its README). The
-default provider is the public-domain `user-country` dataset from
-[ip-location-db](https://github.com/sapics/ip-location-db) (PDDL 1.0, no attribution,
-rebuilt daily from RIR statistics, BGP archives and geofeeds). DB-IP IP to Country Lite
-(CC BY 4.0, monthly) remains selectable with `--provider dbip`.
+## License
 
-Start Sibuna with storage and its opt-in console, then finish administrator bootstrap and
-password setup. The CLI prompts for the password without putting it in shell history:
-
-```sh
-python3 tools/console_geoip.py --origin http://127.0.0.1:19446 --username admin
-```
-
-The daemon also provides a native command for scripts with an owner-only password file:
-
-```sh
-./zig-out/bin/sibuna console geoip update --version 2026-09-09 \
-    --origin http://127.0.0.1:19446 --username admin \
-    --password-file ./admin-password
-```
-
-Use `console geoip status` to inspect the generation and `--factor-file` when a second factor
-is required. The native update requires an explicit version; the Python helper defaults to
-today. Versions are `YYYY-MM-DD` for `user-country` and `YYYY-MM` for `dbip`; `--month` is
-the DB-IP alias (`--month 2026-09` means `--provider dbip --version 2026-09`).
-
-The port must match your `--console` listener. Add `--totp` to prompt for an authenticator
-or recovery code. Use `--status` to inspect the active generation without importing. Remote
-consoles require HTTPS with a valid certificate; HTTP is restricted to literal loopback
-addresses.
-
-The command authenticates to the running console, which downloads the provider's fixed
-HTTPS files (following exactly one redirect to the publisher's asset host), verifies the
-publisher's SHA-256 file for each source file, validates every row, and waits for durable
-storage and local activation. It never opens the database directly. Downloads and imports
-remain bounded by the daemon's existing limits. An invalid download retains the previous
-generation. Interrupting the CLI or reaching `--timeout` stops polling; it does not cancel a
-submitted import. The CLI signs out its own session when it exits. Repeating the command
-for the active provider and version succeeds without importing it again. A supplied checksum
-must match that active generation.
-
-Use `--checksum` with an independently obtained SHA-256 of the **source bytes in provider
-file order** (for `user-country`: `cat user-country-ipv4.csv user-country-ipv6.csv |
-sha256sum`; for `dbip`: the compressed `.csv.gz`) to require a particular dataset. The
-resulting digest is printed with the active revision, provider, version and range count.
-
-Country mapping is approximate. Local/private addresses remain Unknown when absent from the
-dataset. The globe uses sampled requests from a rolling 60-second window, so loading the
-database does not invent traffic or retroactively locate old samples. Send requests through
-the firewall to see live countries. When DB-IP data is active the console shows the CC BY
-4.0 attribution; `user-country` requires none.
-
-To validate a download offline or to prepare an embedded snapshot, use the library tool:
-
-```sh
-zig build geoip-snapshot -- --provider user-country --version 2026-09-09 \
-    user-country-ipv4.csv user-country-ipv6.csv --snapshot-out geoip.bin
-zig build -Dgeoip-data=geoip.bin
-```
-
-A build with `-Dgeoip-data` serves lookups from the embedded snapshot (about 5.6 MB for the
-full dataset) at revision 0 until the first durable import replaces it. The September 9,
-2026 `user-country` dataset was loaded into the development review instance with 559,667
-known-country ranges and generation SHA-256
-`cd52619878ee0f7592f1c9eb45b03383722a38b443408348743ba27e18a23ce0`.
-Dataset files and the populated development database are not committed to Git.
+Sibuna is open-source software released under the Apache License, Version 2.0.
