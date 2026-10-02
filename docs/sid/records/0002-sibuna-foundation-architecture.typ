@@ -7,7 +7,7 @@
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
 #let sid-status = "Published"
-#let sid-last-updated = "2026-09-07"
+#let sid-last-updated = "2026-10-02"
 
 #import "../../shared/sid.typ": sid-document
 
@@ -201,11 +201,31 @@ processes. It checks status codes, sessions across nodes, authenticated WAF deni
 challenge rejection, reputation propagation, and continued HTTP service with one member down.
 Batch timings include client and loopback costs. The harness tests loopback PSK and mutual TLS. WAN behavior needs separate measurements.
 
+= Native platforms and release boundaries
+
+The packaged engine targets Linux x86-64 and ARM64, macOS Intel and Apple Silicon, and
+native Windows x86-64. Every platform runs the same HTTP parser, inspection and proof
+protocol. Platform code supplies bounded socket operations, process resource gauges and
+termination notification; it does not change policy or challenge semantics.
+
+Windows uses AFD handles owned by Zig's native Io backend, not Winsock socket identifiers.
+Each bounded operation owns a completion event. A timeout cancels and joins the outstanding
+driver request before any caller buffer can be reused. The upgraded byte relay keeps its
+existing bounded buffers and one connection worker. Ctrl+C and Ctrl+Break request ordered
+shutdown; forcibly terminating a process is not that shutdown contract. Private credential
+files use owner-only POSIX permissions or Windows DACLs permitting the owner, SYSTEM and
+Administrators. Unknown grant forms and absent ACLs fail closed.
+
+The default release includes storage and the opt-in console but no cluster transport.
+Cluster deployments use a separate build with OpenSSL 3. Release archives carry the target,
+compiler, source commit and binary digest; native functional qualification is required before
+a platform archive is published. Cross-compilation alone does not qualify a native port.
+
 = Remaining limits
 
 Shield is a bounded heuristic inspector, not a full SQL/HTML parser. Only the first 8 KB of
 body is inspected, and encoded fields longer than the canonical buffer are inspected raw.
 There is no HTTP/2, native TLS termination, global rate quota, durable replay set, administrative
-UI, or measured volumetric network mitigation. Forward-auth inspection sees only bytes the
+service manager integration, or measured volumetric network mitigation. Forward-auth inspection sees only bytes the
 ingress sends. Blocking workers and slow origins limit concurrency. No claim of full managed
 edge-service equivalence follows from a local benchmark.

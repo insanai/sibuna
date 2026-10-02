@@ -192,7 +192,8 @@ fn diagnose(err: Error) void {
         error.PasswordChangeRequired => "Change the temporary password in the browser first.",
         error.FactorEnrollmentRequired => "Complete required two-factor enrollment in Account.",
         error.RateLimited => "Wait a minute before another login or management operation.",
-        error.CredentialPermissions => "Remove group and other permissions from credential files.",
+        error.CredentialPermissions => "Restrict credential files to their owner " ++
+            "(POSIX mode 600 or a private Windows ACL).",
         error.CredentialFile, error.InvalidCredential => "Use private regular credential files.",
         error.InvalidOrigin, error.InsecureOrigin => "Use HTTPS or literal loopback HTTP.",
         else => "Check origin, input bounds and server compatibility before retrying.",

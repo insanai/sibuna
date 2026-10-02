@@ -21,8 +21,9 @@ def manifest():
                                       "assets/world-110m.bin", "assets/GEOGRAPHY.md")]
     files += [Path(__file__).resolve(), ROOT / "tools/console_geometry.py"]
     lines = ["# Console asset input/output digests", "", "```text"]
-    for path in sorted(files):
-        lines.append(f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.relative_to(ROOT)}")
+    for path in sorted(files, key=lambda path: path.as_posix()):
+        relative = path.relative_to(ROOT).as_posix()
+        lines.append(f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {relative}")
     return "\n".join(lines + ["```", ""])
 
 

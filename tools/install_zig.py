@@ -9,6 +9,7 @@ import sys
 import tarfile
 import urllib.request
 import zipfile
+from prepare_build import prepare
 
 
 def main():
@@ -34,6 +35,7 @@ def main():
             bundle.extractall(destination, filter="data")
     executable = "zig.exe" if system == "windows" else "zig"
     toolchain = next(destination.glob(f"zig-*/{executable}")).parent
+    prepare(toolchain / executable)
     if path_file := os.environ.get("GITHUB_PATH"):
         with open(path_file, "a") as output:
             output.write(str(toolchain) + "\n")

@@ -124,6 +124,7 @@ git clone https://github.com/insanai/sibuna.git
 cd sibuna
 
 # Compile optimized release binary
+python3 tools/prepare_build.py
 zig build -Doptimize=ReleaseFast
 ```
 
