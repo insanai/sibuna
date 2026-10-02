@@ -1,12 +1,12 @@
 #let sid-number = "0009"
 #let sid-title = "Chunked Request Bodies: Strict In-Place Decoding, Canonical Re-Framing, and Inspection Equivalence"
-#let sid-state = "discussion"
+#let sid-state = "committed"
 #let sid-created = "2026-10-02"
 #let sid-discussion = "Specifies how the reverse proxy accepts chunked request bodies without a heap allocation or a second buffer: a strict RFC 9112 chunk grammar that rejects every known terminator and extension ambiguity, an in-place decoder whose output never overtakes its input, Content-Length forwarding for bodies that complete within the connection buffer and canonical re-chunking for the rest, and proofs that inspection sees exactly the bytes a Content-Length request would show and that the origin cannot observe the client's framing."
 #let sid-labels = ("http", "proxy", "security", "request-smuggling", "performance",)
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
-#let sid-status = "Open for Discussion"
+#let sid-status = "Committed"
 #let sid-last-updated = "2026-10-02"
 
 #import "../../shared/sid.typ": sid-document
@@ -369,6 +369,43 @@ drop the "chunked request bodies are rejected" limitation and state that trailer
 discarded and other transfer codings receive 501. Origins that cannot parse chunked requests
 (HTTP/1.0-era servers) still receive `Content-Length` for any body under about 44 KiB.
 Larger streamed bodies require an HTTP/1.1 origin, which RFC 9112 §7.1 already requires.
+
+= Implementation Record (2026-10-02)
+
+The design landed without changes to the rules. The decoder is `libs/net/src/chunked.zig`
+(`Decoder.decode`, line limit 4,096, trailer limit 16 KiB, at most 16 size digits). The parser
+rules R1–R4 are in `net.http.parseRequest`, which sets `Request.chunked` and distinguishes
+`InvalidTransferEncoding` (400) from `UnsupportedTransferEncoding` (501). Admission decoding
+is `bufferChunked` in `apps/sibuna/src/server.zig`. It cuts each call's framing out of the
+reader's window by moving the tail down and shortening `end`. Forwarding uses
+`net.proxy.Upload` (`none`, `length`, `chunked`), which `writeHead`, `exchange` and
+`streamProxy` all read; `relayChunkedBody` re-chunks per read, flushes before it waits, and
+writes the terminal chunk only at `done`. A body that continues past the buffer records no
+declared length in incident evidence: the evidence carries the decoded bytes seen, flagged
+incomplete.
+
+*Verification.* Unit tests cover the grammar (six accepted forms, 24 rejected vectors and the
+trailer bound), the partition property (3,000 random streams, half of them mutated, each
+decoded whole and in random pieces), and R1–R4. Three daemon end-to-end tests check:
+
+- a pipelined small upload that reaches the origin with `Content-Length`, followed by a GET
+  on the same connection;
+- a 256 KiB upload in irregular chunks with extensions that reaches the origin as canonical
+  chunks with an identical digest;
+- an injection payload split across chunks, which is denied;
+- a lone LF, `gzip, chunked`, HTTP/1.0 with a coding, and a malformed chunk after 80 KiB had
+  already streamed, each answered as R3–R9 require.
+
+The origin stub in those tests parses only canonical framing, so any client framing leaking
+through fails the test. `zig build test` passed on Linux (paxos-zig).
+
+*Performance.* These measurements were taken on paxos-zig, 2026-10-02, on loopback, with the
+product pinned to four CPUs. On the reverse-proxy GET path, the build with this change and the
+build before it were indistinguishable under the tools-comparison load: medians of 59.0k and
+59.2k requests per second over five interleaved rounds. Uploads of 256 MiB reached 2.0–2.4 GiB/s
+chunked and 1.7–2.9 GiB/s with `Content-Length`. Both figures are bound by the Python origin
+that drains them, so they show that chunked uploads stream at the same order as sized ones.
+They do not measure the decoder.
 
 = References
 
