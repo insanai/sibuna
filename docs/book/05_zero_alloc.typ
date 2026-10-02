@@ -1,7 +1,7 @@
 #import "theme.typ": *
 #import "figures.typ": *
 
-#part_page("V", [Zero-Allocation Engineering in Pure Zig], [
+#part_page("V", [Deterministic Memory and Zero-Allocation Engineering], [
   We follow a connection from accept to response through one stack buffer, and examine the
   concurrent data structures that let many worker threads share state without heap
   allocation on the request path.

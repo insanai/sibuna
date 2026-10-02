@@ -175,7 +175,7 @@
   #v(3mm)
   #text(size: 8.8pt, weight: "bold", fill: ink)[Vikrant Rathore #h(10pt) and #h(10pt) Ronak Rathore]
   #v(0.5mm)
-  #text(size: 8pt, fill: muted)[Insan AI Systems & Architecture Lab | Pure Zig Release 0.16.0]
+  #text(size: 8pt, fill: muted)[Insan AI Systems & Architecture Lab | Architecture & Systems Report]
   #v(3mm)
 ]
 
@@ -194,7 +194,7 @@
     (2) *Runtime unpredictability*, stemming from dynamic memory allocators (`malloc`), garbage-collection stop-the-world pauses, and bloated container architectures (such as SafeLine's 1.5-2.5 GB footprint spanning 5 to 8 containers); and
     (3) *Externalized state coupling*, forcing operators to deploy and manage auxiliary Redis or PostgreSQL clusters to synchronize IP reputation, token verification, and rate limits across nodes.
 
-    *Sibuna* demonstrates a complete architectural reconstruction from first principles. Implemented as a standalone, zero-dependency pure Zig binary, Sibuna introduces:
+    *Sibuna* demonstrates a complete architectural reconstruction from first principles. Implemented as a standalone, zero-dependency binary, Sibuna introduces:
     (i) *Work-verifiable thermodynamic defense* via Cohen-Pietrzak Proof of Sequential Work (PoSW) and BLAKE3 MAC tokens, forcing attacking bots to perform unparallelizable CPU work while the defender verifies authenticity in under 24 #us with zero heap allocation;
     (ii) *A strict zero-allocation hot path*, employing SIMD-accelerated Aho-Corasick automata (74.05 ns for 40 bot signatures, 12.3#times faster than sequential scanning), 16-shard atomic GCRA rate limiting (6.00 ns per check, >166M ops/sec), and Robin Hood hashed nonce tracking (29.90 ns); and
     (iii) *An embedded distributed consensus engine* powered by `zaxonlite`, executing WAL-frame Multi-Paxos directly within the process memory space to provide sub-105 ms cluster-wide ban propagation, 397k+ req/s leader-failover sustained throughput, and bounded memory under 27 MB RSS per node.
@@ -838,7 +838,7 @@ a distributed web defense engine can achieve over *219,000 requests per second p
 #v(1mm)
 #align(center)[
   #text(size: 8pt, fill: muted)[
-    Sibuna Whitepaper | Produced by Insan AI Engineering | Pure Zig Systems Research \
+    Sibuna Whitepaper | Produced by Insan AI Engineering | Systems & Security Research \
     Open Source Specification, Source Code, & Benchmarks: https://github.com/insanai/sibuna
   ]
 ]
