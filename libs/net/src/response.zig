@@ -19,6 +19,7 @@ pub const Status = enum(u16) {
     too_many_requests = 429,
     headers_too_large = 431,
     internal_error = 500,
+    not_implemented = 501,
     bad_gateway = 502,
     service_unavailable = 503,
 
@@ -36,6 +37,7 @@ pub const Status = enum(u16) {
             .too_many_requests => "Too Many Requests",
             .headers_too_large => "Request Header Fields Too Large",
             .internal_error => "Internal Server Error",
+            .not_implemented => "Not Implemented",
             .bad_gateway => "Bad Gateway",
             .service_unavailable => "Service Unavailable",
         };

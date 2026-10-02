@@ -5,7 +5,9 @@
 //! hop-by-hop fields are dropped and the audit headers (`X-Forwarded-For`,
 //! `X-Real-IP`, `X-Sibuna-Status`, `X-Sibuna-Rule`) are injected without
 //! copying the request into an intermediate buffer. Bodies larger than the
-//! connection buffer are relayed in 16 KB chunks.
+//! connection buffer are relayed as they arrive. A chunked request body is
+//! decoded and re-framed: complete ones reach the origin with a length, longer
+//! ones as canonical chunks (SID 0009).
 //!
 //! The origin response head is parsed only far enough to learn its framing:
 //! a `Content-Length`, a chunked `Transfer-Encoding`, no body at all, or
@@ -30,6 +32,7 @@ const Io = std.Io;
 const http = @import("http.zig");
 const upgrade = @import("proxy_upgrade.zig");
 const duplex = @import("duplex.zig");
+const chunk_coding = @import("chunked.zig");
 
 pub const Audit = struct {
     client_ip: []const u8,
@@ -58,6 +61,9 @@ pub const ProxyError = error{
     /// aborted by closing the connection, because a second response would corrupt the first.
     UpstreamTruncated,
     ClientWriteFailed,
+    /// The rest of a chunked request body broke the chunk grammar; the origin got no
+    /// terminal chunk, so it sees a truncated body, never a complete altered one.
+    MalformedRequestBody,
 };
 
 pub const Client = struct {
@@ -76,6 +82,34 @@ pub const Progress = struct {
         if (self.activity) |activity| activity.touch(self.io);
     }
 };
+/// How the request body reaches the origin. `request.body` always holds the bytes already
+/// buffered (decoded, for a chunked request); the variant says what framing the origin is given
+/// and what still follows from the client.
+pub const Upload = union(enum) {
+    /// No framing is declared and nothing follows the head.
+    none,
+    /// `Content-Length`; `length - request.body.len` further bytes follow unchanged.
+    length: u64,
+    /// The rest of a chunked body follows: decoded in place and re-chunked per read, so the
+    /// origin never sees the client's chunk sizes, extensions or trailers (SID 0009).
+    chunked: *chunk_coding.Decoder,
+
+    /// The framing a head declares on its own; chunked bodies are framed by the caller after
+    /// decoding (a complete one becomes a length).
+    pub fn declared(request: *const http.Request) Upload {
+        return if (request.contentLength()) |length| .{ .length = length } else .none;
+    }
+
+    /// Whether the whole body is already buffered, so the request can be sent again.
+    fn buffered(self: Upload, body_len: usize) bool {
+        return switch (self) {
+            .none => true,
+            .length => |length| length <= body_len,
+            .chunked => false,
+        };
+    }
+};
+
 /// Borrowed exchange inputs live until HTTP completion or the upgraded relay ends.
 pub const Exchange = struct {
     io: Io,
@@ -83,6 +117,7 @@ pub const Exchange = struct {
     upstream_host: []const u8,
     upstream_port: u16,
     request: *const http.Request,
+    upload: Upload,
     audit: Audit,
     keep_alive: bool,
 };
@@ -192,7 +227,13 @@ fn isHopByHop(name: []const u8) bool {
     return false;
 }
 
-fn writeHead(w: *Io.Writer, req: *const http.Request, audit: Audit, switching: bool) !void {
+fn writeHead(
+    w: *Io.Writer,
+    req: *const http.Request,
+    upload: Upload,
+    audit: Audit,
+    switching: bool,
+) !void {
     const method = req.method_text;
     if (req.query.len > 0) {
         try w.print("{s} {s}?{s} HTTP/1.1\r\n", .{ method, req.path, req.query });
@@ -203,8 +244,13 @@ fn writeHead(w: *Io.Writer, req: *const http.Request, audit: Audit, switching: b
         if (isHopByHop(h.name) or upgrade.nominated(req, h.name)) continue;
         try w.print("{s}: {s}\r\n", .{ h.name, h.value });
     }
-    // Reconstruct framing even if a client tried to nominate Content-Length as hop-by-hop.
-    if (req.contentLength()) |length| try w.print("Content-Length: {d}\r\n", .{length});
+    // Framing is always generated, never copied: even if a client nominated Content-Length
+    // as hop-by-hop, and whatever chunk framing the client used.
+    switch (upload) {
+        .none => {},
+        .length => |length| try w.print("Content-Length: {d}\r\n", .{length}),
+        .chunked => try w.writeAll("Transfer-Encoding: chunked\r\n"),
+    }
     try w.writeAll(if (switching)
         "Connection: Upgrade\r\nUpgrade: websocket\r\n"
     else
@@ -270,6 +316,41 @@ fn relayBody(
             credit = 0;
         }
     }
+}
+
+/// Sends the rest of a chunked request body. Each read is decoded in place and forwarded as one
+/// canonical chunk, so chunk boundaries at the origin follow arrival, not the client's choice.
+/// Like `step`, the origin is flushed before each wait; activity advances per raw credit.
+fn relayChunkedBody(
+    client_reader: *Io.Reader,
+    up: *Io.Writer,
+    decoder: *chunk_coding.Decoder,
+    progress: Progress,
+) ProxyError!void {
+    var credit: usize = 0;
+    while (true) {
+        const raw = client_reader.buffered();
+        const decoded = decoder.decode(raw) catch return error.MalformedRequestBody;
+        writeChunk(up, raw[0..decoded.output]) catch return error.UpstreamWriteFailed;
+        client_reader.toss(decoded.consumed);
+        credit += decoded.consumed;
+        if (credit >= upload_credit) {
+            progress.touch();
+            credit = 0;
+        }
+        if (decoder.done()) break;
+        up.flush() catch return error.UpstreamWriteFailed;
+        client_reader.fillMore() catch return error.ClientWriteFailed;
+    }
+    up.writeAll("0\r\n\r\n") catch return error.UpstreamWriteFailed;
+    progress.touch();
+}
+
+fn writeChunk(up: *Io.Writer, data: []const u8) Io.Writer.Error!void {
+    if (data.len == 0) return;
+    try up.print("{x}\r\n", .{data.len});
+    try up.writeAll(data);
+    try up.writeAll("\r\n");
 }
 
 /// Copies exactly `n` origin bytes to the client. Every read refreshes activity, so the idle
@@ -532,15 +613,24 @@ fn exchange(
     const progress = Progress{ .io = input.io, .activity = input.client.relay.activity };
     var up_writer_buf: [8192]u8 = undefined;
     var up_writer = upstream_stream.writer(input.io, &up_writer_buf);
-    writeHead(&up_writer.interface, req, input.audit, handshake != null) catch
+    const up = &up_writer.interface;
+    writeHead(up, req, input.upload, input.audit, handshake != null) catch
         return error.UpstreamWriteFailed;
-    up_writer.interface.writeAll(req.body) catch return error.UpstreamWriteFailed;
-    const declared = req.contentLength() orelse req.body.len;
-    if (declared > req.body.len) {
-        const rest = declared - req.body.len;
-        try relayBody(input.client.reader, &up_writer.interface, rest, progress);
+    switch (input.upload) {
+        .none => {},
+        .length => |length| {
+            up.writeAll(req.body) catch return error.UpstreamWriteFailed;
+            if (length > req.body.len) {
+                const rest: usize = @intCast(length - req.body.len);
+                try relayBody(input.client.reader, up, rest, progress);
+            }
+        },
+        .chunked => |decoder| {
+            writeChunk(up, req.body) catch return error.UpstreamWriteFailed;
+            try relayChunkedBody(input.client.reader, up, decoder, progress);
+        },
     }
-    up_writer.interface.flush() catch return error.UpstreamWriteFailed;
+    up.flush() catch return error.UpstreamWriteFailed;
 
     var up_reader_buf: [max_response_head]u8 = undefined;
     var up_reader = upstream_stream.reader(input.io, &up_reader_buf);
@@ -605,9 +695,8 @@ pub fn streamProxy(
     const io = input.io;
     const req = input.request;
     const handshake = try upgrade.offered(req);
-    const declared = req.contentLength() orelse req.body.len;
     const safe = req.method == .GET or req.method == .HEAD or req.method == .OPTIONS;
-    const retryable = safe and declared <= req.body.len;
+    const retryable = safe and input.upload.buffered(req.body.len);
     var attempt: u8 = 0;
     while (true) : (attempt += 1) {
         // A retry always connects afresh: after an idle period every pooled
@@ -650,6 +739,7 @@ test "proxy head rewrite drops hop-by-hop headers and injects audit fields" {
     try writeHead(
         &w,
         &req,
+        .declared(&req),
         .{ .client_ip = "203.0.113.4", .status = "PASS", .rule = "default/allow" },
         false,
     );

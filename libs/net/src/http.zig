@@ -43,6 +43,8 @@ pub const Request = struct {
     headers: [MAX_HEADERS]Header = [_]Header{.{ .name = "", .value = "" }} ** MAX_HEADERS,
     header_count: usize = 0,
     body: []const u8 = "",
+    /// The body follows in the chunked transfer coding, the only coding accepted (SID 0009).
+    chunked: bool = false,
 
     pub fn getHeader(self: *const Request, name: []const u8) ?[]const u8 {
         for (self.headers[0..self.header_count]) |h| {
@@ -101,7 +103,10 @@ pub const ParseError = error{
     RequestSmugglingAttempt,
     UnsupportedVersion,
     TooManyHeaders,
+    /// A coding list ending in `chunked` after another coding: valid, but not decoded here.
     UnsupportedTransferEncoding,
+    /// Framing no recipient can determine reliably (RFC 9112 §6.1, §6.3).
+    InvalidTransferEncoding,
     InvalidContentLength,
 };
 
@@ -135,6 +140,24 @@ pub fn splitTarget(target: []const u8) Target {
     return .{ .path = target[0..mark], .query = target[mark + 1 ..] };
 }
 
+/// Accepts exactly `chunked`. The final coding must be `chunked` and may appear once (RFC 9112
+/// §6.3, §7); a list that also names another coding is understood but not decoded, because
+/// inspection would see encoded bytes.
+fn chunkedOnly(value: []const u8) ParseError!void {
+    var codings = std.mem.splitScalar(u8, value, ',');
+    var count: usize = 0;
+    var last: []const u8 = "";
+    while (codings.next()) |item| {
+        const coding = std.mem.trim(u8, item, " \t");
+        if (!validToken(coding) or std.ascii.eqlIgnoreCase(last, "chunked"))
+            return error.InvalidTransferEncoding;
+        last = coding;
+        count += 1;
+    }
+    if (!std.ascii.eqlIgnoreCase(last, "chunked")) return error.InvalidTransferEncoding;
+    if (count > 1) return error.UnsupportedTransferEncoding;
+}
+
 pub fn parseRequest(data: []const u8) ParseError!Request {
     var req = Request{};
     var line_it = std.mem.splitSequence(u8, data, "\r\n");
@@ -163,7 +186,8 @@ pub fn parseRequest(data: []const u8) ParseError!Request {
 
     var has_content_length = false;
     var content_length_val: []const u8 = "";
-    var has_transfer_encoding = false;
+    var transfer_encoding: ?[]const u8 = null;
+    var transfer_fields: usize = 0;
 
     while (line_it.next()) |line| {
         if (line.len == 0) break;
@@ -189,7 +213,8 @@ pub fn parseRequest(data: []const u8) ParseError!Request {
             has_content_length = true;
             content_length_val = value;
         } else if (std.ascii.eqlIgnoreCase(name, "transfer-encoding")) {
-            has_transfer_encoding = true;
+            transfer_encoding = value;
+            transfer_fields += 1;
         }
 
         if (req.header_count >= MAX_HEADERS) return error.TooManyHeaders;
@@ -197,11 +222,13 @@ pub fn parseRequest(data: []const u8) ParseError!Request {
         req.header_count += 1;
     }
 
-    if (has_content_length and has_transfer_encoding) {
-        return error.RequestSmugglingAttempt;
+    if (transfer_encoding) |codings| {
+        if (has_content_length) return error.RequestSmugglingAttempt;
+        if (transfer_fields != 1 or !std.mem.eql(u8, ver_str, "HTTP/1.1"))
+            return error.InvalidTransferEncoding;
+        try chunkedOnly(codings);
+        req.chunked = true;
     }
-
-    if (has_transfer_encoding) return error.UnsupportedTransferEncoding;
     if (has_content_length) try validateContentLength(content_length_val);
     const header_end = std.mem.indexOf(u8, data, "\r\n\r\n");
     if (header_end) |end_idx| {
@@ -270,7 +297,6 @@ test "parser rejects ambiguous framing and control bytes" {
         "GET / HTTP/1.1\r\nHost: a\nb\r\n\r\n",
         "POST / HTTP/1.1\r\nContent-Length: +5\r\n\r\n",
         "POST / HTTP/1.1\r\nContent-Length: invalid\r\n\r\n",
-        "POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\n",
     };
     for (bad) |raw| {
         if (parseRequest(raw)) |_| return error.AcceptedMalformedRequest else |_| {}
@@ -279,4 +305,32 @@ test "parser rejects ambiguous framing and control bytes" {
         "Cookie: a=1;__sibuna_token=abc\r\n\r\n");
     try std.testing.expectEqualStrings("PROPFIND", req.method_text);
     try std.testing.expectEqualStrings("abc", req.getCookie("__sibuna_token").?);
+}
+
+test "only a single exact chunked coding frames an HTTP/1.1 request body" {
+    const ok = try parseRequest("POST / HTTP/1.1\r\nTransfer-Encoding: \tChunked \r\n\r\n");
+    try std.testing.expect(ok.chunked and ok.contentLength() == null);
+    try std.testing.expect(!(try parseRequest("POST / HTTP/1.1\r\n\r\n")).chunked);
+    const twice = "Transfer-Encoding: chunked\r\nTransfer-Encoding: chunked";
+    const cases = [_]struct { ParseError, []const u8 }{
+        .{ error.RequestSmugglingAttempt, "Content-Length: 5\r\nTransfer-Encoding: chunked" },
+        .{ error.InvalidTransferEncoding, "Transfer-Encoding: chunked\r\nTransfer-Encoding: x" },
+        .{ error.InvalidTransferEncoding, twice },
+        .{ error.InvalidTransferEncoding, "Transfer-Encoding: chunked, gzip" },
+        .{ error.InvalidTransferEncoding, "Transfer-Encoding: chunked, chunked" },
+        .{ error.InvalidTransferEncoding, "Transfer-Encoding: xchunked" },
+        .{ error.InvalidTransferEncoding, "Transfer-Encoding: , chunked" },
+        .{ error.InvalidTransferEncoding, "Transfer-Encoding: chunked;q=1" },
+        .{ error.InvalidTransferEncoding, "Transfer-Encoding:" },
+        .{ error.UnsupportedTransferEncoding, "Transfer-Encoding: gzip, chunked" },
+    };
+    var buf: [256]u8 = undefined;
+    for (cases) |case| {
+        const raw = try std.fmt.bufPrint(&buf, "POST / HTTP/1.1\r\n{s}\r\n\r\n", .{case[1]});
+        try std.testing.expectError(case[0], parseRequest(raw));
+    }
+    try std.testing.expectError(
+        error.InvalidTransferEncoding,
+        parseRequest("POST / HTTP/1.0\r\nTransfer-Encoding: chunked\r\n\r\n"),
+    );
 }

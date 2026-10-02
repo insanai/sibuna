@@ -356,43 +356,97 @@ fn serveOne(c: *Connection) !bool {
         return false;
     }) orelse return false;
 
-    var req = net.parseRequest(c.reader.buffered()[0..head_len]) catch {
+    var req = net.parseRequest(c.reader.buffered()[0..head_len]) catch |err| {
         Metrics.bump(&c.state.metrics.parse_errors);
-        try net.response.write400(c.writer, "Malformed HTTP request");
+        if (err == error.UnsupportedTransferEncoding) {
+            const text = "Transfer coding not supported";
+            try net.response.writeText(c.writer, .not_implemented, text, false);
+        } else try net.response.write400(c.writer, "Malformed HTTP request");
         return false;
     };
     const declared = req.contentLength() orelse 0;
     if (!try expectContinue(c, &req, declared)) return false;
+    var decoder: net.chunked.Decoder = .{};
+    const body = (if (req.chunked)
+        try bufferChunked(c, &req, head_len, &decoder)
+    else
+        try bufferLength(c, &req, head_len, declared)) orelse return false;
+    var ctx = RequestContext.init(c, &req, body.declared);
+    ctx.upload = body.upload;
+    return dispatch(&ctx);
+}
+
+/// What admission buffered of a body: the length the request declared (`unknown_length` while a
+/// chunked body continues past the buffer) and how the origin will receive it.
+const Buffered = struct { declared: usize, upload: net.proxy.Upload };
+
+/// A chunked body whose end is not yet buffered has no declared length.
+const unknown_length = std.math.maxInt(usize);
+
+/// Buffers up to one connection buffer of a `Content-Length` body.
+fn bufferLength(c: *Connection, req: *net.Request, head_len: usize, declared: usize) !?Buffered {
     const fits = @min(declared, max_request_bytes - head_len);
     if (fits > 0) {
         c.reader.fill(head_len + fits) catch {
-            req = refreshedRequest(c, head_len);
-            // The head identifies an external request even when its body is incomplete.
-            var incomplete = RequestContext.init(c, &req, declared);
-            recordOutcome(&incomplete, .other, 400);
-            if (req.method == .POST and std.mem.eql(u8, req.path, "/__sibuna/verify")) {
-                observation.submit(c.state);
-                observation.reject(
-                    c.state,
-                    incomplete.client_ip,
-                    incomplete.now,
-                    .malformed_solution,
-                );
-            }
-            try net.response.write400(c.writer, "Truncated request body");
-            return false;
+            try rejectBody(c, head_len, declared, "Truncated request body");
+            return null;
         };
         // fill can compact prefetched pipelined input. Re-establish every borrowed slice
         // before policy evaluation; stale pointers can otherwise point into the upload.
-        req = refreshedRequest(c, head_len);
+        req.* = refreshedRequest(c, head_len);
     }
     const buffered = c.reader.buffered();
     const body_end = @min(buffered.len, head_len + fits);
     req.body = buffered[head_len..body_end];
     c.reader.toss(body_end);
+    return .{ .declared = declared, .upload = .declared(req) };
+}
 
-    var ctx = RequestContext.init(c, &req, declared);
-    return dispatch(&ctx);
+/// Decodes a chunked body in place behind the head until it ends or the buffer is full (SID
+/// 0009). Each call's framing is cut out of the reader's window so the decoded prefix stays
+/// contiguous for inspection; a body that ends here is forwarded with its length, otherwise the
+/// decoder carries on in the proxy with the bytes still buffered.
+fn bufferChunked(
+    c: *Connection,
+    req: *net.Request,
+    head_len: usize,
+    decoder: *net.chunked.Decoder,
+) !?Buffered {
+    const reader = c.reader;
+    var decoded: usize = 0;
+    while (true) {
+        const raw = reader.buffered()[head_len + decoded ..];
+        const step = decoder.decode(raw) catch {
+            try rejectBody(c, head_len, unknown_length, "Malformed chunked request body");
+            return null;
+        };
+        const tail = raw[step.consumed..];
+        std.mem.copyForwards(u8, raw[step.output..][0..tail.len], tail);
+        reader.end -= step.consumed - step.output;
+        decoded += step.output;
+        if (decoder.done() or reader.bufferedLen() == reader.buffer.len) break;
+        reader.fillMore() catch {
+            try rejectBody(c, head_len, unknown_length, "Truncated request body");
+            return null;
+        };
+    }
+    req.* = refreshedRequest(c, head_len);
+    req.body = reader.buffered()[head_len..][0..decoded];
+    reader.toss(head_len + decoded);
+    if (!decoder.done()) return .{ .declared = unknown_length, .upload = .{ .chunked = decoder } };
+    return .{ .declared = decoded, .upload = .{ .length = decoded } };
+}
+
+/// The head identifies an external request even when its body is incomplete or malformed.
+fn rejectBody(c: *Connection, head_len: usize, declared: usize, text: []const u8) !void {
+    var req = refreshedRequest(c, head_len);
+    var incomplete = RequestContext.init(c, &req, declared);
+    recordOutcome(&incomplete, .other, 400);
+    if (req.method == .POST and std.mem.eql(u8, req.path, "/__sibuna/verify")) {
+        observation.submit(c.state);
+        observation.reject(c.state, incomplete.client_ip, incomplete.now, .malformed_solution);
+    }
+    try net.response.write400(c.writer, text);
 }
 
 fn refreshedRequest(c: *Connection, head_len: usize) net.Request {
@@ -422,7 +476,7 @@ fn expectContinue(c: *Connection, req: *net.Request, declared: usize) !bool {
         );
         return false;
     }
-    if (declared != 0) {
+    if (declared != 0 or req.chunked) {
         try c.writer.writeAll("HTTP/1.1 100 Continue\r\n\r\n");
         try c.writer.flush();
     }
@@ -435,6 +489,8 @@ pub const RequestContext = struct {
     c: *Connection,
     req: *net.Request,
     declared_body: usize,
+    /// How an admitted body reaches the origin; `.none` until admission buffers the body.
+    upload: net.proxy.Upload = .none,
     client_ip: []const u8,
     user_agent: []const u8,
     now: u64,
@@ -880,11 +936,22 @@ fn recordIncident(ctx: *RequestContext, category: []const u8) void {
             .selected_status = 403,
             .query_bytes = @intCast(@min(ctx.req.query.len, std.math.maxInt(u32))),
             .body_bytes = @intCast(@min(ctx.req.body.len, std.math.maxInt(u32))),
-            .declared_body_bytes = @intCast(@min(ctx.declared_body, std.math.maxInt(u32))),
-            .truncated = if (ctx.declared_body > std.math.maxInt(u32)) 128 else 0,
+            .declared_body_bytes = @intCast(@min(declaredBytes(ctx), std.math.maxInt(u32))),
+            .truncated = if (ctx.declared_body == unknown_length)
+                incomplete_body
+            else if (ctx.declared_body > std.math.maxInt(u32)) 128 else 0,
         } else .{},
         .now = ctx.now,
     });
+}
+
+/// The evidence flag for a body that continued past what was buffered (bit 6).
+const incomplete_body: u16 = 1 << 6;
+
+/// A chunked body that continues past the buffer declared no length; the evidence records the
+/// bytes seen and flags them incomplete instead of inventing one.
+fn declaredBytes(ctx: *const RequestContext) usize {
+    return if (ctx.declared_body == unknown_length) ctx.req.body.len else ctx.declared_body;
 }
 
 fn writeChallengeResponse(ctx: *RequestContext, ticket: []const u8) !void {
@@ -1030,6 +1097,7 @@ fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule
         .upstream_host = cfg.upstream_host,
         .upstream_port = cfg.upstream_port,
         .request = ctx.req,
+        .upload = ctx.upload,
         .audit = audit,
         .keep_alive = ctx.keep_alive,
     });
@@ -1044,6 +1112,10 @@ fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule
             error.UpstreamReadFailed => try net.response.write502(
                 ctx.writer(),
                 "Bad Gateway: malformed upstream response",
+            ),
+            error.MalformedRequestBody => try net.response.write400(
+                ctx.writer(),
+                "Malformed chunked request body",
             ),
             else => {},
         }

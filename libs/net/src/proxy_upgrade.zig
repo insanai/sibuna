@@ -41,7 +41,8 @@ pub fn offered(request: *const Request) Error!?Handshake {
     }
     if (request.method != .GET or !std.mem.eql(u8, request.version, "HTTP/1.1") or
         !std.ascii.eqlIgnoreCase(upgrade.?, "websocket") or
-        !nominated(request, "upgrade") or (request.contentLength() orelse 0) != 0)
+        !nominated(request, "upgrade") or (request.contentLength() orelse 0) != 0 or
+        request.chunked)
         return error.InvalidUpgrade;
     const version = (try one(request, "sec-websocket-version")) orelse return error.InvalidUpgrade;
     if (!std.mem.eql(u8, version, "13")) return error.InvalidUpgrade;

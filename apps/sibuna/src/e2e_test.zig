@@ -110,6 +110,12 @@ fn originConnection(stream: Io.net.Stream) void {
             trickle(&writer.interface, "Connection: close\r\n") catch {};
             return;
         }
+        if (std.mem.indexOf(u8, request_line, "?upload") != null) {
+            const framing = UploadFraming.of(head);
+            reader.interface.toss(end + 4);
+            echoUpload(&reader.interface, &writer.interface, framing) catch return;
+            continue;
+        }
         if (std.mem.indexOf(u8, request_line, "/truncated") != null) {
             writer.interface.writeAll("HTTP/1.1 200 OK\r\nContent-Length: 100\r\n\r\n" ++
                 "0123456789") catch {};
@@ -123,6 +129,66 @@ fn originConnection(stream: Io.net.Stream) void {
         ) catch return;
         writer.interface.flush() catch return;
         reader.interface.toss(end + 4);
+    }
+}
+
+/// How the proxy framed an upload, read from the head before the body moves the buffer.
+const UploadFraming = union(enum) {
+    length: u64,
+    chunked,
+    none,
+
+    fn of(head: []const u8) UploadFraming {
+        if (std.mem.indexOf(u8, head, "\r\nTransfer-Encoding: chunked\r\n") != null) {
+            if (std.mem.indexOf(u8, head, "\r\nContent-Length:") != null) return .none;
+            return .chunked;
+        }
+        const at = std.mem.indexOf(u8, head, "\r\nContent-Length: ") orelse return .none;
+        const digits = std.mem.sliceTo(head[at + 18 ..], '\r');
+        return .{ .length = std.fmt.parseInt(u64, digits, 10) catch return .none };
+    }
+};
+
+/// Reads the upload as an origin would and answers with its framing, length and digest. The
+/// chunked reader accepts only canonical framing: bare lower-case hex sizes, no extensions and
+/// no trailers, which is all a re-framing proxy may send.
+fn echoUpload(r: *Io.Reader, w: *Io.Writer, framing: UploadFraming) !void {
+    var digest = std.hash.Wyhash.init(0);
+    var total: u64 = 0;
+    switch (framing) {
+        .none => {},
+        .length => |length| try digestBytes(r, length, &digest, &total),
+        .chunked => while (true) {
+            const line = try r.takeDelimiterInclusive('\n');
+            if (line.len < 3 or !std.mem.endsWith(u8, line, "\r\n")) return error.NotCanonical;
+            const hex = line[0 .. line.len - 2];
+            for (hex) |c| if (!std.ascii.isDigit(c) and (c < 'a' or c > 'f'))
+                return error.NotCanonical;
+            if (hex.len > 1 and hex[0] == '0') return error.NotCanonical;
+            const size = try std.fmt.parseInt(u64, hex, 16);
+            if (size == 0) {
+                if (!std.mem.eql(u8, try r.take(2), "\r\n")) return error.NotCanonical;
+                break;
+            }
+            try digestBytes(r, size, &digest, &total);
+            if (!std.mem.eql(u8, try r.take(2), "\r\n")) return error.NotCanonical;
+        },
+    }
+    var body: [64]u8 = undefined;
+    const text = try std.fmt.bufPrint(&body, "UPLOAD|{s}|{d}|{x}", .{
+        @tagName(framing), total, digest.final(),
+    });
+    try w.print("HTTP/1.1 200 OK\r\nContent-Length: {d}\r\n\r\n{s}", .{ text.len, text });
+    try w.flush();
+}
+
+fn digestBytes(r: *Io.Reader, count: u64, digest: *std.hash.Wyhash, total: *u64) !void {
+    var left = count;
+    while (left > 0) {
+        const piece = try r.take(@intCast(@min(left, r.buffer.len)));
+        digest.update(piece);
+        left -= piece.len;
+        total.* += piece.len;
     }
 }
 
@@ -1068,6 +1134,97 @@ test "malformed, smuggled, oversized, and unknown requests are rejected cleanly"
     );
     try std.testing.expectEqual(@as(u16, 400), resp.status());
     try std.testing.expect(resp.contains("MALFORMED CHALLENGE"));
+}
+
+/// The expected origin answer for an upload of `body` framed as `framing`.
+fn uploadEcho(out: []u8, framing: []const u8, body: []const u8) ![]const u8 {
+    return std.fmt.bufPrint(out, "UPLOAD|{s}|{d}|{x}", .{
+        framing, body.len, std.hash.Wyhash.hash(0, body),
+    });
+}
+
+const upload_head = "POST /robots.txt?upload HTTP/1.1\r\nHost: t\r\n" ++
+    "Content-Type: application/octet-stream\r\nTransfer-Encoding: chunked\r\n";
+
+test "chunked uploads reach the origin framed by Sibuna, never by the client" {
+    boot_once.call();
+    const p = proxy_fixture.port;
+    const allocator = std.testing.allocator;
+    const resp = try allocator.create(Response);
+    defer allocator.destroy(resp);
+    var expected: [64]u8 = undefined;
+
+    // A body that ends within the buffer reaches the origin with a length; extensions and the
+    // trailer stay behind, and the pipelined request after it is served on the same connection.
+    try roundTrip(p, upload_head ++ "X-Forwarded-For: 203.0.113.81\r\n\r\n" ++
+        "5;sig=\"a;b\"\r\nhello\r\n1\r\n \r\n00D\r\nchunked world\r\n" ++
+        "0\r\nX-Checksum: 1\r\n\r\n" ++
+        "GET /robots.txt HTTP/1.1\r\nHost: t\r\nX-Forwarded-For: 203.0.113.81\r\n\r\n", resp);
+    const short = try uploadEcho(&expected, "length", "hello chunked world");
+    try std.testing.expect(resp.contains(short));
+    try std.testing.expect(resp.contains("ORIGIN|GET /robots.txt"));
+    try std.testing.expect(!resp.contains("X-Checksum"));
+
+    // A body longer than the buffer streams as canonical chunks, one per read, whatever sizes
+    // the client chose; the origin's digest matches the body byte for byte.
+    const body = try allocator.alloc(u8, 256 * 1024);
+    defer allocator.free(body);
+    for (body, 0..) |*b, i| b.* = "abcdefghijklmnopqrstuvwxyz0123456789"[i % 36];
+    var raw: std.Io.Writer.Allocating = .init(allocator);
+    defer raw.deinit();
+    try raw.writer.writeAll(upload_head ++ "X-Forwarded-For: 203.0.113.82\r\n\r\n");
+    var at: usize = 0;
+    var size: usize = 1;
+    while (at < body.len) : (size = size * 7 % 9001 + 1) {
+        const n = @min(size, body.len - at);
+        try raw.writer.print("{X};n={d}\r\n{s}\r\n", .{ n, at, body[at..][0..n] });
+        at += n;
+    }
+    try raw.writer.writeAll("0\r\n\r\n");
+    try roundTrip(p, raw.written(), resp);
+    try std.testing.expect(resp.contains(try uploadEcho(&expected, "chunked", body)));
+}
+
+test "chunk boundaries cannot hide a payload from inspection" {
+    boot_once.call();
+    const resp = try std.testing.allocator.create(Response);
+    defer std.testing.allocator.destroy(resp);
+    try roundTrip(proxy_fixture.port, "POST /robots.txt?upload HTTP/1.1\r\nHost: t\r\n" ++
+        "X-Forwarded-For: 203.0.113.83\r\nTransfer-Encoding: chunked\r\n" ++
+        "Content-Type: application/x-www-form-urlencoded\r\n\r\n" ++
+        "8\r\nq=1' uni\r\n6\r\non sel\r\nA\r\nect null--\r\n0\r\n\r\n", resp);
+    try std.testing.expectEqual(@as(u16, 403), resp.status());
+}
+
+test "ambiguous chunked framing is refused before and after forwarding begins" {
+    boot_once.call();
+    const p = proxy_fixture.port;
+    const allocator = std.testing.allocator;
+    const resp = try allocator.create(Response);
+    defer allocator.destroy(resp);
+    const from = "X-Forwarded-For: 203.0.113.84\r\n\r\n";
+    // A lone LF ends this size line for lenient parsers: refused before the origin sees it.
+    try roundTrip(p, upload_head ++ from ++ "5\nhello\r\n0\r\n\r\n", resp);
+    try std.testing.expectEqual(@as(u16, 400), resp.status());
+    try std.testing.expect(resp.contains("Malformed chunked request body"));
+    const coded = "POST /robots.txt HTTP/1.1\r\nTransfer-Encoding: gzip, chunked\r\n\r\n";
+    try roundTrip(p, coded, resp);
+    try std.testing.expectEqual(@as(u16, 501), resp.status());
+    try roundTrip(p, "POST /robots.txt HTTP/1.0\r\nTransfer-Encoding: chunked\r\n\r\n", resp);
+    try std.testing.expectEqual(@as(u16, 400), resp.status());
+
+    // Past the buffer the body is already streaming: the origin gets no terminal chunk and
+    // the client still gets one 400.
+    const filler = try allocator.alloc(u8, 80 * 1024);
+    defer allocator.free(filler);
+    @memset(filler, 'f');
+    const raw = try std.fmt.allocPrint(allocator, upload_head ++ "X-Forwarded-For: " ++
+        "203.0.113.85\r\n\r\n{X}\r\n{s}\r\n5 \r\nhello\r\n0\r\n\r\n", .{ filler.len, filler });
+    defer allocator.free(raw);
+    try roundTrip(p, raw, resp);
+    try std.testing.expectEqual(@as(u16, 400), resp.status());
+    try std.testing.expect(resp.contains("Malformed chunked request body"));
+    try std.testing.expect(!resp.contains("UPLOAD|"));
 }
 
 test "assets are served with caching and the wasm module is the embedded solver" {
