@@ -1,5 +1,6 @@
 """Notifications: destination validation, sealed secrets, a real webhook delivery with an
 HMAC signature, a UDP syslog line, and audit records without secret bytes."""
+import private_file
 import hashlib
 import hmac
 import http.server
@@ -165,7 +166,7 @@ def check(binary, h):
         root = Path(directory)
         key_file = root / "console.key"
         key_file.write_text("0f" * 32)
-        key_file.chmod(0o600)
+        private_file.permissions(key_file)
         temporary = bootstrap.initialize(binary, str(root / "data"), "admin")
         with (root / "daemon.log").open("w+") as log:
             port = h.port()

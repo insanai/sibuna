@@ -16,6 +16,7 @@ import sys
 import tempfile
 import time
 import console_e2e as helper
+import process_control
 from proxy_fixture import WebSocket, frame, origin, receive
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "benchmarks"))
@@ -162,7 +163,7 @@ def check(binary, caddy=None):
             (root / "secret").write_bytes(os.urandom(32))
             port = helper.port()
             with (root / "sibuna.log").open("w+") as log:
-                proc = subprocess.Popen([
+                proc = process_control.spawn([
                     binary, "--host", "127.0.0.1", "--port", str(port), "--workers", "1",
                     "--upstream-port", str(server.server_port), "--trust-forwarded",
                     "--algorithm", "hashcash", "--difficulty", "8", "--idle-timeout", "2",

@@ -1,4 +1,5 @@
 const std = @import("std");
+const python = if (@import("builtin").os.tag == .windows) "python" else "python3";
 const console_build = @import("build/console.zig");
 
 pub const Modules = struct {
@@ -220,6 +221,7 @@ fn addServer(
     console: ?*std.Build.Module,
 ) AppModules {
     const options = b.addOptions();
+    options.addOption([]const u8, "version", @import("build.zig.zon").version);
     options.addOption(bool, "storage", storage);
     options.addOption(bool, "console", console != null);
     options.addOption(bool, "cluster", storage and cluster);
@@ -249,15 +251,16 @@ fn addServer(
         .root_source_file = b.path("apps/sibuna/src/main.zig"),
         .target = target,
         .optimize = optimize,
+        .strip = b.option(bool, "strip", "Remove debug symbols from the daemon") orelse false,
     });
     wireApp(b, root, app);
     const exe = b.addExecutable(.{ .name = "sibuna", .root_module = root });
     b.installArtifact(exe);
     const proxy_e2e = b.step("proxy-e2e", "Verify HTTP and WebSocket proxy compatibility");
-    const proxy_check = b.addSystemCommand(&.{ "python3", "tools/proxy_e2e.py" });
+    const proxy_check = b.addSystemCommand(&.{ python, "tools/proxy_e2e.py" });
     proxy_check.addArtifactArg(exe);
     proxy_e2e.dependOn(&proxy_check.step);
-    const modes_check = b.addSystemCommand(&.{ "python3", "tools/ingress_e2e.py" });
+    const modes_check = b.addSystemCommand(&.{ python, "tools/ingress_e2e.py" });
     modes_check.addArtifactArg(exe);
     proxy_e2e.dependOn(&modes_check.step);
     addConsoleLiveChecks(b, exe, console != null);
@@ -266,9 +269,9 @@ fn addServer(
     const impact = b.step("console-impact", "Measure data-plane cost of the console");
     if (console != null) {
         const acceptance = b.addSystemCommand(&.{
-            "python3", "benchmarks/console_impact_test.py",
+            python, "benchmarks/console_impact_test.py",
         });
-        const measure = b.addSystemCommand(&.{ "python3", "benchmarks/console_impact.py" });
+        const measure = b.addSystemCommand(&.{ python, "benchmarks/console_impact.py" });
         measure.step.dependOn(&acceptance.step);
         if (b.args) |args| measure.addArgs(args);
         impact.dependOn(&measure.step);
@@ -606,7 +609,7 @@ fn addConsoleLiveChecks(b: *std.Build, exe: *std.Build.Step.Compile, enabled: bo
     inline for (scenarios) |scenario| {
         const step = b.step(scenario[0], scenario[2]);
         if (enabled) {
-            const check = b.addSystemCommand(&.{ "python3", scenario[1] });
+            const check = b.addSystemCommand(&.{ python, scenario[1] });
             check.addArtifactArg(exe);
             step.dependOn(&check.step);
         } else step.dependOn(&b.addFail("console live checks require -Dconsole=true").step);

@@ -2,7 +2,8 @@
 //! directions; no extra threads, allocations or unbounded output queues are introduced.
 const std = @import("std");
 const Io = std.Io;
-const posix = std.posix;
+const windows = @import("builtin").os.tag == .windows;
+const posix = if (windows) @import("windows_socket.zig") else std.posix;
 const core = @import("core");
 pub const Error = error{ ConnectionFailed, IdleTimeout };
 pub const Endpoint = struct { stream: Io.net.Stream, reader: *Io.Reader };
@@ -137,7 +138,10 @@ pub fn relay(io: Io, endpoints: [2]Endpoint, options: Options) Error!void {
             // A half-closed descriptor with no pending work reports HUP continuously.
             // Disable it until it has bytes to write, avoiding an idle busy loop.
             descriptor.* = .{
-                .fd = if (events == 0) -1 else endpoints[index].stream.socket.handle,
+                .fd = if (events == 0)
+                    (if (windows) posix.invalid_socket else -1)
+                else
+                    endpoints[index].stream.socket.handle,
                 .events = events,
                 .revents = 0,
             };

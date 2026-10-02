@@ -1,4 +1,5 @@
 """Native account commands against a real daemon; no direct database connection."""
+import private_file
 import json
 from pathlib import Path
 import re
@@ -29,7 +30,7 @@ def invoke(binary, port, password_file, command, expected=None, username="admin"
 
 def private(path, value):
     path.write_text(value + "\n")
-    path.chmod(0o600)
+    private_file.permissions(path)
     return path
 
 
@@ -47,9 +48,9 @@ def factor_input(binary, port, credentials, recovery, root):
 
 def exercise(binary, h, port, password_file, root, temporary, restart):
     bootstrap.change(h, port, temporary, password_file.read_text().strip())
-    password_file.chmod(0o644)
+    private_file.permissions(password_file, private=False)
     invoke(binary, port, password_file, ["users"], "CredentialPermissions")
-    password_file.chmod(0o600)
+    private_file.permissions(password_file)
     page = invoke(binary, port, password_file, ["users"])
     assert page["version"] == 1 and page["rows"][0]["username"] == "admin"
     created = invoke(binary, port, password_file, ["add-user", "cli-viewer"])

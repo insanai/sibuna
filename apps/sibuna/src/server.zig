@@ -21,7 +21,7 @@ pub const wasm_bytes = @embedFile("wasm_solver");
 pub const challenge_html = @embedFile("challenge_html");
 pub const worker_js = @embedFile("worker_js");
 
-pub const version = "0.2.0";
+pub const version = build_options.version;
 pub const max_request_bytes = 64 * 1024;
 pub const max_head_bytes = 16 * 1024;
 pub const max_requests_per_connection = 4096;
@@ -215,6 +215,7 @@ fn rejectRaw(stream: Io.net.Stream, io: Io, st: *AppState, text: []const u8) voi
 }
 
 fn drainPending(stream: Io.net.Stream) void {
+    if (@import("builtin").os.tag == .windows) return net.connect.drainPending(stream);
     var scratch: [4096]u8 = undefined;
     for (0..8) |_| {
         const result = std.posix.system.recv(

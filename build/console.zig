@@ -1,4 +1,5 @@
 const std = @import("std");
+const python = if (@import("builtin").os.tag == .windows) "python" else "python3";
 
 pub const Modules = struct {
     protocol: *std.Build.Module,
@@ -42,7 +43,7 @@ pub fn add(
     step.dependOn(&b.top_level_steps.get("console-render-test").?.step);
     step.dependOn(&b.top_level_steps.get("console-golden-check").?.step);
     step.dependOn(&b.top_level_steps.get("console-assets-check").?.step);
-    const abi_test = b.addSystemCommand(&.{ "python3", "tools/console_wasm_check_test.py" });
+    const abi_test = b.addSystemCommand(&.{ python, "tools/console_wasm_check_test.py" });
     step.dependOn(&abi_test.step);
     for ([_]*std.Build.Module{ protocol, console, serve, html, geoip }) |module| {
         const tests = b.addTest(.{ .root_module = module });
@@ -80,7 +81,7 @@ fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module)
     wasm.root_module.addImport("html", htmlModule(b, target, .ReleaseSmall));
     wasm.bundle_compiler_rt = true;
     const artifact = linkUi(b, wasm);
-    const size = b.addSystemCommand(&.{ "python3", "tools/console_wasm_check.py" });
+    const size = b.addSystemCommand(&.{ python, "tools/console_wasm_check.py" });
     size.addFileArg(artifact);
     const checked = size.addOutputFileArg("console.wasm");
     // Every embedding build consumes verified bytes, including ordinary daemon builds.
@@ -154,10 +155,10 @@ fn addAssets(b: *std.Build) void {
         "console-assets",
         "Regenerate pinned console CSS and digests (needs npm)",
     );
-    const build = b.addSystemCommand(&.{ "python3", "tools/console_assets.py", "build" });
+    const build = b.addSystemCommand(&.{ python, "tools/console_assets.py", "build" });
     assets.dependOn(&build.step);
     const check = b.step("console-assets-check", "Verify committed console assets without npm");
-    const verify = b.addSystemCommand(&.{ "python3", "tools/console_assets.py", "check" });
+    const verify = b.addSystemCommand(&.{ python, "tools/console_assets.py", "check" });
     check.dependOn(&verify.step);
 }
 

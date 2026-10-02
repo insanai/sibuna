@@ -5,10 +5,7 @@ const std = @import("std");
 pub fn read(io: std.Io, path: []const u8) ![32]u8 {
     const file = try std.Io.Dir.openFile(.cwd(), io, path, .{});
     defer file.close(io);
-    const stat = try file.stat(io);
-    if (@hasDecl(std.Io.File.Permissions, "toMode")) {
-        if (stat.permissions.toMode() & 0o077 != 0) return error.ConsoleKeyPermissions;
-    }
+    @import("core").private_file.check(io, file) catch return error.ConsoleKeyPermissions;
     var buffer: [67]u8 = undefined;
     var scratch: [128]u8 = undefined;
     defer std.crypto.secureZero(u8, &buffer);

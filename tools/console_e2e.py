@@ -11,6 +11,7 @@ import sys
 import tempfile
 import time
 import console_ws_test
+import process_control
 
 
 def port():
@@ -39,7 +40,7 @@ def request(console_port, method, path, body=None, cookie=None, csrf=None, extra
 
 def start(binary, directory, console_port, logfile, key_file=None, proxy=False,
           workers=1, extra=()):
-    proc = subprocess.Popen([
+    proc = process_control.spawn([
         binary, "--data-dir", directory, "--host", "127.0.0.1",
         "--port", str(port()), "--workers", str(workers), "--console", f"127.0.0.1:{console_port}",
     ] + (["--console-key-file", key_file] if key_file else []) + ([
@@ -61,7 +62,7 @@ def start(binary, directory, console_port, logfile, key_file=None, proxy=False,
 
 
 def stop(proc):
-    proc.terminate()
+    process_control.terminate(proc)
     try:
         proc.wait(timeout=10)
     except subprocess.TimeoutExpired:

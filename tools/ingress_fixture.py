@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import process_control
 import tempfile
 import time
 import console_e2e as helper
@@ -81,7 +82,7 @@ def stack(binary, mode, ingress=None):
         log = owned.enter_context((root / "sibuna.log").open("w+"))
         # Exercise both documented option spellings and forward-auth's default ingress trust.
         option = "-m" if mode == "forward_auth" else "--mode"
-        daemon = subprocess.Popen([
+        daemon = process_control.spawn([
             str(binary), "--host", "127.0.0.1", "--port", str(backend), "--workers", "1",
             option, mode, "--algorithm", "hashcash", "--difficulty", "8", "--rate-limit", "100000",
             "--upstream-port", str(application.server_port),

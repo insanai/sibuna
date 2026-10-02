@@ -19,6 +19,7 @@ pub const Mode = config.Mode;
 pub const max_cluster_peers = config.max_cluster_peers;
 pub const log = @import("log.zig");
 pub const Lock = @import("lock.zig").Lock;
+pub const private_file = @import("private_file.zig");
 
 test {
     _ = @import("diagnostic.zig");

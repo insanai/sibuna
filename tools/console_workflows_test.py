@@ -1,6 +1,7 @@
 """Policy workflows through the live daemon: ordering changes a decision, replay counts
 retained events, reputation prefixes deny and undo, a country block applies from the active
 generation, and a chunked import replaces the managed set atomically."""
+import private_file
 import hashlib
 import json
 from pathlib import Path
@@ -204,7 +205,7 @@ def check_import(h, port, admin):
 def check_cli(binary, h, port, admin, credentials, root):
     password = root / "cli-password"
     password.write_text(credentials["password"] + "\n")
-    password.chmod(0o600)
+    private_file.permissions(password)
     base = [binary, "console", "policies"]
     auth = ["--origin", f"http://127.0.0.1:{port}", "--username", credentials["username"],
             "--password-file", str(password)]

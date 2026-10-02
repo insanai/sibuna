@@ -5,7 +5,19 @@
 const std = @import("std");
 const Io = std.Io;
 const posix = std.posix;
+const windows = @import("builtin").os.tag == .windows;
+const windows_socket = @import("windows_socket.zig");
 const Error = error{UpstreamUnreachable};
+
+/// Windows Io owns AFD handles, so an overload drain must not call Winsock recv.
+pub fn drainPending(stream: Io.net.Stream) void {
+    var buffer: [4096]u8 = undefined;
+    for (0..8) |_| {
+        const count = windows_socket.receive(stream.socket.handle, &buffer, 1_000_000) catch
+            return;
+        if (count == 0) return;
+    }
+}
 
 pub fn bounded(io: Io, address: Io.net.IpAddress) Error!Io.net.Stream {
     const deadline = Io.Clock.awake.now(io).nanoseconds + 5 * std.time.ns_per_s;
@@ -47,6 +59,7 @@ fn waitUntil(io: Io, fd: posix.socket_t, deadline: i96) Error!void {
 /// saves no packets and delays the next small write until the peer acknowledges the last,
 /// up to its delayed-ACK timer (40 ms on Linux). Failure only leaves the default behaviour.
 pub fn noDelay(stream: Io.net.Stream) void {
+    if (windows) return windows_socket.noDelay(stream);
     const one: c_int = 1;
     const bytes = std.mem.asBytes(&one);
     const fd = stream.socket.handle;
@@ -55,6 +68,8 @@ pub fn noDelay(stream: Io.net.Stream) void {
 
 /// `bounded` with an explicit absolute awake-clock deadline in nanoseconds.
 pub fn boundedDeadline(io: Io, address: Io.net.IpAddress, deadline_ns: i96) Error!Io.net.Stream {
+    if (windows) return windows_socket.connect(io, address, deadline_ns) catch
+        return error.UpstreamUnreachable;
     const local: Io.net.IpAddress = switch (address) {
         .ip4 => .{ .ip4 = .unspecified(0) },
         .ip6 => .{ .ip6 = .unspecified(0) },
@@ -79,6 +94,7 @@ pub fn boundedDeadline(io: Io, address: Io.net.IpAddress, deadline_ns: i96) Erro
 
 /// Writes all bytes, polling for writability so a stalled peer cannot block past the deadline.
 pub fn writeBounded(io: Io, stream: Io.net.Stream, bytes: []const u8, deadline_ns: i96) !void {
+    if (windows) return windows_socket.writeBounded(io, stream, bytes, deadline_ns);
     const fd = stream.socket.handle;
     var offset: usize = 0;
     while (offset < bytes.len) {
@@ -94,6 +110,7 @@ pub fn writeBounded(io: Io, stream: Io.net.Stream, bytes: []const u8, deadline_n
 
 /// Reads until the peer closes, `out` is full, or the deadline passes; returns the count.
 pub fn readBounded(io: Io, stream: Io.net.Stream, out: []u8, deadline_ns: i96) !usize {
+    if (windows) return windows_socket.readBounded(io, stream, out, deadline_ns);
     const fd = stream.socket.handle;
     var length: usize = 0;
     while (length < out.len) {

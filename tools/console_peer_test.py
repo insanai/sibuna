@@ -1,4 +1,5 @@
 """Live daemon peer authentication, TLS verification, receipt fencing and clean cancellation."""
+import private_file
 import base64
 import http.client
 import json
@@ -113,7 +114,7 @@ def check(binary, h):
         key_file, console_key = root / "peer.key", root / "console.key"
         for path, value in ((key_file, master), (console_key, os.urandom(32))):
             path.write_text(value.hex())
-            path.chmod(0o600)
+            private_file.permissions(path)
         peer_port, port = h.port(), h.port()
         peer = fixture.Peer(peer_port, cert, tls_key, master)
         temporary = bootstrap.initialize(binary, str(root / "data"), "peer-admin")

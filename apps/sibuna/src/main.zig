@@ -43,7 +43,7 @@ pub fn main(init: std.process.Init) !u8 {
         return @import("console_init.zig").execute(gpa, io, cfg, username.slice());
     };
     const seed = resolveSecret(io, init.environ_map, &cfg) orelse return 1;
-    const signals = @import("shutdown.zig").Signals.init();
+    const signals = try @import("shutdown.zig").Signals.init();
     defer signals.deinit();
 
     const engine = try gpa.create(policy.Engine);

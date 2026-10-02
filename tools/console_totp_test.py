@@ -1,4 +1,5 @@
 """Exercise encrypted enrollment, factor boundaries and durable single-use recovery."""
+import private_file
 import base64
 import console_bootstrap_test
 import hashlib
@@ -65,7 +66,7 @@ def check(binary, h):
     with tempfile.TemporaryDirectory(prefix="sibuna-factor-") as root:
         keypath = Path(root) / "console.key"
         keypath.write_text(os.urandom(32).hex() + "\n")
-        keypath.chmod(0o600)
+        private_file.permissions(keypath)
         temporary = console_bootstrap_test.initialize(
             binary, str(Path(root) / "data"), "factor-admin")
         logpath = Path(root) / "daemon.log"
@@ -105,7 +106,7 @@ def check_proxy(binary, h):
     with tempfile.TemporaryDirectory(prefix="sibuna-proxy-") as root:
         keypath = Path(root) / "console.key"
         keypath.write_text(os.urandom(32).hex() + "\n")
-        keypath.chmod(0o600)
+        private_file.permissions(keypath)
         temporary = console_bootstrap_test.initialize(
             binary, str(Path(root) / "data"), "factor-admin")
         logpath = Path(root) / "daemon.log"

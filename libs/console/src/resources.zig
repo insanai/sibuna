@@ -11,6 +11,7 @@ pub const Sample = struct {
 };
 
 pub fn sample(io: std.Io) Sample {
+    if (builtin.os.tag == .windows) return @import("resources_windows.zig").sample();
     const usage = std.posix.getrusage(0);
     const peak: u64 = @intCast(@max(0, usage.maxrss));
     return .{

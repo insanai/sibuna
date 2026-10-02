@@ -231,6 +231,7 @@ pub fn readSecret(io: std.Io, path_value: []const u8, output: []u8) Error![]cons
     const file = std.Io.Dir.cwd().openFile(io, path_value, .{}) catch return error.CredentialFile;
     defer file.close(io);
     try checkFile(file.stat(io) catch return error.CredentialFile, output.len);
+    @import("core").private_file.check(io, file) catch return error.CredentialPermissions;
     var scratch: [256]u8 = undefined;
     defer std.crypto.secureZero(u8, &scratch);
     var reader = file.reader(io, &scratch);

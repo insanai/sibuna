@@ -1,4 +1,5 @@
 """Native token lifecycle and private-file bearer commands against the running daemon."""
+import private_file
 import json
 from pathlib import Path
 import re
@@ -51,9 +52,9 @@ def lifecycle(binary, port, password, root, restart):
     assert reader["saved"] and re.fullmatch("[0-9a-f]{64}", reader["token"])
     assert int(reader["expires"]) == expiry
     read_file = private(root / "reader", reader["token"])
-    read_file.chmod(0o644)
+    private_file.permissions(read_file, private=False)
     automation(binary, port, read_file, ["users"], "CredentialPermissions")
-    read_file.chmod(0o600)
+    private_file.permissions(read_file)
     assert automation(binary, port, read_file, ["users"])["rows"][0]["username"] == "admin"
     assert automation(binary, port, read_file, ["geoip", "status"])["status"] == "idle"
     automation(binary, port, read_file, ["add-user", "forbidden"], "Forbidden")
