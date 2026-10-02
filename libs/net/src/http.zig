@@ -105,12 +105,13 @@ pub const ParseError = error{
     InvalidContentLength,
 };
 
+pub fn tokenChar(c: u8) bool {
+    return std.ascii.isAlphanumeric(c) or std.mem.indexOfScalar(u8, "!#$%&'*+-.^_`|~", c) != null;
+}
+
 pub fn validToken(text: []const u8) bool {
     if (text.len == 0) return false;
-    for (text) |c| {
-        if (!std.ascii.isAlphanumeric(c) and
-            std.mem.indexOfScalar(u8, "!#$%&'*+-.^_`|~", c) == null) return false;
-    }
+    for (text) |c| if (!tokenChar(c)) return false;
     return true;
 }
 
