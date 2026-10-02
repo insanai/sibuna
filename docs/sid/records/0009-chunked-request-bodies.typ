@@ -407,6 +407,18 @@ chunked and 1.7–2.9 GiB/s with `Content-Length`. Both figures are bound by the
 that drains them, so they show that chunked uploads stream at the same order as sized ones.
 They do not measure the decoder.
 
+*Correction.* A review found that a streamed body, chunked or sized, refilled the reader buffer
+that still held the request head. The telemetry sample and any audit findings held for the
+origin head read that head after the relay. With `--console-capture-heads`, the recorded path
+and request head then held upload bytes. This flaw predates chunked support; this record's
+tests did not combine streaming with head capture. `forward` now lends the relay only the
+buffer behind the head (`HeadPin`) and restores the reader when the relay returns. A body
+streams only after admission filled the whole buffer, so the head is at the start of the
+buffer and the relay keeps at least 48 KiB of it; nothing is copied. An end-to-end test sends
+192 KiB uploads in both framings through a fixture that captures heads and audits SQL
+injection. It asserts that the recorded path, client, agent and redacted request head match
+the request exactly.
+
 = References
 
 + R. Fielding, M. Nottingham, J. Reschke. RFC 9112, _HTTP/1.1_, §6 (message body), §7.1 (chunked transfer coding), §11.2 (request smuggling). IETF, 2022.
