@@ -4,6 +4,14 @@ Run `zig build fmt`, `zig build test`, and `zig build sid` before submitting a c
 `benchmarks/results/latest.json` with `sh benchmarks/run-all.sh` whenever a change touches a
 measured subsystem; the book renders its figures from that file.
 
+The engine is LGPL-3.0-only and the console is AGPL-3.0-only, as scoped in `LICENSE`.
+Contributions must preserve dependency notices and the console's corresponding-source link.
+Release packages are built with Zig 0.16.0 at `ReleaseSafe`, with storage and console enabled
+and clustering disabled. A `v` tag must match `build.zig.zon` and the console source link.
+The release workflow verifies the actual binaries before publishing archives and checksums;
+it refuses to replace assets on an already published release. macOS packages are unsigned.
+Windows packages contain a native executable qualified on a Windows runner. `python3 tools/build_site.py` builds the GitHub Pages documentation.
+
 ---
 
 ## Code and architectural guidelines

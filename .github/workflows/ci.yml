@@ -1,0 +1,35 @@
+name: Verify
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - name: Install checksum-verified Zig
+        run: python3 tools/install_zig.py "$RUNNER_TEMP/zig"
+      - name: Install cluster build dependency
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev
+      - name: Native and console checks
+        run: zig build fmt test console-ui-e2e -j2 --summary all
+      - name: Cluster checks
+        run: zig build test -Dcluster=true -j2 --summary all
+      - name: Compile feature-disabled configurations
+        run: |
+          zig build -Dstorage=false -j2 --prefix "$RUNNER_TEMP/storage-off"
+          zig build -Dconsole=false -j2 --prefix "$RUNNER_TEMP/console-off"

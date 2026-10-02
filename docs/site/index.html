@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Sibuna: proof-of-work admission, bounded web application inspection and a built-in management console.">
+<title>Sibuna — web application protection</title>
+<style>
+:root{color-scheme:light dark;font-family:system-ui,sans-serif;color:#172033;background:#f8fafc}
+body{max-width:960px;margin:0 auto;padding:48px 24px;line-height:1.6}
+a{color:#0369a1}h1{font-size:3rem;letter-spacing:-.06em;margin-bottom:8px}h2{font-size:1.3rem}
+nav{display:flex;gap:20px;flex-wrap:wrap}.lead{font-size:1.25rem;max-width:760px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin:32px 0}
+section{border:1px solid #cbd5e1;border-radius:12px;padding:20px;background:#fff}
+pre{overflow:auto;padding:16px;border-radius:8px;background:#e2e8f0}footer{margin-top:40px;font-size:.9rem}
+@media(prefers-color-scheme:dark){:root{color:#e2e8f0;background:#0f172a}section{background:#172033;border-color:#475569}a{color:#7dd3fc}pre{background:#1e293b}}
+</style>
+</head>
+<body>
+<header><nav aria-label="Project navigation"><a href="https://github.com/insanai/sibuna">Source</a><a href="https://github.com/insanai/sibuna/releases">Downloads</a><a href="book/operations.html">Operations</a><a href="sid/index.html">Design discussions</a></nav>
+<h1>Sibuna</h1><p class="lead">Protect websites and APIs with browser proof-of-work admission, bounded application inspection and an optional management console.</p></header>
+<p>Run one executable as a reverse proxy or as an authorization service for an existing ingress.
+Terminate public HTTPS at Caddy, Nginx or another trusted ingress and keep Sibuna's HTTP listener private.</p>
+<div class="grid">
+<section><h2>Operate</h2><p>Configure admission, policies, persistent storage, uploads, WebSockets and the console.</p><a href="book/operations.html">Read the operations guide</a><br><a href="book/reference.html">CLI and protocol reference</a></section>
+<section><h2>Understand</h2><p>The book explains the proof protocol, request pipeline, inspection bounds and measurements.</p><a href="book/index.html">Read the book</a><br><a href="pdf/sibuna-book.pdf">Download the book PDF</a></section>
+<section><h2>Review the design</h2><p>Shibuna Discussions record architectural decisions, contracts and acceptance evidence.</p><a href="sid/index.html">Browse the SIDs</a><br><a href="whitepaper/index.html">Architecture whitepaper</a></section>
+</div>
+<h2>Try v0.1.0</h2>
+<p>Packages are available for Linux x86-64 and ARM64, and macOS Intel and Apple Silicon.
+Windows packages contain a native x86-64 executable for Windows 10 / Server 2019 or later.</p>
+<pre><code>curl -fLO https://github.com/insanai/sibuna/releases/download/v0.1.0/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.1.0/SHA256SUMS
+sha256sum --ignore-missing -c SHA256SUMS
+tar -xzf sibuna-linux-amd64.tar.gz
+./sibuna --help</code></pre>
+<h2>Protection has boundaries</h2>
+<p>Inspection covers the first 8 KiB of supported request bodies. Uploaded file contents and
+WebSocket messages are not scanned. Forward-auth sees only the metadata supplied by the ingress.
+Sibuna does not implement native ingress TLS, HTTP/2, global quotas or volumetric network mitigation.</p>
+<p>The console is opt-in. Its strict performance isolation target has not formally passed;
+published measurements identify the code revision and uncertainty. See the operations guide and SID 0007.</p>
+<footer>Engine: LGPL-3.0-only. Console and combined release executable: AGPL-3.0-only.
+<a href="https://github.com/insanai/sibuna/blob/main/LICENSE">Licenses and source</a> ·
+<a href="pdf/sibuna-whitepaper.pdf">Whitepaper PDF</a></footer>
+</body>
+</html>

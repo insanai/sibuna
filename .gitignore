@@ -14,6 +14,7 @@ benchmarks/vendor/
 benchmarks/tmp/
 tmp/
 output/
+dist/
 scratch/
 
 # Local data directories and cluster node test directories

@@ -8,6 +8,25 @@
 
 == Surfaces and Configuration
 
+=== Release Packages and Licenses
+
+Version 0.1.0 packages include persistent storage, the browser solver and the optional
+management console. Linux x86-64 and ARM64 packages link musl statically; macOS packages
+cover Intel and Apple Silicon and are unsigned. Windows packages contain a native x86-64 executable for Windows 10 / Server 2019 or later.
+Use Ctrl+C for ordered shutdown and restrict credential and data files with Windows ACLs. Clustering requires a separate `-Dcluster=true` source build with OpenSSL 3.
+
+Download from #link("https://github.com/insanai/sibuna/releases")[GitHub Releases], verify the
+archive against `SHA256SUMS`, extract it and run `sibuna --version`. Each package contains
+license texts, dependency notices and a `sibuna.build.json` manifest identifying the commit,
+target, compiler, build options and executable digest. The release workflow tests the actual
+packaged executables before publication; these checks do not establish performance acceptance.
+
+The engine is LGPL-3.0-only. The console, including its WebAssembly interface, is
+AGPL-3.0-only; the default combined executable is distributed under AGPL-3.0-only.
+An engine-only build uses `-Dconsole=false`. Directory boundaries and third-party exceptions
+are in `LICENSE` and `NOTICE`; full terms are in `LICENSES/`. Every release tag includes the
+corresponding source and build scripts, and the console links to that source.
+
 #objectives([
   By the end of this chapter, you should be able to run Sibuna as a reverse proxy or a
   forward-auth validator, choose a surface, set the proof-of-work tier and difficulty, and

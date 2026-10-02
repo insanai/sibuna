@@ -1,0 +1,33 @@
+Sibuna v0.1.0 is the first binary release: proof-of-work admission, bounded application
+inspection, reverse-proxy and forward-auth modes, embedded persistent storage, and an
+opt-in management console with policy editing, incident investigation and GeoIP visualization.
+
+Downloads:
+- Linux x86-64 and ARM64: statically linked musl builds; Linux 5.10 or later.
+- macOS Apple Silicon and Intel: macOS 13 or later; unsigned command-line builds.
+- Windows x86-64: native sibuna.exe; Windows 10 / Server 2019 or later.
+
+Archives include the executable, README, full license texts, dependency notices and an exact
+build manifest. SHA256SUMS covers every archive. Engine sources are LGPL-3.0-only; console
+sources, including the Wasm interface, are AGPL-3.0-only. The combined executable is AGPL-covered.
+Corresponding source and build scripts are in this release's tag and linked from the console.
+
+The shipped builds include storage and console support; the console starts only with --console.
+Multi-node deployments require a separate -Dcluster=true build with OpenSSL 3. No GeoIP address
+database is bundled; use the documented CLI import/update commands for your chosen dataset.
+
+Terminate public HTTPS at a trusted ingress and forward private HTTP/1.1 to Sibuna. Uploads,
+including multipart and chunked bodies, stream to the origin; inspection covers the first
+8 KiB and does not scan file contents for malware. Admitted WebSockets relay bytes without
+message inspection. Forward-auth sees only metadata supplied by the ingress. Local rate limits
+are not global quotas, and Sibuna does not provide volumetric network mitigation.
+
+Functional tests qualify both ingress modes, uploads, WebSockets, authentication and console
+workflows on the packaged binaries. The strict SID 0007 console-impact target is not formally
+passed: existing container measurements are inconclusive and predate recent request-path fixes.
+The historical September performance exception is not a pass for this release. Published
+benchmarks retain their measured revision and must not be treated as v0.1.0 guarantees.
+
+Documentation: https://insanai.github.io/sibuna/
+Deployment guide: https://insanai.github.io/sibuna/book/operations.html
+Source: https://github.com/insanai/sibuna/tree/v0.1.0

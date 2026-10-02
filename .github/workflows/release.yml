@@ -1,0 +1,104 @@
+name: Binary release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            package: linux-amd64
+            target: x86_64-linux-musl
+          - runner: ubuntu-24.04-arm
+            package: linux-arm64
+            target: aarch64-linux-musl
+          - runner: macos-14
+            package: macos-arm64
+            target: aarch64-macos
+          - runner: macos-15-intel
+            package: macos-amd64
+            target: x86_64-macos
+          - runner: windows-2022
+            package: windows-amd64
+            target: x86_64-windows-gnu
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - name: Install checksum-verified Zig 0.16.0
+        run: python tools/install_zig.py "$RUNNER_TEMP/zig"
+      - name: Verify tag and console assets
+        run: |
+          python tools/check_release_version.py
+          python tools/console_assets.py check
+      - name: Full native qualification
+        if: matrix.package == 'linux-amd64' || matrix.package == 'macos-arm64'
+        run: |
+          zig build fmt test console-ui-e2e -j2 --summary all
+          zig build -Dstorage=false -j2 --prefix "$RUNNER_TEMP/storage-off"
+          zig build -Dconsole=false -j2 --prefix "$RUNNER_TEMP/console-off"
+      - name: Build portable release
+        run: zig build -Doptimize=ReleaseSafe -Dstrip=true -Dtarget=${{ matrix.target }} -j2
+      - name: Verify the actual release executable
+        env:
+          BINARY: ${{ runner.os == 'Windows' && 'zig-out/bin/sibuna.exe' || 'zig-out/bin/sibuna' }}
+        run: |
+          python tools/check_release_version.py "$BINARY"
+          python tools/proxy_e2e.py "$BINARY"
+          python tools/ingress_e2e.py "$BINARY"
+          python tools/console_e2e.py "$BINARY"
+          python tools/console_ui_live_test.py "$BINARY"
+      - name: Package binaries, licenses and source manifest
+        env:
+          BINARY: ${{ runner.os == 'Windows' && 'zig-out/bin/sibuna.exe' || 'zig-out/bin/sibuna' }}
+        run: python tools/package_release.py --binary "$BINARY" --target ${{ matrix.package }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sibuna-${{ matrix.package }}
+          path: dist/*
+          if-no-files-found: error
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: sibuna-*
+          merge-multiple: true
+          path: dist
+      - name: Publish only after all platforms pass
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          cd dist
+          sha256sum *.tar.gz *.zip > SHA256SUMS
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft > release-state.json; then
+            python -c 'import json; assert json.load(open("release-state.json"))["isDraft"], "Already published: do not replace release assets"'
+          else
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --draft --title "Sibuna $RELEASE_TAG" --notes-file ../.github/release-notes.txt
+          fi
+          gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber ./*.tar.gz ./*.zip SHA256SUMS
+          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest

@@ -85,7 +85,36 @@ Sibuna provides two operational surfaces within the same executable:
 
 ## Quickstart
 
-Getting up and running takes less than two minutes.
+Download a package from [Releases](https://github.com/insanai/sibuna/releases), or build from source.
+The v0.1.0 packages include the engine, embedded storage, browser solver and management console.
+Clustering requires a separate `-Dcluster=true` source build with OpenSSL 3.
+
+| Platform | Package | Requirements |
+| --- | --- | --- |
+| Linux x86-64 | `sibuna-linux-amd64.tar.gz` | Linux 5.10 or later; statically linked musl |
+| Linux ARM64 | `sibuna-linux-arm64.tar.gz` | Linux 5.10 or later; statically linked musl |
+| macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 13 or later |
+| macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 13 or later |
+| Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019 or later; native `sibuna.exe` |
+
+macOS builds are unsigned. Packages include license texts, corresponding-source links and a
+`sibuna.build.json` manifest. Verify the archive against the release's `SHA256SUMS` before use.
+On Windows, extract the ZIP and run `.\sibuna.exe --help` from PowerShell. Use Ctrl+C for
+ordered shutdown and restrict seed, credential and data files with Windows ACLs.
+
+For Linux x86-64:
+
+```sh
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.1.0/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.1.0/SHA256SUMS
+sha256sum --ignore-missing -c SHA256SUMS
+tar -xzf sibuna-linux-amd64.tar.gz
+./sibuna --version
+./sibuna --host 127.0.0.1 --port 8080 --upstream-port 3000 --secret-file ./sibuna.seed
+```
+
+Terminate public HTTPS at your ingress and keep Sibuna's listener private; see
+[deployment limits](#deployment-limits) and the [operations guide](https://insanai.github.io/sibuna/book/operations.html).
 
 ### 1. Build the Executable
 
@@ -378,6 +407,11 @@ Facts gathered from public documentation, release artifacts, and reproducible be
 
 ## Documentation
 
+[Website](https://insanai.github.io/sibuna/) ·
+[Book](https://insanai.github.io/sibuna/book/) ·
+[Operations guide](https://insanai.github.io/sibuna/book/operations.html) ·
+[Design discussions](https://insanai.github.io/sibuna/sid/)
+
 For deep technical study, the repository includes two comprehensive publications:
 
 1. **The Sibuna Book (`docs/book/`):**
@@ -405,4 +439,19 @@ For deep technical study, the repository includes two comprehensive publications
 
 ## License
 
-Sibuna is open-source software released under the Apache License, Version 2.0.
+The engine is licensed under **LGPL 3.0 only** and the console under **AGPL 3.0 only**,
+including its WebAssembly interface. The default executable includes the console and is
+distributed as a combined work under AGPL 3.0. An engine-only build uses `-Dconsole=false`.
+See [LICENSE](LICENSE) for directory boundaries, [LICENSES](LICENSES) for the complete terms,
+and [NOTICE](NOTICE) for dependencies. Corresponding source and build scripts are available
+under each release tag; the console also provides a source-code link.
+
+## Related open-source projects
+
+- [Anubis](https://github.com/TecharoHQ/anubis): a proof-of-work admission proxy for reducing crawler traffic.
+- [OWASP ModSecurity](https://github.com/owasp-modsecurity/ModSecurity): a web application firewall engine integrated through web-server connectors.
+- [OWASP Coraza](https://github.com/corazawaf/coraza): a Go WAF library supporting ModSecurity rules and the OWASP Core Rule Set.
+- [OWASP Core Rule Set](https://github.com/coreruleset/coreruleset): maintained application-attack detection rules for compatible WAF engines.
+
+These projects overlap with different parts of Sibuna. Sibuna's bounded heuristic detectors
+do not implement ModSecurity's rule language or provide drop-in Core Rule Set compatibility.
