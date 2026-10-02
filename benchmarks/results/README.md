@@ -69,9 +69,14 @@ The four selected three-host matrices likewise verify 360 samples and all six pe
 All 54 non-baseline configuration comparisons in each topology remain inconclusive.
 `linux-launch-review-20261002.json` links every current record with its digest, functional
 checks, supplementary paired readings and verified process cleanup. Its performance acceptance
-field is false. The five core families and eight current impact matrices use the updated
-application code. Binary sizes are those of the recorded build, including its
+field is false. The five core families and eight impact matrices were current for the 1 October code. Binary sizes are those of the recorded build, including its
 symbols and embedded assets; the 34.5 MB Linux binary is not the earlier 3.3 MB macOS artifact.
+On 2 October 2026 the request path changed again. Chunked request bodies are accepted (SID
+0009), an adaptive lock replaces the request-path spinlocks, and `TCP_NODELAY` is set on client
+and origin sockets. The whole-product comparison was regenerated from a clean checkout of
+`2e1a7f8` (`tools-comparison-latest-20261002T014905Z.json`). The other four core families, the
+eight impact matrices and `linux-launch-review-20261002.json` predate that change and were
+not rerun. Rerun them before citing them for the current code.
 The whole-product run verifies all 24 expected workload statuses without transport failures.
 Its four-CPU allowance applies to both products; request-rate comparisons remain specific to
 the supplied Anubis version, configuration, fixture origin and declared host.

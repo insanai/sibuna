@@ -147,6 +147,24 @@ requests per second before exhausting ephemeral ports). The tables above are fro
 after those changes; the superseded runs are not retained as result files, which is why their
 figures appear only in this paragraph, labelled as such.
 
+A later run pinned every product to the same four CPUs for an equal budget. It showed
+Sibuna's reverse-proxy 99th percentile at 35–45 ms against Anubis's 11 ms, with occasional
+stalls of over 100 ms. The cause was the locks on the request path: the origin pool, the rate
+limiter's shard, the idle table and the origin attachment were all spinlocks. Every benchmark
+request comes from one address, so they all hit one rate-limiter shard. With about seventy
+connection threads on four CPUs, a thread could be preempted while holding a lock, and the
+waiters then spun through their time slices while the holder waited behind them. These locks
+now spin briefly and then sleep on a futex (`core.Lock`), so a preempted holder gets its CPU
+back.
+
+The same change enabled `TCP_NODELAY` on client and origin sockets. Without it, an origin that
+flushes its head before its body costs every response a delayed acknowledgement, about 40 ms
+on Linux. The tables above are from the run after both changes. A separate A/B run measured
+the reverse proxy at an equal open-loop rate of 20,000 requests per second with `wrk2`. The
+99th percentile was 17–33 ms before the change, 1.9 ms after it, and 5.7 ms for Anubis.
+Those equal-rate figures are not in a result file, which is why they appear only in this
+paragraph.
+
 #callout([Reading the Anubis rows], [
   Anubis is a capable, widely deployed product and this is not a claim that it is slow. It runs
   a garbage-collected runtime, verifies an Ed25519 signature per session check, and keeps
