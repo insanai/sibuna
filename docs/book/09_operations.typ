@@ -409,8 +409,14 @@ This is upload compatibility, not file validation or malware scanning. The backe
 enforce accepted media types rather than trust a client's Content-Type declaration. Fields
 after the inspection prefix, including those after a large uploaded file, are not inspected.
 Compressed payloads are not decompressed for inspection. Uploads still pass admission, path,
-query and header checks and remain subject to connection deadlines. Request transfer coding
-is currently unsupported, so send Content-Length rather than chunked request bodies.
+query and header checks and remain subject to connection deadlines. Chunked request bodies
+are decoded inside the connection buffer before inspection (SID 0009). A body that ends
+within the buffer reaches the backend with Content-Length. A longer one is re-chunked by
+Sibuna, one chunk per read, so the backend never sees the client's chunk sizes, extensions
+or trailers. A chunk line with a lone CR or LF, whitespace around the size, a malformed
+extension or more than 4 KiB is refused with 400. So is a trailer section over 16 KiB.
+`Transfer-Encoding` with another coding receives 501. Backends that cannot parse chunked
+requests still receive Content-Length for bodies under about 44 KiB.
 Clients waiting for `100-continue` receive it locally before sending the body; unsupported
 expectations receive 417. The Expect header is consumed before forwarding to the backend.
 

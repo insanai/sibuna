@@ -114,7 +114,8 @@ next taken, so slots are taken lowest first and the number of allocated stacks f
 connections currently open rather than the number served. The idle reaper
 closes connections silent for longer than `--idle-timeout`. Each active connection owns a
 64 KB read buffer, with a 16 KB head limit, and bounded write buffers. HTTP/1.0 and HTTP/1.1 are supported.
-Transfer-Encoding is rejected: chunked request decoding is not implemented. Invalid header
+Chunked request bodies are decoded in place and re-framed for the origin (SID 0009); other
+transfer codings are refused with 501. Invalid header
 names, request-line control bytes, conflicting lengths, and invalid decimal lengths are refused.
 Truncated bodies fail closed. Requests whose declared body exceeds the buffered prefix do not
 reuse the client connection after a local response.

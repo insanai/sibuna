@@ -68,7 +68,10 @@ provided the origin's response is framed; the next section shows how the proxy d
 
 The head is not forwarded verbatim. `writeHead` re-emits the request line and each header,
 dropping hop-by-hop fields (`Connection`, `Transfer-Encoding`, any incoming `X-Forwarded-For`)
-and appending the audit set:
+and appending the audit set. Body framing is generated, never copied. A `Content-Length` is
+re-emitted. A chunked body that ended within the connection buffer is decoded in place and
+sent with its length. A longer one is announced as `Transfer-Encoding: chunked` and
+re-chunked one read at a time (SID 0009). The audit set:
 
 ```
 Connection: close

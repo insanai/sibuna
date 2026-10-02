@@ -156,12 +156,16 @@ your ingress can supply these fields. Reverse proxy mode preserves the applicati
 reconstructs `X-Forwarded-Proto` from trusted ingress metadata, or `http` for a direct request.
 It removes alternate forwarded host/port fields; applications should use the preserved Host.
 
-Content-Length uploads stream to the backend with their MIME headers and bytes preserved,
+Uploads stream to the backend with their MIME headers and bytes preserved,
 including multipart forms and repeated file fields. WAF body inspection covers the first
 8 KiB: text fields and upload metadata are inspected; file payloads and recognized binary
 MIME bodies remain opaque. Fields beyond that prefix are not inspected. The backend must
 validate accepted MIME types and uploaded files; Sibuna does not scan files for malware.
-Chunked request bodies are currently rejected. `Expect: 100-continue` is handled locally.
+Chunked request bodies are decoded before inspection, so chunk boundaries cannot hide a
+payload. A body that ends within the 64 KiB connection buffer reaches the backend with a
+Content-Length. A longer one is re-chunked by Sibuna, one chunk per read. Chunk extensions
+and request trailers are dropped. Ambiguous chunk framing is refused with 400, and other
+transfer codings with 501 (SID 0009). `Expect: 100-continue` is handled locally.
 
 ## Policy file
 
