@@ -20,5 +20,8 @@
         "docs",
         "README.md",
         "LICENSE",
+        "LICENSES",
+        "NOTICE",
+        "CONTRIBUTING.md",
     },
 }

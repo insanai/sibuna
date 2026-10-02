@@ -1,0 +1,30 @@
+Sibuna
+Copyright (c) 2026 Vikrant Rathore and Ronak Rathore and Sibuna contributors.
+
+First-party engine: LGPL-3.0-only. First-party console: AGPL-3.0-only.
+See LICENSE and LICENSES/ for the scope and complete license texts.
+
+Bundled dependencies in the default, single-node release:
+
+- Zaxonlite 0.7.0 and Paxos 0.7.0: MIT; LICENSES/Zaxonlite-MIT.txt and
+  LICENSES/Paxos-MIT.txt. Sources: github.com/insanai/zaxonlite and
+  github.com/insanai/paxos-zig. Exact archives and package hashes are pinned
+  in build.zig.zon and Zaxonlite's build.zig.zon.
+- SQLite 3.50.4: public domain; sqlite.org/copyright.html. The pinned
+  amalgamation is sqlite-amalgamation-3500400.zip.
+- sqlite-vec 0.1.9: MIT; LICENSES/sqlite-vec-MIT.txt.
+  Source: github.com/asg017/sqlite-vec.
+- daisyUI and Tailwind CSS: MIT; LICENSES/daisyUI-MIT.txt and
+  LICENSES/Tailwind-MIT.txt. Versions are pinned in
+  apps/console-ui/web/package-lock.json. Only generated CSS is bundled;
+  Node and npm are not runtime dependencies.
+- Natural Earth 5.1.2 geographic geometry: public domain;
+  naturalearthdata.com/about/terms-of-use/. Reproduction and source digests
+  are in tools/console_geometry.py and the console asset manifest.
+- Zig 0.16.0 runtime and standard library: MIT and included notices;
+  LICENSES/Zig-LICENSE.txt. Static Linux releases also link musl libc;
+  LICENSES/musl-COPYRIGHT.txt.
+
+No GeoIP address database is bundled. Operators import separately licensed
+datasets using Sibuna's GeoIP commands. Cluster builds are separate source
+builds and link OpenSSL 3; the default release has no OpenSSL dependency.
