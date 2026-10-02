@@ -464,7 +464,7 @@ A modern high-performance edge reverse proxy must process between $50,000$ and $
 ], fill: red-light, stroke: red)
 
 External time-series databases and event-sourcing pipelines (such as InfluxDB, ClickHouse, Kafka, or TimescaleDB) are widely deployed in enterprise cloud tiers, but introducing them directly into Sibuna destroys the core design principles of the system:
-1. *Single-Binary Zero-Dependency Invariant:* Sibuna is engineered as an embedded, self-contained daemon in pure Zig. Requiring an external database daemon, JVM broker, or network-attached collector creates operational friction, complex credential management, and external point-of-failure vulnerabilities.
+1. *Single-Binary Zero-Dependency Invariant:* Sibuna is engineered as an embedded, self-contained daemon with zero external dependencies. Requiring an external database daemon, JVM broker, or network-attached collector creates operational friction, complex credential management, and external point-of-failure vulnerabilities.
 2. *The High-Cardinality Pitfall:* Time-series engines such as InfluxDB structure metrics around inverted tag indices. When applied to web traffic where URL paths, client IP addresses, and User-Agent tokens represent high-cardinality unbounded sets, TSDB memory footprints explode exponentially, leading to out-of-memory crashes.
 
 To resolve this dilemma without sacrificing either analytical depth or edge simplicity, Sibuna adopts a *streaming in-memory rollup architecture* paired with *deterministic probabilistic sketches* and *pre-aggregated binary archive snapshots*.
@@ -731,7 +731,7 @@ This two-tier division ensures that Sibuna remains an unencumbered, ultra-fast s
 
 == 3. Operator Console Dashboard Interface
 
-The Sibuna Console UI (`apps/console-ui`) provides website operators with an intuitive, real-time monitoring dashboard rendered in pure Zig via WebAssembly. 
+The Sibuna Console UI (`apps/console-ui`) provides website operators with an intuitive, real-time monitoring dashboard compiled to client-side WebAssembly. 
 
 === 3.1 Operator Screen Wireframes
 

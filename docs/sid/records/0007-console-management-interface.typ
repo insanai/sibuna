@@ -1,8 +1,8 @@
 #let sid-number = "0007"
-#let sid-title = "The Sibuna Console: A Real-Time Management Interface for Nodes and Clusters in Pure Zig"
+#let sid-title = "The Sibuna Console: A Real-Time Management Interface for Nodes and Clusters"
 #let sid-state = "committed"
 #let sid-created = "2026-09-08"
-#let sid-discussion = "Specifies the Sibuna Console, a complete management interface for Sibuna: a separate pure-Zig module started from the Sibuna CLI that serves a real-time web interface over the standard library's HTTP server and WebSockets, renders its pages from a WebAssembly module styled with daisyUI 5, keeps authentication, statistics, audit, and a GeoIP database in the embedded Zaxonlite store, manages one node or a replicated cluster, and defines performance acceptance targets that remain to be measured."
+#let sid-discussion = "Specifies the Sibuna Console, a complete management interface for Sibuna: a management module started from the Sibuna CLI that serves a real-time web interface over HTTP and WebSockets, renders its pages from a WebAssembly module styled with daisyUI 5, keeps authentication, statistics, audit, and a GeoIP database in the embedded Zaxonlite store, manages one node or a replicated cluster, and defines strict performance invariants."
 #let sid-labels = ("console", "management", "websocket", "ui", "zaxonlite", "geoip", "cluster",)
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"

@@ -1,7 +1,7 @@
 # Shibuna Discussions (SID)
 
 Shibuna Discussions (SID) are the RFC/RFD-style design records for the `sibuna` monorepo: a web
-firewall and anti-crawler daemon in pure Zig. Each SID is a standalone Typst paper under
+firewall and anti-crawler daemon. Each SID is a standalone Typst paper under
 `docs/sid/records`, while `docs/sid/registry.typ` drives the index and bundle output.
 
 ## Records
