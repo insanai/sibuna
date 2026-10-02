@@ -38,6 +38,7 @@ var proxy_fixture: *Fixture = undefined;
 var auth_fixture: *Fixture = undefined;
 var audit_fixture: *Fixture = undefined;
 var quota_fixture: *Fixture = undefined;
+var capture_fixture: *Fixture = undefined;
 
 fn allocateFixture() *Fixture {
     const fixture = std.heap.page_allocator.create(Fixture) catch @panic("fixture memory");
@@ -274,8 +275,10 @@ fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
         navigate.header_count = 1;
         prependRule(&f.engine, navigate);
     }
-    if (f == audit_fixture) {
+    if (f == audit_fixture or f == capture_fixture) {
         f.engine.inspection_modes = .{ .sqli = .audit, .path_traversal = .disabled };
+    }
+    if (f == audit_fixture) {
         f.engine.ip_trie.insertCidr("203.0.113.223/32", .deny) catch unreachable;
         // A customized denial page: the request path renders it from the snapshot.
         const denied = &f.engine.pages.entries[@intFromEnum(policy.page_template.Kind.denied)];
@@ -291,6 +294,7 @@ fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
     const seed = [_]u8{0x5a} ** 32;
     f.state.init(cfg, &f.slot, &seed);
     if (f == audit_fixture) f.state.hooks = .{ .record_incident = captureAudit };
+    if (f == capture_fixture) f.state.hooks = .{ .record_incident = captureFinding };
     if (console_enabled) {
         f.telemetry = telemetry_store.ConsoleTelemetry.init();
         f.state.telemetry = &f.telemetry;
@@ -320,6 +324,7 @@ fn bootAll() void {
     auth_fixture = allocateFixture();
     audit_fixture = allocateFixture();
     quota_fixture = allocateFixture();
+    capture_fixture = allocateFixture();
     var proxy_cfg = core.Config.default();
     proxy_cfg.default_difficulty = 8;
     proxy_cfg.algorithm = .hashcash;
@@ -334,6 +339,9 @@ fn bootAll() void {
     bootFixture(auth_fixture, auth_cfg);
     bootFixture(audit_fixture, proxy_cfg);
     bootFixture(quota_fixture, proxy_cfg);
+    var capture_cfg = proxy_cfg;
+    capture_cfg.console_capture_heads = true;
+    bootFixture(capture_fixture, capture_cfg);
 }
 
 fn prependRule(engine: *policy.Engine, rule: policy.PolicyRule) void {
@@ -1238,6 +1246,111 @@ test "ambiguous chunked framing is refused before and after forwarding begins" {
     try std.testing.expectEqual(@as(u16, 400), resp.status());
     try std.testing.expect(resp.contains("Malformed chunked request body"));
     try std.testing.expect(!resp.contains("UPLOAD|"));
+}
+
+/// An audit finding from the head-capture fixture, copied as the persistent layer copies it.
+const CapturedFinding = struct {
+    path: [64]u8 = undefined,
+    path_len: usize = 0,
+    ip: [48]u8 = undefined,
+    ip_len: usize = 0,
+    agent: [64]u8 = undefined,
+    agent_len: usize = 0,
+    head: [core.incident_heads.request_bytes]u8 = undefined,
+    head_len: usize = 0,
+    state: core.incident_heads.ResponseState = .unknown,
+
+    /// Copies what fits and returns the full length, so a longer value never compares equal.
+    fn keep(dst: []u8, src: []const u8) usize {
+        const n = @min(dst.len, src.len);
+        @memcpy(dst[0..n], src[0..n]);
+        return src.len;
+    }
+
+    fn text(bytes: []const u8, len: usize) []const u8 {
+        return bytes[0..@min(bytes.len, len)];
+    }
+};
+var captured_findings: [4]CapturedFinding = undefined;
+var captured_count: std.atomic.Value(usize) = .init(0);
+
+fn captureFinding(_: ?*anyopaque, incident: server.Incident) void {
+    const index = captured_count.load(.monotonic);
+    if (index == captured_findings.len) return;
+    const slot = &captured_findings[index];
+    slot.path_len = CapturedFinding.keep(&slot.path, incident.path);
+    slot.ip_len = CapturedFinding.keep(&slot.ip, incident.client_ip);
+    slot.agent_len = CapturedFinding.keep(&slot.agent, incident.user_agent);
+    slot.head_len = CapturedFinding.keep(&slot.head, incident.request_head);
+    slot.state = incident.response_state;
+    captured_count.store(index + 1, .release);
+}
+
+test "streamed uploads leave audit evidence and captured request heads intact" {
+    if (!console_enabled) return;
+    boot_once.call();
+    const allocator = std.testing.allocator;
+    const resp = try allocator.create(Response);
+    defer allocator.destroy(resp);
+    // Three buffers of body refill the reader the head was parsed from while the audit finding
+    // waits for the origin head; nothing recorded afterwards may come from the body.
+    const body_len = 3 * server.max_request_bytes;
+    const body = try allocator.alloc(u8, body_len);
+    defer allocator.free(body);
+    for (body, 0..) |*b, i| b.* = "SYNTHETIC-UPLOAD-"[i % 17];
+    const start = "POST /robots.txt?upload&q=union%20select HTTP/1.1\r\nHost: t\r\n" ++
+        "User-Agent: upload-agent/1.0\r\nX-Forwarded-For: 203.0.113.86\r\n" ++
+        "Content-Type: application/octet-stream\r\n";
+    const heads = [_][]const u8{
+        start ++ std.fmt.comptimePrint("Content-Length: {d}\r\n\r\n", .{body_len}),
+        start ++ "Transfer-Encoding: chunked\r\n\r\n",
+    };
+    var echo: [64]u8 = undefined;
+    for (heads, [_][]const u8{ "length", "chunked" }) |head, framing| {
+        var raw: std.Io.Writer.Allocating = .init(allocator);
+        defer raw.deinit();
+        try raw.writer.writeAll(head);
+        if (std.mem.eql(u8, framing, "length")) try raw.writer.writeAll(body) else {
+            var at: usize = 0;
+            while (at < body.len) : (at += 4000) {
+                const piece = body[at..@min(body.len, at + 4000)];
+                try raw.writer.print("{X}\r\n{s}\r\n", .{ piece.len, piece });
+            }
+            try raw.writer.writeAll("0\r\n\r\n");
+        }
+        const before = captured_count.load(.acquire);
+        try roundTrip(capture_fixture.port, raw.written(), resp);
+        try std.testing.expectEqual(@as(u16, 200), resp.status());
+        try std.testing.expect(resp.contains(try uploadEcho(&echo, framing, body)));
+
+        try std.testing.expectEqual(before + 1, captured_count.load(.acquire));
+        const finding = &captured_findings[before];
+        const req = try net.parseRequest(head);
+        var expected: [core.incident_heads.request_bytes]u8 = undefined;
+        const redacted = core.incident_heads.requestHead(.{
+            .method = req.method_text,
+            .path = req.path,
+            .query = req.query,
+            .version = req.version,
+            .headers = req.headers[0..req.header_count],
+        }, &capture_fixture.state.config.console_capture_headers, &expected);
+        try std.testing.expectEqualStrings(
+            expected[0..redacted.len],
+            CapturedFinding.text(&finding.head, finding.head_len),
+        );
+        const path = CapturedFinding.text(&finding.path, finding.path_len);
+        try std.testing.expectEqualStrings("/robots.txt", path);
+        const ip = CapturedFinding.text(&finding.ip, finding.ip_len);
+        try std.testing.expectEqualStrings("203.0.113.86", ip);
+        const agent = CapturedFinding.text(&finding.agent, finding.agent_len);
+        try std.testing.expectEqualStrings("upload-agent/1.0", agent);
+        try std.testing.expectEqual(core.incident_heads.ResponseState.captured, finding.state);
+    }
+    // One request in 64 is sampled after the relay; any sample taken names the request too.
+    while (capture_fixture.telemetry.queue.pop()) |record| {
+        try std.testing.expectEqualStrings("/robots.txt", record.path[0..record.path_len]);
+        try std.testing.expectEqualStrings("203.0.113.86", record.ip[0..record.ip_len]);
+    }
 }
 
 test "assets are served with caching and the wasm module is the embedded solver" {

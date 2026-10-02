@@ -1064,6 +1064,36 @@ fn admittedComplete(ctx: *RequestContext, origin_status: u16, origin: *const Ori
     );
 }
 
+/// Keeps the request head out of the relay's reach. A body that continues past the buffer is
+/// streamed through the reader buffer the head was parsed from, yet the sample and any audit
+/// findings held for the origin head read the head's slices after the relay. The relay is lent
+/// only the buffer behind the head and the reader is handed back whole once it returns. A body
+/// streams only after admission filled the whole buffer, which put the head at its start, so a
+/// streaming relay keeps at least `max_request_bytes - max_head_bytes` of it.
+const HeadPin = struct {
+    reader: *Io.Reader,
+    buffer: []u8,
+    head_end: usize,
+
+    fn init(reader: *Io.Reader, req: *const net.Request) HeadPin {
+        // Admission tossed the head and the buffered body, which follows the head directly.
+        const head_end = reader.seek - req.body.len;
+        std.debug.assert(@intFromPtr(req.body.ptr) == @intFromPtr(reader.buffer.ptr) + head_end);
+        const pin: HeadPin = .{ .reader = reader, .buffer = reader.buffer, .head_end = head_end };
+        reader.buffer = reader.buffer[head_end..];
+        reader.seek -= head_end;
+        reader.end -= head_end;
+        return pin;
+    }
+
+    fn release(self: HeadPin) void {
+        std.debug.assert(self.reader.buffer.ptr == self.buffer[self.head_end..].ptr);
+        self.reader.buffer = self.buffer;
+        self.reader.seek += self.head_end;
+        self.reader.end += self.head_end;
+    }
+};
+
 fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule_hash: u64) !bool {
     const st = ctx.state();
     Metrics.bump(&st.metrics.allowed);
@@ -1075,6 +1105,8 @@ fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule
     var origin_status: u16 = 0;
     var origin: OriginHead = .{ .extra = &cfg.console_capture_headers };
     defer if (build_options.console) admittedComplete(ctx, origin_status, &origin);
+    const pin = HeadPin.init(c.reader, ctx.req);
+    defer pin.release();
     const audit = net.ProxyAudit{
         .client_ip = ctx.client_ip,
         .scheme = net.forwarded.scheme(ctx.req, cfg.trustsForwarded()),
