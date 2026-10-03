@@ -376,14 +376,15 @@ Sibuna's engineering design follows four foundational principles:
 Adding moving parts increases the surface area for failure. Sibuna avoids external databases, cache servers, runtime interpreters, and container fleets. It compiles to a single, self-contained binary that does one job dependably.
 
 ### 2. Thermodynamic Asymmetry (Richard Feynman)
-A defender must never spend more energy inspecting an attack than an adversary spends generating it. Like the physical inertia of a revolving door, verification requires a tiny, constant number of operations ($< 25\,\mu\text{s}$), while an unverified client must prove non-parallelizable work ($W \ge 10^3 \cdot c_s$) before entering.
+Admission asks an unverified client to perform configurable work before accessing the origin, while Sibuna verifies the submitted proof natively. The cost depends on the algorithm, settings and client hardware. The benchmark records measure server operations under their stated conditions; they do not establish a universal energy or latency guarantee.
 
 ### 3. Explicit Invariants and Bounded State (Leslie Lamport)
-Every hot-path resource is strictly bounded:
-- Request classification runs in fixed stack buffers with zero heap allocation.
-- Challenge state on the server is zero until a valid solution is presented.
-- Rate limits track client state in fixed 16-byte slots.
-- Memory consumption is an invariant of configuration, never of traffic volume.
+Request-path resources have explicit bounds:
+
+- Request classification uses caller-owned buffers and allocation-free primitive APIs.
+- Sealed challenges avoid allocating a record for each outstanding puzzle; local rate and replay tables still hold client state.
+- Rate limits use sharded, fixed-capacity tables.
+- Deployment memory depends on enabled features and active connections within configured quotas. Exhausted capacity refuses new work.
 
 ### 4. Literate and Honest Engineering (Donald Knuth)
 A system must be honest about what it is, and what it is not.
@@ -394,20 +395,16 @@ A system must be honest about what it is, and what it is not.
 
 ## Comparison with Alternative Systems
 
-Facts gathered from public documentation, release artifacts, and reproducible benchmark suites (see the Sibuna Book Part II for full citations):
+Sibuna combines proof-of-work admission, bounded application inspection and an opt-in
+management console in one executable. Other projects cover different parts of that scope:
 
-| Dimension | Sibuna | Anubis (v1.27) | SafeLine CE (v9.x) | Cloudflare WAF |
-|---|---|---|---|---|
-| **Architecture** | Single static binary | Single Go binary | Sprawling multi-container (7 containers) | Proprietary hosted cloud |
-| **Admission Puzzle** | Proof of Sequential Work & Hashcash | SHA-256 Hashcash | Proprietary challenge & image CAPTCHAs | Managed challenge & Turnstile |
-| **Server Challenge State** | Zero state until solved | In-memory, bbolt, Valkey, or S3 | Managed by container stack | Managed cloud state |
-| **Session Token** | Keyed BLAKE3 MAC (16 bytes) | Ed25519 JWT | Cookie-based session | `cf_clearance` cookie |
-| **WAF Inspection** | Linear-time automata & tokenizers | None | Semantic inspection engine | Managed rule sets |
-| **Rate Limiting** | Atomic GCRA per client | None | Per IP, path, session | Rules limited by plan tier |
-| **Bot Identification** | Sub-microsecond CIDR trie & signatures | DNSBL; ASN lookup | IP groups; threat intelligence | Cloud bot management score |
-| **Multi-Node Consensus** | Embedded Multi-Paxos (Zaxonlite) | Shared key + Valkey | One stack per host | Global anycast network |
-| **Idle Memory Footprint** | $\sim 10\,\text{MB}$ RSS | $\sim 21\,\text{MB}$ RSS | $\ge 1\,\text{GB}$ RAM (recommended) | None on premises |
-| **Open Source** | Yes | Yes | Open core / community edition | No (closed source) |
+- [Anubis](https://github.com/TecharoHQ/anubis) uses client challenges to protect upstream resources from scraper bots.
+- [ModSecurity](https://github.com/owasp-modsecurity/ModSecurity) and [Coraza](https://github.com/corazawaf/coraza) provide WAF engines for integration with web servers and applications.
+- [OWASP Core Rule Set](https://github.com/coreruleset/coreruleset) provides attack-detection rules for compatible WAF engines. Sibuna's heuristic detectors do not implement that rule language.
+
+The [book's empirical evaluation](https://insanai.github.io/sibuna/book/)
+compares pinned, runnable products under documented workloads. Each result identifies its
+revision, configuration and host; memory and throughput figures describe those measurements.
 
 ---
 
