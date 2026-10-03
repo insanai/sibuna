@@ -63,15 +63,12 @@ pub fn control(
             _ = w.ntdll.NtWaitForSingleObject(event, .FALSE, null);
             if (status.u.Status != .SUCCESS) return error.TimedOut;
         }
-    } else if (result != .SUCCESS) {
-        if (code == w.IOCTL.AFD.POLL) std.debug.print("AFD poll submission: {t}\n", .{result});
+    } else if (result == .TIMEOUT) return error.TimedOut else if (result != .SUCCESS)
         return error.ConnectionFailed;
-    }
-    if (status.u.Status != .SUCCESS) {
-        if (code == w.IOCTL.AFD.POLL)
-            std.debug.print("AFD poll completion: {t}\n", .{status.u.Status});
-        return error.ConnectionFailed;
-    }
+    // AFD polling completes normally with STATUS_TIMEOUT when no events arrive.
+    // Distinguish that result from a failed socket operation or canceled ownership.
+    if (status.u.Status == .TIMEOUT) return error.TimedOut;
+    if (status.u.Status != .SUCCESS) return error.ConnectionFailed;
     return status.Information;
 }
 
@@ -215,7 +212,7 @@ pub const system = struct {
             bytes,
             bytes,
             @as(u64, @intCast(@max(1, timeout_ms) + 100)) * std.time.ns_per_ms,
-        ) catch return -1;
+        ) catch |err| return if (err == error.TimedOut) 0 else -1;
         var ready: isize = 0;
         for (descriptors[0..length]) |*descriptor| {
             for (request.entries[0..request.count]) |entry| {
