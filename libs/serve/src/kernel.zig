@@ -133,6 +133,7 @@ pub const Kernel = struct {
         const slot = &self.slots[index];
         const stream = slot.stream.?;
         defer {
+            finish(stream, self.io, &slot.deadline);
             self.mutex.lockUncancelable(self.io);
             stream.close(self.io);
             slot.stream = null;
@@ -179,6 +180,22 @@ pub const Kernel = struct {
         }
     }
 };
+
+// Closing over unread request bytes can reset TCP and discard an already flushed
+// authorization error. Half-close output first, then drain at most 64 KiB until peer
+// EOF. The watchdog bounds this grace period to one second, including a stalled client.
+// Do not hold the slot mutex here: the watchdog must be able to interrupt this read.
+fn finish(stream: Io.net.Stream, io: Io, deadline: *std.atomic.Value(i64)) void {
+    stream.shutdown(io, .send) catch return;
+    const now = @divTrunc(Io.Clock.awake.now(io).nanoseconds, std.time.ns_per_s);
+    deadline.store(@intCast(now + 1), .release);
+    var buffer: [4096]u8 = undefined;
+    var reader = stream.reader(io, &.{});
+    for (0..16) |_| {
+        const count = reader.interface.readSliceShort(&buffer) catch return;
+        if (count != buffer.len) return;
+    }
+}
 
 fn shutdown(stream: Io.net.Stream, io: Io) void {
     stream.shutdown(io, .both) catch |err| switch (err) {
