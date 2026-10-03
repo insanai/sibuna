@@ -62,6 +62,15 @@ def receive(reader, masked):
     return head[0] & 15, payload, bool(head[0] & 128)
 
 
+def closed(reader, message):
+    """A bounded shutdown may finish with FIN or an explicit native reset."""
+    try:
+        data = reader.read(1)
+    except ConnectionResetError:
+        return
+    assert data == b"", message
+
+
 class Origin(http.server.BaseHTTPRequestHandler):
     # Headers and bodies are separate writes. Avoid Nagle/delayed-ACK interactions
     # dominating the 4096-request compatibility test on macOS and Linux runners.

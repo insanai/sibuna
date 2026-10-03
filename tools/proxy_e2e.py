@@ -17,7 +17,7 @@ import tempfile
 import time
 import console_e2e as helper
 import process_control
-from proxy_fixture import WebSocket, frame, origin, receive
+from proxy_fixture import WebSocket, closed, frame, origin, receive
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "benchmarks"))
 from distributed import headers, session  # noqa: E402
@@ -65,7 +65,7 @@ def persistence(port, hdrs):
             time.sleep(0.25)
         client.socket.settimeout(5)
         started = time.monotonic()
-        assert client.reader.read(1) == b"", "idle upgrade exceeded its deadline"
+        closed(client.reader, "idle upgrade exceeded its deadline")
         assert time.monotonic() - started >= 2.3, "HTTP timeout killed an upgraded connection"
     finally:
         client.close()
@@ -197,7 +197,7 @@ def check(binary, caddy=None):
                     try:
                         assert receive(held.reader, False)[1] == b"origin ready"
                         helper.stop(proc)
-                        assert held.reader.read(1) == b"", "upgrade survived daemon shutdown"
+                        closed(held.reader, "upgrade survived daemon shutdown")
                     finally:
                         held.close()
                 except Exception:
