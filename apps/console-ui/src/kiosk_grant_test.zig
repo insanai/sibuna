@@ -1,3 +1,4 @@
+const repeat = @import("text").repeat;
 const std = @import("std");
 const t = std.testing;
 const p = @import("console_protocol");
@@ -29,7 +30,9 @@ fn reply(state: *State, id: []const u8, h: *Harness) !void {
     const fields = try std.json.parseFromSlice(
         std.json.Value,
         t.allocator,
-        "{\"code\":\"" ++ "a" ** 64 ++ "\",\"use_by\":700,\"expires\":43300}",
+        "{\"code\":\"" ++
+            &repeat("a", 64) ++
+            "\",\"use_by\":700,\"expires\":43300}",
         .{},
     );
     defer fields.deinit();
@@ -60,7 +63,7 @@ test "wall display codes are erased and late responses cannot reopen them" {
     try start(&state, &h);
     const ticket = state.kiosk_grant.ticket;
     try reply(&state, ticket.slice(), &h);
-    try t.expectEqualStrings("a" ** 64, state.kiosk_grant.code.slice());
+    try t.expectEqualStrings(&repeat("a", 64), state.kiosk_grant.code.slice());
     state.hidden = true;
     grant.retain(&state);
     try t.expectEqualSlices(u8, &@as([64]u8, @splat(0)), &state.kiosk_grant.code.data);

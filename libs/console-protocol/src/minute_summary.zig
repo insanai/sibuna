@@ -21,11 +21,11 @@ pub const Window = struct {
 
     pub fn jsonStringify(self: Window, w: *std.json.Stringify) std.json.Stringify.Error!void {
         try w.beginObject();
-        inline for (@typeInfo(Window).@"struct".fields) |field| {
-            try w.objectField(field.name);
-            if (field.type == u64) {
-                try p.writeCounter(w, @field(self, field.name));
-            } else try w.write(@field(self, field.name));
+        inline for (@typeInfo(Window).@"struct".field_names) |field_name| {
+            try w.objectField(field_name);
+            if (@FieldType(Window, field_name) == u64) {
+                try p.writeCounter(w, @field(self, field_name));
+            } else try w.write(@field(self, field_name));
         }
         try w.endObject();
     }

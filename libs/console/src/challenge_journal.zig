@@ -242,7 +242,7 @@ test "challenge journal attributes deltas to the ending minute and seals on the 
     const current = journal.current.?;
     try t.expectEqual(@as(u64, 2), current.minute);
     try t.expectEqual(@as(u32, 1), current.submitted);
-    try t.expectEqual(@as(u32, 1), current.causes[@intFromEnum(cm.Cause.replay)]);
+    try t.expectEqual(@as(u32, 1), current.causes[@backingInt(cm.Cause.replay)]);
     try t.expectEqual(@as(u8, 1), current.count);
     try t.expectEqual(@as(u8, 133), current.bins[0].bin);
     try t.expectEqual(@as(u32, 1), current.bins[0].issued);

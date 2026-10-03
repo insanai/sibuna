@@ -27,11 +27,11 @@ pub fn intervalRates(previous: *const p.StatsSnapshot, next: *const p.StatsSnaps
     const elapsed = next.uptime_ms - previous.uptime_ms;
     if (elapsed > 2000) return null;
     var result: Rates = .{};
-    inline for (@typeInfo(Rates).@"struct".fields) |field| {
-        const before = @field(previous, field.name);
-        const after = @field(next, field.name);
+    inline for (@typeInfo(Rates).@"struct".field_names) |field_name| {
+        const before = @field(previous, field_name);
+        const after = @field(next, field_name);
         if (after < before) return null;
-        @field(result, field.name) = @as(f64, @floatFromInt(after - before)) * 1000 /
+        @field(result, field_name) = @as(f64, @floatFromInt(after - before)) * 1000 /
             @as(f64, @floatFromInt(elapsed));
     }
     return result;
@@ -92,12 +92,13 @@ pub const Scope = struct {
 // Counter precision follows the shared browser contract even inside coverage metadata.
 fn fields(value: anytype, writer: *std.json.Stringify) std.json.Stringify.Error!void {
     try writer.beginObject();
-    inline for (@typeInfo(@TypeOf(value)).@"struct".fields) |field| {
-        try writer.objectField(field.name);
-        const item = @field(value, field.name);
-        if (field.type == u64) {
+    inline for (@typeInfo(@TypeOf(value)).@"struct".field_names) |field_name| {
+        const FieldType = @FieldType(@TypeOf(value), field_name);
+        try writer.objectField(field_name);
+        const item = @field(value, field_name);
+        if (FieldType == u64) {
             try p.writeCounter(writer, item);
-        } else if (field.type == ?u64) {
+        } else if (FieldType == ?u64) {
             if (item) |number| try p.writeCounter(writer, number) else try writer.write(null);
         } else try writer.write(item);
     }

@@ -133,10 +133,15 @@ pub const Model = struct {
     message: p.Bytes(192) = .{},
 
     pub fn clear(self: *Model) void {
-        inline for (@typeInfo(Model).@"struct".fields) |field| {
-            if (comptime std.mem.eql(u8, field.name, "windows")) {
+        const metadata = @typeInfo(Model).@"struct";
+        inline for (metadata.field_names, 0..) |field_name, index| {
+            const FieldType = @FieldType(Model, field_name);
+            if (comptime std.mem.eql(u8, field_name, "windows")) {
                 for (&self.windows) |*window| window.* = .{};
-            } else @field(self, field.name) = field.defaultValue().?;
+            } else {
+                const attrs = metadata.field_attrs[index];
+                @field(self, field_name) = attrs.defaultValue(FieldType).?;
+            }
         }
     }
 };

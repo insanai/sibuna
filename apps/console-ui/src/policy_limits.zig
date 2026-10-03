@@ -23,10 +23,10 @@ pub fn read(root: std.json.Value) Error!?Limits {
     var keys = item.object.iterator();
     while (keys.next()) |entry| {
         var known = false;
-        inline for (@typeInfo(Limits).@"struct".fields) |field| {
-            if (std.mem.eql(u8, entry.key_ptr.*, field.name)) {
+        inline for (@typeInfo(Limits).@"struct".field_names) |field_name| {
+            if (std.mem.eql(u8, entry.key_ptr.*, field_name)) {
                 if (entry.value_ptr.* != .integer) return error.InvalidRuleLimit;
-                @field(result, field.name) = std.math.cast(u32, entry.value_ptr.integer) orelse
+                @field(result, field_name) = std.math.cast(u32, entry.value_ptr.integer) orelse
                     return error.InvalidRuleLimit;
                 known = true;
             }

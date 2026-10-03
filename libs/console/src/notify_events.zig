@@ -9,7 +9,7 @@ pub const Event = enum(u2) {
     leader_change,
 
     pub fn bit(self: Event) u8 {
-        return @as(u8, 1) << @intFromEnum(self);
+        return @as(u8, 1) << @backingInt(self);
     }
 };
 pub const max_detail = 128;

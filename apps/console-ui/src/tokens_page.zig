@@ -49,10 +49,10 @@ fn catalog(state: *const State, w: *Writer) Writer.Error!void {
             .revision = row.revision,
             .actor = row.created_by,
         });
-        inline for (@typeInfo(p.tokens.Scope).@"enum".fields) |field| {
-            const scope: p.tokens.Scope = @enumFromInt(field.value);
+        inline for (@typeInfo(p.tokens.Scope).@"enum".field_names) |field_name| {
+            const scope: p.tokens.Scope = @field(p.tokens.Scope, field_name);
             if (row.scopes & scope.bit() != 0) try html.render(w, "<code>{{ scope }}</code> ", .{
-                .scope = field.name,
+                .scope = field_name,
             });
         }
         try html.render(w, "</p><p>Created ", .{});
@@ -95,10 +95,10 @@ fn create(state: *const State, w: *Writer) Writer.Error!void {
         "Change policies and inspection", "Read GeoIP status",         "Update GeoIP",
         "Read users",                     "Manage users",
     };
-    inline for (@typeInfo(p.tokens.Scope).@"enum".fields, labels) |field, label| {
-        const scope: p.tokens.Scope = @enumFromInt(field.value);
+    inline for (@typeInfo(p.tokens.Scope).@"enum".field_names, labels) |field_name, label| {
+        const scope: p.tokens.Scope = @field(p.tokens.Scope, field_name);
         try html.render(w, @embedFile("snippets/tokens-scope.html"), .{
-            .scope = field.name,
+            .scope = field_name,
             .label = label,
             .checked = if (model.scopes & scope.bit() != 0) " checked" else "",
             .disabled = if (model.role.allows(scope.action())) "" else " disabled",

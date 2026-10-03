@@ -1,7 +1,7 @@
 //! Owned subscription commands and bounded transport contracts, shared by native and Wasm.
 const std = @import("std");
 const p = @import("root.zig");
-pub const topic_count = @typeInfo(p.Topic).@"enum".fields.len;
+pub const topic_count = @typeInfo(p.Topic).@"enum".field_names.len;
 pub const ring_capacity = 1024;
 pub const record_bytes = 2048;
 pub const queue_capacity = 64;
@@ -21,20 +21,21 @@ pub const Args = struct {
 
     pub fn jsonStringify(self: Args, writer: *std.json.Stringify) !void {
         try writer.beginObject();
-        inline for (@typeInfo(Args).@"struct".fields) |field| {
-            const value = @field(self, field.name);
-            if (field.type == ?p.security.Module) {
+        inline for (@typeInfo(Args).@"struct".field_names) |field_name| {
+            const FieldType = @FieldType(Args, field_name);
+            const value = @field(self, field_name);
+            if (FieldType == ?p.security.Module) {
                 if (value) |module| {
-                    try writer.objectField(field.name);
+                    try writer.objectField(field_name);
                     try writer.write(module);
                 }
-            } else if (field.type == ?u32 or field.type == ?u64) {
+            } else if (FieldType == ?u32 or FieldType == ?u64) {
                 if (value) |number| {
-                    try writer.objectField(field.name);
+                    try writer.objectField(field_name);
                     try p.writeCounter(writer, number);
                 }
             } else if (value.len != 0) {
-                try writer.objectField(field.name);
+                try writer.objectField(field_name);
                 try writer.write(value.slice());
             }
         }
@@ -132,7 +133,7 @@ test "subscription filters reject unrelated fields and retain owned UTF-8" {
     try t.expectError(error.InvalidCommand, parse(
         "{\"op\":\"sub\",\"topic\":\"events\",\"args\":{\"node\":0}}",
     ));
-    const unicode = "a" ** (fragment_bytes - 1) ++ "界";
+    const unicode = &@as([(fragment_bytes - 1)]u8, @splat(97)) ++ "界";
     try t.expectEqual(fragment_bytes - 1, fragmentLength(unicode));
 }
 

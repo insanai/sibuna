@@ -112,11 +112,11 @@ pub const Coverage = struct {
 
     pub fn jsonStringify(self: Coverage, w: *std.json.Stringify) std.json.Stringify.Error!void {
         try w.beginObject();
-        inline for (@typeInfo(Coverage).@"struct".fields) |field| {
-            try w.objectField(field.name);
-            if (field.type == u64) {
-                try p.writeCounter(w, @field(self, field.name));
-            } else try w.write(@field(self, field.name));
+        inline for (@typeInfo(Coverage).@"struct".field_names) |field_name| {
+            try w.objectField(field_name);
+            if (@FieldType(Coverage, field_name) == u64) {
+                try p.writeCounter(w, @field(self, field_name));
+            } else try w.write(@field(self, field_name));
         }
         try w.endObject();
     }

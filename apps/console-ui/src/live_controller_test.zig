@@ -1,4 +1,5 @@
 //! Real protocol envelopes exercise navigation and transactional publication natively.
+const repeat = @import("text").repeat;
 const std = @import("std");
 const p = @import("console_protocol");
 const live = @import("live_controller.zig");
@@ -26,7 +27,7 @@ fn frame(
     try std.json.Stringify.value(.{ .state = "message", .body = .{
         .op = op,
         .topic = topic,
-        .epoch = "a" ** 32 ++ ":1",
+        .epoch = &repeat("a", 32) ++ ":1",
         .seq = sequence,
         .snapshot = true,
         .watermark = 0,
@@ -110,7 +111,7 @@ test "a filter changed during a snapshot cannot publish rows under the new filte
             "\"observed_at\":100,\"missing_ids\":3}}",
     );
     try frame(&state, &commands, .events, "snapshot_end", 2, null);
-    try t.expectEqual(@as(u8, 0), state.live.topics[@intFromEnum(p.Topic.events)].newer);
+    try t.expectEqual(@as(u8, 0), state.live.topics[@backingInt(p.Topic.events)].newer);
     try live.sync(&state, commands.out());
     try t.expect(std.mem.indexOf(u8, commands.writer.buffered(), "\"filter\"") != null);
     try t.expect(std.mem.indexOf(u8, commands.writer.buffered(), "8.8.8.8") != null);

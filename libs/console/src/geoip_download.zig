@@ -63,7 +63,7 @@ fn download(
     const uri = try std.Uri.parse(target);
     if (!std.mem.eql(u8, uri.scheme, "https")) return error.RedirectRejected;
     var host_buffer: [std.Io.net.HostName.max_len]u8 = undefined;
-    const host = try uri.getHost(&host_buffer);
+    const host = try std.Io.net.HostName.fromUri(uri, &host_buffer);
     if (!provider.redirectAllowed(host.bytes)) return error.RedirectRejected;
     var second: [max_location]u8 = undefined;
     if (try receive(&client, target, .not_allowed, writer, &second) != null)

@@ -109,11 +109,11 @@ pub const Job = struct {
 
     fn needed(self: *const Job, index: usize, wanted: [s.topic_count]bool) bool {
         return switch (index) {
-            nodes_slot => wanted[@intFromEnum(p.Topic.nodes)] or
-                wanted[@intFromEnum(p.Topic.events)],
-            policy_slot => wanted[@intFromEnum(p.Topic.policy)],
-            audit_slot => wanted[@intFromEnum(p.Topic.audit)],
-            else => index < self.node_count and wanted[@intFromEnum(p.Topic.events)],
+            nodes_slot => wanted[@backingInt(p.Topic.nodes)] or
+                wanted[@backingInt(p.Topic.events)],
+            policy_slot => wanted[@backingInt(p.Topic.policy)],
+            audit_slot => wanted[@backingInt(p.Topic.audit)],
+            else => index < self.node_count and wanted[@backingInt(p.Topic.events)],
         };
     }
 
@@ -148,7 +148,7 @@ pub const Job = struct {
                 if (result != .subscription_page) return error.InvalidSource;
                 const page = &result.subscription_page;
                 const topic: p.Topic = if (page.kind == .events) .events else .audit;
-                const store = self.app.hub.stores[@intFromEnum(topic)];
+                const store = self.app.hub.stores[@backingInt(topic)];
                 for (page.rows[0..page.count]) |row| try store.row(self.app.io, row);
                 try store.advance(self.app.io, page);
                 const slot = &self.slots[index];
@@ -165,13 +165,13 @@ pub const Job = struct {
         if (self.node_count == p.nodes.max_members) return error.TooManySources;
         self.slots[self.node_count].cursor.node = node;
         self.node_count += 1;
-        self.app.hub.stores[@intFromEnum(p.Topic.events)].expected_sources = self.node_count;
+        self.app.hub.stores[@backingInt(p.Topic.events)].expected_sources = self.node_count;
     }
 
     fn local(self: *Job, wanted: [s.topic_count]bool) !void {
         const app = self.app;
-        if (wanted[@intFromEnum(p.Topic.stats)]) try self.statistics();
-        if (wanted[@intFromEnum(p.Topic.challenges)]) try self.state(
+        if (wanted[@backingInt(p.Topic.stats)]) try self.statistics();
+        if (wanted[@backingInt(p.Topic.challenges)]) try self.state(
             .challenges,
             @import("challenge_routes.zig").snapshot(
                 &app.telemetry.challenges,
@@ -196,7 +196,7 @@ pub const Job = struct {
     }
 
     fn state(self: *Job, topic: p.Topic, value: anytype) !void {
-        try self.publish(self.app.hub.stores[@intFromEnum(topic)], value);
+        try self.publish(self.app.hub.stores[@backingInt(topic)], value);
     }
 
     fn publish(self: *Job, store: *@import("topic_store.zig").Store, value: anytype) !void {

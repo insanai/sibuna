@@ -111,16 +111,17 @@ pub fn validate(query: Query) error{InvalidLimit}!void {
 
 fn fields(value: anytype, w: *std.json.Stringify) std.json.Stringify.Error!void {
     try w.beginObject();
-    inline for (@typeInfo(@TypeOf(value)).@"struct".fields) |field| {
-        try w.objectField(field.name);
-        const item = @field(value, field.name);
-        if (field.type == [16]u8) {
+    inline for (@typeInfo(@TypeOf(value)).@"struct".field_names) |field_name| {
+        const FieldType = @FieldType(@TypeOf(value), field_name);
+        try w.objectField(field_name);
+        const item = @field(value, field_name);
+        if (FieldType == [16]u8) {
             try w.beginArray();
             for (item) |byte| try w.write(byte);
             try w.endArray();
-        } else if (field.type == u64) {
+        } else if (FieldType == u64) {
             try @import("root.zig").writeCounter(w, item);
-        } else if (field.type == ?u64) {
+        } else if (FieldType == ?u64) {
             if (item) |number| {
                 try @import("root.zig").writeCounter(w, number);
             } else try w.write(null);

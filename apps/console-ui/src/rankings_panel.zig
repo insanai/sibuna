@@ -255,8 +255,8 @@ fn histogram(
         var buffer: [8]u8 = undefined;
         try html.render(w, "<tr><th scope=\"row\">{{ label }}</th><td>{{ count }}</td></tr>", .{
             .label = switch (axis) {
-                .os => family.osLabel(@enumFromInt(slot)),
-                .browser => family.browserLabel(@enumFromInt(slot)),
+                .os => family.osLabel(@fromBackingInt(@intCast(slot))),
+                .browser => family.browserLabel(@fromBackingInt(@intCast(slot))),
                 .status => family.statusLabel(slot, &buffer),
             },
             .count = count,

@@ -181,7 +181,7 @@ fn preview(app: *App, context: *http.Context, principal: p.Principal) !void {
         return http.fail(context, .bad_request, "CONSOLEPAGE");
     const scratch = try app.gpa.create(page_template.Template);
     defer app.gpa.destroy(scratch);
-    const kind: page_template.Kind = @enumFromInt(@intFromEnum(parsed.value.kind));
+    const kind: page_template.Kind = @fromBackingInt(@intCast(@backingInt(parsed.value.kind)));
     page_template.compile(kind, parsed.value.html, scratch) catch |err| {
         return http.json(context, .{ .accepted = false, .diagnostic = @errorName(err) }, &.{});
     };
@@ -218,7 +218,7 @@ fn render(app: *App, context: *http.Context, principal: p.Principal, kind: p.pag
     }
     const template = try app.gpa.create(page_template.Template);
     defer app.gpa.destroy(template);
-    const template_kind: page_template.Kind = @enumFromInt(@intFromEnum(kind));
+    const template_kind: page_template.Kind = @fromBackingInt(@intCast(@backingInt(kind)));
     page_template.compile(template_kind, html[0..length.?], template) catch
         return http.fail(context, .bad_request, "CONSOLEPAGE");
     const output = try app.gpa.alloc(u8, p.pages.max_bytes + 4096);

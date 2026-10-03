@@ -1,3 +1,4 @@
+const repeat = @import("text").repeat;
 const p = @import("root.zig");
 pub const Authorization = struct {
     session_digest: [32]u8,
@@ -54,11 +55,11 @@ const std = @import("std");
 
 test "source digests are one or two lowercase hex values" {
     const t = std.testing;
-    const hex = "a" ** 64;
+    const hex = &repeat("a", 64);
     try t.expect(validSourceDigests(""));
     try t.expect(validSourceDigests(hex));
     try t.expect(validSourceDigests(hex ++ ":" ++ hex));
     try t.expect(!validSourceDigests(hex ++ " " ++ hex));
-    try t.expect(!validSourceDigests("A" ** 64));
+    try t.expect(!validSourceDigests(&repeat("A", 64)));
     try t.expect(!validSourceDigests(hex[0..63]));
 }

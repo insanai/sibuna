@@ -30,7 +30,8 @@ pub fn validateWebhook(url: []const u8) Error!Webhook {
     if (uri.user != null or uri.password != null or uri.fragment != null)
         return error.InvalidTarget;
     var buffer: [std.Io.net.HostName.max_len]u8 = undefined;
-    const host = (uri.getHost(&buffer) catch return error.InvalidTarget).bytes;
+    const host = (std.Io.net.HostName.fromUri(uri, &buffer) catch
+        return error.InvalidTarget).bytes;
     if (host.len == 0 or std.mem.indexOfAny(u8, url, " \t\r\n\"'<>\\") != null)
         return error.InvalidTarget;
     const port = uri.port orelse @as(u16, if (scheme == .https) 443 else 80);

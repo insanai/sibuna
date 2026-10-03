@@ -21,7 +21,7 @@ pub fn validate(record: *const p.Record) Error!void {
         if (value > std.math.maxInt(i64)) return error.InvalidArchive;
     };
     // The codec has an explicit field order; a new family requires a new format version.
-    comptime std.debug.assert(@typeInfo(@TypeOf(record.counts)).@"struct".fields.len == 8);
+    comptime std.debug.assert(@typeInfo(@TypeOf(record.counts)).@"struct".field_names.len == 8);
 }
 
 pub fn encode(record: *const p.Record, output: *[bytes_len]u8) Error!void {

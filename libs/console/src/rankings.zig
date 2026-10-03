@@ -78,8 +78,8 @@ test "families and referring hosts are counted beside paths within the same minu
     record.path[0] = '/';
     record.status = 429;
     const family = @import("console_protocol").client_family;
-    record.os = @intFromEnum(family.Os.linux);
-    record.browser = @intFromEnum(family.Browser.firefox);
+    record.os = @backingInt(family.Os.linux);
+    record.browser = @backingInt(family.Browser.firefox);
     const host = "news.example.test";
     @memcpy(record.referer[0..host.len], host);
     record.referer_len = host.len;
@@ -88,8 +88,8 @@ test "families and referring hosts are counted beside paths within the same minu
     rankings.add(&record);
     var minute: Minute = undefined;
     rankings.snapshot(120, &minute);
-    try t.expectEqual(@as(u64, 2), minute.families.os[@intFromEnum(family.Os.linux)]);
-    try t.expectEqual(@as(u64, 2), minute.families.browser[@intFromEnum(family.Browser.firefox)]);
+    try t.expectEqual(@as(u64, 2), minute.families.os[@backingInt(family.Os.linux)]);
+    try t.expectEqual(@as(u64, 2), minute.families.browser[@backingInt(family.Browser.firefox)]);
     try t.expectEqual(@as(u64, 2), minute.families.status[family.statusSlot(429)]);
     try t.expectEqual(@as(u64, 1), minute.referrers.samples);
     try t.expectEqualStrings(host, minute.referrers.counters[0].key.slice());

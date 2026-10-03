@@ -43,7 +43,7 @@ pub fn refresh(state: *State, out: Outbox) !void {
         var id: [48]u8 = undefined;
         const name = try std.fmt.bufPrint(&id, "security-view-{d}-{d}", .{ index, serial });
         var request = model.request;
-        request.view = @enumFromInt(index);
+        request.view = @fromBackingInt(@intCast(index));
         try out.post(name, if (state.kiosk)
             "/console/api/security/trends"
         else
@@ -77,7 +77,7 @@ pub fn response(
     if (status != 200) return;
     var page: p.security.Page = undefined;
     @import("json_value.zig").into(&page, body, alloc) catch return;
-    if (@intFromEnum(page.request.view) != index) return;
+    if (@backingInt(page.request.view) != index) return;
     model.accept(&page) catch return;
 }
 

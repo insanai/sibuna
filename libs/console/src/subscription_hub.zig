@@ -137,7 +137,7 @@ pub const Hub = struct {
             else
                 null;
             var stores = self.stores;
-            if (dashboard != null) stores[@intFromEnum(p.Topic.stats)] = self.dashboard_store;
+            if (dashboard != null) stores[@backingInt(p.Topic.stats)] = self.dashboard_store;
             var fixed = std.heap.FixedBufferAllocator.init(self.arena_bytes);
             value.pump(.{
                 .io = self.io,
@@ -152,7 +152,7 @@ pub const Hub = struct {
                 std.log.warn("console subscription serialization failed: {t}", .{err});
                 for (&value.states, 0..) |*state, index| {
                     if (state.phase == .off or state.phase == .paused) continue;
-                    value.outbox.invalidate(@enumFromInt(index), state.epoch, 1);
+                    value.outbox.invalidate(@fromBackingInt(@intCast(index)), state.epoch, 1);
                     state.phase = .paused;
                 }
                 value.pending = null;

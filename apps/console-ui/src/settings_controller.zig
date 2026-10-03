@@ -97,9 +97,9 @@ fn query(state: *State, out: Outbox, kind: Kind) !void {
 
 fn events(fields: std.json.Value) u8 {
     var mask: u8 = 0;
-    inline for (@typeInfo(n.Event).@"enum".fields) |field| {
-        if (equal(u8, string(fields, field.name), "on"))
-            mask |= @as(n.Event, @enumFromInt(field.value)).bit();
+    inline for (@typeInfo(n.Event).@"enum".field_names) |field_name| {
+        if (equal(u8, string(fields, field_name), "on"))
+            mask |= @as(n.Event, @field(n.Event, field_name)).bit();
     }
     return mask;
 }

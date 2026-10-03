@@ -243,8 +243,8 @@ test "topic snapshots bound escaped summaries and keep filtered node probes cons
     defer allocator.deinit();
     for (0..64) |id| try store.row(t.io, .{ .audit = .{
         .id = id + 1,
-        .action = try p.Bytes(48).init("\x01" ** 48),
-        .target = try p.Bytes(128).init("\x01" ** 128),
+        .action = try p.Bytes(48).init(&@as([48]u8, @splat(1))),
+        .target = try p.Bytes(128).init(&@as([128]u8, @splat(1))),
     } });
     var writer: std.Io.Writer = .fixed(buffer);
     try store.snapshot(.audit, &.{}, allocator.allocator(), &writer);

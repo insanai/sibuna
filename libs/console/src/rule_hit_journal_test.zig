@@ -34,7 +34,7 @@ test "whole ending-minute cohorts conserve exact counts and immutable identities
     journal.begin(&source);
     source.rules[0].name = try p.Name.init("Recycled name");
     var counters: Counters = .{ .generation = 1 };
-    var matches = Counters.Matches.initEmpty();
+    var matches = Counters.Matches.empty;
     matches.set(0);
     for (61..181) |utc| {
         counters.record(&matches);

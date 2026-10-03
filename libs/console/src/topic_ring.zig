@@ -1,6 +1,7 @@
 //! Single-publisher topic journals. Publishing never waits for readers or allocates.
 //! A contended publication still advances the sequence: consumers observe the missing
 //! record as a gap and must obtain a new snapshot instead of applying later deltas.
+const repeat = @import("text").repeat;
 const std = @import("std");
 
 pub fn Ring(comptime capacity: u32, comptime payload_bytes: u16, comptime Metadata: type) type {
@@ -94,7 +95,7 @@ test "topic overwrite and contention report exact gaps without borrowing payload
     ring.mutex.unlock(t.io);
     try t.expectEqual(@as(u64, 1), ring.read(t.io, 8, &record).gap.dropped);
     try t.expectEqual(@as(u64, 1), ring.lost.load(.monotonic));
-    try t.expectError(error.TooLarge, ring.publish(t.io, 0, "a" ** 17));
+    try t.expectError(error.TooLarge, ring.publish(t.io, 0, &repeat("a", 17)));
     try t.expectEqual(@as(u64, 8), ring.watermark());
 }
 

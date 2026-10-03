@@ -44,7 +44,7 @@ fn selection(state: *const State, name: []const u8) !?Selection {
     const index = try std.fmt.parseInt(usize, parts.next() orelse return error.InvalidRequest, 10);
     if (source or module) {
         if (!model.loaded[0] or index >= 3) return error.InvalidRequest;
-        var result: Selection = .{ .module = @enumFromInt(index) };
+        var result: Selection = .{ .module = @fromBackingInt(@intCast(index)) };
         if (source) {
             const rank = try std.fmt.parseInt(
                 usize,

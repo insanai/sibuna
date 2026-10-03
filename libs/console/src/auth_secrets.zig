@@ -62,7 +62,7 @@ pub fn parseRecovery(input: []const u8) error{InvalidCode}!Recovery {
 test "seed envelopes reject tampering, owner substitution and a different provisioned key" {
     const t = std.testing;
     const seed: Seed = "12345678901234567890".*;
-    const key = [_]u8{17} ** 32;
+    const key = @as([32]u8, @splat(17));
     const sealed = seal(t.io, seed, key, 42);
     try t.expectEqualSlices(u8, &seed, &try open(sealed, key, 42));
     try t.expectError(error.AuthenticationFailed, open(sealed, key, 43));
@@ -118,7 +118,7 @@ pub fn openBytes(envelope: []const u8, key: [32]u8, subject: u64, out: *[max_sea
 
 test "byte envelopes bind the subject and refuse tampering" {
     const t = std.testing;
-    const key = [_]u8{5} ** 32;
+    const key = @as([32]u8, @splat(5));
     const sealed = try sealBytes(t.io, "hook secret", key, 7);
     var out: [max_sealed]u8 = undefined;
     try t.expectEqual(@as(u8, 11), try openBytes(&sealed, key, 7, &out));

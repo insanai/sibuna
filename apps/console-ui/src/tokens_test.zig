@@ -1,3 +1,4 @@
+const repeat = @import("text").repeat;
 const std = @import("std");
 const t = std.testing;
 const p = @import("console_protocol");
@@ -60,7 +61,7 @@ test "token mint selects bounded authority and keeps its one-time value until di
     try t.expectEqual(@as(usize, 1), scopes.len);
     try t.expectEqualStrings("stats_read", scopes[0].string);
     const issued = "{\"saved\":true,\"id\":\"9007199254740993\",\"token\":\"" ++
-        "b" ** 64 ++ "\",\"expires\":604900}";
+        &repeat("b", 64) ++ "\",\"expires\":604900}";
     const reply = try std.json.parseFromSlice(std.json.Value, t.allocator, issued, .{});
     defer reply.deinit();
     const ticket = state.tokens.ticket;

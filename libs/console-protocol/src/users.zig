@@ -47,18 +47,19 @@ pub const Row = struct {
 
     pub fn jsonStringify(self: Row, writer: *std.json.Stringify) std.json.Stringify.Error!void {
         try writer.beginObject();
-        inline for (@typeInfo(Row).@"struct".fields) |field| {
-            try writer.objectField(field.name);
-            if (field.type == root.Bytes(64)) {
-                try writer.write(@field(self, field.name).slice());
-            } else if (field.type == u64) {
-                try root.writeCounter(writer, @field(self, field.name));
-            } else if (field.type == ?u64) {
-                if (@field(self, field.name)) |value|
+        inline for (@typeInfo(Row).@"struct".field_names) |field_name| {
+            const FieldType = @FieldType(Row, field_name);
+            try writer.objectField(field_name);
+            if (FieldType == root.Bytes(64)) {
+                try writer.write(@field(self, field_name).slice());
+            } else if (FieldType == u64) {
+                try root.writeCounter(writer, @field(self, field_name));
+            } else if (FieldType == ?u64) {
+                if (@field(self, field_name)) |value|
                     try root.writeCounter(writer, value)
                 else
                     try writer.write(null);
-            } else try writer.write(@field(self, field.name));
+            } else try writer.write(@field(self, field_name));
         }
         try writer.endObject();
     }

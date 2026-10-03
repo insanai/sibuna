@@ -39,9 +39,9 @@ pub fn csv(source: []const u8, output: *[4096]u8) Error![]const u8 {
     const rows = parsed.value.rows;
     if (rows.len > 10) return error.InvalidResponse;
     var writer: std.Io.Writer = .fixed(output);
-    inline for (std.meta.fields(Row), 0..) |column, i| {
+    inline for (@typeInfo(Row).@"struct".field_names, 0..) |column_name, i| {
         if (i != 0) writer.writeByte(',') catch return error.TooLarge;
-        try cell(&writer, column.name);
+        try cell(&writer, column_name);
     }
     writer.writeAll("\r\n") catch return error.TooLarge;
     for (rows) |row| {
@@ -49,9 +49,9 @@ pub fn csv(source: []const u8, output: *[4096]u8) Error![]const u8 {
         if (row.geography.mixed) {
             display.country = "Mixed";
         } else if (row.country == null and row.geography.recorded) display.country = "Unknown";
-        inline for (std.meta.fields(Row), 0..) |column, i| {
+        inline for (@typeInfo(Row).@"struct".field_names, 0..) |column_name, i| {
             if (i != 0) writer.writeByte(',') catch return error.TooLarge;
-            try value(&writer, @field(display, column.name));
+            try value(&writer, @field(display, column_name));
         }
         writer.writeAll("\r\n") catch return error.TooLarge;
     }

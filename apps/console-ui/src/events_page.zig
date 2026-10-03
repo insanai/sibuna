@@ -303,7 +303,7 @@ pub fn timestamp(w: *Writer, value: u64) Writer.Error!void {
     const date = day.calculateMonthDay();
     const time = seconds.getDaySeconds();
     try w.print("{d:0>4}-{d:0>2}-{d:0>2} {d:0>2}:{d:0>2}:{d:0>2} UTC", .{
-        day.year,               @intFromEnum(date.month),  @as(u8, date.day_index) + 1,
+        day.year,               @backingInt(date.month),   @as(u8, date.day_index) + 1,
         time.getHoursIntoDay(), time.getMinutesIntoHour(), time.getSecondsIntoMinute(),
     });
 }

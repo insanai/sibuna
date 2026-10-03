@@ -17,7 +17,7 @@ test "peer queries own cursors and fence reconnects without recycling abandoned 
     defer store.deinit();
     const handle = try store.activate(0, @splat(1));
     const box = store.queries[0].?;
-    var boot = [_]u8{'a'} ** 32;
+    var boot = @as([32]u8, @splat('a'));
     const cursor = try q.Cursor.from(.{ .before = 100, .epoch = 1, .boot = &boot });
     const ticket = try box.submit(t.io, .{
         .generation = handle.generation,
@@ -75,22 +75,22 @@ test "peer reader handoff is bounded and preserves FIFO ownership" {
 }
 
 test "eight escaped ranking rows, eight referrers and full families fit the peer reply body" {
-    const label = [_]u8{1} ** 128;
+    const label = @as([128]u8, @splat(1));
     const row: p.rankings.Row = .{
         .key = &label,
         .encoding = .utf8,
         .estimate = std.math.maxInt(u64),
         .error_bound = std.math.maxInt(u64),
     };
-    const rows = [_]p.rankings.Row{row} ** 8;
-    const host = [_]u8{1} ** 24;
+    const rows = @as([8]p.rankings.Row, @splat(row));
+    const host = @as([24]u8, @splat(1));
     const referrer: p.rankings.Row = .{
         .key = &host,
         .encoding = .utf8,
         .estimate = std.math.maxInt(u64),
         .error_bound = std.math.maxInt(u64),
     };
-    const referrers = [_]p.rankings.Row{referrer} ** 8;
+    const referrers = @as([8]p.rankings.Row, @splat(referrer));
     var families: p.ranking_storage.Families = .{};
     families.os = @splat(std.math.maxInt(u64));
     families.browser = @splat(std.math.maxInt(u64));

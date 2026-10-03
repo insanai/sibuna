@@ -86,11 +86,12 @@ test "delayed observations retain their actual interval and leave missing second
 test "maximum timeline page fits HTTP and keeps u64 values exact through JSON" {
     var rows: [p.max_rows]p.Bucket = @splat(.{});
     for (&rows) |*row| {
-        inline for (@typeInfo(p.Bucket).@"struct".fields) |field| {
-            if (field.type == u64) @field(row, field.name) = std.math.maxInt(u64);
+        inline for (@typeInfo(p.Bucket).@"struct".field_names) |field_name| {
+            const FieldType = @FieldType(p.Bucket, field_name);
+            if (FieldType == u64) @field(row, field_name) = std.math.maxInt(u64);
         }
-        inline for (@typeInfo(p.Counts).@"struct".fields) |field|
-            @field(row.counts, field.name) = std.math.maxInt(u64);
+        inline for (@typeInfo(p.Counts).@"struct".field_names) |field_name|
+            @field(row.counts, field_name) = std.math.maxInt(u64);
         row.observations = std.math.maxInt(u32);
     }
     const page: p.Page = .{

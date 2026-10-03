@@ -60,12 +60,13 @@ pub const Page = struct {
 fn writeFields(value: anytype, writer: *std.json.Stringify) std.json.Stringify.Error!void {
     const counter = @import("root.zig").writeCounter;
     try writer.beginObject();
-    inline for (@typeInfo(@TypeOf(value)).@"struct".fields) |field| {
-        try writer.objectField(field.name);
-        const item = @field(value, field.name);
-        if (field.type == u64) {
+    inline for (@typeInfo(@TypeOf(value)).@"struct".field_names) |field_name| {
+        const FieldType = @FieldType(@TypeOf(value), field_name);
+        try writer.objectField(field_name);
+        const item = @field(value, field_name);
+        if (FieldType == u64) {
             try counter(writer, item);
-        } else if (field.type == ?u64) {
+        } else if (FieldType == ?u64) {
             if (item) |number| try counter(writer, number) else try writer.write(null);
         } else try writer.write(item);
     }

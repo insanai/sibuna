@@ -23,9 +23,9 @@ pub const Form = struct {
     limit_ban: p.Bytes(10) = .{},
 
     pub fn capture(self: *Form, fields: std.json.Value) !void {
-        inline for (@typeInfo(Form).@"struct".fields) |field| {
-            if (comptime !std.mem.eql(u8, field.name, "headers")) {
-                try @field(self, field.name).set(text(fields, "rule_" ++ field.name));
+        inline for (@typeInfo(Form).@"struct".field_names) |field_name| {
+            if (comptime !std.mem.eql(u8, field_name, "headers")) {
+                try @field(self, field_name).set(text(fields, "rule_" ++ field_name));
             }
         }
         try matchers.capture(fields, &self.headers);

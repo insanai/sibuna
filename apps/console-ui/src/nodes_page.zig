@@ -51,8 +51,8 @@ fn rank(peers: *const @import("nodes_state.zig").Peers, value: p.nodes.Member) R
 /// Unhealthy members first, then unobserved, then healthy; the leader leads its group.
 fn before(a: Rank, b: Rank) bool {
     const order = [_]u8{ 2, 3, 1, 0 }; // unknown, healthy, degraded, down → rank
-    const ra = order[@intFromEnum(a.health)];
-    const rb = order[@intFromEnum(b.health)];
+    const ra = order[@backingInt(a.health)];
+    const rb = order[@backingInt(b.health)];
     if (ra != rb) return ra < rb;
     if (a.observed != b.observed) return !a.observed;
     if (a.leader != b.leader) return a.leader;

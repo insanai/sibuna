@@ -5,7 +5,7 @@ const html = @import("html");
 const State = @import("state.zig").State;
 
 pub fn render(state: *const State, topic: p.Topic, w: *std.Io.Writer) std.Io.Writer.Error!void {
-    const value = state.live.topics[@intFromEnum(topic)];
+    const value = state.live.topics[@backingInt(topic)];
     try html.render(w, "<section class=\"sb-note my-4\" aria-label=\"Live updates\">" ++
         "<p>{{ status }} · Last update {{ age }} seconds ago.</p>", .{
         .status = status(value),

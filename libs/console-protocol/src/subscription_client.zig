@@ -1,5 +1,6 @@
 //! Browser-independent, transactional chunk reassembly. A gap preserves the last good
 //! view and forbids further deltas until a new subscription epoch supplies a snapshot.
+const repeat = @import("text").repeat;
 const std = @import("std");
 const p = @import("root.zig");
 const s = p.subscriptions;
@@ -32,14 +33,14 @@ pub const Client = struct {
     }
 
     pub fn view(self: *const Client, topic: p.Topic) []const u8 {
-        return self.slots[@intFromEnum(topic)].current.slice();
+        return self.slots[@backingInt(topic)].current.slice();
     }
 
     pub const Position = struct { sequence: u64, watermark: u64 };
 
     /// Only completed, gap-free views have a position that consumers may acknowledge.
     pub fn position(self: *const Client, topic: p.Topic) ?Position {
-        const slot = &self.slots[@intFromEnum(topic)];
+        const slot = &self.slots[@backingInt(topic)];
         if (slot.pending or slot.blocked) return null;
         return .{ .sequence = slot.sequence, .watermark = slot.watermark };
     }
@@ -59,7 +60,7 @@ pub const Client = struct {
         if (std.mem.eql(u8, op, "pong")) return .none;
         const topic = std.meta.stringToEnum(p.Topic, try text(value, "topic")) orelse
             return error.InvalidMessage;
-        const slot = &self.slots[@intFromEnum(topic)];
+        const slot = &self.slots[@backingInt(topic)];
         const epoch = try text(value, "epoch");
         if (std.mem.eql(u8, op, "snapshot_begin")) {
             try begin(slot, value, epoch);
@@ -230,7 +231,7 @@ fn snapshotFlag(value: std.json.Value, expected: bool) Error!void {
 const TestFrame = struct {
     op: []const u8,
     topic: []const u8 = "stats",
-    epoch: []const u8 = "a" ** 32 ++ ":1",
+    epoch: []const u8 = &repeat("a", 32) ++ ":1",
     seq: u64 = 0,
     snapshot: bool = true,
     watermark: u64 = 0,
@@ -287,17 +288,18 @@ test "client commits complete snapshots and patches without losing its last good
         .data = "{\"set\":{\"requests\":2},\"remove\":[\"requests\"]}",
     }));
     try t.expectEqualStrings("{\"requests\":\"9007199254740993\"}", client.view(.stats));
-    _ = try testFrame(client, .{ .op = "snapshot_begin", .epoch = "b" ** 32 ++ ":2", .parts = 2 });
+    _ = try testFrame(client, .{ .op = "snapshot_begin", .epoch = &repeat("b", 32) ++
+        ":2", .parts = 2 });
     _ = try testFrame(client, .{
         .op = "snapshot_chunk",
-        .epoch = "b" ** 32 ++ ":2",
+        .epoch = &repeat("b", 32) ++ ":2",
         .parts = 2,
         .seq = 1,
         .data = "{\"requests\":",
     });
     try t.expectError(error.InvalidMessage, testFrame(client, .{
         .op = "snapshot_end",
-        .epoch = "b" ** 32 ++ ":2",
+        .epoch = &repeat("b", 32) ++ ":2",
         .seq = 2,
         .parts = 2,
     }));

@@ -66,7 +66,7 @@ pub fn sync(state: *State, out: Outbox) !void {
         return;
     }
     for (&subscriptions, 0..) |*subscription, index| {
-        const topic: p.Topic = @enumFromInt(index);
+        const topic: p.Topic = @fromBackingInt(@intCast(index));
         const args = desired(state, topic);
         if (args != null and !std.meta.eql(args.?, subscription.args))
             state.live.topics[index] = .{};
@@ -153,12 +153,12 @@ pub fn event(
             return null;
         },
         .gap => |topic| {
-            subscriptions[@intFromEnum(topic)].active = false;
-            state.live.topics[@intFromEnum(topic)].stale = true;
+            subscriptions[@backingInt(topic)].active = false;
+            state.live.topics[@backingInt(topic)].stale = true;
             return null;
         },
         .changed => |topic| {
-            const subscription = &subscriptions[@intFromEnum(topic)];
+            const subscription = &subscriptions[@backingInt(topic)];
             subscription.pending = false;
             const args = desired(state, topic) orelse return null;
             if (!subscription.active or !std.meta.eql(args, subscription.args)) return null;
@@ -205,7 +205,7 @@ fn expire(state: *State, out: Outbox) !void {
 }
 
 fn publish(state: *State, topic: p.Topic, value: std.json.Value, alloc: std.mem.Allocator) !void {
-    const observation = &state.live.topics[@intFromEnum(topic)];
+    const observation = &state.live.topics[@backingInt(topic)];
     observation.received_at = state.browser_time;
     observation.stale = false;
     observation.available = fields.field(value, "available") == null or
@@ -261,7 +261,7 @@ fn challenge(state: *State, value: std.json.Value, alloc: std.mem.Allocator) !vo
 }
 
 fn rows(state: *State, topic: p.Topic, value: std.json.Value, alloc: std.mem.Allocator) !void {
-    const observation = &state.live.topics[@intFromEnum(topic)];
+    const observation = &state.live.topics[@backingInt(topic)];
     const coverage = fields.field(value, "coverage") orelse return error.InvalidResponse;
     observation.available = try decode(
         bool,

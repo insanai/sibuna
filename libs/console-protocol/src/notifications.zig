@@ -10,7 +10,7 @@ pub const Event = enum(u2) {
     leader_change,
 
     pub fn bit(self: Event) u8 {
-        return @as(u8, 1) << @intFromEnum(self);
+        return @as(u8, 1) << @backingInt(self);
     }
 };
 pub const all_events: u8 = 15;
@@ -187,17 +187,18 @@ pub fn validateSave(input: Save) error{InvalidLimit}!void {
 
 fn fields(value: anytype, w: *std.json.Stringify) std.json.Stringify.Error!void {
     try w.beginObject();
-    inline for (@typeInfo(@TypeOf(value)).@"struct".fields) |field| {
-        try w.objectField(field.name);
-        const item = @field(value, field.name);
-        if (field.type == p.Bytes(max_label) or field.type == p.Bytes(max_target) or
-            field.type == p.Bytes(max_host) or field.type == p.Bytes(max_detail) or
-            field.type == p.Bytes(max_setting_key) or field.type == p.Bytes(max_setting_value))
+    inline for (@typeInfo(@TypeOf(value)).@"struct".field_names) |field_name| {
+        const FieldType = @FieldType(@TypeOf(value), field_name);
+        try w.objectField(field_name);
+        const item = @field(value, field_name);
+        if (FieldType == p.Bytes(max_label) or FieldType == p.Bytes(max_target) or
+            FieldType == p.Bytes(max_host) or FieldType == p.Bytes(max_detail) or
+            FieldType == p.Bytes(max_setting_key) or FieldType == p.Bytes(max_setting_value))
         {
             try w.write(item.slice());
-        } else if (field.type == u64) {
+        } else if (FieldType == u64) {
             try p.writeCounter(w, item);
-        } else if (field.type == ?u64) {
+        } else if (FieldType == ?u64) {
             if (item) |number| try p.writeCounter(w, number) else try w.write(null);
         } else try w.write(item);
     }

@@ -67,7 +67,7 @@ const Create = struct {
 
 fn mint(app: *App, context: *http.Context, auth: p.users.Auth, input: Create) !void {
     var scopes: u32 = 0;
-    if (input.scopes.len > @typeInfo(p.tokens.Scope).@"enum".fields.len)
+    if (input.scopes.len > @typeInfo(p.tokens.Scope).@"enum".field_names.len)
         return error.InvalidRequest;
     for (input.scopes) |scope| {
         if (scopes & scope.bit() != 0) return error.InvalidRequest;

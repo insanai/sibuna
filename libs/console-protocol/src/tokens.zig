@@ -24,10 +24,10 @@ pub const Scope = enum(u5) {
     }
 
     pub fn bit(self: Scope) u32 {
-        return @as(u32, 1) << @intFromEnum(self);
+        return @as(u32, 1) << @backingInt(self);
     }
 };
-pub const known_scopes = (@as(u32, 1) << @typeInfo(Scope).@"enum".fields.len) - 1;
+pub const known_scopes = (@as(u32, 1) << @typeInfo(Scope).@"enum".field_names.len) - 1;
 pub const Query = struct { auth: p.users.Auth, after: u64 = 0, limit: u8 = page_rows };
 pub const Create = struct {
     auth: p.users.Auth,
@@ -58,20 +58,21 @@ pub const Row = struct {
 
     pub fn jsonStringify(self: Row, writer: *std.json.Stringify) std.json.Stringify.Error!void {
         try writer.beginObject();
-        inline for (@typeInfo(Row).@"struct".fields) |field| {
-            try writer.objectField(field.name);
-            if (field.type == p.Bytes(64)) {
-                try writer.write(@field(self, field.name).slice());
-            } else if (field.type == u64) {
-                try p.writeCounter(writer, @field(self, field.name));
-            } else if (field.type == ?u64) {
-                if (@field(self, field.name)) |value|
+        inline for (@typeInfo(Row).@"struct".field_names) |field_name| {
+            const FieldType = @FieldType(Row, field_name);
+            try writer.objectField(field_name);
+            if (FieldType == p.Bytes(64)) {
+                try writer.write(@field(self, field_name).slice());
+            } else if (FieldType == u64) {
+                try p.writeCounter(writer, @field(self, field_name));
+            } else if (FieldType == ?u64) {
+                if (@field(self, field_name)) |value|
                     try p.writeCounter(writer, value)
                 else
                     try writer.write(null);
-            } else if (std.mem.eql(u8, field.name, "scopes")) {
+            } else if (std.mem.eql(u8, field_name, "scopes")) {
                 try writeScopes(self.scopes, writer);
-            } else try writer.write(@field(self, field.name));
+            } else try writer.write(@field(self, field_name));
         }
         try writer.endObject();
     }
@@ -97,8 +98,8 @@ pub const Page = struct {
 pub fn writeScopes(scopes: u32, writer: *std.json.Stringify) std.json.Stringify.Error!void {
     std.debug.assert(scopes & ~known_scopes == 0);
     try writer.beginArray();
-    inline for (@typeInfo(Scope).@"enum".fields) |field| {
-        const scope: Scope = @enumFromInt(field.value);
+    inline for (@typeInfo(Scope).@"enum".field_names) |field_name| {
+        const scope: Scope = @field(Scope, field_name);
         if (scopes & scope.bit() != 0) try writer.write(scope);
     }
     try writer.endArray();
@@ -106,8 +107,8 @@ pub fn writeScopes(scopes: u32, writer: *std.json.Stringify) std.json.Stringify.
 
 pub fn validScopes(scopes: u32, role: p.Role) bool {
     if (scopes == 0 or scopes & ~known_scopes != 0) return false;
-    inline for (@typeInfo(Scope).@"enum".fields) |field| {
-        const scope: Scope = @enumFromInt(field.value);
+    inline for (@typeInfo(Scope).@"enum".field_names) |field_name| {
+        const scope: Scope = @field(Scope, field_name);
         if (scopes & scope.bit() != 0 and !role.allows(scope.action())) return false;
     }
     return true;

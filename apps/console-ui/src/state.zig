@@ -120,9 +120,11 @@ pub const State = struct {
     /// full initialized State image just to clear bounded page buffers on sign-out.
     pub fn reset(self: *State) void {
         const Field = @import("std").meta.FieldEnum(State);
-        inline for (@typeInfo(State).@"struct".fields, 0..) |field, index| {
+        const metadata = @typeInfo(State).@"struct";
+        inline for (metadata.field_names, 0..) |field_name, index| {
+            const FieldType = @FieldType(State, field_name);
             // Dispatch by the compiler's field enum, avoiding repeated name comparisons.
-            switch (@as(Field, @enumFromInt(index))) {
+            switch (@as(Field, @fromBackingInt(@intCast(index)))) {
                 .rankings,
                 .ranking_history,
                 .rule_history,
@@ -137,8 +139,11 @@ pub const State = struct {
                 .reputation,
                 .audit,
                 .kiosk_grant,
-                => @field(self, field.name).clear(),
-                else => @field(self, field.name) = field.defaultValue().?,
+                => @field(self, field_name).clear(),
+                else => {
+                    const attrs = metadata.field_attrs[index];
+                    @field(self, field_name) = attrs.defaultValue(FieldType).?;
+                },
             }
         }
     }

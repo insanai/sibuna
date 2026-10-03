@@ -49,8 +49,8 @@ pub const Timeline = struct {
         bucket.observed_ms += elapsed;
         bucket.observations +|= 1;
         bucket.gap = bucket.gap or elapsed > 1000 or clock_gap;
-        inline for (@typeInfo(p.Counts).@"struct".fields) |field|
-            @field(bucket.counts, field.name) += @field(counts, field.name);
+        inline for (@typeInfo(p.Counts).@"struct".field_names) |field_name|
+            @field(bucket.counts, field_name) += @field(counts, field_name);
         self.last_interval = .{
             .sequence = sequence,
             .utc_start = previous.utc,
@@ -128,11 +128,11 @@ pub const Timeline = struct {
 
 fn delta(previous: Totals, next: Totals) ?p.Counts {
     var result: p.Counts = .{};
-    inline for (@typeInfo(p.Counts).@"struct".fields) |field| {
-        const before = @field(previous, field.name);
-        const after = @field(next, field.name);
+    inline for (@typeInfo(p.Counts).@"struct".field_names) |field_name| {
+        const before = @field(previous, field_name);
+        const after = @field(next, field_name);
         if (after < before) return null;
-        @field(result, field.name) = after - before;
+        @field(result, field_name) = after - before;
     }
     return result;
 }

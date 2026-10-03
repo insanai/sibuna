@@ -13,7 +13,7 @@ pub fn format(
     event: []const u8,
     message: []const u8,
 ) []const u8 {
-    const priority = facility_local0 * 8 + @intFromEnum(severity);
+    const priority = facility_local0 * 8 + @backingInt(severity);
     const epoch = std.time.epoch.EpochSeconds{ .secs = unix_seconds };
     const day = epoch.getEpochDay().calculateYearDay();
     const month = day.calculateMonthDay();

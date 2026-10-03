@@ -124,7 +124,9 @@ pub const Journal = struct {
         return .{
             .second = @min(record.second, now),
             .ip = protocol.Bytes(48).init(record.ip[0..record.ip_len]) catch .{},
-            .outcome = if (record.outcome <= 2) @enumFromInt(record.outcome) else .rejected,
+            .outcome = if (record.outcome <= 2) @fromBackingInt(
+                @intCast(record.outcome),
+            ) else .rejected,
             .cause = record.cause,
             .algorithm = record.algorithm,
             .parameter = record.parameter,

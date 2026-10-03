@@ -10,7 +10,7 @@ fn hubState(hub: *@import("subscription_hub.zig").Hub, value: p.StatsSnapshot) !
     var writer: std.Io.Writer = .fixed(&bytes);
     try std.json.Stringify.value(value, .{}, &writer);
     var arena = std.heap.FixedBufferAllocator.init(hub.arena_bytes);
-    try hub.stores[@intFromEnum(p.Topic.stats)].state(
+    try hub.stores[@backingInt(p.Topic.stats)].state(
         t.io,
         arena.allocator(),
         writer.buffered(),

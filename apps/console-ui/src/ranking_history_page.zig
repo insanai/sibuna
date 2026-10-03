@@ -191,9 +191,9 @@ fn familyTables(w: *Writer, windows: *const [2]Window) Writer.Error!void {
             shown += 1;
             var buffer: [8]u8 = undefined;
             const label = if (comptime std.mem.eql(u8, name, "os"))
-                family.osLabel(@enumFromInt(slot))
+                family.osLabel(@fromBackingInt(@intCast(slot)))
             else if (comptime std.mem.eql(u8, name, "browser"))
-                family.browserLabel(@enumFromInt(slot))
+                family.browserLabel(@fromBackingInt(@intCast(slot)))
             else
                 family.statusLabel(slot, &buffer);
             try html.render(w, "<tr><th scope=\"row\">{{ label }}</th>", .{ .label = label });

@@ -13,8 +13,8 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
         "Requests", "Admitted",   "Challenged", "Policy denied", "Banned", "Rate limited",
         "Other",    "Origin 4xx", "Origin 5xx",
     };
-    inline for (@typeInfo(sparkline.Metric).@"enum".fields, labels) |field, label|
-        try tile(state, w, @enumFromInt(field.value), label);
+    inline for (@typeInfo(sparkline.Metric).@"enum".field_names, labels) |field_name, label|
+        try tile(state, w, @field(sparkline.Metric, field_name), label);
     try gaugeTile(state, w, .active_bans, "Active ban entries");
     try gaugeTile(state, w, .nodes_healthy, "Nodes healthy");
     try w.writeAll("</section>");

@@ -25,14 +25,14 @@ pub const Event = struct {
 
     pub fn jsonStringify(self: Event, json: *std.json.Stringify) !void {
         try json.beginObject();
-        inline for (@typeInfo(Event).@"struct".fields) |field| {
-            try json.objectField(field.name);
-            const value = @field(self, field.name);
-            if (field.type == u64) {
+        inline for (@typeInfo(Event).@"struct".field_names) |field_name| {
+            try json.objectField(field_name);
+            const value = @field(self, field_name);
+            if (@FieldType(Event, field_name) == u64) {
                 try p.writeCounter(json, value);
-            } else if (field.type == p.events.country.Mapping) {
+            } else if (@FieldType(Event, field_name) == p.events.country.Mapping) {
                 try json.write(value);
-            } else if (@typeInfo(field.type) == .@"struct") {
+            } else if (@typeInfo(@FieldType(Event, field_name)) == .@"struct") {
                 try json.write(value.slice());
             } else try json.write(value);
         }

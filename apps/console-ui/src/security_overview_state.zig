@@ -49,7 +49,7 @@ pub const Model = struct {
             },
             .paths => self.paths = page.rows,
         }
-        const index = @intFromEnum(page.request.view);
+        const index = @backingInt(page.request.view);
         self.observed_at[index] = page.observed_at;
         self.loaded[index] = true;
         self.failed[index] = false;

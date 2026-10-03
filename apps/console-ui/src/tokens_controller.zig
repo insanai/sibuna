@@ -64,9 +64,9 @@ fn draft(state: *State, fields: std.json.Value) !void {
     model.role = std.meta.stringToEnum(p.Role, string(fields, "role")) orelse
         return error.InvalidResponse;
     model.scopes = 0;
-    inline for (@typeInfo(p.tokens.Scope).@"enum".fields) |field| {
-        const scope: p.tokens.Scope = @enumFromInt(field.value);
-        if (model.role.allows(scope.action()) and equal(u8, string(fields, field.name), "on"))
+    inline for (@typeInfo(p.tokens.Scope).@"enum".field_names) |field_name| {
+        const scope: p.tokens.Scope = @field(p.tokens.Scope, field_name);
+        if (model.role.allows(scope.action()) and equal(u8, string(fields, field_name), "on"))
             model.scopes |= scope.bit();
     }
     const days = try std.fmt.parseInt(u8, string(fields, "days"), 10);

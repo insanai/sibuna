@@ -70,18 +70,23 @@ const Field = struct {
 
 /// All offsets, defaults and typed readers come from the compiler's own struct metadata.
 /// Neither wire input nor callers can construct a descriptor or choose a destination.
-fn fields(comptime T: type) [@typeInfo(T).@"struct".fields.len]Field {
-    const members = @typeInfo(T).@"struct".fields;
-    var result: [members.len]Field = undefined;
-    for (members, &result) |member, *field| {
-        if (member.is_comptime) @compileError("Wire fields must have runtime storage");
-        const offset = @offsetOf(T, member.name);
-        std.debug.assert(offset + @sizeOf(member.type) <= @sizeOf(T));
+fn fields(comptime T: type) [@typeInfo(T).@"struct".field_names.len]Field {
+    const members = @typeInfo(T).@"struct";
+    var result: [members.field_names.len]Field = undefined;
+    for (members.field_names, members.field_types, members.field_attrs, &result) |
+        name,
+        F,
+        attrs,
+        *field,
+    | {
+        if (attrs.@"comptime") @compileError("Wire fields must have runtime storage");
+        const offset = @offsetOf(T, name);
+        std.debug.assert(offset + @sizeOf(F) <= @sizeOf(T));
         field.* = .{
-            .name = member.name,
+            .name = name,
             .offset = offset,
-            .default = defaultValue(member.type, member.default_value_ptr),
-            .read = Reader(member.type).read,
+            .default = defaultValue(F, attrs.default_value_ptr),
+            .read = Reader(F).read,
         };
     }
     return result;
@@ -104,14 +109,15 @@ fn zeroValue(comptime T: type, value: T) bool {
     return switch (@typeInfo(T)) {
         .bool => !value,
         .int => value == 0,
-        .@"enum" => @intFromEnum(value) == 0,
+        .@"enum" => @backingInt(value) == 0,
         .array => |info| array: {
             for (value) |item| if (!zeroValue(info.child, item)) break :array false;
             break :array true;
         },
         .@"struct" => structure: {
-            inline for (@typeInfo(T).@"struct".fields) |field| {
-                if (!zeroValue(field.type, @field(value, field.name))) break :structure false;
+            inline for (@typeInfo(T).@"struct".field_names) |field_name| {
+                const FieldType = @FieldType(T, field_name);
+                if (!zeroValue(FieldType, @field(value, field_name))) break :structure false;
             }
             break :structure true;
         },
@@ -188,7 +194,7 @@ fn floating(comptime T: type, value: std.json.Value) Error!T {
 
 fn slice(comptime T: type, value: std.json.Value, allocator: std.mem.Allocator) Error!T {
     const info = @typeInfo(T).pointer;
-    if (info.size != .slice or !info.is_const) @compileError("Wire slices must be const");
+    if (info.size != .slice or !info.attrs.@"const") @compileError("Wire slices must be const");
     if (info.child == u8) return if (value == .string) value.string else error.InvalidResponse;
     // Reject response row capacity before allocating; fixed arrays have exact bounds.
     const minutes = @import("console_protocol").minutes;

@@ -9,7 +9,7 @@ fn state(hub: *Hub, count: u64) !void {
     var scratch: [256]u8 = undefined;
     var arena = std.heap.ArenaAllocator.init(t.allocator);
     defer arena.deinit();
-    try hub.stores[@intFromEnum(p.Topic.stats)].state(
+    try hub.stores[@backingInt(p.Topic.stats)].state(
         t.io,
         arena.allocator(),
         try std.fmt.bufPrint(&buffer, "{{\"count\":{d},\"unchanged\":true}}", .{count}),
@@ -86,7 +86,7 @@ test "hub filters retained summaries and recycled handles cannot change another 
     defer hub.detach(handle);
     try t.expectEqual(stale.index, handle.index);
     try t.expectError(error.StaleHandle, hub.command(stale, .{ .op = .sub, .topic = .stats }));
-    const store = hub.stores[@intFromEnum(p.Topic.events)];
+    const store = hub.stores[@backingInt(p.Topic.events)];
     for ([_]u32{ 1, 2 }) |node| try store.row(t.io, .{ .events = .{
         .node = node,
         .id = @as(u64, node) << 40 | 1,

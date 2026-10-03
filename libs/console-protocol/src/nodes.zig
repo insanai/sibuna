@@ -186,18 +186,19 @@ pub fn validate(input: Command) error{InvalidLimit}!void {
 
 fn fields(value: anytype, w: *std.json.Stringify) std.json.Stringify.Error!void {
     try w.beginObject();
-    inline for (@typeInfo(@TypeOf(value)).@"struct".fields) |field| {
-        try w.objectField(field.name);
-        const item = @field(value, field.name);
-        if (field.type == p.Bytes(32) or field.type == p.Bytes(max_address) or
-            field.type == p.Bytes(max_url))
+    inline for (@typeInfo(@TypeOf(value)).@"struct".field_names) |field_name| {
+        const FieldType = @FieldType(@TypeOf(value), field_name);
+        try w.objectField(field_name);
+        const item = @field(value, field_name);
+        if (FieldType == p.Bytes(32) or FieldType == p.Bytes(max_address) or
+            FieldType == p.Bytes(max_url))
         {
             try w.write(item.slice());
-        } else if (field.type == ?p.Bytes(32)) {
+        } else if (FieldType == ?p.Bytes(32)) {
             if (item) |text| try w.write(text.slice()) else try w.write(null);
-        } else if (field.type == u64) {
+        } else if (FieldType == u64) {
             try p.writeCounter(w, item);
-        } else if (field.type == ?u64) {
+        } else if (FieldType == ?u64) {
             if (item) |number| try p.writeCounter(w, number) else try w.write(null);
         } else try w.write(item);
     }

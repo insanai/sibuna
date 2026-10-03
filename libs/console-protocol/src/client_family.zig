@@ -59,7 +59,7 @@ pub fn browserLabel(value: Browser) []const u8 {
 }
 
 fn contains(agent: []const u8, needle: []const u8) bool {
-    return std.ascii.indexOfIgnoreCase(agent, needle) != null;
+    return std.ascii.findIgnoreCase(agent, needle) != null;
 }
 
 fn isBot(agent: []const u8) bool {

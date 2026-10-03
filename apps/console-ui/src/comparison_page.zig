@@ -111,8 +111,8 @@ fn results(state: *const State, w: *Writer) Writer.Error!void {
         "aria-label=\"Scrollable comparison\"><table class=\"table sb-comparison\">" ++
         "<thead><tr><th>Outcome</th><th>Current</th><th>Reference</th><th>Rate change</th>" ++
         "</tr></thead><tbody>");
-    inline for (@typeInfo(comparison.Metric).@"enum".fields) |field|
-        try metric(state, w, @enumFromInt(field.value));
+    inline for (@typeInfo(comparison.Metric).@"enum".field_names) |field_name|
+        try metric(state, w, @field(comparison.Metric, field_name));
     try w.writeAll("</tbody></table></div><p class=\"sb-note\">Counts include loaded records " ++
         "only. A percentage requires complete, non-overlapping, equal-duration coverage on " ++
         "both sides, using rates normalized by observed milliseconds. " ++

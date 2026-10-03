@@ -214,14 +214,14 @@ fn pages(state: *const State, w: *Writer) Writer.Error!void {
         .placeholders = "{{ status }}, {{ reason }}, {{ retry_after }}, {{ request_id }}, " ++
             "{{ node }} and, for the challenge page only, {{ challenge }}",
     });
-    inline for (@typeInfo(p.pages.Kind).@"enum".fields) |field| {
-        const active = std.mem.eql(u8, field.name, @tagName(model.kind));
+    inline for (@typeInfo(p.pages.Kind).@"enum".field_names) |field_name| {
+        const active = std.mem.eql(u8, field_name, @tagName(model.kind));
         try html.render(w, "<button class=\"btn btn-sm{{ active }}\" role=\"tab\" " ++
             "aria-selected=\"{{ selected }}\" data-action=\"pages-open-{{ name }}\"{{ busy }}>" ++
             "{{ name }}</button>", .{
             .active = if (active) " btn-active" else "",
             .selected = if (active) "true" else "false",
-            .name = field.name,
+            .name = field_name,
             .busy = busy,
         });
     }

@@ -279,7 +279,7 @@ fn ranks(state: *const State, w: *Writer, categories: bool) Writer.Error!void {
 }
 
 fn feed(state: *const State, w: *Writer) Writer.Error!void {
-    const live = state.live.topics[@intFromEnum(p.Topic.events)];
+    const live = state.live.topics[@backingInt(p.Topic.events)];
     try html.render(w, "<p class=\"sb-note\">{{ status }} · Last receipt {{ age }} seconds " ++
         "ago. Eight newest available summaries from a bounded 64-record feed; " ++
         "{{ missing }} unavailable source IDs, including expired history. " ++

@@ -52,7 +52,7 @@ pub const ConsoleConfig = struct {
             return error.InvalidAddress;
         const loopback = switch (address) {
             .ip4 => |a| a.bytes[0] == 127,
-            .ip6 => |a| std.mem.eql(u8, &a.bytes, &(.{0} ** 15 ++ .{1})),
+            .ip6 => |a| std.mem.eql(u8, &a.bytes, &(@as([15]u8, @splat(0)) ++ .{1})),
         };
         try self.validateAdvertise();
         try self.validateProbes();
@@ -79,12 +79,12 @@ pub const ConsoleConfig = struct {
             return error.InvalidAdvertise;
         if (https) return;
         var buffer: [std.Io.net.HostName.max_len]u8 = undefined;
-        const name = uri.getHost(&buffer) catch return error.InvalidAdvertise;
+        const name = std.Io.net.HostName.fromUri(uri, &buffer) catch return error.InvalidAdvertise;
         const address = std.Io.net.IpAddress.parse(name.bytes, 1) catch
             return error.InvalidAdvertise;
         const loopback = switch (address) {
             .ip4 => |a| a.bytes[0] == 127,
-            .ip6 => |a| std.mem.eql(u8, &a.bytes, &(.{0} ** 15 ++ .{1})),
+            .ip6 => |a| std.mem.eql(u8, &a.bytes, &(@as([15]u8, @splat(0)) ++ .{1})),
         };
         if (!loopback) return error.InvalidAdvertise;
     }

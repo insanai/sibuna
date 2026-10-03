@@ -17,12 +17,12 @@ pub const Snapshot = struct {
         writer: *std.json.Stringify,
     ) std.json.Stringify.Error!void {
         try writer.beginObject();
-        inline for (@typeInfo(Snapshot).@"struct".fields) |field| {
-            try writer.objectField(field.name);
-            if (field.type == u64)
-                try root.writeCounter(writer, @field(self, field.name))
+        inline for (@typeInfo(Snapshot).@"struct".field_names) |field_name| {
+            try writer.objectField(field_name);
+            if (@FieldType(Snapshot, field_name) == u64)
+                try root.writeCounter(writer, @field(self, field_name))
             else
-                try writer.write(@field(self, field.name));
+                try writer.write(@field(self, field_name));
         }
         try writer.endObject();
     }

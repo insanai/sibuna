@@ -6,9 +6,9 @@ pub const Error = std.json.Stringify.Error;
 
 pub fn object(record: anytype, w: *std.json.Stringify) Error!void {
     try w.beginObject();
-    inline for (@typeInfo(@TypeOf(record)).@"struct".fields) |field| {
-        try w.objectField(field.name);
-        try value(@field(record, field.name), w);
+    inline for (@typeInfo(@TypeOf(record)).@"struct".field_names) |field_name| {
+        try w.objectField(field_name);
+        try value(@field(record, field_name), w);
     }
     try w.endObject();
 }

@@ -1,4 +1,5 @@
 //! Bounded audit views contain only recorded metadata and redacted summaries.
+const repeat = @import("text").repeat;
 const std = @import("std");
 const p = @import("root.zig");
 pub const page_rows = 8;
@@ -39,14 +40,15 @@ pub const Row = struct {
 
     pub fn jsonStringify(self: Row, json: *std.json.Stringify) !void {
         try json.beginObject();
-        inline for (@typeInfo(Row).@"struct".fields) |field| {
-            try json.objectField(field.name);
-            const value = @field(self, field.name);
-            if (field.type == u64) {
+        inline for (@typeInfo(Row).@"struct".field_names) |field_name| {
+            const FieldType = @FieldType(Row, field_name);
+            try json.objectField(field_name);
+            const value = @field(self, field_name);
+            if (FieldType == u64) {
                 try p.writeCounter(json, value);
-            } else if (field.type == p.Bytes(48)) {
+            } else if (FieldType == p.Bytes(48)) {
                 try json.write(value.slice());
-            } else if (field.type == ?p.Bytes(128) or field.type == ?p.Bytes(48)) {
+            } else if (FieldType == ?p.Bytes(128) or FieldType == ?p.Bytes(48)) {
                 if (value) |text| try json.write(text.slice()) else try json.write(null);
             } else try json.write(value);
         }
@@ -122,7 +124,7 @@ test "audit navigation requires an exact policy action, complete identifier and 
     const t = std.testing;
     var row: Row = .{
         .action = try p.Bytes(48).init("policy.edit"),
-        .target = try p.Bytes(128).init("policy-" ++ "a" ** 121),
+        .target = try p.Bytes(128).init("policy-" ++ &repeat("a", 121)),
         .subject = last_id,
     };
     const reference = row.policyRevision().?;

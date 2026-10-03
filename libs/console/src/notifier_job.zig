@@ -75,7 +75,7 @@ pub const Job = struct {
                 .node = self.holder.node,
                 .boot = self.holder.boot,
                 .sequence = item.sequence,
-                .event = @enumFromInt(@intFromEnum(item.event)),
+                .event = @fromBackingInt(@intCast(@backingInt(item.event))),
                 .raised_at = item.raised_at,
                 .detail = p.Bytes(n.max_detail).init(
                     item.text()[0..@min(item.detail_len, n.max_detail)],

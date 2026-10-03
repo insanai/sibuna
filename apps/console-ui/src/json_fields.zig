@@ -8,11 +8,11 @@ const Field = struct { name: []const u8, value: Scalar };
 pub fn write(json: *Json, value: anytype) Json.Error!void {
     const T = @TypeOf(value);
     if (comptime !supported(T)) return json.write(value);
-    const members = @typeInfo(T).@"struct".fields;
+    const members = @typeInfo(T).@"struct".field_names;
     var fields: [members.len]Field = undefined;
     inline for (members, &fields) |member, *field| field.* = .{
-        .name = member.name,
-        .value = scalar(@field(value, member.name)),
+        .name = member,
+        .value = scalar(@field(value, member)),
     };
     try object(json, &fields);
 }
@@ -20,8 +20,8 @@ pub fn write(json: *Json, value: anytype) Json.Error!void {
 fn supported(comptime T: type) bool {
     if (@typeInfo(T) != .@"struct") return false;
     const info = @typeInfo(T).@"struct";
-    if (info.is_tuple or info.fields.len > 32 or @hasDecl(T, "jsonStringify")) return false;
-    for (info.fields) |field| if (!primitive(field.type)) return false;
+    if (info.is_tuple or info.field_names.len > 32 or @hasDecl(T, "jsonStringify")) return false;
+    for (info.field_types) |FieldType| if (!primitive(FieldType)) return false;
     return true;
 }
 

@@ -1,3 +1,4 @@
+const repeat = @import("text").repeat;
 const std = @import("std");
 const t = std.testing;
 const State = @import("state.zig").State;
@@ -22,7 +23,9 @@ test "country apply retains reviewed scope and absolute expiry even after form e
     const body = try std.json.parseFromSliceLeaky(
         std.json.Value,
         arena.allocator(),
-        "{\"prefixes\":0,\"review\":\"" ++ "a" ** 64 ++ "\",\"next_offset\":null}",
+        "{\"prefixes\":0,\"review\":\"" ++
+            &repeat("a", 64) ++
+            "\",\"next_offset\":null}",
         .{},
     );
     try controller.response(&state, state.reputation.ticket.slice(), 200, body, h.out());
@@ -38,8 +41,8 @@ test "country apply retains reviewed scope and absolute expiry even after form e
     try t.expect(try controller.action(&state, "country-apply", changed, h.out()));
     const request = h.writer.buffered();
     for ([_][]const u8{
-        "\"country\":\"US\"", "\"action\":\"deny\"",        "\"expected_revision\":\"7\"",
-        "\"until\":\"3700\"", "\"review\":\"" ++ "a" ** 64,
+        "\"country\":\"US\"", "\"action\":\"deny\"",               "\"expected_revision\":\"7\"",
+        "\"until\":\"3700\"", "\"review\":\"" ++ &repeat("a", 64),
     }) |expected| try t.expect(std.mem.indexOf(u8, request, expected) != null);
     try controller.response(&state, state.reputation.ticket.slice(), 409, .null, h.out());
     try t.expect(state.reputation.country_review.len == 0);

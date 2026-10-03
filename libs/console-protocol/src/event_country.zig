@@ -1,4 +1,5 @@
 //! Persistence-time attribution, not a reconstructed request-time location.
+const repeat = @import("text").repeat;
 const std = @import("std");
 const Bytes = @import("root.zig").Bytes;
 pub const Filter = Bytes(12);
@@ -67,8 +68,8 @@ pub fn validFilter(value: []const u8) bool {
 test "missing mapping, unknown address and mixed source groups remain distinct" {
     const t = std.testing;
     const absent: Mapping = .{};
-    const unknown = try Mapping.decode(.{ .generation = "a" ** 64 });
-    const known = try Mapping.decode(.{ .code = "US", .generation = "b" ** 64 });
+    const unknown = try Mapping.decode(.{ .generation = &repeat("a", 64) });
+    const known = try Mapping.decode(.{ .code = "US", .generation = &repeat("b", 64) });
     try t.expect(absent.matches("not_recorded") and !absent.matches("unknown"));
     try t.expect(unknown.matches("unknown") and !unknown.matches("not_recorded"));
     try t.expect(known.matches("US") and !known.matches("DE"));
@@ -81,6 +82,6 @@ test "missing mapping, unknown address and mixed source groups remain distinct" 
     try t.expectError(error.InvalidCountry, Mapping.decode(.{ .code = "U'" }));
     try t.expectError(error.InvalidCountry, Mapping.decode(.{
         .code = "US",
-        .generation = "z" ** 64,
+        .generation = &repeat("z", 64),
     }));
 }

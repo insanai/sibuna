@@ -56,7 +56,7 @@ pub const Subscriber = struct {
         const topic = input.topic orelse return;
         self.outbox.reset(topic);
         if (self.pending != null and self.pending.?.topic == topic) self.pending = null;
-        self.states[@intFromEnum(topic)] = .{
+        self.states[@backingInt(topic)] = .{
             .phase = if (input.op == .unsub) .off else .waiting,
             .args = input.args,
             .epoch = epoch,
@@ -68,10 +68,10 @@ pub const Subscriber = struct {
         var sent: usize = 0;
         for (0..s.messages_per_second * s.topic_count) |_| {
             if (sent == s.messages_per_second) break;
-            const topic: p.Topic = @enumFromInt(self.next_topic);
+            const topic: p.Topic = @fromBackingInt(@intCast(self.next_topic));
             self.next_topic = (self.next_topic + 1) % s.topic_count;
-            const state = &self.states[@intFromEnum(topic)];
-            const store = context.stores[@intFromEnum(topic)];
+            const state = &self.states[@backingInt(topic)];
+            const store = context.stores[@backingInt(topic)];
             if (state.phase == .waiting and self.pending == null)
                 try self.snapshot(context, topic, store);
             if (self.pending != null and self.pending.?.topic == topic) {
@@ -84,7 +84,7 @@ pub const Subscriber = struct {
     }
 
     fn snapshot(self: *Subscriber, context: Context, topic: p.Topic, store: *topics.Store) !void {
-        const state = &self.states[@intFromEnum(topic)];
+        const state = &self.states[@backingInt(topic)];
         var writer: std.Io.Writer = .fixed(&self.payload.data);
         try snapshotView(context, topic, store, &state.args, &writer);
         self.payload.len = writer.buffered().len;
@@ -129,12 +129,12 @@ pub const Subscriber = struct {
         const complete = message.op == .snapshot_end or
             (!pending.snapshot and pending.phase == .end);
         self.pending = if (complete) null else pending;
-        if (complete) self.states[@intFromEnum(pending.topic)].phase = .live;
+        if (complete) self.states[@backingInt(pending.topic)].phase = .live;
         try self.offer(message);
     }
 
     fn delta(self: *Subscriber, context: Context, topic: p.Topic, store: *topics.Store) !bool {
-        const state = &self.states[@intFromEnum(topic)];
+        const state = &self.states[@backingInt(topic)];
         var record: topics.Journal.Record = undefined;
         switch (store.ring.read(context.io, state.cursor, &record)) {
             .busy, .empty => return false,
@@ -171,7 +171,7 @@ pub const Subscriber = struct {
 
     fn filteredView(self: *Subscriber, context: Context, topic: p.Topic) ?*p.Bytes(16384) {
         if (topic == .stats and context.dashboard != null) return &self.stats_view;
-        if (topic == .nodes and self.states[@intFromEnum(topic)].args.node != null)
+        if (topic == .nodes and self.states[@backingInt(topic)].args.node != null)
             return &self.node_view;
         return null;
     }
@@ -182,7 +182,7 @@ pub const Subscriber = struct {
         topic: p.Topic,
         store: *topics.Store,
     ) !void {
-        const state = &self.states[@intFromEnum(topic)];
+        const state = &self.states[@backingInt(topic)];
         const previous = self.filteredView(context, topic).?;
         var view: std.Io.Writer = .fixed(context.scratch);
         try snapshotView(context, topic, store, &state.args, &view);
@@ -212,7 +212,7 @@ pub const Subscriber = struct {
             .op = .delta,
             .topic = topic,
             .epoch = "",
-            .seq = .{ .value = self.states[@intFromEnum(topic)].sequence },
+            .seq = .{ .value = self.states[@backingInt(topic)].sequence },
             .snapshot = false,
             .watermark = .{ .value = 0 },
         };
@@ -220,12 +220,12 @@ pub const Subscriber = struct {
 
     fn formatEpoch(self: *Subscriber, topic: p.Topic, boot: [32]u8, buffer: []u8) ![]const u8 {
         return std.fmt.bufPrint(buffer, "{s}:{d}", .{
-            boot, self.states[@intFromEnum(topic)].epoch,
+            boot, self.states[@backingInt(topic)].epoch,
         });
     }
 
     fn offer(self: *Subscriber, message_value: Message) !void {
-        const state = &self.states[@intFromEnum(message_value.topic)];
+        const state = &self.states[@backingInt(message_value.topic)];
         var frame: queue.Frame = .{
             .topic = message_value.topic,
             .epoch = state.epoch,
@@ -235,14 +235,14 @@ pub const Subscriber = struct {
         try std.json.Stringify.value(message_value, .{}, &writer);
         frame.bytes.len = writer.buffered().len;
         if (self.outbox.offer(frame)) |topic| {
-            self.states[@intFromEnum(topic)].phase = .paused;
+            self.states[@backingInt(topic)].phase = .paused;
             if (self.pending != null and self.pending.?.topic == topic) self.pending = null;
         }
         state.sequence += 1;
     }
 
     fn pause(self: *Subscriber, topic: p.Topic, dropped: u64) void {
-        const state = &self.states[@intFromEnum(topic)];
+        const state = &self.states[@backingInt(topic)];
         self.outbox.invalidate(topic, state.epoch, dropped);
         state.phase = .paused;
         if (self.pending != null and self.pending.?.topic == topic) self.pending = null;

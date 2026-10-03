@@ -166,8 +166,8 @@ pub const Frame = struct {
             identity.update(&value.boot);
             if (self.scope.outcome_rates) |*rates| {
                 if (self.rates[index]) |amount| {
-                    inline for (@typeInfo(d.Rates).@"struct".fields) |field|
-                        @field(rates, field.name) += @field(amount, field.name);
+                    inline for (@typeInfo(d.Rates).@"struct".field_names) |field_name|
+                        @field(rates, field_name) += @field(amount, field_name);
                 } else self.scope.outcome_rates = null;
             }
             try self.add(value);

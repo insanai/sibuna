@@ -149,7 +149,8 @@ test "extended snippet value indexes retain escaping and literal control bytes" 
         break :blk @Struct(.auto, null, &names, &@splat([]const u8), &@splat(.{}));
     };
     var values: Values = undefined;
-    inline for (@typeInfo(Values).@"struct".fields) |field| @field(values, field.name) = "<&";
+    inline for (@typeInfo(Values).@"struct".field_names) |field_name|
+        @field(values, field_name) = "<&";
     var buffer: [128]u8 = undefined;
     var writer: Writer = .fixed(&buffer);
     try render(&writer, "\x00\x7f世界{{ f0 }}|{{ f127 }}", values);

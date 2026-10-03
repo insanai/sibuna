@@ -77,12 +77,13 @@ pub const Row = struct {
 
     pub fn jsonStringify(self: Row, w: *std.json.Stringify) std.json.Stringify.Error!void {
         try w.beginObject();
-        inline for (@typeInfo(Row).@"struct".fields) |field| {
-            try w.objectField(field.name);
-            const value = @field(self, field.name);
-            if (field.type == u64) {
+        inline for (@typeInfo(Row).@"struct".field_names) |field_name| {
+            const FieldType = @FieldType(Row, field_name);
+            try w.objectField(field_name);
+            const value = @field(self, field_name);
+            if (FieldType == u64) {
                 try p.writeCounter(w, value);
-            } else if (field.type == p.Bytes(48)) {
+            } else if (FieldType == p.Bytes(48)) {
                 try w.write(value.slice());
             } else try w.write(value);
         }

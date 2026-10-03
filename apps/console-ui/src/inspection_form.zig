@@ -70,21 +70,21 @@ pub fn render(
     try html.render(w, @embedFile("snippets/inspection-header.html"), .{});
     if (pending) try html.render(w, "<p role=\"status\">Waiting for this node to apply " ++
         "the committed revision. Refresh before editing.</p>", .{});
-    inline for (@typeInfo(Modes).@"struct".fields, labels) |field, label| {
+    inline for (@typeInfo(Modes).@"struct".field_names, labels) |field_name, label| {
         try html.render(w, "<label class=\"form-control\" for=\"inspection-{{ v0 }}\">{{ v1 }}" ++
             "<select class=\"select\" id=\"inspection-{{ v2 }}\" name=\"{{ v3 }}\"{{ v4 }}>", .{
-            .v0 = field.name,
+            .v0 = field_name,
             .v1 = label,
-            .v2 = field.name,
-            .v3 = field.name,
+            .v2 = field_name,
+            .v3 = field_name,
             .v4 = if (disabled) " disabled" else "",
         });
-        inline for (comptime std.meta.tags(Mode)) |mode| try html.render(
+        inline for (comptime std.enums.values(Mode)) |mode| try html.render(
             w,
             "<option value=\"{{ v0 }}\"{{ v1 }}>{{ v2 }}</option>",
             .{
                 .v0 = @tagName(mode),
-                .v1 = if (@field(modes, field.name) == mode) " selected" else "",
+                .v1 = if (@field(modes, field_name) == mode) " selected" else "",
                 .v2 = switch (mode) {
                     .disabled => "Disabled",
                     .audit => "Audit",

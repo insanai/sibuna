@@ -1,3 +1,4 @@
+const repeat = @import("text").repeat;
 const std = @import("std");
 const p = @import("console_protocol");
 const peers = @import("peer_store.zig");
@@ -143,7 +144,7 @@ test "peer reports preserve unavailable values, boot text, exact counters and st
         .{},
     );
     defer parsed.deinit();
-    try t.expectEqualStrings("01" ** 16, parsed.value.object.get("boot").?.string);
+    try t.expectEqualStrings(&repeat("01", 16), parsed.value.object.get("boot").?.string);
     try t.expectEqualStrings("9007199254740993", parsed.value.object.get("requests").?.string);
 }
 

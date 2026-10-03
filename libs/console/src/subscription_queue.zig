@@ -24,7 +24,7 @@ pub fn Queue(comptime capacity: usize) type {
         /// Returns the invalidated topic so its publisher can pause. Caller must never
         /// queue further data for that topic until a fresh subscription resets its epoch.
         pub fn offer(self: *Self, frame: Frame) ?p.Topic {
-            if (self.blocked[@intFromEnum(frame.topic)]) return frame.topic;
+            if (self.blocked[@backingInt(frame.topic)]) return frame.topic;
             var invalidated: ?p.Topic = null;
             if (self.count == capacity) {
                 const victim = &self.frames[self.head];
@@ -33,8 +33,8 @@ pub fn Queue(comptime capacity: usize) type {
                 invalidated = topic;
                 self.invalidate(topic, epoch, 0);
             }
-            if (self.blocked[@intFromEnum(frame.topic)]) {
-                self.gaps[@intFromEnum(frame.topic)].?.dropped += 1;
+            if (self.blocked[@backingInt(frame.topic)]) {
+                self.gaps[@backingInt(frame.topic)].?.dropped += 1;
                 return invalidated;
             }
             self.frames[(self.head + self.count) % capacity] = frame;
@@ -44,7 +44,7 @@ pub fn Queue(comptime capacity: usize) type {
 
         /// A ring gap and a queue overflow use the same resynchronization barrier.
         pub fn invalidate(self: *Self, topic: p.Topic, epoch: u64, dropped: u64) void {
-            const index = @intFromEnum(topic);
+            const index = @backingInt(topic);
             const removed = self.remove(topic);
             self.blocked[index] = true;
             self.gaps[index] = .{ .topic = topic, .epoch = epoch, .dropped = dropped + removed };
@@ -52,8 +52,8 @@ pub fn Queue(comptime capacity: usize) type {
 
         pub fn reset(self: *Self, topic: p.Topic) void {
             _ = self.remove(topic);
-            self.blocked[@intFromEnum(topic)] = false;
-            self.gaps[@intFromEnum(topic)] = null;
+            self.blocked[@backingInt(topic)] = false;
+            self.gaps[@backingInt(topic)] = null;
         }
 
         pub fn pop(self: *Self) ?Item {

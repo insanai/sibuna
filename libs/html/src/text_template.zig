@@ -10,31 +10,31 @@ fn Program(comptime capacity: usize) type {
 }
 
 pub fn supports(comptime T: type) bool {
-    for (@typeInfo(T).@"struct".fields) |field| {
-        if (@typeInfo(field.type) == .bool or @typeInfo(field.type) == .comptime_int) continue;
-        if (@typeInfo(field.type) == .array and @typeInfo(field.type).array.child == u8) continue;
-        if (@typeInfo(field.type) == .int and @typeInfo(field.type).int.bits <= 64) continue;
-        if (@typeInfo(field.type) != .pointer) return false;
-        const pointer = @typeInfo(field.type).pointer;
+    for (@typeInfo(T).@"struct".field_types) |Field| {
+        if (@typeInfo(Field) == .bool or @typeInfo(Field) == .comptime_int) continue;
+        if (@typeInfo(Field) == .array and @typeInfo(Field).array.child == u8) continue;
+        if (@typeInfo(Field) == .int and @typeInfo(Field).int.bits <= 64) continue;
+        if (@typeInfo(Field) != .pointer) return false;
+        const pointer = @typeInfo(Field).pointer;
         if (pointer.size == .slice and pointer.child == u8) continue;
         if (pointer.size != .one or @typeInfo(pointer.child) != .array) return false;
         if (@typeInfo(pointer.child).array.child != u8) return false;
     }
-    return @typeInfo(T).@"struct".fields.len <= 128;
+    return @typeInfo(T).@"struct".field_names.len <= 128;
 }
 
 const Scalar = union(enum) { text: []const u8, unsigned: u64, signed: i64 };
 
 pub fn render(w: *Writer, comptime source: []const u8, values: anytype) Writer.Error!void {
-    const fields = @typeInfo(@TypeOf(values)).@"struct".fields;
-    var items: [fields.len]Scalar = undefined;
-    inline for (fields, &items) |field, *item| {
-        const value = @field(values, field.name);
-        item.* = switch (@typeInfo(field.type)) {
+    const info = @typeInfo(@TypeOf(values)).@"struct";
+    var items: [info.field_names.len]Scalar = undefined;
+    inline for (info.field_names, info.field_types, &items) |name, T, *item| {
+        const value = @field(values, name);
+        item.* = switch (@typeInfo(T)) {
             .bool => .{ .text = if (value) "true" else "false" },
-            .array => .{ .text = &@field(values, field.name) },
+            .array => .{ .text = &@field(values, name) },
             .comptime_int => if (value < 0) .{ .signed = value } else .{ .unsigned = value },
-            .int => |info| if (info.signedness == .signed)
+            .int => |integer| if (integer.signedness == .signed)
                 .{ .signed = value }
             else
                 .{ .unsigned = value },
@@ -62,8 +62,8 @@ fn compile(comptime source: []const u8, comptime T: type) Program(source.len * 2
                 @compileError("HTML003: unclosed placeholder; add }}");
             const name = std.mem.trim(u8, source[cursor + 2 .. end], " \r\n\t");
             root.validateName(name);
-            const slot: u8 = for (@typeInfo(T).@"struct".fields, 0..) |field, i| {
-                if (std.mem.eql(u8, field.name, name)) break @intCast(i);
+            const slot: u8 = for (@typeInfo(T).@"struct".field_names, 0..) |field_name, i| {
+                if (std.mem.eql(u8, field_name, name)) break @intCast(i);
             } else @compileError(
                 "HTML004: missing value '" ++ name ++ "'; supply the named field",
             );

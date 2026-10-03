@@ -1,4 +1,5 @@
 //! Shared native/Wasm contracts. No networking, database or daemon dependencies.
+const repeat = @import("text").repeat;
 const std = @import("std");
 
 pub const similarity = @import("similarity.zig");
@@ -495,21 +496,22 @@ pub const StatsSnapshot = struct {
         self: *const StatsSnapshot,
         writer: *std.json.Stringify,
     ) std.json.Stringify.Error!void {
-        inline for (@typeInfo(StatsSnapshot).@"struct".fields) |field| {
-            try writer.objectField(field.name);
-            if (comptime std.mem.eql(u8, field.name, "boot")) {
+        inline for (@typeInfo(StatsSnapshot).@"struct".field_names) |field_name| {
+            const FieldType = @FieldType(StatsSnapshot, field_name);
+            try writer.objectField(field_name);
+            if (comptime std.mem.eql(u8, field_name, "boot")) {
                 // Random bytes can be valid UTF-8. Always emit an array, never an accidental
                 // string selected by the standard serializer's byte-slice convenience rule.
                 try writer.beginArray();
                 for (self.boot) |byte| try writer.write(byte);
                 try writer.endArray();
-            } else if (field.type == u64) {
-                try writeCounter(writer, @field(self, field.name));
-            } else if (field.type == ?u64) {
-                if (@field(self, field.name)) |value| {
+            } else if (FieldType == u64) {
+                try writeCounter(writer, @field(self, field_name));
+            } else if (FieldType == ?u64) {
+                if (@field(self, field_name)) |value| {
                     try writeCounter(writer, value);
                 } else try writer.write(null);
-            } else try writer.write(@field(self, field.name));
+            } else try writer.write(@field(self, field_name));
         }
     }
 };
@@ -562,7 +564,7 @@ test "owned byte updates preserve oversize state, support overlap and erase trun
     try buffer.set(buffer.slice()[8..]);
     try t.expectEqualStrings("value", buffer.slice());
     try t.expect(std.mem.allEqual(u8, buffer.data[buffer.len..], 0));
-    try t.expectError(error.TooLarge, buffer.set("x" ** 17));
+    try t.expectError(error.TooLarge, buffer.set(&repeat("x", 17)));
     try t.expectEqualStrings("value", buffer.slice());
     try buffer.set("");
     try t.expectEqual(@as(usize, 0), buffer.len);

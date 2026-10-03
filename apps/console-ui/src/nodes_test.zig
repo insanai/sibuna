@@ -1,3 +1,4 @@
+const repeat = @import("text").repeat;
 const std = @import("std");
 const t = std.testing;
 const p = @import("console_protocol");
@@ -275,7 +276,7 @@ test "direct peer observations decode owned values and remain stale while the br
         .{
             .node = 3,
             .status = .current,
-            .boot = try p.Bytes(32).init("01" ** 16),
+            .boot = try p.Bytes(32).init(&repeat("01", 16)),
             .requests = 9007199254740993,
             .age_seconds = 1,
             .clock_skew_seconds = 2,
