@@ -3,6 +3,12 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      platform:
+        description: Native platform to qualify (tags always build all)
+        type: choice
+        default: all
+        options: [all, linux-amd64, linux-arm64, macos-arm64, macos-amd64, windows-amd64]
 permissions:
   contents: read
 concurrency:
@@ -12,26 +18,22 @@ defaults:
   run:
     shell: bash
 jobs:
+  plan:
+    runs-on: ubuntu-22.04
+    outputs:
+      matrix: ${{ steps.targets.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: targets
+        env:
+          PLATFORM: ${{ inputs.platform || 'all' }}
+        run: echo "matrix=$(python3 tools/release_targets.py "$PLATFORM")" >> "$GITHUB_OUTPUT"
   build:
+    needs: plan
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - runner: ubuntu-22.04
-            package: linux-amd64
-            target: x86_64-linux-musl
-          - runner: ubuntu-24.04-arm
-            package: linux-arm64
-            target: aarch64-linux-musl
-          - runner: macos-14
-            package: macos-arm64
-            target: aarch64-macos
-          - runner: macos-15-intel
-            package: macos-amd64
-            target: x86_64-macos
-          - runner: windows-2022
-            package: windows-amd64
-            target: x86_64-windows-gnu
+        include: ${{ fromJSON(needs.plan.outputs.matrix) }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     steps:

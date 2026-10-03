@@ -196,6 +196,11 @@ def check(binary, caddy=None):
                         assert held.reader.read(1) == b"", "upgrade survived daemon shutdown"
                     finally:
                         held.close()
+                except Exception:
+                    log.flush()
+                    log.seek(0)
+                    print("proxy-e2e daemon log tail:\n" + log.read()[-12000:], file=sys.stderr)
+                    raise
                 finally:
                     if proc.poll() is None:
                         helper.stop(proc)

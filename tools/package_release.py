@@ -11,13 +11,7 @@ import tempfile
 import zipfile
 from check_release_version import ROOT, version
 
-TARGETS = {
-    "linux-amd64": "x86_64-linux-musl",
-    "linux-arm64": "aarch64-linux-musl",
-    "macos-amd64": "x86_64-macos",
-    "macos-arm64": "aarch64-macos",
-    "windows-amd64": "x86_64-windows-gnu",
-}
+from release_targets import TARGETS
 
 
 def package(binary, target, destination):

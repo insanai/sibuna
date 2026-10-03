@@ -63,8 +63,15 @@ pub fn control(
             _ = w.ntdll.NtWaitForSingleObject(event, .FALSE, null);
             if (status.u.Status != .SUCCESS) return error.TimedOut;
         }
-    } else if (result != .SUCCESS) return error.ConnectionFailed;
-    if (status.u.Status != .SUCCESS) return error.ConnectionFailed;
+    } else if (result != .SUCCESS) {
+        if (code == w.IOCTL.AFD.POLL) std.debug.print("AFD poll submission: {t}\n", .{result});
+        return error.ConnectionFailed;
+    }
+    if (status.u.Status != .SUCCESS) {
+        if (code == w.IOCTL.AFD.POLL)
+            std.debug.print("AFD poll completion: {t}\n", .{status.u.Status});
+        return error.ConnectionFailed;
+    }
     return status.Information;
 }
 
