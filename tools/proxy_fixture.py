@@ -63,6 +63,9 @@ def receive(reader, masked):
 
 
 class Origin(http.server.BaseHTTPRequestHandler):
+    # Headers and bodies are separate writes. Avoid Nagle/delayed-ACK interactions
+    # dominating the 4096-request compatibility test on macOS and Linux runners.
+    disable_nagle_algorithm = True
     protocol_version = "HTTP/1.1"
 
     def do_GET(self):

@@ -14,6 +14,7 @@ pub const outbound = @import("outbound.zig");
 pub const connect = @import("connect.zig");
 pub const duplex = @import("duplex.zig");
 pub const forwarded = @import("forwarded.zig");
+pub const socket_system = @import("socket_system.zig").system;
 
 pub const Method = http.Method;
 pub const Header = http.Header;
@@ -38,5 +39,3 @@ test {
     const addr = try std.Io.net.IpAddress.parse("127.0.0.1", 8080);
     try std.testing.expectEqual(@as(u16, 8080), addr.ip4.port);
 }
-
-pub const socket_system = @import("socket_system.zig").system;

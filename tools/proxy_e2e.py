@@ -41,7 +41,11 @@ def websocket(port, hdrs, tls=None):
         for opcode, payload, final in ((1, b"frag", False), (9, b"ping", True),
                                        (0, b"mented", True), (2, bytes(range(256)) * 8192, True)):
             client.socket.sendall(frame(opcode, payload, masked=True, final=final))
-            assert receive(client.reader, False) == (10 if opcode == 9 else opcode, payload, final)
+            try:
+                actual = receive(client.reader, False)
+                assert actual == (10 if opcode == 9 else opcode, payload, final)
+            except (OSError, AssertionError) as error:
+                raise AssertionError(f"WebSocket opcode {opcode}, {len(payload)} bytes") from error
         client.socket.sendall(frame(8, b"\x03\xe8", masked=True))
         assert receive(client.reader, False) == (8, b"\x03\xe8", True)
     finally:
