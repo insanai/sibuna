@@ -1,5 +1,6 @@
 //! Storage-thread policy materialization into the caller-owned spare engine and arena.
 //! Persistent alone owns the database and publishes the engine after every loader succeeds.
+const repeat = @import("text").repeat;
 const std = @import("std");
 const Io = std.Io;
 const policy = @import("policy");
@@ -136,7 +137,9 @@ test "invalid stored matchers preserve the live engine and revision until repair
             "\"D\":\"4\",\"E\":\"5\"}'", error.TooManyHeaders },
         .{ "cidr_matchers='[\"invalid\"]'", error.InvalidCidr },
         .{
-            "cidr_matchers='[" ++ "\"10.0.0.0/8\"," ** 8 ++ "\"10.0.0.0/8\"]'",
+            "cidr_matchers='[" ++
+                &repeat("\"10.0.0.0/8\",", 8) ++
+                "\"10.0.0.0/8\"]'",
             error.TooManyCidrs,
         },
     }) |case| {

@@ -1,4 +1,5 @@
 //! RFC 6455 handshake validation shared by browser and peer listeners.
+const repeat = @import("text").repeat;
 const std = @import("std");
 const Context = @import("context.zig").Context;
 pub const Error = error{InvalidRequest};
@@ -53,7 +54,7 @@ test "upgrade key validates its bounded base64 and matches the RFC 6455 acceptan
     try t.expectEqualStrings("s3pPLMBiTxaQ9kYGzzhZRbK+xOo=", &try acceptKey(
         "dGhlIHNhbXBsZSBub25jZQ==",
     ));
-    for ([_][]const u8{ "", "AAAA", "!!!!!!!!!!!!!!!!!!!!!!==", "A" ** 25 }) |encoded|
+    for ([_][]const u8{ "", "AAAA", "!!!!!!!!!!!!!!!!!!!!!!==", &repeat("A", 25) }) |encoded|
         try t.expectError(error.InvalidRequest, decodeKey(encoded));
     try t.expect(contains("keep-alive, Upgrade", "upgrade"));
     try t.expect(!contains("not-upgrade", "upgrade"));

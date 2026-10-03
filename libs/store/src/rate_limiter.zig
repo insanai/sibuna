@@ -59,7 +59,7 @@ const Shard = struct {
     /// One client's arrivals all land in one shard, so a flood from few addresses contends
     /// here; the lock parks rather than spins once its holder is preempted.
     lock: core.Lock align(64) = .{},
-    cells: [SLOTS_PER_SHARD]Cell = [_]Cell{.{}} ** SLOTS_PER_SHARD,
+    cells: [SLOTS_PER_SHARD]Cell = @as([SLOTS_PER_SHARD]Cell, @splat(.{})),
 
     /// Claims only free or fully drained cells; saturation fails closed.
     fn locate(self: *Shard, key: u64, now_ms: u64, tau: u64) ?*Cell {
@@ -103,7 +103,7 @@ const Shard = struct {
 };
 
 pub const RateLimiter = struct {
-    shards: [NUM_SHARDS]Shard = [_]Shard{.{}} ** NUM_SHARDS,
+    shards: [NUM_SHARDS]Shard = @as([NUM_SHARDS]Shard, @splat(.{})),
 
     pub fn init() RateLimiter {
         return .{};

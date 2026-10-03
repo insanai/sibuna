@@ -118,10 +118,10 @@ pub const ConsoleTelemetry = struct {
 
     pub fn totals(self: *const ConsoleTelemetry) Totals {
         var result: Totals = .{};
-        inline for (@typeInfo(Totals).@"struct".fields) |field| {
+        inline for (@typeInfo(Totals).@"struct".field_names) |field_name| {
             var sum: u64 = 0;
-            for (&self.counts) |*line| sum +%= @field(line, field.name).load(.monotonic);
-            @field(result, field.name) = sum;
+            for (&self.counts) |*line| sum +%= @field(line, field_name).load(.monotonic);
+            @field(result, field_name) = sum;
         }
         return result;
     }
@@ -216,12 +216,12 @@ test "external outcomes partition traffic independently of origin response class
     const telemetry = try t.allocator.create(ConsoleTelemetry);
     defer t.allocator.destroy(telemetry);
     telemetry.* = ConsoleTelemetry.init();
-    inline for (comptime std.meta.tags(Outcome)) |outcome|
+    inline for (comptime std.enums.values(Outcome)) |outcome|
         telemetry.record(outcome, .{ .second = 1, .ip = "8.8.8.8", .path = "/" });
     telemetry.origin(404);
     telemetry.origin(503);
     const snapshot = telemetry.totals();
     try t.expectEqual(@as(u64, 6), snapshot.requests());
-    inline for (comptime std.meta.tags(Outcome)) |outcome|
+    inline for (comptime std.enums.values(Outcome)) |outcome|
         try t.expectEqual(@as(u64, 1), @field(snapshot, @tagName(outcome)));
 }

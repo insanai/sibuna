@@ -28,7 +28,7 @@ pub fn decode(input: []const u8, role: Role) Error!Frame {
     const masked = input[1] & 0x80 != 0;
     if (masked != (role == .server)) return error.Protocol;
     const marker = input[1] & 0x7f;
-    const control = @intFromEnum(opcode) >= 8;
+    const control = @backingInt(opcode) >= 8;
     if (control and (!final or marker > 125)) return error.Protocol;
     var length: u64 = marker;
     var offset: usize = 2;
@@ -81,7 +81,7 @@ pub const Receiver = struct {
 
     pub fn accept(self: *Receiver, frame: Frame) Error!Event {
         if (self.closed) return error.Closed;
-        if (@intFromEnum(frame.opcode) >= 8) return self.acceptControl(frame);
+        if (@backingInt(frame.opcode) >= 8) return self.acceptControl(frame);
         if (frame.opcode == .continuation) {
             if (self.pending == null) return error.Protocol;
         } else {
@@ -144,12 +144,12 @@ pub fn encode(
 ) Error![]const u8 {
     if ((role == .client) != (mask != null)) return error.Protocol;
     if (payload.len > max_message) return error.TooLarge;
-    if (@intFromEnum(opcode) >= 8 and (!final or payload.len > 125)) return error.Protocol;
+    if (@backingInt(opcode) >= 8 and (!final or payload.len > 125)) return error.Protocol;
     if (opcode == .close) try validateClose(payload);
     const header: usize = (if (payload.len < 126) @as(usize, 2) else 4) +
         (if (mask != null) @as(usize, 4) else 0);
     if (output.len < header + payload.len) return error.NoSpace;
-    output[0] = @as(u8, @intFromEnum(opcode)) | (if (final) @as(u8, 0x80) else 0);
+    output[0] = @as(u8, @backingInt(opcode)) | (if (final) @as(u8, 0x80) else 0);
     output[1] = if (payload.len < 126) @intCast(payload.len) else 126;
     if (payload.len >= 126) std.mem.writeInt(u16, output[2..4], @intCast(payload.len), .big);
     if (mask) |key| {

@@ -171,7 +171,7 @@ test "candidate refuses duplicates and capacity overflow and releases failed dra
         &.{ source, source },
         &.{},
     ));
-    const sources = [_][]const u8{source} ** (engine.MAX_RULES + 1);
+    const sources = @as([(engine.MAX_RULES + 1)][]const u8, @splat(source));
     try std.testing.expectError(error.TooManyDocuments, Candidate.init(
         std.testing.allocator,
         options,

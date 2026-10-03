@@ -18,7 +18,7 @@ pub const Cause = enum {
     replay,
     capacity,
 };
-pub const cause_count = std.meta.fields(Cause).len;
+pub const cause_count = @typeInfo(Cause).@"enum".field_names.len;
 pub const bin_count = 256;
 pub const Timing = union(enum) { missing, invalid, milliseconds: f64 };
 pub const Solver = enum { unknown, wasm, javascript };
@@ -40,13 +40,13 @@ pub const Metrics = struct {
 
     pub fn issue(self: *Metrics, algorithm: Algorithm, parameter: u8, openings: u8) void {
         _ = self.bins[index(algorithm, parameter, openings)].issued.fetchAdd(1, .monotonic);
-        const encoded = @as(u32, @intFromEnum(algorithm)) | (@as(u32, parameter) << 8) |
+        const encoded = @as(u32, @backingInt(algorithm)) | (@as(u32, parameter) << 8) |
             (@as(u32, openings) << 16) | (1 << 24);
         self.last_parameters.store(encoded, .monotonic);
     }
 
     pub fn reject(self: *Metrics, cause: Cause) void {
-        _ = self.causes[@intFromEnum(cause)].fetchAdd(1, .monotonic);
+        _ = self.causes[@backingInt(cause)].fetchAdd(1, .monotonic);
     }
 
     pub fn accept(
@@ -81,7 +81,7 @@ pub const Metrics = struct {
 /// Hashcash has no openings and always uses opening bin zero; the last bin is saturated.
 pub fn index(algorithm: Algorithm, parameter: u8, openings: u8) usize {
     const opening: usize = if (algorithm == .hashcash) 0 else @min(openings / 16, 3);
-    return @as(usize, @intFromEnum(algorithm)) * 128 + @as(usize, parameter / 8) * 4 + opening;
+    return @as(usize, @backingInt(algorithm)) * 128 + @as(usize, parameter / 8) * 4 + opening;
 }
 
 pub fn bucket(ms: f64) usize {

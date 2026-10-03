@@ -20,11 +20,11 @@ pub fn Automaton(comptime max_states: u16) type {
         const Self = @This();
         pub const MAX_STATES = max_states;
 
-        transitions: [max_states][256]u16 = [_][256]u16{[_]u16{0} ** 256} ** max_states,
-        fail: [max_states]u16 = [_]u16{0} ** max_states,
-        match_id: [max_states]u16 = [_]u16{no_match} ** max_states,
-        pattern_names: [max_states][]const u8 = [_][]const u8{""} ** max_states,
-        pattern_tags: [max_states]u8 = [_]u8{0} ** max_states,
+        transitions: [max_states][256]u16 = @splat(@splat(0)),
+        fail: [max_states]u16 = @as([max_states]u16, @splat(0)),
+        match_id: [max_states]u16 = @as([max_states]u16, @splat(no_match)),
+        pattern_names: [max_states][]const u8 = @as([max_states][]const u8, @splat("")),
+        pattern_tags: [max_states]u8 = @as([max_states]u8, @splat(0)),
         num_states: u16 = 1,
         num_patterns: u16 = 0,
         built: bool = false,
@@ -222,7 +222,7 @@ test "aho corasick agrees with naive search on random inputs" {
         const text = buf[0..len];
         var naive = false;
         for (patterns) |p| {
-            if (std.ascii.indexOfIgnoreCase(text, p) != null) naive = true;
+            if (std.ascii.findIgnoreCase(text, p) != null) naive = true;
         }
         try std.testing.expectEqual(naive, matcher.findFirst(text) != null);
     }

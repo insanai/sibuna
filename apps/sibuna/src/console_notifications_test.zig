@@ -1,3 +1,4 @@
+const repeat = @import("text").repeat;
 const std = @import("std");
 const t = std.testing;
 const p = @import("console").protocol;
@@ -30,7 +31,9 @@ fn save(
         .label = try p.Bytes(n.max_label).init(label),
         .target = try p.Bytes(n.max_target).init(target),
         .target_host = try p.Bytes(n.max_host).init("hooks.example"),
-        .secret_envelope = if (secret) try p.Bytes(n.max_envelope).init("a" ** 105) else null,
+        .secret_envelope = if (secret) try p.Bytes(n.max_envelope).init(
+            &repeat("a", 105),
+        ) else null,
         .events = n.all_events,
         .cooldown_seconds = 60,
         .enabled = true,

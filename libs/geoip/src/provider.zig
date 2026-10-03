@@ -14,7 +14,7 @@ pub const Provider = enum(u8) {
     dbip = 2,
 
     pub fn parse(text: []const u8) ?Provider {
-        inline for (std.meta.tags(Provider)) |tag| {
+        inline for (std.enums.values(Provider)) |tag| {
             if (std.mem.eql(u8, text, tag.name())) return tag;
         }
         return null;

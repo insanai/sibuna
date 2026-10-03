@@ -30,7 +30,7 @@ pub const SHARD_CAPACITY = 4096;
 pub const MAX_PROBE = 64;
 
 pub const Entry = struct {
-    tag: Tag = [_]u8{0} ** 16,
+    tag: Tag = @as([16]u8, @splat(0)),
     expires_at: u64 = 0,
     dist: u8 = 0,
     occupied: bool = false,
@@ -56,7 +56,7 @@ pub const SpinLock = struct {
 
 const Shard = struct {
     lock: SpinLock align(64) = .{},
-    entries: [SHARD_CAPACITY]Entry = [_]Entry{.{}} ** SHARD_CAPACITY,
+    entries: [SHARD_CAPACITY]Entry = @as([SHARD_CAPACITY]Entry, @splat(.{})),
     live: u32 = 0,
 
     fn home(tag: *const Tag) usize {
@@ -123,7 +123,7 @@ const Shard = struct {
 };
 
 pub const ChallengeStore = struct {
-    shards: [NUM_SHARDS]Shard = [_]Shard{.{}} ** NUM_SHARDS,
+    shards: [NUM_SHARDS]Shard = @as([NUM_SHARDS]Shard, @splat(.{})),
 
     fn shardFor(self: *ChallengeStore, tag: *const Tag) *Shard {
         return &self.shards[std.mem.readInt(u64, tag[0..8], .little) % NUM_SHARDS];
@@ -222,12 +222,12 @@ test "failed insertion leaves all live spent tags reachable" {
     // the probe limit. Previously the last displaced live tag was lost.
     var tags: [MAX_PROBE + 1]Tag = undefined;
     for (&tags, 0..) |*tag, i| {
-        tag.* = [_]u8{0} ** 16;
+        tag.* = @as([16]u8, @splat(0));
         std.mem.writeInt(u64, tag[0..8], i, .little);
         std.mem.writeInt(u64, tag[8..16], if (i == 0) 0 else 1, .little);
         try shard.insert(tag, 1000, 0);
     }
-    var incoming = [_]u8{0} ** 16;
+    var incoming = @as([16]u8, @splat(0));
     incoming[0] = 255;
     try std.testing.expectError(error.StoreFull, shard.insert(&incoming, 1000, 0));
     for (&tags) |*tag| try std.testing.expect(shard.find(tag) != null);

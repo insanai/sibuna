@@ -33,7 +33,7 @@ pub const Pages = struct {
     entries: [5]Template = undefined,
 
     pub fn get(self: *const Pages, kind: Kind) *const Template {
-        return &self.entries[@intFromEnum(kind)];
+        return &self.entries[@backingInt(kind)];
     }
 };
 pub const Values = struct {
@@ -162,7 +162,7 @@ pub fn defaults(out: *Pages, challenge_default: []const u8) void {
     };
     for (sources, 0..) |source, index| {
         const entry = &out.entries[index];
-        compile(@enumFromInt(index), source.?, entry) catch unreachable;
+        compile(@fromBackingInt(@intCast(index)), source.?, entry) catch unreachable;
         entry.customized = false;
         entry.revision = 0;
     }

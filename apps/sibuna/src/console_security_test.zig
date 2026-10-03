@@ -78,7 +78,7 @@ test "security reply worst-case escaping and counter precision fit the HTTP resp
         .observed_at = std.math.maxInt(i64),
         .total = std.math.maxInt(u64),
     };
-    const label = [_]u8{1} ** 96;
+    const label = @as([96]u8, @splat(1));
     const row: p.security.Rank = .{
         .label = try p.Bytes(96).init(&label),
         .count = std.math.maxInt(u64),

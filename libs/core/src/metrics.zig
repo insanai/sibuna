@@ -26,10 +26,10 @@ pub const Metrics = struct {
     }
 
     pub fn writePrometheus(self: *const Metrics, w: *Io.Writer) !void {
-        inline for (std.meta.fields(Metrics)) |field| {
+        inline for (@typeInfo(Metrics).@"struct".field_names) |field_name| {
             try w.print(
                 "# TYPE sibuna_{s}_total counter\nsibuna_{s}_total {d}\n",
-                .{ field.name, field.name, @field(self, field.name).load(.monotonic) },
+                .{ field_name, field_name, @field(self, field_name).load(.monotonic) },
             );
         }
     }

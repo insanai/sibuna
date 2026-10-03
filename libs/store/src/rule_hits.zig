@@ -9,7 +9,7 @@ pub fn Counters(comptime capacity: usize) type {
     std.debug.assert(capacity > 0 and capacity <= 128);
     return struct {
         const Self = @This();
-        pub const Matches = std.StaticBitSet(capacity);
+        pub const Matches = std.bit_set.Static(capacity);
         pub const Snapshot = struct {
             generation: u64,
             values: [capacity]u64,
@@ -84,7 +84,7 @@ test "concurrent rule matches accumulate and generation changes fence old baseli
     counters.read(&before);
     const Worker = struct {
         fn run(shared: *C) void {
-            var matches = C.Matches.initEmpty();
+            var matches = C.Matches.empty;
             matches.set(0);
             matches.set(3);
             for (0..10000) |_| shared.record(&matches);
@@ -117,7 +117,7 @@ test "counter wrap cannot produce an apparently complete interval" {
     var before: C.Snapshot = undefined;
     counters.read(&before);
     counters.values[telemetry.stripe][0].store(std.math.maxInt(u64), .monotonic);
-    const matches = C.Matches.initFull();
+    const matches = C.Matches.full;
     counters.record(&matches);
     var after: C.Snapshot = undefined;
     counters.read(&after);

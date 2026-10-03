@@ -7,6 +7,7 @@
 //! are bare hexadecimal, and extensions follow the RFC grammar exactly. Extensions and trailers
 //! are validated and dropped; whoever forwards the body generates its own framing.
 
+const repeat = @import("text").repeat;
 const std = @import("std");
 const http = @import("http.zig");
 
@@ -193,7 +194,7 @@ test "decoder recovers bodies under the full RFC grammar" {
 }
 
 test "decoder rejects terminator, size, extension and trailer ambiguities" {
-    const long_line = "1;" ++ "a" ** max_line ++ "\r\n";
+    const long_line = "1;" ++ &repeat("a", max_line) ++ "\r\n";
     const bad = [_][]const u8{
         "5\nhello\r\n0\r\n\r\n", // lone LF ends a size line for lenient parsers
         "5\rX\r\nhello\r\n0\r\n\r\n", // lone CR inside the line
@@ -225,7 +226,9 @@ test "decoder rejects terminator, size, extension and trailer ambiguities" {
     var trailer: [max_trailer + 512]u8 = undefined;
     var w: std.Io.Writer = .fixed(&trailer);
     try w.writeAll("0\r\n");
-    while (w.end <= "0\r\n".len + max_trailer) try w.writeAll("X-Pad: " ++ "p" ** 120 ++ "\r\n");
+    while (w.end <= "0\r\n".len + max_trailer) try w.writeAll("X-Pad: " ++
+        &repeat("p", 120) ++
+        "\r\n");
     try w.writeAll("\r\n");
     var big: [max_trailer + 512]u8 = undefined;
     try t.expectError(error.MalformedChunk, decodeAll(w.buffered(), &big));

@@ -1,6 +1,7 @@
 //! Strict management documents, separate from the compatible startup-file loader.
 //! The caller owns the allocator and all returned strings. Use a bounded arena whose
 //! lifetime covers candidate validation and, after publication, the engine snapshot.
+const repeat = @import("text").repeat;
 const std = @import("std");
 const rule = @import("rule.zig");
 const matchers = @import("matchers.zig");
@@ -117,7 +118,9 @@ test "management input rejects ambiguous and overflowing matchers without trunca
     const base = "{\"id\":\"test\",\"name\":\"Test\",\"action\":\"allow\",";
     const five_headers = "\"headers\":{\"A\":\"1\",\"B\":\"2\",\"C\":\"3\"," ++
         "\"D\":\"4\",\"E\":\"5\"}}";
-    const nine_cidrs = "\"cidrs\":[" ++ "\"8.8.8.0/24\"," ** 8 ++ "\"8.8.4.0/24\"]}";
+    const nine_cidrs = "\"cidrs\":[" ++
+        &repeat("\"8.8.8.0/24\",", 8) ++
+        "\"8.8.4.0/24\"]}";
     const cases = .{
         .{ five_headers, error.TooManyHeaders },
         .{ nine_cidrs, error.TooManyCidrs },
@@ -138,7 +141,7 @@ test "management input rejects ambiguous and overflowing matchers without trunca
 test "management document bounds reject exhaustion and invalid identifiers" {
     var memory: [32768]u8 = undefined;
     var arena = std.heap.FixedBufferAllocator.init(&memory);
-    const oversized = [_]u8{' '} ** (max_document + 1);
+    const oversized = @as([max_document + 1]u8, @splat(' '));
     try std.testing.expectError(error.TooLarge, parse(arena.allocator(), &oversized));
     try std.testing.expectEqual(@as(usize, 0), arena.end_index);
     const input = "{\"id\":\"bad/id\",\"name\":\"Test\",\"action\":\"allow\"}";

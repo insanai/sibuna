@@ -1,3 +1,4 @@
+const repeat = @import("text").repeat;
 const std = @import("std");
 const t = std.testing;
 const p = @import("console").protocol;
@@ -275,14 +276,14 @@ test "country prefixes stage in chunks, preflight in a candidate and apply pinne
         .count = 3,
         .country = "ZZ".*,
         .action = .deny,
-        .geo_generation = try p.Bytes(64).init("ab" ** 32),
+        .geo_generation = try p.Bytes(64).init(&repeat("ab", 32)),
     } });
     try t.expect(applied == .revision);
     var rows = try db.query(fx.owner.db, t.allocator, "SELECT COUNT(*),MIN(source)," ++
         "MIN(geo_generation) FROM ip_reputation WHERE source='console:country:ZZ'", &.{});
     defer rows.deinit();
     try t.expectEqualStrings("3", rows.rows[0][0].?);
-    try t.expectEqualStrings("ab" ** 32, rows.rows[0][2].?);
+    try t.expectEqualStrings(&repeat("ab", 32), rows.rows[0][2].?);
     var stage = try db.query(
         fx.owner.db,
         t.allocator,

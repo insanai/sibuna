@@ -1,3 +1,4 @@
+const repeat = @import("text").repeat;
 const std = @import("std");
 const t = std.testing;
 const p = @import("console").protocol;
@@ -197,7 +198,7 @@ test "audit records preserve the full supported policy identifier and bounded pa
         .{tmp.sub_path},
     ));
     defer fx.close();
-    const id = "a" ** 128;
+    const id = &repeat("a", 128);
     const document = "{\"id\":\"" ++ id ++ "\",\"name\":\"A\",\"action\":\"deny\"}";
     _ = (try fx.run(.{ .policy_edit = try edit(document, 0) })).revision;
     const detail = try latest(fx, "policy.edit");

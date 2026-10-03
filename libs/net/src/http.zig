@@ -40,7 +40,7 @@ pub const Request = struct {
     path: []const u8 = "/",
     query: []const u8 = "",
     version: []const u8 = "HTTP/1.1",
-    headers: [MAX_HEADERS]Header = [_]Header{.{ .name = "", .value = "" }} ** MAX_HEADERS,
+    headers: [MAX_HEADERS]Header = @as([MAX_HEADERS]Header, @splat(.{ .name = "", .value = "" })),
     header_count: usize = 0,
     body: []const u8 = "",
     /// The body follows in the chunked transfer coding, the only coding accepted (SID 0009).

@@ -281,7 +281,7 @@ fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
     if (f == audit_fixture) {
         f.engine.ip_trie.insertCidr("203.0.113.223/32", .deny) catch unreachable;
         // A customized denial page: the request path renders it from the snapshot.
-        const denied = &f.engine.pages.entries[@intFromEnum(policy.page_template.Kind.denied)];
+        const denied = &f.engine.pages.entries[@backingInt(policy.page_template.Kind.denied)];
         policy.page_template.compile(
             .denied,
             "<!doctype html><title>Custom</title><p>Custom denial: {{ reason }} " ++
@@ -291,7 +291,7 @@ fn bootFixture(f: *Fixture, cfg_in: core.Config) void {
         denied.customized = true;
     }
     f.slot = .{ .engine = &f.engine };
-    const seed = [_]u8{0x5a} ** 32;
+    const seed = @as([32]u8, @splat(0x5a));
     f.state.init(cfg, &f.slot, &seed);
     if (f == audit_fixture) f.state.hooks = .{ .record_incident = captureAudit };
     if (f == capture_fixture) f.state.hooks = .{ .record_incident = captureFinding };
@@ -466,7 +466,7 @@ test "incomplete external bodies have one other outcome while internal and inval
     try std.testing.expectEqual(@as(u16, 400), resp.status());
     try std.testing.expectEqual(counted.requests(), telemetry.totals().requests());
     const submitted = telemetry.challenges.submitted.load(.monotonic);
-    const cause = @intFromEnum(telemetry_store.challenge_metrics.Cause.malformed_solution);
+    const cause = @backingInt(telemetry_store.challenge_metrics.Cause.malformed_solution);
     const rejected = telemetry.challenges.causes[cause].load(.monotonic);
     try roundTrip(
         proxy_fixture.port,
@@ -1552,8 +1552,8 @@ test "accepted client timing is observational and rejection causes cover parsed 
     const missing = bin.missing.load(.monotonic);
     const invalid = bin.invalid.load(.monotonic);
     const bucket = bin.buckets[4].load(.monotonic);
-    const replay = metrics.causes[@intFromEnum(cm.Cause.replay)].load(.monotonic);
-    const missing_id = metrics.causes[@intFromEnum(cm.Cause.missing_id)].load(.monotonic);
+    const replay = metrics.causes[@backingInt(cm.Cause.replay)].load(.monotonic);
+    const missing_id = metrics.causes[@backingInt(cm.Cause.missing_id)].load(.monotonic);
     const resp = try std.testing.allocator.create(Response);
     defer std.testing.allocator.destroy(resp);
     const metadata = [_][]const u8{
@@ -1584,9 +1584,9 @@ test "accepted client timing is observational and rejection causes cover parsed 
     try std.testing.expectEqual(missing + 1, bin.missing.load(.monotonic));
     try std.testing.expectEqual(invalid + 1, bin.invalid.load(.monotonic));
     try std.testing.expectEqual(bucket + 1, bin.buckets[4].load(.monotonic));
-    try std.testing.expectEqual(replay + 3, metrics.causes[@intFromEnum(cm.Cause.replay)].load(
+    try std.testing.expectEqual(replay + 3, metrics.causes[@backingInt(cm.Cause.replay)].load(
         .monotonic,
     ));
-    const missing_counter = &metrics.causes[@intFromEnum(cm.Cause.missing_id)];
+    const missing_counter = &metrics.causes[@backingInt(cm.Cause.missing_id)];
     try std.testing.expectEqual(missing_id + 1, missing_counter.load(.monotonic));
 }

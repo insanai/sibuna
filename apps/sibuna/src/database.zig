@@ -9,7 +9,7 @@ pub const Db = union(enum) {
     pub fn exec(self: Db, gpa: std.mem.Allocator, sql: []const u8) !void {
         switch (self) {
             .node => |n| {
-                const z = try gpa.dupeZ(u8, sql);
+                const z = try gpa.dupeSentinel(u8, sql, 0);
                 defer gpa.free(z);
                 _ = try n.exec(z);
             },

@@ -94,7 +94,7 @@ pub const IncidentRecord = struct {
             r.response_len = @intCast(copy(&r.response_head, incident.response_head));
             r.heads_truncated = @intFromBool(incident.request_truncated) |
                 (@as(u8, @intFromBool(incident.response_truncated)) << 1);
-            r.response_state = @intFromEnum(incident.response_state);
+            r.response_state = @backingInt(incident.response_state);
             const lengths = [_]bool{
                 incident.client_ip.len > r.ip.len,
                 incident.user_agent.len > r.ua.len,
@@ -831,7 +831,7 @@ test "persistent store: policy reload, reputation, forensics, campaigns" {
     cfg.default_difficulty = 12;
     fx.engine.initInPlace(cfg.default_difficulty);
     fx.slot = .{ .engine = &fx.engine };
-    const seed = [_]u8{1} ** 32;
+    const seed = @as([32]u8, @splat(1));
     fx.state.init(cfg, &fx.slot, &seed);
 
     const p = try Persistent.open(

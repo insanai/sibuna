@@ -17,9 +17,9 @@ pub fn read(owner: *Persistent) !?policy.inspection.Modes {
     defer result.deinit();
     if (result.rows.len == 0) return null;
     var modes: policy.inspection.Modes = .{};
-    inline for (@typeInfo(policy.inspection.Modes).@"struct".fields, 0..) |field, i| {
+    inline for (@typeInfo(policy.inspection.Modes).@"struct".field_names, 0..) |field_name, i| {
         const text = result.rows[0][i] orelse return error.InvalidInspectionMode;
-        @field(modes, field.name) = std.meta.stringToEnum(policy.inspection.Mode, text) orelse
+        @field(modes, field_name) = std.meta.stringToEnum(policy.inspection.Mode, text) orelse
             return error.InvalidInspectionMode;
     }
     return modes;

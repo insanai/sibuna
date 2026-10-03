@@ -128,7 +128,7 @@ pub fn post(io: Io, gpa: std.mem.Allocator, input: Post) Error!u16 {
     connection.flush() catch return error.HttpUnavailable;
     const response = request.receiveHead(&.{}) catch |err|
         return mapError(err, error.HttpUnavailable);
-    return @intFromEnum(response.head.status);
+    return @backingInt(response.head.status);
 }
 
 fn mapError(err: anyerror, fallback: Error) Error {

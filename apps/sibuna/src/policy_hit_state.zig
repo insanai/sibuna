@@ -1,4 +1,5 @@
 //! Engine-slot metadata is immutable while pinned. Only the storage owner prepares a spare.
+const repeat = @import("text").repeat;
 const std = @import("std");
 const p = @import("console").protocol.rule_hits;
 const policy = @import("policy");
@@ -58,11 +59,11 @@ test "observation metadata preserves accepted long and opaque file rule identiti
     defer t.allocator.destroy(engine);
     engine.initInPlace(16);
     var slot: Slot = .{};
-    const long = "x" ** 127 ++ "é" ** 10;
+    const long = &repeat("x", 127) ++ &repeat("é", 10);
     engine.rules[0] = .{ .name = long };
     try slot.identify(engine, 0, null, 0);
     const first = slot.generation.rules[0];
-    try t.expectEqualStrings("x" ** 127, first.name.slice());
+    try t.expectEqualStrings(&repeat("x", 127), first.name.slice());
     try t.expect(std.mem.startsWith(u8, first.key.slice(), "fh:0:"));
     engine.rules[0].name = long ++ "different";
     try slot.identify(engine, 0, null, 0);

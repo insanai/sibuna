@@ -31,7 +31,7 @@ pub fn readAt(owner: *Persistent, key: p.rule_hits.Key, now: u64) !wire.Today {
         .from_minute = from,
         .partial = result.rows.len > wire.page_rows,
     };
-    var seen: std.StaticBitSet(24) = .initEmpty();
+    var seen: std.bit_set.Static(24) = .empty;
     if (result.rows.len != 0) today.hits = 0;
     for (result.rows[0..@min(result.rows.len, wire.page_rows)]) |row| {
         if (row.len != 6) return error.InvalidStoredValue;

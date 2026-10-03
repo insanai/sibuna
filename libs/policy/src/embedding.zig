@@ -21,7 +21,7 @@ fn fold(c: u8) u8 {
 }
 
 pub fn embed(payload: []const u8) Vector {
-    var v: Vector = [_]f32{0} ** dim;
+    var v: Vector = @as([dim]f32, @splat(0));
     if (payload.len == 0) return v;
     var i: usize = 0;
     while (i + 3 <= payload.len) : (i += 1) {

@@ -1,5 +1,6 @@
 //! The CLI emits only validated, bounded contracts. In particular, catalog responses
 //! cannot smuggle credential digests or values into redirected command output.
+const repeat = @import("text").repeat;
 const std = @import("std");
 const p = @import("console").protocol;
 const Args = @import("console_command_args.zig").Args;
@@ -89,7 +90,8 @@ test "token CLI output checks authority, scope uniqueness and one-time disclosur
     try t.expectError(error.InvalidResponse, validate(args, sensitive));
     const repeated = "{\"version\":1,\"rows\":[" ++ row ++ "," ++ row ++ "],\"next\":null}";
     try t.expectError(error.InvalidResponse, validate(args, repeated));
-    const created = "{\"saved\":true,\"id\":\"1\",\"token\":\"" ++ "a" ** 64 ++
+    const created = "{\"saved\":true,\"id\":\"1\",\"token\":\"" ++
+        &repeat("a", 64) ++
         "\",\"expires\":null}";
     try validate(.{ .kind = .mint_token }, created);
     try t.expectError(error.InvalidResponse, validate(.{ .kind = .tokens }, created));

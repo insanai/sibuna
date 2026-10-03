@@ -20,7 +20,7 @@ pub const IdleTable = struct {
         activity: net.duplex.Activity = .{},
     };
 
-    slots: [capacity]Slot = [_]Slot{.{}} ** capacity,
+    slots: [capacity]Slot = @as([capacity]Slot, @splat(.{})),
     cursor: std.atomic.Value(u32) = std.atomic.Value(u32).init(0),
 
     pub fn register(self: *IdleTable, io: Io, stream: Io.net.Stream, now_ms: u64) ?u32 {

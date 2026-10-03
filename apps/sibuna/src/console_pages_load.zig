@@ -10,7 +10,7 @@ const util = @import("console_store.zig");
 const challenge_default = @import("challenge_page.zig").default;
 
 pub fn source(kind: anytype) []const u8 {
-    return switch (@intFromEnum(kind)) {
+    return switch (@backingInt(kind)) {
         0 => challenge_default,
         1 => page_template.default_denied,
         2 => page_template.default_rate_limited,
@@ -32,7 +32,7 @@ pub fn install(owner: *Persistent, pages: *page_template.Pages) !void {
     for (rows.rows) |cells| {
         const kind = std.meta.stringToEnum(page_template.Kind, cells[0] orelse continue) orelse
             continue;
-        const entry = &pages.entries[@intFromEnum(kind)];
+        const entry = &pages.entries[@backingInt(kind)];
         page_template.compile(kind, cells[1] orelse "", entry) catch |err| {
             std.log.warn("page template {s} ignored: {t}; default retained", .{
                 @tagName(kind),

@@ -14,7 +14,7 @@ pub fn submit(state: *AppState) void {
 pub fn reject(state: *AppState, ip: []const u8, now: u64, cause: counters.Cause) void {
     if (options.console) if (state.telemetry) |telemetry| {
         telemetry.challenges.reject(cause);
-        telemetry.challengeEvent(event(ip, now, 2, @intFromEnum(cause), 0, 0, 0, null));
+        telemetry.challengeEvent(event(ip, now, 2, @backingInt(cause), 0, 0, 0, null));
     };
 }
 
@@ -52,7 +52,7 @@ pub fn issue(
             state.coordinator.adaptive.rate_256.load(.monotonic),
             .monotonic,
         );
-        const kind: u8 = @intFromEnum(convert(algorithm));
+        const kind: u8 = @backingInt(convert(algorithm));
         const bits: u8 = @intCast(parameter);
         telemetry.challengeEvent(event(ip, now, 0, no_cause, kind, bits, openings, null));
     };
@@ -81,7 +81,7 @@ pub fn accept(
                 null,
             else => null,
         };
-        const kind: u8 = @intFromEnum(convert(result.algorithm));
+        const kind: u8 = @backingInt(convert(result.algorithm));
         telemetry.challengeEvent(event(
             ip,
             now,

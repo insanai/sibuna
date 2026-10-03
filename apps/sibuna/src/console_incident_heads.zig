@@ -53,7 +53,7 @@ pub fn read(owner: *Persistent, input: wire.Read) !p.StorageResult {
         payload.request_truncated = (try util.number(row[2])) != 0;
         payload.response_truncated = (try util.number(row[3])) != 0;
         const state = try util.number(row[4]);
-        payload.response_state = if (state <= 4) @enumFromInt(state) else .unknown;
+        payload.response_state = if (state <= 4) @fromBackingInt(@intCast(state)) else .unknown;
     }
     if (try access.check(owner, input.session_digest, input.require_totp, .events_read)) |reason| {
         owner.gpa.destroy(payload);

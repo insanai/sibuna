@@ -156,8 +156,8 @@ pub fn draftFailure(err: anyerror) p.Failure {
     if (err == error.Conflict) return .conflict;
     if (err == error.OutOfMemory) return .unavailable;
     if (err == error.InvalidStoredPolicy or err == error.WriteFailed) return .invalid_input;
-    inline for (@typeInfo(policy.candidate.Error).error_set.?) |field| {
-        if (err == @field(anyerror, field.name)) return .invalid_input;
+    inline for (@typeInfo(policy.candidate.Error).error_set.error_names.?) |name| {
+        if (err == @field(anyerror, name)) return .invalid_input;
     }
     return .unavailable;
 }

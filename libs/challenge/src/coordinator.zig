@@ -59,7 +59,7 @@ pub fn requiredWork(algorithm: Algorithm, difficulty: u32) WorkLevel {
         .hashcash => @intCast(spec.hashcashBits()),
         .posw => spec.poswDepth(),
     };
-    return .{ .algorithm = @intFromEnum(algorithm), .bits = workBits(algorithm, units) };
+    return .{ .algorithm = @backingInt(algorithm), .bits = workBits(algorithm, units) };
 }
 
 /// What a challenge asks for. `difficulty` is in work bits: hashcash needs
@@ -246,7 +246,7 @@ pub const Coordinator = struct {
     ) [ticket_len]u8 {
         var raw: [ticket_raw_len]u8 = undefined;
         raw[0] = ticket_version;
-        raw[1] = @intFromEnum(requirement.spec.algorithm);
+        raw[1] = @backingInt(requirement.spec.algorithm);
         raw[2] = @intCast(@min(requirement.spec.difficulty, 255));
         raw[3] = requirement.spec.posw_challenges;
         std.mem.writeInt(u64, raw[4..12], now, .little);
@@ -282,7 +282,7 @@ pub const Coordinator = struct {
         if (fingerprint_given != self.fingerprint(client_ip, user_agent)) return null;
         return .{
             .spec = .{
-                .algorithm = @enumFromInt(raw[1]),
+                .algorithm = @fromBackingInt(@intCast(raw[1])),
                 .difficulty = raw[2],
                 .posw_challenges = raw[3],
             },
@@ -327,7 +327,7 @@ pub const Coordinator = struct {
 
         var raw: [id_raw_len]u8 = undefined;
         raw[0] = version;
-        raw[1] = @intFromEnum(effective.algorithm);
+        raw[1] = @backingInt(effective.algorithm);
         raw[2] = difficulty;
         raw[3] = challenges;
         std.mem.writeInt(u64, raw[4..12], now, .little);
@@ -425,7 +425,7 @@ pub const Coordinator = struct {
             else => return error.StoreFull,
         };
         var result = self.mintToken(now, decoded.rule_hash, decoded.fingerprint, .{
-            .algorithm = @intFromEnum(decoded.algorithm),
+            .algorithm = @backingInt(decoded.algorithm),
             .bits = workBits(decoded.algorithm, decoded.difficulty),
         });
         result.algorithm = decoded.algorithm;
@@ -511,7 +511,7 @@ const TestCtx = struct {
     coord: Coordinator = undefined,
 
     fn init(self: *TestCtx, spec: ChallengeSpec) void {
-        const seed = [_]u8{9} ** 32;
+        const seed = @as([32]u8, @splat(9));
         self.coord = Coordinator.init(&self.spent, &seed, spec, 600, 3600);
     }
 };

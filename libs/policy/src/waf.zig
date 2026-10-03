@@ -62,7 +62,7 @@ pub const MAX_BODY_INSPECT: usize = body_fields.max_prefix;
 pub const MAX_CANONICAL: usize = MAX_BODY_INSPECT;
 
 pub fn containsIgnoreCase(haystack: []const u8, needle: []const u8) bool {
-    return std.ascii.indexOfIgnoreCase(haystack, needle) != null;
+    return std.ascii.findIgnoreCase(haystack, needle) != null;
 }
 
 fn isWordByte(c: u8) bool {
@@ -88,7 +88,7 @@ fn addAll(sigs: *Signatures, patterns: []const []const u8, category: AttackCateg
     for (patterns) |pat| {
         // The pattern tables are fixed at compile time and sized well below
         // the automaton capacity; exceeding it is a programming error.
-        _ = sigs.addPatternTagged(pat, @intFromEnum(category)) catch unreachable;
+        _ = sigs.addPatternTagged(pat, @backingInt(category)) catch unreachable;
     }
 }
 
@@ -120,7 +120,7 @@ const Classes = packed struct {
 };
 
 const class_table: [256]u8 = blk: {
-    var t = [_]u8{0} ** 256;
+    var t = @as([256]u8, @splat(0));
     t['\''] = 1;
     t['"'] = 1;
     t['`'] = 1;
@@ -336,7 +336,7 @@ fn hasHtmlTag(text: []const u8) bool {
 /// string is not preceded by such a byte and does not count.
 fn hasEventHandler(text: []const u8) bool {
     var pos: usize = 0;
-    while (std.ascii.indexOfIgnoreCasePos(text, pos, "on")) |idx| {
+    while (std.ascii.findIgnoreCasePos(text, pos, "on")) |idx| {
         pos = idx + 1;
         if (idx == 0) continue;
         const prev = text[idx - 1];
@@ -425,7 +425,7 @@ fn checkRceStructure(text: []const u8, classes: Classes) ?Violation {
 
 fn inspectRaw(sigs: *const Signatures, text: []const u8, classes: Classes) ?Violation {
     if (sigs.findFirstTagged(text)) |m| {
-        return Violation.of(@enumFromInt(m.tag), m.name);
+        return Violation.of(@fromBackingInt(@intCast(m.tag)), m.name);
     }
     if (checkNullByte(text, classes)) |v| return v;
     if (checkSqliStructure(text, classes)) |v| return v;
@@ -500,7 +500,7 @@ fn inspectRawCategory(
     comptime category: AttackCategory,
     text: []const u8,
 ) ?Violation {
-    if (sigs.findFirstTaggedAs(text, @intFromEnum(category))) |match|
+    if (sigs.findFirstTaggedAs(text, @backingInt(category))) |match|
         return Violation.of(category, match.name);
     const classes = scanClasses(text);
     return switch (category) {

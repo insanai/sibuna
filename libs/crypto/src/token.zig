@@ -234,7 +234,7 @@ pub fn ruleHash(rule_name: []const u8) u64 {
 }
 
 test "mac token mint, verify, tamper, fingerprint, expiry" {
-    const key = [_]u8{3} ** 32;
+    const key = @as([32]u8, @splat(3));
     const fp = computeFingerprintKeyed(&key, "192.168.1.100", "Mozilla/5.0");
     const now: u64 = 1_700_000_000;
     const work = WorkLevel{ .algorithm = 1, .bits = 19 };
@@ -265,7 +265,7 @@ test "mac token mint, verify, tamper, fingerprint, expiry" {
         MacToken.verify(&key, &tampered, now, fp),
     );
 
-    const other_key = [_]u8{4} ** 32;
+    const other_key = @as([32]u8, @splat(4));
     try std.testing.expectError(
         error.InvalidTokenSignature,
         MacToken.verify(&other_key, &tok, now, fp),
@@ -282,7 +282,7 @@ test "mac token mint, verify, tamper, fingerprint, expiry" {
 }
 
 test "ed25519 token minting, verification, and expiration" {
-    const seed = [_]u8{7} ** 32;
+    const seed = @as([32]u8, @splat(7));
     const key_pair = Ed25519.KeyPair.generateDeterministic(seed) catch unreachable;
     const fp = computeFingerprint("192.168.1.100", "Mozilla/5.0");
     const now: u64 = 1_700_000_000;

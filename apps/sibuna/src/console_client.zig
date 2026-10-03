@@ -113,7 +113,7 @@ pub fn validateOrigin(origin: []const u8) Error!void {
         return error.InsecureOrigin;
     const loopback = switch (address) {
         .ip4 => |ip| ip.bytes[0] == 127,
-        .ip6 => |ip| std.mem.eql(u8, &ip.bytes, &(.{0} ** 15 ++ .{1})),
+        .ip6 => |ip| std.mem.eql(u8, &ip.bytes, &(@as([15]u8, @splat(0)) ++ .{1})),
     };
     if (!loopback) return error.InsecureOrigin;
 }

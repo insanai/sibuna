@@ -60,7 +60,7 @@ pub fn parseSeed(text: []const u8) ?[seed_len]u8 {
 }
 
 test "derived keys are distinct per purpose and stable" {
-    const seed = [_]u8{7} ** 32;
+    const seed = @as([32]u8, @splat(7));
     const a = Keys.derive(&seed);
     const b = Keys.derive(&seed);
     try std.testing.expectEqualSlices(u8, &a.token, &b.token);
@@ -68,7 +68,7 @@ test "derived keys are distinct per purpose and stable" {
     try std.testing.expect(!std.mem.eql(u8, &a.challenge, &a.ed25519_seed));
     try std.testing.expect(!std.mem.eql(u8, &a.requirement, &a.token));
     try std.testing.expect(!std.mem.eql(u8, &a.requirement, &a.challenge));
-    const other = Keys.derive(&([_]u8{8} ** 32));
+    const other = Keys.derive(&(@as([32]u8, @splat(8))));
     try std.testing.expect(!std.mem.eql(u8, &a.token, &other.token));
 }
 
@@ -78,6 +78,6 @@ test "parseSeed accepts hex and raw forms" {
     try std.testing.expectEqual(@as(u8, 0x00), seed[0]);
     try std.testing.expectEqual(@as(u8, 0xff), seed[31]);
     try std.testing.expect(parseSeed("short") == null);
-    const raw = [_]u8{1} ** 32;
+    const raw = @as([32]u8, @splat(1));
     try std.testing.expectEqualSlices(u8, &raw, &parseSeed(&raw).?);
 }

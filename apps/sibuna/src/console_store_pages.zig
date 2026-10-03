@@ -55,7 +55,7 @@ pub fn edit(owner: *Persistent, input: p.pages.Edit, now: u64) !p.StorageResult 
     p.pages.validateEdit(input) catch return .{ .failed = .invalid_input };
     const actor = try settings.admin(owner, input.auth, now) orelse
         return .{ .failed = .forbidden };
-    const kind: policy.page_template.Kind = @enumFromInt(@intFromEnum(input.kind));
+    const kind: policy.page_template.Kind = @fromBackingInt(@intCast(@backingInt(input.kind)));
     const html: []const u8 = if (input.html) |block| block.slice() else "";
     if (!input.reset) {
         const scratch = try owner.gpa.create(policy.page_template.Template);

@@ -110,7 +110,7 @@ pub fn parse(args: []const []const u8) Error!Args {
     while (index < args.len) : (index += 2) {
         if (index + 1 == args.len) return error.MissingValue;
         const option = try optionName(args[index]);
-        const bit = @as(u32, 1) << @intFromEnum(option);
+        const bit = @as(u32, 1) << @backingInt(option);
         if (seen & bit != 0 and option != .scope) return error.DuplicateOption;
         seen |= bit;
         try assign(&result, option, args[index + 1]);
@@ -118,8 +118,8 @@ pub fn parse(args: []const []const u8) Error!Args {
     try authentication(result);
     if (kind == .mint_token and !p.tokens.validScopes(result.scopes, result.role))
         return error.InvalidValue;
-    const access_fields = (@as(u32, 1) << @intFromEnum(Option.role)) |
-        (@as(u32, 1) << @intFromEnum(Option.disabled));
+    const access_fields = (@as(u32, 1) << @backingInt(Option.role)) |
+        (@as(u32, 1) << @backingInt(Option.disabled));
     if (kind == .access and seen & access_fields != access_fields)
         return error.AccessFieldsRequired;
     if (kind.needsRevision() and result.revision == 0)
@@ -138,7 +138,7 @@ fn optionName(name: []const u8) Error!Option {
         "--file",
     };
     inline for (names, 0..) |value, index| {
-        if (equal(name, value)) return @enumFromInt(index);
+        if (equal(name, value)) return @fromBackingInt(@intCast(index));
     }
     return error.UnknownOption;
 }

@@ -18,7 +18,7 @@ const Slot = struct {
 };
 
 pub const BanList = struct {
-    slots: [CAPACITY]Slot = [_]Slot{.{}} ** CAPACITY,
+    slots: [CAPACITY]Slot = @as([CAPACITY]Slot, @splat(.{})),
     write_lock: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
 
     fn keyFor(ip: []const u8) u64 {

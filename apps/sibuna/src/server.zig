@@ -150,7 +150,7 @@ pub fn requestStop(listener: *Io.net.Server, io: Io, state: *AppState) void {
             ip.bytes = .{ 127, 0, 0, 1 };
         },
         .ip6 => |*ip| if (std.mem.allEqual(u8, &ip.bytes, 0)) {
-            ip.bytes = .{0} ** 15 ++ .{1};
+            ip.bytes = @as([15]u8, @splat(0)) ++ .{1};
         },
     }
     // Only workers already inside the loop can be blocked in accept. Later starters
@@ -818,8 +818,8 @@ fn sampleOutcome(ctx: *RequestContext, outcome: store.telemetry.Outcome, status:
         .path = ctx.req.path,
         .referer = refererHost(ctx.req.getHeader("referer") orelse ""),
         .status = status,
-        .os = @intFromEnum(family.os),
-        .browser = @intFromEnum(family.browser),
+        .os = @backingInt(family.os),
+        .browser = @backingInt(family.browser),
     });
 }
 
@@ -883,7 +883,7 @@ fn recordFindings(
     const hook = st.hooks.record_incident orelse return;
     var head: [core.incident_heads.request_bytes]u8 = undefined;
     const captured = requestHead(ctx, &head);
-    inline for (comptime std.meta.tags(policy.waf.AttackCategory)) |category| {
+    inline for (comptime std.enums.values(policy.waf.AttackCategory)) |category| {
         if (findings & policy.inspection.bit(category) != 0) hook(st.hooks.context, .{
             .client_ip = ctx.client_ip,
             .user_agent = ctx.user_agent,
@@ -1419,7 +1419,7 @@ test "query parameter lookup and ipv6 peer formatting" {
     try std.testing.expectEqualStrings("/a/b", queryParam("x=1&path=/a/b&y=2", "path").?);
     try std.testing.expect(queryParam("x=1", "path") == null);
     var buf: [48]u8 = undefined;
-    const bytes = [_]u8{ 0x20, 0x01, 0x0d, 0xb8 } ++ [_]u8{0} ** 11 ++ [_]u8{1};
+    const bytes = [_]u8{ 0x20, 0x01, 0x0d, 0xb8 } ++ @as([11]u8, @splat(0)) ++ .{1};
     try std.testing.expectEqualStrings("2001:db8:0:0:0:0:0:1", formatIpv6(&buf, &bytes));
 }
 

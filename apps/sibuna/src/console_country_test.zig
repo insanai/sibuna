@@ -1,3 +1,4 @@
+const repeat = @import("text").repeat;
 const std = @import("std");
 const t = std.testing;
 const p = @import("console").protocol;
@@ -22,7 +23,9 @@ fn stage(fx: *fixture.Fixture, prefixes: []const []const u8, seed: u8) !w.Countr
         .digest = chunk.digest,
         .count = chunk.count,
         .expected_revision = try @import("console_policy_candidate.zig").revision(fx.owner),
-        .geo_generation = try p.Bytes(64).init(if (seed == 1) "ab" ** 32 else "cd" ** 32),
+        .geo_generation = try p.Bytes(64).init(
+            if (seed == 1) &repeat("ab", 32) else &repeat("cd", 32),
+        ),
     };
 }
 
@@ -65,7 +68,7 @@ test "country replacement removes obsolete rows atomically and supports an empty
     try t.expectEqual(@as(u16, 1), review.added);
     try t.expectEqual(@as(u16, 1), review.removed);
     try t.expectEqual(@as(u16, 1), review.retained);
-    try t.expectEqualStrings("ab" ** 32, review.previous_generation.slice());
+    try t.expectEqualStrings(&repeat("ab", 32), review.previous_generation.slice());
     try t.expectEqualStrings("192.0.2.0/24", review.removed_sample[0].slice());
     // The audit is in the same statement. A failed audit must roll back every row change.
     try fx.owner.db.exec(t.allocator, "CREATE TRIGGER country_test_fail BEFORE INSERT ON " ++
@@ -199,6 +202,8 @@ fn stageFull(fx: *fixture.Fixture, seed: u8) !w.CountryApply {
         .digest = @splat(seed),
         .count = w.max_country_prefixes,
         .expected_revision = try @import("console_policy_candidate.zig").revision(fx.owner),
-        .geo_generation = try p.Bytes(64).init(if (seed == 1) "ab" ** 32 else "cd" ** 32),
+        .geo_generation = try p.Bytes(64).init(
+            if (seed == 1) &repeat("ab", 32) else &repeat("cd", 32),
+        ),
     };
 }

@@ -169,7 +169,7 @@ fn naiveBody(_: void, iters: u64) u64 {
                 policy.bot_signatures.SCRAPER_LIBRARIES ++
                 policy.bot_signatures.SEARCH_CRAWLERS) |pattern|
             {
-                if (std.ascii.indexOfIgnoreCase(ua, pattern) != null) break :blk true;
+                if (std.ascii.findIgnoreCase(ua, pattern) != null) break :blk true;
             }
             break :blk false;
         };
@@ -213,7 +213,7 @@ fn trieBody(trie: *const policy.radix_trie.Trie, iters: u64) u64 {
     var found: u64 = 0;
     var i: u64 = 0;
     while (i < iters) : (i += 1) {
-        if (trie.matchIpStr(test_ips[i % test_ips.len])) |a| found +%= @intFromEnum(a);
+        if (trie.matchIpStr(test_ips[i % test_ips.len])) |a| found +%= @backingInt(a);
     }
     return found;
 }
@@ -222,7 +222,7 @@ fn trie6Body(trie: *const policy.radix_trie.Trie, iters: u64) u64 {
     var found: u64 = 0;
     var i: u64 = 0;
     while (i < iters) : (i += 1) {
-        if (trie.matchIpStr(test_ips6[i % test_ips6.len])) |a| found +%= @intFromEnum(a);
+        if (trie.matchIpStr(test_ips6[i % test_ips6.len])) |a| found +%= @backingInt(a);
     }
     return found;
 }
@@ -289,7 +289,7 @@ fn edBody(ctx: *const EdCtx, iters: u64) u64 {
 }
 
 fn benchTokens(io: std.Io, runs: *Runs) !void {
-    const seed = [_]u8{0x42} ** 32;
+    const seed = @as([32]u8, @splat(0x42));
     const keys = crypto.Keys.derive(&seed);
     const now: u64 = 1_725_700_000;
     const fp = crypto.computeFingerprintKeyed(&keys.fingerprint, "203.0.113.195", "Chrome/128");
@@ -424,7 +424,7 @@ fn policyBody(engine: *const policy.Engine, iters: u64) u64 {
             .user_agent = req.getHeader("user-agent") orelse "",
             .headers = hdrs[0..req.header_count],
         });
-        n +%= @intFromEnum(d.action);
+        n +%= @backingInt(d.action);
     }
     return n;
 }
@@ -442,7 +442,7 @@ fn wafBodyScan(ctx: BodyCtx, iters: u64) u64 {
             .user_agent = "Mozilla/5.0",
             .body = ctx.body,
         });
-        n +%= @intFromEnum(d.action);
+        n +%= @backingInt(d.action);
     }
     return n;
 }

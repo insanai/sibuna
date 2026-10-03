@@ -48,7 +48,7 @@ test "reject malformed headers before payload allocation" {
 test "aggregate fragments bounded independently of each frame" {
     var receiver: ws.Receiver = .{};
     var wire: [ws.max_message + 8]u8 = undefined;
-    const payload = [_]u8{'a'} ** ws.max_message;
+    const payload = @as([ws.max_message]u8, @splat('a'));
     var encoded = try ws.encode(&wire, .binary, false, &payload, .client, .{ 1, 2, 3, 4 });
     try t.expect((try receiver.accept(try ws.decode(encoded, .server))) == .fragment);
     encoded = try ws.encode(&wire, .continuation, true, "x", .client, .{ 5, 6, 7, 8 });

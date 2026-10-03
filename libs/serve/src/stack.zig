@@ -13,7 +13,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-pub const debug_scale: usize = if (builtin.mode == .Debug) 4 else 1;
+pub const debug_scale: usize = if (builtin.mode == .debug) 4 else 1;
 
 pub fn bytes(usable: usize) usize {
     return usable * debug_scale + (std.options.signal_stack_size orelse 0);

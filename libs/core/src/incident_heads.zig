@@ -4,6 +4,7 @@
 //! lose userinfo, query values and fragments, and every query value is masked before any
 //! byte is copied. Truncation is decided after redaction and flagged, never silent; the
 //! head is a transcript of what was seen, not a rebuild.
+const repeat = @import("text").repeat;
 const std = @import("std");
 pub const request_bytes = 2048;
 pub const response_bytes = 1024;
@@ -46,7 +47,7 @@ const url_headers = [_][]const u8{ "origin", "referer", "location" };
 pub fn secretHeader(name: []const u8) bool {
     for (secret_headers) |secret| if (std.ascii.eqlIgnoreCase(name, secret)) return true;
     const marks = [_][]const u8{ "token", "secret", "password", "session", "apikey" };
-    for (marks) |mark| if (std.ascii.indexOfIgnoreCase(name, mark) != null) return true;
+    for (marks) |mark| if (std.ascii.findIgnoreCase(name, mark) != null) return true;
     return false;
 }
 
@@ -256,13 +257,14 @@ test "heads keep listed values, redact the rest and query values, and flag trunc
     );
     // A long credential value is redacted before it costs any of the bound, so a raw head
     // wider than the buffer still fits whole; truncation follows redaction, not the input.
-    const wide = "HTTP/1.1 101 Switching Protocols\r\nSet-Cookie: " ++ ("c" ** 3000) ++
+    const wide = "HTTP/1.1 101 Switching Protocols\r\nSet-Cookie: " ++
+        (&repeat("c", 3000)) ++
         "\r\nUpgrade: websocket\r\n\r\n";
     const fits = responseHead(wide, &none, &response);
     try t.expect(!fits.truncated);
     try t.expectEqualStrings("HTTP/1.1 101 Switching Protocols\r\nSet-Cookie: [redacted]" ++
         "\r\nUpgrade: websocket\r\n", response[0..fits.len]);
-    const long = [_]u8{'a'} ** 4000;
+    const long = @as([4000]u8, @splat('a'));
     const big = [_]struct { name: []const u8, value: []const u8 }{
         .{ .name = "User-Agent", .value = &long },
     };
@@ -284,7 +286,7 @@ test "operator additions keep values, credential names still lose them, names ar
     try t.expect(try extra.add("Authorization"));
     try t.expectError(error.InvalidHeaderName, extra.add("bad name"));
     try t.expectError(error.InvalidHeaderName, extra.add(""));
-    try t.expectError(error.InvalidHeaderName, extra.add(&([_]u8{'a'} ** 65)));
+    try t.expectError(error.InvalidHeaderName, extra.add(&(@as([65]u8, @splat('a')))));
     try t.expectEqual(@as(u8, 2), extra.count);
     var full: Extra = .{};
     for (0..max_extra) |i| {

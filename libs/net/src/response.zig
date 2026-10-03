@@ -67,7 +67,7 @@ pub fn write(
             "X-Content-Type-Options: nosniff\r\n" ++
             "{s}\r\n",
         .{
-            @intFromEnum(status),
+            @backingInt(status),
             status.reason(),
             content_type,
             body.len,

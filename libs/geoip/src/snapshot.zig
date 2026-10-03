@@ -81,7 +81,7 @@ fn significant(class: Class, ip: *const [16]u8) []const u8 {
 
 fn encodeRow(previous: ?ranges.Range, value: ranges.Range, out: *[max_row_bytes]u8) usize {
     const class = classOf(value.first, value.last);
-    var tag: u8 = @intFromEnum(class);
+    var tag: u8 = @backingInt(class);
     var length: usize = 1;
     const adjacent = if (previous) |p| blk: {
         const successor = address.next(p.last) orelse break :blk false;
@@ -121,7 +121,7 @@ fn decodeRow(previous: ?ranges.Range, bytes: []const u8) Error!Decoded {
     if (bytes.len < 1) return error.InvalidSnapshot;
     const tag = bytes[0];
     if (tag & 0x7c != 0 or tag & 0x03 == 3) return error.InvalidSnapshot;
-    const class: Class = @enumFromInt(@as(u2, @truncate(tag)));
+    const class: Class = @fromBackingInt(@intCast(@as(u2, @truncate(tag))));
     const adjacent = tag & adjacent_bit != 0;
     const w = width(class);
     var offset: usize = 1;
@@ -181,7 +181,7 @@ pub fn encode(writer: *std.Io.Writer, db: *const database.Database) !void {
     if (header_bytes + @as(usize, payload.length) > max_bytes) return error.InvalidSnapshot;
     var header: [header_bytes]u8 = @splat(0);
     header[0..8].* = magic.*;
-    header[8] = @intFromEnum(db.provider);
+    header[8] = @backingInt(db.provider);
     @memcpy(header[10..][0..db.version.len], db.version.slice());
     std.mem.writeInt(u32, header[20..24], @intCast(db.ranges.len), .big);
     std.mem.writeInt(u32, header[24..28], payload.length, .big);

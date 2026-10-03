@@ -17,7 +17,7 @@ pub fn query(owner: *Persistent, input: p.events.Query) !p.StorageResult {
         .time = std.math.maxInt(i64),
         .id = std.math.maxInt(i64),
     };
-    const module: u64 = if (input.module) |m| @intFromEnum(m) else 3;
+    const module: u64 = if (input.module) |m| @backingInt(m) else 3;
     const sql = statement(input.grouped, input.campaign != 0, input.incident != 0);
     var result = try db.query(owner.db, owner.gpa, sql, &.{
         integer(input.from),             integer(input.until),

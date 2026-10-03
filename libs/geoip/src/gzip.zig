@@ -21,7 +21,7 @@ pub fn decode(
     var window: [std.compress.flate.max_window_len]u8 = undefined;
     var inflater: std.compress.flate.Decompress = .init(&input, .gzip, &window);
     var buffer: [8192]u8 = undefined;
-    var crc = std.hash.crc.Crc32.init();
+    var crc = std.hash.crc.@"CRC-32/ISO-HDLC".init();
     var expanded: usize = 0;
     while (true) {
         try io.checkCancel();

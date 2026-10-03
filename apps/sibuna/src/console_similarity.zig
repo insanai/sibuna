@@ -83,7 +83,7 @@ fn decode(hex: []const u8) error{InvalidVector}!embedding.Vector {
 
 test "stored vectors reject empty, zero and non-finite evidence" {
     try std.testing.expectError(error.InvalidVector, decode(""));
-    const zero = [_]u8{'0'} ** 512;
+    const zero = @as([512]u8, @splat('0'));
     try std.testing.expectError(error.InvalidVector, decode(&zero));
     const bytes = embedding.toBytes(&embedding.embed("test payload"));
     const hex = std.fmt.bytesToHex(bytes, .lower);

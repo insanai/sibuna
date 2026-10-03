@@ -26,7 +26,7 @@ pub const MAX_RULES: usize = 128;
 pub const MAX_RULE_NAME: usize = 128;
 /// Declarative rules that matched during this evaluation, including nonterminal WEIGH rules.
 /// Indices belong only to the immutable engine evaluated by the caller.
-pub const RuleMatches = std.StaticBitSet(MAX_RULES);
+pub const RuleMatches = std.bit_set.Static(MAX_RULES);
 
 /// Everything the engine looks at for one request; all slices borrow the
 /// connection buffer.
@@ -263,7 +263,7 @@ pub const Engine = struct {
         req: RequestView,
         matches: *RuleMatches,
     ) Decision {
-        matches.* = RuleMatches.initEmpty();
+        matches.* = RuleMatches.empty;
         return self.evaluateObserved(req, true, matches);
     }
 
@@ -513,7 +513,7 @@ test "observed evaluation records weigh and terminal matches without changing de
     try engine.addRule(.{ .name = "allow", .action = .allow, .path_pattern = "/public" });
     try engine.addRule(.{ .name = "deny", .action = .deny });
     try engine.addRule(.{ .name = "unreached", .action = .weigh, .weight = 99 });
-    var matches = RuleMatches.initFull();
+    var matches = RuleMatches.full;
     for ([_][]const u8{ "/public", "/private" }, 0..) |path, index| {
         const request: RequestView = .{ .path = path, .client_ip = "8.8.8.8" };
         const decision = engine.evaluateRequestWithMatches(request, &matches);

@@ -1,3 +1,4 @@
+const repeat = @import("text").repeat;
 const std = @import("std");
 const t = std.testing;
 const p = @import("console").protocol;
@@ -16,7 +17,7 @@ fn insert(fx: *Fixture, node: u32, sequence: u64) !void {
         &.{
             util.integer((@as(u64, node) << 40) + sequence),
             util.integer(node),
-            util.text("/public/" ++ "x" ** 128 ++ "?secret=hidden"),
+            util.text("/public/" ++ &repeat("x", 128) ++ "?secret=hidden"),
         },
     );
     _ = try db.exec(

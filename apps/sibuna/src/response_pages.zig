@@ -52,7 +52,7 @@ pub fn respond(
     var id: [16]u8 = undefined;
     var block: [challenge_page.block_capacity]u8 = undefined;
     const values: page_template.Values = .{
-        .status = @intFromEnum(status),
+        .status = @backingInt(status),
         .reason = if (extra.reason.len != 0) extra.reason else text,
         .retry_after = extra.retry_after,
         .request_id = requestId(ctx, &id),
@@ -70,7 +70,7 @@ pub fn respond(
             "Connection: {s}\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\n" ++
             "{s}{s}\r\n",
         .{
-            @intFromEnum(status),
+            @backingInt(status),
             status.reason(),
             length,
             if (ctx.keep_alive) "keep-alive" else "close",

@@ -167,7 +167,7 @@ fn matchPrefixWildcard(pattern: []const u8, text: []const u8) bool {
     if (std.mem.startsWith(u8, pattern, "/")) {
         return std.mem.eql(u8, pattern, text);
     }
-    return std.ascii.indexOfIgnoreCase(text, pattern) != null;
+    return std.ascii.findIgnoreCase(text, pattern) != null;
 }
 
 test "rule pattern matches paths, uas, and wildcards" {

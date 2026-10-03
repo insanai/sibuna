@@ -1,5 +1,6 @@
 //! Socket-independent frame I/O. The owner supplies deadlines and serializes writes;
 //! role controls masking in both directions, including management TLS clients.
+const repeat = @import("text").repeat;
 const std = @import("std");
 const ws = @import("websocket.zig");
 pub const ReadError = std.Io.Reader.Error || ws.Error;
@@ -39,7 +40,7 @@ fn validate(header: []const u8, role: ws.Role) ws.Error!void {
 test "one bounded reader supports masked clients and unmasked servers" {
     const t = std.testing;
     var bytes: [ws.max_message + 14]u8 = undefined;
-    const payload = "a" ** 512;
+    const payload = &repeat("a", 512);
     for ([_]ws.Role{ .server, .client }) |role| {
         const sending: ws.Role = if (role == .server) .client else .server;
         const frame = try ws.encode(

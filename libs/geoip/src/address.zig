@@ -2,7 +2,7 @@
 //! assign a country to private, reserved, documentation or transition space.
 const std = @import("std");
 pub const Error = error{InvalidAddress};
-pub const mapped = [_]u8{0} ** 10 ++ .{ 255, 255 };
+pub const mapped = @as([10]u8, @splat(0)) ++ .{ 255, 255 };
 
 pub fn parse(text: []const u8) Error![16]u8 {
     if (text.len == 0 or text.len > 45 or std.mem.indexOfScalar(u8, text, '%') != null)

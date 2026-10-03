@@ -35,10 +35,10 @@ pub fn write(owner: *Persistent, input: wire.Batch) !p.StorageResult {
         if (record.ip.len == 0 or record.second > input.now) return .{ .failed = .invalid_input };
         try writer.writeAll(if (i == 0) "(?,?,?,?,?,?,?,?,?,?)" else ",(?,?,?,?,?,?,?,?,?,?)");
         values[count..][0..10].* = .{
-            integer(input.node),                   text(&boot),
-            integer(record.second),                text(record.ip.slice()),
-            integer(@intFromEnum(record.outcome)), integer(record.cause),
-            integer(record.algorithm),             integer(record.parameter),
+            integer(input.node),                  text(&boot),
+            integer(record.second),               text(record.ip.slice()),
+            integer(@backingInt(record.outcome)), integer(record.cause),
+            integer(record.algorithm),            integer(record.parameter),
             integer(record.openings),
             if (record.duration_ms) |ms|
                 integer(ms)
@@ -109,7 +109,7 @@ pub fn query(owner: *Persistent, input: wire.Query) !p.StorageResult {
     }
     if (input.outcome) |outcome| {
         try writer.writeAll("AND outcome=? ");
-        values[count] = integer(@intFromEnum(outcome));
+        values[count] = integer(@backingInt(outcome));
         count += 1;
     }
     if (input.cause) |cause| {
@@ -166,7 +166,9 @@ fn decode(row: []const ?[]const u8) !wire.Row {
         .node = @intCast(try util.number(row[1])),
         .second = try util.number(row[2]),
         .ip = try p.Bytes(48).init(row[3] orelse return error.InvalidStoredValue),
-        .outcome = if (outcome <= 2) @enumFromInt(outcome) else return error.InvalidStoredValue,
+        .outcome = if (outcome <= 2) @fromBackingInt(
+            @intCast(outcome),
+        ) else return error.InvalidStoredValue,
         .cause = @intCast(@min(try util.number(row[5]), 255)),
         .algorithm = @intCast(@min(try util.number(row[6]), 255)),
         .parameter = @intCast(@min(try util.number(row[7]), 255)),

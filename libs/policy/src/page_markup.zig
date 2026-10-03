@@ -19,7 +19,7 @@ const attributes = " id class title lang dir role tabindex hidden open disabled 
 pub fn validate(source: []const u8) Error!void {
     // Retain clear diagnostics for schemes even when nested inside another attribute.
     for ([_][]const u8{ "javascript:", "vbscript:", "data:", "<!--" }) |token|
-        if (std.ascii.indexOfIgnoreCase(source, token) != null) return error.ForbiddenContent;
+        if (std.ascii.findIgnoreCase(source, token) != null) return error.ForbiddenContent;
     var parser: Parser = .{ .source = source };
     while (std.mem.indexOfScalarPos(u8, source, parser.at, '<')) |open| {
         parser.at = open;
@@ -138,7 +138,7 @@ fn validateUrl(value: []const u8) Error!void {
 
 fn validateCss(value: []const u8) Error!void {
     for ([_][]const u8{ "\\", "&", "/*", "url", "@import", "expression", "{{" }) |token|
-        if (std.ascii.indexOfIgnoreCase(value, token) != null) return error.ForbiddenContent;
+        if (std.ascii.findIgnoreCase(value, token) != null) return error.ForbiddenContent;
 }
 
 fn whitespace(byte: u8) bool {

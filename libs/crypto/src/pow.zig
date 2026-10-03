@@ -87,7 +87,7 @@ pub fn solveHashcashBits(challenge: []const u8, bits: u32, max_nonce: u64) ?u64 
 }
 
 test "leading zero counting in bits and hex" {
-    var digest: [32]u8 = [_]u8{0xff} ** 32;
+    var digest: [32]u8 = @as([32]u8, @splat(0xff));
     try std.testing.expectEqual(@as(u32, 0), countLeadingZeroBits(digest));
     try std.testing.expectEqual(@as(u32, 0), countLeadingZeroHex(digest));
 

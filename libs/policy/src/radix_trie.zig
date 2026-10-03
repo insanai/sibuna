@@ -22,9 +22,9 @@ pub const Prefix = struct {
 };
 
 pub const Trie = struct {
-    children: [MAX_NODES][2]u16 = [_][2]u16{[_]u16{ 0, 0 }} ** MAX_NODES,
+    children: [MAX_NODES][2]u16 = @splat(.{ 0, 0 }),
     /// 0 = no action; otherwise `@intFromEnum(action) + 1`.
-    actions: [MAX_NODES]u8 = [_]u8{0} ** MAX_NODES,
+    actions: [MAX_NODES]u8 = @as([MAX_NODES]u8, @splat(0)),
     node_count: u16 = 1,
     /// Node at depth 96 under `::ffff:0:0`, so IPv4 lookups skip the
     /// mapped prefix and walk at most 32 levels.
@@ -57,7 +57,7 @@ pub const Trie = struct {
     pub fn insert(self: *Trie, address: u128, prefix_len: u8, action: Action) !void {
         std.debug.assert(prefix_len <= 128);
         const node = try self.pathTo(address, prefix_len);
-        self.actions[node] = @intFromEnum(action) + 1;
+        self.actions[node] = @backingInt(action) + 1;
     }
 
     /// Inserts a `/32` or `/128` host entry or a CIDR block of either family.
@@ -85,7 +85,7 @@ pub const Trie = struct {
             if (self.actions[current] != 0) best = self.actions[current];
         }
         if (best == 0) return null;
-        return @enumFromInt(best - 1);
+        return @fromBackingInt(@intCast(best - 1));
     }
 
     pub fn matchIpStr(self: *const Trie, ip_str: []const u8) ?Action {

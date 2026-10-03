@@ -65,7 +65,7 @@ pub const Kernel = struct {
                 if (std.mem.allEqual(u8, &ip.bytes, 0)) ip.bytes = .{ 127, 0, 0, 1 };
             },
             .ip6 => |*ip| {
-                if (std.mem.allEqual(u8, &ip.bytes, 0)) ip.bytes = .{0} ** 15 ++ .{1};
+                if (std.mem.allEqual(u8, &ip.bytes, 0)) ip.bytes = @as([15]u8, @splat(0)) ++ .{1};
             },
         }
         if (wake_address.connect(self.io, .{ .mode = .stream })) |stream| {

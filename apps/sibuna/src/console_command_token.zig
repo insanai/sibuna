@@ -40,8 +40,8 @@ fn operation(args: Args, writer: *Writer) command.Error!client.Endpoint {
     if (args.kind == .mint_token) {
         var selected: [8]p.tokens.Scope = undefined;
         var count: usize = 0;
-        inline for (@typeInfo(p.tokens.Scope).@"enum".fields) |field| {
-            const scope: p.tokens.Scope = @enumFromInt(field.value);
+        inline for (@typeInfo(p.tokens.Scope).@"enum".field_names) |field_name| {
+            const scope: p.tokens.Scope = @field(p.tokens.Scope, field_name);
             if (args.scopes & scope.bit() != 0) {
                 selected[count] = scope;
                 count += 1;

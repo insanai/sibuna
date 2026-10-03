@@ -1,4 +1,5 @@
 //! Audit summaries are an allowlisted view, never arbitrary stored JSON or policy secrets.
+const repeat = @import("text").repeat;
 const std = @import("std");
 const p = @import("console").protocol;
 pub const Coverage = struct { truncated: bool = false, redacted: bool = false };
@@ -100,7 +101,7 @@ test "audit summary redaction drops secrets and truncates complete UTF-8 charact
     var coverage: Coverage = .{};
     try copy(
         &output,
-        "{\"label\":\"" ++ "a" ** 63 ++ "é\",\"revision\":2," ++
+        "{\"label\":\"" ++ &repeat("a", 63) ++ "é\",\"revision\":2," ++
             "\"password\":\"private\",\"token\":\"private\",\"nested\":{\"secret\":true}}",
         &coverage,
         "",

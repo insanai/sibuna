@@ -16,7 +16,7 @@ pub fn authorize(
 ) !p.StorageResult {
     if (now > std.math.maxInt(i64)) return .{ .failed = .unauthorized };
     const hex = std.fmt.bytesToHex(digest, .lower);
-    const mode: zx.Value = .{ .integer = if (kind) |value| @intFromEnum(value) else -1 };
+    const mode: zx.Value = .{ .integer = if (kind) |value| @backingInt(value) else -1 };
     var result = try db.query(owner.db, owner.gpa, sql, &.{
         util.integer(p.tokens.known_scopes), util.text(&hex), util.integer(now),
         util.integer(now),                   mode,            mode,

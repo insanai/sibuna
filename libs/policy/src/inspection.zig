@@ -28,7 +28,7 @@ pub const Findings = struct {
 };
 
 pub fn bit(category: waf.AttackCategory) u8 {
-    return @as(u8, 1) << @intCast(@intFromEnum(category));
+    return @as(u8, 1) << @intCast(@backingInt(category));
 }
 
 pub fn auditName(category: waf.AttackCategory) []const u8 {
@@ -71,7 +71,7 @@ fn inspectField(
 ) void {
     // A first audit hit must not hide another category in the same field, including
     // an encoded enforcing signature. Disabled categories never run their detector.
-    inline for (comptime std.meta.tags(waf.AttackCategory)) |category| {
+    inline for (comptime std.enums.values(waf.AttackCategory)) |category| {
         const mode = modes.get(category);
         if (mode != .disabled and result.audited & bit(category) == 0) {
             if (waf.inspectCategory(sigs, category, text)) |violation| {
