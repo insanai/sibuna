@@ -52,7 +52,7 @@ DASHBOARDS = 8
 
 
 def build(prefix, console, cluster, geoip=None):
-    args = ["zig", "build", "-j1", "-Doptimize=ReleaseFast", "-p", str(prefix)]
+    args = ["zig", "build", "-j1", "-Doptimize=fast", "-p", str(prefix)]
     if not console:
         args.append("-Dconsole=false")
     if cluster:

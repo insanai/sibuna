@@ -87,7 +87,7 @@ Sibuna provides two operational surfaces within the same executable:
 ## Quickstart
 
 Download a package from [Releases](https://github.com/insanai/sibuna/releases), or build from source.
-The v0.1.0 packages include the engine, embedded storage, browser solver and management console.
+The v0.2.0 packages include the engine, embedded storage, browser solver and management console.
 Clustering requires a separate `-Dcluster=true` source build with OpenSSL 3.
 
 | Platform | Package | Requirements |
@@ -106,8 +106,8 @@ ordered shutdown and restrict seed, credential and data files with Windows ACLs.
 For Linux x86-64:
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.1.0/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.1.0/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.2.0/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.2.0/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)
@@ -120,8 +120,8 @@ Terminate public HTTPS at your ingress and keep Sibuna's listener private; see
 
 ### 1. Build the Executable
 
-Use **Zig 0.16.0**, the checksum-pinned release toolchain. Zig 0.17 requires a separate
-migration of Sibuna and its dependencies.
+Use **Zig 0.17.0**, the checksum-pinned release toolchain. The storage libraries include
+reviewable compatibility sources in `vendor/`; original release digests are recorded there.
 
 ```sh
 # Clone the repository
@@ -130,7 +130,7 @@ cd sibuna
 
 # Compile optimized release binary
 python3 tools/prepare_build.py
-zig build -Doptimize=ReleaseFast
+zig build -Doptimize=fast
 ```
 
 The resulting standalone binary is located at `./zig-out/bin/sibuna`.

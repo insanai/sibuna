@@ -204,6 +204,21 @@ processes. It checks status codes, sessions across nodes, authenticated WAF deni
 challenge rejection, reputation propagation, and continued HTTP service with one member down.
 Batch timings include client and loopback costs. The harness tests loopback PSK and mutual TLS. WAN behavior needs separate measurements.
 
+= Release toolchain
+
+Version 0.2.0 uses checksum-pinned Zig 0.17.0 on every release platform. Build configuration
+uses lazy paths and deferred command arguments; source code uses the compiler's field names,
+field types and attributes directly. The console exports only its declared browser ABI,
+excluding compiler runtime globals. Compatibility changes preserve the HTTP, challenge,
+console and storage wire formats. The primitive benchmark record identifies its own source
+revision and compiler; platform qualification and performance acceptance are separate gates.
+
+Zaxonlite and Paxos 0.7.0 do not yet publish Zig 0.17 packages. Their MIT library sources are
+included in `vendor/`, with original archive hashes and file digests. Library-only build
+entry points retain SQLite, sqlite-vec and optional OpenSSL configuration. No generated source
+or compiler-cache file is patched. Replace these snapshots with upstream compatible packages
+only after storage replay, cluster and native-platform qualification.
+
 = Native platforms and release boundaries
 
 The packaged engine targets Linux x86-64 and ARM64, macOS Intel and Apple Silicon, and

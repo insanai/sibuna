@@ -191,7 +191,8 @@ throughput by at most one percent and p99 latency by at most ten percent under t
 
 #callout("Status and applicability")[
   This architectural discussion defines requirements and their rationale. Proposed targets
-  are not measured guarantees. Zig 0.16.0 and Zaxonlite 0.6.2 are the implementation baseline.
+  are not measured guarantees. Sibuna 0.2.0 uses Zig 0.17.0 and the Zaxonlite 0.7.0 library sources, with explicit
+  compiler compatibility changes and provenance in `vendor/`.
   The service and interface logic are Zig; browser glue and committed CSS supply host
   capabilities and styling. Storage links SQLite and libc as described in SID 0005.
   Only browser modules target `wasm32-freestanding`.
@@ -590,7 +591,7 @@ about firewalls.
   `respondStreaming` write responses. Bodies are limited to 1 MB except the policy import
   route (8 MB). Every response carries `Cache-Control`, `Content-Security-Policy`
   (`default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'`; add only the exact console WebSocket origin if required by a supported browser), `X-Content-Type-Options`, `Referrer-Policy`, and `X-Frame-Options`.
-- *WebSocket.* `Request.upgradeRequested` and `respondWebSocket` provide the Zig 0.16
+- *WebSocket.* `Request.upgradeRequested` and `respondWebSocket` provide the Zig 0.17
   handshake/writer primitives. `readSmallMessage` is bounded by its input buffer, not a
   built-in 4 KB constant, and rejects fragmentation. The kernel must implement and test
   RFC 6455 fragmentation, masking, RSV/opcode checks, UTF-8, control-frame limits and close
@@ -2000,7 +2001,7 @@ crossing 640 KiB triggers the dependency and browser-timing review above.
 - zenfmt ZDS 0016, “The zenfmt Server: REST, Streaming, and the Administered Service”
   (`zenfmt/docs/zds/records/0016-server.typ`, reviewed from the sibling checkout): service,
   UI/glue and vendored-style patterns. Sibuna defines its own asset build and peer protocol.
-- #link("https://github.com/ziglang/zig/blob/0.16.0/lib/std/http/Server.zig")[Zig 0.16.0 HTTP/WebSocket source], checked against the installed source; `std.crypto.pwhash.argon2`.
+- #link("https://github.com/ziglang/zig/blob/0.17.0/lib/std/http/Server.zig")[Zig 0.17.0 HTTP/WebSocket source], checked against the installed source; `std.crypto.pwhash.argon2`.
 - #link("https://tailwindcss.com/docs/installation/tailwind-cli")[Tailwind CLI] and
   #link("https://daisyui.com/docs/config/")[daisyUI configuration]: CLI dependency and explicit component inclusion.
 - #link("https://db-ip.com/db/lite.php")[DB-IP Lite] (CC BY 4.0) and

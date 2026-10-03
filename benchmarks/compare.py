@@ -223,7 +223,7 @@ def main():
     if args.batches < 1:
         parser.error('--batches must be positive')
     binary = args.anubis.resolve(strict=True)
-    subprocess.run(['zig', 'build', '-Doptimize=ReleaseFast'], cwd=ROOT, check=True)
+    subprocess.run(['zig', 'build', '-Doptimize=fast'], cwd=ROOT, check=True)
     data = {'meta': metadata(), 'anubis_version': subprocess.check_output(
         [str(binary), '--version'], text=True).strip(), 'runs': [], 'limitations': [
         'Two clients, two Sibuna workers, GOMAXPROCS=2; loopback HTTP forward-auth, no origin or TLS.',

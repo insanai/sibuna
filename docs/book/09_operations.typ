@@ -10,7 +10,7 @@
 
 === Release Packages and Licenses
 
-Version 0.1.0 packages include persistent storage, the browser solver and the optional
+Version 0.2.0 packages include persistent storage, the browser solver and the optional
 management console. Linux x86-64 and ARM64 packages link musl statically; macOS packages
 cover Intel and Apple Silicon and are unsigned. Windows packages contain a native x86-64 executable for Windows 10 / Server 2019 or later.
 Use Ctrl+C for ordered shutdown and restrict credential and data files with Windows ACLs. Clustering requires a separate `-Dcluster=true` source build with OpenSSL 3.
@@ -236,8 +236,9 @@ console encryption, challenge and consensus keys. `--console-peer-ca-file` optio
 PEM trust anchors for a private management PKI; otherwise the client uses system roots.
 Certificate hostname validation always applies. Use a DNS name in each management origin,
 resolvable by its peers and listed in the certificate's DNS subject alternative names. The
-pinned Zig 0.16 verifier checks DNS names; an IP-only subject alternative name does not
-authenticate a numeric-IP management origin. Private certificates must also have the normal
+pinned Zig 0.17 verifier also supports IP subject alternative names for numeric-IP origins.
+An address must match the certificate's IP alternative name; DNS names must match a DNS
+alternative name. Private certificates must also have the normal
 CA constraints, key usages and authority identifiers. Key rotation requires coordinated restart.
 The Nodes API and its subscription report receipt age, clock skew, boot changes and sampling
 loss. Missing observations remain unavailable and disconnected values remain stale; received
@@ -701,9 +702,9 @@ harness creates temporary CA-signed identities and exercises this mutual-TLS tra
   Build the binary for a target, package it, and run it under systemd.
 ])
 
-- `zig build -Doptimize=ReleaseFast` produces a binary with storage compiled in (it links
+- `zig build -Doptimize=fast` produces a binary with storage compiled in (it links
   libc for SQLite).
-- `zig build -Doptimize=ReleaseFast -Dstorage=false` produces a fully static binary with no libc
+- `zig build -Doptimize=fast -Dstorage=false` produces a fully static binary with no libc
   dependency, suitable for a `scratch` container image; `--data-dir` is then refused at start.
 - `zig build -Dcluster=true` adds replication and requires OpenSSL 3 at build and run time.
 

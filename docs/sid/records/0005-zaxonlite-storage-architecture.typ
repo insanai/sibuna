@@ -7,7 +7,7 @@
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
 #let sid-status = "Published"
-#let sid-last-updated = "2026-09-14"
+#let sid-last-updated = "2026-10-03"
 
 #import "../../shared/sid.typ": sid-document
 
@@ -71,6 +71,13 @@
   recreated rather than upgraded. This record describes the code as
   built and lists what remains unexercised.
 ], fill: amber-light, stroke: amber)
+
+For Sibuna 0.2.0, the same Zaxonlite and Paxos 0.7.0 library sources are included in `vendor/`
+with explicit Zig 0.17 compatibility changes. Original archives, package hashes and source
+file digests are recorded in `vendor/provenance.json`; MIT licenses remain with the sources.
+The library-only build graph excludes the unused terminal UI, preserves the SQLite and
+OpenSSL settings, and changes neither durable formats nor database schema. Compatibility
+is qualified through Sibuna's replay and cluster tests, rather than an edited package cache.
 
 = Context and motivation
 

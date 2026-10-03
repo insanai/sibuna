@@ -91,7 +91,7 @@ def source_paths():
     """Track build inputs and assets without hashing generated dependencies or prior results."""
     names = subprocess.check_output(
         ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z", "--",
-         "build.zig", "build.zig.zon", "build", "apps", "libs", "benchmarks", "tools"],
+         "build.zig", "build.zig.zon", "build", "apps", "libs", "benchmarks", "tools", "vendor"],
         cwd=ROOT,
     )
     paths = {pathlib.Path(name.decode()) for name in names.split(b"\0") if name}
@@ -118,6 +118,16 @@ def cpu_name():
     return "unknown"
 
 
+def storage_provenance(manifest):
+    """Original pin plus explicit compatibility source; the source hash covers vendor files."""
+    if '.path = "vendor/zaxonlite"' in manifest:
+        original = json.loads((ROOT / "vendor/provenance.json").read_text())["zaxonlite"]
+        return {"url": original["url"], "hash": original["zig_package_hash"],
+                "path": "vendor/zaxonlite", "compatibility": "Zig 0.17"}
+    return {"url": re.search(r'\.url\s*=\s*"([^"]+)"', manifest).group(1),
+            "hash": re.search(r'\.hash\s*=\s*"([^"]+)"', manifest).group(1)}
+
+
 def metadata(binary=None):
     manifest = (ROOT / "build.zig.zon").read_text()
     artifact = pathlib.Path(binary) if binary else ROOT / "zig-out/bin/sibuna"
@@ -129,12 +139,9 @@ def metadata(binary=None):
         source.update(len(content).to_bytes(8, "big"))
         source.update(content)
     return {
-        "zaxonlite": {
-            "url": re.search(r'\.url\s*=\s*"([^"]+)"', manifest).group(1),
-            "hash": re.search(r'\.hash\s*=\s*"([^"]+)"', manifest).group(1),
-        },
+        "zaxonlite": storage_provenance(manifest),
         "source_sha256": source.hexdigest(),
-        "source_manifest_version": 2,
+        "source_manifest_version": 3,
         "source_file_count": len(paths),
         "daemon_sha256": hashlib.sha256(artifact.read_bytes()).hexdigest(),
         "date": datetime.datetime.now(datetime.timezone.utc).isoformat(),
@@ -155,8 +162,8 @@ def record(data, name):
 
 
 def main():
-    subprocess.run(["zig", "build", "-j1", "wasm", "-Doptimize=ReleaseFast"], cwd=ROOT, check=True)
-    subprocess.run(["zig", "build", "-j1", "-Doptimize=ReleaseFast"], cwd=ROOT, check=True)
+    subprocess.run(["zig", "build", "-j1", "wasm", "-Doptimize=fast"], cwd=ROOT, check=True)
+    subprocess.run(["zig", "build", "-j1", "-Doptimize=fast"], cwd=ROOT, check=True)
     data = json.loads(command(str(ROOT / "zig-out/bin/sibuna-benchmark")))
     data["meta"].update(metadata())
     data["meta"].update({

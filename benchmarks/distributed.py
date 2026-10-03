@@ -280,7 +280,7 @@ def main():
     args = parser.parse_args()
     if not 1 <= args.requests <= 200:
         parser.error("--requests must be 1..200 to keep batches below the connection limit")
-    subprocess.run(["zig", "build", "-Dcluster=true", "-Doptimize=ReleaseFast"],
+    subprocess.run(["zig", "build", "-Dcluster=true", "-Doptimize=fast"],
                    cwd=ROOT, check=True)
     data = {"meta": metadata(), "runs": [], "limitations": [
         "One host, loopback, forward-auth; excludes origin proxy and client-facing TLS/WAN costs",

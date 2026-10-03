@@ -266,7 +266,7 @@ def main():
     parser.add_argument("--threads", type=int, default=2)
     parser.add_argument("--idle-seconds", type=int, default=10)
     args = parser.parse_args()
-    subprocess.run(["zig", "build", "-Dcluster=true", "-Doptimize=ReleaseFast"],
+    subprocess.run(["zig", "build", "-Dcluster=true", "-Doptimize=fast"],
                    cwd=ROOT, check=True)
     binary = ROOT / "zig-out/bin/sibuna"
     load = {"threads": args.threads, "connections": args.connections, "seconds": args.seconds}

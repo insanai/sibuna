@@ -1,6 +1,8 @@
-Sibuna v0.1.0 is the first binary release: proof-of-work admission, bounded application
-inspection, reverse-proxy and forward-auth modes, embedded persistent storage, and an
-opt-in management console with policy editing, incident investigation and GeoIP visualization.
+Sibuna v0.2.0 migrates the engine, console and browser solver to checksum-pinned Zig 0.17.0.
+It retains reverse-proxy and forward-auth modes, streamed uploads, WebSocket relay, embedded
+storage and the opt-in management console. Existing database schemas and wire protocols remain
+compatible. Zaxonlite and Paxos 0.7.0 library snapshots carry explicit compiler compatibility
+changes with upstream provenance and MIT licenses in vendor/. No compiler-cache patch is used.
 
 Downloads:
 - Linux x86-64 and ARM64: statically linked musl builds; Linux 5.10 or later.
@@ -26,8 +28,8 @@ Functional tests qualify both ingress modes, uploads, WebSockets, authentication
 workflows on the packaged binaries. The strict SID 0007 console-impact target is not formally
 passed: existing container measurements are inconclusive and predate recent request-path fixes.
 The historical September performance exception is not a pass for this release. Published
-benchmarks retain their measured revision and must not be treated as v0.1.0 guarantees.
+benchmarks retain their measured revision and must not be treated as v0.2.0 guarantees.
 
 Documentation: https://insanai.github.io/sibuna/
 Deployment guide: https://insanai.github.io/sibuna/book/operations.html
-Source: https://github.com/insanai/sibuna/tree/v0.1.0
+Source: https://github.com/insanai/sibuna/tree/v0.2.0

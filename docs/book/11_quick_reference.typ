@@ -19,8 +19,8 @@
 
 #card([Build], [
   ```sh
-  zig build -Doptimize=ReleaseFast          # daemon + storage
-  zig build -Doptimize=ReleaseFast -Dstorage=false   # static, no libc
+  zig build -Doptimize=fast          # daemon + storage
+  zig build -Doptimize=fast -Dstorage=false   # static, no libc
   zig build -Dcluster=true                  # Multi-Paxos, needs OpenSSL 3
   zig build test        # native, UI and live daemon tests
   zig build console-test # console workflows through a live daemon

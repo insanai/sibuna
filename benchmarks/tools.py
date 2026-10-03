@@ -324,7 +324,7 @@ def main():
         if shutil.which(tool) is None:
             parser.error(f"{tool} is required on PATH")
     anubis = args.anubis.resolve(strict=True)
-    subprocess.run(["zig", "build", "-Doptimize=ReleaseFast"], cwd=ROOT, check=True)
+    subprocess.run(["zig", "build", "-Doptimize=fast"], cwd=ROOT, check=True)
     sibuna = ROOT / "zig-out/bin/sibuna"
     load = {"threads": args.threads, "connections": args.connections, "seconds": args.seconds}
     with tempfile.TemporaryDirectory(prefix="sibuna-tools-lua-") as name:
