@@ -53,7 +53,7 @@ def terminate(proc):
             raise ctypes.WinError(ctypes.get_last_error())
         if not kernel.GenerateConsoleCtrlEvent(signal.CTRL_BREAK_EVENT, 0):
             raise ctypes.WinError(ctypes.get_last_error())
-        proc.wait(timeout=30)
+        proc.wait(timeout=10)
     finally:
         kernel.FreeConsole()
         kernel.AttachConsole(0xffffffff)  # Restore the parent's console when one exists.

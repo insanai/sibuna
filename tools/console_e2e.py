@@ -62,18 +62,24 @@ def start(binary, directory, console_port, logfile, key_file=None, proxy=False,
 
 
 def stop(proc):
-    process_control.terminate(proc)
     try:
+        process_control.terminate(proc)
         proc.wait(timeout=10)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.wait()
+        log_tail(proc)
         raise AssertionError("daemon failed to shut down within ten seconds")
-    if proc.returncode != 0 and getattr(proc, "sibuna_log", None):
-        # The temporary directory disappears with the failure; keep the evidence visible.
+    if proc.returncode != 0:
+        log_tail(proc)
+    assert proc.returncode == 0, f"daemon shutdown status {proc.returncode}"
+
+
+def log_tail(proc):
+    if getattr(proc, "sibuna_log", None):
+        # Temporary directories disappear with failures; preserve shutdown and crash evidence.
         tail = Path(proc.sibuna_log).read_text(errors="replace").splitlines()[-60:]
         sys.stderr.write("daemon log tail:\n" + "\n".join(tail) + "\n")
-    assert proc.returncode == 0, f"daemon shutdown status {proc.returncode}"
 
 
 def geo_import(console_port, cookie, csrf):

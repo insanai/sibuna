@@ -60,6 +60,7 @@ pub const AppState = struct {
     /// Connections currently served on their own threads.
     connections: std.atomic.Value(u32) = .init(0),
     stopping: std.atomic.Value(bool) = .init(false),
+    acceptors: std.atomic.Value(u16) = .init(0),
     draining: if (build_options.console) std.atomic.Value(bool) else void =
         if (build_options.console) .init(false) else {},
     tasks: @import("connection_tasks.zig").Pool = .{},
@@ -129,9 +130,12 @@ pub fn runServer(server: *Io.net.Server, io: Io, state: *AppState) void {
     }
     workerLoop(server, io, state);
     requestStop(server, io, state);
+    std.log.info("shutdown: joining accept workers", .{});
     for (workers[0..spawned]) |thread| thread.join();
+    std.log.info("shutdown: interrupting client and origin I/O", .{});
     state.idle.shutdown(io);
     state.upstream.shutdown(io);
+    std.log.info("shutdown: joining connection workers", .{});
     state.tasks.join();
     if (reaper) |thread| thread.join();
     state.upstream.drain(io);
@@ -139,7 +143,7 @@ pub fn runServer(server: *Io.net.Server, io: Io, state: *AppState) void {
 
 /// Wake each possible accept worker without closing a descriptor underneath a blocked accept.
 pub fn requestStop(listener: *Io.net.Server, io: Io, state: *AppState) void {
-    if (state.stopping.swap(true, .acq_rel)) return;
+    if (state.stopping.swap(true, .seq_cst)) return;
     var address = listener.socket.address;
     switch (address) {
         .ip4 => |*ip| if (std.mem.allEqual(u8, &ip.bytes, 0)) {
@@ -149,8 +153,15 @@ pub fn requestStop(listener: *Io.net.Server, io: Io, state: *AppState) void {
             ip.bytes = .{0} ** 15 ++ .{1};
         },
     }
-    for (0..64) |_| {
-        const wake = address.connect(io, .{ .mode = .stream }) catch break;
+    // Only workers already inside the loop can be blocked in accept. Later starters
+    // observe stopping before accepting. Surplus wakes can fill the Windows backlog
+    // after the last acceptor exits, leaving the shutdown monitor blocked in connect.
+    // Sequential consistency orders registration before the stopping check: a
+    // worker that could enter accept cannot be missed by this count.
+    const count = state.acceptors.load(.seq_cst);
+    const deadline = Io.Clock.awake.now(io).nanoseconds + std.time.ns_per_s;
+    for (0..count) |_| {
+        const wake = net.connect.boundedDeadline(io, address, deadline) catch break;
         wake.close(io);
     }
 }
@@ -159,7 +170,9 @@ pub fn requestStop(listener: *Io.net.Server, io: Io, state: *AppState) void {
 /// or idle client never delays the others. Beyond `max_connections` new
 /// connections are answered 503 and closed without allocating a thread.
 pub fn workerLoop(server: *Io.net.Server, io: Io, state: *AppState) void {
-    while (!state.stopping.load(.acquire)) {
+    _ = state.acceptors.fetchAdd(1, .seq_cst);
+    defer _ = state.acceptors.fetchSub(1, .seq_cst);
+    while (!state.stopping.load(.seq_cst)) {
         const client_stream = server.accept(io) catch |err| switch (err) {
             error.Canceled, error.SocketNotListening => return,
             else => continue,
