@@ -104,6 +104,34 @@ def dashboard(port, cookie):
         client.close()
 
 
+def ip_identity(binary, h, root, master, key_file, console_key, snapshot):
+    """Zig 0.17 must authenticate an IP SAN, not fall back to a DNS common name."""
+    directory = root / "ip-identity"
+    directory.mkdir()
+    cert, tls_key = fixture.certificate(directory, "IP:127.0.0.1")
+    peer_port, port = h.port(), h.port()
+    peer = fixture.Peer(peer_port, cert, tls_key, master)
+    peer.snapshot = snapshot
+    proc = None
+    try:
+        with (directory / "daemon.log").open("w+") as log:
+            extra = ("--console-peer", f"2=https://127.0.0.1:{peer_port}",
+                     "--console-peer-key-file", str(key_file),
+                     "--console-peer-ca-file", str(cert))
+            proc = h.start(binary, str(root / "data"), port, log, str(console_key), True,
+                           extra=extra)
+            wait(lambda: peer.authenticated > 0, "numeric origin with matching IP SAN", 20)
+            h.stop(proc)
+            proc = None
+            assert not peer.errors, peer.errors
+    finally:
+        try:
+            if proc is not None and proc.poll() is None:
+                h.stop(proc)
+        finally:
+            peer.close()
+
+
 def check(binary, h):
     headers = {"Origin": "https://console.test", "X-Forwarded-Proto": "https"}
     trusted = SimpleNamespace(request=lambda *a, **kw: h.request(*a, **kw, extra_headers=headers))
@@ -196,6 +224,7 @@ def check(binary, h):
                 h.stop(proc)
                 proc = None
                 assert not peer.errors, peer.errors
+                ip_identity(binary, h, root, master, key_file, console_key, peer.snapshot)
         except BaseException:
             text = (root / "daemon.log").read_text()
             print(text[-5000:])
@@ -208,7 +237,7 @@ def check(binary, h):
                     h.stop(proc)
             finally:
                 peer.close()
-    print("console-e2e: TLS peer proof, masking, quota, replay, stale, boot and cancellation passed")
+    print("console-e2e: TLS peer proof, DNS/IP identity, masking, quota, replay, stale, boot and cancellation passed")
 
 
 if __name__ == "__main__":

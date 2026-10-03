@@ -17,10 +17,10 @@ def proof(key, domain, data):
     return hmac.new(key, b"sibuna-console-peer-v1/" + domain + data, hashlib.sha256).digest()
 
 
-def certificate(root):
+def certificate(root, alternative="DNS:localhost"):
     cert, key = root / "peer.pem", root / "peer-tls.key"
     subprocess.run(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "1",
-                    "-subj", "/CN=localhost", "-addext", "subjectAltName=DNS:localhost",
+                    "-subj", "/CN=localhost", "-addext", f"subjectAltName={alternative}",
                     "-keyout", str(key), "-out", str(cert)],
                    check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return cert, key
