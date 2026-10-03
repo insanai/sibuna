@@ -5,6 +5,7 @@ const Io = std.Io;
 const windows = @import("builtin").os.tag == .windows;
 const posix = if (windows) @import("windows_socket.zig") else std.posix;
 const core = @import("core");
+const system = @import("socket_system.zig").system;
 pub const Error = error{ ConnectionFailed, IdleTimeout };
 pub const Endpoint = struct { stream: Io.net.Stream, reader: *Io.Reader };
 /// Liveness of one client connection as the idle reaper sees it. The stamp advances whenever
@@ -73,7 +74,7 @@ const Direction = struct {
 
     fn receive(self: *Direction, fd: posix.socket_t) Error!bool {
         std.debug.assert(self.begin == self.end and self.prefix.len == 0 and !self.eof);
-        const result = posix.system.recv(fd, &self.bytes, capacity, posix.MSG.DONTWAIT);
+        const result = system.recv(fd, &self.bytes, capacity, posix.MSG.DONTWAIT);
         switch (posix.errno(result)) {
             .SUCCESS => {
                 self.begin = 0;
@@ -89,7 +90,7 @@ const Direction = struct {
     fn send(self: *Direction, fd: posix.socket_t) Error!bool {
         const bytes = self.pending();
         std.debug.assert(bytes.len != 0);
-        const result = posix.system.send(
+        const result = system.send(
             fd,
             bytes.ptr,
             bytes.len,
@@ -146,7 +147,7 @@ pub fn relay(io: Io, endpoints: [2]Endpoint, options: Options) Error!void {
                 .revents = 0,
             };
         }
-        const result = posix.system.poll(&descriptors, descriptors.len, 100);
+        const result = system.poll(&descriptors, descriptors.len, 100);
         switch (posix.errno(result)) {
             .SUCCESS => {},
             .INTR => continue,

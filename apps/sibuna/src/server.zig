@@ -218,7 +218,7 @@ fn drainPending(stream: Io.net.Stream) void {
     if (@import("builtin").os.tag == .windows) return net.connect.drainPending(stream);
     var scratch: [4096]u8 = undefined;
     for (0..8) |_| {
-        const result = std.posix.system.recv(
+        const result = net.socket_system.recv(
             stream.socket.handle,
             &scratch,
             scratch.len,

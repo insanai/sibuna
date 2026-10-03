@@ -38,3 +38,5 @@ test {
     const addr = try std.Io.net.IpAddress.parse("127.0.0.1", 8080);
     try std.testing.expectEqual(@as(u16, 8080), addr.ip4.port);
 }
+
+pub const socket_system = @import("socket_system.zig").system;
