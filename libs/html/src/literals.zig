@@ -121,9 +121,26 @@ fn raw(w: *Writer, comptime source: []const u8) Writer.Error!void {
     return w.writeAll(&bytes);
 }
 
+// Preserve dictionary order while checking only entries with the same first byte.
+// This shared index bounds compile-time work for every literal and scalar snippet.
+const candidates = blk: {
+    var first: [256]u8 = @splat(255);
+    var next: [dictionary.len]u8 = @splat(255);
+    var i = dictionary.len;
+    while (i != 0) {
+        i -= 1;
+        const byte = dictionary[i][0];
+        next[i] = first[byte];
+        first[byte] = @intCast(i);
+    }
+    break :blk .{ .first = first, .next = next };
+};
+
 pub fn match(source: []const u8) ?u8 {
-    for (dictionary, 0..) |entry, i| {
-        if (std.mem.startsWith(u8, source, entry)) return @intCast(i);
+    if (source.len == 0) return null;
+    var i = candidates.first[source[0]];
+    while (i != 255) : (i = candidates.next[i]) {
+        if (std.mem.startsWith(u8, source, dictionary[i])) return i;
     }
     return null;
 }
@@ -192,4 +209,16 @@ test "packed HTML preserves every byte, UTF-8 and overlapping dictionary prefixe
     var small: [4]u8 = undefined;
     writer = .fixed(&small);
     try std.testing.expectError(error.WriteFailed, write(&writer, source));
+}
+
+test "candidate index preserves first-match dictionary ordering" {
+    for (dictionary) |entry| {
+        for (0..entry.len + 1) |start| {
+            const source = entry[start..];
+            const expected: ?u8 = for (dictionary, 0..) |candidate, i| {
+                if (std.mem.startsWith(u8, source, candidate)) break @intCast(i);
+            } else null;
+            try std.testing.expectEqual(expected, match(source));
+        }
+    }
 }

@@ -5,7 +5,9 @@ const root = @import("root.zig");
 const literals = @import("literals.zig");
 const Writer = std.Io.Writer;
 const instructions = @import("instructions.zig");
-const Program = struct { bytes: [64 * 1024]u8 = undefined, len: usize = 0 };
+fn Program(comptime capacity: usize) type {
+    return struct { bytes: [capacity]u8 = undefined, len: usize = 0 };
+}
 
 pub fn supports(comptime T: type) bool {
     for (@typeInfo(T).@"struct".fields) |field| {
@@ -46,10 +48,12 @@ pub fn render(w: *Writer, comptime source: []const u8, values: anytype) Writer.E
 
 // Dictionary indexes precede at most 128 value slots. The program is private compiler
 // output, never accepted from a client or file; escaping affects literals only.
-fn compile(comptime source: []const u8, comptime T: type) Program {
+fn compile(comptime source: []const u8, comptime T: type) Program(source.len * 2) {
     @setEvalBranchQuota(10_000_000);
     std.debug.assert(literals.dictionary.len <= 127);
-    var program: Program = .{};
+    // Encoding emits at most two bytes per input byte. Sizing each compiler-owned
+    // buffer to its snippet avoids retaining a 64 KiB value for every instantiation.
+    var program: Program(source.len * 2) = .{};
     var cursor: usize = 0;
     var slots: usize = 0;
     while (cursor < source.len) {
