@@ -19,21 +19,21 @@
 
 **sibuna** is an open-source web application firewall (WAF) and anti-crawler daemon. It sits in front of your web application as a protective reverse proxy, or alongside your existing reverse proxy (such as Caddy, Nginx, or Traefik) as an authorization gate.
 
-Instead of subjecting human visitors to frustrating image CAPTCHAs or privacy-invasive tracking scripts, Sibuna asks client browsers to solve a silent background computational puzzle in a fraction of a second. Instead of requiring sprawling container clusters, external databases, or heavy interpreters, Sibuna runs as a **single, self-contained executable** with predictable, bounded memory.
+Instead of subjecting human visitors to frustrating image CAPTCHAs or privacy-invasive tracking scripts, Sibuna asks client browsers to solve a background computational puzzle whose cost depends on the configured difficulty and client hardware. Instead of requiring sprawling container clusters, external databases, or heavy interpreters, Sibuna runs as a **single, self-contained executable** with predictable, bounded memory.
 
 ---
 
 ## Features
 
-- **[x] Zero External Dependencies:** Compiles to a single static binary. No external Redis, PostgreSQL, Node, or Docker clusters required.
-- **[x] Frictionless Human Verification:** Legitimate visitors solve a silent, background proof-of-work puzzle in WebAssembly ($< 1\,\text{s}$). No images to click, no tracking cookies.
-- **[x] Deterministic Memory Bounds:** Fixed stack buffers for request processing. Zero dynamic heap allocation on the hot request path ensures immunity to memory fragmentation and out-of-memory crashes under flood.
-- **[x] AI Crawler & Bot Governance:** Sub-45ns Radix CIDR trie matches client IPs against published ranges for OpenAI, Anthropic, Google Gemini, Perplexity, Meta, Apple, and ByteDance. Instantly catches spoofed User-Agents.
+- **[x] Self-Contained Deployment:** The standard binary includes storage and browser assets. No external Redis, PostgreSQL, Node, or Docker is required; clustering is a separate build with OpenSSL 3.
+- **[x] Browser Proof of Work:** WebAssembly solves a configurable background puzzle. No image CAPTCHA is required; successful clients receive a signed admission session.
+- **[x] Bounded Request Processing:** Fixed-capacity request buffers, connection quotas and explicit overload responses. Parsing, classification and proof verification use allocation-free primitive APIs; deployment memory still depends on enabled features and concurrency.
+- **[x] AI Crawler & Bot Governance:** CIDR ranges and User-Agent signatures support provider-specific policy for OpenAI, Anthropic, Google Gemini, Perplexity, Meta, Apple, and ByteDance. Operator-managed data and rules determine the decision.
 - **[x] Semantic Attack Shield:** Single-pass, linear-time Aho–Corasick automata and structural tokenizers inspect SQL injection, XSS, and path traversal without regular expression backtracking (ReDoS).
-- **[x] Thermodynamic Asymmetry:** Verifying a solution costs the server under $25\,\mu\text{s}$, while mass scrapers must burn hours of dedicated CPU compute to harvest pages.
-- **[x] Local Rate Limiting:** 16-shard atomic GCRA (Generic Cell Rate Algorithm) enforces strict per-client burst and sustained rate limits in $6\,\text{ns}$ with zero lock contention.
-- **[x] Real-Time Management Console:** Built-in web dashboard with a live 3D country traffic globe, 24-hour comparative analytics, incident forensics with full-text search (FTS5), and granular provider toggles.
-- **[x] Embedded Multi-Node Clustering:** Embedded Zaxonlite store executes Multi-Paxos consensus to synchronize dynamic policies and propagate banned IPs across nodes in milliseconds.
+- **[x] Work Asymmetry:** Clients perform configurable Hashcash or sequential work before admission; the server verifies submitted proofs with native code.
+- **[x] Local Rate Limiting:** Sharded GCRA (Generic Cell Rate Algorithm) enforces per-client burst and sustained limits, with optional terminal-rule limits. Quotas remain node-local.
+- **[x] Real-Time Management Console:** Opt-in dashboard with an animated country traffic globe, comparative analytics, incident investigation with full-text search (FTS5), and policy editing. GeoIP requires a separately imported dataset.
+- **[x] Embedded Multi-Node Clustering:** A cluster-enabled source build uses Zaxonlite Multi-Paxos to replicate policy and reputation. Management telemetry travels separately; missing peers are shown as incomplete coverage.
 
 ---
 
@@ -118,6 +118,9 @@ Terminate public HTTPS at your ingress and keep Sibuna's listener private; see
 [deployment limits](#deployment-limits) and the [operations guide](https://insanai.github.io/sibuna/book/operations.html).
 
 ### 1. Build the Executable
+
+Use **Zig 0.16.0**, the checksum-pinned release toolchain. Zig 0.17 requires a separate
+migration of Sibuna and its dependencies.
 
 ```sh
 # Clone the repository

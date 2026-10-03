@@ -3,6 +3,11 @@
 // Designed with inspiration from Richard Feynman, Donald Knuth, and Leslie Lamport.
 
 #import "@preview/cetz:0.5.2" as cetz
+#import "../book/figures.typ": bench_data, bench_find, fmt_ns, benchmark_results_table, tools_meta_line, tools_mode_table
+#let primitives = bench_data()
+#let primitive(subsystem, workload) = bench_find(primitives, "sibuna", subsystem, workload)
+#let latency(subsystem, workload) = fmt_ns(primitive(subsystem, workload).ns_per_op_median)
+
 
 // --- Design System & Color Palette ---
 #let ink = rgb("0f172a")          // Slate 900
@@ -34,7 +39,7 @@
       grid(
         columns: (auto, 1fr),
         align(left)[#text(size: 8pt, fill: muted, font: "New Computer Modern", weight: "bold")[SIBUNA: ARCHITECTURE & DISTRIBUTED CONSENSUS]],
-        align(right)[#text(size: 8pt, fill: muted, font: "New Computer Modern", style: "italic")[Whitepaper | September 2026]]
+        align(right)[#text(size: 8pt, fill: muted, font: "New Computer Modern", style: "italic")[Whitepaper | October 2026]]
       )
       v(-3pt)
       line(length: 100%, stroke: 0.4pt + light-border)
@@ -46,7 +51,7 @@
       v(2pt)
       grid(
         columns: (1fr, 1fr),
-        align(left)[#text(size: 8pt, fill: muted)[Insan AI Systems Research | Zero-Allocation Web Defense]],
+        align(left)[#text(size: 8pt, fill: muted)[#link("https://github.com/insanai/sibuna")[Insan AI Systems Research | Sibuna Source & Benchmarks]]],
         align(right)[#text(size: 8pt, weight: "bold", fill: ink)[#counter(page).display("1 of 1", both: true)]]
       )
     }
@@ -189,15 +194,15 @@
   #align(center)[#text(weight: "bold", size: 8.5pt, fill: ink)[ABSTRACT]]
   #v(1pt)
   #text(size: 8.4pt, fill: rgb("334155"))[
-    Web application firewalls (WAFs) and edge defense platforms suffer from three systemic architectural dysfunctions:
-    (1) *Thermodynamic inversion*, wherein defending proxies expend orders of magnitude more computational energy parsing headers, traversing regular expressions, and querying databases than automated botnets expend emitting requests;
-    (2) *Runtime unpredictability*, stemming from dynamic memory allocators (`malloc`), garbage-collection stop-the-world pauses, and bloated container architectures (such as SafeLine's 1.5-2.5 GB footprint spanning 5 to 8 containers); and
-    (3) *Externalized state coupling*, forcing operators to deploy and manage auxiliary Redis or PostgreSQL clusters to synchronize IP reputation, token verification, and rate limits across nodes.
+    Web application firewalls (WAFs) and edge defense platforms must balance three costs:
+    (1) *Work asymmetry*: bots can generate requests cheaply, while inspection consumes defender resources;
+    (2) *Runtime predictability*: allocation, scheduling and contention affect tail latency; and
+    (3) *State coordination*: replicated policy and reputation need explicit ownership, failure handling and consistency guarantees.
 
-    *Sibuna* demonstrates a complete architectural reconstruction from first principles. Implemented as a standalone, zero-dependency binary, Sibuna introduces:
-    (i) *Work-verifiable thermodynamic defense* via Cohen-Pietrzak Proof of Sequential Work (PoSW) and BLAKE3 MAC tokens, forcing attacking bots to perform unparallelizable CPU work while the defender verifies authenticity in under 24 #us with zero heap allocation;
-    (ii) *A strict zero-allocation hot path*, employing SIMD-accelerated Aho-Corasick automata (74.05 ns for 40 bot signatures, 12.3#times faster than sequential scanning), 16-shard atomic GCRA rate limiting (6.00 ns per check, >166M ops/sec), and Robin Hood hashed nonce tracking (29.90 ns); and
-    (iii) *An embedded distributed consensus engine* powered by `zaxonlite`, executing WAL-frame Multi-Paxos directly within the process memory space to provide sub-105 ms cluster-wide ban propagation, 397k+ req/s leader-failover sustained throughput, and bounded memory under 27 MB RSS per node.
+    *Sibuna* combines bounded request processing with optional persistent management. Its standard release is a standalone binary; source builds enable clustering separately. The design provides:
+    (i) *Work-verifiable thermodynamic defense* via Cohen-Pietrzak Proof of Sequential Work (PoSW) and BLAKE3 MAC tokens, requiring client work before admission; the sequential verifier measures #latency("pow_verify", "posw_depth13_t16") in the recorded primitive workload;
+    (ii) *A strict zero-allocation hot path*, employing SIMD-accelerated Aho-Corasick automata (#latency("bot_matcher", "aho_corasick_40_signatures") for 40 bot signatures), 16-shard atomic GCRA rate limiting (#latency("rate_limiter", "gcra_check") per check), and Robin Hood hashed nonce tracking (#latency("challenge_store", "robin_hood_spend_and_lookup")); and
+    (iii) *An embedded distributed consensus engine* powered by `zaxonlite`, replicating WAL frames through Multi-Paxos while request workers read immutable policy snapshots. The measured cluster results are historical fixtures, not release capacity guarantees.
   ]
 ]
 
@@ -206,10 +211,10 @@
 #grid(
   columns: (1fr, 1fr, 1fr, 1fr),
   gutter: 6pt,
-  metric-card("6.00 ns", "GCRA RATE CHECK", "166M ops/sec | 16 Shards"),
-  metric-card("74.05 ns", "SIMD BOT MATCHER", "Aho-Corasick | 40 Sigs"),
-  metric-card("23.24 " + us, "PoSW VERIFICATION", "Depth 13 | Bounded Stack"),
-  metric-card("< 27 MB", "BOUNDED NODE RSS", "Lowest-Slot Stack Reuse")
+  metric-card(latency("rate_limiter", "gcra_check"), "GCRA RATE CHECK", "16 Shards | Source-audited bound"),
+  metric-card(latency("bot_matcher", "aho_corasick_40_signatures"), "SIMD BOT MATCHER", "Aho-Corasick | 40 Sigs"),
+  metric-card(latency("pow_verify", "posw_depth13_t16"), "PoSW VERIFICATION", "Depth 13 | Bounded Stack"),
+  metric-card(str(calc.round(primitives.meta.idle_rss_kb / 1024, digits: 1)) + " MiB", "IDLE ENGINE RSS", "Two Workers | Storage Inactive")
 )
 
 #v(2.5mm)
@@ -376,7 +381,7 @@ The following architectural diagram illustrates the wire-speed progression of a 
     stage-box(4.8, 8.6, c-blue-bg, c-blue, [1. Radix Trie CIDR], [44.71 ns], [IPv4/IPv6 Table Lookup])
 
     // Stage 2: Sharded GCRA (x: 9.3 .. 12.6)
-    stage-box(9.3, 8.6, c-blue-bg, c-blue, [2. Sharded GCRA], [6.00 ns], [16 Shards | Lock-Free CAS])
+    stage-box(9.3, 8.6, c-blue-bg, c-blue, [2. Sharded GCRA], [#latency("rate_limiter", "gcra_check")], [16 Shards | Lock-Free CAS])
 
     // Stage 3: Zero-Copy HTTP (x: 13.6 .. 16.9)
     stage-box(13.6, 8.6, c-blue-bg, c-blue, [3. Zero-Copy HTTP], [1.11 #us], [Slices Only | In-Place])
@@ -397,13 +402,13 @@ The following architectural diagram illustrates the wire-speed progression of a 
     // Reverse flow (Right to Left)
     // ==========================================
     // Stage 4: SIMD Bot Matcher (x: 13.6 .. 16.9)
-    stage-box(13.6, 4.9, c-purple-bg, c-purple, [4. SIMD Bot Matcher], [74.05 ns], [40 Crawler Signatures])
+    stage-box(13.6, 4.9, c-purple-bg, c-purple, [4. SIMD Bot Matcher], [#latency("bot_matcher", "aho_corasick_40_signatures")], [40 Crawler Signatures])
 
     // Stage 5: BLAKE3 Token Auth (x: 9.3 .. 12.6)
-    stage-box(9.3, 4.9, c-purple-bg, c-purple, [5. BLAKE3 Token], [295.46 ns], [Keyed MAC Verify])
+    stage-box(9.3, 4.9, c-purple-bg, c-purple, [5. BLAKE3 Token], [#latency("token_auth", "blake3_mac_token")], [Keyed MAC Verify])
 
     // Stage 6: PoSW Verifier (x: 4.8 .. 8.1)
-    stage-box(4.8, 4.9, c-gold-bg, c-gold, [6. PoSW Verifier], [23.24 #us], [Cohen-Pietrzak Depth 13])
+    stage-box(4.8, 4.9, c-gold-bg, c-gold, [6. PoSW Verifier], [#latency("pow_verify", "posw_depth13_t16")], [Cohen-Pietrzak Depth 13])
 
     // Stage 7: Semantic WAF (x: 0.6 .. 3.9)
     stage-box(0.6, 4.9, c-blue-bg, c-blue, [7. Semantic WAF], [18.55 #us], [SQLi / XSS Tokenizer])
@@ -474,7 +479,9 @@ The following architectural diagram illustrates the wire-speed progression of a 
   [Given an input string $T$ of length $n$ and a dictionary of $k$ attack patterns $P = {p_1, dots, p_k}$ of aggregate length $m$, Sibuna classifies $T$ in strict worst-case time $O(n + m)$ using zero heap memory, completely eliminating Regular Expression Denial of Service (ReDoS).],
   [Conventional regular expression engines compile patterns into non-deterministic finite automata (NFAs) or backtracking engines. On malicious inputs designed with overlapping prefixes (e.g., `(a+)+$`), backtracking induces execution time $O(n dot 2^m)$.
   Sibuna constructs a deterministic finite state machine where every node contains a direct 256-ary transition table flattened into contiguous 32-bit integers. Transitions are vectorized across 128-bit/256-bit SIMD registers. Every input byte triggers exactly one state transition without branching or dynamic allocation.
-  Empirical verification on 40 production bot signatures yields a median evaluation time of *74.05 ns* (13,505,197 ops/sec), compared to 908.60 ns for standard sequential substring scanning, achieving a *12.3#times speedup*.]
+  Empirical verification on 40 production bot signatures yields a median evaluation time of *#latency("bot_matcher", "aho_corasick_40_signatures")* in this suite. The same patterns scanned by sequential substring search cost
+  #fmt_ns(bench_find(primitives, "sibuna-naive", "bot_matcher", "sequential_substring_40_signatures").ns_per_op_median).
+  The table records batch spread and source provenance.]
 )
 
 #v(1.5mm)
@@ -490,7 +497,7 @@ The following architectural diagram illustrates the wire-speed progression of a 
     "reject" & "if" "TAT"_(n-1) > t + L,
   ) $
   where $t$ is the nanosecond arrival timestamp, $T$ is the emission interval, and $L$ is burst tolerance. Both $t$ and $"TAT"$ are packed into a single atomic `u64`. Updates proceed lock-free via atomic CAS (`cmpxchg`).
-  To eradicate CPU cacheline bouncing across socket cores, Sibuna partitions the client table across *16 independent memory shards* indexed by a 4-bit hash of the client IP. On a bare-metal Linux x86_64 host, single-scope GCRA executes in *6.00 ns* (>166 million checks/sec) with zero heap allocations.]
+  To eradicate CPU cacheline bouncing across socket cores, Sibuna partitions the client table across *16 independent memory shards* indexed by a 4-bit hash of the client IP. In the measured Linux container, single-scope GCRA has a batch median of *#latency("rate_limiter", "gcra_check")*; its request-path API takes no allocator.]
 )
 
 
@@ -505,11 +512,11 @@ The following architectural diagram illustrates the wire-speed progression of a 
   [A web proxy can challenge clients and verify computational proofs without maintaining server-side session tables, bounding memory exposure to zero under massive SYN/HTTP floods.],
   [Sibuna constructs an authenticated challenge ticket:
   $ "Ticket" = chevron.l "IP" || "Timestamp" || "Difficulty" || "Nonce" || "MAC"_K("IP" || "Timestamp" || "Difficulty" || "Nonce") chevron.r $
-  where $"MAC"_K$ is computed using BLAKE3 in keyed mode (*295.46 ns*). The secret key $K$ is rotated every epoch $Delta t$. When a client submits a solved puzzle, Sibuna validates:
+  where $"MAC"_K$ is computed using BLAKE3 in keyed mode (*#latency("token_auth", "blake3_mac_token")*). The secret key $K$ is rotated every epoch $Delta t$. When a client submits a solved puzzle, Sibuna validates:
   (1) $"MAC"_K$ verifies under epoch key $K_t$ or $K_(t-1)$;
   (2) $|t_"now" - "Timestamp"| <= Delta t_"valid"$; and
   (3) the proof satisfies the target sequential difficulty.
-  To prevent replay attacks within $Delta t_"valid"$, Sibuna inserts the 64-bit hash of the spent nonce into a fixed-capacity *Robin Hood hash table*. Robin Hood hashing minimizes the variance of probe sequence lengths ($D_i - "ideal"$), ensuring worst-case insertion and lookup in *29.90 ns* ($O(1)$ amortized).]
+  To prevent replay attacks within $Delta t_"valid"$, Sibuna inserts the 64-bit hash of the spent nonce into a fixed-capacity *Robin Hood hash table*. Robin Hood hashing minimizes the variance of probe sequence lengths ($D_i - "ideal"$), with a measured batch median for insertion and lookup of *#latency("challenge_store", "robin_hood_spend_and_lookup")*. This is a bounded table, not a worst-case latency guarantee.]
 )
 
 = The Distributed State Machine: Consensus via zaxonlite
@@ -619,7 +626,7 @@ Sibuna cluster nodes maintain a replicated Write-Ahead Log (WAL). State mutation
 ]
 
 == Empirical Cluster Verification and Fault Injection
-In empirical cluster benchmarks conducted on the dedicated 32-core Linux x86_64 host:
+The committed cluster record describes its Linux host, transport, load and source revision. These historical measurements predate the October request-path changes and do not qualify v0.1.0:
 - *Cluster-Wide Ban Propagation*: An IP ban initiated on the leader node was replicated and enforced across all three nodes in *103.77 ms* with loopback PSK (*124.56 ms* with mutual TLS).
 - *Fault Tolerance under Leader Termination*: During active benchmark load of >550,000 requests/second across all 3 nodes (558k req/s challenged, 543k req/s admitted, p99 latency 230 to 265 #us), the cluster leader was abruptly killed (`kill -9`). The surviving nodes elected a new leader and sustained *397,799 requests/sec* (PSK) / *387,909 requests/sec* (mTLS) with zero 5xx errors and post-failover ban propagation of *81.99 to 122.62 ms*.
 - *Memory Footprint*: In a full 3-node mesh with consensus active, idle RSS remained at *30.6-32.2 MB* per node (*34.6-37.0 MB* under mTLS); a standalone single node with no storage consumes only *11.3 MB*.
@@ -630,56 +637,53 @@ In empirical cluster benchmarks conducted on the dedicated 32-core Linux x86_64 
 // PAGE 6: COMPREHENSIVE MARKET COMPARISON TABLE & CRITIQUE
 // ==========================================
 #pagebreak()
-= Comprehensive Market Comparison: Sibuna vs. Industry Solutions
+= Whole-Product Comparison and Deployment Trade-offs
 
-To evaluate Sibuna's engineering trade-offs, we present an exhaustive comparison against both prominent open-source engines and proprietary enterprise cloud WAFs.
+A useful performance comparison runs actual products with equivalent workloads, reports
+response states and includes the origin, client and host conditions. The whole-product
+harness measures Sibuna and Anubis in forward-auth and reverse-proxy modes. It gives both
+processes the same allowed CPU set on Linux, obtains valid sessions and reports throughput,
+latency, CPU accounting and peak resident memory.
 
-#v(1.5mm)
+#tools_meta_line()
 
-#align(center)[
-  #text(size: 7.2pt)[
-    #table(
-      columns: (1.5fr, 0.9fr, 0.9fr, 1.1fr, 1.2fr, 1.2fr, 1fr, 1fr),
-      align: (left, center, center, center, center, center, center, center),
-      table.header(
-        [*System*], [*License*], [*Runtime*], [*Memory (RSS)*], [*Dependencies*], [*Consensus*], [*PoW Challenge*], [*Latency (Median)*]
-      ),
-      [#text(weight: "bold", fill: primary)[Sibuna]], [Open Source], [Pure Zig], [*11-27 MB*], [*None (0)*], [*Embedded Paxos*], [*Native PoSW*], [*146 #us* / 1.29 #us],
-      [SafeLine (Chaitin)], [Open/Prop], [Py/Go/C++], [1.5-2.5 GB], [Postgres, Redis, Nginx], [Central DB], [None (Captcha)], [1.5-5.0 ms],
-      [Anubis (OWASP/Go)], [Open Source], [Go Runtime], [30-570 MB], [Redis / Envoy], [External Redis], [Hashcash], [1.78-3.49 ms],
-      [Coraza / ModSec], [Open Source], [Go / C++], [80-200 MB], [Host Nginx/Apache], [None], [None], [250-800 #us],
-      [BunkerWeb], [Open Source], [Python/Lua], [500-1200 MB], [Nginx, Docker, Redis], [None], [Captcha only], [2.0-8.0 ms],
-      [CrowdSec], [Open Source], [Go Runtime], [100-250 MB], [SQLite / Central API], [Cloud API Relay], [None], [Asynchronous],
-      [Cloudflare WAF], [Proprietary], [Rust/C/Lua], [N/A (SaaS)], [Cloudflare Edge], [Global Raft/Kafka], [JS / Captcha], [1.0-5.0 ms],
-      [AWS WAF], [Proprietary], [Closed Edge], [N/A (SaaS)], [AWS ALB / CloudFront], [AWS Internal], [JS Challenge], [2.0-10.0 ms],
-      [Fastly / SigSci], [Proprietary], [Go / Agent], [100-200 MB], [SaaS Cloud Relay], [Cloud Relay], [None], [500-1500 #us],
-      [Akamai App Protect], [Proprietary], [Edge Kernel], [N/A (SaaS)], [Akamai Network], [Internal], [JS Captcha], [2.0-8.0 ms]
-    )
-  ]
-]
+== Recorded Reverse-Proxy Workloads
 
-#v(1.5mm)
+#tools_mode_table("reverse_proxy")
 
-== Detailed Architectural Critique
+These figures belong to the revision printed above. They predate the v0.1.0 release fixes
+and must be rerun before being cited as current release performance. A challenged response,
+a forwarded origin response and an inspection denial perform different work: compare rows
+with the same intended behavior, and inspect the status column first. CPU accounting in an
+unprivileged container has limited resolution and does not control host contention.
 
-=== SafeLine (Chaitin Technology)
-SafeLine is marketed as a modern community WAF powered by semantic analysis. However, its architecture exhibits massive operational sprawl:
-- *Container Explosion*: A typical SafeLine deployment requires 5 to 8 separate Docker containers running simultaneously (`safeline-tengine`, `safeline-detector`, `safeline-mgt`, `safeline-postgres`, `safeline-redis`, etc.).
-- *Resource Waste*: SafeLine requires a minimum of *1.5 GB to 2.5 GB of RAM* merely to boot into an idle state.
-- *Fragile State Coordination*: Nodes rely on PostgreSQL for management and Redis for caching. A memory exhaustion event in Redis breaks real-time rate limiting, while a PostgreSQL failure paralyzes policy updates.
-- *Sibuna Difference*: Sibuna compiles down to a single standalone binary. A 3-node Sibuna cluster consumes *under 95 MB total RAM* across all three nodes combined, which is over 25#times less memory than a single idle SafeLine instance.
+== Choosing an Integration
 
-=== Anubis & Coraza (OWASP / Go Runtime)
-Anubis and Coraza represent modern Go-based edge defenders, offering Hashcash challenges and OWASP rules:
-- *Garbage Collection & Memory Sprawl*: Under sustained high-concurrency traffic (64 connections, `wrk`), Anubis resident memory escalates to *509-570 MiB* in reverse-proxy mode due to request buffer allocation and Go heap churn, while throughput falls to *17,697 req/s* admitted (median latency 3,491 #us).
-- *Sibuna Difference*: With lowest-free connection slot reuse and a zero-allocation hot path, Sibuna sustains *219,551 req/s* (forward-auth) and *109,120 req/s* (origin-bound reverse-proxy) while memory stays flat at *27-29.5 MiB* (*6.4#times higher throughput*, *12#times lower latency*, and *19#times smaller footprint*). In direct admission benchmarks, Sibuna verifies sessions *2.18#times faster* (22,010 vs 10,118 ops/s) and verifies proofs *1.77#times faster* (18,272 vs 10,306 ops/s).
+*Forward-auth* keeps the ingress responsible for body forwarding, WebSocket upgrades and
+TLS termination. Sibuna returns the admission decision. The ingress must strip untrusted
+forwarded headers and supply the protected URI and method, including on the challenge
+location. The operations guide provides the complete nginx configuration.
 
-=== Cloud Edge WAFs (Cloudflare & AWS WAF)
-Proprietary cloud WAFs offer vast global edge networks but introduce substantial technical and commercial liabilities:
-- *Data Privacy & Sovereignty*: Utilizing cloud WAFs requires routing customer TLS keys and unencrypted payload streams through third-party multi-tenant servers, conflicting with strict data residency regulations (e.g., GDPR, HIPAA).
-- *Astronomical Edge Costs*: AWS WAF charges per rule evaluated and per million requests, resulting in unexpected cost surges during volumetric attacks. Furthermore, deploying a rule change across AWS CloudFront distributions requires 1 to 2 minutes.
-- *Sibuna Difference*: Sibuna runs entirely on sovereign infrastructure. Bans propagate across the cluster in *104 ms*, with zero recurring per-request fees.
+*Reverse-proxy* places Sibuna in the request and response path. Upload framing, response
+streaming, connection reuse and origin errors therefore require independent functional
+checks. The release tests cover fixed-length and chunked uploads, accepted WebSocket
+upgrades, early responses and idle deadlines against the actual packaged executable.
 
+The console is optional and has a separate isolation gate. Its recorded impact matrices
+remain inconclusive; neither a functional pass nor a primitive speedup establishes that
+console overhead meets the throughput and tail-latency thresholds on a deployment host.
+
+== Related Systems
+
+#link("https://github.com/TecharoHQ/anubis")[Anubis],
+#link("https://github.com/owasp-modsecurity/ModSecurity")[ModSecurity],
+#link("https://github.com/corazawaf/coraza")[Coraza] and
+#link("https://github.com/chaitin/SafeLine")[SafeLine] provide other approaches to web defense.
+Hosted services such as #link("https://developers.cloudflare.com/waf/")[Cloudflare WAF]
+and #link("https://docs.aws.amazon.com/waf/")[AWS WAF] require separate deployment and
+measurement methods. This harness does not measure their latency, memory or operating cost.
+The book retains the published comparison material with its sources; unsupported modeled
+performance figures are not evidence of a speed advantage.
 
 
 // ==========================================
@@ -688,38 +692,25 @@ Proprietary cloud WAFs offer vast global edge networks but introduce substantial
 #pagebreak()
 = Empirical Benchmark Suite
 
-All benchmark measurements reported in this whitepaper were gathered from automated test suites compiled in `ReleaseFast` mode under Zig 0.16.0 on a dedicated 32-core Linux x86_64 host (kernel 7.0.0, glibc 2.41, `paxos-zig`).
+The primitive suite records seven batches in `ReleaseFast`, with median and min–max
+spread. Its source revision, compiler and Linux container host are printed below. These
+measurements describe individual operations; they are not HTTP capacity guarantees or a
+pass of the separate console-impact gate. Allocation activity is not instrumented.
 
 == Microbenchmark Latency Profile
 
-#table(
-  columns: (1.35fr, 1.85fr, 1.25fr, 1.3fr, 0.95fr),
-  align: (left, left, right, right, center),
-  table.header(
-    [*Subsystem*], [*Workload*], [*Median Latency*], [*Throughput*], [*Allocations*]
-  ),
-  [Rate Limiter], [GCRA Single Scope], [*6.00 ns*], [166,801,080 ops/s], [0 bytes],
-  [Rate Limiter], [GCRA 4 Rule Scopes], [*6.26 ns*], [159,801,590 ops/s], [0 bytes],
-  [Challenge Store], [Robin Hood Spend & Lookup], [*29.90 ns*], [33,448,060 ops/s], [0 bytes],
-  [IP Classifier], [IPv4 CIDR Radix Trie], [*44.71 ns*], [22,366,160 ops/s], [0 bytes],
-  [IP Classifier], [IPv6 CIDR Radix Trie], [*87.46 ns*], [11,433,895 ops/s], [0 bytes],
-  [Bot Matcher], [SIMD Aho-Corasick (40 Sigs)], [*74.05 ns*], [13,505,197 ops/s], [0 bytes],
-  [Bot Matcher], [Sequential Substring (Naive)], [908.60 ns], [1,100,597 ops/s], [0 bytes],
-  [Proof-of-Work], [Hashcash 16-bit Verify], [*82.79 ns*], [12,079,140 ops/s], [0 bytes],
-  [Proof-of-Work], [PoSW Depth-13 Verify], [*23,242.45 ns*], [43,024 ops/s], [0 bytes],
-  [Token Auth], [BLAKE3 MAC Verification], [*295.46 ns*], [3,384,609 ops/s], [0 bytes],
-  [Token Auth], [Ed25519 Signature Verify], [50,089.34 ns], [19,964 ops/s], [0 bytes],
-  [HTTP Parser], [Zero-Copy Request & Cookie], [*1,109.70 ns*], [901,141 ops/s], [0 bytes],
-  [Policy Engine], [Browser Gate Profile], [*174.55 ns*], [5,729,046 ops/s], [0 bytes],
-  [Policy Engine], [Browser Shield Full Inspection], [*1,287.85 ns*], [776,489 ops/s], [0 bytes],
-  [WAF Inspector], [8 KB Body Semantic Scan], [18,546.27 ns], [53,919 ops/s], [8 KB buffer]
-)
+#benchmark_results_table()
 
-== Key Takeaways
-1. *Sub-Microsecond Classification*: In the *Gate profile*, Sibuna completes full client classification in *174.55 ns*. Under full semantic inspection (*Shield profile*), classification finishes in *1.29 #us*, two to three orders of magnitude faster than conventional WAFs.
-2. *Symmetric Verification Dominance*: BLAKE3 MAC verification takes *295.46 ns*, compared to 50,089 ns for Ed25519 asymmetric signatures. Rotating symmetric epoch keys gives identical cryptographic integrity with a *170#times throughput advantage*.
-3. *Strict Zero Allocation*: As proven by the zero-allocation instrumentation, all core classification and validation routines allocate *0 bytes of heap memory*.
+== Interpreting the Measurements
 
+The Gate and Shield classification rows describe the same benchmark request under two
+inspection configurations. They do not establish a latency comparison with other WAFs.
+The keyed BLAKE3 and Ed25519 rows measure different authentication constructions, with
+different key-distribution requirements. Their speed ratio alone does not establish an
+equivalent trust model. The allocation-free request-path design is supported by source and
+API review; the timing harness does not measure heap activity.
+
+#pagebreak()
 = Cryptographic Proofs of Work: Sequential vs. Parallel Work
 
 == The Cohen-Pietrzak Proof of Sequential Work (PoSW)
@@ -731,14 +722,13 @@ Sibuna resolves this hardware asymmetry through Cohen-Pietrzak Proofs of Sequent
    where $gamma(i)$ is a bit-reversal skip function. Parallel workers cannot compute node $i$ without the output of node $i-1$.
 2. *Merkle Tree Commitment*: After computing all $N = 2^d$ vertices, the client commits to the execution by constructing a Merkle tree over the vertices and sending the root hash $R$.
 3. *Logarithmic Opening*: The server issues $t$ pseudo-random challenge indices derived from $R$. The client responds with opening paths of length $d$.
-4. *Server Verification*: The server verifies the opening paths in time $O(t dot d)$. For depth $d=13$ ($N = 8,192$ steps) and $t=16$ openings, Sibuna verifies the client's work in *23.24 #us* using constant stack memory.
+4. *Server Verification*: The server verifies the opening paths in time $O(t dot d)$. For depth $d=13$ ($N = 8,192$ steps) and $t=16$ openings, Sibuna verifies the client's work in *#fmt_ns(primitive("pow_verify", "posw_depth13_t16").ns_per_op_median)* in this batch measurement, using bounded stack memory.
 
 
 
 // ==========================================
-// PAGE 8: FIGURE 4 & CONSOLE & CONCLUSION
+// SEQUENTIAL-WORK FIGURE & CONSOLE & CONCLUSION
 // ==========================================
-#pagebreak()
 #figure(
   caption: [Computational Defense: Parallel Hashcash ASIC Vulnerability vs. Cohen-Pietrzak Sequential DAG],
   cetz.canvas(length: 1cm, {
@@ -808,37 +798,28 @@ Sibuna resolves this hardware asymmetry through Cohen-Pietrzak Proofs of Sequent
     rect((9.0, 1.3), (16.2, 3.2), fill: white, stroke: 0.8pt + c-green, radius: 0.15)
     content((12.6, 2.72), text(weight: "bold", size: 8pt, fill: c-green)[Merkle Tree Commitment], anchor: "center")
     content((12.6, 2.25), text(weight: "bold", size: 7.5pt, fill: c-green)[& Logarithmic Verification], anchor: "center")
-    content((12.6, 1.7), text(size: 6.8pt, fill: rgb("14532d"))[Server verifies 16 opening paths in *23.24 #us* ($O(t dot d)$ work)], anchor: "center")
+    content((12.6, 1.7), text(size: 6.8pt, fill: rgb("14532d"))[Server verifies 16 opening paths in *#latency("pow_verify", "posw_depth13_t16")* ($O(t dot d)$ work)], anchor: "center")
 
-    content((12.6, 0.95), text(size: 7pt, fill: rgb("14532d"))[Parallel ASICs get 0 speedup; hardware fairness guaranteed], anchor: "center")
+    content((12.6, 0.95), text(size: 7pt, fill: rgb("14532d"))[Sequential dependence limits parallelism; hardware speed still matters], anchor: "center")
   })
 )
 
 = Real-Time Management: The Sibuna Console
 
-In keeping with its self-contained architecture, Sibuna incorporates a complete administrative console without requiring external web servers or JavaScript build tools:
-- *In-Memory Lock-Free Ring Buffers*: Request telemetry, rate-limit violations, and threat incidents are recorded in pre-allocated circular buffers with sub-microsecond overhead.
-- *Striped Cache-Line Telemetry*: Telemetry counters are striped across 16 independent 64-byte cache lines, and 1-in-64 sampling gates expensive User-Agent classification and referer parsing. An enabled console dashboard incurs zero measurable throughput overhead.
-- *Embedded WebSocket Protocol*: The management daemon streams real-time threat metrics, GeoIP coordinates, and cluster consensus state to web clients at 60 FPS.
-- *Zero-Asset Footprint*: All HTML, CSS, and SVG console assets are embedded directly into the binary at compile time via Zig's `@embedFile`. Deployment requires copying a single executable file.
+The opt-in console embeds its Wasm interface, browser bridge, HTML and CSS. Policy editing,
+incident investigation and operational views use authenticated snapshots, epochs and deltas.
+Fixed-capacity telemetry queues expose sampling and loss; geographic updates run at 1 Hz
+while the browser animates independently. GeoIP requires a separate dataset import. The
+console's AGPL source link identifies the release tag.
+
+Console-impact measurements remain inconclusive. Deployment-host checks must include idle
+and active dashboards, and optional evidence capture; functional success is not a performance pass.
 
 = Conclusion
 
-Web application defense has been led astray by a culture of architectural accretion: piling layers of interpreted runtimes, complex container orchestrations, regular expression parsers, and external database clusters in front of web applications.
-
-*Sibuna* proves that by returning to the foundational principles of computing:
-- Honoring the physical laws of thermodynamic work;
-- Crafting algorithms with mechanical sympathy for CPU cache lines, zero heap allocation, and prompt thread stack reclamation; and
-- Embedding consensus directly into the process memory space via `zaxonlite`,
-
-a distributed web defense engine can achieve over *219,000 requests per second per node* (scaling past *550,000 requests/sec* across a 3-node cluster), propagate cluster-wide defenses in *104 milliseconds*, and operate within a bounded *27 megabyte memory envelope*.
-
-#v(3mm)
-#line(length: 100%, stroke: 0.4pt + light-border)
-#v(1mm)
-#align(center)[
-  #text(size: 8pt, fill: muted)[
-    Sibuna Whitepaper | Produced by Insan AI Engineering | Systems & Security Research \
-    Open Source Specification, Source Code, & Benchmarks: https://github.com/insanai/sibuna
-  ]
-]
+Sibuna combines proof-of-work admission, bounded inspection, streaming HTTP/1.1 proxying and
+optional persistent management. Native and live-daemon tests exercise the SID contracts;
+cluster source builds retain local quotas and issuer-bound challenges. Every measurement
+identifies its revision, host and workload. These fixtures do not establish universal capacity
+or memory guarantees. The operations guide states ingress requirements, inspection bounds
+and the outstanding console performance condition.
