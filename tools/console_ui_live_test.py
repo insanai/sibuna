@@ -22,7 +22,8 @@ class Interface:
         self.appearance = None
         self.requests = []
         self.proc = subprocess.Popen(["node", "tools/console_ui_driver.mjs", str(wasm)],
-                                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+                                     stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                     text=True, encoding="utf-8")
 
     def event(self, kind=None, value=None, **options):
         if kind is not None:
