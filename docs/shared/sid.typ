@@ -1,4 +1,5 @@
 #import "theme.typ": configure-document, document-frontmatter
+#import "html.typ": preserve-figures
 
 #let sid-placeholder-number = "XXXXX"
 
@@ -366,6 +367,7 @@ a:hover {
 ) = context {
   if target() == "html" {
     [
+      #show: preserve-figures
       #html.elem("style")[#html-style]
       #html.elem("div", attrs: (class: "sid-container"))[
         #html.elem("div", attrs: (class: "sid-back-link"))[
