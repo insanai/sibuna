@@ -8,8 +8,9 @@ Bundled dependencies in the default, single-node release:
 
 - Zaxonlite 0.7.0 and Paxos 0.7.0: MIT; LICENSES/Zaxonlite-MIT.txt and
   LICENSES/Paxos-MIT.txt. Sources: github.com/insanai/zaxonlite and
-  github.com/insanai/paxos-zig. Exact archives and package hashes are pinned
-  in build.zig.zon and Zaxonlite's build.zig.zon.
+  github.com/insanai/paxos-zig. Zig 0.17 compatibility sources are included in vendor/. Original archives,
+  package hashes and source digests are recorded in vendor/provenance.json.
+  SQLite dependencies remain pinned in vendor/zaxonlite/build.zig.zon.
 - SQLite 3.50.4: public domain; sqlite.org/copyright.html. The pinned
   amalgamation is sqlite-amalgamation-3500400.zip.
 - sqlite-vec 0.1.9: MIT; LICENSES/sqlite-vec-MIT.txt.
@@ -21,7 +22,7 @@ Bundled dependencies in the default, single-node release:
 - Natural Earth 5.1.2 geographic geometry: public domain;
   naturalearthdata.com/about/terms-of-use/. Reproduction and source digests
   are in tools/console_geometry.py and the console asset manifest.
-- Zig 0.16.0 runtime and standard library: MIT and included notices;
+- Zig 0.17.0 runtime and standard library: MIT and included notices;
   LICENSES/Zig-LICENSE.txt. Static Linux releases also link musl libc;
   LICENSES/musl-COPYRIGHT.txt.
 

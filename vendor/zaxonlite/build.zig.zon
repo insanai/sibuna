@@ -1,0 +1,33 @@
+.{
+    .name = .zaxonlite,
+    .version = "0.7.0",
+    .fingerprint = 0xdf9f861eecc5d6a3, // Changing this has security and trust implications.
+    .minimum_zig_version = "0.17.0",
+    .dependencies = .{
+        .paxos = .{ .path = "../paxos" },
+        .sqlite = .{
+            .url = "https://sqlite.org/2025/sqlite-amalgamation-3500400.zip",
+            .hash = "N-V-__8AAHCbqABM_X5RTjbDBDBWErxZE8tJzmtEnLOLRHGx",
+        },
+        // Pinned sqlite-vec amalgamation (ZDS 0009), statically compiled
+        // into the SQLite library with the filesystem helpers omitted.
+        // Release zip SHA-256:
+        // b87cdda12112657ba5ab8842f0088a4090982eaf41f22b2bd6d495b81765a8c9
+        .sqlite_vec = .{
+            .url = "https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/sqlite-vec-0.1.9-amalgamation.zip",
+            .hash = "N-V-__8AAFjlBACTHqSZPx-m0Y-NHDBK6_c28UfnIp9rxqgX",
+        },
+    },
+    // `include` ships the C ABI header that build.zig installs, and `test`
+    // ships the C smoke test it compiles; both must travel with the package
+    // or dependency builds cannot construct the build graph.
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "include",
+        "test",
+        "README.md",
+        "LICENSE",
+    },
+}

@@ -1,0 +1,30 @@
+.{
+    .name = .zaxon_cli_ui,
+    .version = "0.7.0",
+    .fingerprint = 0xc700243f3c4f73f9, // Changing this has security and trust implications.
+    .minimum_zig_version = "0.16.0",
+    .dependencies = .{
+        // Keep this pin identical to zaxonlite's vaxis pin: both builds
+        // must compile the same code.
+        .vaxis = .{
+            .url = "git+https://github.com/rockorager/libvaxis?ref=main#d63a23c593c9b82f0b2886840161fa1f1df983e9",
+            .hash = "vaxis-0.6.0-BWNV_DsLCgCcKudOoFkyrSgjxUeLAOSf1LxwezEeVieH",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "ui.zig",
+        "term.zig",
+        "editor.zig",
+        "history.zig",
+        "highlight.zig",
+        "view.zig",
+        "table.zig",
+        "reader.zig",
+        "pager.zig",
+        "tests.zig",
+        "README.md",
+        "LICENSE",
+    },
+}
