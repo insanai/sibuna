@@ -109,6 +109,7 @@ curl -fLO https://github.com/insanai/sibuna/releases/download/v0.1.0/sibuna-linu
 curl -fLO https://github.com/insanai/sibuna/releases/download/v0.1.0/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
+(umask 077; openssl rand -hex 32 > sibuna.seed)
 ./sibuna --version
 ./sibuna --host 127.0.0.1 --port 8080 --upstream-port 3000 --secret-file ./sibuna.seed
 ```
@@ -140,7 +141,7 @@ Point Sibuna to your existing web service (for example, a local server on port 3
 
 Open `http://localhost:8080` in your browser. Your application is now protected.
 
-*Note on secrets:* The seed file contains 32 raw bytes (or 64 hex characters) used to sign session tokens. You can also supply the seed via the `SIBUNA_SECRET` environment variable. If omitted, Sibuna generates a secure random seed at startup and prints it to the console.
+*Note on secrets:* The seed file contains 32 raw bytes (or 64 hex characters) used to sign session tokens. You can also supply the seed via the `SIBUNA_SECRET` environment variable. If omitted, Sibuna generates a secure random seed at startup; sessions then expire when the process restarts.
 
 ---
 

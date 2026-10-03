@@ -225,7 +225,7 @@ a platform archive is published. Cross-compilation alone does not qualify a nati
 
 Shield is a bounded heuristic inspector, not a full SQL/HTML parser. Only the first 8 KB of
 body is inspected, and encoded fields longer than the canonical buffer are inspected raw.
-There is no HTTP/2, native TLS termination, global rate quota, durable replay set, administrative
+There is no HTTP/2, native TLS termination, global rate quota, durable replay set, native
 service manager integration, or measured volumetric network mitigation. Forward-auth inspection sees only bytes the
 ingress sends. Blocking workers and slow origins limit concurrency. No claim of full managed
 edge-service equivalence follows from a local benchmark.

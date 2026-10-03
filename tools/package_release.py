@@ -53,7 +53,7 @@ def package(binary, target, destination):
             "Build: zig build -Doptimize=ReleaseSafe -Dstrip=true "
             f"-Dtarget={TARGETS[target]} -j2\n"
             "Pinned dependencies and their sources: build.zig.zon and NOTICE.\n"
-            "Full license texts and notices: LICENSE, LICENSES/ and LICENSES/.\n")
+            "Full license texts and notices: LICENSE, LICENSES/ and NOTICE.\n")
         if target.startswith("windows"):
             archive = destination / f"sibuna-{target}.zip"
             with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as bundle:
