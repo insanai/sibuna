@@ -19,16 +19,23 @@ def check(ui, data_port):
         result = post(h, ui.port, session, "/console/api/policies/test",
                       {"path": path, "ip": "198.51.100.88", "user_agent": "Mozilla"})
         assert result["action"] == "deny", result
+    # Counters are sampled, not timestamped per request. Keep this cohort away from
+    # the minute boundary so its next sample belongs to the same retained minute.
+    ui.event(1, {"action": "dashboard", "fields": {}})
+    ui.event(1, {"action": "traffic-period", "fields": {"hours": "0"}})
+    deadline = time.monotonic() + 65
+    while not 2 <= int(time.time()) % 60 <= 45:
+        assert time.monotonic() < deadline, "rule-hit cohort start deadline"
+        ui.receive()
     first = int(time.time()) // 60
     for index in range(20):
         status, _, _ = h.request(data_port, "GET", path, extra_headers={
             "X-Forwarded-For": f"198.51.100.{index + 1}", "User-Agent": "Mozilla"})
         assert status == 403, status
     last = int(time.time()) // 60
+    assert first == last and int(time.time()) % 60 < 55, "cohort crossed sampling boundary"
     # The production collector seals ending-minute cohorts. No synthetic clock or SQL
     # injection substitutes for this request -> pinned counter -> storage -> browser path.
-    ui.event(1, {"action": "dashboard", "fields": {}})
-    ui.event(1, {"action": "traffic-period", "fields": {"hours": "0"}})
     deadline = time.monotonic() + 75
     while time.monotonic() < deadline and time.time() < (last + 1) * 60 + 2:
         # Drain live snapshots and answer heartbeats while waiting for durable intervals.
@@ -38,7 +45,12 @@ def check(ui, data_port):
              "until_minute": last, "revision": saved["committed"]}
     for key in ("m:ui-hit-weight", "m:ui-hit-deny"):
         query["key"] = key
-        result = post(h, ui.port, session, "/console/api/policies/hits", query)
+        deadline = time.monotonic() + 20
+        while True:
+            result = post(h, ui.port, session, "/console/api/policies/hits", query)
+            if int(result["window"]["hits"]) != 0 or time.monotonic() >= deadline:
+                break
+            ui.receive()
         assert int(result["window"]["hits"]) == 20, result
         assert result["window"]["finished"] and result["window"]["next"] is None, result
     assert h.request(ui.port, "POST", "/console/api/policies/hits", query)[0] == 401
