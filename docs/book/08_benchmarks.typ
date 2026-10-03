@@ -8,7 +8,7 @@
   replicated-cluster costs. The console has a separate isolation acceptance matrix.
   Every number in this part is rendered from a results file at build time. Its header identifies
   the tested revision and host. Historical September records predate the request-path changes
-  of 1 October 2026. The primitive suite was refreshed on 3 October; the other families
+  of 1 October 2026. The primitive suite was refreshed on 3 October with Zig 0.17; the other families
   retain their own earlier revisions and do not qualify the current release.
   A functional pass and an inconclusive isolation measurement answer different questions.
 ])

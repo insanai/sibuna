@@ -77,11 +77,14 @@ and origin sockets. The whole-product comparison was regenerated from a clean ch
 `2e1a7f8` (`tools-comparison-latest-20261002T014905Z.json`). The other four core families, the
 eight impact matrices and `linux-launch-review-20261002.json` predate that change and were
 not rerun. Rerun them before citing them for the current code.
-The primitive suite was regenerated on 3 October from clean revision `11a67a7` on the
-same Linux container, using Zig 0.16.0 and Zaxonlite 0.7.0. `latest.json` and its timestamped
-copy identify that source digest and executable. The admission, distributed, cluster and
-console-impact records were not rerun for v0.1.0; their existing provenance and verdicts
-remain authoritative. The first release does not claim the formal console-impact gate passed.
+The primitive suite was regenerated on 3 October for Zig 0.17.0 from clean revision
+`b1da948` on the same Linux container. `latest.json` and
+`latest-20261003T082823Z.json` identify the source digest and executable. Source manifest
+version 3 includes the explicitly migrated Zaxonlite and Paxos 0.7.0 snapshots in `vendor/`;
+the original package pins and the compatibility source path are recorded separately.
+The earlier Zig 0.16 measurement remains in its timestamped file. Admission, distributed,
+cluster and console-impact measurements were not rerun for v0.2.0. Their recorded revisions
+and verdicts remain authoritative; this release does not claim the formal impact gate passed.
 
 The whole-product run verifies all 24 expected workload statuses without transport failures.
 Its four-CPU allowance applies to both products; request-rate comparisons remain specific to
