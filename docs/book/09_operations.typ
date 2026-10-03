@@ -52,7 +52,7 @@ corresponding source and build scripts, and the console links to that source.
   [`--upstream-port, -u`], [`3000`], [Origin port],
   [`--mode, -m`], [`reverse_proxy`], [`reverse_proxy` or `forward_auth`],
   [`--workers, -w`], [CPU count], [Accept threads sharing the listening socket; each connection then gets its own thread],
-  [`--max-connections`], [`1024`], [Connections served concurrently; further ones are answered `503`],
+  [`--max-connections`], [`1024`], [Connections served concurrently; further ones are refused with a bounded `503` reply],
   [`--idle-timeout`], [`15`], [Longest silence in seconds. A request head must arrive within it. An origin response refreshes it on every read, so a slow stream lives while bytes flow and a silent origin is cut on both sockets. A proxied upload must deliver 16 KiB per period (a minimum rate against slow-body attacks)],
   [`--trust-forwarded`], [off; on in forward-auth], [Honour `X-Forwarded-For` / `X-Real-IP` from the peer],
   [`--algorithm, -a`], [`posw`], [`posw` or `hashcash`],

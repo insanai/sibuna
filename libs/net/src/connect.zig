@@ -9,16 +9,6 @@ const windows = @import("builtin").os.tag == .windows;
 const windows_socket = @import("socket").windows;
 const Error = error{UpstreamUnreachable};
 
-/// Windows Io owns AFD handles, so an overload drain must not call Winsock recv.
-pub fn drainPending(stream: Io.net.Stream) void {
-    var buffer: [4096]u8 = undefined;
-    for (0..8) |_| {
-        const count = windows_socket.receive(stream.socket.handle, &buffer, 1_000_000) catch
-            return;
-        if (count == 0) return;
-    }
-}
-
 pub fn bounded(io: Io, address: Io.net.IpAddress) Error!Io.net.Stream {
     const deadline = Io.Clock.awake.now(io).nanoseconds + 5 * std.time.ns_per_s;
     return boundedDeadline(io, address, deadline);
@@ -131,7 +121,11 @@ pub fn readBounded(io: Io, stream: Io.net.Stream, out: []u8, deadline_ns: i96) !
 fn ready(io: Io, fd: posix.socket_t, events: i16, deadline_ns: i96) Error!void {
     var descriptor = [_]posix.pollfd{.{ .fd = fd, .events = events, .revents = 0 }};
     while (Io.Clock.awake.now(io).nanoseconds < deadline_ns) {
-        const result = posix.system.poll(&descriptor, 1, 100);
+        const left = deadline_ns - Io.Clock.awake.now(io).nanoseconds;
+        if (left <= 0) break;
+        const remaining_ms = std.math.divCeil(i96, left, std.time.ns_per_ms) catch unreachable;
+        const milliseconds: c_int = @intCast(@min(100, remaining_ms));
+        const result = posix.system.poll(&descriptor, 1, milliseconds);
         switch (posix.errno(result)) {
             .SUCCESS => {},
             .INTR => continue,

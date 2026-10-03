@@ -84,11 +84,11 @@ pub fn respond(
 
 /// Pre-parse rejections on the accept loop have no request to negotiate with; a customized
 /// overload page is served as HTML, the built-in reply stays plain text.
-pub fn rejectRaw(st: *server.AppState, writer: *std.Io.Writer, text: []const u8) void {
+pub fn rejectRaw(st: *server.AppState, writer: *std.Io.Writer, text: []const u8) !void {
     var template: page_template.Template = undefined;
     copy(st, .overloaded, &template);
     if (!template.customized) {
-        net.response.writeText(writer, .service_unavailable, text, false) catch {};
+        try net.response.writeText(writer, .service_unavailable, text, false);
         return;
     }
     const values: page_template.Values = .{
@@ -98,12 +98,12 @@ pub fn rejectRaw(st: *server.AppState, writer: *std.Io.Writer, text: []const u8)
         .node = st.config.cluster_node,
     };
     const length = page_template.measure(&template, values);
-    writer.print(
+    try writer.print(
         "HTTP/1.1 503 Service Unavailable\r\nContent-Type: text/html; charset=utf-8\r\n" ++
             "Content-Length: {d}\r\nConnection: close\r\nCache-Control: no-store\r\n" ++
             "X-Content-Type-Options: nosniff\r\nRetry-After: 5\r\n" ++ security_policy ++ "\r\n",
         .{length},
-    ) catch return;
-    page_template.write(&template, writer, values) catch return;
-    writer.flush() catch {};
+    );
+    try page_template.write(&template, writer, values);
+    try writer.flush();
 }

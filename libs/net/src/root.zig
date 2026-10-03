@@ -12,6 +12,7 @@ pub const response = @import("response.zig");
 pub const proxy = @import("proxy.zig");
 pub const outbound = @import("outbound.zig");
 pub const connect = @import("connect.zig");
+pub const refusal = @import("refusal.zig");
 pub const duplex = @import("duplex.zig");
 pub const forwarded = @import("forwarded.zig");
 pub const interrupt = @import("socket").interrupt;

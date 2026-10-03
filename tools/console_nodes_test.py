@@ -2,6 +2,7 @@
 import http.client
 import json
 from pathlib import Path
+import socket
 import tempfile
 import time
 import console_bootstrap_test as bootstrap
@@ -32,6 +33,26 @@ def command(h, port, session, fields, expected=200):
 def operation(node, kind):
     return dict(id=node["operation_id"], node=node["node"], boot=node["boot"],
                 expected_revision=str(node["control_revision"]), kind=kind)
+
+
+def refusal_checks(h, data_port):
+    # Accept happens before the request's complete head arrives. The refusal must
+    # survive the late fragment rather than becoming a reset with a lost response.
+    with socket.create_connection(("127.0.0.1", data_port), timeout=2) as client:
+        client.sendall(b"GET /__sibuna/health HTTP/1.1\r\n")
+        time.sleep(0.02)
+        client.sendall(b"Host: localhost\r\nConnection: close\r\n\r\n")
+        response = http.client.HTTPResponse(client)
+        response.begin()
+        assert response.status == 503
+        assert b"node is draining" in response.read()
+        response.close()
+    # A peer that sends no head must not monopolize the only acceptor. The second
+    # client still receives its refusal within a bounded period, without any retry.
+    with socket.create_connection(("127.0.0.1", data_port), timeout=2):
+        started = time.monotonic()
+        assert h.request(data_port, "GET", "/__sibuna/health")[0] == 503
+        assert time.monotonic() - started < 1, "silent refusal peer held the acceptor"
 
 
 def checks(h, port, data_port, admin):
@@ -75,6 +96,7 @@ def checks(h, port, data_port, admin):
         assert receipt["state"] == "applied" and receipt["completion_persisted"]
         assert status(h, port, admin)["draining"]
         assert h.request(data_port, "GET", "/__sibuna/health")[0] == 503
+        refusal_checks(h, data_port)
         old.request("GET", "/__sibuna/health")
         reply = old.getresponse()
         assert reply.status == 200 and old.sock is socket

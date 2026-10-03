@@ -217,28 +217,15 @@ fn connectionThread(stream: Io.net.Stream, io: Io, context: *anyopaque) void {
 /// template is served as HTML, the built-in reply stays plain text.
 fn rejectRaw(stream: Io.net.Stream, io: Io, st: *AppState, text: []const u8) void {
     defer stream.close(io);
-    var buffer: [4096]u8 = undefined;
-    var writer = stream.writer(io, &buffer);
-    @import("response_pages.zig").rejectRaw(st, &writer.interface, text);
-    // A client that already sent its request still has unread bytes queued on this socket;
-    // closing over them answers with a reset that discards the 503. Drain what has arrived
-    // without blocking the accept loop, then announce the end of the response.
-    drainPending(stream);
-    stream.shutdown(io, .send) catch {};
-}
-
-fn drainPending(stream: Io.net.Stream) void {
-    if (@import("builtin").os.tag == .windows) return net.connect.drainPending(stream);
-    var scratch: [4096]u8 = undefined;
-    for (0..8) |_| {
-        const result = net.socket_system.recv(
-            stream.socket.handle,
-            &scratch,
-            scratch.len,
-            std.posix.MSG.DONTWAIT,
-        );
-        if (std.posix.errno(result) != .SUCCESS or result <= 0) return;
-    }
+    // Reasons are internal literals. Each placeholder expands to at most six bytes
+    // per input byte (HTML escaping); the remaining allowance covers response headers.
+    std.debug.assert(text.len <= 64);
+    const template = policy.page_template;
+    const capacity = template.max_bytes + 6 * 64 * template.max_segments + 1024;
+    var buffer: [capacity]u8 = undefined;
+    var writer = Io.Writer.fixed(&buffer);
+    @import("response_pages.zig").rejectRaw(st, &writer, text) catch unreachable;
+    net.refusal.send(io, stream, writer.buffered()) catch return;
 }
 
 const Connection = struct {

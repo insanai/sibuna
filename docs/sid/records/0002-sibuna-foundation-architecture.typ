@@ -108,7 +108,10 @@ The server runs bounded blocking accept threads (`--workers`, one per CPU by def
 accepted connection is served on its own thread with a one-megabyte stack, so a slow or idle
 peer never delays another connection; the number of connection threads is bounded by
 `--max-connections` (1,024 by default), beyond which the accept loop answers `503` and closes
-the socket without spawning, counting the event in `sibuna_overloaded_total`. A finished
+the socket without spawning, counting the event in `sibuna_overloaded_total`. Pre-parse
+refusals render into a bounded buffer and share a 100 ms send/lingering-close budget, draining
+at most 64 KiB of late input so ordinary clients receive the response before closure. A peer
+that withholds input or close cannot hold the accept loop indefinitely. A finished
 connection thread still owns its stack until it is joined, and it is joined when its slot is
 next taken, so slots are taken lowest first and the number of allocated stacks follows the
 connections currently open rather than the number served. The idle reaper
