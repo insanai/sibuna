@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1197pt" height="1078pt" viewBox="0.00 0.00 1197.00 1078.00" role="img" aria-labelledby="diagram-title diagram-description">
+<title id="diagram-title">Inside Sibuna</title><desc id="diagram-description">Eight modules handle connections, HTTP, proofs, puzzles, access rules, request limits, storage and the operator console.</desc><g id="graph0" class="graph" transform="scale(2.22222 2.22222) rotate(0) translate(18 467)">
+<title>Subsystems</title>
+<polygon fill="#ffffff" stroke="none" points="-18,18 -18,-467 520.75,-467 520.75,18 -18,18" />
+
+<g id="node1" class="node">
+<title>modules</title>
+<polygon fill="#ffffff" stroke="none" points="0,0 0,-449 502.75,-449 502.75,0 0,0" />
+<polygon fill="#475569" stroke="#475569" points="0,-381 0,-381 502.75,-381 502.75,-381 0,-381" />
+<polygon fill="#475569" stroke="#475569" points="0,-333.5 0,-333.5 108.5,-333.5 108.5,-333.5 0,-333.5" />
+<polygon fill="#475569" stroke="#475569" points="108.5,-333.5 108.5,-333.5 502.75,-333.5 502.75,-333.5 108.5,-333.5" />
+<polygon fill="#475569" stroke="#475569" points="0,-286 0,-286 108.5,-286 108.5,-286 0,-286" />
+<polygon fill="#475569" stroke="#475569" points="108.5,-286 108.5,-286 502.75,-286 502.75,-286 108.5,-286" />
+<polygon fill="#475569" stroke="#475569" points="0,-238.5 0,-238.5 108.5,-238.5 108.5,-238.5 0,-238.5" />
+<polygon fill="#475569" stroke="#475569" points="108.5,-238.5 108.5,-238.5 502.75,-238.5 502.75,-238.5 108.5,-238.5" />
+<polygon fill="#475569" stroke="#475569" points="0,-191 0,-191 108.5,-191 108.5,-191 0,-191" />
+<polygon fill="#475569" stroke="#475569" points="108.5,-191 108.5,-191 502.75,-191 502.75,-191 108.5,-191" />
+<polygon fill="#475569" stroke="#475569" points="0,-143.5 0,-143.5 108.5,-143.5 108.5,-143.5 0,-143.5" />
+<polygon fill="#475569" stroke="#475569" points="108.5,-143.5 108.5,-143.5 502.75,-143.5 502.75,-143.5 108.5,-143.5" />
+<polygon fill="#475569" stroke="#475569" points="0,-96 0,-96 108.5,-96 108.5,-96 0,-96" />
+<polygon fill="#475569" stroke="#475569" points="108.5,-96 108.5,-96 502.75,-96 502.75,-96 108.5,-96" />
+<polygon fill="#475569" stroke="#475569" points="0,-48.5 0,-48.5 108.5,-48.5 108.5,-48.5 0,-48.5" />
+<polygon fill="#475569" stroke="#475569" points="108.5,-48.5 108.5,-48.5 502.75,-48.5 502.75,-48.5 108.5,-48.5" />
+<polygon fill="none" stroke="#475569" points="0,0 0,-449 502.75,-449 502.75,0 0,0" />
+<polygon fill="#eff3f8" stroke="none" points="1,-381 1,-448 501.75,-448 501.75,-381 1,-381" />
+<text xml:space="preserve" text-anchor="start" x="144.12" y="-414.1" font-family="Arial" font-size="17.00" fill="#172033">                </text>
+<text xml:space="preserve" text-anchor="start" x="216.12" y="-414.1" font-family="Arial" font-weight="bold" font-size="22.00" fill="#172033">Inside Sibuna</text>
+<text xml:space="preserve" text-anchor="start" x="56" y="-396.85" font-family="Arial" font-size="17.00" fill="#172033">                </text>
+<text xml:space="preserve" text-anchor="start" x="128" y="-396.85" font-family="Arial" font-size="15.00" fill="#172033">One executable; each module has a job</text>
+<text xml:space="preserve" text-anchor="start" x="392.75" y="-396.85" font-family="Arial" font-size="17.00" fill="#172033">            </text>
+<text xml:space="preserve" text-anchor="start" x="15" y="-351.85" font-family="Arial" font-weight="bold" font-size="17.00" fill="#172033">socket</text>
+<text xml:space="preserve" text-anchor="start" x="122.5" y="-351.25" font-family="Arial" font-size="17.00" fill="#172033">Open and close network connections safely</text>
+<text xml:space="preserve" text-anchor="start" x="15" y="-304.35" font-family="Arial" font-weight="bold" font-size="17.00" fill="#172033">net</text>
+<text xml:space="preserve" text-anchor="start" x="122.5" y="-303.75" font-family="Arial" font-size="17.00" fill="#172033">Read HTTP requests and forward allowed traffic</text>
+<text xml:space="preserve" text-anchor="start" x="15" y="-256.85" font-family="Arial" font-weight="bold" font-size="17.00" fill="#172033">crypto</text>
+<text xml:space="preserve" text-anchor="start" x="122.5" y="-256.25" font-family="Arial" font-size="17.00" fill="#172033">Compute proofs and sign or verify sessions</text>
+<text xml:space="preserve" text-anchor="start" x="15" y="-209.35" font-family="Arial" font-weight="bold" font-size="17.00" fill="#172033">challenge</text>
+<text xml:space="preserve" text-anchor="start" x="122.5" y="-208.75" font-family="Arial" font-size="17.00" fill="#172033">Create puzzles and adjust the required work</text>
+<text xml:space="preserve" text-anchor="start" x="15" y="-161.85" font-family="Arial" font-weight="bold" font-size="17.00" fill="#172033">policy</text>
+<text xml:space="preserve" text-anchor="start" x="122.5" y="-161.25" font-family="Arial" font-size="17.00" fill="#172033">Apply access rules and look for attacks</text>
+<text xml:space="preserve" text-anchor="start" x="15" y="-114.35" font-family="Arial" font-weight="bold" font-size="17.00" fill="#172033">store</text>
+<text xml:space="preserve" text-anchor="start" x="122.5" y="-113.75" font-family="Arial" font-size="17.00" fill="#172033">Track request limits and already-used proofs</text>
+<text xml:space="preserve" text-anchor="start" x="15" y="-66.85" font-family="Arial" font-weight="bold" font-size="17.00" fill="#172033">edge</text>
+<text xml:space="preserve" text-anchor="start" x="122.5" y="-66.25" font-family="Arial" font-size="17.00" fill="#172033">Save security data and share it between nodes</text>
+<text xml:space="preserve" text-anchor="start" x="15" y="-19.35" font-family="Arial" font-weight="bold" font-size="17.00" fill="#172033">console</text>
+<text xml:space="preserve" text-anchor="start" x="122.5" y="-18.75" font-family="Arial" font-size="17.00" fill="#172033">Show traffic and help you manage protection</text>
+</g>
+</g>
+</svg>

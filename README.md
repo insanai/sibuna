@@ -5,6 +5,7 @@
   </p>
   <p align="center">
     <a href="#features">Features</a> •
+    <a href="#console">Console</a> •
     <a href="#quickstart">Quickstart</a> •
     <a href="#how-it-works">How It Works</a> •
     <a href="#architecture">Architecture</a> •
@@ -37,50 +38,76 @@ Instead of subjecting human visitors to frustrating image CAPTCHAs or privacy-in
 
 ---
 
+## Console
+
+The opt-in console runs in the same executable. Add `--console` to enable it; the
+[operations guide](https://insanai.github.io/sibuna/book/operations.html) covers bootstrap,
+HTTPS access and GeoIP imports.
+
+![Sibuna Console globe showing incoming sampled traffic, the request timeline and coverage](docs/readme/images/console-globe.jpg)
+
+The globe shows sampled traffic flowing from countries to your Sibuna server. Country markers
+show approximate locations, not visitors' exact positions. The arrows show activity over the
+last minute. The timeline counts request outcomes, and the coverage panel explains the sampling.
+
+<details>
+<summary>Traffic overview, policy editor and incident investigation</summary>
+
+**Traffic overview** — request outcomes, observation windows and live updates.
+
+![Sibuna Console traffic overview with admitted, challenged and denied request counters](docs/readme/images/console-dashboard.jpg)
+
+**Policy editor** — a sample checkout challenge rule, with explicit matchers and settings.
+
+![Sibuna Console policy editor with a draft challenge rule for checkout](docs/readme/images/console-policy-editor.jpg)
+
+**Incident investigation** — recorded evidence and bounded, redacted request heads.
+
+![Sibuna Console incident evidence with redacted headers and response state](docs/readme/images/console-incident.jpg)
+
+</details>
+
+These are real Chrome captures of Sibuna v0.2.0 on a local review node. Traffic and GeoIP
+mappings are illustrative test data; the displayed counts are not performance measurements.
+
+---
+
 ## Architecture
 
 Following the modular design of raylib, Sibuna is divided into small, single-purpose subsystems:
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                          SIBUNA SUBSYSTEMS                             │
-├──────────────┬─────────────────────────────────────────────────────────┤
-│ socket       │ Native socket operations and interruption ownership    │
-│ net          │ Zero-copy HTTP/1.1 stream parser & reverse proxy relay  │
-│ crypto       │ Proof of Sequential Work (PoSW), Hashcash & BLAKE3 MAC  │
-│ policy       │ Aho–Corasick signatures, Radix CIDR trie & semantic WAF │
-│ challenge    │ Stateless challenge coordinator & adaptive difficulty   │
-│ store        │ 16-shard GCRA rate limiter & Robin Hood spent set       │
-│ edge         │ Embedded Zaxonlite store (replicated SQLite Multi-Paxos)│
-│ console      │ WebAssembly operator UI, WebSocket telemetry & GeoIP    │
-└──────────────┴─────────────────────────────────────────────────────────┘
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/images/subsystems-dark.svg">
+  <img src="docs/readme/images/subsystems.svg" alt="Inside Sibuna: the jobs of its eight modules">
+</picture>
 
-### Two Operational Surfaces
+`socket` opens and closes connections safely, and `net` reads HTTP requests and forwards
+allowed traffic. `crypto` computes proofs and signs or verifies sessions; `challenge` creates
+puzzles and adjusts their difficulty. `policy` applies access rules and looks for attacks,
+while `store` tracks local request limits and used proofs. Optional `edge` storage saves
+security data and shares it between nodes. `console` shows traffic and helps operators
+manage protection.
 
-Sibuna provides two operational surfaces within the same executable:
+### Gate and Shield
 
-```
-                  ┌─────────────────────────────────────────┐
-                  │            Incoming Request             │
-                  └────────────────────┬────────────────────┘
-                                       │
-                      [ Surface 1: Gate (--gate) ]
-                      • Proof-of-work admission & sessions
-                      • Bot signatures & Radix CIDR checks
-                      • Atomic GCRA rate limiting & honeypots
-                                       │
-                                       ▼ Admitted
-                      [ Surface 2: Shield (--shield, default) ]
-                      • Inline semantic attack inspection
-                      • SQL injection & XSS automata
-                      • Path traversal & shell execution filters
-                                       │
-                                       ▼ Passed
-                  ┌─────────────────────────────────────────┐
-                  │             Upstream Origin             │
-                  └─────────────────────────────────────────┘
-```
+Choose Gate or Shield when you start Sibuna. Gate (`--gate`) checks access rules, proof-of-work
+sessions and local request limits. Shield (`--shield`, the default) also looks for web attacks.
+Your inspection settings decide whether an attack is blocked or recorded while checks continue.
+
+Read the flow from top to bottom: rectangles show actions, diamonds show decisions, and ovals
+mark the start or an outcome. Every branch has a label; color is an additional cue.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/images/protection-surfaces-dark.svg">
+  <img src="docs/readme/images/protection-surfaces.svg" alt="How Sibuna protects a request: Gate or Shield, followed by allow, challenge or block">
+</picture>
+
+When a visitor requests a page, Shield checks for attacks; Gate skips attack inspection.
+Both check access rules, sessions and request limits. A request is then forwarded to your app,
+given a puzzle or stopped. A valid session does not bypass Shield's attack checks or request limits.
+
+In reverse-proxy mode Sibuna forwards allowed requests itself. In forward-auth mode it tells
+your existing proxy whether to forward them. Either deployment can use Gate or Shield.
 
 ---
 
@@ -153,43 +180,34 @@ Open `http://localhost:8080` in your browser. Your application is now protected.
 
 ### The Revolving Door and the Wristband
 
-Most web security today relies on **interrogation**: a security guard stops you at the doorway, holds up blurry photos, and demands that you identify every traffic light before you are allowed in. It treats every human customer like a suspected intruder, frustrates real people, and tracks their identity across the internet.
+Think of admission as a revolving door followed by a wristband: the client does work once,
+then presents a signed session on subsequent requests. Policy determines when a challenge
+is required; the proof does not establish that a client is human.
 
-Sibuna replaces the interrogation room with a simple physical principle: **a revolving door and a wristband**.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/images/admission-session-dark.svg">
+  <img src="docs/readme/images/admission-session.svg" alt="Solve a puzzle, save a signed session cookie, and check rules on later requests">
+</picture>
 
-```
-  [ Real Human Visitor ]                               [ Automated Botnet / Scraper ]
-            │                                                        │
-            │ Walks in normally                                      │ Tries to force 50,000 requests/sec
-            ▼                                                        ▼
-  ┌──────────────────┐                                     ┌──────────────────┐
-  │  Revolving Door  │ ◄─── Effortless push (100ms)        │  Revolving Door  │ ◄─── Impossible resistance
-  │ (Proof of Work)  │      Handled silently in background │ (Proof of Work)  │      Attacker's CPU burns out
-  └────────┬─────────┘                                     └────────┬─────────┘
-           │                                                        │
-           ▼ Receives Wristband                                     ▼ Blocked at the entrance
-  ┌──────────────────┐                                     ┌──────────────────┐
-  │ Keyed Wristband  │ ◄─── Checked in 28 nanoseconds      │  Origin Server   │ ◄─── Untouched & Relaxed
-  │ (Session Token)  │      Free to browse any page        │                  │      Zero database strain
-  └──────────────────┘                                     └──────────────────┘
-```
+#### 1. Browser Work (The Door)
 
-#### 1. The Gentle Push (The Door)
-When a browser first visits your website, Sibuna asks it to turn a smoothly balanced revolving door—solving a small mathematical puzzle in the background via WebAssembly in a fraction of a second.
-- The human visitor **never clicks a puzzle, never solves a riddle, and sees no prompt**.
-- The page simply loads.
+When a request requires a challenge, the browser solves a computational puzzle using
+WebAssembly. No image CAPTCHA is needed. Work depends on configured difficulty and client
+hardware, so the challenge can take time before the protected page loads. Sibuna verifies the
+solution and rejects invalid proofs.
 
-#### 2. The Cryptographic Wristband (The Token)
-Once through the door, Sibuna stamps the browser with a cryptographic **wristband** (a 16-byte keyed BLAKE3 session token).
-- As the visitor browses from page to page, clicks articles, and loads images, Sibuna glances at the wristband in **28 nanoseconds**.
-- No repeated challenges, no database lookups, no friction.
+#### 2. The Signed Session (The Wristband)
 
-#### 3. The Scraper's Impasse (Thermodynamic Asymmetry)
-For a human browsing a dozen pages, turning a revolving door once is completely imperceptible.
-- But for an automated AI crawler or scraper attempting to harvest 100,000 pages per minute, turning that door 100,000 times requires the energy of an industrial turbine.
-- The scraper’s CPU overheats and grinds to a halt under the computational debt. Meanwhile, your origin server expends virtually zero energy verifying the passes.
+A successful proof earns a session authenticated with keyed BLAKE3. The browser can reuse
+it until it expires, is revoked or no longer satisfies the required work. Sibuna verifies
+the session in native code; applicable inspection, policy and local rate limits still run.
 
-The burden is placed entirely on the abuser, while real people walk straight through.
+#### 3. Automation and Limits
+
+Automated clients can also solve challenges and reuse valid sessions. Proof of work adds
+an admission cost; bot rules, inspection and local quotas control subsequent access.
+Choose difficulty and limits for your application and visitors, rather than assuming every
+request requires a new proof or that a challenge guarantees protection from overload.
 
 ---
 

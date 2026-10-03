@@ -1,0 +1,148 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1797pt" height="2020pt" viewBox="0.00 0.00 1797.00 2020.00" role="img" aria-labelledby="diagram-title diagram-description">
+<title id="diagram-title">Solve a puzzle, then keep browsing</title><desc id="diagram-description">The browser solves a puzzle. An accepted solution earns a signed session cookie, which the browser sends on later requests. Rules and request limits still apply, and Shield still checks attacks. Later requests can reach the app, need new work or be stopped.</desc><g id="graph0" class="graph" transform="scale(2.22222 2.22222) rotate(0) translate(21.6 887.52)">
+<title>AdmissionSession</title>
+<polygon fill="#0f172a" stroke="none" points="-21.6,21.6 -21.6,-887.52 787.01,-887.52 787.01,21.6 -21.6,21.6" />
+<text xml:space="preserve" text-anchor="middle" x="382.71" y="-841.02" font-family="Arial" font-size="22.00" fill="#f1f5f9">Solve a puzzle, then keep browsing</text>
+
+<g id="node1" class="node">
+<title>challenge</title>
+<ellipse fill="#1e293b" stroke="#94a3b8" stroke-width="1.6" cx="300.95" cy="-792.63" rx="148.87" ry="39.8" />
+<text xml:space="preserve" text-anchor="middle" x="300.95" y="-795.98" font-family="Arial" font-size="17.00" fill="#f1f5f9">Sibuna asks the browser</text>
+<text xml:space="preserve" text-anchor="middle" x="300.95" y="-776.48" font-family="Arial" font-size="17.00" fill="#f1f5f9">to solve a puzzle</text>
+</g>
+
+<g id="node2" class="node">
+<title>work</title>
+<polygon fill="#1e293b" stroke="#94a3b8" stroke-width="1.6" points="411.47,-725.83 190.43,-725.83 190.43,-669.55 411.47,-669.55 411.47,-725.83" />
+<text xml:space="preserve" text-anchor="middle" x="300.95" y="-701.04" font-family="Arial" font-size="17.00" fill="#f1f5f9">Browser solves the puzzle</text>
+<text xml:space="preserve" text-anchor="middle" x="300.95" y="-681.54" font-family="Arial" font-size="17.00" fill="#f1f5f9">in the background</text>
+</g>
+
+<g id="edge1" class="edge">
+<title>challenge-&gt;work</title>
+<path fill="none" stroke="#94a3b8" stroke-width="1.5" d="M300.95,-752.21C300.95,-747.1 300.95,-741.88 300.95,-736.79" />
+<polygon fill="#94a3b8" stroke="#94a3b8" stroke-width="1.5" points="303.75,-736.89 300.95,-728.89 298.15,-736.89 303.75,-736.89" />
+</g>
+
+<g id="node3" class="node">
+<title>proof</title>
+<polygon fill="#3a2d13" stroke="#94a3b8" stroke-width="1.6" points="300.95,-642.55 124.91,-586.27 300.95,-529.99 476.99,-586.27 300.95,-642.55" />
+<text xml:space="preserve" text-anchor="middle" x="300.95" y="-589.62" font-family="Arial" font-size="17.00" fill="#f1f5f9">Does Sibuna accept</text>
+<text xml:space="preserve" text-anchor="middle" x="300.95" y="-570.12" font-family="Arial" font-size="17.00" fill="#f1f5f9">the solution?</text>
+</g>
+
+<g id="edge2" class="edge">
+<title>work-&gt;proof</title>
+<path fill="none" stroke="#94a3b8" stroke-width="1.5" d="M300.95,-668.8C300.95,-663.89 300.95,-658.6 300.95,-653.16" />
+<polygon fill="#94a3b8" stroke="#94a3b8" stroke-width="1.5" points="303.75,-653.51 300.95,-645.51 298.15,-653.51 303.75,-653.51" />
+</g>
+
+<g id="node4" class="node">
+<title>cookie</title>
+<polygon fill="#1e293b" stroke="#94a3b8" stroke-width="1.6" points="403.22,-485.99 198.68,-485.99 198.68,-429.71 403.22,-429.71 403.22,-485.99" />
+<text xml:space="preserve" text-anchor="middle" x="300.95" y="-461.2" font-family="Arial" font-size="17.00" fill="#f1f5f9">Browser saves a signed</text>
+<text xml:space="preserve" text-anchor="middle" x="300.95" y="-441.7" font-family="Arial" font-size="17.00" fill="#f1f5f9">session cookie</text>
+</g>
+
+<g id="edge3" class="edge">
+<title>proof-&gt;cookie</title>
+<path fill="none" stroke="#94a3b8" stroke-width="1.5" d="M300.95,-529.45C300.95,-518.46 300.95,-507.16 300.95,-496.91" />
+<polygon fill="#94a3b8" stroke="#94a3b8" stroke-width="1.5" points="303.75,-496.94 300.95,-488.94 298.15,-496.94 303.75,-496.94" />
+<text xml:space="preserve" text-anchor="middle" x="313.32" y="-502.74" font-family="Arial" font-size="15.00" fill="#f1f5f9">Yes</text>
+</g>
+
+<g id="node5" class="node">
+<title>invalid</title>
+<ellipse fill="#442327" stroke="#94a3b8" stroke-width="1.6" cx="649.95" cy="-586.27" rx="115.46" ry="26.01" />
+<text xml:space="preserve" text-anchor="middle" x="649.95" y="-579.87" font-family="Arial" font-size="17.00" fill="#f1f5f9">Reject the solution</text>
+</g>
+
+<g id="edge4" class="edge">
+<title>proof:e-&gt;invalid:w</title>
+<path fill="none" stroke="#94a3b8" stroke-width="1.5" d="M476.99,-586.27C476.99,-586.27 496.36,-602.27 496.36,-602.27 496.36,-602.27 515.11,-602.27 515.11,-602.27 515.11,-602.27 517,-600.71 519.6,-598.56" />
+<polygon fill="#94a3b8" stroke="#94a3b8" stroke-width="1.5" points="528.35,-594.97 532.73,-587.72 524.78,-590.65 528.35,-594.97" />
+<text xml:space="preserve" text-anchor="middle" x="505.74" y="-606.02" font-family="Arial" font-size="15.00" fill="#f1f5f9">No</text>
+</g>
+
+<g id="node6" class="node">
+<title>requests</title>
+<polygon fill="#1e293b" stroke="#94a3b8" stroke-width="1.6" points="409.59,-402.71 192.3,-402.71 192.3,-346.43 409.59,-346.43 409.59,-402.71" />
+<text xml:space="preserve" text-anchor="middle" x="300.95" y="-377.92" font-family="Arial" font-size="17.00" fill="#f1f5f9">On the next request,</text>
+<text xml:space="preserve" text-anchor="middle" x="300.95" y="-358.42" font-family="Arial" font-size="17.00" fill="#f1f5f9">browser sends the cookie</text>
+</g>
+
+<g id="edge5" class="edge">
+<title>cookie-&gt;requests</title>
+<path fill="none" stroke="#94a3b8" stroke-width="1.5" d="M300.95,-429.33C300.95,-424.23 300.95,-418.81 300.95,-413.46" />
+<polygon fill="#94a3b8" stroke="#94a3b8" stroke-width="1.5" points="303.75,-413.61 300.95,-405.61 298.15,-413.61 303.75,-413.61" />
+</g>
+
+<g id="node7" class="node">
+<title>checks</title>
+<polygon fill="#1e293b" stroke="#94a3b8" stroke-width="1.6" points="443.34,-319.43 158.55,-319.43 158.55,-263.15 443.34,-263.15 443.34,-319.43" />
+<text xml:space="preserve" text-anchor="middle" x="300.95" y="-294.64" font-family="Arial" font-size="17.00" fill="#f1f5f9">Check the session, rules and limits</text>
+<text xml:space="preserve" text-anchor="middle" x="300.95" y="-275.14" font-family="Arial" font-size="17.00" fill="#f1f5f9">Shield also checks for attacks</text>
+</g>
+
+<g id="edge6" class="edge">
+<title>requests-&gt;checks</title>
+<path fill="none" stroke="#94a3b8" stroke-width="1.5" d="M300.95,-346.05C300.95,-340.95 300.95,-335.53 300.95,-330.18" />
+<polygon fill="#94a3b8" stroke="#94a3b8" stroke-width="1.5" points="303.75,-330.33 300.95,-322.33 298.15,-330.33 303.75,-330.33" />
+</g>
+
+<g id="node8" class="node">
+<title>result</title>
+<polygon fill="#3a2d13" stroke="#94a3b8" stroke-width="1.6" points="300.95,-236.15 152.66,-179.87 300.95,-123.59 449.24,-179.87 300.95,-236.15" />
+<text xml:space="preserve" text-anchor="middle" x="300.95" y="-183.22" font-family="Arial" font-size="17.00" fill="#f1f5f9">Can this request</text>
+<text xml:space="preserve" text-anchor="middle" x="300.95" y="-163.72" font-family="Arial" font-size="17.00" fill="#f1f5f9">reach your app?</text>
+</g>
+
+<g id="edge7" class="edge">
+<title>checks-&gt;result</title>
+<path fill="none" stroke="#94a3b8" stroke-width="1.5" d="M300.95,-262.4C300.95,-257.49 300.95,-252.2 300.95,-246.76" />
+<polygon fill="#94a3b8" stroke="#94a3b8" stroke-width="1.5" points="303.75,-247.11 300.95,-239.11 298.15,-247.11 303.75,-247.11" />
+</g>
+
+<g id="node9" class="node">
+<title>app</title>
+<ellipse fill="#15392a" stroke="#94a3b8" stroke-width="1.6" cx="88.95" cy="-39.8" rx="88.95" ry="39.8" />
+<text xml:space="preserve" text-anchor="middle" x="88.95" y="-43.15" font-family="Arial" font-size="17.00" fill="#f1f5f9">Send request</text>
+<text xml:space="preserve" text-anchor="middle" x="88.95" y="-23.65" font-family="Arial" font-size="17.00" fill="#f1f5f9">to your app</text>
+</g>
+
+<g id="edge8" class="edge">
+<title>result-&gt;app</title>
+<path fill="none" stroke="#94a3b8" stroke-width="1.5" d="M246.63,-143.49C216.24,-123.7 178.35,-99.02 147.32,-78.82" />
+<polygon fill="#94a3b8" stroke="#94a3b8" stroke-width="1.5" points="148.9,-76.5 140.67,-74.48 145.85,-81.2 148.9,-76.5" />
+<text xml:space="preserve" text-anchor="middle" x="207.32" y="-96.34" font-family="Arial" font-size="15.00" fill="#f1f5f9">Yes</text>
+</g>
+
+<g id="node10" class="node">
+<title>again</title>
+<polygon fill="#3a2d13" stroke="#94a3b8" stroke-width="1.6" points="394.59,-67.94 207.3,-67.94 207.3,-11.66 394.59,-11.66 394.59,-67.94" />
+<text xml:space="preserve" text-anchor="middle" x="300.95" y="-43.15" font-family="Arial" font-size="17.00" fill="#f1f5f9">Ask for a new puzzle</text>
+<text xml:space="preserve" text-anchor="middle" x="300.95" y="-23.65" font-family="Arial" font-size="17.00" fill="#f1f5f9">(e.g. expired session)</text>
+</g>
+
+<g id="edge9" class="edge">
+<title>result-&gt;again</title>
+<path fill="none" stroke="#94a3b8" stroke-width="1.5" d="M300.95,-123.11C300.95,-108.2 300.95,-92.43 300.95,-78.73" />
+<polygon fill="#94a3b8" stroke="#94a3b8" stroke-width="1.5" points="303.75,-78.97 300.95,-70.97 298.15,-78.97 303.75,-78.97" />
+<text xml:space="preserve" text-anchor="middle" x="352.32" y="-96.34" font-family="Arial" font-size="15.00" fill="#f1f5f9">Needs a puzzle</text>
+</g>
+
+<g id="node11" class="node">
+<title>stop</title>
+<ellipse fill="#442327" stroke="#94a3b8" stroke-width="1.6" cx="528.95" cy="-39.8" rx="105.39" ry="26.01" />
+<text xml:space="preserve" text-anchor="middle" x="528.95" y="-33.4" font-family="Arial" font-size="17.00" fill="#f1f5f9">Stop the request</text>
+</g>
+
+<g id="edge10" class="edge">
+<title>result-&gt;stop</title>
+<path fill="none" stroke="#94a3b8" stroke-width="1.5" d="M357.89,-144.39C395.87,-121.39 445.23,-91.5 481.15,-69.74" />
+<polygon fill="#94a3b8" stroke="#94a3b8" stroke-width="1.5" points="482.19,-72.39 487.58,-65.85 479.29,-67.6 482.19,-72.39" />
+<text xml:space="preserve" text-anchor="middle" x="451.45" y="-96.34" font-family="Arial" font-size="15.00" fill="#f1f5f9">No</text>
+</g>
+</g>
+</svg>

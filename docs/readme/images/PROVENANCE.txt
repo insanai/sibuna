@@ -1,0 +1,29 @@
+DIAGRAM PROVENANCE
+Generated locally with Graphviz from docs/readme/diagrams/*.dot.
+Light and dark SVGs are selected in the README with a picture element.
+PNGs are review previews of the same sources. Geometry is identical in both themes.
+Regenerate all formats and check contrast: sh docs/readme/render-diagrams.sh
+The shared palette and SVG descriptions are in docs/readme/render_diagrams.py.
+
+ACCESSIBILITY CHECKS
+WCAG 2.2 SC 1.4.3 text contrast target: at least 4.5:1.
+WCAG 2.2 SC 1.4.11 essential lines and arrowheads: at least 3:1.
+Measured minimum text contrast: light 13.85:1; dark 11.61:1.
+Measured minimum line contrast against adjacent fills: light 6.45:1; dark 4.96:1.
+Calculations use unrounded ratios to pass/fail, not rounded displayed values.
+Actions, decisions and outcomes have distinct shapes and explicit text labels.
+Color is never the sole way to distinguish a branch or outcome.
+SVGs have titles and descriptions; the README provides alt text and equivalent prose.
+These checks cover the diagrams; they do not certify the whole project as WCAG compliant.
+References:
+https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html
+https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html
+https://github.blog/developer-skills/github/how-to-make-your-images-in-markdown-on-github-adjust-for-dark-mode-and-light-mode/
+
+SCREENSHOT PROVENANCE
+Captured 2026-10-03 in Chrome from the published Sibuna v0.2.0 macOS ARM64 binary.
+All network traffic remained on loopback. Trusted forwarded client metadata and an eight-row
+GeoIP dataset were synthetic, illustrative data, not real IP geolocation. The configured
+server position was London (51.5, -0.12), not the capture machine location.
+The policy editor shows an unsaved sample draft. Incident capture was explicitly enabled.
+Screenshots are unmodified browser captures at the normal 1440 x 646 viewport.

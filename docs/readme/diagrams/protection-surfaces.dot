@@ -1,0 +1,36 @@
+digraph ProtectionSurfaces {
+    graph [rankdir=TB, bgcolor="#ffffff", pad=0.3, nodesep=0.4,
+        ranksep=0.4, splines=polyline, fontname="Arial", fontsize=22,
+        fontcolor="#172033", label="How Sibuna protects a request", labelloc=t];
+    node [shape=box, style=filled, fillcolor="#eff3f8", fontname="Arial",
+        fontsize=17, color="#475569", fontcolor="#172033", penwidth=1.6,
+        margin="0.16,0.12", group="main"];
+    edge [fontname="Arial", fontsize=15, color="#475569",
+        fontcolor="#172033", penwidth=1.5, arrowsize=0.8];
+
+    request [shape=oval, label="Visitor requests a page"];
+    mode [shape=diamond, fillcolor="#fff4cc", label="Check for\nweb attacks?"];
+    scan [label="Look for web attacks"];
+    attack [shape=diamond, fillcolor="#fff4cc",
+        label="Do your settings\nblock this attack?"];
+    attack_stop [group="side", shape=oval, fillcolor="#fde8e7", label="Stop the request"];
+    checks [label="Check your access rules,\nsession and request limits"];
+    result [shape=diamond, fillcolor="#fff4cc", label="Can this request\nreach your app?"];
+    app [group="left", shape=oval, fillcolor="#e2f3e8", label="Send request\nto your app"];
+    puzzle [fillcolor="#fff4cc", label="Ask browser to solve\na proof-of-work puzzle"];
+    stop [group="right", shape=oval, fillcolor="#fde8e7", label="Stop the request"];
+
+    // The operator chooses Gate or Shield at startup; these are alternatives.
+    request -> mode;
+    mode -> scan [label="Yes: Shield (default)"];
+    mode:e -> checks:e [label="No: Gate (--gate)", constraint=false];
+    scan -> attack;
+    attack -> checks [label="No"];
+    attack:e -> attack_stop:w [label="Yes"];
+    {rank=same; attack; attack_stop;}
+    checks -> result;
+    result -> app [label="Yes"];
+    result -> puzzle [label="Needs a puzzle"];
+    result -> stop [label="No"];
+    {rank=same; app; puzzle; stop;}
+}

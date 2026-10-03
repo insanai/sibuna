@@ -1,0 +1,38 @@
+digraph Subsystems {
+    graph [bgcolor="#ffffff", pad=0.25];
+    node [shape=plain, fontname="Arial", fontsize=17, fontcolor="#172033"];
+
+    modules [label=<
+        <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="14"
+            COLOR="#475569" BGCOLOR="#ffffff">
+            <TR><TD COLSPAN="2" BGCOLOR="#eff3f8">
+                <FONT POINT-SIZE="22"><B>Inside Sibuna</B></FONT><BR/>
+                <FONT POINT-SIZE="15">One executable; each module has a job</FONT>
+            </TD></TR>
+            <HR/>
+            <TR><TD ALIGN="LEFT"><B>socket</B></TD>
+                <TD ALIGN="LEFT">Open and close network connections safely</TD></TR>
+            <HR/>
+            <TR><TD ALIGN="LEFT"><B>net</B></TD>
+                <TD ALIGN="LEFT">Read HTTP requests and forward allowed traffic</TD></TR>
+            <HR/>
+            <TR><TD ALIGN="LEFT"><B>crypto</B></TD>
+                <TD ALIGN="LEFT">Compute proofs and sign or verify sessions</TD></TR>
+            <HR/>
+            <TR><TD ALIGN="LEFT"><B>challenge</B></TD>
+                <TD ALIGN="LEFT">Create puzzles and adjust the required work</TD></TR>
+            <HR/>
+            <TR><TD ALIGN="LEFT"><B>policy</B></TD>
+                <TD ALIGN="LEFT">Apply access rules and look for attacks</TD></TR>
+            <HR/>
+            <TR><TD ALIGN="LEFT"><B>store</B></TD>
+                <TD ALIGN="LEFT">Track request limits and already-used proofs</TD></TR>
+            <HR/>
+            <TR><TD ALIGN="LEFT"><B>edge</B></TD>
+                <TD ALIGN="LEFT">Save security data and share it between nodes</TD></TR>
+            <HR/>
+            <TR><TD ALIGN="LEFT"><B>console</B></TD>
+                <TD ALIGN="LEFT">Show traffic and help you manage protection</TD></TR>
+        </TABLE>
+    >];
+}
