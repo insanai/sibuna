@@ -4,7 +4,8 @@ const std = @import("std");
 pub const windows = @import("windows.zig");
 
 /// Interrupt I/O without closing or reusing a handle. The owning worker still closes
-/// it; callers join that worker before releasing shared state. A normal Windows shutdown leaves already pending reads blocked;
+/// it; callers join that worker before releasing shared state. A normal Windows
+/// shutdown leaves already pending reads blocked;
 /// abortive disconnect completes them even when the remote peer never closes.
 pub fn interrupt(io: std.Io, stream: std.Io.net.Stream) void {
     if (@import("builtin").os.tag == .windows) {
