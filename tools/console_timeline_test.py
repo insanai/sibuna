@@ -62,11 +62,19 @@ def saved(h, port, cookie, csrf, boot):
         reply = json.loads(body)
         assert reply["version"] == 1 and reply["retention_days"] == 90
         own = [row for row in reply["rows"] if row["boot"] == expected_boot]
-        if sum(int(row["counts"][name]) for row in own for name in names) == 5:
+        gauged = any(row["cpu_ms"] is not None and row["rss_max_kib"] is not None
+                     for row in own)
+        if sum(int(row["counts"][name]) for row in own for name in names) == 5 and gauged:
             for row in own:
                 assert row["end_ms"] - row["start_ms"] == row["observed_ms"] > 0
-                # Resource gauges: CPU time and peak memory are recorded on every platform.
-                assert int(row["cpu_ms"]) >= 0 and int(row["rss_max_kib"]) > 0, row
+                # A short partial minute can persist before its first 1 Hz resource sample.
+                # Longer intervals must record gauges; absence must not become a fake zero.
+                for field in ("cpu_ms", "rss_max_kib"):
+                    if row[field] is None:
+                        assert not row["complete"], row
+                        assert row["observed_ms"] < 2000, row
+                    else:
+                        assert int(row[field]) >= (1 if field == "rss_max_kib" else 0), row
                 assert not row["complete"] or (row["sealed"] and not row["gap"])
             summarized(h, port, cookie, csrf, reply)
             return

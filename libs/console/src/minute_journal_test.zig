@@ -17,6 +17,28 @@ fn interval(index: u64) p.timeline.Bucket {
     };
 }
 
+test "minute gauges await a sample instead of fabricating startup or rollover zeros" {
+    var journal: Journal = .{ .node = 1, .boot = @splat(1) };
+    // Startup has a CPU baseline before the first counter interval opens a minute.
+    journal.gauges(.{ .rss_kib = 12, .rss_max_kib = 16, .cpu_ms = 100 });
+    var first = interval(1);
+    first.utc_start = 119;
+    first.utc_end = 119;
+    journal.observe(1, first);
+    var next = interval(2);
+    next.utc_start = 119;
+    next.utc_end = 120;
+    journal.observe(1, next);
+    const startup = journal.jobs[0].record;
+    try t.expect(startup.sealed and !startup.complete);
+    try t.expectEqual(@as(u64, 250), startup.observed_ms);
+    try t.expect(startup.cpu_ms == null and startup.rss_max_kib == null);
+    try t.expect(journal.current.?.cpu_ms == null and journal.current.?.rss_max_kib == null);
+    journal.gauges(.{ .rss_kib = 20, .rss_max_kib = 24, .cpu_ms = 104 });
+    try t.expectEqual(@as(?u64, 4), journal.current.?.cpu_ms);
+    try t.expectEqual(@as(?u64, 24), journal.current.?.rss_max_kib);
+}
+
 test "minute aggregation distinguishes startup, complete intervals, gaps and observation resets" {
     var journal: Journal = .{ .node = 1, .boot = @splat(1) };
     for (1..321) |i| journal.observe(1, interval(i));

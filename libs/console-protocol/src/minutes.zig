@@ -23,7 +23,7 @@ pub const Record = struct {
     counts: @import("timeline.zig").Counts = .{},
     /// Resident memory at the last observation and its peak within the minute, in KiB,
     /// and CPU time consumed during the minute; null on rows written before version 37
-    /// or on platforms without a source.
+    /// or before a resource sample/CPU baseline exists, or on platforms without a source.
     rss_last_kib: ?u64 = null,
     rss_max_kib: ?u64 = null,
     cpu_ms: ?u64 = null,
