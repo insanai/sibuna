@@ -774,7 +774,7 @@ Sibuna resolves this hardware asymmetry through Cohen-Pietrzak Proofs of Sequent
 
     // Right Panel: Cohen-Pietrzak PoSW (Strictly Sequential)
     rect((8.8, 0.6), (16.4, 6.7), fill: rgb("f0fdf4"), stroke: 0.7pt + rgb("86efac"), radius: 0.2)
-    content((12.6, 6.2), text(weight: "bold", size: 8.8pt, fill: c-green)[Sibuna PoSW: Unparallelizable Sequential Work], anchor: "center")
+    content((12.6, 6.2), text(weight: "bold", size: 8.8pt, fill: c-green)[Sibuna PoSW: Sequential Work], anchor: "center")
     content((12.6, 5.6), text(size: 7.5pt, style: "italic", fill: rgb("14532d"))[$v_i = H(v_(i-1) || v_(gamma(i)))$ (Depth $d=13$, $N=8,192$ steps)], anchor: "center")
 
     // Sequential nodes
@@ -800,7 +800,7 @@ Sibuna resolves this hardware asymmetry through Cohen-Pietrzak Proofs of Sequent
     content((12.6, 2.25), text(weight: "bold", size: 7.5pt, fill: c-green)[& Logarithmic Verification], anchor: "center")
     content((12.6, 1.7), text(size: 6.8pt, fill: rgb("14532d"))[Server verifies 16 opening paths in *#latency("pow_verify", "posw_depth13_t16")* ($O(t dot d)$ work)], anchor: "center")
 
-    content((12.6, 0.95), text(size: 7pt, fill: rgb("14532d"))[Sequential dependence limits parallelism; hardware speed still matters], anchor: "center")
+    content((12.6, 0.95), text(size: 7pt, fill: rgb("14532d"))[Sequential work still depends on hardware speed], anchor: "center")
   })
 )
 
