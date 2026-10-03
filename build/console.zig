@@ -9,7 +9,7 @@ pub const Modules = struct {
 pub fn add(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
+    optimize: std.lang.Optimize,
     geoip_data: ?[]const u8,
     socket: *std.Build.Module,
 ) Modules {
@@ -57,9 +57,10 @@ pub fn add(
         .root_module = b.createModule(.{
             .root_source_file = b.path("libs/console-protocol/src/root.zig"),
             .target = b.resolveTargetQuery(.{ .cpu_arch = .wasm32, .os_tag = .freestanding }),
-            .optimize = .ReleaseSmall,
+            .optimize = .small,
         }),
     });
+    wasm.root_module.addImport("text", b.modules.get("sibuna-text").?);
     step.dependOn(&wasm.step);
     return .{ .protocol = protocol, .console = console };
 }
@@ -69,18 +70,20 @@ fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module)
     const wasm_protocol = b.createModule(.{
         .root_source_file = b.path("libs/console-protocol/src/root.zig"),
         .target = target,
-        .optimize = .ReleaseSmall,
+        .optimize = .small,
     });
     const wasm = b.addObject(.{
         .name = "console",
         .root_module = b.createModule(.{
             .root_source_file = b.path("apps/console-ui/src/main.zig"),
             .target = target,
-            .optimize = .ReleaseSmall,
+            .optimize = .small,
             .imports = &.{.{ .name = "console_protocol", .module = wasm_protocol }},
         }),
     });
-    wasm.root_module.addImport("html", htmlModule(b, target, .ReleaseSmall));
+    wasm_protocol.addImport("text", b.modules.get("sibuna-text").?);
+    wasm.root_module.addImport("text", b.modules.get("sibuna-text").?);
+    wasm.root_module.addImport("html", htmlModule(b, target, .small));
     wasm.bundle_compiler_rt = true;
     const artifact = linkUi(b, wasm);
     const size = b.addSystemCommand(&.{ python, "tools/console_wasm_check.py" });
@@ -103,7 +106,8 @@ fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module)
         .target = b.graph.host,
         .imports = &.{.{ .name = "console_protocol", .module = protocol }},
     }) });
-    tests.root_module.addImport("html", htmlModule(b, b.graph.host, .Debug));
+    tests.root_module.addImport("text", b.modules.get("sibuna-text").?);
+    tests.root_module.addImport("html", htmlModule(b, b.graph.host, .debug));
     tests.root_module.addAnonymousImport("console_world", .{
         .root_source_file = b.path("apps/console-ui/web/assets/world-110m.bin"),
     });
@@ -124,7 +128,6 @@ fn linkUi(b: *std.Build, object: *std.Build.Step.Compile) std.Build.LazyPath {
         b.graph.zig_exe,
         "wasm-ld",
         "--no-entry",
-        "--export-dynamic",
         "--export-memory",
         "--compress-relocations",
         "--strip-all",
@@ -133,8 +136,16 @@ fn linkUi(b: *std.Build, object: *std.Build.Step.Compile) std.Build.LazyPath {
         "stack-size=262144",
         "--initial-memory=4194304",
         "--max-memory=4194304",
-        "-o",
     });
+    // Explicit exports keep compiler runtime globals outside the fixed browser ABI.
+    const exports = .{
+        "sb_event",          "sb_init",            "sb_geometry_loaded", "sb_geometry_capacity",
+        "sb_geometry_input", "sb_commands_length", "sb_commands",        "sb_html_length",
+        "sb_html",           "sb_input_capacity",  "sb_input",           "sb_frame_html",
+        "sb_frame",
+    };
+    inline for (exports) |name| link.addArg("--export=" ++ name);
+    link.addArg("-o");
     const artifact = link.addOutputFileArg("console.wasm");
     link.addFileArg(object.getEmittedBin());
     return artifact;
@@ -143,10 +154,11 @@ fn linkUi(b: *std.Build, object: *std.Build.Step.Compile) std.Build.LazyPath {
 fn htmlModule(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
+    optimize: std.lang.Optimize,
 ) *std.Build.Module {
     return b.createModule(.{
         .root_source_file = b.path("libs/html/src/root.zig"),
+        .imports = &.{.{ .name = "text", .module = b.modules.get("sibuna-text").? }},
         .target = target,
         .optimize = optimize,
     });
@@ -167,13 +179,10 @@ fn addAssets(b: *std.Build) void {
 fn addGolden(b: *std.Build, tests: *std.Build.Step.Compile, render: *std.Build.Step) void {
     b.step("console-golden-check", "Verify reviewed native console HTML").dependOn(render);
     const step = b.step("console-golden", "Review native HTML (-- --update to regenerate)");
-    const args = b.args orelse &.{};
-    if (args.len == 0) return step.dependOn(render);
-    if (args.len != 1 or !std.mem.eql(u8, args[0], "--update"))
-        return step.dependOn(&b.addFail("console-golden accepts only -- --update").step);
-    // Reuse the native renderer test artifact; no second full UI compilation is needed.
-    const update = b.addRunArtifact(tests);
+    // Runtime arguments are unavailable during Zig 0.17's configure phase.
+    const update = b.addSystemCommand(&.{ python, "tools/console_golden.py" });
+    update.addArtifactArg(tests);
+    update.addPassthruArgs();
     update.setCwd(b.path("."));
-    update.setEnvironmentVariable("SIBUNA_UPDATE_CONSOLE_GOLDENS", "1");
     step.dependOn(&update.step);
 }

@@ -72,6 +72,7 @@ pub fn build(b: *std.Build) void {
         cluster,
         if (console_enabled) console_modules.console else null,
     );
+    addTextImports(b);
     addTests(b, modules, app);
     if (console_enabled) {
         b.top_level_steps.get("test").?.step.dependOn(
@@ -86,10 +87,23 @@ pub fn build(b: *std.Build) void {
     addFormatting(b);
 }
 
+fn addText(b: *std.Build) *std.Build.Module {
+    return b.addModule("sibuna-text", .{
+        .root_source_file = b.path("libs/text/src/root.zig"),
+    });
+}
+
+fn addTextImports(b: *std.Build) void {
+    const text = b.modules.get("sibuna-text").?;
+    for (b.modules.values()) |module| {
+        if (module != text) module.addImport("text", text);
+    }
+}
+
 fn addSocket(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
+    optimize: std.lang.Optimize,
 ) *std.Build.Module {
     const socket = b.addModule("sibuna-socket", .{
         .root_source_file = b.path("libs/socket/src/root.zig"),
@@ -105,8 +119,9 @@ fn addSocket(
 fn addModules(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
+    optimize: std.lang.Optimize,
 ) Modules {
+    _ = addText(b);
     const socket = addSocket(b, target, optimize);
     const core = b.addModule("sibuna-core", .{
         .root_source_file = b.path("libs/core/src/root.zig"),
@@ -192,19 +207,19 @@ fn addWasmSolver(b: *std.Build) *std.Build.Step.Compile {
     const wasm_pow_mod = b.createModule(.{
         .root_source_file = b.path("libs/crypto/src/pow.zig"),
         .target = wasm_target,
-        .optimize = .ReleaseSmall,
+        .optimize = .small,
     });
     const wasm_posw_mod = b.createModule(.{
         .root_source_file = b.path("libs/crypto/src/posw.zig"),
         .target = wasm_target,
-        .optimize = .ReleaseSmall,
+        .optimize = .small,
     });
     const wasm_pow = b.addExecutable(.{
         .name = "sibuna-pow",
         .root_module = b.createModule(.{
             .root_source_file = b.path("apps/wasm-pow/src/entry.zig"),
             .target = wasm_target,
-            .optimize = .ReleaseSmall,
+            .optimize = .small,
             .imports = &.{
                 .{ .name = "pow", .module = wasm_pow_mod },
                 .{ .name = "posw", .module = wasm_posw_mod },
@@ -232,7 +247,7 @@ const AppModules = struct {
 fn addServer(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
+    optimize: std.lang.Optimize,
     modules: Modules,
     wasm_pow: *std.Build.Step.Compile,
     storage: bool,
@@ -292,13 +307,13 @@ fn addServer(
         });
         const measure = b.addSystemCommand(&.{ python, "benchmarks/console_impact.py" });
         measure.step.dependOn(&acceptance.step);
-        if (b.args) |args| measure.addArgs(args);
+        measure.addPassthruArgs();
         impact.dependOn(&measure.step);
     } else impact.dependOn(&b.addFail("console-impact requires -Dconsole=true").step);
 
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
-    if (b.args) |args| run_cmd.addArgs(args);
+    run_cmd.addPassthruArgs();
     const run_step = b.step("run", "Run the Sibuna daemon");
     run_step.dependOn(&run_cmd.step);
     return app;
@@ -308,6 +323,7 @@ fn addServer(
 /// and (when enabled) Zaxonlite to a daemon root module. The end-to-end
 /// test module receives exactly the same graph as the executable.
 fn wireApp(b: *std.Build, root: *std.Build.Module, app: AppModules) void {
+    root.addImport("text", b.modules.get("sibuna-text").?);
     for (app.imports) |imp| root.addImport(imp.name, imp.module);
     root.addAnonymousImport("wasm_solver", .{ .root_source_file = app.wasm_bin });
     root.addAnonymousImport(
@@ -338,6 +354,11 @@ fn addTests(b: *std.Build, modules: Modules, app: AppModules) void {
     });
     wireApp(b, server_root, app);
     const server_tests = b.addTest(.{ .root_module = server_root });
+    const text_tests = b.addTest(.{ .root_module = b.createModule(.{
+        .root_source_file = b.path("libs/text/src/root.zig"),
+        .target = b.graph.host,
+    }) });
+    test_step.dependOn(&b.addRunArtifact(text_tests).step);
     const core_tests = b.addTest(.{ .root_module = modules.core });
     const crypto_tests = b.addTest(.{ .root_module = modules.crypto });
     const net_tests = b.addTest(.{ .root_module = modules.net });
@@ -370,7 +391,7 @@ fn addTests(b: *std.Build, modules: Modules, app: AppModules) void {
 fn addBenchmarks(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
+    optimize: std.lang.Optimize,
     modules: Modules,
 ) void {
     const bench_exe = b.addExecutable(.{
@@ -391,9 +412,7 @@ fn addBenchmarks(
     b.installArtifact(bench_exe);
 
     const run_bench = b.addRunArtifact(bench_exe);
-    if (b.args) |args| {
-        run_bench.addArgs(args);
-    }
+    run_bench.addPassthruArgs();
     const bench_step = b.step("benchmark-zig", "Run the Sibuna benchmark suite");
     bench_step.dependOn(&run_bench.step);
 
@@ -463,7 +482,7 @@ fn addWhitepaper(b: *std.Build) void {
 
 fn addFormatting(b: *std.Build) void {
     const fmt = b.addFmt(.{
-        .paths = &.{ "build.zig", "build", "apps", "libs", "tools", "benchmarks" },
+        .paths = b.pathList(&.{ "build.zig", "build", "apps", "libs", "tools", "benchmarks" }),
         .check = true,
     });
     const style = b.addSystemCommand(&.{ "sh", "tools/check-style.sh" });
@@ -535,9 +554,10 @@ fn addSid(b: *std.Build) void {
 }
 
 fn sidRecordStems(b: *std.Build, filter: ?[]const u8) [][]const u8 {
+    b.dependOnDirectoryContents(b.path("docs/sid/records"));
     const io = b.graph.io;
     var stems = std.ArrayList([]const u8).empty;
-    var dir = b.build_root.handle.openDir(io, "docs/sid/records", .{ .iterate = true }) catch
+    var dir = b.root.openDir(io, "docs/sid/records", .{ .iterate = true }) catch
         return stems.items;
     defer dir.close(io);
     var it = dir.iterate();
@@ -586,20 +606,24 @@ fn addSidTool(b: *std.Build) void {
         .root_module = b.createModule(.{
             .root_source_file = b.path("tools/sid.zig"),
             .target = b.graph.host,
-            .optimize = .Debug,
+            .optimize = .debug,
         }),
     });
 
     const list_run = b.addRunArtifact(tool);
     list_run.has_side_effects = true;
-    list_run.addArgs(&.{ "--root", b.pathFromRoot("."), "list" });
+    list_run.addArg("--root");
+    list_run.addDirectoryArg(b.path("."));
+    list_run.addArg("list");
     const list_step = b.step("sid-list", "List SID registry entries and placeholder drafts");
     list_step.dependOn(&list_run.step);
 
     const new_run = b.addRunArtifact(tool);
     new_run.has_side_effects = true;
-    new_run.addArgs(&.{ "--root", b.pathFromRoot("."), "new" });
-    if (b.args) |args| new_run.addArgs(args);
+    new_run.addArg("--root");
+    new_run.addDirectoryArg(b.path("."));
+    new_run.addArg("new");
+    new_run.addPassthruArgs();
     const new_step = b.step(
         "sid-new",
         "Create a placeholder SID draft: zig build sid-new -- <slug>",
@@ -608,8 +632,10 @@ fn addSidTool(b: *std.Build) void {
 
     const promote_run = b.addRunArtifact(tool);
     promote_run.has_side_effects = true;
-    promote_run.addArgs(&.{ "--root", b.pathFromRoot("."), "promote" });
-    if (b.args) |args| promote_run.addArgs(args);
+    promote_run.addArg("--root");
+    promote_run.addDirectoryArg(b.path("."));
+    promote_run.addArg("promote");
+    promote_run.addPassthruArgs();
     const promote_step = b.step(
         "sid-promote",
         "Assign next number to draft and register: zig build sid-promote -- <slug>",

@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import platform
 import sys
+import subprocess
 import tarfile
 import urllib.request
 import zipfile
@@ -34,7 +35,10 @@ def main():
         with tarfile.open(archive) as bundle:
             bundle.extractall(destination, filter="data")
     executable = "zig.exe" if system == "windows" else "zig"
-    toolchain = next(destination.glob(f"zig-*/{executable}")).parent
+    toolchain = destination / f"zig-{machine}-{system}-{lock["version"]}"
+    installed = subprocess.check_output([str(toolchain / executable), "version"], text=True).strip()
+    if installed != lock["version"]:
+        raise SystemExit("Installed Zig version does not match the release lock")
     prepare(toolchain / executable)
     if path_file := os.environ.get("GITHUB_PATH"):
         with open(path_file, "a") as output:

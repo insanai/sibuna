@@ -1,12 +1,11 @@
 .{
     .name = .sibuna,
-    .version = "0.1.0",
+    .version = "0.2.0",
     .fingerprint = 0xaa8849243c3108cc,
-    .minimum_zig_version = "0.16.0",
+    .minimum_zig_version = "0.17.0",
     .dependencies = .{
         .zaxonlite = .{
-            .url = "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.7.0.tar.gz",
-            .hash = "zaxonlite-0.7.0-o9bF7IxHHQDxiixvOsdt-BvzGbI87rjtLKBJpW5LPse-",
+            .path = "vendor/zaxonlite",
         },
     },
     .paths = .{
@@ -17,6 +16,7 @@
         "benchmarks",
         "libs",
         "tools",
+        "vendor",
         "docs",
         "README.md",
         "LICENSE",

@@ -6,7 +6,7 @@ const std = @import("std");
 pub fn add(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
+    optimize: std.lang.Optimize,
     cluster: bool,
 ) *std.Build.Module {
     const dependency = b.dependency("zaxonlite", .{

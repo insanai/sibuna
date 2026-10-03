@@ -22,8 +22,8 @@ def package(binary, target, destination):
     source = f"https://github.com/insanai/sibuna/tree/v{release}"
     manifest = {
         "version": release, "commit": commit, "source": source,
-        "target": TARGETS[target], "package": target, "zig": "0.16.0",
-        "optimization": "ReleaseSafe", "stripped": True,
+        "target": TARGETS[target], "package": target, "zig": json.loads((ROOT / "tools/zig-release.json").read_text())["version"],
+        "optimization": "safe", "stripped": True,
         "features": {"storage": True, "console": True, "cluster": False},
         "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
         "license": "AGPL-3.0-only", "engine_license": "LGPL-3.0-only",
@@ -44,7 +44,7 @@ def package(binary, target, destination):
         (root / "SOURCE.txt").write_text(
             f"Corresponding source: {source}\nCommit: {commit}\n"
             f"Source archive: https://github.com/insanai/sibuna/archive/refs/tags/v{release}.tar.gz\n"
-            "Build: zig build -Doptimize=ReleaseSafe -Dstrip=true "
+            "Build: zig build -Doptimize=safe -Dstrip=true "
             f"-Dtarget={TARGETS[target]} -j2\n"
             "Pinned dependencies and their sources: build.zig.zon and NOTICE.\n"
             "Full license texts and notices: LICENSE, LICENSES/ and NOTICE.\n")

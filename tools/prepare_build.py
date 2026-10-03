@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create Zig 0.16's ZIP-fetch scratch directory on a clean compiler cache."""
+"""Prepare the pinned Zig toolchain's ZIP-fetch scratch directory."""
 import json
 from pathlib import Path
 import re

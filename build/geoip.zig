@@ -5,7 +5,7 @@ const std = @import("std");
 pub fn add(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
+    optimize: std.lang.Optimize,
 ) *std.Build.Module {
     return b.addModule("sibuna-geoip", .{
         .root_source_file = b.path("libs/geoip/src/root.zig"),
@@ -22,7 +22,7 @@ pub fn addTools(b: *std.Build, geoip: *std.Build.Module) void {
         .root_module = b.createModule(.{
             .root_source_file = b.path("tools/geoip_snapshot.zig"),
             .target = b.graph.host,
-            .optimize = .ReleaseSafe,
+            .optimize = .safe,
             .imports = &.{.{ .name = "geoip", .module = geoip }},
         }),
     });
@@ -33,7 +33,7 @@ pub fn addTools(b: *std.Build, geoip: *std.Build.Module) void {
     };
     inline for (names, descriptions) |name, description| {
         const run = b.addRunArtifact(executable);
-        if (b.args) |args| run.addArgs(args);
+        run.addPassthruArgs();
         b.step(name, description).dependOn(&run.step);
     }
 }

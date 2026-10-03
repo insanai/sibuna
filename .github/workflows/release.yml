@@ -44,7 +44,7 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
-      - name: Install checksum-verified Zig 0.16.0
+      - name: Install checksum-verified Zig 0.17.0
         run: python tools/install_zig.py "$RUNNER_TEMP/zig"
       - name: Verify tag and console assets
         run: |
@@ -57,7 +57,7 @@ jobs:
           zig build -Dstorage=false -j2 --prefix "$RUNNER_TEMP/storage-off"
           zig build -Dconsole=false -j2 --prefix "$RUNNER_TEMP/console-off"
       - name: Build portable release
-        run: zig build -Doptimize=ReleaseSafe -Dstrip=true -Dtarget=${{ matrix.target }} -j2
+        run: zig build -Doptimize=safe -Dstrip=true -Dtarget=${{ matrix.target }} -j2
       - name: Verify the actual release executable
         env:
           PYTHONUNBUFFERED: "1"
