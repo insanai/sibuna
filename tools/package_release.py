@@ -29,7 +29,7 @@ def package(binary, target, destination):
         "license": "AGPL-3.0-only", "engine_license": "LGPL-3.0-only",
         "signed": False,
         "requirements": "Windows 10 / Server 2019 or later" if target.startswith("windows") else
-                        "macOS 13 or later" if target.startswith("macos") else "Linux 5.10 or later",
+                        "macOS 15 or later" if target.startswith("macos") else "Linux 5.10 or later",
     }
     destination.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as temporary:

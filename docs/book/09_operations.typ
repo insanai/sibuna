@@ -12,7 +12,7 @@
 
 Version 0.2.0 packages include persistent storage, the browser solver and the optional
 management console. Linux x86-64 and ARM64 packages link musl statically; macOS packages
-cover Intel and Apple Silicon and are unsigned. Windows packages contain a native x86-64 executable for Windows 10 / Server 2019 or later.
+cover Intel and Apple Silicon, require macOS 15 or later, and are unsigned. Windows packages contain a native x86-64 executable for Windows 10 / Server 2019 or later.
 Use Ctrl+C for ordered shutdown and restrict credential and data files with Windows ACLs. Clustering requires a separate `-Dcluster=true` source build with OpenSSL 3.
 
 Download from #link("https://github.com/insanai/sibuna/releases")[GitHub Releases], verify the

@@ -4,9 +4,12 @@ storage and the opt-in management console. Existing database schemas and wire pr
 compatible. Zaxonlite and Paxos 0.7.0 library snapshots carry explicit compiler compatibility
 changes with upstream provenance and MIT licenses in vendor/. No compiler-cache patch is used.
 
+The macOS minimum is now 15, matching Zig 0.17's target contract; v0.1.0 remains available
+for macOS 13 and 14. Linux and Windows minimums are unchanged.
+
 Downloads:
 - Linux x86-64 and ARM64: statically linked musl builds; Linux 5.10 or later.
-- macOS Apple Silicon and Intel: macOS 13 or later; unsigned command-line builds.
+- macOS Apple Silicon and Intel: macOS 15 or later; unsigned command-line builds.
 - Windows x86-64: native sibuna.exe; Windows 10 / Server 2019 or later.
 
 Archives include the executable, README, full license texts, dependency notices and an exact

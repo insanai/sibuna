@@ -94,8 +94,8 @@ Clustering requires a separate `-Dcluster=true` source build with OpenSSL 3.
 | --- | --- | --- |
 | Linux x86-64 | `sibuna-linux-amd64.tar.gz` | Linux 5.10 or later; statically linked musl |
 | Linux ARM64 | `sibuna-linux-arm64.tar.gz` | Linux 5.10 or later; statically linked musl |
-| macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 13 or later |
-| macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 13 or later |
+| macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 15 or later |
+| macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 15 or later |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019 or later; native `sibuna.exe` |
 
 macOS builds are unsigned. Packages include license texts, corresponding-source links and a
