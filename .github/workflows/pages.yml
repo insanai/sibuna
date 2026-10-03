@@ -2,9 +2,9 @@ name: Documentation
 on:
   push:
     branches: [main]
-    paths: ['docs/**', 'benchmarks/results/**', 'tools/build_site.py', '.github/workflows/pages.yml']
+    paths: ['docs/**', 'benchmarks/results/**', 'tools/build_site.py', 'tools/site_html.py', '.github/workflows/pages.yml']
   pull_request:
-    paths: ['docs/**', 'benchmarks/results/**', 'tools/build_site.py', '.github/workflows/pages.yml']
+    paths: ['docs/**', 'benchmarks/results/**', 'tools/build_site.py', 'tools/site_html.py', '.github/workflows/pages.yml']
   workflow_dispatch:
 permissions:
   contents: read
