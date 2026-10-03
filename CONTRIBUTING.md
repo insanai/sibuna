@@ -4,7 +4,7 @@ Run `zig build fmt`, `zig build test`, and `zig build sid` before submitting a c
 `benchmarks/results/latest.json` with `sh benchmarks/run-all.sh` whenever a change touches a
 measured subsystem; the book renders its figures from that file.
 
-The engine is LGPL-3.0-only and the console is AGPL-3.0-only, as scoped in `LICENSE`.
+The engine is LGPL-3.0 and the console is AGPL-3.0, as scoped in `LICENSE`.
 Contributions must preserve dependency notices and the console's corresponding-source link.
 Release packages are built with Zig 0.17.0 at `ReleaseSafe`, with storage and console enabled
 and clustering disabled. A `v` tag must match `build.zig.zon` and the console source link.

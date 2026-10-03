@@ -442,12 +442,17 @@ For deep technical study, the repository includes two comprehensive publications
 
 ## License
 
-The engine is licensed under **LGPL 3.0 only** and the console under **AGPL 3.0 only**,
+The engine is licensed under **LGPL 3.0** and the console under **AGPL 3.0**,
 including its WebAssembly interface. The default executable includes the console and is
-distributed as a combined work under AGPL 3.0. An engine-only build uses `-Dconsole=false`.
+distributed as a combined work under AGPL 3.0. Build the engine without the console using
+`-Dconsole=false`.
 See [LICENSE](LICENSE) for directory boundaries, [LICENSES](LICENSES) for the complete terms,
 and [NOTICE](NOTICE) for dependencies. Corresponding source and build scripts are available
 under each release tag; the console also provides a source-code link.
+
+Companies seeking a version under terms other than LGPL or AGPL can contact the authors,
+Vikrant Rathore and Ronak Rathore, about alternative licensing. Libraries and other third-party
+materials remain subject to their respective licenses.
 
 ## Related open-source projects
 

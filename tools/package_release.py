@@ -26,7 +26,7 @@ def package(binary, target, destination):
         "optimization": "safe", "stripped": True,
         "features": {"storage": True, "console": True, "cluster": False},
         "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
-        "license": "AGPL-3.0-only", "engine_license": "LGPL-3.0-only",
+        "license": "AGPL-3.0", "engine_license": "LGPL-3.0",
         "signed": False,
         "requirements": "Windows 10 / Server 2019 or later" if target.startswith("windows") else
                         "macOS 15 or later" if target.startswith("macos") else "Linux 5.10 or later",

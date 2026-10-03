@@ -2,25 +2,27 @@ Copyright (c) 2026 Vikrant Rathore and Ronak Rathore and Sibuna contributors.
 
 Sibuna uses two licenses for its first-party code:
 
-1. Engine: GNU Lesser General Public License, version 3 only
-   (SPDX: LGPL-3.0-only).
+1. Engine: GNU Lesser General Public License, version 3.
    This covers apps/sibuna, apps/web, apps/wasm-pow, and libs other than
    libs/console and libs/console-protocol, together with build tooling,
    tests, benchmarks and documentation outside the console directories.
    The complete LGPL text and its incorporated GPL terms are in
-   LICENSES/LGPL-3.0-only.txt and LICENSES/GPL-3.0-only.txt.
+   LICENSES/LGPL-3.0.txt and LICENSES/GPL-3.0.txt.
 
-2. Console: GNU Affero General Public License, version 3 only
-   (SPDX: AGPL-3.0-only).
+2. Console: GNU Affero General Public License, version 3.
    This covers apps/console-ui, libs/console and libs/console-protocol.
-   The complete terms are in LICENSES/AGPL-3.0-only.txt. Distributing the
+   The complete terms are in LICENSES/AGPL-3.0.txt. Distributing the
    interface as WebAssembly does not remove these license requirements.
 
 The default executable includes the console and is distributed as a combined
-work under AGPL-3.0-only, with the engine remaining available separately under
-LGPL-3.0-only. An engine-only build uses -Dconsole=false. Corresponding source,
+work under AGPL-3.0, with the engine remaining available separately under
+LGPL-3.0. An engine build without the console uses
+-Dconsole=false. Corresponding source,
 build scripts and pinned dependency declarations accompany every release tag
 at https://github.com/insanai/sibuna.
+
+Companies seeking a version under terms other than LGPL or AGPL can contact the
+authors, Vikrant Rathore and Ronak Rathore, about alternative licensing.
 
 Third-party code, styles and data retain their original licenses. See NOTICE
 and LICENSES/ for their notices and terms. These notices do not relicense

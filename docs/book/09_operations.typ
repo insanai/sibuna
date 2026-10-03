@@ -21,11 +21,15 @@ license texts, dependency notices and a `sibuna.build.json` manifest identifying
 target, compiler, build options and executable digest. The release workflow tests the actual
 packaged executables before publication; these checks do not establish performance acceptance.
 
-The engine is LGPL-3.0-only. The console, including its WebAssembly interface, is
-AGPL-3.0-only; the default combined executable is distributed under AGPL-3.0-only.
-An engine-only build uses `-Dconsole=false`. Directory boundaries and third-party exceptions
+The engine is LGPL-3.0. The console, including its WebAssembly interface, is
+AGPL-3.0; the default combined executable is distributed under AGPL-3.0.
+Build the engine without the console using `-Dconsole=false`. Directory boundaries and
+third-party exceptions
 are in `LICENSE` and `NOTICE`; full terms are in `LICENSES/`. Every release tag includes the
-corresponding source and build scripts, and the console links to that source.
+corresponding source and build scripts, and the console links to that source. Companies
+seeking a version under terms other than LGPL or AGPL can contact the authors, Vikrant
+Rathore and Ronak Rathore, about alternative licensing. Third-party libraries remain
+subject to their respective licenses.
 
 #objectives([
   By the end of this chapter, you should be able to run Sibuna as a reverse proxy or a

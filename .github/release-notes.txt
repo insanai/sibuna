@@ -13,9 +13,11 @@ Downloads:
 - Windows x86-64: native sibuna.exe; Windows 10 / Server 2019 or later.
 
 Archives include the executable, README, full license texts, dependency notices and an exact
-build manifest. SHA256SUMS covers every archive. Engine sources are LGPL-3.0-only; console
-sources, including the Wasm interface, are AGPL-3.0-only. The combined executable is AGPL-covered.
+build manifest. SHA256SUMS covers every archive. Engine sources are LGPL-3.0; console
+sources, including the Wasm interface, are AGPL-3.0. The combined executable is AGPL-covered.
 Corresponding source and build scripts are in this release's tag and linked from the console.
+Companies seeking alternative licensing can contact the authors, Vikrant Rathore and
+Ronak Rathore. Third-party libraries remain subject to their respective licenses.
 
 The shipped builds include storage and console support; the console starts only with --console.
 Multi-node deployments require a separate -Dcluster=true build with OpenSSL 3. No GeoIP address
