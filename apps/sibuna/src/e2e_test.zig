@@ -61,6 +61,16 @@ const BootOnce = struct {
     }
 };
 var boot_once = BootOnce{};
+// Only the split-response fixture updates this ledger. Darwin may coalesce its 5 ms sleeps;
+// measure those pauses separately so they cannot masquerade as a proxy's Nagle delay.
+var split_pause_ns = std.atomic.Value(u64).init(0);
+
+fn splitPause() void {
+    const before = Io.Clock.awake.now(io);
+    Io.sleep(io, Io.Duration.fromMilliseconds(5), .awake) catch {};
+    const paused = before.durationTo(Io.Clock.awake.now(io)).nanoseconds;
+    _ = split_pause_ns.fetchAdd(@intCast(paused), .release);
+}
 
 /// Stub origin: answers every request with its own view of the headers so
 /// tests can assert on what the proxy injected.
@@ -118,7 +128,7 @@ fn originConnection(stream: Io.net.Stream) void {
             // An origin that flushes its head early (streaming rendering) and its body after.
             writer.interface.writeAll("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\n") catch return;
             writer.interface.flush() catch return;
-            Io.sleep(io, Io.Duration.fromMilliseconds(5), .awake) catch {};
+            splitPause();
             writer.interface.writeAll("body") catch return;
             writer.interface.flush() catch return;
             reader.interface.toss(end + 4);
@@ -1444,6 +1454,7 @@ test "a body sent after an early-flushed head is not held back by the kernel" {
     // Delayed acknowledgement starts after the first exchanges of a connection, so several
     // requests share one: with Nagle each body waits for the head's ACK, about 40 ms on Linux.
     const requests = 8;
+    const pause_before = split_pause_ns.load(.acquire);
     const started = Io.Clock.awake.now(io);
     for (0..requests) |_| {
         try writer.interface.writeAll("GET /.well-known/split HTTP/1.1\r\nHost: t\r\n" ++
@@ -1456,8 +1467,11 @@ test "a body sent after an early-flushed head is not held back by the kernel" {
         reader.interface.toss(std.mem.indexOf(u8, reply, "\r\n\r\nbody").? + 8);
     }
     const elapsed = started.durationTo(Io.Clock.awake.now(io)).nanoseconds;
-    // Each exchange costs the origin's 5 ms pause; a held-back body would cost ~40 ms more.
-    try std.testing.expect(elapsed < requests * 25 * std.time.ns_per_ms);
+    const paused = split_pause_ns.load(.acquire) - pause_before;
+    try std.testing.expect(paused <= elapsed);
+    // Exclude the measured fixture pauses, including timer coalescing. The remaining budget
+    // stays 20 ms per exchange; a held-back body would cost ~40 ms more on Linux.
+    try std.testing.expect(elapsed - paused < requests * 20 * std.time.ns_per_ms);
 }
 
 test "an origin that fails after its head aborts the connection without a second response" {
