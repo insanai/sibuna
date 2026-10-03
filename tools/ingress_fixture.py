@@ -4,7 +4,6 @@ from dataclasses import dataclass
 import json
 import os
 from pathlib import Path
-import subprocess
 import process_control
 import tempfile
 import time
@@ -97,7 +96,7 @@ def stack(binary, mode, ingress=None):
             log = owned.enter_context((root / "ingress.log").open("w+"))
             command = ingress_command(root, kind, executable, port, backend,
                                       application.server_port)
-            gateway = subprocess.Popen(command, stdout=log, stderr=log)
+            gateway = process_control.spawn(command, stdout=log, stderr=log)
             owned.callback(helper.stop, gateway)
             try:
                 healthy(gateway, port)

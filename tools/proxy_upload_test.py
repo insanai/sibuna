@@ -6,7 +6,7 @@ import json
 import os
 import socket
 from pathlib import Path
-import subprocess
+import process_control
 import tempfile
 import console_e2e as helper
 
@@ -150,7 +150,7 @@ def check(binary):
             }))
             port = helper.port()
             with (root / "sibuna.log").open("w+") as log:
-                proc = subprocess.Popen([
+                proc = process_control.spawn([
                     binary, "--host", "127.0.0.1", "--port", str(port), "--workers", "1",
                     "--upstream-port", str(server.server_port), "--rate-limit", "100000",
                     "--policy-file", str(root / "policy.json"),

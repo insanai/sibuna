@@ -31,12 +31,16 @@ def spawn(*args, **kwargs):
             info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
             info.wShowWindow = subprocess.SW_HIDE
             kwargs["startupinfo"] = info
-    return subprocess.Popen(*args, **kwargs)
+    proc = subprocess.Popen(*args, **kwargs)
+    proc.sibuna_private_console = os.name == "nt"
+    return proc
 
 
 def terminate(proc):
     if os.name != "nt":
         return proc.terminate()
+    if not getattr(proc, "sibuna_private_console", False):
+        raise RuntimeError("Windows console shutdown requires process_control.spawn")
     kernel.FreeConsole()
     try:
         if not kernel.AttachConsole(proc.pid):

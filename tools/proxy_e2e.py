@@ -135,7 +135,7 @@ def https_checks(caddy, root, backend):
     path.write_text(json.dumps(config))
     context = ssl.create_default_context(cafile=str(certificate))
     with (root / "caddy.log").open("w+") as log:
-        proc = subprocess.Popen([caddy, "run", "--config", str(path)], stdout=log, stderr=log)
+        proc = process_control.spawn([caddy, "run", "--config", str(path)], stdout=log, stderr=log)
         try:
             deadline = time.monotonic() + 10
             while time.monotonic() < deadline:
