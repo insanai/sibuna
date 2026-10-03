@@ -77,7 +77,7 @@ and origin sockets. The whole-product comparison was regenerated from a clean ch
 `2e1a7f8` (`tools-comparison-latest-20261002T014905Z.json`). The other four core families, the
 eight impact matrices and `linux-launch-review-20261002.json` predate that change and were
 not rerun. Rerun them before citing them for the current code.
-The primitive suite was regenerated on 3 October from clean revision `abab0be` on the
+The primitive suite was regenerated on 3 October from clean revision `28d59b9` on the
 same Linux container, using Zig 0.16.0 and Zaxonlite 0.7.0. `latest.json` and its timestamped
 copy identify that source digest and executable. The admission, distributed, cluster and
 console-impact records were not rerun for v0.1.0; their existing provenance and verdicts
