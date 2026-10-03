@@ -3,7 +3,7 @@
 const std = @import("std");
 const Io = std.Io;
 const windows = @import("builtin").os.tag == .windows;
-const posix = if (windows) @import("windows_socket.zig") else std.posix;
+const posix = if (windows) @import("socket").windows else std.posix;
 const core = @import("core");
 const system = @import("socket_system.zig").system;
 pub const Error = error{ ConnectionFailed, IdleTimeout };
@@ -41,7 +41,7 @@ pub const Activity = struct {
     pub fn shutdownPeer(self: *Activity, io: Io) void {
         self.peer_lock.lock(io);
         defer self.peer_lock.unlock(io);
-        if (self.peer) |stream| stream.shutdown(io, .both) catch {};
+        if (self.peer) |stream| @import("socket").interrupt(io, stream);
     }
 };
 pub const Options = struct {

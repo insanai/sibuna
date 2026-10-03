@@ -72,6 +72,23 @@ pub fn control(
     return status.Information;
 }
 
+/// ABORTIVE is required to release receives already queued by the Threaded backend.
+/// Keep the handle open until its owner finishes; neither cancellation nor disconnect
+/// transfers ownership. `control` joins the driver's references before returning.
+pub fn interrupt(stream: Io.net.Stream) Error!void {
+    const info: w.AFD.PARTIAL_DISCONNECT_INFO = .{
+        .DisconnectMode = .{ .ABORTIVE = true },
+        .Timeout = -1,
+    };
+    _ = try control(
+        stream.socket.handle,
+        w.IOCTL.AFD.PARTIAL_DISCONNECT,
+        std.mem.asBytes(&info),
+        &.{},
+        100 * std.time.ns_per_ms,
+    );
+}
+
 fn remaining(io: Io, deadline: i96) Error!u64 {
     const delta = deadline - Io.Clock.awake.now(io).nanoseconds;
     if (delta <= 0) return error.TimedOut;
@@ -181,7 +198,7 @@ pub const system = struct {
 
     fn sendBytes(handle: socket_t, bytes: []const u8) Error!usize {
         // A send canceled midway may have transferred bytes; never retry an unknown prefix.
-        return @import("windows_socket.zig").send(handle, bytes, 100 * std.time.ns_per_ms);
+        return @import("windows.zig").send(handle, bytes, 100 * std.time.ns_per_ms);
     }
 
     pub fn poll(descriptors: [*]pollfd, length: usize, timeout_ms: c_int) isize {

@@ -187,7 +187,7 @@ pub const Pool = struct {
         defer self.mutex.unlock(io);
         self.stopping = true;
         for (self.active) |entry| {
-            if (entry) |stream| stream.shutdown(io, .both) catch {};
+            if (entry) |stream| @import("socket").interrupt(io, stream);
         }
     }
 

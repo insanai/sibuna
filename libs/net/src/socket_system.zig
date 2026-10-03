@@ -5,7 +5,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 pub const system = if (builtin.os.tag == .windows)
-    @import("windows_socket.zig").system
+    @import("socket").windows.system
 else if (builtin.os.tag == .linux and !builtin.link_libc)
     Linux
 else

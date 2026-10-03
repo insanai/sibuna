@@ -6,7 +6,7 @@ const std = @import("std");
 const Io = std.Io;
 const posix = std.posix;
 const windows = @import("builtin").os.tag == .windows;
-const windows_socket = @import("windows_socket.zig");
+const windows_socket = @import("socket").windows;
 const Error = error{UpstreamUnreachable};
 
 /// Windows Io owns AFD handles, so an overload drain must not call Winsock recv.

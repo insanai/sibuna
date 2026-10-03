@@ -7,7 +7,7 @@
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
 #let sid-status = "Published"
-#let sid-last-updated = "2026-10-02"
+#let sid-last-updated = "2026-10-03"
 
 #import "../../shared/sid.typ": sid-document
 
@@ -208,9 +208,14 @@ native Windows x86-64. Every platform runs the same HTTP parser, inspection and 
 protocol. Platform code supplies bounded socket operations, process resource gauges and
 termination notification; it does not change policy or challenge semantics.
 
-Windows uses AFD handles owned by Zig's native Io backend, not Winsock socket identifiers.
+The application-independent `socket` library supplies native lifetime operations to both the
+HTTP service and streaming relay. Windows uses AFD handles owned by Zig's native Io backend,
+not Winsock socket identifiers.
 Each bounded operation owns a completion event. A timeout cancels and joins the outstanding
-driver request before any caller buffer can be reused. The upgraded byte relay keeps its
+driver request before any caller buffer can be reused. Shutdown and idle expiry use abortive
+Windows disconnects to release already pending reads; handles remain owned until their worker
+closes them, and shared state remains alive until the worker joins. Ordinary reply delivery and upgrade half-closes remain graceful.
+The upgraded byte relay keeps its
 existing bounded buffers and one connection worker. Ctrl+C and Ctrl+Break request ordered
 shutdown; forcibly terminating a process is not that shutdown contract. Private credential
 files use owner-only POSIX permissions or Windows DACLs permitting the owner, SYSTEM and

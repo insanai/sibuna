@@ -7,6 +7,7 @@ pub const Context = struct {
     stream: std.Io.net.Stream,
     subscribers: *std.atomic.Value(u16),
     deadline: *std.atomic.Value(i64),
+    body_received: bool = false,
     pub const Error = std.http.Server.Request.ExpectContinueError || error{
         TooLarge,
         ReadFailed,
@@ -36,11 +37,15 @@ pub const Context = struct {
         const n = try reader.readSliceShort(output);
         if (n == output.len) {
             _ = reader.takeByte() catch |err| switch (err) {
-                error.EndOfStream => return output,
+                error.EndOfStream => {
+                    self.body_received = true;
+                    return output;
+                },
                 else => return err,
             };
             return error.TooLarge;
         }
+        self.body_received = true;
         return output[0..n];
     }
 

@@ -132,8 +132,9 @@ pub const Kernel = struct {
     fn run(self: *Kernel, index: usize) void {
         const slot = &self.slots[index];
         const stream = slot.stream.?;
+        var unread_body = false;
         defer {
-            finish(stream, self.io, &slot.deadline);
+            if (unread_body) finish(stream, self.io, &slot.deadline);
             self.mutex.lockUncancelable(self.io);
             stream.close(self.io);
             slot.stream = null;
@@ -152,6 +153,8 @@ pub const Kernel = struct {
             }
             return;
         };
+        unread_body = (request.head.content_length orelse 0) != 0 or
+            request.head.transfer_encoding == .chunked;
         var context: Context = .{
             .request = &request,
             .io = self.io,
@@ -164,6 +167,7 @@ pub const Kernel = struct {
             error.WriteFailed, error.ReadFailed, error.EndOfStream => {},
             else => std.log.warn("console request rejected: {t}", .{err}),
         };
+        unread_body = unread_body and !context.body_received;
     }
 
     fn watch(self: *Kernel) void {
@@ -184,6 +188,7 @@ pub const Kernel = struct {
 // Closing over unread request bytes can reset TCP and discard an already flushed
 // authorization error. Half-close output first, then drain at most 64 KiB until peer
 // EOF. The watchdog bounds this grace period to one second, including a stalled client.
+// Run only for an unread body: ordinary replies must retain graceful background delivery.
 // Do not hold the slot mutex here: the watchdog must be able to interrupt this read.
 fn finish(stream: Io.net.Stream, io: Io, deadline: *std.atomic.Value(i64)) void {
     stream.shutdown(io, .send) catch return;
@@ -198,10 +203,7 @@ fn finish(stream: Io.net.Stream, io: Io, deadline: *std.atomic.Value(i64)) void 
 }
 
 fn shutdown(stream: Io.net.Stream, io: Io) void {
-    stream.shutdown(io, .both) catch |err| switch (err) {
-        error.SocketUnconnected => {},
-        else => std.log.warn("console stream shutdown: {t}", .{err}),
-    };
+    @import("socket").interrupt(io, stream);
 }
 
 fn reject(stream: Io.net.Stream, io: Io) void {

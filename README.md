@@ -45,6 +45,7 @@ Following the modular design of raylib, Sibuna is divided into small, single-pur
 ┌────────────────────────────────────────────────────────────────────────┐
 │                          SIBUNA SUBSYSTEMS                             │
 ├──────────────┬─────────────────────────────────────────────────────────┤
+│ socket       │ Native socket operations and interruption ownership    │
 │ net          │ Zero-copy HTTP/1.1 stream parser & reverse proxy relay  │
 │ crypto       │ Proof of Sequential Work (PoSW), Hashcash & BLAKE3 MAC  │
 │ policy       │ Aho–Corasick signatures, Radix CIDR trie & semantic WAF │

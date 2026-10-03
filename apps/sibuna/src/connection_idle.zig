@@ -67,7 +67,7 @@ pub const IdleTable = struct {
         for (&self.slots) |*slot| {
             slot.lock.lock(io);
             defer slot.lock.unlock(io);
-            if (slot.active) slot.stream.shutdown(io, .both) catch {};
+            if (slot.active) net.interrupt(io, slot.stream);
         }
     }
 
@@ -84,7 +84,7 @@ pub const IdleTable = struct {
             if (slot.active and timeout != 0 and
                 now_ms -| slot.activity.at_ms.load(.monotonic) > timeout)
             {
-                slot.stream.shutdown(io, .both) catch {};
+                net.interrupt(io, slot.stream);
                 slot.activity.shutdownPeer(io);
                 // Keep ownership until unregister; an old worker must not clear a reused slot.
                 reaped += 1;

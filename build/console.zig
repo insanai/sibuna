@@ -11,6 +11,7 @@ pub fn add(
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
     geoip_data: ?[]const u8,
+    socket: *std.Build.Module,
 ) Modules {
     const protocol = b.addModule("console-protocol", .{
         .root_source_file = b.path("libs/console-protocol/src/root.zig"),
@@ -28,6 +29,7 @@ pub fn add(
         .target = target,
         .optimize = optimize,
     });
+    serve.addImport("socket", socket);
     const html = htmlModule(b, target, optimize);
     const geoip = @import("geoip.zig").add(b, target, optimize);
     console.addImport("serve", serve);

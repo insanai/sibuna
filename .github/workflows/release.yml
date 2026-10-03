@@ -60,8 +60,10 @@ jobs:
         run: zig build -Doptimize=ReleaseSafe -Dstrip=true -Dtarget=${{ matrix.target }} -j2
       - name: Verify the actual release executable
         env:
+          PYTHONUNBUFFERED: "1"
           BINARY: ${{ runner.os == 'Windows' && 'zig-out/bin/sibuna.exe' || 'zig-out/bin/sibuna' }}
         run: |
+          zig build socket-test -j2
           python tools/check_release_version.py "$BINARY"
           python tools/proxy_e2e.py "$BINARY"
           python tools/ingress_e2e.py "$BINARY"

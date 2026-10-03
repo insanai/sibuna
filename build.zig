@@ -3,6 +3,7 @@ const python = if (@import("builtin").os.tag == .windows) "python" else "python3
 const console_build = @import("build/console.zig");
 
 pub const Modules = struct {
+    socket: *std.Build.Module,
     core: *std.Build.Module,
     crypto: *std.Build.Module,
     net: *std.Build.Module,
@@ -53,9 +54,8 @@ pub fn build(b: *std.Build) void {
         );
         b.invalid_user_input = true;
     }
-    const console_modules = console_build.add(b, target, optimize, geoip_data);
-
     const modules = addModules(b, target, optimize);
+    const console_modules = console_build.add(b, target, optimize, geoip_data, modules.socket);
     console_modules.console.addImport("core", modules.core);
     console_modules.console.addImport("store", modules.store);
     console_modules.console.addImport("net", modules.net);
@@ -86,11 +86,28 @@ pub fn build(b: *std.Build) void {
     addFormatting(b);
 }
 
+fn addSocket(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+) *std.Build.Module {
+    const socket = b.addModule("sibuna-socket", .{
+        .root_source_file = b.path("libs/socket/src/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    const tests = b.addTest(.{ .root_module = socket });
+    b.step("socket-test", "Test native socket interruption ownership")
+        .dependOn(&b.addRunArtifact(tests).step);
+    return socket;
+}
+
 fn addModules(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
 ) Modules {
+    const socket = addSocket(b, target, optimize);
     const core = b.addModule("sibuna-core", .{
         .root_source_file = b.path("libs/core/src/root.zig"),
         .target = target,
@@ -110,6 +127,7 @@ fn addModules(
         .optimize = optimize,
     });
     net.addImport("core", core);
+    net.addImport("socket", socket);
 
     const policy = b.addModule("sibuna-policy", .{
         .root_source_file = b.path("libs/policy/src/root.zig"),
@@ -146,6 +164,7 @@ fn addModules(
     });
 
     return .{
+        .socket = socket,
         .core = core,
         .crypto = crypto,
         .net = net,
@@ -336,6 +355,7 @@ fn addTests(b: *std.Build, modules: Modules, app: AppModules) void {
         }),
     });
 
+    test_step.dependOn(&b.top_level_steps.get("socket-test").?.step);
     test_step.dependOn(&b.addRunArtifact(core_tests).step);
     test_step.dependOn(&b.addRunArtifact(crypto_tests).step);
     test_step.dependOn(&b.addRunArtifact(net_tests).step);

@@ -56,6 +56,9 @@ helpers, the end-to-end suite in `apps/sibuna/src/e2e_test.zig`, and the storage
 - Storage tests drive `Persistent.tick()` directly instead of relying on the background thread,
   and must release any pinned `EngineSlot` before a tick that can rebuild.
 
+Native socket changes also run `zig build socket-test`; the release matrix runs it on
+each native platform to check pending-I/O interruption without closing a borrowed handle.
+
 Console changes also run `zig build console-test` and `zig build console-ui-e2e`.
 `console-test` compares native page fixtures byte-for-byte with `apps/console-ui/golden/`.
 When markup intentionally changes, run `zig build console-golden -- --update`, inspect the HTML
