@@ -4,6 +4,7 @@ from pathlib import Path
 from html.parser import HTMLParser
 import shutil
 import subprocess
+from site_html import decorate
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "docs/build/site"
@@ -16,6 +17,7 @@ class FigureCheck(HTMLParser):
         self.figures = 0
         self.in_figure = False
         self.artwork = False
+        self.captions = 0
 
     def handle_starttag(self, tag, attrs):
         if tag == "figure":
@@ -23,12 +25,17 @@ class FigureCheck(HTMLParser):
             self.in_figure = True
             self.artwork = False
             self.figures += 1
+            self.captions = 0
         if tag == "svg" and self.in_figure:
             self.artwork = True
+        if tag == "figcaption" and self.in_figure:
+            self.captions += 1
+            assert self.captions == 1, "duplicate or nested figure caption"
 
     def handle_endtag(self, tag):
         if tag == "figure":
             assert self.in_figure and self.artwork, "figure artwork missing from HTML export"
+            assert self.captions == 1, "figure caption missing from HTML export"
             self.in_figure = False
 
 
@@ -64,7 +71,10 @@ def main():
     compile_typst("docs/whitepaper/whitepaper.typ", SITE / "pdf/sibuna-whitepaper.pdf")
     compile_typst("docs/whitepaper/bundle.typ", SITE / "whitepaper", bundle=True)
     compile_typst("docs/sid/bundle.typ", SITE / "sid", bundle=True, root="docs")
-    shutil.copyfile(ROOT / "docs/site/index.html", SITE / "index.html")
+    (SITE / "assets").mkdir()
+    for name in ("site.css", "site.js"):
+        shutil.copyfile(ROOT / "docs/site" / name, SITE / "assets" / name)
+    decorate(SITE, ROOT)
     (SITE / ".nojekyll").touch()
     print(f"documentation-site: {SITE}")
 

@@ -577,7 +577,7 @@ a:hover {
           #html.elem("span")[*Status:* #doc.status]
           #html.elem("span")[*Created:* #doc.created]
           #html.elem("span")[*Updated:* #doc.updated]
-          #html.elem("span")[*Source:* `#doc.source`]
+          #html.elem("span")[*Source:* #raw(doc.source)]
         ]
       ]
     ]

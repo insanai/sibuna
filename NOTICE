@@ -4,6 +4,9 @@ Copyright (c) 2026 Vikrant Rathore and Ronak Rathore and Sibuna contributors.
 First-party engine: LGPL-3.0. First-party console: AGPL-3.0.
 See LICENSE and LICENSES/ for the scope and complete license texts.
 
+Documentation website template and styles adapted from SQLodin: MIT;
+LICENSES/SQLodin-MIT.txt. Source: github.com/insanai/sqlodin.
+
 Bundled dependencies in the default, single-node release:
 
 - Zaxonlite 0.7.0 and Paxos 0.7.0: MIT; LICENSES/Zaxonlite-MIT.txt and
