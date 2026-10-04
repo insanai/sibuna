@@ -11,10 +11,17 @@ pub const Buffer = struct {
     output: []u8,
     budget: *work.Budget,
 };
+pub const Result = struct { bytes: []const u8, changed: bool };
+const Write = struct { length: usize, changed: bool };
 
 /// All output is caller-owned. Buffers must be disjoint; a transaction uses two
 /// reserved buffers to compose a pipeline. Capacity and work are checked before writes.
 pub fn apply(kind: model.Transform, buffer: Buffer) Error![]const u8 {
+    return (try step(kind, buffer)).bytes;
+}
+
+/// multiMatch consumes the reference's change flag, which is not always byte inequality.
+pub fn step(kind: model.Transform, buffer: Buffer) Error!Result {
     const maximum = try capacity(kind, buffer.input.len);
     if (buffer.output.len < maximum) return error.OutputLimit;
     const count = std.math.add(u64, @intCast(buffer.input.len), 1) catch
@@ -25,19 +32,24 @@ pub fn apply(kind: model.Transform, buffer: Buffer) Error![]const u8 {
         count;
     try buffer.budget.debit(cost);
     assertDisjoint(buffer.input, buffer.output[0..maximum]);
-    const length = switch (kind) {
+    const result: Write = switch (kind) {
         .none => blk: {
             @memcpy(buffer.output[0..buffer.input.len], buffer.input);
-            break :blk buffer.input.len;
+            break :blk .{ .length = buffer.input.len, .changed = false };
         },
         .lowercase => lowercase(buffer),
-        .length => decimalLength(buffer),
-        .hex_encode => hex(buffer),
-        .compress_whitespace => compress(buffer),
-        .remove_whitespace, .remove_nulls => remove(kind, buffer),
+        .length => .{ .length = decimalLength(buffer), .changed = true },
+        .hex_encode => .{ .length = hex(buffer), .changed = buffer.input.len != 0 },
+        .compress_whitespace, .remove_whitespace, .remove_nulls => blk: {
+            const length = if (kind == .compress_whitespace)
+                compress(buffer)
+            else
+                remove(kind, buffer);
+            break :blk .{ .length = length, .changed = length != buffer.input.len };
+        },
         else => unreachable,
     };
-    return buffer.output[0..length];
+    return .{ .bytes = buffer.output[0..result.length], .changed = result.changed };
 }
 
 /// A conservative bound can exceed the eventual output; callers reserve it off-path.
@@ -57,11 +69,13 @@ fn assertDisjoint(input: []const u8, output: []u8) void {
     std.debug.assert(source + input.len <= destination or destination + output.len <= source);
 }
 
-fn lowercase(buffer: Buffer) usize {
+fn lowercase(buffer: Buffer) Write {
+    var changed = false;
     for (buffer.input, buffer.output[0..buffer.input.len]) |byte, *out| {
         out.* = std.ascii.toLower(byte);
+        changed = changed or out.* != byte;
     }
-    return buffer.input.len;
+    return .{ .length = buffer.input.len, .changed = changed };
 }
 
 fn digits(length: usize) usize {
@@ -160,4 +174,23 @@ test "transform bounds and unsupported operations cannot expose partial output" 
         error.OutputLimit,
         capacity(.hex_encode, std.math.maxInt(usize)),
     );
+}
+
+test "change flags retain reference behavior even when byte inequality disagrees" {
+    var output: [8]u8 = undefined;
+    var budget: work.Budget = .{ .remaining = 128 };
+    const space = try step(.compress_whitespace, .{
+        .input = "\t",
+        .output = &output,
+        .budget = &budget,
+    });
+    try std.testing.expectEqualStrings(" ", space.bytes);
+    try std.testing.expect(!space.changed);
+    const length = try step(.length, .{
+        .input = "1",
+        .output = &output,
+        .budget = &budget,
+    });
+    try std.testing.expectEqualStrings("1", length.bytes);
+    try std.testing.expect(length.changed);
 }

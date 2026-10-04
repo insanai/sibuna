@@ -216,8 +216,20 @@ budget. It checks a conservative output bound before writes: identity, lowercase
 filtering need at most $N$ bytes, hex encoding needs $2 N$, and length needs the decimal
 digit count of $N$. Capacity multiplication is checked. These primitives perform a bounded
 number of visits per input byte, so their time is $O(N)$; composing $T$ stages costs the
-sum of stage lengths, including expansion. Pipeline compilation implements `t:none` as
-a reset of inherited/preceding transformations rather than a runtime copy that erases history.
+sum of stage lengths, including expansion. The last local `t:none` suppresses inherited
+transforms and all local transforms through that reset. A `t:none` in default actions is
+an identity and does not discard preceding default transforms. Ordered duplicates remain.
+
+Ordinary matching consumes the final value. `multiMatch` consumes the original and each
+stage whose reference transform reports a change. This flag is not byte inequality:
+`compressWhitespace` can replace a lone tab with a space while reporting no change, and
+`length` always reports a change, including `"1"` becoming `"1"`. There is no additional
+final value when the last stage reports no change. The native iterator borrows two reserved
+buffers and terminates permanently on any resource error. Consumers must finish each match
+and preserve required captures before advancing. Transform iteration is not a transaction
+executor: no rule effects may be published from a resource-limited partial evaluation.
+The reference materializes all stage values before matching; the executor must demonstrate
+equivalent ordering of repeated match effects rather than stop after the first match.
 
 = Algorithms and mathematical contracts
 
@@ -561,6 +573,8 @@ may contact the authors. Adding rules does not replace the existing component li
 - #link("https://github.com/owasp-modsecurity/ModSecurity/wiki/Reference-Manual-(v3.x)")[ModSecurity SecLang reference].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/utils/regex.cc")[ModSecurity 3.0.14 regex implementation and compilation defaults].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/test/unit/unit_test.cc")[Pinned primitive corpus binary decoding].
+- #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/rule_with_actions.cc")[Reference transform ordering and change flags].
+- #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/rule_with_operator.cc")[Reference per-match effects and chain evaluation].
 - #link("https://github.com/owasp-modsecurity/secrules-language-tests/tree/a3d4405e5a2c90488c387e589c5534974575e35b")[SecLang corpus pinned by ModSecurity 3.0.14].
 - #link("https://www.pcre.org/current/doc/html/pcre2pattern.html")[PCRE2 pattern semantics].
 - #link("https://swtch.com/~rsc/regexp/regexp1.html")[Russ Cox: Regular Expression Matching Can Be Simple And Fast].
