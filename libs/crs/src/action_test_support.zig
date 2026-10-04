@@ -23,14 +23,6 @@ pub const Slot = struct {
     }
 
     pub fn frame(self: *Slot) post.Frame {
-        const evaluator = &self.evaluation;
-        return .{
-            .context = &evaluator.context,
-            .state = &self.state,
-            .pieces = &evaluator.pieces,
-            .key_output = &evaluator.key_output,
-            .value_output = &evaluator.value_output,
-            .budget = &evaluator.budget,
-        };
+        return self.evaluation.frame().actions(&self.state);
     }
 };

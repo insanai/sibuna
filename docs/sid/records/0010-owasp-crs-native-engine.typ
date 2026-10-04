@@ -317,6 +317,22 @@ after the last successful action prevents a failed suffix from becoming a comple
 These statements do not establish HTTP entity acquisition or authorization to activate a
 complete generation.
 
+Root `multiMatch` findings are a separate pre-chain evidence contract. After captures,
+matched-variable publication and local writes, expand that root's severity, logdata,
+message and tags for each positive reported stage. Publish a reserved candidate event
+before advancing transform scratch. These findings survive a false child, while controls
+and disruption still require full chain truth. Do not emit a duplicate final full-match
+event for a `multiMatch` root; its full-match actions still execute. The selected stock
+release uses root `multiMatch`; continuation `multiMatch` is rejected in this initial
+profile because its inherited rule-message logging semantics require separate conformance.
+Candidate metadata failure poisons evaluation just like other evidence failures.
+
+*Lemma (candidate evidence).* Every candidate event copies its expanded strings before
+the next predicate or transformation can reuse scratch. Each event corresponds to one
+reported positive stage after that stage's TX writes, and no full-chain truth is assumed.
+Thus later mutation cannot rewrite an earlier finding, and failed chains cannot erase
+already observed candidates or acquire their unexecuted post-match controls.
+
 == Immutable rule programs and phased execution
 
 Compose the owned conditions, full-match actions and validated topology into one rule

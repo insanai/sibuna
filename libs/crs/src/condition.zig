@@ -14,8 +14,14 @@ const work = @import("work.zig");
 const buffers = @import("buffers.zig");
 const controls = @import("controls.zig");
 const macros = @import("macros.zig");
+const post = @import("post_actions.zig");
+const source_actions = @import("compiler_actions.zig");
 pub const Error = selection.Error || operators.Error || pipeline.Error || replay.Error ||
-    set_var.Error || context.Error || controls.Error || error{ InvalidCondition, ActionLimit };
+    set_var.Error || context.Error || controls.Error || post.Error || error{
+    InvalidCondition,
+    ActionLimit,
+    UnsupportedChainMultiMatch,
+};
 pub const Limits = struct {
     selection: selection.Limits = .{},
     operators: operators.Limits = .{},
@@ -34,11 +40,28 @@ pub const Frame = struct {
     argument_output: []u8,
     budget: *work.Budget,
     control: ?*controls.State = null,
+    evidence: ?*post.State = null,
+
+    pub fn actions(self: Frame, state: *post.State) post.Frame {
+        return .{
+            .context = self.context,
+            .state = state,
+            .pieces = self.pieces,
+            .key_output = self.key_output,
+            .value_output = self.value_output,
+            .budget = self.budget,
+        };
+    }
 
     fn assertExclusive(self: Frame) void {
         buffers.assertExclusive(&self.regions());
         if (self.control) |control| {
             self.assertDisjoint(std.mem.sliceAsBytes(control.exclusions));
+        }
+        if (self.evidence) |state| {
+            self.assertDisjoint(std.mem.sliceAsBytes(state.events));
+            self.assertDisjoint(std.mem.sliceAsBytes(state.tags));
+            self.assertDisjoint(state.bytes);
         }
     }
 
@@ -80,6 +103,7 @@ pub const Program = struct {
     negated: bool,
     id: u32,
     tags: []macros.Program,
+    candidate: ?post.Program,
 
     pub fn deinit(self: *Program) void {
         if (self.targets) |*targets| targets.deinit();
@@ -89,6 +113,7 @@ pub const Program = struct {
         self.allocator.free(self.writes);
         for (self.tags) |*tag| tag.deinit();
         self.allocator.free(self.tags);
+        if (self.candidate) |*program| program.deinit();
         self.* = undefined;
     }
 
@@ -99,6 +124,7 @@ pub const Program = struct {
         errdefer {
             frame.context.poison();
             if (frame.control) |control| control.failed = true;
+            if (frame.evidence) |state| state.poison();
         }
         frame.assertExclusive();
         try frame.budget.debit(1);
@@ -165,6 +191,9 @@ pub const Program = struct {
             if (result.matched == self.negated) continue;
             try frame.context.record(entry, counted, value.bytes, frame.budget);
             try self.applyWrites(frame);
+            if (self.candidate) |*program| if (frame.evidence) |state| {
+                try post.execute(program, frame.actions(state));
+            };
             matched = true;
         }
         return matched;
@@ -242,6 +271,13 @@ pub fn compile(
         .local = source.actions,
     });
     errdefer transforms.deinit();
+    if (transforms.multi_match and source_actions.find(source.actions, .id) == null)
+        return error.UnsupportedChainMultiMatch;
+    var candidate = if (transforms.multi_match)
+        try post.compileCandidate(allocator, source)
+    else
+        null;
+    errdefer if (candidate) |*program| program.deinit();
     var writes: std.ArrayList(set_var.Program) = .empty;
     var tags: std.ArrayList(macros.Program) = .empty;
     errdefer {
@@ -278,6 +314,7 @@ pub fn compile(
         .writes = owned_writes,
         .tags = try tags.toOwnedSlice(allocator),
         .id = source.id,
+        .candidate = candidate,
         .capture = capture,
         .negated = if (source.expression) |expression| expression.negated else false,
     };

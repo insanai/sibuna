@@ -42,6 +42,7 @@ pub const Program = struct {
     id: u32,
     phase: model.Phase,
     default_deny: bool,
+    multi_match: bool = false,
 
     pub fn deinit(self: *Program) void {
         for (self.steps) |*step| step.deinit();
@@ -77,7 +78,9 @@ pub fn compile(allocator: std.mem.Allocator, condition: *const model.Condition) 
         if (last) |action| try appendAction(allocator, &steps, action);
     }
     var disruption: ?model.Action = null;
+    var multi_match = false;
     for (condition.actions) |action| {
+        if (action.kind == .multi_match) multi_match = true;
         switch (action.kind) {
             .deny, .pass => disruption = action,
             .tag, .severity, .log_data, .message, .set_var => {},
@@ -91,6 +94,37 @@ pub fn compile(allocator: std.mem.Allocator, condition: *const model.Condition) 
         .id = condition.id,
         .phase = condition.phase,
         .default_deny = default_deny,
+        .multi_match = multi_match,
+    };
+}
+
+/// Independent multiMatch metadata runs after local writes, before chain truth.
+/// It has no default actions, controls, mutation or disruption to run accidentally.
+pub fn compileCandidate(
+    allocator: std.mem.Allocator,
+    source: *const model.Condition,
+) Error!Program {
+    var steps: std.ArrayList(Step) = .empty;
+    errdefer {
+        for (steps.items) |*step| step.deinit();
+        steps.deinit(allocator);
+    }
+    for ([_]model.ActionKind{ .severity, .log_data, .message }) |kind| {
+        var last: ?model.Action = null;
+        for (source.actions) |action| if (action.kind == kind) {
+            last = action;
+        };
+        if (last) |action| try appendAction(allocator, &steps, action);
+    }
+    for (source.actions) |action| {
+        if (action.kind == .tag) try appendAction(allocator, &steps, action);
+    }
+    return .{
+        .allocator = allocator,
+        .steps = try steps.toOwnedSlice(allocator),
+        .id = source.id,
+        .phase = source.phase,
+        .default_deny = false,
     };
 }
 

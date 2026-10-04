@@ -8,6 +8,7 @@ const work = @import("work.zig");
 const buffers = @import("buffers.zig");
 pub const Program = prepared.Program;
 pub const compile = prepared.compile;
+pub const compileCandidate = prepared.compileCandidate;
 pub const State = saved.State;
 pub const Error = prepared.Error || saved.Error || context.Error || error{InvalidUnwind};
 pub const Frame = struct {
@@ -45,7 +46,8 @@ pub fn executeChain(programs: []const Program, unwind: []const usize, frame: Fra
             return error.InvalidUnwind;
         previous = index;
     }
-    if (frame.state.event_used == frame.state.events.len) return error.EventLimit;
+    const publish = !programs[unwind[unwind.len - 1]].multi_match;
+    if (publish and frame.state.event_used == frame.state.events.len) return error.EventLimit;
     try frame.budget.debit(unwind.len);
     var event: saved.Event = .{ .id = leaf.id, .phase = leaf.phase };
     const tag_start = frame.state.tag_used;
@@ -54,8 +56,10 @@ pub fn executeChain(programs: []const Program, unwind: []const usize, frame: Fra
         for (program.steps) |*step| try executeStep(step, program.default_deny, &event, frame);
     }
     event.tags = frame.state.tags[tag_start..frame.state.tag_used];
-    frame.state.events[frame.state.event_used] = event;
-    frame.state.event_used += 1;
+    if (publish) {
+        frame.state.events[frame.state.event_used] = event;
+        frame.state.event_used += 1;
+    }
 }
 
 fn executeStep(

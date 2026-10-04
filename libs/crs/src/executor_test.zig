@@ -88,3 +88,58 @@ test "phased resource errors poison the cursor action and transaction states" {
     slot.evaluation.budget.remaining = 10000;
     try std.testing.expectError(error.TransactionFailed, state.run(.logging));
 }
+
+test "multiMatch evidence keeps each matching stage without a duplicated final event" {
+    var program = try prepare(
+        \\SecRule ARGS "@contains x" "id:1,multiMatch,t:lowercase,\
+        \\ setvar:tx.score=+1,msg:'%{MATCHED_VAR}',tag:'score %{TX.score}'"
+    , &.{});
+    defer program.deinit();
+    const input = [_]@import("variables.zig").Entry{
+        .{ .collection = .args, .key = "q", .value = "Xx" },
+    };
+    var slot: support.Slot = .{};
+    try slot.init(true);
+    try slot.evaluation.init(&input);
+    var unwind: [1]usize = undefined;
+    var state = executor.Executor.init(&program, slot.evaluation.frame(), &slot.state, &unwind);
+    try std.testing.expectEqual(executor.Result.complete, try state.run(.request_body));
+    try std.testing.expectEqualStrings("2", (try slot.evaluation.get("score")).?);
+    try std.testing.expectEqual(@as(usize, 2), slot.state.event_used);
+    try std.testing.expectEqualStrings("Xx", slot.events[0].message);
+    try std.testing.expectEqualStrings("xx", slot.events[1].message);
+    try std.testing.expectEqualStrings("score 1", slot.events[0].tags[0]);
+    try std.testing.expectEqualStrings("score 2", slot.events[1].tags[0]);
+}
+
+test "multiMatch root findings survive a false child without post controls or disruption" {
+    var program = try prepare(
+        \\SecRule ARGS "@contains x" "id:1,chain,multiMatch,\
+        \\ setvar:tx.score=+1,msg:'%{MATCHED_VAR}',ctl:ruleRemoveById=2,deny"
+        \\SecRule TX:score "@eq 9" "t:none"
+        \\SecAction "id:2,setvar:tx.later=1"
+    , &.{});
+    defer program.deinit();
+    const input = [_]@import("variables.zig").Entry{
+        .{ .collection = .args, .key = "q", .value = "x" },
+    };
+    var slot: support.Slot = .{};
+    try slot.init(true);
+    try slot.evaluation.init(&input);
+    var unwind: [2]usize = undefined;
+    var state = executor.Executor.init(&program, slot.evaluation.frame(), &slot.state, &unwind);
+    try std.testing.expectEqual(executor.Result.complete, try state.run(.request_body));
+    try std.testing.expectEqual(@as(usize, 2), slot.state.event_used);
+    try std.testing.expectEqualStrings("x", slot.events[0].message);
+    try std.testing.expectEqualStrings("1", (try slot.evaluation.get("score")).?);
+    try std.testing.expectEqualStrings("1", (try slot.evaluation.get("later")).?);
+    try std.testing.expectEqual(@as(usize, 0), slot.state.control.used);
+    try std.testing.expect(!slot.state.denied and !slot.state.would_deny);
+}
+
+test "unsupported multiMatch continuation rejects the complete candidate" {
+    try std.testing.expectError(error.UnsupportedChainMultiMatch, prepare(
+        \\SecRule ARGS "@contains x" "id:1,chain"
+        \\SecRule ARGS "@contains x" "multiMatch"
+    , &.{}));
+}

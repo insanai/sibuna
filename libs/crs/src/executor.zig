@@ -23,6 +23,7 @@ pub const Executor = struct {
     ) Executor {
         var owned_frame = frame;
         owned_frame.control = &state.control;
+        owned_frame.evidence = state;
         return .{
             .program = program,
             .cursor = cursor.Cursor.init(&program.topology),
@@ -49,14 +50,11 @@ pub const Executor = struct {
                 self.unwind,
             );
             if (result.matched) {
-                try post.executeChain(self.program.actions, result.unwind, .{
-                    .context = self.condition.context,
-                    .state = self.state,
-                    .pieces = self.condition.pieces,
-                    .key_output = self.condition.key_output,
-                    .value_output = self.condition.value_output,
-                    .budget = self.condition.budget,
-                });
+                try post.executeChain(
+                    self.program.actions,
+                    result.unwind,
+                    self.condition.actions(self.state),
+                );
             }
             try self.cursor.complete(result.matched);
             self.roots_run += 1;
