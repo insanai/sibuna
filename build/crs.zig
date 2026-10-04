@@ -18,6 +18,7 @@ pub fn add(
     });
     module.addImport("libinjection-data", dictionary);
     module.addImport("crs-trust", trust);
+    module.addImport("text", b.modules.get("sibuna-text").?);
     const host = b.createModule(.{
         .root_source_file = b.path("libs/crs/src/root.zig"),
         .target = b.graph.host,
@@ -25,6 +26,7 @@ pub fn add(
     });
     host.addImport("libinjection-data", dictionary);
     host.addImport("crs-trust", trust);
+    host.addImport("text", b.modules.get("sibuna-text").?);
     const fixture = b.createModule(.{
         .root_source_file = b.path("vendor/crs/fixture.zig"),
     });
@@ -90,6 +92,7 @@ fn addCompilationChecks(b: *std.Build) *std.Build.Step {
             .target = target,
             .optimize = .small,
         });
+        module.addImport("text", b.modules.get("sibuna-text").?);
         module.addImport("libinjection-data", b.createModule(.{
             .root_source_file = b.path("vendor/libinjection/table.zig"),
         }));

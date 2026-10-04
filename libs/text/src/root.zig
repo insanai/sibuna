@@ -1,5 +1,10 @@
-//! Compile-time text fixtures, shared by native and Wasm consumers without allocation.
+//! Pure text contracts, shared by native and Wasm consumers without allocation.
 const std = @import("std");
+pub const mime = @import("mime.zig");
+
+test {
+    _ = mime;
+}
 
 /// Return an owned array; a caller taking its address at comptime borrows static storage.
 /// The result's size is checked by the compiler before any output is instantiated.
