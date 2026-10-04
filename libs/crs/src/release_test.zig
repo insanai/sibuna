@@ -109,3 +109,22 @@ test "stock collection selectors and key regexes fit the native profile" {
     try std.testing.expect(patterns > 0);
     for (plan.updates) |update| try std.testing.expect(update.targets.len > 0);
 }
+
+test "every stock transform pipeline compiles and has bounded intermediate scratch" {
+    const pipeline = @import("pipeline.zig");
+    var builder = compiler.Compiler.init(std.testing.allocator, .{});
+    defer builder.deinit();
+    for (fixture.sources) |file| try builder.addSource(file.path, file.bytes);
+    var plan = try builder.finish();
+    defer plan.deinit();
+    for (plan.conditions) |condition| {
+        var compiled = try pipeline.compile(std.testing.allocator, .{
+            .inherited = condition.inherited_actions,
+            .local = condition.actions,
+        });
+        defer compiled.deinit();
+        // A future source profile cannot silently omit a transform or reserve
+        // overflowing expansion. Full execution also checks per-field capacity.
+        _ = try compiled.requiredScratch(64 * 1024);
+    }
+}

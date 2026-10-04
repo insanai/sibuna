@@ -293,6 +293,22 @@ equivalence with arbitrary builds using another version of Mbed TLS.
 
 = Algorithms and mathematical contracts
 
+`utf8toUnicode` is a permissive compatibility transform, not the validation operator.
+It emits lowercase `%u` hexadecimal with at least four digits for structurally complete
+two-to-four-byte sequences. Overlong encodings and surrogates append their original leading
+byte after the escape; both conditions can apply. Leading `f5` through `f7` are also copied
+before that escape. Invalid or incomplete sequences in the `c0` through `f7` classes consume
+their first byte, while isolated continuation bytes and bytes at least `f8` remain literal.
+Nonfinal NUL bytes disappear; a final NUL remains. These quirks follow the pinned source,
+whose sentinel-backed lookahead is replaced with explicit slice-length checks.
+
+Each iteration consumes a literal byte, an invalid leading byte, or a complete sequence.
+The largest output for a two-byte sequence is seven bytes, for a three-byte sequence seven,
+and for a four-byte sequence nine. Thus $4 N$ output capacity suffices, checked before
+writes, and $32 N + 1$ work covers bounded probes and hex output. The reference change flag
+is set for complete multibyte conversion, not for every dropped or copied invalid byte.
+Neither the original path nor protocol input validation may be replaced with this transform.
+
 Path normalization preserves the reference's byte-cursor semantics, including relative
 backreferences, repeated separators, trailing separators and the Windows variant's
 backslash conversion. It is not filesystem resolution, URL decoding or symlink traversal.

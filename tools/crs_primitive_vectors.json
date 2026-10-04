@@ -196,7 +196,13 @@
       "sha256": "26febecb98a9ca4719da5a49c697706bd6b99ef67762fb2087ed407c0492cf24",
       "bytes": 4816,
       "cases": 31
+    },
+    {
+      "path": "transformations/utf8toUnicode.json",
+      "sha256": "ee9d1cd23d78ec016b8a0b1d6c0db9e90263bcd4916c6df0efa9f3e36541921e",
+      "bytes": 22481,
+      "cases": 7
     }
   ],
-  "cases": 367
+  "cases": 374
 }

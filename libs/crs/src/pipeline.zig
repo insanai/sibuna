@@ -175,7 +175,7 @@ test "stage iteration follows change flags and never invents a final multiMatch 
     try std.testing.expect(try iterator.next() == null);
 }
 
-test "pipeline capacity and compilation reject unsupported and excessive stages" {
+test "pipeline capacity and compilation reject excessive stages" {
     const parser = @import("compiler_actions.zig");
     const allocator = std.testing.allocator;
     const actions = try parser.parse(allocator, "t:hexEncode,t:hexEncode", 8);
@@ -190,12 +190,6 @@ test "pipeline capacity and compilation reject unsupported and excessive stages"
     try std.testing.expectError(
         error.PipelineLimit,
         compile(allocator, .{ .inherited = &.{}, .local = actions, .stages = 1 }),
-    );
-    const unsupported = try parser.parse(allocator, "t:utf8toUnicode", 1);
-    defer allocator.free(unsupported);
-    try std.testing.expectError(
-        error.UnsupportedTransform,
-        compile(allocator, .{ .inherited = &.{}, .local = unsupported }),
     );
 }
 

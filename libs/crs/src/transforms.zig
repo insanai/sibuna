@@ -1,6 +1,6 @@
-//! Initial byte-transform primitives for the C-locale ModSecurity 3.0.14 profile.
-//! Unsupported transforms are errors, not identities. Ordered t:none/reset semantics
-//! belong to pipeline compilation; the standalone none primitive is byte identity.
+//! Bounded byte-transform primitives for the pinned CRS compatibility profiles.
+//! Unknown names reject source compilation. Ordered t:none/reset semantics belong
+//! to pipeline compilation; the standalone none primitive is byte identity.
 const std = @import("std");
 const model = @import("model.zig");
 const work = @import("work.zig");
@@ -10,6 +10,7 @@ const escapes = @import("transform_escape.zig");
 const entity = @import("transform_entity.zig");
 const base64 = @import("transform_base64.zig");
 const path = @import("transform_path.zig");
+const unicode = @import("transform_unicode.zig");
 
 pub const Error = types.Error;
 pub const Buffer = types.Buffer;
@@ -48,6 +49,7 @@ pub fn step(kind: model.Transform, buffer: Buffer) Error!Result {
             buffer,
             kind == .normalize_path_win,
         ),
+        .utf8_to_unicode => unicode.encode(buffer),
         .compress_whitespace, .remove_whitespace, .remove_nulls => blk: {
             const length = if (kind == .compress_whitespace)
                 compress(buffer)
@@ -55,7 +57,6 @@ pub fn step(kind: model.Transform, buffer: Buffer) Error!Result {
                 remove(kind, buffer);
             break :blk .{ .length = length, .changed = length != buffer.input.len };
         },
-        else => unreachable,
     };
     return .{ .bytes = buffer.output[0..result.length], .changed = result.changed };
 }
@@ -83,7 +84,7 @@ pub fn capacity(kind: model.Transform, length: usize) Error!usize {
         .hex_encode => std.math.mul(usize, length, 2) catch error.OutputLimit,
         .length => digits(length),
         .sha1 => 20,
-        else => error.UnsupportedTransform,
+        .utf8_to_unicode => std.math.mul(usize, length, 4) catch error.OutputLimit,
     };
 }
 
@@ -92,7 +93,7 @@ fn cost(kind: model.Transform, length: usize) work.Error!u64 {
     const factor: u64 = switch (kind) {
         .hex_encode => 2,
         .escape_seq_decode, .cmd_line, .replace_comments, .base64_decode => 8,
-        .remove_comments_char, .html_entity_decode => 32,
+        .remove_comments_char, .html_entity_decode, .utf8_to_unicode => 32,
         .css_decode, .js_decode, .url_decode_uni, .normalize_path, .normalize_path_win => 16,
         else => 1,
     };
@@ -203,12 +204,12 @@ test "byte transforms preserve the pinned whitespace and binary semantics" {
     }
 }
 
-test "transform bounds and unsupported operations cannot expose partial output" {
+test "transform capacity and work bounds cannot expose partial output" {
     var output: [3]u8 = @splat(0x7f);
     var budget: work.Budget = .{ .remaining = 10 };
     const buffer: Buffer = .{ .input = "AB", .output = &output, .budget = &budget };
     try std.testing.expectError(error.OutputLimit, apply(.hex_encode, buffer));
-    try std.testing.expectError(error.UnsupportedTransform, apply(.utf8_to_unicode, buffer));
+    try std.testing.expectError(error.OutputLimit, apply(.utf8_to_unicode, buffer));
     try std.testing.expectEqual(@as(u64, 10), budget.remaining);
     budget.remaining = 0;
     try std.testing.expectError(error.WorkLimit, apply(.lowercase, buffer));
@@ -217,6 +218,67 @@ test "transform bounds and unsupported operations cannot expose partial output" 
         error.OutputLimit,
         capacity(.hex_encode, std.math.maxInt(usize)),
     );
+}
+
+test "Unicode compatibility encoding preserves invalid-byte and change-flag quirks" {
+    const cases = [_]struct {
+        input: []const u8,
+        output: []const u8,
+        changed: bool = true,
+    }{
+        .{ .input = "\xc3\xa9", .output = "%u00e9" },
+        .{ .input = "\xc0\x80", .output = "%u0000\xc0" },
+        .{ .input = "\xf0\x8d\xa0\x80", .output = "%ud800\xf0\xf0" },
+        .{ .input = "\xf5\x80\x80\x80", .output = "\xf5%u140000" },
+        .{ .input = "A\x00B\x00", .output = "AB\x00", .changed = false },
+        .{ .input = "A\xe2\x82", .output = "A\x82", .changed = false },
+        .{ .input = "\xc2A", .output = "A", .changed = false },
+    };
+    var output: [128]u8 = undefined;
+    for (cases) |case| {
+        var budget: work.Budget = .{ .remaining = 4096 };
+        const result = try step(.utf8_to_unicode, .{
+            .input = case.input,
+            .output = &output,
+            .budget = &budget,
+        });
+        try std.testing.expectEqualStrings(case.output, result.bytes);
+        try std.testing.expectEqual(case.changed, result.changed);
+        for (0..case.input.len) |length| {
+            budget.remaining = 4096;
+            const partial = try step(.utf8_to_unicode, .{
+                .input = case.input[0..length],
+                .output = output[0 .. length * 4],
+                .budget = &budget,
+            });
+            try std.testing.expect(partial.bytes.len <= length * 4);
+        }
+    }
+    try std.testing.expectError(
+        error.OutputLimit,
+        capacity(.utf8_to_unicode, std.math.maxInt(usize)),
+    );
+}
+
+test "Unicode transform agrees with independent encoding and hexadecimal formatting" {
+    var random = std.Random.DefaultPrng.init(0x554e4943);
+    var input: [4]u8 = undefined;
+    var output: [16]u8 = undefined;
+    var expected: [16]u8 = undefined;
+    for (0..2048) |_| {
+        const value: u21 = 128 + random.random().uintLessThan(u21, 0x110000 - 128);
+        if (value >= 0xd800 and value <= 0xdfff) continue;
+        const length = try std.unicode.utf8Encode(value, &input);
+        const text = try std.fmt.bufPrint(&expected, "%u{x:0>4}", .{value});
+        var budget: work.Budget = .{ .remaining = 1024 };
+        const result = try step(.utf8_to_unicode, .{
+            .input = input[0..length],
+            .output = &output,
+            .budget = &budget,
+        });
+        try std.testing.expectEqualStrings(text, result.bytes);
+        try std.testing.expect(result.changed);
+    }
 }
 
 test "change flags retain reference behavior even when byte inequality disagrees" {

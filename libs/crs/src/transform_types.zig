@@ -1,7 +1,7 @@
 //! Shared caller-owned transform contracts; implementations never allocate.
 const work = @import("work.zig");
 
-pub const Error = error{ UnsupportedTransform, OutputLimit } || work.Error;
+pub const Error = error{OutputLimit} || work.Error;
 pub const Buffer = struct {
     input: []const u8,
     output: []u8,

@@ -42,7 +42,7 @@ CRS compatibility-development fixtures:
   shipped daemon. vendor/crs/fixture.zig is a first-party LGPL-3.0 test facade.
 - ModSecurity 3.0.14 compatibility algorithms adapted in
   libs/crs/src/transform_scan.zig, transform_escape.zig, transform_entity.zig
-  transform_base64.zig and transform_path.zig: Apache-2.0;
+  transform_base64.zig, transform_path.zig and transform_unicode.zig: Apache-2.0;
   LICENSES/ModSecurity-Apache-2.0.txt. Copyright (c) 2015-2023 Trustwave
   Holdings, Inc. Source: github.com/owasp-modsecurity/ModSecurity.
   The native scans use caller-owned buffers and explicit bounds instead of

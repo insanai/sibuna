@@ -6,7 +6,9 @@ const work = @import("work.zig");
 pub const Character = struct { length: u3, value: u21 };
 pub const DecodeError = error{ Incomplete, Invalid, Restricted, Overlong };
 
-pub fn decode(input: []const u8) DecodeError!Character {
+/// Decode structural continuations without rejecting overlong or restricted values.
+/// This is not Unicode validation; compatibility transforms perform separate handling.
+pub fn structural(input: []const u8) DecodeError!Character {
     std.debug.assert(input.len != 0);
     const first = input[0];
     if (first < 0x80) return .{ .length = 1, .value = first };
@@ -16,7 +18,6 @@ pub fn decode(input: []const u8) DecodeError!Character {
         0xf0...0xf7 => 4,
         else => return error.Invalid,
     };
-    if (first >= 0xf5) return error.Restricted;
     if (input.len < length) return error.Incomplete;
     var value: u21 = first & @as(u8, switch (length) {
         2 => 0x1f,
@@ -28,15 +29,23 @@ pub fn decode(input: []const u8) DecodeError!Character {
         if (byte & 0xc0 != 0x80) return error.Invalid;
         value = (value << 6) | (byte & 0x3f);
     }
-    if (value >= 0xd800 and value <= 0xdfff) return error.Restricted;
-    const minimum: u21 = switch (length) {
+    return .{ .length = length, .value = value };
+}
+
+pub fn decode(input: []const u8) DecodeError!Character {
+    std.debug.assert(input.len != 0);
+    if (input[0] >= 0xf5 and input[0] <= 0xf7) return error.Restricted;
+    const character = try structural(input);
+    if (character.value >= 0xd800 and character.value <= 0xdfff) return error.Restricted;
+    if (character.length == 1) return character;
+    const minimum: u21 = switch (character.length) {
         2 => 0x80,
         3 => 0x800,
         4 => 0x10000,
         else => unreachable,
     };
-    if (value < minimum) return error.Overlong;
-    return .{ .length = length, .value = value };
+    if (character.value < minimum) return error.Overlong;
+    return character;
 }
 
 pub fn invalid(input: []const u8, budget: *work.Budget) work.Error!bool {
