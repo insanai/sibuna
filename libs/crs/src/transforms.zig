@@ -7,6 +7,8 @@ const work = @import("work.zig");
 const types = @import("transform_types.zig");
 const scan = @import("transform_scan.zig");
 const escapes = @import("transform_escape.zig");
+const entity = @import("transform_entity.zig");
+const base64 = @import("transform_base64.zig");
 
 pub const Error = types.Error;
 pub const Buffer = types.Buffer;
@@ -39,6 +41,8 @@ pub fn step(kind: model.Transform, buffer: Buffer) Error!Result {
         .replace_comments => scan.replaceComments(buffer),
         .sha1 => scan.sha1(buffer),
         .css_decode, .js_decode, .url_decode_uni => escapes.decode(kind, buffer),
+        .html_entity_decode => entity.decode(buffer),
+        .base64_decode => base64.decode(buffer),
         .compress_whitespace, .remove_whitespace, .remove_nulls => blk: {
             const length = if (kind == .compress_whitespace)
                 compress(buffer)
@@ -66,6 +70,8 @@ pub fn capacity(kind: model.Transform, length: usize) Error!usize {
         .css_decode,
         .js_decode,
         .url_decode_uni,
+        .html_entity_decode,
+        .base64_decode,
         => length,
         .hex_encode => std.math.mul(usize, length, 2) catch error.OutputLimit,
         .length => digits(length),
@@ -78,8 +84,8 @@ fn cost(kind: model.Transform, length: usize) work.Error!u64 {
     const count: u64 = @intCast(length);
     const factor: u64 = switch (kind) {
         .hex_encode => 2,
-        .escape_seq_decode, .cmd_line, .replace_comments => 8,
-        .remove_comments_char => 32,
+        .escape_seq_decode, .cmd_line, .replace_comments, .base64_decode => 8,
+        .remove_comments_char, .html_entity_decode => 32,
         .css_decode, .js_decode, .url_decode_uni => 16,
         else => 1,
     };
@@ -195,7 +201,7 @@ test "transform bounds and unsupported operations cannot expose partial output" 
     var budget: work.Budget = .{ .remaining = 10 };
     const buffer: Buffer = .{ .input = "AB", .output = &output, .budget = &budget };
     try std.testing.expectError(error.OutputLimit, apply(.hex_encode, buffer));
-    try std.testing.expectError(error.UnsupportedTransform, apply(.html_entity_decode, buffer));
+    try std.testing.expectError(error.UnsupportedTransform, apply(.normalize_path, buffer));
     try std.testing.expectEqual(@as(u64, 10), budget.remaining);
     budget.remaining = 0;
     try std.testing.expectError(error.WorkLimit, apply(.lowercase, buffer));
@@ -308,5 +314,69 @@ test "CSS JavaScript and URL decoders preserve distinct byte and change semantic
             });
             try std.testing.expect(partial.bytes.len <= length);
         }
+    }
+}
+
+test "HTML entities retain the reference prefix and fixed C64 numeric behavior" {
+    const input = "&amplitude;&#x100;&#9223372036854775808;&NBSP;&unknown;&#x;\x00";
+    var output: [128]u8 = undefined;
+    var budget: work.Budget = .{ .remaining = 8192 };
+    const result = try step(.html_entity_decode, .{
+        .input = input,
+        .output = &output,
+        .budget = &budget,
+    });
+    try std.testing.expectEqualStrings("&\x00\xff\xa0&unknown;&#x;\x00", result.bytes);
+    try std.testing.expect(result.changed);
+}
+
+test "base64 validation and the reference NUL boundary cannot expose partial output" {
+    const cases = [_]struct { input: []const u8, output: []const u8 }{
+        .{ .input = "", .output = "" },
+        .{ .input = "QQ== \r\n", .output = "A" },
+        .{ .input = "QQ==\x00invalid", .output = "A" },
+        .{ .input = "\x00QQ==", .output = "" },
+        .{ .input = "QU\nJD", .output = "ABC" },
+        .{ .input = "Q Q==", .output = "" },
+        .{ .input = "QQ==\t", .output = "" },
+        .{ .input = "QQ==\r", .output = "" },
+        .{ .input = "QQ=", .output = "" },
+        .{ .input = "QQ==A", .output = "" },
+        .{ .input = "====", .output = "" },
+        .{ .input = "AB==", .output = "\x00" },
+    };
+    var output: [64]u8 = @splat(0x7f);
+    for (cases) |case| {
+        var budget: work.Budget = .{ .remaining = 1024 };
+        const result = try step(.base64_decode, .{
+            .input = case.input,
+            .output = &output,
+            .budget = &budget,
+        });
+        try std.testing.expectEqualStrings(case.output, result.bytes);
+        try std.testing.expectEqual(case.input.len != 0, result.changed);
+    }
+}
+
+test "base64 decodes independently encoded random binary strings" {
+    var random = std.Random.DefaultPrng.init(0x435253);
+    var input: [64]u8 = undefined;
+    var encoded: [88]u8 = undefined;
+    var output: [88]u8 = undefined;
+    for (0..512) |index| {
+        const length = index % (input.len + 1);
+        random.random().bytes(input[0..length]);
+        const encoded_length = std.base64.standard.Encoder.calcSize(length);
+        const value = std.base64.standard.Encoder.encode(
+            encoded[0..encoded_length],
+            input[0..length],
+        );
+        var budget: work.Budget = .{ .remaining = 2048 };
+        const result = try step(.base64_decode, .{
+            .input = value,
+            .output = &output,
+            .budget = &budget,
+        });
+        try std.testing.expectEqualSlices(u8, input[0..length], result.bytes);
     }
 }

@@ -191,7 +191,7 @@ test "pipeline capacity and compilation reject unsupported and excessive stages"
         error.PipelineLimit,
         compile(allocator, .{ .inherited = &.{}, .local = actions, .stages = 1 }),
     );
-    const unsupported = try parser.parse(allocator, "t:htmlEntityDecode", 1);
+    const unsupported = try parser.parse(allocator, "t:normalizePath", 1);
     defer allocator.free(unsupported);
     try std.testing.expectError(
         error.UnsupportedTransform,

@@ -155,7 +155,19 @@
       "sha256": "677f81ecd7bc57a75367608eb4b91a391a3ff1c143a226bb780c0e3798ad7d88",
       "bytes": 14538,
       "cases": 32
+    },
+    {
+      "path": "transformations/htmlEntityDecode.json",
+      "sha256": "b540cf851c09ed5ee70ff455606cc5815aef077c8e72fdabfa15f0997dfd19a6",
+      "bytes": 1406,
+      "cases": 7
+    },
+    {
+      "path": "transformations/base64Decode.json",
+      "sha256": "482ab5bba59b5de5bee0fb27155288eee72f7d12ee56edf53cb27e9a1816538e",
+      "bytes": 862,
+      "cases": 6
     }
   ],
-  "cases": 252
+  "cases": 265
 }
