@@ -273,6 +273,10 @@ They also prepare all 693 stock rule operators through one shared typed interfac
 caller-owned workspaces and operator-specific capture contracts. This validates compilation
 and the bounded primitives; selection, rule effects and HTTP phase coverage require separate
 execution tests.
+Prepared target tests cover duplicate inputs, count selectors, owned key patterns and
+exclusions. Snapshots use caller metadata scratch and preserve borrowed byte lifetimes;
+unavailable or incomplete collections remain errors. SID 0010 records the native profile's
+consistent exclusion handling and the pinned reference's exact-key discrepancy.
 The native matcher uses ordered regular-expression simulation, length-aware literal
 search, sparse phrase automata and family-separated address intervals. Transform pipelines
 keep the reference's order and change flags, including multi-match behavior. Phrase

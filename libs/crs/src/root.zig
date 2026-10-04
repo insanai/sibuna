@@ -28,6 +28,7 @@ pub const xss_detector = @import("xss_detector.zig");
 pub const variables = @import("variables.zig");
 pub const macros = @import("macros.zig");
 pub const operators = @import("operators.zig");
+pub const selection = @import("selection.zig");
 
 test {
     _ = @import("release_test.zig");
@@ -56,4 +57,5 @@ test {
     _ = xss_detector;
     _ = macros;
     _ = operators;
+    _ = selection;
 }

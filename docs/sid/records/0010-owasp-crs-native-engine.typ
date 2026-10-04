@@ -210,6 +210,38 @@ and error outcomes. Third-party data and code retain their own license notices.
 
 == Transaction views and macro expansion
 
+=== Prepared variable selection
+
+Compile positive targets and exclusions into separate, ordered arrays with owned keys and
+case-insensitive key-regex programs. Before evaluating one positive target, materialize its
+complete selected entries into caller-owned metadata scratch. Preserve duplicate entries and
+input order; repeated positive selectors remain separate evaluations. Do not retain indices
+into a mutable `TX` table. Each copied entry still borrows immutable input or transaction-owned
+bytes, so later action writes must preserve those byte lifetimes. Snapshot each target when it
+is reached, allowing actions on earlier targets to affect later target evaluation as in the
+reference. A capacity or work failure invalidates the snapshot; a partial slice never escapes.
+
+Count targets yield one decimal count, including zero, in dedicated caller scratch. Exclusions
+apply before counting. An excluded whole target produces no synthetic count. Empty complete
+collections, unavailable collections and incomplete collections remain distinct. The two XML
+selectors require explicit element/attribute metadata; absent classification is an error rather
+than broad selection. Structured acquisition must establish that metadata and coverage.
+
+The native profile consistently scopes exclusions to their collection and applies them to
+values and counts, including exact-key targets. Keys compare with fixed ASCII case folding;
+patterns use the pinned case-insensitive selector flags. The pinned parser attaches exclusions
+to dictionary variables, but its exact-key resolution path bypasses that filter unless the
+selector is eliminated by identical source text. That inconsistency is a declared compatibility
+difference, not an equivalence claim. Compatibility and operator-exclusion tests must cover
+it before activation. Exclusions are operator intent and can reduce protection.
+
+*Lemma (bounded target snapshot).* With $E$ entries, $X$ exclusions and bounded regex state
+counts, each positive target visits at most $E$ entries, and each retained candidate checks at
+most $X$ exclusions. Every scan, comparison and regex transition consumes the shared budget.
+At most $E$ copied metadata records and one decimal count are needed for a target. All borrowed
+bytes survive its evaluation, and no request allocation or callback is required. The lemma
+does not establish acquisition coverage or equivalence for unsupported selectors.
+
 A shared variable view contains typed collection entries, borrowed name/value bytes and
 per-collection coverage for the current phase. Empty, absent, unavailable and incomplete
 collections are distinct. Fixed ASCII key comparison preserves the pinned reference's

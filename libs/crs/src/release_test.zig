@@ -137,6 +137,28 @@ test "stock collection selectors and key regexes fit the native profile" {
     for (plan.updates) |update| try std.testing.expect(update.targets.len > 0);
 }
 
+test "every stock target list prepares with owned exclusions and shared matcher bounds" {
+    const selection = @import("selection.zig");
+    var builder = compiler.Compiler.init(std.testing.allocator, .{});
+    defer builder.deinit();
+    for (fixture.sources) |file| try builder.addSource(file.path, file.bytes);
+    var plan = try builder.finish();
+    defer plan.deinit();
+    var count: usize = 0;
+    for (plan.conditions) |condition| {
+        if (condition.targets.len == 0) continue;
+        var program = try selection.compile(std.testing.allocator, condition.targets, .{});
+        defer program.deinit();
+        try std.testing.expect(program.targets.len > 0);
+        count += 1;
+    }
+    try std.testing.expectEqual(@as(usize, 693), count);
+    for (plan.updates) |update| {
+        var program = try selection.compile(std.testing.allocator, update.targets, .{});
+        defer program.deinit();
+    }
+}
+
 test "every stock transform pipeline compiles and has bounded intermediate scratch" {
     const pipeline = @import("pipeline.zig");
     var builder = compiler.Compiler.init(std.testing.allocator, .{});

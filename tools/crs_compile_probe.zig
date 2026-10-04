@@ -52,6 +52,7 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
     if (!detectorProbe(&budget)) return 18;
     if (!macroProbe(allocator.*, &budget)) return 24;
     if (!operatorProbe(allocator.*, &budget)) return 25;
+    if (!selectionProbe(allocator.*, &budget)) return 26;
     const result = crs.regex.match.search(
         &program,
         "xx",
@@ -104,4 +105,21 @@ fn operatorProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
     defer program.deinit();
     const result = program.evaluate(.{ .input = "xx", .budget = budget }) catch return false;
     return result.matched and result.captured("xx", 0) == null;
+}
+
+fn selectionProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
+    const targets = crs.selectors.parse(allocator, "&ARGS", 1) catch return false;
+    defer allocator.free(targets);
+    var program = crs.selection.compile(allocator, targets, .{}) catch return false;
+    defer program.deinit();
+    const view: crs.variables.View = .{ .entries = &.{}, .coverage = @splat(.complete) };
+    var entries: [1]crs.variables.Entry = undefined;
+    var count: [20]u8 = undefined;
+    const result = program.select(0, .{
+        .view = &view,
+        .output = &entries,
+        .count = &count,
+        .budget = budget,
+    }) catch return false;
+    return result.counted and std.mem.eql(u8, result.entries[0].value, "0");
 }

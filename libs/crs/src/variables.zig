@@ -10,7 +10,13 @@ pub const Error = work.Error || error{
     IncompleteCollection,
     AmbiguousVariable,
 };
-pub const Entry = struct { collection: Collection, key: []const u8 = "", value: []const u8 };
+pub const Xml = enum { element, attribute };
+pub const Entry = struct {
+    collection: Collection,
+    key: []const u8 = "",
+    value: []const u8,
+    xml: ?Xml = null,
+};
 pub const Reference = struct { collection: Collection, key: ?[]const u8 = null };
 
 pub const View = struct {
