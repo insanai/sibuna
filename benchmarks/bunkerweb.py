@@ -16,7 +16,8 @@ import tempfile
 import time
 
 import bunkerweb_fixture as bunker
-from process_accounting import PeakRss, snapshot
+from admission_client import Request
+from http_measure import Workload, measure as measure_http, script, validate_measured
 from http_load import HttpLoad
 from product_fixtures import Context, anubis_identity, start_product, stop_product
 from run import ROOT, free_port, metadata, record, stop
@@ -32,40 +33,6 @@ CASES = (
     ("sqli_query", "GET", ATTACK, None),
     ("sqli_json", "POST", "/api", json.dumps({"query": "1' OR 1=1--"})),
 )
-
-
-def script(path, method, body):
-    path.write_text("""
-statuses = {}
-threads = {}
-setup = function(thread) table.insert(threads, thread) end
-response = function(status, headers, body)
-  statuses[status] = (statuses[status] or 0) + 1
-end
-done = function(summary, latency, requests)
-  local totals = {}
-  for _, thread in ipairs(threads) do
-    for status, count in pairs(thread:get('statuses')) do
-      totals[status] = (totals[status] or 0) + count
-    end
-  end
-  io.write(string.format('WRKJSON {"requests":%d,"duration_us":%d,"bytes":%d,'
-    .. '"errors":{"connect":%d,"read":%d,"write":%d,"status":%d,"timeout":%d},'
-    .. '"latency_us":{"p50":%d,"p90":%d,"p99":%d,"max":%d,"mean":%.1f},'
-    .. '"statuses":{', summary.requests, summary.duration, summary.bytes,
-    summary.errors.connect, summary.errors.read, summary.errors.write,
-    summary.errors.status, summary.errors.timeout, latency:percentile(50),
-    latency:percentile(90), latency:percentile(99), latency.max, latency.mean))
-  local first = true
-  for status, count in pairs(totals) do
-    if not first then io.write(',') end
-    io.write(string.format('"%d":%d', status, count))
-    first = false
-  end
-  io.write('}}\\n')
-end
-""" + f"\nwrk.method = {json.dumps(method)}\n"
-        + (f"wrk.body = {json.dumps(body)}\n" if body is not None else ""))
 
 
 def probe(port, method, path, body, expected):
@@ -112,50 +79,15 @@ def launch(profile, arguments, port, origin, temporary, log, cpus):
     return start_product(profile, context, log)
 
 
-def validate_measured(measured, expected):
-    transport = {key: value for key, value in measured["errors"].items() if key != "status"}
-    if any(transport.values()) or measured["statuses"] != {
-            str(expected): measured["requests"]} or not measured["requests"]:
-        raise ValueError(f"invalid measured responses: {measured}")
-
-
 def measure(process, port, label, method, path, body, expected, arguments, temporary):
-    lua = temporary / "request.lua"
-    script(lua, method, body)
     headers = dict(HEADERS)
     if body is not None:
         headers["Content-Type"] = "application/json"
-    evidence = probe(port, method, path, body, expected)
-    load = {"threads": arguments.threads, "connections": arguments.connections,
-            "seconds": arguments.seconds}
-    # Separate logical CPU sets avoid product/generator scheduling overlap. Other
-    # host tenants and shared physical cores are outside this container's control.
-    old_affinity = os.sched_getaffinity(0)
-    os.sched_setaffinity(0, arguments.load_cpus)
-    try:
-        arguments.generator.run(port, path, headers, {**load, "seconds": arguments.warmup}, lua)
-        before = snapshot(process.pid)
-        tracker = PeakRss(process.pid)
-        tracker.start()
-        try:
-            measured = arguments.generator.run(port, path, headers, load, lua)
-        finally:
-            peak = tracker.finish()
-        after = snapshot(process.pid)
-    finally:
-        os.sched_setaffinity(0, old_affinity)
-    validate_measured(measured, expected)
-    if expected == 403 and measured["errors"]["status"] != measured["requests"]:
-        raise ValueError("wrk status accounting disagrees with the response hook")
-    if before["pids"] != after["pids"]:
-        raise ValueError("product process membership changed during measurement")
-    wall = measured["duration_us"] / 1e6
-    cpu = after["cpu_seconds"] - before["cpu_seconds"]
-    return {"label": label, "method": method, "path": path,
-            "request_body_bytes": len(body or ""), "probe": evidence,
-            "requests_per_second": measured["requests"] / wall,
-            "cpu_seconds": cpu, "cpu_us_per_request": cpu * 1e6 / measured["requests"],
-            "peak_process_tree_rss_kib": peak, "process_pids": after["pids"], **measured}
+    context = Context(arguments, port, 0, temporary, [])
+    workload = Workload(label, Request(method, path, headers, body, expected),
+                        origin_response=expected == 200)
+    result = measure_http(context, process, workload)
+    return {**result, "method": method, "request_body_bytes": len(body or "")}
 
 
 def summarize(samples):
