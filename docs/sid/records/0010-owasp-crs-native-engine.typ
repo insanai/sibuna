@@ -243,6 +243,38 @@ succeeded, so a rejected expansion leaves output unchanged. Copies then cannot f
 the disjoint-buffer and lifetime invariants. No partial argument can be mistaken for a
 completed expansion, and injected `%{...}` bytes in values cannot add lookup work.
 
+== Prepared operator interface
+
+One typed compiled-operator interface owns the prepared regex, phrase, address or byte-range
+program, or a literal/numeric argument template. It dispatches every one of the stock
+operator kinds through existing bounded primitives. Static `contains` needles prepare
+their KMP prefix tables off-path; variable needles and `within` use caller-owned prefix
+scratch. Runtime argument templates apply to the reference's comparison and text operators,
+not to regex patterns or static phrase/address data. Phrase-file bytes are resolved from
+the validated artifact and supplied during compilation; evaluation has no file interface.
+Multiple phrase files retain line boundaries and their input order. Their total bytes,
+file count, phrase count and automaton nodes are bounded before publication.
+
+The evaluation frame centralizes the input, shared budget, regex workspace, prefix scratch
+and macro buffers. Results separate predicate truth from operator capture. Regex captures
+are input offsets, phrase captures borrow the generation dictionary, XSS captures borrow
+the evaluated input, and SQL fingerprints own their small byte array. Comparison, encoding,
+address and byte-range predicates do not invent `TX` captures from incidental match spans.
+The result's capture access requires that the result, input and pinned generation remain
+alive; the transaction copies any persistent capture before scratch is reused. Negation,
+selection, transformations, chains and actions belong to the executor. A work, scratch or
+macro error remains an error and cannot be converted into truth by negation.
+
+*Lemma (prepared ownership).* Compilation owns or copies every argument and static table
+before returning a program. A failed compilation releases all its private allocations.
+Evaluation borrows only that immutable program and the frame; it creates no dynamic storage
+or new owner. Every successful capture either consists of bounded offsets, a generation-
+owned dictionary slice, an input slice or owned fingerprint bytes. Therefore retaining the
+generation and copying ephemeral captures suffices for lifetime safety. This lemma assumes
+the caller enforces frame disjointness and does not prove rule-action semantics.
+
+== Ordered transformation profiles
+
 Transforms required by this release are `base64Decode`, `cmdLine`, `compressWhitespace`,
 `cssDecode`, `escapeSeqDecode`, `hexEncode`, `htmlEntityDecode`, `jsDecode`, `length`,
 `lowercase`, `none`, `normalizePath`, `normalizePathWin`, `removeCommentsChar`,
@@ -340,8 +372,6 @@ Validation precedes decoding, each is $O(N)$, capacity $N$ suffices, and $8 N + 
 is reserved. This versioned profile is explicit; a finite vector pass does not establish
 equivalence with arbitrary builds using another version of Mbed TLS.
 
-= Algorithms and mathematical contracts
-
 `utf8toUnicode` is a permissive compatibility transform, not the validation operator.
 It emits lowercase `%u` hexadecimal with at least four digits for structurally complete
 two-to-four-byte sequences. Overlong encodings and surrogates append their original leading
@@ -373,6 +403,8 @@ authorize filesystem paths or alter the path forwarded to the origin.
 written once and can be removed by at most one backwards scan. Charging removals against
 their preceding writes bounds all backwards scans by $N$. Hence normalization costs $O(N)$,
 requires $N$ output bytes, and reserves $16 N + 1$ work; it needs no segment-stack allocation.
+
+= Algorithms and mathematical contracts
 
 == Definitions and axioms
 
@@ -928,6 +960,8 @@ may contact the authors. Adding rules does not replace the existing component li
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/utils/regex.cc")[ModSecurity 3.0.14 regex implementation and compilation defaults].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/test/unit/unit_test.cc")[Pinned primitive corpus binary decoding].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/rule_with_actions.cc")[Reference transform ordering and change flags].
+- #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/parser/seclang-parser.yy")[Reference default-action validation].
+- #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/run_time_string.cc")[Reference runtime-string expansion].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/rule_with_operator.cc")[Reference per-match effects and chain evaluation].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/tree/v3.0.14/src/actions/transformations")[Reference byte transforms].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/utils/acmp.cc")[Reference phrase failure construction and capture behavior].

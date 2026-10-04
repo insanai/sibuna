@@ -51,6 +51,7 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
     _ = addresses.contains("::1", &budget) catch return 17;
     if (!detectorProbe(&budget)) return 18;
     if (!macroProbe(allocator.*, &budget)) return 24;
+    if (!operatorProbe(allocator.*, &budget)) return 25;
     const result = crs.regex.match.search(
         &program,
         "xx",
@@ -93,4 +94,14 @@ fn macroProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
         .budget = budget,
     }) catch return false;
     return true;
+}
+
+fn operatorProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
+    var program = crs.operators.compile(allocator, .{
+        .kind = .contains,
+        .argument = "x",
+    }, .{}) catch return false;
+    defer program.deinit();
+    const result = program.evaluate(.{ .input = "xx", .budget = budget }) catch return false;
+    return result.matched and result.captured("xx", 0) == null;
 }

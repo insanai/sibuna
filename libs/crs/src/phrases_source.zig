@@ -93,9 +93,34 @@ pub fn fileWords(
     source: []const u8,
     options: phrases.Options,
 ) phrases.Error!phrases.Program {
-    if (source.len > options.bytes) return error.SourceLimit;
+    return filesWords(allocator, &.{source}, options);
+}
+
+/// File boundaries remain separate even when the preceding final line lacks LF.
+/// The artifact owner supplies bytes; matching retains no files or resolver callbacks.
+pub fn filesWords(
+    allocator: std.mem.Allocator,
+    sources: []const []const u8,
+    options: phrases.Options,
+) phrases.Error!phrases.Program {
+    if (sources.len > 256) return error.SourceLimit;
+    var length: usize = 0;
+    for (sources) |source| {
+        if (source.len > options.bytes - length) return error.SourceLimit;
+        length += source.len;
+    }
     var words: std.ArrayList([]const u8) = .empty;
     defer words.deinit(allocator);
+    for (sources) |source| try fileLines(allocator, &words, source, options.phrases);
+    return phrases.compile(allocator, words.items, options);
+}
+
+fn fileLines(
+    allocator: std.mem.Allocator,
+    words: *std.ArrayList([]const u8),
+    source: []const u8,
+    limit: usize,
+) phrases.Error!void {
     var lines = std.mem.splitScalar(u8, source, '\n');
     while (lines.next()) |line| {
         if (line.len == 0) continue;
@@ -104,9 +129,21 @@ pub fn fileWords(
         if (first < line.len and line[first] == '#') continue;
         // getline preserves CR and other whitespace. A whitespace-only line
         // without '#' is a literal phrase, unlike an inline token list.
-        try append(allocator, &words, line, options.phrases);
+        try append(allocator, words, line, limit);
     }
-    return phrases.compile(allocator, words.items, options);
+}
+
+test "multiple phrase files preserve unterminated lines and enforce one aggregate bound" {
+    var program = try filesWords(std.testing.allocator, &.{ "one", "two\nthree" }, .{});
+    defer program.deinit();
+    try std.testing.expectEqual(@as(usize, 3), program.words.len);
+    try std.testing.expectEqualStrings("one", program.words[0]);
+    try std.testing.expectEqualStrings("two", program.words[1]);
+    try std.testing.expectError(error.SourceLimit, filesWords(
+        std.testing.allocator,
+        &.{ "1234", "5678" },
+        .{ .bytes = 7 },
+    ));
 }
 
 test "inline quoting binary pairs and literal fallback retain pinned source meaning" {

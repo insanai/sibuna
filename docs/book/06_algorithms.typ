@@ -269,6 +269,10 @@ phase-specific variable view, caller-owned scratch and one work budget; all look
 capacity checks finish before output is copied. Missing keys in complete collections
 expand empty, while unavailable, incomplete or ambiguous references remain explicit errors.
 The native tests compile the stock runtime macros and check output ownership and failures.
+They also prepare all 693 stock rule operators through one shared typed interface, with
+caller-owned workspaces and operator-specific capture contracts. This validates compilation
+and the bounded primitives; selection, rule effects and HTTP phase coverage require separate
+execution tests.
 The native matcher uses ordered regular-expression simulation, length-aware literal
 search, sparse phrase automata and family-separated address intervals. Transform pipelines
 keep the reference's order and change flags, including multi-match behavior. Phrase

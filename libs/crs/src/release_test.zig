@@ -187,6 +187,41 @@ fn findData(name: []const u8) ?[]const u8 {
     return null;
 }
 
+test "every stock condition prepares through the shared native operator interface" {
+    const operators = @import("operators.zig");
+    var builder = compiler.Compiler.init(std.testing.allocator, .{});
+    defer builder.deinit();
+    for (fixture.sources) |file| try builder.addSource(file.path, file.bytes);
+    var plan = try builder.finish();
+    defer plan.deinit();
+    const kinds = @typeInfo(model.Operator).@"enum".field_names.len;
+    var counts: [kinds]usize = @splat(0);
+    var total: usize = 0;
+    for (plan.conditions) |condition| {
+        const expression = condition.expression orelse continue;
+        var files: [256][]const u8 = undefined;
+        var used: usize = 0;
+        if (expression.kind == .pm_from_file) {
+            var names = std.mem.tokenizeAny(u8, expression.argument, " \t\r\n");
+            while (names.next()) |name| {
+                if (used == files.len) return error.TooManyDataFixtures;
+                files[used] = findData(name) orelse return error.MissingDataFixture;
+                used += 1;
+            }
+        }
+        var program = try operators.compile(std.testing.allocator, .{
+            .kind = expression.kind,
+            .argument = expression.argument,
+            .phrase_files = files[0..used],
+        }, .{});
+        defer program.deinit();
+        counts[@backingInt(expression.kind)] += 1;
+        total += 1;
+    }
+    try std.testing.expectEqual(@as(usize, 693), total);
+    for (counts) |count| try std.testing.expect(count > 0);
+}
+
 test "every stock address operator compiles without mapping IPv4 into IPv6" {
     const addresses = @import("address_set.zig");
     var builder = compiler.Compiler.init(std.testing.allocator, .{});
