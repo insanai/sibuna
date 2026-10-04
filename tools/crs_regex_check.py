@@ -92,6 +92,19 @@ def main():
                                 timeout=5, text=True)
         if result.returncode == 0 or "UnsupportedRegex" not in result.stderr:
             raise AssertionError(f"empty captured repetition was not rejected: {pattern!r}")
+    release = subprocess.run([sys.argv[1], "--stock"], capture_output=True,
+                             timeout=10, check=True, text=True)
+    stock = [json.loads(line) for line in release.stdout.splitlines()]
+    if len(stock) != 320:
+        raise AssertionError(f"expected 320 stock regexes, found {len(stock)}")
+    payloads = [b"", b"hello", b"1", b"/etc/passwd", b"<script>alert(1)</script>",
+                b"1' or 1=1--", b"UNION SELECT password FROM users", b"../../etc/passwd",
+                b"application/json", b"Mozilla/5.0", b"https://example.com/?q=x",
+                b"\x00\xff", b"${jndi:ldap://example.com/a}", b"cmd.exe /c whoami",
+                b"eval($_GET['x']);"]
+    for entry in stock:
+        compare(lib, sys.argv[1], entry["pattern"].encode(), payloads)
+        total += len(payloads)
     print(f"PCRE2 differential check: {total} matches/captures and 3 rejections passed")
 
 
