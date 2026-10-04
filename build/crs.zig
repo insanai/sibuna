@@ -8,18 +8,23 @@ pub fn add(
     const dictionary = b.createModule(.{
         .root_source_file = b.path("vendor/libinjection/table.zig"),
     });
+    const trust = b.createModule(.{
+        .root_source_file = b.path("vendor/crs/trust.zig"),
+    });
     const module = b.addModule("sibuna-crs", .{
         .root_source_file = b.path("libs/crs/src/root.zig"),
         .target = target,
         .optimize = optimize,
     });
     module.addImport("libinjection-data", dictionary);
+    module.addImport("crs-trust", trust);
     const host = b.createModule(.{
         .root_source_file = b.path("libs/crs/src/root.zig"),
         .target = b.graph.host,
         .optimize = optimize,
     });
     host.addImport("libinjection-data", dictionary);
+    host.addImport("crs-trust", trust);
     const fixture = b.createModule(.{
         .root_source_file = b.path("vendor/crs/fixture.zig"),
     });
@@ -39,6 +44,13 @@ pub fn add(
         }),
     });
     addRegexCheck(b, host, fixture);
+    addProbeCheck(b, host, .{
+        .name = "sibuna-crs-signature-probe",
+        .source = "tools/crs_signature_probe.zig",
+        .checker = "tools/crs_signature_check.py",
+        .step = "crs-signature-check",
+        .description = "Verify native CRS archive signatures against the pinned GnuPG receipt",
+    });
     addProbeCheck(b, host, .{
         .name = "sibuna-crs-primitive-probe",
         .source = "tools/crs_primitive_probe.zig",
@@ -100,6 +112,9 @@ fn addCompilationChecks(b: *std.Build) *std.Build.Step {
         });
         module.addImport("libinjection-data", b.createModule(.{
             .root_source_file = b.path("vendor/libinjection/table.zig"),
+        }));
+        module.addImport("crs-trust", b.createModule(.{
+            .root_source_file = b.path("vendor/crs/trust.zig"),
         }));
         const probe = b.addObject(.{
             .name = "crs-compile-probe",

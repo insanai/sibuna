@@ -1150,10 +1150,51 @@ run off the request path with bounded concurrency, connection/read deadlines and
 
 The trust root is the pinned CRS signing fingerprint
 `36006F0E0BA167832158821138EEACA1AB8A6E72`, with explicit operator-reviewed key rotation.
-Upstream detached OpenPGP signature verification must be implemented or supplied by an
-audited portable verifier before online activation ships. TLS and an asset digest alone do
-not establish independent upstream signature authenticity. The public key is not fetched
-and trusted afresh from the same download during every update.
+TLS and an asset digest alone do not establish independent upstream signature authenticity.
+The public key is not fetched and trusted afresh from the same download during every update.
+
+== Native detached signature profile
+
+The initial portable verifier accepts one definite-length OpenPGP version-4 binary-document
+signature under the pinned RSA-4096 primary key, with SHA-256 or SHA-512. It verifies the
+key artifact's SHA-256 pin before decoding its primary key, checks its canonical MPI lengths,
+exponent 65537 and version-4 fingerprint, and copies the standard library's public-key state.
+The pinned key has no expiry and its subkey is encryption-only. Signing subkeys, key rotation,
+revocation material or new signature algorithms require a reviewed trust-profile change;
+they cannot select an untrusted key by an issuer string. Learned revocation must disable
+that trust root through the same reviewed software/configuration process.
+
+Decode bounded ASCII armor into caller buffers and reject partial/indeterminate packet
+lengths, ambiguous packet sequences, noncanonical MPIs and unsupported signature kinds.
+CRC24 is not authenticity: ignore missing, malformed or disagreeing CRC footers as
+#link("https://www.rfc-editor.org/rfc/rfc9580.html#section-6.1")[RFC 9580 §6.1] requires.
+Require one hashed issuer fingerprint and creation time; check any issuer key ID against
+that fingerprint. Creation time must follow the trusted key and may exceed the operator's
+clock by at most 300 seconds. Honor hashed signature expiration. Reject duplicate protected
+metadata, security metadata in the unhashed area and unknown critical subpackets. Noncritical
+notation and signer-display fields carry no authority and are not exposed as signer identity.
+
+Hash the exact compressed archive bytes, the v4 signature header through its hashed
+subpackets, and the six-byte v4 trailer described by
+#link("https://www.rfc-editor.org/rfc/rfc9580.html#section-5.2.4")[RFC 9580 §5.2.4]. Check the
+two-byte digest prefix, then use Zig's `std.crypto.Certificate.rsa.PKCS1v1_5Signature` to
+verify the complete DigestInfo and padding. Left-pad a short canonical signature MPI to
+512 bytes; do not use a helper that appends zeros to its right. Return a SHA-256 receipt
+for the verified archive and its protected creation time. Verification uses no subprocess,
+filesystem lookup, downloaded key, C dependency or request-path allocation.
+
+*Security assumption.* Authentication depends on the reviewed key pin, the private key's
+security, RSA-4096 signature security and the supported hashes' collision resistance.
+SHA-1 is used for the prescribed legacy fingerprint, not archive authentication or accepting
+a newly downloaded public key. RSA PKCS1 signatures are a compatibility verification
+profile for upstream artifacts; the application does not generate them.
+
+*Lemma (signed-byte binding).* The v4 preimage includes every supplied archive byte and
+the complete protected metadata prefix. Full standard-library signature verification
+therefore authenticates that exact preimage under the trusted public key, conditional on
+the security assumptions. A digest-prefix match or CRC match alone is insufficient.
+Definite lengths and checked reader advances bound parsing by the armor/packet capacities;
+archive hashing is linear in its 8 MiB ceiling and runs outside request processing.
 
 Repository scope is fixed to `coreruleset/coreruleset`. Release tag and asset names are parsed
 strictly; prereleases and floating branches are not selected automatically. HTTPS redirects

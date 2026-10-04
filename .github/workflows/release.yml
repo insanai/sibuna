@@ -27,13 +27,13 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install test oracles
-        run: sudo apt-get update && sudo apt-get install -y build-essential libpcre2-8-0
+        run: sudo apt-get update && sudo apt-get install -y build-essential libpcre2-8-0 gnupg
       - name: Install checksum-verified Zig 0.17.0
         run: python tools/install_zig.py "$RUNNER_TEMP/zig"
       - name: Qualify native CRS contracts and pinned upstream behavior
         run: |
           zig build crs-test crs-detector-data crs-detector-check \
-            crs-primitive-check crs-regex-check -j2 --summary all -- --download
+            crs-primitive-check crs-regex-check crs-signature-check -j2 --summary all -- --download
   plan:
     runs-on: ubuntu-22.04
     outputs:

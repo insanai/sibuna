@@ -57,6 +57,7 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
     if (!transactionProbe(allocator.*, &budget)) return 27;
     if (!conditionProbe(allocator.*, &budget)) return 28;
     if (!controlProbe(allocator.*, &budget)) return 29;
+    if (!signatureProbe()) return 30;
     const result = crs.regex.match.search(
         &program,
         "xx",
@@ -64,6 +65,35 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
         &budget,
     ) catch return 5;
     return if (result != null) 0 else 6;
+}
+
+fn signatureProbe() bool {
+    var scratch: crs.release_signature.Scratch = .{};
+    const verifier = crs.release_signature.Verifier.init(&scratch) catch return false;
+    if (verifier.verify("bad archive", "bad signature", 1791049738, &scratch)) |_| {
+        return false;
+    } else |err| return err == error.InvalidArmor;
+}
+
+/// Runtime parameters prevent optimization from pruning the RSA verifier from
+/// compile-only Windows, macOS and Wasm objects after a constant malformed armor.
+pub export fn crsSignatureProbe(
+    archive: [*]const u8,
+    archive_length: usize,
+    armored: [*]const u8,
+    armored_length: usize,
+    now: u64,
+) u8 {
+    if (archive_length > 8 * 1024 * 1024 or armored_length > 16 * 1024) return 3;
+    var scratch: crs.release_signature.Scratch = .{};
+    const verifier = crs.release_signature.Verifier.init(&scratch) catch return 2;
+    _ = verifier.verify(
+        archive[0..archive_length],
+        armored[0..armored_length],
+        now,
+        &scratch,
+    ) catch return 1;
+    return 0;
 }
 
 fn controlProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
