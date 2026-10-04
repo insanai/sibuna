@@ -25,6 +25,8 @@ jobs:
         run: python3 tools/install_zig.py "$RUNNER_TEMP/zig"
       - name: Install cluster build dependency
         run: sudo apt-get update && sudo apt-get install -y libssl-dev
+      - name: Benchmark result validation
+        run: python3 benchmarks/bunkerweb_test.py
       - name: Native and console checks
         run: zig build fmt test console-ui-e2e -j2 --summary all
       - name: Cluster checks
