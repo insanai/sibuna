@@ -7,7 +7,9 @@ pub fn main(init: std.process.Init) !u8 {
     defer args.deinit();
     _ = args.next();
     const mode = args.next() orelse return error.MissingMode;
-    if (!std.mem.eql(u8, mode, "tokens")) return error.InvalidMode;
+    const folding = std.mem.eql(u8, mode, "fingerprint");
+    const detecting = std.mem.eql(u8, mode, "sqli");
+    if (!folding and !detecting and !std.mem.eql(u8, mode, "tokens")) return error.InvalidMode;
     const flags = try std.fmt.parseInt(u8, args.next() orelse return error.MissingFlags, 10);
     const options: crs.sql_tokens.Options = switch (flags) {
         0, 9 => .{},
@@ -36,18 +38,49 @@ pub fn main(init: std.process.Init) !u8 {
     var buffer: [4096]u8 = undefined;
     var file = std.Io.File.stdout().writerStreaming(init.io, &buffer);
     const out = &file.interface;
+    try runMode(out, &state, folding, detecting);
+    try out.flush();
+    return 0;
+}
+
+fn tokenStream(out: *std.Io.Writer, state: *crs.sql_tokens.Context) !void {
     var token: crs.sql_tokens.Token = .{};
-    while (try crs.sql_tokens.next(&state, &token)) {
-        try out.print("{d} {d} {d} {d} {d} {d} ", .{
-            @backingInt(token.kind), token.position, token.length,
-            token.count,             token.open,     token.close,
-        });
-        for (token.bytes()) |byte| try out.print("{x:0>2}", .{byte});
-        try out.writeByte('\n');
-    }
+    while (try crs.sql_tokens.next(state, &token)) try writeToken(out, &token);
     try out.print("s {d} {d} {d}\n", .{
         state.stats.tokens, state.stats.dash_comment, state.stats.hash,
     });
-    try out.flush();
-    return 0;
+}
+
+fn writeToken(out: *std.Io.Writer, token: *const crs.sql_tokens.Token) !void {
+    try out.print("{d} {d} {d} {d} {d} {d} ", .{
+        @backingInt(token.kind), token.position, token.length,
+        token.count,             token.open,     token.close,
+    });
+    for (token.bytes()) |byte| try out.print("{x:0>2}", .{byte});
+    try out.writeByte('\n');
+}
+
+fn runMode(
+    out: *std.Io.Writer,
+    state: *crs.sql_tokens.Context,
+    folding: bool,
+    detecting: bool,
+) !void {
+    if (detecting) {
+        var scratch: crs.sql_folding.Result = .{};
+        const result = try crs.sql_detector.detect(state, &scratch);
+        try out.print("d {d} ", .{@intFromBool(result.matched)});
+        for (result.capture()) |byte| try out.print("{x:0>2}", .{byte});
+        try out.writeByte('\n');
+    } else if (folding) {
+        var fingerprint: crs.sql_folding.Result = .{};
+        try crs.sql_folding.fingerprint(state, &fingerprint);
+        try out.writeAll("f ");
+        for (fingerprint.bytes()) |byte| try out.print("{x:0>2}", .{byte});
+        try out.writeByte('\n');
+        for (fingerprint.tokens[0..fingerprint.length]) |*token| try writeToken(out, token);
+        try out.print("s {d} {d} {d} {d}\n", .{
+            state.stats.tokens, state.stats.dash_comment, state.stats.hash, fingerprint.folds,
+        });
+    } else try tokenStream(out, state);
 }

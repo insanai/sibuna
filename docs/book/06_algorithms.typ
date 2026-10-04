@@ -246,6 +246,8 @@ zig build crs-test -j2
 zig build crs-audit -j2 -- vendor/crs --regex
 zig build crs-regex-check -j2
 zig build crs-primitive-check -j2 -- --download
+zig build crs-detector-check -j2 -- --download
+zig build crs-detector-data -j2 -- --check --download
 ```
 
 The first two commands validate the pinned CRS 4.30.0 source and regex compilation. The
@@ -253,6 +255,12 @@ third compares native regex results and capture offsets with PCRE2, which is a t
 and not a runtime dependency. The fourth retrieves digest-pinned upstream unit vectors
 and checks the implemented primitive subset. It does not download or activate daemon rules.
 These checks do not establish full CRS execution support.
+The detector check compares SQL token streams, ordered folding, fingerprints and decisions
+with the pinned libinjection source, compiled as a test oracle. The data check regenerates
+the SQL keyword and fingerprint dictionary and compares its bytes with the committed asset.
+Neither command links the C implementation into the daemon. Native SQL detection receives
+caller-owned scratch and shares the transaction work budget across each dialect and quoting
+pass. XSS detection and the transaction executor require their own compatibility gates.
 The native matcher uses ordered regular-expression simulation, length-aware literal
 search, sparse phrase automata and family-separated address intervals. Transform pipelines
 keep the reference's order and change flags, including multi-match behavior. Phrase

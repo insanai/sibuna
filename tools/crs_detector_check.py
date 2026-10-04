@@ -18,7 +18,8 @@ class Token(c.Structure):
 
 
 class Stats(c.Structure):
-    _fields_ = [("tokens", c.c_size_t), ("dash_comment", c.c_size_t), ("hash", c.c_size_t)]
+    _fields_ = [("tokens", c.c_size_t), ("dash_comment", c.c_size_t),
+                ("hash", c.c_size_t), ("folds", c.c_size_t)]
 
 
 def source_files(directory, download):
@@ -54,20 +55,36 @@ def oracle(directory, download):
     library.crs_oracle_tokens.argtypes = [c.c_void_p, c.c_size_t, c.c_int,
                                         c.POINTER(Token), c.c_size_t, c.POINTER(Stats)]
     library.crs_oracle_tokens.restype = c.c_size_t
+    library.crs_oracle_fingerprint.argtypes = [c.c_void_p, c.c_size_t, c.c_int,
+                                              c.POINTER(Token), c.POINTER(Stats),
+                                              c.POINTER(c.c_ubyte)]
+    library.crs_oracle_fingerprint.restype = c.c_size_t
+    library.crs_oracle_detect.argtypes = [c.c_void_p, c.c_size_t, c.POINTER(c.c_ubyte)]
+    library.crs_oracle_detect.restype = c.c_int
     return library
 
 
-def expected(library, data, flags):
+def expected(library, data, flags, mode):
+    if mode == "sqli":
+        signature = (c.c_ubyte * 8)()
+        matched = library.crs_oracle_detect(data, len(data), signature)
+        value = bytes(signature).split(b"\0", 1)[0]
+        return f"d {matched} {value.hex()}\n"
     storage = (Token * (len(data) + 1))()
     stats = Stats()
-    count = library.crs_oracle_tokens(data, len(data), flags, storage, len(storage), c.byref(stats))
+    signature = (c.c_ubyte * 8)()
+    if mode == "tokens":
+        count = library.crs_oracle_tokens(data, len(data), flags, storage, len(storage), c.byref(stats))
+    else:
+        count = library.crs_oracle_fingerprint(data, len(data), flags, storage, c.byref(stats), signature)
     if count > len(storage):
         raise ValueError("oracle token capacity exhausted")
-    lines = []
+    lines = [] if mode == "tokens" else ["f " + bytes(signature[:count]).hex()]
     for token in storage[:count]:
         metadata = [token.kind, token.position, token.length, token.count, token.open, token.close]
         lines.append(" ".join(map(str, metadata)) + " " + bytes(token.value[:token.length]).hex())
-    lines.append(f"s {stats.tokens} {stats.dash_comment} {stats.hash}")
+    footer = f"s {stats.tokens} {stats.dash_comment} {stats.hash}"
+    lines.append(footer if mode == "tokens" else footer + f" {stats.folds}")
     return "\n".join(lines) + "\n"
 
 
@@ -81,7 +98,14 @@ def inputs():
                   b"Q'\xffabc\xff'", b"U&'abc'", b"E'abc'", b"N'abc'", b"X'00af'", b"B'01'",
                   b"B'\0'", b"0x\0ab", b"0b011", b"1234.e", b"1e+", b"1fUNION", b"$.word",
                   b"$1,000.00", b"$$abc$$", b"$tag$abc$tag$", b"$tag$abc", b"@\0x",
-                  b"[missing", b"[a]1", b"a\0b", b"<=>", b"\\N", b"a" * 80]:
+                  b"[missing", b"[a]1", b"a\0b", b"<=>", b"\\N", b"a" * 80,
+                  b"1 UNION SELECT password FROM users", b"1 OR 1=1-- ",
+                  b"' OR 'a'='a", b"' UNION SELECT NULL,NULL#", b"1; DROP TABLE users",
+                  b"ascii(substring(version() from 1 for 1))", b"1--sp_password",
+                  b"1#sp_password", b"1--SP_PASSWORD", b"ordinary application text",
+                  b"USER()", b"IF(1,2,3)", b"{`}", b"(1,2,3)", b"'hello' + 'world'",
+                  b"1 /* harmless */", b"name--comment", b"one two three four five six",
+                  b"SELECT/*gap*/password FROM users", b"1::int", b"1 NOT IN (2,3)"]:
         yield value
     random_source = random.Random(0x6372736465746563)
     alphabet = b"aAbBeEnNuUqQxX01239$@.[]`'\"\\/*-#=!&| \0\xff\xa0\n"
@@ -103,15 +127,17 @@ def main():
     count = 0
     for index, data in enumerate(inputs()):
         for flags in [9, 17, 10, 18, 12, 20]:
-            result = subprocess.run([str(args.binary.resolve()), "tokens", str(flags), data.hex()],
-                                    capture_output=True, text=True, timeout=5, check=False)
-            wanted = expected(library, data, flags)
-            if result.returncode != 0 or result.stdout != wanted:
-                raise AssertionError(f"tokens:{index} flags:{flags} input:{data.hex()}\n"
-                                     f"native:{result.stdout!r}\nreference:{wanted!r}\n"
-                                     f"error:{result.stderr}")
-            count += 1
-    print(f"Pinned libinjection lexical check: {count} token streams passed")
+            modes = ["tokens", "fingerprint"] + (["sqli"] if flags == 9 else [])
+            for mode in modes:
+                result = subprocess.run([str(args.binary.resolve()), mode, str(flags), data.hex()],
+                                        capture_output=True, text=True, timeout=5, check=False)
+                wanted = expected(library, data, flags, mode)
+                if result.returncode != 0 or result.stdout != wanted:
+                    raise AssertionError(f"{mode}:{index} flags:{flags} input:{data.hex()}\n"
+                                         f"native:{result.stdout!r}\nreference:{wanted!r}\n"
+                                         f"error:{result.stderr}")
+                count += 1
+    print(f"Pinned libinjection stage check: {count} token/fingerprint/decision results passed")
 
 
 if __name__ == "__main__":

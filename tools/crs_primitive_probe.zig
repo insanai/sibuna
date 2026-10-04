@@ -80,6 +80,15 @@ const OperatorProbe = struct {
         }
         const prefixes = try self.allocator.alloc(usize, 64 * 1024);
         defer self.allocator.free(prefixes);
+        if (self.kind == .detect_sqli) {
+            var context: crs.sql_tokens.Context = .{
+                .input = self.input,
+                .prefixes = prefixes,
+                .budget = &budget,
+            };
+            var scratch: crs.sql_folding.Result = .{};
+            return (try crs.sql_detector.detect(&context, &scratch)).matched;
+        }
         const predicate: crs.primitives.Predicate = .{
             .kind = self.kind,
             .argument = self.argument,

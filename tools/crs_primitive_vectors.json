@@ -223,9 +223,15 @@
       "failed_initialization": {
         "16": "IPv4 prefix length 100 fails initialization; the reference unit runner then tests its empty address tree."
       }
+    },
+    {
+      "path": "operators/detectSQLi.json",
+      "sha256": "41aa7876d3b398bf9e78298b89c18d14d244d879853f05cdc2a9213392577758",
+      "bytes": 351,
+      "cases": 3
     }
   ],
-  "cases": 4018,
+  "cases": 4021,
   "resources": [
     {
       "path": "operators/op/pmFromFile-01.dat",
