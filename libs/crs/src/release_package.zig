@@ -74,7 +74,7 @@ pub fn prepare(allocator: std.mem.Allocator, input: Input) Error!*Package {
         .version = input.version,
     };
     package.program = compile(package.bounded.allocator(), entries) catch |err| switch (err) {
-        error.OutOfMemory => return if (package.bounded.exhausted)
+        error.OutOfMemory => return if (package.bounded.last_failure == .ceiling)
             error.CompiledProgramLimit
         else
             error.OutOfMemory,

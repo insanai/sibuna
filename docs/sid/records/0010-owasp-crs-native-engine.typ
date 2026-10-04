@@ -1526,8 +1526,8 @@ until every selected rule and data reference has compiled.
 
 Canonical versions contain three unsigned 16-bit decimal components without leading zeros,
 prerelease text or separators. The archive root and prepared component signature must match
-that version. Load the setup example and every direct rules/*.conf file in lexical order;
-resolve *.data references within that artifact. This stock profile does not activate plugins
+that version. Load the setup example and every direct `rules/*.conf` file in lexical order;
+resolve `*.data` references within that artifact. This stock profile does not activate plugins
 or treat optional example exclusions as operator configuration.
 
 Keep the package and its allocator identity at a stable heap address. A single-owner allocator
