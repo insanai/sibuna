@@ -5,9 +5,10 @@ import io
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from bunkerweb import validate_measured
-from process_accounting import parse_stat
+from process_accounting import parse_stat, snapshot
 from bunkerweb_image import Registry, digest
 
 
@@ -35,10 +36,19 @@ class ValidationTests(unittest.TestCase):
                                     ({"403": 99}, 100)):
             with self.assertRaises(ValueError):
                 validate_measured({**result, "statuses": statuses, "requests": requests}, 403)
-        failed = copy.deepcopy(result)
-        failed["errors"]["read"] = 1
-        with self.assertRaises(ValueError):
-            validate_measured(failed, 403)
+        for key, value in (("read", 1), ("status", 99)):
+            failed = copy.deepcopy(result)
+            failed["errors"][key] = value
+            with self.assertRaises(ValueError):
+                validate_measured(failed, 403)
+
+    def test_proc_reader_tolerates_a_process_exiting_during_stat_read(self):
+        fields = ["S", "7", *(["0"] * 9), "21", "13", "900", "800",
+                  *(["0"] * 6), "42"]
+        text = "100 (product) " + " ".join(fields)
+        with patch.object(Path, "iterdir", return_value=[Path("/proc/100"), Path("/proc/900")]):
+            with patch.object(Path, "read_text", side_effect=[text, ProcessLookupError()]):
+                self.assertEqual(snapshot(100)["pids"], [100])
 
     def test_cpu_accounting_excludes_child_time_and_handles_parentheses_in_names(self):
         # Fields 14/15 are own ticks, 16/17 child ticks; field 24 is resident pages.

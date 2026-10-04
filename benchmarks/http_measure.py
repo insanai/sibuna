@@ -73,6 +73,9 @@ def validate_measured(measured, expected):
     if any(transport.values()) or measured["statuses"] != {
             str(expected): measured["requests"]} or not measured["requests"]:
         raise ValueError(f"invalid measured responses: {measured}")
+    status_errors = measured["requests"] if expected >= 400 else 0
+    if measured["errors"]["status"] != status_errors:
+        raise ValueError(f"invalid measured responses: {measured}")
 
 
 def measure(context, process, workload):

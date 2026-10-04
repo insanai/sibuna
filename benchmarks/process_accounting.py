@@ -22,7 +22,7 @@ def snapshot(root_pid):
             continue
         try:
             processes[int(directory.name)] = parse_stat((directory / "stat").read_text())
-        except FileNotFoundError:
+        except (FileNotFoundError, ProcessLookupError):
             continue  # A process exited between directory listing and stat.
     members = {root_pid}
     while True:
