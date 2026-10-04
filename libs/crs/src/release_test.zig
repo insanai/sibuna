@@ -7,6 +7,7 @@ const inventory = @import("inventory.zig");
 const source = @import("source.zig");
 const syntax = @import("syntax.zig");
 const model = @import("model.zig");
+const collections = @import("collections.zig");
 
 test "CRS 4.30.0 stock source preserves every condition and exclusion" {
     var builder = compiler.Compiler.init(std.testing.allocator, .{});
@@ -76,4 +77,35 @@ test "every stock rule regex compiles within the published native limits" {
     try std.testing.expectEqual(@as(usize, 320), count);
     try std.testing.expectEqual(@as(usize, 6653), largest);
     try std.testing.expectEqual(@as(usize, 3), captures);
+}
+
+test "stock collection selectors and key regexes fit the native profile" {
+    const regex = @import("regex.zig");
+    var builder = compiler.Compiler.init(std.testing.allocator, .{});
+    defer builder.deinit();
+    for (fixture.sources) |file| try builder.addSource(file.path, file.bytes);
+    var plan = try builder.finish();
+    defer plan.deinit();
+    const collection_capacity = @typeInfo(collections.Collection).@"enum".field_names.len;
+    var seen: [collection_capacity]bool = @splat(false);
+    var patterns: usize = 0;
+    for (plan.conditions) |condition| {
+        for (condition.targets) |target| {
+            seen[@backingInt(target.collection)] = true;
+            if (target.selection == .pattern) {
+                var program = try regex.secLang(
+                    std.testing.allocator,
+                    target.selection.pattern,
+                    true,
+                );
+                defer program.deinit();
+                patterns += 1;
+            }
+        }
+    }
+    var collection_count: usize = 0;
+    for (seen) |present| collection_count += @intFromBool(present);
+    try std.testing.expectEqual(@as(usize, 33), collection_count);
+    try std.testing.expect(patterns > 0);
+    for (plan.updates) |update| try std.testing.expect(update.targets.len > 0);
 }

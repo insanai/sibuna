@@ -5,8 +5,9 @@ const source = @import("source.zig");
 const syntax = @import("syntax.zig");
 const model = @import("model.zig");
 const actions = @import("compiler_actions.zig");
+const selection = @import("selectors.zig");
 
-pub const Error = actions.Error || error{
+pub const Error = actions.Error || selection.Error || error{
     InvalidState,
     CompiledLimit,
     PathLimit,
@@ -110,6 +111,11 @@ pub const Compiler = struct {
                     .site = site,
                     .id = try actions.id(update.id.bytes),
                     .selectors = update.selectors.bytes,
+                    .targets = try selection.parse(
+                        self.arena.allocator(),
+                        update.selectors.bytes,
+                        self.limits.selectors_per_condition,
+                    ),
                 });
             },
         }
@@ -141,6 +147,10 @@ pub const Compiler = struct {
             .root = root,
             .phase = resolved.phase,
             .selectors = selectors,
+            .targets = if (expression != null)
+                try selection.parse(allocator, selectors, self.limits.selectors_per_condition)
+            else
+                &.{},
             .expression = expression,
             .actions = compiled,
             .inherited_actions = self.defaults[@backingInt(resolved.phase) - 1] orelse &.{},
@@ -271,6 +281,9 @@ test "source plan owns text and resolves chains and exclusions" {
     try std.testing.expectEqual(@as(usize, 3), plan.conditions[2].skip_to.?);
     try std.testing.expectEqual(@as(usize, 0), plan.updates[0].root.?);
     try std.testing.expectEqualStrings("x", plan.conditions[0].expression.?.argument);
+    try std.testing.expectEqualStrings("n", plan.conditions[1].targets[0].selection.name);
+    try std.testing.expectEqualStrings("token", plan.updates[0].targets[0].selection.name);
+    try std.testing.expectEqual(selection.Mode.exclude, plan.updates[0].targets[0].mode);
     try std.testing.expect(!model.Plan.executable);
 }
 
@@ -306,6 +319,12 @@ test "source and instruction budgets reject before publication" {
     var bounded = Compiler.init(std.testing.allocator, .{ .source_bytes = 3 });
     defer bounded.deinit();
     try std.testing.expectError(error.SourceLimit, bounded.addSource("too-large", "four"));
+    var targets = Compiler.init(std.testing.allocator, .{ .selectors_per_condition = 1 });
+    defer targets.deinit();
+    try std.testing.expectError(
+        error.SelectorLimit,
+        targets.addSource("targets.conf", "SecRule ARGS|ARGS_NAMES x \"id:1\""),
+    );
 }
 
 test "defaults are captured at each rule's source position" {

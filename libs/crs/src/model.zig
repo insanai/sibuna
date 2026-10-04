@@ -1,5 +1,6 @@
 //! Typed source contracts. These tags recognize constructs, not executable support.
 const std = @import("std");
+const selection = @import("selectors.zig");
 
 pub const Phase = enum(u3) {
     request_headers = 1,
@@ -175,6 +176,7 @@ pub const Condition = struct {
     root: usize,
     phase: Phase,
     selectors: []const u8,
+    targets: []const selection.Selector,
     expression: ?Expression,
     actions: []const Action,
     inherited_actions: []const Action,
@@ -192,6 +194,7 @@ pub const TargetUpdate = struct {
     site: Site,
     id: u32,
     selectors: []const u8,
+    targets: []const selection.Selector,
     root: ?usize = null,
 };
 
@@ -204,6 +207,7 @@ pub const Limits = struct {
     conditions: usize = 4096,
     chain: usize = 256,
     actions_per_condition: usize = 256,
+    selectors_per_condition: usize = 128,
     markers: usize = 4096,
     target_updates: usize = 4096,
 };
