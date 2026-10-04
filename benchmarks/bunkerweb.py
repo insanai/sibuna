@@ -18,8 +18,9 @@ import time
 
 import bunkerweb_fixture as bunker
 from process_accounting import PeakRss, snapshot
+from http_load import HttpLoad
 from run import ROOT, free_port, metadata, record, stop
-from tools import ATTACK, ORIGIN_BODY, wrk
+from tools import ATTACK, ORIGIN_BODY
 
 HEADERS = {"Host": "benchmark.test", "User-Agent": "Mozilla/5.0 SibunaBenchmark",
            "Accept": "text/html", "Accept-Encoding": "identity"}
@@ -116,7 +117,7 @@ def launch(profile, arguments, port, origin, temporary, log, cpus):
     policy.write_text('{"default_action":"allow","rules":[]}\n')
     command = ["taskset", "-c", ",".join(map(str, cpus)), str(arguments.sibuna),
                "--gate" if profile == "sibuna-gate" else "--shield",
-               "--host", "127.0.0.1", "--port", str(port),
+               "--host", arguments.listen_host, "--port", str(port),
                "--workers", str(arguments.workers), "--upstream-host", "127.0.0.1",
                "--upstream-port", str(origin), "--policy-file", str(policy),
                "--rate-limit", "100000000", "--idle-timeout", "15"]
@@ -162,12 +163,12 @@ def measure(process, port, label, method, path, body, expected, arguments, tempo
     old_affinity = os.sched_getaffinity(0)
     os.sched_setaffinity(0, arguments.load_cpus)
     try:
-        wrk(port, path, headers, {**load, "seconds": arguments.warmup}, lua)
+        arguments.generator.run(port, path, headers, {**load, "seconds": arguments.warmup}, lua)
         before = snapshot(process.pid)
         tracker = PeakRss(process.pid)
         tracker.start()
         try:
-            measured = wrk(port, path, headers, load, lua)
+            measured = arguments.generator.run(port, path, headers, load, lua)
         finally:
             peak = tracker.finish()
         after = snapshot(process.pid)
@@ -252,7 +253,7 @@ def run_rounds(arguments, temporary, origin, origin_port, cpus, data):
                                    in results[profile].items()}} for profile in PROFILES]
 
 
-def main():
+def parse_arguments():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rootfs", type=Path, required=True)
     parser.add_argument("--image", type=Path, required=True)
@@ -263,29 +264,50 @@ def main():
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--threads", type=int, default=2)
     parser.add_argument("--connections", type=int, default=64)
+    parser.add_argument("--load-host", help="SSH destination for a separate Linux wrk host")
+    parser.add_argument("--target-host", default="127.0.0.1")
+    parser.add_argument("--load-wrk", default="wrk")
+    parser.add_argument("--load-library-dir")
+    parser.add_argument("--ssh-known-hosts")
     arguments = parser.parse_args()
     for field in ("seconds", "warmup", "repetitions", "workers", "threads", "connections"):
         if getattr(arguments, field) < 1:
             parser.error(f"{field} must be positive")
+    if arguments.load_host and arguments.target_host == "127.0.0.1":
+        parser.error("--load-host requires a --target-host reachable from the generator")
+    return arguments
+
+
+def main():
+    arguments = parse_arguments()
     allowed = sorted(os.sched_getaffinity(0))
     if len(allowed) < arguments.workers + 4:
-        parser.error("need separate CPUs for product, generator and origin")
+        raise ValueError("need separate CPUs for product, generator and origin")
     cpus = allowed[:arguments.workers]
     arguments.load_cpus = allowed[arguments.workers:arguments.workers + 2]
     origin_cpus = allowed[arguments.workers + 2:arguments.workers + 4]
     arguments.rootfs = arguments.rootfs.resolve(strict=True)
     arguments.image = arguments.image.resolve(strict=True)
     arguments.sibuna = arguments.sibuna.resolve(strict=True)
+    arguments.listen_host = "0.0.0.0" if arguments.load_host else "127.0.0.1"
+    arguments.generator = HttpLoad(arguments.target_host, arguments.load_host,
+                                   arguments.load_wrk, arguments.load_library_dir,
+                                   arguments.ssh_known_hosts)
+    remote_generator = arguments.generator.identity()
     data = {"meta": metadata(arguments.sibuna), "bunkerweb": bunker.identity(
         arguments.rootfs, arguments.image), "load": {
         field: getattr(arguments, field) for field in (
             "seconds", "warmup", "repetitions", "workers", "threads", "connections")},
-        "affinity": {"product": cpus, "generator": arguments.load_cpus, "origin": origin_cpus},
+        "affinity": {"product": cpus, "origin": origin_cpus, "generator":
+                     remote_generator["cpus"] if remote_generator else arguments.load_cpus},
         "runs": [], "rounds": [], "functional_pass": False,
+        "topology": "two-host" if arguments.load_host else "loopback",
+        "generator": remote_generator,
+        "target_host": arguments.target_host,
         "tools": tool_versions(),
         "limitations": [
             "Unprivileged container on a shared host; no control of CPU frequency or host load.",
-            "Loopback HTTP/1.1; no TLS, browser challenges, sessions or AI-bot detection test.",
+            "HTTP/1.1; no TLS, browser challenges, sessions or AI-bot detection test.",
             "Unconditional admission configured; inspection enabled only in Shield/CRS profiles.",
             "Default CRS v4 rules; Sibuna heuristic inspection is not equivalent rule coverage.",
             "Stock denial pages differ; a separate CRS profile serves a 235-byte static 403 page.",
@@ -295,12 +317,14 @@ def main():
             "CPU uses summed user/system ticks; peak summed RSS double-counts shared pages.",
             "wrk response hooks validate statuses and add client cost; expected 403 is valid.",
             "An origin baseline bounds fixture throughput; results are not universal rankings.",
+            "CPU interval includes generator invocation; remote SSH setup precedes wrk timing.",
         ]}
     with tempfile.TemporaryDirectory(prefix="sibuna-bunkerweb-") as name:
         temporary = Path(name)
         origin_port = free_port()
         origin = subprocess.Popen(["taskset", "-c", ",".join(map(str, origin_cpus)),
-                                   "caddy", "respond", "--listen", f"127.0.0.1:{origin_port}",
+                                   "caddy", "respond", "--listen",
+                                   f"{arguments.listen_host}:{origin_port}",
                                    "--body", ORIGIN_BODY], stdout=subprocess.DEVNULL,
                                   stderr=subprocess.DEVNULL)
         try:
@@ -309,7 +333,8 @@ def main():
         finally:
             stop(origin)
     data["functional_pass"] = True
-    record(data, "bunkerweb-comparison-latest")
+    record(data, "bunkerweb-two-host-latest" if arguments.load_host
+           else "bunkerweb-comparison-latest")
 
 
 if __name__ == "__main__":
