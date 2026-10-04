@@ -9,6 +9,7 @@ import random
 import subprocess
 import sys
 from urllib.request import urlopen
+from crs_detector_corpus import inputs as corpus_inputs
 
 
 class Token(c.Structure):
@@ -20,6 +21,10 @@ class Token(c.Structure):
 class Stats(c.Structure):
     _fields_ = [("tokens", c.c_size_t), ("dash_comment", c.c_size_t),
                 ("hash", c.c_size_t), ("folds", c.c_size_t)]
+
+
+class HtmlToken(c.Structure):
+    _fields_ = [("position", c.c_size_t), ("length", c.c_size_t), ("kind", c.c_ubyte)]
 
 
 def source_files(directory, download):
@@ -50,7 +55,9 @@ def oracle(directory, download):
     shared = "-dynamiclib" if sys.platform == "darwin" else "-shared"
     subprocess.run(["cc", "-std=c99", "-O2", shared, "-fPIC", '-DLIBINJECTION_VERSION="pinned"',
                     "-I", str(directory / "src"), "tools/crs_detector_oracle.c",
-                    str(directory / "src/libinjection_sqli.c"), "-o", str(path)], check=True)
+                    str(directory / "src/libinjection_sqli.c"),
+                    str(directory / "src/libinjection_html5.c"),
+                    str(directory / "src/libinjection_xss.c"), "-o", str(path)], check=True)
     library = c.CDLL(str(path.resolve()))
     library.crs_oracle_tokens.argtypes = [c.c_void_p, c.c_size_t, c.c_int,
                                         c.POINTER(Token), c.c_size_t, c.POINTER(Stats)]
@@ -61,22 +68,48 @@ def oracle(directory, download):
     library.crs_oracle_fingerprint.restype = c.c_size_t
     library.crs_oracle_detect.argtypes = [c.c_void_p, c.c_size_t, c.POINTER(c.c_ubyte)]
     library.crs_oracle_detect.restype = c.c_int
+    library.crs_oracle_html.argtypes = [c.c_void_p, c.c_size_t, c.c_int,
+                                      c.POINTER(HtmlToken), c.c_size_t]
+    library.crs_oracle_html.restype = c.c_size_t
+    library.libinjection_xss.argtypes = [c.c_void_p, c.c_size_t]
+    library.libinjection_xss.restype = c.c_int
     return library
 
 
 def expected(library, data, flags, mode):
+    # The C XSS pin reads a fixed event-name length past short attribute tokens.
+    # Zero padding keeps that test oracle's backing allocation readable; its
+    # advertised input length and every native token bound remain unchanged.
+    backing = data + b"\0" * 64
+    if mode == "xss":
+        return f"x {library.libinjection_xss(backing, len(data))}\n"
+    if mode == "html":
+        storage = (HtmlToken * (2 * len(data) + 8))()
+        count = library.crs_oracle_html(backing, len(data), flags, storage, len(storage))
+        if count > len(storage):
+            raise ValueError("oracle HTML token capacity exhausted")
+        lines = []
+        for token in storage[:count]:
+            end = token.position + token.length
+            if end > len(data):
+                raise ValueError("oracle HTML token outside input")
+            lines.append(f"{token.kind} {token.position} {token.length} " +
+                         data[token.position:end].hex() + "\n")
+        return "".join(lines)
     if mode == "sqli":
         signature = (c.c_ubyte * 8)()
-        matched = library.crs_oracle_detect(data, len(data), signature)
+        matched = library.crs_oracle_detect(backing, len(data), signature)
         value = bytes(signature).split(b"\0", 1)[0]
         return f"d {matched} {value.hex()}\n"
     storage = (Token * (len(data) + 1))()
     stats = Stats()
     signature = (c.c_ubyte * 8)()
     if mode == "tokens":
-        count = library.crs_oracle_tokens(data, len(data), flags, storage, len(storage), c.byref(stats))
+        count = library.crs_oracle_tokens(backing, len(data), flags, storage, len(storage),
+                                         c.byref(stats))
     else:
-        count = library.crs_oracle_fingerprint(data, len(data), flags, storage, c.byref(stats), signature)
+        count = library.crs_oracle_fingerprint(backing, len(data), flags, storage,
+                                              c.byref(stats), signature)
     if count > len(storage):
         raise ValueError("oracle token capacity exhausted")
     lines = [] if mode == "tokens" else ["f " + bytes(signature[:count]).hex()]
@@ -116,6 +149,34 @@ def inputs():
     yield b"$" + b"a" * 256 + b"$" + b"a$" * 1024 + b"$" + b"a" * 256 + b"$"
 
 
+def html_inputs():
+    yield b""
+    for byte in range(256):
+        yield bytes([byte])
+    for value in [b"text<a href='url'/>tail", b"</a>", b"</a attr>", b"<a", b"<a x",
+                  b"<a x=", b"<a x=>", b"<a x=''>", b"<a x=unquoted>", b"<a x=\0y>",
+                  b"<script>alert(1)</script>", b"<svg onload=alert(1)>", b"<?xml?>",
+                  b"<!doctype html>", b"<!DoCtYpE x>", b"<![CDATA[x]]>", b"<![cdata[x]]>",
+                  b"<!---->", b"<!--x-!>tail", b"<!--x-\0->tail", b"<!--x-\0!>tail",
+                  b"<!---", b"<!-", b"<%x%>tail", b"<%x%y%>tail", b"<%x%",
+                  b"<\0script>", b"<scr\0ipt>", b"</>", b"<<", b"<>tail", b"<a///>",
+                  b"<a x='a'y=b/>", b"<a x=`a`>", b"<a x='a'\0y=b>", b"' ><script>",
+                  b"<a" + b"/" * 8192 + b">", b"<!--" + b"-\0x" * 1024,
+                  b"<![CDATA[" + b"]x" * 1024, b"<%" + b"%x" * 1024,
+                  b"<a href=javascript:alert(1)>", b"<a href='&#106;avascript:alert(1)'>",
+                  b"<a href='&#x1004a;ava'>", b"<a href='&'>", b"<a href='&#'>",
+                  b"<a href='&#x'>", b"<a href='&#9999999999;'>", b"<a onloadextra=1>",
+                  b"<a onclick>", b"<a style=''>", b"<a style>", b"<a dataformatas=1>",
+                  b"<a attributename='href'>", b"<a on\0load=1>", b"<a onlo=1>",
+                  b"<a xmlnsfoo=1>", b"<svgi>", b"<xslfoo>", b"<?IMPORT x>",
+                  b"<!--ENTITY x-->", b"<!--[if IE]>x<![endif]-->", b"<!--x`y-->"]:
+        yield value
+    random_source = random.Random(0x63727368746d6c35)
+    alphabet = b"aAxX<>/=!-?%[]`'\"&; \0\xff\t\n"
+    for _ in range(256):
+        yield bytes(random_source.choice(alphabet) for _ in range(random_source.randrange(1, 129)))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("binary", type=Path)
@@ -124,8 +185,12 @@ def main():
                         default=Path(".zig-cache/crs-review/libinjection-reference"))
     args = parser.parse_args()
     library = oracle(args.source, args.download)
+    corpus = corpus_inputs(args.source, args.download)
+    sql_inputs = list(inputs())
+    for category in ["tokens", "folding", "sqli"]:
+        sql_inputs.extend(data for _, data in corpus[category])
     count = 0
-    for index, data in enumerate(inputs()):
+    for index, data in enumerate(sql_inputs):
         for flags in [9, 17, 10, 18, 12, 20]:
             modes = ["tokens", "fingerprint"] + (["sqli"] if flags == 9 else [])
             for mode in modes:
@@ -138,6 +203,20 @@ def main():
                                          f"error:{result.stderr}")
                 count += 1
     print(f"Pinned libinjection stage check: {count} token/fingerprint/decision results passed")
+    count = 0
+    html_cases = list(html_inputs()) + [data for _, data in corpus["html5"]]
+    for index, data in enumerate(html_cases):
+        for flags in range(6):
+            mode = "html" if flags < 5 else "xss"
+            result = subprocess.run([str(args.binary.resolve()), mode, str(flags), data.hex()],
+                                    capture_output=True, text=True, timeout=5, check=False)
+            wanted = expected(library, data, flags, mode)
+            if result.returncode != 0 or result.stdout != wanted:
+                raise AssertionError(f"{mode}:{index} flags:{flags} input:{data.hex()}\n"
+                                     f"native:{result.stdout!r}\nreference:{wanted!r}\n"
+                                     f"error:{result.stderr}")
+            count += 1
+    print(f"Pinned libinjection XSS check: {count} token streams and decisions passed")
 
 
 if __name__ == "__main__":

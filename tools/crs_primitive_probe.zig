@@ -58,6 +58,10 @@ const OperatorProbe = struct {
 
     fn evaluate(self: OperatorProbe) !bool {
         var budget: crs.work.Budget = .{ .remaining = 16_000_000 };
+        if (self.kind == .detect_xss) {
+            var context: crs.xss_detector.Context = .{ .input = self.input, .budget = &budget };
+            return crs.xss_detector.detect(&context);
+        }
         if (self.kind == .validate_byte_range) {
             var range: crs.byte_range.Range = .{};
             if (!self.failed_init) range = try crs.byte_range.compile(self.argument);

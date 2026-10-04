@@ -9,17 +9,13 @@ pub fn main(init: std.process.Init) !u8 {
     const mode = args.next() orelse return error.MissingMode;
     const folding = std.mem.eql(u8, mode, "fingerprint");
     const detecting = std.mem.eql(u8, mode, "sqli");
-    if (!folding and !detecting and !std.mem.eql(u8, mode, "tokens")) return error.InvalidMode;
+    const html = std.mem.eql(u8, mode, "html");
+    const xss = std.mem.eql(u8, mode, "xss");
+    if (!folding and !detecting and !html and !xss and !std.mem.eql(u8, mode, "tokens")) {
+        return error.InvalidMode;
+    }
     const flags = try std.fmt.parseInt(u8, args.next() orelse return error.MissingFlags, 10);
-    const options: crs.sql_tokens.Options = switch (flags) {
-        0, 9 => .{},
-        17 => .{ .dialect = .mysql },
-        10 => .{ .quote = .single },
-        18 => .{ .dialect = .mysql, .quote = .single },
-        12 => .{ .quote = .double },
-        20 => .{ .dialect = .mysql, .quote = .double },
-        else => return error.InvalidFlags,
-    };
+    const options = if (html or xss) crs.sql_tokens.Options{} else try sqlOptions(flags);
     const hex = args.next() orelse return error.MissingInput;
     if (hex.len % 2 != 0 or hex.len / 2 > 64 * 1024) return error.InputLimit;
     const input = try init.gpa.alloc(u8, hex.len / 2);
@@ -38,9 +34,36 @@ pub fn main(init: std.process.Init) !u8 {
     var buffer: [4096]u8 = undefined;
     var file = std.Io.File.stdout().writerStreaming(init.io, &buffer);
     const out = &file.interface;
-    try runMode(out, &state, folding, detecting);
+    if (xss) {
+        var context: crs.xss_detector.Context = .{ .input = input, .budget = &budget };
+        try out.print("x {d}\n", .{@intFromBool(try crs.xss_detector.detect(&context))});
+    } else if (html) try htmlStream(out, input, &budget, flags) else {
+        try runMode(out, &state, folding, detecting);
+    }
     try out.flush();
     return 0;
+}
+
+fn sqlOptions(flags: u8) !crs.sql_tokens.Options {
+    return switch (flags) {
+        0, 9 => .{},
+        17 => .{ .dialect = .mysql },
+        10 => .{ .quote = .single },
+        18 => .{ .dialect = .mysql, .quote = .single },
+        12 => .{ .quote = .double },
+        20 => .{ .dialect = .mysql, .quote = .double },
+        else => return error.InvalidFlags,
+    };
+}
+
+fn htmlStream(out: *std.Io.Writer, input: []const u8, budget: *crs.work.Budget, flags: u8) !void {
+    if (flags > 4) return error.InvalidFlags;
+    var context = crs.html_tokens.Context.init(input, budget, @fromBackingInt(@intCast(flags)));
+    while (try crs.html_tokens.next(&context)) |token| {
+        try out.print("{d} {d} {d} ", .{ @backingInt(token.kind), token.position, token.length });
+        for (token.bytes(input)) |byte| try out.print("{x:0>2}", .{byte});
+        try out.writeByte('\n');
+    }
 }
 
 fn tokenStream(out: *std.Io.Writer, state: *crs.sql_tokens.Context) !void {

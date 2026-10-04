@@ -257,10 +257,13 @@ and checks the implemented primitive subset. It does not download or activate da
 These checks do not establish full CRS execution support.
 The detector check compares SQL token streams, ordered folding, fingerprints and decisions
 with the pinned libinjection source, compiled as a test oracle. The data check regenerates
-the SQL keyword and fingerprint dictionary and compares its bytes with the committed asset.
+the SQL dictionary and XSS classification tables and compares them with the committed assets.
 Neither command links the C implementation into the daemon. Native SQL detection receives
 caller-owned scratch and shares the transaction work budget across each dialect and quoting
-pass. XSS detection and the transaction executor require their own compatibility gates.
+pass. The XSS tokenizer uses an iterative state machine with constant stack use, and its
+decision stage shares the budget across five HTML contexts. The detector check compares
+both its token ranges and attack decisions. The transaction executor, structured inputs and
+daemon activation still require their own compatibility gates.
 The native matcher uses ordered regular-expression simulation, length-aware literal
 search, sparse phrase automata and family-separated address intervals. Transform pipelines
 keep the reference's order and change flags, including multi-match behavior. Phrase

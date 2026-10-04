@@ -229,9 +229,15 @@
       "sha256": "41aa7876d3b398bf9e78298b89c18d14d244d879853f05cdc2a9213392577758",
       "bytes": 351,
       "cases": 3
+    },
+    {
+      "path": "operators/detectXSS.json",
+      "sha256": "8406364da2fea346be60ade75b5ecbcfe47068ef98e56c3875d500eab6ac9ab5",
+      "bytes": 342,
+      "cases": 3
     }
   ],
-  "cases": 4021,
+  "cases": 4024,
   "resources": [
     {
       "path": "operators/op/pmFromFile-01.dat",

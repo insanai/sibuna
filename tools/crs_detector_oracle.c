@@ -4,6 +4,7 @@
 #include <string.h>
 #include "libinjection_sqli.h"
 #include "libinjection.h"
+#include "libinjection_html5.h"
 
 struct crs_oracle_token {
     size_t position;
@@ -78,4 +79,26 @@ int crs_oracle_detect(const unsigned char *input, size_t length, unsigned char *
 {
     memset(fingerprint, 0, 8);
     return libinjection_sqli((const char *)input, length, (char *)fingerprint);
+}
+
+struct crs_oracle_html_token {
+    size_t position;
+    size_t length;
+    unsigned char kind;
+};
+
+size_t crs_oracle_html(const unsigned char *input, size_t length, int flags,
+                      struct crs_oracle_html_token *output, size_t capacity)
+{
+    h5_state_t state;
+    size_t count = 0;
+    libinjection_h5_init(&state, (const char *)input, length, flags);
+    while (libinjection_h5_next(&state)) {
+        if (count == capacity) return SIZE_MAX;
+        output[count].position = (size_t)(state.token_start - (const char *)input);
+        output[count].length = state.token_len;
+        output[count].kind = (unsigned char)state.token_type;
+        count += 1;
+    }
+    return count;
 }
