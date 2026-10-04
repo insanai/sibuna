@@ -10,7 +10,7 @@ import shlex
 import subprocess
 
 REMOTE = """
-import hashlib,json,os,platform,subprocess,sys,tempfile
+import hashlib,json,os,platform,shutil,subprocess,sys,tempfile
 from pathlib import Path
 data=json.load(sys.stdin)
 allowed=sorted(os.sched_getaffinity(0))
@@ -19,6 +19,8 @@ if len(cpus)!=2: raise RuntimeError('generator requires two allowed CPUs')
 os.sched_setaffinity(0,cpus)
 environment=os.environ.copy()
 if data.get('library_dir'): environment['LD_LIBRARY_PATH']=data['library_dir']
+data['wrk']=shutil.which(data['wrk'])
+if not data['wrk']: raise RuntimeError('wrk was not found on the generator')
 if data['operation']=='identity':
     result=subprocess.run([data['wrk'],'--version'],env=environment,text=True,
                           stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
