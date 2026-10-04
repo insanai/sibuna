@@ -29,6 +29,7 @@ admin-password
 
 # Downloaded GeoIP datasets and binary snapshots
 *.bin
+!vendor/libinjection/sqli-table.bin
 *.csv
 *.csv.gz
 

@@ -511,6 +511,27 @@ Its permissive `atoi` suffix parsing and C-string truncation are not safe native
 These declared differences belong to the artifact compatibility report; valid stock CRS
 lists and the defined upstream membership vectors must otherwise agree.
 
+== Structural detector tables
+
+The SQL detector ports the libinjection commit selected by ModSecurity 3.0.14,
+`b9fcaaf9e50e9492807b23ffcc6af46ee1f203b9`. Its 9,352 keyword and fingerprint entries
+are a versioned immutable byte asset, not source strings searched by a general rule
+interpreter. Reproducible extraction validates the pinned source digest, exact entry count,
+strict ASCII ordering, unique keys, type codes and maximum 29-byte key length. The asset
+contains a little-endian offset/length index and concatenated keys; compilation validates
+every index and the format before exposing any lookup. Both source and generated-data
+digests are retained with the upstream BSD license. No C library or runtime compiler is
+required to use this table.
+
+*Lemma (dictionary lookup bound).* ASCII case folding preserves each byte's fixed ordering.
+Binary search halves the remaining key interval on each comparison, so a lookup compares
+at most $ceil(log_2(K + 1))$ keys for $K$ entries, each of length at most 29. Every compared
+byte and search iteration is charged before reading it. Empty, longer, NUL-bearing and
+non-ASCII queries cannot equal a table key. They must never trigger locale conversion or
+read outside their supplied length. The table lookup is not a SQLi decision: the detector
+still requires its pinned tokenization, folding, context passes, fingerprint and whitelist.
+CRS capture stores the resulting fingerprint in transaction-owned memory.
+
 == Lemma 4: sound prefiltering
 
 A candidate regex may be skipped by a literal prefilter only when the compiler has proven

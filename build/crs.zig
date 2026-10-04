@@ -5,16 +5,21 @@ pub fn add(
     target: std.Build.ResolvedTarget,
     optimize: std.lang.Optimize,
 ) void {
-    _ = b.addModule("sibuna-crs", .{
+    const dictionary = b.createModule(.{
+        .root_source_file = b.path("vendor/libinjection/table.zig"),
+    });
+    const module = b.addModule("sibuna-crs", .{
         .root_source_file = b.path("libs/crs/src/root.zig"),
         .target = target,
         .optimize = optimize,
     });
+    module.addImport("libinjection-data", dictionary);
     const host = b.createModule(.{
         .root_source_file = b.path("libs/crs/src/root.zig"),
         .target = b.graph.host,
         .optimize = optimize,
     });
+    host.addImport("libinjection-data", dictionary);
     const fixture = b.createModule(.{
         .root_source_file = b.path("vendor/crs/fixture.zig"),
     });
@@ -79,6 +84,9 @@ fn addCompilationChecks(b: *std.Build) *std.Build.Step {
             .target = target,
             .optimize = .small,
         });
+        module.addImport("libinjection-data", b.createModule(.{
+            .root_source_file = b.path("vendor/libinjection/table.zig"),
+        }));
         const probe = b.addObject(.{
             .name = "crs-compile-probe",
             .root_module = b.createModule(.{

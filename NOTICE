@@ -54,3 +54,9 @@ CRS compatibility-development fixtures:
   Apache-2.0; LICENSES/Mbed-TLS-Apache-2.0.txt. Copyright The Mbed TLS
   Contributors. Source: github.com/Mbed-TLS/mbedtls. The native bounded
   decoder does not link or bundle the Mbed TLS library.
+- libinjection dictionary, commit b9fcaaf9e50e9492807b23ffcc6af46ee1f203b9:
+  BSD-3-Clause; LICENSES/libinjection-BSD-3-Clause.txt and vendor/libinjection/LICENSE.
+  Copyright (c) 2012-2016 Nick Galbreath. Source: github.com/libinjection/libinjection.
+  The generated native lookup asset is reproduced from the pinned source and digest
+  recorded in vendor/libinjection/provenance.json. Table lookup is not a complete
+  SQL injection detector; detector execution remains under development in SID 0010.

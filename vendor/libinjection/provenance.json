@@ -1,0 +1,12 @@
+{
+  "reference": "libinjection selected by ModSecurity 3.0.14",
+  "commit": "b9fcaaf9e50e9492807b23ffcc6af46ee1f203b9",
+  "source_url": "https://raw.githubusercontent.com/libinjection/libinjection/b9fcaaf9e50e9492807b23ffcc6af46ee1f203b9/src/libinjection_sqli_data.h",
+  "source_bytes": 206900,
+  "source_sha256": "2d1e025b91e4431e16f603d7dd454ad16bcfe68e91b7dc0102850c1976c58b94",
+  "entries": 9352,
+  "format": "SBSQ001: 8-byte magic, u32le count, 8-byte (u32le key offset, u16le length, u8 type, zero) entries, concatenated ASCII keys",
+  "license": "BSD-3-Clause",
+  "asset_bytes": 133433,
+  "asset_sha256": "d605afb245c66a19b97d58cc3daa87fd389be8d8249637aa3f7dd7d7908c2125"
+}

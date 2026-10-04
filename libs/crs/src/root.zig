@@ -19,6 +19,7 @@ pub const utf8_profile = @import("utf8_profile.zig");
 pub const phrases = @import("phrases.zig");
 pub const phrases_source = @import("phrases_source.zig");
 pub const address_set = @import("address_set.zig");
+pub const injection_dictionary = @import("injection_dictionary.zig");
 
 test {
     _ = @import("release_test.zig");
@@ -39,4 +40,5 @@ test {
     _ = phrases;
     _ = phrases_source;
     _ = address_set;
+    _ = injection_dictionary;
 }

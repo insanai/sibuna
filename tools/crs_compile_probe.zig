@@ -49,6 +49,7 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
     var addresses = crs.address_set.compile(allocator.*, "127.0.0.1,::1", .{}) catch return 16;
     defer addresses.deinit();
     _ = addresses.contains("::1", &budget) catch return 17;
+    _ = crs.injection_dictionary.lookup("SELECT", &budget) catch return 18;
     const result = crs.regex.match.search(
         &program,
         "xx",
