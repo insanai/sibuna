@@ -39,12 +39,15 @@ fn run(init: std.process.Init, out: *Io.Writer, err_out: *Io.Writer) !u8 {
     const inventory = try allocator.create(crs.inventory.Inventory);
     inventory.* = .{};
     const scratch = try allocator.alloc(u8, maximum_line_bytes);
+    var compiler = crs.compiler.Compiler.init(allocator, .{});
+    defer compiler.deinit();
     var audit: Audit = .{
         .io = init.io,
         .allocator = allocator,
         .root = root,
         .scratch = scratch,
         .inventory = inventory,
+        .compiler = &compiler,
         .err_out = err_out,
     };
     try audit.file("crs-setup.conf.example");
@@ -53,6 +56,14 @@ fn run(init: std.process.Init, out: *Io.Writer, err_out: *Io.Writer) !u8 {
         const file_path = try std.fmt.allocPrint(allocator, "rules/{s}", .{name});
         try audit.file(file_path);
     }
+    var plan = compiler.finish() catch |err| {
+        if (compiler.fault) |site| try sourceError(err_out, site.path, site.line, err);
+        return err;
+    };
+    defer plan.deinit();
+    const message = "Validated source plan: {d} conditions; " ++
+        "runtime support remains unavailable.\n";
+    try out.print(message, .{plan.conditions.len});
     var digest: [32]u8 = undefined;
     audit.hash.final(&digest);
     try out.writeAll("Source inventory; executable CRS compatibility is not asserted.\n");
@@ -92,6 +103,7 @@ const Audit = struct {
     root: Io.Dir,
     scratch: []u8,
     inventory: *crs.inventory.Inventory,
+    compiler: *crs.compiler.Compiler,
     err_out: *Io.Writer,
     hash: std.crypto.hash.sha2.Sha256 = .init(.{}),
     bytes_read: usize = 0,
@@ -106,6 +118,12 @@ const Audit = struct {
         defer self.allocator.free(bytes);
         if (bytes.len > 32 * 1024 * 1024 - self.bytes_read) return error.SourceTooLarge;
         self.bytes_read += bytes.len;
+        self.compiler.addSource(path, bytes) catch |err| {
+            if (self.compiler.fault) |site| {
+                try sourceError(self.err_out, site.path, site.line, err);
+            }
+            return err;
+        };
         var lengths: [16]u8 = undefined;
         std.mem.writeInt(u64, lengths[0..8], path.len, .big);
         std.mem.writeInt(u64, lengths[8..16], bytes.len, .big);

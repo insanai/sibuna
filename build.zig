@@ -206,6 +206,9 @@ fn addCrs(
         .target = b.graph.host,
         .optimize = optimize,
     });
+    host.addImport("crs-fixture", b.createModule(.{
+        .root_source_file = b.path("vendor/crs/fixture.zig"),
+    }));
     const tests = b.addTest(.{ .root_module = host });
     const test_step = b.step("crs-test", "Test bounded native CRS source contracts");
     test_step.dependOn(&b.addRunArtifact(tests).step);
