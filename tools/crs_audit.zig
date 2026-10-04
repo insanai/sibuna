@@ -30,7 +30,14 @@ fn run(init: std.process.Init, out: *Io.Writer, err_out: *Io.Writer) !u8 {
         try err_out.writeAll("usage: zig build crs-audit -- <extracted-release-directory>\n");
         return 2;
     };
-    if (args.next() != null) return error.TooManyArguments;
+    const regex_option = args.next();
+    const regex_requested = if (regex_option) |value|
+        std.mem.eql(u8, value, "--regex")
+    else
+        false;
+    if ((regex_option != null and !regex_requested) or args.next() != null) {
+        return error.TooManyArguments;
+    }
     var root = try Io.Dir.cwd().openDir(init.io, path, .{});
     defer root.close(init.io);
     var arena: std.heap.ArenaAllocator = .init(init.gpa);
@@ -61,6 +68,7 @@ fn run(init: std.process.Init, out: *Io.Writer, err_out: *Io.Writer) !u8 {
         return err;
     };
     defer plan.deinit();
+    if (regex_requested) try auditRegex(allocator, &plan, out, err_out);
     const message = "Validated source plan: {d} conditions; " ++
         "runtime support remains unavailable.\n";
     try out.print(message, .{plan.conditions.len});
@@ -161,4 +169,34 @@ fn printNames(out: *Io.Writer, label: []const u8, names: *crs.inventory.Names) !
     for (names.entries[0..names.size]) |*entry| {
         try out.print("  {s}: {d}\n", .{ entry.name(), entry.count });
     }
+}
+
+fn auditRegex(
+    allocator: std.mem.Allocator,
+    plan: *const crs.model.Plan,
+    out: *Io.Writer,
+    err_out: *Io.Writer,
+) !void {
+    var count: usize = 0;
+    var failures: usize = 0;
+    var largest: usize = 0;
+    var groups: usize = 0;
+    for (plan.conditions) |condition| {
+        const expression = condition.expression orelse continue;
+        if (expression.kind != .rx) continue;
+        count += 1;
+        var program = crs.regex.compile(allocator, expression.argument, .{}) catch |err| {
+            failures += 1;
+            try sourceError(err_out, condition.site.path, condition.site.line, err);
+            continue;
+        };
+        defer program.deinit();
+        largest = @max(largest, program.instructions.len);
+        groups = @max(groups, program.groups);
+    }
+    try out.print(
+        "Regex compilation: {d}/{d}; maximum {d} states, {d} groups.\n",
+        .{ count - failures, count, largest, groups },
+    );
+    if (failures != 0) return error.IncompatibleRegex;
 }

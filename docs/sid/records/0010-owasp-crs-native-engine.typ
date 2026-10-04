@@ -249,7 +249,10 @@ are at most $N + 1$ positions. Capture priority and greedy/lazy behavior require
 conformance check; the Boolean bound does not prove PCRE capture equivalence.
 
 Backreferences, recursive patterns and unsupported PCRE extensions reject compilation.
-They are not approximated by a regular language. Possessive quantifiers and atomic behavior
+They are not approximated by a regular language. Unbounded repetitions of nullable
+capture-producing expressions are also rejected: ordinary first-arrival state deduplication
+does not reproduce PCRE’s final empty capture. Supporting that form requires a separately
+verified lowering. The initial stock release does not require it. Possessive quantifiers and atomic behavior
 require explicit compatible handling or rejection. The release audit must analyze parsed
 regex syntax, not infer features by searching for punctuation substrings. Unanchored matching
 adds start threads at each position in the same simulation; restarting a matcher for every

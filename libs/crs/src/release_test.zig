@@ -53,3 +53,27 @@ test "CRS source inventory agrees with the independently reviewed release" {
     try std.testing.expectEqual(@as(usize, 320), counts.operators.count("rx"));
     try std.testing.expectEqual(@as(usize, 435), counts.transforms.count("none"));
 }
+
+test "every stock rule regex compiles within the published native limits" {
+    const regex = @import("regex.zig");
+    var builder = compiler.Compiler.init(std.testing.allocator, .{});
+    defer builder.deinit();
+    for (fixture.sources) |file| try builder.addSource(file.path, file.bytes);
+    var plan = try builder.finish();
+    defer plan.deinit();
+    var count: usize = 0;
+    var largest: usize = 0;
+    var captures: usize = 0;
+    for (plan.conditions) |condition| {
+        const expression = condition.expression orelse continue;
+        if (expression.kind != .rx) continue;
+        var program = try regex.compile(std.testing.allocator, expression.argument, .{});
+        defer program.deinit();
+        count += 1;
+        largest = @max(largest, program.instructions.len);
+        captures = @max(captures, program.groups);
+    }
+    try std.testing.expectEqual(@as(usize, 320), count);
+    try std.testing.expectEqual(@as(usize, 6653), largest);
+    try std.testing.expectEqual(@as(usize, 3), captures);
+}
