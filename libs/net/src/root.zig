@@ -12,6 +12,7 @@ pub const response = @import("response.zig");
 pub const proxy = @import("proxy.zig");
 pub const outbound = @import("outbound.zig");
 pub const connect = @import("connect.zig");
+pub const fetch = @import("fetch.zig");
 pub const refusal = @import("refusal.zig");
 pub const duplex = @import("duplex.zig");
 pub const forwarded = @import("forwarded.zig");
@@ -34,6 +35,7 @@ test {
     _ = @import("response.zig");
     _ = @import("proxy.zig");
     _ = @import("connect.zig");
+    _ = fetch;
     _ = @import("outbound.zig");
     _ = @import("duplex.zig");
     _ = @import("proxy_upgrade.zig");
