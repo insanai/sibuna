@@ -11,6 +11,7 @@ from email.parser import BytesParser
 import json
 from pathlib import Path
 import random
+import re
 import subprocess
 from urllib.parse import quote_from_bytes, unquote_to_bytes
 from xml.etree import ElementTree
@@ -70,7 +71,7 @@ def probe(binary, kind, input_bytes, expected):
     for line in output.splitlines():
         tag, key, value = line.split("\t")
         decoded = (bytes.fromhex(key), bytes.fromhex(value))
-        if kind in ["multipart", "xml"]:
+        if kind in ["multipart", "xml", "uri", "cookie"]:
             actual.append((tag, *decoded))
         else:
             if tag != "arg":
@@ -195,6 +196,32 @@ def xml_vectors():
         yield element(4, 0).encode("utf-8")
 
 
+def uri_oracle(target):
+    meaningful = target.split(b"#", 1)[0]
+    path, separator, query = meaningful.partition(b"?")
+    path = unquote_to_bytes(path)
+    decoded = unquote_to_bytes(meaningful)
+    absolute = re.match(rb"^[^/:]+://[^/]*(/.*)$", decoded, re.DOTALL)
+    uri = absolute.group(1) if absolute else decoded
+    pieces = re.split(rb"[/\\]", path)
+    basename = pieces[-1] if len(pieces) > 1 else b""
+    result = [("uri-raw", b"", target), ("uri", b"", uri),
+              ("filename", b"", path), ("basename", b"", basename),
+              ("query", b"", query)]
+    result.extend(("arg", key, value) for key, value in form_oracle(query))
+    return result
+
+
+def cookie_oracle(data):
+    result = []
+    for pair in data.rstrip(b" \t\r\n\x0b\x0c").split(b";"):
+        key, separator, value = pair.partition(b"=")
+        key = key.lstrip(b" \t\r\n\x0b\x0c")
+        if key:
+            result.append(("cookie", key, value))
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("binary", type=Path)
@@ -249,6 +276,25 @@ def main():
         count += 1
     probe(binary, "xml", b"<!DOCTYPE a [<!ENTITY e 'unsafe'>]><a>&e;</a>", None)
     count += 1
+    randomizer = random.Random(0x48545450)
+    uri_cases = [b"/", b"/a%3fb+c?q=x%26y&q=again#ignored", b"*", b"/trailing/",
+                 b"https://example.test/a%00b?q=x", b"/a%23b?q=x%3fy", b"/a\\b?q=x"]
+    for _ in range(250):
+        path = quote_from_bytes(randomizer.randbytes(randomizer.randrange(20)))
+        query = quote_from_bytes(randomizer.randbytes(randomizer.randrange(20)))
+        authority = "https://example.test" if randomizer.randrange(2) else ""
+        uri_cases.append((authority + "/" + path + "?q=" + query).encode("ascii"))
+    for target in uri_cases:
+        probe(binary, "uri", target, uri_oracle(target))
+        count += 1
+    cookie_cases = [b"", b";; first = a=b ;bare; =skip;last=\"x\"  ", b"a=one;a=two"]
+    cookie_cases.extend(randomizer.randbytes(randomizer.randrange(200)) for _ in range(250))
+    for cookie in cookie_cases:
+        probe(binary, "cookie", cookie, cookie_oracle(cookie))
+        count += 1
+    for target in [b"/bad%", b"/bad%zz", b"/valid?q=%0g"]:
+        probe(binary, "uri", target, None)
+        count += 1
     print(f"Native acquisition agrees with {count} independent cases; "
           "whole-engine FTW qualification remains separate.")
 

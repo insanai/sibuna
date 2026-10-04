@@ -32,32 +32,68 @@ fn run(init: std.process.Init, out: *Io.Writer) !u8 {
     defer init.gpa.free(scratch);
     var builder = crs.acquired_values.Builder.init(entries, storage);
     var budget: crs.work.Budget = .{ .remaining = 16_000_000 };
+    try acquire(kind, input, &builder, scratch, &budget);
+    try emit(&builder, out);
+    return 0;
+}
+
+fn acquire(
+    kind: []const u8,
+    input: []const u8,
+    builder: *crs.acquired_values.Builder,
+    scratch: []u8,
+    budget: *crs.work.Budget,
+) !void {
+    if (std.mem.eql(u8, kind, "uri")) {
+        try crs.http_acquisition.request(.{
+            .method = "GET",
+            .target = input,
+            .protocol = "HTTP/1.1",
+            .line = "GET / HTTP/1.1",
+            .client = "127.0.0.1",
+            .id = "probe",
+            .headers = &.{},
+        }, builder, .{ .key = scratch[0 .. 32 * 1024], .value = scratch[32 * 1024 ..] }, budget);
+    } else if (std.mem.eql(u8, kind, "cookie")) {
+        try crs.cookie_acquisition.parse(input, builder, budget);
+    } else {
+        try structured(kind, input, builder, scratch, budget);
+    }
+}
+
+fn structured(
+    kind: []const u8,
+    input: []const u8,
+    builder: *crs.acquired_values.Builder,
+    scratch: []u8,
+    budget: *crs.work.Budget,
+) !void {
     if (std.mem.eql(u8, kind, "json")) {
         var bits: [8]u8 = undefined;
         var frames: [64]crs.json_acquisition.Frame = undefined;
-        try crs.json_acquisition.parse(input, &builder, .{
+        try crs.json_acquisition.parse(input, builder, .{
             .value = scratch[0 .. 32 * 1024],
             .path = scratch[32 * 1024 ..],
             .bits = &bits,
             .frames = &frames,
-        }, &budget);
+        }, budget);
     } else if (std.mem.eql(u8, kind, "xml")) {
         var frames: [64]crs.xml_acquisition.Frame = undefined;
         var attributes: [256]crs.xml_acquisition.Attribute = undefined;
         var bindings: [256]crs.xml_acquisition.Binding = undefined;
-        try crs.xml_acquisition.parse(input, &builder, .{
+        try crs.xml_acquisition.parse(input, builder, .{
             .text = scratch[0 .. 32 * 1024],
             .value = scratch[32 * 1024 ..],
             .frames = &frames,
             .attributes = &attributes,
             .bindings = &bindings,
-        }, &budget);
+        }, budget);
     } else if (std.mem.eql(u8, kind, "multipart")) {
-        try crs.multipart_acquisition.parse(input, "B", &builder, .{
+        try crs.multipart_acquisition.parse(input, "B", builder, .{
             .name = scratch[0 .. 16 * 1024],
             .filename = scratch[16 * 1024 .. 32 * 1024],
             .extended = scratch[32 * 1024 ..],
-        }, .{}, &budget);
+        }, .{}, budget);
     } else {
         const origin: crs.acquired_values.Origin = if (std.mem.eql(u8, kind, "query"))
             .query
@@ -65,19 +101,23 @@ fn run(init: std.process.Init, out: *Io.Writer) !u8 {
             .form
         else
             return error.InvalidKind;
-        try crs.form_acquisition.parse(input, origin, &builder, .{
+        try crs.form_acquisition.parse(input, origin, builder, .{
             .key = scratch[0 .. 32 * 1024],
             .value = scratch[32 * 1024 ..],
-        }, &budget);
+        }, budget);
     }
-    try emit(&builder, out);
-    return 0;
 }
 
 fn emit(builder: *const crs.acquired_values.Builder, out: *Io.Writer) !void {
     for ((try builder.view()).entries) |entry| {
         const tag = switch (entry.collection) {
             .args => "arg",
+            .request_cookies => "cookie",
+            .request_uri_raw => "uri-raw",
+            .request_uri => "uri",
+            .request_filename => "filename",
+            .request_basename => "basename",
+            .query_string => "query",
             .files => "file",
             .files_combined_size => "size",
             .xml => if (entry.xml.? == .element) "xml-element" else "xml-attribute",

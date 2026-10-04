@@ -50,6 +50,8 @@ pub const json_acquisition = @import("json_acquisition.zig");
 pub const percent_decode = @import("percent_decode.zig");
 pub const form_acquisition = @import("form_acquisition.zig");
 pub const acquired_values = @import("acquired_values.zig");
+pub const cookie_acquisition = @import("cookie_acquisition.zig");
+pub const http_acquisition = @import("http_acquisition.zig");
 pub const transaction_pool = @import("transaction_pool.zig");
 pub const transaction_slot = @import("transaction_slot.zig");
 
@@ -102,6 +104,7 @@ test {
     _ = percent_decode;
     _ = form_acquisition;
     _ = acquired_values;
+    _ = http_acquisition;
     _ = transaction_pool;
     _ = transaction_slot;
 }

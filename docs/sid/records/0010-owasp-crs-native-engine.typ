@@ -1257,6 +1257,39 @@ support or whole-engine detection equivalence.
 
 = Input acquisition and HTTP phases
 
+The metadata adapter consumes pure shared HTTP field types, never a socket or daemon
+object. The transport supplies the validated request line, raw target, method, protocol,
+resolved client address and transaction identity. Copy these into the acquired monotonic
+pool before transport buffers can be refilled. Retain duplicate header, query and cookie
+occurrences in arrival order. A repeated Content-Type is an ambiguity error, not a last-wins
+processor choice.
+
+Split the raw target on the first literal query delimiter before percent decoding. A raw
+fragment remains in REQUEST_URI_RAW and the request line, but does not contribute query
+fields or decoded filename/URI metadata. URI plus signs remain plus signs; form plus signs
+become spaces. REQUEST_FILENAME retains the decoded path and REQUEST_BASENAME follows
+the final slash or backslash. Absolute URI metadata removes the authority from REQUEST_URI,
+without changing the filename or the raw transport target. Strict malformed-percent refusal
+is the native profile's declared difference from the reference's permissive URI decoder.
+
+Cookies follow the pinned connector's byte semantics: trim final string whitespace and
+leading key whitespace, split each occurrence at its first equals sign, preserve interior
+whitespace and values, retain bare keys and duplicates, and skip empty keys. Do not unquote,
+percent-decode or treat these acquired fields as authenticated session cookies. Before phase
+one, the reference media prefixes select MULTIPART or URLENCODED; phase-one controls can
+subsequently override processor selection. Strict MIME/body validation belongs to the entity
+boundary, before phase-two publication.
+
+*Lemma 29 (metadata separation).* Query parsing cannot reinterpret an encoded path
+delimiter as a transport delimiter, and scratch reuse cannot change already acquired URI
+metadata.
+
+*Proof.* The shared target splitter runs on raw bytes. Percent decoding receives its path
+and query slices separately. Every scalar is copied into the monotonic pool before form
+parsing reuses its disjoint scratch. Header/cookie aliases refer only to completed immutable
+copies. Checked scan reservations plus copy charges bound the work, and every refusal
+poisons the builder, making a partial view inaccessible. $square$
+
 #block(breakable: false, table(
   columns: (1fr, 2fr, 3fr),
   [Phase], [Input], [Publication boundary],

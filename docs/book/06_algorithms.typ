@@ -282,7 +282,9 @@ The native tests cover ownership, bounds, action timing and the prepared stock g
 Regex qualification compares matches and captures with PCRE2. Primitive and detector checks
 use pinned upstream vectors and implementations; data checks reproduce committed assets.
 Signature qualification compares the native RSA receipt with isolated GnuPG verification
-using the pinned primary key. Acquisition checks use independent JSON, form, MIME and XML
-parsers. These development oracles are not runtime dependencies. They do not establish
+using the pinned primary key. Acquisition checks use independent JSON, form, MIME, XML,
+URI and cookie decoders. Metadata acquisition uses the same pure header/target types as
+the proxy and preserves duplicate occurrences before copying them into the transaction.
+These development oracles are not runtime dependencies. They do not establish
 whole-engine FTW compatibility, live HTTP coverage or performance acceptance. The daemon
 still uses its existing Gate and Shield behavior until the remaining SID gates pass.
