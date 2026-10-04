@@ -1,0 +1,109 @@
+{
+  "reference": "ModSecurity 3.0.14",
+  "reference_commit": "a555e5a44573e50f04ad997b3b24c214c42f8e29",
+  "corpus_commit": "a3d4405e5a2c90488c387e589c5534974575e35b",
+  "files": [
+    {
+      "path": "operators/beginsWith.json",
+      "sha256": "ae93e8090e968314fad8d1efe0e0b494bf971080a08ca502cdbe0ebb6838970d",
+      "bytes": 757,
+      "cases": 6
+    },
+    {
+      "path": "operators/contains.json",
+      "sha256": "b004c49896d4435ead77a4bf76707eadbebf7577a1e3d4a7849abfc296ac880c",
+      "bytes": 1272,
+      "cases": 10
+    },
+    {
+      "path": "operators/endsWith.json",
+      "sha256": "be99fffd7a1e0b2c1d8a9fb39fce61c25c25ee4fcae772d00c6b4d1914ef778c",
+      "bytes": 875,
+      "cases": 7
+    },
+    {
+      "path": "operators/eq.json",
+      "sha256": "78f0c781a2c9d196b835b83de47923f929995dc16b0ffe8b6991becd7bc3a00a",
+      "bytes": 1457,
+      "cases": 13
+    },
+    {
+      "path": "operators/ge.json",
+      "sha256": "58d5180f7982fdb5ae5be5150c4335ef2e8d17a5e45f7ada8fc1aea652c688fc",
+      "bytes": 1344,
+      "cases": 12
+    },
+    {
+      "path": "operators/gt.json",
+      "sha256": "cab425c0d342b4e78e59390926c5b6bf0e158c61d4e3ff4e5e3865075512c4b7",
+      "bytes": 1345,
+      "cases": 12
+    },
+    {
+      "path": "operators/lt.json",
+      "sha256": "f7f109257a4ef1b2561a17ef7bc1926aa1d9f969ec65a08647c17afe2ae7fe24",
+      "bytes": 1345,
+      "cases": 12
+    },
+    {
+      "path": "operators/streq.json",
+      "sha256": "4154ea6b2ab022733eee3b4746a060c2802d6d8e054cc2f15071ea1397e0f7b8",
+      "bytes": 857,
+      "cases": 7
+    },
+    {
+      "path": "operators/within.json",
+      "sha256": "657f20680a83465ce406033d43c753699b07c36e1bad58891ee052b4e0eb88a3",
+      "bytes": 859,
+      "cases": 7
+    },
+    {
+      "path": "operators/unconditionalMatch.json",
+      "sha256": "3ee0d5fe3e32b33a6da37941b2cccb64f3344caeefa91d51bfa913860edd9891",
+      "bytes": 394,
+      "cases": 3
+    },
+    {
+      "path": "operators/validateUrlEncoding.json",
+      "sha256": "a41b9e8c495c182e7b20b5c73b5a5fe98d0d288d51034aa90dbb9b2a10953e1d",
+      "bytes": 1858,
+      "cases": 14
+    },
+    {
+      "path": "transformations/lowercase.json",
+      "sha256": "e0927ebc4e5c192a0a9c45314f5d2d262597dbc62e579f2c60fca5f745c3c8b3",
+      "bytes": 681,
+      "cases": 5
+    },
+    {
+      "path": "transformations/length.json",
+      "sha256": "5eeee764124d67cf4b5ff9315c0cae0a50f32c7c0cdc35862c3f25f555f9f4b2",
+      "bytes": 518,
+      "cases": 4
+    },
+    {
+      "path": "transformations/hexEncode.json",
+      "sha256": "2dcc8c8496ed33db2a7875e5a9b6f14300b80b5d7643ea5c01faf3cef9b59481",
+      "bytes": 414,
+      "cases": 3
+    },
+    {
+      "path": "transformations/compressWhitespace.json",
+      "sha256": "2f59166111cef410e76500de9f648335520038fde442f92b5feca9e77da2fc74",
+      "bytes": 1112,
+      "cases": 6
+    },
+    {
+      "path": "transformations/removeWhitespace.json",
+      "sha256": "d54de16a0b761ec700821c44a46d8fd07bf58d5530b6b3dd8a0b3ddf2b18f58f",
+      "bytes": 922,
+      "cases": 5
+    },
+    {
+      "path": "transformations/removeNulls.json",
+      "sha256": "55e1c2a5e05d774b24495f1d5cd02b02a2ddbe8ab7727e7b5d4dfc2003d8fd93",
+      "bytes": 1129,
+      "cases": 8
+    }
+  ]
+}

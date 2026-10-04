@@ -34,6 +34,7 @@ pub fn add(
         }),
     });
     addRegexCheck(b, host, fixture);
+    addPrimitiveCheck(b, host);
     const run = b.addRunArtifact(audit);
     run.addPassthruArgs();
     b.step("crs-audit", "Inventory an extracted CRS release; does not activate rules")
@@ -90,4 +91,22 @@ fn addCompilationChecks(b: *std.Build) *std.Build.Step {
         step.dependOn(&probe.step);
     }
     return step;
+}
+
+fn addPrimitiveCheck(b: *std.Build, crs: *std.Build.Module) void {
+    const probe = b.addExecutable(.{
+        .name = "sibuna-crs-primitive-probe",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tools/crs_primitive_probe.zig"),
+            .target = b.graph.host,
+            .optimize = .safe,
+            .imports = &.{.{ .name = "crs", .module = crs }},
+        }),
+    });
+    const python = if (@import("builtin").os.tag == .windows) "python" else "python3";
+    const check = b.addSystemCommand(&.{ python, "tools/crs_primitive_check.py" });
+    check.addArtifactArg(probe);
+    check.addPassthruArgs();
+    b.step("crs-primitive-check", "Check the supported subset against pinned SecLang vectors")
+        .dependOn(&check.step);
 }
