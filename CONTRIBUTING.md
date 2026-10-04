@@ -11,6 +11,9 @@ and clustering disabled. A `v` tag must match `build.zig.zon` and the console so
 The release workflow verifies the actual binaries before publishing archives and checksums;
 it refuses to replace assets on an already published release. macOS packages are unsigned.
 Windows packages contain a native executable qualified on a Windows runner. `python3 tools/build_site.py` builds the GitHub Pages documentation.
+The release workflow also requires the native CRS contract suite, portable compile probes
+and pinned detector, primitive and PCRE2 comparisons. These checks qualify the CRS library;
+they do not establish daemon activation or complete phased HTTP coverage by themselves.
 
 ---
 

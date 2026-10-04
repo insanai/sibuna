@@ -18,6 +18,22 @@ defaults:
   run:
     shell: bash
 jobs:
+  crs-conformance:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Install test oracles
+        run: sudo apt-get update && sudo apt-get install -y build-essential libpcre2-8-0
+      - name: Install checksum-verified Zig 0.17.0
+        run: python tools/install_zig.py "$RUNNER_TEMP/zig"
+      - name: Qualify native CRS contracts and pinned upstream behavior
+        run: |
+          zig build crs-test crs-detector-data crs-detector-check \
+            crs-primitive-check crs-regex-check -j2 --summary all -- --download
   plan:
     runs-on: ubuntu-22.04
     outputs:
@@ -80,7 +96,7 @@ jobs:
           if-no-files-found: error
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
+    needs: [build, crs-conformance]
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     permissions:
