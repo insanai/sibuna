@@ -8,6 +8,7 @@ pub const Modules = struct {
     crypto: *std.Build.Module,
     net: *std.Build.Module,
     policy: *std.Build.Module,
+    crs: *std.Build.Module,
     challenge: *std.Build.Module,
     store: *std.Build.Module,
     crypto_pow: *std.Build.Module,
@@ -121,6 +122,7 @@ fn addModules(
     target: std.Build.ResolvedTarget,
     optimize: std.lang.Optimize,
 ) Modules {
+    _ = b.step("test", "Run all unit and end-to-end tests");
     _ = addText(b);
     const socket = addSocket(b, target, optimize);
     const core = b.addModule("sibuna-core", .{
@@ -184,6 +186,7 @@ fn addModules(
         .crypto = crypto,
         .net = net,
         .policy = policy,
+        .crs = @import("build/crs.zig").add(b, target, optimize),
         .challenge = challenge,
         .store = store,
         .crypto_pow = crypto_pow,
@@ -237,7 +240,7 @@ fn addWasmSolver(b: *std.Build) *std.Build.Step.Compile {
 }
 
 const AppModules = struct {
-    imports: [6]std.Build.Module.Import,
+    imports: [7]std.Build.Module.Import,
     wasm_bin: std.Build.LazyPath,
     options: *std.Build.Step.Options,
     zaxonlite: ?*std.Build.Module,
@@ -272,6 +275,7 @@ fn addServer(
             .{ .name = "crypto", .module = modules.crypto },
             .{ .name = "net", .module = modules.net },
             .{ .name = "policy", .module = modules.policy },
+            .{ .name = "crs", .module = modules.crs },
             .{ .name = "challenge", .module = modules.challenge },
             .{ .name = "store", .module = modules.store },
         },
@@ -340,8 +344,7 @@ fn wireApp(b: *std.Build, root: *std.Build.Module, app: AppModules) void {
 }
 
 fn addTests(b: *std.Build, modules: Modules, app: AppModules) void {
-    const test_step = b.step("test", "Run all unit and end-to-end tests");
-    @import("build/crs.zig").add(b, modules.core.resolved_target.?, modules.core.optimize.?);
+    const test_step = &b.top_level_steps.get("test").?.step;
     test_step.dependOn(&b.top_level_steps.get("proxy-e2e").?.step);
     const e2e_root = b.createModule(.{
         .root_source_file = b.path("apps/sibuna/src/e2e_test.zig"),

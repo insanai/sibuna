@@ -4,7 +4,7 @@ pub fn add(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
     optimize: std.lang.Optimize,
-) void {
+) *std.Build.Module {
     const dictionary = b.createModule(.{
         .root_source_file = b.path("vendor/libinjection/table.zig"),
     });
@@ -52,6 +52,7 @@ pub fn add(
     run.addPassthruArgs();
     b.step("crs-audit", "Inventory an extracted CRS release; does not activate rules")
         .dependOn(&run.step);
+    return module;
 }
 
 fn addRegexCheck(
