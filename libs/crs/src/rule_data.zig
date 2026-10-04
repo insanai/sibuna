@@ -8,7 +8,7 @@ pub fn validate(files: []const File, byte_limit: usize) Error!void {
     if (files.len > 256) return error.DataLimit;
     var total: usize = 0;
     for (files, 0..) |file, index| {
-        try path(file.path);
+        try validatePath(file.path);
         if (file.bytes.len > byte_limit - total) return error.DataLimit;
         total += file.bytes.len;
         for (files[0..index]) |previous| {
@@ -26,14 +26,14 @@ pub fn resolve(
 ) Error![]const []const u8 {
     const expression = source.expression orelse return &.{};
     if (expression.kind != .pm_from_file) return &.{};
-    try path(source.site.path);
+    try validatePath(source.site.path);
     const slash = std.mem.lastIndexOfScalar(u8, source.site.path, '/');
     const parent = source.site.path[0..if (slash) |index| index + 1 else 0];
     var references = std.mem.tokenizeAny(u8, expression.argument, " \t\r\n");
     var used: usize = 0;
     var resolved: [4096]u8 = undefined;
     while (references.next()) |name| {
-        try path(name);
+        try validatePath(name);
         if (used == output.len) return error.DataLimit;
         if (parent.len > resolved.len or name.len > resolved.len - parent.len)
             return error.InvalidDataPath;
@@ -54,7 +54,7 @@ pub fn resolve(
     return output[0..used];
 }
 
-fn path(value: []const u8) Error!void {
+pub fn validatePath(value: []const u8) Error!void {
     if (value.len == 0 or value.len > 4096 or value[0] == '/' or
         std.mem.indexOfAny(u8, value, "\\:\x00\r\n") != null) return error.InvalidDataPath;
     var segments = std.mem.splitScalar(u8, value, '/');
