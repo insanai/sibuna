@@ -113,7 +113,9 @@ pub const Store = struct {
     fn locate(self: *const Store, key: []const u8, budget: *work.Budget) Error!?usize {
         const cost = std.math.add(u64, @intCast(key.len), 1) catch return error.WorkLimit;
         try budget.debit(cost);
-        if (key.len == 0 or std.mem.indexOfScalar(u8, key, 0) != null) return error.InvalidKey;
+        // Runtime keys can contain decoded argument names. They are length-aware
+        // bytes, so a NUL neither terminates a key nor aliases its shorter prefix.
+        if (key.len == 0) return error.InvalidKey;
         for (self.entries[0..self.used], 0..) |entry, index| {
             try budget.debit(1);
             if (try variables.keyEqual(entry.key, key, budget)) return index;

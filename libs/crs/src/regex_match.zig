@@ -44,6 +44,13 @@ const Context = struct {
     scratch: *Scratch,
     budget: *work.Budget,
 
+    fn start(self: *Context, position: usize) Error!void {
+        try self.budget.debit(1);
+        if (!self.program.nullable and (position == self.input.len or
+            !self.program.first.contains(self.input[position]))) return;
+        try self.closure(.{ .pc = self.program.start }, position);
+    }
+
     fn push(self: *Context, thread: Thread) Error!void {
         try self.budget.debit(1 + types.capture_slots);
         if (self.scratch.stack_used == self.scratch.stack.len) return error.ScratchTooSmall;
@@ -110,7 +117,7 @@ pub fn search(
         .scratch = scratch,
         .budget = budget,
     };
-    try context.closure(.{ .pc = program.start }, 0);
+    try context.start(0);
     var candidate: ?Match = null;
     var position: usize = 0;
     while (true) {
@@ -137,7 +144,7 @@ pub fn search(
         }
         position += 1;
         if (candidate != null and scratch.next_used == 0) return candidate;
-        if (candidate == null) try context.closure(.{ .pc = program.start }, position);
+        if (candidate == null) try context.start(position);
     }
 }
 

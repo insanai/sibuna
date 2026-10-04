@@ -177,7 +177,11 @@ test "topology rejects inconsistent IDs phases links roots markers and capacitie
 }
 
 fn allocationScenario(allocator: std.mem.Allocator) !void {
-    var prepared = try Prepared.init(allocator, chain_source);
+    // Arena growth can remap in place depending on backing addresses. Refuse
+    // remaps here so failure enumeration visits the same allocation sequence
+    // every time and exercises the allocating fallback's cleanup as well.
+    var fixed = std.testing.FailingAllocator.init(allocator, .{ .resize_fail_index = 0 });
+    var prepared = try Prepared.init(fixed.allocator(), chain_source);
     defer prepared.deinit();
 }
 

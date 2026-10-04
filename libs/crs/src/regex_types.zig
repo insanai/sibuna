@@ -85,6 +85,7 @@ pub const Node = struct {
     value: NodeValue,
     nullable: bool,
     captures: bool,
+    first: Class,
 };
 
 pub const Instruction = struct {
@@ -98,6 +99,8 @@ pub const Program = struct {
     instructions: []const Instruction,
     start: u32,
     groups: u8,
+    first: Class = .{ .bits = @splat(std.math.maxInt(u64)) },
+    nullable: bool = true,
 
     pub fn deinit(self: *Program) void {
         self.allocator.free(self.instructions);

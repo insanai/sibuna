@@ -51,6 +51,8 @@ pub fn configured(
         .instructions = try allocator.dupe(types.Instruction, emitter.instructions.items),
         .start = fragment.start,
         .groups = reader.groups,
+        .first = reader.nodes.items[root].first,
+        .nullable = reader.nodes.items[root].nullable,
     };
 }
 

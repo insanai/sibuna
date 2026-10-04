@@ -248,6 +248,9 @@ multi-match evidence survives a failed child without applying full-chain disrupt
 Each primitive shares a transaction work ledger. The matcher uses ordered regex
 simulation, length-aware KMP search, sparse phrase automata and family-separated address
 intervals. Native SQL and XSS detectors use reproducible tables from the pinned reference.
+Regex compilation prepares a conservative first-byte set, so impossible start positions
+need a membership test instead of creating matcher threads. Nullable expressions retain
+every possible start. Independent PCRE2 comparisons check capture priority as well as truth.
 Resource exhaustion is an error, never a negative predicate result. SID 0010 documents
 intentional corrections to the reference's phrase matching and exclusion defects.
 
@@ -256,6 +259,8 @@ serving work. An exclusive lease owns one slot; pool exhaustion refuses admissio
 stops new leases while admitted work retains its generation. TX and matched bytes are
 monotonic within a transaction, so scratch reuse and metadata replacement preserve saved
 values. Beginning the next transaction resets cursors and controls after all borrows end.
+Parser controls become visible to following rules in the same phase. Runtime TX keys retain
+their full byte length, including decoded NULs, while source text still rejects NULs.
 
 Generation publication uses two stable reader-pin cells. A transaction keeps one generation
 through its final phase; an update cannot reclaim its program or workspace. A third update

@@ -495,6 +495,9 @@ completed expansion, and injected `%{...}` bytes in values cannot add lookup wor
 `TX` is a caller-owned metadata table and monotonic byte pool reserved with the transaction
 slot. Keys use fixed ASCII case-insensitive equality and are unique; updates preserve the
 original key spelling and entry order. A missing key differs from a present empty value.
+Runtime keys remain length-aware, including NULs in decoded argument names expanded by
+rules. A binary key never aliases its prefix. Empty runtime keys and NULs in source text
+remain errors; these contracts concern different boundaries.
 Each successful write copies its new value to unused pool space. Old value bytes remain
 valid until the transaction ends, so target snapshots and macro parts cannot dangle after
 an action updates or deletes their source key. Deletion compacts metadata without reclaiming
@@ -796,6 +799,27 @@ require explicit compatible handling or rejection. The release audit must analyz
 regex syntax, not infer features by searching for punctuation substrings. Unanchored matching
 adds start threads at each position in the same simulation; restarting a matcher for every
 suffix would introduce an avoidable quadratic bound.
+
+=== Conservative first-byte filtering
+
+Prepare a 256-bit first-byte set and a nullable flag for each syntax node. A byte class
+contributes its members; alternatives union their sets; concatenation takes the left set
+and adds the right set when the left side is nullable. Captures and repetitions inherit
+their child's set. Treat assertions as nullable without a byte contribution, even when
+their position-dependent condition may fail. A zero-count repetition may conservatively
+retain extra members. This computation costs constant work per node and runs off path.
+
+*Lemma (safe start omission).* If an expression is nonnullable and the next byte is outside
+its prepared set, no match can start at that input position. Induction on the syntax tree
+establishes that every accepting nonempty path consumes a first byte in the set. Ignoring
+assertion conditions only adds possible paths. Omitting such a start thread therefore
+removes no accepting path and preserves the priority of surviving captures. Nullable
+expressions always add a start thread, including at end of input. $square$
+
+The matcher charges each membership probe and retains its ordered simulation for all
+remaining threads. This improves common nonmatching prefixes without changing the worst-case
+$O(S N)$ bound or permitting an exhausted budget to be reported as a negative match.
+Long-prefix capture fixtures and independent PCRE2 comparisons verify the optimization.
 
 == Lemma 3: linear literal search
 

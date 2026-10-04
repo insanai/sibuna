@@ -45,8 +45,27 @@ pub const Parser = struct {
             .value = value,
             .nullable = nullable,
             .captures = captures,
+            .first = self.firstClass(value),
         });
         return index;
+    }
+
+    /// Assertions are conservatively treated as epsilon transitions. False
+    /// positives cost matching work; omitting a possible first byte would be unsafe.
+    fn firstClass(self: *const Parser, value: types.NodeValue) types.Class {
+        return switch (value) {
+            .empty, .assertion => .{},
+            .class => |class| class,
+            .capture => |capture| self.nodes.items[capture.child].first,
+            .repeat => |repeat| self.nodes.items[repeat.child].first,
+            .concat, .alternate => |pair| blk: {
+                const left = self.nodes.items[pair.left];
+                var result = left.first;
+                if (value == .alternate or left.nullable)
+                    result.merge(self.nodes.items[pair.right].first);
+                break :blk result;
+            },
+        };
     }
 
     fn alternation(self: *Parser) types.Error!u32 {

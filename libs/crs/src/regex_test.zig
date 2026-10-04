@@ -48,6 +48,31 @@ test "ordered regex preserves leftmost, branch and quantifier priorities" {
     try lazy.expect("zaaa", "a");
 }
 
+test "first-byte filtering bounds a long nonmatching prefix without changing captures" {
+    var fixture = try Fixture.init("\\b(cat|dog)([0-9]+)");
+    defer fixture.deinit();
+    var input: [65536]u8 = @splat('z');
+    const suffix = " dog123 cat7";
+    @memcpy(input[input.len - suffix.len ..], suffix);
+    var budget: work.Budget = .{ .remaining = 100_000 };
+    const result = (try regex.match.search(
+        &fixture.program,
+        &input,
+        &fixture.workspace.scratch,
+        &budget,
+    )).?;
+    const word = result.span(1).?;
+    const digits = result.span(2).?;
+    try std.testing.expectEqualStrings("dog", input[word.start..word.end]);
+    try std.testing.expectEqualStrings("123", input[digits.start..digits.end]);
+    try std.testing.expect(budget.remaining > 0);
+    var nullable = try Fixture.init("(?:a?|\\b)(b|c)?$");
+    defer nullable.deinit();
+    try nullable.expect("", "");
+    try nullable.expect("zb", "b");
+    try nullable.expect("z", "");
+}
+
 test "flags, anchors, ranges and binary bytes are explicit" {
     var fixture = try Fixture.init("(?i)\\b[a-c]{2,3}\\b");
     defer fixture.deinit();

@@ -116,7 +116,15 @@ test "TX entry and monotonic byte bounds do not change committed private state o
     try std.testing.expect(store.failed);
     try std.testing.expectEqual(@as(usize, 0), store.used);
     store = scratch.store();
-    try std.testing.expectError(error.InvalidKey, store.get("bad\x00key", &budget));
+    try store.put("bad\x00key", "binary", &budget);
+    try store.put("bad", "prefix", &budget);
+    try store.put("bad\x00other", "distinct", &budget);
+    try std.testing.expectEqualStrings("binary", (try store.get("BAD\x00KEY", &budget)).?);
+    try std.testing.expectEqualStrings("prefix", (try store.get("bad", &budget)).?);
+    try std.testing.expectEqualStrings("distinct", (try store.get("bad\x00other", &budget)).?);
+    try std.testing.expectEqual(@as(usize, 3), store.used);
+    try std.testing.expect(try store.remove("bad\x00key", &budget));
+    try std.testing.expectEqualStrings("prefix", (try store.get("bad", &budget)).?);
 }
 
 test "every insufficient work allowance leaves a TX write atomic and poisoned" {
