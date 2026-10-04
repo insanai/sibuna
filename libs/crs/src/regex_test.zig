@@ -85,6 +85,32 @@ test "captures remain valid and caller owned after matching" {
     try std.testing.expectEqualStrings("b", input[optional.start..optional.end]);
 }
 
+test "SecLang defaults use multiline dotall and empty-expression substitution" {
+    const cases = [_]struct { pattern: []const u8, input: []const u8, matched: []const u8 }{
+        .{ .pattern = "^a.b$", .input = "prefix\na\nb\nsuffix", .matched = "a\nb" },
+        .{ .pattern = "(?-ms:^a.b$)", .input = "a b", .matched = "a b" },
+        .{ .pattern = "", .input = "a\nb", .matched = "a\nb" },
+    };
+    for (cases) |case| {
+        var program = try regex.secLang(std.testing.allocator, case.pattern, false);
+        defer program.deinit();
+        var fixture: Fixture = .{
+            .program = program,
+            .workspace = try regex.Workspace.init(std.testing.allocator, &program),
+        };
+        defer fixture.workspace.deinit();
+        try fixture.expect(case.input, case.matched);
+    }
+    var program = try regex.secLang(std.testing.allocator, "^header$", true);
+    defer program.deinit();
+    var fixture: Fixture = .{
+        .program = program,
+        .workspace = try regex.Workspace.init(std.testing.allocator, &program),
+    };
+    defer fixture.workspace.deinit();
+    try fixture.expect("HEADER", "HEADER");
+}
+
 test "epsilon cycles and hostile regexes terminate within their work budget" {
     var cycle = try Fixture.init("(?:a?)*");
     defer cycle.deinit();

@@ -36,10 +36,15 @@ def oracle():
     return lib
 
 
-def compare(lib, binary, pattern, inputs):
+def compare(lib, binary, pattern, inputs, seclang=False):
     error = ctypes.c_int()
     offset = ctypes.c_size_t()
-    code = lib.pcre2_compile_8(pattern, len(pattern), 0, ctypes.byref(error),
+    # ModSecurity 3.0.14 src/utils/regex.cc, rather than the outdated manual:
+    # PCRE2_DOTALL (0x20) | PCRE2_MULTILINE (0x400), LF byte profile.
+    options = 0x420 if seclang else 0
+    reference_pattern = b".*" if seclang and not pattern else pattern
+    code = lib.pcre2_compile_8(reference_pattern, len(reference_pattern), options,
+                             ctypes.byref(error),
                              ctypes.byref(offset), None)
     if not code:
         raise AssertionError(f"reference rejected {pattern!r}: {error.value} at {offset.value}")
@@ -61,7 +66,8 @@ def compare(lib, binary, pattern, inputs):
                 expected = [[None if spans[i] == absent else spans[i],
                              None if spans[i + 1] == absent else spans[i + 1]]
                             for i in range(0, count * 2, 2)]
-            result = subprocess.run([binary, pattern.hex(), text.hex()], capture_output=True,
+            arguments = [binary] + (["--seclang"] if seclang else [])
+            result = subprocess.run(arguments + [pattern.hex(), text.hex()], capture_output=True,
                                     timeout=5, check=True, text=True)
             actual = json.loads(result.stdout)
             if actual != expected:
@@ -79,14 +85,16 @@ def main():
                 b"(?:a*)*", b"(?:ab|a)+?b", b"a{0,3}", b"(ab){1,3}?", b"^a$",
                 b"(?m)^a$", b"(?s)a.b", b"(?i)aB", b"(?i:a)b", b"[a-b]+",
                 b"[^a]+", rb"\ba\b", rb"\Ba\B", rb"[\x00-\x{ff}]+",
-                rb"a\z", rb"a\Z", rb"\Aa", b"(?i)a|b", b"(a)?(b)?"]
+                rb"a\z", rb"a\Z", rb"\Aa", b"(?i)a|b", b"(a)?(b)?", b"^0?$",
+                b"^$", b"^", b"$", b"(?-ms)^a.b$"]
     inputs = [bytes(chars) for length in range(4)
               for chars in itertools.product(b"ab\n", repeat=length)]
     inputs += [b"AB", b"AaB", b" a ", b"zaaaab", b"\x00\xff", b"\xff\x00"]
     total = 0
     for pattern in patterns:
         compare(lib, sys.argv[1], pattern, inputs)
-        total += len(inputs)
+        compare(lib, sys.argv[1], pattern, inputs, seclang=True)
+        total += 2 * len(inputs)
     for pattern in [b"(a?)*", b"(a?)*?", b"(a*)*"]:
         result = subprocess.run([sys.argv[1], pattern.hex(), ""], capture_output=True,
                                 timeout=5, text=True)
@@ -101,9 +109,10 @@ def main():
                 b"1' or 1=1--", b"UNION SELECT password FROM users", b"../../etc/passwd",
                 b"application/json", b"Mozilla/5.0", b"https://example.com/?q=x",
                 b"\x00\xff", b"${jndi:ldap://example.com/a}", b"cmd.exe /c whoami",
-                b"eval($_GET['x']);"]
+                b"eval($_GET['x']);", b"hello\nworld", b"prefix\na\nsuffix",
+                b"<script>\nalert(1)\n</script>", b"a\r\nb", b"a\n", b"a\r"]
     for entry in stock:
-        compare(lib, sys.argv[1], entry["pattern"].encode(), payloads)
+        compare(lib, sys.argv[1], entry["pattern"].encode(), payloads, seclang=True)
         total += len(payloads)
     print(f"PCRE2 differential check: {total} matches/captures and 3 rejections passed")
 

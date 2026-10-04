@@ -12,6 +12,21 @@ pub fn compile(
     bytes: []const u8,
     limits: types.Limits,
 ) types.Error!types.Program {
+    return configured(allocator, bytes, .{ .limits = limits });
+}
+
+pub const Config = struct {
+    limits: types.Limits = .{},
+    flags: types.Flags = .{},
+};
+
+/// The byte profile is explicit; callers must not infer SecLang options from PCRE defaults.
+pub fn configured(
+    allocator: std.mem.Allocator,
+    bytes: []const u8,
+    config: Config,
+) types.Error!types.Program {
+    const limits = config.limits;
     if (limits.nodes > std.math.maxInt(u32) or
         limits.instructions > std.math.maxInt(u32) / 2) return error.RegexLimit;
     var arena: std.heap.ArenaAllocator = .init(allocator);
@@ -20,6 +35,7 @@ pub fn compile(
         .allocator = arena.allocator(),
         .bytes = bytes,
         .limits = limits,
+        .flags = config.flags,
     };
     const root = try reader.parse();
     var emitter: Emitter = .{

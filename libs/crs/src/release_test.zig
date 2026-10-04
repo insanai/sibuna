@@ -67,7 +67,7 @@ test "every stock rule regex compiles within the published native limits" {
     for (plan.conditions) |condition| {
         const expression = condition.expression orelse continue;
         if (expression.kind != .rx) continue;
-        var program = try regex.compile(std.testing.allocator, expression.argument, .{});
+        var program = try regex.secLang(std.testing.allocator, expression.argument, false);
         defer program.deinit();
         count += 1;
         largest = @max(largest, program.instructions.len);

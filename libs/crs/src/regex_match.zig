@@ -146,7 +146,8 @@ fn asserted(assertion: types.Assertion, input: []const u8, position: usize) bool
     return switch (assertion.kind) {
         .absolute_start => position == 0,
         .absolute_end => position == input.len,
-        .start => position == 0 or (assertion.multiline and input[position - 1] == '\n'),
+        .start => position == 0 or (assertion.multiline and position < input.len and
+            input[position - 1] == '\n'),
         .end => position == input.len or (input[position] == '\n' and
             (assertion.multiline or position + 1 == input.len)),
         .final_end => position == input.len or

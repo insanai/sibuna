@@ -7,7 +7,9 @@ pub fn main(init: std.process.Init) !u8 {
     var args = std.process.Args.Iterator.init(init.minimal.args);
     defer args.deinit();
     _ = args.next();
-    const pattern_hex = args.next() orelse return error.MissingPattern;
+    var pattern_hex = args.next() orelse return error.MissingPattern;
+    const seclang = std.mem.eql(u8, pattern_hex, "--seclang");
+    if (seclang) pattern_hex = args.next() orelse return error.MissingPattern;
     if (std.mem.eql(u8, pattern_hex, "--stock")) {
         if (args.next() != null) return error.TooManyArguments;
         return stock(init);
@@ -18,7 +20,10 @@ pub fn main(init: std.process.Init) !u8 {
     defer init.gpa.free(pattern);
     const input = try decode(init.gpa, input_hex, 64 * 1024);
     defer init.gpa.free(input);
-    var program = try crs.regex.compile(init.gpa, pattern, .{});
+    var program = if (seclang)
+        try crs.regex.secLang(init.gpa, pattern, false)
+    else
+        try crs.regex.compile(init.gpa, pattern, .{});
     defer program.deinit();
     var workspace = try crs.regex.Workspace.init(init.gpa, &program);
     defer workspace.deinit();
