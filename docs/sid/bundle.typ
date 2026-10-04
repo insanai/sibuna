@@ -126,3 +126,16 @@
 #document("pdf/sid-0009-chunked-request-bodies.pdf")[
   #include "records/0009-chunked-request-bodies.typ"
 ]
+
+#document(
+  "sid/0010-owasp-crs-native-engine.html",
+  title: [SID 0010: Native OWASP Core Rule Set Evaluation and Verified Rule Updates],
+  author: ("Sibuna Contributors",),
+  description: [Native SecLang compilation and bounded CRS evaluation, complete input contracts, anomaly scoring, immutable rule generations, authenticated operator updates, and compatibility gates.],
+)[
+  #include "records/0010-owasp-crs-native-engine.typ"
+]
+
+#document("pdf/sid-0010-owasp-crs-native-engine.pdf")[
+  #include "records/0010-owasp-crs-native-engine.typ"
+]
