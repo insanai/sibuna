@@ -104,6 +104,40 @@
       "sha256": "55e1c2a5e05d774b24495f1d5cd02b02a2ddbe8ab7727e7b5d4dfc2003d8fd93",
       "bytes": 1129,
       "cases": 8
+    },
+    {
+      "path": "transformations/cmdLine.json",
+      "sha256": "e1ca88ebf27b95ec47f7f0438c09a4f26e07a6316156db505985717898c20007",
+      "bytes": 820,
+      "cases": 6
+    },
+    {
+      "path": "transformations/escapeSeqDecode.json",
+      "sha256": "0686a357ee36f5b59af25305d036a82566331e801e56a0387095df4a2b44fe86",
+      "bytes": 2136,
+      "cases": 14,
+      "undefined_encoding": {
+        "5": "json2bin accepts \\xga but sscanf writes no result; the reference reads an uninitialized value. Invalid escapes are covered by native tests."
+      }
+    },
+    {
+      "path": "transformations/removeCommentsChar.json",
+      "sha256": "aae595a6754e668fc4df5ce69a37afedab18a95b48d165a84e9d684580e3ec32",
+      "bytes": 3330,
+      "cases": 21
+    },
+    {
+      "path": "transformations/replaceComments.json",
+      "sha256": "ae246b13d9556d1ffcb1f74d192c98c0c9e330f27ba664900bf5badf523fe1dc",
+      "bytes": 3130,
+      "cases": 21
+    },
+    {
+      "path": "transformations/sha1.json",
+      "sha256": "11de7a5844baddb7012042932cab019ccfada05c5dd55a6bb29e7504ff32ca54",
+      "bytes": 695,
+      "cases": 3
     }
-  ]
+  ],
+  "cases": 199
 }

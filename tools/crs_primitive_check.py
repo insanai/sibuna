@@ -14,6 +14,10 @@ import subprocess
 from urllib.request import urlopen
 
 
+class UndefinedVector(ValueError):
+    """The reference runner reads an uninitialized sscanf result for this encoding."""
+
+
 def json_bytes(value):
     # Pinned test/unit/unit_test.cc constructs std::string from YAJL's C string
     # before json2bin expands literal \\xNN and \\uNNNN to a single low byte.
@@ -22,7 +26,10 @@ def json_bytes(value):
     for prefix, width in [(b"x", 2), (b"u", 4)]:
         pattern = re.compile(rb"\\" + prefix + rb"([a-zA-Z0-9]{" + str(width).encode() + rb"})")
         while match := pattern.search(result):
-            number = int(match[1], 16)
+            digits = re.match(rb"[0-9a-fA-F]+", match[1])
+            if digits is None:
+                raise UndefinedVector(f"reference sscanf cannot decode {match[0]!r}")
+            number = int(digits[0], 16)
             result = result.replace(match[0], bytes([number & 255]))
     return result
 
@@ -52,9 +59,19 @@ def vectors(directory, manifest, download):
             raise ValueError(f"corpus count mismatch: {relative}")
         for index, case in enumerate(cases):
             total += 1
+            reason = entry.get("undefined_encoding", {}).get(str(index))
+            if reason is not None:
+                try:
+                    json_bytes(case["input"])
+                    json_bytes(case.get("output", ""))
+                except UndefinedVector:
+                    print(f"Undefined upstream fixture: {relative}:{index}: {reason}")
+                    continue
+                raise ValueError(f"stale undefined-encoding exception: {relative}:{index}")
             yield relative, index, case
-    if total != 134:
-        raise ValueError(f"expected 134 pinned primitive cases, found {total}")
+    expected = manifest["cases"]
+    if total != expected:
+        raise ValueError(f"expected {expected} pinned primitive cases, found {total}")
 
 
 def main():
@@ -68,11 +85,15 @@ def main():
     count = 0
     for path, index, case in vectors(args.corpus, manifest, args.download):
         kind = case["type"]
+        # The pinned corpus predates the canonical CRS spelling of this action.
+        name = {"cmd_line": "cmdLine"}.get(case["name"], case["name"])
         input_bytes = json_bytes(case["input"])
         parameter = case.get("param", "").encode("utf-8").split(b"\0", 1)[0]
-        result = subprocess.run([str(args.binary.resolve()), kind, case["name"],
-                                 input_bytes.hex(), parameter.hex()], check=True,
+        result = subprocess.run([str(args.binary.resolve()), kind, name,
+                                 input_bytes.hex(), parameter.hex()], check=False,
                                 capture_output=True, timeout=5, text=True)
+        if result.returncode != 0:
+            raise AssertionError(f"{path}:{index}: probe failed: {result.stderr.strip()}")
         if kind == "op":
             expected = "true" if case["ret"] else "false"
         elif kind == "tfn":
