@@ -28,7 +28,7 @@ def chroot(root, *command):
             "/bin/sh", str(wrapper), str(root), str(os.getuid()), str(os.getgid()), *command]
 
 
-def configure(root, port, origin_port, workers, inspection, small_error=False):
+def configure(root, port, origin_port, workers, inspection, small_error=False, overrides=None):
     if not (root / "usr/share/bunkerweb/VERSION").is_file():
         raise ValueError("expected a dedicated unpacked BunkerWeb image")
     settings = {
@@ -50,6 +50,7 @@ def configure(root, port, origin_port, workers, inspection, small_error=False):
         "USE_CLIENT_CACHE": "no", "USE_REAL_IP": "no", "LOG_LEVEL": "crit",
         "ACCESS_LOG": "off", "ERROR_LOG": "/var/log/bunkerweb/benchmark-error.log",
     }
+    settings.update(overrides or {})
     custom = root / "data/configs/server-http/benchmark-denied.conf"
     if small_error:
         # A URI error redirect changes POST to GET. The stock ERRORS named location

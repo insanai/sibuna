@@ -10,7 +10,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import signal
 import statistics
 import subprocess
 import tempfile
@@ -19,6 +18,7 @@ import time
 import bunkerweb_fixture as bunker
 from process_accounting import PeakRss, snapshot
 from http_load import HttpLoad
+from product_fixtures import Context, anubis_identity, start_product, stop_product
 from run import ROOT, free_port, metadata, record, stop
 from tools import ATTACK, ORIGIN_BODY
 
@@ -108,38 +108,8 @@ def wait_ready(process, port):
 
 
 def launch(profile, arguments, port, origin, temporary, log, cpus):
-    if profile.startswith("bunkerweb"):
-        settings = bunker.configure(arguments.rootfs, port, origin,
-                                    arguments.workers, profile.startswith("bunkerweb-crs"),
-                                    small_error=profile == "bunkerweb-crs-small-error")
-        return bunker.start(arguments.rootfs, cpus, log), settings
-    policy = temporary / "policy.json"
-    policy.write_text('{"default_action":"allow","rules":[]}\n')
-    command = ["taskset", "-c", ",".join(map(str, cpus)), str(arguments.sibuna),
-               "--gate" if profile == "sibuna-gate" else "--shield",
-               "--host", arguments.listen_host, "--port", str(port),
-               "--workers", str(arguments.workers), "--upstream-host", "127.0.0.1",
-               "--upstream-port", str(origin), "--policy-file", str(policy),
-               "--rate-limit", "100000000", "--idle-timeout", "15"]
-    return subprocess.Popen(command, stdout=log, stderr=log), {
-        "command": command, "policy": json.loads(policy.read_text()),
-        "console_active": False, "storage_active": False,
-    }
-
-
-def stop_product(profile, process, rootfs):
-    if not profile.startswith("bunkerweb"):
-        stop(process)
-        return
-    pid_file = rootfs / "var/run/bunkerweb/nginx.pid"
-    if process.poll() is None and pid_file.exists():
-        pid = int(pid_file.read_text())
-        if pid not in snapshot(process.pid)["pids"]:
-            raise RuntimeError("nginx PID does not belong to this fixture")
-        os.kill(pid, signal.SIGQUIT)
-    process.wait(timeout=15)
-    if process.returncode:
-        raise RuntimeError(f"BunkerWeb stop returned {process.returncode}")
+    context = Context(arguments, port, origin, temporary, cpus)
+    return start_product(profile, context, log)
 
 
 def validate_measured(measured, expected):
@@ -216,10 +186,12 @@ def tool_versions():
 
 
 def run_rounds(arguments, temporary, origin, origin_port, cpus, data):
-    results = {profile: {case[0]: [] for case in CASES} for profile in PROFILES}
+    profiles = (*PROFILES[:2], "anubis-proxy", *PROFILES[2:]) if arguments.anubis else PROFILES
+    results = {profile: {case[0]: [] for case in CASES} for profile in profiles}
     configurations = {}
     for round_index in range(arguments.repetitions):
-        order = PROFILES[round_index % len(PROFILES):] + PROFILES[:round_index % len(PROFILES)]
+        offset = round_index % len(profiles)
+        order = profiles[offset:] + profiles[:offset]
         data["rounds"].append(list(order))
         for profile in order:
             port = origin_port if profile == "origin" else free_port()
@@ -250,7 +222,7 @@ def run_rounds(arguments, temporary, origin, origin_port, cpus, data):
                         stop_product(profile, process, arguments.rootfs)
     data["runs"] = [{"profile": profile, "configuration": configurations[profile],
                      "workloads": {label: summarize(samples) for label, samples
-                                   in results[profile].items()}} for profile in PROFILES]
+                                   in results[profile].items()}} for profile in profiles]
 
 
 def parse_arguments():
@@ -258,6 +230,7 @@ def parse_arguments():
     parser.add_argument("--rootfs", type=Path, required=True)
     parser.add_argument("--image", type=Path, required=True)
     parser.add_argument("--sibuna", type=Path, default=ROOT / "zig-out/bin/sibuna")
+    parser.add_argument("--anubis", type=Path, help="pinned Anubis v1.27.0 release binary")
     parser.add_argument("--seconds", type=int, default=5)
     parser.add_argument("--warmup", type=int, default=1)
     parser.add_argument("--repetitions", type=int, default=5)
@@ -278,8 +251,7 @@ def parse_arguments():
     return arguments
 
 
-def main():
-    arguments = parse_arguments()
+def prepare(arguments):
     allowed = sorted(os.sched_getaffinity(0))
     if len(allowed) < arguments.workers + 4:
         raise ValueError("need separate CPUs for product, generator and origin")
@@ -289,11 +261,17 @@ def main():
     arguments.rootfs = arguments.rootfs.resolve(strict=True)
     arguments.image = arguments.image.resolve(strict=True)
     arguments.sibuna = arguments.sibuna.resolve(strict=True)
+    if arguments.anubis:
+        arguments.anubis = arguments.anubis.resolve(strict=True)
     arguments.listen_host = "0.0.0.0" if arguments.load_host else "127.0.0.1"
     arguments.generator = HttpLoad(arguments.target_host, arguments.load_host,
                                    arguments.load_wrk, arguments.load_library_dir,
                                    arguments.ssh_known_hosts)
     remote_generator = arguments.generator.identity()
+    return cpus, origin_cpus, remote_generator
+
+
+def run_metadata(arguments, cpus, origin_cpus, remote_generator):
     data = {"meta": metadata(arguments.sibuna), "bunkerweb": bunker.identity(
         arguments.rootfs, arguments.image), "load": {
         field: getattr(arguments, field) for field in (
@@ -304,6 +282,7 @@ def main():
         "topology": "two-host" if arguments.load_host else "loopback",
         "generator": remote_generator,
         "target_host": arguments.target_host,
+        "anubis": anubis_identity(arguments.anubis) if arguments.anubis else None,
         "tools": tool_versions(),
         "limitations": [
             "Unprivileged container on a shared host; no control of CPU frequency or host load.",
@@ -320,6 +299,13 @@ def main():
             "The origin baseline exposes fixture costs; results are not universal rankings.",
             "CPU interval includes generator invocation; remote SSH setup precedes wrk timing.",
         ]}
+    return data
+
+
+def main():
+    arguments = parse_arguments()
+    cpus, origin_cpus, remote_generator = prepare(arguments)
+    data = run_metadata(arguments, cpus, origin_cpus, remote_generator)
     with tempfile.TemporaryDirectory(prefix="sibuna-bunkerweb-") as name:
         temporary = Path(name)
         origin_port = free_port()
@@ -334,8 +320,8 @@ def main():
         finally:
             stop(origin)
     data["functional_pass"] = True
-    record(data, "bunkerweb-two-host-latest" if arguments.load_host
-           else "bunkerweb-comparison-latest")
+    family = "products-proxy" if arguments.anubis else "bunkerweb"
+    record(data, family + ("-two-host-latest" if arguments.load_host else "-comparison-latest"))
 
 
 if __name__ == "__main__":
