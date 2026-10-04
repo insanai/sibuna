@@ -11,6 +11,7 @@ const entity = @import("transform_entity.zig");
 const base64 = @import("transform_base64.zig");
 const path = @import("transform_path.zig");
 const unicode = @import("transform_unicode.zig");
+const buffers = @import("buffers.zig");
 
 pub const Error = types.Error;
 pub const Buffer = types.Buffer;
@@ -28,7 +29,7 @@ pub fn step(kind: model.Transform, buffer: Buffer) Error!Result {
     const maximum = try capacity(kind, buffer.input.len);
     if (buffer.output.len < maximum) return error.OutputLimit;
     try buffer.budget.debit(try cost(kind, buffer.input.len));
-    assertDisjoint(buffer.input, buffer.output[0..maximum]);
+    buffers.assertDisjoint(buffer.input, buffer.output[0..maximum]);
     const result: Write = switch (kind) {
         .none => blk: {
             @memcpy(buffer.output[0..buffer.input.len], buffer.input);
@@ -104,13 +105,6 @@ fn cost(kind: model.Transform, length: usize) work.Error!u64 {
         charged = std.math.add(u64, charged, rounds) catch return error.WorkLimit;
     }
     return std.math.add(u64, charged, 1) catch error.WorkLimit;
-}
-
-fn assertDisjoint(input: []const u8, output: []u8) void {
-    if (input.len == 0 or output.len == 0) return;
-    const source = @intFromPtr(input.ptr);
-    const destination = @intFromPtr(output.ptr);
-    std.debug.assert(source + input.len <= destination or destination + output.len <= source);
 }
 
 fn lowercase(buffer: Buffer) Write {

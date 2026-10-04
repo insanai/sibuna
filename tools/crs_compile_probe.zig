@@ -49,21 +49,8 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
     var addresses = crs.address_set.compile(allocator.*, "127.0.0.1,::1", .{}) catch return 16;
     defer addresses.deinit();
     _ = addresses.contains("::1", &budget) catch return 17;
-    _ = crs.injection_dictionary.lookup("SELECT", &budget) catch return 18;
-    var lexical: crs.sql_tokens.Context = .{
-        .input = "SELECT 1",
-        .prefixes = &prefixes,
-        .budget = &budget,
-    };
-    var token: crs.sql_tokens.Token = .{};
-    _ = crs.sql_tokens.next(&lexical, &token) catch return 19;
-    var fingerprint: crs.sql_folding.Result = .{};
-    crs.sql_folding.fingerprint(&lexical, &fingerprint) catch return 20;
-    _ = crs.sql_detector.detect(&lexical, &fingerprint) catch return 21;
-    var html = crs.html_tokens.Context.init("<a href='url'>", &budget, .data);
-    _ = crs.html_tokens.next(&html) catch return 22;
-    var xss: crs.xss_detector.Context = .{ .input = "<script>", .budget = &budget };
-    _ = crs.xss_detector.detect(&xss) catch return 23;
+    if (!detectorProbe(&budget)) return 18;
+    if (!macroProbe(allocator.*, &budget)) return 24;
     const result = crs.regex.match.search(
         &program,
         "xx",
@@ -71,4 +58,39 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
         &budget,
     ) catch return 5;
     return if (result != null) 0 else 6;
+}
+
+fn detectorProbe(budget: *crs.work.Budget) bool {
+    _ = crs.injection_dictionary.lookup("SELECT", budget) catch return false;
+    var prefixes: [2]usize = undefined;
+    var lexical: crs.sql_tokens.Context = .{
+        .input = "SELECT 1",
+        .prefixes = &prefixes,
+        .budget = budget,
+    };
+    var token: crs.sql_tokens.Token = .{};
+    _ = crs.sql_tokens.next(&lexical, &token) catch return false;
+    var fingerprint: crs.sql_folding.Result = .{};
+    crs.sql_folding.fingerprint(&lexical, &fingerprint) catch return false;
+    _ = crs.sql_detector.detect(&lexical, &fingerprint) catch return false;
+    var html = crs.html_tokens.Context.init("<a href='url'>", budget, .data);
+    _ = crs.html_tokens.next(&html) catch return false;
+    var xss: crs.xss_detector.Context = .{ .input = "<script>", .budget = budget };
+    _ = crs.xss_detector.detect(&xss) catch return false;
+    return true;
+}
+
+fn macroProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
+    var program = crs.macros.compile(allocator, "%{TX.value}", .{}) catch return false;
+    defer program.deinit();
+    const view: crs.variables.View = .{ .entries = &.{}, .coverage = @splat(.complete) };
+    var pieces: [1][]const u8 = undefined;
+    var output: [16]u8 = undefined;
+    _ = program.expand(.{
+        .view = &view,
+        .pieces = &pieces,
+        .output = &output,
+        .budget = budget,
+    }) catch return false;
+    return true;
 }

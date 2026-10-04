@@ -55,6 +55,33 @@ test "CRS source inventory agrees with the independently reviewed release" {
     try std.testing.expectEqual(@as(usize, 435), counts.transforms.count("none"));
 }
 
+test "every stock runtime macro compiles into bounded typed parts" {
+    const macros = @import("macros.zig");
+    const primitives = @import("primitives.zig");
+    var builder = compiler.Compiler.init(std.testing.allocator, .{});
+    defer builder.deinit();
+    for (fixture.sources) |file| try builder.addSource(file.path, file.bytes);
+    var plan = try builder.finish();
+    defer plan.deinit();
+    var count: usize = 0;
+    for (plan.conditions) |condition| {
+        for (condition.actions) |action| {
+            const value = action.value orelse continue;
+            if (std.mem.indexOf(u8, value, "%{") == null) continue;
+            var program = try macros.compile(std.testing.allocator, value, .{});
+            defer program.deinit();
+            count += 1;
+        }
+        const expression = condition.expression orelse continue;
+        if (!primitives.supported(expression.kind) or
+            std.mem.indexOf(u8, expression.argument, "%{") == null) continue;
+        var program = try macros.compile(std.testing.allocator, expression.argument, .{});
+        defer program.deinit();
+        count += 1;
+    }
+    try std.testing.expect(count > 1000);
+}
+
 test "every stock rule regex compiles within the published native limits" {
     const regex = @import("regex.zig");
     var builder = compiler.Compiler.init(std.testing.allocator, .{});

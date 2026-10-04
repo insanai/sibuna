@@ -264,6 +264,11 @@ pass. The XSS tokenizer uses an iterative state machine with constant stack use,
 decision stage shares the budget across five HTML contexts. The detector check compares
 both its token ranges and attack decisions. The transaction executor, structured inputs and
 daemon activation still require their own compatibility gates.
+Runtime strings compile into literal and typed variable parts. Expansion uses a shared
+phase-specific variable view, caller-owned scratch and one work budget; all lookups and
+capacity checks finish before output is copied. Missing keys in complete collections
+expand empty, while unavailable, incomplete or ambiguous references remain explicit errors.
+The native tests compile the stock runtime macros and check output ownership and failures.
 The native matcher uses ordered regular-expression simulation, length-aware literal
 search, sparse phrase automata and family-separated address intervals. Transform pipelines
 keep the reference's order and change flags, including multi-match behavior. Phrase

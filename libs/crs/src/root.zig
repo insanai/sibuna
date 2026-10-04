@@ -25,6 +25,8 @@ pub const sql_folding = @import("sql_folding.zig");
 pub const sql_detector = @import("sql_detector.zig");
 pub const html_tokens = @import("html_tokens.zig");
 pub const xss_detector = @import("xss_detector.zig");
+pub const variables = @import("variables.zig");
+pub const macros = @import("macros.zig");
 
 test {
     _ = @import("release_test.zig");
@@ -51,4 +53,5 @@ test {
     _ = sql_detector;
     _ = html_tokens;
     _ = xss_detector;
+    _ = macros;
 }

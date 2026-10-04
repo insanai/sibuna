@@ -208,6 +208,41 @@ Capture-producing operators write transaction-owned slices or offsets, never tem
 references. Detector parity is checked against upstream libinjection, including fingerprints
 and error outcomes. Third-party data and code retain their own license notices.
 
+== Transaction views and macro expansion
+
+A shared variable view contains typed collection entries, borrowed name/value bytes and
+per-collection coverage for the current phase. Empty, absent, unavailable and incomplete
+collections are distinct. Fixed ASCII key comparison preserves the pinned reference's
+case-insensitive dictionaries without its locale-dependent conversion of signed bytes.
+Transaction entries retain their input order; selectors may evaluate every duplicate.
+Macro expansion cannot reproduce an unspecified C hash-table iteration order reliably.
+If a macro reference selects more than one value, return an explicit ambiguous-variable
+outcome rather than pick an undocumented value. The stock macro profile uses exact keys
+or scalar variables; a bare keyed collection and nested macro references reject compilation.
+These constraints appear in the compatibility report and do not erase duplicate inputs.
+
+Compile each runtime string into literal and typed-reference parts off-path, bounded by
+64 KiB of source and 1,024 parts. `%{TX.name}` and `%{TX:name}` select the same key; a key
+retains dots after its first collection separator. Unknown collections, malformed braces,
+empty keys and NUL source are diagnostics. Missing keys in a complete collection expand
+to an empty string, matching the pinned runtime-string evaluator. An unavailable or
+incomplete collection is an error even if a conveniently matching entry is present.
+Expanded values are bytes and are not recursively parsed as additional macros.
+
+Expansion borrows caller-owned piece scratch and a disjoint output buffer. Resolve all
+parts, validate coverage and unique selection, add lengths with checked arithmetic and
+reserve the output-copy work before writing output. Every entry scan, key comparison,
+part and copied byte debits the transaction budget. Source and entry lifetimes cover the
+whole expansion. The view has no callbacks, SQL, network operations or allocation.
+
+*Lemma (atomic bounded expansion).* For $P$ parts, $E$ entries and maximum key length $K$,
+resolution costs at most $O(P E K)$, charged to the shared budget; copying costs $O(L)$
+for the checked expanded length $L$. Each resolved part occupies one caller-owned slice.
+No output write occurs until every lookup, capacity check and copy-work reservation has
+succeeded, so a rejected expansion leaves output unchanged. Copies then cannot fail under
+the disjoint-buffer and lifetime invariants. No partial argument can be mistaken for a
+completed expansion, and injected `%{...}` bytes in values cannot add lookup work.
+
 Transforms required by this release are `base64Decode`, `cmdLine`, `compressWhitespace`,
 `cssDecode`, `escapeSeqDecode`, `hexEncode`, `htmlEntityDecode`, `jsDecode`, `length`,
 `lowercase`, `none`, `normalizePath`, `normalizePathWin`, `removeCommentsChar`,
