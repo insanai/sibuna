@@ -385,6 +385,37 @@ executor: no rule effects may be published from a resource-limited partial evalu
 The reference materializes all stage values before matching; the executor must demonstrate
 equivalent ordering of repeated match effects rather than stop after the first match.
 
+=== Validated constant-space transform replay
+
+The native executor may replace per-stage value copies with a validated replay for one
+snapshotted field. Its input bytes, generation and transformation configuration are immutable
+through both passes. First run the complete pipeline without predicates or rule effects,
+using two dedicated scratch buffers and the transaction budget. Any transform failure stops
+before that field's effects. Measure the exact charged transform work $D$ and reserve another
+$D$ from the transaction budget before exposing a matching value. The replay receives that
+separate reserved budget; predicates and effects continue to use the remaining shared budget.
+Interleaved actions therefore cannot consume the replay's already reserved transform work.
+The outer ledger counts the reservation once; inner debits spend those transferred units,
+so work reporting does not sum both the reservation and its later consumption.
+
+Run the same pure pipeline again and expose values in the reference order, copying captures
+or persistent values before advancing scratch. No request allocation or per-stage value pool
+is required. The replay object stays at a stable caller-owned address because its iterator
+borrows its reserved budget. Failure invalidates it permanently. This method doubles the
+transform work and counts both passes; performance reporting must include that cost. It
+does not reserve predicate work or make multiple rule effects atomic. An exhausted predicate
+or effect still stops the transaction with an explicit limit outcome.
+
+*Lemma (replay equivalence).* Under immutable input/configuration and deterministic pure
+transforms, induction on stage index gives the same bytes and change flag in both passes.
+Their sequence of visible values is consequently the same as materialization before matching.
+The first pass establishes capacity and the cost $D$; reserving $D$ gives the second pass enough
+transform work independently of intervening actions. Two scratch buffers require space bounded
+by the largest intermediate value, while total transform work is twice the sum of stage costs.
+The lemma does not permit retaining scratch slices after the next value, mutating input bytes,
+or substituting transforms that depend on evolving transaction state. Those would invalidate
+the proof and must use a separately specified execution method.
+
 Escape, command-line and comment transforms use monotone bounded scans. Escape decoding
 consumes one literal byte or one escape of at most four bytes; unknown escapes discard
 the backslash, incomplete hexadecimal escapes retain their following bytes, and octal

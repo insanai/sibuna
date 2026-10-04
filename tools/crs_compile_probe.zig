@@ -27,11 +27,12 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
     defer pipeline.deinit();
     var transformed: [4]u8 = undefined;
     var alternate: [4]u8 = undefined;
-    var iterator = crs.pipeline.Iterator.init(&pipeline, .{
+    var iterator: crs.pipeline_replay.Replay = .{};
+    iterator.init(&pipeline, .{
         .input = "xx",
         .scratch = .{ &transformed, &alternate },
         .budget = &budget,
-    });
+    }) catch return 11;
     _ = iterator.next() catch return 11;
     _ = crs.transforms.apply(.lowercase, .{
         .input = "XX",

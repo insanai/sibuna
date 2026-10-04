@@ -194,7 +194,44 @@ test "every stock transform pipeline compiles and has bounded intermediate scrat
         // A future source profile cannot silently omit a transform or reserve
         // overflowing expansion. Full execution also checks per-field capacity.
         _ = try compiled.requiredScratch(64 * 1024);
+        try stockReplay(&compiled, "Aa\t/<script>\x00\xff");
     }
+}
+
+fn stockReplay(program: *const @import("pipeline.zig").Pipeline, input: []const u8) !void {
+    const pipeline = @import("pipeline.zig");
+    const replay = @import("pipeline_replay.zig");
+    const allocator = std.testing.allocator;
+    const capacity = try program.requiredScratch(input.len);
+    const first = try allocator.alloc(u8, capacity);
+    defer allocator.free(first);
+    const second = try allocator.alloc(u8, capacity);
+    defer allocator.free(second);
+    var expected: std.ArrayList([]const u8) = .empty;
+    defer expected.deinit(allocator);
+    defer for (expected.items) |bytes| allocator.free(bytes);
+    var budget: @import("work.zig").Budget = .{ .remaining = 16_000_000 };
+    const frame: pipeline.Frame = .{
+        .input = input,
+        .scratch = .{ first, second },
+        .budget = &budget,
+    };
+    var iterator = pipeline.Iterator.init(program, frame);
+    while (try iterator.next()) |value| {
+        const owned = try allocator.dupe(u8, value.bytes);
+        errdefer allocator.free(owned);
+        try expected.append(allocator, owned);
+    }
+    const cost = 16_000_000 - budget.remaining;
+    budget.remaining = cost * 2;
+    var repeated: replay.Replay = .{};
+    try repeated.init(program, frame);
+    for (expected.items) |bytes| {
+        try std.testing.expectEqualStrings(bytes, (try repeated.next()).?.bytes);
+    }
+    try std.testing.expect(try repeated.next() == null);
+    try std.testing.expectEqual(@as(u64, 0), budget.remaining);
+    try std.testing.expectEqual(@as(u64, 0), repeated.reserved.remaining);
 }
 
 test "every stock phrase operator and its complete data file compile in the native profile" {

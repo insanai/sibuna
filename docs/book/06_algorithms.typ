@@ -282,6 +282,10 @@ old value lifetimes, copy work is reserved before mutation, and failed mutations
 continued evaluation. Score arithmetic checks the reference's signed 32-bit domain instead
 of allowing overflow to wrap a score. These storage contracts do not establish action timing
 or full transaction execution.
+Validated transform replay checks the whole pipeline before exposing field match values,
+then reserves its second pass's work independently of predicates and actions. All stock
+pipelines are tested against ordinary iteration. The design uses two scratch buffers and
+counts both passes; it trades extra transform work for avoiding per-stage value copies.
 The native matcher uses ordered regular-expression simulation, length-aware literal
 search, sparse phrase automata and family-separated address intervals. Transform pipelines
 keep the reference's order and change flags, including multi-match behavior. Phrase
