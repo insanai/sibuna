@@ -279,6 +279,7 @@ zig build crs-detector-check -j2 -- --download
 zig build crs-detector-data -j2 -- --check --download
 zig build crs-signature-check -j2 -- --download
 zig build crs-acquisition-check -j2
+zig build crs-package-check -j2 -- --download
 ```
 
 The native tests cover ownership, bounds, action timing and the prepared stock graph.
@@ -291,3 +292,8 @@ the proxy and preserves duplicate occurrences before copying them into the trans
 These development oracles are not runtime dependencies. They do not establish
 whole-engine FTW compatibility, live HTTP coverage or performance acceptance. The daemon
 still uses its existing Gate and Shield behavior until the remaining SID gates pass.
+
+Signed-package preparation verifies before bounded gzip/tar decoding and compiles privately
+with a reclaiming allocator that caps live payload. The program retains no staging-buffer
+borrows. Package qualification checks that ownership against the actual signed release;
+the generation publisher still decides compatibility and activation separately.

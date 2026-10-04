@@ -13,9 +13,9 @@ it refuses to replace assets on an already published release. macOS packages are
 Windows packages contain a native executable qualified on a Windows runner. `python3 tools/build_site.py` builds the GitHub Pages documentation.
 The release workflow also requires the native CRS contract suite, portable compile probes
 and pinned detector, primitive, PCRE2 and native/GnuPG signature comparisons,
-plus independent JSON, form, MIME, XML, URI and cookie acquisition comparisons. These checks
-qualify the CRS library;
-they do not establish daemon activation or complete phased HTTP coverage by themselves.
+plus independent JSON, form, MIME, XML, URI and cookie acquisition comparisons, and native
+signed-package unpacking, private compilation and staging ownership. These checks qualify
+the CRS library; they do not establish daemon activation or complete phased HTTP coverage.
 
 ---
 

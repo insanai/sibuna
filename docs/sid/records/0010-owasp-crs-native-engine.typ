@@ -1508,6 +1508,51 @@ bounded authenticated management channel or independent verified retrieval. Node
 unapplied security revision are visibly unhealthy; policy enforcement must not report them
 as converged. Concurrent updates use existing storage-owner compare-and-swap discipline.
 
+== Bounded package preparation
+
+Authenticate the complete compressed archive before expansion. The native gzip adapter
+uses Zig's fixed-window decoder, bounds compressed and expanded bytes, validates footer
+CRC and size, and requires exact compressed consumption. Concatenated members and
+trailing bytes are not silently accepted. The management work ledger charges compressed
+input and expanded copy/CRC visits; it is separate from the transaction budget.
+
+The minimal-release archive profile supports canonical USTAR and the plain GNU headers
+used by the pinned release. It refuses links, devices, sparse files, PAX/GNU extensions,
+noncanonical names, paths outside the expected version root, duplicate entries, nonzero
+padding, invalid checksums and incomplete terminal blocks. Check numeric sizes against
+the remaining source bound before block rounding, including on 32-bit targets. Unpacking
+creates no filesystem entries. Copied relative names and borrowed file slices remain private
+until every selected rule and data reference has compiled.
+
+Canonical versions contain three unsigned 16-bit decimal components without leading zeros,
+prerelease text or separators. The archive root and prepared component signature must match
+that version. Load the setup example and every direct rules/*.conf file in lexical order;
+resolve *.data references within that artifact. This stock profile does not activate plugins
+or treat optional example exclusions as operator configuration.
+
+Keep the package and its allocator identity at a stable heap address. A single-owner allocator
+tracks live payload, permits growth only within the 64 MiB compiled ceiling, reclaims temporary
+compiler buffers, and records its high-water mark. Distinguish ceiling exhaustion from a
+backing allocator failure. Backend metadata and resident memory remain separately measured
+quantities. A monotonic fixed arena is unsuitable here because temporary compilation storage
+would consume the ceiling after release. Prepared programs own all retained source and
+table bytes; staging buffers can be destroyed before evaluation.
+
+*Lemma (private package bound).* A successful package owns an authenticated, complete
+program whose live compilation payload never exceeded its configured ceiling.
+
+*Proof.* Signature verification precedes decoding and tar parsing. Every decoded/archive
+bound is checked before copying or rounding, and all selected directives must compile.
+The allocator tests each allocation or resize against the remaining live capacity before
+calling its backing allocator; accounting changes only after success and decreases on free.
+The stable package outlives all retained allocator interfaces. A refusal unwinds private state
+without publication; successful staging cleanup leaves only program-owned bytes. $square$
+
+Package qualification prepares the actual signed release, destroys its archive/signature
+contents before executing benign and malicious transactions, and rejects version mismatch,
+tampering and truncation. This gate qualifies preparation and ownership, not runtime update
+publication or full FTW compatibility.
+
 = Console and evidence
 
 The page presents current release, mode, coverage, thresholds, paranoia levels, last verified

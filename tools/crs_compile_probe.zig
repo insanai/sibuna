@@ -391,3 +391,22 @@ pub export fn crsHttpProbe(
     transaction.finish(.inspected) catch return 10;
     return 0;
 }
+
+pub export fn crsPackageProbe(
+    allocator: *const std.mem.Allocator,
+    archive: [*]const u8,
+    archive_length: usize,
+    signature: [*]const u8,
+    signature_length: usize,
+    now: u64,
+) u8 {
+    if (archive_length > 8 * 1024 * 1024 or signature_length > 16 * 1024) return 1;
+    const package = crs.release_package.prepare(allocator.*, .{
+        .archive = archive[0..archive_length],
+        .signature = signature[0..signature_length],
+        .version = .{ .major = 4, .minor = 30, .patch = 0 },
+        .now = now,
+    }) catch return 2;
+    defer package.deinit();
+    return 0;
+}

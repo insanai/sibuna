@@ -124,6 +124,13 @@ const Probe = struct {
 
 const probes: []const Probe = &.{
     .{
+        .name = "sibuna-crs-package-probe",
+        .source = "tools/crs_package_probe.zig",
+        .checker = "tools/crs_package_check.py",
+        .step = "crs-package-check",
+        .description = "Qualify signed unpacking, private compilation and staging ownership",
+    },
+    .{
         .name = "sibuna-crs-acquisition-probe",
         .source = "tools/crs_acquisition_probe.zig",
         .checker = "tools/crs_acquisition_check.py",
