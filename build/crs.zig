@@ -39,7 +39,21 @@ pub fn add(
         }),
     });
     addRegexCheck(b, host, fixture);
-    addPrimitiveCheck(b, host);
+    addProbeCheck(b, host, .{
+        .name = "sibuna-crs-primitive-probe",
+        .source = "tools/crs_primitive_probe.zig",
+        .checker = "tools/crs_primitive_check.py",
+        .step = "crs-primitive-check",
+        .description = "Check the supported subset against pinned SecLang vectors",
+    });
+    addProbeCheck(b, host, .{
+        .name = "sibuna-crs-detector-probe",
+        .source = "tools/crs_detector_probe.zig",
+        .checker = "tools/crs_detector_check.py",
+        .step = "crs-detector-check",
+        .description = "Compare native detector stages with pinned libinjection",
+    });
+    addDataCheck(b);
     const run = b.addRunArtifact(audit);
     run.addPassthruArgs();
     b.step("crs-audit", "Inventory an extracted CRS release; does not activate rules")
@@ -101,20 +115,35 @@ fn addCompilationChecks(b: *std.Build) *std.Build.Step {
     return step;
 }
 
-fn addPrimitiveCheck(b: *std.Build, crs: *std.Build.Module) void {
+const Probe = struct {
+    name: []const u8,
+    source: []const u8,
+    checker: []const u8,
+    step: []const u8,
+    description: []const u8,
+};
+
+fn addProbeCheck(b: *std.Build, crs: *std.Build.Module, contract: Probe) void {
     const probe = b.addExecutable(.{
-        .name = "sibuna-crs-primitive-probe",
+        .name = contract.name,
         .root_module = b.createModule(.{
-            .root_source_file = b.path("tools/crs_primitive_probe.zig"),
+            .root_source_file = b.path(contract.source),
             .target = b.graph.host,
             .optimize = .safe,
             .imports = &.{.{ .name = "crs", .module = crs }},
         }),
     });
     const python = if (@import("builtin").os.tag == .windows) "python" else "python3";
-    const check = b.addSystemCommand(&.{ python, "tools/crs_primitive_check.py" });
+    const check = b.addSystemCommand(&.{ python, contract.checker });
     check.addArtifactArg(probe);
     check.addPassthruArgs();
-    b.step("crs-primitive-check", "Check the supported subset against pinned SecLang vectors")
+    b.step(contract.step, contract.description).dependOn(&check.step);
+}
+
+fn addDataCheck(b: *std.Build) void {
+    const python = if (@import("builtin").os.tag == .windows) "python" else "python3";
+    const check = b.addSystemCommand(&.{ python, "tools/crs_detector_data.py", "--check" });
+    check.addPassthruArgs();
+    b.step("crs-detector-data", "Reproduce native detector data from pinned source")
         .dependOn(&check.step);
 }

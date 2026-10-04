@@ -8,5 +8,27 @@
   "format": "SBSQ001: 8-byte magic, u32le count, 8-byte (u32le key offset, u16le length, u8 type, zero) entries, concatenated ASCII keys",
   "license": "BSD-3-Clause",
   "asset_bytes": 133433,
-  "asset_sha256": "d605afb245c66a19b97d58cc3daa87fd389be8d8249637aa3f7dd7d7908c2125"
+  "asset_sha256": "d605afb245c66a19b97d58cc3daa87fd389be8d8249637aa3f7dd7d7908c2125",
+  "oracle_sources": [
+    {
+      "path": "src/libinjection_sqli.c",
+      "bytes": 72595,
+      "sha256": "ec73a2972434890dcf6312d2bce794ef1e04781f16a8d014cc4bfbd7c4909abd"
+    },
+    {
+      "path": "src/libinjection_sqli.h",
+      "bytes": 7107,
+      "sha256": "04ea8b256bb53c8e5e42ffbef2f949afe2df4d31154ca881589ddaea80888104"
+    },
+    {
+      "path": "src/libinjection_sqli_data.h",
+      "bytes": 206900,
+      "sha256": "2d1e025b91e4431e16f603d7dd454ad16bcfe68e91b7dc0102850c1976c58b94"
+    },
+    {
+      "path": "src/libinjection.h",
+      "bytes": 1633,
+      "sha256": "13f2e841662a13833c7cad342738e9bb5f3e307c4dc219dce7021fd9c1caaff2"
+    }
+  ]
 }
