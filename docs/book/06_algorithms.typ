@@ -292,6 +292,11 @@ keep the reference's order and change flags, including multi-match behavior. Phr
 matching uses complete unsigned-byte Aho–Corasick; SID 0010 documents known missed-match
 and capture defects in the pinned reference instead of copying them into protection.
 Each matcher shares an explicit work budget, and resource exhaustion remains an error.
+Prepared conditions now combine target snapshots, validated transform replay and local
+capture/TX effects. A reserved context rebuilds its variable view between actions and
+copies matched values before scratch is reused. Repeated fields and multi-match stages
+retain their effects; a failed condition clears matched variables without rolling back TX.
+This is condition evaluation, not yet a complete phased CRS generation.
 Operator/transform conformance, structured bodies, phased evaluation, generation updates
 and the CLI/console activation controls must pass the SID's remaining gates before the
 daemon can enable CRS. Current Gate and Shield behavior is unchanged.

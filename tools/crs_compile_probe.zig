@@ -55,6 +55,7 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
     if (!operatorProbe(allocator.*, &budget)) return 25;
     if (!selectionProbe(allocator.*, &budget)) return 26;
     if (!transactionProbe(allocator.*, &budget)) return 27;
+    if (!conditionProbe(allocator.*, &budget)) return 28;
     const result = crs.regex.match.search(
         &program,
         "xx",
@@ -158,4 +159,55 @@ fn setVarProbe(
         .budget = budget,
     }) catch return false;
     return true;
+}
+
+fn conditionProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
+    var builder = crs.compiler.Compiler.init(allocator, .{});
+    defer builder.deinit();
+    builder.addSource("probe.conf",
+        \\SecRule ARGS "@contains x" "id:1,setvar:tx.score=+1"
+    ) catch return false;
+    var source = builder.finish() catch return false;
+    defer source.deinit();
+    var program = crs.condition.compile(allocator, &source.conditions[0], &.{}, .{}) catch
+        return false;
+    defer program.deinit();
+    const input = [_]crs.variables.Entry{.{ .collection = .args, .key = "q", .value = "x" }};
+    var stored: [4]crs.variables.Entry = undefined;
+    var bytes: [64]u8 = undefined;
+    var store = crs.transaction_vars.Store.init(&stored, &bytes);
+    var merged: [16]crs.variables.Entry = undefined;
+    var matched: [4]crs.variables.Entry = undefined;
+    var matched_bytes: [64]u8 = undefined;
+    var context = crs.evaluation_context.Context.init(.{
+        .entries = &input,
+        .coverage = @splat(.complete),
+    }, &store, .{
+        .view = &merged,
+        .matched = &matched,
+        .bytes = &matched_bytes,
+    }) catch return false;
+    var snapshot: [4]crs.variables.Entry = undefined;
+    var count: [20]u8 = undefined;
+    var first: [4]u8 = undefined;
+    var second: [4]u8 = undefined;
+    var prefixes: [4]usize = undefined;
+    var pieces: [4][]const u8 = undefined;
+    var key: [16]u8 = undefined;
+    var value: [16]u8 = undefined;
+    var argument: [16]u8 = undefined;
+    const result = program.evaluate(.{
+        .context = &context,
+        .snapshot = &snapshot,
+        .count = &count,
+        .transforms = .{ &first, &second },
+        .prefixes = &prefixes,
+        .pieces = &pieces,
+        .key_output = &key,
+        .value_output = &value,
+        .argument_output = &argument,
+        .budget = budget,
+    }) catch return false;
+    const score = (store.get("score", budget) catch return false) orelse "";
+    return result and std.mem.eql(u8, score, "1");
 }

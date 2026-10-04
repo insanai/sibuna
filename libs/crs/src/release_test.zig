@@ -278,19 +278,10 @@ test "every stock condition prepares through the shared native operator interfac
     for (plan.conditions) |condition| {
         const expression = condition.expression orelse continue;
         var files: [256][]const u8 = undefined;
-        var used: usize = 0;
-        if (expression.kind == .pm_from_file) {
-            var names = std.mem.tokenizeAny(u8, expression.argument, " \t\r\n");
-            while (names.next()) |name| {
-                if (used == files.len) return error.TooManyDataFixtures;
-                files[used] = findData(name) orelse return error.MissingDataFixture;
-                used += 1;
-            }
-        }
         var program = try operators.compile(std.testing.allocator, .{
             .kind = expression.kind,
             .argument = expression.argument,
-            .phrase_files = files[0..used],
+            .phrase_files = try phraseFiles(expression, &files),
         }, .{});
         defer program.deinit();
         counts[@backingInt(expression.kind)] += 1;
@@ -298,6 +289,40 @@ test "every stock condition prepares through the shared native operator interfac
     }
     try std.testing.expectEqual(@as(usize, 693), total);
     for (counts) |count| try std.testing.expect(count > 0);
+}
+
+fn phraseFiles(expression: model.Expression, output: [][]const u8) ![]const []const u8 {
+    if (expression.kind != .pm_from_file) return &.{};
+    var names = std.mem.tokenizeAny(u8, expression.argument, " \t\r\n");
+    var used: usize = 0;
+    while (names.next()) |name| {
+        if (used == output.len) return error.TooManyDataFixtures;
+        output[used] = findData(name) orelse return error.MissingDataFixture;
+        used += 1;
+    }
+    return output[0..used];
+}
+
+test "all stock conditions compose selection transforms predicates and pre-chain writes" {
+    const evaluator = @import("condition.zig");
+    var builder = compiler.Compiler.init(std.testing.allocator, .{});
+    defer builder.deinit();
+    for (fixture.sources) |file| try builder.addSource(file.path, file.bytes);
+    var plan = try builder.finish();
+    defer plan.deinit();
+    for (plan.conditions) |*condition| {
+        var files: [256][]const u8 = undefined;
+        const data = if (condition.expression) |expression|
+            try phraseFiles(expression, &files)
+        else
+            &.{};
+        var program = try evaluator.compile(std.testing.allocator, condition, data, .{});
+        defer program.deinit();
+        try std.testing.expect(program.regexStates() <= 16384);
+    }
+    try std.testing.expectEqual(@as(usize, 701), plan.conditions.len);
+    // Preparing the match portion does not validate post-match or phase execution.
+    try std.testing.expect(!model.Plan.executable);
 }
 
 test "every stock address operator compiles without mapping IPv4 into IPv6" {

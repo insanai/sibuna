@@ -11,3 +11,9 @@ pub fn assertDisjoint(left: []const u8, right: []const u8) void {
     else
         first - second >= right.len);
 }
+
+pub fn assertExclusive(regions: []const []const u8) void {
+    for (regions, 0..) |left, index| {
+        for (regions[index + 1 ..]) |right| assertDisjoint(left, right);
+    }
+}

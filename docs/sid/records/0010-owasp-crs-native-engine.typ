@@ -180,6 +180,43 @@ and chain markers. The complete phase default binds to every rule when compilati
 finishes, including rules read before that declaration. Capturing defaults lexically at
 each rule's source position would differ from the reference's final ruleset lookup.
 
+== Condition effects and transaction views
+
+A prepared condition composes selection, validated transform replay, the predicate and
+local `capture` and `setvar` effects. It is not an executable generation: post-match
+controls, disruption, phase scheduling and entity coverage require separate validation.
+Evaluate every field and every reported transform stage, rather than returning after
+the first match. Apply operator captures, update matched variables, then execute local
+transaction writes in source order. Negation reverses predicate truth but does not
+invent captures for a failed operator. A successful capture-producing operator writes
+captures even when negation subsequently makes that candidate false; unmatched capture
+groups do not delete older TX keys. A condition with no matching candidate clears
+all four matched-variable collections; it does not undo earlier transaction writes.
+Chain traversal evaluates its child once after all parent candidates have run. A failed
+child cannot roll back the parent's already executed local writes.
+
+The transaction context borrows immutable acquired entries and owns reserved TX metadata,
+matched metadata, monotonic matched bytes and a separate merged-view array. Rebuild the
+merged view before each target, predicate and action, so earlier TX writes are visible
+without exposing metadata that a write can compact. A target snapshot remains separate
+from this merged view. Match values and their qualified names are copied before advancing
+transform scratch. Matched lists retain occurrence order and duplicates; their scalar
+views refer to the last occurrence. Native input order is deterministic, whereas the
+reference's unordered collection traversal does not specify a portable order. Do not
+admit externally supplied TX or matched entries into this context.
+
+*Lemma (effect lifetime).* Acquired bytes and generation constants remain immutable,
+TX replacements preserve old bytes, matched bytes are monotonic, and target metadata is
+copied before mutation. Consequently a target snapshot's byte references remain valid
+through its condition's later writes. Rebuilding the separate merged view cannot invalidate
+that snapshot. This does not establish equivalence for undefined reference ordering.
+
+*Failure rule.* Any selection, transform, predicate, capture, view-capacity or action
+failure poisons the context and TX store. Prior writes remain available only as failure
+evidence; replenishing a work budget cannot resume evaluation as a completed rule. The
+caller must apply its configured resource failure disposition and return the reserved
+slot. Bound metadata copies and matched-byte copies against the same work ledger.
+
 #table(
   columns: (2fr, 4fr),
   [Operator family], [CRS 4.30.0 names],
