@@ -57,6 +57,9 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
     };
     var token: crs.sql_tokens.Token = .{};
     _ = crs.sql_tokens.next(&lexical, &token) catch return 19;
+    var fingerprint: crs.sql_folding.Result = .{};
+    crs.sql_folding.fingerprint(&lexical, &fingerprint) catch return 20;
+    _ = crs.sql_detector.detect(&lexical, &fingerprint) catch return 21;
     const result = crs.regex.match.search(
         &program,
         "xx",

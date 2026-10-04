@@ -21,6 +21,8 @@ pub const phrases_source = @import("phrases_source.zig");
 pub const address_set = @import("address_set.zig");
 pub const injection_dictionary = @import("injection_dictionary.zig");
 pub const sql_tokens = @import("sql_tokens.zig");
+pub const sql_folding = @import("sql_folding.zig");
+pub const sql_detector = @import("sql_detector.zig");
 
 test {
     _ = @import("release_test.zig");
@@ -43,4 +45,6 @@ test {
     _ = address_set;
     _ = injection_dictionary;
     _ = sql_tokens;
+    _ = sql_folding;
+    _ = sql_detector;
 }

@@ -551,6 +551,27 @@ by 31 bytes and every input visit, dictionary comparison and copy is charged. To
 must compare kind, position, bytes, prefix counts and quote markers, not just the final
 attack Boolean. Tokenization and dictionary lookup alone are not an executable detector.
 
+SQL folding keeps the pinned eight-token array and at most five final fingerprint tokens.
+The extra token supplies lookahead for the fifth token. Ordered pair and triple rewrites,
+compound-word merging, trailing-comment handling and the five-token reductions must retain
+their reference order, counters and source metadata. Fixed-array copies debit their bound
+before writing. Rewrites that keep the window size change a token kind; reductions decrease
+the window size, and reading advances the source cursor. Independently of any amortized
+argument, every loop iteration debits work, so an unexpected rewrite cycle terminates with
+an explicit work-limit error. No unproved linear-time claim is made for the whole detector.
+The lexical routines, table and finite token window bound per-step work and memory.
+Fingerprint parity is checked with the exact pin before using the blacklist and whitelist;
+a fingerprint by itself is not an attack decision.
+
+`detectSQLi` performs the reference's at-most-five ANSI/MySQL and simulated-quote passes.
+The keyword-table fingerprint blacklist is followed by its small-pattern whitelist, with
+the original token counts, quote boundaries, trailing comments and case-sensitive
+`sp_password` exception. Capture is the positive fingerprint, not the original field.
+Whitelist checks retain the pin's clipped-length source indexing and signed-byte whitespace
+predicate, with explicit length checks before reading. An undefined reference read is an
+incomplete detector error, never an invented safe result. Every pass uses the same shared
+budget and scratch. A negative result does not erase exhaustion or publish a stale capture.
+
 == Lemma 4: sound prefiltering
 
 A candidate regex may be skipped by a literal prefilter only when the compiler has proven
