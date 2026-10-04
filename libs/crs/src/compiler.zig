@@ -28,6 +28,7 @@ pub const Error = actions.Error || selection.Error || error{
     UnknownOperator,
     DuplicateSignature,
     InvalidDefaults,
+    DuplicateDefaults,
 };
 
 pub const Compiler = struct {
@@ -153,7 +154,9 @@ pub const Compiler = struct {
                 &.{},
             .expression = expression,
             .actions = compiled,
-            .inherited_actions = self.defaults[@backingInt(resolved.phase) - 1] orelse &.{},
+            // The reference resolves defaults from the final phase table, not
+            // from the declarations visible at this rule's source position.
+            .inherited_actions = &.{},
         });
         if (self.pending_chain) |previous| self.conditions.items[previous].chain_next = index;
         const chain = actions.find(compiled, .chain) != null;
@@ -209,13 +212,21 @@ pub const Compiler = struct {
             bytes,
             self.limits.actions_per_condition,
         );
-        const phase = try actions.phase(
-            (actions.find(compiled, .phase) orelse return error.InvalidDefaults).value.?,
-        );
-        if (actions.find(compiled, .id) != null or actions.find(compiled, .chain) != null) {
+        const phase = if (actions.find(compiled, .phase)) |action|
+            try actions.phase(action.value.?)
+        else
+            model.Phase.request_headers;
+        if (actions.find(compiled, .pass) == null and actions.find(compiled, .deny) == null) {
             return error.InvalidDefaults;
         }
-        self.defaults[@backingInt(phase) - 1] = compiled;
+        for (compiled) |action| switch (action.kind) {
+            .id, .chain, .version => return error.InvalidDefaults,
+            .transform => if (action.transform.? == .none) return error.InvalidDefaults,
+            else => {},
+        };
+        const index = @backingInt(phase) - 1;
+        if (self.defaults[index] != null) return error.DuplicateDefaults;
+        self.defaults[index] = compiled;
     }
 
     /// Resolution occurs after all after-CRS exclusions have been read. Ownership
@@ -226,7 +237,11 @@ pub const Compiler = struct {
         if (self.pending_chain != null) return error.DanglingChain;
         for (self.conditions.items, 0..) |*condition, index| {
             self.fault = condition.site;
-            if (actions.find(condition.actions, .skip_after)) |action| {
+            condition.inherited_actions = self.defaults[@backingInt(condition.phase) - 1] orelse
+                &.{};
+            if (actions.find(condition.actions, .skip_after) orelse
+                actions.find(condition.inherited_actions, .skip_after)) |action|
+            {
                 condition.skip_to = try self.resolveMarker(action.value.?, index);
             }
         }
@@ -327,17 +342,60 @@ test "source and instruction budgets reject before publication" {
     );
 }
 
-test "defaults are captured at each rule's source position" {
+test "one final default per phase binds rules before and after its declaration" {
     var compiler = Compiler.init(std.testing.allocator, .{});
     defer compiler.deinit();
-    try compiler.addSource("defaults.conf", "SecDefaultAction \"phase:2,deny,status:403\"\n" ++
-        "SecRule ARGS x \"id:1\"\n" ++
-        "SecDefaultAction \"phase:2,pass\"\n" ++
+    try compiler.addSource("defaults.conf", "SecRule ARGS x \"id:1\"\n" ++
+        "SecDefaultAction \"phase:2,deny,status:403\"\n" ++
+        "SecDefaultAction \"pass\"\n" ++
+        "SecRule ARGS x \"id:3,phase:1\"\n" ++
         "SecRule ARGS x \"id:2\"\n");
     var plan = try compiler.finish();
     defer plan.deinit();
     try std.testing.expect(actions.find(plan.conditions[0].inherited_actions, .deny) != null);
     try std.testing.expect(actions.find(plan.conditions[1].inherited_actions, .pass) != null);
+    try std.testing.expect(actions.find(plan.conditions[2].inherited_actions, .deny) != null);
+}
+
+test "invalid or repeated phase defaults reject the complete candidate" {
+    for ([_][]const u8{
+        "phase:2,log",
+        "phase:2,block",
+        "phase:2,pass,t:none",
+        "phase:2,pass,id:9",
+        "phase:2,pass,chain",
+        "phase:2,pass,ver:x",
+    }) |text| {
+        var compiler = Compiler.init(std.testing.allocator, .{});
+        defer compiler.deinit();
+        var buffer: [128]u8 = undefined;
+        const line = try std.fmt.bufPrint(&buffer, "SecDefaultAction \"{s}\"", .{text});
+        try std.testing.expectError(
+            error.InvalidDefaults,
+            compiler.addSource("invalid.conf", line),
+        );
+        try std.testing.expectError(error.InvalidState, compiler.finish());
+    }
+    var compiler = Compiler.init(std.testing.allocator, .{});
+    defer compiler.deinit();
+    try compiler.addSource("first.conf", "SecDefaultAction \"pass\"");
+    try std.testing.expectError(error.DuplicateDefaults, compiler.addSource(
+        "second.conf",
+        "SecDefaultAction \"phase:1,deny\"",
+    ));
+}
+
+test "phase default skip destinations resolve with local override precedence" {
+    var compiler = Compiler.init(std.testing.allocator, .{});
+    defer compiler.deinit();
+    try compiler.addSource("jumps.conf", "SecDefaultAction \"pass,skipAfter:END\"\n" ++
+        "SecRule ARGS x \"id:1,phase:1,skipAfter:MIDDLE\"\n" ++
+        "SecMarker MIDDLE\n" ++
+        "SecRule ARGS y \"id:2,phase:1\"\nSecMarker END\n");
+    var plan = try compiler.finish();
+    defer plan.deinit();
+    try std.testing.expectEqual(@as(?usize, 1), plan.conditions[0].skip_to);
+    try std.testing.expectEqual(@as(?usize, 2), plan.conditions[1].skip_to);
 }
 
 fn allocationFailureCase(allocator: std.mem.Allocator) !void {

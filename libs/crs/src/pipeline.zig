@@ -6,7 +6,10 @@ const model = @import("model.zig");
 const transforms = @import("transforms.zig");
 const work = @import("work.zig");
 
-pub const Error = std.mem.Allocator.Error || transforms.Error || error{PipelineLimit};
+pub const Error = std.mem.Allocator.Error || transforms.Error || error{
+    PipelineLimit,
+    InvalidInheritedReset,
+};
 pub const Actions = struct {
     inherited: []const model.Action,
     local: []const model.Action,
@@ -37,8 +40,13 @@ pub const Pipeline = struct {
 };
 
 /// A local t:none suppresses defaults and local transforms through the last reset.
-/// A default-action none is an identity; it does not erase earlier default stages.
+/// The reference rejects t:none in phase defaults, even when a local reset suppresses them.
 pub fn compile(allocator: std.mem.Allocator, actions: Actions) Error!Pipeline {
+    for (actions.inherited) |action| {
+        if (action.kind == .transform and action.transform.? == .none) {
+            return error.InvalidInheritedReset;
+        }
+    }
     var local_start: usize = 0;
     var reset = false;
     var multi_match = false;
@@ -132,7 +140,7 @@ pub const Iterator = struct {
 test "last local reset suppresses defaults and prior stages while preserving duplicates" {
     const parser = @import("compiler_actions.zig");
     const allocator = std.testing.allocator;
-    const defaults = try parser.parse(allocator, "t:lowercase,t:none,t:hexEncode", 8);
+    const defaults = try parser.parse(allocator, "t:lowercase,t:hexEncode", 8);
     defer allocator.free(defaults);
     const local = try parser.parse(allocator, "t:length,t:none,t:lowercase,t:lowercase", 8);
     defer allocator.free(local);
@@ -151,6 +159,19 @@ test "last local reset suppresses defaults and prior stages while preserving dup
         &.{ .lowercase, .hex_encode },
         inherited.stages,
     );
+}
+
+test "local resets cannot hide an invalid inherited t:none" {
+    const parser = @import("compiler_actions.zig");
+    const allocator = std.testing.allocator;
+    const inherited = try parser.parse(allocator, "t:none", 8);
+    defer allocator.free(inherited);
+    const local = try parser.parse(allocator, "t:none,t:lowercase", 8);
+    defer allocator.free(local);
+    try std.testing.expectError(error.InvalidInheritedReset, compile(allocator, .{
+        .inherited = inherited,
+        .local = local,
+    }));
 }
 
 test "stage iteration follows change flags and never invents a final multiMatch value" {

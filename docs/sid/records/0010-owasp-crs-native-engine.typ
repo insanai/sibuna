@@ -172,6 +172,13 @@ not bypass other rules. `block` resolves through the configured disruptive defau
 CRS anomaly mode accumulates detections before its blocking evaluation. `deny` remains an
 explicit disruptive action. `skipAfter` is compiled to a forward instruction index, never a
 runtime text search. Logging and audit controls affect evidence, not detection truth.
+Within the one configuration context, a phase accepts one `SecDefaultAction`; repeated
+declarations reject the candidate instead of replacing it. Defaults without an explicit
+phase select request headers, as the pinned parser does. Each declaration must contain
+`pass` or `deny`, and must not contain `t:none` or configuration-only actions such as IDs
+and chain markers. The complete phase default binds to every rule when compilation
+finishes, including rules read before that declaration. Capturing defaults lexically at
+each rule's source position would differ from the reference's final ruleset lookup.
 
 #table(
   columns: (2fr, 4fr),
@@ -219,8 +226,9 @@ filtering need at most $N$ bytes, hex encoding needs $2 N$, and length needs the
 digit count of $N$. Capacity multiplication is checked. These primitives perform a bounded
 number of visits per input byte, so their time is $O(N)$; composing $T$ stages costs the
 sum of stage lengths, including expansion. The last local `t:none` suppresses inherited
-transforms and all local transforms through that reset. A `t:none` in default actions is
-an identity and does not discard preceding default transforms. Ordered duplicates remain.
+transforms and all local transforms through that reset. A `t:none` in default actions
+rejects the candidate even if a local reset suppresses those inherited transforms.
+Ordered duplicates remain.
 
 Ordinary matching consumes the final value. `multiMatch` consumes the original and each
 stage whose reference transform reports a change. This flag is not byte inequality:
