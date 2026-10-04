@@ -24,6 +24,8 @@ def snapshot(root_pid):
             processes[int(directory.name)] = parse_stat((directory / "stat").read_text())
         except (FileNotFoundError, ProcessLookupError):
             continue  # A process exited between directory listing and stat.
+    if root_pid not in processes:
+        raise ProcessLookupError("measured process exited during accounting")
     members = {root_pid}
     while True:
         children = {pid for pid, row in processes.items() if row["parent"] in members}

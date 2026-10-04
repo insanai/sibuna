@@ -49,6 +49,9 @@ class ValidationTests(unittest.TestCase):
         with patch.object(Path, "iterdir", return_value=[Path("/proc/100"), Path("/proc/900")]):
             with patch.object(Path, "read_text", side_effect=[text, ProcessLookupError()]):
                 self.assertEqual(snapshot(100)["pids"], [100])
+        with patch.object(Path, "iterdir", return_value=[]):
+            with self.assertRaises(ProcessLookupError):
+                snapshot(100)
 
     def test_cpu_accounting_excludes_child_time_and_handles_parentheses_in_names(self):
         # Fields 14/15 are own ticks, 16/17 child ticks; field 24 is resident pages.
