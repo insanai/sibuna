@@ -29,6 +29,43 @@
       "path": "src/libinjection.h",
       "bytes": 1633,
       "sha256": "13f2e841662a13833c7cad342738e9bb5f3e307c4dc219dce7021fd9c1caaff2"
+    },
+    {
+      "path": "src/libinjection_html5.c",
+      "bytes": 22311,
+      "sha256": "97bd702dcc3ce5fe33fc8bf358df7de911274587f97222b59590f6fd08462f39"
+    },
+    {
+      "path": "src/libinjection_html5.h",
+      "bytes": 913,
+      "sha256": "2a71e8d47a1e857c3d8e0c79292eee8e60eee8b761493320eccb4e470a8117f9"
+    },
+    {
+      "path": "src/libinjection_xss.c",
+      "bytes": 25498,
+      "sha256": "b0207fae9c0e16dbced21e91b358f59a6324976357f90c02efc9fce1e27ce4d9"
+    },
+    {
+      "path": "src/libinjection_xss.h",
+      "bytes": 267,
+      "sha256": "ff377b98579c5bed514df47d173c9daa83620eb10ea940099c3a32f42f5038d2"
     }
-  ]
+  ],
+  "xss_tables": {
+    "bytes": 7137,
+    "sha256": "bbd032d742bb0dffe5bf6c92e96a112f5e11f75cc406d0f56676a96edc0d807f",
+    "events": 298,
+    "attributes": 20,
+    "tags": 20
+  },
+  "test_archive": {
+    "bytes": 2218439,
+    "sha256": "0a002e1128332c1bc9560c9dfac4aff3eb16624e029e56030790874fea0a8be1",
+    "categories": {
+      "tokens": 249,
+      "folding": 118,
+      "sqli": 50,
+      "html5": 63
+    }
+  }
 }

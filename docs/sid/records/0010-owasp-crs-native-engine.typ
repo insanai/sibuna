@@ -572,6 +572,49 @@ predicate, with explicit length checks before reading. An undefined reference re
 incomplete detector error, never an invented safe result. Every pass uses the same shared
 budget and scratch. A negative result does not erase exhaustion or publish a stale capture.
 
+XSS tokenization uses the same libinjection pin. A finite tagged state replaces its recursive
+state callbacks: each step either yields a token, terminates or changes state in one iterative
+driver. Data, tag names, attribute names/values, declarations, comments and CDATA keep their
+distinct token kinds. Token slices borrow the immutable input and remain within its length.
+Five initial contexts represent data and unquoted, single-, double- and back-quoted values.
+This is a detector grammar, not an HTML sanitizer or a general browser parser.
+The pin's signed-byte attribute-whitespace routine returns `0xff` as its EOF sentinel;
+preserve that declared byte-profile behavior explicitly on every native and Wasm target.
+
+*Lemma (HTML tokenizer storage and progress).* State, cursor and one offset/length token
+require constant auxiliary storage. Every state dispatch and byte read debits the shared
+budget before execution. Attribute slash runs, malformed tag transitions and comment scans
+return through the iterative driver, so their length cannot increase call-stack depth.
+State-only transitions have bounded fixed work; scanning loops advance a cursor. Exhaustion
+poisons the context and cannot be mistaken for end of input. Even a future erroneous state
+cycle ends at the work bound. Tests compare every token kind, offset and byte range with the
+pin in all five contexts, including empty and binary inputs, before detector use.
+
+`detectXSS` runs those five contexts over one input and one shared budget. Its positive
+predicates are the pin's tag and attribute classifications, URL prefixes, declarations and
+legacy comment forms. Static event, attribute and tag tables are reproducibly extracted
+from the same digest-pinned source; they are detector data with the upstream BSD notice.
+The tables contain 298 distinct event names (one duplicate is removed), 20 attribute
+classifications and 20 complete tag names. A positive `detectXSS` capture is the evaluated
+field, whereas `detectSQLi` captures its fingerprint; the executor must own the captured
+bytes before its transformation scratch is reused.
+ASCII comparison skips embedded NUL, and numeric HTML references preserve the pinned
+decoder's consumed-length and low-byte comparison semantics. Short or malformed references
+return their literal ampersand without reading beyond the supplied length. Event-name prefix
+comparisons are bounded by the attribute token, even where the C routine reads a fixed
+event-name length without checking that token's length. Such undefined reference reads are
+excluded from a parity claim. Style values and banned attributes are detected when a value
+token occurs, retaining the reference's attribute-state reset ordering. This algorithm is
+not evidence that arbitrary HTML is safe, nor a replacement for application output encoding.
+
+*Lemma (XSS decision bound).* There are five passes and finite static classification tables.
+Each token, table comparison, numeric-reference byte and comment search is charged to the
+same budget. Numeric accumulation checks the fixed maximum before its next multiplication;
+indices and consumed lengths remain within the field. The detector allocates no scratch
+proportional to the input. Consequently its auxiliary storage is constant and its charged
+work cannot exceed the transaction budget. A work error poisons the detector context; a
+later context pass cannot convert that error into a negative result.
+
 == Lemma 4: sound prefiltering
 
 A candidate regex may be skipped by a literal prefilter only when the compiler has proven

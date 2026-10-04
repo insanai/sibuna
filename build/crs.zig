@@ -144,6 +144,9 @@ fn addDataCheck(b: *std.Build) void {
     const python = if (@import("builtin").os.tag == .windows) "python" else "python3";
     const check = b.addSystemCommand(&.{ python, "tools/crs_detector_data.py", "--check" });
     check.addPassthruArgs();
-    b.step("crs-detector-data", "Reproduce native detector data from pinned source")
-        .dependOn(&check.step);
+    const xss = b.addSystemCommand(&.{ python, "tools/crs_xss_data.py", "--check" });
+    xss.addPassthruArgs();
+    const step = b.step("crs-detector-data", "Reproduce native detector data from pinned source");
+    step.dependOn(&check.step);
+    step.dependOn(&xss.step);
 }
