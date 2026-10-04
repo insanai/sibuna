@@ -76,6 +76,11 @@ and peak resident memory; `python3 benchmarks/compare.py --anubis <binary>` meas
 operations; `python3 benchmarks/cluster.py` compares one node with a three-node replicated
 cluster under `wrk`. Third-party binaries are supplied from their official releases and never
 committed.
+`python3 benchmarks/bunkerweb.py` compares proxy and inspection profiles against a verified
+official BunkerWeb image and optional Anubis binary, locally or with a separate SSH load host.
+`admission_http.py` measures protected HTTP workloads; `admission_operations.py` measures native
+proof and session operations with two clients on that load host. See
+`benchmarks/results/README.md` for the isolated fixture, scope and replay commands.
 Benchmarks must not add instrumentation to request code. Allocator statistics must be labelled
 as instrumented, source-audited, or unknown. Competitor comparisons require pinned runnable
 artifacts, equivalent workloads, and provenance; fixed unsourced model rows are not accepted.

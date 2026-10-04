@@ -4,6 +4,155 @@ Run `sh benchmarks/run-all.sh` for primitive measurements and
 `python3 benchmarks/distributed.py` for the three-process HTTP/replication matrix.
 Both write timestamped results and update their respective `latest` JSON files.
 
+## Three-product comparisons
+
+The fresh 4 October 2026 families use Sibuna v0.2.0 built with Zig 0.17.0 at ReleaseSafe,
+Anubis's verified official v1.27.0 Linux amd64 binary, and BunkerWeb's verified official
+1.6.15 Linux amd64 image. Products run sequentially on `insan@10.175.52.18`, with the load
+clients on `insan@10.175.52.20`, containers on different physical hosts. Every family records
+source and executable digests, artifact versions, configuration, affinity and individual samples.
+
+- `products-proxy-two-host-latest.json`: seven unconditional proxy/inspection profiles,
+  four workloads, five rounds; 140 validated samples. Adds Anubis to the fixture below.
+- `products-admission-http-two-host-latest.json`: genuine sessions, no-session protected
+  responses, explicitly allowed static paths and SQL injection with a session. Five native
+  reverse-proxy profiles and three native forward-auth profiles, five rounds; 160 samples.
+- `products-admission-operations-two-host-latest.json`: session and missing-session checks,
+  fresh proof verification and complete challenge bootstrap from two remote Python clients.
+  Six product/mode/token configurations, seven batches; 168 operation samples.
+
+Protected comparisons match SHA-256 proof work at 16 leading zero bits (four zero hex digits).
+The BunkerWeb JavaScript challenge has that fixed requirement in the shipped image; neither
+its challenge code nor its verifier is modified. Every session comes from a real solved proof.
+Proof solving is untimed. Synthetic signing secrets and a trusted forwarded address belong to
+this private fixture, not a deployment recipe. All protected requests advertise gzip; Anubis's
+native challenge compression remains active. Probes decode gzip to validate content.
+The unconditional proxy comparison requests identity encoding.
+
+A missing session returns challenge HTML for Sibuna/Anubis reverse proxies, a challenge
+redirect for BunkerWeb and 401 for the native forward-auth checks. All timed and warmup HTTP
+statuses are counted, transport errors must be zero, and pre/post probes verify the response
+class and origin body. BunkerWeb has no native forward-auth endpoint in this fixture, so it
+is explicitly omitted from that mode. Its operation session checks include origin relay;
+these costs are not interchangeable with pure authorization costs.
+
+Operation batches have 200 operations, or 32 fresh proofs, each split between two remote
+Python processes. An operation is the complete native journey: bootstrap has two requests
+for Sibuna (HTML + JSON), one for Anubis (HTML) and two for BunkerWeb (redirect + HTML).
+Cookies from a bootstrap response are carried into the next request. Every prepared proof
+is consumed once; all request counts and statuses are checked. The record retains Sibuna's
+observed adaptive issuance difficulty during bootstrap. Two-client rates include Python,
+IPC, connection setup and HTTP; they are not server saturation or native verifier timings.
+Anubis Ed25519 and optional HS512 sessions have separate rows. CPU intervals include SSH
+invocation and tick changes below 0.01 seconds are unresolved; SSH and proof solving are
+outside the generator's operation clock.
+
+The earlier `bunkerweb-two-host-latest.json` records the comparison with the products on
+`insan@10.175.52.18` and wrk on `insan@10.175.52.20`, containers on different physical hosts.
+`bunkerweb-comparison-latest.json` is the separate loopback baseline. Both retain five
+five-second samples per workload after one second of warmup, rotating product order,
+64 connections and two load threads. The product gets four logical CPUs; the Caddy origin
+gets two different logical CPUs on the product host. The generator gets two logical CPUs
+on its own host, or two further CPUs for the loopback baseline. Samples are not pooled.
+
+The Sibuna executable is the v0.2.0 application built on the product host with Zig 0.17.0
+at `ReleaseSafe`, using the default native target, stripped, with storage and console compiled in but inactive. BunkerWeb is the official
+`bunkerity/bunkerweb:1.6.15` Linux amd64 image, with nginx 1.30.5 and CRS 4.29.0. The recorded
+manifest and layer digests identify the downloaded artifacts; the fixture does not patch
+its configuration generator, ModSecurity or CRS. It runs natively from an unpacked image
+inside a private mount namespace, with no Docker daemon or CPU emulation. The scheduler,
+database and management UI are not launched.
+
+The six profiles are direct origin, Sibuna Gate, BunkerWeb with ModSecurity/CRS disabled,
+Sibuna Shield, BunkerWeb with ModSecurity/CRS enabled, and CRS enabled with a small custom
+error page. Each receives the same benign GET, approximately 8 KiB JSON POST, SQL-injection
+query and SQL-injection JSON POST. Admission is unconditional; browser challenges are off.
+The two attacks must return 403 for every inspection profile and 200 for proxy-only profiles.
+Functional probes check the origin body and denial body; a wrk response hook counts every
+timed status. A transport failure or unexpected status prevents publication.
+
+The stock BunkerWeb denial body is 69,282 bytes, versus Sibuna's 235 bytes. The additional
+CRS profile uses a 235-byte static error page through custom server configuration. Its URI
+error redirect changes POST to GET for the static handler and retains status 403. The
+shipped `ERRORS` named-location route preserves POST and returned 405 in the preliminary
+test, so that route is not used. Both stock and custom-page costs are reported. BunkerWeb
+upstream keepalive is explicitly enabled. Access and audit logging, feeds and compression
+are disabled; Sibuna keeps its native rate check with a high allowance.
+
+CPU sums `/proc` user/system ticks over the live product process tree, including nginx
+workers. Membership changes invalidate the sample. The accounting interval brackets the
+generator invocation, including SSH setup for the remote generator; wrk's own duration and
+histogram exclude SSH setup and result transfer. Peak summed RSS is sampled every 100 ms
+and counts shared pages more than once. Throughput is the median with observed min–max
+spread; p99 is the median of the five run percentiles at fixed concurrency, not an
+equal-rate latency comparison or a confidence interval.
+The direct-origin row has two allowed CPUs and receives external traffic itself; it is a
+fixture reference, not a mathematical ceiling for a four-CPU proxy whose origin uses loopback.
+The controller monitored progress and staged verification code over SSH during the network
+run. Neither a compiler nor another product benchmark overlapped it, but it was not an
+isolated network-capacity test.
+
+These shared containers do not control physical-host activity or CPU frequency. HTTP/1.1
+proxy and inspection cost is measured; TLS, large uploads, bot-detection accuracy and false
+positives are not. BunkerWeb's broader CRS rules, body parsing and response inspection are
+not equivalent to Sibuna's bounded heuristics. The fresh three-product families supersede
+the older loopback Anubis comparisons for this fixture; historical records remain separate. None passes the console-impact acceptance gate.
+
+Replay on a disposable Linux amd64 benchmark filesystem with Python 3, wrk, Caddy,
+`taskset`, `umoci`, and sudo access to `unshare`, `mount` and `chroot`:
+
+```sh
+zig build -Doptimize=safe -Dstrip=true -j2
+python3 benchmarks/bunkerweb_test.py
+python3 benchmarks/bunkerweb_image.py /tmp/bunkerweb-benchmark/image \
+  --reference sha256:1b96f672660cc32bfae93604ac297371222dc9039b2b09b8eee5e40ba9d35c35
+umoci unpack --rootless --image /tmp/bunkerweb-benchmark/image:benchmark \
+  /tmp/bunkerweb-benchmark/bundle
+python3 benchmarks/bunkerweb.py \
+  --rootfs /tmp/bunkerweb-benchmark/bundle/rootfs \
+  --image /tmp/bunkerweb-benchmark/image \
+  --anubis /path/to/anubis-1.27.0-linux-amd64/bin/anubis
+```
+
+For a separate load host, add `--load-host user@host --target-host <product-address>`.
+The generator needs Python 3 and wrk, verified SSH host keys and existing key authentication
+from the controller; agent forwarding can supply authentication without copying private
+keys. `--load-wrk` and `--load-library-dir` select an existing runtime. The recorded run uses
+`/home/insan/sibuna-launch-20261001/runtime/wrk` and its `lib` directory on `.20`.
+`--ssh-known-hosts` can select a dedicated file containing the already verified public host
+key. The remote profile listens on the product host's network interfaces, so use an isolated
+benchmark network. HTTP load goes directly between the hosts, not through SSH.
+Run one comparison at a time, with no concurrent builds or other benchmark jobs.
+
+Run `admission_http.py` and then `admission_operations.py` with the same rootfs, image,
+Anubis binary and SSH load arguments. The former uses five rounds, 64 connections and the
+same five-second timed/one-second warmup settings; the latter uses its seven-batch operation
+budgets above. Both products and generator retain the same CPU allowances. For example:
+
+```sh
+python3 benchmarks/admission_http.py \
+  --rootfs /tmp/bunkerweb-benchmark/bundle/rootfs \
+  --image /tmp/bunkerweb-benchmark/image \
+  --anubis /path/to/anubis-1.27.0-linux-amd64/bin/anubis \
+  --load-host user@load-host --target-host product-address
+python3 benchmarks/admission_operations.py \
+  --rootfs /tmp/bunkerweb-benchmark/bundle/rootfs \
+  --image /tmp/bunkerweb-benchmark/image \
+  --anubis /path/to/anubis-1.27.0-linux-amd64/bin/anubis \
+  --load-host user@load-host --target-host product-address
+```
+
+The two-host records use four product CPUs, two distinct origin CPUs and two generator
+CPUs. They refresh HTTP/admission comparisons, not the primitive, cluster or console-impact
+matrices. The shared-host caveats below apply to all three families.
+
+
+The helper downloads and verifies the official OCI image; `umoci` performs extraction.
+The namespace wrapper confines every temporary mount to its private namespace and drops
+privileges before running the image command. It does not install host packages or change
+host services. Fixture daemons and generator temporary files are stopped or removed on exit;
+the unpacked image and JSON measurements remain for reproduction.
+
 Primitive results contain seven batch measurements after untimed warmup and reset of mutable
 state. Timers run around loops, never around individual operations. Compiler barriers prevent
 pure verification work from being hoisted. Bot matcher comparisons use identical signatures
@@ -17,7 +166,7 @@ so timed issuance and fresh-proof verification batches measure successful operat
 production limiter check still runs; its default allowance and exhaustion behavior are not
 measured by this comparison. The result records the fixture allowance explicitly.
 
-Linux admission and whole-product comparisons pin every product thread to the same allowed
+Historical Linux admission and whole-product comparisons pin every product thread to the same allowed
 CPU set before warmup: two CPUs for admission, `--workers` CPUs for whole products. This
 matches CPU capacity rather than treating Sibuna accept threads as equivalent to Go's
 `GOMAXPROCS`. The origin and load generator retain native scheduling, and each product row

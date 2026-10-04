@@ -417,12 +417,46 @@ Sibuna combines proof-of-work admission, bounded application inspection and an o
 management console in one executable. Other projects cover different parts of that scope:
 
 - [Anubis](https://github.com/TecharoHQ/anubis) uses client challenges to protect upstream resources from scraper bots.
+- [BunkerWeb](https://github.com/bunkerity/bunkerweb) combines nginx, ModSecurity and OWASP CRS with bot challenges and an operator interface.
 - [ModSecurity](https://github.com/owasp-modsecurity/ModSecurity) and [Coraza](https://github.com/corazawaf/coraza) provide WAF engines for integration with web servers and applications.
 - [OWASP Core Rule Set](https://github.com/coreruleset/coreruleset) provides attack-detection rules for compatible WAF engines. Sibuna's heuristic detectors do not implement that rule language.
 
 The [book's empirical evaluation](https://insanai.github.io/sibuna/book/)
 compares pinned, runnable products under documented workloads. Each result identifies its
 revision, configuration and host; memory and throughput figures describe those measurements.
+
+### Measured comparison
+
+On 4 October 2026 we compared Sibuna v0.2.0, Anubis 1.27.0 and BunkerWeb 1.6.15 with the
+products on one Linux host and the request generator on another. Each product had four
+allowed logical CPUs, serving the same Caddy origin over HTTP/1.1 with 64 connections.
+This table uses unconditional admission, with challenges and management interfaces inactive.
+The book also covers real sessions, challenge responses and native admission operations.
+
+The table shows median request rates and the median of each run's p99 latency over five
+repeated measurements. The book includes the observed ranges, CPU cost and memory use.
+
+| Profile | Benign GET (req/s) | p99 (ms) | 8 KiB JSON POST (req/s) | p99 (ms) |
+| --- | ---: | ---: | ---: | ---: |
+| Origin directly | 70,759 | 4.67 | 13,719 | 9.01 |
+| Sibuna Gate | 71,270 | 4.12 | 13,719 | 9.16 |
+| Anubis | 28,277 | 7.50 | 13,718 | 9.20 |
+| BunkerWeb, CRS off | 13,617 | 8.27 | 12,300 | 8.94 |
+| Sibuna Shield | 70,909 | 4.06 | 13,719 | 9.08 |
+| BunkerWeb, CRS on | 2,730 | 32.73 | 797 | 98.42 |
+
+The JSON POST rates for Sibuna, Anubis and the direct origin are close to the same fixture
+limit; use the book's ranges and configuration when interpreting the results.
+
+BunkerWeb's CRS profile provides broader rules, structured body parsing and response
+inspection; Sibuna uses bounded heuristics. These tests measure request cost, not equivalent
+protection or bot-detection accuracy. Both hosts are shared containers with uncontrolled
+CPU frequency and host activity. The book also reports blocked requests with BunkerWeb's
+stock error page and a small custom page, so rendering cost is visible.
+
+See the [benchmark records and replay commands](benchmarks/results/README.md#three-product-comparisons)
+for the pinned artifacts, exact configuration and every sample. This comparison does not
+change the separate console-impact gate's recorded verdict.
 
 ---
 
@@ -472,9 +506,10 @@ Companies seeking a version under terms other than LGPL or AGPL can contact the 
 Vikrant Rathore and Ronak Rathore, about alternative licensing. Libraries and other third-party
 materials remain subject to their respective licenses.
 
-## Related open-source projects
+## Other software to consider
 
 - [Anubis](https://github.com/TecharoHQ/anubis): a proof-of-work admission proxy for reducing crawler traffic.
+- [BunkerWeb](https://github.com/bunkerity/bunkerweb): an nginx-based security platform with ModSecurity, OWASP CRS, bot challenges and an operator interface.
 - [OWASP ModSecurity](https://github.com/owasp-modsecurity/ModSecurity): a web application firewall engine integrated through web-server connectors.
 - [OWASP Coraza](https://github.com/corazawaf/coraza): a Go WAF library supporting ModSecurity rules and the OWASP Core Rule Set.
 - [OWASP Core Rule Set](https://github.com/coreruleset/coreruleset): maintained application-attack detection rules for compatible WAF engines.

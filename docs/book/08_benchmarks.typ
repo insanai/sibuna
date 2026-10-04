@@ -1,15 +1,17 @@
 #import "theme.typ": *
 #import "figures.typ": *
+#import "products.typ": proxy_meta_line, proxy_table
+#import "product_admission.typ": admission_meta_line, admission_http_table, admission_operations_table, bootstrap_work_line
 
 #part_page("VIII", [Empirical Evaluation], [
-  We present the measurements recorded by five committed performance harnesses: primitive
-  latencies, an admission-only comparison with Anubis, a whole-product comparison under an
-  external load generator with CPU and memory accounting, distributed behavior and local
-  replicated-cluster costs. The console has a separate isolation acceptance matrix.
-  Every number in this part is rendered from a results file at build time. Its header identifies
-  the tested revision and host. Historical September records predate the request-path changes
-  of 1 October 2026. The primitive suite was refreshed on 3 October with Zig 0.17; the other families
-  retain their own earlier revisions and do not qualify the current release.
+  We measure primitive costs, complete HTTP products, admission operations, distributed
+  behavior and replicated-cluster costs. The console has a separate isolation acceptance
+  matrix. Every number is rendered from a results file at build time; its header identifies
+  the tested revision and host. The 4 October three-product comparisons run Sibuna v0.2.0,
+  Anubis and BunkerWeb with the products and generator on separate physical hosts.
+  The primitive suite was refreshed on 3 October with Zig 0.17. Earlier loopback product,
+  admission, distributed and cluster records retain their historical revisions and do not
+  qualify the current release.
   A functional pass and an inconclusive isolation measurement answer different questions.
 ])
 
@@ -21,7 +23,7 @@
   measured figure from a published one.
 ])
 
-Five performance harnesses live under `benchmarks/`:
+The performance harnesses live under `benchmarks/`:
 
 #table(
   columns: (1fr, 1.6fr, 1.6fr),
@@ -31,12 +33,16 @@ Five performance harnesses live under `benchmarks/`:
   [`tools.py`], [Whole products under `wrk`: throughput, latency percentiles, CPU time per request, peak resident memory, for Sibuna Gate, Sibuna Shield, and Anubis in forward-auth and reverse-proxy modes], [`results/tools-comparison-latest.json`],
   [`distributed.py`], [Three daemons with six client processes: Gate, Shield, and replicated Shield; session portability, WAF denial with a session, ban propagation, leader loss], [`results/distributed-latest.json`],
   [`cluster.py`], [One node and three local replicated nodes under `wrk`, including idle CPU, memory, transport and failover checks], [`results/cluster-latest.json`],
+  [`bunkerweb.py`], [Three native Linux products: unconditional HTTP/1.1 proxy and inspection profiles, with a separate load host], [`results/products-proxy-two-host-latest.json`],
+  [`admission_http.py`], [Real sessions, challenges, allowed paths and attacks under wrk; native proxy and forward-auth modes], [`results/products-admission-http-two-host-latest.json`],
+  [`admission_operations.py`], [Native challenge bootstrap, fresh proof and session operations from two remote Python clients], [`results/products-admission-operations-two-host-latest.json`],
 )
 
 The primitive suite times batches of many thousand operations; per-operation percentiles are
 not reported because a clock read costs as much as the work. The HTTP harnesses report what
 `wrk` reports: request counts, and per-request latency percentiles that `wrk` computes from
-its own histogram. CPU time is the product process's accumulated user and system time from
+its own histogram. Except for the current three-product comparisons described below, CPU
+time is the product process's accumulated user and system time from
 `ps`, read before and after each run; memory is the peak resident set sampled every 100 ms.
 On the Linux containers used for the release review, `ps` reports whole CPU seconds, so
 short runs cannot resolve small changes in CPU cost. Request rate and latency come from
@@ -45,7 +51,7 @@ not change those measurements. Container permissions do not grant control over t
 processor governor or other tenants. Resource conditions and uncertainty belong with each
 record rather than being assumed to match a dedicated machine.
 
-The Linux admission and whole-product comparisons give every product thread the same allowed
+The historical Linux admission and whole-product comparisons give every product thread the same allowed
 CPU set before warmup: two CPUs for admission and four by default for whole products. A Sibuna
 accept-thread count is not a CPU budget equivalent to Go's `GOMAXPROCS`. Each product row records
 its affinity; the origin and load generator keep native scheduling. Admission issuance reserves
@@ -55,10 +61,10 @@ An idle CPU figure of zero over ten seconds means `ps` did not cross a whole CPU
 it does not prove that a node performed no background work.
 
 #callout([Measurement scope], [
-  Only local measurements are emitted. Third-party products are measured only when their
-  binary can run on the host: Anubis can, SafeLine (Docker only) and Cloudflare (hosted) cannot,
-  and both appear in a "not measured" table with the published facts that stand in for a
-  measurement. Timers surround batches; state resets and warmup are untimed. Allocation counts
+  Only host measurements are emitted. Anubis runs from its release binary; BunkerWeb runs
+  natively from its verified official image in a private mount namespace. SafeLine and
+  Cloudflare remain unmeasured in this chapter; their published facts are identified
+  separately. Timers surround batches; state resets and warmup are untimed. Allocation counts
   are not instrumented: the allocation-free primitive contract is based on API and source
   review. No harness links into the daemon or adds a hook to the request path.
 ], kind: "warning")
@@ -85,7 +91,11 @@ these primitive APIs; the harness records unknown allocation counts rather than 
 measurements. Engine and table byte counts come directly from `@sizeOf`. Resident memory
 includes runtime and thread costs and is measured separately from the primitives.
 
-== Whole-Product Comparison
+== Historical Loopback Whole-Product Comparison
+
+These loopback records predate the v0.2.0 request path and use a different fixture from the
+current three-product measurements below. They document the earlier design investigation;
+compare their rows within their own recorded run.
 
 #objectives([
   Read the throughput, latency, CPU, and memory of Sibuna and Anubis as complete processes,
@@ -187,7 +197,170 @@ concern detection quality, not throughput; Cloudflare publishes plan quotas rath
 per-request costs. Anyone with a Docker host can run SafeLine behind the same `wrk` workloads;
 the harness accepts any product that can be started as a process and solved as a browser.
 
-== Admission Comparison
+== Three-Product Proxy and Inspection Comparison
+
+This comparison asks what an HTTP request costs when it is proxied or inspected. It does
+not measure browser challenges, AI-bot identification, false positives, or attack-detection
+coverage. All three products use unconditional admission policies. Gate and the BunkerWeb
+CRS-off profile, together with Anubis, provide proxy baselines; Shield and the two CRS-on
+profiles enable inspection.
+
+Sibuna v0.2.0 is built on the product host with Zig 0.17.0 at `ReleaseSafe`, using the
+native target, stripped, with storage and console
+compiled in but inactive. BunkerWeb 1.6.15 comes from its official Linux amd64 image,
+resolved by SHA-256 digest, with nginx 1.30.5 and the shipped OWASP CRS 4.29.0 rules. Its
+configuration generator and security modules are unchanged. Anubis uses its verified official
+v1.27.0 binary and native Go upstream transport defaults. The BunkerWeb image runs natively
+through
+`chroot` in a private mount namespace, without Docker, CPU emulation or a container network
+bridge. The result file records the immutable image digest, rule revision, configuration,
+tool versions, executable digest and source digest.
+
+`python3 benchmarks/bunkerweb.py --rootfs <unpacked-image>/rootfs --image <oci-layout>
+--anubis <release-binary> --load-host <ssh-destination> --target-host <product-address>`
+starts a separate Caddy origin
+and drives four identical requests over HTTP/1.1:
+an ordinary GET, an approximately 8 KiB JSON POST, a SQL-injection query and a SQL-injection
+JSON POST. The admitted response body is 41 bytes. The JSON fixture fits within Sibuna's
+8 KiB inspection prefix; this does not measure large-upload inspection.
+
+The principal comparison runs the products on `10.175.52.18` and the load generator on
+`10.175.52.20`, containers on different physical hosts. The origin stays on the product host
+and is contacted over loopback by every proxy. The direct-origin row crosses the same
+client-to-server network as the product rows. Every product gets four allowed logical CPUs;
+the origin gets two different allowed logical CPUs and the remote load generator gets two
+on its own host. Runs use 64 keep-alive connections and two load threads,
+one second of warmup followed by five timed seconds, repeated five times. Product order
+rotates between rounds. Browser challenges, feeds, compression, access and audit logging,
+and management services are inactive. BunkerWeb upstream keepalive is explicitly enabled.
+Sibuna retains its rate-limit check with a high allowance to avoid quota exhaustion.
+
+#proxy_meta_line()
+
+=== Admitted Requests
+
+#proxy_table()
+
+Throughput is the median with the observed min–max range, not a confidence interval. p99
+is the median of each run's histogram percentile under this fixed-concurrency load; it is
+not latency at an equal offered request rate. CPU sums live process user/system ticks from
+`/proc`, including nginx workers, rather than the master's time alone. Peak summed process
+RSS includes shared pages more than once and is not proportional memory. The origin's CPU
+is excluded from product rows and measured separately in the direct-origin baseline.
+The direct-origin row is a fixture reference, not a mathematical throughput ceiling;
+its external transport and two-CPU allowance differ from an origin behind a four-CPU proxy.
+In the two-host run, the CPU-accounting interval also brackets the SSH generator invocation;
+SSH setup and result transfer are outside wrk's request timing and latency histogram.
+
+=== Rejected Requests and Error Pages
+
+#proxy_table(denied: true)
+
+All inspection profiles return `403` for the two attack fixtures. Proxy-only profiles
+return the origin response. Every timed response status is counted by a load-generator
+hook; transport failures, unexpected statuses or mismatched functional probes invalidate
+the run. The result retains all samples, including the proxy-only attack requests.
+
+Sibuna's denial body is 235 bytes. BunkerWeb's stock denial body is 69,282 bytes and includes
+its dynamic error-page rendering cost. A second CRS-on profile uses a 235-byte static page
+through supported custom nginx configuration. Its internal URI error redirect converts
+POST to GET for the static handler while preserving the final `403`; CRS still decides
+whether to block. Reporting both configurations avoids attributing all rejection cost
+to inspection. The custom page and configuration are part of the committed fixture.
+
+#callout([Different protection, one request fixture], [
+  BunkerWeb's #link("https://docs.bunkerweb.io/1.6.15/features/#modsecurity")[ModSecurity/CRS profile] parses request bodies, evaluates its broader rule set
+  and retains response-body inspection. Sibuna uses bounded heuristic detectors and does
+  not implement CRS. These throughput rows cannot establish equivalent protection or
+  superior bot detection. The host is an unprivileged container on a shared machine;
+  processor frequency and other tenants are outside the fixture's control. Separate logical
+  CPU sets do not establish exclusive physical cores. Consult the recorded spread and
+  reproduce on your deployment host before using the figures for capacity planning.
+  The controller monitored progress and staged verification code over SSH during the network
+  run; no compiler or competing product benchmark overlapped it. This is not an isolated
+  network-capacity test.
+], kind: "warning")
+
+=== Loopback Baseline
+
+An earlier run kept the generator on the product host, with separate logical CPU sets for
+product, generator and origin. Its application code, workloads and load settings match
+the two-host run. The table shows ordinary GET requests; its result file retains all four
+workloads. These measurements answer a different question from requests crossing a network
+and are never pooled with the two-host samples.
+
+#proxy_meta_line(loopback: true)
+#proxy_table(loopback: true)
+
+The replay procedure is in `benchmarks/results/README.md`. This comparison adds a current
+measurement family; it does not rerun or pass the separate console-impact acceptance gate.
+
+== Three-Product Protected HTTP Comparison
+
+`admission_http.py` uses the same two-host topology, origin, CPU allowances and wrk settings
+as the proxy comparison. It obtains a genuine session by solving and verifying each
+product's native SHA-256 challenge. Work is matched at 16 leading zero bits: Sibuna takes
+bits, Anubis takes four hexadecimal digits, and BunkerWeb's shipped JavaScript challenge
+requires four zero hexadecimal digits. Solving is outside HTTP timing. Every request uses
+the same browser headers, including `Accept-Encoding: gzip`; Anubis's native challenge
+compression stays active. Synthetic forwarded addresses are trusted only inside this fixture.
+
+The four workloads are a protected request with a valid session, the same request without
+a session, an explicitly allowed static path and a SQL-injection query with a valid session.
+Sibuna Shield and BunkerWeb with CRS must deny the attack. All other admitted proxy responses
+must match the origin body exactly. Timed and warmup response counts, transport errors and
+positive/negative probes are checked; a failure prevents publishing the record.
+
+#admission_meta_line()
+
+=== Reverse-Proxy Mode
+
+With no session, Sibuna and Anubis serve challenge HTML (`200`). BunkerWeb returns a `302`
+redirect to `/challenge`; its following HTML request is part of bootstrap in the operation
+comparison below. The initial-response rows have different byte counts and work, so they do
+not rank a complete browser challenge journey.
+
+#admission_http_table("reverse_proxy", ("admitted", "challenged"))
+#v(4mm)
+#admission_http_table("reverse_proxy", ("allowed_static", "attack"))
+
+=== Native Forward-Auth Mode
+
+Sibuna and Anubis answer authorization checks without an origin relay; missing sessions
+return `401`. BunkerWeb has no native forward-auth endpoint in this fixture and is omitted
+from this table rather than treating its proxy response as equivalent.
+
+#admission_http_table("forward_auth", ("admitted", "challenged", "allowed_static", "attack"))
+
+== Three-Product Admission Operations
+
+`admission_operations.py` runs two Python client processes on the separate generator host.
+It reports seven batches of 200 operations for session checks, missing-session checks and
+complete bootstrap journeys, and seven batches of 32 fresh proofs. SHA-256 proofs are solved
+at 16 bits before timing and verified once. Bootstrap includes two HTTP requests for Sibuna
+(HTML and JSON), one for Anubis (HTML), and two for BunkerWeb (redirect and HTML). Request
+counts and native expected statuses are retained, as is the observed adaptive issuance
+range for Sibuna's bootstrap workload.
+
+#admission_meta_line(operations: true)
+#admission_operations_table(("valid_session", "unauthenticated_check"))
+#v(4mm)
+#admission_operations_table(("proof_verification", "challenge_bootstrap"))
+#bootstrap_work_line()
+
+Sibuna and Anubis use forward-auth here. BunkerWeb session checks include the origin relay;
+its proxy rows are not pure authorization costs. Anubis's Ed25519 and optional HS512 session
+schemes are separate cases. Operation rates include Python, IPC, connection setup and HTTP,
+so they describe the whole journey with two clients, not native verifier speed or maximum
+server capacity. SSH transfer and proof solving are outside the generator's clock. CPU
+accounting includes the controller's SSH interval; tick deltas too small to resolve are
+reported as unresolved. No per-operation percentile is inferred from these batch rates.
+
+The replay commands and every sample are in `benchmarks/results/README.md`. These fresh
+HTTP and admission families do not rerun primitive, cluster or console-impact acceptance
+matrices, and they do not measure detection quality.
+
+== Historical Loopback Admission Comparison
 
 `python3 benchmarks/compare.py --anubis <binary>` measures admission operations with two
 Python clients against forward-auth endpoints, so its absolute numbers are limited by the
