@@ -39,6 +39,9 @@ pub const phase_cursor = @import("phase_cursor.zig");
 pub const controls = @import("controls.zig");
 pub const post_actions = @import("post_actions.zig");
 pub const action_state = @import("action_state.zig");
+pub const rule_data = @import("rule_data.zig");
+pub const rule_program = @import("rule_program.zig");
+pub const executor = @import("executor.zig");
 
 test {
     _ = @import("release_test.zig");
@@ -77,4 +80,6 @@ test {
     _ = phase_cursor;
     _ = controls;
     _ = post_actions;
+    _ = rule_program;
+    _ = executor;
 }

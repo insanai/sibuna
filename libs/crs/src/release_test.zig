@@ -382,6 +382,32 @@ test "every stock full-match program prepares controls metadata and disruption" 
     }
 }
 
+test "stock rule graph composes every condition action data file and static update" {
+    const rules = @import("rule_program.zig");
+    const data = @import("rule_data.zig");
+    var builder = compiler.Compiler.init(std.testing.allocator, .{});
+    defer builder.deinit();
+    for (fixture.sources) |file| try builder.addSource(file.path, file.bytes);
+    var plan = try builder.finish();
+    defer plan.deinit();
+    var files: [fixture.data.len]data.File = undefined;
+    for (fixture.data, &files) |file, *prepared| prepared.* = .{
+        .path = file.path,
+        .bytes = file.bytes,
+    };
+    var program = try rules.compile(std.testing.allocator, &plan, &files, .{});
+    defer program.deinit();
+    try std.testing.expectEqual(@as(usize, 701), program.conditions.len);
+    try std.testing.expectEqual(@as(usize, 701), program.actions.len);
+    try std.testing.expectEqualStrings("OWASP_CRS/4.30.0", program.signature);
+    try std.testing.expectEqual(@as(usize, 6653), program.regex_states);
+    // In particular the common-cookie exceptions are part of published selectors.
+    for (plan.updates) |update| {
+        const selected = program.conditions[update.root.?].targets.?;
+        try std.testing.expect(selected.exclusions.len > 0);
+    }
+}
+
 test "every stock address operator compiles without mapping IPv4 into IPv6" {
     const addresses = @import("address_set.zig");
     var builder = compiler.Compiler.init(std.testing.allocator, .{});

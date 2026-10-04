@@ -65,6 +65,17 @@ pub const Cursor = struct {
         }
         self.pending = null;
     }
+
+    /// An enforcing intervention stops this phase after its completed root. This
+    /// is not normal exhaustion; the executor separately reports a denied phase.
+    pub fn halt(self: *Cursor) Error!void {
+        if (self.failed) return error.InvalidCursor;
+        errdefer self.failed = true;
+        const phase = self.phase orelse return error.NoActivePhase;
+        if (self.pending != null) return error.PendingRoot;
+        self.completed = @backingInt(phase);
+        self.phase = null;
+    }
 };
 
 test {

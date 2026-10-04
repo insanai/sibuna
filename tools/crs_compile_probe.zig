@@ -180,13 +180,7 @@ fn conditionProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
     ) catch return false;
     var source = builder.finish() catch return false;
     defer source.deinit();
-    var topology = crs.chains.compile(allocator, source.conditions, .{}) catch return false;
-    defer topology.deinit();
-    var cursor = crs.phase_cursor.Cursor.init(&topology);
-    cursor.begin(.request_body) catch return false;
-    const root = (cursor.next(budget) catch return false) orelse return false;
-    var program = crs.condition.compile(allocator, &source.conditions[0], &.{}, .{}) catch
-        return false;
+    var program = crs.rule_program.compile(allocator, &source, &.{}, .{}) catch return false;
     defer program.deinit();
     const input = [_]crs.variables.Entry{.{ .collection = .args, .key = "q", .value = "x" }};
     var stored: [4]crs.variables.Entry = undefined;
@@ -212,20 +206,7 @@ fn conditionProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
     var key: [16]u8 = undefined;
     var value: [16]u8 = undefined;
     var argument: [16]u8 = undefined;
-    var unwind: [1]usize = undefined;
-    const result = topology.evaluate(&.{program}, root, .{
-        .context = &context,
-        .snapshot = &snapshot,
-        .count = &count,
-        .transforms = .{ &first, &second },
-        .prefixes = &prefixes,
-        .pieces = &pieces,
-        .key_output = &key,
-        .value_output = &value,
-        .argument_output = &argument,
-        .budget = budget,
-    }, &unwind) catch return false;
-    if (result.matched and !postProbe(allocator, &source.conditions[0], .{
+    if (!runProgramProbe(&program, .{
         .context = &context,
         .snapshot = &snapshot,
         .count = &count,
@@ -237,31 +218,21 @@ fn conditionProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
         .argument_output = &argument,
         .budget = budget,
     })) return false;
-    cursor.complete(result.matched) catch return false;
-    if ((cursor.next(budget) catch return false) != null) return false;
     const score = (store.get("score", budget) catch return false) orelse "";
-    return result.matched and std.mem.eql(u8, score, "1");
+    return std.mem.eql(u8, score, "1");
 }
 
-fn postProbe(
-    allocator: std.mem.Allocator,
-    source: *const crs.model.Condition,
+fn runProgramProbe(
+    program: *const crs.rule_program.Program,
     frame: crs.condition.Frame,
 ) bool {
-    var program = crs.post_actions.compile(allocator, source) catch return false;
-    defer program.deinit();
     var exclusions: [2]crs.controls.Exclusion = undefined;
     var events: [1]crs.action_state.Event = undefined;
     var tags: [2][]const u8 = undefined;
     var bytes: [64]u8 = undefined;
     var state = crs.action_state.State.init(&exclusions, &events, &tags, &bytes, true);
-    crs.post_actions.execute(&program, .{
-        .context = frame.context,
-        .state = &state,
-        .pieces = frame.pieces,
-        .key_output = frame.key_output,
-        .value_output = frame.value_output,
-        .budget = frame.budget,
-    }) catch return false;
-    return state.event_used == 1;
+    var unwind: [1]usize = undefined;
+    var executor = crs.executor.Executor.init(program, frame, &state, &unwind);
+    const result = executor.run(.request_body) catch return false;
+    return result == .complete and state.event_used == 1;
 }

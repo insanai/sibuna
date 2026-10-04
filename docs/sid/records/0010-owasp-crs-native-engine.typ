@@ -317,6 +317,37 @@ after the last successful action prevents a failed suffix from becoming a comple
 These statements do not establish HTTP entity acquisition or authorization to activate a
 complete generation.
 
+== Immutable rule programs and phased execution
+
+Compose the owned conditions, full-match actions and validated topology into one rule
+program. Resolve `pmFromFile` names relative to their source file within the supplied
+artifact's canonical path table. Reject absolute paths, traversal, ambiguous duplicates
+and missing files. Copy phrase data during preparation; no filesystem handle or borrowed
+artifact buffer reaches evaluation. Apply every bound static target update to its root's
+selector list before preparation, preserving additions and exclusions in declaration order.
+Validate updates to existing predicate roots and bound the combined target list, rather
+than checking each directive in isolation. Preparation failure destroys the whole candidate.
+
+The program owns its rule signature and all runtime constants independently of the source
+plan. Reserve scratch from the maximum prepared regex state count and maximum transform
+expansion for the selected field bound. Preparing this program establishes rule execution
+contracts, not complete entity acquisition or permission to activate the daemon.
+
+One phased executor borrows that program, the evaluation frame, action state and bounded
+unwind indices. It schedules roots, evaluates conditions, unwinds full-match actions and
+only then completes the pending root's `skipAfter` decision. Controls feed the same
+transaction's following conditions. An enforcing intervention halts the current phase
+after its completed root and returns Denied, distinguished from normal exhaustion; later
+protection phases cannot run, but logging may run. Audit records would-deny and continues.
+Any phase-order, predicate, action or resource error poisons all three states.
+
+*Lemma (composed lifetime).* Every prepared component owns its runtime text and tables,
+and the executor borrows one immutable program through transaction release. Therefore
+destroying the source plan or download buffer cannot change subsequent rule evaluation.
+Composition introduces no backwards control edge: root cursor advancement and chain
+evaluation remain bounded by their earlier lemmas. This is conditional on complete phase
+inputs; it does not prove an HTTP connector has supplied them or held back its response.
+
 #block(breakable: false, table(
   columns: (2fr, 4fr),
   [Operator family], [CRS 4.30.0 names],
