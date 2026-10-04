@@ -198,7 +198,20 @@ def summarize(samples):
             "cpu_us_per_request_median": statistics.median(
                 sample["cpu_us_per_request"] for sample in samples),
             "peak_process_tree_rss_kib_max": max(
-                sample["peak_process_tree_rss_kib"] for sample in samples)}
+                       sample["peak_process_tree_rss_kib"] for sample in samples)}
+
+
+def tool_versions():
+    # wrk prints its version and usage but returns 1, unlike caddy's version command.
+    versions = {}
+    for name, command, accepted in (("wrk", ["wrk", "--version"], (0, 1)),
+                                    ("caddy", ["caddy", "version"], (0,))):
+        result = subprocess.run(command, text=True, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+        if result.returncode not in accepted or not result.stdout.strip():
+            raise RuntimeError(f"could not identify {name}: {result.stdout}")
+        versions[name] = result.stdout.strip().splitlines()[0]
+    return versions
 
 
 def run_rounds(arguments, temporary, origin, origin_port, cpus, data):
@@ -269,9 +282,7 @@ def main():
             "seconds", "warmup", "repetitions", "workers", "threads", "connections")},
         "affinity": {"product": cpus, "generator": arguments.load_cpus, "origin": origin_cpus},
         "runs": [], "rounds": [], "functional_pass": False,
-        "tools": {name: subprocess.check_output(command, text=True,
-                  stderr=subprocess.STDOUT).strip() for name, command in (
-                      ("wrk", ["wrk", "--version"]), ("caddy", ["caddy", "version"]))},
+        "tools": tool_versions(),
         "limitations": [
             "Unprivileged container on a shared host; no control of CPU frequency or host load.",
             "Loopback HTTP/1.1; no TLS, browser challenges, sessions or AI-bot detection test.",
