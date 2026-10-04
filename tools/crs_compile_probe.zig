@@ -20,6 +20,12 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
     var workspace = crs.regex.Workspace.init(allocator.*, &program) catch return 4;
     defer workspace.deinit();
     var budget: crs.work.Budget = .{ .remaining = 16_000_000 };
+    var transformed: [4]u8 = undefined;
+    _ = crs.transforms.apply(.lowercase, .{
+        .input = "XX",
+        .output = &transformed,
+        .budget = &budget,
+    }) catch return 8;
     const result = crs.regex.match.search(
         &program,
         "xx",
