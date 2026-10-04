@@ -230,3 +230,29 @@ detector could produce.])
   Explain to a reviewer why `Accept: */*` was a false positive, what structural property the
   new SQL detector requires, and how the automaton and the tokenizer divide the work.
 ])
+
+= Core Rule Set development
+
+OWASP Core Rule Set is a maintained SecLang policy, not a collection of independent
+signature strings. Its rules depend on transaction variables, ordered transformations,
+chains, captures, phased input and anomaly scoring. Sibuna's current structural detectors
+do not execute that language.
+
+SID 0010 specifies an opt-in native CRS engine and verified operator updates. The native
+source reader and source-plan compiler are available for development review:
+
+```sh
+zig build crs-test -j2
+zig build crs-audit -j2 -- vendor/crs --regex
+zig build crs-regex-check -j2
+zig build crs-primitive-check -j2 -- --download
+```
+
+The first two commands validate the pinned CRS 4.30.0 source and regex compilation. The
+third compares native regex results and capture offsets with PCRE2, which is a test oracle
+and not a runtime dependency. The fourth retrieves digest-pinned upstream unit vectors
+and checks the implemented primitive subset. It does not download or activate daemon rules.
+These checks do not establish full CRS execution support.
+Operator/transform conformance, structured bodies, phased evaluation, generation updates
+and the CLI/console activation controls must pass the SID's remaining gates before the
+daemon can enable CRS. Current Gate and Shield behavior is unchanged.

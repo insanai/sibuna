@@ -55,7 +55,7 @@ Commented examples and optional plugins do not establish support requirements si
 
 #table(
   columns: (2fr, 1fr, 3fr),
-  [Construct], [Count], [Required meaning],
+  table.header([Construct], [Count], [Required meaning]),
   [`SecRule`], [693], [Selectors, operator, ordered actions and chain membership],
   [`SecAction`], [8], [Unconditional transaction actions],
   [`SecMarker`], [31], [Ordered control-flow destinations],
@@ -188,6 +188,13 @@ Phrase files compile into a shared Aho–Corasick representation with per-rule o
 Case and boundary semantics must agree with the operator rather than an unrelated policy
 matcher. Address lists compile into the existing bounded CIDR trie representation where its
 semantics agree. Numeric comparisons use checked conversion and explicit signed arithmetic.
+The pinned implementation’s `eq` converts a decimal prefix to a 32-bit signed integer and
+treats conversion exceptions as zero, whereas `ge`, `gt` and `lt` use 64-bit `atoll`.
+Preserve those distinct domains. Because overflowing `atoll` is not portable, the native
+profile reports an explicit numeric-limit outcome outside its signed 64-bit domain. This
+difference must be covered by the compatibility report rather than labelled a negative match.
+Literal `contains` and `within` use length-aware KMP search. Static needles prepare their
+prefix tables off-path; macro-expanded needles prepare in bounded transaction scratch.
 Capture-producing operators write transaction-owned slices or offsets, never temporary stack
 references. Detector parity is checked against upstream libinjection, including fingerprints
 and error outcomes. Third-party data and code retain their own license notices.
@@ -199,6 +206,18 @@ Transforms required by this release are `base64Decode`, `cmdLine`, `compressWhit
 `utf8toUnicode`. There are 20 names including the reset action `none`. Output expansion is
 checked before writing. Invalid encoding is interpreted as specified by the transform and
 validation operators; truncation is an error, not a transformed field.
+
+The byte profile fixes ASCII case conversion and C-locale whitespace. In particular, the
+reference `removeWhitespace` also removes isolated `0xc2` and `0xa0` bytes, while
+`compressWhitespace` preserves them. A Unicode-aware replacement would change rule
+semantics and is not interchangeable. Numeric `length` counts bytes, not code points.
+Each primitive receives disjoint caller-owned input/output buffers and the shared work
+budget. It checks a conservative output bound before writes: identity, lowercase and
+filtering need at most $N$ bytes, hex encoding needs $2 N$, and length needs the decimal
+digit count of $N$. Capacity multiplication is checked. These primitives perform a bounded
+number of visits per input byte, so their time is $O(N)$; composing $T$ stages costs the
+sum of stage lengths, including expansion. Pipeline compilation implements `t:none` as
+a reset of inherited/preceding transformations rather than a runtime copy that erases history.
 
 = Algorithms and mathematical contracts
 
@@ -220,6 +239,13 @@ until every borrower releases it. The lifetime proof below depends on this owner
 *Axiom A3 (reference semantics).* The pinned SecLang reference and its tests define the
 selected compatibility profile. Passing a finite test corpus is evidence of compatibility, not
 proof of detection of every possible attack.
+
+The initial regex reference is ModSecurity 3.0.14’s implementation, with the LF byte
+profile and `DOTALL | MULTILINE` compilation defaults. An empty expression becomes `.*`;
+collection-key regexes additionally use case-insensitive matching. Scoped pattern options
+can override those defaults. The reference manual’s older dot/end-anchor description does
+not match this implementation, so differential checks pin the source behavior explicitly.
+Generic PCRE-default tests alone are insufficient to establish SecLang compatibility.
 
 *Axiom A4 (finite capacity).* Inputs and intermediate representations fit the published limits,
 or evaluation returns an explicit limit outcome. The engine must never silently truncate a
@@ -258,7 +284,16 @@ regex syntax, not infer features by searching for punctuation substrings. Unanch
 adds start threads at each position in the same simulation; restarting a matcher for every
 suffix would introduce an avoidable quadratic bound.
 
-== Lemma 3: sound prefiltering
+== Lemma 3: linear literal search
+
+For a literal needle of length $M$ and input of length $N$, KMP preparation and matching
+cost $O(M + N)$ time and $O(M)$ caller-owned prefix storage. On a mismatch, the matched
+prefix length strictly decreases; it can increase at most once per consumed byte. Thus
+the total fallback steps are bounded by the total advances. Charge each comparison before
+performing it. Empty needles match at offset zero, byte equality retains embedded NUL, and
+work exhaustion returns a limit outcome rather than a negative match.
+
+== Lemma 4: sound prefiltering
 
 A candidate regex may be skipped by a literal prefilter only when the compiler has proven
 that every match implies the prefilter predicate.
@@ -402,6 +437,16 @@ share bounded typed request/response contracts. Offline `validate` accepts an ex
 candidate without starting the daemon and reports syntax, feature and capacity diagnostics.
 There is no unauthenticated network endpoint or shell command invocation in the service.
 
+Engine deployments without the console retain a file-based update path. The native updater
+verifies and compiles the artifact off-path, then replaces a versioned manifest in the
+operator-owned `--crs-dir`. The daemon’s bounded reload task validates that manifest and
+publishes a complete generation. Expected manifest revisions, atomic replacement, durable
+intent/completion and the previous verified artifact provide conflict and recovery semantics.
+Filesystem permissions authorize this local path; it does not open an unauthenticated
+management listener or require the AGPL console for the LGPL engine’s rule updates.
+Clustered deployments use the storage owner’s revision discipline rather than independent
+file writers. Both paths share verification, compilation and publication code.
+
 Update stages are retrieve metadata, download, verify signature and digest, safely unpack,
 read, compile, run candidate checks, persist intent, publish and record completion. The
 console shows a release diff, excluded rules, memory/work bounds, selected profile, committed
@@ -514,6 +559,9 @@ may contact the authors. Adding rules does not replace the existing component li
 - #link("https://coreruleset.org/docs/1-getting-started/1-1-crs-installation/")[CRS installation and signed releases].
 - #link("https://coreruleset.org/docs/2-how-crs-works/2-1-anomaly_scoring/")[CRS anomaly scoring].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/wiki/Reference-Manual-(v3.x)")[ModSecurity SecLang reference].
+- #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/utils/regex.cc")[ModSecurity 3.0.14 regex implementation and compilation defaults].
+- #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/test/unit/unit_test.cc")[Pinned primitive corpus binary decoding].
+- #link("https://github.com/owasp-modsecurity/secrules-language-tests/tree/a3d4405e5a2c90488c387e589c5534974575e35b")[SecLang corpus pinned by ModSecurity 3.0.14].
 - #link("https://www.pcre.org/current/doc/html/pcre2pattern.html")[PCRE2 pattern semantics].
 - #link("https://swtch.com/~rsc/regexp/regexp1.html")[Russ Cox: Regular Expression Matching Can Be Simple And Fast].
 - #link("https://swtch.com/~rsc/regexp/regexp2.html")[Russ Cox: Regular Expression Matching: the Virtual Machine Approach].

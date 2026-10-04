@@ -419,7 +419,7 @@ management console in one executable. Other projects cover different parts of th
 - [Anubis](https://github.com/TecharoHQ/anubis) uses client challenges to protect upstream resources from scraper bots.
 - [BunkerWeb](https://github.com/bunkerity/bunkerweb) combines nginx, ModSecurity and OWASP CRS with bot challenges and an operator interface.
 - [ModSecurity](https://github.com/owasp-modsecurity/ModSecurity) and [Coraza](https://github.com/corazawaf/coraza) provide WAF engines for integration with web servers and applications.
-- [OWASP Core Rule Set](https://github.com/coreruleset/coreruleset) provides attack-detection rules for compatible WAF engines. Sibuna's heuristic detectors do not implement that rule language.
+- [OWASP Core Rule Set](https://github.com/coreruleset/coreruleset) provides attack-detection rules for compatible WAF engines. Sibuna's heuristic detectors do not implement that rule language. Native CRS support is being developed under [SID 0010](docs/sid/records/0010-owasp-crs-native-engine.typ); it is not enabled in the daemon yet.
 
 The [book's empirical evaluation](https://insanai.github.io/sibuna/book/)
 compares pinned, runnable products under documented workloads. Each result identifies its
@@ -485,6 +485,7 @@ For deep technical study, the repository includes two comprehensive publications
    - **SID 0007:** The Sibuna Console: A Real-Time Management Interface for Nodes and Clusters
    - **SID 0008:** AI Bot Traffic Identification, Multi-Tier Verification, and Operator Console Analytics
    - **SID 0009:** Chunked Request Bodies and Transfer-Coding Validation
+   - **SID 0010:** Native OWASP Core Rule Set Evaluation and Verified Rule Updates
 
    ```sh
    zig build sid                 # Compiles all SID specification papers to PDF
