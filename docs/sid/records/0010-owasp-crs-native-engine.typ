@@ -7,7 +7,7 @@
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
 #let sid-status = "Open for Discussion"
-#let sid-last-updated = "2026-10-04"
+#let sid-last-updated = "2026-10-05"
 
 #import "../../shared/sid.typ": sid-document
 
@@ -48,8 +48,8 @@ release archive was downloaded from the official release and checked against its
 asset digest, SHA-256
 `3d678a41fd5aade34760127fef5dd64fd7a77848913fc0f70dde0cf467c94427`.
 The detached signature was also independently verified with GPG against the pinned CRS
-fingerprint below. This audit verification does not implement the proposed native update
-verifier. Unmodified fixtures and their file digests are in `vendor/crs/provenance.json`.
+fingerprint below. Runtime update candidates must also pass the native pinned-key verifier
+specified below. Unmodified fixtures and their file digests are in `vendor/crs/provenance.json`.
 The active directives in the distributed rule files and example setup are the design input.
 Commented examples and optional plugins do not establish support requirements silently.
 
@@ -1215,6 +1215,45 @@ monotonically and is charged before each visit. Part/header ceilings, entry limi
 byte limits independently bound metadata. Complete coverage is published only after closing
 and all fields succeed; any error poisons the builder. No file handle, temporary upload,
 network fetch or request-path heap allocation is needed.
+
+== Restricted XML acquisition and namespace ownership
+
+The UTF-8 XML 1.0 profile supports the stock `/*` and `//@*` selectors. Root selection returns
+one concatenation of descendant text and CDATA; attribute selection returns ordinary
+attributes in document order, excluding namespace declarations. Entry keys retain the actual
+XPath expression so matched-variable labels do not substitute invented node paths. Bare XML
+selects an opaque document-tree value in the reference, rather than these values, and is
+explicitly unsupported. Other XPath expressions reject compilation before activation.
+
+Follow the #link("https://www.w3.org/TR/xml/")[XML 1.0 fifth-edition] character and name
+ranges. Validate UTF-8 throughout the document, including comments and instructions. Normalize
+literal CR/CRLF to LF and attribute whitespace to spaces; character references retain their
+referenced whitespace. Decode the five predefined entities and checked decimal/hex scalar
+references. Unknown entities, invalid characters, unpaired markup, repeated roots, malformed
+comments and invalid declarations poison acquisition. XML declarations accept version 1.0
+and UTF-8; other encodings are explicit unsupported-input outcomes. Refuse every DTD or entity
+declaration. No external URI, entity loader, file, network or recursive expansion is available.
+
+A caller-owned stack tracks element names and scoped namespace cursors. Decode namespace
+URIs into the acquired monotonic byte pool; names borrow the immutable entity. Resolve prefixes
+after reading all start-tag attributes, including declarations placed after their use. Bindings
+are exact, scoped identifiers, never fetched locations. Apply the reserved xml/xmlns rules,
+reject unbound prefixes and duplicate expanded attribute names, and restore namespace cursors
+at each end tag. Borrow saved attribute values when publishing metadata instead of copying
+them twice. Namespace declarations consume the same byte bound even though they are not
+selected attributes. Root text is copied before its decoder scratch can be reused.
+
+*Lemma (bounded XML ownership).* Each lexical scan advances within the reserved entity.
+An element pushes at most one frame and must pop with the same qualified name. All stacks,
+attributes and namespace bindings check capacity before publication. Restoring a scope cursor
+does not reclaim saved URI/value bytes; monotonic ownership preserves existing metadata.
+Root text and attributes become a complete XML view only after the whole document succeeds.
+Namespace and duplicate comparisons debit their byte visits, bounding the quadratic attribute
+comparison term by the shared ledger. UTF-8 lexical validation reserves 16 source visits per
+byte; character-data decoding reserves eight and every copy is separately charged. These
+bounds and refusal of general entities prevent recursive expansion or request-time allocation.
+Independent XML parsing fixtures qualify this profile; they do not establish arbitrary XPath
+support or whole-engine detection equivalence.
 
 = Input acquisition and HTTP phases
 

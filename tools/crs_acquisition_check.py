@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check native acquisition against independent JSON, form and MIME decoders.
+"""Check native acquisition against independent JSON, form, MIME and XML decoders.
 
 JSON syntax uses Python's standard parser. Field naming follows the explicitly
 reviewed ModSecurity 3.0.14 profile; this is not whole-engine FTW qualification.
@@ -13,6 +13,7 @@ from pathlib import Path
 import random
 import subprocess
 from urllib.parse import quote_from_bytes, unquote_to_bytes
+from xml.etree import ElementTree
 
 
 class Object(list):
@@ -69,7 +70,7 @@ def probe(binary, kind, input_bytes, expected):
     for line in output.splitlines():
         tag, key, value = line.split("\t")
         decoded = (bytes.fromhex(key), bytes.fromhex(value))
-        if kind == "multipart":
+        if kind in ["multipart", "xml"]:
             actual.append((tag, *decoded))
         else:
             if tag != "arg":
@@ -160,6 +161,40 @@ def multipart_vectors():
         yield body
 
 
+def xml_oracle(data):
+    root = ElementTree.fromstring(data)
+    result = []
+    for element in root.iter():
+        for value in element.attrib.values():
+            result.append(("xml-attribute", b"//@*", value.encode("utf-8")))
+    text = "".join(root.itertext()).encode("utf-8")
+    result.append(("xml-element", b"/*", text))
+    return result
+
+
+def xml_vectors():
+    yield from [
+        b"<root/>", b"<root a='a&#9;b\r\nc'>x\r\ny&#13;z</root>",
+        b"<?xml version='1.0' encoding='UTF-8'?><root><![CDATA[a&b<c]]></root>",
+        b"<root xmlns='urn:a' xmlns:p='urn:p' a='1' p:a='2'><p:x/></root>",
+        b"<root>before<!--ignored--><?instruction ignored?>after<child>child</child>end</root>",
+        b"<root xmlns:p='urn:a'><p:x xmlns:p='urn:b' p:a='one'/><p:y p:a='two'/></root>",
+    ]
+    randomizer = random.Random(0x584d4c)
+    atoms = ["ordinary", "&amp;&lt;&gt;&quot;&apos;", "&#x1F600;", "&#233;", "x\r\ny", ""]
+
+    def element(depth, index):
+        name = "node" + str(index)
+        attribute = randomizer.choice(atoms)
+        text = randomizer.choice(atoms)
+        children = "" if depth == 0 else "".join(element(depth - 1, child)
+                                                for child in range(randomizer.randrange(4)))
+        return f'<{name} a="{attribute}">{text}{children}{text}</{name}>'
+
+    for _ in range(150):
+        yield element(4, 0).encode("utf-8")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("binary", type=Path)
@@ -199,6 +234,21 @@ def main():
     for body in multipart_vectors():
         probe(binary, "multipart", body, multipart_oracle(body))
         count += 1
+    for document in xml_vectors():
+        probe(binary, "xml", document, xml_oracle(document))
+        count += 1
+    for document in [b"<a>", b"<a/><b/>", b"<a>&#0;</a>", b"<p:a/>",
+                     b"<a xmlns:p='urn:x' xmlns:q='urn:x' p:a='1' q:a='2'/>"]:
+        try:
+            xml_oracle(document)
+        except ElementTree.ParseError:
+            pass
+        else:
+            raise ValueError(f"invalid XML fixture accepted by independent parser: {document!r}")
+        probe(binary, "xml", document, None)
+        count += 1
+    probe(binary, "xml", b"<!DOCTYPE a [<!ENTITY e 'unsafe'>]><a>&e;</a>", None)
+    count += 1
     print(f"Native acquisition agrees with {count} independent cases; "
           "whole-engine FTW qualification remains separate.")
 

@@ -103,10 +103,30 @@ pub const Builder = struct {
         try allowed(entry.collection);
         try self.capacity(1, 0);
         try budget.debit(1);
-        buffers.assertDisjoint(entry.key, self.bytes);
-        buffers.assertDisjoint(entry.value, self.bytes);
+        // Borrow external immutable bytes or existing monotonic owned bytes.
+        // Neither may refer to capacity that future appends will overwrite.
+        buffers.assertDisjoint(entry.key, self.bytes[self.byte_used..]);
+        buffers.assertDisjoint(entry.value, self.bytes[self.byte_used..]);
         self.entries[self.used] = entry;
         self.used += 1;
+    }
+
+    /// Namespace URI and decoded attribute storage shares the acquired byte bound.
+    /// This copy publishes no collection entry and survives parser scratch reuse.
+    pub fn own(self: *Builder, record: Record, budget: *work.Budget) Error!Record {
+        errdefer self.poison();
+        return self.save(record, 0, budget);
+    }
+
+    pub fn xml(
+        self: *Builder,
+        kind: variables.Xml,
+        value: []const u8,
+        budget: *work.Budget,
+    ) Error!void {
+        const selector = if (kind == .element) "/*" else "//@*";
+        try self.add(.xml, .{ .key = selector, .value = value }, budget);
+        self.entries[self.used - 1].xml = kind;
     }
 
     pub fn sizes(self: *Builder, budget: *work.Budget) Error!void {

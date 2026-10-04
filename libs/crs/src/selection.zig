@@ -208,7 +208,7 @@ fn validate(item: selectors.Selector) Error!void {
         .name, .pattern => if (!item.collection.keyed() or item.collection == .xml) {
             return error.InvalidTarget;
         },
-        .all => {},
+        .all => if (item.collection == .xml) return error.InvalidTarget,
     }
 }
 

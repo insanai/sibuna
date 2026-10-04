@@ -127,7 +127,7 @@ const probes: []const Probe = &.{
         .source = "tools/crs_acquisition_probe.zig",
         .checker = "tools/crs_acquisition_check.py",
         .step = "crs-acquisition-check",
-        .description = "Check bounded JSON and form acquisition against independent decoders",
+        .description = "Check bounded structured acquisition against independent decoders",
     },
     .{
         .name = "sibuna-crs-signature-probe",

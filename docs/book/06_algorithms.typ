@@ -233,13 +233,39 @@ detector could produce.])
 
 = Core Rule Set development
 
-OWASP Core Rule Set is a maintained SecLang policy, not a collection of independent
-signature strings. Its rules depend on transaction variables, ordered transformations,
-chains, captures, phased input and anomaly scoring. Sibuna's current structural detectors
-do not execute that language.
+OWASP Core Rule Set is a maintained SecLang policy. Its rules depend on transaction
+variables, ordered transformations, chains, captures, phased input and anomaly scoring.
+Sibuna's small structural inspector remains separate. The native CRS library follows
+SID 0010; daemon activation and operator updates are still under development.
 
-SID 0010 specifies an opt-in native CRS engine and verified operator updates. The native
-source reader and source-plan compiler are available for development review:
+The compiler prepares an immutable graph from the pinned CRS 4.30.0 rules and data.
+It resolves defaults, static target updates, chains and marker jumps before evaluation.
+Unknown constructs reject the candidate. A phased executor combines target snapshots,
+transform replay, captures, local TX writes and leaf-to-root full-match actions. Audit
+records would-deny outcomes; enforcement retains denials across later rules. Root
+multi-match evidence survives a failed child without applying full-chain disruption.
+
+Each primitive shares a transaction work ledger. The matcher uses ordered regex
+simulation, length-aware KMP search, sparse phrase automata and family-separated address
+intervals. Native SQL and XSS detectors use reproducible tables from the pinned reference.
+Resource exhaustion is an error, never a negative predicate result. SID 0010 documents
+intentional corrections to the reference's phrase matching and exclusion defects.
+
+Transaction slots reserve their entity, collection, TX, matcher and evidence buffers before
+serving work. An exclusive lease owns one slot; pool exhaustion refuses admission. Closing
+stops new leases while admitted work retains its generation. TX and matched bytes are
+monotonic within a transaction, so scratch reuse and metadata replacement preserve saved
+values. Beginning the next transaction resets cursors and controls after all borrows end.
+
+Complete input adapters retain duplicate URL-encoded and JSON fields, multipart filenames
+and part headers, and the stock XML wildcard views. MIME syntax is shared with the existing
+prefix inspector. File payloads stay in entity storage rather than becoming ARGS. JSON uses
+Zig's standard token scanner with fixed borrowed capacity. XML refuses DTDs and external
+entities, validates scoped namespaces and distinguishes attributes from descendant text.
+Parsing failures cannot expose a partial collection as complete. The HTTP connector must
+still establish framing, body holdback, deadlines and phase coverage before activation.
+
+Development qualification runs separately from enabling protection:
 
 ```sh
 zig build crs-test -j2
@@ -248,63 +274,15 @@ zig build crs-regex-check -j2
 zig build crs-primitive-check -j2 -- --download
 zig build crs-detector-check -j2 -- --download
 zig build crs-detector-data -j2 -- --check --download
+zig build crs-signature-check -j2 -- --download
+zig build crs-acquisition-check -j2
 ```
 
-The first two commands validate the pinned CRS 4.30.0 source and regex compilation. The
-third compares native regex results and capture offsets with PCRE2, which is a test oracle
-and not a runtime dependency. The fourth retrieves digest-pinned upstream unit vectors
-and checks the implemented primitive subset. It does not download or activate daemon rules.
-These checks do not establish full CRS execution support.
-The detector check compares SQL token streams, ordered folding, fingerprints and decisions
-with the pinned libinjection source, compiled as a test oracle. The data check regenerates
-the SQL dictionary and XSS classification tables and compares them with the committed assets.
-Neither command links the C implementation into the daemon. Native SQL detection receives
-caller-owned scratch and shares the transaction work budget across each dialect and quoting
-pass. The XSS tokenizer uses an iterative state machine with constant stack use, and its
-decision stage shares the budget across five HTML contexts. The detector check compares
-both its token ranges and attack decisions. The transaction executor, structured inputs and
-daemon activation still require their own compatibility gates.
-Runtime strings compile into literal and typed variable parts. Expansion uses a shared
-phase-specific variable view, caller-owned scratch and one work budget; all lookups and
-capacity checks finish before output is copied. Missing keys in complete collections
-expand empty, while unavailable, incomplete or ambiguous references remain explicit errors.
-The native tests compile the stock runtime macros and check output ownership and failures.
-They also prepare all 693 stock rule operators through one shared typed interface, with
-caller-owned workspaces and operator-specific capture contracts. This validates compilation
-and the bounded primitives; selection, rule effects and HTTP phase coverage require separate
-execution tests.
-Prepared target tests cover duplicate inputs, count selectors, owned key patterns and
-exclusions. Snapshots use caller metadata scratch and preserve borrowed byte lifetimes;
-unavailable or incomplete collections remain errors. SID 0010 records the native profile's
-consistent exclusion handling and the pinned reference's exact-key discrepancy.
-Transaction variables use reserved metadata and a monotonic byte pool. Updates preserve
-old value lifetimes, copy work is reserved before mutation, and failed mutations prevent
-continued evaluation. Score arithmetic checks the reference's signed 32-bit domain instead
-of allowing overflow to wrap a score. These storage contracts do not establish action timing
-or full transaction execution.
-Validated transform replay checks the whole pipeline before exposing field match values,
-then reserves its second pass's work independently of predicates and actions. All stock
-pipelines are tested against ordinary iteration. The design uses two scratch buffers and
-counts both passes; it trades extra transform work for avoiding per-stage value copies.
-The native matcher uses ordered regular-expression simulation, length-aware literal
-search, sparse phrase automata and family-separated address intervals. Transform pipelines
-keep the reference's order and change flags, including multi-match behavior. Phrase
-matching uses complete unsigned-byte Aho–Corasick; SID 0010 documents known missed-match
-and capture defects in the pinned reference instead of copying them into protection.
-Each matcher shares an explicit work budget, and resource exhaustion remains an error.
-Prepared conditions now combine target snapshots, validated transform replay and local
-capture/TX effects. A reserved context rebuilds its variable view between actions and
-copies matched values before scratch is reused. Repeated fields and multi-match stages
-retain their effects; a failed condition clears matched variables without rolling back TX.
-This is condition evaluation, not yet a complete phased CRS generation.
-Chain topology is prepared separately. Traversal evaluates links once without recursion
-and returns successful post-match indices in leaf-to-root order. Failed children preserve
-parent TX effects and return no post-match actions. Marker targets and chain capacities
-are validated before evaluation; the stock rules and failure paths are covered by tests.
-A phase cursor scans roots in source order, requires pending-rule completion and applies
-forward marker jumps after full matches. It rejects repeated or backwards phases and
-does not convert a work failure into end-of-phase. This scheduler does not acquire input
-or execute the remaining post-match actions.
-Operator/transform conformance, structured bodies, phased evaluation, generation updates
-and the CLI/console activation controls must pass the SID's remaining gates before the
-daemon can enable CRS. Current Gate and Shield behavior is unchanged.
+The native tests cover ownership, bounds, action timing and the prepared stock graph.
+Regex qualification compares matches and captures with PCRE2. Primitive and detector checks
+use pinned upstream vectors and implementations; data checks reproduce committed assets.
+Signature qualification compares the native RSA receipt with isolated GnuPG verification
+using the pinned primary key. Acquisition checks use independent JSON, form, MIME and XML
+parsers. These development oracles are not runtime dependencies. They do not establish
+whole-engine FTW compatibility, live HTTP coverage or performance acceptance. The daemon
+still uses its existing Gate and Shield behavior until the remaining SID gates pass.

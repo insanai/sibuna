@@ -333,3 +333,24 @@ pub export fn crsMultipartProbe(input: [*]const u8, length: usize) u8 {
     }, .{}, &budget) catch return 2;
     return 0;
 }
+
+pub export fn crsXmlProbe(input: [*]const u8, length: usize) u8 {
+    if (length > 4096) return 1;
+    var entries: [128]crs.variables.Entry = undefined;
+    var bytes: [4096]u8 = undefined;
+    var text: [1024]u8 = undefined;
+    var value: [1024]u8 = undefined;
+    var frames: [64]crs.xml_acquisition.Frame = undefined;
+    var attributes: [128]crs.xml_acquisition.Attribute = undefined;
+    var bindings: [128]crs.xml_acquisition.Binding = undefined;
+    var builder = crs.acquired_values.Builder.init(&entries, &bytes);
+    var budget: crs.work.Budget = .{ .remaining = 16_000_000 };
+    crs.xml_acquisition.parse(input[0..length], &builder, .{
+        .text = &text,
+        .value = &value,
+        .frames = &frames,
+        .attributes = &attributes,
+        .bindings = &bindings,
+    }, &budget) catch return 2;
+    return 0;
+}

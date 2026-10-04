@@ -48,7 +48,7 @@ pub const Iterator = struct {
             if (!collection.keyed()) return error.InvalidSelector;
             self.offset += 1;
             selection = try self.key(collection);
-        }
+        } else if (collection == .xml) return error.UnsupportedXPath;
         if (self.offset < self.bytes.len) {
             std.debug.assert(self.bytes[self.offset] == '|');
             self.offset += 1;

@@ -16,6 +16,8 @@ const buffers = @import("buffers.zig");
 const json = @import("json_acquisition.zig");
 const form = @import("form_acquisition.zig");
 const multipart = @import("multipart_head.zig");
+const xml = @import("xml_acquisition.zig");
+const xml_ns = @import("xml_namespaces.zig");
 pub const Error = rules.Error || error{
     InvalidSlotLimits,
     ReservationLimit,
@@ -45,6 +47,9 @@ pub const Slot = struct {
     input: acquired.Builder = undefined,
     json_frames: []json.Frame = &.{},
     json_bits: []u8 = &.{},
+    xml_frames: []xml.Frame = &.{},
+    xml_attributes: []xml.Attribute = &.{},
+    xml_bindings: []xml_ns.Binding = &.{},
     context: context.Context = undefined,
     state: actions.State = undefined,
     budget: work.Budget = undefined,
@@ -92,6 +97,9 @@ pub const Slot = struct {
         self.unwind = try arena.alloc(usize, program.topology.maximum_depth);
         self.json_frames = try arena.alloc(json.Frame, limits.depth);
         self.json_bits = try arena.alloc(u8, (limits.depth + 7) / 8);
+        self.xml_frames = try arena.alloc(xml.Frame, limits.depth);
+        self.xml_attributes = try arena.alloc(xml.Attribute, limits.entries);
+        self.xml_bindings = try arena.alloc(xml_ns.Binding, limits.entries);
         if (program.regex_states != 0) {
             self.workspace = try regex.Workspace.initStates(arena, program.regex_states);
         }
@@ -114,6 +122,17 @@ pub const Slot = struct {
     pub fn formScratch(self: *Slot) form.Scratch {
         std.debug.assert(self.active);
         return .{ .key = self.frame.key_output, .value = self.frame.value_output };
+    }
+
+    pub fn xmlScratch(self: *Slot) xml.Scratch {
+        std.debug.assert(self.active);
+        return .{
+            .text = self.frame.argument_output,
+            .value = self.frame.value_output,
+            .frames = self.xml_frames,
+            .attributes = self.xml_attributes,
+            .bindings = self.xml_bindings,
+        };
     }
 
     pub fn multipartScratch(self: *Slot) multipart.Scratch {
@@ -203,6 +222,9 @@ fn reservation(program: *const rules.Program, limits: Limits) Error!usize {
     const threads = std.math.mul(usize, program.regex_states, 4) catch
         return error.ReservationLimit;
     const counts = [_]struct { usize, usize }{
+        .{ limits.depth, @sizeOf(xml.Frame) },
+        .{ limits.entries, @sizeOf(xml.Attribute) },
+        .{ limits.entries, @sizeOf(xml_ns.Binding) },
         .{ limits.depth, @sizeOf(json.Frame) },
         .{ (limits.depth + 7) / 8, 1 },
         .{ limits.request, 1 },

@@ -41,6 +41,17 @@ fn run(init: std.process.Init, out: *Io.Writer) !u8 {
             .bits = &bits,
             .frames = &frames,
         }, &budget);
+    } else if (std.mem.eql(u8, kind, "xml")) {
+        var frames: [64]crs.xml_acquisition.Frame = undefined;
+        var attributes: [256]crs.xml_acquisition.Attribute = undefined;
+        var bindings: [256]crs.xml_acquisition.Binding = undefined;
+        try crs.xml_acquisition.parse(input, &builder, .{
+            .text = scratch[0 .. 32 * 1024],
+            .value = scratch[32 * 1024 ..],
+            .frames = &frames,
+            .attributes = &attributes,
+            .bindings = &bindings,
+        }, &budget);
     } else if (std.mem.eql(u8, kind, "multipart")) {
         try crs.multipart_acquisition.parse(input, "B", &builder, .{
             .name = scratch[0 .. 16 * 1024],
@@ -59,11 +70,17 @@ fn run(init: std.process.Init, out: *Io.Writer) !u8 {
             .value = scratch[32 * 1024 ..],
         }, &budget);
     }
+    try emit(&builder, out);
+    return 0;
+}
+
+fn emit(builder: *const crs.acquired_values.Builder, out: *Io.Writer) !void {
     for ((try builder.view()).entries) |entry| {
         const tag = switch (entry.collection) {
             .args => "arg",
             .files => "file",
             .files_combined_size => "size",
+            .xml => if (entry.xml.? == .element) "xml-element" else "xml-attribute",
             else => continue,
         };
         try out.print("{s}\t", .{tag});
@@ -72,5 +89,4 @@ fn run(init: std.process.Init, out: *Io.Writer) !u8 {
         for (entry.value) |byte| try out.print("{x:0>2}", .{byte});
         try out.writeByte('\n');
     }
-    return 0;
 }

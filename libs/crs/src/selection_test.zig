@@ -183,3 +183,13 @@ test "selection compilation owns source keys and releases partial regexes on fai
         .{ .collection = .request_method, .mode = .values, .selection = .{ .name = "x" } },
     }, .{}));
 }
+
+test "bare XML does not silently select wildcard acquisition values" {
+    var iterator: @import("selectors.zig").Iterator = .{ .bytes = "XML" };
+    try std.testing.expectError(error.UnsupportedXPath, iterator.next());
+    try std.testing.expectError(error.InvalidTarget, @import("selection.zig").compile(
+        std.testing.allocator,
+        &.{.{ .collection = .xml, .mode = .values, .selection = .all }},
+        .{},
+    ));
+}
