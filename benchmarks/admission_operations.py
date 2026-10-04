@@ -119,6 +119,7 @@ def main():
         "Bootstrap is HTML+JSON for Sibuna, HTML for Anubis, redirect+HTML for BunkerWeb.",
         "Every proof is fresh and solved before timing; expected statuses checked per request.",
         "Bootstrap may increase Sibuna's adaptive issued difficulty; observed bits recorded.",
+        "Same Accept-Encoding: gzip for all; native Anubis challenge compression active.",
         "Each batch includes Python, IPC, HTTP and connection setup; SSH excluded from timing.",
         "CPU interval includes SSH invocation; small tick deltas reported as unresolved.",
         "Shared host/frequency uncontrolled; CRS and heuristic rule coverage are different.",

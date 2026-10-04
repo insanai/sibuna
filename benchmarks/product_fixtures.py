@@ -19,7 +19,7 @@ from run import free_port, stop
 
 BITS = 16
 CLIENT_HEADERS = {"Host": "benchmark.test", "User-Agent": "Mozilla/5.0 SibunaBenchmark",
-                  "Accept": "text/html", "Accept-Encoding": "identity",
+                  "Accept": "text/html", "Accept-Encoding": "gzip",
                   "X-Real-IP": "203.0.113.30", "X-Forwarded-For": "203.0.113.30"}
 
 

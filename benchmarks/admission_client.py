@@ -5,6 +5,7 @@ All protocols use SHA-256 and 16 leading zero bits, but their envelopes and sess
 mechanisms differ. Request groups retain each product's actual round trip count.
 """
 from dataclasses import dataclass
+import gzip
 import hashlib
 import http.client
 import json
@@ -39,6 +40,8 @@ class AdmissionClient:
             if response.status != task.expected:
                 raise ValueError(f"{task.path}: expected {task.expected}, got {response.status}: "
                                  f"{body[:200]!r}")
+            if response.getheader("Content-Encoding", "").lower() == "gzip":
+                body = gzip.decompress(body)
             return response.getheaders(), body
         finally:
             if own:
