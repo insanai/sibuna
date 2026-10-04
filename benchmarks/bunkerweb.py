@@ -317,7 +317,7 @@ def main():
             "BunkerWeb upstream keepalive explicitly enabled; Sibuna uses its native transport.",
             "CPU uses summed user/system ticks; peak summed RSS double-counts shared pages.",
             "wrk response hooks validate statuses and add client cost; expected 403 is valid.",
-            "An origin baseline bounds fixture throughput; results are not universal rankings.",
+            "The origin baseline exposes fixture costs; results are not universal rankings.",
             "CPU interval includes generator invocation; remote SSH setup precedes wrk timing.",
         ]}
     with tempfile.TemporaryDirectory(prefix="sibuna-bunkerweb-") as name:
