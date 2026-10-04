@@ -312,6 +312,7 @@ test "all stock conditions compose selection transforms predicates and pre-chain
     defer plan.deinit();
     var topology = try @import("chains.zig").compile(std.testing.allocator, plan.conditions, .{});
     defer topology.deinit();
+    try stockPhaseScans(&topology);
     for (plan.conditions) |*condition| {
         var files: [256][]const u8 = undefined;
         const data = if (condition.expression) |expression|
@@ -325,6 +326,26 @@ test "all stock conditions compose selection transforms predicates and pre-chain
     try std.testing.expectEqual(@as(usize, 701), plan.conditions.len);
     // Preparing the match portion does not validate post-match or phase execution.
     try std.testing.expect(!model.Plan.executable);
+}
+
+fn stockPhaseScans(topology: *const @import("chains.zig").Program) !void {
+    const cursor = @import("phase_cursor.zig");
+    var state = cursor.Cursor.init(topology);
+    var budget: @import("work.zig").Budget = .{ .remaining = 100_000 };
+    var seen: [4096]bool = @splat(false);
+    var total: usize = 0;
+    for (std.enums.values(model.Phase)) |phase| {
+        try state.begin(phase);
+        while (try state.next(&budget)) |root| {
+            try std.testing.expect(!seen[root]);
+            try std.testing.expectEqual(root, topology.rows[root].root);
+            try std.testing.expectEqual(phase, topology.rows[root].phase);
+            seen[root] = true;
+            total += 1;
+            try state.complete(false);
+        }
+    }
+    try std.testing.expectEqual(@as(usize, 628), total);
 }
 
 test "every stock address operator compiles without mapping IPv4 into IPv6" {

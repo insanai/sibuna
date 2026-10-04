@@ -301,6 +301,10 @@ Chain topology is prepared separately. Traversal evaluates links once without re
 and returns successful post-match indices in leaf-to-root order. Failed children preserve
 parent TX effects and return no post-match actions. Marker targets and chain capacities
 are validated before evaluation; the stock rules and failure paths are covered by tests.
+A phase cursor scans roots in source order, requires pending-rule completion and applies
+forward marker jumps after full matches. It rejects repeated or backwards phases and
+does not convert a work failure into end-of-phase. This scheduler does not acquire input
+or execute the remaining post-match actions.
 Operator/transform conformance, structured bodies, phased evaluation, generation updates
 and the CLI/console activation controls must pass the SID's remaining gates before the
 daemon can enable CRS. Current Gate and Shield behavior is unchanged.

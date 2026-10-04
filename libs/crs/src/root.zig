@@ -35,6 +35,7 @@ pub const set_var = @import("set_var.zig");
 pub const evaluation_context = @import("evaluation_context.zig");
 pub const condition = @import("condition.zig");
 pub const chains = @import("chains.zig");
+pub const phase_cursor = @import("phase_cursor.zig");
 
 test {
     _ = @import("release_test.zig");
@@ -70,4 +71,5 @@ test {
     _ = evaluation_context;
     _ = condition;
     _ = chains;
+    _ = phase_cursor;
 }

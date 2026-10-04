@@ -233,6 +233,20 @@ same order as reference recursive unwinding. Local effects run before the next l
 remain when a later link is false. This establishes chain traversal and effect visibility,
 conditional on each condition's semantics; it does not prove post-match action handling.
 
+The phase cursor visits roots in source order for one selected phase, skipping entire
+continuation ranges. It requires completion of a pending root before advancing. Apply
+its forward `skipAfter` destination only when the complete chain matched and post-match
+actions succeeded. Beginning a later phase resets the scan; phases may be omitted by
+an explicitly configured observation profile but may not repeat or run backwards. A
+phase is complete only after a scan reports exhaustion with no pending root. Budget
+failure poisons the cursor instead of masquerading as normal end-of-phase.
+
+*Lemma (phase termination).* Ordinary advancement moves from a root to its chain end;
+a compiled marker destination is a forward root boundary or the terminal boundary.
+Both strictly increase the source position. Therefore a phase visits at most the
+number of source roots. Five ordered phases perform at most five such scans, excluding
+the separately charged condition and action work.
+
 #table(
   columns: (2fr, 4fr),
   [Operator family], [CRS 4.30.0 names],
