@@ -34,26 +34,32 @@ def json_bytes(value):
     return result
 
 
-def vectors(directory, manifest, download):
+def read_pinned(directory, manifest, entry, download):
     root = "https://raw.githubusercontent.com/owasp-modsecurity/secrules-language-tests/"
+    relative = Path(entry["path"])
+    if relative.is_absolute() or ".." in relative.parts:
+        raise ValueError("invalid pinned corpus path")
+    path = directory / relative
+    if not path.exists() and download:
+        with urlopen(root + manifest["corpus_commit"] + "/" + entry["path"],
+                     timeout=20) as response:
+            data = response.read(65537)
+        if len(data) > 65536 or hashlib.sha256(data).hexdigest() != entry["sha256"]:
+            raise ValueError(f"download digest/size mismatch: {relative}")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+    with path.open("rb") as source:
+        data = source.read(65537)
+    if len(data) != entry["bytes"] or hashlib.sha256(data).hexdigest() != entry["sha256"]:
+        raise ValueError(f"corpus digest/size mismatch: {relative}")
+    return data
+
+
+def vectors(directory, manifest, download):
     total = 0
     for entry in manifest["files"]:
         relative = Path(entry["path"])
-        if relative.is_absolute() or ".." in relative.parts:
-            raise ValueError("invalid pinned corpus path")
-        path = directory / relative
-        if not path.exists() and download:
-            with urlopen(root + manifest["corpus_commit"] + "/" + entry["path"],
-                         timeout=20) as response:
-                data = response.read(65537)
-            if len(data) > 65536 or hashlib.sha256(data).hexdigest() != entry["sha256"]:
-                raise ValueError(f"download digest/size mismatch: {relative}")
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(data)
-        with path.open("rb") as source:
-            data = source.read(65537)
-        if len(data) != entry["bytes"] or hashlib.sha256(data).hexdigest() != entry["sha256"]:
-            raise ValueError(f"corpus digest/size mismatch: {relative}")
+        data = read_pinned(directory, manifest, entry, download)
         cases = json.loads(data)
         if len(cases) != entry["cases"]:
             raise ValueError(f"corpus count mismatch: {relative}")
@@ -82,6 +88,8 @@ def main():
     parser.add_argument("--download", action="store_true")
     args = parser.parse_args()
     manifest = json.loads(Path(__file__).with_name("crs_primitive_vectors.json").read_text())
+    resources = {entry["parameter"].encode(): read_pinned(args.corpus, manifest, entry, args.download)
+                 for entry in manifest.get("resources", [])}
     count = 0
     for path, index, case, failed_init in vectors(args.corpus, manifest, args.download):
         kind = case["type"]
@@ -91,6 +99,8 @@ def main():
         name = aliases.get(case["name"], case["name"])
         input_bytes = json_bytes(case["input"])
         parameter = case.get("param", "").encode("utf-8").split(b"\0", 1)[0]
+        if name == "pmFromFile":
+            parameter = resources[parameter]
         result = subprocess.run([str(args.binary.resolve()), kind, name,
                                  input_bytes.hex(), parameter.hex()], check=False,
                                 capture_output=True, timeout=5, text=True)

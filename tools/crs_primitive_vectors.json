@@ -202,7 +202,27 @@
       "sha256": "ee9d1cd23d78ec016b8a0b1d6c0db9e90263bcd4916c6df0efa9f3e36541921e",
       "bytes": 22481,
       "cases": 7
+    },
+    {
+      "path": "operators/pm.json",
+      "sha256": "b2d56b351483ca44c9c00db8737660ae97e804fef7b354328b4f5490e0df9fec",
+      "bytes": 5883,
+      "cases": 15
+    },
+    {
+      "path": "operators/pmFromFile.json",
+      "sha256": "140bf1e819821ff5f2745320dc850bb3ebef91e550549da700309777cfdbd641",
+      "bytes": 1149,
+      "cases": 6
     }
   ],
-  "cases": 374
+  "cases": 395,
+  "resources": [
+    {
+      "path": "operators/op/pmFromFile-01.dat",
+      "sha256": "bdfe4fab29a2695bcc5365a42c6fe70799715517cdd93bdfdef94297019fe04e",
+      "bytes": 24,
+      "parameter": "test-cases/secrules-language-tests/operators/op/pmFromFile-01.dat"
+    }
+  ]
 }

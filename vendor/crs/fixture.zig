@@ -30,3 +30,27 @@ pub const sources = [_]struct { path: []const u8, bytes: []const u8 }{
     .{ .path = "rules/RESPONSE-959-BLOCKING-EVALUATION.conf", .bytes = @embedFile("rules/RESPONSE-959-BLOCKING-EVALUATION.conf") },
     .{ .path = "rules/RESPONSE-980-CORRELATION.conf", .bytes = @embedFile("rules/RESPONSE-980-CORRELATION.conf") },
 };
+
+// Phrase/data bytes remain unmodified upstream fixtures.
+pub const data = [_]struct { path: []const u8, bytes: []const u8 }{
+    .{ .path = "rules/ai-critical-artifacts.data", .bytes = @embedFile("rules/ai-critical-artifacts.data") },
+    .{ .path = "rules/asp-dotnet-errors.data", .bytes = @embedFile("rules/asp-dotnet-errors.data") },
+    .{ .path = "rules/iis-errors.data", .bytes = @embedFile("rules/iis-errors.data") },
+    .{ .path = "rules/java-classes.data", .bytes = @embedFile("rules/java-classes.data") },
+    .{ .path = "rules/lfi-os-files.data", .bytes = @embedFile("rules/lfi-os-files.data") },
+    .{ .path = "rules/php-errors.data", .bytes = @embedFile("rules/php-errors.data") },
+    .{ .path = "rules/php-function-names-933150.data", .bytes = @embedFile("rules/php-function-names-933150.data") },
+    .{ .path = "rules/php-variables.data", .bytes = @embedFile("rules/php-variables.data") },
+    .{ .path = "rules/restricted-files.data", .bytes = @embedFile("rules/restricted-files.data") },
+    .{ .path = "rules/ruby-errors.data", .bytes = @embedFile("rules/ruby-errors.data") },
+    .{ .path = "rules/scanners-user-agents.data", .bytes = @embedFile("rules/scanners-user-agents.data") },
+    .{ .path = "rules/sql-errors.data", .bytes = @embedFile("rules/sql-errors.data") },
+    .{ .path = "rules/ssrf-no-scheme.data", .bytes = @embedFile("rules/ssrf-no-scheme.data") },
+    .{ .path = "rules/ssrf.data", .bytes = @embedFile("rules/ssrf.data") },
+    .{ .path = "rules/unix-shell-aliases.data", .bytes = @embedFile("rules/unix-shell-aliases.data") },
+    .{ .path = "rules/unix-shell-builtins.data", .bytes = @embedFile("rules/unix-shell-builtins.data") },
+    .{ .path = "rules/unix-shell.data", .bytes = @embedFile("rules/unix-shell.data") },
+    .{ .path = "rules/web-shells-asp.data", .bytes = @embedFile("rules/web-shells-asp.data") },
+    .{ .path = "rules/web-shells-php.data", .bytes = @embedFile("rules/web-shells-php.data") },
+    .{ .path = "rules/windows-powershell-commands.data", .bytes = @embedFile("rules/windows-powershell-commands.data") },
+};

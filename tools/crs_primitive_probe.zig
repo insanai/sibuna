@@ -21,20 +21,14 @@ pub fn main(init: std.process.Init) !u8 {
         if (failed_init and !std.mem.eql(u8, name, "validateByteRange")) {
             return error.InvalidInitializationFixture;
         }
-        const prefixes = try init.gpa.alloc(usize, 64 * 1024);
-        defer init.gpa.free(prefixes);
-        const predicate: crs.primitives.Predicate = .{
+        const probe: OperatorProbe = .{
+            .allocator = init.gpa,
             .kind = crs.model.operators.get(name) orelse return error.UnknownOperator,
+            .input = input,
             .argument = argument,
+            .failed_init = failed_init,
         };
-        var budget: crs.work.Budget = .{ .remaining = 16_000_000 };
-        const result = if (predicate.kind == .validate_byte_range) result: {
-            var range: crs.byte_range.Range = .{};
-            if (!failed_init) range = try crs.byte_range.compile(argument);
-            const findings = try range.inspect(input, &budget);
-            break :result crs.primitives.Result{ .matched = findings.count != 0 };
-        } else try predicate.evaluate(input, .{ .prefixes = prefixes, .budget = &budget });
-        try out.writeAll(if (result.matched) "true\n" else "false\n");
+        try out.writeAll(if (try probe.evaluate()) "true\n" else "false\n");
     } else if (std.mem.eql(u8, kind, "tfn")) {
         if (argument.len != 0) return error.UnexpectedArgument;
         const storage = try init.gpa.alloc(u8, 128 * 1024);
@@ -52,6 +46,43 @@ pub fn main(init: std.process.Init) !u8 {
     try out.flush();
     return 0;
 }
+
+const OperatorProbe = struct {
+    allocator: std.mem.Allocator,
+    kind: crs.model.Operator,
+    input: []const u8,
+    argument: []const u8,
+    failed_init: bool,
+
+    fn evaluate(self: OperatorProbe) !bool {
+        var budget: crs.work.Budget = .{ .remaining = 16_000_000 };
+        if (self.kind == .validate_byte_range) {
+            var range: crs.byte_range.Range = .{};
+            if (!self.failed_init) range = try crs.byte_range.compile(self.argument);
+            return (try range.inspect(self.input, &budget)).count != 0;
+        }
+        if (self.kind == .pm or self.kind == .pm_from_file) {
+            const options: crs.phrases.Options = .{ .profile = .modsecurity_3_0_14 };
+            var program = if (self.kind == .pm)
+                try crs.phrases_source.inlineWords(self.allocator, self.argument, options)
+            else
+                try crs.phrases_source.fileWords(self.allocator, self.argument, options);
+            defer program.deinit();
+            return try program.search(self.input, &budget) != null;
+        }
+        const prefixes = try self.allocator.alloc(usize, 64 * 1024);
+        defer self.allocator.free(prefixes);
+        const predicate: crs.primitives.Predicate = .{
+            .kind = self.kind,
+            .argument = self.argument,
+        };
+        const result = try predicate.evaluate(self.input, .{
+            .prefixes = prefixes,
+            .budget = &budget,
+        });
+        return result.matched;
+    }
+};
 
 fn decode(allocator: std.mem.Allocator, bytes: []const u8) ![]u8 {
     if (bytes.len % 2 != 0 or bytes.len / 2 > 64 * 1024) return error.InputLimit;

@@ -128,3 +128,34 @@ test "every stock transform pipeline compiles and has bounded intermediate scrat
         _ = try compiled.requiredScratch(64 * 1024);
     }
 }
+
+test "every stock phrase operator and its complete data file compile in the native profile" {
+    const phrase = @import("phrases_source.zig");
+    var builder = compiler.Compiler.init(std.testing.allocator, .{});
+    defer builder.deinit();
+    for (fixture.sources) |file| try builder.addSource(file.path, file.bytes);
+    var plan = try builder.finish();
+    defer plan.deinit();
+    for (plan.conditions) |condition| {
+        const expression = condition.expression orelse continue;
+        if (expression.kind == .pm) {
+            var program = try phrase.inlineWords(std.testing.allocator, expression.argument, .{});
+            defer program.deinit();
+        } else if (expression.kind == .pm_from_file) {
+            const bytes = findData(expression.argument) orelse return error.MissingDataFixture;
+            var program = try phrase.fileWords(std.testing.allocator, bytes, .{});
+            defer program.deinit();
+            for (program.words) |word| {
+                var budget: @import("work.zig").Budget = .{ .remaining = 1_000_000 };
+                try std.testing.expect(try program.search(word, &budget) != null);
+            }
+        }
+    }
+}
+
+fn findData(name: []const u8) ?[]const u8 {
+    for (fixture.data) |file| {
+        if (std.mem.eql(u8, file.path["rules/".len..], name)) return file.bytes;
+    }
+    return null;
+}
