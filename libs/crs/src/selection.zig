@@ -7,8 +7,10 @@ const regex = @import("regex.zig");
 const work = @import("work.zig");
 const buffers = @import("buffers.zig");
 const decimal_format = @import("decimal_format.zig");
+const controls = @import("controls.zig");
 
-pub const Error = regex.types.Error || regex.match.Error || variables.Error || error{
+pub const Error = regex.types.Error || regex.match.Error || variables.Error ||
+    controls.Error || error{
     SelectorLimit,
     InvalidTarget,
     SnapshotLimit,
@@ -33,6 +35,9 @@ pub const Frame = struct {
     count: *[20]u8,
     regex: ?*regex.match.Scratch = null,
     budget: *work.Budget,
+    filter: ?controls.Filter = null,
+    pieces: [][]const u8 = &.{},
+    macro_output: []u8 = &.{},
 };
 pub const Snapshot = struct {
     entries: []const variables.Entry,
@@ -60,12 +65,21 @@ pub const Program = struct {
         const target = &self.targets[index];
         try frame.budget.debit(1);
         if (try self.omitted(target, frame.budget)) return .{ .entries = &.{} };
+        const name = key(target);
+        if (try controlled(.{
+            .collection = target.collection,
+            .key = if (name.len == 0) null else name,
+        }, frame)) return .{ .entries = &.{} };
         try frame.view.require(target.collection);
         var count: usize = 0;
         for (frame.view.entries) |entry| {
             try frame.budget.debit(1);
             if (!try matches(target, entry, frame)) continue;
             if (try self.excluded(entry, frame)) continue;
+            if (target.mode == .count and try controlled(.{
+                .collection = entry.collection,
+                .key = if (entry.key.len == 0) null else entry.key,
+            }, frame)) continue;
             if (target.mode != .count) {
                 if (count == frame.output.len) return error.SnapshotLimit;
                 frame.output[count] = entry;
@@ -113,6 +127,16 @@ pub const Program = struct {
         return false;
     }
 };
+
+fn controlled(target: controls.Target, frame: Frame) Error!bool {
+    const filter = frame.filter orelse return false;
+    return filter.excludes(target, .{
+        .view = frame.view,
+        .pieces = frame.pieces,
+        .output = frame.macro_output,
+        .budget = frame.budget,
+    });
+}
 
 fn key(target: *const Target) []const u8 {
     return switch (target.selection) {

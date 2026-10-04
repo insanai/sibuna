@@ -260,6 +260,14 @@ empty targets, extra delimiters and numeric suffixes rather than adopting permis
 and target-key comparisons remain byte-exact. Tags are expanded from the candidate
 rule against the current transaction view before selection.
 
+Whole-rule controls are checked before any condition effects. Target-wide controls are
+checked before requiring the collection. Value targets retain their immutable snapshots,
+but refresh the transaction view and expanded tags before filtering each candidate; an
+earlier candidate's TX write can therefore affect a later tag exclusion. Count selectors
+filter entries before aggregation, consistently with the native static-exclusion profile.
+Tag expansion uses the shared bounded macro scratch and work ledger. Unavailable tag inputs
+are resource/coverage failures, never a silently non-matching exclusion.
+
 Reserve transaction exclusion entries before evaluation. A prepared control owns its
 constant strings and exclusion descriptors. Applying it checks the complete required
 entry count and work charge before copying descriptors into the transaction array.

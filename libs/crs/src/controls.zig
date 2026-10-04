@@ -3,8 +3,9 @@
 const std = @import("std");
 const collections = @import("collections.zig");
 const work = @import("work.zig");
+const macros = @import("macros.zig");
 
-pub const Error = std.mem.Allocator.Error || work.Error || error{
+pub const Error = macros.Error || error{
     InvalidControl,
     UnsupportedControl,
     SourceLimit,
@@ -17,6 +18,21 @@ pub const Range = struct { first: u32, last: u32 };
 pub const Selector = union(enum) { ids: Range, tag: []const u8 };
 pub const Target = struct { collection: collections.Collection, key: ?[]const u8 };
 pub const Exclusion = struct { selector: Selector, target: ?Target = null };
+pub const Tags = union(enum) {
+    values: []const []const u8,
+    expanded: struct { programs: []const macros.Program, frame: macros.Frame },
+};
+pub const Filter = struct {
+    state: *State,
+    id: u32,
+    tags: []const macros.Program,
+
+    pub fn excludes(self: Filter, field: ?Target, frame: macros.Frame) Error!bool {
+        return self.state.excludesTags(self.id, .{
+            .expanded = .{ .programs = self.tags, .frame = frame },
+        }, field, frame.budget);
+    }
+};
 pub const Operation = union(enum) {
     exclude: []const Exclusion,
     processor: Processor,
@@ -175,6 +191,16 @@ pub const State = struct {
         field: ?Target,
         budget: *work.Budget,
     ) Error!bool {
+        return self.excludesTags(id, .{ .values = tags }, field, budget);
+    }
+
+    pub fn excludesTags(
+        self: *State,
+        id: u32,
+        tags: Tags,
+        field: ?Target,
+        budget: *work.Budget,
+    ) Error!bool {
         if (self.failed) return error.TransactionFailed;
         errdefer self.failed = true;
         for (self.exclusions[0..self.used]) |item| {
@@ -198,19 +224,31 @@ pub const State = struct {
 fn selected(
     selector: Selector,
     id: u32,
-    tags: []const []const u8,
+    tags: Tags,
     budget: *work.Budget,
-) work.Error!bool {
+) Error!bool {
     switch (selector) {
         .ids => |ids| return id >= ids.first and id <= ids.last,
-        .tag => |wanted| {
-            for (tags) |tag| {
+        .tag => |wanted| return hasTag(tags, wanted, budget),
+    }
+}
+
+fn hasTag(tags: Tags, wanted: []const u8, budget: *work.Budget) Error!bool {
+    switch (tags) {
+        .values => |values| for (values) |tag| {
+            try budget.debit(wanted.len + tag.len);
+            if (std.mem.eql(u8, wanted, tag)) return true;
+        },
+        .expanded => |expanded| {
+            std.debug.assert(expanded.frame.budget == budget);
+            for (expanded.programs) |*program| {
+                const tag = try program.expand(expanded.frame);
                 try budget.debit(wanted.len + tag.len);
                 if (std.mem.eql(u8, wanted, tag)) return true;
             }
-            return false;
         },
     }
+    return false;
 }
 
 test {

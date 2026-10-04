@@ -4,6 +4,7 @@ const condition = @import("condition.zig");
 const variables = @import("variables.zig");
 const regex = @import("regex.zig");
 const support = @import("evaluation_test_support.zig");
+const controls = @import("controls.zig");
 
 fn prepare(allocator: std.mem.Allocator, source: []const u8) !condition.Program {
     var builder = compiler.Compiler.init(allocator, .{});
@@ -12,6 +13,83 @@ fn prepare(allocator: std.mem.Allocator, source: []const u8) !condition.Program 
     var plan = try builder.finish();
     defer plan.deinit();
     return condition.compile(allocator, &plan.conditions[0], &.{}, .{});
+}
+
+test "runtime tag exclusions refresh dynamic tags after preceding candidate writes" {
+    var program = try prepare(std.testing.allocator,
+        \\SecRule ARGS "@contains x" "id:1,tag:'%{TX.kind}',\
+        \\ setvar:tx.kind=drop,setvar:tx.score=+1"
+    );
+    defer program.deinit();
+    var removal = try controls.compile(std.testing.allocator, "ruleRemoveTargetByTag=drop;ARGS:b");
+    defer removal.deinit();
+    const input = [_]variables.Entry{
+        .{ .collection = .args, .key = "a", .value = "x" },
+        .{ .collection = .args, .key = "b", .value = "x" },
+    };
+    var slot: support.Slot = .{};
+    try slot.init(&input);
+    try slot.store.put("kind", "keep", &slot.budget);
+    var exclusions: [1]controls.Exclusion = undefined;
+    var control: controls.State = .{ .exclusions = &exclusions };
+    try control.apply(&removal, &slot.budget);
+    var frame = slot.frame();
+    frame.control = &control;
+    try std.testing.expect(try program.evaluate(frame));
+    try std.testing.expectEqualStrings("1", (try slot.get("score")).?);
+    try std.testing.expectEqual(@as(usize, 2), slot.context.matched_used);
+    try std.testing.expectEqualStrings("ARGS:a", slot.matched[0].key);
+}
+
+test "runtime target exclusions are applied before count aggregation and rule effects" {
+    var program = try prepare(std.testing.allocator,
+        \\SecRule &ARGS "@eq 1" "id:1,setvar:tx.score=+1"
+    );
+    defer program.deinit();
+    var removal = try controls.compile(std.testing.allocator, "ruleRemoveTargetById=1;ARGS:b");
+    defer removal.deinit();
+    const input = [_]variables.Entry{
+        .{ .collection = .args, .key = "a", .value = "x" },
+        .{ .collection = .args, .key = "b", .value = "x" },
+    };
+    var slot: support.Slot = .{};
+    try slot.init(&input);
+    var exclusions: [1]controls.Exclusion = undefined;
+    var control: controls.State = .{ .exclusions = &exclusions };
+    try control.apply(&removal, &slot.budget);
+    var frame = slot.frame();
+    frame.control = &control;
+    try std.testing.expect(try program.evaluate(frame));
+    try std.testing.expectEqualStrings("1", (try slot.get("score")).?);
+    try std.testing.expectEqualStrings("1", slot.matched[0].value);
+}
+
+test "excluded actions have no writes and unavailable exclusion tags poison evaluation" {
+    var program = try prepare(std.testing.allocator,
+        \\SecAction "id:1,tag:'%{REQUEST_BODY}',setvar:tx.score=+1"
+    );
+    defer program.deinit();
+    var removal = try controls.compile(std.testing.allocator, "ruleRemoveByTag=drop");
+    defer removal.deinit();
+    const input = [_]variables.Entry{.{ .collection = .request_body, .value = "drop" }};
+    for ([_]bool{ true, false }) |available| {
+        var slot: support.Slot = .{};
+        try slot.init(&input);
+        var exclusions: [1]controls.Exclusion = undefined;
+        var control: controls.State = .{ .exclusions = &exclusions };
+        try control.apply(&removal, &slot.budget);
+        var frame = slot.frame();
+        frame.control = &control;
+        if (available) {
+            try std.testing.expect(!try program.evaluate(frame));
+            try std.testing.expect(try slot.get("score") == null);
+        } else {
+            slot.context.acquired.coverage[@backingInt(variables.Collection.request_body)] =
+                .unavailable;
+            try std.testing.expectError(error.UnavailableCollection, program.evaluate(frame));
+            try std.testing.expect(slot.context.failed and slot.store.failed and control.failed);
+        }
+    }
 }
 
 test "each field and multiMatch stage sees prior writes and owns its matched value" {

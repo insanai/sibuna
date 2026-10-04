@@ -12,8 +12,10 @@ const variables = @import("variables.zig");
 const regex = @import("regex.zig");
 const work = @import("work.zig");
 const buffers = @import("buffers.zig");
+const controls = @import("controls.zig");
+const macros = @import("macros.zig");
 pub const Error = selection.Error || operators.Error || pipeline.Error || replay.Error ||
-    set_var.Error || context.Error || error{ InvalidCondition, ActionLimit };
+    set_var.Error || context.Error || controls.Error || error{ InvalidCondition, ActionLimit };
 pub const Limits = struct {
     selection: selection.Limits = .{},
     operators: operators.Limits = .{},
@@ -31,9 +33,13 @@ pub const Frame = struct {
     value_output: []u8,
     argument_output: []u8,
     budget: *work.Budget,
+    control: ?*controls.State = null,
 
     fn assertExclusive(self: Frame) void {
         buffers.assertExclusive(&self.regions());
+        if (self.control) |control| {
+            self.assertDisjoint(std.mem.sliceAsBytes(control.exclusions));
+        }
     }
 
     pub fn assertDisjoint(self: Frame, region: []const u8) void {
@@ -72,6 +78,8 @@ pub const Program = struct {
     writes: []set_var.Program,
     capture: bool,
     negated: bool,
+    id: u32,
+    tags: []macros.Program,
 
     pub fn deinit(self: *Program) void {
         if (self.targets) |*targets| targets.deinit();
@@ -79,6 +87,8 @@ pub const Program = struct {
         self.transforms.deinit();
         for (self.writes) |*write| write.deinit();
         self.allocator.free(self.writes);
+        for (self.tags) |*tag| tag.deinit();
+        self.allocator.free(self.tags);
         self.* = undefined;
     }
 
@@ -86,9 +96,13 @@ pub const Program = struct {
     /// stages. Chain traversal and post-match effects execute after this returns.
     pub fn evaluate(self: *const Program, frame: Frame) Error!bool {
         if (frame.context.failed or frame.context.store.failed) return error.TransactionFailed;
-        errdefer frame.context.poison();
+        errdefer {
+            frame.context.poison();
+            if (frame.control) |control| control.failed = true;
+        }
         frame.assertExclusive();
         try frame.budget.debit(1);
+        if (try self.excluded(null, frame)) return false;
         const targets = if (self.targets) |*targets| targets else {
             try self.applyWrites(frame);
             return true;
@@ -102,6 +116,13 @@ pub const Program = struct {
                 .count = frame.count,
                 .regex = frame.regex,
                 .budget = frame.budget,
+                .filter = if (frame.control) |control| controls.Filter{
+                    .state = control,
+                    .id = self.id,
+                    .tags = self.tags,
+                } else null,
+                .pieces = frame.pieces,
+                .macro_output = frame.argument_output,
             });
             for (snapshot.entries) |entry| {
                 if (try self.evaluateField(entry, snapshot.counted, frame)) matched = true;
@@ -117,6 +138,10 @@ pub const Program = struct {
         counted: bool,
         frame: Frame,
     ) Error!bool {
+        if (!counted and try self.excluded(.{
+            .collection = entry.collection,
+            .key = if (entry.key.len == 0) null else entry.key,
+        }, frame)) return false;
         var values: replay.Replay = .{};
         try values.init(&self.transforms, .{
             .input = entry.value,
@@ -157,6 +182,18 @@ pub const Program = struct {
                 .budget = frame.budget,
             });
         }
+    }
+
+    fn excluded(self: *const Program, field: ?controls.Target, frame: Frame) Error!bool {
+        const control = frame.control orelse return false;
+        const view = try frame.context.view(frame.budget);
+        const filter: controls.Filter = .{ .state = control, .id = self.id, .tags = self.tags };
+        return filter.excludes(field, .{
+            .view = &view,
+            .pieces = frame.pieces,
+            .output = frame.argument_output,
+            .budget = frame.budget,
+        });
     }
 
     pub fn regexStates(self: *const Program) usize {
@@ -206,25 +243,41 @@ pub fn compile(
     });
     errdefer transforms.deinit();
     var writes: std.ArrayList(set_var.Program) = .empty;
+    var tags: std.ArrayList(macros.Program) = .empty;
     errdefer {
         for (writes.items) |*write| write.deinit();
         writes.deinit(allocator);
+        for (tags.items) |*tag| tag.deinit();
+        tags.deinit(allocator);
     }
     var capture = false;
     for (source.actions) |action| {
         if (action.kind == .capture) capture = true;
+        if (action.kind == .tag) {
+            if (tags.items.len == limits.actions) return error.ActionLimit;
+            var tag = try macros.compile(allocator, action.value.?, .{});
+            errdefer tag.deinit();
+            try tags.append(allocator, tag);
+        }
         if (action.kind != .set_var) continue;
         if (writes.items.len == limits.actions) return error.ActionLimit;
         var write = try set_var.compile(allocator, action.value.?);
         errdefer write.deinit();
         try writes.append(allocator, write);
     }
+    const owned_writes = try writes.toOwnedSlice(allocator);
+    errdefer {
+        for (owned_writes) |*write| write.deinit();
+        allocator.free(owned_writes);
+    }
     return .{
         .allocator = allocator,
         .targets = targets,
         .predicate = predicate,
         .transforms = transforms,
-        .writes = try writes.toOwnedSlice(allocator),
+        .writes = owned_writes,
+        .tags = try tags.toOwnedSlice(allocator),
+        .id = source.id,
         .capture = capture,
         .negated = if (source.expression) |expression| expression.negated else false,
     };
