@@ -9,6 +9,7 @@ const scan = @import("transform_scan.zig");
 const escapes = @import("transform_escape.zig");
 const entity = @import("transform_entity.zig");
 const base64 = @import("transform_base64.zig");
+const path = @import("transform_path.zig");
 
 pub const Error = types.Error;
 pub const Buffer = types.Buffer;
@@ -43,6 +44,10 @@ pub fn step(kind: model.Transform, buffer: Buffer) Error!Result {
         .css_decode, .js_decode, .url_decode_uni => escapes.decode(kind, buffer),
         .html_entity_decode => entity.decode(buffer),
         .base64_decode => base64.decode(buffer),
+        .normalize_path, .normalize_path_win => path.normalize(
+            buffer,
+            kind == .normalize_path_win,
+        ),
         .compress_whitespace, .remove_whitespace, .remove_nulls => blk: {
             const length = if (kind == .compress_whitespace)
                 compress(buffer)
@@ -72,6 +77,8 @@ pub fn capacity(kind: model.Transform, length: usize) Error!usize {
         .url_decode_uni,
         .html_entity_decode,
         .base64_decode,
+        .normalize_path,
+        .normalize_path_win,
         => length,
         .hex_encode => std.math.mul(usize, length, 2) catch error.OutputLimit,
         .length => digits(length),
@@ -86,7 +93,7 @@ fn cost(kind: model.Transform, length: usize) work.Error!u64 {
         .hex_encode => 2,
         .escape_seq_decode, .cmd_line, .replace_comments, .base64_decode => 8,
         .remove_comments_char, .html_entity_decode => 32,
-        .css_decode, .js_decode, .url_decode_uni => 16,
+        .css_decode, .js_decode, .url_decode_uni, .normalize_path, .normalize_path_win => 16,
         else => 1,
     };
     var charged = std.math.mul(u64, count, factor) catch return error.WorkLimit;
@@ -201,7 +208,7 @@ test "transform bounds and unsupported operations cannot expose partial output" 
     var budget: work.Budget = .{ .remaining = 10 };
     const buffer: Buffer = .{ .input = "AB", .output = &output, .budget = &budget };
     try std.testing.expectError(error.OutputLimit, apply(.hex_encode, buffer));
-    try std.testing.expectError(error.UnsupportedTransform, apply(.normalize_path, buffer));
+    try std.testing.expectError(error.UnsupportedTransform, apply(.utf8_to_unicode, buffer));
     try std.testing.expectEqual(@as(u64, 10), budget.remaining);
     budget.remaining = 0;
     try std.testing.expectError(error.WorkLimit, apply(.lowercase, buffer));

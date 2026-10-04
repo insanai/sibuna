@@ -184,7 +184,19 @@
       "sha256": "8fc3e18006fae5c031599b2551853870c104bba691e1a1bec009281f9ca2fd5d",
       "bytes": 7265,
       "cases": 32
+    },
+    {
+      "path": "transformations/normalisePath.json",
+      "sha256": "47233e66de3f807facecf43397fcaee401b592ed1eb07fc82c6b34c1ae0f132b",
+      "bytes": 4572,
+      "cases": 31
+    },
+    {
+      "path": "transformations/normalisePathWin.json",
+      "sha256": "26febecb98a9ca4719da5a49c697706bd6b99ef67762fb2087ed407c0492cf24",
+      "bytes": 4816,
+      "cases": 31
     }
   ],
-  "cases": 305
+  "cases": 367
 }
