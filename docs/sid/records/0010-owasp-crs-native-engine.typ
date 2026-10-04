@@ -1650,6 +1650,41 @@ incomplete rather than zero. Existing engine incidents and CRS findings remain d
 
 = Verification and acceptance
 
+== Phase evidence and reference differences
+
+The pinned FTW inventory contains 5,193 tests in 326 YAML files. The development
+`crs-ftw-check` probe runs the same prepared signed package through complete metadata,
+entity and rule phases. Its fixture serialization follows go-ftw 2.6.0. An optional loopback
+Albedo 0.3.0 origin supplies actual response headers and entities. This probe does not
+exercise Sibuna's socket connector, final HTTP status or origin delivery boundary.
+
+Request qualification evaluates 5,037 rule-ID contracts: 4,939 match their upstream
+assertions, 65 refuse malformed or exhausted inputs, and 33 disagree with an upstream
+expectation while producing exactly the same rule-ID set as ModSecurity 3.0.14.
+The 65 refusals include six work-budget exhaustions under the diagnostic ceiling.
+Response qualification evaluates 104 rule-ID contracts against Albedo: 102 match; both
+remaining logging differences reproduce ModSecurity's saved-message behavior.
+Status, raw wire, regex-log and multi-stage contracts remain separate coverage gaps.
+
+The reference uses Debian's `3.0.14-1+deb13u1` library, with SHA-256
+`af98ca264e2834bd76507684caf0b41e9f1d14f99030fd1626abffad376b5694`.
+The independent reference report retains every upstream mismatch. In particular,
+multiMatch may save a root finding before a later chain link fails, XML names remain
+visible through raw REQUEST_BODY, and `noauditlog` clears saved-message state in this
+reference. Changing those behaviors merely to satisfy another connector's expectation
+would weaken compatibility with the selected reference profile.
+
+Diagnostic execution allows 128 million charged units to separate semantics from the
+16-million production default. Seventy-seven request cases and twenty response cases
+exceed that default. These are paranoia-level-four fixture results, not an admission or
+performance guarantee for normal application traffic. Reports retain per-case work,
+errors, observed IDs, the source commit and raw expectations. Reference annotations do
+not convert failed assertions or coverage gaps into passed tests. The live-daemon gate
+below must establish refusal status, withheld origin/client bytes and supported profile
+coverage before activation or release.
+
+== Release gates
+
 1. Reader and compiler tests cover comments, quoting, continuations, duplicate IDs, inherited
    phases/defaults, chained rules, marker resolution, exclusions and every selected release file.
    The native inventory must agree with independently checked source counts.

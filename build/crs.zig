@@ -124,6 +124,13 @@ const Probe = struct {
 
 const probes: []const Probe = &.{
     .{
+        .name = "sibuna-crs-ftw-probe",
+        .source = "tools/crs_ftw_probe.zig",
+        .checker = "tools/crs_ftw_check.py",
+        .step = "crs-ftw-check",
+        .description = "Compare native phase evidence with pinned FTW assertions",
+    },
+    .{
         .name = "sibuna-crs-package-probe",
         .source = "tools/crs_package_probe.zig",
         .checker = "tools/crs_package_check.py",
