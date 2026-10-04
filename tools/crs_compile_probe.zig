@@ -20,7 +20,19 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
     var workspace = crs.regex.Workspace.init(allocator.*, &program) catch return 4;
     defer workspace.deinit();
     var budget: crs.work.Budget = .{ .remaining = 16_000_000 };
+    var pipeline = crs.pipeline.compile(allocator.*, .{
+        .inherited = plan.conditions[0].inherited_actions,
+        .local = plan.conditions[0].actions,
+    }) catch return 10;
+    defer pipeline.deinit();
     var transformed: [4]u8 = undefined;
+    var alternate: [4]u8 = undefined;
+    var iterator = crs.pipeline.Iterator.init(&pipeline, .{
+        .input = "xx",
+        .scratch = .{ &transformed, &alternate },
+        .budget = &budget,
+    });
+    _ = iterator.next() catch return 11;
     _ = crs.transforms.apply(.lowercase, .{
         .input = "XX",
         .output = &transformed,

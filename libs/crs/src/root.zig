@@ -13,6 +13,7 @@ pub const config = @import("config.zig");
 pub const transforms = @import("transforms.zig");
 pub const substring = @import("substring.zig");
 pub const primitives = @import("primitives.zig");
+pub const pipeline = @import("pipeline.zig");
 
 test {
     _ = @import("release_test.zig");
@@ -27,4 +28,5 @@ test {
     _ = transforms;
     _ = substring;
     _ = primitives;
+    _ = pipeline;
 }
