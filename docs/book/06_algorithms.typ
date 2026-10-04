@@ -264,6 +264,9 @@ Zig's standard token scanner with fixed borrowed capacity. XML refuses DTDs and 
 entities, validates scoped namespaces and distinguishes attributes from descendant text.
 Parsing failures cannot expose a partial collection as complete. The HTTP connector must
 still establish framing, body holdback, deadlines and phase coverage before activation.
+The entity adapter applies phase-one processor controls before publishing phase-two fields,
+preserves empty HTTP entities and raw binary bodies, and poisons all evaluation state on
+acquisition failure. This prevents a caller from evaluating a prior view after a failed parser.
 
 Development qualification runs separately from enabling protection:
 

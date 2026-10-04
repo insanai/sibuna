@@ -143,7 +143,7 @@
     category: "Architectural Specification",
     status: "Open for Discussion",
     created: "2026-10-04",
-    updated: "2026-10-04",
+    updated: "2026-10-05",
     summary: "Native SecLang compilation and bounded CRS evaluation, complete input contracts, anomaly scoring, immutable rule generations, authenticated operator updates, and compatibility gates.",
     source: "docs/sid/records/0010-owasp-crs-native-engine.typ",
     html: "sid/0010-owasp-crs-native-engine.html",

@@ -354,3 +354,46 @@ pub export fn crsXmlProbe(input: [*]const u8, length: usize) u8 {
     }, &budget) catch return 2;
     return 0;
 }
+
+/// Instantiate the complete metadata/entity path with runtime inputs on every
+/// target. An unused import alone would not qualify Zig's lazily compiled code.
+pub export fn crsHttpProbe(
+    allocator: *const std.mem.Allocator,
+    input: [*]const u8,
+    length: usize,
+    processor: u8,
+) u8 {
+    if (length > 4096 or processor > 3) return 1;
+    var compiler = crs.compiler.Compiler.init(allocator.*, .{});
+    defer compiler.deinit();
+    compiler.addSource("http.conf", "SecAction \"id:1,phase:2\"") catch return 2;
+    var source = compiler.finish() catch return 3;
+    defer source.deinit();
+    var program = crs.rule_program.compile(allocator.*, &source, &.{}, .{}) catch return 4;
+    defer program.deinit();
+    var slot: crs.transaction_slot.Slot = undefined;
+    slot.init(allocator.*, &program, .{}) catch return 5;
+    defer slot.deinit();
+    var execution = slot.begin(.{ .entries = &.{} }, true) catch return 6;
+    defer slot.finish();
+    crs.http_acquisition.request(.{
+        .method = "POST",
+        .target = "/probe?q=one&q=two",
+        .protocol = "HTTP/1.1",
+        .line = "POST /probe?q=one&q=two HTTP/1.1",
+        .client = "127.0.0.1",
+        .id = "probe",
+        .headers = &.{},
+    }, &slot.input, slot.formScratch(), &slot.budget) catch return 7;
+    slot.acquire(slot.input.view() catch return 8) catch return 9;
+    _ = execution.run(.request_headers) catch return 10;
+    const descriptor = crs.entity_acquisition.Descriptor.parse(
+        null,
+        @fromBackingInt(@as(u2, @intCast(processor))),
+        &slot.budget,
+    ) catch return 11;
+    crs.entity_acquisition.request(&slot, input[0..length], descriptor) catch return 12;
+    slot.acquire(slot.input.view() catch return 13) catch return 14;
+    _ = execution.run(.request_body) catch return 15;
+    return 0;
+}

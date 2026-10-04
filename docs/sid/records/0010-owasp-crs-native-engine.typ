@@ -1310,6 +1310,32 @@ Parsing errors populate the corresponding collection/error semantics and cannot 
 as an empty valid document. Ambiguous framing is rejected before CRS evaluation.
 
 The enforcing reverse-proxy profile holds the bounded request before sending it to the origin.
+After phase-one controls run, select the effective entity processor from the strict MIME
+descriptor and its explicit override. The automatic descriptor selects URLENCODED or
+MULTIPART only; JSON and XML selection comes from phase-one policy controls. Reject
+duplicate boundary/charset parameters and unsupported JSON/XML charsets. This native
+profile validates the complete media type instead of accepting a misleading media prefix.
+An empty HTTP entity establishes empty complete body collections without invoking a
+nonempty-document parser or inventing a REQUEST_BODY occurrence. Raw binary entities
+remain immutable borrowed bytes and never become form fields merely because they contain
+an equals sign. Parsed body fields extend the already acquired query fields. Update body
+length, processor and aggregate sizes before acquiring the phase-two view.
+
+Any entity acquisition error poisons the builder, evaluation context and intervention state.
+The caller cannot run the previous phase's merged view after a failed parser. Publish a
+complete view only after every contribution succeeds; repeated body acquisition is an
+ordering error. Entity and work limits remain independent: a body fitting its byte ceiling
+may exhaust the shared parser/matcher budget.
+
+*Lemma 30 (entity failure isolation).* A failed entity acquisition cannot produce a valid
+negative phase-two result or overwrite a retained raw entity with parser scratch.
+
+*Proof.* Each parser writes only reserved scratch and monotonic owned fields, while raw
+entities are immutable borrows into separate reserved buffers. Every error poisons all three
+transaction owners. The executor refuses a poisoned context or state before running a rule,
+and the builder refuses its partial view. No body data reaches phase two until the successful
+view is acquired. $square$
+
 Response-body enforcement holds eligible MIME types before sending the response head.
 Content encoding requires bounded decoding with an expansion limit; inspection of compressed
 wire bytes is not inspection of the decoded representation. Oversize and timeout outcomes
