@@ -933,7 +933,7 @@ traffic, that a payload is safe, or that all applications tolerate a given block
 
 = Input acquisition and HTTP phases
 
-#table(
+#block(breakable: false, table(
   columns: (1fr, 2fr, 3fr),
   [Phase], [Input], [Publication boundary],
   [1], [Request line and headers], [Before acquiring or forwarding a protected body],
@@ -941,7 +941,7 @@ traffic, that a payload is safe, or that all applications tolerate a given block
   [3], [Validated response status and headers], [Before client receives the response head],
   [4], [Complete selected response body], [Before client receives a protected response body],
   [5], [Final transaction state], [Logging; cannot undo bytes already sent],
-)
+))
 
 Request acquisition decodes HTTP transfer framing once and supplies the same entity bytes
 for inspection and replay. Chunk extensions and trailers are validated by the transport.
