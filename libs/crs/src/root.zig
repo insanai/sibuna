@@ -9,6 +9,7 @@ pub const inventory = @import("inventory.zig");
 pub const syntax = @import("syntax.zig");
 pub const selectors = @import("selectors.zig");
 pub const collections = @import("collections.zig");
+pub const config = @import("config.zig");
 
 test {
     _ = @import("release_test.zig");
@@ -19,4 +20,5 @@ test {
     _ = syntax;
     _ = inventory;
     _ = selectors;
+    _ = config;
 }

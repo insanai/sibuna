@@ -4,6 +4,8 @@ const std = @import("std");
 const crs = @import("crs");
 
 pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
+    const activation: crs.config.Activation = .{};
+    activation.validate(.request_metadata, .source_only) catch return 7;
     var compiler = crs.compiler.Compiler.init(allocator.*, .{});
     defer compiler.deinit();
     compiler.addSource("probe.conf", "SecRule ARGS \"@rx (x+)\" \"id:1,phase:1\"") catch return 1;
