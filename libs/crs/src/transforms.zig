@@ -6,6 +6,7 @@ const model = @import("model.zig");
 const work = @import("work.zig");
 const types = @import("transform_types.zig");
 const scan = @import("transform_scan.zig");
+const escapes = @import("transform_escape.zig");
 
 pub const Error = types.Error;
 pub const Buffer = types.Buffer;
@@ -37,6 +38,7 @@ pub fn step(kind: model.Transform, buffer: Buffer) Error!Result {
         .remove_comments_char => scan.removeCommentMarkers(buffer),
         .replace_comments => scan.replaceComments(buffer),
         .sha1 => scan.sha1(buffer),
+        .css_decode, .js_decode, .url_decode_uni => escapes.decode(kind, buffer),
         .compress_whitespace, .remove_whitespace, .remove_nulls => blk: {
             const length = if (kind == .compress_whitespace)
                 compress(buffer)
@@ -61,6 +63,9 @@ pub fn capacity(kind: model.Transform, length: usize) Error!usize {
         .cmd_line,
         .remove_comments_char,
         .replace_comments,
+        .css_decode,
+        .js_decode,
+        .url_decode_uni,
         => length,
         .hex_encode => std.math.mul(usize, length, 2) catch error.OutputLimit,
         .length => digits(length),
@@ -75,6 +80,7 @@ fn cost(kind: model.Transform, length: usize) work.Error!u64 {
         .hex_encode => 2,
         .escape_seq_decode, .cmd_line, .replace_comments => 8,
         .remove_comments_char => 32,
+        .css_decode, .js_decode, .url_decode_uni => 16,
         else => 1,
     };
     var charged = std.math.mul(u64, count, factor) catch return error.WorkLimit;
@@ -189,7 +195,7 @@ test "transform bounds and unsupported operations cannot expose partial output" 
     var budget: work.Budget = .{ .remaining = 10 };
     const buffer: Buffer = .{ .input = "AB", .output = &output, .budget = &budget };
     try std.testing.expectError(error.OutputLimit, apply(.hex_encode, buffer));
-    try std.testing.expectError(error.UnsupportedTransform, apply(.js_decode, buffer));
+    try std.testing.expectError(error.UnsupportedTransform, apply(.html_entity_decode, buffer));
     try std.testing.expectEqual(@as(u64, 10), budget.remaining);
     budget.remaining = 0;
     try std.testing.expectError(error.WorkLimit, apply(.lowercase, buffer));
@@ -259,4 +265,48 @@ test "scan and digest work refusal preserves output before any write" {
         cost(.remove_comments_char, std.math.maxInt(usize)),
     );
     try std.testing.expectEqual(@as(u64, 217), try cost(.sha1, 56));
+}
+
+test "CSS JavaScript and URL decoders preserve distinct byte and change semantics" {
+    const cases = [_]struct {
+        kind: model.Transform,
+        input: []const u8,
+        output: []const u8,
+        changed: bool = true,
+    }{
+        .{ .kind = .css_decode, .input = "\\000041 \\ff01\\\n\\", .output = "A!" },
+        .{ .kind = .css_decode, .input = "\\z", .output = "z", .changed = false },
+        .{ .kind = .css_decode, .input = "\\41\r\nB", .output = "A\nB" },
+        .{ .kind = .js_decode, .input = "\\uFF01\\777\\x00\\q\\", .output = "!?7\x00q\\" },
+        .{ .kind = .js_decode, .input = "\\u12g4\\xF", .output = "u12g4xF" },
+        .{ .kind = .url_decode_uni, .input = "%uFF01+%00%u0041", .output = "! \x00A" },
+        .{
+            .kind = .url_decode_uni,
+            .input = "%u12g4%2g%",
+            .output = "%u12g4%2g%",
+            .changed = false,
+        },
+    };
+    var output: [64]u8 = undefined;
+    for (cases) |case| {
+        var budget: work.Budget = .{ .remaining = 4096 };
+        const result = try step(case.kind, .{
+            .input = case.input,
+            .output = &output,
+            .budget = &budget,
+        });
+        try std.testing.expectEqualStrings(case.output, result.bytes);
+        try std.testing.expectEqual(case.changed, result.changed);
+        // Every proper prefix includes incomplete escapes. Capacity must suffice
+        // and lookahead must remain inside the caller's slice at each boundary.
+        for (0..case.input.len) |length| {
+            budget.remaining = 4096;
+            const partial = try step(case.kind, .{
+                .input = case.input[0..length],
+                .output = output[0..length],
+                .budget = &budget,
+            });
+            try std.testing.expect(partial.bytes.len <= length);
+        }
+    }
 }

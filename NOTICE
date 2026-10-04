@@ -41,7 +41,7 @@ CRS compatibility-development fixtures:
   vendor/crs/provenance.json. These source fixtures do not enable CRS in the
   shipped daemon. vendor/crs/fixture.zig is a first-party LGPL-3.0 test facade.
 - ModSecurity 3.0.14 compatibility algorithms adapted in
-  libs/crs/src/transform_scan.zig: Apache-2.0;
+  libs/crs/src/transform_scan.zig and transform_escape.zig: Apache-2.0;
   LICENSES/ModSecurity-Apache-2.0.txt. Copyright (c) 2015-2023 Trustwave
   Holdings, Inc. Source: github.com/owasp-modsecurity/ModSecurity.
   The native scans use caller-owned buffers and explicit bounds instead of

@@ -258,6 +258,18 @@ unchecked `sscanf` result is uninitialized. The digest manifest identifies this 
 explicitly; it cannot provide deterministic conformance evidence. Native tests cover invalid
 escapes directly, and the checker fails if the recorded exception stops being undefined.
 
+CSS decoding consumes up to six hexadecimal digits and one following C-locale whitespace
+byte; an escaped newline and trailing backslash disappear. An unrecognized CSS escape
+removes the backslash without setting the reference change flag. JavaScript decoding uses
+four-digit `\u`, two-digit `\x`, C escapes and octal escapes bounded to one byte; a
+three-digit octal escape above `377` consumes two digits instead. URL decoding recognizes
+`%xx`, `%uHHHH` and `+`. These three transforms retain the low byte and fold full-width
+ASCII `ff01` through `ff5e` by adding `20` to it. No Unicode map table is configured in
+the initial compatibility profile; a candidate requiring such a table is unsupported.
+All decode lookahead is bounded by seven bytes, each step consumes input, and output is
+at most $N$. Reserve $16 N + 1$ work units before writes, including the unchanged stages.
+This byte profile must not be substituted with a Unicode string decoder.
+
 = Algorithms and mathematical contracts
 
 == Definitions and axioms

@@ -137,7 +137,25 @@
       "sha256": "11de7a5844baddb7012042932cab019ccfada05c5dd55a6bb29e7504ff32ca54",
       "bytes": 695,
       "cases": 3
+    },
+    {
+      "path": "transformations/cssDecode.json",
+      "sha256": "691bab438091a593f7419fffef92ac5f1115ff7a8900624d7a4296fc7012c4b7",
+      "bytes": 995,
+      "cases": 6
+    },
+    {
+      "path": "transformations/jsDecode.json",
+      "sha256": "2a8c9aafda8a6a4d4cfc6f39f54b4ca90d711142dad2c106e669e1500798fe70",
+      "bytes": 2155,
+      "cases": 15
+    },
+    {
+      "path": "transformations/urlDecodeUni.json",
+      "sha256": "677f81ecd7bc57a75367608eb4b91a391a3ff1c143a226bb780c0e3798ad7d88",
+      "bytes": 14538,
+      "cases": 32
     }
   ],
-  "cases": 199
+  "cases": 252
 }
