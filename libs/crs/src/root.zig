@@ -18,6 +18,7 @@ pub const byte_range = @import("byte_range.zig");
 pub const utf8_profile = @import("utf8_profile.zig");
 pub const phrases = @import("phrases.zig");
 pub const phrases_source = @import("phrases_source.zig");
+pub const address_set = @import("address_set.zig");
 
 test {
     _ = @import("release_test.zig");
@@ -37,4 +38,5 @@ test {
     _ = utf8_profile;
     _ = phrases;
     _ = phrases_source;
+    _ = address_set;
 }

@@ -186,8 +186,10 @@ runtime text search. Logging and audit controls affect evidence, not detection t
 
 Phrase files compile into a shared Aho–Corasick representation with per-rule output lists.
 Case and boundary semantics must agree with the operator rather than an unrelated policy
-matcher. Address lists compile into the existing bounded CIDR trie representation where its
-semantics agree. Numeric comparisons use checked conversion and explicit signed arithmetic.
+matcher. Boolean address lists compile into sorted disjoint intervals, preserving IPv4 and
+IPv6 as distinct families. The policy trie carries actions and maps IPv4 into IPv6 space;
+reusing it would change `ipMatch` semantics. Numeric comparisons use checked conversion and
+explicit signed arithmetic.
 The pinned implementation’s `eq` converts a decimal prefix to a 32-bit signed integer and
 treats conversion exceptions as zero, whereas `ge`, `gt` and `lt` use 64-bit `atoll`.
 Preserve those distinct domains. Because overflowing `atoll` is not portable, the native
@@ -468,6 +470,47 @@ remain literal, including a CR and whitespace-only lines. Both paths enforce byt
 phrase bounds before constructing the owned automaton, and release temporary input storage
 on every failure. Dictionary formatting is part of the operator semantics.
 
+== Address sets and family isolation
+
+An address set owns sorted inclusive intervals, ordered by family and unsigned network
+value. IPv4 uses 32 bits and IPv6 uses 128 bits. An IPv4-mapped IPv6 literal remains IPv6,
+matching the reference's separate trees. Private and reserved addresses remain eligible:
+this is a security predicate, not a GeoIP public-address classifier.
+The pure length-aware parser follows RFC 4291 section 2.2, including exactly one `::`
+that elides at least one group and a dotted decimal tail on any IPv6 prefix. It writes
+at most eight 16-bit groups, rejects excess or empty groups before indexing, and never
+uses the socket library's special-case IPv4-mapping parser. Accepted address text is
+at most 45 bytes. Eight charged byte visits per input byte cover family selection,
+delimiter scans and digit parsing; the fixed group array is transaction-local.
+
+For an address $a$, family width $w$ and prefix length $p$, let
+$s = floor(a / 2^(w-p)) 2^(w-p)$. The interval is $[s, s + 2^(w-p) - 1]$.
+Host prefixes use a zero host mask and `/0`
+uses the whole family; the implementation handles these boundaries without shifting by
+the integer width. Overlapping or adjacent intervals of the same family merge. Compilation
+uses bounded iterative merge sort with charged copies and comparisons, then one merge scan.
+It limits source bytes and prefix count before allocation, owns the resulting intervals,
+and frees intermediate storage on every failure. Matching has no allocation or recursion.
+
+*Lemma (address-set equivalence).* Each CIDR describes exactly its inclusive interval.
+Merging overlapping or adjacent intervals preserves their union and cannot cross a family
+boundary. After merging, membership is determined by the last interval whose start is no
+greater than the address: any earlier interval ends before that interval begins. Binary
+search therefore gives the same Boolean result as testing every original prefix.
+Compilation costs $O(B + P log P)$ for $B$ source bytes and $P$ prefixes; lookup costs
+$O(log P)$ after bounded literal parsing. Every comparison and copy is charged before
+execution. A work-limit error is not a negative predicate result.
+
+LF-delimited source supports comma lists and `#` comments, without network or file access
+on the request path. Empty comma elements are skipped as in the reference. CIDR suffixes
+are strictly decimal and within the family width; whitespace, zones, NULs, trailing junk
+and malformed addresses reject compilation. Invalid input fields match nothing, rather
+than resolving names. The native profile intentionally accepts valid `/0` and IPv6 `/128`
+prefixes: the pinned reference rejects `/0` and mishandles an explicit IPv6 `/128` suffix.
+Its permissive `atoi` suffix parsing and C-string truncation are not safe native contracts.
+These declared differences belong to the artifact compatibility report; valid stock CRS
+lists and the defined upstream membership vectors must otherwise agree.
+
 == Lemma 4: sound prefiltering
 
 A candidate regex may be skipped by a literal prefilter only when the compiler has proven
@@ -731,6 +774,7 @@ may contact the authors. Adding rules does not replace the existing component li
 
 - #link("https://github.com/coreruleset/coreruleset")[OWASP Core Rule Set source and license].
 - #link("https://github.com/coreruleset/coreruleset/releases/tag/v4.30.0")[CRS 4.30.0 release].
+- #link("https://www.rfc-editor.org/rfc/rfc4291.html#section-2.2")[RFC 4291 address text grammar].
 - #link("https://coreruleset.org/docs/1-getting-started/1-1-crs-installation/")[CRS installation and signed releases].
 - #link("https://coreruleset.org/docs/2-how-crs-works/2-1-anomaly_scoring/")[CRS anomaly scoring].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/wiki/Reference-Manual-(v3.x)")[ModSecurity SecLang reference].
