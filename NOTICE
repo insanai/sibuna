@@ -32,3 +32,11 @@ Bundled dependencies in the default, single-node release:
 No GeoIP address database is bundled. Operators import separately licensed
 datasets using Sibuna's GeoIP commands. Cluster builds are separate source
 builds and link OpenSSL 3; the default release has no OpenSSL dependency.
+
+CRS compatibility-development fixtures:
+
+- OWASP Core Rule Set 4.30.0: Apache-2.0; LICENSES/OWASP-CRS-Apache-2.0.txt
+  and vendor/crs/LICENSE. Source: github.com/coreruleset/coreruleset.
+  Release digest, signing fingerprint and unmodified file digests are in
+  vendor/crs/provenance.json. These source fixtures do not enable CRS in the
+  shipped daemon. vendor/crs/fixture.zig is a first-party LGPL-3.0 test facade.

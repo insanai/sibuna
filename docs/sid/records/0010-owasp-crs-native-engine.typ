@@ -47,7 +47,9 @@ CRS 4.30.0, released on 2 October 2026, is the initial compatibility target. The
 release archive was downloaded from the official release and checked against its GitHub
 asset digest, SHA-256
 `3d678a41fd5aade34760127fef5dd64fd7a77848913fc0f70dde0cf467c94427`.
-That digest checks the audit input; it is not an independent signature verification.
+The detached signature was also independently verified with GPG against the pinned CRS
+fingerprint below. This audit verification does not implement the proposed native update
+verifier. Unmodified fixtures and their file digests are in `vendor/crs/provenance.json`.
 The active directives in the distributed rule files and example setup are the design input.
 Commented examples and optional plugins do not establish support requirements silently.
 
@@ -377,10 +379,16 @@ decision. Error responses disclose neither payload secrets nor internal traces.
 
 = Operator configuration and updates
 
-Proposed startup options are `--crs-dir`, `--crs-mode off|audit|enforce`,
+Proposed startup controls are `--crs` (enable enforcement), `--no-crs` (disable),
+`--crs-mode off|audit|enforce` and `--crs-dir`,
 `--crs-paranoia`, `--crs-detection-paranoia`, `--crs-request-limit`,
 `--crs-response-limit`, `--crs-work-budget` and `--crs-slots`. Thresholds and exclusions
-are explicit configuration with revisions. CRS starts disabled. Begin application tuning in
+are explicit configuration with revisions. CRS starts disabled. Conflicting enable/disable/mode options are rejected rather than
+resolved by argument order. The console provides the same Off, Audit and Enforce controls;
+a mode change is an authorized revision, not a browser-local toggle. Off skips CRS
+evaluation, input holdback and telemetry production while retaining the verified artifact
+for a later reviewed activation. CRS enforcement and Gate admission are independent
+choices; enabling CRS does not silently switch Gate to Shield. Begin application tuning in
 audit mode, inspect findings, add narrow exclusions and then select enforcement.
 A broad rule exclusion must state the lost protection in the console.
 

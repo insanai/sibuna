@@ -1,0 +1,278 @@
+{
+  "repository": "https://github.com/coreruleset/coreruleset",
+  "version": "4.30.0",
+  "asset": "https://github.com/coreruleset/coreruleset/releases/download/v4.30.0/coreruleset-4.30.0-minimal.tar.gz",
+  "archive_sha256": "3d678a41fd5aade34760127fef5dd64fd7a77848913fc0f70dde0cf467c94427",
+  "signature_fingerprint": "36006F0E0BA167832158821138EEACA1AB8A6E72",
+  "signature_verified": true,
+  "license": "Apache-2.0",
+  "source_plan_only": true,
+  "files": [
+    {
+      "path": "LICENSE",
+      "sha256": "676a192d3fc5205a288934ee02c5f934b782b91604a4b93589ba64520a4fec13",
+      "bytes": 11347
+    },
+    {
+      "path": "crs-setup.conf.example",
+      "sha256": "3818cf2a114fc9ac96c184828b8cad20dae78f471edc8cf5b2269a3bc6ee5160",
+      "bytes": 40319
+    },
+    {
+      "path": "release.tar.gz.asc",
+      "sha256": "dfd8c998d9c1759a3bbb080534fd220177ae1e9213867b91dc33ad74e2e71eb4",
+      "bytes": 906
+    },
+    {
+      "path": "rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf.example",
+      "sha256": "efda64c693410a169758dec8a1fd7df44285468de37f6e1a2eb44be2e441186d",
+      "bytes": 10047
+    },
+    {
+      "path": "rules/REQUEST-901-INITIALIZATION.conf",
+      "sha256": "0a7dfccf87cc2f8ea2afbb3c8ed3e59d69f5cc27d8a934b6b958cb564d28805c",
+      "bytes": 18607
+    },
+    {
+      "path": "rules/REQUEST-905-COMMON-EXCEPTIONS.conf",
+      "sha256": "8c3e62f2e79d0bb3413e51a61b26d3eccc87cba23d95963b2b1514e5155c27e7",
+      "bytes": 1640
+    },
+    {
+      "path": "rules/REQUEST-911-METHOD-ENFORCEMENT.conf",
+      "sha256": "1d9a08d955e205e64ebf6313cf4a8f4711956cd19762aac680bf3169612e93a0",
+      "bytes": 2972
+    },
+    {
+      "path": "rules/REQUEST-913-SCANNER-DETECTION.conf",
+      "sha256": "82a6823265f8e191fa4b3f40369a87df3ffd613fd495fbfe8212487844826eb4",
+      "bytes": 3609
+    },
+    {
+      "path": "rules/REQUEST-920-PROTOCOL-ENFORCEMENT.conf",
+      "sha256": "4550747b301abbfa7a072644c0db04041e971760e678943c29b7a4daa31a403b",
+      "bytes": 69018
+    },
+    {
+      "path": "rules/REQUEST-921-PROTOCOL-ATTACK.conf",
+      "sha256": "d07f08d8af15477ef04f7ff9ebdbffeee081afe78d5c9f174a23a1f38adcae67",
+      "bytes": 24003
+    },
+    {
+      "path": "rules/REQUEST-922-MULTIPART-ATTACK.conf",
+      "sha256": "11497df11f882b14ab16d84a5b9ee6e8df80201bb427ebf9934c53781bacbc8b",
+      "bytes": 7616
+    },
+    {
+      "path": "rules/REQUEST-930-APPLICATION-ATTACK-LFI.conf",
+      "sha256": "9588c356452d15c75e78ace7faefcb9809ed2b9684ecf33069c6ab44f4c2771f",
+      "bytes": 9494
+    },
+    {
+      "path": "rules/REQUEST-931-APPLICATION-ATTACK-RFI.conf",
+      "sha256": "f0702896585fff0a3d82984d4fcc014136565421170d6a22b766c33324622eb2",
+      "bytes": 9696
+    },
+    {
+      "path": "rules/REQUEST-932-APPLICATION-ATTACK-RCE.conf",
+      "sha256": "5dc9375267ed955cabe3e5539c80472bdcc82f8603add70806f7919230cb58b3",
+      "bytes": 212341
+    },
+    {
+      "path": "rules/REQUEST-933-APPLICATION-ATTACK-PHP.conf",
+      "sha256": "a6b85c6e0424ba1abd8f555487ab10ec2b66b3dd11461dabcf4c3a5f56bd56b7",
+      "bytes": 71027
+    },
+    {
+      "path": "rules/REQUEST-934-APPLICATION-ATTACK-GENERIC.conf",
+      "sha256": "5d1229f3eae59f6c44436c7377c37f6b158f22380c59fbd52987065349e8dcc1",
+      "bytes": 27170
+    },
+    {
+      "path": "rules/REQUEST-941-APPLICATION-ATTACK-XSS.conf",
+      "sha256": "2a33fa32daca6b1d2bf354fbe54dcb5355d84fe3362c8b13ca412cf422caaf50",
+      "bytes": 55720
+    },
+    {
+      "path": "rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf",
+      "sha256": "8dadc742af2bb6b7e5b48570cb0201930cd9cfe9e3de94776e736605ea7be228",
+      "bytes": 98961
+    },
+    {
+      "path": "rules/REQUEST-943-APPLICATION-ATTACK-SESSION-FIXATION.conf",
+      "sha256": "ede2218f226d3b32e1dc4056f72ed771a857a6bad71dbcf3dd457e83d57d6fa5",
+      "bytes": 6811
+    },
+    {
+      "path": "rules/REQUEST-944-APPLICATION-ATTACK-JAVA.conf",
+      "sha256": "3cdeb69d368e425d7066b1694e70969c3b53c3947d562622ca919331fdca8b09",
+      "bytes": 23650
+    },
+    {
+      "path": "rules/REQUEST-949-BLOCKING-EVALUATION.conf",
+      "sha256": "3ee1a0ca0e88d851a6015cb5f125df78a5a4055540a4427452f53733e2f34f60",
+      "bytes": 8089
+    },
+    {
+      "path": "rules/REQUEST-999-COMMON-EXCEPTIONS-AFTER.conf",
+      "sha256": "da61f6f1d5be9b66c2436efc5cd5368ff618954d26cae37204128be21001f99c",
+      "bytes": 4813
+    },
+    {
+      "path": "rules/RESPONSE-950-DATA-LEAKAGES.conf",
+      "sha256": "c8fd989ad7b5d6ee1db1277f53c8ea3dc0d5428c4d5f554b9071e00c7bdebff8",
+      "bytes": 6619
+    },
+    {
+      "path": "rules/RESPONSE-951-DATA-LEAKAGES-SQL.conf",
+      "sha256": "23602734f3f6e87b4638d1dff11d2c96e58ae50b8d2cbb67883dfed8f76d0040",
+      "bytes": 19059
+    },
+    {
+      "path": "rules/RESPONSE-952-DATA-LEAKAGES-JAVA.conf",
+      "sha256": "e86183764723e48dd083dec54044676621451e9a8a08d538171b342f4865d73f",
+      "bytes": 3400
+    },
+    {
+      "path": "rules/RESPONSE-953-DATA-LEAKAGES-PHP.conf",
+      "sha256": "bc902951c5d0ba6b458acb6712d2028852340a63692a71d33143afb01583cb45",
+      "bytes": 6118
+    },
+    {
+      "path": "rules/RESPONSE-954-DATA-LEAKAGES-IIS.conf",
+      "sha256": "3a9604c560048e690b2793939d8304ff98e12073cd7a531bf7765bf899c8b714",
+      "bytes": 6117
+    },
+    {
+      "path": "rules/RESPONSE-955-WEB-SHELLS.conf",
+      "sha256": "75c9b00fd730a6f9996e8c68dae70a8412b019bd1be641b3dc45b0adbf53e30e",
+      "bytes": 19297
+    },
+    {
+      "path": "rules/RESPONSE-956-DATA-LEAKAGES-RUBY.conf",
+      "sha256": "55be285f03eaac97332d4148e6bc5a64e2db0aba0caac902ac68218a2c607fe6",
+      "bytes": 3790
+    },
+    {
+      "path": "rules/RESPONSE-959-BLOCKING-EVALUATION.conf",
+      "sha256": "f2f2ebc2b8e63823c9627bd8abe5f1e3debabdff7f775856bdf8cd575e5dfae7",
+      "bytes": 8815
+    },
+    {
+      "path": "rules/RESPONSE-980-CORRELATION.conf",
+      "sha256": "8a57cc168c99d0c5bca27edcc26b889582a50323117cd6a4b409e5afcd4b1fc8",
+      "bytes": 7598
+    },
+    {
+      "path": "rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf.example",
+      "sha256": "805b1a61f5c81d457e2c83041357cf9df287085adfd89291584a7ca8f7fed698",
+      "bytes": 3424
+    },
+    {
+      "path": "rules/ai-critical-artifacts.data",
+      "sha256": "9352bbfff2c5dd86311dfbefaf76a71597402a2eba9cad33bc736b3d2560311a",
+      "bytes": 1802
+    },
+    {
+      "path": "rules/asp-dotnet-errors.data",
+      "sha256": "a3bb53002692e86fdb06e7045b64bc8f7c74972f824106f566ec48bd528884aa",
+      "bytes": 3755
+    },
+    {
+      "path": "rules/iis-errors.data",
+      "sha256": "3eac5008e5dee373d0b876e92405af04cc4ce0f73625e7510499f708b516aa40",
+      "bytes": 4441
+    },
+    {
+      "path": "rules/java-classes.data",
+      "sha256": "e939e4af2b219a695f84d905cae484698718beabc0efdbe4236ae1d8dc9e2ca3",
+      "bytes": 2157
+    },
+    {
+      "path": "rules/lfi-os-files.data",
+      "sha256": "2404760c4e8c49701d5a69498ea4bb623c313538787daa43a56f5e3b905aeee4",
+      "bytes": 18677
+    },
+    {
+      "path": "rules/php-errors.data",
+      "sha256": "2c614f73c190bafa8cd4580fa54ac61f198ed295e23c390e318841888bf93dac",
+      "bytes": 75748
+    },
+    {
+      "path": "rules/php-function-names-933150.data",
+      "sha256": "0331ce6dbb5d72dff674ab713248ea392020c8cfaeaf868e4c284fdbb273fc8e",
+      "bytes": 3342
+    },
+    {
+      "path": "rules/php-variables.data",
+      "sha256": "07ffd3c28d5d79e18e3844352fc3dd122af7e0037dbfebe6ed4dad403e9a95de",
+      "bytes": 610
+    },
+    {
+      "path": "rules/restricted-files.data",
+      "sha256": "17b0ab9a5be2901a520e6f5821ba17b41372fae5224e314eccc0ba3b483c59e7",
+      "bytes": 11366
+    },
+    {
+      "path": "rules/ruby-errors.data",
+      "sha256": "a72c25e9cf0b51a0984efb5826b7ecf753de50fda36980bb676492451f56d728",
+      "bytes": 2803
+    },
+    {
+      "path": "rules/scanners-user-agents.data",
+      "sha256": "1a4ac901d8fb2f388db068b9c5dc07d3de4b41b832f5b1dfce5b89933ae968ce",
+      "bytes": 4063
+    },
+    {
+      "path": "rules/sql-errors.data",
+      "sha256": "ba9f3f7070f4c2c6c2d6165da06566f18aee19756c510ccde99aeff57fd5ca1a",
+      "bytes": 4363
+    },
+    {
+      "path": "rules/ssrf-no-scheme.data",
+      "sha256": "753805c3b3284a28c2d834c9ce32aab8f3d24257e66c2d64b3308bd8f4aacbd4",
+      "bytes": 1085
+    },
+    {
+      "path": "rules/ssrf.data",
+      "sha256": "6305d2a07d3b7997112358a38986fe30c55faa11f9002c3479a687a718bfc66a",
+      "bytes": 5428
+    },
+    {
+      "path": "rules/unix-shell-aliases.data",
+      "sha256": "7860d692ba74be8465972e1c348d06b9ba41f61243406cfc7fed82db6fc26bee",
+      "bytes": 192
+    },
+    {
+      "path": "rules/unix-shell-builtins.data",
+      "sha256": "7c7b600b457b06940a440095cf594f0e28de1891020de9840fc9ea7cf1e00e57",
+      "bytes": 138
+    },
+    {
+      "path": "rules/unix-shell.data",
+      "sha256": "de5b0f7b6569e63706cdb68e3a185a26d1f28b2ee12023f4790c1b49bfe35e69",
+      "bytes": 9228
+    },
+    {
+      "path": "rules/web-shells-asp.data",
+      "sha256": "4ebbd5ab8fe4d10f18dd69b56e9e935eb861c1bf327893532221578feaa5c0cc",
+      "bytes": 1067
+    },
+    {
+      "path": "rules/web-shells-php.data",
+      "sha256": "6a9f64c8000c567b9bf87f183895526ecd689937f672f7ee2e7e0fb99668cefc",
+      "bytes": 10082
+    },
+    {
+      "path": "rules/windows-powershell-commands.data",
+      "sha256": "5055ffeb4ce22869dee0f611045991e64365e980bba68649f4468aea86476d93",
+      "bytes": 7222
+    },
+    {
+      "path": "security.asc",
+      "sha256": "b3ea4d3014e9386b61a12cadd986360b358996624b26f9fb6be0fc8a219873ca",
+      "bytes": 3151
+    }
+  ],
+  "contents": "Unmodified stock rules, phrase data, setup and license; optional documentation and plugin templates omitted."
+}
