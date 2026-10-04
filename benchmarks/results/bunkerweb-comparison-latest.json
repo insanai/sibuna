@@ -1,0 +1,5689 @@
+{
+  "meta": {
+    "zaxonlite": {
+      "url": "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.7.0.tar.gz",
+      "hash": "zaxonlite-0.7.0-o9bF7IxHHQDxiixvOsdt-BvzGbI87rjtLKBJpW5LPse-",
+      "path": "vendor/zaxonlite",
+      "compatibility": "Zig 0.17"
+    },
+    "source_sha256": "6343d74abe7645a3b218097f211b94cd5a62e4038e16272d2e7343e72b52d698",
+    "source_manifest_version": 3,
+    "source_file_count": 832,
+    "daemon_sha256": "cad1880ab6c2e77c74d1b7319c61160368ef1138e131a19117a101365f1eff9b",
+    "date": "2026-10-04T01:16:05.795034+00:00",
+    "host": "paxos-zig",
+    "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+    "os": "Linux-7.0.0-28-generic-x86_64-with-glibc2.41",
+    "git": "1c8907f187e964554099f325547c8b083f1c2e8f",
+    "dirty": false,
+    "zig": "0.17.0"
+  },
+  "bunkerweb": {
+    "version": "1.6.15",
+    "image": {
+      "repository": "bunkerity/bunkerweb",
+      "reference": "1.6.15",
+      "index_digest": "sha256:1b96f672660cc32bfae93604ac297371222dc9039b2b09b8eee5e40ba9d35c35",
+      "image_digest": "sha256:b9b0ea44e0feb71eb3e6076a9218f3abfe284fd9f2749d9c483ffd6100a5346b",
+      "config_digest": "sha256:782a2726e0d028b491e2bae4c095cdf578de093dd8268a4d3e763f5071ef42a4",
+      "layers": [
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:55afa1ecc21d2bb5e5045f32dafee56272ffd89860bac26f6c32123439af26a4",
+          "size": 3846391
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:d57a2d5adcf624d860440eda0751197834a37175fd555f9bb3969d0bcb0fd2b3",
+          "size": 4352385
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:a9e7aa0bb73bd20b7931b7fa56d00becede0a777436b5bab85168c47e89b365a",
+          "size": 629
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:16720f76a6c9de7581783bf4d55fead5d0360ebdb9fde075e92bc44d64ad0cef",
+          "size": 956
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:da8b0d805e5c3713753e89ee1f9dfe90fb19eb0ff78e274c37661599c5e2f064",
+          "size": 404
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:aac3a72f1123b823f55acd996a59133f46feb86faa909181b083d4c78e64316a",
+          "size": 1212
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:f709c26bfc6a0474abd2851641ff6b209dd577025f696ed892d37b061664b865",
+          "size": 1398
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1",
+          "size": 32
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:9b965e275a1dc480b900d2a88111150332beb3d63488e6e87952bb791288242e",
+          "size": 27615694
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:66bfaf51dcdff864030b3df900d7a97ae2cc27fc445cc2785cd13b7f07821c99",
+          "size": 82668
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:e11bc25ca6cd9dbc4d6c9771b659cedcfc76e9536fb8fb873b2726e691292829",
+          "size": 82694
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:2c23e07d9816c1e58d05518014a616c6061a0ad4642e7b08ca658af3b67d1280",
+          "size": 94710
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:ad9892dd544aab4b4f3c66b51d0a659aca8ac9f3273c880d427cdf2873250a48",
+          "size": 82875
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:85ae4ca24a2ff39cd4b03451dccf01f84eb34fe45557863b346e6407f04b8eba",
+          "size": 82906
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:f8b0fb7b2f3d9494a84376f89b12c448b5c531d8ba0066641a929b3e597fdf35",
+          "size": 25142831
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1",
+          "size": 32
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:1f7787e0174e7330b81d9640938cabaa2ac415f44b949546929d49e345e4326b",
+          "size": 18655203
+        }
+      ],
+      "platform": "linux/amd64"
+    },
+    "modsecurity_crs": {
+      "git_repository": [
+        {
+          "id": "coreruleset-v3",
+          "name": "Coreruleset v3.3.10",
+          "url": "https://github.com/coreruleset/coreruleset.git",
+          "commit": "ab9e8bb690c8d89567076ff3598164d0ca0151b1",
+          "post_install": "rm -rf files/coreruleset-v3/tests files/coreruleset-v3/.github files/coreruleset-v3/docs && mv files/coreruleset-v3/crs-setup.conf.example files/crs-setup-v3.conf && ./misc/patch.sh 3"
+        },
+        {
+          "id": "coreruleset-v4",
+          "name": "Coreruleset v4.29.0",
+          "url": "https://github.com/coreruleset/coreruleset.git",
+          "commit": "ab3ccd5fcd691424ba3f320d4040c61417270193",
+          "post_install": "rm -rf files/coreruleset-v4/tests files/coreruleset-v4/.github files/coreruleset-v4/docs && mv files/coreruleset-v4/crs-setup.conf.example files/crs-setup-v4.conf && ./misc/patch.sh 4"
+        }
+      ]
+    },
+    "nginx": "nginx version: nginx/1.30.5\nbuilt by gcc 15.2.0 (Alpine 15.2.0) \nbuilt with OpenSSL 3.5.7 9 Jun 2026 (running with OpenSSL 3.5.8 25 Aug 2026)\nTLS SNI support enabled\nconfigure arguments: --prefix=/etc/nginx --sbin-path=/usr/sbin/nginx --modules-path=/usr/lib/nginx/modules --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --pid-path=/run/nginx.pid --lock-path=/run/nginx.lock --http-client-body-temp-path=/var/cache/nginx/client_temp --http-proxy-temp-path=/var/cache/nginx/proxy_temp --http-fastcgi-temp-path=/var/cache/nginx/fastcgi_temp --http-uwsgi-temp-path=/var/cache/nginx/uwsgi_temp --http-scgi-temp-path=/var/cache/nginx/scgi_temp --with-perl_modules_path=/usr/lib/perl5/vendor_perl --user=nginx --group=nginx --with-compat --with-file-aio --with-threads --with-http_addition_module --with-http_auth_request_module --with-http_dav_module --with-http_flv_module --with-http_gunzip_module --with-http_gzip_static_module --with-http_mp4_module --with-http_random_index_module --with-http_realip_module --with-http_secure_link_module --with-http_slice_module --with-http_ssl_module --with-http_stub_status_module --with-http_sub_module --with-http_v2_module --with-http_v3_module --with-mail --with-mail_ssl_module --with-stream --with-stream_realip_module --with-stream_ssl_module --with-stream_ssl_preread_module --with-cc-opt='-Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt -g' --with-ld-opt='-Wl,--as-needed,-O1,--sort-common -Wl,-z,pack-relative-relocs'",
+    "execution": "native Linux amd64; chroot; no Docker daemon or CPU emulation"
+  },
+  "load": {
+    "seconds": 5,
+    "warmup": 1,
+    "repetitions": 5,
+    "workers": 4,
+    "threads": 2,
+    "connections": 64
+  },
+  "affinity": {
+    "product": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "generator": [
+      4,
+      5
+    ],
+    "origin": [
+      6,
+      7
+    ]
+  },
+  "runs": [
+    {
+      "profile": "origin",
+      "configuration": {},
+      "workloads": {
+        "benign_get": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 90261.15127190072,
+              "cpu_seconds": 9.39,
+              "cpu_us_per_request": 20.405857067728324,
+              "peak_process_tree_rss_kib": 28432.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 460162,
+              "duration_us": 5098118,
+              "bytes": 79608026,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 660,
+                "p90": 1631,
+                "p99": 4050,
+                "max": 7228,
+                "mean": 819.7
+              },
+              "statuses": {
+                "200": 460162
+              }
+            },
+            {
+              "round": 1,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 90414.96502462581,
+              "cpu_seconds": 9.410000000000025,
+              "cpu_us_per_request": 20.40807474430271,
+              "peak_process_tree_rss_kib": 28316.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 461092,
+              "duration_us": 5099731,
+              "bytes": 79768916,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 659,
+                "p90": 1622,
+                "p99": 3968,
+                "max": 7575,
+                "mean": 816.5
+              },
+              "statuses": {
+                "200": 461092
+              }
+            },
+            {
+              "round": 2,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 90506.84479963136,
+              "cpu_seconds": 9.269999999999982,
+              "cpu_us_per_request": 20.449085747185727,
+              "peak_process_tree_rss_kib": 28440.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 453321,
+              "duration_us": 5008693,
+              "bytes": 78424533,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 669,
+                "p90": 1626,
+                "p99": 4013,
+                "max": 7654,
+                "mean": 821.8
+              },
+              "statuses": {
+                "200": 453321
+              }
+            },
+            {
+              "round": 3,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 90016.6618973056,
+              "cpu_seconds": 9.259999999999991,
+              "cpu_us_per_request": 20.48532069703182,
+              "peak_process_tree_rss_kib": 28944.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 452031,
+              "duration_us": 5021637,
+              "bytes": 78201363,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 668,
+                "p90": 1635,
+                "p99": 3953,
+                "max": 7376,
+                "mean": 822.4
+              },
+              "statuses": {
+                "200": 452031
+              }
+            },
+            {
+              "round": 4,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 90482.9413887709,
+              "cpu_seconds": 9.290000000000077,
+              "cpu_us_per_request": 20.49510345725277,
+              "peak_process_tree_rss_kib": 28660.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 453279,
+              "duration_us": 5009552,
+              "bytes": 78417267,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 669,
+                "p90": 1622,
+                "p99": 3953,
+                "max": 9465,
+                "mean": 820.6
+              },
+              "statuses": {
+                "200": 453279
+              }
+            }
+          ],
+          "requests_per_second_median": 90414.96502462581,
+          "requests_per_second_min": 90016.6618973056,
+          "requests_per_second_max": 90506.84479963136,
+          "p50_us_median": 668,
+          "p99_us_median": 3968,
+          "cpu_us_per_request_median": 20.449085747185727,
+          "peak_process_tree_rss_kib_max": 28944.0
+        },
+        "benign_json_8k": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 80841.52451087405,
+              "cpu_seconds": 9.290000000000001,
+              "cpu_us_per_request": 22.93147709320695,
+              "peak_process_tree_rss_kib": 28176.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 405120,
+              "duration_us": 5011286,
+              "bytes": 70085760,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 753,
+                "p90": 1762,
+                "p99": 4271,
+                "max": 7234,
+                "mean": 905.9
+              },
+              "statuses": {
+                "200": 405120
+              }
+            },
+            {
+              "round": 1,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 79194.66140805543,
+              "cpu_seconds": 9.159999999999968,
+              "cpu_us_per_request": 23.08112916109159,
+              "peak_process_tree_rss_kib": 28408.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 396861,
+              "duration_us": 5011209,
+              "bytes": 68656953,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 766,
+                "p90": 1826,
+                "p99": 4416,
+                "max": 9311,
+                "mean": 933.5
+              },
+              "statuses": {
+                "200": 396861
+              }
+            },
+            {
+              "round": 2,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 80372.32673146087,
+              "cpu_seconds": 9.319999999999993,
+              "cpu_us_per_request": 23.088795245491845,
+              "peak_process_tree_rss_kib": 28852.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 403659,
+              "duration_us": 5022363,
+              "bytes": 69833007,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 755,
+                "p90": 1766,
+                "p99": 4277,
+                "max": 7976,
+                "mean": 907.4
+              },
+              "statuses": {
+                "200": 403659
+              }
+            },
+            {
+              "round": 3,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 80308.31410412658,
+              "cpu_seconds": 9.339999999999975,
+              "cpu_us_per_request": 23.217139916825904,
+              "peak_process_tree_rss_kib": 28376.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 402289,
+              "duration_us": 5009307,
+              "bytes": 69595997,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 758,
+                "p90": 1765,
+                "p99": 4174,
+                "max": 7595,
+                "mean": 906.2
+              },
+              "statuses": {
+                "200": 402289
+              }
+            },
+            {
+              "round": 4,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 79578.49058076169,
+              "cpu_seconds": 9.409999999999968,
+              "cpu_us_per_request": 23.185220592220922,
+              "peak_process_tree_rss_kib": 28936.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 405862,
+              "duration_us": 5100147,
+              "bytes": 70214126,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 753,
+                "p90": 1788,
+                "p99": 4285,
+                "max": 7967,
+                "mean": 913.8
+              },
+              "statuses": {
+                "200": 405862
+              }
+            }
+          ],
+          "requests_per_second_median": 80308.31410412658,
+          "requests_per_second_min": 79194.66140805543,
+          "requests_per_second_max": 80841.52451087405,
+          "p50_us_median": 755,
+          "p99_us_median": 4277,
+          "cpu_us_per_request_median": 23.088795245491845,
+          "peak_process_tree_rss_kib_max": 28936.0
+        },
+        "sqli_query": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 93056.09358837186,
+              "cpu_seconds": 9.250000000000004,
+              "cpu_us_per_request": 19.83867404736833,
+              "peak_process_tree_rss_kib": 28568.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 466261,
+              "duration_us": 5010537,
+              "bytes": 80663153,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 651,
+                "p90": 1573,
+                "p99": 3839,
+                "max": 7321,
+                "mean": 797.3
+              },
+              "statuses": {
+                "200": 466261
+              }
+            },
+            {
+              "round": 1,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 92607.14650024065,
+              "cpu_seconds": 9.240000000000009,
+              "cpu_us_per_request": 19.917527639880774,
+              "peak_process_tree_rss_kib": 28676.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 463913,
+              "duration_us": 5009473,
+              "bytes": 80256949,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 653,
+                "p90": 1592,
+                "p99": 4020,
+                "max": 7250,
+                "mean": 807.0
+              },
+              "statuses": {
+                "200": 463913
+              }
+            },
+            {
+              "round": 2,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 91673.93004248453,
+              "cpu_seconds": 9.169999999999959,
+              "cpu_us_per_request": 19.928067716312892,
+              "peak_process_tree_rss_kib": 28592.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 460155,
+              "duration_us": 5019475,
+              "bytes": 79606815,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 656,
+                "p90": 1624,
+                "p99": 3984,
+                "max": 6859,
+                "mean": 814.4
+              },
+              "statuses": {
+                "200": 460155
+              }
+            },
+            {
+              "round": 3,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 92474.72520814183,
+              "cpu_seconds": 9.25,
+              "cpu_us_per_request": 19.93667680383819,
+              "peak_process_tree_rss_kib": 28668.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 463969,
+              "duration_us": 5017252,
+              "bytes": 80266637,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 652,
+                "p90": 1588,
+                "p99": 3847,
+                "max": 8692,
+                "mean": 800.4
+              },
+              "statuses": {
+                "200": 463969
+              }
+            },
+            {
+              "round": 4,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 90840.35292950214,
+              "cpu_seconds": 9.149999999999977,
+              "cpu_us_per_request": 20.111127717749614,
+              "peak_process_tree_rss_kib": 28348.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 454972,
+              "duration_us": 5008479,
+              "bytes": 78710156,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 665,
+                "p90": 1637,
+                "p99": 3955,
+                "max": 7034,
+                "mean": 820.9
+              },
+              "statuses": {
+                "200": 454972
+              }
+            }
+          ],
+          "requests_per_second_median": 92474.72520814183,
+          "requests_per_second_min": 90840.35292950214,
+          "requests_per_second_max": 93056.09358837186,
+          "p50_us_median": 653,
+          "p99_us_median": 3955,
+          "cpu_us_per_request_median": 19.928067716312892,
+          "peak_process_tree_rss_kib_max": 28676.0
+        },
+        "sqli_json": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 88068.65997621302,
+              "cpu_seconds": 9.310000000000002,
+              "cpu_us_per_request": 21.081425022813683,
+              "peak_process_tree_rss_kib": 28536.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 441621,
+              "duration_us": 5014508,
+              "bytes": 76400433,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 687,
+                "p90": 1646,
+                "p99": 4056,
+                "max": 7994,
+                "mean": 840.3
+              },
+              "statuses": {
+                "200": 441621
+              }
+            },
+            {
+              "round": 1,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 88530.06492566735,
+              "cpu_seconds": 9.370000000000005,
+              "cpu_us_per_request": 21.127490992067617,
+              "peak_process_tree_rss_kib": 28100.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 443498,
+              "duration_us": 5009575,
+              "bytes": 76725154,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 686,
+                "p90": 1608,
+                "p99": 3768,
+                "max": 7550,
+                "mean": 823.4
+              },
+              "statuses": {
+                "200": 443498
+              }
+            },
+            {
+              "round": 2,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 88127.1654580134,
+              "cpu_seconds": 9.319999999999993,
+              "cpu_us_per_request": 21.115496327444237,
+              "peak_process_tree_rss_kib": 28736.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 441382,
+              "duration_us": 5008467,
+              "bytes": 76359086,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 689,
+                "p90": 1638,
+                "p99": 3938,
+                "max": 8632,
+                "mean": 834.8
+              },
+              "statuses": {
+                "200": 441382
+              }
+            },
+            {
+              "round": 3,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 87692.17504185397,
+              "cpu_seconds": 9.289999999999964,
+              "cpu_us_per_request": 21.144295592245033,
+              "peak_process_tree_rss_kib": 28360.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 439362,
+              "duration_us": 5010276,
+              "bytes": 76009626,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 691,
+                "p90": 1658,
+                "p99": 4042,
+                "max": 7184,
+                "mean": 842.9
+              },
+              "statuses": {
+                "200": 439362
+              }
+            },
+            {
+              "round": 4,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 87531.06233690902,
+              "cpu_seconds": 9.329999999999927,
+              "cpu_us_per_request": 21.261565106421603,
+              "peak_process_tree_rss_kib": 29428.0,
+              "process_pids": [
+                2752048
+              ],
+              "requests": 438820,
+              "duration_us": 5013306,
+              "bytes": 75915860,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 692,
+                "p90": 1647,
+                "p99": 3936,
+                "max": 9025,
+                "mean": 838.6
+              },
+              "statuses": {
+                "200": 438820
+              }
+            }
+          ],
+          "requests_per_second_median": 88068.65997621302,
+          "requests_per_second_min": 87531.06233690902,
+          "requests_per_second_max": 88530.06492566735,
+          "p50_us_median": 689,
+          "p99_us_median": 3938,
+          "cpu_us_per_request_median": 21.127490992067617,
+          "peak_process_tree_rss_kib_max": 29428.0
+        }
+      }
+    },
+    {
+      "profile": "sibuna-gate",
+      "configuration": {
+        "command": [
+          "taskset",
+          "-c",
+          "0,1,2,3",
+          "/home/insan/sibuna-bunkerweb-benchmark-20261004/source/zig-out/bin/sibuna",
+          "--gate",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "59655",
+          "--workers",
+          "4",
+          "--upstream-host",
+          "127.0.0.1",
+          "--upstream-port",
+          "33291",
+          "--policy-file",
+          "/tmp/sibuna-bunkerweb-55x79qmq/policy.json",
+          "--rate-limit",
+          "100000000",
+          "--idle-timeout",
+          "15"
+        ],
+        "policy": {
+          "default_action": "allow",
+          "rules": []
+        },
+        "console_active": false,
+        "storage_active": false
+      },
+      "workloads": {
+        "benign_get": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 76876.39759093549,
+              "cpu_seconds": 11.889999999999999,
+              "cpu_us_per_request": 30.832743388075063,
+              "peak_process_tree_rss_kib": 37940.0,
+              "process_pids": [
+                2752097
+              ],
+              "requests": 385629,
+              "duration_us": 5016221,
+              "bytes": 75968593,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 784,
+                "p90": 1784,
+                "p99": 4107,
+                "max": 7409,
+                "mean": 931.6
+              },
+              "statuses": {
+                "200": 385629
+              }
+            },
+            {
+              "round": 1,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 75371.68633776094,
+              "cpu_seconds": 11.24,
+              "cpu_us_per_request": 29.7168963292759,
+              "peak_process_tree_rss_kib": 38020.0,
+              "process_pids": [
+                2754446
+              ],
+              "requests": 378236,
+              "duration_us": 5018277,
+              "bytes": 74512172,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 800,
+                "p90": 1817,
+                "p99": 4060,
+                "max": 9768,
+                "mean": 945.7
+              },
+              "statuses": {
+                "200": 378236
+              }
+            },
+            {
+              "round": 2,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 76284.51998408281,
+              "cpu_seconds": 11.83,
+              "cpu_us_per_request": 30.9477655085453,
+              "peak_process_tree_rss_kib": 38064.0,
+              "process_pids": [
+                2758419
+              ],
+              "requests": 382257,
+              "duration_us": 5010938,
+              "bytes": 75304309,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 793,
+                "p90": 1800,
+                "p99": 4202,
+                "max": 8299,
+                "mean": 941.6
+              },
+              "statuses": {
+                "200": 382257
+              }
+            },
+            {
+              "round": 3,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 76657.31498876304,
+              "cpu_seconds": 11.9,
+              "cpu_us_per_request": 30.94252491003266,
+              "peak_process_tree_rss_kib": 37992.0,
+              "process_pids": [
+                2760721
+              ],
+              "requests": 384584,
+              "duration_us": 5016925,
+              "bytes": 75762728,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 788,
+                "p90": 1777,
+                "p99": 4042,
+                "max": 7378,
+                "mean": 929.3
+              },
+              "statuses": {
+                "200": 384584
+              }
+            },
+            {
+              "round": 4,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 77047.18063088032,
+              "cpu_seconds": 12.17,
+              "cpu_us_per_request": 30.971886078429876,
+              "peak_process_tree_rss_kib": 37840.0,
+              "process_pids": [
+                2762039
+              ],
+              "requests": 392937,
+              "duration_us": 5099953,
+              "bytes": 77408269,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 775,
+                "p90": 1752,
+                "p99": 3828,
+                "max": 8687,
+                "mean": 910.9
+              },
+              "statuses": {
+                "200": 392937
+              }
+            }
+          ],
+          "requests_per_second_median": 76657.31498876304,
+          "requests_per_second_min": 75371.68633776094,
+          "requests_per_second_max": 77047.18063088032,
+          "p50_us_median": 788,
+          "p99_us_median": 4060,
+          "cpu_us_per_request_median": 30.94252491003266,
+          "peak_process_tree_rss_kib_max": 38064.0
+        },
+        "benign_json_8k": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 69650.5308203115,
+              "cpu_seconds": 12.219999999999999,
+              "cpu_us_per_request": 35.01823986061479,
+              "peak_process_tree_rss_kib": 38300.0,
+              "process_pids": [
+                2752097
+              ],
+              "requests": 348961,
+              "duration_us": 5010170,
+              "bytes": 68744997,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 873,
+                "p90": 1933,
+                "p99": 4349,
+                "max": 10153,
+                "mean": 1017.7
+              },
+              "statuses": {
+                "200": 348961
+              }
+            },
+            {
+              "round": 1,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 69819.63566345193,
+              "cpu_seconds": 12.44,
+              "cpu_us_per_request": 34.93626378564187,
+              "peak_process_tree_rss_kib": 38020.0,
+              "process_pids": [
+                2754446
+              ],
+              "requests": 356077,
+              "duration_us": 5099955,
+              "bytes": 70146849,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 855,
+                "p90": 1926,
+                "p99": 4329,
+                "max": 9992,
+                "mean": 1008.4
+              },
+              "statuses": {
+                "200": 356077
+              }
+            },
+            {
+              "round": 2,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 69140.01575242584,
+              "cpu_seconds": 12.16,
+              "cpu_us_per_request": 35.10463548628292,
+              "peak_process_tree_rss_kib": 38400.0,
+              "process_pids": [
+                2758419
+              ],
+              "requests": 346393,
+              "duration_us": 5010022,
+              "bytes": 68239101,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 878,
+                "p90": 1951,
+                "p99": 4314,
+                "max": 9306,
+                "mean": 1024.1
+              },
+              "statuses": {
+                "200": 346393
+              }
+            },
+            {
+              "round": 3,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 69384.32002095752,
+              "cpu_seconds": 12.43,
+              "cpu_us_per_request": 35.12797831843527,
+              "peak_process_tree_rss_kib": 37708.0,
+              "process_pids": [
+                2760721
+              ],
+              "requests": 353849,
+              "duration_us": 5099841,
+              "bytes": 69707933,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 861,
+                "p90": 1945,
+                "p99": 4360,
+                "max": 9095,
+                "mean": 1015.1
+              },
+              "statuses": {
+                "200": 353849
+              }
+            },
+            {
+              "round": 4,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 68878.40337070369,
+              "cpu_seconds": 12.369999999999997,
+              "cpu_us_per_request": 35.21447522745647,
+              "peak_process_tree_rss_kib": 37652.0,
+              "process_pids": [
+                2762039
+              ],
+              "requests": 351276,
+              "duration_us": 5099944,
+              "bytes": 69201052,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 866,
+                "p90": 1963,
+                "p99": 4524,
+                "max": 8200,
+                "mean": 1026.7
+              },
+              "statuses": {
+                "200": 351276
+              }
+            }
+          ],
+          "requests_per_second_median": 69384.32002095752,
+          "requests_per_second_min": 68878.40337070369,
+          "requests_per_second_max": 69819.63566345193,
+          "p50_us_median": 866,
+          "p99_us_median": 4349,
+          "cpu_us_per_request_median": 35.10463548628292,
+          "peak_process_tree_rss_kib_max": 38400.0
+        },
+        "sqli_query": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 77051.38748012234,
+              "cpu_seconds": 12.020000000000003,
+              "cpu_us_per_request": 31.129734853389834,
+              "peak_process_tree_rss_kib": 38252.0,
+              "process_pids": [
+                2752097
+              ],
+              "requests": 386126,
+              "duration_us": 5011279,
+              "bytes": 76066502,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 785,
+                "p90": 1772,
+                "p99": 4023,
+                "max": 9687,
+                "mean": 925.9
+              },
+              "statuses": {
+                "200": 386126
+              }
+            },
+            {
+              "round": 1,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 76388.06955215603,
+              "cpu_seconds": 11.89,
+              "cpu_us_per_request": 31.073756396385097,
+              "peak_process_tree_rss_kib": 38308.0,
+              "process_pids": [
+                2754446
+              ],
+              "requests": 382638,
+              "duration_us": 5009133,
+              "bytes": 75379366,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 791,
+                "p90": 1797,
+                "p99": 4179,
+                "max": 6677,
+                "mean": 939.3
+              },
+              "statuses": {
+                "200": 382638
+              }
+            },
+            {
+              "round": 2,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 76438.93599380799,
+              "cpu_seconds": 11.96,
+              "cpu_us_per_request": 31.236533162698983,
+              "peak_process_tree_rss_kib": 38428.0,
+              "process_pids": [
+                2758419
+              ],
+              "requests": 382885,
+              "duration_us": 5009031,
+              "bytes": 75428025,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 792,
+                "p90": 1790,
+                "p99": 4042,
+                "max": 8056,
+                "mean": 933.3
+              },
+              "statuses": {
+                "200": 382885
+              }
+            },
+            {
+              "round": 3,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 76376.36241324927,
+              "cpu_seconds": 11.95,
+              "cpu_us_per_request": 31.223381740461846,
+              "peak_process_tree_rss_kib": 37896.0,
+              "process_pids": [
+                2760721
+              ],
+              "requests": 382726,
+              "duration_us": 5011053,
+              "bytes": 75396702,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 792,
+                "p90": 1786,
+                "p99": 4005,
+                "max": 7352,
+                "mean": 932.5
+              },
+              "statuses": {
+                "200": 382726
+              }
+            },
+            {
+              "round": 4,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 75960.74471318346,
+              "cpu_seconds": 12.099999999999998,
+              "cpu_us_per_request": 31.234189305000562,
+              "peak_process_tree_rss_kib": 37844.0,
+              "process_pids": [
+                2762039
+              ],
+              "requests": 387396,
+              "duration_us": 5099950,
+              "bytes": 76316692,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 785,
+                "p90": 1790,
+                "p99": 4054,
+                "max": 8966,
+                "mean": 931.8
+              },
+              "statuses": {
+                "200": 387396
+              }
+            }
+          ],
+          "requests_per_second_median": 76388.06955215603,
+          "requests_per_second_min": 75960.74471318346,
+          "requests_per_second_max": 77051.38748012234,
+          "p50_us_median": 791,
+          "p99_us_median": 4042,
+          "cpu_us_per_request_median": 31.223381740461846,
+          "peak_process_tree_rss_kib_max": 38428.0
+        },
+        "sqli_json": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 74237.05021345396,
+              "cpu_seconds": 12.39,
+              "cpu_us_per_request": 33.2975006718624,
+              "peak_process_tree_rss_kib": 38060.0,
+              "process_pids": [
+                2752097
+              ],
+              "requests": 372100,
+              "duration_us": 5012322,
+              "bytes": 73303380,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 816,
+                "p90": 1819,
+                "p99": 3997,
+                "max": 7547,
+                "mean": 952.0
+              },
+              "statuses": {
+                "200": 372100
+              }
+            },
+            {
+              "round": 1,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 74016.5464107861,
+              "cpu_seconds": 12.329999999999998,
+              "cpu_us_per_request": 33.24937842808372,
+              "peak_process_tree_rss_kib": 38428.0,
+              "process_pids": [
+                2754446
+              ],
+              "requests": 370834,
+              "duration_us": 5010150,
+              "bytes": 73053978,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 818,
+                "p90": 1828,
+                "p99": 4056,
+                "max": 11792,
+                "mean": 957.4
+              },
+              "statuses": {
+                "200": 370834
+              }
+            },
+            {
+              "round": 2,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 74723.10107967441,
+              "cpu_seconds": 12.75,
+              "cpu_us_per_request": 33.45648819707577,
+              "peak_process_tree_rss_kib": 38408.0,
+              "process_pids": [
+                2758419
+              ],
+              "requests": 381092,
+              "duration_us": 5100056,
+              "bytes": 75074804,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 800,
+                "p90": 1800,
+                "p99": 4030,
+                "max": 8141,
+                "mean": 938.6
+              },
+              "statuses": {
+                "200": 381092
+              }
+            },
+            {
+              "round": 3,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 73901.07380713911,
+              "cpu_seconds": 12.380000000000003,
+              "cpu_us_per_request": 33.4098864117836,
+              "peak_process_tree_rss_kib": 37660.0,
+              "process_pids": [
+                2760721
+              ],
+              "requests": 370549,
+              "duration_us": 5014122,
+              "bytes": 72997833,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 818,
+                "p90": 1831,
+                "p99": 4016,
+                "max": 8601,
+                "mean": 957.4
+              },
+              "statuses": {
+                "200": 370549
+              }
+            },
+            {
+              "round": 4,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 73559.70527648271,
+              "cpu_seconds": 12.54,
+              "cpu_us_per_request": 33.42556015801174,
+              "peak_process_tree_rss_kib": 37604.0,
+              "process_pids": [
+                2762039
+              ],
+              "requests": 375162,
+              "duration_us": 5100102,
+              "bytes": 73906594,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 813,
+                "p90": 1835,
+                "p99": 4030,
+                "max": 8428,
+                "mean": 955.4
+              },
+              "statuses": {
+                "200": 375162
+              }
+            }
+          ],
+          "requests_per_second_median": 74016.5464107861,
+          "requests_per_second_min": 73559.70527648271,
+          "requests_per_second_max": 74723.10107967441,
+          "p50_us_median": 816,
+          "p99_us_median": 4030,
+          "cpu_us_per_request_median": 33.4098864117836,
+          "peak_process_tree_rss_kib_max": 38428.0
+        }
+      }
+    },
+    {
+      "profile": "bunkerweb-proxy",
+      "configuration": {
+        "settings": {
+          "SERVER_NAME": "benchmark.test",
+          "HTTP_PORT": "46209",
+          "HTTPS_PORT": "",
+          "LISTEN_HTTP": "yes",
+          "API_HTTP_PORT": "46210",
+          "API_LISTEN_HTTP": "no",
+          "WORKER_PROCESSES": "4",
+          "WORKER_CONNECTIONS": "4096",
+          "WORKER_RLIMIT_NOFILE": "8192",
+          "HTTP2": "no",
+          "HTTP3": "no",
+          "AUTO_LETS_ENCRYPT": "no",
+          "USE_REVERSE_PROXY": "yes",
+          "REVERSE_PROXY_HOST": "http://127.0.0.1:33291",
+          "REVERSE_PROXY_HTTP_VERSION": "1.1",
+          "REVERSE_PROXY_KEEPALIVE": "yes",
+          "USE_MODSECURITY": "no",
+          "USE_MODSECURITY_CRS": "no",
+          "MODSECURITY_CRS_VERSION": "4",
+          "MODSECURITY_SEC_AUDIT_ENGINE": "Off",
+          "USE_ANTIBOT": "no",
+          "USE_BAD_BEHAVIOR": "no",
+          "USE_BLACKLIST": "no",
+          "USE_WHITELIST": "no",
+          "USE_DNSBL": "no",
+          "USE_LIMIT_REQ": "no",
+          "USE_LIMIT_CONN": "no",
+          "USE_BUNKERNET": "no",
+          "SEND_ANONYMOUS_REPORT": "no",
+          "USE_GZIP": "no",
+          "USE_BROTLI": "no",
+          "USE_CLIENT_CACHE": "no",
+          "USE_REAL_IP": "no",
+          "LOG_LEVEL": "crit",
+          "ACCESS_LOG": "off",
+          "ERROR_LOG": "/var/log/bunkerweb/benchmark-error.log"
+        },
+        "generated_configuration_sha256": "c1b7f3fc34505c60fcd5a59397a999ad21d99d1d7b4386af6aace175ee26f390",
+        "custom_error_configuration": null
+      },
+      "workloads": {
+        "benign_get": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 13657.995100828268,
+              "cpu_seconds": 19.97,
+              "cpu_us_per_request": 291.2862102161673,
+              "peak_process_tree_rss_kib": 96844.0,
+              "process_pids": [
+                2752962,
+                2752964,
+                2752979,
+                2752980,
+                2752981,
+                2752982
+              ],
+              "requests": 68558,
+              "duration_us": 5019624,
+              "bytes": 160018723,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4320,
+                "p90": 6229,
+                "p99": 7647,
+                "max": 12529,
+                "mean": 4661.8
+              },
+              "statuses": {
+                "200": 68558
+              }
+            },
+            {
+              "round": 1,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 13670.925519486003,
+              "cpu_seconds": 19.96,
+              "cpu_us_per_request": 290.8900126790737,
+              "peak_process_tree_rss_kib": 96604.0,
+              "process_pids": [
+                2755311,
+                2755313,
+                2755328,
+                2755329,
+                2755330,
+                2755331
+              ],
+              "requests": 68617,
+              "duration_us": 5019192,
+              "bytes": 160154141,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4347,
+                "p90": 6300,
+                "p99": 7917,
+                "max": 12803,
+                "mean": 4659.4
+              },
+              "statuses": {
+                "200": 68617
+              }
+            },
+            {
+              "round": 2,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 13595.223918640935,
+              "cpu_seconds": 19.96,
+              "cpu_us_per_request": 292.3642542221441,
+              "peak_process_tree_rss_kib": 99148.0,
+              "process_pids": [
+                2756903,
+                2756905,
+                2756920,
+                2756921,
+                2756922,
+                2756923
+              ],
+              "requests": 68271,
+              "duration_us": 5021690,
+              "bytes": 159348870,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4362,
+                "p90": 6383,
+                "p99": 7641,
+                "max": 12072,
+                "mean": 4681.5
+              },
+              "statuses": {
+                "200": 68271
+              }
+            },
+            {
+              "round": 3,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 13668.285780841536,
+              "cpu_seconds": 20.31,
+              "cpu_us_per_request": 291.36241697390506,
+              "peak_process_tree_rss_kib": 98232.0,
+              "process_pids": [
+                2761595,
+                2761597,
+                2761612,
+                2761613,
+                2761614,
+                2761615
+              ],
+              "requests": 69707,
+              "duration_us": 5099908,
+              "bytes": 162700619,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4498,
+                "p90": 6650,
+                "p99": 8033,
+                "max": 20549,
+                "mean": 4639.9
+              },
+              "statuses": {
+                "200": 69707
+              }
+            },
+            {
+              "round": 4,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 13648.986489516148,
+              "cpu_seconds": 19.939999999999998,
+              "cpu_us_per_request": 291.1373923200467,
+              "peak_process_tree_rss_kib": 97824.0,
+              "process_pids": [
+                2762927,
+                2762929,
+                2762944,
+                2762945,
+                2762946,
+                2762947
+              ],
+              "requests": 68490,
+              "duration_us": 5017955,
+              "bytes": 159860071,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4507,
+                "p90": 6897,
+                "p99": 9133,
+                "max": 17091,
+                "mean": 4682.5
+              },
+              "statuses": {
+                "200": 68490
+              }
+            }
+          ],
+          "requests_per_second_median": 13657.995100828268,
+          "requests_per_second_min": 13595.223918640935,
+          "requests_per_second_max": 13670.925519486003,
+          "p50_us_median": 4362,
+          "p99_us_median": 7917,
+          "cpu_us_per_request_median": 291.2862102161673,
+          "peak_process_tree_rss_kib_max": 99148.0
+        },
+        "benign_json_8k": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 13275.664601868299,
+              "cpu_seconds": 20.36,
+              "cpu_us_per_request": 300.71634295842256,
+              "peak_process_tree_rss_kib": 97516.0,
+              "process_pids": [
+                2752962,
+                2752964,
+                2752979,
+                2752980,
+                2752981,
+                2752982
+              ],
+              "requests": 67705,
+              "duration_us": 5099933,
+              "bytes": 158025618,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4528,
+                "p90": 6690,
+                "p99": 7886,
+                "max": 19997,
+                "mean": 4771.3
+              },
+              "statuses": {
+                "200": 67705
+              }
+            },
+            {
+              "round": 1,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 12605.875543847043,
+              "cpu_seconds": 19.98,
+              "cpu_us_per_request": 316.3244304418726,
+              "peak_process_tree_rss_kib": 97320.0,
+              "process_pids": [
+                2755311,
+                2755313,
+                2755328,
+                2755329,
+                2755330,
+                2755331
+              ],
+              "requests": 63163,
+              "duration_us": 5010600,
+              "bytes": 147426968,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4909,
+                "p90": 7002,
+                "p99": 7782,
+                "max": 12391,
+                "mean": 5060.0
+              },
+              "statuses": {
+                "200": 63163
+              }
+            },
+            {
+              "round": 2,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 12744.09183360953,
+              "cpu_seconds": 19.98,
+              "cpu_us_per_request": 312.1972561642551,
+              "peak_process_tree_rss_kib": 99136.0,
+              "process_pids": [
+                2756903,
+                2756905,
+                2756920,
+                2756921,
+                2756922,
+                2756923
+              ],
+              "requests": 63998,
+              "duration_us": 5021778,
+              "bytes": 149373555,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4680,
+                "p90": 6663,
+                "p99": 7642,
+                "max": 14255,
+                "mean": 4994.8
+              },
+              "statuses": {
+                "200": 63998
+              }
+            },
+            {
+              "round": 3,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 13234.72478558462,
+              "cpu_seconds": 19.96,
+              "cpu_us_per_request": 300.6567451949147,
+              "peak_process_tree_rss_kib": 98952.0,
+              "process_pids": [
+                2761595,
+                2761597,
+                2761612,
+                2761613,
+                2761614,
+                2761615
+              ],
+              "requests": 66388,
+              "duration_us": 5016198,
+              "bytes": 154953928,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4382,
+                "p90": 6385,
+                "p99": 7829,
+                "max": 12877,
+                "mean": 4815.3
+              },
+              "statuses": {
+                "200": 66388
+              }
+            },
+            {
+              "round": 4,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 12945.12381464613,
+              "cpu_seconds": 20.009999999999998,
+              "cpu_us_per_request": 308.14481728444485,
+              "peak_process_tree_rss_kib": 98560.0,
+              "process_pids": [
+                2762927,
+                2762929,
+                2762944,
+                2762945,
+                2762946,
+                2762947
+              ],
+              "requests": 64937,
+              "duration_us": 5016329,
+              "bytes": 151567484,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4700,
+                "p90": 6889,
+                "p99": 8026,
+                "max": 13612,
+                "mean": 4923.5
+              },
+              "statuses": {
+                "200": 64937
+              }
+            }
+          ],
+          "requests_per_second_median": 12945.12381464613,
+          "requests_per_second_min": 12605.875543847043,
+          "requests_per_second_max": 13275.664601868299,
+          "p50_us_median": 4680,
+          "p99_us_median": 7829,
+          "cpu_us_per_request_median": 308.14481728444485,
+          "peak_process_tree_rss_kib_max": 99136.0
+        },
+        "sqli_query": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 13788.002684277053,
+              "cpu_seconds": 19.980000000000004,
+              "cpu_us_per_request": 288.728323699422,
+              "peak_process_tree_rss_kib": 97240.0,
+              "process_pids": [
+                2752962,
+                2752964,
+                2752979,
+                2752980,
+                2752981,
+                2752982
+              ],
+              "requests": 69200,
+              "duration_us": 5018856,
+              "bytes": 161517151,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4243,
+                "p90": 6191,
+                "p99": 7840,
+                "max": 14514,
+                "mean": 4622.3
+              },
+              "statuses": {
+                "200": 69200
+              }
+            },
+            {
+              "round": 1,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 13835.426291486525,
+              "cpu_seconds": 20.32999999999999,
+              "cpu_us_per_request": 288.1276662084212,
+              "peak_process_tree_rss_kib": 97264.0,
+              "process_pids": [
+                2755311,
+                2755313,
+                2755328,
+                2755329,
+                2755330,
+                2755331
+              ],
+              "requests": 70559,
+              "duration_us": 5099879,
+              "bytes": 164686839,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4452,
+                "p90": 6651,
+                "p99": 7778,
+                "max": 13640,
+                "mean": 4577.7
+              },
+              "statuses": {
+                "200": 70559
+              }
+            },
+            {
+              "round": 2,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 13808.768833448003,
+              "cpu_seconds": 20.019999999999996,
+              "cpu_us_per_request": 289.1308743248317,
+              "peak_process_tree_rss_kib": 99092.0,
+              "process_pids": [
+                2756903,
+                2756905,
+                2756920,
+                2756921,
+                2756922,
+                2756923
+              ],
+              "requests": 69242,
+              "duration_us": 5014350,
+              "bytes": 161617477,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4298,
+                "p90": 6368,
+                "p99": 7716,
+                "max": 11986,
+                "mean": 4615.4
+              },
+              "statuses": {
+                "200": 69242
+              }
+            },
+            {
+              "round": 3,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 13787.715934271559,
+              "cpu_seconds": 19.909999999999997,
+              "cpu_us_per_request": 288.0664390300364,
+              "peak_process_tree_rss_kib": 98144.0,
+              "process_pids": [
+                2761595,
+                2761597,
+                2761612,
+                2761613,
+                2761614,
+                2761615
+              ],
+              "requests": 69116,
+              "duration_us": 5012868,
+              "bytes": 161318717,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4193,
+                "p90": 6157,
+                "p99": 7679,
+                "max": 15232,
+                "mean": 4626.9
+              },
+              "statuses": {
+                "200": 69116
+              }
+            },
+            {
+              "round": 4,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 13282.855886850382,
+              "cpu_seconds": 19.17,
+              "cpu_us_per_request": 287.9891835048449,
+              "peak_process_tree_rss_kib": 98808.0,
+              "process_pids": [
+                2762927,
+                2762929,
+                2762944,
+                2762945,
+                2762946,
+                2762947
+              ],
+              "requests": 66565,
+              "duration_us": 5011347,
+              "bytes": 155367161,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 6346,
+                "p90": 9364,
+                "p99": 9961,
+                "max": 16458,
+                "mean": 4812.5
+              },
+              "statuses": {
+                "200": 66565
+              }
+            }
+          ],
+          "requests_per_second_median": 13788.002684277053,
+          "requests_per_second_min": 13282.855886850382,
+          "requests_per_second_max": 13835.426291486525,
+          "p50_us_median": 4298,
+          "p99_us_median": 7778,
+          "cpu_us_per_request_median": 288.1276662084212,
+          "peak_process_tree_rss_kib_max": 99092.0
+        },
+        "sqli_json": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 13669.42468341941,
+              "cpu_seconds": 19.950000000000003,
+              "cpu_us_per_request": 290.90962116130544,
+              "peak_process_tree_rss_kib": 97496.0,
+              "process_pids": [
+                2752962,
+                2752964,
+                2752979,
+                2752980,
+                2752981,
+                2752982
+              ],
+              "requests": 68578,
+              "duration_us": 5016890,
+              "bytes": 160065408,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4422,
+                "p90": 6346,
+                "p99": 7893,
+                "max": 14862,
+                "mean": 4661.5
+              },
+              "statuses": {
+                "200": 68578
+              }
+            },
+            {
+              "round": 1,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 12990.478917041768,
+              "cpu_seconds": 20.349999999999994,
+              "cpu_us_per_request": 307.179084651612,
+              "peak_process_tree_rss_kib": 97208.0,
+              "process_pids": [
+                2755311,
+                2755313,
+                2755328,
+                2755329,
+                2755330,
+                2755331
+              ],
+              "requests": 66248,
+              "duration_us": 5099735,
+              "bytes": 154625045,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4772,
+                "p90": 6966,
+                "p99": 8642,
+                "max": 13768,
+                "mean": 4873.3
+              },
+              "statuses": {
+                "200": 66248
+              }
+            },
+            {
+              "round": 2,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 13208.756190654714,
+              "cpu_seconds": 20.39,
+              "cpu_us_per_request": 302.679432939954,
+              "peak_process_tree_rss_kib": 99092.0,
+              "process_pids": [
+                2756903,
+                2756905,
+                2756920,
+                2756921,
+                2756922,
+                2756923
+              ],
+              "requests": 67365,
+              "duration_us": 5100026,
+              "bytes": 157231883,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4342,
+                "p90": 6359,
+                "p99": 7313,
+                "max": 16238,
+                "mean": 4792.1
+              },
+              "statuses": {
+                "200": 67365
+              }
+            },
+            {
+              "round": 3,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 13542.880771529704,
+              "cpu_seconds": 19.97,
+              "cpu_us_per_request": 293.9920797326542,
+              "peak_process_tree_rss_kib": 98144.0,
+              "process_pids": [
+                2761595,
+                2761597,
+                2761612,
+                2761613,
+                2761614,
+                2761615
+              ],
+              "requests": 67927,
+              "duration_us": 5015698,
+              "bytes": 158545884,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4276,
+                "p90": 6294,
+                "p99": 7679,
+                "max": 14121,
+                "mean": 4705.3
+              },
+              "statuses": {
+                "200": 67927
+              }
+            },
+            {
+              "round": 4,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 13367.967350895711,
+              "cpu_seconds": 20.36,
+              "cpu_us_per_request": 298.64757825564,
+              "peak_process_tree_rss_kib": 98484.0,
+              "process_pids": [
+                2762927,
+                2762929,
+                2762944,
+                2762945,
+                2762946,
+                2762947
+              ],
+              "requests": 68174,
+              "duration_us": 5099803,
+              "bytes": 159122517,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 4472,
+                "p90": 6489,
+                "p99": 7631,
+                "max": 11807,
+                "mean": 4734.9
+              },
+              "statuses": {
+                "200": 68174
+              }
+            }
+          ],
+          "requests_per_second_median": 13367.967350895711,
+          "requests_per_second_min": 12990.478917041768,
+          "requests_per_second_max": 13669.42468341941,
+          "p50_us_median": 4422,
+          "p99_us_median": 7679,
+          "cpu_us_per_request_median": 298.64757825564,
+          "peak_process_tree_rss_kib_max": 99092.0
+        }
+      }
+    },
+    {
+      "profile": "sibuna-shield",
+      "configuration": {
+        "command": [
+          "taskset",
+          "-c",
+          "0,1,2,3",
+          "/home/insan/sibuna-bunkerweb-benchmark-20261004/source/zig-out/bin/sibuna",
+          "--shield",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "37651",
+          "--workers",
+          "4",
+          "--upstream-host",
+          "127.0.0.1",
+          "--upstream-port",
+          "33291",
+          "--policy-file",
+          "/tmp/sibuna-bunkerweb-55x79qmq/policy.json",
+          "--rate-limit",
+          "100000000",
+          "--idle-timeout",
+          "15"
+        ],
+        "policy": {
+          "default_action": "allow",
+          "rules": []
+        },
+        "console_active": false,
+        "storage_active": false
+      },
+      "workloads": {
+        "benign_get": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 75702.29574027567,
+              "cpu_seconds": 11.93,
+              "cpu_us_per_request": 31.415570325584333,
+              "peak_process_tree_rss_kib": 37916.0,
+              "process_pids": [
+                2753011
+              ],
+              "requests": 379748,
+              "duration_us": 5016334,
+              "bytes": 74810036,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 796,
+                "p90": 1814,
+                "p99": 4198,
+                "max": 8545,
+                "mean": 946.5
+              },
+              "statuses": {
+                "200": 379748
+              }
+            },
+            {
+              "round": 1,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 75543.55837227398,
+              "cpu_seconds": 11.91,
+              "cpu_us_per_request": 31.447205132944315,
+              "peak_process_tree_rss_kib": 38088.0,
+              "process_pids": [
+                2755371
+              ],
+              "requests": 378730,
+              "duration_us": 5013399,
+              "bytes": 74609490,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 799,
+                "p90": 1811,
+                "p99": 4181,
+                "max": 9104,
+                "mean": 948.9
+              },
+              "statuses": {
+                "200": 378730
+              }
+            },
+            {
+              "round": 2,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 75314.68724155433,
+              "cpu_seconds": 11.82,
+              "cpu_us_per_request": 31.336244263638026,
+              "peak_process_tree_rss_kib": 38128.0,
+              "process_pids": [
+                2756952
+              ],
+              "requests": 377199,
+              "duration_us": 5008306,
+              "bytes": 74307883,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 802,
+                "p90": 1835,
+                "p99": 4232,
+                "max": 8651,
+                "mean": 954.9
+              },
+              "statuses": {
+                "200": 377199
+              }
+            },
+            {
+              "round": 3,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 76193.28629787733,
+              "cpu_seconds": 12.040000000000001,
+              "cpu_us_per_request": 31.546237246568953,
+              "peak_process_tree_rss_kib": 37808.0,
+              "process_pids": [
+                2759245
+              ],
+              "requests": 381662,
+              "duration_us": 5009129,
+              "bytes": 75187094,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 795,
+                "p90": 1786,
+                "p99": 3950,
+                "max": 9621,
+                "mean": 932.1
+              },
+              "statuses": {
+                "200": 381662
+              }
+            },
+            {
+              "round": 4,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 75299.91084486792,
+              "cpu_seconds": 12.13,
+              "cpu_us_per_request": 31.585498272301887,
+              "peak_process_tree_rss_kib": 37956.0,
+              "process_pids": [
+                2762984
+              ],
+              "requests": 384037,
+              "duration_us": 5100099,
+              "bytes": 75654969,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 791,
+                "p90": 1813,
+                "p99": 4111,
+                "max": 8461,
+                "mean": 940.9
+              },
+              "statuses": {
+                "200": 384037
+              }
+            }
+          ],
+          "requests_per_second_median": 75543.55837227398,
+          "requests_per_second_min": 75299.91084486792,
+          "requests_per_second_max": 76193.28629787733,
+          "p50_us_median": 796,
+          "p99_us_median": 4181,
+          "cpu_us_per_request_median": 31.447205132944315,
+          "peak_process_tree_rss_kib_max": 38128.0
+        },
+        "benign_json_8k": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 48585.60826740332,
+              "cpu_seconds": 16.869999999999997,
+              "cpu_us_per_request": 69.3200309002153,
+              "peak_process_tree_rss_kib": 37452.0,
+              "process_pids": [
+                2753011
+              ],
+              "requests": 243364,
+              "duration_us": 5008973,
+              "bytes": 47942708,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 1159,
+                "p90": 2837,
+                "p99": 5895,
+                "max": 10657,
+                "mean": 1470.6
+              },
+              "statuses": {
+                "200": 243364
+              }
+            },
+            {
+              "round": 1,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 49137.38118146102,
+              "cpu_seconds": 17.369999999999997,
+              "cpu_us_per_request": 69.31198774171408,
+              "peak_process_tree_rss_kib": 37004.0,
+              "process_pids": [
+                2755371
+              ],
+              "requests": 250606,
+              "duration_us": 5100109,
+              "bytes": 49369382,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 1130,
+                "p90": 2740,
+                "p99": 5798,
+                "max": 10066,
+                "mean": 1438.5
+              },
+              "statuses": {
+                "200": 250606
+              }
+            },
+            {
+              "round": 2,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 48698.403687382146,
+              "cpu_seconds": 16.940000000000005,
+              "cpu_us_per_request": 69.4359050031562,
+              "peak_process_tree_rss_kib": 37756.0,
+              "process_pids": [
+                2756952
+              ],
+              "requests": 243966,
+              "duration_us": 5009733,
+              "bytes": 48061302,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 1149,
+                "p90": 2751,
+                "p99": 5823,
+                "max": 10805,
+                "mean": 1457.5
+              },
+              "statuses": {
+                "200": 243966
+              }
+            },
+            {
+              "round": 3,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 48873.36432233424,
+              "cpu_seconds": 17.310000000000002,
+              "cpu_us_per_request": 69.44890229811274,
+              "peak_process_tree_rss_kib": 37168.0,
+              "process_pids": [
+                2759245
+              ],
+              "requests": 249248,
+              "duration_us": 5099874,
+              "bytes": 49101856,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 1138,
+                "p90": 2725,
+                "p99": 5863,
+                "max": 11712,
+                "mean": 1444.3
+              },
+              "statuses": {
+                "200": 249248
+              }
+            },
+            {
+              "round": 4,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 49012.471994581865,
+              "cpu_seconds": 17.34,
+              "cpu_us_per_request": 69.37137690581255,
+              "peak_process_tree_rss_kib": 37412.0,
+              "process_pids": [
+                2762984
+              ],
+              "requests": 249959,
+              "duration_us": 5099906,
+              "bytes": 49241923,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 1132,
+                "p90": 2747,
+                "p99": 5770,
+                "max": 11264,
+                "mean": 1439.8
+              },
+              "statuses": {
+                "200": 249959
+              }
+            }
+          ],
+          "requests_per_second_median": 48873.36432233424,
+          "requests_per_second_min": 48585.60826740332,
+          "requests_per_second_max": 49137.38118146102,
+          "p50_us_median": 1138,
+          "p99_us_median": 5823,
+          "cpu_us_per_request_median": 69.37137690581255,
+          "peak_process_tree_rss_kib_max": 37756.0
+        },
+        "sqli_query": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "f93bf4a9ce16ba702319f3845eaf26d081b697daadfcb36b7c4ab1410fe9fc65"
+              },
+              "requests_per_second": 216883.69537897257,
+              "cpu_seconds": 13.660000000000004,
+              "cpu_us_per_request": 12.34827933145729,
+              "peak_process_tree_rss_kib": 35492.0,
+              "process_pids": [
+                2753011
+              ],
+              "requests": 1106227,
+              "duration_us": 5100554,
+              "bytes": 611742301,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1106227,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 143,
+                "p90": 174,
+                "p99": 305,
+                "max": 1588,
+                "mean": 155.1
+              },
+              "statuses": {
+                "403": 1106227
+              }
+            },
+            {
+              "round": 1,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "b5843806d5577254c049ac930d397e0c22f211846a5063f440c93eeb8c9dc11d"
+              },
+              "requests_per_second": 214952.37126044146,
+              "cpu_seconds": 13.61,
+              "cpu_us_per_request": 12.415051311288483,
+              "peak_process_tree_rss_kib": 35452.0,
+              "process_pids": [
+                2755371
+              ],
+              "requests": 1096250,
+              "duration_us": 5099967,
+              "bytes": 606225020,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1096250,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 145,
+                "p90": 176,
+                "p99": 306,
+                "max": 2493,
+                "mean": 156.5
+              },
+              "statuses": {
+                "403": 1096250
+              }
+            },
+            {
+              "round": 2,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "0376dbc6c07a0932ea4685ebc3d3ebcaced173f1b30a6ea938c99ddf65b02f9e"
+              },
+              "requests_per_second": 215970.8754233839,
+              "cpu_seconds": 13.619999999999997,
+              "cpu_us_per_request": 12.364115017134555,
+              "peak_process_tree_rss_kib": 35864.0,
+              "process_pids": [
+                2756952
+              ],
+              "requests": 1101575,
+              "duration_us": 5100572,
+              "bytes": 609169725,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1101575,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 144,
+                "p90": 172,
+                "p99": 306,
+                "max": 2507,
+                "mean": 156.0
+              },
+              "statuses": {
+                "403": 1101575
+              }
+            },
+            {
+              "round": 3,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "a4065b57b368d2787b6eb1adc63fdef9d0862f9188cdf424feae487e45434a69"
+              },
+              "requests_per_second": 215420.61122744842,
+              "cpu_seconds": 13.600000000000001,
+              "cpu_us_per_request": 12.37745410330806,
+              "peak_process_tree_rss_kib": 35508.0,
+              "process_pids": [
+                2759245
+              ],
+              "requests": 1098772,
+              "duration_us": 5100589,
+              "bytes": 607619676,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1098772,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 144,
+                "p90": 176,
+                "p99": 306,
+                "max": 2283,
+                "mean": 156.4
+              },
+              "statuses": {
+                "403": 1098772
+              }
+            },
+            {
+              "round": 4,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "94b5aa160cc6ab2874a401dd38ce1a083e781d18d8a98b88edc791b69b01b559"
+              },
+              "requests_per_second": 214341.8184841234,
+              "cpu_seconds": 13.5,
+              "cpu_us_per_request": 12.349213812458435,
+              "peak_process_tree_rss_kib": 35644.0,
+              "process_pids": [
+                2762984
+              ],
+              "requests": 1093187,
+              "duration_us": 5100204,
+              "bytes": 604531171,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1093187,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 145,
+                "p90": 179,
+                "p99": 308,
+                "max": 2401,
+                "mean": 157.2
+              },
+              "statuses": {
+                "403": 1093187
+              }
+            }
+          ],
+          "requests_per_second_median": 215420.61122744842,
+          "requests_per_second_min": 214341.8184841234,
+          "requests_per_second_max": 216883.69537897257,
+          "p50_us_median": 144,
+          "p99_us_median": 306,
+          "cpu_us_per_request_median": 12.364115017134555,
+          "peak_process_tree_rss_kib_max": 35864.0
+        },
+        "sqli_json": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "20621ea98ef73418015e7e547bd879a1b83c9552f02186394c137c773191869d"
+              },
+              "requests_per_second": 213671.8082094223,
+              "cpu_seconds": 14.86,
+              "cpu_us_per_request": 13.63673070852268,
+              "peak_process_tree_rss_kib": 35404.0,
+              "process_pids": [
+                2753011
+              ],
+              "requests": 1089704,
+              "duration_us": 5099896,
+              "bytes": 602605082,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1089704,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 146,
+                "p90": 171,
+                "p99": 307,
+                "max": 2510,
+                "mean": 158.3
+              },
+              "statuses": {
+                "403": 1089704
+              }
+            },
+            {
+              "round": 1,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "57f23a10687fcaa0bfddefc8838410aa22577247aba31fc8936cd5fb4d511b3a"
+              },
+              "requests_per_second": 213152.14262689924,
+              "cpu_seconds": 14.849999999999994,
+              "cpu_us_per_request": 13.659995805415424,
+              "peak_process_tree_rss_kib": 35408.0,
+              "process_pids": [
+                2755371
+              ],
+              "requests": 1087116,
+              "duration_us": 5100188,
+              "bytes": 601173923,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1087116,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 146,
+                "p90": 169,
+                "p99": 308,
+                "max": 2218,
+                "mean": 158.7
+              },
+              "statuses": {
+                "403": 1087116
+              }
+            },
+            {
+              "round": 2,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "27c9393d4dfb2c29552d27bd9a602805a8c586797d40aeed55f66a429a1de584"
+              },
+              "requests_per_second": 213304.66447950972,
+              "cpu_seconds": 14.829999999999998,
+              "cpu_us_per_request": 13.632143546563466,
+              "peak_process_tree_rss_kib": 35744.0,
+              "process_pids": [
+                2756952
+              ],
+              "requests": 1087870,
+              "duration_us": 5100076,
+              "bytes": 601590890,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1087870,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 146,
+                "p90": 172,
+                "p99": 308,
+                "max": 2349,
+                "mean": 158.5
+              },
+              "statuses": {
+                "403": 1087870
+              }
+            },
+            {
+              "round": 3,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "8273262e382518648558e2bbfad6d7013049a76074f36640a9bf4caadc7d9b91"
+              },
+              "requests_per_second": 215356.02951373713,
+              "cpu_seconds": 14.800000000000004,
+              "cpu_us_per_request": 13.717230417031613,
+              "peak_process_tree_rss_kib": 35448.0,
+              "process_pids": [
+                2759245
+              ],
+              "requests": 1078935,
+              "duration_us": 5010006,
+              "bytes": 596649845,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1078935,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 146,
+                "p90": 164,
+                "p99": 307,
+                "max": 1191,
+                "mean": 158.4
+              },
+              "statuses": {
+                "403": 1078935
+              }
+            },
+            {
+              "round": 4,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "4d32ee451aeb415c938a4b0171b3c6bbaa68eb56834c6b83a3d89d0fd5eb0097"
+              },
+              "requests_per_second": 213380.2836233608,
+              "cpu_seconds": 14.979999999999997,
+              "cpu_us_per_request": 13.765725365508493,
+              "peak_process_tree_rss_kib": 35496.0,
+              "process_pids": [
+                2762984
+              ],
+              "requests": 1088210,
+              "duration_us": 5099862,
+              "bytes": 601778910,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1088210,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 146,
+                "p90": 176,
+                "p99": 309,
+                "max": 2404,
+                "mean": 159.1
+              },
+              "statuses": {
+                "403": 1088210
+              }
+            }
+          ],
+          "requests_per_second_median": 213380.2836233608,
+          "requests_per_second_min": 213152.14262689924,
+          "requests_per_second_max": 215356.02951373713,
+          "p50_us_median": 146,
+          "p99_us_median": 308,
+          "cpu_us_per_request_median": 13.659995805415424,
+          "peak_process_tree_rss_kib_max": 35744.0
+        }
+      }
+    },
+    {
+      "profile": "bunkerweb-crs",
+      "configuration": {
+        "settings": {
+          "SERVER_NAME": "benchmark.test",
+          "HTTP_PORT": "48713",
+          "HTTPS_PORT": "",
+          "LISTEN_HTTP": "yes",
+          "API_HTTP_PORT": "48714",
+          "API_LISTEN_HTTP": "no",
+          "WORKER_PROCESSES": "4",
+          "WORKER_CONNECTIONS": "4096",
+          "WORKER_RLIMIT_NOFILE": "8192",
+          "HTTP2": "no",
+          "HTTP3": "no",
+          "AUTO_LETS_ENCRYPT": "no",
+          "USE_REVERSE_PROXY": "yes",
+          "REVERSE_PROXY_HOST": "http://127.0.0.1:33291",
+          "REVERSE_PROXY_HTTP_VERSION": "1.1",
+          "REVERSE_PROXY_KEEPALIVE": "yes",
+          "USE_MODSECURITY": "yes",
+          "USE_MODSECURITY_CRS": "yes",
+          "MODSECURITY_CRS_VERSION": "4",
+          "MODSECURITY_SEC_AUDIT_ENGINE": "Off",
+          "USE_ANTIBOT": "no",
+          "USE_BAD_BEHAVIOR": "no",
+          "USE_BLACKLIST": "no",
+          "USE_WHITELIST": "no",
+          "USE_DNSBL": "no",
+          "USE_LIMIT_REQ": "no",
+          "USE_LIMIT_CONN": "no",
+          "USE_BUNKERNET": "no",
+          "SEND_ANONYMOUS_REPORT": "no",
+          "USE_GZIP": "no",
+          "USE_BROTLI": "no",
+          "USE_CLIENT_CACHE": "no",
+          "USE_REAL_IP": "no",
+          "LOG_LEVEL": "crit",
+          "ACCESS_LOG": "off",
+          "ERROR_LOG": "/var/log/bunkerweb/benchmark-error.log"
+        },
+        "generated_configuration_sha256": "c3724d7f767bd68549195980ee1de8b437b25f8e18c8b933dde773e512f48a9c",
+        "custom_error_configuration": null
+      },
+      "workloads": {
+        "benign_get": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 1341.1828609770903,
+              "cpu_seconds": 10.030000000000001,
+              "cpu_us_per_request": 1493.448481238833,
+              "peak_process_tree_rss_kib": 320856.0,
+              "process_pids": [
+                2754204,
+                2754206,
+                2754249,
+                2754250,
+                2754251,
+                2754252
+              ],
+              "requests": 6716,
+              "duration_us": 5007520,
+              "bytes": 15675144,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 79981,
+                "p90": 85451,
+                "p99": 93633,
+                "max": 110062,
+                "mean": 47085.3
+              },
+              "statuses": {
+                "200": 6716
+              }
+            },
+            {
+              "round": 1,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 1334.5963314341868,
+              "cpu_seconds": 10.05,
+              "cpu_us_per_request": 1500.4478948939982,
+              "peak_process_tree_rss_kib": 322268.0,
+              "process_pids": [
+                2756563,
+                2756565,
+                2756608,
+                2756609,
+                2756610,
+                2756611
+              ],
+              "requests": 6698,
+              "duration_us": 5018746,
+              "bytes": 15633132,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 77821,
+                "p90": 82145,
+                "p99": 88866,
+                "max": 94645,
+                "mean": 47703.7
+              },
+              "statuses": {
+                "200": 6698
+              }
+            },
+            {
+              "round": 2,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 2123.457085398691,
+              "cpu_seconds": 16.619999999999997,
+              "cpu_us_per_request": 1559.9774732494836,
+              "peak_process_tree_rss_kib": 321160.0,
+              "process_pids": [
+                2758147,
+                2758149,
+                2758192,
+                2758193,
+                2758194,
+                2758195
+              ],
+              "requests": 10654,
+              "duration_us": 5017290,
+              "bytes": 24868709,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 37983,
+                "p90": 81635,
+                "p99": 100150,
+                "max": 110617,
+                "mean": 35730.4
+              },
+              "statuses": {
+                "200": 10654
+              }
+            },
+            {
+              "round": 3,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 2668.8582590049527,
+              "cpu_seconds": 20.049999999999997,
+              "cpu_us_per_request": 1498.9533492822964,
+              "peak_process_tree_rss_kib": 319048.0,
+              "process_pids": [
+                2760437,
+                2760439,
+                2760482,
+                2760483,
+                2760484,
+                2760485
+              ],
+              "requests": 13376,
+              "duration_us": 5011881,
+              "bytes": 31224170,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 22853,
+                "p90": 29515,
+                "p99": 34730,
+                "max": 70256,
+                "mean": 23879.8
+              },
+              "statuses": {
+                "200": 13376
+              }
+            },
+            {
+              "round": 4,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 1378.7805200057587,
+              "cpu_seconds": 10.05,
+              "cpu_us_per_request": 1451.473136915078,
+              "peak_process_tree_rss_kib": 320900.0,
+              "process_pids": [
+                2761730,
+                2761732,
+                2761775,
+                2761776,
+                2761777,
+                2761778
+              ],
+              "requests": 6924,
+              "duration_us": 5021829,
+              "bytes": 16160616,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 54033,
+                "p90": 83083,
+                "p99": 101892,
+                "max": 107772,
+                "mean": 46413.5
+              },
+              "statuses": {
+                "200": 6924
+              }
+            }
+          ],
+          "requests_per_second_median": 1378.7805200057587,
+          "requests_per_second_min": 1334.5963314341868,
+          "requests_per_second_max": 2668.8582590049527,
+          "p50_us_median": 54033,
+          "p99_us_median": 93633,
+          "cpu_us_per_request_median": 1498.9533492822964,
+          "peak_process_tree_rss_kib_max": 322268.0
+        },
+        "benign_json_8k": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 786.1677542020497,
+              "cpu_seconds": 20.08,
+              "cpu_us_per_request": 5092.569109814862,
+              "peak_process_tree_rss_kib": 323088.0,
+              "process_pids": [
+                2754204,
+                2754206,
+                2754249,
+                2754250,
+                2754251,
+                2754252
+              ],
+              "requests": 3943,
+              "duration_us": 5015469,
+              "bytes": 9202962,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 77460,
+                "p90": 90563,
+                "p99": 147483,
+                "max": 308969,
+                "mean": 81051.4
+              },
+              "statuses": {
+                "200": 3943
+              }
+            },
+            {
+              "round": 1,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 392.62620847773354,
+              "cpu_seconds": 10.150000000000002,
+              "cpu_us_per_request": 5157.520325203253,
+              "peak_process_tree_rss_kib": 326776.0,
+              "process_pids": [
+                2756563,
+                2756565,
+                2756608,
+                2756609,
+                2756610,
+                2756611
+              ],
+              "requests": 1968,
+              "duration_us": 5012401,
+              "bytes": 4593312,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 281208,
+                "p90": 290490,
+                "p99": 308550,
+                "max": 353035,
+                "mean": 160178.5
+              },
+              "statuses": {
+                "200": 1968
+              }
+            },
+            {
+              "round": 2,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 793.6792460345912,
+              "cpu_seconds": 20.069999999999997,
+              "cpu_us_per_request": 5036.386449184441,
+              "peak_process_tree_rss_kib": 323976.0,
+              "process_pids": [
+                2758147,
+                2758149,
+                2758192,
+                2758193,
+                2758194,
+                2758195
+              ],
+              "requests": 3985,
+              "duration_us": 5020920,
+              "bytes": 9300990,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 81281,
+                "p90": 160269,
+                "p99": 162254,
+                "max": 166959,
+                "mean": 79615.0
+              },
+              "statuses": {
+                "200": 3985
+              }
+            },
+            {
+              "round": 3,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 786.7793931624801,
+              "cpu_seconds": 20.060000000000002,
+              "cpu_us_per_request": 5086.206896551725,
+              "peak_process_tree_rss_kib": 322384.0,
+              "process_pids": [
+                2760437,
+                2760439,
+                2760482,
+                2760483,
+                2760484,
+                2760485
+              ],
+              "requests": 3944,
+              "duration_us": 5012841,
+              "bytes": 9205296,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 77777,
+                "p90": 89658,
+                "p99": 149454,
+                "max": 313808,
+                "mean": 81011.3
+              },
+              "statuses": {
+                "200": 3944
+              }
+            },
+            {
+              "round": 4,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 406.3943359785488,
+              "cpu_seconds": 10.150000000000002,
+              "cpu_us_per_request": 4975.490196078432,
+              "peak_process_tree_rss_kib": 324652.0,
+              "process_pids": [
+                2761730,
+                2761732,
+                2761775,
+                2761776,
+                2761777,
+                2761778
+              ],
+              "requests": 2040,
+              "duration_us": 5019755,
+              "bytes": 4761360,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 25651,
+                "p90": 294358,
+                "p99": 297507,
+                "max": 302597,
+                "mean": 155970.0
+              },
+              "statuses": {
+                "200": 2040
+              }
+            }
+          ],
+          "requests_per_second_median": 786.1677542020497,
+          "requests_per_second_min": 392.62620847773354,
+          "requests_per_second_max": 793.6792460345912,
+          "p50_us_median": 77777,
+          "p99_us_median": 162254,
+          "cpu_us_per_request_median": 5086.206896551725,
+          "peak_process_tree_rss_kib_max": 326776.0
+        },
+        "sqli_query": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 403,
+                "body_bytes": 69282,
+                "body_sha256": "b23c1bc18602d53528a3bb4960ac85ce35343f69727afc89e1e36d216a4868f9"
+              },
+              "requests_per_second": 363.19952497325284,
+              "cpu_seconds": 20.120000000000005,
+              "cpu_us_per_request": 11030.701754385967,
+              "peak_process_tree_rss_kib": 331500.0,
+              "process_pids": [
+                2754204,
+                2754206,
+                2754249,
+                2754250,
+                2754251,
+                2754252
+              ],
+              "requests": 1824,
+              "duration_us": 5022033,
+              "bytes": 131257865,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1824,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 169414,
+                "p90": 175988,
+                "p99": 1087082,
+                "max": 1450928,
+                "mean": 198143.3
+              },
+              "statuses": {
+                "403": 1824
+              }
+            },
+            {
+              "round": 1,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 403,
+                "body_bytes": 69282,
+                "body_sha256": "e0070e36b547f6b199f7d96955064a51d4ee906376279f7ff5f7331cd13b4352"
+              },
+              "requests_per_second": 274.6860382405194,
+              "cpu_seconds": 15.380000000000003,
+              "cpu_us_per_request": 11153.009427121104,
+              "peak_process_tree_rss_kib": 333616.0,
+              "process_pids": [
+                2756563,
+                2756565,
+                2756608,
+                2756609,
+                2756610,
+                2756611
+              ],
+              "requests": 1379,
+              "duration_us": 5020277,
+              "bytes": 99285629,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1379,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 78066,
+                "p90": 622751,
+                "p99": 761704,
+                "max": 763708,
+                "mean": 262144.2
+              },
+              "statuses": {
+                "403": 1379
+              }
+            },
+            {
+              "round": 2,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 403,
+                "body_bytes": 69282,
+                "body_sha256": "62405a726736354891c00b53d3b502beee112a58120a1c46ed593b36301bd223"
+              },
+              "requests_per_second": 362.8028725849874,
+              "cpu_seconds": 20.1,
+              "cpu_us_per_request": 11050.027487630567,
+              "peak_process_tree_rss_kib": 331032.0,
+              "process_pids": [
+                2758147,
+                2758149,
+                2758192,
+                2758193,
+                2758194,
+                2758195
+              ],
+              "requests": 1819,
+              "duration_us": 5013742,
+              "bytes": 130826818,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1819,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 161996,
+                "p90": 183709,
+                "p99": 1104958,
+                "max": 1471393,
+                "mean": 199891.6
+              },
+              "statuses": {
+                "403": 1819
+              }
+            },
+            {
+              "round": 3,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 403,
+                "body_bytes": 69282,
+                "body_sha256": "fae0d1d149f370fde528d496a2655aa183266baa8d9f325ad79ce2c177c4233c"
+              },
+              "requests_per_second": 363.0004024266666,
+              "cpu_seconds": 20.130000000000003,
+              "cpu_us_per_request": 11042.238069116842,
+              "peak_process_tree_rss_kib": 331380.0,
+              "process_pids": [
+                2760437,
+                2760439,
+                2760482,
+                2760483,
+                2760484,
+                2760485
+              ],
+              "requests": 1823,
+              "duration_us": 5022033,
+              "bytes": 131327151,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1823,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 169496,
+                "p90": 173018,
+                "p99": 1090335,
+                "max": 1459778,
+                "mean": 198344.1
+              },
+              "statuses": {
+                "403": 1823
+              }
+            },
+            {
+              "round": 4,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 403,
+                "body_bytes": 69282,
+                "body_sha256": "de6da70e9d78fd0694993587feef911acb531dd8af8db3790864f156b3a6cb4b"
+              },
+              "requests_per_second": 356.5002713108549,
+              "cpu_seconds": 20.120000000000005,
+              "cpu_us_per_request": 11246.506428172166,
+              "peak_process_tree_rss_kib": 331180.0,
+              "process_pids": [
+                2761730,
+                2761732,
+                2761775,
+                2761776,
+                2761777,
+                2761778
+              ],
+              "requests": 1789,
+              "duration_us": 5018229,
+              "bytes": 128597175,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1789,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 161472,
+                "p90": 199333,
+                "p99": 1161687,
+                "max": 1621282,
+                "mean": 206380.8
+              },
+              "statuses": {
+                "403": 1789
+              }
+            }
+          ],
+          "requests_per_second_median": 362.8028725849874,
+          "requests_per_second_min": 274.6860382405194,
+          "requests_per_second_max": 363.19952497325284,
+          "p50_us_median": 161996,
+          "p99_us_median": 1090335,
+          "cpu_us_per_request_median": 11050.027487630567,
+          "peak_process_tree_rss_kib_max": 333616.0
+        },
+        "sqli_json": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 403,
+                "body_bytes": 69282,
+                "body_sha256": "e054e471505d7d67bbb40d0f2e218eace0b5819a1efcfe7cc04a4b2db3f67318"
+              },
+              "requests_per_second": 360.3027740321052,
+              "cpu_seconds": 20.10000000000001,
+              "cpu_us_per_request": 11129.568106312296,
+              "peak_process_tree_rss_kib": 339128.0,
+              "process_pids": [
+                2754204,
+                2754206,
+                2754249,
+                2754250,
+                2754251,
+                2754252
+              ],
+              "requests": 1806,
+              "duration_us": 5012451,
+              "bytes": 130034000,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1806,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 170554,
+                "p90": 185014,
+                "p99": 1106958,
+                "max": 1504078,
+                "mean": 201098.0
+              },
+              "statuses": {
+                "403": 1806
+              }
+            },
+            {
+              "round": 1,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 403,
+                "body_bytes": 69282,
+                "body_sha256": "d2cd01f3cd90f222fff9d1a3a6ff37aa411ad8db813a5be15474d5d4cde7231e"
+              },
+              "requests_per_second": 272.67350994789905,
+              "cpu_seconds": 15.300000000000004,
+              "cpu_us_per_request": 11184.210526315792,
+              "peak_process_tree_rss_kib": 338640.0,
+              "process_pids": [
+                2756563,
+                2756565,
+                2756608,
+                2756609,
+                2756610,
+                2756611
+              ],
+              "requests": 1368,
+              "duration_us": 5016989,
+              "bytes": 98495367,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1368,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 34414,
+                "p90": 629786,
+                "p99": 638599,
+                "max": 675742,
+                "mean": 260315.5
+              },
+              "statuses": {
+                "403": 1368
+              }
+            },
+            {
+              "round": 2,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 403,
+                "body_bytes": 69282,
+                "body_sha256": "2ddcd366cb441d505e8155cd104e04aa50d32287e6ae284f9518f003d209f079"
+              },
+              "requests_per_second": 359.40567641940356,
+              "cpu_seconds": 20.11999999999999,
+              "cpu_us_per_request": 11146.814404432127,
+              "peak_process_tree_rss_kib": 339424.0,
+              "process_pids": [
+                2758147,
+                2758149,
+                2758192,
+                2758193,
+                2758194,
+                2758195
+              ],
+              "requests": 1805,
+              "duration_us": 5022180,
+              "bytes": 129892867,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1805,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 170472,
+                "p90": 185003,
+                "p99": 1099931,
+                "max": 1492215,
+                "mean": 200576.0
+              },
+              "statuses": {
+                "403": 1805
+              }
+            },
+            {
+              "round": 3,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 403,
+                "body_bytes": 69282,
+                "body_sha256": "2c662fe59a6fe607353dbec2818b7309fba074281a0c94ec4419fb3f239aa029"
+              },
+              "requests_per_second": 358.818262634248,
+              "cpu_seconds": 20.099999999999994,
+              "cpu_us_per_request": 11160.466407551356,
+              "peak_process_tree_rss_kib": 339628.0,
+              "process_pids": [
+                2760437,
+                2760439,
+                2760482,
+                2760483,
+                2760484,
+                2760485
+              ],
+              "requests": 1801,
+              "duration_us": 5019254,
+              "bytes": 129674790,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1801,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 170788,
+                "p90": 175401,
+                "p99": 1098973,
+                "max": 1477513,
+                "mean": 201444.9
+              },
+              "statuses": {
+                "403": 1801
+              }
+            },
+            {
+              "round": 4,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 403,
+                "body_bytes": 69282,
+                "body_sha256": "0db19b8769461343d0cdedb408ef7596d33ff8d862a45b84811991807fc947e9"
+              },
+              "requests_per_second": 358.95591014037507,
+              "cpu_seconds": 20.129999999999995,
+              "cpu_us_per_request": 11164.725457570714,
+              "peak_process_tree_rss_kib": 340432.0,
+              "process_pids": [
+                2761730,
+                2761732,
+                2761775,
+                2761776,
+                2761777,
+                2761778
+              ],
+              "requests": 1803,
+              "duration_us": 5022901,
+              "bytes": 129818474,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 1803,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 170519,
+                "p90": 185567,
+                "p99": 1079832,
+                "max": 1502848,
+                "mean": 201110.8
+              },
+              "statuses": {
+                "403": 1803
+              }
+            }
+          ],
+          "requests_per_second_median": 358.95591014037507,
+          "requests_per_second_min": 272.67350994789905,
+          "requests_per_second_max": 360.3027740321052,
+          "p50_us_median": 170519,
+          "p99_us_median": 1098973,
+          "cpu_us_per_request_median": 11160.466407551356,
+          "peak_process_tree_rss_kib_max": 340432.0
+        }
+      }
+    },
+    {
+      "profile": "bunkerweb-crs-small-error",
+      "configuration": {
+        "settings": {
+          "SERVER_NAME": "benchmark.test",
+          "HTTP_PORT": "50001",
+          "HTTPS_PORT": "",
+          "LISTEN_HTTP": "yes",
+          "API_HTTP_PORT": "50002",
+          "API_LISTEN_HTTP": "no",
+          "WORKER_PROCESSES": "4",
+          "WORKER_CONNECTIONS": "4096",
+          "WORKER_RLIMIT_NOFILE": "8192",
+          "HTTP2": "no",
+          "HTTP3": "no",
+          "AUTO_LETS_ENCRYPT": "no",
+          "USE_REVERSE_PROXY": "yes",
+          "REVERSE_PROXY_HOST": "http://127.0.0.1:33291",
+          "REVERSE_PROXY_HTTP_VERSION": "1.1",
+          "REVERSE_PROXY_KEEPALIVE": "yes",
+          "USE_MODSECURITY": "yes",
+          "USE_MODSECURITY_CRS": "yes",
+          "MODSECURITY_CRS_VERSION": "4",
+          "MODSECURITY_SEC_AUDIT_ENGINE": "Off",
+          "USE_ANTIBOT": "no",
+          "USE_BAD_BEHAVIOR": "no",
+          "USE_BLACKLIST": "no",
+          "USE_WHITELIST": "no",
+          "USE_DNSBL": "no",
+          "USE_LIMIT_REQ": "no",
+          "USE_LIMIT_CONN": "no",
+          "USE_BUNKERNET": "no",
+          "SEND_ANONYMOUS_REPORT": "no",
+          "USE_GZIP": "no",
+          "USE_BROTLI": "no",
+          "USE_CLIENT_CACHE": "no",
+          "USE_REAL_IP": "no",
+          "LOG_LEVEL": "crit",
+          "ACCESS_LOG": "off",
+          "ERROR_LOG": "/var/log/bunkerweb/benchmark-error.log",
+          "INTERCEPTED_ERROR_CODES": "400 401 404 405 413 429 500 501 502 503 504"
+        },
+        "generated_configuration_sha256": "f10ee7acd4070f7b993f357e503e66382d8f3cca535cc00b6b45cd44dd66d150",
+        "custom_error_configuration": "error_page 403 /benchmark-denied.html;\nlocation = /benchmark-denied.html {\n    internal;\n    root /var/www/html;\n    modsecurity off;\n    auth_basic off;\n}\n"
+      },
+      "workloads": {
+        "benign_get": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 2793.2152685391734,
+              "cpu_seconds": 20.06,
+              "cpu_us_per_request": 1433.0618659808545,
+              "peak_process_tree_rss_kib": 318920.0,
+              "process_pids": [
+                2754359,
+                2754361,
+                2754404,
+                2754405,
+                2754406,
+                2754407
+              ],
+              "requests": 13998,
+              "duration_us": 5011429,
+              "bytes": 32675918,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 22738,
+                "p90": 25856,
+                "p99": 28506,
+                "max": 86869,
+                "mean": 22856.5
+              },
+              "statuses": {
+                "200": 13998
+              }
+            },
+            {
+              "round": 1,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 2012.275638337775,
+              "cpu_seconds": 14.84,
+              "cpu_us_per_request": 1469.01603642843,
+              "peak_process_tree_rss_kib": 320940.0,
+              "process_pids": [
+                2756728,
+                2756730,
+                2756773,
+                2756774,
+                2756775,
+                2756776
+              ],
+              "requests": 10102,
+              "duration_us": 5020187,
+              "bytes": 23582639,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 48990,
+                "p90": 83640,
+                "p99": 87105,
+                "max": 102272,
+                "mean": 36572.9
+              },
+              "statuses": {
+                "200": 10102
+              }
+            },
+            {
+              "round": 2,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 2074.5414381571977,
+              "cpu_seconds": 14.810000000000002,
+              "cpu_us_per_request": 1424.3123677630315,
+              "peak_process_tree_rss_kib": 320780.0,
+              "process_pids": [
+                2758304,
+                2758306,
+                2758349,
+                2758350,
+                2758351,
+                2758352
+              ],
+              "requests": 10398,
+              "duration_us": 5012192,
+              "bytes": 24271210,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 41875,
+                "p90": 83770,
+                "p99": 98996,
+                "max": 122501,
+                "mean": 36466.5
+              },
+              "statuses": {
+                "200": 10398
+              }
+            },
+            {
+              "round": 3,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 2792.1303002123886,
+              "cpu_seconds": 20.04,
+              "cpu_us_per_request": 1432.5541496890414,
+              "peak_process_tree_rss_kib": 319920.0,
+              "process_pids": [
+                2760592,
+                2760594,
+                2760637,
+                2760638,
+                2760639,
+                2760640
+              ],
+              "requests": 13989,
+              "duration_us": 5010153,
+              "bytes": 32650326,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 22734,
+                "p90": 25577,
+                "p99": 28349,
+                "max": 88755,
+                "mean": 22866.9
+              },
+              "statuses": {
+                "200": 13989
+              }
+            },
+            {
+              "round": 4,
+              "label": "benign_get",
+              "method": "GET",
+              "path": "/private",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 2646.922030328467,
+              "cpu_seconds": 20.05,
+              "cpu_us_per_request": 1511.3824815317353,
+              "peak_process_tree_rss_kib": 318556.0,
+              "process_pids": [
+                2761906,
+                2761908,
+                2761951,
+                2761952,
+                2761953,
+                2761954
+              ],
+              "requests": 13266,
+              "duration_us": 5011859,
+              "bytes": 30967430,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 23153,
+                "p90": 27997,
+                "p99": 32868,
+                "max": 89233,
+                "mean": 24096.1
+              },
+              "statuses": {
+                "200": 13266
+              }
+            }
+          ],
+          "requests_per_second_median": 2646.922030328467,
+          "requests_per_second_min": 2012.275638337775,
+          "requests_per_second_max": 2793.2152685391734,
+          "p50_us_median": 23153,
+          "p99_us_median": 32868,
+          "cpu_us_per_request_median": 1433.0618659808545,
+          "peak_process_tree_rss_kib_max": 320940.0
+        },
+        "benign_json_8k": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 800.3736140838624,
+              "cpu_seconds": 20.07,
+              "cpu_us_per_request": 5002.492522432702,
+              "peak_process_tree_rss_kib": 321956.0,
+              "process_pids": [
+                2754359,
+                2754361,
+                2754404,
+                2754405,
+                2754406,
+                2754407
+              ],
+              "requests": 4012,
+              "duration_us": 5012659,
+              "bytes": 9364008,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 77511,
+                "p90": 90182,
+                "p99": 146440,
+                "max": 300596,
+                "mean": 79653.0
+              },
+              "statuses": {
+                "200": 4012
+              }
+            },
+            {
+              "round": 1,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 591.5926776634245,
+              "cpu_seconds": 15.029999999999998,
+              "cpu_us_per_request": 5070.850202429149,
+              "peak_process_tree_rss_kib": 325348.0,
+              "process_pids": [
+                2756728,
+                2756730,
+                2756773,
+                2756774,
+                2756775,
+                2756776
+              ],
+              "requests": 2964,
+              "duration_us": 5010204,
+              "bytes": 6917976,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 109040,
+                "p90": 293299,
+                "p99": 301686,
+                "max": 353038,
+                "mean": 125764.8
+              },
+              "statuses": {
+                "200": 2964
+              }
+            },
+            {
+              "round": 2,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 767.3910418304837,
+              "cpu_seconds": 20.09,
+              "cpu_us_per_request": 5216.826798234225,
+              "peak_process_tree_rss_kib": 323356.0,
+              "process_pids": [
+                2758304,
+                2758306,
+                2758349,
+                2758350,
+                2758351,
+                2758352
+              ],
+              "requests": 3851,
+              "duration_us": 5018302,
+              "bytes": 8988234,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 83421,
+                "p90": 91880,
+                "p99": 152829,
+                "max": 307899,
+                "mean": 82948.1
+              },
+              "statuses": {
+                "200": 3851
+              }
+            },
+            {
+              "round": 3,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 402.81532451336443,
+              "cpu_seconds": 10.170000000000002,
+              "cpu_us_per_request": 5029.673590504452,
+              "peak_process_tree_rss_kib": 325848.0,
+              "process_pids": [
+                2760592,
+                2760594,
+                2760637,
+                2760638,
+                2760639,
+                2760640
+              ],
+              "requests": 2022,
+              "duration_us": 5019670,
+              "bytes": 4719348,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 26289,
+                "p90": 291817,
+                "p99": 297316,
+                "max": 326013,
+                "mean": 155751.1
+              },
+              "statuses": {
+                "200": 2022
+              }
+            },
+            {
+              "round": 4,
+              "label": "benign_json_8k",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 8031,
+              "probe": {
+                "status": 200,
+                "body_bytes": 41,
+                "body_sha256": "41781f59956e99f4e5a5c904fefb4c0b6f50dcca3356af520ede29409dfd1178"
+              },
+              "requests_per_second": 800.6952650718025,
+              "cpu_seconds": 20.080000000000002,
+              "cpu_us_per_request": 5000.0,
+              "peak_process_tree_rss_kib": 321280.0,
+              "process_pids": [
+                2761906,
+                2761908,
+                2761951,
+                2761952,
+                2761953,
+                2761954
+              ],
+              "requests": 4016,
+              "duration_us": 5015641,
+              "bytes": 9373344,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 0,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 77350,
+                "p90": 79805,
+                "p99": 175249,
+                "max": 316086,
+                "mean": 79829.8
+              },
+              "statuses": {
+                "200": 4016
+              }
+            }
+          ],
+          "requests_per_second_median": 767.3910418304837,
+          "requests_per_second_min": 402.81532451336443,
+          "requests_per_second_max": 800.6952650718025,
+          "p50_us_median": 77511,
+          "p99_us_median": 175249,
+          "cpu_us_per_request_median": 5029.673590504452,
+          "peak_process_tree_rss_kib_max": 325848.0
+        },
+        "sqli_query": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "e25848c5fbc47293795bb7b245acb645ed7c0986e9c65da38bcb7c566250212d"
+              },
+              "requests_per_second": 2231.9554685700673,
+              "cpu_seconds": 20.080000000000005,
+              "cpu_us_per_request": 1793.9783793442334,
+              "peak_process_tree_rss_kib": 335052.0,
+              "process_pids": [
+                2754359,
+                2754361,
+                2754404,
+                2754405,
+                2754406,
+                2754407
+              ],
+              "requests": 11193,
+              "duration_us": 5014885,
+              "bytes": 28443719,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 11193,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 28065,
+                "p90": 32060,
+                "p99": 59274,
+                "max": 233768,
+                "mean": 29101.0
+              },
+              "statuses": {
+                "403": 11193
+              }
+            },
+            {
+              "round": 1,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "e25848c5fbc47293795bb7b245acb645ed7c0986e9c65da38bcb7c566250212d"
+              },
+              "requests_per_second": 1847.5425791335851,
+              "cpu_seconds": 16.58,
+              "cpu_us_per_request": 1787.6010781671157,
+              "peak_process_tree_rss_kib": 333816.0,
+              "process_pids": [
+                2756728,
+                2756730,
+                2756773,
+                2756774,
+                2756775,
+                2756776
+              ],
+              "requests": 9275,
+              "duration_us": 5020182,
+              "bytes": 23567765,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 9275,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 5443,
+                "p90": 102561,
+                "p99": 103711,
+                "max": 113021,
+                "mean": 41998.9
+              },
+              "statuses": {
+                "403": 9275
+              }
+            },
+            {
+              "round": 2,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "e25848c5fbc47293795bb7b245acb645ed7c0986e9c65da38bcb7c566250212d"
+              },
+              "requests_per_second": 1689.7950010281031,
+              "cpu_seconds": 15.159999999999997,
+              "cpu_us_per_request": 1787.5250560075458,
+              "peak_process_tree_rss_kib": 332972.0,
+              "process_pids": [
+                2758304,
+                2758306,
+                2758349,
+                2758350,
+                2758351,
+                2758352
+              ],
+              "requests": 8481,
+              "duration_us": 5018952,
+              "bytes": 21552527,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 8481,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 43100,
+                "p90": 61893,
+                "p99": 62601,
+                "max": 65613,
+                "mean": 37522.3
+              },
+              "statuses": {
+                "403": 8481
+              }
+            },
+            {
+              "round": 3,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "e25848c5fbc47293795bb7b245acb645ed7c0986e9c65da38bcb7c566250212d"
+              },
+              "requests_per_second": 1819.3496991075497,
+              "cpu_seconds": 16.43,
+              "cpu_us_per_request": 1800.3506465044927,
+              "peak_process_tree_rss_kib": 334636.0,
+              "process_pids": [
+                2760592,
+                2760594,
+                2760637,
+                2760638,
+                2760639,
+                2760640
+              ],
+              "requests": 9126,
+              "duration_us": 5016078,
+              "bytes": 23189156,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 9126,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 5707,
+                "p90": 102809,
+                "p99": 104015,
+                "max": 109512,
+                "mean": 42362.7
+              },
+              "statuses": {
+                "403": 9126
+              }
+            },
+            {
+              "round": 4,
+              "label": "sqli_query",
+              "method": "GET",
+              "path": "/search?q=%27%20OR%201%3D1--",
+              "request_body_bytes": 0,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "e25848c5fbc47293795bb7b245acb645ed7c0986e9c65da38bcb7c566250212d"
+              },
+              "requests_per_second": 1704.776246371989,
+              "cpu_seconds": 15.07,
+              "cpu_us_per_request": 1763.6044470450556,
+              "peak_process_tree_rss_kib": 331376.0,
+              "process_pids": [
+                2761906,
+                2761908,
+                2761951,
+                2761952,
+                2761953,
+                2761954
+              ],
+              "requests": 8545,
+              "duration_us": 5012388,
+              "bytes": 21712845,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 8545,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 49852,
+                "p90": 56666,
+                "p99": 57350,
+                "max": 76355,
+                "mean": 37255.1
+              },
+              "statuses": {
+                "403": 8545
+              }
+            }
+          ],
+          "requests_per_second_median": 1819.3496991075497,
+          "requests_per_second_min": 1689.7950010281031,
+          "requests_per_second_max": 2231.9554685700673,
+          "p50_us_median": 28065,
+          "p99_us_median": 62601,
+          "cpu_us_per_request_median": 1787.6010781671157,
+          "peak_process_tree_rss_kib_max": 335052.0
+        },
+        "sqli_json": {
+          "samples": [
+            {
+              "round": 0,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "e25848c5fbc47293795bb7b245acb645ed7c0986e9c65da38bcb7c566250212d"
+              },
+              "requests_per_second": 996.0004543579504,
+              "cpu_seconds": 10.14,
+              "cpu_us_per_request": 2028.811524609844,
+              "peak_process_tree_rss_kib": 335200.0,
+              "process_pids": [
+                2754359,
+                2754361,
+                2754404,
+                2754405,
+                2754406,
+                2754407
+              ],
+              "requests": 4998,
+              "duration_us": 5018070,
+              "bytes": 12699918,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 4998,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 12182,
+                "p90": 118935,
+                "p99": 120781,
+                "max": 128981,
+                "mean": 63281.4
+              },
+              "statuses": {
+                "403": 4998
+              }
+            },
+            {
+              "round": 1,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "e25848c5fbc47293795bb7b245acb645ed7c0986e9c65da38bcb7c566250212d"
+              },
+              "requests_per_second": 1534.8158121323231,
+              "cpu_seconds": 16.03,
+              "cpu_us_per_request": 2082.629595946473,
+              "peak_process_tree_rss_kib": 335720.0,
+              "process_pids": [
+                2756728,
+                2756730,
+                2756773,
+                2756774,
+                2756775,
+                2756776
+              ],
+              "requests": 7697,
+              "duration_us": 5014934,
+              "bytes": 19562679,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 7697,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 6463,
+                "p90": 121082,
+                "p99": 122768,
+                "max": 129657,
+                "mean": 50111.1
+              },
+              "statuses": {
+                "403": 7697
+              }
+            },
+            {
+              "round": 2,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "e25848c5fbc47293795bb7b245acb645ed7c0986e9c65da38bcb7c566250212d"
+              },
+              "requests_per_second": 991.4809913694547,
+              "cpu_seconds": 10.120000000000005,
+              "cpu_us_per_request": 2032.944957814384,
+              "peak_process_tree_rss_kib": 335748.0,
+              "process_pids": [
+                2758304,
+                2758306,
+                2758349,
+                2758350,
+                2758351,
+                2758352
+              ],
+              "requests": 4978,
+              "duration_us": 5020772,
+              "bytes": 12651404,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 4978,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 12301,
+                "p90": 119358,
+                "p99": 121782,
+                "max": 130964,
+                "mean": 63674.4
+              },
+              "statuses": {
+                "403": 4978
+              }
+            },
+            {
+              "round": 3,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "e25848c5fbc47293795bb7b245acb645ed7c0986e9c65da38bcb7c566250212d"
+              },
+              "requests_per_second": 1453.6429075725218,
+              "cpu_seconds": 15.110000000000007,
+              "cpu_us_per_request": 2069.5795096562124,
+              "peak_process_tree_rss_kib": 336148.0,
+              "process_pids": [
+                2760592,
+                2760594,
+                2760637,
+                2760638,
+                2760639,
+                2760640
+              ],
+              "requests": 7301,
+              "duration_us": 5022554,
+              "bytes": 18554137,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 7301,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 10767,
+                "p90": 121900,
+                "p99": 123548,
+                "max": 126451,
+                "mean": 51675.1
+              },
+              "statuses": {
+                "403": 7301
+              }
+            },
+            {
+              "round": 4,
+              "label": "sqli_json",
+              "method": "POST",
+              "path": "/api",
+              "request_body_bytes": 24,
+              "probe": {
+                "status": 403,
+                "body_bytes": 235,
+                "body_sha256": "e25848c5fbc47293795bb7b245acb645ed7c0986e9c65da38bcb7c566250212d"
+              },
+              "requests_per_second": 1003.2246792473302,
+              "cpu_seconds": 10.11,
+              "cpu_us_per_request": 2009.9403578528827,
+              "peak_process_tree_rss_kib": 334312.0,
+              "process_pids": [
+                2761906,
+                2761908,
+                2761951,
+                2761952,
+                2761953,
+                2761954
+              ],
+              "requests": 5030,
+              "duration_us": 5013832,
+              "bytes": 12785842,
+              "errors": {
+                "connect": 0,
+                "read": 0,
+                "write": 0,
+                "status": 5030,
+                "timeout": 0
+              },
+              "latency_us": {
+                "p50": 14040,
+                "p90": 117486,
+                "p99": 119105,
+                "max": 121658,
+                "mean": 62925.3
+              },
+              "statuses": {
+                "403": 5030
+              }
+            }
+          ],
+          "requests_per_second_median": 1003.2246792473302,
+          "requests_per_second_min": 991.4809913694547,
+          "requests_per_second_max": 1534.8158121323231,
+          "p50_us_median": 12182,
+          "p99_us_median": 121782,
+          "cpu_us_per_request_median": 2032.944957814384,
+          "peak_process_tree_rss_kib_max": 336148.0
+        }
+      }
+    }
+  ],
+  "rounds": [
+    [
+      "origin",
+      "sibuna-gate",
+      "bunkerweb-proxy",
+      "sibuna-shield",
+      "bunkerweb-crs",
+      "bunkerweb-crs-small-error"
+    ],
+    [
+      "sibuna-gate",
+      "bunkerweb-proxy",
+      "sibuna-shield",
+      "bunkerweb-crs",
+      "bunkerweb-crs-small-error",
+      "origin"
+    ],
+    [
+      "bunkerweb-proxy",
+      "sibuna-shield",
+      "bunkerweb-crs",
+      "bunkerweb-crs-small-error",
+      "origin",
+      "sibuna-gate"
+    ],
+    [
+      "sibuna-shield",
+      "bunkerweb-crs",
+      "bunkerweb-crs-small-error",
+      "origin",
+      "sibuna-gate",
+      "bunkerweb-proxy"
+    ],
+    [
+      "bunkerweb-crs",
+      "bunkerweb-crs-small-error",
+      "origin",
+      "sibuna-gate",
+      "bunkerweb-proxy",
+      "sibuna-shield"
+    ]
+  ],
+  "functional_pass": true,
+  "tools": {
+    "wrk": "wrk debian/4.1.0-4+b1 [epoll] Copyright (C) 2012 Will Glozer",
+    "caddy": "2.6.2"
+  },
+  "limitations": [
+    "Unprivileged container on a shared host; no control of CPU frequency or host load.",
+    "Loopback HTTP/1.1; no TLS, browser challenges, sessions or AI-bot detection test.",
+    "Unconditional admission configured; inspection enabled only in Shield/CRS profiles.",
+    "Default CRS v4 rules; Sibuna heuristic inspection is not equivalent rule coverage.",
+    "Stock denial pages differ; a separate CRS profile serves a 235-byte static 403 page.",
+    "Product CPU allowance equal; generator and origin on separate allowed CPU sets.",
+    "Control planes, audit/access logging, rate limits, feeds and compression inactive.",
+    "BunkerWeb upstream keepalive explicitly enabled; Sibuna uses its native transport.",
+    "CPU uses summed user/system ticks; peak summed RSS double-counts shared pages.",
+    "wrk response hooks validate statuses and add client cost; expected 403 is valid.",
+    "An origin baseline bounds fixture throughput; results are not universal rankings."
+  ]
+}
