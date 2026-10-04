@@ -51,11 +51,17 @@ class Registry:
 
     def blob(self, descriptor, directory):
         expected = descriptor["digest"]
-        if not expected.startswith("sha256:") or len(expected) != 71:
+        if (not expected.startswith("sha256:") or len(expected) != 71
+                or any(c not in "0123456789abcdef" for c in expected[7:])):
             raise ValueError("unsupported blob digest")
+        if type(descriptor["size"]) is not int or descriptor["size"] < 0:
+            raise ValueError("invalid blob size")
         path = directory / expected.split(":")[1]
-        if path.exists() and digest(path.read_bytes()) == expected:
-            return
+        if path.exists() and path.stat().st_size == descriptor["size"]:
+            with path.open("rb") as source:
+                checksum = "sha256:" + hashlib.file_digest(source, "sha256").hexdigest()
+            if checksum == expected:
+                return
         temporary = path.with_suffix(".partial")
         checksum, total = hashlib.sha256(), 0
         try:

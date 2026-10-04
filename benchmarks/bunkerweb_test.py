@@ -1,13 +1,31 @@
 #!/usr/bin/env python3
 """Benchmark validation must distinguish expected denials from invalid measurements."""
 import copy
+import io
+from pathlib import Path
+import tempfile
 import unittest
 
 from bunkerweb import validate_measured
 from process_accounting import parse_stat
+from bunkerweb_image import Registry, digest
 
 
 class ValidationTests(unittest.TestCase):
+    def test_cached_image_blobs_still_require_a_valid_digest_and_declared_size(self):
+        registry = object.__new__(Registry)
+        registry.open = lambda kind, reference: io.BytesIO(b"abcd")
+        with tempfile.TemporaryDirectory() as name:
+            directory = Path(name)
+            with self.assertRaises(ValueError):
+                registry.blob({"digest": "sha256:" + "g" * 64, "size": 4}, directory)
+            reference = digest(b"abcd")
+            (directory / reference[7:]).write_bytes(b"abcd")
+            registry.blob({"digest": reference, "size": 4}, directory)
+            with self.assertRaises(ValueError):
+                registry.blob({"digest": reference, "size": 3}, directory)
+            self.assertFalse(list(directory.glob("*.partial")))
+
     def test_expected_denial_is_valid_but_mixed_or_empty_responses_are_not(self):
         result = {"requests": 100, "statuses": {"403": 100},
                   "errors": {"connect": 0, "read": 0, "write": 0,
