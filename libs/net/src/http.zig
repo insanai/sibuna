@@ -27,10 +27,7 @@ pub const Method = enum {
     }
 };
 
-pub const Header = struct {
-    name: []const u8,
-    value: []const u8,
-};
+pub const Header = @import("text").http_fields.Header;
 
 pub const MAX_HEADERS = 32;
 
@@ -127,18 +124,12 @@ fn validateContentLength(value: []const u8) ParseError!void {
 }
 
 /// A request-target split into its path and query (without the `?`).
-pub const Target = struct {
-    path: []const u8,
-    query: []const u8 = "",
-};
+pub const Target = @import("text").http_fields.Target;
 
 /// The one split of a request-target used everywhere a target is read: the request line,
 /// forwarded authorization metadata and the interstitial's reported URL. Policy matches the
 /// path alone, so any reader that kept the query attached would evaluate a different request.
-pub fn splitTarget(target: []const u8) Target {
-    const mark = std.mem.indexOfScalar(u8, target, '?') orelse return .{ .path = target };
-    return .{ .path = target[0..mark], .query = target[mark + 1 ..] };
-}
+pub const splitTarget = @import("text").http_fields.splitTarget;
 
 /// Accepts exactly `chunked`. The final coding must be `chunked` and may appear once (RFC 9112
 /// §6.3, §7); a list that also names another coding is understood but not decoded, because

@@ -51,10 +51,7 @@ pub const Algorithm = enum(u8) {
     }
 };
 
-pub const Header = struct {
-    name: []const u8,
-    value: []const u8,
-};
+pub const Header = @import("text").http_fields.Header;
 
 pub const HeaderMatcher = struct {
     name: []const u8,
