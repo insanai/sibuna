@@ -231,6 +231,33 @@ executor: no rule effects may be published from a resource-limited partial evalu
 The reference materializes all stage values before matching; the executor must demonstrate
 equivalent ordering of repeated match effects rather than stop after the first match.
 
+Escape, command-line and comment transforms use monotone bounded scans. Escape decoding
+consumes one literal byte or one escape of at most four bytes; unknown escapes discard
+the backslash, incomplete hexadecimal escapes retain their following bytes, and octal
+escapes retain the low eight bits. Command-line normalization removes quotes, backslashes
+and carets, compresses its specified separators and removes a preceding space before
+`/` or `(`. Its change flag compares lengths, even when case conversion changes bytes.
+Comment-marker removal preserves comment contents; comment replacement consumes a complete
+or unterminated `/*` comment and emits one space. These are distinct operations.
+
+*Lemma (scan bound).* Every scan iteration advances the input cursor by at least one, with
+at most four escape probes and one output byte. Marker removal checks six fixed strings
+of at most four bytes. Command-line space removal only decreases
+the output cursor. Hence output capacity $N$ suffices and time is $O(N)$, with no recursion
+or rescanning. Reserve $8 N + 1$ work units before writing, or $32 N + 1$ for marker
+removal; arithmetic overflow is a work
+limit error. SHA-1 emits its 20 binary digest bytes, rather than hexadecimal text. Its
+charged work is $N + 80 ceil((N + 9) / 64) + 1$, covering the input and all compression
+rounds including padding. SHA-1 here is a compatibility transform, not an authentication
+or artifact-verification primitive.
+
+The pinned primitive corpus is a compatibility subset. The test adapter reproduces its
+length-aware binary escapes and C-string JSON boundary. One escape-decoder fixture embeds
+`\xga`, which the reference harness matches as a hexadecimal token but cannot parse: its
+unchecked `sscanf` result is uninitialized. The digest manifest identifies this fixture
+explicitly; it cannot provide deterministic conformance evidence. Native tests cover invalid
+escapes directly, and the checker fails if the recorded exception stops being undefined.
+
 = Algorithms and mathematical contracts
 
 == Definitions and axioms
@@ -575,6 +602,7 @@ may contact the authors. Adding rules does not replace the existing component li
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/test/unit/unit_test.cc")[Pinned primitive corpus binary decoding].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/rule_with_actions.cc")[Reference transform ordering and change flags].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/rule_with_operator.cc")[Reference per-match effects and chain evaluation].
+- #link("https://github.com/owasp-modsecurity/ModSecurity/tree/v3.0.14/src/actions/transformations")[Reference byte transforms].
 - #link("https://github.com/owasp-modsecurity/secrules-language-tests/tree/a3d4405e5a2c90488c387e589c5534974575e35b")[SecLang corpus pinned by ModSecurity 3.0.14].
 - #link("https://www.pcre.org/current/doc/html/pcre2pattern.html")[PCRE2 pattern semantics].
 - #link("https://swtch.com/~rsc/regexp/regexp1.html")[Russ Cox: Regular Expression Matching Can Be Simple And Fast].

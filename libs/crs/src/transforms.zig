@@ -4,15 +4,13 @@
 const std = @import("std");
 const model = @import("model.zig");
 const work = @import("work.zig");
+const types = @import("transform_types.zig");
+const scan = @import("transform_scan.zig");
 
-pub const Error = error{ UnsupportedTransform, OutputLimit } || work.Error;
-pub const Buffer = struct {
-    input: []const u8,
-    output: []u8,
-    budget: *work.Budget,
-};
-pub const Result = struct { bytes: []const u8, changed: bool };
-const Write = struct { length: usize, changed: bool };
+pub const Error = types.Error;
+pub const Buffer = types.Buffer;
+pub const Result = types.Result;
+const Write = types.Write;
 
 /// All output is caller-owned. Buffers must be disjoint; a transaction uses two
 /// reserved buffers to compose a pipeline. Capacity and work are checked before writes.
@@ -24,13 +22,7 @@ pub fn apply(kind: model.Transform, buffer: Buffer) Error![]const u8 {
 pub fn step(kind: model.Transform, buffer: Buffer) Error!Result {
     const maximum = try capacity(kind, buffer.input.len);
     if (buffer.output.len < maximum) return error.OutputLimit;
-    const count = std.math.add(u64, @intCast(buffer.input.len), 1) catch
-        return error.WorkLimit;
-    const cost = if (kind == .hex_encode)
-        std.math.add(u64, count, @intCast(buffer.input.len)) catch return error.WorkLimit
-    else
-        count;
-    try buffer.budget.debit(cost);
+    try buffer.budget.debit(try cost(kind, buffer.input.len));
     assertDisjoint(buffer.input, buffer.output[0..maximum]);
     const result: Write = switch (kind) {
         .none => blk: {
@@ -40,6 +32,11 @@ pub fn step(kind: model.Transform, buffer: Buffer) Error!Result {
         .lowercase => lowercase(buffer),
         .length => .{ .length = decimalLength(buffer), .changed = true },
         .hex_encode => .{ .length = hex(buffer), .changed = buffer.input.len != 0 },
+        .escape_seq_decode => scan.escapeSequence(buffer),
+        .cmd_line => scan.commandLine(buffer),
+        .remove_comments_char => scan.removeCommentMarkers(buffer),
+        .replace_comments => scan.replaceComments(buffer),
+        .sha1 => scan.sha1(buffer),
         .compress_whitespace, .remove_whitespace, .remove_nulls => blk: {
             const length = if (kind == .compress_whitespace)
                 compress(buffer)
@@ -55,11 +52,38 @@ pub fn step(kind: model.Transform, buffer: Buffer) Error!Result {
 /// A conservative bound can exceed the eventual output; callers reserve it off-path.
 pub fn capacity(kind: model.Transform, length: usize) Error!usize {
     return switch (kind) {
-        .none, .lowercase, .compress_whitespace, .remove_whitespace, .remove_nulls => length,
+        .none,
+        .lowercase,
+        .compress_whitespace,
+        .remove_whitespace,
+        .remove_nulls,
+        .escape_seq_decode,
+        .cmd_line,
+        .remove_comments_char,
+        .replace_comments,
+        => length,
         .hex_encode => std.math.mul(usize, length, 2) catch error.OutputLimit,
         .length => digits(length),
+        .sha1 => 20,
         else => error.UnsupportedTransform,
     };
+}
+
+fn cost(kind: model.Transform, length: usize) work.Error!u64 {
+    const count: u64 = @intCast(length);
+    const factor: u64 = switch (kind) {
+        .hex_encode => 2,
+        .escape_seq_decode, .cmd_line, .replace_comments => 8,
+        .remove_comments_char => 32,
+        else => 1,
+    };
+    var charged = std.math.mul(u64, count, factor) catch return error.WorkLimit;
+    if (kind == .sha1) {
+        const blocks = count / 64 + @as(u64, if (count % 64 >= 56) 2 else 1);
+        const rounds = std.math.mul(u64, blocks, 80) catch return error.WorkLimit;
+        charged = std.math.add(u64, charged, rounds) catch return error.WorkLimit;
+    }
+    return std.math.add(u64, charged, 1) catch error.WorkLimit;
 }
 
 fn assertDisjoint(input: []const u8, output: []u8) void {
@@ -193,4 +217,46 @@ test "change flags retain reference behavior even when byte inequality disagrees
     });
     try std.testing.expectEqualStrings("1", length.bytes);
     try std.testing.expect(length.changed);
+    const command = try step(.cmd_line, .{
+        .input = "AB",
+        .output = &output,
+        .budget = &budget,
+    });
+    try std.testing.expectEqualStrings("ab", command.bytes);
+    try std.testing.expect(!command.changed);
+}
+
+test "bounded scans preserve binary escapes and distinguish comment operations" {
+    const cases = [_]struct { kind: model.Transform, input: []const u8, output: []const u8 }{
+        .{ .kind = .escape_seq_decode, .input = "\\x00\\777\\q\\xF\\", .output = "\x00\xffqxF\\" },
+        .{ .kind = .cmd_line, .input = " 'A'^ ;\\ /B", .output = " a/b" },
+        .{ .kind = .remove_comments_char, .input = "A/*x*/<!--B-->--#", .output = "AxB" },
+        .{ .kind = .replace_comments, .input = "A/*x*/B/*", .output = "A B " },
+        .{ .kind = .replace_comments, .input = "A\x00B/**/C", .output = "A\x00B C" },
+    };
+    var output: [64]u8 = undefined;
+    for (cases) |case| {
+        var budget: work.Budget = .{ .remaining = 4096 };
+        const result = try step(case.kind, .{
+            .input = case.input,
+            .output = &output,
+            .budget = &budget,
+        });
+        try std.testing.expectEqualStrings(case.output, result.bytes);
+        try std.testing.expect(result.changed);
+    }
+}
+
+test "scan and digest work refusal preserves output before any write" {
+    var output: [32]u8 = @splat(0x7f);
+    var budget: work.Budget = .{ .remaining = 80 };
+    const buffer: Buffer = .{ .input = "", .output = &output, .budget = &budget };
+    try std.testing.expectError(error.WorkLimit, step(.sha1, buffer));
+    try std.testing.expectEqual(@as(u64, 80), budget.remaining);
+    for (output) |byte| try std.testing.expectEqual(@as(u8, 0x7f), byte);
+    try std.testing.expectError(
+        error.WorkLimit,
+        cost(.remove_comments_char, std.math.maxInt(usize)),
+    );
+    try std.testing.expectEqual(@as(u64, 217), try cost(.sha1, 56));
 }
