@@ -1,0 +1,2592 @@
+{
+  "meta": {
+    "zaxonlite": {
+      "url": "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.7.0.tar.gz",
+      "hash": "zaxonlite-0.7.0-o9bF7IxHHQDxiixvOsdt-BvzGbI87rjtLKBJpW5LPse-",
+      "path": "vendor/zaxonlite",
+      "compatibility": "Zig 0.17"
+    },
+    "source_sha256": "7a43b9a92ec1c7811afc042e45707015bb61855ba0b1068b2bfd07d31930f58c",
+    "source_manifest_version": 3,
+    "source_file_count": 839,
+    "daemon_sha256": "cad1880ab6c2e77c74d1b7319c61160368ef1138e131a19117a101365f1eff9b",
+    "date": "2026-10-04T02:52:05.984414+00:00",
+    "host": "paxos-zig",
+    "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+    "os": "Linux-7.0.0-28-generic-x86_64-with-glibc2.41",
+    "git": "1f413c551f5fa5172a66c5bcb0e2cee2f50544c4",
+    "dirty": false,
+    "zig": "0.17.0"
+  },
+  "bunkerweb": {
+    "version": "1.6.15",
+    "image": {
+      "repository": "bunkerity/bunkerweb",
+      "reference": "1.6.15",
+      "index_digest": "sha256:1b96f672660cc32bfae93604ac297371222dc9039b2b09b8eee5e40ba9d35c35",
+      "image_digest": "sha256:b9b0ea44e0feb71eb3e6076a9218f3abfe284fd9f2749d9c483ffd6100a5346b",
+      "config_digest": "sha256:782a2726e0d028b491e2bae4c095cdf578de093dd8268a4d3e763f5071ef42a4",
+      "layers": [
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:55afa1ecc21d2bb5e5045f32dafee56272ffd89860bac26f6c32123439af26a4",
+          "size": 3846391
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:d57a2d5adcf624d860440eda0751197834a37175fd555f9bb3969d0bcb0fd2b3",
+          "size": 4352385
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:a9e7aa0bb73bd20b7931b7fa56d00becede0a777436b5bab85168c47e89b365a",
+          "size": 629
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:16720f76a6c9de7581783bf4d55fead5d0360ebdb9fde075e92bc44d64ad0cef",
+          "size": 956
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:da8b0d805e5c3713753e89ee1f9dfe90fb19eb0ff78e274c37661599c5e2f064",
+          "size": 404
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:aac3a72f1123b823f55acd996a59133f46feb86faa909181b083d4c78e64316a",
+          "size": 1212
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:f709c26bfc6a0474abd2851641ff6b209dd577025f696ed892d37b061664b865",
+          "size": 1398
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1",
+          "size": 32
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:9b965e275a1dc480b900d2a88111150332beb3d63488e6e87952bb791288242e",
+          "size": 27615694
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:66bfaf51dcdff864030b3df900d7a97ae2cc27fc445cc2785cd13b7f07821c99",
+          "size": 82668
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:e11bc25ca6cd9dbc4d6c9771b659cedcfc76e9536fb8fb873b2726e691292829",
+          "size": 82694
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:2c23e07d9816c1e58d05518014a616c6061a0ad4642e7b08ca658af3b67d1280",
+          "size": 94710
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:ad9892dd544aab4b4f3c66b51d0a659aca8ac9f3273c880d427cdf2873250a48",
+          "size": 82875
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:85ae4ca24a2ff39cd4b03451dccf01f84eb34fe45557863b346e6407f04b8eba",
+          "size": 82906
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:f8b0fb7b2f3d9494a84376f89b12c448b5c531d8ba0066641a929b3e597fdf35",
+          "size": 25142831
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1",
+          "size": 32
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:1f7787e0174e7330b81d9640938cabaa2ac415f44b949546929d49e345e4326b",
+          "size": 18655203
+        }
+      ],
+      "platform": "linux/amd64"
+    },
+    "modsecurity_crs": {
+      "git_repository": [
+        {
+          "id": "coreruleset-v3",
+          "name": "Coreruleset v3.3.10",
+          "url": "https://github.com/coreruleset/coreruleset.git",
+          "commit": "ab9e8bb690c8d89567076ff3598164d0ca0151b1",
+          "post_install": "rm -rf files/coreruleset-v3/tests files/coreruleset-v3/.github files/coreruleset-v3/docs && mv files/coreruleset-v3/crs-setup.conf.example files/crs-setup-v3.conf && ./misc/patch.sh 3"
+        },
+        {
+          "id": "coreruleset-v4",
+          "name": "Coreruleset v4.29.0",
+          "url": "https://github.com/coreruleset/coreruleset.git",
+          "commit": "ab3ccd5fcd691424ba3f320d4040c61417270193",
+          "post_install": "rm -rf files/coreruleset-v4/tests files/coreruleset-v4/.github files/coreruleset-v4/docs && mv files/coreruleset-v4/crs-setup.conf.example files/crs-setup-v4.conf && ./misc/patch.sh 4"
+        }
+      ]
+    },
+    "nginx": "nginx version: nginx/1.30.5\nbuilt by gcc 15.2.0 (Alpine 15.2.0) \nbuilt with OpenSSL 3.5.7 9 Jun 2026 (running with OpenSSL 3.5.8 25 Aug 2026)\nTLS SNI support enabled\nconfigure arguments: --prefix=/etc/nginx --sbin-path=/usr/sbin/nginx --modules-path=/usr/lib/nginx/modules --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --pid-path=/run/nginx.pid --lock-path=/run/nginx.lock --http-client-body-temp-path=/var/cache/nginx/client_temp --http-proxy-temp-path=/var/cache/nginx/proxy_temp --http-fastcgi-temp-path=/var/cache/nginx/fastcgi_temp --http-uwsgi-temp-path=/var/cache/nginx/uwsgi_temp --http-scgi-temp-path=/var/cache/nginx/scgi_temp --with-perl_modules_path=/usr/lib/perl5/vendor_perl --user=nginx --group=nginx --with-compat --with-file-aio --with-threads --with-http_addition_module --with-http_auth_request_module --with-http_dav_module --with-http_flv_module --with-http_gunzip_module --with-http_gzip_static_module --with-http_mp4_module --with-http_random_index_module --with-http_realip_module --with-http_secure_link_module --with-http_slice_module --with-http_ssl_module --with-http_stub_status_module --with-http_sub_module --with-http_v2_module --with-http_v3_module --with-mail --with-mail_ssl_module --with-stream --with-stream_realip_module --with-stream_ssl_module --with-stream_ssl_preread_module --with-cc-opt='-Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt -g' --with-ld-opt='-Wl,--as-needed,-O1,--sort-common -Wl,-z,pack-relative-relocs'",
+    "execution": "native Linux amd64; chroot; no Docker daemon or CPU emulation"
+  },
+  "load": {
+    "seconds": 5,
+    "warmup": 1,
+    "repetitions": 5,
+    "workers": 4,
+    "threads": 2,
+    "connections": 64
+  },
+  "affinity": {
+    "product": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "origin": [
+      6,
+      7
+    ],
+    "generator": [
+      0,
+      1
+    ]
+  },
+  "runs": [
+    {
+      "profile": "sibuna-gate",
+      "mode": "forward_auth",
+      "scheme": "default",
+      "configuration": {
+        "policy": {
+          "default_action": "challenge",
+          "rules": [
+            {
+              "name": "robots",
+              "path": "/robots.txt",
+              "action": "ALLOW"
+            }
+          ]
+        },
+        "console_active": false,
+        "storage_active": false,
+        "command": [
+          "taskset",
+          "-c",
+          "0,1,2,3",
+          "/home/insan/sibuna-bunkerweb-benchmark-20261004/source/zig-out/bin/sibuna",
+          "--gate",
+          "--mode",
+          "forward_auth",
+          "--host",
+          "0.0.0.0",
+          "--port",
+          "52699",
+          "--workers",
+          "4",
+          "--upstream-host",
+          "127.0.0.1",
+          "--upstream-port",
+          "48461",
+          "--policy-file",
+          "/tmp/sibuna-admission-operations-amcqq3jm/policy.json",
+          "--rate-limit",
+          "100000000",
+          "--idle-timeout",
+          "15",
+          "--algorithm",
+          "hashcash",
+          "--difficulty",
+          "16",
+          "--secret-file",
+          "/tmp/sibuna-admission-operations-amcqq3jm/seed.hex",
+          "--trust-forwarded",
+          "--challenge-rate-limit",
+          "100000000"
+        ]
+      },
+      "operations": {
+        "valid_session": {
+          "samples": [
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 21949676,
+              "operations_per_second": 9111.751809001646,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 21351902,
+              "operations_per_second": 9366.84703779551,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 20833755,
+              "operations_per_second": 9599.805699932633,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 21206055,
+              "operations_per_second": 9431.268569283631,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 21918662,
+              "operations_per_second": 9124.644560876937,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 21180280,
+              "operations_per_second": 9442.745799394532,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 22221322,
+              "operations_per_second": 9000.364604770139,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 9366.84703779551,
+          "operations_per_second_min": 9000.364604770139,
+          "operations_per_second_max": 9599.805699932633,
+          "cpu_seconds": 0.03,
+          "cpu_us_per_operation": 21.428571428571427,
+          "peak_process_tree_rss_kib": 10676.0
+        },
+        "unauthenticated_check": {
+          "samples": [
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 29839003,
+              "operations_per_second": 6702.636813971298,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 29312825,
+              "operations_per_second": 6822.95206961458,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 29400417,
+              "operations_per_second": 6802.624602229282,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 29797722,
+              "operations_per_second": 6711.922475147597,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 29719700,
+              "operations_per_second": 6729.543030380522,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 29237736,
+              "operations_per_second": 6840.47492596554,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 29736254,
+              "operations_per_second": 6725.796732836624,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 6729.543030380522,
+          "operations_per_second_min": 6702.636813971298,
+          "operations_per_second_max": 6840.47492596554,
+          "cpu_seconds": 0.04000000000000001,
+          "cpu_us_per_operation": 28.571428571428577,
+          "peak_process_tree_rss_kib": 10676.0
+        },
+        "proof_verification": {
+          "samples": [
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 6000029,
+              "operations_per_second": 5333.307555680148,
+              "statuses": {
+                "200": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 4770323,
+              "operations_per_second": 6708.1411468363885,
+              "statuses": {
+                "200": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 4706201,
+              "operations_per_second": 6799.539586175771,
+              "statuses": {
+                "200": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 5218200,
+              "operations_per_second": 6132.382813997164,
+              "statuses": {
+                "200": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 5106231,
+              "operations_per_second": 6266.853183884552,
+              "statuses": {
+                "200": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 5082831,
+              "operations_per_second": 6295.704106628767,
+              "statuses": {
+                "200": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 5187745,
+              "operations_per_second": 6168.383372737095,
+              "statuses": {
+                "200": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 6266.853183884552,
+          "operations_per_second_min": 5333.307555680148,
+          "operations_per_second_max": 6799.539586175771,
+          "cpu_seconds": 0.0,
+          "cpu_us_per_operation": null,
+          "peak_process_tree_rss_kib": 11408.0
+        },
+        "challenge_bootstrap": {
+          "samples": [
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 52960477,
+              "operations_per_second": 3776.4010320375323,
+              "statuses": {
+                "200": 400
+              },
+              "issued_bits_min": 16,
+              "issued_bits_max": 16
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 49648198,
+              "operations_per_second": 4028.3435866091254,
+              "statuses": {
+                "200": 400
+              },
+              "issued_bits_min": 16,
+              "issued_bits_max": 16
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 50266858,
+              "operations_per_second": 3978.7646962139547,
+              "statuses": {
+                "200": 400
+              },
+              "issued_bits_min": 16,
+              "issued_bits_max": 18
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 49892812,
+              "operations_per_second": 4008.593462320785,
+              "statuses": {
+                "200": 400
+              },
+              "issued_bits_min": 18,
+              "issued_bits_max": 18
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 50816716,
+              "operations_per_second": 3935.7128075730043,
+              "statuses": {
+                "200": 400
+              },
+              "issued_bits_min": 18,
+              "issued_bits_max": 18
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 49820867,
+              "operations_per_second": 4014.382166412319,
+              "statuses": {
+                "200": 400
+              },
+              "issued_bits_min": 18,
+              "issued_bits_max": 18
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 50579995,
+              "operations_per_second": 3954.1324588901207,
+              "statuses": {
+                "200": 400
+              },
+              "issued_bits_min": 18,
+              "issued_bits_max": 18
+            }
+          ],
+          "operations_per_second_median": 3978.7646962139547,
+          "operations_per_second_min": 3776.4010320375323,
+          "operations_per_second_max": 4028.3435866091254,
+          "cpu_seconds": 0.07,
+          "cpu_us_per_operation": 50.0,
+          "peak_process_tree_rss_kib": 11104.0
+        }
+      }
+    },
+    {
+      "profile": "anubis",
+      "mode": "forward_auth",
+      "scheme": "default",
+      "configuration": {
+        "policy": "bots:\n  - name: benchmark-client\n    user_agent_regex: Mozilla\n    action: CHALLENGE\ndnsbl: false\nhoneypot:\n  enabled: false\n",
+        "token_scheme": "default",
+        "upstream_keepalive": "enabled; native Go transport defaults",
+        "command": [
+          "taskset",
+          "-c",
+          "0,1,2,3",
+          "/home/insan/anubis/anubis-1.27.0-linux-amd64/bin/anubis",
+          "--bind",
+          "0.0.0.0:41049",
+          "--metrics-bind",
+          "127.0.0.1:55675",
+          "--target=",
+          "--difficulty",
+          "4",
+          "--policy-fname",
+          "/tmp/sibuna-admission-operations-amcqq3jm/policy.yaml",
+          "--slog-level",
+          "ERROR",
+          "--cookie-secure=false"
+        ]
+      },
+      "operations": {
+        "valid_session": {
+          "samples": [
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 34954662,
+              "operations_per_second": 5721.697437669402,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 33966426,
+              "operations_per_second": 5888.16733323665,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 33931152,
+              "operations_per_second": 5894.2885287242825,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 33933946,
+              "operations_per_second": 5893.803214044132,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 33725864,
+              "operations_per_second": 5930.1668298253235,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 33896437,
+              "operations_per_second": 5900.325158068973,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 33353773,
+              "operations_per_second": 5996.32311462934,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 5894.2885287242825,
+          "operations_per_second_min": 5721.697437669402,
+          "operations_per_second_max": 5996.32311462934,
+          "cpu_seconds": 0.25,
+          "cpu_us_per_operation": 178.57142857142858,
+          "peak_process_tree_rss_kib": 24888.0
+        },
+        "unauthenticated_check": {
+          "samples": [
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 23108902,
+              "operations_per_second": 8654.673424120281,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 24091200,
+              "operations_per_second": 8301.786544464368,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 22068908,
+              "operations_per_second": 9062.523619202182,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 21791605,
+              "operations_per_second": 9177.84623941192,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 21629553,
+              "operations_per_second": 9246.608101424934,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 21623126,
+              "operations_per_second": 9249.356452901398,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 21296299,
+              "operations_per_second": 9391.303155538904,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 9177.84623941192,
+          "operations_per_second_min": 8301.786544464368,
+          "operations_per_second_max": 9391.303155538904,
+          "cpu_seconds": 0.10999999999999999,
+          "cpu_us_per_operation": 78.57142857142856,
+          "peak_process_tree_rss_kib": 24888.0
+        },
+        "proof_verification": {
+          "samples": [
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 6055280,
+              "operations_per_second": 5284.644145274868,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 5267374,
+              "operations_per_second": 6075.133453595663,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 5306421,
+              "operations_per_second": 6030.429926310031,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 5352731,
+              "operations_per_second": 5978.256706716627,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 5211843,
+              "operations_per_second": 6139.862616736536,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 5366630,
+              "operations_per_second": 5962.773658702016,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 5520020,
+              "operations_per_second": 5797.080445360705,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 5978.256706716627,
+          "operations_per_second_min": 5284.644145274868,
+          "operations_per_second_max": 6139.862616736536,
+          "cpu_seconds": 0.040000000000000036,
+          "cpu_us_per_operation": 178.57142857142873,
+          "peak_process_tree_rss_kib": 26168.0
+        },
+        "challenge_bootstrap": {
+          "samples": [
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 42289519,
+              "operations_per_second": 4729.304204193006,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 39751177,
+              "operations_per_second": 5031.2975638432035,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 40168669,
+              "operations_per_second": 4979.0049055396885,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 40630865,
+              "operations_per_second": 4922.366284842816,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 40513587,
+              "operations_per_second": 4936.615461869619,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 39210679,
+              "operations_per_second": 5100.651279208912,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 40921231,
+              "operations_per_second": 4887.438503499565,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 4936.615461869619,
+          "operations_per_second_min": 4729.304204193006,
+          "operations_per_second_max": 5100.651279208912,
+          "cpu_seconds": 0.29000000000000004,
+          "cpu_us_per_operation": 207.1428571428572,
+          "peak_process_tree_rss_kib": 32540.0
+        }
+      }
+    },
+    {
+      "profile": "anubis",
+      "mode": "forward_auth",
+      "scheme": "hs512",
+      "configuration": {
+        "policy": "bots:\n  - name: benchmark-client\n    user_agent_regex: Mozilla\n    action: CHALLENGE\ndnsbl: false\nhoneypot:\n  enabled: false\n",
+        "token_scheme": "hs512",
+        "upstream_keepalive": "enabled; native Go transport defaults",
+        "command": [
+          "taskset",
+          "-c",
+          "0,1,2,3",
+          "/home/insan/anubis/anubis-1.27.0-linux-amd64/bin/anubis",
+          "--bind",
+          "0.0.0.0:56201",
+          "--metrics-bind",
+          "127.0.0.1:38797",
+          "--target=",
+          "--difficulty",
+          "4",
+          "--policy-fname",
+          "/tmp/sibuna-admission-operations-amcqq3jm/policy.yaml",
+          "--slog-level",
+          "ERROR",
+          "--cookie-secure=false",
+          "--hs512-secret",
+          "benchmark-synthetic-signing-key-0000000000000000000000000000000000000000000000000000000000000000"
+        ]
+      },
+      "operations": {
+        "valid_session": {
+          "samples": [
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 31771116,
+              "operations_per_second": 6295.025960057556,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 30039120,
+              "operations_per_second": 6657.984654676968,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 29132818,
+              "operations_per_second": 6865.109993822088,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 29721582,
+              "operations_per_second": 6729.116909052822,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 30524366,
+              "operations_per_second": 6552.14263909691,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 29597809,
+              "operations_per_second": 6757.256930741056,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 29797440,
+              "operations_per_second": 6711.9859961124175,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 6711.9859961124175,
+          "operations_per_second_min": 6295.025960057556,
+          "operations_per_second_max": 6865.109993822088,
+          "cpu_seconds": 0.18,
+          "cpu_us_per_operation": 128.57142857142858,
+          "peak_process_tree_rss_kib": 24096.0
+        },
+        "unauthenticated_check": {
+          "samples": [
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 23056793,
+              "operations_per_second": 8674.233229226631,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 22277828,
+              "operations_per_second": 8977.535871091204,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 21475044,
+              "operations_per_second": 9313.135749570525,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 21324448,
+              "operations_per_second": 9378.90631447998,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 22618345,
+              "operations_per_second": 8842.379935401994,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 21649110,
+              "operations_per_second": 9238.255059907775,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 21354413,
+              "operations_per_second": 9365.74561895005,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 9238.255059907775,
+          "operations_per_second_min": 8674.233229226631,
+          "operations_per_second_max": 9378.90631447998,
+          "cpu_seconds": 0.10999999999999999,
+          "cpu_us_per_operation": 78.57142857142856,
+          "peak_process_tree_rss_kib": 25120.0
+        },
+        "proof_verification": {
+          "samples": [
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 6223408,
+              "operations_per_second": 5141.8772479644595,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 5187605,
+              "operations_per_second": 6168.549841400801,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 4904714,
+              "operations_per_second": 6524.335567782342,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 5064251,
+              "operations_per_second": 6318.8021288834225,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 4875586,
+              "operations_per_second": 6563.3136201474035,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 4745875,
+              "operations_per_second": 6742.697605815577,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 4731765,
+              "operations_per_second": 6762.804154475127,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 6524.335567782342,
+          "operations_per_second_min": 5141.8772479644595,
+          "operations_per_second_max": 6762.804154475127,
+          "cpu_seconds": 0.03999999999999998,
+          "cpu_us_per_operation": 178.57142857142847,
+          "peak_process_tree_rss_kib": 26656.0
+        },
+        "challenge_bootstrap": {
+          "samples": [
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 42435294,
+              "operations_per_second": 4713.057955955248,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 39948361,
+              "operations_per_second": 5006.46321885396,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 41080138,
+              "operations_per_second": 4868.532817489561,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 39926987,
+              "operations_per_second": 5009.143314520577,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 40717897,
+              "operations_per_second": 4911.845029717522,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 40389044,
+              "operations_per_second": 4951.837929117609,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 40118725,
+              "operations_per_second": 4985.203293474556,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 4951.837929117609,
+          "operations_per_second_min": 4713.057955955248,
+          "operations_per_second_max": 5009.143314520577,
+          "cpu_seconds": 0.29,
+          "cpu_us_per_operation": 207.14285714285714,
+          "peak_process_tree_rss_kib": 34856.0
+        }
+      }
+    },
+    {
+      "profile": "sibuna-shield",
+      "mode": "forward_auth",
+      "scheme": "default",
+      "configuration": {
+        "policy": {
+          "default_action": "challenge",
+          "rules": [
+            {
+              "name": "robots",
+              "path": "/robots.txt",
+              "action": "ALLOW"
+            }
+          ]
+        },
+        "console_active": false,
+        "storage_active": false,
+        "command": [
+          "taskset",
+          "-c",
+          "0,1,2,3",
+          "/home/insan/sibuna-bunkerweb-benchmark-20261004/source/zig-out/bin/sibuna",
+          "--shield",
+          "--mode",
+          "forward_auth",
+          "--host",
+          "0.0.0.0",
+          "--port",
+          "37133",
+          "--workers",
+          "4",
+          "--upstream-host",
+          "127.0.0.1",
+          "--upstream-port",
+          "48461",
+          "--policy-file",
+          "/tmp/sibuna-admission-operations-amcqq3jm/policy.json",
+          "--rate-limit",
+          "100000000",
+          "--idle-timeout",
+          "15",
+          "--algorithm",
+          "hashcash",
+          "--difficulty",
+          "16",
+          "--secret-file",
+          "/tmp/sibuna-admission-operations-amcqq3jm/seed.hex",
+          "--trust-forwarded",
+          "--challenge-rate-limit",
+          "100000000"
+        ]
+      },
+      "operations": {
+        "valid_session": {
+          "samples": [
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 23131741,
+              "operations_per_second": 8646.12827888744,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 20776475,
+              "operations_per_second": 9626.272021601355,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 21578561,
+              "operations_per_second": 9268.458633548364,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 20357028,
+              "operations_per_second": 9824.616835031125,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 20230390,
+              "operations_per_second": 9886.116876639551,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 20290950,
+              "operations_per_second": 9856.61095217326,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 20300031,
+              "operations_per_second": 9852.201703534345,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 9824.616835031125,
+          "operations_per_second_min": 8646.12827888744,
+          "operations_per_second_max": 9886.116876639551,
+          "cpu_seconds": 0.02,
+          "cpu_us_per_operation": 14.285714285714286,
+          "peak_process_tree_rss_kib": 10900.0
+        },
+        "unauthenticated_check": {
+          "samples": [
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 29760837,
+              "operations_per_second": 6720.241100745923,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 28821288,
+              "operations_per_second": 6939.31513400789,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 29521042,
+              "operations_per_second": 6774.828612079479,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 29298571,
+              "operations_per_second": 6826.271492899773,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 28301046,
+              "operations_per_second": 7066.876609436979,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 29113329,
+              "operations_per_second": 6869.705625213798,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 29233191,
+              "operations_per_second": 6841.5384416980005,
+              "statuses": {
+                "401": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 6841.5384416980005,
+          "operations_per_second_min": 6720.241100745923,
+          "operations_per_second_max": 7066.876609436979,
+          "cpu_seconds": 0.05,
+          "cpu_us_per_operation": 35.714285714285715,
+          "peak_process_tree_rss_kib": 11156.0
+        },
+        "proof_verification": {
+          "samples": [
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 5752760,
+              "operations_per_second": 5562.547368567435,
+              "statuses": {
+                "200": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 5110560,
+              "operations_per_second": 6261.544723083184,
+              "statuses": {
+                "200": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 4633766,
+              "operations_per_second": 6905.829944800838,
+              "statuses": {
+                "200": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 4547990,
+              "operations_per_second": 7036.075277210372,
+              "statuses": {
+                "200": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 5040990,
+              "operations_per_second": 6347.959428604302,
+              "statuses": {
+                "200": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 5105671,
+              "operations_per_second": 6267.540544621853,
+              "statuses": {
+                "200": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 5089746,
+              "operations_per_second": 6287.150675102451,
+              "statuses": {
+                "200": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 6287.150675102451,
+          "operations_per_second_min": 5562.547368567435,
+          "operations_per_second_max": 7036.075277210372,
+          "cpu_seconds": 0.020000000000000018,
+          "cpu_us_per_operation": 89.28571428571436,
+          "peak_process_tree_rss_kib": 11504.0
+        },
+        "challenge_bootstrap": {
+          "samples": [
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 53022845,
+              "operations_per_second": 3771.959048972193,
+              "statuses": {
+                "200": 400
+              },
+              "issued_bits_min": 16,
+              "issued_bits_max": 16
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 50452512,
+              "operations_per_second": 3964.123728864085,
+              "statuses": {
+                "200": 400
+              },
+              "issued_bits_min": 16,
+              "issued_bits_max": 16
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 49790965,
+              "operations_per_second": 4016.793006522368,
+              "statuses": {
+                "200": 400
+              },
+              "issued_bits_min": 16,
+              "issued_bits_max": 16
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 50982393,
+              "operations_per_second": 3922.9229589125016,
+              "statuses": {
+                "200": 400
+              },
+              "issued_bits_min": 16,
+              "issued_bits_max": 16
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 50727999,
+              "operations_per_second": 3942.595882798373,
+              "statuses": {
+                "200": 400
+              },
+              "issued_bits_min": 16,
+              "issued_bits_max": 16
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 50667091,
+              "operations_per_second": 3947.335362118974,
+              "statuses": {
+                "200": 400
+              },
+              "issued_bits_min": 16,
+              "issued_bits_max": 16
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 50177723,
+              "operations_per_second": 3985.832517748962,
+              "statuses": {
+                "200": 400
+              },
+              "issued_bits_min": 16,
+              "issued_bits_max": 16
+            }
+          ],
+          "operations_per_second_median": 3947.335362118974,
+          "operations_per_second_min": 3771.959048972193,
+          "operations_per_second_max": 4016.793006522368,
+          "cpu_seconds": 0.06999999999999998,
+          "cpu_us_per_operation": 49.99999999999999,
+          "peak_process_tree_rss_kib": 11504.0
+        }
+      }
+    },
+    {
+      "profile": "bunkerweb-js",
+      "mode": "reverse_proxy",
+      "scheme": "default",
+      "configuration": {
+        "settings": {
+          "SERVER_NAME": "benchmark.test",
+          "HTTP_PORT": "34053",
+          "HTTPS_PORT": "",
+          "LISTEN_HTTP": "yes",
+          "API_HTTP_PORT": "34054",
+          "API_LISTEN_HTTP": "no",
+          "WORKER_PROCESSES": "4",
+          "WORKER_CONNECTIONS": "4096",
+          "WORKER_RLIMIT_NOFILE": "8192",
+          "HTTP2": "no",
+          "HTTP3": "no",
+          "AUTO_LETS_ENCRYPT": "no",
+          "USE_REVERSE_PROXY": "yes",
+          "REVERSE_PROXY_HOST": "http://127.0.0.1:48461",
+          "REVERSE_PROXY_HTTP_VERSION": "1.1",
+          "REVERSE_PROXY_KEEPALIVE": "yes",
+          "USE_MODSECURITY": "no",
+          "USE_MODSECURITY_CRS": "no",
+          "MODSECURITY_CRS_VERSION": "4",
+          "MODSECURITY_SEC_AUDIT_ENGINE": "Off",
+          "USE_ANTIBOT": "javascript",
+          "USE_BAD_BEHAVIOR": "no",
+          "USE_BLACKLIST": "no",
+          "USE_WHITELIST": "no",
+          "USE_DNSBL": "no",
+          "USE_LIMIT_REQ": "no",
+          "USE_LIMIT_CONN": "no",
+          "USE_BUNKERNET": "no",
+          "SEND_ANONYMOUS_REPORT": "no",
+          "USE_GZIP": "no",
+          "USE_BROTLI": "no",
+          "USE_CLIENT_CACHE": "no",
+          "USE_REAL_IP": "yes",
+          "LOG_LEVEL": "crit",
+          "ACCESS_LOG": "off",
+          "ERROR_LOG": "/var/log/bunkerweb/benchmark-error.log",
+          "ANTIBOT_IGNORE_URI": "^/robots[.]txt$",
+          "REAL_IP_FROM": "127.0.0.1/32 10.0.0.0/8",
+          "SESSIONS_SECRET": "0000000000000000000000000000000000000000000000000000000000000000",
+          "SESSIONS_NAME": "benchmark-session"
+        },
+        "generated_configuration_sha256": "a399f975724b299bd8a7fc63eaffa4d9a0934c1cc95aec6d40e58822fe6709fa",
+        "custom_error_configuration": null
+      },
+      "operations": {
+        "valid_session": {
+          "samples": [
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 116952806,
+              "operations_per_second": 1710.0915047733015,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 87196232,
+              "operations_per_second": 2293.6770937533174,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 72594689,
+              "operations_per_second": 2755.022478297276,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 70271345,
+              "operations_per_second": 2846.110317085862,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 68406635,
+              "operations_per_second": 2923.693001417187,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 68306261,
+              "operations_per_second": 2927.9892805141244,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 70456029,
+              "operations_per_second": 2838.649904609299,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 2838.649904609299,
+          "operations_per_second_min": 1710.0915047733015,
+          "operations_per_second_max": 2927.9892805141244,
+          "cpu_seconds": 0.6299999999999999,
+          "cpu_us_per_operation": 449.99999999999994,
+          "peak_process_tree_rss_kib": 93480.0
+        },
+        "unauthenticated_check": {
+          "samples": [
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 61383936,
+              "operations_per_second": 3258.1814238826264,
+              "statuses": {
+                "302": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 60857687,
+              "operations_per_second": 3286.3555921867355,
+              "statuses": {
+                "302": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 60635077,
+              "operations_per_second": 3298.4208134179494,
+              "statuses": {
+                "302": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 59901024,
+              "operations_per_second": 3338.8410855881193,
+              "statuses": {
+                "302": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 60792378,
+              "operations_per_second": 3289.886110393642,
+              "statuses": {
+                "302": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 72076334,
+              "operations_per_second": 2774.8359121594613,
+              "statuses": {
+                "302": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 81613206,
+              "operations_per_second": 2450.5837940002016,
+              "statuses": {
+                "302": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 3286.3555921867355,
+          "operations_per_second_min": 2450.5837940002016,
+          "operations_per_second_max": 3338.8410855881193,
+          "cpu_seconds": 0.53,
+          "cpu_us_per_operation": 378.57142857142856,
+          "peak_process_tree_rss_kib": 95784.0
+        },
+        "proof_verification": {
+          "samples": [
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 17305637,
+              "operations_per_second": 1849.108472574572,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 15847662,
+              "operations_per_second": 2019.2252964506688,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 16653170,
+              "operations_per_second": 1921.5560761104343,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 13121075,
+              "operations_per_second": 2438.8245627740107,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 14517512,
+              "operations_per_second": 2204.23444457976,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 14905458,
+              "operations_per_second": 2146.8645914805165,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 13388949,
+              "operations_per_second": 2390.0307634303485,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 2146.8645914805165,
+          "operations_per_second_min": 1849.108472574572,
+          "operations_per_second_max": 2438.8245627740107,
+          "cpu_seconds": 0.09000000000000008,
+          "cpu_us_per_operation": 401.7857142857146,
+          "peak_process_tree_rss_kib": 104248.0
+        },
+        "challenge_bootstrap": {
+          "samples": [
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 144631973,
+              "operations_per_second": 1382.8201043762294,
+              "statuses": {
+                "302": 200,
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 136161636,
+              "operations_per_second": 1468.8425159638946,
+              "statuses": {
+                "302": 200,
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 135823005,
+              "operations_per_second": 1472.50460258923,
+              "statuses": {
+                "302": 200,
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 136143337,
+              "operations_per_second": 1469.0399428067494,
+              "statuses": {
+                "302": 200,
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 134234411,
+              "operations_per_second": 1489.930923897003,
+              "statuses": {
+                "302": 200,
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 133980088,
+              "operations_per_second": 1492.7591329839997,
+              "statuses": {
+                "302": 200,
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 137613535,
+              "operations_per_second": 1453.3454140248632,
+              "statuses": {
+                "302": 200,
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 1469.0399428067494,
+          "operations_per_second_min": 1382.8201043762294,
+          "operations_per_second_max": 1492.7591329839997,
+          "cpu_seconds": 1.18,
+          "cpu_us_per_operation": 842.8571428571429,
+          "peak_process_tree_rss_kib": 105016.0
+        }
+      }
+    },
+    {
+      "profile": "bunkerweb-js-crs",
+      "mode": "reverse_proxy",
+      "scheme": "default",
+      "configuration": {
+        "settings": {
+          "SERVER_NAME": "benchmark.test",
+          "HTTP_PORT": "60739",
+          "HTTPS_PORT": "",
+          "LISTEN_HTTP": "yes",
+          "API_HTTP_PORT": "60740",
+          "API_LISTEN_HTTP": "no",
+          "WORKER_PROCESSES": "4",
+          "WORKER_CONNECTIONS": "4096",
+          "WORKER_RLIMIT_NOFILE": "8192",
+          "HTTP2": "no",
+          "HTTP3": "no",
+          "AUTO_LETS_ENCRYPT": "no",
+          "USE_REVERSE_PROXY": "yes",
+          "REVERSE_PROXY_HOST": "http://127.0.0.1:48461",
+          "REVERSE_PROXY_HTTP_VERSION": "1.1",
+          "REVERSE_PROXY_KEEPALIVE": "yes",
+          "USE_MODSECURITY": "yes",
+          "USE_MODSECURITY_CRS": "yes",
+          "MODSECURITY_CRS_VERSION": "4",
+          "MODSECURITY_SEC_AUDIT_ENGINE": "Off",
+          "USE_ANTIBOT": "javascript",
+          "USE_BAD_BEHAVIOR": "no",
+          "USE_BLACKLIST": "no",
+          "USE_WHITELIST": "no",
+          "USE_DNSBL": "no",
+          "USE_LIMIT_REQ": "no",
+          "USE_LIMIT_CONN": "no",
+          "USE_BUNKERNET": "no",
+          "SEND_ANONYMOUS_REPORT": "no",
+          "USE_GZIP": "no",
+          "USE_BROTLI": "no",
+          "USE_CLIENT_CACHE": "no",
+          "USE_REAL_IP": "yes",
+          "LOG_LEVEL": "crit",
+          "ACCESS_LOG": "off",
+          "ERROR_LOG": "/var/log/bunkerweb/benchmark-error.log",
+          "ANTIBOT_IGNORE_URI": "^/robots[.]txt$",
+          "REAL_IP_FROM": "127.0.0.1/32 10.0.0.0/8",
+          "SESSIONS_SECRET": "0000000000000000000000000000000000000000000000000000000000000000",
+          "SESSIONS_NAME": "benchmark-session"
+        },
+        "generated_configuration_sha256": "0ab6161f32625cd099a7ae37f12a80f7f821940b0de158f3233b4afb40afd0b2",
+        "custom_error_configuration": null
+      },
+      "operations": {
+        "valid_session": {
+          "samples": [
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 481140014,
+              "operations_per_second": 415.67941592985034,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 259912499,
+              "operations_per_second": 769.4897350819592,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 244155152,
+              "operations_per_second": 819.1512583768865,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 243598868,
+              "operations_per_second": 821.0218776550308,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 244709340,
+              "operations_per_second": 817.2961440703489,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 244715137,
+              "operations_per_second": 817.2767833319604,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 431687331,
+              "operations_per_second": 463.2982847485974,
+              "statuses": {
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 817.2767833319604,
+          "operations_per_second_min": 415.67941592985034,
+          "operations_per_second_max": 821.0218776550308,
+          "cpu_seconds": 3.21,
+          "cpu_us_per_operation": 2292.8571428571427,
+          "peak_process_tree_rss_kib": 314012.0
+        },
+        "unauthenticated_check": {
+          "samples": [
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 219796920,
+              "operations_per_second": 909.9308579938245,
+              "statuses": {
+                "302": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 118737812,
+              "operations_per_second": 1684.38340433627,
+              "statuses": {
+                "302": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 114153989,
+              "operations_per_second": 1752.0193709568923,
+              "statuses": {
+                "302": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 133597798,
+              "operations_per_second": 1497.030662137111,
+              "statuses": {
+                "302": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 113728673,
+              "operations_per_second": 1758.5714730004806,
+              "statuses": {
+                "302": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 113597984,
+              "operations_per_second": 1760.5946246370006,
+              "statuses": {
+                "302": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 200,
+              "elapsed_ns": 114264282,
+              "operations_per_second": 1750.3282434313112,
+              "statuses": {
+                "302": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 1750.3282434313112,
+          "operations_per_second_min": 909.9308579938245,
+          "operations_per_second_max": 1760.5946246370006,
+          "cpu_seconds": 1.46,
+          "cpu_us_per_operation": 1042.857142857143,
+          "peak_process_tree_rss_kib": 318364.0
+        },
+        "proof_verification": {
+          "samples": [
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 35381786,
+              "operations_per_second": 904.4201443081477,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 36275234,
+              "operations_per_second": 882.1445507422502,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 32144667,
+              "operations_per_second": 995.4995022969129,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 33065706,
+              "operations_per_second": 967.7700515452475,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 33497797,
+              "operations_per_second": 955.2867013911392,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 30988932,
+              "operations_per_second": 1032.6267455748393,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 32,
+              "requests": 32,
+              "elapsed_ns": 24421724,
+              "operations_per_second": 1310.3088053898243,
+              "statuses": {
+                "302": 32
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 967.7700515452475,
+          "operations_per_second_min": 882.1445507422502,
+          "operations_per_second_max": 1310.3088053898243,
+          "cpu_seconds": 0.2400000000000002,
+          "cpu_us_per_operation": 1071.4285714285722,
+          "peak_process_tree_rss_kib": 324044.0
+        },
+        "challenge_bootstrap": {
+          "samples": [
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 384178278,
+              "operations_per_second": 520.5916405299729,
+              "statuses": {
+                "302": 200,
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 383926119,
+              "operations_per_second": 520.9335601363449,
+              "statuses": {
+                "302": 200,
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 387183704,
+              "operations_per_second": 516.5506655724333,
+              "statuses": {
+                "302": 200,
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 385576251,
+              "operations_per_second": 518.7041460185783,
+              "statuses": {
+                "302": 200,
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 384594160,
+              "operations_per_second": 520.0286972636299,
+              "statuses": {
+                "302": 200,
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 384452435,
+              "operations_per_second": 520.2204012571802,
+              "statuses": {
+                "302": 200,
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            },
+            {
+              "operations": 200,
+              "requests": 400,
+              "elapsed_ns": 394816468,
+              "operations_per_second": 506.5644830194874,
+              "statuses": {
+                "302": 200,
+                "200": 200
+              },
+              "issued_bits_min": null,
+              "issued_bits_max": null
+            }
+          ],
+          "operations_per_second_median": 520.0286972636299,
+          "operations_per_second_min": 506.5644830194874,
+          "operations_per_second_max": 520.9335601363449,
+          "cpu_seconds": 4.9,
+          "cpu_us_per_operation": 3500.0,
+          "peak_process_tree_rss_kib": 324812.0
+        }
+      }
+    }
+  ],
+  "rounds": [],
+  "functional_pass": true,
+  "topology": "two-host",
+  "generator": {
+    "host": "agy02",
+    "os": "Linux-7.0.0-28-generic-x86_64-with-glibc2.41",
+    "cpu": "AMD Ryzen 7 5800H with Radeon Graphics",
+    "cpus": [
+      0,
+      1
+    ],
+    "wrk": "wrk debian/4.1.0-4+b1 [epoll] Copyright (C) 2012 Will Glozer",
+    "wrk_sha256": "3722bf8b31651d8b029b4856af9239dfb491ca93e92447368a4e183e8863b588"
+  },
+  "target_host": "10.175.52.18",
+  "anubis": {
+    "version": "Anubis v1.27.0",
+    "binary_sha256": "43a02b1d3908d3d775fe9454140f91ac36843320bc3d3712b33b638f38e801ac",
+    "release": "https://github.com/TecharoHQ/anubis/releases/tag/v1.27.0",
+    "archive_sha256": "092f92b1710ee2eb208f019733f6ce06cbc041884272340bea13635a4515c357"
+  },
+  "tools": {
+    "wrk": "wrk debian/4.1.0-4+b1 [epoll] Copyright (C) 2012 Will Glozer",
+    "caddy": "2.6.2"
+  },
+  "limitations": [
+    "Products/origin on .18, two Python client processes on .20; separate physical hosts.",
+    "Four product CPUs; two generator CPUs; HTTP/1.1; no TLS or browser solve timing.",
+    "SHA-256 work matched at 16 zero bits; native envelopes/session mechanisms differ.",
+    "Sibuna/Anubis use native forward-auth; BunkerWeb session checks include origin relay.",
+    "Anubis default Ed25519 and optional HS512 are measured separately.",
+    "Bootstrap is HTML+JSON for Sibuna, HTML for Anubis, redirect+HTML for BunkerWeb.",
+    "Every proof is fresh and solved before timing; expected statuses checked per request.",
+    "Bootstrap may increase Sibuna's adaptive issued difficulty; observed bits recorded.",
+    "Same Accept-Encoding: gzip for all; native Anubis challenge compression active.",
+    "Each batch includes Python, IPC, HTTP and connection setup; SSH excluded from timing.",
+    "CPU interval includes SSH invocation; small tick deltas reported as unresolved.",
+    "Shared host/frequency uncontrolled; CRS and heuristic rule coverage are different."
+  ],
+  "scope": {
+    "clients": 2,
+    "batches": 7,
+    "operations_per_batch": 200,
+    "proofs_per_batch": 32,
+    "verified_proof_bits": 16,
+    "not_measured": "BunkerWeb native forward-auth endpoint"
+  }
+}
