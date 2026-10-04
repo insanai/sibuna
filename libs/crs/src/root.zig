@@ -34,6 +34,7 @@ pub const transaction_vars = @import("transaction_vars.zig");
 pub const set_var = @import("set_var.zig");
 pub const evaluation_context = @import("evaluation_context.zig");
 pub const condition = @import("condition.zig");
+pub const chains = @import("chains.zig");
 
 test {
     _ = @import("release_test.zig");
@@ -68,4 +69,5 @@ test {
     _ = set_var;
     _ = evaluation_context;
     _ = condition;
+    _ = chains;
 }

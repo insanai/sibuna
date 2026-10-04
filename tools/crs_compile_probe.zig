@@ -169,6 +169,8 @@ fn conditionProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
     ) catch return false;
     var source = builder.finish() catch return false;
     defer source.deinit();
+    var topology = crs.chains.compile(allocator, source.conditions, .{}) catch return false;
+    defer topology.deinit();
     var program = crs.condition.compile(allocator, &source.conditions[0], &.{}, .{}) catch
         return false;
     defer program.deinit();
@@ -196,7 +198,8 @@ fn conditionProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
     var key: [16]u8 = undefined;
     var value: [16]u8 = undefined;
     var argument: [16]u8 = undefined;
-    const result = program.evaluate(.{
+    var unwind: [1]usize = undefined;
+    const result = topology.evaluate(&.{program}, 0, .{
         .context = &context,
         .snapshot = &snapshot,
         .count = &count,
@@ -207,7 +210,7 @@ fn conditionProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
         .value_output = &value,
         .argument_output = &argument,
         .budget = budget,
-    }) catch return false;
+    }, &unwind) catch return false;
     const score = (store.get("score", budget) catch return false) orelse "";
-    return result and std.mem.eql(u8, score, "1");
+    return result.matched and std.mem.eql(u8, score, "1");
 }

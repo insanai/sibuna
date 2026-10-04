@@ -217,6 +217,22 @@ evidence; replenishing a work budget cannot resume evaluation as a completed rul
 caller must apply its configured resource failure disposition and return the reserved
 slot. Bound metadata copies and matched-byte copies against the same work ledger.
 
+Compile contiguous chain topology separately from condition programs. Validate every
+root, continuation ID/phase, forward child link, maximum depth and marker destination
+before accepting that topology. The evaluator checks the supplied condition count and
+reserves the complete unwind index buffer before the first local effect. Evaluate links
+once from root to leaf. On the first false link, return no post-match indices, retaining
+the already executed TX writes. Only after every link is true return the indices from
+leaf to root for the later post-match executor. Topology preparation and chain truth do
+not authorize activation or execute disruption and controls.
+
+*Lemma (bounded chain traversal).* Every child is the adjacent next row, all rows in a
+chain share a root/ID/phase, and each chain has at most $C$ rows. Traversal therefore
+visits at most $C$ distinct conditions without recursion. The returned reversal is the
+same order as reference recursive unwinding. Local effects run before the next link and
+remain when a later link is false. This establishes chain traversal and effect visibility,
+conditional on each condition's semantics; it does not prove post-match action handling.
+
 #table(
   columns: (2fr, 4fr),
   [Operator family], [CRS 4.30.0 names],

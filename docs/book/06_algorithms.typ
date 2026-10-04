@@ -297,6 +297,10 @@ capture/TX effects. A reserved context rebuilds its variable view between action
 copies matched values before scratch is reused. Repeated fields and multi-match stages
 retain their effects; a failed condition clears matched variables without rolling back TX.
 This is condition evaluation, not yet a complete phased CRS generation.
+Chain topology is prepared separately. Traversal evaluates links once without recursion
+and returns successful post-match indices in leaf-to-root order. Failed children preserve
+parent TX effects and return no post-match actions. Marker targets and chain capacities
+are validated before evaluation; the stock rules and failure paths are covered by tests.
 Operator/transform conformance, structured bodies, phased evaluation, generation updates
 and the CLI/console activation controls must pass the SID's remaining gates before the
 daemon can enable CRS. Current Gate and Shield behavior is unchanged.

@@ -310,6 +310,8 @@ test "all stock conditions compose selection transforms predicates and pre-chain
     for (fixture.sources) |file| try builder.addSource(file.path, file.bytes);
     var plan = try builder.finish();
     defer plan.deinit();
+    var topology = try @import("chains.zig").compile(std.testing.allocator, plan.conditions, .{});
+    defer topology.deinit();
     for (plan.conditions) |*condition| {
         var files: [256][]const u8 = undefined;
         const data = if (condition.expression) |expression|

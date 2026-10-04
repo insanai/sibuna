@@ -33,7 +33,15 @@ pub const Frame = struct {
     budget: *work.Budget,
 
     fn assertExclusive(self: Frame) void {
-        buffers.assertExclusive(&.{
+        buffers.assertExclusive(&self.regions());
+    }
+
+    pub fn assertDisjoint(self: Frame, region: []const u8) void {
+        for (self.regions()) |scratch| buffers.assertDisjoint(scratch, region);
+    }
+
+    fn regions(self: Frame) [19][]const u8 {
+        return .{
             std.mem.sliceAsBytes(self.context.acquired.entries),
             std.mem.sliceAsBytes(self.context.store.entries),
             self.context.store.bytes,
@@ -49,7 +57,11 @@ pub const Frame = struct {
             self.key_output,
             self.value_output,
             self.argument_output,
-        });
+            if (self.regex) |scratch| std.mem.sliceAsBytes(scratch.current) else &.{},
+            if (self.regex) |scratch| std.mem.sliceAsBytes(scratch.next) else &.{},
+            if (self.regex) |scratch| std.mem.sliceAsBytes(scratch.stack) else &.{},
+            if (self.regex) |scratch| std.mem.sliceAsBytes(scratch.visited) else &.{},
+        };
     }
 };
 pub const Program = struct {
