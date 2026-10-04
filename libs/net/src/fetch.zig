@@ -90,7 +90,9 @@ fn receive(
     var request = try client.request(.GET, try std.Uri.parse(url), .{
         .redirect_behavior = behavior,
         .keep_alive = false,
-        .extra_headers = &.{.{ .name = "Accept-Encoding", .value = "identity" }},
+        // Extra headers do not replace the standard client's default header.
+        // Override it so publishers see exactly one identity-only negotiation.
+        .headers = .{ .accept_encoding = .{ .override = "identity" } },
     });
     defer request.deinit();
     try request.sendBodiless();
