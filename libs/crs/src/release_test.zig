@@ -348,6 +348,25 @@ fn stockPhaseScans(topology: *const @import("chains.zig").Program) !void {
     try std.testing.expectEqual(@as(usize, 628), total);
 }
 
+test "every stock transaction control prepares a typed bounded operation" {
+    const controls = @import("controls.zig");
+    var builder = compiler.Compiler.init(std.testing.allocator, .{});
+    defer builder.deinit();
+    for (fixture.sources) |file| try builder.addSource(file.path, file.bytes);
+    var plan = try builder.finish();
+    defer plan.deinit();
+    var count: usize = 0;
+    for (plan.conditions) |condition| {
+        for (condition.actions) |action| {
+            if (action.kind != .control) continue;
+            var program = try controls.compile(std.testing.allocator, action.value.?);
+            defer program.deinit();
+            count += 1;
+        }
+    }
+    try std.testing.expect(count > 10);
+}
+
 test "every stock address operator compiles without mapping IPv4 into IPv6" {
     const addresses = @import("address_set.zig");
     var builder = compiler.Compiler.init(std.testing.allocator, .{});

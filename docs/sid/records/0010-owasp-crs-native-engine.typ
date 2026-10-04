@@ -247,6 +247,35 @@ Both strictly increase the source position. Therefore a phase visits at most the
 number of source roots. Five ordered phases perform at most five such scans, excluding
 the separately charged condition and action work.
 
+== Transaction controls
+
+Prepare `ctl` into typed body-processor, forced-body, audit and exclusion operations.
+The initial profile accepts JSON, XML and URLENCODED processor overrides; On/Off forced
+body selection; On/Off/RelevantOnly audit selection; rule removal by ID or tag; and target
+removal by ID or tag. Other controls reject the generation. IDs are positive signed-32-bit
+decimal values; whole-rule removals accept space-separated IDs and inclusive ranges.
+Target-by-ID accepts one ID, matching the pinned v3 action. Reject malformed ranges,
+empty targets, extra delimiters and numeric suffixes rather than adopting permissive
+`stoi` parsing. Normalize collection identifiers into the native collection enum; tag
+and target-key comparisons remain byte-exact. Tags are expanded from the candidate
+rule against the current transaction view before selection.
+
+Reserve transaction exclusion entries before evaluation. A prepared control owns its
+constant strings and exclusion descriptors. Applying it checks the complete required
+entry count and work charge before copying descriptors into the transaction array.
+These descriptors borrow the generation, which must remain pinned across phases.
+Processor and audit overrides similarly debit before publishing one value. Audit settings
+affect evidence, never rule truth or denial. Capacity, work or selection failure poisons
+the control state; later phases cannot resume it after replenishing a budget.
+
+*Lemma (bounded control publication).* For $K$ prepared exclusion entries and $N$ reserved
+slots, the capacity check proves $u + K <= N$ before mutation. Charging $K$ units before
+the copy makes publication indivisible with respect to recoverable errors. Selection
+visits at most $N$ entries and the supplied rule tags, charging every compared byte.
+A target-qualified entry requires both rule selection and matching collection/key;
+therefore it cannot suppress another collection or an entire rule when no field is given.
+Generation pinning preserves borrowed exclusion bytes until transaction release.
+
 #block(breakable: false, table(
   columns: (2fr, 4fr),
   [Operator family], [CRS 4.30.0 names],

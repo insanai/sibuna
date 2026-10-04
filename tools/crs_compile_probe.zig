@@ -56,6 +56,7 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
     if (!selectionProbe(allocator.*, &budget)) return 26;
     if (!transactionProbe(allocator.*, &budget)) return 27;
     if (!conditionProbe(allocator.*, &budget)) return 28;
+    if (!controlProbe(allocator.*, &budget)) return 29;
     const result = crs.regex.match.search(
         &program,
         "xx",
@@ -63,6 +64,16 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
         &budget,
     ) catch return 5;
     return if (result != null) 0 else 6;
+}
+
+fn controlProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
+    var program = crs.controls.compile(allocator, "ruleRemoveTargetById=1;ARGS:q") catch
+        return false;
+    defer program.deinit();
+    var exclusions: [1]crs.controls.Exclusion = undefined;
+    var state: crs.controls.State = .{ .exclusions = &exclusions };
+    state.apply(&program, budget) catch return false;
+    return state.excludes(1, &.{}, .{ .collection = .args, .key = "q" }, budget) catch false;
 }
 
 fn detectorProbe(budget: *crs.work.Budget) bool {
