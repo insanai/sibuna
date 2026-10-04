@@ -421,6 +421,53 @@ one to four bytes; lookahead checks remaining length before reads. Reserve $8 N 
 work before validation. An invalid encoding is a positive validation-operator match;
 resource exhaustion is a separate error, never a negative match.
 
+== Phrase automata and reference profiles
+
+Phrase programs own their dictionary and use sparse sorted byte edges, breadth-first
+failure construction and caller-free matching. ASCII case folding is fixed. At most 256
+edges leave a node, so binary lookup takes at most nine comparisons. Construction bounds
+dictionary bytes, phrase count, node count and charged work; it has no recursive tree walk.
+Empty dictionaries match nothing. Empty phrases and NUL-bearing phrases reject compilation:
+the pinned reference's phrase allocation uses `strlen` even when it receives a longer
+explicit length, so binary NUL phrases do not provide a safe compatibility target.
+The reference profile also rejects non-ASCII dictionary bytes: its signed-character
+conversion passes negative values to locale case folding. Binary input fields remain valid;
+the general native profile has unsigned byte edges.
+
+The general Aho–Corasick profile follows failure links to the longest suffix with a
+transition. The ModSecurity 3.0.14 profile instead preserves two source quirks: construction
+checks only the parent's immediate failure node, and a suffix match captures the current
+node's original prefix text rather than the matched suffix. Dictionary insertion order fixes
+that text, including case. The compatibility profile must be named explicitly; improved
+general matching must not silently change `TX.0` or which rules add anomaly scores.
+
+Sibuna's security execution adopts the complete unsigned-byte profile, with the original
+matched dictionary phrase as capture. The legacy profile is a diagnostic comparison tool,
+not a console setting that can weaken protection. This is an explicit semantic correction:
+`aabcx` and `bc` against `aabc` must detect `bc`, and `abcd` and `bc` against `ABC` must
+capture `bc`, rather than the reference's missed match and `abc` capture respectively.
+Stock CRS contains non-ASCII phrases, including SSRF addresses and web-shell markers, which
+remain executable. The artifact ABI identifies this native phrase profile and its conformance
+report lists these known reference differences. It must not claim byte-for-byte ModSecurity
+equivalence. All other unexplained detection or capture mismatches still fail the gate.
+
+*Lemma (phrase search bound).* A successful transition increases depth by one and every
+failure strictly decreases it. Summed over $N$ input bytes, there are at most $N$ depth
+increases and $N$ failure steps. Binary edge searches cost $O(log 256)$ each, hence matching
+is $O(N log 256)$ with constant transaction state. Every lookup and consumed byte is charged
+before execution. For the general profile, the failure invariant establishes complete
+dictionary matching; that correctness statement does not apply to the reference's shortened
+construction. Both profiles require independent result and capture tests.
+
+Inline phrase arguments retain the pinned quoting, escape and binary-pair parser, followed
+by C-locale whitespace splitting. Invalid escape/binary syntax falls back to the original
+literal argument as the reference does; a decoded NUL still rejects compilation. Phrase-file
+input is supplied from the verified artifact, never a request-time path or URL. LF separates
+lines, empty lines and whitespace-prefixed `#` comments are skipped, and all other bytes
+remain literal, including a CR and whitespace-only lines. Both paths enforce byte and
+phrase bounds before constructing the owned automaton, and release temporary input storage
+on every failure. Dictionary formatting is part of the operator semantics.
+
 == Lemma 4: sound prefiltering
 
 A candidate regex may be skipped by a literal prefilter only when the compiler has proven
@@ -692,6 +739,7 @@ may contact the authors. Adding rules does not replace the existing component li
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/rule_with_actions.cc")[Reference transform ordering and change flags].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/rule_with_operator.cc")[Reference per-match effects and chain evaluation].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/tree/v3.0.14/src/actions/transformations")[Reference byte transforms].
+- #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/utils/acmp.cc")[Reference phrase failure construction and capture behavior].
 - #link("https://github.com/Mbed-TLS/mbedtls/blob/2ca6c285a0dd3f33982dd57299012dacab1ff206/library/base64.c")[Pinned base64 decoding profile].
 - #link("https://github.com/owasp-modsecurity/secrules-language-tests/tree/a3d4405e5a2c90488c387e589c5534974575e35b")[SecLang corpus pinned by ModSecurity 3.0.14].
 - #link("https://www.pcre.org/current/doc/html/pcre2pattern.html")[PCRE2 pattern semantics].
