@@ -26,6 +26,9 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
         .output = &transformed,
         .budget = &budget,
     }) catch return 8;
+    var prefixes: [2]usize = undefined;
+    const predicate: crs.primitives.Predicate = .{ .kind = .contains, .argument = "x" };
+    _ = predicate.evaluate("xx", .{ .prefixes = &prefixes, .budget = &budget }) catch return 9;
     const result = crs.regex.match.search(
         &program,
         "xx",

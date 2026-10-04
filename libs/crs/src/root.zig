@@ -11,6 +11,8 @@ pub const selectors = @import("selectors.zig");
 pub const collections = @import("collections.zig");
 pub const config = @import("config.zig");
 pub const transforms = @import("transforms.zig");
+pub const substring = @import("substring.zig");
+pub const primitives = @import("primitives.zig");
 
 test {
     _ = @import("release_test.zig");
@@ -23,4 +25,6 @@ test {
     _ = selectors;
     _ = config;
     _ = transforms;
+    _ = substring;
+    _ = primitives;
 }
