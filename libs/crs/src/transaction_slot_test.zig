@@ -65,7 +65,10 @@ test "phase acquisition preserves copied matched state and TX while updating cov
 
 fn failAllocation(allocator: std.mem.Allocator, program: *const rules.Program) !void {
     var slot: slots.Slot = undefined;
-    try slot.init(allocator, program, limits);
+    // Backing reallocations depend on heap placement; disable them so failure
+    // injection enumerates a deterministic set of arena node allocations.
+    var fixed = std.testing.FailingAllocator.init(allocator, .{ .resize_fail_index = 0 });
+    try slot.init(fixed.allocator(), program, limits);
     defer slot.deinit();
 }
 

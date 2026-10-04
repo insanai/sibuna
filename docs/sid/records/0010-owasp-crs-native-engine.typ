@@ -1101,6 +1101,53 @@ the pool, and the pool outlives every lease; shutdown alone does not establish r
 Pool startup checks aggregate retained arena capacity plus slot objects, independently of
 the per-slot reservation ceiling, and unwinds every completed slot on failure.
 
+== Acquired collection ownership
+
+The collection builder reserves one monotonic byte pool and separate entry metadata per
+slot. Named headers, cookies and arguments share one immutable copy with their name
+aliases; duplicate occurrences remain separate and ordered. Query and URL-encoded fields
+populate ARGS and their GET/POST views. The pinned JSON processor populates ARGS without
+claiming URL-encoded POST coverage. Combined size counts decoded keys and values once,
+retaining the reference's six-decimal scalar representation.
+
+A field reserves all aliases, copied bytes and work before publishing any entry. Failure
+poisons the builder and refuses access to partial views. A collection becomes complete
+only after its parser succeeds; empty complete and unavailable are distinct. Raw bodies
+borrow the separately reserved immutable entity buffers instead of using the smaller field
+pool. TX and matched-variable collections belong to evaluation state and cannot be supplied
+by acquisition. Begin an empty transaction before acquisition so decoding and inspection
+share one ledger; replacing acquired views preserves TX and copied matches between phases.
+
+*Lemma (atomic field publication).* Capacity and work checks precede every copy and entry
+write. After reservation, the bounded disjoint copies cannot fail. Alias entries point to the
+same saved key/value without multiplying their byte charge. Monotonic storage preserves
+prior value borrows when scalar metadata changes. Parser failure leaves no accessible
+complete view, even when earlier fields were published internally.
+
+== URL-encoded and URI decoding
+
+Use one length-aware percent decoder for URI metadata and form fields, with an explicit
+plus-as-space option. Scan, validate and size the output before writing; preserve decoded
+NULs and every other byte without C-string truncation. Form parsing splits only on `&`
+and the first `=`, retains duplicate order, accepts empty keys and values, and retains empty
+interior separator segments. A final separator does not add another field. Semicolons remain data. Parsed fields are copied before scratch reuse.
+GET or POST coverage is completed only after the entire input succeeds; the connector
+completes combined ARGS after all contributing processors finish.
+
+The native acquisition profile refuses malformed percent escapes explicitly. This differs
+from the pinned reference's non-strict decoder, which retains them and sets an error flag.
+The initial collection profile does not expose that reference error flag. Refusal avoids
+pretending that malformed input was fully decoded; enforcement refuses the request and
+audit applies its explicit incomplete-input policy. This difference requires independent
+fixtures and an operator-visible compatibility report. It must not be a silent negative match.
+
+*Lemma (decode bound).* Each input byte is visited at most twice and emits at most one
+output byte; a valid escape consumes three bytes and emits one. Reserving four charged units
+per input byte plus one covers validation, hex conversion and copying. Validation and output
+capacity precede writes, so malformed input and exhausted capacity leave scratch unchanged.
+The additional form scans reserve two visits per input byte. All costs share the transaction
+ledger and all loops advance monotonically, independent of argument count.
+
 = Input acquisition and HTTP phases
 
 #block(breakable: false, table(

@@ -11,6 +11,8 @@ const controls = @import("controls.zig");
 const regex = @import("regex.zig");
 const executor = @import("executor.zig");
 const work = @import("work.zig");
+const acquired = @import("acquired_values.zig");
+const buffers = @import("buffers.zig");
 pub const Error = rules.Error || error{
     InvalidSlotLimits,
     ReservationLimit,
@@ -36,6 +38,7 @@ pub const Slot = struct {
     request: []u8 = &.{},
     response: []u8 = &.{},
     store: tx.Store = undefined,
+    input: acquired.Builder = undefined,
     context: context.Context = undefined,
     state: actions.State = undefined,
     budget: work.Budget = undefined,
@@ -69,6 +72,10 @@ pub const Slot = struct {
         self.response = try arena.alloc(u8, limits.response);
         const entries = try arena.alloc(variables.Entry, limits.entries);
         self.store = tx.Store.init(entries, try arena.alloc(u8, limits.bytes));
+        self.input = acquired.Builder.init(
+            try arena.alloc(variables.Entry, limits.entries),
+            try arena.alloc(u8, limits.bytes),
+        );
         self.merged = try arena.alloc(variables.Entry, limits.entries * 4 + 2);
         self.matched = try arena.alloc(variables.Entry, limits.entries * 2);
         self.matched_bytes = try arena.alloc(u8, limits.bytes);
@@ -102,10 +109,17 @@ pub const Slot = struct {
         self.* = undefined;
     }
 
+    /// Begin with an external view or an empty view. Build input afterward using
+    /// this transaction budget, then acquire its view before running that phase.
     pub fn begin(self: *Slot, view: variables.View, enforce: bool) Error!executor.Executor {
         if (self.active) return error.ActiveSlot;
         if (view.entries.len > self.limits.entries) return error.ViewLimit;
+        buffers.assertDisjoint(
+            std.mem.sliceAsBytes(view.entries),
+            std.mem.sliceAsBytes(self.input.entries),
+        );
         self.budget = .{ .remaining = self.limits.work };
+        self.input = acquired.Builder.init(self.input.entries, self.input.bytes);
         self.store = tx.Store.init(self.store.entries, self.store.bytes);
         self.context = try context.Context.init(view, &self.store, .{
             .view = self.merged,
@@ -158,9 +172,9 @@ fn reservation(program: *const rules.Program, limits: Limits) Error!usize {
     const counts = [_]struct { usize, usize }{
         .{ limits.request, 1 },
         .{ limits.response, 1 },
-        .{ limits.bytes, 6 },
+        .{ limits.bytes, 7 },
         .{ transformed, 2 },
-        .{ limits.entries * 8 + 2, @sizeOf(variables.Entry) },
+        .{ limits.entries * 9 + 2, @sizeOf(variables.Entry) },
         .{ limits.events, @sizeOf(actions.Event) },
         .{ limits.tags, @sizeOf([]const u8) },
         .{ limits.exclusions, @sizeOf(controls.Exclusion) },

@@ -37,7 +37,8 @@ test "pool exhaustion, reuse and closing retain already admitted work" {
 
 fn allocationFailure(allocator: std.mem.Allocator, program: *const rules.Program) !void {
     var pool: pools.Pool = undefined;
-    try pool.init(allocator, program, limits, 3, 3 * 1024 * 1024);
+    var fixed = std.testing.FailingAllocator.init(allocator, .{ .resize_fail_index = 0 });
+    try pool.init(fixed.allocator(), program, limits, 3, 3 * 1024 * 1024);
     pool.close();
     defer pool.deinit();
 }
