@@ -22,6 +22,7 @@ pub const Context = struct {
     matched_used: usize = 0,
     byte_used: usize = 0,
     failed: bool = false,
+    processor: ?[]const u8 = null,
 
     /// The context and all scratch belong exclusively to one reserved slot. Resetting
     /// invalidates borrows; clearing matches does not reclaim monotonic byte storage.
@@ -62,7 +63,8 @@ pub const Context = struct {
         if (self.failed) return error.TransactionFailed;
         errdefer self.poison();
         const stored = try self.store.values();
-        const scalar_count: usize = if (self.matched_used == 0) 0 else 2;
+        const scalar_count: usize = (if (self.matched_used == 0) @as(usize, 0) else 2) +
+            (if (self.processor == null) @as(usize, 0) else 1);
         var total: usize = 0;
         const lengths = [_]usize{
             self.acquired.entries.len, stored.len, self.matched_used, scalar_count,
@@ -76,24 +78,39 @@ pub const Context = struct {
         const lists = [_][]const variables.Entry{
             self.acquired.entries, stored, self.scratch.matched[0..self.matched_used],
         };
-        for (lists) |list| {
-            @memcpy(self.scratch.view[cursor..][0..list.len], list);
-            cursor += list.len;
+        for (lists) |list| for (list) |entry| {
+            if (self.processor != null and entry.collection == .reqbody_processor) continue;
+            self.scratch.view[cursor] = entry;
+            cursor += 1;
+        };
+        cursor = self.appendScalars(cursor);
+        var result = self.acquired;
+        result.entries = self.scratch.view[0..cursor];
+        if (self.processor != null) {
+            result.coverage[@backingInt(variables.Collection.reqbody_processor)] = .complete;
         }
-        if (scalar_count != 0) {
+        inline for (std.enums.values(variables.Collection)) |collection| {
+            if (comptime owned(collection)) result.coverage[@backingInt(collection)] = .complete;
+        }
+        return result;
+    }
+
+    fn appendScalars(self: *Context, start: usize) usize {
+        var cursor = start;
+        if (self.processor) |label| {
+            self.scratch.view[cursor] = .{ .collection = .reqbody_processor, .value = label };
+            cursor += 1;
+        }
+        if (self.matched_used != 0) {
             const last = self.scratch.matched[self.matched_used - 2];
             self.scratch.view[cursor] = .{ .collection = .matched_var, .value = last.value };
             self.scratch.view[cursor + 1] = .{
                 .collection = .matched_var_name,
                 .value = last.key,
             };
+            cursor += 2;
         }
-        var result = self.acquired;
-        result.entries = self.scratch.view[0..total];
-        inline for (std.enums.values(variables.Collection)) |collection| {
-            if (comptime owned(collection)) result.coverage[@backingInt(collection)] = .complete;
-        }
-        return result;
+        return cursor;
     }
 
     /// The positive predicate's value must be copied before transform replay advances.

@@ -25,6 +25,39 @@ const request: http.Request = .{
     .headers = &.{.{ .name = "Content-Type", .value = "application/x-www-form-urlencoded" }},
 };
 
+test "body processor controls immediately update phase-one selectors and macros" {
+    var program = try prepare(
+        \\SecAction "id:1,phase:1,ctl:requestBodyProcessor=JSON"
+        \\SecRule REQBODY_PROCESSOR "@streq JSON" \
+        \\ "id:2,phase:1,setvar:tx.seen=1,setvar:tx.first=%{REQBODY_PROCESSOR}"
+        \\SecAction "id:3,phase:1,ctl:requestBodyProcessor=XML"
+        \\SecRule REQBODY_PROCESSOR "@streq XML" "id:4,phase:1,setvar:tx.last=%{REQBODY_PROCESSOR}"
+        \\SecRule XML://@* "@contains attack" "id:5,phase:2,deny"
+    , &.{});
+    defer program.deinit();
+    var slot: slots.Slot = undefined;
+    try slot.init(std.testing.allocator, &program, limits);
+    defer slot.deinit();
+    var input = request;
+    input.headers = &.{.{ .name = "Content-Type", .value = "application/xml" }};
+    var transaction = try transactions.Transaction.begin(&slot, .full, true, input);
+    defer slot.finish();
+    try std.testing.expectEqualStrings("JSON", (try slot.store.get("first", &slot.budget)).?);
+    try std.testing.expectEqualStrings("1", (try slot.store.get("seen", &slot.budget)).?);
+    try std.testing.expectEqualStrings("XML", (try slot.store.get("last", &slot.budget)).?);
+    const view = try slot.context.view(&slot.budget);
+    try std.testing.expectEqualStrings("XML", try view.lookup(.{
+        .collection = .reqbody_processor,
+    }, &slot.budget));
+    try std.testing.expectEqual(Result.denied, try transaction.requestBody(
+        "<root value=\"attack\"/>",
+    ));
+    try transaction.finish(.local_response);
+    slot.finish();
+    var again = try transactions.Transaction.begin(&slot, .headers, true, input);
+    try again.finish(.headers_profile);
+}
+
 test "immutable operator tuning is installed before CRS fallback initialization" {
     var program = try prepare(
         \\SecRule &TX:blocking_paranoia_level "@eq 0" \

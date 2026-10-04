@@ -70,7 +70,20 @@ fn executeStep(
 ) Error!void {
     try frame.budget.debit(1);
     switch (step.*) {
-        .control => |*program| try frame.state.control.apply(program, frame.budget),
+        .control => |*program| {
+            try frame.state.control.apply(program, frame.budget);
+            // Parser selection is visible to following rules and macro expansion
+            // in this phase. These labels have static lifetime, like the control.
+            if (program.operation == .processor) {
+                const processor = frame.state.control.processor;
+                frame.context.processor = switch (processor) {
+                    .automatic => null,
+                    .urlencoded => "URLENCODED",
+                    .json => "JSON",
+                    .xml => "XML",
+                };
+            }
+        },
         .write => |*program| {
             const view = try frame.context.view(frame.budget);
             try program.execute(.{

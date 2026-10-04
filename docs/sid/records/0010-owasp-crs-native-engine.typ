@@ -1580,6 +1580,20 @@ quantities. A monotonic fixed arena is unsuitable here because temporary compila
 would consume the ceiling after release. Prepared programs own all retained source and
 table bytes; staging buffers can be destroyed before evaluation.
 
+An optional operator source is bounded to 64 KiB and compiled between the verified setup
+example and the sorted upstream rules. It uses the same directive, ID, work and compiled-byte
+limits; includes and external paths remain unsupported. Upstream signature verification
+authenticates the release, not these locally authorized changes. Keep the SHA-256 digest of
+the operator bytes separate from the signed archive digest in generation metadata. Changing
+the local source requires a new reviewed revision even when the upstream version is unchanged.
+Prepared actions retain owned copies, so queued publication does not borrow editor buffers.
+
+Parser-selection controls must update `REQBODY_PROCESSOR` for following selectors and macro
+expansion in the same phase. Store the selected static label in the transaction context and
+replace the acquired scalar when constructing an evaluation view. There is one visible scalar,
+and a slot reset clears the override. This update does not change the rule-local pre-chain
+timing of `setvar`; entity acquisition still waits for complete phase-one execution.
+
 *Lemma (private package bound).* A successful package owns an authenticated, complete
 program whose live compilation payload never exceeded its configured ceiling.
 
@@ -1592,7 +1606,8 @@ without publication; successful staging cleanup leaves only program-owned bytes.
 
 Package qualification prepares the actual signed release, destroys its archive/signature
 contents before executing benign and malicious transactions, and rejects version mismatch,
-tampering and truncation. This gate qualifies preparation and ownership, not runtime update
+tampering, truncation, duplicate local IDs, unknown directives and an oversized local source.
+This gate qualifies preparation and ownership, not runtime update
 publication or full FTW compatibility.
 
 = Console and evidence
