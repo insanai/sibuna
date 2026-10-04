@@ -44,27 +44,7 @@ pub fn add(
         }),
     });
     addRegexCheck(b, host, fixture);
-    addProbeCheck(b, host, .{
-        .name = "sibuna-crs-signature-probe",
-        .source = "tools/crs_signature_probe.zig",
-        .checker = "tools/crs_signature_check.py",
-        .step = "crs-signature-check",
-        .description = "Verify native CRS archive signatures against the pinned GnuPG receipt",
-    });
-    addProbeCheck(b, host, .{
-        .name = "sibuna-crs-primitive-probe",
-        .source = "tools/crs_primitive_probe.zig",
-        .checker = "tools/crs_primitive_check.py",
-        .step = "crs-primitive-check",
-        .description = "Check the supported subset against pinned SecLang vectors",
-    });
-    addProbeCheck(b, host, .{
-        .name = "sibuna-crs-detector-probe",
-        .source = "tools/crs_detector_probe.zig",
-        .checker = "tools/crs_detector_check.py",
-        .step = "crs-detector-check",
-        .description = "Compare native detector stages with pinned libinjection",
-    });
+    for (probes) |contract| addProbeCheck(b, host, contract);
     addDataCheck(b);
     const run = b.addRunArtifact(audit);
     run.addPassthruArgs();
@@ -136,6 +116,37 @@ const Probe = struct {
     checker: []const u8,
     step: []const u8,
     description: []const u8,
+};
+
+const probes: []const Probe = &.{
+    .{
+        .name = "sibuna-crs-acquisition-probe",
+        .source = "tools/crs_acquisition_probe.zig",
+        .checker = "tools/crs_acquisition_check.py",
+        .step = "crs-acquisition-check",
+        .description = "Check bounded JSON and form acquisition against independent decoders",
+    },
+    .{
+        .name = "sibuna-crs-signature-probe",
+        .source = "tools/crs_signature_probe.zig",
+        .checker = "tools/crs_signature_check.py",
+        .step = "crs-signature-check",
+        .description = "Verify native CRS archive signatures against the pinned GnuPG receipt",
+    },
+    .{
+        .name = "sibuna-crs-primitive-probe",
+        .source = "tools/crs_primitive_probe.zig",
+        .checker = "tools/crs_primitive_check.py",
+        .step = "crs-primitive-check",
+        .description = "Check the supported subset against pinned SecLang vectors",
+    },
+    .{
+        .name = "sibuna-crs-detector-probe",
+        .source = "tools/crs_detector_probe.zig",
+        .checker = "tools/crs_detector_check.py",
+        .step = "crs-detector-check",
+        .description = "Compare native detector stages with pinned libinjection",
+    },
 };
 
 fn addProbeCheck(b: *std.Build, crs: *std.Build.Module, contract: Probe) void {

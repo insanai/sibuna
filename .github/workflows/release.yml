@@ -33,7 +33,7 @@ jobs:
       - name: Qualify native CRS contracts and pinned upstream behavior
         run: |
           zig build crs-test crs-detector-data crs-detector-check \
-            crs-primitive-check crs-regex-check crs-signature-check -j2 --summary all -- --download
+            crs-primitive-check crs-regex-check crs-signature-check crs-acquisition-check -j2 --summary all -- --download
   plan:
     runs-on: ubuntu-22.04
     outputs:

@@ -1148,6 +1148,37 @@ capacity precede writes, so malformed input and exhausted capacity leave scratch
 The additional form scans reserve two visits per input byte. All costs share the transaction
 ledger and all loops advance monotonically, independent of argument count.
 
+== Bounded JSON tokenization and paths
+
+Use Zig 0.17's standard JSON scanner for strict UTF-8, escape, number and grammar validation.
+It emits duplicate object keys in source order and number spellings without numeric rounding.
+Supply its bit stack with fixed borrowed storage and refuse a new container at the configured
+depth before its push. The scanner's allocator has no storage to offer; valid and depth-refused
+inputs never invoke it. Neither standard scanner deinitialization nor owning JSON parsing
+may free or replace the borrowed bit array. Assemble partial escaped strings in fixed output,
+copying them into acquisition storage before reading the next token. Reject invalid UTF-8,
+unpaired surrogates, trailing tokens, malformed grammar and excessive values explicitly.
+
+The CRS adapter uses an iterative caller-owned frame stack. Root scalars use `json`; root
+objects use `json.` and arrays append `.array_0`, `.array_1`, and so on. Each container retains
+its prefix length; closing restores the parent prefix and advances the parent array ordinal.
+Empty containers still advance their array position. An empty object key becomes `empty-key`,
+as the pinned processor's `getCurrentKey` does. Nested paths and repeated keys remain distinct
+occurrences, including path collisions inherent in the reference's flattened representation.
+JSON populates ARGS and ARGS_NAMES; it does not add values to the URL-encoded POST view.
+
+*Lemma (JSON scratch bound).* The borrowed bit array has at least $ceil(D/8)$ bytes for depth
+$D$. Peek checks depth before every push and does not push itself; therefore the standard
+bit stack cannot grow. The adapter stack has exactly $D$ frames and checks before adding one.
+Decoded strings and paths refuse overflow before copying. Prefix restoration changes only
+scratch cursors; previously published fields have monotonic owned copies. No recursion,
+heap allocation, number coercion or duplicate-key map is needed on the request path.
+Reserve 32 units per source byte for standard scanner state visits and charge each emitted
+token, assembled byte, path copy and field publication separately. This conservative ledger
+can refuse an entity below its byte ceiling; byte limits do not promise a given work budget.
+The compiler version and JSON qualification fixtures must change together if scanner storage
+or tokenization contracts change.
+
 = Input acquisition and HTTP phases
 
 #block(breakable: false, table(

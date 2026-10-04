@@ -289,3 +289,30 @@ pub export fn crsPoolProbe(allocator: *const std.mem.Allocator) u8 {
     _ = evaluation.run(.request_body) catch return 7;
     return 0;
 }
+
+/// JSON and form acquisition must remain available without a host JSON library.
+pub export fn crsAcquisitionProbe(input: [*]const u8, length: usize, structured: bool) u8 {
+    if (length > 4096) return 1;
+    var entries: [128]crs.variables.Entry = undefined;
+    var bytes: [4096]u8 = undefined;
+    var value: [1024]u8 = undefined;
+    var path: [1024]u8 = undefined;
+    var bits: [8]u8 = undefined;
+    var frames: [64]crs.json_acquisition.Frame = undefined;
+    var builder = crs.acquired_values.Builder.init(&entries, &bytes);
+    var budget: crs.work.Budget = .{ .remaining = 16_000_000 };
+    if (structured) {
+        crs.json_acquisition.parse(input[0..length], &builder, .{
+            .value = &value,
+            .path = &path,
+            .bits = &bits,
+            .frames = &frames,
+        }, &budget) catch return 2;
+    } else {
+        crs.form_acquisition.parse(input[0..length], .form, &builder, .{
+            .key = &path,
+            .value = &value,
+        }, &budget) catch return 3;
+    }
+    return 0;
+}

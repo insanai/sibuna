@@ -43,6 +43,8 @@ pub const rule_data = @import("rule_data.zig");
 pub const rule_program = @import("rule_program.zig");
 pub const executor = @import("executor.zig");
 pub const release_signature = @import("release_signature.zig");
+pub const bounded_json = @import("bounded_json.zig");
+pub const json_acquisition = @import("json_acquisition.zig");
 pub const percent_decode = @import("percent_decode.zig");
 pub const form_acquisition = @import("form_acquisition.zig");
 pub const acquired_values = @import("acquired_values.zig");
@@ -89,6 +91,8 @@ test {
     _ = rule_program;
     _ = executor;
     _ = release_signature;
+    _ = bounded_json;
+    _ = json_acquisition;
     _ = percent_decode;
     _ = form_acquisition;
     _ = acquired_values;

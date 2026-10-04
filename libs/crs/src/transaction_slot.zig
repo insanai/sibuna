@@ -13,6 +13,8 @@ const executor = @import("executor.zig");
 const work = @import("work.zig");
 const acquired = @import("acquired_values.zig");
 const buffers = @import("buffers.zig");
+const json = @import("json_acquisition.zig");
+const form = @import("form_acquisition.zig");
 pub const Error = rules.Error || error{
     InvalidSlotLimits,
     ReservationLimit,
@@ -21,6 +23,7 @@ pub const Error = rules.Error || error{
 };
 pub const Limits = struct {
     entries: usize = 1024,
+    depth: usize = 64,
     bytes: usize = 256 * 1024,
     request: usize = 4 * 1024 * 1024,
     response: usize = 1024 * 1024,
@@ -39,6 +42,8 @@ pub const Slot = struct {
     response: []u8 = &.{},
     store: tx.Store = undefined,
     input: acquired.Builder = undefined,
+    json_frames: []json.Frame = &.{},
+    json_bits: []u8 = &.{},
     context: context.Context = undefined,
     state: actions.State = undefined,
     budget: work.Budget = undefined,
@@ -84,6 +89,8 @@ pub const Slot = struct {
         self.tags = try arena.alloc([]const u8, limits.tags);
         self.exclusions = try arena.alloc(controls.Exclusion, limits.exclusions);
         self.unwind = try arena.alloc(usize, program.topology.maximum_depth);
+        self.json_frames = try arena.alloc(json.Frame, limits.depth);
+        self.json_bits = try arena.alloc(u8, (limits.depth + 7) / 8);
         if (program.regex_states != 0) {
             self.workspace = try regex.Workspace.initStates(arena, program.regex_states);
         }
@@ -101,6 +108,21 @@ pub const Slot = struct {
             .budget = &self.budget,
         };
         if (self.owner.queryCapacity() > limits.reservation) return error.ReservationLimit;
+    }
+
+    pub fn formScratch(self: *Slot) form.Scratch {
+        std.debug.assert(self.active);
+        return .{ .key = self.frame.key_output, .value = self.frame.value_output };
+    }
+
+    pub fn jsonScratch(self: *Slot) json.Scratch {
+        std.debug.assert(self.active);
+        return .{
+            .value = self.frame.value_output,
+            .path = self.frame.key_output,
+            .bits = self.json_bits,
+            .frames = self.json_frames,
+        };
     }
 
     pub fn deinit(self: *Slot) void {
@@ -157,6 +179,7 @@ pub const Slot = struct {
 };
 
 fn reservation(program: *const rules.Program, limits: Limits) Error!usize {
+    if (limits.depth == 0 or limits.depth > 256) return error.InvalidSlotLimits;
     if (limits.entries == 0 or limits.entries > 4096 or limits.bytes == 0 or
         limits.bytes > 4 * 1024 * 1024 or limits.request == 0 or
         limits.request > 64 * 1024 * 1024 or limits.response == 0 or
@@ -170,6 +193,8 @@ fn reservation(program: *const rules.Program, limits: Limits) Error!usize {
     const threads = std.math.mul(usize, program.regex_states, 4) catch
         return error.ReservationLimit;
     const counts = [_]struct { usize, usize }{
+        .{ limits.depth, @sizeOf(json.Frame) },
+        .{ (limits.depth + 7) / 8, 1 },
         .{ limits.request, 1 },
         .{ limits.response, 1 },
         .{ limits.bytes, 7 },
