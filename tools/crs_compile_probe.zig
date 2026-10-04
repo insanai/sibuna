@@ -448,7 +448,17 @@ pub export fn crsPublicationProbe(
     };
     var lease = publisher.lease() catch return 5;
     defer lease.release();
-    const metadata = publisher.snapshot() catch return 6;
-    publisher.close() catch return 7;
-    return if (metadata.revision == lease.generation().options.revision) 0 else 8;
+    var transaction = lease.begin(.{
+        .method = "GET",
+        .target = "/",
+        .protocol = "HTTP/1.1",
+        .line = "GET / HTTP/1.1",
+        .client = "192.0.2.1",
+        .id = "publication-probe",
+        .headers = &.{.{ .name = "Host", .value = "example.test" }},
+    }) catch return 6;
+    const metadata = publisher.snapshot() catch return 7;
+    publisher.close() catch return 8;
+    transaction.finish(.local_response) catch return 9;
+    return if (metadata.revision == lease.generation().options.revision) 0 else 10;
 }

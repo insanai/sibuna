@@ -25,6 +25,53 @@ const request: http.Request = .{
     .headers = &.{.{ .name = "Content-Type", .value = "application/x-www-form-urlencoded" }},
 };
 
+test "immutable operator tuning is installed before CRS fallback initialization" {
+    var program = try prepare(
+        \\SecRule &TX:blocking_paranoia_level "@eq 0" \
+        \\ "id:1,phase:1,setvar:tx.blocking_paranoia_level=1"
+        \\SecRule TX:blocking_paranoia_level "@eq 2" "id:2,phase:1,deny"
+        \\SecAction "id:3,phase:5,setvar:tx.logged=1"
+    , &.{});
+    defer program.deinit();
+    var slot: slots.Slot = undefined;
+    try slot.init(std.testing.allocator, &program, limits);
+    defer slot.deinit();
+    var transaction = try transactions.Transaction.beginConfigured(&slot, .{
+        .activation = .{ .mode = .audit, .blocking_paranoia = 2, .detection_paranoia = 3 },
+        .thresholds = .{ .inbound = 7, .outbound = 9 },
+    }, request);
+    try std.testing.expect(!slot.state.denied);
+    try std.testing.expect(slot.state.would_deny);
+    const expected = .{
+        .{ "blocking_paranoia_level", "2" },
+        .{ "detection_paranoia_level", "3" },
+        .{ "inbound_anomaly_score_threshold", "7" },
+        .{ "outbound_anomaly_score_threshold", "9" },
+    };
+    inline for (expected) |entry| try std.testing.expectEqualStrings(
+        entry[1],
+        (try slot.store.get(entry[0], &slot.budget)).?,
+    );
+    try transaction.finish(.local_response);
+    slot.finish();
+    try std.testing.expectError(error.InvalidThreshold, transactions.Transaction.beginConfigured(
+        &slot,
+        .{ .activation = .{ .mode = .enforce }, .thresholds = .{ .inbound = 0 } },
+        request,
+    ));
+    try std.testing.expect(!slot.active);
+    var enforce = try transactions.Transaction.beginConfigured(&slot, .{
+        .activation = .{ .mode = .enforce, .blocking_paranoia = 2, .detection_paranoia = 2 },
+    }, request);
+    defer slot.finish();
+    try std.testing.expect(slot.state.denied);
+    try enforce.finish(.local_response);
+    try std.testing.expectEqualStrings("5", (try slot.store.get(
+        "inbound_anomaly_score_threshold",
+        &slot.budget,
+    )).?);
+}
+
 test "HTTP transaction executes all five phases with one budget and retained scoring" {
     var program = try prepare(
         \\SecRule REQUEST_METHOD "@streq POST" "id:1,phase:1,setvar:tx.score=1"

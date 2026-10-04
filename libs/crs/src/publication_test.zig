@@ -4,7 +4,12 @@ const generations = @import("generation.zig");
 const packages = @import("release_package.zig");
 const compiler = @import("compiler.zig");
 const rules = @import("rule_program.zig");
-const limits = @import("transaction_slot_test.zig").limits;
+const limits = blk: {
+    var selected = @import("transaction_slot_test.zig").limits;
+    selected.entries = 128;
+    selected.bytes = 8192;
+    break :blk selected;
+};
 
 fn package(revision: u64) !*packages.Package {
     const allocator = std.testing.allocator;
@@ -46,6 +51,43 @@ fn generation(revision: u64) !*generations.Generation {
 fn shutdown(publisher: *publications.Publisher) void {
     publisher.close() catch unreachable;
     publisher.deinit();
+}
+
+test "leased transaction keeps its operator tuning after a concurrent publication" {
+    var publisher: publications.Publisher = .{};
+    defer shutdown(&publisher);
+    const first = try generation(1);
+    first.options.activation = .{
+        .mode = .audit,
+        .blocking_paranoia = 2,
+        .detection_paranoia = 3,
+    };
+    first.options.thresholds = .{ .inbound = 7, .outbound = 9 };
+    try publisher.publish(first);
+    var old = try publisher.lease();
+    defer old.release();
+    try publisher.publish(try generation(2));
+    var transaction = try old.begin(.{
+        .method = "GET",
+        .target = "/",
+        .protocol = "HTTP/1.1",
+        .line = "GET / HTTP/1.1",
+        .client = "192.0.2.1",
+        .id = "pinned-tuning",
+        .headers = &.{.{ .name = "Host", .value = "example.test" }},
+    });
+    try std.testing.expectEqualStrings("7", (try old.work.slot().store.get(
+        "inbound_anomaly_score_threshold",
+        &old.work.slot().budget,
+    )).?);
+    try std.testing.expectEqualStrings("3", (try old.work.slot().store.get(
+        "detection_paranoia_level",
+        &old.work.slot().budget,
+    )).?);
+    try transaction.finish(.local_response);
+    const current = try publisher.snapshot();
+    try std.testing.expectEqual(@as(u16, 5), current.thresholds.inbound);
+    try std.testing.expectEqual(.enforce, current.activation.mode);
 }
 
 test "publication retains leased generations and bounds outstanding replacement" {

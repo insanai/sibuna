@@ -7,9 +7,12 @@ const http = @import("http_acquisition.zig");
 const entities = @import("entity_acquisition.zig");
 const config = @import("config.zig");
 const model = @import("model.zig");
-pub const Error = slots.Error || executor.Error || http.Error || entities.Error || error{
+const decimal = @import("decimal_format.zig");
+pub const Error = slots.Error || executor.Error || http.Error || entities.Error ||
+    config.Error || error{
     InvalidHttpPhase,
     ResponseEntityLimit,
+    DisabledTransaction,
 };
 pub const End = enum {
     inspected,
@@ -34,13 +37,48 @@ pub const Transaction = struct {
         enforce: bool,
         input: http.Request,
     ) Error!Transaction {
-        const execution = try slot.begin(.{ .entries = &.{} }, enforce);
-        var self: Transaction = .{ .slot = slot, .execution = execution, .profile = profile };
+        return beginConfigured(slot, .{
+            .activation = .{ .profile = profile, .mode = if (enforce) .enforce else .audit },
+        }, input);
+    }
+
+    pub fn beginConfigured(
+        slot: *slots.Slot,
+        options: config.Execution,
+        input: http.Request,
+    ) Error!Transaction {
+        try options.activation.validate(.request_response, .executable);
+        try options.thresholds.validate();
+        if (options.activation.mode == .off) return error.DisabledTransaction;
+        const execution = try slot.begin(
+            .{ .entries = &.{} },
+            options.activation.mode == .enforce,
+        );
+        var self: Transaction = .{
+            .slot = slot,
+            .execution = execution,
+            .profile = options.activation.profile,
+        };
         errdefer self.poison();
+        try self.configure(options);
         try http.request(input, &slot.input, slot.formScratch(), &slot.budget);
         try self.acquire();
         _ = try self.execution.run(.request_headers);
         return self;
+    }
+
+    fn configure(self: *Transaction, options: config.Execution) Error!void {
+        const values = .{
+            .{ "blocking_paranoia_level", options.activation.blocking_paranoia },
+            .{ "detection_paranoia_level", options.activation.detection_paranoia },
+            .{ "inbound_anomaly_score_threshold", options.thresholds.inbound },
+            .{ "outbound_anomaly_score_threshold", options.thresholds.outbound },
+        };
+        inline for (values) |entry| {
+            var bytes: [decimal.capacity(u16)]u8 = undefined;
+            const value = try decimal.write(u16, entry[1], &bytes, &self.slot.budget);
+            try self.slot.store.put(entry[0], value, &self.slot.budget);
+        }
     }
 
     pub fn requestBody(self: *Transaction, entity: []const u8) Error!executor.Result {

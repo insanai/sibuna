@@ -6,6 +6,8 @@ const generations = @import("generation.zig");
 const pools = @import("transaction_pool.zig");
 const config = @import("config.zig");
 const versions = @import("release_version.zig");
+const http = @import("http_acquisition.zig");
+const transactions = @import("http_transaction.zig");
 pub const Error = pools.Error || error{
     PublicationBusy,
     PublicationClosed,
@@ -22,6 +24,7 @@ const Cell = struct {
 pub const Snapshot = struct {
     revision: u64,
     activation: config.Activation,
+    thresholds: config.Thresholds,
     version: ?versions.Version,
     digest: ?[32]u8,
     compiled_peak: usize,
@@ -34,6 +37,14 @@ pub const Lease = struct {
 
     pub fn generation(self: *const Lease) *const generations.Generation {
         return self.owner.cells[self.index].generation.?;
+    }
+
+    pub fn begin(self: *Lease, input: http.Request) transactions.Error!transactions.Transaction {
+        const options = self.generation().options;
+        return transactions.Transaction.beginConfigured(self.work.slot(), .{
+            .activation = options.activation,
+            .thresholds = options.thresholds,
+        }, input);
     }
 
     /// Finish and release slot borrows before dropping the generation pin.
@@ -90,6 +101,7 @@ pub const Publisher = struct {
         return .{
             .revision = generation.options.revision,
             .activation = generation.options.activation,
+            .thresholds = generation.options.thresholds,
             .version = if (generation.package) |package| package.version else null,
             .digest = if (generation.package) |package| package.receipt.digest else null,
             .compiled_peak = if (generation.package) |package| package.bounded.peak else 0,

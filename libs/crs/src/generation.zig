@@ -11,6 +11,7 @@ pub const Error = pools.Error || config.Error || std.mem.Allocator.Error || erro
 pub const Options = struct {
     revision: u64,
     activation: config.Activation,
+    thresholds: config.Thresholds = .{},
     observation: config.Observation,
     limits: slots.Limits = .{},
     slots: usize = 8,
@@ -31,6 +32,7 @@ pub const Generation = struct {
         options: Options,
     ) Error!*Generation {
         if (options.revision == 0) return error.InvalidGenerationRevision;
+        try options.thresholds.validate();
         try options.activation.validate(options.observation, if (package != null)
             .executable
         else

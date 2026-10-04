@@ -12,6 +12,7 @@ pub const Error = error{
     MissingArtifact,
     NotExecutable,
     UnobservableProfile,
+    InvalidThreshold,
 };
 
 pub const Mode = enum(u8) {
@@ -30,6 +31,18 @@ const modes = std.StaticStringMap(Mode).initComptime(.{
 pub const Profile = enum { headers, full };
 pub const Observation = enum { request_metadata, request_response };
 pub const Artifact = enum { absent, source_only, executable };
+pub const Thresholds = struct {
+    inbound: u16 = 5,
+    outbound: u16 = 4,
+
+    pub fn validate(self: Thresholds) Error!void {
+        if (self.inbound == 0 or self.outbound == 0) return error.InvalidThreshold;
+    }
+};
+pub const Execution = struct {
+    activation: Activation,
+    thresholds: Thresholds = .{},
+};
 
 pub const Activation = struct {
     mode: Mode = .off,
