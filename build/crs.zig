@@ -22,6 +22,7 @@ pub fn add(
     const tests = b.addTest(.{ .root_module = host });
     const test_step = b.step("crs-test", "Test bounded native CRS source contracts");
     test_step.dependOn(&b.addRunArtifact(tests).step);
+    test_step.dependOn(addCompilationChecks(b));
     b.top_level_steps.get("test").?.step.dependOn(test_step);
     const audit = b.addExecutable(.{
         .name = "sibuna-crs-audit",
@@ -61,4 +62,32 @@ fn addRegexCheck(
     check.addArtifactArg(probe);
     b.step("crs-regex-check", "Compare native regex matches and captures against PCRE2")
         .dependOn(&check.step);
+}
+
+fn addCompilationChecks(b: *std.Build) *std.Build.Step {
+    const step = b.step("crs-compile-check", "Compile native CRS contracts for Windows and Wasm");
+    const targets: []const std.Target.Query = &.{
+        .{ .cpu_arch = .x86_64, .os_tag = .windows },
+        .{ .cpu_arch = .aarch64, .os_tag = .macos },
+        .{ .cpu_arch = .wasm32, .os_tag = .freestanding },
+    };
+    for (targets) |query| {
+        const target = b.resolveTargetQuery(query);
+        const module = b.createModule(.{
+            .root_source_file = b.path("libs/crs/src/root.zig"),
+            .target = target,
+            .optimize = .small,
+        });
+        const probe = b.addObject(.{
+            .name = "crs-compile-probe",
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("tools/crs_compile_probe.zig"),
+                .target = target,
+                .optimize = .small,
+                .imports = &.{.{ .name = "crs", .module = module }},
+            }),
+        });
+        step.dependOn(&probe.step);
+    }
+    return step;
 }

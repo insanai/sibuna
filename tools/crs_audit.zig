@@ -27,7 +27,7 @@ fn run(init: std.process.Init, out: *Io.Writer, err_out: *Io.Writer) !u8 {
     defer args.deinit();
     _ = args.next();
     const path = args.next() orelse {
-        try err_out.writeAll("usage: zig build crs-audit -- <extracted-release-directory>\n");
+        try err_out.writeAll("usage: zig build crs-audit -- <release-directory> [--regex]\n");
         return 2;
     };
     const regex_option = args.next();
