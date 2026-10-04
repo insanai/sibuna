@@ -127,6 +127,7 @@ not treat those costs as solved by mathematical notation.
   columns: (2fr, 4fr),
   [Module], [Responsibility],
   [`libs/crs`], [SecLang reader, typed compiler, operators, transforms, transaction state and diagnostics. No networking, database or daemon imports.],
+  [`libs/crs-update`], [Off-path, bounded publisher retrieval and authenticated candidate preparation; shared by CLI and console jobs. No daemon or database imports.],
   [`libs/policy`], [Compose CRS with existing inspection and policy; preserve denial precedence.],
   [`libs/net`], [Generic bounded body acquisition and response holdback contracts; no rule knowledge.],
   [Daemon], [Preallocate transaction slots, pin immutable programs, run updates and compose storage and control services.],
@@ -1088,6 +1089,14 @@ incrementing a counter. Observing zero counters alone is insufficient to establi
 An unpublished candidate can be destroyed directly: destruction closes its empty pool before
 reclamation. Failed publication leaves candidate ownership and the active generation unchanged.
 
+The immutable generation owns blocking and detection paranoia levels and the inbound/outbound
+anomaly thresholds. Configured startup seeds those four TX values before metadata acquisition
+and phase-one evaluation. CRS fallback initialization therefore preserves operator tuning.
+Levels must be in 1–4 with detection no lower than blocking; thresholds are nonzero 16-bit
+integers. Invalid tuning rejects startup before a slot becomes active. A pinned lease supplies
+both execution mode and tuning, so a later publication cannot change either during a transaction.
+Decimal conversion and TX ownership use the transaction's charged, caller-owned buffers.
+
 == Theorem 4: no partial activation
 
 A rejected candidate cannot change the active generation when all validation precedes the
@@ -1443,6 +1452,16 @@ release; omission checks the latest stable official release. `check`, `status` a
 share bounded typed request/response contracts. Offline `validate` accepts an extracted
 candidate without starting the daemon and reports syntax, feature and capacity diagnostics.
 There is no unauthenticated network endpoint or shell command invocation in the service.
+
+Candidate preparation also runs independently as `sibuna crs check [--version <x.y.z>]
+[--timeout <seconds>]`. Its report identifies a verified candidate rather than active
+protection. The native `libs/crs-update` service owns bounded download buffers and a private
+package, exposing no daemon or database types. CLI and console jobs share this service.
+Latest-release metadata is limited to 128 KiB and accepts a canonical stable tag; asset
+destinations are reconstructed from that tag, never taken from metadata links. Signature
+and archive bounds are 16 KiB and 8 MiB. One monotonic deadline, at most five minutes,
+covers discovery, both transfers and preparation. Each transfer receives the remaining
+budget, and cancellation or expiration after compilation destroys the unpublished package.
 
 Engine deployments without the console retain a file-based update path. The native updater
 verifies and compiles the artifact off-path, then replaces a versioned manifest in the

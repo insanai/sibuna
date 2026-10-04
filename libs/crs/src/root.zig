@@ -46,6 +46,7 @@ pub const release_signature = @import("release_signature.zig");
 pub const release_tar = @import("release_tar.zig");
 pub const release_gzip = @import("release_gzip.zig");
 pub const release_version = @import("release_version.zig");
+pub const release_urls = @import("release_urls.zig");
 pub const release_package = @import("release_package.zig");
 pub const generation = @import("generation.zig");
 pub const publication = @import("publication.zig");
@@ -107,6 +108,7 @@ test {
     _ = release_tar;
     _ = release_gzip;
     _ = release_version;
+    _ = release_urls;
     _ = @import("compiled_allocator.zig");
     _ = publication;
     _ = xml_acquisition;

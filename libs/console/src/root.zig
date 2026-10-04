@@ -3,9 +3,11 @@ pub const protocol = @import("console_protocol");
 pub const Budget = @import("budget.zig").Budget;
 pub const ConsoleConfig = @import("config.zig").ConsoleConfig;
 pub const Mailbox = @import("mailbox.zig").Mailbox;
+pub const crs_download = @import("crs-update");
 
 test {
     _ = @import("budget.zig");
+    _ = crs_download;
     _ = @import("config.zig");
     _ = @import("ingress.zig");
     _ = @import("bearer.zig");

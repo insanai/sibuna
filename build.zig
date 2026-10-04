@@ -9,6 +9,7 @@ pub const Modules = struct {
     net: *std.Build.Module,
     policy: *std.Build.Module,
     crs: *std.Build.Module,
+    crs_update: *std.Build.Module,
     challenge: *std.Build.Module,
     store: *std.Build.Module,
     crypto_pow: *std.Build.Module,
@@ -57,11 +58,7 @@ pub fn build(b: *std.Build) void {
     }
     const modules = addModules(b, target, optimize);
     const console_modules = console_build.add(b, target, optimize, geoip_data, modules.socket);
-    console_modules.console.addImport("core", modules.core);
-    console_modules.console.addImport("store", modules.store);
-    console_modules.console.addImport("net", modules.net);
-    // Template previews compile drafts with the same validator the storage owner uses.
-    console_modules.console.addImport("policy", modules.policy);
+    wireConsole(console_modules.console, modules);
     const wasm_pow = addWasmSolver(b);
     const app = addServer(
         b,
@@ -92,6 +89,15 @@ fn addText(b: *std.Build) *std.Build.Module {
     return b.addModule("sibuna-text", .{
         .root_source_file = b.path("libs/text/src/root.zig"),
     });
+}
+
+fn wireConsole(console: *std.Build.Module, modules: Modules) void {
+    console.addImport("core", modules.core);
+    console.addImport("store", modules.store);
+    console.addImport("net", modules.net);
+    console.addImport("crs-update", modules.crs_update);
+    // Template previews use the same validator as the storage owner.
+    console.addImport("policy", modules.policy);
 }
 
 fn addTextImports(b: *std.Build) void {
@@ -180,13 +186,15 @@ fn addModules(
         .optimize = optimize,
     });
 
+    const crs = @import("build/crs.zig").add(b, target, optimize);
     return .{
         .socket = socket,
         .core = core,
         .crypto = crypto,
         .net = net,
         .policy = policy,
-        .crs = @import("build/crs.zig").add(b, target, optimize),
+        .crs = crs,
+        .crs_update = @import("build/crs_update.zig").add(b, target, optimize, crs, net),
         .challenge = challenge,
         .store = store,
         .crypto_pow = crypto_pow,
@@ -240,7 +248,7 @@ fn addWasmSolver(b: *std.Build) *std.Build.Step.Compile {
 }
 
 const AppModules = struct {
-    imports: [7]std.Build.Module.Import,
+    imports: [8]std.Build.Module.Import,
     wasm_bin: std.Build.LazyPath,
     options: *std.Build.Step.Options,
     zaxonlite: ?*std.Build.Module,
@@ -276,6 +284,7 @@ fn addServer(
             .{ .name = "net", .module = modules.net },
             .{ .name = "policy", .module = modules.policy },
             .{ .name = "crs", .module = modules.crs },
+            .{ .name = "crs-update", .module = modules.crs_update },
             .{ .name = "challenge", .module = modules.challenge },
             .{ .name = "store", .module = modules.store },
         },

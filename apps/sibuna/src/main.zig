@@ -20,6 +20,8 @@ pub fn main(init: std.process.Init) !u8 {
     var arena = std.heap.ArenaAllocator.init(gpa);
     defer arena.deinit();
     const argv = try readArgs(arena.allocator(), init.minimal.args) orelse return 0;
+    if (argv.len != 0 and std.mem.eql(u8, argv[0], "crs"))
+        return @import("crs_command.zig").execute(gpa, io, argv[1..]);
     const subcommand = argv.len != 0 and std.mem.eql(u8, argv[0], "console");
     if (subcommand) {
         if (!build_options.console) return consoleNotCompiled();
@@ -141,19 +143,17 @@ fn invalidArguments(err: core.Config.ParseError, diagnostic: core.Config.Diagnos
 fn readArgs(arena: std.mem.Allocator, args: std.process.Args) !?[]const []const u8 {
     const raw = try args.toSlice(arena);
     const given = raw[@min(raw.len, 1)..];
-    const output = try arena.alloc([]const u8, given.len);
-    for (given, output) |arg, *slot| {
-        if (std.mem.eql(u8, arg, "--help")) {
+    switch (@import("command_line.zig").action(given)) {
+        .help => {
             printHelp();
             return null;
-        }
-        if (std.mem.eql(u8, arg, "--version")) {
+        },
+        .version => {
             std.debug.print("sibuna {s}\n", .{server.version});
             return null;
-        }
-        slot.* = arg;
+        },
+        .run => return given,
     }
-    return output;
 }
 
 fn runListener(io: std.Io, cfg: core.Config, state: *server.AppState) u8 {
@@ -344,6 +344,8 @@ fn printConsoleHelp() void {
 
 fn printHelp() void {
     printConsoleHelp();
+    std.debug.print("CRS candidate check: sibuna crs check [--version <x.y.z>] " ++
+        "[--timeout <seconds, 1-300, default 120>]\n", .{});
     std.debug.print(
         \\Usage: sibuna [options]
         \\

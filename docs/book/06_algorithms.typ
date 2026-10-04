@@ -257,6 +257,24 @@ stops new leases while admitted work retains its generation. TX and matched byte
 monotonic within a transaction, so scratch reuse and metadata replacement preserve saved
 values. Beginning the next transaction resets cursors and controls after all borrows end.
 
+Generation publication uses two stable reader-pin cells. A transaction keeps one generation
+through its final phase; an update cannot reclaim its program or workspace. A third update
+returns busy while the retired generation remains pinned. Shutdown joins every possible
+reader before reclaiming the cells.
+
+The native candidate checker uses the updater service shared with console management:
+
+```sh
+sibuna crs check --version 4.30.0
+sibuna crs check                  # resolve the latest stable official release
+```
+
+It downloads the minimal archive and detached signature from fixed publisher destinations,
+authenticates the pinned signing key and compiles an owned candidate. The printed digest,
+condition count and live compilation payload describe preparation, not active protection.
+This command works without storage or console support. A shared deadline covers metadata,
+downloads and preparation; shutdown and deadline checks discard unsuccessful candidates.
+
 Complete input adapters retain duplicate URL-encoded and JSON fields, multipart filenames
 and part headers, and the stock XML wildcard views. MIME syntax is shared with the existing
 prefix inspector. File payloads stay in entity storage rather than becoming ARGS. JSON uses
@@ -272,6 +290,7 @@ Development qualification runs separately from enabling protection:
 
 ```sh
 zig build crs-test -j2
+zig build crs-update-test -j2
 zig build crs-audit -j2 -- vendor/crs --regex
 zig build crs-regex-check -j2
 zig build crs-primitive-check -j2 -- --download
