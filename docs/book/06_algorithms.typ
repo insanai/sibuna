@@ -253,6 +253,12 @@ third compares native regex results and capture offsets with PCRE2, which is a t
 and not a runtime dependency. The fourth retrieves digest-pinned upstream unit vectors
 and checks the implemented primitive subset. It does not download or activate daemon rules.
 These checks do not establish full CRS execution support.
+The native matcher uses ordered regular-expression simulation, length-aware literal
+search, sparse phrase automata and family-separated address intervals. Transform pipelines
+keep the reference's order and change flags, including multi-match behavior. Phrase
+matching uses complete unsigned-byte Aho–Corasick; SID 0010 documents known missed-match
+and capture defects in the pinned reference instead of copying them into protection.
+Each matcher shares an explicit work budget, and resource exhaustion remains an error.
 Operator/transform conformance, structured bodies, phased evaluation, generation updates
 and the CLI/console activation controls must pass the SID's remaining gates before the
 daemon can enable CRS. Current Gate and Shield behavior is unchanged.
