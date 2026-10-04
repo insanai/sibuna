@@ -266,3 +266,26 @@ fn runProgramProbe(
     const result = executor.run(.request_body) catch return false;
     return result == .complete and state.event_used == 1;
 }
+
+/// Exercise atomic pool ownership and prepared frame pointers on every target.
+pub export fn crsPoolProbe(allocator: *const std.mem.Allocator) u8 {
+    var compiler = crs.compiler.Compiler.init(allocator.*, .{});
+    defer compiler.deinit();
+    compiler.addSource("pool.conf", "SecAction \"id:1,setvar:tx.score=1\"") catch return 1;
+    var source = compiler.finish() catch return 2;
+    defer source.deinit();
+    var program = crs.rule_program.compile(allocator.*, &source, &.{}, .{}) catch return 3;
+    defer program.deinit();
+    var pool: crs.transaction_pool.Pool = undefined;
+    pool.init(allocator.*, &program, .{}, 1, 128 * 1024 * 1024) catch return 4;
+    defer pool.deinit();
+    var lease = pool.lease() catch return 5;
+    defer lease.release();
+    pool.close();
+    var evaluation = lease.slot().begin(.{
+        .entries = &.{},
+        .coverage = @splat(.complete),
+    }, true) catch return 6;
+    _ = evaluation.run(.request_body) catch return 7;
+    return 0;
+}

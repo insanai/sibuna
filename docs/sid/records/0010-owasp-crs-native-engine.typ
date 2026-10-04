@@ -1078,6 +1078,29 @@ a node that cannot apply the committed revision reports failure and retains its 
 These proofs concern execution and ownership. They do not prove that CRS eliminates bot
 traffic, that a payload is safe, or that all applications tolerate a given blocking threshold.
 
+== Exclusive pool leases and shutdown
+
+A generation owns at most 31 stable transaction slots. One atomic 32-bit word records
+leased slots and a separate closed bit. Admission examines a free bit and claims it with
+strong compare-and-swap; at most the slot count attempts are permitted. Contention can
+return service unavailable even when some capacity remains, rather than spin without a
+bound. No request allocates, grows the pool or waits for another request's workspace.
+
+Closing atomically sets the closed bit in the same occupancy word. It stops new leases;
+it neither cancels existing work nor invalidates a generation. The owner joins workers
+and observes closed with all lease bits clear before freeing slots. Release publishes all
+workspace writes before clearing its bit. A lease is an exclusive ownership token that
+must not be copied or reused after release. Entity, Executor and View borrows end first.
+
+*Lemma (exclusive reservation).* Two successful claim operations cannot return the same
+occupied bit without an intervening release: compare-and-swap accepts only the observed
+word with that bit clear. The closed bit shares this word, so admission cannot succeed
+using a word observed before close once close has linearized. Acquire/release ordering
+makes prior writes visible to the next successful owner. The immutable generation outlives
+the pool, and the pool outlives every lease; shutdown alone does not establish reclamation.
+Pool startup checks aggregate retained arena capacity plus slot objects, independently of
+the per-slot reservation ceiling, and unwinds every completed slot on failure.
+
 = Input acquisition and HTTP phases
 
 #block(breakable: false, table(
