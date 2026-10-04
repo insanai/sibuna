@@ -68,7 +68,7 @@ def vectors(directory, manifest, download):
                     print(f"Undefined upstream fixture: {relative}:{index}: {reason}")
                     continue
                 raise ValueError(f"stale undefined-encoding exception: {relative}:{index}")
-            yield relative, index, case
+            yield relative, index, case, entry.get("failed_initialization", {}).get(str(index))
     expected = manifest["cases"]
     if total != expected:
         raise ValueError(f"expected {expected} pinned primitive cases, found {total}")
@@ -83,15 +83,27 @@ def main():
     args = parser.parse_args()
     manifest = json.loads(Path(__file__).with_name("crs_primitive_vectors.json").read_text())
     count = 0
-    for path, index, case in vectors(args.corpus, manifest, args.download):
+    for path, index, case, failed_init in vectors(args.corpus, manifest, args.download):
         kind = case["type"]
         # The pinned corpus predates the canonical CRS spelling of this action.
-        name = {"cmd_line": "cmdLine"}.get(case["name"], case["name"])
+        aliases = {"cmd_line": "cmdLine", "normalisePath": "normalizePath",
+                   "normalisePathWin": "normalizePathWin"}
+        name = aliases.get(case["name"], case["name"])
         input_bytes = json_bytes(case["input"])
         parameter = case.get("param", "").encode("utf-8").split(b"\0", 1)[0]
         result = subprocess.run([str(args.binary.resolve()), kind, name,
                                  input_bytes.hex(), parameter.hex()], check=False,
                                 capture_output=True, timeout=5, text=True)
+        if failed_init is not None:
+            if name != "validateByteRange" or kind != "op" or result.returncode == 0:
+                raise AssertionError(f"{path}:{index}: invalid initialization was not rejected")
+            if "InvalidRange" not in result.stderr:
+                raise AssertionError(f"{path}:{index}: unexpected rejection: {result.stderr}")
+            # The reference unit runner ignores failed init and evaluates its empty
+            # table. Verify that historical result without allowing activation of it.
+            result = subprocess.run([str(args.binary.resolve()), "op-uninitialized", name,
+                                     input_bytes.hex(), parameter.hex()], check=False,
+                                    capture_output=True, timeout=5, text=True)
         if result.returncode != 0:
             raise AssertionError(f"{path}:{index}: probe failed: {result.stderr.strip()}")
         if kind == "op":

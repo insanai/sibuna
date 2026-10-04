@@ -41,6 +41,8 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
     var prefixes: [2]usize = undefined;
     const predicate: crs.primitives.Predicate = .{ .kind = .contains, .argument = "x" };
     _ = predicate.evaluate("xx", .{ .prefixes = &prefixes, .budget = &budget }) catch return 9;
+    const range = crs.byte_range.compile("32-126") catch return 12;
+    _ = range.inspect("xx", &budget) catch return 13;
     const result = crs.regex.match.search(
         &program,
         "xx",

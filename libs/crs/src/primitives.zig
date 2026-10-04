@@ -5,6 +5,7 @@ const std = @import("std");
 const model = @import("model.zig");
 const work = @import("work.zig");
 const substring = @import("substring.zig");
+const utf8 = @import("utf8_profile.zig");
 
 pub const Error = error{ UnsupportedOperator, NumericLimit } || substring.Error;
 pub const Context = struct { prefixes: []usize, budget: *work.Budget };
@@ -27,6 +28,7 @@ pub const Predicate = struct {
             .within => try find(self.argument, input, .argument, context),
             .begins_with, .ends_with, .streq => try self.edge(input, context.budget),
             .validate_url_encoding => .{ .matched = try invalidUrl(input, context.budget) },
+            .validate_utf8_encoding => .{ .matched = try utf8.invalid(input, context.budget) },
             else => unreachable,
         };
     }
@@ -63,6 +65,7 @@ pub fn supported(kind: model.Operator) bool {
         .within => true,
         .unconditional_match => true,
         .validate_url_encoding => true,
+        .validate_utf8_encoding => true,
         else => false,
     };
 }

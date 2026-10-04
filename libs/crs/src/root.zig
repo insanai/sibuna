@@ -14,6 +14,8 @@ pub const transforms = @import("transforms.zig");
 pub const substring = @import("substring.zig");
 pub const primitives = @import("primitives.zig");
 pub const pipeline = @import("pipeline.zig");
+pub const byte_range = @import("byte_range.zig");
+pub const utf8_profile = @import("utf8_profile.zig");
 
 test {
     _ = @import("release_test.zig");
@@ -29,4 +31,6 @@ test {
     _ = substring;
     _ = primitives;
     _ = pipeline;
+    _ = byte_range;
+    _ = utf8_profile;
 }

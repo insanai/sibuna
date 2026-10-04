@@ -167,7 +167,24 @@
       "sha256": "482ab5bba59b5de5bee0fb27155288eee72f7d12ee56edf53cb27e9a1816538e",
       "bytes": 862,
       "cases": 6
+    },
+    {
+      "path": "operators/validateByteRange.json",
+      "sha256": "5446ed90c8119625783f1f0a83e95617d7e2b77f2a3d59b7fe758e11c972c221",
+      "bytes": 1090,
+      "cases": 8,
+      "failed_initialization": {
+        "1": "Upstream unit runner ignores failed range initialization and evaluates its empty table; native compilation must reject it.",
+        "2": "Upstream unit runner ignores failed range initialization and evaluates its empty table; native compilation must reject it.",
+        "3": "Upstream unit runner ignores failed range initialization and evaluates its empty table; native compilation must reject it."
+      }
+    },
+    {
+      "path": "operators/validateUtf8Encoding.json",
+      "sha256": "8fc3e18006fae5c031599b2551853870c104bba691e1a1bec009281f9ca2fd5d",
+      "bytes": 7265,
+      "cases": 32
     }
   ],
-  "cases": 265
+  "cases": 305
 }

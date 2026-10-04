@@ -16,7 +16,11 @@ pub fn main(init: std.process.Init) !u8 {
     var buffer: [4096]u8 = undefined;
     var file = std.Io.File.stdout().writerStreaming(init.io, &buffer);
     const out = &file.interface;
-    if (std.mem.eql(u8, kind, "op")) {
+    const failed_init = std.mem.eql(u8, kind, "op-uninitialized");
+    if (std.mem.eql(u8, kind, "op") or failed_init) {
+        if (failed_init and !std.mem.eql(u8, name, "validateByteRange")) {
+            return error.InvalidInitializationFixture;
+        }
         const prefixes = try init.gpa.alloc(usize, 64 * 1024);
         defer init.gpa.free(prefixes);
         const predicate: crs.primitives.Predicate = .{
@@ -24,7 +28,12 @@ pub fn main(init: std.process.Init) !u8 {
             .argument = argument,
         };
         var budget: crs.work.Budget = .{ .remaining = 16_000_000 };
-        const result = try predicate.evaluate(input, .{ .prefixes = prefixes, .budget = &budget });
+        const result = if (predicate.kind == .validate_byte_range) result: {
+            var range: crs.byte_range.Range = .{};
+            if (!failed_init) range = try crs.byte_range.compile(argument);
+            const findings = try range.inspect(input, &budget);
+            break :result crs.primitives.Result{ .matched = findings.count != 0 };
+        } else try predicate.evaluate(input, .{ .prefixes = prefixes, .budget = &budget });
         try out.writeAll(if (result.matched) "true\n" else "false\n");
     } else if (std.mem.eql(u8, kind, "tfn")) {
         if (argument.len != 0) return error.UnexpectedArgument;

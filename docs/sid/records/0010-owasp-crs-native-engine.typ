@@ -257,6 +257,10 @@ length-aware binary escapes and C-string JSON boundary. One escape-decoder fixtu
 unchecked `sscanf` result is uninitialized. The digest manifest identifies this fixture
 explicitly; it cannot provide deterministic conformance evidence. Native tests cover invalid
 escapes directly, and the checker fails if the recorded exception stops being undefined.
+Three byte-range fixtures exercise an operator after failed initialization, which the
+reference unit runner ignores. The checker first requires native compilation to reject
+each fixture, then checks the historical empty-table result through a test adapter.
+That adapter is not linked into the daemon and does not permit invalid candidate activation.
 
 CSS decoding consumes up to six hexadecimal digits and one following C-locale whitespace
 byte; an escaped newline and trailing backslash disappear. An unrecognized CSS escape
@@ -288,6 +292,22 @@ is reserved. This versioned profile is explicit; a finite vector pass does not e
 equivalence with arbitrary builds using another version of Mbed TLS.
 
 = Algorithms and mathematical contracts
+
+Path normalization preserves the reference's byte-cursor semantics, including relative
+backreferences, repeated separators, trailing separators and the Windows variant's
+backslash conversion. It is not filesystem resolution, URL decoding or symlink traversal.
+The reference recognizes a backreference from the final two emitted dots at a segment
+boundary; replacing it with an operating-system path API would change rule behavior.
+Native indices saturate at the root where the reference temporarily forms a pointer before
+the buffer; no pointer arithmetic outside an allocation is performed. The reference's
+change flag is retained, including a final backreference that changes bytes without setting it.
+For example, `/..` becomes empty in this profile; this transform must never be reused to
+authorize filesystem paths or alter the path forwarded to the origin.
+
+*Lemma (normalization amortization).* The input cursor only advances. Each output byte is
+written once and can be removed by at most one backwards scan. Charging removals against
+their preceding writes bounds all backwards scans by $N$. Hence normalization costs $O(N)$,
+requires $N$ output bytes, and reserves $16 N + 1$ work; it needs no segment-stack allocation.
 
 == Definitions and axioms
 
@@ -360,6 +380,26 @@ prefix length strictly decreases; it can increase at most once per consumed byte
 the total fallback steps are bounded by the total advances. Charge each comparison before
 performing it. Empty needles match at offset zero, byte equality retains embedded NUL, and
 work exhaustion returns a limit outcome rather than a negative match.
+
+== Byte and encoding validation bounds
+
+Byte-range validation compiles inclusive decimal ranges into a 256-bit membership table.
+It rejects empty, reversed and out-of-byte ranges before activation. The reference's
+decimal-prefix parsing is retained, including leading whitespace and `+`; trailing suffixes
+do not change a parsed number. Inspecting a field counts every out-of-range byte and records
+the first and last offset without allocating. Construction is $O(L + 256 K)$ for $K$
+ranges and source length $L$; matching is $O(N)$ with 32 immutable bytes of table storage.
+Reserve $4 N + 1$ work before matching. Set union is idempotent, so duplicate and overlapping
+ranges cannot change membership or double-count a byte.
+
+UTF-8 validation separately pins ModSecurity 3.0.14's byte behavior. It rejects incomplete
+sequences, bad continuations, overlong encodings, surrogates and leading bytes at least
+`f5`. Its `f4` branch accepts some values above `10ffff`; this is a documented reference
+quirk, not RFC 3629 validation. The CRS primitive must remain distinct from strict Unicode
+validation used by protocol and structured-input parsers. Each successful step advances
+one to four bytes; lookahead checks remaining length before reads. Reserve $8 N + 1$
+work before validation. An invalid encoding is a positive validation-operator match;
+resource exhaustion is a separate error, never a negative match.
 
 == Lemma 4: sound prefiltering
 
