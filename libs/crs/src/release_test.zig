@@ -82,6 +82,25 @@ test "every stock runtime macro compiles into bounded typed parts" {
     try std.testing.expect(count > 1000);
 }
 
+test "every stock setvar action prepares its target operand and typed operation" {
+    const set_var = @import("set_var.zig");
+    var builder = compiler.Compiler.init(std.testing.allocator, .{});
+    defer builder.deinit();
+    for (fixture.sources) |file| try builder.addSource(file.path, file.bytes);
+    var plan = try builder.finish();
+    defer plan.deinit();
+    var count: usize = 0;
+    for (plan.conditions) |condition| {
+        for (condition.actions) |action| {
+            if (action.kind != .set_var) continue;
+            var program = try set_var.compile(std.testing.allocator, action.value.?);
+            defer program.deinit();
+            count += 1;
+        }
+    }
+    try std.testing.expect(count > 600);
+}
+
 test "every stock rule regex compiles within the published native limits" {
     const regex = @import("regex.zig");
     var builder = compiler.Compiler.init(std.testing.allocator, .{});

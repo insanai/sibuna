@@ -53,7 +53,7 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
     if (!macroProbe(allocator.*, &budget)) return 24;
     if (!operatorProbe(allocator.*, &budget)) return 25;
     if (!selectionProbe(allocator.*, &budget)) return 26;
-    if (!transactionProbe(&budget)) return 27;
+    if (!transactionProbe(allocator.*, &budget)) return 27;
     const result = crs.regex.match.search(
         &program,
         "xx",
@@ -125,11 +125,36 @@ fn selectionProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
     return result.counted and std.mem.eql(u8, result.entries[0].value, "0");
 }
 
-fn transactionProbe(budget: *crs.work.Budget) bool {
+fn transactionProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
     var entries: [2]crs.variables.Entry = undefined;
     var bytes: [64]u8 = undefined;
     var store = crs.transaction_vars.Store.init(&entries, &bytes);
     store.update("score", .add, "5", budget) catch return false;
     const score = (store.get("SCORE", budget) catch return false) orelse return false;
-    return std.mem.eql(u8, score, "5");
+    return std.mem.eql(u8, score, "5") and setVarProbe(allocator, &store, budget);
+}
+
+fn setVarProbe(
+    allocator: std.mem.Allocator,
+    store: *crs.transaction_vars.Store,
+    budget: *crs.work.Budget,
+) bool {
+    var program = crs.set_var.compile(allocator, "tx.score=+1") catch return false;
+    defer program.deinit();
+    const view: crs.variables.View = .{
+        .entries = store.values() catch return false,
+        .coverage = @splat(.complete),
+    };
+    var pieces: [1][]const u8 = undefined;
+    var key: [16]u8 = undefined;
+    var value: [16]u8 = undefined;
+    program.execute(.{
+        .store = store,
+        .view = &view,
+        .pieces = &pieces,
+        .key_output = &key,
+        .value_output = &value,
+        .budget = budget,
+    }) catch return false;
+    return true;
 }
