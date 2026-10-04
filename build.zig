@@ -191,6 +191,40 @@ fn addModules(
     };
 }
 
+fn addCrs(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.lang.Optimize,
+) void {
+    _ = b.addModule("sibuna-crs", .{
+        .root_source_file = b.path("libs/crs/src/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    const host = b.createModule(.{
+        .root_source_file = b.path("libs/crs/src/root.zig"),
+        .target = b.graph.host,
+        .optimize = optimize,
+    });
+    const tests = b.addTest(.{ .root_module = host });
+    const test_step = b.step("crs-test", "Test bounded native CRS source contracts");
+    test_step.dependOn(&b.addRunArtifact(tests).step);
+    b.top_level_steps.get("test").?.step.dependOn(test_step);
+    const audit = b.addExecutable(.{
+        .name = "sibuna-crs-audit",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tools/crs_audit.zig"),
+            .target = b.graph.host,
+            .optimize = optimize,
+            .imports = &.{.{ .name = "crs", .module = host }},
+        }),
+    });
+    const run = b.addRunArtifact(audit);
+    run.addPassthruArgs();
+    b.step("crs-audit", "Inventory an extracted CRS release; does not activate rules")
+        .dependOn(&run.step);
+}
+
 fn addWasmSolver(b: *std.Build) *std.Build.Step.Compile {
     const wasm_target = b.resolveTargetQuery(.{
         .cpu_arch = .wasm32,
@@ -341,6 +375,7 @@ fn wireApp(b: *std.Build, root: *std.Build.Module, app: AppModules) void {
 
 fn addTests(b: *std.Build, modules: Modules, app: AppModules) void {
     const test_step = b.step("test", "Run all unit and end-to-end tests");
+    addCrs(b, modules.core.resolved_target.?, modules.core.optimize.?);
     test_step.dependOn(&b.top_level_steps.get("proxy-e2e").?.step);
     const e2e_root = b.createModule(.{
         .root_source_file = b.path("apps/sibuna/src/e2e_test.zig"),
