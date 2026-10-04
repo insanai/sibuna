@@ -282,9 +282,13 @@ at its maximum, then retain the low byte; the result is independent of the host 
 Unknown entities retain their bytes. Scanning and copying consume each input range a
 bounded number of times, with $N$ output capacity and $32 N + 1$ reserved work.
 
-The base64 profile pins Mbed TLS 3.6.5's strict alphabet/padding and whitespace validation:
+The base64 profile pins Mbed TLS commit `2ca6c285a0dd3f33982dd57299012dacab1ff206`,
+the submodule selected by ModSecurity 3.0.14, including its alphabet/padding and whitespace validation:
 LF and CRLF are permitted, spaces are permitted before a line ending or at the end,
-and embedded spaces or tabs are invalid. Nonempty invalid input becomes empty, as in
+and embedded spaces or tabs are invalid. At most two trailing `=` are allowed. It emits
+complete four-character groups and discards an incomplete final group; a newer decoder
+that rejects the entire value would erase a valid prefix and change detection. Nonempty
+invalid input becomes empty, as in
 ModSecurity's wrapper. The wrapper's C-string boundary means the first input NUL ends
 base64 input; the outer transform's change flag still uses the original byte length.
 Validation precedes decoding, each is $O(N)$, capacity $N$ suffices, and $8 N + 1$ work
@@ -688,7 +692,7 @@ may contact the authors. Adding rules does not replace the existing component li
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/rule_with_actions.cc")[Reference transform ordering and change flags].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/rule_with_operator.cc")[Reference per-match effects and chain evaluation].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/tree/v3.0.14/src/actions/transformations")[Reference byte transforms].
-- #link("https://github.com/Mbed-TLS/mbedtls/blob/v3.6.5/library/base64.c")[Pinned strict base64 decoding profile].
+- #link("https://github.com/Mbed-TLS/mbedtls/blob/2ca6c285a0dd3f33982dd57299012dacab1ff206/library/base64.c")[Pinned base64 decoding profile].
 - #link("https://github.com/owasp-modsecurity/secrules-language-tests/tree/a3d4405e5a2c90488c387e589c5534974575e35b")[SecLang corpus pinned by ModSecurity 3.0.14].
 - #link("https://www.pcre.org/current/doc/html/pcre2pattern.html")[PCRE2 pattern semantics].
 - #link("https://swtch.com/~rsc/regexp/regexp1.html")[Russ Cox: Regular Expression Matching Can Be Simple And Fast].

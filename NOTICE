@@ -49,7 +49,8 @@ CRS compatibility-development fixtures:
   the reference's in-place C++ strings. This does not bundle the ModSecurity
   engine or imply complete compatibility. External SecLang test vectors are
   fetched into an ignored cache, not redistributed with Sibuna.
-- Mbed TLS 3.6.5 base64 validation semantics adapted in transform_base64.zig:
+- Mbed TLS commit 2ca6c285a0dd3f33982dd57299012dacab1ff206 base64
+  validation semantics adapted in transform_base64.zig:
   Apache-2.0; LICENSES/Mbed-TLS-Apache-2.0.txt. Copyright The Mbed TLS
   Contributors. Source: github.com/Mbed-TLS/mbedtls. The native bounded
   decoder does not link or bundle the Mbed TLS library.

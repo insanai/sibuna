@@ -1,4 +1,4 @@
-//! Strict byte decoding under the Mbed TLS 3.6.5 compatibility profile in SID 0010.
+//! Byte decoding under ModSecurity 3.0.14's pinned Mbed TLS profile in SID 0010.
 //! Invalid encodings produce no bytes; validation completes before any output write.
 // Compatibility algorithms adapted from ModSecurity and Mbed TLS under Apache-2.0.
 // Copyright (c) 2015-2021 Trustwave Holdings, Inc.; Copyright The Mbed TLS Contributors.
@@ -19,7 +19,6 @@ fn digit(byte: u8) ?u8 {
 
 fn valid(input: []const u8) bool {
     var position: usize = 0;
-    var count: usize = 0;
     var padding: usize = 0;
     while (position < input.len) : (position += 1) {
         const start = position;
@@ -36,9 +35,8 @@ fn valid(input: []const u8) bool {
             padding += 1;
             if (padding > 2) return false;
         } else if (padding != 0 or digit(byte) == null) return false;
-        count += 1;
     }
-    return count % 4 == 0 and (count - padding) % 4 != 1;
+    return true;
 }
 
 pub fn decode(buffer: types.Buffer) types.Write {
@@ -48,18 +46,31 @@ pub fn decode(buffer: types.Buffer) types.Write {
     const changed = buffer.input.len != 0;
     if (!valid(input)) return .{ .length = 0, .changed = changed };
     var value: u32 = 0;
-    var bits: u5 = 0;
+    var digits: u3 = 0;
+    var padding: u2 = 0;
     var written: usize = 0;
     for (input) |byte| {
-        if (byte == '=') break;
-        const decoded = digit(byte) orelse continue;
+        if (byte == '\r' or byte == '\n' or byte == ' ') continue;
+        const decoded = if (byte == '=') padding: {
+            padding += 1;
+            break :padding @as(u8, 0);
+        } else digit(byte).?;
         value = (value << 6) | decoded;
-        bits += 6;
-        if (bits >= 8) {
-            bits -= 8;
-            buffer.output[written] = @truncate(value >> bits);
+        digits += 1;
+        if (digits != 4) continue;
+        digits = 0;
+        buffer.output[written] = @truncate(value >> 16);
+        written += 1;
+        if (padding <= 1) {
+            buffer.output[written] = @truncate(value >> 8);
+            written += 1;
+        }
+        if (padding == 0) {
+            buffer.output[written] = @truncate(value);
             written += 1;
         }
     }
+    // The pinned decoder discards incomplete final groups. A newer Mbed TLS
+    // implementation rejects them; substituting it would erase a valid prefix.
     return .{ .length = written, .changed = changed };
 }
