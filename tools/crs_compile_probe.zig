@@ -46,6 +46,9 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
     var phrase = crs.phrases_source.inlineWords(allocator.*, "x y", .{}) catch return 14;
     defer phrase.deinit();
     _ = phrase.search("xx", &budget) catch return 15;
+    var addresses = crs.address_set.compile(allocator.*, "127.0.0.1,::1", .{}) catch return 16;
+    defer addresses.deinit();
+    _ = addresses.contains("::1", &budget) catch return 17;
     const result = crs.regex.match.search(
         &program,
         "xx",

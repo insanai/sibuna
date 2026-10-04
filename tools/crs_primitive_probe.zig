@@ -18,7 +18,9 @@ pub fn main(init: std.process.Init) !u8 {
     const out = &file.interface;
     const failed_init = std.mem.eql(u8, kind, "op-uninitialized");
     if (std.mem.eql(u8, kind, "op") or failed_init) {
-        if (failed_init and !std.mem.eql(u8, name, "validateByteRange")) {
+        if (failed_init and !std.mem.eql(u8, name, "validateByteRange") and
+            !std.mem.eql(u8, name, "ipMatch"))
+        {
             return error.InvalidInitializationFixture;
         }
         const probe: OperatorProbe = .{
@@ -60,6 +62,12 @@ const OperatorProbe = struct {
             var range: crs.byte_range.Range = .{};
             if (!self.failed_init) range = try crs.byte_range.compile(self.argument);
             return (try range.inspect(self.input, &budget)).count != 0;
+        }
+        if (self.kind == .ip_match) {
+            const source = if (self.failed_init) "" else self.argument;
+            var program = try crs.address_set.compile(self.allocator, source, .{});
+            defer program.deinit();
+            return program.contains(self.input, &budget);
         }
         if (self.kind == .pm or self.kind == .pm_from_file) {
             const options: crs.phrases.Options = .{ .profile = .modsecurity_3_0_14 };

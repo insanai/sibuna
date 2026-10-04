@@ -214,9 +214,18 @@
       "sha256": "140bf1e819821ff5f2745320dc850bb3ebef91e550549da700309777cfdbd641",
       "bytes": 1149,
       "cases": 6
+    },
+    {
+      "path": "operators/ipMatch.json",
+      "sha256": "ac41378f4398e82eb3e73aa15db2c0836d844c60683b674d2143dcddf557a703",
+      "bytes": 617031,
+      "cases": 3623,
+      "failed_initialization": {
+        "16": "IPv4 prefix length 100 fails initialization; the reference unit runner then tests its empty address tree."
+      }
     }
   ],
-  "cases": 395,
+  "cases": 4018,
   "resources": [
     {
       "path": "operators/op/pmFromFile-01.dat",

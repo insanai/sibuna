@@ -159,3 +159,25 @@ fn findData(name: []const u8) ?[]const u8 {
     }
     return null;
 }
+
+test "every stock address operator compiles without mapping IPv4 into IPv6" {
+    const addresses = @import("address_set.zig");
+    var builder = compiler.Compiler.init(std.testing.allocator, .{});
+    defer builder.deinit();
+    for (fixture.sources) |file| try builder.addSource(file.path, file.bytes);
+    var plan = try builder.finish();
+    defer plan.deinit();
+    var count: usize = 0;
+    for (plan.conditions) |condition| {
+        const expression = condition.expression orelse continue;
+        if (expression.kind != .ip_match) continue;
+        var program = try addresses.compile(std.testing.allocator, expression.argument, .{});
+        defer program.deinit();
+        var budget: @import("work.zig").Budget = .{ .remaining = 4096 };
+        try std.testing.expect(try program.contains("127.0.0.1", &budget));
+        try std.testing.expect(try program.contains("::1", &budget));
+        try std.testing.expect(!try program.contains("::ffff:127.0.0.1", &budget));
+        count += 1;
+    }
+    try std.testing.expectEqual(@as(usize, 2), count);
+}

@@ -40,16 +40,21 @@ def read_pinned(directory, manifest, entry, download):
     if relative.is_absolute() or ".." in relative.parts:
         raise ValueError("invalid pinned corpus path")
     path = directory / relative
+    # The upstream IP corpus is 617 KiB. This is a test-document bound, distinct
+    # from each native probe's 64 KiB input and parameter limits.
+    limit = 1024 * 1024
+    if entry["bytes"] > limit:
+        raise ValueError("pinned corpus file exceeds test-document bound")
     if not path.exists() and download:
         with urlopen(root + manifest["corpus_commit"] + "/" + entry["path"],
                      timeout=20) as response:
-            data = response.read(65537)
-        if len(data) > 65536 or hashlib.sha256(data).hexdigest() != entry["sha256"]:
+            data = response.read(limit + 1)
+        if len(data) > limit or hashlib.sha256(data).hexdigest() != entry["sha256"]:
             raise ValueError(f"download digest/size mismatch: {relative}")
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
     with path.open("rb") as source:
-        data = source.read(65537)
+        data = source.read(limit + 1)
     if len(data) != entry["bytes"] or hashlib.sha256(data).hexdigest() != entry["sha256"]:
         raise ValueError(f"corpus digest/size mismatch: {relative}")
     return data
@@ -105,9 +110,10 @@ def main():
                                  input_bytes.hex(), parameter.hex()], check=False,
                                 capture_output=True, timeout=5, text=True)
         if failed_init is not None:
-            if name != "validateByteRange" or kind != "op" or result.returncode == 0:
+            rejection = {"validateByteRange": "InvalidRange", "ipMatch": "InvalidPrefix"}
+            if name not in rejection or kind != "op" or result.returncode == 0:
                 raise AssertionError(f"{path}:{index}: invalid initialization was not rejected")
-            if "InvalidRange" not in result.stderr:
+            if rejection[name] not in result.stderr:
                 raise AssertionError(f"{path}:{index}: unexpected rejection: {result.stderr}")
             # The reference unit runner ignores failed init and evaluates its empty
             # table. Verify that historical result without allowing activation of it.
