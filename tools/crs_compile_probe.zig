@@ -53,6 +53,7 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
     if (!macroProbe(allocator.*, &budget)) return 24;
     if (!operatorProbe(allocator.*, &budget)) return 25;
     if (!selectionProbe(allocator.*, &budget)) return 26;
+    if (!transactionProbe(&budget)) return 27;
     const result = crs.regex.match.search(
         &program,
         "xx",
@@ -122,4 +123,13 @@ fn selectionProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
         .budget = budget,
     }) catch return false;
     return result.counted and std.mem.eql(u8, result.entries[0].value, "0");
+}
+
+fn transactionProbe(budget: *crs.work.Budget) bool {
+    var entries: [2]crs.variables.Entry = undefined;
+    var bytes: [64]u8 = undefined;
+    var store = crs.transaction_vars.Store.init(&entries, &bytes);
+    store.update("score", .add, "5", budget) catch return false;
+    const score = (store.get("SCORE", budget) catch return false) orelse return false;
+    return std.mem.eql(u8, score, "5");
 }

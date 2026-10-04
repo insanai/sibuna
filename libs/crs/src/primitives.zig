@@ -117,6 +117,12 @@ const Number = struct {
     }
 };
 
+/// std::stoi's finite 32-bit decimal-prefix profile, shared by eq and TX arithmetic.
+/// The reference converts invalid/out-of-range operands to zero before the operation.
+pub fn integer32(bytes: []const u8, budget: *work.Budget) work.Error!i32 {
+    return @intCast((try decimal(bytes, budget)).eqValue());
+}
+
 fn numeric(
     kind: model.Operator,
     input: []const u8,
@@ -137,7 +143,7 @@ fn numeric(
     };
 }
 
-fn decimal(bytes: []const u8, budget: *work.Budget) Error!Number {
+fn decimal(bytes: []const u8, budget: *work.Budget) work.Error!Number {
     var position: usize = 0;
     while (position < bytes.len) {
         try budget.debit(1);

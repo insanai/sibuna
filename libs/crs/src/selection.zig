@@ -6,6 +6,7 @@ const variables = @import("variables.zig");
 const regex = @import("regex.zig");
 const work = @import("work.zig");
 const buffers = @import("buffers.zig");
+const decimal_format = @import("decimal_format.zig");
 
 pub const Error = regex.types.Error || regex.match.Error || variables.Error || error{
     SelectorLimit,
@@ -76,7 +77,7 @@ pub const Program = struct {
             frame.output[0] = .{
                 .collection = target.collection,
                 .key = key(target),
-                .value = try decimal(count, frame.count, frame.budget),
+                .value = try decimal_format.write(u64, @intCast(count), frame.count, frame.budget),
             };
             return .{ .entries = frame.output[0..1], .counted = true };
         }
@@ -141,21 +142,6 @@ fn matches(target: *const Target, entry: variables.Entry, frame: Frame) Error!bo
                 variables.Xml.attribute);
         },
     };
-}
-
-/// usize fits in 20 decimal digits on every supported target. Work is reserved
-/// before writing, and the backing array remains dedicated until the snapshot is consumed.
-fn decimal(count: usize, output: *[20]u8, budget: *work.Budget) Error![]const u8 {
-    try budget.debit(40);
-    var position: usize = output.len;
-    var remaining = count;
-    while (true) {
-        position -= 1;
-        output[position] = @intCast('0' + remaining % 10);
-        remaining /= 10;
-        if (remaining == 0) break;
-    }
-    return output[position..];
 }
 
 pub fn compile(

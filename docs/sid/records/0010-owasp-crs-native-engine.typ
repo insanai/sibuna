@@ -275,6 +275,51 @@ succeeded, so a rejected expansion leaves output unchanged. Copies then cannot f
 the disjoint-buffer and lifetime invariants. No partial argument can be mistaken for a
 completed expansion, and injected `%{...}` bytes in values cannot add lookup work.
 
+=== Transaction-owned variables
+
+`TX` is a caller-owned metadata table and monotonic byte pool reserved with the transaction
+slot. Keys use fixed ASCII case-insensitive equality and are unique; updates preserve the
+original key spelling and entry order. A missing key differs from a present empty value.
+Each successful write copies its new value to unused pool space. Old value bytes remain
+valid until the transaction ends, so target snapshots and macro parts cannot dangle after
+an action updates or deletes their source key. Deletion compacts metadata without reclaiming
+bytes. Entry and byte capacity are explicit bounds, not a hidden allocation fallback.
+
+Reserve the complete write capacity and copy work before touching stored metadata or bytes.
+Arithmetic uses the pinned `setvar` profile: each operand is a decimal prefix converted to
+a signed 32-bit integer, with invalid or out-of-range conversion yielding zero. Addition
+and subtraction are checked in that domain; overflowing signed C arithmetic is undefined
+and becomes an explicit native numeric-limit outcome. Arithmetic never wraps a high anomaly
+score into a permissive value. Missing previous values convert to zero.
+Counts and arithmetic values use one fixed-capacity decimal writer rather than general
+formatting. The maximum integer width is 64 bits: at most 20 digits, including a sign for
+the signed domain. Widen before negating the minimum signed value. Reserve the fixed
+capacity's work before writing; the loop then performs at most one division per digit.
+
+A resource, invalid-key or arithmetic failure poisons the transaction store. Refilling a
+budget cannot resume partial action execution as a completed transaction. Previously written
+private state may remain for diagnostics but cannot support an admission decision or a
+completed finding. Reinitialization starts a new transaction and invalidates all old borrows.
+The later executor must handle this failure as the configured limit outcome, not a negative
+match. Multiple action writes are not claimed to be one atomic batch.
+
+*Lemma (stable atomic variable write).* A lookup visits at most the bounded entry count;
+the copied key and value length is bounded by remaining pool space. Capacity and work
+reservation precede both writes, so failure leaves existing entries and pool usage unchanged.
+After reservation, disjoint copies cannot fail and the metadata update publishes the completed
+value. Monotonic pool usage ensures every earlier value slice stays valid for the transaction
+lifetime. The poison flag prevents further use after a failed mutation. This proof assumes
+the caller respects buffer disjointness and the slot lifetime.
+
+Compile transaction-variable actions into a typed operation and two owned macro programs:
+target key and optional operand. Support assignment, addition, subtraction, unset and bare
+key assignment to `1` in the transaction namespace. Expand the operand before the key, as
+the pinned action does, using separate caller buffers and one shared view/budget. Resolve
+both programs before any store mutation. An expansion failure poisons the store even though
+stored bytes have not changed. This primitive does not decide when an action runs in a chain
+or whether a match is disruptive. Persistent namespaces require their own bounded lifecycle
+and cannot be routed into `TX` silently.
+
 == Prepared operator interface
 
 One typed compiled-operator interface owns the prepared regex, phrase, address or byte-range
@@ -994,6 +1039,8 @@ may contact the authors. Adding rules does not replace the existing component li
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/rule_with_actions.cc")[Reference transform ordering and change flags].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/parser/seclang-parser.yy")[Reference default-action validation].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/run_time_string.cc")[Reference runtime-string expansion].
+- #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/variables/variable.h")[Reference dictionary selectors and counts].
+- #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/actions/set_var.cc")[Reference transaction-variable operations and arithmetic].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/rule_with_operator.cc")[Reference per-match effects and chain evaluation].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/tree/v3.0.14/src/actions/transformations")[Reference byte transforms].
 - #link("https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/src/utils/acmp.cc")[Reference phrase failure construction and capture behavior].

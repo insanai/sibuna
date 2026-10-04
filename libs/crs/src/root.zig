@@ -29,6 +29,7 @@ pub const variables = @import("variables.zig");
 pub const macros = @import("macros.zig");
 pub const operators = @import("operators.zig");
 pub const selection = @import("selection.zig");
+pub const transaction_vars = @import("transaction_vars.zig");
 
 test {
     _ = @import("release_test.zig");
@@ -58,4 +59,5 @@ test {
     _ = macros;
     _ = operators;
     _ = selection;
+    _ = transaction_vars;
 }

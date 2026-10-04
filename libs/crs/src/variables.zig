@@ -50,7 +50,7 @@ pub const View = struct {
     }
 };
 
-pub fn keyEqual(left: []const u8, right: []const u8, budget: *work.Budget) Error!bool {
+pub fn keyEqual(left: []const u8, right: []const u8, budget: *work.Budget) work.Error!bool {
     if (left.len != right.len) return false;
     try budget.debit(@intCast(left.len));
     return std.ascii.eqlIgnoreCase(left, right);

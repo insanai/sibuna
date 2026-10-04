@@ -277,6 +277,11 @@ Prepared target tests cover duplicate inputs, count selectors, owned key pattern
 exclusions. Snapshots use caller metadata scratch and preserve borrowed byte lifetimes;
 unavailable or incomplete collections remain errors. SID 0010 records the native profile's
 consistent exclusion handling and the pinned reference's exact-key discrepancy.
+Transaction variables use reserved metadata and a monotonic byte pool. Updates preserve
+old value lifetimes, copy work is reserved before mutation, and failed mutations prevent
+continued evaluation. Score arithmetic checks the reference's signed 32-bit domain instead
+of allowing overflow to wrap a score. These storage contracts do not establish action timing
+or full transaction execution.
 The native matcher uses ordered regular-expression simulation, length-aware literal
 search, sparse phrase automata and family-separated address intervals. Transform pipelines
 keep the reference's order and change flags, including multi-match behavior. Phrase
