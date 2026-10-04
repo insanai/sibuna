@@ -60,6 +60,10 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
     var fingerprint: crs.sql_folding.Result = .{};
     crs.sql_folding.fingerprint(&lexical, &fingerprint) catch return 20;
     _ = crs.sql_detector.detect(&lexical, &fingerprint) catch return 21;
+    var html = crs.html_tokens.Context.init("<a href='url'>", &budget, .data);
+    _ = crs.html_tokens.next(&html) catch return 22;
+    var xss: crs.xss_detector.Context = .{ .input = "<script>", .budget = &budget };
+    _ = crs.xss_detector.detect(&xss) catch return 23;
     const result = crs.regex.match.search(
         &program,
         "xx",

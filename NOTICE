@@ -54,12 +54,13 @@ CRS compatibility-development fixtures:
   Apache-2.0; LICENSES/Mbed-TLS-Apache-2.0.txt. Copyright The Mbed TLS
   Contributors. Source: github.com/Mbed-TLS/mbedtls. The native bounded
   decoder does not link or bundle the Mbed TLS library.
-- libinjection dictionary, SQL lexical, folding and detection algorithms,
+- libinjection dictionary, SQL detection and HTML/XSS algorithms,
   commit b9fcaaf9e50e9492807b23ffcc6af46ee1f203b9:
   BSD-3-Clause; LICENSES/libinjection-BSD-3-Clause.txt and vendor/libinjection/LICENSE.
   Copyright (c) 2012-2016 Nick Galbreath. Source: github.com/libinjection/libinjection.
   The generated native lookup asset and native sql_token_context.zig, sql_tokens*.zig,
-  sql_fold*.zig and sql_detector*.zig
+  sql_fold*.zig, sql_detector*.zig, html_*.zig and xss_*.zig routines and
+  vendor/libinjection/xss_tables.zig
   routines are reproduced or adapted from the pinned source and digests recorded in
   vendor/libinjection/provenance.json. The port uses caller-owned buffers and budgets;
   no libinjection C library is linked into Sibuna. The detector library does not activate
