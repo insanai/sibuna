@@ -247,7 +247,7 @@ Both strictly increase the source position. Therefore a phase visits at most the
 number of source roots. Five ordered phases perform at most five such scans, excluding
 the separately charged condition and action work.
 
-#table(
+#block(breakable: false, table(
   columns: (2fr, 4fr),
   [Operator family], [CRS 4.30.0 names],
   [Comparison], [`eq`, `ge`, `gt`, `lt`, `streq`, `within`],
@@ -256,7 +256,7 @@ the separately charged condition and action work.
   [Validation], [`validateByteRange`, `validateUrlEncoding`, `validateUtf8Encoding`],
   [Structure], [`detectSQLi`, `detectXSS`],
   [Unconditional], [`unconditionalMatch`],
-)
+))
 
 Phrase files compile into a shared Aho–Corasick representation with per-rule output lists.
 Case and boundary semantics must agree with the operator rather than an unrelated policy
