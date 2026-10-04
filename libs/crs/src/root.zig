@@ -37,6 +37,8 @@ pub const condition = @import("condition.zig");
 pub const chains = @import("chains.zig");
 pub const phase_cursor = @import("phase_cursor.zig");
 pub const controls = @import("controls.zig");
+pub const post_actions = @import("post_actions.zig");
+pub const action_state = @import("action_state.zig");
 
 test {
     _ = @import("release_test.zig");
@@ -74,4 +76,5 @@ test {
     _ = chains;
     _ = phase_cursor;
     _ = controls;
+    _ = post_actions;
 }

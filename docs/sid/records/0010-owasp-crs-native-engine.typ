@@ -276,6 +276,39 @@ A target-qualified entry requires both rule selection and matching collection/ke
 therefore it cannot suppress another collection or an entire rule when no field is given.
 Generation pinning preserves borrowed exclusion bytes until transaction release.
 
+== Full-match actions and evidence
+
+Prepare full-match actions independently of the condition's local captures and TX writes.
+The executable order is the phase's non-disruptive defaults, local tags, the last local
+severity/logdata/message, local non-disruptive runtime actions, then the last explicit
+disruptive action. A local `block` invokes the phase's disruptive default. Default TX
+writes execute here; local TX writes have already executed for matching candidates and
+must not run again. Status is a validated HTTP value from 100 through 599. Severity is a
+named Emergency-through-Debug value or an integer from 0 through 7; permissive numeric
+suffixes and out-of-domain reference values reject preparation.
+
+Execute a successful chain's prepared programs from leaf to root with one shared evidence
+event. Tags append in that order; later metadata overwrites earlier metadata. A failed chain
+has no post-match event. Reserve the event slot before its first effect, and publish the
+completed event after all actions succeed. Macro results and namespace bindings are copied
+into monotonic reserved storage before reusing expansion scratch. `initcol` binds an IP,
+global or resource key, as the pinned action does; it does not access a database or authorize
+unimplemented external collection selectors or mutations.
+
+`deny` records a would-deny decision in Audit and denies in Enforce. Status 200 becomes 403
+when a denial has no alternate status. `pass` never clears transaction denial. Evidence
+logging flags and audit-engine overrides remain separate from that decision. Evidence
+capacity or action failure poisons the action and evaluation states; no partial event is
+published as complete. Earlier TX writes remain failure evidence, not resumable execution.
+
+*Lemma (post-match lifetime and order).* A validated unwind contains adjacent decreasing
+indices belonging to one rule ID and phase. Iterating it is bounded by chain depth and has
+the same leaf-to-root order as recursive reference unwinding. Copying expanded strings
+before the next expansion preserves earlier event fields and tag occurrences. Publication
+after the last successful action prevents a failed suffix from becoming a completed event.
+These statements do not establish HTTP entity acquisition or authorization to activate a
+complete generation.
+
 #block(breakable: false, table(
   columns: (2fr, 4fr),
   [Operator family], [CRS 4.30.0 names],

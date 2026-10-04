@@ -225,8 +225,43 @@ fn conditionProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
         .argument_output = &argument,
         .budget = budget,
     }, &unwind) catch return false;
+    if (result.matched and !postProbe(allocator, &source.conditions[0], .{
+        .context = &context,
+        .snapshot = &snapshot,
+        .count = &count,
+        .transforms = .{ &first, &second },
+        .prefixes = &prefixes,
+        .pieces = &pieces,
+        .key_output = &key,
+        .value_output = &value,
+        .argument_output = &argument,
+        .budget = budget,
+    })) return false;
     cursor.complete(result.matched) catch return false;
     if ((cursor.next(budget) catch return false) != null) return false;
     const score = (store.get("score", budget) catch return false) orelse "";
     return result.matched and std.mem.eql(u8, score, "1");
+}
+
+fn postProbe(
+    allocator: std.mem.Allocator,
+    source: *const crs.model.Condition,
+    frame: crs.condition.Frame,
+) bool {
+    var program = crs.post_actions.compile(allocator, source) catch return false;
+    defer program.deinit();
+    var exclusions: [2]crs.controls.Exclusion = undefined;
+    var events: [1]crs.action_state.Event = undefined;
+    var tags: [2][]const u8 = undefined;
+    var bytes: [64]u8 = undefined;
+    var state = crs.action_state.State.init(&exclusions, &events, &tags, &bytes, true);
+    crs.post_actions.execute(&program, .{
+        .context = frame.context,
+        .state = &state,
+        .pieces = frame.pieces,
+        .key_output = frame.key_output,
+        .value_output = frame.value_output,
+        .budget = frame.budget,
+    }) catch return false;
+    return state.event_used == 1;
 }

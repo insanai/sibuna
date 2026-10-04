@@ -367,6 +367,21 @@ test "every stock transaction control prepares a typed bounded operation" {
     try std.testing.expect(count > 10);
 }
 
+test "every stock full-match program prepares controls metadata and disruption" {
+    const actions = @import("post_actions.zig");
+    var builder = compiler.Compiler.init(std.testing.allocator, .{});
+    defer builder.deinit();
+    for (fixture.sources) |file| try builder.addSource(file.path, file.bytes);
+    var plan = try builder.finish();
+    defer plan.deinit();
+    for (plan.conditions) |*condition| {
+        var program = try actions.compile(std.testing.allocator, condition);
+        defer program.deinit();
+        try std.testing.expectEqual(condition.id, program.id);
+        try std.testing.expectEqual(condition.phase, program.phase);
+    }
+}
+
 test "every stock address operator compiles without mapping IPv4 into IPv6" {
     const addresses = @import("address_set.zig");
     var builder = compiler.Compiler.init(std.testing.allocator, .{});
