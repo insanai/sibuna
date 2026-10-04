@@ -1065,6 +1065,29 @@ pointer used by later acquisitions and does not mutate that storage. Reference o
 prevents reclamation before release. A response cannot acquire a fresh generation halfway
 through a transaction. Restart publication uses the last completely validated manifest.
 
+Two stable pin cells bound generation lifetime. A serialized publisher replaces only the
+inactive cell when its reader count is zero and its transaction pool has drained. Acquisitions
+increment the selected cell's count and validate the active index again before accessing
+its payload. Both index operations and reader-count operations use sequential consistency;
+acquire/release ordering on separate atomics does not establish that validation proof.
+The cells and their counters are never relocated or reset while workers exist. Reader
+acquisition permits three attempts and at most 4,096 pins; exhaustion returns unavailable.
+
+*Lemma (stable-cell reclamation).* In the sequentially consistent order, a reader whose
+validation precedes replacement has already incremented the cell's count, preventing
+reclamation until release. A late reader whose increment follows the publisher's zero check
+cannot access the retired payload: validation observes another active cell, or observes that
+the same cell has been published again after its new payload is complete. Stable counters
+preserve late increments across that reuse. Releasing the exclusive transaction slot before
+the cell pin ensures both mutable workspace and immutable program borrows have ended.
+Publication may refuse a third outstanding generation rather than wait or reclaim live work.
+
+Closing first stops publication and pins, then retires the pools. The owner cancels or finishes
+and joins every potential reader before freeing the cells, including a worker stalled before
+incrementing a counter. Observing zero counters alone is insufficient to establish shutdown.
+An unpublished candidate can be destroyed directly: destruction closes its empty pool before
+reclamation. Failed publication leaves candidate ownership and the active generation unchanged.
+
 == Theorem 4: no partial activation
 
 A rejected candidate cannot change the active generation when all validation precedes the

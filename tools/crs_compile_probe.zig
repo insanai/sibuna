@@ -410,3 +410,45 @@ pub export fn crsPackageProbe(
     defer package.deinit();
     return 0;
 }
+
+/// Instantiate generation publication and pinned ownership on every supported target.
+pub export fn crsPublicationProbe(
+    allocator: *const std.mem.Allocator,
+    archive: [*]const u8,
+    archive_length: usize,
+    signature: [*]const u8,
+    signature_length: usize,
+    now: u64,
+) u8 {
+    if (archive_length > 8 * 1024 * 1024 or signature_length > 16 * 1024) return 1;
+    const package = crs.release_package.prepare(allocator.*, .{
+        .archive = archive[0..archive_length],
+        .signature = signature[0..signature_length],
+        .version = .{ .major = 4, .minor = 30, .patch = 0 },
+        .now = now,
+    }) catch return 2;
+    const candidate = crs.generation.Generation.create(allocator.*, package, .{
+        .revision = 1,
+        .activation = .{ .mode = .audit },
+        .observation = .request_response,
+        .slots = 1,
+        .reservation = 128 * 1024 * 1024,
+    }) catch {
+        package.deinit();
+        return 3;
+    };
+    var publisher: crs.publication.Publisher = .{};
+    defer {
+        publisher.close() catch unreachable;
+        publisher.deinit();
+    }
+    publisher.publish(candidate) catch {
+        candidate.deinit();
+        return 4;
+    };
+    var lease = publisher.lease() catch return 5;
+    defer lease.release();
+    const metadata = publisher.snapshot() catch return 6;
+    publisher.close() catch return 7;
+    return if (metadata.revision == lease.generation().options.revision) 0 else 8;
+}

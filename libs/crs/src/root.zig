@@ -47,6 +47,8 @@ pub const release_tar = @import("release_tar.zig");
 pub const release_gzip = @import("release_gzip.zig");
 pub const release_version = @import("release_version.zig");
 pub const release_package = @import("release_package.zig");
+pub const generation = @import("generation.zig");
+pub const publication = @import("publication.zig");
 pub const xml_acquisition = @import("xml_acquisition.zig");
 pub const multipart_acquisition = @import("multipart_acquisition.zig");
 pub const bounded_json = @import("bounded_json.zig");
@@ -106,6 +108,7 @@ test {
     _ = release_gzip;
     _ = release_version;
     _ = @import("compiled_allocator.zig");
+    _ = publication;
     _ = xml_acquisition;
     _ = @import("xml_text.zig");
     _ = @import("xml_names.zig");
