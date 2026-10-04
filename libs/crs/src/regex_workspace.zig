@@ -12,6 +12,12 @@ pub const Workspace = struct {
     pub fn init(allocator: std.mem.Allocator, program: *const types.Program) !Workspace {
         const states = program.instructions.len;
         std.debug.assert(states > 0);
+        return initStates(allocator, states);
+    }
+
+    /// One reserved workspace serves every immutable regex in a generation.
+    pub fn initStates(allocator: std.mem.Allocator, states: usize) !Workspace {
+        if (states == 0) return error.ScratchTooSmall;
         if (states > std.math.maxInt(usize) / (4 * @sizeOf(matcher.Thread))) {
             return error.ScratchTooSmall;
         }

@@ -46,6 +46,16 @@ pub const Context = struct {
         self.store.failed = true;
     }
 
+    /// Between phases the connector supplies another immutable acquired view.
+    /// Preserve TX and copied matched values; rebuilding Context would erase them.
+    pub fn acquire(self: *Context, acquired: variables.View, budget: *work.Budget) Error!void {
+        if (self.failed or self.store.failed) return error.TransactionFailed;
+        errdefer self.poison();
+        _ = try Context.init(acquired, self.store, self.scratch);
+        try budget.debit(acquired.entries.len);
+        self.acquired = acquired;
+    }
+
     /// Caller consumes this view before another rebuild. Entries borrow immutable
     /// acquired bytes or monotonic pools, never macro or transformation scratch.
     pub fn view(self: *Context, budget: *work.Budget) Error!variables.View {

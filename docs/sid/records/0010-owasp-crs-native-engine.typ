@@ -364,6 +364,36 @@ Composition introduces no backwards control edge: root cursor advancement and ch
 evaluation remain bounded by their earlier lemmas. This is conditional on complete phase
 inputs; it does not prove an HTTP connector has supplied them or held back its response.
 
+== Reserved transaction slots
+
+Initialize slots in place before serving protected work. A slot owns its arena, acquired
+entity buffers, TX and matched pools, independent merged/snapshot metadata, evidence pools,
+macro buffers, transform buffers, unwind indices and one matcher workspace sized from the
+largest prepared regex. The arena's allocator points at the stable slot owner, not a moved
+temporary. Destroy partial reservations on failure; report retained arena capacity separately
+from compiled program storage and process RSS.
+
+Size transform scratch using each prepared target's collection bound. Raw request and
+response entities have different bounds from parsed fields, while count values fit the
+reserved decimal buffer. Taking the maximum actual target expansion is conservative without
+applying every field transform to the largest unrelated entity. Check all requested payload
+sizes before allocation and retained capacity after allocation against the configured slot
+ceiling. Per-slot ceilings and slot count bound startup reservation; exceeding either cannot
+silently reduce inspection coverage or turn into request-path allocation.
+
+Beginning a transaction resets TX, matched/evidence cursors, controls and work, retaining the
+reserved buffers. A second begin while active is refused. Between phases, replace only the
+acquired view after validating its ownership and charged metadata bound; preserve existing TX
+and copied matched values. Finish ends every transaction borrow before reuse or destruction.
+The connector remains responsible for acquiring complete immutable input and ensuring that
+only one worker owns a slot.
+
+*Lemma (slot separation).* Each arena reservation returns disjoint typed regions, and frame
+assertions exclude overlap with acquired and generation storage. A matcher may swap its
+private lists without changing ownership. Resetting cursors before the next transaction and
+ending all prior borrows prevents old TX or evidence from becoming that transaction's view.
+Replacing acquired metadata cannot alter the monotonic copies retained by TX and matches.
+
 #block(breakable: false, table(
   columns: (2fr, 4fr),
   [Operator family], [CRS 4.30.0 names],

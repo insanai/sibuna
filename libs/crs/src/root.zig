@@ -43,6 +43,7 @@ pub const rule_data = @import("rule_data.zig");
 pub const rule_program = @import("rule_program.zig");
 pub const executor = @import("executor.zig");
 pub const release_signature = @import("release_signature.zig");
+pub const transaction_slot = @import("transaction_slot.zig");
 
 test {
     _ = @import("release_test.zig");
@@ -84,4 +85,5 @@ test {
     _ = rule_program;
     _ = executor;
     _ = release_signature;
+    _ = transaction_slot;
 }

@@ -7,6 +7,7 @@ const condition = @import("condition.zig");
 const post = @import("post_actions.zig");
 const chains = @import("chains.zig");
 const data = @import("rule_data.zig");
+const variables = @import("variables.zig");
 pub const Error = condition.Error || post.Error || chains.Error || data.Error || error{
     InvalidTargetUpdate,
 };
@@ -36,6 +37,26 @@ pub const Program = struct {
     pub fn requiredTransformScratch(self: *const Program, input: usize) Error!usize {
         var required: usize = input;
         for (self.conditions) |*program| {
+            required = @max(required, try program.transforms.requiredScratch(input));
+        }
+        return required;
+    }
+
+    /// Count values fit the reserved decimal buffer; raw entities have different
+    /// bounds from parsed fields. Reserve for each actual target, not every body
+    /// multiplied by transforms that cannot select it.
+    pub fn transformScratch(self: *const Program, bounds: [variables.count]usize) Error!usize {
+        var required: usize = 0;
+        for (self.conditions) |*program| {
+            const targets = if (program.targets) |*targets| targets else continue;
+            var input: usize = 0;
+            for (targets.targets) |target| {
+                const bound = if (target.mode == .count)
+                    20
+                else
+                    bounds[@backingInt(target.collection)];
+                input = @max(input, bound);
+            }
             required = @max(required, try program.transforms.requiredScratch(input));
         }
         return required;
