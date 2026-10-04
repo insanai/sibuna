@@ -20,6 +20,7 @@ pub const Error = regex.types.Error || regex.match.Error || phrases.Error || add
     MissingPhraseFile,
     UnexpectedPhraseFile,
     DiagnosticProfile,
+    UnsupportedDynamicRegex,
 };
 pub const Source = struct {
     kind: model.Operator,
@@ -156,11 +157,16 @@ pub fn compile(allocator: std.mem.Allocator, source: Source, limits: Limits) Err
         return error.UnexpectedPhraseFile;
     }
     return switch (source.kind) {
-        .rx => .{ .regex = try regex.configured(
-            allocator,
-            if (source.argument.len == 0) ".*" else source.argument,
-            .{ .limits = limits.regex, .flags = .{ .dotall = true, .multiline = true } },
-        ) },
+        .rx => if (std.mem.indexOf(u8, source.argument, "%{") != null)
+            error.UnsupportedDynamicRegex
+        else if (source.argument.len == 0)
+            .{ .literal = try literal.compile(allocator, .unconditional_match, "") }
+        else
+            .{ .regex = try regex.configured(
+                allocator,
+                source.argument,
+                .{ .limits = limits.regex, .flags = .{ .dotall = true, .multiline = true } },
+            ) },
         .pm => .{ .phrases = try phrase_source.inlineWords(
             allocator,
             source.argument,

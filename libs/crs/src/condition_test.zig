@@ -88,6 +88,24 @@ test "unconditional actions rebuild the view between ordered writes" {
     try std.testing.expectEqualStrings("1", (try slot.get("b")).?);
 }
 
+test "empty regex operators succeed without replacing older capture keys" {
+    var program = try prepare(std.testing.allocator,
+        \\SecRule ARGS "@rx" "id:1,capture,setvar:tx.score=+1"
+    );
+    defer program.deinit();
+    const input = [_]variables.Entry{.{ .collection = .args, .key = "q", .value = "uncaptured" }};
+    var slot: support.Slot = .{};
+    try slot.init(&input);
+    try slot.store.put("0", "old capture", &slot.budget);
+    try std.testing.expect(try program.evaluate(slot.frame()));
+    try std.testing.expectEqualStrings("1", (try slot.get("score")).?);
+    try std.testing.expectEqualStrings("old capture", (try slot.get("0")).?);
+    const view = try slot.context.view(&slot.budget);
+    try std.testing.expectEqualStrings("uncaptured", try view.lookup(.{
+        .collection = .matched_var,
+    }, &slot.budget));
+}
+
 test "missing coverage and every exhausted budget poison continued evaluation" {
     var program = try prepare(std.testing.allocator,
         \\SecRule ARGS "@contains x" "id:1,t:lowercase,setvar:tx.score=+1"

@@ -601,8 +601,13 @@ selected compatibility profile. Passing a finite test corpus is evidence of comp
 proof of detection of every possible attack.
 
 The initial regex reference is ModSecurity 3.0.14’s implementation, with the LF byte
-profile and `DOTALL | MULTILINE` compilation defaults. An empty expression becomes `.*`;
-collection-key regexes additionally use case-insensitive matching. Scoped pattern options
+profile and `DOTALL | MULTILINE` compilation defaults. Its regex constructor substitutes
+`.*` for an empty expression; collection-key regexes additionally use case-insensitive
+matching. The `@rx` operator has a preceding empty-argument fast path: it succeeds without
+running that regex or producing captures. Preserve that distinction in the prepared
+operator. Runtime macro patterns need their own bounded compilation contract; until that
+exists, reject them explicitly rather than interpreting macro source as a static regex.
+Scoped pattern options
 can override those defaults. The reference manual’s older dot/end-anchor description does
 not match this implementation, so differential checks pin the source behavior explicitly.
 Generic PCRE-default tests alone are insufficient to establish SecLang compatibility.

@@ -55,6 +55,8 @@ test "prepared predicates expose only the pinned operator capture contracts" {
         .{ .kind = .ge, .argument = "1", .input = "1" },
         .{ .kind = .lt, .argument = "1", .input = "0" },
         .{ .kind = .unconditional_match, .input = "" },
+        .{ .kind = .rx, .input = "" },
+        .{ .kind = .rx, .input = "an empty pattern leaves this uncaptured" },
         .{ .kind = .validate_byte_range, .argument = "32-126", .input = "\x00" },
         .{ .kind = .validate_byte_range, .argument = "32-126", .input = "a", .matched = false },
         .{ .kind = .validate_url_encoding, .input = "%bad%" },
@@ -97,6 +99,14 @@ test "compiled regex retains group offsets without borrowing mutable scratch" {
         .input = "abc",
         .budget = &budget,
     }));
+}
+
+test "dynamic regex arguments reject explicitly instead of matching their macro spelling" {
+    try std.testing.expectError(error.UnsupportedDynamicRegex, operators.compile(
+        std.testing.allocator,
+        .{ .kind = .rx, .argument = "%{TX.pattern}" },
+        .{},
+    ));
 }
 
 test "owned static literal needles require no transaction prefix scratch" {
