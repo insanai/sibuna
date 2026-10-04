@@ -20,6 +20,7 @@ pub const phrases = @import("phrases.zig");
 pub const phrases_source = @import("phrases_source.zig");
 pub const address_set = @import("address_set.zig");
 pub const injection_dictionary = @import("injection_dictionary.zig");
+pub const sql_tokens = @import("sql_tokens.zig");
 
 test {
     _ = @import("release_test.zig");
@@ -41,4 +42,5 @@ test {
     _ = phrases_source;
     _ = address_set;
     _ = injection_dictionary;
+    _ = sql_tokens;
 }

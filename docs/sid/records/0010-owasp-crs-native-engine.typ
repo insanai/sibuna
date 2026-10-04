@@ -532,6 +532,25 @@ read outside their supplied length. The table lookup is not a SQLi decision: the
 still requires its pinned tokenization, folding, context passes, fingerprint and whitelist.
 CRS capture stores the resulting fingerprint in transaction-owned memory.
 
+SQL tokenization uses one bounded context shared by its lexical routines: borrowed input,
+caller-owned prefix scratch, cursor, dialect/quote selection, counters and the transaction
+budget. Tokens own a 32-byte value array and retain the reference's maximum 31-byte value,
+source position, variable prefix count and opening/closing quote markers. This is detector
+state, not truncation of forwarded application data. Nonempty tokens consume input; skipped
+control bytes also advance the cursor. A resource failure permanently terminates that
+tokenization context, preventing callers from treating a later empty result as success.
+
+The port retains the pinned comment, operator, number, bracket-word, variable and quoted
+string grammars, including C-string membership quirks for embedded NUL. Oracle alternative
+quotes retain the reference's signed-byte delimiter restriction explicitly. Quoted strings
+scan forward; checking a preceding backslash run is charged to that disjoint input run.
+PostgreSQL dollar-string delimiters can be long. Use the already proved length-aware KMP
+matcher with caller-owned prefix scratch instead of the reference's potentially quadratic
+substring scan; insufficient scratch is an explicit capacity error. Token copying is bounded
+by 31 bytes and every input visit, dictionary comparison and copy is charged. Token parity
+must compare kind, position, bytes, prefix counts and quote markers, not just the final
+attack Boolean. Tokenization and dictionary lookup alone are not an executable detector.
+
 == Lemma 4: sound prefiltering
 
 A candidate regex may be skipped by a literal prefilter only when the compiler has proven
@@ -810,6 +829,6 @@ may contact the authors. Adding rules does not replace the existing component li
 - #link("https://www.pcre.org/current/doc/html/pcre2pattern.html")[PCRE2 pattern semantics].
 - #link("https://swtch.com/~rsc/regexp/regexp1.html")[Russ Cox: Regular Expression Matching Can Be Simple And Fast].
 - #link("https://swtch.com/~rsc/regexp/regexp2.html")[Russ Cox: Regular Expression Matching: the Virtual Machine Approach].
-- #link("https://github.com/libinjection/libinjection")[libinjection source, vectors and BSD license].
+- #link("https://github.com/libinjection/libinjection/tree/b9fcaaf9e50e9492807b23ffcc6af46ee1f203b9")[Pinned libinjection source, vectors and BSD license].
 - SID 0001 (discussion process), SID 0003 (policy), SID 0004 (inspection), SID 0005
   (storage), SID 0006 (mathematics), SID 0007 (console) and SID 0009 (request framing).

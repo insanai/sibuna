@@ -50,6 +50,13 @@ pub export fn crsCompileProbe(allocator: *const std.mem.Allocator) u8 {
     defer addresses.deinit();
     _ = addresses.contains("::1", &budget) catch return 17;
     _ = crs.injection_dictionary.lookup("SELECT", &budget) catch return 18;
+    var lexical: crs.sql_tokens.Context = .{
+        .input = "SELECT 1",
+        .prefixes = &prefixes,
+        .budget = &budget,
+    };
+    var token: crs.sql_tokens.Token = .{};
+    _ = crs.sql_tokens.next(&lexical, &token) catch return 19;
     const result = crs.regex.match.search(
         &program,
         "xx",
