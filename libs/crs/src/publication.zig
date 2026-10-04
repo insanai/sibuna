@@ -27,6 +27,7 @@ pub const Snapshot = struct {
     thresholds: config.Thresholds,
     version: ?versions.Version,
     digest: ?[32]u8,
+    operator_digest: ?[32]u8,
     compiled_peak: usize,
     reservation: usize,
 };
@@ -104,6 +105,7 @@ pub const Publisher = struct {
             .thresholds = generation.options.thresholds,
             .version = if (generation.package) |package| package.version else null,
             .digest = if (generation.package) |package| package.receipt.digest else null,
+            .operator_digest = if (generation.package) |package| package.operator_digest else null,
             .compiled_peak = if (generation.package) |package| package.bounded.peak else 0,
             .reservation = if (generation.pool_live) generation.pool.reserved_bytes else 0,
         };

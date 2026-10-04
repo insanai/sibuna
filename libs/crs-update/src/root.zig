@@ -12,6 +12,7 @@ pub const Config = struct {
     io: Io,
     stopping: *const std.atomic.Value(bool),
     deadline_ms: u32 = 120_000,
+    configuration: []const u8 = "",
 };
 pub const Prepared = struct {
     allocator: std.mem.Allocator,
@@ -83,6 +84,7 @@ const Download = struct {
 /// A missing version resolves the latest stable tag over TLS. Both subsequent URLs
 /// are reconstructed locally and the pinned signer authenticates the archive itself.
 pub fn prepare(config: Config, version: ?crs.release_version.Version) Error!Prepared {
+    if (config.configuration.len > 64 * 1024) return error.OperatorConfigurationLimit;
     if (config.deadline_ms == 0 or config.deadline_ms > 300_000)
         return error.InvalidDownloadDeadline;
     const job: Download = .{
@@ -114,6 +116,7 @@ pub fn prepare(config: Config, version: ?crs.release_version.Version) Error!Prep
         .signature = signature,
         .version = selected,
         .now = @intCast(seconds),
+        .configuration = config.configuration,
     });
     errdefer package.deinit();
     _ = try job.check();

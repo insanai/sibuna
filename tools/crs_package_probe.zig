@@ -23,6 +23,7 @@ fn run(init: std.process.Init, out: *Io.Writer) !u8 {
     const version = try crs.release_version.Version.parse(args.next() orelse
         return error.MissingVersion);
     const now = try std.fmt.parseInt(u64, args.next() orelse return error.MissingClock, 10);
+    const configuration_path = args.next();
     if (args.next() != null) return error.TooManyArguments;
     const archive = try Io.Dir.cwd().readFileAlloc(
         init.io,
@@ -38,18 +39,29 @@ fn run(init: std.process.Init, out: *Io.Writer) !u8 {
         .limited(16 * 1024),
     );
     defer init.gpa.free(signature);
+    const configuration = if (configuration_path) |path|
+        try Io.Dir.cwd().readFileAlloc(init.io, path, init.gpa, .limited(64 * 1024 + 2))
+    else
+        try init.gpa.alloc(u8, 0);
+    defer init.gpa.free(configuration);
     const package = try crs.release_package.prepare(init.gpa, .{
         .archive = archive,
         .signature = signature,
         .version = version,
         .now = now,
+        .configuration = configuration,
     });
     defer package.deinit();
+    var operator_digest: [32]u8 = undefined;
+    std.crypto.hash.sha2.Sha256.hash(configuration, &operator_digest, .{});
+    if (!std.mem.eql(u8, &operator_digest, &package.operator_digest))
+        return error.OperatorDigestMismatch;
     // Compilation must own every source/table byte. Poisoning both inputs checks
     // that evaluation does not retain the archive or its detached signature.
     @memset(archive, '!');
     @memset(signature, '!');
-    try evaluate(init.gpa, &package.program);
+    @memset(configuration, '!');
+    try evaluate(init.gpa, &package.program, configuration.len != 0);
     try out.print("prepared {d} {d} {x} {d}\n", .{
         package.program.conditions.len,
         package.program.regex_states,
@@ -59,7 +71,11 @@ fn run(init: std.process.Init, out: *Io.Writer) !u8 {
     return 0;
 }
 
-fn evaluate(allocator: std.mem.Allocator, program: *const crs.rule_program.Program) !void {
+fn evaluate(
+    allocator: std.mem.Allocator,
+    program: *const crs.rule_program.Program,
+    configured: bool,
+) !void {
     var slot: crs.transaction_slot.Slot = undefined;
     try slot.init(allocator, program, .{});
     defer slot.deinit();
@@ -79,6 +95,11 @@ fn evaluate(allocator: std.mem.Allocator, program: *const crs.rule_program.Progr
             },
         });
         defer slot.finish();
+        if (configured) {
+            const marker = (try slot.store.get("operator_marker", &slot.budget)) orelse
+                return error.OperatorMarkerMissing;
+            if (!std.mem.eql(u8, marker, "present")) return error.OperatorMarkerMismatch;
+        }
         const result = try transaction.requestBody("");
         if ((result == .denied) != (index == 1)) return error.PackageDecisionMismatch;
         if (index == 1) {

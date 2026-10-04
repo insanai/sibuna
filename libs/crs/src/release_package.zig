@@ -17,12 +17,14 @@ pub const Error = signatures.Error || versions.Error || gzip.Error || tar.Error 
     MissingReleaseRules,
     ReleaseVersionMismatch,
     CompiledProgramLimit,
+    OperatorConfigurationLimit,
 };
 pub const Input = struct {
     archive: []const u8,
     signature: []const u8,
     version: versions.Version,
     now: u64,
+    configuration: []const u8 = "",
 };
 pub const Package = struct {
     allocator: std.mem.Allocator,
@@ -30,6 +32,7 @@ pub const Package = struct {
     program: rules.Program,
     receipt: signatures.Receipt,
     version: versions.Version,
+    operator_digest: [32]u8 = @splat(0),
 
     pub fn deinit(self: *Package) void {
         const allocator = self.allocator;
@@ -44,6 +47,7 @@ pub const compiled_capacity = 64 * 1024 * 1024;
 /// The returned pointer has stable allocator identity. Moving the payload budget
 /// by value would invalidate allocator interfaces retained by the prepared program.
 pub fn prepare(allocator: std.mem.Allocator, input: Input) Error!*Package {
+    if (input.configuration.len > 64 * 1024) return error.OperatorConfigurationLimit;
     var verification: signatures.Scratch = .{};
     const verifier = try signatures.Verifier.init(&verification);
     const receipt = try verifier.verify(input.archive, input.signature, input.now, &verification);
@@ -73,13 +77,16 @@ pub fn prepare(allocator: std.mem.Allocator, input: Input) Error!*Package {
         .receipt = receipt,
         .version = input.version,
     };
-    package.program = compile(package.bounded.allocator(), entries) catch |err| switch (err) {
-        error.OutOfMemory => return if (package.bounded.last_failure == .ceiling)
-            error.CompiledProgramLimit
-        else
-            error.OutOfMemory,
-        else => return err,
-    };
+    std.crypto.hash.sha2.Sha256.hash(input.configuration, &package.operator_digest, .{});
+    const owned = package.bounded.allocator();
+    package.program = compile(owned, entries, input.configuration) catch |err|
+        switch (err) {
+            error.OutOfMemory => return if (package.bounded.last_failure == .ceiling)
+                error.CompiledProgramLimit
+            else
+                error.OutOfMemory,
+            else => return err,
+        };
     errdefer package.program.deinit();
     const marker = "OWASP_CRS/";
     if (!std.mem.startsWith(u8, package.program.signature, marker) or
@@ -88,15 +95,19 @@ pub fn prepare(allocator: std.mem.Allocator, input: Input) Error!*Package {
     return package;
 }
 
-fn compile(allocator: std.mem.Allocator, entries: []const tar.Entry) Error!rules.Program {
-    var configuration: ?[]const u8 = null;
+fn compile(
+    allocator: std.mem.Allocator,
+    entries: []const tar.Entry,
+    configuration: []const u8,
+) Error!rules.Program {
+    var setup: ?[]const u8 = null;
     var selected: [tar.maximum_entries]tar.Entry = undefined;
     var files: [tar.maximum_entries]data.File = undefined;
     var count: usize = 0;
     var file_count: usize = 0;
     for (entries) |entry| {
         if (entry.kind != .file) continue;
-        if (std.mem.eql(u8, entry.path, "crs-setup.conf.example")) configuration = entry.bytes;
+        if (std.mem.eql(u8, entry.path, "crs-setup.conf.example")) setup = entry.bytes;
         if (!std.mem.startsWith(u8, entry.path, "rules/")) continue;
         const name = entry.path[6..];
         if (std.mem.indexOfScalar(u8, name, '/') != null) return error.InvalidArchivePath;
@@ -116,8 +127,9 @@ fn compile(allocator: std.mem.Allocator, entries: []const tar.Entry) Error!rules
     }.less);
     var builder = compiler.Compiler.init(allocator, .{});
     defer builder.deinit();
-    try builder.addSource("crs-setup.conf.example", configuration orelse
+    try builder.addSource("crs-setup.conf.example", setup orelse
         return error.MissingReleaseConfiguration);
+    if (configuration.len != 0) try builder.addSource("sibuna-operator.conf", configuration);
     for (selected[0..count]) |entry| try builder.addSource(entry.path, entry.bytes);
     var plan = try builder.finish();
     defer plan.deinit();

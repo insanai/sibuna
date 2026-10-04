@@ -21,6 +21,7 @@ fn package(revision: u64) !*packages.Package {
         .program = undefined,
         .receipt = .{ .digest = @splat(@intCast(revision)), .created = 1, .archive_bytes = 1 },
         .version = .{ .major = 4, .minor = 30, .patch = 0 },
+        .operator_digest = @splat(@intCast(revision + 16)),
     };
     var source: [128]u8 = undefined;
     const text = try std.fmt.bufPrint(&source, "SecAction \"id:1,setvar:tx.revision={d}\"", .{
@@ -117,6 +118,7 @@ test "publication retains leased generations and bounds outstanding replacement"
     const metadata = try publisher.snapshot();
     try std.testing.expectEqual(@as(u64, 3), metadata.revision);
     try std.testing.expectEqual(@as(u8, 3), metadata.digest.?[0]);
+    try std.testing.expectEqual(@as(u8, 19), metadata.operator_digest.?[0]);
     try std.testing.expect(metadata.reservation > 0);
 }
 
