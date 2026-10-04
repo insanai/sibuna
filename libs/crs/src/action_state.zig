@@ -88,6 +88,8 @@ pub const State = struct {
         event.would_deny = true;
         self.would_deny = true;
         if (self.status == 200) self.status = 403;
-        if (self.enforce) self.denied = true;
+        // Logging records intent after publication; it cannot retroactively deny
+        // bytes already delivered. An earlier enforcing denial remains retained.
+        if (self.enforce and event.phase != .logging) self.denied = true;
     }
 };

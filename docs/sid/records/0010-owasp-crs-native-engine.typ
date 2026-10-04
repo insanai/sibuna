@@ -1280,7 +1280,7 @@ one, the reference media prefixes select MULTIPART or URLENCODED; phase-one cont
 subsequently override processor selection. Strict MIME/body validation belongs to the entity
 boundary, before phase-two publication.
 
-*Lemma 29 (metadata separation).* Query parsing cannot reinterpret an encoded path
+*Lemma (metadata separation).* Query parsing cannot reinterpret an encoded path
 delimiter as a transport delimiter, and scratch reuse cannot change already acquired URI
 metadata.
 
@@ -1327,7 +1327,7 @@ complete view only after every contribution succeeds; repeated body acquisition 
 ordering error. Entity and work limits remain independent: a body fitting its byte ceiling
 may exhaust the shared parser/matcher budget.
 
-*Lemma 30 (entity failure isolation).* A failed entity acquisition cannot produce a valid
+*Lemma (entity failure isolation).* A failed entity acquisition cannot produce a valid
 negative phase-two result or overwrite a retained raw entity with parser scratch.
 
 *Proof.* Each parser writes only reserved scratch and monotonic owned fields, while raw
@@ -1346,6 +1346,30 @@ WebSocket upgrades inspect the HTTP handshake and then become a tunnel. CRS does
 inspect WebSocket frames. Server-sent events and other indefinite responses use an explicit
 streaming profile without phase-4 body enforcement. The UI reports the missing coverage.
 A completed body must never be required for a tunnel or an intentionally streaming response.
+
+The pure HTTP transaction coordinator couples successful acquisition to exactly one phase
+execution. Its state advances from request headers through request body, response headers
+and response body; repeated or out-of-order transitions poison the transaction. Response
+metadata keeps duplicate occurrences and the validated three-digit status. A response entity
+uses its independent byte ceiling and the same retained work ledger and generation.
+
+Finalization names its coverage: inspected, headers profile, local response, origin unavailable,
+handshake only or streaming excluded. Inspected completion requires the response-body phase;
+handshake/streaming endings require completed response-header evaluation. The headers
+profile cannot acquire a body. Omitted body coverage remains unavailable instead of being
+fabricated as a complete empty response. Logging executes once with retained TX and matched
+state, including after an enforcing request denial. A phase-five deny records would-deny
+intent, never a new delivery denial; an earlier denial remains retained.
+
+*Lemma (publication order).* A successful full transaction cannot skip an acquisition
+boundary without declaring an explicit partial-coverage ending.
+
+*Proof.* Each transition requires the preceding coordinator phase, complete acquisition and
+view publication before execution. Failure poisons its builder, context and state. Full inspected
+completion requires phase four. Every other permitted completion has a named coverage
+reason; none supplies absent body bytes to selectors. Logging runs only after a permitted
+ending and records completion without undoing publication. The lease owner retains the slot
+until final evidence consumption ends. $square$
 
 Forward-auth observes the authenticating proxy’s forwarded request metadata, not the origin
 body or response. It offers a named headers profile and reports phases 2–4 as unavailable.

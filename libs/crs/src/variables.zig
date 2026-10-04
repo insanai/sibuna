@@ -34,6 +34,16 @@ pub const View = struct {
     /// Macros require a unique value. Selectors instead iterate all entries.
     /// The C reference's multimap ordering is not a portable duplicate tie-breaker.
     pub fn lookup(self: *const View, reference: Reference, budget: *work.Budget) Error![]const u8 {
+        return (try self.lookupOptional(reference, budget)) orelse "";
+    }
+
+    /// Connector metadata distinguishes an absent header from a present empty
+    /// header. Keep the same uniqueness and coverage checks as macro lookup.
+    pub fn lookupOptional(
+        self: *const View,
+        reference: Reference,
+        budget: *work.Budget,
+    ) Error!?[]const u8 {
         try budget.debit(1);
         try self.require(reference.collection);
         var found: ?[]const u8 = null;
@@ -46,7 +56,7 @@ pub const View = struct {
             if (found != null) return error.AmbiguousVariable;
             found = entry.value;
         }
-        return found orelse "";
+        return found;
     }
 };
 

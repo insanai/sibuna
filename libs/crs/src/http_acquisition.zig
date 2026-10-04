@@ -8,6 +8,7 @@ const form = @import("form_acquisition.zig");
 const decode = @import("percent_decode.zig");
 const cookies = @import("cookie_acquisition.zig");
 const work = @import("work.zig");
+const decimal = @import("decimal_format.zig");
 pub const Error = form.Error || error{ InvalidHttpMetadata, AmbiguousContentType };
 pub const Request = struct {
     method: []const u8,
@@ -18,6 +19,31 @@ pub const Request = struct {
     id: []const u8,
     headers: []const http.Header,
 };
+pub const Response = struct { status: u16, headers: []const http.Header };
+
+pub fn response(
+    input: Response,
+    builder: *values.Builder,
+    budget: *work.Budget,
+) Error!void {
+    errdefer builder.poison();
+    if (input.status < 100 or input.status > 999) return error.InvalidHttpMetadata;
+    var digits: [decimal.capacity(u16)]u8 = undefined;
+    try builder.scalar(.response_status, try decimal.write(
+        u16,
+        input.status,
+        &digits,
+        budget,
+    ), budget);
+    for (input.headers) |header| {
+        if (header.name.len == 0) return error.InvalidHttpMetadata;
+        try builder.named(.response_headers, .response_headers_names, .{
+            .key = header.name,
+            .value = header.value,
+        }, budget);
+    }
+    try builder.complete(&.{ .response_status, .response_headers, .response_headers_names });
+}
 
 pub fn request(
     input: Request,

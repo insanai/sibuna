@@ -374,9 +374,7 @@ pub export fn crsHttpProbe(
     var slot: crs.transaction_slot.Slot = undefined;
     slot.init(allocator.*, &program, .{}) catch return 5;
     defer slot.deinit();
-    var execution = slot.begin(.{ .entries = &.{} }, true) catch return 6;
-    defer slot.finish();
-    crs.http_acquisition.request(.{
+    var transaction = crs.http_transaction.Transaction.begin(&slot, .full, true, .{
         .method = "POST",
         .target = "/probe?q=one&q=two",
         .protocol = "HTTP/1.1",
@@ -384,16 +382,12 @@ pub export fn crsHttpProbe(
         .client = "127.0.0.1",
         .id = "probe",
         .headers = &.{},
-    }, &slot.input, slot.formScratch(), &slot.budget) catch return 7;
-    slot.acquire(slot.input.view() catch return 8) catch return 9;
-    _ = execution.run(.request_headers) catch return 10;
-    const descriptor = crs.entity_acquisition.Descriptor.parse(
-        null,
-        @fromBackingInt(@as(u2, @intCast(processor))),
-        &slot.budget,
-    ) catch return 11;
-    crs.entity_acquisition.request(&slot, input[0..length], descriptor) catch return 12;
-    slot.acquire(slot.input.view() catch return 13) catch return 14;
-    _ = execution.run(.request_body) catch return 15;
+    }) catch return 6;
+    defer slot.finish();
+    slot.state.control.processor = @fromBackingInt(@as(u2, @intCast(processor)));
+    _ = transaction.requestBody(input[0..length]) catch return 7;
+    _ = transaction.responseHeaders(.{ .status = 200, .headers = &.{} }) catch return 8;
+    _ = transaction.responseBody(input[0..length]) catch return 9;
+    transaction.finish(.inspected) catch return 10;
     return 0;
 }

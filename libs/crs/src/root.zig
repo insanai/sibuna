@@ -53,11 +53,13 @@ pub const acquired_values = @import("acquired_values.zig");
 pub const cookie_acquisition = @import("cookie_acquisition.zig");
 pub const http_acquisition = @import("http_acquisition.zig");
 pub const entity_acquisition = @import("entity_acquisition.zig");
+pub const http_transaction = @import("http_transaction.zig");
 pub const transaction_pool = @import("transaction_pool.zig");
 pub const transaction_slot = @import("transaction_slot.zig");
 
 test {
     _ = @import("release_test.zig");
+    _ = @import("stock_transaction_test.zig");
     _ = regex;
     _ = work;
     _ = compiler;
@@ -107,6 +109,7 @@ test {
     _ = acquired_values;
     _ = http_acquisition;
     _ = entity_acquisition;
+    _ = http_transaction;
     _ = transaction_pool;
     _ = transaction_slot;
 }
