@@ -65,6 +65,8 @@ def anubis_command(context, protected, mode, scheme):
                "--policy-fname", str(policy), "--slog-level", "ERROR", "--cookie-secure=false"]
     if scheme == "hs512":
         command += ["--hs512-secret", "benchmark-synthetic-signing-key-" + "0" * 64]
+    if not protected:
+        command += ["--use-remote-address"]
     return command, {"policy": policy.read_text(), "token_scheme": scheme,
                      "upstream_keepalive": "enabled; native Go transport defaults"}
 
