@@ -36,7 +36,11 @@ pub const Reader = struct {
             self.fault = start;
             const end = std.mem.indexOfScalarPos(u8, self.source, self.offset, '\n') orelse
                 self.source.len;
-            const first = std.mem.trim(u8, self.source[self.offset..end], " \t\r");
+            const physical = self.source[self.offset..end];
+            // Comments do not execute, but source validation must reject NUL
+            // consistently before any text is discarded or passed to tooling.
+            if (std.mem.indexOfScalar(u8, physical, 0) != null) return error.NulByte;
+            const first = std.mem.trim(u8, physical, " \t\r");
             if (first.len == 0 or first[0] == '#') {
                 self.advance(end);
                 continue;
@@ -74,6 +78,14 @@ pub const Reader = struct {
         self.line += 1;
     }
 };
+
+test "source NUL rejection also covers ignored comments" {
+    var reader: Reader = .{ .source = "# ignored\x00text\nSecMarker NEXT\n" };
+    var scratch: [64]u8 = undefined;
+    try std.testing.expectError(error.NulByte, reader.next(&scratch));
+    try std.testing.expectEqual(@as(usize, 1), reader.fault.line);
+    try std.testing.expectEqual(@as(usize, 0), reader.offset);
+}
 
 pub const Token = struct {
     /// Content excludes the outer quote. Regex/config escapes remain intact.
