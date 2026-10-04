@@ -111,6 +111,27 @@ test "SecLang defaults use multiline dotall and empty-expression substitution" {
     try fixture.expect("HEADER", "HEADER");
 }
 
+test "shared regex workspace charges active states and survives program changes" {
+    const allocator = std.testing.allocator;
+    var large = try regex.compile(allocator, "z{2000}", .{});
+    defer large.deinit();
+    var small = try regex.compile(allocator, "a", .{});
+    defer small.deinit();
+    var workspace = try regex.Workspace.init(allocator, &large);
+    defer workspace.deinit();
+    var budget: work.Budget = .{ .remaining = 600 };
+    const first = try regex.match.search(&small, "a", &workspace.scratch, &budget);
+    try std.testing.expect(first != null);
+    budget.remaining = 100_000;
+    try std.testing.expectEqual(
+        @as(?regex.match.Match, null),
+        try regex.match.search(&large, "zz", &workspace.scratch, &budget),
+    );
+    budget.remaining = 600;
+    const reused = try regex.match.search(&small, "a", &workspace.scratch, &budget);
+    try std.testing.expect(reused != null);
+}
+
 test "epsilon cycles and hostile regexes terminate within their work budget" {
     var cycle = try Fixture.init("(?:a?)*");
     defer cycle.deinit();

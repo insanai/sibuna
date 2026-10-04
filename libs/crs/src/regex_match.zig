@@ -96,9 +96,12 @@ pub fn search(
     scratch: *Scratch,
     budget: *work.Budget,
 ) Error!?Match {
-    try scratch.validate(program.instructions.len);
-    try budget.debit(scratch.visited.len);
-    @memset(scratch.visited, types.unset);
+    const states = program.instructions.len;
+    try scratch.validate(states);
+    // One transaction reserves the largest program's workspace. Reset and charge
+    // only this program's states; unused capacity must not consume each rule's budget.
+    try budget.debit(states);
+    @memset(scratch.visited[0..states], types.unset);
     scratch.used = 0;
     scratch.next_used = 0;
     var context: Context = .{
