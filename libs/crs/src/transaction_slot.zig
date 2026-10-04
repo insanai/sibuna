@@ -15,6 +15,7 @@ const acquired = @import("acquired_values.zig");
 const buffers = @import("buffers.zig");
 const json = @import("json_acquisition.zig");
 const form = @import("form_acquisition.zig");
+const multipart = @import("multipart_head.zig");
 pub const Error = rules.Error || error{
     InvalidSlotLimits,
     ReservationLimit,
@@ -113,6 +114,15 @@ pub const Slot = struct {
     pub fn formScratch(self: *Slot) form.Scratch {
         std.debug.assert(self.active);
         return .{ .key = self.frame.key_output, .value = self.frame.value_output };
+    }
+
+    pub fn multipartScratch(self: *Slot) multipart.Scratch {
+        std.debug.assert(self.active);
+        return .{
+            .name = self.frame.key_output,
+            .filename = self.frame.value_output,
+            .extended = self.frame.argument_output,
+        };
     }
 
     pub fn jsonScratch(self: *Slot) json.Scratch {

@@ -1179,6 +1179,43 @@ can refuse an entity below its byte ceiling; byte limits do not promise a given 
 The compiler version and JSON qualification fixtures must change together if scanner storage
 or tokenization contracts change.
 
+== Complete multipart acquisition
+
+Share MIME token and parameter syntax in the pure text library, retaining the policy library's
+compatibility facade. The complete processor scans delimiters using the existing charged KMP
+primitive with at most 74 pattern bytes. A matching prefix is a delimiter only with valid
+closing/line-ending syntax; lookalike prefixes inside binary files remain payload. Preamble,
+epilogue and transport padding are bounded by the entity reservation. Require a closing
+delimiter; partial bodies cannot publish complete coverage.
+
+Each part has at most 8 KiB of headers by default and the entity has at most 256 parts.
+Header names use MIME tokens; reject control bytes, folded lines, duplicate Content-Disposition,
+duplicate Content-Type, duplicate transfer encodings and conflicting disposition parameters.
+Field values populate POST arguments, preserving duplicates. File fields publish their original
+name and filename, file-name aliases, aggregate file byte size and every raw part-header line.
+The file payload remains in entity storage and is neither copied into ARGS nor scanned as text
+unless a rule selects the raw body. An empty filename follows the pinned reference's field
+classification. Names, filenames and field values are copied before parameter scratch reuse.
+
+Ordinary quoted filename parameters decode quote/backslash pairs and preserve other
+backslashes as the pinned processor does. UTF-8 `filename*` is accepted with an ordinary
+filename only when its strictly decoded bytes equal that filename. The reference retains the
+ordinary name; some backends prefer the extended one. Refusing differing names prevents an
+inspection/backend disagreement. Unsupported charsets and transfer encodings are explicit
+uninspectable-input outcomes. The native profile refuses LF-only, folded or ambiguous headers
+rather than exposing the reference's permissive error-flag semantics as complete input.
+Multipart field sizes contribute to native ARGS_COMBINED_SIZE as query and form fields do;
+this is a conservative complete-field total, not the pinned processor's legacy query-only
+scalar update. These declared differences require fixtures and compatibility reporting.
+
+*Lemma (multipart scan bound).* Boundary bytes contain no CR or LF, so a rejected delimiter
+candidate cannot contain an overlapping full delimiter. Resuming after the candidate and
+charging each KMP comparison yields linear scanning over the entity. Suffix padding advances
+monotonically and is charged before each visit. Part/header ceilings, entry limits and owned
+byte limits independently bound metadata. Complete coverage is published only after closing
+and all fields succeed; any error poisons the builder. No file handle, temporary upload,
+network fetch or request-path heap allocation is needed.
+
 = Input acquisition and HTTP phases
 
 #block(breakable: false, table(

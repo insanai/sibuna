@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Check native acquisition against independent JSON and form decoders.
+"""Check native acquisition against independent JSON, form and MIME decoders.
 
 JSON syntax uses Python's standard parser. Field naming follows the explicitly
 reviewed ModSecurity 3.0.14 profile; this is not whole-engine FTW qualification.
 Fixtures cover duplicate members, binary bytes, numeric spelling and path collisions.
 """
 import argparse
+from email import policy
+from email.parser import BytesParser
 import json
 from pathlib import Path
 import random
@@ -66,9 +68,13 @@ def probe(binary, kind, input_bytes, expected):
     actual = []
     for line in output.splitlines():
         tag, key, value = line.split("\t")
-        if tag != "arg":
-            raise ValueError(f"invalid probe output: {line!r}")
-        actual.append((bytes.fromhex(key), bytes.fromhex(value)))
+        decoded = (bytes.fromhex(key), bytes.fromhex(value))
+        if kind == "multipart":
+            actual.append((tag, *decoded))
+        else:
+            if tag != "arg":
+                raise ValueError(f"invalid probe output: {line!r}")
+            actual.append(decoded)
     if actual != expected:
         raise ValueError(f"acquisition mismatch: {kind} {input_bytes!r}\n"
                          f"expected {expected!r}\nactual {actual!r}")
@@ -114,6 +120,46 @@ def form_oracle(data):
     return result
 
 
+def multipart_oracle(body):
+    header = b'Content-Type: multipart/form-data; boundary="B"\r\nMIME-Version: 1.0\r\n\r\n'
+    message = BytesParser(policy=policy.default).parsebytes(header + body)
+    if not message.is_multipart():
+        raise ValueError("independent parser did not recognize fixture")
+    result = []
+    file_bytes = 0
+    for part in message.iter_parts():
+        name = part.get_param("name", header="Content-Disposition")
+        filename = part.get_filename()
+        payload = part.get_payload(decode=True)
+        if filename:
+            result.append(("file", name.encode("utf-8"), filename.encode("utf-8")))
+            file_bytes += len(payload)
+        else:
+            result.append(("arg", name.encode("utf-8"), payload))
+    result.append(("size", b"", str(file_bytes).encode("ascii")))
+    return result
+
+
+def multipart_vectors():
+    randomizer = random.Random(0x4d494d45)
+    for iteration in range(150):
+        parts = []
+        for index in range(randomizer.randrange(1, 10)):
+            name = "q" if index % 2 else "upload"
+            filename = f"file-{index}.bin" if randomizer.randrange(2) else None
+            metadata = f'Content-Disposition: form-data; name="{name}"'
+            if filename:
+                metadata += f'; filename="{filename}"'
+            metadata += "\r\nContent-Type: application/octet-stream\r\n\r\n"
+            payload = randomizer.randbytes(randomizer.randrange(100))
+            payload += b"\r\n--Bx\r\n--B--garbage"  # Prefixes inside file/field data.
+            parts.append(b"--B\r\n" + metadata.encode("ascii") + payload + b"\r\n")
+        body = b"".join(parts) + b"--B--\r\n"
+        if iteration % 2:
+            body = b"preamble\r\n" + body + b"epilogue"
+        yield body
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("binary", type=Path)
@@ -149,6 +195,9 @@ def main():
             count += 1
     for data in [b"q=%", b"q=%a", b"q=%zz", b"ok=v&bad=%0g"]:
         probe(binary, "form", data, None)
+        count += 1
+    for body in multipart_vectors():
+        probe(binary, "multipart", body, multipart_oracle(body))
         count += 1
     print(f"Native acquisition agrees with {count} independent cases; "
           "whole-engine FTW qualification remains separate.")

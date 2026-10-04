@@ -41,6 +41,12 @@ fn run(init: std.process.Init, out: *Io.Writer) !u8 {
             .bits = &bits,
             .frames = &frames,
         }, &budget);
+    } else if (std.mem.eql(u8, kind, "multipart")) {
+        try crs.multipart_acquisition.parse(input, "B", &builder, .{
+            .name = scratch[0 .. 16 * 1024],
+            .filename = scratch[16 * 1024 .. 32 * 1024],
+            .extended = scratch[32 * 1024 ..],
+        }, .{}, &budget);
     } else {
         const origin: crs.acquired_values.Origin = if (std.mem.eql(u8, kind, "query"))
             .query
@@ -54,8 +60,13 @@ fn run(init: std.process.Init, out: *Io.Writer) !u8 {
         }, &budget);
     }
     for ((try builder.view()).entries) |entry| {
-        if (entry.collection != .args) continue;
-        try out.writeAll("arg\t");
+        const tag = switch (entry.collection) {
+            .args => "arg",
+            .files => "file",
+            .files_combined_size => "size",
+            else => continue,
+        };
+        try out.print("{s}\t", .{tag});
         for (entry.key) |byte| try out.print("{x:0>2}", .{byte});
         try out.writeByte('\t');
         for (entry.value) |byte| try out.print("{x:0>2}", .{byte});

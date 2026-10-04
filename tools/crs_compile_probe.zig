@@ -316,3 +316,20 @@ pub export fn crsAcquisitionProbe(input: [*]const u8, length: usize, structured:
     }
     return 0;
 }
+
+pub export fn crsMultipartProbe(input: [*]const u8, length: usize) u8 {
+    if (length > 4096) return 1;
+    var entries: [128]crs.variables.Entry = undefined;
+    var bytes: [4096]u8 = undefined;
+    var name: [512]u8 = undefined;
+    var filename: [512]u8 = undefined;
+    var extended: [512]u8 = undefined;
+    var builder = crs.acquired_values.Builder.init(&entries, &bytes);
+    var budget: crs.work.Budget = .{ .remaining = 16_000_000 };
+    crs.multipart_acquisition.parse(input[0..length], "B", &builder, .{
+        .name = &name,
+        .filename = &filename,
+        .extended = &extended,
+    }, .{}, &budget) catch return 2;
+    return 0;
+}
