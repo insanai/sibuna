@@ -7,7 +7,7 @@
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
 #let sid-status = "Open for Discussion"
-#let sid-last-updated = "2026-10-05"
+#let sid-last-updated = "2026-10-06"
 
 #import "../../shared/sid.typ": sid-document
 
@@ -2102,8 +2102,10 @@ Configuration and upstream digests remain separate authenticated identities.
 
 The comparison sorts copied root inventories by ID and merges them. It reports added,
 removed, modified, reordered and unchanged roots. Root order is compared separately because
-changing the relative order of retained rules can change intervention or exclusion behavior.
-Insertion alone does not mark every following root as reordered. At most
+changing the relative order of retained rules within an execution phase can change
+intervention or exclusion behavior. Cross-phase source interleaving does not change that
+execution order. Insertions, removals and phase changes do not mark every following root
+as reordered; a changed phase is a modified rule. At most
 64 changed rows are returned, with exact totals and an omitted-row count. Configured target
 exclusions and runtime exclusion entries are counted separately. A runtime exclusion remains
 conditional on its controlling rule matching; a count cannot claim every request loses that

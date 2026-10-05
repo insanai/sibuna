@@ -220,29 +220,34 @@ fn summary(rows: []const Fingerprint) !api.Summary {
 fn rankRetained(rows: []Fingerprint, other: []const Fingerprint) void {
     var positions: [4096]u16 = undefined;
     for (rows, 0..) |row, index| positions[row.position] = @intCast(index);
-    var rank: u16 = 0;
+    var ranks: [5]u16 = @splat(0);
     for (positions[0..rows.len]) |index| {
-        if (contains(other, rows[index].id)) {
-            rows[index].position = rank;
-            rank += 1;
+        const phase = rows[index].phase;
+        rows[index].position = 0;
+        // Execution orders roots within a phase. Insertions, removals and phase
+        // changes must not falsely reorder the roots retained in that phase.
+        if (retainedPhase(other, rows[index].id, phase)) {
+            rows[index].position = ranks[phase - 1];
+            ranks[phase - 1] += 1;
         }
     }
 }
 
-fn contains(rows: []const Fingerprint, id: u32) bool {
+fn retainedPhase(rows: []const Fingerprint, id: u32, phase: u8) bool {
     var low: usize = 0;
     var high: usize = rows.len;
     while (low < high) {
         const middle = low + (high - low) / 2;
-        if (rows[middle].id == id) return true;
+        if (rows[middle].id == id) return rows[middle].phase == phase;
         if (rows[middle].id < id) low = middle + 1 else high = middle;
     }
     return false;
 }
 
 fn retained(result: *api.Report, old: Fingerprint, next: Fingerprint) void {
-    const moved = old.position != next.position;
-    const modified = !std.mem.eql(u8, &old.digest, &next.digest);
+    const phase_changed = old.phase != next.phase;
+    const moved = phase_changed or old.position != next.position;
+    const modified = phase_changed or !std.mem.eql(u8, &old.digest, &next.digest);
     if (!moved and !modified) {
         result.unchanged += 1;
         return;

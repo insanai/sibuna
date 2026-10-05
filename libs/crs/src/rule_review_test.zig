@@ -117,3 +117,36 @@ test "bounded review counts omitted rows and releases every partial allocation" 
         &result,
     ));
 }
+
+test "phase ordering cannot falsely reorder roots retained in the same execution phase" {
+    var before = try prepare(
+        \\SecAction "id:1,phase:1"
+        \\SecAction "id:2,phase:2"
+        \\SecAction "id:3,phase:1"
+        \\SecAction "id:4,phase:2"
+    , &.{});
+    defer before.deinit();
+    var interleaved = try prepare(
+        \\SecAction "id:2,phase:2"
+        \\SecAction "id:1,phase:1"
+        \\SecAction "id:4,phase:2"
+        \\SecAction "id:3,phase:1"
+    , &.{});
+    defer interleaved.deinit();
+    var result: api.Report = undefined;
+    try review.compare(t.allocator, before.review, interleaved.review, &result);
+    try t.expectEqual(@as(u32, 4), result.unchanged);
+    try t.expectEqual(@as(u32, 0), result.reordered);
+    var changed = try prepare(
+        \\SecAction "id:1,phase:2"
+        \\SecAction "id:2,phase:2"
+        \\SecAction "id:3,phase:1"
+        \\SecAction "id:4,phase:2"
+    , &.{});
+    defer changed.deinit();
+    try review.compare(t.allocator, before.review, changed.review, &result);
+    try t.expectEqual(@as(u32, 1), result.modified);
+    try t.expectEqual(@as(u32, 3), result.unchanged);
+    try t.expectEqual(@as(u32, 0), result.reordered);
+    try t.expect(result.changes[0].?.moved);
+}
