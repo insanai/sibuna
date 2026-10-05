@@ -2,6 +2,7 @@
 //! No allocation, filesystem, socket or application dependency exists here.
 const std = @import("std");
 const buffers = @import("text").buffers;
+pub const content_coding = @import("content_coding.zig");
 pub const Coding = enum { gzip, zlib };
 pub const Error = error{
     InvalidCompressionLimits,
@@ -118,4 +119,5 @@ fn retainHistory(writer: *std.Io.Writer, allowance: usize) void {
 
 test {
     _ = @import("decode_test.zig");
+    _ = content_coding;
 }

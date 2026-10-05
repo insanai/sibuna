@@ -107,15 +107,8 @@ pub const ParseError = error{
     InvalidContentLength,
 };
 
-pub fn tokenChar(c: u8) bool {
-    return std.ascii.isAlphanumeric(c) or std.mem.indexOfScalar(u8, "!#$%&'*+-.^_`|~", c) != null;
-}
-
-pub fn validToken(text: []const u8) bool {
-    if (text.len == 0) return false;
-    for (text) |c| if (!tokenChar(c)) return false;
-    return true;
-}
+pub const tokenChar = @import("text").http_fields.tokenChar;
+pub const validToken = @import("text").http_fields.validToken;
 
 fn validateContentLength(value: []const u8) ParseError!void {
     if (value.len == 0) return error.InvalidContentLength;

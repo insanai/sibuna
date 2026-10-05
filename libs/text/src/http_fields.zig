@@ -18,3 +18,14 @@ test "target splitting preserves encoded separators, empty queries and binary sl
     try std.testing.expectEqualStrings("", splitTarget("/path?").query);
     try std.testing.expectEqualStrings("/path", splitTarget("/path").path);
 }
+
+/// RFC 9110 tokens share one predicate across framing and representation parsing.
+pub fn tokenChar(c: u8) bool {
+    return std.ascii.isAlphanumeric(c) or std.mem.indexOfScalar(u8, "!#$%&'*+-.^_`|~", c) != null;
+}
+
+pub fn validToken(text: []const u8) bool {
+    if (text.len == 0) return false;
+    for (text) |c| if (!tokenChar(c)) return false;
+    return true;
+}
