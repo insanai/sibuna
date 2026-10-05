@@ -93,7 +93,7 @@ pub fn parse(argv: []const []const u8) Error!Args {
             .settings => output.settings = value,
             .case_file => output.sample_file = value,
             .timeout => {
-                const timeout = try number(value, 300);
+                const timeout = try number(value, 900);
                 if (timeout == 0) return error.InvalidValue;
                 output.timeout = @intCast(timeout);
             },
@@ -118,6 +118,7 @@ fn number(text: []const u8, maximum: u64) Error!u64 {
 }
 
 fn validate(args: Args) Error!void {
+    if (args.timeout > 300 and args.operation != .review) return error.InvalidValue;
     if (args.origin.len == 0 or !p.validUsername(args.credentials.username) or
         args.credentials.password_file.len == 0) return error.AuthenticationRequired;
     const preparing = args.operation == .check or args.operation == .update;
@@ -171,6 +172,19 @@ test "managed CRS commands require explicit revisions and reject mixed rollback 
     try t.expectError(error.InvalidValue, parse(&(.{"mode"} ++ auth ++ .{
         "--mode", "audit", "--revision", "-1",
     })));
+}
+
+test "managed CRS commands allow full review deadlines without unbounding other operations" {
+    const t = std.testing;
+    const auth = .{
+        "--origin", "http://127.0.0.1:9443", "--username", "admin", "--password-file", "private",
+    };
+    const options = .{
+        "--revision", "1", "--id", "11111111111111111111111111111111", "--timeout", "900",
+    };
+    const reviewed = try parse(&(.{"review"} ++ auth ++ options));
+    try t.expectEqual(@as(u32, 900), reviewed.timeout);
+    try t.expectError(error.InvalidValue, parse(&(.{"select"} ++ auth ++ options)));
 }
 
 test "managed CRS commands require a source and reject sample or settings overrides" {

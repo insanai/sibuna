@@ -116,6 +116,12 @@ def qualify(binary, source, root):
         comparison = reviewed["result"]["comparison"]
         assert reviewed["rule_review"] and not reviewed["private_test"], reviewed
         assert comparison["unchanged"] == 628 and comparison["count"] == 0, comparison
+        for side in ("before", "after"):
+            summary = comparison[side]
+            rows = reviewed["exclusions"][side]
+            assert len(rows) == summary["target_exclusions"] + summary["runtime_exclusions"]
+            assert any(row["scope"] == "static_target" for row in rows), rows
+            assert any(row["scope"] != "static_target" for row in rows), rows
         assert not reviewed["origin_contacted"] and reviewed["active_protection"] == "unchanged"
         assert status(port, cookie, csrf)["revision"] == 1
         command(binary, auth, "select", "--id", identifier, "--revision", "1")

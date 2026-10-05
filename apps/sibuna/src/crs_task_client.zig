@@ -50,12 +50,17 @@ pub fn run(
         if (output.state == .complete) break;
         try budget.wait(session.io);
     }
+    var exclusions: @import("crs_exclusion_client.zig").Inventory = .{};
+    defer exclusions.deinit(session.allocator);
+    if (kind == .review)
+        try @import("crs_exclusion_client.zig").load(session, output, budget, &exclusions);
     try std.json.Stringify.value(.{
         .private_test = kind == .sample,
         .rule_review = kind == .review,
         .active_protection = "unchanged",
         .origin_contacted = false,
         .result = output.*,
+        .exclusions = if (kind == .review) exclusions else null,
     }, .{}, writer);
     try writer.writeByte('\n');
 }
