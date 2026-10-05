@@ -30,6 +30,11 @@ pub const Budget = struct {
     pub const evidence_bytes = 544 * (@sizeOf(@import("core").IncidentEvidence) +
         @alignOf(@import("core").IncidentEvidence));
     pub const query_bytes = @sizeOf(@import("query_budget.zig").Budget);
+    // One compiler/source owner and at most one queued editor. CRS transaction
+    // pools are selected separately and reported by each applied generation.
+    pub const crs_prepare_bytes = @import("crs").release_package.compiled_capacity +
+        8 * 1024 * 1024 + 80 * 1024 +
+        2 * @sizeOf(@import("crs_candidate.zig").Configuration);
     pub const collector_bytes = @sizeOf(@import("stats.zig").Stats) +
         @sizeOf(@import("rankings_journal.zig").Journal) +
         @sizeOf(@import("minute_journal.zig").Journal) +
@@ -60,7 +65,8 @@ pub const Budget = struct {
         // Each thread reserves its usable stack plus the thread-local signal stack.
         const per_thread = @import("serve").stack.bytes(self.stack_bytes);
         const stacks = (connections + self.subscribers + self.peers + 6) * per_thread +
-            @import("serve").stack.bytes(512 * 1024);
+            @import("serve").stack.bytes(512 * 1024) +
+            @import("serve").stack.bytes(1024 * 1024);
         return stacks + connections * 2 * socket_buffer_bytes +
             @as(u64, self.slots) * body_bytes + import_bytes + auth_bytes +
             (@as(u64, self.subscribers) + self.peers) *
@@ -69,6 +75,7 @@ pub const Budget = struct {
             @as(u64, self.peers) * (@import("peer_client.zig").allocation_bytes +
                 @sizeOf(@import("peer_query.zig").Mailbox)) +
             topic_bytes + traffic_bytes + query_bytes + evidence_bytes + collector_bytes +
+            crs_prepare_bytes +
             2 * @as(u64, self.geoip_generation_bytes) +
             // Completed mailbox payloads and concurrent HTTP history encoders are owned.
             (32 + @as(u64, self.slots)) *

@@ -1078,7 +1078,7 @@ same module natively and assert rendered HTML strings.
   and cohesive modules take precedence over recovering a few bytes through complex encoding.
   Crossing the warning requires a dependency and browser-timing review; changing the ceiling
   requires evidence. At 4 Mbit/s, 768 KiB alone takes about 1.57 seconds before latency
-  and other assets, an arithmetic planning assumption rather than a measured load time. Linear memory remains 4 MiB initial and explicit maximum, with bounded
+  and other assets, an arithmetic planning assumption rather than a measured load time. Linear memory is 6 MiB initial and explicit maximum, with bounded
   retained history and a bump arena reset after each event.
 
 == Pages
@@ -1984,7 +1984,8 @@ against a loopback node reached the page heading in 74–103 ms (median 98 ms) w
 module fetch, so on that path the module cost is instantiation and first render, not
 transfer; on the 4 Mbit/s planning link a full 768 KiB module takes about 1.57 seconds,
 which stays within the LCP target only with the immutable cache path (`/console/assets/<digest>/`)
-serving repeat visits. Linear memory stays at 4 MiB initial and maximum: the module keeps a
+serving repeat visits. Linear memory was 4 MiB at this review; SID 0010's bounded CRS editor
+extends it to 6 MiB initial and maximum. The module keeps a
 bump arena reset after each event and fixed buffers, and code size does not change the
 retained-history bound. Each phase that adds a page records the new module size, and
 crossing 640 KiB triggers the dependency and browser-timing review above.

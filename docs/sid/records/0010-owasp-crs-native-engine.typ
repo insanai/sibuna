@@ -1763,6 +1763,16 @@ editor read is the exception to the raw-source boundary; archive and signature c
 internal. A selection reply reports commit and does not claim application. Operators inspect
 the serving node and boot-fenced receipts after an unknown reply or a pending runtime effect.
 
+The console's retained editor and JSON transfer buffers require 4,632,128 bytes of static
+Wasm memory with the pinned Zig 0.17 build, including its 256 KiB stack. Set initial and maximum
+memory to 6 MiB (96 WebAssembly pages), leaving bounded layout headroom without runtime growth.
+The asset-byte ceiling remains 768 KiB and is independent of linear memory. The browser bridge
+and native renderer use the same owned model; leaving the CRS page or ending a session wipes
+operator text. Responses carry generation tickets, so late requests cannot repopulate a new
+page or session. The daemon's capacity estimate adds the joined 1 MiB worker stack, bounded
+source, private compiler and queued editor; selected transaction pools remain separately
+reported runtime reservations.
+
 == Native detached signature profile
 
 The initial portable verifier accepts one definite-length OpenPGP version-4 binary-document

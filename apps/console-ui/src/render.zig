@@ -18,6 +18,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
 }
 
 fn page(state: *const State, w: *Writer) Writer.Error!void {
+    if (state.phase == .crs) return @import("crs_page.zig").render(state, w);
     if (state.phase == .security_overview)
         return @import("security_overview_page.zig").render(state, w);
     if (state.phase == .nodes) return @import("nodes_page.zig").render(state, w);

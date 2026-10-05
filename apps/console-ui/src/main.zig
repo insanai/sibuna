@@ -11,14 +11,14 @@ var state: State = undefined;
 var initialized: bool = false;
 var similarity_generation: u32 = 0;
 var policy_generation: u32 = 0;
-var input: [p.ranking_history.event_bytes]u8 = undefined;
+var input: [@max(p.ranking_history.event_bytes, p.crs_api.body_bytes + 4096)]u8 = undefined;
 // Browser events execute serially. A fixed scratch region keeps large JSON arrays
 // off the Wasm stack and is erased after every event, including parser failures.
 var event_memory: [512 * 1024]u8 = undefined;
 var html: [512 * 1024]u8 = undefined;
 var geometry: [@import("geography.zig").max_bytes]u8 = undefined;
 var html_length: usize = 0;
-var commands: [16 * 1024]u8 = undefined;
+var commands: [p.crs_api.body_bytes + 4096]u8 = undefined;
 var command_writer: std.Io.Writer = undefined;
 var command_count: usize = 0;
 var commands_length: usize = 0;
@@ -115,6 +115,7 @@ export fn sb_event(kind: u32, length: usize) void {
     if (state.phase != previous_phase) {
         if (previous_phase == .users) state.users.clearSecret();
         if (previous_phase == .tokens) state.tokens.clearSecret();
+        if (previous_phase == .crs) state.crs.clear();
         state.navigation_open = false;
         command(.{ .op = "focus", .selector = "main h1", .top = true }) catch unreachable;
     }
@@ -122,7 +123,7 @@ export fn sb_event(kind: u32, length: usize) void {
 }
 
 fn begin() void {
-    std.crypto.secureZero(u8, &commands);
+    std.crypto.secureZero(u8, commands[0..commands_length]);
     command_writer = .fixed(&commands);
     command_count = 0;
     command_writer.writeByte('[') catch unreachable;
@@ -199,6 +200,8 @@ fn dispatch(kind: u32, value: std.json.Value, alloc: std.mem.Allocator) !void {
                     (!state.security_overview.busy[0] and
                         state.browser_time -| state.security_overview.request.until >= 60)))
                 try @import("security_overview_controller.zig").refresh(&state, outbox());
+            if (state.phase == .crs)
+                return @import("crs_controller.zig").tick(&state, outbox());
             if (state.phase == .nodes)
                 return @import("nodes_controller.zig").tick(&state, outbox());
             if (equal(string(value, "id"), "age")) return;

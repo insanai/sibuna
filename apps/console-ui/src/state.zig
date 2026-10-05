@@ -7,6 +7,7 @@ pub const Phase = enum {
     dashboard,
     security_overview,
     geoip,
+    crs,
     security,
     events,
     challenges,
@@ -42,6 +43,7 @@ pub const State = struct {
     route: @import("routing.zig").Model = .{},
     live: @import("live_state.zig").Model = .{},
     policies: @import("policies_page.zig").Model = .{},
+    crs: @import("crs_state.zig").Model = .{},
     rankings: @import("rankings_panel.zig").Model = .{},
     similarity: @import("similarity_state.zig").Model = .{},
     challenges: @import("challenges_page.zig").Model = .{},
@@ -139,6 +141,7 @@ pub const State = struct {
                 .reputation,
                 .audit,
                 .kiosk_grant,
+                .crs,
                 => @field(self, field_name).clear(),
                 else => {
                     const attrs = metadata.field_attrs[index];

@@ -42,6 +42,9 @@ fn run(io: std.Io, alloc: std.mem.Allocator, update: bool) !void {
         "nodes-crs-disabled",
         "nodes-crs-audit",
         "nodes-crs-enforce",
+        "crs-ready",
+        "crs-reviewed",
+        "crs-stale",
     };
     inline for (variants, 0..) |name, i| {
         configure(&state, .dashboard);
@@ -219,6 +222,7 @@ fn variant(state: *State, index: usize) void {
         14 => auditDetail(state),
         15, 16, 17 => crsFinding(state, index),
         18, 19, 20, 21 => crsNode(state, index),
+        22, 23, 24 => @import("crs_fixture.zig").configure(state, index == 23, index == 24),
         3, 4 => {
             state.kiosk = true;
             state.kiosk_expires = 176400;

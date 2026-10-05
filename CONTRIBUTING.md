@@ -37,6 +37,9 @@ settings and clean management-worker shutdown.
 `python3 tools/crs_management_check.py <binary> --candidate <directory>` drives authenticated
 preparation, separate selection, Off/Enforce, rollback, conflicts, discard, revocation,
 boot-fenced application and restart through the real daemon with a signed release.
+`python3 tools/crs_ui_check.py <binary> --candidate <directory>` drives the shipped Wasm
+through reviewed modes, exact rollback, operator edits, failed preparation and sign-out.
+It requires Node; Chrome separately verifies form retention, focus and responsive layout.
 `crs-start-test` checks startup option conflicts, observable profiles, resource bounds and
 the disabled lifecycle. The signed-artifact probe also exercises the startup owner's
 generation leases, forward-auth profile, exhaustion cleanup and joined-reader teardown.

@@ -1,0 +1,86 @@
+<div class="sb-shell" data-navigation-open="false">
+  <a class="sb-skip btn btn-primary" href="#page-heading">Skip to content</a>
+  <header class="navbar sb-mobile-header bg-base-100 border-b border-base-300">
+    <span class="sb-brand grow">SIBUNA</span>
+    <span class="sb-note">Console node 1</span>
+    <button id="navigation-toggle" class="btn btn-ghost" data-action="navigation-toggle"
+            aria-controls="console-navigation" aria-expanded="false">Menu</button>
+  </header>
+  <nav id="console-navigation" class="sb-nav bg-base-100 border-r border-base-300"
+       aria-label="Main navigation" data-preserve-scroll>
+    <div class="sb-nav-brand">
+      <a class="sb-brand" href="/console/">SIBUNA</a>
+      <p class="sb-caption">SECURITY CONSOLE</p>
+      <p class="sb-note">Console node 1</p>
+    </div>
+    <ul class="menu menu-md w-full gap-1">
+<li><button class="" data-action="dashboard"
+            aria-current="false">Statistics</button></li>
+<li><button class="" data-action="events"
+            aria-current="false">Events</button></li>
+<li><button class="" data-action="challenges"
+            aria-current="false">Challenges</button></li>
+<li><button class="" data-action="policies"
+            aria-current="false">Policies</button></li>
+<li><button class="menu-active" data-action="crs"
+            aria-current="page">Core Rule Set</button></li>
+<li><button class="" data-action="geoip"
+            aria-current="false">GeoIP</button></li>
+<li><button class="" data-action="users"
+            aria-current="false">Users</button></li>
+<li><button class="" data-action="tokens"
+            aria-current="false">Tokens</button></li>
+<li><button class="" data-action="audit"
+            aria-current="false">Audit</button></li>
+<li><button class="" data-action="nodes"
+            aria-current="false">Nodes</button></li>
+<li><button class="" data-action="settings"
+            aria-current="false">Settings</button></li>
+<li><button class="" data-action="account"
+            aria-current="false">Account</button></li>
+    </ul>
+    <div class="sb-nav-footer">
+      <span class="badge badge-outline">admin</span>
+      <ul class="menu menu-md w-full gap-1 mt-4">
+        <li><button data-action="theme">Theme: system</button></li>
+        <li><button data-action="density">Spacing: comfortable</button></li>
+        <li><button data-action="logout">Sign out</button></li>
+      </ul>
+    </div>
+  </nav>
+  <div class="sb-content">
+<main class="sb-main min-h-screen">
+  <header class="sb-header">
+    <div>
+      <p class="sb-subtitle">WEB APPLICATION PROTECTION</p>
+      <h1 id="page-heading" tabindex="-1">Core Rule Set</h1>
+      <p class="sb-subtitle">Review signed OWASP rules before changing protection.</p>
+    </div>
+    <button class="btn btn-sm" data-action="crs-refresh">Refresh</button>
+  </header>
+  <p id="console-message" role="status" class="sb-note mt-4"></p>
+  <section class="sb-panel mt-4">
+    <h2>How changes take effect</h2>
+    <p>Check a release or prepare a mode change, review its settings, then select the verified
+      candidate. Checking and preparation leave the current protection in place.</p>
+    <p class="sb-note">Audit records findings without denying for CRS. Enforce applies CRS
+      decisions. Off disables CRS inspection; Sibuna's bot protection and other policy rules
+      continue to apply. Start with Audit and review your application's traffic.</p>
+  </section>
+<section id="crs-selection" class="sb-panel mt-6"><h2>Saved selection and local application</h2><p>Saved revision: 4 · Last status 1 seconds ago.</p><p>CRS 4.30.0 · audit · full profile</p><p>Source SHA-256: <code class="break-all">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</code></p><p>Serving node: revision 4 · audit · 2 slots · 119537664 reserved bytes.</p><h3 class="mt-4">Node application receipts</h3><div class="overflow-x-auto"><table class="table"><thead><tr><th>Node</th><th>Revision</th><th>Result</th><th>Reason</th></tr></thead><tbody><tr><td>1</td><td>4</td><td>Applied</td><td>none</td></tr></tbody></table></div><p class="sb-note">Absent receipts are unconfirmed, not successful application. Check Nodes for membership and health.</p></section><section id="crs-candidates" class="sb-panel mt-6"><h2>Candidates</h2><p>Local preparation: verified · none</p><div class="overflow-x-auto"><table class="table"><thead><tr><th>Operation</th><th>State</th><th>Release</th><th>Mode</th><th>Review</th></tr></thead><tbody><tr><td>mode</td><td>verified · none</td><td>4.30.0</td><td>enforce</td><td><button class="btn btn-sm" data-action="crs-review-0">Review</button></td></tr><tr><td>mode</td><td>selected · none</td><td>4.30.0</td><td>audit</td><td></td></tr></tbody></table></div></section><section id="crs-mode-panel" class="sb-panel mt-6"><h2>Change CRS mode</h2><form id="crs-mode" class="sb-settings-form mt-4"><label for="crs-mode-value">Candidate mode</label><select id="crs-mode-value" name="mode" class="select select-bordered w-full"><option value="off">off</option><option value="audit" selected>audit</option><option value="enforce">enforce</option></select><div class="flex flex-wrap gap-3 mt-4"><button class="btn btn-primary" type="submit">Prepare mode change</button><button class="btn" type="button" data-action="crs-rollback" disabled>Prepare rollback</button></div></form><p class="sb-note mt-3">Both operations need review and selection. Rollback restores the previous source and settings as a new revision.</p></section><section id="crs-editor-panel" class="sb-panel mt-6">
+  <h2>Release and operator rules</h2>
+  <form id="crs-prepare" class="sb-settings-form mt-4">
+    <fieldset>
+      <label class="form-control" for="crs-version">Upstream release</label>
+      <input id="crs-version" name="version" class="input input-bordered w-full" maxlength="17"
+        value="4.30.0" placeholder="Leave blank to check the latest signed release">
+      <p class="sb-note">Downloads come from the official CRS release repository and require
+        its pinned signing key. Unsupported rules and exhausted bounds refuse preparation.</p>
+      <label class="form-control mt-4" for="crs-configuration">Additional operator rules and exclusions</label>
+      <textarea id="crs-configuration" name="configuration" class="textarea textarea-bordered w-full font-mono"
+        rows="10" maxlength="65536" spellcheck="false" aria-describedby="crs-exclusion-note"># Keep exclusions specific to the application&#39;s parameters.
+</textarea>
+      <p id="crs-exclusion-note" class="sb-note">This configuration belongs to the candidate.
+        Exclusions reduce protection. Prefer a specific rule and parameter over disabling
+        an entire rule family. Copy unsaved edits before reloading the saved configuration.</p>
+<details class="mt-4"><summary>Inspection settings and resource bounds</summary><div class="sb-filters"><div class="sb-filter-grid sb-filter-three mt-4"><label class="form-control" for="crs-blocking_paranoia"><span>Blocking paranoia (1–4)</span><input id="crs-blocking_paranoia" name="blocking_paranoia" type="number" min="1" class="input input-bordered w-full" value="1" required></label><label class="form-control" for="crs-detection_paranoia"><span>Detection paranoia (1–4)</span><input id="crs-detection_paranoia" name="detection_paranoia" type="number" min="1" class="input input-bordered w-full" value="1" required></label><label class="form-control" for="crs-inbound_threshold"><span>Inbound threshold</span><input id="crs-inbound_threshold" name="inbound_threshold" type="number" min="1" class="input input-bordered w-full" value="5" required></label><label class="form-control" for="crs-outbound_threshold"><span>Outbound threshold</span><input id="crs-outbound_threshold" name="outbound_threshold" type="number" min="1" class="input input-bordered w-full" value="4" required></label><label class="form-control" for="crs-request_bytes"><span>Request body bytes</span><input id="crs-request_bytes" name="request_bytes" type="number" min="1" class="input input-bordered w-full" value="4194304" required></label><label class="form-control" for="crs-response_bytes"><span>Response body bytes</span><input id="crs-response_bytes" name="response_bytes" type="number" min="1" class="input input-bordered w-full" value="1048576" required></label><label class="form-control" for="crs-work_budget"><span>Work budget</span><input id="crs-work_budget" name="work_budget" type="number" min="1" class="input input-bordered w-full" value="16000000" required></label><label class="form-control" for="crs-slots"><span>Transaction slots (1–31)</span><input id="crs-slots" name="slots" type="number" min="1" class="input input-bordered w-full" value="2" required></label><label class="form-control" for="crs-reservation"><span>Reservation bytes</span><input id="crs-reservation" name="reservation" type="number" min="1" class="input input-bordered w-full" value="1073741824" required></label><label class="form-control" for="crs-profile"><span>Inspection profile</span><select id="crs-profile" name="profile" class="select select-bordered w-full"><option value="headers">headers</option><option value="full" selected>full</option></select></label></div></div></details><div class="flex flex-wrap gap-3 mt-4"><button class="btn" type="button" data-action="crs-check">Check release</button><button class="btn btn-primary" type="button" data-action="crs-update">Prepare update</button></div></fieldset></form><button class="btn btn-sm mt-4" data-action="crs-reload-editor">Reload saved operator rules</button></section></main></div></div>

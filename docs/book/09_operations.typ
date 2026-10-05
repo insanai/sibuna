@@ -459,7 +459,7 @@ peer transport and the combined dashboard have separate coverage and freshness c
 interface review and browser acceptance remain tracked in SID 0007. The complete Wasm
 application warns above 640 KiB and has a 768 KiB uncompressed ceiling. These project limits
 leave room for console workflows; they do not replace browser loading and responsiveness
-measurements or change the explicit 4 MiB linear-memory allocation.
+measurements or change the explicit 6 MiB linear-memory allocation.
 
 #pagebreak(weak: true)
 

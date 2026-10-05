@@ -4,12 +4,12 @@ const Phase = @import("state.zig").Phase;
 const html = @import("html");
 const Writer = std.Io.Writer;
 pub const actions = [_][]const u8{
-    "dashboard", "events", "challenges", "policies", "geoip",             "users", "tokens",
-    "audit",     "nodes",  "settings",   "account",  "security-overview",
+    "dashboard", "events", "challenges", "policies", "crs",     "geoip",             "users",
+    "tokens",    "audit",  "nodes",      "settings", "account", "security-overview",
 };
 const labels = [_][]const u8{
-    "Statistics", "Events",   "Challenges", "Policies", "GeoIP", "Users", "Tokens", "Audit",
-    "Nodes",      "Settings", "Account",    "Security",
+    "Statistics", "Events", "Challenges", "Policies", "Core Rule Set", "GeoIP",    "Users",
+    "Tokens",     "Audit",  "Nodes",      "Settings", "Account",       "Security",
 };
 
 pub fn destination(name: []const u8) bool {
@@ -27,7 +27,8 @@ pub fn begin(state: *const State, w: *Writer) Writer.Error!void {
     for (actions, labels) |action, label| {
         if (std.mem.eql(u8, action, "security-overview")) continue;
         if (std.mem.eql(u8, action, "tokens") and !state.allows(.manage_users)) continue;
-        if (std.mem.eql(u8, action, "settings") and !state.allows(.manage_settings)) continue;
+        if ((std.mem.eql(u8, action, "settings") or std.mem.eql(u8, action, "crs")) and
+            !state.allows(.manage_settings)) continue;
         try html.render(w, @embedFile("snippets/shell-item.html"), .{
             .action = action,
             .label = label,
@@ -52,6 +53,7 @@ pub fn section(phase: Phase) []const u8 {
         .challenges => "challenges",
         .policies => "policies",
         .geoip => "geoip",
+        .crs => "crs",
         .users => "users",
         .tokens => "tokens",
         .audit => "audit",

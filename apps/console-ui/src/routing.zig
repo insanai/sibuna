@@ -27,7 +27,8 @@ pub fn take(state: *State) ?[]const u8 {
     state.route.pending = null;
     if (state.kiosk) return null;
     if (std.mem.eql(u8, name, "tokens") and !state.allows(.manage_users)) return "dashboard";
-    if (std.mem.eql(u8, name, "settings") and !state.allows(.manage_settings)) return "dashboard";
+    if ((std.mem.eql(u8, name, "settings") or std.mem.eql(u8, name, "crs")) and
+        !state.allows(.manage_settings)) return "dashboard";
     if (state.route.current) |current| {
         if (std.mem.eql(u8, name, current)) return null;
     }

@@ -7,6 +7,7 @@ import sys
 # Loading and interaction acceptance remain independent of this artifact check.
 WARN_BYTES = 640 * 1024
 MAX_BYTES = 768 * 1024
+MEMORY_PAGES = 96  # Fixed 6 MiB, in WebAssembly's 64 KiB pages; no runtime growth.
 EXPORTS = {
     "memory": 2,
     **dict.fromkeys((
@@ -67,8 +68,8 @@ def contract(data):
         if kind == 5:
             if count != 1 or section.integer() != 1:
                 raise ValueError("expected one unshared memory with an explicit maximum")
-            if section.integer() != 64 or section.integer() != 64:
-                raise ValueError("initial and maximum memory must both be 4 MiB")
+            if section.integer() != MEMORY_PAGES or section.integer() != MEMORY_PAGES:
+                raise ValueError("initial and maximum memory must both be 6 MiB")
         if kind == 7:
             exports = {}
             for _ in range(count):

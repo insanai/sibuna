@@ -146,8 +146,8 @@ fn linkUi(b: *std.Build, object: *std.Build.Step.Compile) std.Build.LazyPath {
         "--stack-first",
         "-z",
         "stack-size=262144",
-        "--initial-memory=4194304",
-        "--max-memory=4194304",
+        "--initial-memory=6291456",
+        "--max-memory=6291456",
     });
     // Explicit exports keep compiler runtime globals outside the fixed browser ABI.
     const exports = .{

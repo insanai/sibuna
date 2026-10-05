@@ -1,0 +1,18 @@
+<main class="sb-main min-h-screen">
+  <header class="sb-header">
+    <div>
+      <p class="sb-subtitle">WEB APPLICATION PROTECTION</p>
+      <h1 id="page-heading" tabindex="-1">Core Rule Set</h1>
+      <p class="sb-subtitle">Review signed OWASP rules before changing protection.</p>
+    </div>
+    <button class="btn btn-sm" data-action="crs-refresh"{{ disabled }}>Refresh</button>
+  </header>
+  <p id="console-message" role="status" class="sb-note mt-4">{{ message }}</p>
+  <section class="sb-panel mt-4">
+    <h2>How changes take effect</h2>
+    <p>Check a release or prepare a mode change, review its settings, then select the verified
+      candidate. Checking and preparation leave the current protection in place.</p>
+    <p class="sb-note">Audit records findings without denying for CRS. Enforce applies CRS
+      decisions. Off disables CRS inspection; Sibuna's bot protection and other policy rules
+      continue to apply. Start with Audit and review your application's traffic.</p>
+  </section>

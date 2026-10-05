@@ -1,0 +1,15 @@
+<section id="crs-editor-panel" class="sb-panel mt-6">
+  <h2>Release and operator rules</h2>
+  <form id="crs-prepare" class="sb-settings-form mt-4">
+    <fieldset{{ disabled }}>
+      <label class="form-control" for="crs-version">Upstream release</label>
+      <input id="crs-version" name="version" class="input input-bordered w-full" maxlength="17"
+        value="{{ release }}" placeholder="Leave blank to check the latest signed release">
+      <p class="sb-note">Downloads come from the official CRS release repository and require
+        its pinned signing key. Unsupported rules and exhausted bounds refuse preparation.</p>
+      <label class="form-control mt-4" for="crs-configuration">Additional operator rules and exclusions</label>
+      <textarea id="crs-configuration" name="configuration" class="textarea textarea-bordered w-full font-mono"
+        rows="10" maxlength="65536" spellcheck="false" aria-describedby="crs-exclusion-note">{{ configuration }}</textarea>
+      <p id="crs-exclusion-note" class="sb-note">This configuration belongs to the candidate.
+        Exclusions reduce protection. Prefer a specific rule and parameter over disabling
+        an entire rule family. Copy unsaved edits before reloading the saved configuration.</p>
