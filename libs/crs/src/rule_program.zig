@@ -9,6 +9,7 @@ const post = @import("post_actions.zig");
 const chains = @import("chains.zig");
 const data = @import("rule_data.zig");
 const variables = @import("variables.zig");
+const review = @import("rule_review.zig");
 pub const Error = condition.Error || post.Error || chains.Error || data.Error || error{
     InvalidTargetUpdate,
 };
@@ -25,6 +26,7 @@ pub const Program = struct {
     topology: chains.Program,
     signature: []const u8,
     regex_states: usize,
+    review: []review.Fingerprint = &.{},
 
     pub fn deinit(self: *Program) void {
         for (self.conditions) |*program| program.deinit();
@@ -32,6 +34,7 @@ pub const Program = struct {
         self.allocator.free(self.conditions);
         self.allocator.free(self.actions);
         self.allocator.free(self.signature);
+        self.allocator.free(self.review);
         self.topology.deinit();
         self.* = undefined;
     }
@@ -106,6 +109,8 @@ fn compileInner(
         actions[index].deinit();
     };
     var states: usize = 0;
+    var reviewed = try review.Builder.init(allocator, source.conditions);
+    defer reviewed.deinit();
     for (source.conditions, 0..) |original, index| {
         fault.* = .{ .site = original.site, .rule = original.id };
         var targets: [128]selectors.Selector = undefined;
@@ -117,6 +122,7 @@ fn compileInner(
         errdefer conditions[index].deinit();
         actions[index] = try post.compile(allocator, &updated);
         initialized += 1;
+        reviewed.append(&updated, source.conditions, index, bytes, &actions[index]);
         states = @max(states, conditions[index].regexStates());
     }
     fault.* = .{};
@@ -128,6 +134,7 @@ fn compileInner(
         .topology = topology,
         .signature = signature,
         .regex_states = states,
+        .review = reviewed.take(),
     };
 }
 

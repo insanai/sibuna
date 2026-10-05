@@ -1,7 +1,7 @@
 //! Private, off-path phased evaluation. No publisher, telemetry producer, origin,
 //! storage or daemon is reachable. Reports are copied before releasing the slot.
 const std = @import("std");
-const contract = @import("crs-test-protocol");
+const contract = @import("crs-protocol").tests;
 const rules = @import("rule_program.zig");
 const slots = @import("transaction_slot.zig");
 const transactions = @import("http_transaction.zig");

@@ -1,7 +1,7 @@
 const std = @import("std");
 const t = std.testing;
 const scenarios = @import("scenario.zig");
-const contract = @import("crs-test-protocol");
+const contract = @import("crs-protocol").tests;
 const prepare = @import("rule_program_test.zig").prepare;
 const limits: @import("transaction_slot.zig").Limits = .{
     .entries = 128,

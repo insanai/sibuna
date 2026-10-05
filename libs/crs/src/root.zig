@@ -2,7 +2,7 @@
 //! compatibility: no runtime protection is implied by a successfully parsed file.
 pub const regex = @import("regex.zig");
 pub const scenario = @import("scenario.zig");
-pub const scenario_contract = @import("crs-test-protocol");
+pub const scenario_contract = @import("crs-protocol").tests;
 pub const work = @import("work.zig");
 pub const compiler = @import("compiler.zig");
 pub const model = @import("model.zig");
@@ -44,6 +44,8 @@ pub const post_actions = @import("post_actions.zig");
 pub const action_state = @import("action_state.zig");
 pub const rule_data = @import("rule_data.zig");
 pub const rule_program = @import("rule_program.zig");
+pub const rule_review = @import("rule_review.zig");
+pub const review_contract = @import("crs-protocol").review;
 pub const executor = @import("executor.zig");
 pub const release_signature = @import("release_signature.zig");
 pub const release_tar = @import("release_tar.zig");
@@ -108,6 +110,7 @@ test {
     _ = controls;
     _ = post_actions;
     _ = rule_program;
+    _ = rule_review;
     _ = scenario;
     _ = scenario_contract;
     _ = @import("diagnostics_test.zig");

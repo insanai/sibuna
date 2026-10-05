@@ -2090,6 +2090,35 @@ observation. No sum over findings and no default zero enters this mapping. $squa
 
 = Console and evidence
 
+== Bounded rule-change review
+
+Preparation retains an owned SHA-256 review fingerprint for each root rule. Its
+length-delimited encoding includes the phase, complete ordered chain, resolved selectors
+and target updates, local and inherited actions, operator arguments, referenced data bytes,
+and the identity of a skip destination. Source locations and comments are excluded. An
+unchanged fingerprint means these reviewed inputs are identical, subject to SHA-256's
+collision resistance; it does not prove equivalent behavior between different fingerprints.
+Configuration and upstream digests remain separate authenticated identities.
+
+The comparison sorts copied root inventories by ID and merges them. It reports added,
+removed, modified, reordered and unchanged roots. Root order is compared separately because
+changing the relative order of retained rules can change intervention or exclusion behavior.
+Insertion alone does not mark every following root as reordered. At most
+64 changed rows are returned, with exact totals and an omitted-row count. Configured target
+exclusions and runtime exclusion entries are counted separately. A runtime exclusion remains
+conditional on its controlling rule matching; a count cannot claim every request loses that
+coverage. Neither the comparison nor its fingerprints are evaluated on the request path.
+
+*Lemma (bounded review).* For $R <= 4096$ root rules and $B$ reviewed source/data bytes,
+fingerprint construction costs $O(B + R)$ after existing compilation resolution. Comparison
+costs $O(R log R)$ time and $O(R)$ owned workspace, followed by a linear merge. Returned
+metadata is bounded independently of the number of changed rules.
+
+*Proof.* Each resolved condition contributes once to its root's incremental hash. The
+inventory holds one fixed-width row per root. Sorting compares numeric IDs; the merge advances
+at least one cursor per step and counts every change even after its 64-row output fills.
+No source borrow survives preparation or enters the comparison result. $square$
+
 The page presents current release, mode, coverage, thresholds, paranoia levels, last verified
 update, effective exclusions and node convergence. The update form separates checking a
 release from activating it and shows concrete incompatibility diagnostics. Operators can

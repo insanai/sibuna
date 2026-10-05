@@ -3,7 +3,7 @@
 const std = @import("std");
 const p = @import("root.zig");
 const m = p.crs_management;
-pub const sample = @import("crs-test-protocol");
+pub const sample = @import("crs-protocol").tests;
 pub const Request = struct {
     source: []const u8,
     expected_revision: []const u8,
