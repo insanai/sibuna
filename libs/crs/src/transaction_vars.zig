@@ -21,6 +21,7 @@ pub const Store = struct {
     used: usize = 0,
     byte_used: usize = 0,
     failed: bool = false,
+    journal: ?*@import("score_journal.zig").Journal = null,
 
     /// Reserved buffers belong exclusively to one transaction. Reinitialization
     /// invalidates old borrows; deleting a key never reclaims bytes within that lifetime.
@@ -47,6 +48,7 @@ pub const Store = struct {
         if (self.failed) return error.TransactionFailed;
         errdefer self.failed = true;
         const existing = try self.locate(key, budget);
+        const before = if (existing) |index| self.entries[index].value else null;
         if (existing == null and self.used == self.entries.len) return error.EntryLimit;
         const key_bytes = if (existing == null) key.len else 0;
         if (key_bytes > self.bytes.len - self.byte_used) return error.ByteLimit;
@@ -69,12 +71,14 @@ pub const Store = struct {
         };
         self.byte_used += copied;
         if (existing == null) self.used += 1;
+        if (self.journal) |journal| journal.committed(key, before, self.entries[index].value);
     }
 
     pub fn remove(self: *Store, key: []const u8, budget: *work.Budget) Error!bool {
         if (self.failed) return error.TransactionFailed;
         errdefer self.failed = true;
         const index = try self.locate(key, budget) orelse return false;
+        const before = self.entries[index].value;
         const shifted = self.used - index - 1;
         const cost = std.math.mul(u64, @intCast(shifted), @sizeOf(variables.Entry)) catch
             return error.WorkLimit;
@@ -85,6 +89,7 @@ pub const Store = struct {
             self.entries[index + 1 .. self.used],
         );
         self.used -= 1;
+        if (self.journal) |journal| journal.committed(key, before, null);
         return true;
     }
 

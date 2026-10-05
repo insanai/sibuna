@@ -2182,6 +2182,63 @@ incomplete rather than zero. Existing engine incidents and CRS findings remain d
 
 == Retained scalar findings
 
+=== Safe templates and actual score contributions
+
+Retain the unexpanded source of executed `msg` and `tag` actions, never their expanded
+transaction values. A chain's last executed message wins and its executed tags append,
+including candidate messages produced by `multiMatch`. These slices borrow the immutable
+generation during evaluation. Copy bounded owned previews before releasing the lease;
+identify truncation and omitted tags explicitly. They describe rule templates, not a
+reconstruction of the values that matched. Matched data and `logdata` remain excluded.
+
+Attribute numeric score changes at the transaction store's successful commit boundary.
+Observe the eight `inbound_anomaly_score_pl1` through `pl4` and corresponding outbound
+buckets. Do not count blocking/detection rollups or category counters again. Each compiled
+root binds one caller-reserved journal row while its conditions, chain continuations and
+post-actions execute. Thus a write preceding a false chain and every repeated field or
+`multiMatch` write retain their actual owner. Assignments and removals are included;
+no score is inferred from severity or a final threshold event.
+
+For a bucket, missing storage denotes the additive identity zero. A committed transition
+from numeric $a$ to numeric $b$ contributes $b - a$ to its root. Numeric observation accepts
+complete signed decimal values representable by `i64`; it does not replace the evaluator's
+reference `stoi` conversion. Non-numeric, oversized or overflowing observations mark that
+root/bucket unknown, without retaining either operand. Checked accumulation keeps unknown
+sticky. A row also records observed writes, so an observed zero differs from no observation.
+The contribution is net change per root and phase, not an individual repeated match score.
+Attach it once to the first event of that root; later repeated events cannot double count it.
+Report writes without a retained event separately and preserve incomplete execution labels.
+
+*Axiom (commit observation).* Store updates publish only after key, capacity and work checks
+succeed; committed value bytes remain immutable for the transaction lifetime. Execution
+binds the root before evaluating any condition and clears the binding on every exit.
+
+*Lemma (faithful attribution).* Every recorded delta belongs to a successful store mutation
+of the indicated root, including mutations in a chain that subsequently fails.
+
+*Proof.* Observation uses the actual previous and newly committed values at the store's
+publication point. Failed writes never reach that point. The executor's binding encloses
+condition and post-action execution and ends with scope unwinding, independently of chain
+truth. No reconstruction from a finding's severity, ID or message occurs. $square$
+
+*Theorem (numeric conservation).* When every observed transition and root sum is known,
+the sum of all root deltas for one bucket equals its final numeric value minus its initial
+value, excluding initialization outside rule execution.
+
+*Proof.* Order successful writes as $v_0, v_1, dots, v_n$. Their deltas telescope:
+$sum_(i=1)^n (v_i - v_(i-1)) = v_n - v_0$. Grouping these terms by the bound root changes
+neither their values nor their sum. Reporting the root once prevents repeated findings
+from duplicating its contribution. Unknown transitions invalidate the premise rather than
+entering the sum as zero. This theorem does not identify rollup or threshold variables with
+the per-paranoia buckets. $square$
+
+*Lemma (bounded observation).* A journal reserves one fixed row per compiled condition
+off the request path. Each commit classifies a bounded key and parses at most 20 bytes of
+each numeric operand, then performs eight-bucket indexed checked arithmetic. It allocates,
+formats and charges no evaluation work; observation failure changes reporting alone.
+Reset and complete journal traversal cost $O(R)$ for $R$ compiled conditions, and journal
+space is $O(R)$. These reservations are included in the slot ceiling and performance gate.
+
 The Nodes page reports copied local generation metadata through the existing authorized
 storage mailbox. The publisher's snapshot pins the immutable generation while copying its
 revision, release and configuration digests, activation, thresholds, compilation peak and

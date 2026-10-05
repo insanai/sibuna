@@ -61,6 +61,7 @@ pub const Frame = struct {
         if (self.evidence) |state| {
             self.assertDisjoint(std.mem.sliceAsBytes(state.events));
             self.assertDisjoint(std.mem.sliceAsBytes(state.tags));
+            self.assertDisjoint(std.mem.sliceAsBytes(state.tag_templates));
             self.assertDisjoint(state.bytes);
         }
     }

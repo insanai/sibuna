@@ -13,6 +13,7 @@ const executor = @import("executor.zig");
 const work = @import("work.zig");
 const acquired = @import("acquired_values.zig");
 const buffers = @import("buffers.zig");
+const scores = @import("score_journal.zig");
 const json = @import("json_acquisition.zig");
 const form = @import("form_acquisition.zig");
 const multipart = @import("multipart_head.zig");
@@ -77,6 +78,8 @@ pub const Slot = struct {
     event_bytes: []u8 = &.{},
     events: []actions.Event = &.{},
     tags: [][]const u8 = &.{},
+    tag_templates: [][]const u8 = &.{},
+    scores: scores.Journal = .{ .rows = &.{} },
     exclusions: []controls.Exclusion = &.{},
     unwind: []usize = &.{},
     count: [20]u8 = undefined,
@@ -108,6 +111,8 @@ pub const Slot = struct {
         self.event_bytes = try arena.alloc(u8, limits.bytes);
         self.events = try arena.alloc(actions.Event, limits.events);
         self.tags = try arena.alloc([]const u8, limits.tags);
+        self.tag_templates = try arena.alloc([]const u8, limits.tags);
+        self.scores = .{ .rows = try arena.alloc(scores.Row, program.conditions.len) };
         self.exclusions = try arena.alloc(controls.Exclusion, limits.exclusions);
         self.unwind = try arena.alloc(usize, program.topology.maximum_depth);
         self.json_frames = try arena.alloc(json.Frame, limits.depth);
@@ -200,6 +205,8 @@ pub const Slot = struct {
         self.budget = .{ .remaining = self.limits.work };
         self.input = acquired.Builder.init(self.input.entries, self.input.bytes);
         self.store = tx.Store.init(self.store.entries, self.store.bytes);
+        self.scores.reset();
+        self.store.journal = &self.scores;
         self.context = try context.Context.init(view, &self.store, .{
             .view = self.merged,
             .matched = self.matched,
@@ -212,6 +219,7 @@ pub const Slot = struct {
             self.event_bytes,
             enforce,
         );
+        self.state.tag_templates = self.tag_templates;
         self.active = true;
         return executor.Executor.init(self.program, self.frame, &self.state, self.unwind);
     }
@@ -258,7 +266,8 @@ fn reservation(program: *const rules.Program, limits: Limits) Error!usize {
         .{ transformed, 2 },
         .{ limits.entries * 9 + 2, @sizeOf(variables.Entry) },
         .{ limits.events, @sizeOf(actions.Event) },
-        .{ limits.tags, @sizeOf([]const u8) },
+        .{ limits.tags * 2, @sizeOf([]const u8) },
+        .{ program.conditions.len, @sizeOf(scores.Row) },
         .{ limits.exclusions, @sizeOf(controls.Exclusion) },
         .{ limits.pieces, @sizeOf([]const u8) },
         .{ limits.bytes, @sizeOf(usize) },

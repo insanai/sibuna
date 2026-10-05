@@ -56,6 +56,8 @@ pub fn executeChain(programs: []const Program, unwind: []const usize, frame: Fra
         for (program.steps) |*step| try executeStep(step, program.default_deny, &event, frame);
     }
     event.tags = frame.state.tags[tag_start..frame.state.tag_used];
+    if (frame.state.tag_templates.len != 0)
+        event.tag_templates = frame.state.tag_templates[tag_start..frame.state.tag_used];
     if (publish) {
         frame.state.events[frame.state.event_used] = event;
         frame.state.event_used += 1;
@@ -102,11 +104,16 @@ fn executeStep(
         },
         .message => |*program| {
             event.message = try frame.state.save(try expand(program, frame), frame.budget);
+            event.message_template = program.source;
         },
         .data => |*program| {
             event.data = try frame.state.save(try expand(program, frame), frame.budget);
         },
-        .tag => |*program| try frame.state.appendTag(try expand(program, frame), frame.budget),
+        .tag => |*program| try frame.state.appendTagTemplate(
+            try expand(program, frame),
+            program.source,
+            frame.budget,
+        ),
         .severity => |value| {
             event.severity = value;
             frame.state.highest_severity = @min(frame.state.highest_severity, @as(u8, value));
@@ -145,6 +152,7 @@ fn assertDisjoint(frame: Frame) void {
         std.mem.sliceAsBytes(state.control.exclusions),
         std.mem.sliceAsBytes(state.events),
         std.mem.sliceAsBytes(state.tags),
+        std.mem.sliceAsBytes(state.tag_templates),
         state.bytes,
         std.mem.sliceAsBytes(ctx.scratch.view),
         std.mem.sliceAsBytes(ctx.scratch.matched),

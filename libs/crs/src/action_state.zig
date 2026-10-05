@@ -11,8 +11,11 @@ pub const Event = struct {
     id: u32,
     phase: model.Phase,
     message: []const u8 = "",
+    message_template: []const u8 = "",
     data: []const u8 = "",
     tags: []const []const u8 = &.{},
+    tag_templates: []const []const u8 = &.{},
+    score_owner: ?usize = null,
     severity: u3 = 0,
     save: bool = true,
     no_audit: bool = false,
@@ -22,6 +25,7 @@ pub const State = struct {
     control: controls.State,
     events: []Event,
     tags: [][]const u8,
+    tag_templates: [][]const u8 = &.{},
     bytes: []u8,
     event_used: usize = 0,
     tag_used: usize = 0,
@@ -75,11 +79,24 @@ pub const State = struct {
     }
 
     pub fn appendTag(self: *State, value: []const u8, budget: *work.Budget) Error!void {
+        return self.appendTagTemplate(value, "", budget);
+    }
+
+    pub fn appendTagTemplate(
+        self: *State,
+        value: []const u8,
+        template: []const u8,
+        budget: *work.Budget,
+    ) Error!void {
         if (self.failed) return error.TransactionFailed;
         errdefer self.poison();
         if (self.tag_used == self.tags.len) return error.TagLimit;
         const owned = try self.save(value, budget);
         self.tags[self.tag_used] = owned;
+        if (self.tag_templates.len != 0) {
+            std.debug.assert(self.tag_templates.len == self.tags.len);
+            self.tag_templates[self.tag_used] = template;
+        }
         self.tag_used += 1;
     }
 

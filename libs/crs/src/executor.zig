@@ -43,6 +43,10 @@ pub const Executor = struct {
         if (self.state.denied and phase != .logging) return error.DisruptedTransaction;
         try self.cursor.begin(phase);
         while (try self.cursor.next(self.condition.budget)) |root| {
+            const journal = self.condition.context.store.journal;
+            if (journal) |value| value.bind(root, self.program.actions[root].id, phase);
+            const event_start = self.state.event_used;
+            defer self.finishScores(journal, root, event_start);
             const result = try self.program.topology.evaluate(
                 self.program.conditions,
                 root,
@@ -64,6 +68,21 @@ pub const Executor = struct {
             }
         }
         return .complete;
+    }
+
+    fn finishScores(
+        self: *Executor,
+        journal: ?*@import("score_journal.zig").Journal,
+        root: usize,
+        event_start: usize,
+    ) void {
+        const value = journal orelse return;
+        value.unbind();
+        // A root may publish repeated multiMatch events, or none for a false chain.
+        // One reference denotes its net total and prevents duplicated contributions.
+        if (self.state.event_used != event_start) {
+            self.state.events[event_start].score_owner = root;
+        }
     }
 };
 
