@@ -44,6 +44,12 @@ It requires Node; Chrome separately verifies form retention, focus and responsiv
 full candidate/member view. `python3 tools/crs_cli_check.py <binary> --candidate <directory>`
 checks offline authentication of saved sources and reviewed live CLI changes. Each command
 closes its own session; the fixture honors the login rate limit instead of weakening it.
+`python3 tools/crs_local_check.py <binary> --candidate <directory>` qualifies the independent
+engine path: local signed-source adoption, live modes, retained rollback, failed effects,
+exclusive daemon ownership, boot-fenced restart and corruption refusal. Run it with
+`-Dstorage=false -Dconsole=false` to verify the engine needs neither service. POSIX runs
+inject a failure after committing intent and before authentication by pausing the owned
+daemon between polls; all platforms test failed preparation and corrupted startup sources.
 `crs-start-test` checks startup option conflicts, observable profiles, resource bounds and
 the disabled lifecycle. The signed-artifact probe also exercises the startup owner's
 generation leases, forward-auth profile, exhaustion cleanup and joined-reader teardown.

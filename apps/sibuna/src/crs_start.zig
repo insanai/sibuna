@@ -5,19 +5,39 @@ const crs = @import("crs");
 const updater = @import("crs-update");
 pub const http_policy = @import("crs_http_policy.zig");
 pub const options = @import("crs_options.zig");
+const local_reload = @import("crs_local_reload.zig");
 pub const Error = options.Error || http_policy.Error || updater.artifact.Error ||
     crs.generation.Error ||
-    crs.publication.Error || std.Io.Dir.OpenError || error{InvalidCrsClock};
+    crs.publication.Error || local_reload.Error || std.Io.Dir.OpenError || error{InvalidCrsClock};
 pub const Runtime = struct {
     allocator: std.mem.Allocator,
     publisher: crs.publication.Publisher = .{},
     source: ?crs.artifact_manifest.Manifest = null,
+    reload: ?*local_reload.Owner = null,
 
     /// Console management needs a stable address even before its first selection.
     /// No generation or transaction pool is allocated until a reviewed activation.
     pub fn empty(allocator: std.mem.Allocator) std.mem.Allocator.Error!*Runtime {
         const self = try allocator.create(Runtime);
         self.* = .{ .allocator = allocator };
+        return self;
+    }
+
+    pub fn startReloading(
+        allocator: std.mem.Allocator,
+        io: std.Io,
+        path: []const u8,
+        observation: crs.config.Observation,
+    ) Error!*Runtime {
+        const self = try empty(allocator);
+        errdefer self.stop();
+        self.reload = try local_reload.Owner.start(
+            allocator,
+            io,
+            path,
+            &self.publisher,
+            observation,
+        );
         return self;
     }
 
@@ -88,11 +108,19 @@ pub const Runtime = struct {
 
     /// The owner must already have joined listener, console and reload workers.
     pub fn stop(self: *Runtime) void {
+        self.stopReload();
         self.publisher.close() catch unreachable;
         self.publisher.deinit();
         const allocator = self.allocator;
         self.* = undefined;
         allocator.destroy(self);
+    }
+
+    /// Stop new local work while retaining published generations for readers and
+    /// storage teardown. Final destruction still requires every reader to join.
+    pub fn stopReload(self: *Runtime) void {
+        if (self.reload) |reload| reload.stop();
+        self.reload = null;
     }
 };
 
@@ -107,6 +135,40 @@ test "disabled CRS startup never loads a directory or allocates" {
         .request_metadata,
     );
     try std.testing.expect(result == null);
+}
+
+test "empty local reload owns no generation and joins its exclusive worker before restart" {
+    const t = std.testing;
+    var temporary = t.tmpDir(.{ .iterate = true });
+    defer temporary.cleanup();
+    var path: [1024]u8 = undefined;
+    const length = try temporary.dir.realPath(t.io, &path);
+    const first = try Runtime.startReloading(
+        t.allocator,
+        t.io,
+        path[0..length],
+        .request_response,
+    );
+    var stopped = false;
+    defer if (!stopped) first.stop();
+    try t.expect(!first.publisher.enabled.load(.acquire));
+    try t.expectError(error.NoGeneration, first.publisher.snapshot());
+    try t.expectError(error.LocalStoreBusy, Runtime.startReloading(
+        t.allocator,
+        t.io,
+        path[0..length],
+        .request_response,
+    ));
+    first.stop();
+    stopped = true;
+    const restarted = try Runtime.startReloading(
+        t.allocator,
+        t.io,
+        path[0..length],
+        .request_response,
+    );
+    defer restarted.stop();
+    try t.expectError(error.NoGeneration, restarted.publisher.snapshot());
 }
 
 test {

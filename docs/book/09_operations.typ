@@ -119,6 +119,41 @@ selection. Query status after an uncertain response rather than assuming the cha
 wait to 1–300 seconds. Every command closes its session. `crs validate --directory <path>`
 authenticates and compiles a saved signed candidate without opening the console or storage.
 
+Engine deployments can manage rules through a private local directory, without the console
+or persistent application storage. Prepare and review a signed candidate first, then copy
+its sources into a versioned local selection:
+
+```sh
+mkdir -m 700 ./crs-store
+sibuna crs update --directory ./crs-store --from ./crs-candidate \
+    --revision 0 --mode audit --crs-slots 2
+sibuna --upstream-port 3000 --crs-reload --crs-dir ./crs-store
+sibuna crs status --directory ./crs-store
+sibuna crs mode --directory ./crs-store --revision 1 --mode enforce
+```
+
+The CLI requires an explicit revision for every change. `crs update` accepts a reviewed
+`--from` directory or downloads a tagged `--version`; omission discovers the latest stable
+release. A downloaded update preserves the current operator configuration when no new file
+is supplied. An explicit candidate supplies its own reviewed configuration. Updates retain
+current settings unless resource controls such as `--crs-profile`, `--crs-request-limit`,
+`--crs-work-budget` or `--crs-slots` override them. `crs rollback --directory <store>
+--revision <revision>` restores the previous source and settings as a new selection.
+Changing modes retains operator rules and all resource controls.
+
+The task applies the saved selection before opening listeners and follows later selections
+off the request path. Its report separates saved intent from the last observed boot and
+application; neither proves process liveness. A busy writer lock is a retryable refusal.
+After an uncertain write, query status before retrying. Failed application keeps the current
+running generation and reports failure; startup refuses corrupt selected sources. The store
+retains current and previous generations and bounds staging to four generation directories.
+Use a private directory on a local filesystem with working file locks and atomic rename.
+Generated names and lock files belong to the store; keep unrelated files outside it.
+Windows operators restrict the directory using ACLs. `--crs-reload` excludes the console and
+cluster management owners and refuses process settings that would override the saved
+selection. Forward auth requires a saved `headers` profile. `--crs-timeout` remains the
+process inspection deadline, independent of the saved rule selection.
+
 === Release Packages and Licenses
 
 Version 0.2.0 packages include persistent storage, the browser solver and the optional

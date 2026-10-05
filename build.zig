@@ -338,12 +338,7 @@ fn addServer(
     modes_check.addArtifactArg(exe);
     proxy_e2e.dependOn(&modes_check.step);
     addConsoleLiveChecks(b, exe, console != null);
-    const crs_check = b.addSystemCommand(&.{ python, "tools/crs_daemon_check.py" });
-    crs_check.addArtifactArg(exe);
-    if (console != null) crs_check.addArg("--console");
-    crs_check.addPassthruArgs();
-    b.step("crs-daemon-check", "Qualify signed CRS through the real daemon and loopback origin")
-        .dependOn(&crs_check.step);
+    addCrsLiveChecks(b, exe, console != null);
     // The isolation gate builds its own ReleaseFast binaries (with and without the
     // console) into a temporary prefix; `-- --quick` runs the short CI matrix.
     const impact = b.step("console-impact", "Measure data-plane cost of the console");
@@ -771,5 +766,29 @@ fn addConsoleLiveChecks(b: *std.Build, exe: *std.Build.Step.Compile, enabled: bo
             check.addArtifactArg(exe);
             step.dependOn(&check.step);
         } else step.dependOn(&b.addFail("console live checks require -Dconsole=true").step);
+    }
+}
+
+fn addCrsLiveChecks(b: *std.Build, exe: *std.Build.Step.Compile, console: bool) void {
+    const scenarios = .{
+        .{
+            "crs-daemon-check",
+            "tools/crs_daemon_check.py",
+            true,
+            "Qualify signed CRS through the real daemon and loopback origin",
+        },
+        .{
+            "crs-local-check",
+            "tools/crs_local_check.py",
+            false,
+            "Qualify local engine CRS updates, effects, rollback and restart",
+        },
+    };
+    inline for (scenarios) |scenario| {
+        const check = b.addSystemCommand(&.{ python, scenario[1] });
+        check.addArtifactArg(exe);
+        if (scenario[2] and console) check.addArg("--console");
+        check.addPassthruArgs();
+        b.step(scenario[0], scenario[3]).dependOn(&check.step);
     }
 }

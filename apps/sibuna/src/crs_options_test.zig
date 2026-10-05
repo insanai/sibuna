@@ -75,3 +75,22 @@ test "startup overrides preserve signed identity and the independent Gate profil
     }, &remaining);
     try t.expectError(error.DetectionBelowBlocking, bad.config.validate(.request_response));
 }
+
+test "local reload is explicit and cannot silently override saved protection" {
+    var remaining: [16][]const u8 = undefined;
+    const valid = try options.parse(&.{ "--crs-reload", "--crs-dir", "/store" }, &remaining);
+    try t.expect(valid.config.reload);
+    try valid.config.validate(.request_response);
+    for ([_][]const []const u8{
+        &.{"--crs-reload"},
+        &.{ "--crs-reload", "--crs-dir", "/store", "--no-crs" },
+        &.{ "--crs-reload", "--crs-dir", "/store", "--crs-slots", "2" },
+        &.{ "--crs-reload", "--crs-dir", "/store", "--crs-profile", "headers" },
+    }) |argv| {
+        const parsed = try options.parse(argv, &remaining);
+        try t.expectError(error.InvalidCrsReload, parsed.config.validate(.request_response));
+    }
+    try t.expectError(error.DuplicateCrsOption, options.parse(&.{
+        "--crs-reload", "--crs-reload",
+    }, &remaining));
+}

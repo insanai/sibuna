@@ -24,6 +24,7 @@ const Error = crs.release_version.Error || error{
 test {
     _ = @import("command_line.zig");
     _ = @import("crs_candidate.zig");
+    _ = @import("crs_local_command.zig");
     if (build_options.console) _ = @import("crs_management_command.zig");
 }
 
@@ -70,6 +71,7 @@ fn path(destination: *?[]const u8, value: []const u8) Error!void {
 }
 
 pub fn execute(allocator: std.mem.Allocator, io: std.Io, argv: []const []const u8) u8 {
+    if (localCommand(argv)) return @import("crs_local_command.zig").execute(allocator, io, argv);
     if (managed(argv)) {
         if (build_options.console) return @import("crs_management_command.zig").execute(
             allocator,
@@ -127,6 +129,12 @@ pub fn execute(allocator: std.mem.Allocator, io: std.Io, argv: []const []const u
     ) catch return outputFailed();
     output.interface.flush() catch return outputFailed();
     return 0;
+}
+
+fn localCommand(argv: []const []const u8) bool {
+    if (argv.len == 0 or std.mem.eql(u8, argv[0], "validate")) return false;
+    for (argv) |arg| if (std.mem.eql(u8, arg, "--directory")) return true;
+    return false;
 }
 
 fn managed(argv: []const []const u8) bool {

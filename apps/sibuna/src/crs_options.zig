@@ -10,10 +10,12 @@ pub const Error = crs.config.Error || error{
     InvalidCrsProfile,
     InvalidCrsLimit,
     CrsArgumentBufferLimit,
+    InvalidCrsReload,
 };
 pub const Config = struct {
     choice: crs.config.Choice = .{},
     directory: ?[]const u8 = null,
+    reload: bool = false,
     profile: ?crs.config.Profile = null,
     blocking: ?u8 = null,
     detection: ?u8 = null,
@@ -26,6 +28,13 @@ pub const Config = struct {
     timeout: ?u16 = null,
 
     pub fn validate(self: Config, observation: crs.config.Observation) Error!void {
+        // Saved local intent owns these values. Process overrides would change
+        // protection without changing its revision or the operator's receipt.
+        if (self.reload and (self.directory == null or self.choice.explicit != null or
+            self.profile != null or self.blocking != null or self.detection != null or
+            self.inbound != null or self.outbound != null or self.request != null or
+            self.response != null or self.work != null or self.slots != null))
+            return error.InvalidCrsReload;
         const activation: crs.config.Activation = .{
             .mode = self.choice.resolved(),
             .profile = self.profile orelse .full,
@@ -77,6 +86,9 @@ pub fn parse(argv: []const []const u8, output: [][]const u8) Error!Parsed {
             try config.choice.select(.enforce);
         } else if (std.mem.eql(u8, flag, "--no-crs")) {
             try config.choice.select(.off);
+        } else if (std.mem.eql(u8, flag, "--crs-reload")) {
+            if (config.reload) return error.DuplicateCrsOption;
+            config.reload = true;
         } else if (std.mem.startsWith(u8, flag, "--crs-")) {
             if (index + 1 == argv.len) return error.MissingCrsValue;
             index += 1;

@@ -38,6 +38,7 @@ fn addStartupTest(
         .imports = &.{
             .{ .name = "crs", .module = crs },
             .{ .name = "crs-update", .module = update },
+            .{ .name = "net", .module = update.import_table.get("net").? },
         },
     });
     const tests = b.addTest(.{ .root_module = module });

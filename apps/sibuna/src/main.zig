@@ -74,17 +74,9 @@ pub fn main(init: std.process.Init) !u8 {
         };
     }
     defer if (persistent) |p| if (!p.shutdown()) abandonedStorageExit();
+    defer if (protection) |running| running.stopReload();
 
-    const runtime = if (build_options.console and parsed.config.enabled)
-        try console_start.Runtime.start(
-            gpa,
-            io,
-            parsed.config,
-            persistent.?,
-            try console_start.crsSeed(protection, settings.crs),
-        )
-    else
-        null;
+    const runtime = try startConsole(gpa, io, settings, persistent, protection);
     defer if (build_options.console) {
         if (runtime) |running| running.stop();
     };
@@ -100,10 +92,42 @@ fn startProtection(
     settings: Settings,
     config: core.Config,
 ) !?*crs_start.Runtime {
+    if (settings.crs.reload) {
+        if (config.cluster_node != 0 or config.cluster_peer_count != 0 or
+            (build_options.console and settings.console.config.enabled))
+            return error.ConflictingCrsManagement;
+        return crs_start.Runtime.startReloading(
+            gpa,
+            io,
+            settings.crs.directory.?,
+            observation(config),
+        );
+    }
     if (try crs_start.Runtime.start(gpa, io, settings.crs, observation(config))) |runtime|
         return runtime;
     if (build_options.console and settings.console.config.enabled)
         return crs_start.Runtime.empty(gpa);
+    return null;
+}
+
+const ConsoleRuntime = if (build_options.console) console_start.Runtime else void;
+
+fn startConsole(
+    gpa: std.mem.Allocator,
+    io: std.Io,
+    settings: Settings,
+    persistent: ?*storage.Persistent,
+    protection: ?*crs_start.Runtime,
+) !?ConsoleRuntime {
+    if (build_options.console) {
+        if (settings.console.config.enabled) return try console_start.Runtime.start(
+            gpa,
+            io,
+            settings.console.config,
+            persistent.?,
+            try console_start.crsSeed(protection, settings.crs),
+        );
+    }
     return null;
 }
 
@@ -410,6 +434,7 @@ fn printHelp() void {
     std.debug.print("CRS candidate check: sibuna crs check [--version <x.y.z>] " ++
         "[--timeout <seconds, 1-300, default 120>]\n", .{});
     printCrsManagementHelp();
+    printCrsLocalHelp();
     std.debug.print(
         \\Usage: sibuna [options]
         \\
@@ -464,7 +489,7 @@ fn printHelp() void {
 fn printCrsManagementHelp() void {
     std.debug.print(
         "Offline: sibuna crs validate --directory <signed-candidate>\n" ++
-            "Running management: sibuna crs status | check | update | mode | rollback | " ++
+            "Console management: sibuna crs status | check | update | mode | rollback | " ++
             "select | discard\n" ++
             "  Required: --origin <origin> --username <admin> --password-file <private-file>; " ++
             "optional --factor-file <private-file>.\n" ++
@@ -476,12 +501,27 @@ fn printCrsManagementHelp() void {
     );
 }
 
+fn printCrsLocalHelp() void {
+    std.debug.print(
+        "Local engine management: sibuna crs status | update | mode | rollback " ++
+            "--directory <private-store>\n" ++
+            "  Changes require --revision <saved-revision>. update accepts --from " ++
+            "<reviewed-signed-candidate> or --version <x.y.z>, and --configuration <file>.\n" ++
+            "  mode requires --mode off|audit|enforce. update accepts --mode and " ++
+            "the --crs-profile/paranoia/threshold/limit/work-budget/slots controls.\n" ++
+            "  The daemon follows intent with --crs-reload --crs-dir <private-store>; " ++
+            "local reload excludes console management and clustered processes.\n",
+        .{},
+    );
+}
+
 fn printCrsHelp() void {
     std.debug.print(
         \\Core Rule Set (starts disabled; source-build integration pending release qualification):
         \\  --crs | --no-crs            Select Enforce or Off; conflicting modes are refused
         \\  --crs-mode <mode>           off | audit | enforce
         \\  --crs-dir <path>            Verified artifact directory (required when enabled)
+        \\  --crs-reload                Follow local selection; excludes console and cluster owners
         \\  --crs-profile <profile>     full | headers; forward_auth requires headers
         \\  --crs-paranoia <1-4>        Blocking paranoia (default: artifact setting)
         \\  --crs-detection-paranoia <n> Detection paranoia, at least the blocking level

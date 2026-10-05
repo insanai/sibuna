@@ -4,12 +4,13 @@ const std = @import("std");
 const crs = @import("crs");
 const updater = @import("crs-update");
 const Io = std.Io;
+pub const ReadError = updater.files.Error || Io.Dir.OpenError;
 
 pub fn readConfiguration(
     allocator: std.mem.Allocator,
     io: Io,
     path: ?[]const u8,
-) !updater.files.Bytes {
+) ReadError!updater.files.Bytes {
     const selected = path orelse {
         const empty = try allocator.alloc(u8, 0);
         return .{ .buffer = empty, .value = empty };
@@ -22,7 +23,7 @@ pub fn readFile(
     io: Io,
     selected: []const u8,
     maximum: usize,
-) !updater.files.Bytes {
+) ReadError!updater.files.Bytes {
     const parent_path = std.fs.path.dirname(selected) orelse ".";
     const parent = try Io.Dir.cwd().openDir(io, parent_path, .{ .follow_symlinks = false });
     defer parent.close(io);

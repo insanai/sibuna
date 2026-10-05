@@ -139,6 +139,28 @@ pub const Locked = struct {
     }
 
     pub fn load(self: *const Locked, source: Source) Error!artifact.Candidate {
+        const expected = try self.manifest(source);
+        const store = self.store;
+        const directory = try store.directory.openDir(store.io, &source.name(), .{
+            .follow_symlinks = false,
+            .iterate = true,
+        });
+        defer directory.close(store.io);
+        var loaded = try artifact.load(.{
+            .allocator = store.allocator,
+            .io = store.io,
+            .directory = directory,
+            .now = try store.now(),
+            .observation = .request_response,
+        });
+        errdefer loaded.deinit();
+        if (!std.meta.eql(loaded.manifest, expected)) return error.InvalidLocalSource;
+        return loaded;
+    }
+
+    /// Configuration is locally authorized metadata, never proof of archive
+    /// authenticity. Executable loading still authenticates every source byte.
+    pub fn manifest(self: *const Locked, source: Source) Error!crs.artifact_manifest.Manifest {
         const store = self.store;
         const directory = try store.directory.openDir(store.io, &source.name(), .{
             .follow_symlinks = false,
@@ -150,23 +172,41 @@ pub const Locked = struct {
             .io = store.io,
             .directory = directory,
         };
-        const limit = crs.artifact_manifest.capacity;
-        const bytes = try reader.read("manifest.bin", .{ .maximum = limit });
+        const bytes = try reader.read("manifest.bin", .{
+            .maximum = crs.artifact_manifest.capacity,
+        });
         defer store.allocator.free(bytes.buffer);
         var digest: [32]u8 = undefined;
         std.crypto.hash.sha2.Sha256.hash(bytes.value, &digest, .{});
         if (!std.crypto.timing_safe.eql([32]u8, digest, source.digest))
             return error.InvalidLocalSource;
-        var loaded = try artifact.load(.{
+        const parsed = try crs.artifact_manifest.decode(bytes.value);
+        if (parsed.revision != source.revision) return error.InvalidLocalSource;
+        return parsed;
+    }
+
+    pub fn configuration(self: *const Locked, source: Source) Error!ownership.Bytes {
+        const metadata = try self.manifest(source);
+        const store = self.store;
+        const directory = try store.directory.openDir(store.io, &source.name(), .{
+            .follow_symlinks = false,
+        });
+        defer directory.close(store.io);
+        const reader: @import("artifact_files.zig").Reader = .{
             .allocator = store.allocator,
             .io = store.io,
             .directory = directory,
-            .now = try store.now(),
-            .observation = .request_response,
-        });
-        errdefer loaded.deinit();
-        if (loaded.manifest.revision != source.revision) return error.InvalidLocalSource;
-        return loaded;
+        };
+        const bytes = try reader.read("operator.conf", .{ .exact = metadata.configuration_bytes });
+        errdefer {
+            std.crypto.secureZero(u8, bytes.buffer);
+            store.allocator.free(bytes.buffer);
+        }
+        var digest: [32]u8 = undefined;
+        std.crypto.hash.sha2.Sha256.hash(bytes.value, &digest, .{});
+        if (!std.crypto.timing_safe.eql([32]u8, digest, metadata.operator_digest))
+            return error.InvalidLocalSource;
+        return bytes;
     }
 
     fn syncSource(self: *const Locked, source: Source) Error!void {

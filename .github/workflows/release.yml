@@ -33,6 +33,7 @@ jobs:
       - name: Qualify native CRS contracts and pinned upstream behavior
         run: |
           zig build crs-test crs-http-test crs-start-test crs-daemon-e2e crs-daemon-check \
+            crs-local-check \
             compression-test net-test \
             crs-detector-data crs-detector-check \
             crs-primitive-check crs-regex-check crs-signature-check crs-acquisition-check \
@@ -90,6 +91,8 @@ jobs:
           python tools/console_ui_live_test.py "$BINARY"
       - name: Verify native signed artifact staging and reload
         run: zig build crs-update-test crs-artifact-check -j2 --summary all -- --download
+      - name: Verify packaged local CRS management
+        run: zig build crs-local-check -Doptimize=safe -Dstrip=true -Dtarget=${{ matrix.target }} -j2 -- --download
       - name: Package binaries, licenses and source manifest
         env:
           BINARY: ${{ runner.os == 'Windows' && 'zig-out/bin/sibuna.exe' || 'zig-out/bin/sibuna' }}
