@@ -149,3 +149,11 @@ test "token scopes reject unknown capabilities and permissions above their role"
     try t.expect(!validLabel("line\nbreak"));
     try t.expect(!validLabel("   "));
 }
+
+pub fn validateQuery(input: Query) error{InvalidLimit}!void {
+    try @import("users.zig").validateQuery(.{
+        .auth = input.auth,
+        .after = input.after,
+        .limit = input.limit,
+    });
+}

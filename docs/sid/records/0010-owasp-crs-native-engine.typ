@@ -1684,6 +1684,41 @@ The trust root is the pinned CRS signing fingerprint
 TLS and an asset digest alone do not establish independent upstream signature authenticity.
 The public key is not fetched and trusted afresh from the same download during every update.
 
+== Durable management ledger
+
+The storage owner alone handles the candidate ledger. A candidate has a random 128-bit
+identifier, the authenticated actor, an expected selection revision, a bounded lifetime and
+one of Preparing, Verified, Selected, Failed, Canceled or Retired. A check prepares a candidate;
+selecting it is a separate, freshly authorized action. Off, Audit, Enforce and rollback share
+that selection operation. Rollback copies retained signed source into a new candidate and
+advances the revision; it never decreases an applied revision.
+
+Source crosses the bounded mailbox in owned 2 KiB chunks. The maximum archive, detached
+signature and private operator configuration are 8 MiB, 16 KiB and 64 KiB. Sequential ordinals,
+full preceding chunks and exact retry bytes prevent holes, append-after-final-chunk and
+replacement of queued work. The native preparation service submits the verification witness
+after pinned signature verification and complete compilation. HTTP cannot submit a witness
+or read raw source. Storage checks manifest compatibility and complete source lengths;
+those structural checks do not replace cryptographic verification.
+
+Four live source sets bound staging: the current selection, its previous selection and up to
+two candidates. Each source set is at most 8 MiB + 80 KiB; hex storage has a factor of two
+before database/index overhead. An atomic count predicate prevents concurrent writers from
+exceeding that bound. Expired and discarded candidates release chunks, and a new selection
+retires older source outside the retained pair. At most 128 ledger rows are retained, with
+24-hour identifier tombstones and bounded pruning. A preparing command expires within five
+minutes, preventing its reuse after a tombstone has been removed.
+
+Prepared mutations recheck the administrator cookie, account revision, CSRF, expiry and
+required factor in the same statement as the edit. Authorization is checked again for reads
+and lost-reply retries. Selecting uses expected-revision compare-and-swap; its redacted audit
+trigger commits with the selected pointer. A failed audit rolls back both pointer and candidate
+state. Database selection and runtime publication remain separate operations. Node receipts
+record the boot, attempted revision, actual application result and bounded failure reason.
+A successful receipt requires that revision to be currently published by the reporting node;
+repeated receipts do not duplicate audit. A new boot must establish its own application result.
+Missing or failed receipts are pending or failed coverage, never successful protection.
+
 == Native detached signature profile
 
 The initial portable verifier accepts one definite-length OpenPGP version-4 binary-document

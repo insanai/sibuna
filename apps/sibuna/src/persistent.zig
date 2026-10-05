@@ -1037,6 +1037,7 @@ test {
         _ = @import("console_challenge_minutes_test.zig");
         _ = @import("console_incident_heads_test.zig");
         _ = @import("console_crs_evidence_test.zig");
+        _ = @import("console_crs_jobs_test.zig");
         _ = @import("console_challenge_records_test.zig");
         _ = @import("console_retention_test.zig");
         _ = @import("console_settings_retention_test.zig");

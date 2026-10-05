@@ -24,6 +24,7 @@ pub const ranking_storage = @import("ranking_storage.zig");
 pub const security = @import("security.zig");
 pub const events = @import("events.zig");
 pub const crs = @import("crs.zig");
+pub const crs_management = @import("crs_management.zig");
 pub const auth = @import("auth.zig");
 pub const users = @import("users.zig");
 pub const audit = @import("audit.zig");
@@ -115,6 +116,7 @@ pub const AuthorizationCheck = struct {
     kind: CredentialKind = .session,
 };
 pub const StorageRequest = union(enum) {
+    crs_management: crs_management.Request,
     subscription_read: subscription_feed.Request,
     subscription_nodes,
     subscription_policy,
@@ -205,6 +207,11 @@ pub const StorageRequest = union(enum) {
     import_commit: workflows.ImportCommit,
 };
 pub const StorageResult = union(enum) {
+    crs_job: ?crs_management.Job,
+    crs_jobs: crs_management.Jobs,
+    crs_selection: crs_management.Selection,
+    crs_source: Bytes(crs_management.chunk_bytes),
+    crs_nodes: crs_management.Nodes,
     security_page: security.Page,
     subscription_page: subscription_feed.Page,
     node_status: nodes.Status,
@@ -324,17 +331,14 @@ pub fn releaseResult(result: StorageResult, gpa: std.mem.Allocator) void {
 
 pub fn validate(request: StorageRequest) error{ InvalidLimit, TooLarge }!void {
     switch (request) {
+        .crs_management => |input| try crs_management.validate(input),
         .subscription_read => |input| try subscription_feed.validate(input),
         .node_command => |input| try nodes.validate(input),
         .audit_query => |input| try audit.validate(input),
         .audit_read => |input| {
             if (input.id == 0 or input.id > audit.last_id) return error.InvalidLimit;
         },
-        .tokens_query => |input| try users.validateQuery(.{
-            .auth = input.auth,
-            .after = input.after,
-            .limit = input.limit,
-        }),
+        .tokens_query => |input| try tokens.validateQuery(input),
         .tokens_create => |input| try tokens.validateCreate(input),
         .tokens_revoke => |input| try tokens.validateRevoke(input),
         .users_query => |input| try users.validateQuery(input),

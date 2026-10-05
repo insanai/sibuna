@@ -35,6 +35,7 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
     const kiosk = @import("console_store_kiosk.zig");
     const users = @import("console_store_users.zig");
     return switch (request) {
+        .crs_management => |input| @import("console_crs_jobs.zig").execute(owner, input),
         .subscription_read => |input| @import("console_subscription_feed.zig").read(owner, input),
         .subscription_nodes => .{ .nodes_page = try @import("console_node_read.zig")
             .memberSnapshot(owner) },

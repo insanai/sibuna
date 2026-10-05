@@ -26,7 +26,9 @@ encoded uploads, response holdback, configured denial statuses, pipeline retenti
 forward-auth metadata, admission limits, absolute deadlines and early stream/tunnel release.
 Run it with the console enabled to verify exact response-refusal telemetry as well.
 `console-crs-evidence-test` drives deterministic storage ticks for atomic scalar findings,
-lost-reply retries, migration replay and authorized reads. `crs-daemon-check -- --download`
+lost-reply retries, migration replay and authorized reads. `console-crs-management-test`
+checks the storage-owned candidate ledger, source chunk ownership, expected-revision selection,
+audit rollback, bounded staging, authorization at execution, rollback and boot-fenced receipts. `crs-daemon-check -- --download`
 also qualifies saved findings and redacted heads through authenticated console queries when
 the console is compiled in, including restart retention and sign-out revocation.
 `crs-start-test` checks startup option conflicts, observable profiles, resource bounds and
