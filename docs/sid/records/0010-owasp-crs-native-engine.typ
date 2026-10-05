@@ -1642,8 +1642,17 @@ A broad rule exclusion must state the lost protection in the console.
 The native command `sibuna crs update` submits an authenticated management job, using the
 same service as the console’s *Security → Core Rule Set* page. `--version` selects a tagged
 release; omission checks the latest stable official release. `check`, `status` and `rollback`
-share bounded typed request/response contracts. Offline `validate` accepts an extracted
-candidate without starting the daemon and reports syntax, feature and capacity diagnostics.
+share bounded typed request/response contracts. Running commands require `--origin`,
+`--username` and a private `--password-file`; `--factor-file` supplies a required second
+factor. An insecure remote HTTP origin is refused. Every change supplies `--revision`,
+including zero for an initial selection. Preparation owns a temporary session until it
+finishes, reports an unchanged selection and closes the session; activation remains a
+separate `select --id <reviewed-id> --revision <expected-revision>` command. Status reports
+saved intent and local boot-fenced application separately. Unknown outcomes require a
+fresh status query. Mode clones current settings; rollback takes the exact previous settings
+and refuses overrides. A bounded `--settings` file rejects unknown names. Offline
+`validate --directory <saved-candidate>` authenticates and compiles the restart files
+without starting the daemon or opening application storage.
 There is no unauthenticated network endpoint or shell command invocation in the service.
 
 Candidate preparation also runs independently as `sibuna crs check [--version <x.y.z>]
@@ -1671,6 +1680,43 @@ Filesystem permissions authorize this local path; it does not open an unauthenti
 management listener or require the AGPL console for the LGPL engine’s rule updates.
 Clustered deployments use the storage owner’s revision discipline rather than independent
 file writers. Both paths share verification, compilation and publication code.
+
+== Local filesystem selection
+
+A local store uses immutable generation directories, a versioned `selection.bin` and a
+separate boot-fenced `applied.bin`. The selection names the current and previous source
+directories and binds each manifest digest. Operators prepare and review signed candidates
+before `crs update --directory <store> --from <candidate> --revision <expected>`. Mode and
+rollback changes also create a new immutable generation. Every mutation holds the same
+nonblocking exclusive file lock and rechecks the expected revision under that lock.
+The lock file is never replaced or removed; operating-system ownership releases the lock
+after a crash. A busy lock is a recoverable error, not a reason to wait indefinitely.
+
+Sources and their manifest are synchronized before the atomic selector replacement; the
+namespace transition is then synchronized on supported local filesystems. The selector
+is durable intent, not proof of a running effect. A joined, bounded daemon task enabled
+explicitly by `--crs-reload --crs-dir <store>` authenticates the named source, compiles it
+privately, reserves its complete generation and rechecks selection before publication.
+It records a separate boot-fenced receipt. Startup applies the saved selection before
+opening listeners. Failed updates preserve the last usable running generation and report
+failure; a restart refuses a corrupt selected generation rather than guessing an older one.
+Console management and local reload cannot own the same publisher, and clustered processes
+reject local reload. File ownership authorizes this path; no management listener is opened.
+
+*Lemma: immutable local selection.* Assume cooperative writers use the stable lock inode,
+atomic replacement provides a complete old or new selector, and synchronization succeeds
+on the operator's local filesystem. A selector references complete, synchronized sources,
+because its installation follows source preparation. A reader holds a shared lock while
+loading and publishing; collection cannot remove its source and a writer cannot change its
+selection during publication. Exclusive writers compare revisions before installation, so
+two changes with one expected revision cannot both commit. A failure before installation
+leaves the previous selector intact; an uncertain failure after installation requires a
+status query. A receipt acknowledges an observed boot and revision, never process liveness.
+
+The store retains current and previous generations and bounds private staging. Reclamation
+runs under the same lock and targets the store's generated names, never unrelated operator
+files. Atomic namespace semantics, lock contention, stale edits, interrupted staging,
+restart, retained rollback and an unknown completion outcome require executable tests.
 
 Update stages are retrieve metadata, download, verify signature and digest, safely unpack,
 read, compile, run candidate checks, persist intent, publish and record completion. The

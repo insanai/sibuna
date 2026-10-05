@@ -9,6 +9,7 @@ pub const files = @import("artifact_files.zig");
 pub const artifact = @import("artifact.zig");
 pub const candidate_directory = @import("candidate_directory.zig");
 pub const staging = @import("staging.zig");
+pub const local = @import("local_store.zig");
 pub const Prepared = @import("prepared.zig").Prepared;
 pub const Error = fetch.Error || crs.release_package.Error || urls.Error ||
     std.json.ParseError(std.json.Scanner) || error{ InvalidClock, InvalidDownloadDeadline };
@@ -130,4 +131,5 @@ test "canceled updater creates no artifact or candidate generation" {
 test {
     _ = artifact;
     _ = candidate_directory;
+    _ = local;
 }
