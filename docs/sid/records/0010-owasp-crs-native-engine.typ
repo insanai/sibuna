@@ -1365,6 +1365,28 @@ selects raw body bytes. MIME metadata is not trusted as proof that a payload is 
 Parsing errors populate the corresponding collection/error semantics and cannot masquerade
 as an empty valid document. Ambiguous framing is rejected before CRS evaluation.
 
+The transport's reserved entity reader removes transfer framing into caller-owned storage.
+Content-Length, chunked and close-delimited reads have an independent entity ceiling;
+chunked control bytes also have a separate ceiling, defaulting to 64 KiB. Each decoding
+window is at most 16 KiB. An incomplete chunk-size or trailer line is scanned incrementally,
+bounded by the existing 4 KiB line limit. Eight consecutive reads without progress refuse
+acquisition. Upload activity is credited per 16 KiB consumed, while response activity follows
+each origin read. These policies retain slow-upload protection without cutting an active
+slow response. The reader owns no writer and never publishes a partial entity.
+
+*Lemma (bounded transport acquisition).* For entity ceiling $E$, framing ceiling $F$ and
+line ceiling $L$, successful acquisition visits $O(E + F)$ bytes with $O(L)$ reader storage
+in addition to the caller's entity reservation. It consumes no following pipelined message.
+
+*Proof.* Length and close-delimited paths advance over each consumed byte once. Chunked
+decoding advances over complete control units and payload runs; incremental scanning visits
+only newly arrived bytes of a pending line before one complete validation. Consumed control
+bytes are charged independently of copied payload. Both ceilings are checked before copying
+or advancing the accepted result. The decoder stops at the terminal trailer delimiter, and
+length framing stops at its declared count. No writer is reachable during these operations.
+This argument does not cover content decompression, socket deadlines or later publication,
+which remain separate connector obligations. $square$
+
 The enforcing reverse-proxy profile holds the bounded request before sending it to the origin.
 After phase-one controls run, select the effective entity processor from the strict MIME
 descriptor and its explicit override. The automatic descriptor selects URLENCODED or

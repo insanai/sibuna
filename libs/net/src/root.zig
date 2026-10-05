@@ -8,6 +8,7 @@ const core = @import("core");
 
 pub const http = @import("http.zig");
 pub const chunked = @import("chunked.zig");
+pub const entity = @import("entity.zig");
 pub const response = @import("response.zig");
 pub const proxy = @import("proxy.zig");
 pub const outbound = @import("outbound.zig");
@@ -32,6 +33,7 @@ pub const ProxyAudit = proxy.Audit;
 test {
     _ = @import("http.zig");
     _ = @import("chunked.zig");
+    _ = entity;
     _ = @import("response.zig");
     _ = @import("proxy.zig");
     _ = @import("connect.zig");

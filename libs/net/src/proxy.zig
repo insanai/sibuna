@@ -385,12 +385,7 @@ fn bufferLine(up: *Io.Reader, w: *Io.Writer, progress: Progress) ProxyError!usiz
 }
 
 /// How the origin delimits its response body (RFC 9112 §6).
-pub const Framing = union(enum) {
-    none,
-    length: u64,
-    chunked,
-    until_close,
-};
+pub const Framing = @import("entity.zig").Framing;
 
 pub const ResponseHead = struct {
     status: u16,

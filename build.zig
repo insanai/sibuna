@@ -392,7 +392,10 @@ fn addTests(b: *std.Build, modules: Modules, app: AppModules) void {
     test_step.dependOn(&b.top_level_steps.get("socket-test").?.step);
     test_step.dependOn(&b.addRunArtifact(core_tests).step);
     test_step.dependOn(&b.addRunArtifact(crypto_tests).step);
-    test_step.dependOn(&b.addRunArtifact(net_tests).step);
+    const run_net_tests = b.addRunArtifact(net_tests);
+    test_step.dependOn(&run_net_tests.step);
+    b.step("net-test", "Test native HTTP framing, relay and bounded entity acquisition")
+        .dependOn(&run_net_tests.step);
     test_step.dependOn(&b.addRunArtifact(policy_tests).step);
     test_step.dependOn(&b.addRunArtifact(challenge_tests).step);
     test_step.dependOn(&b.addRunArtifact(store_tests).step);
