@@ -7,6 +7,7 @@ pub const crs_download = @import("crs-update");
 
 test {
     _ = @import("budget.zig");
+    _ = @import("crs_test_worker.zig");
     _ = crs_download;
     _ = @import("config.zig");
     _ = @import("ingress.zig");

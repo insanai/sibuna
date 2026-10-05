@@ -18,6 +18,7 @@ pub fn add(
         .target = target,
         .optimize = optimize,
     });
+    protocol.addImport("crs-test-protocol", b.modules.get("crs-test-protocol").?);
     protocol.addImport("security-evidence", b.modules.get("security-evidence").?);
     const console = b.addModule("sibuna-console", .{
         .root_source_file = b.path("libs/console/src/root.zig"),
@@ -61,6 +62,7 @@ pub fn add(
             .optimize = .small,
         }),
     });
+    wasm.root_module.addImport("crs-test-protocol", b.modules.get("crs-test-protocol").?);
     wasm.root_module.addImport("text", b.modules.get("sibuna-text").?);
     const browser = b.resolveTargetQuery(.{ .cpu_arch = .wasm32, .os_tag = .freestanding });
     wasm.root_module.addImport("security-evidence", evidenceModule(b, browser));
@@ -84,6 +86,7 @@ fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module)
             .imports = &.{.{ .name = "console_protocol", .module = wasm_protocol }},
         }),
     });
+    wasm_protocol.addImport("crs-test-protocol", b.modules.get("crs-test-protocol").?);
     wasm_protocol.addImport("text", b.modules.get("sibuna-text").?);
     wasm_protocol.addImport("security-evidence", evidenceModule(b, target));
     wasm.root_module.addImport("text", b.modules.get("sibuna-text").?);

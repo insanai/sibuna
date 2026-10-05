@@ -5,6 +5,8 @@ const p = @import("console_protocol");
 pub const Access = enum { public, account, full };
 pub const Handler = enum {
     crs_status,
+    crs_test,
+    crs_test_read,
     crs_prepare,
     crs_select,
     crs_discard,
@@ -104,6 +106,21 @@ const table = [_]Route{
         .action = .manage_settings,
         .handler = .crs_configuration,
         .mutation = false,
+    },
+    .{
+        .path = "/console/api/crs/test",
+        .method = .POST,
+        .access = .full,
+        .action = .manage_settings,
+        .handler = .crs_test,
+        .mutation = true,
+    },
+    .{
+        .path = "/console/api/crs/test/result",
+        .method = .POST,
+        .access = .full,
+        .action = .manage_settings,
+        .handler = .crs_test_read,
     },
     .{
         .path = "/console/api/crs/prepare",

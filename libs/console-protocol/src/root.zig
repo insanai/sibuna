@@ -25,6 +25,7 @@ pub const security = @import("security.zig");
 pub const events = @import("events.zig");
 pub const crs = @import("crs.zig");
 pub const crs_management = @import("crs_management.zig");
+pub const crs_tests = @import("crs_tests.zig");
 pub const crs_api = @import("crs_api.zig");
 pub const json_value = @import("json_value.zig");
 pub const auth = @import("auth.zig");

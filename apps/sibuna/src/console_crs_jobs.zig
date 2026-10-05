@@ -20,6 +20,7 @@ pub fn execute(owner: *Persistent, input: m.Request) !p.StorageResult {
         .begin => |value| begin(owner, value),
         .chunk => |value| chunk(owner, value),
         .verify => |value| verify(owner, value),
+        .test_begin => |value| @import("console_crs_test.zig").begin(owner, value),
         .select => |value| @import("console_crs_selection.zig").select(owner, value),
         .discard => |value| discard(owner, value),
         .selected => reads.selected(owner),

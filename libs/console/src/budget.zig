@@ -35,6 +35,10 @@ pub const Budget = struct {
     pub const crs_prepare_bytes = @import("crs").release_package.compiled_capacity +
         8 * 1024 * 1024 + 80 * 1024 +
         2 * @sizeOf(@import("crs_candidate.zig").Configuration);
+    // Private tests share the one joined compiler, but own a queued JSON body,
+    // parser and evaluation slot in addition to the verified private program.
+    pub const crs_test_bytes = @import("console_protocol").crs_tests.sample.sample_json_bytes +
+        @import("console_protocol").crs_tests.sample.parser_bytes + 128 * 1024 * 1024;
     pub const collector_bytes = @sizeOf(@import("stats.zig").Stats) +
         @sizeOf(@import("rankings_journal.zig").Journal) +
         @sizeOf(@import("minute_journal.zig").Journal) +
@@ -75,7 +79,7 @@ pub const Budget = struct {
             @as(u64, self.peers) * (@import("peer_client.zig").allocation_bytes +
                 @sizeOf(@import("peer_query.zig").Mailbox)) +
             topic_bytes + traffic_bytes + query_bytes + evidence_bytes + collector_bytes +
-            crs_prepare_bytes +
+            crs_prepare_bytes + crs_test_bytes +
             2 * @as(u64, self.geoip_generation_bytes) +
             // Completed mailbox payloads and concurrent HTTP history encoders are owned.
             (32 + @as(u64, self.slots)) *

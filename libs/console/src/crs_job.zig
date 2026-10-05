@@ -8,6 +8,7 @@ const p = @import("console_protocol");
 const m = p.crs_management;
 const App = @import("app.zig").App;
 const candidate = @import("crs_candidate.zig");
+const private_test = @import("crs_test_worker.zig");
 const sources = @import("crs_sources.zig");
 pub const Input = candidate.Input;
 pub const Overrides = struct {
@@ -55,6 +56,7 @@ pub const Job = struct {
     mutex: std.Io.Mutex = .init,
     thread: ?std.Thread = null,
     pending: ?Input = null,
+    tester: private_test.Task = .{},
     running: bool = false,
     last_id: m.Id = .{},
     stage: Stage = .idle,
@@ -83,6 +85,7 @@ pub const Job = struct {
         self.thread = null;
         if (self.pending) |*input| input.deinit(self.app.gpa);
         self.pending = null;
+        self.tester.deinit(self.app.gpa);
     }
 
     pub fn enqueue(self: *Job, input: Input) !m.Id {
@@ -92,7 +95,8 @@ pub const Job = struct {
             (input.clone != null and input.configuration != null)) return error.InvalidRequest;
         self.mutex.lockUncancelable(self.app.io);
         defer self.mutex.unlock(self.app.io);
-        if (self.running or self.pending != null) return error.Busy;
+        if (self.running or self.pending != null or self.tester.pending != null)
+            return error.Busy;
         if (self.app.stopping.load(.acquire)) return error.Canceled;
         const result = try self.app.request(.{ .crs_management = .{ .begin = .{
             .auth = input.auth,
@@ -115,6 +119,21 @@ pub const Job = struct {
         self.stage = .preparing;
         self.reason = .none;
         return input.id;
+    }
+
+    pub fn enqueueTest(self: *Job, input: private_test.Input) !void {
+        if (self.publisher == null) return error.CrsManagementUnavailable;
+        self.mutex.lockUncancelable(self.app.io);
+        defer self.mutex.unlock(self.app.io);
+        if (self.running or self.pending != null) return error.Busy;
+        if (self.app.stopping.load(.acquire)) return error.Canceled;
+        try self.tester.enqueue(input, self.app.now());
+    }
+
+    pub fn testSnapshot(self: *Job, auth: p.users.Auth, id: m.Id) !p.crs_tests.Status {
+        self.mutex.lockUncancelable(self.app.io);
+        defer self.mutex.unlock(self.app.io);
+        return self.tester.snapshot(auth, id, self.app.now());
     }
 
     pub fn snapshot(self: *Job) struct { id: m.Id, stage: Stage, reason: m.Reason } {
@@ -175,6 +194,7 @@ pub const Job = struct {
                 self.running = false;
                 self.mutex.unlock(self.app.io);
             }
+            self.runTest();
             const now = self.app.now();
             if (now >= self.next_maintenance) {
                 self.next_maintenance = now + 60;
@@ -188,6 +208,25 @@ pub const Job = struct {
             }
             std.Io.sleep(self.app.io, .fromMilliseconds(250), .awake) catch return;
         }
+    }
+
+    fn runTest(self: *Job) void {
+        self.mutex.lockUncancelable(self.app.io);
+        var input = self.tester.pending orelse {
+            self.mutex.unlock(self.app.io);
+            return;
+        };
+        self.tester.pending = null;
+        self.running = true;
+        self.tester.result.?.state = .running;
+        self.mutex.unlock(self.app.io);
+        defer input.deinit(self.app.gpa);
+        var result: p.crs_tests.Status = undefined;
+        private_test.execute(self.app, input, &result);
+        self.mutex.lockUncancelable(self.app.io);
+        self.tester.result = result;
+        self.running = false;
+        self.mutex.unlock(self.app.io);
     }
 
     fn take(self: *Job) ?Input {

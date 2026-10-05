@@ -513,3 +513,33 @@ test "CRS failure diagnostics are committed with the failure audit and retained 
     const retained = (try fx.run(.{ .job = .{ .auth = auth, .id = id(1) } })).crs_job.?;
     try t.expectEqualDeep(diagnostic, retained.diagnostic.?);
 }
+
+test "CRS management private tests bind authority revision and audit without changing selection" {
+    var fx = try Fixture.open();
+    defer fx.close();
+    try fx.prepare(1, 0, null);
+    const request: m.Select = .{ .auth = auth, .id = id(1), .expected_revision = 0 };
+    try fx.storage.owner.db.exec(t.allocator, "CREATE TEMP TRIGGER refuse_test_audit " ++
+        "BEFORE INSERT ON console_audit WHEN NEW.action='crs.test' " ++
+        "BEGIN SELECT RAISE(ABORT,'test audit unavailable'); END");
+    try t.expectEqual(p.Failure.unavailable, (try fx.run(.{ .test_begin = request })).failed);
+    try t.expectEqual(@as(u64, 0), try fx.count(
+        "SELECT COUNT(*) FROM console_audit WHERE action='crs.test'",
+    ));
+    try fx.storage.owner.db.exec(t.allocator, "DROP TRIGGER refuse_test_audit");
+    const result = try fx.run(.{ .test_begin = request });
+    try t.expectEqual(m.State.verified, result.crs_job.?.state);
+    try t.expectEqual(@as(u64, 0), (try fx.run(.{ .status = auth })).crs_selection.revision);
+    try t.expectEqual(@as(u64, 1), try fx.count(
+        "SELECT COUNT(*) FROM console_audit WHERE action='crs.test' " ++
+            "AND target='00000000000000000000000000000001' AND actor=1",
+    ));
+    var invalid = request;
+    invalid.auth.csrf_digest = @splat(9);
+    try t.expectEqual(p.Failure.forbidden, (try fx.run(.{ .test_begin = invalid })).failed);
+    _ = try fx.select(1, 0);
+    try t.expectEqual(p.Failure.conflict, (try fx.run(.{ .test_begin = request })).failed);
+    invalid = request;
+    invalid.expected_revision = 1;
+    try t.expectEqual(m.State.selected, (try fx.run(.{ .test_begin = invalid })).crs_job.?.state);
+}
