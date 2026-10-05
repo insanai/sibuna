@@ -43,7 +43,7 @@ test "HTTP gzip, deflate and stacked codings decode in reverse order without alt
         const selected = try plan(case.name, &fixture.budget);
         const decoded = try selected.decode(case.wire, fixture.storage(), &fixture.budget);
         try t.expectEqualStrings(payload, decoded);
-        try t.expect(@intFromPtr(decoded.ptr) != @intFromPtr(case.wire.ptr));
+        try t.expectEqual(@intFromPtr(&fixture.output), @intFromPtr(decoded.ptr));
     }
     var fixture: Fixture = .{};
     const selected = try coding.Plan.parse(&.{
@@ -51,6 +51,8 @@ test "HTTP gzip, deflate and stacked codings decode in reverse order without alt
         .{ .name = "content-encoding", .value = "deflate" },
     }, &fixture.budget);
     const decoded = try selected.decode(stacked, fixture.storage(), &fixture.budget);
+    try t.expectEqualStrings(payload, decoded);
+    @memset(&fixture.alternate, '!');
     try t.expectEqualStrings(payload, decoded);
 }
 

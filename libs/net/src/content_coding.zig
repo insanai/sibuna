@@ -52,7 +52,8 @@ pub const Plan = struct {
     }
 
     /// Both expansion buffers are reserved to the permitted decoded ceiling.
-    /// Raw identity returns a borrow of wire; all layers use the same work ledger.
+    /// Raw identity returns a borrow of wire. Compressed results always occupy
+    /// output, so alternate may be reused without invalidating phase borrows.
     pub fn decode(
         self: Plan,
         wire: []const u8,
@@ -69,8 +70,9 @@ pub const Plan = struct {
         if (self.count == 0 and wire.len > storage.output.len) return error.ExpansionLimit;
         buffers.assertExclusive(&.{ wire, storage.output, storage.alternate, storage.window });
         var result = wire;
-        var output = storage.output;
-        var alternate = storage.alternate;
+        const even = self.count % 2 == 0;
+        var output = if (even) storage.alternate else storage.output;
+        var alternate = if (even) storage.output else storage.alternate;
         var remaining = self.count;
         while (remaining != 0) {
             remaining -= 1;

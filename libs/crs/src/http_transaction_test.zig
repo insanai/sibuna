@@ -253,3 +253,37 @@ test "logging records a late deny as intent without retroactively denying delive
     try std.testing.expect(slot.state.would_deny and !slot.state.denied);
     try std.testing.expectEqual(@as(usize, 1), slot.state.event_used);
 }
+
+test "response decoding scratch cannot invalidate the retained request representation" {
+    var program = try prepare(
+        \\SecRule REQUEST_BODY "@streq request" "id:1,phase:2,setvar:tx.request_seen=1"
+        \\SecRule RESPONSE_BODY "@streq response" "id:2,phase:4,chain,deny"
+        \\SecRule REQUEST_BODY "@streq request" "setvar:tx.child_seen=1"
+        \\SecRule REQUEST_BODY "@streq request" "id:4,phase:5,setvar:tx.retained=1"
+    , &.{});
+    defer program.deinit();
+    var slot: slots.Slot = undefined;
+    try slot.init(std.testing.allocator, &program, limits);
+    defer slot.deinit();
+    const buffers = @import("buffers.zig");
+    buffers.assertExclusive(&.{
+        slot.request,          slot.response,       slot.request_wire,  slot.response_wire,
+        slot.decode_alternate, slot.inflate_window, slot.response_head,
+    });
+    @memcpy(slot.request[0..7], "request");
+    @memcpy(slot.request_wire[0..15], "encoded-request");
+    @memcpy(slot.response[0..8], "response");
+    @memcpy(slot.response_wire[0..16], "encoded-response");
+    var input = request;
+    input.headers = &.{.{ .name = "Content-Type", .value = "application/octet-stream" }};
+    var transaction = try transactions.Transaction.begin(&slot, .full, true, input);
+    try std.testing.expectEqual(Result.complete, try transaction.requestBody(slot.request[0..7]));
+    @memset(slot.decode_alternate, '!');
+    _ = try transaction.responseHeaders(.{ .status = 200, .headers = &.{} });
+    try std.testing.expectEqual(Result.denied, try transaction.responseBody(slot.response[0..8]));
+    try transaction.finish(.local_response);
+    try std.testing.expectEqualStrings("1", (try slot.store.get("retained", &slot.budget)).?);
+    try std.testing.expectEqualStrings("encoded-request", slot.request_wire[0..15]);
+    try std.testing.expectEqualStrings("encoded-response", slot.response_wire[0..16]);
+    slot.finish();
+}

@@ -54,6 +54,11 @@ pub const Slot = struct {
     limits: Limits,
     request: []u8 = &.{},
     response: []u8 = &.{},
+    request_wire: []u8 = &.{},
+    response_wire: []u8 = &.{},
+    decode_alternate: []u8 = &.{},
+    inflate_window: []u8 = &.{},
+    response_head: []u8 = &.{},
     store: tx.Store = undefined,
     input: acquired.Builder = undefined,
     json_frames: []json.Frame = &.{},
@@ -90,8 +95,7 @@ pub const Slot = struct {
             self.* = undefined;
         }
         const arena = self.owner.allocator();
-        self.request = try arena.alloc(u8, limits.request);
-        self.response = try arena.alloc(u8, limits.response);
+        try self.reserveEntities(arena);
         const entries = try arena.alloc(variables.Entry, limits.entries);
         self.store = tx.Store.init(entries, try arena.alloc(u8, limits.bytes));
         self.input = acquired.Builder.init(
@@ -128,6 +132,19 @@ pub const Slot = struct {
             .budget = &self.budget,
         };
         if (self.owner.queryCapacity() > limits.reservation) return error.ReservationLimit;
+    }
+
+    fn reserveEntities(self: *Slot, arena: std.mem.Allocator) Error!void {
+        const limits = self.limits;
+        self.request = try arena.alloc(u8, limits.request);
+        self.response = try arena.alloc(u8, limits.response);
+        self.request_wire = try arena.alloc(u8, limits.request);
+        self.response_wire = try arena.alloc(u8, limits.response);
+        // Only intermediate representations borrow alternate. The HTTP decoder
+        // returns primary storage before any body becomes a phased collection.
+        self.decode_alternate = try arena.alloc(u8, @max(limits.request, limits.response));
+        self.inflate_window = try arena.alloc(u8, std.compress.flate.max_window_len);
+        self.response_head = try arena.alloc(u8, 16 * 1024);
     }
 
     pub fn formScratch(self: *Slot) form.Scratch {
@@ -232,8 +249,11 @@ fn reservation(program: *const rules.Program, limits: Limits) Error!usize {
         .{ limits.entries, @sizeOf(xml_ns.Binding) },
         .{ limits.depth, @sizeOf(json.Frame) },
         .{ (limits.depth + 7) / 8, 1 },
-        .{ limits.request, 1 },
-        .{ limits.response, 1 },
+        .{ limits.request, 2 },
+        .{ limits.response, 2 },
+        .{ @max(limits.request, limits.response), 1 },
+        .{ std.compress.flate.max_window_len, 1 },
+        .{ 16 * 1024, 1 },
         .{ limits.bytes, 7 },
         .{ transformed, 2 },
         .{ limits.entries * 9 + 2, @sizeOf(variables.Entry) },

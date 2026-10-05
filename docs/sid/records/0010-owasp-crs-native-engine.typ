@@ -383,6 +383,14 @@ sizes before allocation and retained capacity after allocation against the confi
 ceiling. Per-slot ceilings and slot count bound startup reservation; exceeding either cannot
 silently reduce inspection coverage or turn into request-path allocation.
 
+Wire request and response entities have independent reservations from their decoded bodies.
+The decoder always returns primary decoded storage, including an even number of coding
+layers; only intermediate layers borrow the alternate buffer. Therefore response decoding
+may reuse the alternate buffer and inflater history without invalidating REQUEST_BODY for
+later response or logging rules. Identity bodies borrow their retained wire reservation.
+The complete origin head has its own 16 KiB reservation. Every one of these allocations is
+charged to both the per-slot payload bound and retained arena capacity at startup.
+
 Beginning a transaction resets TX, matched/evidence cursors, controls and work, retaining the
 reserved buffers. A second begin while active is refused. Between phases, replace only the
 acquired view after validating its ownership and charged metadata bound; preserve existing TX
@@ -1517,7 +1525,8 @@ charged work units. Byte scratch and capture storage are sized off-path from the
 These values are proposal defaults, not measured guarantees or an application-upload limit
 when CRS is disabled. Larger configured bounds require a displayed memory reservation and
 benchmark acceptance before use. Eight simultaneous acquisition slots reserve at least
-40 MiB for request and response entity bytes, before metadata and matcher scratch.
+112.6 MiB for retained wire and decoded entities, alternate decoding, inflater and response
+head storage, before metadata, allocator overhead and matcher scratch.
 
 Pool exhaustion returns a recoverable service-unavailable response. Body size limits return
 an explicit refusal before origin delivery. Work exhaustion in enforcement refuses the
