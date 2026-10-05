@@ -123,6 +123,34 @@ fn addSocket(
     return socket;
 }
 
+fn addEvidence(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.lang.Optimize,
+) *std.Build.Module {
+    return b.addModule("security-evidence", .{
+        .root_source_file = b.path("libs/core/src/security_evidence.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+}
+
+fn addCore(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.lang.Optimize,
+) *std.Build.Module {
+    const evidence = addEvidence(b, target, optimize);
+    const core = b.addModule("sibuna-core", .{
+        .root_source_file = b.path("libs/core/src/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    core.addImport("security-evidence", evidence);
+    return core;
+}
+
 fn addModules(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
@@ -132,12 +160,7 @@ fn addModules(
     _ = addText(b);
     const compression = @import("build/compression.zig").add(b);
     const socket = addSocket(b, target, optimize);
-    const core = b.addModule("sibuna-core", .{
-        .root_source_file = b.path("libs/core/src/root.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-
+    const core = addCore(b, target, optimize);
     const crypto = b.addModule("sibuna-crypto", .{
         .root_source_file = b.path("libs/crypto/src/root.zig"),
         .target = target,
@@ -316,6 +339,7 @@ fn addServer(
     addConsoleLiveChecks(b, exe, console != null);
     const crs_check = b.addSystemCommand(&.{ python, "tools/crs_daemon_check.py" });
     crs_check.addArtifactArg(exe);
+    if (console != null) crs_check.addArg("--console");
     crs_check.addPassthruArgs();
     b.step("crs-daemon-check", "Qualify signed CRS through the real daemon and loopback origin")
         .dependOn(&crs_check.step);
@@ -426,6 +450,21 @@ fn addCrsDaemonTests(b: *std.Build, app: AppModules, all: *std.Build.Step) void 
     const step = b.step("crs-daemon-e2e", "Test native CRS phases through the live HTTP daemon");
     step.dependOn(&run.step);
     all.dependOn(step);
+    if (app.console != null) addCrsEvidenceTests(b, app);
+}
+
+fn addCrsEvidenceTests(b: *std.Build, app: AppModules) void {
+    const root = b.createModule(.{
+        .root_source_file = b.path("apps/sibuna/src/console_crs_evidence_test.zig"),
+        .target = b.graph.host,
+    });
+    wireApp(b, root, app);
+    const run = b.addRunArtifact(b.addTest(.{
+        .root_module = root,
+        .filters = &.{"CRS evidence"},
+    }));
+    b.step("console-crs-evidence-test", "Test atomic CRS evidence and authorized incident reads")
+        .dependOn(&run.step);
 }
 
 fn addBenchmarks(

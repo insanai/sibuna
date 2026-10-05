@@ -45,6 +45,68 @@ test "phase-one denial precedes continue, body acquisition and origin delivery" 
     try t.expectEqual(@as(u64, 1), fixture.state.crs_counts.denied.load(.monotonic));
 }
 
+test "CRS findings consume saved events exactly once without expanded request secrets" {
+    const source = "SecRule REQUEST_URI \"@contains evidence\" " ++
+        "\"id:942100,phase:1,deny,status:406,msg:'secret %{REQUEST_URI}',severity:2\"\n" ++
+        "SecRule REQUEST_URI \"@contains evidence\" " ++
+        "\"id:942101,phase:1,pass,nolog,msg:'not saved'\"\n" ++
+        "SecRule REQUEST_URI \"@contains evidence\" " ++
+        "\"id:942102,phase:1,pass,noauditlog,msg:'not audited'\"";
+    for ([_]bool{ false, true }) |enforcing| {
+        const fixture = try fixtures.Fixture.create(.{
+            .source = source,
+            .mode = if (enforcing) .enforce else .audit,
+        });
+        defer fixture.destroy();
+        var output: [1024]u8 = undefined;
+        const response = try exchange(fixture, "GET /evidence?token=private-value HTTP/1.1\r\n" ++
+            "Host: example.test\r\nConnection: close\r\n\r\n", &output);
+        try status(response, if (enforcing) "HTTP/1.1 406" else "HTTP/1.1 200");
+        const finding = fixture.findings.pop().?;
+        try t.expectEqual(@as(u32, 942100), finding.evidence.rule_id);
+        try t.expectEqual(enforcing, finding.evidence.enforcing);
+        try t.expectEqual(enforcing, finding.evidence.denied);
+        try t.expect(finding.evidence.would_deny);
+        try t.expectEqual(@as(usize, 0), finding.payload_bytes);
+        try t.expectEqualStrings("/evidence", std.mem.sliceTo(&finding.path, 0));
+        const category = if (enforcing) "waf:crs" else "audit:crs";
+        try t.expectEqualStrings(category, std.mem.sliceTo(&finding.category, 0));
+        try t.expect(fixture.findings.pop() == null);
+        try finding.evidence.validate();
+    }
+}
+
+test "CRS heads are redacted and consumed before WebSocket early release" {
+    if (!console_enabled) return;
+    const fixture = try fixtures.Fixture.create(.{
+        .source = "SecRule REQUEST_URI \"@contains socket\" " ++
+            "\"id:942100,phase:1,pass,msg:'handshake finding'\"",
+        .capture = true,
+    });
+    defer fixture.destroy();
+    const stream = try fixture.connect();
+    defer stream.close(io);
+    try send(stream, "GET /socket?token=private-value HTTP/1.1\r\nHost: example.test\r\n" ++
+        "Upgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Version: 13\r\n" ++
+        "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n" ++
+        "Authorization: Bearer private-value\r\n\r\n");
+    var storage: [4096]u8 = undefined;
+    var reader = stream.reader(io, &storage);
+    try reader.interface.fill(12);
+    // The callback finishes findings before publishing the accepted handshake.
+    try t.expect(std.mem.startsWith(u8, reader.interface.buffered(), "HTTP/1.1 101"));
+    const finding = fixture.findings.pop().?;
+    try t.expectEqual(.handshake_only, finding.evidence.coverage);
+    try t.expectEqual(.captured, finding.response_state);
+    const request = std.mem.sliceTo(&finding.request, 0);
+    try t.expect(std.mem.indexOf(u8, request, "private-value") == null);
+    try t.expect(std.mem.indexOf(u8, request, "[redacted]") != null);
+    try t.expect(std.mem.startsWith(u8, &finding.response, "HTTP/1.1 101"));
+    try t.expect(fixture.findings.pop() == null);
+    // A close frame permits both owned peers to end normally.
+    try send(stream, &.{ 0x88, 0x82, 1, 2, 3, 4, 2, 0xea });
+}
+
 test "decoded gzip and chunked entities reach phase two before the origin" {
     const source = "SecRule REQUEST_BODY \"@contains bounded\" \"id:1,phase:2,deny,status:409\"";
     const fixture = try fixtures.Fixture.create(.{ .source = source });

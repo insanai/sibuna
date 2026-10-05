@@ -18,6 +18,7 @@ pub fn add(
         .target = target,
         .optimize = optimize,
     });
+    protocol.addImport("security-evidence", b.modules.get("security-evidence").?);
     const console = b.addModule("sibuna-console", .{
         .root_source_file = b.path("libs/console/src/root.zig"),
         .target = target,
@@ -61,6 +62,8 @@ pub fn add(
         }),
     });
     wasm.root_module.addImport("text", b.modules.get("sibuna-text").?);
+    const browser = b.resolveTargetQuery(.{ .cpu_arch = .wasm32, .os_tag = .freestanding });
+    wasm.root_module.addImport("security-evidence", evidenceModule(b, browser));
     step.dependOn(&wasm.step);
     return .{ .protocol = protocol, .console = console };
 }
@@ -82,6 +85,7 @@ fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module)
         }),
     });
     wasm_protocol.addImport("text", b.modules.get("sibuna-text").?);
+    wasm_protocol.addImport("security-evidence", evidenceModule(b, target));
     wasm.root_module.addImport("text", b.modules.get("sibuna-text").?);
     wasm.root_module.addImport("html", htmlModule(b, target, .small));
     wasm.bundle_compiler_rt = true;
@@ -119,6 +123,14 @@ fn addUi(b: *std.Build, protocol: *std.Build.Module, console: *std.Build.Module)
     render_check.setEnvironmentVariable("SIBUNA_UPDATE_CONSOLE_GOLDENS", "");
     render_step.dependOn(&render_check.step);
     addGolden(b, tests, render_step);
+}
+
+fn evidenceModule(b: *std.Build, target: std.Build.ResolvedTarget) *std.Build.Module {
+    return b.createModule(.{
+        .root_source_file = b.path("libs/core/src/security_evidence.zig"),
+        .target = target,
+        .optimize = .small,
+    });
 }
 
 fn linkUi(b: *std.Build, object: *std.Build.Step.Compile) std.Build.LazyPath {

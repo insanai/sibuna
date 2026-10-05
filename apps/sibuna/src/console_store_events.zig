@@ -118,6 +118,7 @@ fn decode(row: []const ?[]const u8) !p.events.Row {
         };
         result.query_redacted = result.query_redacted or result.capture.?.query_bytes != 0;
     }
+    result.crs = try @import("console_crs_read.zig").decode(row[21..34]);
     return result;
 }
 
@@ -155,6 +156,7 @@ pub fn copy(
 const base_filters =
     " FROM security_incidents LEFT JOIN console_incident_evidence e ON e.incident_id=id " ++
     "LEFT JOIN console_incident_country c ON c.incident_id=id " ++
+    "LEFT JOIN console_crs_evidence x ON x.incident_id=id " ++
     "WHERE recorded_at BETWEEN ? AND ? " ++
     "AND (?=0 OR node_id=?) AND (?='' OR violation_category=?) AND (?='' OR client_ip=?) " ++
     "AND substr(path,1,length(?))=? AND (?='' OR " ++
@@ -168,7 +170,10 @@ const campaign_filters = base_filters ++ "AND campaign_id=? AND ?!=0 ";
 const raw_select =
     "SELECT id,node_id,recorded_at,client_ip,method,path,violation_category,user_agent," ++
     "campaign_id,1,recorded_at,e.version,e.selected_status,e.query_bytes,e.body_bytes," ++
-    "e.declared_body_bytes,e.truncated,c.country,c.generation,0,c.generation IS NOT NULL";
+    "e.declared_body_bytes,e.truncated,c.country,c.generation,0,c.generation IS NOT NULL," ++
+    "x.rule_id,x.phase,x.severity,x.revision,x.source_digest,x.enforcing,x.denied," ++
+    "x.would_deny,x.coverage,x.selected_status,x.blocking_paranoia,x.detection_paranoia," ++
+    "x.incident_id";
 const raw_order =
     "AND (recorded_at<? OR (recorded_at=? AND id<?)) " ++
     "ORDER BY recorded_at DESC,id DESC LIMIT ?";
@@ -178,7 +183,8 @@ const group_select =
     "CASE WHEN COUNT(DISTINCT COALESCE(c.country,''))=1 THEN MIN(c.country) END," ++
     "CASE WHEN COUNT(DISTINCT COALESCE(c.generation,''))=1 THEN MIN(c.generation) END," ++
     "COUNT(DISTINCT CASE WHEN c.generation IS NULL THEN 'not_recorded' " ++
-    "ELSE COALESCE(c.country,'unknown') END)>1,COUNT(c.generation)=COUNT(*)";
+    "ELSE COALESCE(c.country,'unknown') END)>1,COUNT(c.generation)=COUNT(*)," ++
+    "NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL";
 const group_order =
     "GROUP BY node_id,client_ip HAVING MAX(recorded_at)<? OR " ++
     "(MAX(recorded_at)=? AND MAX(id)<?) ORDER BY MAX(recorded_at) DESC,MAX(id) DESC LIMIT ?";

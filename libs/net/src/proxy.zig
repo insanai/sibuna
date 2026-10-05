@@ -710,6 +710,10 @@ fn relayUpgrade(
     handshake: upgrade.Handshake,
 ) ProxyError!Relayed {
     if (!upgrade.accepted(handshake, head)) return error.UpstreamReadFailed;
+    // Evidence describes the validated origin, including a withheld handshake.
+    // The inspector may release its transaction immediately at this boundary.
+    if (input.audit.response_status) |status| status.* = 101;
+    if (input.audit.response_head) |sink| sink.call(sink.context, head);
     if (input.response_inspector) |hook| {
         const view = inspection.Head{
             .bytes = head,
@@ -723,8 +727,6 @@ fn relayUpgrade(
     input.client.writer.writeAll("Connection: Upgrade\r\nUpgrade: websocket\r\n\r\n") catch
         return error.ClientWriteFailed;
     input.client.writer.flush() catch return error.ClientWriteFailed;
-    if (input.audit.response_status) |status| status.* = 101;
-    if (input.audit.response_head) |sink| sink.call(sink.context, head);
     reader.toss(head.len);
     duplex.relay(input.io, .{
         .{ .stream = input.client.stream, .reader = input.client.reader },

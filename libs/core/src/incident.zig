@@ -7,6 +7,7 @@ pub const Incident = struct {
     payload: []const u8,
     now: u64,
     evidence: Evidence = .{},
+    crs: ?@import("security-evidence").Crs = null,
     /// Redacted heads captured at the incident (see incident_heads.zig); empty when off.
     request_head: []const u8 = "",
     response_head: []const u8 = "",

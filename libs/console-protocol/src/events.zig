@@ -2,6 +2,7 @@
 const std = @import("std");
 const Bytes = @import("root.zig").Bytes;
 pub const country = @import("event_country.zig");
+pub const security_evidence = @import("security-evidence");
 pub const Cursor = struct { time: u64, id: u64 };
 pub const Query = struct {
     session_digest: [32]u8,
@@ -34,6 +35,7 @@ pub const Capture = struct {
 pub const Row = struct {
     geography: country.Mapping = .{},
     capture: ?Capture = null,
+    crs: ?security_evidence.Crs = null,
     id: u64 = 0,
     grouped: bool = false,
     count: u64 = 1,
@@ -74,6 +76,7 @@ pub const Row = struct {
             .query_redacted = self.query_redacted,
             .evidence_version = if (self.capture) |c| @as(?u16, c.version) else null,
             .capture = self.capture,
+            .crs = self.crs,
             .country = self.geography.wire().code,
             .geography = self.geography,
             .response_status = @as(?u16, null),

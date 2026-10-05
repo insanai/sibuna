@@ -14,6 +14,23 @@ pub const max_name = 64;
 
 pub const Head = struct { len: u16 = 0, truncated: bool = false };
 
+/// Caller-owned response evidence survives the origin adapter's stack frame.
+/// receive() consumes a complete validated head before its reader is reused.
+pub const ResponseCapture = struct {
+    extra: *const Extra,
+    bytes: [response_bytes]u8 = undefined,
+    head: Head = .{},
+    seen: bool = false,
+    response_state: ResponseState = .local,
+
+    pub fn receive(context: *anyopaque, raw: []const u8) void {
+        const self: *ResponseCapture = @ptrCast(@alignCast(context));
+        self.head = responseHead(raw, self.extra, &self.bytes);
+        self.seen = true;
+        self.response_state = .captured;
+    }
+};
+
 /// How the response side of the evidence was observed. Stored with the heads so an empty
 /// response never claims a local answer by default.
 pub const ResponseState = enum(u8) {

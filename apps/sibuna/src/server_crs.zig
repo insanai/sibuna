@@ -15,10 +15,16 @@ pub fn serve(
 ) !bool {
     const declared = request.contentLength() orelse 0;
     var context = server.RequestContext.init(connection, request, declared);
+    var captured: @import("core").incident_heads.ResponseCapture = .{
+        .extra = &context.state().config.console_capture_headers,
+    };
+    if (@import("build_options").console and context.state().config.console_capture_heads)
+        context.crs_evidence = &captured;
     if (!try server.restoreAuthorizationTarget(&context)) return false;
     var lease = publisher.lease() catch |err| {
-        if (err == error.DisabledGeneration)
-            return server.serveBuffered(connection, request, head_length);
+        if (err == error.DisabledGeneration) {
+            return buffered(&context, head_length);
+        }
         observe.increment(&context.state().crs_counts.incomplete);
         return refuse(&context, .service_unavailable, "Security inspection is unavailable");
     };
@@ -40,14 +46,16 @@ pub fn serve(
     });
     var transaction = lease.begin(input) catch {
         observe.increment(&context.state().crs_counts.incomplete);
-        if (lease.generation().options.activation.mode == .audit)
-            return server.serveBuffered(connection, request, head_length);
+        if (lease.generation().options.activation.mode == .audit) {
+            return buffered(&context, head_length);
+        }
         return refuse(&context, .forbidden, "Security inspection could not complete");
     };
-    defer if (leased) complete(&context, &transaction);
+    defer if (leased) complete(&context, &transaction, lease.generation());
     if (transaction.slot.state.denied) return denied(&context, transaction.slot.state.status);
-    if (transaction.profile == .headers)
-        return server.serveBuffered(connection, request, head_length);
+    if (transaction.profile == .headers) {
+        return buffered(&context, head_length);
+    }
     var ownership: Ownership = .{
         .context = &context,
         .transaction = &transaction,
@@ -55,6 +63,15 @@ pub fn serve(
         .leased = &leased,
     };
     return full(&ownership, head_length);
+}
+
+fn buffered(context: *server.RequestContext, head_length: usize) !bool {
+    return server.serveBufferedWithEvidence(
+        context.c,
+        context.req,
+        head_length,
+        context.crs_evidence,
+    );
 }
 
 const Ownership = struct {
@@ -67,7 +84,7 @@ const Ownership = struct {
         const self: *Ownership = @ptrCast(@alignCast(context));
         std.debug.assert(self.leased.*);
         finishResponse(response);
-        complete(self.context, self.transaction);
+        complete(self.context, self.transaction, self.lease.generation());
         self.context.inspected_body = null;
         server.countOutcome(self.context, .admitted);
         self.context.c.activity.deadline_ms.store(0, .monotonic);
@@ -160,7 +177,11 @@ fn finishResponse(response: *bridge.Response) void {
     response.finish(response.fallback) catch |err| response.fail(err);
 }
 
-fn complete(context: *server.RequestContext, transaction: *crs.http_transaction.Transaction) void {
+fn complete(
+    context: *server.RequestContext,
+    transaction: *crs.http_transaction.Transaction,
+    generation: *const crs.generation.Generation,
+) void {
     if (!transaction.slot.state.failed and transaction.end == null) {
         const headers = transaction.profile == .headers and !transaction.slot.state.denied;
         const End = crs.http_transaction.End;
@@ -168,6 +189,7 @@ fn complete(context: *server.RequestContext, transaction: *crs.http_transaction.
         transaction.finish(ending) catch transaction.poison();
     }
     context.state().crs_counts.finish(transaction);
+    @import("crs_findings.zig").record(context, transaction, generation);
 }
 
 fn refuse(context: *server.RequestContext, status: net.Status, message: []const u8) !bool {

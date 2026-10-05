@@ -99,6 +99,8 @@ def main():
     parser.add_argument("binary", type=Path)
     parser.add_argument("--download", action="store_true")
     parser.add_argument("--candidate", type=Path)
+    parser.add_argument("--console", action="store_true",
+                        help="also qualify saved findings through the authenticated console")
     args = parser.parse_args()
     if args.download and args.candidate is not None:
         parser.error("choose --download or --candidate, not both")
@@ -110,6 +112,9 @@ def main():
         source = args.candidate.resolve() if args.candidate else candidate(binary, root)
         qualify(binary, source, root)
         qualify(binary, source, root, "forward_auth")
+        if args.console:
+            from crs_console_check import qualify as console_qualify
+            console_qualify(binary, source, root)
     print("Signed CRS startup, ordinary traffic, SQL refusal, WebSocket coverage, "
           "forward-auth headers, overwrite refusal and clean shutdown pass.")
 

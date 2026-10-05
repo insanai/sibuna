@@ -386,6 +386,15 @@ fn serveOne(c: *Connection) !bool {
 }
 
 pub fn serveBuffered(c: *Connection, req: *net.Request, head_len: usize) !bool {
+    return serveBufferedWithEvidence(c, req, head_len, null);
+}
+
+pub fn serveBufferedWithEvidence(
+    c: *Connection,
+    req: *net.Request,
+    head_len: usize,
+    evidence: ?*core.incident_heads.ResponseCapture,
+) !bool {
     const declared = req.contentLength() orelse 0;
     if (!try expectContinue(c, req, declared)) return false;
     var decoder: net.chunked.Decoder = .{};
@@ -394,6 +403,7 @@ pub fn serveBuffered(c: *Connection, req: *net.Request, head_len: usize) !bool {
     else
         try bufferLength(c, req, head_len, declared)) orelse return false;
     var ctx = RequestContext.init(c, req, body.declared);
+    ctx.crs_evidence = evidence;
     ctx.upload = body.upload;
     return dispatch(&ctx);
 }
@@ -525,6 +535,7 @@ pub const RequestContext = struct {
     response_refused: bool = false,
     inspected_body: ?[]const u8 = null,
     crs_response: ?*@import("crs_entity.zig").Response = null,
+    crs_evidence: ?*core.incident_heads.ResponseCapture = null,
     /// Audit findings held back until the origin response head is known (capture only).
     deferred_findings: if (build_options.console) u8 else void =
         if (build_options.console) 0 else {},
@@ -962,7 +973,7 @@ fn recordFindings(
 }
 
 /// The redacted request head when capture is on; an empty head otherwise.
-fn requestHead(
+pub fn requestHead(
     ctx: *RequestContext,
     out: *[core.incident_heads.request_bytes]u8,
 ) core.incident_heads.Head {
@@ -1073,6 +1084,7 @@ fn forwardAuth(
     rule_name: []const u8,
     rule_hash: u64,
 ) !bool {
+    if (ctx.crs_evidence) |evidence| evidence.response_state = .unobserved;
     sampleOutcome(ctx, .admitted, 200);
     if (build_options.console) forwardComplete(ctx);
     var hdr: [256]u8 = undefined;
@@ -1092,18 +1104,7 @@ fn forwardAuth(
 }
 
 /// The origin response head redacted into its bound as soon as the relay validates it.
-const OriginHead = struct {
-    extra: *const core.incident_heads.Extra,
-    bytes: [core.incident_heads.response_bytes]u8 = undefined,
-    head: core.incident_heads.Head = .{},
-    seen: bool = false,
-
-    fn capture(context: *anyopaque, raw: []const u8) void {
-        const self: *OriginHead = @ptrCast(@alignCast(context));
-        self.head = core.incident_heads.responseHead(raw, self.extra, &self.bytes);
-        self.seen = true;
-    }
-};
+const OriginHead = core.incident_heads.ResponseCapture;
 
 /// After the relay: the origin status counter and sample (a failed relay reports 502), and
 /// any audit findings held back until the origin head was known.
@@ -1148,8 +1149,10 @@ fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule
     const c = ctx.c;
     const cfg = st.config;
     var origin_status: u16 = 0;
-    var origin: OriginHead = .{ .extra = &cfg.console_capture_headers };
-    defer if (build_options.console) admittedComplete(ctx, origin_status, &origin);
+    var local_origin: OriginHead = .{ .extra = &cfg.console_capture_headers };
+    const origin = ctx.crs_evidence orelse &local_origin;
+    origin.response_state = .unavailable;
+    defer if (build_options.console) admittedComplete(ctx, origin_status, origin);
     // Ordinary admissions were counted above. Held CRS responses count after
     // inspection; exclusions already counted at the slot's early release.
     defer if (ctx.crs_response) |inspection| {
@@ -1165,8 +1168,9 @@ fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule
         .status = status,
         .rule = rule_name,
         .response_status = if (build_options.console) &origin_status else null,
-        .response_head = if (build_options.console and ctx.deferred_findings != 0)
-            .{ .context = &origin, .call = OriginHead.capture }
+        .response_head = if (build_options.console and
+            (ctx.deferred_findings != 0 or ctx.crs_evidence != null))
+            .{ .context = origin, .call = OriginHead.receive }
         else
             null,
     };

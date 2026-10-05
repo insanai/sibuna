@@ -18,6 +18,16 @@ pub const Options = struct {
     forward_auth: bool = false,
     deadline_ms: u64 = 30_000,
     rate: u32 = 1000,
+    capture: bool = false,
+};
+pub const Finding = struct {
+    evidence: core.security_evidence.Crs,
+    path: [128]u8 = @splat(0),
+    category: [32]u8 = @splat(0),
+    payload_bytes: usize,
+    request: [core.incident_heads.request_bytes]u8 = @splat(0),
+    response: [core.incident_heads.response_bytes]u8 = @splat(0),
+    response_state: core.incident_heads.ResponseState,
 };
 pub const Fixture = struct {
     engine: policy.Engine = undefined,
@@ -34,6 +44,7 @@ pub const Fixture = struct {
     received: std.atomic.Value(u32) = .init(0),
     body_digest: [32]u8 = @splat(0),
     error_seen: std.atomic.Value(bool) = .init(false),
+    findings: store.BoundedQueue(Finding, 16) = .init(),
 
     pub fn create(options: Options) !*Fixture {
         const self = try t.allocator.create(Fixture);
@@ -53,9 +64,11 @@ pub const Fixture = struct {
             .idle_timeout_seconds = 0,
             .websocket_idle_timeout_seconds = 0,
             .workers = 1,
+            .console_capture_heads = options.capture,
         };
         if (options.forward_auth) config.mode = .forward_auth;
         self.state.init(config, &self.engine_slot, &@as([32]u8, @splat(3)));
+        self.state.hooks = .{ .context = self, .record_incident = record };
         try self.publisher.publish(try generation(options));
         errdefer self.closePublisher();
         if (console_enabled) {
@@ -100,6 +113,23 @@ pub const Fixture = struct {
     fn serve(self: *Fixture) void {
         server.runServer(&self.listener, io, &self.state) catch
             self.error_seen.store(true, .release);
+    }
+
+    fn record(context: ?*anyopaque, incident: core.Incident) void {
+        const self: *Fixture = @ptrCast(@alignCast(context.?));
+        const evidence = incident.crs orelse return;
+        var finding: Finding = .{
+            .evidence = evidence,
+            .payload_bytes = incident.payload.len,
+            .response_state = incident.response_state,
+        };
+        const path = @min(finding.path.len, incident.path.len);
+        const category = @min(finding.category.len, incident.category.len);
+        @memcpy(finding.path[0..path], incident.path[0..path]);
+        @memcpy(finding.category[0..category], incident.category[0..category]);
+        @memcpy(finding.request[0..incident.request_head.len], incident.request_head);
+        @memcpy(finding.response[0..incident.response_head.len], incident.response_head);
+        _ = self.findings.push(finding);
     }
 
     fn origins(self: *Fixture) void {

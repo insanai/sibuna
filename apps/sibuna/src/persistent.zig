@@ -65,6 +65,7 @@ pub const IncidentRecord = struct {
     now: u64 = 0,
     evidence: if (build_options.console) core.IncidentEvidence else void =
         if (build_options.console) .{} else {},
+    crs: ?core.security_evidence.Crs = null,
     request_head: if (build_options.console) [core.incident_heads.request_bytes]u8 else void =
         if (build_options.console) undefined else {},
     response_head: if (build_options.console) [core.incident_heads.response_bytes]u8 else void =
@@ -81,7 +82,7 @@ pub const IncidentRecord = struct {
     }
 
     fn from(incident: server.Incident) IncidentRecord {
-        var r = IncidentRecord{ .now = incident.now };
+        var r = IncidentRecord{ .now = incident.now, .crs = incident.crs };
         r.ip_len = @intCast(copy(&r.ip, incident.client_ip));
         r.ua_len = @intCast(copy(&r.ua, incident.user_agent));
         r.method_len = @intCast(copy(&r.method, incident.method));
@@ -545,24 +546,10 @@ pub const Persistent = struct {
         try quote(w, rec.category[0..rec.category_len]);
         try w.writeAll(",");
         try quote(w, payload);
-        try w.print(",COALESCE((SELECT CASE WHEN v.distance <= {d} THEN s.campaign_id " ++
-            "ELSE NULL END FROM incidents_vec v JOIN security_incidents s ON s.id=v.item_id " ++
-            "WHERE v.embedding MATCH X'{s}' AND k=1),{d}),{d}", .{
-            campaign_distance,
-            hex,
-            id,
-            rec.now,
-        });
+        try self.appendCampaign(w, rec, id, hex);
         try self.receiptGuard(w);
         try w.writeAll("; ");
-        try w.print("INSERT INTO incidents_fts(rowid,path,offending_payload) SELECT {d},", .{id});
-        try quote(w, rec.path[0..rec.path_len]);
-        try w.writeAll(",");
-        try quote(w, payload);
-        try self.receiptGuard(w);
-        try w.print("; INSERT INTO incidents_vec(item_id,embedding,embedding_coarse) " ++
-            "SELECT {d},X'{s}',vec_quantize_binary(X'{s}')", .{ id, hex, hex });
-        try self.receiptGuard(w);
+        try self.appendIndexes(w, rec, id, hex);
         if (std.mem.eql(u8, rec.category[0..rec.category_len], "honeypot")) {
             try w.writeAll("; ");
             try w.writeAll("INSERT INTO ip_reputation(ip_or_cidr,reputation_score,banned_until," ++
@@ -582,6 +569,46 @@ pub const Persistent = struct {
         if (build_options.console) try self.appendSidecars(w, id, rec);
     }
 
+    fn appendCampaign(
+        self: *Persistent,
+        w: *Io.Writer,
+        rec: *const IncidentRecord,
+        id: u64,
+        hex: []const u8,
+    ) !void {
+        _ = self;
+        // CRS deliberately stores no matched payload. A zero vector cannot be
+        // used to fabricate similarity or a campaign among unrelated findings.
+        if (rec.crs != null) return w.print(",NULL,{d}", .{rec.now});
+        try w.print(",COALESCE((SELECT CASE WHEN v.distance <= {d} THEN s.campaign_id " ++
+            "ELSE NULL END FROM incidents_vec v JOIN security_incidents s ON s.id=v.item_id " ++
+            "WHERE v.embedding MATCH X'{s}' AND k=1),{d}),{d}", .{
+            campaign_distance,
+            hex,
+            id,
+            rec.now,
+        });
+    }
+
+    fn appendIndexes(
+        self: *Persistent,
+        w: *Io.Writer,
+        rec: *const IncidentRecord,
+        id: u64,
+        hex: []const u8,
+    ) !void {
+        const payload = rec.payload[0..rec.payload_len];
+        try w.print("INSERT INTO incidents_fts(rowid,path,offending_payload) SELECT {d},", .{id});
+        try quote(w, rec.path[0..rec.path_len]);
+        try w.writeAll(",");
+        try quote(w, payload);
+        try self.receiptGuard(w);
+        if (rec.crs != null) return;
+        try w.print("; INSERT INTO incidents_vec(item_id,embedding,embedding_coarse) " ++
+            "SELECT {d},X'{s}',vec_quantize_binary(X'{s}')", .{ id, hex, hex });
+        try self.receiptGuard(w);
+    }
+
     /// Console sidecars ride in the incident's transaction: evidence metadata, opt-in
     /// redacted heads and the country at persistence.
     fn appendSidecars(
@@ -590,6 +617,11 @@ pub const Persistent = struct {
         id: u64,
         rec: *const IncidentRecord,
     ) !void {
+        if (rec.crs) |evidence| {
+            try @import("console_crs_evidence.zig").append(w, id, evidence);
+            try self.receiptGuard(w);
+            try w.writeAll("; ");
+        }
         if (rec.evidence.version != 0) {
             try @import("console_evidence.zig").append(w, id, rec.evidence);
             try self.receiptGuard(w);
@@ -1004,6 +1036,7 @@ test {
         _ = @import("console_minutes_test.zig");
         _ = @import("console_challenge_minutes_test.zig");
         _ = @import("console_incident_heads_test.zig");
+        _ = @import("console_crs_evidence_test.zig");
         _ = @import("console_challenge_records_test.zig");
         _ = @import("console_retention_test.zig");
         _ = @import("console_settings_retention_test.zig");
