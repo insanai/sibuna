@@ -43,4 +43,38 @@ pub fn evaluate(
             try transaction.finish(.inspected);
         }
     }
+    try privateScenarios(allocator, program);
+}
+
+fn privateScenarios(allocator: std.mem.Allocator, program: *const crs.rule_program.Program) !void {
+    var report: crs.scenario_contract.Report = undefined;
+    var input: crs.scenario.Input = .{
+        .allocator = allocator,
+        .program = program,
+        .execution = .{ .activation = .{ .mode = .enforce } },
+        .sample = .{
+            .request = .{
+                .target = "/?q=ordinary",
+                .headers = &.{
+                    .{ .name = "Host", .value = "example.test" },
+                    .{ .name = "User-Agent", .value = "Mozilla/5.0" },
+                    .{ .name = "Accept", .value = "text/html" },
+                },
+            },
+            .response = .{ .entity = .{ .body = "ordinary page" } },
+        },
+    };
+    try crs.scenario.evaluate(input, &report);
+    if (report.failure != null or report.denied or report.coverage != .inspected)
+        return error.PrivateBenignScenarioMismatch;
+    input.sample.request.target = "/?q=1%27%20OR%20%271%27=%271";
+    try crs.scenario.evaluate(input, &report);
+    if (report.failure != null or !report.denied or report.coverage != .local_response)
+        return error.PrivateEnforcingScenarioMismatch;
+    if ((report.inbound_score orelse return error.PrivateScoreMissing) < 5)
+        return error.PrivateScoreMismatch;
+    input.execution.activation.mode = .audit;
+    try crs.scenario.evaluate(input, &report);
+    if (report.failure != null or report.denied or !report.would_deny or
+        report.coverage != .inspected) return error.PrivateAuditScenarioMismatch;
 }

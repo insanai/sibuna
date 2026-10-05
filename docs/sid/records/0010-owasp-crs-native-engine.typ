@@ -2013,6 +2013,52 @@ tampering, truncation, duplicate local IDs, unknown directives and an oversized 
 This gate qualifies preparation and ownership, not runtime update
 publication or full FTW compatibility.
 
+== Private phased evaluation
+
+The private tester takes a borrowed immutable executable program, explicit activation and
+thresholds, validated slot limits and one owned request/response sample. It shares request
+acquisition, phased execution and bounded content decoding with the live connector. Transfer
+framing has already been removed from sample entities; `Content-Encoding` still describes
+the supplied bytes. Text entities and hexadecimal binary entities are mutually exclusive.
+Each supplied entity is bounded to 64 KiB, headers to 128 fields and 16 KiB total, the target
+to 8 KiB and the JSON envelope to 1 MiB. A fixed 8 MiB parser workspace refuses exhaustion.
+The candidate's configured decoded-entity and work limits remain authoritative. A single
+private slot has a 128 MiB hard allocation ceiling; backing arena overhead is counted.
+
+The evaluator has no origin, publisher, telemetry producer or application storage reference.
+Off allocates no evaluation slot. Enforce stops after a terminal denial; Audit records intent
+and continues to eligible phases. Response-header rules precede handshake and streaming
+exclusions. Headers profile, absent response, handshake and streaming endings have distinct
+coverage. An absent response is labelled `response_not_supplied`, not an origin failure.
+Acquisition, representation or work failures produce an incomplete report with a stable
+engine error name; they cannot become inspected completion. Invalid sample structure is a
+recoverable refusal, not a fabricated decision.
+
+Reports own rule ID, phase, severity, save/audit flags and intervention metadata. They retain
+at most 64 findings and count additional omitted findings. Expanded messages, tags, matched
+values, request data and response data are excluded. Blocking and detection anomaly scores
+are copied separately from the actual CRS transaction variables, after successful evaluation.
+Absent or invalid numeric variables remain absent. Reporting neither charges rule work nor
+changes the decision. Private slot allocations are erased before release, including allocations
+replaced during arena growth; inputs and parser memory have separately owned erasure.
+
+*Lemma (private-test noninterference).* A private test cannot change the selected generation,
+contact an origin or emit data-plane observations.
+
+*Proof.* The evaluator's input contains an immutable program, scalar configuration, borrowed
+sample and allocator. Every mutable execution object belongs to its private slot. No origin,
+publication or telemetry capability is reachable. Reports copy bounded scalar metadata before
+slot teardown, and all temporary allocation owners unwind on refusal. The live generation is
+never mutated or released by evaluation. $square$
+
+*Lemma (faithful score reporting).* A reported score is a completed evaluation's actual numeric
+CRS variable, rather than a reconstruction from matched IDs or severity.
+
+*Proof.* After phased execution succeeds, the observer scans the bounded immutable transaction
+store for the blocking/detection inbound/outbound score keys. It copies values using checked
+signed parsing; missing and invalid values are absent. Failed or poisoned execution skips score
+observation. No sum over findings and no default zero enters this mapping. $square$
+
 = Console and evidence
 
 The page presents current release, mode, coverage, thresholds, paranoia levels, last verified

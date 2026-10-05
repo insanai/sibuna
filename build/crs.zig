@@ -6,6 +6,10 @@ pub fn add(
     optimize: std.lang.Optimize,
     compression: *std.Build.Module,
 ) *std.Build.Module {
+    const test_protocol = b.addModule("crs-test-protocol", .{
+        .root_source_file = b.path("libs/crs/src/scenario_contract.zig"),
+        .imports = &.{.{ .name = "text", .module = b.modules.get("sibuna-text").? }},
+    });
     const dictionary = b.createModule(.{
         .root_source_file = b.path("vendor/libinjection/table.zig"),
     });
@@ -18,6 +22,7 @@ pub fn add(
         .optimize = optimize,
     });
     module.addImport("compression", compression);
+    module.addImport("crs-test-protocol", test_protocol);
     module.addImport("libinjection-data", dictionary);
     module.addImport("crs-trust", trust);
     module.addImport("text", b.modules.get("sibuna-text").?);
@@ -27,6 +32,7 @@ pub fn add(
         .optimize = optimize,
     });
     host.addImport("compression", compression);
+    host.addImport("crs-test-protocol", test_protocol);
     host.addImport("libinjection-data", dictionary);
     host.addImport("crs-trust", trust);
     host.addImport("text", b.modules.get("sibuna-text").?);
@@ -97,6 +103,7 @@ fn addCompilationChecks(b: *std.Build, compression: *std.Build.Module) *std.Buil
             .optimize = .small,
         });
         module.addImport("compression", compression);
+        module.addImport("crs-test-protocol", b.modules.get("crs-test-protocol").?);
         module.addImport("text", b.modules.get("sibuna-text").?);
         module.addImport("libinjection-data", b.createModule(.{
             .root_source_file = b.path("vendor/libinjection/table.zig"),

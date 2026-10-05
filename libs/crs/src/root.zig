@@ -1,6 +1,8 @@
 //! Native Core Rule Set support. Source recognition is separate from executable
 //! compatibility: no runtime protection is implied by a successfully parsed file.
 pub const regex = @import("regex.zig");
+pub const scenario = @import("scenario.zig");
+pub const scenario_contract = @import("crs-test-protocol");
 pub const work = @import("work.zig");
 pub const compiler = @import("compiler.zig");
 pub const model = @import("model.zig");
@@ -106,6 +108,8 @@ test {
     _ = controls;
     _ = post_actions;
     _ = rule_program;
+    _ = scenario;
+    _ = scenario_contract;
     _ = @import("diagnostics_test.zig");
     _ = executor;
     _ = release_signature;

@@ -490,3 +490,25 @@ pub export fn crsExpansionProbe(
     }, &budget) catch return 1;
     return 0;
 }
+
+/// Keep private phased evaluation reachable on native and Wasm targets. Its slot
+/// belongs to this call; a report outlives neither a borrowed sample nor program.
+pub export fn crsScenarioProbe(allocator: *const std.mem.Allocator, enforcing: bool) u8 {
+    var compiler = crs.compiler.Compiler.init(allocator.*, .{});
+    defer compiler.deinit();
+    compiler.addSource("test.conf",
+        \\SecRule ARGS "@streq attack" "id:1,phase:2,deny,status:418"
+    ) catch return 1;
+    var source = compiler.finish() catch return 2;
+    defer source.deinit();
+    var program = crs.rule_program.compile(allocator.*, &source, &.{}, .{}) catch return 3;
+    defer program.deinit();
+    var report: crs.scenario_contract.Report = undefined;
+    crs.scenario.evaluate(.{
+        .allocator = allocator.*,
+        .program = &program,
+        .execution = .{ .activation = .{ .mode = if (enforcing) .enforce else .audit } },
+        .sample = .{ .request = .{ .target = "/?q=attack" } },
+    }, &report) catch return 4;
+    return if (report.denied == enforcing and report.would_deny) 0 else 5;
+}
