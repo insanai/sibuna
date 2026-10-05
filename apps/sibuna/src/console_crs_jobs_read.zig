@@ -88,7 +88,8 @@ pub fn jobs(owner: *Persistent, auth: p.users.Auth) !p.StorageResult {
     var rows = try db.query(
         owner.db,
         owner.gpa,
-        "SELECT id FROM console_crs_jobs ORDER BY created_at DESC,id DESC LIMIT 4",
+        "SELECT id FROM console_crs_jobs ORDER BY " ++
+            "state IN ('preparing','verified','selected') DESC,created_at DESC,id DESC LIMIT 4",
         &.{},
     );
     defer rows.deinit();

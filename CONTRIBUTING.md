@@ -34,6 +34,9 @@ the console is compiled in, including restart retention and sign-out revocation.
 `python3 tools/crs_restart_check.py <binary> --candidate <directory>` qualifies signed-source
 adoption, durable restoration without the original path, refusal of conflicting startup
 settings and clean management-worker shutdown.
+`python3 tools/crs_management_check.py <binary> --candidate <directory>` drives authenticated
+preparation, separate selection, Off/Enforce, rollback, conflicts, discard, revocation,
+boot-fenced application and restart through the real daemon with a signed release.
 `crs-start-test` checks startup option conflicts, observable profiles, resource bounds and
 the disabled lifecycle. The signed-artifact probe also exercises the startup owner's
 generation leases, forward-auth profile, exhaustion cleanup and joined-reader teardown.

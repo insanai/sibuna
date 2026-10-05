@@ -523,6 +523,9 @@ pub const App = struct {
         identity: p.Principal,
     ) !void {
         return switch (route.handler) {
+            .crs_status, .crs_prepare, .crs_select, .crs_discard, .crs_configuration => @import(
+                "crs_routes.zig",
+            ).handle(self, context, identity, route.handler),
             .pages_read, .pages_edit, .pages_preview, .pages_preview_get => @import(
                 "page_routes.zig",
             ).handle(self, context, identity, route),

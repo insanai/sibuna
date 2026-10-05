@@ -24,6 +24,10 @@ pub fn fail(context: *Context, status: std.http.Status, code: []const u8) Contex
 }
 
 fn failureHint(code: []const u8) []const u8 {
+    if (std.mem.eql(u8, code, "CONSOLECRS"))
+        return "Refresh the candidates and saved revision before retrying. " ++
+            "Use an administrator session. Verified candidates require a separate selection; " ++
+            "a committed selection remains pending until each node reports application.";
     if (std.mem.eql(u8, code, "RANKHISTORY"))
         return "Retained ranking read failed. Check access, period and storage health, " ++
             "then restart the scan. Missing archives are not zero traffic.";

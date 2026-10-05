@@ -4,6 +4,11 @@ const std = @import("std");
 const p = @import("console_protocol");
 pub const Access = enum { public, account, full };
 pub const Handler = enum {
+    crs_status,
+    crs_prepare,
+    crs_select,
+    crs_discard,
+    crs_configuration,
     challenge_summary,
     challenge_records,
     challenge_difficulty,
@@ -84,6 +89,46 @@ pub const Route = struct {
     handler: Handler,
 };
 const table = [_]Route{
+    .{
+        .path = "/console/api/crs/status",
+        .method = .GET,
+        .access = .full,
+        .action = .manage_settings,
+        .handler = .crs_status,
+        .mutation = false,
+    },
+    .{
+        .path = "/console/api/crs/configuration",
+        .method = .GET,
+        .access = .full,
+        .action = .manage_settings,
+        .handler = .crs_configuration,
+        .mutation = false,
+    },
+    .{
+        .path = "/console/api/crs/prepare",
+        .method = .POST,
+        .access = .full,
+        .action = .manage_settings,
+        .handler = .crs_prepare,
+        .mutation = true,
+    },
+    .{
+        .path = "/console/api/crs/select",
+        .method = .POST,
+        .access = .full,
+        .action = .manage_settings,
+        .handler = .crs_select,
+        .mutation = true,
+    },
+    .{
+        .path = "/console/api/crs/discard",
+        .method = .POST,
+        .access = .full,
+        .action = .manage_settings,
+        .handler = .crs_discard,
+        .mutation = true,
+    },
     .{ .path = "/console/peer", .method = .GET, .access = .public, .handler = .peer },
     .{
         .path = "/console/api/nodes/local",

@@ -1744,6 +1744,25 @@ operator digest, activation and resource settings with the local publication. A 
 reply after publication retries a successful receipt; it does not report a failed runtime
 effect. Candidate expiry and bounded tombstone pruning run once per minute off the request path.
 
+Administrator session routes expose a bounded status view, candidate preparation, reviewed
+selection, discard and the current operator configuration. They do not accept native witnesses,
+source paths or signing keys. Bearer credentials and kiosk sessions cannot reach these routes.
+Preparation accepts a caller-retained 128-bit identifier and expected revision. A mode change
+clones the current source; rollback clones the retained previous source. An update that omits
+operator text preserves the current configuration rather than silently removing exclusions.
+Rollback rejects setting overrides and restores the previous configuration and settings.
+Each clone re-verifies the signed archive and compiler compatibility before it becomes Verified.
+The operator reviews release/configuration digests and effective settings before selection.
+
+Operator text is at most 64 KiB. The HTTP body accommodates its worst-case JSON escaping;
+body, parser workspace and transferred editor storage together remain below 1 MiB. These
+buffers have explicit heap owners and are wiped on release. Large editor values fill their
+destination directly, avoiding by-value temporaries on the bounded HTTP thread stack. A
+configuration read verifies its digest and administrator authority before responding. This
+editor read is the exception to the raw-source boundary; archive and signature chunks remain
+internal. A selection reply reports commit and does not claim application. Operators inspect
+the serving node and boot-fenced receipts after an unknown reply or a pending runtime effect.
+
 == Native detached signature profile
 
 The initial portable verifier accepts one definite-length OpenPGP version-4 binary-document
