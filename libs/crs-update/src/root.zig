@@ -14,6 +14,7 @@ pub const Prepared = @import("prepared.zig").Prepared;
 pub const Error = fetch.Error || crs.release_package.Error || urls.Error ||
     std.json.ParseError(std.json.Scanner) || error{ InvalidClock, InvalidDownloadDeadline };
 pub const Config = struct {
+    diagnostic: ?*?crs.release_package.Diagnostic = null,
     allocator: std.mem.Allocator,
     io: Io,
     stopping: *const std.atomic.Value(bool),
@@ -102,6 +103,7 @@ pub fn prepare(config: Config, version: ?crs.release_version.Version) Error!Prep
         .signature = signature,
         .version = selected,
         .now = @intCast(seconds),
+        .diagnostic = config.diagnostic,
         .configuration = configuration,
     });
     errdefer package.deinit();

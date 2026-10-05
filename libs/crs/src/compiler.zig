@@ -47,6 +47,8 @@ pub const Compiler = struct {
     files: usize = 0,
     failed: bool = false,
     fault: ?model.Site = null,
+    fault_id: ?u32 = null,
+    diagnostic: ?*?@import("text").source_diagnostic.Diagnostic = null,
 
     pub fn init(allocator: std.mem.Allocator, limits: model.Limits) Compiler {
         return .{ .backing = allocator, .arena = .init(allocator), .limits = limits };
@@ -59,9 +61,17 @@ pub const Compiler = struct {
 
     /// On any failure the builder becomes unusable; no partial plan can escape.
     pub fn addSource(self: *Compiler, path: []const u8, bytes: []const u8) Error!void {
+        self.addSourceInner(path, bytes) catch |err| {
+            if (self.diagnostic) |output| output.* = self.diagnose(err);
+            return err;
+        };
+    }
+
+    fn addSourceInner(self: *Compiler, path: []const u8, bytes: []const u8) Error!void {
         if (self.failed) return error.InvalidState;
         errdefer self.failed = true;
         self.fault = null;
+        self.fault_id = null;
         if (path.len > self.limits.path_bytes) return error.PathLimit;
         if (bytes.len > self.limits.source_bytes - self.source_bytes) return error.SourceLimit;
         if (self.files == self.limits.files) return error.FileLimit;
@@ -77,6 +87,7 @@ pub const Compiler = struct {
             return err;
         }) |line| {
             self.fault = .{ .path = owned_path, .line = line.location.line };
+            self.fault_id = null;
             const owned = try allocator.dupe(u8, line.bytes);
             try self.add(try syntax.parse(owned), self.fault.?);
             if (self.arena.queryCapacity() > self.limits.compiled_bytes) {
@@ -142,6 +153,7 @@ pub const Compiler = struct {
         else
             index;
         const resolved = try self.identity(compiled, root, index);
+        self.fault_id = resolved.id;
         try self.conditions.append(allocator, .{
             .site = site,
             .id = resolved.id,
@@ -232,11 +244,19 @@ pub const Compiler = struct {
     /// Resolution occurs after all after-CRS exclusions have been read. Ownership
     /// transfers on success; the builder's new empty arena remains safe to deinit.
     pub fn finish(self: *Compiler) Error!model.Plan {
+        return self.finishInner() catch |err| {
+            if (self.diagnostic) |output| output.* = self.diagnose(err);
+            return err;
+        };
+    }
+
+    fn finishInner(self: *Compiler) Error!model.Plan {
         if (self.failed) return error.InvalidState;
         errdefer self.failed = true;
         if (self.pending_chain != null) return error.DanglingChain;
         for (self.conditions.items, 0..) |*condition, index| {
             self.fault = condition.site;
+            self.fault_id = condition.id;
             condition.inherited_actions = self.defaults[@backingInt(condition.phase) - 1] orelse
                 &.{};
             if (actions.find(condition.actions, .skip_after) orelse
@@ -247,6 +267,7 @@ pub const Compiler = struct {
         }
         for (self.updates.items) |*update| {
             self.fault = update.site;
+            self.fault_id = update.id;
             update.root = self.ids.get(update.id) orelse return error.UnknownRuleId;
         }
         const allocator = self.arena.allocator();
@@ -265,6 +286,19 @@ pub const Compiler = struct {
         self.arena = .init(self.backing);
         self.failed = true;
         return result;
+    }
+
+    fn diagnose(
+        self: *const Compiler,
+        err: anyerror,
+    ) @import("text").source_diagnostic.Diagnostic {
+        const site = self.fault;
+        return .capture(
+            err,
+            if (site) |value| value.path else null,
+            if (site) |value| value.line else null,
+            self.fault_id,
+        );
     }
 
     fn resolveMarker(self: *const Compiler, name: []const u8, index: usize) Error!usize {

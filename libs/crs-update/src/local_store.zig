@@ -139,6 +139,14 @@ pub const Locked = struct {
     }
 
     pub fn load(self: *const Locked, source: Source) Error!artifact.Candidate {
+        return self.loadDiagnosed(source, null);
+    }
+
+    pub fn loadDiagnosed(
+        self: *const Locked,
+        source: Source,
+        diagnostic: ?*?crs.release_package.Diagnostic,
+    ) Error!artifact.Candidate {
         const expected = try self.manifest(source);
         const store = self.store;
         const directory = try store.directory.openDir(store.io, &source.name(), .{
@@ -152,6 +160,7 @@ pub const Locked = struct {
             .directory = directory,
             .now = try store.now(),
             .observation = .request_response,
+            .diagnostic = diagnostic,
         });
         errdefer loaded.deinit();
         if (!std.meta.eql(loaded.manifest, expected)) return error.InvalidLocalSource;

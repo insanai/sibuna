@@ -2,11 +2,13 @@
 const std = @import("std");
 pub const http_fields = @import("http_fields.zig");
 pub const buffers = @import("buffers.zig");
+pub const source_diagnostic = @import("source_diagnostic.zig");
 pub const mime = @import("mime.zig");
 
 test {
     _ = http_fields;
     _ = mime;
+    _ = source_diagnostic;
 }
 
 /// Return an owned array; a caller taking its address at comptime borrows static storage.

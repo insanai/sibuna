@@ -1,6 +1,7 @@
 //! Immutable prepared rule graph. HTTP acquisition and activation qualification
 //! remain separate contracts; compiling this graph does not enable the daemon.
 const std = @import("std");
+const Diagnostic = @import("text").source_diagnostic.Diagnostic;
 const model = @import("model.zig");
 const selectors = @import("selectors.zig");
 const condition = @import("condition.zig");
@@ -15,6 +16,7 @@ pub const Limits = struct {
     condition: condition.Limits = .{},
     chains: chains.Limits = .{},
     data_bytes: usize = 32 * 1024 * 1024,
+    diagnostic: ?*?Diagnostic = null,
 };
 pub const Program = struct {
     allocator: std.mem.Allocator,
@@ -69,6 +71,27 @@ pub fn compile(
     files: []const data.File,
     limits: Limits,
 ) Error!Program {
+    var fault: Fault = .{};
+    return compileInner(allocator, source, files, limits, &fault) catch |err| {
+        if (limits.diagnostic) |output| output.* = Diagnostic.capture(
+            err,
+            if (fault.site) |value| value.path else null,
+            if (fault.site) |value| value.line else null,
+            fault.rule,
+        );
+        return err;
+    };
+}
+
+const Fault = struct { site: ?model.Site = null, rule: ?u32 = null };
+
+fn compileInner(
+    allocator: std.mem.Allocator,
+    source: *const model.Plan,
+    files: []const data.File,
+    limits: Limits,
+    fault: *Fault,
+) Error!Program {
     try data.validate(files, limits.data_bytes);
     try validateUpdates(source);
     var topology = try chains.compile(allocator, source.conditions, limits.chains);
@@ -84,6 +107,7 @@ pub fn compile(
     };
     var states: usize = 0;
     for (source.conditions, 0..) |original, index| {
+        fault.* = .{ .site = original.site, .rule = original.id };
         var targets: [128]selectors.Selector = undefined;
         var files_scratch: [256][]const u8 = undefined;
         var updated = original;
@@ -95,6 +119,7 @@ pub fn compile(
         initialized += 1;
         states = @max(states, conditions[index].regexStates());
     }
+    fault.* = .{};
     const signature = try allocator.dupe(u8, source.signature orelse "");
     return .{
         .allocator = allocator,

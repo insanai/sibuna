@@ -7,6 +7,7 @@ const files = @import("artifact_files.zig");
 const manifests = crs.artifact_manifest;
 pub const Error = files.Error || manifests.Error || crs.release_package.Error;
 pub const Config = struct {
+    diagnostic: ?*?crs.release_package.Diagnostic = null,
     allocator: std.mem.Allocator,
     io: std.Io,
     directory: std.Io.Dir,
@@ -46,6 +47,7 @@ pub fn load(config: Config) Error!Candidate {
         .configuration = configuration.value,
         .version = manifest.version,
         .now = config.now,
+        .diagnostic = config.diagnostic,
     });
     errdefer package.deinit();
     try manifest.bind(package);

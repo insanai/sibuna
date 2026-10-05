@@ -106,6 +106,7 @@ test {
     _ = controls;
     _ = post_actions;
     _ = rule_program;
+    _ = @import("diagnostics_test.zig");
     _ = executor;
     _ = release_signature;
     _ = release_tar;

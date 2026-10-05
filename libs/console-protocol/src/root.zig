@@ -274,36 +274,7 @@ pub const Failure = enum {
 
 /// Fixed buffers cross asynchronous boundaries by value. Length is checked on construction;
 /// callers must not serialize the unused tail or rely on native struct layout as a wire format.
-pub fn Bytes(comptime capacity: usize) type {
-    return struct {
-        pub const byte_capacity = capacity;
-        data: [capacity]u8 = @splat(0),
-        len: usize = 0,
-
-        pub fn init(value: []const u8) error{TooLarge}!@This() {
-            var result: @This() = undefined;
-            try result.set(value);
-            return result;
-        }
-
-        /// Caller-owned outputs avoid large error-union copies. Oversize input leaves
-        /// the previous value intact; overlapping slices are moved before tail erasure.
-        pub fn set(self: *@This(), value: []const u8) error{TooLarge}!void {
-            if (value.len > capacity) return error.TooLarge;
-            const output = self.data[0..value.len];
-            if (@intFromPtr(output.ptr) <= @intFromPtr(value.ptr)) {
-                std.mem.copyForwards(u8, output, value);
-            } else std.mem.copyBackwards(u8, output, value);
-            @memset(self.data[value.len..], 0);
-            self.len = value.len;
-        }
-
-        pub fn slice(self: *const @This()) []const u8 {
-            std.debug.assert(self.len <= capacity);
-            return self.data[0..self.len];
-        }
-    };
-}
+pub const Bytes = @import("text").buffers.Bytes;
 
 // Every request waiter carries this envelope. Larger documents must transfer an owned
 // heap payload rather than inflating every management call frame and mailbox slot.

@@ -19,12 +19,14 @@ pub const Error = signatures.Error || versions.Error || gzip.Error || tar.Error 
     CompiledProgramLimit,
     OperatorConfigurationLimit,
 };
+pub const Diagnostic = @import("text").source_diagnostic.Diagnostic;
 pub const Input = struct {
     archive: []const u8,
     signature: []const u8,
     version: versions.Version,
     now: u64,
     configuration: []const u8 = "",
+    diagnostic: ?*?Diagnostic = null,
 };
 pub const Package = struct {
     allocator: std.mem.Allocator,
@@ -79,7 +81,7 @@ pub fn prepare(allocator: std.mem.Allocator, input: Input) Error!*Package {
     };
     std.crypto.hash.sha2.Sha256.hash(input.configuration, &package.operator_digest, .{});
     const owned = package.bounded.allocator();
-    package.program = compile(owned, entries, input.configuration) catch |err|
+    package.program = compile(owned, entries, input.configuration, input.diagnostic) catch |err|
         switch (err) {
             error.OutOfMemory => return if (package.bounded.last_failure == .ceiling)
                 error.CompiledProgramLimit
@@ -99,6 +101,7 @@ fn compile(
     allocator: std.mem.Allocator,
     entries: []const tar.Entry,
     configuration: []const u8,
+    diagnostic: ?*?Diagnostic,
 ) Error!rules.Program {
     var setup: ?[]const u8 = null;
     var selected: [tar.maximum_entries]tar.Entry = undefined;
@@ -127,11 +130,12 @@ fn compile(
     }.less);
     var builder = compiler.Compiler.init(allocator, .{});
     defer builder.deinit();
+    builder.diagnostic = diagnostic;
     try builder.addSource("crs-setup.conf.example", setup orelse
         return error.MissingReleaseConfiguration);
     if (configuration.len != 0) try builder.addSource("sibuna-operator.conf", configuration);
     for (selected[0..count]) |entry| try builder.addSource(entry.path, entry.bytes);
     var plan = try builder.finish();
     defer plan.deinit();
-    return rules.compile(allocator, &plan, files[0..file_count], .{});
+    return rules.compile(allocator, &plan, files[0..file_count], .{ .diagnostic = diagnostic });
 }
