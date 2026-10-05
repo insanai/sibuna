@@ -205,3 +205,24 @@ test "direct expansion retains the complete DEFLATE history across output and bu
     try t.expectEqualSlices(u8, expected[0..8192], output[0..8192]);
     try t.expectEqualStrings("!!!!", output[8192..8196]);
 }
+
+test "empty stored flush blocks preserve representation and exact output ceilings" {
+    const raw = "\x00\x00\x00\xff\xff" ++ // Empty non-final stored block.
+        "\x00\x01\x00\xfe\xffx" ++ // One payload byte, followed by another flush.
+        "\x00\x00\x00\xff\xff" ++ "\x01\x00\x00\xff\xff";
+    const gz = "\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff" ++ raw ++
+        "\x83\x16\xdc\x8c\x01\x00\x00\x00";
+    const zl = "\x78\x01" ++ raw ++ "\x00\x79\x00\x79";
+    const cases = [_]struct { bytes: []const u8, coding: codec.Coding }{
+        .{ .bytes = gz, .coding = .gzip },
+        .{ .bytes = zl, .coding = .zlib },
+    };
+    for (cases) |case| {
+        var fixture: Fixture = .{};
+        var options = fixture.options(case.bytes, case.coding);
+        options.scratch.output = fixture.output[0..1];
+        try t.expectEqualStrings("x", try codec.decode(options, &fixture.budget));
+        options.scratch.output = fixture.output[0..0];
+        try t.expectError(error.ExpansionLimit, codec.decode(options, &fixture.budget));
+    }
+}

@@ -1444,7 +1444,10 @@ by #link("https://www.rfc-editor.org/rfc/rfc9110.html#section-8.4.1")[RFC 9110 Â
 It combines ordered Content-Encoding fields and decodes at most four layers in reverse
 order. Every layer has an independent decoded ceiling and uses the transaction work ledger.
 Charge compressed input before decoding and reserve work for each output allowance before
-the native decoder runs. Direct streaming limits each allowance to 8 KiB; an indirect
+the native decoder runs. Empty stored DEFLATE blocks may consume framing without
+producing output; progress is measured in both consumed input and produced bytes. A stalled
+decoder is refused, while valid flush boundaries retain the exact expansion ceiling.
+Direct streaming limits each allowance to 8 KiB; an indirect
 reader must not expand ahead of that charge. Unused allowances are not refunded. Preserve
 the most recent 32 KiB of history when compacting its caller-owned 64 KiB buffer, and start
 each member with empty history. A one-byte overflow probe distinguishes an exact fit from

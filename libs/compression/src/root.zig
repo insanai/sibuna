@@ -81,6 +81,7 @@ fn member(
         try budget.debitLinear(allowance, 4, 1);
         retainHistory(&writer, allowance);
         const before = writer.end;
+        const consumed = source.seek;
         const finished = if (inflater.reader.stream(&writer, .limited(allowance))) |_|
             false
         else |err| switch (err) {
@@ -96,7 +97,9 @@ fn member(
         adler.update(bytes);
         used.* += count;
         if (finished) break;
-        if (count == 0) return error.InvalidCompressedData;
+        // Empty stored blocks are legal flush boundaries. They consume framing
+        // without producing bytes; refuse only a genuinely stalled decoder.
+        if (count == 0 and source.seek == consumed) return error.InvalidCompressedData;
     }
     const valid = switch (inflater.container_metadata) {
         .gzip => |footer| footer.crc == crc.final() and footer.count == used.* - start,
