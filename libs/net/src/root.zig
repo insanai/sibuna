@@ -9,6 +9,7 @@ const core = @import("core");
 pub const http = @import("http.zig");
 pub const chunked = @import("chunked.zig");
 pub const entity = @import("entity.zig");
+pub const response_inspection = @import("response_inspection.zig");
 pub const response = @import("response.zig");
 pub const proxy = @import("proxy.zig");
 pub const outbound = @import("outbound.zig");

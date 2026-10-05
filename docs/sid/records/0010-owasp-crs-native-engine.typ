@@ -1425,6 +1425,22 @@ inspect WebSocket frames. Server-sent events and other indefinite responses use 
 streaming profile without phase-4 body enforcement. The UI reports the missing coverage.
 A completed body must never be required for a tunnel or an intentionally streaming response.
 
+The transport accepts an optional exchange-owned response inspector. Its header callback
+chooses holdback or explicit streaming before final response publication. An inspection
+refusal or acquisition failure sends no response bytes; informational origin responses are
+suppressed while an inspector is present. Holdback copies the validated head into a separate
+reservation before the origin reader can refill, removes chunk framing and invokes the body
+callback on the complete reserved entity. Replay drops transfer framing and trailer declarations
+and emits its actual content length. HEAD and other bodyless replies preserve representation
+metadata. A fully held close-delimited response can keep the client connection open but cannot
+return the origin socket to the pool. An accepted WebSocket handshake runs header inspection
+and refuses a holdback decision before any 101 bytes are sent.
+
+These generic hooks import no rule engine. They refuse additional transfer codings on held
+bodies; content encoding is preserved for wire replay and must be decoded and validated by
+the application inspection callback before it claims decoded-body coverage. Neither the
+presence of these hooks nor a library fixture establishes live CRS activation.
+
 The pure HTTP transaction coordinator couples successful acquisition to exactly one phase
 execution. Its state advances from request headers through request body, response headers
 and response body; repeated or out-of-order transitions poison the transaction. Response

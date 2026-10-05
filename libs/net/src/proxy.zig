@@ -34,6 +34,9 @@ const http = @import("http.zig");
 const upgrade = @import("proxy_upgrade.zig");
 const duplex = @import("duplex.zig");
 const chunk_coding = @import("chunked.zig");
+const inspection = @import("response_inspection.zig");
+
+pub const ResponseInspector = inspection.Inspector;
 
 pub const Audit = struct {
     client_ip: []const u8,
@@ -65,7 +68,7 @@ pub const ProxyError = error{
     /// The rest of a chunked request body broke the chunk grammar; the origin got no
     /// terminal chunk, so it sees a truncated body, never a complete altered one.
     MalformedRequestBody,
-};
+} || inspection.Error || @import("entity.zig").Error;
 
 pub const Client = struct {
     stream: Io.net.Stream,
@@ -121,6 +124,7 @@ pub const Exchange = struct {
     upload: Upload,
     audit: Audit,
     keep_alive: bool,
+    response_inspector: ?ResponseInspector = null,
 };
 
 /// Idle origin connections shared by every connection thread.
@@ -478,22 +482,32 @@ fn isConnectionHeader(line: []const u8) bool {
 /// Re-emits the origin head to the client with Sibuna's own connection
 /// semantics; every other header passes through unchanged.
 fn writeClientHead(w: *Io.Writer, head: []const u8, keep_alive: bool) ProxyError!void {
-    try writeResponseFields(w, head);
+    try writeResponseFields(w, head, null);
     const tail = if (keep_alive) "Connection: keep-alive\r\n\r\n" else "Connection: close\r\n\r\n";
     w.writeAll(tail) catch return error.ClientWriteFailed;
 }
 
-fn writeResponseFields(w: *Io.Writer, head: []const u8) ProxyError!void {
+fn writeResponseFields(
+    w: *Io.Writer,
+    head: []const u8,
+    held_length: ?usize,
+) ProxyError!void {
     var lines = std.mem.splitSequence(u8, head, "\r\n");
     const status_line = lines.first();
     w.print("{s}\r\n", .{status_line}) catch return error.ClientWriteFailed;
     while (lines.next()) |line| {
         if (line.len == 0) break;
         if (isConnectionHeader(line)) continue;
+        if (held_length != null and (headerLine(line, "content-length") != null or
+            headerLine(line, "transfer-encoding") != null or
+            headerLine(line, "trailer") != null)) continue;
         if (headerLine(line, "content-length") != null and hasTransferEncoding(head)) continue;
         const colon = std.mem.indexOfScalar(u8, line, ':') orelse return error.UpstreamReadFailed;
         if (upgrade.responseNominated(head, line[0..colon])) continue;
         w.print("{s}\r\n", .{line}) catch return error.ClientWriteFailed;
+    }
+    if (held_length) |length| {
+        w.print("Content-Length: {d}\r\n", .{length}) catch return error.ClientWriteFailed;
     }
 }
 
@@ -551,13 +565,23 @@ fn relayResponse(
     client_keep_alive: bool,
     audit: *const Audit,
     progress: Progress,
+    inspector: ?ResponseInspector,
 ) ProxyError!Relayed {
-    const head_len = try finalResponseHead(up, w, progress);
+    const head_len = try finalResponseHead(up, w, progress, inspector != null);
     const head = up.buffered()[0..head_len];
     const parsed = parseResponseHead(head, head_request) orelse return error.UpstreamReadFailed;
     if (parsed.status == 101) return error.UpstreamReadFailed;
     if (audit.response_status) |output| output.* = parsed.status;
     if (audit.response_head) |sink| sink.call(sink.context, head);
+    if (inspector) |hook| {
+        const view = inspection.Head{
+            .bytes = head,
+            .status = parsed.status,
+            .framing = parsed.framing,
+        };
+        if (try hook.inspectHeaders(view) == .hold)
+            return relayHeld(up, w, view, parsed, client_keep_alive, hook, progress);
+    }
     const framed = parsed.framing != .until_close;
     const keep = client_keep_alive and framed;
     try writeClientHead(w, head, keep);
@@ -572,18 +596,48 @@ fn relayResponse(
     return .{ .client_keep = keep, .origin_reusable = parsed.keep_alive };
 }
 
+/// The complete bounded entity is accepted before any final head or body byte
+/// reaches the client. Its canonical length replaces removed transfer framing.
+fn relayHeld(
+    up: *Io.Reader,
+    w: *Io.Writer,
+    view: inspection.Head,
+    parsed: ResponseHead,
+    keep_alive: bool,
+    hook: ResponseInspector,
+    progress: Progress,
+) ProxyError!Relayed {
+    const activity: ?@import("entity.zig").Progress = if (progress.activity) |value|
+        .{ .io = progress.io, .activity = value, .mode = .any_bytes }
+    else
+        null;
+    const held = try hook.acquire(up, view, activity);
+    const length: ?usize = if (view.framing == .none) null else held.body.len;
+    try writeResponseFields(w, held.head, length);
+    const tail = if (keep_alive) "Connection: keep-alive\r\n\r\n" else "Connection: close\r\n\r\n";
+    w.writeAll(tail) catch return error.ClientWriteFailed;
+    w.writeAll(held.body) catch return error.ClientWriteFailed;
+    w.flush() catch return error.ClientWriteFailed;
+    return .{ .client_keep = keep_alive, .origin_reusable = parsed.keep_alive };
+}
+
 /// Informational responses precede the final response and cannot return an origin socket
 /// to the pool. Bound their count as well as each head, including unsolicited 100/103.
-fn finalResponseHead(up: *Io.Reader, w: *Io.Writer, progress: Progress) ProxyError!usize {
+fn finalResponseHead(
+    up: *Io.Reader,
+    w: *Io.Writer,
+    progress: Progress,
+    suppress: bool,
+) ProxyError!usize {
     for (0..9) |index| {
         const length = try readResponseHead(up, progress);
         const head = up.buffered()[0..length];
         const parsed = parseResponseHead(head, false) orelse return error.UpstreamReadFailed;
         if (parsed.status == 101 or parsed.status >= 200) return length;
         if (parsed.status < 100 or index == 8) return error.UpstreamReadFailed;
-        try writeClientHead(w, head, true);
+        if (!suppress) try writeClientHead(w, head, true);
         up.toss(length);
-        w.flush() catch return error.ClientWriteFailed;
+        if (!suppress) w.flush() catch return error.ClientWriteFailed;
     }
     unreachable;
 }
@@ -620,7 +674,12 @@ fn exchange(
     var up_reader_buf: [max_response_head]u8 = undefined;
     var up_reader = upstream_stream.reader(input.io, &up_reader_buf);
     if (handshake) |offered| {
-        const length = try finalResponseHead(&up_reader.interface, input.client.writer, progress);
+        const length = try finalResponseHead(
+            &up_reader.interface,
+            input.client.writer,
+            progress,
+            input.response_inspector != null,
+        );
         const head = up_reader.interface.buffered()[0..length];
         const parsed = parseResponseHead(head, false) orelse return error.UpstreamReadFailed;
         if (parsed.status == 101) return relayUpgrade(
@@ -639,6 +698,7 @@ fn exchange(
         input.keep_alive,
         &input.audit,
         progress,
+        input.response_inspector,
     );
 }
 
@@ -650,7 +710,16 @@ fn relayUpgrade(
     handshake: upgrade.Handshake,
 ) ProxyError!Relayed {
     if (!upgrade.accepted(handshake, head)) return error.UpstreamReadFailed;
-    try writeResponseFields(input.client.writer, head);
+    if (input.response_inspector) |hook| {
+        const view = inspection.Head{
+            .bytes = head,
+            .status = 101,
+            .framing = .none,
+            .upgrade = true,
+        };
+        _ = try hook.inspectHeaders(view);
+    }
+    try writeResponseFields(input.client.writer, head, null);
     input.client.writer.writeAll("Connection: Upgrade\r\nUpgrade: websocket\r\n\r\n") catch
         return error.ClientWriteFailed;
     input.client.writer.flush() catch return error.ClientWriteFailed;
@@ -781,7 +850,7 @@ fn relayFixed(origin: []const u8, out: []u8, keep_alive: bool) !Fixed {
     var w = std.Io.Writer.fixed(out);
     const audit: Audit = .{ .client_ip = "", .status = "", .rule = "" };
     const progress = Progress{ .io = std.testing.io };
-    const relayed = try relayResponse(&up, &w, false, keep_alive, &audit, progress);
+    const relayed = try relayResponse(&up, &w, false, keep_alive, &audit, progress, null);
     return .{
         .keep = relayed.client_keep,
         .reusable = relayed.origin_reusable,
@@ -857,4 +926,211 @@ test "response framing honors bodyless replies and rejects ambiguous origin head
     try t.expect(std.mem.indexOf(u8, output[0..relayed.len], "Content-Length") == null);
     try t.expect(std.mem.indexOf(u8, output[0..relayed.len], "X-Hop") == null);
     try t.expect(std.mem.indexOf(u8, output[0..relayed.len], "X-App: preserve") != null);
+}
+
+const HoldFixture = @import("response_inspection_fixture.zig").Fixture;
+
+fn inspectedFixed(
+    fixture: *HoldFixture,
+    origin: []const u8,
+    writer: *Io.Writer,
+    head_request: bool,
+) !Relayed {
+    var mutable: [1024]u8 = undefined;
+    @memcpy(mutable[0..origin.len], origin);
+    var reader = Io.Reader.fixed(mutable[0..origin.len]);
+    fixture.writer = writer;
+    const audit: Audit = .{ .client_ip = "", .status = "", .rule = "" };
+    const relayed = try relayResponse(
+        &reader,
+        writer,
+        head_request,
+        true,
+        &audit,
+        .{ .io = std.testing.io },
+        fixture.hooks(),
+    );
+    const remaining = reader.buffered();
+    @memcpy(fixture.remaining[0..remaining.len], remaining);
+    fixture.remaining_length = remaining.len;
+    return relayed;
+}
+
+test "held responses are inspected before publication and replayed with canonical framing" {
+    const cases = [_]struct { origin: []const u8, reusable: bool }{
+        .{
+            .origin = "HTTP/1.1 200 OK\r\nContent-Length: 5\r\nX-App: keep\r\n\r\nhelloNEXT",
+            .reusable = true,
+        },
+        .{
+            .origin = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Length: 99\r\n" ++
+                "Trailer: X-End\r\nX-App: keep\r\n\r\n" ++
+                "2\r\nhe\r\n3\r\nllo\r\n0\r\nX-End: yes\r\n\r\nNEXT",
+            .reusable = true,
+        },
+        .{
+            .origin = "HTTP/1.0 200 OK\r\nX-App: keep\r\n\r\nhello",
+            .reusable = false,
+        },
+    };
+    for (cases) |case| {
+        var fixture: HoldFixture = .{};
+        var out: [1024]u8 = undefined;
+        var writer = Io.Writer.fixed(&out);
+        const relayed = try inspectedFixed(&fixture, case.origin, &writer, false);
+        try std.testing.expect(relayed.client_keep);
+        try std.testing.expectEqual(case.reusable, relayed.origin_reusable);
+        try std.testing.expectEqual(@as(usize, 1), fixture.head_calls);
+        try std.testing.expectEqual(@as(usize, 1), fixture.body_calls);
+        try std.testing.expectEqualStrings("hello", fixture.body[0..fixture.body_length]);
+        const result = writer.buffered();
+        const tail = "X-App: keep\r\nContent-Length: 5\r\n" ++
+            "Connection: keep-alive\r\n\r\nhello";
+        try std.testing.expect(std.mem.endsWith(u8, result, tail));
+        try std.testing.expect(std.mem.indexOf(u8, result, "Transfer-Encoding") == null);
+        try std.testing.expect(std.mem.indexOf(u8, result, "Trailer:") == null);
+        const next = if (case.reusable) "NEXT" else "";
+        try std.testing.expectEqualStrings(next, fixture.remaining[0..fixture.remaining_length]);
+    }
+}
+
+test "response refusal suppresses informational and final response bytes" {
+    const raw = "HTTP/1.1 103 Early Hints\r\nLink: </secret>\r\n\r\n" ++
+        "HTTP/1.1 200 OK\r\nContent-Length: 6\r\n\r\nsecret";
+    for ([_]@FieldType(HoldFixture, "refuse"){ .headers, .body }) |phase| {
+        var fixture: HoldFixture = .{ .refuse = phase };
+        var out: [1024]u8 = undefined;
+        var writer = Io.Writer.fixed(&out);
+        const result = inspectedFixed(&fixture, raw, &writer, false);
+        try std.testing.expectError(error.InspectionDenied, result);
+        try std.testing.expectEqual(@as(usize, 0), writer.buffered().len);
+        try std.testing.expectEqual(@as(u16, 200), fixture.status);
+        try std.testing.expectEqual(@as(usize, 1), fixture.head_calls);
+        const bodies: usize = if (phase == .body) 1 else 0;
+        try std.testing.expectEqual(bodies, fixture.body_calls);
+    }
+}
+
+test "failed response acquisition never publishes a partial head or body" {
+    const cases = [_]struct { raw: []const u8, err: ProxyError }{
+        .{ .raw = "HTTP/1.1 200 OK\r\nContent-Length: 65\r\n\r\n", .err = error.EntityLimit },
+        .{
+            .raw = "HTTP/1.1 200 OK\r\nContent-Length: 6\r\n\r\nshort",
+            .err = error.IncompleteEntity,
+        },
+        .{
+            .raw = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\nzz\r\n",
+            .err = error.MalformedEntity,
+        },
+        .{
+            .raw = "HTTP/1.1 200 OK\r\nTransfer-Encoding: gzip, chunked\r\n\r\n",
+            .err = error.UnsupportedInspectedTransferCoding,
+        },
+    };
+    for (cases) |case| {
+        var fixture: HoldFixture = .{};
+        var out: [1024]u8 = undefined;
+        var writer = Io.Writer.fixed(&out);
+        try std.testing.expectError(case.err, inspectedFixed(&fixture, case.raw, &writer, false));
+        try std.testing.expectEqual(@as(usize, 0), writer.buffered().len);
+        try std.testing.expectEqual(@as(usize, 0), fixture.body_calls);
+    }
+    var fixture: HoldFixture = .{ .head_ceiling = 2 };
+    var out: [1024]u8 = undefined;
+    var writer = Io.Writer.fixed(&out);
+    const result = inspectedFixed(&fixture, cases[0].raw, &writer, false);
+    try std.testing.expectError(error.InspectionHeadLimit, result);
+    try std.testing.expectEqual(@as(usize, 0), writer.buffered().len);
+}
+
+test "held bodyless responses retain representation length and do not consume the next message" {
+    const cases = [_]struct { raw: []const u8, head_request: bool }{
+        .{ .raw = "HTTP/1.1 200 OK\r\nContent-Length: 999\r\n\r\nNEXT", .head_request = true },
+        .{
+            .raw = "HTTP/1.1 304 Not Modified\r\nContent-Length: 999\r\n\r\nNEXT",
+            .head_request = false,
+        },
+    };
+    for (cases) |case| {
+        var fixture: HoldFixture = .{};
+        var out: [1024]u8 = undefined;
+        var writer = Io.Writer.fixed(&out);
+        _ = try inspectedFixed(&fixture, case.raw, &writer, case.head_request);
+        try std.testing.expectEqual(@as(usize, 0), fixture.body_length);
+        try std.testing.expectEqual(@as(usize, 1), fixture.body_calls);
+        try std.testing.expectEqualStrings("NEXT", fixture.remaining[0..fixture.remaining_length]);
+        const retained = std.mem.indexOf(u8, writer.buffered(), "Content-Length: 999");
+        try std.testing.expect(retained != null);
+    }
+}
+
+test "response holdback retains the validated head across fragmented origin buffer refills" {
+    const prefix = "HTTP/1.1 200 OK\r\nContent-Length: 8192\r\nX-App: retain\r\n\r\n";
+    var origin: [prefix.len + 8192]u8 = undefined;
+    @memcpy(origin[0..prefix.len], prefix);
+    for (origin[prefix.len..], 0..) |*byte, index| byte.* = @intCast(index % 251);
+    for ([_]usize{ 1, 7, 4096 }) |piece| {
+        var source: @import("test_reader.zig").Fragmented = undefined;
+        source.init(&origin, piece);
+        var fixture: HoldFixture = .{ .body_ceiling = 8192 };
+        var out: [16384]u8 = undefined;
+        var writer = Io.Writer.fixed(&out);
+        fixture.writer = &writer;
+        const audit: Audit = .{ .client_ip = "", .status = "", .rule = "" };
+        const relayed = try relayResponse(
+            &source.interface,
+            &writer,
+            false,
+            true,
+            &audit,
+            .{ .io = std.testing.io },
+            fixture.hooks(),
+        );
+        try std.testing.expect(relayed.origin_reusable);
+        try std.testing.expectEqualStrings(prefix, fixture.head[0..prefix.len]);
+        try std.testing.expectEqualSlices(u8, origin[prefix.len..], &fixture.body);
+        const bytes = writer.buffered();
+        try std.testing.expectEqualSlices(u8, origin[prefix.len..], bytes[bytes.len - 8192 ..]);
+        try std.testing.expect(std.mem.indexOf(u8, bytes, "X-App: retain\r\n") != null);
+    }
+}
+
+test "explicit streaming inspects headers and preserves the origin's chunked representation" {
+    const raw = "HTTP/1.1 103 Early Hints\r\nLink: </app>\r\n\r\n" ++
+        "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n" ++
+        "5;ext=x\r\nhello\r\n0\r\n\r\nNEXT";
+    var fixture: HoldFixture = .{ .decision = .stream };
+    var out: [1024]u8 = undefined;
+    var writer = Io.Writer.fixed(&out);
+    const relayed = try inspectedFixed(&fixture, raw, &writer, false);
+    try std.testing.expect(relayed.client_keep);
+    try std.testing.expectEqual(@as(usize, 1), fixture.head_calls);
+    try std.testing.expectEqual(@as(usize, 0), fixture.body_calls);
+    try std.testing.expectEqualStrings("NEXT", fixture.remaining[0..fixture.remaining_length]);
+    try std.testing.expectEqualStrings(
+        "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n" ++
+            "Connection: keep-alive\r\n\r\n5;ext=x\r\nhello\r\n0\r\n\r\n",
+        writer.buffered(),
+    );
+}
+
+test "accepted upgrade inspection cannot require a complete tunnel body" {
+    var fixture: HoldFixture = .{};
+    var output: [256]u8 = undefined;
+    var writer = Io.Writer.fixed(&output);
+    fixture.writer = &writer;
+    const hook = fixture.hooks();
+    const head: inspection.Head = .{
+        .bytes = "HTTP/1.1 101 Switching Protocols\r\n\r\n",
+        .status = 101,
+        .framing = .none,
+        .upgrade = true,
+    };
+    try std.testing.expectError(error.InspectionUpgradeHold, hook.inspectHeaders(head));
+    fixture.decision = .stream;
+    try std.testing.expectEqual(inspection.Decision.stream, try hook.inspectHeaders(head));
+    fixture.refuse = .headers;
+    try std.testing.expectError(error.InspectionDenied, hook.inspectHeaders(head));
+    try std.testing.expectEqual(@as(usize, 0), writer.buffered().len);
+    try std.testing.expectEqual(@as(usize, 0), fixture.body_calls);
 }

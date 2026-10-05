@@ -3,45 +3,7 @@ const entity = @import("entity.zig");
 const Io = std.Io;
 const t = std.testing;
 
-const Fragmented = struct {
-    interface: Io.Reader,
-    buffer: [4096]u8 = undefined,
-    bytes: []const u8,
-    offset: usize = 0,
-    piece: usize,
-    empty_reads: usize = 0,
-
-    fn init(self: *Fragmented, bytes: []const u8, piece: usize) void {
-        std.debug.assert(piece > 0);
-        self.* = .{
-            .interface = .{
-                .vtable = &.{ .stream = stream },
-                .buffer = &self.buffer,
-                .seek = 0,
-                .end = 0,
-            },
-            .bytes = bytes,
-            .piece = piece,
-        };
-    }
-
-    fn stream(
-        reader: *Io.Reader,
-        writer: *Io.Writer,
-        limit: Io.Limit,
-    ) Io.Reader.StreamError!usize {
-        const self: *Fragmented = @fieldParentPtr("interface", reader);
-        if (self.empty_reads != 0) {
-            self.empty_reads -= 1;
-            return 0;
-        }
-        if (self.offset == self.bytes.len) return error.EndOfStream;
-        const count = limit.minInt(@min(self.piece, self.bytes.len - self.offset));
-        try writer.writeAll(self.bytes[self.offset..][0..count]);
-        self.offset += count;
-        return count;
-    }
-};
+const Fragmented = @import("test_reader.zig").Fragmented;
 
 test "held lengths and chunks preserve payload and pipelined bytes across every read size" {
     const raw = "3;test=\"x\"\r\nabc\r\n2\r\nde\r\n0\r\nX-Trailer: good\r\n\r\nGET /next";
