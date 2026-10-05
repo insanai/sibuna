@@ -96,6 +96,16 @@ pub export fn crsSignatureProbe(
     return 0;
 }
 
+/// Exercise runtime manifest decoding on every target; no host struct layout or
+/// pointer width becomes part of the persisted restart contract.
+pub export fn crsManifestProbe(bytes: [*]const u8, length: usize) u8 {
+    if (length > crs.artifact_manifest.capacity) return 1;
+    const manifest = crs.artifact_manifest.decode(bytes[0..length]) catch return 2;
+    var output: [crs.artifact_manifest.capacity]u8 = undefined;
+    const encoded = manifest.encode(&output) catch return 3;
+    return if (std.mem.eql(u8, bytes[0..length], encoded)) 0 else 4;
+}
+
 fn controlProbe(allocator: std.mem.Allocator, budget: *crs.work.Budget) bool {
     var program = crs.controls.compile(allocator, "ruleRemoveTargetById=1;ARGS:q") catch
         return false;

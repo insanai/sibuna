@@ -1568,6 +1568,30 @@ artifact; orphan staging artifacts are reclaimed within a quota. Retain the curr
 generations plus bounded staging space. Rollback is a new reviewed revision, not pointer
 mutation without history. An incompatible binary refuses the artifact and explains recovery.
 
+The native restart manifest has an exact 251-byte version-one encoding within a
+512-byte input ceiling. Fixed big-endian integer widths and explicit field order avoid
+host padding, pointer width and enum-layout dependencies. It carries the schema marker,
+compiler ABI, pinned signing fingerprint, revision/previous revision, upstream version,
+archive and operator digests, signed creation time, file sizes, condition count, compilation
+high-water mark, activation/profile, thresholds, transaction limits, slot count and total
+reservation. Refuse truncated records, trailing bytes, unknown modes, incompatible ABI or
+signer, invalid revision ancestry and unsafe capacities before reserving generation memory.
+Transport observation is a composition property, never authority supplied by the manifest.
+
+The loader re-verifies and compiles the signed source, checks exact file sizes, then binds
+the prepared package to its recorded identity and condition count. Compilation high-water
+marks can differ between architectures; each node enforces its own allocator ceiling rather
+than treating a recorded peak as permission to allocate. A manifest does not authenticate
+its contents or establish applied runtime state. Atomic file replacement, durable management
+intent and actual publication completion remain separate responsibilities of the store.
+
+*Lemma (manifest separation).* A decoded record cannot turn missing body observation or
+unverified source bytes into an executable generation. Fixed-length decoding establishes
+structure and capacities only. The composition layer supplies actual observation, and a
+separately authenticated package must match the archive/operator identity, version, signature
+creation time and condition count before generation construction. Successful decoding alone
+therefore confers neither artifact authenticity nor runtime application. $square$
+
 Cluster nodes validate the same content-addressed artifact and report applied revisions.
 Large rule archives do not travel in telemetry WebSockets. Artifact transfer uses the
 bounded authenticated management channel or independent verified retrieval. Nodes with an

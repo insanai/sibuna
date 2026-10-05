@@ -36,6 +36,17 @@ pub const Limits = struct {
     pieces: usize = 1024,
     work: u64 = 16_000_000,
     reservation: usize = 128 * 1024 * 1024,
+
+    /// Management validates persisted limits before reserving any transaction memory.
+    pub fn validate(self: Limits) error{InvalidSlotLimits}!void {
+        if (self.depth == 0 or self.depth > 256) return error.InvalidSlotLimits;
+        if (self.entries == 0 or self.entries > 4096 or self.bytes == 0 or
+            self.bytes > 4 * 1024 * 1024 or self.request == 0 or
+            self.request > 64 * 1024 * 1024 or self.response == 0 or
+            self.response > 64 * 1024 * 1024 or self.events == 0 or self.events > 8192 or
+            self.tags > 65536 or self.exclusions > 4096 or self.pieces > 4096 or
+            self.work == 0 or self.reservation == 0) return error.InvalidSlotLimits;
+    }
 };
 pub const Slot = struct {
     owner: std.heap.ArenaAllocator,
@@ -208,13 +219,7 @@ pub const Slot = struct {
 };
 
 fn reservation(program: *const rules.Program, limits: Limits) Error!usize {
-    if (limits.depth == 0 or limits.depth > 256) return error.InvalidSlotLimits;
-    if (limits.entries == 0 or limits.entries > 4096 or limits.bytes == 0 or
-        limits.bytes > 4 * 1024 * 1024 or limits.request == 0 or
-        limits.request > 64 * 1024 * 1024 or limits.response == 0 or
-        limits.response > 64 * 1024 * 1024 or limits.events == 0 or limits.events > 8192 or
-        limits.tags > 65536 or limits.exclusions > 4096 or limits.pieces > 4096 or
-        limits.work == 0 or limits.reservation == 0) return error.InvalidSlotLimits;
+    try limits.validate();
     var bounds: [variables.count]usize = @splat(limits.bytes);
     bounds[@backingInt(variables.Collection.request_body)] = limits.request;
     bounds[@backingInt(variables.Collection.response_body)] = limits.response;

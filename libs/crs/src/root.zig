@@ -49,6 +49,7 @@ pub const release_version = @import("release_version.zig");
 pub const release_urls = @import("release_urls.zig");
 pub const release_package = @import("release_package.zig");
 pub const generation = @import("generation.zig");
+pub const artifact_manifest = @import("artifact_manifest.zig");
 pub const publication = @import("publication.zig");
 pub const xml_acquisition = @import("xml_acquisition.zig");
 pub const multipart_acquisition = @import("multipart_acquisition.zig");
@@ -111,6 +112,7 @@ test {
     _ = release_urls;
     _ = @import("compiled_allocator.zig");
     _ = publication;
+    _ = artifact_manifest;
     _ = xml_acquisition;
     _ = @import("xml_text.zig");
     _ = @import("xml_names.zig");
