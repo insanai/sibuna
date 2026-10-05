@@ -9,12 +9,14 @@ pub const Error = Io.Dir.StatFileError || Io.File.OpenError || Io.File.StatError
     ArtifactFileLimit,
     ArtifactFileName,
 };
+pub const Bytes = ownership.Bytes;
 pub const Limit = union(enum) { exact: usize, maximum: usize };
 const maximum_file = 8 * 1024 * 1024;
 pub const Reader = struct {
     allocator: std.mem.Allocator,
     io: Io,
     directory: Io.Dir,
+    name_capacity: usize = 64,
 
     pub fn read(self: Reader, name: []const u8, limit: Limit) Error!ownership.Bytes {
         const maximum = switch (limit) {
@@ -38,7 +40,8 @@ pub const Reader = struct {
     }
 
     fn open(self: Reader, name: []const u8) Error!Io.File {
-        if (name.len == 0 or name.len > 64 or std.mem.eql(u8, name, ".") or
+        std.debug.assert(self.name_capacity > 0 and self.name_capacity <= 255);
+        if (name.len == 0 or name.len > self.name_capacity or std.mem.eql(u8, name, ".") or
             std.mem.eql(u8, name, "..") or std.mem.indexOfAny(u8, name, "/\\:\x00") != null)
             return error.ArtifactFileName;
         const before = try self.directory.statFile(self.io, name, .{ .follow_symlinks = false });

@@ -73,6 +73,7 @@ fn run(init: std.process.Init, out: *Io.Writer) !u8 {
     try sourceRefusals(staging, manifest, &source);
     try updater.staging.write(staging, manifest, &source);
     try duplicateRefusal(staging, manifest, &source);
+    try candidateDirectory(init, staged, manifest, &source, now);
     try @import("crs_startup_fixture.zig").qualify(init, staged, manifest, now);
     @memset(archive, '!');
     @memset(signature, '!');
@@ -83,6 +84,28 @@ fn run(init: std.process.Init, out: *Io.Writer) !u8 {
         &package.receipt.digest,        package.bounded.peak,
     });
     return 0;
+}
+
+fn candidateDirectory(
+    init: std.process.Init,
+    parent: Io.Dir,
+    manifest: crs.artifact_manifest.Manifest,
+    source: *const updater.Prepared,
+    now: u64,
+) !void {
+    const config: updater.candidate_directory.Config = .{
+        .io = init.io,
+        .parent = parent,
+        .name = "saved-candidate",
+        .now = now,
+    };
+    try updater.candidate_directory.write(config, manifest, source);
+    if (updater.candidate_directory.write(config, manifest, source)) |_|
+        return error.CandidateDirectoryWasReplaced
+    else |err| if (err != error.PathAlreadyExists) return err;
+    const saved = try parent.openDir(init.io, config.name, .{ .follow_symlinks = false });
+    defer saved.close(init.io);
+    try @import("crs_startup_fixture.zig").qualify(init, saved, manifest, now);
 }
 
 fn sourceRefusals(
