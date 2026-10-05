@@ -31,6 +31,7 @@ test "CRS startup rejects conflicts, unobserved enforcement and invalid bounds" 
         &.{ "--crs-request-limit", "67108865" }, &.{ "--crs-response-limit", "0" },
         &.{ "--crs-slots", "32" },               &.{ "--crs-work-budget", "-1" },
         &.{ "--crs-work-budget", "1000000001" }, &.{ "--crs-paranoia", "5" },
+        &.{ "--crs-timeout", "0" },              &.{ "--crs-timeout", "301" },
         &.{ "--crs-work-budget", "+12" },        &.{ "--crs-work-budget", "1x" },
     }) |input| try t.expectError(error.InvalidCrsLimit, options.parse(input, &remaining));
     try t.expectError(error.UnknownCrsOption, options.parse(&.{ "--crs-url", "x" }, &remaining));

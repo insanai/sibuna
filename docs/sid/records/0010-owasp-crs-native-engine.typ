@@ -306,7 +306,19 @@ global or resource key, as the pinned action does; it does not access a database
 unimplemented external collection selectors or mutations.
 
 `deny` records a would-deny decision in Audit and denies in Enforce. Status 200 becomes 403
-when a denial has no alternate status. `pass` never clears transaction denial. Evidence
+when a denial has no alternate status. The HTTP enforcing profile accepts terminal
+intervention statuses 400–599. Before publication it refuses observed, non-logging status
+actions outside that range except the default 200, including passing actions whose status
+could survive to a later denial. Audit retains the pure executor's status semantics. HEAD
+refusals preserve the selected error code and send no payload.
+
+*Lemma (terminal HTTP intervention).* Initially the status is 200. Every status action in an
+observed enforcing phase writes either 200 or an error status; all other actions preserve it.
+Induction on the prepared action sequence preserves this set. A denial converts 200 to 403,
+so every emitted intervention has one terminal error code. Logging cannot retroactively
+intervene after publication. $square$
+
+`pass` never clears transaction denial. Evidence
 logging flags and audit-engine overrides remain separate from that decision. Evidence
 capacity or action failure poisons the action and evaluation states; no partial event is
 published as complete. Earlier TX writes remain failure evidence, not resumable execution.
@@ -1510,6 +1522,18 @@ Transport, wrapper or decoding failures poison all transaction owners and retain
 internal cause; they cannot finalize as inspected. Unsupported body coverage uses the named
 streaming or handshake ending rather than empty body collections. These adapter contracts
 are qualified separately from listener startup, generation selection and operator updates.
+
+The listener rebases a consumed pipeline prefix before borrowing a protected request head.
+It retains that head while acquiring the entire transfer-decoded request into the slot's wire
+reservation. Existing admission limits run before body acquisition and before `100 Continue`;
+subsequent dispatch does not spend their budget or count the request twice. The decoded
+entity is a separate inspection view for CRS and the existing inspector; the origin receives
+the original content-coded representation. Request-phase refusal precedes origin delivery.
+Origin response-phase refusal precedes final client publication. Existing admission counters
+retain their meanings; external outcome telemetry selects a response refusal once, rather
+than counting both admission and denial. Boot-local CRS counters distinguish complete,
+headers, handshake and excluded-stream coverage, incomplete evaluations and would-deny
+findings. They are exposed on the existing internal metrics endpoint when CRS is configured.
 After response-header enforcement, trusted operator rules may set
 `tx.sibuna_stream_response=1` for a route or MIME type (`0` retains holdback; other values
 are invalid). Such an exception declares omitted response-body coverage and cannot bypass
@@ -1599,7 +1623,9 @@ decision. Error responses disclose neither payload secrets nor internal traces.
 Proposed startup controls are `--crs` (enable enforcement), `--no-crs` (disable),
 `--crs-mode off|audit|enforce` and `--crs-dir`,
 `--crs-paranoia`, `--crs-detection-paranoia`, `--crs-request-limit`,
-`--crs-response-limit`, `--crs-work-budget` and `--crs-slots`. Thresholds and exclusions
+`--crs-response-limit`, `--crs-work-budget`, `--crs-timeout` and `--crs-slots`.
+The absolute inspection deadline defaults to 30 seconds and accepts 1–300 seconds;
+configured CRS requires a working connection reaper even when both idle timers are disabled. Thresholds and exclusions
 are explicit configuration with revisions. CRS starts disabled. Conflicting enable/disable/mode options are rejected rather than
 resolved by argument order. The console provides the same Off, Audit and Enforce controls;
 a mode change is an authorized revision, not a browser-local toggle. Off skips CRS
@@ -1617,7 +1643,13 @@ candidate without starting the daemon and reports syntax, feature and capacity d
 There is no unauthenticated network endpoint or shell command invocation in the service.
 
 Candidate preparation also runs independently as `sibuna crs check [--version <x.y.z>]
-[--timeout <seconds>]`. Its report identifies a verified candidate rather than active
+[--timeout <seconds>] [--configuration <file>] [--output <new-directory>]`. Operator
+configuration is a bounded regular file, read without following its final symbolic link.
+An output directory is created exclusively inside an operator-owned parent; it is never
+reused or replaced. The saved artifact records Off at revision one and can be authenticated
+again by explicit startup configuration. This candidate is not a selected, durable management
+revision and does not change a running process. A failed save can leave a private partial
+directory, which cannot be mistaken for active protection. Its report identifies a verified candidate rather than active
 protection. The native `libs/crs-update` service owns bounded download buffers and a private
 package, exposing no daemon or database types. CLI and console jobs share this service.
 Latest-release metadata is limited to 128 KiB and accepts a canonical stable tag; asset

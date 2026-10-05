@@ -8,6 +8,56 @@
 
 == Surfaces and Configuration
 
+=== Native Core Rule Set in Source Builds
+
+SID 0010's native CRS connector is under release qualification. Version 0.2.0 packages do
+not include this opt-in listener integration. Keep CRS disabled until the application has
+been reviewed with the selected rules and resource bounds. Verified updates, console
+management and complete compatibility/performance acceptance are still being implemented.
+
+A candidate check authenticates the official archive with the pinned upstream signing key,
+compiles all selected rules privately and can save a new restart directory:
+
+```sh
+sibuna crs check --version 4.30.0 --output ./crs-candidate
+sibuna --upstream-host 127.0.0.1 --upstream-port 3000 \
+    --crs-mode audit --crs-dir ./crs-candidate
+```
+
+Use `--configuration <file>` on the check to include up to 64 KiB of locally authorized
+operator rules. Existing output directories are refused. The report describes a candidate;
+checking or saving never changes an already running daemon. Startup authenticates the
+saved sources again. `--no-crs` is the default and opens no artifact files or inspection pool.
+Conflicting mode flags are errors rather than choices resolved by argument order.
+
+The full reverse-proxy profile inspects complete request and response entities before
+publication. Default wire and decoded ceilings are 4 MiB for requests and 1 MiB for responses.
+The shared work budget defaults to 16 million units. Use `--crs-request-limit`,
+`--crs-response-limit`, `--crs-work-budget` and `--crs-slots` to set reviewed bounds. Eight
+slots reserve at least 112.6 MiB for entities, decoding and response heads, plus metadata and
+matcher storage. `--crs-timeout` is an absolute inspection deadline, 1–300 seconds, default
+30; active progress cannot extend it. Pool exhaustion returns 503, excessive uploads 413,
+and enforcing inspection failure refuses delivery.
+
+Forward auth observes ingress metadata rather than the origin body or response. Select
+`--crs-profile headers` explicitly with `--mode forward_auth`; full body enforcement is
+refused there. Existing bot admission and CRS protection are independent. Audit counts
+would-deny findings while preserving deliverable traffic; Enforce applies denials. An
+incomplete Audit evaluation is labelled incomplete, never counted as inspected.
+
+Indefinite responses require a reviewed operator exception, for example:
+
+```text
+SecRule RESPONSE_HEADERS:Content-Type "@beginsWith text/event-stream" \
+    "id:123456,phase:3,pass,setvar:tx.sibuna_stream_response=1"
+```
+
+The exception takes effect after response-header enforcement and declares missing body
+coverage. Validated WebSockets inspect their handshake rather than tunnel frames. Both
+release the CRS slot before their long-lived relay. The existing HTTP/WebSocket idle policy
+then governs the connection. The internal metrics endpoint exposes separate CRS counters
+for complete, headers, handshake, excluded-stream and incomplete coverage.
+
 === Release Packages and Licenses
 
 Version 0.2.0 packages include persistent storage, the browser solver and the optional

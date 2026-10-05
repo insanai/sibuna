@@ -11,6 +11,7 @@ const server = @import("server.zig");
 const storage = @import("storage.zig");
 const build_options = @import("build_options");
 const console_start = if (build_options.console) @import("console_start.zig") else struct {};
+const crs_start = @import("crs_start.zig");
 
 pub fn main(init: std.process.Init) !u8 {
     const io = init.io;
@@ -29,18 +30,9 @@ pub fn main(init: std.process.Init) !u8 {
             return @import("console_command.zig").execute(gpa, io, argv[1..]);
     }
     const daemon_args = if (subcommand) argv[1..] else argv;
-    const data_args = try arena.allocator().alloc([]const u8, daemon_args.len);
-    const parsed = if (build_options.console)
-        console_start.parse(daemon_args, data_args) catch |err| return invalidConsole(err)
-    else {};
-    var cfg = dataPlaneConfig(if (build_options.console) parsed.data_args else daemon_args) orelse
-        return 1;
-    if (build_options.console) if (parsed.query_steps) |steps| {
-        cfg.console_query_steps = steps;
-    };
-    if (build_options.console) console_start.applyCapture(&cfg, parsed);
-    if (build_options.console and !console_start.validate(parsed.config, cfg.data_dir != null))
-        return 1;
+    const settings = try parseSettings(arena.allocator(), daemon_args) orelse return 1;
+    const parsed = settings.console;
+    var cfg = settings.config;
     if (build_options.console) if (parsed.initial_admin) |username| {
         return @import("console_init.zig").execute(gpa, io, cfg, username.slice());
     };
@@ -76,6 +68,12 @@ pub fn main(init: std.process.Init) !u8 {
     }
     defer if (persistent) |p| if (!p.shutdown()) abandonedStorageExit();
 
+    const protection = crs_start.Runtime.start(gpa, io, settings.crs, observation(cfg)) catch |err|
+        return invalidCrs(err);
+    defer if (protection) |running| running.stop();
+    if (protection) |running| state.crs = &running.publisher;
+    state.crs_timeout_ms = @as(u64, settings.crs.timeout orelse 30) * 1000;
+
     const runtime = if (build_options.console and parsed.config.enabled)
         try console_start.Runtime.start(gpa, io, parsed.config, persistent.?)
     else
@@ -87,6 +85,50 @@ pub fn main(init: std.process.Init) !u8 {
     printBanner(cfg, persistent != null);
 
     return runListener(io, cfg, state);
+}
+
+const Settings = struct {
+    config: core.Config,
+    console: if (build_options.console) console_start.Parsed else void,
+    crs: crs_start.options.Config,
+};
+
+fn parseSettings(allocator: std.mem.Allocator, args: []const []const u8) !?Settings {
+    const crs_args = try allocator.alloc([]const u8, args.len);
+    const crs = crs_start.options.parse(args, crs_args) catch |err| {
+        _ = invalidCrs(err);
+        return null;
+    };
+    const console_args = try allocator.alloc([]const u8, crs.remaining.len);
+    const console = if (build_options.console)
+        console_start.parse(crs.remaining, console_args) catch |err| {
+            _ = invalidConsole(err);
+            return null;
+        }
+    else {};
+    const data_args = if (build_options.console) console.data_args else crs.remaining;
+    var config = dataPlaneConfig(data_args) orelse return null;
+    if (build_options.console) {
+        if (console.query_steps) |steps| config.console_query_steps = steps;
+        console_start.applyCapture(&config, console);
+        if (!console_start.validate(console.config, config.data_dir != null)) return null;
+    }
+    crs.config.validate(observation(config)) catch |err| {
+        _ = invalidCrs(err);
+        return null;
+    };
+    return .{ .config = config, .console = console, .crs = crs.config };
+}
+
+fn observation(config: core.Config) @import("crs").config.Observation {
+    return if (config.mode == .forward_auth) .request_metadata else .request_response;
+}
+
+fn invalidCrs(err: anyerror) u8 {
+    std.debug.print("CRSSTART001: CRS cannot start ({t}). " ++
+        "Hint: use a verified --crs-dir, review resource bounds and mode conflicts; " ++
+        "forward_auth requires --crs-profile headers. Off is the default.\n", .{err});
+    return 1;
 }
 
 /// Threads left blocked inside the consensus library cannot be joined; the process
@@ -172,7 +214,7 @@ fn runListener(io: std.Io, cfg: core.Config, state: *server.AppState) u8 {
     defer listener.deinit(io);
 
     @import("shutdown.zig").run(&listener, io, state) catch |err| {
-        std.debug.print("Failed to start shutdown monitor: {t}\n", .{err});
+        std.debug.print("Failed to start listener supervision: {t}\n", .{err});
         return 1;
     };
     return 0;
@@ -344,6 +386,7 @@ fn printConsoleHelp() void {
 
 fn printHelp() void {
     printConsoleHelp();
+    printCrsHelp();
     std.debug.print("CRS candidate check: sibuna crs check [--version <x.y.z>] " ++
         "[--timeout <seconds, 1-300, default 120>]\n", .{});
     std.debug.print(
@@ -393,6 +436,24 @@ fn printHelp() void {
         \\  --version                    Print the version and exit
         \\
         \\Unknown options and out-of-range values stop startup with a diagnostic.
+        \\
+    , .{});
+}
+
+fn printCrsHelp() void {
+    std.debug.print(
+        \\Core Rule Set (starts disabled; source-build integration pending release qualification):
+        \\  --crs | --no-crs            Select Enforce or Off; conflicting modes are refused
+        \\  --crs-mode <mode>           off | audit | enforce
+        \\  --crs-dir <path>            Verified artifact directory (required when enabled)
+        \\  --crs-profile <profile>     full | headers; forward_auth requires headers
+        \\  --crs-paranoia <1-4>        Blocking paranoia (default: artifact setting)
+        \\  --crs-detection-paranoia <n> Detection paranoia, at least the blocking level
+        \\  --crs-request-limit <bytes> Request wire and decoded bound, at most 64 MiB
+        \\  --crs-response-limit <bytes> Response wire and decoded bound, at most 64 MiB
+        \\  --crs-work-budget <units>   Shared acquisition/inspection budget, at most 1 billion
+        \\  --crs-timeout <seconds>     Absolute inspection deadline, 1-300 (default: 30)
+        \\  --crs-slots <1-31>          Simultaneous inspection reservations
         \\
     , .{});
 }

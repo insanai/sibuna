@@ -21,6 +21,10 @@ tampering, changed lengths, identity mismatch and retention of a prior prepared 
 `compression-test`, `net-test` and `crs-http-test` check bounded representation decoding,
 response publication and phase composition. They preserve encoded replay and verify that
 streaming and WebSocket exclusions cannot bypass response-header denials.
+`crs-daemon-e2e` exercises phased inspection through the actual TCP listener, including
+encoded uploads, response holdback, configured denial statuses, pipeline retention,
+forward-auth metadata, admission limits, absolute deadlines and early stream/tunnel release.
+Run it with the console enabled to verify exact response-refusal telemetry as well.
 `crs-start-test` checks startup option conflicts, observable profiles, resource bounds and
 the disabled lifecycle. The signed-artifact probe also exercises the startup owner's
 generation leases, forward-auth profile, exhaustion cleanup and joined-reader teardown.

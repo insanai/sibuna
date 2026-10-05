@@ -298,8 +298,12 @@ WebSocket inspection ends at the validated handshake. The shared bounded inflate
 gzip and zlib wrappers and checksums, handles ordered content codings and retains the
 encoded entity for unchanged replay. It shares the transaction work ledger and uses separate
 wire and decoded ceilings. The daemon adapter now couples these operations to phase ordering,
-audit/enforcement outcomes and explicit streaming or handshake coverage. Startup, authorized
-generation selection and update workflows remain necessary before CRS can be enabled.
+audit/enforcement outcomes and explicit streaming or handshake coverage. Source builds can
+now authenticate a saved candidate at opt-in startup and enforce these phases through the
+listener. The connector retains request metadata across large and pipelined uploads, checks
+admission limits before acquisition, and releases inspection resources before indefinite
+streaming or an accepted WebSocket tunnel. Authorized updates, the console workflows and
+complete live compatibility and performance acceptance remain required for release.
 
 Development qualification runs separately from enabling protection:
 

@@ -21,6 +21,7 @@ pub const Config = struct {
     response: ?usize = null,
     work: ?u64 = null,
     slots: ?usize = null,
+    timeout: ?u16 = null,
 
     pub fn validate(self: Config, observation: crs.config.Observation) Error!void {
         const activation: crs.config.Activation = .{
@@ -100,6 +101,8 @@ fn option(config: *Config, flag: []const u8, value: []const u8) Error!void {
         try number(usize, &config.response, value, 1, 64 * 1024 * 1024);
     } else if (std.mem.eql(u8, flag, "--crs-work-budget")) {
         try number(u64, &config.work, value, 1, 1_000_000_000);
+    } else if (std.mem.eql(u8, flag, "--crs-timeout")) {
+        try number(u16, &config.timeout, value, 1, 300);
     } else if (std.mem.eql(u8, flag, "--crs-slots")) {
         try number(usize, &config.slots, value, 1, 31);
     } else return error.UnknownCrsOption;
