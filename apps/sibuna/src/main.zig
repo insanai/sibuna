@@ -489,6 +489,8 @@ fn printHelp() void {
 fn printCrsManagementHelp() void {
     std.debug.print(
         "Offline: sibuna crs validate --directory <signed-candidate>\n" ++
+            "Private test: sibuna crs test --directory <signed-candidate> --case <json-file> " ++
+            "[--mode off|audit|enforce]\n" ++
             "Console management: sibuna crs status | check | update | mode | rollback | " ++
             "select | discard\n" ++
             "  Required: --origin <origin> --username <admin> --password-file <private-file>; " ++

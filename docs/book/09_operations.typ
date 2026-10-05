@@ -122,6 +122,30 @@ selection. Query status after an uncertain response rather than assuming the cha
 wait to 1–300 seconds. Every command closes its session. `crs validate --directory <path>`
 authenticates and compiles a saved signed candidate without opening the console or storage.
 
+Use a private request/response sample to test a saved signed candidate without starting a
+listener or changing protection:
+
+```sh
+sibuna crs test --directory ./crs-candidate --case ./request.json --mode audit
+```
+
+The JSON sample has a required `request` and an optional `response`. Request fields include
+`method`, `target`, `client`, `headers` (name/value pairs) and `entity`; response fields include
+`status`, `headers`, `entity` and `ending` (`complete`, `handshake` or `streaming`). An entity
+has either `body` text or `body_hex` binary bytes. Remove transfer framing first and retain
+`Content-Encoding` when supplying compressed bytes. Each supplied entity is at most 64 KiB.
+Unknown names, duplicate keys and malformed transport metadata are refused. The command
+inherits saved thresholds, paranoia levels, profile and resource limits; `--mode` overrides
+this private evaluation without editing the candidate. Without it, a saved Off candidate
+reports disabled coverage.
+
+The JSON report identifies both source digests and the saved candidate revision. It reports
+coverage, would-deny and enforcing decisions, actual blocking/detection scores when present,
+work used and up to 64 scalar findings with an omitted count. Missing response data is
+labelled separately. Representation or work failures report incomplete coverage. The test
+contacts no origin, emits no traffic observations and retains no sample or expanded matched
+values. It does not reproduce Gate sessions, live limiters or origin behavior.
+
 Engine deployments can manage rules through a private local directory, without the console
 or persistent application storage. Prepare and review a signed candidate first, then copy
 its sources into a versioned local selection:

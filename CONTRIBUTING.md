@@ -42,7 +42,7 @@ through reviewed modes, exact rollback, operator edits, failed preparation and s
 It requires Node; Chrome separately verifies form retention, focus and responsive layout.
 `crs-client-test` checks native command authority, explicit revisions and decoding of a
 full candidate/member view. `python3 tools/crs_cli_check.py <binary> --candidate <directory>`
-checks offline authentication of saved sources and reviewed live CLI changes. Each command
+checks offline authentication, private phased samples against signed sources and reviewed live CLI changes. Each command
 closes its own session; the fixture honors the login rate limit instead of weakening it.
 `python3 tools/crs_local_check.py <binary> --candidate <directory>` qualifies the independent
 engine path: local signed-source adoption, live modes, retained rollback, failed effects,

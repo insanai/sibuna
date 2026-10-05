@@ -1653,6 +1653,13 @@ fresh status query. Mode clones current settings; rollback takes the exact previ
 and refuses overrides. A bounded `--settings` file rejects unknown names. Offline
 `validate --directory <saved-candidate>` authenticates and compiles the restart files
 without starting the daemon or opening application storage.
+The independent `test --directory <saved-candidate> --case <json-file>
+[--mode off|audit|enforce]` command re-authenticates signed source and runs the private phased
+evaluator. It inherits the manifest's profile, paranoia levels, thresholds and slot limits;
+a mode override affects this test alone. Its JSON report binds source and operator digests
+and the saved candidate revision, and states that active protection is unchanged and no
+origin was contacted. Invalid inputs are refused without printing their contents. An
+incomplete engine report remains incomplete rather than becoming a successful inspection.
 There is no unauthenticated network endpoint or shell command invocation in the service.
 
 Candidate preparation also runs independently as `sibuna crs check [--version <x.y.z>]

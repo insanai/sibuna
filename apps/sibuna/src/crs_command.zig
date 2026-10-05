@@ -25,6 +25,7 @@ test {
     _ = @import("command_line.zig");
     _ = @import("crs_candidate.zig");
     _ = @import("crs_local_command.zig");
+    _ = @import("crs_test_command.zig");
     if (build_options.console) _ = @import("crs_management_command.zig");
 }
 
@@ -71,6 +72,8 @@ fn path(destination: *?[]const u8, value: []const u8) Error!void {
 }
 
 pub fn execute(allocator: std.mem.Allocator, io: std.Io, argv: []const []const u8) u8 {
+    if (argv.len != 0 and std.mem.eql(u8, argv[0], "test"))
+        return @import("crs_test_command.zig").execute(allocator, io, argv);
     if (localCommand(argv)) return @import("crs_local_command.zig").execute(allocator, io, argv);
     if (managed(argv)) {
         if (build_options.console) return @import("crs_management_command.zig").execute(

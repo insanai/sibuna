@@ -33,6 +33,40 @@ def command(binary, auth, operation, *options, failure=None):
     return json.loads(result.stdout)
 
 
+def private_tests(binary, source, root):
+    sample = root / "private-case.json"
+    headers = [{"name": name, "value": value} for name, value in
+               (("Host", "example.test"), ("User-Agent", "Mozilla/5.0"),
+                ("Accept", "text/html"))]
+    case = {"request": {"target": ATTACK, "headers": headers},
+            "response": {"entity": {"body": "ordinary page"}}}
+    sample.write_text(json.dumps(case))
+    original = {p.name: p.read_bytes() for p in source.iterdir() if p.is_file()}
+    for mode in ("off", "audit", "enforce"):
+        result = subprocess.run([str(binary), "crs", "test", "--directory", str(source),
+                                 "--case", str(sample), "--mode", mode],
+                                capture_output=True, text=True, timeout=90)
+        assert result.returncode == 0 and not result.stderr, result
+        report = json.loads(result.stdout)
+        assert report["private_test"] and not report["origin_contacted"], report
+        assert report["active_protection"] == "unchanged", report
+        assert report["report"]["mode"] == mode, report
+        assert not report["report"]["failure"], report
+        assert report["report"]["denied"] == (mode == "enforce"), report
+        assert report["report"]["would_deny"] == (mode != "off"), report
+        if mode != "off":
+            assert report["report"]["inbound_score"] >= 5, report
+        assert ATTACK not in result.stdout and "ordinary page" not in result.stdout
+    assert original == {p.name: p.read_bytes() for p in source.iterdir() if p.is_file()}
+    case["request"]["headers"][0]["value"] = "private-value\r\nInjected: bad"
+    sample.write_text(json.dumps(case))
+    result = subprocess.run([str(binary), "crs", "test", "--directory", str(source),
+                             "--case", str(sample), "--mode", "enforce"],
+                            capture_output=True, text=True, timeout=90)
+    assert result.returncode == 1 and "InvalidSample" in result.stderr, result
+    assert "private-value" not in result.stdout + result.stderr
+
+
 def applied(port, cookie, csrf, revision, mode):
     deadline = time.monotonic() + 90
     while True:
@@ -46,6 +80,7 @@ def applied(port, cookie, csrf, revision, mode):
 
 
 def qualify(binary, source, root):
+    private_tests(binary, source, root)
     # Offline validation verifies the signed restart bytes without any daemon.
     validation = subprocess.run([str(binary), "crs", "validate", "--directory", str(source)],
                                 capture_output=True, text=True, timeout=90)
@@ -120,7 +155,7 @@ def main():
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix="sibuna-crs-cli-") as temporary:
         qualify(args.binary.resolve(), args.candidate.resolve(), Path(temporary))
-    print("Native CRS CLI: offline validation, authenticated status, reviewed modes, "
+    print("Native CRS CLI: private tests, offline validation, authenticated status, reviewed modes, "
           "rollback, conflicts, discard, full-size operator rules and strict settings pass.")
 
 
