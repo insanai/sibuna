@@ -3,8 +3,10 @@
 const std = @import("std");
 const crs = @import("crs");
 const updater = @import("crs-update");
+pub const http_policy = @import("crs_http_policy.zig");
 pub const options = @import("crs_options.zig");
-pub const Error = options.Error || updater.artifact.Error || crs.generation.Error ||
+pub const Error = options.Error || http_policy.Error || updater.artifact.Error ||
+    crs.generation.Error ||
     crs.publication.Error || std.Io.Dir.OpenError || error{InvalidCrsClock};
 pub const Runtime = struct {
     allocator: std.mem.Allocator,
@@ -52,6 +54,7 @@ pub const Runtime = struct {
         var selected = try candidate.manifest.options(.request_response);
         selected.observation = observation;
         try config.apply(&selected);
+        try http_policy.validate(&candidate.prepared.package.?.program, selected.activation);
         const self = try allocator.create(Runtime);
         errdefer allocator.destroy(self);
         self.* = .{ .allocator = allocator, .source = candidate.manifest };
@@ -91,4 +94,5 @@ test "disabled CRS startup never loads a directory or allocates" {
 
 test {
     _ = options;
+    _ = http_policy;
 }

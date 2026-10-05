@@ -164,3 +164,35 @@ test "response builders emit length-delimited framing" {
         cookie,
     );
 }
+
+/// CRS intervention statuses are numeric. Never emit an informational response
+/// as a terminal refusal; invalid intervention codes close with an error instead.
+pub fn writeRefusal(
+    writer: *std.Io.Writer,
+    code: u16,
+    head_only: bool,
+    message: []const u8,
+) !void {
+    if (code < 400 or code > 599) return error.InvalidInterventionStatus;
+    const status: std.http.Status = @fromBackingInt(@intCast(code));
+    const reason = status.phrase() orelse "Request Refused";
+    const body = if (head_only) "" else message;
+    try writer.print("HTTP/1.1 {d} {s}\r\nContent-Type: text/plain; charset=utf-8\r\n" ++
+        "Content-Length: {d}\r\nConnection: close\r\nCache-Control: no-store\r\n" ++
+        "X-Content-Type-Options: nosniff\r\n\r\n", .{ code, reason, body.len });
+    try writer.writeAll(body);
+    try writer.flush();
+}
+
+test "numeric interventions preserve error status and never send a HEAD payload" {
+    const t = std.testing;
+    var bytes: [512]u8 = undefined;
+    var writer = std.Io.Writer.fixed(&bytes);
+    try writeRefusal(&writer, 406, true, "must not appear");
+    try t.expect(std.mem.startsWith(u8, writer.buffered(), "HTTP/1.1 406 Not Acceptable"));
+    try t.expect(std.mem.endsWith(u8, writer.buffered(), "Content-Length: 0\r\n" ++
+        "Connection: close\r\nCache-Control: no-store\r\n" ++
+        "X-Content-Type-Options: nosniff\r\n\r\n"));
+    try t.expectError(error.InvalidInterventionStatus, writeRefusal(&writer, 101, false, ""));
+    try t.expectError(error.InvalidInterventionStatus, writeRefusal(&writer, 600, false, ""));
+}
