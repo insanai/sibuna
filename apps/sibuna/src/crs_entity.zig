@@ -7,7 +7,7 @@ const Transaction = crs.http_transaction.Transaction;
 const Result = crs.executor.Result;
 const Header = @import("text").http_fields.Header;
 pub const Error = crs.http_transaction.Error || net.content_coding.Error ||
-    net.response_fields.Error || net.proxy.ProxyError;
+    net.response_fields.Error || net.proxy.ProxyError || error{InvalidStreamingPolicy};
 
 pub fn requestBody(
     transaction: *Transaction,
@@ -37,7 +37,16 @@ pub const Response = struct {
     coding: net.content_coding.Plan = .{},
     bodyless: bool = false,
     completion: ?crs.http_transaction.End = null,
+    fallback: crs.http_transaction.End = .local_response,
     failure: ?Error = null,
+    partial_release: ?PartialRelease = null,
+    partial_finalized: bool = false,
+    pub const PartialRelease = struct {
+        context: *anyopaque,
+        // Consume logging/coverage before releasing the transaction lease. No
+        // response callback may borrow that slot after this function returns.
+        call: *const fn (*anyopaque, *Response) void,
+    };
 
     /// Initialize at a stable address after request-body evaluation succeeds.
     pub fn init(self: *Response, transaction: *Transaction) Error!void {
@@ -46,6 +55,7 @@ pub const Response = struct {
     }
 
     pub fn hooks(self: *Response) net.response_inspection.Inspector {
+        std.debug.assert(!self.partial_finalized);
         const slot = self.transaction.slot;
         return .{
             .context = self,
@@ -61,6 +71,7 @@ pub const Response = struct {
         head: net.response_inspection.Head,
     ) net.response_inspection.Error!net.response_inspection.Decision {
         const self: *Response = @ptrCast(@alignCast(context));
+        if (self.partial_finalized) return error.InspectionFailed;
         var storage: [128]Header = undefined;
         const headers = net.response_fields.parse(head.bytes, &storage) catch |err|
             return self.failedHeaders(err);
@@ -69,8 +80,10 @@ pub const Response = struct {
             .headers = headers,
         }) catch |err| return self.failedHeaders(err);
         if (result == .denied) return self.denied();
-        if (head.upgrade or self.policy == .streaming_excluded) {
+        const excluded = self.streaming() catch |err| return self.failedHeaders(err);
+        if (head.upgrade or excluded) {
             self.completion = if (head.upgrade) .handshake_only else .streaming_excluded;
+            self.releasePartial();
             return .stream;
         }
         self.bodyless = head.framing == .none;
@@ -84,6 +97,7 @@ pub const Response = struct {
 
     fn onBody(context: *anyopaque, wire: []const u8) net.response_inspection.Error!void {
         const self: *Response = @ptrCast(@alignCast(context));
+        if (self.partial_finalized) return error.InspectionFailed;
         const slot = self.transaction.slot;
         self.transaction.checkPhase(.response_headers) catch |err| return self.failedBody(err);
         std.debug.assert(!self.bodyless or wire.len == 0);
@@ -109,7 +123,10 @@ pub const Response = struct {
         err: Error,
     ) net.response_inspection.Error!net.response_inspection.Decision {
         self.fail(err);
-        if (self.canContinue()) return .stream;
+        if (self.canContinue()) {
+            self.releasePartial();
+            return .stream;
+        }
         return error.InspectionFailed;
     }
 
@@ -123,14 +140,33 @@ pub const Response = struct {
             self.audit_failure == .continue_uninspected;
     }
 
+    fn streaming(self: *Response) Error!bool {
+        if (self.policy == .streaming_excluded) return true;
+        const slot = self.transaction.slot;
+        const value = (try slot.store.get("sibuna_stream_response", &slot.budget)) orelse
+            return false;
+        if (std.mem.eql(u8, value, "1")) return true;
+        if (std.mem.eql(u8, value, "0")) return false;
+        return error.InvalidStreamingPolicy;
+    }
+
     pub fn fail(self: *Response, err: Error) void {
+        if (self.partial_finalized) return;
         if (self.failure == null) self.failure = err;
         self.transaction.poison();
+    }
+
+    fn releasePartial(self: *Response) void {
+        if (self.partial_release) |owner| {
+            owner.call(owner.context, self);
+            self.partial_finalized = true;
+        }
     }
 
     /// The owner supplies the actual ending if the origin produced no head.
     /// A failure exposes its bounded cause and cannot fabricate phase completion.
     pub fn finish(self: *Response, fallback: crs.http_transaction.End) Error!void {
+        if (self.partial_finalized) return;
         if (self.failure) |err| return err;
         try self.transaction.finish(self.completion orelse fallback);
     }

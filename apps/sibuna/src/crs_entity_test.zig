@@ -251,3 +251,82 @@ test "bodyless response metadata does not require decoding an absent representat
     try t.expectEqual(crs.http_transaction.End.inspected, transaction.end.?);
     try t.expect(!fixture.slot.state.denied);
 }
+
+const PartialOwner = struct {
+    released: bool = false,
+
+    fn release(context: *anyopaque, response: *bridge.Response) void {
+        const self: *PartialOwner = @ptrCast(@alignCast(context));
+        response.finish(.origin_unavailable) catch unreachable;
+        response.transaction.slot.finish();
+        self.released = true;
+    }
+};
+
+test "a streaming ending releases inspection storage before an indefinite relay" {
+    var fixture: Fixture = undefined;
+    try fixture.init(rules);
+    defer fixture.deinit();
+    var transaction = try fixture.begin(true);
+    var response: bridge.Response = undefined;
+    try response.init(&transaction);
+    var owner: PartialOwner = .{};
+    response.partial_release = .{ .context = &owner, .call = PartialOwner.release };
+    response.policy = .streaming_excluded;
+    const hook = response.hooks();
+    const decision = try hook.inspectHeaders(.{
+        .bytes = "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\n\r\n",
+        .status = 200,
+        .framing = .until_close,
+    });
+    try t.expectEqual(net.response_inspection.Decision.stream, decision);
+    try t.expect(owner.released and response.partial_finalized and !fixture.slot.active);
+    // The old relay still owns its Response object, but the slot already belongs
+    // to another transaction. Its later completion or socket failure cannot log
+    // against, poison or inspect that new owner.
+    var next = try fixture.begin(true);
+    response.fail(error.WorkLimit);
+    try response.finish(.origin_unavailable);
+    try t.expectError(error.InspectionFailed, hook.body(hook.context, "late callback"));
+    try t.expectError(error.InspectionFailed, hook.inspectHeaders(.{
+        .bytes = "HTTP/1.1 200 OK\r\n\r\n",
+        .status = 200,
+        .framing = .none,
+    }));
+    try t.expect(!fixture.slot.state.failed and next.end == null);
+    try next.finish(.local_response);
+}
+
+test "operator streaming exceptions run after header enforcement and declare omitted coverage" {
+    const source =
+        \\SecRule RESPONSE_HEADERS:Content-Type "@beginsWith text/event-stream" \
+        \\"id:1,phase:3,pass,setvar:tx.sibuna_stream_response=1"
+        \\SecRule RESPONSE_HEADERS:X-Refuse "@streq yes" "id:2,phase:3,deny"
+    ;
+    for ([_]bool{ false, true }) |deny| {
+        var fixture: Fixture = undefined;
+        try fixture.init(source);
+        defer fixture.deinit();
+        var transaction = try fixture.begin(true);
+        var response: bridge.Response = undefined;
+        try response.init(&transaction);
+        const hook = response.hooks();
+        const header: net.response_inspection.Head = .{
+            .bytes = if (deny)
+                "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nX-Refuse: yes\r\n\r\n"
+            else
+                "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\n\r\n",
+            .status = 200,
+            .framing = .until_close,
+        };
+        const result = hook.inspectHeaders(header);
+        if (deny) {
+            try t.expectError(error.InspectionDenied, result);
+            try t.expectEqual(crs.http_transaction.End.local_response, response.completion.?);
+        } else {
+            try t.expectEqual(net.response_inspection.Decision.stream, try result);
+            try t.expectEqual(crs.http_transaction.End.streaming_excluded, response.completion.?);
+        }
+        try response.finish(.origin_unavailable);
+    }
+}

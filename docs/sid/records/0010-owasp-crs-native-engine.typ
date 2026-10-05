@@ -1510,6 +1510,13 @@ Transport, wrapper or decoding failures poison all transaction owners and retain
 internal cause; they cannot finalize as inspected. Unsupported body coverage uses the named
 streaming or handshake ending rather than empty body collections. These adapter contracts
 are qualified separately from listener startup, generation selection and operator updates.
+After response-header enforcement, trusted operator rules may set
+`tx.sibuna_stream_response=1` for a route or MIME type (`0` retains holdback; other values
+are invalid). Such an exception declares omitted response-body coverage and cannot bypass
+a phase-three denial. Before a stream or accepted handshake begins its indefinite relay,
+finish logging and coverage, clear the inspection deadline and release the slot and generation
+pin. Later transport completion or failure cannot touch storage already leased to another
+request. Explicit exclusions do not retain scarce inspection resources for connection life.
 
 The pure HTTP transaction coordinator couples successful acquisition to exactly one phase
 execution. Its state advances from request headers through request body, response headers
