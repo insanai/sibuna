@@ -8,6 +8,7 @@ const m = p.crs_management;
 const api = p.crs_tests;
 pub const Input = struct {
     auth: p.users.Auth,
+    kind: p.crs_tasks.Kind = .sample,
     id: m.Id,
     body: []u8,
     length: usize,
@@ -44,7 +45,12 @@ pub const Task = struct {
         }
         self.pending = input;
         self.session = input.auth.session_digest;
-        self.result = .{ .id = input.id, .state = .queued, .expires = now + 300 };
+        self.result = .{
+            .id = input.id,
+            .kind = input.kind,
+            .state = .queued,
+            .expires = now + 300,
+        };
     }
 
     pub fn snapshot(self: *const Task, auth: p.users.Auth, id: m.Id, now: u64) !api.Status {
@@ -57,12 +63,18 @@ pub const Task = struct {
 };
 
 pub fn execute(app: *App, input: Input, result: *api.Status) void {
-    result.* = .{ .id = input.id, .state = .running, .expires = app.now() + 60 };
-    run(app, input, result) catch |err| {
+    result.* = .{
+        .id = input.id,
+        .kind = input.kind,
+        .state = .running,
+        .expires = app.now() + 60,
+    };
+    perform(app, input, result) catch |err| {
         result.state = .failed;
         const name = @errorName(err);
         result.failure = p.Bytes(64).init(name[0..@min(name.len, 64)]) catch unreachable;
         result.report = null;
+        result.comparison = null;
     };
     result.expires = app.now() + 60;
 }
@@ -82,15 +94,7 @@ fn run(app: *App, input: Input, result: *api.Status) !void {
     try request.validate();
     result.source = try m.Id.init(request.source);
     result.expected_revision = try std.fmt.parseInt(u64, request.expected_revision, 10);
-    const authorized = try app.request(.{ .crs_management = .{ .test_begin = .{
-        .auth = input.auth,
-        .id = result.source,
-        .expected_revision = result.expected_revision,
-    } } });
-    if (authorized == .failed and authorized.failed == .forbidden)
-        return error.CrsPreparationForbidden;
-    if (authorized != .crs_job or authorized.crs_job == null) return error.CrsSelectionConflict;
-    const job = authorized.crs_job.?;
+    const job = try @import("crs_task_access.zig").begin(app, input.auth, result);
     var prepared = try @import("crs_sources.zig").loadDiagnosed(app, job, &result.diagnostic);
     defer prepared.deinit();
     const manifest = try crs.artifact_manifest.decode(job.manifest.slice());
@@ -112,23 +116,16 @@ fn run(app: *App, input: Input, result: *api.Status) !void {
         .sample = request.sample,
     }, &report);
     result.report = report;
-    try recheck(app, input.auth, result);
+    try @import("crs_task_access.zig").recheck(app, input.auth, result);
     result.artifact = (try @import("crs_views.zig").candidate(job)).artifact;
     result.state = .complete;
 }
 
-fn recheck(app: *App, auth: p.users.Auth, result: *const api.Status) !void {
-    if (app.stopping.load(.acquire)) return error.Canceled;
-    const selected = try app.request(.{ .crs_management = .{ .status = auth } });
-    if (selected != .crs_selection or selected.crs_selection.revision != result.expected_revision)
-        return error.CrsSelectionConflict;
-    const retained = try app.request(.{ .crs_management = .{ .job = .{
-        .auth = auth,
-        .id = result.source,
-    } } });
-    if (retained != .crs_job or retained.crs_job == null or
-        (retained.crs_job.?.state != .verified and retained.crs_job.?.state != .selected))
-        return error.CrsPreparationForbidden;
+fn perform(app: *App, input: Input, result: *api.Status) !void {
+    return switch (input.kind) {
+        .sample => run(app, input, result),
+        .review => @import("crs_review_worker.zig").run(app, input, result),
+    };
 }
 
 test "private test jobs own queued bytes and bind pollable results to session and expiry" {

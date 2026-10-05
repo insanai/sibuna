@@ -26,6 +26,7 @@ pub const events = @import("events.zig");
 pub const crs = @import("crs.zig");
 pub const crs_management = @import("crs_management.zig");
 pub const crs_tests = @import("crs_tests.zig");
+pub const crs_tasks = @import("crs_tasks.zig");
 pub const crs_api = @import("crs_api.zig");
 pub const json_value = @import("json_value.zig");
 pub const auth = @import("auth.zig");
@@ -554,4 +555,5 @@ test {
     _ = @import("rule_hit_history_test.zig");
     _ = json_value;
     _ = crs_api;
+    _ = crs_tasks;
 }

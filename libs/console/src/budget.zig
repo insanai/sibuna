@@ -39,6 +39,9 @@ pub const Budget = struct {
     // parser and evaluation slot in addition to the verified private program.
     pub const crs_test_bytes = @import("console_protocol").crs_tests.sample.sample_json_bytes +
         @import("console_protocol").crs_tests.sample.parser_bytes + 128 * 1024 * 1024;
+    // Review and sample evaluation are serialized. Three copied inventories
+    // cover one baseline and both comparison sort buffers, without source borrows.
+    pub const crs_review_bytes = 3 * 4096 * @sizeOf(@import("crs").rule_review.Fingerprint);
     pub const collector_bytes = @sizeOf(@import("stats.zig").Stats) +
         @sizeOf(@import("rankings_journal.zig").Journal) +
         @sizeOf(@import("minute_journal.zig").Journal) +
@@ -79,7 +82,7 @@ pub const Budget = struct {
             @as(u64, self.peers) * (@import("peer_client.zig").allocation_bytes +
                 @sizeOf(@import("peer_query.zig").Mailbox)) +
             topic_bytes + traffic_bytes + query_bytes + evidence_bytes + collector_bytes +
-            crs_prepare_bytes + crs_test_bytes +
+            crs_prepare_bytes + @max(crs_test_bytes, crs_review_bytes) +
             2 * @as(u64, self.geoip_generation_bytes) +
             // Completed mailbox payloads and concurrent HTTP history encoders are owned.
             (32 + @as(u64, self.slots)) *

@@ -133,6 +133,7 @@ pub const Request = union(enum) {
     verify: Verify,
     select: Select,
     test_begin: Select,
+    review_begin: Select,
     discard: Read,
     // These are daemon service operations, never decoded from an HTTP body.
     selected,
@@ -181,7 +182,7 @@ pub fn validate(request: Request) error{InvalidLimit}!void {
         inline .verify, .startup_begin => |input| if (!validId(input.id) or
             input.manifest.len == 0 or
             input.manifest.len > Manifest.byte_capacity) return error.InvalidLimit,
-        .select, .test_begin => |input| if (!validId(input.id) or
+        .select, .test_begin, .review_begin => |input| if (!validId(input.id) or
             input.expected_revision >= std.math.maxInt(i64)) return error.InvalidLimit,
         .startup_commit => |id| if (!validId(id)) return error.InvalidLimit,
         .job, .discard => |input| if (!validId(input.id)) return error.InvalidLimit,

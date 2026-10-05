@@ -9,7 +9,11 @@ const db = @import("console_database.zig");
 const util = @import("console_store.zig");
 const zx = @import("zaxonlite");
 
-pub fn begin(owner: *Persistent, input: m.Select) !p.StorageResult {
+pub fn begin(
+    owner: *Persistent,
+    input: m.Select,
+    kind: p.crs_tasks.Kind,
+) !p.StorageResult {
     if (try access.mutation(owner, input.auth) == null) return .{ .failed = .forbidden };
     const credentials = access.Credentials.init(input.auth, owner.nowSeconds());
     const changed = try db.exec(
@@ -17,13 +21,14 @@ pub fn begin(owner: *Persistent, input: m.Select) !p.StorageResult {
         owner.gpa,
         access.sql ++
             "INSERT INTO console_audit(actor,actor_role,action,subject,target," ++
-            "recorded_at,client_ip) SELECT a.id,'admin','crs.test',?,?,?,? FROM a " ++
+            "recorded_at,client_ip) SELECT a.id,'admin',?,?,?,?,? FROM a " ++
             "WHERE (SELECT revision FROM console_crs_selection WHERE id=1)=? " ++
             "AND EXISTS(SELECT 1 FROM console_crs_jobs j WHERE j.id=? AND " ++
             "((j.state='verified' AND j.expires>?) OR (j.state='selected' AND j.id IN " ++
             "(SELECT job FROM console_crs_selection UNION " ++
             "SELECT previous FROM console_crs_selection))))",
         &(credentials.values() ++ [_]zx.Value{
+            util.text(if (kind == .sample) "crs.test" else "crs.review"),
             util.integer(input.expected_revision),
             util.text(input.id.slice()),
             util.integer(credentials.now),

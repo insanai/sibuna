@@ -7,6 +7,8 @@ pub const Handler = enum {
     crs_status,
     crs_test,
     crs_test_read,
+    crs_review,
+    crs_review_read,
     crs_prepare,
     crs_select,
     crs_discard,
@@ -91,6 +93,20 @@ pub const Route = struct {
     handler: Handler,
 };
 const table = [_]Route{
+    .{
+        .path = "/console/api/crs/review",
+        .method = .POST,
+        .access = .full,
+        .action = .manage_settings,
+        .handler = .crs_review,
+    },
+    .{
+        .path = "/console/api/crs/review/result",
+        .method = .POST,
+        .access = .full,
+        .action = .manage_settings,
+        .handler = .crs_review_read,
+    },
     .{
         .path = "/console/api/crs/status",
         .method = .GET,

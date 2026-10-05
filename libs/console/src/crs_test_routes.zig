@@ -5,15 +5,35 @@ const App = @import("app.zig").App;
 const http = @import("http.zig");
 const api = @import("crs_routes.zig");
 const jobs = @import("crs_job.zig");
+const Handler = @import("routes.zig").Handler;
 
-pub fn submit(app: *App, context: *http.Context, auth: p.users.Auth) !void {
+pub fn handle(app: *App, context: *http.Context, auth: p.users.Auth, route: Handler) !void {
+    const kind: p.crs_tasks.Kind = switch (route) {
+        .crs_test, .crs_test_read => .sample,
+        .crs_review, .crs_review_read => .review,
+        else => unreachable,
+    };
+    if (route == .crs_test or route == .crs_review) return submit(app, context, auth, kind);
+    return read(app, context, auth, kind);
+}
+
+pub fn submit(
+    app: *App,
+    context: *http.Context,
+    auth: p.users.Auth,
+    kind: p.crs_tasks.Kind,
+) !void {
     _ = try api.administrator(app, auth);
     const content_type = try context.header("Content-Type") orelse return error.InvalidRequest;
     if (!std.mem.eql(u8, content_type, "application/json")) return error.InvalidRequest;
     var input: @import("crs_test_worker.zig").Input = .{
         .auth = auth,
+        .kind = kind,
         .id = jobs.identifier(app.io),
-        .body = try app.gpa.alloc(u8, p.crs_tests.sample.sample_json_bytes),
+        .body = try app.gpa.alloc(u8, if (kind == .sample)
+            p.crs_tests.sample.sample_json_bytes
+        else
+            512),
         .length = 0,
     };
     var transferred = false;
@@ -25,7 +45,12 @@ pub fn submit(app: *App, context: *http.Context, auth: p.users.Auth) !void {
     return http.json(context, .{ .accepted = true, .id = input.id.slice() }, &.{});
 }
 
-pub fn read(app: *App, context: *http.Context, auth: p.users.Auth) !void {
+pub fn read(
+    app: *App,
+    context: *http.Context,
+    auth: p.users.Auth,
+    kind: p.crs_tasks.Kind,
+) !void {
     _ = try api.administrator(app, auth);
     var body: [128]u8 = undefined;
     var memory: [512]u8 = undefined;
@@ -36,6 +61,7 @@ pub fn read(app: *App, context: *http.Context, auth: p.users.Auth) !void {
     defer parsed.deinit();
     const id = try api.identifier(parsed.value.id);
     const result = try app.crs_job.testSnapshot(auth, id);
+    if (result.kind != kind) return error.InvalidRequest;
     _ = try api.administrator(app, auth);
     return http.json(context, result, &.{});
 }
