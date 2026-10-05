@@ -114,6 +114,14 @@ test "native CRS replies decode a full candidate and member view within the wire
         .stage = .verified,
         .reason = .none,
     };
+    for (&snapshot.candidates) |*row| {
+        row.*.?.diagnostic = p.crs_management.Diagnostic.capture(
+            error.UnknownOperator,
+            &@as([256]u8, @splat('"')),
+            std.math.maxInt(u32),
+            std.math.maxInt(u32),
+        );
+    }
     try snapshot.validate();
     const bytes = try std.json.Stringify.valueAlloc(t.allocator, snapshot, .{});
     defer t.allocator.free(bytes);

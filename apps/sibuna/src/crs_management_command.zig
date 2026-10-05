@@ -76,7 +76,11 @@ fn run(
             if (snapshot.revision != args.revision.?) return error.Conflict;
             const id = args.id orelse snapshot.next_id;
             try prepare(&session, args, snapshot, id);
-            try awaitCandidate(&session, snapshot, id, budget);
+            awaitCandidate(&session, snapshot, id, budget) catch |err| {
+                if (reply.find(snapshot, id)) |failed|
+                    @import("crs_diagnostic.zig").report(failed.diagnostic);
+                return err;
+            };
             const candidate = reply.find(snapshot, id) orelse return error.InvalidResponse;
             var revision: [20]u8 = undefined;
             try std.json.Stringify.value(.{

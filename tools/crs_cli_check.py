@@ -28,7 +28,7 @@ def command(binary, auth, operation, *options, failure=None):
     assert PASSWORD not in result.stdout + result.stderr
     if failure:
         assert result.returncode == 1 and failure in result.stderr, result
-        return None
+        return result.stderr
     assert result.returncode == 0 and not result.stderr, result
     return json.loads(result.stdout)
 
@@ -103,6 +103,12 @@ def qualify(binary, source, root):
         invalid.write_text('{"inbound_threshhold":1}')
         command(binary, auth, "update", "--revision", "5", "--settings", str(invalid),
                 failure="InvalidConfiguration")
+        invalid_rules = root / "invalid.conf"
+        invalid_rules.write_text("# location check\nInvalidDirective secret-value\n")
+        report = command(binary, auth, "check", "--revision", "5", "--version", "4.30.0",
+                         "--configuration", str(invalid_rules), failure="PreparationFailed")
+        assert "CRSCOMPILE/" in report and "sibuna-operator.conf" in report and "Line: 2" in report
+        assert "secret-value" not in report
         assert status(port, cookie, csrf)["revision"] == 5
         assert exchange(data_port, ATTACK, HEADERS)[0] == 403
 

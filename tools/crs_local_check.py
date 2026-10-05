@@ -27,7 +27,7 @@ def command(binary, store, operation, *flags, failure=None):
                             capture_output=True, text=True, timeout=150)
     if failure:
         assert result.returncode == 1 and failure in result.stderr, result
-        return None
+        return result.stderr
     assert result.returncode == 0 and not result.stderr, result
     return json.loads(result.stdout)
 
@@ -178,9 +178,11 @@ def qualify(binary, candidate, root):
         current = command(binary, store, "status")["saved_selection"]["current"]
         name = "generation-" + bytes(current["id"]).hex()
         invalid = root / "invalid.conf"
-        invalid.write_text("UnrecognizedDirective x\n")
-        command(binary, store, "update", "--revision", "2", "--from", str(store / name),
-                "--configuration", str(invalid), failure="CRSLOCALCOMMAND")
+        invalid.write_text("# location check\nUnrecognizedDirective secret-value\n")
+        report = command(binary, store, "update", "--revision", "2", "--from", str(store / name),
+                         "--configuration", str(invalid), failure="CRSLOCALCOMMAND")
+        assert "CRSCOMPILE/" in report and "sibuna-operator.conf" in report and "Line: 2" in report
+        assert "secret-value" not in report
         assert selected == (store / "selection.bin").read_bytes()
         assert exchange(port, ATTACK, HEADERS)[0] == 403
         command(binary, store, "mode", "--revision", "2", "--mode", "off")

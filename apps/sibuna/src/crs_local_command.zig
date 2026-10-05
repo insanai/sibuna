@@ -25,7 +25,9 @@ pub fn execute(allocator: std.mem.Allocator, io: Io, argv: []const []const u8) u
     };
     var bytes: [4096]u8 = undefined;
     var writer = Io.File.stdout().writer(io, &bytes);
-    run(allocator, io, args, &writer.interface) catch |err| {
+    var diagnostic: ?crs.release_package.Diagnostic = null;
+    run(allocator, io, args, &writer.interface, &diagnostic) catch |err| {
+        @import("crs_diagnostic.zig").report(diagnostic);
         std.debug.print("CRSLOCALCOMMAND: local command failed ({t}). Hint: query local " ++
             "status before retrying an unknown outcome. Keep the store private, use a " ++
             "local filesystem and review signed sources and resource bounds.\n", .{err});
@@ -39,7 +41,13 @@ pub fn execute(allocator: std.mem.Allocator, io: Io, argv: []const []const u8) u
     return 0;
 }
 
-fn run(allocator: std.mem.Allocator, io: Io, args: arguments.Args, writer: *Writer) Error!void {
+fn run(
+    allocator: std.mem.Allocator,
+    io: Io,
+    args: arguments.Args,
+    writer: *Writer,
+    diagnostic: *?crs.release_package.Diagnostic,
+) Error!void {
     const directory = try Io.Dir.cwd().openDir(io, args.directory, .{
         .follow_symlinks = false,
         .iterate = true,
@@ -54,7 +62,7 @@ fn run(allocator: std.mem.Allocator, io: Io, args: arguments.Args, writer: *Writ
         const configuration = try operatorText(store, args, before);
         defer allocator.free(configuration.buffer);
         defer std.crypto.secureZero(u8, configuration.buffer);
-        var sources = try prepare(store, args, before, configuration.value);
+        var sources = try prepare(store, args, before, configuration.value, diagnostic);
         defer sources.prepared.deinit();
         var options = sources.defaults;
         if (args.operation != .rollback) {
@@ -116,6 +124,7 @@ fn prepare(
     args: arguments.Args,
     before: Snapshot,
     configuration: []const u8,
+    diagnostic: *?crs.release_package.Diagnostic,
 ) Error!Sources {
     if (args.operation == .mode or args.operation == .rollback) {
         var locked = try store.lock(.shared);
@@ -126,7 +135,7 @@ fn prepare(
             selected.previous orelse return error.LocalStoreConflict
         else
             selected.current;
-        var candidate = try locked.load(source);
+        var candidate = try locked.loadDiagnosed(source, diagnostic);
         errdefer candidate.deinit();
         return .{
             .prepared = candidate.prepared,
@@ -142,10 +151,16 @@ fn prepare(
             .directory = directory,
             .now = try store.now(),
             .observation = .request_response,
+            .diagnostic = diagnostic,
         });
         errdefer candidate.deinit();
         if (args.configuration != null)
-            try replaceConfiguration(&candidate.prepared, configuration, try store.now());
+            try replaceConfiguration(
+                &candidate.prepared,
+                configuration,
+                try store.now(),
+                diagnostic,
+            );
         return .{
             .prepared = candidate.prepared,
             .defaults = try (before.manifest orelse candidate.manifest).options(.request_response),
@@ -158,6 +173,7 @@ fn prepare(
         .stopping = &stopping,
         .deadline_ms = args.timeout * 1000,
         .configuration = configuration,
+        .diagnostic = diagnostic,
     }, args.version);
     errdefer prepared.deinit();
     return .{
@@ -169,7 +185,12 @@ fn prepare(
     };
 }
 
-fn replaceConfiguration(prepared: *updater.Prepared, text: []const u8, now: u64) Error!void {
+fn replaceConfiguration(
+    prepared: *updater.Prepared,
+    text: []const u8,
+    now: u64,
+    diagnostic: *?crs.release_package.Diagnostic,
+) Error!void {
     const package = prepared.package.?;
     const version = package.version;
     const replacement = try prepared.allocator.dupe(u8, text);
@@ -184,6 +205,7 @@ fn replaceConfiguration(prepared: *updater.Prepared, text: []const u8, now: u64)
         .configuration = replacement,
         .version = version,
         .now = now,
+        .diagnostic = diagnostic,
     });
 }
 

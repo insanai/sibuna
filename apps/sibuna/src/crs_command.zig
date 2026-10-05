@@ -99,6 +99,7 @@ pub fn execute(allocator: std.mem.Allocator, io: std.Io, argv: []const []const u
         return 1;
     };
     defer allocator.free(configuration.buffer);
+    var diagnostic: ?crs.release_package.Diagnostic = null;
     var stopping: std.atomic.Value(bool) = .init(false);
     var candidate = updater.prepare(.{
         .allocator = allocator,
@@ -106,7 +107,9 @@ pub fn execute(allocator: std.mem.Allocator, io: std.Io, argv: []const []const u
         .stopping = &stopping,
         .deadline_ms = args.timeout * 1000,
         .configuration = configuration.value,
+        .diagnostic = &diagnostic,
     }, args.version) catch |err| {
+        @import("crs_diagnostic.zig").report(diagnostic);
         std.debug.print("CRSUPDATE001: CRS candidate preparation failed ({t}). " ++
             "Hint: check publisher access, the version and resource bounds.\n", .{err});
         return 1;
@@ -154,13 +157,16 @@ fn validate(allocator: std.mem.Allocator, io: std.Io, path_value: []const u8) u8
     defer directory.close(io);
     const seconds = @divFloor(std.Io.Clock.real.now(io).nanoseconds, std.time.ns_per_s);
     if (seconds < 0 or seconds > std.math.maxInt(u64)) return 1;
+    var diagnostic: ?crs.release_package.Diagnostic = null;
     var candidate = updater.artifact.load(.{
         .allocator = allocator,
         .io = io,
         .directory = directory,
         .now = @intCast(seconds),
         .observation = .request_response,
+        .diagnostic = &diagnostic,
     }) catch |err| {
+        @import("crs_diagnostic.zig").report(diagnostic);
         std.debug.print("CRSCLIVALIDATE: signed candidate validation failed ({t}). " ++
             "Hint: prepare a fresh complete candidate; active protection is unchanged.\n", .{err});
         return 1;
