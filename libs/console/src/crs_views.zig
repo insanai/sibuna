@@ -17,6 +17,7 @@ pub fn candidate(job: m.Job) !p.crs_api.Candidate {
         .verified_at = job.verified_at,
         .completed_at = job.completed_at,
         .reason = job.reason,
+        .diagnostic = job.diagnostic,
         .artifact = if (manifest) |value| try artifact(value) else null,
     };
 }

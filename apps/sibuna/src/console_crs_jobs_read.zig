@@ -14,7 +14,7 @@ pub fn load(owner: *Persistent, id: m.Id) !?m.Job {
         owner.db,
         owner.gpa,
         "SELECT id,kind,state,expected_revision,created_at,expires,verified_at," ++
-            "completed_at,manifest,reason FROM console_crs_jobs WHERE id=? LIMIT 1",
+            "completed_at,manifest,reason,diagnostic FROM console_crs_jobs WHERE id=? LIMIT 1",
         &.{util.text(id.slice())},
     );
     defer rows.deinit();
@@ -30,6 +30,7 @@ pub fn load(owner: *Persistent, id: m.Id) !?m.Job {
         .verified_at = if (row[6]) |_| try util.number(row[6]) else null,
         .completed_at = if (row[7]) |_| try util.number(row[7]) else null,
         .reason = try enumeration(m.Reason, row[9]),
+        .diagnostic = try @import("console_crs_diagnostics.zig").decode(owner.gpa, row[10]),
     };
     if (!m.validId(value.id)) return error.InvalidStoredValue;
     if (row[8]) |hex| {

@@ -476,3 +476,40 @@ test "CRS management bounds stale operations factors and observable profiles" {
         .ordinal = 8,
     } }));
 }
+
+test "CRS failure diagnostics are committed with the failure audit and retained on replay" {
+    var fx = try Fixture.open();
+    defer fx.close();
+    _ = try fx.begin(1, 0, null);
+    const diagnostic = m.Diagnostic.capture(
+        error.UnknownOperator,
+        "sibuna-operator.conf",
+        2,
+        null,
+    );
+    const operation: m.Request = .{ .failed = .{
+        .id = id(1),
+        .reason = .incompatible,
+        .diagnostic = diagnostic,
+    } };
+    try fx.storage.owner.db.exec(
+        t.allocator,
+        "CREATE TRIGGER reject_crs_failure BEFORE INSERT ON console_audit " ++
+            "WHEN NEW.action='crs.failed' BEGIN SELECT RAISE(ABORT,'injected'); END",
+    );
+    try t.expectEqual(p.Failure.unavailable, (try fx.run(operation)).failed);
+    const before = (try fx.run(.{ .job = .{ .auth = auth, .id = id(1) } })).crs_job.?;
+    try t.expectEqual(m.State.preparing, before.state);
+    try t.expect(before.diagnostic == null);
+    try fx.storage.owner.db.exec(t.allocator, "DROP TRIGGER reject_crs_failure");
+    const result = (try fx.run(operation)).crs_job.?;
+    try t.expectEqualDeep(diagnostic, result.diagnostic.?);
+    try t.expectEqual(m.State.failed, result.state);
+    _ = try fx.run(operation);
+    try t.expectEqual(@as(u64, 1), try fx.count(
+        "SELECT count(*) FROM console_audit WHERE action='crs.failed'",
+    ));
+    try @import("console_migrations.zig").run(fx.storage.owner);
+    const retained = (try fx.run(.{ .job = .{ .auth = auth, .id = id(1) } })).crs_job.?;
+    try t.expectEqualDeep(diagnostic, retained.diagnostic.?);
+}

@@ -169,7 +169,8 @@ pub const Job = struct {
             if (self.take()) |owned| {
                 var input = owned;
                 defer input.deinit(self.app.gpa);
-                self.prepare(input) catch |err| self.fail(input.id, err);
+                var diagnostic: ?m.Diagnostic = null;
+                self.prepare(input, &diagnostic) catch |err| self.fail(input.id, err, diagnostic);
                 self.mutex.lockUncancelable(self.app.io);
                 self.running = false;
                 self.mutex.unlock(self.app.io);
@@ -198,8 +199,8 @@ pub const Job = struct {
         return input;
     }
 
-    fn prepare(self: *Job, input: Input) !void {
-        var prepared = try candidate.prepare(self.app, input);
+    fn prepare(self: *Job, input: Input, diagnostic: *?m.Diagnostic) !void {
+        var prepared = try candidate.prepare(self.app, input, diagnostic);
         defer prepared.deinit();
         const manifest = try candidate.verify(self.app, input, &prepared);
         self.progress(.storing, .none);
@@ -221,13 +222,14 @@ pub const Job = struct {
         self.reason = reason;
     }
 
-    fn fail(self: *Job, id: m.Id, err: anyerror) void {
+    fn fail(self: *Job, id: m.Id, err: anyerror, diagnostic: ?m.Diagnostic) void {
         const reason = failure(err);
         self.progress(.failed, reason);
         if (self.app.stopping.load(.acquire)) return;
         const result = self.app.request(.{ .crs_management = .{ .failed = .{
             .id = id,
             .reason = reason,
+            .diagnostic = diagnostic,
         } } }) catch |record_error| {
             std.log.warn("CRS candidate failure receipt unavailable: {t}", .{record_error});
             return;

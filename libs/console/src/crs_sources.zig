@@ -37,6 +37,10 @@ pub fn store(app: *App, id: m.Id, auth: ?p.users.Auth, prepared: *const updater.
 }
 
 pub fn load(app: *App, job: m.Job) !updater.Prepared {
+    return loadDiagnosed(app, job, null);
+}
+
+pub fn loadDiagnosed(app: *App, job: m.Job, diagnostic: ?*?m.Diagnostic) !updater.Prepared {
     const manifest = try crs.artifact_manifest.decode(job.manifest.slice());
     var prepared = try read(app, job.id, manifest);
     errdefer prepared.deinit();
@@ -46,6 +50,7 @@ pub fn load(app: *App, job: m.Job) !updater.Prepared {
         .configuration = prepared.configuration.value,
         .version = manifest.version,
         .now = app.now(),
+        .diagnostic = diagnostic,
     });
     try manifest.bind(prepared.package.?);
     if (app.stopping.load(.acquire)) return error.Canceled;

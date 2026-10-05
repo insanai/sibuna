@@ -188,13 +188,17 @@ pub fn discard(owner: *Persistent, input: m.Read) !p.StorageResult {
 }
 
 pub fn failed(owner: *Persistent, input: m.Failed) !p.StorageResult {
+    var bytes: [@import("console_crs_diagnostics.zig").capacity]u8 = undefined;
+    const diagnostic = @import("console_crs_diagnostics.zig").encode(input.diagnostic, &bytes);
     _ = try db.exec(
         owner.db,
         owner.gpa,
-        "UPDATE console_crs_jobs SET state='failed',reason=?,completed_at=? " ++
+        "UPDATE console_crs_jobs SET state='failed',reason=?,completed_at=?,diagnostic=? " ++
             "WHERE id=? AND state='preparing'",
         &.{
-            util.text(@tagName(input.reason)), util.integer(owner.nowSeconds()),
+            util.text(@tagName(input.reason)),
+            util.integer(owner.nowSeconds()),
+            if (diagnostic) |value| util.text(value) else .null_value,
             util.text(input.id.slice()),
         },
     );

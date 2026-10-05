@@ -2,6 +2,7 @@
 //! node's local publication are distinct facts; no program pointer crosses here.
 const std = @import("std");
 const p = @import("root.zig");
+pub const Diagnostic = @import("text").source_diagnostic.Diagnostic;
 pub const Id = p.Bytes(32);
 pub const Manifest = p.Bytes(512);
 pub const chunk_bytes = 2048;
@@ -61,6 +62,7 @@ pub const Job = struct {
     completed_at: ?u64 = null,
     manifest: Manifest = .{},
     reason: Reason = .none,
+    diagnostic: ?Diagnostic = null,
 };
 pub const Jobs = struct {
     rows: [candidate_capacity]?Job = @splat(null),
@@ -100,7 +102,7 @@ pub const Chunk = struct {
 pub const Verify = struct { auth: p.users.Auth, id: Id, manifest: Manifest };
 pub const Select = struct { auth: p.users.Auth, id: Id, expected_revision: u64 };
 pub const Source = struct { id: Id, file: File, ordinal: u32 };
-pub const Failed = struct { id: Id, reason: Reason };
+pub const Failed = struct { id: Id, reason: Reason, diagnostic: ?Diagnostic = null };
 pub const Applied = struct {
     revision: u64,
     applied: bool,
@@ -184,8 +186,11 @@ pub fn validate(request: Request) error{InvalidLimit}!void {
         .job, .discard => |input| if (!validId(input.id)) return error.InvalidLimit,
         .source => |input| if (!validId(input.id) or
             input.ordinal >= fileLimit(input.file) / chunk_bytes) return error.InvalidLimit,
-        .failed => |input| if (!validId(input.id) or input.reason == .none)
-            return error.InvalidLimit,
+        .failed => |input| {
+            if (!validId(input.id) or input.reason == .none) return error.InvalidLimit;
+            if (input.diagnostic) |diagnostic|
+                diagnostic.validate() catch return error.InvalidLimit;
+        },
         .applied => |input| if (input.revision == 0 or input.revision > std.math.maxInt(i64) or
             input.applied != (input.reason == .none)) return error.InvalidLimit,
         else => {},

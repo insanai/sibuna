@@ -30,6 +30,7 @@ pub const Candidate = struct {
     verified_at: ?u64,
     completed_at: ?u64,
     reason: m.Reason,
+    diagnostic: ?m.Diagnostic = null,
 
     artifact: ?Artifact,
 
@@ -70,6 +71,8 @@ pub const Status = struct {
         }
         for (self.candidates[0..self.count]) |row| {
             const candidate = row orelse return error.InvalidResponse;
+            if (candidate.diagnostic) |diagnostic|
+                diagnostic.validate() catch return error.InvalidResponse;
             if (!m.validId(candidate.id)) return error.InvalidResponse;
             if (candidate.artifact) |artifact|
                 artifact.settings.validate() catch return error.InvalidResponse;

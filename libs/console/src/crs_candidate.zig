@@ -65,16 +65,17 @@ pub fn options(input: Input, observed: crs.config.Observation) !crs.generation.O
     };
 }
 
-pub fn prepare(app: *App, input: Input) !updater.Prepared {
+pub fn prepare(app: *App, input: Input, diagnostic: *?m.Diagnostic) !updater.Prepared {
     if (input.clone) |original| {
         var job = original;
         job.id = input.id;
-        return sources.load(app, job);
+        return sources.loadDiagnosed(app, job, diagnostic);
     }
     return updater.prepare(.{
         .allocator = app.gpa,
         .io = app.io,
         .stopping = &app.stopping,
+        .diagnostic = diagnostic,
         .configuration = if (input.configuration) |value| value.slice() else "",
     }, input.version);
 }
