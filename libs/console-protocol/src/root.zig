@@ -26,6 +26,7 @@ pub const events = @import("events.zig");
 pub const crs = @import("crs.zig");
 pub const crs_management = @import("crs_management.zig");
 pub const crs_api = @import("crs_api.zig");
+pub const json_value = @import("json_value.zig");
 pub const auth = @import("auth.zig");
 pub const users = @import("users.zig");
 pub const audit = @import("audit.zig");
@@ -579,4 +580,6 @@ test "owned byte updates preserve oversize state, support overlap and erase trun
 
 test {
     _ = @import("rule_hit_history_test.zig");
+    _ = json_value;
+    _ = crs_api;
 }

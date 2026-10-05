@@ -30,6 +30,7 @@ pub const Candidate = struct {
     verified_at: ?u64,
     completed_at: ?u64,
     reason: m.Reason,
+
     artifact: ?Artifact,
 
     pub fn jsonStringify(self: Candidate, w: *std.json.Stringify) json.Error!void {
@@ -52,7 +53,58 @@ pub const Status = struct {
     stage: Stage,
     reason: m.Reason,
 
+    pub fn validate(self: *const Status) error{InvalidResponse}!void {
+        if (self.count > self.candidates.len or self.node_count > self.nodes.len or
+            !m.validId(self.next_id)) return error.InvalidResponse;
+        if (self.current) |current| {
+            const artifact = current.artifact orelse return error.InvalidResponse;
+            if (current.state != .selected or artifact.revision != self.revision)
+                return error.InvalidResponse;
+            artifact.settings.validate() catch return error.InvalidResponse;
+        } else if (self.revision != 0) return error.InvalidResponse;
+        if (self.previous) |previous| {
+            const artifact = previous.artifact orelse return error.InvalidResponse;
+            if (previous.state != .selected or artifact.revision >= self.revision)
+                return error.InvalidResponse;
+            artifact.settings.validate() catch return error.InvalidResponse;
+        }
+        for (self.candidates[0..self.count]) |row| {
+            const candidate = row orelse return error.InvalidResponse;
+            if (!m.validId(candidate.id)) return error.InvalidResponse;
+            if (candidate.artifact) |artifact|
+                artifact.settings.validate() catch return error.InvalidResponse;
+        }
+        if (self.local.selection) |local| local.validate() catch return error.InvalidResponse;
+    }
+
     pub fn jsonStringify(self: Status, w: *std.json.Stringify) json.Error!void {
         return json.object(self, w);
     }
 };
+
+test "CRS clients reject missing candidates, invalid IDs and unbounded views" {
+    const t = std.testing;
+    var status: Status = .{
+        .available = true,
+        .next_id = try m.Id.init("11111111111111111111111111111111"),
+        .revision = 0,
+        .selected_at = 0,
+        .current = null,
+        .previous = null,
+        .local = .{},
+        .job = .{},
+        .stage = .idle,
+        .reason = .none,
+    };
+    try status.validate();
+    status.count = 1;
+    try t.expectError(error.InvalidResponse, status.validate());
+    status.count = m.candidate_capacity + 1;
+    try t.expectError(error.InvalidResponse, status.validate());
+    status.count = 0;
+    status.node_count = p.nodes.max_members + 1;
+    try t.expectError(error.InvalidResponse, status.validate());
+    status.node_count = 0;
+    status.next_id = .{};
+    try t.expectError(error.InvalidResponse, status.validate());
+}

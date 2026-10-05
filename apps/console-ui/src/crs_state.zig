@@ -32,21 +32,7 @@ pub const Model = struct {
     pub fn accept(self: *Model, value: std.json.Value, alloc: std.mem.Allocator) !void {
         var observed: p.crs_api.Status = undefined;
         try @import("json_value.zig").into(&observed, value, alloc);
-        if (observed.count > observed.candidates.len or
-            observed.node_count > observed.nodes.len or
-            !p.crs_management.validId(observed.next_id)) return error.InvalidResponse;
-        if (observed.current) |current| {
-            const artifact = current.artifact orelse return error.InvalidResponse;
-            if (current.state != .selected or artifact.revision != observed.revision)
-                return error.InvalidResponse;
-            try artifact.settings.validate();
-        } else if (observed.revision != 0) return error.InvalidResponse;
-        for (observed.candidates[0..observed.count]) |row| {
-            const candidate = row orelse return error.InvalidResponse;
-            if (!p.crs_management.validId(candidate.id)) return error.InvalidResponse;
-            if (candidate.artifact) |artifact| try artifact.settings.validate();
-        }
-        if (observed.local.selection) |local| try local.validate();
+        try observed.validate();
         if (self.snapshot) |previous| {
             if (previous.revision != observed.revision) self.reviewed = null;
         }
