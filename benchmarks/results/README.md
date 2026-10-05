@@ -4,6 +4,19 @@ Run `sh benchmarks/run-all.sh` for primitive measurements and
 `python3 benchmarks/distributed.py` for the three-process HTTP/replication matrix.
 Both write timestamped results and update their respective `latest` JSON files.
 
+## Primitive baseline
+
+`latest.json` and `latest-20261005T072832Z.json` record clean revision
+`7a192bae3e6e6024840849506c2d11dfb27390fe`, measured on the Linux service container
+with Zig 0.17.0 at ReleaseFast. Each row retains seven-batch median, minimum and maximum
+latencies. Storage and console are compiled in but inactive; native CRS is disabled.
+The idle process measurement uses two workers without a data directory or console listener.
+The record identifies the source, executable, dependency and solver module.
+
+These primitive timings and idle memory do not measure a loaded CRS generation, console
+isolation or production throughput. The three-product families below remain measurements
+of v0.2.0 and must not be relabelled as native CRS comparisons.
+
 ## Three-product comparisons
 
 The fresh 4 October 2026 families use Sibuna v0.2.0 built with Zig 0.17.0 at ReleaseSafe,

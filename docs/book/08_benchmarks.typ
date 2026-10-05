@@ -9,7 +9,9 @@
   matrix. Every number is rendered from a results file at build time; its header identifies
   the tested revision and host. The 4 October three-product comparisons run Sibuna v0.2.0,
   Anubis and BunkerWeb with the products and generator on separate physical hosts.
-  The primitive suite was refreshed on 3 October with Zig 0.17. Earlier loopback product,
+  The primitive suite identifies its current clean revision and Zig version in the figure
+  metadata. It measures primitives with native CRS disabled, not the cost of a loaded CRS
+  generation. Earlier loopback product,
   admission, distributed and cluster records retain their historical revisions and do not
   qualify the current release.
   A functional pass and an inconclusive isolation measurement answer different questions.
