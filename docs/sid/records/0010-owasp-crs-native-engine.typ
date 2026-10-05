@@ -1866,6 +1866,49 @@ headers and bodies follow SID 0007’s redaction and capture policy. No credenti
 payloads are logged implicitly. Missing matches caused by incomplete inputs are labelled
 incomplete rather than zero. Existing engine incidents and CRS findings remain distinguishable.
 
+== Retained scalar findings
+
+The current connector copies saved findings before releasing its transaction slot and
+generation lease. The bounded incident queue owns rule ID, phase, severity, applied revision,
+signed archive digest, mode, would-deny and final-denial flags, selected status, paranoia
+levels and coverage. Expanded messages, tags, matched values and body contents are omitted
+because their expansion can contain credentials. Configuration bookkeeping events do not
+consume incident capacity. Logging and audit suppression affect retention, never denial.
+Incomplete evaluation overrides any nominal complete coverage classification.
+
+Schema 41 adds a scalar sidecar committed in the incident transaction under the existing
+batch receipt guard. A failed sidecar write rolls back the incident and its indexes. An
+unconfirmed committed batch is retried by receipt without duplicating either row. Deleting
+an incident deletes its sidecar even on a connection without foreign-key enforcement.
+Revisions use decimal text in storage and the browser protocol, preserving all 64 bits.
+Missing historical or grouped evidence stays null. Findings without retained matched values
+have no similarity vector or inferred campaign. JSON page exports carry the scalar envelope;
+CSV retains its existing incident columns.
+
+Opt-in head capture follows SID 0007's redaction before bounded copying. A caller-owned
+response capture outlives the relay's temporary frame. A validated origin head is captured
+before response inspection can finish an excluded stream or handshake and release its slot.
+An observed origin head describes observation, not delivery; a request-side local denial
+cannot invent an origin response. Console details preserve these distinctions and erase
+findings and captured heads on sign-out.
+
+*Lemma (retention ownership).* No queued CRS finding borrows transaction or relay storage.
+
+*Proof.* The producer runs before lease release and passes scalar values and temporary
+redacted slices to the incident hook. The hook copies them into its owned bounded record
+before returning. Storage consumes that record on its own thread. Response capture occurs
+before finalization and has caller-owned lifetime through the producer's return. Queue
+exhaustion increments the existing loss counter without retaining any borrow. $square$
+
+Native tests cover atomic rollback, committed-reply loss, full-width revisions, migration
+replay, suppression and handshake capture ordering. Signed-package daemon qualification
+checks Audit and Enforce findings through authenticated console reads, restart and revocation.
+Chrome checks the real findings, incomplete coverage, local and observed response heads,
+charset controls, clipboard copy and sign-out in desktop dark and mobile light layouts.
+Static rule messages/tags and per-rule score contributions still need a safe retained
+contract to satisfy the complete evidence requirement above. This scalar envelope does not
+establish the management page, live activation, cluster convergence or release acceptance.
+
 = Verification and acceptance
 
 == Phase evidence and reference differences

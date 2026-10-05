@@ -1162,6 +1162,20 @@ test "full incident browser envelope fits fixed arena and retains exact candidat
     const row: @import("events_state.zig").WireRow = .{
         .id = "9007199254740993",
         .campaign = "9007199254740993",
+        .crs = .{
+            .rule_id = 942100,
+            .phase = 2,
+            .severity = 2,
+            .revision = "9007199254740993",
+            .source_digest = &@import("text").repeat("ab", 32),
+            .enforcing = false,
+            .denied = false,
+            .would_deny = true,
+            .coverage = .incomplete,
+            .selected_status = 403,
+            .blocking_paranoia = 1,
+            .detection_paranoia = 2,
+        },
         .capture = .{
             .selected_status = 403,
             .query_bytes = 20,
@@ -1180,6 +1194,7 @@ test "full incident browser envelope fits fixed arena and retains exact candidat
     try std.testing.expect(!state.events.busy);
     try std.testing.expectEqual(@as(usize, 10), state.events.count);
     try std.testing.expectEqual(@as(u64, 9007199254740993), state.events.rows[0].campaign.?);
+    try std.testing.expectEqual(@as(u64, 9007199254740993), state.events.rows[0].crs.?.revision);
 }
 
 fn similarityAction(name: []const u8) !bool {

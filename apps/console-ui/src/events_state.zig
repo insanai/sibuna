@@ -56,6 +56,7 @@ pub const Model = struct {
                 .query_redacted = row.query_redacted,
                 .display_truncated = row.display_truncated,
                 .capture = row.capture,
+                .crs = if (row.crs) |crs| try crs.decode() else null,
                 .geography = try p.events.country.Mapping.decode(row.geography),
             };
             if (row.campaign) |id| parsed[i].campaign = try std.fmt.parseInt(u64, id, 10);
@@ -77,6 +78,7 @@ pub const Model = struct {
 noinline fn clearRow(row: *p.events.Row) void {
     @memset(std.mem.asBytes(row), 0);
     row.capture = null;
+    row.crs = null;
     row.campaign = null;
     row.count = 1;
 }
@@ -91,6 +93,20 @@ test "event reset restores every default and erases retained evidence display bu
         .body_bytes = 2,
         .declared_body_bytes = 2,
         .truncated = 0,
+    };
+    model.rows[0].crs = .{
+        .rule_id = 942100,
+        .phase = 2,
+        .severity = 2,
+        .revision = 1,
+        .source_digest = @splat(0xab),
+        .enforcing = false,
+        .denied = false,
+        .would_deny = true,
+        .coverage = .incomplete,
+        .selected_status = 403,
+        .blocking_paranoia = 1,
+        .detection_paranoia = 1,
     };
     model.clear();
     try t.expectEqualDeep(Model{}, model);
@@ -126,4 +142,5 @@ pub const WireRow = struct {
     display_truncated: bool = false,
     campaign: ?[]const u8 = null,
     capture: ?p.events.Capture = null,
+    crs: ?p.events.security_evidence.Wire = null,
 };

@@ -1,0 +1,80 @@
+<div class="sb-shell" data-navigation-open="false">
+  <a class="sb-skip btn btn-primary" href="#page-heading">Skip to content</a>
+  <header class="navbar sb-mobile-header bg-base-100 border-b border-base-300">
+    <span class="sb-brand grow">SIBUNA</span>
+    <span class="sb-note">Console node 1</span>
+    <button id="navigation-toggle" class="btn btn-ghost" data-action="navigation-toggle"
+            aria-controls="console-navigation" aria-expanded="false">Menu</button>
+  </header>
+  <nav id="console-navigation" class="sb-nav bg-base-100 border-r border-base-300"
+       aria-label="Main navigation" data-preserve-scroll>
+    <div class="sb-nav-brand">
+      <a class="sb-brand" href="/console/">SIBUNA</a>
+      <p class="sb-caption">SECURITY CONSOLE</p>
+      <p class="sb-note">Console node 1</p>
+    </div>
+    <ul class="menu menu-md w-full gap-1">
+<li><button class="" data-action="dashboard"
+            aria-current="false">Statistics</button></li>
+<li><button class="menu-active" data-action="events"
+            aria-current="page">Events</button></li>
+<li><button class="" data-action="challenges"
+            aria-current="false">Challenges</button></li>
+<li><button class="" data-action="policies"
+            aria-current="false">Policies</button></li>
+<li><button class="" data-action="geoip"
+            aria-current="false">GeoIP</button></li>
+<li><button class="" data-action="users"
+            aria-current="false">Users</button></li>
+<li><button class="" data-action="tokens"
+            aria-current="false">Tokens</button></li>
+<li><button class="" data-action="audit"
+            aria-current="false">Audit</button></li>
+<li><button class="" data-action="nodes"
+            aria-current="false">Nodes</button></li>
+<li><button class="" data-action="settings"
+            aria-current="false">Settings</button></li>
+<li><button class="" data-action="account"
+            aria-current="false">Account</button></li>
+    </ul>
+    <div class="sb-nav-footer">
+      <span class="badge badge-outline">admin</span>
+      <ul class="menu menu-md w-full gap-1 mt-4">
+        <li><button data-action="theme">Theme: system</button></li>
+        <li><button data-action="density">Spacing: comfortable</button></li>
+        <li><button data-action="logout">Sign out</button></li>
+      </ul>
+    </div>
+  </nav>
+  <div class="sb-content">
+<main class="sb-main min-h-screen"><header class="sb-header"><div><p class="sb-subtitle">INVESTIGATION / RECORDED INCIDENTS</p><h1 id="page-heading" tabindex="-1">Events</h1><p class="sb-subtitle">Inspect what your firewall recorded.</p></div><button class="btn" data-action="dashboard">Back to dashboard</button></header><div class="flex flex-wrap gap-3 mt-6" aria-label="Incident view"><button class="btn" data-action="events-raw" disabled>Raw incidents</button><button class="btn" data-action="events-source">By source address</button></div><section class="sb-note my-4" aria-label="Live updates"><p>Waiting for live updates · Last update 0 seconds ago.</p><p>0 recent summaries newer than this page. Rows stay in place while you read. <button class="btn btn-sm" data-action="events-refresh">Load latest records</button></p><p>At most 64 summaries retained in the live feed; this is not a total count. 0 unavailable source IDs, including expired history. Storage observation age: 0 seconds.</p></section><section class="sb-panel sb-filters mt-6"><h2>Filter incidents</h2><form id="events-filter"><div class="sb-filter-grid"><div class="sb-filter-field"><label for="event-module">Module</label><select class="select select-bordered" id="event-module" name="module"><option value="">All recorded modules</option><option value="inspection">inspection</option><option value="honeypot">honeypot</option><option value="other">other</option></select></div><div class="sb-filter-field">
+    <label for="category">Category</label>
+    <input id="category" name="category" class="input input-bordered"
+        maxlength="32" value="" placeholder=""
+        aria-describedby="">
+</div>
+<div class="sb-filter-field">
+    <label for="country">Country</label>
+    <input id="country" name="country" class="input input-bordered"
+        maxlength="12" value="" placeholder="e.g. US"
+        aria-describedby="event-filter-help">
+</div>
+<div class="sb-filter-field">
+    <label for="ip">Client address</label>
+    <input id="ip" name="ip" class="input input-bordered"
+        maxlength="48" value="" placeholder=""
+        aria-describedby="">
+</div>
+<div class="sb-filter-field sb-filter-wide">
+    <label for="path_prefix">Path starts with</label>
+    <input id="path_prefix" name="path_prefix" class="input input-bordered"
+        maxlength="256" value="" placeholder=""
+        aria-describedby="">
+</div>
+<div class="sb-filter-field">
+    <label for="node">Node ID</label>
+    <input id="node" name="node" class="input input-bordered"
+        maxlength="10" value="" placeholder="All nodes"
+        aria-describedby="">
+</div>
+<div class="sb-filter-field"><label for="hours">Time range</label><select id="hours" name="hours" class="select select-bordered"><option value="0" selected>All recorded time</option><option value="1">Last hour</option><option value="24">Last 24 hours</option><option value="168">Last 7 days</option><option value="720">Last 30 days</option></select></div></div><p id="event-filter-help" class="sb-note mt-4">Leave fields blank to include all values. Category and address match exactly. Country accepts a two-letter code, unknown or not_recorded.</p><div class="sb-filter-actions"><button type="submit" class="btn btn-primary">Apply filters</button></div></form></section><section id="incident-results" tabindex="-1" class="sb-panel mt-6" aria-label="Incident results"><article class="border-b border-base-300 py-4"><h2><span class="badge badge-outline sb-chip sb-decision-info">audit:crs</span> <span class="sb-note">#1099511627777</span></h2><p>1970-01-02 23:58:20 UTC · Node 1</p><p class="break-all">198.51.100.7 · POST /api</p><details class="mt-3"><summary>Incident details</summary><dl class="grid gap-2 mt-3"><dt>User agent</dt><dd class="break-all">CRS review fixture</dd><dt>Campaign candidate</dt><dd>Not recorded</dd><dt>Country at persistence</dt><dd>Not recorded</dd><dt>Response</dt><dd>Audit finding: this rule would deny in enforce mode. Delivery is not recorded.</dd><dt>CRS rule</dt><dd>942100</dd><dt>Inspection phase</dt><dd>2 — Request body</dd><dt>Severity</dt><dd>2 — Critical</dd><dt>Mode</dt><dd>Audit</dd><dt>Coverage</dt><dd>Incomplete inspection; a limit or transport failure interrupted evaluation</dd><dt>Paranoia levels</dt><dd>Blocking 1; detection 2</dd><dt>Applied revision</dt><dd>9007199254740993</dd><dt>Signed release SHA-256</dt><dd class="break-all">abababababababababababababababababababababababababababababababab</dd><dt>Rule message and tags</dt><dd>Not retained: expanded values may contain secrets.</dd><dt>Score contributions</dt><dd>Not recorded.</dd><dt>JA4 fingerprint</dt><dd>Not recorded: requires bounded capture at a trusted ingress that overwrites spoofed headers.</dd></dl><p class="sb-note mt-3">Matched values, expanded messages, tags and body contents are omitted. CRS findings have no payload similarity grouping.</p><p class="mt-3"><button class="btn btn-sm" data-action="events-heads-1099511627777">Show request and response heads</button></p><div class="flex flex-wrap gap-2 mt-3"><button class="btn btn-outline" data-action="events-deny-198.51.100.7">Deny address…</button><button class="btn btn-outline" data-action="events-allow-198.51.100.7">Allow address…</button></div></details></article><div class="flex flex-wrap gap-3 mt-6"><span>Page 1</span><button class="btn" data-action="events-prev" disabled>Previous</button><button class="btn" data-action="events-next" disabled>Next</button><button class="btn" data-action="events-refresh">Latest results</button><button class="btn" data-action="events-export">Export this page (JSON)</button><button class="btn" data-action="events-export-csv">Export this page (CSV)</button></div><p class="sb-note mt-4">Records are ordered by capture time (UTC). Pages retain the selected time boundary; use Latest results to include new incidents. Missing historical evidence and capture coverage are not inferred.</p><p class="sb-note">CSV prefixes formula-like text with “Text: ”. JSON preserves string values and exact identifiers.</p></section></main></div></div>

@@ -35,6 +35,9 @@ fn run(io: std.Io, alloc: std.mem.Allocator, update: bool) !void {
         "rule-hit-history",
         "rule-hit-history-partial",
         "audit-detail",
+        "events-crs-denied",
+        "events-crs-audit-incomplete",
+        "events-crs-streaming",
     };
     inline for (variants, 0..) |name, i| {
         configure(&state, .dashboard);
@@ -60,6 +63,39 @@ fn run(io: std.Io, alloc: std.mem.Allocator, update: bool) !void {
         variant(&state, i);
         try check(io, alloc, name, &state, update);
     }
+}
+
+fn crsFinding(state: *State, index: usize) void {
+    state.phase = .events;
+    state.events.loaded = true;
+    state.events.count = 1;
+    const row = &state.events.rows[0];
+    row.id = 1099511627777;
+    row.node = 1;
+    row.time = 172700;
+    row.ip.set("198.51.100.7") catch unreachable;
+    row.method.set("POST") catch unreachable;
+    row.path.set("/api") catch unreachable;
+    row.category.set(if (index == 15) "waf:crs" else "audit:crs") catch unreachable;
+    row.user_agent.set("CRS review fixture") catch unreachable;
+    row.crs = .{
+        .rule_id = 942100,
+        .phase = if (index == 17) 3 else 2,
+        .severity = 2,
+        .revision = 9007199254740993,
+        .source_digest = @splat(0xab),
+        .enforcing = index == 15,
+        .denied = index == 15,
+        .would_deny = index != 17,
+        .coverage = switch (index) {
+            15 => .local_response,
+            16 => .incomplete,
+            else => .streaming_excluded,
+        },
+        .selected_status = if (index == 17) 0 else 403,
+        .blocking_paranoia = 1,
+        .detection_paranoia = 2,
+    };
 }
 
 fn configure(state: *State, phase: Phase) void {
@@ -128,6 +164,7 @@ fn variant(state: *State, index: usize) void {
         9, 10 => period(state, index == 10),
         12, 13 => ruleHistory(state, index == 13),
         14 => auditDetail(state),
+        15, 16, 17 => crsFinding(state, index),
         3, 4 => {
             state.kiosk = true;
             state.kiosk_expires = 176400;

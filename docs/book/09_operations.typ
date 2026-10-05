@@ -58,6 +58,18 @@ release the CRS slot before their long-lived relay. The existing HTTP/WebSocket 
 then governs the connection. The internal metrics endpoint exposes separate CRS counters
 for complete, headers, handshake, excluded-stream and incomplete coverage.
 
+The console Events page retains saved CRS findings with their rule ID, phase, severity,
+mode, signed release digest, applied revision, paranoia levels and inspection coverage.
+Audit findings do not claim an enforced denial. A selected denial status describes the
+inspection decision; it does not prove that the client received the response. Incomplete,
+headers-only, local-response, handshake and excluded-stream coverage remain distinct.
+Expanded rule messages, tags, matched values and body contents are omitted; score
+contributions are not yet retained. CRS findings have no payload similarity grouping.
+Schema 41 commits scalar findings with their incident and optional redacted heads. JSON
+page exports include this metadata; the CSV export retains its existing incident columns.
+Enable `--console-capture-heads` to inspect redacted request and observed origin heads.
+The page distinguishes a local response from an unavailable or unobserved origin response.
+
 === Release Packages and Licenses
 
 Version 0.2.0 packages include persistent storage, the browser solver and the optional

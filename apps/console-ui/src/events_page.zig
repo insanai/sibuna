@@ -202,20 +202,26 @@ fn incident(
     try html.render(w, "</dd><dt>Country at persistence</dt><dd>", .{});
     try geography(&row.geography, w);
     try html.render(w, "</dd><dt>Response</dt><dd>", .{});
-    if (row.capture) |capture| {
+    if (row.crs) |crs| {
+        try @import("crs_evidence.zig").decision(crs, w);
+    } else if (row.capture) |capture| {
         try html.render(w, "Local denial: status {{ v0 }} selected; no origin response. " ++
             "Delivery is not recorded.", .{ .v0 = capture.selected_status });
     } else try w.writeAll("Not recorded");
-    try html.render(w, "</dd><dt>Matched rule and score terms</dt><dd>Not recorded</dd>" ++
-        "<dt>JA4 fingerprint</dt><dd>Not recorded: requires bounded capture at a trusted " ++
+    try html.render(w, "</dd>", .{});
+    if (row.crs) |crs| {
+        try @import("crs_evidence.zig").render(crs, w);
+    } else try html.render(w, "<dt>Matched rule and score terms</dt><dd>Not recorded</dd>", .{});
+    try html.render(w, "<dt>JA4 fingerprint</dt><dd>Not recorded: " ++
+        "requires bounded capture at a trusted " ++
         "ingress that overwrites spoofed headers.</dd></dl>", .{});
     try evidence(row, w);
     try @import("incident_heads.zig").render(state, row.id, w);
-    try html.render(w, "<div class=\"flex flex-wrap gap-2 mt-3\">" ++
-        "<button class=\"btn\" data-action=\"events-similar-{{ v0 }}\">" ++
-        "Find similar incidents</button>", .{
-        .v0 = row.id,
-    });
+    try html.render(w, "<div class=\"flex flex-wrap gap-2 mt-3\">", .{});
+    if (row.crs == null) {
+        try html.render(w, "<button class=\"btn\" data-action=\"events-similar-{{ v0 }}\">" ++
+            "Find similar incidents</button>", .{ .v0 = row.id });
+    }
     if (manage) try addressActions(row, w);
     try w.writeAll("</div>");
     if (row.query_redacted) try html.render(
@@ -354,6 +360,11 @@ test "historical incident rendering escapes stored markup and names absent field
 }
 
 fn evidence(row: *const p.events.Row, w: *Writer) Writer.Error!void {
+    if (row.crs != null) {
+        return html.render(w, "<p class=\"sb-note mt-3\">Matched values, expanded messages, " ++
+            "tags and body contents are omitted. CRS findings have no payload similarity " ++
+            "grouping.</p>", .{});
+    }
     const capture = row.capture orelse {
         try html.render(
             w,

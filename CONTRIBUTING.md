@@ -25,6 +25,10 @@ streaming and WebSocket exclusions cannot bypass response-header denials.
 encoded uploads, response holdback, configured denial statuses, pipeline retention,
 forward-auth metadata, admission limits, absolute deadlines and early stream/tunnel release.
 Run it with the console enabled to verify exact response-refusal telemetry as well.
+`console-crs-evidence-test` drives deterministic storage ticks for atomic scalar findings,
+lost-reply retries, migration replay and authorized reads. `crs-daemon-check -- --download`
+also qualifies saved findings and redacted heads through authenticated console queries when
+the console is compiled in, including restart retention and sign-out revocation.
 `crs-start-test` checks startup option conflicts, observable profiles, resource bounds and
 the disabled lifecycle. The signed-artifact probe also exercises the startup owner's
 generation leases, forward-auth profile, exhaustion cleanup and joined-reader teardown.
