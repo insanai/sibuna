@@ -10,19 +10,6 @@
 //! especially), so the same code needs several times the optimised frame depth; the usable
 //! request is scaled in Debug so test binaries exercise the same paths without overflowing.
 //! The documented bound (256 KiB usable per service thread) is the optimised one.
-const std = @import("std");
-const builtin = @import("builtin");
-
-pub const debug_scale: usize = if (builtin.mode == .debug) 4 else 1;
-
-pub fn bytes(usable: usize) usize {
-    return usable * debug_scale + (std.options.signal_stack_size orelse 0);
-}
-
-test "a usable stack request grows by the thread-local signal stack" {
-    try std.testing.expect(bytes(256 * 1024) >= 256 * 1024);
-    try std.testing.expectEqual(
-        bytes(0),
-        @as(usize, @intCast(std.options.signal_stack_size orelse 0)),
-    );
-}
+const shared = @import("socket").stack;
+pub const debug_scale = shared.debug_scale;
+pub const bytes = shared.bytes;

@@ -2,6 +2,11 @@
 //! No application, policy or database dependencies belong in this module.
 const std = @import("std");
 pub const windows = @import("windows.zig");
+pub const stack = @import("stack.zig");
+
+test {
+    _ = stack;
+}
 
 /// Interrupt I/O without closing or reusing a handle. The owning worker still closes
 /// it; callers join that worker before releasing shared state. A normal Windows

@@ -22,6 +22,7 @@ pub const refusal = @import("refusal.zig");
 pub const duplex = @import("duplex.zig");
 pub const forwarded = @import("forwarded.zig");
 pub const interrupt = @import("socket").interrupt;
+pub const stack = @import("socket").stack;
 pub const socket_system = @import("socket_system.zig").system;
 
 pub const Method = http.Method;
