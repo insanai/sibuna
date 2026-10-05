@@ -1730,6 +1730,32 @@ The trust root is the pinned CRS signing fingerprint
 TLS and an asset digest alone do not establish independent upstream signature authenticity.
 The public key is not fetched and trusted afresh from the same download during every update.
 
+== Owned preparation diagnostics
+
+A failed source parse, reference resolution or executable compilation copies its source
+location before releasing the compiler arena. The diagnostic owns a UTF-8 path of at most
+256 bytes, a path-truncation flag, optional 32-bit line and resolved rule ID, and a bounded
+engine error identifier. Stable categories distinguish syntax, unsupported constructs,
+references, capacity and other compilation failures, each with an explanation and recovery
+hint. Locations not established before failure stay absent. No rule text, patterns, matched
+values, request data, SQL or internal traces enter this envelope.
+
+The native offline, filesystem-authorized and authenticated commands share the same
+contract. Schema 43 adds an optional 2 KiB diagnostic column to the bounded candidate
+ledger. Failure state, owned diagnostic and existing redacted audit record commit together;
+a failed audit leaves the candidate Preparing without a partial diagnostic. Historical rows
+without diagnostics remain absent. Authorized views validate and copy the complete record;
+HTML escapes its text. A failed candidate cannot be selected or change active protection.
+
+*Lemma (diagnostic lifetime).* A reported source location cannot borrow a released compiler
+arena or operator input buffer.
+
+*Proof.* The source compiler captures its site before its owning arena is released; the
+executable compiler captures a condition's site while the borrowed plan is still alive.
+Both copy bounded metadata into an inline owned record. Native reporting, storage messages
+and UI decoding retain that value, never its original slices. Teardown and input erasure
+therefore do not affect the reported location. $square$
+
 == Durable management ledger
 
 The storage owner alone handles the candidate ledger. A candidate has a random 128-bit

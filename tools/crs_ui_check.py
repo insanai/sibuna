@@ -97,13 +97,20 @@ def editor(ui, data_port):
     assert exchange(data_port, "/operator-test", HEADERS)[0] == 418
     action(ui, "crs-reload-editor")
     assert "id:100001" in ui.html
-    action(ui, "crs-check", {"version": "4.30.0", "configuration": "InvalidDirective\n"})
+    action(ui, "crs-check", {"version": "4.30.0", "configuration": "# location check\nInvalidDirective secret-value\n"})
     deadline = time.monotonic() + 120
     while snapshot(ui)["stage"] != "failed":
         assert time.monotonic() < deadline
         time.sleep(1)
         action(ui, "crs-refresh")
-    assert snapshot(ui)["revision"] == 5
+    observed = snapshot(ui)
+    assert observed["revision"] == 5
+    failed = next(row for row in observed["candidates"] if row and row["state"] == "failed")
+    diagnostic = failed["diagnostic"]
+    assert diagnostic["path"] == "sibuna-operator.conf" and diagnostic["line"] == 2, failed
+    assert "sibuna-operator.conf" in ui.html and "Line: 2" in ui.html
+    assert "CRSCOMPILE/" in ui.html and "Hint:" in ui.html
+    assert "secret-value" not in json.dumps(diagnostic)
     assert exchange(data_port, "/operator-test", HEADERS)[0] == 418
 
 

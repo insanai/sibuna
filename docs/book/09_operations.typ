@@ -89,7 +89,10 @@ application receipt. Off releases the CRS inspection pool while other protection
 Rollback restores the previous signed source, operator rules and settings as a new revision.
 Additional operator rules are limited to 64 KiB. Failed verification or exhausted bounds
 retain the previous protection. Unsaved editor text is erased when leaving the page or
-signing out; copy it before reloading a changed saved revision.
+signing out; copy it before reloading a changed saved revision. A failed compilation shows
+`CRSCOMPILE/<category>`, the source file and line, the rule ID when already resolved, and a
+recovery hint. Source text is not copied into the error. Native checks and both update
+commands report the same location; candidate failures remain available after a restart.
 
 Native commands use the same authenticated service. Keep administrator credentials in a
 private file; the CLI refuses insecure remote HTTP origins and credentials in arguments.

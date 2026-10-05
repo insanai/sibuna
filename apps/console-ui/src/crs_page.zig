@@ -111,7 +111,32 @@ fn candidates(snapshot: p.crs_api.Status, w: *W) W.Error!void {
         try w.writeAll("</td></tr>");
     }
     if (snapshot.count == 0) try w.writeAll("<tr><td colspan=\"5\">No candidates.</td></tr>");
-    try w.writeAll("</tbody></table></div></section>");
+    try w.writeAll("</tbody></table></div>");
+    // Diagnostics must wrap independently of the comparison table's scroll width.
+    for (snapshot.candidates[0..snapshot.count]) |row| {
+        if (row.?.diagnostic != null) try failure(w, row.?);
+    }
+    try w.writeAll("</section>");
+}
+
+fn failure(w: *W, candidate: p.crs_api.Candidate) W.Error!void {
+    const diagnostic = candidate.diagnostic.?;
+    try html.render(w, "<div class=\"sb-error mt-4\">" ++
+        "<p>Failed {{ kind }} candidate <code class=\"break-all\">{{ id }}</code></p>", .{
+        .kind = @tagName(candidate.kind),
+        .id = candidate.id.slice(),
+    });
+    try html.render(w, "<p><strong>CRSCOMPILE/{{ code }}</strong>: {{ explanation }} " ++
+        "({{ cause }})</p><p class=\"break-all\">Source: {{ path }}{{ truncated }}</p>", .{
+        .code = @tagName(diagnostic.code),
+        .explanation = diagnostic.explanation(),
+        .cause = diagnostic.cause.slice(),
+        .path = if (diagnostic.path.len == 0) "Not available" else diagnostic.path.slice(),
+        .truncated = if (diagnostic.path_truncated) " (truncated)" else "",
+    });
+    if (diagnostic.line) |line| try html.render(w, "<p>Line: {{ line }}</p>", .{ .line = line });
+    if (diagnostic.rule) |rule| try html.render(w, "<p>Rule: {{ rule }}</p>", .{ .rule = rule });
+    try html.render(w, "<p>Hint: {{ hint }}</p></div>", .{ .hint = diagnostic.hint() });
 }
 
 fn mode(snapshot: p.crs_api.Status, disabled: []const u8, w: *W) W.Error!void {
@@ -289,4 +314,33 @@ fn setting(comptime name: []const u8, value: Settings, buffer: *[20]u8) []const 
 fn receipt(node: p.crs_management.Node, revision: u64) []const u8 {
     if (!node.applied) return "Failed";
     return if (node.revision == revision) "Applied" else "Previous revision";
+}
+
+test "CRS diagnostics escape source metadata and wrap outside the scrolling table" {
+    const t = std.testing;
+    const state = try t.allocator.create(State);
+    defer t.allocator.destroy(state);
+    state.* = .{};
+    @import("crs_fixture.zig").configure(state, false, false);
+    const row = &state.crs.snapshot.?.candidates[0].?;
+    row.state = .failed;
+    row.artifact = null;
+    row.reason = .incompatible;
+    row.diagnostic = p.crs_management.Diagnostic.capture(
+        error.UnknownDirective,
+        "rules/<script>.conf",
+        2,
+        null,
+    );
+    var bytes: [32 * 1024]u8 = undefined;
+    var writer: W = .fixed(&bytes);
+    try render(state, &writer);
+    const rendered = writer.buffered();
+    const source = rendered[std.mem.indexOf(u8, rendered, "id=\"crs-candidates\"").?..];
+    const table_end = std.mem.indexOf(u8, source, "</tbody></table></div>").?;
+    const error_at = std.mem.indexOf(u8, source, "CRSCOMPILE/unsupported").?;
+    try t.expect(error_at > table_end);
+    try t.expect(std.mem.indexOf(u8, source, "Source: rules/&lt;script&gt;.conf") != null);
+    try t.expect(std.mem.indexOf(u8, source, "Line: 2") != null);
+    try t.expect(std.mem.indexOf(u8, source, "<script>") == null);
 }
