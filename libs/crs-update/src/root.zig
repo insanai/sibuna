@@ -6,6 +6,7 @@ const fetch = @import("net").fetch;
 const urls = crs.release_urls;
 const Io = std.Io;
 pub const artifact = @import("artifact.zig");
+pub const staging = @import("staging.zig");
 pub const Prepared = @import("prepared.zig").Prepared;
 pub const Error = fetch.Error || crs.release_package.Error || urls.Error ||
     std.json.ParseError(std.json.Scanner) || error{ InvalidClock, InvalidDownloadDeadline };

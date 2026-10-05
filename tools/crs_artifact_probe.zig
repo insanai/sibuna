@@ -56,12 +56,27 @@ fn run(init: std.process.Init, out: *Io.Writer) !u8 {
         .signature_bytes = signature.len,
         .configuration_bytes = configuration.len,
     });
-    try stage(init.io, directory, manifest, .{
-        .archive = archive,
-        .signature = signature,
-        .configuration = configuration,
-    });
-    try qualify(init, directory, manifest, now, configuration.len != 0);
+    var nonce: [8]u8 = undefined;
+    init.io.random(&nonce);
+    const name = std.fmt.bytesToHex(&nonce, .lower);
+    try directory.createDir(init.io, &name, .default_dir);
+    const staged = try directory.openDir(init.io, &name, .{ .follow_symlinks = false });
+    defer staged.close(init.io);
+    var source: updater.Prepared = .{
+        .allocator = init.gpa,
+        .archive = .{ .buffer = archive, .value = archive },
+        .signature = .{ .buffer = signature, .value = signature },
+        .configuration = .{ .buffer = configuration, .value = configuration },
+        .package = package,
+    };
+    const staging: updater.staging.Config = .{ .io = init.io, .directory = staged, .now = now };
+    try sourceRefusals(staging, manifest, &source);
+    try updater.staging.write(staging, manifest, &source);
+    try duplicateRefusal(staging, manifest, &source);
+    @memset(archive, '!');
+    @memset(signature, '!');
+    @memset(configuration, '!');
+    try qualify(init, staged, manifest, now, configuration.len != 0);
     try out.print("prepared {d} {d} {x} {d}\n", .{
         package.program.conditions.len, package.program.regex_states,
         &package.receipt.digest,        package.bounded.peak,
@@ -69,25 +84,55 @@ fn run(init: std.process.Init, out: *Io.Writer) !u8 {
     return 0;
 }
 
-const Source = struct { archive: []u8, signature: []u8, configuration: []u8 };
+fn sourceRefusals(
+    config: updater.staging.Config,
+    manifest: crs.artifact_manifest.Manifest,
+    source: *updater.Prepared,
+) !void {
+    const package = source.package;
+    source.package = null;
+    try expectStagingFailure(config, manifest, source, error.PreparedPackageTransferred);
+    source.package = package;
+    var changed = manifest;
+    changed.signature_bytes += 1;
+    try expectStagingFailure(config, changed, source, error.StagingSourceMismatch);
+    const last = source.archive.value.len - 1;
+    source.archive.buffer[last] ^= 1;
+    try expectStagingFailure(config, manifest, source, error.InvalidSignature);
+    source.archive.buffer[last] ^= 1;
+    if (source.configuration.value.len != 0) {
+        source.configuration.buffer[0] ^= 1;
+        try expectStagingFailure(config, manifest, source, error.StagingSourceMismatch);
+        source.configuration.buffer[0] ^= 1;
+    }
+    if (config.directory.statFile(config.io, "archive.tar.gz", .{})) |_| {
+        return error.InvalidSourceWasStaged;
+    } else |err| if (err != error.FileNotFound) return err;
+}
+
+fn expectStagingFailure(
+    config: updater.staging.Config,
+    manifest: crs.artifact_manifest.Manifest,
+    source: *const updater.Prepared,
+    expected: anyerror,
+) !void {
+    if (updater.staging.write(config, manifest, source)) {
+        return error.InvalidSourceWasAccepted;
+    } else |err| if (err != expected) return error.UnexpectedStagingRefusal;
+}
 
 fn read(init: std.process.Init, path: []const u8, limit: usize) ![]u8 {
     return Io.Dir.cwd().readFileAlloc(init.io, path, init.gpa, .limited(limit));
 }
 
-fn stage(
-    io: Io,
-    directory: Io.Dir,
+fn duplicateRefusal(
+    config: updater.staging.Config,
     manifest: crs.artifact_manifest.Manifest,
-    source: Source,
+    source: *const updater.Prepared,
 ) !void {
-    try directory.writeFile(io, .{ .sub_path = "archive.tar.gz", .data = source.archive });
-    try directory.writeFile(io, .{ .sub_path = "signature.asc", .data = source.signature });
-    try directory.writeFile(io, .{ .sub_path = "operator.conf", .data = source.configuration });
-    try writeManifest(io, directory, manifest);
-    @memset(source.archive, '!');
-    @memset(source.signature, '!');
-    @memset(source.configuration, '!');
+    if (updater.staging.write(config, manifest, source)) {
+        return error.StagingOverwroteExistingArtifact;
+    } else |err| if (err != error.PathAlreadyExists) return err;
 }
 
 fn writeManifest(io: Io, directory: Io.Dir, manifest: crs.artifact_manifest.Manifest) !void {

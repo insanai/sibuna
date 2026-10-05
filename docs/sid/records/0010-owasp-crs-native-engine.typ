@@ -1595,6 +1595,15 @@ transferring the package leaves source buffers owned for staging. The signed-art
 checks real disk reloads, altered identity/lengths, signature failure, missing files and prior
 candidate retention. It does not establish filesystem commit durability or daemon reload.
 
+Private staging rechecks the actual source buffers against the prepared identity and
+signature before writing. Each fixed file is created atomically without replacement,
+its contents are synchronized, and the manifest is written last. Source mutation,
+transferred package ownership and existing files cause refusal. A failure can leave
+private partial files for quota-bound reclamation; it never replaces an active artifact.
+The management store must separately synchronize directory metadata, authorize the
+expected revision and select the staged candidate. File-content synchronization is not
+reported as a durable committed revision or an applied runtime effect.
+
 *Lemma (manifest separation).* A decoded record cannot turn missing body observation or
 unverified source bytes into an executable generation. Fixed-length decoding establishes
 structure and capacities only. The composition layer supplies actual observation, and a

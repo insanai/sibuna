@@ -86,6 +86,8 @@ jobs:
           python tools/ingress_e2e.py "$BINARY"
           python tools/console_e2e.py "$BINARY"
           python tools/console_ui_live_test.py "$BINARY"
+      - name: Verify native signed artifact staging and reload
+        run: zig build crs-update-test crs-artifact-check -j2 --summary all -- --download
       - name: Package binaries, licenses and source manifest
         env:
           BINARY: ${{ runner.os == 'Windows' && 'zig-out/bin/sibuna.exe' || 'zig-out/bin/sibuna' }}
