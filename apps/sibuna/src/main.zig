@@ -61,7 +61,7 @@ pub fn main(init: std.process.Init) !u8 {
 
     // Publish the stable owner before any worker can read it. Storage must join
     // before its destruction, after console and data-plane readers stop.
-    const protection = crs_start.Runtime.start(gpa, io, settings.crs, observation(cfg)) catch |err|
+    const protection = startProtection(gpa, io, settings, cfg) catch |err|
         return invalidCrs(err);
     defer if (protection) |running| running.stop();
     if (protection) |running| state.crs = &running.publisher;
@@ -76,7 +76,13 @@ pub fn main(init: std.process.Init) !u8 {
     defer if (persistent) |p| if (!p.shutdown()) abandonedStorageExit();
 
     const runtime = if (build_options.console and parsed.config.enabled)
-        try console_start.Runtime.start(gpa, io, parsed.config, persistent.?)
+        try console_start.Runtime.start(
+            gpa,
+            io,
+            parsed.config,
+            persistent.?,
+            try console_start.crsSeed(protection, settings.crs),
+        )
     else
         null;
     defer if (build_options.console) {
@@ -86,6 +92,19 @@ pub fn main(init: std.process.Init) !u8 {
     printBanner(cfg, persistent != null);
 
     return runListener(io, cfg, state);
+}
+
+fn startProtection(
+    gpa: std.mem.Allocator,
+    io: std.Io,
+    settings: Settings,
+    config: core.Config,
+) !?*crs_start.Runtime {
+    if (try crs_start.Runtime.start(gpa, io, settings.crs, observation(config))) |runtime|
+        return runtime;
+    if (build_options.console and settings.console.config.enabled)
+        return crs_start.Runtime.empty(gpa);
+    return null;
 }
 
 const Settings = struct {

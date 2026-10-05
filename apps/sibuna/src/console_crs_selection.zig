@@ -48,11 +48,17 @@ pub fn select(owner: *Persistent, input: m.Select) !p.StorageResult {
 }
 
 pub fn applied(owner: *Persistent, input: m.Applied) !p.StorageResult {
-    if (input.applied) {
-        const publisher = owner.state.crs orelse return .{ .failed = .conflict };
-        const snapshot = publisher.snapshot() catch return .{ .failed = .conflict };
-        if (snapshot.revision != input.revision) return .{ .failed = .conflict };
+    const selected = (try reads.selected(owner)).crs_selection;
+    const job = selected.current orelse return .{ .failed = .conflict };
+    if (selected.revision != input.revision) return .{ .failed = .conflict };
+    const manifest = try @import("crs").artifact_manifest.decode(job.manifest.slice());
+    var matches = false;
+    if (owner.state.crs) |publisher| {
+        if (publisher.snapshot()) |snapshot| {
+            matches = manifest.matchesCurrent(snapshot);
+        } else |err| if (err != error.NoGeneration) return .{ .failed = .unavailable };
     }
+    if (input.applied != matches) return .{ .failed = .conflict };
     const boot = std.fmt.bytesToHex(owner.console_node.boot, .lower);
     _ = try db.exec(
         owner.db,

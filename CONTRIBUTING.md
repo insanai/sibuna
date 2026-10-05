@@ -31,6 +31,9 @@ checks the storage-owned candidate ledger, source chunk ownership, expected-revi
 audit rollback, bounded staging, authorization at execution, rollback and boot-fenced receipts. `crs-daemon-check -- --download`
 also qualifies saved findings and redacted heads through authenticated console queries when
 the console is compiled in, including restart retention and sign-out revocation.
+`python3 tools/crs_restart_check.py <binary> --candidate <directory>` qualifies signed-source
+adoption, durable restoration without the original path, refusal of conflicting startup
+settings and clean management-worker shutdown.
 `crs-start-test` checks startup option conflicts, observable profiles, resource bounds and
 the disabled lifecycle. The signed-artifact probe also exercises the startup owner's
 generation leases, forward-auth profile, exhaustion cleanup and joined-reader teardown.

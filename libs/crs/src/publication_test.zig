@@ -94,8 +94,10 @@ test "leased transaction keeps its operator tuning after a concurrent publicatio
 test "publication retains leased generations and bounds outstanding replacement" {
     var publisher: publications.Publisher = .{};
     defer shutdown(&publisher);
+    try std.testing.expect(!publisher.enabled.load(.acquire));
     try std.testing.expectError(error.NoGeneration, publisher.lease());
     try publisher.publish(try generation(1));
+    try std.testing.expect(publisher.enabled.load(.acquire));
     var old = try publisher.lease();
     try publisher.publish(try generation(2));
     const next = try generation(3);
@@ -147,9 +149,11 @@ test "disabled publication reserves no pool and shutdown retains acquired work" 
     }));
     try std.testing.expectError(error.DisabledGeneration, publisher.lease());
     try std.testing.expectEqual(@as(usize, 0), (try publisher.snapshot()).reservation);
+    try std.testing.expect(!publisher.enabled.load(.acquire));
     try publisher.publish(try generation(2));
     var lease = try publisher.lease();
     try publisher.close();
+    try std.testing.expect(!publisher.enabled.load(.acquire));
     try std.testing.expectError(error.PublicationClosed, publisher.lease());
     try std.testing.expectError(error.PublicationClosed, publisher.snapshot());
     const refused = try generation(3);

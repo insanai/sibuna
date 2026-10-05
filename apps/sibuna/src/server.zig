@@ -369,7 +369,13 @@ fn serveOne(c: *Connection) !bool {
 
     // Reclaim a preceding pipelined request before borrowing this head. Pinning
     // an arbitrary consumed prefix could otherwise leave no framing workspace.
-    if (c.state.crs != null) try c.reader.rebase(c.reader.buffer.len);
+    // Use one activation observation for framing and dispatch. A selection may
+    // change while parsing; newly enabled protection begins with the next head.
+    const crs_enabled = if (c.state.crs) |publisher|
+        publisher.enabled.load(.acquire)
+    else
+        false;
+    if (crs_enabled) try c.reader.rebase(c.reader.buffer.len);
     var req = net.parseRequest(c.reader.buffered()[0..head_len]) catch |err| {
         Metrics.bump(&c.state.metrics.parse_errors);
         if (err == error.UnsupportedTransferEncoding) {
@@ -379,7 +385,8 @@ fn serveOne(c: *Connection) !bool {
         return false;
     };
     if (c.state.crs) |publisher| {
-        if (!std.mem.startsWith(u8, req.path, "/__sibuna/"))
+        if (crs_enabled and
+            !std.mem.startsWith(u8, req.path, "/__sibuna/"))
             return @import("server_crs.zig").serve(c, &req, head_len, publisher);
     }
     return serveBuffered(c, &req, head_len);

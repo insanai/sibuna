@@ -40,6 +40,7 @@ pub const App = struct {
     /// The composing storage owner outlives every console task and incident flush.
     geo: *@import("geoip_generation.zig").Registry,
     geo_job: @import("geoip_job.zig").Job = .{},
+    crs_job: @import("crs_job.zig").Job = .{},
     geo_maintenance: @import("geoip_maintenance.zig").Maintenance = .{},
     cluster: @import("cluster_probe.zig").Probe = .{},
     notifier: @import("notifier_job.zig").Job = .{},
@@ -62,6 +63,7 @@ pub const App = struct {
         totp_key: ?[32]u8,
         peer_key: ?[32]u8 = null,
         boot: [16]u8,
+        crs: @import("crs_job.zig").Seed = .{},
         /// The data plane's dynamic ban table; its snapshot count is a console-tick gauge.
         bans: ?*store.BanList = null,
     };
@@ -113,11 +115,11 @@ pub const App = struct {
                 .{ if (ipv6) "[" else "", host, if (ipv6) "]" else "", cfg.port },
             ));
         }
-        try self.startServices(boot);
+        try self.startServices(boot, input.crs);
         return self;
     }
 
-    fn startServices(self: *App, boot: [16]u8) !void {
+    fn startServices(self: *App, boot: [16]u8, seed: @import("crs_job.zig").Seed) !void {
         const cfg = self.config;
         const io = self.io;
         const incidents = self.incidents;
@@ -133,6 +135,8 @@ pub const App = struct {
         self.challenge_records.boot = self.history.boot;
         self.retention.holder = .{ .node = cfg.node_id, .boot = self.history.boot };
         try self.geo_job.restore();
+        try self.crs_job.start(self, seed);
+        errdefer self.crs_job.stop();
         self.stats.boot = self.history.boot;
         self.stats.node = cfg.node_id;
         self.stats.proxy_mode = cfg.proxy_mode;
@@ -171,6 +175,7 @@ pub const App = struct {
         self.subscriptions.stop();
         self.cluster.stop();
         self.notifier.stop();
+        self.crs_job.stop();
         self.geo_job.stop();
         if (self.collector) |thread| thread.join();
         self.geo_maintenance.stop(self.io, self.mailbox);

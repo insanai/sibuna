@@ -64,6 +64,9 @@ pub const Publisher = struct {
     active: std.atomic.Value(u8) = .init(absent),
     closed: std.atomic.Value(bool) = .init(false),
     writer: std.atomic.Value(bool) = .init(false),
+    /// A disabled fast path borrows no cell. Publication stores this after the
+    /// active index; a reader that observes true still obtains a normal lease.
+    enabled: std.atomic.Value(bool) = .init(false),
 
     /// Success transfers candidate ownership. Every failure leaves it owned by
     /// the caller and keeps the active generation intact. Expected-revision CAS
@@ -87,6 +90,7 @@ pub const Publisher = struct {
         }
         target.generation = candidate;
         self.active.store(next, .seq_cst);
+        self.enabled.store(candidate.options.activation.mode != .off, .release);
         if (current != absent) self.cells[current].generation.?.retire();
     }
 
@@ -125,6 +129,7 @@ pub const Publisher = struct {
             return error.PublicationBusy;
         defer self.writer.store(false, .release);
         self.closed.store(true, .release);
+        self.enabled.store(false, .release);
         self.active.store(absent, .seq_cst);
         for (&self.cells) |*cell| if (cell.generation) |generation| generation.retire();
     }

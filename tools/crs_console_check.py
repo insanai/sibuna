@@ -131,15 +131,16 @@ def stop_while_reading(process, port, cookie):
 
 
 def qualify(binary, source, root):
-    credentials = bootstrap.initialize(str(binary), str(root / "console-data"), "crs-admin")
     port = helper.port()
     audit_ids = set()
     for mode in ("audit", "enforce"):
+        mode_root = root / mode
+        mode_root.mkdir()
+        credentials = bootstrap.initialize(str(binary), str(mode_root / "console-data"), "crs-admin")
         with (root / f"console-{mode}.log").open("w+") as logfile:
-            owned, process, application = start(binary, source, root, port, mode, logfile)
+            owned, process, application = start(binary, source, mode_root, port, mode, logfile)
             with owned:
-                if mode == "audit":
-                    bootstrap.change(helper, port, credentials, PASSWORD)
+                bootstrap.change(helper, port, credentials, PASSWORD)
                 cookie, csrf = login(port)
                 data_port = int(process.args[process.args.index("--port") + 1])
                 status, _, body = exchange(data_port, ATTACK, HEADERS)
@@ -169,10 +170,6 @@ def qualify(binary, source, root):
                         "captured" if mode == "audit" else "local"), captured
                 if mode == "audit":
                     audit_ids = {row["id"] for row in rows}
-                else:
-                    retained = findings(port, cookie, csrf, "audit:crs")
-                    saved_audit = {row["id"] for row in retained if not row["crs"]["enforcing"]}
-                    assert audit_ids == saved_audit, retained
                 if mode == "enforce":
                     stop_while_reading(process, port, cookie)
                     continue
@@ -180,6 +177,22 @@ def qualify(binary, source, root):
                                       cookie, csrf)[0] == 200
                 assert helper.request(port, "POST", "/console/api/events/query", {},
                                       cookie, csrf)[0] == 401
-    tuned(binary, source, root, port)
+    # The saved selection remains authoritative across restarts. A mode change
+    # requires a reviewed management revision, rather than new startup flags.
+    with (root / "console-retained.log").open("w+") as logfile:
+        owned, _, _ = start(binary, source, root / "audit", port, "audit", logfile)
+        with owned:
+            cookie, csrf = login(port)
+            retained = findings(port, cookie, csrf, "audit:crs")
+            assert audit_ids == {row["id"] for row in retained}, retained
+    tuned_root = root / "tuned"
+    tuned_root.mkdir()
+    credentials = bootstrap.initialize(str(binary), str(tuned_root / "console-data"), "crs-admin")
+    with (root / "console-tuned-bootstrap.log").open("w+") as logfile:
+        owned, _, _ = start(binary, source, tuned_root, port, "enforce", logfile,
+                            ("--crs-inbound-threshold", "9", "--crs-outbound-threshold", "8"))
+        with owned:
+            bootstrap.change(helper, port, credentials, PASSWORD)
+    tuned(binary, source, tuned_root, port)
     print("Signed CRS audit/denial evidence, threshold tuning, local status, "
           "secret omission, restart and revocation pass.")

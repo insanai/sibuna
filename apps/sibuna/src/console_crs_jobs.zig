@@ -23,6 +23,13 @@ pub fn execute(owner: *Persistent, input: m.Request) !p.StorageResult {
         .select => |value| @import("console_crs_selection.zig").select(owner, value),
         .discard => |value| discard(owner, value),
         .selected => reads.selected(owner),
+        .maintenance => blk: {
+            try prune(owner, owner.nowSeconds());
+            break :blk .command_recorded;
+        },
+        .startup_begin, .startup_chunk, .startup_commit => {
+            return @import("console_crs_startup.zig").execute(owner, input);
+        },
         .source => |value| reads.source(owner, value),
         .failed => |value| failed(owner, value),
         .applied => |value| @import("console_crs_selection.zig").applied(owner, value),
@@ -90,57 +97,12 @@ pub fn begin(owner: *Persistent, input: m.Begin) !p.StorageResult {
 }
 
 pub fn chunk(owner: *Persistent, input: m.Chunk) !p.StorageResult {
-    if (try access.mutation(owner, input.auth) == null) return .{ .failed = .forbidden };
-    const credentials = access.Credentials.init(input.auth, owner.nowSeconds());
-    var encoded: [m.chunk_bytes * 2]u8 = undefined;
-    defer std.crypto.secureZero(u8, &encoded);
-    var writer: std.Io.Writer = .fixed(&encoded);
-    try writer.print("{x}", .{input.bytes.slice()});
-    const file = @tagName(input.file);
-    const changed = try db.exec(
-        owner.db,
-        owner.gpa,
-        access.sql ++
-            "INSERT INTO console_crs_chunks(job,file,ordinal,bytes) SELECT ?,?,?,? FROM a " ++
-            "WHERE EXISTS(SELECT 1 FROM console_crs_jobs WHERE id=? AND actor=a.id " ++
-            "AND state='preparing' AND clone IS NULL AND expires>?) " ++
-            "AND (SELECT COUNT(*) FROM console_crs_chunks WHERE job=? AND file=?)=? " ++
-            "AND NOT EXISTS(SELECT 1 FROM console_crs_chunks WHERE job=? AND file=? " ++
-            "AND length(bytes)!=4096) ON CONFLICT DO NOTHING",
-        &(credentials.values() ++ [_]zx.Value{
-            util.text(input.id.slice()),
-            util.text(file),
-            util.integer(input.ordinal),
-            util.text(writer.buffered()),
-            util.text(input.id.slice()),
-            util.integer(credentials.now),
-            util.text(input.id.slice()),
-            util.text(file),
-            util.integer(input.ordinal),
-            util.text(input.id.slice()),
-            util.text(file),
-        }),
-    );
-    if (changed != 0) return .command_recorded;
-    var repeated = try db.query(
-        owner.db,
-        owner.gpa,
-        access.sql ++
-            "SELECT c.bytes FROM console_crs_chunks c JOIN console_crs_jobs j ON j.id=c.job " ++
-            "WHERE c.job=? AND c.file=? AND c.ordinal=? AND c.bytes=? AND " ++
-            "j.actor=(SELECT id FROM a) " ++
-            "AND j.state='preparing' AND j.expires>? LIMIT 1",
-        &(credentials.values() ++ [_]zx.Value{
-            util.text(input.id.slice()),
-            util.text(file),
-            util.integer(input.ordinal),
-            util.text(writer.buffered()),
-            util.integer(credentials.now),
-        }),
-    );
-    defer repeated.deinit();
-    if (repeated.rows.len == 1) return .command_recorded;
-    return mutationFailure(owner, input.auth);
+    return @import("console_crs_chunks.zig").append(owner, .{ .admin = input.auth }, .{
+        .id = input.id,
+        .file = input.file,
+        .ordinal = input.ordinal,
+        .bytes = input.bytes,
+    });
 }
 
 pub fn verify(owner: *Persistent, input: m.Verify) !p.StorageResult {
@@ -182,7 +144,7 @@ pub fn verify(owner: *Persistent, input: m.Verify) !p.StorageResult {
     return mutationFailure(owner, input.auth);
 }
 
-fn complete(
+pub fn complete(
     owner: *Persistent,
     id: m.Id,
     manifest: @import("crs").artifact_manifest.Manifest,
@@ -239,7 +201,7 @@ pub fn failed(owner: *Persistent, input: m.Failed) !p.StorageResult {
     return .{ .crs_job = try reads.load(owner, input.id) };
 }
 
-fn prune(owner: *Persistent, now: u64) !void {
+pub fn prune(owner: *Persistent, now: u64) !void {
     _ = try db.exec(
         owner.db,
         owner.gpa,

@@ -1719,6 +1719,31 @@ A successful receipt requires that revision to be currently published by the rep
 repeated receipts do not duplicate audit. A new boot must establish its own application result.
 Missing or failed receipts are pending or failed coverage, never successful protection.
 
+The daemon composes one stable publisher and one joined management worker. A console with
+no selected rules allocates neither a generation nor a transaction pool. Off checks an atomic
+activation flag once per request, before framing and dispatch, and follows the ordinary
+buffered path. Publication can change between requests without allocating on that path.
+The management worker has a 1 MiB stack, owns preparation inputs, and releases or transfers
+each compiled package explicitly. Its shutdown joins before storage and publisher destruction.
+Source transfers and bounded TLS downloads observe cancellation; borrowed caller memory never
+outlives a disconnected caller. A failed preparation leaves the existing generation usable.
+
+On the first console startup, a generation authenticated from the operator's filesystem may
+be adopted into an empty ledger before listeners open. The native service verifies its signed
+source again and binds the manifest to the actual published identity and configuration.
+Adoption records filesystem authority as actor zero; it cannot replace an existing selection.
+Later starts restore the saved source without relying on the original directory. Explicit
+startup mode, profile, paranoia, threshold and resource options must agree with that selection;
+conflicting process input is refused rather than silently overriding reviewed desired state.
+
+Each node checks desired state once per second and re-authenticates retained source before
+compilation and publication. It checks the desired revision again before publishing. A busy
+publisher, exhausted reservation or unavailable storage retains the prior generation and
+retries with exponential delays bounded at sixty seconds. Receipts compare signed identity,
+operator digest, activation and resource settings with the local publication. A lost database
+reply after publication retries a successful receipt; it does not report a failed runtime
+effect. Candidate expiry and bounded tombstone pruning run once per minute off the request path.
+
 == Native detached signature profile
 
 The initial portable verifier accepts one definite-length OpenPGP version-4 binary-document

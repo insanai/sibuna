@@ -118,6 +118,40 @@ fn manifest(previous: u64) m.Manifest {
     return m.Manifest.init(value.encode(&bytes) catch unreachable) catch unreachable;
 }
 
+fn nativePackage(source: crs.artifact_manifest.Manifest) !*crs.release_package.Package {
+    const package = try t.allocator.create(crs.release_package.Package);
+    errdefer t.allocator.destroy(package);
+    package.* = .{
+        .allocator = t.allocator,
+        .bounded = .{ .parent = t.allocator, .limit = crs.release_package.compiled_capacity },
+        .program = undefined,
+        .receipt = .{
+            .digest = source.archive_digest,
+            .created = source.signed_at,
+            .archive_bytes = source.archive_bytes,
+        },
+        .operator_digest = source.operator_digest,
+        .version = source.version,
+    };
+    var compiler = crs.compiler.Compiler.init(t.allocator, .{});
+    defer compiler.deinit();
+    try compiler.addSource("test.conf", "SecAction \"id:1,setvar:tx.example=1\"");
+    var plan = try compiler.finish();
+    defer plan.deinit();
+    package.program = try crs.rule_program.compile(package.bounded.allocator(), &plan, &.{}, .{});
+    return package;
+}
+
+fn nativeGeneration(source: crs.artifact_manifest.Manifest) !*crs.generation.Generation {
+    const prepared = try nativePackage(source);
+    errdefer prepared.deinit();
+    return crs.generation.Generation.create(
+        t.allocator,
+        prepared,
+        try source.options(.request_response),
+    );
+}
+
 test "CRS management selects atomically and survives lost replies and migration replay" {
     var fx = try Fixture.open();
     defer fx.close();
@@ -288,11 +322,7 @@ test "CRS management applied receipts require real publication and remain boot f
         publisher.deinit();
     }
     const selected = try crs.artifact_manifest.decode(manifest(0).slice());
-    const generation = try crs.generation.Generation.create(
-        t.allocator,
-        null,
-        try selected.options(.request_response),
-    );
+    const generation = try nativeGeneration(selected);
     try publisher.publish(generation);
     fx.storage.state.crs = &publisher;
     _ = try fx.run(.{ .applied = .{ .revision = 1, .applied = true } });
@@ -324,6 +354,69 @@ test "CRS management applied receipts require real publication and remain boot f
             .applied = true,
         } })).failed,
     );
+}
+
+test "CRS management adopts filesystem startup only while the durable selection is empty" {
+    var fx = try Fixture.open();
+    defer fx.close();
+    const input: m.Startup = .{ .id = id(1), .manifest = manifest(0) };
+    try t.expectEqual(p.Failure.conflict, (try fx.run(.{ .startup_begin = input })).failed);
+    var publisher: crs.publication.Publisher = .{};
+    defer {
+        fx.storage.state.crs = null;
+        publisher.close() catch unreachable;
+        publisher.deinit();
+    }
+    const selected = try crs.artifact_manifest.decode(manifest(0).slice());
+    try publisher.publish(try nativeGeneration(selected));
+    fx.storage.state.crs = &publisher;
+    _ = try fx.run(.{ .startup_begin = input });
+    try t.expectEqual(p.Failure.conflict, (try fx.run(.{ .startup_commit = id(1) })).failed);
+    const source: m.SourceWrite = .{
+        .id = id(1),
+        .file = .archive,
+        .ordinal = 0,
+        .bytes = try p.Bytes(m.chunk_bytes).init("abc"),
+    };
+    _ = try fx.run(.{ .startup_chunk = source });
+    _ = try fx.run(.{ .startup_chunk = source });
+    try t.expectEqual(p.Failure.conflict, (try fx.run(.{ .chunk = .{
+        .auth = auth,
+        .id = id(1),
+        .file = .signature,
+        .ordinal = 0,
+        .bytes = try p.Bytes(m.chunk_bytes).init("de"),
+    } })).failed);
+    _ = try fx.run(.{ .startup_chunk = .{
+        .id = id(1),
+        .file = .signature,
+        .ordinal = 0,
+        .bytes = try p.Bytes(m.chunk_bytes).init("de"),
+    } });
+    _ = try fx.run(.{ .startup_commit = id(1) });
+    const result = (try fx.run(.{ .startup_commit = id(1) })).crs_selection;
+    try t.expectEqual(@as(u64, 1), result.revision);
+    try t.expectEqualDeep(id(1), result.current.?.id);
+    try t.expectEqual(@as(u64, 1), try fx.count(
+        "SELECT COUNT(*) FROM console_audit WHERE action='crs.select' AND actor=0",
+    ));
+    _ = try fx.run(.{ .applied = .{ .revision = 1, .applied = true } });
+    try t.expectEqual(p.Failure.conflict, (try fx.run(.{ .applied = .{
+        .revision = 1,
+        .applied = false,
+        .reason = .storage,
+    } })).failed);
+    try t.expectEqual(p.Failure.conflict, (try fx.run(.{ .startup_begin = .{
+        .id = id(2),
+        .manifest = manifest(0),
+    } })).failed);
+    try t.expectEqual(p.Failure.conflict, (try fx.run(.{ .startup_chunk = source })).failed);
+    try fx.prepare(2, 1, id(1));
+    _ = try fx.select(2, 1);
+    try t.expectEqual(p.Failure.conflict, (try fx.run(.{ .applied = .{
+        .revision = 2,
+        .applied = true,
+    } })).failed);
 }
 
 test "CRS management bounds stale operations factors and observable profiles" {

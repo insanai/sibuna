@@ -141,6 +141,30 @@ fn endpoint(config: *console.ConsoleConfig, value: []const u8) !void {
     config.port = std.fmt.parseInt(u16, value[colon + 1 ..], 10) catch return error.InvalidAddress;
 }
 
+pub fn crsSeed(
+    runtime: ?*@import("crs_start.zig").Runtime,
+    config: @import("crs_start.zig").options.Config,
+) !console.crs_job.Seed {
+    const owner = runtime orelse return .{};
+    return .{
+        .publisher = &owner.publisher,
+        .initial = owner.source,
+        .directory = try console.protocol.Bytes(1024).init(config.directory orelse ""),
+        .overrides = .{
+            .mode = config.choice.explicit,
+            .profile = config.profile,
+            .blocking_paranoia = config.blocking,
+            .detection_paranoia = config.detection,
+            .inbound = config.inbound,
+            .outbound = config.outbound,
+            .request = config.request,
+            .response = config.response,
+            .work = config.work,
+            .slots = config.slots,
+        },
+    };
+}
+
 pub const Runtime = struct {
     app: *console.App,
     kernel: *console.Kernel,
@@ -150,6 +174,7 @@ pub const Runtime = struct {
         io: std.Io,
         config: console.ConsoleConfig,
         owner: *Persistent,
+        seed: console.crs_job.Seed,
     ) !Runtime {
         try config.validate(true);
         if (config.behind_proxy and config.key_file.len == 0) return error.ConsoleKeyRequired;
@@ -177,6 +202,7 @@ pub const Runtime = struct {
             .totp_key = key,
             .peer_key = peer_key,
             .boot = owner.console_node.boot,
+            .crs = seed,
         });
         errdefer app.deinit();
         const spec = owner.state.coordinator.default_spec;

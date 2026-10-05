@@ -9,6 +9,7 @@ pub const inventory = @import("inventory.zig");
 pub const syntax = @import("syntax.zig");
 pub const selectors = @import("selectors.zig");
 pub const collections = @import("collections.zig");
+pub const http_policy = @import("http_policy.zig");
 pub const config = @import("config.zig");
 pub const transforms = @import("transforms.zig");
 pub const substring = @import("substring.zig");
@@ -76,6 +77,7 @@ test {
     _ = inventory;
     _ = selectors;
     _ = config;
+    _ = http_policy;
     _ = transforms;
     _ = substring;
     _ = primitives;

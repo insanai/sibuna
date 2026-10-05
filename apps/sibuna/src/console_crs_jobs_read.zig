@@ -108,7 +108,8 @@ pub fn source(owner: *Persistent, input: m.Source) !p.StorageResult {
         owner.gpa,
         "SELECT c.bytes FROM console_crs_chunks c JOIN console_crs_jobs j ON j.id=c.job " ++
             "WHERE c.job=? AND c.file=? AND c.ordinal=? " ++
-            "AND j.state IN ('verified','selected') LIMIT 1",
+            "AND (j.state IN ('verified','selected') OR " ++
+            "(j.state='preparing' AND j.clone IS NOT NULL)) LIMIT 1",
         &.{
             util.text(input.id.slice()),
             util.text(@tagName(input.file)),

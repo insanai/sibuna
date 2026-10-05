@@ -10,6 +10,7 @@ pub const preparation_seconds = 300;
 pub const review_seconds = 86400;
 pub const Kind = enum { check, update, mode, rollback };
 pub const State = enum { preparing, verified, selected, failed, canceled, retired };
+pub const Stage = enum(u8) { idle, preparing, storing, verified, failed };
 pub const Reason = enum {
     none,
     canceled,
@@ -21,6 +22,34 @@ pub const Reason = enum {
     storage,
 };
 pub const File = enum { archive, signature, configuration };
+pub const Settings = struct {
+    mode: p.crs.Mode = .audit,
+    profile: p.crs.Profile = .full,
+    blocking_paranoia: u8 = 1,
+    detection_paranoia: u8 = 1,
+    inbound_threshold: u16 = 5,
+    outbound_threshold: u16 = 4,
+    request_bytes: u32 = 4 * 1024 * 1024,
+    response_bytes: u32 = 1024 * 1024,
+    work_budget: u64 = 16_000_000,
+    slots: u8 = 8,
+    reservation: u64 = 1024 * 1024 * 1024,
+
+    pub fn jsonStringify(self: Settings, w: *std.json.Stringify) std.json.Stringify.Error!void {
+        return @import("json_counters.zig").object(self, w);
+    }
+
+    pub fn validate(self: Settings) error{InvalidLimit}!void {
+        if (self.blocking_paranoia < 1 or self.blocking_paranoia > 4 or
+            self.detection_paranoia < self.blocking_paranoia or self.detection_paranoia > 4 or
+            self.inbound_threshold == 0 or self.outbound_threshold == 0 or
+            self.request_bytes == 0 or self.request_bytes > 64 * 1024 * 1024 or
+            self.response_bytes == 0 or self.response_bytes > 64 * 1024 * 1024 or
+            self.work_budget == 0 or self.work_budget > 1_000_000_000 or
+            self.slots == 0 or self.slots > 31 or self.reservation == 0 or
+            self.reservation > std.math.maxInt(u32)) return error.InvalidLimit;
+    }
+};
 pub const Job = struct {
     id: Id,
     kind: Kind,
@@ -54,6 +83,13 @@ pub const Begin = struct {
     clone: ?Id = null,
 };
 pub const Read = struct { auth: p.users.Auth, id: Id };
+pub const SourceWrite = struct {
+    id: Id,
+    file: File,
+    ordinal: u32,
+    bytes: p.Bytes(chunk_bytes),
+};
+pub const Startup = struct { id: Id, manifest: Manifest };
 pub const Chunk = struct {
     auth: p.users.Auth,
     id: Id,
@@ -77,6 +113,10 @@ pub const Node = struct {
     applied: bool = false,
     reason: Reason = .none,
     observed_at: u64 = 0,
+
+    pub fn jsonStringify(self: Node, w: *std.json.Stringify) std.json.Stringify.Error!void {
+        return @import("json_counters.zig").object(self, w);
+    }
 };
 pub const Nodes = struct {
     rows: [p.nodes.max_members]Node = @splat(.{}),
@@ -93,6 +133,10 @@ pub const Request = union(enum) {
     discard: Read,
     // These are daemon service operations, never decoded from an HTTP body.
     selected,
+    maintenance,
+    startup_begin: Startup,
+    startup_chunk: SourceWrite,
+    startup_commit: Id,
     source: Source,
     failed: Failed,
     applied: Applied,
@@ -127,14 +171,16 @@ pub fn validate(request: Request) error{InvalidLimit}!void {
             if ((input.kind == .mode or input.kind == .rollback) != (input.clone != null))
                 return error.InvalidLimit;
         },
-        .chunk => |input| {
+        inline .chunk, .startup_chunk => |input| {
             if (!validId(input.id) or input.bytes.len == 0 or input.bytes.len > chunk_bytes or
                 input.ordinal >= fileLimit(input.file) / chunk_bytes) return error.InvalidLimit;
         },
-        .verify => |input| if (!validId(input.id) or input.manifest.len == 0 or
+        inline .verify, .startup_begin => |input| if (!validId(input.id) or
+            input.manifest.len == 0 or
             input.manifest.len > Manifest.byte_capacity) return error.InvalidLimit,
         .select => |input| if (!validId(input.id) or
             input.expected_revision >= std.math.maxInt(i64)) return error.InvalidLimit,
+        .startup_commit => |id| if (!validId(id)) return error.InvalidLimit,
         .job, .discard => |input| if (!validId(input.id)) return error.InvalidLimit,
         .source => |input| if (!validId(input.id) or
             input.ordinal >= fileLimit(input.file) / chunk_bytes) return error.InvalidLimit,

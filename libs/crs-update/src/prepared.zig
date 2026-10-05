@@ -22,6 +22,7 @@ pub const Prepared = struct {
 
     pub fn deinit(self: *Prepared) void {
         if (self.package) |package| package.deinit();
+        std.crypto.secureZero(u8, self.configuration.buffer);
         self.allocator.free(self.configuration.buffer);
         self.allocator.free(self.signature.buffer);
         self.allocator.free(self.archive.buffer);

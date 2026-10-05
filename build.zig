@@ -96,6 +96,7 @@ fn wireConsole(console: *std.Build.Module, modules: Modules) void {
     console.addImport("store", modules.store);
     console.addImport("net", modules.net);
     console.addImport("crs-update", modules.crs_update);
+    console.addImport("crs", modules.crs);
     // Template previews use the same validator as the storage owner.
     console.addImport("policy", modules.policy);
 }

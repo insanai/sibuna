@@ -130,6 +130,25 @@ pub const Manifest = struct {
             return error.ManifestPackageMismatch;
     }
 
+    /// A copied runtime observation can confirm application of this selection.
+    /// Architecture-specific compilation peaks do not define signed identity.
+    pub fn matchesCurrent(self: Manifest, current: @import("publication.zig").Snapshot) bool {
+        if (current.revision != self.revision or
+            !std.meta.eql(current.activation, self.activation) or
+            !std.meta.eql(current.thresholds, self.thresholds)) return false;
+        const digest = current.digest orelse return false;
+        const configuration = current.operator_digest orelse return false;
+        const version = current.version orelse return false;
+        if (!std.mem.eql(u8, &digest, &self.archive_digest) or
+            !std.mem.eql(u8, &configuration, &self.operator_digest) or
+            !std.meta.eql(version, self.version) or
+            current.request_bytes != self.limits.request or
+            current.response_bytes != self.limits.response or
+            current.work_budget != self.limits.work) return false;
+        if (self.activation.mode == .off) return current.reservation == 0 and current.slots == 0;
+        return current.slots == self.slots and current.reservation <= self.reservation;
+    }
+
     /// Fixed big-endian widths avoid host padding, enum layout and usize changes.
     /// A caller-owned cursor also makes truncation and trailing-byte refusal exact.
     pub fn encode(self: Manifest, output: []u8) Error![]const u8 {

@@ -63,3 +63,5 @@ test {
 pub const RetentionJob = @import("retention_job.zig").Job;
 pub const App = @import("app.zig").App;
 pub const Kernel = @import("serve").Kernel;
+
+pub const crs_job = @import("crs_job.zig");

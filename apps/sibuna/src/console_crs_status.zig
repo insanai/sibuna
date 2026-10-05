@@ -6,7 +6,10 @@ const server = @import("server.zig");
 
 pub fn snapshot(state: *server.AppState) !p.crs.Status {
     const publisher = state.crs orelse return .{};
-    const current = try publisher.snapshot();
+    const current = publisher.snapshot() catch |err| switch (err) {
+        error.NoGeneration => return .{},
+        else => return err,
+    };
     var version: [17]u8 = undefined;
     const selected: p.crs.Selection = .{
         .mode = switch (current.activation.mode) {

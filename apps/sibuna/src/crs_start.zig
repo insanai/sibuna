@@ -11,7 +11,15 @@ pub const Error = options.Error || http_policy.Error || updater.artifact.Error |
 pub const Runtime = struct {
     allocator: std.mem.Allocator,
     publisher: crs.publication.Publisher = .{},
-    source: crs.artifact_manifest.Manifest,
+    source: ?crs.artifact_manifest.Manifest = null,
+
+    /// Console management needs a stable address even before its first selection.
+    /// No generation or transaction pool is allocated until a reviewed activation.
+    pub fn empty(allocator: std.mem.Allocator) std.mem.Allocator.Error!*Runtime {
+        const self = try allocator.create(Runtime);
+        self.* = .{ .allocator = allocator };
+        return self;
+    }
 
     /// Off returns without touching files, allocating a pool or publishing a pin.
     pub fn start(
@@ -57,7 +65,16 @@ pub const Runtime = struct {
         try http_policy.validate(&candidate.prepared.package.?.program, selected.activation);
         const self = try allocator.create(Runtime);
         errdefer allocator.destroy(self);
-        self.* = .{ .allocator = allocator, .source = candidate.manifest };
+        const source = try crs.artifact_manifest.Manifest.create(
+            candidate.prepared.package.?,
+            selected,
+            .{
+                .previous_revision = candidate.manifest.previous_revision,
+                .signature_bytes = candidate.prepared.signature.value.len,
+                .configuration_bytes = candidate.prepared.configuration.value.len,
+            },
+        );
+        self.* = .{ .allocator = allocator, .source = source };
         const generation = try crs.generation.Generation.create(
             allocator,
             candidate.prepared.package.?,
