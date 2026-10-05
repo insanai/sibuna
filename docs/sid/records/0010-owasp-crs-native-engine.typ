@@ -2239,6 +2239,18 @@ not convert failed assertions or coverage gaps into passed tests. The live-daemo
 below must establish refusal status, withheld origin/client bytes and supported profile
 coverage before activation or release.
 
+== Cluster qualification
+
+The three-node management check observes protected request decisions on every node before
+and after separate selection. It checks Audit, Enforce and Off, leader loss, mutation refusal
+without quorum, durable restoration after member restart, exact rollback and incompatible
+preparation. Applied local revisions must agree with the saved revision on every running node.
+Each member must stop cleanly. This functional check uses three loopback processes; it does
+not establish multi-host latency, TLS deployment configuration or performance acceptance.
+When storage cannot confirm fresh authorization, a management read may return unavailable
+instead of a quorum view. That response is not a successful read or permission to mutate;
+serving retains its last applied immutable generation.
+
 == Release gates
 
 1. Reader and compiler tests cover comments, quoting, continuations, duplicate IDs, inherited

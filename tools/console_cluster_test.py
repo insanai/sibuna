@@ -38,15 +38,18 @@ class Cluster:
                 args += ["--cluster-peer", f"{j + 1}@127.0.0.1:{self.peers[j]}"]
         return args
 
-    def start(self, i):
+    def node_args(self, i):
         args = [self.binary, "--host", "127.0.0.1", "--port", str(self.data[i]), "--workers", "1",
                 "--trust-forwarded", "--console", f"127.0.0.1:{self.consoles[i]}",
                 "--console-advertise", f"http://127.0.0.1:{self.consoles[i]}"]
         for j in range(NODES):
             if i != j:
                 args += ["--console-probe", f"{j + 1}=http://127.0.0.1:{self.data[j]}"]
-        args += self.cluster_args(i)
-        self.procs[i] = subprocess.Popen(args, stdout=self.logs[i], stderr=self.logs[i])
+        return args + self.cluster_args(i)
+
+    def start(self, i):
+        self.procs[i] = subprocess.Popen(self.node_args(i), stdout=self.logs[i],
+                                         stderr=self.logs[i])
 
     def ready(self, i, timeout=90):
         deadline = time.monotonic() + timeout
