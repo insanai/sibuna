@@ -2042,12 +2042,34 @@ engine error name; they cannot become inspected completion. Invalid sample struc
 recoverable refusal, not a fabricated decision.
 
 Reports own rule ID, phase, severity, save/audit flags and intervention metadata. They retain
-at most 64 findings and count additional omitted findings. Expanded messages, tags, matched
+at most 64 findings and count additional omitted findings. Unlogged or audit-suppressed
+nonterminal matches are counted separately and do not displace security findings; terminal
+decisions remain visible even with suppressed logging. Expanded messages, tags, matched
 values, request data and response data are excluded. Blocking and detection anomaly scores
 are copied separately from the actual CRS transaction variables, after successful evaluation.
 Absent or invalid numeric variables remain absent. Reporting neither charges rule work nor
 changes the decision. Private slot allocations are erased before release, including allocations
 replaced during arena growth; inputs and parser memory have separately owned erasure.
+
+The authenticated service transfers one bounded JSON allocation to the existing joined
+CRS worker. Preparation and private testing share capacity; neither compiles on HTTP tasks.
+The worker owns input and an 8 MiB parser workspace until evaluation ends. Storage checks
+fresh administrator session/CSRF, expected revision and a retained usable source in the same
+statement that records a redacted `crs.test` intent. It returns the immutable manifest; the
+worker re-authenticates source, creates a private slot, and rechecks access and revision
+before completing. It publishes no generation and writes no sample to storage.
+
+One ephemeral result is bound to its issuing session and unpredictable test ID. Fresh
+authorization is required for every poll. Queued/running work remains bounded; a completed
+or refused result expires after one minute. New work cannot replace another session's
+unexpired result. Shutdown joins this worker before storage closes, then erases queued input.
+Budget accounting includes an additional 1 MiB queued body, 8 MiB parser and 128 MiB private
+slot envelope; the shared private compiler/source envelope and selected live pools remain
+separate. A console form limits each entity to 16 KiB and each header list to 32 entries so
+its browser event and command buffers remain bounded. The native CLI accepts the full shared
+sample contract. Both clients identify a retained source and explicit saved revision;
+`--mode` affects private evaluation alone. Browser navigation/sign-out discard its sample
+form and owned scalar result; stale replies cannot repopulate a later page.
 
 *Lemma (private-test noninterference).* A private test cannot change the selected generation,
 contact an origin or emit data-plane observations.

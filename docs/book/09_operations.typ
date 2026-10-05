@@ -141,10 +141,28 @@ reports disabled coverage.
 
 The JSON report identifies both source digests and the saved candidate revision. It reports
 coverage, would-deny and enforcing decisions, actual blocking/detection scores when present,
-work used and up to 64 scalar findings with an omitted count. Missing response data is
+work used and up to 64 scalar findings with an omitted count. Unlogged nonterminal matches
+have a separate count; terminal decisions remain visible even when logging is suppressed.
+Missing response data is
 labelled separately. Representation or work failures report incomplete coverage. The test
 contacts no origin, emits no traffic observations and retains no sample or expanded matched
 values. It does not reproduce Gate sessions, live limiters or origin behavior.
+
+The console's *Core Rule Set* page also runs private tests. Review a verified candidate to
+test its rules, or test the selected candidate. Enter the request method, path, client IP,
+headers and text or hexadecimal entity. A response is optional; its ending declares complete
+content, a WebSocket handshake or streaming. The form bounds each entity to 16 KiB and
+accepts up to 32 headers on each side. Results report actual coverage and scores, retain no
+sample, and remain available to the issuing session for one minute. Leaving the page or
+signing out removes its form and result. Active protection needs separate selection.
+
+Authenticated CLI users can submit the same private sample using `crs test --origin <origin>
+--username <admin> --password-file <private-file> --id <retained-candidate>
+--revision <saved-revision> --case <json-file> [--mode off|audit|enforce]`. The command keeps its
+session through polling and closes it afterwards. Authorization and the expected revision
+are rechecked when execution begins and before a result completes. The redacted audit row
+records the source and test intent; it contains no sample. A lost response or expired result
+requires a new private test, never a selection retry.
 
 Engine deployments can manage rules through a private local directory, without the console
 or persistent application storage. Prepare and review a signed candidate first, then copy

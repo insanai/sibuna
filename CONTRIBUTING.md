@@ -40,6 +40,9 @@ boot-fenced application and restart through the real daemon with a signed releas
 `python3 tools/crs_ui_check.py <binary> --candidate <directory>` drives the shipped Wasm
 through reviewed modes, exact rollback, operator edits, failed preparation and sign-out.
 It requires Node; Chrome separately verifies form retention, focus and responsive layout.
+`python3 tools/crs_test_check.py <binary> --candidate <directory>` qualifies private samples
+against signed sources, compressed entities, atomic redacted audit intent, unchanged
+publication, session isolation and revocation through the actual console listener.
 `crs-client-test` checks native command authority, explicit revisions and decoding of a
 full candidate/member view. `python3 tools/crs_cli_check.py <binary> --candidate <directory>`
 checks offline authentication, private phased samples against signed sources and reviewed live CLI changes. Each command
