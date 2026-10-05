@@ -1,0 +1,33 @@
+<dl class="sb-definition mt-3">
+    <dt>Mode</dt><dd>{{ mode }}</dd>
+    <dt>Configured profile</dt><dd>{{ profile }}</dd>
+    <dt>Release</dt><dd>{{ release }}</dd>
+    <dt>Applied CRS revision</dt><dd>{{ revision }}</dd>
+    <dt>Signed release SHA-256</dt><dd class="break-all">{{ digest }}</dd>
+    <dt>Operator configuration SHA-256</dt><dd class="break-all">{{ operator_digest }}</dd>
+    <dt>Initial paranoia levels</dt><dd>Blocking {{ blocking }}; detection {{ detection }}</dd>
+    <dt>Initial anomaly thresholds</dt><dd>Inbound {{ inbound }}; outbound {{ outbound }}</dd>
+    <dt>Compilation peak</dt><dd>{{ compiled }} bytes of live compilation payload</dd>
+    <dt>Inspection reservations</dt><dd>{{ reserved }} bytes</dd>
+    <dt>Simultaneous inspections</dt><dd>{{ slots }} slots</dd>
+    <dt>Request wire and decoded limit</dt><dd>{{ request }} bytes</dd>
+    <dt>Response wire and decoded limit</dt><dd>{{ response }} bytes</dd>
+    <dt>Per-exchange work budget</dt><dd>{{ work }} units</dd>
+    <dt>Absolute inspection deadline</dt><dd>{{ timeout }} seconds</dd>
+</dl>
+<p class="sb-note">This is the serving node's applied generation. It does not establish a
+    durable activation revision or another node's state. The node observation age applies.
+    Authorized operator rules can adjust transaction variables during inspection.</p>
+<h3>Coverage since this boot</h3>
+<dl class="sb-definition mt-3">
+    <dt>Complete exchanges</dt><dd>{{ inspected }}</dd>
+    <dt>Request headers profile</dt><dd>{{ headers }}</dd>
+    <dt>WebSocket handshakes</dt><dd>{{ handshake }}</dd>
+    <dt>Excluded response streams</dt><dd>{{ streaming }}</dd>
+    <dt>Incomplete inspections</dt><dd>{{ incomplete }}</dd>
+    <dt>Enforced denials</dt><dd>{{ denied }}</dd>
+    <dt>Audit would-deny exchanges</dt><dd>{{ would_deny }}</dd>
+</dl>
+<p class="sb-note">Counters are observed independently and reset on restart. Coverage and
+    denial counters describe different properties; adding them would double-count exchanges.
+    These are exchange counts, not incident totals.</p>

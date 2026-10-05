@@ -461,9 +461,9 @@ fn addCrsEvidenceTests(b: *std.Build, app: AppModules) void {
     wireApp(b, root, app);
     const run = b.addRunArtifact(b.addTest(.{
         .root_module = root,
-        .filters = &.{"CRS evidence"},
+        .filters = &.{ "CRS evidence", "local CRS status" },
     }));
-    b.step("console-crs-evidence-test", "Test atomic CRS evidence and authorized incident reads")
+    b.step("console-crs-evidence-test", "Test atomic CRS evidence and authorized observations")
         .dependOn(&run.step);
 }
 

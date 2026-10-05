@@ -26,6 +26,7 @@ pub fn status(owner: *Persistent, auth: p.users.Auth) !p.StorageResult {
         .observed_at = now,
         .uptime_ms = @intCast(@max(0, @divTrunc(uptime, std.time.ns_per_ms))),
         .completion_pending = owner.console_node.pending != null,
+        .crs = try @import("console_crs_status.zig").snapshot(owner.state),
     };
     if (try access.check(owner, auth, false)) |reason| return .{ .failed = reason };
     return .{ .node_status = result };

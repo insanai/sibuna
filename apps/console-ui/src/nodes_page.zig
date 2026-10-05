@@ -18,6 +18,7 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     );
     if (model.status) |node| {
         try status(state, node, w);
+        try @import("crs_status.zig").render(node.crs, w);
     } else try html.render(w, "<p role=\"status\">{{ status }}</p>", .{
         .status = if (busy)
             "Loading node state…"

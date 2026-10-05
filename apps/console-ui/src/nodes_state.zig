@@ -66,6 +66,7 @@ pub const Model = struct {
             candidate.control_revision > std.math.maxInt(i64) or
             !identifier(candidate.boot.slice()) or !identifier(candidate.operation_id.slice()))
             return error.InvalidResponse;
+        if (candidate.crs) |crs| if (crs.selection) |selection| try selection.validate();
         self.status = candidate;
         self.loaded = true;
     }
@@ -148,4 +149,38 @@ fn identifier(text: []const u8) bool {
         nonzero = nonzero or byte != '0';
     }
     return nonzero;
+}
+
+test "CRS node observations retain exact revisions and refuse invalid source metadata" {
+    const t = std.testing;
+    const bytes =
+        \\{"operation_id":"11111111111111111111111111111111","node":1,
+        \\ "boot":"22222222222222222222222222222222","control_revision":"1",
+        \\ "draining":false,"connections":0,"active_ban_entries":0,"committed":"3",
+        \\ "applied":"3","observed_at":"4","uptime_ms":"5000",
+        \\ "completion_pending":false,"crs":{"selection":{"mode":"audit",
+        \\ "profile":"full","revision":"18446744073709551615","release":"4.30.0",
+        \\ "source_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        \\ "operator_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        \\ "blocking_paranoia":1,"detection_paranoia":2,"inbound_threshold":5,
+        \\ "outbound_threshold":4,"compiled_peak":"20","reserved_bytes":"30",
+        \\ "slots":2,"request_bytes":"4194304","response_bytes":"1048576",
+        \\ "work_budget":"16000000","timeout_ms":"30000"},
+        \\ "counts":{"incomplete":"18446744073709551615"}}}
+    ;
+    const parsed = try std.json.parseFromSlice(std.json.Value, t.allocator, bytes, .{});
+    defer parsed.deinit();
+    var model: Model = .{};
+    try model.statusValue(parsed.value, t.allocator);
+    try t.expectEqual(std.math.maxInt(u64), model.status.?.crs.?.selection.?.revision);
+    try t.expectEqual(std.math.maxInt(u64), model.status.?.crs.?.counts.incomplete);
+    const previous = model.status.?;
+    var invalid = previous;
+    try invalid.crs.?.selection.?.release.set("....");
+    const encoded = try std.json.Stringify.valueAlloc(t.allocator, invalid, .{});
+    defer t.allocator.free(encoded);
+    const changed = try std.json.parseFromSlice(std.json.Value, t.allocator, encoded, .{});
+    defer changed.deinit();
+    try t.expectError(error.InvalidCrsStatus, model.statusValue(changed.value, t.allocator));
+    try t.expectEqualDeep(previous, model.status.?);
 }

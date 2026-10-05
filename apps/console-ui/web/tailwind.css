@@ -100,6 +100,13 @@ button, input, select, textarea { font: inherit; }
  font-size: 16px; font-weight: 700; margin-bottom: 16px; overflow-wrap: anywhere;
 }
 .sb-panel svg { width: 100%; height: auto; }
+.sb-definition { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px 20px; }
+.sb-definition dt { font-weight: 600; }
+.sb-definition dd { min-width: 0; margin: 0 0 12px; overflow-wrap: anywhere; }
+@media (min-width: 700px) {
+ .sb-definition { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 12px 20px; }
+ .sb-definition dd { margin-bottom: 0; }
+}
 .sb-note { font-size: 12px; opacity: .8; line-height: 1.7; }
 .sb-auth { min-height: 100vh; display: grid; place-items: center; background: var(--color-base-200); padding: 24px; color: var(--color-base-content); }
 .sb-auth-card { min-width: 0; width: min(100%, 430px); background: var(--color-base-100); padding: 36px; border: 1px solid var(--color-base-300); border-radius: 8px; }

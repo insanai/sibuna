@@ -30,6 +30,10 @@ pub const Snapshot = struct {
     operator_digest: ?[32]u8,
     compiled_peak: usize,
     reservation: usize,
+    slots: usize,
+    request_bytes: usize,
+    response_bytes: usize,
+    work_budget: u64,
 };
 pub const Lease = struct {
     owner: *Publisher,
@@ -108,6 +112,10 @@ pub const Publisher = struct {
             .operator_digest = if (generation.package) |package| package.operator_digest else null,
             .compiled_peak = if (generation.package) |package| package.bounded.peak else 0,
             .reservation = if (generation.pool_live) generation.pool.reserved_bytes else 0,
+            .slots = if (generation.pool_live) generation.options.slots else 0,
+            .request_bytes = generation.options.limits.request,
+            .response_bytes = generation.options.limits.response,
+            .work_budget = generation.options.limits.work,
         };
     }
 

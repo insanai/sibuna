@@ -44,6 +44,12 @@ Forward auth observes ingress metadata rather than the origin body or response. 
 refused there. Existing bot admission and CRS protection are independent. Audit counts
 would-deny findings while preserving deliverable traffic; Enforce applies denials. An
 incomplete Audit evaluation is labelled incomplete, never counted as inspected.
+Use `--crs-inbound-threshold` and `--crs-outbound-threshold` for explicit startup threshold
+overrides, each 1–65,535. Omitted thresholds retain the candidate settings, normally 5 and 4.
+These process options do not edit the saved candidate or its source revision. Increasing a
+threshold changes which accumulated anomalies deny an exchange; review the application
+before selecting it. These generation settings initialize each transaction; locally authorized
+rules can subsequently adjust its threshold and paranoia variables.
 
 Indefinite responses require a reviewed operator exception, for example:
 
@@ -69,6 +75,12 @@ Schema 41 commits scalar findings with their incident and optional redacted head
 page exports include this metadata; the CSV export retains its existing incident columns.
 Enable `--console-capture-heads` to inspect redacted request and observed origin heads.
 The page distinguishes a local response from an unavailable or unobserved origin response.
+The Nodes page reports the serving node's applied CRS release, mode, profile, source and
+operator configuration digests, thresholds, paranoia levels and effective resource bounds.
+Coverage counters are boot-local exchange observations. They are not incident totals or a
+partition to sum: an enforced denial and incomplete evaluation can describe the same
+exchange. Missing status from an older binary differs from CRS being unconfigured.
+This local snapshot does not establish a durable activation revision or peer convergence.
 
 === Release Packages and Licenses
 

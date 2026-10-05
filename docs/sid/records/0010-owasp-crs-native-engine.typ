@@ -1868,6 +1868,23 @@ incomplete rather than zero. Existing engine incidents and CRS findings remain d
 
 == Retained scalar findings
 
+The Nodes page reports copied local generation metadata through the existing authorized
+storage mailbox. The publisher's snapshot pins the immutable generation while copying its
+revision, release and configuration digests, activation, thresholds, compilation peak and
+effective reservations and limits. No generation pointer or source path crosses the console
+contract. Authorization is checked before observation and again before delivering the result.
+Publisher contention refuses the read rather than fabricating an Off selection. A null
+reported selection means unconfigured; an absent contract means an older binary did not
+report it. An explicit Off generation retains its applied revision while reserving no slots.
+Boot-local coverage counters are independently observed and distinguish exchange properties,
+not disjoint categories. They cannot be summed into total traffic or incident counts.
+The snapshot is applied local state, not a durable committed revision or peer convergence.
+The storage owner's snapshot access makes it a generation reader. Shutdown joins console
+and data-plane work, then the storage thread, before destroying the stable publisher.
+Threshold and paranoia settings initialize each transaction; authorized operator rules
+may change TX variables during evaluation. The local status page labels these as initial
+settings rather than claiming they describe every exchange's final scoring decision.
+
 The current connector copies saved findings before releasing its transaction slot and
 generation lease. The bounded incident queue owns rule ID, phase, severity, applied revision,
 signed archive digest, mode, would-deny and final-denial flags, selected status, paranoia

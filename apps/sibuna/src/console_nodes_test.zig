@@ -14,6 +14,44 @@ fn setup(path: []const u8) !*Fixture {
     return fx;
 }
 
+test "local CRS status distinguishes unconfigured from a pinned Off generation" {
+    const crs = @import("crs");
+    var temporary = t.tmpDir(.{});
+    defer temporary.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try setup(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/crs-status",
+        .{temporary.sub_path},
+    ));
+    defer fx.close();
+    var publisher: crs.publication.Publisher = .{};
+    defer {
+        fx.state.crs = null;
+        publisher.close() catch unreachable;
+        publisher.deinit();
+    }
+    const empty = (try fx.run(.{ .node_status = auth })).node_status.crs.?;
+    try t.expect(empty.selection == null);
+    {
+        const generation = try crs.generation.Generation.create(t.allocator, null, .{
+            .revision = std.math.maxInt(u64),
+            .activation = .{ .mode = .off },
+            .observation = .request_response,
+        });
+        errdefer generation.deinit();
+        try publisher.publish(generation);
+    }
+    fx.state.crs = &publisher;
+    const status = (try fx.run(.{ .node_status = auth })).node_status.crs.?;
+    try t.expectEqual(std.math.maxInt(u64), status.selection.?.revision);
+    try t.expectEqual(p.crs.Mode.off, status.selection.?.mode);
+    try t.expectEqual(@as(u64, 0), status.selection.?.reserved_bytes);
+    try t.expectEqual(@as(u16, 0), status.selection.?.source_digest.len);
+    _ = try fx.run(.{ .logout = .{ .digest = auth.session_digest } });
+    try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .node_status = auth })).failed);
+}
+
 fn operation(fx: *Fixture, byte: u8, kind: p.nodes.Kind) p.nodes.Command {
     return .{
         .auth = auth,

@@ -154,6 +154,9 @@ pub const Status = struct {
     observed_at: u64,
     uptime_ms: u64,
     completion_pending: bool,
+    /// Null means an older peer did not report this contract; selection null
+    /// means this serving node has no configured generation.
+    crs: ?p.crs.Status = null,
 
     pub fn jsonStringify(self: Status, w: *std.json.Stringify) std.json.Stringify.Error!void {
         return fields(self, w);

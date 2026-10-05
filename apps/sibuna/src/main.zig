@@ -59,6 +59,13 @@ pub fn main(init: std.process.Init) !u8 {
     defer gpa.destroy(state);
     state.init(cfg, slot, &seed);
 
+    // Publish the stable owner before any worker can read it. Storage must join
+    // before its destruction, after console and data-plane readers stop.
+    const protection = crs_start.Runtime.start(gpa, io, settings.crs, observation(cfg)) catch |err|
+        return invalidCrs(err);
+    defer if (protection) |running| running.stop();
+    if (protection) |running| state.crs = &running.publisher;
+    state.crs_timeout_ms = @as(u64, settings.crs.timeout orelse 30) * 1000;
     var persistent: ?*storage.Persistent = null;
     if (cfg.data_dir != null) {
         persistent = storage.Persistent.start(gpa, io, cfg, state, policy_text) catch |err| {
@@ -67,12 +74,6 @@ pub fn main(init: std.process.Init) !u8 {
         };
     }
     defer if (persistent) |p| if (!p.shutdown()) abandonedStorageExit();
-
-    const protection = crs_start.Runtime.start(gpa, io, settings.crs, observation(cfg)) catch |err|
-        return invalidCrs(err);
-    defer if (protection) |running| running.stop();
-    if (protection) |running| state.crs = &running.publisher;
-    state.crs_timeout_ms = @as(u64, settings.crs.timeout orelse 30) * 1000;
 
     const runtime = if (build_options.console and parsed.config.enabled)
         try console_start.Runtime.start(gpa, io, parsed.config, persistent.?)

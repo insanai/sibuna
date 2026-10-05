@@ -38,6 +38,10 @@ fn run(io: std.Io, alloc: std.mem.Allocator, update: bool) !void {
         "events-crs-denied",
         "events-crs-audit-incomplete",
         "events-crs-streaming",
+        "nodes-crs-unrecorded",
+        "nodes-crs-disabled",
+        "nodes-crs-audit",
+        "nodes-crs-enforce",
     };
     inline for (variants, 0..) |name, i| {
         configure(&state, .dashboard);
@@ -95,6 +99,55 @@ fn crsFinding(state: *State, index: usize) void {
         .selected_status = if (index == 17) 0 else 403,
         .blocking_paranoia = 1,
         .detection_paranoia = 2,
+    };
+}
+
+fn crsNode(state: *State, index: usize) void {
+    state.phase = .nodes;
+    state.nodes.loaded = true;
+    state.nodes.received_at = 172800;
+    state.nodes.status = .{
+        .operation_id = p.Bytes(32).init("11111111111111111111111111111111") catch unreachable,
+        .node = 1,
+        .boot = p.Bytes(32).init("22222222222222222222222222222222") catch unreachable,
+        .control_revision = 1,
+        .draining = false,
+        .connections = 4,
+        .active_ban_entries = 0,
+        .committed = 3,
+        .applied = 3,
+        .observed_at = 172800,
+        .uptime_ms = 9000,
+        .completion_pending = false,
+    };
+    if (index == 18) return;
+    state.nodes.status.?.crs = .{};
+    if (index == 19) return;
+    state.nodes.status.?.crs.?.selection = .{
+        .mode = if (index == 20) .audit else .enforce,
+        .profile = .full,
+        .revision = 9007199254740993,
+        .release = p.Bytes(17).init("4.30.0") catch unreachable,
+        .source_digest = p.Bytes(64).init(&@as([64]u8, @splat('a'))) catch unreachable,
+        .operator_digest = p.Bytes(64).init(&@as([64]u8, @splat('b'))) catch unreachable,
+        .blocking_paranoia = 1,
+        .detection_paranoia = 2,
+        .inbound_threshold = 5,
+        .outbound_threshold = 4,
+        .compiled_peak = 21632547,
+        .reserved_bytes = 118000000,
+        .slots = 8,
+        .request_bytes = 4194304,
+        .response_bytes = 1048576,
+        .work_budget = 16000000,
+        .timeout_ms = 30000,
+    };
+    state.nodes.status.?.crs.?.counts = .{
+        .inspected = 7,
+        .incomplete = 1,
+        .handshake = 1,
+        .would_deny = if (index == 20) 2 else 0,
+        .denied = if (index == 21) 2 else 0,
     };
 }
 
@@ -165,6 +218,7 @@ fn variant(state: *State, index: usize) void {
         12, 13 => ruleHistory(state, index == 13),
         14 => auditDetail(state),
         15, 16, 17 => crsFinding(state, index),
+        18, 19, 20, 21 => crsNode(state, index),
         3, 4 => {
             state.kiosk = true;
             state.kiosk_expires = 176400;
