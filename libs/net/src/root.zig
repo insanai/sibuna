@@ -10,6 +10,7 @@ pub const http = @import("http.zig");
 pub const chunked = @import("chunked.zig");
 pub const content_coding = @import("content_coding.zig");
 pub const entity = @import("entity.zig");
+pub const retained_head = @import("retained_head.zig");
 pub const response_fields = @import("response_fields.zig");
 pub const response_inspection = @import("response_inspection.zig");
 pub const response = @import("response.zig");
@@ -37,6 +38,7 @@ test {
     _ = @import("http.zig");
     _ = @import("chunked.zig");
     _ = entity;
+    _ = retained_head;
     _ = content_coding;
     _ = response_fields;
     _ = @import("response.zig");

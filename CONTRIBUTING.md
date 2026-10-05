@@ -63,6 +63,9 @@ helpers, the end-to-end suite in `apps/sibuna/src/e2e_test.zig`, and the storage
   live daemon in `e2e_test.zig` (it boots the server on a loopback port in front of a stub
   origin and speaks raw HTTP/1.1). Use a distinct `X-Forwarded-For` address per scenario so the
   per-client tables do not interfere.
+- `zig build daemon-e2e` runs that same native daemon harness separately, including its
+  transitive ownership and storage checks, so a relay change can be qualified without
+  rebuilding the complete console suite.
 - Unit tests belong where a property is easier to state directly (a verifier rejecting a
   tampered proof, a limiter's exact bound, an automaton agreeing with a naive scan). Do not add
   tests for trivial accessors that the end-to-end suite already covers.

@@ -1383,6 +1383,13 @@ acquisition. Upload activity is credited per 16 KiB consumed, while response act
 each origin read. These policies retain slow-upload protection without cutting an active
 slow response. The reader owns no writer and never publishes a partial entity.
 
+The HTTP service's consumed-head pin lends only the connection buffer tail to subsequent
+reads. It preserves borrowed request metadata without copying it, whether admission has
+already consumed a buffered body prefix or CRS is about to acquire the complete entity.
+Prefetched body and pipeline bytes remain in that tail. Restore the full buffer after final
+evidence and telemetry consumption, before the next request can compact it. The daemon's
+ordinary relay and complete entity acquisition share this ownership primitive.
+
 *Lemma (bounded transport acquisition).* For entity ceiling $E$, framing ceiling $F$ and
 line ceiling $L$, successful acquisition visits $O(E + F)$ bytes with $O(L)$ reader storage
 in addition to the caller's entity reservation. It consumes no following pipelined message.

@@ -1072,26 +1072,11 @@ fn admittedComplete(ctx: *RequestContext, origin_status: u16, origin: *const Ori
 /// streams only after admission filled the whole buffer, which put the head at its start, so a
 /// streaming relay keeps at least `max_request_bytes - max_head_bytes` of it.
 const HeadPin = struct {
-    reader: *Io.Reader,
-    buffer: []u8,
-    head_end: usize,
-
-    fn init(reader: *Io.Reader, req: *const net.Request) HeadPin {
+    fn init(reader: *Io.Reader, req: *const net.Request) net.retained_head.Pin {
         // Admission tossed the head and the buffered body, which follows the head directly.
         const head_end = reader.seek - req.body.len;
         std.debug.assert(@intFromPtr(req.body.ptr) == @intFromPtr(reader.buffer.ptr) + head_end);
-        const pin: HeadPin = .{ .reader = reader, .buffer = reader.buffer, .head_end = head_end };
-        reader.buffer = reader.buffer[head_end..];
-        reader.seek -= head_end;
-        reader.end -= head_end;
-        return pin;
-    }
-
-    fn release(self: HeadPin) void {
-        std.debug.assert(self.reader.buffer.ptr == self.buffer[self.head_end..].ptr);
-        self.reader.buffer = self.buffer;
-        self.reader.seek += self.head_end;
-        self.reader.end += self.head_end;
+        return net.retained_head.Pin.init(reader, head_end);
     }
 };
 

@@ -404,7 +404,10 @@ fn addTests(b: *std.Build, modules: Modules, app: AppModules) void {
     test_step.dependOn(&b.addRunArtifact(store_tests).step);
     test_step.dependOn(&b.addRunArtifact(solver_tests).step);
     test_step.dependOn(&b.addRunArtifact(server_tests).step);
-    test_step.dependOn(&b.addRunArtifact(e2e_tests).step);
+    const daemon_e2e = b.addRunArtifact(e2e_tests);
+    test_step.dependOn(&daemon_e2e.step);
+    b.step("daemon-e2e", "Test live request, admission and upload relay paths")
+        .dependOn(&daemon_e2e.step);
 }
 
 fn addBenchmarks(
