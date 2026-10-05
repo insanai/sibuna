@@ -766,6 +766,10 @@ fn addConsoleLiveChecks(b: *std.Build, exe: *std.Build.Step.Compile, enabled: bo
             const check = b.addSystemCommand(&.{ python, scenario[1] });
             check.addArtifactArg(exe);
             step.dependOn(&check.step);
+            if (std.mem.eql(u8, scenario[0], "console-ui-e2e")) {
+                const bridge = b.addSystemCommand(&.{ "node", "tools/console_bridge_test.mjs" });
+                step.dependOn(&bridge.step);
+            }
         } else step.dependOn(&b.addFail("console live checks require -Dconsole=true").step);
     }
 }

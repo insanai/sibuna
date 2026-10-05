@@ -129,6 +129,35 @@ function patchNode(current, desired) {
   if (current.localName === "option" && selectedChanged) current.selected = desired.selected;
 }
 
+function disconnectStream() {
+  const previous = socket;
+  socket = undefined;
+  if (!previous) return;
+  previous.onopen = previous.onmessage = previous.onclose = null;
+  previous.close();
+}
+
+function connectStream(path) {
+  disconnectStream();
+  const url = new URL(path, location.href);
+  url.protocol = location.protocol === "https:" ? "wss:" : "ws:";
+  const current = new WebSocket(url);
+  socket = current;
+  // Queued callbacks can outlive replacement or sign-out. Object identity fences
+  // all three event kinds, including callbacks already retained by the browser.
+  current.onopen = () => { if (socket === current) event(4, {state: "open"}); };
+  current.onmessage = ({data}) => {
+    if (socket !== current) return;
+    try { event(4, {state: "message", body: JSON.parse(data)}); }
+    catch { if (socket === current) event(4, {state: "invalid"}); }
+  };
+  current.onclose = ({code}) => {
+    if (socket !== current) return;
+    socket = undefined;
+    event(4, {state: "closed", code});
+  };
+}
+
 async function run(command) {
   if (command.op === "save-text") {
     const url = URL.createObjectURL(new Blob([command.text], {type: "application/json"}));
@@ -187,21 +216,12 @@ async function run(command) {
     clearTimeout(timers.get(command.id));
     timers.set(command.id, setTimeout(() => event(3, {id: command.id}), command.delay_ms));
   } else if (command.op === "connect") {
-    if (socket) { socket.onclose = null; socket.close(); }
-    const url = new URL(command.path, location.href);
-    url.protocol = location.protocol === "https:" ? "wss:" : "ws:";
-    socket = new WebSocket(url);
-    socket.onopen = () => event(4, {state: "open"});
-    socket.onmessage = ({data}) => {
-      try { event(4, {state: "message", body: JSON.parse(data)}); }
-      catch { event(4, {state: "invalid"}); }
-    };
-    socket.onclose = ({code}) => event(4, {state: "closed", code});
+    connectStream(command.path);
   } else if (command.op === "send") {
     if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(command.body));
   } else if (command.op === "disconnect") {
     geometryController?.abort();
-    if (socket) { socket.onclose = null; socket.close(); socket = undefined; }
+    disconnectStream();
     for (const timer of timers.values()) clearTimeout(timer);
     timers.clear();
   } else if (command.op === "focus") {

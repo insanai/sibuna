@@ -198,6 +198,7 @@ def exercise(ui, data_port):
     ui.event(3, {"id": "live-retry"})
     ui.topic("stats")
     assert ui.connections == 2 and "Traffic overview" in ui.html
+    policy_close(ui)
     ui.event(1, {"action": "logout", "fields": {}})
     assert ui.stream is None and "Welcome back" in ui.html
     assert "console-navigation" not in ui.html and "globe-scene" not in ui.html
@@ -205,6 +206,28 @@ def exercise(ui, data_port):
     assert ui.appearance["theme"] == "light"
     ui.event(8, {"route": "nodes"})
     assert ui.stream is None and "Welcome back" in ui.html
+
+
+def policy_close(ui):
+    """An invalid subscription closes the socket without revoking HTTP authority."""
+    ui.stream.send(1, b'{"op":"sub","topic":"stats","args":{"ip":"8.8.8.8"}}')
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        opcode, body = ui.stream.receive()
+        if opcode == 9:
+            ui.stream.send(10, body)
+        elif opcode == 8:
+            code = int.from_bytes(body[:2], "big")
+            assert code == 1008, code
+            ui.event(4, {"state": "closed", "code": code})
+            break
+    else:
+        raise AssertionError("invalid command did not close the stream")
+    assert ui.requests[-1]["path"] == "/console/api/session"
+    assert ui.stream is None and "Traffic overview" in ui.html
+    ui.event(3, {"id": "live-retry"})
+    ui.topic("stats")
+    assert ui.connections == 3 and "Welcome back" not in ui.html
 
 
 def audit_revert(ui):

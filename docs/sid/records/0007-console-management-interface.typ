@@ -852,6 +852,13 @@ notice before surviving data. That topic resumes only with a new subscription ep
 stalled tab cannot complete a broken snapshot or grow an unbounded backlog. Subscribers are capped at 64 per console; the 65th
 receives a `503` at upgrade. Reserve separate HTTP/control capacity so 64 long-lived sockets cannot prevent login or API requests. Sequence numbers are per subscription with an epoch; filters start a new epoch/snapshot. A 2 KiB ring entry carries a bounded event summary, not a 64-record full-payload batch. Chunk snapshots with explicit begin/end watermarks; bound reassembly and resynchronize after a gap. Reconnect with jittered backoff, show stale age and keep the last good view.
 
+The browser ignores callbacks from replaced sockets. A WebSocket policy close (`1008`)
+can mean an idle peer or an invalid subscription command as well as expired authority;
+confirm the current session over HTTP before clearing private state. An explicit
+unauthorized frame or a current authorization refusal clears it immediately. Fence this
+confirmation across sign-out and subsequent sign-in, and retain stale views during a
+recoverable transport failure.
+
 #let sequence() = cetz.canvas(length: 1mm, {
   import cetz.draw: *
   let lanes = (("Browser", 12), ("Console", 52), ("Zaxonlite", 92), ("Storage thread (every node)", 138))

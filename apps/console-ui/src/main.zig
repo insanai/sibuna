@@ -312,6 +312,7 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
     if (status_value != .integer) return;
     const status = status_value.integer;
     const body = field(value, "body") orelse return;
+    if (try live.response(&state, id, status, body, outbox())) return;
     if (equal(id, "events-heads-copy")) {
         state.incident_heads.copied = if (status == 200) .ok else .failed;
         return;

@@ -49,6 +49,81 @@ fn ready(state: *State, commands: *Commands) !void {
     try live.sync(state, commands.out());
 }
 
+fn authorityId(commands: *Commands) !p.Bytes(48) {
+    const bytes = try std.fmt.allocPrint(t.allocator, "[{s}]", .{commands.writer.buffered()});
+    defer t.allocator.free(bytes);
+    const parsed = try std.json.parseFromSlice(
+        std.json.Value,
+        t.allocator,
+        bytes,
+        .{},
+    );
+    defer parsed.deinit();
+    for (parsed.value.array.items) |command| {
+        if (command.object.get("id")) |id| return p.Bytes(48).init(id.string);
+    }
+    return error.MissingAuthorityRequest;
+}
+
+fn authorityBody(allocator: std.mem.Allocator) !std.json.Parsed(std.json.Value) {
+    const bytes = "{\"csrf\":\"principal\",\"role\":\"admin\",\"must_change\":false," ++
+        "\"totp_required\":false}";
+    return std.json.parseFromSlice(std.json.Value, allocator, bytes, .{});
+}
+
+test "policy closes confirm authority and old confirmations cannot expire a new session" {
+    var state: State = undefined;
+    var commands: Commands = .{};
+    try ready(&state, &commands);
+    defer live.init();
+    state.phase = .crs;
+    try state.crs.editor.set("unsaved operator rules");
+    try deliver(&state, "{\"state\":\"closed\",\"code\":1008}", &commands);
+    const first = try authorityId(&commands);
+    try t.expectEqual(.crs, state.phase);
+    try live.sync(&state, commands.out());
+    try t.expectEqual(@as(usize, 0), commands.writer.buffered().len);
+    var body = try authorityBody(t.allocator);
+    defer body.deinit();
+    try t.expect(try live.response(&state, first.slice(), 200, body.value, commands.out()));
+    try t.expectEqualStrings("unsaved operator rules", state.crs.editor.slice());
+    try t.expect(state.stale);
+    live.timer();
+    try live.sync(&state, commands.out());
+    try t.expect(std.mem.indexOf(u8, commands.writer.buffered(), "connect") != null);
+    try deliver(&state, "{\"state\":\"closed\",\"code\":1008}", &commands);
+    const abandoned = try authorityId(&commands);
+    try ready(&state, &commands);
+    try deliver(&state, "{\"state\":\"closed\",\"code\":1008}", &commands);
+    const current = try authorityId(&commands);
+    try t.expect(!std.mem.eql(u8, abandoned.slice(), current.slice()));
+    try t.expect(try live.response(&state, abandoned.slice(), 401, .null, commands.out()));
+    try t.expect(state.fullAccess());
+    try t.expect(try live.response(&state, current.slice(), 401, .null, commands.out()));
+    try t.expectEqual(.login, state.phase);
+    try t.expectEqual(@as(usize, 0), state.csrf.len);
+}
+
+test "authority changes erase drafts while failed confirmation keeps the stale view" {
+    var state: State = undefined;
+    var commands: Commands = .{};
+    try ready(&state, &commands);
+    defer live.init();
+    try deliver(&state, "{\"state\":\"closed\",\"code\":1008}", &commands);
+    const id = try authorityId(&commands);
+    try t.expect(try live.response(&state, id.slice(), 0, .null, commands.out()));
+    try t.expectEqual(.dashboard, state.phase);
+    try t.expect(state.stale);
+    try t.expect(std.mem.indexOf(u8, commands.writer.buffered(), "live-retry") != null);
+    try deliver(&state, "{\"state\":\"closed\",\"code\":1008}", &commands);
+    const changed = try authorityId(&commands);
+    var body = try authorityBody(t.allocator);
+    defer body.deinit();
+    try state.csrf.set("different session");
+    try t.expect(try live.response(&state, changed.slice(), 200, body.value, commands.out()));
+    try t.expectEqual(.login, state.phase);
+}
+
 test "navigation retains one socket and policy publication never changes a reviewed draft" {
     var state: State = undefined;
     var commands: Commands = .{};

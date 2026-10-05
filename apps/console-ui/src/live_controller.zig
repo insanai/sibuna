@@ -19,6 +19,9 @@ var connected = false;
 var opening = false;
 var retry = false;
 var suspended = false;
+// Correlation survives session reset; an old HTTP refusal cannot expire a new principal.
+var authority_generation: u64 = 0;
+var authority_ticket: p.Bytes(48) = .{};
 
 pub fn init() void {
     client.reset();
@@ -28,6 +31,7 @@ pub fn init() void {
     opening = false;
     retry = false;
     suspended = false;
+    authority_ticket = .{};
 }
 
 pub fn stop(out: Outbox) !void {
@@ -137,7 +141,7 @@ pub fn event(
     if (!std.mem.eql(u8, kind, "message")) {
         const code = fields.field(value, "code");
         if (code != null and code.? == .integer and code.?.integer == 1008) {
-            try expire(state, out);
+            try checkAuthority(state, out);
         } else try failed(state, value, out);
         return null;
     }
@@ -179,6 +183,59 @@ pub fn event(
                 null;
         },
     }
+}
+
+fn checkAuthority(state: *State, out: Outbox) !void {
+    try stop(out);
+    retry = true;
+    state.stale = true;
+    for (&state.live.topics) |*topic| topic.stale = true;
+    if (authority_generation == std.math.maxInt(u64)) return error.GenerationExhausted;
+    authority_generation += 1;
+    const ticket = try std.fmt.bufPrint(
+        &authority_ticket.data,
+        "live-authority-{d}",
+        .{authority_generation},
+    );
+    authority_ticket.len = ticket.len;
+    try out.emit(.{
+        .op = "request",
+        .method = "GET",
+        .id = ticket,
+        .path = "/console/api/session",
+    });
+}
+
+/// A policy close also covers invalid commands and idle peers. Only current HTTP
+/// authority or an explicit unauthorized frame establishes session revocation.
+pub fn response(
+    state: *State,
+    id: []const u8,
+    status: i64,
+    body: std.json.Value,
+    out: Outbox,
+) !bool {
+    if (!std.mem.startsWith(u8, id, "live-authority-")) return false;
+    if (authority_ticket.len == 0 or !std.mem.eql(u8, id, authority_ticket.slice()) or
+        !state.fullAccess())
+    {
+        return true;
+    }
+    authority_ticket = .{};
+    if (status == 401 or status == 403 or (status == 200 and !samePrincipal(state, body))) {
+        try expire(state, out);
+    } else try failed(state, .null, out);
+    return true;
+}
+
+fn samePrincipal(state: *const State, body: std.json.Value) bool {
+    if (!std.mem.eql(u8, fields.string(body, "csrf"), state.csrf.slice()) or
+        !std.mem.eql(u8, fields.string(body, "role"), state.role.slice())) return false;
+    inline for (.{ "must_change", "totp_required" }) |name| {
+        const value = fields.field(body, name) orelse return false;
+        if (value != .bool or value.bool) return false;
+    }
+    return true;
 }
 
 pub fn failed(state: *State, value: std.json.Value, out: Outbox) !void {
