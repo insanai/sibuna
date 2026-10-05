@@ -68,6 +68,9 @@ def updated(port, cookie, csrf):
     configuration = ('SecRuleUpdateTargetById 942100 "!ARGS:application_field"\n'
                      'SecRule REQUEST_URI "@streq /operator-test" '
                      '"id:123457,phase:1,deny,status:418"\n')
+    for index in range(8):
+        configuration += (f'SecAction "id:{123458 + index},phase:1,'
+                          f'ctl:ruleRemoveTargetByTag={"T" * 1024};ARGS:{"K" * 1024}"\n')
     code, _, body = request(port, cookie, csrf, "prepare", {
         "id": identifier, "kind": "update", "expected_revision": "1",
         "version": "4.30.0", "configuration": configuration})
@@ -82,6 +85,34 @@ def updated(port, cookie, csrf):
         assert candidate["state"] == "preparing", candidate
         assert time.monotonic() < deadline, candidate
         time.sleep(1)
+
+
+def qualify_exclusions(port, cookie, csrf, receipt, result):
+    before_rows = exclusions(port, cookie, csrf, receipt, result, "before")
+    after_rows = exclusions(port, cookie, csrf, receipt, result, "after")
+    added = [row for row in after_rows if row not in before_rows]
+    assert len(added) == 9, added
+    narrow = next(row for row in added if row["scope"] == "static_target")
+    assert narrow["rule_id"] == 942100, narrow
+    assert narrow["collection"] == "args" and narrow["selection"] == "exact", narrow
+    assert bytes.fromhex(narrow["key"]["hex"]) == b"application_field", narrow
+    wide = [row for row in added if row["scope"] == "conditional_target"]
+    assert len(wide) == 8, wide
+    for row in wide:
+        for name, byte in ((row["tag"], b"T"), (row["key"], b"K")):
+            assert name["bytes"] == 1024 and bytes.fromhex(name["hex"]) == byte * 256
+            assert name["digest"] == hashlib.sha256(byte * 1024).hexdigest()
+    start = after_rows.index(wide[0])
+    code, _, body = request(port, cookie, csrf, "review/exclusions", {
+        "id": receipt, "side": "after", "offset": start})
+    assert code == 200 and len(body) < 16384, (code, body)
+    assert json.loads(body)["page"]["rows"] == wide
+    page_query = {"id": receipt, "side": "after", "offset": 4097}
+    assert request(port, cookie, csrf, "review/exclusions", page_query)[0] == 400
+    page_query["offset"] = 0
+    assert request(port, None, None, "review/exclusions", page_query)[0] == 401
+    assert request(port, cookie, None, "review/exclusions", page_query)[0] == 400
+    return page_query
 
 
 def qualify(binary, source, root):
@@ -108,24 +139,14 @@ def qualify(binary, source, root):
         receipt, result = review(port, cookie, csrf, candidate, 1)
         assert result["state"] == "complete", result
         comparison = result["comparison"]
-        assert comparison["added"] == 1 and comparison["modified"] == 1, comparison
+        assert comparison["added"] == 9 and comparison["modified"] == 1, comparison
         assert comparison["reordered"] == 0 and comparison["removed"] == 0, comparison
         assert comparison["after"]["target_exclusions"] == comparison["before"][
             "target_exclusions"] + 1, comparison
         changes = {row["id"]: row["kind"] for row in comparison["changes"] if row}
-        assert changes == {123457: "added", 942100: "modified"}, changes
-        before_rows = exclusions(port, cookie, csrf, receipt, result, "before")
-        after_rows = exclusions(port, cookie, csrf, receipt, result, "after")
-        added = [row for row in after_rows if row not in before_rows]
-        assert len(added) == 1, added
-        assert added[0]["rule_id"] == 942100 and added[0]["scope"] == "static_target", added
-        assert added[0]["collection"] == "args" and added[0]["selection"] == "exact", added
-        assert bytes.fromhex(added[0]["key"]["hex"]) == b"application_field", added
-        page_query = {"id": receipt, "side": "after", "offset": 4097}
-        assert request(port, cookie, csrf, "review/exclusions", page_query)[0] == 400
-        page_query["offset"] = 0
-        assert request(port, None, None, "review/exclusions", page_query)[0] == 401
-        assert request(port, cookie, None, "review/exclusions", page_query)[0] == 400
+        expected_changes = {942100: "modified", **{id: "added" for id in range(123457, 123466)}}
+        assert changes == expected_changes, changes
+        page_query = qualify_exclusions(port, cookie, csrf, receipt, result)
         assert not origin.requests and status(port, cookie, csrf)["revision"] == 1
         assert request(port, cookie, csrf, "test/result", {"id": receipt})[0] == 400
         other, other_csrf = login(port)

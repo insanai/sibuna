@@ -17,6 +17,7 @@ pub fn handle(app: *App, context: *http.Context, principal: p.Principal, route: 
         return http.fail(context, switch (err) {
             error.CrsPreparationForbidden => .forbidden,
             error.CrsSelectionConflict, error.CrsPreparationRejected => .conflict,
+            error.CrsReviewExpired => .gone,
             error.Busy, error.CrsPreparationCapacity => .too_many_requests,
             error.InvalidRequest,
             error.InvalidLimit,

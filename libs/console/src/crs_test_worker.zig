@@ -26,6 +26,7 @@ pub const Task = struct {
     result: ?api.Status = null,
     exclusions: Inventory = .{},
     retained_until: u64 = 0,
+    expired: ?m.Id = null,
 
     pub fn deinit(self: *Task, allocator: std.mem.Allocator) void {
         if (self.pending) |*input| input.deinit(allocator);
@@ -49,6 +50,7 @@ pub const Task = struct {
         }
         self.exclusions.deinit(allocator);
         self.retained_until = 0;
+        self.expired = null;
         self.pending = input;
         self.session = input.auth.session_digest;
         self.result = .{
@@ -60,10 +62,15 @@ pub const Task = struct {
     }
 
     pub fn snapshot(self: *const Task, auth: p.users.Auth, id: m.Id, now: u64) !api.Status {
-        const result = self.result orelse return error.InvalidRequest;
-        if (result.expires <= now or !std.mem.eql(u8, id.slice(), result.id.slice()) or
-            !std.crypto.timing_safe.eql([32]u8, self.session, auth.session_digest))
+        if (!std.crypto.timing_safe.eql([32]u8, self.session, auth.session_digest))
             return error.InvalidRequest;
+        const result = self.result orelse {
+            if (self.expired) |expired| if (std.mem.eql(u8, expired.slice(), id.slice()))
+                return error.CrsReviewExpired;
+            return error.InvalidRequest;
+        };
+        if (!std.mem.eql(u8, id.slice(), result.id.slice())) return error.InvalidRequest;
+        if (result.expires <= now) return error.CrsReviewExpired;
         return result;
     }
 
@@ -82,6 +89,7 @@ pub const Task = struct {
         const result = self.result orelse return;
         if (result.state == .running or result.expires > now) return;
         self.exclusions.deinit(allocator);
+        self.expired = result.id;
         std.crypto.secureZero(u8, std.mem.asBytes(&self.result.?));
         self.result = null;
         self.retained_until = 0;
@@ -174,7 +182,7 @@ test "private test jobs own queued bytes and bind pollable results to session an
     var other = input.auth;
     other.session_digest = @splat(3);
     try t.expectError(error.InvalidRequest, task.snapshot(other, input.id, 101));
-    try t.expectError(error.InvalidRequest, task.snapshot(input.auth, input.id, 400));
+    try t.expectError(error.CrsReviewExpired, task.snapshot(input.auth, input.id, 400));
     task.deinit(fixed.allocator());
     // Debug allocators may poison released memory after erasure. It must never
     // retain the submitted sample in this caller-owned backing array.
@@ -200,9 +208,11 @@ test "review pagination renews only its owner within an absolute bound and expir
     var now: u64 = 200;
     while (now < 1000) : (now += 50) _ = try task.renew(auth, id, now);
     try t.expectEqual(@as(u64, 1000), task.result.?.expires);
-    try t.expectError(error.InvalidRequest, task.renew(auth, id, 1000));
+    try t.expectError(error.CrsReviewExpired, task.renew(auth, id, 1000));
     task.expire(t.allocator, 999);
     try t.expect(task.result != null and task.exclusions.before.len == 8);
     task.expire(t.allocator, 1000);
     try t.expect(task.result == null and task.exclusions.before.len == 0);
+    try t.expectError(error.CrsReviewExpired, task.snapshot(auth, id, 1001));
+    try t.expectError(error.InvalidRequest, task.snapshot(other, id, 1001));
 }
