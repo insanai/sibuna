@@ -2125,7 +2125,10 @@ Names retain their exact byte length, SHA-256 identity and first 256 bytes encod
 The interface decodes valid UTF-8 for display and labels longer or binary previews; a prefix
 is never presented as the complete selector. This metadata is configuration, not expanded
 request data. The same session, review ID, expiration, fresh authority and saved-revision
-checks govern every page. Replacing work or stopping the worker releases both inventories.
+checks govern every page. Successful authorized page reads renew a one-minute idle lease,
+with a fifteen-minute absolute cap. This permits a full scan within the existing 120-query
+per-minute allowance without weakening that allowance. Idle expiration, replacement or
+worker shutdown releases both inventories.
 
 *Lemma (complete bounded exclusion review).* For $X <= 4096$ exclusions and $B$ name bytes,
 preparation costs $O(X + B)$ time and $O(X)$ owned metadata. Reading all pages costs $O(X)$,
@@ -2145,10 +2148,15 @@ that package, then reauthenticates and compiles the candidate. It never retains 
 packages together. Its owned result binds both artifact identities, the candidate ID and
 expected saved revision. Atomic `crs.review` audit intent precedes work; fresh administrator,
 retained-source and revision checks precede completion. No rule source enters that audit.
-Results expire after one minute and belong to the issuing session. Every poll rechecks access.
+Results belong to the issuing session. Samples expire after one minute; comparisons use
+the bounded pagination lease above. Every poll rechecks access.
 The console enables selection after a completed comparison matches both current artifacts;
 a changed candidate, baseline or revision requires a new comparison. The native `crs review`
-command uses the same API, session ownership and monotonic deadline as private tests.
+command uses the same API, session ownership and monotonic deadline as private tests. It
+collects both complete bounded exclusion inventories before emitting its result, follows
+validated cursors and waits within its deadline after query-limit refusals. A caller may
+extend this review deadline to fifteen minutes; other management deadlines remain capped
+at five minutes. A failed page read cannot publish a partial inventory as a completed review.
 
 *Lemma (bounded review).* For $R <= 4096$ root rules and $B$ reviewed source/data bytes,
 fingerprint construction costs $O(B + R)$ after existing compilation resolution. Comparison

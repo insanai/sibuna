@@ -8,7 +8,12 @@ const worker = @import("crs_test_worker.zig");
 const access = @import("crs_task_access.zig");
 const sources = @import("crs_sources.zig");
 
-pub fn run(app: *App, input: worker.Input, result: *p.crs_tasks.Status) !void {
+pub fn run(
+    app: *App,
+    input: worker.Input,
+    result: *p.crs_tasks.Status,
+    inventory: *worker.Inventory,
+) !void {
     var memory: [4096]u8 = undefined;
     defer std.crypto.secureZero(u8, &memory);
     var fixed: std.heap.FixedBufferAllocator = .init(&memory);
@@ -30,8 +35,12 @@ pub fn run(app: *App, input: worker.Input, result: *p.crs_tasks.Status) !void {
         result.baseline = (try @import("crs_views.zig").candidate(current)).artifact;
         var prepared = try sources.loadDiagnosed(app, current, &result.diagnostic);
         defer prepared.deinit();
-        const inventory = prepared.package.?.program.review;
-        break :blk try app.gpa.dupe(crs.rule_review.Fingerprint, inventory);
+        inventory.before = try app.gpa.dupe(
+            p.crs_tasks.review.exclusions.Row,
+            prepared.package.?.program.exclusions,
+        );
+        const roots = prepared.package.?.program.review;
+        break :blk try app.gpa.dupe(crs.rule_review.Fingerprint, roots);
     } else try app.gpa.alloc(crs.rule_review.Fingerprint, 0);
     defer app.gpa.free(before);
     var prepared = try sources.loadDiagnosed(app, job, &result.diagnostic);
@@ -39,6 +48,10 @@ pub fn run(app: *App, input: worker.Input, result: *p.crs_tasks.Status) !void {
     var comparison: p.crs_tasks.review.Report = undefined;
     try crs.rule_review.compare(app.gpa, before, prepared.package.?.program.review, &comparison);
     try access.recheck(app, input.auth, result);
+    inventory.after = try app.gpa.dupe(
+        p.crs_tasks.review.exclusions.Row,
+        prepared.package.?.program.exclusions,
+    );
     result.comparison = comparison;
     result.artifact = (try @import("crs_views.zig").candidate(job)).artifact;
     result.state = .complete;

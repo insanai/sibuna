@@ -127,13 +127,34 @@ pub const Job = struct {
         defer self.mutex.unlock(self.app.io);
         if (self.running or self.pending != null) return error.Busy;
         if (self.app.stopping.load(.acquire)) return error.Canceled;
-        try self.tester.enqueue(input, self.app.now());
+        try self.tester.enqueue(self.app.gpa, input, self.app.now());
     }
 
     pub fn testSnapshot(self: *Job, auth: p.users.Auth, id: m.Id) !p.crs_tests.Status {
         self.mutex.lockUncancelable(self.app.io);
         defer self.mutex.unlock(self.app.io);
         return self.tester.snapshot(auth, id, self.app.now());
+    }
+
+    pub fn exclusionPage(
+        self: *Job,
+        auth: p.users.Auth,
+        id: m.Id,
+        side: p.crs_tasks.review.exclusions.Side,
+        offset: u32,
+        out: *p.crs_tasks.review.exclusions.Page,
+    ) !void {
+        self.mutex.lockUncancelable(self.app.io);
+        defer self.mutex.unlock(self.app.io);
+        const result = try self.tester.snapshot(auth, id, self.app.now());
+        if (result.kind != .review or result.state != .complete) return error.InvalidRequest;
+        try self.tester.exclusions.read(side, offset, out);
+    }
+
+    pub fn renewReview(self: *Job, auth: p.users.Auth, id: m.Id) !u64 {
+        self.mutex.lockUncancelable(self.app.io);
+        defer self.mutex.unlock(self.app.io);
+        return self.tester.renew(auth, id, self.app.now());
     }
 
     pub fn snapshot(self: *Job) struct { id: m.Id, stage: Stage, reason: m.Reason } {
@@ -196,6 +217,9 @@ pub const Job = struct {
             }
             self.runTest();
             const now = self.app.now();
+            self.mutex.lockUncancelable(self.app.io);
+            self.tester.expire(self.app.gpa, now);
+            self.mutex.unlock(self.app.io);
             if (now >= self.next_maintenance) {
                 self.next_maintenance = now + 60;
                 self.maintain() catch |err| {
@@ -222,9 +246,13 @@ pub const Job = struct {
         self.mutex.unlock(self.app.io);
         defer input.deinit(self.app.gpa);
         var result: p.crs_tests.Status = undefined;
-        private_test.execute(self.app, input, &result);
+        var inventory: private_test.Inventory = .{};
+        private_test.execute(self.app, input, &result, &inventory);
         self.mutex.lockUncancelable(self.app.io);
         self.tester.result = result;
+        self.tester.exclusions.deinit(self.app.gpa);
+        self.tester.exclusions = inventory;
+        self.tester.retained_until = self.app.now() + 15 * 60;
         self.running = false;
         self.mutex.unlock(self.app.io);
     }
@@ -382,7 +410,7 @@ pub fn identifier(io: std.Io) m.Id {
 pub fn failure(err: anyerror) m.Reason {
     if (err == error.Canceled or err == error.CrsPreparationRejected) return .canceled;
     if (err == error.OutOfMemory or err == error.ReservationLimit or
-        err == error.CompiledLimit) return .capacity;
+        err == error.CompiledLimit or err == error.ExclusionReviewLimit) return .capacity;
     if (err == error.CrsSourceRejected or err == error.CrsSourceUnavailable or
         err == error.CrsSelectionUnavailable or err == error.CrsReceiptUnavailable or
         err == error.StorageTimeout) return .storage;

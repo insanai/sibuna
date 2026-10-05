@@ -6,6 +6,69 @@ const m = p.crs_management;
 pub const review = @import("crs-protocol").review;
 pub const Kind = enum { sample, review };
 pub const State = enum { queued, running, complete, failed };
+pub const ExclusionPage = struct {
+    id: m.Id,
+    expected_revision: u64,
+    expires: u64 = 0,
+    page: review.exclusions.Page,
+
+    pub fn validate(self: *const ExclusionPage) error{InvalidResponse}!void {
+        if (!m.validId(self.id) or self.expected_revision >= std.math.maxInt(i64) or
+            self.expires == 0)
+            return error.InvalidResponse;
+        self.page.validate() catch return error.InvalidResponse;
+    }
+
+    pub fn jsonStringify(
+        self: ExclusionPage,
+        w: *std.json.Stringify,
+    ) std.json.Stringify.Error!void {
+        return @import("json_counters.zig").object(self, w);
+    }
+};
+
+test "widest exclusion page fits the HTTP envelope and preserves exact opaque name identity" {
+    const t = std.testing;
+    const api = review.exclusions;
+    const name = api.Text.init(&@as([64 * 1024]u8, @splat(0xff)));
+    var output: ExclusionPage = .{
+        .id = try m.Id.init("11111111111111111111111111111111"),
+        .expected_revision = std.math.maxInt(i64) - 1,
+        .expires = std.math.maxInt(u64),
+        .page = .{
+            .side = .after,
+            .total = 4096,
+            .offset = 0,
+            .count = api.page_capacity,
+            .next = api.page_capacity,
+        },
+    };
+    for (&output.page.rows) |*row| row.* = .{
+        .rule_id = std.math.maxInt(u32),
+        .phase = 5,
+        .chain_link = 255,
+        .scope = .conditional_target,
+        .selector = .tag,
+        .tag = name,
+        .collection = try p.Bytes(32).init(&@as([32]u8, @splat('x'))),
+        .selection = .exact,
+        .key = name,
+    };
+    try output.validate();
+    var bytes: [16 * 1024]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&bytes);
+    try std.json.Stringify.value(output, .{}, &writer);
+    try t.expect(writer.buffered().len < bytes.len);
+    const wire = writer.buffered();
+    const parsed = try std.json.parseFromSlice(std.json.Value, t.allocator, wire, .{});
+    defer parsed.deinit();
+    var decoded: ExclusionPage = undefined;
+    try p.json_value.into(&decoded, parsed.value, t.allocator);
+    try decoded.validate();
+    try t.expectEqualDeep(output, decoded);
+    decoded.page.next = 0;
+    try t.expectError(error.InvalidResponse, decoded.validate());
+}
 pub const Source = struct {
     source: []const u8,
     expected_revision: []const u8,
@@ -92,8 +155,8 @@ test "widest rule review fits the shared HTTP envelope and rejects mixed task re
         .artifact = artifact,
         .baseline = artifact,
         .comparison = .{
-            .before = .{ .rules = 4096, .target_exclusions = std.math.maxInt(u32) },
-            .after = .{ .rules = 4096, .runtime_exclusions = std.math.maxInt(u32) },
+            .before = .{ .rules = 4096, .target_exclusions = review.exclusions.capacity },
+            .after = .{ .rules = 4096, .runtime_exclusions = review.exclusions.capacity },
             .modified = 4096,
             .count = review.change_capacity,
             .omitted = 4096 - review.change_capacity,

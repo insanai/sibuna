@@ -70,6 +70,10 @@ pub const Row = struct {
             (self.selector == .rule_id and self.last != self.first)) return error.InvalidExclusion;
         if ((self.scope == .conditional_rule) != (self.selection == .none) or
             (self.selection == .none) != (self.collection == null)) return error.InvalidExclusion;
+        if (self.scope == .static_target and (self.selector != .rule_id or
+            self.first != self.rule_id)) return error.InvalidExclusion;
+        if (self.scope == .conditional_target and self.selection != .all and
+            self.selection != .exact) return error.InvalidExclusion;
         if ((self.selection == .exact or self.selection == .pattern) != (self.key != null))
             return error.InvalidExclusion;
         if (self.collection) |name| {
@@ -77,7 +81,10 @@ pub const Row = struct {
             for (name.slice()) |byte| if (!std.ascii.isAlphanumeric(byte) and byte != '_')
                 return error.InvalidExclusion;
         }
-        if (self.tag) |value| try value.validate();
+        if (self.tag) |value| {
+            if (value.bytes == 0) return error.InvalidExclusion;
+            try value.validate();
+        }
         if (self.key) |value| try value.validate();
     }
 

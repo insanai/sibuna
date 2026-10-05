@@ -29,6 +29,12 @@ pub const Report = struct {
     pub fn validate(self: *const Report) error{InvalidReview}!void {
         if (self.before.rules > 4096 or self.after.rules > 4096 or
             self.count > change_capacity) return error.InvalidReview;
+        const old_exclusions = @as(u64, self.before.target_exclusions) +
+            self.before.runtime_exclusions;
+        const new_exclusions = @as(u64, self.after.target_exclusions) +
+            self.after.runtime_exclusions;
+        if (old_exclusions > exclusions.capacity or new_exclusions > exclusions.capacity)
+            return error.InvalidReview;
         const retained = @as(u64, self.modified) + self.reordered + self.unchanged;
         const changed = @as(u64, self.added) + self.removed + self.modified + self.reordered;
         if (retained + self.removed != self.before.rules or

@@ -41,7 +41,9 @@ pub const Budget = struct {
         @import("console_protocol").crs_tests.sample.parser_bytes + 128 * 1024 * 1024;
     // Review and sample evaluation are serialized. Three copied inventories
     // cover one baseline and both comparison sort buffers, without source borrows.
-    pub const crs_review_bytes = 3 * 4096 * @sizeOf(@import("crs").rule_review.Fingerprint);
+    pub const crs_review_bytes = 3 * 4096 * @sizeOf(@import("crs").rule_review.Fingerprint) +
+        2 * @import("console_protocol").crs_tasks.review.exclusions.capacity *
+            @sizeOf(@import("console_protocol").crs_tasks.review.exclusions.Row);
     pub const collector_bytes = @sizeOf(@import("stats.zig").Stats) +
         @sizeOf(@import("rankings_journal.zig").Journal) +
         @sizeOf(@import("minute_journal.zig").Journal) +

@@ -532,6 +532,7 @@ pub const App = struct {
             .crs_test_read,
             .crs_review,
             .crs_review_read,
+            .crs_exclusions,
             => @import(
                 "crs_routes.zig",
             ).handle(self, context, identity, route.handler),

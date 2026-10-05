@@ -91,3 +91,31 @@ test "exclusion metadata unwinds every partial ownership and refuses capacity ov
     };
     try t.expectError(error.ExclusionReviewLimit, builder.append(&item, 0, &actions));
 }
+
+test "the maximum inventory traverses all cursors exactly once without losing the final row" {
+    const rows = try t.allocator.alloc(api.Row, api.capacity);
+    defer t.allocator.free(rows);
+    for (rows, 0..) |*row, index| row.* = .{
+        .rule_id = @intCast(index + 1),
+        .phase = 1,
+        .chain_link = 0,
+        .scope = .conditional_rule,
+        .selector = .rule_id,
+        .first = 942100,
+        .last = 942100,
+    };
+    var offset: u32 = 0;
+    var seen: usize = 0;
+    while (true) {
+        var page: api.Page = undefined;
+        try review.page(rows, .before, offset, &page);
+        try page.validate();
+        for (page.rows[0..page.count], 0..) |row, index|
+            try t.expectEqual(@as(u32, @intCast(seen + index + 1)), row.?.rule_id);
+        seen += page.count;
+        if (page.next) |next| offset = next else break;
+    }
+    try t.expectEqual(@as(usize, api.capacity), seen);
+    var page: api.Page = undefined;
+    try t.expectError(error.InvalidRequest, review.page(rows, .before, api.capacity + 1, &page));
+}
