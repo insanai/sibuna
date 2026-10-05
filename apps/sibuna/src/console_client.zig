@@ -31,6 +31,10 @@ pub const Endpoint = enum {
     policies_read,
     policies_import_chunk,
     policies_import_commit,
+    crs_status,
+    crs_prepare,
+    crs_select,
+    crs_discard,
 };
 pub const Reply = struct { status: std.http.Status, length: usize };
 const Outcome = union(enum) { reply: Error!Reply, deadline: Error!void };
@@ -74,7 +78,7 @@ pub const Session = struct {
         output: *[max_response + 1]u8,
         timeout_ns: u64,
     ) Error!Reply {
-        std.debug.assert(body.len <= 2048);
+        std.debug.assert(body.len <= bodyLimit(endpoint));
         std.debug.assert(timeout_ns <= 20 * std.time.ns_per_s);
         if (timeout_ns == 0) return error.Deadline;
         var results: [2]Outcome = undefined;
@@ -147,7 +151,7 @@ fn exchange(
     }
     const authenticated_headers: usize = if (session.bearer.len != 0) 2 else 3;
     const header_count: usize = if (endpoint == .login) 1 else authenticated_headers;
-    var request = client.request(if (endpoint == .geo_status) .GET else .POST, uri, .{
+    var request = client.request(if (readOnly(endpoint)) .GET else .POST, uri, .{
         .keep_alive = false,
         .redirect_behavior = .not_allowed,
         .headers = .{
@@ -157,7 +161,7 @@ fn exchange(
         .extra_headers = headers[0..header_count],
     }) catch |err| return transportError(err);
     defer request.deinit();
-    if (endpoint == .geo_status) {
+    if (readOnly(endpoint)) {
         std.debug.assert(body.len == 0);
         request.sendBodiless() catch return error.Transport;
     } else request.sendBodyComplete(body) catch return error.Transport;
@@ -208,7 +212,19 @@ fn path(endpoint: Endpoint) []const u8 {
         .policies_read => "/console/api/policies/read",
         .policies_import_chunk => "/console/api/policies/import/chunk",
         .policies_import_commit => "/console/api/policies/import/commit",
+        .crs_status => "/console/api/crs/status",
+        .crs_prepare => "/console/api/crs/prepare",
+        .crs_select => "/console/api/crs/select",
+        .crs_discard => "/console/api/crs/discard",
     };
+}
+
+fn readOnly(endpoint: Endpoint) bool {
+    return endpoint == .geo_status or endpoint == .crs_status;
+}
+
+fn bodyLimit(endpoint: Endpoint) usize {
+    return if (endpoint == .crs_prepare) p.crs_api.body_bytes else 2048;
 }
 
 fn deadline(io: std.Io, timeout_ns: u64) Error!void {

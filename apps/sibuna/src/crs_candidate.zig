@@ -14,6 +14,15 @@ pub fn readConfiguration(
         const empty = try allocator.alloc(u8, 0);
         return .{ .buffer = empty, .value = empty };
     };
+    return readFile(allocator, io, selected, 64 * 1024);
+}
+
+pub fn readFile(
+    allocator: std.mem.Allocator,
+    io: Io,
+    selected: []const u8,
+    maximum: usize,
+) !updater.files.Bytes {
     const parent_path = std.fs.path.dirname(selected) orelse ".";
     const parent = try Io.Dir.cwd().openDir(io, parent_path, .{ .follow_symlinks = false });
     defer parent.close(io);
@@ -23,7 +32,7 @@ pub fn readConfiguration(
         .directory = parent,
         .name_capacity = 255,
     };
-    return reader.read(std.fs.path.basename(selected), .{ .maximum = 64 * 1024 });
+    return reader.read(std.fs.path.basename(selected), .{ .maximum = maximum });
 }
 
 pub fn write(io: Io, path: []const u8, source: *const updater.Prepared) !void {

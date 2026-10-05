@@ -409,6 +409,7 @@ fn printHelp() void {
     printCrsHelp();
     std.debug.print("CRS candidate check: sibuna crs check [--version <x.y.z>] " ++
         "[--timeout <seconds, 1-300, default 120>]\n", .{});
+    printCrsManagementHelp();
     std.debug.print(
         \\Usage: sibuna [options]
         \\
@@ -458,6 +459,21 @@ fn printHelp() void {
         \\Unknown options and out-of-range values stop startup with a diagnostic.
         \\
     , .{});
+}
+
+fn printCrsManagementHelp() void {
+    std.debug.print(
+        "Offline: sibuna crs validate --directory <signed-candidate>\n" ++
+            "Running management: sibuna crs status | check | update | mode | rollback | " ++
+            "select | discard\n" ++
+            "  Required: --origin <origin> --username <admin> --password-file <private-file>; " ++
+            "optional --factor-file <private-file>.\n" ++
+            "  Changes require --revision <saved-revision>; select/discard require --id " ++
+            "<reviewed-candidate>. Preparation leaves protection unchanged.\n" ++
+            "  mode requires --mode off|audit|enforce. check/update accept --version <x.y.z>, " ++
+            "--configuration <file> and --settings <bounded-json-file>.\n",
+        .{},
+    );
 }
 
 fn printCrsHelp() void {

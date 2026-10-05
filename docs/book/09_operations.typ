@@ -12,8 +12,8 @@
 
 SID 0010's native CRS connector is under release qualification. Version 0.2.0 packages do
 not include this opt-in listener integration. Keep CRS disabled until the application has
-been reviewed with the selected rules and resource bounds. Verified updates, console
-management and complete compatibility/performance acceptance are still being implemented.
+been reviewed with the selected rules and resource bounds. Source builds provide reviewed
+console updates; complete compatibility and performance acceptance are still in progress.
 
 A candidate check authenticates the official archive with the pinned upstream signing key,
 compiles all selected rules privately and can save a new restart directory:
@@ -81,6 +81,43 @@ Coverage counters are boot-local exchange observations. They are not incident to
 partition to sum: an enforced denial and incomplete evaluation can describe the same
 exchange. Missing status from an older binary differs from CRS being unconfigured.
 This local snapshot does not establish a durable activation revision or peer convergence.
+
+Administrators manage signed candidates on the *Core Rule Set* page. Prepare a release or
+mode change, compare the candidate with the saved selection, then select it. Preparation
+leaves protection unchanged. The page distinguishes the saved revision from each node's
+application receipt. Off releases the CRS inspection pool while other protection continues.
+Rollback restores the previous signed source, operator rules and settings as a new revision.
+Additional operator rules are limited to 64 KiB. Failed verification or exhausted bounds
+retain the previous protection. Unsaved editor text is erased when leaving the page or
+signing out; copy it before reloading a changed saved revision.
+
+Native commands use the same authenticated service. Keep administrator credentials in a
+private file; the CLI refuses insecure remote HTTP origins and credentials in arguments.
+Use HTTPS for a remote console. A preparation command waits for verification and leaves
+protection unchanged. Read its candidate ID and settings before selecting it:
+
+```sh
+sibuna crs status --origin https://console.example.org \
+    --username admin --password-file ./console-password
+sibuna crs mode --mode audit --revision 1 \
+    --origin https://console.example.org \
+    --username admin --password-file ./console-password
+sibuna crs select --id <reviewed-candidate-id> --revision 1 \
+    --origin https://console.example.org \
+    --username admin --password-file ./console-password
+```
+
+`crs check` and `crs update` with `--origin` prepare a release, accepting `--version`,
+`--configuration` and a bounded JSON `--settings` file. Omitted configuration preserves
+the current operator rules. A settings file accepts the console's named settings and
+rejects unknown fields; omitted fields use the documented defaults, so review the resulting
+candidate. `crs rollback` prepares the exact previous source and settings; selection remains
+separate. `crs discard --id <id> --revision <revision>` cancels an unused candidate.
+All changes require the saved revision explicitly, including revision zero for an initial
+selection. Query status after an uncertain response rather than assuming the change failed.
+`--factor-file` supplies a required second factor and `--timeout` bounds the preparation
+wait to 1–300 seconds. Every command closes its session. `crs validate --directory <path>`
+authenticates and compiles a saved signed candidate without opening the console or storage.
 
 === Release Packages and Licenses
 

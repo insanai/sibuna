@@ -1551,6 +1551,7 @@ test "an idle connection is closed after the socket timeout" {
 test {
     _ = @import("storage.zig");
     if (console_enabled) _ = @import("console_command.zig");
+    if (console_enabled) _ = @import("crs_management_command.zig");
 }
 
 test "accepted client timing is observational and rejection causes cover parsed submissions" {

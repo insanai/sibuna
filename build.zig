@@ -454,6 +454,7 @@ fn addCrsDaemonTests(b: *std.Build, app: AppModules, all: *std.Build.Step) void 
     if (app.console != null) {
         addCrsEvidenceTests(b, app);
         addCrsManagementTests(b, app);
+        addCrsClientTests(b, app);
     }
 }
 
@@ -482,6 +483,20 @@ fn addCrsManagementTests(b: *std.Build, app: AppModules) void {
         .filters = &.{"CRS management"},
     }));
     b.step("console-crs-management-test", "Test durable CRS selection and owned preparation")
+        .dependOn(&run.step);
+}
+
+fn addCrsClientTests(b: *std.Build, app: AppModules) void {
+    const root = b.createModule(.{
+        .root_source_file = b.path("apps/sibuna/src/crs_management_command.zig"),
+        .target = b.graph.host,
+    });
+    wireApp(b, root, app);
+    const run = b.addRunArtifact(b.addTest(.{
+        .root_module = root,
+        .filters = &.{ "managed CRS commands", "native CRS replies" },
+    }));
+    b.step("crs-client-test", "Test reviewed native CRS commands and bounded reply decoding")
         .dependOn(&run.step);
 }
 

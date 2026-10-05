@@ -4,11 +4,13 @@ const std = @import("std");
 const crs = @import("crs");
 const updater = @import("crs-update");
 const Writer = std.Io.Writer;
+const build_options = @import("build_options");
 const Args = struct {
     version: ?crs.release_version.Version = null,
     timeout: u32 = 120,
     output: ?[]const u8 = null,
     configuration: ?[]const u8 = null,
+    directory: ?[]const u8 = null,
 };
 const Error = crs.release_version.Error || error{
     InvalidCrsCommand,
@@ -22,9 +24,17 @@ const Error = crs.release_version.Error || error{
 test {
     _ = @import("command_line.zig");
     _ = @import("crs_candidate.zig");
+    if (build_options.console) _ = @import("crs_management_command.zig");
 }
 
 fn parse(argv: []const []const u8) Error!Args {
+    if (argv.len != 0 and std.mem.eql(u8, argv[0], "validate")) {
+        if (argv.len != 3 or !std.mem.eql(u8, argv[1], "--directory"))
+            return error.InvalidCrsCommand;
+        var args: Args = .{};
+        try path(&args.directory, argv[2]);
+        return args;
+    }
     if (argv.len == 0 or !std.mem.eql(u8, argv[0], "check")) return error.InvalidCrsCommand;
     var args: Args = .{};
     var timeout_seen = false;
@@ -60,12 +70,23 @@ fn path(destination: *?[]const u8, value: []const u8) Error!void {
 }
 
 pub fn execute(allocator: std.mem.Allocator, io: std.Io, argv: []const []const u8) u8 {
+    if (managed(argv)) {
+        if (build_options.console) return @import("crs_management_command.zig").execute(
+            allocator,
+            io,
+            argv,
+        );
+        std.debug.print("CRSCLIUNAVAILABLE: running management requires the console build. " ++
+            "Hint: offline checks still work; use a console-enabled binary for updates.\n", .{});
+        return 1;
+    }
     const args = parse(argv) catch |err| {
         std.debug.print("CRSCLI001: invalid CRS candidate check ({t}). " ++
             "Hint: use sibuna crs check [--version <x.y.z>] [--timeout <1-300>] " ++
             "[--configuration <file>] [--output <new-directory>].\n", .{err});
         return 1;
     };
+    if (args.directory) |directory| return validate(allocator, io, directory);
     const configuration = @import("crs_candidate.zig").readConfiguration(
         allocator,
         io,
@@ -108,6 +129,42 @@ pub fn execute(allocator: std.mem.Allocator, io: std.Io, argv: []const []const u
     return 0;
 }
 
+fn managed(argv: []const []const u8) bool {
+    if (argv.len == 0) return false;
+    for (argv) |arg| if (std.mem.eql(u8, arg, "--origin")) return true;
+    return !std.mem.eql(u8, argv[0], "check") and !std.mem.eql(u8, argv[0], "validate");
+}
+
+fn validate(allocator: std.mem.Allocator, io: std.Io, path_value: []const u8) u8 {
+    const directory = std.Io.Dir.cwd().openDir(io, path_value, .{
+        .follow_symlinks = false,
+    }) catch |err| {
+        std.debug.print("CRSCLIVALIDATE: candidate directory cannot be opened ({t}). " ++
+            "Hint: use the private signed directory produced by crs check --output.\n", .{err});
+        return 1;
+    };
+    defer directory.close(io);
+    const seconds = @divFloor(std.Io.Clock.real.now(io).nanoseconds, std.time.ns_per_s);
+    if (seconds < 0 or seconds > std.math.maxInt(u64)) return 1;
+    var candidate = updater.artifact.load(.{
+        .allocator = allocator,
+        .io = io,
+        .directory = directory,
+        .now = @intCast(seconds),
+        .observation = .request_response,
+    }) catch |err| {
+        std.debug.print("CRSCLIVALIDATE: signed candidate validation failed ({t}). " ++
+            "Hint: prepare a fresh complete candidate; active protection is unchanged.\n", .{err});
+        return 1;
+    };
+    defer candidate.deinit();
+    var bytes: [1024]u8 = undefined;
+    var output = std.Io.File.stdout().writer(io, &bytes);
+    report(&output.interface, candidate.prepared.package.?) catch return outputFailed();
+    output.interface.flush() catch return outputFailed();
+    return 0;
+}
+
 fn report(writer: *Writer, package: *const crs.release_package.Package) Writer.Error!void {
     var version_buffer: [17]u8 = undefined;
     const version = package.version.write(&version_buffer) catch unreachable;
@@ -139,6 +196,9 @@ test "CRS checks reject ambiguous versions and bounded timeout mistakes" {
     try t.expectEqualStrings("operator.conf", saved.configuration.?);
     try t.expectEqualStrings("new-candidate", saved.output.?);
     try t.expectError(error.InvalidCrsPath, parse(&.{ "check", "--output", "" }));
+    try t.expectEqualStrings("saved", (try parse(&.{
+        "validate", "--directory", "saved",
+    })).directory.?);
     try t.expectError(error.DuplicateCrsOption, parse(&.{
         "check", "--output", "first", "--output", "second",
     }));

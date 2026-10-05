@@ -82,6 +82,8 @@ fn addCommandTest(
     crs: *std.Build.Module,
     update: *std.Build.Module,
 ) void {
+    const options = b.addOptions();
+    options.addOption(bool, "console", false);
     const tests = b.addTest(.{ .root_module = b.createModule(.{
         .root_source_file = b.path("apps/sibuna/src/crs_command.zig"),
         .target = target,
@@ -90,5 +92,6 @@ fn addCommandTest(
             .{ .name = "crs-update", .module = update },
         },
     }) });
+    tests.root_module.addOptions("build_options", options);
     step.dependOn(&b.addRunArtifact(tests).step);
 }
