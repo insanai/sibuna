@@ -10,6 +10,7 @@ const Password = @import("password.zig").Password;
 const Limiter = @import("limiter.zig").Limiter;
 const http = @import("http.zig");
 const auth = @import("auth_routes.zig");
+const events = @import("event_routes.zig");
 
 pub const App = struct {
     gpa: std.mem.Allocator,
@@ -481,9 +482,6 @@ pub const App = struct {
             .policy_edit, .inspection_edit => return @import("policy_routes.zig")
                 .edit(self, context, identity.?, route.handler == .inspection_edit),
             .policy_read => return @import("policy_read_routes.zig").read(self, context),
-            .events => return @import("event_routes.zig").query(self, context, false),
-            .events_heads => return @import("event_routes.zig").heads(self, context),
-            .events_export => return @import("event_routes.zig").query(self, context, true),
             .login => return auth.login(self, context),
             .kiosk_token, .kiosk_exchange => return @import("kiosk_routes.zig").handle(
                 self,
@@ -514,7 +512,7 @@ pub const App = struct {
         }
     }
 
-    /// Settings-owned pages and the policy workflows: every handler the route table can
+    /// Management pages, incident reads and policy workflows: every route handler
     /// name is listed here or in `executeRoute`; an unlisted one is a programming error.
     fn managementRoute(
         self: *App,
@@ -523,6 +521,11 @@ pub const App = struct {
         identity: p.Principal,
     ) !void {
         return switch (route.handler) {
+            .events, .events_heads, .events_crs, .events_export => events.handle(
+                self,
+                context,
+                route.handler,
+            ),
             .crs_status,
             .crs_prepare,
             .crs_select,

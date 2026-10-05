@@ -35,6 +35,10 @@ pub fn record(
         if (head == null) head = server.requestHead(context, &request);
         const denial = actions.enforce and actions.denied and event.would_deny and
             event.phase != .logging;
+        var detail: core.security_evidence.detail.Detail = undefined;
+        if (@import("build_options").console) {
+            crs.finding_detail.copy(&detail, &event, &transaction.slot.scores);
+        }
         hook(state.hooks.context, .{
             .client_ip = context.client_ip,
             .user_agent = context.user_agent,
@@ -43,6 +47,7 @@ pub fn record(
             .category = if (denial) "waf:crs" else "audit:crs",
             .payload = "",
             .now = context.now,
+            .crs_detail = if (@import("build_options").console) &detail else null,
             .request_head = request[0..head.?.len],
             .request_truncated = head.?.truncated,
             .response_head = if (response) |r| r.bytes[0..r.head.len] else "",

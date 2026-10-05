@@ -35,6 +35,7 @@ pub const operators = @import("operators.zig");
 pub const selection = @import("selection.zig");
 pub const transaction_vars = @import("transaction_vars.zig");
 pub const score_journal = @import("score_journal.zig");
+pub const finding_detail = @import("finding_detail.zig");
 pub const set_var = @import("set_var.zig");
 pub const evaluation_context = @import("evaluation_context.zig");
 pub const condition = @import("condition.zig");
@@ -105,6 +106,7 @@ test {
     _ = selection;
     _ = transaction_vars;
     _ = score_journal;
+    _ = finding_detail;
     _ = set_var;
     _ = evaluation_context;
     _ = condition;

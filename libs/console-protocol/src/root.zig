@@ -9,6 +9,7 @@ pub const challenge_minutes = @import("challenge_minutes.zig");
 pub const client_family = @import("client_family.zig");
 pub const challenge_records = @import("challenge_records.zig");
 pub const incident_heads = @import("incident_heads.zig");
+pub const incident_crs = @import("incident_crs.zig");
 pub const settings = @import("settings.zig");
 pub const dashboard = @import("dashboard.zig");
 pub const space_saving = @import("space_saving.zig");
@@ -146,6 +147,7 @@ pub const StorageRequest = union(enum) {
     challenge_records_query: challenge_records.Query,
     challenge_difficulty_query: challenge_records.DifficultyQuery,
     incident_heads_read: incident_heads.Read,
+    incident_crs_read: incident_crs.Read,
     rule_hits_start,
     rule_hit_history: rule_hit_history.Query,
     rankings_query: ranking_history.Query,
@@ -248,6 +250,7 @@ pub const StorageResult = union(enum) {
     challenge_records: challenge_records.Page,
     challenge_difficulty: challenge_records.DifficultyPage,
     incident_heads: *incident_heads.Heads,
+    incident_crs: *incident_crs.Response,
     rule_hit_history: rule_hit_history.Part,
     ranking_history: ranking_history.Page,
     ranking_inventory: rankings.Inventory,
@@ -300,6 +303,7 @@ pub fn releaseResult(result: StorageResult, gpa: std.mem.Allocator) void {
         .page_document => |document| gpa.destroy(document.html),
         .ranking_history => |page| gpa.destroy(page.payload),
         .incident_heads => |heads| gpa.destroy(heads),
+        .incident_crs => |detail| gpa.destroy(detail),
         else => {},
     }
 }

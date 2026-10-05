@@ -2293,9 +2293,15 @@ replay, suppression and handshake capture ordering. Signed-package daemon qualif
 checks Audit and Enforce findings through authenticated console reads, restart and revocation.
 Chrome checks the real findings, incomplete coverage, local and observed response heads,
 charset controls, clipboard copy and sign-out in desktop dark and mobile light layouts.
-Static rule messages/tags and per-rule score contributions still need a safe retained
-contract to satisfy the complete evidence requirement above. This scalar envelope does not
-establish the management page, live activation, cluster convergence or release acceptance.
+Schema 44 adds a nullable, versioned detail beside the scalar envelope. The producer copies
+up to 96 message bytes and four 64-byte tag prefixes from unexpanded templates, plus the
+root’s actual net bucket changes, before either owner is released. The detail has a 4 KiB
+JSON limit and commits under the same incident receipt guard. Historical rows remain null.
+An authorized, CSRF-protected read loads one incident’s detail without enlarging incident
+pages or subscriptions. Signed score deltas cross JavaScript as decimal strings. A delayed
+reply must match its request generation and a visible incident’s rule and phase; navigation
+and sign-out erase the owned view. These contracts do not establish complete private-test
+evidence, cluster convergence or release acceptance.
 
 = Verification and acceptance
 

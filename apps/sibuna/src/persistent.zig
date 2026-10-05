@@ -66,6 +66,8 @@ pub const IncidentRecord = struct {
     evidence: if (build_options.console) core.IncidentEvidence else void =
         if (build_options.console) .{} else {},
     crs: ?core.security_evidence.Crs = null,
+    crs_detail: if (build_options.console) ?core.security_evidence.detail.Detail else void =
+        if (build_options.console) null else {},
     request_head: if (build_options.console) [core.incident_heads.request_bytes]u8 else void =
         if (build_options.console) undefined else {},
     response_head: if (build_options.console) [core.incident_heads.response_bytes]u8 else void =
@@ -90,6 +92,7 @@ pub const IncidentRecord = struct {
         r.category_len = @intCast(copy(&r.category, incident.category));
         r.payload_len = @intCast(copy(&r.payload, incident.payload));
         if (build_options.console) {
+            if (incident.crs_detail) |detail| r.crs_detail = detail.*;
             r.evidence = incident.evidence;
             r.request_len = @intCast(copy(&r.request_head, incident.request_head));
             r.response_len = @intCast(copy(&r.response_head, incident.response_head));
@@ -618,7 +621,7 @@ pub const Persistent = struct {
         rec: *const IncidentRecord,
     ) !void {
         if (rec.crs) |evidence| {
-            try @import("console_crs_evidence.zig").append(w, id, evidence);
+            try @import("console_crs_evidence.zig").append(w, id, evidence, rec.crs_detail);
             try self.receiptGuard(w);
             try w.writeAll("; ");
         }

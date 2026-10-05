@@ -1,5 +1,5 @@
 //! Versioned additive schema. The owner serializes migration before serving console work.
-pub const version = 43;
+pub const version = 44;
 pub const rule_hits = @import("schema_rule_hits.zig");
 pub const transport_v25 = @import("schema_notification_transport.zig").sql;
 pub const deliveries_v24 = @import("schema_deliveries.zig").sql;
@@ -99,6 +99,7 @@ pub const migrations = [_][]const u8{
     @import("schema_crs_evidence.zig").sql,
     @import("schema_crs_management.zig").sql,
     @import("schema_crs_diagnostics.zig").sql,
+    @import("schema_crs_detail.zig").sql,
 };
 
 comptime {

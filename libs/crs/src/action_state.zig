@@ -11,7 +11,7 @@ pub const Event = struct {
     id: u32,
     phase: model.Phase,
     message: []const u8 = "",
-    message_template: []const u8 = "",
+    message_template: ?[]const u8 = null,
     data: []const u8 = "",
     tags: []const []const u8 = &.{},
     tag_templates: []const []const u8 = &.{},

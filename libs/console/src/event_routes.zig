@@ -94,6 +94,24 @@ fn campaignId(value: []const u8) error{InvalidRequest}!u64 {
 
 /// Redacted heads for one incident; absent rows read as not recorded, never as empty.
 pub fn heads(app: *App, context: *http.Context) !void {
+    return readDetail(app, context, .heads);
+}
+
+pub fn handle(app: *App, context: *http.Context, handler: @import("routes.zig").Handler) !void {
+    return switch (handler) {
+        .events => query(app, context, false),
+        .events_export => query(app, context, true),
+        .events_heads => heads(app, context),
+        .events_crs => crs(app, context),
+        else => unreachable,
+    };
+}
+
+pub fn crs(app: *App, context: *http.Context) !void {
+    return readDetail(app, context, .crs);
+}
+
+fn readDetail(app: *App, context: *http.Context, kind: enum { heads, crs }) !void {
     const digest = try http.session(context);
     if (!app.query_budget.allow(app.io, digest, app.now(), .query))
         return http.fail(context, .too_many_requests, "CONSOLEQUERY");
@@ -103,13 +121,18 @@ pub fn heads(app: *App, context: *http.Context) !void {
     const input = try http.parse(struct { id: []const u8 }, context, &body, fixed.allocator());
     defer input.deinit();
     const id = std.fmt.parseInt(u64, input.value.id, 10) catch return error.InvalidRequest;
-    const result = try app.request(.{ .incident_heads_read = .{
+    const request: p.incident_heads.Read = .{
         .session_digest = digest,
         .require_totp = app.config.behind_proxy,
         .id = id,
-    } });
+    };
+    const result = try app.request(switch (kind) {
+        .heads => .{ .incident_heads_read = request },
+        .crs => .{ .incident_crs_read = request },
+    });
     defer p.releaseResult(result, app.gpa);
     if (result == .incident_heads) return http.json(context, result.incident_heads.*, &.{});
+    if (result == .incident_crs) return http.json(context, result.incident_crs.*, &.{});
     return http.fail(context, switch (result.failed) {
         .unauthorized => .unauthorized,
         .forbidden => .forbidden,

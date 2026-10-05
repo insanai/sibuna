@@ -124,24 +124,12 @@ fn addSocket(
     return socket;
 }
 
-fn addEvidence(
-    b: *std.Build,
-    target: std.Build.ResolvedTarget,
-    optimize: std.lang.Optimize,
-) *std.Build.Module {
-    return b.addModule("security-evidence", .{
-        .root_source_file = b.path("libs/core/src/security_evidence.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-}
-
 fn addCore(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
     optimize: std.lang.Optimize,
 ) *std.Build.Module {
-    const evidence = addEvidence(b, target, optimize);
+    const evidence = @import("build/evidence.zig").add(b);
     const core = b.addModule("sibuna-core", .{
         .root_source_file = b.path("libs/core/src/root.zig"),
         .target = target,

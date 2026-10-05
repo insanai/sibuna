@@ -10,6 +10,7 @@ pub fn add(
         .root_source_file = b.path("libs/crs/src/protocol.zig"),
         .imports = &.{.{ .name = "text", .module = b.modules.get("sibuna-text").? }},
     });
+    protocol.addImport("security-evidence", @import("evidence.zig").add(b));
     const dictionary = b.createModule(.{
         .root_source_file = b.path("vendor/libinjection/table.zig"),
     });

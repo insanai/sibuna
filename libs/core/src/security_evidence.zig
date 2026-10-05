@@ -1,6 +1,10 @@
 //! Scalar evidence shared by native producers and the browser. No expanded rule
 //! message, tag, selector value or body belongs here: each can contain secrets.
 const std = @import("std");
+pub const detail = @import("crs_detail.zig");
+test {
+    _ = detail;
+}
 pub const Coverage = enum(u8) {
     incomplete,
     inspected,

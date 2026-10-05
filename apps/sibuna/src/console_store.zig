@@ -114,6 +114,7 @@ fn observations(owner: *Persistent, request: p.StorageRequest) !p.StorageResult 
         .challenge_difficulty_query => |input| @import("console_store_challenge_records.zig")
             .difficulty(owner, input),
         .incident_heads_read => |input| @import("console_incident_heads.zig").read(owner, input),
+        .incident_crs_read => |input| @import("console_crs_detail_read.zig").read(owner, input),
         .rankings_query => |input| @import("console_store_ranking_history.zig")
             .query(owner, input),
         .rankings_begin,

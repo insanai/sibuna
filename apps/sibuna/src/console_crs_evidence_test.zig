@@ -17,6 +17,7 @@ test "CRS evidence commits atomically, retries once and retains full-width revis
     try fixture.owner.db.exec(t.allocator, "CREATE TRIGGER reject_crs " ++
         "BEFORE INSERT ON console_crs_evidence " ++
         "BEGIN SELECT RAISE(ABORT,'injected'); END;");
+    var detail = exampleDetail();
     fixture.state.hooks.record_incident.?(fixture.state.hooks.context, .{
         .client_ip = "8.8.8.8",
         .user_agent = "evidence-test",
@@ -26,7 +27,9 @@ test "CRS evidence commits atomically, retries once and retains full-width revis
         .payload = "",
         .now = 100,
         .crs = example,
+        .crs_detail = &detail,
     });
+    detail.message = core.security_evidence.detail.Preview(96).copy("replaced caller bytes");
     try fixture.owner.tick();
     try counts(fixture, 0);
     try fixture.owner.db.exec(t.allocator, "DROP TRIGGER reject_crs");
@@ -41,12 +44,17 @@ test "CRS evidence commits atomically, retries once and retains full-width revis
         .module = .inspection,
     } })).page;
     const parsed = try std.json.parseFromSlice(struct {
-        rows: []const struct { crs: ?core.security_evidence.Wire, campaign: ?[]const u8 },
+        rows: []const struct {
+            id: []const u8,
+            crs: ?core.security_evidence.Wire,
+            campaign: ?[]const u8,
+        },
     }, t.allocator, result.slice(), .{ .ignore_unknown_fields = true });
     defer parsed.deinit();
     try t.expectEqual(@as(usize, 1), parsed.value.rows.len);
     try t.expectEqualDeep(example, try parsed.value.rows[0].crs.?.decode());
     try t.expect(parsed.value.rows[0].campaign == null);
+    try verifyDetail(fixture, try std.fmt.parseInt(u64, parsed.value.rows[0].id, 10));
     const grouped = (try fixture.run(.{ .events_query = .{
         .session_digest = @splat(1),
         .grouped = true,
@@ -58,6 +66,46 @@ test "CRS evidence commits atomically, retries once and retains full-width revis
     try t.expectEqual(p.Failure.unauthorized, (try fixture.run(.{ .events_query = .{
         .session_digest = @splat(1),
     } })).failed);
+    try t.expectEqual(p.Failure.unauthorized, (try fixture.run(.{ .incident_crs_read = .{
+        .session_digest = @splat(1),
+        .id = 1,
+    } })).failed);
+}
+
+fn exampleDetail() core.security_evidence.detail.Detail {
+    const api = core.security_evidence.detail;
+    return .{
+        .rule_id = example.rule_id,
+        .phase = example.phase,
+        .message = api.Preview(96).copy("SQL injection %{MATCHED_VAR}"),
+        .tags = @as([1]?api.Preview(64), .{api.Preview(64).copy("attack-sqli")}) ++
+            @as([3]?api.Preview(64), @splat(null)),
+        .tag_count = 1,
+        .score = .{ .buckets = @as([1]api.Bucket, .{.{ .writes = 1, .delta = 5 }}) ++
+            @as([7]api.Bucket, @splat(.{})) },
+    };
+}
+
+fn verifyDetail(fixture: *fixtures.Fixture, id: u64) !void {
+    const result = try fixture.run(.{ .incident_crs_read = .{
+        .session_digest = @splat(1),
+        .id = id,
+    } });
+    defer p.releaseResult(result, fixture.owner.gpa);
+    try t.expectEqualDeep(exampleDetail(), result.incident_crs.detail.?);
+    const absent = try fixture.run(.{ .incident_crs_read = .{
+        .session_digest = @splat(1),
+        .id = std.math.maxInt(i64),
+    } });
+    defer p.releaseResult(absent, fixture.owner.gpa);
+    try t.expect(absent.incident_crs.detail == null);
+    try fixture.owner.db.exec(t.allocator, "UPDATE console_crs_evidence SET detail=NULL");
+    const historical = try fixture.run(.{ .incident_crs_read = .{
+        .session_digest = @splat(1),
+        .id = id,
+    } });
+    defer p.releaseResult(historical, fixture.owner.gpa);
+    try t.expect(historical.incident_crs.detail == null);
 }
 
 fn counts(fixture: *fixtures.Fixture, expected: usize) !void {

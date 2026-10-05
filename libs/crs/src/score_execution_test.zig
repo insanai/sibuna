@@ -43,7 +43,7 @@ test "false chains and multiMatch retain actual root totals and unexpanded metad
     const event = slot.state.events[1];
     try t.expectEqual(@as(?usize, 3), event.score_owner);
     try t.expectEqualStrings("hit Xx", event.message);
-    try t.expectEqualStrings("hit %{MATCHED_VAR}", event.message_template);
+    try t.expectEqualStrings("hit %{MATCHED_VAR}", event.message_template.?);
     try t.expectEqualStrings("score 8", event.tags[0]);
     try t.expectEqualStrings("score %{TX.inbound_anomaly_score_pl1}", event.tag_templates[0]);
     for (slot.state.events[2..4]) |repeated| try t.expect(repeated.score_owner == null);
@@ -88,7 +88,7 @@ test "chain templates follow executed leaf to root metadata precedence" {
     _ = try runner.run(.request_body);
     const event = slot.state.events[0];
     try t.expectEqualStrings("root must-not-escape", event.message);
-    try t.expectEqualStrings("root %{TX.secret}", event.message_template);
+    try t.expectEqualStrings("root %{TX.secret}", event.message_template.?);
     try t.expectEqualStrings("leaf %{TX.secret}", event.tag_templates[0]);
     try t.expectEqualStrings("root %{TX.secret}", event.tag_templates[1]);
 }

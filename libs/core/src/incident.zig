@@ -8,6 +8,8 @@ pub const Incident = struct {
     now: u64,
     evidence: Evidence = .{},
     crs: ?@import("security-evidence").Crs = null,
+    /// The hook copies this owned, unexpanded evidence before returning.
+    crs_detail: ?*const @import("security-evidence").detail.Detail = null,
     /// Redacted heads captured at the incident (see incident_heads.zig); empty when off.
     request_head: []const u8 = "",
     response_head: []const u8 = "",

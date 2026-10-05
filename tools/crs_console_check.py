@@ -57,6 +57,36 @@ def findings(port, cookie, csrf, category):
         time.sleep(0.05)
 
 
+def rule_details(port, cookie, csrf, rows):
+    endpoint = "/console/api/events/crs"
+    assert helper.request(port, "POST", endpoint, {"id": rows[0]["id"]})[0] == 401
+    assert helper.request(port, "POST", endpoint, {"id": rows[0]["id"]}, cookie)[0] == 400
+    observed = []
+    all_details = []
+    for row in rows:
+        status, _, body = helper.request(port, "POST", endpoint, {"id": row["id"]}, cookie, csrf)
+        assert status == 200 and len(body) < 16384, (status, body[:128])
+        value = json.loads(body)
+        assert str(value["id"]) == row["id"] and value["detail"] is not None, value
+        detail = value["detail"]
+        all_details.append(detail)
+        assert detail["rule_id"] == row["crs"]["rule_id"]
+        assert detail["phase"] == row["crs"]["phase"] and detail["version"] == 1
+        previews = [detail["message"], *detail["tags"]]
+        for preview in previews:
+            if preview is not None:
+                literal = bytes.fromhex(preview["hex"])
+                assert len(literal) <= preview["bytes"]
+                assert b"private-crs-value" not in literal and b"1' OR '1'='1" not in literal
+        if detail["score"] is not None:
+            score = detail["score"]
+            assert score["scope"] == "root_net" and len(score["buckets"]) == 8
+            assert any(bucket["writes"] for bucket in score["buckets"])
+            observed.append(detail)
+    assert any(value["rule_id"] == 942100 and
+               value["score"]["buckets"][0]["delta"] == "5" for value in observed), all_details
+
+
 def node_status(port, cookie, mode, evidence):
     status, _, body = helper.request(port, "GET", "/console/api/nodes/local", cookie=cookie)
     assert status == 200, body
@@ -149,6 +179,7 @@ def qualify(binary, source, root):
                 category = "audit:crs" if mode == "audit" else "waf:crs"
                 rows = findings(port, cookie, csrf, category)
                 node_status(port, cookie, mode, rows[0]["crs"])
+                rule_details(port, cookie, csrf, findings(port, cookie, csrf, ""))
                 for row in rows:
                     evidence = row["crs"]
                     assert evidence is not None and row["path"] == "/ordinary", row
@@ -177,6 +208,8 @@ def qualify(binary, source, root):
                                       cookie, csrf)[0] == 200
                 assert helper.request(port, "POST", "/console/api/events/query", {},
                                       cookie, csrf)[0] == 401
+                assert helper.request(port, "POST", "/console/api/events/crs",
+                                      {"id": rows[0]["id"]}, cookie, csrf)[0] == 401
     # The saved selection remains authoritative across restarts. A mode change
     # requires a reviewed management revision, rather than new startup flags.
     with (root / "console-retained.log").open("w+") as logfile:
@@ -185,6 +218,7 @@ def qualify(binary, source, root):
             cookie, csrf = login(port)
             retained = findings(port, cookie, csrf, "audit:crs")
             assert audit_ids == {row["id"] for row in retained}, retained
+            rule_details(port, cookie, csrf, retained)
     tuned_root = root / "tuned"
     tuned_root.mkdir()
     credentials = bootstrap.initialize(str(binary), str(tuned_root / "console-data"), "crs-admin")
