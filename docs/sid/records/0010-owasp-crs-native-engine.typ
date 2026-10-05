@@ -130,6 +130,7 @@ not treat those costs as solved by mathematical notation.
   [`libs/crs-update`], [Off-path, bounded publisher retrieval and authenticated candidate preparation; shared by CLI and console jobs. No daemon or database imports.],
   [`libs/policy`], [Compose CRS with existing inspection and policy; preserve denial precedence.],
   [`libs/net`], [Generic bounded body acquisition and response holdback contracts; no rule knowledge.],
+  [`libs/compression`], [Pure bounded gzip/zlib expansion shared by HTTP representation decoding and signed-archive preparation. No allocation or application imports.],
   [Daemon], [Preallocate transaction slots, pin immutable programs, run updates and compose storage and control services.],
   [Console service], [Authorize updates, provide job status, revisions, compatibility findings and audit.],
   [Console UI], [Render the operator controls and coverage; never evaluate security decisions in Wasm.],
@@ -1419,6 +1420,38 @@ Content encoding requires bounded decoding with an expansion limit; inspection o
 wire bytes is not inspection of the decoded representation. Oversize and timeout outcomes
 have explicit policies. The safe enforcing default refuses an uninspectable protected body;
 operators can configure a documented streaming exclusion for a route or MIME type.
+
+The shared inflater preserves compressed input and writes into disjoint reserved output and
+history storage. It validates gzip reserved flags, optional header CRC, payload CRC and
+terminal size; zlib validates FCHECK, compression/window fields and Adler-32 and refuses
+external dictionaries. HTTP accepts gzip, its x-gzip alias and zlib-wrapped deflate as specified
+by #link("https://www.rfc-editor.org/rfc/rfc9110.html#section-8.4.1")[RFC 9110 §8.4.1].
+It combines ordered Content-Encoding fields and decodes at most four layers in reverse
+order. Every layer has an independent decoded ceiling and uses the transaction work ledger.
+The compressed wire ceiling is independent of the decoded ceiling. Unsupported codings,
+invalid wrappers, expansion overflow and exhausted work are refusals, never identity data.
+Identity data remains an immutable borrow and obeys the decoded ceiling.
+
+HTTP gzip permits at most 64 concatenated members, as defined by
+#link("https://www.rfc-editor.org/rfc/rfc1952.html#section-2.2")[RFC 1952 §2.2]; each member
+validates its own checksum and terminal size against the same aggregate output ceiling.
+Signed rule archives require exactly one member and reject trailing data. A failed decode
+cannot publish partial scratch as an accepted representation. The HTTP connector retains
+the original encoded entity and metadata for replay rather than substituting decoded bytes
+under their original Content-Encoding.
+
+*Lemma (bounded representation expansion).* For $K <= 4$ coding layers, compressed
+lengths $C_i$ and decoded lengths $D_i <= D$, expansion takes $O(sum_i (C_i + D_i))$ visits
+and two buffers of size $D$, one 64 KiB history buffer and bounded local decoder state.
+
+*Proof.* Each wrapper scan advances monotonically. The native DEFLATE decoder consumes
+bounded Huffman symbols and length/distance runs, while checksum and copy passes advance
+over decoded bytes. Every output contribution checks the aggregate ceiling before copying;
+all members of a layer share that count. Alternating two disjoint buffers suffices because
+each layer consumes only its preceding immutable result. Charging input and output visits
+to the shared work ledger bounds the permitted work further. Checksums authenticate format
+integrity, not publisher identity or payload safety. This argument assumes the pinned native
+DEFLATE implementation and does not establish a wall-clock latency guarantee. $square$
 
 WebSocket upgrades inspect the HTTP handshake and then become a tunnel. CRS does not
 inspect WebSocket frames. Server-sent events and other indefinite responses use an explicit

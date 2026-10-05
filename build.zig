@@ -130,6 +130,7 @@ fn addModules(
 ) Modules {
     _ = b.step("test", "Run all unit and end-to-end tests");
     _ = addText(b);
+    const compression = @import("build/compression.zig").add(b);
     const socket = addSocket(b, target, optimize);
     const core = b.addModule("sibuna-core", .{
         .root_source_file = b.path("libs/core/src/root.zig"),
@@ -151,6 +152,7 @@ fn addModules(
     });
     net.addImport("core", core);
     net.addImport("socket", socket);
+    net.addImport("compression", compression);
 
     const policy = b.addModule("sibuna-policy", .{
         .root_source_file = b.path("libs/policy/src/root.zig"),
@@ -186,7 +188,7 @@ fn addModules(
         .optimize = optimize,
     });
 
-    const crs = @import("build/crs.zig").add(b, target, optimize);
+    const crs = @import("build/crs.zig").add(b, target, optimize, compression);
     return .{
         .socket = socket,
         .core = core,

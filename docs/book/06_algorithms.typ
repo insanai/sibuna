@@ -291,11 +291,21 @@ The entity adapter applies phase-one processor controls before publishing phase-
 preserves empty HTTP entities and raw binary bodies, and poisons all evaluation state on
 acquisition failure. This prevents a caller from evaluating a prior view after a failed parser.
 
+Generic transport helpers now acquire bounded entities without publishing partial bodies
+and can inspect an origin response before sending its head. Held chunked responses replay
+with their actual content length. An explicit streaming decision covers indefinite responses;
+WebSocket inspection ends at the validated handshake. The shared bounded inflater checks
+gzip and zlib wrappers and checksums, handles ordered content codings and retains the
+encoded entity for unchanged replay. It shares the transaction work ledger and uses separate
+wire and decoded ceilings. These building blocks still require daemon phase composition and
+authorized generation selection before CRS can be enabled.
+
 Development qualification runs separately from enabling protection:
 
 ```sh
 zig build crs-test -j2
 zig build crs-update-test -j2
+zig build compression-test net-test -j2
 zig build crs-audit -j2 -- vendor/crs --regex
 zig build crs-regex-check -j2
 zig build crs-primitive-check -j2 -- --download

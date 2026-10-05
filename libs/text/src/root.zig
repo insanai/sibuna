@@ -1,6 +1,7 @@
 //! Pure text contracts, shared by native and Wasm consumers without allocation.
 const std = @import("std");
 pub const http_fields = @import("http_fields.zig");
+pub const buffers = @import("buffers.zig");
 pub const mime = @import("mime.zig");
 
 test {

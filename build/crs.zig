@@ -4,6 +4,7 @@ pub fn add(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
     optimize: std.lang.Optimize,
+    compression: *std.Build.Module,
 ) *std.Build.Module {
     const dictionary = b.createModule(.{
         .root_source_file = b.path("vendor/libinjection/table.zig"),
@@ -16,6 +17,7 @@ pub fn add(
         .target = target,
         .optimize = optimize,
     });
+    module.addImport("compression", compression);
     module.addImport("libinjection-data", dictionary);
     module.addImport("crs-trust", trust);
     module.addImport("text", b.modules.get("sibuna-text").?);
@@ -24,6 +26,7 @@ pub fn add(
         .target = b.graph.host,
         .optimize = optimize,
     });
+    host.addImport("compression", compression);
     host.addImport("libinjection-data", dictionary);
     host.addImport("crs-trust", trust);
     host.addImport("text", b.modules.get("sibuna-text").?);
@@ -34,7 +37,7 @@ pub fn add(
     const tests = b.addTest(.{ .root_module = host });
     const test_step = b.step("crs-test", "Test bounded native CRS source contracts");
     test_step.dependOn(&b.addRunArtifact(tests).step);
-    test_step.dependOn(addCompilationChecks(b));
+    test_step.dependOn(addCompilationChecks(b, compression));
     b.top_level_steps.get("test").?.step.dependOn(test_step);
     const audit = b.addExecutable(.{
         .name = "sibuna-crs-audit",
@@ -79,7 +82,7 @@ fn addRegexCheck(
         .dependOn(&check.step);
 }
 
-fn addCompilationChecks(b: *std.Build) *std.Build.Step {
+fn addCompilationChecks(b: *std.Build, compression: *std.Build.Module) *std.Build.Step {
     const step = b.step("crs-compile-check", "Compile native CRS contracts for Windows and Wasm");
     const targets: []const std.Target.Query = &.{
         .{ .cpu_arch = .x86_64, .os_tag = .windows },
@@ -93,6 +96,7 @@ fn addCompilationChecks(b: *std.Build) *std.Build.Step {
             .target = target,
             .optimize = .small,
         });
+        module.addImport("compression", compression);
         module.addImport("text", b.modules.get("sibuna-text").?);
         module.addImport("libinjection-data", b.createModule(.{
             .root_source_file = b.path("vendor/libinjection/table.zig"),

@@ -39,7 +39,7 @@ const decode_window = 16 * 1024;
 pub fn read(options: Options, framing: Framing) Error![]const u8 {
     if (options.output.len > maximum_entity or options.framing_limit > maximum_framing)
         return error.InvalidEntityLimits;
-    @import("buffer_ownership.zig").assertDisjoint(options.output, options.reader.buffer);
+    @import("text").buffers.assertDisjoint(options.output, options.reader.buffer);
     var source: Source = .{ .options = options };
     switch (framing) {
         .none => {},

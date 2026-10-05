@@ -3,7 +3,7 @@
 const std = @import("std");
 const entity = @import("entity.zig");
 const Io = std.Io;
-const assertDisjoint = @import("buffer_ownership.zig").assertDisjoint;
+const assertDisjoint = @import("text").buffers.assertDisjoint;
 
 pub const Error = error{
     InspectionDenied,

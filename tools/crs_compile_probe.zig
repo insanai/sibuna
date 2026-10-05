@@ -472,3 +472,21 @@ pub export fn crsPublicationProbe(
     transaction.finish(.local_response) catch return 9;
     return if (metadata.revision == lease.generation().options.revision) 0 else 10;
 }
+
+/// Runtime compressed input keeps the shared bounded inflater reachable in
+/// native and Wasm portability probes instead of pruning a constant bad header.
+pub export fn crsExpansionProbe(
+    bytes: [*]const u8,
+    length: usize,
+    output: [*]u8,
+    output_length: usize,
+) u8 {
+    if (length > 8 * 1024 * 1024 or output_length > 32 * 1024 * 1024) return 2;
+    var window: [std.compress.flate.max_window_len]u8 = undefined;
+    var budget: crs.work.Budget = .{ .remaining = 1_000_000_000 };
+    _ = crs.release_gzip.decode(bytes[0..length], .{
+        .output = output[0..output_length],
+        .window = &window,
+    }, &budget) catch return 1;
+    return 0;
+}

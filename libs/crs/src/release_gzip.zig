@@ -2,7 +2,7 @@
 //! authenticating the compressed archive. No filesystem or external codec exists.
 const std = @import("std");
 const tar = @import("release_tar.zig");
-const buffers = @import("buffers.zig");
+const codec = @import("compression");
 const work = @import("work.zig");
 pub const Error = work.Error || error{
     ArchiveInputLimit,
@@ -17,27 +17,19 @@ pub fn decode(input: []const u8, scratch: Scratch, budget: *work.Budget) Error![
     if (scratch.output.len == 0 or scratch.output.len > tar.maximum_expanded or
         scratch.window.len != std.compress.flate.max_window_len)
         return error.ExpandedArchiveLimit;
-    buffers.assertExclusive(&.{ input, scratch.output, scratch.window });
-    try budget.debitLinear(input.len, 16, 1);
-    var source: std.Io.Reader = .fixed(input);
-    var inflater: std.compress.flate.Decompress = .init(&source, .gzip, scratch.window);
-    var buffer: [8192]u8 = undefined;
-    var crc = std.hash.crc.@"CRC-32/ISO-HDLC".init();
-    var used: usize = 0;
-    while (true) {
-        const count = inflater.reader.readSliceShort(&buffer) catch
-            return error.InvalidCompressedArchive;
-        if (count == 0) break;
-        if (count > scratch.output.len - used) return error.ExpandedArchiveLimit;
-        try budget.debitLinear(count, 4, 1);
-        @memcpy(scratch.output[used..][0..count], buffer[0..count]);
-        crc.update(buffer[0..count]);
-        used += count;
-    }
-    const footer = inflater.container_metadata.gzip;
-    if (footer.crc != crc.final() or footer.count != used or source.seek != input.len)
-        return error.InvalidArchiveChecksum;
-    return scratch.output[0..used];
+    return codec.decode(.{
+        .input = input,
+        .coding = .gzip,
+        .scratch = .{ .output = scratch.output, .window = scratch.window },
+    }, budget) catch |err| switch (err) {
+        error.WorkLimit => error.WorkLimit,
+        error.CompressedInputLimit => error.ArchiveInputLimit,
+        error.InvalidCompressionLimits, error.ExpansionLimit => error.ExpandedArchiveLimit,
+        error.InvalidCompressedData => error.InvalidCompressedArchive,
+        error.InvalidCompressedChecksum, error.CompressedMemberLimit => {
+            return error.InvalidArchiveChecksum;
+        },
+    };
 }
 
 test "archive expansion validates checksum, terminal size and exact compressed consumption" {
