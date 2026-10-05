@@ -114,24 +114,60 @@ test "CRS inspects decoded bodies while held replay retains the encoded represen
     }
 }
 
-test "decoding failure poisons every CRS owner and cannot finish as inspected" {
-    var fixture: Fixture = undefined;
-    try fixture.init(rules);
-    defer fixture.deinit();
-    var transaction = try fixture.begin(true);
-    var response: bridge.Response = undefined;
-    try response.init(&transaction);
-    var corrupt: [gzip.len]u8 = undefined;
-    @memcpy(&corrupt, gzip);
-    corrupt[corrupt.len - 8] ^= 1;
-    var raw: [256]u8 = undefined;
-    const encoded = try responseBytes(&raw, &corrupt);
-    try t.expectError(error.InspectionFailed, acquire(&response, encoded));
-    try t.expectEqual(error.InvalidCompressedChecksum, response.failure.?);
-    try t.expect(fixture.slot.state.failed and fixture.slot.context.failed);
-    try t.expectError(error.AcquisitionFailed, fixture.slot.input.view());
-    try t.expectError(error.InvalidCompressedChecksum, response.finish(.origin_unavailable));
-    try t.expect(transaction.end == null);
+test "failed decoding refuses enforcement but audit replay remains explicitly incomplete" {
+    for ([_]bool{ false, true }) |enforce| {
+        var fixture: Fixture = undefined;
+        try fixture.init(rules);
+        defer fixture.deinit();
+        var transaction = try fixture.begin(enforce);
+        var response: bridge.Response = undefined;
+        try response.init(&transaction);
+        var corrupt: [gzip.len]u8 = undefined;
+        @memcpy(&corrupt, gzip);
+        corrupt[corrupt.len - 8] ^= 1;
+        var raw: [256]u8 = undefined;
+        const encoded = try responseBytes(&raw, &corrupt);
+        const held = acquire(&response, encoded);
+        if (enforce) {
+            try t.expectError(error.InspectionFailed, held);
+        } else {
+            try t.expectEqualSlices(u8, &corrupt, (try held).body);
+        }
+        try t.expectEqual(error.InvalidCompressedChecksum, response.failure.?);
+        try t.expect(fixture.slot.state.failed and fixture.slot.context.failed);
+        try t.expectError(error.AcquisitionFailed, fixture.slot.input.view());
+        try t.expectError(error.InvalidCompressedChecksum, response.finish(.origin_unavailable));
+        try t.expect(transaction.end == null and response.completion == null);
+    }
+}
+
+test "audit work exhaustion streams only under the explicit incomplete-response policy" {
+    for ([_]bool{ false, true }) |refuse| {
+        var fixture: Fixture = undefined;
+        try fixture.init(rules);
+        defer fixture.deinit();
+        var transaction = try fixture.begin(false);
+        var response: bridge.Response = undefined;
+        try response.init(&transaction);
+        if (refuse) response.audit_failure = .refuse;
+        fixture.slot.budget.remaining = 0;
+        const hook = response.hooks();
+        const head: net.response_inspection.Head = .{
+            .bytes = "HTTP/1.1 200 OK\r\nContent-Length: 7\r\n\r\n",
+            .status = 200,
+            .framing = .{ .length = 7 },
+        };
+        const result = hook.inspectHeaders(head);
+        if (refuse) {
+            try t.expectError(error.InspectionFailed, result);
+        } else {
+            try t.expectEqual(net.response_inspection.Decision.stream, try result);
+        }
+        try t.expectEqual(error.WorkLimit, response.failure.?);
+        try t.expect(fixture.slot.state.failed);
+        try t.expectError(error.WorkLimit, response.finish(.origin_unavailable));
+        try t.expect(transaction.end == null);
+    }
 }
 
 test "streaming and WebSocket endings report absent body coverage without decoding it" {

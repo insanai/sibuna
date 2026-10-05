@@ -1559,7 +1559,14 @@ head storage, before metadata, allocator overhead and matcher scratch.
 Pool exhaustion returns a recoverable service-unavailable response. Body size limits return
 an explicit refusal before origin delivery. Work exhaustion in enforcement refuses the
 transaction; audit mode records an incomplete evaluation and continues according to its
-explicit audit policy. Invalid compiler input cannot enable audit or enforcement implicitly.
+explicit audit policy. The response adapter's audit default permits replay of a completely
+acquired, transport-valid original entity after a semantic decode or work failure. A failed
+header evaluation permits ordinary streaming without inventing body coverage. Both retain
+the first bounded failure code, poison the transaction and refuse an inspected completion;
+an operator can select refusal instead. This policy does not turn malformed transfer framing,
+incomplete acquisition or a violated transport bound into a deliverable response. Enforcement
+always refuses a semantic inspection failure. Invalid compiler input cannot enable audit or
+enforcement implicitly.
 Capture and incident queues retain bounded loss counters; logging loss must not reverse a
 decision. Error responses disclose neither payload secrets nor internal traces.
 

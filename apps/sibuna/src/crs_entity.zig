@@ -31,6 +31,9 @@ pub fn requestBody(
 pub const Response = struct {
     transaction: *Transaction,
     policy: enum { inspect, streaming_excluded },
+    // Audit may replay validated wire data after a semantic inspection failure.
+    // Its poisoned transaction remains incomplete; transport failures still fail.
+    audit_failure: enum { refuse, continue_uninspected } = .continue_uninspected,
     coding: net.content_coding.Plan = .{},
     bodyless: bool = false,
     completion: ?crs.http_transaction.End = null,
@@ -60,11 +63,11 @@ pub const Response = struct {
         const self: *Response = @ptrCast(@alignCast(context));
         var storage: [128]Header = undefined;
         const headers = net.response_fields.parse(head.bytes, &storage) catch |err|
-            return self.refused(err);
+            return self.failedHeaders(err);
         const result = self.transaction.responseHeaders(.{
             .status = head.status,
             .headers = headers,
-        }) catch |err| return self.refused(err);
+        }) catch |err| return self.failedHeaders(err);
         if (result == .denied) return self.denied();
         if (head.upgrade or self.policy == .streaming_excluded) {
             self.completion = if (head.upgrade) .handshake_only else .streaming_excluded;
@@ -74,7 +77,7 @@ pub const Response = struct {
         if (!self.bodyless) {
             const budget = &self.transaction.slot.budget;
             self.coding = net.content_coding.Plan.parse(headers, budget) catch |err|
-                return self.refused(err);
+                return self.failedHeaders(err);
         }
         return .hold;
     }
@@ -82,15 +85,16 @@ pub const Response = struct {
     fn onBody(context: *anyopaque, wire: []const u8) net.response_inspection.Error!void {
         const self: *Response = @ptrCast(@alignCast(context));
         const slot = self.transaction.slot;
-        self.transaction.checkPhase(.response_headers) catch |err| return self.refused(err);
+        self.transaction.checkPhase(.response_headers) catch |err| return self.failedBody(err);
         std.debug.assert(!self.bodyless or wire.len == 0);
         const decoded = if (self.bodyless) wire else self.coding.decode(wire, .{
             .output = slot.response,
             .alternate = slot.decode_alternate[0..slot.limits.response],
             .window = slot.inflate_window,
             .wire_limit = slot.limits.response,
-        }, &slot.budget) catch |err| return self.refused(err);
-        const result = self.transaction.responseBody(decoded) catch |err| return self.refused(err);
+        }, &slot.budget) catch |err| return self.failedBody(err);
+        const result = self.transaction.responseBody(decoded) catch |err|
+            return self.failedBody(err);
         if (result == .denied) return self.denied();
         self.completion = .inspected;
     }
@@ -100,9 +104,23 @@ pub const Response = struct {
         return error.InspectionDenied;
     }
 
-    fn refused(self: *Response, err: Error) net.response_inspection.Error {
+    fn failedHeaders(
+        self: *Response,
+        err: Error,
+    ) net.response_inspection.Error!net.response_inspection.Decision {
         self.fail(err);
+        if (self.canContinue()) return .stream;
         return error.InspectionFailed;
+    }
+
+    fn failedBody(self: *Response, err: Error) net.response_inspection.Error!void {
+        self.fail(err);
+        if (!self.canContinue()) return error.InspectionFailed;
+    }
+
+    fn canContinue(self: *const Response) bool {
+        return !self.transaction.slot.state.enforce and
+            self.audit_failure == .continue_uninspected;
     }
 
     pub fn fail(self: *Response, err: Error) void {
