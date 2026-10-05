@@ -2109,6 +2109,17 @@ exclusions and runtime exclusion entries are counted separately. A runtime exclu
 conditional on its controlling rule matching; a count cannot claim every request loses that
 coverage. Neither the comparison nor its fingerprints are evaluated on the request path.
 
+The authenticated comparison shares the joined preparation worker with private samples.
+It reauthenticates and compiles the saved baseline, copies its fixed-width inventory, releases
+that package, then reauthenticates and compiles the candidate. It never retains two compiled
+packages together. Its owned result binds both artifact identities, the candidate ID and
+expected saved revision. Atomic `crs.review` audit intent precedes work; fresh administrator,
+retained-source and revision checks precede completion. No rule source enters that audit.
+Results expire after one minute and belong to the issuing session. Every poll rechecks access.
+The console enables selection after a completed comparison matches both current artifacts;
+a changed candidate, baseline or revision requires a new comparison. The native `crs review`
+command uses the same API, session ownership and monotonic deadline as private tests.
+
 *Lemma (bounded review).* For $R <= 4096$ root rules and $B$ reviewed source/data bytes,
 fingerprint construction costs $O(B + R)$ after existing compilation resolution. Comparison
 costs $O(R log R)$ time and $O(R)$ owned workspace, followed by a linear merge. Returned

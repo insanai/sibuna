@@ -164,6 +164,25 @@ are rechecked when execution begins and before a result completes. The redacted 
 records the source and test intent; it contains no sample. A lost response or expired result
 requires a new private test, never a selection retry.
 
+Before selecting a candidate, the console compares its verified rules with the saved
+selection. It reports added, removed, modified and reordered rules, unchanged totals,
+configured target exclusions and conditional runtime exclusion entries. At most 64 changed
+rules are shown; additional changes are counted. Selection stays disabled while comparison
+is pending or stale. Settings and authenticated source digests are reviewed separately.
+A comparison never contacts the origin or changes protection.
+
+CLI operators can request the same comparison:
+
+```sh
+sibuna crs review --origin http://127.0.0.1:9443 --username admin \
+    --password-file ./console-password --id <candidate-id> --revision <saved-revision>
+```
+
+The result belongs to its issuing session and is retained for one minute. A fresh administrator
+check, retained-source check and saved-revision check precede completion. The audit records
+`crs.review` intent without rule source or request content. If the selection changes, refresh
+status and compare again before a separate `crs select` command.
+
 Engine deployments can manage rules through a private local directory, without the console
 or persistent application storage. Prepare and review a signed candidate first, then copy
 its sources into a versioned local selection:
