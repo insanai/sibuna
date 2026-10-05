@@ -1534,6 +1534,10 @@ retain their meanings; external outcome telemetry selects a response refusal onc
 than counting both admission and denial. Boot-local CRS counters distinguish complete,
 headers, handshake and excluded-stream coverage, incomplete evaluations and would-deny
 findings. They are exposed on the existing internal metrics endpoint when CRS is configured.
+Admission owns the external outcome when response inspection is absent. A held response
+owns it after inspection; an excluded stream owns it at early slot release. Relay completion
+must not count an outcome already selected by either path. Console-enabled listener tests
+exercise this ownership; compiling out telemetry cannot qualify exact outcome accounting.
 After response-header enforcement, trusted operator rules may set
 `tx.sibuna_stream_response=1` for a route or MIME type (`0` retains holdback; other values
 are invalid). Such an exception declares omitted response-body coverage and cannot bypass

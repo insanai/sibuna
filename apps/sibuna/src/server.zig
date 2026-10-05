@@ -1150,7 +1150,12 @@ fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule
     var origin_status: u16 = 0;
     var origin: OriginHead = .{ .extra = &cfg.console_capture_headers };
     defer if (build_options.console) admittedComplete(ctx, origin_status, &origin);
-    defer if (!ctx.response_refused) countOutcome(ctx, .admitted);
+    // Ordinary admissions were counted above. Held CRS responses count after
+    // inspection; exclusions already counted at the slot's early release.
+    defer if (ctx.crs_response) |inspection| {
+        if (!ctx.response_refused and !inspection.partial_finalized)
+            countOutcome(ctx, .admitted);
+    };
     const pin = if (ctx.head_pinned) null else HeadPin.init(c.reader, ctx.req);
     defer if (pin) |held| held.release();
     if (ctx.crs_response) |inspection| inspection.fallback = .origin_unavailable;
