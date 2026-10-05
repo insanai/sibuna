@@ -1530,6 +1530,15 @@ body or response. It offers a named headers profile and reports phases 2–4 as 
 A full-body enforcing profile is rejected in forward-auth mode. Console status and audit
 records distinguish full reverse-proxy coverage from metadata admission.
 
+The daemon composition layer strips and validates CRS options independently of data-plane
+and console parsing. Off returns before opening artifact files or reserving a pool. For an
+enabled process, startup authenticates and compiles the artifact again, applies explicit
+startup configuration and validates it against the listener's actual observation contract.
+The manifest revision identifies its signed sources; startup overrides are process
+configuration, not persisted management edits. One stable runtime owns publication and
+generation leases. Its source read buffers are released after compilation, and its
+generations remain alive until every listener and management reader has joined.
+
 = Resource limits and failure policy
 
 The compiler stores configurable bounds in the generation manifest. Initial hard ceilings are

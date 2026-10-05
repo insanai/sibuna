@@ -21,6 +21,9 @@ tampering, changed lengths, identity mismatch and retention of a prior prepared 
 `compression-test`, `net-test` and `crs-http-test` check bounded representation decoding,
 response publication and phase composition. They preserve encoded replay and verify that
 streaming and WebSocket exclusions cannot bypass response-header denials.
+`crs-start-test` checks startup option conflicts, observable profiles, resource bounds and
+the disabled lifecycle. The signed-artifact probe also exercises the startup owner's
+generation leases, forward-auth profile, exhaustion cleanup and joined-reader teardown.
 
 ---
 

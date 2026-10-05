@@ -73,6 +73,7 @@ fn run(init: std.process.Init, out: *Io.Writer) !u8 {
     try sourceRefusals(staging, manifest, &source);
     try updater.staging.write(staging, manifest, &source);
     try duplicateRefusal(staging, manifest, &source);
+    try @import("crs_startup_fixture.zig").qualify(init, staged, manifest, now);
     @memset(archive, '!');
     @memset(signature, '!');
     @memset(configuration, '!');
