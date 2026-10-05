@@ -7,24 +7,12 @@ const sessions = @import("console_session.zig");
 const client = @import("console_client.zig");
 const reply = @import("crs_management_reply.zig");
 const Writer = std.Io.Writer;
-const Error = sessions.Error || error{ InvalidConfiguration, PreparationFailed };
-const Budget = struct {
-    started: i96,
-    seconds: u32,
-
-    fn remaining(self: Budget, io: std.Io) Error!u64 {
-        const elapsed = std.Io.Clock.awake.now(io).nanoseconds - self.started;
-        const limit = @as(i96, self.seconds) * std.time.ns_per_s;
-        if (elapsed >= limit) return error.Deadline;
-        return @intCast(limit - @max(0, elapsed));
-    }
-
-    fn wait(self: Budget, io: std.Io) Error!void {
-        const remaining_ns = try self.remaining(io);
-        std.Io.sleep(io, .fromNanoseconds(@min(remaining_ns, std.time.ns_per_s)), .awake) catch
-            return error.Canceled;
-    }
+const Error = sessions.Error || error{
+    InvalidConfiguration,
+    PreparationFailed,
+    PrivateTestFailed,
 };
+const Budget = @import("console_deadline.zig").Budget;
 
 pub fn execute(allocator: std.mem.Allocator, io: std.Io, argv: []const []const u8) u8 {
     const args = arguments.parse(argv) catch |err| {
@@ -66,6 +54,7 @@ fn run(
         .seconds = args.timeout,
     };
     switch (args.operation) {
+        .@"test" => return @import("crs_test_client.zig").run(&session, args, budget, writer),
         .status => try reply.status(&session, snapshot),
         .select, .discard => {
             try edit(&session, args);

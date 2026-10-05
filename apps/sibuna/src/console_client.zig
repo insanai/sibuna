@@ -32,6 +32,8 @@ pub const Endpoint = enum {
     policies_import_chunk,
     policies_import_commit,
     crs_status,
+    crs_test,
+    crs_test_read,
     crs_prepare,
     crs_select,
     crs_discard,
@@ -212,6 +214,8 @@ fn path(endpoint: Endpoint) []const u8 {
         .policies_read => "/console/api/policies/read",
         .policies_import_chunk => "/console/api/policies/import/chunk",
         .policies_import_commit => "/console/api/policies/import/commit",
+        .crs_test => "/console/api/crs/test",
+        .crs_test_read => "/console/api/crs/test/result",
         .crs_status => "/console/api/crs/status",
         .crs_prepare => "/console/api/crs/prepare",
         .crs_select => "/console/api/crs/select",
@@ -224,6 +228,7 @@ fn readOnly(endpoint: Endpoint) bool {
 }
 
 fn bodyLimit(endpoint: Endpoint) usize {
+    if (endpoint == .crs_test) return p.crs_tests.sample.sample_json_bytes;
     return if (endpoint == .crs_prepare) p.crs_api.body_bytes else 2048;
 }
 

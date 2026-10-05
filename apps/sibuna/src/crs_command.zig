@@ -72,7 +72,7 @@ fn path(destination: *?[]const u8, value: []const u8) Error!void {
 }
 
 pub fn execute(allocator: std.mem.Allocator, io: std.Io, argv: []const []const u8) u8 {
-    if (argv.len != 0 and std.mem.eql(u8, argv[0], "test"))
+    if (argv.len != 0 and std.mem.eql(u8, argv[0], "test") and !hasOrigin(argv))
         return @import("crs_test_command.zig").execute(allocator, io, argv);
     if (localCommand(argv)) return @import("crs_local_command.zig").execute(allocator, io, argv);
     if (managed(argv)) {
@@ -135,6 +135,11 @@ pub fn execute(allocator: std.mem.Allocator, io: std.Io, argv: []const []const u
     ) catch return outputFailed();
     output.interface.flush() catch return outputFailed();
     return 0;
+}
+
+fn hasOrigin(argv: []const []const u8) bool {
+    for (argv) |arg| if (std.mem.eql(u8, arg, "--origin")) return true;
+    return false;
 }
 
 fn localCommand(argv: []const []const u8) bool {

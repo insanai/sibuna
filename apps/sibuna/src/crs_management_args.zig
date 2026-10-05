@@ -3,7 +3,7 @@ const std = @import("std");
 const p = @import("console").protocol;
 const Version = @import("crs").release_version.Version;
 const sessions = @import("console_session.zig");
-pub const Operation = enum { status, check, update, mode, rollback, select, discard };
+pub const Operation = enum { status, check, update, mode, rollback, select, discard, @"test" };
 pub const Args = struct {
     operation: Operation,
     origin: []const u8 = "",
@@ -14,6 +14,7 @@ pub const Args = struct {
     version: ?Version = null,
     configuration: ?[]const u8 = null,
     settings: ?[]const u8 = null,
+    sample_file: ?[]const u8 = null,
     timeout: u32 = 120,
 };
 pub const Error = error{
@@ -27,6 +28,7 @@ pub const Error = error{
     RevisionRequired,
     IdentifierRequired,
     ModeRequired,
+    CaseRequired,
 };
 const Option = enum {
     origin,
@@ -40,11 +42,12 @@ const Option = enum {
     configuration,
     settings,
     timeout,
+    case_file,
 };
 const names = .{
     "--origin",        "--username", "--password-file", "--factor-file",
     "--revision",      "--id",       "--mode",          "--version",
-    "--configuration", "--settings", "--timeout",
+    "--configuration", "--settings", "--timeout",       "--case",
 };
 
 pub fn parse(argv: []const []const u8) Error!Args {
@@ -78,6 +81,7 @@ pub fn parse(argv: []const []const u8) Error!Args {
             .version => output.version = Version.parse(value) catch return error.InvalidValue,
             .configuration => output.configuration = value,
             .settings => output.settings = value,
+            .case_file => output.sample_file = value,
             .timeout => {
                 const timeout = try number(value, 300);
                 if (timeout == 0) return error.InvalidValue;
@@ -112,11 +116,15 @@ fn validate(args: Args) Error!void {
         return error.UnexpectedOption;
     if (args.operation == .mode) {
         if (args.mode == null) return error.ModeRequired;
-    } else if (args.mode != null) return error.UnexpectedOption;
+    } else if (args.operation != .@"test" and args.mode != null) return error.UnexpectedOption;
     if (args.operation == .status) {
         if (args.revision != null or args.id != null) return error.UnexpectedOption;
     } else if (args.revision == null) return error.RevisionRequired;
-    if ((args.operation == .select or args.operation == .discard) and args.id == null)
+    if (args.operation == .@"test") {
+        if (args.sample_file == null) return error.CaseRequired;
+    } else if (args.sample_file != null) return error.UnexpectedOption;
+    if ((args.operation == .select or args.operation == .discard or args.operation == .@"test") and
+        args.id == null)
         return error.IdentifierRequired;
 }
 
@@ -133,6 +141,15 @@ test "managed CRS commands require explicit revisions and reject mixed rollback 
     try t.expectError(error.UnexpectedOption, parse(&(.{"rollback"} ++ auth ++ .{
         "--revision", "1", "--mode", "off",
     })));
+    try t.expectError(error.CaseRequired, parse(&(.{"test"} ++ auth ++ .{
+        "--revision", "1", "--id", "11111111111111111111111111111111",
+    })));
+    const testing = try parse(&(.{"test"} ++ auth ++ .{
+        "--revision", "1",           "--id",   "11111111111111111111111111111111",
+        "--case",     "sample.json", "--mode", "enforce",
+    }));
+    try t.expectEqual(Operation.@"test", testing.operation);
+    try t.expectEqualStrings("sample.json", testing.sample_file.?);
     const command = try parse(&(.{"update"} ++ auth ++ .{
         "--revision", "0", "--version", "4.30.0", "--settings", "bounds.json",
     }));

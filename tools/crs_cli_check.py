@@ -97,6 +97,15 @@ def qualify(binary, source, root):
         observed = command(binary, auth, "status")
         assert int(observed["revision"]) == 1 and observed["current"]["artifact"][
             "settings"]["mode"] == "audit", observed
+        private_case = root / "remote-case.json"
+        private_case.write_text(json.dumps({"request": {"target": ATTACK, "headers": [
+            {"name": key, "value": value} for key, value in HEADERS.items()]}}))
+        view = command(binary, auth, "status")
+        tested = command(binary, auth, "test", "--id", view["current"]["id"],
+                         "--revision", "1", "--case", str(private_case), "--mode", "enforce")
+        assert tested["private_test"] and not tested["origin_contacted"], tested
+        assert tested["result"]["report"]["denied"], tested
+        assert status(port, cookie, csrf)["revision"] == 1
         prepared = command(binary, auth, "mode", "--mode", "enforce", "--revision", "1")
         assert prepared["protection"] == "unchanged"
         assert prepared["candidate"]["artifact"]["settings"]["mode"] == "enforce"
