@@ -154,6 +154,12 @@ fn observe(slot: *const slots.Slot, output: *contract.Report) void {
     output.would_deny = state.would_deny;
     if (state.denied or state.would_deny) output.selected_status = state.status;
     for (state.events[0..state.event_used]) |event| {
+        // Setup actions and intentionally unlogged matches must not displace
+        // security findings. Terminal decisions stay visible even with nolog.
+        if ((!event.save or event.no_audit) and !event.would_deny) {
+            output.unlogged_matches += 1;
+            continue;
+        }
         if (event.message.len == 0 and event.tags.len == 0 and !event.would_deny) continue;
         if (output.event_count == output.events.len) {
             output.omitted_events += 1;

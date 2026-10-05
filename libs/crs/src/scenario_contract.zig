@@ -103,6 +103,23 @@ pub const Report = struct {
     events: [event_capacity]?Event = @splat(null),
     event_count: usize = 0,
     omitted_events: usize = 0,
+    unlogged_matches: usize = 0,
+
+    pub fn validate(self: *const Report) error{InvalidReport}!void {
+        if (self.event_count > event_capacity or self.attempted_phase > 5 or
+            self.work_used > 1_000_000_000 or (self.denied and
+            (!self.would_deny or self.mode != .enforce)) or
+            (self.failure != null and self.coverage != .incomplete)) return error.InvalidReport;
+        if (self.selected_status) |status| if (status < 100 or status > 599)
+            return error.InvalidReport;
+        for (self.events[0..self.event_count]) |item| {
+            const event = item orelse return error.InvalidReport;
+            if (event.phase < 1 or event.phase > 5 or event.severity > 7)
+                return error.InvalidReport;
+        }
+        for (self.events[self.event_count..]) |event|
+            if (event != null) return error.InvalidReport;
+    }
 
     pub fn jsonStringify(self: Report, w: *std.json.Stringify) std.json.Stringify.Error!void {
         try w.beginObject();

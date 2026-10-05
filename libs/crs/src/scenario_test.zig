@@ -217,3 +217,31 @@ test "private request-only tests label absent responses without inventing an ori
     try t.expectEqual(contract.Coverage.response_not_supplied, report.coverage);
     try t.expect(report.selected_status == null);
 }
+
+test "unlogged setup matches cannot crowd out a private terminal finding" {
+    var source: [16384]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&source);
+    for (1..101) |id| try writer.print(
+        "SecAction \"id:{d},phase:1,nolog,pass,msg:'setup'\"\n",
+        .{id},
+    );
+    try writer.writeAll("SecRule ARGS:q \"@streq attack\" " ++
+        "\"id:1000,phase:2,nolog,deny,msg:'terminal'\"\n");
+    var program = try prepare(writer.buffered(), &.{});
+    defer program.deinit();
+    var report: contract.Report = undefined;
+    try scenarios.evaluate(.{
+        .allocator = t.allocator,
+        .program = &program,
+        .limits = limits,
+        .execution = .{ .activation = .{ .mode = .enforce } },
+        .sample = .{ .request = .{ .target = "/?q=attack" } },
+    }, &report);
+    try report.validate();
+    try t.expect(report.denied);
+    try t.expectEqual(@as(usize, 100), report.unlogged_matches);
+    try t.expectEqual(@as(usize, 0), report.omitted_events);
+    try t.expectEqual(@as(usize, 1), report.event_count);
+    try t.expectEqual(@as(u32, 1000), report.events[0].?.rule_id);
+    try t.expect(!report.events[0].?.saved);
+}
