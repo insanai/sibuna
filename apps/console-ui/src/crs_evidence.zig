@@ -28,10 +28,7 @@ pub fn render(evidence: Crs, writer: *Writer) Writer.Error!void {
         "<dt>Coverage</dt><dd>{{ coverage }}</dd>" ++
         "<dt>Paranoia levels</dt><dd>Blocking {{ blocking }}; detection {{ detection }}</dd>" ++
         "<dt>Applied revision</dt><dd>{{ revision }}</dd>" ++
-        "<dt>Signed release SHA-256</dt><dd class=\"break-all\">{{ digest }}</dd>" ++
-        "<dt>Rule message and tags</dt><dd>Not retained: " ++
-        "expanded values may contain secrets.</dd>" ++
-        "<dt>Score contributions</dt><dd>Not recorded.</dd>", .{
+        "<dt>Signed release SHA-256</dt><dd class=\"break-all\">{{ digest }}</dd>", .{
         .rule = evidence.rule_id,
         .phase = phase(evidence.phase),
         .severity = severity(evidence.severity),

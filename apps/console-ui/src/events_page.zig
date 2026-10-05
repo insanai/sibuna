@@ -216,6 +216,7 @@ fn incident(
         "requires bounded capture at a trusted " ++
         "ingress that overwrites spoofed headers.</dd></dl>", .{});
     try evidence(row, w);
+    if (row.crs != null) try @import("crs_detail_page.zig").render(&state.incident_crs, row.id, w);
     try @import("incident_heads.zig").render(state, row.id, w);
     try html.render(w, "<div class=\"flex flex-wrap gap-2 mt-3\">", .{});
     if (row.crs == null) {

@@ -116,6 +116,7 @@ export fn sb_event(kind: u32, length: usize) void {
         if (previous_phase == .users) state.users.clearSecret();
         if (previous_phase == .tokens) state.tokens.clearSecret();
         if (previous_phase == .crs) state.crs.clear();
+        if (previous_phase == .events) state.incident_crs.clear();
         state.navigation_open = false;
         command(.{ .op = "focus", .selector = "main h1", .top = true }) catch unreachable;
     }
@@ -631,6 +632,7 @@ test {
     _ = @import("geography.zig");
     _ = @import("qr.zig");
     _ = @import("crs_exclusion_controller.zig");
+    _ = @import("incident_crs_controller_test.zig");
 }
 
 test "authenticated earth remains bounded without a GeoIP provider" {
@@ -830,6 +832,7 @@ fn eventAction(name: []const u8, fields: std.json.Value) !bool {
     }
     if (try incidentHeads(name)) return true;
     if (!try @import("events_actions.zig").act(&state, name, fields)) return false;
+    state.incident_crs.clear();
     try eventQuery(false, false);
     return true;
 }

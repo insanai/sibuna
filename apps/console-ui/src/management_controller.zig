@@ -17,6 +17,7 @@ const kiosk = @import("kiosk_grant.zig");
 
 pub fn action(state: *State, name: []const u8, fields: std.json.Value, out: Outbox) !bool {
     const ctx: controller.Context = .{ .state = state, .out = out };
+    if (try @import("incident_crs_controller.zig").action(ctx, name)) return true;
     if (try @import("crs_controller.zig").action(ctx, name, fields)) return true;
     if (try rule_hits.action(ctx, name, fields)) return true;
     if (try ranking_history.action(ctx, name, fields)) return true;
@@ -49,7 +50,9 @@ pub fn response(
         .body = body,
         .allocator = alloc,
     };
-    if (std.mem.startsWith(u8, id, "crs-")) {
+    if (std.mem.startsWith(u8, id, "incident-crs-")) {
+        try @import("incident_crs_controller.zig").response(ctx, reply);
+    } else if (std.mem.startsWith(u8, id, "crs-")) {
         try @import("crs_controller.zig").response(ctx, reply);
     } else if (std.mem.startsWith(u8, id, "rule-hits-")) {
         try rule_hits.response(ctx, reply);

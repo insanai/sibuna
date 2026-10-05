@@ -98,6 +98,26 @@ def private_test(ui):
     assert snapshot(ui)["revision"] == 1
 
 
+def incident_details(ui, data_port):
+    assert exchange(data_port, ATTACK, HEADERS)[0] == 200
+    action(ui, "events")
+    deadline = time.monotonic() + 15
+    while True:
+        match = re.search(
+            r'<dt>CRS rule</dt><dd>942100</dd>.*?data-action="(events-crs-\d+)"',
+            ui.html, re.S)
+        if match:
+            break
+        assert time.monotonic() < deadline, ui.html[-5000:]
+        time.sleep(0.1)
+        action(ui, "events-refresh")
+    action(ui, match[1])
+    assert "Unexpanded rule templates" in ui.html and "SQL Injection" in ui.html
+    assert "Net bucket score change" in ui.html and "Inbound PL1" in ui.html
+    assert "private-crs-value" not in ui.html
+    action(ui, "crs")
+
+
 def modes(ui, data_port):
     revision = 1
     for mode, expected in (("enforce", 403), ("off", 200)):
@@ -170,6 +190,7 @@ def qualify(binary, source, root):
             assert "Core Rule Set" in ui.html and 'id="console-navigation"' in ui.html
             data_port = int(process.args[process.args.index("--port") + 1])
             private_test(ui)
+            incident_details(ui, data_port)
             modes(ui, data_port)
             editor(ui, data_port)
             action(ui, "logout")

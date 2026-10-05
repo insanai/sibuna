@@ -69,9 +69,13 @@ mode, signed release digest, applied revision, paranoia levels and inspection co
 Audit findings do not claim an enforced denial. A selected denial status describes the
 inspection decision; it does not prove that the client received the response. Incomplete,
 headers-only, local-response, handshake and excluded-stream coverage remain distinct.
-Expanded rule messages, tags, matched values and body contents are omitted; score
-contributions are not yet retained. CRS findings have no payload similarity grouping.
-Schema 41 commits scalar findings with their incident and optional redacted heads. JSON
+Expanded rule messages, tags, matched values and body contents are omitted. Open
+“Show CRS rule details” for bounded unexpanded message and tag templates, with explicit
+truncation, and actual net anomaly-bucket changes for that rule and phase. Repeated findings
+share one root total; unknown numeric changes are labelled. CRS findings have no payload
+similarity grouping.
+Schema 44 adds separately loaded rule details to the scalar findings introduced in
+schema 41. Both commit with their incident and optional redacted heads. JSON
 page exports include this metadata; the CSV export retains its existing incident columns.
 Enable `--console-capture-heads` to inspect redacted request and observed origin heads.
 The page distinguishes a local response from an unavailable or unobserved origin response.
