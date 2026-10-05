@@ -71,7 +71,7 @@ pub fn run(listener: *Io.net.Server, io: Io, state: *server.AppState) !void {
         monitor.finished.store(true, .release);
         thread.join();
     }
-    server.runServer(listener, io, state);
+    try server.runServer(listener, io, state);
 }
 
 const Monitor = struct {

@@ -71,6 +71,9 @@ pub const AppState = struct {
     telemetry: if (build_options.console) ?*store.ConsoleTelemetry else void =
         if (build_options.console) null else {},
     hooks: Hooks = .{},
+    crs: ?*@import("crs").publication.Publisher = null,
+    crs_counts: @import("crs_observe.zig").Counters = .{},
+    crs_timeout_ms: u64 = 30_000,
 
     pub fn init(self: *AppState, cfg: core.Config, slot: *EngineSlot, seed: *const [32]u8) void {
         self.* = .{
@@ -118,8 +121,9 @@ pub const AppState = struct {
     }
 };
 
-pub fn runServer(server: *Io.net.Server, io: Io, state: *AppState) void {
+pub fn runServer(server: *Io.net.Server, io: Io, state: *AppState) !void {
     const reaper = startReaper(io, state);
+    if (state.crs != null and reaper == null) return error.InspectionWatchdogUnavailable;
     const cpu_count = std.Thread.getCpuCount() catch 1;
     const wanted: usize = if (state.config.workers == 0) cpu_count else state.config.workers;
     const extra = @min(wanted -| 1, 63);
@@ -228,7 +232,7 @@ fn rejectRaw(stream: Io.net.Stream, io: Io, st: *AppState, text: []const u8) voi
     net.refusal.send(io, stream, writer.buffered()) catch return;
 }
 
-const Connection = struct {
+pub const Connection = struct {
     stream: Io.net.Stream,
     io: Io,
     state: *AppState,
@@ -269,7 +273,7 @@ fn nowMs(io: Io) u64 {
 
 fn reaperLoop(io: Io, state: *AppState) void {
     const timeout_ms = @as(u64, state.config.idle_timeout_seconds) * 1000;
-    const interval = reaperInterval(state.config) orelse return;
+    const interval = inspectionInterval(state) orelse return;
     var next_reap = nowMs(io) + interval;
     while (!state.stopping.load(.acquire)) {
         const pause = Io.Duration.fromMilliseconds(200);
@@ -283,8 +287,13 @@ fn reaperLoop(io: Io, state: *AppState) void {
 
 /// Starts the idle reaper when a timeout is configured.
 pub fn startReaper(io: Io, state: *AppState) ?std.Thread {
-    if (reaperInterval(state.config) == null) return null;
+    if (inspectionInterval(state) == null) return null;
     return std.Thread.spawn(.{}, reaperLoop, .{ io, state }) catch null;
+}
+
+fn inspectionInterval(state: *const AppState) ?u64 {
+    if (state.crs != null) return 200;
+    return reaperInterval(state.config);
 }
 
 /// A disabled or very long HTTP timeout must not disable an independent upgrade deadline.
@@ -358,6 +367,9 @@ fn serveOne(c: *Connection) !bool {
         return false;
     }) orelse return false;
 
+    // Reclaim a preceding pipelined request before borrowing this head. Pinning
+    // an arbitrary consumed prefix could otherwise leave no framing workspace.
+    if (c.state.crs != null) try c.reader.rebase(c.reader.buffer.len);
     var req = net.parseRequest(c.reader.buffered()[0..head_len]) catch |err| {
         Metrics.bump(&c.state.metrics.parse_errors);
         if (err == error.UnsupportedTransferEncoding) {
@@ -366,14 +378,22 @@ fn serveOne(c: *Connection) !bool {
         } else try net.response.write400(c.writer, "Malformed HTTP request");
         return false;
     };
+    if (c.state.crs) |publisher| {
+        if (!std.mem.startsWith(u8, req.path, "/__sibuna/"))
+            return @import("server_crs.zig").serve(c, &req, head_len, publisher);
+    }
+    return serveBuffered(c, &req, head_len);
+}
+
+pub fn serveBuffered(c: *Connection, req: *net.Request, head_len: usize) !bool {
     const declared = req.contentLength() orelse 0;
-    if (!try expectContinue(c, &req, declared)) return false;
+    if (!try expectContinue(c, req, declared)) return false;
     var decoder: net.chunked.Decoder = .{};
     const body = (if (req.chunked)
-        try bufferChunked(c, &req, head_len, &decoder)
+        try bufferChunked(c, req, head_len, &decoder)
     else
-        try bufferLength(c, &req, head_len, declared)) orelse return false;
-    var ctx = RequestContext.init(c, &req, body.declared);
+        try bufferLength(c, req, head_len, declared)) orelse return false;
+    var ctx = RequestContext.init(c, req, body.declared);
     ctx.upload = body.upload;
     return dispatch(&ctx);
 }
@@ -458,7 +478,7 @@ fn refreshedRequest(c: *Connection, head_len: usize) net.Request {
 
 /// A client can wait for 100 before sending any bytes. Complete that exchange locally;
 /// policy still checks the bounded prefix before any body reaches the origin.
-fn expectContinue(c: *Connection, req: *net.Request, declared: usize) !bool {
+pub fn expectContinue(c: *Connection, req: *net.Request, declared: usize) !bool {
     var count: usize = 0;
     var supported = true;
     for (req.headers[0..req.header_count]) |header| {
@@ -500,11 +520,16 @@ pub const RequestContext = struct {
     keep_alive: bool,
     /// Route identity precedes any trusted authorization-target rewrite.
     internal: bool,
+    head_pinned: bool = false,
+    preflight_done: bool = false,
+    response_refused: bool = false,
+    inspected_body: ?[]const u8 = null,
+    crs_response: ?*@import("crs_entity.zig").Response = null,
     /// Audit findings held back until the origin response head is known (capture only).
     deferred_findings: if (build_options.console) u8 else void =
         if (build_options.console) 0 else {},
 
-    fn init(c: *Connection, req: *net.Request, declared_body: usize) RequestContext {
+    pub fn init(c: *Connection, req: *net.Request, declared_body: usize) RequestContext {
         const ts = Io.Clock.real.now(c.io);
         const now_ms: u64 = @intCast(@max(0, @divTrunc(ts.nanoseconds, std.time.ns_per_ms)));
         return .{
@@ -544,19 +569,19 @@ fn resolveClientIp(c: *Connection, req: *const net.Request) []const u8 {
     return c.peer;
 }
 
-fn dispatch(ctx: *RequestContext) !bool {
+pub fn dispatch(ctx: *RequestContext) !bool {
     // Every parsed external request gets one selected outcome, even on an early error.
     // Unparseable heads cannot be classified as external and remain parse_errors only.
     defer if (build_options.console) {
         if (!ctx.outcome_recorded) recordOutcome(ctx, .other, 400);
     };
     const st = ctx.state();
-    Metrics.bump(&st.metrics.requests);
+    if (!ctx.preflight_done) Metrics.bump(&st.metrics.requests);
     if (!ctx.internal and !try restoreAuthorizationTarget(ctx)) return false;
     const submission = ctx.internal and ctx.req.method == .POST and
         std.mem.eql(u8, ctx.req.path, "/__sibuna/verify");
     if (submission) observation.submit(st);
-    if (st.bans.isBanned(ctx.client_ip, ctx.now)) {
+    if (!ctx.preflight_done and st.bans.isBanned(ctx.client_ip, ctx.now)) {
         if (submission) observation.reject(st, ctx.client_ip, ctx.now, .address_banned);
         Metrics.bump(&st.metrics.banned);
         recordOutcome(ctx, .banned, 403);
@@ -584,6 +609,7 @@ fn dispatch(ctx: *RequestContext) !bool {
         try handleInternal(ctx);
         return ctx.keep_alive;
     }
+    if (ctx.preflight_done) return applyPolicy(ctx);
     const limits = store.RateLimits{
         .rate = st.config.rate_limit,
         .window_ms = st.config.rate_window_seconds * 1000,
@@ -591,6 +617,38 @@ fn dispatch(ctx: *RequestContext) !bool {
     const rate = st.rate_limiter.check(ctx.c.io, ctx.client_ip, ctx.now_ms, limits);
     if (rate.limited) return rateLimited(ctx, rate, 0);
     return applyPolicy(ctx);
+}
+
+/// Spend the ordinary external admission budget before retaining an entire body.
+/// A refused unread upload closes; dispatch does not spend or count it twice.
+pub fn preflight(ctx: *RequestContext) !bool {
+    std.debug.assert(!ctx.internal and !ctx.preflight_done);
+    const st = ctx.state();
+    ctx.preflight_done = true;
+    ctx.keep_alive = false;
+    Metrics.bump(&st.metrics.requests);
+    if (st.bans.isBanned(ctx.client_ip, ctx.now)) {
+        Metrics.bump(&st.metrics.banned);
+        recordOutcome(ctx, .banned, 403);
+        try @import("response_pages.zig").respond(
+            ctx,
+            .banned,
+            .forbidden,
+            "Forbidden: address is banned",
+            .{},
+        );
+        return false;
+    }
+    const limits = store.RateLimits{
+        .rate = st.config.rate_limit,
+        .window_ms = st.config.rate_window_seconds * 1000,
+    };
+    const rate = st.rate_limiter.check(ctx.c.io, ctx.client_ip, ctx.now_ms, limits);
+    if (rate.limited) {
+        _ = try rateLimited(ctx, rate, 0);
+        return false;
+    }
+    return true;
 }
 
 /// A stable scope keeps the challenge budget's buckets apart from the request limiter's.
@@ -650,7 +708,7 @@ fn requestDecision(ctx: *RequestContext, name: *[policy.engine.MAX_RULE_NAME]u8)
         .client_ip = ctx.client_ip,
         .user_agent = ctx.user_agent,
         .headers = headers,
-        .body = ctx.req.body,
+        .body = ctx.inspected_body orelse ctx.req.body,
     };
     // Embedders may attach request telemetry without a Persistent rule generation.
     var decision = if (build_options.console and st.telemetry != null and
@@ -778,7 +836,7 @@ fn applyPolicy(ctx: *RequestContext) !bool {
 
 /// Restore ingress metadata for external authorization requests before any decision is recorded.
 /// Header slices stay owned by this connection until the authorization reply has completed.
-fn restoreAuthorizationTarget(ctx: *RequestContext) !bool {
+pub fn restoreAuthorizationTarget(ctx: *RequestContext) !bool {
     const cfg = ctx.state().config;
     if (cfg.mode != .forward_auth) return true;
     const target = net.forwarded.target(ctx.req, cfg.trustsForwarded()) catch {
@@ -789,12 +847,12 @@ fn restoreAuthorizationTarget(ctx: *RequestContext) !bool {
     return true;
 }
 
-fn recordOutcome(ctx: *RequestContext, outcome: store.telemetry.Outcome, status: u16) void {
+pub fn recordOutcome(ctx: *RequestContext, outcome: store.telemetry.Outcome, status: u16) void {
     countOutcome(ctx, outcome);
     sampleOutcome(ctx, outcome, status);
 }
 
-fn countOutcome(ctx: *RequestContext, outcome: store.telemetry.Outcome) void {
+pub fn countOutcome(ctx: *RequestContext, outcome: store.telemetry.Outcome) void {
     if (!build_options.console) return;
     const telemetry = ctx.state().telemetry orelse return;
     if (ctx.internal) return;
@@ -1052,7 +1110,8 @@ const OriginHead = struct {
 fn admittedComplete(ctx: *RequestContext, origin_status: u16, origin: *const OriginHead) void {
     const st = ctx.state();
     if (st.telemetry) |telemetry| telemetry.origin(origin_status);
-    sampleOutcome(ctx, .admitted, if (origin_status == 0) 502 else origin_status);
+    if (!ctx.response_refused)
+        sampleOutcome(ctx, .admitted, if (origin_status == 0) 502 else origin_status);
     const findings = ctx.deferred_findings;
     if (findings == 0) return;
     ctx.deferred_findings = 0;
@@ -1083,7 +1142,7 @@ const HeadPin = struct {
 fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule_hash: u64) !bool {
     const st = ctx.state();
     Metrics.bump(&st.metrics.allowed);
-    countOutcome(ctx, .admitted);
+    if (ctx.crs_response == null) countOutcome(ctx, .admitted);
     if (st.config.mode == .forward_auth) return forwardAuth(ctx, status, rule_name, rule_hash);
     Metrics.bump(&st.metrics.proxied);
     const c = ctx.c;
@@ -1091,8 +1150,10 @@ fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule
     var origin_status: u16 = 0;
     var origin: OriginHead = .{ .extra = &cfg.console_capture_headers };
     defer if (build_options.console) admittedComplete(ctx, origin_status, &origin);
-    const pin = HeadPin.init(c.reader, ctx.req);
-    defer pin.release();
+    defer if (!ctx.response_refused) countOutcome(ctx, .admitted);
+    const pin = if (ctx.head_pinned) null else HeadPin.init(c.reader, ctx.req);
+    defer if (pin) |held| held.release();
+    if (ctx.crs_response) |inspection| inspection.fallback = .origin_unavailable;
     const audit = net.ProxyAudit{
         .client_ip = ctx.client_ip,
         .scheme = net.forwarded.scheme(ctx.req, cfg.trustsForwarded()),
@@ -1121,27 +1182,56 @@ fn forward(ctx: *RequestContext, status: []const u8, rule_name: []const u8, rule
         .upload = ctx.upload,
         .audit = audit,
         .keep_alive = ctx.keep_alive,
+        .response_inspector = if (ctx.crs_response) |inspection| inspection.hooks() else null,
     });
-    return relay catch |err| {
-        Metrics.bump(&st.metrics.upstream_errors);
-        switch (err) {
-            error.InvalidUpgrade => try net.response.write400(ctx.writer(), "Invalid upgrade"),
-            error.UpstreamUnreachable => try net.response.write502(
-                ctx.writer(),
-                "Bad Gateway: upstream unreachable",
-            ),
-            error.UpstreamReadFailed => try net.response.write502(
-                ctx.writer(),
-                "Bad Gateway: malformed upstream response",
-            ),
-            error.MalformedRequestBody => try net.response.write400(
-                ctx.writer(),
-                "Malformed chunked request body",
-            ),
-            else => {},
-        }
+    return relay catch |err| relayFailure(ctx, err);
+}
+
+fn relayFailure(ctx: *RequestContext, err: net.proxy.ProxyError) !bool {
+    if (err == error.InspectionDenied) {
+        ctx.response_refused = true;
+        const code = ctx.crs_response.?.transaction.slot.state.status;
+        recordOutcome(ctx, .denied, code);
+        try net.response.writeRefusal(
+            ctx.writer(),
+            code,
+            ctx.req.method == .HEAD,
+            "Response refused",
+        );
         return false;
-    };
+    }
+    Metrics.bump(&ctx.state().metrics.upstream_errors);
+    if (ctx.crs_response) |inspection| {
+        const phase = inspection.transaction.phase;
+        if (inspection.completion == null and
+            (phase == .response_headers or inspection.failure != null))
+        {
+            // Holdback has published no response bytes. Once a stream or complete
+            // response was published, ordinary relay errors must only close it.
+            inspection.fail(err);
+            ctx.response_refused = true;
+            recordOutcome(ctx, .other, 502);
+            try net.response.write502(ctx.writer(), "Bad Gateway: inspection incomplete");
+            return false;
+        }
+    }
+    switch (err) {
+        error.InvalidUpgrade => try net.response.write400(ctx.writer(), "Invalid upgrade"),
+        error.UpstreamUnreachable => try net.response.write502(
+            ctx.writer(),
+            "Bad Gateway: upstream unreachable",
+        ),
+        error.UpstreamReadFailed => try net.response.write502(
+            ctx.writer(),
+            "Bad Gateway: malformed upstream response",
+        ),
+        error.MalformedRequestBody => try net.response.write400(
+            ctx.writer(),
+            "Malformed chunked request body",
+        ),
+        else => {},
+    }
+    return false;
 }
 
 fn handleInternal(ctx: *RequestContext) !void {
@@ -1199,6 +1289,7 @@ fn handleInternal(ctx: *RequestContext) !void {
         var buf: [4096]u8 = undefined;
         var mw = Io.Writer.fixed(&buf);
         try st.metrics.writePrometheus(&mw);
+        if (st.crs != null) try st.crs_counts.writePrometheus(&mw);
         try net.response.write(
             w,
             .ok,

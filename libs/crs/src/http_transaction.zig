@@ -28,6 +28,8 @@ pub const Transaction = struct {
     profile: config.Profile,
     phase: model.Phase = .request_headers,
     end: ?End = null,
+    /// Complete decoded entity, retained separately from replay until lease release.
+    request_entity: ?[]const u8 = null,
 
     /// Startup must validate activation separately. This method takes an already
     /// leased, inactive slot; no allocation or network access occurs in any phase.
@@ -96,6 +98,7 @@ pub const Transaction = struct {
             &self.slot.budget,
         );
         try entities.request(self.slot, entity, descriptor);
+        self.request_entity = entity;
         try self.acquire();
         self.phase = .request_body;
         return self.execution.run(self.phase);

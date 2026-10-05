@@ -314,6 +314,11 @@ fn addServer(
     modes_check.addArtifactArg(exe);
     proxy_e2e.dependOn(&modes_check.step);
     addConsoleLiveChecks(b, exe, console != null);
+    const crs_check = b.addSystemCommand(&.{ python, "tools/crs_daemon_check.py" });
+    crs_check.addArtifactArg(exe);
+    crs_check.addPassthruArgs();
+    b.step("crs-daemon-check", "Qualify signed CRS through the real daemon and loopback origin")
+        .dependOn(&crs_check.step);
     // The isolation gate builds its own ReleaseFast binaries (with and without the
     // console) into a temporary prefix; `-- --quick` runs the short CI matrix.
     const impact = b.step("console-impact", "Measure data-plane cost of the console");
@@ -357,6 +362,7 @@ fn wireApp(b: *std.Build, root: *std.Build.Module, app: AppModules) void {
 
 fn addTests(b: *std.Build, modules: Modules, app: AppModules) void {
     const test_step = &b.top_level_steps.get("test").?.step;
+    addCrsDaemonTests(b, app, test_step);
     test_step.dependOn(&b.top_level_steps.get("proxy-e2e").?.step);
     const e2e_root = b.createModule(.{
         .root_source_file = b.path("apps/sibuna/src/e2e_test.zig"),
@@ -408,6 +414,18 @@ fn addTests(b: *std.Build, modules: Modules, app: AppModules) void {
     test_step.dependOn(&daemon_e2e.step);
     b.step("daemon-e2e", "Test live request, admission and upload relay paths")
         .dependOn(&daemon_e2e.step);
+}
+
+fn addCrsDaemonTests(b: *std.Build, app: AppModules, all: *std.Build.Step) void {
+    const root = b.createModule(.{
+        .root_source_file = b.path("apps/sibuna/src/crs_daemon_test.zig"),
+        .target = b.graph.host,
+    });
+    wireApp(b, root, app);
+    const run = b.addRunArtifact(b.addTest(.{ .root_module = root }));
+    const step = b.step("crs-daemon-e2e", "Test native CRS phases through the live HTTP daemon");
+    step.dependOn(&run.step);
+    all.dependOn(step);
 }
 
 fn addBenchmarks(
