@@ -36,6 +36,7 @@ pub const IdleTable = struct {
                 slot.stream = stream;
                 slot.activity.at_ms.store(now_ms, .monotonic);
                 slot.activity.timeout_ms.store(0, .monotonic);
+                slot.activity.deadline_ms.store(0, .monotonic);
                 slot.activity.detachPeer(io);
                 return idx;
             }
@@ -79,11 +80,7 @@ pub const IdleTable = struct {
         for (&self.slots) |*slot| {
             slot.lock.lock(io);
             defer slot.lock.unlock(io);
-            const override = slot.activity.timeout_ms.load(.monotonic);
-            const timeout = if (override == 0) timeout_ms else override;
-            if (slot.active and timeout != 0 and
-                now_ms -| slot.activity.at_ms.load(.monotonic) > timeout)
-            {
+            if (slot.active and slot.activity.expired(now_ms, timeout_ms)) {
                 net.interrupt(io, slot.stream);
                 slot.activity.shutdownPeer(io);
                 // Keep ownership until unregister; an old worker must not clear a reused slot.
@@ -117,4 +114,34 @@ test "reaped idle slots remain owned until the original connection unregisters" 
     table.unregister(io, old);
     try std.testing.expect(table.slots[fresh].active);
     table.unregister(io, fresh);
+}
+
+test "an absolute inspection deadline expires despite progress and resets on reuse" {
+    const io = std.testing.io;
+    const t = std.testing;
+    const table = try t.allocator.create(IdleTable);
+    defer t.allocator.destroy(table);
+    table.* = .{};
+    const address = try Io.net.IpAddress.parse("127.0.0.1", 0);
+    var listener = try address.listen(io, .{ .reuse_address = true });
+    defer listener.deinit(io);
+    const client = try listener.socket.address.connect(io, .{ .mode = .stream });
+    defer client.close(io);
+    const stream = try listener.accept(io);
+    defer stream.close(io);
+    const index = table.register(io, stream, 0).?;
+    const activity = table.activity(index);
+    activity.deadline_ms.store(100, .monotonic);
+    table.touch(io, index, 99);
+    try t.expectEqual(@as(u32, 0), table.reap(io, 99, 0));
+    try t.expectEqual(@as(u32, 1), table.reap(io, 100, 0));
+    activity.deadline_ms.store(0, .monotonic);
+    try t.expectEqual(@as(u32, 0), table.reap(io, 101, 0));
+    // A new connection must not inherit the previous borrower's deadline.
+    activity.deadline_ms.store(100, .monotonic);
+    table.unregister(io, index);
+    table.cursor.store(index, .monotonic);
+    try t.expectEqual(index, table.register(io, stream, 200).?);
+    try t.expectEqual(@as(u64, 0), table.activity(index).deadline_ms.load(.monotonic));
+    table.unregister(io, index);
 }

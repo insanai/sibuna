@@ -16,10 +16,20 @@ pub const Activity = struct {
     at_ms: std.atomic.Value(u64) = .init(0),
     /// Zero uses the HTTP owner's default; an upgrade sets its own idle bound.
     timeout_ms: std.atomic.Value(u64) = .init(0),
+    /// Absolute inspection deadline; progress never extends a scarce workspace lease.
+    deadline_ms: std.atomic.Value(u64) = .init(0),
     /// Orders attach, detach and the reaper's shutdown: the owner detaches before it closes
     /// or pools the socket, so the reaper never shuts down a reused descriptor.
     peer_lock: core.Lock = .{},
     peer: ?Io.net.Stream = null,
+
+    pub fn expired(self: *const Activity, now_ms: u64, default_timeout_ms: u64) bool {
+        const deadline = self.deadline_ms.load(.monotonic);
+        if (deadline != 0 and now_ms >= deadline) return true;
+        const override = self.timeout_ms.load(.monotonic);
+        const timeout = if (override == 0) default_timeout_ms else override;
+        return timeout != 0 and now_ms -| self.at_ms.load(.monotonic) > timeout;
+    }
 
     pub fn touch(self: *Activity, io: Io) void {
         self.at_ms.store(nowMs(io), .monotonic);

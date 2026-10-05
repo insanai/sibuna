@@ -1573,6 +1573,13 @@ benchmark acceptance before use. Eight simultaneous acquisition slots reserve at
 112.6 MiB for retained wire and decoded entities, alternate decoding, inflater and response
 head storage, before metadata, allocator overhead and matcher scratch.
 
+Inspection slots have an absolute deadline independent of socket activity. The connection
+reaper interrupts both client and attached origin I/O at expiry; the owning worker keeps
+its slot until it unwinds. Progress may renew idle expiry but cannot extend this deadline.
+Registration clears any prior deadline before reusing a connection entry. Clearing the
+inspection deadline after a declared streaming ending preserves the independent HTTP or
+WebSocket idle policy.
+
 Pool exhaustion returns a recoverable service-unavailable response. Body size limits return
 an explicit refusal before origin delivery. Work exhaustion in enforcement refuses the
 transaction; audit mode records an incomplete evaluation and continues according to its
