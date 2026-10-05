@@ -20,8 +20,35 @@ pub fn add(
     const step = b.step("crs-update-test", "Test bounded authenticated update preparation");
     step.dependOn(&b.addRunArtifact(tests).step);
     addCommandTest(b, step, target, crs, module);
+    addArtifactCheck(b, target, crs, module);
     b.top_level_steps.get("test").?.step.dependOn(step);
     return module;
+}
+
+fn addArtifactCheck(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    crs: *std.Build.Module,
+    update: *std.Build.Module,
+) void {
+    const probe = b.addExecutable(.{
+        .name = "sibuna-crs-artifact-probe",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tools/crs_artifact_probe.zig"),
+            .target = target,
+            .optimize = .safe,
+            .imports = &.{
+                .{ .name = "crs", .module = crs },
+                .{ .name = "crs-update", .module = update },
+            },
+        }),
+    });
+    const python = if (@import("builtin").os.tag == .windows) "python" else "python3";
+    const check = b.addSystemCommand(&.{ python, "tools/crs_package_check.py" });
+    check.addArtifactArg(probe);
+    check.addPassthruArgs();
+    b.step("crs-artifact-check", "Verify bounded disk reload against the signed stock package")
+        .dependOn(&check.step);
 }
 
 fn addCommandTest(

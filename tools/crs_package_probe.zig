@@ -61,7 +61,11 @@ fn run(init: std.process.Init, out: *Io.Writer) !u8 {
     @memset(archive, '!');
     @memset(signature, '!');
     @memset(configuration, '!');
-    try evaluate(init.gpa, &package.program, configuration.len != 0);
+    try @import("crs_transaction_fixture.zig").evaluate(
+        init.gpa,
+        &package.program,
+        configuration.len != 0,
+    );
     try out.print("prepared {d} {d} {x} {d}\n", .{
         package.program.conditions.len,
         package.program.regex_states,
@@ -69,47 +73,4 @@ fn run(init: std.process.Init, out: *Io.Writer) !u8 {
         package.bounded.peak,
     });
     return 0;
-}
-
-fn evaluate(
-    allocator: std.mem.Allocator,
-    program: *const crs.rule_program.Program,
-    configured: bool,
-) !void {
-    var slot: crs.transaction_slot.Slot = undefined;
-    try slot.init(allocator, program, .{});
-    defer slot.deinit();
-    for ([_][]const u8{ "/?q=ordinary", "/?q=1%27%20OR%20%271%27=%271" }, 0..) |target, index| {
-        var line: [256]u8 = undefined;
-        var transaction = try crs.http_transaction.Transaction.begin(&slot, .full, true, .{
-            .method = "GET",
-            .target = target,
-            .protocol = "HTTP/1.1",
-            .line = try std.fmt.bufPrint(&line, "GET {s} HTTP/1.1", .{target}),
-            .client = "192.0.2.1",
-            .id = "package-probe",
-            .headers = &.{
-                .{ .name = "Host", .value = "example.test" },
-                .{ .name = "User-Agent", .value = "Mozilla/5.0" },
-                .{ .name = "Accept", .value = "text/html" },
-            },
-        });
-        defer slot.finish();
-        if (configured) {
-            const marker = (try slot.store.get("operator_marker", &slot.budget)) orelse
-                return error.OperatorMarkerMissing;
-            if (!std.mem.eql(u8, marker, "present")) return error.OperatorMarkerMismatch;
-        }
-        const result = try transaction.requestBody("");
-        if ((result == .denied) != (index == 1)) return error.PackageDecisionMismatch;
-        if (index == 1) {
-            const score = (try slot.store.get("sql_injection_score", &slot.budget)).?;
-            if (try std.fmt.parseInt(i32, score, 10) < 5) return error.PackageDecisionMismatch;
-            try transaction.finish(.local_response);
-        } else {
-            _ = try transaction.responseHeaders(.{ .status = 200, .headers = &.{} });
-            _ = try transaction.responseBody("ordinary page");
-            try transaction.finish(.inspected);
-        }
-    }
 }

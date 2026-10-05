@@ -304,6 +304,7 @@ zig build crs-detector-data -j2 -- --check --download
 zig build crs-signature-check -j2 -- --download
 zig build crs-acquisition-check -j2
 zig build crs-package-check -j2 -- --download
+zig build crs-artifact-check -j2 -- --download
 zig build crs-ftw-check -j2 -- --download
 ```
 
@@ -329,3 +330,10 @@ Signed-package preparation verifies before bounded gzip/tar decoding and compile
 with a reclaiming allocator that caps live payload. The program retains no staging-buffer
 borrows. Package qualification checks that ownership against the actual signed release;
 the generation publisher still decides compatibility and activation separately.
+
+Restart preparation reads a bounded manifest and exact regular-file sizes from an
+operator-owned directory. It verifies the signature again, recompiles the source and
+checks the recorded archive/configuration identity. Invalid profiles are refused before
+source loading. Signed-artifact qualification tests a real disk round trip and rejected
+reloads while retaining a previously prepared package. This is a read contract, not a
+completed update, atomic commit or running reload service.

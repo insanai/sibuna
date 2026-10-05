@@ -5,6 +5,8 @@ const crs = @import("crs");
 const fetch = @import("net").fetch;
 const urls = crs.release_urls;
 const Io = std.Io;
+pub const artifact = @import("artifact.zig");
+pub const Prepared = @import("prepared.zig").Prepared;
 pub const Error = fetch.Error || crs.release_package.Error || urls.Error ||
     std.json.ParseError(std.json.Scanner) || error{ InvalidClock, InvalidDownloadDeadline };
 pub const Config = struct {
@@ -13,28 +15,6 @@ pub const Config = struct {
     stopping: *const std.atomic.Value(bool),
     deadline_ms: u32 = 120_000,
     configuration: []const u8 = "",
-};
-pub const Prepared = struct {
-    allocator: std.mem.Allocator,
-    archive_buffer: []u8,
-    signature_buffer: []u8,
-    archive: []const u8,
-    signature: []const u8,
-    package: ?*crs.release_package.Package,
-
-    /// Transfers the stable package to a generation; the artifact remains owned here.
-    pub fn takePackage(self: *Prepared) *crs.release_package.Package {
-        const result = self.package.?;
-        self.package = null;
-        return result;
-    }
-
-    pub fn deinit(self: *Prepared) void {
-        if (self.package) |package| package.deinit();
-        self.allocator.free(self.signature_buffer);
-        self.allocator.free(self.archive_buffer);
-        self.* = undefined;
-    }
 };
 const Metadata = struct { tag_name: []const u8, draft: bool, prerelease: bool };
 const Download = struct {
@@ -92,6 +72,8 @@ pub fn prepare(config: Config, version: ?crs.release_version.Version) Error!Prep
         .started = Io.Clock.awake.now(config.io).nanoseconds,
     };
     _ = try job.check();
+    const configuration = try config.allocator.dupe(u8, config.configuration);
+    errdefer config.allocator.free(configuration);
     const selected = version orelse try job.latestVersion();
     const archive_buffer = try config.allocator.alloc(u8, urls.archive_capacity);
     errdefer config.allocator.free(archive_buffer);
@@ -116,16 +98,15 @@ pub fn prepare(config: Config, version: ?crs.release_version.Version) Error!Prep
         .signature = signature,
         .version = selected,
         .now = @intCast(seconds),
-        .configuration = config.configuration,
+        .configuration = configuration,
     });
     errdefer package.deinit();
     _ = try job.check();
     return .{
         .allocator = config.allocator,
-        .archive_buffer = archive_buffer,
-        .signature_buffer = signature_buffer,
-        .archive = archive,
-        .signature = signature,
+        .archive = .{ .buffer = archive_buffer, .value = archive },
+        .signature = .{ .buffer = signature_buffer, .value = signature },
+        .configuration = .{ .buffer = configuration, .value = configuration },
         .package = package,
     };
 }
@@ -141,4 +122,8 @@ test "canceled updater creates no artifact or candidate generation" {
     var invalid = config;
     invalid.deadline_ms = 300_001;
     try std.testing.expectError(error.InvalidDownloadDeadline, prepare(invalid, null));
+}
+
+test {
+    _ = artifact;
 }

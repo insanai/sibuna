@@ -16,6 +16,8 @@ and pinned detector, primitive, PCRE2 and native/GnuPG signature comparisons,
 plus independent JSON, form, MIME, XML, URI and cookie acquisition comparisons, and native
 signed-package unpacking, private compilation and staging ownership. These checks qualify
 the CRS library; they do not establish daemon activation or complete phased HTTP coverage.
+`crs-artifact-check` also re-verifies the signed package from its restart files and checks
+tampering, changed lengths, identity mismatch and retention of a prior prepared candidate.
 
 ---
 

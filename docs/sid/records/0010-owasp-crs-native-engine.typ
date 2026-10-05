@@ -1585,6 +1585,16 @@ than treating a recorded peak as permission to allocate. A manifest does not aut
 its contents or establish applied runtime state. Atomic file replacement, durable management
 intent and actual publication completion remain separate responsibilities of the store.
 
+Restart preparation accepts four fixed regular-file names in an operator-owned artifact
+directory: `manifest.bin`, `archive.tar.gz`, `signature.asc` and `operator.conf`.
+The bounded reader rejects symbolic links and nonregular files, checks declared sizes
+before allocation and reads one extra byte to detect growth after the size check. It never
+uses archive member paths as filesystem destinations. Retrieved and reloaded candidates
+share one explicit owner for archive, signature, operator source and compiled package;
+transferring the package leaves source buffers owned for staging. The signed-artifact gate
+checks real disk reloads, altered identity/lengths, signature failure, missing files and prior
+candidate retention. It does not establish filesystem commit durability or daemon reload.
+
 *Lemma (manifest separation).* A decoded record cannot turn missing body observation or
 unverified source bytes into an executable generation. Fixed-length decoding establishes
 structure and capacities only. The composition layer supplies actual observation, and a
