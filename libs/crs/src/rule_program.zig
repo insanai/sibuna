@@ -10,9 +10,10 @@ const chains = @import("chains.zig");
 const data = @import("rule_data.zig");
 const variables = @import("variables.zig");
 const review = @import("rule_review.zig");
+const exclusions = @import("exclusion_review.zig");
 pub const Error = condition.Error || post.Error || chains.Error || data.Error || error{
     InvalidTargetUpdate,
-};
+} || exclusions.Error;
 pub const Limits = struct {
     condition: condition.Limits = .{},
     chains: chains.Limits = .{},
@@ -27,6 +28,7 @@ pub const Program = struct {
     signature: []const u8,
     regex_states: usize,
     review: []review.Fingerprint = &.{},
+    exclusions: []exclusions.api.Row = &.{},
 
     pub fn deinit(self: *Program) void {
         for (self.conditions) |*program| program.deinit();
@@ -35,6 +37,7 @@ pub const Program = struct {
         self.allocator.free(self.actions);
         self.allocator.free(self.signature);
         self.allocator.free(self.review);
+        self.allocator.free(self.exclusions);
         self.topology.deinit();
         self.* = undefined;
     }
@@ -111,6 +114,8 @@ fn compileInner(
     var states: usize = 0;
     var reviewed = try review.Builder.init(allocator, source.conditions);
     defer reviewed.deinit();
+    var excluded: exclusions.Builder = .{ .allocator = allocator };
+    defer excluded.deinit();
     for (source.conditions, 0..) |original, index| {
         fault.* = .{ .site = original.site, .rule = original.id };
         var targets: [128]selectors.Selector = undefined;
@@ -123,10 +128,13 @@ fn compileInner(
         actions[index] = try post.compile(allocator, &updated);
         initialized += 1;
         reviewed.append(&updated, source.conditions, index, bytes, &actions[index]);
+        try excluded.append(&updated, index, &actions[index]);
         states = @max(states, conditions[index].regexStates());
     }
     fault.* = .{};
     const signature = try allocator.dupe(u8, source.signature orelse "");
+    errdefer allocator.free(signature);
+    const inventory = try excluded.take();
     return .{
         .allocator = allocator,
         .conditions = conditions,
@@ -135,6 +143,7 @@ fn compileInner(
         .signature = signature,
         .regex_states = states,
         .review = reviewed.take(),
+        .exclusions = inventory,
     };
 }
 

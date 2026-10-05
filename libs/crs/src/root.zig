@@ -45,6 +45,7 @@ pub const action_state = @import("action_state.zig");
 pub const rule_data = @import("rule_data.zig");
 pub const rule_program = @import("rule_program.zig");
 pub const rule_review = @import("rule_review.zig");
+pub const exclusion_review = @import("exclusion_review.zig");
 pub const review_contract = @import("crs-protocol").review;
 pub const executor = @import("executor.zig");
 pub const release_signature = @import("release_signature.zig");
@@ -111,6 +112,7 @@ test {
     _ = post_actions;
     _ = rule_program;
     _ = rule_review;
+    _ = exclusion_review;
     _ = scenario;
     _ = scenario_contract;
     _ = @import("diagnostics_test.zig");

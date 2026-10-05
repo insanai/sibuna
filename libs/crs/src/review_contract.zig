@@ -1,5 +1,6 @@
 //! Bounded scalar review. A modified fingerprint is not an equivalence claim.
 pub const change_capacity = 64;
+pub const exclusions = @import("exclusion_contract.zig");
 pub const Kind = enum { added, removed, modified, reordered };
 pub const Change = struct {
     id: u32,

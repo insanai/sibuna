@@ -2111,6 +2111,34 @@ exclusions and runtime exclusion entries are counted separately. A runtime exclu
 conditional on its controlling rule matching; a count cannot claim every request loses that
 coverage. Neither the comparison nor its fingerprints are evaluated on the request path.
 
+The prepared program also owns an exclusion inventory, capped at 4,096 entries. It lists
+resolved static target exclusions, including target updates, and conditional runtime rule
+or target exclusions. Each entry identifies its controlling root, phase and chain link,
+selected rule ID/range or tag, collection and exact/regex/XML target semantics. A rule-wide
+exclusion states that all targets of its selected rules lose inspection when its controller
+matches. A tag or range is a selector, not a claim that a fixed set of rules always matches.
+
+The review worker copies both inventories before releasing their respective packages.
+Eight owned rows per page fit the existing 16 KiB response envelope. Every entry is reachable
+by an explicit cursor; no entry disappears because the summary or first page filled.
+Names retain their exact byte length, SHA-256 identity and first 256 bytes encoded as hex.
+The interface decodes valid UTF-8 for display and labels longer or binary previews; a prefix
+is never presented as the complete selector. This metadata is configuration, not expanded
+request data. The same session, review ID, expiration, fresh authority and saved-revision
+checks govern every page. Replacing work or stopping the worker releases both inventories.
+
+*Lemma (complete bounded exclusion review).* For $X <= 4096$ exclusions and $B$ name bytes,
+preparation costs $O(X + B)$ time and $O(X)$ owned metadata. Reading all pages costs $O(X)$,
+with constant-sized responses independent of $B$.
+
+*Proof.* Each resolved excluded target and each prepared runtime exclusion contributes one
+row, in condition/action declaration order. Each name is hashed once and its bounded prefix
+is copied. The cursor partitions the immutable inventory into consecutive blocks of at most
+eight rows; advancing to the returned end neither skips nor duplicates an entry. Names,
+including embedded invalid UTF-8, cross the wire as bounded hex rather than unbounded JSON
+escapes. Exhausting the inventory cap refuses the entire candidate. No preview borrow
+survives compilation, so pages need no live generation lease. $square$
+
 The authenticated comparison shares the joined preparation worker with private samples.
 It reauthenticates and compiles the saved baseline, copies its fixed-width inventory, releases
 that package, then reauthenticates and compiles the candidate. It never retains two compiled
