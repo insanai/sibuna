@@ -47,7 +47,15 @@ pub fn qualify(
     try evaluate(metadata, .headers);
     // A failed replacement cannot disturb an already leased generation. The
     // failure allocator also verifies private load cleanup under exhaustion.
-    if (startup.Runtime.load(std.testing.failing_allocator, init.io, directory, config, .request_metadata, now)) |unexpected| {
+    const exhausted = startup.Runtime.load(
+        std.testing.failing_allocator,
+        init.io,
+        directory,
+        config,
+        .request_metadata,
+        now,
+    );
+    if (exhausted) |unexpected| {
         unexpected.stop();
         return error.StartupAcceptedExhaustedAllocator;
     } else |err| if (err != error.OutOfMemory) return err;
