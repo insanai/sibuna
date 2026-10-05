@@ -33,6 +33,7 @@ test "CRS startup rejects conflicts, unobserved enforcement and invalid bounds" 
         &.{ "--crs-work-budget", "1000000001" }, &.{ "--crs-paranoia", "5" },
         &.{ "--crs-timeout", "0" },              &.{ "--crs-timeout", "301" },
         &.{ "--crs-work-budget", "+12" },        &.{ "--crs-work-budget", "1x" },
+        &.{ "--crs-inbound-threshold", "0" },    &.{ "--crs-outbound-threshold", "65536" },
     }) |input| try t.expectError(error.InvalidCrsLimit, options.parse(input, &remaining));
     try t.expectError(error.UnknownCrsOption, options.parse(&.{ "--crs-url", "x" }, &remaining));
     try t.expectError(error.MissingCrsValue, options.parse(&.{"--crs-dir"}, &remaining));
@@ -42,10 +43,16 @@ test "CRS startup rejects conflicts, unobserved enforcement and invalid bounds" 
 }
 
 test "startup overrides preserve signed identity and the independent Gate profile" {
-    var remaining: [16][]const u8 = undefined;
+    var remaining: [20][]const u8 = undefined;
     const parsed = try options.parse(&.{
-        "--crs-mode",          "audit", "--crs-dir",         "/rules",  "--crs-paranoia", "3",
-        "--crs-request-limit", "8192",  "--crs-work-budget", "1000000", "--crs-slots",    "2",
+        "--crs-mode",               "audit",
+        "--crs-dir",                "/rules",
+        "--crs-paranoia",           "3",
+        "--crs-request-limit",      "8192",
+        "--crs-work-budget",        "1000000",
+        "--crs-slots",              "2",
+        "--crs-inbound-threshold",  "9",
+        "--crs-outbound-threshold", "8",
     }, &remaining);
     var selected: crs.generation.Options = .{
         .revision = 17,
@@ -61,6 +68,8 @@ test "startup overrides preserve signed identity and the independent Gate profil
     try t.expectEqual(@as(usize, 8192), selected.limits.request);
     try t.expectEqual(@as(u64, 1_000_000), selected.limits.work);
     try t.expectEqual(@as(usize, 2), selected.slots);
+    try t.expectEqual(@as(u16, 9), selected.thresholds.inbound);
+    try t.expectEqual(@as(u16, 8), selected.thresholds.outbound);
     const bad = try options.parse(&.{
         "--crs-paranoia", "3", "--crs-detection-paranoia", "2",
     }, &remaining);

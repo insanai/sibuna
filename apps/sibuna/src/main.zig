@@ -449,6 +449,8 @@ fn printCrsHelp() void {
         \\  --crs-profile <profile>     full | headers; forward_auth requires headers
         \\  --crs-paranoia <1-4>        Blocking paranoia (default: artifact setting)
         \\  --crs-detection-paranoia <n> Detection paranoia, at least the blocking level
+        \\  --crs-inbound-threshold <n>  Inbound anomaly threshold, 1-65535
+        \\  --crs-outbound-threshold <n> Outbound anomaly threshold, 1-65535
         \\  --crs-request-limit <bytes> Request wire and decoded bound, at most 64 MiB
         \\  --crs-response-limit <bytes> Response wire and decoded bound, at most 64 MiB
         \\  --crs-work-budget <units>   Shared acquisition/inspection budget, at most 1 billion

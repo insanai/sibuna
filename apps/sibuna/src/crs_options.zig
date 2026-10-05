@@ -17,6 +17,8 @@ pub const Config = struct {
     profile: ?crs.config.Profile = null,
     blocking: ?u8 = null,
     detection: ?u8 = null,
+    inbound: ?u16 = null,
+    outbound: ?u16 = null,
     request: ?usize = null,
     response: ?usize = null,
     work: ?u64 = null,
@@ -33,6 +35,10 @@ pub const Config = struct {
         // Off validates operator input without opening even an invalid directory.
         const artifact: crs.config.Artifact = if (self.directory != null) .executable else .absent;
         try activation.validate(observation, artifact);
+        try (crs.config.Thresholds{
+            .inbound = self.inbound orelse 5,
+            .outbound = self.outbound orelse 4,
+        }).validate();
     }
 
     /// Startup overrides are explicit process configuration, not stored edits.
@@ -51,6 +57,9 @@ pub const Config = struct {
         if (self.response) |value| selected.limits.response = value;
         if (self.work) |value| selected.limits.work = value;
         if (self.slots) |value| selected.slots = value;
+        if (self.inbound) |value| selected.thresholds.inbound = value;
+        if (self.outbound) |value| selected.thresholds.outbound = value;
+        try selected.thresholds.validate();
         try selected.activation.validate(selected.observation, .executable);
     }
 };
@@ -95,6 +104,10 @@ fn option(config: *Config, flag: []const u8, value: []const u8) Error!void {
         try number(u8, &config.blocking, value, 1, 4);
     } else if (std.mem.eql(u8, flag, "--crs-detection-paranoia")) {
         try number(u8, &config.detection, value, 1, 4);
+    } else if (std.mem.eql(u8, flag, "--crs-inbound-threshold")) {
+        try number(u16, &config.inbound, value, 1, std.math.maxInt(u16));
+    } else if (std.mem.eql(u8, flag, "--crs-outbound-threshold")) {
+        try number(u16, &config.outbound, value, 1, std.math.maxInt(u16));
     } else if (std.mem.eql(u8, flag, "--crs-request-limit")) {
         try number(usize, &config.request, value, 1, 64 * 1024 * 1024);
     } else if (std.mem.eql(u8, flag, "--crs-response-limit")) {
