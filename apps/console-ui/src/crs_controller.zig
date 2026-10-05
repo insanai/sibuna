@@ -21,6 +21,7 @@ pub fn action(c: ctx.Context, name: []const u8, fields: std.json.Value) !bool {
     if (state.phase != .crs or !state.allows(.manage_settings)) return true;
     const model = &state.crs;
     if (model.busy != .idle) return true;
+    if (try @import("crs_exclusion_controller.zig").action(c, name)) return true;
     if (std.mem.eql(u8, name, "crs-test")) {
         try @import("crs_test_controller.zig").submit(c, fields);
     } else if (std.mem.eql(u8, name, "crs-test-poll")) {
@@ -42,9 +43,7 @@ pub fn action(c: ctx.Context, name: []const u8, fields: std.json.Value) !bool {
         if (model.reviewed) |candidate|
             try @import("crs_review_controller.zig").start(c, candidate);
     } else if (std.mem.eql(u8, name, "crs-cancel-review")) {
-        model.reviewed = null;
-        model.review_job = null;
-        model.review_result = null;
+        model.clearReview();
     } else if (std.mem.eql(u8, name, "crs-select") or std.mem.eql(u8, name, "crs-discard")) {
         try edit(c, std.mem.eql(u8, name, "crs-select"));
     } else if (std.mem.eql(u8, name, "crs-mode") or
@@ -118,11 +117,24 @@ pub fn response(c: ctx.Context, reply: ctx.Response) !void {
         return c.out.emit(.{ .op = "disconnect" });
     }
     if (reply.status != 200) {
+        if (kind == .exclusions and reply.status == 410) {
+            model.review_job = null;
+            model.review_result = null;
+            model.clearExclusions();
+            try state.message.set("This comparison expired. Compare again to reload " ++
+                "the rule and exclusion details.");
+            return c.out.emit(.{ .op = "focus", .selector = "#crs-review-heading" });
+        }
         model.stale = true;
         try state.message.set("CRS request was not confirmed. Refresh to inspect candidates, " ++
             "the saved revision and node receipts before retrying.");
         return;
     }
+    if (kind == .exclusions) return @import("crs_exclusion_controller.zig").response(
+        c,
+        reply.body,
+        reply.allocator,
+    );
     if (kind == .test_submit or kind == .test_read) {
         return @import("crs_test_controller.zig").response(c, kind, reply.body, reply.allocator);
     }

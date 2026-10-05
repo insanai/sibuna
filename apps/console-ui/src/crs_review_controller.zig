@@ -9,6 +9,7 @@ pub fn start(c: ctx.Context, candidate: p.crs_api.Candidate) !void {
     const model = &c.state.crs;
     const snapshot = model.snapshot orelse return;
     if (model.stale or candidate.expected_revision != snapshot.revision) return;
+    model.clearReview();
     model.reviewed = candidate;
     model.review_job = null;
     model.review_result = null;
@@ -51,4 +52,5 @@ pub fn response(
     if (result.kind != .review or !std.mem.eql(u8, result.id.slice(), id.slice()))
         return error.InvalidResponse;
     model.review_result = result;
+    if (result.state == .complete) try @import("crs_exclusion_controller.zig").read(c, .after, 0);
 }

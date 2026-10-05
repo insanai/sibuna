@@ -13,6 +13,7 @@ pub const Kind = enum {
     test_read,
     review_submit,
     review_read,
+    exclusions,
 };
 pub const Model = struct {
     snapshot: ?p.crs_api.Status = null,
@@ -22,6 +23,9 @@ pub const Model = struct {
     reviewed: ?p.crs_api.Candidate = null,
     review_job: ?p.crs_management.Id = null,
     review_result: ?p.crs_tasks.Status = null,
+    exclusion_page: ?p.crs_tasks.ExclusionPage = null,
+    exclusion_side: p.crs_tasks.review.exclusions.Side = .after,
+    exclusion_offset: u32 = 0,
     test_id: ?p.crs_management.Id = null,
     test_result: ?p.crs_tests.Status = null,
     ticket: p.Bytes(48) = .{},
@@ -34,9 +38,7 @@ pub const Model = struct {
         self.snapshot = null;
         self.editor_revision = 0;
         self.editor_loaded = false;
-        self.reviewed = null;
-        self.review_job = null;
-        self.review_result = null;
+        self.clearReview();
         self.test_id = null;
         self.test_result = null;
         self.ticket = .{};
@@ -66,10 +68,21 @@ pub const Model = struct {
         }
         self.snapshot = observed;
         self.stale = false;
-        if (self.reviewed == null) {
-            self.review_job = null;
-            self.review_result = null;
-        }
+        if (self.reviewed == null) self.clearReview();
+    }
+
+    pub fn clearExclusions(self: *Model) void {
+        if (self.exclusion_page) |*page| std.crypto.secureZero(u8, std.mem.asBytes(page));
+        self.exclusion_page = null;
+    }
+
+    pub fn clearReview(self: *Model) void {
+        self.reviewed = null;
+        self.review_job = null;
+        self.review_result = null;
+        self.clearExclusions();
+        self.exclusion_side = .after;
+        self.exclusion_offset = 0;
     }
 
     pub fn reviewPending(self: *const Model) bool {

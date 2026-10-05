@@ -629,6 +629,7 @@ test {
     _ = @import("render.zig");
     _ = @import("geography.zig");
     _ = @import("qr.zig");
+    _ = @import("crs_exclusion_controller.zig");
 }
 
 test "authenticated earth remains bounded without a GeoIP provider" {

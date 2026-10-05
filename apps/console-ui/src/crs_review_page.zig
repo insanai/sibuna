@@ -8,8 +8,14 @@ const W = std.Io.Writer;
 pub fn render(model: *const Model, w: *W) W.Error!void {
     try w.writeAll("<h3 class=\"mt-4\">Rule changes</h3>");
     const result = model.review_result orelse {
-        try w.writeAll("<p role=\"status\">Preparing the rule comparison. " ++
-            "Selection is available after it completes.</p>");
+        if (model.busy == .review_submit or model.review_job != null) {
+            try w.writeAll("<p role=\"status\">Preparing the rule comparison. " ++
+                "Selection is available after it completes.</p>");
+        } else {
+            try w.writeAll("<p role=\"status\">Compare the verified candidate again to " ++
+                "reload its rule and exclusion details.</p><button class=\"btn btn-sm\" " ++
+                "type=\"button\" data-action=\"crs-compare\">Compare again</button>");
+        }
         return;
     };
     if (result.state == .queued or result.state == .running) {
@@ -38,6 +44,7 @@ pub fn render(model: *const Model, w: *W) W.Error!void {
         });
         try exclusions(w, report);
         try changes(w, report);
+        try @import("crs_exclusion_page.zig").render(model, w);
     }
     if (!model.reviewReady()) try w.writeAll("<p class=\"sb-note\">This comparison does not " ++
         "confirm the current candidate and saved revision. Refresh and compare again.</p>");

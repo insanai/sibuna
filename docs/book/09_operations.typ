@@ -169,7 +169,10 @@ selection. It reports added, removed, modified and reordered rules, unchanged to
 configured target exclusions and conditional runtime exclusion entries. At most 64 changed
 rules are shown; additional changes are counted. Selection stays disabled while comparison
 is pending or stale. Settings and authenticated source digests are reviewed separately.
-A comparison never contacts the origin or changes protection.
+A comparison never contacts the origin or changes protection. The *Excluded protection*
+panel pages through the current and candidate inventories. It names skipped fields and
+rule-wide exclusions and identifies conditional controls. Long or binary names have labelled
+previews, exact byte lengths and SHA-256 identities; inspect their full configured selectors.
 
 CLI operators can request the same comparison:
 
@@ -178,7 +181,14 @@ sibuna crs review --origin http://127.0.0.1:9443 --username admin \
     --password-file ./console-password --id <candidate-id> --revision <saved-revision>
 ```
 
-The result belongs to its issuing session and is retained for one minute. A fresh administrator
+The CLI includes both complete exclusion inventories in its JSON result. It follows cursors
+within the same session and honors query limits. For large inventories, `crs review --timeout 900`
+permits up to fifteen minutes; other management commands retain their five-minute
+maximum. No partial inventory is printed after a failed or timed-out read.
+
+The result belongs to its issuing session. Authorized page reads renew a one-minute idle
+lease, bounded to fifteen minutes after completion. An expired comparison can be run again
+without preparing or selecting a new candidate. A fresh administrator
 check, retained-source check and saved-revision check precede completion. The audit records
 `crs.review` intent without rule source or request content. If the selection changes, refresh
 status and compare again before a separate `crs select` command.

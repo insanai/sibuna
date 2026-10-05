@@ -47,24 +47,7 @@ pub fn configure(state: *State, reviewing: bool, stale: bool) void {
         .reason = .none,
     };
     state.crs.reviewed = if (reviewing) prepared else null;
-    if (reviewing) {
-        state.crs.review_job = prepared.id;
-        state.crs.review_result = .{
-            .id = prepared.id,
-            .kind = .review,
-            .state = .complete,
-            .expires = 172859,
-            .source = prepared.id,
-            .expected_revision = 4,
-            .artifact = prepared.artifact,
-            .baseline = current.artifact,
-            .comparison = .{
-                .before = .{ .rules = 628 },
-                .after = .{ .rules = 628 },
-                .unchanged = 628,
-            },
-        };
-    }
+    if (reviewing) configureReview(state, current, prepared);
     state.crs.received_at = 172799;
     state.crs.editor_loaded = true;
     state.crs.editor_revision = 4;
@@ -99,5 +82,55 @@ fn candidate(
             .compiled_peak = 21 * 1024 * 1024,
             .settings = .{ .mode = mode, .slots = 2 },
         },
+    };
+}
+
+fn configureReview(
+    state: *State,
+    current: p.crs_api.Candidate,
+    prepared: p.crs_api.Candidate,
+) void {
+    state.crs.review_job = prepared.id;
+    state.crs.review_result = .{
+        .id = prepared.id,
+        .kind = .review,
+        .state = .complete,
+        .expires = 172859,
+        .source = prepared.id,
+        .expected_revision = 4,
+        .artifact = prepared.artifact,
+        .baseline = current.artifact,
+        .comparison = .{
+            .before = .{ .rules = 628, .target_exclusions = 1, .runtime_exclusions = 1 },
+            .after = .{ .rules = 628, .target_exclusions = 1, .runtime_exclusions = 1 },
+            .unchanged = 628,
+        },
+    };
+    const api = p.crs_tasks.review.exclusions;
+    state.crs.exclusion_page = .{
+        .id = prepared.id,
+        .expected_revision = 4,
+        .expires = 172859,
+        .page = .{ .side = .after, .total = 2, .offset = 0, .count = 2, .next = null },
+    };
+    state.crs.exclusion_page.?.page.rows[0] = .{
+        .rule_id = 942100,
+        .phase = 2,
+        .chain_link = 0,
+        .scope = .static_target,
+        .selector = .rule_id,
+        .first = 942100,
+        .last = 942100,
+        .collection = p.Bytes(32).init("args") catch unreachable,
+        .selection = .exact,
+        .key = api.Text.init("application_field"),
+    };
+    state.crs.exclusion_page.?.page.rows[1] = .{
+        .rule_id = 900130,
+        .phase = 1,
+        .chain_link = 0,
+        .scope = .conditional_rule,
+        .selector = .tag,
+        .tag = api.Text.init("attack-sqli"),
     };
 }

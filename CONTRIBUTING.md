@@ -44,7 +44,8 @@ It requires Node; Chrome separately verifies form retention, focus and responsiv
 against signed sources, compressed entities, atomic redacted audit intent, unchanged
 publication, session isolation and revocation through the actual console listener.
 `python3 tools/crs_review_check.py <binary> --candidate <directory>` qualifies exact rule
-changes, conditional exclusions, redacted intent, session isolation and unchanged publication.
+changes, complete named exclusion pages, redacted intent, session isolation and unchanged
+publication. Maximum-width pages must fit the 16 KiB response bound, including binary names.
 `zig build crs-cluster-check -Dcluster=true -j2 -- --download` qualifies three-node CRS
 mode convergence, leader loss, quorum refusal, restart, rollback and incompatible preparation.
 The CRS console fixtures accept either a saved `--candidate <directory>` or `--download`.

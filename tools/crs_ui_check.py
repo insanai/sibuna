@@ -46,6 +46,15 @@ def candidate(ui, revision, mode):
                 time.sleep(1)
                 action(ui, "crs-review-poll")
             assert "unchanged." in ui.html and "Configured target exclusions:" in ui.html
+            assert "Excluded protection" in ui.html and "1–8 of" in ui.html, ui.html[-10000:]
+            action(ui, "crs-exclusions-next")
+            assert "9–16 of" in ui.html, ui.html[-10000:]
+            action(ui, "crs-exclusions-previous")
+            assert "1–8 of" in ui.html, ui.html[-10000:]
+            action(ui, "crs-exclusions-before")
+            assert 'aria-pressed="true">Current exclusions' in ui.html, ui.html[-10000:]
+            action(ui, "crs-exclusions-after")
+            assert 'aria-pressed="true">Candidate exclusions' in ui.html, ui.html[-10000:]
             return pending
         assert observed["stage"] not in ("failed", "canceled"), observed
         assert time.monotonic() < deadline, observed
