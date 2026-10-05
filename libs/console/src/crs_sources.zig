@@ -96,7 +96,7 @@ fn readBytes(app: *App, id: m.Id, file: m.File, length: usize) ![]u8 {
 
 /// A service may expose the operator's editor text after fresh administrator
 /// authorization. Neither the signed archive nor its signature can be exposed.
-pub fn configuration(app: *App, job: m.Job) ![]u8 {
+pub fn readConfiguration(app: *App, job: m.Job) ![]u8 {
     const manifest = try crs.artifact_manifest.decode(job.manifest.slice());
     const output = try readBytes(app, job.id, .configuration, manifest.configuration_bytes);
     errdefer {
