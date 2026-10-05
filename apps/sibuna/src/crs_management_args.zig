@@ -3,7 +3,17 @@ const std = @import("std");
 const p = @import("console").protocol;
 const Version = @import("crs").release_version.Version;
 const sessions = @import("console_session.zig");
-pub const Operation = enum { status, check, update, mode, rollback, select, discard, @"test" };
+pub const Operation = enum {
+    status,
+    check,
+    update,
+    mode,
+    rollback,
+    select,
+    discard,
+    @"test",
+    review,
+};
 pub const Args = struct {
     operation: Operation,
     origin: []const u8 = "",
@@ -123,8 +133,9 @@ fn validate(args: Args) Error!void {
     if (args.operation == .@"test") {
         if (args.sample_file == null) return error.CaseRequired;
     } else if (args.sample_file != null) return error.UnexpectedOption;
-    if ((args.operation == .select or args.operation == .discard or args.operation == .@"test") and
-        args.id == null)
+    const identified = args.operation == .select or args.operation == .discard or
+        args.operation == .@"test" or args.operation == .review;
+    if (identified and args.id == null)
         return error.IdentifierRequired;
 }
 
@@ -159,5 +170,28 @@ test "managed CRS commands require explicit revisions and reject mixed rollback 
     })));
     try t.expectError(error.InvalidValue, parse(&(.{"mode"} ++ auth ++ .{
         "--mode", "audit", "--revision", "-1",
+    })));
+}
+
+test "managed CRS commands require a source and reject sample or settings overrides" {
+    const t = std.testing;
+    const auth = .{
+        "--origin", "http://127.0.0.1:9443", "--username", "admin", "--password-file", "private",
+    };
+    const source = .{ "--revision", "1", "--id", "11111111111111111111111111111111" };
+    const command = try parse(&(.{"review"} ++ auth ++ source));
+    try t.expectEqual(Operation.review, command.operation);
+    try t.expectError(error.RevisionRequired, parse(&(.{"review"} ++ auth)));
+    try t.expectError(error.IdentifierRequired, parse(&(.{"review"} ++ auth ++ .{
+        "--revision", "1",
+    })));
+    try t.expectError(error.UnexpectedOption, parse(&(.{"review"} ++ auth ++ source ++ .{
+        "--mode", "enforce",
+    })));
+    try t.expectError(error.UnexpectedOption, parse(&(.{"review"} ++ auth ++ source ++ .{
+        "--case", "private.json",
+    })));
+    try t.expectError(error.UnexpectedOption, parse(&(.{"review"} ++ auth ++ source ++ .{
+        "--settings", "override.json",
     })));
 }

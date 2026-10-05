@@ -492,13 +492,15 @@ fn printCrsManagementHelp() void {
             "Private test: sibuna crs test --directory <signed-candidate> --case <json-file> " ++
             "[--mode off|audit|enforce]\n" ++
             "Console management: sibuna crs status | check | update | mode | rollback | " ++
-            "select | discard | test\n" ++
+            "select | discard | test | review\n" ++
             "  Required: --origin <origin> --username <admin> --password-file <private-file>; " ++
             "optional --factor-file <private-file>.\n" ++
             "  Changes require --revision <saved-revision>; select/discard require --id " ++
             "<reviewed-candidate>. Preparation leaves protection unchanged.\n" ++
             "  test requires --id <retained-candidate> --case <json-file> and --revision; " ++
             "optional --mode affects the private test.\n" ++
+            "  review requires --id <verified-candidate> and --revision; " ++
+            "it compares rules without changing protection.\n" ++
             "  mode requires --mode off|audit|enforce. check/update accept --version <x.y.z>, " ++
             "--configuration <file> and --settings <bounded-json-file>.\n",
         .{},

@@ -111,6 +111,12 @@ def qualify(binary, source, root):
         assert prepared["candidate"]["artifact"]["settings"]["mode"] == "enforce"
         assert exchange(data_port, ATTACK, HEADERS)[0] == 200
         identifier = prepared["candidate"]["id"]
+        reviewed = command(binary, auth, "review", "--id", identifier, "--revision", "1")
+        comparison = reviewed["result"]["comparison"]
+        assert reviewed["rule_review"] and not reviewed["private_test"], reviewed
+        assert comparison["unchanged"] == 628 and comparison["count"] == 0, comparison
+        assert not reviewed["origin_contacted"] and reviewed["active_protection"] == "unchanged"
+        assert status(port, cookie, csrf)["revision"] == 1
         command(binary, auth, "select", "--id", identifier, "--revision", "1")
         applied(port, cookie, csrf, 2, "enforce")
         assert exchange(data_port, ATTACK, HEADERS)[0] == 403

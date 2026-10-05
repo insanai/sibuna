@@ -10,7 +10,7 @@ const Writer = std.Io.Writer;
 const Error = sessions.Error || error{
     InvalidConfiguration,
     PreparationFailed,
-    PrivateTestFailed,
+    ManagedTaskFailed,
 };
 const Budget = @import("console_deadline.zig").Budget;
 
@@ -54,7 +54,12 @@ fn run(
         .seconds = args.timeout,
     };
     switch (args.operation) {
-        .@"test" => return @import("crs_test_client.zig").run(&session, args, budget, writer),
+        .@"test", .review => return @import("crs_task_client.zig").run(
+            &session,
+            args,
+            budget,
+            writer,
+        ),
         .status => try reply.status(&session, snapshot),
         .select, .discard => {
             try edit(&session, args);
