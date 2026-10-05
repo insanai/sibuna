@@ -1482,6 +1482,18 @@ bodies; content encoding is preserved for wire replay and must be decoded and va
 the application inspection callback before it claims decoded-body coverage. Neither the
 presence of these hooks nor a library fixture establishes live CRS activation.
 
+The daemon's entity adapter composes the shared decoder with the phase coordinator.
+Request decoding checks phase-one completion before acquiring the phase-two view. Response
+headers are copied into acquired metadata before the reader can refill; header denial takes
+precedence over every streaming or handshake exclusion. A held body is decoded into its
+primary reservation, evaluated in phase four and retained through logging. Audit preserves
+would-deny findings while accepting a completed evaluation; Enforce returns an inspection
+denial before transport publication. Both replay the original encoded entity if admitted.
+Transport, wrapper or decoding failures poison all transaction owners and retain a bounded
+internal cause; they cannot finalize as inspected. Unsupported body coverage uses the named
+streaming or handshake ending rather than empty body collections. These adapter contracts
+are qualified separately from listener startup, generation selection and operator updates.
+
 The pure HTTP transaction coordinator couples successful acquisition to exactly one phase
 execution. Its state advances from request headers through request body, response headers
 and response body; repeated or out-of-order transitions poison the transaction. Response

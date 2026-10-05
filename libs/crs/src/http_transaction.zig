@@ -83,7 +83,7 @@ pub const Transaction = struct {
 
     pub fn requestBody(self: *Transaction, entity: []const u8) Error!executor.Result {
         errdefer self.poison();
-        try self.expectPhase(.request_headers);
+        try self.checkPhase(.request_headers);
         if (self.profile != .full) return error.InvalidHttpPhase;
         const view = try self.slot.input.view();
         const content_type = try view.lookupOptional(.{
@@ -103,7 +103,7 @@ pub const Transaction = struct {
 
     pub fn responseHeaders(self: *Transaction, input: http.Response) Error!executor.Result {
         errdefer self.poison();
-        try self.expectPhase(.request_body);
+        try self.checkPhase(.request_body);
         try http.response(input, &self.slot.input, &self.slot.budget);
         try self.acquire();
         self.phase = .response_headers;
@@ -112,7 +112,7 @@ pub const Transaction = struct {
 
     pub fn responseBody(self: *Transaction, entity: []const u8) Error!executor.Result {
         errdefer self.poison();
-        try self.expectPhase(.response_headers);
+        try self.checkPhase(.response_headers);
         if (entity.len > self.slot.limits.response) return error.ResponseEntityLimit;
         // An empty selected response is still a complete entity. Borrow no phantom
         // occurrence, matching the request adapter's collection count convention.
@@ -149,14 +149,17 @@ pub const Transaction = struct {
         try self.slot.acquire(try self.slot.input.view());
     }
 
-    fn expectPhase(self: *Transaction, phase: model.Phase) Error!void {
+    /// Transport adapters check ordering before acquiring or decoding a body.
+    pub fn checkPhase(self: *Transaction, phase: model.Phase) Error!void {
         std.debug.assert(self.slot.active);
         if (self.end != null or self.phase != phase)
             return error.InvalidHttpPhase;
+        if (self.slot.state.failed) return error.TransactionFailed;
         if (self.slot.state.denied) return error.DisruptedTransaction;
     }
 
-    fn poison(self: *Transaction) void {
+    /// Transport or decoding failure invalidates every owner, never a partial view.
+    pub fn poison(self: *Transaction) void {
         std.debug.assert(self.slot.active);
         self.slot.input.poison();
         self.slot.context.poison();

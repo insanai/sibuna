@@ -18,6 +18,9 @@ signed-package unpacking, private compilation and staging ownership. These check
 the CRS library; they do not establish daemon activation or complete phased HTTP coverage.
 `crs-artifact-check` also re-verifies the signed package from its restart files and checks
 tampering, changed lengths, identity mismatch and retention of a prior prepared candidate.
+`compression-test`, `net-test` and `crs-http-test` check bounded representation decoding,
+response publication and phase composition. They preserve encoded replay and verify that
+streaming and WebSocket exclusions cannot bypass response-header denials.
 
 ---
 

@@ -297,8 +297,9 @@ with their actual content length. An explicit streaming decision covers indefini
 WebSocket inspection ends at the validated handshake. The shared bounded inflater checks
 gzip and zlib wrappers and checksums, handles ordered content codings and retains the
 encoded entity for unchanged replay. It shares the transaction work ledger and uses separate
-wire and decoded ceilings. These building blocks still require daemon phase composition and
-authorized generation selection before CRS can be enabled.
+wire and decoded ceilings. The daemon adapter now couples these operations to phase ordering,
+audit/enforcement outcomes and explicit streaming or handshake coverage. Startup, authorized
+generation selection and update workflows remain necessary before CRS can be enabled.
 
 Development qualification runs separately from enabling protection:
 
@@ -306,6 +307,7 @@ Development qualification runs separately from enabling protection:
 zig build crs-test -j2
 zig build crs-update-test -j2
 zig build compression-test net-test -j2
+zig build crs-http-test -j2
 zig build crs-audit -j2 -- vendor/crs --regex
 zig build crs-regex-check -j2
 zig build crs-primitive-check -j2 -- --download

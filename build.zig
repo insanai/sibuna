@@ -189,6 +189,7 @@ fn addModules(
     });
 
     const crs = @import("build/crs.zig").add(b, target, optimize, compression);
+    @import("build/crs_http.zig").add(b, target, crs, net);
     return .{
         .socket = socket,
         .core = core,
