@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Qualify session-bound rule comparisons without changing active protection."""
 import argparse
+import crs_fixture_source as fixtures
 import json
 from pathlib import Path
 import tempfile
@@ -104,10 +105,12 @@ def qualify(binary, source, root):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("binary", type=Path)
-    parser.add_argument("--candidate", type=Path, required=True)
+    fixtures.arguments(parser)
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix="sibuna-crs-review-") as temporary:
-        qualify(args.binary.resolve(), args.candidate.resolve(), Path(temporary))
+        root = Path(temporary)
+        binary = args.binary.resolve()
+        qualify(binary, fixtures.resolve(binary, args, root), root)
     print("Rule comparisons: exact changes, conditional exclusion counts, redacted audit, "
           "unchanged publication, revision conflicts, session isolation and revocation pass.")
 

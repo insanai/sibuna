@@ -339,6 +339,7 @@ fn addServer(
     proxy_e2e.dependOn(&modes_check.step);
     addConsoleLiveChecks(b, exe, console != null);
     addCrsLiveChecks(b, exe, console != null);
+    if (console != null) addCrsConsoleChecks(b, exe);
     // The isolation gate builds its own ReleaseFast binaries (with and without the
     // console) into a temporary prefix; `-- --quick` runs the short CI matrix.
     const impact = b.step("console-impact", "Measure data-plane cost of the console");
@@ -790,5 +791,25 @@ fn addCrsLiveChecks(b: *std.Build, exe: *std.Build.Step.Compile, console: bool) 
         if (scenario[2] and console) check.addArg("--console");
         check.addPassthruArgs();
         b.step(scenario[0], scenario[3]).dependOn(&check.step);
+    }
+}
+
+fn addCrsConsoleChecks(b: *std.Build, exe: *std.Build.Step.Compile) void {
+    const checks = .{
+        .{ "crs-restart-check", "restart", "Qualify durable CRS startup and restart restoration" },
+        .{ "crs-management-check", "management", "Qualify reviewed CRS selection and rollback" },
+        .{ "crs-private-check", "test", "Qualify authorized private phased CRS samples" },
+        .{ "crs-review-check", "review", "Qualify session-bound CRS rule comparisons" },
+        .{ "crs-cli-check", "cli", "Qualify native CRS commands through authenticated APIs" },
+        .{ "crs-ui-check", "ui", "Qualify shipped CRS Wasm workflows with Node" },
+        .{ "crs-cluster-check", "cluster", "Qualify three-node CRS convergence (-Dcluster=true)" },
+    };
+    inline for (checks) |check| {
+        const run = b.addSystemCommand(&.{
+            python, "tools/crs_" ++ check[1] ++ "_check.py",
+        });
+        run.addArtifactArg(exe);
+        run.addPassthruArgs();
+        b.step(check[0], check[2]).dependOn(&run.step);
     }
 }

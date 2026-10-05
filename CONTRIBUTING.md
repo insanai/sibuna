@@ -45,6 +45,11 @@ against signed sources, compressed entities, atomic redacted audit intent, uncha
 publication, session isolation and revocation through the actual console listener.
 `python3 tools/crs_review_check.py <binary> --candidate <directory>` qualifies exact rule
 changes, conditional exclusions, redacted intent, session isolation and unchanged publication.
+`zig build crs-cluster-check -Dcluster=true -j2 -- --download` qualifies three-node CRS
+mode convergence, leader loss, quorum refusal, restart, rollback and incompatible preparation.
+The CRS console fixtures accept either a saved `--candidate <directory>` or `--download`.
+Use the `crs-restart-check`, `crs-management-check`, `crs-private-check`, `crs-review-check`,
+`crs-cli-check` and `crs-ui-check` build steps to replay the same authenticated workflows.
 `crs-client-test` checks native command authority, explicit revisions and decoding of a
 full candidate/member view. `python3 tools/crs_cli_check.py <binary> --candidate <directory>`
 checks offline authentication, private phased samples against signed sources and reviewed live CLI changes. Each command

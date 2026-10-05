@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Exercise reviewed CRS changes against a signed package and a real daemon."""
 import argparse
+import crs_fixture_source as fixtures
 import json
 from pathlib import Path
 import tempfile
@@ -123,10 +124,12 @@ def qualify(binary, source, root):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("binary", type=Path)
-    parser.add_argument("--candidate", type=Path, required=True)
+    fixtures.arguments(parser)
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix="sibuna-crs-management-") as temporary:
-        qualify(args.binary.resolve(), args.candidate.resolve(), Path(temporary))
+        root = Path(temporary)
+        binary = args.binary.resolve()
+        qualify(binary, fixtures.resolve(binary, args, root), root)
     print("Authenticated preparation, separate reviewed selection, Off/Enforce, rollback, "
           "conflicts, discard, applied receipts, revocation and restart pass.")
 
