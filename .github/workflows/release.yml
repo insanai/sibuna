@@ -38,6 +38,34 @@ jobs:
             crs-detector-data crs-detector-check \
             crs-primitive-check crs-regex-check crs-signature-check crs-acquisition-check \
             crs-update-test crs-package-check crs-artifact-check -j2 --summary all -- --download
+  crs-console:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - name: Install cluster build dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential libssl-dev
+      - name: Install checksum-verified Zig 0.17.0
+        run: python tools/install_zig.py "$RUNNER_TEMP/zig"
+      - name: Qualify owned management and native clients
+        run: |
+          zig build console-test console-crs-evidence-test console-crs-management-test \
+            crs-client-test -j2 --summary all
+      - name: Qualify authenticated CRS workflows sequentially
+        run: |
+          for step in crs-restart-check crs-management-check crs-private-check \
+            crs-review-check crs-cli-check crs-ui-check
+          do
+            zig build "$step" -j2 --summary all -- --download
+          done
+      - name: Qualify three-node CRS propagation and restart
+        run: zig build crs-cluster-check -Dcluster=true -j2 --summary all -- --download
   plan:
     runs-on: ubuntu-22.04
     outputs:
@@ -104,7 +132,7 @@ jobs:
           if-no-files-found: error
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build, crs-conformance]
+    needs: [build, crs-conformance, crs-console]
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     permissions:
