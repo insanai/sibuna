@@ -12,7 +12,10 @@ pub fn render(state: *const State, w: *W) W.Error!void {
     try html.render(w, @embedFile("snippets/crs-test.html"), .{
         .source_kind = if (model.reviewed != null) "Reviewed" else "Selected",
         .source = source.id.slice(),
-        .disabled = if (model.busy != .idle or model.stale) " disabled" else "",
+        .disabled = if (model.busy != .idle or model.stale or model.reviewPending())
+            " disabled"
+        else
+            "",
     });
     if (model.test_result) |result| {
         try html.render(w, "<section id=\"crs-test-result\" class=\"sb-panel mt-4\">" ++

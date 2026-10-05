@@ -29,16 +29,22 @@ pub fn action(c: ctx.Context, name: []const u8, fields: std.json.Value) !bool {
         try get(c, .status);
     } else if (std.mem.eql(u8, name, "crs-reload-editor")) {
         try get(c, .configuration);
+    } else if (std.mem.eql(u8, name, "crs-review-poll")) {
+        try @import("crs_review_controller.zig").poll(c);
     } else if (std.mem.startsWith(u8, name, "crs-review-")) {
         const index = std.fmt.parseInt(usize, name[11..], 10) catch return true;
         const snapshot = model.snapshot orelse return true;
         if (index >= snapshot.count) return true;
         const candidate = snapshot.candidates[index].?;
         if (candidate.state != .verified) return true;
-        model.reviewed = candidate;
-        try c.out.emit(.{ .op = "focus", .selector = "#crs-review-heading" });
+        try @import("crs_review_controller.zig").start(c, candidate);
+    } else if (std.mem.eql(u8, name, "crs-compare")) {
+        if (model.reviewed) |candidate|
+            try @import("crs_review_controller.zig").start(c, candidate);
     } else if (std.mem.eql(u8, name, "crs-cancel-review")) {
         model.reviewed = null;
+        model.review_job = null;
+        model.review_result = null;
     } else if (std.mem.eql(u8, name, "crs-select") or std.mem.eql(u8, name, "crs-discard")) {
         try edit(c, std.mem.eql(u8, name, "crs-select"));
     } else if (std.mem.eql(u8, name, "crs-mode") or
@@ -80,6 +86,7 @@ fn get(c: ctx.Context, kind: Kind) !void {
 fn edit(c: ctx.Context, select: bool) !void {
     const model = &c.state.crs;
     if (model.stale) return;
+    if (select and !model.reviewReady()) return;
     const reviewed = model.reviewed orelse return;
     const snapshot = model.snapshot orelse return;
     if (reviewed.expected_revision != snapshot.revision) {
@@ -119,6 +126,14 @@ pub fn response(c: ctx.Context, reply: ctx.Response) !void {
     if (kind == .test_submit or kind == .test_read) {
         return @import("crs_test_controller.zig").response(c, kind, reply.body, reply.allocator);
     }
+    if (kind == .review_submit or kind == .review_read) {
+        return @import("crs_review_controller.zig").response(
+            c,
+            kind,
+            reply.body,
+            reply.allocator,
+        );
+    }
     if (kind == .status) {
         try model.accept(reply.body, reply.allocator);
         model.received_at = state.browser_time;
@@ -151,6 +166,7 @@ pub fn tick(state: *State, out: Outbox) !void {
     if (!state.fullAccess() or model.busy != .idle) return;
     if (state.browser_time -| model.attempted_at < 5) return;
     const c: ctx.Context = .{ .state = state, .out = out };
+    if (model.reviewPending()) return @import("crs_review_controller.zig").poll(c);
     if (model.test_id != null) {
         const pending = if (model.test_result) |result|
             result.state == .queued or result.state == .running

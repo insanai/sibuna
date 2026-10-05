@@ -40,6 +40,11 @@ def candidate(ui, revision, mode):
             assert match, ui.html[-3000:]
             action(ui, match[1])
             assert 'id="crs-review"' in ui.html and "Select candidate" in ui.html
+            while 'data-action="crs-select" disabled' in ui.html:
+                assert time.monotonic() < deadline, ui.html[-7000:]
+                time.sleep(1)
+                action(ui, "crs-review-poll")
+            assert "unchanged." in ui.html and "Configured target exclusions:" in ui.html
             return pending
         assert observed["stage"] not in ("failed", "canceled"), observed
         assert time.monotonic() < deadline, observed

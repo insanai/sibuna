@@ -13,7 +13,7 @@ pub fn submit(c: ctx.Context, values: std.json.Value) !void {
     const model = &c.state.crs;
     const snapshot = model.snapshot orelse return;
     const source = model.reviewed orelse snapshot.current orelse return;
-    if (model.stale or source.artifact == null) return;
+    if (model.stale or model.reviewPending() or source.artifact == null) return;
     var request_headers: [32]Header = undefined;
     var response_headers: [32]Header = undefined;
     const input = read(values, &request_headers, &response_headers) catch {
@@ -123,7 +123,8 @@ pub fn response(
     try @import("json_value.zig").into(&result, value, allocator);
     try result.validate();
     const id = model.test_id orelse return error.InvalidResponse;
-    if (!std.mem.eql(u8, result.id.slice(), id.slice())) return error.InvalidResponse;
+    if (result.kind != .sample or !std.mem.eql(u8, result.id.slice(), id.slice()))
+        return error.InvalidResponse;
     model.test_result = result;
 }
 

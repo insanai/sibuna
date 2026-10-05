@@ -47,6 +47,24 @@ pub fn configure(state: *State, reviewing: bool, stale: bool) void {
         .reason = .none,
     };
     state.crs.reviewed = if (reviewing) prepared else null;
+    if (reviewing) {
+        state.crs.review_job = prepared.id;
+        state.crs.review_result = .{
+            .id = prepared.id,
+            .kind = .review,
+            .state = .complete,
+            .expires = 172859,
+            .source = prepared.id,
+            .expected_revision = 4,
+            .artifact = prepared.artifact,
+            .baseline = current.artifact,
+            .comparison = .{
+                .before = .{ .rules = 628 },
+                .after = .{ .rules = 628 },
+                .unchanged = 628,
+            },
+        };
+    }
     state.crs.received_at = 172799;
     state.crs.editor_loaded = true;
     state.crs.editor_revision = 4;

@@ -11,6 +11,8 @@ pub const Kind = enum {
     discard,
     test_submit,
     test_read,
+    review_submit,
+    review_read,
 };
 pub const Model = struct {
     snapshot: ?p.crs_api.Status = null,
@@ -18,6 +20,8 @@ pub const Model = struct {
     editor_revision: u64 = 0,
     editor_loaded: bool = false,
     reviewed: ?p.crs_api.Candidate = null,
+    review_job: ?p.crs_management.Id = null,
+    review_result: ?p.crs_tasks.Status = null,
     test_id: ?p.crs_management.Id = null,
     test_result: ?p.crs_tests.Status = null,
     ticket: p.Bytes(48) = .{},
@@ -31,6 +35,8 @@ pub const Model = struct {
         self.editor_revision = 0;
         self.editor_loaded = false;
         self.reviewed = null;
+        self.review_job = null;
+        self.review_result = null;
         self.test_id = null;
         self.test_result = null;
         self.ticket = .{};
@@ -60,5 +66,41 @@ pub const Model = struct {
         }
         self.snapshot = observed;
         self.stale = false;
+        if (self.reviewed == null) {
+            self.review_job = null;
+            self.review_result = null;
+        }
+    }
+
+    pub fn reviewPending(self: *const Model) bool {
+        if (self.review_job == null) return false;
+        const result = self.review_result orelse return true;
+        return result.state == .queued or result.state == .running;
+    }
+
+    pub fn reviewReady(self: *const Model) bool {
+        const snapshot = self.snapshot orelse return false;
+        const candidate = self.reviewed orelse return false;
+        const result = self.review_result orelse return false;
+        const artifact = result.artifact orelse return false;
+        const expected = candidate.artifact orelse return false;
+        if (snapshot.current) |current| {
+            const baseline = result.baseline orelse return false;
+            const saved = current.artifact orelse return false;
+            if (baseline.revision != snapshot.revision or !sameArtifact(baseline, saved))
+                return false;
+        } else if (result.baseline != null) return false;
+        return !self.stale and result.kind == .review and result.state == .complete and
+            result.comparison != null and result.expected_revision == snapshot.revision and
+            std.mem.eql(u8, result.source.slice(), candidate.id.slice()) and
+            sameArtifact(artifact, expected);
     }
 };
+
+fn sameArtifact(left: p.crs_api.Artifact, right: p.crs_api.Artifact) bool {
+    return left.revision == right.revision and
+        std.mem.eql(u8, left.release.slice(), right.release.slice()) and
+        std.mem.eql(u8, left.source_digest.slice(), right.source_digest.slice()) and
+        std.mem.eql(u8, left.operator_digest.slice(), right.operator_digest.slice()) and
+        std.meta.eql(left.settings, right.settings);
+}

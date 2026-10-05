@@ -22,7 +22,7 @@ pub fn render(state: *const State, w: *W) W.Error!void {
         "This view is stale. Refresh before preparing or selecting a candidate.</p>");
     try status(state, snapshot, w);
     try candidates(snapshot, w);
-    if (model.reviewed) |reviewed| try review(snapshot, reviewed, disabled, w);
+    if (model.reviewed) |reviewed| try review(state, reviewed, disabled, w);
     if (snapshot.available) {
         try @import("crs_test_page.zig").render(state, w);
         try mode(snapshot, disabled, w);
@@ -213,11 +213,12 @@ fn bounds(settings: Settings, w: *W) W.Error!void {
 }
 
 fn review(
-    snapshot: p.crs_api.Status,
+    state: *const State,
     candidate: p.crs_api.Candidate,
     disabled: []const u8,
     w: *W,
 ) W.Error!void {
+    const snapshot = state.crs.snapshot.?;
     const next = candidate.artifact orelse return;
     const previous = if (snapshot.current) |row| row.artifact else null;
     try html.render(w, "<section id=\"crs-review\" class=\"sb-panel mt-6\" " ++
@@ -232,32 +233,28 @@ fn review(
         .rules = next.conditions,
     });
     try diff(w, "Release", if (previous) |a| a.release.slice() else "None", next.release.slice());
-    try diff(
-        w,
-        "Source SHA-256",
-        if (previous) |a| a.source_digest.slice() else "None",
-        next.source_digest.slice(),
-    );
-    try diff(
-        w,
-        "Operator SHA-256",
-        if (previous) |a| a.operator_digest.slice() else "None",
-        next.operator_digest.slice(),
-    );
     inline for (@typeInfo(Settings).@"struct".field_names) |name| {
         var before: [20]u8 = undefined;
         var after: [20]u8 = undefined;
         const old = if (previous) |a| setting(name, a.settings, &before) else "Not selected";
         try diff(w, label(name), old, setting(name, next.settings, &after));
     }
-    try html.render(w, "</tbody></table></div><p class=\"sb-note mt-4\">Verify exclusions and " ++
+    try w.writeAll("</tbody></table></div>");
+    try @import("crs_identity_page.zig").render(previous, next, w);
+    try @import("crs_review_page.zig").render(&state.crs, w);
+    if (next.settings.profile == .headers) try w.writeAll("<p class=\"sb-note mt-4\">" ++
+        "Headers profile excludes request bodies and origin responses from CRS inspection.</p>");
+    try html.render(w, "<p class=\"sb-note mt-4\">Verify exclusions and " ++
         "application traffic before enforcing. Selection commits desired state; each node " ++
         "then compiles and applies it independently.</p>" ++
         "<div class=\"flex flex-wrap gap-3 mt-4\"><button class=\"btn btn-primary\" " ++
-        "data-action=\"crs-select\"{{ disabled }}>Select candidate</button>" ++
+        "data-action=\"crs-select\"{{ select_disabled }}>Select candidate</button>" ++
         "<button class=\"btn\" data-action=\"crs-discard\"{{ disabled }}>Discard candidate" ++
         "</button><button class=\"btn\" data-action=\"crs-cancel-review\">Close review</button>" ++
-        "</div></section>", .{ .disabled = disabled });
+        "</div></section>", .{
+        .disabled = disabled,
+        .select_disabled = if (state.crs.reviewReady()) disabled else " disabled",
+    });
 }
 
 fn diff(w: *W, name: []const u8, old: []const u8, next: []const u8) W.Error!void {
