@@ -24,6 +24,7 @@ pub fn render(state: *const State, w: *W) W.Error!void {
     try candidates(snapshot, w);
     if (model.reviewed) |reviewed| try review(snapshot, reviewed, disabled, w);
     if (snapshot.available) {
+        try @import("crs_test_page.zig").render(state, w);
         try mode(snapshot, disabled, w);
         try editor(state, snapshot, w);
     } else try w.writeAll("<p class=\"sb-note mt-6\">Management is unavailable on this node.</p>");
@@ -126,17 +127,8 @@ fn failure(w: *W, candidate: p.crs_api.Candidate) W.Error!void {
         .kind = @tagName(candidate.kind),
         .id = candidate.id.slice(),
     });
-    try html.render(w, "<p><strong>CRSCOMPILE/{{ code }}</strong>: {{ explanation }} " ++
-        "({{ cause }})</p><p class=\"break-all\">Source: {{ path }}{{ truncated }}</p>", .{
-        .code = @tagName(diagnostic.code),
-        .explanation = diagnostic.explanation(),
-        .cause = diagnostic.cause.slice(),
-        .path = if (diagnostic.path.len == 0) "Not available" else diagnostic.path.slice(),
-        .truncated = if (diagnostic.path_truncated) " (truncated)" else "",
-    });
-    if (diagnostic.line) |line| try html.render(w, "<p>Line: {{ line }}</p>", .{ .line = line });
-    if (diagnostic.rule) |rule| try html.render(w, "<p>Rule: {{ rule }}</p>", .{ .rule = rule });
-    try html.render(w, "<p>Hint: {{ hint }}</p></div>", .{ .hint = diagnostic.hint() });
+    try @import("crs_diagnostic_page.zig").render(w, diagnostic);
+    try w.writeAll("</div>");
 }
 
 fn mode(snapshot: p.crs_api.Status, disabled: []const u8, w: *W) W.Error!void {

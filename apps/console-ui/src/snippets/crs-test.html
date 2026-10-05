@@ -1,0 +1,34 @@
+<section id="crs-test-panel" class="sb-panel mt-6">
+    <h2>Test a request privately</h2>
+    <p>{{ source_kind }} candidate <code class="break-all">{{ source }}</code></p>
+    <p class="sb-note">This test uses the candidate's rules, profile and limits. It contacts no origin and changes no active protection. Samples are temporary; each form entity is at most 16 KiB. Use the CLI for larger samples.</p>
+    <form id="crs-test" class="mt-4">
+        <fieldset{{ disabled }}>
+            <div class="sb-filters"><div class="sb-filter-grid sb-filter-three">
+                <label class="form-control" for="crs-test-mode"><span>Test mode</span><select id="crs-test-mode" name="mode" class="select select-bordered w-full"><option value="audit">Audit</option><option value="enforce">Enforce</option><option value="off">Off</option></select></label>
+                <label class="form-control" for="crs-test-method"><span>Request method</span><input id="crs-test-method" name="request_method" class="input input-bordered w-full" value="GET" maxlength="32" required></label>
+                <label class="form-control" for="crs-test-client"><span>Client IP</span><input id="crs-test-client" name="client" class="input input-bordered w-full" value="192.0.2.1" maxlength="64" required></label>
+            </div></div>
+            <label class="form-control mt-4" for="crs-test-target"><span>Request path and query</span><input id="crs-test-target" name="request_target" class="input input-bordered w-full" value="/" maxlength="8192" required></label>
+            <div class="grid md:grid-cols-2 gap-6 mt-4">
+                <div>
+                    <h3>Request</h3>
+                    <label class="form-control mt-3" for="crs-test-request-headers"><span>Headers (one Name: value per line)</span><textarea id="crs-test-request-headers" name="request_headers" class="textarea textarea-bordered w-full font-mono" rows="4" maxlength="16384">Host: example.test
+User-Agent: Mozilla/5.0
+Accept: text/html</textarea></label>
+                    <label class="form-control mt-3" for="crs-test-request-body"><span>Entity bytes (without transfer framing)</span><textarea id="crs-test-request-body" name="request_body" class="textarea textarea-bordered w-full font-mono" rows="4" maxlength="16384"></textarea></label>
+                    <label class="form-control mt-3" for="crs-test-request-encoding"><span>Entity format</span><select id="crs-test-request-encoding" name="request_encoding" class="select select-bordered w-full"><option value="text">Text</option><option value="hex">Hexadecimal bytes</option></select></label>
+                </div>
+                <div>
+                    <h3>Optional response</h3>
+                    <label class="form-control mt-3" for="crs-test-status"><span>Status (leave empty when unavailable)</span><input id="crs-test-status" name="response_status" type="number" min="100" max="599" class="input input-bordered w-full" placeholder="200"></label>
+                    <label class="form-control mt-3" for="crs-test-response-headers"><span>Headers (one Name: value per line)</span><textarea id="crs-test-response-headers" name="response_headers" class="textarea textarea-bordered w-full font-mono" rows="3" maxlength="16384"></textarea></label>
+                    <label class="form-control mt-3" for="crs-test-response-body"><span>Entity bytes (without transfer framing)</span><textarea id="crs-test-response-body" name="response_body" class="textarea textarea-bordered w-full font-mono" rows="4" maxlength="16384"></textarea></label>
+                    <label class="form-control mt-3" for="crs-test-response-encoding"><span>Entity format</span><select id="crs-test-response-encoding" name="response_encoding" class="select select-bordered w-full"><option value="text">Text</option><option value="hex">Hexadecimal bytes</option></select></label>
+                    <label class="form-control mt-3" for="crs-test-ending"><span>Response ending</span><select id="crs-test-ending" name="response_ending" class="select select-bordered w-full"><option value="complete">Complete</option><option value="handshake">WebSocket handshake</option><option value="streaming">Declared streaming</option></select></label>
+                </div>
+            </div>
+            <button class="btn btn-primary mt-4" type="submit">Run private test</button>
+        </fieldset>
+    </form>
+</section>

@@ -2,13 +2,24 @@
 //! page and on session reset. JSON event bytes never become retained references.
 const std = @import("std");
 const p = @import("console_protocol");
-pub const Kind = enum { idle, status, configuration, prepare, select, discard };
+pub const Kind = enum {
+    idle,
+    status,
+    configuration,
+    prepare,
+    select,
+    discard,
+    test_submit,
+    test_read,
+};
 pub const Model = struct {
     snapshot: ?p.crs_api.Status = null,
     editor: p.Bytes(p.crs_api.editor_bytes) = .{},
     editor_revision: u64 = 0,
     editor_loaded: bool = false,
     reviewed: ?p.crs_api.Candidate = null,
+    test_id: ?p.crs_management.Id = null,
+    test_result: ?p.crs_tests.Status = null,
     ticket: p.Bytes(48) = .{},
     busy: Kind = .idle,
     attempted_at: u64 = 0,
@@ -20,6 +31,8 @@ pub const Model = struct {
         self.editor_revision = 0;
         self.editor_loaded = false;
         self.reviewed = null;
+        self.test_id = null;
+        self.test_result = null;
         self.ticket = .{};
         self.busy = .idle;
         self.attempted_at = 0;

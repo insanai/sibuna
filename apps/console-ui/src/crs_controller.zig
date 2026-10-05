@@ -21,7 +21,11 @@ pub fn action(c: ctx.Context, name: []const u8, fields: std.json.Value) !bool {
     if (state.phase != .crs or !state.allows(.manage_settings)) return true;
     const model = &state.crs;
     if (model.busy != .idle) return true;
-    if (std.mem.eql(u8, name, "crs-refresh")) {
+    if (std.mem.eql(u8, name, "crs-test")) {
+        try @import("crs_test_controller.zig").submit(c, fields);
+    } else if (std.mem.eql(u8, name, "crs-test-poll")) {
+        try @import("crs_test_controller.zig").poll(c);
+    } else if (std.mem.eql(u8, name, "crs-refresh")) {
         try get(c, .status);
     } else if (std.mem.eql(u8, name, "crs-reload-editor")) {
         try get(c, .configuration);
@@ -112,6 +116,9 @@ pub fn response(c: ctx.Context, reply: ctx.Response) !void {
             "the saved revision and node receipts before retrying.");
         return;
     }
+    if (kind == .test_submit or kind == .test_read) {
+        return @import("crs_test_controller.zig").response(c, kind, reply.body, reply.allocator);
+    }
     if (kind == .status) {
         try model.accept(reply.body, reply.allocator);
         model.received_at = state.browser_time;
@@ -141,9 +148,17 @@ pub fn response(c: ctx.Context, reply: ctx.Response) !void {
 
 pub fn tick(state: *State, out: Outbox) !void {
     const model = &state.crs;
-    if (!state.fullAccess() or model.busy != .idle or model.reviewed != null) return;
-    if (state.browser_time -| model.attempted_at >= 5)
-        try get(.{ .state = state, .out = out }, .status);
+    if (!state.fullAccess() or model.busy != .idle) return;
+    if (state.browser_time -| model.attempted_at < 5) return;
+    const c: ctx.Context = .{ .state = state, .out = out };
+    if (model.test_id != null) {
+        const pending = if (model.test_result) |result|
+            result.state == .queued or result.state == .running
+        else
+            true;
+        if (pending) return @import("crs_test_controller.zig").poll(c);
+    }
+    if (model.reviewed == null) try get(c, .status);
 }
 
 test "CRS page tickets reject late replies and revoked sessions erase operator text" {

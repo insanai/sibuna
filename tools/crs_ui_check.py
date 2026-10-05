@@ -63,6 +63,26 @@ def select(ui, revision, mode):
         time.sleep(1)
 
 
+def private_test(ui):
+    action(ui, "crs-test", {
+        "mode": "enforce", "request_method": "GET", "request_target": ATTACK,
+        "client": "192.0.2.1", "request_headers": "Host: example.test\n"
+        "User-Agent: Mozilla/5.0\nAccept: text/html", "request_body": "",
+        "request_encoding": "text", "response_status": "200", "response_headers": "",
+        "response_body": "ordinary page", "response_encoding": "text",
+        "response_ending": "complete"})
+    deadline = time.monotonic() + 90
+    while "Enforcing denial: yes" not in ui.html:
+        assert time.monotonic() < deadline, ui.html[-7000:]
+        time.sleep(1)
+        action(ui, "crs-test-poll")
+    assert "Would deny: yes" in ui.html and "Blocking inbound score:" in ui.html
+    assert "Origin contacted: no" in ui.html and "Active protection: unchanged" in ui.html
+    assert "Tested candidate:" in ui.html and "unlogged matches excluded" in ui.html
+    assert "0 additional findings omitted" in ui.html
+    assert snapshot(ui)["revision"] == 1
+
+
 def modes(ui, data_port):
     revision = 1
     for mode, expected in (("enforce", 403), ("off", 200)):
@@ -134,6 +154,7 @@ def qualify(binary, source, root):
             action(ui, "crs")
             assert "Core Rule Set" in ui.html and 'id="console-navigation"' in ui.html
             data_port = int(process.args[process.args.index("--port") + 1])
+            private_test(ui)
             modes(ui, data_port)
             editor(ui, data_port)
             action(ui, "logout")
@@ -150,7 +171,7 @@ def main():
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix="sibuna-crs-ui-") as temporary:
         qualify(args.binary.resolve(), args.candidate.resolve(), Path(temporary))
-    print("Shipped CRS Wasm: reviewed modes, exact rollback, operator edits, failed "
+    print("Shipped CRS Wasm: private phased tests, reviewed modes, exact rollback, operator edits, failed "
           "preparation and sign-out pass against the live daemon.")
 
 
