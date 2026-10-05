@@ -39,8 +39,10 @@ test "gzip and zlib decode into bounded reserved storage and debit shared work" 
         const result = try codec.decode(options, &fixture.budget);
         try t.expectEqualStrings(payload, result);
         try t.expectEqualSlices(u8, case.bytes, options.input);
-        const charged = case.bytes.len * 16 + 1 + payload.len * 4 + 1;
-        try t.expectEqual(@as(u64, 1_000_000 - charged), fixture.budget.remaining);
+        const charged = 1_000_000 - fixture.budget.remaining;
+        const input_cost = case.bytes.len * 16 + 1;
+        try t.expect(charged >= input_cost + payload.len * 4);
+        try t.expect(charged <= input_cost + 2 * ((fixture.output.len + 1) * 4 + 1));
     }
 }
 
@@ -171,4 +173,35 @@ test "zlib FCHECK and external dictionary headers are refused before expansion" 
     const prefix = @as(u16, encoded[0]) << 8 | encoded[1];
     encoded[1] |= @intCast((31 - prefix % 31) % 31);
     try t.expectError(error.InvalidCompressedData, codec.decode(options, &fixture.budget));
+}
+
+test "direct expansion retains the complete DEFLATE history across output and budget steps" {
+    const compressed = @embedFile("testdata/window.gz");
+    var expected: [30000 * 3]u8 = undefined;
+    var state: u32 = 0x12345678;
+    for (expected[0..30000]) |*byte| {
+        state ^= state << 13;
+        state ^= state >> 17;
+        state ^= state << 5;
+        byte.* = @truncate(state);
+    }
+    @memcpy(expected[30000..60000], expected[0..30000]);
+    @memcpy(expected[60000..90000], expected[0..30000]);
+    var output: [expected.len]u8 = undefined;
+    var window: [codec.window_length]u8 = undefined;
+    var budget: Budget = .{ .remaining = 4_000_000 };
+    const options: codec.Options = .{
+        .input = compressed,
+        .coding = .gzip,
+        .scratch = .{ .output = &output, .window = &window },
+    };
+    try t.expectEqualSlices(u8, &expected, try codec.decode(options, &budget));
+    @memset(&output, '!');
+    budget.remaining = compressed.len * 16 + 1;
+    try t.expectError(error.WorkLimit, codec.decode(options, &budget));
+    try t.expectEqualStrings("!!!!", output[0..4]);
+    budget.remaining = compressed.len * 16 + 1 + 8192 * 4 + 1;
+    try t.expectError(error.WorkLimit, codec.decode(options, &budget));
+    try t.expectEqualSlices(u8, expected[0..8192], output[0..8192]);
+    try t.expectEqualStrings("!!!!", output[8192..8196]);
 }

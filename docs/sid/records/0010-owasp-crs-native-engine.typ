@@ -1436,6 +1436,12 @@ external dictionaries. HTTP accepts gzip, its x-gzip alias and zlib-wrapped defl
 by #link("https://www.rfc-editor.org/rfc/rfc9110.html#section-8.4.1")[RFC 9110 §8.4.1].
 It combines ordered Content-Encoding fields and decodes at most four layers in reverse
 order. Every layer has an independent decoded ceiling and uses the transaction work ledger.
+Charge compressed input before decoding and reserve work for each output allowance before
+the native decoder runs. Direct streaming limits each allowance to 8 KiB; an indirect
+reader must not expand ahead of that charge. Unused allowances are not refunded. Preserve
+the most recent 32 KiB of history when compacting its caller-owned 64 KiB buffer, and start
+each member with empty history. A one-byte overflow probe distinguishes an exact fit from
+an oversized entity without copying past the decoded ceiling.
 The compressed wire ceiling is independent of the decoded ceiling. Unsupported codings,
 invalid wrappers, expansion overflow and exhausted work are refusals, never identity data.
 Identity data remains an immutable borrow and obeys the decoded ceiling.
@@ -1456,8 +1462,9 @@ and two buffers of size $D$, one 64 KiB history buffer and bounded local decoder
 bounded Huffman symbols and length/distance runs, while checksum and copy passes advance
 over decoded bytes. Every output contribution checks the aggregate ceiling before copying;
 all members of a layer share that count. Alternating two disjoint buffers suffices because
-each layer consumes only its preceding immutable result. Charging input and output visits
-to the shared work ledger bounds the permitted work further. Checksums authenticate format
+each layer consumes only its preceding immutable result. Precharging input and bounded
+output allowances prevents expansion after the ledger is exhausted; preserving the DEFLATE
+history keeps backward references valid across those steps. Checksums authenticate format
 integrity, not publisher identity or payload safety. This argument assumes the pinned native
 DEFLATE implementation and does not establish a wall-clock latency guarantee. $square$
 

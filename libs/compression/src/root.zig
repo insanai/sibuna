@@ -69,22 +69,34 @@ fn member(
         .gzip => .gzip,
         .zlib => .zlib,
     };
-    var inflater: std.compress.flate.Decompress = .init(source, container, scratch.window);
-    var buffer: [8192]u8 = undefined;
+    // Direct streaming honors the output limit. The indirect reader fills its
+    // window ahead of the caller, which would expand bytes before charging work.
+    var inflater: std.compress.flate.Decompress = .init(source, container, &.{});
+    var writer = std.Io.Writer.fixed(scratch.window);
     var crc = std.hash.crc.@"CRC-32/ISO-HDLC".init();
     var adler: std.hash.Adler32 = .{};
     const start = used.*;
     while (true) {
-        const count = inflater.reader.readSliceShort(&buffer) catch
-            return error.InvalidCompressedData;
-        if (count == 0) break;
+        const allowance = @min(@as(usize, 8192), scratch.output.len - used.* + 1);
+        try budget.debitLinear(allowance, 4, 1);
+        retainHistory(&writer, allowance);
+        const before = writer.end;
+        const finished = if (inflater.reader.stream(&writer, .limited(allowance))) |_|
+            false
+        else |err| switch (err) {
+            error.EndOfStream => true,
+            else => return error.InvalidCompressedData,
+        };
+        const count = writer.end - before;
+        std.debug.assert(count <= allowance);
         if (count > scratch.output.len - used.*) return error.ExpansionLimit;
-        try budget.debitLinear(count, 4, 1);
-        const bytes = buffer[0..count];
+        const bytes = writer.buffer[before..writer.end];
         @memcpy(scratch.output[used.*..][0..count], bytes);
         crc.update(bytes);
         adler.update(bytes);
         used.* += count;
+        if (finished) break;
+        if (count == 0) return error.InvalidCompressedData;
     }
     const valid = switch (inflater.container_metadata) {
         .gzip => |footer| footer.crc == crc.final() and footer.count == used.* - start,
@@ -92,6 +104,13 @@ fn member(
         .raw => unreachable,
     };
     if (!valid) return error.InvalidCompressedChecksum;
+}
+
+fn retainHistory(writer: *std.Io.Writer, allowance: usize) void {
+    if (allowance <= writer.buffer.len - writer.end) return;
+    const length = @min(writer.end, std.compress.flate.history_len);
+    @memmove(writer.buffer[0..length], writer.buffer[writer.end - length .. writer.end]);
+    writer.end = length;
 }
 
 test {
