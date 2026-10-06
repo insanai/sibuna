@@ -7,7 +7,7 @@
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
 #let sid-status = "Committed"
-#let sid-last-updated = "2026-10-02"
+#let sid-last-updated = "2026-10-06"
 
 #import "../../shared/sid.typ": sid-document
 #import "@preview/cetz:0.5.2" as cetz
@@ -1890,6 +1890,12 @@ Security aggregates use an operator-selected local statement allowance through
 their smaller budget. Cluster reads use the supported Zaxonlite RPC facade and its fixed
 ten-million-step server limit; the local option cannot override it. VM steps bound work,
 not wall-clock time, and exhaustion produces an unavailable result with a narrower-period hint.
+SQLite plans a statement before its parameters are bound, so it cannot use an index through
+`?='' OR column=?`. Exact address and category filters therefore select a dedicated statement
+shape over address-first (schema 45) and category-first indexes, and one client's aged
+incidents remain readable within the light budget behind any volume of newer traffic.
+Path-prefix, country and classification filters still walk the time index; on long histories
+they can exhaust the light budget and answer unavailable, so narrow the period first.
 
 Sessions record the sign-in client address and a SHA-256 digest of the User-Agent when
 available. Authentication audit rows record the client address at sign-in, refusal or explicit
