@@ -3,6 +3,7 @@
 const std = @import("std");
 const types = @import("regex_types.zig");
 const work = @import("work.zig");
+const dfa = @import("regex_dfa.zig");
 
 pub const Error = work.Error || error{ScratchTooSmall};
 pub const Thread = struct { pc: u32, captures: [types.capture_slots]usize = @splat(types.unset) };
@@ -24,6 +25,8 @@ pub const Scratch = struct {
     next: []Thread,
     stack: []Thread,
     visited: []usize,
+    /// Present for reserved workspaces; Boolean matches use it before the NFA.
+    dfa: ?dfa.Cache = null,
 
     pub fn requiredStates(program: *const types.Program) usize {
         return program.instructions.len;
@@ -39,8 +42,8 @@ pub const Scratch = struct {
 /// copies four bytes instead of a full capture thread.
 const Pc = struct { pc: u32 };
 
-/// Ordered Pike simulation state for either state shape. Control flow and work charges
-/// below are shared, so a Boolean match agrees with `search` on every input and budget.
+/// Ordered Pike simulation state for either state shape. Control flow is shared, so a
+/// Boolean match reaches the same decision as `search`. Work charges what a step copies.
 fn Simulation(comptime State: type) type {
     return struct {
         program: *const types.Program,
@@ -76,6 +79,11 @@ fn simulation(
 
 /// Reserved thread storage is reinterpreted, never resized: a state is no larger than a
 /// thread, so every bound proven for threads holds for states.
+/// One unit per state step plus one per capture slot it copies.
+fn stepCost(comptime State: type) u64 {
+    return 1 + if (@hasField(State, "captures")) types.capture_slots else 0;
+}
+
 fn reinterpret(comptime State: type, threads: []Thread) []State {
     if (State == Thread) return threads;
     comptime std.debug.assert(@sizeOf(State) <= @sizeOf(Thread));
@@ -91,7 +99,7 @@ fn enter(comptime State: type, self: *Simulation(State), position: usize) Error!
 }
 
 fn push(comptime State: type, self: *Simulation(State), state: State) Error!void {
-    try self.budget.debit(1 + types.capture_slots);
+    try self.budget.debit(stepCost(State));
     if (self.stack_used == self.stack.len) return error.ScratchTooSmall;
     self.stack[self.stack_used] = state;
     self.stack_used += 1;
@@ -110,7 +118,7 @@ fn closure(
     while (self.stack_used > 0) {
         self.stack_used -= 1;
         var active = self.stack[self.stack_used];
-        try self.budget.debit(1 + types.capture_slots);
+        try self.budget.debit(stepCost(State));
         if (self.visited[active.pc] == position) continue;
         self.visited[active.pc] = position;
         const instruction = self.program.instructions[active.pc];
@@ -190,7 +198,7 @@ pub fn search(
     return .{ .captures = accepted.captures };
 }
 
-/// Same decision and work as `search` when no capture is consumed.
+/// Same decision as `search` when no capture is consumed, without copying capture slots.
 pub fn matches(
     program: *const types.Program,
     input: []const u8,
@@ -198,6 +206,14 @@ pub fn matches(
     budget: *work.Budget,
 ) Error!bool {
     try scratch.validate(program.instructions.len);
+    if (scratch.dfa) |*cache| {
+        const buffers: dfa.Buffers = .{
+            .stack = std.mem.bytesAsSlice(u32, std.mem.sliceAsBytes(scratch.stack)),
+            .kernel = std.mem.bytesAsSlice(u32, std.mem.sliceAsBytes(scratch.current)),
+            .visited = scratch.visited,
+        };
+        if (try dfa.matches(program, input, cache, buffers, budget)) |decision| return decision;
+    }
     var state = simulation(Pc, program, input, scratch, budget);
     return try run(Pc, &state) != null;
 }

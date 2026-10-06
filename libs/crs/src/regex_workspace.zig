@@ -3,6 +3,7 @@
 const std = @import("std");
 const types = @import("regex_types.zig");
 const matcher = @import("regex_match.zig");
+const dfa = @import("regex_dfa.zig");
 
 pub const Workspace = struct {
     allocator: std.mem.Allocator,
@@ -24,6 +25,7 @@ pub const Workspace = struct {
         const threads = try allocator.alloc(matcher.Thread, states * 4);
         errdefer allocator.free(threads);
         const visited = try allocator.alloc(usize, states);
+        errdefer allocator.free(visited);
         return .{
             .allocator = allocator,
             .threads = threads,
@@ -32,11 +34,13 @@ pub const Workspace = struct {
                 .next = threads[states .. states * 2],
                 .stack = threads[states * 2 ..],
                 .visited = visited,
+                .dfa = try dfa.Cache.init(allocator, states),
             },
         };
     }
 
     pub fn deinit(self: *Workspace) void {
+        if (self.scratch.dfa) |*cache| cache.deinit(self.allocator);
         self.allocator.free(self.scratch.visited);
         self.allocator.free(self.threads);
         self.* = undefined;

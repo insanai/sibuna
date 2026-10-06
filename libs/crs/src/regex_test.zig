@@ -30,16 +30,16 @@ const Fixture = struct {
             const span = (result orelse return error.ExpectedMatch).span(0).?;
             try std.testing.expectEqualStrings(bytes, input[span.start..span.end]);
         } else try std.testing.expect(result == null);
-        // The capture-free simulation must agree on the decision and the charged work.
+        // The capture-free simulation reaches the same decision and never charges more.
         var boolean: work.Budget = .{ .remaining = 16_000_000 };
         const scratch = &self.workspace.scratch;
         const matched = try regex.match.matches(&self.program, input, scratch, &boolean);
         try std.testing.expectEqual(result != null, matched);
-        try std.testing.expectEqual(budget.remaining, boolean.remaining);
+        try std.testing.expect(boolean.remaining >= budget.remaining);
     }
 };
 
-test "Boolean matching exhausts the work budget exactly where capturing search does" {
+test "Boolean matching succeeds wherever capturing search fits the same budget" {
     var fixture = try Fixture.init("(a|ab)(c|bcd)(d*)x?$");
     defer fixture.deinit();
     const scratch = &fixture.workspace.scratch;
@@ -51,8 +51,11 @@ test "Boolean matching exhausts the work budget exactly where capturing search d
         const boolean = regex.match.matches(&fixture.program, input, scratch, &right);
         if (full) |found| {
             try std.testing.expectEqual(found != null, try boolean);
-        } else |err| try std.testing.expectError(err, boolean);
-        try std.testing.expectEqual(left.remaining, right.remaining);
+            try std.testing.expect(right.remaining >= left.remaining);
+        } else |_| {
+            // Exhaustion may now happen only for the capturing search.
+            if (boolean) |_| {} else |err| try std.testing.expectEqual(error.WorkLimit, err);
+        }
     }
 }
 
@@ -212,4 +215,60 @@ test "epsilon cycles and hostile regexes terminate within their work budget" {
         error.RegexLimit,
         regex.compile(std.testing.allocator, "a{1000}", .{ .instructions = 10 }),
     );
+}
+
+test "the lazy DFA agrees with the capturing simulation on every assertion form" {
+    const patterns = [_][]const u8{
+        "^ab",         "ab$",           "(?m)^b",   "(?m)a$",     "\\Aab",
+        "ab\\z",       "a\\Z",          "\\bab\\b", "a\\B",       "(?:a|ab)(?:c|bcd)",
+        "a(?:b|c)*?d", "[^\\n]+\\n$",   "(?s).a",   "^$",         "(?m)^$",
+        "\\b",         "(?:ab|a_)\\b+", "b{2,3}",   "(?i)A[b-c]", "_\\b",
+    };
+    var prng: std.Random.DefaultPrng = .init(0x5b_c0ff_ee);
+    const random = prng.random();
+    const alphabet = "ab_ \ncd";
+    var input: [24]u8 = undefined;
+    for (patterns) |pattern| {
+        var fixture = try Fixture.init(pattern);
+        defer fixture.deinit();
+        for (0..300) |_| {
+            const length = random.uintLessThan(usize, input.len + 1);
+            for (input[0..length]) |*byte| byte.* = alphabet[random.uintLessThan(usize, 7)];
+            var left: work.Budget = .{ .remaining = 16_000_000 };
+            var right: work.Budget = .{ .remaining = 16_000_000 };
+            const scratch = &fixture.workspace.scratch;
+            const text = input[0..length];
+            const found = try regex.match.search(&fixture.program, text, scratch, &left);
+            const decided = try regex.match.matches(&fixture.program, text, scratch, &right);
+            std.testing.expectEqual(found != null, decided) catch |err| {
+                std.debug.print("pattern {s} input {any}\n", .{ pattern, text });
+                return err;
+            };
+        }
+    }
+}
+
+test "a thrashing DFA cache falls back to the simulation with the same decision" {
+    // Recognizing the ninth byte from the end needs 2^9 DFA states, beyond the cache.
+    var fixture = try Fixture.init("a[ab]{8}$");
+    defer fixture.deinit();
+    var prng: std.Random.DefaultPrng = .init(7);
+    const random = prng.random();
+    var input: [512]u8 = undefined;
+    for (0..20) |_| {
+        for (&input) |*byte| byte.* = if (random.boolean()) 'a' else 'b';
+        const tail = input[input.len - 9 ..];
+        try fixture.expect(&input, if (tail[0] == 'a') tail else null);
+    }
+}
+
+test "repeated searches and an epoch wrap never wedge the DFA index" {
+    var fixture = try Fixture.init("(?:ab|cd)+e");
+    defer fixture.deinit();
+    for (0..5000) |round| {
+        const input = if (round % 2 == 0) "zzababcde" else "zzabab";
+        try fixture.expect(input, if (round % 2 == 0) "ababcde" else null);
+    }
+    fixture.workspace.scratch.dfa.?.epoch = std.math.maxInt(u16);
+    for (0..4) |_| try fixture.expect("zzcde", "cde");
 }

@@ -5,6 +5,7 @@ pub const Config = @import("regex_compile.zig").Config;
 pub const configured = @import("regex_compile.zig").configured;
 pub const Workspace = @import("regex_workspace.zig").Workspace;
 pub const match = @import("regex_match.zig");
+pub const dfa = @import("regex_dfa.zig");
 
 /// ModSecurity 3.0.14's Regex constructor uses DOTALL | MULTILINE and substitutes
 /// ".*" for an empty expression. Key selection additionally uses CASELESS.

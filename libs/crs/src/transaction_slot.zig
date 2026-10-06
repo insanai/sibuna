@@ -273,6 +273,7 @@ fn reservation(program: *const rules.Program, limits: Limits) Error!usize {
         .{ limits.bytes, @sizeOf(usize) },
         .{ threads, @sizeOf(regex.match.Thread) },
         .{ program.regex_states, @sizeOf(usize) },
+        .{ if (program.regex_states == 0) 0 else regex.dfa.Cache.bytes(program.regex_states), 1 },
         .{ program.topology.maximum_depth, @sizeOf(usize) },
     };
     var total: usize = 0;

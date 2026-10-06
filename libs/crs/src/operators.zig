@@ -109,9 +109,10 @@ pub const Program = union(enum) {
             .regex => |*program| blk: {
                 const scratch = frame.regex orelse return error.ScratchTooSmall;
                 const input = frame.input;
-                if (!frame.captures) break :blk .{
-                    .matched = try regex.match.matches(program, input, scratch, frame.budget),
-                };
+                // Most values do not match; the Boolean decision is cheap and decides alone.
+                // Only a match pays for the ordered simulation that defines capture groups.
+                const matched = try regex.match.matches(program, input, scratch, frame.budget);
+                if (!matched or !frame.captures) break :blk .{ .matched = matched };
                 const found = try regex.match.search(program, input, scratch, frame.budget);
                 break :blk if (found) |captures|
                     .{ .matched = true, .capture = .{ .regex = captures } }
