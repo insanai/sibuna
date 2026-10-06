@@ -61,15 +61,18 @@ const Shard = struct {
     lock: core.Lock align(64) = .{},
     cells: [SLOTS_PER_SHARD]Cell = @as([SLOTS_PER_SHARD]Cell, @splat(.{})),
 
-    /// Claims only free or fully drained cells; saturation fails closed.
-    fn locate(self: *Shard, key: u64, now_ms: u64, tau: u64) ?*Cell {
+    /// Claims only free or fully drained cells; saturation fails closed. A cell whose
+    /// theoretical arrival time has passed grants a full burst, exactly like an empty
+    /// cell, so reclaiming it changes no decision. Waiting a further `tau` would keep
+    /// cells for days when the configured rate exceeds the window in milliseconds.
+    fn locate(self: *Shard, key: u64, now_ms: u64) ?*Cell {
         const home = @as(usize, @intCast((key >> 8) % SLOTS_PER_SHARD));
         var free: ?*Cell = null;
         var probe: usize = 0;
         while (probe < MAX_PROBE) : (probe += 1) {
             const cell = &self.cells[(home + probe) % SLOTS_PER_SHARD];
             if (cell.key == key) return cell;
-            if (cell.key == 0 or cell.tat_ms +| tau < now_ms) {
+            if (cell.key == 0 or cell.tat_ms <= now_ms) {
                 if (free == null) free = cell;
             }
         }
@@ -83,7 +86,7 @@ const Shard = struct {
         const tau = limits.burstTolerance();
         self.lock.lock(io);
         defer self.lock.unlock(io);
-        const cell = self.locate(key, now_ms, tau) orelse return .{
+        const cell = self.locate(key, now_ms) orelse return .{
             .capacity_exhausted = true,
             .limited = true,
             .retry_after_ms = interval,
@@ -238,6 +241,18 @@ test "saturation cannot evict an active client and reset its quota" {
     for (1..MAX_PROBE + 1) |key| {
         try std.testing.expect(shard.check(test_io, key, 100, limits).limited);
     }
+}
+
+test "a large configured burst does not pin drained clients in the table" {
+    var shard = Shard{};
+    // T clamps to 1 ms, so tau is about 23 days; drained cells must still be reusable.
+    const limits = Limits{ .rate = 2_000_000_000, .window_ms = 10_000 };
+    for (1..MAX_PROBE + 1) |key| {
+        try std.testing.expect(!shard.check(test_io, key, 100, limits).limited);
+    }
+    try std.testing.expect(shard.check(test_io, MAX_PROBE + 1, 100, limits).capacity_exhausted);
+    const fresh = shard.check(test_io, MAX_PROBE + 1, 102, limits);
+    try std.testing.expect(!fresh.limited and !fresh.capacity_exhausted);
 }
 
 test "scoped GCRA keeps clients and rules independent across repeated snapshot reads" {
