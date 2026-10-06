@@ -66,7 +66,11 @@ target must be origin-form (`/...`), or `*` for `OPTIONS`. Absolute-form, author
 origin see them: a path rule written as `/admin` would not match `http://host/admin`, and an
 origin that honours `CONNECT` could open a tunnel nothing inspects. RFC 9112 §3.2.2 asks
 servers to accept absolute-form; Sibuna refuses it rather than guess a normalization. The
-same byte loop that rejects control characters rejects `#`, so the check adds no pass. Internal
+same byte loop that rejects control characters rejects `#`, so the check adds no pass. `Host`
+follows RFC 9112 §3.2: a repeated field, or a missing or empty one in HTTP/1.1, is answered
+`400`, and the value must be literal host bytes with an optional port. Percent escapes are
+refused, so `localhost%00` cannot name one virtual host to policy and another to the origin.
+Internal
 routes are length-delimited and keep the connection open. Proxied requests keep it open too,
 provided the origin's response is framed; the next section shows how the proxy decides.
 

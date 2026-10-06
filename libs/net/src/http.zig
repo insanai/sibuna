@@ -101,6 +101,8 @@ pub const ParseError = error{
     UnsupportedVersion,
     /// Only origin-form and `OPTIONS *` are served (RFC 9112 §3.2).
     InvalidRequestTarget,
+    /// A repeated Host, a missing or empty HTTP/1.1 Host, or a value outside host syntax.
+    InvalidHost,
     TooManyHeaders,
     /// A coding list ending in `chunked` after another coding: valid, but not decoded here.
     UnsupportedTransferEncoding,
@@ -176,6 +178,19 @@ fn parseRequestLine(req: *Request, line: []const u8) ParseError!void {
     req.query = target.query;
 }
 
+/// RFC 9112 §3.2: HTTP/1.1 needs exactly one non-empty Host. Percent escapes are legal in a
+/// reg-name but name no real HTTP host, and `%00` or `%1F` would let policy, CRS and the
+/// origin disagree on the virtual host, so the front line accepts only literal host bytes.
+fn validHost(host: ?[]const u8, required: bool) bool {
+    const value = host orelse return !required;
+    if (value.len == 0) return !required;
+    for (value) |c| {
+        const literal = std.mem.indexOfScalar(u8, "-._~!$&'()*+,;=:[]", c) != null;
+        if (!std.ascii.isAlphanumeric(c) and !literal) return false;
+    }
+    return true;
+}
+
 pub fn parseRequest(data: []const u8) ParseError!Request {
     var req = Request{};
     var line_it = std.mem.splitSequence(u8, data, "\r\n");
@@ -186,6 +201,7 @@ pub fn parseRequest(data: []const u8) ParseError!Request {
     var content_length_val: []const u8 = "";
     var transfer_encoding: ?[]const u8 = null;
     var transfer_fields: usize = 0;
+    var host: ?[]const u8 = null;
 
     while (line_it.next()) |line| {
         if (line.len == 0) break;
@@ -213,6 +229,9 @@ pub fn parseRequest(data: []const u8) ParseError!Request {
         } else if (std.ascii.eqlIgnoreCase(name, "transfer-encoding")) {
             transfer_encoding = value;
             transfer_fields += 1;
+        } else if (std.ascii.eqlIgnoreCase(name, "host")) {
+            if (host != null) return error.InvalidHost;
+            host = value;
         }
 
         if (req.header_count >= MAX_HEADERS) return error.TooManyHeaders;
@@ -228,6 +247,7 @@ pub fn parseRequest(data: []const u8) ParseError!Request {
         req.chunked = true;
     }
     if (has_content_length) try validateContentLength(content_length_val);
+    if (!validHost(host, std.mem.eql(u8, req.version, "HTTP/1.1"))) return error.InvalidHost;
     const header_end = std.mem.indexOf(u8, data, "\r\n\r\n");
     if (header_end) |end_idx| {
         req.body = data[end_idx + 4 ..];
@@ -282,7 +302,7 @@ test "parseRequest rejects HTTP request smuggling and malformed headers" {
 
     // Whitespace before colon
     const ws_colon =
-        "GET / HTTP/1.1\r\n" ++
+        "GET / HTTP/1.1\r\nHost: a\r\n" ++
         "Host : localhost\r\n\r\n";
     try std.testing.expectError(error.InvalidHeaderWhitespace, parseRequest(ws_colon));
 }
@@ -290,16 +310,16 @@ test "parseRequest rejects HTTP request smuggling and malformed headers" {
 test "parser rejects ambiguous framing and control bytes" {
     const bad = [_][]const u8{
         "GET / HTTP/1.1 extra\r\n\r\n",
-        "GET /bad\npath HTTP/1.1\r\n\r\n",
-        "GET / HTTP/1.1\r\n: empty\r\n\r\n",
+        "GET /bad\npath HTTP/1.1\r\nHost: a\r\n\r\n",
+        "GET / HTTP/1.1\r\nHost: a\r\n: empty\r\n\r\n",
         "GET / HTTP/1.1\r\nHost: a\nb\r\n\r\n",
-        "POST / HTTP/1.1\r\nContent-Length: +5\r\n\r\n",
-        "POST / HTTP/1.1\r\nContent-Length: invalid\r\n\r\n",
+        "POST / HTTP/1.1\r\nHost: a\r\nContent-Length: +5\r\n\r\n",
+        "POST / HTTP/1.1\r\nHost: a\r\nContent-Length: invalid\r\n\r\n",
     };
     for (bad) |raw| {
         if (parseRequest(raw)) |_| return error.AcceptedMalformedRequest else |_| {}
     }
-    const req = try parseRequest("PROPFIND / HTTP/1.1\r\n" ++
+    const req = try parseRequest("PROPFIND / HTTP/1.1\r\nHost: a\r\n" ++
         "Cookie: a=1;__sibuna_token=abc\r\n\r\n");
     try std.testing.expectEqualStrings("PROPFIND", req.method_text);
     try std.testing.expectEqualStrings("abc", req.getCookie("__sibuna_token").?);
@@ -307,27 +327,45 @@ test "parser rejects ambiguous framing and control bytes" {
 
 test "only origin-form targets and OPTIONS asterisk reach policy" {
     const refused = [_][]const u8{
-        "GET http://localhost/admin HTTP/1.1\r\n\r\n",
-        "CONNECT example.test:443 HTTP/1.1\r\n\r\n",
-        "CONNECT / HTTP/1.1\r\n\r\n",
-        "GET /#fragment HTTP/1.1\r\n\r\n",
-        "GET \\index.html HTTP/1.1\r\n\r\n",
-        "GET * HTTP/1.1\r\n\r\n",
-        "GET index.html HTTP/1.1\r\n\r\n",
+        "GET http://localhost/admin HTTP/1.1\r\nHost: a\r\n\r\n",
+        "CONNECT example.test:443 HTTP/1.1\r\nHost: a\r\n\r\n",
+        "CONNECT / HTTP/1.1\r\nHost: a\r\n\r\n",
+        "GET /#fragment HTTP/1.1\r\nHost: a\r\n\r\n",
+        "GET \\index.html HTTP/1.1\r\nHost: a\r\n\r\n",
+        "GET * HTTP/1.1\r\nHost: a\r\n\r\n",
+        "GET index.html HTTP/1.1\r\nHost: a\r\n\r\n",
     };
     for (refused) |raw| {
         try std.testing.expectError(error.InvalidRequestTarget, parseRequest(raw));
     }
-    const asterisk = try parseRequest("OPTIONS * HTTP/1.1\r\n\r\n");
+    const asterisk = try parseRequest("OPTIONS * HTTP/1.1\r\nHost: a\r\n\r\n");
     try std.testing.expectEqualStrings("*", asterisk.path);
-    const encoded = try parseRequest("GET /a%23b HTTP/1.1\r\n\r\n");
+    const encoded = try parseRequest("GET /a%23b HTTP/1.1\r\nHost: a\r\n\r\n");
     try std.testing.expectEqualStrings("/a%23b", encoded.path);
 }
 
+test "Host is single, present for HTTP/1.1 and limited to literal host syntax" {
+    const refused = [_][]const u8{
+        "GET / HTTP/1.1\r\n\r\n",
+        "GET / HTTP/1.1\r\nHost: \r\n\r\n",
+        "GET / HTTP/1.1\r\nHost: a\r\nHost: a\r\n\r\n",
+        "GET / HTTP/1.0\r\nHost: a\r\nHOST: b\r\n\r\n",
+        "GET / HTTP/1.1\r\nHost: localhost%00\r\n\r\n",
+        "GET / HTTP/1.1\r\nHost: a b\r\n\r\n",
+        "GET / HTTP/1.1\r\nHost: a/b\r\n\r\n",
+    };
+    for (refused) |raw| try std.testing.expectError(error.InvalidHost, parseRequest(raw));
+    _ = try parseRequest("GET / HTTP/1.1\r\nHost: [2001:db8::1]:8443\r\n\r\n");
+    _ = try parseRequest("GET / HTTP/1.1\r\nhost: example.test:80\r\n\r\n");
+    _ = try parseRequest("GET / HTTP/1.0\r\n\r\n");
+    _ = try parseRequest("GET / HTTP/1.0\r\nHost:\r\n\r\n");
+}
+
 test "only a single exact chunked coding frames an HTTP/1.1 request body" {
-    const ok = try parseRequest("POST / HTTP/1.1\r\nTransfer-Encoding: \tChunked \r\n\r\n");
+    const ok = try parseRequest("POST / HTTP/1.1\r\nHost: a\r\n" ++
+        "Transfer-Encoding: \tChunked \r\n\r\n");
     try std.testing.expect(ok.chunked and ok.contentLength() == null);
-    try std.testing.expect(!(try parseRequest("POST / HTTP/1.1\r\n\r\n")).chunked);
+    try std.testing.expect(!(try parseRequest("POST / HTTP/1.1\r\nHost: a\r\n\r\n")).chunked);
     const twice = "Transfer-Encoding: chunked\r\nTransfer-Encoding: chunked";
     const cases = [_]struct { ParseError, []const u8 }{
         .{ error.RequestSmugglingAttempt, "Content-Length: 5\r\nTransfer-Encoding: chunked" },
@@ -343,7 +381,8 @@ test "only a single exact chunked coding frames an HTTP/1.1 request body" {
     };
     var buf: [256]u8 = undefined;
     for (cases) |case| {
-        const raw = try std.fmt.bufPrint(&buf, "POST / HTTP/1.1\r\n{s}\r\n\r\n", .{case[1]});
+        const head = "POST / HTTP/1.1\r\nHost: a\r\n{s}\r\n\r\n";
+        const raw = try std.fmt.bufPrint(&buf, head, .{case[1]});
         try std.testing.expectError(case[0], parseRequest(raw));
     }
     try std.testing.expectError(
