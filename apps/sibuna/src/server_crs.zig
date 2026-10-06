@@ -21,7 +21,10 @@ pub fn serve(
     if (@import("build_options").console and context.state().config.console_capture_heads)
         context.crs_evidence = &captured;
     if (!try server.restoreAuthorizationTarget(&context)) return false;
-    var lease = publisher.lease() catch |err| {
+    const demand: crs.transaction_pool.Demand = .{
+        .request_bytes = if (request.chunked) null else declared,
+    };
+    var lease = publisher.lease(connection.io, demand, slot_wait) catch |err| {
         if (err == error.DisabledGeneration) {
             return buffered(&context, head_length);
         }
@@ -29,7 +32,7 @@ pub fn serve(
         return refuse(&context, .service_unavailable, "Security inspection is unavailable");
     };
     var leased = true;
-    defer if (leased) lease.release();
+    defer if (leased) lease.release(connection.io);
     connection.activity.deadline_ms.store(
         net.duplex.nowMs(connection.io) + context.state().crs_timeout_ms,
         .monotonic,
@@ -74,6 +77,11 @@ fn buffered(context: *server.RequestContext, head_length: usize) !bool {
     );
 }
 
+/// A burst beyond the pool parks briefly for a slot release instead of failing at once.
+/// The bound stays far below client and origin timeouts, so a saturated node still sheds
+/// load quickly with 503 rather than queuing work it cannot finish.
+const slot_wait: std.Io.Clock.Duration = .{ .raw = .fromMilliseconds(50), .clock = .awake };
+
 const Ownership = struct {
     context: *server.RequestContext,
     transaction: *crs.http_transaction.Transaction,
@@ -88,7 +96,7 @@ const Ownership = struct {
         self.context.inspected_body = null;
         server.countOutcome(self.context, .admitted);
         self.context.c.activity.deadline_ms.store(0, .monotonic);
-        self.lease.release();
+        self.lease.release(self.context.c.io);
         self.leased.* = false;
     }
 };

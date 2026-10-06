@@ -4,6 +4,12 @@ const generations = @import("generation.zig");
 const packages = @import("release_package.zig");
 const compiler = @import("compiler.zig");
 const rules = @import("rule_program.zig");
+const io = std.testing.io;
+const immediate: std.Io.Clock.Duration = .{ .raw = .zero, .clock = .awake };
+
+fn leaseNow(publisher: *publications.Publisher) publications.Error!publications.Lease {
+    return publisher.lease(io, .{ .request_bytes = 0 }, immediate);
+}
 const limits = blk: {
     var selected = @import("transaction_slot_test.zig").limits;
     selected.entries = 128;
@@ -65,8 +71,8 @@ test "leased transaction keeps its operator tuning after a concurrent publicatio
     };
     first.options.thresholds = .{ .inbound = 7, .outbound = 9 };
     try publisher.publish(first);
-    var old = try publisher.lease();
-    defer old.release();
+    var old = try leaseNow(&publisher);
+    defer old.release(io);
     try publisher.publish(try generation(2));
     var transaction = try old.begin(.{
         .method = "GET",
@@ -95,10 +101,10 @@ test "publication retains leased generations and bounds outstanding replacement"
     var publisher: publications.Publisher = .{};
     defer shutdown(&publisher);
     try std.testing.expect(!publisher.enabled.load(.acquire));
-    try std.testing.expectError(error.NoGeneration, publisher.lease());
+    try std.testing.expectError(error.NoGeneration, leaseNow(&publisher));
     try publisher.publish(try generation(1));
     try std.testing.expect(publisher.enabled.load(.acquire));
-    var old = try publisher.lease();
+    var old = try leaseNow(&publisher);
     try publisher.publish(try generation(2));
     const next = try generation(3);
     try std.testing.expectError(error.PublicationBusy, publisher.publish(next));
@@ -112,7 +118,7 @@ test "publication retains leased generations and bounds outstanding replacement"
         &old.work.slot().budget,
     )).?);
     try std.testing.expectEqual(@as(u64, 1), old.generation().options.revision);
-    old.release();
+    old.release(io);
     publisher.publish(next) catch |err| {
         next.deinit();
         return err;
@@ -131,9 +137,9 @@ test "failed publication keeps ownership and exhausted slots do not leak pins" {
     const stale = try generation(1);
     defer stale.deinit();
     try std.testing.expectError(error.StaleGenerationRevision, publisher.publish(stale));
-    var lease = try publisher.lease();
-    try std.testing.expectError(error.PoolBusy, publisher.lease());
-    lease.release();
+    var lease = try leaseNow(&publisher);
+    try std.testing.expectError(error.PoolBusy, leaseNow(&publisher));
+    lease.release(io);
     try publisher.publish(try generation(3));
     try publisher.publish(try generation(4));
     try std.testing.expectEqual(@as(u64, 4), (try publisher.snapshot()).revision);
@@ -147,21 +153,21 @@ test "disabled publication reserves no pool and shutdown retains acquired work" 
         .activation = .{},
         .observation = .request_metadata,
     }));
-    try std.testing.expectError(error.DisabledGeneration, publisher.lease());
+    try std.testing.expectError(error.DisabledGeneration, leaseNow(&publisher));
     try std.testing.expectEqual(@as(usize, 0), (try publisher.snapshot()).reservation);
     try std.testing.expect(!publisher.enabled.load(.acquire));
     try publisher.publish(try generation(2));
-    var lease = try publisher.lease();
+    var lease = try leaseNow(&publisher);
     try publisher.close();
     try std.testing.expect(!publisher.enabled.load(.acquire));
-    try std.testing.expectError(error.PublicationClosed, publisher.lease());
+    try std.testing.expectError(error.PublicationClosed, leaseNow(&publisher));
     try std.testing.expectError(error.PublicationClosed, publisher.snapshot());
     const refused = try generation(3);
     defer refused.deinit();
     try std.testing.expectError(error.PublicationClosed, publisher.publish(refused));
     var evaluation = try lease.work.slot().begin(.{ .entries = &.{} }, true);
     _ = try evaluation.run(.request_body);
-    lease.release();
+    lease.release(io);
 }
 
 fn failCreate(allocator: std.mem.Allocator, prepared: *packages.Package) !void {

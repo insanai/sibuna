@@ -2,6 +2,7 @@
 //! or reset while workers exist. A single bounded writer reservation serializes
 //! publication; no allocator, mutex wait or teardown occurs in reader operations.
 const std = @import("std");
+const Io = std.Io;
 const generations = @import("generation.zig");
 const pools = @import("transaction_pool.zig");
 const config = @import("config.zig");
@@ -31,6 +32,7 @@ pub const Snapshot = struct {
     compiled_peak: usize,
     reservation: usize,
     slots: usize,
+    small_slots: usize,
     request_bytes: usize,
     response_bytes: usize,
     work_budget: u64,
@@ -53,8 +55,8 @@ pub const Lease = struct {
     }
 
     /// Finish and release slot borrows before dropping the generation pin.
-    pub fn release(self: *Lease) void {
-        self.work.release();
+    pub fn release(self: *Lease, io: Io) void {
+        self.work.release(io);
         self.owner.unpin(self.index);
         self.* = undefined;
     }
@@ -94,12 +96,20 @@ pub const Publisher = struct {
         if (current != absent) self.cells[current].generation.?.retire();
     }
 
-    pub fn lease(self: *Publisher) Error!Lease {
+    /// A busy pool parks the request for at most `wait` while the generation stays pinned;
+    /// a zero wait refuses at once. Publication of a successor is delayed by that bound.
+    pub fn lease(
+        self: *Publisher,
+        io: Io,
+        demand: pools.Demand,
+        wait: Io.Clock.Duration,
+    ) Error!Lease {
         const index = try self.pin();
         errdefer self.unpin(index);
         const generation = self.cells[index].generation.?;
         if (generation.options.activation.mode == .off) return error.DisabledGeneration;
-        return .{ .owner = self, .index = index, .work = try generation.pool.lease() };
+        const work = try generation.pool.leaseWithin(io, demand, wait);
+        return .{ .owner = self, .index = index, .work = work };
     }
 
     /// Small copied metadata needs no body slot and borrows no mutable generation.
@@ -116,7 +126,8 @@ pub const Publisher = struct {
             .operator_digest = if (generation.package) |package| package.operator_digest else null,
             .compiled_peak = if (generation.package) |package| package.bounded.peak else 0,
             .reservation = if (generation.pool_live) generation.pool.reserved_bytes else 0,
-            .slots = if (generation.pool_live) generation.options.slots else 0,
+            .slots = if (generation.pool_live) generation.pool.slotCount(.large) else 0,
+            .small_slots = if (generation.pool_live) generation.pool.slotCount(.small) else 0,
             .request_bytes = generation.options.limits.request,
             .response_bytes = generation.options.limits.response,
             .work_budget = generation.options.limits.work,

@@ -289,8 +289,9 @@ pub export fn crsPoolProbe(allocator: *const std.mem.Allocator) u8 {
     var pool: crs.transaction_pool.Pool = undefined;
     pool.init(allocator.*, &program, .{}, 1, 128 * 1024 * 1024) catch return 4;
     defer pool.deinit();
-    var lease = pool.lease() catch return 5;
-    defer lease.release();
+    var lease = pool.lease(.{ .request_bytes = 0 }) catch return 5;
+    // Release wakes only parked waiters; this probe has none and needs no runtime I/O.
+    defer lease.release(std.Io.failing);
     pool.close();
     var evaluation = lease.slot().begin(.{
         .entries = &.{},
@@ -456,8 +457,11 @@ pub export fn crsPublicationProbe(
         candidate.deinit();
         return 4;
     };
-    var lease = publisher.lease() catch return 5;
-    defer lease.release();
+    // A zero wait never parks, so this portable probe needs no runtime I/O.
+    const io = std.Io.failing;
+    const immediate: std.Io.Clock.Duration = .{ .raw = .zero, .clock = .awake };
+    var lease = publisher.lease(io, .{ .request_bytes = 0 }, immediate) catch return 5;
+    defer lease.release(io);
     var transaction = lease.begin(.{
         .method = "GET",
         .target = "/",
