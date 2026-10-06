@@ -48,6 +48,15 @@ changes, complete named exclusion pages, redacted intent, session isolation and 
 publication. Maximum-width pages must fit the 16 KiB response bound, including binary names.
 `zig build crs-cluster-check -Dcluster=true -j2 -- --download` qualifies three-node CRS
 mode convergence, leader loss, quorum refusal, restart, rollback and incompatible preparation.
+`python3 tools/crs_three_host_check.py --host <node1> --host <node2> --host <node3> --root
+<remote-root>` runs the same scenario across three real machines with mutual-TLS consensus,
+validated HTTPS management peers behind a TLS ingress and TOTP sessions. Its docstring lists
+the prepared remote root it expects.
+`python3 tools/crs_ftw_daemon_check.py <binary> --download --albedo <albedo-0.3.0>` runs the
+pinned FTW corpus through the actual daemon, Albedo origin and console evidence on Linux.
+Each test owns one loopback source address; storage is drained every 16 tests and any
+dropped incident invalidates the run. `--engine-report` classifies each difference against
+`crs-ftw-check` output; `--mode enforce` records refusal status and origin delivery.
 The CRS console fixtures accept either a saved `--candidate <directory>` or `--download`.
 Use the `crs-restart-check`, `crs-management-check`, `crs-private-check`, `crs-review-check`,
 `crs-cli-check` and `crs-ui-check` build steps to replay the same authenticated workflows.
@@ -134,6 +143,9 @@ cluster under `wrk`. Third-party binaries are supplied from their official relea
 committed.
 `python3 benchmarks/bunkerweb.py` compares proxy and inspection profiles against a verified
 official BunkerWeb image and optional Anubis binary, locally or with a separate SSH load host.
+`python3 benchmarks/crs_request_path.py --candidate <signed-candidate>` measures CRS
+disabled, audit and enforce at paranoia 1 and 2 on small, JSON and multipart requests with
+eight signed-in dashboards, locally or with the same `--load-host` options.
 `admission_http.py` measures protected HTTP workloads; `admission_operations.py` measures native
 proof and session operations with two clients on that load host. See
 `benchmarks/results/README.md` for the isolated fixture, scope and replay commands.
