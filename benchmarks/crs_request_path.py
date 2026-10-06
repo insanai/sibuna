@@ -211,7 +211,9 @@ def parse_arguments():
     parser.add_argument("--repetitions", type=int, default=5)
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--threads", type=int, default=2)
-    parser.add_argument("--connections", type=int, default=64)
+    # Sixteen closed-loop clients stay within the default inspection slots, so the family
+    # measures inspection cost rather than load shedding after the bounded slot wait.
+    parser.add_argument("--connections", type=int, default=16)
     parser.add_argument("--load-host", help="SSH destination for a separate Linux wrk host")
     parser.add_argument("--target-host", default="127.0.0.1")
     parser.add_argument("--load-wrk", default="wrk")
@@ -262,6 +264,8 @@ def run_metadata(arguments, generator):
             "Stock CRS 4.30.0 at the stated paranoia with default thresholds and work budget.",
             "CPU sums user/system ticks of the process tree; peak RSS is the process tree.",
             "wrk response hooks validate statuses and add client cost; expected 403 is valid.",
+            "Closed-loop clients stay within the slot count; beyond it CRS sheds load with 503 "
+            "after a 50 ms wait, which this family does not measure.",
         ]}
 
 
