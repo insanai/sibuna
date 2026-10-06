@@ -19,9 +19,32 @@ pub const Entry = struct {
 };
 pub const Reference = struct { collection: Collection, key: ?[]const u8 = null };
 
+/// Half-open entry positions of one collection within a grouped view.
+pub const Range = struct { start: u32 = 0, end: u32 = 0 };
+
 pub const View = struct {
     entries: []const Entry,
     coverage: [count]Coverage = @splat(.unavailable),
+    /// Present when entries are grouped by collection with acquisition order kept inside
+    /// each group. Readers then visit one collection instead of every entry.
+    ranges: ?*const [count]Range = null,
+    /// The live TX store when present: `entries` then omit TX rows, so writes never force
+    /// a rebuild. Views are read before the write that follows them, never after.
+    tx: ?[]const Entry = null,
+
+    /// Candidate entries for one collection. Callers still compare the collection, so an
+    /// ungrouped view is simply scanned in full.
+    pub fn of(self: *const View, collection: Collection) []const Entry {
+        if (collection == .tx) if (self.tx) |rows| return rows;
+        const ranges = self.ranges orelse return self.entries;
+        const range = ranges[@backingInt(collection)];
+        return self.entries[range.start..range.end];
+    }
+
+    /// Entries a full scan would visit; work is charged for this regardless of grouping.
+    pub fn scanned(self: *const View) usize {
+        return self.entries.len + if (self.tx) |rows| rows.len else 0;
+    }
 
     pub fn require(self: *const View, collection: Collection) Error!void {
         return switch (self.coverage[@backingInt(collection)]) {
@@ -46,9 +69,10 @@ pub const View = struct {
     ) Error!?[]const u8 {
         try budget.debit(1);
         try self.require(reference.collection);
+        // Charge the full scan once; grouping saves time, never work accounting.
+        try budget.debit(@intCast(self.scanned()));
         var found: ?[]const u8 = null;
-        for (self.entries) |entry| {
-            try budget.debit(1);
+        for (self.of(reference.collection)) |entry| {
             if (entry.collection != reference.collection) continue;
             if (reference.key) |key| {
                 if (!try keyEqual(key, entry.key, budget)) continue;

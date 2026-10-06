@@ -23,6 +23,15 @@ pub const Context = struct {
     byte_used: usize = 0,
     failed: bool = false,
     processor: ?[]const u8 = null,
+    /// Advances when acquired, matched or processor state changes.
+    revision: u64 = 0,
+    /// Rules usually read without writing, so the merged view is rebuilt only when its
+    /// inputs changed. Work is still charged per read, keeping budgets independent of reuse.
+    /// TX values are read live from the store and never invalidate it.
+    cached: ?Cached = null,
+    ranges: [variables.count]variables.Range = undefined,
+
+    const Cached = struct { revision: u64, len: usize };
 
     /// The context and all scratch belong exclusively to one reserved slot. Resetting
     /// invalidates borrows; clearing matches does not reclaim monotonic byte storage.
@@ -55,6 +64,12 @@ pub const Context = struct {
         _ = try Context.init(acquired, self.store, self.scratch);
         try budget.debit(acquired.entries.len);
         self.acquired = acquired;
+        self.revision += 1;
+    }
+
+    pub fn setProcessor(self: *Context, label: ?[]const u8) void {
+        self.processor = label;
+        self.revision += 1;
     }
 
     /// Caller consumes this view before another rebuild. Entries borrow immutable
@@ -74,18 +89,48 @@ pub const Context = struct {
             total += length;
         }
         try budget.debit(@intCast(total));
-        var cursor: usize = 0;
+        if (self.cached) |cached| if (cached.revision == self.revision) {
+            return self.merged(cached.len, stored);
+        };
+        var synthetic: [3]variables.Entry = undefined;
         const lists = [_][]const variables.Entry{
-            self.acquired.entries, stored, self.scratch.matched[0..self.matched_used],
+            self.acquired.entries,
+            self.scratch.matched[0..self.matched_used],
+            self.scalars(&synthetic),
         };
-        for (lists) |list| for (list) |entry| {
-            if (self.processor != null and entry.collection == .reqbody_processor) continue;
-            self.scratch.view[cursor] = entry;
-            cursor += 1;
+        // A stable counting sort groups collections while keeping each one's order, so a
+        // selector reads only its collection. It runs on rebuilds, not on every read.
+        var sizes: [variables.count]u32 = @splat(0);
+        for (lists, 0..) |list, source| for (list) |entry| {
+            if (source == 0 and self.shadowed(entry)) continue;
+            sizes[@backingInt(entry.collection)] += 1;
         };
-        cursor = self.appendScalars(cursor);
+        var start: u32 = 0;
+        for (&self.ranges, sizes) |*range, size| {
+            range.* = .{ .start = start, .end = start };
+            start += size;
+        }
+        for (lists, 0..) |list, source| for (list) |entry| {
+            if (source == 0 and self.shadowed(entry)) continue;
+            const range = &self.ranges[@backingInt(entry.collection)];
+            self.scratch.view[range.end] = entry;
+            range.end += 1;
+        };
+        self.cached = .{ .revision = self.revision, .len = start };
+        return self.merged(start, stored);
+    }
+
+    /// An explicit body processor replaces the connector's acquired label; the synthetic
+    /// label that carries the explicit choice is never shadowed.
+    fn shadowed(self: *const Context, entry: variables.Entry) bool {
+        return self.processor != null and entry.collection == .reqbody_processor;
+    }
+
+    fn merged(self: *const Context, len: usize, stored: []const variables.Entry) variables.View {
         var result = self.acquired;
-        result.entries = self.scratch.view[0..cursor];
+        result.entries = self.scratch.view[0..len];
+        result.ranges = &self.ranges;
+        result.tx = stored;
         if (self.processor != null) {
             result.coverage[@backingInt(variables.Collection.reqbody_processor)] = .complete;
         }
@@ -95,22 +140,19 @@ pub const Context = struct {
         return result;
     }
 
-    fn appendScalars(self: *Context, start: usize) usize {
-        var cursor = start;
+    fn scalars(self: *const Context, output: *[3]variables.Entry) []const variables.Entry {
+        var used: usize = 0;
         if (self.processor) |label| {
-            self.scratch.view[cursor] = .{ .collection = .reqbody_processor, .value = label };
-            cursor += 1;
+            output[used] = .{ .collection = .reqbody_processor, .value = label };
+            used += 1;
         }
         if (self.matched_used != 0) {
             const last = self.scratch.matched[self.matched_used - 2];
-            self.scratch.view[cursor] = .{ .collection = .matched_var, .value = last.value };
-            self.scratch.view[cursor + 1] = .{
-                .collection = .matched_var_name,
-                .value = last.key,
-            };
-            cursor += 2;
+            output[used] = .{ .collection = .matched_var, .value = last.value };
+            output[used + 1] = .{ .collection = .matched_var_name, .value = last.key };
+            used += 2;
         }
-        return cursor;
+        return output[0..used];
     }
 
     /// The positive predicate's value must be copied before transform replay advances.
@@ -158,11 +200,15 @@ pub const Context = struct {
         };
         self.matched_used += 2;
         self.byte_used += name_length + value.len;
+        self.revision += 1;
     }
 
     pub fn clearMatches(self: *Context) Error!void {
         if (self.failed or self.store.failed) return error.TransactionFailed;
+        // Most rules do not match; leave the cached view valid when nothing was cleared.
+        if (self.matched_used == 0) return;
         self.matched_used = 0;
+        self.revision += 1;
     }
 };
 

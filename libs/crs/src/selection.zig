@@ -72,8 +72,9 @@ pub const Program = struct {
         }, frame)) return .{ .entries = &.{} };
         try frame.view.require(target.collection);
         var count: usize = 0;
-        for (frame.view.entries) |entry| {
-            try frame.budget.debit(1);
+        // Charge the full scan once; grouping saves time, never work accounting.
+        try frame.budget.debit(@intCast(frame.view.scanned()));
+        for (frame.view.of(target.collection)) |entry| {
             if (!try matches(target, entry, frame)) continue;
             if (try self.excluded(entry, frame)) continue;
             if (target.mode == .count and try controlled(.{

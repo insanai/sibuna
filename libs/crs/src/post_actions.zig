@@ -78,12 +78,12 @@ fn executeStep(
             // in this phase. These labels have static lifetime, like the control.
             if (program.operation == .processor) {
                 const processor = frame.state.control.processor;
-                frame.context.processor = switch (processor) {
+                frame.context.setProcessor(switch (processor) {
                     .automatic => null,
                     .urlencoded => "URLENCODED",
                     .json => "JSON",
                     .xml => "XML",
-                };
+                });
             }
         },
         .write => |*program| {
