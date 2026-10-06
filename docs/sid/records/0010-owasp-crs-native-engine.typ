@@ -1157,26 +1157,43 @@ traffic, that a payload is safe, or that all applications tolerate a given block
 
 == Exclusive pool leases and shutdown
 
-A generation owns at most 31 stable transaction slots. One atomic 32-bit word records
-leased slots and a separate closed bit. Admission examines a free bit and claims it with
-strong compare-and-swap; at most the slot count attempts are permitted. Contention can
-return service unavailable even when some capacity remains, rather than spin without a
-bound. No request allocates, grows the pool or waits for another request's workspace.
+A generation owns two tiers of stable transaction slots. The configured large tier holds at
+most 31 slots at the configured request limit. Most requests are far smaller, and a large slot
+reserves tens of MiB, so the reservation left after the large tier is filled with small slots
+whose only difference is a 64 KiB request entity bound, up to 1,024 slots in total. Response,
+metadata and work limits are identical, so a small slot gives the same coverage to every
+request it accepts. The tier is derived from the explicit reservation; no persisted setting
+or manifest field changes. A declared request size selects the smallest tier that can hold
+it and spills to a large slot when every small slot is busy. Chunked framing declares no
+size and takes a large slot. A request never displaces work into a smaller bound.
 
-Closing atomically sets the closed bit in the same occupancy word. It stops new leases;
-it neither cancels existing work nor invalidates a generation. The owner joins workers
-and observes closed with all lease bits clear before freeing slots. Release publishes all
-workspace writes before clearing its bit. A lease is an exclusive ownership token that
+Each tier records leases in 64-bit occupancy words; a separate closed flag stops admission.
+Admission scans for a free bit and claims it with compare-and-swap; each failed exchange
+proves that another admission or release progressed, so a word is retried at most once per
+slot it can hold. A busy pool parks the request on a release epoch for at most 50 ms instead
+of refusing at once. The waiter reads the epoch before each attempt, so a release between a
+failed attempt and the park changes the expected value and the futex returns immediately.
+Release pays a wake only when a waiter is parked. When the bound passes, the request is
+refused with service unavailable. No request allocates or grows the pool.
+
+Closing sets the flag. It stops new leases; it neither cancels existing work nor invalidates
+a generation. Parked waiters observe it at their next wake or deadline. The owner joins workers
+and observes the flag with every occupancy word clear before freeing slots. Release publishes
+all workspace writes before clearing its bit. A lease is an exclusive ownership token that
 must not be copied or reused after release. Entity, Executor and View borrows end first.
 
 *Lemma (exclusive reservation).* Two successful claim operations cannot return the same
 occupied bit without an intervening release: compare-and-swap accepts only the observed
-word with that bit clear. The closed bit shares this word, so admission cannot succeed
-using a word observed before close once close has linearized. Acquire/release ordering
-makes prior writes visible to the next successful owner. The immutable generation outlives
-the pool, and the pool outlives every lease; shutdown alone does not establish reclamation.
-Pool startup checks aggregate retained arena capacity plus slot objects, independently of
-the per-slot reservation ceiling, and unwinds every completed slot on failure.
+word with that bit clear. A claim reads the closed flag after its exchange, in one
+sequentially consistent order with the close store. A claim ordered after close therefore
+observes it and clears its bit before reporting a closed pool, so no lease succeeds once
+close has linearized, and `drained` cannot hold while a claimed bit remains. Release
+ordering makes prior writes visible to the next successful owner. The immutable generation
+outlives the pool, and the pool outlives every lease; shutdown alone does not establish
+reclamation. Pool startup checks aggregate retained arena capacity plus slot objects,
+independently of the per-slot reservation ceiling, and unwinds every completed slot on
+failure. The small tier is best-effort and stops at the first slot that would exceed the
+reservation; the configured large tier must fit.
 
 == Acquired collection ownership
 
@@ -1608,7 +1625,7 @@ Registration clears any prior deadline before reusing a connection entry. Cleari
 inspection deadline after a declared streaming ending preserves the independent HTTP or
 WebSocket idle policy.
 
-Pool exhaustion returns a recoverable service-unavailable response. Body size limits return
+Pool exhaustion after the bounded wait returns a recoverable service-unavailable response. Body size limits return
 an explicit refusal before origin delivery. Work exhaustion in enforcement refuses the
 transaction; audit mode records an incomplete evaluation and continues according to its
 explicit audit policy. The response adapter's audit default permits replay of a completely
