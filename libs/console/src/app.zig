@@ -533,6 +533,7 @@ pub const App = struct {
             .crs_configuration,
             .crs_test,
             .crs_test_read,
+            .crs_test_details,
             .crs_review,
             .crs_review_read,
             .crs_exclusions,

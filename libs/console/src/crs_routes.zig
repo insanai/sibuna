@@ -37,6 +37,7 @@ fn dispatch(app: *App, context: *http.Context, auth: p.users.Auth, route: Handle
             return @import("crs_test_routes.zig").handle(app, context, auth, route);
         },
         .crs_exclusions => return @import("crs_exclusion_routes.zig").read(app, context, auth),
+        .crs_test_details => return @import("crs_detail_routes.zig").read(app, context, auth),
         .crs_status => return status(app, context, auth),
         .crs_prepare => return @import("crs_prepare_routes.zig").prepare(app, context, auth),
         .crs_configuration => return @import("crs_prepare_routes.zig").configuration(

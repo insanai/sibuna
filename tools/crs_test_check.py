@@ -41,6 +41,34 @@ def result(port, cookie, csrf, identifier):
         time.sleep(1)
 
 
+def details(port, cookie, csrf, observed):
+    rows, offset = [], 0
+    while True:
+        code, _, body = request(port, cookie, csrf, "test/details", {
+            "id": observed["id"], "offset": offset})
+        assert code == 200 and len(body) < 16384, (code, body[:256])
+        page = json.loads(body)
+        assert page["id"] == observed["id"]
+        assert page["expected_revision"] == observed["expected_revision"]
+        value = page["page"]
+        assert value["offset"] == offset and value["total"] == observed["report"]["event_count"]
+        rows.extend(row for row in value["rows"] if row is not None)
+        if value["next"] is None:
+            break
+        assert value["next"] == offset + 2
+        offset = value["next"]
+    for scalar, detail in zip(observed["report"]["events"], rows):
+        assert scalar["rule_id"] == detail["rule_id"] and scalar["phase"] == detail["phase"]
+        for preview in [detail["message"], *detail["tags"]]:
+            if preview:
+                assert b"private-crs-value" not in bytes.fromhex(preview["hex"])
+    if observed["report"]["mode"] != "off":
+        assert any(row["rule_id"] == 942100 and row["score"] and
+                   row["score"]["buckets"][0]["delta"] == "5" for row in rows), rows
+    assert request(port, cookie, csrf, "test/details", {
+        "id": observed["id"], "offset": 1})[0] == 400
+
+
 def qualify(binary, source, root):
     credentials = bootstrap.initialize(str(binary), str(root / "data"), "crs-admin")
     owned, process, origin, port = launch(binary, root, source)
@@ -55,6 +83,7 @@ def qualify(binary, source, root):
             receipt = submit(port, cookie, csrf, identifier, sample(), mode)
             observed = result(port, cookie, csrf, receipt)
             assert observed["state"] == "complete", observed
+            details(port, cookie, csrf, observed)
             report = observed["report"]
             assert report["mode"] == mode and report["failure"] is None, report
             assert report["denied"] == (mode == "enforce"), report
@@ -92,6 +121,8 @@ def qualify(binary, source, root):
         # A second valid administrator session cannot read this caller's result.
         other, other_csrf = login(port)
         assert request(port, other, other_csrf, "test/result", {"id": receipt})[0] == 400
+        assert request(port, other, other_csrf, "test/details",
+                       {"id": receipt, "offset": 0})[0] == 400
         code, _, audit = helper.request(port, "POST", "/console/api/audit/query",
                                         {"action": "crs.test"}, cookie, csrf)
         assert code == 200, (code, audit)
@@ -104,6 +135,8 @@ def qualify(binary, source, root):
             "selection"]["mode"] == "audit"
         assert helper.request(port, "POST", "/console/api/logout", {}, cookie, csrf)[0] == 200
         assert request(port, cookie, csrf, "test/result", {"id": receipt})[0] == 401
+        assert request(port, cookie, csrf, "test/details",
+                       {"id": receipt, "offset": 0})[0] == 401
 
 
 def main():

@@ -7,6 +7,7 @@ pub const Handler = enum {
     crs_status,
     crs_test,
     crs_test_read,
+    crs_test_details,
     crs_review,
     crs_review_read,
     crs_exclusions,
@@ -139,6 +140,13 @@ const table = [_]Route{
         .action = .manage_settings,
         .handler = .crs_test,
         .mutation = true,
+    },
+    .{
+        .path = "/console/api/crs/test/details",
+        .method = .POST,
+        .access = .full,
+        .action = .manage_settings,
+        .handler = .crs_test_details,
     },
     .{
         .path = "/console/api/crs/test/result",

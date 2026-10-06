@@ -20,17 +20,20 @@ pub const Input = struct {
         std.crypto.secureZero(u8, std.mem.asBytes(self));
     }
 };
+pub const Details = @import("crs_detail_inventory.zig").Inventory;
 pub const Task = struct {
     pending: ?Input = null,
     session: [32]u8 = @splat(0),
     result: ?api.Status = null,
     exclusions: Inventory = .{},
+    details: Details = .{},
     retained_until: u64 = 0,
     expired: ?m.Id = null,
 
     pub fn deinit(self: *Task, allocator: std.mem.Allocator) void {
         if (self.pending) |*input| input.deinit(allocator);
         self.exclusions.deinit(allocator);
+        self.details.deinit(allocator);
         std.crypto.secureZero(u8, std.mem.asBytes(self));
     }
 
@@ -49,6 +52,7 @@ pub const Task = struct {
             )) return error.Busy;
         }
         self.exclusions.deinit(allocator);
+        self.details.deinit(allocator);
         self.retained_until = 0;
         self.expired = null;
         self.pending = input;
@@ -78,7 +82,7 @@ pub const Task = struct {
     /// lets a full inventory traverse the existing 120-query/minute allowance.
     pub fn renew(self: *Task, auth: p.users.Auth, id: m.Id, now: u64) !u64 {
         const result = try self.snapshot(auth, id, now);
-        if (result.kind != .review or result.state != .complete or self.retained_until <= now)
+        if (result.state != .complete or self.retained_until <= now)
             return error.InvalidRequest;
         self.result.?.expires = @min(self.retained_until, now + 60);
         return self.result.?.expires;
@@ -89,6 +93,7 @@ pub const Task = struct {
         const result = self.result orelse return;
         if (result.state == .running or result.expires > now) return;
         self.exclusions.deinit(allocator);
+        self.details.deinit(allocator);
         self.expired = result.id;
         std.crypto.secureZero(u8, std.mem.asBytes(&self.result.?));
         self.result = null;
@@ -96,15 +101,22 @@ pub const Task = struct {
     }
 };
 
-pub fn execute(app: *App, input: Input, result: *api.Status, inventory: *Inventory) void {
+pub fn execute(
+    app: *App,
+    input: Input,
+    result: *api.Status,
+    inventory: *Inventory,
+    details: *Details,
+) void {
     result.* = .{
         .id = input.id,
         .kind = input.kind,
         .state = .running,
         .expires = app.now() + 60,
     };
-    perform(app, input, result, inventory) catch |err| {
+    perform(app, input, result, inventory, details) catch |err| {
         inventory.deinit(app.gpa);
+        details.deinit(app.gpa);
         result.state = .failed;
         const name = @errorName(err);
         result.failure = p.Bytes(64).init(name[0..@min(name.len, 64)]) catch unreachable;
@@ -114,7 +126,7 @@ pub fn execute(app: *App, input: Input, result: *api.Status, inventory: *Invento
     result.expires = app.now() + 60;
 }
 
-fn run(app: *App, input: Input, result: *api.Status) !void {
+fn run(app: *App, input: Input, result: *api.Status, details: *Details) !void {
     const memory = try app.gpa.alloc(u8, api.sample.parser_bytes);
     defer app.gpa.free(memory);
     defer std.crypto.secureZero(u8, memory);
@@ -142,6 +154,7 @@ fn run(app: *App, input: Input, result: *api.Status) !void {
         .audit => .audit,
         .enforce => .enforce,
     };
+    details.rows = try app.gpa.alloc(p.incident_crs.api.Detail, api.sample.event_capacity);
     var report: api.sample.Report = undefined;
     try crs.scenario.evaluate(.{
         .allocator = app.gpa,
@@ -149,16 +162,24 @@ fn run(app: *App, input: Input, result: *api.Status) !void {
         .execution = execution,
         .limits = manifest.limits,
         .sample = request.sample,
+        .details = details.rows,
     }, &report);
+    details.count = report.event_count;
     result.report = report;
     try @import("crs_task_access.zig").recheck(app, input.auth, result);
     result.artifact = (try @import("crs_views.zig").candidate(job)).artifact;
     result.state = .complete;
 }
 
-fn perform(app: *App, input: Input, result: *api.Status, inventory: *Inventory) !void {
+fn perform(
+    app: *App,
+    input: Input,
+    result: *api.Status,
+    inventory: *Inventory,
+    details: *Details,
+) !void {
     return switch (input.kind) {
-        .sample => run(app, input, result),
+        .sample => run(app, input, result, details),
         .review => @import("crs_review_worker.zig").run(app, input, result, inventory),
     };
 }
@@ -215,4 +236,34 @@ test "review pagination renews only its owner within an absolute bound and expir
     try t.expect(task.result == null and task.exclusions.before.len == 0);
     try t.expectError(error.CrsReviewExpired, task.snapshot(auth, id, 1001));
     try t.expectError(error.InvalidRequest, task.snapshot(other, id, 1001));
+}
+
+test "sample pagination renews its owner and idle expiration erases copied templates" {
+    const t = std.testing;
+    const auth: p.users.Auth = .{ .session_digest = @splat(1), .csrf_digest = @splat(2) };
+    const id = try m.Id.init("11111111111111111111111111111111");
+    const detail = p.incident_crs.api;
+    var bytes: [@sizeOf(detail.Detail) * 2]u8 = @splat(0);
+    var fixed: std.heap.FixedBufferAllocator = .init(&bytes);
+    var task: Task = .{
+        .session = auth.session_digest,
+        .retained_until = 1000,
+        .result = .{ .id = id, .kind = .sample, .state = .complete, .expires = 160 },
+        .details = .{ .rows = try fixed.allocator().alloc(detail.Detail, 1), .count = 1 },
+    };
+    defer task.deinit(fixed.allocator());
+    task.details.rows[0] = .{
+        .rule_id = 1,
+        .phase = 2,
+        .message = detail.Preview(96).copy("owned operator template"),
+    };
+    try t.expectEqual(@as(u64, 210), try task.renew(auth, id, 150));
+    task.expire(fixed.allocator(), 209);
+    var page: p.crs_tasks.sample_details.Page = undefined;
+    try task.details.read(0, &page);
+    try t.expectEqualStrings("owned operator template", page.rows[0].?.message.?.slice());
+    task.expire(fixed.allocator(), 210);
+    try t.expect(task.details.rows.len == 0 and task.result == null);
+    try t.expect(std.mem.indexOf(u8, &bytes, "owned operator template") == null);
+    try t.expectError(error.CrsReviewExpired, task.snapshot(auth, id, 210));
 }

@@ -69,6 +69,25 @@ test "widest exclusion page fits the HTTP envelope and preserves exact opaque na
     decoded.page.next = 0;
     try t.expectError(error.InvalidResponse, decoded.validate());
 }
+pub const sample_details = @import("crs-protocol").test_details;
+pub const DetailPage = struct {
+    pub const Wire = DetailWire;
+    id: m.Id,
+    expected_revision: u64,
+    expires: u64,
+    page: sample_details.Page,
+
+    pub fn validate(self: *const DetailPage) error{InvalidResponse}!void {
+        if (!m.validId(self.id) or self.expected_revision >= std.math.maxInt(i64) or
+            self.expires == 0) return error.InvalidResponse;
+        self.page.validate() catch return error.InvalidResponse;
+    }
+
+    pub fn jsonStringify(self: DetailPage, w: *std.json.Stringify) !void {
+        return @import("json_counters.zig").object(self, w);
+    }
+};
+
 pub const Source = struct {
     source: []const u8,
     expected_revision: []const u8,
@@ -181,4 +200,53 @@ test "widest rule review fits the shared HTTP envelope and rejects mixed task re
     status.kind = .review;
     status.baseline.?.revision -= 1;
     try t.expectError(error.InvalidResponse, status.validate());
+}
+
+pub const DetailWire = struct {
+    id: m.Id,
+    expected_revision: u64,
+    expires: u64,
+    page: sample_details.Wire,
+
+    pub fn into(self: DetailWire, output: *DetailPage) !void {
+        output.id = self.id;
+        output.expected_revision = self.expected_revision;
+        output.expires = self.expires;
+        try self.page.into(&output.page);
+        try output.validate();
+    }
+};
+
+test "widest owned private detail envelope preserves signed values and full revisions" {
+    const t = std.testing;
+    var output: DetailPage = .{
+        .id = try m.Id.init("11111111111111111111111111111111"),
+        .expected_revision = std.math.maxInt(i64) - 1,
+        .expires = std.math.maxInt(u64),
+        .page = .{ .total = 64, .offset = 0, .count = 2, .next = 2 },
+    };
+    const api = @import("security-evidence").detail;
+    for (&output.page.rows) |*row| {
+        row.* = .{ .rule_id = std.math.maxInt(u32), .phase = 5 };
+        row.*.?.message = api.Preview(96).copy(&@as([65536]u8, @splat(255)));
+        row.*.?.tags = @splat(api.Preview(64).copy(&@as([65536]u8, @splat(254))));
+        row.*.?.tag_count = 4;
+        row.*.?.omitted_tags = 65532;
+        row.*.?.score = .{};
+        for (&row.*.?.score.?.buckets) |*bucket| bucket.* = .{
+            .writes = std.math.maxInt(u32),
+            .delta = std.math.minInt(i64),
+        };
+    }
+    try output.validate();
+    const bytes = try std.json.Stringify.valueAlloc(t.allocator, output, .{});
+    defer t.allocator.free(bytes);
+    try t.expect(bytes.len < 16 * 1024);
+    const parsed = try std.json.parseFromSlice(std.json.Value, t.allocator, bytes, .{});
+    defer parsed.deinit();
+    var wire: DetailWire = undefined;
+    try p.json_value.into(&wire, parsed.value, t.allocator);
+    var decoded: DetailPage = undefined;
+    try wire.into(&decoded);
+    try t.expectEqualDeep(output, decoded);
 }

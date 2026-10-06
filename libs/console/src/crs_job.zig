@@ -151,7 +151,21 @@ pub const Job = struct {
         try self.tester.exclusions.read(side, offset, out);
     }
 
-    pub fn renewReview(self: *Job, auth: p.users.Auth, id: m.Id) !u64 {
+    pub fn detailPage(
+        self: *Job,
+        auth: p.users.Auth,
+        id: m.Id,
+        offset: u8,
+        out: *p.crs_tasks.sample_details.Page,
+    ) !void {
+        self.mutex.lockUncancelable(self.app.io);
+        defer self.mutex.unlock(self.app.io);
+        const result = try self.tester.snapshot(auth, id, self.app.now());
+        if (result.kind != .sample or result.state != .complete) return error.InvalidRequest;
+        try self.tester.details.read(offset, out);
+    }
+
+    pub fn renewTask(self: *Job, auth: p.users.Auth, id: m.Id) !u64 {
         self.mutex.lockUncancelable(self.app.io);
         defer self.mutex.unlock(self.app.io);
         return self.tester.renew(auth, id, self.app.now());
@@ -247,11 +261,14 @@ pub const Job = struct {
         defer input.deinit(self.app.gpa);
         var result: p.crs_tests.Status = undefined;
         var inventory: private_test.Inventory = .{};
-        private_test.execute(self.app, input, &result, &inventory);
+        var details: private_test.Details = .{};
+        private_test.execute(self.app, input, &result, &inventory, &details);
         self.mutex.lockUncancelable(self.app.io);
         self.tester.result = result;
         self.tester.exclusions.deinit(self.app.gpa);
         self.tester.exclusions = inventory;
+        self.tester.details.deinit(self.app.gpa);
+        self.tester.details = details;
         self.tester.retained_until = self.app.now() + 15 * 60;
         self.running = false;
         self.mutex.unlock(self.app.io);

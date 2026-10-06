@@ -38,7 +38,9 @@ pub const Budget = struct {
     // Private tests share the one joined compiler, but own a queued JSON body,
     // parser and evaluation slot in addition to the verified private program.
     pub const crs_test_bytes = @import("console_protocol").crs_tests.sample.sample_json_bytes +
-        @import("console_protocol").crs_tests.sample.parser_bytes + 128 * 1024 * 1024;
+        @import("console_protocol").crs_tests.sample.parser_bytes + 128 * 1024 * 1024 +
+        @import("console_protocol").crs_tasks.sample_details.capacity *
+            @sizeOf(@import("console_protocol").incident_crs.api.Detail);
     // Review and sample evaluation are serialized. Three copied inventories
     // cover one baseline and both comparison sort buffers, without source borrows.
     pub const crs_review_bytes = 3 * 4096 * @sizeOf(@import("crs").rule_review.Fingerprint) +
