@@ -147,12 +147,18 @@ The JSON report identifies both source digests and the saved candidate revision.
 coverage, would-deny and enforcing decisions, actual blocking/detection scores when present,
 work used and up to 64 scalar findings with an omitted count. Unlogged nonterminal matches
 have a separate count; terminal decisions remain visible even when logging is suppressed.
+Safe unexpanded message and tag prefixes, truncation counts and actual net bucket changes
+are included in `details`. Scored roots without a retained finding total are counted
+separately, so setup actions and failed chains cannot disappear from coverage.
 Missing response data is
 labelled separately. Representation or work failures report incomplete coverage. The test
 contacts no origin, emits no traffic observations and retains no sample or expanded matched
 values. It does not reproduce Gate sessions, live limiters or origin behavior.
 
-The console's *Core Rule Set* page also runs private tests. Review a verified candidate to
+The console's *Core Rule Set* page also runs private tests. Open *Show rule details* in a
+completed result to browse two findings at a time. These session-owned pages expire after
+one minute without use; a successful read renews that idle lease within a fifteen-minute
+absolute limit. Expired details require another test and do not change live protection. Review a verified candidate to
 test its rules, or test the selected candidate. Enter the request method, path, client IP,
 headers and text or hexadecimal entity. A response is optional; its ending declares complete
 content, a WebSocket handshake or streaming. The form bounds each entity to 16 KiB and

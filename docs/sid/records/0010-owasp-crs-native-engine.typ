@@ -2062,14 +2062,33 @@ before completing. It publishes no generation and writes no sample to storage.
 One ephemeral result is bound to its issuing session and unpredictable test ID. Fresh
 authorization is required for every poll. Queued/running work remains bounded; a completed
 or refused result expires after one minute. New work cannot replace another session's
-unexpired result. Shutdown joins this worker before storage closes, then erases queued input.
+unexpired result. Safe details use two-finding pages, independently of the scalar poll.
+Each detail satisfies the template and committed-score contract below. It is indexed by
+retained finding ordinal; clients validate rule, phase, task identity and expected revision.
+Every page rechecks source retention, revision and authority before and after owned copying.
+A successful page read renews the one-minute idle lease under a fifteen-minute absolute cap.
+Expiration erases details; it is not an error in the selected protection. Both native CLI
+paths copy all retained details before producing their complete report.
+Shutdown joins this worker before storage closes, then erases queued input.
 Budget accounting includes an additional 1 MiB queued body, 8 MiB parser and 128 MiB private
-slot envelope; the shared private compiler/source envelope and selected live pools remain
+slot envelope, plus 64 fixed-width owned details; the shared private compiler/source
+envelope and selected live pools remain
 separate. A console form limits each entity to 16 KiB and each header list to 32 entries so
 its browser event and command buffers remain bounded. The native CLI accepts the full shared
 sample contract. Both clients identify a retained source and explicit saved revision;
 `--mode` affects private evaluation alone. Browser navigation/sign-out discard its sample
-form and owned scalar result; stale replies cannot repopulate a later page.
+form and owned result/detail pages; stale replies cannot repopulate a later page.
+
+*Lemma (bounded private detail retention).* A completed sample retains at most 64 owned
+fixed-width details, independent of source template lengths. Each HTTP reply contains at
+most two details and fits the 16 KiB envelope.
+
+*Proof.* The report admits at most 64 finding ordinals. A detail copies fixed byte prefixes,
+four tags and eight numeric bucket records. Preview validation bounds its serialized form
+to 4 KiB; the two-row page and fixed identity envelope remain below 16 KiB. The task owns
+that array until replacement, expiration or joined shutdown. Page copying holds its mutex;
+fresh authority/revision checks surround the copy and renewal. No client-controlled cursor
+can allocate a larger array or retain a borrowed source. $square$
 
 *Lemma (private-test noninterference).* A private test cannot change the selected generation,
 contact an origin or emit data-plane observations.
@@ -2300,8 +2319,9 @@ JSON limit and commits under the same incident receipt guard. Historical rows re
 An authorized, CSRF-protected read loads one incident’s detail without enlarging incident
 pages or subscriptions. Signed score deltas cross JavaScript as decimal strings. A delayed
 reply must match its request generation and a visible incident’s rule and phase; navigation
-and sign-out erase the owned view. These contracts do not establish complete private-test
-evidence, cluster convergence or release acceptance.
+and sign-out erase the owned view. Private reports also count scored roots without a
+retained finding total, including unlogged setup actions and unsuccessful chains. These
+contracts do not establish cluster convergence or release acceptance.
 
 = Verification and acceptance
 
