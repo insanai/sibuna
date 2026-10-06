@@ -458,7 +458,7 @@ def main():
     parser.add_argument("--report", type=Path,
                         default=Path(".zig-cache/crs-review/ftw-daemon-report.json"))
     parser.add_argument("--mode", choices=("audit", "enforce"), default="audit")
-    parser.add_argument("--work-budget", type=int, default=16_000_000)
+    parser.add_argument("--work-budget", type=int, default=128_000_000)
     parser.add_argument("--sessions", type=int, default=8)
     parser.add_argument("--timeout", type=float, default=15)
     parser.add_argument("--limit", type=int, help="run only the first N tests")

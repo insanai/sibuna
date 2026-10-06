@@ -99,7 +99,7 @@ def node_status(port, cookie, mode, evidence):
     assert selected["inbound_threshold"] == 5 and selected["outbound_threshold"] == 4
     assert int(selected["reserved_bytes"]) > 0 and int(selected["compiled_peak"]) > 0
     assert selected["slots"] == 2 and selected["request_bytes"] == 4194304
-    assert selected["response_bytes"] == 1048576 and selected["work_budget"] == 16000000
+    assert selected["response_bytes"] == 1048576 and selected["work_budget"] == 128000000
     assert selected["timeout_ms"] == 30000
     assert int(counts["would_deny" if mode == "audit" else "denied"]) == 1, counts
 

@@ -36,7 +36,9 @@ pub const Limits = struct {
     tags: usize = 8192,
     exclusions: usize = 256,
     pieces: usize = 1024,
-    work: u64 = 16_000_000,
+    /// Linear-time evaluation charges about 1,800 units per byte of free text at paranoia
+    /// one; this admits ordinary form and API bodies while bounding per-request CPU.
+    work: u64 = 128_000_000,
     reservation: usize = 128 * 1024 * 1024,
 
     /// Management validates persisted limits before reserving any transaction memory.

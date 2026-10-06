@@ -32,7 +32,7 @@ pub const Settings = struct {
     outbound_threshold: u16 = 4,
     request_bytes: u32 = 4 * 1024 * 1024,
     response_bytes: u32 = 1024 * 1024,
-    work_budget: u64 = 16_000_000,
+    work_budget: u64 = 128_000_000,
     slots: u8 = 8,
     reservation: u64 = 1024 * 1024 * 1024,
 

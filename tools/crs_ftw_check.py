@@ -252,8 +252,8 @@ def main():
                   evaluated=len(requests), passed=len(requests) - len(failures),
                   failures=failures, coverage_gaps=gaps,
                   work_peak=max(row["work"] for row in rows),
-                  work_over_default=sum(row["work"] > 16_000_000 for row in rows),
-                  diagnostic_work_limit=128_000_000, production_default_work_limit=16_000_000,
+                  work_over_default=sum(row["work"] > 128_000_000 for row in rows),
+                  diagnostic_work_limit=128_000_000, production_default_work_limit=128_000_000,
                   confirmed_reference_differences=reference_differences(args.reference_report,
                                                                         failures),
                   rows=[dict(row, test=contracts[row["id"]]["test"]) for row in rows])
