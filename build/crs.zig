@@ -44,6 +44,7 @@ pub fn add(
     const tests = b.addTest(.{ .root_module = host });
     const test_step = b.step("crs-test", "Test bounded native CRS source contracts");
     test_step.dependOn(&b.addRunArtifact(tests).step);
+    addProtocolTests(b, protocol, test_step);
     test_step.dependOn(addCompilationChecks(b, compression));
     b.top_level_steps.get("test").?.step.dependOn(test_step);
     const audit = b.addExecutable(.{
@@ -63,6 +64,18 @@ pub fn add(
     b.step("crs-audit", "Inventory an extracted CRS release; does not activate rules")
         .dependOn(&run.step);
     return module;
+}
+
+fn addProtocolTests(b: *std.Build, protocol: *std.Build.Module, step: *std.Build.Step) void {
+    const root = b.createModule(.{
+        .root_source_file = b.path("libs/crs/src/protocol.zig"),
+        .target = b.graph.host,
+    });
+    root.addImport("text", protocol.import_table.get("text").?);
+    root.addImport("security-evidence", @import("evidence.zig").add(b));
+    const run = b.addRunArtifact(b.addTest(.{ .root_module = root }));
+    b.step("crs-protocol-test", "Test bounded pure CRS client contracts").dependOn(&run.step);
+    step.dependOn(&run.step);
 }
 
 fn addRegexCheck(

@@ -3,6 +3,7 @@
 pub const regex = @import("regex.zig");
 pub const scenario = @import("scenario.zig");
 pub const scenario_contract = @import("crs-protocol").tests;
+pub const evidence = @import("crs-protocol").evidence;
 pub const work = @import("work.zig");
 pub const compiler = @import("compiler.zig");
 pub const model = @import("model.zig");
@@ -118,6 +119,7 @@ test {
     _ = rule_review;
     _ = exclusion_review;
     _ = scenario;
+    _ = @import("crs-protocol").test_details;
     _ = scenario_contract;
     _ = @import("diagnostics_test.zig");
     _ = executor;

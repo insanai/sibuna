@@ -245,3 +245,37 @@ test "unlogged setup matches cannot crowd out a private terminal finding" {
     try t.expectEqual(@as(u32, 1000), report.events[0].?.rule_id);
     try t.expect(!report.events[0].?.saved);
 }
+
+test "private details copy actual root totals and count scored roots without retained findings" {
+    var program = try prepare(
+        \\SecAction "id:10,phase:1,nolog,setvar:tx.inbound_anomaly_score_pl1=3"
+        \\SecRule ARGS:q "@streq private" "id:11,phase:2,chain,\
+        \\ setvar:tx.inbound_anomaly_score_pl1=+2,msg:'unpublished'"
+        \\SecRule TX:inbound_anomaly_score_pl1 "@eq 999" "setvar:tx.inbound_anomaly_score_pl1=+1"
+        \\SecRule ARGS:q "@streq private" "id:12,phase:2,\
+        \\ setvar:tx.inbound_anomaly_score_pl1=+4,msg:'hit %{MATCHED_VAR}'"
+    , &.{});
+    defer program.deinit();
+    var report: contract.Report = undefined;
+    const details = try t.allocator.alloc(@import("crs-protocol").evidence.Detail, 64);
+    defer t.allocator.free(details);
+    const input: scenarios.Input = .{
+        .allocator = t.allocator,
+        .program = &program,
+        .limits = limits,
+        .execution = .{ .activation = .{ .mode = .audit } },
+        .sample = .{ .request = .{ .target = "/?q=private" } },
+        .details = details,
+    };
+    try scenarios.evaluate(input, &report);
+    try t.expectEqual(@as(usize, 1), report.event_count);
+    try t.expectEqual(@as(usize, 2), report.unretained_score_roots);
+    try t.expectEqual(@as(?i64, 4), details[0].score.?.buckets[0].delta);
+    try t.expectEqualStrings("hit %{MATCHED_VAR}", details[0].message.?.slice());
+    try details[0].validate();
+    var scalar_only = input;
+    scalar_only.details = null;
+    var second: contract.Report = undefined;
+    try scenarios.evaluate(scalar_only, &second);
+    try t.expectEqualDeep(report, second);
+}

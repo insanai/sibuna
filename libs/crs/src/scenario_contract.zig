@@ -104,9 +104,12 @@ pub const Report = struct {
     event_count: usize = 0,
     omitted_events: usize = 0,
     unlogged_matches: usize = 0,
+    /// Roots with committed bucket writes but no retained score-owning finding.
+    unretained_score_roots: usize = 0,
 
     pub fn validate(self: *const Report) error{InvalidReport}!void {
-        if (self.event_count > event_capacity or self.attempted_phase > 5 or
+        if (self.event_count > event_capacity or self.unretained_score_roots > 4096 or
+            self.attempted_phase > 5 or
             self.work_used > 1_000_000_000 or (self.denied and
             (!self.would_deny or self.mode != .enforce)) or
             (self.failure != null and self.coverage != .incomplete)) return error.InvalidReport;

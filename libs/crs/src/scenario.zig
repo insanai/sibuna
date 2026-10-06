@@ -17,9 +17,13 @@ pub const Input = struct {
     execution: config.Execution,
     limits: slots.Limits = .{},
     sample: contract.Sample,
+    /// Optional caller-owned output indexed exactly like the scalar finding array.
+    details: ?[]@import("crs-protocol").evidence.Detail = null,
 };
 
 pub fn evaluate(input: Input, output: *contract.Report) Error!void {
+    if (input.details) |details| if (details.len != contract.event_capacity)
+        return error.InvalidSample;
     try input.sample.validate();
     try input.execution.activation.validate(.request_response, .executable);
     try input.execution.thresholds.validate();
@@ -58,7 +62,7 @@ pub fn evaluate(input: Input, output: *contract.Report) Error!void {
     };
     if (slot.active) {
         output.work_used = @intCast(slot.limits.work - slot.budget.remaining);
-        observe(&slot, output);
+        observe(&slot, output, input.details);
     }
 }
 
@@ -148,8 +152,15 @@ fn finish(
     };
 }
 
-fn observe(slot: *const slots.Slot, output: *contract.Report) void {
+fn observe(
+    slot: *const slots.Slot,
+    output: *contract.Report,
+    details: ?[]@import("crs-protocol").evidence.Detail,
+) void {
     const state = &slot.state;
+    for (slot.scores.rows) |row| {
+        if (row.observed()) output.unretained_score_roots += 1;
+    }
     output.denied = state.denied;
     output.would_deny = state.would_deny;
     if (state.denied or state.would_deny) output.selected_status = state.status;
@@ -173,6 +184,14 @@ fn observe(slot: *const slots.Slot, output: *contract.Report) void {
             .saved = event.save,
             .audit_suppressed = event.no_audit,
         };
+        if (event.score_owner) |owner| {
+            if (slot.scores.rows[owner].observed()) output.unretained_score_roots -= 1;
+        }
+        if (details) |rows| @import("finding_detail.zig").copy(
+            &rows[output.event_count],
+            &event,
+            &slot.scores,
+        );
         output.event_count += 1;
     }
     // Reporting cannot spend evaluation work or turn a completed decision into
