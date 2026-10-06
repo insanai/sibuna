@@ -48,6 +48,7 @@ pub fn render(state: *const State, w: *W) W.Error!void {
         );
         if (result.report) |report| try details(w, report);
         try w.writeAll("</section>");
+        try @import("crs_sample_details_page.zig").render(model, w);
     } else if (model.test_id != null) try w.writeAll(
         "<p class=\"sb-note mt-4\" role=\"status\">Private test queued. " ++
             "Results are temporary and are available to this session.</p>",
@@ -113,10 +114,12 @@ fn details(w: *W, report: p.crs_tests.sample.Report) W.Error!void {
     }
     try html.render(w, "</tbody></table></div><p>{{ count }} findings shown · " ++
         "{{ omitted }} additional findings omitted · " ++
-        "{{ unlogged }} unlogged matches excluded.</p>", .{
+        "{{ unlogged }} unlogged matches excluded.</p>" ++
+        "<p>{{ unretained }} scored rule roots have no retained finding total.</p>", .{
         .count = report.event_count,
         .omitted = report.omitted_events,
         .unlogged = report.unlogged_matches,
+        .unretained = report.unretained_score_roots,
     });
 }
 

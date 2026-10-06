@@ -22,6 +22,7 @@ pub fn action(c: ctx.Context, name: []const u8, fields: std.json.Value) !bool {
     const model = &state.crs;
     if (model.busy != .idle) return true;
     if (try @import("crs_exclusion_controller.zig").action(c, name)) return true;
+    if (try @import("crs_sample_details_controller.zig").action(c, name)) return true;
     if (std.mem.eql(u8, name, "crs-test")) {
         try @import("crs_test_controller.zig").submit(c, fields);
     } else if (std.mem.eql(u8, name, "crs-test-poll")) {
@@ -116,20 +117,12 @@ pub fn response(c: ctx.Context, reply: ctx.Response) !void {
         try state.message.set("Your session ended. Sign in to continue.");
         return c.out.emit(.{ .op = "disconnect" });
     }
-    if (reply.status != 200) {
-        if (kind == .exclusions and reply.status == 410) {
-            model.review_job = null;
-            model.review_result = null;
-            model.clearExclusions();
-            try state.message.set("This comparison expired. Compare again to reload " ++
-                "the rule and exclusion details.");
-            return c.out.emit(.{ .op = "focus", .selector = "#crs-review-heading" });
-        }
-        model.stale = true;
-        try state.message.set("CRS request was not confirmed. Refresh to inspect candidates, " ++
-            "the saved revision and node receipts before retrying.");
-        return;
-    }
+    if (reply.status != 200) return failed(c, kind, reply.status);
+    if (kind == .test_details) return @import("crs_sample_details_controller.zig").response(
+        c,
+        reply.body,
+        reply.allocator,
+    );
     if (kind == .exclusions) return @import("crs_exclusion_controller.zig").response(
         c,
         reply.body,
@@ -171,6 +164,32 @@ pub fn response(c: ctx.Context, reply: ctx.Response) !void {
             "Candidate discarded. Protection has not changed.");
         state.message_success = true;
     }
+}
+
+fn failed(c: ctx.Context, kind: Kind, status: i64) !void {
+    const state = c.state;
+    const model = &state.crs;
+    if (kind == .test_details) {
+        if (status == 410) {
+            model.clearTestDetails();
+            model.test_details_expired = true;
+        }
+        try state.message.set("Private rule details unavailable. Retry the read, " ++
+            "or run the sample again if it expired.");
+        return;
+    }
+    if (kind == .exclusions and status == 410) {
+        model.review_job = null;
+        model.review_result = null;
+        model.clearExclusions();
+        try state.message.set("This comparison expired. Compare again to reload " ++
+            "the rule and exclusion details.");
+        return c.out.emit(.{ .op = "focus", .selector = "#crs-review-heading" });
+    }
+    model.stale = true;
+    try state.message.set("CRS request was not confirmed. Refresh to inspect candidates, " ++
+        "the saved revision and node receipts before retrying.");
+    return;
 }
 
 pub fn tick(state: *State, out: Outbox) !void {

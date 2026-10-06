@@ -26,6 +26,8 @@ pub fn submit(c: ctx.Context, values: std.json.Value) !void {
     try controller.ticket(c, .test_submit);
     errdefer model.busy = .idle;
     model.test_id = null;
+    model.clearTestDetails();
+    model.test_details_expired = false;
     model.test_result = null;
     var revision: [20]u8 = undefined;
     try c.out.post(model.ticket.slice(), "/console/api/crs/test", .{

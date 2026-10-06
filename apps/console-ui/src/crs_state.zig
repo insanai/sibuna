@@ -11,6 +11,7 @@ pub const Kind = enum {
     discard,
     test_submit,
     test_read,
+    test_details,
     review_submit,
     review_read,
     exclusions,
@@ -28,6 +29,9 @@ pub const Model = struct {
     exclusion_offset: u32 = 0,
     test_id: ?p.crs_management.Id = null,
     test_result: ?p.crs_tests.Status = null,
+    test_details: ?p.crs_tasks.DetailPage = null,
+    test_details_offset: u8 = 0,
+    test_details_expired: bool = false,
     ticket: p.Bytes(48) = .{},
     busy: Kind = .idle,
     attempted_at: u64 = 0,
@@ -40,6 +44,8 @@ pub const Model = struct {
         self.editor_loaded = false;
         self.clearReview();
         self.test_id = null;
+        self.clearTestDetails();
+        self.test_details_expired = false;
         self.test_result = null;
         self.ticket = .{};
         self.busy = .idle;
@@ -69,6 +75,12 @@ pub const Model = struct {
         self.snapshot = observed;
         self.stale = false;
         if (self.reviewed == null) self.clearReview();
+    }
+
+    pub fn clearTestDetails(self: *Model) void {
+        if (self.test_details) |*page| std.crypto.secureZero(u8, std.mem.asBytes(page));
+        self.test_details = null;
+        self.test_details_offset = 0;
     }
 
     pub fn clearExclusions(self: *Model) void {

@@ -95,6 +95,9 @@ def private_test(ui):
     assert "Origin contacted: no" in ui.html and "Active protection: unchanged" in ui.html
     assert "Tested candidate:" in ui.html and "unlogged matches excluded" in ui.html
     assert "0 additional findings omitted" in ui.html
+    action(ui, "crs-test-details")
+    assert "Private rule details" in ui.html and "SQL Injection" in ui.html
+    assert "Inbound PL1" in ui.html and "private-crs-value" not in ui.html
     assert snapshot(ui)["revision"] == 1
 
 
