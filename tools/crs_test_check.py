@@ -98,7 +98,10 @@ def qualify(binary, source, root):
             assert observed["artifact"]["source_digest"] == before["current"][
                 "artifact"]["source_digest"], observed
             assert ATTACK not in json.dumps(observed) and "ordinary page" not in json.dumps(observed)
-            assert result(port, cookie, csrf, receipt) == observed
+            # Detail reads renew the idle lease, so only the expiry may move, and only forward.
+            reread = result(port, cookie, csrf, receipt)
+            assert int(reread["expires"]) >= int(observed["expires"]), (reread, observed)
+            assert dict(reread, expires=None) == dict(observed, expires=None)
             assert not origin.requests, "private test contacted the origin"
             assert status(port, cookie, csrf)["revision"] == before["revision"]
         compressed = sample("/ordinary")
