@@ -57,6 +57,10 @@ def private_tests(binary, source, root):
         assert report["report"]["would_deny"] == (mode != "off"), report
         if mode != "off":
             assert report["report"]["inbound_score"] >= 5, report
+            assert len(report["details"]) == report["report"]["event_count"]
+            assert any(row["rule_id"] == 942100 and row["score"] and
+                       row["score"]["buckets"][0]["delta"] == "5"
+                       for row in report["details"]), report
         assert ATTACK not in result.stdout and "ordinary page" not in result.stdout
     assert original == {p.name: p.read_bytes() for p in source.iterdir() if p.is_file()}
     case["request"]["headers"][0]["value"] = "private-value\r\nInjected: bad"

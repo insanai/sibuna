@@ -116,20 +116,25 @@ fn run(
     };
     if (args.mode) |mode| execution.activation.mode = mode;
     var report: contract.Report = undefined;
+    const details = try allocator.alloc(crs.evidence.Detail, contract.event_capacity);
+    defer allocator.free(details);
+    defer std.crypto.secureZero(u8, std.mem.sliceAsBytes(details));
     try crs.scenario.evaluate(.{
         .allocator = allocator,
         .program = &candidate.prepared.package.?.program,
         .execution = execution,
         .limits = candidate.manifest.limits,
         .sample = parsed.value,
+        .details = details,
     }, &report);
-    try writeReport(writer, candidate.manifest, report);
+    try writeReport(writer, candidate.manifest, report, details[0..report.event_count]);
 }
 
 fn writeReport(
     writer: *Io.Writer,
     manifest: crs.artifact_manifest.Manifest,
     report: contract.Report,
+    details: []const crs.evidence.Detail,
 ) Io.Writer.Error!void {
     var version: [17]u8 = undefined;
     try std.json.Stringify.value(.{
@@ -144,6 +149,7 @@ fn writeReport(
         .detection_paranoia = manifest.activation.detection_paranoia,
         .thresholds = manifest.thresholds,
         .report = report,
+        .details = details,
     }, .{}, writer);
     try writer.writeByte('\n');
 }

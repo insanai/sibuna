@@ -23,7 +23,13 @@ pub fn read(
     const parsed = std.json.parseFromSlice(std.json.Value, fixed.allocator(), bytes, .{}) catch
         return error.InvalidResponse;
     defer parsed.deinit();
-    p.json_value.into(output, parsed.value, fixed.allocator()) catch return error.InvalidResponse;
+    if (comptime @hasDecl(T, "Wire")) {
+        var wire: T.Wire = undefined;
+        p.json_value.into(&wire, parsed.value, fixed.allocator()) catch
+            return error.InvalidResponse;
+        wire.into(output) catch return error.InvalidResponse;
+    } else p.json_value.into(output, parsed.value, fixed.allocator()) catch
+        return error.InvalidResponse;
 }
 
 pub fn status(session: *client.Session, output: *p.crs_api.Status) Error!void {
@@ -130,4 +136,25 @@ test "native CRS replies decode a full candidate and member view within the wire
     try read(t.allocator, p.crs_api.Status, &decoded, bytes);
     try decoded.validate();
     try t.expectEqualDeep(snapshot, decoded);
+}
+
+test "mapped private pages copy previews before bounded parser memory is erased" {
+    const t = std.testing;
+    var expected: p.crs_tasks.DetailPage = .{
+        .id = try p.crs_management.Id.init("11111111111111111111111111111111"),
+        .expected_revision = 1,
+        .expires = 100,
+        .page = .{ .total = 1, .count = 1 },
+    };
+    expected.page.rows[0] = .{
+        .rule_id = 1,
+        .phase = 2,
+        .message = p.incident_crs.api.Preview(96).copy("literal %{MATCHED_VAR}"),
+    };
+    const bytes = try std.json.Stringify.valueAlloc(t.allocator, expected, .{});
+    defer t.allocator.free(bytes);
+    var owned: p.crs_tasks.DetailPage = undefined;
+    try read(t.allocator, p.crs_tasks.DetailPage, &owned, bytes);
+    try t.expectEqualDeep(expected, owned);
+    try t.expectEqualStrings("literal %{MATCHED_VAR}", owned.page.rows[0].?.message.?.slice());
 }

@@ -54,6 +54,11 @@ pub fn run(
     defer exclusions.deinit(session.allocator);
     if (kind == .review)
         try @import("crs_exclusion_client.zig").load(session, output, budget, &exclusions);
+    const details = if (kind == .sample)
+        try @import("crs_detail_client.zig").load(session, output, budget)
+    else
+        null;
+    defer if (details) |rows| session.allocator.free(rows);
     try std.json.Stringify.value(.{
         .private_test = kind == .sample,
         .rule_review = kind == .review,
@@ -61,6 +66,7 @@ pub fn run(
         .origin_contacted = false,
         .result = output.*,
         .exclusions = if (kind == .review) exclusions else null,
+        .details = details,
     }, .{}, writer);
     try writer.writeByte('\n');
 }
