@@ -2390,26 +2390,31 @@ tests and one dropped incident invalidates the run. Raw wire requests, multi-sta
 the 29 status assertions now run over the socket. The 15 regex log assertions remain gaps:
 Sibuna stores rule IDs, not log lines.
 
-In Audit (2026-10-06), 5,090 tests pass with no dropped incident. Differences are classified
+In Audit (2026-10-06), 5,093 tests pass with no dropped incident. Differences are classified
 against the engine probe: 35 reproduce its reference differences exactly, 30 are its strict
 acquisition refusals (chiefly invalid percent escapes in urlencoded bodies) and 30 exceed the
 production work budget at paranoia four. Five are deliberate connector refusals answered 400
 before CRS runs: an absolute-form target, `CONNECT`, a request with both `Content-Length` and
-`Transfer-Encoding`, and two unsupported protocol versions. Three status assertions expect a
-web server's 400 for malformed `Host` fields; Sibuna forwards those in Audit with the
-expected rule IDs and denies them by anomaly score in Enforce.
+`Transfer-Encoding`, and two unsupported protocol versions. Malformed `Host` fields are now
+refused with the 400 the corpus expects.
 
-In Enforce, 4,797 request stages were denied and no request-phase denial delivered a byte to
+In Enforce, 4,793 request stages were denied and no request-phase denial delivered a byte to
 the origin. Requests whose inspection could not complete were refused 403 rather than
 forwarded. At blocking paranoia four, 62 of the 102 response fixtures are denied on their own
 inbound score before any response phase runs, so response rule IDs are qualified in Audit and
 Enforce qualifies disruption and withheld delivery.
 
-The daemon corpus found two defects that are now fixed. Request targets in absolute or
+Daemon qualification found defects that are now fixed. Request targets in absolute or
 authority form reached policy without a leading slash, so path rules could not match them;
-the parser now serves only origin-form and `OPTIONS *`. Console address filters walked the time
-index and exceeded the statement budget once a client's incidents aged behind newer traffic;
-address and category filters now use indexed statement shapes. Results are recorded in
+the parser now serves only origin-form and `OPTIONS *`, and refuses repeated, missing or
+non-literal `Host` fields. Console address filters walked the time index and exceeded the
+statement budget once a client's incidents aged behind newer traffic; address and category
+filters now use indexed statement shapes. Rate-limiter cells were retained for the burst
+tolerance after they drained, so a high configured limit filled the table; drained cells are
+now reclaimed. A pool beyond its slots refused at once; slots are now tiered and a request
+parks briefly for a release. Merged views were rebuilt before every condition; they are now
+reused until their inputs change, with identical rule IDs, errors and work over the engine
+corpus. Results are recorded in
 `benchmarks/results/crs-ftw-daemon-latest.json`.
 
 == Cluster qualification

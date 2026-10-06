@@ -1,9 +1,9 @@
 {
  "schema": 1,
  "purpose": "Pinned CRS 4.30.0 FTW corpus through the actual Sibuna daemon, Albedo 0.3.0 origin and console evidence",
- "date": "2026-10-06T03:50:44.173592+00:00",
+ "date": "2026-10-06T09:02:51.505379+00:00",
  "host": "paxos-zig",
- "binary_sha256": "b4d50efee7dadce0b53c51e81ad38c1d57160fabd63e93c57b6dad2666eb7f4f",
+ "binary_sha256": "548edb9381e5e87aca8e182e09d19474de9fa319d4f81f4d25f9d0aeba71bfdd",
  "harness": "tools/crs_ftw_daemon_check.py",
  "runs": {
   "audit": {
@@ -14,67 +14,67 @@
    "paranoia": 4,
    "work_budget": 16000000,
    "classes": {
-    "passed": 5090,
-    "daemon only": 6,
+    "passed": 5093,
+    "daemon only": 3,
     "connector difference": 2,
     "engine refusal": 30,
     "work budget": 30,
     "engine agrees": 35
    },
-   "passed": 5090,
+   "passed": 5093,
    "status_assertions": 29,
    "regex_gaps": 15,
    "dropped_incidents": 0,
    "console_unavailable_retries": 0,
    "crs_counters": {
-    "sibuna_crs_inspected_total": 5001,
+    "sibuna_crs_inspected_total": 4997,
     "sibuna_crs_headers_total": 0,
     "sibuna_crs_handshake_total": 0,
     "sibuna_crs_streaming_total": 0,
     "sibuna_crs_incomplete_total": 170,
     "sibuna_crs_denied_total": 0,
-    "sibuna_crs_would_deny_total": 4632
+    "sibuna_crs_would_deny_total": 4628
    },
    "slowest": [
     {
      "test": "934120-43",
-     "seconds": 0.0324
-    },
-    {
-     "test": "922110-24",
-     "seconds": 0.0115
-    },
-    {
-     "test": "932240-8",
-     "seconds": 0.0114
-    },
-    {
-     "test": "932230-14",
-     "seconds": 0.0109
-    },
-    {
-     "test": "932236-29",
-     "seconds": 0.0107
+     "seconds": 0.0169
     },
     {
      "test": "932236-31",
-     "seconds": 0.0107
+     "seconds": 0.0073
     },
     {
-     "test": "932236-32",
-     "seconds": 0.0107
+     "test": "942380-20",
+     "seconds": 0.0073
     },
     {
-     "test": "941120-20",
-     "seconds": 0.0107
+     "test": "944260-2",
+     "seconds": 0.0072
     },
     {
-     "test": "941120-14",
-     "seconds": 0.01
+     "test": "932200-14",
+     "seconds": 0.0071
     },
     {
-     "test": "932230-18",
-     "seconds": 0.0099
+     "test": "951240-1",
+     "seconds": 0.0071
+    },
+    {
+     "test": "942440-24",
+     "seconds": 0.0069
+    },
+    {
+     "test": "951240-2",
+     "seconds": 0.0069
+    },
+    {
+     "test": "942151-19",
+     "seconds": 0.0068
+    },
+    {
+     "test": "942560-1",
+     "seconds": 0.0068
     }
    ],
    "origin_boundary_violations": 0,
@@ -187,62 +187,6 @@
      "unexpected": [],
      "errors": [],
      "origin_bytes": 378,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "920270-4",
-     "class": "daemon only",
-     "ids": [
-      920270,
-      920271,
-      920272,
-      920274,
-      949110
-     ],
-     "missing": [],
-     "unexpected": [],
-     "errors": [
-      "status 200 not in [400]"
-     ],
-     "origin_bytes": 359,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "920274-1",
-     "class": "daemon only",
-     "ids": [
-      920271,
-      920272,
-      920274,
-      949110
-     ],
-     "missing": [],
-     "unexpected": [],
-     "errors": [
-      "status 200 not in [400]"
-     ],
-     "origin_bytes": 362,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "920290-1",
-     "class": "daemon only",
-     "ids": [
-      920290,
-      949110
-     ],
-     "missing": [],
-     "unexpected": [],
-     "errors": [
-      "status 200 not in [400]"
-     ],
-     "origin_bytes": 336,
      "statuses": [
       200
      ]
@@ -1866,14 +1810,14 @@
    "paranoia": 4,
    "work_budget": 16000000,
    "classes": {
-    "passed": 5024,
-    "daemon only": 9,
+    "passed": 5027,
+    "daemon only": 6,
     "connector difference": 64,
     "engine refusal": 30,
     "work budget": 31,
     "engine agrees": 35
    },
-   "passed": 5024,
+   "passed": 5027,
    "status_assertions": 29,
    "regex_gaps": 15,
    "dropped_incidents": 0,
@@ -1884,49 +1828,49 @@
     "sibuna_crs_handshake_total": 0,
     "sibuna_crs_streaming_total": 0,
     "sibuna_crs_incomplete_total": 165,
-    "sibuna_crs_denied_total": 4632,
+    "sibuna_crs_denied_total": 4628,
     "sibuna_crs_would_deny_total": 0
    },
    "slowest": [
     {
      "test": "934120-43",
-     "seconds": 0.0297
+     "seconds": 0.0151
     },
     {
-     "test": "922110-24",
-     "seconds": 0.0116
+     "test": "944260-2",
+     "seconds": 0.0069
+    },
+    {
+     "test": "942440-24",
+     "seconds": 0.0068
+    },
+    {
+     "test": "932200-14",
+     "seconds": 0.0067
     },
     {
      "test": "932240-8",
-     "seconds": 0.0113
+     "seconds": 0.0066
     },
     {
-     "test": "941120-20",
-     "seconds": 0.0106
+     "test": "942380-20",
+     "seconds": 0.0066
     },
     {
-     "test": "932230-14",
-     "seconds": 0.0105
-    },
-    {
-     "test": "932236-29",
-     "seconds": 0.0104
+     "test": "932140-10",
+     "seconds": 0.0065
     },
     {
      "test": "932236-31",
-     "seconds": 0.0102
+     "seconds": 0.0065
     },
     {
-     "test": "941120-14",
-     "seconds": 0.0102
+     "test": "932380-9",
+     "seconds": 0.0065
     },
     {
-     "test": "932236-32",
-     "seconds": 0.01
-    },
-    {
-     "test": "941120-11",
-     "seconds": 0.0099
+     "test": "942151-19",
+     "seconds": 0.0065
     }
    ],
    "origin_boundary_violations": 0,
@@ -2044,26 +1988,6 @@
      ]
     },
     {
-     "test": "920270-4",
-     "class": "daemon only",
-     "ids": [
-      920270,
-      920271,
-      920272,
-      920274,
-      949110
-     ],
-     "missing": [],
-     "unexpected": [],
-     "errors": [
-      "status 403 not in [400]"
-     ],
-     "origin_bytes": 0,
-     "statuses": [
-      403
-     ]
-    },
-    {
      "test": "920272-5",
      "class": "daemon only",
      "ids": [
@@ -2075,42 +1999,6 @@
      "unexpected": [],
      "errors": [
       "status 403 not in [200]"
-     ],
-     "origin_bytes": 0,
-     "statuses": [
-      403
-     ]
-    },
-    {
-     "test": "920274-1",
-     "class": "daemon only",
-     "ids": [
-      920271,
-      920272,
-      920274,
-      949110
-     ],
-     "missing": [],
-     "unexpected": [],
-     "errors": [
-      "status 403 not in [400]"
-     ],
-     "origin_bytes": 0,
-     "statuses": [
-      403
-     ]
-    },
-    {
-     "test": "920290-1",
-     "class": "daemon only",
-     "ids": [
-      920290,
-      949110
-     ],
-     "missing": [],
-     "unexpected": [],
-     "errors": [
-      "status 403 not in [400]"
      ],
      "origin_bytes": 0,
      "statuses": [
