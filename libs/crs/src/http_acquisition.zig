@@ -138,12 +138,11 @@ fn headers(
 
 /// The reference selects form processors from the media prefix before phase one.
 /// Strict MIME validation and any ctl override happen before consuming the entity.
+/// The label reports the processor automatic selection will use for this Content-Type.
 fn initialProcessor(content_type: []const u8) []const u8 {
-    if (std.ascii.startsWithIgnoreCase(content_type, "multipart/form-data"))
-        return "MULTIPART";
-    if (std.ascii.startsWithIgnoreCase(content_type, "application/x-www-form-urlencoded"))
-        return "URLENCODED";
-    return "";
+    const end = std.mem.indexOfScalar(u8, content_type, ';') orelse content_type.len;
+    const media = std.mem.trim(u8, content_type[0..end], " \t");
+    return @import("entity_acquisition.zig").automatic(media).label();
 }
 
 test {

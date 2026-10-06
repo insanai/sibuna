@@ -165,7 +165,19 @@ test "entity limits refuse oversized bodies before publishing any raw occurrence
 test "entity descriptor rejects ambiguous MIME and honours explicit processor overrides" {
     var budget: work.Budget = .{ .remaining = 1_000_000 };
     const automatic = try entities.Descriptor.parse("application/json", .automatic, &budget);
-    try std.testing.expectEqual(entities.Kind.raw, automatic.kind);
+    try std.testing.expectEqual(entities.Kind.json, automatic.kind);
+    // ModSecurity's recommended processor rules select by these Content-Type prefixes.
+    const xml_types = [_][]const u8{
+        "application/xml",
+        "text/xml; charset=utf-8",
+        "application/soap+xml",
+    };
+    for (xml_types) |media| {
+        const parsed = try entities.Descriptor.parse(media, .automatic, &budget);
+        try std.testing.expectEqual(entities.Kind.xml, parsed.kind);
+    }
+    const plain = try entities.Descriptor.parse("text/plain", .automatic, &budget);
+    try std.testing.expectEqual(entities.Kind.raw, plain.kind);
     const multipart = try entities.Descriptor.parse(
         "multipart/form-data; boundary=\"B\"",
         .automatic,

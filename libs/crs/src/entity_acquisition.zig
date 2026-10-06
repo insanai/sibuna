@@ -35,6 +35,24 @@ pub const Kind = enum {
         };
     }
 };
+/// Stock CRS assumes ModSecurity's recommended configuration, whose rules 200000 and 200001
+/// select the XML and JSON processors by Content-Type prefix. Automatic selection follows it,
+/// so API payloads reach argument rules instead of only raw-body rules.
+pub fn automatic(media: []const u8) Kind {
+    if (std.ascii.eqlIgnoreCase(media, "application/x-www-form-urlencoded")) return .urlencoded;
+    if (std.ascii.eqlIgnoreCase(media, "multipart/form-data")) return .multipart;
+    const prefixes = [_]struct { []const u8, Kind }{
+        .{ "application/json", .json },
+        .{ "application/xml", .xml },
+        .{ "application/soap+xml", .xml },
+        .{ "text/xml", .xml },
+    };
+    for (prefixes) |entry| {
+        if (std.ascii.startsWithIgnoreCase(media, entry[0])) return entry[1];
+    }
+    return .raw;
+}
+
 pub const Descriptor = struct {
     kind: Kind,
     boundary: []const u8 = "",
@@ -54,12 +72,7 @@ pub const Descriptor = struct {
         try budget.debitLinear(text.len, 8, 1);
         var parsed = try mime.Value.init(text);
         if (!mime.mediaType(parsed.media)) return error.InvalidMime;
-        if (processor == .automatic) {
-            if (std.ascii.eqlIgnoreCase(parsed.media, "application/x-www-form-urlencoded"))
-                result.kind = .urlencoded;
-            if (std.ascii.eqlIgnoreCase(parsed.media, "multipart/form-data"))
-                result.kind = .multipart;
-        }
+        if (processor == .automatic) result.kind = automatic(parsed.media);
         var boundary: ?[]const u8 = null;
         var charset: ?[]const u8 = null;
         while (try parsed.next()) |parameter| {
