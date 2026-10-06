@@ -35,6 +35,7 @@ pub fn snapshot(state: *server.AppState) !p.crs.Status {
         .compiled_peak = current.compiled_peak,
         .reserved_bytes = current.reservation,
         .slots = @intCast(current.slots),
+        .small_slots = @intCast(current.small_slots),
         .request_bytes = current.request_bytes,
         .response_bytes = current.response_bytes,
         .work_budget = current.work_budget,

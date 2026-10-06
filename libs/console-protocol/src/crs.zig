@@ -18,6 +18,8 @@ pub const Selection = struct {
     compiled_peak: u64,
     reserved_bytes: u64,
     slots: u8,
+    /// Derived from spare reservation; zero from nodes that predate tiered pools.
+    small_slots: u16 = 0,
     request_bytes: u64,
     response_bytes: u64,
     work_budget: u64,
@@ -37,8 +39,9 @@ pub const Selection = struct {
             try release(self.release.slice());
         }
         if (self.mode != .off and !source) return error.InvalidCrsStatus;
-        if (self.mode == .off and (self.reserved_bytes != 0 or self.slots != 0))
-            return error.InvalidCrsStatus;
+        if (self.mode == .off and (self.reserved_bytes != 0 or self.slots != 0 or
+            self.small_slots != 0)) return error.InvalidCrsStatus;
+        if (@as(usize, self.slots) + self.small_slots > 1024) return error.InvalidCrsStatus;
         if (self.mode != .off and (self.slots == 0 or self.slots > 31 or
             self.reserved_bytes == 0)) return error.InvalidCrsStatus;
         if (self.request_bytes == 0 or self.request_bytes > 64 * 1024 * 1024 or

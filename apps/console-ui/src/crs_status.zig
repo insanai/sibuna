@@ -40,6 +40,7 @@ pub fn render(optional: ?p.crs.Status, writer: *Writer) Writer.Error!void {
         .compiled = selected.compiled_peak,
         .reserved = selected.reserved_bytes,
         .slots = selected.slots,
+        .small = selected.small_slots,
         .request = selected.request_bytes,
         .response = selected.response_bytes,
         .work = selected.work_budget,

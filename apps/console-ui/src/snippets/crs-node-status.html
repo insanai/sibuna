@@ -9,7 +9,8 @@
     <dt>Initial anomaly thresholds</dt><dd>Inbound {{ inbound }}; outbound {{ outbound }}</dd>
     <dt>Compilation peak</dt><dd>{{ compiled }} bytes of live compilation payload</dd>
     <dt>Inspection reservations</dt><dd>{{ reserved }} bytes</dd>
-    <dt>Simultaneous inspections</dt><dd>{{ slots }} slots</dd>
+    <dt>Simultaneous inspections</dt><dd>{{ slots }} full-size slots; {{ small }} slots for
+        requests up to 64 KiB</dd>
     <dt>Request wire and decoded limit</dt><dd>{{ request }} bytes</dd>
     <dt>Response wire and decoded limit</dt><dd>{{ response }} bytes</dd>
     <dt>Per-exchange work budget</dt><dd>{{ work }} units</dd>

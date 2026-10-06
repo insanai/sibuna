@@ -51,10 +51,12 @@ fn status(state: *const State, snapshot: p.crs_api.Status, w: *W) W.Error!void {
     } else try w.writeAll("<p>No signed rules have been selected.</p>");
     if (snapshot.local.selection) |local| {
         try html.render(w, "<p>Serving node: revision {{ revision }} · {{ mode }} · " ++
-            "{{ slots }} slots · {{ bytes }} reserved bytes.</p>", .{
+            "{{ slots }} full-size and {{ small }} small slots · " ++
+            "{{ bytes }} reserved bytes.</p>", .{
             .revision = local.revision,
             .mode = @tagName(local.mode),
             .slots = local.slots,
+            .small = local.small_slots,
             .bytes = local.reserved_bytes,
         });
         if (local.revision != snapshot.revision) try w.writeAll(
