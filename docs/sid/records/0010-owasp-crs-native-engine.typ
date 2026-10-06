@@ -7,7 +7,7 @@
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
 #let sid-status = "Open for Discussion"
-#let sid-last-updated = "2026-10-06"
+#let sid-last-updated = "2026-10-07"
 
 #import "../../shared/sid.typ": sid-document
 
@@ -631,6 +631,15 @@ equivalent ordering of repeated match effects rather than stop after the first m
 
 === Validated constant-space transform replay
 
+A pipeline without `multiMatch` exposes only its final value, after every stage has run and
+before any effect, so one pass both validates and yields it; the two-pass replay below applies
+to `multiMatch`, which exposes intermediate stages. Within one phase, final outputs are shared
+by rules whose stage sequences are identical. Entries are keyed by the input's address and
+length and compared on the exact stage sequence; the hash only places them. By the
+effect-lifetime lemma, acquired, TX and matched bytes are immutable for the transaction, so the
+key names fixed bytes. Counted targets live in reused scratch and are never shared, and the
+cache is cleared at every phase. A shared output is charged one unit per byte read.
+
 The native executor may replace per-stage value copies with a validated replay for one
 snapshotted field. Its input bytes, generation and transformation configuration are immutable
 through both passes. First run the complete pipeline without predicates or rule effects,
@@ -645,8 +654,9 @@ so work reporting does not sum both the reservation and its later consumption.
 Run the same pure pipeline again and expose values in the reference order, copying captures
 or persistent values before advancing scratch. No request allocation or per-stage value pool
 is required. The replay object stays at a stable caller-owned address because its iterator
-borrows its reserved budget. Failure invalidates it permanently. This method doubles the
-transform work and counts both passes; performance reporting must include that cost. It
+borrows its reserved budget. Failure invalidates it permanently. For `multiMatch` this method
+doubles the transform work and counts both passes; performance reporting must include that
+cost. It
 does not reserve predicate work or make multiple rule effects atomic. An exhausted predicate
 or effect still stops the transaction with an explicit limit outcome.
 
@@ -815,6 +825,18 @@ has bounded out-degree, so closure work is $O(S)$. Processing one byte advances 
 states once. Ordered thread insertion selects the highest-priority equivalent thread. There
 are at most $N + 1$ positions. Capture priority and greedy/lazy behavior require a separate
 conformance check; the Boolean bound does not prove PCRE capture equivalence.
+
+A Boolean decision runs first on a lazy DFA. A DFA state is the sorted set of NFA states
+reached after a byte, plus three bits about that byte (text start, newline, word character)
+that decide every supported assertion together with the next byte and whether it is the last.
+States and their 256 transitions are cached per search in a bounded slot reservation of 1,024
+states. A full cache is cleared; after four clears the search answers with the Pike simulation,
+so the worst case keeps the $O(S N)$ bound above while ordinary inputs pay one table lookup per
+byte. Captures are produced only when a rule consumes them and the DFA reported a match; the
+ordered simulation then defines the groups exactly as before. Each simulation step charges one
+unit plus one per capture slot it copies, so Boolean work reflects Boolean cost.
+Randomized differential tests compare the DFA with the capturing simulation over every
+assertion form, and a thrashing pattern exercises the fallback.
 
 Backreferences, recursive patterns and unsupported PCRE extensions reject compilation.
 They are not approximated by a regular language. Unbounded repetitions of nullable
@@ -1615,7 +1637,7 @@ All capacities are checked with overflow-safe arithmetic. A supported stock rele
 exceeds them is rejected and diagnosed; ceilings are reviewed from measured requirements.
 
 Initial transaction defaults are 4 MiB of request entity data, 1 MiB of eligible response data,
-1,024 collection entries, depth 64, 256 KiB aggregate collection/macro storage and 16 million
+1,024 collection entries, depth 64, 256 KiB aggregate collection/macro storage and 128 million
 charged work units. Byte scratch and capture storage are sized off-path from the candidate.
 These values are proposal defaults, not measured guarantees or an application-upload limit
 when CRS is disabled. Larger configured bounds require a displayed memory reservation and
@@ -2355,10 +2377,10 @@ entity and rule phases. Its fixture serialization follows go-ftw 2.6.0. An optio
 Albedo 0.3.0 origin supplies actual response headers and entities. This probe does not
 exercise Sibuna's socket connector, final HTTP status or origin delivery boundary.
 
-Request qualification evaluates 5,037 rule-ID contracts: 4,939 match their upstream
-assertions, 65 refuse malformed or exhausted inputs, and 33 disagree with an upstream
+Request qualification evaluates 5,037 rule-ID contracts: 4,944 match their upstream
+assertions, 60 refuse malformed or exhausted inputs, and 33 disagree with an upstream
 expectation while producing exactly the same rule-ID set as ModSecurity 3.0.14.
-The 65 refusals include six work-budget exhaustions under the diagnostic ceiling.
+The 60 refusals include one work-budget exhaustion under the diagnostic ceiling.
 Response qualification evaluates 104 rule-ID contracts against Albedo: 102 match; both
 remaining logging differences reproduce ModSecurity's saved-message behavior.
 Status, raw wire, regex-log and multi-stage contracts remain separate coverage gaps.
@@ -2371,10 +2393,11 @@ visible through raw REQUEST_BODY, and `noauditlog` clears saved-message state in
 reference. Changing those behaviors merely to satisfy another connector's expectation
 would weaken compatibility with the selected reference profile.
 
-Diagnostic execution allows 128 million charged units to separate semantics from the
-16-million production default. Seventy-seven request cases and twenty response cases
-exceed that default. These are paranoia-level-four fixture results, not an admission or
-performance guarantee for normal application traffic. Reports retain per-case work,
+Diagnostic execution allows 128 million charged units, which is also the production default.
+After the lazy DFA, capture-on-match and shared transform outputs, no request or response
+case reaches it, and four request cases exceed the former 16 million default (seventy-seven
+did before). These are paranoia-level-four fixture results, not an admission or performance
+guarantee for normal application traffic. Reports retain per-case work,
 errors, observed IDs, the source commit and raw expectations. Reference annotations do
 not convert failed assertions or coverage gaps into passed tests. The daemon corpus below
 establishes refusal status, withheld origin bytes and supported profile coverage.
@@ -2383,22 +2406,22 @@ establishes refusal status, withheld origin bytes and supported profile coverage
 
 `tools/crs_ftw_daemon_check.py` sends all 5,193 pinned tests through the actual daemon, a
 loopback Albedo 0.3.0 origin and the console's stored evidence. It uses blocking and detection
-paranoia four, the corpus's TX settings and the production 16-million work budget. Each test
+paranoia four, the corpus's TX settings and the production 128-million work budget. Each test
 owns one loopback source address, so saved findings are attributed through the console's exact
 address filter; log markers would add headers that rules inspect. Storage is drained every 16
 tests and one dropped incident invalidates the run. Raw wire requests, multi-stage tests and
 the 29 status assertions now run over the socket. The 15 regex log assertions remain gaps:
 Sibuna stores rule IDs, not log lines.
 
-In Audit (2026-10-06), 5,093 tests pass with no dropped incident. Differences are classified
-against the engine probe: 35 reproduce its reference differences exactly, 30 are its strict
-acquisition refusals (chiefly invalid percent escapes in urlencoded bodies) and 30 exceed the
-production work budget at paranoia four. Five are deliberate connector refusals answered 400
+In Audit (2026-10-07), 5,123 tests pass with no dropped incident and none limited by the work
+budget. Differences are classified against the engine probe: 35 reproduce its reference
+differences exactly and 30 are its strict acquisition refusals (chiefly invalid percent
+escapes in urlencoded bodies). Five are deliberate connector refusals answered 400
 before CRS runs: an absolute-form target, `CONNECT`, a request with both `Content-Length` and
 `Transfer-Encoding`, and two unsupported protocol versions. Malformed `Host` fields are now
 refused with the 400 the corpus expects.
 
-In Enforce, 4,793 request stages were denied and no request-phase denial delivered a byte to
+In Enforce, 4,792 request stages were denied and no request-phase denial delivered a byte to
 the origin. Requests whose inspection could not complete were refused 403 rather than
 forwarded. At blocking paranoia four, 62 of the 102 response fixtures are denied on their own
 inbound score before any response phase runs, so response rule IDs are qualified in Audit and
