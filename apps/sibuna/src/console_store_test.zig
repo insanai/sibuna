@@ -972,6 +972,38 @@ test "incident pages bound bytes, paginate tied timestamps and redact historical
     try t.expectEqual(p.Failure.unauthorized, (try fx.run(.{ .events_query = input })).failed);
 }
 
+test "address and category investigations reach aged incidents within the step budget" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var buffer: [160]u8 = undefined;
+    const fx = try readFixture(try std.fmt.bufPrint(
+        &buffer,
+        ".zig-cache/tmp/{s}/aged-events",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    // Thirty thousand newer rows push a time-ordered scan far beyond the light budget.
+    _ = try db.exec(fx.owner.db, t.allocator, "INSERT INTO security_incidents(id,node_id," ++
+        "client_ip,user_agent,method,path,violation_category,offending_payload,recorded_at) " ++
+        "VALUES(1,1,'203.0.113.7','ua','GET','/old','rare','',100)", &.{});
+    _ = try db.exec(fx.owner.db, t.allocator, "INSERT INTO security_incidents(id,node_id," ++
+        "client_ip,user_agent,method,path,violation_category,offending_payload,recorded_at) " ++
+        "WITH RECURSIVE n(i) AS (SELECT 2 UNION ALL SELECT i+1 FROM n WHERE i<30001) " ++
+        "SELECT i,1,'198.51.100.1','ua','GET','/','attack','',1000+i FROM n", &.{});
+    const address = try p.Bytes(48).init("203.0.113.7");
+    const filters = [_]p.events.Query{
+        .{ .session_digest = @splat(1), .ip = address },
+        .{ .session_digest = @splat(1), .category = try p.Bytes(32).init("rare") },
+        .{ .session_digest = @splat(1), .grouped = true, .ip = address },
+    };
+    for (filters) |input| {
+        const result = try fx.run(.{ .events_query = input });
+        try t.expect(result == .page);
+        try t.expect(std.mem.indexOf(u8, result.page.slice(), "\"ip\":\"203.0.113.7\"") != null);
+        try t.expect(std.mem.indexOf(u8, result.page.slice(), "198.51.100.1") == null);
+    }
+}
+
 fn insertEvents(owner: *Persistent) !void {
     for (1..31) |id| {
         _ = try db.exec(

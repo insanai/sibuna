@@ -18,7 +18,13 @@ pub fn query(owner: *Persistent, input: p.events.Query) !p.StorageResult {
         .id = std.math.maxInt(i64),
     };
     const module: u64 = if (input.module) |m| @backingInt(m) else 3;
-    const sql = statement(input.grouped, input.campaign != 0, input.incident != 0);
+    const kind: Kind = if (input.incident != 0) .incident else if (input.campaign != 0)
+        .campaign
+    else
+        .all;
+    const shapes = statements[@intFromBool(input.grouped)][@backingInt(kind)];
+    const category = @intFromBool(input.category.len != 0);
+    const sql = shapes[category][@intFromBool(input.ip.len != 0)];
     var result = try db.query(owner.db, owner.gpa, sql, &.{
         integer(input.from),             integer(input.until),
         integer(input.node),             integer(input.node),
@@ -153,20 +159,28 @@ pub fn copy(
     truncated.* = truncated.* or position != source.len;
 }
 
-const base_filters =
-    " FROM security_incidents LEFT JOIN console_incident_evidence e ON e.incident_id=id " ++
-    "LEFT JOIN console_incident_country c ON c.incident_id=id " ++
-    "LEFT JOIN console_crs_evidence x ON x.incident_id=id " ++
-    "WHERE recorded_at BETWEEN ? AND ? " ++
-    "AND (?=0 OR node_id=?) AND (?='' OR violation_category=?) AND (?='' OR client_ip=?) " ++
-    "AND substr(path,1,length(?))=? AND (?='' OR " ++
-    "CASE WHEN c.generation IS NULL THEN 'not_recorded' " ++
-    "ELSE COALESCE(c.country,'unknown') END=?) AND (?=3 OR " ++
-    @import("console_store_security.zig").classification ++ "=?) ";
-const filters = base_filters ++ "AND (?=0 OR campaign_id=?) ";
+// SQLite plans at prepare time and cannot use an index through `?='' OR column=?`.
+// A selective filter on aging rows would then walk the time index past the fixed step
+// budget, so indexed filters get their own statement shape whenever they are set.
+fn optional(comptime column: []const u8, comptime selective: bool) []const u8 {
+    return if (selective) column ++ "=? AND ?!='' " else "(?='' OR " ++ column ++ "=?) ";
+}
+
+fn baseFilters(comptime category: bool, comptime ip: bool) []const u8 {
+    return " FROM security_incidents LEFT JOIN console_incident_evidence e ON e.incident_id=id " ++
+        "LEFT JOIN console_incident_country c ON c.incident_id=id " ++
+        "LEFT JOIN console_crs_evidence x ON x.incident_id=id " ++
+        "WHERE recorded_at BETWEEN ? AND ? AND (?=0 OR node_id=?) " ++
+        "AND " ++ optional("violation_category", category) ++
+        "AND " ++ optional("client_ip", ip) ++
+        "AND substr(path,1,length(?))=? AND (?='' OR " ++
+        "CASE WHEN c.generation IS NULL THEN 'not_recorded' " ++
+        "ELSE COALESCE(c.country,'unknown') END=?) AND (?=3 OR " ++
+        @import("console_store_security.zig").classification ++ "=?) ";
+}
+
 const id_filter = "AND (?=0 OR id=?) ";
 const exact_id = "AND id=? AND ?!=0 ";
-const campaign_filters = base_filters ++ "AND campaign_id=? AND ?!=0 ";
 const raw_select =
     "SELECT id,node_id,recorded_at,client_ip,method,path,violation_category,user_agent," ++
     "campaign_id,1,recorded_at,e.version,e.selected_status,e.query_bytes,e.body_bytes," ++
@@ -189,13 +203,32 @@ const group_order =
     "GROUP BY node_id,client_ip HAVING MAX(recorded_at)<? OR " ++
     "(MAX(recorded_at)=? AND MAX(id)<?) ORDER BY MAX(recorded_at) DESC,MAX(id) DESC LIMIT ?";
 
-fn statement(grouped: bool, campaign: bool, incident: bool) []const u8 {
-    if (grouped) {
-        if (incident) return group_select ++ filters ++ exact_id ++ group_order;
-        if (campaign) return group_select ++ campaign_filters ++ id_filter ++ group_order;
-        return group_select ++ filters ++ id_filter ++ group_order;
-    }
-    if (incident) return raw_select ++ filters ++ exact_id ++ raw_order;
-    if (campaign) return raw_select ++ campaign_filters ++ id_filter ++ raw_order;
-    return raw_select ++ filters ++ id_filter ++ raw_order;
+const Kind = enum { all, campaign, incident };
+
+fn compose(
+    comptime grouped: bool,
+    comptime kind: Kind,
+    comptime category: bool,
+    comptime ip: bool,
+) []const u8 {
+    const where = baseFilters(category, ip) ++ switch (kind) {
+        .all, .incident => "AND (?=0 OR campaign_id=?) ",
+        .campaign => "AND campaign_id=? AND ?!=0 ",
+    } ++ if (kind == .incident) exact_id else id_filter;
+    return if (grouped) group_select ++ where ++ group_order else raw_select ++ where ++ raw_order;
 }
+
+/// Every parameter keeps its position in each shape, so one binding list serves all of them.
+const statements = table: {
+    var output: [2][3][2][2][]const u8 = undefined;
+    for ([_]bool{ false, true }, 0..) |grouped, g| {
+        for (std.enums.values(Kind)) |kind| {
+            for ([_]bool{ false, true }, 0..) |category, c| {
+                for ([_]bool{ false, true }, 0..) |ip, i| {
+                    output[g][@backingInt(kind)][c][i] = compose(grouped, kind, category, ip);
+                }
+            }
+        }
+    }
+    break :table output;
+};
