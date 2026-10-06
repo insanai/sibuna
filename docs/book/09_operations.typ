@@ -32,12 +32,16 @@ Conflicting mode flags are errors rather than choices resolved by argument order
 
 The full reverse-proxy profile inspects complete request and response entities before
 publication. Default wire and decoded ceilings are 4 MiB for requests and 1 MiB for responses.
-The shared work budget defaults to 16 million units. Use `--crs-request-limit`,
-`--crs-response-limit`, `--crs-work-budget` and `--crs-slots` to set reviewed bounds. Eight
-slots reserve at least 112.6 MiB for entities, decoding and response heads, plus metadata and
-matcher storage. `--crs-timeout` is an absolute inspection deadline, 1–300 seconds, default
-30; active progress cannot extend it. Pool exhaustion returns 503, excessive uploads 413,
-and enforcing inspection failure refuses delivery.
+The shared work budget defaults to 128 million units; evaluation is linear in the input, and
+paranoia level one charges roughly 1,800 units per byte of free-text arguments. Use
+`--crs-request-limit`, `--crs-response-limit`, `--crs-work-budget` and `--crs-slots` to set
+reviewed bounds. Eight full-size slots reserve at least 112.6 MiB for entities, decoding and
+response heads, plus metadata and matcher storage; spare reservation becomes small slots for
+requests up to 64 KiB. A busy pool waits up to 50 ms for a slot. `--crs-timeout` is an
+absolute inspection deadline, 1–300 seconds, default 30; active progress cannot extend it.
+Pool exhaustion after the wait returns 503, excessive uploads 413, and enforcing inspection
+failure refuses delivery. JSON and XML bodies are parsed by Content-Type, as in ModSecurity's
+recommended configuration; a body that fails to parse is an inspection failure.
 
 Forward auth observes ingress metadata rather than the origin body or response. Select
 `--crs-profile headers` explicitly with `--mode forward_auth`; full body enforcement is
