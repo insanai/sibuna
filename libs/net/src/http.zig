@@ -99,6 +99,8 @@ pub const ParseError = error{
     DuplicateContentLength,
     RequestSmugglingAttempt,
     UnsupportedVersion,
+    /// Only origin-form and `OPTIONS *` are served (RFC 9112 §3.2).
+    InvalidRequestTarget,
     TooManyHeaders,
     /// A coding list ending in `chunked` after another coding: valid, but not decoded here.
     UnsupportedTransferEncoding,
@@ -142,31 +144,43 @@ fn chunkedOnly(value: []const u8) ParseError!void {
     if (count > 1) return error.UnsupportedTransferEncoding;
 }
 
+/// Policy, CRS and the origin must see the same path. Absolute and authority forms carry
+/// no leading slash, so path rules would miss them, and CONNECT could open an uninspected
+/// tunnel through an origin that honours it. Constant time: the caller already scanned bytes.
+fn servedTarget(method: []const u8, target: []const u8) bool {
+    if (target[0] == '/') return !std.mem.eql(u8, method, "CONNECT");
+    return target.len == 1 and target[0] == '*' and std.mem.eql(u8, method, "OPTIONS");
+}
+
+fn parseRequestLine(req: *Request, line: []const u8) ParseError!void {
+    if (line.len == 0) return error.EmptyRequest;
+    var tokens = std.mem.splitScalar(u8, line, ' ');
+    const method = tokens.next() orelse return error.InvalidRequestLine;
+    const uri = tokens.next() orelse return error.InvalidRequestLine;
+    const version = tokens.next() orelse return error.InvalidRequestLine;
+    if (!validToken(method) or uri.len == 0 or tokens.next() != null)
+        return error.InvalidRequestLine;
+    for (uri) |c| {
+        if (c <= 32 or c == 127) return error.InvalidRequestLine;
+        // Fragments are never part of a request target; checked in the same single pass.
+        if (c == '#') return error.InvalidRequestTarget;
+    }
+    if (!servedTarget(method, uri)) return error.InvalidRequestTarget;
+    req.method_text = method;
+    req.method = Method.fromString(method);
+    req.version = version;
+    if (!std.mem.eql(u8, version, "HTTP/1.1") and !std.mem.eql(u8, version, "HTTP/1.0"))
+        return error.UnsupportedVersion;
+    const target = splitTarget(uri);
+    req.path = target.path;
+    req.query = target.query;
+}
+
 pub fn parseRequest(data: []const u8) ParseError!Request {
     var req = Request{};
     var line_it = std.mem.splitSequence(u8, data, "\r\n");
 
-    const req_line = line_it.first();
-    if (req_line.len == 0) return error.EmptyRequest;
-
-    var req_tokens = std.mem.splitScalar(u8, req_line, ' ');
-    const method_str = req_tokens.next() orelse return error.InvalidRequestLine;
-    const uri_str = req_tokens.next() orelse return error.InvalidRequestLine;
-    const ver_str = req_tokens.next() orelse return error.InvalidRequestLine;
-
-    if (!validToken(method_str) or uri_str.len == 0 or req_tokens.next() != null)
-        return error.InvalidRequestLine;
-    for (uri_str) |c| if (c <= 32 or c == 127) return error.InvalidRequestLine;
-    req.method_text = method_str;
-    req.method = Method.fromString(method_str);
-    req.version = ver_str;
-    if (!std.mem.eql(u8, ver_str, "HTTP/1.1") and !std.mem.eql(u8, ver_str, "HTTP/1.0")) {
-        return error.UnsupportedVersion;
-    }
-
-    const target = splitTarget(uri_str);
-    req.path = target.path;
-    req.query = target.query;
+    try parseRequestLine(&req, line_it.first());
 
     var has_content_length = false;
     var content_length_val: []const u8 = "";
@@ -208,7 +222,7 @@ pub fn parseRequest(data: []const u8) ParseError!Request {
 
     if (transfer_encoding) |codings| {
         if (has_content_length) return error.RequestSmugglingAttempt;
-        if (transfer_fields != 1 or !std.mem.eql(u8, ver_str, "HTTP/1.1"))
+        if (transfer_fields != 1 or !std.mem.eql(u8, req.version, "HTTP/1.1"))
             return error.InvalidTransferEncoding;
         try chunkedOnly(codings);
         req.chunked = true;
@@ -289,6 +303,25 @@ test "parser rejects ambiguous framing and control bytes" {
         "Cookie: a=1;__sibuna_token=abc\r\n\r\n");
     try std.testing.expectEqualStrings("PROPFIND", req.method_text);
     try std.testing.expectEqualStrings("abc", req.getCookie("__sibuna_token").?);
+}
+
+test "only origin-form targets and OPTIONS asterisk reach policy" {
+    const refused = [_][]const u8{
+        "GET http://localhost/admin HTTP/1.1\r\n\r\n",
+        "CONNECT example.test:443 HTTP/1.1\r\n\r\n",
+        "CONNECT / HTTP/1.1\r\n\r\n",
+        "GET /#fragment HTTP/1.1\r\n\r\n",
+        "GET \\index.html HTTP/1.1\r\n\r\n",
+        "GET * HTTP/1.1\r\n\r\n",
+        "GET index.html HTTP/1.1\r\n\r\n",
+    };
+    for (refused) |raw| {
+        try std.testing.expectError(error.InvalidRequestTarget, parseRequest(raw));
+    }
+    const asterisk = try parseRequest("OPTIONS * HTTP/1.1\r\n\r\n");
+    try std.testing.expectEqualStrings("*", asterisk.path);
+    const encoded = try parseRequest("GET /a%23b HTTP/1.1\r\n\r\n");
+    try std.testing.expectEqualStrings("/a%23b", encoded.path);
 }
 
 test "only a single exact chunked coding frames an HTTP/1.1 request body" {
