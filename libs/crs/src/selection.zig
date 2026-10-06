@@ -153,12 +153,12 @@ fn matches(target: *const Target, entry: variables.Entry, frame: Frame) Error!bo
     return switch (target.selection) {
         .all => true,
         .name => |name| variables.keyEqual(name, entry.key, frame.budget),
-        .pattern => |*pattern| try regex.match.search(
+        .pattern => |*pattern| try regex.match.matches(
             &pattern.program,
             entry.key,
             frame.regex orelse return error.ScratchTooSmall,
             frame.budget,
-        ) != null,
+        ),
         .xml => |kind| blk: {
             const metadata = entry.xml orelse return error.InvalidXmlMetadata;
             break :blk metadata == (if (kind == .elements)

@@ -24,9 +24,6 @@ pub const Scratch = struct {
     next: []Thread,
     stack: []Thread,
     visited: []usize,
-    used: usize = 0,
-    next_used: usize = 0,
-    stack_used: usize = 0,
 
     pub fn requiredStates(program: *const types.Program) usize {
         return program.instructions.len;
@@ -38,64 +35,148 @@ pub const Scratch = struct {
     }
 };
 
-const Context = struct {
+/// A Boolean match needs no capture slots. Its state is a program counter, so each step
+/// copies four bytes instead of a full capture thread.
+const Pc = struct { pc: u32 };
+
+/// Ordered Pike simulation state for either state shape. Control flow and work charges
+/// below are shared, so a Boolean match agrees with `search` on every input and budget.
+fn Simulation(comptime State: type) type {
+    return struct {
+        program: *const types.Program,
+        input: []const u8,
+        current: []State,
+        next: []State,
+        stack: []State,
+        visited: []usize,
+        budget: *work.Budget,
+        used: usize = 0,
+        next_used: usize = 0,
+        stack_used: usize = 0,
+    };
+}
+
+fn simulation(
+    comptime State: type,
     program: *const types.Program,
     input: []const u8,
     scratch: *Scratch,
     budget: *work.Budget,
+) Simulation(State) {
+    return .{
+        .program = program,
+        .input = input,
+        .current = reinterpret(State, scratch.current),
+        .next = reinterpret(State, scratch.next),
+        .stack = reinterpret(State, scratch.stack),
+        .visited = scratch.visited,
+        .budget = budget,
+    };
+}
 
-    fn start(self: *Context, position: usize) Error!void {
-        try self.budget.debit(1);
-        if (!self.program.nullable and (position == self.input.len or
-            !self.program.first.contains(self.input[position]))) return;
-        try self.closure(.{ .pc = self.program.start }, position);
-    }
+/// Reserved thread storage is reinterpreted, never resized: a state is no larger than a
+/// thread, so every bound proven for threads holds for states.
+fn reinterpret(comptime State: type, threads: []Thread) []State {
+    if (State == Thread) return threads;
+    comptime std.debug.assert(@sizeOf(State) <= @sizeOf(Thread));
+    const states: []State = std.mem.bytesAsSlice(State, std.mem.sliceAsBytes(threads));
+    return states[0..threads.len];
+}
 
-    fn push(self: *Context, thread: Thread) Error!void {
+fn enter(comptime State: type, self: *Simulation(State), position: usize) Error!void {
+    try self.budget.debit(1);
+    if (!self.program.nullable and (position == self.input.len or
+        !self.program.first.contains(self.input[position]))) return;
+    try closure(State, self, .{ .pc = self.program.start }, position);
+}
+
+fn push(comptime State: type, self: *Simulation(State), state: State) Error!void {
+    try self.budget.debit(1 + types.capture_slots);
+    if (self.stack_used == self.stack.len) return error.ScratchTooSmall;
+    self.stack[self.stack_used] = state;
+    self.stack_used += 1;
+}
+
+/// DFS follows the first split branch first. Marking on pop preserves its priority over
+/// a pending lower-priority path to the same instruction.
+fn closure(
+    comptime State: type,
+    self: *Simulation(State),
+    state: State,
+    position: usize,
+) Error!void {
+    self.stack_used = 0;
+    try push(State, self, state);
+    while (self.stack_used > 0) {
+        self.stack_used -= 1;
+        var active = self.stack[self.stack_used];
         try self.budget.debit(1 + types.capture_slots);
-        if (self.scratch.stack_used == self.scratch.stack.len) return error.ScratchTooSmall;
-        self.scratch.stack[self.scratch.stack_used] = thread;
-        self.scratch.stack_used += 1;
-    }
-
-    /// DFS follows the first split branch first. Marking on pop preserves its
-    /// priority over a pending lower-priority path to the same instruction.
-    fn closure(self: *Context, thread: Thread, position: usize) Error!void {
-        const scratch = self.scratch;
-        scratch.stack_used = 0;
-        try self.push(thread);
-        while (scratch.stack_used > 0) {
-            scratch.stack_used -= 1;
-            var active = scratch.stack[scratch.stack_used];
-            try self.budget.debit(1 + types.capture_slots);
-            if (scratch.visited[active.pc] == position) continue;
-            scratch.visited[active.pc] = position;
-            const instruction = self.program.instructions[active.pc];
-            switch (instruction.op) {
-                .split => {
-                    active.pc = instruction.alternative;
-                    try self.push(active);
-                    active.pc = instruction.next;
-                    try self.push(active);
-                },
-                .jump, .save => {
+        if (self.visited[active.pc] == position) continue;
+        self.visited[active.pc] = position;
+        const instruction = self.program.instructions[active.pc];
+        switch (instruction.op) {
+            .split => {
+                active.pc = instruction.alternative;
+                try push(State, self, active);
+                active.pc = instruction.next;
+                try push(State, self, active);
+            },
+            .jump, .save => {
+                if (comptime @hasField(State, "captures")) {
                     if (instruction.op == .save) active.captures[instruction.op.save] = position;
-                    active.pc = instruction.next;
-                    try self.push(active);
-                },
-                .assertion => |assertion| if (asserted(assertion, self.input, position)) {
-                    active.pc = instruction.next;
-                    try self.push(active);
-                },
-                .class, .accept => {
-                    if (scratch.next_used == scratch.next.len) return error.ScratchTooSmall;
-                    scratch.next[scratch.next_used] = active;
-                    scratch.next_used += 1;
-                },
-            }
+                }
+                active.pc = instruction.next;
+                try push(State, self, active);
+            },
+            .assertion => |assertion| if (asserted(assertion, self.input, position)) {
+                active.pc = instruction.next;
+                try push(State, self, active);
+            },
+            .class, .accept => {
+                if (self.next_used == self.next.len) return error.ScratchTooSmall;
+                self.next[self.next_used] = active;
+                self.next_used += 1;
+            },
         }
     }
-};
+}
+
+fn run(comptime State: type, self: *Simulation(State)) Error!?State {
+    const states = self.program.instructions.len;
+    // One transaction reserves the largest program's workspace. Reset and charge only
+    // this program's states; unused capacity must not consume each rule's budget.
+    try self.budget.debit(states);
+    @memset(self.visited[0..states], types.unset);
+    try enter(State, self, 0);
+    var candidate: ?State = null;
+    var position: usize = 0;
+    while (true) {
+        std.mem.swap([]State, &self.current, &self.next);
+        self.used = self.next_used;
+        self.next_used = 0;
+        for (self.current[0..self.used], 0..) |state, index| {
+            try self.budget.debit(1);
+            if (self.program.instructions[state.pc].op == .accept) {
+                candidate = state;
+                self.used = index;
+                break;
+            }
+        }
+        if (position == self.input.len) return candidate;
+        for (self.current[0..self.used]) |state| {
+            try self.budget.debit(1);
+            const instruction = self.program.instructions[state.pc];
+            if (instruction.op.class.contains(self.input[position])) {
+                var advanced = state;
+                advanced.pc = instruction.next;
+                try closure(State, self, advanced, position + 1);
+            }
+        }
+        position += 1;
+        if (candidate != null and self.next_used == 0) return candidate;
+        if (candidate == null) try enter(State, self, position);
+    }
+}
 
 pub fn search(
     program: *const types.Program,
@@ -103,49 +184,22 @@ pub fn search(
     scratch: *Scratch,
     budget: *work.Budget,
 ) Error!?Match {
-    const states = program.instructions.len;
-    try scratch.validate(states);
-    // One transaction reserves the largest program's workspace. Reset and charge
-    // only this program's states; unused capacity must not consume each rule's budget.
-    try budget.debit(states);
-    @memset(scratch.visited[0..states], types.unset);
-    scratch.used = 0;
-    scratch.next_used = 0;
-    var context: Context = .{
-        .program = program,
-        .input = input,
-        .scratch = scratch,
-        .budget = budget,
-    };
-    try context.start(0);
-    var candidate: ?Match = null;
-    var position: usize = 0;
-    while (true) {
-        std.mem.swap([]Thread, &scratch.current, &scratch.next);
-        scratch.used = scratch.next_used;
-        scratch.next_used = 0;
-        for (scratch.current[0..scratch.used], 0..) |thread, index| {
-            try budget.debit(1);
-            if (program.instructions[thread.pc].op == .accept) {
-                candidate = .{ .captures = thread.captures };
-                scratch.used = index;
-                break;
-            }
-        }
-        if (position == input.len) return candidate;
-        for (scratch.current[0..scratch.used]) |thread| {
-            try budget.debit(1);
-            const instruction = program.instructions[thread.pc];
-            if (instruction.op.class.contains(input[position])) {
-                var advanced = thread;
-                advanced.pc = instruction.next;
-                try context.closure(advanced, position + 1);
-            }
-        }
-        position += 1;
-        if (candidate != null and scratch.next_used == 0) return candidate;
-        if (candidate == null) try context.start(position);
-    }
+    try scratch.validate(program.instructions.len);
+    var state = simulation(Thread, program, input, scratch, budget);
+    const accepted = try run(Thread, &state) orelse return null;
+    return .{ .captures = accepted.captures };
+}
+
+/// Same decision and work as `search` when no capture is consumed.
+pub fn matches(
+    program: *const types.Program,
+    input: []const u8,
+    scratch: *Scratch,
+    budget: *work.Budget,
+) Error!bool {
+    try scratch.validate(program.instructions.len);
+    var state = simulation(Pc, program, input, scratch, budget);
+    return try run(Pc, &state) != null;
 }
 
 fn word(byte: u8) bool {

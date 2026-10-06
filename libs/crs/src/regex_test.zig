@@ -30,8 +30,31 @@ const Fixture = struct {
             const span = (result orelse return error.ExpectedMatch).span(0).?;
             try std.testing.expectEqualStrings(bytes, input[span.start..span.end]);
         } else try std.testing.expect(result == null);
+        // The capture-free simulation must agree on the decision and the charged work.
+        var boolean: work.Budget = .{ .remaining = 16_000_000 };
+        const scratch = &self.workspace.scratch;
+        const matched = try regex.match.matches(&self.program, input, scratch, &boolean);
+        try std.testing.expectEqual(result != null, matched);
+        try std.testing.expectEqual(budget.remaining, boolean.remaining);
     }
 };
+
+test "Boolean matching exhausts the work budget exactly where capturing search does" {
+    var fixture = try Fixture.init("(a|ab)(c|bcd)(d*)x?$");
+    defer fixture.deinit();
+    const scratch = &fixture.workspace.scratch;
+    for (0..4000) |limit| {
+        var left: work.Budget = .{ .remaining = limit };
+        var right: work.Budget = .{ .remaining = limit };
+        const input = "zzabcdddd";
+        const full = regex.match.search(&fixture.program, input, scratch, &left);
+        const boolean = regex.match.matches(&fixture.program, input, scratch, &right);
+        if (full) |found| {
+            try std.testing.expectEqual(found != null, try boolean);
+        } else |err| try std.testing.expectError(err, boolean);
+        try std.testing.expectEqual(left.remaining, right.remaining);
+    }
+}
 
 test "ordered regex preserves leftmost, branch and quantifier priorities" {
     var first = try Fixture.init("(a|ab)");

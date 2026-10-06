@@ -182,6 +182,7 @@ pub const Program = struct {
                 .budget = frame.budget,
                 .prefixes = frame.prefixes,
                 .regex = frame.regex,
+                .captures = self.capture,
                 .variables = &view,
                 .pieces = frame.pieces,
                 .argument_output = frame.argument_output,

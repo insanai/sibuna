@@ -38,6 +38,8 @@ pub const Frame = struct {
     budget: *work.Budget,
     prefixes: []usize = &.{},
     regex: ?*regex.match.Scratch = null,
+    /// False when no capture action consumes groups, so regex can skip capture slots.
+    captures: bool = true,
     variables: ?*const variables.View = null,
     pieces: [][]const u8 = &.{},
     argument_output: []u8 = &.{},
@@ -104,15 +106,18 @@ pub const Program = union(enum) {
                 .output = frame.argument_output,
                 .budget = frame.budget,
             } else null) },
-            .regex => |*program| if (try regex.match.search(
-                program,
-                frame.input,
-                frame.regex orelse return error.ScratchTooSmall,
-                frame.budget,
-            )) |captures|
-                .{ .matched = true, .capture = .{ .regex = captures } }
-            else
-                .{},
+            .regex => |*program| blk: {
+                const scratch = frame.regex orelse return error.ScratchTooSmall;
+                const input = frame.input;
+                if (!frame.captures) break :blk .{
+                    .matched = try regex.match.matches(program, input, scratch, frame.budget),
+                };
+                const found = try regex.match.search(program, input, scratch, frame.budget);
+                break :blk if (found) |captures|
+                    .{ .matched = true, .capture = .{ .regex = captures } }
+                else
+                    .{};
+            },
             .phrases => |*program| if (try program.search(frame.input, frame.budget)) |match|
                 .{ .matched = true, .capture = .{ .borrowed = match.capture } }
             else
