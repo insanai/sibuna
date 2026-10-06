@@ -16,13 +16,25 @@ from crs_restart_check import launch
 from proxy_e2e import exchange
 
 
+# Each long poll spends a harness read and a Wasm refresh from one session. This pace
+# keeps downloads within the console's 120 queries per minute, so mutations still pass.
+POLL = 2.5
+
+
 def action(ui, name, fields=None):
     ui.event(1, {"action": name, "fields": fields or {}})
 
 
 def snapshot(ui):
-    code, _, body = helper.request(ui.port, "GET", "/console/api/crs/status",
-                                   cookie=ui.cookie)
+    # Wasm refreshes share this session's fixed query window; wait for it instead of
+    # weakening the console's investigation budget.
+    deadline = time.monotonic() + 65
+    while True:
+        code, _, body = helper.request(ui.port, "GET", "/console/api/crs/status",
+                                       cookie=ui.cookie)
+        if code != 429 or time.monotonic() > deadline:
+            break
+        time.sleep(5)
     assert code == 200, (code, body)
     return json.loads(body)
 
@@ -58,7 +70,7 @@ def candidate(ui, revision, mode):
             return pending
         assert observed["stage"] not in ("failed", "canceled"), observed
         assert time.monotonic() < deadline, observed
-        time.sleep(1)
+        time.sleep(POLL)
 
 
 def select(ui, revision, mode):
@@ -75,7 +87,7 @@ def select(ui, revision, mode):
             assert f"Serving node: revision {revision}" in ui.html
             return observed
         assert time.monotonic() < deadline, observed
-        time.sleep(1)
+        time.sleep(POLL)
 
 
 def private_test(ui):
@@ -159,7 +171,7 @@ def editor(ui, data_port):
     deadline = time.monotonic() + 120
     while snapshot(ui)["stage"] != "failed":
         assert time.monotonic() < deadline
-        time.sleep(1)
+        time.sleep(POLL)
         action(ui, "crs-refresh")
     observed = snapshot(ui)
     assert observed["revision"] == 5
