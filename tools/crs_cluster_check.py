@@ -35,6 +35,21 @@ class CrsCluster(Cluster):
             args += ["--crs-mode", "audit", "--crs-dir", str(self.candidate), "--crs-slots", "2"]
         return args
 
+    def bootstrap(self):
+        # Node 1 initializes its own store, so its peers must already be serving.
+        self.start(1)
+        self.start(2)
+        result = subprocess.run([self.binary, "init-admin", "admin"] + self.cluster_args(0),
+                                capture_output=True, text=True, timeout=120)
+        assert result.returncode == 0, result.stderr
+        temporary = re.search(r"Temporary console password .*: ([0-9a-f]{48})",
+                              result.stderr)[1]
+        self.start(0)
+        for node in range(3):
+            self.ready(node)
+        return bootstrap.change(helper, self.consoles[0], {
+            "username": "admin", "password": temporary}, PASSWORD)
+
     def close(self):
         errors = []
         for node, process in enumerate(self.procs):
@@ -73,19 +88,7 @@ def convergence(cluster, sessions, revision, mode):
 
 
 def scenario(cluster):
-    cluster.start(1)
-    cluster.start(2)
-    bootstrap_result = subprocess.run([cluster.binary, "init-admin", "admin"] +
-                                      cluster.cluster_args(0), capture_output=True,
-                                      text=True, timeout=120)
-    assert bootstrap_result.returncode == 0, bootstrap_result.stderr
-    temporary = re.search(r"Temporary console password .*: ([0-9a-f]{48})",
-                          bootstrap_result.stderr)[1]
-    cluster.start(0)
-    for node in range(3):
-        cluster.ready(node)
-    credentials = bootstrap.change(helper, cluster.consoles[0], {
-        "username": "admin", "password": temporary}, PASSWORD)
+    credentials = cluster.bootstrap()
     sessions = [cluster.session(node, credentials) for node in range(3)]
     convergence(cluster, sessions, 1, "audit")
     for port in cluster.data:
