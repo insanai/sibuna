@@ -198,10 +198,15 @@ Chain traversal evaluates its child once after all parent candidates have run. A
 child cannot roll back the parent's already executed local writes.
 
 The transaction context borrows immutable acquired entries and owns reserved TX metadata,
-matched metadata, monotonic matched bytes and a separate merged-view array. Rebuild the
-merged view before each target, predicate and action, so earlier TX writes are visible
-without exposing metadata that a write can compact. A target snapshot remains separate
-from this merged view. Match values and their qualified names are copied before advancing
+matched metadata, monotonic matched bytes and a separate merged-view array. The array holds
+acquired and matched entries grouped by collection, keeping occurrence order within each
+collection, and is rebuilt only when acquired, matched or body-processor state changes.
+TX entries are read from the store at each target, predicate and action, so earlier writes
+are visible. Each view is consumed by one selection, predicate or expansion before the write
+that follows it, and a target snapshot copies the metadata it selects, so no reader observes
+an entry that a later removal compacts. Work is charged for a full scan on every read, so
+reuse and grouping change time, never budgets or exhaustion. A target snapshot remains
+separate from this merged view. Match values and their qualified names are copied before advancing
 transform scratch. Matched lists retain occurrence order and duplicates; their scalar
 views refer to the last occurrence. Native input order is deterministic, whereas the
 reference's unordered collection traversal does not specify a portable order. Do not
@@ -210,8 +215,8 @@ admit externally supplied TX or matched entries into this context.
 *Lemma (effect lifetime).* Acquired bytes and generation constants remain immutable,
 TX replacements preserve old bytes, matched bytes are monotonic, and target metadata is
 copied before mutation. Consequently a target snapshot's byte references remain valid
-through its condition's later writes. Rebuilding the separate merged view cannot invalidate
-that snapshot. This does not establish equivalence for undefined reference ordering.
+through its condition's later writes. Rebuilding or reusing the separate merged view cannot
+invalidate that snapshot. This does not establish equivalence for undefined reference ordering.
 
 *Failure rule.* Any selection, transform, predicate, capture, view-capacity or action
 failure poisons the context and TX store. Prior writes remain available only as failure
