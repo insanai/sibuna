@@ -1,0 +1,4993 @@
+{
+ "schema": 1,
+ "purpose": "Pinned CRS 4.30.0 FTW corpus through the actual Sibuna daemon, Albedo 0.3.0 origin and console evidence",
+ "date": "2026-10-06T03:50:44.173592+00:00",
+ "host": "paxos-zig",
+ "binary_sha256": "b4d50efee7dadce0b53c51e81ad38c1d57160fabd63e93c57b6dad2666eb7f4f",
+ "harness": "tools/crs_ftw_daemon_check.py",
+ "runs": {
+  "audit": {
+   "commit": "e03a4f6dabc7a30ebd8c52c97d28a154f590a48f",
+   "source_sha256": "bdd0dec65d47fcae5aaa48aa681e0f4c151a8c1d9eb3040f6f65ebb8b2273c75",
+   "inventory": 5193,
+   "mode": "audit",
+   "paranoia": 4,
+   "work_budget": 16000000,
+   "classes": {
+    "passed": 5090,
+    "daemon only": 6,
+    "connector difference": 2,
+    "engine refusal": 30,
+    "work budget": 30,
+    "engine agrees": 35
+   },
+   "passed": 5090,
+   "status_assertions": 29,
+   "regex_gaps": 15,
+   "dropped_incidents": 0,
+   "console_unavailable_retries": 0,
+   "crs_counters": {
+    "sibuna_crs_inspected_total": 5001,
+    "sibuna_crs_headers_total": 0,
+    "sibuna_crs_handshake_total": 0,
+    "sibuna_crs_streaming_total": 0,
+    "sibuna_crs_incomplete_total": 170,
+    "sibuna_crs_denied_total": 0,
+    "sibuna_crs_would_deny_total": 4632
+   },
+   "slowest": [
+    {
+     "test": "934120-43",
+     "seconds": 0.0324
+    },
+    {
+     "test": "922110-24",
+     "seconds": 0.0115
+    },
+    {
+     "test": "932240-8",
+     "seconds": 0.0114
+    },
+    {
+     "test": "932230-14",
+     "seconds": 0.0109
+    },
+    {
+     "test": "932236-29",
+     "seconds": 0.0107
+    },
+    {
+     "test": "932236-31",
+     "seconds": 0.0107
+    },
+    {
+     "test": "932236-32",
+     "seconds": 0.0107
+    },
+    {
+     "test": "941120-20",
+     "seconds": 0.0107
+    },
+    {
+     "test": "941120-14",
+     "seconds": 0.01
+    },
+    {
+     "test": "932230-18",
+     "seconds": 0.0099
+    }
+   ],
+   "origin_boundary_violations": 0,
+   "not_passed": [
+    {
+     "test": "920100-4",
+     "class": "daemon only",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [
+      "status 400 not in [200]"
+     ],
+     "origin_bytes": 0,
+     "statuses": [
+      400
+     ]
+    },
+    {
+     "test": "920100-16",
+     "class": "connector difference",
+     "ids": [],
+     "missing": [
+      920100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      400
+     ]
+    },
+    {
+     "test": "920181-1",
+     "class": "daemon only",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [
+      "status 400 not in [200]"
+     ],
+     "origin_bytes": 0,
+     "statuses": [
+      400
+     ]
+    },
+    {
+     "test": "920240-1",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      920240
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 407,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "920240-5",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      920240
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 437,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "920240-6",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      920240
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 471,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "920260-1",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      920260
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 341,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "920260-3",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      920260
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 378,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "920270-4",
+     "class": "daemon only",
+     "ids": [
+      920270,
+      920271,
+      920272,
+      920274,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [
+      "status 200 not in [400]"
+     ],
+     "origin_bytes": 359,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "920274-1",
+     "class": "daemon only",
+     "ids": [
+      920271,
+      920272,
+      920274,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [
+      "status 200 not in [400]"
+     ],
+     "origin_bytes": 362,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "920290-1",
+     "class": "daemon only",
+     "ids": [
+      920290,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [
+      "status 200 not in [400]"
+     ],
+     "origin_bytes": 336,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "920380-1",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      920380
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 3098,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "920430-5",
+     "class": "daemon only",
+     "ids": [],
+     "missing": [
+      920430
+     ],
+     "unexpected": [],
+     "errors": [
+      "expected transport error, observed 400"
+     ],
+     "origin_bytes": 0,
+     "statuses": [
+      400
+     ]
+    },
+    {
+     "test": "920430-8",
+     "class": "connector difference",
+     "ids": [],
+     "missing": [
+      920430
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      400
+     ]
+    },
+    {
+     "test": "921150-1",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      921150
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 382,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "921160-1",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      921160
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 414,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "932380-7",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      932380
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 452,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "933170-4",
+     "class": "work budget",
+     "ids": [
+      920273,
+      920370,
+      921180,
+      932240
+     ],
+     "missing": [
+      933170
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 1258,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "934100-34",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932130,
+      932190,
+      932200,
+      932240,
+      933135,
+      933161
+     ],
+     "missing": [
+      934100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 874,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "934120-33",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      934120
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 418,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "934120-34",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      934120
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 447,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "941100-8",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 376,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "941100-9",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 375,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "941110-6",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 459,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "941130-2",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 618,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "941130-4",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 598,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "941130-6",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 656,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "941130-9",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 606,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "941130-10",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 604,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "941130-11",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 608,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "941130-12",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 657,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "941130-14",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 591,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "941130-16",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 604,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "941280-2",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941280
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 516,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "941360-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      920370
+     ],
+     "missing": [
+      941360
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 1633,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "941360-4",
+     "class": "work budget",
+     "ids": [
+      920273,
+      920300
+     ],
+     "missing": [
+      941360
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 1550,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "942100-10",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      942100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 548,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "942100-13",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      942100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 442,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "942100-16",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      942100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 355,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "942100-17",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      942100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 367,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "942131-3",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      942120,
+      942131,
+      942432,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      942131
+     ],
+     "errors": [],
+     "origin_bytes": 359,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "942131-5",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      942131,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      942131
+     ],
+     "errors": [],
+     "origin_bytes": 369,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "942131-7",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      942120,
+      942131,
+      942432,
+      942511,
+      942520,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      942131
+     ],
+     "errors": [],
+     "origin_bytes": 430,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "942151-1",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      942151
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 570,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "942210-40",
+     "class": "work budget",
+     "ids": [
+      920273,
+      920360,
+      921210,
+      921220
+     ],
+     "missing": [
+      942210
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 1068,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "942380-20",
+     "class": "work budget",
+     "ids": [
+      920273,
+      920360,
+      921210,
+      921220,
+      932130,
+      933161,
+      942151,
+      942190,
+      942270
+     ],
+     "missing": [
+      942380
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 741,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "942440-24",
+     "class": "work budget",
+     "ids": [
+      920300,
+      920370
+     ],
+     "missing": [
+      942440
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 1256,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "942450-6",
+     "class": "work budget",
+     "ids": [
+      920273,
+      920370,
+      932236
+     ],
+     "missing": [
+      942450
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 1397,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "942490-17",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      942490
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 432,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "942521-17",
+     "class": "work budget",
+     "ids": [
+      920273,
+      920370
+     ],
+     "missing": [
+      942521
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 9255,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "942521-18",
+     "class": "work budget",
+     "ids": [
+      920273,
+      920370
+     ],
+     "missing": [
+      942521
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 4653,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944100-11",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944100,
+      944110,
+      944130,
+      944250,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944100
+     ],
+     "errors": [],
+     "origin_bytes": 558,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944100-12",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944100,
+      944110,
+      944130,
+      944250,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944100
+     ],
+     "errors": [],
+     "origin_bytes": 549,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944100-15",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944100,
+      944110,
+      944130,
+      944250,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944100
+     ],
+     "errors": [],
+     "origin_bytes": 572,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944100-16",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944100,
+      944110,
+      944130,
+      944250,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944100
+     ],
+     "errors": [],
+     "origin_bytes": 556,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944110-11",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944110,
+      944250,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944110
+     ],
+     "errors": [],
+     "origin_bytes": 547,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944110-12",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944110,
+      944250,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944110
+     ],
+     "errors": [],
+     "origin_bytes": 543,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944110-15",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944110,
+      944250,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944110
+     ],
+     "errors": [],
+     "origin_bytes": 562,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944110-16",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944110,
+      944250,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944110
+     ],
+     "errors": [],
+     "origin_bytes": 551,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944120-6",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 596,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944120-7",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 568,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944120-23",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 584,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944120-24",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 562,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944120-40",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 600,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944120-41",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 570,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944120-57",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 608,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944120-58",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 574,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944120-74",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 600,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944120-75",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 570,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944120-91",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 606,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944120-92",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 573,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944120-108",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 622,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944120-109",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 581,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944120-125",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 584,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944120-126",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 560,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944210-6",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944210,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944210
+     ],
+     "errors": [],
+     "origin_bytes": 533,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944210-7",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944210,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944210
+     ],
+     "errors": [],
+     "origin_bytes": 535,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944210-23",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944210,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944210
+     ],
+     "errors": [],
+     "origin_bytes": 533,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944210-24",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944210,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944210
+     ],
+     "errors": [],
+     "origin_bytes": 535,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944210-40",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944210,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944210
+     ],
+     "errors": [],
+     "origin_bytes": 533,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944210-41",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944210,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944210
+     ],
+     "errors": [],
+     "origin_bytes": 535,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "944260-2",
+     "class": "work budget",
+     "ids": [
+      920272,
+      920273,
+      920300,
+      932240
+     ],
+     "missing": [
+      944260
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 1054,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "949110-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      931130,
+      932200,
+      932240,
+      934100,
+      941100,
+      941110,
+      941130,
+      941160,
+      941170,
+      941210
+     ],
+     "missing": [
+      949110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 629,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "951110-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932240
+     ],
+     "missing": [
+      951110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 647,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "951120-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932240
+     ],
+     "missing": [
+      951120
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 607,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "951130-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932240
+     ],
+     "missing": [
+      951130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 616,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "951140-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932200,
+      932240,
+      942200
+     ],
+     "missing": [
+      951140
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 689,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "951160-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932200,
+      932231,
+      932240
+     ],
+     "missing": [
+      951160
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 828,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "951170-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932240,
+      942431,
+      942432
+     ],
+     "missing": [
+      951170
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 608,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "951180-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932240
+     ],
+     "missing": [
+      951180
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 660,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "951190-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932200,
+      932240,
+      933211
+     ],
+     "missing": [
+      951190
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 690,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "951200-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932200,
+      932236,
+      932240
+     ],
+     "missing": [
+      951200
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 695,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "951210-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932240
+     ],
+     "missing": [
+      951210
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 648,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "951210-2",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932240
+     ],
+     "missing": [
+      951210
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 638,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "951220-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932200,
+      932240
+     ],
+     "missing": [
+      951220
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 699,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "951220-2",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932200,
+      932240,
+      942470
+     ],
+     "missing": [
+      951220
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 633,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "951230-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932200,
+      932240
+     ],
+     "missing": [
+      951230
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 626,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "951230-2",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932200,
+      932240,
+      942430,
+      942431,
+      942432,
+      942460
+     ],
+     "missing": [
+      951230
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 605,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "951240-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      930120,
+      932240,
+      933150,
+      933152,
+      942131
+     ],
+     "missing": [
+      951240
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 676,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "951250-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932240
+     ],
+     "missing": [
+      951250
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 654,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "951260-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932200,
+      932240
+     ],
+     "missing": [
+      951260
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 684,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "980170-1",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      920350,
+      932160,
+      949110
+     ],
+     "missing": [
+      980170
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 362,
+     "statuses": [
+      200
+     ]
+    },
+    {
+     "test": "980170-2",
+     "class": "engine agrees",
+     "ids": [
+      920350
+     ],
+     "missing": [
+      980170
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 350,
+     "statuses": [
+      200
+     ]
+    }
+   ]
+  },
+  "enforce": {
+   "commit": "e03a4f6dabc7a30ebd8c52c97d28a154f590a48f",
+   "source_sha256": "bdd0dec65d47fcae5aaa48aa681e0f4c151a8c1d9eb3040f6f65ebb8b2273c75",
+   "inventory": 5193,
+   "mode": "enforce",
+   "paranoia": 4,
+   "work_budget": 16000000,
+   "classes": {
+    "passed": 5024,
+    "daemon only": 9,
+    "connector difference": 64,
+    "engine refusal": 30,
+    "work budget": 31,
+    "engine agrees": 35
+   },
+   "passed": 5024,
+   "status_assertions": 29,
+   "regex_gaps": 15,
+   "dropped_incidents": 0,
+   "console_unavailable_retries": 0,
+   "crs_counters": {
+    "sibuna_crs_inspected_total": 374,
+    "sibuna_crs_headers_total": 0,
+    "sibuna_crs_handshake_total": 0,
+    "sibuna_crs_streaming_total": 0,
+    "sibuna_crs_incomplete_total": 165,
+    "sibuna_crs_denied_total": 4632,
+    "sibuna_crs_would_deny_total": 0
+   },
+   "slowest": [
+    {
+     "test": "934120-43",
+     "seconds": 0.0297
+    },
+    {
+     "test": "922110-24",
+     "seconds": 0.0116
+    },
+    {
+     "test": "932240-8",
+     "seconds": 0.0113
+    },
+    {
+     "test": "941120-20",
+     "seconds": 0.0106
+    },
+    {
+     "test": "932230-14",
+     "seconds": 0.0105
+    },
+    {
+     "test": "932236-29",
+     "seconds": 0.0104
+    },
+    {
+     "test": "932236-31",
+     "seconds": 0.0102
+    },
+    {
+     "test": "941120-14",
+     "seconds": 0.0102
+    },
+    {
+     "test": "932236-32",
+     "seconds": 0.01
+    },
+    {
+     "test": "941120-11",
+     "seconds": 0.0099
+    }
+   ],
+   "origin_boundary_violations": 0,
+   "not_passed": [
+    {
+     "test": "920100-4",
+     "class": "daemon only",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [
+      "status 400 not in [200]"
+     ],
+     "origin_bytes": 0,
+     "statuses": [
+      400
+     ]
+    },
+    {
+     "test": "920100-16",
+     "class": "connector difference",
+     "ids": [],
+     "missing": [
+      920100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      400
+     ]
+    },
+    {
+     "test": "920181-1",
+     "class": "daemon only",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [
+      "status 400 not in [200]"
+     ],
+     "origin_bytes": 0,
+     "statuses": [
+      400
+     ]
+    },
+    {
+     "test": "920240-1",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      920240
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "920240-5",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      920240
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "920240-6",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      920240
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "920260-1",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      920260
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "920260-3",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      920260
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "920270-4",
+     "class": "daemon only",
+     "ids": [
+      920270,
+      920271,
+      920272,
+      920274,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [
+      "status 403 not in [400]"
+     ],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "920272-5",
+     "class": "daemon only",
+     "ids": [
+      920250,
+      920272,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [
+      "status 403 not in [200]"
+     ],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "920274-1",
+     "class": "daemon only",
+     "ids": [
+      920271,
+      920272,
+      920274,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [
+      "status 403 not in [400]"
+     ],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "920290-1",
+     "class": "daemon only",
+     "ids": [
+      920290,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [
+      "status 403 not in [400]"
+     ],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "920380-1",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      920380
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "920430-5",
+     "class": "daemon only",
+     "ids": [],
+     "missing": [
+      920430
+     ],
+     "unexpected": [],
+     "errors": [
+      "expected transport error, observed 400"
+     ],
+     "origin_bytes": 0,
+     "statuses": [
+      400
+     ]
+    },
+    {
+     "test": "920430-8",
+     "class": "connector difference",
+     "ids": [],
+     "missing": [
+      920430
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      400
+     ]
+    },
+    {
+     "test": "920620-1",
+     "class": "daemon only",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [
+      "status 403 not in [200]"
+     ],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "920640-4",
+     "class": "daemon only",
+     "ids": [
+      920470
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [
+      "status 403 not in [200]"
+     ],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "921150-1",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      921150
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "921160-1",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      921160
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "932380-7",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      932380
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "933170-4",
+     "class": "work budget",
+     "ids": [
+      920273,
+      920370,
+      921180,
+      932240
+     ],
+     "missing": [
+      933170
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "934100-34",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932130,
+      932190,
+      932200,
+      932240,
+      933135,
+      933161
+     ],
+     "missing": [
+      934100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "934120-33",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      934120
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "934120-34",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      934120
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "941100-8",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "941100-9",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "941110-6",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "941130-2",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "941130-4",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "941130-6",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "941130-9",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "941130-10",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "941130-11",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "941130-12",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "941130-14",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "941130-16",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "941280-2",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      941280
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "941360-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      920370
+     ],
+     "missing": [
+      941360
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "941360-4",
+     "class": "work budget",
+     "ids": [
+      920273,
+      920300
+     ],
+     "missing": [
+      941360
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "942100-10",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      942100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "942100-13",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      942100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "942100-16",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      942100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "942100-17",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      942100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "942131-3",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      942120,
+      942131,
+      942432,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      942131
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "942131-5",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      942131,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      942131
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "942131-7",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      942120,
+      942131,
+      942432,
+      942511,
+      942520,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      942131
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "942151-1",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      942151
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "942210-40",
+     "class": "work budget",
+     "ids": [
+      920273,
+      920360,
+      921210,
+      921220
+     ],
+     "missing": [
+      942210
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "942380-20",
+     "class": "work budget",
+     "ids": [
+      920273,
+      920360,
+      921210,
+      921220,
+      932130,
+      933161,
+      942151,
+      942190,
+      942270
+     ],
+     "missing": [
+      942380
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "942440-24",
+     "class": "work budget",
+     "ids": [
+      920300,
+      920370
+     ],
+     "missing": [
+      942440
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "942450-6",
+     "class": "work budget",
+     "ids": [
+      920273,
+      920370,
+      932236
+     ],
+     "missing": [
+      942450
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "942490-17",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [
+      942490
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "942521-17",
+     "class": "work budget",
+     "ids": [
+      920273,
+      920370
+     ],
+     "missing": [
+      942521
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "942521-18",
+     "class": "work budget",
+     "ids": [
+      920273,
+      920370
+     ],
+     "missing": [
+      942521
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944100-11",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944100,
+      944110,
+      944130,
+      944250,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944100
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944100-12",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944100,
+      944110,
+      944130,
+      944250,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944100
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944100-15",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944100,
+      944110,
+      944130,
+      944250,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944100
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944100-16",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944100,
+      944110,
+      944130,
+      944250,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944100
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944110-11",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944110,
+      944250,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944110
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944110-12",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944110,
+      944250,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944110
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944110-15",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944110,
+      944250,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944110
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944110-16",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944110,
+      944250,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944110
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944120-6",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944120-7",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944120-23",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944120-24",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944120-40",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944120-41",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944120-57",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944120-58",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944120-74",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944120-75",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944120-91",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944120-92",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944120-108",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944120-109",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944120-125",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944120-126",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944120,
+      944240,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944120
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944210-6",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944210,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944210
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944210-7",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944210,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944210
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944210-23",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944210,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944210
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944210-24",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944210,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944210
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944210-40",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944210,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944210
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944210-41",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      944210,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [
+      944210
+     ],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "944260-2",
+     "class": "work budget",
+     "ids": [
+      920272,
+      920273,
+      920300,
+      932240
+     ],
+     "missing": [
+      944260
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "949110-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      931130,
+      932200,
+      932240,
+      934100,
+      941100,
+      941110,
+      941130,
+      941160,
+      941170,
+      941210
+     ],
+     "missing": [
+      949110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "950020-2",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      950100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "950100-1",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      950100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "950150-1",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      950150
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "950150-2",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      950150
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "950150-3",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      950150
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "950150-4",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      950150
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "950150-5",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      950150
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "950150-6",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      950150
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "950150-7",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      950150
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "950150-8",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      950150
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "950150-9",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      950150
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951110-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932240
+     ],
+     "missing": [
+      951110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951120-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932240
+     ],
+     "missing": [
+      951120
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951130-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932240
+     ],
+     "missing": [
+      951130
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951140-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932200,
+      932240,
+      942200
+     ],
+     "missing": [
+      951140
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951150-1",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      932240,
+      942431,
+      942432,
+      949110
+     ],
+     "missing": [
+      951150
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951160-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932200,
+      932231,
+      932240
+     ],
+     "missing": [
+      951160
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951170-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932240,
+      942431,
+      942432
+     ],
+     "missing": [
+      951170
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951180-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932240
+     ],
+     "missing": [
+      951180
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951190-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932200,
+      932240,
+      933211
+     ],
+     "missing": [
+      951190
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951200-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932200,
+      932236,
+      932240
+     ],
+     "missing": [
+      951200
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951210-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932240
+     ],
+     "missing": [
+      951210
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951210-2",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932240
+     ],
+     "missing": [
+      951210
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951220-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932200,
+      932240
+     ],
+     "missing": [
+      951220
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951220-2",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932200,
+      932240,
+      942470
+     ],
+     "missing": [
+      951220
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951230-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932200,
+      932240
+     ],
+     "missing": [
+      951230
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951230-2",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932200,
+      932240,
+      942430,
+      942431,
+      942432,
+      942460
+     ],
+     "missing": [
+      951230
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951230-3",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      942131,
+      942432,
+      942460,
+      949110
+     ],
+     "missing": [
+      951230
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951240-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      930120,
+      932240,
+      933150,
+      933152,
+      942131
+     ],
+     "missing": [
+      951240
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951240-2",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932240,
+      942431,
+      942432,
+      949110
+     ],
+     "missing": [
+      951240
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951250-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932240
+     ],
+     "missing": [
+      951250
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "951260-1",
+     "class": "work budget",
+     "ids": [
+      920273,
+      932200,
+      932240
+     ],
+     "missing": [
+      951260
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "952110-1",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      952110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "952110-2",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      952110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "952110-3",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      942380,
+      949110
+     ],
+     "missing": [
+      952110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "952110-4",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      944130,
+      949110
+     ],
+     "missing": [
+      952110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "952110-5",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      952110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "952110-6",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      952110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "952110-7",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      942431,
+      942432,
+      942460,
+      949110
+     ],
+     "missing": [
+      952110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "952110-8",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      952110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "952110-9",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      932240,
+      942432,
+      949110
+     ],
+     "missing": [
+      952110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "953101-1",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      953101
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "953101-2",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      953101
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "953101-3",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      953101
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "953101-4",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      953101
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "953101-5",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      953101
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "953120-1",
+     "class": "connector difference",
+     "ids": [
+      920272,
+      920273,
+      933100,
+      933190,
+      942432,
+      942460,
+      949110
+     ],
+     "missing": [
+      953120
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "953120-3",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      933100,
+      949110
+     ],
+     "missing": [
+      953120
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "953120-5",
+     "class": "connector difference",
+     "ids": [
+      920272,
+      920273,
+      933100,
+      933190,
+      942431,
+      942432,
+      942460,
+      942520,
+      949110
+     ],
+     "missing": [
+      953120
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "953120-7",
+     "class": "connector difference",
+     "ids": [
+      920272,
+      920273,
+      933100,
+      933190,
+      942432,
+      942460,
+      949110
+     ],
+     "missing": [
+      953120
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "954100-1",
+     "class": "connector difference",
+     "ids": [
+      920272,
+      920273,
+      920460,
+      949110
+     ],
+     "missing": [
+      954100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "954100-2",
+     "class": "connector difference",
+     "ids": [
+      920272,
+      920273,
+      949110
+     ],
+     "missing": [
+      954100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "954100-3",
+     "class": "connector difference",
+     "ids": [
+      920272,
+      920273,
+      949110
+     ],
+     "missing": [
+      954100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "954101-1",
+     "class": "connector difference",
+     "ids": [
+      920272,
+      920273,
+      920460,
+      949110
+     ],
+     "missing": [
+      954101
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "954101-2",
+     "class": "connector difference",
+     "ids": [
+      920272,
+      920273,
+      949110
+     ],
+     "missing": [
+      954101
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "954120-1",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      941320,
+      942131,
+      942431,
+      942432,
+      949110
+     ],
+     "missing": [
+      954120
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "954120-2",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      941320,
+      942131,
+      942431,
+      942432,
+      949110
+     ],
+     "missing": [
+      954120
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "955100-1",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      941320,
+      942432,
+      949110
+     ],
+     "missing": [
+      955100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "955100-2",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      931130,
+      941180,
+      941181,
+      942120,
+      942431,
+      942432,
+      942440,
+      942460,
+      949110
+     ],
+     "missing": [
+      955100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "955100-3",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      921130,
+      941320,
+      942430,
+      942431,
+      942432,
+      942460,
+      949110
+     ],
+     "missing": [
+      955100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "955110-1",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      920300,
+      921130,
+      941100,
+      941160,
+      941250,
+      941260,
+      941320,
+      942131,
+      942370,
+      942430,
+      942431,
+      942432,
+      942520,
+      949110
+     ],
+     "missing": [
+      955110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "955120-1",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      921130,
+      932200,
+      941100,
+      941160,
+      941250,
+      941260,
+      941320,
+      942131,
+      942370,
+      942430,
+      942431,
+      942432,
+      942511,
+      942520,
+      949110
+     ],
+     "missing": [
+      955120
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "955120-2",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      921130,
+      932200,
+      941100,
+      941160,
+      941250,
+      941260,
+      941320,
+      942131,
+      942370,
+      942430,
+      942431,
+      942432,
+      942460,
+      942511,
+      942520,
+      949110
+     ],
+     "missing": [
+      955120
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "955260-1",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      920420,
+      949110
+     ],
+     "missing": [
+      955260
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "955400-1",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      941320,
+      942131,
+      942432,
+      949110
+     ],
+     "missing": [
+      955400
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "955400-2",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      921130,
+      941320,
+      942131,
+      942431,
+      942432,
+      949110
+     ],
+     "missing": [
+      955400
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "955400-3",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      921130,
+      941320,
+      942131,
+      942431,
+      942432,
+      949110
+     ],
+     "missing": [
+      955400
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "956100-1",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      942432,
+      949110
+     ],
+     "missing": [
+      956100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "956100-2",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      942431,
+      942432,
+      942450,
+      942460,
+      949110
+     ],
+     "missing": [
+      956100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "956100-3",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      942310,
+      942431,
+      942432,
+      942490,
+      942511,
+      942520,
+      949110
+     ],
+     "missing": [
+      956100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "956100-4",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      942431,
+      942432,
+      942511,
+      949110
+     ],
+     "missing": [
+      956100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "956100-5",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      956100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "956100-6",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      942431,
+      942432,
+      942450,
+      942460,
+      942511,
+      949110
+     ],
+     "missing": [
+      956100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "956100-7",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      942432,
+      949110
+     ],
+     "missing": [
+      956100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "956100-8",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      942432,
+      949110
+     ],
+     "missing": [
+      956100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "956100-9",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      942432,
+      949110
+     ],
+     "missing": [
+      956100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "956100-13",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [
+      956100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "956110-1",
+     "class": "connector difference",
+     "ids": [
+      920272,
+      920273,
+      934180,
+      942432,
+      949110
+     ],
+     "missing": [
+      956110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "956110-2",
+     "class": "connector difference",
+     "ids": [
+      920272,
+      920273,
+      934180,
+      941320,
+      942131,
+      942431,
+      942432,
+      942460,
+      949110
+     ],
+     "missing": [
+      956110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "956110-3",
+     "class": "connector difference",
+     "ids": [
+      920273,
+      942432,
+      942460,
+      949110
+     ],
+     "missing": [
+      956110
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "959100-1",
+     "class": "connector difference",
+     "ids": [
+      920272,
+      920273,
+      933100,
+      933190,
+      942432,
+      942460,
+      949110
+     ],
+     "missing": [
+      959100
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "980170-1",
+     "class": "engine agrees",
+     "ids": [
+      920273,
+      920350,
+      932160,
+      949110
+     ],
+     "missing": [
+      980170
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 0,
+     "statuses": [
+      403
+     ]
+    },
+    {
+     "test": "980170-2",
+     "class": "engine agrees",
+     "ids": [
+      920350
+     ],
+     "missing": [
+      980170
+     ],
+     "unexpected": [],
+     "errors": [],
+     "origin_bytes": 350,
+     "statuses": [
+      200
+     ]
+    }
+   ]
+  }
+ }
+}

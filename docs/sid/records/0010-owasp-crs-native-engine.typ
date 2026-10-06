@@ -2354,9 +2354,41 @@ Diagnostic execution allows 128 million charged units to separate semantics from
 exceed that default. These are paranoia-level-four fixture results, not an admission or
 performance guarantee for normal application traffic. Reports retain per-case work,
 errors, observed IDs, the source commit and raw expectations. Reference annotations do
-not convert failed assertions or coverage gaps into passed tests. The live-daemon gate
-below must establish refusal status, withheld origin/client bytes and supported profile
-coverage before activation or release.
+not convert failed assertions or coverage gaps into passed tests. The daemon corpus below
+establishes refusal status, withheld origin bytes and supported profile coverage.
+
+== Daemon corpus qualification
+
+`tools/crs_ftw_daemon_check.py` sends all 5,193 pinned tests through the actual daemon, a
+loopback Albedo 0.3.0 origin and the console's stored evidence. It uses blocking and detection
+paranoia four, the corpus's TX settings and the production 16-million work budget. Each test
+owns one loopback source address, so saved findings are attributed through the console's exact
+address filter; log markers would add headers that rules inspect. Storage is drained every 16
+tests and one dropped incident invalidates the run. Raw wire requests, multi-stage tests and
+the 29 status assertions now run over the socket. The 15 regex log assertions remain gaps:
+Sibuna stores rule IDs, not log lines.
+
+In Audit (2026-10-06), 5,090 tests pass with no dropped incident. Differences are classified
+against the engine probe: 35 reproduce its reference differences exactly, 30 are its strict
+acquisition refusals (chiefly invalid percent escapes in urlencoded bodies) and 30 exceed the
+production work budget at paranoia four. Five are deliberate connector refusals answered 400
+before CRS runs: an absolute-form target, `CONNECT`, a request with both `Content-Length` and
+`Transfer-Encoding`, and two unsupported protocol versions. Three status assertions expect a
+web server's 400 for malformed `Host` fields; Sibuna forwards those in Audit with the
+expected rule IDs and denies them by anomaly score in Enforce.
+
+In Enforce, 4,797 request stages were denied and no request-phase denial delivered a byte to
+the origin. Requests whose inspection could not complete were refused 403 rather than
+forwarded. At blocking paranoia four, 62 of the 102 response fixtures are denied on their own
+inbound score before any response phase runs, so response rule IDs are qualified in Audit and
+Enforce qualifies disruption and withheld delivery.
+
+The daemon corpus found two defects that are now fixed. Request targets in absolute or
+authority form reached policy without a leading slash, so path rules could not match them;
+the parser now serves only origin-form and `OPTIONS *`. Console address filters walked the time
+index and exceeded the statement budget once a client's incidents aged behind newer traffic;
+address and category filters now use indexed statement shapes. Results are recorded in
+`benchmarks/results/crs-ftw-daemon-latest.json`.
 
 == Cluster qualification
 
@@ -2364,8 +2396,13 @@ The three-node management check observes protected request decisions on every no
 and after separate selection. It checks Audit, Enforce and Off, leader loss, mutation refusal
 without quorum, durable restoration after member restart, exact rollback and incompatible
 preparation. Applied local revisions must agree with the saved revision on every running node.
-Each member must stop cleanly. This functional check uses three loopback processes; it does
-not establish multi-host latency, TLS deployment configuration or performance acceptance.
+Each member must stop cleanly. The loopback check uses three local processes.
+`tools/crs_three_host_check.py` runs the same scenario across three Linux hosts on separate
+machines (2026-10-06). Consensus uses mutual TLS, management peers use validated HTTPS
+behind a TLS ingress, and every console session requires TOTP. Selection, convergence,
+leader loss with a survivor write, quorum refusal, restart restoration, exact rollback,
+refusal of an incompatible candidate and clean shutdown all pass there. Neither check
+establishes multi-host latency or performance acceptance.
 When storage cannot confirm fresh authorization, a management read may return unavailable
 instead of a quorum view. That response is not a successful read or permission to mutate;
 serving retains its last applied immutable generation.
