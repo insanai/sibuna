@@ -1,9 +1,9 @@
 {
  "schema": 1,
  "purpose": "Pinned CRS 4.30.0 FTW corpus through the actual Sibuna daemon, Albedo 0.3.0 origin and console evidence",
- "date": "2026-10-06T09:02:51.505379+00:00",
+ "date": "2026-10-06T23:50:28.347651+00:00",
  "host": "paxos-zig",
- "binary_sha256": "548edb9381e5e87aca8e182e09d19474de9fa319d4f81f4d25f9d0aeba71bfdd",
+ "binary_sha256": "4c06ef3290e15675a1063ed62a02955e4031b3ab1567374c27846b1b0937cbc7",
  "harness": "tools/crs_ftw_daemon_check.py",
  "runs": {
   "audit": {
@@ -12,69 +12,68 @@
    "inventory": 5193,
    "mode": "audit",
    "paranoia": 4,
-   "work_budget": 16000000,
+   "work_budget": 128000000,
    "classes": {
-    "passed": 5093,
+    "passed": 5123,
     "daemon only": 3,
     "connector difference": 2,
     "engine refusal": 30,
-    "work budget": 30,
     "engine agrees": 35
    },
-   "passed": 5093,
+   "passed": 5123,
    "status_assertions": 29,
    "regex_gaps": 15,
    "dropped_incidents": 0,
    "console_unavailable_retries": 0,
    "crs_counters": {
-    "sibuna_crs_inspected_total": 4997,
+    "sibuna_crs_inspected_total": 5097,
     "sibuna_crs_headers_total": 0,
     "sibuna_crs_handshake_total": 0,
     "sibuna_crs_streaming_total": 0,
-    "sibuna_crs_incomplete_total": 170,
+    "sibuna_crs_incomplete_total": 70,
     "sibuna_crs_denied_total": 0,
-    "sibuna_crs_would_deny_total": 4628
+    "sibuna_crs_would_deny_total": 4724
    },
    "slowest": [
     {
+     "test": "942521-16",
+     "seconds": 0.0403
+    },
+    {
+     "test": "942522-8",
+     "seconds": 0.0401
+    },
+    {
+     "test": "920390-1",
+     "seconds": 0.0272
+    },
+    {
      "test": "934120-43",
-     "seconds": 0.0169
+     "seconds": 0.0129
     },
     {
-     "test": "932236-31",
-     "seconds": 0.0073
-    },
-    {
-     "test": "942380-20",
-     "seconds": 0.0073
+     "test": "942521-17",
+     "seconds": 0.0099
     },
     {
      "test": "944260-2",
-     "seconds": 0.0072
-    },
-    {
-     "test": "932200-14",
-     "seconds": 0.0071
-    },
-    {
-     "test": "951240-1",
-     "seconds": 0.0071
+     "seconds": 0.007
     },
     {
      "test": "942440-24",
-     "seconds": 0.0069
+     "seconds": 0.006
     },
     {
-     "test": "951240-2",
-     "seconds": 0.0069
+     "test": "922110-24",
+     "seconds": 0.0059
     },
     {
-     "test": "942151-19",
-     "seconds": 0.0068
+     "test": "951200-1",
+     "seconds": 0.0058
     },
     {
-     "test": "942560-1",
-     "seconds": 0.0068
+     "test": "951160-1",
+     "seconds": 0.0055
     }
    ],
    "origin_boundary_violations": 0,
@@ -273,47 +272,6 @@
      "unexpected": [],
      "errors": [],
      "origin_bytes": 452,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "933170-4",
-     "class": "work budget",
-     "ids": [
-      920273,
-      920370,
-      921180,
-      932240
-     ],
-     "missing": [
-      933170
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 1258,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "934100-34",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932130,
-      932190,
-      932200,
-      932240,
-      933135,
-      933161
-     ],
-     "missing": [
-      934100
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 874,
      "statuses": [
       200
      ]
@@ -529,40 +487,6 @@
      ]
     },
     {
-     "test": "941360-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      920370
-     ],
-     "missing": [
-      941360
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 1633,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "941360-4",
-     "class": "work budget",
-     "ids": [
-      920273,
-      920300
-     ],
-     "missing": [
-      941360
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 1550,
-     "statuses": [
-      200
-     ]
-    },
-    {
      "test": "942100-10",
      "class": "engine refusal",
      "ids": [],
@@ -693,84 +617,6 @@
      ]
     },
     {
-     "test": "942210-40",
-     "class": "work budget",
-     "ids": [
-      920273,
-      920360,
-      921210,
-      921220
-     ],
-     "missing": [
-      942210
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 1068,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "942380-20",
-     "class": "work budget",
-     "ids": [
-      920273,
-      920360,
-      921210,
-      921220,
-      932130,
-      933161,
-      942151,
-      942190,
-      942270
-     ],
-     "missing": [
-      942380
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 741,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "942440-24",
-     "class": "work budget",
-     "ids": [
-      920300,
-      920370
-     ],
-     "missing": [
-      942440
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 1256,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "942450-6",
-     "class": "work budget",
-     "ids": [
-      920273,
-      920370,
-      932236
-     ],
-     "missing": [
-      942450
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 1397,
-     "statuses": [
-      200
-     ]
-    },
-    {
      "test": "942490-17",
      "class": "engine refusal",
      "ids": [],
@@ -780,40 +626,6 @@
      "unexpected": [],
      "errors": [],
      "origin_bytes": 432,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "942521-17",
-     "class": "work budget",
-     "ids": [
-      920273,
-      920370
-     ],
-     "missing": [
-      942521
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 9255,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "942521-18",
-     "class": "work budget",
-     "ids": [
-      920273,
-      920370
-     ],
-     "missing": [
-      942521
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 4653,
      "statuses": [
       200
      ]
@@ -1391,381 +1203,6 @@
      ]
     },
     {
-     "test": "944260-2",
-     "class": "work budget",
-     "ids": [
-      920272,
-      920273,
-      920300,
-      932240
-     ],
-     "missing": [
-      944260
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 1054,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "949110-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      931130,
-      932200,
-      932240,
-      934100,
-      941100,
-      941110,
-      941130,
-      941160,
-      941170,
-      941210
-     ],
-     "missing": [
-      949110
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 629,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "951110-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932240
-     ],
-     "missing": [
-      951110
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 647,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "951120-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932240
-     ],
-     "missing": [
-      951120
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 607,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "951130-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932240
-     ],
-     "missing": [
-      951130
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 616,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "951140-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932200,
-      932240,
-      942200
-     ],
-     "missing": [
-      951140
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 689,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "951160-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932200,
-      932231,
-      932240
-     ],
-     "missing": [
-      951160
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 828,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "951170-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932240,
-      942431,
-      942432
-     ],
-     "missing": [
-      951170
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 608,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "951180-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932240
-     ],
-     "missing": [
-      951180
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 660,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "951190-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932200,
-      932240,
-      933211
-     ],
-     "missing": [
-      951190
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 690,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "951200-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932200,
-      932236,
-      932240
-     ],
-     "missing": [
-      951200
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 695,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "951210-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932240
-     ],
-     "missing": [
-      951210
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 648,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "951210-2",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932240
-     ],
-     "missing": [
-      951210
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 638,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "951220-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932200,
-      932240
-     ],
-     "missing": [
-      951220
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 699,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "951220-2",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932200,
-      932240,
-      942470
-     ],
-     "missing": [
-      951220
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 633,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "951230-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932200,
-      932240
-     ],
-     "missing": [
-      951230
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 626,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "951230-2",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932200,
-      932240,
-      942430,
-      942431,
-      942432,
-      942460
-     ],
-     "missing": [
-      951230
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 605,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "951240-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      930120,
-      932240,
-      933150,
-      933152,
-      942131
-     ],
-     "missing": [
-      951240
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 676,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "951250-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932240
-     ],
-     "missing": [
-      951250
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 654,
-     "statuses": [
-      200
-     ]
-    },
-    {
-     "test": "951260-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932200,
-      932240
-     ],
-     "missing": [
-      951260
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 684,
-     "statuses": [
-      200
-     ]
-    },
-    {
      "test": "980170-1",
      "class": "engine agrees",
      "ids": [
@@ -1808,69 +1245,68 @@
    "inventory": 5193,
    "mode": "enforce",
    "paranoia": 4,
-   "work_budget": 16000000,
+   "work_budget": 128000000,
    "classes": {
-    "passed": 5027,
+    "passed": 5039,
     "daemon only": 6,
-    "connector difference": 64,
+    "connector difference": 83,
     "engine refusal": 30,
-    "work budget": 31,
     "engine agrees": 35
    },
-   "passed": 5027,
+   "passed": 5039,
    "status_assertions": 29,
    "regex_gaps": 15,
    "dropped_incidents": 0,
    "console_unavailable_retries": 0,
    "crs_counters": {
-    "sibuna_crs_inspected_total": 374,
+    "sibuna_crs_inspected_total": 375,
     "sibuna_crs_headers_total": 0,
     "sibuna_crs_handshake_total": 0,
     "sibuna_crs_streaming_total": 0,
-    "sibuna_crs_incomplete_total": 165,
-    "sibuna_crs_denied_total": 4628,
+    "sibuna_crs_incomplete_total": 68,
+    "sibuna_crs_denied_total": 4724,
     "sibuna_crs_would_deny_total": 0
    },
    "slowest": [
     {
+     "test": "942521-16",
+     "seconds": 0.0404
+    },
+    {
+     "test": "942522-8",
+     "seconds": 0.0395
+    },
+    {
+     "test": "920390-1",
+     "seconds": 0.027
+    },
+    {
      "test": "934120-43",
-     "seconds": 0.0151
+     "seconds": 0.0108
+    },
+    {
+     "test": "942521-17",
+     "seconds": 0.0099
     },
     {
      "test": "944260-2",
-     "seconds": 0.0069
-    },
-    {
-     "test": "942440-24",
-     "seconds": 0.0068
-    },
-    {
-     "test": "932200-14",
      "seconds": 0.0067
     },
     {
-     "test": "932240-8",
-     "seconds": 0.0066
+     "test": "942440-24",
+     "seconds": 0.0055
     },
     {
-     "test": "942380-20",
-     "seconds": 0.0066
+     "test": "922110-24",
+     "seconds": 0.0054
     },
     {
-     "test": "932140-10",
-     "seconds": 0.0065
+     "test": "942440-22",
+     "seconds": 0.0051
     },
     {
-     "test": "932236-31",
-     "seconds": 0.0065
-    },
-    {
-     "test": "932380-9",
-     "seconds": 0.0065
-    },
-    {
-     "test": "942151-19",
-     "seconds": 0.0065
+     "test": "942440-23",
+     "seconds": 0.0048
     }
    ],
    "origin_boundary_violations": 0,
@@ -2122,47 +1558,6 @@
      ]
     },
     {
-     "test": "933170-4",
-     "class": "work budget",
-     "ids": [
-      920273,
-      920370,
-      921180,
-      932240
-     ],
-     "missing": [
-      933170
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
-     ]
-    },
-    {
-     "test": "934100-34",
-     "class": "work budget",
-     "ids": [
-      920273,
-      932130,
-      932190,
-      932200,
-      932240,
-      933135,
-      933161
-     ],
-     "missing": [
-      934100
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
-     ]
-    },
-    {
      "test": "934120-33",
      "class": "engine refusal",
      "ids": [],
@@ -2373,40 +1768,6 @@
      ]
     },
     {
-     "test": "941360-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      920370
-     ],
-     "missing": [
-      941360
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
-     ]
-    },
-    {
-     "test": "941360-4",
-     "class": "work budget",
-     "ids": [
-      920273,
-      920300
-     ],
-     "missing": [
-      941360
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
-     ]
-    },
-    {
      "test": "942100-10",
      "class": "engine refusal",
      "ids": [],
@@ -2537,123 +1898,11 @@
      ]
     },
     {
-     "test": "942210-40",
-     "class": "work budget",
-     "ids": [
-      920273,
-      920360,
-      921210,
-      921220
-     ],
-     "missing": [
-      942210
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
-     ]
-    },
-    {
-     "test": "942380-20",
-     "class": "work budget",
-     "ids": [
-      920273,
-      920360,
-      921210,
-      921220,
-      932130,
-      933161,
-      942151,
-      942190,
-      942270
-     ],
-     "missing": [
-      942380
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
-     ]
-    },
-    {
-     "test": "942440-24",
-     "class": "work budget",
-     "ids": [
-      920300,
-      920370
-     ],
-     "missing": [
-      942440
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
-     ]
-    },
-    {
-     "test": "942450-6",
-     "class": "work budget",
-     "ids": [
-      920273,
-      920370,
-      932236
-     ],
-     "missing": [
-      942450
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
-     ]
-    },
-    {
      "test": "942490-17",
      "class": "engine refusal",
      "ids": [],
      "missing": [
       942490
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
-     ]
-    },
-    {
-     "test": "942521-17",
-     "class": "work budget",
-     "ids": [
-      920273,
-      920370
-     ],
-     "missing": [
-      942521
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
-     ]
-    },
-    {
-     "test": "942521-18",
-     "class": "work budget",
-     "ids": [
-      920273,
-      920370
-     ],
-     "missing": [
-      942521
      ],
      "unexpected": [],
      "errors": [],
@@ -3235,51 +2484,6 @@
      ]
     },
     {
-     "test": "944260-2",
-     "class": "work budget",
-     "ids": [
-      920272,
-      920273,
-      920300,
-      932240
-     ],
-     "missing": [
-      944260
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
-     ]
-    },
-    {
-     "test": "949110-1",
-     "class": "work budget",
-     "ids": [
-      920273,
-      931130,
-      932200,
-      932240,
-      934100,
-      941100,
-      941110,
-      941130,
-      941160,
-      941170,
-      941210
-     ],
-     "missing": [
-      949110
-     ],
-     "unexpected": [],
-     "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
-     ]
-    },
-    {
      "test": "950020-2",
      "class": "connector difference",
      "ids": [
@@ -3468,10 +2672,15 @@
     },
     {
      "test": "951110-1",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
-      932240
+      932240,
+      942430,
+      942431,
+      942432,
+      942460,
+      949110
      ],
      "missing": [
       951110
@@ -3485,10 +2694,13 @@
     },
     {
      "test": "951120-1",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
-      932240
+      932240,
+      942431,
+      942432,
+      949110
      ],
      "missing": [
       951120
@@ -3502,10 +2714,13 @@
     },
     {
      "test": "951130-1",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
-      932240
+      932240,
+      942431,
+      942432,
+      949110
      ],
      "missing": [
       951130
@@ -3519,12 +2734,18 @@
     },
     {
      "test": "951140-1",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
       932200,
       932240,
-      942200
+      942200,
+      942430,
+      942431,
+      942432,
+      942460,
+      942480,
+      949110
      ],
      "missing": [
       951140
@@ -3558,12 +2779,25 @@
     },
     {
      "test": "951160-1",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
       932200,
       932231,
-      932240
+      932240,
+      942120,
+      942131,
+      942180,
+      942200,
+      942430,
+      942431,
+      942432,
+      942460,
+      942480,
+      942490,
+      942511,
+      942530,
+      949110
      ],
      "missing": [
       951160
@@ -3577,12 +2811,13 @@
     },
     {
      "test": "951170-1",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
       932240,
       942431,
-      942432
+      942432,
+      949110
      ],
      "missing": [
       951170
@@ -3596,10 +2831,13 @@
     },
     {
      "test": "951180-1",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
-      932240
+      932240,
+      942431,
+      942432,
+      949110
      ],
      "missing": [
       951180
@@ -3613,12 +2851,17 @@
     },
     {
      "test": "951190-1",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
       932200,
       932240,
-      933211
+      933211,
+      942430,
+      942431,
+      942432,
+      942460,
+      949110
      ],
      "missing": [
       951190
@@ -3632,12 +2875,27 @@
     },
     {
      "test": "951200-1",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
       932200,
       932236,
-      932240
+      932240,
+      942180,
+      942200,
+      942330,
+      942340,
+      942370,
+      942400,
+      942430,
+      942431,
+      942432,
+      942460,
+      942480,
+      942490,
+      942511,
+      942520,
+      949110
      ],
      "missing": [
       951200
@@ -3651,10 +2909,15 @@
     },
     {
      "test": "951210-1",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
-      932240
+      932240,
+      942430,
+      942431,
+      942432,
+      942460,
+      949110
      ],
      "missing": [
       951210
@@ -3668,10 +2931,15 @@
     },
     {
      "test": "951210-2",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
-      932240
+      932240,
+      942430,
+      942431,
+      942432,
+      942460,
+      949110
      ],
      "missing": [
       951210
@@ -3685,11 +2953,16 @@
     },
     {
      "test": "951220-1",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
       932200,
-      932240
+      932240,
+      942430,
+      942431,
+      942432,
+      942460,
+      949110
      ],
      "missing": [
       951220
@@ -3703,12 +2976,16 @@
     },
     {
      "test": "951220-2",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
       932200,
       932240,
-      942470
+      942431,
+      942432,
+      942470,
+      942511,
+      949110
      ],
      "missing": [
       951220
@@ -3722,11 +2999,15 @@
     },
     {
      "test": "951230-1",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
       932200,
-      932240
+      932240,
+      942431,
+      942432,
+      942511,
+      949110
      ],
      "missing": [
       951230
@@ -3740,7 +3021,7 @@
     },
     {
      "test": "951230-2",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
       932200,
@@ -3748,7 +3029,8 @@
       942430,
       942431,
       942432,
-      942460
+      942460,
+      949110
      ],
      "missing": [
       951230
@@ -3782,14 +3064,18 @@
     },
     {
      "test": "951240-1",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
       930120,
       932240,
       933150,
       933152,
-      942131
+      942131,
+      942431,
+      942432,
+      942460,
+      949110
      ],
      "missing": [
       951240
@@ -3803,7 +3089,7 @@
     },
     {
      "test": "951240-2",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
       932240,
@@ -3823,10 +3109,15 @@
     },
     {
      "test": "951250-1",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
-      932240
+      932240,
+      942430,
+      942431,
+      942432,
+      942460,
+      949110
      ],
      "missing": [
       951250
@@ -3840,11 +3131,17 @@
     },
     {
      "test": "951260-1",
-     "class": "work budget",
+     "class": "connector difference",
      "ids": [
       920273,
       932200,
-      932240
+      932240,
+      942430,
+      942431,
+      942432,
+      942460,
+      942511,
+      949110
      ],
      "missing": [
       951260
