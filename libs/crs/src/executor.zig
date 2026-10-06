@@ -46,6 +46,8 @@ pub const Executor = struct {
         // Every scratch region is slot-owned and fixed; only the acquired view changes, and
         // it changes between phases. One proof per phase covers every condition in it.
         self.condition.assertExclusive();
+        // Shared transform outputs never cross phases; each phase recomputes them once.
+        if (self.condition.cache) |cache| cache.clear();
         const unwind = std.mem.sliceAsBytes(self.unwind);
         self.condition.assertDisjoint(unwind);
         buffers.assertDisjoint(unwind, std.mem.sliceAsBytes(self.program.topology.rows));

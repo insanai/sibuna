@@ -223,7 +223,8 @@ fn stockReplay(program: *const @import("pipeline.zig").Pipeline, input: []const 
         try expected.append(allocator, owned);
     }
     const cost = 16_000_000 - budget.remaining;
-    budget.remaining = cost * 2;
+    // multiMatch replays a validated pass; a single final value is charged once.
+    budget.remaining = if (program.multi_match) cost * 2 else cost;
     var repeated: replay.Replay = .{};
     try repeated.init(program, frame);
     for (expected.items) |bytes| {

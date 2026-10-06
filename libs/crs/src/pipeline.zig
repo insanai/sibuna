@@ -20,6 +20,8 @@ pub const Pipeline = struct {
     allocator: std.mem.Allocator,
     stages: []const model.Transform,
     multi_match: bool,
+    /// Identity of the stage sequence; equal sequences produce equal outputs.
+    key: u64 = 0,
 
     pub fn deinit(self: *Pipeline) void {
         self.allocator.free(self.stages);
@@ -60,10 +62,12 @@ pub fn compile(allocator: std.mem.Allocator, actions: Actions) Error!Pipeline {
     errdefer stages.deinit(allocator);
     if (!reset) try append(allocator, &stages, actions.inherited, actions.stages);
     try append(allocator, &stages, actions.local[local_start..], actions.stages);
+    const owned = try stages.toOwnedSlice(allocator);
     return .{
         .allocator = allocator,
-        .stages = try stages.toOwnedSlice(allocator),
+        .stages = owned,
         .multi_match = multi_match,
+        .key = std.hash.Wyhash.hash(0, std.mem.sliceAsBytes(owned)),
     };
 }
 

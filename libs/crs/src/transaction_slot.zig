@@ -19,6 +19,7 @@ const form = @import("form_acquisition.zig");
 const multipart = @import("multipart_head.zig");
 const xml = @import("xml_acquisition.zig");
 const xml_ns = @import("xml_namespaces.zig");
+const transform_cache = @import("transform_cache.zig");
 pub const Error = rules.Error || error{
     InvalidSlotLimits,
     ReservationLimit,
@@ -72,6 +73,7 @@ pub const Slot = struct {
     budget: work.Budget = undefined,
     frame: condition.Frame = undefined,
     workspace: ?regex.Workspace = null,
+    transform_cache: transform_cache.Cache = undefined,
     merged: []variables.Entry = &.{},
     matched: []variables.Entry = &.{},
     matched_bytes: []u8 = &.{},
@@ -136,6 +138,8 @@ pub const Slot = struct {
             .argument_output = try arena.alloc(u8, limits.bytes),
             .budget = &self.budget,
         };
+        self.transform_cache = try .init(arena, cacheBytes(limits));
+        self.frame.cache = &self.transform_cache;
         if (self.owner.queryCapacity() > limits.reservation) return error.ReservationLimit;
     }
 
@@ -243,6 +247,11 @@ pub const Slot = struct {
     }
 };
 
+/// Shared transform outputs are bounded like other copied metadata.
+fn cacheBytes(limits: Limits) usize {
+    return 2 * limits.bytes;
+}
+
 fn reservation(program: *const rules.Program, limits: Limits) Error!usize {
     try limits.validate();
     var bounds: [variables.count]usize = @splat(limits.bytes);
@@ -273,6 +282,7 @@ fn reservation(program: *const rules.Program, limits: Limits) Error!usize {
         .{ limits.bytes, @sizeOf(usize) },
         .{ threads, @sizeOf(regex.match.Thread) },
         .{ program.regex_states, @sizeOf(usize) },
+        .{ transform_cache.Cache.bytesFor(cacheBytes(limits)), 1 },
         .{ if (program.regex_states == 0) 0 else regex.dfa.Cache.bytes(program.regex_states), 1 },
         .{ program.topology.maximum_depth, @sizeOf(usize) },
     };

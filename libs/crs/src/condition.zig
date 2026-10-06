@@ -6,6 +6,7 @@ const selection = @import("selection.zig");
 const operators = @import("operators.zig");
 const pipeline = @import("pipeline.zig");
 const replay = @import("pipeline_replay.zig");
+const transform_cache = @import("transform_cache.zig");
 const set_var = @import("set_var.zig");
 const context = @import("evaluation_context.zig");
 const variables = @import("variables.zig");
@@ -33,6 +34,8 @@ pub const Frame = struct {
     count: *[20]u8,
     transforms: [2][]u8,
     regex: ?*regex.match.Scratch = null,
+    /// Final transform outputs shared within one phase; absent in direct tests.
+    cache: ?*transform_cache.Cache = null,
     prefixes: []usize = &.{},
     pieces: [][]const u8,
     key_output: []u8,
@@ -168,6 +171,16 @@ pub const Program = struct {
             .collection = entry.collection,
             .key = if (entry.key.len == 0) null else entry.key,
         }, frame)) return false;
+        // Counted values live in reused scratch and multiMatch observes every stage, so
+        // only single final values over stable bytes are shared between rules.
+        const pipeline_key = self.transforms.key;
+        const stages = std.mem.sliceAsBytes(self.transforms.stages);
+        const shared = if (counted or self.transforms.multi_match or
+            self.transforms.stages.len == 0) null else frame.cache;
+        if (shared) |cache| if (cache.find(entry.value, pipeline_key, stages)) |output| {
+            try frame.budget.debit(@as(u64, output.len) + 1);
+            return self.evaluateValue(entry, counted, output, frame);
+        };
         var values: replay.Replay = .{};
         try values.init(&self.transforms, .{
             .input = entry.value,
@@ -176,28 +189,39 @@ pub const Program = struct {
         });
         var matched = false;
         while (try values.next()) |value| {
-            const view = try frame.context.view(frame.budget);
-            const result = try self.predicate.?.evaluate(.{
-                .input = value.bytes,
-                .budget = frame.budget,
-                .prefixes = frame.prefixes,
-                .regex = frame.regex,
-                .captures = self.capture,
-                .variables = &view,
-                .pieces = frame.pieces,
-                .argument_output = frame.argument_output,
-            });
-            // Capturing belongs to the operator, before the reference's negation.
-            if (self.capture and result.matched) try saveCaptures(&result, value.bytes, frame);
-            if (result.matched == self.negated) continue;
-            try frame.context.record(entry, counted, value.bytes, frame.budget);
-            try self.applyWrites(frame);
-            if (self.candidate) |*program| if (frame.evidence) |state| {
-                try post.execute(program, frame.actions(state));
-            };
-            matched = true;
+            if (shared) |cache| cache.store(entry.value, pipeline_key, stages, value.bytes);
+            if (try self.evaluateValue(entry, counted, value.bytes, frame)) matched = true;
         }
         return matched;
+    }
+
+    fn evaluateValue(
+        self: *const Program,
+        entry: variables.Entry,
+        counted: bool,
+        bytes: []const u8,
+        frame: Frame,
+    ) Error!bool {
+        const view = try frame.context.view(frame.budget);
+        const result = try self.predicate.?.evaluate(.{
+            .input = bytes,
+            .budget = frame.budget,
+            .prefixes = frame.prefixes,
+            .regex = frame.regex,
+            .captures = self.capture,
+            .variables = &view,
+            .pieces = frame.pieces,
+            .argument_output = frame.argument_output,
+        });
+        // Capturing belongs to the operator, before the reference's negation.
+        if (self.capture and result.matched) try saveCaptures(&result, bytes, frame);
+        if (result.matched == self.negated) return false;
+        try frame.context.record(entry, counted, bytes, frame.budget);
+        try self.applyWrites(frame);
+        if (self.candidate) |*program| if (frame.evidence) |state| {
+            try post.execute(program, frame.actions(state));
+        };
+        return true;
     }
 
     fn applyWrites(self: *const Program, frame: Frame) Error!void {

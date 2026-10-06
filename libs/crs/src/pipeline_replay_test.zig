@@ -78,8 +78,12 @@ test "ordinary replay emits one final value and reported unchanged stages stay i
         .scratch = .{ &first, &second },
         .budget = &budget,
     };
+    const single_pass = try cost(&program, frame);
+    const before = budget.remaining;
     var iterator: replay.Replay = .{};
     try iterator.init(&program, frame);
+    // A single final value is produced by the validating pass; nothing is charged twice.
+    try std.testing.expectEqual(single_pass, before - budget.remaining);
     const final = (try iterator.next()).?;
     try std.testing.expectEqualStrings("78", final.bytes);
     try std.testing.expectEqual(@as(?usize, 1), final.after_stage);
