@@ -1,10 +1,12 @@
 //! Phased execution over one borrowed immutable rule program and reserved slot.
 //! The caller acquires complete phase inputs and retains their immutable bytes.
+const std = @import("std");
 const model = @import("model.zig");
 const rules = @import("rule_program.zig");
 const condition = @import("condition.zig");
 const post = @import("post_actions.zig");
 const cursor = @import("phase_cursor.zig");
+const buffers = @import("buffers.zig");
 pub const Error = rules.Error || cursor.Error || error{DisruptedTransaction};
 pub const Result = enum { complete, denied };
 pub const Executor = struct {
@@ -41,6 +43,13 @@ pub const Executor = struct {
             self.state.poison();
         }
         if (self.state.denied and phase != .logging) return error.DisruptedTransaction;
+        // Every scratch region is slot-owned and fixed; only the acquired view changes, and
+        // it changes between phases. One proof per phase covers every condition in it.
+        self.condition.assertExclusive();
+        const unwind = std.mem.sliceAsBytes(self.unwind);
+        self.condition.assertDisjoint(unwind);
+        buffers.assertDisjoint(unwind, std.mem.sliceAsBytes(self.program.topology.rows));
+        buffers.assertDisjoint(unwind, std.mem.sliceAsBytes(self.program.conditions));
         try self.cursor.begin(phase);
         while (try self.cursor.next(self.condition.budget)) |root| {
             const journal = self.condition.context.store.journal;

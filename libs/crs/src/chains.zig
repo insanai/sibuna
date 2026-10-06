@@ -48,10 +48,6 @@ pub const Program = struct {
     ) Error!Result {
         if (frame.context.failed or frame.context.store.failed) return error.TransactionFailed;
         errdefer frame.context.poison();
-        const output = std.mem.sliceAsBytes(unwind);
-        frame.assertDisjoint(output);
-        buffers.assertDisjoint(output, std.mem.sliceAsBytes(self.rows));
-        buffers.assertDisjoint(output, std.mem.sliceAsBytes(programs));
         if (programs.len != self.rows.len) return error.ProgramCount;
         if (root >= self.rows.len or self.rows[root].root != root) return error.InvalidRoot;
         const end = self.rows[root].end;

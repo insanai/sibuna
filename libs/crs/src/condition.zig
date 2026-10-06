@@ -53,7 +53,7 @@ pub const Frame = struct {
         };
     }
 
-    fn assertExclusive(self: Frame) void {
+    pub fn assertExclusive(self: Frame) void {
         buffers.assertExclusive(&self.regions());
         if (self.control) |control| {
             self.assertDisjoint(std.mem.sliceAsBytes(control.exclusions));
@@ -127,7 +127,6 @@ pub const Program = struct {
             if (frame.control) |control| control.failed = true;
             if (frame.evidence) |state| state.poison();
         }
-        frame.assertExclusive();
         try frame.budget.debit(1);
         if (try self.excluded(null, frame)) return false;
         const targets = if (self.targets) |*targets| targets else {
