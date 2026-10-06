@@ -60,7 +60,13 @@ pub fn handleConnection(stream: Io.net.Stream, io: Io, state: *AppState) void {
 `readHead` fills the buffer until the blank line appears, refusing heads over 16 KB with `431`.
 The parser produces a `Request` whose method, path, query, headers, and cookies are slices of
 the buffer; the declared body is filled up to what fits and sliced after the head; then
-`toss(body_end)` advances the reader so the next keep-alive request starts cleanly. Internal
+`toss(body_end)` advances the reader so the next keep-alive request starts cleanly. The request
+target must be origin-form (`/...`), or `*` for `OPTIONS`. Absolute-form, authority-form
+(`CONNECT`), fragments and any other target are answered `400` before policy, CRS or the
+origin see them: a path rule written as `/admin` would not match `http://host/admin`, and an
+origin that honours `CONNECT` could open a tunnel nothing inspects. RFC 9112 §3.2.2 asks
+servers to accept absolute-form; Sibuna refuses it rather than guess a normalization. The
+same byte loop that rejects control characters rejects `#`, so the check adds no pass. Internal
 routes are length-delimited and keep the connection open. Proxied requests keep it open too,
 provided the origin's response is framed; the next section shows how the proxy decides.
 
