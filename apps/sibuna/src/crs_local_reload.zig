@@ -192,7 +192,7 @@ pub const Owner = struct {
 
 fn reason(err: anyerror) local.Reason {
     return switch (err) {
-        error.OutOfMemory, error.CompiledProgramLimit, error.PoolReservationLimit => .capacity,
+        error.OutOfMemory, error.CompiledProgramLimit, error.ReservationLimit => .capacity,
         error.PublicationBusy, error.PublicationClosed, error.StaleGenerationRevision => {
             return .publication;
         },
