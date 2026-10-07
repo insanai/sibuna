@@ -17,6 +17,29 @@ These primitive timings and idle memory do not measure a loaded CRS generation, 
 isolation or production throughput. The three-product families below remain measurements
 of v0.2.0 and must not be relabelled as native CRS comparisons.
 
+## Native CRS request path
+
+`crs-request-path-two-host-latest.json` and its timestamped copy record clean revision
+`eeef5ef4a190e928810e5305f6e279c97d3b7db2` (v0.3.0), built on the product host with Zig
+0.17.0 at ReleaseSafe. Sibuna runs on `insan@10.175.52.18` with four logical CPUs and a
+Caddy origin on two others; `wrk` runs on `insan@10.175.52.20` with 16 connections. Five
+profiles (CRS disabled, Audit and Enforce at paranoia 1 and 2, stock CRS 4.30.0, default
+thresholds and 128-million-unit work budget) and four workloads (small GET, 8 KiB JSON,
+16 KiB multipart, SQL injection in the query) run for five rotated rounds with eight
+signed-in dashboards. Every status is validated; no sample reached the work limit.
+
+```sh
+python3 benchmarks/crs_request_path.py --candidate <signed-candidate> \
+    --load-host <ssh-destination> --target-host <product-address>
+```
+
+At paranoia 1 the small GET runs at 10,831 req/s (369 µs CPU per request) against 47,311
+with CRS disabled, the 8 KiB JSON POST at 1,157 req/s and the multipart upload at 4,257.
+Peak summed RSS is 132–139 MiB against 103 MiB disabled. Enforce closes the connection after
+a denial, so its SQL-injection row includes a reconnect per request. The disabled JSON and
+multipart rows are limited by the network between the hosts. This family measures the
+request path only; it is not a comparison with the BunkerWeb CRS profile below.
+
 ## Three-product comparisons
 
 The fresh 4 October 2026 families use Sibuna v0.2.0 built with Zig 0.17.0 at ReleaseSafe,

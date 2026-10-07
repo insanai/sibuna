@@ -2,6 +2,7 @@
 #import "figures.typ": *
 #import "products.typ": proxy_meta_line, proxy_table
 #import "product_admission.typ": admission_meta_line, admission_http_table, admission_operations_table, bootstrap_work_line
+#import "crs_request_path.typ": crs_meta_line, crs_table
 
 #part_page("VIII", [Empirical Evaluation], [
   We measure primitive costs, complete HTTP products, admission operations, distributed
@@ -361,6 +362,48 @@ reported as unresolved. No per-operation percentile is inferred from these batch
 The replay commands and every sample are in `benchmarks/results/README.md`. These fresh
 HTTP and admission families do not rerun primitive, cluster or console-impact acceptance
 matrices, and they do not measure detection quality.
+
+== Native CRS Request Path
+
+`benchmarks/crs_request_path.py` measures what SID 0010's native Core Rule Set costs on the
+request path. One console-enabled binary runs every profile with eight signed-in dashboards:
+CRS disabled, then Audit and Enforce at paranoia levels one and two with stock CRS 4.30.0,
+default thresholds and the default 128-million-unit work budget. The lightweight inspector
+stays disabled, so the rows isolate CRS evaluation. Sibuna runs on `10.175.52.18` with four
+allowed logical CPUs and a Caddy origin on two others; `wrk` runs on `10.175.52.20`, a
+different physical host, over HTTP/1.1 with 16 keep-alive connections. Profile order rotates
+between rounds and response hooks validate every status.
+
+The workloads are a small GET, an 8 KiB JSON POST, a 16 KiB multipart upload with one text
+file, and a SQL-injection query. Enforce answers the last with 403 and closes the connection,
+so that row includes a reconnect per request; Audit relays it. Peak RSS is summed over the
+process tree.
+
+#crs_meta_line()
+#crs_table(("disabled", "audit-pl1", "enforce-pl1"))
+#v(4mm)
+#crs_table(("audit-pl2", "enforce-pl2"))
+
+The disabled JSON and multipart rows are bounded by the network between the hosts, as in the
+three-product JSON rows, so their CPU column is the better baseline. No sample exhausted the
+work budget, and Audit and Enforce cost the same on admitted traffic.
+Body cost scales with inspected bytes: paranoia level one charges about 1,800 work units per
+byte of free text, and most of that time is regex scanning and transform pipelines per rule
+and value. Peak RSS rises by 29 to 36 MiB over the disabled profile. Slot reservations are
+address space, and a page becomes resident only when a transaction touches it.
+
+The measurement changed the implementation. Safe builds fill every new allocation with
+`0xAA`, so the first run kept the whole 1 GiB slot reservation resident (920 MiB); slot
+scratch is now reserved without that fill. Stack sampling then showed that CRS 941010's tag
+exclusion made every later rule merge the transaction view and copy its tags, that the DFA
+paid a function call and a budget check per cached byte, and that kernel sorting cleared
+scratch on every call. Removing those raised small-GET throughput at paranoia one from about
+8,000 to 10,800 requests per second without changing any decision on the engine corpus;
+charged work there fell 22% because the skipped merges and tag copies are no longer billed.
+
+These rows are not a comparison with BunkerWeb's CRS profile: that family used 64
+connections and a different fixture. Concurrency beyond the slot pool, where CRS sheds load
+with 503 after a 50 ms wait, is not measured here.
 
 == Historical Loopback Admission Comparison
 
