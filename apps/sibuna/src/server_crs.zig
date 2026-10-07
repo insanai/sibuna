@@ -22,7 +22,7 @@ pub fn serve(
         context.crs_evidence = &captured;
     if (!try server.restoreAuthorizationTarget(&context)) return false;
     const demand: crs.transaction_pool.Demand = .{
-        .request_bytes = if (request.chunked) null else declared,
+        .request_bytes = if (request.chunked or encodedBody(request)) null else declared,
     };
     var lease = publisher.lease(connection.io, demand, slot_wait) catch |err| {
         if (err == error.DisabledGeneration) {
@@ -66,6 +66,17 @@ pub fn serve(
         .leased = &leased,
     };
     return full(&ownership, head_length);
+}
+
+/// Content-Length bounds the encoded representation, not decoded input. Only a
+/// known identity representation can safely use the smaller request reservation.
+fn encodedBody(request: *const net.Request) bool {
+    for (request.headers[0..request.header_count]) |header| {
+        if (!std.ascii.eqlIgnoreCase(header.name, "content-encoding")) continue;
+        const value = std.mem.trim(u8, header.value, " \t");
+        if (!std.ascii.eqlIgnoreCase(value, "identity")) return true;
+    }
+    return false;
 }
 
 fn buffered(context: *server.RequestContext, head_length: usize) !bool {

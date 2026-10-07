@@ -145,6 +145,38 @@ test "admitted encoded uploads preserve their original representation for the or
     try t.expectEqual(@as(u64, 1), fixture.state.crs_counts.inspected.load(.monotonic));
 }
 
+test "compressed request size never lowers the configured decoded entity ceiling" {
+    // This gzip expands to 96 KiB, above the small tier but within the configured
+    // 256 KiB request bound. Its original wire representation must reach the origin.
+    const compressed = @embedFile("testdata/crs-large-entity.gz");
+    try t.expect(compressed.len < @import("crs").transaction_pool.small_request_bytes);
+    const fixture = try fixtures.Fixture.create(.{
+        .source = "SecRule REQUEST_BODY_LENGTH \"!@eq 98304\" " ++
+            "\"id:1,phase:2,deny,status:409\"",
+    });
+    defer fixture.destroy();
+    const encodings = [_][]const u8{
+        "Content-Encoding: gzip\r\n",
+        "Content-Encoding: identity\r\nContent-Encoding: gzip\r\n",
+    };
+    for (encodings) |headers| {
+        var request: [1024]u8 = undefined;
+        var writer = Io.Writer.fixed(&request);
+        try writer.print("POST / HTTP/1.1\r\nHost: example.test\r\n{s}" ++
+            "Content-Length: {d}\r\nConnection: close\r\n\r\n{s}", .{
+            headers, compressed.len, compressed,
+        });
+        var output: [1024]u8 = undefined;
+        try status(try exchange(fixture, writer.buffered(), &output), "HTTP/1.1 200 OK\r\n");
+        var expected: [32]u8 = undefined;
+        std.crypto.hash.sha2.Sha256.hash(compressed, &expected, .{});
+        try t.expectEqualSlices(u8, &expected, &fixture.body_digest);
+    }
+    try t.expectEqual(@as(u32, 2), fixture.received.load(.acquire));
+    try t.expectEqual(@as(u64, 2), fixture.state.crs_counts.inspected.load(.monotonic));
+    try t.expectEqual(@as(u64, 0), fixture.state.crs_counts.incomplete.load(.monotonic));
+}
+
 test "response phases refuse before any origin head or confidential bytes are published" {
     for ([_][]const u8{
         "SecRule RESPONSE_HEADERS:Content-Type \"@streq text/plain\" " ++
