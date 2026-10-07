@@ -233,7 +233,9 @@ const Search = struct {
             }
         }
         const next = self.buffers.kernel[0..next_used];
-        std.mem.sort(u32, next, {}, std.sort.asc(u32));
+        // Kernels are sets, so stability is irrelevant; the stable block sort clears a
+        // cache buffer on every call, which showed up in request profiles.
+        std.mem.sortUnstable(u32, next, {}, std.sort.asc(u32));
         return .{ .next = next[0..dedupe(next)] };
     }
 
