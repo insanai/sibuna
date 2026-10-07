@@ -317,7 +317,7 @@ TCP and TLS resources still need appropriate ingress limits.
 
     // --- Panel 1: Ordinary request work ---
     rect((0, 0), (8.2, 4.4), fill: rgb("fff5f5"), stroke: 0.8pt + rgb("fca5a5"), radius: 0.2)
-    content((4.1, 4.0), text(weight: "bold", size: 8.5pt, fill: rgb("991b1b"))[Request processing without an admission proof], anchor: "center")
+    content((4.1, 4.0), text(weight: "bold", size: 8.5pt, fill: rgb("991b1b"))[Without an admission proof], anchor: "center")
 
     // Attacker node (width 2.6cm: 0.5 to 3.1)
     rect((0.5, 0.9), (3.1, 3.4), fill: white, stroke: 0.8pt + c-attacker, radius: 0.15)
@@ -335,11 +335,11 @@ TCP and TLS resources still need appropriate ingress limits.
     // Arrow with 2.0cm gap (3.1 to 5.1)
     line((3.1, 2.15), (5.1, 2.15), mark: (end: ">"), stroke: 1.5pt + c-attacker)
     content((4.1, 2.6), text(size: 7.2pt, weight: "bold", fill: c-attacker)[Request], anchor: "center")
-    content((4.1, 0.4), text(size: 7.2pt, style: "italic", fill: rgb("7f1d1d"))[Capacity depends on the work each request triggers], anchor: "center")
+    content((4.1, 0.4), text(size: 7.2pt, style: "italic", fill: rgb("7f1d1d"))[Each request consumes server resources], anchor: "center")
 
     // --- Panel 2: Proof-backed admission ---
     rect((8.8, 0), (17.0, 4.4), fill: rgb("f0fdf4"), stroke: 0.8pt + rgb("86efac"), radius: 0.2)
-    content((12.9, 4.0), text(weight: "bold", size: 8.5pt, fill: rgb("065f46"))[Proof-backed admission in Sibuna], anchor: "center")
+    content((12.9, 4.0), text(weight: "bold", size: 8.5pt, fill: rgb("065f46"))[With proof-backed admission], anchor: "center")
 
     // Attacker node under PoSW (width 2.6cm: 9.3 to 11.9)
     rect((9.3, 0.9), (11.9, 3.4), fill: white, stroke: 0.8pt + rgb("b45309"), radius: 0.15)
@@ -358,7 +358,7 @@ TCP and TLS resources still need appropriate ingress limits.
     // Arrow with 2.0cm gap (11.9 to 13.9)
     line((11.9, 2.15), (13.9, 2.15), mark: (end: ">"), stroke: 1.5pt + c-posw)
     content((12.9, 2.6), text(size: 7.2pt, weight: "bold", fill: c-posw)[Proof], anchor: "center")
-    content((12.9, 0.4), text(size: 7.2pt, style: "italic", fill: rgb("14532d"))[Hardware and difficulty determine the actual costs], anchor: "center")
+    content((12.9, 0.4), text(size: 7.2pt, style: "italic", fill: rgb("14532d"))[Proof cost depends on hardware and difficulty], anchor: "center")
   })
 )
 
@@ -453,7 +453,7 @@ proceed, must be challenged, or must be denied.
     stage-box(9.3, 8.6, c-blue-bg, c-blue, [Local Admission], [Shard Lock], [Bans + Global GCRA])
 
     // Optional request CRS (x: 13.6 .. 16.9)
-    stage-box(13.6, 8.6, c-blue-bg, c-blue, [Optional Request CRS], [Leased Scratch], [Headers / Bounded Body])
+    stage-box(13.6, 8.6, c-blue-bg, c-blue, [Request CRS], [Leased Scratch], [Headers + Bounded Body])
 
     // Row 1 Forward Arrows
     line((3.5, 9.35), (4.8, 9.35), mark: (end: ">"), stroke: 1.2pt + c-blue)
@@ -471,30 +471,30 @@ proceed, must be challenged, or must be denied.
     // Reverse flow (Right to Left)
     // ==========================================
     // Inspection and policy (x: 13.6 .. 16.9)
-    stage-box(13.6, 4.9, c-purple-bg, c-purple, [Inspection + Policy], [Ordered Rules], [Allow / Deny / Challenge])
+    stage-box(13.6, 4.9, c-purple-bg, c-purple, [Policy + Inspection], [Ordered Rules], [Allow / Deny / Challenge])
 
     // Session authentication (x: 9.3 .. 12.6)
-    stage-box(9.3, 4.9, c-purple-bg, c-purple, [Session MAC], [Authenticate], [Challenge Routes Only])
+    stage-box(9.3, 4.9, c-purple-bg, c-purple, [Session MAC], [Authenticate], [Challenged Routes])
 
     // Paid-work comparison (x: 4.8 .. 8.1)
-    stage-box(4.8, 4.9, c-gold-bg, c-gold, [Paid Work Level], [Compare], [Only After a Valid MAC])
+    stage-box(4.8, 4.9, c-gold-bg, c-gold, [Paid Work Level], [Compare], [Authenticated Session])
 
     // Handoff (x: 0.6 .. 3.9)
     stage-box(0.6, 4.9, c-blue-bg, c-blue, [Handoff], [Mode-Specific], [Origin / Auth Response])
 
     // Row 2 Forward Arrows (Right to Left)
     line((13.6, 5.65), (12.6, 5.65), mark: (end: ">"), stroke: 1.2pt + c-purple)
-    content((13.1, 5.95), text(size: 6.5pt, weight: "bold", fill: c-green)[Challenge], anchor: "center")
+    content((13.1, 6.05), text(size: 6.5pt, weight: "bold", fill: c-green)[Needs\ proof], anchor: "center")
 
     line((9.3, 5.65), (8.1, 5.65), mark: (end: ">"), stroke: 1.2pt + c-gold)
-    content((8.7, 5.95), text(size: 6.5pt, weight: "bold", fill: c-gold)[MAC Valid], anchor: "center")
+    content((8.7, 5.95), text(size: 6.5pt, weight: "bold", fill: c-gold)[Valid], anchor: "center")
 
     line((4.8, 5.65), (3.9, 5.65), mark: (end: ">"), stroke: 1.2pt + c-green)
     content((4.35, 5.95), text(size: 6.5pt, weight: "bold", fill: c-green)[Paid], anchor: "center")
 
     // Policy ALLOW route: arc above the conditional session check in open corridor (y: 7.2)
-    line((10.95, 6.4), (10.95, 7.2), (2.25, 7.2), (2.25, 6.4), mark: (end: ">"), stroke: 1.2pt + c-green)
-    content((6.6, 7.45), text(size: 6.8pt, weight: "bold", fill: c-green)[Policy ALLOW Route (No Admission Challenge)], anchor: "center")
+    line((14.25, 6.4), (14.25, 7.2), (2.25, 7.2), (2.25, 6.4), mark: (end: ">"), stroke: 1.2pt + c-green)
+    content((6.6, 7.45), text(size: 6.8pt, weight: "bold", fill: c-green)[ALLOW: no admission challenge], anchor: "center")
 
     // ==========================================
     // ROW 3: TERMINAL DESTINATIONS (y: 0.8 .. 2.4)
@@ -507,36 +507,37 @@ proceed, must be challenged, or must be denied.
 
     // Sink 2: Upstream Origin Proxy (x: 5.6 .. 11.6) directly below Stage 6
     rect((5.6, 0.8), (11.6, 2.4), fill: c-green-bg, stroke: 1.1pt + c-green, radius: 0.18)
-    content((8.6, 1.95), text(weight: "bold", size: 8.5pt, fill: c-green)[Upstream Origin Proxy], anchor: "center")
-    content((8.6, 1.50), text(size: 7.2pt)[HTTP/1.1 Keep-Alive Connection], anchor: "center")
+    content((8.6, 1.95), text(weight: "bold", size: 8.5pt, fill: c-green)[Allowed Request], anchor: "center")
+    content((8.6, 1.50), text(size: 7.2pt)[Reverse Proxy / Forward Auth], anchor: "center")
     content((8.6, 1.10), text(weight: "bold", size: 7pt, fill: c-green)[Origin Status / Auth Decision], anchor: "center")
 
     // Sink 3: HTTP 401 Challenge Issuer (x: 12.6 .. 16.9) directly below Stage 4
     rect((12.6, 0.8), (16.9, 2.4), fill: c-gold-bg, stroke: 1.1pt + c-gold, radius: 0.18)
     content((14.75, 1.95), text(weight: "bold", size: 8.5pt, fill: c-gold)[Browser Challenge], anchor: "center")
-    content((14.75, 1.50), text(size: 7.2pt)[Client Solves Separate Proof], anchor: "center")
-    content((14.75, 1.10), text(weight: "bold", size: 7pt, fill: c-gold)[No Per-Issued Ticket Table], anchor: "center")
+    content((14.75, 1.50), text(size: 7.2pt)[Client Solves a Proof], anchor: "center")
+    content((14.75, 1.10), text(weight: "bold", size: 7pt, fill: c-gold)[Proof Checked on Submission], anchor: "center")
 
     // --- TERMINAL ARROWS ---
-    // 1. Decision components to HTTP refusal: straight vertical drop!
-    line((1.5, 4.9), (1.5, 2.4), mark: (end: ">"), stroke: 1.2pt + c-red, dash: "dashed")
-    content((1.0, 3.65), text(size: 6.8pt, weight: "bold", fill: c-red)[Deny], anchor: "center")
+    // Policy denials join the refusal path on the right perimeter.
+    line((16.25, 4.9), (16.25, 4.5), (17.05, 4.5), stroke: 1.2pt + c-red, dash: "dashed")
+    content((16.5, 4.2), text(size: 6.8pt, weight: "bold", fill: c-red)[Deny], anchor: "center")
 
     // 2. Handoff to upstream origin: clean handoff through the gap at x: 4.35
     line((3.9, 5.1), (4.35, 5.1), (4.35, 1.6), (5.6, 1.6), mark: (end: ">"), stroke: 1.5pt + c-green)
     content((5.0, 3.4), text(size: 6.8pt, weight: "bold", fill: c-green)[Admit], anchor: "center")
 
-    // 3. Unpaid challenge route to issuance: straight vertical drop!
-    line((14.75, 4.9), (14.75, 2.4), mark: (end: ">"), stroke: 1.2pt + c-gold, dash: "dashed")
-    content((15.7, 3.65), text(size: 6.8pt, weight: "bold", fill: c-gold)[Unpaid], anchor: "center")
+    // Missing sessions and insufficient paid work lead to the challenge exchange.
+    line((7.0, 4.9), (7.0, 3.65), (14.75, 3.65), (14.75, 2.4), mark: (end: ">"), stroke: 1.2pt + c-gold, dash: "dashed")
+    line((11.8, 4.9), (11.8, 3.65), stroke: 1.2pt + c-gold, dash: "dashed")
+    content((9.5, 3.95), text(size: 6.8pt, weight: "bold", fill: c-gold)[New Proof Required], anchor: "center")
 
     // 4. Local ban interaction with refusal: along top and left perimeter
-    line((5.8, 10.1), (5.8, 10.55), (0.35, 10.55), (0.35, 1.6), (0.6, 1.6), mark: (end: ">"), stroke: 1.1pt + c-red, dash: "dashed")
+    line((9.8, 10.1), (9.8, 10.55), (0.35, 10.55), (0.35, 1.6), (0.6, 1.6), mark: (end: ">"), stroke: 1.1pt + c-red, dash: "dashed")
     content((3.0, 10.75), text(size: 6.5pt, weight: "bold", fill: c-red)[Local Ban (403)], anchor: "center")
 
-    // 5. Rate refusal follows the outer perimeter: along top and right perimeter
-    line((11.5, 10.1), (11.5, 10.55), (17.05, 10.55), (17.05, 0.45), (2.6, 0.45), (2.6, 0.8), mark: (end: ">"), stroke: 1.1pt + c-gold, dash: "dashed")
-    content((14.3, 10.75), text(size: 6.5pt, weight: "bold", fill: c-gold)[Rate Exceeded (429)], anchor: "center")
+    // Rate and policy refusals share the outer path to the refusal response.
+    line((11.5, 10.1), (11.5, 10.55), (17.05, 10.55), (17.05, 0.45), (2.6, 0.45), (2.6, 0.8), mark: (end: ">"), stroke: 1.1pt + c-red, dash: "dashed")
+    content((14.3, 10.75), text(size: 6.5pt, weight: "bold", fill: c-red)[Rate Exceeded (429)], anchor: "center")
   })
 )
 
@@ -726,10 +727,10 @@ configured members.
 
     // Outer boundary card
     rect((0, 0), (17.0, 8.4), fill: rgb("fafafa"), stroke: 0.8pt + c-border, radius: 0.3)
-    content((8.5, 7.95), text(weight: "bold", size: 10pt, fill: c-navy)[Three-node replication through embedded Zaxonlite], anchor: "center")
+    content((8.5, 7.95), text(weight: "bold", size: 10pt, fill: c-navy)[Three-node replication with Zaxonlite], anchor: "center")
 
     // Node drawing helper (width 4.2cm, height 2.7cm)
-    let draw-node(x, y, is-leader, name, port, mesh-port, rss, state-text) = {
+    let draw-node(x, y, is-leader, name, port, mesh-port, state-text) = {
       let stroke-color = if is-leader { c-green } else { c-blue }
       let fill-color = if is-leader { c-green-bg } else { white }
       rect((x, y), (x + 4.2, y + 2.7), fill: fill-color, stroke: 1.2pt + stroke-color, radius: 0.2)
@@ -744,19 +745,19 @@ configured members.
       content((x + 2.1, y + 1.35), text(size: 7.2pt, fill: c-text)[HTTP: #port | Mesh: #mesh-port], anchor: "center")
       content((x + 2.1, y + 1.00), text(size: 7pt, fill: c-text)[WAL: #state-text], anchor: "center")
 
-      // RSS Badge
+      // Local runtime badge
       rect((x + 1.1, y + 0.22), (x + 3.1, y + 0.65), fill: rgb("e2e8f0"), stroke: none, radius: 0.1)
-      content((x + 2.1, y + 0.43), text(weight: "bold", size: 7pt, fill: c-navy)[RSS Varies], anchor: "center")
+      content((x + 2.1, y + 0.43), text(weight: "bold", size: 7pt, fill: c-navy)[Local Runtime], anchor: "center")
     }
 
     // Leader (Top Center)
-    draw-node(6.4, 4.4, true, "Node 1", "8000", "9000", "fixture-specific", "Chosen frames / applied locally")
+    draw-node(6.4, 4.4, true, "Node 1", "8000", "9000", "Propose, learn, apply")
 
     // Follower 1 (Bottom Left)
-    draw-node(0.6, 0.5, false, "Node 2", "8001", "9001", "fixture-specific", "Accept, learn, apply")
+    draw-node(0.6, 0.5, false, "Node 2", "8001", "9001", "Accept, learn, apply")
 
     // Follower 2 (Bottom Right)
-    draw-node(12.2, 0.5, false, "Node 3", "8002", "9002", "fixture-specific", "Accept, learn, apply")
+    draw-node(12.2, 0.5, false, "Node 3", "8002", "9002", "Accept, learn, apply")
 
     // Left replication arrow: from Leader to Node 2
     line((6.4, 4.9), (4.3, 3.2), mark: (start: ">", end: ">"), stroke: 1.5pt + c-blue)
@@ -767,8 +768,8 @@ configured members.
     content((13.2, 4.3), text(weight: "bold", size: 6.8pt, fill: c-blue)[Accept Proposals\ Chosen-Frame Notices], anchor: "south-west")
 
     // Heartbeat between Node 2 and Node 3 across the 7.4cm gap
-    content((8.5, 2.3), text(weight: "bold", size: 7.2pt, fill: c-gold)[Authenticated heartbeats and recovery messages], anchor: "center")
-    content((8.5, 1.75), text(size: 7pt, style: "italic", fill: c-text)[A chosen edit and each node's applied revision are separate states], anchor: "center")
+    content((8.5, 2.3), text(weight: "bold", size: 7.2pt, fill: c-gold)[Heartbeats and recovery], anchor: "center")
+    content((8.5, 1.75), text(size: 7pt, style: "italic", fill: c-text)[Chosen edits are applied separately on each node], anchor: "center")
     line((4.8, 1.15), (12.2, 1.15), mark: (start: ">", end: ">"), stroke: 1.1pt + c-gold, dash: "dashed")
   })
 )
@@ -1062,11 +1063,11 @@ from the word “sequential.”
 
     // Outer card
     rect((0, 0), (17.0, 7.8), fill: rgb("fafafa"), stroke: 0.8pt + c-border, radius: 0.3)
-    content((8.5, 7.3), text(weight: "bold", size: 10pt, fill: c-navy)[Hashcash Trial Parallelism and PoSW Label Dependencies], anchor: "center")
+    content((8.5, 7.3), text(weight: "bold", size: 10pt, fill: c-navy)[Hashcash Trials and PoSW Dependencies], anchor: "center")
 
     // Left Panel: independent Hashcash candidate trials
     rect((0.6, 0.6), (8.2, 6.7), fill: rgb("fff8f8"), stroke: 0.7pt + rgb("fca5a5"), radius: 0.2)
-    content((4.4, 6.2), text(weight: "bold", size: 8.8pt, fill: c-red)[Hashcash: Independent Candidate Trials], anchor: "center")
+    content((4.4, 6.2), text(weight: "bold", size: 8.8pt, fill: c-red)[Hashcash: Independent Trials], anchor: "center")
     content((4.4, 5.6), text(size: 7.5pt, style: "italic", fill: rgb("991b1b"))[$"Find" x: H("Challenge" || x) < T$], anchor: "center")
 
     // Cores attacking in parallel (width 1.7cm: 0.8 to 2.5)
@@ -1092,7 +1093,7 @@ from the word “sequential.”
 
     // Right Panel: schematic dependency order of PoSW labels
     rect((8.8, 0.6), (16.4, 6.7), fill: rgb("f0fdf4"), stroke: 0.7pt + rgb("86efac"), radius: 0.2)
-    content((12.6, 6.2), text(weight: "bold", size: 8.8pt, fill: c-green)[PoSW: Dependent Label Computation], anchor: "center")
+    content((12.6, 6.2), text(weight: "bold", size: 8.8pt, fill: c-green)[PoSW: Dependent Labels], anchor: "center")
     content((12.6, 5.6), text(size: 7.5pt, style: "italic", fill: rgb("14532d"))[Depth 13: 8,192 leaves / 16,383 total labels], anchor: "center")
 
     // Sequential nodes
