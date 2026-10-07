@@ -21,6 +21,20 @@ test "standard scanner rejects invalid complete JSON without allocation" {
     }) |input| try check(input);
 }
 
+test "borrowed bit capacity is initialized before the first stack update" {
+    var bits: [1]u8 = @splat(0xff);
+    var output: [8]u8 = undefined;
+    var budget: work.Budget = .{ .remaining = 10000 };
+    var scanner: tokens.Scanner = undefined;
+    try scanner.init("{}", &output, &bits, 8, &budget);
+    try std.testing.expectEqual(.object_begin, try scanner.next());
+    // BitStack appends zero when a byte first enters the live stack; updating its
+    // first bit must never read an undefined or recycled byte from borrowed capacity.
+    try std.testing.expectEqual(@as(u8, 0), bits[0] & 0xfe);
+    try std.testing.expectEqual(.object_end, try scanner.next());
+    try std.testing.expectEqual(.end_of_document, try scanner.next());
+}
+
 test "depth and decoded string bounds are enforced before growing borrowed storage" {
     try std.testing.expectError(error.JsonDepthLimit, check("[[[[[[[[[]]]]]]]]]"));
     var bits: [1]u8 = undefined;

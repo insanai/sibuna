@@ -41,6 +41,9 @@ pub const Scanner = struct {
         // BitStack.push never grows while bit_len stays below this capacity.
         // peekNextTokenType rejects excess depth before a push can allocate.
         self.raw.stack.bytes = .fromOwnedSlice(self.blocked.allocator(), bits);
+        // This is capacity, not live stack bytes. BitStack appends an initialized
+        // zero before its first read-modify-write, even when backing pages are untouched.
+        self.raw.stack.bytes.items.len = 0;
     }
 
     /// Partial escaped strings are assembled in one fixed output region. Tokens
