@@ -2,9 +2,9 @@
 
 #document(
   "index.html",
-  title: [Sibuna: A Zero-Allocation, Distributed Web Defense Engine],
+  title: [Sibuna: Architecture, Distributed Consensus, and Empirical Foundations],
   author: ("Vikrant Rathore", "Ronak Rathore"),
-  description: [Whitepaper on Sibuna's architecture, thermodynamic proof of work, zero-allocation pipeline, and embedded Multi-Paxos consensus via zaxonlite.],
+  description: [Sibuna's proof-of-work admission, bounded native inspection, Core Rule Set engine, memory ownership, embedded consensus and measured deployment limits.],
 )[
   #show: preserve-figures
   #include "whitepaper.typ"
