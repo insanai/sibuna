@@ -1,9 +1,15 @@
 """Explicit compatibility exceptions for the pinned actual-daemon FTW qualification.
 
 An exception must explain this transaction, not merely its rule family or HTTP status.
-Unknown failures, missing oracle evidence, and work exhaustion fail qualification.
+Unknown failures, missing oracle evidence, and unreviewed work exhaustion fail qualification.
 """
 from collections import Counter
+import hashlib
+
+OVERLONG_ARGUMENT_REQUEST_SHA256 = \
+    "5611a59971c02acf6abd5cfeedb863a368089bd447fc4d5a70a160933dc5f6bd"
+CRS_ARCHIVE_SHA256 = \
+    "3d678a41fd5aade34760127fef5dd64fd7a77848913fc0f70dde0cf467c94427"
 
 ACQUISITION_ERRORS = {"InvalidPercentEscape", "InvalidMime", "MultipartHeadLimit",
                       "AmbiguousBodyParameter", "InvalidXml", "InvalidMultipartHead",
@@ -48,12 +54,56 @@ def status_errors_only(result):
     return all(error.startswith("status 403 not in [") for error in result["errors"])
 
 
+def bounded_work_refusal(test, result, reference, budget, mode):
+    # The pinned PL4 overlong argument fixture reaches the deliberate work bound.
+    # Rule assertions alone cannot call this complete: the daemon must preserve
+    # incomplete coverage and enforce refusal before any origin delivery.
+    if test["test"] != "920390-1" or test["response"] or budget != 128_000_000 or \
+            len(test["stages"]) != 1 or len(result["stages"]) != 1 or \
+            reference["error"] != "WorkLimit" or not 0 < reference["work"] <= budget:
+        return False
+    if result["missing"] or result["unexpected"] or result["errors"] or result["gaps"]:
+        return False
+    payload = test["stages"][0]["payload"]
+    if hashlib.sha256(payload).hexdigest() != OVERLONG_ARGUMENT_REQUEST_SHA256:
+        return False
+    head, separator, body = payload.partition(b"\r\n\r\n")
+    lines = head.split(b"\r\n")
+    if not separator or lines[0] != b"POST /post HTTP/1.1" or \
+            lines.count(b"Content-Length: 64005") != 1 or \
+            lines.count(b"Content-Type: application/x-www-form-urlencoded") != 1 or \
+            body != b"foo=" + b"1" * 64001:
+        return False
+    if result["ids"] != [920370, 920390] or sorted(reference["ids"]) != result["ids"]:
+        return False
+    stage = result["stages"][0]
+    if stage.get("error") is not None or stage.get("leaked", False):
+        return False
+    findings = stage.get("findings", [])
+    if len(findings) != 2 or sorted(row["rule_id"] for row in findings) != result["ids"]:
+        return False
+    for finding in findings:
+        if finding["phase"] != 2 or finding["coverage"] != "incomplete" or \
+                finding["enforcing"] != (mode == "enforce") or finding["denied"] or \
+                finding["would_deny"] or finding["selected_status"] != 0 or \
+                finding["blocking_paranoia"] != 4 or finding["detection_paranoia"] != 4 or \
+                finding["source_digest"] != CRS_ARCHIVE_SHA256:
+            return False
+    if mode == "enforce":
+        return stage["status"] == 403 and stage["origin_bytes"] == 0 and \
+            result["origin_bytes"] == 0
+    return mode == "audit" and stage["status"] == 200 and \
+        stage["origin_bytes"] >= len(payload) and result["origin_bytes"] == stage["origin_bytes"]
+
+
 def verdict(test, result, engine, independent, budget, mode):
     if result["leaked"]:
         return "origin boundary"
     reference = engine.get(result["test"])
     if reference is not None and (reference["work"] > budget or
                                   reference["error"] == "WorkLimit"):
+        if bounded_work_refusal(test, result, reference, budget, mode):
+            return "bounded work refusal"
         return "work budget"
     if result["passed"]:
         return "log coverage gap" if result["gaps"] else "passed"
@@ -100,5 +150,6 @@ def classify(tests, results, engine, independent, budget, mode):
 def failures(results):
     accepted = {"passed", "log coverage gap", "deliberate connector refusal",
                 "deliberate acquisition refusal", "response preempted by request denial",
-                "engine refusal", "reference agrees", "enforce disruption"}
+                "engine refusal", "reference agrees", "enforce disruption",
+                "bounded work refusal"}
     return [row for row in results if row["class"] not in accepted]

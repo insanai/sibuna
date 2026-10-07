@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Check daemon corpus verdicts and transaction attribution without starting a daemon."""
 import unittest
+from copy import deepcopy
 
 from crs_ftw_daemon_check import evaluate
-from crs_ftw_daemon_verdict import verdict, failures
+from crs_ftw_daemon_verdict import CRS_ARCHIVE_SHA256, verdict, failures
 
 
 def test_case(name="942100-1", payload=b"GET / HTTP/1.1\r\n\r\n", response=False):
@@ -16,6 +17,29 @@ def result(name="942100-1", ids=None, status=200, origin=20, inbound=False):
     return dict(test=name, ids=ids or [], passed=False, leaked=False, gaps=[],
                 missing=[942100], unexpected=[], errors=[], origin_bytes=origin,
                 stages=[dict(status=status, origin_bytes=origin, request_denial=inbound)])
+
+
+def work_fixture(mode="audit"):
+    payload = (b"POST /post HTTP/1.1\r\n"
+               b"Accept: text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,"
+               b"text/plain;q=0.8,image/png,*/*;q=0.5\r\n"
+               b"Accept-Encoding: gzip,deflate\r\nAccept-Language: en-us,en;q=0.5\r\n"
+               b"Content-Length: 64005\r\nContent-Type: application/x-www-form-urlencoded\r\n"
+               b"Host: localhost\r\nKeep-Alive: 300\r\nProxy-Connection: keep-alive\r\n"
+               b"User-Agent: OWASP CRS test agent\r\nConnection: close\r\n\r\n"
+               b"foo=" + b"1" * 64001)
+    test = test_case("920390-1", payload)
+    test["stages"][0]["expected"] = [920390]
+    enforcing = mode == "enforce"
+    origin = 0 if enforcing else len(payload) + 82
+    row = result(test["test"], [920370, 920390], 403 if enforcing else 200, origin)
+    row.update(missing=[], passed=True)
+    row["stages"][0]["findings"] = [dict(rule_id=identifier, phase=2,
+        coverage="incomplete", enforcing=enforcing, denied=False, would_deny=False,
+        selected_status=0, blocking_paranoia=4, detection_paranoia=4,
+        source_digest=CRS_ARCHIVE_SHA256) for identifier in row["ids"]]
+    engine = {test["test"]: dict(error="WorkLimit", work=127_864_803, ids=row["ids"])}
+    return test, row, engine
 
 
 class VerdictTest(unittest.TestCase):
@@ -79,6 +103,60 @@ class VerdictTest(unittest.TestCase):
         observed = [[dict(rule_id=942100, phase=2, would_deny=True),
                      dict(rule_id=950100, phase=4, would_deny=True)]]
         self.assertTrue(evaluate(test, row, observed)["leaked"])
+
+    def test_exact_audit_work_refusal_is_visible_and_not_a_complete_contract(self):
+        test, row, engine = work_fixture()
+        self.assertEqual(self.decision(test, row, engine), "bounded work refusal")
+        self.assertEqual(failures([dict(row, **{"class": "bounded work refusal"})]), [])
+
+    def test_exact_enforcing_work_refusal_delivers_nothing(self):
+        test, row, engine = work_fixture("enforce")
+        self.assertEqual(self.decision(test, row, engine, mode="enforce"), "bounded work refusal")
+
+    def test_work_refusal_never_accepts_changed_payload_or_ambiguous_headers(self):
+        test, row, engine = work_fixture()
+        payload = test["stages"][0]["payload"]
+        for changed in (payload[:-1] + b"2", payload.replace(b"64005", b"64004"),
+                        payload.replace(b"Host:", b"Content-Length: 64005\r\nHost:")):
+            altered = deepcopy(test)
+            altered["stages"][0]["payload"] = changed
+            self.assertEqual(self.decision(altered, row, engine), "work budget")
+
+    def test_work_refusal_requires_the_actual_mode_status(self):
+        for mode in ("audit", "enforce"):
+            test, row, engine = work_fixture(mode)
+            row["stages"][0]["status"] = 403 if mode == "audit" else 200
+            self.assertEqual(self.decision(test, row, engine, mode=mode), "work budget")
+
+    def test_complete_coverage_cannot_hide_a_work_refusal(self):
+        test, row, engine = work_fixture()
+        row["stages"][0]["findings"][0]["coverage"] = "inspected"
+        self.assertEqual(self.decision(test, row, engine), "work budget")
+
+    def test_work_refusal_cannot_waive_an_enforcing_origin_leak(self):
+        test, row, engine = work_fixture("enforce")
+        row.update(leaked=True, origin_bytes=1)
+        row["stages"][0]["origin_bytes"] = 1
+        self.assertEqual(self.decision(test, row, engine, mode="enforce"), "origin boundary")
+
+    def test_work_refusal_requires_all_findings_and_the_reviewed_profile(self):
+        test, original, engine = work_fixture()
+        for field, value in (("missing", [920390]), ("unexpected", [942100]),
+                             ("errors", ["console evidence page unavailable"]),
+                             ("gaps", ["regex log assertion"])):
+            row = dict(original, **{field: value})
+            self.assertEqual(self.decision(test, row, engine), "work budget")
+        for field, value in (("blocking_paranoia", 1), ("enforcing", True),
+                             ("source_digest", "00" * 32), ("denied", True)):
+            row = deepcopy(original)
+            row["stages"][0]["findings"][0][field] = value
+            self.assertEqual(self.decision(test, row, engine), "work budget")
+        self.assertEqual(verdict(test, original, engine, {}, 16_000_000, "audit"), "work budget")
+        changed = deepcopy(test)
+        changed["test"] = "920390-2"
+        row = dict(original, test=changed["test"])
+        self.assertEqual(self.decision(changed, row, {row["test"]: engine[test["test"]]}),
+                         "work budget")
 
 
 if __name__ == "__main__":

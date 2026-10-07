@@ -2411,9 +2411,9 @@ reference. Changing those behaviors merely to satisfy another connector's expect
 would weaken compatibility with the selected reference profile.
 
 Diagnostic execution allows 128 million charged units, which is also the production default.
-After the lazy DFA, capture-on-match and shared transform outputs, no request or response
-case reaches it, and four request cases exceed the former 16 million default (seventy-seven
-did before). These are paranoia-level-four fixture results, not an admission or performance
+The overlong-argument request `920390-1` exhausts that budget; no response case does.
+Four request cases exceed the former 16 million default (seventy-seven did before).
+These are paranoia-level-four fixture results, not an admission or performance
 guarantee for normal application traffic. Reports retain per-case work,
 errors, observed IDs, the source commit and raw expectations. Reference annotations do
 not convert failed assertions or coverage gaps into passed tests. The daemon corpus below
@@ -2430,13 +2430,27 @@ tests and one dropped incident invalidates the run. Raw wire requests, multi-sta
 the 29 status assertions now run over the socket. The 15 regex log assertions remain gaps:
 Sibuna stores rule IDs, not log lines.
 
-In Audit (2026-10-07), 5,123 tests pass with no dropped incident and none limited by the work
-budget. Differences are classified against the engine probe: 35 reproduce its reference
+In Audit (2026-10-07), 5,107 complete contracts pass, and 5,123 tests satisfy their rule-ID
+and status assertions, with no dropped incident. The latter count also includes the fifteen
+regex-log gaps and one incomplete work-bound case; neither is complete inspection.
+Differences are classified against the engine probe: 35 reproduce its reference
 differences exactly and 30 are its strict acquisition refusals (chiefly invalid percent
 escapes in urlencoded bodies). Five are deliberate connector refusals answered 400
 before CRS runs: an absolute-form target, `CONNECT`, a request with both `Content-Length` and
 `Transfer-Encoding`, and two unsupported protocol versions. Malformed `Host` fields are now
 refused with the 400 the corpus expects.
+
+`920390-1` sends one URL-encoded `foo` argument of 64,001 bytes at paranoia four, above the
+fixture's 400-byte argument bound. Rules 920370 and 920390 are retained before the native
+probe refuses further work. Audit permits the request according to its explicit incomplete
+policy and marks both findings incomplete. A focused Enforce replay returns 403 with zero
+origin bytes and retains the same incomplete evidence. This is a reviewed bounded refusal,
+not a complete-contract pass or proof that every input below the entity ceiling completes.
+Qualification recognizes this exact pinned request, 128-million budget, signed source,
+paranoia profile, findings and delivery states. Changed bytes, missing findings, completed
+coverage, an unexpected status or any enforcing origin delivery remain failures; other
+work-limit cases are not waived. The original raw report and its executable provenance are
+retained separately from any subsequent classification receipt.
 
 In Enforce, 4,792 request stages were denied and no request-phase denial delivered a byte to
 the origin. Requests whose inspection could not complete were refused 403 rather than
