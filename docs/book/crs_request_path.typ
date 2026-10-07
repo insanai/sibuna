@@ -15,7 +15,7 @@
   ("small_get", [Small GET]),
   ("json_8k", [8 KiB JSON]),
   ("multipart_16k", [16 KiB multipart]),
-  ("sqli_query", [SQLi in query]),
+  ("sqli_query", [SQL injection (query)]),
 )
 
 #let crs_meta_line() = {
@@ -53,7 +53,7 @@
     inset: 4pt, stroke: 0.4pt + rule,
     fill: (col, row) => if row == 0 { blue_light } else { none },
     table.header([*Profile*], [*Workload*], [*req/s* #linebreak() median; min–max],
-      [*p50*], [*p99*], [*CPU* #linebreak() µs/req], [*Peak summed RSS*]),
+      [*p50*], [*p99*], [*CPU* #linebreak() µs/req], [*Peak resident memory*]),
     ..rows.flatten(),
   ))
 }

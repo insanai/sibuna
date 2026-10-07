@@ -21,7 +21,7 @@
 
 #let workload_names = (
   "admitted": [Admitted session], "challenged": [No session],
-  "allowed_static": [Allowed static path], "attack": [SQLi with session],
+  "allowed_static": [Allowed static path], "attack": [SQL injection with session],
   "valid_session": [Session check], "unauthenticated_check": [No session],
   "proof_verification": [Fresh proof], "challenge_bootstrap": [Challenge bootstrap],
 )
@@ -45,7 +45,7 @@
     inset: 4pt, stroke: 0.4pt + rule,
     fill: (col, row) => if row == 0 { blue_light } else { none },
     table.header([*Profile*], [*Workload*], [*req/s* #linebreak() median; min–max],
-      [*p99*], [*CPU* #linebreak() µs/req], [*Peak summed RSS*]), ..rows.flatten()))
+      [*p99*], [*CPU* #linebreak() µs/req], [*Peak resident memory*]), ..rows.flatten()))
 }
 
 #let admission_operations_table(labels) = {
@@ -71,7 +71,7 @@
     inset: 4pt, stroke: 0.4pt + rule,
     fill: (col, row) => if row == 0 { blue_light } else { none },
     table.header([*Profile*], [*Mode*], [*Operation*], [*ops/s* #linebreak() median; min–max],
-      [*CPU* #linebreak() µs/op], [*Peak summed RSS*]), ..rows.flatten()))
+      [*CPU* #linebreak() µs/op], [*Peak resident memory*]), ..rows.flatten()))
 }
 
 #let bootstrap_work_line() = {

@@ -40,7 +40,7 @@
   let labels = if loopback {
     (("benign_get", [Benign GET]),)
   } else if denied {
-    (("sqli_query", [SQLi in query]), ("sqli_json", [SQLi in JSON]))
+    (("sqli_query", [SQL injection (query)]), ("sqli_json", [SQL injection (JSON)]))
   } else {
     (("benign_get", [Benign GET]), ("benign_json_8k", [Benign JSON POST]))
   }
@@ -67,7 +67,7 @@
     inset: 4pt, stroke: 0.4pt + rule,
     fill: (col, row) => if row == 0 { blue_light } else { none },
     table.header([*Profile*], [*Workload*], [*req/s* #linebreak() median; min–max],
-      [*p99*], [*CPU* #linebreak() µs/req], [*Peak summed RSS*]),
+      [*p99*], [*CPU* #linebreak() µs/req], [*Peak resident memory*]),
     ..rows.flatten(),
   ))
 }

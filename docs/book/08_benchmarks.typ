@@ -5,25 +5,20 @@
 #import "crs_request_path.typ": crs_meta_line, crs_table
 
 #part_page("VIII", [Empirical Evaluation], [
-  We measure primitive costs, complete HTTP products, admission operations, distributed
-  behavior and replicated-cluster costs. The console has a separate isolation acceptance
-  matrix. Every number is rendered from a results file at build time; its header identifies
-  the tested revision and host. The 4 October three-product comparisons run Sibuna v0.2.0,
-  Anubis and BunkerWeb with the products and generator on separate physical hosts.
-  The primitive suite identifies its current clean revision and Zig version in the figure
-  metadata. It measures primitives with native CRS disabled, not the cost of a loaded CRS
-  generation. Earlier loopback product,
-  admission, distributed and cluster records retain their historical revisions and do not
-  qualify the current release.
-  A functional pass and an inconclusive isolation measurement answer different questions.
+  This chapter measures basic operations, complete HTTP requests, admission and clusters.
+  Tables read their values from saved results and name the tested revision and host.
+  The 4 October comparison uses Sibuna v0.2.0, Anubis and BunkerWeb on separate service and
+  load hosts. The current native CRS measurements appear in their own section.
+  Basic-operation timings use CRS disabled. Earlier loopback and cluster records describe
+  their recorded revisions. The console has a separate performance-isolation gate;
+  working features alone do not establish that target.
 ])
 
 == Methodology
 
 #objectives([
-  By the end of this chapter, you should be able to reproduce every number in this part, say
-  what each harness includes and excludes, explain what the spread column means, and tell a
-  measured figure from a published one.
+  Reproduce the measurements, explain what each test includes, and read the observed
+  ranges. Distinguish results measured here from figures published by another product.
 ])
 
 The performance harnesses live under `benchmarks/`:
@@ -42,22 +37,20 @@ The performance harnesses live under `benchmarks/`:
   [`crs_request_path.py`], [Native CRS disabled, Audit and Enforce at paranoia 1 and 2; small GET, JSON, multipart and SQL-injection requests with eight dashboards on separate load and service hosts], [`results/crs-request-path-two-host-latest.json`],
 )
 
-The primitive suite times batches of many thousand operations; per-operation percentiles are
-not reported because a clock read costs as much as the work. The HTTP harnesses report what
-`wrk` reports: request counts, and per-request latency percentiles that `wrk` computes from
-its own histogram. Except for the three-product and native CRS comparisons described below, CPU
-time is the product process's accumulated user and system time from
-`ps`, read before and after each run; memory is the peak resident set sampled every 100 ms.
-On the Linux containers used for the release review, `ps` reports whole CPU seconds, so
-short runs cannot resolve small changes in CPU cost. Request rate and latency come from
-the load generator's independent wall clock and histogram; CPU-accounting precision does
-not change those measurements. Container permissions do not grant control over the host's
-processor governor or other tenants. Resource conditions and uncertainty belong with each
-record rather than being assumed to match a dedicated machine.
-The three-product and native CRS families instead sum the live product tree's `/proc`
-user/system ticks; shared pages may be counted more than once in their peak summed RSS.
-Their CPU-accounting interval includes the remote generator invocation, while request
-latency and throughput use the generator's own timed workload.
+The primitive suite times batches of thousands of operations. A clock read can cost as
+much as one operation, so it reports batch medians instead of per-operation percentiles.
+The HTTP tests use `wrk` request counts and latency histograms.
+
+Most older tests read the product's accumulated user and system CPU time from `ps` before
+and after each run. They sample resident memory every 100 ms. On the Linux review containers,
+`ps` reports whole CPU seconds, so a short run cannot resolve a small CPU change. Request
+rate and latency use the load generator's separate clock and retain their own precision.
+
+The three-product and native CRS tests sum user and system ticks from `/proc` for every live
+product process. Their CPU interval includes the remote load-generator invocation; request
+timing comes from the generator itself. Summed resident memory can count shared pages more
+than once. Each record describes its host conditions. These containers cannot control CPU
+frequency or other users of the physical host.
 
 The historical Linux admission and whole-product comparisons give every product thread the same allowed
 CPU set before warmup: two CPUs for admission and four by default for whole products. A Sibuna
@@ -65,16 +58,16 @@ accept-thread count is not a CPU budget equivalent to Go's `GOMAXPROCS`. Each pr
 its affinity; the origin and load generator keep native scheduling. Admission issuance reserves
 a large challenge allowance to measure successful operations rather than the production
 limiter's default exhaustion behavior. The comparison records that allowance explicitly.
-An idle CPU figure of zero over ten seconds means `ps` did not cross a whole CPU second;
-it does not prove that a node performed no background work.
+A zero idle-CPU figure over ten seconds means `ps` observed less than one whole CPU second.
+Background work below that resolution remains unmeasured.
 
 #callout([Measurement scope], [
-  Only host measurements are emitted. Anubis runs from its release binary; BunkerWeb runs
-  natively from its verified official image in a private mount namespace. SafeLine and
-  Cloudflare remain unmeasured in this chapter; their published facts are identified
-  separately. Timers surround batches; state resets and warmup are untimed. Allocation counts
-  are not instrumented: the allocation-free primitive contract is based on API and source
-  review. No harness links into the daemon or adds a hook to the request path.
+  The tables contain measurements from the named hosts. Anubis uses its release binary;
+  BunkerWeb uses its verified official image in a private mount namespace. SafeLine and
+  Cloudflare are unmeasured here; their published figures are identified separately.
+  Batch timers exclude state resets and warmup. Allocation counts are not instrumented;
+  the allocation-free primitive contract comes from API and source review. The test tools
+  run outside the daemon and add no request-path hooks.
 ], kind: "warning")
 
 == Primitive Latencies
@@ -153,18 +146,17 @@ Reverse-proxy rows therefore include the origin's own cost and one extra loopbac
 
 === What the Measurement Changed
 
-The first run of this harness measured a version of Sibuna in which each accept thread served
-one connection to completion and every proxied response closed the client connection. Under
-64 concurrent connections the throughput looked healthy but the 99th-percentile latency was
-over 130 ms, because sixty connections waited for four workers, and the reverse-proxy runs
-exhausted the host's ephemeral ports with sockets in `TIME_WAIT`. Neither defect was visible
-in the primitive suite or in the two-client admission harness. Three changes followed, all
-described in Part V: a bounded thread per connection with a `503` overload path, origin
-response framing so proxied connections stay open, and a pooled origin connection (the second
-run, with framing but a fresh origin connection per request, managed about 1,400 proxied
-requests per second before exhausting ephemeral ports). The tables above are from the run
-after those changes; the superseded runs are not retained as result files, which is why their
-figures appear only in this paragraph, labelled as such.
+The first run exposed two problems that the primitive and two-client tests had missed.
+Each accept thread served one connection to completion. With 64 connections and four
+workers, sixty connections could wait; p99 exceeded 130 ms. Every proxied response also
+closed its client connection, eventually exhausting ephemeral ports in `TIME_WAIT`.
+
+Part V describes the resulting changes: a bounded thread per connection, a `503` response
+when capacity is full, correctly framed keep-alive responses, and an origin connection pool.
+An intermediate run kept client connections open but opened a new origin connection for each
+request. It reached about 1,400 requests per second before running out of ephemeral ports.
+The tables show the later implementation. These earlier diagnostic runs have no retained
+result files; their figures are included here to explain the design changes.
 
 A later run pinned every product to the same four CPUs for an equal budget. It showed
 Sibuna's reverse-proxy 99th percentile at 35–45 ms against Anubis's 11 ms, with occasional
@@ -185,15 +177,13 @@ Those equal-rate figures are not in a result file, which is why they appear only
 paragraph.
 
 #callout([Reading the Anubis rows], [
-  Anubis is a capable, widely deployed product and this is not a claim that it is slow. It runs
-  a garbage-collected runtime, verifies an Ed25519 signature per session check, and keeps
-  challenge state in a store; those are design choices with benefits this harness does not
-  measure, such as a smaller dependency on the host's threading model. The rows show what a
-  request costs each product on one host under one load shape. Its reverse-proxy rows are
-  far below its forward-auth rows, with peak memory in the hundreds of megabytes; the most
-  likely cause is origin-connection churn under 64 concurrent clients (Go's HTTP transport
-  keeps only two idle connections per host by default, and Anubis was run with its default
-  flags), but the harness did not confirm that and records only what it observed.
+  These rows describe one host and load pattern. Anubis uses a garbage-collected runtime,
+  verifies an Ed25519 signature for each session check, and stores challenge state.
+  The test does not measure the wider benefits or costs of those choices.
+  Its reverse-proxy rate is lower than its forward-auth rate, and peak memory reaches
+  hundreds of megabytes. Origin-connection churn under 64 clients is one possible cause:
+  Go's default HTTP transport keeps two idle connections per host, and Anubis used its
+  default flags. This explanation was not confirmed by the test.
 ])
 
 === Not Measured
@@ -213,15 +203,12 @@ coverage. All three products use unconditional admission policies. Gate and the 
 CRS-off profile, together with Anubis, provide proxy baselines; Shield and the two CRS-on
 profiles enable inspection.
 
-Sibuna v0.2.0 is built on the product host with Zig 0.17.0 at `ReleaseSafe`, using the
-native target, stripped, with storage and console
-compiled in but inactive. BunkerWeb 1.6.15 comes from its official Linux amd64 image,
+Sibuna v0.2.0 is built on the service host with Zig 0.17.0 at `ReleaseSafe`. It uses the
+native target with symbols stripped. Storage and console are compiled in but inactive. BunkerWeb 1.6.15 comes from its official Linux amd64 image,
 resolved by SHA-256 digest, with nginx 1.30.5 and the shipped OWASP CRS 4.29.0 rules. Its
 configuration generator and security modules are unchanged. Anubis uses its verified official
-v1.27.0 binary and native Go upstream transport defaults. The BunkerWeb image runs natively
-through
-`chroot` in a private mount namespace, without Docker, CPU emulation or a container network
-bridge. The result file records the immutable image digest, rule revision, configuration,
+v1.27.0 binary and native Go upstream transport defaults. BunkerWeb runs natively through `chroot` in a private mount namespace. This setup uses
+neither Docker nor CPU emulation and adds no container network bridge. The result file records the immutable image digest, rule revision, configuration,
 tool versions, executable digest and source digest.
 
 `python3 benchmarks/bunkerweb.py --rootfs <unpacked-image>/rootfs --image <oci-layout>
@@ -277,17 +264,18 @@ whether to block. Reporting both configurations avoids attributing all rejection
 to inspection. The custom page and configuration are part of the committed fixture.
 
 #callout([Different protection, one request fixture], [
-  BunkerWeb's #link("https://docs.bunkerweb.io/1.6.15/features/#modsecurity")[ModSecurity/CRS profile] parses request bodies, evaluates its broader rule set
-  and retains response-body inspection. The Sibuna v0.2.0 profiles measured here use bounded
-  heuristic detectors without CRS. Version 0.3.0 adds native CRS; its separate measurement
-  family below uses a different fixture. These throughput rows cannot establish equivalent
-  protection or superior bot detection. The host is an unprivileged container on a shared machine;
-  processor frequency and other tenants are outside the fixture's control. Separate logical
-  CPU sets do not establish exclusive physical cores. Consult the recorded spread and
-  reproduce on your deployment host before using the figures for capacity planning.
-  The controller monitored progress and staged verification code over SSH during the network
-  run; no compiler or competing product benchmark overlapped it. This is not an isolated
-  network-capacity test.
+  BunkerWeb's #link("https://docs.bunkerweb.io/1.6.15/features/#modsecurity")[ModSecurity/CRS profile]
+  parses bodies, evaluates a broader rule set and inspects responses. The measured Sibuna
+  v0.2.0 profiles use bounded heuristic detectors. Version 0.3.0's native CRS results use
+  a separate fixture below. Request rates cannot establish equivalent protection or
+  bot-detection quality.
+
+  The service runs in an unprivileged container on a shared machine. Logical CPU allowances
+  do not reserve physical cores or control CPU frequency. The controller also monitored
+  progress and copied verification code over SSH during the run. No compiler or competing
+  benchmark overlapped it, but network capacity was not isolated. Read the observed ranges
+  and repeat the test on your deployment host before planning capacity.
+
 ], kind: "warning")
 
 === Loopback Baseline
@@ -359,9 +347,9 @@ range for Sibuna's bootstrap workload.
 
 Sibuna and Anubis use forward-auth here. BunkerWeb session checks include the origin relay;
 its proxy rows are not pure authorization costs. Anubis's Ed25519 and optional HS512 session
-schemes are separate cases. Operation rates include Python, IPC, connection setup and HTTP,
-so they describe the whole journey with two clients, not native verifier speed or maximum
-server capacity. SSH transfer and proof solving are outside the generator's clock. CPU
+schemes are separate cases. Operation rates include Python, communication between processes, connection setup and HTTP.
+They describe the complete journey with two clients. Native verifier speed and maximum
+server capacity require separate measurements. SSH transfer and proof solving are outside the generator's clock. CPU
 accounting includes the controller's SSH interval; tick deltas too small to resolve are
 reported as unresolved. No per-operation percentile is inferred from these batch rates.
 
@@ -390,9 +378,9 @@ process tree.
 #v(4mm)
 #crs_table(("audit-pl2", "enforce-pl2"))
 
-The disabled JSON and multipart rows are bounded by the network between the hosts, as in the
-three-product JSON rows, so their CPU column is the better baseline. No sample exhausted the
-work budget, and Audit and Enforce cost the same on admitted traffic.
+The network limits the disabled JSON and multipart rows, as it does the three-product JSON
+rows. Use their CPU cost when comparing inspection work. No sample exhausts the work budget.
+Audit and Enforce have similar measured costs for admitted traffic.
 Body cost scales with inspected bytes: paranoia level one charges about 1,800 work units per
 byte of free text, and most of that time is regex scanning and transform pipelines per rule
 and value. Peak RSS rises by 30 to 37 MiB over the disabled profile. Slot reservations are
@@ -459,9 +447,8 @@ keep admitting requests and still propagate a fresh ban.
 #callout([What the cluster costs], [
   Per-node throughput and tail latency in the cluster rows should be read against the
   single-node rows in the same table, not against the four-worker figures earlier in this
-  part. The differences that matter to an operator are the idle CPU and resident memory
-  columns, which are what replication and the embedded database add to a quiet node, and the
-  all-nodes rows. Three daemons and three load generators share the benchmark host's CPU,
+  part. The idle CPU and resident-memory columns show what replication and the embedded database
+  add to a quiet node. The all-nodes rows show aggregate throughput. Three daemons and three load generators share the benchmark host's CPU,
   memory and loopback network; the aggregate does not establish throughput on three separate
   hosts. CPU microseconds per request and idle costs also depend on that host and the
   accounting resolution. Read the measured rows and their provenance without assuming linear
