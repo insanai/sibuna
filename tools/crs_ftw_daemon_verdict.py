@@ -54,6 +54,32 @@ def status_errors_only(result):
     return all(error.startswith("status 403 not in [") for error in result["errors"])
 
 
+def acquisition_refusal(result, reference, mode):
+    # Matching upstream IDs does not complete a transaction that stopped acquiring
+    # its entity. The native refusal explains that boundary, and retained findings
+    # must describe the actual incomplete transaction rather than a complete denial.
+    if reference["error"] not in ACQUISITION_ERRORS or result["unexpected"] or \
+            sorted(reference["ids"]) != result["ids"]:
+        return False
+    for stage in result["stages"]:
+        if stage.get("error") is not None or stage.get("leaked", False):
+            return False
+        for finding in stage.get("findings", []):
+            if finding["coverage"] != "incomplete" or \
+                    finding["enforcing"] != (mode == "enforce") or finding["denied"] or \
+                    finding["would_deny"] or finding["selected_status"] != 0 or \
+                    finding["blocking_paranoia"] != 4 or finding["detection_paranoia"] != 4 or \
+                    finding["source_digest"] != CRS_ARCHIVE_SHA256:
+                return False
+    if mode == "enforce":
+        return status_errors_only(result) and result["origin_bytes"] == 0 and all(
+            stage["status"] == 403 and stage["origin_bytes"] == 0
+            for stage in result["stages"])
+    return mode == "audit" and not result["errors"] and result["origin_bytes"] > 0 and all(
+        stage["status"] is not None and stage["origin_bytes"] > 0
+        for stage in result["stages"])
+
+
 def bounded_work_refusal(test, result, reference, budget, mode):
     # The pinned PL4 overlong argument fixture reaches the deliberate work bound.
     # Rule assertions alone cannot call this complete: the daemon must preserve
@@ -105,6 +131,14 @@ def verdict(test, result, engine, independent, budget, mode):
         if bounded_work_refusal(test, result, reference, budget, mode):
             return "bounded work refusal"
         return "work budget"
+    if reference is not None and acquisition_refusal(result, reference, mode):
+        return "engine refusal"
+    if any(finding.get("coverage") == "incomplete" for stage in result["stages"]
+           for finding in stage.get("findings", [])):
+        return "incomplete inspection"
+    if reference is not None and reference["error"] in ACQUISITION_ERRORS and \
+            not result["ids"]:
+        return "incomplete inspection"
     if result["passed"]:
         return "log coverage gap" if result["gaps"] else "passed"
     if connector_refusal(test, result):
@@ -116,13 +150,6 @@ def verdict(test, result, engine, independent, budget, mode):
             return "deliberate acquisition refusal"
     if reference is None:
         return "missing engine evidence"
-    if reference["error"] in ACQUISITION_ERRORS and not result["ids"]:
-        if not result["errors"] and mode == "audit":
-            return "engine refusal"
-        if mode == "enforce" and status_errors_only(result) and all(
-                row["status"] == 403 and row["origin_bytes"] == 0
-                for row in result["stages"]):
-            return "engine refusal"
     oracle = independent.get(result["test"])
     if oracle is None:
         return "missing independent evidence"

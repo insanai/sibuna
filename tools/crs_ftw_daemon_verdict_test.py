@@ -42,6 +42,21 @@ def work_fixture(mode="audit"):
     return test, row, engine
 
 
+def acquisition_fixture(mode="audit", ids=None):
+    identifiers = [920470] if ids is None else ids
+    test = test_case("920470-1")
+    enforcing = mode == "enforce"
+    row = result(test["test"], identifiers, 403 if enforcing else 200,
+                 0 if enforcing else 100)
+    row.update(missing=[], passed=True)
+    row["stages"][0]["findings"] = [dict(rule_id=identifier, phase=1,
+        coverage="incomplete", enforcing=enforcing, denied=False, would_deny=False,
+        selected_status=0, blocking_paranoia=4, detection_paranoia=4,
+        source_digest=CRS_ARCHIVE_SHA256) for identifier in identifiers]
+    engine = {test["test"]: dict(error="InvalidMime", work=100, ids=identifiers)}
+    return test, row, engine
+
+
 class VerdictTest(unittest.TestCase):
     def decision(self, test, row, engine=None, independent=None, mode="audit"):
         return verdict(test, row, engine or {}, independent or {}, 128_000_000, mode)
@@ -157,6 +172,51 @@ class VerdictTest(unittest.TestCase):
         row = dict(original, test=changed["test"])
         self.assertEqual(self.decision(changed, row, {row["test"]: engine[test["test"]]}),
                          "work budget")
+
+    def test_matching_ids_do_not_hide_incomplete_acquisition(self):
+        for mode in ("audit", "enforce"):
+            test, row, engine = acquisition_fixture(mode)
+            self.assertEqual(self.decision(test, row, engine, mode=mode), "engine refusal")
+
+    def test_empty_findings_do_not_complete_native_acquisition_refusal(self):
+        for mode in ("audit", "enforce"):
+            test, row, engine = acquisition_fixture(mode, [])
+            self.assertEqual(self.decision(test, row, engine, mode=mode), "engine refusal")
+
+    def test_unknown_incomplete_inspection_is_not_a_pass(self):
+        test, row, engine = acquisition_fixture()
+        engine[test["test"]]["error"] = None
+        self.assertEqual(self.decision(test, row, engine), "incomplete inspection")
+        self.assertEqual(len(failures([dict(row, **{"class": "incomplete inspection"})])), 1)
+
+    def test_acquisition_refusal_requires_identical_native_ids(self):
+        test, row, engine = acquisition_fixture()
+        engine[test["test"]]["ids"] = []
+        self.assertEqual(self.decision(test, row, engine), "incomplete inspection")
+
+    def test_acquisition_refusal_preserves_enforcing_delivery_boundary(self):
+        test, original, engine = acquisition_fixture("enforce")
+        for status, origin in ((200, 0), (403, 1)):
+            row = deepcopy(original)
+            row["origin_bytes"] = origin
+            row["stages"][0].update(status=status, origin_bytes=origin)
+            self.assertEqual(self.decision(test, row, engine, mode="enforce"),
+                             "incomplete inspection")
+
+    def test_acquisition_refusal_requires_honest_finding_state(self):
+        test, original, engine = acquisition_fixture()
+        for field, value in (("enforcing", True), ("denied", True), ("would_deny", True),
+                             ("selected_status", 403), ("blocking_paranoia", 1),
+                             ("source_digest", "00" * 32)):
+            row = deepcopy(original)
+            row["stages"][0]["findings"][0][field] = value
+            self.assertEqual(self.decision(test, row, engine), "incomplete inspection")
+
+    def test_complete_early_denial_is_not_an_acquisition_refusal(self):
+        test, row, engine = acquisition_fixture("enforce")
+        row["stages"][0]["findings"][0].update(coverage="local_response", denied=True,
+                                                 would_deny=True, selected_status=403)
+        self.assertEqual(self.decision(test, row, engine, mode="enforce"), "passed")
 
 
 if __name__ == "__main__":
