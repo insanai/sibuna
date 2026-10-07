@@ -780,6 +780,9 @@ pub fn ProtocolGated(
             role: Role = .follower,
             ballot: Ballot = Ballot.zero,
             highest_observed_round: u64 = 0,
+            // Nacks need the full ordering: priorities and node IDs also
+            // distinguish promises within one election round.
+            highest_observed_ballot: Ballot = .zero,
             leader_hint: ?NodeId = null,
             next_slot: Slot = 1,
             /// First slot this leadership may fill with a new value. Every
@@ -1368,11 +1371,8 @@ pub fn ProtocolGated(
 
             fn observeLeader(self: *Node, from: NodeId, ballot: Ballot) void {
                 self.leader_hint = from;
+                self.noteObservedBallot(ballot);
                 self.election_ticks = 0;
-                self.highest_observed_round = @max(
-                    self.highest_observed_round,
-                    ballot.round,
-                );
                 if (!self.ballot.eql(ballot)) self.role = .follower;
             }
 
@@ -1912,12 +1912,19 @@ pub fn ProtocolGated(
                 _ = from;
                 if (!message.rejected.eql(self.ballot)) return;
                 if (!self.ballot.lessThan(message.promised)) return;
+                // A delayed rejection concerns our old campaign; it cannot
+                // replace a newer durable promise or observed routing hint.
+                if (message.promised.lessThan(self.durable.promised) or
+                    message.promised.lessThan(self.highest_observed_ballot)) return;
+                self.noteObservedBallot(message.promised);
                 self.role = .follower;
                 self.leader_hint = message.promised.node;
-                self.highest_observed_round = @max(
-                    self.highest_observed_round,
-                    message.promised.round,
-                );
+            }
+
+            fn noteObservedBallot(self: *Node, ballot: Ballot) void {
+                if (self.highest_observed_ballot.lessThan(ballot))
+                    self.highest_observed_ballot = ballot;
+                self.highest_observed_round = @max(self.highest_observed_round, ballot.round);
             }
 
             fn sendAccept(
@@ -3462,4 +3469,67 @@ fn hasPointers(comptime T: type) bool {
         .error_union => |info| hasPointers(info.payload) or hasPointers(info.error_set),
         else => false,
     };
+}
+
+test "a delayed nack preserves the newer durable leader observation" {
+    var membership: TestProtocol.Membership = undefined;
+    try membership.init(&.{ 1, 2, 3 });
+    var node: TestProtocol.Node = undefined;
+    try node.init(1, &membership);
+    node.role = .preparing;
+    node.ballot = .{ .round = 1, .node = 1 };
+    node.durable.promised = node.ballot;
+    var effects = TestProtocol.Effects{};
+    const newer = Ballot{ .round = 3, .node = 3 };
+    try node.step(.{ .from = 3, .to = 1, .message = .{ .prepare = .{
+        .ballot = newer,
+        .first = 1,
+    } } }, &effects);
+    effects.confirmWritesDurable();
+    node.election_ticks = 7;
+    try node.step(.{ .from = 2, .to = 1, .message = .{ .nack = .{
+        .rejected = node.ballot,
+        .promised = .{ .round = 2, .node = 2 },
+        .decided_through = 0,
+    } } }, &effects);
+    try std.testing.expectEqual(@as(?NodeId, 3), node.currentLeader());
+    try std.testing.expectEqual(TestProtocol.Role.follower, node.role);
+    try std.testing.expect(node.durable.promised.eql(newer));
+    try std.testing.expectEqual(@as(u32, 7), node.election_ticks);
+}
+
+test "nack routing evidence never moves backward in full ballot order" {
+    const Case = struct { newer: Ballot, older: Ballot };
+    const cases = [_]Case{
+        .{ .newer = .{ .round = 3, .node = 3 }, .older = .{ .round = 2, .node = 2 } },
+        .{
+            .newer = .{ .round = 3, .priority = 9, .node = 2 },
+            .older = .{ .round = 3, .priority = 8, .node = 3 },
+        },
+        .{
+            .newer = .{ .round = 3, .priority = 9, .node = 3 },
+            .older = .{ .round = 3, .priority = 9, .node = 2 },
+        },
+    };
+    for (cases) |case| {
+        var membership: TestProtocol.Membership = undefined;
+        try membership.init(&.{ 1, 2, 3 });
+        var node: TestProtocol.Node = undefined;
+        try node.init(1, &membership);
+        node.role = .leader;
+        node.ballot = .{ .round = 1, .node = 1 };
+        node.durable.promised = node.ballot;
+        var effects = TestProtocol.Effects{};
+        for ([_]Ballot{ case.newer, case.older }) |promise| {
+            try node.step(.{ .from = 2, .to = 1, .message = .{ .nack = .{
+                .rejected = node.ballot,
+                .promised = promise,
+                .decided_through = 0,
+            } } }, &effects);
+        }
+        try std.testing.expectEqual(@as(?NodeId, case.newer.node), node.currentLeader());
+        try std.testing.expect(node.highest_observed_ballot.eql(case.newer));
+        try std.testing.expect(node.durable.promised.eql(node.ballot));
+        try std.testing.expectEqual(@as(u64, case.newer.round), node.highest_observed_round);
+    }
 }
