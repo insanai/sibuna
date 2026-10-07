@@ -1,0 +1,136 @@
+{
+  "format": 1,
+  "date": "2026-10-07",
+  "source_commit": "e6664465ad589bb9dcca565a3d465ccf184c8ecf",
+  "binary_sha256": "e49c2c0f2769d890728f43899949204eb7656b35fd441e40258a6680da215639",
+  "build": {
+    "zig": "0.17.0",
+    "optimization": "safe",
+    "cluster": true,
+    "jobs": 2,
+    "steps_passed": 14,
+    "clean_source_checkout": true
+  },
+  "scenario": "Complete committed console_cluster_test.scenario, unchanged assertions and limits",
+  "result": {
+    "passed": true,
+    "elapsed_seconds": 87.5743651483208,
+    "cleanup_errors": [],
+    "owned_processes_after_cleanup": [],
+    "history_reads": [
+      {
+        "elapsed_seconds": 63.71019223704934,
+        "method": "POST",
+        "path": "/console/api/policies/hits",
+        "status": 200
+      },
+      {
+        "elapsed_seconds": 83.64306417200714,
+        "method": "POST",
+        "path": "/console/api/policies/hits",
+        "status": 200
+      }
+    ]
+  },
+  "fixtures": {
+    "sampling": "Shared 2-45 second start window; same minute and finish before second 55",
+    "query_pacing": "Existing 65-second allowance recovery retries only HTTP 429",
+    "assertions": "All 20 denied requests, exact revision/node/key, complete page and retained equality",
+    "bounds_note": "Quota waiting is bounded separately from the 30-second convergence predicate"
+  },
+  "previous_runs": [
+    {
+      "source_commit": "166fc129bdc596f505587a315f86f8420f79d0b7",
+      "binary_sha256": "656c360fbf9b632bd0988e27b5526bad316c5f775e21630016a25493aff85888",
+      "harness": "pristine original 166",
+      "passed": true,
+      "elapsed_seconds": 80.73108616098762
+    },
+    {
+      "source_commit": "166fc129bdc596f505587a315f86f8420f79d0b7",
+      "binary_sha256": "656c360fbf9b632bd0988e27b5526bad316c5f775e21630016a25493aff85888",
+      "harness": "reviewed sampling and 429 pacing overlay, committed as e29fcc4",
+      "passed": false,
+      "elapsed_seconds": 93.9235779568553,
+      "failure": "Node 3 restart exited 1 with StorageUnavailable after initial history returned 200",
+      "observed_final_markers": [
+        45,
+        45,
+        45
+      ],
+      "cause": "Unclassified; final markers cannot reconstruct transient reads. The separate migration race was proved by owner regressions."
+    }
+  ],
+  "limitations": [
+    "Single Linux host running three nodes; not the separate-host TLS qualification",
+    "Functional test; no performance acceptance claim",
+    "An earlier unsupported-schema bootstrap failure lost its automatic temporary root; no marker cause is inferred"
+  ],
+  "artifacts": [
+    {
+      "file": "console-cluster-final-030-20261007-final-status.json.gz",
+      "sha256": "f4952a2a1bb845c3e433f834aec4ac476ea212de002c65bca1ac40c46bc0ec9d",
+      "uncompressed_sha256": "d9a765926bb77c1bbd35fb41cc299b1c94ae40db41ebbfd03335156a1afa0ff3"
+    },
+    {
+      "file": "console-cluster-final-030-20261007-final-node1.log.gz",
+      "sha256": "d555f45572d011aa717033c21139e6a3fcf0285e15b77f97a8d964f2defcc2ba",
+      "uncompressed_sha256": "1753ebcdaca4783e64b01c70b482b501fc916af9dd7fc9238a37eb7290291ea7"
+    },
+    {
+      "file": "console-cluster-final-030-20261007-final-node2.log.gz",
+      "sha256": "38012f5dba896600bd28e3563763b7c2abc64f2710957bc8480175c4d6cb5238",
+      "uncompressed_sha256": "7d9718a5d5a77d24e713912ef27a5f80e13336c8da63446652b9ec219a35f0eb"
+    },
+    {
+      "file": "console-cluster-final-030-20261007-final-node3.log.gz",
+      "sha256": "5eba643513096a9a28e6b534751a71d4104306b6900a8c133b1934a807ca8534",
+      "uncompressed_sha256": "2658e4825ca83f7a19fac69ef2c880caaae2876ef11e0eae61d4d4d9ef6dabd5"
+    },
+    {
+      "file": "console-cluster-final-030-20261007-original-preserved-report-1.json.gz",
+      "sha256": "fcaf5cc4cc4fe3e54f567b173c7230fcf264212d35d040827188906d3c4d0dcf",
+      "uncompressed_sha256": "ee919602cf8b657d5a7f33cc32fa33cd01f5b025b4fcec5bef38c98a65fa2ef5"
+    },
+    {
+      "file": "console-cluster-final-030-20261007-corrected-preserved-report-2.json.gz",
+      "sha256": "d7d4c4fba93c22bfaca48d577ea84cb9efe42b0214790d5441383df0d22623dc",
+      "uncompressed_sha256": "7da0f6a272342007c668d7d47fe99b3bbaced29cf0172136868eef52706eeacc"
+    },
+    {
+      "file": "console-cluster-final-030-20261007-stopped-schema-markers.json.gz",
+      "sha256": "812b4251df5aa8fd4bcdfebdc89812ff97aef7eed5c3cf2701afb9805c9bdae5",
+      "uncompressed_sha256": "911ebe4319239f04cfdfa15cf423b7babbb9b88a91a015fb3628b49a96d5e789"
+    },
+    {
+      "file": "console-cluster-final-030-20261007-corrected-preserved-2-node1.log.gz",
+      "sha256": "51193ae8ba3c4e64c4be8c62f99f78939b0b022bf5b0bf1b3441495a7b4e64b4",
+      "uncompressed_sha256": "3522b678cb02fe743740524edaacf2eda6b1da5868c60c5118cf2aa31f2f08d1"
+    },
+    {
+      "file": "console-cluster-final-030-20261007-corrected-preserved-2-node2.log.gz",
+      "sha256": "e85520f4ea48a3e61d646397b0b4bfeb60cf5b268359d8cd997e5c0183fd17e0",
+      "uncompressed_sha256": "e2b866270f6730d1dbee02a3d811be860b07def530182856830b8a1e0c003374"
+    },
+    {
+      "file": "console-cluster-final-030-20261007-corrected-preserved-2-node3.log.gz",
+      "sha256": "9996364fcd951b7d92bd8488068477878d3f67ace8e83554376ea7cc98647f68",
+      "uncompressed_sha256": "4c1e7d25a411988a35b0a232f8d4ce9cd57f92ed793d37cf5cc1e659d9b45181"
+    },
+    {
+      "file": "console-cluster-final-030-20261007-original-preserved-1-node1.log.gz",
+      "sha256": "89e7d80ca21f6d73ec74f63a07dacd675bf180c27a6de9029cccdd4a2c71d80e",
+      "uncompressed_sha256": "c1738bab2010b8c6d541767a53eb30a75fbe561cff154eae79fccfae26f85a7f"
+    },
+    {
+      "file": "console-cluster-final-030-20261007-original-preserved-1-node2.log.gz",
+      "sha256": "7eeb4a075abecbb711ef0eaa9e3c2cfe7764c76a49e12419eb8d2774fc37b459",
+      "uncompressed_sha256": "1546c3e46c966825a6c9e8ed35c8cac3f7a38d6e2308b68f4f5343cc8b0b6584"
+    },
+    {
+      "file": "console-cluster-final-030-20261007-original-preserved-1-node3.log.gz",
+      "sha256": "5a9e9dba97a747fb24bb42775083af40059afdd6c9bcdc99d697d34ff44e1f03",
+      "uncompressed_sha256": "cdc299dfd1d389a9f63dda7c244fc24289d4492c4e898760d4e7d69ad7a5e3dd"
+    }
+  ]
+}
