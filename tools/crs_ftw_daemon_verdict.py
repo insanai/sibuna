@@ -5,11 +5,13 @@ Unknown failures, missing oracle evidence, and unreviewed work exhaustion fail q
 """
 from collections import Counter
 import hashlib
+import zlib
 
 OVERLONG_ARGUMENT_REQUEST_SHA256 = \
     "5611a59971c02acf6abd5cfeedb863a368089bd447fc4d5a70a160933dc5f6bd"
 CRS_ARCHIVE_SHA256 = \
     "3d678a41fd5aade34760127fef5dd64fd7a77848913fc0f70dde0cf467c94427"
+ALBEDO_SHA256 = "07d57ce946aeaef9d1f97a62bfca559dfca2382c31d645f125e5d6c5e46eb73d"
 
 ACQUISITION_ERRORS = {"InvalidPercentEscape", "InvalidMime", "MultipartHeadLimit",
                       "AmbiguousBodyParameter", "InvalidXml", "InvalidMultipartHead",
@@ -80,6 +82,50 @@ def acquisition_refusal(result, reference, mode):
         for stage in result["stages"])
 
 
+def origin_representation_refusal(test, result, reference, proof, mode):
+    # A native logical-body probe cannot validate the origin's gzip representation.
+    # Bind independently observed malformed bytes to this exact pinned wire request;
+    # this explains incomplete Audit coverage, never a complete inspection pass.
+    if mode != "audit" or proof is None or not test["response"] or \
+            len(test["stages"]) != 1 or len(result["stages"]) != 1 or \
+            reference is None or reference["error"] is not None or \
+            result["missing"] or result["unexpected"] or result["errors"] or result["gaps"]:
+        return False
+    if proof.get("albedo_sha256") != ALBEDO_SHA256 or proof.get("gzip_version") != "gzip 1.13" \
+            or proof["gzip_test_exit"] != 1 or not proof["zlib_decode_error"]:
+        return False
+    request = proof["request"]
+    payload = (request["line"] + "\r\n" + "".join(
+        f'{header["name"]}: {header["value"]}\r\n' for header in request["headers"]) +
+        "\r\n" + request["body"]).encode()
+    if payload != test["stages"][0]["payload"]:
+        return False
+    response = proof["response"]
+    body = bytes.fromhex(response["body_hex"])
+    headers = [(header["name"].lower(), header["value"]) for header in response["headers"]]
+    if len(body) > 65536 or hashlib.sha256(body).hexdigest() != proof["body_sha256"] or \
+            [value for name, value in headers if name == "content-encoding"] != ["gzip"] or \
+            [value for name, value in headers if name == "content-length"] != [str(len(body))]:
+        return False
+    decoder = zlib.decompressobj(31)
+    try:
+        decoder.decompress(body, 65537)
+        if decoder.eof or decoder.unconsumed_tail:
+            return False
+    except zlib.error:
+        pass
+    stage = result["stages"][0]
+    if stage["status"] != response["status"] or stage["origin_bytes"] < len(payload) or \
+            result["origin_bytes"] != stage["origin_bytes"] or stage.get("error") is not None or \
+            not result["ids"] or not set(result["ids"]).issubset(reference["ids"]):
+        return False
+    findings = stage.get("findings", [])
+    return bool(findings) and all(finding["coverage"] == "incomplete" and
+        not finding["enforcing"] and not finding["denied"] and
+        finding["blocking_paranoia"] == 4 and finding["detection_paranoia"] == 4 and
+        finding["source_digest"] == CRS_ARCHIVE_SHA256 for finding in findings)
+
+
 def bounded_work_refusal(test, result, reference, budget, mode):
     # The pinned PL4 overlong argument fixture reaches the deliberate work bound.
     # Rule assertions alone cannot call this complete: the daemon must preserve
@@ -122,7 +168,7 @@ def bounded_work_refusal(test, result, reference, budget, mode):
         stage["origin_bytes"] >= len(payload) and result["origin_bytes"] == stage["origin_bytes"]
 
 
-def verdict(test, result, engine, independent, budget, mode):
+def verdict(test, result, engine, independent, budget, mode, representation=None):
     if result["leaked"]:
         return "origin boundary"
     reference = engine.get(result["test"])
@@ -133,6 +179,8 @@ def verdict(test, result, engine, independent, budget, mode):
         return "work budget"
     if reference is not None and acquisition_refusal(result, reference, mode):
         return "engine refusal"
+    if origin_representation_refusal(test, result, reference, representation, mode):
+        return "origin representation refusal"
     if any(finding.get("coverage") == "incomplete" for stage in result["stages"]
            for finding in stage.get("findings", [])):
         return "incomplete inspection"
@@ -164,13 +212,14 @@ def verdict(test, result, engine, independent, budget, mode):
     return "connector difference"
 
 
-def classify(tests, results, engine, independent, budget, mode):
+def classify(tests, results, engine, independent, budget, mode, representations=None):
     if len(tests) != len(results):
         raise ValueError("daemon result inventory mismatch")
     for test, result in zip(tests, results):
         if test["test"] != result["test"]:
             raise ValueError("daemon result order mismatch")
-        result["class"] = verdict(test, result, engine, independent, budget, mode)
+        result["class"] = verdict(test, result, engine, independent, budget, mode,
+                                  (representations or {}).get(test["test"]))
     return Counter(result["class"] for result in results)
 
 
@@ -178,5 +227,5 @@ def failures(results):
     accepted = {"passed", "log coverage gap", "deliberate connector refusal",
                 "deliberate acquisition refusal", "response preempted by request denial",
                 "engine refusal", "reference agrees", "enforce disruption",
-                "bounded work refusal"}
+                "bounded work refusal", "origin representation refusal"}
     return [row for row in results if row["class"] not in accepted]

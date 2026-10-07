@@ -2,9 +2,11 @@
 """Check daemon corpus verdicts and transaction attribution without starting a daemon."""
 import unittest
 from copy import deepcopy
+import gzip
+import hashlib
 
 from crs_ftw_daemon_check import evaluate
-from crs_ftw_daemon_verdict import CRS_ARCHIVE_SHA256, verdict, failures
+from crs_ftw_daemon_verdict import ALBEDO_SHA256, CRS_ARCHIVE_SHA256, verdict, failures
 
 
 def test_case(name="942100-1", payload=b"GET / HTTP/1.1\r\n\r\n", response=False):
@@ -55,6 +57,26 @@ def acquisition_fixture(mode="audit", ids=None):
         source_digest=CRS_ARCHIVE_SHA256) for identifier in identifiers]
     engine = {test["test"]: dict(error="InvalidMime", work=100, ids=identifiers)}
     return test, row, engine
+
+
+def representation_fixture(body=b"ViewStateException: Invalid viewstate detected.", status=200):
+    request = dict(line="POST /reflect HTTP/1.1", headers=[
+        dict(name="Content-Length", value="2"), dict(name="Host", value="localhost")],
+        body="{}")
+    payload = b"POST /reflect HTTP/1.1\r\nContent-Length: 2\r\nHost: localhost\r\n\r\n{}"
+    test = test_case("950020-1", payload, response=True)
+    row = result(test["test"], [920273, 949110], status, len(payload) + 80)
+    row.update(missing=[], passed=True)
+    row["stages"][0]["findings"] = [dict(rule_id=identifier, coverage="incomplete",
+        enforcing=False, denied=False, blocking_paranoia=4, detection_paranoia=4,
+        source_digest=CRS_ARCHIVE_SHA256) for identifier in row["ids"]]
+    engine = {test["test"]: dict(error=None, work=100, ids=row["ids"])}
+    proof = dict(albedo_sha256=ALBEDO_SHA256, gzip_version="gzip 1.13", request=request,
+        response=dict(status=status, headers=[dict(name="Content-Encoding", value="gzip"),
+            dict(name="Content-Length", value=str(len(body)))], body_hex=body.hex()),
+        body_sha256=hashlib.sha256(body).hexdigest(), gzip_test_exit=1,
+        zlib_decode_error="independent decoder rejects the malformed gzip stream")
+    return test, row, engine, proof
 
 
 class VerdictTest(unittest.TestCase):
@@ -217,6 +239,55 @@ class VerdictTest(unittest.TestCase):
         row["stages"][0]["findings"][0].update(coverage="local_response", denied=True,
                                                  would_deny=True, selected_status=403)
         self.assertEqual(self.decision(test, row, engine, mode="enforce"), "passed")
+
+    def representation_decision(self, test, row, engine, proof, mode="audit"):
+        return verdict(test, row, engine, {}, 128_000_000, mode, proof)
+
+    def test_proved_malformed_origin_encoding_is_not_a_complete_contract(self):
+        for body, status in ((b"not gzip", 200), (b"", 500)):
+            test, row, engine, proof = representation_fixture(body, status)
+            self.assertEqual(self.representation_decision(test, row, engine, proof),
+                             "origin representation refusal")
+            self.assertEqual(self.decision(test, row, engine), "incomplete inspection")
+
+    def test_origin_proof_binds_exact_input_bytes(self):
+        test, row, engine, proof = representation_fixture()
+        proof["request"]["body"] = "[]"
+        self.assertEqual(self.representation_decision(test, row, engine, proof),
+                         "incomplete inspection")
+
+    def test_origin_proof_binds_binary_decoder_and_body_identity(self):
+        test, row, engine, original = representation_fixture()
+        for field, value in (("albedo_sha256", "00" * 32), ("gzip_version", "gzip 1.12"),
+                             ("gzip_test_exit", 0), ("zlib_decode_error", ""),
+                             ("body_sha256", "00" * 32)):
+            proof = dict(original, **{field: value})
+            self.assertEqual(self.representation_decision(test, row, engine, proof),
+                             "incomplete inspection")
+
+    def test_valid_gzip_never_receives_representation_exception(self):
+        test, row, engine, proof = representation_fixture(gzip.compress(b"valid"))
+        self.assertEqual(self.representation_decision(test, row, engine, proof),
+                         "incomplete inspection")
+
+    def test_representation_exception_requires_actual_origin_status_and_delivery(self):
+        test, original, engine, proof = representation_fixture()
+        for status, origin in ((403, original["origin_bytes"]), (200, 0)):
+            row = deepcopy(original)
+            row["origin_bytes"] = origin
+            row["stages"][0].update(status=status, origin_bytes=origin)
+            self.assertEqual(self.representation_decision(test, row, engine, proof),
+                             "incomplete inspection")
+        self.assertEqual(self.representation_decision(test, original, engine, proof, "enforce"),
+                         "incomplete inspection")
+
+    def test_representation_exception_cannot_hide_failed_assertions_or_unknown_ids(self):
+        test, original, engine, proof = representation_fixture()
+        for field, value in (("missing", [950100]), ("unexpected", [959100]),
+                             ("errors", ["no HTTP response"]), ("ids", [942100])):
+            row = dict(original, **{field: value})
+            self.assertEqual(self.representation_decision(test, row, engine, proof),
+                             "incomplete inspection")
 
 
 if __name__ == "__main__":
