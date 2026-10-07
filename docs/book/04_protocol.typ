@@ -18,20 +18,22 @@
 #book_figure([The challenge round trip], challenge_round_trip())
 
 1. A navigation with no valid session reaches the policy engine and is classified `CHALLENGE`.
-   Because the request accepts `text/html`, the daemon answers `200` with the interstitial
-   page and the header `X-Sibuna-Status: CHALLENGE`; an API client that does not accept HTML
-   receives `401` with a JSON body whose `challenge` URL is ready to fetch. Either way the
-   response carries a *requirement ticket*: the challenge this decision demands (algorithm,
-   work bits, openings) and the rule's hash, sealed for this client with a keyed BLAKE3 tag
-   under its own derived key and valid for one challenge lifetime.
+   If the request accepts `text/html`, the daemon returns the interstitial page with status
+   `200` and `X-Sibuna-Status: CHALLENGE`. Otherwise, it returns `401` with a JSON body
+   containing a `challenge` URL.
+
+   Both responses carry a *requirement ticket*. It records the required algorithm, work bits,
+   opening count and rule hash. A keyed BLAKE3 tag seals it for this client under a separate
+   derived key. It is valid for one challenge lifetime.
 2. The interstitial fetches `GET /__sibuna/challenge.json?path=<original URL>&need=<ticket>`.
-   A valid ticket decides the challenge: the work is fixed by the decision that demanded it,
-   not recomputed from a reported URL and the fetch's own headers, which differ from the
-   navigation's (`Accept`, `Sec-Fetch-*`). Without a valid ticket (an API client that ignores
-   the URL, a page left open past the lifetime) the server evaluates the reported URL, split
-   into path and query by the same function that reads the request line; a URL longer than
-   8 KiB is refused with `414`, never truncated. The ticket is advisory: admission still checks
-   the session's work level, so a replayed or forged ticket can only cost its holder work.
+   A valid ticket preserves the work required by the original decision. Recomputing that
+   decision from the fetch could change it: the fetch's `Accept` and `Sec-Fetch-*` headers
+   differ from the navigation's headers.
+
+   Without a valid ticket, the server evaluates the reported URL. The same function that
+   reads a request line splits it into path and query. URLs longer than 8 KiB receive `414`
+   rather than being truncated. The ticket does not grant admission. Admission still checks
+   the session's work level, so replaying or forging a ticket cannot clear a stronger requirement.
 3. The response is the challenge record:
    ```json
    {"id":"AQEND…70 chars","algorithm":"posw","difficulty":13,"challenges":16,"expires_at":1757241234}
@@ -48,14 +50,15 @@
    ```
    to `POST /__sibuna/verify`.
 5. On success the server answers `200 {"status":"ok"}` with a `Set-Cookie` header, and the page
-   reloads its original location. Every later request carries the cookie and is admitted
-   before policy evaluation.
+   reloads its original location. Later requests carry the cookie. It satisfies a challenge
+   decision when the session has paid enough work; inspection and explicit denials still apply.
 
 #callout([Why the path travels with the challenge], [
-  The interstitial is served at the protected URL, so the browser knows where it is. Sending
-  the path lets the server pick the *per-rule* difficulty and algorithm (a checkout route may
-  demand 20 work bits of sequential work while a blog demands 16 bits of Hashcash) and binds the
-  rule hash into the token, where `X-Sibuna-Rule-Hash` reports it upstream.
+  The interstitial is served at the protected URL. Its ticket preserves that request's
+  difficulty, algorithm and rule hash. For example, checkout may demand 20 work bits of
+  sequential work while a blog demands 16 bits of Hashcash. The reported path also permits
+  evaluation when the ticket has expired or is absent. The token records the issuing rule's
+  hash, which `X-Sibuna-Rule-Hash` reports upstream.
 ])
 
 == The Stateless Challenge Record
@@ -102,12 +105,12 @@ Three details deserve attention:
 
 - *Adaptive difficulty.* The coordinator keeps an exponentially weighted moving average of the
   challenge issue rate in three atomics. Above a baseline of 50 challenges per second, each
-  doubling of the rate adds one work bit, capped at six. A flood pays exponentially more while
-  quiet traffic keeps the base cost.
+  doubling of the rate adds one work bit, capped at six. This raises the expected puzzle
+  work during a flood. Quiet traffic retains the base setting.
 - *The nonce is a PRF output*, keyed by the challenge key over a counter, the clock, and the
-  fingerprint. It is unique (counter) and unpredictable (key), so an adversary cannot
-  precompute solutions for identifiers it has not been issued, and the hot path never calls
-  into the operating system for entropy.
+  fingerprint. The counter distinguishes successive inputs, and the secret key makes the
+  result unpredictable. This prevents preparing solutions for predictable future
+  identifiers without calling the operating system for entropy on the request path.
 - *Difficulty travels inside the tag.* A client cannot lower the difficulty by editing the
   record: the tag would fail before any proof is examined.
 
@@ -141,12 +144,14 @@ pub fn verifyAndMint(self: *Coordinator, challenge_id: []const u8, solution: Sol
 }
 ```
 
-The order is deliberate. Tag, age, and binding are constant-time checks that reject garbage
-before any hashing. A wrong proof must not consume the challenge, so the spent set is written
-only after `checkSolution` succeeds. Two threads that both verify the same valid solution race
-on `markSpent`; the shard spinlock serialises them, exactly one wins, and the other receives
-`DoubleSpendAttempt`. The `issued_at > now + 60` clause rejects records minted by a node whose
-clock runs ahead by more than a minute, which would otherwise extend a challenge's life.
+Authentication, age and client binding are checked before the more expensive proof.
+A wrong proof must not consume the challenge, so the spent set is written after
+`checkSolution` succeeds. If two threads verify the same valid solution, they race on
+`markSpent`. The shard spinlock serialises them: one wins and the other receives
+`DoubleSpendAttempt`.
+
+The `issued_at > now + 60` clause rejects records issued by a node whose clock is more than
+a minute ahead. Otherwise, that clock error could extend the challenge's effective lifetime.
 
 Errors surface to the client as `400` with an Elm-style diagnostic (Part X): the end-to-end
 tests assert on `DOUBLE SPEND`, `FINGERPRINT MISMATCH`, `WRONG SOLUTION TYPE`, and
@@ -187,22 +192,26 @@ Set-Cookie: __sibuna_token=<75 chars>; Path=/; Max-Age=86400; HttpOnly;
     SameSite=Lax[; Secure]
 ```
 
-`HttpOnly` keeps it out of page scripts, `SameSite=Lax` stops cross-site replay while allowing
-top-level navigation, and `Secure` is added with `--secure-cookie` when TLS terminates in front
-of the daemon. Because the payload carries the keyed fingerprint of address and User-Agent, a
-cookie copied to another machine fails with `TokenBoundAddressMismatch`; the end-to-end test
-"the cookie is bound to the client identity" exercises exactly that path.
+`HttpOnly` prevents page scripts from reading the cookie. `SameSite=Lax` restricts when a
+browser sends it with cross-site requests while allowing top-level navigation. Add
+`--secure-cookie` when TLS terminates in front of the daemon so that the cookie carries
+`Secure`.
+
+The payload contains a keyed fingerprint of the client address and User-Agent. A request
+with a different fingerprint fails with `TokenBoundAddressMismatch`. The end-to-end test
+"the cookie is bound to the client identity" exercises this check. Clients sharing the same
+address and User-Agent also share this binding; it is not a person's identity.
 
 The payload begins with a version byte and the *work level* the holder paid: the mechanism
-(Hashcash or PoSW) and the work bits actually solved, including any load-adaptive bump. A
-session clears a challenge only when its level reaches what the route demands, computed from
-the rule's difficulty through the same clamping the challenge itself applies. Levels are
-ordered, not named: a cookie earned at 24 bits also covers every 16-bit route, while a 16-bit
-cookie presented to a 24-bit route falls through to the stronger interstitial and the new
-cookie replaces the old one. `rule_hash` remains the audit identity of the rule that issued the
-challenge; it is reported upstream, never used for admission. WAF findings and explicit
-denials are never cleared by a session. The end-to-end test "a session earned on a cheaper
-route does not admit a route that demands more work" exercises both directions.
+(Hashcash or PoSW) and the work bits actually solved, including any adaptive increase.
+A session satisfies a challenge when its work level reaches the route's requirement. The
+requirement uses the same difficulty conversion and bounds as challenge issuance.
+
+A cookie earned at 24 bits can satisfy a 16-bit route. A 16-bit cookie on a 24-bit route
+receives a stronger challenge, and the new cookie replaces the old one. `rule_hash` identifies
+the issuing rule for audit and upstream reporting; it does not decide admission. WAF findings
+and explicit denials remain effective. The end-to-end test "a session earned on a cheaper
+route does not admit a route that demands more work" covers both directions.
 
 #warning([Forwarded addresses], [
   Behind an ingress the client address arrives in `X-Forwarded-For`. Sibuna trusts that header

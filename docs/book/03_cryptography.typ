@@ -10,28 +10,32 @@
 == Hashcash: The Mathematics of Tier One
 
 #objectives([
-  By the end of this chapter, you should be able to state the expected work, variance, and tail
-  probability of a bit-level Hashcash puzzle, explain why the server's verification cost bounds
-  the attacker's advantage, and describe the two limits that motivate a second tier.
+  By the end of this chapter, you should be able to state a Hashcash puzzle's expected work,
+  variance and tail probability. You should also be able to explain why checking a solution
+  costs less than searching for one, and describe the two limits that motivate a second tier.
 ])
 
 === Definition and Cost
 
 Sibuna's Tier One puzzle for challenge string $C$ and difficulty $b$ bits is: find $N in NN$
-such that $"SHA-256"(C || ":" || "dec"(N))$ has $b$ leading zero bits. The decimal rendering of
-the nonce is deliberate; it keeps the wire format identical between the WebAssembly solver, the
-JavaScript fallback, and the native verifier without a binary encoding step.
+such that $"SHA-256"(C || ":" || "dec"(N))$ has $b$ leading zero bits. The nonce $N$ is written
+in decimal. This gives the WebAssembly solver, JavaScript fallback and native verifier the
+same bytes to hash.
 
 The unit of difficulty is an expected *hash trial*, not a compression function call.
 An input can occupy several SHA-256 blocks. Prefix precomputation can also change the work
 per nonce. The wire rule remains the digest predicate; implementations must agree on the
 statement and nonce encoding, not on an estimated CPU cost.
 
-For independent ideal digests, the trial count $X$ is geometric with $p=2^(-b)$. Its median
-is $ceil(ln(1/2)/ln(1-p))$, approximately $2^b ln 2$ for small $p$, and its variance is
-$(1-p)/p^2$. The verifier checks one candidate digest rather than performing the search.
-Parsing, challenge authentication, fingerprint checks, spent-state insertion, and the response
-are additional work. A primitive timing cannot be inverted into a server's flood capacity.
+For independent ideal digests, the trial count $X$ is geometric with $p=2^(-b)$ and
+$E[X]=2^b$. Its median is $ceil(ln(1/2)/ln(1-p))$, approximately $2^b ln 2$ for small $p$.
+Its variance is $(1-p)/p^2$.
+
+The requester searches; the verifier checks one candidate digest. At $b=16$, that is an
+average of 65,536 candidate trials to create a proof and one to check it. This difference is
+the intended admission cost balance. It is not a ratio of elapsed time or electrical energy.
+The server also parses the request, authenticates the challenge, checks its fingerprint,
+records a solved challenge and sends a response. Those costs belong in a capacity measurement.
 
 === Two Limits of Search
 
@@ -56,16 +60,15 @@ among several workers?], hint: [Count aggregate trials, not elapsed seconds.])
 
 === Why Sequential Work
 
-A sequential-work construction introduces dependencies between computations: a later label
-needs a value produced earlier. This addresses a different quantity from aggregate work,
-namely the depth of the computation. Independent puzzles can still run in parallel, and
-hardware hash latency still matters.
+A sequential-work construction makes a later calculation depend on an earlier result.
+It therefore constrains the depth of the computation as well as its total work. Independent
+puzzles can still run in parallel, and the time taken by one hash still depends on hardware.
 
 Sibuna follows the hash-based construction described by Cohen and Pietrzak. Its graph has
-$2^(n+1)-1$ labels at depth $n$, but a fixed label count is not a deterministic browser latency:
-labels can span several compression blocks, openings may recompute subtrees, and scheduling
-adds variation. Security statements from oracle-model analyses must not be turned into an
-unqualified claim about every concrete implementation or adversary.
+$2^(n+1)-1$ labels at depth $n$. This fixes a count of calculations, not a browser completion
+time. A label can span several compression blocks, proof openings may recompute subtrees,
+and browser scheduling adds variation. The security analysis also has assumptions. They must
+be checked when applying the construction to a concrete implementation.
 
 === The Construction
 
@@ -86,9 +89,10 @@ The left-sibling edges are what make the computation sequential: leaf $u$ cannot
 until every subtree to its left is complete, so a depth-first post-order traversal is forced and
 the root label $phi = ell_epsilon$ depends on all $2^(n+1) - 1$ labels in sequence.
 
-*Openings.* After computing $phi$, the prover derives $t$ leaves by Fiat–Shamir,
-$gamma_i = H(chi || phi || i) mod 2^n$, and for each sends the leaf label and the $n$ sibling labels
-along its root path. The verifier recomputes the leaf from the siblings that are its parents,
+*Openings.* After computing $phi$, the prover derives $t$ leaves by Fiat–Shamir: hashing the
+statement and commitment determines which leaves the verifier will check. The selected leaf
+is $gamma_i = H(chi || phi || i) mod 2^n$. For each leaf, the prover sends its label and the
+$n$ sibling labels along its root path. The verifier recomputes the leaf from the siblings that are its parents,
 hashes upward through the path, and checks that it arrives at $phi$. The verifier's cost is
 $O(t n)$ label computations with bounded workspace. A label computation may span multiple
 hash blocks; counting labels is not counting compression calls.
@@ -142,7 +146,7 @@ The referenced sequential-work construction has a security analysis in an oracle
 Sibuna's domain separation, parameter mapping, truncation, and implementation must still be
 checked against the construction's assumptions. Fiat–Shamir sampling makes openings
 reproducible from a commitment; reproducibility alone does not prove resistance to grinding.
-We make no unconditional claim that cheating is never cheaper.
+The construction's assumptions limit the security claim.
 
 #exercise("3.1", [If an attacker tries $g$ independent commitments, each accepted with
 probability $q$, derive the probability that at least one is accepted. Which costs are missing
@@ -152,11 +156,13 @@ from that expression?], hint: [First calculate the probability that all $g$ fail
 
 A naive prover stores every label ($2^(n+1) - 1$ of them). Sibuna's prover keeps a stack of the
 current path's left-sibling labels ($n + 1$ labels) during the first pass and retains only the
-top $m = min(n, 10)$ levels ($2^(m+1) - 1$ labels, at most 64 KB). To open a leaf it recomputes
-the subtree of the leaf's depth-$m$ ancestor, $2^(n - m + 1) - 1$ hashes, seeding the stack from the
-retained levels. Total prover cost is $2^(n+1) - 1 + t (2^(n - m + 1) - 1)$ hashes and the whole
-workspace, including the output proof, is under 100 KB: a browser tab and a native test share the
-same `Workspace` type.
+top $m = min(n, 10)$ levels ($2^(m+1) - 1$ labels, at most 64 KB).
+
+To open a leaf, it recomputes the subtree of the leaf's depth-$m$ ancestor. This takes
+$2^(n - m + 1) - 1$ label calculations, using the retained levels to seed the stack. Total
+prover cost is $2^(n+1) - 1 + t (2^(n - m + 1) - 1)$ label calculations. The whole workspace,
+including the output proof, is under 100 KB. Browser and native tests share the same
+`Workspace` type.
 
 === Parameters Are Not Timings
 
@@ -198,11 +204,14 @@ label belongs to a commitment, and dependency edges, which constrain how labels 
 
 === Issuer Equals Verifier
 
-A digital signature lets *anyone* holding the public key verify, which is the right tool when
-verifiers must not be able to mint. Sibuna's verifier *is* the issuer (or a cluster sharing one
-seed). A message authentication code built from a pseudorandom function supplies authentication
-within that trust domain. It does not supply public verification: anyone holding the MAC key
-can also mint tokens. The benchmark chapter compares the implemented token operations.
+A digital signature lets a public-key holder verify a token without issuing one. That is
+useful when verifiers must not be able to mint tokens. Sibuna's verifier is also the issuer,
+or a cluster member sharing the same seed.
+
+A message authentication code (MAC) authenticates tokens within this shared trust domain.
+It uses a pseudorandom function (PRF), whose output is modelled as unpredictable to someone
+without the key. Every holder of the MAC key can mint tokens as well as verify them. Part VIII compares
+the implemented token operations.
 
 #callout([Lemma 3 (Forgery bound)], [
   With BLAKE3 in keyed mode modelled as a PRF and a 16-byte tag, an adversary making $q$
@@ -210,10 +219,10 @@ can also mint tokens. The benchmark chapter compares the implemented token opera
   At a million queries per second that is $2^(-108)$ per second.
 ])
 
-A second consequence matters for the long term: Ed25519 rests on discrete logarithms in an
-elliptic-curve group, which Shor's algorithm breaks; a keyed hash rests only on the hash
-function, against which quantum algorithms give at most a quadratic speedup. Sibuna keeps
-Ed25519 as an option (`--token-scheme ed25519`) for deployments that need non-minting verifiers.
+The assumptions also differ under quantum computation. Ed25519 relies on elliptic-curve
+discrete logarithms, which Shor's algorithm breaks. Generic quantum search gives a quadratic
+speedup against ideal keyed-hash search. Sibuna retains Ed25519 as an option
+(`--token-scheme ed25519`) for deployments whose verifiers must not mint tokens.
 
 === The Key Schedule
 
@@ -231,9 +240,8 @@ pub fn derive(seed: *const [32]u8) Keys {
 }
 ```
 
-Domain separation prevents accidental reuse across purposes; compromise of the master seed
-compromises every derived key. A cluster only
-has to agree on one seed.
+Each domain string gives the derived key a separate purpose. Compromising the master seed
+compromises every derived key. Cluster members must agree on the seed.
 
 === Stateless Challenges
 
@@ -242,9 +250,9 @@ has to agree on one seed.
 A challenge identifier is a self-authenticating record: version, algorithm, difficulty, opening
 count, issue time, the client's keyed fingerprint, a PRF-derived nonce, and the hash of the
 policy rule that demanded the challenge, followed by a 16-byte tag under the challenge key.
-Issuing one writes nothing. Verification decodes the record, checks the tag in constant time,
-checks the age against the challenge TTL, checks the fingerprint against the submitting client,
-and only then examines the proof.
+Issuing one writes nothing. Verification decodes the record and checks its tag with a
+constant-time comparison. It then checks the age against the challenge lifetime (TTL) and
+the fingerprint against the submitting client. Proof verification follows these cheap checks.
 
 #callout([Lemma 4 (State grows only with paid work)], [
   Let $S$ be the set of challenge tags the daemon remembers. A tag enters $S$ only after a valid
@@ -256,9 +264,9 @@ and only then examines the proof.
 ])
 
 The spent set is 16 shards of Robin Hood open addressing over the 16-byte tags (chapter 5). The
-fingerprint is a keyed hash of the client address and User-Agent, length-separated so no two
-inputs collide by concatenation, and keyed so fingerprints of other clients cannot be computed
-offline.
+fingerprint is a keyed hash of the client address and User-Agent. Their lengths are encoded
+separately, so different field boundaries cannot produce the same concatenated input.
+The key prevents computing another client's fingerprint offline without the secret.
 
 #exercise([3.3], [
   A token payload carries a work level, `timestamp`, `expiry`, `rule_hash`, and `fingerprint`.

@@ -289,6 +289,13 @@ subject to their respective licenses.
 
 === Choosing a Surface
 
+Both surfaces can ask an unverified client to complete a proof before the application handles
+its request. The client creates the proof and Sibuna verifies it. Choose work settings that
+make creation costlier than verification without overburdening your users. A valid session
+reuses the completed work, avoiding a new proof for every request; a route can still require
+a higher work level. This admission step helps reserve application resources for admitted
+traffic. Inspection and rate limits address separate risks.
+
 - *Gate* (`--gate`, alias `--no-waf`): proof-of-work admission, sessions, declarative rules,
   reputation, GCRA limits, bans.
 - *Shield* (default, `--shield`): Gate plus the semantic firewall.
