@@ -1,6 +1,7 @@
 #import "theme.typ": *
 
 #heading(numbering: none)[Selected Solutions]
+#set heading(numbering: none)
 
 Use these solutions to check your reasoning after trying the exercises. If a result
 differs, compare assumptions first. Interval endpoints, the definition of work and the

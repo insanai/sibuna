@@ -49,6 +49,6 @@ and changed.
 
 #v(5mm)
 #text(size: 9pt, fill: gray)[
-  Edition 0.3 · September 2026 #linebreak()
+  Edition 0.3 · October 2026 #linebreak()
   Sources, exercises, and reproducible measurements accompany the Sibuna repository.
 ]
