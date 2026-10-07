@@ -2,7 +2,7 @@
 #import "figures.typ": *
 
 #part_page("VII", [The Browser Proof-of-Work Engine], [
-  We look at the 8,831-byte WebAssembly module that shares its source with the server's
+  We look at the small WebAssembly module that shares its source with the server's
   verifiers, the Web Worker protocol, the JavaScript fallback provers, and the interstitial.
 ])
 
@@ -35,8 +35,10 @@ const wasm_pow = b.addExecutable(.{
 });
 ```
 
-There is no second implementation to drift. The module measures 8,831 bytes with both tiers
-and is served from the daemon with a one-hour cache header.
+The native verifier and WebAssembly solver therefore share their proof definitions.
+A recorded build measured 8,831 bytes with both tiers. The daemon serves the module with a
+one-hour cache header. Shared sources reduce protocol drift, but the browser boundary still
+needs its own tests.
 
 === Exports
 
@@ -49,13 +51,14 @@ and is served from the daemon with a one-hour cache header.
   [`sibuna_posw_proof_ptr()`], [Start of the proof bytes in the prover workspace],
 )
 
-The prover's workspace, the retained top levels, the sibling stack, and the proof, is a static
-90 KB region; no allocator is linked.
+The prover uses a static 90 KB workspace for retained tree levels, sibling labels and the
+output proof. It links no allocator.
 
 === Prefix Pre-Hashing
 
-The Hashcash inner loop absorbs the challenge and the colon once and copies the SHA-256 state
-per nonce, so each candidate costs one compression rather than two:
+The Hashcash loop absorbs the challenge and colon once, then copies that SHA-256 state for
+each nonce. With Sibuna's challenge format, each candidate needs one compression rather than
+two:
 
 ```zig
 var base_hasher = Sha256.init(.{});
@@ -95,11 +98,13 @@ The page posts one message and receives progress, fallback, and result messages:
 { type: 'error', message: '...' }
 ```
 
-The worker tries WebAssembly first and falls back to pure JavaScript when `WebAssembly` is
-absent, blocked by policy, or fails to instantiate. The JavaScript provers are line-for-line
-ports of the Zig code and produce *byte-identical* output: a Node.js harness compares the two
-paths for both tiers. They are slower, about 60 times for the sequential prover, but they
-guarantee that every browser can pass.
+The worker tries WebAssembly first. It falls back to JavaScript if WebAssembly is absent,
+blocked by policy or cannot be instantiated. The JavaScript provers follow the Zig algorithm;
+a Node.js harness checks byte-identical output for both tiers.
+
+The fallback is slower: the sequential prover was about 60 times slower in the comparison.
+It lets browsers with JavaScript continue when WebAssembly is unavailable. It cannot help a
+client that disables scripts, and slow devices may still take too long at the chosen difficulty.
 
 #warning([The signed sentinel], [
   WebAssembly returns a 64-bit integer to JavaScript as a *signed* `BigInt`. The Hashcash
@@ -135,12 +140,15 @@ be measured without adding a timer to the server's request handler.
 
 == The Interstitial
 
-The page is a single embedded HTML file with a card, an indeterminate progress bar, and a
-status line. It requests the challenge for its own location (`?path=`), spawns the worker,
-posts the solution with `fetch`, and reloads on success; `fetch` calls retry with jittered
-exponential backoff, and a `4xx` verification answer is shown with its diagnostic title. An
-off-screen honeypot link (`/__sibuna/honeypot`) is invisible to people and to script-running
-browsers; blind crawlers that follow every `href` ban themselves.
+The page is an embedded HTML file with a card, an indeterminate progress bar and a status
+line. It fetches a challenge using its own location (`?path=`) and the requirement ticket
+(`need=`), starts the worker, posts the solution with `fetch`, and reloads on success.
+Retries use exponential backoff with random jitter. A `4xx` verification response is shown
+with its diagnostic title so that a repeated failure does not become an unexplained loop.
+
+An off-screen honeypot link points to `/__sibuna/honeypot`. Ordinary navigation does not
+need this link. Following it triggers a local ban, which can catch crawlers that follow
+every `href` without considering how the page presents it.
 
 #exercise([7.1], [
   The JavaScript sequential prover is about 60 times slower than WebAssembly. Estimate the
@@ -149,6 +157,6 @@ browsers; blind crawlers that follow every `href` ban themselves.
 ])
 
 #teach_back([
-  Explain why compiling the browser module from the server's verifier sources is a stronger
-  guarantee than testing two implementations against each other.
+  Explain which kinds of protocol drift shared proof sources avoid. Which browser behaviour
+  and cryptographic assumptions still need independent verification?
 ])
