@@ -111,6 +111,14 @@ fn editor(state: *const State, w: *Writer, row: *const p.users.Row) Writer.Error
         .explanation = "Generate a one-hour temporary password. Existing sessions end; " ++
             "enabled state, role and enrolled two-factor authentication remain in effect.",
     });
+    if (!own and row.totp_enabled) try html.render(w, @embedFile("snippets/users-revoke.html"), .{
+        .action = "users-factor",
+        .title = "Reset two-factor",
+        .busy = if (model.busy) " disabled" else "",
+        .explanation = "Remove the authenticator and recovery codes, for example after a " ++
+            "lost device or console key. Existing sessions end; the owner signs in with the " ++
+            "password and can enroll again.",
+    });
     const self_note = "End your sessions and API tokens, including this session. " ++
         "You will be signed out.";
     const other_note = "End all existing sessions and API tokens. The owner can sign in again.";
@@ -138,7 +146,17 @@ test "account forms bind to bridge IDs and protect self access and read-only rol
     try t.expect(std.mem.indexOf(u8, writer.buffered(), "id=\"users-revoke\"") != null);
     try t.expect(std.mem.indexOf(u8, writer.buffered(), "id=\"users-access\"") == null);
     try t.expect(std.mem.indexOf(u8, writer.buffered(), "id=\"users-password\"") == null);
+    // Administrators turn off their own factor from Account, never by reset.
+    state.users.rows[0].totp_enabled = true;
+    writer = .fixed(&buffer);
+    try render(&state, &writer);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "id=\"users-factor\"") == null);
     state.users.rows[0].id = 2;
+    writer = .fixed(&buffer);
+    try render(&state, &writer);
+    try t.expectEqual(@as(usize, 4), std.mem.count(u8, writer.buffered(), "<form "));
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "id=\"users-factor\"") != null);
+    state.users.rows[0].totp_enabled = false;
     writer = .fixed(&buffer);
     try render(&state, &writer);
     try t.expectEqual(@as(usize, 3), std.mem.count(u8, writer.buffered(), "<form "));

@@ -69,7 +69,7 @@ pub fn handle(app: *App, context: *http.Context, principal: p.Principal, kind: K
 const Change = struct {
     target: []const u8,
     expected_revision: []const u8,
-    operation: enum { access, password, revoke },
+    operation: enum { access, password, revoke, factor },
     role: ?p.Role = null,
     disabled: ?bool = null,
 };
@@ -88,6 +88,7 @@ fn change(auth: p.users.Auth, input: Change) !p.users.Change {
             } },
             .password => .{ .password = .{} },
             .revoke => .revoke,
+            .factor => .factor,
         },
     };
 }

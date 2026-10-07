@@ -406,7 +406,7 @@ fn printConsoleHelp() void {
             "  sibuna console add-user <name> [--role viewer|operator|admin]\n" ++
             "  sibuna console set-user <id> --revision <n> " ++
             "--role <role> --disabled true|false\n" ++
-            "  sibuna console reset-password|revoke-sessions <id> --revision <n>\n" ++
+            "  sibuna console reset-password|revoke-sessions|reset-factor <id> --revision <n>\n" ++
             "GeoIP CLI: sibuna console geoip status\n" ++
             "  sibuna console geoip update --version <YYYY-MM-DD|YYYY-MM> " ++
             "[--provider user-country|dbip] [--month <YYYY-MM>, DB-IP alias]\n" ++

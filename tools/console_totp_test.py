@@ -173,6 +173,54 @@ def lifecycle(binary, h, root, port, log, logpath, keypath, credentials, recover
         assert login(credentials)[0] == 200
     finally:
         h.stop(proc)
+    administrator_reset(binary, h, root, port, log, keypath, credentials)
+
+
+def administrator_reset(binary, h, root, port, log, keypath, credentials):
+    import console_cli_test
+    import console_users_test
+    data = str(root / "data")
+    admin = console_cli_test.private(root / "admin-password", credentials["password"])
+    replacement = "factor user long passphrase"
+    proc = h.start(binary, data, port, log, str(keypath))
+    try:
+        cookie, csrf, _ = console_users_test.login(h, port, credentials)
+        status, _, body = h.request(port, "POST", "/console/api/users/create",
+                                    {"username": "factor-user", "role": "viewer"}, cookie, csrf)
+        assert status == 200, body
+        temporary = json.loads(body)["temporary_password"]
+        cookie, csrf = console_users_test.rotate(
+            h, port, {"username": "factor-user", "password": temporary}, replacement)
+        enrollment_body = {"password": replacement, "revision": 0}
+        status, _, body = h.request(port, "POST", "/console/api/totp/enroll",
+                                    enrollment_body, cookie, csrf)
+        assert status == 200, body
+        enrollment = json.loads(body)
+        confirm = dict(enrollment_body, revision=enrollment["revision"],
+                       code=code(enrollment["secret"], int(time.time()) // 30))
+        status, _, body = h.request(port, "POST", "/console/api/totp/confirm",
+                                    confirm, cookie, csrf)
+        assert status == 200, body
+    finally:
+        h.stop(proc)
+    proc = h.start(binary, data, port, log, str(keypath))
+    try:
+        rows = console_cli_test.invoke(binary, port, admin, ["users"],
+                                       username=credentials["username"])["rows"]
+        user = next(row for row in rows if row["username"] == "factor-user")
+        assert user["totp_enabled"]
+        reset = console_cli_test.invoke(binary, port, admin, [
+            "reset-factor", str(user["id"]), "--revision", str(user["revision"]),
+        ], username=credentials["username"])
+        assert reset["saved"] and reset["temporary_password"] is None
+        console_cli_test.invoke(binary, port, admin, [
+            "reset-factor", str(user["id"]), "--revision", str(user["revision"]),
+        ], "Conflict", username=credentials["username"])
+        signed_in = h.request(port, "POST", "/console/api/login",
+                              {"username": "factor-user", "password": replacement})
+        assert signed_in[0] == 200, signed_in
+    finally:
+        h.stop(proc)
 
 
 def check_proxy(binary, h):

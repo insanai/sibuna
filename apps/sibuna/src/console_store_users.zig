@@ -134,6 +134,20 @@ pub fn change(owner: *Persistent, input: u.Change, now: u64) !p.StorageResult {
     if (input.target == actor.authorized.actor and input.operation != .revoke)
         return .{ .failed = .forbidden };
     const credentials = Credentials.init(input.auth, now);
+    if (input.operation == .factor) {
+        const reset = try db.exec(
+            owner.db,
+            owner.gpa,
+            factor_sql,
+            &(credentials.values(true) ++ [_]zx.Value{
+                util.integer(input.target), util.integer(input.expected_revision),
+                util.integer(now),          util.address(&input.auth.client),
+            }),
+        );
+        if (reset != 0) return .{ .users_saved = 0 };
+        const current = try identity(owner, input.auth, now, true);
+        return if (current == .authorized) .{ .failed = .conflict } else current;
+    }
     const role: zx.Value = if (input.operation == .access)
         util.text(@tagName(input.operation.access.role))
     else
@@ -164,6 +178,16 @@ pub fn change(owner: *Persistent, input: u.Change, now: u64) !p.StorageResult {
     const current = try identity(owner, input.auth, now, true);
     return if (current == .authorized) .{ .failed = .conflict } else current;
 }
+
+// Turning the factor off fires the audited user-revision bump that ends the target's sessions.
+// Clearing the enrollment deadline stops a stale pending seed from being confirmed again.
+const factor_sql = authorization ++
+    ", i AS (SELECT ? target,? revision,? now,? client) " ++
+    "UPDATE console_totp SET enabled=0,recovery_digests='',recovery_used=0,last_step=NULL," ++
+    "expires=0,revision=console_totp.revision+1,modified_at=i.now,modified_by=a.id," ++
+    "client_ip=i.client FROM a,i WHERE console_totp.user_id=i.target " ++
+    "AND console_totp.user_id!=a.id AND console_totp.enabled=1 " ++
+    "AND EXISTS(SELECT 1 FROM console_users v WHERE v.id=i.target AND v.revision=i.revision)";
 
 const change_sql = authorization ++
     ", i AS (SELECT ? target,? revision,? role,? disabled,? password_hash,? now,? client) " ++

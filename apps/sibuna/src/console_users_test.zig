@@ -198,3 +198,49 @@ test "user changes recheck caller authorization and reject expiry, CSRF and miss
     try t.expectEqualStrings("private-test-hash", user.rows[0][0].?);
     try t.expectEqualStrings("1", user.rows[0][1].?);
 }
+
+test "administrators reset another account's factor once, ending its sessions with audit" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const location = try std.fmt.bufPrint(&path, ".zig-cache/tmp/{s}/factor", .{tmp.sub_path});
+    const fx = try setup(location);
+    defer fx.close();
+    try t.expect(try create(fx, "operator", .operator) == .users_saved);
+    try t.expect(try create(fx, "viewer", .viewer) == .users_saved);
+    try fx.owner.db.exec(t.allocator, "INSERT INTO console_totp(user_id,envelope,key_id," ++
+        "revision,enabled,expires,last_step,recovery_digests,recovery_used,modified_at) " ++
+        "VALUES(2,printf('%0120d',0),printf('%064d',0),1,1,999999,7," ++
+        "printf('%0640d',0),3,100);" ++
+        "INSERT INTO console_sessions(digest,user_id,revision,csrf_digest,created_at," ++
+        "expires,idle_expires) VALUES(printf('%064x',9),2,1,printf('%064x',9),100,99999,99999)");
+    const reset = struct {
+        fn run(fixture: *Fixture, target: u64, revision: u64) !p.StorageResult {
+            return fixture.run(.{ .users_change = .{
+                .auth = credentials,
+                .target = target,
+                .expected_revision = revision,
+                .operation = .factor,
+            } });
+        }
+    }.run;
+    try t.expectEqual(p.Failure.forbidden, (try reset(fx, 1, 1)).failed);
+    try t.expectEqual(p.Failure.conflict, (try reset(fx, 2, 2)).failed);
+    try t.expectEqual(p.Failure.conflict, (try reset(fx, 3, 1)).failed);
+    try t.expect(try reset(fx, 2, 1) == .users_saved);
+    try t.expectEqual(p.Failure.conflict, (try reset(fx, 2, 2)).failed);
+    var rows = try fx.owner.db.query(t.allocator, "SELECT t.enabled,t.recovery_digests," ++
+        "t.recovery_used,t.last_step IS NULL,t.expires,t.modified_by,u.revision," ++
+        "(SELECT COUNT(*) FROM console_sessions WHERE user_id=2)," ++
+        "(SELECT group_concat(actor||':'||action,',') FROM (SELECT actor,action FROM " ++
+        "console_audit WHERE subject=2 AND action IN('totp.reset','user.revoke') ORDER BY id))" ++
+        " FROM console_totp t JOIN console_users u ON u.id=t.user_id WHERE t.user_id=2");
+    defer rows.deinit();
+    const expected = [_][]const u8{
+        "0", "", "0", "1", "0", "1", "2", "0", "1:totp.reset,1:user.revoke",
+    };
+    for (expected, rows.rows[0]) |value, actual| try t.expectEqualStrings(value, actual.?);
+    // The cleared row still carries its revision, so the owner can enroll again.
+    const factor = (try fx.run(.{ .totp_read = 2 })).totp;
+    try t.expect(!factor.enabled and factor.revision == 2);
+}

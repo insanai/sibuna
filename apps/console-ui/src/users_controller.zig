@@ -58,7 +58,7 @@ pub fn action(state: *State, name: []const u8, fields: std.json.Value, out: Outb
             .role = model.role,
         });
     } else if (equal(u8, name, "users-access") or equal(u8, name, "users-password") or
-        equal(u8, name, "users-revoke"))
+        equal(u8, name, "users-revoke") or equal(u8, name, "users-factor"))
     {
         try mutate(state, name, fields, out);
     }
@@ -112,10 +112,16 @@ fn mutate(state: *State, name: []const u8, fields: std.json.Value, out: Outbox) 
     }
     if (!model.confirmed) return;
     const row = &model.rows[index];
-    const kind: Kind = if (equal(u8, name, "users-access")) .access else password: {
-        break :password if (equal(u8, name, "users-password")) .password else .revoke;
-    };
+    const kind: Kind = if (equal(u8, name, "users-access"))
+        .access
+    else if (equal(u8, name, "users-password"))
+        .password
+    else if (equal(u8, name, "users-factor"))
+        .factor
+    else
+        .revoke;
     if (row.id == state.user_id and kind != .revoke) return;
+    if (kind == .factor and !row.totp_enabled) return;
     model.username = row.username;
     model.self_revoke = row.id == state.user_id and kind == .revoke;
     var target: [20]u8 = undefined;

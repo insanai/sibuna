@@ -1,6 +1,6 @@
 const std = @import("std");
 const p = @import("console_protocol");
-pub const Kind = enum { query, create, access, password, revoke };
+pub const Kind = enum { query, create, access, password, revoke, factor };
 const WireRow = struct {
     id: u64,
     username: []const u8,

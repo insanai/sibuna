@@ -26,6 +26,7 @@ pub const Kind = enum {
     access,
     password,
     revoke,
+    factor,
     geo_status,
     geo_update,
     tokens,
@@ -44,7 +45,7 @@ pub const Kind = enum {
 
     fn needsRevision(self: Kind) bool {
         return switch (self) {
-            .access, .password, .revoke, .revoke_token, .remove_token => true,
+            .access, .password, .revoke, .factor, .revoke_token, .remove_token => true,
             else => false,
         };
     }
@@ -209,6 +210,10 @@ test "account CLI requires explicit authority, exact revisions and complete acce
     try t.expectEqual(@as(u64, 9007199254740995), args.revision);
     try t.expectEqual(p.Role.operator, args.role);
     try t.expectError(error.RevisionRequired, parse(&(.{ "reset-password", "2" } ++ auth)));
+    try t.expectError(error.RevisionRequired, parse(&(.{ "reset-factor", "2" } ++ auth)));
+    const reset = try parse(&(.{ "reset-factor", "2" } ++ auth ++ .{ "--revision", "7" }));
+    try t.expectEqual(Kind.factor, reset.kind);
+    try t.expectEqual(@as(u64, 7), reset.revision);
     try t.expectError(error.AccessFieldsRequired, parse(&(.{ "set-user", "2" } ++ auth)));
     try t.expectError(error.UnexpectedOption, parse(
         &(.{"users"} ++ auth ++ .{ "--role", "admin" }),
@@ -234,12 +239,12 @@ fn command(args: []const []const u8) Error!Kind {
         return error.UnknownCommand;
     }
     const names = .{
-        "users",  "add-user",   "set-user",     "reset-password", "revoke-sessions",
-        "tokens", "mint-token", "revoke-token", "remove-token",
+        "users",        "add-user", "set-user",   "reset-password", "revoke-sessions",
+        "reset-factor", "tokens",   "mint-token", "revoke-token",   "remove-token",
     };
     const kinds = [_]Kind{
-        .users,  .add,        .access,       .password,     .revoke,
-        .tokens, .mint_token, .revoke_token, .remove_token,
+        .users,  .add,    .access,     .password,     .revoke,
+        .factor, .tokens, .mint_token, .revoke_token, .remove_token,
     };
     inline for (names, kinds) |name, kind| if (equal(args[0], name)) return kind;
     return error.UnknownCommand;

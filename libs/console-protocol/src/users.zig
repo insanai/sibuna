@@ -31,6 +31,8 @@ pub const Change = struct {
         access: struct { role: root.Role, disabled: bool },
         password: root.Bytes(255),
         revoke,
+        /// Turns off another account's second factor and its recovery codes.
+        factor,
     },
 };
 
