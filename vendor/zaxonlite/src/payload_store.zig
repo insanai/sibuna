@@ -21,6 +21,7 @@
 const std = @import("std");
 const Io = std.Io;
 const Sha256 = std.crypto.hash.sha2.Sha256;
+const named_atomic = @import("named_atomic.zig");
 const durability = @import("durability.zig");
 
 pub const Hash = [32]u8;
@@ -68,9 +69,17 @@ pub const PayloadStore = struct {
                 .{ .iterate = true },
             );
             defer shard_dir.close(self.io);
+            // Node.open holds the exclusive directory LOCK before init; no
+            // live writer can own a stage while crash leftovers are removed.
+            var removed_stage = false;
             var objects = shard_dir.iterate();
             while (try objects.next(self.io)) |object| {
                 if (object.kind != .file) continue;
+                if (named_atomic.isTemporaryName(object.name)) {
+                    try shard_dir.deleteFile(self.io, object.name);
+                    removed_stage = true;
+                    continue;
+                }
                 var object_name: [62]u8 = undefined;
                 if (object.name.len != 62) continue;
                 object_name = object.name[0..62].*;
@@ -81,6 +90,7 @@ pub const PayloadStore = struct {
                 );
                 total +|= stat.size;
             }
+            if (removed_stage) try durability.syncDirectory(shard_dir);
         }
         return total;
     }
@@ -137,14 +147,14 @@ pub const PayloadStore = struct {
         if (shard_status == .created) {
             try durability.syncDirectoryBeforeBarrier(self.dir);
         }
-        var atomic = try self.dir.createFileAtomic(self.io, path, .{
-            .make_path = false,
-            .permissions = @fromBackingInt(@intCast(0o600)),
-        });
+        // A named stage uses no-replace rename rather than O_TMPFILE linkat.
+        // Some filesystems stall that link long enough to starve protocol ticks.
+        // Byte, directory and journal barriers retain their existing order.
+        var atomic = try named_atomic.NamedAtomic.init(self.io, self.dir, path[0..2]);
         defer atomic.deinit(self.io);
         try atomic.file.writePositionalAll(self.io, bytes, 0);
         try durability.syncFileBeforeBarrier(self.io, atomic.file);
-        atomic.link(self.io) catch |err| switch (err) {
+        atomic.finish(self.io, path[3..]) catch |err| switch (err) {
             // Another writer installed identical content first; it also
             // counted the bytes.
             error.PathAlreadyExists => {
@@ -349,4 +359,90 @@ test "retained bytes track installs, duplicates, removal, and reopening" {
     var reopened = try PayloadStore.init(io, tmp.dir);
     defer reopened.deinit();
     try std.testing.expectEqual(@as(u64, 4), reopened.retained_bytes);
+}
+
+test "reopen discards only abandoned named stages and preserves payloads" {
+    const io = testing.io;
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    const payload = "chosen payload survives abandoned staging";
+    const stages = [_][]const u8{
+        ".stage-0123456789abcdef0123456789abcdef",
+        ".stage-ffffffffffffffffffffffffffffffff",
+    };
+    const foreign = [_][]const u8{
+        ".stage-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        ".stage-0123",
+        "operator-note",
+    };
+    const stage_directory = ".stage-22222222222222222222222222222222";
+    var digest: Hash = undefined;
+    var path_buffer: [65]u8 = undefined;
+    {
+        var store = try PayloadStore.init(io, tmp.dir);
+        defer store.deinit();
+        digest = try store.put(payload);
+        const path = PayloadStore.pathOf(&path_buffer, digest);
+        var shard = try store.dir.openDir(io, path[0..2], .{ .iterate = true });
+        defer shard.close(io);
+        // Simulate process death before installation; none of these bytes are chosen.
+        for (stages) |name| try shard.writeFile(io, .{
+            .sub_path = name,
+            .data = "unfinished upload",
+        });
+        for (foreign) |name| try shard.writeFile(io, .{
+            .sub_path = name,
+            .data = "keep these bytes",
+        });
+        try shard.createDirPath(io, stage_directory);
+    }
+
+    var reopened = try PayloadStore.init(io, tmp.dir);
+    defer reopened.deinit();
+    try testing.expectEqual(@as(u64, payload.len), reopened.retained_bytes);
+    const loaded = try reopened.load(testing.allocator, digest);
+    defer testing.allocator.free(loaded);
+    try testing.expectEqualStrings(payload, loaded);
+    const path = PayloadStore.pathOf(&path_buffer, digest);
+    var shard = try reopened.dir.openDir(io, path[0..2], .{ .iterate = true });
+    defer shard.close(io);
+    for (stages) |name| try testing.expectError(error.FileNotFound, shard.access(io, name, .{}));
+    for (foreign) |name| {
+        const bytes = try shard.readFileAlloc(io, name, testing.allocator, .limited(64));
+        defer testing.allocator.free(bytes);
+        try testing.expectEqualStrings("keep these bytes", bytes);
+    }
+    var preserved = try shard.openDir(io, stage_directory, .{});
+    preserved.close(io);
+}
+
+test "named payload repair counts one object across repeated installs and reopen" {
+    const io = testing.io;
+    var tmp = testing.tmpDir(.{});
+    defer tmp.cleanup();
+    const payload = "replicated immutable transaction";
+    var digest: Hash = undefined;
+    {
+        var store = try PayloadStore.init(io, tmp.dir);
+        defer store.deinit();
+        digest = try store.put(payload);
+        var path_buffer: [65]u8 = undefined;
+        const path = PayloadStore.pathOf(&path_buffer, digest);
+        const file = try store.dir.openFile(io, path, .{ .mode = .read_write });
+        try file.writePositionalAll(io, "X", 0);
+        file.close(io);
+        try testing.expectError(error.PayloadCorrupt, store.verify(digest));
+
+        try store.putNamed(digest, payload);
+        try store.verify(digest);
+        try testing.expectEqual(@as(u64, payload.len), store.retained_bytes);
+        try store.putNamed(digest, payload);
+        try testing.expectEqual(@as(u64, payload.len), store.retained_bytes);
+    }
+    var reopened = try PayloadStore.init(io, tmp.dir);
+    defer reopened.deinit();
+    try testing.expectEqual(@as(u64, payload.len), reopened.retained_bytes);
+    const loaded = try reopened.load(testing.allocator, digest);
+    defer testing.allocator.free(loaded);
+    try testing.expectEqualStrings(payload, loaded);
 }
