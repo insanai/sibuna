@@ -4,7 +4,7 @@ from pathlib import Path
 from html.parser import HTMLParser
 import shutil
 import subprocess
-from site_html import decorate
+from site_html import decorate, inventory
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "docs/build/site"
@@ -62,6 +62,14 @@ def compile_typst(source, output, bundle=False, root="."):
         check_bundle_figures(output)
 
 
+def compile_sid_pdfs():
+    # Bundle outlines query every record and share heading counters. Compile each
+    # downloadable PDF in its own document, matching the standalone `sid` build.
+    for page in inventory(SITE, ROOT):
+        if page["group"] == "sid" and "pdf" in page:
+            compile_typst(page["source"], SITE / page["pdf"])
+
+
 def main():
     if SITE.exists():
         shutil.rmtree(SITE)
@@ -71,6 +79,7 @@ def main():
     compile_typst("docs/whitepaper/whitepaper.typ", SITE / "pdf/sibuna-whitepaper.pdf")
     compile_typst("docs/whitepaper/bundle.typ", SITE / "whitepaper", bundle=True)
     compile_typst("docs/sid/bundle.typ", SITE / "sid", bundle=True, root="docs")
+    compile_sid_pdfs()
     (SITE / "assets").mkdir()
     for name in ("site.css", "site.js"):
         shutil.copyfile(ROOT / "docs/site" / name, SITE / "assets" / name)
