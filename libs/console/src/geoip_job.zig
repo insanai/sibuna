@@ -28,7 +28,8 @@ pub const Job = struct {
 
     /// Startup restores only the durable active pointer; incomplete staging is invisible.
     pub fn restore(self: *Job) !void {
-        const result = try self.app.background(.geo_metadata);
+        const retry = @import("crs_restore_retry.zig").Retry.init(self.app.io);
+        const result = try self.startupRead(retry, .geo_metadata);
         if (result != .geo_metadata) return error.StorageUnavailable;
         const metadata = result.geo_metadata;
         if (metadata.ranges == 0) return self.restoreEmbedded(metadata.revision);
@@ -39,7 +40,7 @@ pub const Job = struct {
         var count: usize = 0;
         var ordinal: u32 = 0;
         while (count < ranges.len) : (ordinal += 1) {
-            const chunk = try self.app.background(.{ .geo_read = .{
+            const chunk = try self.startupRead(retry, .{ .geo_read = .{
                 .digest = metadata.digest,
                 .ordinal = ordinal,
             } });
@@ -62,6 +63,24 @@ pub const Job = struct {
             .files = provider.fileCount(),
         }, metadata.revision);
         self.metadata = metadata;
+    }
+
+    /// A restarting replica may still be electing a leader, so its linearizable reads can be
+    /// unavailable briefly. Startup retries those within its deadline instead of exiting.
+    fn startupRead(
+        self: *Job,
+        retry: @import("crs_restore_retry.zig").Retry,
+        request: p.StorageRequest,
+    ) !p.StorageResult {
+        while (true) {
+            const stopping = self.app.stopping.load(.acquire);
+            const result = self.app.background(request) catch |err| {
+                try retry.wait(self.app.io, stopping, err);
+                continue;
+            };
+            if (result != .failed or result.failed != .unavailable) return result;
+            try retry.wait(self.app.io, stopping, error.StorageUnavailable);
+        }
     }
 
     /// Without a durable generation, an embedded build snapshot serves lookups until the

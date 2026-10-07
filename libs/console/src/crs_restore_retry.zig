@@ -1,4 +1,4 @@
-//! Election transients may interrupt a durable CRS read after storage startup.
+//! Election transients may interrupt a durable CRS or GeoIP read after storage startup.
 //! Retry only observation/application before listeners; source adoption is never replayed.
 const std = @import("std");
 

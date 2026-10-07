@@ -29,6 +29,7 @@ pub const Reply = enum {
     conflict,
     command,
     setup_ready,
+    geo_empty,
     owned_heads,
     hold,
 };
@@ -161,6 +162,7 @@ pub const Fixture = struct {
             .conflict => .{ .failed = .conflict },
             .command => .command_recorded,
             .setup_ready => .{ .setup_required = false },
+            .geo_empty => .{ .geo_metadata = .{ .revision = 1 } },
             .owned_heads => block: {
                 const heads = try t.allocator.create(p.incident_heads.Heads);
                 heads.* = .{ .id = 1 };

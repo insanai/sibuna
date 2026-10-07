@@ -728,6 +728,33 @@ test "console startup deadline abandons executing work until its owner completes
     for (fx.mailbox.slots) |slot| try t.expectEqual(Mailbox.State.free, slot.state);
 }
 
+test "console startup retries unavailable GeoIP reads and refuses other replies" {
+    const t = std.testing;
+    const fixture = @import("auth_http_test.zig");
+    {
+        const fx = try fixture.Fixture.init(&.{
+            .{ .request = .geo_metadata, .reply = .unavailable },
+            .{ .request = .geo_metadata, .reply = .unavailable },
+            .{ .request = .geo_metadata, .reply = .geo_empty },
+        });
+        defer fx.deinit();
+        fx.app.geo_job.app = &fx.app;
+        try fx.app.geo_job.restore();
+        fx.stop();
+        try t.expectEqual(null, fx.failure);
+        try t.expectEqual(@as(usize, 3), fx.consumed);
+    }
+    const fx = try fixture.Fixture.init(&.{
+        .{ .request = .geo_metadata, .reply = .invalid_input },
+    });
+    defer fx.deinit();
+    fx.app.geo_job.app = &fx.app;
+    try t.expectError(error.StorageUnavailable, fx.app.geo_job.restore());
+    fx.stop();
+    try t.expectEqual(null, fx.failure);
+    try t.expectEqual(@as(usize, 1), fx.consumed);
+}
+
 test "expired console startup submits no storage work" {
     const t = std.testing;
     const fixture = @import("auth_http_test.zig");
