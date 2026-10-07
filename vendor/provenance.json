@@ -128,6 +128,12 @@
         "file": "src/protocol.zig",
         "reason": "Chosen commits carry no ballot and can be served by any member during catch-up; they cannot replace leader evidence or reset election time.",
         "verification": "Regression tests cover fresh and duplicate history, an elected leader receiving follower history, and valid prepare/accept/heartbeat contact."
+      },
+      {
+        "file": "src/protocol.zig",
+        "reason": "Delayed Nacks cannot replace newer durable or observed leader evidence; compare complete round, priority and node ballots before changing role or leader hint.",
+        "verification": "41 focused protocol and bitset tests include lower rounds, equal-round priority and node ordering, durable promises and earlier observed Nacks. Ignored Nacks preserve role, hint, ticks and promise; fresh higher rejection still demotes the campaign.",
+        "source_sha256": "028d49159297b70ee36113d7415a66f191524b12762c1d45c61d6d0b642ad461"
       }
     ],
     "upstream_files": {

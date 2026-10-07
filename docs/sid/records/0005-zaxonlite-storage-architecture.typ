@@ -94,6 +94,21 @@ Applying it preserves the chosen prefix without changing ballot-bearing leadersh
 Election time is refreshed by valid prepare, accept or matching heartbeat contact instead.
 
 
+A rejected campaign also has to respect newer leadership evidence. A delayed Nack changes
+neither the role nor the leader hint when its promised ballot is below the durable promise
+or the greatest observed ballot. The comparison uses the complete ordering: round, priority
+and node identifier. A single helper advances the volatile full-ballot floor and the
+existing round counter together. Fresh higher rejections retain the normal demotion and
+next-campaign behavior. This adds no persistent field or wire change.
+
+*Lemma (a delayed rejection cannot weaken leadership evidence).* Let $b_p$ be the durable
+promise and $b_o$ the greatest observed full ballot. A Nack may update the hint only when its
+promised ballot $b$ satisfies $b >= b_p$ and $b >= b_o$, as well as the existing own-campaign
+checks. Lower evidence therefore cannot replace either floor, including ties in round that
+differ in priority or node identifier. The observation floor advances monotonically during
+the process lifetime; after restart the durable promise still bounds accepted rejection
+hints. This guards routing evidence, not a new quorum or agreement rule.
+
 The payload store uses a named temporary file in the destination hash shard. Creation is
 exclusive, with mode `0600` and at most sixteen random-name attempts. The owner flushes the
 file, installs it with atomic no-replace rename, flushes the shard directory, and then runs

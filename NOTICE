@@ -13,6 +13,7 @@ Bundled dependencies in the default, single-node release:
   LICENSES/Paxos-MIT.txt. Sources: github.com/insanai/zaxonlite and
   github.com/insanai/paxos-zig. Zig 0.17 compatibility sources are included in vendor/.
   Paxos chosen-history replay preserves ballot-bearing leader evidence and election timers.
+  Delayed Nacks cannot replace a newer durable or observed full ballot with an older hint.
   Zaxonlite payloads use named same-directory stages and atomic no-replace installation.
   File, directory and journal durability barriers retain their order. Abandoned stages
   are removed under the node's exclusive data-directory lock during startup.
