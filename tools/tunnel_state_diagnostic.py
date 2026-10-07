@@ -24,7 +24,18 @@ replace('libs/net/src/duplex.zig', 'fn interests(', '''fn diagnostic(io: Io, dir
             &buffer,
             "TUNNEL-DIAGNOSTIC side={d} fd={d} events={d} revents={d} " ++
                 "prefix={d} begin={d} end={d} eof={} closed={} idle={d}\\n",
-            .{ i, fd.fd, fd.events, fd.revents, d.prefix.len, d.begin, d.end, d.eof, d.closed, idle },
+            .{
+                i,
+                fd.fd,
+                fd.events,
+                fd.revents,
+                d.prefix.len,
+                d.begin,
+                d.end,
+                d.eof,
+                d.closed,
+                idle,
+            },
         ) catch return;
         @import("socket").diagnostic(io, message);
     }
