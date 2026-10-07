@@ -62,9 +62,11 @@ def select(port, cookie, csrf, identifier, revision, mode):
         observed = status(port, cookie, csrf)
         assert observed["revision"] == revision + 1, observed
         local = observed["local"]["selection"]
-        receipt = next((node for node in observed["nodes"] if node), None)
+        # Receipts from other members can still describe the previous revision for a
+        # moment; wait for one that reports this selection rather than the first one seen.
+        receipt = next((node for node in observed["nodes"]
+                        if node and node["revision"] == revision + 1), None)
         if local["revision"] == revision + 1 and receipt and receipt["applied"]:
-            assert receipt["revision"] == revision + 1, receipt
             assert local["mode"] == mode, local
             return observed
         assert time.monotonic() < deadline, observed
