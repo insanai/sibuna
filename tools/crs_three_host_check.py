@@ -12,6 +12,7 @@ node 1 also holds a signed `candidate/` from `sibuna crs check`. See
 `benchmarks/results/linux-launch-harness-20261001.json` for those controllers.
 """
 import argparse
+from datetime import datetime, timezone
 import http.client
 import json
 from pathlib import Path
@@ -44,6 +45,8 @@ class RemoteCluster:
         self.procs, self.tunnels, self.infrastructure = [None] * 3, [], []
         self.data, self.consoles, self.seeded, self.serial = [], [], False, 0
         self.recovery = []
+        self.processes, self.identities = {}, []
+        self.started = time.monotonic()
 
     def ssh(self, index, args, timeout=150):
         result = subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10",
@@ -59,13 +62,32 @@ class RemoteCluster:
         return json.loads(result.stdout)
 
     def launch(self, index, name, args):
+        kind = name
         self.serial += 1
         name = f"{self.run}-{name}-{self.serial}"
         self.agent(index, "launch", {"name": name, "args": args})
+        self.processes[name] = {"node": index + 1, "kind": kind, "name": name,
+                                "ready": None, "stop_status": None}
         return name
+
+    def process_status(self, index, name):
+        script = ("import json, pathlib, sys; p=pathlib.Path(sys.argv[1]); "
+                  "print(json.dumps(int(p.read_text()) if p.exists() else None))")
+        result = self.ssh(index, ["python3", "-c", script,
+                                 f"{self.root}/processes/{name}/status"])
+        return json.loads(result.stdout)
+
+    def identity(self, index):
+        script = ("import hashlib,json,pathlib,platform,sys; "
+                  "p=pathlib.Path(sys.argv[1]); "
+                  "print(json.dumps({'hostname':platform.node(), 'kernel':platform.release(), "
+                  "'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}))")
+        result = json.loads(self.ssh(index, ["python3", "-c", script, self.binary]).stdout)
+        return {"host": self.hosts[index], "binary": self.binary, **result}
 
     def prepare(self):
         for index in range(3):
+            self.identities.append(self.identity(index))
             self.ssh(index, ["sh", "-c", f"umask 077; printf %s {shlex.quote(POLICY)} > "
                              f"{self.root}/control/crs-policy.json"])
             self.infrastructure.append((index, self.launch(index, "tls", [
@@ -84,6 +106,7 @@ class RemoteCluster:
             self.consoles.append(ports[1])
         time.sleep(2)
         assert all(tunnel.poll() is None for tunnel in self.tunnels), "SSH tunnel failed"
+        assert len({row["sha256"] for row in self.identities}) == 1, "mixed cluster binaries"
 
     def cluster_args(self, index):
         args = ["--data-dir", f"{self.root}/data/{self.run}", "--storage-poll-ms", "100",
@@ -125,11 +148,20 @@ class RemoteCluster:
         self.procs[index] = self.launch(index, f"node{index + 1}", self.node_args(index))
 
     def ready(self, index, timeout=120):
+        started, checked = time.monotonic(), 0
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
+            if time.monotonic() - checked >= 1:
+                checked = time.monotonic()
+                status = self.process_status(index, self.procs[index])
+                if status is not None:
+                    raise RuntimeError(f"node {index + 1} exited before readiness: {status}")
             try:
-                if direct_request(self.data[index], "GET", "/__sibuna/health")[0] == 200 and \
-                        proxied(self.consoles[index], "GET", "/console/api/setup")[0] < 500:
+                health = direct_request(self.data[index], "GET", "/__sibuna/health")[0]
+                setup = proxied(self.consoles[index], "GET", "/console/api/setup")[0]
+                if health == 200 and setup < 500:
+                    self.processes[self.procs[index]]["ready"] = {
+                        "seconds": time.monotonic() - started, "health": health, "setup": setup}
                     return
             except (OSError, http.client.HTTPException):
                 pass
@@ -138,6 +170,7 @@ class RemoteCluster:
 
     def stop(self, index):
         status = self.agent(index, "stop", {"name": self.procs[index]})["status"]
+        self.processes[self.procs[index]]["stop_status"] = status
         assert status == 0, f"node {index + 1} shutdown status {status}"
         self.procs[index] = None
 
@@ -191,13 +224,32 @@ class RemoteCluster:
                     errors.append(str(error))
         for index, name in reversed(self.infrastructure):
             try:
-                self.agent(index, "stop", {"name": name})
+                status = self.agent(index, "stop", {"name": name})["status"]
+                self.processes[name]["stop_status"] = status
+                assert status == 0, f"{name} shutdown status {status}"
             except BaseException as error:
                 errors.append(str(error))
         for tunnel in self.tunnels:
             tunnel.terminate()
             tunnel.wait(timeout=10)
         assert not errors, errors
+
+    def report(self, build_commit, failure):
+        controller = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+        changes = subprocess.check_output(["git", "diff", "--name-only", "HEAD"],
+                                          text=True).splitlines()
+        return {"date": datetime.now(timezone.utc).isoformat(), "run": self.run,
+                "build_commit": build_commit, "controller_commit": controller,
+                "controller_changes": changes, "binary_identities": self.identities,
+                "elapsed_seconds": time.monotonic() - self.started,
+                "passed": failure is None, "failure": None if failure is None else str(failure),
+                "processes": list(self.processes.values()), "transport": {
+                    "consensus": "mutual TLS", "management": "validated HTTPS peers",
+                    "controller": "SSH tunnels", "sessions": "TOTP"},
+                "required_checks": ["Audit/Enforce/Off", "separate preparation and selection",
+                           "leader loss", "quorum refusal", "durable restart restoration",
+                           "exact rollback", "incompatible preparation refusal",
+                           "all owned daemons and ingress processes stop with status zero"]}
 
     def logs(self):
         for index, name in enumerate(self.procs):
@@ -213,19 +265,36 @@ def main():
     parser.add_argument("--host", action="append", required=True,
                         help="user@address for nodes 1, 2 and 3, in order")
     parser.add_argument("--root", required=True, help="prepared remote fixture root")
+    parser.add_argument("--report", type=Path, help="write functional qualification provenance")
+    parser.add_argument("--build-commit", help="source commit used to build the remote binary")
     args = parser.parse_args()
     if len(args.host) != 3:
         parser.error("exactly three --host values are required")
+    if args.report and (not args.build_commit or
+                        not re.fullmatch(r"[0-9a-f]{40}", args.build_commit)):
+        parser.error("--report requires a full hexadecimal --build-commit")
     helper.request = proxied
     cluster = RemoteCluster(args.host, args.root, str(int(time.time())))
+    failure = None
     try:
         cluster.prepare()
         scenario(cluster)
-    except BaseException:
+    except BaseException as error:
+        failure = error
         cluster.logs()
-        raise
     finally:
-        cluster.close()
+        try:
+            cluster.close()
+        except BaseException as cleanup:
+            if failure is None:
+                failure = cleanup
+            else:
+                failure.add_note(f"Fixture cleanup: {cleanup}")
+        if args.report:
+            args.report.write_text(json.dumps(cluster.report(args.build_commit, failure),
+                                              indent=2) + "\n")
+    if failure is not None:
+        raise failure
     print("Three-host CRS: Audit/Enforce/Off, separate selection, leader loss, quorum refusal, "
           "restart restoration, exact rollback and clean shutdown pass across real machines.")
 
