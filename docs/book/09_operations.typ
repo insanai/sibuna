@@ -127,6 +127,10 @@ the current operator rules. A settings file accepts the console's named settings
 rejects unknown fields; omitted fields use the documented defaults, so review the resulting
 candidate. `crs rollback` prepares the exact previous source and settings; selection remains
 separate. `crs discard --id <id> --revision <revision>` cancels an unused candidate.
+An update without settings preserves the current resource controls, including a saved
+16-million work budget from earlier builds. To adopt the 128-million default, edit Work budget
+in the console candidate or supply a complete reviewed settings file, then select the verified
+candidate. Changing a startup flag cannot override an existing saved selection.
 All changes require the saved revision explicitly, including revision zero for an initial
 selection. Query status after an uncertain response rather than assuming the change failed.
 `--factor-file` supplies a required second factor and `--timeout` bounds the preparation

@@ -26,12 +26,16 @@ Qualification:
 
 Behaviour changes:
 - Request targets must be origin-form (or `OPTIONS *`); absolute-form, `CONNECT` and fragments
-  receive 400. Repeated, missing (HTTP/1.1) or non-literal `Host` fields receive 400.
+  receive 400. Repeated, missing (HTTP/1.1) or malformed `Host` fields receive 400.
 - CRS transaction slots are tiered: spare reservation becomes small slots for requests up to
   64 KiB, and a busy pool waits up to 50 ms before answering 503.
 - The default CRS work budget is 128 million units. Selections saved by earlier builds keep
-  their stored budget; re-prepare them or set `--crs-work-budget` to adopt the new default.
+  their stored budget. Change Work budget in a console candidate or supply complete reviewed
+  settings with `crs update --settings`, then select it. Local-directory updates accept
+  `--crs-work-budget`; startup flags must agree with an existing saved selection.
 - Malformed JSON or XML declared by Content-Type is an inspection failure (403 in Enforce).
+- Cluster catch-up preserves ballot-bearing leader evidence while replaying chosen history.
+  Startup retries temporary storage unavailability before opening listeners.
 
 Downloads:
 - Linux x86-64 and ARM64: statically linked musl builds; Linux 5.10 or later.
@@ -56,9 +60,7 @@ Admitted WebSockets relay bytes without message inspection. Forward-auth sees on
 supplied by the ingress. Local rate limits are not global quotas, and Sibuna does not provide
 volumetric network mitigation.
 
-Known issues: in one of four three-host qualification runs a restarted node did not become
-ready; the next runs passed and the cause is under investigation. The strict SID 0007
-console-impact target is still not formally passed. Published benchmarks retain their
+The strict SID 0007 console-impact target is still not formally passed. Published benchmarks retain their
 measured revision and host description and are not guarantees for other hosts.
 
 Documentation: https://insanai.github.io/sibuna/

@@ -1,12 +1,12 @@
 #let sid-number = "0010"
 #let sid-title = "Native OWASP Core Rule Set Evaluation and Verified Rule Updates"
-#let sid-state = "discussion"
+#let sid-state = "accepted"
 #let sid-created = "2026-10-04"
 #let sid-discussion = "Native SecLang compilation and bounded CRS evaluation, complete input contracts, anomaly scoring, immutable rule generations, authenticated operator updates, and compatibility gates."
 #let sid-labels = ("security", "policy", "performance",)
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
-#let sid-status = "Open for Discussion"
+#let sid-status = "Accepted"
 #let sid-last-updated = "2026-10-07"
 
 #import "../../shared/sid.typ": sid-document
@@ -2423,7 +2423,7 @@ establishes refusal status, withheld origin bytes and supported profile coverage
 
 `tools/crs_ftw_daemon_check.py` sends all 5,193 pinned tests through the actual daemon, a
 loopback Albedo 0.3.0 origin and the console's stored evidence. It uses blocking and detection
-paranoia four, the corpus's TX settings and the production 128-million work budget. Each test
+paranoia four, the corpus's TX settings and the production 128-million work budget. Each stage
 owns one loopback source address, so saved findings are attributed through the console's exact
 address filter; log markers would add headers that rules inspect. Storage is drained every 16
 tests and one dropped incident invalidates the run. Raw wire requests, multi-stage tests and
@@ -2461,13 +2461,13 @@ Enforce qualifies disruption and withheld delivery.
 Daemon qualification found defects that are now fixed. Request targets in absolute or
 authority form reached policy without a leading slash, so path rules could not match them;
 the parser now serves only origin-form and `OPTIONS *`, and refuses repeated, missing or
-non-literal `Host` fields. Console address filters walked the time index and exceeded the
+malformed `Host` fields. Console address filters walked the time index and exceeded the
 statement budget once a client's incidents aged behind newer traffic; address and category
 filters now use indexed statement shapes. Rate-limiter cells were retained for the burst
 tolerance after they drained, so a high configured limit filled the table; drained cells are
 now reclaimed. A pool beyond its slots refused at once; slots are now tiered and a request
 parks briefly for a release. Merged views were rebuilt before every condition; they are now
-reused until their inputs change, with identical rule IDs, errors and work over the engine
+reused until their inputs change, with identical rule IDs and errors over the engine
 corpus. Results are recorded in
 `benchmarks/results/crs-ftw-daemon-latest.json`.
 
@@ -2479,7 +2479,10 @@ without quorum, durable restoration after member restart, exact rollback and inc
 preparation. Applied local revisions must agree with the saved revision on every running node.
 Each member must stop cleanly. The loopback check uses three local processes.
 `tools/crs_three_host_check.py` runs the same scenario across three Linux hosts on separate
-machines (2026-10-06). Consensus uses mutual TLS, management peers use validated HTTPS
+machines. Two complete qualification runs on 7 October 2026 use the corrected chosen-history
+leader handling and record every executable identity and owned process outcome in
+`benchmarks/results/crs-three-host-release-030-20261007-run1.json` and
+`crs-three-host-release-030-20261007-run2.json`. Consensus uses mutual TLS, management peers use validated HTTPS
 behind a TLS ingress, and every console session requires TOTP. Selection, convergence,
 leader loss with a survivor write, quorum refusal, restart restoration, exact rollback,
 refusal of an incompatible candidate and clean shutdown all pass there. Neither check

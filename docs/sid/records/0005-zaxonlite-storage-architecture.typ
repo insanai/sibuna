@@ -213,8 +213,10 @@ downloaded and nothing allocates on a request thread.
 = Forensics
 
 `Persistent.searchIncidents(match, limit)` runs an FTS5 `MATCH` over path and payload joined to
-the incident rows, ordered by rank. There is no HTTP administration endpoint yet; operators
-query the data directory with `zaxon sql --data <dir>` or read `current.db` directly.
+the incident rows, ordered by rank. SID 0007 defines the authenticated console's Events page
+and bounded HTTP queries for incident investigation, filtering, pagination and export.
+Policies and reputation changes use the same storage owner through authorized management
+operations; console handlers receive no raw database handle.
 
 = Product boundary
 
@@ -251,11 +253,13 @@ incidents), and the reputation upsert. Unit tests cover the ring under concurren
 embedding, peer-spec parsing, and SQL quoting. A manual run of the release daemon recorded WAF
 denials and a honeypot ban in `current.db` with 12 MB resident memory.
 
-= Open items
+= Operational qualification
 
-- Automated multi-node tests (leader failover, ban propagation latency).
-- An authenticated HTTP administration API for policies and incident search.
-- Retention and archival policy for `security_incidents`.
+Automated multi-member tests exercise leader loss and replicated bans; their topology,
+revision and transport belong with each result. SID 0007 defines the authenticated management
+API, incident retention and archival contracts. Deployment qualification still distinguishes
+functional failover from WAN latency, sustained forensic-write capacity and performance
+acceptance; a passed local fixture cannot establish those properties for another host.
 
 = Review corrections (2026-09-07)
 
