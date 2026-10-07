@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "date": "2026-10-07",
+  "application_revision": "d461e7fee9622f5f365fdb37b18acc77dc56608f",
+  "binary_sha256": "6556a59f140e76b190e1fa582a4cea72c0f1372b37027fd70f610570b0ba81e2",
+  "toolchain": "Zig 0.17.0",
+  "optimization": "ReleaseSafe",
+  "target": "native Linux x86-64",
+  "features": {
+    "storage": true,
+    "console": true,
+    "cluster": false
+  },
+  "build": {
+    "host": "insan@10.175.52.18",
+    "checkout_revision": "e7412b80ae06bdd8f9ef84cbf31d8b69ec6fe48d",
+    "change": "libs/console/src/http.zig matches committed d461e7f; later commits before d461 change documents and Python fixtures, not the binary",
+    "command": "zig build install -Doptimize=safe -j2 --summary all"
+  },
+  "qualification": {
+    "host": "insan@10.175.52.21",
+    "source": "Exact git archive of d461e7f, with the already-built executable copied from .18",
+    "command": "python3 -u tools/console_e2e.py ./bin/sibuna",
+    "exit_code": 0,
+    "transcript_sha256": "3bbd66f74ce792b953db521c2e28249ac282acdd43c4b98c657fd05c4918e5a0",
+    "transcript": [
+      "console-e2e: local initialization, required change and temporary credential removal passed",
+      "console-e2e: real incident queries, filtering, pagination and privacy boundaries passed",
+      "console-e2e: account creation, rotation, roles, revocation and restart passed",
+      "console-e2e: native account CLI, permissions, revisions and restart passed",
+      "console-e2e: native client bounds, redirect refusal, deadline and logout passed",
+      "console-e2e: native GeoIP CAS, no-op, failure, reply bounds and deadline passed",
+      "console-e2e: shared mutation allowance, CSRF isolation and read capacity passed",
+      "console-e2e: bearer scopes, GeoIP, policy writes, expiry and revocation passed",
+      "console-e2e: native token lifecycle, bearer headers, bounds and restart passed",
+      "console-e2e: node drain, clear, fencing, receipt, roles and restart passed",
+      "console-e2e: audit filters, ownership, redaction, export and restart passed",
+      "console-e2e: graceful multi-worker shutdown, active streams and restart passed",
+      "console-e2e: encrypted TOTP, session revocation, replay and recovery persistence passed",
+      "console-e2e: trusted HTTPS ingress and mandatory administrator TOTP passed",
+      "console-e2e: notification targets, sealed secrets, webhook HMAC and syslog passed",
+      "console-e2e: independent cooldowns, durable bounded retries and delivery audit passed",
+      "console-e2e: page template editing, browser rendering, sandboxed preview and reset passed",
+      "console-e2e: rule ordering, replay, reputation prefixes, country block and set import passed",
+      "console-e2e: opt-in redacted head capture, response states, kept headers and the not-recorded default passed",
+      "console-e2e: six topics, chunk watermarks, real deltas, filters, quota and revocation passed",
+      "console-e2e: TLS peer proof, DNS/IP identity, masking, quota, replay, stale, boot and cancellation passed",
+      "console-e2e: kiosk minting, one-time exchange, scope, replay and expiry passed",
+      "console-e2e: cluster scenarios skipped (build with -Dcluster=true)",
+      "console-e2e: TLS cluster peers skipped (build with -Dcluster=true)",
+      "console-e2e: both CLI modes, origin coverage, subscriptions and restart passed",
+      "console-e2e: bootstrap, login, CSRF, stream delivery/revocation, restart persistence passed"
+    ],
+    "owned_daemons_remaining": 0,
+    "cluster_scope": "This default binary skips cluster cases; separate three-host records qualify clustering."
+  },
+  "regression": {
+    "route": "POST /console/api/geoip/country/preview",
+    "before": "The existing live country workflow crashes ReleaseSafe with SIGSEGV in zig_probe_stack.",
+    "after": "Country preview, reviewed replacement, stale-generation refusal, independent-prefix ownership and atomic import pass.",
+    "fix": "Keep the common 16 KiB JSON response scratch in a non-inlined leaf function; stack reservation and response limits are unchanged.",
+    "service_usable_stack_bytes": 262144,
+    "frame_measurement": "Linux objdump prologue local reservations; saved registers and deeper library frames are additional. These are measurements for this native build, not portable worst-case bounds.",
+    "before_local_frame_bytes": {
+      "country_routes.handle": 66184,
+      "workflow_routes.handle": 67752,
+      "app.App.executeRoute": 71016,
+      "app.App.handle": 1352
+    },
+    "after_local_frame_bytes": {
+      "country_routes.handle": 60104,
+      "workflow_routes.handle": 52968,
+      "app.App.executeRoute": 55688,
+      "app.App.handle": 1352,
+      "country_response_json_leaf": 16600,
+      "app.App.requestAt": 8536
+    }
+  }
+}
