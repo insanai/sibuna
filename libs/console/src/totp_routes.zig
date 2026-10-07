@@ -15,6 +15,7 @@ pub fn factor(app: *App, user: p.AuthUser, code: []const u8) !p.auth.Factor {
     if (!user.totp_enabled) return .none;
     var result = try app.request(.{ .totp_read = user.id });
     defer std.crypto.secureZero(u8, std.mem.asBytes(&result));
+    try result.checkAvailable();
     if (result != .totp or !result.totp.enabled) return error.InvalidCode;
     const record = result.totp;
     if (code.len == 32) {
@@ -53,6 +54,7 @@ pub fn handle(app: *App, context: *Context, path: []const u8, principal: p.Princ
     const confirming = std.mem.endsWith(u8, path, "/confirm");
     if (context.request.head.method == .GET) {
         const result = try app.request(.{ .totp_read = principal.actor });
+        try result.checkAvailable();
         return http.json(context, .{
             .available = app.totp_key != null,
             .enabled = result == .totp and result.totp.enabled,
@@ -73,14 +75,16 @@ pub fn handle(app: *App, context: *Context, path: []const u8, principal: p.Princ
     const parsed = try http.parse(Input, context, &body, fixed.allocator());
     defer parsed.deinit();
     const account = try app.request(.{ .auth_user = principal.username });
+    try account.checkAvailable();
     if (account != .auth_user) return http.fail(context, .unauthorized, "CONSOLE401");
     app.passwords.verify(
         app.io,
         parsed.value.password,
         account.auth_user.password_hash.slice(),
     ) catch |err| {
-        if (err == error.Busy) return err;
-        return http.fail(context, .unauthorized, "CONSOLE401");
+        if (err == error.InvalidPassword)
+            return http.fail(context, .unauthorized, "CONSOLE401");
+        return err;
     };
     const authorization: p.auth.Authorization = .{
         .session_digest = session_digest,
@@ -105,6 +109,7 @@ fn enroll(app: *App, context: *Context, user: u64, grant: p.auth.Authorization, 
         .envelope = secrets.seal(app.io, seed, key, user),
         .key_id = secrets.keyId(key),
     } });
+    try result.checkAvailable();
     if (result != .command_recorded) return http.fail(context, .conflict, "CONSOLE409");
     var encoded = totp.base32(seed);
     defer std.crypto.secureZero(u8, &encoded);
@@ -131,6 +136,7 @@ fn confirm(
 ) !void {
     var record = try app.request(.{ .totp_read = user });
     defer std.crypto.secureZero(u8, std.mem.asBytes(&record));
+    try record.checkAvailable();
     if (record != .totp or record.totp.enabled or record.totp.revision != input.revision)
         return http.fail(context, .conflict, "CONSOLE409");
     var seed = try decrypt(app, record.totp);
@@ -155,6 +161,7 @@ fn confirm(
         .step = step,
         .recovery_digests = digests,
     } });
+    try result.checkAvailable();
     if (result != .command_recorded) return http.fail(context, .conflict, "CONSOLE409");
     try http.json(context, .{ .recovery_codes = views, .sign_in_required = true }, &.{});
 }

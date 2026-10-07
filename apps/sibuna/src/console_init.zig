@@ -60,13 +60,21 @@ pub fn run(gpa: std.mem.Allocator, io: std.Io, cfg: core.Config, username: []con
 fn request(owner: *Persistent, operation: p.StorageRequest) !p.StorageResult {
     const ticket = try owner.console_mailbox.submit(owner.io, operation, .urgent);
     try owner.tick();
-    return (try owner.console_mailbox.poll(owner.io, ticket)) orelse error.StorageUnavailable;
+    const result = (try owner.console_mailbox.poll(owner.io, ticket)) orelse
+        return error.StorageUnavailable;
+    try result.checkAvailable();
+    return result;
 }
 
 pub fn execute(gpa: std.mem.Allocator, io: std.Io, cfg: core.Config, username: []const u8) u8 {
     return run(gpa, io, cfg, username) catch |err| {
-        std.debug.print("CONSOLEBOOT: local initialization failed ({t}). " ++
-            "Hint: use --data-dir with a stopped, uninitialized Sibuna instance.\n", .{err});
+        const hint = if (err == error.StorageUnavailable)
+            "check storage and cluster quorum, then retry initialization."
+        else
+            "use --data-dir with a stopped, uninitialized Sibuna instance.";
+        std.debug.print("CONSOLEBOOT: local initialization failed ({t}). Hint: {s}\n", .{
+            err, hint,
+        });
         return 1;
     };
 }

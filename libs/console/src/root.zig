@@ -30,6 +30,7 @@ pub const schema = @import("schema.zig");
 pub const Password = @import("password.zig").Password;
 test {
     _ = @import("password.zig");
+    _ = @import("auth_http_test.zig");
     _ = @import("totp.zig");
     _ = @import("auth_secrets.zig");
     _ = @import("stats.zig");

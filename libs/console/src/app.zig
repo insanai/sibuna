@@ -334,9 +334,11 @@ pub const App = struct {
                 try http.fail(context, .bad_request, "CONSOLE002");
             },
             error.Busy => try http.fail(context, .too_many_requests, "CONSOLE003"),
-            // The storage owner did not answer within its deadline: a lost quorum or a
-            // stalled store. The operation's outcome is unknown, not proven failed.
-            error.StorageTimeout => try http.fail(context, .service_unavailable, "CONSOLEQUORUM"),
+            // Unavailable storage can affect reads as well as writes. A timed-out write
+            // may already have committed, so never describe its outcome as proven failed.
+            error.StorageTimeout, error.StorageUnavailable => {
+                try http.fail(context, .service_unavailable, "CONSOLEQUORUM");
+            },
             else => {
                 std.log.warn("console application request failed: {t}", .{err});
                 try http.fail(context, .service_unavailable, "CONSOLE004");

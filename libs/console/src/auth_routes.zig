@@ -40,17 +40,21 @@ pub fn login(app: *App, context: *Context) !void {
         return http.fail(context, .too_many_requests, "CONSOLE003");
     const username = try p.Bytes(64).init(input.value.username);
     const result = try app.request(.{ .auth_user = username });
+    try result.checkAvailable();
     const hash = if (result == .auth_user) result.auth_user.password_hash else app.dummy_hash;
     app.passwords.verify(app.io, input.value.password, hash.slice()) catch |err| {
-        if (err == error.Busy) return err;
-        return refuse(app, context, username, origin);
+        if (err == error.InvalidPassword) return refuse(app, context, username, origin);
+        return err;
     };
     if (result != .auth_user) return refuse(app, context, username, origin);
     const factor = @import("totp_routes.zig").factor(
         app,
         result.auth_user,
         input.value.code,
-    ) catch return refuse(app, context, username, origin);
+    ) catch |err| {
+        if (err == error.InvalidCode) return refuse(app, context, username, origin);
+        return err;
+    };
     try establish(app, context, result.auth_user, factor, origin);
 }
 
@@ -95,6 +99,7 @@ fn establish(
         .client = origin.client,
         .agent_digest = origin.agent_digest,
     } });
+    try result.checkAvailable();
     if (result != .command_recorded) return http.fail(context, .conflict, "CONSOLE409");
     try sessionResponse(app, context, user, raw, csrf, expires - now);
 }
@@ -135,6 +140,7 @@ pub fn logout(app: *App, context: *Context) !void {
         .digest = try http.session(context),
         .client = origin.client,
     } });
+    try result.checkAvailable();
     if (result != .command_recorded) return error.StorageUnavailable;
     const cookie = if (app.config.behind_proxy or app.config.cookie_secure)
         "__sibuna_console=; HttpOnly; SameSite=Strict; Path=/console; Max-Age=0; Secure"
@@ -163,14 +169,16 @@ pub fn password(app: *App, context: *Context, principal: p.Principal) !void {
     if (!allowed(app, context, principal.username.slice()))
         return http.fail(context, .too_many_requests, "CONSOLE003");
     const account = try app.request(.{ .auth_user = principal.username });
+    try account.checkAvailable();
     if (account != .auth_user) return http.fail(context, .unauthorized, "CONSOLE401");
     app.passwords.verify(
         app.io,
         input.value.old_password,
         account.auth_user.password_hash.slice(),
     ) catch |err| {
-        if (err == error.Busy) return err;
-        return http.fail(context, .unauthorized, "CONSOLE401");
+        if (err == error.InvalidPassword)
+            return http.fail(context, .unauthorized, "CONSOLE401");
+        return err;
     };
     if (std.mem.eql(u8, input.value.old_password, input.value.password))
         return error.InvalidRequest;
@@ -192,6 +200,7 @@ pub fn password(app: *App, context: *Context, principal: p.Principal) !void {
         .password_hash = hash,
         .client = seen.client,
     } });
+    try result.checkAvailable();
     if (result != .command_recorded) return http.fail(context, .conflict, "CONSOLE409");
     var changed = account.auth_user;
     changed.must_change = false;

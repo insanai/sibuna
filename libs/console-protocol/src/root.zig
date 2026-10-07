@@ -266,6 +266,12 @@ pub const StorageResult = union(enum) {
     revision: Revision,
     command_recorded,
     failed: Failure,
+
+    /// An unavailable owner is not evidence of a credential or revision mismatch.
+    /// Borrow the bounded result; never copy its large inactive payloads to classify it.
+    pub fn checkAvailable(self: *const StorageResult) error{StorageUnavailable}!void {
+        if (self.* == .failed and self.failed == .unavailable) return error.StorageUnavailable;
+    }
 };
 pub const Failure = enum {
     unauthorized,
