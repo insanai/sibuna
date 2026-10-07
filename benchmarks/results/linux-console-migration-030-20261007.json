@@ -1,0 +1,120 @@
+{
+  "schema": 1,
+  "kind": "console-migration-stale-owner-qualification",
+  "date": "2026-10-07",
+  "fix_commit": "3c25e7eb10b4aabe9267f5f6b9955ab672eb02c9",
+  "base_source_commit": "34a1f0c2846d9b2e7496536023ea72a4bcb32f79",
+  "host": "insan@10.175.52.18",
+  "zig": "0.17.0",
+  "build_jobs": 2,
+  "defect": "A startup owner could submit an unguarded migration after another owner upgraded the schema. Successful stale index or table-rebuild DDL reset the committed marker backwards.",
+  "correction": "A temporary aggregate CHECK enforces exactly one expected predecessor before DDL in the same captured transaction. Stale work rolls back and adopts the authoritative newer marker. A known future marker remains explicitly unsupported.",
+  "formats": "No persistent schema, schema-version or RPC-format change.",
+  "negative": {
+    "production_overlay": false,
+    "review_overlay": "Two regressions appended to the original console storage fixture plus a filtered build-only Persistent target. Exact patch is retained.",
+    "command": "zig build migration-review -Doptimize=ReleaseSafe -j2 --summary all",
+    "test_root_optimization": "Debug, as in the normal native test graph; dependencies use ReleaseSafe.",
+    "exit_status": 1,
+    "tests_passed": 4,
+    "tests_total": 6,
+    "failures": [
+      {
+        "migration": 5,
+        "expected_marker": 45,
+        "actual_marker": 5
+      },
+      {
+        "migration": 37,
+        "expected_marker": 45,
+        "actual_marker": 37
+      }
+    ],
+    "storage_path": "Actual Persistent.open and Node.exec captured transactions, not an unmanaged SQLite connection."
+  },
+  "guarded": {
+    "qualified_files": [
+      {
+        "path": "apps/sibuna/src/console_migrations.zig",
+        "sha256": "7a22003d2fc98607402e345d3c5d25793b774b38bc0d38d9fdfdd2941821ba37"
+      },
+      {
+        "path": "apps/sibuna/src/console_migrations_test.zig",
+        "sha256": "8bcd764acf53131f5af90f0ed2fca53fbfada3da838190225dc721bdab564f6e"
+      },
+      {
+        "path": "apps/sibuna/src/persistent.zig",
+        "sha256": "cb0011bd025cc7472236da42325ad8ba1e17246224d4abb5f04f8466f2555534"
+      }
+    ],
+    "review_overlay": "Build-only filtered root at console_migrations_test.zig with explicit ReleaseSafe optimization. Production files match the committed fix.",
+    "command": "zig build migration-review -Doptimize=ReleaseSafe -j2 --summary all",
+    "test_root_optimization": "ReleaseSafe",
+    "exit_status": 0,
+    "build_steps_passed": 12,
+    "build_steps_total": 12,
+    "tests_passed": 10,
+    "tests_total": 10,
+    "focused_contract_tests": 6,
+    "properties": [
+      "Stale migrations5 and37 preserve current marker and retained minute bytes.",
+      "Every historical catalog migration rejects stale replay at the supported version.",
+      "Valid predecessor advances once; stale retry adopts the committed marker.",
+      "Mid-body SQL failure rolls back all schema and data effects.",
+      "Empty, multiple and NULL marker rows fail before body effects.",
+      "A future marker appearing after the advisory read remains explicitly unsupported.",
+      "No main or TEMP guard object remains, checked against the still-open actual writer.",
+      "Reopening the captured store preserves data and marker; recovered-writer cleanup is checked again."
+    ]
+  },
+  "normal_daemon": {
+    "command": "zig build daemon-e2e -Doptimize=ReleaseSafe -j2 --summary all",
+    "build_graph": "Original unmodified build.zig. No filters, skips, timer changes or test assertions removed.",
+    "exit_status": 0,
+    "build_steps_passed": 12,
+    "build_steps_total": 12,
+    "tests_passed": 218,
+    "tests_total": 218,
+    "prior_tests": 212,
+    "new_migration_contracts_counted": 6,
+    "peak_rss_mib": 137,
+    "qualified_files": [
+      {
+        "path": "apps/sibuna/src/console_migrations.zig",
+        "sha256": "7a22003d2fc98607402e345d3c5d25793b774b38bc0d38d9fdfdd2941821ba37"
+      },
+      {
+        "path": "apps/sibuna/src/console_migrations_test.zig",
+        "sha256": "e92002c8c5b9040b7f9693c4028a3867850b5aecf9d91a7795a701bea8e1d030"
+      },
+      {
+        "path": "apps/sibuna/src/persistent.zig",
+        "sha256": "cb0011bd025cc7472236da42325ad8ba1e17246224d4abb5f04f8466f2555534"
+      }
+    ],
+    "test_revision_note": "The normal gate preceded the additional live-writer TEMP premise; the final focused ReleaseSafe gate verifies that stronger assertion. Runtime guard and Persistent catalog import are identical."
+  },
+  "artifacts": [
+    {
+      "path": "benchmarks/results/linux-console-migration-030-20261007-negative.log.gz",
+      "sha256": "157a7ed054f19e890c0721d49dcaf55deec6764d56185920e928cee5985f5388",
+      "uncompressed_sha256": "6d20dbc359823e306cd3e0912197fc9d19e85d6b70c7f5de3096d4a03acdc012"
+    },
+    {
+      "path": "benchmarks/results/linux-console-migration-030-20261007-negative.patch.gz",
+      "sha256": "b0cc1522050df8cbd42367025d60698a13d63f17ad0fd4a393716caabcd353b4",
+      "uncompressed_sha256": "9dca8c7bd31f2a9e0027997cf2731dd7d90a54f46d82d29cc2c6c489b1837803"
+    },
+    {
+      "path": "benchmarks/results/linux-console-migration-030-20261007-guarded.log.gz",
+      "sha256": "08cb96c0776e7ccc80cd4461dd745a6bbce8c70f7281807deef61451ee8026ca",
+      "uncompressed_sha256": "1bada709e9e2ebae0538e6e69010f681a9be5b399c65ba3394cd61b9f48ba286"
+    },
+    {
+      "path": "benchmarks/results/linux-console-migration-030-20261007-daemon.log.gz",
+      "sha256": "1945c71cd758f618ab620c9190aa2eb0bf7d1c1ee9e034977d9f7994b4aeab95",
+      "uncompressed_sha256": "27e4aff57f287323f2ae4dba32dd8ae0dbe2cc50740bc669c410e2b51b203fa8"
+    }
+  ],
+  "limits": "The source-level race is reproduced independently. These results do not identify the earlier .19 startup refusal cause, qualify clustered RPC replay, or replace final combined cluster/platform gates. No performance claim is made."
+}
