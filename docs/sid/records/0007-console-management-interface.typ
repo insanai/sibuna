@@ -191,7 +191,7 @@ throughput by at most one percent and p99 latency by at most ten percent under t
 
 #callout("Status and applicability")[
   This architectural discussion defines requirements and their rationale. Proposed targets
-  are not measured guarantees. Sibuna 0.3.0 uses Zig 0.17.0 and the Zaxonlite 0.7.0 library sources, with explicit
+  are not measured guarantees. Sibuna 0.3.1 uses Zig 0.17.0 and the Zaxonlite 0.7.0 library sources, with explicit
   compiler compatibility changes and provenance in `vendor/`.
   The service and interface logic are Zig; browser glue and committed CSS supply host
   capabilities and styling. Storage links SQLite and libc as described in SID 0005.

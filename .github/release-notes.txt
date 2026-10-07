@@ -1,67 +1,29 @@
-Sibuna v0.3.0 adds a native OWASP Core Rule Set engine (SID 0010). Signed CRS 4.30.0 releases
-are verified against the pinned CRS key, compiled in-process and inspected in Off, Audit or
-Enforce mode on both reverse-proxy and forward-auth (headers profile) deployments. Selection,
-rollback, private sample tests, rule-change reviews, exclusions and per-finding evidence are
-managed through the console or the native `sibuna crs` commands, with three-node convergence.
+Sibuna v0.3.1 is a patch release for v0.3.0. It fixes a cluster restart failure and adds the
+missing mingw-w64 runtime notices to the Windows package. Request inspection, CRS behaviour,
+storage schemas and wire protocols are unchanged from v0.3.0.
 
-The engine evaluates CRS with linear-time matching: a bounded lazy DFA decides regexes, the
-ordered Pike simulation defines capture groups only when a rule uses them, and identical
-transform pipelines share one result per value within a phase. JSON and XML bodies are parsed
-by Content-Type, as in ModSecurity's recommended configuration.
+Fixes:
+- A restarting cluster node could exit with StorageUnavailable about two seconds after start.
+  Its first GeoIP metadata read went through the cluster database while the node was still
+  electing a leader, and that single read was fatal. Console startup now retries unavailable
+  GeoIP reads within the same 30-second bound used for the CRS restore. This was the
+  intermittent restart failure seen during v0.3.0 qualification.
+- Windows archives now include the mingw-w64 runtime notices (ZPL-2.1 and gdtoa). Each
+  archive carries only the C runtime notices its executable links: musl for Linux, mingw-w64
+  for Windows.
+- `sibuna --help` no longer describes CRS integration as pending release qualification.
+- vendor/README.md lists every local change to the vendored Paxos and Zaxonlite sources.
 
 Qualification:
-- The pinned CRS FTW corpus was measured on revision d461e7f: 5,074 complete contracts pass
-  in Audit and 4,993 in Enforce. Rule-ID/status assertions match for 5,123 and 5,039 of 5,193
-  tests respectively. Fifteen regex-log assertions remain gaps; acquisition failures, malformed
-  wire representations and one work-bound case retain explicit incomplete coverage.
-  Reference differences and strict connector refusals are classified separately. All 4,792
-  enforcing 403 stages deliver zero origin bytes; 82 response fixtures are preempted by a
-  request denial. Original measurements and supplemental wire/oracle evidence are retained.
-- Recorded three-node selection, failover, quorum refusal, restart and rollback checks pass
-  on separate hosts. Those records identify their own revisions and binaries.
-- With the load generator on a separate host and four product CPUs, paranoia level one serves
-  10,787 small GETs per second (47,311 with CRS disabled), 1,151 8 KiB JSON POSTs and 4,248
-  16 KiB multipart uploads, at 133.8-140.5 MiB peak RSS. No sample reached the work limit.
-  The five-round, 16-connection run includes eight dashboards and identifies clean revision
-  d461e7f. These measurements predate the later storage, authentication, startup and relay
-  lifecycle fixes. CPU frequency and unrelated physical-host
-  activity remain uncontrolled; the results are not a matched BunkerWeb comparison.
-- Focused relay-cancellation checks qualify the two-file 1393b2c correction against the
-  original release source, including native macOS 15 tests. They are separate from the
-  recorded full corpus and benchmarks.
-- Final source e666446 passed the complete five-platform release workflow and normal CI.
-  Linux x86-64 and Apple Silicon passed the full native suites; every packaged executable
-  passed proxy, console, signed artifact management and active CRS checks. The separate CRS
-  conformance and authenticated console/cluster jobs passed. Two final three-host runs
-  passed in 141.50 and 114.63 seconds, and the complete console cluster scenario passed in
-  87.57 seconds. All owned test processes stopped cleanly. Chrome verified the final Wasm
-  interface, authentication, policy testing, live updates and sign-out.
-  Qualification: https://github.com/insanai/sibuna/actions/runs/37599968840
-  Normal CI: https://github.com/insanai/sibuna/actions/runs/37599966493
-
-Behaviour changes:
-- Request targets must be origin-form (or `OPTIONS *`); absolute-form, `CONNECT` and fragments
-  receive 400. Repeated, missing (HTTP/1.1) or malformed `Host` fields receive 400.
-- CRS transaction slots are tiered: spare reservation becomes small slots for requests up to
-  64 KiB, and a busy pool waits up to 50 ms before answering 503.
-- The default CRS work budget is 128 million units. Selections saved by earlier builds keep
-  their stored budget. Change Work budget in a console candidate or supply complete reviewed
-  settings with `crs update --settings`, then select it. Local-directory updates accept
-  `--crs-work-budget`; startup flags must agree with an existing saved selection.
-- Malformed JSON or XML declared by Content-Type is an inspection failure (403 in Enforce).
-- Declared content encoding is validated even on bodyless requests. Empty deflate input is
-  incomplete and receives 403 in Enforce; Audit records incomplete coverage. This is a
-  stricter inspection policy, not an HTTP framing requirement.
-- Cluster catch-up preserves ballot-bearing leader evidence while replaying chosen history.
-  Delayed election rejections cannot replace newer ballot evidence. Payload installation
-  uses named stages with atomic no-replace publication and the existing durability barriers.
-- Console startup retries temporary storage unavailability within a 30-second budget before
-  opening its services. Newer schemas fail startup. Authentication storage outages return
-  503 without claiming that credentials were wrong.
-- Migration batches check the expected predecessor inside their captured transaction.
-  A stale startup owner adopts the committed schema instead of replaying old migration DDL
-  or resetting a newer marker. Actual-owner regressions verify rollback and retained data.
-- Upgraded relays observe connection cancellation even when the idle timeout is disabled.
+- The unchanged three-host CRS scenario (selection, leader loss, quorum refusal, restart
+  restoration, rollback) failed on its first run with the v0.3.0 cluster build. With the fix
+  it passed 12 consecutive runs on separate hosts. In 25 node starts a transient storage
+  failure was retried and the node then served its console.
+- The full native suite and console browser tests pass: 95 of 95 build steps and 1,174 of
+  1,174 tests.
+- The release workflow builds and checks every packaged executable before publication.
+- Benchmarks and the FTW corpus results in the v0.3.0 notes still apply, because the request
+  path is unchanged.
 
 Downloads:
 - Linux x86-64 and ARM64: statically linked musl builds; Linux 5.10 or later.
@@ -80,15 +42,10 @@ The shipped builds include storage and console support; the console starts only 
 Multi-node deployments require a separate -Dcluster=true build with OpenSSL 3. No GeoIP address
 database is bundled; use the documented CLI import/update commands for your chosen dataset.
 
-Terminate public HTTPS at a trusted ingress and forward private HTTP/1.1 to Sibuna. With CRS
-disabled, uploads stream to the origin and the lightweight inspector covers the first 8 KiB.
-Admitted WebSockets relay bytes without message inspection. Forward-auth sees only metadata
-supplied by the ingress. Local rate limits are not global quotas, and Sibuna does not provide
-volumetric network mitigation.
-
-The strict SID 0007 console-impact target is still not formally passed. Published benchmarks retain their
-measured revision and host description and are not guarantees for other hosts.
+Upgrading from v0.3.0 needs no migration. The v0.3.0 release notes describe that release's
+behaviour changes and limits, which still apply:
+https://github.com/insanai/sibuna/releases/tag/v0.3.0
 
 Documentation: https://insanai.github.io/sibuna/
 Deployment guide: https://insanai.github.io/sibuna/book/operations.html
-Source: https://github.com/insanai/sibuna/tree/v0.3.0
+Source: https://github.com/insanai/sibuna/tree/v0.3.1
