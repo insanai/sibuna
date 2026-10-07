@@ -28,8 +28,16 @@ Qualification:
   activity remain uncontrolled; the results are not a matched BunkerWeb comparison.
 - Focused relay-cancellation checks qualify the two-file 1393b2c correction against the
   original release source, including native macOS 15 tests. They are separate from the
-  recorded full corpus and benchmarks. Combined platform and cluster checks must qualify
-  the final source before publication; earlier measurements do not establish those results.
+  recorded full corpus and benchmarks.
+- Final source e666446 passed the complete five-platform release workflow and normal CI.
+  Linux x86-64 and Apple Silicon passed the full native suites; every packaged executable
+  passed proxy, console, signed artifact management and active CRS checks. The separate CRS
+  conformance and authenticated console/cluster jobs passed. Two final three-host runs
+  passed in 141.50 and 114.63 seconds, and the complete console cluster scenario passed in
+  87.57 seconds. All owned test processes stopped cleanly. Chrome verified the final Wasm
+  interface, authentication, policy testing, live updates and sign-out.
+  Qualification: https://github.com/insanai/sibuna/actions/runs/37599968840
+  Normal CI: https://github.com/insanai/sibuna/actions/runs/37599966493
 
 Behaviour changes:
 - Request targets must be origin-form (or `OPTIONS *`); absolute-form, `CONNECT` and fragments
@@ -50,6 +58,9 @@ Behaviour changes:
 - Console startup retries temporary storage unavailability within a 30-second budget before
   opening its services. Newer schemas fail startup. Authentication storage outages return
   503 without claiming that credentials were wrong.
+- Migration batches check the expected predecessor inside their captured transaction.
+  A stale startup owner adopts the committed schema instead of replaying old migration DDL
+  or resetting a newer marker. Actual-owner regressions verify rollback and retained data.
 - Upgraded relays observe connection cancellation even when the idle timeout is disabled.
 
 Downloads:
