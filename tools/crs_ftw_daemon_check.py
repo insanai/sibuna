@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Run the pinned CRS FTW corpus through the actual daemon, a live origin and console evidence.
 
-Every test owns one loopback source address, so saved findings are attributed through the
+Every stage owns one loopback source address, so saved findings are attributed through the
 console's exact client-address filter. Log markers would add headers that rules inspect.
 Regex log assertions remain coverage gaps because Sibuna retains rule IDs, not log lines.
 Linux is required: other platforms do not route all of 127.0.0.0/8 to loopback.
 """
 import argparse
 import base64
-from collections import Counter
 from contextlib import ExitStack
 import io
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -33,6 +33,7 @@ import crs_fixture_source as fixtures
 from crs_console_check import PASSWORD, login
 from crs_ftw_check import COMMIT, SOURCE_DIGEST, normalize, source_bytes
 from crs_management_check import request, select as select_candidate, status
+from crs_ftw_daemon_verdict import classify, failures
 
 # The pinned corpus's README prescribes these TX settings; tools/crs_ftw_probe.zig
 # compiles the same text, so engine and daemon evidence share one configuration.
@@ -202,21 +203,24 @@ def drain(port, settled=3):
 
 
 def run(tests, port, relay, timeout):
-    rows = []
+    rows, ordinal = [], 0
     for index, test in enumerate(tests):
         if index % 16 == 0:
             drain(port)
-        source = address(index)
         before = relay.total()
         started = time.monotonic()
         stages = []
         for item in test["stages"]:
+            source = address(ordinal)
+            ordinal += 1
+            stage_before = relay.total()
             try:
                 code, error = exchange(port, source, item["payload"], timeout)
             except OSError as failure:
                 code, error = None, f"{type(failure).__name__}: {failure}"
-            stages.append(dict(status=code, error=error))
-        rows.append(dict(test=test["test"], address=source, stages=stages,
+            stages.append(dict(status=code, error=error, address=source,
+                               origin_bytes=relay.total() - stage_before))
+        rows.append(dict(test=test["test"], stages=stages,
                          origin_bytes=relay.total() - before,
                          seconds=round(time.monotonic() - started, 4)))
         if index % 500 == 499:
@@ -306,12 +310,27 @@ def prepare(port, cookie, csrf, settings):
 
 
 def evaluate(test, row, observed):
-    errors, gaps = [], []
-    if observed is None:
-        errors.append("console evidence page unavailable")
-        observed = []
-    ids = sorted({finding["rule_id"] for finding in observed})
-    for item, outcome in zip(test["stages"], row["stages"]):
+    if len(test["stages"]) != len(row["stages"]) or len(observed) != len(row["stages"]):
+        raise ValueError("daemon stage evidence inventory mismatch")
+    errors, gaps, missing, unexpected, stages = [], [], [], [], []
+    leaked, all_ids = False, set()
+    for item, outcome, findings in zip(test["stages"], row["stages"], observed):
+        if findings is None:
+            errors.append("console evidence page unavailable")
+            findings = []
+        ids = {finding["rule_id"] for finding in findings}
+        all_ids.update(ids)
+        missing.extend(sorted(set(item["expected"]) - ids))
+        unexpected.extend(sorted(set(item["forbidden"]) & ids))
+        phases = {finding["phase"] for finding in findings if finding["would_deny"]}
+        inbound = any(phase <= 2 for phase in phases)
+        # Attribute each denial to its own transaction; a later response-phase finding
+        # or successful stage cannot hide bytes forwarded by a request refusal.
+        stage_leak = outcome["status"] == 403 and outcome["origin_bytes"] > 0 and \
+            (inbound or not any(phase in (3, 4) for phase in phases))
+        leaked |= stage_leak
+        stages.append(dict(outcome, findings=findings, request_denial=inbound,
+                           leaked=bool(stage_leak)))
         if item["regex"]:
             gaps.append("regex log assertion")
         if item["expect_error"]:
@@ -321,51 +340,24 @@ def evaluate(test, row, observed):
             errors.append(f"no HTTP response: {outcome['error']}")
         elif item["status"] and outcome["status"] not in item["status"]:
             errors.append(f"status {outcome['status']} not in {item['status']}")
-    expected = {value for item in test["stages"] for value in item["expected"]}
-    forbidden = {value for item in test["stages"] for value in item["forbidden"]}
-    missing, unexpected = sorted(expected - set(ids)), sorted(forbidden & set(ids))
-    phases = {finding["phase"] for finding in observed if finding["would_deny"]}
-    denied = any(outcome["status"] == 403 for outcome in row["stages"])
-    # A request-phase refusal must leave the origin untouched; response denials follow
-    # a legitimate delivery and are excluded from this boundary check.
-    leaked = denied and phases and max(phases) <= 2 and row["origin_bytes"] > 0
-    return dict(row, ids=ids, missing=missing, unexpected=unexpected, errors=errors,
+    return dict(row, stages=stages, ids=sorted(all_ids), missing=missing,
+                unexpected=unexpected, errors=errors,
                 gaps=gaps, leaked=bool(leaked),
                 passed=not (missing or unexpected or errors or leaked))
 
 
-def engine_rows(paths):
+def engine_rows(paths, reference=False):
     rows = {}
     for path in paths or []:
         report = json.loads(path.read_text())
         if report.get("commit") != COMMIT or report.get("source_sha256") != SOURCE_DIGEST:
             raise ValueError("engine report provenance mismatch")
+        if reference and (not re.search(r"\bv3\.0\.14\b", report.get("reference", "")) or
+                          report.get("library_sha256") !=
+                          "af98ca264e2834bd76507684caf0b41e9f1d14f99030fd1626abffad376b5694"):
+            raise ValueError("independent reference artifact mismatch")
         rows.update((row["test"], row) for row in report["rows"])
     return rows
-
-
-def classify(results, engine, budget):
-    # Disagreement with an upstream assertion is only a connector defect when the
-    # daemon also differs from the engine's evidence for the same serialized request.
-    for result in results:
-        reference = engine.get(result["test"])
-        if result["passed"]:
-            result["class"] = "passed"
-        elif result["leaked"]:
-            result["class"] = "origin boundary"
-        elif reference is None:
-            result["class"] = "daemon only"
-        elif reference["work"] > budget:
-            result["class"] = "work budget"
-        elif reference["error"] is not None and not result["ids"] and not result["errors"]:
-            # Strict acquisition refusals are deliberate engine contracts, not connector loss.
-            result["class"] = "engine refusal"
-        elif reference["error"] is None and sorted(reference["ids"]) == result["ids"] and \
-                not result["errors"]:
-            result["class"] = "engine agrees"
-        else:
-            result["class"] = "connector difference"
-    return Counter(result["class"] for result in results)
 
 
 def daemon(binary, candidate, root, origin_port, console_port, owned):
@@ -411,34 +403,48 @@ def qualify(args, root, tests, owned):
     rows = run(tests, port, relay, args.timeout)
     counters = drain(port, settled=10)
     sessions = Sessions(console_port, args.sessions)
-    results = [evaluate(test, row, findings(sessions, row["address"]))
+    results = [evaluate(test, row, [findings(sessions, item["address"])
+                                  for item in row["stages"]])
                for test, row in zip(tests, rows)]
     counters["console_unavailable_retries"] = sessions.unavailable
     return results, counters
 
 
 def report(args, tests, results, counters):
-    classes = classify(results, engine_rows(args.engine_report), args.work_budget)
+    classes = classify(tests, results, engine_rows(args.engine_report),
+                       engine_rows(args.reference_report, reference=True),
+                       args.work_budget, args.mode)
     slowest = sorted(results, key=lambda result: -result["seconds"])[:10]
     summary = dict(
         commit=COMMIT, source_sha256=SOURCE_DIGEST, inventory=len(results), mode=args.mode,
         paranoia=4, work_budget=args.work_budget, classes=classes,
-        passed=classes["passed"], status_assertions=sum(
+        passed=classes["passed"], assertions_passed=sum(row["passed"] for row in results),
+        status_assertions=sum(
             bool(item["status"]) for test in tests for item in test["stages"]),
         regex_gaps=sum(bool(result["gaps"]) for result in results),
         dropped_incidents=counters.get("sibuna_incidents_dropped_total"),
         console_unavailable_retries=counters.get("console_unavailable_retries"),
         crs_counters={name: value for name, value in counters.items() if "_crs_" in name},
         slowest=[dict(test=row["test"], seconds=row["seconds"]) for row in slowest])
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "benchmarks"))
+    from run import metadata
+    summary["source_provenance"] = metadata(args.binary)
+    summary["oracle_provenance"] = [dict(path=str(path),
+        sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+        for path in args.engine_report + args.reference_report]
     args.report.parent.mkdir(parents=True, exist_ok=True)
-    args.report.write_text(json.dumps(dict(summary, rows=results), indent=1) + "\n")
     print(f"Daemon FTW ({args.mode}, PL4, work {args.work_budget}): "
-          f"{summary['passed']}/{len(results)} passed; classes {dict(classes)}")
+          f"{summary['passed']}/{len(results)} complete contracts; "
+          f"{summary['assertions_passed']} rule-ID/status assertions passed; "
+          f"classes {dict(classes)}")
     print(f"Dropped incidents: {summary['dropped_incidents']}; "
           f"regex-log gaps: {summary['regex_gaps']}; report: {args.report}")
-    defects = [row for row in results if row["class"] in ("origin boundary",
-                                                          "connector difference")]
-    if defects or summary["dropped_incidents"]:
+    defects = failures(results)
+    summary["full_inventory"] = len(results) == 5193 and args.limit is None
+    summary["qualified"] = not defects and summary["dropped_incidents"] == 0 and \
+        summary["full_inventory"]
+    args.report.write_text(json.dumps(dict(summary, rows=results), indent=1) + "\n")
+    if defects or summary["dropped_incidents"] != 0:
         print("First connector defects:", json.dumps([
             {key: row[key] for key in ("test", "class", "ids", "missing", "unexpected",
                                        "errors", "origin_bytes")}
@@ -455,6 +461,8 @@ def main():
     parser.add_argument("--source-dir", type=Path, default=Path(".zig-cache/crs-review"))
     parser.add_argument("--engine-report", type=Path, action="append",
                         help="crs-ftw-check request or response report; repeatable")
+    parser.add_argument("--reference-report", type=Path, action="append",
+                        help="pinned ModSecurity request or response report; repeatable")
     parser.add_argument("--report", type=Path,
                         default=Path(".zig-cache/crs-review/ftw-daemon-report.json"))
     parser.add_argument("--mode", choices=("audit", "enforce"), default="audit")
@@ -463,6 +471,8 @@ def main():
     parser.add_argument("--timeout", type=float, default=15)
     parser.add_argument("--limit", type=int, help="run only the first N tests")
     args = parser.parse_args()
+    if not args.engine_report or not args.reference_report:
+        parser.error("qualification requires --engine-report and --reference-report")
     if sys.platform != "linux":
         parser.error("per-test loopback addresses require Linux")
     tests = corpus(source_bytes(args.source_dir, args.download))[:args.limit]
