@@ -361,7 +361,7 @@ def engine_rows(paths, reference=False):
 
 
 def representation_rows(paths, albedo):
-    # These proofs qualify malformed origin representations, never complete inspection.
+    # These proofs qualify malformed representations, never complete inspection.
     pinned = "07d57ce946aeaef9d1f97a62bfca559dfca2382c31d645f125e5d6c5e46eb73d"
     if paths and hashlib.sha256(albedo.read_bytes()).hexdigest() != pinned:
         raise ValueError("origin representation binary mismatch")
@@ -372,16 +372,27 @@ def representation_rows(paths, albedo):
         if len(data) > RESPONSE_LIMIT:
             raise ValueError("origin representation report exceeds bound")
         proof = json.loads(data)
-        if proof.get("albedo_sha256") != pinned or proof.get("gzip_version") != "gzip 1.13":
+        kind = proof.get("kind", "response")
+        if kind == "request":
+            if proof.get("source_sha256") != SOURCE_DIGEST:
+                raise ValueError("request representation source mismatch")
+        elif kind != "response" or proof.get("albedo_sha256") != pinned or \
+                proof.get("gzip_version") != "gzip 1.13":
             raise ValueError("origin representation provenance mismatch")
         for row in proof["rows"]:
             name = row["test"]
-            body = bytes.fromhex(row["response"]["body_hex"])
+            body = row["request"]["body"].encode() if kind == "request" else \
+                bytes.fromhex(row["response"]["body_hex"])
             if not isinstance(name, str) or len(name) > 64 or name in rows:
                 raise ValueError("origin representation identity mismatch")
             if len(body) > RESPONSE_LIMIT or hashlib.sha256(body).hexdigest() != \
                     row["body_sha256"]:
                 raise ValueError("origin representation body mismatch")
+            if kind == "request":
+                if row.get("zlib_version") != "1.3.1" or not row.get("zlib_decode_error"):
+                    raise ValueError("request representation missing decoder refusal")
+                rows[name] = dict(row, kind=kind, source_sha256=proof["source_sha256"])
+                continue
             if row.get("gzip_test_exit") != 1 or not row.get("gzip_test_stderr") or \
                     not row.get("zlib_decode_error"):
                 raise ValueError("origin representation missing decoder refusal")
@@ -495,7 +506,7 @@ def main():
     parser.add_argument("--reference-report", type=Path, action="append",
                         help="pinned ModSecurity request or response report; repeatable")
     parser.add_argument("--representation-report", type=Path, action="append", default=[],
-                        help="independent malformed origin representation proof; repeatable")
+                        help="independent malformed request/origin representation proof; repeatable")
     parser.add_argument("--report", type=Path,
                         default=Path(".zig-cache/crs-review/ftw-daemon-report.json"))
     parser.add_argument("--mode", choices=("audit", "enforce"), default="audit")
