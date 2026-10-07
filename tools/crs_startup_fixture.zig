@@ -31,7 +31,7 @@ pub fn qualify(
     if (snapshot.revision != manifest.revision or snapshot.activation.mode != .enforce or
         !std.mem.eql(u8, &snapshot.digest.?, &manifest.archive_digest))
         return error.StartupIdentityMismatch;
-    try evaluate(running, .full);
+    try evaluate(init.io, running, .full);
     // Forward-auth is a distinct observation contract. Its explicit override is
     // validated after authentication, without changing the signed rule sources.
     config.profile = .headers;
@@ -44,7 +44,7 @@ pub fn qualify(
         now,
     );
     defer metadata.stop();
-    try evaluate(metadata, .headers);
+    try evaluate(init.io, metadata, .headers);
     // A failed replacement cannot disturb an already leased generation. The
     // failure allocator also verifies private load cleanup under exhaustion.
     const exhausted = startup.Runtime.load(
@@ -59,16 +59,17 @@ pub fn qualify(
         unexpected.stop();
         return error.StartupAcceptedExhaustedAllocator;
     } else |err| if (err != error.OutOfMemory) return err;
-    try evaluate(running, .full);
+    try evaluate(init.io, running, .full);
 }
 
-fn evaluate(running: *startup.Runtime, profile: crs.config.Profile) !void {
+fn evaluate(io: std.Io, running: *startup.Runtime, profile: crs.config.Profile) !void {
+    const immediate: std.Io.Clock.Duration = .{ .raw = .zero, .clock = .awake };
     for ([_][]const u8{ "/?q=ordinary", "/?q=1%27%20OR%20%271%27=%271" }, 0..) |target, index| {
-        var lease = try running.publisher.lease();
-        defer lease.release();
-        if (running.publisher.lease()) |value| {
+        var lease = try running.publisher.lease(io, .{ .request_bytes = 0 }, immediate);
+        defer lease.release(io);
+        if (running.publisher.lease(io, .{ .request_bytes = 0 }, immediate)) |value| {
             var unexpected = value;
-            unexpected.release();
+            unexpected.release(io);
             return error.StartupPoolWasNotBounded;
         } else |err| if (err != error.PoolBusy) return err;
         var line: [256]u8 = undefined;
