@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "recorded_at": "2026-10-07",
+  "kind": "supplemental exact-source console qualification",
+  "version": "0.3.0",
+  "production_revision": "4519b4d66caae575f8c2130f04253da197a2e76f",
+  "qualification_workflow_revision": "5ba1b4bc1a7fb4f09e3eb8adb9842050dbeafbdf",
+  "harness_revision": "1e1ae6a174c1ded60f173e0e926c0961383d4a13",
+  "only_source_delta": "tools/crs_ui_check.py",
+  "harness_sha256": "96a2bd2e12c88b234e437c89b73721152cd5bc31367238ae2a7d34888783ded7",
+  "source_checks": [
+    "Exact production HEAD verified before and after qualification",
+    "Reviewed harness HEAD and file SHA verified",
+    "The harness is the sole tracked delta; final working-tree status checked",
+    "Application, library, build and dependency inputs unchanged"
+  ],
+  "ci": {
+    "url": "https://github.com/insanai/sibuna/actions/runs/37577461504",
+    "job_id": 112649462247,
+    "conclusion": "success",
+    "started_at": "2026-10-07T05:40:19Z",
+    "completed_at": "2026-10-07T05:54:55Z"
+  },
+  "artifact": {
+    "id": 11463562678,
+    "name": "sibuna-030-console-qualification",
+    "container_digest": "sha256:6d7ac61bbcfc118e02b22a6f7380a51d4025e290a9267aa013c1f0352f6c2ab7",
+    "bytes": 5963
+  },
+  "steps": [
+    "console-test",
+    "console-crs-evidence-test",
+    "console-crs-management-test",
+    "crs-client-test",
+    "crs-restart-check",
+    "crs-management-check",
+    "crs-private-check",
+    "crs-review-check",
+    "crs-cli-check",
+    "crs-ui-check",
+    "crs-cluster-check -Dcluster=true"
+  ],
+  "compiled_daemons": [
+    {
+      "path": ".zig-cache/o/5064db33b5457486ae389848fdbd1ca7/sibuna",
+      "sha256": "32ef7d1e6d0ac1cdf4e8fa3ab2a0a7dc6fc64738c8023c63e2fcb338a3594d64"
+    },
+    {
+      "path": ".zig-cache/o/990439664c2a6585bf96b83564303cb9/sibuna",
+      "sha256": "27437c40dcb139c9e1195cdd0ade8a92ebe02873492a46ecc388a973a6bc3e76"
+    }
+  ],
+  "retained_files": [
+    {
+      "name": "binaries.json",
+      "sha256": "21a7c1af4a1df93faf85fd99ef1303a3662c2cd5a19be58451c5694b17f8232f",
+      "bytes": 319
+    },
+    {
+      "name": "cluster.log",
+      "sha256": "7442d0450319798b889d4994ab4c34832f5622f24edd891a35f596588e1b82a0",
+      "bytes": 854
+    },
+    {
+      "name": "crs-cli-check.log",
+      "sha256": "3f54efb42e3c02d06cb883630886c0aafb15d79b26233aaad5a6ee3422cd55f8",
+      "bytes": 874
+    },
+    {
+      "name": "crs-management-check.log",
+      "sha256": "73d2d3f733ac0221c0ab727f70227e5c3730152a8c40c8355c41976806ca6ab4",
+      "bytes": 857
+    },
+    {
+      "name": "crs-private-check.log",
+      "sha256": "1245f39e33753c91bb00f67acf4d47637900ca097b352cc13d91eaf1530327b1",
+      "bytes": 854
+    },
+    {
+      "name": "crs-restart-check.log",
+      "sha256": "0f4dda9cfe51639d92e5fc4714a40199b939b4b103ffba3db3171e04e4e3e418",
+      "bytes": 818
+    },
+    {
+      "name": "crs-review-check.log",
+      "sha256": "a6ef3c9aae34df3f60e43c6b49cf160ff5b6df6fcf4d083f0fad51ee248e5c39",
+      "bytes": 870
+    },
+    {
+      "name": "crs-ui-check.log",
+      "sha256": "814971712230bd1bc3ba120933a7ad7ea473a44d64783380a3422eb5668b0974",
+      "bytes": 852
+    },
+    {
+      "name": "native.log",
+      "sha256": "bffa7df75b28c41a57a937b559652675d61d36848b696fa65623931b5173429f",
+      "bytes": 4171
+    },
+    {
+      "name": "provenance.txt",
+      "sha256": "f51f1f0496745a50fbc5a5c51712b891101602b3aae459eb8d6f59f3d5f1f8be",
+      "bytes": 1269
+    }
+  ],
+  "preceding_ui_failures": [
+    {
+      "run": 37572199104,
+      "attempt": 1,
+      "job": 112633096568,
+      "assertion": "API failure diagnostic was complete before the independent Wasm refresh displayed it",
+      "log_sha256": "b6ee86e0147e7273b06d2f70d1865c1778d28753e4a898e893a1983896a99ea1"
+    },
+    {
+      "run": 37572199104,
+      "attempt": 2,
+      "job": 112644794313,
+      "assertion": "API failure diagnostic was complete before the independent Wasm refresh displayed it",
+      "log_sha256": "17a59584a434f04e3eda3270dff103399268aa106774b06da276481395460b27"
+    }
+  ],
+  "scope_limit": "This passes the corrected full CRS console gate. It does not waive the independently reproduced broader console-cluster rejoin/401 finding or the unexplained macOS ARM native test stall. No release was published by this workflow."
+}
