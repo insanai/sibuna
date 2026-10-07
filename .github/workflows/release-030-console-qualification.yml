@@ -116,6 +116,7 @@ jobs:
           sparse-checkout: |
             tools/native_test_diagnostic.py
             tools/native_test_diagnostic_test.py
+            tools/tunnel_state_diagnostic.py
           sparse-checkout-cone-mode: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
@@ -136,14 +137,24 @@ jobs:
           } > "$RUNNER_TEMP/qualification/provenance.txt"
       - name: Install checksum-verified Zig 0.17.0
         run: python tools/install_zig.py "$RUNNER_TEMP/zig"
-      - name: Observe original full native qualification
+      - name: Apply counts-only tunnel diagnostic to exact source
+        run: |
+          python ../diagnostic-tools/tools/tunnel_state_diagnostic.py
+          test "$(git diff --name-only | tr '\n' ' ')" = \
+            "libs/net/src/duplex.zig libs/socket/src/root.zig "
+          git diff --check
+          git diff >> "$RUNNER_TEMP/qualification/provenance.txt"
+          shasum -a 256 ../diagnostic-tools/tools/tunnel_state_diagnostic.py \
+            >> "$RUNNER_TEMP/qualification/provenance.txt"
+      - name: Observe full native qualification with labeled logging overlay
         run: |
           python ../diagnostic-tools/tools/native_test_diagnostic.py \
             --log-dir "$RUNNER_TEMP/qualification/native" -- \
             zig build fmt test console-ui-e2e -j2 --verbose --summary all
           zig build -Dstorage=false -j2 --verbose --prefix "$RUNNER_TEMP/storage-off"
           zig build -Dconsole=false -j2 --verbose --prefix "$RUNNER_TEMP/console-off"
-          test -z "$(git status --porcelain)"
+          test "$(git diff --name-only | tr '\n' ' ')" = \
+            "libs/net/src/duplex.zig libs/socket/src/root.zig "
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
