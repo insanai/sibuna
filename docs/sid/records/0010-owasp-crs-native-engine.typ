@@ -1,12 +1,12 @@
 #let sid-number = "0010"
 #let sid-title = "Native OWASP Core Rule Set Evaluation and Verified Rule Updates"
-#let sid-state = "accepted"
+#let sid-state = "committed"
 #let sid-created = "2026-10-04"
 #let sid-discussion = "Native SecLang compilation and bounded CRS evaluation, complete input contracts, anomaly scoring, immutable rule generations, authenticated operator updates, and compatibility gates."
 #let sid-labels = ("security", "policy", "performance",)
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
-#let sid-status = "Accepted"
+#let sid-status = "Committed"
 #let sid-last-updated = "2026-10-07"
 
 #import "../../shared/sid.typ": sid-document
@@ -2437,15 +2437,27 @@ tests and one dropped incident invalidates the run. Raw wire requests, multi-sta
 the 29 status assertions now run over the socket. The 15 regex log assertions remain gaps:
 Sibuna stores rule IDs, not log lines.
 
-In Audit (2026-10-07), 5,107 complete contracts pass, and 5,123 tests satisfy their rule-ID
-and status assertions, with no dropped incident. The latter count also includes the fifteen
-regex-log gaps and one incomplete work-bound case; neither is complete inspection.
-Differences are classified against the engine probe: 35 reproduce its reference
-differences exactly and 30 are its strict acquisition refusals (chiefly invalid percent
-escapes in urlencoded bodies). Five are deliberate connector refusals answered 400
-before CRS runs: an absolute-form target, `CONNECT`, a request with both `Content-Length` and
-`Transfer-Encoding`, and two unsupported protocol versions. Malformed `Host` fields are now
-refused with the 400 the corpus expects.
+The final 7 October 2026 measurement identifies clean application revision `d461e7f`,
+Zig 0.17.0 and the ReleaseSafe executable digest in the qualification receipt. In Audit,
+5,074 complete contracts pass, and 5,123 of 5,193 tests satisfy their rule-ID and status
+assertions. Matching those assertions does not prove complete inspection: retained findings
+can precede an acquisition or decoding failure. Fifteen regex-log assertions remain gaps.
+Sixty transactions reproduce native acquisition refusals, 35 reproduce the independent
+reference's rule-ID differences, and five are deliberate connector refusals answered 400
+before CRS runs: an absolute-form target, `CONNECT`, a request with both `Content-Length`
+and `Transfer-Encoding`, and two unsupported protocol versions. Malformed `Host` fields
+receive the 400 the corpus expects. Neither run drops an incident or violates origin delivery.
+
+Three wire-representation differences are explicitly incomplete. The pinned Albedo origin
+reflects `Content-Encoding: gzip` but emits plaintext or an empty entity for `950020-1` and
+`950020-2`; independent gzip and zlib decoding reject those exact bytes. Audit retains
+incomplete response coverage rather than treating the logical-body probe as wire validation.
+`920450-7` declares deflate on a bodyless request. The conservative connector refuses that
+empty representation; its normal HTTP framing is valid. Audit permits it with incomplete
+coverage and Enforce returns 403 before origin delivery. This is a reviewed stricter policy,
+not an RFC requirement. Qualification binds each representation proof to the exact pinned
+request, observed bytes, fixture identity and retained coverage; unknown incomplete
+transactions fail the gate.
 
 `920390-1` sends one URL-encoded `foo` argument of 64,001 bytes at paranoia four, above the
 fixture's 400-byte argument bound. Rules 920370 and 920390 are retained before the native
@@ -2459,24 +2471,17 @@ coverage, an unexpected status or any enforcing origin delivery remain failures;
 work-limit cases are not waived. The original raw report and its executable provenance are
 retained separately from any subsequent classification receipt.
 
-In Enforce, 4,792 request stages were denied and no request-phase denial delivered a byte to
-the origin. Requests whose inspection could not complete were refused 403 rather than
-forwarded. At blocking paranoia four, 62 of the 102 response fixtures are denied on their own
-inbound score before any response phase runs, so response rule IDs are qualified in Audit and
-Enforce qualifies disruption and withheld delivery.
+In Enforce, 4,993 complete contracts pass, and 5,039 tests satisfy their rule-ID and status
+assertions. All 4,792 stages answered 403 deliver zero origin bytes: 4,724 are terminal
+policy denials and 68 are incomplete refusals. At blocking paranoia four, 82 response fixtures
+are denied on their inbound score before response inspection, so Audit qualifies those
+response rule IDs and Enforce qualifies the terminal decision and withheld delivery.
 
-Daemon qualification found defects that are now fixed. Request targets in absolute or
-authority form reached policy without a leading slash, so path rules could not match them;
-the parser now serves only origin-form and `OPTIONS *`, and refuses repeated, missing or
-malformed `Host` fields. Console address filters walked the time index and exceeded the
-statement budget once a client's incidents aged behind newer traffic; address and category
-filters now use indexed statement shapes. Rate-limiter cells were retained for the burst
-tolerance after they drained, so a high configured limit filled the table; drained cells are
-now reclaimed. A pool beyond its slots refused at once; slots are now tiered and a request
-parks briefly for a release. Merged views were rebuilt before every condition; they are now
-reused until their inputs change, with identical rule IDs and errors over the engine
-corpus. Results are recorded in
-`benchmarks/results/crs-ftw-daemon-latest.json`.
+The original measurements remain unchanged, including the initially failed Enforce gate
+whose status-bearing fixtures lacked native oracle entries. Exact supplemental native and
+independent probes supply that evidence. Strict replay records each raw digest, executable,
+source, oracle and representation proof separately; it does not relabel incomplete inspection
+as complete. The final receipt is `benchmarks/results/crs-ftw-daemon-latest.json`.
 
 == Cluster qualification
 
@@ -2532,6 +2537,25 @@ serving retains its last applied immutable generation.
    is reported separately from the existing lightweight inspector. An inconclusive result
    cannot be described as a passed performance gate.
 
+== Release acceptance
+
+Version 0.3.0 qualifies the supported stock CRS 4.30.0 profile with the reference differences,
+strict acquisition and representation refusals, and regex-log gaps described above. Native
+package checks pass for Linux x86-64 and ARM64, macOS Intel and Apple Silicon, and Windows
+x86-64. Their package manifests and CI identities are recorded in
+`benchmarks/results/native-release-030-20261007.json`. Chrome workflows and a final-binary
+smoke check are recorded in `chrome-crs-release-review-20261007.json`; full console workflows
+and the bounded response-stack regression are in `console-release-030-20261007.json`.
+The two real three-host checks qualify convergence and failover independently of throughput.
+
+Separate-host request-path measurements compare CRS Off, Audit and Enforce at paranoia one
+and two with eight dashboards; the final record and regenerated primitive baseline retain
+clean application revision `d461e7f` and distinct ReleaseSafe/ReleaseFast executable digests.
+No timed CRS sample reports incomplete inspection. Containers do not control physical-host
+load or CPU frequency, and these measurements do not establish universal capacity or a
+matched comparison with another CRS product. The separate SID 0007 console-impact target
+remains not formally passed; this release does not reinterpret its accepted exception.
+
 = Delivery and status
 
 Deliver independently reviewable chunks: source contracts and diagnostics; full candidate
@@ -2541,10 +2565,10 @@ performance evidence. Foundation commits must not expose a production “CRS ena
 until the executable compatibility gate is satisfied. Documentation distinguishes implemented
 capabilities from this design throughout delivery.
 
-Promotion assigns a permanent discussion number under SID 0001. It is not acceptance of a
-finished implementation. The record advances to Committed after the gates above pass;
-Published requires a normative implementation and reproducible compatibility evidence.
-This document records design decisions and contracts, not a chronological progress log.
+The architecture is accepted and the supported implementation is Committed under SID 0001
+with the explicit release qualification above. Published status requires the normative
+implementation and reproducible evidence to remain available with its release. This document
+records design decisions and contracts, not a chronological progress log.
 
 = Licensing
 

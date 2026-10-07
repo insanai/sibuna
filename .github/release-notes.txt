@@ -10,12 +10,13 @@ transform pipelines share one result per value within a phase. JSON and XML bodi
 by Content-Type, as in ModSecurity's recommended configuration.
 
 Qualification:
-- The pinned CRS FTW corpus runs through the actual daemon: 5,107 complete contracts pass
-  in Audit, and 5,123 of 5,193 tests satisfy their rule-ID/status assertions. Fifteen regex-log
-  gaps and one incomplete work-bound case remain explicit. Other differences reproduce
-  ModSecurity 3.0.14 or are strict acquisition and deliberate connector refusals. The pinned
-  overlong-argument work-bound case returns 403 with zero origin bytes in Enforce; Audit
-  permits it under its configured policy and records incomplete coverage.
+- The pinned CRS FTW corpus runs through the final daemon: 5,074 complete contracts pass
+  in Audit and 4,993 in Enforce. Rule-ID/status assertions match for 5,123 and 5,039 of 5,193
+  tests respectively. Fifteen regex-log assertions remain gaps; acquisition failures, malformed
+  wire representations and one work-bound case retain explicit incomplete coverage.
+  Reference differences and strict connector refusals are classified separately. All 4,792
+  enforcing 403 stages deliver zero origin bytes; 82 response fixtures are preempted by a
+  request denial. Original measurements and supplemental wire/oracle evidence are retained.
 - Three-node selection, failover, quorum refusal, restart and rollback pass on separate hosts.
 - With the load generator on a separate host and four product CPUs, paranoia level one serves
   10,787 small GETs per second (47,311 with CRS disabled), 1,151 8 KiB JSON POSTs and 4,248
