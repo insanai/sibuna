@@ -403,9 +403,9 @@
         [Hardware SHA-256, zero allocation], fill: blue_light, stroke: blue),
       stat_tile([#fmt_ns(bench_find(data, "sibuna", "token_auth", "blake3_mac_token").ns_per_op_median)], [Session token check],
         [Keyed BLAKE3, 75-character cookie], fill: green_light, stroke: green),
-      stat_tile([#calc.round(meta.idle_rss_kb / 1024, digits: 1) MB], [Idle resident memory],
+      stat_tile([#calc.round(meta.idle_rss_kb / 1024, digits: 1) MiB], [Idle resident memory],
         [Daemon after start, storage off], fill: amber_light, stroke: amber),
-      stat_tile([#calc.round(meta.binary_bytes / 1048576, digits: 1) MB], [Daemon binary],
+      stat_tile([#calc.round(meta.binary_bytes / 1048576, digits: 1) MiB], [Daemon binary],
         [WASM solver #meta.wasm_bytes bytes], fill: rgb("f5f3ff"), stroke: rgb("7c3aed")),
     )
     #v(8pt)

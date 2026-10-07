@@ -785,7 +785,7 @@ configured members.
 )[
   #text(weight: "bold", fill: ink)[Invariant S1 (Consensus Safety).] Under the protocol's durable-state and authenticated-membership assumptions, no two replicas choose different values at log index $i$. Network delay and partitions must not violate this safety condition.
 
-  #text(weight: "bold", fill: ink)[Invariant S2 (Monotonic Ballots).] Ballot numbers $b = chevron.l "term", "node_id" chevron.r$ are totally ordered. A replica's promised ballot does not decrease, and it rejects Prepare or Accept messages below that promise. Historical chosen commits do not establish current leadership.
+  #text(weight: "bold", fill: ink)[Invariant S2 (Monotonic Ballots).] Ballot numbers $b = chevron.l "round", "priority", "node_id" chevron.r$ are totally ordered. A replica's promised ballot does not decrease, and it rejects Prepare or Accept messages below that promise. Historical chosen commits do not establish current leadership.
 
   #text(weight: "bold", fill: ink)[Condition L1 (Eventual Convergence).] A chosen durable edit eventually reaches a recovering member if a stable leader can communicate with a quorum and the recovering member, storage and scheduling make progress, and recovery retries continue. A fixed convergence deadline needs additional latency and resource assumptions; quorum presence alone supplies none.
 ]
@@ -948,7 +948,7 @@ incomplete results fail the qualification gate.
 
 == Current CRS Measurements
 
-The fresh request-path suite uses the final ReleaseSafe executable, CRS 4.30.0 and the
+The request-path suite uses the recorded ReleaseSafe executable, CRS 4.30.0 and the
 128-million-unit budget. Sibuna runs on one physical host with four allowed logical CPUs;
 the load comes from a different physical host over 16 HTTP/1.1 keep-alive connections.
 Eight dashboards are signed in. Five rounds rotate profile order. The origin receives

@@ -398,7 +398,7 @@ charged work there fell 22% because the skipped merges and tag copies are no lon
 These rows are not a comparison with BunkerWeb's CRS profile: that family used 64
 connections and a different fixture. Concurrency beyond the slot pool, where CRS sheds load
 with 503 after a 50 ms wait, is not measured here.
-The final measured revision `d461e7f` includes the scratch-initialization, compressed-slot,
+The recorded revision `d461e7f` includes the scratch-initialization, compressed-slot,
 startup-restoration and console-stack corrections. No competing build or benchmark overlapped
 this run. Earlier timestamped records retain their own executable identities. CPU frequency
 and unrelated physical-host activity remain uncontrolled, and these rows do not establish
