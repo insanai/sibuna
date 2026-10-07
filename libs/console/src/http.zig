@@ -4,7 +4,13 @@ const p = @import("console_protocol");
 pub const Context = serve.Context;
 pub const digest = std.crypto.hash.sha2.Sha256.hash;
 
-pub fn json(context: *Context, value: anytype, extra: []const std.http.Header) Context.Error!void {
+// Keep response scratch in a leaf frame. Inlining this generic helper retains separate
+// 16 KiB buffers in route dispatchers, exceeding bounded service stacks when nested.
+pub noinline fn json(
+    context: *Context,
+    value: anytype,
+    extra: []const std.http.Header,
+) Context.Error!void {
     var buffer: [16 * 1024]u8 = undefined;
     defer std.crypto.secureZero(u8, &buffer);
     var writer: std.Io.Writer = .fixed(&buffer);
