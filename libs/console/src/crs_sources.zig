@@ -89,7 +89,9 @@ fn readBytes(app: *App, id: m.Id, file: m.File, length: usize) ![]u8 {
             .ordinal = ordinal,
         } } });
         defer std.crypto.secureZero(u8, std.mem.asBytes(&result));
-        if (result != .crs_source) return error.CrsSourceUnavailable;
+        if (result == .failed and result.failed == .unavailable) return error.StorageUnavailable;
+        if (result == .failed and result.failed == .cancelled) return error.Canceled;
+        if (result != .crs_source) return error.InvalidCrsSource;
         const chunk = result.crs_source.slice();
         const count = @min(m.chunk_bytes, length - offset);
         if (chunk.len != count) return error.InvalidCrsSource;

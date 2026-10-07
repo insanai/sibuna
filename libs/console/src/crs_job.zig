@@ -178,7 +178,14 @@ pub const Job = struct {
     }
 
     fn restore(self: *Job, seed: Seed) !void {
-        const selected = try self.selection();
+        const retry = @import("crs_restore_retry.zig").Retry.init(self.app.io);
+        const selected = while (true) {
+            if (self.app.stopping.load(.acquire)) return error.Canceled;
+            break self.selection() catch |err| {
+                try retry.wait(self.app.io, self.app.stopping.load(.acquire), err);
+                continue;
+            };
+        };
         if (selected.current) |job| {
             const manifest = try crs.artifact_manifest.decode(job.manifest.slice());
             if (!seed.overrides.matches(manifest)) return error.CrsStartupConflict;
@@ -186,7 +193,17 @@ pub const Job = struct {
         if (selected.revision == 0) {
             if (seed.initial) |manifest| try self.adopt(seed.directory.slice(), manifest);
         }
-        try self.apply();
+        const application = @import("crs_restore_retry.zig").Retry.init(self.app.io);
+        while (true) {
+            if (self.app.stopping.load(.acquire)) return error.Canceled;
+            // Runtime backoff must not turn an incomplete startup into success.
+            self.retry_after = 0;
+            self.apply() catch |err| {
+                try application.wait(self.app.io, self.app.stopping.load(.acquire), err);
+                continue;
+            };
+            return;
+        }
     }
 
     fn adopt(self: *Job, path: []const u8, manifest: crs.artifact_manifest.Manifest) !void {
@@ -323,7 +340,9 @@ pub const Job = struct {
 
     fn selection(self: *Job) !m.Selection {
         const result = try self.app.background(.{ .crs_management = .selected });
-        if (result != .crs_selection) return error.CrsSelectionUnavailable;
+        if (result == .failed and result.failed == .unavailable) return error.StorageUnavailable;
+        if (result == .failed and result.failed == .cancelled) return error.Canceled;
+        if (result != .crs_selection) return error.InvalidCrsSelection;
         return result.crs_selection;
     }
 
@@ -375,7 +394,9 @@ pub const Job = struct {
             .revision = revision,
             .applied = true,
         } } });
-        if (result != .command_recorded) return error.CrsReceiptUnavailable;
+        if (result == .failed and result.failed == .unavailable) return error.StorageUnavailable;
+        if (result == .failed and result.failed == .cancelled) return error.Canceled;
+        if (result != .command_recorded) return error.InvalidCrsReceipt;
         self.confirmed_revision = revision;
         self.retry_seconds = 1;
     }
@@ -430,7 +451,7 @@ pub fn failure(err: anyerror) m.Reason {
         err == error.CompiledLimit or err == error.ExclusionReviewLimit) return .capacity;
     if (err == error.CrsSourceRejected or err == error.CrsSourceUnavailable or
         err == error.CrsSelectionUnavailable or err == error.CrsReceiptUnavailable or
-        err == error.StorageTimeout) return .storage;
+        err == error.StorageTimeout or err == error.StorageUnavailable) return .storage;
     if (err == error.PublicationBusy or err == error.PublicationClosed or
         err == error.CrsSelectionChanged or err == error.CrsStartupConflict) return .publication;
     const name = @errorName(err);
@@ -439,4 +460,78 @@ pub fn failure(err: anyerror) m.Reason {
     if (err == error.Transport or err == error.DownloadDeadline or
         err == error.Deadline or err == error.HttpStatus) return .download;
     return .incompatible;
+}
+
+test {
+    _ = @import("crs_restore_retry.zig");
+}
+
+const RestoreTest = struct {
+    mailbox: *@import("mailbox.zig").Mailbox,
+    initial: p.Failure,
+    stop: std.atomic.Value(bool) = .init(false),
+    requests: usize = 0,
+    failure: ?anyerror = null,
+
+    fn run(self: *RestoreTest) void {
+        const io = std.testing.io;
+        while (!self.stop.load(.acquire)) {
+            const request = self.mailbox.take(io) orelse {
+                self.mailbox.wait(io, 5) catch return;
+                continue;
+            };
+            if (request.request != .crs_management or
+                request.request.crs_management != .selected)
+            {
+                self.failure = error.UnexpectedMutation;
+                self.mailbox.stop(io);
+                return;
+            }
+            const result: p.StorageResult = if (self.requests == 0)
+                .{ .failed = self.initial }
+            else
+                .{ .crs_selection = .{} };
+            self.requests += 1;
+            self.mailbox.complete(io, request.ticket, result) catch |err| {
+                self.failure = err;
+                return;
+            };
+        }
+    }
+};
+
+test "CRS startup observes an election retry but refuses invalid durable selection" {
+    const t = std.testing;
+    const mailbox = try t.allocator.create(@import("mailbox.zig").Mailbox);
+    defer t.allocator.destroy(mailbox);
+    const app = try t.allocator.create(App);
+    defer t.allocator.destroy(app);
+    for ([_]p.Failure{ .unavailable, .invalid_input }) |initial| {
+        mailbox.* = .{};
+        // No other application field participates in these read-only empty restorations.
+        app.io = t.io;
+        app.gpa = t.allocator;
+        app.mailbox = mailbox;
+        app.stopping = .init(false);
+        var context: RestoreTest = .{ .mailbox = mailbox, .initial = initial };
+        const worker = try std.Thread.spawn(.{}, RestoreTest.run, .{&context});
+        var joined = false;
+        defer if (!joined) {
+            context.stop.store(true, .release);
+            mailbox.stop(t.io);
+            worker.join();
+        };
+        var job: Job = .{ .app = app };
+        const restored = job.restore(.{});
+        if (initial == .unavailable) {
+            try restored;
+        } else try t.expectError(error.InvalidCrsSelection, restored);
+        context.stop.store(true, .release);
+        mailbox.stop(t.io);
+        worker.join();
+        joined = true;
+        try t.expect(context.failure == null);
+        try t.expectEqual(@as(usize, if (initial == .unavailable) 3 else 1), context.requests);
+        mailbox.deinit(t.io);
+    }
 }
