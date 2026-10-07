@@ -31,6 +31,8 @@ def processes():
 
 def observe(process, destination, first_seen, last_sample):
     now = time.monotonic()
+    for log in Path(".zig-cache").glob("tunnel-diagnostic-*.log"):
+        (destination / log.name).write_bytes(log.read_bytes())
     rows = owned_rows(processes(), process.pid)
     with (destination / "processes.log").open("a") as output:
         for pid, parent, rss, elapsed, command in rows:
