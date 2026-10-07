@@ -56,5 +56,31 @@
       "401 anonymous session probe"
     ],
     "owned_fixture_and_tunnel_stop_status": 0
+  },
+  "guarded_release_smoke": {
+    "core_commit": "e6664465ad589bb9dcca565a3d465ccf184c8ecf",
+    "daemon_sha256": "e49c2c0f2769d890728f43899949204eb7656b35fd441e40258a6680da215639",
+    "build": "ReleaseSafe, cluster enabled",
+    "host": "10.175.52.18",
+    "viewport": "1440 x 1000, desktop, system theme, no touch emulation",
+    "anonymous_geography_resources": 0,
+    "authentication_and_live_dashboard": true,
+    "globe_and_configured_server_location_visible": true,
+    "geoip_unavailable_disclosed": true,
+    "policy_help_says_per_rule_limits_also_apply": true,
+    "private_enforce_SQL_test_complete": true,
+    "private_test_would_deny": true,
+    "private_test_denial_status": 403,
+    "private_test_inbound_score": 15,
+    "private_test_origin_contacted": false,
+    "saved_audit_revision_unchanged": 1,
+    "private_test_input_retained": true,
+    "policies_and_CRS_sidebar_preserved": true,
+    "no_horizontal_page_overflow": true,
+    "signout_returns_authentication_shell": true,
+    "owned_fixture_exit_status": 0,
+    "owned_origin_and_tunnel_stopped": true,
+    "browser_restored_to_desktop": true,
+    "scope": "Focused final-source smoke after the migration guard and policy-help changes. Earlier detailed walkthroughs retain their original source pins; this is not a repeat of every earlier interaction."
   }
 }
