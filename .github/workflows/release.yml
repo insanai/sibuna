@@ -28,11 +28,14 @@ jobs:
           python-version: '3.12'
       - name: Install test oracles
         run: sudo apt-get update && sudo apt-get install -y build-essential libpcre2-8-0 gnupg
+      - name: Install pinned corpus parser
+        run: python -m pip install PyYAML==6.0.2
       - name: Install checksum-verified Zig 0.17.0
         run: python tools/install_zig.py "$RUNNER_TEMP/zig"
       - name: Qualify native CRS contracts and pinned upstream behavior
         run: |
-          zig build crs-test crs-http-test crs-start-test crs-daemon-e2e crs-daemon-check \
+          zig build crs-test crs-ftw-verdict-test crs-http-test crs-start-test \
+            crs-daemon-e2e crs-daemon-check \
             crs-local-check \
             compression-test net-test \
             crs-detector-data crs-detector-check \

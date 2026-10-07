@@ -59,6 +59,10 @@ pub fn add(
     addRegexCheck(b, host, fixture);
     for (probes) |contract| addProbeCheck(b, host, contract);
     addDataCheck(b);
+    const python = if (@import("builtin").os.tag == .windows) "python" else "python3";
+    const verdict = b.addSystemCommand(&.{ python, "tools/crs_ftw_daemon_verdict_test.py" });
+    b.step("crs-ftw-verdict-test", "Test attributable daemon corpus compatibility verdicts")
+        .dependOn(&verdict.step);
     const run = b.addRunArtifact(audit);
     run.addPassthruArgs();
     b.step("crs-audit", "Inventory an extracted CRS release; does not activate rules")
