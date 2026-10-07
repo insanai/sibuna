@@ -16,7 +16,7 @@
 
 #let book(body) = {
   set document(
-    title: "The Book of Sibuna: High-Performance Web Defense, Zero-Allocation Systems, and Native Proof-of-Work",
+    title: "The Book of Sibuna: Proof of Work and Practical Web Protection",
     author: ("Vikrant Rathore", "Ronak Rathore"),
     keywords: ("Sibuna", "Firewall", "Proof-of-Work", "WebAssembly", "Zig", "Performance", "Security"),
   )
@@ -28,7 +28,9 @@
     header: context {
       if counter(page).get().first() > 1 {
         set text(size: 8pt, fill: gray)
-        let headings = query(heading.where(level: 1).before(here()))
+        let page_number = here().page()
+        let headings = query(heading.where(level: 1)).filter(it =>
+          it.location().page() <= page_number)
         let chapter = if headings.len() > 0 { headings.last().body } else { [] }
         grid(
           columns: (1fr, 1fr),
@@ -41,10 +43,15 @@
   )
   set text(font: "New Computer Modern", size: 10.5pt, fill: ink, lang: "en")
   set smartquote(enabled: false)
-  set par(justify: true, leading: 0.60em, spacing: 0.62em)
+  set par(justify: true, leading: 0.60em, spacing: 1em)
   set heading(numbering: "1.1")
   set raw(tab-size: 4)
   show raw: set text(size: 8.3pt)
+  // Keep short examples together. Long listings can still span a page.
+  show raw.where(block: true): it => block(
+    breakable: it.text.split("\n").len() > 30,
+    it,
+  )
   set table(stroke: 0.45pt + rule, inset: 6pt)
   show link: set text(fill: blue)
   show heading.where(level: 1): heading => {
@@ -124,11 +131,20 @@
 }
 
 #let part_page(number, title, summary) = {
+  // Front matter has headings too. Reset chapter numbering to the named part.
+  let parts = ("I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII")
+  counter(heading).update((parts.position(part => part == number),))
   heading(level: 1, title)
   block(above: 0pt, below: 7pt)[#text(style: "italic", fill: gray)[#summary]]
 }
 
-#let callout(title, body, kind: "note") = {
+#let callout(title, body, kind: "note") = context {
+  if target() == "html" {
+    return html.elem("aside", attrs: (class: "callout " + kind))[
+      #html.elem("strong", title)
+      #html.elem("div", body)
+    ]
+  }
   let colors = if kind == "warning" {
     (red, red_light)
   } else if kind == "idea" {
@@ -166,6 +182,7 @@
 
 #let exercise(number, body, hint: none) = block(
   width: 100%,
+  breakable: false,
   inset: 9pt,
   outset: (y: 3pt),
   radius: 3pt,
@@ -216,7 +233,7 @@
   #block(width: 100%, inset: 8pt)[#body]
 ]
 
-#let book_figure(caption, body, placement: auto) = figure(
+#let book_figure(caption, body, placement: none) = figure(
   placement: placement,
   layout(size => {
     let natural = measure(body).width

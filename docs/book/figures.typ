@@ -218,19 +218,23 @@
 // ------------------------------------------------------------------- RCU
 
 #let rcu_swap() = fit(diagram(
-  spacing: (16mm, 11mm),
+  spacing: (11mm, 15mm),
   node-stroke: 0.8pt + blue,
   edge-stroke: 0.8pt + gray,
-  node((0, 0), [Worker thread #linebreak() `acquireEngine`], ..node_style),
-  node((1, 0), [`slot` pointer #linebreak() atomic], ..warn_style),
-  node((2, 0), [Slot A: engine, #linebreak() readers = 3], ..good_style),
-  node((2, 1), [Slot B: engine, #linebreak() readers = 0], ..node_style),
-  node((0, 1), [Storage thread #linebreak() rebuild B, swap, #linebreak() wait A.readers = 0], ..node_style),
-  edge((0, 0), (1, 0), "-|>", [load]),
-  edge((1, 0), (2, 0), "-|>", [pin, re-check]),
-  edge((0, 1), (2, 1), "-|>", [build]),
-  edge((0, 1), (1, 0), "-|>", [swap to B], bend: 20deg),
-  edge((0, 1), (2, 0), "--|>", [drain], bend: -10deg),
+  node((0, 0), [Worker thread], ..node_style),
+  node((1, 0), [Load active #linebreak() slot pointer], ..warn_style),
+  node((2, 0), [Pin slot; #linebreak() re-check pointer], ..node_style),
+  node((3, 0), [Use engine; #linebreak() release reader], ..good_style),
+  node((0, 1), [Storage thread], ..node_style),
+  node((1, 1), [Build spare #linebreak() engine B], ..node_style),
+  node((2, 1), [Publish B as #linebreak() active engine], ..warn_style),
+  node((3, 1), [Wait until A #linebreak() has no readers], ..good_style),
+  edge((0, 0), (1, 0), "-|>"),
+  edge((1, 0), (2, 0), "-|>"),
+  edge((2, 0), (3, 0), "-|>"),
+  edge((0, 1), (1, 1), "-|>"),
+  edge((1, 1), (2, 1), "-|>"),
+  edge((2, 1), (3, 1), "-|>"),
 ), 85%)
 
 // --------------------------------------------------------------- storage
@@ -246,15 +250,16 @@
   node((3, 1), [`policies`, `ip_reputation`, #linebreak() `security_incidents`, FTS5, vec0], ..good_style),
   node((2, 1), [Rebuild spare #linebreak() engine slot], ..node_style),
   node((1, 1), [`publishEngine` #linebreak() RCU swap], ..warn_style),
-  node((0, 1), [Other cluster #linebreak() nodes], ..node_style),
+  node((3, 2), [Other nodes #linebreak() Multi-Paxos], ..node_style),
   edge((0, 0), (1, 0), "-|>", [push]),
   edge((1, 0), (2, 0), "-|>", [pop]),
   edge((2, 0), (3, 0), "-|>", [batched SQL]),
   edge((3, 0), (3, 1), "-|>"),
-  edge((3, 1), (2, 1), "-|>", [changed?]),
+  edge((3, 1), (2, 1), "-|>"),
   edge((2, 1), (1, 1), "-|>"),
-  edge((1, 1), (0, 0), "-|>", [new rules], bend: 20deg),
-  edge((3, 0), (0, 1), "<-|>", [Multi-Paxos], bend: 30deg),
+  edge((1, 1), (0, 1), "-|>"),
+  node((0, 1), [Workers read #linebreak() new engine], ..good_style),
+  edge((3, 0), (4, 0), (4, 2), (3, 2), "<-|>"),
 ), 80%)
 
 // --------------------------------------------------------- Aho-Corasick

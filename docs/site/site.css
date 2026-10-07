@@ -398,6 +398,12 @@ h1 {
   max-width:100%;
   height:auto
 }
+/* Keep diagram labels readable. Small screens scroll within the figure. */
+.reading figure>svg {
+  width:100% !important;
+  height:auto !important;
+  min-width:640px
+}
 .reading figcaption {
   font-size:13px;
   color:var(--muted);
