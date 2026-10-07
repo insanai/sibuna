@@ -758,6 +758,19 @@ test "TOTP enrollment revokes sessions and each step or recovery value commits o
     try t.expectEqual(1, (try fx.run(.{ .totp_read = 1 })).totp.recovery_used);
 }
 
+test "accounts without a factor row read as not enrolled rather than unavailable" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try geoFixture(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/console-no-factor",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    try t.expectEqual(p.Failure.conflict, (try fx.run(.{ .totp_read = 1 })).failed);
+}
+
 test "console storage reopens after sealed journal rotation" {
     const zx = @import("zaxonlite");
     const original = zx.segment.rotation_records;

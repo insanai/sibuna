@@ -21,7 +21,8 @@ pub fn read(owner: *Persistent, user: u64) !p.StorageResult {
         &.{integer(user)},
     );
     defer result.deinit();
-    if (result.rows.len != 1) return .{ .failed = .unavailable };
+    // No row means the account never enrolled: answered as not enabled, not as an outage.
+    if (result.rows.len != 1) return .{ .failed = .conflict };
     const row = result.rows[0];
     var output: p.auth.Totp = .{
         .user = user,

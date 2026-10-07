@@ -370,3 +370,11 @@ test "busy password verification preserves the independent concurrency bound" {
         .diagnostic = "CONSOLE003",
     });
 }
+
+test "accounts without a factor read as not enabled instead of unavailable" {
+    const status = [_]Step{ step(.authorize, .authorized), step(.totp_read, .conflict) };
+    try check(&status, "/console/api/totp", null, .{
+        .status = 200,
+        .diagnostic = "\"enabled\":false",
+    });
+}
