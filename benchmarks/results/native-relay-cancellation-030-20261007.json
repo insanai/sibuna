@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "kind": "native-relay-cancellation-qualification",
+  "date": "2026-10-07",
+  "production_fix_commit": "1393b2c",
+  "behavior": "A sticky per-connection cancellation signal ends an upgraded relay independently of socket EOF, including when the idle timeout is disabled.",
+  "ownership": "Only the connection worker closes descriptors. Shutdown and reaping signal cancellation before interrupting sockets; slot registration resets the signal after the prior owner unregisters.",
+  "qualification": {
+    "production_base": "4519b4d66caae575f8c2130f04253da197a2e76f",
+    "reviewed_overlay_sha256": "f06ff2445a65b5a97c1dd5c7887bcdf4eb484afaa88e979daf5b3496e4b738c1",
+    "allowed_production_changes": [
+      "libs/net/src/duplex.zig",
+      "apps/sibuna/src/connection_idle.zig"
+    ],
+    "qualified_source_files": [
+      {
+        "path": "libs/net/src/duplex.zig",
+        "sha256": "293df8c4f91f9ff7cbbf0d6be93fb06961cc7b4bfb80015cec8c7a68f4c9ac7f"
+      },
+      {
+        "path": "apps/sibuna/src/connection_idle.zig",
+        "sha256": "7ae134a0d5750692806a8770f443b3db2c562b905ee78a15f05db6e90776f924"
+      }
+    ],
+    "workflow_commit": "22a1e3f599c0ddb22f975736b2231eec6882c0ef",
+    "run_url": "https://github.com/insanai/sibuna/actions/runs/37585432829",
+    "job_url": "https://github.com/insanai/sibuna/actions/runs/37585432829/job/112674349593",
+    "runner": "macos-15 ARM64",
+    "zig": "0.17.0",
+    "conclusion": "success",
+    "commands": [
+      "zig build fmt test console-ui-e2e -j2 --verbose --summary all",
+      "zig build -Dstorage=false -j2 --verbose --prefix \"$RUNNER_TEMP/storage-off\"",
+      "zig build -Dconsole=false -j2 --verbose --prefix \"$RUNNER_TEMP/console-off\""
+    ],
+    "native_summary": {
+      "steps_passed": 95,
+      "steps_total": 95,
+      "tests_passed": 1146,
+      "tests_total": 1146
+    },
+    "live_crs_tests": 33,
+    "native_step_started": "2026-10-07T07:08:16Z",
+    "native_step_finished": "2026-10-07T07:25:24Z",
+    "artifact": {
+      "id": 11466693236,
+      "name": "sibuna-030-macos-arm64-diagnostic",
+      "digest": "sha256:115e255e2bc92f3943a507cd0bd55ed02350165789bea0d9bfc7cc17edd67785"
+    },
+    "provenance_sha256": "07b13e6ae3868e89b8157bc25ea2ffeae727f333d2f3ac9e28b18b1dc3ed9b7e",
+    "build_log_sha256": "c6379ec363635d048364b511c6777b4d823ce1f28f9141df414ad26f184077ea",
+    "constraints": "Original full native gates, assertions and 45-minute job cap retained; no logging overlay or test skips in this candidate qualification."
+  },
+  "focused_regression": {
+    "scenario": "Both live socket peers remain open, relay idle timeout is disabled, and cancellation is signalled without interrupting either socket before checking completion.",
+    "completion_assertion_deadline_ms": 3000,
+    "poll_bound_ms": 100,
+    "positive": {
+      "tests_passed": 3,
+      "tests_total": 3,
+      "runner": "local macOS 27.0 ARM64"
+    },
+    "negative": {
+      "change": "Remove only the relay cancellation observation; retain the signal, live peers, assertion and failure cleanup.",
+      "tests_passed": 2,
+      "tests_total": 3,
+      "failed_assertion": "fixture.finished.load(.acquire)",
+      "cleanup": "After the bounded assertion, cleanup interrupts owned sockets and joins the worker.",
+      "transcript": "benchmarks/results/native-relay-cancellation-030-20261007-negative.log.gz",
+      "transcript_sha256": "0d246000109d716fbd6b83776a941e4be614a93a464dc7eb84b63560041f3c7e",
+      "uncompressed_transcript_sha256": "dfa039628331fbd619e9654dbbbe06baaa8e1bb7d62b120060c0fdf891edb5f0"
+    }
+  },
+  "historical_evidence": {
+    "original_tag_native_arm_failures": [
+      37572199104,
+      37578613598
+    ],
+    "identified_stack": "CRS WebSocket early-release test teardown waits in Fixture.destroy and connection Pool.join while one worker remains in duplex.relay.",
+    "original_local_results": "Exact-tag macOS 27.0 passed 100 isolated WebSocket repetitions and all 33 native CRS tests.",
+    "logging_run_cancelled_before_target": 37584149341,
+    "diagnosis_limit": "The original macOS 15 kernel-readiness mechanism remains unclassified. This qualification establishes the explicit cancellation lifecycle guarantee, not an explanation of that mechanism."
+  },
+  "release_limit": "This gate qualifies the two-file cancellation overlay against the original tag. Combined final-source platform and cluster gates are still required before publication."
+}
