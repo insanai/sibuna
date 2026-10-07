@@ -1,10 +1,16 @@
 name: Sibuna 0.3.0 console qualification
 on:
   workflow_dispatch:
+    inputs:
+      gate:
+        description: Exact-tag diagnostic or reviewed console qualification
+        type: choice
+        default: console
+        options: [console, macos-arm64]
 permissions:
   contents: read
 concurrency:
-  group: release-030-console-qualification
+  group: release-030-qualification-${{ inputs.gate || 'console' }}
   cancel-in-progress: false
 defaults:
   run:
@@ -12,6 +18,7 @@ defaults:
     working-directory: production
 jobs:
   console:
+    if: inputs.gate != 'macos-arm64'
     runs-on: ubuntu-22.04
     timeout-minutes: 45
     env:
@@ -91,5 +98,55 @@ jobs:
         if: always()
         with:
           name: sibuna-030-console-qualification
+          path: ${{ runner.temp }}/qualification
+          if-no-files-found: error
+  native:
+    if: inputs.gate == 'macos-arm64'
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: 4519b4d66caae575f8c2130f04253da197a2e76f
+          path: production
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: diagnostic-tools
+          sparse-checkout: |
+            tools/native_test_diagnostic.py
+            tools/native_test_diagnostic_test.py
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - name: Verify exact untouched production source and diagnostic ownership
+        run: |
+          test "$(git rev-parse HEAD)" = "4519b4d66caae575f8c2130f04253da197a2e76f"
+          test -z "$(git status --porcelain)"
+          python ../diagnostic-tools/tools/native_test_diagnostic_test.py
+          mkdir -p "$RUNNER_TEMP/qualification"
+          {
+            git rev-parse HEAD
+            git -C ../diagnostic-tools rev-parse HEAD
+            shasum -a 256 ../diagnostic-tools/tools/native_test_diagnostic*.py
+          } > "$RUNNER_TEMP/qualification/provenance.txt"
+      - name: Install checksum-verified Zig 0.17.0
+        run: python tools/install_zig.py "$RUNNER_TEMP/zig"
+      - name: Observe original full native qualification
+        run: |
+          python ../diagnostic-tools/tools/native_test_diagnostic.py \
+            --log-dir "$RUNNER_TEMP/qualification/native" -- \
+            zig build fmt test console-ui-e2e -j2 --verbose --summary all
+          zig build -Dstorage=false -j2 --verbose --prefix "$RUNNER_TEMP/storage-off"
+          zig build -Dconsole=false -j2 --verbose --prefix "$RUNNER_TEMP/console-off"
+          test -z "$(git status --porcelain)"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: sibuna-030-macos-arm64-diagnostic
           path: ${{ runner.temp }}/qualification
           if-no-files-found: error
