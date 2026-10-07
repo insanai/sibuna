@@ -902,7 +902,19 @@ policy rebuild it causes on every node. Storage arrows represent mailbox request
 = Data Model
 
 All console tables live in the same Zaxonlite database as SID 0005 and replicate with it.
-Migrations are numbered and version-gated in `schema.zig`. The authoritative writer serializes each migration and schema-version update; followers wait for application before serving compatible routes. Never run concurrent startup DDL independently on every member. All tables below are proposed. Bound row/result sizes and use typed SQL operations with parameter binding where supported (otherwise audited literal escaping), never client-supplied SQL. Console object IDs must be globally unique (random 128-bit ids or node-scoped sequences); foreign keys and uniqueness constraints are required.
+Migrations are numbered and version-gated in `schema.zig`. The authoritative writer
+serializes each migration and schema-version update. Before schema changes, the same
+captured transaction checks that exactly one non-null marker row holds the expected
+predecessor version. A temporary constraint enforces this check without changing the
+persistent schema or RPC format. Failure rolls back the guard and migration body.
+Startup reads cannot authorize stale DDL: after a competing upgrade, the owner rereads
+the marker and adopts only a version its binary supports. Followers wait for application
+before serving compatible routes. Never run startup DDL outside this writer contract.
+
+All tables below are proposed. Bound row/result sizes and use typed SQL operations with
+parameter binding where supported (otherwise audited literal escaping), never
+client-supplied SQL. Console object IDs must be globally unique (random 128-bit ids or
+node-scoped sequences); foreign keys and uniqueness constraints are required.
 
 #table(
   columns: (1fr, 2.8fr),

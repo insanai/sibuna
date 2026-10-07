@@ -180,6 +180,22 @@ request path.
 
 = Schema
 
+Schema reads during startup are advisory. A migration to version $v$ must check that the
+marker contains exactly one non-null row at version $v - 1$ inside the captured write
+transaction, before its schema changes. A connection-local temporary table enforces that
+condition with a `NOT NULL` constraint and an exact-version `CHECK`. The guard is dropped
+before the migration body; failure rolls back the whole transaction, including its
+temporary objects. The guard adds no persistent table or replication format.
+
+*Lemma (a stale migration cannot regress the schema marker).* Assume serialized SQLite
+write transactions and migrations which advance the marker from $v - 1$ to $v$ only after
+the check above. An owner may read $v - 1$ before another owner advances the schema. When
+its transaction runs, the check sees the writer's current marker. A newer marker fails
+the constraint before any migration statement executes, so that stale transaction changes
+neither schema nor data. A successful transaction publishes its schema changes and marker
+together. After refusal, the owner may adopt an already-applied version supported by its
+binary; a newer unsupported version remains an explicit startup error.
+
 ```sql
 CREATE TABLE sibuna_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE policies (
