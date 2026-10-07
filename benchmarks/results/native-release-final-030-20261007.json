@@ -1,0 +1,192 @@
+{
+  "format": 1,
+  "date": "2026-10-07",
+  "version": "0.3.0",
+  "source_commit": "e6664465ad589bb9dcca565a3d465ccf184c8ecf",
+  "workflow": {
+    "url": "https://github.com/insanai/sibuna/actions/runs/37599968840",
+    "event": "workflow_dispatch",
+    "conclusion": "success",
+    "publish_job": "skipped; manual qualification run"
+  },
+  "normal_ci": {
+    "url": "https://github.com/insanai/sibuna/actions/runs/37599966493",
+    "conclusion": "success"
+  },
+  "documentation_ci": {
+    "url": "https://github.com/insanai/sibuna/actions/runs/37599966565",
+    "conclusion": "success"
+  },
+  "jobs": [
+    {
+      "name": "plan",
+      "id": 112721665736,
+      "url": "https://github.com/insanai/sibuna/actions/runs/37599968840/job/112721665736",
+      "conclusion": "success",
+      "started_at": "2026-10-07T09:20:52Z",
+      "completed_at": "2026-10-07T09:20:58Z"
+    },
+    {
+      "name": "crs-conformance",
+      "id": 112721666093,
+      "url": "https://github.com/insanai/sibuna/actions/runs/37599968840/job/112721666093",
+      "conclusion": "success",
+      "started_at": "2026-10-07T09:20:52Z",
+      "completed_at": "2026-10-07T09:27:28Z"
+    },
+    {
+      "name": "crs-console",
+      "id": 112721666144,
+      "url": "https://github.com/insanai/sibuna/actions/runs/37599968840/job/112721666144",
+      "conclusion": "success",
+      "started_at": "2026-10-07T09:20:52Z",
+      "completed_at": "2026-10-07T09:33:30Z"
+    },
+    {
+      "name": "build (macos-15-intel, macos-amd64, x86_64-macos.15.0)",
+      "id": 112721727695,
+      "url": "https://github.com/insanai/sibuna/actions/runs/37599968840/job/112721727695",
+      "conclusion": "success",
+      "started_at": "2026-10-07T09:21:02Z",
+      "completed_at": "2026-10-07T09:45:31Z"
+    },
+    {
+      "name": "build (macos-15, macos-arm64, aarch64-macos.15.0)",
+      "id": 112721727696,
+      "url": "https://github.com/insanai/sibuna/actions/runs/37599968840/job/112721727696",
+      "conclusion": "success",
+      "started_at": "2026-10-07T09:21:07Z",
+      "completed_at": "2026-10-07T09:49:39Z"
+    },
+    {
+      "name": "build (ubuntu-22.04, linux-amd64, x86_64-linux-musl)",
+      "id": 112721727758,
+      "url": "https://github.com/insanai/sibuna/actions/runs/37599968840/job/112721727758",
+      "conclusion": "success",
+      "started_at": "2026-10-07T09:21:01Z",
+      "completed_at": "2026-10-07T09:42:22Z"
+    },
+    {
+      "name": "build (ubuntu-24.04-arm, linux-arm64, aarch64-linux-musl)",
+      "id": 112721727767,
+      "url": "https://github.com/insanai/sibuna/actions/runs/37599968840/job/112721727767",
+      "conclusion": "success",
+      "started_at": "2026-10-07T09:21:03Z",
+      "completed_at": "2026-10-07T09:34:42Z"
+    },
+    {
+      "name": "build (windows-2022, windows-amd64, x86_64-windows-gnu)",
+      "id": 112721727892,
+      "url": "https://github.com/insanai/sibuna/actions/runs/37599968840/job/112721727892",
+      "conclusion": "success",
+      "started_at": "2026-10-07T09:21:01Z",
+      "completed_at": "2026-10-07T09:36:43Z"
+    },
+    {
+      "name": "publish",
+      "id": 112732536377,
+      "url": "https://github.com/insanai/sibuna/actions/runs/37599968840/job/112732536377",
+      "conclusion": "skipped",
+      "started_at": "2026-10-07T09:49:40Z",
+      "completed_at": "2026-10-07T09:49:39Z"
+    }
+  ],
+  "ci_artifacts": [
+    {
+      "name": "sibuna-macos-arm64",
+      "id": 11473691985,
+      "digest": "sha256:bf6b63dd8c07129d7e7d817521379499c06ba90190b441ccf9d31e8058f3abaa",
+      "size_bytes": 3050457
+    },
+    {
+      "name": "sibuna-windows-amd64",
+      "id": 11473506543,
+      "digest": "sha256:b0bda838131fe08f92729959a272a3dcd7d93ed3287b0f0b546d02b03dca4f30",
+      "size_bytes": 3265383
+    },
+    {
+      "name": "sibuna-linux-arm64",
+      "id": 11473116829,
+      "digest": "sha256:6d5d16d376f366ce4f598c59fffb241217fba0afe066218b96309477d224d679",
+      "size_bytes": 3210125
+    },
+    {
+      "name": "sibuna-macos-amd64",
+      "id": 11473053169,
+      "digest": "sha256:c2273d61b0f7ad03fee44fd4a3c758ecbba2781ea688e24a0cc459edfb512065",
+      "size_bytes": 3176287
+    },
+    {
+      "name": "sibuna-linux-amd64",
+      "id": 11472894029,
+      "digest": "sha256:d54bfde9cf051f563d820eb194ec835d0eaae03feb07d4a63a4452fbdbbd4642",
+      "size_bytes": 3238680
+    }
+  ],
+  "archives": [
+    {
+      "package": "linux-amd64",
+      "archive_sha256": "2baeda74502cf9b7fcb49ca1c36f7bcee881a8febd5f525995cf236d5f340156",
+      "binary_sha256": "62a5e6ecfd6d1e34ba903969fa670b7d7bb593f6b4127d3253e2d985e33e604f",
+      "commit": "e6664465ad589bb9dcca565a3d465ccf184c8ecf",
+      "requirements": "Linux 5.10 or later"
+    },
+    {
+      "package": "linux-arm64",
+      "archive_sha256": "40d83a59d8025d75620adc72939ea967d6671e943aab55503c414d1178eb9136",
+      "binary_sha256": "6cf3972f473e146e1d63e05564356013efa5bf070d12b5903f2edc9a816310ed",
+      "commit": "e6664465ad589bb9dcca565a3d465ccf184c8ecf",
+      "requirements": "Linux 5.10 or later"
+    },
+    {
+      "package": "macos-amd64",
+      "archive_sha256": "93ea3037fd52429b15062508c0188b8e33e6f927fc9ed46257cd0945d8aef5aa",
+      "binary_sha256": "8ccf186bdcc473933ce054e5643c5f28a4e9ffb33dd2f79da21fa9f962c4f0b0",
+      "commit": "e6664465ad589bb9dcca565a3d465ccf184c8ecf",
+      "requirements": "macOS 15 or later"
+    },
+    {
+      "package": "macos-arm64",
+      "archive_sha256": "6f98e419a421a8326437bd58f0f4805f6f4dd91155eca537ad96f11142c1cefb",
+      "binary_sha256": "669bf7e5b552fcc1d59fe7d4a1b476c170a914d11900bc8da7def4c3cf4f1c8e",
+      "commit": "e6664465ad589bb9dcca565a3d465ccf184c8ecf",
+      "requirements": "macOS 15 or later"
+    },
+    {
+      "package": "windows-amd64",
+      "archive_sha256": "d1fb8e1da53226f175c826346b11c858b024fa6aeb7f08816d32ea411de868d3",
+      "binary_sha256": "3a210097a7da189ba6c526b0602f0ee3feb9b6d6cd39aef34975ea4891c07701",
+      "commit": "e6664465ad589bb9dcca565a3d465ccf184c8ecf",
+      "requirements": "Windows 10 / Server 2019 or later"
+    }
+  ],
+  "verification": {
+    "all_five_archives": true,
+    "exact_source_and_version": true,
+    "binary_hashes_match_manifests": true,
+    "native_windows_pe_x64": true,
+    "native_macos_macho_architectures": true,
+    "linux_elf_architectures": true,
+    "linux_no_dynamic_interpreter": true,
+    "full_licenses_and_notices": true,
+    "exact_corresponding_source_commit": true,
+    "macos_arm64_version_check": "sibuna 0.3.0",
+    "features": {
+      "storage": true,
+      "console": true,
+      "cluster": false
+    },
+    "engine_license": "LGPL-3.0",
+    "console_and_combined_license": "AGPL-3.0"
+  },
+  "checksums_sha256": "60473ec547670606473ded5e52d71af5c501d59c879f2399a6b84ea5b8b83982",
+  "related_receipts": [
+    "console-cluster-final-030-20261007.json",
+    "linux-console-migration-030-20261007.json"
+  ],
+  "limitations": [
+    "Historical corpus/benchmark records keep their original source revisions.",
+    "SID 0007 performance acceptance retains its documented exception.",
+    "Publication uses these inspected artifacts; later main commits are evidence/docs only."
+  ]
+}
