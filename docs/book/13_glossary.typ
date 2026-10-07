@@ -13,31 +13,41 @@
   costs one table load.])
 #term([Ban table], [4,096 lock-free slots of banned client addresses with expiry, written by the
   honeypot and by replicated reputation, read on every request.])
-#term([Campaign], [A cluster of security incidents whose payload embeddings lie within cosine
-  distance 0.35 of one another; a heuristic grouping, not a proof of common origin.])
+#term([Campaign], [A heuristic group of similar incidents. A new payload joins a campaign
+  when its vector is within cosine distance 0.35 of the nearest recorded incident.
+  Grouping does not establish a common attacker.])
+#term([Candidate], [A prepared rule package and its settings. Verification and review precede
+  a separate selection; preparing a candidate leaves live protection unchanged.])
 #term([Challenge record], [The 70-character stateless identifier a client must solve: version,
   algorithm, difficulty, openings, issue time, client fingerprint, PRF nonce, rule hash, and a
-  16-byte keyed BLAKE3 tag. Issuing one writes nothing on the server.])
+  16-byte keyed BLAKE3 tag. Verification needs no stored challenge record. Issuance can
+  still update counters and optional telemetry.])
+#term([Core Rule Set (CRS)], [OWASP's application-security rules. Sibuna verifies a signed
+  release, compiles it natively and evaluates it within configured input and work bounds.])
+#term([Coverage], [The parts of an exchange that inspection observed. Complete, incomplete,
+  headers-only, local-response, handshake and excluded-stream states describe different
+  limits; missing coverage does not establish an absence of attacks.])
 #term([Difficulty, work bits], [The single integer that scales both tiers: the number of leading
   zero bits for Hashcash, or three more than the tree depth for sequential work.])
 #term([Edge], [A Sibuna deployment with `--data-dir`, and optionally `-Dcluster` replication,
   giving persistent policies, replicated reputation, and incident forensics to either surface.])
 #term([Engine slot], [One of two policy-engine instances with a reader count. Workers pin a slot
   while classifying; the storage thread rebuilds the other and publishes it by pointer swap.])
-#term([Fingerprint], [A keyed hash of client address and User-Agent, bound into challenges and
-  tokens so neither can be replayed from another client.])
+#term([Fingerprint], [A keyed hash of client address and User-Agent, included in challenges
+  and tokens. A different address or User-Agent fails the binding. Clients sharing both,
+  such as browsers behind one NAT, can share a fingerprint.])
 #term([Forward auth], [Deployment mode in which an ingress asks Sibuna whether to admit a request
   (`200`) or challenge, deny, or limit it (`401`, `403`, `429`), and proxies the origin itself.])
-#term([Gate], [The surface with proof-of-work admission, sessions, rules, reputation, GCRA limits
-  and bans, but no application inspection (`--gate`).])
+#term([Gate], [Proof-of-work admission, sessions, rules, reputation, GCRA limits and bans
+  (`--gate`). It disables the lightweight inspector. Native CRS is configured separately.])
 #term([GCRA], [The Generic Cell Rate Algorithm: one theoretical arrival time per client that
   admits a burst of $N$ then one request per emission interval, with no window boundaries.])
 #term([Hashcash], [Tier One: find a nonce such that SHA-256 of the challenge, a colon, and the
   decimal nonce has $b$ leading zero bits. Expected $2^b$ trials, verified with one hash.])
 #term([Honeypot], [An invisible link to `/__sibuna/honeypot`; a client that follows it is banned
   and an incident with reputation $-100$ is recorded.])
-#term([Idle reaper], [A thread that closes connections that have been silent longer than
-  `--idle-timeout`, so a slow client cannot pin a connection thread.])
+#term([Idle reaper], [A thread that closes connections after their idle deadline.
+  `--idle-timeout` bounds HTTP silence; uploads also have a minimum progress rate.])
 #term([Interstitial], [The embedded HTML page served in place of a protected page; it fetches a
   challenge, solves it in a Web Worker, posts the solution, and reloads.])
 #term([Keyed BLAKE3], [The pseudorandom function behind Sibuna's key schedule, challenge tags,
@@ -45,15 +55,19 @@
 #term([MAC token], [The default session cookie: a 40-byte payload (version, work level,
   timestamp, expiry, rule hash, fingerprint) and a 16-byte keyed BLAKE3 tag, verified in
   constant time.])
-#term([Work level], [The mechanism and work bits a session's holder actually solved, carried in
-  the token; a route admits a session only when its level reaches the route's requirement.])
 #term([Opening], [In a sequential-work proof, one leaf label plus the sibling labels along its
   path to the root; the verifier recomputes the path and compares with the commitment.])
-#term([Proof of Sequential Work (PoSW)], [Tier Two: the Cohen–Pietrzak hash graph whose labels
-  depend on all earlier labels, forcing $2^(n+1)-1$ sequential hashes however many cores the
-  prover has. Verified with $t(n+1)$ hashes.])
+#term([Paranoia level], [A CRS setting that enables additional rules at higher levels.
+  Blocking and detection levels are separate. Higher levels can add work and findings;
+  review their effect on the application before enforcing them.])
+#term([Proof of Sequential Work (PoSW)], [Tier Two: a proof built from the Cohen–Pietrzak
+  dependent hash graph. Under the construction's assumptions, the stated work bound is
+  $2^(n+1)-1$ sequential hashes, with verification using $t(n+1)$ hashes. Part III explains
+  the assumptions and the implemented variant.])
 #term([Reputation trie], [The 128-bit radix trie holding `allow`, `deny`, and `challenge` prefixes
   from the policy file and from the replicated `ip_reputation` table.])
+#term([Resident memory (RSS)], [Memory pages currently resident for a process. Summing RSS
+  across several processes can count shared pages more than once.])
 #term([Robin Hood spent set], [The fixed-capacity open-addressed table of solved challenge tags,
   which prevents a valid solution from being submitted twice.])
 #term([Rule hash], [A 64-bit hash of the rule name that demanded a challenge, carried in the
@@ -65,8 +79,11 @@
   options for either.])
 #term([WEIGH], [A rule action that adds a signed weight to a request's score instead of deciding;
   totals at or above the thresholds challenge with extra work bits or deny.])
-#term([Zaxonlite], [The embedded SQLite replication engine (Multi-Paxos) behind `--data-dir` and
-  cluster mode, fetched as a pinned release in `build.zig.zon`.])
+#term([Work level], [The mechanism and work bits a session's holder actually solved, carried in
+  the token; a route admits a session only when its level reaches the route's requirement.])
+#term([Zaxonlite], [The SQLite storage and Multi-Paxos replication library behind
+  `--data-dir` and cluster mode. `build.zig.zon` pins its release; `vendor/` contains the
+  reviewed compatibility sources.])
 
 #pagebreak()
 #heading(numbering: none)[Bibliography]
@@ -117,6 +134,6 @@ incident queue).
 Wang, X., Hong, Y., Chang, H., Park, K., Langdale, G., Hu, J., and Zhu, H. "Hyperscan: a fast
 multi-pattern regex matcher for modern CPUs." _NSDI_, 2019.
 
-Sibuna Shibuna Discussions 0001–0006, `docs/sid/records`, 2026: process, foundation
-architecture, declarative policy engine, semantic inspection, Zaxonlite storage architecture,
-and mathematical foundations.
+Sibuna Shibuna Discussions 0001–0010, `docs/sid/records`, 2026: process, foundation
+architecture, policy, inspection, storage, mathematical foundations, the console, AI-bot
+identification, chunked request bodies and native CRS evaluation. The registry identifies each record's status.

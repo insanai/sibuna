@@ -2,9 +2,9 @@
 
 #heading(numbering: none)[Selected Solutions]
 
-These solutions are checks on the argument, not substitutes for the exercises. If your result
-differs, first compare assumptions: endpoints of time intervals, what is counted as work, and
-whether a write has committed are common sources of disagreement.
+Use these solutions to check your reasoning after trying the exercises. If a result
+differs, compare assumptions first. Interval endpoints, the definition of work and the
+point at which a write commits often explain the difference.
 
 == Part I: Cost and Probability
 
@@ -19,17 +19,17 @@ commits batches, so the exact first drop depends on arrival and commit times.
 
 == Part II: Prior Art
 
-*2.1.* One source compiled twice cannot disagree with itself about the statement, the nonce
-encoding, the tree shape, or the opening layout; drift would require a compiler bug. It says
-nothing about whether the construction is sound (cryptographic review), whether the browser
-runtime executes it correctly (a byte-identical comparison between the WebAssembly and
-JavaScript provers covers that), or whether the parameters are calibrated (measurement).
+*2.1.* Sharing the source keeps the statement, nonce encoding, tree shape and opening layout
+in one place. Separate implementations can drift when one changes without the other.
+Compiler and runtime defects are still possible. Cryptographic review must establish the
+construction's security, WebAssembly/JavaScript comparisons check compatible output, and
+measurements guide parameter choices.
 
-*2.2.* (a) Sibuna Gate or Anubis, one binary; (b) Sibuna Shield, SafeLine, or Cloudflare
-(Pro plan or above); (c) Sibuna Edge with `-Dcluster`, Anubis with a shared Valkey store (for
-state, not for bans), or Cloudflare. The only single product meeting all three without a
-Docker host or a subscription is Sibuna Shield with `--data-dir` and cluster replication; the
-"runs as", "inspection", and "multi-node" rows decide it.
+*2.2.* Several deployments can meet these requirements. Use Part II's capability table to
+compare installation needs, inspection and shared state. For Sibuna, Gate supplies admission,
+Shield adds the lightweight inspector, and `--data-dir` with a cluster build adds persistent
+policies and replicated reputation. Choose a deployment around the application's needs;
+the examples do not establish one product as the best choice for every site.
 
 == Part III: Cryptography
 
@@ -46,12 +46,11 @@ find a commitment with a particular acceptance probability.
 openings it has $32(1+32 times 18)=18464$ bytes. The opening bytes double; the 32-byte root
 is still sent once.
 
-*3.3.* Without the work level a session earned on a cheap route would admit a request to an
-expensive one that demanded more work; without `timestamp` a token could be minted "in the
-future" and outlive its policy; without `expiry` it would never die; without `rule_hash` the
-upstream could not learn which rule admitted the client; without `fingerprint` a cookie copied
-to another machine would be accepted. The tag must cover all five because any field left
-outside it could be edited freely, and the verifier could not tell.
+*3.3.* The work level prevents a session earned on a cheap route from satisfying a route
+that demands more work. `timestamp` allows the verifier to reject future-dated tokens;
+`expiry` bounds their lifetime. `rule_hash` tells the upstream which rule admitted the client.
+The `fingerprint` binds the cookie to an address and User-Agent, although clients sharing
+both already share that binding. The tag covers all five fields so an edit is detected.
 
 == Part IV: Protocol
 
@@ -64,11 +63,11 @@ shared address.
 
 == Part V: State and Ordering
 
-*5.1.* The head and the first part of the body (up to what fits after the head in 64 KB) are
-in the connection buffer and are sent with `writeAll(req.body)`. The remaining bytes never
-enter the buffer whole: `relayBody` reads them in 16 KB pieces from the client reader and
-writes each to the origin. The head must go first because the origin needs `Content-Length`
-before the body, and because the audit headers are part of the head.
+*5.1.* The 64 KiB connection buffer holds the head and the start of the body. The relay
+forwards those buffered body bytes, then reads and forwards the remainder in bounded pieces.
+It preserves the head until evidence and telemetry have consumed it. The origin needs the
+head first to interpret the body's framing and the added audit headers. Content-Length and
+chunked uploads use their respective forwarding paths.
 
 *5.2.* The emission interval is 100 ms and burst tolerance is 9,900 ms. An idle client may
 send 100 requests immediately, then one per 100 ms. Through the inclusive endpoint at 3,000 ms,
@@ -98,12 +97,11 @@ matches clients known to block WebAssembly rather than for everyone.
 
 == Part VIII: Evaluation
 
-*8.2.* CPU microseconds per request divided by cores busy gives the wall time the product
-spent per request; it is far above the sub-microsecond classification cost because the
-product row also contains the kernel's socket read and write, the parser, the session tag
-check, the metrics increments, the response formatting, the writer flush, and the scheduler's
-hand-off between the load generator and the connection thread. The primitive suite times
-none of those.
+*8.2.* Dividing CPU microseconds per request by busy cores estimates amortized wall time per
+completed request. Concurrent requests can wait or overlap, so this ratio is not an
+individual request's latency. The complete product also pays for socket reads and writes,
+parsing, session checks, metrics, response formatting, writer flushes and scheduling.
+The primitive classification timing excludes those costs.
 
 == Part IX: Operations
 
