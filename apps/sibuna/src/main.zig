@@ -523,7 +523,7 @@ fn printCrsLocalHelp() void {
 
 fn printCrsHelp() void {
     std.debug.print(
-        \\Core Rule Set (starts disabled; source-build integration pending release qualification):
+        \\Core Rule Set (starts disabled):
         \\  --crs | --no-crs            Select Enforce or Off; conflicting modes are refused
         \\  --crs-mode <mode>           off | audit | enforce
         \\  --crs-dir <path>            Verified artifact directory (required when enabled)
