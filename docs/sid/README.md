@@ -1,8 +1,8 @@
 # Shibuna Discussions (SID)
 
-Shibuna Discussions (SID) are the RFC/RFD-style design records for the `sibuna` monorepo: a web
-firewall and anti-crawler daemon. Each SID is a standalone Typst paper under
-`docs/sid/records`, while `docs/sid/registry.typ` drives the index and bundle output.
+Shibuna Discussions (SIDs) record Sibuna's design decisions and engineering contracts.
+Each record is a Typst paper in `docs/sid/records`. The registry supplies metadata for the
+index and bundle. Read a record's status before treating its design as implemented.
 
 ## Records
 
@@ -14,8 +14,10 @@ firewall and anti-crawler daemon. Each SID is a standalone Typst paper under
 | 0004 | Semantic attack inspection and GCRA rate limiting (Shield surface) | security |
 | 0005 | Zaxonlite storage: dynamic policies, replicated reputation, forensics (Edge) | storage |
 | 0006 | Mathematical foundations: sequential work, keyed authentication, rate limiting, hashing, automata | research |
-| 0007 | The Sibuna Console: real-time management interface for nodes and clusters (proposed) | console |
-| 0008 | AI Bot Traffic Identification, Multi-Tier Verification, and Operator Console Analytics | analytics |
+| 0007 | The Sibuna Console: real-time management interface for nodes and clusters | console |
+| 0008 | AI bot traffic identification and operator analytics (open discussion) | analytics |
+| 0009 | Chunked request bodies and transfer-coding validation | network |
+| 0010 | Native OWASP Core Rule Set and verified rule updates | security |
 
 ## Layout
 

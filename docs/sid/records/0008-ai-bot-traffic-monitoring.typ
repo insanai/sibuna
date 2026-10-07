@@ -2,12 +2,12 @@
 #let sid-title = "AI Bot Traffic Identification, Multi-Tier Verification, and Operator Console Analytics"
 #let sid-state = "discussion"
 #let sid-created = "2026-09-15"
-#let sid-discussion = "Specifies the architecture for identifying, verifying, and monitoring AI crawler and automated bot traffic in Sibuna: zero-allocation single-pass signature matching, sub-microsecond Radix CIDR verification for major providers (OpenAI, Anthropic, Google Gemini, Perplexity, Meta, Apple, ByteDance), multi-tier confidence classification, bounded telemetry extensions, and a real-time console dashboard delivering visual composition, time-series analysis, and granular tabular analytics contrasting bot traffic against actual human traffic."
+#let sid-discussion = "Open proposal for bot identity evidence, provider-range matching, bounded telemetry and operator analytics. Confidence describes available evidence rather than human identity."
 #let sid-labels = ("analytics", "bot-detection", "console", "dashboard", "waf", "ai-crawlers",)
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
 #let sid-status = "Open for Discussion"
-#let sid-last-updated = "2026-09-15"
+#let sid-last-updated = "2026-10-07"
 
 #import "../../shared/sid.typ": sid-document
 #import "@preview/cetz:0.5.2" as cetz
@@ -232,15 +232,29 @@
 
 = Abstract
 
-Autonomous artificial intelligence crawlers, multi-modal data extraction agents, and real-time retrieval-augmented generation (RAG) fetchers have transformed edge web traffic. In modern web infrastructure, automated scrapers and AI agents frequently represent between 30% and 75% of total ingress requests, consuming valuable origin compute, cache capacity, and network bandwidth while skewing site metrics. As a high-performance Web Application Firewall (WAF) and anti-crawler daemon, `sibuna` must provide website operators with clear, actionable visibility into incoming automated traffic, specifically separating bot traffic—with granular breakdowns for major AI service providers including OpenAI, Anthropic, Google (Gemini), Perplexity, Meta, Apple, ByteDance, and others—from genuine human visitors.
+This is an open design discussion. Its proposed categories and analytics are not a statement
+that every feature is delivered. A provider range and User-Agent can support an identity
+claim, but do not establish cryptographic identity. A valid puzzle proof does not establish
+that a visitor is human. The interface must explain these limits.
 
-Achieving 100% classification accuracy is fundamentally impossible in adversarial web environments due to User-Agent spoofing, headless browser evasion, distributed residential proxy rotations, and the strict zero-allocation, sub-microsecond latency budget of the Sibuna hot path, which prohibits synchronous reverse DNS queries during request evaluation. 
+Automated crawlers and retrieval agents can consume application resources and distort traffic
+statistics. Operators may want to know which clients claim to be bots, which provider ranges
+they use, and which resources they request.
 
-This specification establishes an explicit *multi-tier confidence model* combining zero-allocation Aho-Corasick signature classification, zero-allocation Radix-trie IP CIDR verification against published provider ranges, and structural behavioral heuristics. It extends Sibuna's telemetry and storage architecture to record bot identity, provider family, crawl intent (offline model training vs. real-time user-directed fetch vs. search indexing), and verification confidence without dynamic allocations. Finally, it specifies a dedicated real-time operator console dashboard delivering visual composition ratios, time-series trends, and detailed tabular inspection to give operators an honest, mathematically bounded understanding of their incoming traffic and enable targeted declarative policy enforcement.
+Headers can be forged. Provider ranges can change. Residential proxies and shared networks
+also limit what an address tells us. This proposal describes confidence levels based on the
+available evidence. It keeps external identity lookups outside request evaluation.
+
+The proposed analytics combine signature matching, provider-range lookup and behavioral
+signals. They would record provider claims, crawl intent and confidence in bounded telemetry.
+The console would show those signals alongside sampling loss and missing coverage.
 
 = Introduction and Motivation
 
-Sibuna's foundational architecture (SID 0002), declarative policy engine (SID 0003), semantic shield (SID 0004), and management console (SID 0007) establish a pure-Zig, zero-allocation WAF daemon capable of processing requests in sub-microsecond time. While `libs/policy/src/bot_signatures.zig` currently maintains a flat list of bot User-Agent strings, and `libs/console-protocol/src/client_family.zig` lumps all automated clients into a single coarse `.bot` ("Automated") display label, operators currently lack deep visibility into their incoming bot landscape.
+Sibuna already has admission policies, structural inspection and a management console.
+Its bot signatures recognize some User-Agent strings. The current client-family display groups
+automated clients under one broad label. More detailed identity evidence could help operators
+review that traffic, but it must remain distinct from a claim that a request is human.
 
 Website operators are routinely confronted with urgent operational questions that the current telemetry cannot answer:
 1. *Volume and Proportion:* What fraction of total incoming requests and egress bandwidth is consumed by automated bots versus genuine human traffic?
@@ -251,8 +265,12 @@ Website operators are routinely confronted with urgent operational questions tha
 
 To resolve these questions, Sibuna must elevate bot classification from a binary filter into a first-class analytical and observability subsystem within the console management interface.
 
-#callout("The Accuracy Reality Principle", [
-  No perimeter security system can guarantee 100% identification accuracy based solely on HTTP request headers or external IP addresses. Malicious bots can forge standard browser User-Agents, while unscrupulous actors can forge known AI bot User-Agents. Conversely, genuine AI providers periodically expand their IP allocations before updating public documentation. Sibuna explicitly rejects illusory precision: the system computes and presents transparent, multi-tier confidence levels, distinguishing *Verified Bots* (cryptographically or CIDR-proven) from *Declared Bots* (self-reported via User-Agent) and *Suspected Bots* (behaviorally detected).
+#callout("Classification has limits", [
+  Headers and IP addresses do not establish identity on their own. Clients can forge
+  User-Agent strings. Providers can change their published ranges. The proposed labels
+  separate range-supported claims, self-declared claims and behavioral suspicions.
+  “Verified” means that the stated check passed. It does not mean that the visitor is human
+  or that the request is safe.
 ])
 
 = Terminology and Scope
@@ -298,7 +316,10 @@ Sibuna's existing architecture handles bot traffic through two isolated mechanis
 Building an effective WAF analytics dashboard for AI bots introduces three severe engineering constraints:
 
 1. *The Spoofing Dilemma:* Any client can send `User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0` to pretend to be human, or send `User-Agent: GPTBot/1.2 (+https://openai.com/gptbot)` to pretend to be OpenAI. If an operator configures an allow rule for AI search fetchers, an attacker can spoof that User-Agent to bypass protection. Conversely, if analytics rely solely on User-Agent strings, spoofed scrapers distort business metrics.
-2. *The Zero-Allocation Latency Contract:* Standard anti-bot systems perform Forward-Confirmed Reverse DNS (FCrDNS) lookups to verify Googlebot or Bingbot. Performing synchronous DNS queries in Sibuna's hot path would introduce 15ms–200ms of latency, require dynamic memory allocation, and create external network dependencies that violate Sibuna's sub-microsecond latency guarantee.
+2. *Request-path costs:* Some bot-verification systems use forward-confirmed reverse DNS.
+   Synchronous DNS would make request latency depend on an external service.
+   This proposal keeps those lookups outside Sibuna's allocation-free evaluation path.
+   It does not claim a universal sub-microsecond request latency.
 3. *Provider IP Churn and Asymmetry:* Major AI providers publish their CIDR blocks in machine-readable JSON feeds (e.g., OpenAI, Google, Meta, Amazon), but updates occur out-of-band. The verification mechanism must handle out-of-band CIDR synchronization without locks or latency penalties on request threads.
 
 = System Invariants and Design Principles
@@ -593,8 +614,8 @@ To track the most frequently targeted URI paths without unbounded memory allocat
 #proof[
   Let $C = sum_(i=1)^m hat(f)_i$ denote the sum of all counter estimates. Initially, $C = 0$. For each incoming path $sigma$:
   1. If $sigma in cal(T)$, its counter is incremented: $hat(f)_sigma arrow.l hat(f)_sigma + 1$. Thus $C$ increases by 1.
-  2. If $sigma cancel(in) cal(T)$ and $|cal(T)| < m$, a new entry is allocated with $hat(f) = 1$ and $e = 0$. Again $C$ increases by 1.
-  3. If $sigma cancel(in) cal(T)$ and $|cal(T)| = m$, the entry with minimal estimate $c_("min") = min_j hat(f)_j$ is evicted. Its key is replaced with $sigma$, its error is set to $e = c_("min")$, and its estimate becomes $hat(f) = c_("min") + 1$. $C$ increases by 1.
+  2. If $sigma in.not cal(T)$ and $|cal(T)| < m$, a new entry is allocated with $hat(f) = 1$ and $e = 0$. Again $C$ increases by 1.
+  3. If $sigma in.not cal(T)$ and $|cal(T)| = m$, the entry with minimal estimate $c_("min") = min_j hat(f)_j$ is evicted. Its key is replaced with $sigma$, its error is set to $e = c_("min")$, and its estimate becomes $hat(f) = c_("min") + 1$. $C$ increases by 1.
   
   Therefore, after $N_s$ arrivals, $sum_(i=1)^m hat(f)_i = N_s$.
   By the pigeonhole principle, the minimum counter must satisfy:
@@ -1167,7 +1188,7 @@ wire(170, 108, H => {
 
   // Footer note
   rect((28, H - 104), (166, H - 97), stroke: 0.35pt + blue, fill: blue-light, radius: 0.8)
-  content((31, H - 100.5), anchor: "west", text(size: 4pt, fill: blue)[Comparative telemetry derived from 100% exact atomic striped counters combined with 1/64 Space-Saving sample sketches. Zero-allocation hot path executes in sub-50 nanoseconds.])
+  content((31, H - 100.5), anchor: "west", text(size: 4pt, fill: blue)[Comparative telemetry derived from 100% exact atomic striped counters combined with 1/64 Space-Saving sample sketches. Proposed bounded telemetry; request-path cost must be measured.])
 }))
 
 === 3.2 Visual Components
@@ -1232,8 +1253,8 @@ Implementation acceptance requires passing the following verification gates:
 #table(
   columns: (1.2fr, 1fr, 2fr),
   table.header([*Test Suite*], [*Target*], [*Acceptance Criteria*]),
-  [Bot Signature Unit Tests], [`bot_matcher_test.zig`], [100% correct classification of all major AI bots, scraper libraries, and search crawlers; zero false positives on standard desktop and mobile browser strings.],
-  [Radix CIDR Trie Verification], [`provider_cidr_test.zig`], [Correctly verifies IPs matching published ranges; rejects alien IPs; executes in $< 50$ ns without heap allocations.],
+  [Bot Signature Unit Tests], [`bot_matcher_test.zig`], [Expected classifications for the pinned signature corpus; no false positives in the selected browser fixtures. These tests do not establish accuracy on all traffic.],
+  [Radix CIDR Trie Verification], [`provider_cidr_test.zig`], [Matches the pinned provider ranges and rejects addresses outside them. Uses no heap allocation during lookup. Measure latency on a documented host.],
   [Striped Exact Telemetry], [`telemetry_test.zig`], [Concurrent worker threads accurately increment exact bot intent counters without data races or cache line contention.],
   [Archive Compatibility], [`rankings_archive_test.zig`], [Correct serialization and deserialization of `SBR3` archives; seamless backward-compatibility when decoding legacy `SBR1` and `SBR2` records.],
   [Console UI Wasm Tests], [`console-ui-test`], [Native and WebAssembly render tests for the AI & Bot dashboard panel; verification of goldens with `zig build console-golden-check`.],
@@ -1243,7 +1264,7 @@ Implementation acceptance requires passing the following verification gates:
 = Security Considerations
 
 1. *Adversarial User-Agent Spoofing:* Malicious scrapers regularly forge common browser headers to bypass naive crawler bans. Sibuna mitigates this by combining signature matching with behavioral heuristics and PoW verification.
-2. *Spoofed AI Credentials for Policy Bypass:* If an operator configures an allow rule for AI search fetchers, attackers may forge `ChatGPT-User` or `Perplexity-User`. Sibuna's Radix CIDR trie ensures that privileged allow rules apply only to cryptographically or network-verified provider IP addresses.
+2. *Spoofed AI Credentials for Policy Bypass:* If an operator configures an allow rule for AI search fetchers, attackers may forge `ChatGPT-User` or `Perplexity-User`. The proposed provider trie would require a matching published range for rules that use that check. Range membership supports a network claim; it is not cryptographic identity.
 3. *Privacy and Data Leakage:* Sampled bot telemetry contains only path prefixes (up to 128 bytes) and stripped referring hosts (up to 24 bytes). Query parameters, credentials, authentication cookies, and request bodies are strictly excluded from telemetry buffers.
 4. *Memory Exhaustion Protection:* Space-Saving sketches and Radix tries are allocated with fixed upper bounds at daemon startup. No incoming traffic surge can cause telemetry memory usage to grow unbounded.
 

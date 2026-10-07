@@ -31,15 +31,16 @@ Sibuna supplies proof-of-work admission and a small structural inspection engine
 Core Rule Set (CRS) supplies a maintained application-attack policy written in SecLang;
 it does not supply an HTTP proxy or a matching engine. Importing its regular expressions
 as isolated signatures would discard scoring, exclusions, transformations and control flow.
-This discussion specifies a separate, opt-in native Zig implementation with explicit resource
-bounds and a verified update service shared by the CLI and console.
+This discussion specifies an optional native Zig engine. It has explicit resource limits.
+The CLI and console share a verified update service.
 
-Compatibility is a release-specific, tested property. A syntactically readable rule is not
-necessarily executable. An update must compile every selected directive and pass the
-compatibility checks before publication. Unsupported syntax, unavailable required input,
-resource exhaustion and failed verification are distinct outcomes; none means “no attack.”
-The present Sibuna inspector remains available without CRS. This SID extends the optional
-Shield surface of SID 0004; it does not change Gate admission or the proof protocol.
+Compatibility must be tested for each release. Parsing a rule does not establish that the
+engine can execute it. An update must compile every selected directive and pass compatibility
+checks before publication.
+
+Unsupported syntax, missing input, exhausted resources and failed verification have separate
+outcomes. None establishes that a request is safe. The existing inspector remains available.
+CRS adds optional inspection around the admission pipeline. The proof protocol is unchanged.
 
 = Context and scope
 

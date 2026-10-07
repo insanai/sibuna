@@ -7,7 +7,7 @@
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Process Memo"
 #let sid-status = "Published"
-#let sid-last-updated = "2026-09-07"
+#let sid-last-updated = "2026-10-07"
 
 #import "../../shared/sid.typ": sid-document
 
@@ -215,7 +215,7 @@ The system strictly distinguishes between two failure classes:
 `build.zig` drives Typst compilation and verification:
 
 - `zig build sid`: Builds PDFs for all registered records into `docs/build/`.
-- `zig build sid -Dshd=<number_or_slug>`: Compiles a single record.
+- `zig build sid -Dsid=<number_or_slug>`: Compiles a single record.
 - `zig build sid-index`: Compiles the registry index PDF.
 - `zig build sid-site`: Generates the HTML bundle into `docs/build/sid-site/`.
 - `zig build fmt`: Runs `zig fmt --check` and `tools/check-style.sh` to enforce all structural limits.
@@ -223,7 +223,7 @@ The system strictly distinguishes between two failure classes:
 
 = Conclusion
 
-By combining version-controlled Typst design records (SID), rigorous structural limits,
-TigerStyle engineering discipline, and Elm-style human-friendly diagnostics, Sibuna guarantees
-long-term codebase maintainability, extreme operational reliability, and sub-microsecond
-anti-crawler defense.
+SIDs keep design decisions and their evidence beside the implementation.
+Structural checks make code easier to review. Clear diagnostics help operators recover from
+expected failures. These practices support maintenance; verification must still establish
+whether an implementation meets its contracts.

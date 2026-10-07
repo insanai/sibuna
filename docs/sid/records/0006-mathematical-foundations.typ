@@ -7,7 +7,7 @@
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
 #let sid-status = "Published"
-#let sid-last-updated = "2026-09-07"
+#let sid-last-updated = "2026-10-07"
 
 #import "../../shared/sid.typ": sid-document
 
@@ -97,11 +97,30 @@
 
 = Abstract
 
-Sibuna is a web firewall whose admission decisions must cost the server almost nothing and cost an unverified client a measurable, unavoidable amount of work. This record states the mathematics that makes that asymmetry a theorem rather than a hope. It gives, for every hot-path primitive, a definition, the lemmas or theorems that bound its cost and its security, a citation to the primary literature, and the exact pure-Zig function that realises it together with the number we measured on the reference host.
+Sibuna uses proof of work to share the cost of admission with the requester.
+Creating a proof should require more computation than checking it. This record describes
+the models, assumptions and bounds behind that design. It links each primitive to its
+implementation and measured cost.
 
-The central design decision is the choice of the client puzzle. SID 0002 proposed three tiers (SHA-256 hashcash, HashX, Argon2id). On review, HashX carries no formal proof and requires an interpreter, Argon2id makes verification as expensive as solving, and the memory-hard puzzle we considered as a replacement (Equihash) is a generalised-birthday construction with a cryptocurrency lineage and known quantum speedups for its underlying $k$-XOR problem. Sibuna therefore adopts the Cohen–Pietrzak *proof of sequential work* [4] as its research-grade tier: a construction with a sequentiality theorem in the random oracle model, a post-quantum proof in the parallel quantum random oracle model [6], deterministic solve time, $O(log N)$ prover memory, and $O(t log N)$ verification. Bit-granular hashcash [1] remains as the lightweight tier.
+The client puzzle is a central choice. SID 0002 considered Hashcash, HashX and Argon2id.
+HashX would require an interpreter. Argon2id makes verification expensive too. Equihash was
+also considered, but its generalized-birthday model has different tradeoffs.
 
-Around the puzzle, the record proves: that a 16-byte keyed-BLAKE3 tag bounds forgery by $q\/2^128$ and makes both challenges and session tokens stateless and post-quantum; that the only server state the design keeps, the *spent set*, is bounded by work the adversary actually performed; that the GCRA limiter admits at most $N + floor(L\/T)$ requests in any interval of length $L$ with sixteen bytes of state per client; that Robin Hood lookups may terminate early and may overwrite expired occupants exactly when the incoming probe distance is not smaller; that the inspection pipeline is linear in the input with one automaton pass and one byte-class pass; and that the read-copy-update slot protocol never rebuilds an engine a request is still reading. Every measurement quoted is ours, from `benchmarks/results/latest.json` on an Apple M1; reference figures for other systems are labelled as models and never as measurements.
+Sibuna uses Cohen–Pietrzak sequential work [4] for dependent computation. Its published
+sequentiality results use a random-oracle model. The quantum result [6] uses a parallel
+quantum random-oracle model. These results are not an independent audit of Sibuna's concrete
+protocol. Bit-granular Hashcash [1] remains available for nonce search.
+
+The record also studies keyed authentication, rate limits, replay state and inspection.
+The classical forgery bound for a 16-byte tag is $q\/2^128$ under the stated PRF assumption.
+Authenticated payloads avoid saving every challenge or session. The spent set, rate tables
+and other local state still need explicit bounds.
+
+For GCRA, the admission bound is $N + floor(L\/T)$ over an interval of length $L$.
+Robin Hood hashing permits early lookup termination under its probe-distance invariant.
+The inspection and engine-publication sections state their own costs and ownership conditions.
+Measurements come from `benchmarks/results/latest.json`. Its metadata identifies the current
+source, compiler and host. Models and chosen example values are not measurements.
 
 = Introduction and Adversary Model
 
@@ -415,7 +434,11 @@ Signatures alone are either too loose (a bare `/*` flags every browser's `Accept
 2. A *SQL word tokenizer*: one pass extracting alphanumeric words, folding case into a 7-byte buffer, looking each up in a 21-entry keyword list pruned by length, and, on `or`/`and`, checking the tautology grammar `literal = literal` in place. The verdict is a small score: a quote is mandatory, up to two keywords, a comment marker, and an equals sign add one point each, and four points deny. Prose such as _it's a group order from the shop_ scores three; `name='x' union all from t--` scores four.
 3. Tag/attribute and separator/command recognisers for XSS and command injection that fire only in attribute or separator position.
 
-This is a deliberate middle between two extremes. Regular-expression rule sets (backtracking engines) run hundreds of backtracking engines per request, each its own pass with its own match state, and are neither linear nor allocation-free. Full SQL/HTML parsers are linear but carry parser state, memory for ASTs, and a large surface of grammar edge cases; their precision advantage is real for a general-purpose WAF, but for an edge gate the fingerprint approach pioneered by libinjection captures most of it with a fixed-size tokenizer state.
+The built-in inspector uses bounded structural checks. Backtracking regexes can have poor
+worst-case behavior when patterns overlap. Regex engines and full parsers use different
+algorithms and resource controls; their costs must be assessed individually.
+A fixed-size tokenizer can recognize useful attack shapes without building a full syntax tree.
+It does not establish the same coverage as a general-purpose parser or rule set.
 
 == Vectorised matchers
 
