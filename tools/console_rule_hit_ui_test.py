@@ -4,6 +4,7 @@ import time
 import console_e2e as h
 from console_workflows_test import post, save, wait_applied
 from console_ui_forms import FormValues
+import console_rule_hit_sampling as sampling
 
 
 def check(ui, data_port):
@@ -23,17 +24,12 @@ def check(ui, data_port):
     # the minute boundary so its next sample belongs to the same retained minute.
     ui.event(1, {"action": "dashboard", "fields": {}})
     ui.event(1, {"action": "traffic-period", "fields": {"hours": "0"}})
-    deadline = time.monotonic() + 65
-    while not 2 <= int(time.time()) % 60 <= 45:
-        assert time.monotonic() < deadline, "rule-hit cohort start deadline"
-        ui.receive()
-    first = int(time.time()) // 60
+    first = sampling.begin(ui.receive)
     for index in range(20):
         status, _, _ = h.request(data_port, "GET", path, extra_headers={
             "X-Forwarded-For": f"198.51.100.{index + 1}", "User-Agent": "Mozilla"})
         assert status == 403, status
-    last = int(time.time()) // 60
-    assert first == last and int(time.time()) % 60 < 55, "cohort crossed sampling boundary"
+    last = sampling.finish(first)
     # The production collector seals ending-minute cohorts. No synthetic clock or SQL
     # injection substitutes for this request -> pinned counter -> storage -> browser path.
     deadline = time.monotonic() + 75

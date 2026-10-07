@@ -1,15 +1,17 @@
 """Rule observations survive replication, leader loss and producer restarts."""
 import json
 import time
+from console_reads import budgeted
+import console_rule_hit_sampling as sampling
 
 
 def capture(cluster, harness, session, revision):
-    first = int(time.time()) // 60
+    first = sampling.begin(lambda: time.sleep(0.25))
     for index in range(20):
         status, _, _ = harness.request(cluster.data[2], "GET", "/cluster-rule", extra_headers={
             "X-Forwarded-For": f"8.8.10.{index + 1}", "User-Agent": "Mozilla/5.0"})
         assert status == 403, status
-    last = int(time.time()) // 60
+    last = sampling.finish(first)
     deadline = time.monotonic() + 75
     while time.time() < (last + 1) * 60 + 2 and time.monotonic() < deadline:
         time.sleep(0.25)
@@ -22,7 +24,7 @@ def capture(cluster, harness, session, revision):
 
 
 def read(harness, port, session, query, minimum):
-    code, _, body = harness.request(port, "POST", "/console/api/policies/hits", query, *session)
+    code, _, body = budgeted(harness, port, "POST", "/console/api/policies/hits", query, *session)
     assert code == 200, (code, body)
     window = json.loads(body)["window"]
     assert window["request"]["node"] == 3 and window["request"]["key"] == query["key"]
