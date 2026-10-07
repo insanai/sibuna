@@ -1781,8 +1781,11 @@ pub fn ProtocolGated(
                 message: Commit,
                 effects: *Effects,
             ) !void {
-                self.leader_hint = from;
-                self.election_ticks = 0;
+                // A commit proves a chosen value, not current leadership. Any
+                // member may serve catch-up history, including delayed commits
+                // from an earlier ballot; only ballot-bearing contact may reset
+                // election time or replace the observed leader.
+                _ = from;
                 try self.recordCommit(message.slot, message.value, effects);
             }
 
@@ -3364,6 +3367,79 @@ test "nack for a higher promise steps the leader down" {
     // The next campaign picks a round above the observed higher promise.
     try leader.campaign(0, &effects);
     try std.testing.expectEqual(@as(u64, 3), leader.ballot.round);
+}
+
+test "chosen history preserves the follower's ballot-bearing leader and election timer" {
+    for ([_]bool{ false, true }) |duplicate| {
+        var membership: TestProtocol.Membership = undefined;
+        try membership.init(&.{ 1, 2, 3 });
+        var node: TestProtocol.Node = undefined;
+        try node.init(3, &membership);
+        node.durable.promised = .{ .round = 2, .node = 1 };
+        node.leader_hint = 1;
+        node.election_ticks = 9;
+        if (duplicate) {
+            node.durable.cells[1] = .{ .slot = 1, .committed = 10 };
+            node.delivered_through = 1;
+        }
+        var effects = TestProtocol.Effects{};
+        try node.step(.{
+            .from = 2,
+            .to = 3,
+            .message = .{ .commit = .{ .slot = 1, .value = 10 } },
+        }, &effects);
+        try std.testing.expectEqual(@as(?NodeId, 1), node.currentLeader());
+        try std.testing.expectEqual(@as(u32, 9), node.election_ticks);
+        try std.testing.expectEqual(@as(Slot, 1), node.decidedThrough());
+        try std.testing.expectEqual(@as(?u64, 10), node.committedAt(1));
+        try std.testing.expectEqual(@as(usize, if (duplicate) 0 else 1), effects.writes_count);
+    }
+}
+
+test "catch-up from a follower cannot replace an elected leader's own identity" {
+    var membership: TestProtocol.Membership = undefined;
+    try membership.init(&.{ 1, 2, 3 });
+    var node: TestProtocol.Node = undefined;
+    try node.init(1, &membership);
+    node.role = .leader;
+    node.ballot = .{ .round = 2, .node = 1 };
+    node.durable.promised = node.ballot;
+    node.leader_hint = 1;
+    node.election_ticks = 9;
+    node.durable.cells[1] = .{ .slot = 1, .committed = 10 };
+    node.delivered_through = 1;
+    var effects = TestProtocol.Effects{};
+    try node.step(.{
+        .from = 3,
+        .to = 1,
+        .message = .{ .commit = .{ .slot = 1, .value = 10 } },
+    }, &effects);
+    try std.testing.expectEqual(TestProtocol.Role.leader, node.role);
+    try std.testing.expectEqual(@as(?NodeId, 1), node.currentLeader());
+    try std.testing.expectEqual(@as(u32, 9), node.election_ticks);
+}
+
+test "valid ballot-bearing contact refreshes a follower during ordinary operation" {
+    const ballot: Ballot = .{ .round = 2, .node = 1 };
+    const messages = [_]TestProtocol.Message{
+        .{ .prepare = .{ .ballot = ballot, .first = 1 } },
+        .{ .accept = .{ .ballot = ballot, .slot = 1, .value = 10 } },
+        .{ .heartbeat = .{ .ballot = ballot, .decided_through = 0 } },
+    };
+    for (messages) |message| {
+        var membership: TestProtocol.Membership = undefined;
+        try membership.init(&.{ 1, 2, 3 });
+        var node: TestProtocol.Node = undefined;
+        try node.init(3, &membership);
+        node.durable.promised = ballot;
+        node.leader_hint = 2;
+        node.election_ticks = 9;
+        var effects = TestProtocol.Effects{};
+        try node.step(.{ .from = 1, .to = 3, .message = message }, &effects);
+        try std.testing.expectEqual(@as(?NodeId, 1), node.currentLeader());
+        try std.testing.expectEqual(@as(u32, 0), node.election_ticks);
+        try std.testing.expectEqual(TestProtocol.Role.follower, node.role);
+    }
 }
 
 fn hasPointers(comptime T: type) bool {

@@ -108,6 +108,13 @@
     "url": "https://github.com/insanai/paxos-zig/archive/refs/tags/v0.7.0.tar.gz",
     "archive_sha256": "e233f5b3681573ac22b4249be223209e28537ec81637ea116db2ffdf68432747",
     "zig_package_hash": "paxos-0.7.0-_zKMfQYMBAC2Myl7xvXj6bqWoh39vqCJ0JnW2z2i6u--",
+    "local_changes": [
+      {
+        "file": "src/protocol.zig",
+        "reason": "Chosen commits carry no ballot and can be served by any member during catch-up; they cannot replace leader evidence or reset election time.",
+        "verification": "Regression tests cover fresh and duplicate history, an elected leader receiving follower history, and valid prepare/accept/heartbeat contact."
+      }
+    ],
     "upstream_files": {
       "CHANGELOG.md": "5bd321088afa1cad0653e4def6efd037a469c665d6e5da0f705519eadd9269a4",
       "LICENSE": "fda88836526617781960d9d4d22aae619f0e4e17c5388c894905f87eb679eeda",

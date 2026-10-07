@@ -7,7 +7,7 @@
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
 #let sid-status = "Published"
-#let sid-last-updated = "2026-10-03"
+#let sid-last-updated = "2026-10-07"
 
 #import "../../shared/sid.typ": sid-document
 
@@ -78,6 +78,20 @@ file digests are recorded in `vendor/provenance.json`; MIT licenses remain with 
 The library-only build graph excludes the unused terminal UI, preserves the SQLite and
 OpenSSL settings, and changes neither durable formats nor database schema. Compatibility
 is qualified through Sibuna's replay and cluster tests, rather than an edited package cache.
+The vendored Paxos chosen-history adapter preserves leadership evidence during catch-up:
+commit messages carry a chosen value without a ballot, and any member may serve them.
+They therefore neither replace the observed leader nor refresh election time. Valid prepare,
+accept and matching heartbeat messages retain those effects. This changes no chosen-value,
+quorum or write-before-send rule; it prevents an old or follower-served commit from presenting
+its sender as the current leader. The correction and tests remain explicit in the dependency
+notices and provenance.
+
+*Lemma (chosen history is not leadership evidence).* A value chosen under ballot $b$
+remains chosen after another member is elected under $b' > b$. Either member may then serve
+the same slot/value commit during catch-up. That message contains no ballot, so its contents
+cannot distinguish the former leader, the current leader or another history provider.
+Applying it preserves the chosen prefix without changing ballot-bearing leadership state.
+Election time is refreshed by valid prepare, accept or matching heartbeat contact instead.
 
 = Context and motivation
 
