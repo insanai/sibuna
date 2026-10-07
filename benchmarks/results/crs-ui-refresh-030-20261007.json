@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "recorded_at": "2026-10-07",
+  "release_tag": "v0.3.0",
+  "tag_revision": "4519b4d66caae575f8c2130f04253da197a2e76f",
+  "application_revision": "d461e7fee9622f5f365fdb37b18acc77dc56608f",
+  "binary_sha256": "6556a59f140e76b190e1fa582a4cea72c0f1372b37027fd70f610570b0ba81e2",
+  "failed_ci_job": "https://github.com/insanai/sibuna/actions/runs/37572199104/job/112633096568",
+  "cause": "The preparation worker completed between the Wasm refresh and the harness's separate status request. API completion did not imply that the independently rendered UI had refreshed.",
+  "reproduction": {
+    "host": "10.175.52.21",
+    "runtime": "Node 24.21.0; unchanged ReleaseSafe Linux daemon and shipped Wasm",
+    "ordering": "An isolated test copy yielded before the status request, allowing the worker to finish without another Wasm refresh.",
+    "before_refresh": {
+      "api_stage": "failed",
+      "diagnostic_path_correct": true,
+      "diagnostic_line_correct": true,
+      "rendered_path_present": false,
+      "rendered_line_present": false
+    },
+    "after_explicit_refresh": {
+      "rendered_path_present": true,
+      "rendered_line_present": true,
+      "remaining_workflow": "pass"
+    },
+    "transcript_sha256": "742d637ffccad399a89661f0e1f58c0ba667a9f8530e2f39d6d8df7031a95a42"
+  },
+  "correction": {
+    "scope": "tools/crs_ui_check.py only; no application or tag change",
+    "method": "Refresh until the expected rendered diagnostic appears within the existing 120-second deadline. Preserve exact path, line, code, hint, redaction, selection, origin-response and sign-out assertions.",
+    "validation": "The same forced ordering starts with both rendered labels absent; bounded refreshed-state polling completes and the whole shipped-Wasm CRS workflow passes.",
+    "exit_code": 0,
+    "transcript_sha256": "cade9858ba1db207b63eb0b540f5f234e7dcffed9edccec1ef5f6bfe15900af1"
+  }
+}

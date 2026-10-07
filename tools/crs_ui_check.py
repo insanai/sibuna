@@ -178,6 +178,13 @@ def editor(ui, data_port):
     failed = next(row for row in observed["candidates"] if row and row["state"] == "failed")
     diagnostic = failed["diagnostic"]
     assert diagnostic["path"] == "sibuna-operator.conf" and diagnostic["line"] == 2, failed
+    # Preparation can finish after the Wasm refresh but before the separate status
+    # request. Observe the rendered diagnostic too; API completion is not UI completion.
+    while "sibuna-operator.conf" not in ui.html or "Line: 2" not in ui.html:
+        assert time.monotonic() < deadline, ui.html[-7000:]
+        action(ui, "crs-refresh")
+        if "sibuna-operator.conf" not in ui.html or "Line: 2" not in ui.html:
+            time.sleep(POLL)
     assert "sibuna-operator.conf" in ui.html and "Line: 2" in ui.html
     assert "CRSCOMPILE/" in ui.html and "Hint:" in ui.html
     assert "secret-value" not in json.dumps(diagnostic)
