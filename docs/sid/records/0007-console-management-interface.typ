@@ -459,6 +459,17 @@ per-tick quotas; it must not call `rebuild` or `publishEngine` itself. Heavy for
 need validated cancellation/deadlines or a separately owned read snapshot before release.
 An arbitrary SQLite connection must not bypass Zaxonlite's commit/replication path.
 
+Console startup waits for an authoritative setup result before publishing its services.
+A restarting replica may need to elect a leader or catch up before it can answer that read.
+Transient storage unavailability is retried within one absolute 30-second awake-clock budget.
+Each request keeps its ten-second bound, shortened to the remaining startup budget. Retries
+use a 100 ms backoff, also clamped to that deadline. Timeouts abandon their mailbox ticket;
+the storage owner retains executing work until completion. Unknown state never means that
+the console is initialized or that bootstrap is required. An explicit newer schema is a
+fatal incompatibility. Ordinary requests report unavailable storage as HTTP 503, rather than
+inventing a credential rejection or revision conflict.
+
+
 
 
 == Process model and the isolation contract
