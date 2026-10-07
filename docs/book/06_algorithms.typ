@@ -2,7 +2,7 @@
 #import "figures.typ": *
 
 #part_page("VI", [Automata, Tries, and the Semantic Firewall], [
-  We examine the algorithms behind sub-microsecond classification: the tagged Aho–Corasick
+  We examine the algorithms used for request classification: the tagged Aho–Corasick
   automaton, the IPv4/IPv6 radix trie, the byte-class tokenizers of the semantic WAF, and
   the declarative policy engine with WEIGH scoring.
 ])
@@ -11,8 +11,8 @@
 
 #objectives([
   By the end of this chapter, you should be able to derive the Aho–Corasick automaton's
-  linear-time guarantee, explain the dense-table layout and comptime case folding, and argue
-  why a SIMD literal engine was not adopted.
+  linear-time guarantee, explain the dense-table layout and compile-time case folding, and
+  describe the tradeoffs considered when choosing a literal matcher.
 ])
 
 === Aho–Corasick as a Dense DFA
@@ -48,22 +48,24 @@ chapter 8. The latter uses the same patterns and any-match semantics.
 
 === Regular Expressions, SIMD Engines, and the Choice
 
-Three families were weighed for the signature stage:
+Three approaches were considered for the short-field signature stage:
 
-- *Backtracking regular expressions* (a backtracking rule-set style) run hundreds of patterns
-  per request and allocate per match; they are the slowest option and the most prone to false
-  positives.
+- *Backtracking regular expressions* support rich patterns, but their evaluation cost can
+  depend strongly on the expression and input. A rule engine must bound work and scratch
+  memory. Sibuna's separate CRS engine uses bounded compiled matching rather than an
+  unrestricted backtracking evaluator.
 - *SIMD literal engines* (Hyperscan, Vectorscan) prefilter blocks of 16–32 bytes with
   shuffle-based nibble masks (the "Teddy" algorithm) and verify candidates with automata. They
-  excel on long inputs with large literal sets. The cost is a multi-megabyte C++ dependency, a
-  compile-time pattern database, no WebAssembly target, and, for inputs of a hundred bytes, no
-  advantage: the whole field scans in less time than one cache miss.
-- *Dense Aho–Corasick plus small structural tokenizers*, the libinjection lineage, gives exact
-  linear-time behaviour in a fixed table and needs nothing outside the binary.
+  target long inputs and large literal sets. Integration also brings a C++ dependency,
+  compiled pattern databases and architecture-specific code. Those costs need to be weighed
+  against the benefit on the fields a deployment actually inspects.
+- *Dense Aho–Corasick plus small structural tokenizers* gives a bounded linear scan in a fixed
+  table. It suits the small inspector's literal sets and requires no external matching service.
 
-Sibuna's fields are short, so the third family wins on both memory and speed; chapter 8 records
-2.9 ns per byte on an 8 KB body, the one workload where a SIMD prefilter would pay, and SID 0006
-keeps that as an open item.
+Sibuna uses the third approach for its small inspector. The comparison in Part VIII records
+2.9 ns per byte on an 8 KB body. That result describes the measured workload; it does not
+decide the best matcher for every input. SID 0006 leaves a SIMD prefilter for longer inputs
+as an option to evaluate.
 
 == The Radix Trie for IPv4 and IPv6
 
@@ -74,8 +76,8 @@ keeps that as an open item.
 
 One binary trie over 128-bit keys serves both families: IPv6 prefixes are inserted as-is, IPv4
 prefixes are mapped into `::ffff:0:0/96` so a `/24` becomes a depth-120 path. Nodes are flat
-arrays indexed by `u16` with index zero as both root and "no child", so a lookup is at most 128
-dependent loads with no pointer chasing.
+arrays indexed by `u16`, with index zero as both root and "no child". A lookup needs at most
+128 dependent array accesses. It follows indices instead of heap pointers.
 
 A first implementation walked the 96 mapped-prefix levels for every IPv4 lookup and measured
 257 ns; the trie now records the node at depth 96 at initialisation and starts IPv4 lookups
@@ -88,7 +90,7 @@ if (address >> 32 == v4_mapped_prefix >> 32) {
 }
 ```
 
-IPv4 lookups cost 45 ns and IPv6 lookups 80 ns. The engine consults the trie twice: terminal
+The comparison measured 45 ns for IPv4 lookups and 80 ns for IPv6. The engine consults the trie twice: terminal
 `allow`/`deny` verdicts before the rule table, so a cluster-wide ban beats every rule, and
 `challenge` verdicts after it.
 
@@ -102,12 +104,13 @@ IPv4 lookups cost 45 ns and IPv6 lookups 80 ns. The engine consults the trie twi
 
 === A Lesson in False Positives
 
-The first version of the WAF matched a flat substring list against every header. The list
-contained `/*`, and every browser sends `Accept: text/html,…,*/*;q=0.8`. Every real browser was
-classified as SQL injection and received `403`. The lesson shaped the design: a detector may fire
-only on *structure*, and the test suite now passes a complete Chrome request, including a
-comment body containing `select`, `--`, and an apostrophe, through the engine and asserts it
-comes out clean.
+The first WAF matched substrings in every header. One signature was `/*`, which also occurs
+in the ordinary browser header `Accept: text/html,…,*/*;q=0.8`. The test request was wrongly
+classified as SQL injection and received `403`.
+
+That failure showed why the context of a match matters. The test suite now checks a complete
+Chrome request and a benign comment containing `select`, `--` and an apostrophe. The detector
+must recognise an attack pattern without treating these ordinary uses as sufficient evidence.
 
 === Byte Classes in One Pass
 
@@ -147,12 +150,14 @@ fn scanClasses(text: []const u8) Classes {
   newline is followed by a known command name. `status ok; done | next` passes.
 - *Path traversal.* Signatures (`../`, `..%2f`, `/etc/passwd`, `id_rsa`, …) plus NUL and `%00`.
 
-Structural headers whose grammar legitimately contains quotes and stars (`Accept*`,
-`Content-Type`, `Sec-*`, `If-*`, …) are skipped; the path, query, User-Agent, other headers,
-and the first 8 KB of the body are inspected, and fields with percent escapes, plus signs,
-comment openers, or collapsible whitespace are canonicalised into an 8 KB stack buffer and
-inspected again, so `1%27/**/UnIoN/**/SeLeCt` and `%252e%252e/` collapse onto the raw
-signatures.
+The small inspector skips structural headers whose grammar permits quotes and stars,
+including `Accept*`, `Content-Type`, `Sec-*` and `If-*`. It inspects the path, query,
+User-Agent, other headers and the first 8 KB of the body.
+
+Fields containing percent escapes, plus signs, comment openers or repeated whitespace are
+also normalised into an 8 KB stack buffer and inspected again. This exposes encoded forms
+such as `1%27/**/UnIoN/**/SeLeCt` and `%252e%252e/` to the same signatures as their decoded
+forms. CRS has its own input adapters and rule-defined transformations.
 
 === Cost
 
@@ -169,14 +174,18 @@ be inspected by this process.
   grammar.
 ])
 
-A rule is a conjunction of optional criteria (path pattern, User-Agent pattern, up to four
-headers, up to eight IPv4/IPv6 CIDR blocks) with an action `ALLOW`, `DENY`, `CHALLENGE`, or
-`WEIGH`, optional per-rule difficulty in work bits and algorithm, and a signed `weight`.
-Evaluation order:
+A rule matches when all its configured criteria match. Criteria can include a path pattern,
+a User-Agent pattern, up to four headers and up to eight IPv4/IPv6 CIDR blocks. Its action
+is `ALLOW`, `DENY`, `CHALLENGE` or `WEIGH`. A rule can also set its challenge algorithm and
+work bits, or contribute a signed `weight`.
 
-1. Semantic WAF (Shield only): violation is a terminal `deny`.
+The small policy engine evaluates these stages in order:
+
+1. Semantic WAF (Shield): an enforcing finding returns `deny`; an audit finding is recorded
+   and evaluation continues.
 2. Reputation trie: `deny` or `allow` prefixes are terminal.
-3. Rules in order: the first terminal match returns; `WEIGH` matches accumulate.
+3. Rules in order: the first terminal match returns; `WEIGH` matches accumulate. A terminal
+   rule's optional rate limit applies before a session can satisfy its challenge.
 4. Score: negative totals `allow`; totals $>= 40$ `deny`; totals $>= 10$ `challenge` with one
    extra work bit per 5 points above the threshold, capped at six.
 5. Static bypass paths, then trie `challenge` verdicts, then the bot automaton.
@@ -184,7 +193,7 @@ Evaluation order:
 
 Built-in rules allow `/.well-known/*`, `/favicon.ico`, `/robots.txt`, and `/__sibuna/*`,
 deny `CF-Worker` clients and `Amazonbot`, and challenge every `Mozilla` User-Agent: a browser
-string is free to forge, so admitting it would make the gate decorative.
+string can be forged, so it is not sufficient evidence for admission.
 
 ```json
 {
@@ -231,41 +240,57 @@ detector could produce.])
   new SQL detector requires, and how the automaton and the tokenizer divide the work.
 ])
 
-= Core Rule Set development
+== Native Core Rule Set
 
 OWASP Core Rule Set is a maintained SecLang policy. Its rules depend on transaction
 variables, ordered transformations, chains, captures, phased input and anomaly scoring.
-Sibuna's small structural inspector remains separate. The native CRS library follows
-SID 0010; daemon activation and operator updates are still under development.
+Sibuna's small structural inspector remains separate. The native CRS engine, daemon
+integration and operator updates follow SID 0010. Operators can leave CRS Off, use Audit
+to observe findings, or select Enforce after reviewing a candidate.
+
+=== Preparing and Evaluating Rules
 
 The compiler prepares an immutable graph from the pinned CRS 4.30.0 rules and data.
 It resolves defaults, static target updates, chains and marker jumps before evaluation.
-Unknown constructs reject the candidate. A phased executor combines target snapshots,
-transform replay, captures, local TX writes and leaf-to-root full-match actions. Audit
-records would-deny outcomes; enforcement retains denials across later rules. Root
-multi-match evidence survives a failed child without applying full-chain disruption.
+An unknown construct rejects the candidate before publication.
 
-Each primitive shares a transaction work ledger. The matcher uses ordered regex
-simulation, length-aware KMP search, sparse phrase automata and family-separated address
+The executor runs rules in HTTP phases. It presents stable target collections, applies
+ordered transformations, retains regex captures and updates `TX`, the transaction's local
+variable map. A chain's full-match actions run from its last matched child back to its root.
+Audit records a decision that would deny. Enforce keeps a denial effective as later rules run.
+Evidence from a root's multi-match action can survive a failed child, but the failed chain
+does not apply its full-match denial.
+
+Each primitive shares a transaction work budget. Matching uses ordered regex simulation,
+length-aware Knuth–Morris–Pratt search, sparse phrase automata and separate IPv4/IPv6
 intervals. Native SQL and XSS detectors use reproducible tables from the pinned reference.
-Regex compilation prepares a conservative first-byte set, so impossible start positions
-need a membership test instead of creating matcher threads. Nullable expressions retain
-every possible start. Independent PCRE2 comparisons check capture priority as well as truth.
-Resource exhaustion is an error, never a negative predicate result. SID 0010 documents
-intentional corrections to the reference's phrase matching and exclusion defects.
 
-Transaction slots reserve their entity, collection, TX, matcher and evidence buffers before
-serving work. An exclusive lease owns one slot; pool exhaustion refuses admission. Closing
-stops new leases while admitted work retains its generation. TX and matched bytes are
-monotonic within a transaction, so scratch reuse and metadata replacement preserve saved
-values. Beginning the next transaction resets cursors and controls after all borrows end.
-Parser controls become visible to following rules in the same phase. Runtime TX keys retain
-their full byte length, including decoded NULs, while source text still rejects NULs.
+Regex compilation calculates which bytes can begin a match. An impossible start needs a
+membership test rather than new matcher state. Expressions that can match an empty string
+retain every possible start. Independent PCRE2 comparisons check both match results and
+capture priority. Exhausting a resource budget returns an error; it cannot turn a match
+into a false result. SID 0010 records corrections to the reference's phrase matching and
+exclusion behaviour.
 
-Generation publication uses two stable reader-pin cells. A transaction keeps one generation
-through its final phase; an update cannot reclaim its program or workspace. A third update
-returns busy while the retired generation remains pinned. Shutdown joins every possible
-reader before reclaiming the cells.
+=== Reserved Memory and Publication
+
+Transaction slots reserve entity, collection, `TX`, matcher and evidence buffers before
+serving work. An exclusive lease owns one slot. If the pool is full, admission waits within
+its deadline and refuses when no slot becomes available. Closing stops new leases while
+admitted work retains its rule generation.
+
+`TX` values and matched bytes remain valid until the transaction ends. Scratch reuse and
+metadata replacement cannot overwrite them. The next transaction resets cursors and controls
+after all borrowed values are released. Parser controls affect following rules in the same
+phase. Runtime `TX` keys retain their full byte length, including decoded NULs; rule source
+text rejects NULs.
+
+Two stable cells hold rule generations and their reader counts. A transaction pins one
+generation through its final phase. An update cannot reclaim that program or workspace
+until its readers leave. A third update returns busy if both generations are still needed.
+Shutdown joins readers before reclaiming either cell.
+
+=== Signed Candidates and Updates
 
 The native candidate checker uses the updater service shared with console management:
 
@@ -275,37 +300,48 @@ sibuna crs check                  # resolve the latest stable official release
 ```
 
 It downloads the minimal archive and detached signature from fixed publisher destinations,
-authenticates the pinned signing key and compiles an owned candidate. The printed digest,
-condition count and live compilation payload describe preparation, not active protection.
-This command works without storage or console support. A shared deadline covers metadata,
-downloads and preparation; shutdown and deadline checks discard unsuccessful candidates.
+verifies the signature under the pinned signing key and compiles a candidate. The printed
+digest, condition count and live compilation payload describe the prepared candidate.
+They do not mean that protection has changed. The command works without storage or console
+support. One deadline covers metadata, downloads and preparation; cancellation discards an
+unfinished candidate.
 
-Complete input adapters retain duplicate URL-encoded and JSON fields, multipart filenames
-and part headers, and the stock XML wildcard views. MIME syntax is shared with the existing
-prefix inspector. File payloads stay in entity storage rather than becoming ARGS. JSON uses
-Zig's standard token scanner with fixed borrowed capacity. XML refuses DTDs and external
-entities, validates scoped namespaces and distinguishes attributes from descendant text.
-Parsing failures cannot expose a partial collection as complete. The HTTP connector must
-still establish framing, body holdback, deadlines and phase coverage before activation.
-The entity adapter applies phase-one processor controls before publishing phase-two fields,
-preserves empty HTTP entities and raw binary bodies, and poisons all evaluation state on
-acquisition failure. This prevents a caller from evaluating a prior view after a failed parser.
+Selection is a separate operator decision. The CLI and console use the same updater service
+to prepare signed releases, review settings and exclusions, and select a candidate at an
+expected revision. A failed preparation leaves the active generation in place. Part IX
+describes these workflows and local operation without storage.
 
-Generic transport helpers now acquire bounded entities without publishing partial bodies
-and can inspect an origin response before sending its head. Held chunked responses replay
-with their actual content length. An explicit streaming decision covers indefinite responses;
-WebSocket inspection ends at the validated handshake. The shared bounded inflater checks
-gzip and zlib wrappers and checksums, handles ordered content codings and retains the
-encoded entity for unchanged replay. It shares the transaction work ledger and uses separate
-wire and decoded ceilings. The daemon adapter now couples these operations to phase ordering,
-audit/enforcement outcomes and explicit streaming or handshake coverage. Source builds can
-now authenticate a saved candidate at opt-in startup and enforce these phases through the
-listener. The connector retains request metadata across large and pipelined uploads, checks
-admission limits before acquisition, and releases inspection resources before indefinite
-streaming or an accepted WebSocket tunnel. Authorized updates, the console workflows and
-complete live compatibility and performance acceptance remain required for release.
+=== Request and Response Inputs
 
-Development qualification runs separately from enabling protection:
+Input adapters retain duplicate URL-encoded and JSON fields, multipart filenames and part
+headers, and the stock XML wildcard views. MIME parsing is shared with the small inspector.
+File payloads remain in entity storage rather than becoming `ARGS`, the parsed argument
+collection. JSON uses Zig's standard token scanner with fixed borrowed capacity. XML
+rejects DTDs and external entities, validates scoped namespaces and separates attributes
+from descendant text.
+
+Phase-one processor controls apply before phase-two fields are published. Empty entities
+and raw binary bodies remain distinct inputs. A parsing failure invalidates the transaction,
+so a caller cannot evaluate a previous view or present a partial collection as complete.
+
+The HTTP connector reads bounded entities without publishing partial bodies. It can inspect
+an origin response before sending its head. Held chunked responses replay with their actual
+content length. An explicit streaming decision covers indefinite responses; WebSocket
+inspection ends at the validated handshake.
+
+The bounded inflater checks gzip and zlib wrappers and checksums, handles ordered content
+codings and retains the encoded entity for unchanged replay. Encoded and decoded size limits
+are separate, and decoding consumes the transaction's work budget.
+
+The daemon preserves phase order and records whether inspection completed, was excluded
+for streaming or ended at a handshake. It retains request metadata across large and pipelined
+uploads, checks admission limits before body acquisition, and releases inspection resources
+before indefinite streaming or an accepted WebSocket tunnel. A session cannot clear a CRS
+denial. Invalid acquisition or encoding remains incomplete in Audit and is refused in Enforce.
+
+=== Verification
+
+Library verification runs separately from enabling protection:
 
 ```sh
 zig build crs-test -j2
@@ -324,32 +360,32 @@ zig build crs-artifact-check -j2 -- --download
 zig build crs-ftw-check -j2 -- --download
 ```
 
-The native tests cover ownership, bounds, action timing and the prepared stock graph.
-Regex qualification compares matches and captures with PCRE2. Primitive and detector checks
-use pinned upstream vectors and implementations; data checks reproduce committed assets.
-Signature qualification compares the native RSA receipt with isolated GnuPG verification
-using the pinned primary key. Acquisition checks use independent JSON, form, MIME, XML,
-URI and cookie decoders. Metadata acquisition uses the same pure header/target types as
-the proxy and preserves duplicate occurrences before copying them into the transaction.
-These development oracles are not runtime dependencies. They do not establish
-whole-engine FTW compatibility, live HTTP coverage or performance acceptance. The daemon
-still uses its existing Gate and Shield behavior until the remaining SID gates pass.
+Native tests cover ownership, bounds, action timing and the prepared graph. Regex comparisons
+check matches and captures against PCRE2. Primitive and detector checks use pinned upstream
+vectors; data checks reproduce committed assets. Signature checks compare native RSA receipts
+with isolated GnuPG verification. Independent JSON, form, MIME, XML, URI and cookie decoders
+check input acquisition. These reference implementations are test tools, not runtime dependencies.
 
-The FTW phase probe retains upstream rule-ID assertions and reports malformed-input
-refusals, budget exhaustion and omitted wire/response contracts separately. It fails on
-every raw mismatch. Optional ModSecurity reference reports annotate independently
-reproduced differences without changing expectations. An Albedo fixture origin can supply
-actual response bytes; it still does not establish Sibuna's proxy holdback or delivery
-behavior. Its higher diagnostic work ceiling is displayed alongside the runtime default.
+The engine FTW probe retains upstream rule-ID assertions. It reports malformed-input refusals,
+work exhaustion and omitted wire or response contracts separately. ModSecurity reports
+annotate independently reproduced differences without changing expectations. An Albedo
+origin can supply real response bytes, but this probe does not test proxy holdback or delivery.
+Reports state the work used and the configured ceiling.
 
-Signed-package preparation verifies before bounded gzip/tar decoding and compiles privately
-with a reclaiming allocator that caps live payload. The program retains no staging-buffer
-borrows. Package qualification checks that ownership against the actual signed release;
-the generation publisher still decides compatibility and activation separately.
+The actual-daemon FTW harness sends the full pinned corpus through Sibuna and reads saved
+console findings. It distinguishes complete contracts from acquisition refusals, work
+exhaustion, malformed representations and response tests preempted by a request denial.
+It checks that a request-phase refusal sends no bytes to the origin. Unknown incomplete
+inspection fails qualification. Part VIII and SID 0010 retain the measurements, exact
+reference evidence and compatibility limits.
 
-Restart preparation reads a bounded manifest and exact regular-file sizes from an
-operator-owned directory. It verifies the signature again, recompiles the source and
-checks the recorded archive/configuration identity. Invalid profiles are refused before
-source loading. Signed-artifact qualification tests a real disk round trip and rejected
-reloads while retaining a previously prepared package. This is a read contract, not a
-completed update, atomic commit or running reload service.
+Signed-package preparation verifies the archive before bounded gzip/tar decoding. Private
+compilation uses an allocator that caps live payload and frees temporary storage. The
+resulting program retains no borrowed staging bytes. Package tests check this ownership
+against the signed release; generation publication checks compatibility separately.
+
+At restart, the updater reads a bounded manifest and exact regular-file sizes from the
+operator-owned directory. It rechecks the signature, recompiles the source and verifies the
+archive and configuration identities. Invalid profiles are refused before source loading.
+Restart tests cover disk round trips, rejected reloads and retention of a previously prepared
+candidate. Management tests separately check saved intent, publication, receipts and recovery.
