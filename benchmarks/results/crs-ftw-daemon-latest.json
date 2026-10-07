@@ -1,10 +1,92 @@
 {
- "schema": 1,
- "purpose": "Pinned CRS 4.30.0 FTW corpus through the actual Sibuna daemon, Albedo 0.3.0 origin and console evidence",
- "date": "2026-10-06T23:50:28.347651+00:00",
- "host": "paxos-zig",
- "binary_sha256": "4c06ef3290e15675a1063ed62a02955e4031b3ab1567374c27846b1b0937cbc7",
+ "schema": 2,
+ "purpose": "Final Sibuna 0.3.0 pinned CRS FTW actual-daemon qualification",
+ "date": "2026-10-07T04:33:56.136625+00:00",
+ "host": "agy01",
+ "address": "10.175.52.19",
+ "binary_sha256": "6556a59f140e76b190e1fa582a4cea72c0f1372b37027fd70f610570b0ba81e2",
+ "build_commit": "d461e7fee9622f5f365fdb37b18acc77dc56608f",
  "harness": "tools/crs_ftw_daemon_check.py",
+ "notes": [
+  "Each mode sends the complete 5,193-test pinned corpus to the real daemon.",
+  "Complete-contract counts exclude regex log gaps and all reviewed refusals.",
+  "The exact incomplete work-bound case remains incomplete in both modes.",
+  "Enforce must refuse that case before delivering any origin byte.",
+  "Incident loss, unknown work exhaustion and origin-boundary violations fail.",
+  "Compressed raw reports, four original oracles and exact supplemental proofs are retained.",
+  "The original Enforce controller exited 1 for missing oracle evidence.",
+  "Separate derived qualification retains that failure and its exact proofs.",
+  "Acquisition and representation failures remain incomplete, not complete passes.",
+  "Bodyless request Content-Encoding is conservatively validated as a declared stream.",
+  "That stricter profile behavior is a compatibility deviation, not full HTTP equivalence.",
+  "These functional checks do not establish performance acceptance."
+ ],
+ "oracle_artifacts": [
+  {
+   "path": "crs-ftw-release-030-20261007-engine-request.json.gz",
+   "sha256": "caebba8ab575d3ebba51630d3718bbb29fa2d0312affc11fbdad5ac3ed2a2b54",
+   "uncompressed_sha256": "beaf8212b9fb17661105a6d319411b3248e74d4658dbb78c5fcaaf3ee4305576",
+   "uncompressed_bytes": 1035338,
+   "kind": "engine-request",
+   "original_name": "release-ftw-engine-20261007.json"
+  },
+  {
+   "path": "crs-ftw-release-030-20261007-engine-response.json.gz",
+   "sha256": "dfd2368b7c72162b92b5bfdfce78bee73af7c3276b59eb975235df638133a87d",
+   "uncompressed_sha256": "c8d06ee50a82c979025afdf991b3cb5f0e602b61f70cd82565643e9506454e1a",
+   "uncompressed_bytes": 24686,
+   "kind": "engine-response",
+   "original_name": "release-ftw-response-20261007.json"
+  },
+  {
+   "path": "crs-ftw-release-030-20261007-reference-request.json.gz",
+   "sha256": "ca45beae2bcb8e9dd7ba5d47f4ba5d78926a81ad71e5ee62a393f6a897f3250f",
+   "uncompressed_sha256": "2b4202714d6c50aa04f6f1d9692867547efa9ecf8d7516594d8b436dcdebea4e",
+   "uncompressed_bytes": 916043,
+   "kind": "reference-request",
+   "original_name": "ftw-reference-full.json"
+  },
+  {
+   "path": "crs-ftw-release-030-20261007-reference-response.json.gz",
+   "sha256": "48e68ff362ce95579138480c3d887f06fad91e980c19c917b0f313bcef65885d",
+   "uncompressed_sha256": "ab8f1b449782a021f6281ac65e24b9ce3cc28061255b50411377b5ec04ee0ed2",
+   "uncompressed_bytes": 22151,
+   "kind": "reference-response",
+   "original_name": "ftw-reference-response.json"
+  },
+  {
+   "path": "crs-ftw-release-030-20261007-engine-supplement.json.gz",
+   "sha256": "c619f3596d8a28d31b5078482af2d47f1a69dfc052d74144bc38e9ede21e231d",
+   "uncompressed_sha256": "7876e0d0a02d68416dce235d042272c3c652356a9e4c86d497f953241b84fba9",
+   "uncompressed_bytes": 2353,
+   "kind": "engine-supplement",
+   "original_name": "supplemental-native.json"
+  },
+  {
+   "path": "crs-ftw-release-030-20261007-reference-supplement.json.gz",
+   "sha256": "4e0d8680d871c8de6b171bb56b3bd3dfbdef7a7fb2370e88a54524a96948227c",
+   "uncompressed_sha256": "f4850243dd84656239ef3394f6615a5ebfcd8bb54987dab82833d9db1b5e019c",
+   "uncompressed_bytes": 535,
+   "kind": "reference-supplement",
+   "original_name": "supplemental-reference.json"
+  },
+  {
+   "path": "crs-ftw-release-030-20261007-origin-representation.json.gz",
+   "sha256": "2e4ba430abe09903196cf0026ae1f7050d410b4ec07d425e8cb236e60f57ff1d",
+   "uncompressed_sha256": "d4c513007b38eb5f8bca77d94d02b6cc7024bf914d64bc64cfd1fc88e23dbd3c",
+   "uncompressed_bytes": 3538,
+   "kind": "origin-representation",
+   "original_name": "origin-representation-proof.json"
+  },
+  {
+   "path": "crs-ftw-release-030-20261007-request-representation.json.gz",
+   "sha256": "6fee1d26d26298edb111dbd88909212ddb6b6d95df56bdcab1ad0a41b7c3547e",
+   "uncompressed_sha256": "0eae3e51e0db13242ec8b052a76f6c9419feb52064a65d11283c4a8ae8323878",
+   "uncompressed_bytes": 3414,
+   "kind": "request-representation",
+   "original_name": "request-representation-proof.json"
+  }
+ ],
  "runs": {
   "audit": {
    "commit": "e03a4f6dabc7a30ebd8c52c97d28a154f590a48f",
@@ -14,13 +96,17 @@
    "paranoia": 4,
    "work_budget": 128000000,
    "classes": {
-    "passed": 5123,
-    "daemon only": 3,
-    "connector difference": 2,
-    "engine refusal": 30,
-    "engine agrees": 35
+    "passed": 5074,
+    "engine refusal": 60,
+    "deliberate connector refusal": 5,
+    "bounded work refusal": 1,
+    "request representation refusal": 1,
+    "log coverage gap": 15,
+    "reference agrees": 35,
+    "origin representation refusal": 2
    },
-   "passed": 5123,
+   "passed": 5074,
+   "assertions_passed": 5123,
    "status_assertions": 29,
    "regex_gaps": 15,
    "dropped_incidents": 0,
@@ -36,88 +122,256 @@
    },
    "slowest": [
     {
-     "test": "942521-16",
-     "seconds": 0.0403
+     "test": "942522-8",
+     "seconds": 0.0445
     },
     {
-     "test": "942522-8",
-     "seconds": 0.0401
+     "test": "942521-16",
+     "seconds": 0.0397
     },
     {
      "test": "920390-1",
-     "seconds": 0.0272
-    },
-    {
-     "test": "934120-43",
-     "seconds": 0.0129
+     "seconds": 0.0304
     },
     {
      "test": "942521-17",
-     "seconds": 0.0099
+     "seconds": 0.0166
     },
     {
-     "test": "944260-2",
-     "seconds": 0.007
+     "test": "934120-43",
+     "seconds": 0.0108
     },
     {
      "test": "942440-24",
-     "seconds": 0.006
+     "seconds": 0.0087
+    },
+    {
+     "test": "944260-2",
+     "seconds": 0.0087
+    },
+    {
+     "test": "932236-31",
+     "seconds": 0.007
+    },
+    {
+     "test": "951240-1",
+     "seconds": 0.0068
     },
     {
      "test": "922110-24",
-     "seconds": 0.0059
-    },
-    {
-     "test": "951200-1",
-     "seconds": 0.0058
-    },
-    {
-     "test": "951160-1",
-     "seconds": 0.0055
+     "seconds": 0.0067
     }
    ],
+   "source_provenance": {
+    "zaxonlite": {
+     "url": "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.7.0.tar.gz",
+     "hash": "zaxonlite-0.7.0-o9bF7IxHHQDxiixvOsdt-BvzGbI87rjtLKBJpW5LPse-",
+     "path": "vendor/zaxonlite",
+     "compatibility": "Zig 0.17"
+    },
+    "source_sha256": "defd16d5135eb954fd1e709ef9484106583b93fce0152386d4b6f970372ba2fa",
+    "source_manifest_version": 3,
+    "source_file_count": 1265,
+    "daemon_sha256": "6556a59f140e76b190e1fa582a4cea72c0f1372b37027fd70f610570b0ba81e2",
+    "date": "2026-10-07T04:00:19.116869+00:00",
+    "host": "agy01",
+    "cpu": "AMD Ryzen 7 5800H with Radeon Graphics",
+    "os": "Linux-7.0.0-28-generic-x86_64-with-glibc2.41",
+    "git": "d461e7fee9622f5f365fdb37b18acc77dc56608f",
+    "dirty": false,
+    "zig": "0.17.0"
+   },
+   "oracle_provenance": [
+    {
+     "path": "/home/insan/sibuna-release-ftw-20261007-review/oracles/release-ftw-engine-20261007.json",
+     "sha256": "beaf8212b9fb17661105a6d319411b3248e74d4658dbb78c5fcaaf3ee4305576"
+    },
+    {
+     "path": "/home/insan/sibuna-release-ftw-20261007-review/oracles/release-ftw-response-20261007.json",
+     "sha256": "c8d06ee50a82c979025afdf991b3cb5f0e602b61f70cd82565643e9506454e1a"
+    },
+    {
+     "path": "/home/insan/sibuna-release-ftw-20261007-review/oracles/ftw-reference-full.json",
+     "sha256": "2b4202714d6c50aa04f6f1d9692867547efa9ecf8d7516594d8b436dcdebea4e"
+    },
+    {
+     "path": "/home/insan/sibuna-release-ftw-20261007-review/oracles/ftw-reference-response.json",
+     "sha256": "ab8f1b449782a021f6281ac65e24b9ce3cc28061255b50411377b5ec04ee0ed2"
+    }
+   ],
+   "full_inventory": true,
+   "qualified": true,
+   "measurement_exit": 0,
+   "classification_provenance": {
+    "date": "2026-10-07T04:32:03.937669+00:00",
+    "raw_measurement_sha256": "8387357a6b4492e214e6f1977bdf638191729ec136ef7430f39f899711399c14",
+    "tools": [
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/reclassification-tools/crs_ftw_reclassify.py",
+      "sha256": "4fdfda823797ad1d4f8e80d5d9ee53e8b700388729de58716f7f5b0a8daf27b9"
+     },
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/reclassification-tools/crs_ftw_daemon_verdict.py",
+      "sha256": "fa23f0e181a97687c1115eab11730275c116dadd6a181c1e7291cecb990f8eb0"
+     },
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/reclassification-tools/crs_ftw_daemon_check.py",
+      "sha256": "e269fc5d8266e8dc552b46742049dbf3048f0fbfe9e08693fcd12082301ab0bd"
+     }
+    ],
+    "input_proofs": [
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/oracles/release-ftw-engine-20261007.json",
+      "sha256": "beaf8212b9fb17661105a6d319411b3248e74d4658dbb78c5fcaaf3ee4305576"
+     },
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/oracles/release-ftw-response-20261007.json",
+      "sha256": "c8d06ee50a82c979025afdf991b3cb5f0e602b61f70cd82565643e9506454e1a"
+     },
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/reports/supplemental-native.json",
+      "sha256": "7876e0d0a02d68416dce235d042272c3c652356a9e4c86d497f953241b84fba9"
+     },
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/oracles/ftw-reference-full.json",
+      "sha256": "2b4202714d6c50aa04f6f1d9692867547efa9ecf8d7516594d8b436dcdebea4e"
+     },
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/oracles/ftw-reference-response.json",
+      "sha256": "ab8f1b449782a021f6281ac65e24b9ce3cc28061255b50411377b5ec04ee0ed2"
+     },
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/reports/supplemental-reference.json",
+      "sha256": "f4850243dd84656239ef3394f6615a5ebfcd8bb54987dab82833d9db1b5e019c"
+     },
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/reports/origin-representation-proof.json",
+      "sha256": "d4c513007b38eb5f8bca77d94d02b6cc7024bf914d64bc64cfd1fc88e23dbd3c"
+     },
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/reports/request-representation-proof.json",
+      "sha256": "0eae3e51e0db13242ec8b052a76f6c9419feb52064a65d11283c4a8ae8323878"
+     }
+    ]
+   },
    "origin_boundary_violations": 0,
-   "not_passed": [
+   "request_denied_stages": 0,
+   "refused_before_origin_stages": 0,
+   "response_inventory": 105,
+   "response_tests_refused_before_origin": 0,
+   "non_complete": [
+    {
+     "test": "901370-11",
+     "class": "engine refusal",
+     "ids": [
+      920274,
+      920420,
+      920470
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 394,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
     {
      "test": "920100-4",
-     "class": "daemon only",
+     "class": "deliberate connector refusal",
      "ids": [],
      "missing": [],
      "unexpected": [],
      "errors": [
       "status 400 not in [200]"
      ],
-     "origin_bytes": 0,
-     "statuses": [
-      400
+     "gaps": [],
+     "stages": [
+      {
+       "status": 400,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
      "test": "920100-16",
-     "class": "connector difference",
+     "class": "deliberate connector refusal",
      "ids": [],
      "missing": [
       920100
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      400
+     "gaps": [],
+     "stages": [
+      {
+       "status": 400,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "920120-39",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 636,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
      "test": "920181-1",
-     "class": "daemon only",
+     "class": "deliberate connector refusal",
      "ids": [],
      "missing": [],
      "unexpected": [],
      "errors": [
       "status 400 not in [200]"
      ],
-     "origin_bytes": 0,
-     "statuses": [
-      400
+     "gaps": [],
+     "stages": [
+      {
+       "status": 400,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "920230-2",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 401,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -129,9 +383,31 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 407,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 407,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "920240-4",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 1097,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -143,9 +419,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 437,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 437,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -157,9 +438,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 471,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 471,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -171,9 +457,31 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 341,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 341,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "920260-2",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 339,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -185,9 +493,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 378,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 378,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -199,14 +512,242 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 3098,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 3098,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "920390-1",
+     "class": "bounded work refusal",
+     "ids": [
+      920370,
+      920390
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 64472,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920400-1",
+     "class": "engine refusal",
+     "ids": [
+      920400
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 64613,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920400-2",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 697,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "920420-2",
+     "class": "engine refusal",
+     "ids": [
+      920420
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 385,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920420-3",
+     "class": "engine refusal",
+     "ids": [
+      920170,
+      920420
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 384,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920420-4",
+     "class": "engine refusal",
+     "ids": [
+      911100,
+      920420
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 389,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920420-5",
+     "class": "engine refusal",
+     "ids": [
+      920420
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 712,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920420-8",
+     "class": "engine refusal",
+     "ids": [
+      920170,
+      920420
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 385,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920420-9",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 385,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "920420-10",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 389,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "920420-11",
+     "class": "engine refusal",
+     "ids": [
+      920420
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 380,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
      ]
     },
     {
      "test": "920430-5",
-     "class": "daemon only",
+     "class": "deliberate connector refusal",
      "ids": [],
      "missing": [
       920430
@@ -215,23 +756,299 @@
      "errors": [
       "expected transport error, observed 400"
      ],
-     "origin_bytes": 0,
-     "statuses": [
-      400
+     "gaps": [],
+     "stages": [
+      {
+       "status": 400,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
      "test": "920430-8",
-     "class": "connector difference",
+     "class": "deliberate connector refusal",
      "ids": [],
      "missing": [
       920430
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      400
+     "gaps": [],
+     "stages": [
+      {
+       "status": 400,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "920450-7",
+     "class": "request representation refusal",
+     "ids": [
+      920450
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 280,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920470-1",
+     "class": "engine refusal",
+     "ids": [
+      920274,
+      920420,
+      920470
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 401,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920470-2",
+     "class": "engine refusal",
+     "ids": [
+      920420,
+      920470
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 395,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920470-3",
+     "class": "engine refusal",
+     "ids": [
+      920420,
+      920480,
+      921422
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 388,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920470-10",
+     "class": "engine refusal",
+     "ids": [
+      920274,
+      920420
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 427,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920470-11",
+     "class": "engine refusal",
+     "ids": [
+      920274,
+      920420,
+      921422
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 419,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920470-17",
+     "class": "engine refusal",
+     "ids": [
+      920470
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 373,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920480-19",
+     "class": "engine refusal",
+     "ids": [
+      920300,
+      920480,
+      920530
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 324,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920530-2",
+     "class": "engine refusal",
+     "ids": [
+      920530
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 436,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920530-4",
+     "class": "engine refusal",
+     "ids": [
+      920530
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 436,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920540-4",
+     "class": "log coverage gap",
+     "ids": [
+      920273,
+      920540,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 431,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920640-4",
+     "class": "engine refusal",
+     "ids": [
+      920470
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 396,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
      ]
     },
     {
@@ -243,9 +1060,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 382,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 382,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -257,9 +1079,331 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 414,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 414,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "922130-1",
+     "class": "log coverage gap",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 496,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "922130-2",
+     "class": "log coverage gap",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 496,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "922130-3",
+     "class": "log coverage gap",
+     "ids": [
+      920272,
+      920273,
+      933110,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 455,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "922130-4",
+     "class": "log coverage gap",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 496,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "922130-5",
+     "class": "log coverage gap",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 456,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "922130-6",
+     "class": "log coverage gap",
+     "ids": [
+      920272,
+      920273,
+      930120,
+      932160,
+      932200,
+      933100,
+      933150,
+      933153,
+      933190,
+      942370,
+      942431,
+      942432,
+      942460,
+      942520,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 500,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "922130-7",
+     "class": "log coverage gap",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 496,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "922130-8",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 383,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "931130-24",
+     "class": "log coverage gap",
+     "ids": [
+      920273,
+      931130,
+      942432,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 400,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "932180-3",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 657,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "932200-13",
+     "class": "log coverage gap",
+     "ids": [
+      920273,
+      932190,
+      932200,
+      942432,
+      942440,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 387,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "932207-7",
+     "class": "log coverage gap",
+     "ids": [
+      932207,
+      932237,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 422,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "932300-10",
+     "class": "log coverage gap",
+     "ids": [
+      920272,
+      920273,
+      932235,
+      932236,
+      932300,
+      942432,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 354,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "932311-2",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 307,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -271,9 +1415,39 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 452,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 452,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "933120-2",
+     "class": "log coverage gap",
+     "ids": [
+      920510,
+      933120,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 484,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
@@ -285,9 +1459,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 418,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 418,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -299,9 +1478,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 447,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 447,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -313,9 +1497,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 376,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 376,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -327,9 +1516,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 375,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 375,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -341,9 +1535,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 459,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 459,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -355,9 +1554,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 618,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 618,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -369,9 +1573,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 598,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 598,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -383,9 +1592,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 656,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 656,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -397,9 +1611,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 606,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 606,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -411,9 +1630,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 604,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 604,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -425,9 +1649,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 608,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 608,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -439,9 +1668,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 657,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 657,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -453,9 +1687,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 591,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 591,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -467,9 +1706,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 604,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 604,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -481,9 +1725,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 516,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 516,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -495,9 +1744,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 548,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 548,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -509,9 +1763,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 442,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 442,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -523,9 +1782,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 355,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 355,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -537,14 +1801,19 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 367,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 367,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
      "test": "942131-3",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       942120,
@@ -557,14 +1826,21 @@
       942131
      ],
      "errors": [],
-     "origin_bytes": 359,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 359,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "942131-5",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       942131,
@@ -575,14 +1851,21 @@
       942131
      ],
      "errors": [],
-     "origin_bytes": 369,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 369,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "942131-7",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       942120,
@@ -597,9 +1880,16 @@
       942131
      ],
      "errors": [],
-     "origin_bytes": 430,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 430,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
@@ -611,9 +1901,48 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 570,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 570,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "942151-14",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 549,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "942151-21",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 564,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -625,14 +1954,19 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 432,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 432,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
      "test": "944100-11",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944100,
@@ -646,14 +1980,21 @@
       944100
      ],
      "errors": [],
-     "origin_bytes": 558,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 558,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944100-12",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944100,
@@ -667,14 +2008,21 @@
       944100
      ],
      "errors": [],
-     "origin_bytes": 549,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 549,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944100-15",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944100,
@@ -688,14 +2036,21 @@
       944100
      ],
      "errors": [],
-     "origin_bytes": 572,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 572,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944100-16",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944100,
@@ -709,14 +2064,21 @@
       944100
      ],
      "errors": [],
-     "origin_bytes": 556,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 556,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944110-11",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944110,
@@ -728,14 +2090,21 @@
       944110
      ],
      "errors": [],
-     "origin_bytes": 547,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 547,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944110-12",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944110,
@@ -747,14 +2116,21 @@
       944110
      ],
      "errors": [],
-     "origin_bytes": 543,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 543,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944110-15",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944110,
@@ -766,14 +2142,21 @@
       944110
      ],
      "errors": [],
-     "origin_bytes": 562,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 562,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944110-16",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944110,
@@ -785,14 +2168,21 @@
       944110
      ],
      "errors": [],
-     "origin_bytes": 551,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 551,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944120-6",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -804,14 +2194,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 596,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 596,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944120-7",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -823,14 +2220,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 568,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 568,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944120-23",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -842,14 +2246,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 584,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 584,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944120-24",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -861,14 +2272,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 562,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 562,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944120-40",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -880,14 +2298,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 600,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 600,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944120-41",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -899,14 +2324,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 570,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 570,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944120-57",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -918,14 +2350,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 608,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 608,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944120-58",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -937,14 +2376,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 574,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 574,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944120-74",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -956,14 +2402,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 600,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 600,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944120-75",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -975,14 +2428,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 570,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 570,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944120-91",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -994,14 +2454,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 606,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 606,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944120-92",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -1013,14 +2480,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 573,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 573,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944120-108",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -1032,14 +2506,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 622,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 622,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944120-109",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -1051,14 +2532,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 581,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 581,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944120-125",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -1070,14 +2558,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 584,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 586,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944120-126",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -1089,14 +2584,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 560,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 562,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944210-6",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944210,
@@ -1107,14 +2609,21 @@
       944210
      ],
      "errors": [],
-     "origin_bytes": 533,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 533,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944210-7",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944210,
@@ -1125,14 +2634,21 @@
       944210
      ],
      "errors": [],
-     "origin_bytes": 535,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 535,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944210-23",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944210,
@@ -1143,14 +2659,21 @@
       944210
      ],
      "errors": [],
-     "origin_bytes": 533,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 533,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944210-24",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944210,
@@ -1161,14 +2684,21 @@
       944210
      ],
      "errors": [],
-     "origin_bytes": 535,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 535,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944210-40",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944210,
@@ -1179,14 +2709,21 @@
       944210
      ],
      "errors": [],
-     "origin_bytes": 533,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 533,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "944210-41",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944210,
@@ -1197,14 +2734,146 @@
       944210
      ],
      "errors": [],
-     "origin_bytes": 535,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 535,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "949110-5",
+     "class": "log coverage gap",
+     "ids": [
+      920273,
+      931130,
+      932200,
+      932240,
+      934100,
+      941100,
+      941110,
+      941130,
+      941150,
+      941160,
+      941170,
+      941210,
+      941320,
+      941330,
+      941340,
+      941390,
+      942131,
+      942180,
+      942340,
+      942370,
+      942430,
+      942431,
+      942432,
+      942460,
+      942490,
+      942520,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 631,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "950020-1",
+     "class": "origin representation refusal",
+     "ids": [
+      920273,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 551,
+       "request_denial": true,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "950020-2",
+     "class": "origin representation refusal",
+     "ids": [
+      920273,
+      949110,
+      950100
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 500,
+       "origin_bytes": 506,
+       "request_denial": true,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "959100-3",
+     "class": "log coverage gap",
+     "ids": [
+      920272,
+      920273,
+      933100,
+      933190,
+      942432,
+      942460,
+      949110,
+      953120,
+      959100
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 496,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "980170-1",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       920350,
@@ -1216,14 +2885,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 362,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 362,
+       "request_denial": true,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     },
     {
      "test": "980170-2",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920350
      ],
@@ -1232,12 +2908,32 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 350,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 350,
+       "request_denial": false,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     }
-   ]
+   ],
+   "raw_report": {
+    "path": "crs-ftw-daemon-release-030-20261007-audit-raw.json.gz",
+    "sha256": "5527cc5c99b594409512cb1117fe2a262002d4af5a7b1716cd1032795c59afbb",
+    "uncompressed_sha256": "8387357a6b4492e214e6f1977bdf638191729ec136ef7430f39f899711399c14",
+    "uncompressed_bytes": 12586913
+   },
+   "classification_report": {
+    "path": "crs-ftw-daemon-release-030-20261007-audit-qualified.json.gz",
+    "sha256": "5188648a922c144d802b3171a1669fe107419231b6ffa88c7988eaad7a3c5070",
+    "uncompressed_sha256": "b60e75c1178f90cc1a220d692e5997c09cbf459abae4139f594a637365b042d7",
+    "uncompressed_bytes": 12589681
+   },
+   "daemon_shutdown": "status 0 asserted by console_e2e.stop before reporting"
   },
   "enforce": {
    "commit": "e03a4f6dabc7a30ebd8c52c97d28a154f590a48f",
@@ -1247,13 +2943,19 @@
    "paranoia": 4,
    "work_budget": 128000000,
    "classes": {
-    "passed": 5039,
-    "daemon only": 6,
-    "connector difference": 83,
-    "engine refusal": 30,
-    "engine agrees": 35
+    "passed": 4993,
+    "engine refusal": 60,
+    "deliberate connector refusal": 5,
+    "enforce disruption": 1,
+    "bounded work refusal": 1,
+    "request representation refusal": 1,
+    "log coverage gap": 15,
+    "deliberate acquisition refusal": 1,
+    "reference agrees": 34,
+    "response preempted by request denial": 82
    },
-   "passed": 5039,
+   "passed": 4993,
+   "assertions_passed": 5039,
    "status_assertions": 29,
    "regex_gaps": 15,
    "dropped_incidents": 0,
@@ -1269,88 +2971,256 @@
    },
    "slowest": [
     {
-     "test": "942521-16",
-     "seconds": 0.0404
+     "test": "942522-8",
+     "seconds": 0.044
     },
     {
-     "test": "942522-8",
-     "seconds": 0.0395
+     "test": "942521-16",
+     "seconds": 0.0393
     },
     {
      "test": "920390-1",
-     "seconds": 0.027
-    },
-    {
-     "test": "934120-43",
-     "seconds": 0.0108
+     "seconds": 0.0299
     },
     {
      "test": "942521-17",
-     "seconds": 0.0099
+     "seconds": 0.0149
+    },
+    {
+     "test": "934120-43",
+     "seconds": 0.0091
     },
     {
      "test": "944260-2",
-     "seconds": 0.0067
+     "seconds": 0.0089
     },
     {
      "test": "942440-24",
-     "seconds": 0.0055
+     "seconds": 0.0075
+    },
+    {
+     "test": "951160-1",
+     "seconds": 0.0065
+    },
+    {
+     "test": "942380-20",
+     "seconds": 0.0063
     },
     {
      "test": "922110-24",
-     "seconds": 0.0054
-    },
-    {
-     "test": "942440-22",
-     "seconds": 0.0051
-    },
-    {
-     "test": "942440-23",
-     "seconds": 0.0048
+     "seconds": 0.0062
     }
    ],
+   "source_provenance": {
+    "zaxonlite": {
+     "url": "https://github.com/insanai/zaxonlite/archive/refs/tags/v0.7.0.tar.gz",
+     "hash": "zaxonlite-0.7.0-o9bF7IxHHQDxiixvOsdt-BvzGbI87rjtLKBJpW5LPse-",
+     "path": "vendor/zaxonlite",
+     "compatibility": "Zig 0.17"
+    },
+    "source_sha256": "defd16d5135eb954fd1e709ef9484106583b93fce0152386d4b6f970372ba2fa",
+    "source_manifest_version": 3,
+    "source_file_count": 1265,
+    "daemon_sha256": "6556a59f140e76b190e1fa582a4cea72c0f1372b37027fd70f610570b0ba81e2",
+    "date": "2026-10-07T04:10:44.706513+00:00",
+    "host": "agy01",
+    "cpu": "AMD Ryzen 7 5800H with Radeon Graphics",
+    "os": "Linux-7.0.0-28-generic-x86_64-with-glibc2.41",
+    "git": "d461e7fee9622f5f365fdb37b18acc77dc56608f",
+    "dirty": false,
+    "zig": "0.17.0"
+   },
+   "oracle_provenance": [
+    {
+     "path": "/home/insan/sibuna-release-ftw-20261007-review/oracles/release-ftw-engine-20261007.json",
+     "sha256": "beaf8212b9fb17661105a6d319411b3248e74d4658dbb78c5fcaaf3ee4305576"
+    },
+    {
+     "path": "/home/insan/sibuna-release-ftw-20261007-review/oracles/release-ftw-response-20261007.json",
+     "sha256": "c8d06ee50a82c979025afdf991b3cb5f0e602b61f70cd82565643e9506454e1a"
+    },
+    {
+     "path": "/home/insan/sibuna-release-ftw-20261007-review/oracles/ftw-reference-full.json",
+     "sha256": "2b4202714d6c50aa04f6f1d9692867547efa9ecf8d7516594d8b436dcdebea4e"
+    },
+    {
+     "path": "/home/insan/sibuna-release-ftw-20261007-review/oracles/ftw-reference-response.json",
+     "sha256": "ab8f1b449782a021f6281ac65e24b9ce3cc28061255b50411377b5ec04ee0ed2"
+    }
+   ],
+   "full_inventory": true,
+   "qualified": true,
+   "measurement_exit": 1,
+   "classification_provenance": {
+    "date": "2026-10-07T04:32:08.037405+00:00",
+    "raw_measurement_sha256": "4c2089dada2034c5d5f10bdd8a0b547da9c2c73ec4815a61c19ca695e29c3ce1",
+    "tools": [
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/reclassification-tools/crs_ftw_reclassify.py",
+      "sha256": "4fdfda823797ad1d4f8e80d5d9ee53e8b700388729de58716f7f5b0a8daf27b9"
+     },
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/reclassification-tools/crs_ftw_daemon_verdict.py",
+      "sha256": "fa23f0e181a97687c1115eab11730275c116dadd6a181c1e7291cecb990f8eb0"
+     },
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/reclassification-tools/crs_ftw_daemon_check.py",
+      "sha256": "e269fc5d8266e8dc552b46742049dbf3048f0fbfe9e08693fcd12082301ab0bd"
+     }
+    ],
+    "input_proofs": [
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/oracles/release-ftw-engine-20261007.json",
+      "sha256": "beaf8212b9fb17661105a6d319411b3248e74d4658dbb78c5fcaaf3ee4305576"
+     },
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/oracles/release-ftw-response-20261007.json",
+      "sha256": "c8d06ee50a82c979025afdf991b3cb5f0e602b61f70cd82565643e9506454e1a"
+     },
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/reports/supplemental-native.json",
+      "sha256": "7876e0d0a02d68416dce235d042272c3c652356a9e4c86d497f953241b84fba9"
+     },
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/oracles/ftw-reference-full.json",
+      "sha256": "2b4202714d6c50aa04f6f1d9692867547efa9ecf8d7516594d8b436dcdebea4e"
+     },
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/oracles/ftw-reference-response.json",
+      "sha256": "ab8f1b449782a021f6281ac65e24b9ce3cc28061255b50411377b5ec04ee0ed2"
+     },
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/reports/supplemental-reference.json",
+      "sha256": "f4850243dd84656239ef3394f6615a5ebfcd8bb54987dab82833d9db1b5e019c"
+     },
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/reports/origin-representation-proof.json",
+      "sha256": "d4c513007b38eb5f8bca77d94d02b6cc7024bf914d64bc64cfd1fc88e23dbd3c"
+     },
+     {
+      "path": "/home/insan/sibuna-release-ftw-20261007-review/reports/request-representation-proof.json",
+      "sha256": "0eae3e51e0db13242ec8b052a76f6c9419feb52064a65d11283c4a8ae8323878"
+     }
+    ]
+   },
    "origin_boundary_violations": 0,
-   "not_passed": [
+   "request_denied_stages": 4724,
+   "refused_before_origin_stages": 4792,
+   "response_inventory": 105,
+   "response_tests_refused_before_origin": 103,
+   "non_complete": [
+    {
+     "test": "901370-11",
+     "class": "engine refusal",
+     "ids": [
+      920274,
+      920420,
+      920470
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
     {
      "test": "920100-4",
-     "class": "daemon only",
+     "class": "deliberate connector refusal",
      "ids": [],
      "missing": [],
      "unexpected": [],
      "errors": [
       "status 400 not in [200]"
      ],
-     "origin_bytes": 0,
-     "statuses": [
-      400
+     "gaps": [],
+     "stages": [
+      {
+       "status": 400,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
      "test": "920100-16",
-     "class": "connector difference",
+     "class": "deliberate connector refusal",
      "ids": [],
      "missing": [
       920100
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      400
+     "gaps": [],
+     "stages": [
+      {
+       "status": 400,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "920120-39",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
      "test": "920181-1",
-     "class": "daemon only",
+     "class": "deliberate connector refusal",
      "ids": [],
      "missing": [],
      "unexpected": [],
      "errors": [
       "status 400 not in [200]"
      ],
-     "origin_bytes": 0,
-     "statuses": [
-      400
+     "gaps": [],
+     "stages": [
+      {
+       "status": 400,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "920230-2",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1362,9 +3232,31 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "920240-4",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1376,9 +3268,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1390,9 +3287,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1404,9 +3306,31 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "920260-2",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1418,14 +3342,19 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
      "test": "920272-5",
-     "class": "daemon only",
+     "class": "enforce disruption",
      "ids": [
       920250,
       920272,
@@ -1436,9 +3365,16 @@
      "errors": [
       "status 403 not in [200]"
      ],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
@@ -1450,14 +3386,242 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "920390-1",
+     "class": "bounded work refusal",
+     "ids": [
+      920370,
+      920390
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920400-1",
+     "class": "engine refusal",
+     "ids": [
+      920400
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920400-2",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "920420-2",
+     "class": "engine refusal",
+     "ids": [
+      920420
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920420-3",
+     "class": "engine refusal",
+     "ids": [
+      920170,
+      920420
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920420-4",
+     "class": "engine refusal",
+     "ids": [
+      911100,
+      920420
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920420-5",
+     "class": "engine refusal",
+     "ids": [
+      920420
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920420-8",
+     "class": "engine refusal",
+     "ids": [
+      920170,
+      920420
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920420-9",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "920420-10",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "920420-11",
+     "class": "engine refusal",
+     "ids": [
+      920420
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
      ]
     },
     {
      "test": "920430-5",
-     "class": "daemon only",
+     "class": "deliberate connector refusal",
      "ids": [],
      "missing": [
       920430
@@ -1466,42 +3630,302 @@
      "errors": [
       "expected transport error, observed 400"
      ],
-     "origin_bytes": 0,
-     "statuses": [
-      400
+     "gaps": [],
+     "stages": [
+      {
+       "status": 400,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
      "test": "920430-8",
-     "class": "connector difference",
+     "class": "deliberate connector refusal",
      "ids": [],
      "missing": [
       920430
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      400
+     "gaps": [],
+     "stages": [
+      {
+       "status": 400,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "920450-7",
+     "class": "request representation refusal",
+     "ids": [
+      920450
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920470-1",
+     "class": "engine refusal",
+     "ids": [
+      920274,
+      920420,
+      920470
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920470-2",
+     "class": "engine refusal",
+     "ids": [
+      920420,
+      920470
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920470-3",
+     "class": "engine refusal",
+     "ids": [
+      920420,
+      920480,
+      921422
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920470-10",
+     "class": "engine refusal",
+     "ids": [
+      920274,
+      920420
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920470-11",
+     "class": "engine refusal",
+     "ids": [
+      920274,
+      920420,
+      921422
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920470-17",
+     "class": "engine refusal",
+     "ids": [
+      920470
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920480-19",
+     "class": "engine refusal",
+     "ids": [
+      920300,
+      920480,
+      920530
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920530-2",
+     "class": "engine refusal",
+     "ids": [
+      920530
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920530-4",
+     "class": "engine refusal",
+     "ids": [
+      920530
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "920540-4",
+     "class": "log coverage gap",
+     "ids": [
+      920273,
+      920540,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "920620-1",
-     "class": "daemon only",
+     "class": "deliberate acquisition refusal",
      "ids": [],
      "missing": [],
      "unexpected": [],
      "errors": [
       "status 403 not in [200]"
      ],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
      "test": "920640-4",
-     "class": "daemon only",
+     "class": "engine refusal",
      "ids": [
       920470
      ],
@@ -1510,9 +3934,16 @@
      "errors": [
       "status 403 not in [200]"
      ],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": [
+        "incomplete"
+       ]
+      }
      ]
     },
     {
@@ -1524,9 +3955,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1538,9 +3974,331 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "922130-1",
+     "class": "log coverage gap",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "922130-2",
+     "class": "log coverage gap",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "922130-3",
+     "class": "log coverage gap",
+     "ids": [
+      920272,
+      920273,
+      933110,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "922130-4",
+     "class": "log coverage gap",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "922130-5",
+     "class": "log coverage gap",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "922130-6",
+     "class": "log coverage gap",
+     "ids": [
+      920272,
+      920273,
+      930120,
+      932160,
+      932200,
+      933100,
+      933150,
+      933153,
+      933190,
+      942370,
+      942431,
+      942432,
+      942460,
+      942520,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "922130-7",
+     "class": "log coverage gap",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "922130-8",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "931130-24",
+     "class": "log coverage gap",
+     "ids": [
+      920273,
+      931130,
+      942432,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "932180-3",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "932200-13",
+     "class": "log coverage gap",
+     "ids": [
+      920273,
+      932190,
+      932200,
+      942432,
+      942440,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "932207-7",
+     "class": "log coverage gap",
+     "ids": [
+      932207,
+      932237,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "932300-10",
+     "class": "log coverage gap",
+     "ids": [
+      920272,
+      920273,
+      932235,
+      932236,
+      932300,
+      942432,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "932311-2",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1552,9 +4310,39 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "933120-2",
+     "class": "log coverage gap",
+     "ids": [
+      920510,
+      933120,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
@@ -1566,9 +4354,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1580,9 +4373,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1594,9 +4392,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1608,9 +4411,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1622,9 +4430,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1636,9 +4449,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1650,9 +4468,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1664,9 +4487,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1678,9 +4506,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1692,9 +4525,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1706,9 +4544,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1720,9 +4563,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1734,9 +4582,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1748,9 +4601,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1762,9 +4620,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1776,9 +4639,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1790,9 +4658,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1804,9 +4677,14 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1818,14 +4696,19 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
      "test": "942131-3",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       942120,
@@ -1838,14 +4721,21 @@
       942131
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "942131-5",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       942131,
@@ -1856,14 +4746,21 @@
       942131
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "942131-7",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       942120,
@@ -1878,9 +4775,16 @@
       942131
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
@@ -1892,9 +4796,48 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "942151-14",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
+     ]
+    },
+    {
+     "test": "942151-21",
+     "class": "engine refusal",
+     "ids": [],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
@@ -1906,14 +4849,19 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": false,
+       "coverage": []
+      }
      ]
     },
     {
      "test": "944100-11",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944100,
@@ -1927,14 +4875,21 @@
       944100
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944100-12",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944100,
@@ -1948,14 +4903,21 @@
       944100
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944100-15",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944100,
@@ -1969,14 +4931,21 @@
       944100
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944100-16",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944100,
@@ -1990,14 +4959,21 @@
       944100
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944110-11",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944110,
@@ -2009,14 +4985,21 @@
       944110
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944110-12",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944110,
@@ -2028,14 +5011,21 @@
       944110
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944110-15",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944110,
@@ -2047,14 +5037,21 @@
       944110
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944110-16",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944110,
@@ -2066,14 +5063,21 @@
       944110
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944120-6",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -2085,14 +5089,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944120-7",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -2104,14 +5115,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944120-23",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -2123,14 +5141,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944120-24",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -2142,14 +5167,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944120-40",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -2161,14 +5193,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944120-41",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -2180,14 +5219,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944120-57",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -2199,14 +5245,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944120-58",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -2218,14 +5271,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944120-74",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -2237,14 +5297,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944120-75",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -2256,14 +5323,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944120-91",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -2275,14 +5349,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944120-92",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -2294,14 +5375,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944120-108",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -2313,14 +5401,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944120-109",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -2332,14 +5427,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944120-125",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -2351,14 +5453,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944120-126",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944120,
@@ -2370,14 +5479,21 @@
       944120
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944210-6",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944210,
@@ -2388,14 +5504,21 @@
       944210
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944210-7",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944210,
@@ -2406,14 +5529,21 @@
       944210
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944210-23",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944210,
@@ -2424,14 +5554,21 @@
       944210
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944210-24",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944210,
@@ -2442,14 +5579,21 @@
       944210
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944210-40",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944210,
@@ -2460,14 +5604,21 @@
       944210
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "944210-41",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920273,
       944210,
@@ -2478,14 +5629,70 @@
       944210
      ],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "949110-5",
+     "class": "log coverage gap",
+     "ids": [
+      920273,
+      931130,
+      932200,
+      932240,
+      934100,
+      941100,
+      941110,
+      941130,
+      941150,
+      941160,
+      941170,
+      941210,
+      941320,
+      941330,
+      941340,
+      941390,
+      942131,
+      942180,
+      942340,
+      942370,
+      942430,
+      942431,
+      942432,
+      942460,
+      942490,
+      942520,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "950020-2",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -2495,14 +5702,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "950100-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -2512,14 +5726,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "950150-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -2529,14 +5750,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "950150-2",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -2546,14 +5774,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "950150-3",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -2563,14 +5798,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "950150-4",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -2580,14 +5822,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "950150-5",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -2597,14 +5846,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "950150-6",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -2614,14 +5870,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "950150-7",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -2631,14 +5894,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "950150-8",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -2648,14 +5918,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "950150-9",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -2665,14 +5942,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951110-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932240,
@@ -2687,14 +5971,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951120-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932240,
@@ -2707,14 +5998,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951130-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932240,
@@ -2727,14 +6025,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951140-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932200,
@@ -2752,14 +6057,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951150-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932240,
@@ -2772,14 +6084,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951160-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932200,
@@ -2804,14 +6123,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951170-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932240,
@@ -2824,14 +6150,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951180-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932240,
@@ -2844,14 +6177,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951190-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932200,
@@ -2868,14 +6208,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951200-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932200,
@@ -2902,14 +6249,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951210-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932240,
@@ -2924,14 +6278,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951210-2",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932240,
@@ -2946,14 +6307,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951220-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932200,
@@ -2969,14 +6337,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951220-2",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932200,
@@ -2992,14 +6367,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951230-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932200,
@@ -3014,14 +6396,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951230-2",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932200,
@@ -3037,14 +6426,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951230-3",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       942131,
@@ -3057,14 +6453,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951240-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       930120,
@@ -3082,14 +6485,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951240-2",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932240,
@@ -3102,14 +6512,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951250-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932240,
@@ -3124,14 +6541,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "951260-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932200,
@@ -3148,14 +6572,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "952110-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -3165,14 +6596,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "952110-2",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -3182,14 +6620,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "952110-3",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       942380,
@@ -3200,14 +6645,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "952110-4",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       944130,
@@ -3218,14 +6670,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "952110-5",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -3235,14 +6694,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "952110-6",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -3252,14 +6718,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "952110-7",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       942431,
@@ -3272,14 +6745,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "952110-8",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -3289,14 +6769,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "952110-9",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       932240,
@@ -3308,14 +6795,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "953101-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -3325,14 +6819,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "953101-2",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -3342,14 +6843,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "953101-3",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -3359,14 +6867,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "953101-4",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -3376,14 +6891,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "953101-5",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -3393,14 +6915,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "953120-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920272,
       920273,
@@ -3415,14 +6944,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "953120-3",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       933100,
@@ -3433,14 +6969,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "953120-5",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920272,
       920273,
@@ -3457,14 +7000,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "953120-7",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920272,
       920273,
@@ -3479,14 +7029,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "954100-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920272,
       920273,
@@ -3498,14 +7055,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "954100-2",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920272,
       920273,
@@ -3516,14 +7080,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "954100-3",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920272,
       920273,
@@ -3534,14 +7105,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "954101-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920272,
       920273,
@@ -3553,14 +7131,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "954101-2",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920272,
       920273,
@@ -3571,14 +7156,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "954120-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       941320,
@@ -3592,14 +7184,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "954120-2",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       941320,
@@ -3613,14 +7212,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "955100-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       941320,
@@ -3632,14 +7238,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "955100-2",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       931130,
@@ -3657,14 +7270,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "955100-3",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       921130,
@@ -3680,14 +7300,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "955110-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       920300,
@@ -3710,14 +7337,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "955120-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       921130,
@@ -3741,14 +7375,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "955120-2",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       921130,
@@ -3773,14 +7414,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "955260-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       920420,
@@ -3791,14 +7439,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "955400-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       941320,
@@ -3811,14 +7466,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "955400-2",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       921130,
@@ -3833,14 +7495,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "955400-3",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       921130,
@@ -3855,14 +7524,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "956100-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       942432,
@@ -3873,14 +7549,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "956100-2",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       942431,
@@ -3894,14 +7577,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "956100-3",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       942310,
@@ -3917,14 +7607,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "956100-4",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       942431,
@@ -3937,14 +7634,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "956100-5",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -3954,14 +7658,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "956100-6",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       942431,
@@ -3976,14 +7687,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "956100-7",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       942432,
@@ -3994,14 +7712,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "956100-8",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       942432,
@@ -4012,14 +7737,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "956100-9",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       942432,
@@ -4030,14 +7762,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "956100-13",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       949110
@@ -4047,14 +7786,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "956110-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920272,
       920273,
@@ -4067,14 +7813,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "956110-2",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920272,
       920273,
@@ -4091,14 +7844,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "956110-3",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       942432,
@@ -4110,14 +7870,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "959100-1",
-     "class": "connector difference",
+     "class": "response preempted by request denial",
      "ids": [
       920272,
       920273,
@@ -4132,14 +7899,50 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
+     ]
+    },
+    {
+     "test": "959100-3",
+     "class": "log coverage gap",
+     "ids": [
+      920272,
+      920273,
+      933100,
+      933190,
+      942432,
+      942460,
+      949110
+     ],
+     "missing": [],
+     "unexpected": [],
+     "errors": [],
+     "gaps": [
+      "regex log assertion"
+     ],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "980170-1",
-     "class": "engine agrees",
+     "class": "response preempted by request denial",
      "ids": [
       920273,
       920350,
@@ -4151,14 +7954,21 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 0,
-     "statuses": [
-      403
+     "gaps": [],
+     "stages": [
+      {
+       "status": 403,
+       "origin_bytes": 0,
+       "request_denial": true,
+       "coverage": [
+        "local_response"
+       ]
+      }
      ]
     },
     {
      "test": "980170-2",
-     "class": "engine agrees",
+     "class": "reference agrees",
      "ids": [
       920350
      ],
@@ -4167,12 +7977,32 @@
      ],
      "unexpected": [],
      "errors": [],
-     "origin_bytes": 350,
-     "statuses": [
-      200
+     "gaps": [],
+     "stages": [
+      {
+       "status": 200,
+       "origin_bytes": 350,
+       "request_denial": false,
+       "coverage": [
+        "inspected"
+       ]
+      }
      ]
     }
-   ]
+   ],
+   "raw_report": {
+    "path": "crs-ftw-daemon-release-030-20261007-enforce-raw.json.gz",
+    "sha256": "9592644cf8d4b3c5837ebbfb1372580bd11104384943eda925d046ee1b2aaa72",
+    "uncompressed_sha256": "4c2089dada2034c5d5f10bdd8a0b547da9c2c73ec4815a61c19ca695e29c3ce1",
+    "uncompressed_bytes": 12564620
+   },
+   "classification_report": {
+    "path": "crs-ftw-daemon-release-030-20261007-enforce-qualified.json.gz",
+    "sha256": "d79c4a699334b942f4b47458964d1aa0a67ad702dc759182794f9a8c73389187",
+    "uncompressed_sha256": "0935698368f4ea37e5811a2a23be100df0b38cac2768f8be5ffc7b2deec4f7c6",
+    "uncompressed_bytes": 12567276
+   },
+   "daemon_shutdown": "status 0 asserted by console_e2e.stop before reporting"
   }
  }
 }
