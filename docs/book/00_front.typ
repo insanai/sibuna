@@ -4,50 +4,48 @@
 #pagebreak()
 #heading(numbering: none)[Preface]
 
-A request arrives with a method, a path, some headers, and a claim to the server's attention.
-None of those bytes establishes that serving it is worthwhile. Sibuna places a decision
-between the request and the origin: admit it, refuse it, or ask its sender to do verifiable work.
+Every request asks a server to spend resources. Its method, path and headers describe what
+the sender wants; they do not establish that the sender should receive it. Sibuna decides
+whether to admit the request, refuse it, or ask its sender to do verifiable work before it
+reaches the origin.
 This book follows that decision from its mathematical model to the bytes in memory.
 
-The system has two surfaces. *Gate* provides proof-of-work admission and local flood controls.
-*Shield* adds application inspection and policy decisions. Either can use replicated storage
-for policy, reputation, and incident history; we call that deployment *Edge*. A valid session
-establishes admission; it does not exempt the request from inspection. Replication distributes
-durable state; it does not turn a local rate counter into a global quota.
+The aim is to protect the site's resources by asking a requester to do more work to create
+a proof than the server needs to check it. A successful proof buys admission for a session;
+later requests can reuse that session. Local limits and application inspection still apply.
+The difficulty, client hardware and session lifetime determine how useful that cost balance
+is for a particular site.
 
-The central engineering question is not whether a hash is fast. It is whether the complete
-path remains bounded when an untrusted client chooses the input. How many bytes can a parser
-inspect? How much memory can a challenge consume? How many connections can a client hold
-open? Which writes may be retried? What remains available after a leader disappears? Each
-answer must name both an invariant and its boundary.
+*Gate* provides proof-of-work admission and local flood controls. *Shield* adds application
+inspection. Either can use replicated policy, reputation and incident storage; we call that
+deployment *Edge*. A session does not bypass inspection, and replication does not turn a
+local rate counter into a global quota.
 
-The mathematics serves the same purpose. An expected cost is not a latency guarantee. A
-sampling argument for a fixed commitment is not a proof against every adaptive prover. A
-queue absorbs a burst; it cannot compensate for a permanently slower consumer. We derive
-small models, work examples by hand, and then ask where the implementation departs from them.
+The engineering problem is to bound the request path when an untrusted client chooses the
+input. We ask how much data a parser can inspect, how much state a client can occupy, which
+writes can be retried, and what survives a leader's loss. Each answer states a guarantee and
+its limits.
 
-The book is written to be used three ways. Read in order, Parts I to VII are a course: each
-chapter opens with what you should be able to do afterwards, works an example by hand, and
-closes with an exercise and an invariant to explain in your own words; selected solutions are
-at the back. Parts VIII to X are the reference: measurements with their provenance, every flag
-and topology, every endpoint, status, error, and table. Part XI is a two-page card for the
-terminal. A glossary and a bibliography close the book.
+The mathematics helps explain those limits. An average cost is not a deadline. Sampling a
+fixed commitment is not a proof against an adaptive prover. A queue absorbs bursts but cannot
+make a slow consumer faster. Worked examples connect these models to the implementation.
 
-Part II places Sibuna beside Anubis, SafeLine, and the Cloudflare WAF, feature by feature,
-and Part VIII measures Sibuna and Anubis as whole products under the same load generator.
-Both are written so the reader can check the claims: the comparison names its sources and the
-measurements are rendered from committed result files.
+Parts I to VII form a course, with worked examples, exercises and selected solutions.
+Parts VIII to X cover measurements, deployment and the API. Part XI is a reference card for
+the terminal. A glossary and bibliography close the book.
 
-The reader should know basic programming, logarithms, and conditional probability. Zig is
-introduced through ownership and data layout rather than a language survey. The chapters can
-be read in order: the cost model motivates the protocol, the protocol determines the state,
-and the state determines the concurrency and storage design. Later chapters turn those
-invariants into measurements and operating procedures.
+Part II compares Sibuna with Anubis, SafeLine and the Cloudflare WAF. Part VIII measures
+complete processes under documented workloads. Sources and committed result files let
+readers check the claims.
 
-This is an implementation book, not a claim that computational puzzles eliminate automated
-traffic. Clients can buy compute, addresses can be shared, and application syntax is richer
-than a bounded detector. The useful result is a system whose costs and limitations can be
-examined, tested, and changed without hiding them behind a slogan.
+The reader should know basic programming, logarithms and conditional probability. Zig is
+introduced through ownership and data layout. Later chapters turn the design's invariants
+into measurements and operating procedures.
+
+Computational puzzles do not eliminate automated traffic. Clients can buy computing power,
+addresses can be shared, and a bounded detector cannot understand every application.
+This book explains an implementation whose costs and limitations can be examined, tested
+and changed.
 
 #v(5mm)
 #text(size: 9pt, fill: gray)[

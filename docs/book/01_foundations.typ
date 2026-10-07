@@ -3,30 +3,38 @@
 
 #part_page("I", [The Cost of a Request], [
   Before choosing an algorithm, identify the resource it is meant to protect. This chapter
-  builds the small models that every later design decision is measured against: origin work,
-  puzzle work, session amortisation, and the memory an untrusted client can make a server hold.
+  develops models for origin work, puzzle work, sessions, and the memory an untrusted client
+  can make a server retain. Later chapters use these models to assess design choices.
 ])
 
 #objectives([
-  By the end of this chapter, you should be able to write the inequality that decides whether a
-  gate pays for itself, state what a proof of work does and does not establish, derive the
-  expectation and tail of hash search, explain how sessions amortise work, and list the five
-  invariants the rest of the book maintains.
+  By the end of this chapter, you should be able to calculate whether a gate saves origin
+  work and explain what a proof of work establishes. You should also be able to derive the
+  average and tail of hash search, explain how sessions spread puzzle cost across requests,
+  and state the five invariants used throughout the book.
 ])
 
 == Admission Is an Economic Decision
 
+Serving a request may cost the site much more than sending it costs the requester. A bot can
+repeat a cheap request while the origin performs a database query or renders a page each time.
+Sibuna's challenge asks the requester to do the expensive search. The server checks the
+result with much less work before granting a session. This can help rebalance the cost of
+access, although the benefit depends on the workload and how sessions are reused.
+
 Suppose an origin performs a database lookup and renders a page for each admitted request.
 Let $c_o$ be that work, $c_g$ the gate's work per request, and $r$ the arrival rate. With no gate,
 the origin must sustain $r c_o$ units of work per second. A gate that admits fraction $a$ changes
-that demand to $r a c_o$, while spending $r c_g$ itself. The gate is useful only when the saved
-origin work exceeds its own cost and the cost it imposes on legitimate visitors.
+that demand to $r a c_o$ and spends $r c_g$ itself. The following inequality asks whether the
+gate saves server work. A deployment must also account for the delay it imposes on legitimate
+visitors.
 
 $ r c_g + r a c_o < r c_o quad arrow.l.r.double quad c_g < (1-a)c_o. $
 
 This is a capacity model, not a measurement. It omits bandwidth, connection state, storage,
-and client delay. Its value is that every missing term is visible. A cache hit may make $c_o$
-small; a costly query may make it large. There is no universal requester-to-server cost ratio.
+and client delay. These omissions identify what a deployment measurement must add. A cache
+hit may make $c_o$ small; a costly query may make it large. There is no universal
+requester-to-server cost ratio.
 
 #definition([Worked example: when a gate pays for itself], [
   Choose $c_o=100$ work units and $c_g=1$. If half the requests are rejected, the gated system
@@ -38,14 +46,15 @@ small; a costly query may make it large. There is no universal requester-to-serv
 == What a Proof of Work Establishes
 
 A client puzzle establishes that somebody found an input satisfying a public verification
-rule. It does not establish humanity, identity, or good intent. A requester can rent compute,
+rule. Its practical benefit is that finding the answer costs more work than checking it.
+It does not establish humanity, identity, or good intent. A requester can rent compute,
 reuse a valid session within its lifetime, or distribute work across machines. The puzzle
 changes the admission cost; policy and inspection still decide what admitted requests may do.
 
-Address-based limits are complementary. They constrain one address, but shared addresses can
-represent many people and one requester can use many addresses. Neither a puzzle nor an
-address is an identity oracle. Sibuna therefore keeps admission, inspection, and reputation
-as distinct decisions.
+Address-based limits constrain traffic from one address. A shared address can represent many
+people, and one requester can use many addresses. Neither an address nor a solved puzzle
+identifies a person. Sibuna therefore keeps admission, inspection and reputation as distinct
+decisions.
 
 == Hash Search as a Random Variable
 
@@ -75,7 +84,8 @@ expected trials; the continuous curves use the large-work approximation $P(K>x/p
 
 Suppose a session permits $m$ requests before expiry, a puzzle costs $c_p$, verification costs
 $c_v$, and a session check costs $c_s$. Ignoring unsuccessful attempts, the amortized gate cost
-per request is $c_v/m+c_s$, while the client's puzzle cost is $c_p/m$. Increasing the session
+per request is $c_v/m+c_s$, while the client's puzzle cost is $c_p/m$. This is *amortisation*:
+the initial cost is spread across later requests. Increasing the session
 lifetime helps people and automated clients alike. Choosing it is a policy decision, not a
 cryptographic optimization.
 
@@ -108,8 +118,8 @@ How long can an initially empty queue absorb the excess? Why is the answer only 
 4. A durable retry cannot multiply an incident or its reputation effect.
 5. A published policy snapshot is immutable until its last reader releases it.
 
-The rest of the book derives the mechanisms that make these statements true, and the tests
-that would reveal a violation. A fast path is useful only while those statements remain true.
+The rest of the book explains how the implementation maintains these invariants and how
+tests detect a violation. Performance matters within these guarantees.
 
 #teach_back([
   State the gate inequality $c_g < (1-a) c_o$ in words, then explain why a measured

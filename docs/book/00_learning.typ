@@ -9,10 +9,9 @@
 #pagebreak()
 #heading(numbering: none)[How to Read This Book]
 
-Begin with a single question: what is the cheapest safe decision the server can make now?
-Keep that question beside you through the protocol and implementation chapters. A cheap
-operation that admits the wrong request is a defect; a correct operation with unbounded
-cost is another kind of defect.
+Begin with a question: what is the cheapest safe decision the server can make now?
+Keep it in mind through the protocol and implementation chapters. An operation must make
+the right decision and have a bounded cost. Either failure leaves the server vulnerable.
 
 #table(columns: (1fr, 2.5fr),
   table.header([Question], [Where the answer develops]),
@@ -35,21 +34,22 @@ cost is another kind of defect.
   "Feature Comparison" in Part II before choosing a surface, and the "Whole-Product
   Comparison" in Part VIII before choosing worker and connection limits.
 - *Changing the code.* Parts V and VI, the source anchors in every chapter, and the SID
-  records they cite. Part VIII explains which harness will catch a regression in what you
-  touched; Part II lists the constraints a change must keep.
+  records they cite. Part VIII explains which test harness to use for the subsystem you
+  change. Part II lists the constraints that the change must preserve.
 
 === Conventions
 
 A *worked example* shows the intermediate states, not just the answer. An *exercise* asks you
 to change one assumption. Hints suggest a first step; selected solutions at the end of the book
-make the reasoning checkable. Diagrams distinguish the request path from background work.
-A source anchor names the implementation to inspect when prose and code appear to disagree.
+show how to check the reasoning. Diagrams distinguish the request path from background work.
+A source anchor points to the implementation discussed in the text.
 Boxes headed "Implementation" name a function and its file; boxes headed "Explain the
 invariant" ask you to teach the idea back.
 
 In equations, $b$ is Hashcash difficulty in bits, $n$ is sequential-work depth, $t$ is the
 number of openings, $p$ is success probability per trial, $K$ is the number of trials, $T$ is
-a rate limiter's emission interval, $tau$ its burst tolerance, and $Q$ is a queue capacity.
+a rate limiter's interval between admitted requests, $tau$ its burst tolerance, and $Q$ is a
+queue capacity.
 A symbol is local to its section unless stated otherwise. Nanoseconds and requests per second
 in Part VIII are measurements from a named run. Numbers in worked examples are chosen inputs,
 not benchmark claims. Statistical models state their assumptions before drawing conclusions.

@@ -3,10 +3,9 @@
 #import "comparison.typ": *
 
 #part_page("II", [Prior Art and the Design Space], [
-  We place Sibuna among the systems it learned from: client puzzles and sequential work from
-  the cryptography literature, signature and semantic application firewalls, proof-of-work
-  interstitials, and hosted edge networks. We then compare the four tools an operator is most
-  likely to weigh against each other, feature by feature, and record which facts were checked.
+  Sibuna draws on client puzzles, sequential work, application firewalls and hosted edge
+  networks. This chapter traces those ideas, then compares four products feature by feature.
+  It distinguishes tested behaviour from information reported in product documentation.
 ])
 
 == Where Sibuna Comes From
@@ -14,25 +13,25 @@
 #objectives([
   By the end of this chapter, you should be able to trace the lineage of client puzzles from
   1992 to the sequential-work constructions of 2018, name the three architectural ideas Sibuna
-  combines, place Sibuna, Anubis, SafeLine, and the Cloudflare WAF in one design space, and
-  say which comparison claims were verified and which were only read from documentation.
+  combines, compare Sibuna with Anubis, SafeLine and the Cloudflare WAF, and distinguish
+  tested claims from documented features.
 ])
 
 === Client Puzzles and Sequential Work
 
 Dwork and Naor's "Pricing via Processing" (CRYPTO 1992) proposed that a service require a
 moderately hard, easily checked computation before doing work for a requester. Back's Hashcash
-(1997, written up in 2002) made the puzzle a partial hash inversion whose difficulty is one
-integer, and Juels and Brainard's client puzzles (NDSS 1999) applied the idea to connection
-floods, where the server must not remember anything about an unsolved puzzle. All three share
-the shape Sibuna keeps: a server-chosen statement, a solution whose cost is tunable, and
-verification that is orders of magnitude cheaper than solving.
+(1997, written up in 2002) asks for an input whose hash meets a chosen difficulty. Juels and
+Brainard's client puzzles (NDSS 1999) applied the idea to connection floods. The server must
+not retain state for an unsolved puzzle, because an attacker could exhaust that state for free.
+Sibuna retains the three shared ideas: the server chooses the statement, the solution cost
+can be adjusted, and verification is much cheaper than solving.
 
-Hash search is embarrassingly parallel, so a requester with more cores finishes sooner. Mahmoody,
+Hash trials are independent, so a requester with more cores can finish sooner. Mahmoody,
 Moran, and Vadhan (CRYPTO 2013) defined proofs of *sequential* work, in which the prover must
-perform a long chain of dependent steps whatever its core count, and Cohen and Pietrzak
-(EUROCRYPT 2018) gave the simple hash-graph construction whose verifier needs only $O(t log N)$
-work. Blocki, Lee, and Zhou (ITC 2021) proved the same construction sound against quantum
+perform a long chain of dependent steps regardless of its core count. Cohen and Pietrzak
+(EUROCRYPT 2018) gave a hash-graph construction with $O(t log N)$ verification work.
+Blocki, Lee, and Zhou (ITC 2021) proved the same construction sound against quantum
 provers in the quantum random-oracle model. Part III derives Sibuna's Tier Two from that line
 of work; SID 0006 records the assumptions.
 
@@ -43,35 +42,35 @@ row is the system layer where Sibuna sits.], design_lineage())
 
 The first generation of web application firewalls matched request bytes against regular
 expressions. ModSecurity (2002) and the OWASP Core Rule Set made that approach open and
-widely deployed, and also made its costs familiar: hundreds of backtracking patterns per
-request, anomaly scores tuned by hand, and a long tail of false positives on ordinary
-input. libinjection (Hanson, 2012) replaced pattern lists with a tokenizer that asks whether a
-string *parses* as SQL, cutting both cost and false positives. Chaitin's SafeLine carries that
-semantic idea into a full product, and Hyperscan (Wang et al., NSDI 2019) showed how far
-vectorised literal matching can be pushed when inputs are long. Part VI explains why Sibuna
-chose a dense automaton plus small structural tokenizers over either regular expressions or a
-SIMD engine for the short fields it inspects.
+widely deployed. Their costs include evaluating many patterns, tuning anomaly scores and
+investigating false positives on ordinary input. libinjection (Hanson, 2012) uses a tokenizer
+to recognise SQL-injection patterns. Chaitin's SafeLine applies semantic detection in a full
+firewall product. Hyperscan (Wang et al., NSDI 2019) studies vectorised matching for long inputs.
+
+Part VI explains Sibuna's small structural inspector. It combines a dense literal automaton
+with tokenizers for short fields. The optional native CRS engine evaluates a broader maintained
+rule set under a separate transaction work budget.
 
 === Interstitials and Edges
 
-The proof-of-work interstitial in front of a website became common in 2025, when scraper
-traffic feeding language-model training made ordinary origins unaffordable to run. Anubis
-(Techaro) is the best-known open implementation: a Go reverse proxy that serves a JavaScript
+Interest in proof-of-work interstitials grew in 2025 as websites faced scraper traffic
+feeding language-model training. Anubis
+(Techaro) is an open implementation: a Go reverse proxy that serves a JavaScript
 puzzle, signs a session token, and otherwise passes traffic through. Sibuna's Gate surface
 solves the same problem with a stateless challenge, a symmetric token, and a second work tier;
 the comparison below records where the two differ.
 
 At the other end of the scale, hosted edges such as Cloudflare place inspection, rate limiting,
 and bot scoring in hundreds of points of presence with a global control plane. Sibuna's Edge
-deployment borrows the shape (a replicated policy and reputation plane feeding local, immutable
-snapshots) while staying self-hosted, which is why the storage layer is an embedded consensus
-database rather than a service call.
+deployment distributes policy and reputation through replicated storage. Each node reads a
+local, immutable snapshot when making request decisions. The storage layer is an embedded
+consensus database; the request path makes no remote storage call.
 
 == Three Ideas in One Binary
 
 Sibuna combines a browser work challenge for admission, bounded application-payload inspection,
 and a replicated control plane that publishes local policy snapshots. Gate and Shield are the
-two product surfaces; storage and distributed deployment are options for either.
+two operating configurations; storage and distributed deployment are options for either.
 
 #table(
   columns: (1fr, 2fr, 2fr),
@@ -110,20 +109,20 @@ plan name means the feature exists but only on that plan.
 
 #feature_comparison_table()
 
-Three differences carry most of the weight in a selection decision.
+Three differences help an operator choose between them.
 
 - *Where the work goes.* Anubis and Sibuna Gate make the *client* pay before the origin does
   anything. SafeLine and Cloudflare inspect first and challenge selectively; their default
-  posture is to admit and filter. Sibuna Shield does both, in that order: inspection can deny a
-  request that already holds a valid session.
+  posture is to admit and filter. Sibuna Shield combines admission and inspection. Inspection
+  can deny a request that already holds a valid session.
 - *What the server remembers.* Anubis keeps challenge state in a store (memory, bbolt, Valkey,
   or S3) and signs a JSON Web Token with Ed25519; Sibuna issues a self-authenticating record
-  and remembers only solved tags in a fixed table. SafeLine keeps attack logs in PostgreSQL;
-  Cloudflare keeps everything, with sampled visibility on the Free plan.
+  and stores solved tags in a fixed table. SafeLine keeps attack logs in PostgreSQL;
+  Cloudflare provides attack visibility, with sampling on the Free plan.
 - *What you have to run.* Sibuna is one static binary with an optional embedded database;
   Anubis is one Go binary; SafeLine is seven containers behind a Docker daemon on a Linux
   host with at least one core, one gigabyte of memory, and five gigabytes of disk; Cloudflare
-  is a DNS change and a subscription.
+  is a hosted service configured through DNS and a subscription plan.
 
 #callout([Current product boundary], [
   Sibuna leaves ingress TLS termination to the deployment proxy and does not score bots with
@@ -148,5 +147,5 @@ Three differences carry most of the weight in a selection decision.
 #teach_back([
   Describe how Gate, Shield, and optional replicated storage divide admission, inspection and
   policy distribution. Then name one row of the comparison table you would want to re-verify
-  before quoting it to a customer, and say how you would verify it.
+  before quoting it to a customer, and explain how you would verify it.
 ])
