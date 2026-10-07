@@ -1,0 +1,95 @@
+name: Sibuna 0.3.0 console qualification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: release-030-console-qualification
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+    working-directory: production
+jobs:
+  console:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    env:
+      PRODUCTION_COMMIT: 4519b4d66caae575f8c2130f04253da197a2e76f
+      HARNESS_COMMIT: 1e1ae6a174c1ded60f173e0e926c0961383d4a13
+      HARNESS_SHA256: 96a2bd2e12c88b234e437c89b73721152cd5bc31367238ae2a7d34888783ded7
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: 4519b4d66caae575f8c2130f04253da197a2e76f
+          path: production
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: 1e1ae6a174c1ded60f173e0e926c0961383d4a13
+          path: reviewed-tests
+          sparse-checkout: tools/crs_ui_check.py
+          sparse-checkout-cone-mode: false
+      - name: Verify exact release source and reviewed test overlay
+        run: |
+          test "$(git rev-parse HEAD)" = "$PRODUCTION_COMMIT"
+          test "$(git -C ../reviewed-tests rev-parse HEAD)" = "$HARNESS_COMMIT"
+          test -z "$(git status --porcelain)"
+          printf '%s  %s\n' "$HARNESS_SHA256" \
+            ../reviewed-tests/tools/crs_ui_check.py | sha256sum --check
+          cp ../reviewed-tests/tools/crs_ui_check.py tools/crs_ui_check.py
+          test "$(git diff --name-only)" = "tools/crs_ui_check.py"
+          git diff --check
+          mkdir -p "$RUNNER_TEMP/qualification"
+          {
+            printf 'Production commit: %s\nHarness commit: %s\n' \
+              "$PRODUCTION_COMMIT" "$HARNESS_COMMIT"
+            sha256sum tools/crs_ui_check.py
+            git diff -- tools/crs_ui_check.py
+          } > "$RUNNER_TEMP/qualification/provenance.txt"
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - name: Install cluster build dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential libssl-dev
+      - name: Install checksum-verified Zig 0.17.0
+        run: python tools/install_zig.py "$RUNNER_TEMP/zig"
+      - name: Qualify native console contracts
+        run: |
+          zig build console-test console-crs-evidence-test console-crs-management-test \
+            crs-client-test -j2 --summary all 2>&1 | \
+            tee "$RUNNER_TEMP/qualification/native.log"
+      - name: Qualify every authenticated CRS workflow
+        run: |
+          for step in crs-restart-check crs-management-check crs-private-check \
+            crs-review-check crs-cli-check crs-ui-check
+          do
+            zig build "$step" -j2 --summary all -- --download 2>&1 | \
+              tee "$RUNNER_TEMP/qualification/$step.log"
+          done
+      - name: Qualify three-node propagation and restart
+        run: |
+          zig build crs-cluster-check -Dcluster=true -j2 --summary all -- --download \
+            2>&1 | tee "$RUNNER_TEMP/qualification/cluster.log"
+      - name: Verify production inputs remain unchanged
+        run: |
+          test "$(git rev-parse HEAD)" = "$PRODUCTION_COMMIT"
+          test "$(git diff --name-only)" = "tools/crs_ui_check.py"
+          test "$(git status --porcelain)" = " M tools/crs_ui_check.py"
+          printf '%s  %s\n' "$HARNESS_SHA256" tools/crs_ui_check.py | sha256sum --check
+          python - <<'PY' > "$RUNNER_TEMP/qualification/binaries.json"
+          import hashlib, json
+          from pathlib import Path
+          rows = [{"path": str(p), "sha256": hashlib.sha256(p.read_bytes()).hexdigest()}
+                  for p in sorted(Path(".zig-cache").rglob("sibuna")) if p.is_file()]
+          assert rows, "No qualified daemon executable"
+          print(json.dumps(rows, indent=2))
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: sibuna-030-console-qualification
+          path: ${{ runner.temp }}/qualification
+          if-no-files-found: error
