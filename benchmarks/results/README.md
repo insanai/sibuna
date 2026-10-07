@@ -39,6 +39,9 @@ Peak summed RSS is 132–139 MiB against 103 MiB disabled. Enforce closes the co
 a denial, so its SQL-injection row includes a reconnect per request. The disabled JSON and
 multipart rows are limited by the network between the hosts. This family measures the
 request path only; it is not a comparison with the BunkerWeb CRS profile below.
+These figures predate the subsequent scratch-initialization, compressed-slot and startup
+restoration corrections. Their revision and executable digest remain authoritative; they
+must not be presented as a measurement of a later release binary.
 
 ## Three-product comparisons
 

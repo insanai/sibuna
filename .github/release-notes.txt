@@ -18,6 +18,9 @@ Qualification:
 - With the load generator on a separate host and four product CPUs, paranoia level one serves
   10,831 small GETs per second (47,311 with CRS disabled), 1,157 8 KiB JSON POSTs and 4,257
   16 KiB multipart uploads, at 132-139 MiB peak RSS. No request reached the work limit.
+  These figures identify revision eeef5ef and predate the final scratch-initialization,
+  compressed-slot and startup-restoration corrections; they are not a measurement of a
+  later release binary.
 
 Behaviour changes:
 - Request targets must be origin-form (or `OPTIONS *`); absolute-form, `CONNECT` and fragments

@@ -36,7 +36,9 @@ paranoia level one charges roughly 1,800 units per byte of free-text arguments. 
 `--crs-request-limit`, `--crs-response-limit`, `--crs-work-budget` and `--crs-slots` to set
 reviewed bounds. Eight full-size slots reserve at least 112.6 MiB for entities, decoding and
 response heads, plus metadata and matcher storage; spare reservation becomes small slots for
-requests up to 64 KiB. Reservations are address space: pages become resident only as
+identity-encoded requests up to 64 KiB. A compressed request uses a full-size slot even when
+its encoded `Content-Length` is small: decoded input retains the configured request ceiling.
+Chunked requests also use full-size slots. Reservations are address space: pages become resident as
 transactions use them, and a node at the defaults peaked near 140 MiB under the benchmark
 load. A busy pool waits up to 50 ms for a slot. `--crs-timeout` is an
 absolute inspection deadline, 1–300 seconds, default 30; active progress cannot extend it.
@@ -608,8 +610,10 @@ Page fragments can be bookmarked; Back and Forward reopen authenticated pages. T
 also remembers theme and spacing choices in this browser, with System as the default theme.
 SID 0007 is Committed. Its pages and management workflows passed the October Linux and
 connected Chrome review, including an actual cluster on three physical hosts. Performance
-acceptance is separate: all eight fresh single-node and three-host impact matrices are inconclusive, with each raw
-sample, coverage check and formal verdict retained under `benchmarks/results/`. The September
+acceptance is separate: the eight selected single-node and three-host impact matrices from
+1 October 2026 are inconclusive, with each raw sample, coverage check and formal verdict
+retained under `benchmarks/results/`. They predate the subsequent request-path and CRS
+changes and do not qualify the v0.3.0 binary. The September
 paired reading was accepted by the owner as a historical exception, not a formal pass, and it
 does not apply automatically to the updated request path or to new measurements. These
 unprivileged containers cannot control the processor governor or other host activity; that

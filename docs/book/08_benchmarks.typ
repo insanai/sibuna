@@ -39,12 +39,13 @@ The performance harnesses live under `benchmarks/`:
   [`bunkerweb.py`], [Three native Linux products: unconditional HTTP/1.1 proxy and inspection profiles, with a separate load host], [`results/products-proxy-two-host-latest.json`],
   [`admission_http.py`], [Real sessions, challenges, allowed paths and attacks under wrk; native proxy and forward-auth modes], [`results/products-admission-http-two-host-latest.json`],
   [`admission_operations.py`], [Native challenge bootstrap, fresh proof and session operations from two remote Python clients], [`results/products-admission-operations-two-host-latest.json`],
+  [`crs_request_path.py`], [Native CRS disabled, Audit and Enforce at paranoia 1 and 2; small GET, JSON, multipart and SQL-injection requests with eight dashboards on separate load and service hosts], [`results/crs-request-path-two-host-latest.json`],
 )
 
 The primitive suite times batches of many thousand operations; per-operation percentiles are
 not reported because a clock read costs as much as the work. The HTTP harnesses report what
 `wrk` reports: request counts, and per-request latency percentiles that `wrk` computes from
-its own histogram. Except for the current three-product comparisons described below, CPU
+its own histogram. Except for the three-product and native CRS comparisons described below, CPU
 time is the product process's accumulated user and system time from
 `ps`, read before and after each run; memory is the peak resident set sampled every 100 ms.
 On the Linux containers used for the release review, `ps` reports whole CPU seconds, so
@@ -53,6 +54,10 @@ the load generator's independent wall clock and histogram; CPU-accounting precis
 not change those measurements. Container permissions do not grant control over the host's
 processor governor or other tenants. Resource conditions and uncertainty belong with each
 record rather than being assumed to match a dedicated machine.
+The three-product and native CRS families instead sum the live product tree's `/proc`
+user/system ticks; shared pages may be counted more than once in their peak summed RSS.
+Their CPU-accounting interval includes the remote generator invocation, while request
+latency and throughput use the generator's own timed workload.
 
 The historical Linux admission and whole-product comparisons give every product thread the same allowed
 CPU set before warmup: two CPUs for admission and four by default for whole products. A Sibuna
@@ -405,6 +410,9 @@ charged work there fell 22% because the skipped merges and tag copies are no lon
 These rows are not a comparison with BunkerWeb's CRS profile: that family used 64
 connections and a different fixture. Concurrency beyond the slot pool, where CRS sheds load
 with 503 after a 50 ms wait, is not measured here.
+The recorded revision predates subsequent scratch-initialization, compressed-slot and
+startup-restoration corrections. The figures describe that executable; they do not establish
+the performance of a later release binary.
 
 == Historical Loopback Admission Comparison
 

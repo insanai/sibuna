@@ -837,6 +837,10 @@ ordered simulation then defines the groups exactly as before. Each simulation st
 unit plus one per capture slot it copies, so Boolean work reflects Boolean cost.
 Randomized differential tests compare the DFA with the capturing simulation over every
 assertion form, and a thrashing pattern exercises the fallback.
+Closure marks are initialized before the first search reads them. A reused allocation may
+contain a value equal to the first search epoch; treating that stale value as a visited mark
+would omit a reachable state. Clearing the bounded mark array when a workspace is created
+establishes the closure proof without touching the rest of the reserved entity scratch.
 
 Backreferences, recursive patterns and unsupported PCRE extensions reject compilation.
 They are not approximated by a regular language. Unbounded repetitions of nullable
@@ -1190,9 +1194,11 @@ reserves tens of MiB, so the reservation left after the large tier is filled wit
 whose only difference is a 64 KiB request entity bound, up to 1,024 slots in total. Response,
 metadata and work limits are identical, so a small slot gives the same coverage to every
 request it accepts. The tier is derived from the explicit reservation; no persisted setting
-or manifest field changes. A declared request size selects the smallest tier that can hold
-it and spills to a large slot when every small slot is busy. Chunked framing declares no
-size and takes a large slot. A request never displaces work into a smaller bound.
+or manifest field changes. A declared identity-representation request size selects the
+smallest tier that can hold it and spills to a large slot when every small slot is busy.
+Content-Length on an encoded representation does not bound the decoded entity, so any
+non-identity Content-Encoding takes a large slot. Chunked framing declares no size and also
+takes a large slot. A request never displaces work into a smaller bound.
 
 Each tier records leases in 64-bit occupancy words; a separate closed flag stops admission.
 Admission scans for a free bit and claims it with compare-and-swap; each failed exchange
@@ -1274,7 +1280,9 @@ ledger and all loops advance monotonically, independent of argument count.
 Use Zig 0.17's standard JSON scanner for strict UTF-8, escape, number and grammar validation.
 It emits duplicate object keys in source order and number spellings without numeric rounding.
 Supply its bit stack with fixed borrowed storage and refuse a new container at the configured
-depth before its push. The scanner's allocator has no storage to offer; valid and depth-refused
+depth before its push. Borrowed capacity begins with zero live bytes: the standard bit stack
+initializes a byte before its first read-modify-write. Untouched or recycled backing bytes
+are capacity, not initialized stack contents. The scanner's allocator has no storage to offer; valid and depth-refused
 inputs never invoke it. Neither standard scanner deinitialization nor owning JSON parsing
 may free or replace the borrowed bit array. Assemble partial escaped strings in fixed output,
 copying them into acquisition storage before reading the next token. Reject invalid UTF-8,
@@ -1858,6 +1866,15 @@ Adoption records filesystem authority as actor zero; it cannot replace an existi
 Later starts restore the saved source without relying on the original directory. Explicit
 startup mode, profile, paranoia, threshold and resource options must agree with that selection;
 conflicting process input is refused rather than silently overriding reviewed desired state.
+
+Restoration must finish before either listener opens. Selection observation and saved-source
+application each have a thirty-second awake-clock retry window for unavailable or timed-out
+storage, a saturated mailbox or a changed selection revision. Retries sleep up to 100 ms and
+check shutdown before starting work. An admitted attempt retains its ordinary per-query
+deadlines and compilation bounds; the retry window bounds new attempts, not total compilation
+time. Initial source adoption occurs once outside both retry loops. Invalid selection,
+signature failure, configuration conflicts and allocation failure remain startup errors;
+temporary election unavailability cannot authorize serving without the saved protection.
 
 Each node checks desired state once per second and re-authenticates retained source before
 compilation and publication. It checks the desired revision again before publishing. A busy
