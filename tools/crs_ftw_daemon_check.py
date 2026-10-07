@@ -360,6 +360,36 @@ def engine_rows(paths, reference=False):
     return rows
 
 
+def representation_rows(paths, albedo):
+    # These proofs qualify malformed origin representations, never complete inspection.
+    pinned = "07d57ce946aeaef9d1f97a62bfca559dfca2382c31d645f125e5d6c5e46eb73d"
+    if paths and hashlib.sha256(albedo.read_bytes()).hexdigest() != pinned:
+        raise ValueError("origin representation binary mismatch")
+    rows = {}
+    for path in paths:
+        with path.open("rb") as source:
+            data = source.read(RESPONSE_LIMIT + 1)
+        if len(data) > RESPONSE_LIMIT:
+            raise ValueError("origin representation report exceeds bound")
+        proof = json.loads(data)
+        if proof.get("albedo_sha256") != pinned or proof.get("gzip_version") != "gzip 1.13":
+            raise ValueError("origin representation provenance mismatch")
+        for row in proof["rows"]:
+            name = row["test"]
+            body = bytes.fromhex(row["response"]["body_hex"])
+            if not isinstance(name, str) or len(name) > 64 or name in rows:
+                raise ValueError("origin representation identity mismatch")
+            if len(body) > RESPONSE_LIMIT or hashlib.sha256(body).hexdigest() != \
+                    row["body_sha256"]:
+                raise ValueError("origin representation body mismatch")
+            if row.get("gzip_test_exit") != 1 or not row.get("gzip_test_stderr") or \
+                    not row.get("zlib_decode_error"):
+                raise ValueError("origin representation missing decoder refusal")
+            rows[name] = dict(row, albedo_sha256=proof["albedo_sha256"],
+                              gzip_version=proof["gzip_version"])
+    return rows
+
+
 def daemon(binary, candidate, root, origin_port, console_port, owned):
     policy = root / "policy.json"
     policy.write_text(json.dumps({"waf": False, "default_action": "ALLOW", "rules": [
@@ -413,7 +443,8 @@ def qualify(args, root, tests, owned):
 def report(args, tests, results, counters):
     classes = classify(tests, results, engine_rows(args.engine_report),
                        engine_rows(args.reference_report, reference=True),
-                       args.work_budget, args.mode)
+                       args.work_budget, args.mode,
+                       representation_rows(args.representation_report, args.albedo))
     slowest = sorted(results, key=lambda result: -result["seconds"])[:10]
     summary = dict(
         commit=COMMIT, source_sha256=SOURCE_DIGEST, inventory=len(results), mode=args.mode,
@@ -431,7 +462,7 @@ def report(args, tests, results, counters):
     summary["source_provenance"] = metadata(args.binary)
     summary["oracle_provenance"] = [dict(path=str(path),
         sha256=hashlib.sha256(path.read_bytes()).hexdigest())
-        for path in args.engine_report + args.reference_report]
+        for path in args.engine_report + args.reference_report + args.representation_report]
     args.report.parent.mkdir(parents=True, exist_ok=True)
     print(f"Daemon FTW ({args.mode}, PL4, work {args.work_budget}): "
           f"{summary['passed']}/{len(results)} complete contracts; "
@@ -463,6 +494,8 @@ def main():
                         help="crs-ftw-check request or response report; repeatable")
     parser.add_argument("--reference-report", type=Path, action="append",
                         help="pinned ModSecurity request or response report; repeatable")
+    parser.add_argument("--representation-report", type=Path, action="append", default=[],
+                        help="independent malformed origin representation proof; repeatable")
     parser.add_argument("--report", type=Path,
                         default=Path(".zig-cache/crs-review/ftw-daemon-report.json"))
     parser.add_argument("--mode", choices=("audit", "enforce"), default="audit")
