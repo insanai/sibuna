@@ -13,7 +13,10 @@ Bundled dependencies in the default, single-node release:
   LICENSES/Paxos-MIT.txt. Sources: github.com/insanai/zaxonlite and
   github.com/insanai/paxos-zig. Zig 0.17 compatibility sources are included in vendor/.
   Paxos chosen-history replay preserves ballot-bearing leader evidence and election timers.
-  Original archives, package hashes, source digests and the local correction are recorded
+  Zaxonlite payloads use named same-directory stages and atomic no-replace installation.
+  File, directory and journal durability barriers retain their order. Abandoned stages
+  are removed under the node's exclusive data-directory lock during startup.
+  Original archives, package hashes, source digests and local corrections are recorded
   in vendor/provenance.json.
   SQLite dependencies remain pinned in vendor/zaxonlite/build.zig.zon.
 - SQLite 3.50.4: public domain; sqlite.org/copyright.html. The pinned

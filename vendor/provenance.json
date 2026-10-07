@@ -101,7 +101,22 @@
       "src/wal.zig": "d2ccb6d86fd40e6b025827a62a0d58b6d037a49e4ddd0016efb4c59d25d6cdfe",
       "src/wire.zig": "9a916399745c3ce35f801f742fec7bb250cadacf7a08547cb3d5189b20884e2e",
       "test/capi_smoke.c": "483c89d446b06587f1e8a9d84008c2dbe2ea83050d8c19a4aebccdbb8672995b"
-    }
+    },
+    "local_changes": [
+      {
+        "files": [
+          "src/named_atomic.zig",
+          "src/payload_store.zig"
+        ],
+        "reason": "Named same-directory stages avoid slow anonymous O_TMPFILE linkat installation on ZFS while preserving exclusive creation, atomic no-replace publication and existing file, directory and journal barriers.",
+        "ownership": "Startup removes matching abandoned stages under the node exclusive directory lock. Other files and installed content-addressed payloads remain untouched.",
+        "verification": "Focused tests cover the 16-attempt collision bound, no-overwrite publication, owned resource cleanup, abandoned-stage replay, foreign-file preservation, corruption repair, idempotence and retained-byte accounting.",
+        "source_sha256": {
+          "src/named_atomic.zig": "375814b50f51406f95a3db91ab1cb56320eb555641972623b1de2f1e44fff4a0",
+          "src/payload_store.zig": "80b33acdfc06cbb28c1806b570e76b55ae775af4650339d9ffa05ded02b1507d"
+        }
+      }
+    ]
   },
   "paxos": {
     "version": "0.7.0",

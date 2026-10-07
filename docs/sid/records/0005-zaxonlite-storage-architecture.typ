@@ -93,6 +93,35 @@ cannot distinguish the former leader, the current leader or another history prov
 Applying it preserves the chosen prefix without changing ballot-bearing leadership state.
 Election time is refreshed by valid prepare, accept or matching heartbeat contact instead.
 
+
+The payload store uses a named temporary file in the destination hash shard. Creation is
+exclusive, with mode `0600` and at most sixteen random-name attempts. The owner flushes the
+file, installs it with atomic no-replace rename, flushes the shard directory, and then runs
+the existing journal barrier. A newly created shard still requires its parent-directory
+barrier. Unsupported no-replace operations fail closed. Neither the durable payload format
+nor the journal, schema, quorum rule or election timeout changes.
+
+This avoids the anonymous `O_TMPFILE` installation path. On the reviewed Linux ZFS host,
+its `linkat` syscall sometimes held the storage owner's mutex longer than the election
+window. Named installation removes that measured stall without releasing mutable node
+state during a write. It does not guarantee an upper bound on filesystem latency. Node
+startup holds the exclusive data-directory lock before removing abandoned files whose names
+match the private staging pattern. Other files and installed hash objects remain untouched.
+The local adapter and its resource, collision and recovery tests are recorded in the
+third-party notice and provenance.
+
+*Lemma (acknowledgement follows complete payload installation).* Assume atomic no-replace
+rename, successful validated writes and the node's same-volume durability barriers.
+Before installation, a partial file has a private temporary name, not the content-addressed
+name used by a journal record. Installation follows the file flush. The shard flush follows
+installation. The completed full journal barrier precedes acknowledgement or transmission
+under the node's write-before-send rule. Therefore an acknowledged durable reference follows
+complete payload installation and its durability barrier. Before that final barrier completes,
+a crash may leave temporary files, unreferenced installed objects or incomplete unacknowledged
+journal records. Recovery must validate those records and fail closed on a missing or corrupt
+payload. Cleanup under the exclusive node lock removes abandoned temporary names without
+removing an installed object.
+
 = Context and motivation
 
 A single Sibuna instance loads policy from a file and keeps its challenge, rate-limit, and ban
