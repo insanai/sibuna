@@ -514,7 +514,7 @@ proceed, must be challenged, or must be denied.
     // Sink 3: HTTP 401 Challenge Issuer (x: 12.6 .. 16.9) directly below Stage 4
     rect((12.6, 0.8), (16.9, 2.4), fill: c-gold-bg, stroke: 1.1pt + c-gold, radius: 0.18)
     content((14.75, 1.95), text(weight: "bold", size: 8.5pt, fill: c-gold)[Browser Challenge], anchor: "center")
-    content((14.75, 1.50), text(size: 7.2pt)[HTML 200 / JSON 401], anchor: "center")
+    content((14.75, 1.50), text(size: 7.2pt)[Client Solves Separate Proof], anchor: "center")
     content((14.75, 1.10), text(weight: "bold", size: 7pt, fill: c-gold)[No Per-Issued Ticket Table], anchor: "center")
 
     // --- TERMINAL ARROWS ---
@@ -551,6 +551,10 @@ response headers and eligible bounded bodies run later phases before publication
 and upgraded connections release their transaction resources early and report the excluded
 coverage. Forward-auth sees the trusted metadata supplied by ingress; it does not see an
 origin response which ingress handles itself.
+
+The reverse-proxy browser interstitial returns HTTP 200. Forward-auth keeps it at HTTP 401
+until admission succeeds. A protected request expecting JSON also receives HTTP 401 when
+a challenge is required.
 
 == Mathematical Proofs of Algorithmic Primitives
 
