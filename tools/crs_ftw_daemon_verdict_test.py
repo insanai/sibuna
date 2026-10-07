@@ -6,7 +6,8 @@ import gzip
 import hashlib
 
 from crs_ftw_daemon_check import evaluate
-from crs_ftw_daemon_verdict import ALBEDO_SHA256, CRS_ARCHIVE_SHA256, verdict, failures
+from crs_ftw_daemon_verdict import (ALBEDO_SHA256, CRS_ARCHIVE_SHA256,
+    EMPTY_DEFLATE_REQUEST_SHA256, FTW_SOURCE_SHA256, verdict, failures)
 
 
 def test_case(name="942100-1", payload=b"GET / HTTP/1.1\r\n\r\n", response=False):
@@ -77,6 +78,28 @@ def representation_fixture(body=b"ViewStateException: Invalid viewstate detected
         body_sha256=hashlib.sha256(body).hexdigest(), gzip_test_exit=1,
         zlib_decode_error="independent decoder rejects the malformed gzip stream")
     return test, row, engine, proof
+
+
+def request_representation_fixture(mode="audit"):
+    request = dict(line="GET / HTTP/1.1", headers=[
+        dict(name="Accept", value="text/html"), dict(name="Content-Encoding", value="deflate"),
+        dict(name="Host", value="localhost"), dict(name="User-Agent", value="OWASP CRS test agent"),
+        dict(name="Connection", value="close")], body="")
+    payload = (b"GET / HTTP/1.1\r\nAccept: text/html\r\nContent-Encoding: deflate\r\n"
+               b"Host: localhost\r\nUser-Agent: OWASP CRS test agent\r\nConnection: close\r\n\r\n")
+    test = test_case("920450-7", payload)
+    enforcing = mode == "enforce"
+    row = result(test["test"], [920450], 403 if enforcing else 200,
+                 0 if enforcing else len(payload) + 80)
+    row.update(missing=[], passed=True)
+    row["stages"][0]["findings"] = [dict(rule_id=920450, phase=1, coverage="incomplete",
+        enforcing=enforcing, denied=False, would_deny=False, selected_status=0,
+        blocking_paranoia=4, detection_paranoia=4, source_digest=CRS_ARCHIVE_SHA256)]
+    reference = dict(error=None, work=866402, ids=[920450, 949110])
+    proof = dict(kind="request", source_sha256=FTW_SOURCE_SHA256, request=request,
+        request_sha256=EMPTY_DEFLATE_REQUEST_SHA256, body_sha256=hashlib.sha256(b"").hexdigest(),
+        zlib_version="1.3.1", zlib_decode_error="empty bytes are a truncated deflate stream")
+    return test, row, {test["test"]: reference}, proof
 
 
 class VerdictTest(unittest.TestCase):
@@ -288,6 +311,53 @@ class VerdictTest(unittest.TestCase):
             row = dict(original, **{field: value})
             self.assertEqual(self.representation_decision(test, row, engine, proof),
                              "incomplete inspection")
+
+    def request_representation_decision(self, test, row, engine, proof, mode="audit"):
+        return verdict(test, row, engine, engine, 128_000_000, mode, proof)
+
+    def test_declared_empty_deflate_is_explicitly_incomplete_in_both_modes(self):
+        for mode in ("audit", "enforce"):
+            test, row, engine, proof = request_representation_fixture(mode)
+            self.assertEqual(self.request_representation_decision(test, row, engine, proof, mode),
+                             "request representation refusal")
+            self.assertEqual(self.decision(test, row, engine, mode=mode), "incomplete inspection")
+
+    def test_empty_deflate_exception_binds_every_request_byte(self):
+        test, row, engine, proof = request_representation_fixture()
+        for replacement in (b"gzip", b"identity"):
+            changed = deepcopy(test)
+            changed["stages"][0]["payload"] = test["stages"][0]["payload"].replace(
+                b"deflate", replacement)
+            self.assertEqual(self.request_representation_decision(changed, row, engine, proof),
+                             "incomplete inspection")
+
+    def test_empty_deflate_exception_requires_pinned_source_and_independent_reference(self):
+        test, row, engine, original = request_representation_fixture()
+        for field, value in (("source_sha256", "00" * 32), ("request_sha256", "00" * 32),
+                             ("body_sha256", "00" * 32), ("zlib_version", "1.3.0"),
+                             ("zlib_decode_error", "")):
+            proof = dict(original, **{field: value})
+            self.assertEqual(self.request_representation_decision(test, row, engine, proof),
+                             "incomplete inspection")
+        self.assertEqual(verdict(test, row, engine, {}, 128_000_000, "audit", original),
+                         "incomplete inspection")
+
+    def test_empty_deflate_exception_cannot_allow_enforcing_origin_bytes(self):
+        test, row, engine, proof = request_representation_fixture("enforce")
+        row["origin_bytes"] = row["stages"][0]["origin_bytes"] = 1
+        self.assertEqual(self.request_representation_decision(test, row, engine, proof, "enforce"),
+                         "incomplete inspection")
+
+    def test_empty_deflate_exception_cannot_hide_missing_findings_or_bad_mode(self):
+        test, original, engine, proof = request_representation_fixture()
+        for field, value in (("missing", [920450]), ("ids", []), ("errors", ["no response"])):
+            row = dict(original, **{field: value})
+            self.assertEqual(self.request_representation_decision(test, row, engine, proof),
+                             "incomplete inspection")
+        row = deepcopy(original)
+        row["stages"][0]["findings"][0]["enforcing"] = True
+        self.assertEqual(self.request_representation_decision(test, row, engine, proof),
+                         "incomplete inspection")
 
 
 if __name__ == "__main__":

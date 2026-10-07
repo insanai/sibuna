@@ -12,6 +12,9 @@ OVERLONG_ARGUMENT_REQUEST_SHA256 = \
 CRS_ARCHIVE_SHA256 = \
     "3d678a41fd5aade34760127fef5dd64fd7a77848913fc0f70dde0cf467c94427"
 ALBEDO_SHA256 = "07d57ce946aeaef9d1f97a62bfca559dfca2382c31d645f125e5d6c5e46eb73d"
+EMPTY_DEFLATE_REQUEST_SHA256 = \
+    "dbd1cd4a309d9a95f8c8026656c9f4e06ebbeaf765cb5f197b3afc445c340c73"
+FTW_SOURCE_SHA256 = "bdd0dec65d47fcae5aaa48aa681e0f4c151a8c1d9eb3040f6f65ebb8b2273c75"
 
 ACQUISITION_ERRORS = {"InvalidPercentEscape", "InvalidMime", "MultipartHeadLimit",
                       "AmbiguousBodyParameter", "InvalidXml", "InvalidMultipartHead",
@@ -126,6 +129,53 @@ def origin_representation_refusal(test, result, reference, proof, mode):
         finding["source_digest"] == CRS_ARCHIVE_SHA256 for finding in findings)
 
 
+def request_representation_refusal(test, result, reference, independent, proof, mode):
+    # Bodyless HTTP framing is valid. The stricter connector nevertheless refuses
+    # the declared, empty deflate representation; RFC framing does not require this.
+    # The logical-body probes cannot prove a successful wire representation decode.
+    if proof is None or proof.get("kind") != "request" or test["response"] or \
+            len(test["stages"]) != 1 or len(result["stages"]) != 1 or \
+            reference is None or independent is None or reference["error"] is not None or \
+            independent["error"] is not None or sorted(reference["ids"]) != [920450, 949110] or \
+            sorted(independent["ids"]) != [920450, 949110] or result["ids"] != [920450] or \
+            result["missing"] or result["unexpected"] or result["errors"] or result["gaps"]:
+        return False
+    if proof.get("source_sha256") != FTW_SOURCE_SHA256 or \
+            proof.get("zlib_version") != "1.3.1" or not proof.get("zlib_decode_error"):
+        return False
+    request = proof["request"]
+    payload = (request["line"] + "\r\n" + "".join(
+        f'{header["name"]}: {header["value"]}\r\n' for header in request["headers"]) +
+        "\r\n" + request["body"]).encode()
+    if payload != test["stages"][0]["payload"] or \
+            hashlib.sha256(payload).hexdigest() != EMPTY_DEFLATE_REQUEST_SHA256 or \
+            proof["request_sha256"] != EMPTY_DEFLATE_REQUEST_SHA256 or request["body"] or \
+            proof["body_sha256"] != hashlib.sha256(b"").hexdigest():
+        return False
+    try:
+        zlib.decompress(b"")
+        return False
+    except zlib.error:
+        pass
+    stage = result["stages"][0]
+    findings = stage.get("findings", [])
+    if stage.get("error") is not None or len(findings) != 1:
+        return False
+    finding = findings[0]
+    if finding["rule_id"] != 920450 or finding["phase"] != 1 or \
+            finding["coverage"] != "incomplete" or finding["denied"] or \
+            finding["would_deny"] or finding["selected_status"] != 0 or \
+            finding["enforcing"] != (mode == "enforce") or \
+            finding["source_digest"] != CRS_ARCHIVE_SHA256 or \
+            finding["blocking_paranoia"] != 4 or finding["detection_paranoia"] != 4:
+        return False
+    if mode == "enforce":
+        return stage["status"] == 403 and stage["origin_bytes"] == 0 and \
+            result["origin_bytes"] == 0
+    return mode == "audit" and stage["status"] == 200 and \
+        stage["origin_bytes"] >= len(payload) and result["origin_bytes"] == stage["origin_bytes"]
+
+
 def bounded_work_refusal(test, result, reference, budget, mode):
     # The pinned PL4 overlong argument fixture reaches the deliberate work bound.
     # Rule assertions alone cannot call this complete: the daemon must preserve
@@ -179,6 +229,9 @@ def verdict(test, result, engine, independent, budget, mode, representation=None
         return "work budget"
     if reference is not None and acquisition_refusal(result, reference, mode):
         return "engine refusal"
+    if request_representation_refusal(test, result, reference, independent.get(result["test"]),
+                                      representation, mode):
+        return "request representation refusal"
     if origin_representation_refusal(test, result, reference, representation, mode):
         return "origin representation refusal"
     if any(finding.get("coverage") == "incomplete" for stage in result["stages"]
@@ -227,5 +280,6 @@ def failures(results):
     accepted = {"passed", "log coverage gap", "deliberate connector refusal",
                 "deliberate acquisition refusal", "response preempted by request denial",
                 "engine refusal", "reference agrees", "enforce disruption",
-                "bounded work refusal", "origin representation refusal"}
+                "bounded work refusal", "origin representation refusal",
+                "request representation refusal"}
     return [row for row in results if row["class"] not in accepted]
