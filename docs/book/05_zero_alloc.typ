@@ -19,28 +19,28 @@
 === One Thread per Connection, Bounded
 
 Accept threads (`--workers`, one per CPU by default) share the listening socket. Each accepted
-connection is handed to its own thread with a one-megabyte stack, and the accept loop goes
-straight back to `accept`. The alternative, serving a connection to completion on the accept
-thread, was the first design: it measured well on a single client and badly on sixty-four,
-because sixty of them waited for a worker to finish its 256-request quota. The tail latency
-under that design was over 100 ms at 64 connections; with a thread per connection it is
-under one millisecond (Part VIII).
+connection gets its own thread with a one-megabyte stack. The accept loop then returns to
+`accept`. The first design served a connection on the accept thread itself. It performed
+well with one client, but at sixty-four connections most clients waited for a worker to
+finish its 256-request quota. In that comparison, tail latency fell from over 100 ms to
+under one millisecond after introducing a thread per connection (Part VIII).
 
 The number of connection threads is bounded by `--max-connections` (1,024 by default). Past
-the bound the accept loop answers `503 Service Unavailable` on the new socket and closes it
-without spawning anything, and counts the event in `sibuna_overloaded_total`. Memory is
-bounded the same way: a connection thread touches about 100 KB of its stack, so the worst case
-is a known number rather than a function of how many sockets a client can open. The idle
-reaper (below) closes connections that stop sending, so a slow client cannot pin a thread
-past `--idle-timeout`.
+the bound, the accept loop returns `503 Service Unavailable`, closes the new socket and
+increments `sibuna_overloaded_total`. It creates no connection thread.
+
+A connection thread touches about 100 KB of its stack in the ordinary path. The connection
+limit bounds how many such stacks can be active; CRS workspace has its own reserved pool.
+The idle reaper interrupts connections that stop making progress for `--idle-timeout`.
+Active streams can live longer, but they remain subject to the connection quota.
 
 === One Buffer per Connection
 
-Every dynamic allocation on a request path is a denial-of-service lever: fragmentation over
-days, allocator lock contention across threads, and amplification by attackers who craft
-requests that maximise allocation. Sibuna's rule is absolute: classification, verification, and
-proxy hand-off run with zero heap allocation. The connection handler owns a 64 KB buffer on its
-thread's stack and a 16 KB write buffer; everything else is a slice into them.
+Request-path allocations introduce memory growth, fragmentation and allocator contention.
+Sibuna instead reserves the storage needed for classification, proof verification and proxy
+handling. These operations perform no heap allocation. The connection handler owns a 64 KB
+read buffer and a 16 KB write buffer on its thread's stack. Parsed request fields borrow
+slices from the read buffer; the optional CRS engine leases its preallocated workspace.
 
 ```zig
 pub fn handleConnection(stream: Io.net.Stream, io: Io, state: *AppState) void {
@@ -58,30 +58,34 @@ pub fn handleConnection(stream: Io.net.Stream, io: Io, state: *AppState) void {
 ```
 
 `readHead` fills the buffer until the blank line appears, refusing heads over 16 KB with `431`.
-The parser produces a `Request` whose method, path, query, headers, and cookies are slices of
-the buffer; the declared body is filled up to what fits and sliced after the head; then
-`toss(body_end)` advances the reader so the next keep-alive request starts cleanly. The request
-target must be origin-form (`/...`), or `*` for `OPTIONS`. Absolute-form, authority-form
+The parser produces a `Request` whose method, path, query, headers and cookies borrow the
+buffer. The body follows the head and is read up to the available capacity.
+`toss(body_end)` advances the reader to the next keep-alive request.
+
+The request target must be origin-form (`/...`), or `*` for `OPTIONS`. Absolute-form, authority-form
 (`CONNECT`), fragments and any other target are answered `400` before policy, CRS or the
-origin see them: a path rule written as `/admin` would not match `http://host/admin`, and an
-origin that honours `CONNECT` could open a tunnel nothing inspects. RFC 9112 §3.2.2 asks
-servers to accept absolute-form; Sibuna refuses it rather than guess a normalization. The
-same byte loop that rejects control characters rejects `#`, so the check adds no pass. `Host`
-follows RFC 9112 §3.2: a repeated field, or a missing or empty one in HTTP/1.1, is answered
-`400`, and the value must be literal host bytes with an optional port. Percent escapes are
-refused, so `localhost%00` cannot name one virtual host to policy and another to the origin.
-Internal
-routes are length-delimited and keep the connection open. Proxied requests keep it open too,
-provided the origin's response is framed; the next section shows how the proxy decides.
+origin see them. Otherwise, a rule for `/admin` could miss `http://host/admin`, or `CONNECT`
+could create an uninspected tunnel. RFC 9112 §3.2.2 requires accepting absolute-form;
+Sibuna's rejection is a documented compatibility deviation. The control-character scan also
+rejects `#`, so it needs no extra pass.
+
+Following RFC 9112 §3.2, HTTP/1.1 requests receive `400` for repeated, missing or empty `Host`
+fields. Sibuna also requires literal host bytes with an optional port. It rejects percent
+escapes so that a value such as `localhost%00` cannot name different hosts to policy and
+origin.
+
+Internal responses have explicit lengths and can keep the connection open. Proxied responses
+can also keep it open when the origin supplies framing, as described below.
 
 === The Proxy Head Rewrite
 
 The head is not forwarded verbatim. `writeHead` re-emits the request line and each header,
-dropping hop-by-hop fields (`Connection`, `Transfer-Encoding`, any incoming `X-Forwarded-For`)
-and appending the audit set. Body framing is generated, never copied. A `Content-Length` is
+dropping hop-by-hop fields such as `Connection` and `Transfer-Encoding`. It also replaces
+incoming `X-Forwarded-For` and appends Sibuna's audit fields. Body framing is generated.
+A `Content-Length` is
 re-emitted. A chunked body that ended within the connection buffer is decoded in place and
 sent with its length. A longer one is announced as `Transfer-Encoding: chunked` and
-re-chunked one read at a time (SID 0009). The audit set:
+re-chunked one read at a time (SID 0009). The added fields are:
 
 ```
 Connection: close
@@ -91,17 +95,18 @@ X-Sibuna-Status: PASS
 X-Sibuna-Rule: session | robots-txt | ip/cidr-trie | ...
 ```
 
-Bodies larger than the buffer are relayed in 16 KB chunks from the client reader to the origin
-writer before the response is streamed back. The unit test in `proxy.zig` asserts the rewrite
-drops a spoofed `X-Forwarded-For` and injects the audit fields.
+Bodies larger than the buffer stream from the client reader to the origin writer. The relay
+uses the buffer space after the request head. This keeps borrowed paths and headers alive
+for audit and telemetry that run after the upload, without copying the head. The unit test
+in `proxy.zig` verifies that the rewrite removes spoofed `X-Forwarded-For` and adds the
+audit fields.
 
 === Relaying the Origin Response
 
-The first proxy streamed the origin's bytes until the origin closed and then closed the client:
-correct framing with no parsing, at the price of a new TCP connection per proxied request.
-Under a load generator that price was visible as tens of thousands of sockets in `TIME_WAIT`
-and, on loopback, exhausted ephemeral ports. The proxy now reads the origin's head (at most
-16 KB) and classifies the body by RFC 9112's rules:
+The first proxy read until the origin closed, then closed the client connection. Every
+request therefore needed a new TCP connection. Load tests produced many sockets in
+`TIME_WAIT` and eventually exhausted loopback's ephemeral ports. The proxy now reads the
+origin's head, bounded to 16 KB, and determines body framing using RFC 9112:
 
 #api_anchor([`proxy.parseResponseHead`], [
   Returns the status and one of four framings: no body (HEAD, 1xx, 204, 304), a
@@ -112,43 +117,53 @@ and, on loopback, exhausted ephemeral ports. The proxy now reads the origin's he
 pub const Framing = union(enum) { none, length: u64, chunked, until_close };
 
 pub fn parseResponseHead(head: []const u8, head_request: bool) ?ResponseHead {
-    if (head.len < 12 or !std.mem.startsWith(u8, head, "HTTP/1.")) return null;
+    if (head.len < 13 or !std.mem.startsWith(u8, head, "HTTP/1.") or
+        (head[7] != '0' and head[7] != '1') or head[8] != ' ' or head[12] != ' ')
+        return null;
     const status = std.fmt.parseInt(u16, head[9..12], 10) catch return null;
+    if (status < 100) return null;
     var framing: Framing = .until_close;
     var chunked = false;
-    // ... one pass over the header lines for Transfer-Encoding and Content-Length
-    if (head_request or status / 100 == 1 or status == 204 or status == 304) framing = .none;
-    if (chunked) framing = .chunked;
-    return .{ .status = status, .framing = framing };
+    var encoded = false;
+    var keep_alive = head[7] == '1';
+    var closing = false;
+    // ... validate headers, collect framing and Connection flags in one pass
+    if (head_request or status / 100 == 1 or status == 204 or status == 304) {
+        framing = .none;
+    } else if (encoded) framing = if (chunked) .chunked else .until_close;
+    if (framing == .until_close or closing) keep_alive = false;
+    // ... reject framing fields nominated by Connection
+    return .{ .status = status, .framing = framing, .keep_alive = keep_alive };
 }
 ```
 
 The head is re-emitted to the client with the origin's `Connection` headers replaced by
-Sibuna's own decision, and the body is relayed exactly: `streamExact` for a length, chunk by
-chunk (size line, data, trailers) for chunked coding, `streamRemaining` for the legacy case.
-Only the legacy case closes the client.
+Sibuna's own decision. The relay uses `streamExact` for an explicit length, forwards size
+lines, data and trailers for chunked coding, and uses `streamRemaining` for a close-delimited
+body. A close-delimited body requires closing the client connection to signal its end.
+Framed responses can reuse the client connection if the client permits it.
 
 === The Origin Pool
 
 Parsing the framing also tells the proxy whether the *origin* socket can be used again: an
 HTTP/1.1 response without `Connection: close` (or an HTTP/1.0 one with `keep-alive`) whose body
 was fully consumed leaves the socket at a clean request boundary. Such sockets go into a fixed
-pool of 256 idle origin connections guarded by a spinlock; the next proxied request takes one
-instead of connecting. The measurement that forced this (Part VIII) was blunt: with a new
-origin connection per request, a four-core proxy managed about 1,400 requests per second
-before loopback ran out of ephemeral ports.
+pool of 256 idle origin connections guarded by a lock. The next proxied request can reuse
+one instead of connecting. In the earlier four-core measurement, creating an origin
+connection for every request limited throughput to about 1,400 requests per second before
+loopback ran out of ephemeral ports (Part VIII).
 
 A pooled socket may have been closed by the origin while idle. The proxy notices in one of two
-ways, a failed write or an end-of-stream before the first response byte, and in both cases
-nothing has reached the client yet, so it closes the socket and retries once on a fresh
-connection, never on another pooled one: after an idle period every pooled socket may be
-stale, and the first version of this retry, which took a second pooled socket, answered `502`
-to the first request after every quiet spell. The retry is allowed only when the request body was fully buffered; a body that
-was relayed in chunks cannot be sent again, and the client gets `502`. Unit tests relay fixed
-byte strings through the same function and assert the output is byte-identical apart from the
-connection header; an end-to-end test sends two proxied requests on one client socket and
-checks, through a sequence header the stub origin adds, that the second reused the pooled
-origin connection.
+ways: a failed write, or end-of-stream before the first response byte. No response has reached
+the client at that point. For a fully buffered `GET`, `HEAD` or `OPTIONS` request, it retries
+once on a fresh connection. It does not take another pooled socket, because that socket
+could also be stale.
+
+Other methods and streamed uploads are not replayed. When their origin exchange fails
+before a response, the client receives `502`. This avoids repeating a mutation or attempting
+to resend body bytes the relay no longer owns. Unit tests compare the relayed bytes, allowing
+for the rewritten connection header. An end-to-end test sends two requests on one client
+socket and uses an origin sequence header to confirm reuse of the origin connection.
 
 #exercise([5.1], [
   A client sends a 200 KB upload. Trace which bytes live in the 64 KB buffer, which are relayed
@@ -158,16 +173,19 @@ origin connection.
 == Concurrent State Without Allocation
 
 #objectives([
-  Analyse the spinlock, the Robin Hood spent set, the GCRA limiter, the lock-free ban table,
+  Analyse the adaptive lock, the Robin Hood spent set, the GCRA limiter, the lock-free ban table,
   the MPSC incident ring, and the read-copy-update engine slot.
 ])
 
-=== Spinlocks and Sharding
+=== Short Locks and Sharding
 
-The critical sections in Sibuna's tables are tens of instructions long, far shorter than a
-kernel futex round trip, so shards are guarded by a two-state atomic spinlock with
-`spinLoopHint` in the wait loop. Tables are split into 16 shards by key hash so two operations
-contend with probability $1/16$.
+Most table updates need a short critical section. `core.Lock` first attempts an atomic
+acquisition and spins briefly if the lock is occupied. If the wait continues, it parks the
+thread on a futex so that the holder can run. An uncontended operation needs no kernel wait.
+
+Tables are split into 16 shards by key hash. For independent uniformly distributed hashes,
+two operations choose the same shard with probability $1/16$. Traffic concentrated on a few
+keys can still contend heavily within their shards.
 
 === The Robin Hood Spent Set
 
@@ -224,13 +242,14 @@ $ "arrival at" t "conforms" <=> "TAT" <= t + tau, quad "then" "TAT" <- max("TAT"
 #book_figure([GCRA admission for a limit of 5 per second: a burst of five, then one every 200 ms], gcra_timeline())
 
 ```zig
-fn check(self: *Shard, key: u64, now_ms: u64, limits: Limits) Decision {
+fn check(self: *Shard, io: Io, key: u64, now_ms: u64, limits: Limits) Decision {
     const interval = limits.emissionInterval();
     const tau = limits.burstTolerance();
-    self.lock.lock();
-    defer self.lock.unlock();
-    const cell = self.locate(key, now_ms, tau) orelse return .{
-        .limited = true, .retry_after_ms = interval, .remaining = 0,
+    self.lock.lock(io);
+    defer self.lock.unlock(io);
+    const cell = self.locate(key, now_ms) orelse return .{
+        .capacity_exhausted = true, .limited = true,
+        .retry_after_ms = interval, .remaining = 0,
     };
     const tat = @max(cell.tat_ms, now_ms);
     if (tat > now_ms +| tau) {
@@ -241,8 +260,8 @@ fn check(self: *Shard, key: u64, now_ms: u64, limits: Limits) Decision {
 }
 ```
 
-Cells are 16 bytes in 16 shards of 512 slots with a 16-slot probe window; a cell whose TAT is
-older than $t - tau$ has drained and is reclaimed on the spot. The `Retry-After` header is
+Cells are 16 bytes in 16 shards of 512 slots with a 16-slot probe window. A cell with
+$"TAT" <= t$ has drained and can be reclaimed immediately. The `Retry-After` header is
 computed from the same arithmetic. Saturated probe windows refuse new clients rather than
 evicting active quota state; a zero configured rate refuses requests.
 
@@ -256,12 +275,12 @@ real cost, measured indirectly in the HTTP harness rather than assumed free.
 
 === The MPSC Incident Ring
 
-When the Shield surface denies a request or the honeypot fires, the incident is copied into a
+When Shield denies a request or the honeypot fires, the incident is copied into a
 fixed 1.3 KB record and pushed onto a bounded multi-producer single-consumer ring (Vyukov's
 sequence-stamped design, 512 slots). Producers are worker threads; the consumer is the storage
-thread. A full ring drops the newest record rather than blocking a response, an explicit loss policy rather than a durability guarantee. The drop counter makes that loss
-observable. After moving a record into a pending batch, the storage thread retains it until
-commit is confirmed; it does not silently discard it on a database error.
+thread. A full ring drops the newest record instead of blocking a response. The drop counter
+makes this loss visible. Once the storage thread moves a record into a pending batch, it
+retains that record until commit is confirmed, including after a database error.
 
 === Read-Copy-Update Engine Slots
 
@@ -292,8 +311,8 @@ Sequentially consistent pointer and reader-count operations establish one total 
 across the two atomics. Merely using acquire/release on separate objects is insufficient.
 The re-check after incrementing closes the race in which a writer swaps between the reader's
 load and its increment and observes zero readers: the reader notices the pointer changed,
-releases, and retries on the new slot. The test suite includes a scenario that deadlocked when a
-test held a slot across a rebuild, which is exactly the guarantee working as designed.
+releases it and retries on the new slot. A caller must release its slot before waiting for a
+rebuild. Keeping a slot pinned while waiting would prevent that rebuild from completing.
 
 Each physical slot owns its own allocation arena, so a rebuild into the spare slot cannot free
 strings the active engine still references. A request copies the matched rule name into a
