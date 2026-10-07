@@ -2552,9 +2552,11 @@ and the bounded response-stack regression are in `console-release-030-20261007.j
 The two real three-host checks qualify convergence and failover independently of throughput.
 
 Separate-host request-path measurements compare CRS Off, Audit and Enforce at paranoia one
-and two with eight dashboards; the final record and regenerated primitive baseline retain
-clean application revision `d461e7f` and distinct ReleaseSafe/ReleaseFast executable digests.
-No timed CRS sample reports incomplete inspection. Containers do not control physical-host
+and two with eight dashboards. Their recorded ReleaseSafe executable uses clean application
+revision `d461e7f`; no timed CRS sample reports incomplete inspection. The regenerated
+primitive baseline uses clean revision `0796752` at ReleaseFast, with native CRS, storage
+and console inactive. Both records retain their own source and executable digests.
+Containers do not control physical-host
 load or CPU frequency, and these measurements do not establish universal capacity or a
 matched comparison with another CRS product. The separate SID 0007 console-impact target
 remains not formally passed; this release does not reinterpret its accepted exception.

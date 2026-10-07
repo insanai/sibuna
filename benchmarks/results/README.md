@@ -6,13 +6,16 @@ Both write timestamped results and update their respective `latest` JSON files.
 
 ## Primitive baseline
 
-`latest.json` and `latest-release-030-20261007.json` record clean revision
-`d461e7fee9622f5f365fdb37b18acc77dc56608f`, measured on the Linux service container
+`latest.json` and `latest-20261007T084613Z.json` record clean revision
+`0796752a0a6fdd8c1f97a27ee3334c41edc84d7a`, measured on the Linux service container
 with Zig 0.17.0 at ReleaseFast. Each row retains seven-batch median, minimum and maximum
 latencies. Storage and console are compiled in but inactive; native CRS is disabled.
 The idle process measurement uses two workers without a data directory or console listener.
 The record identifies the source, executable, dependency and solver module. Its ReleaseFast
-executable differs from the ReleaseSafe native-CRS measurements below; idle RSS is 9,996 KiB.
+executable differs from the ReleaseSafe native-CRS measurements below; idle RSS is 10,076 KiB.
+
+The earlier `latest-release-030-20261007.json` retains revision `d461e7f` and its 9,996 KiB
+idle RSS measurement. It is a separate recorded build, not an alias for the current baseline.
 
 These primitive timings and idle memory do not measure a loaded CRS generation, console
 isolation or production throughput. The three-product families below remain measurements
@@ -273,8 +276,8 @@ and origin sockets. The whole-product comparison was regenerated from a clean ch
 eight impact matrices and `linux-launch-review-20261002.json` predate that change and were
 not rerun. Rerun them before citing them for the current code.
 The primitive suite was regenerated on 3 October for Zig 0.17.0 from clean revision
-`b1da948` on the same Linux container. `latest.json` and
-`latest-20261003T082823Z.json` identify the source digest and executable. Source manifest
+`b1da948` on the same Linux container. Its retained record,
+`latest-20261003T082823Z.json`, identifies the source digest and executable. Source manifest
 version 3 includes the explicitly migrated Zaxonlite and Paxos 0.7.0 snapshots in `vendor/`;
 the original package pins and the compatibility source path are recorded separately.
 The earlier Zig 0.16 measurement remains in its timestamped file. Admission, distributed,
