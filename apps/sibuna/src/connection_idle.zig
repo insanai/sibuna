@@ -37,6 +37,7 @@ pub const IdleTable = struct {
                 slot.activity.at_ms.store(now_ms, .monotonic);
                 slot.activity.timeout_ms.store(0, .monotonic);
                 slot.activity.deadline_ms.store(0, .monotonic);
+                slot.activity.cancelled.store(false, .release);
                 slot.activity.detachPeer(io);
                 return idx;
             }
@@ -68,7 +69,10 @@ pub const IdleTable = struct {
         for (&self.slots) |*slot| {
             slot.lock.lock(io);
             defer slot.lock.unlock(io);
-            if (slot.active) net.interrupt(io, slot.stream);
+            if (slot.active) {
+                slot.activity.cancel();
+                net.interrupt(io, slot.stream);
+            }
         }
     }
 
@@ -81,6 +85,7 @@ pub const IdleTable = struct {
             slot.lock.lock(io);
             defer slot.lock.unlock(io);
             if (slot.active and slot.activity.expired(now_ms, timeout_ms)) {
+                slot.activity.cancel();
                 net.interrupt(io, slot.stream);
                 slot.activity.shutdownPeer(io);
                 // Keep ownership until unregister; an old worker must not clear a reused slot.
@@ -107,13 +112,20 @@ test "reaped idle slots remain owned until the original connection unregisters" 
     try std.testing.expectEqual(@as(u32, 0), table.reap(io, 200, 0));
     table.slots[old].activity.timeout_ms.store(100, .monotonic);
     try std.testing.expectEqual(@as(u32, 1), table.reap(io, 200, 0));
+    try std.testing.expect(table.slots[old].activity.cancelled.load(.acquire));
     table.cursor.store(old, .monotonic);
     // The same socket is sufficient to check registry ownership; neither registration closes it.
     const fresh = table.register(io, stream, 200).?;
     try std.testing.expect(old != fresh);
+    try std.testing.expect(!table.slots[fresh].activity.cancelled.load(.acquire));
     table.unregister(io, old);
     try std.testing.expect(table.slots[fresh].active);
     table.unregister(io, fresh);
+    table.cursor.store(old, .monotonic);
+    const reused = table.register(io, stream, 200).?;
+    try std.testing.expectEqual(old, reused);
+    try std.testing.expect(!table.slots[reused].activity.cancelled.load(.acquire));
+    table.unregister(io, reused);
 }
 
 test "an absolute inspection deadline expires despite progress and resets on reuse" {

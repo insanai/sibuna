@@ -14,6 +14,8 @@ pub const Endpoint = struct { stream: Io.net.Stream, reader: *Io.Reader };
 /// so a stall is cut on both sides and the connection slot comes back.
 pub const Activity = struct {
     at_ms: std.atomic.Value(u64) = .init(0),
+    /// Sticky until the connection owner unregisters; socket EOF is not a cancellation signal.
+    cancelled: std.atomic.Value(bool) = .init(false),
     /// Zero uses the HTTP owner's default; an upgrade sets its own idle bound.
     timeout_ms: std.atomic.Value(u64) = .init(0),
     /// Absolute inspection deadline; progress never extends a scarce workspace lease.
@@ -29,6 +31,10 @@ pub const Activity = struct {
         const override = self.timeout_ms.load(.monotonic);
         const timeout = if (override == 0) default_timeout_ms else override;
         return timeout != 0 and now_ms -| self.at_ms.load(.monotonic) > timeout;
+    }
+
+    pub fn cancel(self: *Activity) void {
+        self.cancelled.store(true, .release);
     }
 
     pub fn touch(self: *Activity, io: Io) void {
@@ -135,6 +141,9 @@ pub fn relay(io: Io, endpoints: [2]Endpoint, options: Options) Error!void {
             @as(u64, options.idle_timeout_seconds) * 1000, .monotonic);
     }
     while (true) {
+        if (options.activity) |activity| {
+            if (activity.cancelled.load(.acquire)) return error.ConnectionFailed;
+        }
         var descriptors: [2]posix.pollfd = undefined;
         for (&directions, 0..) |*direction, index| {
             direction.prefill();
@@ -216,4 +225,59 @@ test "prefetched upgrade bytes larger than one relay buffer remain ordered under
     direction.prefill();
     try std.testing.expectEqual(@as(usize, 17), direction.pending().len);
     try std.testing.expect(std.mem.allEqual(u8, direction.pending(), 2));
+}
+
+const CancellationFixture = struct {
+    streams: [2]Io.net.Stream,
+    activity: Activity = .{},
+    started: std.atomic.Value(bool) = .init(false),
+    finished: std.atomic.Value(bool) = .init(false),
+    result: ?Error = null,
+
+    fn run(self: *@This()) void {
+        var buffers: [2][16]u8 = undefined;
+        var first = self.streams[0].reader(std.testing.io, &buffers[0]);
+        var second = self.streams[1].reader(std.testing.io, &buffers[1]);
+        self.started.store(true, .release);
+        relay(std.testing.io, .{
+            .{ .stream = self.streams[0], .reader = &first.interface },
+            .{ .stream = self.streams[1], .reader = &second.interface },
+        }, .{ .idle_timeout_seconds = 0, .activity = &self.activity }) catch |err| {
+            self.result = err;
+        };
+        self.finished.store(true, .release);
+    }
+};
+
+test "cancelled upgrade exits with idle timeout disabled while both peers stay open" {
+    const t = std.testing;
+    const io = t.io;
+    const address = try Io.net.IpAddress.parse("127.0.0.1", 0);
+    var listener = try address.listen(io, .{});
+    defer listener.deinit(io);
+    const first = try listener.socket.address.connect(io, .{ .mode = .stream });
+    defer first.close(io);
+    const first_stream = try listener.accept(io);
+    defer first_stream.close(io);
+    const second = try listener.socket.address.connect(io, .{ .mode = .stream });
+    defer second.close(io);
+    const second_stream = try listener.accept(io);
+    defer second_stream.close(io);
+    var fixture: CancellationFixture = .{ .streams = .{ first_stream, second_stream } };
+    const worker = try std.Thread.spawn(.{}, CancellationFixture.run, .{&fixture});
+    defer {
+        fixture.activity.cancel();
+        // Cleanup also interrupts sockets so a failing assertion can still join the worker.
+        for (fixture.streams) |stream| @import("socket").interrupt(io, stream);
+        worker.join();
+    }
+    while (!fixture.started.load(.acquire)) std.atomic.spinLoopHint();
+    try Io.sleep(io, .fromMilliseconds(50), .awake);
+    // Cancellation alone must end the relay; no socket is interrupted before this assertion.
+    fixture.activity.cancel();
+    const deadline = nowMs(io) + 3000;
+    while (!fixture.finished.load(.acquire) and nowMs(io) < deadline)
+        try Io.sleep(io, .fromMilliseconds(5), .awake);
+    try t.expect(fixture.finished.load(.acquire));
+    try t.expectEqual(error.ConnectionFailed, fixture.result.?);
 }
