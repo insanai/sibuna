@@ -27,6 +27,9 @@ pub const Workspace = struct {
         errdefer allocator.free(threads);
         const visited = try reserved.alloc(allocator, usize, states);
         errdefer allocator.free(visited);
+        // Closures read marks before writing them. A recycled allocation may contain
+        // this workspace's first stamp, so only the mark array needs an initial clear.
+        @memset(visited, 0);
         return .{
             .allocator = allocator,
             .threads = threads,

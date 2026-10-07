@@ -295,3 +295,23 @@ test "cached DFA edges exhaust the budget exactly where per-byte charging would"
         }
     }
 }
+
+test "new DFA workspaces ignore closure marks left in recycled storage" {
+    var program = try regex.compile(std.testing.allocator, "a", .{});
+    defer program.deinit();
+    // An allocator may return a prior workspace's last closure marks. Its first
+    // search must not mistake them for marks made by this workspace.
+    var storage: [64 * 1024]u8 align(@alignOf(usize)) = undefined;
+    const first_stamp = (@as(usize, 1) << (@bitSizeOf(usize) - 2)) + 1;
+    @memset(std.mem.bytesAsSlice(usize, &storage), first_stamp);
+    var allocator: std.heap.FixedBufferAllocator = .init(&storage);
+    var workspace = try regex.Workspace.init(allocator.allocator(), &program);
+    defer workspace.deinit();
+    var budget: work.Budget = .{ .remaining = 1000 };
+    try std.testing.expect(try regex.match.matches(
+        &program,
+        "a",
+        &workspace.scratch,
+        &budget,
+    ));
+}
