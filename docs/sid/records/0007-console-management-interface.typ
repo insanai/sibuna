@@ -7,7 +7,7 @@
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
 #let sid-status = "Committed"
-#let sid-last-updated = "2026-10-06"
+#let sid-last-updated = "2026-10-07"
 
 #import "../../shared/sid.typ": sid-document
 #import "@preview/cetz:0.5.2" as cetz
@@ -643,6 +643,11 @@ about firewalls.
   the console is bound off loopback: time-based one-time passwords (RFC 6238, HMAC-SHA1 from
   the standard library) enrolled through a QR code rendered by the interface module, with
   ten single-use recovery codes stored as digests. Encrypt the TOTP seed under a separately provisioned console key; atomically consume recovery codes and accepted TOTP time steps to prevent replay across nodes. Enrollment and recovery endpoints are rate limited. Seed envelopes use the standard-library XChaCha20-Poly1305 construction with a fresh 192-bit random nonce, binding the envelope version, console key identifier and user id as associated data. Recovery values contain 128 random bits and their SHA-256 digests are domain-separated and user-bound. Six-digit TOTP accepts at most one 30-second step of skew; the authoritative transaction consumes the newest matching step and refuses any previously consumed or older step. This is Phase 1 for any off-loopback release.
+  An owner who presents the password and an unconsumed proof may replace all recovery codes
+  or turn the factor off; an administrator may reset another account's factor against its
+  revision. Turning a factor off clears its codes and pending enrollment, ends the account's
+  sessions and is audited as `totp.disable` or `totp.reset`; replacement codes are audited as
+  `totp.recovery`. A factor this node cannot decrypt is refused like a wrong password.
 - *API tokens* for automation are opaque 256-bit values with a printable id, a role, and an
   optional expiry, presented as `Authorization: Bearer`; they are hashed like sessions.
 - *Audit.* Every mutation writes one `console_audit` row (actor, role, action, subject,

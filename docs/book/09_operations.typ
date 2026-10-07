@@ -518,6 +518,21 @@ permissions and protects stored second-factor secrets; retain it across restarts
 from the challenge seed. The configured HTTPS origin and proxy allowlist are mandatory for
 off-loopback access.
 
+Each user manages two-factor authentication under Account. Enrollment shows the secret as a QR
+code labelled with the username and returns ten single-use recovery codes. With the password
+and a current authenticator code or unused recovery code, the owner can replace every recovery
+code or turn two-factor off; turning it off ends that account's sessions. A recovery code
+does not need the console key. An administrator can reset another account's two-factor from
+Users or with `sibuna console reset-factor <id> --revision <n>`; the reset ends the account's
+sessions and is audited. Administrators cannot reset their own factor this way.
+
+Stored secrets can be opened only with the console key that enrolled them. If the key is lost
+or replaced, an authenticator code is refused like a wrong password and the node logs that it
+cannot read the factor. Owners can still sign in with a recovery code, turn two-factor off and
+enroll again under the new key; accounts without recovery codes need an administrator reset.
+Behind `--console-behind-proxy`, an administrator whose factor is off can only enroll until
+two-factor is enabled again. Give every console node the same key file.
+
 The native CLI accesses the running console through the same authorization and storage
 contracts. It reads credentials from private files, not command-line values:
 
