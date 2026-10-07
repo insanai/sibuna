@@ -27,7 +27,8 @@ pub fn run(gpa: std.mem.Allocator, io: std.Io, cfg: core.Config, username: []con
     const owner = try Persistent.open(gpa, io, cfg, state, null);
     defer owner.stop();
     const status = try request(owner, .setup_status);
-    if (status != .setup_required or !status.setup_required) return error.AlreadyInitialized;
+    if (status != .setup_required) return error.StorageUnavailable;
+    if (!status.setup_required) return error.AlreadyInitialized;
     var passwords = try console.Password.init(gpa);
     defer passwords.deinit();
     var random: [24]u8 = undefined;

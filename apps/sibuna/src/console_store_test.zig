@@ -1253,3 +1253,30 @@ test "every audited mutation source table carries the presenting client address"
         }
     }
 }
+
+test "newer console schemas fail startup without an election retry or schema writes" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const format = ".zig-cache/tmp/{s}/future-schema";
+    const location = try std.fmt.bufPrint(&path, format, .{tmp.sub_path});
+    const fx = try Fixture.open(location);
+    defer fx.close();
+    try @import("console_migrations.zig").run(fx.owner);
+    // Each migration replaces the constrained marker, as a future binary would.
+    const future = @import("console").schema.version + 1;
+    var sql: [192]u8 = undefined;
+    const migration = try std.fmt.bufPrint(&sql, "DROP TABLE console_schema;" ++
+        "CREATE TABLE console_schema(version INTEGER PRIMARY KEY CHECK(version={d}));" ++
+        "INSERT INTO console_schema VALUES({d});", .{ future, future });
+    try fx.owner.db.exec(t.allocator, migration);
+    fx.owner.console_initialized = false;
+    const result = try fx.run(.setup_status);
+    try t.expectEqual(p.Failure.invalid_input, result.failed);
+    try t.expect(!fx.owner.console_initialized);
+    const query = "SELECT version FROM console_schema";
+    var marker = try db.query(fx.owner.db, t.allocator, query, &.{});
+    defer marker.deinit();
+    const version = try std.fmt.parseInt(u64, marker.rows[0][0].?, 10);
+    try t.expectEqual(future, version);
+}

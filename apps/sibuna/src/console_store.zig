@@ -17,7 +17,10 @@ pub fn tick(owner: *Persistent) void {
         const work = owner.console_mailbox.take(owner.io) orelse return;
         const result = execute(owner, work.request) catch |err| result: {
             std.log.warn("console storage operation failed: {t}", .{err});
-            break :result p.StorageResult{ .failed = .unavailable };
+            // An explicit newer schema cannot recover through an election retry.
+            const failure: p.Failure = if (work.request == .setup_status and
+                err == error.UnsupportedConsoleSchema) .invalid_input else .unavailable;
+            break :result p.StorageResult{ .failed = failure };
         };
         p.releaseRequest(work.request, owner.gpa);
         owner.console_mailbox.complete(owner.io, work.ticket, result) catch |err| {

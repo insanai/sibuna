@@ -16,7 +16,7 @@ const passphrase = "a long test passphrase";
 const key: [32]u8 = @splat(21);
 const seed: totp.Seed = "12345678901234567890".*;
 const origin = "http://console.test";
-const Reply = enum {
+pub const Reply = enum {
     user,
     user_totp,
     authorized,
@@ -25,13 +25,17 @@ const Reply = enum {
     corrupt_factor,
     unavailable,
     unauthorized,
+    invalid_input,
     conflict,
     command,
+    setup_ready,
+    owned_heads,
+    hold,
 };
 const Request = std.meta.Tag(p.StorageRequest);
 const Step = struct { request: Request, reply: Reply };
 
-const Fixture = struct {
+pub const Fixture = struct {
     app: App,
     mailbox: Mailbox = .{},
     telemetry: store.ConsoleTelemetry,
@@ -46,7 +50,7 @@ const Fixture = struct {
     denied: usize = 0,
     failure: ?anyerror = null,
 
-    fn init(script: []const Step) !*Fixture {
+    pub fn init(script: []const Step) !*Fixture {
         const self = try t.allocator.create(Fixture);
         errdefer t.allocator.destroy(self);
         var passwords = try Password.init(t.allocator);
@@ -56,6 +60,7 @@ const Fixture = struct {
         errdefer hub.deinit();
         self.* = .{
             .script = script,
+            .mailbox = .{ .gpa = t.allocator },
             .telemetry = store.ConsoleTelemetry.init(),
             .incidents = store.ConsoleIncidents.init(),
             .app = .{
@@ -92,7 +97,7 @@ const Fixture = struct {
         return self;
     }
 
-    fn stop(self: *Fixture) void {
+    pub fn stop(self: *Fixture) void {
         if (self.kernel) |kernel| kernel.stop();
         self.kernel = null;
         self.stopping.store(true, .release);
@@ -101,7 +106,7 @@ const Fixture = struct {
         self.worker = null;
     }
 
-    fn deinit(self: *Fixture) void {
+    pub fn deinit(self: *Fixture) void {
         self.stop();
         self.mailbox.deinit(t.io);
         self.app.peers.deinit();
@@ -133,19 +138,40 @@ const Fixture = struct {
             }
             const reply = self.script[self.consumed].reply;
             self.consumed += 1;
-            self.mailbox.complete(t.io, work.ticket, self.result(reply)) catch |err| {
+            const answer = self.result(reply) catch |err| {
+                self.failure = err;
+                const failed: p.StorageResult = .{ .failed = .unavailable };
+                self.mailbox.complete(t.io, work.ticket, failed) catch |reply_err| {
+                    self.failure = reply_err;
+                };
+                return;
+            };
+            self.mailbox.complete(t.io, work.ticket, answer) catch |err| {
                 self.failure = err;
                 return;
             };
         }
     }
 
-    fn result(self: *Fixture, reply: Reply) p.StorageResult {
+    fn result(self: *Fixture, reply: Reply) !p.StorageResult {
         return switch (reply) {
             .unavailable => .{ .failed = .unavailable },
             .unauthorized => .{ .failed = .unauthorized },
+            .invalid_input => .{ .failed = .invalid_input },
             .conflict => .{ .failed = .conflict },
             .command => .command_recorded,
+            .setup_ready => .{ .setup_required = false },
+            .owned_heads => block: {
+                const heads = try t.allocator.create(p.incident_heads.Heads);
+                heads.* = .{ .id = 1 };
+                break :block .{ .incident_heads = heads };
+            },
+            .hold => block: {
+                while (!self.stopping.load(.acquire)) {
+                    try std.Io.sleep(t.io, .fromMilliseconds(5), .awake);
+                }
+                break :block .{ .failed = .unavailable };
+            },
             .user, .user_totp => .{ .auth_user = .{
                 .id = 1,
                 .username = p.Bytes(64).init("admin") catch unreachable,

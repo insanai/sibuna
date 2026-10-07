@@ -103,9 +103,9 @@ pub const App = struct {
             if (self.totp_key) |*key| std.crypto.secureZero(u8, key);
         }
         self.dummy_hash = try self.passwords.hash(io, "dummy password never grants access");
-        const status = try self.request(.setup_status);
-        if (status != .setup_required) return error.StorageUnavailable;
-        self.setup_required = status.setup_required;
+        const began = std.Io.Clock.awake.now(io);
+        const deadline = began.addDuration(.fromSeconds(startup_wait_seconds));
+        self.setup_required = try self.waitForSetup(deadline);
         if (self.config.origin.len == 0) {
             var buffer: [255]u8 = undefined;
             const host = if (cfg.host.len == 0) "127.0.0.1" else cfg.host.slice();
@@ -291,12 +291,31 @@ pub const App = struct {
 
     /// Longest wait for the storage owner before a request is answered as unknown.
     pub const storage_wait_seconds = 10;
+    /// A restarting replica can be elected or catch up before its first linearizable read.
+    /// Startup publishes no console services until setup is known, and never waits forever.
+    pub const startup_wait_seconds = 30;
 
     fn requestAt(
         self: *App,
         operation: p.StorageRequest,
         priority: Mailbox.Priority,
     ) !p.StorageResult {
+        const deadline = std.Io.Clock.awake.now(self.io).addDuration(
+            .fromSeconds(storage_wait_seconds),
+        );
+        return self.requestBefore(operation, priority, deadline);
+    }
+
+    fn requestBefore(
+        self: *App,
+        operation: p.StorageRequest,
+        priority: Mailbox.Priority,
+        deadline: std.Io.Timestamp,
+    ) !p.StorageResult {
+        if (std.Io.Clock.awake.now(self.io).nanoseconds >= deadline.nanoseconds) {
+            p.releaseRequest(operation, self.gpa);
+            return error.StorageTimeout;
+        }
         const ticket = self.mailbox.submit(self.io, operation, priority) catch |err| {
             p.releaseRequest(operation, self.gpa);
             return err;
@@ -304,18 +323,44 @@ pub const App = struct {
         errdefer self.mailbox.abandon(self.io, ticket) catch |err| {
             std.log.err("console request cancellation: {t}", .{err});
         };
-        const start = std.Io.Clock.awake.now(self.io);
         while (true) {
             if (try self.mailbox.poll(self.io, ticket)) |result| return result;
-            if (std.Io.Clock.awake.now(self.io).nanoseconds - start.nanoseconds >
-                storage_wait_seconds * std.time.ns_per_s) return error.StorageTimeout;
+            if (std.Io.Clock.awake.now(self.io).nanoseconds >= deadline.nanoseconds)
+                return error.StorageTimeout;
             self.mailbox.waitFor(self.io, ticket, .{ .deadline = .{
                 .clock = .awake,
-                .raw = start.addDuration(.fromSeconds(storage_wait_seconds)),
+                .raw = deadline,
             } }) catch |err| switch (err) {
                 error.Timeout => {},
                 else => return err,
             };
+        }
+    }
+
+    fn waitForSetup(self: *App, deadline: std.Io.Timestamp) !bool {
+        while (true) {
+            const instant = std.Io.Clock.awake.now(self.io);
+            if (instant.nanoseconds >= deadline.nanoseconds) return error.StorageUnavailable;
+            var attempt = instant.addDuration(.fromSeconds(storage_wait_seconds));
+            if (attempt.nanoseconds > deadline.nanoseconds) attempt = deadline;
+            var result: ?p.StorageResult = self.requestBefore(
+                .setup_status,
+                .urgent,
+                attempt,
+            ) catch |err| switch (err) {
+                error.StorageTimeout => null,
+                else => return err,
+            };
+            if (result) |*reply| {
+                defer p.releaseResult(reply.*, self.gpa);
+                if (reply.* == .setup_required) return reply.setup_required;
+                if (reply.* != .failed or reply.failed != .unavailable) {
+                    return error.StorageUnavailable;
+                }
+            }
+            var wake = std.Io.Clock.awake.now(self.io).addDuration(.fromMilliseconds(100));
+            if (wake.nanoseconds > deadline.nanoseconds) wake = deadline;
+            try (std.Io.Clock.Timestamp{ .clock = .awake, .raw = wake }).wait(self.io);
         }
     }
 
@@ -631,3 +676,65 @@ pub const App = struct {
         return result.authorized;
     }
 };
+
+test "console startup retries only unavailable setup reads within one deadline" {
+    const t = std.testing;
+    const fixture = @import("auth_http_test.zig");
+    const fx = try fixture.Fixture.init(&.{
+        .{ .request = .setup_status, .reply = .unavailable },
+        .{ .request = .setup_status, .reply = .unavailable },
+        .{ .request = .setup_status, .reply = .setup_ready },
+    });
+    defer fx.deinit();
+    const deadline = std.Io.Clock.awake.now(t.io).addDuration(.fromSeconds(2));
+    try t.expect(!try fx.app.waitForSetup(deadline));
+    fx.stop();
+    try t.expectEqual(null, fx.failure);
+    try t.expectEqual(@as(usize, 3), fx.consumed);
+}
+
+test "console startup refuses invalid replies and releases unexpected owned results" {
+    const t = std.testing;
+    const fixture = @import("auth_http_test.zig");
+    for ([_]fixture.Reply{ .owned_heads, .unauthorized, .invalid_input }) |reply| {
+        const fx = try fixture.Fixture.init(&.{.{ .request = .setup_status, .reply = reply }});
+        defer fx.deinit();
+        const deadline = std.Io.Clock.awake.now(t.io).addDuration(.fromSeconds(2));
+        try t.expectError(error.StorageUnavailable, fx.app.waitForSetup(deadline));
+        fx.stop();
+        try t.expectEqual(null, fx.failure);
+        try t.expectEqual(@as(usize, 1), fx.consumed);
+    }
+}
+
+test "console startup deadline abandons executing work until its owner completes" {
+    const t = std.testing;
+    const fixture = @import("auth_http_test.zig");
+    const fx = try fixture.Fixture.init(&.{.{ .request = .setup_status, .reply = .hold }});
+    defer fx.deinit();
+    const began = std.Io.Clock.awake.now(t.io);
+    const deadline = began.addDuration(.fromMilliseconds(200));
+    try t.expectError(error.StorageUnavailable, fx.app.waitForSetup(deadline));
+    const elapsed = std.Io.Clock.awake.now(t.io).nanoseconds - began.nanoseconds;
+    try t.expect(elapsed < 2 * std.time.ns_per_s);
+    fx.mailbox.mutex.lockUncancelable(t.io);
+    var abandoned: usize = 0;
+    for (fx.mailbox.slots) |slot| abandoned += @intFromBool(slot.state == .abandoned);
+    fx.mailbox.mutex.unlock(t.io);
+    try t.expectEqual(@as(usize, 1), abandoned);
+    fx.stop();
+    try t.expectEqual(null, fx.failure);
+    try t.expectEqual(@as(usize, 1), fx.consumed);
+    for (fx.mailbox.slots) |slot| try t.expectEqual(Mailbox.State.free, slot.state);
+}
+
+test "expired console startup submits no storage work" {
+    const t = std.testing;
+    const fixture = @import("auth_http_test.zig");
+    const fx = try fixture.Fixture.init(&.{});
+    defer fx.deinit();
+    try t.expectError(error.StorageUnavailable, fx.app.waitForSetup(.fromNanoseconds(0)));
+    fx.stop();
+    try t.expectEqual(null, fx.failure);
+    try t.expectEqual(@as(usize, 0), fx.consumed);
+}
