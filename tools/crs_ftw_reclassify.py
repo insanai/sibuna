@@ -10,7 +10,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from crs_ftw_check import source_bytes
+from crs_ftw_check import COMMIT, SOURCE_DIGEST, source_bytes
 from crs_ftw_daemon_check import corpus, engine_rows, representation_rows
 from crs_ftw_daemon_verdict import classify, failures
 
@@ -33,6 +33,9 @@ def main():
     if len(raw) > 64 * 1024 * 1024:
         parser.error("measurement exceeds the report bound")
     report = json.loads(raw)
+    if report.get("commit") != COMMIT or report.get("source_sha256") != SOURCE_DIGEST or \
+            report.get("paranoia") != 4 or report.get("mode") not in {"audit", "enforce"}:
+        parser.error("measurement source and profile must match pinned qualification")
     tests = corpus(source_bytes(args.source_dir, False))
     if not report["full_inventory"] or report["inventory"] != len(tests):
         parser.error("qualification requires the full pinned measurement inventory")
