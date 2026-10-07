@@ -45,6 +45,10 @@ absolute inspection deadline, 1–300 seconds, default 30; active progress canno
 Pool exhaustion after the wait returns 503, excessive uploads 413, and enforcing inspection
 failure refuses delivery. JSON and XML bodies are parsed by Content-Type, as in ModSecurity's
 recommended configuration; a body that fails to parse is an inspection failure.
+The conservative profile also validates a declared content encoding on a bodyless request:
+empty `Content-Encoding: deflate` is incomplete and returns 403 in Enforce. HTTP permits
+bodyless framing; this is a stricter inspection policy, not a protocol requirement. Audit
+permits that exchange according to its incomplete policy and records the coverage gap.
 
 Forward auth observes ingress metadata rather than the origin body or response. Select
 `--crs-profile headers` explicitly with `--mode forward_auth`; full body enforcement is

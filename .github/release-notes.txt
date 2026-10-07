@@ -34,6 +34,9 @@ Behaviour changes:
   settings with `crs update --settings`, then select it. Local-directory updates accept
   `--crs-work-budget`; startup flags must agree with an existing saved selection.
 - Malformed JSON or XML declared by Content-Type is an inspection failure (403 in Enforce).
+- Declared content encoding is validated even on bodyless requests. Empty deflate input is
+  incomplete and receives 403 in Enforce; Audit records incomplete coverage. This is a
+  stricter inspection policy, not an HTTP framing requirement.
 - Cluster catch-up preserves ballot-bearing leader evidence while replaying chosen history.
   Startup retries temporary storage unavailability before opening listeners.
 

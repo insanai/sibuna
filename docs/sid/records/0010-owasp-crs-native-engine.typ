@@ -1575,6 +1575,13 @@ internal cause; they cannot finalize as inspected. Unsupported body coverage use
 streaming or handshake ending rather than empty body collections. These adapter contracts
 are qualified separately from listener startup, generation selection and operator updates.
 
+The conservative request profile validates a declared content encoding even when HTTP
+framing carries no message body. An empty declared deflate representation therefore records
+incomplete coverage; Enforce refuses it before origin delivery, while Audit follows its
+configured incomplete policy. Bodyless framing without `Content-Length` or `Transfer-Encoding`
+is valid under RFC 9112 section 6.3. This refusal is a stricter inspection policy, not an RFC
+requirement. Logical-body engine probes do not qualify encoded wire representations.
+
 The listener rebases a consumed pipeline prefix before borrowing a protected request head.
 It retains that head while acquiring the entire transfer-decoded request into the slot's wire
 reservation. Existing admission limits run before body acquisition and before `100 Continue`;
