@@ -121,6 +121,11 @@ jobs:
         run: zig build crs-update-test crs-artifact-check -j2 --summary all -- --download
       - name: Verify packaged local CRS management
         run: zig build crs-local-check -Doptimize=safe -Dstrip=true -Dtarget=${{ matrix.target }} -j2 -- --download
+      - name: Verify active CRS through the release executable
+        env:
+          PYTHONUNBUFFERED: "1"
+          BINARY: ${{ runner.os == 'Windows' && 'zig-out/bin/sibuna.exe' || 'zig-out/bin/sibuna' }}
+        run: python tools/crs_daemon_check.py "$BINARY" --download --console
       - name: Package binaries, licenses and source manifest
         env:
           BINARY: ${{ runner.os == 'Windows' && 'zig-out/bin/sibuna.exe' || 'zig-out/bin/sibuna' }}

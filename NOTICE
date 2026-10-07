@@ -33,13 +33,15 @@ No GeoIP address database is bundled. Operators import separately licensed
 datasets using Sibuna's GeoIP commands. Cluster builds are separate source
 builds and link OpenSSL 3; the default release has no OpenSSL dependency.
 
-CRS compatibility-development fixtures:
+CRS engine dependencies and compatibility fixtures:
 
 - OWASP Core Rule Set 4.30.0: Apache-2.0; LICENSES/OWASP-CRS-Apache-2.0.txt
   and vendor/crs/LICENSE. Source: github.com/coreruleset/coreruleset.
   Release digest, signing fingerprint and unmodified file digests are in
-  vendor/crs/provenance.json. These source fixtures do not enable CRS in the
-  shipped daemon. vendor/crs/fixture.zig is a first-party LGPL-3.0 test facade.
+  vendor/crs/provenance.json. Release packages download and verify the signed
+  rules when the operator prepares a candidate; rules are not bundled in the
+  executable. Inspection starts when the operator selects Audit or Enforce.
+  vendor/crs/fixture.zig is a first-party LGPL-3.0 test facade.
 - ModSecurity 3.0.14 compatibility algorithms adapted in
   libs/crs/src/transform_scan.zig, transform_escape.zig, transform_entity.zig
   transform_base64.zig, transform_path.zig and transform_unicode.zig: Apache-2.0;
@@ -63,5 +65,5 @@ CRS compatibility-development fixtures:
   vendor/libinjection/xss_tables.zig
   routines are reproduced or adapted from the pinned source and digests recorded in
   vendor/libinjection/provenance.json. The port uses caller-owned buffers and budgets;
-  no libinjection C library is linked into Sibuna. The detector library does not activate
-  CRS in the daemon; transaction execution remains under development in SID 0010.
+  no libinjection C library is linked into Sibuna. These detectors are used by
+  the native CRS transaction engine described in SID 0010.
