@@ -513,8 +513,8 @@ proceed, must be challenged, or must be denied.
 
     // Sink 3: HTTP 401 Challenge Issuer (x: 12.6 .. 16.9) directly below Stage 4
     rect((12.6, 0.8), (16.9, 2.4), fill: c-gold-bg, stroke: 1.1pt + c-gold, radius: 0.18)
-    content((14.75, 1.95), text(weight: "bold", size: 8.5pt, fill: c-gold)[HTTP 401 Challenge], anchor: "center")
-    content((14.75, 1.50), text(size: 7.2pt)[Client Solves Separate Proof], anchor: "center")
+    content((14.75, 1.95), text(weight: "bold", size: 8.5pt, fill: c-gold)[Browser Challenge], anchor: "center")
+    content((14.75, 1.50), text(size: 7.2pt)[HTML 200 / JSON 401], anchor: "center")
     content((14.75, 1.10), text(weight: "bold", size: 7pt, fill: c-gold)[No Per-Issued Ticket Table], anchor: "center")
 
     // --- TERMINAL ARROWS ---
@@ -859,7 +859,7 @@ console overhead meets the throughput and tail-latency thresholds on a deploymen
 
 #link("https://github.com/TecharoHQ/anubis")[Anubis],
 #link("https://github.com/owasp-modsecurity/ModSecurity")[ModSecurity],
-#link("https://github.com/corazawaf/coraza")[Coraza]
+#link("https://github.com/corazawaf/coraza")[Coraza],
 #link("https://github.com/chaitin/SafeLine")[SafeLine] and
 #link("https://github.com/bunkerity/bunkerweb")[BunkerWeb] provide other approaches to web defense.
 Hosted services such as #link("https://developers.cloudflare.com/waf/")[Cloudflare WAF]
