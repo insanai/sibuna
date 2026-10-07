@@ -1,6 +1,7 @@
 """Current-minute rankings must come from traffic and exclude query-string secrets."""
 import json
 import time
+from console_reads import budgeted
 
 
 def check(h, port, data_port, cookie):
@@ -16,8 +17,8 @@ def check(h, port, data_port, cookie):
                                      "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:127.0) "
                                                    "Gecko/20100101 Firefox/127.0"})
         time.sleep(0.3)
-        status, _, body = h.request(port, "GET", endpoint, cookie=cookie)
-        assert status == 200 and len(body) <= 16384
+        status, _, body = budgeted(h, port, "GET", endpoint, cookie=cookie)
+        assert status == 200 and len(body) <= 16384, (status, len(body), body[:128])
         assert b"not-for-the-console" not in body
         page = json.loads(body)
         assert page["sampling_probability"] == "1/64"

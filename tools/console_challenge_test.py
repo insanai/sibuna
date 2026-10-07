@@ -4,6 +4,7 @@ import json
 import time
 from concurrent.futures import ThreadPoolExecutor
 from console_inspection_test import applied
+from console_reads import budgeted
 
 
 def check(h, port, data_port, cookie, csrf):
@@ -58,23 +59,13 @@ def check(h, port, data_port, cookie, csrf):
     raise AssertionError("challenge observations did not survive in durable minute history")
 
 
-def budgeted(h, port, path, body, cookie, csrf):
-    """Reads share the session's query allowance; a 429 means wait for the next window."""
-    for _ in range(12):
-        status, headers, result = h.request(port, "POST", path, body, cookie, csrf)
-        if status != 429:
-            return status, headers, result
-        time.sleep(10)
-    raise AssertionError("the query allowance did not recover")
-
-
 def records(h, port, data_port, cookie, csrf):
     """Per-address records name the address and cause; a burst records a difficulty bump."""
     endpoint = "/console/api/challenges/records"
     assert h.request(port, "POST", endpoint, {"hours": 3}, cookie, csrf)[0] == 400
     deadline = time.monotonic() + 60
     while time.monotonic() < deadline:
-        status, _, body = budgeted(h, port, endpoint,
+        status, _, body = budgeted(h, port, "POST", endpoint,
                                    {"hours": 1, "outcome": "rejected", "address": "8.8.12.1"},
                                    cookie, csrf)
         assert status == 200, (status, body)
@@ -90,7 +81,7 @@ def records(h, port, data_port, cookie, csrf):
         time.sleep(5)
     else:
         raise AssertionError("the malformed submission left no per-address record")
-    status, _, body = budgeted(h, port, endpoint, {"hours": 1, "address": "8.8.12.1"},
+    status, _, body = budgeted(h, port, "POST", endpoint, {"hours": 1, "address": "8.8.12.1"},
                                cookie, csrf)
     assert status == 200 and all(row["ip"] == "8.8.12.1" for row in json.loads(body)["rows"])
     # Issue well above the 50/s baseline from several senders so the smoothed rate climbs even
@@ -111,7 +102,7 @@ def records(h, port, data_port, cookie, csrf):
         time.sleep(0.05)
     deadline = time.monotonic() + 60
     while time.monotonic() < deadline:
-        status, _, body = budgeted(h, port, "/console/api/challenges/difficulty",
+        status, _, body = budgeted(h, port, "POST", "/console/api/challenges/difficulty",
                                    {"hours": 1}, cookie, csrf)
         assert status == 200, (status, body)
         page = json.loads(body)
