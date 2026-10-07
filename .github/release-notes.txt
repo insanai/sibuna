@@ -1,11 +1,32 @@
-Sibuna v0.2.0 migrates the engine, console and browser solver to checksum-pinned Zig 0.17.0.
-It retains reverse-proxy and forward-auth modes, streamed uploads, WebSocket relay, embedded
-storage and the opt-in management console. Existing database schemas and wire protocols remain
-compatible. Zaxonlite and Paxos 0.7.0 library snapshots carry explicit compiler compatibility
-changes with upstream provenance and MIT licenses in vendor/. No compiler-cache patch is used.
+Sibuna v0.3.0 adds a native OWASP Core Rule Set engine (SID 0010). Signed CRS 4.30.0 releases
+are verified against the pinned CRS key, compiled in-process and inspected in Off, Audit or
+Enforce mode on both reverse-proxy and forward-auth (headers profile) deployments. Selection,
+rollback, private sample tests, rule-change reviews, exclusions and per-finding evidence are
+managed through the console or the native `sibuna crs` commands, with three-node convergence.
 
-The macOS minimum is now 15, matching Zig 0.17's target contract; v0.1.0 remains available
-for macOS 13 and 14. Linux and Windows minimums are unchanged.
+The engine evaluates CRS with linear-time matching: a bounded lazy DFA decides regexes, the
+ordered Pike simulation defines capture groups only when a rule uses them, and identical
+transform pipelines share one result per value within a phase. JSON and XML bodies are parsed
+by Content-Type, as in ModSecurity's recommended configuration.
+
+Qualification:
+- The pinned CRS FTW corpus runs through the actual daemon: 5,123 of 5,193 tests pass in
+  Audit; every other result is classified (reference differences reproduced by ModSecurity
+  3.0.14, strict acquisition refusals, deliberate connector refusals, regex-log gaps). In
+  Enforce no request-phase denial reaches the origin.
+- Three-node selection, failover, quorum refusal, restart and rollback pass on separate hosts.
+- With the load generator on a separate host and four product CPUs, paranoia level one serves
+  10,831 small GETs per second (47,311 with CRS disabled), 1,157 8 KiB JSON POSTs and 4,257
+  16 KiB multipart uploads, at 132-139 MiB peak RSS. No request reached the work limit.
+
+Behaviour changes:
+- Request targets must be origin-form (or `OPTIONS *`); absolute-form, `CONNECT` and fragments
+  receive 400. Repeated, missing (HTTP/1.1) or non-literal `Host` fields receive 400.
+- CRS transaction slots are tiered: spare reservation becomes small slots for requests up to
+  64 KiB, and a busy pool waits up to 50 ms before answering 503.
+- The default CRS work budget is 128 million units. Selections saved by earlier builds keep
+  their stored budget; re-prepare them or set `--crs-work-budget` to adopt the new default.
+- Malformed JSON or XML declared by Content-Type is an inspection failure (403 in Enforce).
 
 Downloads:
 - Linux x86-64 and ARM64: statically linked musl builds; Linux 5.10 or later.
@@ -15,6 +36,7 @@ Downloads:
 Archives include the executable, README, full license texts, dependency notices and an exact
 build manifest. SHA256SUMS covers every archive. Engine sources are LGPL-3.0; console
 sources, including the Wasm interface, are AGPL-3.0. The combined executable is AGPL-covered.
+CRS rules are Apache-2.0 and are downloaded and verified at runtime, not bundled.
 Corresponding source and build scripts are in this release's tag and linked from the console.
 Companies seeking alternative licensing can contact the authors, Vikrant Rathore and
 Ronak Rathore. Third-party libraries remain subject to their respective licenses.
@@ -23,18 +45,17 @@ The shipped builds include storage and console support; the console starts only 
 Multi-node deployments require a separate -Dcluster=true build with OpenSSL 3. No GeoIP address
 database is bundled; use the documented CLI import/update commands for your chosen dataset.
 
-Terminate public HTTPS at a trusted ingress and forward private HTTP/1.1 to Sibuna. Uploads,
-including multipart and chunked bodies, stream to the origin; inspection covers the first
-8 KiB and does not scan file contents for malware. Admitted WebSockets relay bytes without
-message inspection. Forward-auth sees only metadata supplied by the ingress. Local rate limits
-are not global quotas, and Sibuna does not provide volumetric network mitigation.
+Terminate public HTTPS at a trusted ingress and forward private HTTP/1.1 to Sibuna. With CRS
+disabled, uploads stream to the origin and the lightweight inspector covers the first 8 KiB.
+Admitted WebSockets relay bytes without message inspection. Forward-auth sees only metadata
+supplied by the ingress. Local rate limits are not global quotas, and Sibuna does not provide
+volumetric network mitigation.
 
-Functional tests qualify both ingress modes, uploads, WebSockets, authentication and console
-workflows on the packaged binaries. The strict SID 0007 console-impact target is not formally
-passed: existing container measurements are inconclusive and predate recent request-path fixes.
-The historical September performance exception is not a pass for this release. Published
-benchmarks retain their measured revision and must not be treated as v0.2.0 guarantees.
+Known issues: in one of four three-host qualification runs a restarted node did not become
+ready; the next runs passed and the cause is under investigation. The strict SID 0007
+console-impact target is still not formally passed. Published benchmarks retain their
+measured revision and host description and are not guarantees for other hosts.
 
 Documentation: https://insanai.github.io/sibuna/
 Deployment guide: https://insanai.github.io/sibuna/book/operations.html
-Source: https://github.com/insanai/sibuna/tree/v0.2.0
+Source: https://github.com/insanai/sibuna/tree/v0.3.0
