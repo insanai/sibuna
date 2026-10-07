@@ -450,9 +450,11 @@ The JSON POST rates for Sibuna, Anubis and the direct origin are close to the sa
 limit; use the book's ranges and configuration when interpreting the results.
 
 BunkerWeb's CRS profile provides broader rules, structured body parsing and response
-inspection; Sibuna uses bounded heuristics. These tests measure request cost, not equivalent
-protection or bot-detection accuracy. Both hosts are shared containers with uncontrolled
-CPU frequency and host activity. The book also reports blocked requests with BunkerWeb's
+inspection than the v0.2.0 Sibuna Shield profile measured here, which uses bounded heuristics.
+Sibuna v0.3.0 adds native CRS; these older rows do not measure its CRS engine. These tests
+measure request cost, not equivalent protection or bot-detection accuracy. Both hosts are
+shared containers with uncontrolled CPU frequency and host activity. The book also reports
+blocked requests with BunkerWeb's
 stock error page and a small custom page, so rendering cost is visible.
 
 See the [benchmark records and replay commands](benchmarks/results/README.md#three-product-comparisons)

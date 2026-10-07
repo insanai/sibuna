@@ -131,7 +131,9 @@ isolated network-capacity test.
 These shared containers do not control physical-host activity or CPU frequency. HTTP/1.1
 proxy and inspection cost is measured; TLS, large uploads, bot-detection accuracy and false
 positives are not. BunkerWeb's broader CRS rules, body parsing and response inspection are
-not equivalent to Sibuna's bounded heuristics. The fresh three-product families supersede
+not equivalent to the bounded heuristics in the measured Sibuna v0.2.0 profiles. The separate
+native CRS family measures v0.3.0 under different workloads and concurrency; it does not
+establish a matched BunkerWeb comparison. The fresh three-product families supersede
 the older loopback Anubis comparisons for this fixture; historical records remain separate. None passes the console-impact acceptance gate.
 
 Replay on a disposable Linux amd64 benchmark filesystem with Python 3, wrk, Caddy,

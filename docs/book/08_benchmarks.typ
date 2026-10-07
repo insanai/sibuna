@@ -273,9 +273,10 @@ to inspection. The custom page and configuration are part of the committed fixtu
 
 #callout([Different protection, one request fixture], [
   BunkerWeb's #link("https://docs.bunkerweb.io/1.6.15/features/#modsecurity")[ModSecurity/CRS profile] parses request bodies, evaluates its broader rule set
-  and retains response-body inspection. Sibuna uses bounded heuristic detectors and does
-  not implement CRS. These throughput rows cannot establish equivalent protection or
-  superior bot detection. The host is an unprivileged container on a shared machine;
+  and retains response-body inspection. The Sibuna v0.2.0 profiles measured here use bounded
+  heuristic detectors without CRS. Version 0.3.0 adds native CRS; its separate measurement
+  family below uses a different fixture. These throughput rows cannot establish equivalent
+  protection or superior bot detection. The host is an unprivileged container on a shared machine;
   processor frequency and other tenants are outside the fixture's control. Separate logical
   CPU sets do not establish exclusive physical cores. Consult the recorded spread and
   reproduce on your deployment host before using the figures for capacity planning.
