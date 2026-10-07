@@ -1,0 +1,196 @@
+{
+  "schema": 1,
+  "kind": "final-guarded-three-host-qualification",
+  "date": "2026-10-07",
+  "source_commit": "e6664465ad589bb9dcca565a3d465ccf184c8ecf",
+  "source_archive_sha256": "ff11c639fccf8134a007d91fb3429ca23c55e236101c4e27b9eb6f08c2505de9",
+  "binary_sha256": "e49c2c0f2769d890728f43899949204eb7656b35fd441e40258a6680da215639",
+  "build": {
+    "host": "insan@10.175.52.18",
+    "zig": "0.17.0",
+    "optimize": "ReleaseSafe",
+    "cluster": true,
+    "jobs": 2,
+    "production_overlays": false,
+    "provenance": "benchmarks/results/console-cluster-final-030-20261007.json"
+  },
+  "controllers": {
+    "commit": "e6664465ad589bb9dcca565a3d465ccf184c8ecf",
+    "changes": [],
+    "harness_sha256": {
+      "tools/crs_three_host_check.py": "d2d0e4f3e10e42e9921a29c9f682ca4ab6c019556f9af7d0d1a04680b36f7aa4",
+      "tools/crs_cluster_check.py": "b05a6c4b5cb88430a8c54759f940ae91a134fa878710d71247fe77a7dd64e1b5"
+    }
+  },
+  "fixture_root": "/home/insan/sibuna-cluster-guarded-030-20261007",
+  "isolation": "New root and fresh data for each run. Earlier binaries, failed reports and data remain preserved. The second scenario starts only after the first cleanly stops every owned process.",
+  "constraints": "Original committed scenario, assertions, readiness/operation/shutdown timeouts and production quotas unchanged. No test-only runtime overlay or alternate clock.",
+  "transport": {
+    "consensus": "mutual TLS",
+    "management": "validated HTTPS peers",
+    "controller": "SSH tunnels",
+    "sessions": "TOTP"
+  },
+  "required_checks": [
+    "Audit/Enforce/Off",
+    "separate preparation and selection",
+    "leader loss",
+    "quorum refusal",
+    "durable restart restoration",
+    "exact rollback",
+    "incompatible preparation refusal",
+    "all owned daemons and ingress processes stop with status zero"
+  ],
+  "runs": [
+    {
+      "run": "1791365246",
+      "elapsed_seconds": 141.5024994999403,
+      "passed": true,
+      "raw_report": "three-host-run1.json",
+      "binary_identities": [
+        {
+          "host": "insan@10.175.52.19",
+          "binary": "/home/insan/sibuna-cluster-guarded-030-20261007/runtime/sibuna",
+          "hostname": "agy01",
+          "kernel": "7.0.0-28-generic",
+          "sha256": "e49c2c0f2769d890728f43899949204eb7656b35fd441e40258a6680da215639"
+        },
+        {
+          "host": "insan@10.175.52.20",
+          "binary": "/home/insan/sibuna-cluster-guarded-030-20261007/runtime/sibuna",
+          "hostname": "agy02",
+          "kernel": "7.0.0-28-generic",
+          "sha256": "e49c2c0f2769d890728f43899949204eb7656b35fd441e40258a6680da215639"
+        },
+        {
+          "host": "insan@10.175.52.21",
+          "binary": "/home/insan/sibuna-cluster-guarded-030-20261007/runtime/sibuna",
+          "hostname": "agy03",
+          "kernel": "7.0.0-28-generic",
+          "sha256": "e49c2c0f2769d890728f43899949204eb7656b35fd441e40258a6680da215639"
+        }
+      ],
+      "owned_processes": 11,
+      "stop_statuses": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "restarts": [
+        {
+          "node": 1,
+          "kind": "node1",
+          "name": "1791365246-node1-10",
+          "ready": {
+            "seconds": 1.6655497920000926,
+            "health": 200,
+            "setup": 200
+          },
+          "stop_status": 0
+        },
+        {
+          "node": 2,
+          "kind": "node2",
+          "name": "1791365246-node2-11",
+          "ready": {
+            "seconds": 1.6345664999680594,
+            "health": 200,
+            "setup": 200
+          },
+          "stop_status": 0
+        }
+      ]
+    },
+    {
+      "run": "1791365447",
+      "elapsed_seconds": 114.63407745794393,
+      "passed": true,
+      "raw_report": "three-host-run2.json",
+      "binary_identities": [
+        {
+          "host": "insan@10.175.52.19",
+          "binary": "/home/insan/sibuna-cluster-guarded-030-20261007/runtime/sibuna",
+          "hostname": "agy01",
+          "kernel": "7.0.0-28-generic",
+          "sha256": "e49c2c0f2769d890728f43899949204eb7656b35fd441e40258a6680da215639"
+        },
+        {
+          "host": "insan@10.175.52.20",
+          "binary": "/home/insan/sibuna-cluster-guarded-030-20261007/runtime/sibuna",
+          "hostname": "agy02",
+          "kernel": "7.0.0-28-generic",
+          "sha256": "e49c2c0f2769d890728f43899949204eb7656b35fd441e40258a6680da215639"
+        },
+        {
+          "host": "insan@10.175.52.21",
+          "binary": "/home/insan/sibuna-cluster-guarded-030-20261007/runtime/sibuna",
+          "hostname": "agy03",
+          "kernel": "7.0.0-28-generic",
+          "sha256": "e49c2c0f2769d890728f43899949204eb7656b35fd441e40258a6680da215639"
+        }
+      ],
+      "owned_processes": 11,
+      "stop_statuses": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "restarts": [
+        {
+          "node": 2,
+          "kind": "node2",
+          "name": "1791365447-node2-10",
+          "ready": {
+            "seconds": 2.117094916990027,
+            "health": 200,
+            "setup": 200
+          },
+          "stop_status": 0
+        },
+        {
+          "node": 3,
+          "kind": "node3",
+          "name": "1791365447-node3-11",
+          "ready": {
+            "seconds": 2.880122958100401,
+            "health": 200,
+            "setup": 200
+          },
+          "stop_status": 0
+        }
+      ]
+    }
+  ],
+  "final_cleanup": {
+    "hosts": [
+      "insan@10.175.52.19",
+      "insan@10.175.52.20",
+      "insan@10.175.52.21"
+    ],
+    "method": "Read /proc command lines and match only executable paths under the owned fixture root.",
+    "active_owned_executables": [],
+    "node_and_ingress_fatal_pattern_matches": 0
+  },
+  "evidence": {
+    "path": "benchmarks/results/linux-final-guarded-three-host-030-20261007-evidence.tar.gz",
+    "sha256": "30c051d49e76d997d487b514a705b388dd8da461988943738bb99417a17098ad",
+    "contents": "Raw scenario reports and controller transcripts, plus owned daemon/ingress logs and process statuses. Keys, credentials, databases and command-input files excluded."
+  },
+  "scope": "Functional qualification of exact frozen e666 guarded runtime across three separate hosts. No performance acceptance, universal liveness guarantee or qualification of later source changes is claimed."
+}
