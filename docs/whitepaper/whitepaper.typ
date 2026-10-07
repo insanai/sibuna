@@ -318,7 +318,7 @@ TCP and TLS resources still need appropriate ingress limits.
     // --- Panel 1: Ordinary request work ---
     rect((0, 0), (8.2, 4.4), fill: rgb("fff5f5"), stroke: 0.8pt + rgb("fca5a5"), radius: 0.2)
     content((4.1, 4.0), text(weight: "bold", size: 8.5pt, fill: rgb("991b1b"))[Request processing without an admission proof], anchor: "center")
-    
+
     // Attacker node (width 2.6cm: 0.5 to 3.1)
     rect((0.5, 0.9), (3.1, 3.4), fill: white, stroke: 0.8pt + c-attacker, radius: 0.15)
     content((1.8, 2.9), text(weight: "bold", size: 8pt, fill: c-attacker)[Client Work], anchor: "center")
@@ -426,7 +426,7 @@ proceed, must be challenged, or must be denied.
 
     // Outer card
     rect((0, 0), (17.2, 11.6), fill: rgb("f8fafc"), stroke: 0.8pt + c-border, radius: 0.3)
-    content((8.6, 11.1), text(weight: "bold", size: 10pt, fill: c-navy)[Sibuna Request Protection: Components and Decisions], anchor: "center")
+    content((8.6, 11.1), text(weight: "bold", size: 10pt, fill: c-navy)[Sibuna Request Protection], anchor: "center")
 
     // Helper: stage-box (width 3.3cm, height 1.5cm)
     let stage-box(x, y, fill-col, stroke-col, title, latency, subtext) = {
@@ -729,7 +729,7 @@ configured members.
       let stroke-color = if is-leader { c-green } else { c-blue }
       let fill-color = if is-leader { c-green-bg } else { white }
       rect((x, y), (x + 4.2, y + 2.7), fill: fill-color, stroke: 1.2pt + stroke-color, radius: 0.2)
-      
+
       // Role badge
       let badge-fill = if is-leader { c-green } else { c-blue }
       let badge-title = if is-leader { "LEADER (ACTIVE)" } else { "FOLLOWER (REPLICA)" }
@@ -779,7 +779,7 @@ configured members.
   radius: 3pt
 )[
   #text(weight: "bold", fill: ink)[Invariant S1 (Consensus Safety).] Under the protocol's durable-state and authenticated-membership assumptions, no two replicas choose different values at log index $i$. Network delay and partitions must not violate this safety condition.
-  
+
   #text(weight: "bold", fill: ink)[Invariant S2 (Monotonic Ballots).] Ballot numbers $b = chevron.l "term", "node_id" chevron.r$ are totally ordered. A replica's promised ballot does not decrease, and it rejects Prepare or Accept messages below that promise. Historical chosen commits do not establish current leadership.
 
   #text(weight: "bold", fill: ink)[Condition L1 (Eventual Convergence).] A chosen durable edit eventually reaches a recovering member if a stable leader can communicate with a quorum and the recovering member, storage and scheduling make progress, and recovery retries continue. A fixed convergence deadline needs additional latency and resource assumptions; quorum presence alone supplies none.
@@ -859,7 +859,7 @@ console overhead meets the throughput and tail-latency thresholds on a deploymen
 
 #link("https://github.com/TecharoHQ/anubis")[Anubis],
 #link("https://github.com/owasp-modsecurity/ModSecurity")[ModSecurity],
-#link("https://github.com/corazawaf/coraza")[Coraza] 
+#link("https://github.com/corazawaf/coraza")[Coraza]
 #link("https://github.com/chaitin/SafeLine")[SafeLine] and
 #link("https://github.com/bunkerity/bunkerweb")[BunkerWeb] provide other approaches to web defense.
 Hosted services such as #link("https://developers.cloudflare.com/waf/")[Cloudflare WAF]
