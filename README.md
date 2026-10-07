@@ -1,55 +1,103 @@
+<h1 align="center">sibuna</h1>
+<p align="center">Web protection with browser proof of work and an optional console.</p>
 <p align="center">
-  <h1 align="center">sibuna</h1>
-  <p align="center">
-    <strong>A simple and lightweight web application firewall to protect websites and APIs without CAPTCHAs.</strong>
-  </p>
-  <p align="center">
-    <a href="#features">Features</a> •
-    <a href="#console">Console</a> •
-    <a href="#quickstart">Quickstart</a> •
-    <a href="#how-it-works">How It Works</a> •
-    <a href="#architecture">Architecture</a> •
-    <a href="#deployment">Deployment</a> •
-    <a href="#configuration">Configuration</a> •
-    <a href="#philosophy">Philosophy</a> •
-    <a href="#documentation">Documentation</a>
-  </p>
+  <a href="#features">Features</a> ·
+  <a href="#quickstart">Quickstart</a> ·
+  <a href="#console">Console</a> ·
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#documentation">Documentation</a>
 </p>
 
----
+**Sibuna helps protect websites and APIs from unwanted bot traffic.** It can forward requests
+to your app or work alongside an existing proxy, such as Caddy, nginx or Traefik.
 
-**sibuna** is an open-source web application firewall (WAF) and anti-crawler daemon. It sits in front of your web application as a protective reverse proxy, or alongside your existing reverse proxy (such as Caddy, Nginx, or Traefik) as an authorization gate.
+Sending requests is often cheap. Processing them can cost your app more work. Sibuna asks
+clients to solve a puzzle before granting access. Creating the proof costs more computation
+than checking it. This makes automated clients share more of the cost of accessing a site.
 
-Instead of subjecting human visitors to frustrating image CAPTCHAs or privacy-invasive tracking scripts, Sibuna asks client browsers to solve a background computational puzzle whose cost depends on the configured difficulty and client hardware. Instead of requiring sprawling container clusters, external databases, or heavy interpreters, Sibuna runs as a **single, self-contained executable** with predictable, bounded memory.
-
----
+Computing also uses energy, but the amount depends on hardware and settings. Proof of work
+adds an admission cost. It does not prove that a visitor is human or stop every attack.
+A signed session lets admitted clients return without solving a new puzzle on every request.
 
 ## Features
 
-- **[x] Self-Contained Deployment:** The standard binary includes storage and browser assets. No external Redis, PostgreSQL, Node, or Docker is required; clustering is a separate build with OpenSSL 3.
-- **[x] Browser Proof of Work:** WebAssembly solves a configurable background puzzle. No image CAPTCHA is required; successful clients receive a signed admission session.
-- **[x] Bounded Request Processing:** Fixed-capacity request buffers, connection quotas and explicit overload responses. Parsing, classification and proof verification use allocation-free primitive APIs; deployment memory still depends on enabled features and concurrency.
-- **[x] AI Crawler & Bot Governance:** CIDR ranges and User-Agent signatures support provider-specific policy for OpenAI, Anthropic, Google Gemini, Perplexity, Meta, Apple, and ByteDance. Operator-managed data and rules determine the decision.
-- **[x] Semantic Attack Shield:** Single-pass, linear-time Aho–Corasick automata and structural tokenizers inspect SQL injection, XSS, and path traversal without regular expression backtracking (ReDoS).
-- **[x] Native OWASP Core Rule Set:** Opt-in CRS 4.30.0 inspection in Audit or Enforce mode. Signed releases are verified and compiled in-process, and regexes run in linear time on a bounded lazy DFA. Selection, rollback, sample tests and per-finding evidence are managed from the console or `sibuna crs`.
-- **[x] Work Asymmetry:** Clients perform configurable Hashcash or sequential work before admission; the server verifies submitted proofs with native code.
-- **[x] Local Rate Limiting:** Sharded GCRA (Generic Cell Rate Algorithm) enforces per-client burst and sustained limits, with optional terminal-rule limits. Quotas remain node-local.
-- **[x] Real-Time Management Console:** Opt-in dashboard with an animated country traffic globe, comparative analytics, incident investigation with full-text search (FTS5), and policy editing. GeoIP requires a separately imported dataset.
-- **[x] Embedded Multi-Node Clustering:** A cluster-enabled source build uses Zaxonlite Multi-Paxos to replicate policy and reputation. Management telemetry travels separately; missing peers are shown as incomplete coverage.
+- **One executable:** engine, embedded storage, browser solver and console assets.
+- **Native packages:** Linux, macOS and Windows. The browser solver uses WebAssembly.
+- **Browser challenges:** configurable Hashcash or sequential work, followed by a signed session.
+- **Access policies:** allow, challenge or deny requests by address, path, headers and User-Agent.
+- **Application inspection:** built-in checks for SQL injection, XSS and path traversal.
+- **Optional OWASP CRS:** signed rule updates, Audit and Enforce modes, private tests and rollback.
+- **Local rate limits:** control bursts and sustained traffic, with optional limits per rule.
+- **Operator console:** traffic, sampled country activity, recorded incidents and policy editing.
+- **Cluster support:** a separate source build replicates policy and reputation through Zaxonlite.
 
----
+## Quickstart
+
+[Download a release](https://github.com/insanai/sibuna/releases/tag/v0.3.0) for your platform.
+The default package includes storage and console support. The console starts with `--console`.
+
+| Platform | Package | Requirements |
+| --- | --- | --- |
+| Linux x86-64 | `sibuna-linux-amd64.tar.gz` | Linux 5.10 or later; statically linked musl |
+| Linux ARM64 | `sibuna-linux-arm64.tar.gz` | Linux 5.10 or later; statically linked musl |
+| macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 15 or later |
+| macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 15 or later |
+| Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019 or later; native `sibuna.exe` |
+
+macOS builds are unsigned. Each package includes licenses, source links and a build manifest.
+Verify the archive against `SHA256SUMS` before using it.
+
+For Linux x86-64, with your app listening on port 3000:
+
+```sh
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.0/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.0/SHA256SUMS
+sha256sum --ignore-missing -c SHA256SUMS
+tar -xzf sibuna-linux-amd64.tar.gz
+(umask 077; openssl rand -hex 32 > sibuna.seed)
+./sibuna --host 127.0.0.1 --port 8080 --upstream-port 3000 --secret-file ./sibuna.seed
+```
+
+Open `http://127.0.0.1:8080` to try it locally. For a public site, terminate HTTPS at a trusted
+ingress and keep Sibuna's listener private. Follow the
+[deployment guide](https://insanai.github.io/sibuna/book/operations.html) for Caddy or nginx.
+
+On Windows, extract the ZIP and run `.\sibuna.exe --help` in PowerShell.
+Use Ctrl+C to stop it. Restrict access to seed, credential and data files with Windows ACLs.
+
+### Build from source
+
+Use **Zig 0.17.0**. The pinned toolchain checksums and dependency sources are in the repository.
+
+```sh
+git clone git@github.com:insanai/sibuna.git
+cd sibuna
+python3 tools/prepare_build.py
+zig build -Doptimize=safe -j2
+```
+
+The executable is `zig-out/bin/sibuna`. Cluster builds use `-Dcluster=true` and need OpenSSL 3.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for build checks.
 
 ## Console
 
-The opt-in console runs in the same executable. Add `--console` to enable it; the
-[operations guide](https://insanai.github.io/sibuna/book/operations.html) covers bootstrap,
-HTTPS access and GeoIP imports.
+The console runs in the same executable. Bootstrap an administrator while the daemon is stopped:
 
-![Sibuna Console globe showing incoming sampled traffic, the request timeline and coverage](docs/readme/images/console-globe.jpg)
+```sh
+./sibuna init-admin admin --data-dir ./data
+./sibuna --host 127.0.0.1 --upstream-port 3000 --secret-file ./sibuna.seed \
+  --data-dir ./data --console 127.0.0.1:19446
+```
 
-The globe shows sampled traffic flowing from countries to your Sibuna server. Country markers
-show approximate locations, not visitors' exact positions. The arrows show activity over the
-last minute. The timeline counts request outcomes, and the coverage panel explains the sampling.
+Open `http://127.0.0.1:19446/console/` and change the temporary password.
+The [operations guide](https://insanai.github.io/sibuna/book/operations.html) explains HTTPS
+access, GeoIP imports and CRS updates.
+
+![Sibuna Console globe, request timeline and coverage](docs/readme/images/console-globe.jpg)
+
+The globe shows sampled country activity over the last minute. Markers give approximate
+country positions. Arrows point toward the server's configured location. They do not show
+individual live connections. GeoIP needs a separately imported dataset.
 
 <details>
 <summary>Traffic overview, policy editor and incident investigation</summary>
@@ -68,374 +116,67 @@ last minute. The timeline counts request outcomes, and the coverage panel explai
 
 </details>
 
-These are real Chrome captures of Sibuna v0.2.0 on a local review node. Traffic and GeoIP
-mappings are illustrative test data; the displayed counts are not performance measurements.
+These are Chrome captures of v0.2.0 on a review node. Traffic and GeoIP mappings are test data.
+The displayed counts are not benchmark results.
 
----
+## How it works
 
-## Architecture
-
-Following the modular design of raylib, Sibuna is divided into small, single-purpose subsystems:
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/images/subsystems-dark.svg">
-  <img src="docs/readme/images/subsystems.svg" alt="Inside Sibuna: the jobs of its eight modules">
-</picture>
-
-`socket` opens and closes connections safely, and `net` reads HTTP requests and forwards
-allowed traffic. `crypto` computes proofs and signs or verifies sessions; `challenge` creates
-puzzles and adjusts their difficulty. `policy` applies access rules and looks for attacks,
-while `store` tracks local request limits and used proofs. Optional `edge` storage saves
-security data and shares it between nodes. `console` shows traffic and helps operators
-manage protection.
-
-### Gate and Shield
-
-Choose Gate or Shield when you start Sibuna. Gate (`--gate`) checks access rules, proof-of-work
-sessions and local request limits. Shield (`--shield`, the default) also looks for web attacks.
-Your inspection settings decide whether an attack is blocked or recorded while checks continue.
-
-Read the flow from top to bottom: rectangles show actions, diamonds show decisions, and ovals
-mark the start or an outcome. Every branch has a label; color is an additional cue.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/images/protection-surfaces-dark.svg">
-  <img src="docs/readme/images/protection-surfaces.svg" alt="How Sibuna protects a request: Gate or Shield, followed by allow, challenge or block">
-</picture>
-
-When a visitor requests a page, Shield checks for attacks; Gate skips attack inspection.
-Both check access rules, sessions and request limits. A request is then forwarded to your app,
-given a puzzle or stopped. A valid session does not bypass Shield's attack checks or request limits.
-
-In reverse-proxy mode Sibuna forwards allowed requests itself. In forward-auth mode it tells
-your existing proxy whether to forward them. Either deployment can use Gate or Shield.
-
----
-
-## Quickstart
-
-Download a package from [Releases](https://github.com/insanai/sibuna/releases), or build from source.
-The v0.3.0 packages include the engine, embedded storage, browser solver and management console.
-Clustering requires a separate `-Dcluster=true` source build with OpenSSL 3.
-
-| Platform | Package | Requirements |
-| --- | --- | --- |
-| Linux x86-64 | `sibuna-linux-amd64.tar.gz` | Linux 5.10 or later; statically linked musl |
-| Linux ARM64 | `sibuna-linux-arm64.tar.gz` | Linux 5.10 or later; statically linked musl |
-| macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 15 or later |
-| macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 15 or later |
-| Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019 or later; native `sibuna.exe` |
-
-macOS builds are unsigned. Packages include license texts, corresponding-source links and a
-`sibuna.build.json` manifest. Verify the archive against the release's `SHA256SUMS` before use.
-On Windows, extract the ZIP and run `.\sibuna.exe --help` from PowerShell. Use Ctrl+C for
-ordered shutdown and restrict seed, credential and data files with Windows ACLs.
-
-For Linux x86-64:
-
-```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.0/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.0/SHA256SUMS
-sha256sum --ignore-missing -c SHA256SUMS
-tar -xzf sibuna-linux-amd64.tar.gz
-(umask 077; openssl rand -hex 32 > sibuna.seed)
-./sibuna --version
-./sibuna --host 127.0.0.1 --port 8080 --upstream-port 3000 --secret-file ./sibuna.seed
-```
-
-Terminate public HTTPS at your ingress and keep Sibuna's listener private; see
-[deployment limits](#deployment-limits) and the [operations guide](https://insanai.github.io/sibuna/book/operations.html).
-
-### 1. Build the Executable
-
-Use **Zig 0.17.0**, the checksum-pinned release toolchain. The storage libraries include
-reviewable compatibility sources in `vendor/`; original release digests are recorded there.
-
-```sh
-# Clone the repository
-git clone https://github.com/insanai/sibuna.git
-cd sibuna
-
-# Compile optimized release binary
-python3 tools/prepare_build.py
-zig build -Doptimize=fast
-```
-
-The resulting standalone binary is located at `./zig-out/bin/sibuna`.
-
-### 2. Protect Your Application
-
-Point Sibuna to your existing web service (for example, a local server on port 3000):
-
-```sh
-./zig-out/bin/sibuna --port 8080 --upstream-port 3000 --secret-file /run/sibuna.seed
-```
-
-Open `http://localhost:8080` in your browser. Your application is now protected.
-
-*Note on secrets:* The seed file contains 32 raw bytes (or 64 hex characters) used to sign session tokens. You can also supply the seed via the `SIBUNA_SECRET` environment variable. If omitted, Sibuna generates a secure random seed at startup; sessions then expire when the process restarts.
-
----
-
-## How It Works
-
-### The Revolving Door and the Wristband
-
-Think of admission as a revolving door followed by a wristband: the client does work once,
-then presents a signed session on subsequent requests. Policy determines when a challenge
-is required; the proof does not establish that a client is human.
+A request can be admitted, challenged or denied. A visitor who solves a challenge receives
+a signed session. Later requests still pass the applicable policy and rate checks.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/images/admission-session-dark.svg">
-  <img src="docs/readme/images/admission-session.svg" alt="Solve a puzzle, save a signed session cookie, and check rules on later requests">
+  <img src="docs/readme/images/admission-session.svg" alt="Solve a puzzle, receive a signed session and check rules on later requests">
 </picture>
 
-#### 1. Browser Work (The Door)
+Gate checks access rules, sessions and local rate limits. Shield adds the built-in attack
+inspector. Native CRS is configured separately. Start it in Audit to review findings before
+enabling Enforce.
 
-When a request requires a challenge, the browser solves a computational puzzle using
-WebAssembly. No image CAPTCHA is needed. Work depends on configured difficulty and client
-hardware, so the challenge can take time before the protected page loads. Sibuna verifies the
-solution and rejects invalid proofs.
+<details>
+<summary>Gate, Shield and the modules inside Sibuna</summary>
 
-#### 2. The Signed Session (The Wristband)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/images/protection-surfaces-dark.svg">
+  <img src="docs/readme/images/protection-surfaces.svg" alt="Gate and Shield request decisions: allow, challenge or block">
+</picture>
 
-A successful proof earns a session authenticated with keyed BLAKE3. The browser can reuse
-it until it expires, is revoked or no longer satisfies the required work. Sibuna verifies
-the session in native code; applicable inspection, policy and local rate limits still run.
+The diagram shows the built-in Gate and Shield checks. Optional CRS adds its own inspection.
+A valid session does not bypass applicable attack checks or request limits.
 
-#### 3. Automation and Limits
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/images/subsystems-dark.svg">
+  <img src="docs/readme/images/subsystems.svg" alt="The jobs of the modules inside Sibuna">
+</picture>
 
-Automated clients can also solve challenges and reuse valid sessions. Proof of work adds
-an admission cost; bot rules, inspection and local quotas control subsequent access.
-Choose difficulty and limits for your application and visitors, rather than assuming every
-request requires a new proof or that a challenge guarantees protection from overload.
+The modules separate networking, proofs, policies, local state and management.
+The [book](https://insanai.github.io/sibuna/book/) explains their responsibilities.
 
----
+</details>
 
-## Deployment Recipes
+### Deployment limits
 
-### Recipe 1: Direct Reverse Proxy
+Sibuna uses HTTP/1.1 on its private listener. Your ingress handles public TLS and HTTP/2.
+Forward-auth inspects the metadata supplied by the ingress. Full reverse-proxy CRS inspection
+uses configured body and work limits. The built-in inspector covers the first 8 KiB.
+Uploads stream when CRS is disabled. WebSocket messages are relayed without inspection.
 
-The simplest topology. Sibuna receives public traffic on port 8080, validates requests, and forwards admitted traffic to your application on port 3000:
+Rate limits are local to each node. Sibuna does not provide volumetric network mitigation.
+The strict console performance target has not formally passed. Review the
+[deployment limits and measurements](https://insanai.github.io/sibuna/book/operations.html)
+before enabling the console beside a production app.
 
-```sh
-./zig-out/bin/sibuna --port 8080 --upstream-host 127.0.0.1 --upstream-port 3000
-```
+## Benchmarks
 
-### Recipe 2: Forward-Authentication with Caddy
+The book records the source revision, configuration and host for each run. These measurements
+show request cost under one workload. They do not measure equivalent protection or bot accuracy.
 
-If you use Caddy for automatic TLS certificates, run Sibuna alongside Caddy as an authorization gate:
+### Three-product comparison
 
-```caddy
-# Caddyfile
-example.com {
-    # Send verification subrequests to Sibuna
-    forward_auth 127.0.0.1:8080 {
-        uri /__sibuna/verify
-        copy_headers X-Sibuna-Session X-Sibuna-Action
-    }
-
-    # Route challenge assets directly to Sibuna
-    handle /__sibuna/* {
-        reverse_proxy 127.0.0.1:8080
-    }
-
-    # Proxy admitted traffic to your application
-    handle {
-        reverse_proxy 127.0.0.1:3000
-    }
-}
-```
-
-Run Sibuna on private loopback:
-
-```sh
-./zig-out/bin/sibuna --mode forward_auth --host 127.0.0.1 --port 8080
-```
-
-### Recipe 3: Forward-Authentication with Nginx
-
-```nginx
-# nginx.conf
-server {
-    listen 443 ssl;
-    server_name example.com;
-
-    location / {
-        auth_request /__sibuna_auth;
-        auth_request_set $sibuna_token $upstream_http_x_sibuna_session;
-        proxy_set_header X-Sibuna-Session $sibuna_token;
-        proxy_pass http://127.0.0.1:3000;
-    }
-
-    location = /__sibuna_auth {
-        internal;
-        proxy_pass http://127.0.0.1:8080/__sibuna/verify;
-        proxy_pass_request_body off;
-        proxy_set_header Content-Length "";
-        proxy_set_header X-Original-URI $request_uri;
-        proxy_set_header X-Forwarded-Method $request_method;
-    }
-
-    location /__sibuna/ {
-        proxy_pass http://127.0.0.1:8080;
-    }
-}
-```
-
-Validate your ingress integration with the included automated test harness:
-
-```sh
-python3 tools/ingress_e2e.py zig-out/bin/sibuna --caddy /path/to/caddy --nginx /path/to/nginx
-```
-
----
-
-## Configuration Cheatsheet
-
-### Command-Line Options
-
-| Flag | Default | Description |
-|---|---|---|
-| `--mode <mode>` | `reverse_proxy` | `reverse_proxy` to forward to upstream, or `forward_auth` for ingress subrequests |
-| `--port <port>` | `8080` | TCP port to listen on for incoming traffic |
-| `--upstream-host <host>` | `127.0.0.1` | Upstream application hostname or IP address |
-| `--upstream-port <port>` | `3000` | Upstream application TCP port |
-| `--algorithm <algo>` | `posw` | Proof-of-work algorithm: `posw` (sequential work) or `hashcash` |
-| `--difficulty <bits>` | `16` | Difficulty bits (PoSW depth is calibrated to `bits - 3`) |
-| `--token-scheme <scheme>` | `mac` | Session token format: `mac` (16-byte BLAKE3) or `ed25519` |
-| `--gate` / `--shield` | `shield` | Operational surface: Gate for pure admission; Shield adds WAF inspection |
-| `--rate-limit <n>` | `100` | Maximum burst requests allowed by GCRA rate limiter |
-| `--rate-window <sec>` | `10` | Rate limiter refill window duration in seconds |
-| `--policy-file <path>` | none | Path to declarative JSON security policy file |
-| `--data-dir <path>` | none | Enables embedded Zaxonlite storage for persistence and clustering |
-| `--console <host:port>` | none | Enables the web operator console on the specified address |
-| `--workers <n>` | CPU count | Number of acceptor threads (each connection runs on its own bounded thread) |
-| `--max-connections <n>` | `1024` | Maximum concurrent connections before returning `503 Service Unavailable` |
-
-### Declarative Policy Rules (`policy.json`)
-
-```json
-{
-  "default_action": "CHALLENGE",
-  "waf": true,
-  "thresholds": { "challenge_at": 10, "deny_at": 40, "bits_step": 5 },
-  "ip_rules": {
-    "10.0.0.0/8": "ALLOW",
-    "192.168.1.0/24": "ALLOW",
-    "2001:db8::/32": "DENY"
-  },
-  "rules": [
-    {
-      "name": "allow-internal-traffic",
-      "remote_addresses": ["10.0.0.0/8", "fd00::/8"],
-      "action": "ALLOW"
-    },
-    {
-      "name": "protect-checkout-endpoint",
-      "path": "/api/checkout/*",
-      "action": "CHALLENGE",
-      "challenge": { "difficulty": 20, "algorithm": "posw" }
-    },
-    {
-      "name": "block-forged-cloudflare-workers",
-      "headers": { "CF-Worker": ".*" },
-      "action": "DENY"
-    },
-    {
-      "name": "score-headless-browsers",
-      "user_agent": "Headless",
-      "action": "WEIGH",
-      "weight": 30
-    }
-  ]
-}
-```
-
----
-
-## AI Bot & Crawler Governance (SID 0008)
-
-Modern web services face unprecedented scraping from AI training crawlers and automated LLM agents. Sibuna provides deep visibility and governance:
-
-1. **Sub-Microsecond Subnet Matching:** Evaluates client IP addresses against verified subnet CIDRs for OpenAI, Anthropic, Google Gemini, Perplexity, Meta, Apple, and ByteDance in memory ($< 45\,\text{ns}$).
-2. **Four-Tier Confidence Hierarchy:**
-   - **`Verified`:** User-Agent matches provider signature *and* client IP resides within published subnets.
-   - **`Declared`:** Claims a crawler User-Agent from an unverified public IP.
-   - **`Suspected`:** Browser-like User-Agent exhibiting crawler heuristics (e.g. missing asset cascades).
-   - **`Human`:** Verified browser session that completed background proof-of-work.
-3. **Actionable Governance:** Allow AI search fetchers while rate-limiting training scrapers or blocking unverified impersonators.
-
----
-
-## Operator Console & Dashboard
-
-```sh
-# 1. Bootstrap an administrator account while the daemon is stopped
-./zig-out/bin/sibuna init-admin admin --data-dir ./data
-
-# 2. Start Sibuna with storage and console listener enabled
-./zig-out/bin/sibuna --data-dir ./data --console 127.0.0.1:19446
-```
-
-Open `http://127.0.0.1:19446/console/` to access:
-- **Traffic Ratio Overview:** Glanceable visual breakdown of Real Human Traffic vs. AI Crawlers vs. Search Bots from 100% exact monotonic counters.
-- **24-Hour Comparative Analytics:** Time-series area charts showing human diurnal traffic curves beside crawler burst spikes.
-- **Live Country Activity Globe:** 3D interactive vector globe visualizing traffic flows and geographic attack origins using local GeoIP data.
-- **Granular Provider Management:** View scraping volume per AI provider and toggle operational actions (Allow, Rate-Limit, Challenge, Deny).
-- **Incident Investigation:** Full-text search (FTS5) over blocked payloads with campaign clustering based on feature-hashed trigram embeddings.
-
----
-
-## Philosophy & Invariants
-
-Sibuna's engineering design follows four foundational principles:
-
-### 1. Simplicity is Prerequisite for Reliability (Edsger W. Dijkstra)
-Adding moving parts increases the surface area for failure. Sibuna avoids external databases, cache servers, runtime interpreters, and container fleets. It compiles to a single, self-contained binary that does one job dependably.
-
-### 2. Thermodynamic Asymmetry (Richard Feynman)
-Admission asks an unverified client to perform configurable work before accessing the origin, while Sibuna verifies the submitted proof natively. The cost depends on the algorithm, settings and client hardware. The benchmark records measure server operations under their stated conditions; they do not establish a universal energy or latency guarantee.
-
-### 3. Explicit Invariants and Bounded State (Leslie Lamport)
-Request-path resources have explicit bounds:
-
-- Request classification uses caller-owned buffers and allocation-free primitive APIs.
-- Sealed challenges avoid allocating a record for each outstanding puzzle; local rate and replay tables still hold client state.
-- Rate limits use sharded, fixed-capacity tables.
-- Deployment memory depends on enabled features and active connections within configured quotas. Exhausted capacity refuses new work.
-
-### 4. Literate and Honest Engineering (Donald Knuth)
-A system must be honest about what it is, and what it is not.
-- **What Sibuna Is:** A fast, deterministic admission gate, bot governance engine, and heuristic semantic WAF.
-- **What Sibuna Is Not:** Sibuna does not terminate TLS or negotiate HTTP/2 directly (delegate this to Caddy or Nginx). It is not an antivirus scanner for uploaded files. It is not an AST language parser for SQL (write parameterized queries in your application).
-
----
-
-## Comparison with Alternative Systems
-
-Sibuna combines proof-of-work admission, bounded application inspection and an opt-in
-management console in one executable. Other projects cover different parts of that scope:
-
-- [Anubis](https://github.com/TecharoHQ/anubis) uses client challenges to protect upstream resources from scraper bots.
-- [BunkerWeb](https://github.com/bunkerity/bunkerweb) combines nginx, ModSecurity and OWASP CRS with bot challenges and an operator interface.
-- [ModSecurity](https://github.com/owasp-modsecurity/ModSecurity) and [Coraza](https://github.com/corazawaf/coraza) provide WAF engines for integration with web servers and applications.
-- [OWASP Core Rule Set](https://github.com/coreruleset/coreruleset) provides attack-detection rules for compatible WAF engines. Sibuna 0.3.0 evaluates signed stock CRS releases natively under [SID 0010](docs/sid/records/0010-owasp-crs-native-engine.typ); plugins, Lua scripts and other ModSecurity rule sets are outside its scope.
-
-The [book's empirical evaluation](https://insanai.github.io/sibuna/book/)
-compares pinned, runnable products under documented workloads. Each result identifies its
-revision, configuration and host; memory and throughput figures describe those measurements.
-
-### Measured comparison
-
-On 4 October 2026 we compared Sibuna v0.2.0, Anubis 1.27.0 and BunkerWeb 1.6.15 with the
-products on one Linux host and the request generator on another. Each product had four
-allowed logical CPUs, serving the same Caddy origin over HTTP/1.1 with 64 connections.
-This table uses unconditional admission, with challenges and management interfaces inactive.
-The book also covers real sessions, challenge responses and native admission operations.
-
-The table shows median request rates and the median of each run's p99 latency over five
-repeated measurements. The book includes the observed ranges, CPU cost and memory use.
+This run compared **Sibuna v0.2.0**, Anubis 1.27.0 and BunkerWeb 1.6.15 on 4 October 2026.
+The server and request generator ran on separate physical hosts. Each product had four CPUs,
+64 connections and the same Caddy origin. Challenges and management interfaces were inactive.
+The table shows medians over five runs.
 
 | Profile | Benign GET (req/s) | p99 (ms) | 8 KiB JSON POST (req/s) | p99 (ms) |
 | --- | ---: | ---: | ---: | ---: |
@@ -446,26 +187,14 @@ repeated measurements. The book includes the observed ranges, CPU cost and memor
 | Sibuna Shield | 70,909 | 4.06 | 13,719 | 9.08 |
 | BunkerWeb, CRS on | 2,730 | 32.73 | 797 | 98.42 |
 
-The JSON POST rates for Sibuna, Anubis and the direct origin are close to the same fixture
-limit; use the book's ranges and configuration when interpreting the results.
-
-BunkerWeb's CRS profile provides broader rules, structured body parsing and response
-inspection than the v0.2.0 Sibuna Shield profile measured here, which uses bounded heuristics.
-Sibuna v0.3.0 adds native CRS; these older rows do not measure its CRS engine. These tests
-measure request cost, not equivalent protection or bot-detection accuracy. Both hosts are
-shared containers with uncontrolled CPU frequency and host activity. The book also reports
-blocked requests with BunkerWeb's
-stock error page and a small custom page, so rendering cost is visible.
-
-See the [benchmark records and replay commands](benchmarks/results/README.md#three-product-comparisons)
-for the pinned artifacts, exact configuration and every sample. This comparison does not
-change the separate console-impact gate's recorded verdict.
+BunkerWeb's CRS profile inspects more than the v0.2.0 Shield profile in this table.
+Sibuna v0.3.0 adds native CRS; this comparison predates that engine. Both hosts are shared
+containers. CPU frequency and unrelated host activity were not controlled.
 
 ### Native CRS in v0.3.0
 
-A separate run measures the native CRS engine with eight signed-in dashboards, four product
-CPUs and 16 connections from another physical host. These are median request rates over five
-rounds; the lightweight inspector is disabled, and Audit permits the benign requests below.
+This separate run used eight dashboards, four product CPUs and 16 connections from another
+host. The table shows median rates over five rounds. The built-in inspector was disabled.
 
 | Workload | CRS disabled (req/s) | Audit, paranoia 1 (req/s) | Audit, paranoia 2 (req/s) |
 | --- | ---: | ---: | ---: |
@@ -473,69 +202,41 @@ rounds; the lightweight inspector is disabled, and Audit permits the benign requ
 | 8 KiB JSON POST | 13,726 | 1,151 | 799 |
 | 16 KiB multipart upload | 6,704 | 4,248 | 2,887 |
 
-At paranoia one, p99 is 2.34 ms, 23.43 ms and 6.34 ms respectively. Peak process RSS is
-133.8–140.5 MiB across the CRS profiles, against 104 MiB with CRS disabled. No sample reaches the
-work limit. The [native CRS record](benchmarks/results/README.md#native-crs-request-path)
-identifies clean revision `d461e7f` and includes Enforce, denied requests, CPU and observed
-ranges. This fixture uses different payloads and concurrency from the three-product table;
-it is not a matched BunkerWeb comparison or a pass of the console-impact target.
+At paranoia one, p99 latency was 2.34 ms, 23.43 ms and 6.34 ms for these workloads.
+Peak process RSS was 133.8–140.5 MiB across the CRS profiles. No measured request hit the work
+limit. The run used clean revision `d461e7f`. Its payloads and concurrency differ from the
+three-product comparison, so the two tables do not form a matched comparison.
 
----
+See the [benchmark records](benchmarks/results/README.md) for ranges, CPU, memory,
+Enforce results and replay commands. These figures do not pass the separate console-impact gate.
 
 ## Documentation
 
-[Website](https://insanai.github.io/sibuna/) ·
-[Book](https://insanai.github.io/sibuna/book/) ·
-[Operations guide](https://insanai.github.io/sibuna/book/operations.html) ·
-[Design discussions](https://insanai.github.io/sibuna/sid/)
-
-For deep technical study, the repository includes two comprehensive publications:
-
-1. **The Sibuna Book (`docs/book/`):**
-   A complete 13-chapter textbook covering the system from mathematical foundations through zero-allocation memory design, benchmarks, and production operations:
-   ```sh
-   zig build book                # Generates docs/build/sibuna-book.pdf
-   ```
-2. **Shibuna Discussions (SID) (`docs/sid/`):**
-   RFC-style architectural design records:
-   - **SID 0001:** The Shibuna Discussion Process and Engineering Standards
-   - **SID 0002:** Foundation Architecture, Delivery Plan, and Performance Contract
-   - **SID 0003:** Declarative Rule Policy Engine
-   - **SID 0004:** Semantic Attack Inspection and GCRA Rate Limiting (Shield)
-   - **SID 0005:** Distributed Storage Architecture: Zaxonlite Integration (Edge)
-   - **SID 0006:** Mathematical Foundations: Sequential Work, Keyed Authentication, and Automata
-   - **SID 0007:** The Sibuna Console: A Real-Time Management Interface for Nodes and Clusters
-   - **SID 0008:** AI Bot Traffic Identification, Multi-Tier Verification, and Operator Console Analytics
-   - **SID 0009:** Chunked Request Bodies and Transfer-Coding Validation
-   - **SID 0010:** Native OWASP Core Rule Set Evaluation and Verified Rule Updates
-
-   ```sh
-   zig build sid                 # Compiles all SID specification papers to PDF
-   ```
-
----
-
-## License
-
-The engine is licensed under **LGPL 3.0** and the console under **AGPL 3.0**,
-including its WebAssembly interface. The default executable includes the console and is
-distributed as a combined work under AGPL 3.0. Build the engine without the console using
-`-Dconsole=false`.
-See [LICENSE](LICENSE) for directory boundaries, [LICENSES](LICENSES) for the complete terms,
-and [NOTICE](NOTICE) for dependencies. Corresponding source and build scripts are available
-under each release tag; the console also provides a source-code link.
-
-Companies seeking a version under terms other than LGPL or AGPL can contact the authors,
-Vikrant Rathore and Ronak Rathore, about alternative licensing. Libraries and other third-party
-materials remain subject to their respective licenses.
+- [Book](https://insanai.github.io/sibuna/book/): concepts, algorithms, examples and measurements.
+- [Operations guide](https://insanai.github.io/sibuna/book/operations.html): installation and deployment.
+- [Reference](https://insanai.github.io/sibuna/book/reference.html): CLI and protocol details.
+- [Design discussions](https://insanai.github.io/sibuna/sid/): decisions and engineering contracts.
+- [Contributing](CONTRIBUTING.md): source builds and checks.
 
 ## Other software to consider
 
-- [Anubis](https://github.com/TecharoHQ/anubis): a proof-of-work admission proxy for reducing crawler traffic.
-- [BunkerWeb](https://github.com/bunkerity/bunkerweb): an nginx-based security platform with ModSecurity, OWASP CRS, bot challenges and an operator interface.
-- [OWASP ModSecurity](https://github.com/owasp-modsecurity/ModSecurity): a web application firewall engine integrated through web-server connectors.
-- [OWASP Coraza](https://github.com/corazawaf/coraza): a Go WAF library supporting ModSecurity rules and the OWASP Core Rule Set.
-- [OWASP Core Rule Set](https://github.com/coreruleset/coreruleset): maintained application-attack detection rules for compatible WAF engines.
+- [Anubis](https://github.com/TecharoHQ/anubis): browser challenges for reducing crawler traffic.
+- [BunkerWeb](https://github.com/bunkerity/bunkerweb): nginx, ModSecurity, CRS and bot challenges.
+- [ModSecurity](https://github.com/owasp-modsecurity/ModSecurity): a WAF engine used through connectors.
+- [Coraza](https://github.com/corazawaf/coraza): a Go WAF library supporting ModSecurity rules and CRS.
+- [OWASP Core Rule Set](https://github.com/coreruleset/coreruleset): attack-detection rules for WAF engines.
 
-These projects overlap with different parts of Sibuna. Sibuna's native CRS engine evaluates
-stock Core Rule Set releases; it is not a general ModSecurity engine for plugins or other rule sets.
+These projects cover different parts of web protection. Sibuna evaluates signed stock CRS
+releases. Plugins, Lua and other ModSecurity rule sets are outside its scope.
+
+## License
+
+The engine is **LGPL 3.0**. The console, including its WebAssembly interface, is **AGPL 3.0**.
+The default executable combines both and is distributed under AGPL 3.0.
+Use `-Dconsole=false` to build the engine without the console.
+
+[LICENSE](LICENSE) describes the scope. [LICENSES](LICENSES) contains the full terms.
+[NOTICE](NOTICE) lists dependencies. Source and build scripts are available under each release tag.
+
+Companies seeking other licensing terms can contact Vikrant Rathore and Ronak Rathore.
+Third-party libraries and materials keep their respective licenses.

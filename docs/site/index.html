@@ -1,8 +1,9 @@
 <section class="hero">
   <div><p class="eyebrow">Proof of work · Bounded inspection · Zig</p>
-  <h1>Protect your site.<br><em>Keep the work bounded.</em></h1>
-  <p class="lead">Sibuna protects websites and APIs with browser proof-of-work admission,
-  application inspection and an optional management console.</p>
+  <h1>Protect your site.<br><em>Share the cost of access.</em></h1>
+  <p class="lead">Sibuna asks clients to solve a puzzle before granting access.
+  Creating the proof takes more computation than checking it. This helps preserve your
+  app's resources for admitted traffic.</p>
   <div class="actions"><a class="button" href="/sibuna/book/operations.html">Get started ↗</a>
   <a class="button secondary" href="/sibuna/book/">Read the book</a></div>
   <p class="meta">Open source · Engine: LGPL 3.0 · Console: AGPL 3.0 · v0.3.0</p></div>
@@ -30,14 +31,14 @@
 </section>
 <section class="features" aria-label="Protection capabilities">
   <article><span class="label">01 / Govern admission</span><h2>Ask bots to do the work.</h2>
-  <p>Browser challenges and verified sessions control admission. Start with Gate, then enable
-  Shield for policy decisions and application inspection.</p></article>
+  <p>Browser challenges add a cost to automated access. Signed sessions let admitted visitors
+  return without a new puzzle on every request. Hardware and difficulty affect the cost.</p></article>
   <article><span class="label">02 / Protect applications</span><h2>Keep requests flowing.</h2>
-  <p>Reverse-proxy and forward-auth deployments support existing ingress setups. The opt-in
-  native OWASP Core Rule Set inspects traffic in Audit or Enforce mode.</p></article>
+  <p>Use Sibuna as a reverse proxy or an admission service for your existing ingress.
+  Add native OWASP Core Rule Set inspection when your app needs broader checks.</p></article>
   <article><span class="label">03 / Operate with evidence</span><h2>See the decisions.</h2>
-  <p>The opt-in console brings traffic, incidents, challenges and policy management together.
-  Read the design contracts, tests and measured workloads.</p></article>
+  <p>The optional console shows traffic, recorded incidents and policy changes.
+  Coverage and sampling labels help explain what each view can tell you.</p></article>
 </section>
 <section class="section start">
   <div><p class="eyebrow">Try v0.3.0</p><h2>Download.<br>Verify. Configure.</h2>
@@ -70,10 +71,13 @@ tar -xzf sibuna-linux-amd64.tar.gz
   Linux requires kernel 5.10 or later; macOS requires 15 or later; Windows requires
   Windows 10 or Server 2019 or later.</p>
   <a href="/sibuna/book/reference.html">CLI and protocol reference ↗</a></div>
-  <div class="limits"><p>Inspection covers the first 8 KiB of supported request bodies.
-  Uploaded file contents and WebSocket messages are not scanned. Forward-auth sees the
-  metadata supplied by the ingress. Sibuna does not implement native ingress TLS, HTTP/2,
-  global quotas or volumetric network mitigation.</p>
+  <div class="limits"><p>The built-in inspector checks the first 8 KiB of supported bodies.
+  Native CRS adds request and response inspection within configured limits.
+  WebSocket messages are relayed without inspection. Forward-auth sees the metadata
+  supplied by the ingress.</p>
+  <p style="margin-top:16px">Your ingress handles public TLS and HTTP/2. Rate limits are
+  local to each node. Sibuna does not provide volumetric network mitigation.
+  A challenge adds work; it does not establish that a visitor is human.</p>
   <p style="margin-top:16px">The console is opt-in. Its strict performance isolation target
   has not formally passed. Published measurements identify the code revision and uncertainty.</p>
   <p style="margin-top:16px"><a href="/sibuna/sid/sid/0007-console-management-interface.html">Console contract</a>
