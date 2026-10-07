@@ -1,26 +1,45 @@
-Sibuna v0.3.1 is a patch release for v0.3.0. It fixes a cluster restart failure and adds the
-missing mingw-w64 runtime notices to the Windows package. Request inspection, CRS behaviour,
-storage schemas and wire protocols are unchanged from v0.3.0.
+Sibuna v0.3.2 completes console two-factor authentication. Account owners can replace
+recovery codes or turn two-factor off, administrators can reset another account's factor, and
+a lost or replaced console key no longer leaves accounts without a way back. Request
+inspection, CRS behaviour and wire protocols are unchanged from v0.3.1.
 
 Fixes:
-- A restarting cluster node could exit with StorageUnavailable about two seconds after start.
-  Its first GeoIP metadata read went through the cluster database while the node was still
-  electing a leader, and that single read was fatal. Console startup now retries unavailable
-  GeoIP reads within the same 30-second bound used for the CRS restore. This was the
-  intermittent restart failure seen during v0.3.0 qualification.
-- Windows archives now include the mingw-w64 runtime notices (ZPL-2.1 and gdtoa). Each
-  archive carries only the C runtime notices its executable links: musl for Linux, mingw-w64
-  for Windows.
-- `sibuna --help` no longer describes CRS integration as pending release qualification.
-- vendor/README.md lists every local change to the vendored Paxos and Zaxonlite sources.
+- On a node whose console key is missing or different, a correct password for a two-factor
+  account answered 503 without an audit record, while a wrong password answered 401. Both now
+  receive the same audited refusal, and the node logs that it cannot read the factor.
+- Accounts that had never enrolled saw "Two-factor configuration could not be loaded" and
+  could not start enrollment from the console. Their status now reads as not enrolled.
+- Authenticator entries are labelled with the username instead of a numeric account id.
+
+Two-factor lifecycle:
+- Account owners can replace every recovery code, or turn two-factor off, with their password
+  and a current authenticator code or unused recovery code. Proofs are consumed under the same
+  replay rules as sign-in. Turning two-factor off ends the account's sessions.
+- A recovery code needs no console key, so after a key is lost or replaced an owner can sign
+  in, turn two-factor off and enroll again under the new key.
+- Administrators can reset another account's two-factor from Users or with
+  `sibuna console reset-factor <id> --revision <n>`. The reset checks the account revision,
+  ends its sessions and cannot target the administrator's own account.
+- Changes are audited as totp.disable, totp.reset and totp.recovery.
+
+Upgrade:
+- The console schema moves to version 46 on first start. Earlier binaries refuse to start
+  against it, so upgrade every node of a cluster and do not downgrade afterwards.
+- Give every console node the same --console-key-file; a node with a different key cannot
+  read factors enrolled elsewhere.
 
 Qualification:
-- The unchanged three-host CRS scenario (selection, leader loss, quorum refusal, restart
-  restoration, rollback) failed on its first run with the v0.3.0 cluster build. With the fix
-  it passed 12 consecutive runs on separate hosts. In 25 node starts a transient storage
-  failure was retried and the node then served its console.
-- The full native suite and console browser tests pass: 95 of 95 build steps and 1,174 of
-  1,174 tests.
+- Storage, HTTP route and console rendering tests cover replay, stale revisions, forged
+  recovery values, unreadable factors, session revocation and audit records.
+- The console end-to-end suite runs the release executable through code replacement, turning
+  two-factor off, re-enrollment, sign-in after a console key change, and an administrator
+  reset through the CLI, within the production sign-in limits.
+- The full native suite, console browser tests and documentation build pass on a clean
+  checkout: 110 of 110 build steps and 1,181 of 1,181 tests. The console end-to-end suite
+  also passes on a cluster build, including three-node failover and quorum loss.
+- A console database created and used by the published v0.3.1 binary migrates on first start;
+  the same account then reads its two-factor status and enrolls. On v0.3.1 that status read
+  answered 503.
 - The release workflow builds and checks every packaged executable before publication.
 - Benchmarks and the FTW corpus results in the v0.3.0 notes still apply, because the request
   path is unchanged.
@@ -42,10 +61,9 @@ The shipped builds include storage and console support; the console starts only 
 Multi-node deployments require a separate -Dcluster=true build with OpenSSL 3. No GeoIP address
 database is bundled; use the documented CLI import/update commands for your chosen dataset.
 
-Upgrading from v0.3.0 needs no migration. The v0.3.0 release notes describe that release's
-behaviour changes and limits, which still apply:
-https://github.com/insanai/sibuna/releases/tag/v0.3.0
+The v0.3.0 release notes describe that release's behaviour changes and limits, which still
+apply: https://github.com/insanai/sibuna/releases/tag/v0.3.0
 
 Documentation: https://insanai.github.io/sibuna/
 Deployment guide: https://insanai.github.io/sibuna/book/operations.html
-Source: https://github.com/insanai/sibuna/tree/v0.3.1
+Source: https://github.com/insanai/sibuna/tree/v0.3.2

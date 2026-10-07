@@ -206,7 +206,7 @@ Batch timings include client and loopback costs. The harness tests loopback PSK 
 
 = Release toolchain
 
-Version 0.3.1 uses checksum-pinned Zig 0.17.0 on every release platform. macOS packages
+Version 0.3.2 uses checksum-pinned Zig 0.17.0 on every release platform. macOS packages
 explicitly target version 15, matching this compiler's minimum OS contract. Build configuration
 uses lazy paths and deferred command arguments; source code uses the compiler's field names,
 field types and attributes directly. The console exports only its declared browser ABI,
