@@ -46,7 +46,7 @@ requester-to-server cost ratio.
 == What a Proof of Work Establishes
 
 A client puzzle establishes that somebody found an input satisfying a public verification
-rule. Its practical benefit is that finding the answer costs more work than checking it.
+rule. A suitable difficulty makes the expected search cost much higher than verification cost.
 It does not establish humanity, identity, or good intent. A requester can rent compute,
 reuse a valid session within its lifetime, or distribute work across machines. The puzzle
 changes the admission cost; policy and inspection still decide what admitted requests may do.

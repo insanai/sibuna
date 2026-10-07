@@ -89,7 +89,7 @@ pub fn createChallengeWithSpec(self: *Coordinator, client_ip: []const u8,
 
     var raw: [id_raw_len]u8 = undefined;
     raw[0] = version;
-    raw[1] = @intFromEnum(effective.algorithm);
+    raw[1] = @backingInt(effective.algorithm);
     raw[2] = difficulty;
     raw[3] = challenges;
     std.mem.writeInt(u64, raw[4..12], now, .little);
@@ -109,8 +109,8 @@ Three details deserve attention:
   work during a flood. Quiet traffic retains the base setting.
 - *The nonce is a PRF output*, keyed by the challenge key over a counter, the clock, and the
   fingerprint. The counter distinguishes successive inputs, and the secret key makes the
-  result unpredictable. This prevents preparing solutions for predictable future
-  identifiers without calling the operating system for entropy on the request path.
+  result difficult to predict without the key. The server does not need an operating-system
+  entropy call for each issued challenge.
 - *Difficulty travels inside the tag.* A client cannot lower the difficulty by editing the
   record: the tag would fail before any proof is examined.
 
@@ -140,7 +140,14 @@ pub fn verifyAndMint(self: *Coordinator, challenge_id: []const u8, solution: Sol
         error.DoubleSpendAttempt => return error.DoubleSpendAttempt,
         else => return error.StoreFull,
     };
-    return self.mintToken(now, decoded.rule_hash, decoded.fingerprint);
+    var result = self.mintToken(now, decoded.rule_hash, decoded.fingerprint, .{
+        .algorithm = @backingInt(decoded.algorithm),
+        .bits = workBits(decoded.algorithm, decoded.difficulty),
+    });
+    result.algorithm = decoded.algorithm;
+    result.difficulty = decoded.difficulty;
+    result.challenges = decoded.challenges;
+    return result;
 }
 ```
 
@@ -179,7 +186,7 @@ pub fn verify(key: *const [32]u8, token_str: []const u8, now: u64,
     raw[payload_size..raw_size].*)) {
         return error.InvalidTokenSignature;
     }
-    const payload = Payload.deserialize(raw[0..payload_size]);
+    const payload = try Payload.deserialize(raw[0..payload_size]);
     try payload.check(now, expected_fingerprint);
     return payload;
 }

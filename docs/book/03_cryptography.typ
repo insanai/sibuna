@@ -236,12 +236,17 @@ pub fn derive(seed: *const [32]u8) Keys {
         .challenge = subkey(seed, "sibuna/challenge/v1"),
         .ed25519_seed = subkey(seed, "sibuna/ed25519/v1"),
         .fingerprint = subkey(seed, "sibuna/fingerprint/v1"),
+        .requirement = subkey(seed, "sibuna/requirement/v1"),
     };
 }
 ```
 
 Each domain string gives the derived key a separate purpose. Compromising the master seed
 compromises every derived key. Cluster members must agree on the seed.
+
+Cluster startup further binds the challenge key to the issuing node. Its spent set remains
+local, so another node cannot accept the same proof independently. Session tokens and
+requirement tickets keep their shared keys and can be checked by other members.
 
 === Stateless Challenges
 
