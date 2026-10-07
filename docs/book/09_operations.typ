@@ -1110,7 +1110,7 @@ WantedBy=multi-user.target
   Write the policy file and the `ip_reputation` rows needed so that a staging network
   (`10.20.0.0/16`) bypasses challenges, `/admin/*` demands 20 work bits of sequential work, and
   a partner scraper identified by `X-Partner-Key` is admitted at 30 requests per 10 seconds.
-], hint: [Rate limits are global per client; use a rule for the partner and the daemon flags for the limit.])
+], hint: [Set a quota on the partner's terminal rule. The global per-client limiter still applies.])
 
 #teach_back([
   Explain to an operator why adding a row to `policies` takes effect without a restart and

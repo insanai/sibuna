@@ -114,9 +114,9 @@ removes both gaps. Losing the transaction's acknowledgement still requires the r
 *9.2.* `ip_rules: {"10.20.0.0/16": "ALLOW"}` (or an `ip_reputation` row with score 100) admits
 staging; a rule `{"name": "admin", "path": "/admin/*", "action": "CHALLENGE", "challenge":
 {"difficulty": 20, "algorithm": "posw"}}` demands the work; a rule matching
-`headers: {"X-Partner-Key": ".*"}` with `ALLOW` admits the partner. The 30-per-10-seconds
-limit is a daemon flag (`--rate-limit 30 --rate-window 10`) and applies to every client, so
-either accept that or place the partner behind its own Sibuna instance.
+`headers: {"X-Partner-Key": ".*"}` with `ALLOW` admits the partner. Add
+`"limits": {"rate": 30, "window_seconds": 10, "ban_seconds": 0}` to that rule for a burst
+of 30 with a ten-second rate window. The global per-client limiter still applies.
 
 == Part X: Reference
 

@@ -110,7 +110,7 @@ fn limits(page: data.Page, buffer: *[128]u8) []const u8 {
     const window = page.rate_window_seconds orelse return "Not reported";
     const ban = page.ban_seconds orelse return "Not reported";
     return std.fmt.bufPrint(buffer, "{d} requests per {d} s per client address; honeypot " ++
-        "ban {d} s. Per-rule limits below override the global limiter on this node.", .{
+        "ban {d} s. Per-rule limits also apply.", .{
         limit, window, ban,
     }) catch "Not reported";
 }
