@@ -33,7 +33,10 @@ Bundled dependencies in the default, single-node release:
   are in tools/console_geometry.py and the console asset manifest.
 - Zig 0.17.0 runtime and standard library: MIT and included notices;
   LICENSES/Zig-LICENSE.txt. Static Linux releases also link musl libc;
-  LICENSES/musl-COPYRIGHT.txt.
+  LICENSES/musl-COPYRIGHT.txt. Windows releases link the mingw-w64 runtime
+  shipped with Zig: ZPL-2.1, with public-domain parts and David M. Gay's
+  gdtoa conversion code; LICENSES/mingw-w64-ZPL-2.1.txt and
+  LICENSES/mingw-w64-gdtoa.txt. The C library itself is the system UCRT.
 
 No GeoIP address database is bundled. Operators import separately licensed
 datasets using Sibuna's GeoIP commands. Cluster builds are separate source

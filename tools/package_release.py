@@ -38,8 +38,12 @@ def package(binary, target, destination):
         (root / binary.name).chmod(0o755)
         for name in ("README.md", "LICENSE", "NOTICE"):
             shutil.copyfile(ROOT / name, root / name)
-        for name in ("LICENSES",):
-            shutil.copytree(ROOT / name, root / name)
+        # Each archive carries only the C runtime notices its executable links.
+        linked = {"musl-COPYRIGHT.txt": target.startswith("linux"),
+                  "mingw-w64-ZPL-2.1.txt": target.startswith("windows"),
+                  "mingw-w64-gdtoa.txt": target.startswith("windows")}
+        shutil.copytree(ROOT / "LICENSES", root / "LICENSES",
+                        ignore=lambda _, names: [n for n in names if not linked.get(n, True)])
         (root / "sibuna.build.json").write_text(json.dumps(manifest, indent=2) + "\n")
         (root / "SOURCE.txt").write_text(
             f"Corresponding source: {source}\nCommit: {commit}\n"
