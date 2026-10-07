@@ -461,6 +461,25 @@ See the [benchmark records and replay commands](benchmarks/results/README.md#thr
 for the pinned artifacts, exact configuration and every sample. This comparison does not
 change the separate console-impact gate's recorded verdict.
 
+### Native CRS in v0.3.0
+
+A separate run measures the native CRS engine with eight signed-in dashboards, four product
+CPUs and 16 connections from another physical host. These are median request rates over five
+rounds; the lightweight inspector is disabled, and Audit permits the benign requests below.
+
+| Workload | CRS disabled (req/s) | Audit, paranoia 1 (req/s) | Audit, paranoia 2 (req/s) |
+| --- | ---: | ---: | ---: |
+| Small GET | 47,311 | 10,787 | 7,423 |
+| 8 KiB JSON POST | 13,726 | 1,151 | 799 |
+| 16 KiB multipart upload | 6,704 | 4,248 | 2,887 |
+
+At paranoia one, p99 is 2.34 ms, 23.43 ms and 6.34 ms respectively. Peak process RSS is
+133.8–140.5 MiB across the CRS profiles, against 104 MiB with CRS disabled. No sample reaches the
+work limit. The [native CRS record](benchmarks/results/README.md#native-crs-request-path)
+identifies clean revision `d461e7f` and includes Enforce, denied requests, CPU and observed
+ranges. This fixture uses different payloads and concurrency from the three-product table;
+it is not a matched BunkerWeb comparison or a pass of the console-impact target.
+
 ---
 
 ## Documentation

@@ -20,7 +20,7 @@ of v0.2.0 and must not be relabelled as native CRS comparisons.
 ## Native CRS request path
 
 `crs-request-path-two-host-latest.json` and its timestamped copy record clean revision
-`eeef5ef4a190e928810e5305f6e279c97d3b7db2` (v0.3.0), built on the product host with Zig
+`d461e7fee9622f5f365fdb37b18acc77dc56608f` (v0.3.0), built on the product host with Zig
 0.17.0 at ReleaseSafe. Sibuna runs on `insan@10.175.52.18` with four logical CPUs and a
 Caddy origin on two others; `wrk` runs on `insan@10.175.52.20` with 16 connections. Five
 profiles (CRS disabled, Audit and Enforce at paranoia 1 and 2, stock CRS 4.30.0, default
@@ -33,15 +33,19 @@ python3 benchmarks/crs_request_path.py --candidate <signed-candidate> \
     --load-host <ssh-destination> --target-host <product-address>
 ```
 
-At paranoia 1 the small GET runs at 10,831 req/s (369 µs CPU per request) against 47,311
-with CRS disabled, the 8 KiB JSON POST at 1,157 req/s and the multipart upload at 4,257.
-Peak summed RSS is 132–139 MiB against 103 MiB disabled. Enforce closes the connection after
+At paranoia 1 the small GET runs at 10,787 req/s (370 µs CPU per request) against 47,311
+with CRS disabled, the 8 KiB JSON POST at 1,151 req/s and the multipart upload at 4,248.
+Peak summed RSS is 133.8–140.5 MiB against 104 MiB disabled. Enforce closes the connection after
 a denial, so its SQL-injection row includes a reconnect per request. The disabled JSON and
 multipart rows are limited by the network between the hosts. This family measures the
 request path only; it is not a comparison with the BunkerWeb CRS profile below.
-These figures predate the subsequent scratch-initialization, compressed-slot and startup
-restoration corrections. Their revision and executable digest remain authoritative; they
-must not be presented as a measurement of a later release binary.
+The executable SHA-256 is
+`6556a59f140e76b190e1fa582a4cea72c0f1372b37027fd70f610570b0ba81e2`.
+The final run followed the scratch-initialization, compressed-slot, startup-restoration and
+console-stack corrections, with no competing build or benchmark. Earlier timestamped
+records retain their own source and executable identities. Containers still share their
+physical hosts; CPU frequency and unrelated host activity are uncontrolled. This family
+does not establish the separate SID 0007 console-impact target.
 
 ## Three-product comparisons
 

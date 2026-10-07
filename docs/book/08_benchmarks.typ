@@ -395,7 +395,7 @@ three-product JSON rows, so their CPU column is the better baseline. No sample e
 work budget, and Audit and Enforce cost the same on admitted traffic.
 Body cost scales with inspected bytes: paranoia level one charges about 1,800 work units per
 byte of free text, and most of that time is regex scanning and transform pipelines per rule
-and value. Peak RSS rises by 29 to 36 MiB over the disabled profile. Slot reservations are
+and value. Peak RSS rises by 30 to 37 MiB over the disabled profile. Slot reservations are
 address space, and a page becomes resident only when a transaction touches it.
 
 The measurement changed the implementation. Safe builds fill every new allocation with
@@ -410,9 +410,11 @@ charged work there fell 22% because the skipped merges and tag copies are no lon
 These rows are not a comparison with BunkerWeb's CRS profile: that family used 64
 connections and a different fixture. Concurrency beyond the slot pool, where CRS sheds load
 with 503 after a 50 ms wait, is not measured here.
-The recorded revision predates subsequent scratch-initialization, compressed-slot and
-startup-restoration corrections. The figures describe that executable; they do not establish
-the performance of a later release binary.
+The final measured revision `d461e7f` includes the scratch-initialization, compressed-slot,
+startup-restoration and console-stack corrections. No competing build or benchmark overlapped
+this run. Earlier timestamped records retain their own executable identities. CPU frequency
+and unrelated physical-host activity remain uncontrolled, and these rows do not establish
+the separate SID 0007 console-impact target.
 
 == Historical Loopback Admission Comparison
 
