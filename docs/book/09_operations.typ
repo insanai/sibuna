@@ -2,8 +2,8 @@
 #import "figures.typ": *
 
 #part_page("IX", [Operations and Deployment], [
-  We cover the two surfaces, every command-line flag, forward-auth recipes, policy files,
-  persistent storage and clustering with Zaxonlite, and packaging.
+  Choose Gate or Shield, connect Sibuna to your application, and manage policies and rules.
+  This chapter covers deployment, the console, storage, clustering and release packages.
 ])
 
 == Surfaces and Configuration
@@ -14,8 +14,9 @@ Version 0.3.0 packages include SID 0010's native CRS connector. It is opt-in: `-
 remains the default. Start in Audit, review the findings for the application with the
 selected rules and resource bounds, and only then select Enforce.
 
-A candidate check authenticates the official archive with the pinned upstream signing key,
-compiles all selected rules privately and can save a new restart directory:
+Check a release before enabling it. The command verifies the official archive with the
+pinned signing key and compiles its rules privately. It can save the verified sources for
+startup:
 
 ```sh
 sibuna crs check --version 4.30.0 --output ./crs-candidate
@@ -23,25 +24,28 @@ sibuna --upstream-host 127.0.0.1 --upstream-port 3000 \
     --crs-mode audit --crs-dir ./crs-candidate
 ```
 
-Use `--configuration <file>` on the check to include up to 64 KiB of locally authorized
-operator rules. Existing output directories are refused. The report describes a candidate;
-checking or saving never changes an already running daemon. Startup authenticates the
-saved sources again. `--no-crs` is the default and opens no artifact files or inspection pool.
-Conflicting mode flags are errors rather than choices resolved by argument order.
+Add `--configuration <file>` to include up to 64 KiB of your own authorized rules. Choose
+a new output directory; the command refuses an existing one. Checking and saving prepare a
+candidate without changing a running daemon. Startup verifies the saved sources again.
 
-The full reverse-proxy profile inspects complete request and response entities before
-publication. Default wire and decoded ceilings are 4 MiB for requests and 1 MiB for responses.
+With the default `--no-crs`, Sibuna opens no rule files and reserves no inspection pool.
+Conflicting mode flags produce an error regardless of their order.
+
+The full reverse-proxy profile inspects complete request bodies before sending them to the
+origin. It inspects complete response bodies before sending them to the client. Default wire and decoded ceilings are 4 MiB for requests and 1 MiB for responses.
 The shared work budget defaults to 128 million units; evaluation is linear in the input, and
 paranoia level one charges roughly 1,800 units per byte of free-text arguments. Use
 `--crs-request-limit`, `--crs-response-limit`, `--crs-work-budget` and `--crs-slots` to set
-reviewed bounds. Eight full-size slots reserve at least 112.6 MiB for entities, decoding and
-response heads, plus metadata and matcher storage; spare reservation becomes small slots for
-identity-encoded requests up to 64 KiB. A compressed request uses a full-size slot even when
+reviewed bounds. Eight full-size slots reserve at least 112.6 MiB for bodies, decoding and response heads.
+Metadata and matcher storage need additional space. Spare reservation provides small slots
+for uncompressed requests up to 64 KiB. A compressed request uses a full-size slot even when
 its encoded `Content-Length` is small: decoded input retains the configured request ceiling.
-Chunked requests also use full-size slots. Reservations are address space: pages become resident as
-transactions use them, and a node at the defaults peaked near 140 MiB under the benchmark
-load. A busy pool waits up to 50 ms for a slot. `--crs-timeout` is an
-absolute inspection deadline, 1–300 seconds, default 30; active progress cannot extend it.
+Chunked requests also use full-size slots. Reservation consumes address space; pages become
+resident as requests use them. A node with the defaults peaked near 140 MiB under the
+benchmark load.
+
+A request waits up to 50 ms for a free slot. `--crs-timeout` sets an absolute inspection
+deadline of 1–300 seconds, with a default of 30. Progress does not extend that deadline.
 Pool exhaustion after the wait returns 503, excessive uploads 413, and enforcing inspection
 failure refuses delivery. JSON and XML bodies are parsed by Content-Type, as in ModSecurity's
 recommended configuration; a body that fails to parse is an inspection failure.
@@ -80,11 +84,11 @@ mode, signed release digest, applied revision, paranoia levels and inspection co
 Audit findings do not claim an enforced denial. A selected denial status describes the
 inspection decision; it does not prove that the client received the response. Incomplete,
 headers-only, local-response, handshake and excluded-stream coverage remain distinct.
-Expanded rule messages, tags, matched values and body contents are omitted. Open
-“Show CRS rule details” for bounded unexpanded message and tag templates, with explicit
-truncation, and actual net anomaly-bucket changes for that rule and phase. Repeated findings
-share one root total; unknown numeric changes are labelled. CRS findings have no payload
-similarity grouping.
+The event does not store expanded messages, tags, matched values or body contents.
+Open “Show CRS rule details” for message and tag templates and the rule's net changes to
+anomaly-score buckets. Truncated templates and unknown numeric changes are labelled.
+Repeated findings share the total for their top-level rule. CRS findings are not grouped
+by payload similarity.
 Schema 44 adds separately loaded rule details to the scalar findings introduced in
 schema 41. Both commit with their incident and optional redacted heads. JSON
 page exports include this metadata; the CSV export retains its existing incident columns.
@@ -92,15 +96,15 @@ Enable `--console-capture-heads` to inspect redacted request and observed origin
 The page distinguishes a local response from an unavailable or unobserved origin response.
 The Nodes page reports the serving node's applied CRS release, mode, profile, source and
 operator configuration digests, thresholds, paranoia levels and effective resource bounds.
-Coverage counters are boot-local exchange observations. They are not incident totals or a
-partition to sum: an enforced denial and incomplete evaluation can describe the same
-exchange. Missing status from an older binary differs from CRS being unconfigured.
-This local snapshot does not establish a durable activation revision or peer convergence.
+Coverage counters describe exchanges observed since this process started. Their categories
+can overlap: one exchange can be both incomplete and denied. Do not sum them as incident
+totals. An older binary with no CRS status is shown separately from unconfigured CRS.
+The local view records this node's observations; check the saved revision and other nodes
+separately when confirming activation.
 
 Administrators manage signed candidates on the *Core Rule Set* page. Prepare a release or
 mode change, compare the candidate with the saved selection, then select it. Preparation
-leaves protection unchanged. The page distinguishes the saved revision from each node's
-application receipt. Off releases the CRS inspection pool while other protection continues.
+leaves protection unchanged. The page shows the saved revision and each node's record of applying it. Off releases the CRS inspection pool while other protection continues.
 Rollback restores the previous signed source, operator rules and settings as a new revision.
 Additional operator rules are limited to 64 KiB. Failed verification or exhausted bounds
 retain the previous protection. Unsaved editor text is erased when leaving the page or
@@ -127,9 +131,8 @@ sibuna crs select --id <reviewed-candidate-id> --revision 1 \
 
 `crs check` and `crs update` with `--origin` prepare a release, accepting `--version`,
 `--configuration` and a bounded JSON `--settings` file. Omitted configuration preserves
-the current operator rules. A settings file accepts the console's named settings and
-rejects unknown fields; omitted fields use the documented defaults, so review the resulting
-candidate. `crs rollback` prepares the exact previous source and settings; selection remains
+the current operator rules. A settings file uses the same field names as the console. Unknown fields are rejected;
+omitted fields take the documented defaults. Review the resulting candidate before selection. `crs rollback` prepares the exact previous source and settings; selection remains
 separate. `crs discard --id <id> --revision <revision>` cancels an unused candidate.
 An update without settings preserves the current resource controls, including a saved
 16-million work budget from earlier builds. To adopt the 128-million default, edit Work budget
@@ -138,8 +141,8 @@ candidate. Changing a startup flag cannot override an existing saved selection.
 All changes require the saved revision explicitly, including revision zero for an initial
 selection. Query status after an uncertain response rather than assuming the change failed.
 `--factor-file` supplies a required second factor and `--timeout` bounds the preparation
-wait to 1–300 seconds. Every command closes its session. `crs validate --directory <path>`
-authenticates and compiles a saved signed candidate without opening the console or storage.
+wait to 1–300 seconds. Each command closes its session when it finishes. `crs validate --directory <path>` verifies
+and compiles a saved signed candidate without opening the console or storage.
 
 Use a private request/response sample to test a saved signed candidate without starting a
 listener or changing protection:
@@ -158,23 +161,23 @@ inherits saved thresholds, paranoia levels, profile and resource limits; `--mode
 this private evaluation without editing the candidate. Without it, a saved Off candidate
 reports disabled coverage.
 
-The JSON report identifies both source digests and the saved candidate revision. It reports
-coverage, would-deny and enforcing decisions, actual blocking/detection scores when present,
-work used and up to 64 scalar findings with an omitted count. Unlogged nonterminal matches
+The JSON report names the source digests and saved candidate revision. It shows coverage,
+Audit and Enforce decisions, available blocking and detection scores, work used, and up to
+64 compact findings. Additional findings are counted as omitted. Unlogged nonterminal matches
 have a separate count; terminal decisions remain visible even when logging is suppressed.
 Safe unexpanded message and tag prefixes, truncation counts and actual net bucket changes
 are included in `details`. Scored roots without a retained finding total are counted
 separately, so setup actions and failed chains cannot disappear from coverage.
-Missing response data is
-labelled separately. Representation or work failures report incomplete coverage. The test
-contacts no origin, emits no traffic observations and retains no sample or expanded matched
-values. It does not reproduce Gate sessions, live limiters or origin behavior.
+Missing response data is labelled. Decoding and work failures report incomplete coverage.
+The test contacts no origin and adds no traffic observations. It saves neither the sample
+nor expanded matched values. Gate sessions, live rate limits and origin behavior require a
+live request test.
 
-The console's *Core Rule Set* page also runs private tests. Open *Show rule details* in a
-completed result to browse two findings at a time. These session-owned pages expire after
-one minute without use; a successful read renews that idle lease within a fifteen-minute
-absolute limit. Expired details require another test and do not change live protection. Review a verified candidate to
-test its rules, or test the selected candidate. Enter the request method, path, client IP,
+The console's *Core Rule Set* page can test a verified candidate or the selected rules.
+Open *Show rule details* in a completed result to browse two findings at a time. Details
+belong to the session that ran the test. They expire after one idle minute; reading renews
+that period up to fifteen minutes after completion. Run another test to replace expired
+details. Live protection stays unchanged. Enter the request method, path, client IP,
 headers and text or hexadecimal entity. A response is optional; its ending declares complete
 content, a WebSocket handshake or streaming. The form bounds each entity to 16 KiB and
 accepts up to 32 headers on each side. Results report actual coverage and scores, retain no
@@ -211,10 +214,10 @@ within the same session and honors query limits. For large inventories, `crs rev
 permits up to fifteen minutes; other management commands retain their five-minute
 maximum. No partial inventory is printed after a failed or timed-out read.
 
-The result belongs to its issuing session. Authorized page reads renew a one-minute idle
-lease, bounded to fifteen minutes after completion. An expired comparison can be run again
-without preparing or selecting a new candidate. A fresh administrator
-check, retained-source check and saved-revision check precede completion. The audit records
+The comparison belongs to the session that requested it. Reading a page renews its
+one-minute idle expiry, up to fifteen minutes after completion. Run an expired comparison
+again without preparing or selecting another candidate. Before returning a result, the
+service rechecks administrator access, retained sources and the saved revision. The audit records
 `crs.review` intent without rule source or request content. If the selection changes, refresh
 status and compare again before a separate `crs select` command.
 
@@ -240,9 +243,10 @@ current settings unless resource controls such as `--crs-profile`, `--crs-reques
 --revision <revision>` restores the previous source and settings as a new selection.
 Changing modes retains operator rules and all resource controls.
 
-The task applies the saved selection before opening listeners and follows later selections
-off the request path. Its report separates saved intent from the last observed boot and
-application; neither proves process liveness. A busy writer lock is a retryable refusal.
+The background task applies the saved selection before opening listeners. It follows later
+selections without adding work to request handling. Its report separates the requested
+selection from the last process instance and applied revision. Use health checks to confirm
+that process is still running. A busy writer lock is a retryable refusal.
 After an uncertain write, query status before retrying. Failed application keeps the current
 running generation and reports failure; startup refuses corrupt selected sources. The store
 retains current and previous generations and bounds staging to four generation directories.
@@ -257,8 +261,10 @@ process inspection deadline, independent of the saved rule selection.
 
 Version 0.3.0 packages include persistent storage, the browser solver and the optional
 management console. Linux x86-64 and ARM64 packages link musl statically; macOS packages
-cover Intel and Apple Silicon, require macOS 15 or later, and are unsigned. Windows packages contain a native x86-64 executable for Windows 10 / Server 2019 or later.
-Use Ctrl+C for ordered shutdown and restrict credential and data files with Windows ACLs. Clustering requires a separate `-Dcluster=true` source build with OpenSSL 3.
+cover Intel and Apple Silicon, require macOS 15 or later, and are unsigned. Windows packages
+contain a native x86-64 executable for Windows 10 / Server 2019 or later. Use Ctrl+C for
+ordered shutdown and Windows ACLs to restrict credential and data files. Clustering requires
+a separate `-Dcluster=true` source build with OpenSSL 3.
 
 Download from #link("https://github.com/insanai/sibuna/releases")[GitHub Releases], verify the
 archive against `SHA256SUMS`, extract it and run `sibuna --version`. Each package contains
@@ -268,9 +274,8 @@ packaged executables before publication; these checks do not establish performan
 
 The engine is LGPL-3.0. The console, including its WebAssembly interface, is
 AGPL-3.0; the default combined executable is distributed under AGPL-3.0.
-Build the engine without the console using `-Dconsole=false`. Directory boundaries and
-third-party exceptions
-are in `LICENSE` and `NOTICE`; full terms are in `LICENSES/`. Every release tag includes the
+Build the engine without the console using `-Dconsole=false`. `LICENSE` and `NOTICE` describe component boundaries and third-party exceptions. Full terms
+are in `LICENSES/`. Every release tag includes the
 corresponding source and build scripts, and the console links to that source. Companies
 seeking a version under terms other than LGPL or AGPL can contact the authors, Vikrant
 Rathore and Ronak Rathore, about alternative licensing. Third-party libraries remain
@@ -302,7 +307,7 @@ subject to their respective licenses.
   [`--mode, -m`], [`reverse_proxy`], [`reverse_proxy` or `forward_auth`],
   [`--workers, -w`], [CPU count], [Accept threads sharing the listening socket; each connection then gets its own thread],
   [`--max-connections`], [`1024`], [Connections served concurrently; further ones are refused with a bounded `503` reply],
-  [`--idle-timeout`], [`15`], [Longest silence in seconds. A request head must arrive within it. An origin response refreshes it on every read, so a slow stream lives while bytes flow and a silent origin is cut on both sockets. A proxied upload must deliver 16 KiB per period (a minimum rate against slow-body attacks)],
+  [`--idle-timeout`], [`15`], [Idle period in seconds; origin reads refresh it. Uploads must deliver 16 KiB per period],
   [`--trust-forwarded`], [off; on in forward-auth], [Honour `X-Forwarded-For` / `X-Real-IP` from the peer],
   [`--algorithm, -a`], [`posw`], [`posw` or `hashcash`],
   [`--difficulty, -d`], [`16`], [Work bits: Hashcash zero bits, or PoSW depth plus three],
@@ -328,6 +333,10 @@ subject to their respective licenses.
   [`--storage-poll-ms`], [`500`], [Storage thread cadence],
   [`--verbose, -v`], [off], [Verbose logging],
 )
+
+A request head must arrive within `--idle-timeout`. Each origin read refreshes the response
+deadline, so a slow stream stays open while bytes arrive. A silent origin closes both sockets.
+Uploads must deliver at least 16 KiB per idle period to limit slow-body attacks.
 
 #warning([The master secret], [
   Without `--secret-file` or `SIBUNA_SECRET` the daemon draws a random seed and prints
@@ -430,18 +439,16 @@ audited revision after a confirmation, and is refused if the rule set has moved 
 image("images/console-audit.png"))
 
 The optional `--console-location <latitude,longitude>` declares this node's position, for
-example `1.3521,103.8198` for a deployment in Singapore. The globe initially centers there;
-Center Sibuna returns to that point after rotation. Country activity follows animated
+example `1.3521,103.8198` for a deployment in Singapore. The globe initially centers there. *Center Sibuna* returns to that point after rotation. Country activity follows animated
 great-circle arcs toward the node, with rear-hemisphere and flat-map dateline clipping.
-Country positions are representative centroids, and arrows represent the observed sixty-second
-window rather than individual connections. An unset server position stays explicitly unknown.
+Country markers use representative central positions. Arrows summarize the observed
+sixty-second window; they do not trace individual connections. An unset server position stays explicitly unknown.
 The configured marker remains visible through telemetry outages; stale traffic does not animate.
 
-Policy previews build a private candidate including configured file rules. Saves compare the
-expected revision and require confirmation of a field comparison. Historical reverts compare
-against the current rule and create a new revision. Committed and locally applied revisions
-are distinct. Audit details retain
-bounded decision changes and the effective acting role. Matcher values are redacted and old
+Policy previews build a private candidate that includes configured file rules. Before a
+save, review the changed fields and confirm the expected revision. A historical revert
+checks the current rule and creates a new revision. The saved revision and locally applied
+revision are shown separately. Audit details record the changes and the role used to make them. Matcher values are redacted and old
 records with missing context remain explicitly absent. Drain, resume and clear-local-bans
 require a command preview. Inspect the durable receipt after a lost response before retrying;
 a committed intent alone does not establish that the runtime effect finished.
@@ -494,14 +501,16 @@ loss. Missing observations remain unavailable and disconnected values remain sta
 statistics never become another node's own contribution. The dashboard's *Live traffic scope*
 selects one node or combines the configured nodes. *Node coverage and locations* identifies
 missing, stale and clock-skewed sources, observation times and configured destinations.
-Country rankings show the uncertainty from omitted source rows. Arrows retain their receiving
-node, and missing node locations are not invented. The combined rate stays unobserved when
-any contributing source lacks a consecutive interval. Select one node to inspect its retained
+Country rankings show uncertainty when source rows are missing. Each arrow points to its
+receiving node; unknown node locations stay unknown. A combined rate is unavailable until
+every contributing source supplies a consecutive interval. Select one node to inspect its retained
 seconds and current-minute path rankings. Remote queries use the authenticated peer connection;
 missing peers stay unavailable and history cursors cannot cross a node restart. Minute history
 keeps its own node selection and per-node rows.
-The navigation and mobile header identify the serving console node independently of the
-selected traffic source. Local commands remain per node. `zig build console-impact` runs the data-plane isolation matrix (`-- --quick` for
+The navigation and mobile header name the serving console node separately from the selected
+traffic source. Local commands affect their named node.
+
+`zig build console-impact` runs the data-plane isolation matrix (`-- --quick` for
 a smoke run, `-- --mode reverse_proxy` against a local origin, `-- --capture-heads` to
 store heads on the enabled consoles and add an audited-admission workload) and writes
 `benchmarks/results/console-impact-latest.json` with the mode and capture setting in its
@@ -517,9 +526,9 @@ changing the source or period discards the old scope. Missing history never beco
 *Compare retained traffic* displays two closed minute windows beside each other: the same
 window yesterday, the preceding period, or a second node. Duration and end-offset controls
 freeze both UTC ranges. Each action reads at most sixteen compact pages per side, with
-96 stored records per page. This covers a 24-hour window without overlapping restarts in one
-batch; Continue retains the same boundaries for longer scans. Complete coverage, incomplete coverage and missing history remain
-explicit. Rate percentages require complete non-overlapping intervals in equal UTC windows,
+96 stored records per page. One batch covers 24 hours when no restart intervals overlap. Use Continue for a longer scan;
+the original boundaries stay fixed. The page labels complete coverage, incomplete coverage
+and missing history. Rate percentages require complete non-overlapping intervals in equal UTC windows,
 normalized by observed milliseconds; a zero reference with new traffic shows “New”.
 The primary Traffic period remains independent.
 The minute format does not record historical proxy mode, so origin-response comparisons remain
@@ -528,9 +537,9 @@ unavailable rather than interpreting forward-auth zeros as observed responses.
 *Compare retained path rankings* selects two closed windows or nodes. Node 0 includes all
 retained nodes, including retired members. An action reads at most sixteen immutable archives,
 checks their identities and checksums, and merges every counter before selecting display rows.
-Archives seal after the 60-second late-sample window, so the newest closed minute may still
-be pending. Continue preserves the original windows and cursor. Bounds describe sampled path prefixes,
-not exact request totals. The page shows partial scans, truncation, retention boundaries and
+Archives become immutable after the 60-second late-sample window. The newest closed minute
+may therefore still be pending. Continue keeps the original windows and cursor. The bounds
+describe sampled path prefixes; they cannot establish exact request totals. The page shows partial scans, truncation, retention boundaries and
 reported queue loss; missing archives cannot establish zero traffic or complete coverage.
 
 Security opens on the last 24 hours and uses sixty equal time buckets over the selected period.
@@ -576,9 +585,8 @@ Policy workflows on the Policies page: reorder managed rules, replay a draft aga
 inspection findings, manage IP groups and country blocks pinned to the active GeoIP
 generation, and export or atomically import the managed set (also `sibuna console policies
 export` and `sibuna console policies import --file <set.json>`).
-Applied rules show recorded hits today, hourly sparklines and an accessible table. A hit is a
-successful declarative matcher evaluation: matching WEIGH rules and the first terminal match
-count; an earlier inspection or reputation decision may prevent evaluation. Private tests do
+Applied rules show recorded hits today, hourly sparklines and an accessible table. A hit means the rule's conditions matched. Matching WEIGH rules and the first terminal
+match count. An earlier inspection or reputation decision can prevent rule evaluation. Private tests do
 not increment these counters. *Compare rule hits* freezes two closed periods for one recorded
 node. Revision history offers *Compare hits around this edit*, excluding the edit minute and
 using equal available periods up to the chosen duration. Optional applied-revision filters
@@ -593,13 +601,14 @@ page through the reviewed diff before applying it. The replacement removes obsol
 by that country and preserves independently managed prefixes. A changed generation or policy
 revision requires a fresh preview, and overlapping independent edits are refused. The Events page
 contains retained WAF findings and honeypot incidents; it is not a complete access log.
-With GeoIP loaded, the storage worker records each incident's country and generation in
-the incident transaction. This is attribution at persistence, not a reconstructed request-time
-location. Later imports leave recorded mappings unchanged. The country filter accepts an
+With GeoIP loaded, the storage worker records each incident's country and generation when
+saving the incident. The mapping uses data available at persistence, which may differ from
+the data available when the request arrived. Later imports leave recorded mappings unchanged. The country filter accepts an
 uppercase two-letter code, `unknown` for an address absent from the loaded generation,
 or `not_recorded` for an incident without mapping data. Source groups report mixed countries
 or coverage explicitly. The globe's *View events* action keeps the selected node and opens
 the country's retained incidents for the last hour.
+
 The Statistics page's *Security* view combines live rate-limit, challenge and ban rates with
 retained inspection and honeypot findings over one hour, one day, seven days or thirty days.
 Category, source and path links open the normal incident workflow with the same node and a
@@ -607,6 +616,7 @@ fixed time boundary. Applying incident filters starts a new period. Findings inc
 records and are distinct from blocked-request totals; absent reputation and rule-hit attribution
 is shown as not recorded. Event and audit filters keep labels with their controls, align the
 Apply action separately and adapt their columns to the available content width.
+
 One authenticated WebSocket survives navigation and carries statistics, incident summaries,
 node status, policy revisions, challenges and audit summaries. New incident and audit records
 wait behind *Load latest records* so the table stays in place while it is read. Policy updates
@@ -616,23 +626,26 @@ queries, detail reads and mutations remain HTTP requests.
 
 Page fragments can be bookmarked; Back and Forward reopen authenticated pages. The sidebar
 also remembers theme and spacing choices in this browser, with System as the default theme.
-SID 0007 is Committed. Its pages and management workflows passed the October Linux and
-connected Chrome review, including an actual cluster on three physical hosts. Performance
-acceptance is separate: the eight selected single-node and three-host impact matrices from
-1 October 2026 are inconclusive, with each raw sample, coverage check and formal verdict
-retained under `benchmarks/results/`. They predate the subsequent request-path and CRS
-changes and do not qualify the v0.3.0 binary. The September
-paired reading was accepted by the owner as a historical exception, not a formal pass, and it
-does not apply automatically to the updated request path or to new measurements. These
-unprivileged containers cannot control the processor governor or other host activity; that
-limits acceptance without establishing a cause for measured throughput differences. The corrected
-harness includes each dashboard's stream, rankings and retained-timeline queries; a full
-acceptance run requires a production GeoIP snapshot and documented host conditions. Direct TLS
-peer transport and the combined dashboard have separate coverage and freshness contracts;
-interface review and browser acceptance remain tracked in SID 0007. The complete Wasm
-application warns above 640 KiB and has a 768 KiB uncompressed ceiling. These project limits
-leave room for console workflows; they do not replace browser loading and responsiveness
-measurements or change the explicit 6 MiB linear-memory allocation.
+SID 0007 is Committed. The October Linux and Chrome reviews passed its page and management
+workflows, including a cluster on three physical hosts. The connected peer transport and
+combined dashboard retain their own coverage and freshness contracts.
+
+#warning([Console performance acceptance], [
+  The eight single-node and three-host impact matrices from 1 October 2026 are inconclusive.
+  Their raw samples, coverage checks and verdicts remain in `benchmarks/results/`. They
+  predate the later request-path and CRS changes and do not qualify v0.3.0. The September
+  paired reading is an accepted historical exception, not a formal pass for this release.
+
+  These containers cannot control CPU frequency or other activity on the physical host.
+  That uncertainty does not establish why measured throughput differed. Run the full
+  acceptance test on the deployment host with a production GeoIP snapshot and documented
+  conditions. The test includes each dashboard's stream, rankings and retained timeline.
+])
+
+The complete Wasm application warns above 640 KiB and has a 768 KiB uncompressed ceiling.
+Its linear-memory allocation is 6 MiB. These project bounds leave room for the console's
+workflows; loading time and responsiveness still need browser measurements. SID 0007
+records the interface and browser acceptance evidence.
 
 #pagebreak(weak: true)
 
@@ -669,7 +682,9 @@ end-to-end HTTP/2 semantics for applications such as native gRPC.
 
 Content-Length request bodies stream through fixed buffers, preserving bytes and MIME
 headers. Multipart uploads retain boundaries, repeated field names, filenames and part types.
-The WAF examines at most the first 8 KiB of the body: multipart metadata and non-file fields
+The following limits describe the lightweight WAF; the native CRS profile has the separate
+whole-body bounds described at the start of this chapter. The lightweight WAF examines at
+most the first 8 KiB of the body: multipart metadata and non-file fields
 remain text inspection inputs, while file payloads are opaque. Recognized binary top-level
 MIME types (images except SVG, audio, video, PDF, ZIP, gzip, 7z, protobuf and octet-stream)
 are opaque too. JSON, XML, SVG, URL-encoded forms and unknown types retain text inspection.
@@ -679,7 +694,7 @@ bounded to 32 parts and 2 KiB of headers per part within that same prefix.
 This is upload compatibility, not file validation or malware scanning. The backend must
 enforce accepted media types rather than trust a client's Content-Type declaration. Fields
 after the inspection prefix, including those after a large uploaded file, are not inspected.
-Compressed payloads are not decompressed for inspection. Uploads still pass admission, path,
+The lightweight WAF does not decompress payloads for inspection. Uploads still pass admission, path,
 query and header checks and remain subject to connection deadlines. Chunked request bodies
 are decoded inside the connection buffer before inspection (SID 0009). A body that ends
 within the buffer reaches the backend with Content-Length. A longer one is re-chunked by
@@ -820,9 +835,9 @@ and application upload/deadline limits at the ingress; the examples show the rou
 }
 ```
 
-The loader fails closed: an unknown key, a misspelled action, a malformed address or an
-out-of-range number rejects the whole file, the diagnostic names the rule and field, and the
-daemon does not start. A command line with an unknown option or an out-of-range value is
+The loader refuses the whole file if a key is unknown, an action is misspelled, an address
+is malformed or a number is out of range. The diagnostic names the rule and field, and
+startup stops. A command line with an unknown option or an out-of-range value is
 refused the same way.
 `rules` replaces the built-in table when present; `ip_rules` feeds the reputation trie, which
 scales to thousands of prefixes; `waf: false` selects the Gate surface from the file.
@@ -834,12 +849,13 @@ scales to thousands of prefixes; `waf: false` selects the Gate surface from the 
   understand campaign clustering, and run a replicated cluster.
 ])
 
-#book_figure([The storage architecture: workers never block on the database], storage_architecture())
+#book_figure([Storage runs separately from request workers], storage_architecture())
 
 `--data-dir /var/lib/sibuna` opens an embedded Zaxonlite node (journal, payload store, and
 SQLite image in one directory) and starts the storage thread. On start and whenever the
 `policies` or `ip_reputation` tables change, the thread rebuilds the spare engine slot from the
-policy file plus the database and publishes it; requests never wait on SQL.
+policy file and database, then publishes it. Request workers read the published engine
+without querying SQL.
 
 === Schema
 
@@ -882,7 +898,7 @@ WHERE incidents_fts MATCH 'union' ORDER BY rank LIMIT 20;
 
 Scores at or below $-50$ become `deny` prefixes in the trie, scores at or above $50$ become
 `allow`, and `banned_until` bounds the ban. Honeypot hits insert a $-100$ record automatically,
-so a trap sprung on one node bans the address on all of them.
+so members apply the ban after the reputation change commits and propagates.
 
 === A Transaction Receipt Makes Retry Safe
 
@@ -901,22 +917,23 @@ Every data-changing statement is guarded by that cursor; the transaction advance
 
 A failed commit retains the pending batch in memory and increments
 `incident_write_failures`. The tick still attempts policy polling. A full 512-record queue
-counts `incidents_dropped`; it never blocks an HTTP response waiting for disk. The pending
-batch adds space for 32 records. Process death before commit can lose queued data: this is a
-bounded asynchronous forensic path, not a durable message queue at enqueue time.
+counts `incidents_dropped` instead of making the request wait for disk. The pending batch
+holds another 32 records. A process crash before commit can lose queued records. Enqueueing
+is asynchronous; durability begins when the storage transaction commits.
 
 #exercise("9.1", [Move the receipt update outside the data transaction. Construct one crash
 schedule that duplicates a reputation effect and another that loses an incident.])
 
 === Campaign Clustering
 
-Each incident payload is embedded as a 64-dimensional unit vector by the hashing trick over
-byte trigrams (digits folded, case folded) and stored in `incidents_vec`. Before insertion the
-transaction queries the vector table for the nearest existing incident, including earlier
-records in the same batch; if its cosine distance
-is below $0.35$ the new incident joins that incident's `campaign_id`, otherwise it starts a
-campaign. Similarity is a heuristic: the regression examples group related SQL payloads, but that
-is not a guarantee that every pair of attacks shares a campaign. No model runs and nothing is trained.
+The grouping algorithm hashes three-byte sequences from each payload into a 64-component
+unit vector. It folds case and digits and stores the result in `incidents_vec`. Before an
+insert, the transaction finds the nearest existing vector, including earlier records in
+that batch. A cosine distance below $0.35$ joins the existing incident's `campaign_id`;
+otherwise the incident starts a new campaign.
+
+This grouping is a heuristic. The regression examples group related SQL payloads, but a
+shared campaign does not prove a shared attacker. The algorithm uses no trained model.
 
 === Clustering
 
