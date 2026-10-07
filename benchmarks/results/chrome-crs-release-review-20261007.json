@@ -7,7 +7,7 @@
   "ui_asset": "0a4082f7845a13da",
   "wasm_bytes": 713112,
   "wasm_resource_duration_ms": 61.4,
-  "scope": "Actual browser against isolated Linux console through loopback SSH tunnel. Runtime core started at ec8896c; final-core UI asset is unchanged. Final binary smoke pending.",
+  "scope": "Actual browser against isolated Linux console through loopback SSH tunnel. Initial comprehensive walkthrough at ec8896c; final native ReleaseSafe binary rechecked at d461e7f. The shipped UI asset is unchanged.",
   "checks": {
     "anonymous_shell_no_geometry_or_telemetry_stream": true,
     "authentication": true,
@@ -35,5 +35,26 @@
     "401 anonymous session probe"
   ],
   "unexpected_console_errors_observed": false,
-  "fixture_cleanup": "Owned browser daemon and origin stopped cleanly."
+  "fixture_cleanup": "Owned browser daemon and origin stopped cleanly.",
+  "final_binary_smoke": {
+    "core_commit": "d461e7fee9622f5f365fdb37b18acc77dc56608f",
+    "daemon_sha256": "6556a59f140e76b190e1fa582a4cea72c0f1372b37027fd70f610570b0ba81e2",
+    "host": "10.175.52.19",
+    "mode": "enforce",
+    "viewport": "390 \u00d7 844, dark",
+    "authentication_and_live_stream": true,
+    "saved_selection_revision_1_and_applied_receipt": true,
+    "protected_SQL_status_403": true,
+    "private_SQL_test_enforcing_403_without_origin_or_publication": true,
+    "rule_942100_detail_and_heading_focus": true,
+    "persisted_incident_and_local_response_heads": true,
+    "redacted_curl_clipboard_success": true,
+    "no_horizontal_page_overflow": true,
+    "signout_clears_private_evidence": true,
+    "unexpected_console_errors": false,
+    "expected_console_errors": [
+      "401 anonymous session probe"
+    ],
+    "owned_fixture_and_tunnel_stop_status": 0
+  }
 }
