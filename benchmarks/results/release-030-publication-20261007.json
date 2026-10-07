@@ -1,0 +1,84 @@
+{
+  "format": 1,
+  "date": "2026-10-07",
+  "version": "0.3.0",
+  "source_commit": "e6664465ad589bb9dcca565a3d465ccf184c8ecf",
+  "tag_object": "344c97a80498c1ed1156c1881076b390b8b61cf0",
+  "previous_unpublished_tag_object": "fa4a89ba04c7a09c1367048f2d2173a1f3848d19",
+  "tag_update": "Exact-object SSH force-with-lease; old tag was unpublished",
+  "release": {
+    "id": 405618067,
+    "url": "https://github.com/insanai/sibuna/releases/tag/v0.3.0",
+    "published_at": "2026-10-07T09:57:06Z",
+    "draft": false,
+    "prerelease": false
+  },
+  "qualification": {
+    "url": "https://github.com/insanai/sibuna/actions/runs/37599968840",
+    "source_commit": "e6664465ad589bb9dcca565a3d465ccf184c8ecf",
+    "conclusion": "success",
+    "archives_receipt": "native-release-final-030-20261007.json"
+  },
+  "duplicate_tag_run": {
+    "url": "https://github.com/insanai/sibuna/actions/runs/37603735098",
+    "conclusion": "cancelled",
+    "publish_job": "cancelled with no steps executed",
+    "reason": "Reused already qualified identical-source artifacts; no competing publisher"
+  },
+  "verification": {
+    "all_public_asset_digests_match_qualified_bytes": true,
+    "independent_public_download_attempts": 1,
+    "all_public_downloads_match_qualified_bytes": true,
+    "checksums_source_licenses_and_native_formats_reverified": true,
+    "release_notes_match_reviewed_file": true,
+    "immutable_public_tag_dereference_verified": true,
+    "draft_by_tag_api_lookup": {
+      "status": 404,
+      "scope": "Verification lookup before publication; no upload error or asset mismatch",
+      "final_verification": "Public API digests and independent downloads verified after publication"
+    }
+  },
+  "release_notes_sha256": "aedf4818bcdf6eca9b9130873b99a5eb2ea76dd422464444c1c9bd612f576e99",
+  "assets": [
+    {
+      "name": "SHA256SUMS",
+      "size_bytes": 459,
+      "digest": "sha256:60473ec547670606473ded5e52d71af5c501d59c879f2399a6b84ea5b8b83982",
+      "url": "https://github.com/insanai/sibuna/releases/download/v0.3.0/SHA256SUMS"
+    },
+    {
+      "name": "sibuna-linux-amd64.tar.gz",
+      "size_bytes": 3267033,
+      "digest": "sha256:2baeda74502cf9b7fcb49ca1c36f7bcee881a8febd5f525995cf236d5f340156",
+      "url": "https://github.com/insanai/sibuna/releases/download/v0.3.0/sibuna-linux-amd64.tar.gz"
+    },
+    {
+      "name": "sibuna-linux-arm64.tar.gz",
+      "size_bytes": 3236431,
+      "digest": "sha256:40d83a59d8025d75620adc72939ea967d6671e943aab55503c414d1178eb9136",
+      "url": "https://github.com/insanai/sibuna/releases/download/v0.3.0/sibuna-linux-arm64.tar.gz"
+    },
+    {
+      "name": "sibuna-macos-amd64.tar.gz",
+      "size_bytes": 3205798,
+      "digest": "sha256:93ea3037fd52429b15062508c0188b8e33e6f927fc9ed46257cd0945d8aef5aa",
+      "url": "https://github.com/insanai/sibuna/releases/download/v0.3.0/sibuna-macos-amd64.tar.gz"
+    },
+    {
+      "name": "sibuna-macos-arm64.tar.gz",
+      "size_bytes": 3078419,
+      "digest": "sha256:6f98e419a421a8326437bd58f0f4805f6f4dd91155eca537ad96f11142c1cefb",
+      "url": "https://github.com/insanai/sibuna/releases/download/v0.3.0/sibuna-macos-arm64.tar.gz"
+    },
+    {
+      "name": "sibuna-windows-amd64.zip",
+      "size_bytes": 3306091,
+      "digest": "sha256:d1fb8e1da53226f175c826346b11c858b024fa6aeb7f08816d32ea411de868d3",
+      "url": "https://github.com/insanai/sibuna/releases/download/v0.3.0/sibuna-windows-amd64.zip"
+    }
+  ],
+  "limitations": [
+    "Historical FTW and benchmark records retain their measured source revisions.",
+    "The documented SID 0007 performance exception remains explicit."
+  ]
+}
