@@ -107,6 +107,8 @@ pub const Program = struct {
     negated: bool,
     id: u32,
     tags: []macros.Program,
+    /// Some tag reads the transaction, so tag exclusions need the merged view.
+    tag_references: bool,
     candidate: ?post.Program,
 
     pub fn deinit(self: *Program) void {
@@ -240,7 +242,12 @@ pub const Program = struct {
 
     fn excluded(self: *const Program, field: ?controls.Target, frame: Frame) Error!bool {
         const control = frame.control orelse return false;
-        const view = try frame.context.view(frame.budget);
+        if (control.idle()) return false;
+        // Literal tags never read the view; building it would cost a merge per field.
+        const view: variables.View = if (self.tag_references)
+            try frame.context.view(frame.budget)
+        else
+            .{ .entries = &.{} };
         const filter: controls.Filter = .{ .state = control, .id = self.id, .tags = self.tags };
         return filter.excludes(field, .{
             .view = &view,
@@ -312,12 +319,14 @@ pub fn compile(
         tags.deinit(allocator);
     }
     var capture = false;
+    var tag_references = false;
     for (source.actions) |action| {
         if (action.kind == .capture) capture = true;
         if (action.kind == .tag) {
             if (tags.items.len == limits.actions) return error.ActionLimit;
             var tag = try macros.compile(allocator, action.value.?, .{});
             errdefer tag.deinit();
+            if (tag.fixed() == null) tag_references = true;
             try tags.append(allocator, tag);
         }
         if (action.kind != .set_var) continue;
@@ -338,6 +347,7 @@ pub fn compile(
         .transforms = transforms,
         .writes = owned_writes,
         .tags = try tags.toOwnedSlice(allocator),
+        .tag_references = tag_references,
         .id = source.id,
         .candidate = candidate,
         .capture = capture,

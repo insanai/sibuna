@@ -27,6 +27,18 @@ test "macro parts own source and expand once using exact case-insensitive refere
     try t.expectEqualStrings("7/example.com/%{tx.score}/", expanded);
 }
 
+test "reference-free programs expose their literal text" {
+    var tag = try macros.compile(t.allocator, "attack-xss", .{});
+    defer tag.deinit();
+    try t.expectEqualStrings("attack-xss", tag.fixed().?);
+    var empty = try macros.compile(t.allocator, "", .{});
+    defer empty.deinit();
+    try t.expectEqualStrings("", empty.fixed().?);
+    var level = try macros.compile(t.allocator, "paranoia-level/%{tx.level}", .{});
+    defer level.deinit();
+    try t.expect(level.fixed() == null);
+}
+
 test "missing values require complete coverage and duplicate macros fail explicitly" {
     const entries = [_]variables.Entry{
         .{ .collection = .args, .key = "Name", .value = "first" },

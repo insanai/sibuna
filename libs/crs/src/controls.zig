@@ -157,6 +157,11 @@ pub const State = struct {
     audit: Audit = .inherited,
     failed: bool = false,
 
+    /// No exclusion can apply. A failed state is never idle, so `excludes` still reports it.
+    pub fn idle(self: *const State) bool {
+        return self.used == 0 and !self.failed;
+    }
+
     pub fn apply(self: *State, program: *const Program, budget: *work.Budget) Error!void {
         if (self.failed) return error.TransactionFailed;
         errdefer self.failed = true;
@@ -242,7 +247,7 @@ fn hasTag(tags: Tags, wanted: []const u8, budget: *work.Budget) Error!bool {
         .expanded => |expanded| {
             std.debug.assert(expanded.frame.budget == budget);
             for (expanded.programs) |*program| {
-                const tag = try program.expand(expanded.frame);
+                const tag = program.fixed() orelse try program.expand(expanded.frame);
                 try budget.debit(wanted.len + tag.len);
                 if (std.mem.eql(u8, wanted, tag)) return true;
             }

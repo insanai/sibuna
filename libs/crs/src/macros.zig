@@ -33,6 +33,18 @@ pub const Program = struct {
         self.* = undefined;
     }
 
+    /// The fixed text of a program without references; it needs no view or copy.
+    pub fn fixed(self: *const Program) ?[]const u8 {
+        return switch (self.parts.len) {
+            0 => "",
+            1 => switch (self.parts[0]) {
+                .literal => |text| text,
+                .reference => null,
+            },
+            else => null,
+        };
+    }
+
     /// Output is disjoint from source and view values. Resolution and work
     /// reservation finish before any copy, leaving output unchanged on failure.
     pub fn expand(self: *const Program, frame: Frame) Error![]const u8 {
