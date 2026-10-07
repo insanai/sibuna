@@ -2,7 +2,7 @@
 #import "figures.typ": *
 
 #part_page("X", [Desk Reference and Diagnostics], [
-  Endpoints, metrics, error catalog, policy schema, and storage tables in one place.
+  Find endpoints, metrics, error messages, policy fields and storage tables in one place.
 ])
 
 == Endpoints
@@ -14,11 +14,11 @@
 #table(
   columns: (1.4fr, 0.5fr, 2.2fr),
   table.header([*Endpoint*], [*Method*], [*Function*]),
-  [`/__sibuna/challenge`], [GET], [The interstitial page],
-  [`/__sibuna/challenge.json?need=&path=`], [GET], [Issues a stateless challenge: the requirement ticket from the challenged response decides it, otherwise the reported URL is evaluated (`414` above 8 KiB). Returns `{id, algorithm, difficulty, challenges, expires_at}`],
+  [`/__sibuna/challenge`], [GET], [The HTML challenge page],
+  [`/__sibuna/challenge.json?need=&path=`], [GET], [Issues a stateless challenge. A sealed ticket supplies the required work; without it, the reported URL is evaluated (`414` above 8 KiB). Returns `{id, algorithm, difficulty, challenges, expires_at}`],
   [`/__sibuna/verify`], [POST], [Accepts `{"challenge_id", "nonce"}` or `{"challenge_id", "proof"}`; `200` with `Set-Cookie`, or `400` with a diagnostic],
-  [`/__sibuna/wasm/sibuna-pow.wasm`], [GET], [The 8,831-byte solver module, cacheable],
-  [`/__sibuna/worker.js`], [GET], [The Web Worker with WASM and JavaScript provers, cacheable],
+  [`/__sibuna/wasm/sibuna-pow.wasm`], [GET], [The cacheable WebAssembly proof solver],
+  [`/__sibuna/worker.js`], [GET], [The cacheable Web Worker with WebAssembly and JavaScript provers],
   [`/__sibuna/honeypot`], [GET], [Bans the caller for `--ban-seconds` and records an incident; `403`],
   [`/__sibuna/health`], [GET], [JSON liveness status with engine name, version, proxy mode and proof algorithm],
   [`/__sibuna/metrics`], [GET], [Prometheus text format],
@@ -30,10 +30,9 @@ replies).
 
 The separate opt-in management listener serves `/console/`. Initialize its administrator
 locally with `sibuna init-admin`, then replace the temporary password on first sign-in.
-`/console/api/stats` and `/console/ws` require an authenticated session. The WebSocket
-multiplexes statistics, events, nodes, policy, challenges and audit with bounded snapshots,
-deltas and gap recovery. `/console/stream` retains the earlier statistics-only protocol. Origin error counters are not observed in
-forward-auth mode. Part IX documents the console's workflows, HTTPS deployment and current
+`/console/api/stats` and `/console/ws` require an authenticated session. One WebSocket carries statistics, events, nodes, policy, challenges and audit. Bounded
+snapshots and updates allow recovery after missed messages. `/console/stream` retains the
+earlier statistics-only protocol. Forward-auth mode cannot observe origin error counters. Part IX documents the console's workflows, HTTPS deployment and current
 SID 0007 limits.
 
 == Metrics
@@ -56,8 +55,9 @@ Counters exposed as `sibuna_<name>_total` in Prometheus text format:
   [`incidents_dropped`, `incident_write_failures`], [Queue pushes rejected because the ring was full, and failed commit attempts],
 )
 
-A retry can increment `incident_write_failures` without losing records, because the pending
-batch is retained. Monitor increments over an interval; totals alone are not a queue depth.
+A failed write retains its batch for retry. `incident_write_failures` can therefore increase
+without losing a record. Monitor changes over an interval; the lifetime totals do not tell
+you how many records are queued.
 
 == Status Codes
 
@@ -69,19 +69,19 @@ batch is retained. Monitor increments over an interval; totals alone are not a q
   [400], [Malformed request, or a rejected solution with an Elm-style diagnostic],
   [401], [Challenge required for a client that does not accept HTML, or in forward-auth mode],
   [403], [Policy or WAF denial, banned address, honeypot],
-  [413], [Solution body larger than the 64 KB connection buffer],
+  [413], [Body exceeds its route limit; verification has a 64 KiB buffer, while CRS uses configured entity limits],
   [417], [Unsupported request expectation; `100-continue` is handled locally],
   [429], [GCRA limit exceeded; `Retry-After` in seconds],
-  [431], [Request head over 16 KB],
-  [502], [Origin unreachable, or its response head was malformed or larger than 16 KB],
-  [503], [Connection limit (`--max-connections`) reached; the socket is closed after the reply],
+  [431], [Request head over 16 KiB],
+  [502], [Origin unreachable, or its response head was malformed or larger than 16 KiB],
+  [503], [Connection or CRS inspection capacity exhausted; the socket closes after the reply],
 )
 
 == Error Catalog
 
-`INVALID COMMAND LINE` stops startup for any option the daemon does not recognise, any value
-outside its documented range, and an invalid, missing or duplicate mode selection. The block
-names the option, the value given, the range expected and the error (for example
+Startup stops with `INVALID COMMAND LINE` for an unknown option, an out-of-range value, or
+an invalid, missing or duplicate mode selection. The diagnostic names the option, supplied
+value, expected range and error (for example
 `UnknownOption`, `InvalidValue`, `InvalidMode`, `DuplicateMode`, `TooManyPeers`). Supply
 `--mode reverse_proxy` or `--mode forward_auth` once; `-m` is the equivalent short option.
 
@@ -93,7 +93,7 @@ names the option, the value given, the range expected and the error (for example
   columns: (1.3fr, 1.6fr, 1.6fr),
   table.header([*Error*], [*Cause*], [*Hint*]),
   [`MalformedChallenge`], [The identifier is not a well-formed challenge record], [Fetch a fresh challenge and submit it unchanged],
-  [`InvalidChallengeTag`], [The tag does not authenticate; not issued by this cluster or edited], [Challenges cannot be forged; request a new one],
+  [`InvalidChallengeTag`], [The tag does not authenticate; not issued by this cluster or edited], [Request a fresh challenge],
   [`ChallengeExpired`], [Older than the challenge TTL, or minted in the future], [Request a new challenge],
   [`FingerprintMismatch`], [Submitted from a different address or User-Agent], [Submit from the client that fetched it],
   [`DifficultyNotMet`], [Hashcash nonce lacks the required zero bits], [Keep searching nonces],
@@ -101,9 +101,9 @@ names the option, the value given, the range expected and the error (for example
   [`WrongSolutionType`], [A nonce for a PoSW challenge or a proof for Hashcash], [Match the solution field to the algorithm],
   [`DoubleSpendAttempt`], [The challenge was already spent], [Challenges are single use],
   [`StoreFull`], [Spent set shard exhausted], [Lower the challenge TTL or raise capacity],
-  [`InvalidTokenSignature`], [Cookie tag or signature fails], [Re-authenticate through the interstitial],
-  [`TokenExpired`], [Cookie past its expiry], [Re-authenticate],
-  [`TokenBoundAddressMismatch`], [Cookie presented from a different client identity], [Cookies cannot be shared],
+  [`InvalidTokenSignature`], [Cookie tag or signature is invalid], [Re-authenticate through the interstitial],
+  [`TokenExpired`], [Cookie has expired], [Re-authenticate],
+  [`TokenBoundAddressMismatch`], [Cookie presented from a different client identity], [Use the cookie issued to this client identity],
 )
 
 == Policy Schema

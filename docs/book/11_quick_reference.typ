@@ -1,7 +1,7 @@
 #import "theme.typ": *
 
 #part_page("XI", [Quick Reference Card], [
-  Keep beside a terminal: build, run, configure, route, observe, and diagnose.
+  Keep this card beside a terminal when building, running or diagnosing Sibuna.
   Part X holds the full tables; this card holds what an operator types.
 ])
 
@@ -23,7 +23,7 @@
   zig build -Doptimize=fast -Dstorage=false   # static, no libc
   zig build -Dcluster=true                  # Multi-Paxos, needs OpenSSL 3
   zig build test        # native, UI and live daemon tests
-  zig build console-test # console workflows through a live daemon
+  zig build console-test # native console and UI tests
   zig build fmt         # zig fmt + 70-line / 99-column gate
   zig build book sid    # this book, the SID records
   zig build benchmark   # primitives -> results/latest.json
@@ -45,7 +45,7 @@
   ```
 ])
 #v(4pt)
-#card([Console (opt-in preview)], [
+#card([Console (opt-in)], [
   ```sh
   # Initialize while the daemon is stopped, then start the console
   sibuna init-admin admin --data-dir ./data
@@ -54,8 +54,8 @@
   Open `http://127.0.0.1:19446/console/` and replace the temporary password.
   Add `--console-location 1.3521,103.8198` to place the node on the globe.
   Remote access requires an HTTPS proxy, an explicit origin and trusted-proxy CIDRs;
-  follow Part IX. SID 0007 is Committed; functional verification is complete, while the
-  console's performance isolation target remains unproved by the container measurements.
+  follow Part IX. SID 0007 is Committed. Its functional checks passed; the container
+  measurements have not established the console's performance-isolation target.
 ])
 #v(4pt)
 #grid(columns: (1fr, 1fr), gutter: 5pt,
@@ -82,7 +82,7 @@
       [`challenge`], [interstitial HTML],
       [`challenge.json?need=&path=`], [`{id, algorithm, difficulty, challenges, expires_at}`],
       [`verify` (POST)], [`{challenge_id, nonce | proof}` → `200` + `Set-Cookie`, else `400`],
-      [`wasm/sibuna-pow.wasm`], [8,831-byte solver],
+      [`wasm/sibuna-pow.wasm`], [WebAssembly proof solver],
       [`worker.js`], [worker with WASM and JS provers],
       [`honeypot`], [bans caller, `403`],
       [`health`], [`{"status":"ok",…}`],
@@ -99,12 +99,12 @@
       [400], [malformed request or rejected solution (diagnostic body)],
       [401], [challenge required: non-HTML client or forward auth],
       [403], [policy or WAF denial, ban, honeypot],
-      [413], [solution body over the 64 KB buffer],
+      [413], [body exceeds route or configured CRS limit],
       [417], [unsupported request expectation],
       [429], [GCRA limit, `Retry-After` seconds],
-      [431], [head over 16 KB],
+      [431], [head over 16 KiB],
       [502], [origin unreachable or malformed],
-      [503], [`--max-connections` reached],
+      [503], [connection or CRS slot capacity full],
     )
   ]),
   card([Headers], [
@@ -169,7 +169,7 @@
   card([Numbers to remember], [
     Challenge id 70 chars (36-byte payload + 16-byte tag) · token 75 chars (40 + 16) ·
     proof bytes $32(1 + t(n+1))$ · PoSW depth $= "bits" - 3$, range 4–24 · request buffer
-    64 KB · head limit 16 KB · body inspected 8 KB · spent set 16 × 4,096 · rate cells
+    64 KiB · head limit 16 KiB · lightweight body prefix 8 KiB · spent set 16 × 4,096 · rate cells
     16 × 512 · bans 4,096 · incident ring 512 · batch 32 · campaign distance 0.35 ·
     keep-alive 4,096 requests per connection · origin pool 256 sockets.
   ]),
@@ -184,5 +184,7 @@
   `reverse_proxy` carries admitted HTTP/1.1 bodies and WebSockets; `forward_auth` grants
   admission and the ingress carries them. Omitted auth bodies and origin responses cannot
   be inspected or counted by Sibuna. TLS terminates at the ingress; native HTTP/2 is deferred.
-  Uploads use Content-Length; inspection sees at most an 8 KiB prefix, with file bytes opaque.
+  Uploads support Content-Length and chunked framing. The lightweight inspector reads an
+  8 KiB prefix and treats file bytes as opaque. Native CRS has separate whole-body bounds;
+  see Part IX before enabling it.
 ])
