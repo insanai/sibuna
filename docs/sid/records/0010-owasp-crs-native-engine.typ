@@ -2473,9 +2473,11 @@ retained separately from any subsequent classification receipt.
 
 In Enforce, 4,993 complete contracts pass, and 5,039 tests satisfy their rule-ID and status
 assertions. All 4,792 stages answered 403 deliver zero origin bytes: 4,724 are terminal
-policy denials and 68 are incomplete refusals. At blocking paranoia four, 82 response fixtures
-are denied on their inbound score before response inspection, so Audit qualifies those
-response rule IDs and Enforce qualifies the terminal decision and withheld delivery.
+policy denials and 68 are incomplete refusals. At blocking paranoia four, 103 of the 105
+response fixtures are refused locally before response inspection. In 82, this preempts an
+expected response-rule assertion; Audit qualifies those response rule IDs, while Enforce
+qualifies the terminal decision and withheld delivery. Other locally refused response
+fixtures require inbound findings or negative assertions rather than a response-phase match.
 
 The original measurements remain unchanged, including the initially failed Enforce gate
 whose status-bearing fixtures lacked native oracle entries. Exact supplemental native and
