@@ -10,7 +10,12 @@ renamed APIs. Paxos also has a bounded election correction: chosen-history repla
 does not replace a ballot-bearing leader hint or reset the election timer, because
 any member can serve catch-up commits. Prepare, accept and matching heartbeat
 messages retain their leader-contact behavior; chosen-value and durability rules
-are unchanged. This correction and its regression tests are recorded in
+are unchanged. Delayed Nacks are compared by complete ballot and cannot replace
+newer durable or observed leader evidence. Zaxonlite installs payloads through
+named same-directory stages with exclusive creation and atomic no-replace
+publication, instead of anonymous `O_TMPFILE` links, and removes abandoned stages
+at startup under the node's directory lock. File, directory and journal barriers
+are unchanged. These corrections and their regression tests are recorded in
 `provenance.json`. The build entry points expose the embedded
 library and preserve its SQLite, sqlite-vec and optional OpenSSL configuration.
 The unused Zaxon terminal application and its Vaxis dependency are not built.
