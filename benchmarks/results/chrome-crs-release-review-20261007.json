@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "date": "2026-10-07",
+  "product_version": "0.3.0",
+  "toolchain": "Zig 0.17.0",
+  "browser": "Chrome DevTools connected browser",
+  "ui_asset": "0a4082f7845a13da",
+  "wasm_bytes": 713112,
+  "wasm_resource_duration_ms": 61.4,
+  "scope": "Actual browser against isolated Linux console through loopback SSH tunnel. Runtime core started at ec8896c; final-core UI asset is unchanged. Final binary smoke pending.",
+  "checks": {
+    "anonymous_shell_no_geometry_or_telemetry_stream": true,
+    "authentication": true,
+    "private_enforce_sample_without_origin": true,
+    "942100_static_template_and_PL1_delta_5": true,
+    "heading_focus_for_details_and_exclusions": true,
+    "exclusion_pages_1_to_8_and_9_to_16": true,
+    "mode_audit_to_enforce_review_and_applied_revision": true,
+    "protected_SQL_status_403_after_UI_selection": true,
+    "rollback_restores_audit_as_new_revision": true,
+    "operator_rule_100001_review_one_added_and_selected": true,
+    "invalid_directive_reports_file_line_2_and_hint_keeps_revision": true,
+    "failed_preparation_retains_editor": true,
+    "mobile_off_mode_applied_zero_slots_and_reservation": true,
+    "saved_incident_rule_details_and_root_net_score": true,
+    "local_response_capture_state": true,
+    "redacted_copy_as_curl_clipboard_success": true,
+    "desktop_light_1280_no_page_overflow": true,
+    "mobile_dark_390_no_page_overflow": true,
+    "mobile_menu_navigation": true,
+    "signout_removes_private_evidence": true
+  },
+  "expected_console_messages": [
+    "404 favicon",
+    "401 anonymous session probe"
+  ],
+  "unexpected_console_errors_observed": false,
+  "fixture_cleanup": "Owned browser daemon and origin stopped cleanly."
+}
