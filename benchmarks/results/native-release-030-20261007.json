@@ -1,0 +1,332 @@
+{
+  "schema": 1,
+  "recorded_at": "2026-10-07",
+  "version": "0.3.0",
+  "kind": "pre-tag native package qualification",
+  "application_revision": "d461e7fee9622f5f365fdb37b18acc77dc56608f",
+  "status": "All five native platform jobs and inspected packages passed; publication not performed by these manual runs.",
+  "provenance_notes": [
+    "The all-platform d461 run failed solely in the Windows CRS probe build because a test tool used the POSIX argument iterator. Native proxy, console and Wasm checks had already passed. Commit 5340136 switched nine CRS test tools to the allocator-owned portable iterator. The Windows-only rerun passed every gate.",
+    "Between d461e7f and 5340136 there are no application, library, build graph or dependency changes. Platform builds therefore qualify the same application implementation.",
+    "Archive hashes identify downloaded manual-run packages. The final tag workflow rebuilds from the final release commit; its published assets and checksums must be verified separately.",
+    "Source links name the intended v0.3.0 tag; the tag was not yet published when these archives were inspected."
+  ],
+  "runs": [
+    {
+      "url": "https://github.com/insanai/sibuna/actions/runs/37568473874",
+      "head_revision": "d461e7fee9622f5f365fdb37b18acc77dc56608f",
+      "overall_conclusion": "failure",
+      "conformance_jobs": [
+        {
+          "name": "crs-conformance",
+          "job_id": 112621803547,
+          "conclusion": "success"
+        },
+        {
+          "name": "crs-console",
+          "job_id": 112621803749,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "url": "https://github.com/insanai/sibuna/actions/runs/37570113497",
+      "head_revision": "53401367e6b87a36c14dc66c424845da14b0fbde",
+      "overall_conclusion": "success",
+      "conformance_jobs": [
+        {
+          "name": "crs-console",
+          "job_id": 112626611506,
+          "conclusion": "success"
+        },
+        {
+          "name": "crs-conformance",
+          "job_id": 112626611792,
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "qualified_runtime_scenarios": [
+    "reverse proxy streaming and upgrades",
+    "forward authentication ingress",
+    "complete console workflow including reviewed country replacement",
+    "live shipped Wasm module",
+    "socket ownership and deadlines",
+    "signed CRS artifact/update and local management",
+    "active CRS HTTP enforcement and console evidence"
+  ],
+  "platforms": [
+    {
+      "platform": "linux-amd64",
+      "target": "x86_64-linux-musl",
+      "requirements": "Linux 5.10 or later",
+      "source_revision": "d461e7fee9622f5f365fdb37b18acc77dc56608f",
+      "ci": {
+        "run_url": "https://github.com/insanai/sibuna/actions/runs/37568473874",
+        "job_id": 112621829673,
+        "job_url": "https://github.com/insanai/sibuna/actions/runs/37568473874/job/112621829673",
+        "conclusion": "success",
+        "started_at": "2026-10-07T03:49:57Z",
+        "completed_at": "2026-10-07T04:14:28Z"
+      },
+      "github_artifact": {
+        "id": 11460497655,
+        "name": "sibuna-linux-amd64",
+        "container_digest": "sha256:509b97f44c3e61db4bd43a5b1c422b439828979c381234d7a0f5f3bb7c15a353",
+        "container_bytes": 3237997
+      },
+      "archive": {
+        "name": "sibuna-linux-amd64.tar.gz",
+        "sha256": "997d192b6f68083bec654cd3df6de1a8117535ec77143a8944e4a6db376cb567",
+        "bytes": 3266320
+      },
+      "binary": {
+        "sha256": "b492f2fd31328a5e559370b724ae7bc339711def65f9595c4620f32cc6ad337d",
+        "bytes": 14843304
+      },
+      "checks": {
+        "archive_complete": true,
+        "manifest_binary_sha256_matches": true,
+        "version_toolchain_features_match": true,
+        "license_files_present": [
+          "LICENSE",
+          "NOTICE",
+          "README.md",
+          "SOURCE.txt",
+          "LICENSES/AGPL-3.0.txt",
+          "LICENSES/LGPL-3.0.txt",
+          "LICENSES/GPL-3.0.txt",
+          "LICENSES/ModSecurity-Apache-2.0.txt",
+          "LICENSES/OWASP-CRS-Apache-2.0.txt",
+          "LICENSES/libinjection-BSD-3-Clause.txt"
+        ],
+        "corresponding_source_tag": "v0.3.0",
+        "unsigned": true,
+        "executable_format": {
+          "format": "ELF64 little-endian",
+          "machine": 62,
+          "has_interpreter": false,
+          "static_musl": true
+        }
+      }
+    },
+    {
+      "platform": "linux-arm64",
+      "target": "aarch64-linux-musl",
+      "requirements": "Linux 5.10 or later",
+      "source_revision": "d461e7fee9622f5f365fdb37b18acc77dc56608f",
+      "ci": {
+        "run_url": "https://github.com/insanai/sibuna/actions/runs/37568473874",
+        "job_id": 112621829631,
+        "job_url": "https://github.com/insanai/sibuna/actions/runs/37568473874/job/112621829631",
+        "conclusion": "success",
+        "started_at": "2026-10-07T03:50:00Z",
+        "completed_at": "2026-10-07T04:01:43Z"
+      },
+      "github_artifact": {
+        "id": 11460166998,
+        "name": "sibuna-linux-arm64",
+        "container_digest": "sha256:51b529be0fddfbe8bcce2e440b2976b7544146a6aecc0792c80af739f8bdc405",
+        "container_bytes": 3207713
+      },
+      "archive": {
+        "name": "sibuna-linux-arm64.tar.gz",
+        "sha256": "d3f56818cb77bc3bb2f8188ca86deabaa8a01f6f81b3e70a7980cf5eb4300a17",
+        "bytes": 3234526
+      },
+      "binary": {
+        "sha256": "dbad74f56d9c79648dc95c8dc5a6dd0e80f42f4b094ff90adc395cf39df8f4bf",
+        "bytes": 14053632
+      },
+      "checks": {
+        "archive_complete": true,
+        "manifest_binary_sha256_matches": true,
+        "version_toolchain_features_match": true,
+        "license_files_present": [
+          "LICENSE",
+          "NOTICE",
+          "README.md",
+          "SOURCE.txt",
+          "LICENSES/AGPL-3.0.txt",
+          "LICENSES/LGPL-3.0.txt",
+          "LICENSES/GPL-3.0.txt",
+          "LICENSES/ModSecurity-Apache-2.0.txt",
+          "LICENSES/OWASP-CRS-Apache-2.0.txt",
+          "LICENSES/libinjection-BSD-3-Clause.txt"
+        ],
+        "corresponding_source_tag": "v0.3.0",
+        "unsigned": true,
+        "executable_format": {
+          "format": "ELF64 little-endian",
+          "machine": 183,
+          "has_interpreter": false,
+          "static_musl": true
+        }
+      }
+    },
+    {
+      "platform": "macos-amd64",
+      "target": "x86_64-macos.15.0",
+      "requirements": "macOS 15 or later",
+      "source_revision": "d461e7fee9622f5f365fdb37b18acc77dc56608f",
+      "ci": {
+        "run_url": "https://github.com/insanai/sibuna/actions/runs/37568473874",
+        "job_id": 112621829654,
+        "job_url": "https://github.com/insanai/sibuna/actions/runs/37568473874/job/112621829654",
+        "conclusion": "success",
+        "started_at": "2026-10-07T03:49:58Z",
+        "completed_at": "2026-10-07T04:09:35Z"
+      },
+      "github_artifact": {
+        "id": 11459404438,
+        "name": "sibuna-macos-amd64",
+        "container_digest": "sha256:4c653901cdad87ac860ef598ab74592e7b5d71a8da48bd15afd325b4924ed3b9",
+        "container_bytes": 3175296
+      },
+      "archive": {
+        "name": "sibuna-macos-amd64.tar.gz",
+        "sha256": "f29423068c8634b6100e130e269c2944b418b98e3314dd8e4beef7232f8d770d",
+        "bytes": 3203708
+      },
+      "binary": {
+        "sha256": "191a81652fdeb8b9ed5274869a28e376fa3fb3fba08716f897c4316ce051d216",
+        "bytes": 14513916
+      },
+      "checks": {
+        "archive_complete": true,
+        "manifest_binary_sha256_matches": true,
+        "version_toolchain_features_match": true,
+        "license_files_present": [
+          "LICENSE",
+          "NOTICE",
+          "README.md",
+          "SOURCE.txt",
+          "LICENSES/AGPL-3.0.txt",
+          "LICENSES/LGPL-3.0.txt",
+          "LICENSES/GPL-3.0.txt",
+          "LICENSES/ModSecurity-Apache-2.0.txt",
+          "LICENSES/OWASP-CRS-Apache-2.0.txt",
+          "LICENSES/libinjection-BSD-3-Clause.txt"
+        ],
+        "corresponding_source_tag": "v0.3.0",
+        "unsigned": true,
+        "executable_format": {
+          "format": "Mach-O 64 little-endian",
+          "cpu_type": 16777223
+        }
+      }
+    },
+    {
+      "platform": "macos-arm64",
+      "target": "aarch64-macos.15.0",
+      "requirements": "macOS 15 or later",
+      "source_revision": "d461e7fee9622f5f365fdb37b18acc77dc56608f",
+      "ci": {
+        "run_url": "https://github.com/insanai/sibuna/actions/runs/37568473874",
+        "job_id": 112621829625,
+        "job_url": "https://github.com/insanai/sibuna/actions/runs/37568473874/job/112621829625",
+        "conclusion": "success",
+        "started_at": "2026-10-07T03:50:02Z",
+        "completed_at": "2026-10-07T04:17:26Z"
+      },
+      "github_artifact": {
+        "id": 11460463210,
+        "name": "sibuna-macos-arm64",
+        "container_digest": "sha256:8fad694fdd1ec3e90fd0c5739e57360a61fcd40028aa8020680a0483437f92f2",
+        "container_bytes": 3047887
+      },
+      "archive": {
+        "name": "sibuna-macos-arm64.tar.gz",
+        "sha256": "6e6c12fd3d0f21dafa138b54f45156cfeef8952187a526da8df33d1d5da38d56",
+        "bytes": 3074816
+      },
+      "binary": {
+        "sha256": "007a5b8219d987117ec95f52a1082933dd5d4ae64d09af3e653db82f3c370249",
+        "bytes": 13973416
+      },
+      "checks": {
+        "archive_complete": true,
+        "manifest_binary_sha256_matches": true,
+        "version_toolchain_features_match": true,
+        "license_files_present": [
+          "LICENSE",
+          "NOTICE",
+          "README.md",
+          "SOURCE.txt",
+          "LICENSES/AGPL-3.0.txt",
+          "LICENSES/LGPL-3.0.txt",
+          "LICENSES/GPL-3.0.txt",
+          "LICENSES/ModSecurity-Apache-2.0.txt",
+          "LICENSES/OWASP-CRS-Apache-2.0.txt",
+          "LICENSES/libinjection-BSD-3-Clause.txt"
+        ],
+        "corresponding_source_tag": "v0.3.0",
+        "unsigned": true,
+        "executable_format": {
+          "format": "Mach-O 64 little-endian",
+          "cpu_type": 16777228
+        }
+      }
+    },
+    {
+      "platform": "windows-amd64",
+      "target": "x86_64-windows-gnu",
+      "requirements": "Windows 10 / Server 2019 or later",
+      "source_revision": "53401367e6b87a36c14dc66c424845da14b0fbde",
+      "ci": {
+        "run_url": "https://github.com/insanai/sibuna/actions/runs/37570113497",
+        "job_id": 112626650747,
+        "job_url": "https://github.com/insanai/sibuna/actions/runs/37570113497/job/112626650747",
+        "conclusion": "success",
+        "started_at": "2026-10-07T04:09:56Z",
+        "completed_at": "2026-10-07T04:25:43Z"
+      },
+      "github_artifact": {
+        "id": 11460359621,
+        "name": "sibuna-windows-amd64",
+        "container_digest": "sha256:23a368cf62ad19014981a37f45cf077f227cbdc07c0abfeef70d306eeefbbe75",
+        "container_bytes": 3263160
+      },
+      "archive": {
+        "name": "sibuna-windows-amd64.zip",
+        "sha256": "6de5db3718c549f53f4658fda9b311c370b1739703f88a98296c7c549b7b6d12",
+        "bytes": 3301971
+      },
+      "binary": {
+        "sha256": "da444385986f65e500df5a298e2d6ece67c84e94ef86f15b50c3b2dc7bfaa844",
+        "bytes": 14907392
+      },
+      "checks": {
+        "archive_complete": true,
+        "manifest_binary_sha256_matches": true,
+        "version_toolchain_features_match": true,
+        "license_files_present": [
+          "LICENSE",
+          "NOTICE",
+          "README.md",
+          "SOURCE.txt",
+          "LICENSES/AGPL-3.0.txt",
+          "LICENSES/LGPL-3.0.txt",
+          "LICENSES/GPL-3.0.txt",
+          "LICENSES/ModSecurity-Apache-2.0.txt",
+          "LICENSES/OWASP-CRS-Apache-2.0.txt",
+          "LICENSES/libinjection-BSD-3-Clause.txt"
+        ],
+        "corresponding_source_tag": "v0.3.0",
+        "unsigned": true,
+        "executable_format": {
+          "format": "PE32+ native executable",
+          "machine": 34404,
+          "subsystem": "Windows console"
+        }
+      }
+    }
+  ],
+  "additional_local_check": {
+    "platform": "macos-arm64",
+    "command": "sibuna --version",
+    "exit_code": 0,
+    "stdout": "sibuna 0.3.0"
+  }
+}
