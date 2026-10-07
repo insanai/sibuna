@@ -8,6 +8,7 @@
 //! bytes. Counted targets live in reused scratch and are never offered to the cache, and
 //! the cache is cleared at every phase. Storage is bounded; a full cache stops caching.
 const std = @import("std");
+const reserved = @import("reserved.zig");
 
 pub const capacity = 256;
 const slots = 2 * capacity;
@@ -34,12 +35,13 @@ pub const Cache = struct {
     }
 
     pub fn init(allocator: std.mem.Allocator, storage: usize) !Cache {
-        const entries = try allocator.alloc(Entry, capacity);
+        const entries = try reserved.alloc(allocator, Entry, capacity);
         errdefer allocator.free(entries);
         const index = try allocator.alloc(u32, slots);
         errdefer allocator.free(index);
         @memset(index, 0);
-        return .{ .entries = entries, .index = index, .bytes = try allocator.alloc(u8, storage) };
+        const bytes = try reserved.alloc(allocator, u8, storage);
+        return .{ .entries = entries, .index = index, .bytes = bytes };
     }
 
     pub fn deinit(self: *Cache, allocator: std.mem.Allocator) void {

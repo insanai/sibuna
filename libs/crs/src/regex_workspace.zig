@@ -4,6 +4,7 @@ const std = @import("std");
 const types = @import("regex_types.zig");
 const matcher = @import("regex_match.zig");
 const dfa = @import("regex_dfa.zig");
+const reserved = @import("reserved.zig");
 
 pub const Workspace = struct {
     allocator: std.mem.Allocator,
@@ -22,9 +23,9 @@ pub const Workspace = struct {
         if (states > std.math.maxInt(usize) / (4 * @sizeOf(matcher.Thread))) {
             return error.ScratchTooSmall;
         }
-        const threads = try allocator.alloc(matcher.Thread, states * 4);
+        const threads = try reserved.alloc(allocator, matcher.Thread, states * 4);
         errdefer allocator.free(threads);
-        const visited = try allocator.alloc(usize, states);
+        const visited = try reserved.alloc(allocator, usize, states);
         errdefer allocator.free(visited);
         return .{
             .allocator = allocator,

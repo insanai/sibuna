@@ -77,6 +77,7 @@ pub const transaction_slot = @import("transaction_slot.zig");
 test {
     _ = @import("release_test.zig");
     _ = @import("stock_transaction_test.zig");
+    _ = @import("reserved.zig");
     _ = regex;
     _ = work;
     _ = compiler;

@@ -8,6 +8,7 @@
 const std = @import("std");
 const types = @import("regex_types.zig");
 const work = @import("work.zig");
+const reserved = @import("reserved.zig");
 
 pub const Error = work.Error || error{ScratchTooSmall};
 
@@ -59,7 +60,7 @@ pub const Cache = struct {
 
     pub fn init(allocator: std.mem.Allocator, regex_states: usize) !Cache {
         const state_capacity = stateCapacity(regex_states);
-        const transitions = try allocator.alloc(u32, state_capacity * 256);
+        const transitions = try reserved.alloc(allocator, u32, state_capacity * 256);
         errdefer allocator.free(transitions);
         const kernel_start = try allocator.alloc(u32, state_capacity);
         errdefer allocator.free(kernel_start);
@@ -67,7 +68,7 @@ pub const Cache = struct {
         errdefer allocator.free(kernel_len);
         const context = try allocator.alloc(Context, state_capacity);
         errdefer allocator.free(context);
-        const kernels = try allocator.alloc(u32, kernelCapacity(regex_states));
+        const kernels = try reserved.alloc(allocator, u32, kernelCapacity(regex_states));
         errdefer allocator.free(kernels);
         return .{
             .transitions = transitions,

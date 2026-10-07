@@ -20,6 +20,7 @@ const multipart = @import("multipart_head.zig");
 const xml = @import("xml_acquisition.zig");
 const xml_ns = @import("xml_namespaces.zig");
 const transform_cache = @import("transform_cache.zig");
+const reserved = @import("reserved.zig");
 pub const Error = rules.Error || error{
     InvalidSlotLimits,
     ReservationLimit,
@@ -103,41 +104,44 @@ pub const Slot = struct {
         }
         const arena = self.owner.allocator();
         try self.reserveEntities(arena);
-        const entries = try arena.alloc(variables.Entry, limits.entries);
-        self.store = tx.Store.init(entries, try arena.alloc(u8, limits.bytes));
+        const entries = try reserved.alloc(arena, variables.Entry, limits.entries);
+        self.store = tx.Store.init(entries, try reserved.alloc(arena, u8, limits.bytes));
         self.input = acquired.Builder.init(
-            try arena.alloc(variables.Entry, limits.entries),
-            try arena.alloc(u8, limits.bytes),
+            try reserved.alloc(arena, variables.Entry, limits.entries),
+            try reserved.alloc(arena, u8, limits.bytes),
         );
-        self.merged = try arena.alloc(variables.Entry, limits.entries * 4 + 2);
-        self.matched = try arena.alloc(variables.Entry, limits.entries * 2);
-        self.matched_bytes = try arena.alloc(u8, limits.bytes);
-        self.event_bytes = try arena.alloc(u8, limits.bytes);
-        self.events = try arena.alloc(actions.Event, limits.events);
-        self.tags = try arena.alloc([]const u8, limits.tags);
-        self.tag_templates = try arena.alloc([]const u8, limits.tags);
-        self.scores = .{ .rows = try arena.alloc(scores.Row, program.conditions.len) };
-        self.exclusions = try arena.alloc(controls.Exclusion, limits.exclusions);
-        self.unwind = try arena.alloc(usize, program.topology.maximum_depth);
-        self.json_frames = try arena.alloc(json.Frame, limits.depth);
-        self.json_bits = try arena.alloc(u8, (limits.depth + 7) / 8);
-        self.xml_frames = try arena.alloc(xml.Frame, limits.depth);
-        self.xml_attributes = try arena.alloc(xml.Attribute, limits.entries);
-        self.xml_bindings = try arena.alloc(xml_ns.Binding, limits.entries);
+        self.merged = try reserved.alloc(arena, variables.Entry, limits.entries * 4 + 2);
+        self.matched = try reserved.alloc(arena, variables.Entry, limits.entries * 2);
+        self.matched_bytes = try reserved.alloc(arena, u8, limits.bytes);
+        self.event_bytes = try reserved.alloc(arena, u8, limits.bytes);
+        self.events = try reserved.alloc(arena, actions.Event, limits.events);
+        self.tags = try reserved.alloc(arena, []const u8, limits.tags);
+        self.tag_templates = try reserved.alloc(arena, []const u8, limits.tags);
+        self.scores = .{ .rows = try reserved.alloc(arena, scores.Row, program.conditions.len) };
+        self.exclusions = try reserved.alloc(arena, controls.Exclusion, limits.exclusions);
+        self.unwind = try reserved.alloc(arena, usize, program.topology.maximum_depth);
+        self.json_frames = try reserved.alloc(arena, json.Frame, limits.depth);
+        self.json_bits = try reserved.alloc(arena, u8, (limits.depth + 7) / 8);
+        self.xml_frames = try reserved.alloc(arena, xml.Frame, limits.depth);
+        self.xml_attributes = try reserved.alloc(arena, xml.Attribute, limits.entries);
+        self.xml_bindings = try reserved.alloc(arena, xml_ns.Binding, limits.entries);
         if (program.regex_states != 0) {
             self.workspace = try regex.Workspace.initStates(arena, program.regex_states);
         }
         self.frame = .{
             .context = &self.context,
-            .snapshot = try arena.alloc(variables.Entry, limits.entries),
+            .snapshot = try reserved.alloc(arena, variables.Entry, limits.entries),
             .count = &self.count,
-            .transforms = .{ try arena.alloc(u8, scratch), try arena.alloc(u8, scratch) },
+            .transforms = .{
+                try reserved.alloc(arena, u8, scratch),
+                try reserved.alloc(arena, u8, scratch),
+            },
             .regex = if (self.workspace) |*workspace| &workspace.scratch else null,
-            .prefixes = try arena.alloc(usize, limits.bytes),
-            .pieces = try arena.alloc([]const u8, limits.pieces),
-            .key_output = try arena.alloc(u8, limits.bytes),
-            .value_output = try arena.alloc(u8, limits.bytes),
-            .argument_output = try arena.alloc(u8, limits.bytes),
+            .prefixes = try reserved.alloc(arena, usize, limits.bytes),
+            .pieces = try reserved.alloc(arena, []const u8, limits.pieces),
+            .key_output = try reserved.alloc(arena, u8, limits.bytes),
+            .value_output = try reserved.alloc(arena, u8, limits.bytes),
+            .argument_output = try reserved.alloc(arena, u8, limits.bytes),
             .budget = &self.budget,
         };
         self.transform_cache = try .init(arena, cacheBytes(limits));
@@ -147,15 +151,16 @@ pub const Slot = struct {
 
     fn reserveEntities(self: *Slot, arena: std.mem.Allocator) Error!void {
         const limits = self.limits;
-        self.request = try arena.alloc(u8, limits.request);
-        self.response = try arena.alloc(u8, limits.response);
-        self.request_wire = try arena.alloc(u8, limits.request);
-        self.response_wire = try arena.alloc(u8, limits.response);
+        self.request = try reserved.alloc(arena, u8, limits.request);
+        self.response = try reserved.alloc(arena, u8, limits.response);
+        self.request_wire = try reserved.alloc(arena, u8, limits.request);
+        self.response_wire = try reserved.alloc(arena, u8, limits.response);
         // Only intermediate representations borrow alternate. The HTTP decoder
         // returns primary storage before any body becomes a phased collection.
-        self.decode_alternate = try arena.alloc(u8, @max(limits.request, limits.response));
-        self.inflate_window = try arena.alloc(u8, std.compress.flate.max_window_len);
-        self.response_head = try arena.alloc(u8, 16 * 1024);
+        const alternate = @max(limits.request, limits.response);
+        self.decode_alternate = try reserved.alloc(arena, u8, alternate);
+        self.inflate_window = try reserved.alloc(arena, u8, std.compress.flate.max_window_len);
+        self.response_head = try reserved.alloc(arena, u8, 16 * 1024);
     }
 
     pub fn formScratch(self: *Slot) form.Scratch {
