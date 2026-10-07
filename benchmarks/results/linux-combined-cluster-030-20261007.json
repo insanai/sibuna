@@ -1,0 +1,180 @@
+{
+  "schema": 1,
+  "kind": "combined-runtime-cluster-qualification",
+  "date": "2026-10-07",
+  "source_commit": "166fc129bdc596f505587a315f86f8420f79d0b7",
+  "runtime_commit": "1e0d14a2adc0cbba4eb65b0a3f82a00d1143e03f",
+  "source_difference": "166fc12 adds release-note prose only; the runtime is identical to 1e0d14a.",
+  "source_archive_sha256": "323daf810459b396643be60afb2bf766e04f9211b746d4c8469a7e8d584d09d8",
+  "combined_changes": [
+    "owned named payload installation",
+    "full-ballot stale-Nack rejection",
+    "authentication storage-unavailability responses",
+    "bounded console startup availability retry",
+    "explicit upgraded-relay cancellation"
+  ],
+  "build": {
+    "host": "insan@10.175.52.18",
+    "zig": "0.17.0",
+    "jobs": 2,
+    "commands": [
+      "zig build -Dcluster=true -Doptimize=Debug -j2 --summary all",
+      "zig build -Dcluster=true -Doptimize=ReleaseSafe -j2 --summary all"
+    ],
+    "steps_per_build": 14,
+    "source_clean": true,
+    "production_overlays": false
+  },
+  "harnesses": {
+    "tools/console_cluster_test.py": "ec1b231d8a29b81e51dd194d3f9f0b408e90b894ec1adb3433758017eeddbf5c",
+    "tools/crs_three_host_check.py": "d2d0e4f3e10e42e9921a29c9f682ca4ab6c019556f9af7d0d1a04680b36f7aa4",
+    "tools/crs_cluster_check.py": "b05a6c4b5cb88430a8c54759f940ae91a134fa878710d71247fe77a7dd64e1b5",
+    "local_diagnostic_collector": "94b012b33ea1e8d736a6d529cb11c6384fb963bcef3646db636069e0f58d2535"
+  },
+  "constraints": "The original scenarios, production decisions, assertions and timeouts are unchanged. The local collector adds operation timing and preserves fixtures; it does not log successful authentication bodies.",
+  "local_scenarios": [
+    {
+      "mode": "Debug",
+      "passed": true,
+      "elapsed_seconds": 86.5066700046882,
+      "binary_sha256": "e744f579fabccfb4551f114678b918c6a6ca391b78afaa5b80242cfa6c6c6eb6",
+      "process_stop_statuses": [
+        0,
+        0,
+        0
+      ],
+      "raw_report": "debug-report.json"
+    },
+    {
+      "mode": "ReleaseSafe",
+      "passed": true,
+      "elapsed_seconds": 80.41096882615238,
+      "binary_sha256": "656c360fbf9b632bd0988e27b5526bad316c5f775e21630016a25493aff85888",
+      "process_stop_statuses": [
+        0,
+        0,
+        0
+      ],
+      "raw_report": "safe-report.json"
+    }
+  ],
+  "three_host_scenarios": [
+    {
+      "run": "1791361575",
+      "passed": true,
+      "elapsed_seconds": 143.11976483406033,
+      "controller_commit": "166fc129bdc596f505587a315f86f8420f79d0b7",
+      "controller_changes": [],
+      "binary_identities": [
+        {
+          "host": "insan@10.175.52.19",
+          "binary": "/home/insan/sibuna-cluster-combined-030-20261007/runtime/sibuna",
+          "hostname": "agy01",
+          "kernel": "7.0.0-28-generic",
+          "sha256": "656c360fbf9b632bd0988e27b5526bad316c5f775e21630016a25493aff85888"
+        },
+        {
+          "host": "insan@10.175.52.20",
+          "binary": "/home/insan/sibuna-cluster-combined-030-20261007/runtime/sibuna",
+          "hostname": "agy02",
+          "kernel": "7.0.0-28-generic",
+          "sha256": "656c360fbf9b632bd0988e27b5526bad316c5f775e21630016a25493aff85888"
+        },
+        {
+          "host": "insan@10.175.52.21",
+          "binary": "/home/insan/sibuna-cluster-combined-030-20261007/runtime/sibuna",
+          "hostname": "agy03",
+          "kernel": "7.0.0-28-generic",
+          "sha256": "656c360fbf9b632bd0988e27b5526bad316c5f775e21630016a25493aff85888"
+        }
+      ],
+      "process_stop_statuses": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "raw_report": "three-host-run1.json"
+    },
+    {
+      "run": "1791362312",
+      "passed": true,
+      "elapsed_seconds": 136.3743663750356,
+      "controller_commit": "166fc129bdc596f505587a315f86f8420f79d0b7",
+      "controller_changes": [],
+      "binary_identities": [
+        {
+          "host": "insan@10.175.52.19",
+          "binary": "/home/insan/sibuna-cluster-combined-030-20261007/runtime/sibuna",
+          "hostname": "agy01",
+          "kernel": "7.0.0-28-generic",
+          "sha256": "656c360fbf9b632bd0988e27b5526bad316c5f775e21630016a25493aff85888"
+        },
+        {
+          "host": "insan@10.175.52.20",
+          "binary": "/home/insan/sibuna-cluster-combined-030-20261007/runtime/sibuna",
+          "hostname": "agy02",
+          "kernel": "7.0.0-28-generic",
+          "sha256": "656c360fbf9b632bd0988e27b5526bad316c5f775e21630016a25493aff85888"
+        },
+        {
+          "host": "insan@10.175.52.21",
+          "binary": "/home/insan/sibuna-cluster-combined-030-20261007/runtime/sibuna",
+          "hostname": "agy03",
+          "kernel": "7.0.0-28-generic",
+          "sha256": "656c360fbf9b632bd0988e27b5526bad316c5f775e21630016a25493aff85888"
+        }
+      ],
+      "process_stop_statuses": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "raw_report": "three-host-run3.json"
+    }
+  ],
+  "controller_failure": {
+    "run": "1791362078",
+    "passed": false,
+    "failure": "[Errno 49] Can't assign requested address",
+    "elapsed_seconds": 27.11256604094524,
+    "stage": "All three nodes had reached readiness; the local macOS controller then could not create HTTP or SSH sockets.",
+    "classification": "Controller connectivity failure; no runtime qualification is claimed for this run.",
+    "raw_report": "three-host-run2.json",
+    "raw_cleanup_statuses_preserved": true,
+    "recovery_report": "three-host-run2-recovery.json",
+    "recovered_processes": 9,
+    "all_recovered_stop_statuses_zero": true
+  },
+  "final_cleanup": {
+    "method": "Read /proc command lines and match only executable paths under the owned three-host runtime root.",
+    "hosts": [
+      "insan@10.175.52.19",
+      "insan@10.175.52.20",
+      "insan@10.175.52.21"
+    ],
+    "active_owned_executables": [],
+    "all_logs_fatal_pattern_scan_matches": 0
+  },
+  "evidence": {
+    "path": "benchmarks/results/linux-combined-cluster-030-20261007-evidence.tar.gz",
+    "sha256": "0813daa48eeb841394e2da4ea5779cf7b2d6c7607219ab1139d8d8ca23aafa58",
+    "contents": "Raw completed and failed reports, separate failed-run recovery receipt, original controller transcript, build logs and owned node/ingress logs and statuses. Databases, keys, credentials and command-input files are excluded."
+  },
+  "scope": "Functional qualification of this exact combined cluster runtime. It does not qualify later UI edits, future commits, throughput, performance acceptance or a universal election-liveness guarantee."
+}
