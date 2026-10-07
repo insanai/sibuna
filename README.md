@@ -31,6 +31,7 @@ Instead of subjecting human visitors to frustrating image CAPTCHAs or privacy-in
 - **[x] Bounded Request Processing:** Fixed-capacity request buffers, connection quotas and explicit overload responses. Parsing, classification and proof verification use allocation-free primitive APIs; deployment memory still depends on enabled features and concurrency.
 - **[x] AI Crawler & Bot Governance:** CIDR ranges and User-Agent signatures support provider-specific policy for OpenAI, Anthropic, Google Gemini, Perplexity, Meta, Apple, and ByteDance. Operator-managed data and rules determine the decision.
 - **[x] Semantic Attack Shield:** Single-pass, linear-time Aho–Corasick automata and structural tokenizers inspect SQL injection, XSS, and path traversal without regular expression backtracking (ReDoS).
+- **[x] Native OWASP Core Rule Set:** Opt-in CRS 4.30.0 inspection in Audit or Enforce mode. Signed releases are verified and compiled in-process, and regexes run in linear time on a bounded lazy DFA. Selection, rollback, sample tests and per-finding evidence are managed from the console or `sibuna crs`.
 - **[x] Work Asymmetry:** Clients perform configurable Hashcash or sequential work before admission; the server verifies submitted proofs with native code.
 - **[x] Local Rate Limiting:** Sharded GCRA (Generic Cell Rate Algorithm) enforces per-client burst and sustained limits, with optional terminal-rule limits. Quotas remain node-local.
 - **[x] Real-Time Management Console:** Opt-in dashboard with an animated country traffic globe, comparative analytics, incident investigation with full-text search (FTS5), and policy editing. GeoIP requires a separately imported dataset.
@@ -114,7 +115,7 @@ your existing proxy whether to forward them. Either deployment can use Gate or S
 ## Quickstart
 
 Download a package from [Releases](https://github.com/insanai/sibuna/releases), or build from source.
-The v0.2.0 packages include the engine, embedded storage, browser solver and management console.
+The v0.3.0 packages include the engine, embedded storage, browser solver and management console.
 Clustering requires a separate `-Dcluster=true` source build with OpenSSL 3.
 
 | Platform | Package | Requirements |
@@ -133,8 +134,8 @@ ordered shutdown and restrict seed, credential and data files with Windows ACLs.
 For Linux x86-64:
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.2.0/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.2.0/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.0/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.0/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)
@@ -419,7 +420,7 @@ management console in one executable. Other projects cover different parts of th
 - [Anubis](https://github.com/TecharoHQ/anubis) uses client challenges to protect upstream resources from scraper bots.
 - [BunkerWeb](https://github.com/bunkerity/bunkerweb) combines nginx, ModSecurity and OWASP CRS with bot challenges and an operator interface.
 - [ModSecurity](https://github.com/owasp-modsecurity/ModSecurity) and [Coraza](https://github.com/corazawaf/coraza) provide WAF engines for integration with web servers and applications.
-- [OWASP Core Rule Set](https://github.com/coreruleset/coreruleset) provides attack-detection rules for compatible WAF engines. Sibuna's heuristic detectors do not implement that rule language. Native CRS support is being developed under [SID 0010](docs/sid/records/0010-owasp-crs-native-engine.typ); source builds include opt-in proxy inspection and reviewed console and CLI updates. Compatibility and performance qualification remain in progress.
+- [OWASP Core Rule Set](https://github.com/coreruleset/coreruleset) provides attack-detection rules for compatible WAF engines. Sibuna 0.3.0 evaluates signed stock CRS releases natively under [SID 0010](docs/sid/records/0010-owasp-crs-native-engine.typ); plugins, Lua scripts and other ModSecurity rule sets are outside its scope.
 
 The [book's empirical evaluation](https://insanai.github.io/sibuna/book/)
 compares pinned, runnable products under documented workloads. Each result identifies its
@@ -515,5 +516,5 @@ materials remain subject to their respective licenses.
 - [OWASP Coraza](https://github.com/corazawaf/coraza): a Go WAF library supporting ModSecurity rules and the OWASP Core Rule Set.
 - [OWASP Core Rule Set](https://github.com/coreruleset/coreruleset): maintained application-attack detection rules for compatible WAF engines.
 
-These projects overlap with different parts of Sibuna. Sibuna's bounded heuristic detectors
-do not implement ModSecurity's rule language or provide drop-in Core Rule Set compatibility.
+These projects overlap with different parts of Sibuna. Sibuna's native CRS engine evaluates
+stock Core Rule Set releases; it is not a general ModSecurity engine for plugins or other rule sets.

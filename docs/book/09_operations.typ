@@ -8,12 +8,11 @@
 
 == Surfaces and Configuration
 
-=== Native Core Rule Set in Source Builds
+=== Native Core Rule Set
 
-SID 0010's native CRS connector is under release qualification. Version 0.2.0 packages do
-not include this opt-in listener integration. Keep CRS disabled until the application has
-been reviewed with the selected rules and resource bounds. Source builds provide reviewed
-console updates; complete compatibility and performance acceptance are still in progress.
+Version 0.3.0 packages include SID 0010's native CRS connector. It is opt-in: `--no-crs`
+remains the default. Start in Audit, review the findings for the application with the
+selected rules and resource bounds, and only then select Enforce.
 
 A candidate check authenticates the official archive with the pinned upstream signing key,
 compiles all selected rules privately and can save a new restart directory:
@@ -37,7 +36,9 @@ paranoia level one charges roughly 1,800 units per byte of free-text arguments. 
 `--crs-request-limit`, `--crs-response-limit`, `--crs-work-budget` and `--crs-slots` to set
 reviewed bounds. Eight full-size slots reserve at least 112.6 MiB for entities, decoding and
 response heads, plus metadata and matcher storage; spare reservation becomes small slots for
-requests up to 64 KiB. A busy pool waits up to 50 ms for a slot. `--crs-timeout` is an
+requests up to 64 KiB. Reservations are address space: pages become resident only as
+transactions use them, and a node at the defaults peaked near 140 MiB under the benchmark
+load. A busy pool waits up to 50 ms for a slot. `--crs-timeout` is an
 absolute inspection deadline, 1–300 seconds, default 30; active progress cannot extend it.
 Pool exhaustion after the wait returns 503, excessive uploads 413, and enforcing inspection
 failure refuses delivery. JSON and XML bodies are parsed by Content-Type, as in ModSecurity's
@@ -244,7 +245,7 @@ process inspection deadline, independent of the saved rule selection.
 
 === Release Packages and Licenses
 
-Version 0.2.0 packages include persistent storage, the browser solver and the optional
+Version 0.3.0 packages include persistent storage, the browser solver and the optional
 management console. Linux x86-64 and ARM64 packages link musl statically; macOS packages
 cover Intel and Apple Silicon, require macOS 15 or later, and are unsigned. Windows packages contain a native x86-64 executable for Windows 10 / Server 2019 or later.
 Use Ctrl+C for ordered shutdown and restrict credential and data files with Windows ACLs. Clustering requires a separate `-Dcluster=true` source build with OpenSSL 3.

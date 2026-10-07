@@ -5,7 +5,7 @@
   application inspection and an optional management console.</p>
   <div class="actions"><a class="button" href="/sibuna/book/operations.html">Get started ↗</a>
   <a class="button secondary" href="/sibuna/book/">Read the book</a></div>
-  <p class="meta">Open source · Engine: LGPL 3.0 · Console: AGPL 3.0 · v0.2.0</p></div>
+  <p class="meta">Open source · Engine: LGPL 3.0 · Console: AGPL 3.0 · v0.3.0</p></div>
   <div class="cluster"><div class="label">An admission decision before your application.</div>
   <svg viewBox="0 0 450 295" role="img" aria-labelledby="pipeline-title pipeline-desc">
     <title id="pipeline-title">The protected request path</title>
@@ -33,19 +33,19 @@
   <p>Browser challenges and verified sessions control admission. Start with Gate, then enable
   Shield for policy decisions and application inspection.</p></article>
   <article><span class="label">02 / Protect applications</span><h2>Keep requests flowing.</h2>
-  <p>Reverse-proxy and forward-auth deployments support existing ingress setups. Admitted
-  multipart uploads, chunked bodies and WebSockets pass through to the origin.</p></article>
+  <p>Reverse-proxy and forward-auth deployments support existing ingress setups. The opt-in
+  native OWASP Core Rule Set inspects traffic in Audit or Enforce mode.</p></article>
   <article><span class="label">03 / Operate with evidence</span><h2>See the decisions.</h2>
   <p>The opt-in console brings traffic, incidents, challenges and policy management together.
   Read the design contracts, tests and measured workloads.</p></article>
 </section>
 <section class="section start">
-  <div><p class="eyebrow">Try v0.2.0</p><h2>Download.<br>Verify. Configure.</h2>
+  <div><p class="eyebrow">Try v0.3.0</p><h2>Download.<br>Verify. Configure.</h2>
   <p>Native packages cover Linux x86-64 and ARM64, macOS Intel and Apple Silicon, and Windows
   x86-64. Each archive includes license texts, dependency notices and a build manifest.</p>
-  <a href="https://github.com/insanai/sibuna/releases/tag/v0.2.0">All downloads ↗</a></div>
-  <div class="code"><div class="code-label">TERMINAL · LINUX x86-64</div><pre><code>curl -fLO https://github.com/insanai/sibuna/releases/download/v0.2.0/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.2.0/SHA256SUMS
+  <a href="https://github.com/insanai/sibuna/releases/tag/v0.3.0">All downloads ↗</a></div>
+  <div class="code"><div class="code-label">TERMINAL · LINUX x86-64</div><pre><code>curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.0/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.0/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 ./sibuna --help
