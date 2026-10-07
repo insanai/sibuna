@@ -12,12 +12,14 @@
 to your app or work alongside an existing proxy, such as Caddy, nginx or Traefik.
 
 Sending requests is often cheap. Processing them can cost your app more work. Sibuna asks
-clients to solve a puzzle before granting access. Creating the proof costs more computation
-than checking it. This makes automated clients share more of the cost of accessing a site.
+clients to solve a puzzle before granting access. The puzzle is designed to make proof
+creation cost more computation than verification. Automated clients share more of the cost
+of accessing a site.
 
 Computing also uses energy, but the amount depends on hardware and settings. Proof of work
 adds an admission cost. It does not prove that a visitor is human or stop every attack.
 A signed session lets admitted clients return without solving a new puzzle on every request.
+Use access rules and local rate limits to control what those clients can request afterwards.
 
 ## Features
 
@@ -62,6 +64,12 @@ Open `http://127.0.0.1:8080` to try it locally. For a public site, terminate HTT
 ingress and keep Sibuna's listener private. Follow the
 [deployment guide](https://insanai.github.io/sibuna/book/operations.html) for Caddy or nginx.
 
+The default mode is `reverse_proxy`. Use `--mode forward_auth` when your ingress forwards
+requests and asks Sibuna for an access decision. The guide includes both configurations.
+Shield's built-in inspection is enabled by default. Use `--gate` for admission without that
+inspector. Choose access rules with `--policy-file <file>`, including rules for API clients
+and health checks that cannot run a browser challenge.
+
 On Windows, extract the ZIP and run `.\sibuna.exe --help` in PowerShell.
 Use Ctrl+C to stop it. Restrict access to seed, credential and data files with Windows ACLs.
 
@@ -79,6 +87,24 @@ zig build -Doptimize=safe -j2
 The executable is `zig-out/bin/sibuna`. Cluster builds use `-Dcluster=true` and need OpenSSL 3.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for build checks.
 
+### Enable OWASP CRS
+
+CRS is disabled by default. Download and verify a supported signed release, then start in
+Audit to review findings without applying CRS denials:
+
+```sh
+./sibuna crs check --version 4.30.0 --output ./crs-candidate
+./sibuna --host 127.0.0.1 --upstream-port 3000 --secret-file ./sibuna.seed \
+  --crs-mode audit --crs-dir ./crs-candidate
+```
+
+Use a new candidate directory. Checking a candidate does not change a running daemon.
+The CLI and console can prepare updates, review changes and select a verified candidate.
+Start Enforce after testing your application's normal traffic and reviewing exclusions.
+See the [CRS guide](https://insanai.github.io/sibuna/book/operations.html)
+for updates, rollback, body limits and incomplete inspection.
+Forward-auth requires `--crs-profile headers`; it does not see full application bodies.
+
 ## Console
 
 The console runs in the same executable. Bootstrap an administrator while the daemon is stopped:
@@ -92,12 +118,14 @@ The console runs in the same executable. Bootstrap an administrator while the da
 Open `http://127.0.0.1:19446/console/` and change the temporary password.
 The [operations guide](https://insanai.github.io/sibuna/book/operations.html) explains HTTPS
 access, GeoIP imports and CRS updates.
+Append the CRS flags from the example above to enable inspection alongside the console.
 
 ![Sibuna Console globe, request timeline and coverage](docs/readme/images/console-globe.jpg)
 
 The globe shows sampled country activity over the last minute. Markers give approximate
 country positions. Arrows point toward the server's configured location. They do not show
 individual live connections. GeoIP needs a separately imported dataset.
+Set `--console-location <latitude,longitude>` to place the server on the globe.
 
 <details>
 <summary>Traffic overview, policy editor and incident investigation</summary>
@@ -160,6 +188,9 @@ Sibuna uses HTTP/1.1 on its private listener. Your ingress handles public TLS an
 Forward-auth inspects the metadata supplied by the ingress. Full reverse-proxy CRS inspection
 uses configured body and work limits. The built-in inspector covers the first 8 KiB.
 Uploads stream when CRS is disabled. WebSocket messages are relayed without inspection.
+Full CRS defaults to a 4 MiB request limit and a 1 MiB response limit. It buffers bodies for
+inspection. Enforce refuses incomplete inspection; review limits and streaming exceptions
+for your application before enabling it.
 
 Rate limits are local to each node. Sibuna does not provide volumetric network mitigation.
 The strict console performance target has not formally passed. Review the
@@ -213,6 +244,7 @@ Enforce results and replay commands. These figures do not pass the separate cons
 ## Documentation
 
 - [Book](https://insanai.github.io/sibuna/book/): concepts, algorithms, examples and measurements.
+- [Whitepaper](https://insanai.github.io/sibuna/whitepaper/): architecture, proofs and design details.
 - [Operations guide](https://insanai.github.io/sibuna/book/operations.html): installation and deployment.
 - [Reference](https://insanai.github.io/sibuna/book/reference.html): CLI and protocol details.
 - [Design discussions](https://insanai.github.io/sibuna/sid/): decisions and engineering contracts.
