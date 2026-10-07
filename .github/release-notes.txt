@@ -10,20 +10,26 @@ transform pipelines share one result per value within a phase. JSON and XML bodi
 by Content-Type, as in ModSecurity's recommended configuration.
 
 Qualification:
-- The pinned CRS FTW corpus runs through the final daemon: 5,074 complete contracts pass
+- The pinned CRS FTW corpus was measured on revision d461e7f: 5,074 complete contracts pass
   in Audit and 4,993 in Enforce. Rule-ID/status assertions match for 5,123 and 5,039 of 5,193
   tests respectively. Fifteen regex-log assertions remain gaps; acquisition failures, malformed
   wire representations and one work-bound case retain explicit incomplete coverage.
   Reference differences and strict connector refusals are classified separately. All 4,792
   enforcing 403 stages deliver zero origin bytes; 82 response fixtures are preempted by a
   request denial. Original measurements and supplemental wire/oracle evidence are retained.
-- Three-node selection, failover, quorum refusal, restart and rollback pass on separate hosts.
+- Recorded three-node selection, failover, quorum refusal, restart and rollback checks pass
+  on separate hosts. Those records identify their own revisions and binaries.
 - With the load generator on a separate host and four product CPUs, paranoia level one serves
   10,787 small GETs per second (47,311 with CRS disabled), 1,151 8 KiB JSON POSTs and 4,248
   16 KiB multipart uploads, at 133.8-140.5 MiB peak RSS. No sample reached the work limit.
   The five-round, 16-connection run includes eight dashboards and identifies clean revision
-  d461e7f, after the final application corrections. CPU frequency and unrelated physical-host
+  d461e7f. These measurements predate the later storage, authentication, startup and relay
+  lifecycle fixes. CPU frequency and unrelated physical-host
   activity remain uncontrolled; the results are not a matched BunkerWeb comparison.
+- Focused relay-cancellation checks qualify the two-file 1393b2c correction against the
+  original release source, including native macOS 15 tests. They are separate from the
+  recorded full corpus and benchmarks. Combined platform and cluster checks must qualify
+  the final source before publication; earlier measurements do not establish those results.
 
 Behaviour changes:
 - Request targets must be origin-form (or `OPTIONS *`); absolute-form, `CONNECT` and fragments
@@ -39,7 +45,12 @@ Behaviour changes:
   incomplete and receives 403 in Enforce; Audit records incomplete coverage. This is a
   stricter inspection policy, not an HTTP framing requirement.
 - Cluster catch-up preserves ballot-bearing leader evidence while replaying chosen history.
-  Startup retries temporary storage unavailability before opening listeners.
+  Delayed election rejections cannot replace newer ballot evidence. Payload installation
+  uses named stages with atomic no-replace publication and the existing durability barriers.
+- Console startup retries temporary storage unavailability within a 30-second budget before
+  opening its services. Newer schemas fail startup. Authentication storage outages return
+  503 without claiming that credentials were wrong.
+- Upgraded relays observe connection cancellation even when the idle timeout is disabled.
 
 Downloads:
 - Linux x86-64 and ARM64: statically linked musl builds; Linux 5.10 or later.
