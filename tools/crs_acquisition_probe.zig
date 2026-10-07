@@ -14,7 +14,7 @@ pub fn main(init: std.process.Init) !u8 {
 }
 
 fn run(init: std.process.Init, out: *Io.Writer) !u8 {
-    var args = std.process.Args.Iterator.init(init.minimal.args);
+    var args = try init.minimal.args.iterateAllocator(init.gpa);
     defer args.deinit();
     _ = args.next();
     const kind = args.next() orelse return error.MissingKind;

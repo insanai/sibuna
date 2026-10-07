@@ -3,7 +3,7 @@ const std = @import("std");
 const crs = @import("crs");
 
 pub fn main(init: std.process.Init) !u8 {
-    var args = std.process.Args.Iterator.init(init.minimal.args);
+    var args = try init.minimal.args.iterateAllocator(init.gpa);
     defer args.deinit();
     _ = args.next();
     const mode = args.next() orelse return error.MissingMode;

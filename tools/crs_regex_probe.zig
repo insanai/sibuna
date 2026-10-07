@@ -4,7 +4,7 @@ const crs = @import("crs");
 const Io = std.Io;
 
 pub fn main(init: std.process.Init) !u8 {
-    var args = std.process.Args.Iterator.init(init.minimal.args);
+    var args = try init.minimal.args.iterateAllocator(init.gpa);
     defer args.deinit();
     _ = args.next();
     var pattern_hex = args.next() orelse return error.MissingPattern;
