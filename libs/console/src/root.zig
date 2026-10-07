@@ -33,6 +33,7 @@ test {
     _ = @import("auth_http_test.zig");
     _ = @import("totp.zig");
     _ = @import("auth_secrets.zig");
+    _ = @import("totp_routes.zig");
     _ = @import("stats.zig");
     _ = @import("incident_geo.zig");
     _ = @import("timeline_test.zig");

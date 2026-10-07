@@ -91,14 +91,20 @@ pub fn handle(app: *App, context: *Context, path: []const u8, principal: p.Princ
         .csrf_digest = principal.csrf_digest,
         .client = seen.client,
     };
-    if (enrolling)
-        return enroll(app, context, principal.actor, authorization, parsed.value.revision);
+    if (enrolling) return enroll(app, context, principal, authorization, parsed.value.revision);
     if (confirming)
         return confirm(app, context, principal.actor, authorization, parsed.value);
     return error.InvalidRequest;
 }
 
-fn enroll(app: *App, context: *Context, user: u64, grant: p.auth.Authorization, rev: u64) !void {
+fn enroll(
+    app: *App,
+    context: *Context,
+    principal: p.Principal,
+    grant: p.auth.Authorization,
+    rev: u64,
+) !void {
+    const user = principal.actor;
     const key = app.totp_key orelse return http.fail(context, .conflict, "CONSOLE2FAKEY");
     var seed: totp.Seed = undefined;
     app.io.random(&seed);
@@ -113,18 +119,42 @@ fn enroll(app: *App, context: *Context, user: u64, grant: p.auth.Authorization, 
     if (result != .command_recorded) return http.fail(context, .conflict, "CONSOLE409");
     var encoded = totp.base32(seed);
     defer std.crypto.secureZero(u8, &encoded);
-    var uri: [160]u8 = undefined;
+    var uri: [max_uri]u8 = undefined;
     defer std.crypto.secureZero(u8, &uri);
-    const provisioning = try std.fmt.bufPrint(
-        &uri,
-        "otpauth://totp/Sibuna:{d}?secret={s}&issuer=Sibuna&algorithm=SHA1&digits=6&period=30",
-        .{ user, encoded },
-    );
+    const provisioning = provisioningUri(&uri, principal.username.slice(), &encoded);
     try http.json(context, .{
         .secret = @as([]const u8, &encoded),
         .uri = provisioning,
         .revision = rev + 1,
     }, &.{});
+}
+
+/// The console renders this URI as a version-6 QR code holding at most 134 bytes. SHA1, six
+/// digits and 30-second periods are the Key URI defaults, so they are omitted. Usernames use
+/// URI-safe characters only; a very long one drops the label prefix the issuer repeats.
+const max_uri = 134;
+
+fn provisioningUri(buffer: *[max_uri]u8, username: []const u8, secret: *const [32]u8) []const u8 {
+    const prefix = if (username.len <= 58) "Sibuna:" else "";
+    return std.fmt.bufPrint(buffer, "otpauth://totp/{s}{s}?secret={s}&issuer=Sibuna", .{
+        prefix, username, secret,
+    }) catch unreachable;
+}
+
+test "provisioning URIs name the account and fit the console QR code" {
+    const t = std.testing;
+    var buffer: [max_uri]u8 = undefined;
+    const secret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
+    try t.expectEqualStrings(
+        "otpauth://totp/Sibuna:alice?secret=" ++ secret ++ "&issuer=Sibuna",
+        provisioningUri(&buffer, "alice", secret),
+    );
+    const longest = @as([64]u8, @splat('a'));
+    for ([_]usize{ 58, 59, 64 }) |length| {
+        const uri = provisioningUri(&buffer, longest[0..length], secret);
+        try t.expect(std.mem.indexOf(u8, uri, longest[0..length]) != null);
+        try t.expect(std.mem.endsWith(u8, uri, "&issuer=Sibuna"));
+    }
 }
 
 fn confirm(

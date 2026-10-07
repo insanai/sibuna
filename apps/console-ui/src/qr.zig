@@ -1,5 +1,5 @@
 //! Bounded QR Model 2 provisioning: version 6, level L, byte mode, explicit mask 0.
-//! A 130-byte maximum otpauth URI fits the 134-byte capacity. Native matrix fixtures
+//! The console's otpauth URIs are bounded to the 134-byte capacity. Native matrix fixtures
 //! are checked against Project Nayuki's independent QR encoder with identical parameters.
 const html = @import("html");
 const std = @import("std");
