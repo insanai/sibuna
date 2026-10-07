@@ -113,3 +113,55 @@ pub fn confirm(owner: *Persistent, input: p.auth.Confirmation, now: u64) !p.Stor
     // through triggers in the same commit. A lost response cannot leave partial codes.
     return if (changes == 0) .{ .failed = .conflict } else .command_recorded;
 }
+
+/// Turns the owner's enabled factor off, or replaces its recovery codes. The proof is
+/// consumed under the same rules as sign-in: a newer step inside the skew window, or an
+/// unused recovery slot whose digest matches. A stale factor revision is a conflict.
+pub fn change(owner: *Persistent, input: p.auth.FactorChange, now: u64) !p.StorageResult {
+    const session = std.fmt.bytesToHex(input.auth.session_digest, .lower);
+    const csrf = std.fmt.bytesToHex(input.auth.csrf_digest, .lower);
+    var digests: [640]u8 = undefined;
+    if (input.recovery_digests) |replacement| for (replacement, 0..) |digest, index| {
+        @memcpy(digests[index * 64 ..][0..64], &std.fmt.bytesToHex(digest, .lower));
+    };
+    var recovery: [64]u8 = undefined;
+    const revision, const step: ?u64, const slot: ?u8 = switch (input.factor) {
+        .none => return .{ .failed = .invalid_input },
+        .totp => |proof| .{ proof.revision, proof.step, null },
+        .recovery => |proof| proof: {
+            if (proof.slot > 9) return .{ .failed = .invalid_input };
+            recovery = std.fmt.bytesToHex(proof.digest, .lower);
+            break :proof .{ proof.revision, null, proof.slot };
+        },
+    };
+    const changes = try db.exec(owner.db, owner.gpa, change_sql, &.{
+        if (input.recovery_digests != null) text(&digests) else .null_value,
+        if (step) |value| integer(value) else .null_value,
+        if (slot) |value| integer(value) else .null_value,
+        if (slot != null) text(&recovery) else .null_value,
+        integer(now),
+        store.address(&input.auth.client),
+        integer(revision),
+        text(&session),
+        text(&csrf),
+        integer(now),
+    });
+    return if (changes == 0) .{ .failed = .conflict } else .command_recorded;
+}
+
+const change_sql =
+    "WITH i AS (SELECT ? digests,? step,? slot,? recovery,? now,? client,? revision) " ++
+    "UPDATE console_totp SET enabled=i.digests IS NOT NULL," ++
+    "recovery_digests=COALESCE(i.digests,''),recovery_used=0," ++
+    "last_step=CASE WHEN i.digests IS NULL THEN NULL " ++
+    "ELSE COALESCE(i.step,console_totp.last_step) END," ++
+    "expires=CASE WHEN i.digests IS NULL THEN 0 ELSE console_totp.expires END," ++
+    "revision=console_totp.revision+1,modified_at=i.now,modified_by=console_totp.user_id," ++
+    "client_ip=i.client FROM i WHERE console_totp.user_id IN (" ++ authorized ++ ") " ++
+    "AND console_totp.enabled=1 AND console_totp.revision=i.revision " ++
+    "AND ((i.step IS NOT NULL AND i.slot IS NULL " ++
+    "AND i.step>COALESCE(console_totp.last_step,-1) " ++
+    "AND i.step BETWEEN MAX(0,CAST(i.now/30 AS INTEGER)-1) AND CAST(i.now/30 AS INTEGER)+1) " ++
+    "OR (i.slot BETWEEN 0 AND 9 AND i.step IS NULL " ++
+    "AND (console_totp.recovery_used & (1 << i.slot))=0 " ++
+    "AND substr(console_totp.recovery_digests,i.slot*64+1,64)=i.recovery))";

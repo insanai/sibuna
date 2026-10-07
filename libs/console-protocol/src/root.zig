@@ -159,6 +159,7 @@ pub const StorageRequest = union(enum) {
     totp_read: u64,
     totp_begin: auth.Enrollment,
     totp_confirm: auth.Confirmation,
+    totp_change: auth.FactorChange,
     geo_metadata,
     geo_prune: u64,
     geo_begin: geo.Begin,

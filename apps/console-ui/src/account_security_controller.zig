@@ -17,6 +17,11 @@ pub const Controller = struct {
             state.totp_uri = .{};
             state.recovery_codes = @splat(.{});
             state.recovery_count = 0;
+            if (!state.recovery_sign_in) {
+                state.recovery_sign_in = true;
+                try self.refresh();
+                return true;
+            }
             state.csrf = .{};
             state.phase = .login;
             return true;
@@ -31,6 +36,19 @@ pub const Controller = struct {
             return true;
         }
         if (state.phase != .security or state.busy) return false;
+        if (equal(name, "totp-recovery") or equal(name, "totp-disable")) {
+            state.busy = true;
+            state.message = .{};
+            const recovery = equal(name, "totp-recovery");
+            const password = if (recovery) "totp-recovery-password" else "totp-disable-password";
+            const code = if (recovery) "totp-recovery-code" else "totp-disable-code";
+            try self.out.post(
+                name,
+                if (recovery) "/console/api/totp/recovery" else "/console/api/totp/disable",
+                .{ .password = string(fields, password), .code = string(fields, code) },
+            );
+            return true;
+        }
         if (!equal(name, "totp-enroll") and !equal(name, "totp-confirm")) return false;
         state.busy = true;
         state.message = .{};
@@ -64,8 +82,14 @@ pub const Controller = struct {
         state.busy = false;
         if (state.phase != .security) return;
         if (status != 200) {
+            const key = equal(string(body, "error"), "CONSOLE2FAKEY");
             const message = switch (status) {
                 429 => "Too many attempts. Wait a minute and try again.",
+                409 => if (key)
+                    "This node cannot read your authenticator. Use an unused recovery code, " ++
+                        "or ask an administrator to reset two-factor."
+                else
+                    "Two-factor settings changed. Reload this page and try again.",
                 else => "Could not update authentication. Check your password, code and session.",
             };
             state.message_success = false;
@@ -83,7 +107,16 @@ pub const Controller = struct {
             state.totp_secret = try p.Bytes(32).init(string(body, "secret"));
             state.totp_uri = try p.Bytes(134).init(string(body, "uri"));
             state.totp_revision = @import("json_value.zig").unsignedOrZero(body, "revision");
-        } else if (equal(id, "totp-confirm")) {
+        } else if (equal(id, "totp-disable")) {
+            state.totp_secret = .{};
+            state.totp_uri = .{};
+            state.csrf = .{};
+            state.geometry = null;
+            state.stats = null;
+            state.phase = .login;
+            state.message_success = true;
+            try state.message.set("Two-factor authentication is off. Sign in again.");
+        } else if (equal(id, "totp-confirm") or equal(id, "totp-recovery")) {
             const codes = field(body, "recovery_codes") orelse return error.InvalidResponse;
             if (codes != .array or codes.array.items.len != 10) return error.InvalidResponse;
             for (codes.array.items, &state.recovery_codes) |code, *dest| {
@@ -91,6 +124,8 @@ pub const Controller = struct {
                 dest.* = try p.Bytes(32).init(code.string);
             }
             state.recovery_count = 10;
+            state.recovery_sign_in = equal(id, "totp-confirm");
+            if (!state.recovery_sign_in) return;
             state.totp_secret = .{};
             state.totp_uri = .{};
             state.csrf = .{};

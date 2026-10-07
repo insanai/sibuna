@@ -378,3 +378,31 @@ test "accounts without a factor read as not enabled instead of unavailable" {
         .diagnostic = "\"enabled\":false",
     });
 }
+
+test "owners turn factors off or replace recovery codes only with a valid proof" {
+    var buffer: [256]u8 = undefined;
+    const second = @divTrunc(std.Io.Clock.real.now(t.io).nanoseconds, std.time.ns_per_s);
+    const now: u64 = @intCast(second);
+    const format = "{{\"password\":\"{s}\",\"code\":\"{s}\"}}";
+    const body = try std.fmt.bufPrint(&buffer, format, .{ passphrase, totp.code(seed, now / 30) });
+    const owner = [_]Step{ step(.authorize, .authorized), step(.auth_user, .user_totp) };
+    const accepted = owner ++ [_]Step{ step(.totp_read, .factor), step(.totp_change, .command) };
+    try check(&accepted, "/console/api/totp/disable", body, .{
+        .status = 200,
+        .diagnostic = "\"sign_in_required\":true",
+    });
+    try check(&accepted, "/console/api/totp/recovery", body, .{
+        .status = 200,
+        .diagnostic = "\"recovery_codes\":[\"",
+    });
+    const wrong = "{\"password\":\"a long test passphrase\",\"code\":\"000000\"}";
+    const disable = "/console/api/totp/disable";
+    const read = owner ++ [_]Step{step(.totp_read, .factor)};
+    try check(&read, disable, wrong, .{ .status = 401, .diagnostic = "CONSOLE401" });
+    const unreadable = owner ++ [_]Step{step(.totp_read, .corrupt_factor)};
+    try check(&unreadable, disable, body, .{ .status = 409, .diagnostic = "CONSOLE2FAKEY" });
+    const stale = owner ++ [_]Step{ step(.totp_read, .factor), step(.totp_change, .conflict) };
+    try check(&stale, "/console/api/totp/recovery", body, conflict);
+    const plain = [_]Step{ step(.authorize, .authorized), step(.auth_user, .user) };
+    try check(&plain, "/console/api/totp/disable", body, conflict);
+}

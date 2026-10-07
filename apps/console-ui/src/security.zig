@@ -19,9 +19,11 @@ pub fn page(state: *const State, w: *Writer) Writer.Error!void {
         try html.render(
             w,
             "</ol><button class=\"btn btn-primary\" " ++
-                "data-action=\"recovery-saved\">" ++
-                "I saved my codes · Sign in</button></section></main>",
-            .{},
+                "data-action=\"recovery-saved\">{{ label }}</button></section></main>",
+            .{ .label = if (state.recovery_sign_in)
+                "I saved my codes · Sign in"
+            else
+                "I saved my codes" },
         );
         return;
     }
@@ -33,11 +35,45 @@ pub fn page(state: *const State, w: *Writer) Writer.Error!void {
     } else if (state.totp_enabled) {
         try html.render(w, "<p>Two-factor authentication is enabled. Sign in with your " ++
             "password and an authenticator code or an unused recovery code.</p>", .{});
+        try manage(state, w);
     } else {
         try enrollment(state, w);
     }
     try html.render(w, "<button class=\"btn btn-ghost\" data-action=\"account\">" ++
         "Back to account</button></section></main>", .{});
+}
+
+/// Both changes need the password and an authenticator code or unused recovery code.
+fn manage(state: *const State, w: *Writer) Writer.Error!void {
+    const forms = [_]struct { id: []const u8, title: []const u8, note: []const u8 }{
+        .{
+            .id = "totp-recovery",
+            .title = "Replace recovery codes",
+            .note = "New codes replace every earlier recovery code.",
+        },
+        .{
+            .id = "totp-disable",
+            .title = "Turn off two-factor",
+            .note = "This removes the authenticator and recovery codes and ends your " ++
+                "sessions. A recovery code also works when the authenticator is unavailable.",
+        },
+    };
+    for (forms) |form| {
+        try html.render(w, "<form id=\"{{ id }}\"><h2>{{ title }}</h2><p>{{ note }}</p>", .{
+            .id = form.id,
+            .title = form.title,
+            .note = form.note,
+        });
+        var password: [32]u8 = undefined;
+        var code: [32]u8 = undefined;
+        try render.field(w, std.fmt.bufPrint(&password, "{s}-password", .{form.id}) catch
+            unreachable, "Current password", "password", "", "current-password");
+        try render.field(w, std.fmt.bufPrint(&code, "{s}-code", .{form.id}) catch
+            unreachable, "Authenticator or recovery code", "text", "", "one-time-code");
+        try html.render(w, "<button class=\"btn btn-outline\" type=\"submit\"", .{});
+        if (state.busy) try w.writeAll(" disabled");
+        try html.render(w, ">{{ title }}</button></form>", .{ .title = form.title });
+    }
 }
 
 fn status(state: *const State, w: *Writer) Writer.Error!void {
@@ -70,6 +106,27 @@ fn enrollment(state: *const State, w: *Writer) Writer.Error!void {
     try html.render(w, ">{{ v0 }}</button></form>", .{
         .v0 = if (pending) "Enable two-factor authentication" else "Set up authenticator",
     });
+}
+
+test "an enabled factor offers replacement codes and turning off with distinct fields" {
+    const t = std.testing;
+    var state: State = .{ .phase = .security, .totp_available = true, .totp_enabled = true };
+    var buffer: [8192]u8 = undefined;
+    var writer: Writer = .fixed(&buffer);
+    try page(&state, &writer);
+    const output = writer.buffered();
+    for ([_][]const u8{
+        "id=\"totp-recovery\"",            "id=\"totp-disable\"",
+        "name=\"totp-recovery-password\"", "name=\"totp-recovery-code\"",
+        "name=\"totp-disable-password\"",  "name=\"totp-disable-code\"",
+    }) |needle| try t.expect(std.mem.indexOf(u8, output, needle) != null);
+    const code: [32]u8 = @splat('a');
+    state.recovery_codes[0] = try @import("console_protocol").Bytes(32).init(&code);
+    state.recovery_count = 1;
+    state.recovery_sign_in = false;
+    writer = .fixed(&buffer);
+    try page(&state, &writer);
+    try t.expect(std.mem.indexOf(u8, writer.buffered(), "I saved my codes</button>") != null);
 }
 
 test "unconfirmed two-factor status never claims that the encryption key is absent" {

@@ -161,6 +161,7 @@ fn executeMore(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
         .totp_read,
         .totp_begin,
         .totp_confirm,
+        .totp_change,
         => @import("console_auth_commands.zig").execute(owner, request),
         else => .{ .failed = .invalid_input },
     };

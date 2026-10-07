@@ -101,6 +101,8 @@ pub const State = struct {
     totp_uri: p.Bytes(134) = .{},
     recovery_codes: [10]p.Bytes(32) = @splat(.{}),
     recovery_count: usize = 0,
+    /// Codes shown after enrollment end the session; replacement codes keep it.
+    recovery_sign_in: bool = true,
     stats: ?p.StatsSnapshot = null,
     dashboard_scope: ?p.dashboard.Scope = null,
     dashboard_node: ?u32 = null,

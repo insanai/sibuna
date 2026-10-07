@@ -1,7 +1,7 @@
 # Console asset input/output digests
 
 ```text
-dae800446989d546cde5e61213e1bf57a12c9352edfc5733055a851a655bffa8  apps/console-ui/src/account_security_controller.zig
+adb5c50832f8711a2011b84cc71d9e517be011843f5319f1d2318ac5cffda7e8  apps/console-ui/src/account_security_controller.zig
 53ea1d42469368c8832442516a145354c7a236a94e1b2c1fd7df1d319251e6d3  apps/console-ui/src/appearance.zig
 34b47abc596bb054b7c7da43c4397acc83df787acace878a33b6faa0aae87ecd  apps/console-ui/src/audit_controller.zig
 75243b3f38f0fa26f6394617b3698d1f8d37e228255b8ae66606ee814f853b93  apps/console-ui/src/audit_page.zig
@@ -102,7 +102,7 @@ ab854a83d0cc3b4e448f60b7ec9e86ac8d0c8bc8fe51b4ff0ec7eb4353df71ce  apps/console-u
 a95f714b945d6ab831300771c1b5f4fcc3628e70f2b90a53b2a93e5684e0d4ae  apps/console-ui/src/rule_hit_page.zig
 9235b2c65888db117d1ea75d204f5ebdf3101230ad32c7bdae26f65a88d78332  apps/console-ui/src/rule_hit_state.zig
 8c1a602ddb1cd9fb543315cdd616ae39011cac6672cfe0052d9a52b3a220a5e2  apps/console-ui/src/rule_hit_today.zig
-ad00defc092ef8752fb3d1314c00aeb1ea079239daf8c3eeab7155d830271090  apps/console-ui/src/security.zig
+ec9259d7838603a13e76dcecce664f2797b94e0e4837a2a11567fb2ee240d252  apps/console-ui/src/security.zig
 7ad618c8cac6f63a06b3a79554cba2f02b2a529f07f36c01df028e026824f171  apps/console-ui/src/security_category_chart.zig
 c577a3d86329994872243684fbc346ea965f19b9da5419e65216a47b28938743  apps/console-ui/src/security_investigation.zig
 83ccdb461045048216ad8d0d750abe3398016199fbeb2342b01d8cb4e79c36c3  apps/console-ui/src/security_outcome_charts.zig
@@ -199,7 +199,7 @@ f8aeba9242d8236a56a22003e9fbc50488411418829ddde746202e91823ad75a  apps/console-u
 52464d911f6284cfea0eb675dd5e055d60a0e5adddc510c751b8ef20f9268e6e  apps/console-ui/src/snippets/users-header.html
 9ae2c871088471cc2225c3cd2a18513b6f718281dbd1706010e448c30b91f5a8  apps/console-ui/src/snippets/users-revoke.html
 073df3fcdb85e9ac1a266ec3dd0916d44e5159ac195524c2cb4329110d4a6bc6  apps/console-ui/src/snippets/users-secret.html
-e48ce314fb03e57a0c219bfe328dd4cbc03a51fd0d6d3e70266b3b786ecac715  apps/console-ui/src/state.zig
+7feeb0cb434f0f3df585825332e1abda6bca5d498ddd56f52dc272396743a06b  apps/console-ui/src/state.zig
 666941be326a5160cff53bfc9234270ee871b924913a06e7258349035dc70eb3  apps/console-ui/src/statistics_tabs.zig
 4d4d9ba592cf645e46e3c5db6435f6dcfb232291e8d023c920ffa4016e50e258  apps/console-ui/src/stats_series.zig
 c2641cb68e0326c06e4304bd535c27b53d0d248a7a42127f75e662c651691591  apps/console-ui/src/test_transport.zig

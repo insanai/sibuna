@@ -94,7 +94,58 @@ pub fn handle(app: *App, context: *Context, path: []const u8, principal: p.Princ
     if (enrolling) return enroll(app, context, principal, authorization, parsed.value.revision);
     if (confirming)
         return confirm(app, context, principal.actor, authorization, parsed.value);
-    return error.InvalidRequest;
+    const disabling = std.mem.endsWith(u8, path, "/disable");
+    if (!disabling and !std.mem.endsWith(u8, path, "/recovery")) return error.InvalidRequest;
+    return change(app, context, account.auth_user, authorization, parsed.value.code, disabling);
+}
+
+/// Turning the factor off or replacing recovery codes needs the password and a current
+/// authenticator code or unused recovery code. A recovery code needs no console key, so an
+/// owner can still turn the factor off after the key is lost and enroll again.
+fn change(
+    app: *App,
+    context: *Context,
+    user: p.AuthUser,
+    grant: p.auth.Authorization,
+    code: []const u8,
+    disabling: bool,
+) !void {
+    if (!user.totp_enabled) return http.fail(context, .conflict, "CONSOLE409");
+    const proof = factor(app, user, code) catch |err| switch (err) {
+        error.InvalidCode => return http.fail(context, .unauthorized, "CONSOLE401"),
+        error.ConsoleKeyRequired, error.ConsoleKeyMismatch, error.AuthenticationFailed => {
+            std.log.warn("console factor change cannot read the authenticator: {t}", .{err});
+            return http.fail(context, .conflict, "CONSOLE2FAKEY");
+        },
+        else => return err,
+    };
+    var codes: [10][32]u8 = undefined;
+    defer std.crypto.secureZero(u8, std.mem.asBytes(&codes));
+    var digests: [10][32]u8 = undefined;
+    if (!disabling) recoveryCodes(app.io, user.id, &codes, &digests);
+    const result = try app.request(.{ .totp_change = .{
+        .auth = grant,
+        .factor = proof,
+        .recovery_digests = if (disabling) null else digests,
+    } });
+    try result.checkAvailable();
+    if (result != .command_recorded) return http.fail(context, .conflict, "CONSOLE409");
+    if (disabling)
+        return http.json(context, .{ .disabled = true, .sign_in_required = true }, &.{});
+    var views: [10][]const u8 = undefined;
+    for (&views, &codes) |*view, *value| view.* = value;
+    try http.json(context, .{ .recovery_codes = views, .sign_in_required = false }, &.{});
+}
+
+/// Fresh 128-bit recovery codes as lowercase hex, with their owner-scoped digests.
+fn recoveryCodes(io: std.Io, user: u64, codes: *[10][32]u8, digests: *[10][32]u8) void {
+    for (codes, digests) |*code, *digest| {
+        var raw: secrets.Recovery = undefined;
+        io.random(&raw);
+        defer std.crypto.secureZero(u8, &raw);
+        code.* = std.fmt.bytesToHex(raw, .lower);
+        digest.* = secrets.recoveryDigest(user, raw);
+    }
 }
 
 fn enroll(
@@ -175,16 +226,10 @@ fn confirm(
         return http.fail(context, .unauthorized, "CONSOLE401");
     var codes: [10][32]u8 = undefined;
     defer std.crypto.secureZero(u8, std.mem.asBytes(&codes));
-    var views: [10][]const u8 = undefined;
     var digests: [10][32]u8 = undefined;
-    for (&codes, &digests, &views) |*code, *digest, *view| {
-        var raw: secrets.Recovery = undefined;
-        app.io.random(&raw);
-        defer std.crypto.secureZero(u8, &raw);
-        code.* = std.fmt.bytesToHex(raw, .lower);
-        digest.* = secrets.recoveryDigest(user, raw);
-        view.* = code;
-    }
+    recoveryCodes(app.io, user, &codes, &digests);
+    var views: [10][]const u8 = undefined;
+    for (&views, &codes) |*view, *value| view.* = value;
     const result = try app.request(.{ .totp_confirm = .{
         .auth = grant,
         .expected_revision = input.revision,

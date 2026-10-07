@@ -731,6 +731,18 @@ const table = [_]Route{
         .access = .account,
         .handler = .totp,
     },
+    .{
+        .path = "/console/api/totp/disable",
+        .method = .POST,
+        .access = .account,
+        .handler = .totp,
+    },
+    .{
+        .path = "/console/api/totp/recovery",
+        .method = .POST,
+        .access = .account,
+        .handler = .totp,
+    },
 };
 
 pub fn find(path: []const u8, method: std.http.Method) ?Route {

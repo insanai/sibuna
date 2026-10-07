@@ -34,6 +34,13 @@ pub const Factor = union(enum) {
     totp: struct { revision: u64, step: u64 },
     recovery: struct { revision: u64, slot: u8, digest: [32]u8 },
 };
+/// An owner's change to an enabled factor, proven by a current code or an unused recovery
+/// code. Null digests turn the factor off; otherwise they replace every recovery code.
+pub const FactorChange = struct {
+    auth: Authorization,
+    factor: Factor,
+    recovery_digests: ?[10][32]u8,
+};
 
 // Deadlines are absolute bounds, not authorization clocks. Persistent stamps execution.
 pub const Bootstrap = struct {

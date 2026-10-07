@@ -16,6 +16,7 @@ pub fn execute(owner: *Persistent, request: p.StorageRequest) !p.StorageResult {
         .totp_read => |user| factor.read(owner, user),
         .totp_begin => |input| factor.begin(owner, input, now),
         .totp_confirm => |input| factor.confirm(owner, input, now),
+        .totp_change => |input| factor.change(owner, input, now),
         .authorize => |input| authorize(owner, input, now),
         else => unreachable,
     };

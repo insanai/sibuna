@@ -63,6 +63,9 @@ fn failureHint(code: []const u8) []const u8 {
         return "Refresh the token list and expected revision before retrying.";
     if (std.mem.eql(u8, code, "CONSOLETOKEN403"))
         return "Use an administrator session and complete required two-factor setup.";
+    if (std.mem.eql(u8, code, "CONSOLE2FAKEY"))
+        return "This node has no matching console key for two-factor. Use an unused " ++
+            "recovery code, or ask an administrator to configure the key or reset two-factor.";
     if (std.mem.eql(u8, code, "CONSOLETOKENS"))
         return "Outcome unknown. Query the token list before retrying.";
     return "Check your input or sign in again.";

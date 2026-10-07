@@ -96,7 +96,83 @@ def check(binary, h):
                 console_cli_test.factor_input(binary, port, credentials, recovery[2], root)
             finally:
                 h.stop(proc)
+            lifecycle(binary, h, Path(root), port, log, logpath, keypath, credentials, recovery)
     print("console-e2e: encrypted TOTP, session revocation, replay and recovery persistence passed")
+
+
+def lifecycle(binary, h, root, port, log, logpath, keypath, credentials, recovery):
+    """Replace codes, turn off, re-enroll, survive key loss and administrator reset.
+
+    Every phase stays within five password verifications per address per minute, so the
+    production sign-in limit is never relaxed; each restart starts a fresh window.
+    """
+    data = str(root / "data")
+    login = lambda fields: h.request(port, "POST", "/console/api/login", fields)
+    session = lambda fields: (lambda r: (r[0], r[1]["Set-Cookie"].split(";", 1)[0],
+                                         json.loads(r[2]).get("csrf")))(login(fields))
+    post = lambda path, body, cookie, csrf: h.request(port, "POST", path, body, cookie, csrf)
+    password = credentials["password"]
+
+    proc = h.start(binary, data, port, log, str(keypath))
+    try:
+        status, cookie, csrf = session(dict(credentials, code=recovery[3]))
+        assert status == 200
+        status, _, body = post("/console/api/totp/recovery",
+                               {"password": password, "code": recovery[4]}, cookie, csrf)
+        assert status == 200, body
+        replaced = json.loads(body)["recovery_codes"]
+        assert len(set(replaced)) == 10 and not set(replaced) & set(recovery)
+        assert h.request(port, "GET", "/console/api/stats", cookie=cookie)[0] == 200
+        assert login(dict(credentials, code=recovery[5]))[0] == 401
+        status, cookie, csrf = session(dict(credentials, code=replaced[0]))
+        assert status == 200
+        status, _, body = post("/console/api/totp/disable",
+                               {"password": password, "code": replaced[1]}, cookie, csrf)
+        assert status == 200 and json.loads(body)["sign_in_required"], body
+        assert h.request(port, "GET", "/console/api/stats", cookie=cookie)[0] == 401
+    finally:
+        h.stop(proc)
+
+    proc = h.start(binary, data, port, log, str(keypath))
+    try:
+        status, cookie, csrf = session(credentials)
+        assert status == 200
+        status, _, body = h.request(port, "GET", "/console/api/totp", cookie=cookie)
+        state = json.loads(body)
+        assert status == 200 and state["available"] and not state["enabled"], body
+        enrollment_body = {"password": password, "revision": state["revision"]}
+        status, _, body = post("/console/api/totp/enroll", enrollment_body, cookie, csrf)
+        assert status == 200, body
+        enrollment = json.loads(body)
+        assert enrollment["uri"].startswith(f"otpauth://totp/Sibuna:{credentials['username']}?")
+        step = int(time.time()) // 30
+        confirm = dict(enrollment_body, revision=enrollment["revision"],
+                       code=code(enrollment["secret"], step))
+        status, _, body = post("/console/api/totp/confirm", confirm, cookie, csrf)
+        assert status == 200, body
+        codes = json.loads(body)["recovery_codes"]
+    finally:
+        h.stop(proc)
+
+    # A replaced console key cannot open the authenticator. The correct password and code
+    # get the same refusal as a wrong one; a recovery code still turns the factor off.
+    lost = root / "replacement.key"
+    lost.write_text(os.urandom(32).hex() + "\n")
+    private_file.permissions(lost)
+    proc = h.start(binary, data, port, log, str(lost))
+    try:
+        attempt = login(dict(credentials, code=code(enrollment["secret"], step + 1)))
+        assert attempt[0] == 401 and b"CONSOLE401" in attempt[2], attempt
+        log.flush()
+        assert "factor unreadable on this node" in logpath.read_text()
+        status, cookie, csrf = session(dict(credentials, code=codes[0]))
+        assert status == 200
+        status, _, body = post("/console/api/totp/disable",
+                               {"password": password, "code": codes[1]}, cookie, csrf)
+        assert status == 200, body
+        assert login(credentials)[0] == 200
+    finally:
+        h.stop(proc)
 
 
 def check_proxy(binary, h):

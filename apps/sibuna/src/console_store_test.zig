@@ -65,6 +65,7 @@ pub const Fixture = struct {
             .logout => |input| auth.logout(self.owner, input, now),
             .totp_begin => |input| factor.begin(self.owner, input, now),
             .totp_confirm => |input| factor.confirm(self.owner, input, now),
+            .totp_change => |input| factor.change(self.owner, input, now),
             else => return error.InvalidTestRequest,
         };
         return result catch .{ .failed = .unavailable };
@@ -756,6 +757,82 @@ test "TOTP enrollment revokes sessions and each step or recovery value commits o
     } };
     try t.expectEqual(p.Failure.conflict, (try factorSession(fx, stale, 9, 150)).failed);
     try t.expectEqual(1, (try fx.run(.{ .totp_read = 1 })).totp.recovery_used);
+}
+
+fn factorChange(
+    fx: *Fixture,
+    factor: p.auth.Factor,
+    digests: ?[10][32]u8,
+    now: u64,
+) !p.StorageResult {
+    return fx.authenticationAt(.{ .totp_change = .{
+        .auth = .{ .session_digest = @splat(6), .csrf_digest = @splat(8) },
+        .factor = factor,
+        .recovery_digests = digests,
+    } }, now);
+}
+
+test "owners replace recovery codes and turn their factor off with one-use proofs" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    var path: [160]u8 = undefined;
+    const fx = try geoFixture(try std.fmt.bufPrint(
+        &path,
+        ".zig-cache/tmp/{s}/console-factor",
+        .{tmp.sub_path},
+    ));
+    defer fx.close();
+    const digests = try enrollTotp(fx);
+    try t.expect((try factorSession(fx, .{ .totp = .{ .revision = 1, .step = 4 } }, 6, 130)) ==
+        .command_recorded);
+    var replacement: [10][32]u8 = undefined;
+    for (&replacement, 0..) |*digest, index| digest.* = @splat(@intCast(index + 40));
+    // A consumed step, a stale factor revision and a foreign recovery value prove nothing.
+    const consumed: p.auth.Factor = .{ .totp = .{ .revision = 1, .step = 4 } };
+    const reused = try factorChange(fx, consumed, replacement, 130);
+    try t.expectEqual(p.Failure.conflict, reused.failed);
+    const stale: p.auth.Factor = .{ .totp = .{ .revision = 2, .step = 5 } };
+    try t.expectEqual(p.Failure.conflict, (try factorChange(fx, stale, replacement, 150)).failed);
+    const forged: p.auth.Factor = .{ .recovery = .{
+        .revision = 1,
+        .slot = 2,
+        .digest = @splat(1),
+    } };
+    try t.expectEqual(p.Failure.conflict, (try factorChange(fx, forged, null, 150)).failed);
+    const fresh: p.auth.Factor = .{ .totp = .{ .revision = 1, .step = 5 } };
+    try t.expect((try factorChange(fx, fresh, replacement, 150)) == .command_recorded);
+    const replaced = (try fx.run(.{ .totp_read = 1 })).totp;
+    try t.expect(replaced.enabled and replaced.revision == 2 and replaced.last_step.? == 5);
+    try t.expectEqual(@as(u16, 0), replaced.recovery_used);
+    try t.expectEqualSlices(u8, &replacement[3], &replaced.recovery_digests[3]);
+    // Replacing codes keeps the session; earlier recovery codes no longer work.
+    const kept = try fx.authorizeAt(.{ .session_digest = @splat(6), .now = 150 });
+    try t.expect(kept == .authorized);
+    const old: p.auth.Factor = .{ .recovery = .{
+        .revision = 2,
+        .slot = 1,
+        .digest = digests[1],
+    } };
+    try t.expectEqual(p.Failure.conflict, (try factorChange(fx, old, null, 150)).failed);
+    const recovery: p.auth.Factor = .{ .recovery = .{
+        .revision = 2,
+        .slot = 1,
+        .digest = replacement[1],
+    } };
+    try t.expect((try factorChange(fx, recovery, null, 150)) == .command_recorded);
+    const off = (try fx.run(.{ .totp_read = 1 })).totp;
+    try t.expect(!off.enabled and off.revision == 3);
+    try t.expect(off.expires == 0 and off.last_step == null);
+    try t.expectEqual(p.Failure.unauthorized, (try fx.authorizeAt(.{
+        .session_digest = @splat(6),
+        .now = 150,
+    })).failed);
+    const user = (try fx.run(.{ .auth_user = try p.Bytes(64).init("geo-admin") })).auth_user;
+    try t.expect(!user.totp_enabled and user.revision == 3);
+    var audit = try fx.owner.db.query(t.allocator, "SELECT group_concat(action,',') FROM " ++
+        "(SELECT action FROM console_audit WHERE subject=1 AND action LIKE 'totp.%' ORDER BY id)");
+    defer audit.deinit();
+    try t.expectEqualStrings("totp.enable,totp.recovery,totp.disable", audit.rows[0][0].?);
 }
 
 test "accounts without a factor row read as not enrolled rather than unavailable" {
