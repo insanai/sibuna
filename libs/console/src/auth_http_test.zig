@@ -350,12 +350,13 @@ test "genuine session and enrollment revision conflicts remain conflicts" {
     try check(&enrollment, "/console/api/totp/enroll", enrollment_body, conflict);
 }
 
-test "factor corruption remains a service error without a credential-denial audit" {
-    const script = [_]Step{ step(.auth_user, .user_totp), step(.totp_read, .corrupt_factor) };
-    try check(&script, "/console/api/login", login_body, .{
-        .status = 503,
-        .diagnostic = "CONSOLE004",
-    });
+test "an unreadable factor after a correct password is an audited opaque refusal" {
+    const script = [_]Step{
+        step(.auth_user, .user_totp),
+        step(.totp_read, .corrupt_factor),
+        step(.login_denied, .command),
+    };
+    try check(&script, "/console/api/login", login_body, refused);
 }
 
 test "busy password verification preserves the independent concurrency bound" {

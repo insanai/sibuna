@@ -51,9 +51,15 @@ pub fn login(app: *App, context: *Context) !void {
         app,
         result.auth_user,
         input.value.code,
-    ) catch |err| {
-        if (err == error.InvalidCode) return refuse(app, context, username, origin);
-        return err;
+    ) catch |err| switch (err) {
+        error.InvalidCode => return refuse(app, context, username, origin),
+        // The password is already proven here, so a factor this node cannot open must not
+        // answer differently from a wrong password. The operator sees the cause instead.
+        error.ConsoleKeyRequired, error.ConsoleKeyMismatch, error.AuthenticationFailed => {
+            std.log.warn("console sign-in factor unreadable on this node: {t}", .{err});
+            return refuse(app, context, username, origin);
+        },
+        else => return err,
     };
     try establish(app, context, result.auth_user, factor, origin);
 }
