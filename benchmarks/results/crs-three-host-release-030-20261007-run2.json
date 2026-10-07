@@ -1,0 +1,151 @@
+{
+  "date": "2026-10-07T03:36:18.442973+00:00",
+  "run": "1791344035",
+  "build_commit": "020c8bb7d7dc1bda16c737db09cbb904333c0e00",
+  "controller_commit": "e7412b80ae06bdd8f9ef84cbf31d8b69ec6fe48d",
+  "controller_changes": [
+    "tools/crs_ftw_daemon_verdict.py",
+    "tools/crs_ftw_daemon_verdict_test.py"
+  ],
+  "binary_identities": [
+    {
+      "host": "insan@10.175.52.19",
+      "binary": "/home/insan/sibuna-crs-cluster-20261006/runtime/sibuna",
+      "hostname": "agy01",
+      "kernel": "7.0.0-28-generic",
+      "sha256": "79b6588fc5ea3e1588cf854ab07691726285d24e5301d688cbb23b05e8fac436"
+    },
+    {
+      "host": "insan@10.175.52.20",
+      "binary": "/home/insan/sibuna-crs-cluster-20261006/runtime/sibuna",
+      "hostname": "agy02",
+      "kernel": "7.0.0-28-generic",
+      "sha256": "79b6588fc5ea3e1588cf854ab07691726285d24e5301d688cbb23b05e8fac436"
+    },
+    {
+      "host": "insan@10.175.52.21",
+      "binary": "/home/insan/sibuna-crs-cluster-20261006/runtime/sibuna",
+      "hostname": "agy03",
+      "kernel": "7.0.0-28-generic",
+      "sha256": "79b6588fc5ea3e1588cf854ab07691726285d24e5301d688cbb23b05e8fac436"
+    }
+  ],
+  "elapsed_seconds": 142.47901537490543,
+  "passed": true,
+  "failure": null,
+  "processes": [
+    {
+      "node": 1,
+      "kind": "tls",
+      "name": "1791344035-tls-1",
+      "ready": null,
+      "stop_status": 0
+    },
+    {
+      "node": 1,
+      "kind": "origin",
+      "name": "1791344035-origin-2",
+      "ready": null,
+      "stop_status": 0
+    },
+    {
+      "node": 2,
+      "kind": "tls",
+      "name": "1791344035-tls-3",
+      "ready": null,
+      "stop_status": 0
+    },
+    {
+      "node": 2,
+      "kind": "origin",
+      "name": "1791344035-origin-4",
+      "ready": null,
+      "stop_status": 0
+    },
+    {
+      "node": 3,
+      "kind": "tls",
+      "name": "1791344035-tls-5",
+      "ready": null,
+      "stop_status": 0
+    },
+    {
+      "node": 3,
+      "kind": "origin",
+      "name": "1791344035-origin-6",
+      "ready": null,
+      "stop_status": 0
+    },
+    {
+      "node": 2,
+      "kind": "node2",
+      "name": "1791344035-node2-7",
+      "ready": {
+        "seconds": 0.9957057079300284,
+        "health": 200,
+        "setup": 200
+      },
+      "stop_status": 0
+    },
+    {
+      "node": 3,
+      "kind": "node3",
+      "name": "1791344035-node3-8",
+      "ready": {
+        "seconds": 0.3620120419654995,
+        "health": 200,
+        "setup": 200
+      },
+      "stop_status": 0
+    },
+    {
+      "node": 1,
+      "kind": "node1",
+      "name": "1791344035-node1-9",
+      "ready": {
+        "seconds": 11.72167475009337,
+        "health": 200,
+        "setup": 200
+      },
+      "stop_status": 0
+    },
+    {
+      "node": 1,
+      "kind": "node1",
+      "name": "1791344035-node1-10",
+      "ready": {
+        "seconds": 3.895983999944292,
+        "health": 200,
+        "setup": 200
+      },
+      "stop_status": 0
+    },
+    {
+      "node": 2,
+      "kind": "node2",
+      "name": "1791344035-node2-11",
+      "ready": {
+        "seconds": 4.857592000043951,
+        "health": 200,
+        "setup": 200
+      },
+      "stop_status": 0
+    }
+  ],
+  "transport": {
+    "consensus": "mutual TLS",
+    "management": "validated HTTPS peers",
+    "controller": "SSH tunnels",
+    "sessions": "TOTP"
+  },
+  "required_checks": [
+    "Audit/Enforce/Off",
+    "separate preparation and selection",
+    "leader loss",
+    "quorum refusal",
+    "durable restart restoration",
+    "exact rollback",
+    "incompatible preparation refusal",
+    "all owned daemons and ingress processes stop with status zero"
+  ]
+}

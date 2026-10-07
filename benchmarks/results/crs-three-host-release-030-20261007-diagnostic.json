@@ -1,0 +1,128 @@
+{
+  "date": "2026-10-07T03:15:45.296826+00:00",
+  "run": "1791342778",
+  "build_commit": "5a7a20125cd7320df4cc6c0751eaefee6f7437d0",
+  "controller_commit": "7263415f0dfaf70ffb3dc02abd3b0659f6bd382e",
+  "controller_changes": [
+    "tools/console_rankings_test.py"
+  ],
+  "binary_identities": [
+    {
+      "host": "insan@10.175.52.19",
+      "binary": "/home/insan/sibuna-crs-cluster-20261006/runtime/sibuna",
+      "hostname": "agy01",
+      "kernel": "7.0.0-28-generic",
+      "sha256": "083bc1a0fbe7f784522b51bbb198af80ac1b87e27d20f9e344cbb6373b7f13b5"
+    },
+    {
+      "host": "insan@10.175.52.20",
+      "binary": "/home/insan/sibuna-crs-cluster-20261006/runtime/sibuna",
+      "hostname": "agy02",
+      "kernel": "7.0.0-28-generic",
+      "sha256": "083bc1a0fbe7f784522b51bbb198af80ac1b87e27d20f9e344cbb6373b7f13b5"
+    },
+    {
+      "host": "insan@10.175.52.21",
+      "binary": "/home/insan/sibuna-crs-cluster-20261006/runtime/sibuna",
+      "hostname": "agy03",
+      "kernel": "7.0.0-28-generic",
+      "sha256": "083bc1a0fbe7f784522b51bbb198af80ac1b87e27d20f9e344cbb6373b7f13b5"
+    }
+  ],
+  "elapsed_seconds": 167.18182358308695,
+  "passed": false,
+  "failure": "survivors have quorum: AssertionError(503)",
+  "processes": [
+    {
+      "node": 1,
+      "kind": "tls",
+      "name": "1791342778-tls-1",
+      "ready": null,
+      "stop_status": 0
+    },
+    {
+      "node": 1,
+      "kind": "origin",
+      "name": "1791342778-origin-2",
+      "ready": null,
+      "stop_status": 0
+    },
+    {
+      "node": 2,
+      "kind": "tls",
+      "name": "1791342778-tls-3",
+      "ready": null,
+      "stop_status": 0
+    },
+    {
+      "node": 2,
+      "kind": "origin",
+      "name": "1791342778-origin-4",
+      "ready": null,
+      "stop_status": 0
+    },
+    {
+      "node": 3,
+      "kind": "tls",
+      "name": "1791342778-tls-5",
+      "ready": null,
+      "stop_status": 0
+    },
+    {
+      "node": 3,
+      "kind": "origin",
+      "name": "1791342778-origin-6",
+      "ready": null,
+      "stop_status": 0
+    },
+    {
+      "node": 2,
+      "kind": "node2",
+      "name": "1791342778-node2-7",
+      "ready": {
+        "seconds": 0.3386009579990059,
+        "health": 200,
+        "setup": 200
+      },
+      "stop_status": 0
+    },
+    {
+      "node": 3,
+      "kind": "node3",
+      "name": "1791342778-node3-8",
+      "ready": {
+        "seconds": 0.41962375002913177,
+        "health": 200,
+        "setup": 200
+      },
+      "stop_status": 0
+    },
+    {
+      "node": 1,
+      "kind": "node1",
+      "name": "1791342778-node1-9",
+      "ready": {
+        "seconds": 11.646043041953817,
+        "health": 200,
+        "setup": 200
+      },
+      "stop_status": 0
+    }
+  ],
+  "transport": {
+    "consensus": "mutual TLS",
+    "management": "validated HTTPS peers",
+    "controller": "SSH tunnels",
+    "sessions": "TOTP"
+  },
+  "required_checks": [
+    "Audit/Enforce/Off",
+    "separate preparation and selection",
+    "leader loss",
+    "quorum refusal",
+    "durable restart restoration",
+    "exact rollback",
+    "incompatible preparation refusal",
+    "all owned daemons and ingress processes stop with status zero"
+  ]
+}
