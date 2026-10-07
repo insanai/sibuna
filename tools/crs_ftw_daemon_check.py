@@ -506,7 +506,7 @@ def main():
     parser.add_argument("--reference-report", type=Path, action="append",
                         help="pinned ModSecurity request or response report; repeatable")
     parser.add_argument("--representation-report", type=Path, action="append", default=[],
-                        help="independent malformed request/origin representation proof; repeatable")
+                        help="independent request/origin representation proof; repeatable")
     parser.add_argument("--report", type=Path,
                         default=Path(".zig-cache/crs-review/ftw-daemon-report.json"))
     parser.add_argument("--mode", choices=("audit", "enforce"), default="audit")
