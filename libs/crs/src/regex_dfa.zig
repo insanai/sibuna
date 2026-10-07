@@ -233,9 +233,13 @@ const Search = struct {
             }
         }
         const next = self.buffers.kernel[0..next_used];
-        // Kernels are sets, so stability is irrelevant; the stable block sort clears a
-        // cache buffer on every call, which showed up in request profiles.
-        std.mem.sortUnstable(u32, next, {}, std.sort.asc(u32));
+        // Kernels are sets, so stability is irrelevant. Safe builds fill pdq's undefined
+        // partition stack on every call, so short kernels use the insertion sort that pdq
+        // would choose for them anyway.
+        if (next.len <= 24)
+            std.sort.insertion(u32, next, {}, std.sort.asc(u32))
+        else
+            std.mem.sortUnstable(u32, next, {}, std.sort.asc(u32));
         return .{ .next = next[0..dedupe(next)] };
     }
 
@@ -316,7 +320,19 @@ pub fn matches(
         .budget = budget,
     };
     var state = cache.insert(&.{}, .{ .begin = true }).?;
-    for (0..input.len) |position| {
+    var position: usize = 0;
+    while (position < input.len) : (position += 1) {
+        // Cached edges are a table lookup per byte. They are charged together, never past
+        // the budget, so exhaustion lands on the same byte as one debit per byte. Cached
+        // edges never accept, and the last byte's assertions need the closure below.
+        const affordable: usize = @intCast(@min(budget.remaining, input.len - 1 - position));
+        const start = position;
+        while (position < start + affordable) : (position += 1) {
+            const next = cache.transitions[state * 256 + input[position]];
+            if (next == unknown) break;
+            state = next;
+        }
+        try budget.debit(position - start);
         try budget.debit(1);
         state = try search.step(state, position) orelse return null;
         if (state == accepted) return true;

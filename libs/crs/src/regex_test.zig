@@ -272,3 +272,26 @@ test "repeated searches and an epoch wrap never wedge the DFA index" {
     fixture.workspace.scratch.dfa.?.epoch = std.math.maxInt(u16);
     for (0..4) |_| try fixture.expect("zzcde", "cde");
 }
+
+test "cached DFA edges exhaust the budget exactly where per-byte charging would" {
+    var fixture = try Fixture.init("(ab|cd)+x$");
+    defer fixture.deinit();
+    const scratch = &fixture.workspace.scratch;
+    var bytes: [129]u8 = undefined;
+    for (0..32) |index| @memcpy(bytes[index * 4 ..][0..4], "abcd");
+    bytes[128] = 'x';
+    const input: []const u8 = &bytes;
+    var unlimited: work.Budget = .{ .remaining = 1_000_000 };
+    try std.testing.expect(try regex.match.matches(&fixture.program, input, scratch, &unlimited));
+    const cost = 1_000_000 - unlimited.remaining;
+    for (0..cost + 2) |limit| {
+        var budget: work.Budget = .{ .remaining = limit };
+        const result = regex.match.matches(&fixture.program, input, scratch, &budget);
+        if (limit < cost) {
+            try std.testing.expectError(error.WorkLimit, result);
+        } else {
+            try std.testing.expect(try result);
+            try std.testing.expectEqual(limit - cost, budget.remaining);
+        }
+    }
+}
