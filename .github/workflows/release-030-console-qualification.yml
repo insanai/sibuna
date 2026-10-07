@@ -160,6 +160,12 @@ jobs:
             "apps/sibuna/src/connection_idle.zig libs/net/src/duplex.zig "
           git diff --check
           git diff >> "$RUNNER_TEMP/qualification/provenance.txt"
+      - name: Observe affected live CRS target before unrelated test scheduling
+        if: inputs.gate == 'macos-arm64'
+        run: |
+          python ../diagnostic-tools/tools/native_test_diagnostic.py \
+            --log-dir "$RUNNER_TEMP/qualification/crs-live" -- \
+            zig build crs-daemon-e2e -j2 --verbose --summary all
       - name: Observe full native qualification with explicitly recorded overlay
         env:
           GATE: ${{ inputs.gate }}
