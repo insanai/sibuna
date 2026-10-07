@@ -404,6 +404,19 @@ h1 {
   height:auto !important;
   min-width:640px
 }
+.reading figure:focus-visible {
+  outline:3px solid var(--gold);
+  outline-offset:4px
+}
+@media(max-width:680px) {
+  .reading figure::before {
+    content:"Scroll sideways to view the full figure.";
+    display:block;
+    color:var(--muted);
+    font-size:13px;
+    margin-bottom:12px
+  }
+}
 .reading figcaption {
   font-size:13px;
   color:var(--muted);
