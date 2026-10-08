@@ -176,6 +176,8 @@ def home_body(root, locale="en"):
     if locale != "en":
         prefix = metadata(locale)["prefix"]
         body = body.replace(f'href="{BASE}book/', f'href="{BASE}{prefix}book/')
+        body = body.replace(f'href="{BASE}pdf/sibuna-book.pdf"',
+                            f'href="{BASE}{prefix}pdf/sibuna-book.pdf"')
     return body
 
 

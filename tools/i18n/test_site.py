@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from i18n.html import Prose, safe_json, translate_fragment, words
 from i18n.locale import LOCALES, language_choices
-from site_html import stable_headings
+from site_html import BASE, home_body, stable_headings
 from i18n.tables import contract, isolate_numbers
 from i18n.assets import version
 
@@ -50,6 +50,12 @@ class SiteTranslationTest(unittest.TestCase):
         self.assertIn('href="#detail"', native)
         with self.assertRaises(AssertionError):
             stable_headings(original, '<h2 id="native">甲</h2>')
+
+    def test_home_download_uses_the_selected_book_edition(self):
+        for locale, meta in LOCALES.items():
+            body = home_body(ROOT, locale)
+            self.assertIn(f'href="{BASE}{meta["prefix"]}pdf/sibuna-book.pdf"', body)
+            self.assertIn(f'href="{BASE}whitepaper/"', body)
 
     def test_table_labels_can_change_but_coverage_and_numbers_cannot(self):
         source = '<table><tr><th>Latency</th><td><b>2.3 ms</b></td></tr></table>'
