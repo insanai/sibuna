@@ -1,0 +1,390 @@
+{
+  "release": "v0.3.3",
+  "source_commit": "4f91644f2d5f20e6173ed0f4f54d598fac7f0cc2",
+  "scope": "Console diagnostics and two-factor recovery display. No request-path or cryptographic algorithm change.",
+  "schema": 46,
+  "local_checks": {
+    "linux_gate": {
+      "steps_passed": 95,
+      "tests_executed_passed": 568,
+      "unchanged_tests": "cached",
+      "command": "zig build fmt test console-test console-ui-e2e -j2 --summary all"
+    },
+    "docs": "Book and SID builds passed. Affected PDF pages inspected. Long table names wrap within their cells.",
+    "wasm_bytes": 719413,
+    "wasm_hard_limit_bytes": 786432,
+    "chrome": {
+      "version": "0.3.3",
+      "source_commit": "4f91644f2d5f20e6173ed0f4f54d598fac7f0cc2",
+      "checks": {
+        "published_032": "Enrollment status, URI/QR and recovery regeneration verified. Confirmation hid codes; reproduced in Chrome.",
+        "final_033": "Confirmation displayed ten codes without private navigation. Saving erased them and returned to sign-in with a factor field.",
+        "other_candidate_checks": "Recovery regeneration and disable passed; narrow dark layout had no overflow."
+      },
+      "browser_restored": {
+        "viewport": "1440x1000",
+        "mobile": false,
+        "touch": false,
+        "theme": "system"
+      },
+      "console_errors": "Expected 401 after enrollment revoked the previous session. No JavaScript runtime errors.",
+      "evidence_redacted": true
+    }
+  },
+  "cluster_binary": {
+    "source_commit": "4f91644f2d5f20e6173ed0f4f54d598fac7f0cc2",
+    "zig": "0.17.0",
+    "optimize": "ReleaseSafe",
+    "cluster": true,
+    "sha256": "805442a2ee3a3d0d45361e316c189f8ed900d9c6a0717e745e64cc6c5762f6b2"
+  },
+  "cluster_smoke": {
+    "source_commit": "4f91644f2d5f20e6173ed0f4f54d598fac7f0cc2",
+    "kind": "cluster",
+    "state": "passed",
+    "start_utc": "2026-10-08T00:30:43.439027+00:00",
+    "seconds": 90,
+    "identities": [
+      {
+        "host": "insan@10.175.52.19",
+        "binary": "/home/insan/sibuna-soak-033-20261008/runtime/sibuna",
+        "hostname": "agy01",
+        "kernel": "7.0.0-28-generic",
+        "sha256": "805442a2ee3a3d0d45361e316c189f8ed900d9c6a0717e745e64cc6c5762f6b2"
+      },
+      {
+        "host": "insan@10.175.52.20",
+        "binary": "/home/insan/sibuna-soak-033-20261008/runtime/sibuna",
+        "hostname": "agy02",
+        "kernel": "7.0.0-28-generic",
+        "sha256": "805442a2ee3a3d0d45361e316c189f8ed900d9c6a0717e745e64cc6c5762f6b2"
+      },
+      {
+        "host": "insan@10.175.52.21",
+        "binary": "/home/insan/sibuna-soak-033-20261008/runtime/sibuna",
+        "hostname": "agy03",
+        "kernel": "7.0.0-28-generic",
+        "sha256": "805442a2ee3a3d0d45361e316c189f8ed900d9c6a0717e745e64cc6c5762f6b2"
+      }
+    ],
+    "samples": [
+      {
+        "elapsed_seconds": 0.0,
+        "revision": 4,
+        "mode": "enforce",
+        "resources": [
+          {
+            "rss_kib": 182388,
+            "log_bytes": 1100
+          },
+          {
+            "rss_kib": 198032,
+            "log_bytes": 1760
+          },
+          {
+            "rss_kib": 185056,
+            "log_bytes": 1120
+          }
+        ],
+        "subscriptions": [
+          {
+            "messages": 13,
+            "completed_updates": 2
+          },
+          {
+            "messages": 0,
+            "completed_updates": 0
+          },
+          {
+            "messages": 0,
+            "completed_updates": 0
+          }
+        ]
+      },
+      {
+        "elapsed_seconds": 17.34,
+        "revision": 4,
+        "mode": "enforce",
+        "resources": [
+          {
+            "rss_kib": 183320,
+            "log_bytes": 1100
+          },
+          {
+            "rss_kib": 204240,
+            "log_bytes": 1760
+          },
+          {
+            "rss_kib": 185064,
+            "log_bytes": 1120
+          }
+        ],
+        "subscriptions": [
+          {
+            "messages": 108,
+            "completed_updates": 35
+          },
+          {
+            "messages": 100,
+            "completed_updates": 33
+          },
+          {
+            "messages": 100,
+            "completed_updates": 33
+          }
+        ]
+      },
+      {
+        "elapsed_seconds": 39.18,
+        "revision": 4,
+        "mode": "enforce",
+        "resources": [
+          {
+            "rss_kib": 157396,
+            "log_bytes": 880
+          },
+          {
+            "rss_kib": 204624,
+            "log_bytes": 1794
+          },
+          {
+            "rss_kib": 182572,
+            "log_bytes": 1120
+          }
+        ],
+        "subscriptions": [
+          {
+            "messages": 0,
+            "completed_updates": 0
+          },
+          {
+            "messages": 0,
+            "completed_updates": 0
+          },
+          {
+            "messages": 0,
+            "completed_updates": 0
+          }
+        ]
+      },
+      {
+        "elapsed_seconds": 56.56,
+        "revision": 4,
+        "mode": "enforce",
+        "resources": [
+          {
+            "rss_kib": 157688,
+            "log_bytes": 880
+          },
+          {
+            "rss_kib": 204640,
+            "log_bytes": 1794
+          },
+          {
+            "rss_kib": 182576,
+            "log_bytes": 1120
+          }
+        ],
+        "subscriptions": [
+          {
+            "messages": 109,
+            "completed_updates": 35
+          },
+          {
+            "messages": 109,
+            "completed_updates": 34
+          },
+          {
+            "messages": 109,
+            "completed_updates": 34
+          }
+        ]
+      },
+      {
+        "elapsed_seconds": 82.73,
+        "revision": 5,
+        "mode": "audit",
+        "resources": [
+          {
+            "rss_kib": 186572,
+            "log_bytes": 1043
+          },
+          {
+            "rss_kib": 185616,
+            "log_bytes": 880
+          },
+          {
+            "rss_kib": 210296,
+            "log_bytes": 1413
+          }
+        ],
+        "subscriptions": [
+          {
+            "messages": 40,
+            "completed_updates": 10
+          },
+          {
+            "messages": 40,
+            "completed_updates": 10
+          },
+          {
+            "messages": 36,
+            "completed_updates": 9
+          }
+        ]
+      }
+    ],
+    "checks": 5,
+    "restarts": 2,
+    "selections": 1,
+    "peak_rss_kib": [
+      186572,
+      204640,
+      210296
+    ],
+    "scope": "Functional soak. Bounded traffic and multi-topic subscriptions; not performance acceptance.",
+    "active_start_utc": "2026-10-08T00:32:31.153901+00:00",
+    "elapsed_seconds": 107.26,
+    "cleanup": "All owned daemons, observers and origins stopped cleanly.",
+    "failure": null,
+    "end_utc": "2026-10-08T00:34:18.406851+00:00"
+  },
+  "performance": "No new measurement. The SID 0007 console-impact gate is not formally passed; the existing accepted exception is unchanged.",
+  "soaks": {
+    "recorded_utc": "2026-10-08T01:01:14.888646+00:00",
+    "requested_active_seconds": 43200,
+    "full_duration_result": "Pending. This record confirms launch and initial delivery, not twelve-hour completion.",
+    "scope": "Functional checks. Bounded benign and attack requests, persistent state, TOTP recovery, multi-topic subscriptions, reviewed CRS modes and rolling restarts. Not performance acceptance.",
+    "runs": [
+      {
+        "kind": "single",
+        "launch_status": "running",
+        "active_start_utc": "2026-10-08T00:57:39.830872+00:00",
+        "expected_active_end_utc": "2026-10-08T12:57:39.830872+00:00",
+        "controller_pid": 961031,
+        "controller": "insan@10.175.52.18",
+        "report": "/home/insan/sibuna-soak-033-single-20261008/report.json",
+        "identities": [
+          {
+            "binary": "/home/insan/sibuna-033-review-20261008/published033/sibuna",
+            "sha256": "41454f0f800230116ff44f0aba0617403655d6c51a1f266d10a87e4025d69905"
+          }
+        ],
+        "checks_at_receipt": 15,
+        "first_observed_subscriptions": [
+          {
+            "messages": 710,
+            "completed_updates": 402
+          }
+        ]
+      },
+      {
+        "kind": "cluster",
+        "launch_status": "running",
+        "active_start_utc": "2026-10-08T00:58:01.439700+00:00",
+        "expected_active_end_utc": "2026-10-08T12:58:01.439700+00:00",
+        "controller_pid": 86022,
+        "controller": "Local Mac; caffeinate prevents idle sleep. Existing SSH access reaches the remote daemons.",
+        "report": "/tmp/sibuna-soak-033-controller/long/report.json",
+        "identities": [
+          {
+            "host": "insan@10.175.52.19",
+            "binary": "/home/insan/sibuna-soak-033-20261008/runtime/sibuna",
+            "hostname": "agy01",
+            "kernel": "7.0.0-28-generic",
+            "sha256": "805442a2ee3a3d0d45361e316c189f8ed900d9c6a0717e745e64cc6c5762f6b2"
+          },
+          {
+            "host": "insan@10.175.52.20",
+            "binary": "/home/insan/sibuna-soak-033-20261008/runtime/sibuna",
+            "hostname": "agy02",
+            "kernel": "7.0.0-28-generic",
+            "sha256": "805442a2ee3a3d0d45361e316c189f8ed900d9c6a0717e745e64cc6c5762f6b2"
+          },
+          {
+            "host": "insan@10.175.52.21",
+            "binary": "/home/insan/sibuna-soak-033-20261008/runtime/sibuna",
+            "hostname": "agy03",
+            "kernel": "7.0.0-28-generic",
+            "sha256": "805442a2ee3a3d0d45361e316c189f8ed900d9c6a0717e745e64cc6c5762f6b2"
+          }
+        ],
+        "checks_at_receipt": 12,
+        "first_observed_subscriptions": [
+          {
+            "messages": 1057,
+            "completed_updates": 364
+          },
+          {
+            "messages": 1059,
+            "completed_updates": 364
+          },
+          {
+            "messages": 1055,
+            "completed_updates": 364
+          }
+        ]
+      }
+    ],
+    "cleanup": "Controllers stop all owned processes at completion or failure. A stop file beside each report requests cleanup. Remote cluster supervisors have a thirteen-hour safety deadline. Keep the local controller connected for the cluster run."
+  },
+  "workflow_checks": {
+    "release": "https://github.com/insanai/sibuna/actions/runs/37707845384",
+    "verify": "https://github.com/insanai/sibuna/actions/runs/37707839921",
+    "documentation": "https://github.com/insanai/sibuna/actions/runs/37707839919",
+    "documentation_conclusion": "success",
+    "release_conclusion": "success",
+    "verify_conclusion": "success",
+    "clean_native": {
+      "linux_amd64": {
+        "steps": 95,
+        "tests": 1188,
+        "conclusion": "success"
+      },
+      "macos_arm64": {
+        "steps": 95,
+        "tests": 1188,
+        "conclusion": "success"
+      }
+    },
+    "cluster": {
+      "steps": 89,
+      "tests_executed": 410,
+      "unchanged_tests": "cached",
+      "conclusion": "success"
+    }
+  },
+  "archives": [
+    {
+      "archive": "sibuna-linux-amd64.tar.gz",
+      "sha256": "8fffeea1f08c84cbfe3651b6a5ec233c352c84451c2d0a94d5ca2561b60b1ff5",
+      "binary_sha256": "41454f0f800230116ff44f0aba0617403655d6c51a1f266d10a87e4025d69905",
+      "target": "x86_64-linux-musl"
+    },
+    {
+      "archive": "sibuna-linux-arm64.tar.gz",
+      "sha256": "67363732f94942e3d8caf1cb7ac2125dac48f51ed9af40fd8864e4a2fbfe0622",
+      "binary_sha256": "c65efabc968b4488fee8cf345c98e1a0e2532ebe44407e68aa8eab338e724bc7",
+      "target": "aarch64-linux-musl"
+    },
+    {
+      "archive": "sibuna-macos-amd64.tar.gz",
+      "sha256": "f84070cae4c68f996175ae777842304c13c4495ab02f49b6e447817706f33d2f",
+      "binary_sha256": "7fad4d7a065429c185fc700b66997f2ee986c7014a35d0aec72af78cf98ef35c",
+      "target": "x86_64-macos.15.0"
+    },
+    {
+      "archive": "sibuna-macos-arm64.tar.gz",
+      "sha256": "e0a75959719d36f657df8a0ca3ceb86fbbd419c7809d8a65996dcdc9f7df55d2",
+      "binary_sha256": "04f5b041de298f273e56d86363f2f8a8e44b3095d5cbafa04ba0f9538d928a23",
+      "target": "aarch64-macos.15.0"
+    },
+    {
+      "archive": "sibuna-windows-amd64.zip",
+      "sha256": "d5481e6a3dd94ad0420b5d3f5fbbfc365f26cfbdb6c600f01fdbefed06608fcd",
+      "binary_sha256": "f99b2694d9454490d0e31fae42a09e6396f8e611602930784dc0823a68508dd6",
+      "target": "x86_64-windows-gnu"
+    }
+  ],
+  "published_utc": "2026-10-08T00:54:42Z"
+}
