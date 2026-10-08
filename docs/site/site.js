@@ -13,9 +13,10 @@ input?.addEventListener('input', async () => {
   const sequence = ++request;
   const query = input.value.trim().toLowerCase();
   results.replaceChildren();
-  if (query.length < 2) return;
+  const singleCjk = /[\p{Script=Han}\p{Script=Hangul}\p{Script=Hiragana}\p{Script=Katakana}]/u;
+  if (query.length < 2 && !singleCjk.test(query)) return;
   try {
-    index ??= fetch('/sibuna/search.json').then(response => {
+    index ??= fetch(document.documentElement.dataset.search || '/sibuna/search.json').then(response => {
       if (!response.ok) throw new Error('Search index unavailable');
       return response.json();
     });
@@ -26,7 +27,7 @@ input?.addEventListener('input', async () => {
       sum + (page.title.toLowerCase().includes(word) ? 5 : 0) + (page.text.toLowerCase().includes(word) ? 1 : 0), 0)}))
       .filter(item => words.every(word => (item.page.title + ' ' + item.page.text).toLowerCase().includes(word)))
       .sort((a, b) => b.score - a.score).slice(0, 12);
-    if (!matches.length) results.textContent = 'No matching pages. Try a shorter term.';
+    if (!matches.length) results.textContent = document.documentElement.dataset.searchEmpty || 'No matching pages. Try a shorter term.';
     for (const {page} of matches) {
       const link = document.createElement('a'); link.href = page.url; link.textContent = page.title;
       const snippet = document.createElement('small');
@@ -36,7 +37,7 @@ input?.addEventListener('input', async () => {
     }
   } catch {
     index = undefined;
-    if (sequence === request) results.textContent = 'Search could not load. Use the documentation navigation or try again.';
+    if (sequence === request) results.textContent = document.documentElement.dataset.searchFailed || 'Search could not load. Use the documentation navigation or try again.';
   }
 });
 const sidebar = document.querySelector('.sidebar details');

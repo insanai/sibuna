@@ -8,6 +8,14 @@
   <a href="#documentation">Documentation</a>
 </p>
 
+<!-- language-navigation -->
+<p align="center">
+  <a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a> ·
+  <a href="README.ko.md">한국어</a> · <a href="README.ja.md">日本語</a> ·
+  <a href="README.es.md">Español</a> · <a href="README.de.md">Deutsch</a> ·
+  <a href="README.hi.md">हिन्दी</a> · <a href="README.ar.md">العربية</a>
+</p>
+
 **Sibuna helps protect websites and APIs from unwanted bot traffic.** It can forward requests
 to your app or work alongside an existing proxy, such as Caddy, nginx or Traefik.
 

@@ -2,6 +2,8 @@
 
 #title_page()
 #pagebreak()
+#set par(spacing: 0.8em)
+#set text(size: 10pt)
 #heading(numbering: none)[Preface]
 
 Every request asks a server to spend resources. Its method, path and headers describe what
@@ -47,7 +49,7 @@ addresses can be shared, and a bounded detector cannot understand every applicat
 This book explains an implementation whose costs and limitations can be examined, tested
 and changed.
 
-#v(5mm)
+#v(3mm)
 #text(size: 9pt, fill: gray)[
   Edition 0.3 · October 2026 #linebreak()
   Sources, exercises, and reproducible measurements accompany the Sibuna repository.

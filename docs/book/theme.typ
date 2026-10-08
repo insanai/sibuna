@@ -14,9 +14,20 @@
 #let gold = rgb("d97706")
 #let paper = rgb("fdfcf9")
 
-#let book(body) = {
+#let languages = json("../i18n/locales.json")
+
+// Shared labels inherit the edition's language, including inside imported helpers.
+#let words(key) = context {
+  let locale = if text.lang == "zh" { "zh-Hans" } else { text.lang }
+  languages.at(locale, default: languages.en).at(key)
+}
+
+#let book(body,
+  title: "The Book of Sibuna: Proof of Work and Practical Web Protection",
+  running_head: "The Book of Sibuna", language: "en", font: "New Computer Modern",
+) = {
   set document(
-    title: "The Book of Sibuna: Proof of Work and Practical Web Protection",
+    title: title,
     author: ("Vikrant Rathore", "Ronak Rathore"),
     keywords: ("Sibuna", "Firewall", "Proof-of-Work", "WebAssembly", "Zig", "Performance", "Security"),
   )
@@ -34,19 +45,25 @@
         let chapter = if headings.len() > 0 { headings.last().body } else { [] }
         grid(
           columns: (1fr, 1fr),
-          box(width: 100%, clip: true)[The Book of Sibuna],
+          box(width: 100%, clip: true)[#running_head],
           box(width: 100%, clip: true, align(right, emph(chapter))),
         )
         line(length: 100%, stroke: 0.4pt + rule)
       }
     },
   )
-  set text(font: "New Computer Modern", size: 10.5pt, fill: ink, lang: "en")
+  set text(font: font, size: 10.5pt, fill: ink, lang: language)
   set smartquote(enabled: false)
   set par(justify: true, leading: 0.60em, spacing: 1em)
   set heading(numbering: "1.1")
   set raw(tab-size: 4)
-  show raw: set text(size: 8.3pt)
+  // Protocol bytes, equations and command lines retain their original reading order.
+  show raw: set text(size: 8.3pt, dir: ltr, lang: "en")
+  show math.equation: set text(dir: ltr, lang: "en")
+  // Short path and protocol names remain readable as one inline token.
+  show raw.where(block: false): it => {
+    if it.text.len() < 12 and not it.text.contains(" ") { box(it) } else { it }
+  }
   // Keep short examples together. Long listings can still span a page.
   show raw.where(block: true): it => block(
     breakable: it.text.split("\n").len() > 30,
@@ -63,7 +80,12 @@
   }
   show heading.where(level: 2): set text(size: 15pt, fill: ink)
   show heading.where(level: 3): set text(size: 12pt, fill: blue)
-  body
+  if language == "ar" {
+    show regex("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.+Z\\-]+"): it => {
+      text(dir: ltr, lang: "en", it)
+    }
+    body
+  } else { body }
 }
 
 // Mathematical artwork stays vector-sharp in both PDF and PNG exports.
@@ -108,25 +130,31 @@
   circle((0,0.15), radius: 0.12, fill: copper, stroke: none)
 })
 
-#let title_page() = {
+#let title_page() = context {
   set page(margin: (x: 18mm, y: 17mm), header: none, numbering: none,
     background: rect(width: 100%, height: 100%, fill: rgb("142c3b")))
   set text(fill: rgb("f4ecd9"))
+  // Tracking separates joined Arabic and Devanagari letters. Keep those labels intact.
+  let label_tracking = if text.lang in ("ar", "hi") { 0pt } else { 2.8pt }
+  let motto_tracking = if text.lang in ("ar", "hi") { 0pt } else { 1pt }
   align(center)[
     #v(6mm)
-    #text(size: 9pt, tracking: 2.8pt, fill: rgb("d7a15b"))[THE BOOK OF]
+    #text(size: 9pt, tracking: label_tracking, fill: rgb("d7a15b"))[#words("cover")]
     #v(4mm)
     #text(size: 46pt, tracking: 5pt, weight: "regular")[SIBUNA]
     #v(5mm)
-    #text(size: 13pt)[The mathematics and engineering of web defense]
+    #text(size: 13pt)[#context {
+      let locale = if text.lang == "zh" { "zh-Hans" } else { text.lang }
+      languages.at(locale, default: languages.en).subtitle
+    }]
     #v(11mm)
     #cover_art()
     #v(9mm)
-    #text(size: 10pt, tracking: 1pt, fill: rgb("d7a15b"))[WORK · TRUST · BOUNDED STATE]
+    #text(size: 10pt, tracking: motto_tracking, fill: rgb("d7a15b"))[#words("motto")]
     #v(1fr)
     #text(size: 10pt)[Vikrant Rathore]
     #v(2mm)
-    #text(size: 8.5pt, fill: rgb("a6b9bc"))[With assistance from Ronak Rathore]
+    #text(size: 8.5pt, fill: rgb("a6b9bc"))[#words("byline")]
   ]
 }
 
@@ -189,18 +217,18 @@
   fill: amber_light,
   stroke: 0.6pt + amber,
 )[
-  #text(weight: "bold", fill: amber)[Exercise #number.]
+  #text(weight: "bold", fill: amber)[#words("exercise") #number.]
   #h(4pt)
   #body
   #if hint != none [
     #linebreak()
-    #text(size: 9pt, fill: gray)[Hint: #hint]
+    #text(size: 9pt, fill: gray)[#words("hint"): #hint]
   ]
 ]
 
-#let objectives(body) = callout([In this chapter], body, kind: "idea")
-#let checkpoint(title, body) = callout([Checkpoint: #title], body)
-#let predict(body) = callout([Before continuing], body, kind: "warning")
+#let objectives(body) = callout([#words("objectives")], body, kind: "idea")
+#let checkpoint(title, body) = callout([#words("checkpoint"): #title], body)
+#let predict(body) = callout([#words("predict")], body, kind: "warning")
 
 #let teach_back(body) = block(
   width: 100%,
@@ -210,14 +238,14 @@
   fill: blue_light,
   stroke: 0.6pt + blue,
 )[
-  #text(weight: "bold", fill: blue)[Explain the invariant.]
+  #text(weight: "bold", fill: blue)[#words("teach_back")]
   #h(4pt)
   #body
 ]
 
 #let api_anchor(symbol, purpose, source: none) = {
-  let location = if source == none { [] } else { [ in #source] }
-  callout([Implementation: #symbol], [#purpose#location])
+  let location = if source == none { [] } else { [#words("source_in")#source] }
+  callout([#words("implementation"): #symbol], [#purpose#location])
 }
 
 #let code_file(path, body) = block(
@@ -236,6 +264,8 @@
 #let book_figure(caption, body, placement: none) = figure(
   placement: placement,
   layout(size => {
+    // Technical labels and measured profiles remain identical across language editions.
+    set text(font: "New Computer Modern", dir: ltr, lang: "en")
     let natural = measure(body).width
     let factor = calc.min(1, size.width / natural)
     align(center, scale(x: factor * 100%, y: factor * 100%, reflow: true, body))

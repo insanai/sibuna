@@ -11,6 +11,17 @@ and clustering disabled. A `v` tag must match `build.zig.zon` and the console so
 The release workflow verifies the actual binaries before publishing archives and checksums;
 it refuses to replace assets on an already published release. macOS packages are unsigned.
 Windows packages contain a native executable qualified on a Windows runner. `python3 tools/build_site.py` builds the GitHub Pages documentation.
+The language editions include the complete book, operations guide, reference and README.
+The whitepaper and SIDs stay in English. Edit translations under `docs/i18n/`; each catalog
+must cover the current English source. Protected slots preserve commands, equations and URLs.
+Regenerate README editions with `PYTHONPATH=tools python3 -m i18n.readme`.
+Run `PYTHONPATH=tools python3 -m unittest discover -s tools/i18n -t tools -p 'test_*.py'`
+before building the site. The build rejects incomplete editions and broken links. Install
+the Noto fonts listed in `docs/i18n/locales.json` to render non-Latin scripts. Check the PDFs
+and browser layouts after prose or theme changes, including Arabic text and left-to-right code.
+The measurement catalog comes from the existing figure helpers and result files. Its table
+prose is translated; all editions read the same numbers. Shared diagram labels, screenshots
+and bibliographic titles retain their original technical names.
 The release workflow also requires the native CRS contract suite, portable compile probes
 and pinned detector, primitive, PCRE2 and native/GnuPG signature comparisons,
 plus independent JSON, form, MIME, XML, URI and cookie acquisition comparisons, and native

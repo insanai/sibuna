@@ -12,16 +12,16 @@
   "rebuild": "node tools/site_animation_build.mjs /absolute/path/to/pinned/node_modules",
   "files": {
     "admission-scene.js": {
-      "bytes": 18444,
-      "sha256": "e71f02f91f5033a3811f5804f0ba7ac83b81dd0488c75fb6690b2091cdf19664"
+      "bytes": 18680,
+      "sha256": "d69ae82351e8ff5f9ed98e22e5000abdbc02d31a328139009ccd2aed7b0d4d21"
     },
     "admission-model.js": {
       "bytes": 3325,
       "sha256": "5246b76532167b439ac859e4c794a7babb4920be16786e304ff90e353250a791"
     },
     "admission-scene.bundle.js": {
-      "bytes": 594381,
-      "sha256": "f28e6b6c61b0ac356a1c0f511a6871bf4f74e880756332aac7d7336c166d6dad"
+      "bytes": 594535,
+      "sha256": "c569c4ca341e8c73ae7b88e29c13e5a5535ef48b7c8a4129e682b790e99e44c4"
     },
     "three-LICENSE.txt": {
       "bytes": 1081,

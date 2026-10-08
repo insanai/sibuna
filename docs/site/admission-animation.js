@@ -4,6 +4,7 @@ import { journeys, order, frameAt, nextStep } from './admission-model.js';
 class AdmissionAnimation {
     constructor(root) {
         this.root = root;
+        this.messages = JSON.parse(root.querySelector('[data-demo-language]')?.textContent || '{}');
         this.name = 'first'; this.time = 0; this.playing = false; this.visible = false;
         this.frame = 0; this.last = 0; this.drawn = 0; this.caption = '';
         this.scene = null; this.loading = false; this.lost = false; this.disposed = false;
@@ -25,24 +26,26 @@ class AdmissionAnimation {
         const frame = frameAt(this.name, this.time);
         if (this.caption !== `${frame.name}:${frame.index}`) {
             this.caption = `${frame.name}:${frame.index}`;
-            this.ui.heading.textContent = frame.title;
-            this.ui.description.textContent = frame.text;
+            this.ui.heading.textContent = this.text(frame.title);
+            this.ui.description.textContent = this.text(frame.text);
             this.ui.number.textContent = `${frame.index + 1} / ${frame.steps}`;
         }
         this.progress.style.width = `${frame.progress * 100}%`;
         this.scene?.render(frame);
         if (manual) this.root.querySelector('.demo-announcement').textContent =
-            `${frame.title}. ${frame.text}`;
+            `${this.text(frame.title)} ${this.text(frame.text)}`;
         this.root.dataset.journey = frame.name;
         this.root.dataset.step = String(frame.index);
     }
 
+    text(value) { return this.messages[value] ?? value; }
+
     controls() {
-        this.ui.play.textContent = this.playing ? 'Pause' : 'Play';
+        this.ui.play.textContent = this.text(this.playing ? 'Pause' : 'Play');
         this.ui.play.setAttribute('aria-pressed', String(this.playing));
-        this.ui.status.textContent = this.lost ? 'Static view · 3D is unavailable' :
+        this.ui.status.textContent = this.text(this.lost ? 'Static view · 3D is unavailable' :
             this.playing ? 'Playing illustration' : this.reduced.matches ?
-                'Reduced motion · step through' : 'Paused illustration';
+                'Reduced motion · step through' : 'Paused illustration');
         for (const button of this.root.querySelectorAll('[data-journey]')) {
             button.setAttribute('aria-pressed', String(button.dataset.journey === this.name));
         }
@@ -75,7 +78,8 @@ class AdmissionAnimation {
             const { AdmissionScene } = await import('./admission-scene.bundle.js');
             if (this.disposed || this.lost) return;
             this.scene = new AdmissionScene(this.root.querySelector('canvas'),
-                this.root.querySelectorAll('.demo-node'));
+                this.root.querySelectorAll('.demo-node'), { screenTitle: this.text('Your website'),
+                    rtl: document.documentElement.dir === 'rtl' });
             this.draw(); this.root.dataset.renderer = 'ready';
         } catch {
             // Keep an informative SVG and the complete text journey if WebGL cannot start.

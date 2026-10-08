@@ -49,14 +49,16 @@ function glowTexture() {
     });
 }
 
-function screenTexture() {
+function screenTexture(title, rtl) {
     return canvasTexture(512, 384, (c, w, h) => {
         c.fillStyle = '#0e241a'; c.fillRect(0, 0, w, h);
         c.fillStyle = '#41554a'; c.fillRect(0, 0, w, 38);
         ['#deb77a', '#8bbba0', '#6b8b77'].forEach((color, i) => {
             c.fillStyle = color; c.beginPath(); c.arc(24 + 21 * i, 19, 5, 0, Math.PI * 2); c.fill();
         });
-        c.fillStyle = '#bed4c2'; c.font = '500 28px system-ui'; c.fillText('Your website', 40, 102);
+        c.fillStyle = '#bed4c2'; c.font = '500 28px system-ui';
+        c.direction = rtl ? 'rtl' : 'ltr'; c.textAlign = rtl ? 'right' : 'left';
+        c.fillText(title, rtl ? w - 40 : 40, 102, 432);
         c.fillStyle = '#345e46'; c.fillRect(40, 126, 432, 82);
         c.fillStyle = '#789982'; c.fillRect(58, 143, 245, 7); c.fillRect(58, 162, 329, 7);
         c.fillStyle = '#4d7257'; c.fillRect(40, 238, 202, 91); c.fillRect(270, 238, 202, 91);
@@ -65,8 +67,8 @@ function screenTexture() {
 }
 
 export class AdmissionScene {
-    constructor(canvas, labels) {
-        this.canvas = canvas;
+    constructor(canvas, labels, { screenTitle = 'Your website', rtl = false } = {}) {
+        this.canvas = canvas; this.screenTitle = screenTitle; this.rtl = rtl;
         this.labels = labels;
         this.resources = new Set();
         this.projected = new T.Vector3();
@@ -170,7 +172,7 @@ export class AdmissionScene {
         const node = this.node('client');
         this.box(node, 0, 0.62, 0, 0.36, 0.95, 0.36, this.materials.metal);
         this.box(node, 0, 1.62, 0, 2.16, 1.62, 0.16, this.materials.dark);
-        const material = this.keep(new T.MeshBasicMaterial({ map: this.keep(screenTexture()) }));
+        const material = this.keep(new T.MeshBasicMaterial({ map: this.keep(screenTexture(this.screenTitle, this.rtl)) }));
         const screen = new T.Mesh(this.keep(new T.PlaneGeometry(1.97, 1.43)), material);
         screen.position.set(0, 1.62, 0.092); node.add(screen);
         this.box(node, 0, 0.38, 0.78, 1.9, 0.08, 0.6, this.materials.metal);

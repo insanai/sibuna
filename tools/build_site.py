@@ -7,6 +7,10 @@ import json
 import hashlib
 import subprocess
 from site_html import decorate, inventory
+from i18n.build import prepare
+from i18n.locale import LOCALES, source_revision
+from i18n.readme import render, FILENAMES
+from i18n.tables import check_bundle as check_tables
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "docs/build/site"
@@ -43,14 +47,17 @@ class FigureCheck(HTMLParser):
 
 def check_bundle_figures(directory):
     figures = 0
+    pages = {}
     for path in directory.rglob("*.html"):
         parser = FigureCheck()
         parser.feed(path.read_text())
         parser.close()
         assert not parser.in_figure, f"unterminated figure in {path}"
         figures += parser.figures
+        pages[path.relative_to(directory).as_posix()] = parser.figures
     assert figures > 0, f"no figures exported in {directory}"
     print(f"documentation-figures: {directory.name}: {figures} preserved")
+    return pages
 
 
 def compile_typst(source, output, bundle=False, root="."):
@@ -61,7 +68,7 @@ def compile_typst(source, output, bundle=False, root="."):
         args += ["--features", "html,bundle", "--format", "bundle"]
     subprocess.run(args + [source, str(output)], cwd=ROOT, check=True)
     if bundle:
-        check_bundle_figures(output)
+        return check_bundle_figures(output)
 
 
 def compile_sid_pdfs():
@@ -81,19 +88,37 @@ def check_animation_assets():
         assert hashlib.sha256(data).hexdigest() == expected["sha256"], name
 
 
+def compile_language_editions(reference_figures):
+    for locale, meta in LOCALES.items():
+        if locale == "en":
+            continue
+        readme = ROOT / f"README.{FILENAMES[locale]}.md"
+        assert readme.read_text() == render(ROOT, locale), f"stale README edition: {locale}"
+        source, bundle = prepare(ROOT, locale)
+        directory = SITE / meta["prefix"]
+        compile_typst(str(source), directory / "pdf/sibuna-book.pdf")
+        figures = compile_typst(str(bundle), directory / "book", bundle=True)
+        assert figures == reference_figures, f"{locale}: figures differ from the English book"
+        check_tables(SITE / "book", directory / "book")
+        (directory / "source-revision.json").write_text(
+            json.dumps(source_revision(ROOT), indent=2) + "\n")
+
+
 def main():
     check_animation_assets()
     if SITE.exists():
         shutil.rmtree(SITE)
     SITE.mkdir(parents=True)
     compile_typst("docs/book.typ", SITE / "pdf/sibuna-book.pdf")
-    compile_typst("docs/book/bundle.typ", SITE / "book", bundle=True)
+    figures = compile_typst("docs/book/bundle.typ", SITE / "book", bundle=True)
     compile_typst("docs/whitepaper/whitepaper.typ", SITE / "pdf/sibuna-whitepaper.pdf")
     compile_typst("docs/whitepaper/bundle.typ", SITE / "whitepaper", bundle=True)
     compile_typst("docs/sid/bundle.typ", SITE / "sid", bundle=True, root="docs")
     compile_sid_pdfs()
+    compile_language_editions(figures)
     (SITE / "assets").mkdir()
-    for name in ("site.css", "site.js", "favicon.svg", "admission-demo.css", "admission-model.js",
+    for name in ("site.css", "site.js", "site-i18n.css", "site-language.js", "favicon.svg",
+                 "admission-demo.css", "admission-model.js",
                  "admission-animation.js", "admission-scene.bundle.js", "three-LICENSE.txt"):
         shutil.copyfile(ROOT / "docs/site" / name, SITE / "assets" / name)
     decorate(SITE, ROOT)

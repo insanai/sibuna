@@ -90,7 +90,7 @@ value, expected range and error (for example
 ], source: "libs/core/src/errors.zig")
 
 #table(
-  columns: (1.3fr, 1.6fr, 1.6fr),
+  columns: (1.8fr, 1.35fr, 1.35fr),
   table.header([*Error*], [*Cause*], [*Hint*]),
   [`MalformedChallenge`], [The identifier is not a well-formed challenge record], [Fetch a fresh challenge and submit it unchanged],
   [`InvalidChallengeTag`], [The tag does not authenticate; not issued by this cluster or edited], [Request a fresh challenge],

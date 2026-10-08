@@ -1,0 +1,61 @@
+/* Copyright 2026 Vikrant Rathore and Ronak Rathore. LGPL-3.0; see LICENSE. */
+.language-menu { position:relative; font-size:14px; }
+/* Offscreen positioning creates a wide scrolling area in an RTL document. */
+.skip {
+    left:0; width:1px; height:1px; overflow:hidden; clip-path:inset(50%);
+    white-space:nowrap;
+}
+.skip:focus { width:auto; height:auto; clip-path:none; overflow:visible; }
+.language-menu summary {
+    cursor:pointer; list-style:none; padding:11px 13px; min-height:44px;
+    border:1px solid var(--line); border-radius:6px; white-space:nowrap;
+}
+.language-menu summary::-webkit-details-marker { display:none; }
+.language-menu summary::after { content:" ▾"; }
+.language-menu summary:focus-visible,
+.language-menu a:focus-visible { outline:2px solid var(--green); outline-offset:3px; }
+.language-menu > div {
+    position:absolute; inset-inline-end:0; top:calc(100% + 8px); width:175px;
+    display:grid; padding:7px; background:var(--paper); border:1px solid var(--line);
+    border-radius:8px; box-shadow:0 10px 30px #20352f20; z-index:10;
+}
+.nav .language-menu a { padding:10px 12px; min-height:44px; border-radius:4px; }
+.language-menu a[aria-current="true"] { background:#176a4b12; color:var(--green); }
+html:lang(zh-Hans) body { font-family:"Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif; }
+html:lang(ja) body { font-family:"Noto Sans CJK JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; }
+html:lang(ko) body { font-family:"Noto Sans CJK KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif; }
+html:lang(hi) body { font-family:"Noto Sans Devanagari","Kohinoor Devanagari",sans-serif; }
+html:lang(ar) body { font-family:"Noto Naskh Arabic","Noto Sans Arabic",Tahoma,sans-serif; }
+html:lang(hi) body, html:lang(ar) body { line-height:1.9; }
+[dir="rtl"] .docs-layout { grid-template-columns:240px minmax(0,1fr); }
+[dir="rtl"] .docs-layout .sidebar { grid-column:1; grid-row:1; }
+[dir="rtl"] .docs-layout .reading { grid-column:2; grid-row:1; }
+[dir="rtl"] .sidebar { border-right:0; border-left:1px solid var(--line); }
+[dir="rtl"] .sidebar .group { text-align:start; }
+[dir="rtl"] .reading { text-align:start; }
+pre, code, math, .demo-stage, .demo-progress, .demo-step b {
+    direction:ltr; unicode-bidi:isolate;
+}
+[dir="rtl"] .demo-node, [dir="rtl"] .demo-work, [dir="rtl"] .demo-legend,
+[dir="rtl"] .demo-static { direction:rtl; }
+.demo-step b { display:inline-block; }
+.demo-legend { flex-wrap:wrap; }
+@media(max-width:900px) {
+    .nav { flex-wrap:wrap; gap:18px; }
+    .nav > nav { flex-wrap:wrap; justify-content:flex-end; gap:12px; }
+}
+@media(max-width:680px) {
+    [dir="rtl"] .docs-layout { display:block; }
+    .language-menu summary { font-size:12px; }
+    .demo-work { right:18px; }
+    .demo-legend { gap:5px 13px; }
+    .demo-node { overflow-wrap:anywhere; }
+    html:lang(hi) .demo-node, html:lang(ar) .demo-node { font-size:12px; }
+}
+
+html:lang(hi) h1, html:lang(hi) h1 em,
+html:lang(ar) h1, html:lang(ar) h1 em { font-family:inherit; }
+.brand { direction:ltr; unicode-bidi:isolate; }
+html:lang(hi) .eyebrow, html:lang(hi) .meta,
+html:lang(ar) .eyebrow, html:lang(ar) .meta,
+html:lang(ar) .label { font-family:inherit; letter-spacing:normal; }

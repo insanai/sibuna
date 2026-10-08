@@ -14,17 +14,22 @@
     out = c + out
     i += 1
   }
-  out
+  text(dir: ltr, lang: "en", out)
 }
 
 #let fmt_ms(us) = {
+  set text(dir: ltr, lang: "en")
   if us == none { [-] }
   else if us >= 1000 { [#calc.round(us / 1000, digits: 2) ms] }
   else { [#calc.round(us, digits: 0) µs] }
 }
 
-#let fmt_mib(kib) = if kib == none { [-] } else { [#calc.round(kib / 1024, digits: 1) MiB] }
-#let fmt_dec(v, digits: 1) = if v == none { [-] } else { [#calc.round(v, digits: digits)] }
+#let fmt_mib(kib) = text(dir: ltr, lang: "en")[
+  #if kib == none { [-] } else { [#calc.round(kib / 1024, digits: 1) MiB] }
+]
+#let fmt_dec(v, digits: 1) = text(dir: ltr, lang: "en")[
+  #if v == none { [-] } else { [#calc.round(v, digits: digits)] }
+]
 
 
 #let node_style = (
@@ -295,7 +300,7 @@
   inset: 8pt,
   width: 100%,
 )[
-  #text(size: 18pt, weight: "bold", fill: stroke)[#number]\
+  #text(size: 18pt, weight: "bold", fill: stroke, dir: ltr, lang: "en")[#number]\
   #text(size: 8.5pt, weight: "bold")[#label]\
   #text(size: 7.2pt, fill: gray)[#detail]
 ]
@@ -306,6 +311,7 @@
   run.impl == impl and run.subsystem == subsystem and run.workload == workload)
 
 #let fmt_ns(v) = {
+  set text(dir: ltr, lang: "en")
   if v == none { [-] }
   else if v >= 1000000 { [#calc.round(v / 1000000, digits: 2) ms] }
   else if v >= 1000 { [#calc.round(v / 1000, digits: 2) µs] }
