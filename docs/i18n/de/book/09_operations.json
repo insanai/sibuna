@@ -189,7 +189,7 @@
   "1a2cccb5d38d75b9": "Baue mit ⟦0⟧ und OpenSSL 3 für gegenseitiges TLS. Starte jedes Mitglied mit voller statischer Liste:\n",
   "98b1acf1fa265b16": "Jedes nutzt gleiche Liste und Master-Geheimnis. Writes gehen zum Leader und werden\nals SQLite-Seitenbilder durch Multi-Paxos repliziert. Speicherthreads sehen Commit\nund bauen Engines neu. Lokale Loopback-Experimente nutzen optional ⟦0⟧, PSK statt Zertifikaten.\n",
   "f5d8e0ae5412d0fa": "=== Challenge-Routing im Cluster\n",
-  "d59828a1a38d6d46": "Challenge-Schlüssel sind an ⟦0⟧ gebunden. Ausgabe und Prüfung bleiben beim selben\nMitglied. Tokens nutzen gemeinsame Seed und gelten anderswo. Lokale Quoten sind nicht\nglobal; Neustarts leeren Verbrauchsmengen. Verteilte Benchmarks zeigen Loopback,\nSperrverteilung und Ausfall eines Mitglieds.\n",
+  "d59828a1a38d6d46": "Challenge-Schlüssel sind an ⟦0⟧ gebunden. Ausgabe und Prüfung bleiben beim selben\nMitglied. Tokens nutzen denselben Seed und gelten anderswo. Lokale Quoten sind nicht\nglobal; Neustarts leeren Verbrauchsmengen. Verteilte Benchmarks zeigen Loopback,\nSperrverteilung und Ausfall eines Mitglieds.\n",
   "0c09c1a37ffcf86d": "Speichertransport authentifiziert Zertifikate über Common Name ⟦0⟧ passend zu ⟦1⟧,\nmit konfigurierter CA signiert. Beliebige Namen authentifizieren kein Mitglied.\nDer verteilte Test erzeugt temporäre CA-Identitäten und prüft diesen TLS-Transport.\n",
   "0286b229c8c3d2a8": "== Paketierung\n",
   "e34d6ac04de553fd": "#objectives([\n  Baue für ein Ziel, paketiere und betreibe unter systemd.\n])\n",
