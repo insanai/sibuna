@@ -354,8 +354,10 @@ pub const App = struct {
             if (result) |*reply| {
                 defer p.releaseResult(reply.*, self.gpa);
                 if (reply.* == .setup_required) return reply.setup_required;
+                if (reply.* == .failed and reply.failed == .unsupported_schema)
+                    return error.UnsupportedConsoleSchema;
                 if (reply.* != .failed or reply.failed != .unavailable) {
-                    return error.StorageUnavailable;
+                    return error.InvalidStorageReply;
                 }
             }
             var wake = std.Io.Clock.awake.now(self.io).addDuration(.fromMilliseconds(100));
@@ -383,6 +385,9 @@ pub const App = struct {
             // may already have committed, so never describe its outcome as proven failed.
             error.StorageTimeout, error.StorageUnavailable => {
                 try http.fail(context, .service_unavailable, "CONSOLEQUORUM");
+            },
+            error.UnsupportedConsoleSchema => {
+                try http.fail(context, .service_unavailable, "CONSOLESCHEMA");
             },
             else => {
                 std.log.warn("console application request failed: {t}", .{err});
@@ -669,6 +674,7 @@ pub const App = struct {
             try http.fail(context, .service_unavailable, "CONSOLEQUORUM");
             return null;
         }
+        try result.checkAvailable();
         if (result != .authorized) {
             try http.fail(context, .unauthorized, "CONSOLE401");
             return null;
@@ -700,11 +706,25 @@ test "console startup refuses invalid replies and releases unexpected owned resu
         const fx = try fixture.Fixture.init(&.{.{ .request = .setup_status, .reply = reply }});
         defer fx.deinit();
         const deadline = std.Io.Clock.awake.now(t.io).addDuration(.fromSeconds(2));
-        try t.expectError(error.StorageUnavailable, fx.app.waitForSetup(deadline));
+        try t.expectError(error.InvalidStorageReply, fx.app.waitForSetup(deadline));
         fx.stop();
         try t.expectEqual(null, fx.failure);
         try t.expectEqual(@as(usize, 1), fx.consumed);
     }
+}
+
+test "unsupported console schemas retain their cause and are not retried" {
+    const t = std.testing;
+    const fixture = @import("auth_http_test.zig");
+    const fx = try fixture.Fixture.init(&.{
+        .{ .request = .setup_status, .reply = .unsupported_schema },
+    });
+    defer fx.deinit();
+    const deadline = std.Io.Clock.awake.now(t.io).addDuration(.fromSeconds(2));
+    try t.expectError(error.UnsupportedConsoleSchema, fx.app.waitForSetup(deadline));
+    fx.stop();
+    try t.expectEqual(null, fx.failure);
+    try t.expectEqual(@as(usize, 1), fx.consumed);
 }
 
 test "console startup deadline abandons executing work until its owner completes" {
@@ -749,7 +769,7 @@ test "console startup retries unavailable GeoIP reads and refuses other replies"
     });
     defer fx.deinit();
     fx.app.geo_job.app = &fx.app;
-    try t.expectError(error.StorageUnavailable, fx.app.geo_job.restore());
+    try t.expectError(error.InvalidStorageReply, fx.app.geo_job.restore());
     fx.stop();
     try t.expectEqual(null, fx.failure);
     try t.expectEqual(@as(usize, 1), fx.consumed);

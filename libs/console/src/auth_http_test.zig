@@ -26,6 +26,7 @@ pub const Reply = enum {
     unavailable,
     unauthorized,
     invalid_input,
+    unsupported_schema,
     conflict,
     command,
     setup_ready,
@@ -159,6 +160,7 @@ pub const Fixture = struct {
             .unavailable => .{ .failed = .unavailable },
             .unauthorized => .{ .failed = .unauthorized },
             .invalid_input => .{ .failed = .invalid_input },
+            .unsupported_schema => .{ .failed = .unsupported_schema },
             .conflict => .{ .failed = .conflict },
             .command => .command_recorded,
             .setup_ready => .{ .setup_required = false },
@@ -260,7 +262,7 @@ fn exchange(fixture: *Fixture, path: []const u8, body: ?[]const u8, expected: Ex
     try t.expect(std.mem.indexOf(u8, response, expected.diagnostic) != null);
     if (expected.status == 401) {
         const refusal = "{\"error\":\"CONSOLE401\"," ++
-            "\"hint\":\"Check your input or sign in again.\"}";
+            "\"hint\":\"Sign in again with your password and, if enabled, a current code.\"}";
         try t.expect(std.mem.endsWith(u8, response, refusal));
     }
     try t.expect(std.mem.indexOf(u8, response, "Set-Cookie:") == null);
@@ -405,4 +407,18 @@ test "owners turn factors off or replace recovery codes only with a valid proof"
     try check(&stale, "/console/api/totp/recovery", body, conflict);
     const plain = [_]Step{ step(.authorize, .authorized), step(.auth_user, .user) };
     try check(&plain, "/console/api/totp/disable", body, conflict);
+}
+
+test "HTTP schema failures ask for a compatible binary rather than a quorum retry" {
+    const script = [_]Step{
+        step(.authorize, .authorized), step(.totp_read, .unsupported_schema),
+    };
+    try check(&script, "/console/api/totp", null, .{
+        .status = 503,
+        .diagnostic = "CONSOLESCHEMA",
+    });
+    try check(&script, "/console/api/totp", null, .{
+        .status = 503,
+        .diagnostic = "do not downgrade",
+    });
 }

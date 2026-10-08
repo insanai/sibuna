@@ -27,7 +27,7 @@ pub fn run(gpa: std.mem.Allocator, io: std.Io, cfg: core.Config, username: []con
     const owner = try Persistent.open(gpa, io, cfg, state, null);
     defer owner.stop();
     const status = try request(owner, .setup_status);
-    if (status != .setup_required) return error.StorageUnavailable;
+    if (status != .setup_required) return error.InvalidStorageReply;
     if (!status.setup_required) return error.AlreadyInitialized;
     var passwords = try console.Password.init(gpa);
     defer passwords.deinit();
@@ -69,12 +69,9 @@ fn request(owner: *Persistent, operation: p.StorageRequest) !p.StorageResult {
 
 pub fn execute(gpa: std.mem.Allocator, io: std.Io, cfg: core.Config, username: []const u8) u8 {
     return run(gpa, io, cfg, username) catch |err| {
-        const hint = if (err == error.StorageUnavailable)
-            "check storage and cluster quorum, then retry initialization."
-        else
-            "use --data-dir with a stopped, uninitialized Sibuna instance.";
-        std.debug.print("CONSOLEBOOT: local initialization failed ({t}). Hint: {s}\n", .{
-            err, hint,
+        const diagnostic = console.diagnostics.startup(err);
+        std.debug.print("{s}: local initialization failed ({t}). Hint: {s}\n", .{
+            diagnostic.code, err, diagnostic.hint,
         });
         return 1;
     };

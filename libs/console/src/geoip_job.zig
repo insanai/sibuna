@@ -30,7 +30,8 @@ pub const Job = struct {
     pub fn restore(self: *Job) !void {
         const retry = @import("crs_restore_retry.zig").Retry.init(self.app.io);
         const result = try self.startupRead(retry, .geo_metadata);
-        if (result != .geo_metadata) return error.StorageUnavailable;
+        try result.checkAvailable();
+        if (result != .geo_metadata) return error.InvalidStorageReply;
         const metadata = result.geo_metadata;
         if (metadata.ranges == 0) return self.restoreEmbedded(metadata.revision);
         if (metadata.ranges > geoip.max_ranges or metadata.digest.len != 64)

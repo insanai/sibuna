@@ -23,7 +23,7 @@ fn current(owner: *Persistent) !u64 {
     defer versions.deinit();
     if (versions.rows.len != 1) return error.UnsupportedConsoleSchema;
     return std.fmt.parseInt(u64, versions.rows[0][0] orelse
-        return error.UnsupportedConsoleSchema, 10);
+        return error.UnsupportedConsoleSchema, 10) catch return error.UnsupportedConsoleSchema;
 }
 
 pub fn run(owner: *Persistent) !void {

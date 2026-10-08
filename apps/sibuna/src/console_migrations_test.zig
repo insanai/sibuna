@@ -151,6 +151,8 @@ test "console migration malformed markers fail closed without DDL or leaked guar
         "",
         "INSERT INTO console_schema VALUES(NULL);",
         "INSERT INTO console_schema VALUES(44),(45);",
+        "INSERT INTO console_schema VALUES('invalid');",
+        "INSERT INTO console_schema VALUES(-1);",
     }) |rows| {
         var tmp = t.tmpDir(.{});
         defer tmp.cleanup();

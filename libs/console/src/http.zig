@@ -19,56 +19,14 @@ pub noinline fn json(
 }
 
 pub fn fail(context: *Context, status: std.http.Status, code: []const u8) Context.Error!void {
-    var buffer: [256]u8 = undefined;
+    var buffer: [512]u8 = undefined;
     const body = std.fmt.bufPrint(
         &buffer,
         "{{\"error\":\"{s}\",\"hint\":\"{s}\"}}",
-        .{ code, failureHint(code) },
+        .{ code, @import("diagnostics.zig").responseHint(status, code) },
     ) catch
         return error.TooLarge;
     try context.respond(status, "application/json", body, &.{});
-}
-
-fn failureHint(code: []const u8) []const u8 {
-    if (std.mem.eql(u8, code, "CONSOLECRS"))
-        return "Refresh the candidates and saved revision before retrying. " ++
-            "Use an administrator session. Verified candidates require a separate selection; " ++
-            "a committed selection remains pending until each node reports application.";
-    if (std.mem.eql(u8, code, "RANKHISTORY"))
-        return "Retained ranking read failed. Check access, period and storage health, " ++
-            "then restart the scan. Missing archives are not zero traffic.";
-    if (std.mem.eql(u8, code, "CONSOLEPEERQUERY"))
-        return "The selected node could not supply this view. Check peer health and retry. " ++
-            "Unavailable history is not zero traffic.";
-    if (std.mem.eql(u8, code, "TIMELINE001"))
-        return "History changed. Reload the latest page.";
-    if (std.mem.eql(u8, code, "CONSOLEQUORUM"))
-        return "Storage is unavailable; a write may have an unknown outcome. " ++
-            "Check storage and quorum health. Refresh the saved state before retrying a mutation.";
-    if (std.mem.eql(u8, code, "CONSOLENODE"))
-        return "Refresh the node state and inspect the operation receipt before retrying. " ++
-            "A pending completion does not mean the local effect failed.";
-    if (std.mem.eql(u8, code, "CONSOLEAUDIT404"))
-        return "This audit record is unavailable. Refresh; retention may have removed it.";
-    if (std.mem.eql(u8, code, "CONSOLESECURITY"))
-        return "Narrow the findings period or select one node, then retry. " ++
-            "If access changed, sign in again.";
-    if (std.mem.eql(u8, code, "CONSOLEAUDIT"))
-        return "Narrow the audit filters or sign in again, then retry.";
-    if (std.mem.eql(u8, code, "CONSOLEMUTATION"))
-        return "Wait up to one minute; a session permits sixty management mutations per minute.";
-    if (std.mem.eql(u8, code, "CONSOLETOKENFULL"))
-        return "Revoke unused credentials or remove inactive tokens, then retry.";
-    if (std.mem.eql(u8, code, "CONSOLETOKEN409"))
-        return "Refresh the token list and expected revision before retrying.";
-    if (std.mem.eql(u8, code, "CONSOLETOKEN403"))
-        return "Use an administrator session and complete required two-factor setup.";
-    if (std.mem.eql(u8, code, "CONSOLE2FAKEY"))
-        return "This node has no matching console key for two-factor. Use an unused " ++
-            "recovery code, or ask an administrator to configure the key or reset two-factor.";
-    if (std.mem.eql(u8, code, "CONSOLETOKENS"))
-        return "Outcome unknown. Query the token list before retrying.";
-    return "Check your input or sign in again.";
 }
 
 pub fn token(text: []const u8) error{InvalidRequest}![32]u8 {

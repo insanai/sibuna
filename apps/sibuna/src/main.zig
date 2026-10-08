@@ -76,7 +76,15 @@ pub fn main(init: std.process.Init) !u8 {
     defer if (persistent) |p| if (!p.shutdown()) abandonedStorageExit();
     defer if (protection) |running| running.stopReload();
 
-    const runtime = try startConsole(gpa, io, settings, persistent, protection);
+    const runtime = startConsole(gpa, io, settings, persistent, protection) catch |err| {
+        if (build_options.console) {
+            const diagnostic = @import("console").diagnostics.startup(err);
+            std.debug.print("{s}: console startup failed ({t}). Hint: {s}\n", .{
+                diagnostic.code, err, diagnostic.hint,
+            });
+        }
+        return 1;
+    };
     defer if (build_options.console) {
         if (runtime) |running| running.stop();
     };

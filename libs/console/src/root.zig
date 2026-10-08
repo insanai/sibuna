@@ -28,7 +28,9 @@ pub const minute_archive = @import("minute_archive.zig");
 pub const challenge_archive = @import("challenge_archive.zig");
 pub const schema = @import("schema.zig");
 pub const Password = @import("password.zig").Password;
+pub const diagnostics = @import("diagnostics.zig");
 test {
+    _ = diagnostics;
     _ = @import("password.zig");
     _ = @import("auth_http_test.zig");
     _ = @import("totp.zig");

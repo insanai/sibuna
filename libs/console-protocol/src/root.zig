@@ -31,6 +31,7 @@ pub const crs_tasks = @import("crs_tasks.zig");
 pub const crs_api = @import("crs_api.zig");
 pub const json_value = @import("json_value.zig");
 pub const auth = @import("auth.zig");
+pub const diagnostics = @import("diagnostics.zig");
 pub const users = @import("users.zig");
 pub const audit = @import("audit.zig");
 pub const tokens = @import("tokens.zig");
@@ -270,8 +271,15 @@ pub const StorageResult = union(enum) {
 
     /// An unavailable owner is not evidence of a credential or revision mismatch.
     /// Borrow the bounded result; never copy its large inactive payloads to classify it.
-    pub fn checkAvailable(self: *const StorageResult) error{StorageUnavailable}!void {
-        if (self.* == .failed and self.failed == .unavailable) return error.StorageUnavailable;
+    pub fn checkAvailable(
+        self: *const StorageResult,
+    ) error{ StorageUnavailable, UnsupportedConsoleSchema }!void {
+        if (self.* != .failed) return;
+        switch (self.failed) {
+            .unavailable => return error.StorageUnavailable,
+            .unsupported_schema => return error.UnsupportedConsoleSchema,
+            else => {},
+        }
     }
 };
 pub const Failure = enum {
@@ -282,6 +290,7 @@ pub const Failure = enum {
     capacity,
     invalid_input,
     cancelled,
+    unsupported_schema,
 };
 
 /// Fixed buffers cross asynchronous boundaries by value. Length is checked on construction;
@@ -567,4 +576,8 @@ test {
     _ = json_value;
     _ = crs_api;
     _ = crs_tasks;
+}
+
+test {
+    _ = diagnostics;
 }

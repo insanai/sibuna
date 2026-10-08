@@ -336,11 +336,10 @@ fn response(value: std.json.Value, alloc: std.mem.Allocator) !void {
     if (status != 200) {
         state.stale = status == 0;
         if (state.phase == .loading) state.phase = .login;
-        const message = switch (status) {
-            429 => "Too many attempts. Please wait a minute.",
-            401 => "Sign-in failed. Check your credentials.",
-            else => "Could not complete this action. Check your connection and try again.",
-        };
+        const message = p.diagnostics.responseHint(
+            std.math.cast(u16, status) orelse 0,
+            string(body, "error"),
+        );
         setMessage(message);
         return;
     }

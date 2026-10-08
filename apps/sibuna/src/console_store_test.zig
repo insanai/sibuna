@@ -1362,7 +1362,7 @@ test "newer console schemas fail startup without an election retry or schema wri
     try fx.owner.db.exec(t.allocator, migration);
     fx.owner.console_initialized = false;
     const result = try fx.run(.setup_status);
-    try t.expectEqual(p.Failure.invalid_input, result.failed);
+    try t.expectEqual(p.Failure.unsupported_schema, result.failed);
     try t.expect(!fx.owner.console_initialized);
     const query = "SELECT version FROM console_schema";
     var marker = try db.query(fx.owner.db, t.allocator, query, &.{});

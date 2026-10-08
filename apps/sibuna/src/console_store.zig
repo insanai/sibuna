@@ -18,8 +18,10 @@ pub fn tick(owner: *Persistent) void {
         const result = execute(owner, work.request) catch |err| result: {
             std.log.warn("console storage operation failed: {t}", .{err});
             // An explicit newer schema cannot recover through an election retry.
-            const failure: p.Failure = if (work.request == .setup_status and
-                err == error.UnsupportedConsoleSchema) .invalid_input else .unavailable;
+            const failure: p.Failure = if (err == error.UnsupportedConsoleSchema)
+                .unsupported_schema
+            else
+                .unavailable;
             break :result p.StorageResult{ .failed = failure };
         };
         p.releaseRequest(work.request, owner.gpa);
