@@ -7,6 +7,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 from i18n.locale import LOCALES, metadata, language_choices
 from i18n.tables import isolate_numbers
+from i18n.assets import url as asset
 from i18n.html import words as locale_words, translate_fragment, safe_json
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -114,8 +115,8 @@ def shell(title, body, pages, route="", tools="", styles="", locale="en"):
     else:
         content = f'<main id="main" class="home">{body}</main>'
     animation = "" if route else (
-        f'<link rel="stylesheet" href="{BASE}assets/admission-demo.css">'
-        f'<script type="module" src="{BASE}assets/admission-animation.js"></script>')
+        f'<link rel="stylesheet" href="{asset("admission-demo.css")}">'
+        f'<script type="module" src="{asset("admission-animation.js")}"></script>')
     translatable = not route or canonical.startswith("book/")
     detect = str(locale == "en" and translatable).lower()
     page_title = words.get(title, title)
@@ -137,10 +138,10 @@ def shell(title, body, pages, route="", tools="", styles="", locale="en"):
 <meta name="description" content="{escape(description, quote=True)}">{alternates}
 <title>{escape(page_title)} · Sibuna</title>{styles}
 <link rel="icon" type="image/svg+xml" href="{BASE}assets/favicon.svg">
-<link rel="stylesheet" href="{BASE}assets/site.css">
-<link rel="stylesheet" href="{BASE}assets/site-i18n.css">
-<script type="module" src="{BASE}assets/site-language.js"></script>
-<script defer src="{BASE}assets/site.js"></script>{animation}</head><body>
+<link rel="stylesheet" href="{asset('site.css')}">
+<link rel="stylesheet" href="{asset('site-i18n.css')}">
+<script type="module" src="{asset('site-language.js')}"></script>
+<script defer src="{asset('site.js')}"></script>{animation}</head><body>
 <a class="skip" href="#main">{escape(words['Skip to content'])}</a>
 <header class="nav"><a class="brand" href="{BASE}{prefix}"><i aria-hidden="true">s.</i>sibuna</a>
 <nav aria-label="{main_label}"><a href="{BASE}{prefix}book/">{escape(words['Book'])}</a>

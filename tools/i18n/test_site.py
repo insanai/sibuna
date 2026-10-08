@@ -8,6 +8,7 @@ from i18n.html import Prose, safe_json, translate_fragment, words
 from i18n.locale import LOCALES, language_choices
 from site_html import stable_headings
 from i18n.tables import contract, isolate_numbers
+from i18n.assets import version
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -61,6 +62,19 @@ class SiteTranslationTest(unittest.TestCase):
                       isolate_numbers('<p>سجل 2026-10-07T08:46:12+00:00</p>'))
         self.assertNotEqual(contract(source), contract(native.replace('2.3', '3.2')))
         self.assertNotEqual(contract(source), contract('<table><td>2.3 ms</td></table>'))
+
+    def test_cached_animation_version_changes_with_lazy_dependencies(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name in ('admission-animation.js', 'admission-model.js',
+                         'admission-scene.bundle.js'):
+                (root / name).write_text(name)
+            initial = version(root, 'admission-animation.js')
+            (root / 'admission-scene.bundle.js').write_text('new renderer')
+            updated = version(root, 'admission-animation.js')
+            self.assertNotEqual(initial, updated)
+            (root / 'admission-model.js').write_text('new journey')
+            self.assertNotEqual(updated, version(root, 'admission-animation.js'))
 
     def test_browser_language_matching(self):
         source = (ROOT / 'docs/site/site-language.js').as_uri()

@@ -1,5 +1,7 @@
 // Copyright 2026 Vikrant Rathore and Ronak Rathore. LGPL-3.0; see LICENSE.
-import { journeys, order, frameAt, nextStep } from './admission-model.js';
+// The publishing hash includes this controller, its model and its lazy renderer.
+const assetVersion = new URL(import.meta.url).search;
+const { journeys, order, frameAt, nextStep } = await import(`./admission-model.js${assetVersion}`);
 
 class AdmissionAnimation {
     constructor(root) {
@@ -75,7 +77,7 @@ class AdmissionAnimation {
         if (this.scene || this.loading || this.lost || this.disposed) return;
         this.loading = true;
         try {
-            const { AdmissionScene } = await import('./admission-scene.bundle.js');
+            const { AdmissionScene } = await import(`./admission-scene.bundle.js${assetVersion}`);
             if (this.disposed || this.lost) return;
             this.scene = new AdmissionScene(this.root.querySelector('canvas'),
                 this.root.querySelectorAll('.demo-node'), { screenTitle: this.text('Your website'),
