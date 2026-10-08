@@ -3,6 +3,8 @@
 from pathlib import Path
 from html.parser import HTMLParser
 import shutil
+import json
+import hashlib
 import subprocess
 from site_html import decorate, inventory
 
@@ -70,7 +72,17 @@ def compile_sid_pdfs():
             compile_typst(page["source"], SITE / page["pdf"])
 
 
+def check_animation_assets():
+    """Ordinary documentation builds need neither npm nor a network dependency fetch."""
+    manifest = json.loads((ROOT / "docs/site/admission-assets.json").read_text())
+    for name, expected in manifest["files"].items():
+        data = (ROOT / "docs/site" / name).read_bytes()
+        assert len(data) == expected["bytes"], f"stale animation asset: {name}"
+        assert hashlib.sha256(data).hexdigest() == expected["sha256"], name
+
+
 def main():
+    check_animation_assets()
     if SITE.exists():
         shutil.rmtree(SITE)
     SITE.mkdir(parents=True)
@@ -81,7 +93,8 @@ def main():
     compile_typst("docs/sid/bundle.typ", SITE / "sid", bundle=True, root="docs")
     compile_sid_pdfs()
     (SITE / "assets").mkdir()
-    for name in ("site.css", "site.js"):
+    for name in ("site.css", "site.js", "favicon.svg", "admission-demo.css", "admission-model.js",
+                 "admission-animation.js", "admission-scene.bundle.js", "three-LICENSE.txt"):
         shutil.copyfile(ROOT / "docs/site" / name, SITE / "assets" / name)
     decorate(SITE, ROOT)
     (SITE / ".nojekyll").touch()

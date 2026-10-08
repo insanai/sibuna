@@ -4,3 +4,6 @@
 *.jpg binary
 *.pdf binary
 *.woff2 binary
+
+# Generated renderer: preserve whitespace inside upstream shader strings.
+docs/site/admission-scene.bundle.js linguist-generated=true -whitespace

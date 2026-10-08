@@ -76,3 +76,11 @@ CRS engine dependencies and compatibility fixtures:
   vendor/libinjection/provenance.json. The port uses caller-owned buffers and budgets;
   no libinjection C library is linked into Sibuna. These detectors are used by
   the native CRS transaction engine described in SID 0010.
+
+Documentation front-page animation:
+
+- three.js 0.186.1: MIT; docs/site/three-LICENSE.txt. Copyright 2010-2026
+  three.js authors. Source: https://github.com/mrdoob/three.js. The pinned,
+  generated browser renderer and source hashes are in docs/site/admission-assets.json.
+  It is used by the documentation illustration, not the daemon or console.
+  The first-party scene and controller remain LGPL-3.0.

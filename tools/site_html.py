@@ -74,12 +74,16 @@ def shell(title, body, pages, route="", tools="", styles=""):
                    '</main></div>')
     else:
         content = f'<main id="main" class="home">{body}</main>'
+    animation = "" if route else (
+        f'<link rel="stylesheet" href="{BASE}assets/admission-demo.css">'
+        f'<script type="module" src="{BASE}assets/admission-animation.js"></script>')
     return f'''<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Sibuna: proof-of-work admission, bounded web application inspection and an optional management console.">
 <title>{escape(title)} · Sibuna</title>{styles}
+<link rel="icon" type="image/svg+xml" href="{BASE}assets/favicon.svg">
 <link rel="stylesheet" href="{BASE}assets/site.css">
-<script defer src="{BASE}assets/site.js"></script></head><body>
+<script defer src="{BASE}assets/site.js"></script>{animation}</head><body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="nav"><a class="brand" href="{BASE}"><i aria-hidden="true">s.</i>sibuna</a>
 <nav aria-label="Main"><a href="{BASE}book/">Book</a>
@@ -95,6 +99,13 @@ Third-party libraries retain their respective licenses.</span></footer>
 <label for="search-query">Words or a topic</label><input id="search-query" type="search"
 placeholder="Try uploads, challenges, or policies" autocomplete="off">
 <div id="results" aria-live="polite"></div></dialog></body></html>'''
+
+
+def home_body(root):
+    source = root / "docs/site"
+    body = (source / "index.html").read_text()
+    assert body.count("<!-- admission-demo -->") == 1
+    return body.replace("<!-- admission-demo -->", (source / "admission-demo.html").read_text())
 
 
 def decorate(site, root):
@@ -124,7 +135,7 @@ def decorate(site, root):
         search.append(dict(title=page["title"], url=BASE + page["route"],
                            text=re.sub(r"\s+", " ", " ".join(content.words))))
         path.write_text(shell(page["title"], body, pages, page["route"], tools, styles))
-    home = (root / "docs/site/index.html").read_text()
+    home = home_body(root)
     (site / "index.html").write_text(shell("Web application protection", home, pages))
     (site / "search.json").write_text(json.dumps(search))
     validate(site)

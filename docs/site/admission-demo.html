@@ -1,0 +1,58 @@
+<section class="admission-demo" id="how-sibuna-works" aria-labelledby="demo-title">
+  <header><div><p class="eyebrow">Follow a request</p><h2 id="demo-title">Work before access.</h2></div>
+    <div class="demo-controls"><button type="button" data-demo="play" aria-pressed="false">Play</button>
+      <button type="button" data-demo="step">Next step →</button></div></header>
+  <div class="demo-tabs" role="group" aria-label="Choose a request journey">
+    <button type="button" data-journey="first" aria-pressed="true">First visit</button>
+    <button type="button" data-journey="session" aria-pressed="false">With a session</button>
+    <button type="button" data-journey="blocked" aria-pressed="false">Blocked by a rule</button>
+  </div>
+  <div class="demo-stage">
+    <canvas aria-hidden="true"></canvas>
+    <div class="demo-static">
+      <svg viewBox="0 0 850 180" role="img" aria-labelledby="demo-static-title demo-static-desc">
+        <title id="demo-static-title">Sibuna checks requests before they reach your application</title>
+        <desc id="demo-static-desc">Requests pass from a client through an HTTPS ingress to Sibuna.
+        Sibuna may admit, challenge or refuse them. A client creates a proof; Sibuna verifies it
+        and issues a session. Requests with sessions still pass applicable checks.</desc>
+        <defs><marker id="demo-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3"
+          orient="auto"><path d="M0 0L6 3L0 6" fill="none" stroke="#a1e8ba"/></marker></defs>
+        <g fill="none" stroke="#87b69b" stroke-width="2" marker-end="url(#demo-arrow)">
+          <path d="M145 62H240M365 62H465M595 62H685"/>
+          <path d="M530 90V148H83V90"/></g>
+        <g fill="#213c2c" stroke="#67967b"><rect x="20" y="35" width="125" height="55" rx="8"/>
+          <rect x="240" y="35" width="125" height="55" rx="8"/>
+          <rect x="465" y="35" width="130" height="55" rx="8"/>
+          <rect x="685" y="35" width="145" height="55" rx="8"/></g>
+        <g fill="#e7f1e8" text-anchor="middle" font-family="system-ui,sans-serif" font-size="17">
+          <text x="82" y="69">Client</text><text x="302" y="69">HTTPS ingress</text>
+          <text x="530" y="69">Sibuna</text><text x="757" y="69">Your app</text></g>
+        <g fill="#f1ce8e" text-anchor="middle" font-family="system-ui,sans-serif" font-size="14">
+          <text x="305" y="140">Challenge → client work → proof verification</text></g>
+      </svg>
+      <ol class="demo-static-flow" aria-label="Protected request path">
+        <li>Client</li><li>HTTPS ingress</li><li>Sibuna</li><li>Your app</li>
+      </ol>
+      <p>Admit, challenge or refuse. A session avoids another puzzle here;
+        applicable rules and rate limits still apply.</p>
+    </div>
+    <div class="demo-labels" aria-hidden="true">
+      <div class="demo-node" data-node="client">Client<small>Your browser</small></div>
+      <div class="demo-node" data-node="ingress">HTTPS ingress<small>Public TLS</small></div>
+      <div class="demo-node" data-node="sibuna">Sibuna<small>Access decisions</small></div>
+      <div class="demo-node" data-node="app">Your app<small>Admitted traffic</small></div>
+    </div>
+    <div class="demo-work"><strong>CLIENT WORK</strong> · CHECK THE PROOF AT SIBUNA</div>
+    <div class="demo-legend" aria-hidden="true"><span>Admitted</span><span>Challenge / proof</span>
+      <span>Refused</span></div>
+  </div>
+  <div class="demo-progress" aria-hidden="true"><div></div></div>
+  <div class="demo-caption"><div class="demo-step">STEP <b data-demo="number">1 / 8</b>
+    <span data-demo="status">Static illustration</span></div>
+    <div><h3 data-demo="heading">A request arrives</h3>
+      <p data-demo="description">The browser sends a request through your HTTPS ingress.</p></div></div>
+  <p class="demo-note">Scripted illustration, not live traffic or measured timing. Proof time varies
+    by device and settings. This shows the reverse-proxy path; with forward-auth, your ingress forwards
+    admitted requests. <a href="/sibuna/book/operations.html">Deployment guide ↗</a></p>
+  <p class="demo-announcement" role="status" aria-live="polite"></p>
+</section>
