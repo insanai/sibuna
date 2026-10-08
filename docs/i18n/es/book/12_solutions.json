@@ -30,5 +30,5 @@
   "4cf97f60afb1cc46": "== Parte X: referencia\n",
   "8382044f70d20b4c": "*10.1.* El registro contiene la huella con clave de la dirección que lo obtuvo. La solución\nllega de otra, así que ⟦0⟧ devuelve ⟦1⟧ antes de ver la prueba. La recuperación mínima está\nen la página: ante ⟦2⟧ con título ⟦3⟧, obtiene otro desafío y resuelve de nuevo en vez de\nmostrar el error. El trabajo ya realizado no puede transferirse.\n",
   "b030bfe7e48701d0": "== Continúa la investigación\n",
-  "e85aaf5638fe0e39": "Cambia una invariante cada vez en una prueba desechable. Elimina la comprobación de\ninstantánea o el recibo, o redondea el intervalo de tasa hacia abajo. Predice un orden de\nfallo antes de ejecutar. Una regresión útil hace más que comprobar el caso correcto:\ndemuestra por qué es necesaria la condición eliminada.\n"
+  "e85aaf5638fe0e39": "Cambia un invariante cada vez en una prueba desechable. Elimina la comprobación de\ninstantánea o el recibo, o redondea el intervalo de tasa hacia abajo. Predice un orden de\nfallo antes de ejecutar. Una regresión útil hace más que comprobar el caso correcto:\ndemuestra por qué es necesaria la condición eliminada.\n"
 }
