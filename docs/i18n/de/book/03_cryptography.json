@@ -1,5 +1,5 @@
 {
-  "40c4806aef21a470": "#part_page(\"III\", [Grundlagen aus der Kryptografieforschung], [\n  Wir leiten die Kostenmodelle von Sibunas zwei Proof-of-Work-Stufen her, stellen den\n  sequenziellen Arbeitsnachweis von Cohen–Pietrzak mit seinem Sicherheitsargument vor und\n  begründen Authentifizierung durch Hashes mit Schlüssel für Challenges und Sitzungen.\n  SID 0006 hält Annahmen und Quellen fest.\n])\n",
+  "40c4806aef21a470": "#part_page(\"III\", [Grundlagen aus der Kryptografieforschung], [\n  Wir leiten die Kostenmodelle von Sibunas zwei Proof-of-Work-Stufen her, stellen den\n  sequenziellen Proof of Work von Cohen–Pietrzak mit seinem Sicherheitsargument vor und\n  begründen Authentifizierung durch Hashes mit Schlüssel für Challenges und Sitzungen.\n  SID 0006 hält Annahmen und Quellen fest.\n])\n",
   "b6a22d94503e2933": "== Hashcash: Die Mathematik der ersten Stufe\n",
   "82b7879225da689f": "#objectives([\n  Nach diesem Kapitel kannst du Erwartungswert, Varianz und Restwahrscheinlichkeit eines\n  Hashcash-Rätsels angeben. Du kannst erklären, warum eine Lösung billiger zu prüfen als\n  zu suchen ist, und die zwei Grenzen beschreiben, die eine zweite Stufe begründen.\n])\n",
   "5efd95d33ecc5887": "=== Definition und Kosten\n",
@@ -10,7 +10,7 @@
   "45176884699764cc": "=== Zwei Grenzen der Suche\n",
   "4d30f0861cc84d8e": "Die erste ist die Varianz: Eine lange Suche bedeutet nicht unbedingt einen defekten Worker.\nDie zweite ist Parallelität: Unabhängige Nonce-Versuche können gleichzeitig laufen. Mehr\nKerne verkürzen die Suchzeit, auch wenn die erwartete Gesamtzahl der Versuche gleich bleibt.\nDer Hardwaredurchsatz ist daher für die Zulassungsrichtlinie wichtig. Weder eine genannte\nHashrate noch eine einzelne Messung kann den Vorteil jedes Anfragenden begrenzen.\n",
   "4eca3b65600153bf": "#exercise(\"3.0\", [Schätze mit der geometrischen Restwahrscheinlichkeit die Wahrscheinlichkeit,\nmehr als ⟦0⟧ Versuche zu brauchen. Warum bleibt die erwartete Versuchszahl gleich, wenn\nmehrere Worker den Nonce-Raum aufteilen?], hint: [Zähle Gesamtversuche, nicht verstrichene Sekunden.])\n",
-  "e56a480209f41d16": "== Sequenzieller Arbeitsnachweis: Zweite Stufe\n",
+  "e56a480209f41d16": "== Sequenzieller Proof of Work: Zweite Stufe\n",
   "73d7b7811d4f85cc": "#objectives([\n  Verstehe die Cohen–Pietrzak-Beschriftung, weshalb sie sequenzielle Berechnung erzwingt,\n  was der Prüfer kontrolliert, die bedingte Stichprobenschranke ⟦0⟧ und ihre Grenzen,\n  das Post-Quanten-Ergebnis, die Speichergrenze des Beweisführers und die Kalibrierungsdaten\n  hinter der Abbildung von Arbeitsbits.\n])\n",
   "51d92c256230d252": "=== Warum sequenzielle Arbeit?\n",
   "b9476d70f7c8e84c": "Eine Konstruktion sequenzieller Arbeit macht spätere Berechnungen von früheren Ergebnissen\nabhängig. Sie beschränkt daher neben der Gesamtarbeit auch die Berechnungstiefe. Unabhängige\nRätsel können weiterhin parallel laufen. Die Dauer eines Hashes hängt weiterhin von der Hardware ab.\n",
