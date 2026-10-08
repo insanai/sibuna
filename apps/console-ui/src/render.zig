@@ -7,7 +7,10 @@ pub fn render(state: *const State, w: *Writer) Writer.Error!void {
     const shell = @import("shell.zig");
     if (!state.fullAccess()) switch (state.phase) {
         .loading, .setup, .login, .password => {},
-        .security => if (state.csrf.len == 0) return authentication(state, w),
+        // Confirmation ends sessions. Its one-time codes still need a save screen,
+        // without restoring any authority or exposing the signed-in shell.
+        .security => if (state.csrf.len == 0 and state.recovery_count == 0)
+            return authentication(state, w),
         else => return authentication(state, w),
     };
     if (state.kiosk and state.fullAccess()) return @import("kiosk_page.zig").render(state, w);

@@ -146,3 +146,19 @@ test "unconfirmed two-factor status never claims that the encryption key is abse
         try t.expectEqual(index == 3, std.mem.indexOf(u8, output, "Set up authenticator") != null);
     }
 }
+
+test "confirmed recovery codes render after revocation without authenticated access" {
+    const t = std.testing;
+    var state: State = .{ .phase = .security, .recovery_count = 10 };
+    for (&state.recovery_codes) |*code| code.* = try @import("console_protocol").Bytes(32)
+        .init("00000000000000000000000000000000");
+    try t.expect(!state.fullAccess());
+    var buffer: [8192]u8 = undefined;
+    var writer: Writer = .fixed(&buffer);
+    try render.render(&state, &writer);
+    const output = writer.buffered();
+    try t.expect(std.mem.indexOf(u8, output, "Save your recovery codes") != null);
+    try t.expectEqual(@as(usize, 10), std.mem.count(u8, output, "<li>"));
+    try t.expect(std.mem.indexOf(u8, output, "id=\"login\"") == null);
+    try t.expect(std.mem.indexOf(u8, output, "Main navigation") == null);
+}

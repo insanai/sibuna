@@ -343,6 +343,8 @@ def check(binary):
                         ui.close()
                 finally:
                     h.stop(proc)
+    import console_ui_totp_test
+    console_ui_totp_test.check(binary)
     print("console-ui-e2e: shipped Wasm, six topics, navigation, resync and sign-out passed")
 
 

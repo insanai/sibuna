@@ -5,6 +5,7 @@ const State = @import("state.zig").State;
 const Outbox = @import("transport.zig").Outbox;
 const field = @import("events_state.zig").field;
 const string = @import("events_state.zig").string;
+const live = @import("live_controller.zig");
 
 pub const Controller = struct {
     state: *State,
@@ -40,6 +41,7 @@ pub const Controller = struct {
             state.busy = true;
             state.message = .{};
             const recovery = equal(name, "totp-recovery");
+            if (!recovery) try live.signOut(self.out);
             const password = if (recovery) "totp-recovery-password" else "totp-disable-password";
             const code = if (recovery) "totp-recovery-code" else "totp-disable-code";
             try self.out.post(
@@ -53,6 +55,7 @@ pub const Controller = struct {
         state.busy = true;
         state.message = .{};
         const enroll = equal(name, "totp-enroll");
+        if (!enroll) try live.signOut(self.out);
         try self.out.post(
             name,
             if (enroll) "/console/api/totp/enroll" else "/console/api/totp/confirm",
@@ -82,6 +85,7 @@ pub const Controller = struct {
         state.busy = false;
         if (state.phase != .security) return;
         if (status != 200) {
+            if (equal(id, "totp-confirm") or equal(id, "totp-disable")) live.authenticated();
             const key = equal(string(body, "error"), "CONSOLE2FAKEY");
             const message = switch (status) {
                 429 => "Too many attempts. Wait a minute and try again.",
@@ -90,7 +94,10 @@ pub const Controller = struct {
                         "or ask an administrator to reset two-factor."
                 else
                     "Two-factor settings changed. Reload this page and try again.",
-                else => "Could not update authentication. Check your password, code and session.",
+                else => p.diagnostics.responseHint(
+                    std.math.cast(u16, status) orelse 0,
+                    string(body, "error"),
+                ),
             };
             state.message_success = false;
             try state.message.set(message);
@@ -108,12 +115,7 @@ pub const Controller = struct {
             state.totp_uri = try p.Bytes(134).init(string(body, "uri"));
             state.totp_revision = @import("json_value.zig").unsignedOrZero(body, "revision");
         } else if (equal(id, "totp-disable")) {
-            state.totp_secret = .{};
-            state.totp_uri = .{};
-            state.csrf = .{};
-            state.geometry = null;
-            state.stats = null;
-            state.phase = .login;
+            revoked(state, false);
             state.message_success = true;
             try state.message.set("Two-factor authentication is off. Sign in again.");
         } else if (equal(id, "totp-confirm") or equal(id, "totp-recovery")) {
@@ -126,15 +128,66 @@ pub const Controller = struct {
             state.recovery_count = 10;
             state.recovery_sign_in = equal(id, "totp-confirm");
             if (!state.recovery_sign_in) return;
-            state.totp_secret = .{};
-            state.totp_uri = .{};
-            state.csrf = .{};
-            state.geometry = null;
-            state.stats = null;
+            revoked(state, true);
         }
     }
 };
 
+/// An expected revocation retains only the confirmation's one-time codes and appearance.
+/// No private page, pending observation or prior principal survives to a later sign-in.
+fn revoked(state: *State, show_codes: bool) void {
+    var codes = state.recovery_codes;
+    defer std.crypto.secureZero(u8, std.mem.asBytes(&codes));
+    const appearance = state.appearance;
+    const username = state.username;
+    state.reset();
+    state.appearance = appearance;
+    state.username = username;
+    state.phase = if (show_codes) .security else .login;
+    if (show_codes) {
+        state.recovery_codes = codes;
+        state.recovery_count = 10;
+    }
+}
+
 fn equal(a: []const u8, b: []const u8) bool {
     return std.mem.eql(u8, a, b);
+}
+
+test "confirmation fences revocation callbacks and retains only one-time recovery codes" {
+    const t = std.testing;
+    const Commands = @import("test_transport.zig").Commands;
+    live.init();
+    var state: State = .{ .phase = .security, .user_id = 7 };
+    try state.csrf.set("prior principal");
+    try state.username.set("alice");
+    var commands: Commands = .{};
+    try live.sync(&state, commands.out());
+    const fields = std.json.Value{ .object = .empty };
+    const controller: Controller = .{ .state = &state, .out = commands.out() };
+    try t.expect(try controller.action("totp-confirm", fields));
+    const emitted = commands.writer.buffered();
+    const disconnect = std.mem.indexOf(u8, emitted, "disconnect") orelse
+        return error.MissingDisconnect;
+    try t.expect(disconnect < std.mem.indexOf(u8, emitted, "/totp/confirm").?);
+    const rejection = "{\"state\":\"message\",\"body\":{\"error\":\"unauthorized\"}}";
+    const revoked_frame = try std.json.parseFromSlice(std.json.Value, t.allocator, rejection, .{});
+    defer revoked_frame.deinit();
+    _ = try live.event(&state, revoked_frame.value, t.allocator, commands.out());
+    try t.expectEqual(.security, state.phase);
+    const code: [32]u8 = @splat('a');
+    const bytes = try std.json.Stringify.valueAlloc(t.allocator, .{
+        .recovery_codes = @as([10][]const u8, @splat(&code)),
+    }, .{});
+    defer t.allocator.free(bytes);
+    const reply = try std.json.parseFromSlice(std.json.Value, t.allocator, bytes, .{});
+    defer reply.deinit();
+    try controller.response("totp-confirm", 200, reply.value);
+    try t.expect(!state.fullAccess());
+    try t.expectEqual(@as(u64, 0), state.user_id);
+    try t.expectEqual(@as(usize, 10), state.recovery_count);
+    try t.expectEqualStrings("alice", state.username.slice());
+    try t.expect(try controller.action("recovery-saved", fields));
+    try t.expectEqual(.login, state.phase);
+    try t.expectEqual(@as(usize, 0), state.recovery_count);
 }
