@@ -253,7 +253,7 @@
   "soaks": {
     "recorded_utc": "2026-10-08T01:01:14.888646+00:00",
     "requested_active_seconds": 43200,
-    "full_duration_result": "Pending. This record confirms launch and initial delivery, not twelve-hour completion.",
+    "full_duration_result": "Cluster stopped by request before twelve hours; this is not a completed twelve-hour pass. Single-node run continues independently on .18.",
     "scope": "Functional checks. Bounded benign and attack requests, persistent state, TOTP recovery, multi-topic subscriptions, reviewed CRS modes and rolling restarts. Not performance acceptance.",
     "runs": [
       {
@@ -323,7 +323,19 @@
             "messages": 1055,
             "completed_updates": 364
           }
-        ]
+        ],
+        "outcome": {
+          "state": "interrupted",
+          "reason": "Stopped at the user request so the Mac could shut down.",
+          "end_utc": "2026-10-08T01:16:39.870947+00:00",
+          "elapsed_seconds": 1118.47,
+          "checks": 64,
+          "restarts": 1,
+          "failure": null,
+          "cleanup": "All owned daemons, observers and origins stopped cleanly.",
+          "remote_process_verification": "All recorded processes on .19, .20 and .21 exited with status 0. Local controller exited.",
+          "saved_report": "insan@10.175.52.18:/home/insan/sibuna-033-review-20261008/cluster-soak-interrupted.json"
+        }
       }
     ],
     "cleanup": "Controllers stop all owned processes at completion or failure. A stop file beside each report requests cleanup. Remote cluster supervisors have a thirteen-hour safety deadline. Keep the local controller connected for the cluster run."
