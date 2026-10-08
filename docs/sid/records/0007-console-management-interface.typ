@@ -7,7 +7,7 @@
 #let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
 #let sid-category = "Architectural Specification"
 #let sid-status = "Committed"
-#let sid-last-updated = "2026-10-07"
+#let sid-last-updated = "2026-10-08"
 
 #import "../../shared/sid.typ": sid-document
 #import "@preview/cetz:0.5.2" as cetz
@@ -191,7 +191,7 @@ throughput by at most one percent and p99 latency by at most ten percent under t
 
 #callout("Status and applicability")[
   This architectural discussion defines requirements and their rationale. Proposed targets
-  are not measured guarantees. Sibuna 0.3.2 uses Zig 0.17.0 and the Zaxonlite 0.7.0 library sources, with explicit
+  are not measured guarantees. Sibuna 0.3.3 uses Zig 0.17.0 and the Zaxonlite 0.7.0 library sources, with explicit
   compiler compatibility changes and provenance in `vendor/`.
   The service and interface logic are Zig; browser glue and committed CSS supply host
   capabilities and styling. Storage links SQLite and libc as described in SID 0005.
@@ -285,6 +285,8 @@ operator is often looking at it under pressure, the rule becomes:
   no animation; new rows accumulate behind a “Show new events” control whenever the reader has scrolled or focused a row; layout never reflows on data.
 - *R7 Errors are Elm-style.* A failed action names what happened, why, and what to do, in
   the diagnostic voice the daemon already uses, inline where the action was taken.
+  Invalid input, missing authority, stale revisions and storage outages have different
+  recovery hints. A write timeout leaves its outcome unknown until the saved state is read.
 
 == Fast judgement: System 1
 
@@ -916,6 +918,11 @@ Startup reads cannot authorize stale DDL: after a competing upgrade, the owner r
 the marker and adopts only a version its binary supports. Followers wait for application
 before serving compatible routes. Never run startup DDL outside this writer contract.
 
+An unsupported schema is a permanent compatibility refusal, not a quorum failure. The
+mailbox retains that cause through startup and HTTP diagnostics. Unexpected result types
+are named separately from temporary unavailability. Operators keep the data directory and
+use compatible binaries on every node; they never edit the marker to force a downgrade.
+
 All tables below are proposed. Bound row/result sizes and use typed SQL operations with
 parameter binding where supported (otherwise audited literal escaping), never
 client-supplied SQL. Console object IDs must be globally unique (random 128-bit ids or
@@ -924,24 +931,24 @@ node-scoped sequences); foreign keys and uniqueness constraints are required.
 #table(
   columns: (1fr, 2.8fr),
   table.header([*Table*], [*Columns and purpose*]),
-  [`console_users`], [`id`, `name` (unique), `role`, `password_phc`, `must_change`, `disabled`, `auth_revision`, `last_login`, `totp_ciphertext`, `totp_key_id`, `totp_last_step`, `created_at`, `updated_at`],
-  [`console_sessions`], [`digest` (primary), `user_id`, `role`, `client_ip`, `user_agent_hash`, `csrf`, `issued_at`, `last_seen`, `expires_at`, `auth_revision`, `kind` (`browser` or `kiosk`); expired rows are purged by retention],
-  [`console_kiosk_grants`], [`digest` (primary; SHA-256 of the one-time code), `user_id`, `revision`, `label`, `created_at`, `use_by` (ten minutes), `expires` (twelve hours), `consumed_at`; at most 64 outstanding; audit `kiosk.grant` and `kiosk.exchange` never carry the code; retention removes consumed and unusable rows],
-  [`console_tokens`], [`id` (printable), `digest`, `label`, `role`, `scopes`, `auth_revision`, `created_by`, `created_at`, `expires_at`, `disabled`],
-  [`console_audit`], [`id`, `at`, `actor`, `role`, `action`, `subject`, `before`, `after`, `client_ip`; append-only],
-  [`console_settings`], [`key` (primary), `value` (≤ 1 KiB, never a secret), `revision`, `updated_at`, `updated_by`; the denial-spike minimum/factor and bounded retention days; every change is audited with its before and after value],
-  [`console_notifications`], [`id`, `kind` (`webhook` or `syslog`), `label`, `target`, `target_host`, `secret_envelope` (sealed under the console key and bound to the target), `events` bitmask (denial spike, ban, node unhealthy, leader change), `cooldown_seconds`, `enabled`, `revision`, created/modified actor and time, last attempt, outcome and detail; at most eight rows; audit summaries carry kind, label, events, cooldown, enabled state, whether a secret is set and the host only],
-  [`console_notification_events`], [`node`, `boot`, `sequence` (unique per node and boot), `event`, `raised_at`, `detail`, completion time; every node enqueues what it observed, at most 256 pending and 4,096 total rows; completed history expires after seven days. The legacy event-wide attempts column is no longer authoritative],
-  [`console_notification_deliveries`], [One event/destination pair and pinned destination revision; pending/sending/delivered/failed/skipped state, at most three attempts, next due time, claim fence/expiry and redacted outcome. Destination edits invalidate queued work; parent completion and outcome audit commit with each transition],
-  [`console_job_leases`], [`job` (`retention` or `notifier`), `node`, `boot`, `fence`, `expires`; one fenced singleton lease per job name],
-  [`console_pages`], [`kind` (primary: `challenge`, `denied`, `rate_limited`, `banned`, `overloaded`), `html` (≤ 16 KiB, validated before staging), `sha256`, `revision`, `updated_at`, `updated_by`; a one-row stage table commits the page, its audit record (`page.edit` or `page.reset` with digests and sizes only) and a policy-version bump together so the next tick rebuilds the snapshot],
+  [#raw("console_​users")], [`id`, `name` (unique), `role`, `password_phc`, `must_change`, `disabled`, `auth_revision`, `last_login`, `totp_ciphertext`, `totp_key_id`, `totp_last_step`, `created_at`, `updated_at`],
+  [#raw("console_​sessions")], [`digest` (primary), `user_id`, `role`, `client_ip`, `user_agent_hash`, `csrf`, `issued_at`, `last_seen`, `expires_at`, `auth_revision`, `kind` (`browser` or `kiosk`); expired rows are purged by retention],
+  [#raw("console_​kiosk_​grants")], [`digest` (primary; SHA-256 of the one-time code), `user_id`, `revision`, `label`, `created_at`, `use_by` (ten minutes), `expires` (twelve hours), `consumed_at`; at most 64 outstanding; audit `kiosk.grant` and `kiosk.exchange` never carry the code; retention removes consumed and unusable rows],
+  [#raw("console_​tokens")], [`id` (printable), `digest`, `label`, `role`, `scopes`, `auth_revision`, `created_by`, `created_at`, `expires_at`, `disabled`],
+  [#raw("console_​audit")], [`id`, `at`, `actor`, `role`, `action`, `subject`, `before`, `after`, `client_ip`; append-only],
+  [#raw("console_​settings")], [`key` (primary), `value` (≤ 1 KiB, never a secret), `revision`, `updated_at`, `updated_by`; the denial-spike minimum/factor and bounded retention days; every change is audited with its before and after value],
+  [#raw("console_​notifications")], [`id`, `kind` (`webhook` or `syslog`), `label`, `target`, `target_host`, `secret_envelope` (sealed under the console key and bound to the target), `events` bitmask (denial spike, ban, node unhealthy, leader change), `cooldown_seconds`, `enabled`, `revision`, created/modified actor and time, last attempt, outcome and detail; at most eight rows; audit summaries carry kind, label, events, cooldown, enabled state, whether a secret is set and the host only],
+  [#raw("console_​notification_​events")], [`node`, `boot`, `sequence` (unique per node and boot), `event`, `raised_at`, `detail`, completion time; every node enqueues what it observed, at most 256 pending and 4,096 total rows; completed history expires after seven days. The legacy event-wide attempts column is no longer authoritative],
+  [#raw("console_​notification_​deliveries")], [One event/destination pair and pinned destination revision; pending/sending/delivered/failed/skipped state, at most three attempts, next due time, claim fence/expiry and redacted outcome. Destination edits invalidate queued work; parent completion and outcome audit commit with each transition],
+  [#raw("console_​job_​leases")], [`job` (`retention` or `notifier`), `node`, `boot`, `fence`, `expires`; one fenced singleton lease per job name],
+  [#raw("console_​pages")], [`kind` (primary: `challenge`, `denied`, `rate_limited`, `banned`, `overloaded`), `html` (≤ 16 KiB, validated before staging), `sha256`, `revision`, `updated_at`, `updated_by`; a one-row stage table commits the page, its audit record (`page.edit` or `page.reset` with digests and sizes only) and a policy-version bump together so the next tick rebuilds the snapshot],
   [`ip_reputation` (added columns)], [`source` (`console`, `console:country:XX`, or empty for data-plane rows), `note` (≤ 128), `geo_generation` (the GeoIP generation digest a country block was computed from); one-row stage tables `console_policy_order_stage`, `console_reputation_stage`, `console_country_commit` and `console_policy_import_commit` commit each workflow with its history rows, audit record and an explicit policy-version bump; `console_country_stage` and `console_policy_import_stage` hold chunked prefixes and canonical documents for ten minutes],
-  [`traffic_minutes`], [`node_id`, `boot_id`, `minute` (epoch/60), coverage, completeness, counters from “The sampler”, `rss_last_kib`, `rss_max_kib`, `cpu_delta_seconds`; primary key (`node_id`, `boot_id`, `minute`)],
-  [`challenge_minutes`], [`node_id`, `boot_id`, `minute`, algorithm/parameter bin, submitted/issued/accepted, rejected by exhaustive cause, missing/invalid timing, coverage, `solve_ms_buckets` (16 integers)],
-  [`topk_minutes`], [`node_id`, `boot_id`, `minute`, `kind`, `key`, estimate and error; all bounded sketch counters plus N, probability, losses and coverage metadata],
-  [`geoip_ranges`], [`generation`, `start` (16-byte address as blob), `end`, `country` (ISO 3166-1 alpha-2); one row per range from the source CSV],
-  [`geoip_meta`], [`generation`, `active`, `source`, `licence`, `published`, `loaded_at`, `ranges`, `sha256`],
-  [`console_nodes`], [`node` (primary), `address` (the member's consensus endpoint, or `local`), `console_url` (the advertised console origin, rendered only as a plain-origin link), `version`, `boot`, `first_seen`, `last_seen`, `applied_revision`, `control_revision`, `applied_slot`, `decided_slot`, `draining`; each node writes only its own row from the storage owner: at start, every minute, and after every successfully applied policy rebuild],
+  [#raw("traffic_​minutes")], [`node_id`, `boot_id`, `minute` (epoch/60), coverage, completeness, counters from “The sampler”, `rss_last_kib`, `rss_max_kib`, `cpu_delta_seconds`; primary key (`node_id`, `boot_id`, `minute`)],
+  [#raw("challenge_​minutes")], [`node_id`, `boot_id`, `minute`, algorithm/parameter bin, submitted/issued/accepted, rejected by exhaustive cause, missing/invalid timing, coverage, `solve_ms_buckets` (16 integers)],
+  [#raw("topk_​minutes")], [`node_id`, `boot_id`, `minute`, `kind`, `key`, estimate and error; all bounded sketch counters plus N, probability, losses and coverage metadata],
+  [#raw("geoip_​ranges")], [`generation`, `start` (16-byte address as blob), `end`, `country` (ISO 3166-1 alpha-2); one row per range from the source CSV],
+  [#raw("geoip_​meta")], [`generation`, `active`, `source`, `licence`, `published`, `loaded_at`, `ranges`, `sha256`],
+  [#raw("console_​nodes")], [`node` (primary), `address` (the member's consensus endpoint, or `local`), `console_url` (the advertised console origin, rendered only as a plain-origin link), `version`, `boot`, `first_seen`, `last_seen`, `applied_revision`, `control_revision`, `applied_slot`, `decided_slot`, `draining`; each node writes only its own row from the storage owner: at start, every minute, and after every successfully applied policy rebuild],
 )
 
 Additional migrations are required for `console_recovery_codes` (digest and consumed state),

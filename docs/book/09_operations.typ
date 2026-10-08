@@ -526,12 +526,22 @@ does not need the console key. An administrator can reset another account's two-
 Users or with `sibuna console reset-factor <id> --revision <n>`; the reset ends the account's
 sessions and is audited. Administrators cannot reset their own factor this way.
 
+Confirmation ends the enrollment session. Save the ten codes from the result screen, then
+sign in again. That screen has no dashboard access or telemetry connection. Turning
+two-factor off returns to sign-in and clears the previous account view.
+
 Stored secrets can be opened only with the console key that enrolled them. If the key is lost
 or replaced, an authenticator code is refused like a wrong password and the node logs that it
 cannot read the factor. Owners can still sign in with a recovery code, turn two-factor off and
 enroll again under the new key; accounts without recovery codes need an administrator reset.
 Behind `--console-behind-proxy`, an administrator whose factor is off can only enroll until
 two-factor is enabled again. Give every console node the same key file.
+
+`CONSOLESCHEMA` means the binary cannot use the stored console schema. Keep the data
+directory and use a compatible release on every node. Do not downgrade or edit the marker.
+`CONSOLEQUORUM` means storage could not answer; check storage health and cluster quorum.
+If a write timed out, read its saved state before retrying. Input and permission refusals
+have their own hints and do not mean storage is down.
 
 The native CLI accesses the running console through the same authorization and storage
 contracts. It reads credentials from private files, not command-line values:

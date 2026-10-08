@@ -1,55 +1,49 @@
-Sibuna v0.3.2 completes console two-factor authentication. Account owners can replace
-recovery codes or turn two-factor off, administrators can reset another account's factor, and
-a lost or replaced console key no longer leaves accounts without a way back. Request
-inspection, CRS behaviour and wire protocols are unchanged from v0.3.1.
+Sibuna v0.3.3 fixes console diagnostics and the recovery-code screen after two-factor
+setup. Request inspection, CRS decisions and wire protocols are unchanged from v0.3.2.
 
 Fixes:
-- On a node whose console key is missing or different, a correct password for a two-factor
-  account answered 503 without an audit record, while a wrong password answered 401. Both now
-  receive the same audited refusal, and the node logs that it cannot read the factor.
-- Accounts that had never enrolled saw "Two-factor configuration could not be loaded" and
-  could not start enrollment from the console. Their status now reads as not enrolled.
-- Authenticator entries are labelled with the username instead of a numeric account id.
-
-Two-factor lifecycle:
-- Account owners can replace every recovery code, or turn two-factor off, with their password
-  and a current authenticator code or unused recovery code. Proofs are consumed under the same
-  replay rules as sign-in. Turning two-factor off ends the account's sessions.
-- A recovery code needs no console key, so after a key is lost or replaced an owner can sign
-  in, turn two-factor off and enroll again under the new key.
-- Administrators can reset another account's two-factor from Users or with
-  `sibuna console reset-factor <id> --revision <n>`. The reset checks the account revision,
-  ends its sessions and cannot target the administrator's own account.
-- Changes are audited as totp.disable, totp.reset and totp.recovery.
+- An unsupported console schema now reports CONSOLESCHEMA. The hint asks operators to
+  keep the data directory and use compatible binaries. It no longer suggests a quorum outage.
+- Invalid input, permission refusals, stale revisions and storage outages have distinct
+  hints, shared by the HTTP service and Wasm interface. After a write timeout, operators
+  are told to read the saved state before retrying.
+- In v0.3.2, successful two-factor confirmation revoked the session, but the interface
+  switched to sign-in before showing the ten recovery codes. The codes now remain on a
+  standalone result screen until the user saves them. This screen has no dashboard access
+  or telemetry stream. A late revocation callback cannot erase the new codes.
+- Confirmation and disabling two-factor clear the previous account view. Failed attempts
+  resume the authenticated stream without changing the factor or its replay checks.
 
 Upgrade:
-- The console schema moves to version 46 on first start. Earlier binaries refuse to start
-  against it, so upgrade every node of a cluster and do not downgrade afterwards.
-- Give every console node the same --console-key-file; a node with a different key cannot
-  read factors enrolled elsewhere.
+- The console schema remains at version 46. No migration is added in this release.
+- When upgrading from a release older than v0.3.2, upgrade every cluster node. Older binaries
+  cannot use schema 46. Do not downgrade or edit its version marker.
+- Retain the console key file, and give every console node the same key.
 
 Qualification:
-- Storage, HTTP route and console rendering tests cover replay, stale revisions, forged
-  recovery values, unreadable factors, session revocation and audit records.
-- The console end-to-end suite runs the release executable through code replacement, turning
-  two-factor off, re-enrollment, sign-in after a console key change, and an administrator
-  reset through the CLI, within the production sign-in limits.
-- The full native suite, console browser tests and documentation build pass on a clean
-  checkout: 110 of 110 build steps and 1,181 of 1,181 tests. The console end-to-end suite
-  also passes on a cluster build, including three-node failover and quorum loss.
-- A console database created and used by the published v0.3.1 binary migrates on first start;
-  the same account then reads its two-factor status and enrolls. On v0.3.1 that status read
-  answered 503.
-- The release workflow builds and checks every packaged executable before publication.
-- Benchmarks and the FTW corpus results in the v0.3.0 notes still apply, because the request
-  path is unchanged.
+- Native storage tests cover newer and invalid schema markers, migration rollback and
+  typed startup failures. HTTP and Wasm tests distinguish refusals from storage outages.
+- A live daemon and the shipped Wasm complete enrollment, save the recovery codes, sign in,
+  replace the codes and disable two-factor. The test also injects a late revocation callback.
+- The Linux regression gate passed all 95 build steps. It executed 568 tests successfully;
+  other unchanged tests were cached. Book and SID builds passed, and affected pages were
+  inspected after rendering.
+- Chrome reproduced the v0.3.2 recovery-screen defect. The final binary then showed all
+  ten codes, cleared them after saving and returned to sign-in. Recovery replacement and
+  disabling were also checked, including a narrow layout. Desktop emulation was restored.
+- The release workflow qualifies each packaged executable before publication. A twelve-hour
+  single-node and three-host functional soak will start after publication. Its results are
+  separate from these release checks and from performance acceptance.
+- No measured request subsystem changed. Existing benchmark records remain tied to their
+  recorded commits. The SID 0007 performance exception remains; this release does not
+  claim that the strict console-impact gate passed.
 
 Downloads:
 - Linux x86-64 and ARM64: statically linked musl builds; Linux 5.10 or later.
 - macOS Apple Silicon and Intel: macOS 15 or later; unsigned command-line builds.
 - Windows x86-64: native sibuna.exe; Windows 10 / Server 2019 or later.
 
-Archives include the executable, README, full license texts, dependency notices and an exact
+Archives include the executable, README, license texts, dependency notices and an exact
 build manifest. SHA256SUMS covers every archive. Engine sources are LGPL-3.0; console
 sources, including the Wasm interface, are AGPL-3.0. The combined executable is AGPL-covered.
 CRS rules are Apache-2.0 and are downloaded and verified at runtime, not bundled.
@@ -57,13 +51,13 @@ Corresponding source and build scripts are in this release's tag and linked from
 Companies seeking alternative licensing can contact the authors, Vikrant Rathore and
 Ronak Rathore. Third-party libraries remain subject to their respective licenses.
 
-The shipped builds include storage and console support; the console starts only with --console.
+The shipped builds include storage and console support; the console starts with --console.
 Multi-node deployments require a separate -Dcluster=true build with OpenSSL 3. No GeoIP address
 database is bundled; use the documented CLI import/update commands for your chosen dataset.
 
-The v0.3.0 release notes describe that release's behaviour changes and limits, which still
-apply: https://github.com/insanai/sibuna/releases/tag/v0.3.0
+The v0.3.0 release notes describe the earlier behaviour changes and deployment limits:
+https://github.com/insanai/sibuna/releases/tag/v0.3.0
 
 Documentation: https://insanai.github.io/sibuna/
 Deployment guide: https://insanai.github.io/sibuna/book/operations.html
-Source: https://github.com/insanai/sibuna/tree/v0.3.2
+Source: https://github.com/insanai/sibuna/tree/v0.3.3
