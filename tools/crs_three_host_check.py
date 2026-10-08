@@ -183,7 +183,7 @@ class RemoteCluster:
         self.start(0)
         for index in range(3):
             self.ready(index)
-        credentials, _, _, recovery = totp.enroll(helper, self.consoles[1], {
+        credentials, self.factor_secret, _, recovery = totp.enroll(helper, self.consoles[1], {
             "username": "admin", "password": temporary}, True)
         self.recovery = recovery
         return credentials

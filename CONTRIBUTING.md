@@ -52,6 +52,12 @@ mode convergence, leader loss, quorum refusal, restart, rollback and incompatibl
 <remote-root>` runs the same scenario across three real machines with mutual-TLS consensus,
 validated HTTPS management peers behind a TLS ingress and TOTP sessions. Its docstring lists
 the prepared remote root it expects.
+`python3 tools/console_soak.py` extends qualification with persistent single-node or
+three-host owners. It runs bounded traffic and subscriptions, renews authenticated sessions,
+changes reviewed CRS modes and performs rolling restarts. Use isolated roots, record the
+full build commit, and smoke-test the controller before a long run. Reports are bounded and
+contain no credentials. A stop file beside the report requests clean shutdown; these runs
+are functional checks, not performance measurements.
 `python3 tools/crs_ftw_daemon_check.py <binary> --download --albedo <albedo-0.3.0>` runs the
 pinned FTW corpus through the actual daemon, Albedo origin and console evidence on Linux.
 Each test owns one loopback source address; storage is drained every 16 tests and any
