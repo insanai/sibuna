@@ -22,5 +22,6 @@ jobs:
       - run: actionlint -shellcheck=
       - run: python tools/check_helm.py
       - run: python tools/test_distribution.py
+      - run: python tools/test_homebrew_sync.py
       - run: python tools/test_release_recovery.py
       - run: python tools/proxy_fixture_test.py
