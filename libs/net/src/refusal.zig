@@ -6,7 +6,7 @@ const connect = @import("connect.zig");
 pub fn send(io: std.Io, stream: std.Io.net.Stream, bytes: []const u8) !void {
     const deadline = std.Io.Clock.awake.now(io).nanoseconds + 100 * std.time.ns_per_ms;
     try connect.writeBounded(io, stream, bytes, deadline);
-    try stream.shutdown(io, .send);
+    try @import("socket").shutdown(io, stream, .send);
     // The peer can receive the complete response and EOF immediately. It normally closes
     // then; a peer withholding input/close gets no more than this same absolute budget.
     // Closing over unread input can reset TCP and discard the response on Windows.

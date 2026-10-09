@@ -70,16 +70,18 @@ test "operator configuration accepts exact bounds and refuses directories and ov
     const payload: [64 * 1024 + 1]u8 = @splat('#');
     try temporary.dir.writeFile(t.io, .{ .sub_path = "operator.conf", .data = payload[0..65536] });
     var root: [1024]u8 = undefined;
-    const length = try temporary.dir.realPath(t.io, &root);
+    // tmpDir exposes its name; no descriptor-to-path API is needed (OpenBSD
+    // cannot resolve a directory descriptor through Zig's realPath backend).
+    const directory_root = try std.fmt.bufPrint(&root, ".zig-cache/tmp/{s}", .{temporary.sub_path});
     var bytes: [1200]u8 = undefined;
-    const path = try std.fmt.bufPrint(&bytes, "{s}/operator.conf", .{root[0..length]});
+    const path = try std.fmt.bufPrint(&bytes, "{s}/operator.conf", .{directory_root});
     const source = try readConfiguration(t.allocator, t.io, path);
     defer t.allocator.free(source.buffer);
     try t.expectEqual(@as(usize, 65536), source.value.len);
     try temporary.dir.writeFile(t.io, .{ .sub_path = "operator.conf", .data = &payload });
     try t.expectError(error.ArtifactFileLimit, readConfiguration(t.failing_allocator, t.io, path));
     try temporary.dir.createDir(t.io, "directory", .default_dir);
-    const directory = try std.fmt.bufPrint(&bytes, "{s}/directory", .{root[0..length]});
+    const directory = try std.fmt.bufPrint(&bytes, "{s}/directory", .{directory_root});
     const refused = readConfiguration(t.failing_allocator, t.io, directory);
     try t.expectError(error.ArtifactFileKind, refused);
 }

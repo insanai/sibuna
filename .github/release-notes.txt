@@ -43,6 +43,9 @@ sanitizer that reads execute-only libc code; other safe checks and OS protection
 remain enabled. Linux/macOS/Windows C flags are unchanged.
 Paxos durable-state invariant validation iterates its stored window by pointer,
 avoiding large nested stack copies during retained journal replay.
+OpenBSD socket teardown maps a valid shutdown after TCP control-block removal to
+an unconnected socket, avoiding Zig's Debug-mode panic. Other platforms retain
+their existing I/O backend. Portable temporary paths retain all CRS test coverage.
 WebSocket test fixtures mask large frames efficiently under software emulation,
 with independent RFC frame checks and the original daemon idle deadlines retained.
 

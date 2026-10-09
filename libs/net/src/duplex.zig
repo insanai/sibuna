@@ -131,7 +131,7 @@ pub fn relay(io: Io, endpoints: [2]Endpoint, options: Options) Error!void {
         .{ .prefix = endpoints[0].reader.buffered() },
         .{ .prefix = endpoints[1].reader.buffered() },
     };
-    defer for (endpoints) |endpoint| endpoint.stream.shutdown(io, .both) catch {};
+    defer for (endpoints) |endpoint| @import("socket").shutdown(io, endpoint.stream, .both) catch {};
     var last_activity = nowMs(io);
     if (options.activity) |activity| {
         activity.at_ms.store(last_activity, .monotonic);
@@ -148,7 +148,7 @@ pub fn relay(io: Io, endpoints: [2]Endpoint, options: Options) Error!void {
         for (&directions, 0..) |*direction, index| {
             direction.prefill();
             if (direction.eof and direction.pending().len == 0 and !direction.closed) {
-                endpoints[1 - index].stream.shutdown(io, .send) catch {};
+                @import("socket").shutdown(io, endpoints[1 - index].stream, .send) catch {};
                 direction.closed = true;
             }
         }

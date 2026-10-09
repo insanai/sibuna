@@ -191,7 +191,7 @@ pub const Kernel = struct {
 // Run only for an unread body: ordinary replies must retain graceful background delivery.
 // Do not hold the slot mutex here: the watchdog must be able to interrupt this read.
 fn finish(stream: Io.net.Stream, io: Io, deadline: *std.atomic.Value(i64)) void {
-    stream.shutdown(io, .send) catch return;
+    @import("socket").shutdown(io, stream, .send) catch return;
     const now = @divTrunc(Io.Clock.awake.now(io).nanoseconds, std.time.ns_per_s);
     deadline.store(@intCast(now + 1), .release);
     var buffer: [4096]u8 = undefined;

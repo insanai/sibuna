@@ -97,7 +97,7 @@ const Stream = struct {
             .{self},
         ) catch return;
         self.write();
-        self.context.stream.shutdown(self.app.io, .both) catch |err| switch (err) {
+        @import("net").shutdown(self.app.io, self.context.stream, .both) catch |err| switch (err) {
             error.SocketUnconnected => {},
             else => std.log.warn("console stream shutdown: {t}", .{err}),
         };

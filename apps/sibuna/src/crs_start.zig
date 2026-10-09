@@ -142,11 +142,11 @@ test "empty local reload owns no generation and joins its exclusive worker befor
     var temporary = t.tmpDir(.{ .iterate = true });
     defer temporary.cleanup();
     var path: [1024]u8 = undefined;
-    const length = try temporary.dir.realPath(t.io, &path);
+    const directory = try std.fmt.bufPrint(&path, ".zig-cache/tmp/{s}", .{temporary.sub_path});
     const first = try Runtime.startReloading(
         t.allocator,
         t.io,
-        path[0..length],
+        directory,
         .request_response,
     );
     var stopped = false;
@@ -156,7 +156,7 @@ test "empty local reload owns no generation and joins its exclusive worker befor
     try t.expectError(error.LocalStoreBusy, Runtime.startReloading(
         t.allocator,
         t.io,
-        path[0..length],
+        directory,
         .request_response,
     ));
     first.stop();
@@ -164,7 +164,7 @@ test "empty local reload owns no generation and joins its exclusive worker befor
     const restarted = try Runtime.startReloading(
         t.allocator,
         t.io,
-        path[0..length],
+        directory,
         .request_response,
     );
     defer restarted.stop();

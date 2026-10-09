@@ -823,6 +823,18 @@ redacted. Concurrent source qualification and disposable BSD guests mean CPU act
 was not isolated; this record is not a cross-host regression comparison or SID 0007
 console-performance acceptance. Earlier dated measurements retain their original provenance.
 
+Native FreeBSD candidate run 37910650626 passed its library/live suite, safe native
+build and installed ordinary-user console/proxy/ingress, replacement/removal and retained-file
+checks. Native OpenBSD run 37910691404 passed 1,185/1,188 library tests but correctly
+blocked publication: two test fixtures depended on unsupported directory-descriptor realPath,
+and WebSocket teardown panicked on EINVAL in Debug. Fixtures now use their known tmpDir
+relative paths, preserving bounds/lifecycle checks. A scoped native socket wrapper maps
+OpenBSD's valid-direction EINVAL after TCP control-block removal to SocketUnconnected,
+preserving cancellation, handle ownership and other platforms' Io backends. Native rerun
+and installed-package qualification remain required before tagging/publication.
+#link("https://github.com/openbsd/src/blob/master/sys/netinet/tcp_usrreq.c")[OpenBSD TCP source]
+documents EINVAL when the protocol control block is absent; no compiler cache is patched.
+
 = References and Verification Limits
 
 Policies checked on 2026-10-09. Debian, Homebrew, Microsoft, BSD, Helm, Kubernetes, GitHub, and
