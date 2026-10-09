@@ -2,9 +2,9 @@ name: Distribution recipes
 on:
   push:
     branches: [main]
-    paths: ['distribution/**', 'tools/*distribution*', 'tools/package_linux.py', 'tools/package_source.py', 'tools/check_*package*.py', 'tools/check_helm.py', 'tools/check_container.py', 'tools/prepare*container.py', 'tools/release_checksums.py', 'tools/update_homebrew_tap.py', 'tools/build_chart_repository.py', '.github/workflows/release.yml', '.github/workflows/pages.yml', '.github/workflows/distribution.yml', '.github/workflows/homebrew.yml', '.github/workflows/helm-bootstrap.yml']
+    paths: ['distribution/**', 'tools/*distribution*', 'tools/package_linux.py', 'tools/package_source.py', 'tools/check_*package*.py', 'tools/check_helm.py', 'tools/check_container.py', 'tools/prepare*container.py', 'tools/release_checksums.py', 'tools/update_homebrew_tap.py', 'tools/build_chart_repository.py', '.github/workflows/release.yml', '.github/workflows/pages.yml', '.github/workflows/distribution.yml', '.github/workflows/homebrew.yml', '.github/workflows/helm-bootstrap.yml', '.github/workflows/release-recover.yml', 'tools/*release_recovery.py']
   pull_request:
-    paths: ['distribution/**', 'tools/*distribution*', 'tools/package_linux.py', 'tools/package_source.py', 'tools/check_*package*.py', 'tools/check_helm.py', 'tools/check_container.py', 'tools/prepare*container.py', 'tools/release_checksums.py', 'tools/update_homebrew_tap.py', 'tools/build_chart_repository.py', '.github/workflows/release.yml', '.github/workflows/pages.yml', '.github/workflows/distribution.yml', '.github/workflows/homebrew.yml', '.github/workflows/helm-bootstrap.yml']
+    paths: ['distribution/**', 'tools/*distribution*', 'tools/package_linux.py', 'tools/package_source.py', 'tools/check_*package*.py', 'tools/check_helm.py', 'tools/check_container.py', 'tools/prepare*container.py', 'tools/release_checksums.py', 'tools/update_homebrew_tap.py', 'tools/build_chart_repository.py', '.github/workflows/release.yml', '.github/workflows/pages.yml', '.github/workflows/distribution.yml', '.github/workflows/homebrew.yml', '.github/workflows/helm-bootstrap.yml', '.github/workflows/release-recover.yml', 'tools/*release_recovery.py']
   workflow_dispatch:
 permissions:
   contents: read
@@ -22,3 +22,4 @@ jobs:
       - run: actionlint -shellcheck=
       - run: python tools/check_helm.py
       - run: python tools/test_distribution.py
+      - run: python tools/test_release_recovery.py

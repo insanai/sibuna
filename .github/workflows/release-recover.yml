@@ -1,0 +1,164 @@
+name: Recover release Homebrew qualification
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Unpublished immutable application tag
+        required: true
+        type: string
+      qualification_run:
+        description: Original tagged release run; all other gates must succeed
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: release-recovery-${{ inputs.tag }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+jobs:
+  homebrew:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Verify source and formula identity before requalification
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.qualification_run }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: python tools/check_release_recovery.py "$RUN_ID" "$RELEASE_TAG" --source-only
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.qualification_run }}
+          name: sibuna-distribution-source
+          path: input
+      - name: Build and test the source formula in an isolated qualification tap
+        run: |
+          brew update
+          brew tap-new --no-git sibuna/qualification
+          TAP=$(brew --repository)/Library/Taps/sibuna/homebrew-qualification
+          python3 - "$TAP/Formula/sibuna.rb" <<'PYTHON'
+          import pathlib,re,sys
+          formula=pathlib.Path('input/sibuna.rb').read_text()
+          source=next(pathlib.Path('input').glob('*-source.tar.gz')).resolve().as_uri()
+          pathlib.Path(sys.argv[1]).write_text(re.sub(r'url "[^"]+"', f'url "{source}"', formula, count=1))
+          PYTHON
+          brew install --build-from-source sibuna/qualification/sibuna
+          brew test sibuna/qualification/sibuna
+  previous-gates:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Require every original binary, native package, CRS and container gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.qualification_run }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: python tools/check_release_recovery.py "$RUN_ID" "$RELEASE_TAG" --wait
+  publish:
+    needs: [homebrew, previous-gates]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      packages: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.qualification_run }}
+          pattern: sibuna-*
+          merge-multiple: true
+          path: dist
+      - name: Verify release remains unpublished before publishing any artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft > "$RUNNER_TEMP/release-state.json"; then
+            python3 -c 'import json,os; assert json.load(open(os.environ["RUNNER_TEMP"]+"/release-state.json"))["isDraft"], "Already published: do not replace artifacts"'
+          fi
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.qualification_run }}
+          name: qualified-container
+          path: image
+      - name: Publish the qualified immutable-version image to GHCR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          # skopeo copies the previously qualified OCI archive; it does not rebuild.
+          sudo apt-get update && sudo apt-get install -y skopeo
+          skopeo inspect --raw "oci-archive:image/sibuna-image.tar" > "$RUNNER_TEMP/local-image-index.json"
+          if skopeo inspect --raw --authfile "$HOME/.docker/config.json" "docker://$IMAGE:${RELEASE_TAG#v}" > "$RUNNER_TEMP/remote-image-index.json" 2> "$RUNNER_TEMP/image-state.err"; then
+            # Resume a failed publish job only when the existing image is byte-identical.
+            cmp "$RUNNER_TEMP/local-image-index.json" "$RUNNER_TEMP/remote-image-index.json" || {
+              echo "Image version already exists with different bytes; refusing replacement" >&2
+              exit 1
+            }
+          else
+            if ! grep -Eq 'manifest unknown|name unknown' "$RUNNER_TEMP/image-state.err"; then
+              cat "$RUNNER_TEMP/image-state.err" >&2
+              echo "Cannot verify image-version absence; refusing publication" >&2
+              exit 1
+            fi
+            skopeo copy --all --preserve-digests --authfile "$HOME/.docker/config.json" "oci-archive:image/sibuna-image.tar" "docker://$IMAGE:${RELEASE_TAG#v}"
+          fi
+          # First-time GHCR visibility is an owner-controlled setting. Keep the
+          # release unpublished until users can anonymously obtain the image.
+          if ! skopeo inspect --no-creds "docker://$IMAGE:${RELEASE_TAG#v}" --format '{{.Digest}}' > dist/IMAGE-DIGEST.txt; then
+            echo "Set the GHCR sibuna package to public, then rerun this failed publish job (reuse qualified artifacts)." >&2
+            exit 1
+          fi
+      - name: Publish only after all platforms pass
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          cd dist
+          python3 ../tools/release_checksums.py .
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft > release-state.json; then
+            python -c 'import json; assert json.load(open("release-state.json"))["isDraft"], "Already published: do not replace release assets"'
+          else
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --draft --title "Sibuna $RELEASE_TAG" --notes-file ../.github/release-notes.txt
+          fi
+          gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber ./*.tar.gz ./*.zip ./*.deb ./*.rpm ./*.pkg.tar.zst ./*.tgz sibuna.rb IMAGE-DIGEST.txt SHA256SUMS
+          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
+  refresh-distributions:
+    needs: publish
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Refresh the public Helm repository after release publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main --repo "$GITHUB_REPOSITORY"
+      - name: Dispatch the independently retryable Homebrew tap update
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: gh workflow run homebrew.yml --ref main --repo "$GITHUB_REPOSITORY" -f tag="$RELEASE_TAG"

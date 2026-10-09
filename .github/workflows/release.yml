@@ -211,6 +211,7 @@ jobs:
           path: input
       - name: Build and test the source formula in an isolated qualification tap
         run: |
+          brew update
           brew tap-new --no-git sibuna/qualification
           TAP=$(brew --repository)/Library/Taps/sibuna/homebrew-qualification
           python3 - "$TAP/Formula/sibuna.rb" <<'PYTHON'
