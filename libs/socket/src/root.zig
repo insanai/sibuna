@@ -12,7 +12,11 @@ test {
 /// even for a valid shutdown direction. Zig 0.17 treats EINVAL as a programmer
 /// bug in Debug. Keep this native compatibility mapping here, preserving the
 /// descriptor's ownership and cancellation; other platforms use the Io backend.
-pub fn shutdown(io: std.Io, stream: std.Io.net.Stream, how: std.Io.net.ShutdownHow) std.Io.net.ShutdownError!void {
+pub fn shutdown(
+    io: std.Io,
+    stream: std.Io.net.Stream,
+    how: std.Io.net.ShutdownHow,
+) std.Io.net.ShutdownError!void {
     if (@import("builtin").os.tag != .openbsd) return stream.shutdown(io, how);
     const direction: c_int = switch (how) {
         .recv => std.posix.SHUT.RD,

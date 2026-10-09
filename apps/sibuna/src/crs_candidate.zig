@@ -72,7 +72,11 @@ test "operator configuration accepts exact bounds and refuses directories and ov
     var root: [1024]u8 = undefined;
     // tmpDir exposes its name; no descriptor-to-path API is needed (OpenBSD
     // cannot resolve a directory descriptor through Zig's realPath backend).
-    const directory_root = try std.fmt.bufPrint(&root, ".zig-cache/tmp/{s}", .{temporary.sub_path});
+    const directory_root = try std.fmt.bufPrint(
+        &root,
+        ".zig-cache/tmp/{s}",
+        .{temporary.sub_path},
+    );
     var bytes: [1200]u8 = undefined;
     const path = try std.fmt.bufPrint(&bytes, "{s}/operator.conf", .{directory_root});
     const source = try readConfiguration(t.allocator, t.io, path);

@@ -131,7 +131,10 @@ pub fn relay(io: Io, endpoints: [2]Endpoint, options: Options) Error!void {
         .{ .prefix = endpoints[0].reader.buffered() },
         .{ .prefix = endpoints[1].reader.buffered() },
     };
-    defer for (endpoints) |endpoint| @import("socket").shutdown(io, endpoint.stream, .both) catch {};
+    defer {
+        for (endpoints) |endpoint|
+            @import("socket").shutdown(io, endpoint.stream, .both) catch {};
+    }
     var last_activity = nowMs(io);
     if (options.activity) |activity| {
         activity.at_ms.store(last_activity, .monotonic);
