@@ -365,11 +365,35 @@ Do not assume Linux systemd instructions, FreeBSD rc.subr and OpenBSD rcctl are 
 
 === Homebrew and Kubernetes
 
-The release includes a source-built Homebrew formula with its source-bundle checksum;
-Sibuna is a CLI formula, not a cask. It requires Zig 0.17.0. A project tap and Homebrew
-core each have their own publication/review process. Follow the setup instructions in
-#link("https://github.com/insanai/sibuna/blob/main/distribution/README.md")[distribution operations]
-before using a tap installation command.
+The published #link("https://github.com/insanai/homebrew-sibuna")[Sibuna Homebrew tap]
+provides a source-built CLI formula using Zig `0.17.0` and Python `3.14`.
+Homebrew core inclusion is a separate community review. Install and verify the CLI:
+
+```sh
+brew tap insanai/sibuna
+brew install insanai/sibuna/sibuna
+sibuna --version
+```
+
+No service starts automatically. Configure a private admission seed, persistent state
+directory and IP-literal origin before starting Sibuna; the console remains opt-in.
+Back up state and stop your running Sibuna process before upgrading:
+
+```sh
+brew update
+brew upgrade insanai/sibuna/sibuna
+```
+
+To remove the CLI, stop your Sibuna process first, then uninstall:
+
+```sh
+brew uninstall insanai/sibuna/sibuna
+```
+
+Keep operator-owned configuration, seed and
+state outside Homebrew's installation and retain them through upgrade/removal.
+See #link("https://github.com/insanai/sibuna/blob/main/distribution/README.md")[distribution operations]
+for toolchain requirements and package verification.
 
 Helm charts are indexed at `https://insanai.github.io/sibuna/charts/` and listed through
 Artifact Hub. The runtime image is hosted at `ghcr.io/insanai/sibuna`. Review the chart's

@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 0e595d6fb27cba412aeae226ee13400d0d2eb66ac54aef03dace51a4a43911fb -->
+<!-- English source SHA-256: 62c6798d23bbb862a79f760fa8c8937390e9903a501c23d01b52db33b47d4374 -->
 <h1 align="center">sibuna</h1>
 <p align="center">ブラウザーの計算量証明でウェブを保護し、必要に応じて管理コンソールも利用できます。</p>
 <p align="center">
@@ -56,6 +56,14 @@
 macOS向けビルドは未署名です。各パッケージにはライセンス、ソースへのリンク、ビルド情報が含まれます。使用する前に、`SHA256SUMS`と照合してアーカイブを検証してください。
 
 Debian/RPM パッケージは Linux x86-64 と ARM64、Arch `sibuna-bin` は x86-64 に対応します。FreeBSD 15.1 と OpenBSD 7.9 パッケージは x86-64 に対応し、CLI をインストールします。Linux パッケージは任意で有効にする無効状態の systemd サービスを含みます。BSD パッケージはサービス、アカウント、状態を作成しません。これらは上流の配布物で、コミュニティリポジトリでの採用は別の手続きです。Homebrew のソース formula と Helm chart も含まれます。インストール、検証、非公開の状態、更新、Kubernetes 設定は[パッケージ運用ガイド](https://insanai.github.io/sibuna/ja/book/operations.html)をご覧ください。
+
+[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna) はソースからビルドする CLI formula を提供します。インストールしてもサービスは起動しません：
+
+```sh
+brew tap insanai/sibuna
+brew install insanai/sibuna/sibuna
+sibuna --version
+```
 
 Linux x86-64で、アプリがポート3000で待ち受けている場合：
 

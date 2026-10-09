@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 0e595d6fb27cba412aeae226ee13400d0d2eb66ac54aef03dace51a4a43911fb -->
+<!-- English source SHA-256: 62c6798d23bbb862a79f760fa8c8937390e9903a501c23d01b52db33b47d4374 -->
 <h1 align="center">sibuna</h1>
 <p align="center">브라우저 작업 증명과 선택형 콘솔로 웹 서비스를 보호합니다.</p>
 <p align="center">
@@ -56,6 +56,14 @@
 macOS 빌드에는 서명이 없습니다. 각 패키지에는 라이선스, 소스 링크와 빌드 명세가 포함됩니다. 사용하기 전에 `SHA256SUMS`로 압축 파일을 검증하세요.
 
 Debian/RPM 패키지는 Linux x86-64와 ARM64를 지원하고 Arch `sibuna-bin`는 x86-64를 지원합니다. FreeBSD 15.1과 OpenBSD 7.9 패키지는 x86-64를 지원하며 CLI를 설치합니다. Linux 패키지는 선택적인 비활성 systemd 서비스를 포함합니다. BSD 패키지는 서비스, 계정, 상태를 생성하지 않습니다. 이는 업스트림 다운로드이며 커뮤니티 저장소 채택은 별도 절차입니다. 릴리스에는 Homebrew 소스 formula와 Helm 차트도 포함됩니다. 설치, 검증, 비공개 상태, 업그레이드, Kubernetes 설정은 [패키지 운영 가이드](https://insanai.github.io/sibuna/ko/book/operations.html)를 참조하세요.
+
+[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna)은 소스에서 빌드하는 CLI formula를 제공합니다. 설치해도 서비스는 시작되지 않습니다:
+
+```sh
+brew tap insanai/sibuna
+brew install insanai/sibuna/sibuna
+sibuna --version
+```
 
 Linux x86-64에서 앱이 3000번 포트로 요청을 받는 경우:
 

@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 0e595d6fb27cba412aeae226ee13400d0d2eb66ac54aef03dace51a4a43911fb -->
+<!-- English source SHA-256: 62c6798d23bbb862a79f760fa8c8937390e9903a501c23d01b52db33b47d4374 -->
 <h1 align="center">sibuna</h1>
 <p align="center">ब्राउज़र Proof of Work और वैकल्पिक कंसोल के साथ वेब सुरक्षा।</p>
 <p align="center">
@@ -56,6 +56,14 @@
 macOS बिल्ड बिना हस्ताक्षर वाले (Unsigned) हैं। प्रत्येक पैकेज में लाइसेंस, सोर्स लिंक और बिल्ड मैनिफ़ेस्ट शामिल हैं। उपयोग करने से पहले `SHA256SUMS` के विरुद्ध आर्काइव को सत्यापित (Verify) करें।
 
 Debian/RPM पैकेज Linux x86-64 और ARM64 के लिए हैं; Arch `sibuna-bin` x86-64 के लिए है। FreeBSD 15.1 और OpenBSD 7.9 पैकेज x86-64 पर CLI स्थापित करते हैं। Linux पैकेज में वैकल्पिक, निष्क्रिय systemd सेवा है। BSD पैकेज सेवा, खाता या स्थिति नहीं बनाते। ये upstream डाउनलोड हैं; सामुदायिक रिपॉज़िटरी की स्वीकृति अलग प्रक्रिया है। रिलीज़ में Homebrew स्रोत formula और Helm chart भी हैं। स्थापना, सत्यापन, निजी स्थिति, अपग्रेड और Kubernetes सेटअप के लिए [पैकेज संचालन मार्गदर्शिका](https://insanai.github.io/sibuna/hi/book/operations.html) देखें।
+
+[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna) स्रोत से बनायी जाने वाली CLI formula प्रदान करता है। स्थापना से कोई सेवा शुरू नहीं होती:
+
+```sh
+brew tap insanai/sibuna
+brew install insanai/sibuna/sibuna
+sibuna --version
+```
 
 Linux x86-64 के लिए, यदि आपका ऐप पोर्ट 3000 पर सुन रहा है:
 

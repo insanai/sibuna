@@ -65,5 +65,6 @@
   "3e2fb525c55fe27e": "引擎采用 **LGPL 3.0**，控制台及其 WebAssembly 界面采用 **AGPL 3.0**。默认可执行文件包含两者，按 AGPL 3.0 分发。使用 ⟦0⟧ 可以构建不含控制台的引擎。\n",
   "f0e8f80afec391d7": "[LICENSE](⟦0⟧) 说明授权范围，[LICENSES](⟦1⟧) 包含完整条款，[NOTICE](⟦2⟧) 列出依赖。各发行标签下均提供源码和构建脚本。\n",
   "43fc0ebe6496eb25": "需要其他授权条款的企业可以联系 Vikrant Rathore 和 Ronak Rathore。第三方库及资料保留各自的许可证。\n",
-  "5f995944d67b9750": "| 平台 | 安装包 | 要求 |\n| --- | --- | --- |\n| Linux x86-64 | ⟦0⟧ | Linux 5.10 或更高版本；静态链接 musl |\n| Linux ARM64 | ⟦1⟧ | Linux 5.10 或更高版本；静态链接 musl |\n| macOS Apple Silicon | ⟦2⟧ | macOS 15 或更高版本 |\n| macOS Intel | ⟦3⟧ | macOS 15 或更高版本 |\n| Windows x86-64 | ⟦4⟧ | Windows 10 / Server 2019 或更高版本；原生 ⟦5⟧ |\n| FreeBSD x86-64 | ⟦6⟧ | FreeBSD 15.1; CLI 软件包 |\n| OpenBSD x86-64 | ⟦7⟧ | OpenBSD 7.9; CLI 软件包 |\n"
+  "5f995944d67b9750": "| 平台 | 安装包 | 要求 |\n| --- | --- | --- |\n| Linux x86-64 | ⟦0⟧ | Linux 5.10 或更高版本；静态链接 musl |\n| Linux ARM64 | ⟦1⟧ | Linux 5.10 或更高版本；静态链接 musl |\n| macOS Apple Silicon | ⟦2⟧ | macOS 15 或更高版本 |\n| macOS Intel | ⟦3⟧ | macOS 15 或更高版本 |\n| Windows x86-64 | ⟦4⟧ | Windows 10 / Server 2019 或更高版本；原生 ⟦5⟧ |\n| FreeBSD x86-64 | ⟦6⟧ | FreeBSD 15.1; CLI 软件包 |\n| OpenBSD x86-64 | ⟦7⟧ | OpenBSD 7.9; CLI 软件包 |\n",
+  "41882663d53292c3": "[Sibuna Homebrew tap](⟦0⟧) 提供从源码构建的 CLI formula。安装不会启动服务：\n"
 }

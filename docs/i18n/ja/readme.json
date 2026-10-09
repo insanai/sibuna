@@ -65,5 +65,6 @@
   "3e2fb525c55fe27e": "エンジンは**LGPL 3.0**、WebAssemblyインターフェースを含むコンソールは**AGPL 3.0**です。標準の実行ファイルは両方を含み、AGPL 3.0で配布します。⟦0⟧を使うと、コンソールなしでエンジンをビルドできます。\n",
   "f0e8f80afec391d7": "[LICENSE](⟦0⟧)は適用範囲を説明しています。[LICENSES](⟦1⟧)には条文全文があり、[NOTICE](⟦2⟧)には依存ライブラリを記載しています。各リリースタグで、ソースとビルドスクリプトを確認できます。\n",
   "43fc0ebe6496eb25": "別のライセンス条件を希望する企業は、Vikrant RathoreとRonak Rathoreにお問い合わせください。第三者のライブラリや資料には、それぞれのライセンスが適用されます。\n",
-  "5f995944d67b9750": "| プラットフォーム | パッケージ | 動作要件 |\n| --- | --- | --- |\n| Linux x86-64 | ⟦0⟧ | Linux 5.10以降、muslを静的リンク |\n| Linux ARM64 | ⟦1⟧ | Linux 5.10以降、muslを静的リンク |\n| macOS Apple Silicon | ⟦2⟧ | macOS 15以降 |\n| macOS Intel | ⟦3⟧ | macOS 15以降 |\n| Windows x86-64 | ⟦4⟧ | Windows 10 / Server 2019以降、ネイティブの⟦5⟧ |\n| FreeBSD x86-64 | ⟦6⟧ | FreeBSD 15.1; CLI パッケージ |\n| OpenBSD x86-64 | ⟦7⟧ | OpenBSD 7.9; CLI パッケージ |\n"
+  "5f995944d67b9750": "| プラットフォーム | パッケージ | 動作要件 |\n| --- | --- | --- |\n| Linux x86-64 | ⟦0⟧ | Linux 5.10以降、muslを静的リンク |\n| Linux ARM64 | ⟦1⟧ | Linux 5.10以降、muslを静的リンク |\n| macOS Apple Silicon | ⟦2⟧ | macOS 15以降 |\n| macOS Intel | ⟦3⟧ | macOS 15以降 |\n| Windows x86-64 | ⟦4⟧ | Windows 10 / Server 2019以降、ネイティブの⟦5⟧ |\n| FreeBSD x86-64 | ⟦6⟧ | FreeBSD 15.1; CLI パッケージ |\n| OpenBSD x86-64 | ⟦7⟧ | OpenBSD 7.9; CLI パッケージ |\n",
+  "41882663d53292c3": "[Sibuna Homebrew tap](⟦0⟧) はソースからビルドする CLI formula を提供します。インストールしてもサービスは起動しません：\n"
 }

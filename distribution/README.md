@@ -95,6 +95,39 @@ See the book's [operator guide](https://insanai.github.io/sibuna/book/operations
 CLI, console and deployment details. Future official ports have separate source,
 staging, library, maintainer and service-review requirements in SID 0011.
 
+## Homebrew operations
+
+Install the published source formula from the Sibuna-maintained tap:
+
+```sh
+brew tap insanai/sibuna
+brew install insanai/sibuna/sibuna
+sibuna --version
+```
+
+The formula builds with Zig 0.17.0 and Python 3.14, installed as build
+dependencies by Homebrew. It supplies no bottles and starts no service.
+Configure a private admission seed, persistent state and an IP-literal origin
+before starting the CLI; the console is opt-in. This tap is separate from
+Homebrew core, whose admission requires independent community review.
+
+Back up state and stop your running Sibuna process before upgrading:
+
+```sh
+brew update
+brew upgrade insanai/sibuna/sibuna
+```
+
+To remove the CLI after stopping it:
+
+```sh
+brew uninstall insanai/sibuna/sibuna
+```
+
+Keep operator-owned configuration, seed and state outside Homebrew's installation;
+retain them through upgrades and removal. The [tap README](https://github.com/insanai/homebrew-sibuna)
+also describes compiler requirements, release checksums and automatic formula updates.
+
 ## Publishing setup
 
 1. **GitHub release/GHCR:** the organization must allow Actions to publish packages.

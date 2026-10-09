@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 0e595d6fb27cba412aeae226ee13400d0d2eb66ac54aef03dace51a4a43911fb -->
+<!-- English source SHA-256: 62c6798d23bbb862a79f760fa8c8937390e9903a501c23d01b52db33b47d4374 -->
 <div dir="rtl">
 
 <h1 align="center">sibuna</h1>
@@ -58,6 +58,18 @@
 بناءات macOS غير موقعة. تتضمن كل حزمة الرخص، وروابط المصدر، وبيان البناء. تحقق من الأرشيف مقابل `SHA256SUMS` قبل استخدامه.
 
 تغطي حزم Debian/RPM نظام Linux x86-64 وARM64؛ وتغطي Arch `sibuna-bin` معمارية x86-64. تثبّت حزم FreeBSD 15.1 وOpenBSD 7.9 واجهة CLI على x86-64. تتضمن حزم Linux خدمة systemd اختيارية معطلة. لا تنشئ حزم BSD خدمة أو حسابًا أو حالة. هذه تنزيلات من المشروع؛ والقبول في المستودعات المجتمعية إجراء منفصل. يتضمن الإصدار أيضًا صيغة Homebrew من المصدر ومخطط Helm. راجع [دليل تشغيل الحزم](https://insanai.github.io/sibuna/ar/book/operations.html) للتثبيت والتحقق والحالة الخاصة والترقيات وإعداد Kubernetes.
+
+يوفر [مستودع Homebrew الخاص بـSibuna](https://github.com/insanai/homebrew-sibuna) صيغة CLI تُبنى من المصدر. لا تبدأ أي خدمة عند التثبيت:
+
+<div dir="ltr">
+
+```sh
+brew tap insanai/sibuna
+brew install insanai/sibuna/sibuna
+sibuna --version
+```
+
+</div>
 
 على Linux x86-64، مع تطبيقك يستمع على المنفذ 3000:
 

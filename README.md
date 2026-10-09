@@ -67,6 +67,15 @@ is separate. The release also includes a Homebrew source formula and a Helm char
 See the [package operations guide](https://insanai.github.io/sibuna/book/operations.html)
 for installation, verification, private state, upgrades and Kubernetes setup.
 
+The [Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna) provides a
+source-built CLI formula. Installation does not start a service:
+
+```sh
+brew tap insanai/sibuna
+brew install insanai/sibuna/sibuna
+sibuna --version
+```
+
 For Linux x86-64, with your app listening on port 3000:
 
 ```sh

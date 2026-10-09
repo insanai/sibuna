@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 0e595d6fb27cba412aeae226ee13400d0d2eb66ac54aef03dace51a4a43911fb -->
+<!-- English source SHA-256: 62c6798d23bbb862a79f760fa8c8937390e9903a501c23d01b52db33b47d4374 -->
 <h1 align="center">sibuna</h1>
 <p align="center">Protección web con prueba de trabajo en el navegador y consola opcional.</p>
 <p align="center">
@@ -65,6 +65,14 @@ Los paquetes macOS no están firmados. Cada paquete incluye licencias, enlaces a
 y manifiesto. Verifica el archivo contra `SHA256SUMS` antes de usarlo.
 
 Los paquetes Debian/RPM cubren Linux x86-64 y ARM64; Arch `sibuna-bin` cubre x86-64. Los paquetes FreeBSD 15.1 y OpenBSD 7.9 cubren x86-64 e instalan la CLI. Linux incluye un servicio systemd opcional y desactivado. BSD no crea servicio, cuenta ni estado. Son descargas del proyecto; la aceptación en repositorios comunitarios es independiente. La publicación también incluye una fórmula Homebrew desde fuentes y un chart Helm. Consulta la [guía de operaciones de paquetes](https://insanai.github.io/sibuna/es/book/operations.html) para instalación, verificación, estado privado, actualizaciones y Kubernetes.
+
+El [tap Homebrew de Sibuna](https://github.com/insanai/homebrew-sibuna) ofrece una fórmula CLI compilada desde fuentes. La instalación no inicia ningún servicio:
+
+```sh
+brew tap insanai/sibuna
+brew install insanai/sibuna/sibuna
+sibuna --version
+```
 
 Para Linux x86-64, con la aplicación escuchando en el puerto 3000:
 
