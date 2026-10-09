@@ -23,6 +23,8 @@ sibuna --version
 The source build requires the release's exact Zig version and Python 3.14. If
 Homebrew's Zig has moved to a different version, follow the upstream installation
 guide rather than changing the compiler check. No service starts automatically.
+The upstream Homebrew gate builds and tests this formula on macOS 15. This tap
+currently provides source builds; it does not publish prebuilt Homebrew bottles.
 
 Before running Sibuna, create a private 32-byte admission seed and configure a
 persistent private data directory, an IP-literal origin and an appropriate
