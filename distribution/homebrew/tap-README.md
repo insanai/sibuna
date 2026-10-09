@@ -32,10 +32,16 @@ process manager. The console is opt-in. See the
 [operator guide](https://insanai.github.io/sibuna/book/operations.html) for
 configuration, origin protection, upgrades and backup requirements.
 
+Stop your running Sibuna process before upgrading:
+
 ```sh
 brew update
 brew upgrade insanai/sibuna/sibuna
-# Stop your running process before replacement/removal.
+```
+
+To remove the executable after stopping it:
+
+```sh
 brew uninstall insanai/sibuna/sibuna
 ```
 
