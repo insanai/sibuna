@@ -62,7 +62,7 @@
 
 (package
   (name "sibuna")
-  (version "0.3.3")
+  (version "0.3.5")
   (source (local-file root "sibuna-source" #:recursive? #t #:select? source-file?))
   ;; Explicit phases avoid older zig-build-system optimization spellings and
   ;; retain Guix's native libc paths rather than a foreign binary loader.

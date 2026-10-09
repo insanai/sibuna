@@ -808,7 +808,10 @@ also passed persistent console qualification. OpenBSD startup exposed a capacity
 ordinary 4 MiB stack and a C indirect-function sanitizer reading execute-only
 libc instruction bytes. Incident and console telemetry rings now initialize directly in their allocated
 storage. Only OpenBSD's C indirect-function sanitizer is omitted; other safe-mode
-checks and execute-only system mappings remain intact. The installed console
+checks and execute-only system mappings remain intact. Retained journal replay also
+exposed nested capacity-sized copies of Paxos's durable cell window during invariant
+validation. Iterating that stored array through a pointer preserves every check while
+removing those stack temporaries. The installed console
 and native package lifecycle still require successful ordinary-user logs. Do not
 publish either an unqualified package or a version whose required release jobs failed.
 Recovery requires successful original BSD jobs/artifacts as well as existing gates.

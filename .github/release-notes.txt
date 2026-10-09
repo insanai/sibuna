@@ -41,6 +41,8 @@ Startup initializes allocated incident and telemetry rings in place, avoiding te
 larger than OpenBSD's ordinary stack limit. Its C build omits the indirect-function
 sanitizer that reads execute-only libc code; other safe checks and OS protections
 remain enabled. Linux/macOS/Windows C flags are unchanged.
+Paxos durable-state invariant validation iterates its stored window by pointer,
+avoiding large nested stack copies during retained journal replay.
 WebSocket test fixtures mask large frames efficiently under software emulation,
 with independent RFC frame checks and the original daemon idle deadlines retained.
 

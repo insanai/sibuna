@@ -22,6 +22,9 @@ if __name__ == "__main__":
     if f"https://github.com/insanai/sibuna/tree/v{expected}" not in shell:
         raise SystemExit("Console source offer must name the release tag")
     chart = ROOT / "distribution/helm/sibuna/Chart.yaml"
+    guix = ROOT / "guix.scm"
+    if guix.exists() and f'(version "{expected}")' not in guix.read_text():
+        raise SystemExit("Local Guix candidate version must match the source release")
     if chart.exists():
         for field in ("version", "appVersion"):
             value = re.search(r'^' + field + r':\s*"?([^"\s]+)"?\s*$', chart.read_text(), re.MULTILINE)
