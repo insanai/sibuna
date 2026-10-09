@@ -815,8 +815,8 @@ storage. Only OpenBSD's C indirect-function sanitizer is omitted; other safe-mod
 checks and execute-only system mappings remain intact. Retained journal replay also
 exposed nested capacity-sized copies of Paxos's durable cell window during invariant
 validation. Iterating that stored array through a pointer preserves every check while
-removing those stack temporaries. The installed console
-and native package lifecycle still require successful ordinary-user logs. Do not
+removing those stack temporaries. The final native candidates passed installed console
+and package lifecycle checks with ordinary-user limits. Do not
 publish either an unqualified package or a version whose required release jobs failed.
 Recovery requires successful original BSD jobs/artifacts as well as existing gates.
 
@@ -835,10 +835,18 @@ blocked publication: two test fixtures depended on unsupported directory-descrip
 and WebSocket teardown panicked on EINVAL in Debug. Fixtures now use their known tmpDir
 relative paths, preserving bounds/lifecycle checks. A scoped native socket wrapper maps
 OpenBSD's valid-direction EINVAL after TCP control-block removal to SocketUnconnected,
-preserving cancellation, handle ownership and other platforms' Io backends. Native rerun
-and installed-package qualification remain required before tagging/publication.
+preserving cancellation, handle ownership and other platforms' Io backends.
 #link("https://github.com/openbsd/src/blob/master/sys/netinet/tcp_usrreq.c")[OpenBSD TCP source]
 documents EINVAL when the protocol control block is absent; no compiler cache is patched.
+
+The final #link("https://github.com/insanai/sibuna/actions/runs/37915685791")[OpenBSD candidate]
+passed 89/89 native test steps and 1,189/1,189 tests, a 14/14 safe/stripped native build,
+and actual package install/replace/remove with ordinary-user console authentication,
+persistent restart, proxy/WebSocket/ingress and retained-file checks. The
+#link("https://github.com/insanai/sibuna/actions/runs/37910650626")[FreeBSD candidate]
+also passed native build/runtime and package lifecycle gates. These private candidate
+artifacts are not public releases. The immutable v0.3.5 tag must run every required
+platform/CRS/package/source/Homebrew/container/chart gate again before publication.
 
 OpenBSD's package filename must match its internal stem-version name. Its release asset
 is therefore `sibuna-0.3.5.tgz`; the Helm asset is `helm-sibuna-0.3.5.tgz`. The chart indexer
