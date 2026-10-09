@@ -151,10 +151,11 @@ is published and the Pages index contains Sibuna 0.3.3. The repository URL above
 as `ARTIFACTHUB_REPOSITORY_ID`; Pages accepts either a variable or the existing
 secret and publishes only a validated UUID in verified-publisher metadata.
 The public metadata was checked against Artifact Hub's registered repository ID.
-Its verified-publisher badge appears after Artifact Hub processes the repository;
-metadata publication alone does not mean that indexing has completed.
-Tap setup and
-official community packaging described by SID 0011 remain separate launch work.
+Artifact Hub has now indexed Sibuna 0.3.3 and its public API reports the publisher
+as verified. New published charts use the same repository and ownership metadata.
+The Homebrew tap is initialized with its README, Sibuna license files and release
+updater; formula import awaits the qualified source release. Official community
+packaging described by SID 0011 remains separate submission/review work.
 
 ## Validation
 

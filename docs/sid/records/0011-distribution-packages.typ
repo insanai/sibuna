@@ -769,6 +769,10 @@ the fixtures are not public release assets and do not replace v0.3.3.
   public Artifact Hub API response exactly. No owner names or email addresses are included.
   Artifact Hub still reported verified_publisher false and no indexed package at this check;
   the next processing cycle, rather than metadata publication alone, sets that badge.
+- A subsequent public API check on 2026-10-09 confirmed the
+  #link("https://artifacthub.io/packages/helm/sibuna/sibuna")[Sibuna package] indexed at
+  0.3.3 with verified_publisher true. The registered account/repository and public ownership
+  metadata are functioning; future published chart versions use that same HTTP repository.
 
 = Version 0.3.5 Release Scope
 
