@@ -816,12 +816,13 @@ and native package lifecycle still require successful ordinary-user logs. Do not
 publish either an unqualified package or a version whose required release jobs failed.
 Recovery requires successful original BSD jobs/artifacts as well as existing gates.
 
-The required primitive benchmark refresh records clean source revision 4ce8534410de
-in `benchmarks/results/latest-20261009T093609Z.json`, including source/executable digests,
-seven-batch ranges and a 9,960 KiB storage-inactive idle RSS. The private host label is
-redacted. Concurrent source qualification and disposable BSD guests mean CPU activity
-was not isolated; this record is not a cross-host regression comparison or SID 0007
-console-performance acceptance. Earlier dated measurements retain their original provenance.
+The final required primitive benchmark refresh records clean source revision 26a1b508b3c0
+in `benchmarks/results/latest-20261009T101213Z.json`, including source/executable digests,
+seven-batch ranges and a 9,904 KiB storage-inactive idle RSS. Source checks finished before
+measurement; idle disposable BSD guests and a shared physical host mean CPU activity was
+not isolated. The private host label is redacted. This is not a cross-host regression comparison
+or SID 0007 console-performance acceptance. The earlier 4ce8534410de refresh and other dated
+measurements retain their original provenance and conditions.
 
 Native FreeBSD candidate run 37910650626 passed its library/live suite, safe native
 build and installed ordinary-user console/proxy/ingress, replacement/removal and retained-file
