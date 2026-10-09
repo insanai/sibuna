@@ -18,6 +18,11 @@ def fetch(url):
 
 
 def build(destination, repository_id):
+    if repository_id:
+        import uuid
+        if not re.fullmatch(r'[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}', repository_id.strip()):
+            raise ValueError('Artifact Hub repository ID must be a UUID, not an API key')
+        repository_id = str(uuid.UUID(repository_id.strip()))
     destination.mkdir(parents=True, exist_ok=True)
     # Retain all published chart versions, including older app versions; never index drafts.
     page = 1
@@ -53,8 +58,6 @@ def build(destination, repository_id):
         '<a href="https://github.com/insanai/sibuna/tree/main/distribution/helm/sibuna">'
         'Installation and security requirements</a></p></html>\n')
     if repository_id:
-        import uuid
-        uuid.UUID(repository_id)
         (destination / 'artifacthub-repo.yml').write_text(f'repositoryID: {repository_id}\n')
     # Verified-publisher ID is public. No personal owner email is included.
 

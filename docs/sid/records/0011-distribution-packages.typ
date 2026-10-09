@@ -34,7 +34,8 @@ SID 0001 and `SECURITY.md` define the security response process used by this lau
 *Status:* Keep the overall specification in `discussion` pending the remaining targets' review
 and qualification. The initial Helm 0.3.3 chart and minimal two-architecture GHCR image are
 published, with the public Pages index and actual qualification recorded below. The owner has
-created an Artifact Hub account; repository registration/UUID remain separate. No Debian,
+created an Artifact Hub account and configured its repository UUID in GitHub; public
+ownership verification is recorded separately. No Debian,
 Fedora, Arch, Homebrew core, Guix, BSD or WinGet community acceptance is claimed. External
 setup requirements remain open until their own verified records are added.
 
@@ -640,7 +641,7 @@ do not promise zero downtime, guaranteed zero data loss, or effortless schema ro
   [WinGet], [Windows ZIP contract], [GitHub contribution identity, actual manifests/hash, native portable qualification.],
   [Guix], [Local candidate/helper], [Source-built compiler, Guix evaluation/build, origins/policy review; Shepherd later.],
   [BSD], [Specifications], [Native compatibility, complete independent ports, accounts/contact and service review.],
-  [Helm], [Chart/schema, qualified public image/chart and Pages index], [Artifact Hub repository registration/UUID, production network isolation and origin/ingress validation.],
+  [Helm], [Chart/schema, qualified public image/chart, Pages index and configured Artifact Hub UUID], [Verify public ownership metadata/Artifact Hub indexing, production network isolation and origin/ingress validation.],
   [Security], [Policy/process and reporting setting], [Merge/publish policy, responder assignments, notification/recovery drill and downstream contacts.],
 )
 
@@ -751,8 +752,11 @@ the fixtures are not public release assets and do not replace v0.3.3.
 - #link("https://github.com/insanai/sibuna/actions/runs/37891247895")[Pages run 37891247895]
   deployed the populated #link("https://insanai.github.io/sibuna/charts/index.yaml")[HTTP index],
   which lists Sibuna 0.3.3 and its matching public chart download/digest. The owner has created
-  an Artifact Hub account; listing registration and the public repository UUID are the
-  remaining account steps. No API key is required here. Production CNI enforcement, origin
+  an Artifact Hub account and configured ARTIFACTHUB_REPOSITORY_ID as a repository secret.
+  Pages now accepts either a variable (preferred for this public identifier) or that existing
+  secret, validates/canonicalizes the UUID, and publishes only repositoryID in adjacent
+  artifacthub-repo.yml. No owner contact data or API key is published. Verify the served file
+  and Artifact Hub's indexing/ownership status separately. Production CNI enforcement, origin
   traffic and ingress route restrictions remain operator deployment gates.
 - A Helm client on the designated build host added/updated the live repository, found
   `sibuna/sibuna` at chart/app version 0.3.3, downloaded the package with the matching digest,

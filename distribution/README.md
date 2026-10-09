@@ -104,7 +104,8 @@ operation described in the upstream deployment guide; no admin is created.
    add a Helm repository named `sibuna` with URL
    `https://insanai.github.io/sibuna/charts` after `index.yaml` is publicly live.
    Put the assigned repository UUID in the public repository variable
-   `ARTIFACTHUB_REPOSITORY_ID`, then run the Documentation workflow to publish
+   `ARTIFACTHUB_REPOSITORY_ID` (an existing repository secret with that name is
+   also supported), then run the Documentation workflow to publish
    `artifacthub-repo.yml` for verified-publisher metadata. Ordinary indexing
    needs no API key in the release workflow. No personal owner emails are put
    in chart metadata. Artifact Hub indexes charts; GHCR hosts the runtime image.
@@ -114,8 +115,10 @@ Kubernetes qualification. The GHCR image is public and anonymous access was
 verified; the organization's public-package creation permission was enabled
 briefly with owner approval and then restored. The `helm-v0.3.3` chart release
 is published and the Pages index contains Sibuna 0.3.3. Register the repository
-URL above in Artifact Hub and supply its public UUID for verified-publisher
-metadata. Tap setup and
+URL above in Artifact Hub. The owner has configured its public repository UUID
+as `ARTIFACTHUB_REPOSITORY_ID`; Pages accepts either a variable or the existing
+secret and publishes only a validated UUID in verified-publisher metadata.
+Tap setup and
 official community packaging described by SID 0011 remain separate launch work.
 
 ## Validation

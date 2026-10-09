@@ -32,7 +32,7 @@ jobs:
       - name: Rebuild the public Helm chart repository from published releases
         env:
           GH_TOKEN: ${{ github.token }}
-          REPOSITORY_ID: ${{ vars.ARTIFACTHUB_REPOSITORY_ID }}
+          REPOSITORY_ID: ${{ vars.ARTIFACTHUB_REPOSITORY_ID || secrets.ARTIFACTHUB_REPOSITORY_ID }}
         run: |
           python3 tools/install_distribution_tools.py "$RUNNER_TEMP/distribution-tools" helm
           python3 tools/build_chart_repository.py docs/build/site/charts --repository-id "$REPOSITORY_ID"
