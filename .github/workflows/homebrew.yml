@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Published stable release tag (for example v0.3.4)
+        description: Published stable release tag (for example v0.3.5)
         required: true
         type: string
 permissions:
@@ -37,5 +37,5 @@ jobs:
           if [ -n "$TAP" ] && [ -n "$GH_TOKEN" ]; then
             python3 tools/update_homebrew_tap.py "$TAP" "$RELEASE_TAG" "$RUNNER_TEMP/tap-input/sibuna.rb"
           else
-            echo "Formula is attached to the release. Configure HOMEBREW_TAP_REPOSITORY and HOMEBREW_TAP_TOKEN, then rerun this workflow to propose the PR."
+            echo "Formula is attached to the release. The insanai/homebrew-sibuna tap imports qualified releases with its daily/manual updater; no cross-repository token is required. Optional scoped credentials enable this reviewed-PR route."
           fi
