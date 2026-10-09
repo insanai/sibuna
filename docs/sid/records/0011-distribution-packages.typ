@@ -31,11 +31,11 @@ Replaced unsupported examples and guarantees, added account onboarding, and adde
 Guix candidate `guix.scm` plus `tools/prepare_distribution_source.py` for offline source builds.
 SID 0001 and `SECURITY.md` define the security response process used by this launch.
 
-*Status:* Keep the overall specification in `discussion` pending the remaining targets' review
-and qualification. The initial Helm 0.3.3 chart and minimal two-architecture GHCR image are
-published, with the public Pages index and actual qualification recorded below. The owner has
-created an Artifact Hub account and configured its repository UUID in GitHub; public
-ownership verification is recorded separately. No Debian,
+*Status:* Upstream version 0.3.5 is published with qualified binary/native packages,
+corresponding source, a source-built Homebrew formula, and a minimal two-architecture image/chart.
+Keep the overall specification in `discussion` pending the remaining community targets' review
+and qualification. Artifact Hub has indexed the initial 0.3.3 chart with verified publisher
+ownership; new chart versions use the same public repository and registered UUID. No Debian,
 Fedora, Arch, Homebrew core, Guix, BSD or WinGet community acceptance is claimed. External
 setup requirements remain open until their own verified records are added.
 
@@ -138,7 +138,7 @@ Artifact Hub indexes that HTTP repository and does not host the image or chart b
   package defaults to private; an owner must make it public and verify anonymous pulls before
   announcing a usable chart. Version tags must never be replaced; IMAGE-DIGEST.txt records
   the image digest. These files prepare future releases and do not change published v0.3.3.
-- *Homebrew:* The owner created public `insanai/homebrew-sibuna`; initialize it with the
+- *Homebrew:* Public `insanai/homebrew-sibuna` contains the qualified 0.3.5 formula,
   upstream README, license notices and tap-owned release updater. The updater needs only
   its own contents-write GITHUB_TOKEN and imports published checksum-qualified formulae.
   HOMEBREW_TAP_REPOSITORY/HOMEBREW_TAP_TOKEN remain optional for the reviewed-PR route, scoped
@@ -637,14 +637,14 @@ do not promise zero downtime, guaranteed zero data loss, or effortless schema ro
 #table(
   columns: (0.8fr, 1.15fr, 2.25fr),
   table.header([*Target*], [*Present here*], [*Open launch evidence*]),
-  [Archives], [Workflow and tools], [Actual native release runs, immutable tag/assets, source/license closure.],
-  [Debian/RPM/Arch], [Upstream binary-package tooling and service], [Actual native release/lifecycle runs; signed archive/community source recipes and acceptance remain separate.],
-  [Homebrew], [Generated source formula and build gate], [Create thin tap, scoped update-PR credentials, native formula run; core audit/acceptance separately. No cask.],
+  [Archives], [Five qualified v0.3.5 archives and source/license closure], [Preserve immutable assets and repeat native qualification for future tags. macOS signing remains separate.],
+  [Debian/RPM/Arch], [Published v0.3.5 upstream packages and qualified systemd lifecycle], [Signed archive/community source recipes and acceptance remain separate.],
+  [Homebrew], [Public thin tap and qualified v0.3.5 source formula/updater], [Core audit/acceptance separately. No cask; optional PR credentials are not required for tap-owned updates.],
   [WinGet], [Windows ZIP contract], [GitHub contribution identity, actual manifests/hash, native portable qualification.],
   [Guix], [Local candidate/helper], [Source-built compiler, Guix evaluation/build, origins/policy review; Shepherd later.],
-  [BSD], [Native CLI package recipes and workflow gates], [Actual source/package/runtime runs; complete independent official ports and service review remain separate.],
-  [Helm], [Chart/schema, qualified public image/chart, Pages index and verified repository UUID metadata], [Artifact Hub indexing/verified-publisher status, production network isolation and origin/ingress validation.],
-  [Security], [Policy/process and reporting setting], [Merge/publish policy, responder assignments, notification/recovery drill and downstream contacts.],
+  [BSD], [Published native v0.3.5 CLI packages and ordinary-user lifecycle qualification], [Independent official ports and service review remain separate.],
+  [Helm], [Qualified public v0.3.5 image/chart, HTTP repository and verified ownership], [Verify each new index/tracker version; qualify production network isolation and origin/ingress.],
+  [Security], [Published policy/private reporting; primary/backup assigned privately], [Notification/recovery drill and downstream contacts.],
 )
 
 1. Release owner verifies immutable source/dependency/license closure and retains existing release
@@ -776,7 +776,7 @@ the fixtures are not public release assets and do not replace v0.3.3.
 
 = Version 0.3.5 Release Scope
 
-The requested next release is 0.3.5. It retains all five binary archives and adds
+The published release is 0.3.5. It retains all five binary archives and adds
 upstream Debian/RPM (x86-64 and ARM64), Arch (x86-64), FreeBSD 15.1/amd64 and
 OpenBSD 7.9/amd64 packages to the same GitHub release. A source formula, offline
 corresponding-source bundle, chart and qualified public image accompany them.
@@ -845,8 +845,8 @@ and actual package install/replace/remove with ordinary-user console authenticat
 persistent restart, proxy/WebSocket/ingress and retained-file checks. The
 #link("https://github.com/insanai/sibuna/actions/runs/37910650626")[FreeBSD candidate]
 also passed native build/runtime and package lifecycle gates. These private candidate
-artifacts are not public releases. The immutable v0.3.5 tag must run every required
-platform/CRS/package/source/Homebrew/container/chart gate again before publication.
+artifacts are not public releases. The immutable v0.3.5 tag subsequently ran every required
+platform/CRS/package/source/Homebrew/container/chart gate before the publication below.
 
 OpenBSD's package filename must match its internal stem-version name. Its release asset
 is therefore `sibuna-0.3.5.tgz`; the Helm asset is `helm-sibuna-0.3.5.tgz`. The chart indexer
@@ -855,6 +855,48 @@ so it cannot confuse a native OpenBSD package with a chart. The installed-packag
 forces same-version OpenBSD replacement/extraction with installed/donttie flags; it does
 not count an already-installed no-op as a reinstall. These flags apply only to the
 disposable qualification fixture, not system repository signature policy.
+
+= Version 0.3.5 Upstream Publication (2026-10-09)
+
+- #link("https://github.com/insanai/sibuna/actions/runs/37918808388")[Release run 37918808388]
+  completed successfully on attempt 3 and published
+  #link("https://github.com/insanai/sibuna/releases/tag/v0.3.5")[v0.3.5] at 11:45 UTC.
+  Its unchanged immutable tag identifies source commit
+  `3590766b78316049408799d95a3304d74ebc80d1`. All five native binary/runtime jobs,
+  CRS conformance and authenticated workflows, Debian/RPM/Arch and real systemd lifecycles,
+  both native BSD source/runtime/package jobs, Homebrew source build/restart, and minimal
+  container/Restricted Kubernetes install/upgrade/uninstall passed before publication.
+- Attempts 1 and 2 failed the three-node CRS fixture during leadership changes: initial
+  source adoption was refused, then rollback preparation reported unavailable storage after
+  rejoin. No gate was removed and no unconfirmed selection was accepted. Four exact-tag
+  remote runs and an additional one-CPU run passed; these observations do not identify the
+  cause of the GitHub failures or establish uninterrupted clustered availability. Attempt 3
+  passed the original complete fixture at the same tag. Shipped packages retain
+  `-Dcluster=false`; startup/management can refuse work during quorum transitions.
+- All 17 public assets were independently downloaded on the designated build host.
+  `SHA256SUMS` contains 16 entries; every downloaded hash matched both those entries and
+  GitHub's asset digests. All five executable hashes/manifests, tagged source provenance,
+  formula source URL/checksum and distinct OpenBSD/Helm archive roles matched.
+  Corresponding-source SHA-256:
+  #text(size: 9pt)[#raw("3b55834a4d853bae728c56a457a75dfd6a0640078f730642335412f15e1d8eb8", block: true)]
+- Anonymous GHCR access was independently verified for amd64/arm64, with index digest
+  matching `IMAGE-DIGEST.txt`:
+  #text(size: 9pt)[#raw("sha256:3ed8790f180a2f259f3c1a735c78567d622775c9a5b6ea55f07d13bb4bc2c948", block: true)]
+  The published `helm-sibuna-0.3.5.tgz` SHA-256 is
+  #text(size: 9pt)[#raw("fadc813f0cd9de9984e6349694bf284c1d68a63809d7023e030339ae53c43ec8", block: true)]
+- #link("https://github.com/insanai/homebrew-sibuna/actions/runs/37925792397")[Tap updater]
+  passed and committed the qualified
+  #link("https://github.com/insanai/homebrew-sibuna/blob/main/Formula/sibuna.rb")[source formula].
+  It verifies formula/source checksums against GitHub asset digests and uses its own scoped
+  token. README, complete Sibuna license texts/notices and private security policy accompany
+  the formula. Maintainer pushes/pulls used the owner-authorized SSH remote. Future human
+  commits use GitHub-linked no-reply addresses; automated updates use the recognized Actions
+  bot identity, preserving attribution without publishing personal email addresses.
+- Main now contains all eight README, book, operator-guide and website editions plus the
+  shared sidebar-scroll correction. Pages refreshes the chart index from published assets;
+  Artifact Hub consumes that index with its existing verified repository ownership.
+  Community archive admission, Guix native evaluation/build, official BSD ports, WinGet
+  manifests, macOS signing and production network isolation remain independent open work.
 
 = References and Verification Limits
 

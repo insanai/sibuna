@@ -1,7 +1,7 @@
 # Sibuna distribution releases
 
 Keep recipes and validation in this monorepo. A separate `insanai/homebrew-sibuna`
-repository should be a thin publishing tap containing the generated `Formula/sibuna.rb`.
+repository is a thin publishing tap containing the qualified `Formula/sibuna.rb`.
 Community archive submissions remain separate reviews; upstream release packages
 are not admission into Debian, Fedora, Arch, Homebrew core or GNU Guix.
 
@@ -28,8 +28,8 @@ The runtime is UID/GID 65532. Build/test tools run outside the shipped image.
 The release job refuses to replace published releases or existing versioned image
 tags. Do not re-tag an existing version. Increase the app version, Chart.yaml
 version/appVersion, and existing source-offer/release-note references together
-before the next tag. The new files
-are for the next application release; they do not retroactively change v0.3.3.
+before the next tag. Version 0.3.5 uses the complete distribution workflow;
+the original v0.3.3 application assets remain unchanged.
 For initial Helm publication, `helm-bootstrap.yml` verifies both existing
 v0.3.3 Linux downloads against GitHub digests, their published checksums,
 executable manifests and the original source commit. It qualifies the image and
@@ -153,9 +153,29 @@ secret and publishes only a validated UUID in verified-publisher metadata.
 The public metadata was checked against Artifact Hub's registered repository ID.
 Artifact Hub has now indexed Sibuna 0.3.3 and its public API reports the publisher
 as verified. New published charts use the same repository and ownership metadata.
-The Homebrew tap is initialized with its README, Sibuna license files and release
-updater; formula import awaits the qualified source release. Official community
+The Homebrew tap publishes the qualified 0.3.5 source formula, README, Sibuna
+license files and daily/manual release updater. Official community
 packaging described by SID 0011 remains separate submission/review work.
+
+## Published 0.3.5 qualification
+
+[Sibuna 0.3.5](https://github.com/insanai/sibuna/releases/tag/v0.3.5) contains all
+17 expected assets. [Release run 37918808388](https://github.com/insanai/sibuna/actions/runs/37918808388)
+passed every required gate on attempt 3 at the unchanged source tag, including
+both native BSD jobs and actual Linux package/systemd, Homebrew and Kubernetes
+lifecycles. The preceding CRS cluster failures during leader changes are retained
+in SID 0011; shipped packages have clustering disabled.
+Independent public downloads matched all 16 checksum entries and GitHub asset
+digests, including executable manifests and exact source provenance. Anonymous
+GHCR access includes amd64/arm64 and matches the published `IMAGE-DIGEST.txt`.
+
+The [tap import](https://github.com/insanai/homebrew-sibuna/actions/runs/37925792397)
+passed and published [Formula/sibuna.rb](https://github.com/insanai/homebrew-sibuna/blob/main/Formula/sibuna.rb)
+with the verified corresponding-source checksum. Install with
+`brew install insanai/sibuna/sibuna`; this is a source formula without bottles or a cask.
+The same updater checks future qualified stable releases daily or by manual dispatch.
+Pages automatically rebuilds the Helm index; Artifact Hub tracks the registered
+repository with the existing verified ownership metadata.
 
 ## Validation
 
