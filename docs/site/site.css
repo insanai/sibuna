@@ -295,11 +295,7 @@ h1 {
 }
 .sidebar {
   font-size:13px;
-  position:sticky;
-  top:25px;
   align-self:start;
-  max-height:90vh;
-  overflow:auto;
   padding-right:15px
 }
 .sidebar summary {
