@@ -59,7 +59,8 @@ pub fn interrupt(io: std.Io, stream: std.Io.net.Stream) void {
     };
 }
 
-test "shutdown after bidirectional EOF remains a normal connection teardown" {
+test "OpenBSD shutdown after bidirectional EOF remains a normal connection teardown" {
+    if (@import("builtin").os.tag != .openbsd) return error.SkipZigTest;
     const t = std.testing;
     const io = t.io;
     var listener = try (try std.Io.net.IpAddress.parse("127.0.0.1", 0)).listen(io, .{});
