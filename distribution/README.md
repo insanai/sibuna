@@ -70,6 +70,12 @@ operation described in the upstream deployment guide; no admin is created.
    The workflow uses `GITHUB_TOKEN` with `contents:write`, `packages:write`, and
    `actions:write` (to refresh Pages). No separate registry account or long-lived
    image-publishing key is needed. Initial GHCR packages default to private:
+   the organization must also permit public packages under organization
+   Settings → Packages → Package creation. That permission affects every
+   organization member, so an owner should explicitly authorize it. For a
+   one-package bootstrap, enable it only for the visibility change and restore
+   the prior creation restriction afterward; existing public packages remain
+   public and their authorized release workflow can publish new versions.
    after the first image push, an organization owner must make the `sibuna`
    container package public and verify an anonymous pull. The publish job checks
    anonymous access and stops before publishing the GitHub release/chart if it
@@ -103,9 +109,14 @@ operation described in the upstream deployment guide; no admin is created.
    needs no API key in the release workflow. No personal owner emails are put
    in chart metadata. Artifact Hub indexes charts; GHCR hosts the runtime image.
 
-No accounts, tap repository, image, release or Artifact Hub listing were created
-by adding these recipes. Finish setup and all native qualification gates before
-launch. Official community packaging described by SID 0011 is later work.
+The Artifact Hub account has been created. The first chart/image passed actual
+Kubernetes qualification. The GHCR image is public and anonymous access was
+verified; the organization's public-package creation permission was enabled
+briefly with owner approval and then restored. The `helm-v0.3.3` chart release
+is published and the Pages index contains Sibuna 0.3.3. Register the repository
+URL above in Artifact Hub and supply its public UUID for verified-publisher
+metadata. Tap setup and
+official community packaging described by SID 0011 remain separate launch work.
 
 ## Validation
 

@@ -31,10 +31,12 @@ Replaced unsupported examples and guarantees, added account onboarding, and adde
 Guix candidate `guix.scm` plus `tools/prepare_distribution_source.py` for offline source builds.
 SID 0001 and `SECURITY.md` define the security response process used by this launch.
 
-*Status:* This specification is not evidence of publication, upstream acceptance, or a passed
-package build. Keep it in `discussion` pending review. No community account registrations,
-repository submissions, mailing-list messages, or package/registry publications are performed
-by this revision. External setup requirements below remain open until recorded as verified.
+*Status:* Keep the overall specification in `discussion` pending the remaining targets' review
+and qualification. The initial Helm 0.3.3 chart and minimal two-architecture GHCR image are
+published, with the public Pages index and actual qualification recorded below. The owner has
+created an Artifact Hub account; repository registration/UUID remain separate. No Debian,
+Fedora, Arch, Homebrew core, Guix, BSD or WinGet community acceptance is claimed. External
+setup requirements remain open until their own verified records are added.
 
 = Scope and Launch Decision
 
@@ -638,7 +640,7 @@ do not promise zero downtime, guaranteed zero data loss, or effortless schema ro
   [WinGet], [Windows ZIP contract], [GitHub contribution identity, actual manifests/hash, native portable qualification.],
   [Guix], [Local candidate/helper], [Source-built compiler, Guix evaluation/build, origins/policy review; Shepherd later.],
   [BSD], [Specifications], [Native compatibility, complete independent ports, accounts/contact and service review.],
-  [Helm], [Chart/schema, image and deployment gates], [GHCR public visibility, published Pages index, Artifact Hub account/repository ID, native runs and production network isolation.],
+  [Helm], [Chart/schema, qualified public image/chart and Pages index], [Artifact Hub repository registration/UUID, production network isolation and origin/ingress validation.],
   [Security], [Policy/process and reporting setting], [Merge/publish policy, responder assignments, notification/recovery drill and downstream contacts.],
 )
 
@@ -716,9 +718,45 @@ the fixtures are not public release assets and do not replace v0.3.3.
   control plane to start and Restricted admission accepted the chart resources; this is not
   evidence of a healthy chart installation. Do not weaken the shipped image or chart to work
   around the host. Preserve the normal GitHub-runner lifecycle/deployment gates before launch.
-- The supplied package contact is configured as SIBUNA_PACKAGE_CONTACT without duplicating
-  its value in public recipes/security documents. GHCR publication, public visibility, tap
-  setup/PR credentials, Artifact Hub registration and notification drills are still pending.
+- The supplied package contact was configured as SIBUNA_PACKAGE_CONTACT without duplicating
+  its value in public recipes/security documents. At this validation stage GHCR publication,
+  public visibility, tap setup/PR credentials, Artifact Hub registration and notification
+  drills were pending; the subsequent Helm publication record follows below.
+
+= First Helm Publication Qualification (2026-10-09)
+
+- The original v0.3.3 Linux assets were verified against GitHub asset digests,
+  published SHA256SUMS, executable hashes/manifests and source commit
+  `4f91644f2d5f20e6173ed0f4f54d598fac7f0cc2`. No application release asset changed.
+- #link("https://github.com/insanai/sibuna/actions/runs/37889965763")[Bootstrap run 37889965763]
+  passed actual non-root/read-only container checks and Restricted Kubernetes installation,
+  listener health, Recreate upgrade, and uninstall with retained PVC/Secret. A preceding
+  failure exposed storage-driver mount-root ownership; the chart now uses an owned child
+  data directory. The failure and fix were also reproduced on the designated build host.
+- The qualified chart and multi-platform OCI archive are retained as run artifacts.
+  The publishing retry verifies unchanged recipe bytes and the successful actual runtime gate,
+  then copies that same archive. Ubuntu 24.04 provides the required skopeo digest-preserving
+  copy option. A different already-existing image at the version is never overwritten.
+- The image uploaded to GHCR. With explicit owner authorization, public package creation was
+  enabled briefly, the Sibuna package made public, and the original creation restriction
+  restored and UI-verified. An anonymous registry inspection on the designated build host
+  succeeded. The multi-platform image digest is
+  `sha256:75c63a05885c97325175773594e4e30a47163f2a84df807b111e43ea3c954759`.
+- #link("https://github.com/insanai/sibuna/releases/tag/helm-v0.3.3")[Helm 0.3.3]
+  is published separately; the original v0.3.3 application assets/latest marker are unchanged.
+  The chart SHA-256 is `5bcfcef57a946b16a2b5ba8bc23c2d43e50ea0f11406c47febb0506a0e26eaca`.
+- #link("https://github.com/insanai/sibuna/actions/runs/37890615215")[Publishing run 37890615215]
+  succeeded using the original qualified artifacts. Both image architectures and their layers
+  were downloaded anonymously on the designated build host.
+- #link("https://github.com/insanai/sibuna/actions/runs/37891247895")[Pages run 37891247895]
+  deployed the populated #link("https://insanai.github.io/sibuna/charts/index.yaml")[HTTP index],
+  which lists Sibuna 0.3.3 and its matching public chart download/digest. The owner has created
+  an Artifact Hub account; listing registration and the public repository UUID are the
+  remaining account steps. No API key is required here. Production CNI enforcement, origin
+  traffic and ingress route restrictions remain operator deployment gates.
+- A Helm client on the designated build host added/updated the live repository, found
+  `sibuna/sibuna` at chart/app version 0.3.3, downloaded the package with the matching digest,
+  and successfully rendered it using an operator-owned Secret reference.
 
 = References and Verification Limits
 
