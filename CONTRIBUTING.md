@@ -3,6 +3,11 @@
 Report suspected vulnerabilities through the private channel in [SECURITY.md](SECURITY.md).
 Do not put unpatched exploit details or live secrets in public issues, pull requests, or SIDs.
 
+Use the no-reply email shown in your GitHub account's email settings for commit authorship.
+GitHub can then attribute contributions to your account while keeping your personal email
+private. Release-update workflows use GitHub's recognized Actions bot identity for automated
+commits. Contributor statistics may take time to refresh after changes reach the default branch.
+
 Run `zig build fmt`, `zig build test`, and `zig build sid` before submitting a change. Regenerate
 `benchmarks/results/latest.json` with `sh benchmarks/run-all.sh` whenever a change touches a
 measured subsystem; the book renders its figures from that file.
