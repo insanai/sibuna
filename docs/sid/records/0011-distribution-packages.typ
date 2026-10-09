@@ -34,7 +34,7 @@ SID 0001 and `SECURITY.md` define the security response process used by this lau
 *Status:* Upstream version 0.3.5 is published with qualified binary/native packages,
 corresponding source, a source-built Homebrew formula, and a minimal two-architecture image/chart.
 Keep the overall specification in `discussion` pending the remaining community targets' review
-and qualification. Artifact Hub has indexed the initial 0.3.3 chart with verified publisher
+and qualification. Artifact Hub has indexed chart/app version 0.3.5 with verified publisher
 ownership; new chart versions use the same public repository and registered UUID. No Debian,
 Fedora, Arch, Homebrew core, Guix, BSD or WinGet community acceptance is claimed. External
 setup requirements remain open until their own verified records are added.
@@ -897,6 +897,12 @@ disposable qualification fixture, not system repository signature policy.
   Artifact Hub consumes that index with its existing verified repository ownership.
   Community archive admission, Guix native evaluation/build, official BSD ports, WinGet
   manifests, macOS signing and production network isolation remain independent open work.
+- #link("https://github.com/insanai/sibuna/actions/runs/37926429941")[Documentation deployment]
+  passed and published all eight editions plus this release record. The live Helm repository
+  passed repo add/update and an exact-checksum 0.3.5 pull, retaining 0.3.3. Artifact Hub's
+  #link("https://artifacthub.io/packages/helm/sibuna/sibuna")[public catalog]
+  now reports chart/app version 0.3.5, the qualified chart digest above, and verified publisher
+  ownership. Its tracker update required no additional account key or personal contact metadata.
 
 = References and Verification Limits
 

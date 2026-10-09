@@ -151,8 +151,8 @@ is published and the Pages index contains Sibuna 0.3.3. The repository URL above
 as `ARTIFACTHUB_REPOSITORY_ID`; Pages accepts either a variable or the existing
 secret and publishes only a validated UUID in verified-publisher metadata.
 The public metadata was checked against Artifact Hub's registered repository ID.
-Artifact Hub has now indexed Sibuna 0.3.3 and its public API reports the publisher
-as verified. New published charts use the same repository and ownership metadata.
+Artifact Hub indexed the initial 0.3.3 chart and now lists 0.3.5; its public API
+reports the publisher as verified. New charts use the same repository and ownership metadata.
 The Homebrew tap publishes the qualified 0.3.5 source formula, README, Sibuna
 license files and daily/manual release updater. Official community
 packaging described by SID 0011 remains separate submission/review work.
@@ -176,6 +176,9 @@ with the verified corresponding-source checksum. Install with
 The same updater checks future qualified stable releases daily or by manual dispatch.
 Pages automatically rebuilds the Helm index; Artifact Hub tracks the registered
 repository with the existing verified ownership metadata.
+The live repository passed Helm add/update and an exact-checksum 0.3.5 pull,
+retaining the earlier 0.3.3 chart. Artifact Hub now indexes chart/app version
+0.3.5 with the qualified chart digest and verified publisher status.
 
 ## Validation
 
