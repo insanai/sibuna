@@ -641,7 +641,7 @@ do not promise zero downtime, guaranteed zero data loss, or effortless schema ro
   [WinGet], [Windows ZIP contract], [GitHub contribution identity, actual manifests/hash, native portable qualification.],
   [Guix], [Local candidate/helper], [Source-built compiler, Guix evaluation/build, origins/policy review; Shepherd later.],
   [BSD], [Specifications], [Native compatibility, complete independent ports, accounts/contact and service review.],
-  [Helm], [Chart/schema, qualified public image/chart, Pages index and configured Artifact Hub UUID], [Verify public ownership metadata/Artifact Hub indexing, production network isolation and origin/ingress validation.],
+  [Helm], [Chart/schema, qualified public image/chart, Pages index and verified repository UUID metadata], [Artifact Hub indexing/verified-publisher status, production network isolation and origin/ingress validation.],
   [Security], [Policy/process and reporting setting], [Merge/publish policy, responder assignments, notification/recovery drill and downstream contacts.],
 )
 
@@ -761,6 +761,12 @@ the fixtures are not public release assets and do not replace v0.3.3.
 - A Helm client on the designated build host added/updated the live repository, found
   `sibuna/sibuna` at chart/app version 0.3.3, downloaded the package with the matching digest,
   and successfully rendered it using an operator-owned Secret reference.
+- #link("https://github.com/insanai/sibuna/actions/runs/37892240603")[Ownership metadata Pages run]
+  succeeded. The public #link("https://insanai.github.io/sibuna/charts/artifacthub-repo.yml")[metadata]
+  returned HTTP 200 and its sole repositoryID matched the registered `sibuna` repository's
+  public Artifact Hub API response exactly. No owner names or email addresses are included.
+  Artifact Hub still reported verified_publisher false and no indexed package at this check;
+  the next processing cycle, rather than metadata publication alone, sets that badge.
 
 = References and Verification Limits
 

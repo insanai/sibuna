@@ -118,6 +118,9 @@ is published and the Pages index contains Sibuna 0.3.3. Register the repository
 URL above in Artifact Hub. The owner has configured its public repository UUID
 as `ARTIFACTHUB_REPOSITORY_ID`; Pages accepts either a variable or the existing
 secret and publishes only a validated UUID in verified-publisher metadata.
+The public metadata was checked against Artifact Hub's registered repository ID.
+Its verified-publisher badge appears after Artifact Hub processes the repository;
+metadata publication alone does not mean that indexing has completed.
 Tap setup and
 official community packaging described by SID 0011 remain separate launch work.
 
