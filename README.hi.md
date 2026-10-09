@@ -1,4 +1,4 @@
-<!-- English source SHA-256: d0280e2c890d3f18780b8c0cd0965c2d6b1ebfe943eafba0ebdc2c69aa09e771 -->
+<!-- English source SHA-256: 0e595d6fb27cba412aeae226ee13400d0d2eb66ac54aef03dace51a4a43911fb -->
 <h1 align="center">sibuna</h1>
 <p align="center">ब्राउज़र Proof of Work और वैकल्पिक कंसोल के साथ वेब सुरक्षा।</p>
 <p align="center">
@@ -51,7 +51,7 @@
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 15 या बाद का |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019 या बाद का; नेटिव `sibuna.exe` |
 | FreeBSD x86-64 | `sibuna-0.3.5-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI पैकेज |
-| OpenBSD x86-64 | `sibuna-0.3.5-openbsd-7.9-amd64.tgz` | OpenBSD 7.9; CLI पैकेज |
+| OpenBSD x86-64 | `sibuna-0.3.5.tgz` | OpenBSD 7.9; CLI पैकेज |
 
 macOS बिल्ड बिना हस्ताक्षर वाले (Unsigned) हैं। प्रत्येक पैकेज में लाइसेंस, सोर्स लिंक और बिल्ड मैनिफ़ेस्ट शामिल हैं। उपयोग करने से पहले `SHA256SUMS` के विरुद्ध आर्काइव को सत्यापित (Verify) करें।
 

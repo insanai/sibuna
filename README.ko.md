@@ -1,4 +1,4 @@
-<!-- English source SHA-256: d0280e2c890d3f18780b8c0cd0965c2d6b1ebfe943eafba0ebdc2c69aa09e771 -->
+<!-- English source SHA-256: 0e595d6fb27cba412aeae226ee13400d0d2eb66ac54aef03dace51a4a43911fb -->
 <h1 align="center">sibuna</h1>
 <p align="center">브라우저 작업 증명과 선택형 콘솔로 웹 서비스를 보호합니다.</p>
 <p align="center">
@@ -51,7 +51,7 @@
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 15 이상 |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019 이상; 네이티브 `sibuna.exe` |
 | FreeBSD x86-64 | `sibuna-0.3.5-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI 패키지 |
-| OpenBSD x86-64 | `sibuna-0.3.5-openbsd-7.9-amd64.tgz` | OpenBSD 7.9; CLI 패키지 |
+| OpenBSD x86-64 | `sibuna-0.3.5.tgz` | OpenBSD 7.9; CLI 패키지 |
 
 macOS 빌드에는 서명이 없습니다. 각 패키지에는 라이선스, 소스 링크와 빌드 명세가 포함됩니다. 사용하기 전에 `SHA256SUMS`로 압축 파일을 검증하세요.
 

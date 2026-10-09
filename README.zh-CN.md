@@ -1,4 +1,4 @@
-<!-- English source SHA-256: d0280e2c890d3f18780b8c0cd0965c2d6b1ebfe943eafba0ebdc2c69aa09e771 -->
+<!-- English source SHA-256: 0e595d6fb27cba412aeae226ee13400d0d2eb66ac54aef03dace51a4a43911fb -->
 <h1 align="center">sibuna</h1>
 <p align="center">通过浏览器工作量证明保护网站，并提供可选的管理控制台。</p>
 <p align="center">
@@ -51,7 +51,7 @@
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 15 或更高版本 |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019 或更高版本；原生 `sibuna.exe` |
 | FreeBSD x86-64 | `sibuna-0.3.5-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI 软件包 |
-| OpenBSD x86-64 | `sibuna-0.3.5-openbsd-7.9-amd64.tgz` | OpenBSD 7.9; CLI 软件包 |
+| OpenBSD x86-64 | `sibuna-0.3.5.tgz` | OpenBSD 7.9; CLI 软件包 |
 
 macOS 构建未签名。每个安装包都包含许可证、源码链接和构建清单。使用前，请对照 `SHA256SUMS` 校验压缩包。
 

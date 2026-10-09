@@ -17,6 +17,25 @@ def fetch(url):
     return urllib.request.urlopen(request, timeout=120).read()
 
 
+def chart_names(release):
+    """Select charts without confusing canonical OpenBSD .tgz package names."""
+    match = re.fullmatch(r'(helm-)?v([0-9]+\.[0-9]+\.[0-9]+)', release['tag_name'])
+    if not match:
+        return []
+    version = match[2]
+    assets = {a['name'] for a in release['assets']}
+    current = f'helm-sibuna-{version}.tgz'
+    legacy = f'sibuna-{version}.tgz'
+    legacy_allowed = bool(match[1]) or tuple(map(int, version.split('.'))) < (0, 3, 5)
+    candidates = [name for name in (current, legacy) if name in assets
+                  and (name != legacy or legacy_allowed)]
+    if len(candidates) > 1:
+        raise ValueError(f'{release["tag_name"]}: ambiguous chart assets')
+    if not candidates and (match[1] or not legacy_allowed):
+        raise ValueError(f'{release["tag_name"]}: missing qualified Helm asset')
+    return candidates
+
+
 def build(destination, repository_id):
     if repository_id:
         import uuid
@@ -34,7 +53,7 @@ def build(destination, repository_id):
             if release['draft'] or release['prerelease']:
                 continue
             assets = {a['name']: a['browser_download_url'] for a in release['assets']}
-            charts = [n for n in assets if re.fullmatch(r'sibuna-[0-9]+\.[0-9]+\.[0-9]+\.tgz', n)]
+            charts = chart_names(release)
             if not charts:
                 continue
             lines = fetch(assets['SHA256SUMS']).decode().splitlines()

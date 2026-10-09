@@ -73,7 +73,7 @@ installing the exact package for your OS release and CPU. As root, use:
 
 ```sh
 pkg add ./sibuna-0.3.5-freebsd-15.1-amd64.pkg
-pkg_add -D unsigned ./sibuna-0.3.5-openbsd-7.9-amd64.tgz
+pkg_add -D unsigned ./sibuna-0.3.5.tgz
 ```
 
 The OpenBSD option accepts only this explicitly requested unsigned upstream file;

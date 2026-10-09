@@ -199,6 +199,7 @@ jobs:
           VERSION=$(python tools/check_release_version.py --print-version)
           helm lint distribution/helm/sibuna --strict --set secret.existingSecret=qualification
           helm package distribution/helm/sibuna --version "$VERSION" --app-version "$VERSION" --destination dist
+          mv "dist/sibuna-$VERSION.tgz" "dist/helm-sibuna-$VERSION.tgz"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: sibuna-distribution-source

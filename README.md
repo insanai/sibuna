@@ -54,7 +54,7 @@ The default package includes storage and console support. The console starts wit
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 15 or later |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019 or later; native `sibuna.exe` |
 | FreeBSD x86-64 | `sibuna-0.3.5-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI package |
-| OpenBSD x86-64 | `sibuna-0.3.5-openbsd-7.9-amd64.tgz` | OpenBSD 7.9; CLI package |
+| OpenBSD x86-64 | `sibuna-0.3.5.tgz` | OpenBSD 7.9; CLI package |
 
 macOS builds are unsigned. Each package includes licenses, source links and a build manifest.
 Verify the archive against `SHA256SUMS` before using it.

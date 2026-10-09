@@ -37,7 +37,11 @@ def check(package, user):
         if system == 'freebsd':
             command = ['pkg', 'add'] + (['-f'] if replace else [])
         else:
-            command = ['pkg_add', '-D', 'unsigned'] + (['-r'] if replace else [])
+            # Force real extraction for this same-version lifecycle fixture,
+            # rather than accepting an already-installed update signature or
+            # tying the old payload into the replacement.
+            command = ['pkg_add', '-D', 'unsigned'] + (
+                ['-r', '-D', 'installed', '-D', 'donttie'] if replace else [])
         subprocess.run(command + [str(package)], check=True)
 
     def remove():

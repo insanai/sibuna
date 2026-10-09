@@ -1,4 +1,4 @@
-<!-- English source SHA-256: d0280e2c890d3f18780b8c0cd0965c2d6b1ebfe943eafba0ebdc2c69aa09e771 -->
+<!-- English source SHA-256: 0e595d6fb27cba412aeae226ee13400d0d2eb66ac54aef03dace51a4a43911fb -->
 <h1 align="center">sibuna</h1>
 <p align="center">Protección web con prueba de trabajo en el navegador y consola opcional.</p>
 <p align="center">
@@ -59,7 +59,7 @@ de almacenamiento y consola. La consola arranca con `--console`.
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 15 o posterior |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019 o posterior; `sibuna.exe` nativo |
 | FreeBSD x86-64 | `sibuna-0.3.5-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; paquete CLI |
-| OpenBSD x86-64 | `sibuna-0.3.5-openbsd-7.9-amd64.tgz` | OpenBSD 7.9; paquete CLI |
+| OpenBSD x86-64 | `sibuna-0.3.5.tgz` | OpenBSD 7.9; paquete CLI |
 
 Los paquetes macOS no están firmados. Cada paquete incluye licencias, enlaces a fuentes
 y manifiesto. Verifica el archivo contra `SHA256SUMS` antes de usarlo.

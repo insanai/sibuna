@@ -340,7 +340,7 @@ sudo pacman -U ./sibuna-bin-*.pkg.tar.zst
 # FreeBSD 15.1 / amd64 (root shell)
 pkg add ./sibuna-0.3.5-freebsd-15.1-amd64.pkg
 # OpenBSD 7.9 / amd64 (root shell): this verified local upstream package only
-pkg_add -D unsigned ./sibuna-0.3.5-openbsd-7.9-amd64.tgz
+pkg_add -D unsigned ./sibuna-0.3.5.tgz
 ```
 
 These unsigned upstream downloads are separate from official distribution archives.

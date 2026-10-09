@@ -835,6 +835,14 @@ and installed-package qualification remain required before tagging/publication.
 #link("https://github.com/openbsd/src/blob/master/sys/netinet/tcp_usrreq.c")[OpenBSD TCP source]
 documents EINVAL when the protocol control block is absent; no compiler cache is patched.
 
+OpenBSD's package filename must match its internal stem-version name. Its release asset
+is therefore `sibuna-0.3.5.tgz`; the Helm asset is `helm-sibuna-0.3.5.tgz`. The chart indexer
+selects the explicit Helm asset and retains canonical names only for legacy chart releases,
+so it cannot confuse a native OpenBSD package with a chart. The installed-package fixture
+forces same-version OpenBSD replacement/extraction with installed/donttie flags; it does
+not count an already-installed no-op as a reinstall. These flags apply only to the
+disposable qualification fixture, not system repository signature policy.
+
 = References and Verification Limits
 
 Policies checked on 2026-10-09. Debian, Homebrew, Microsoft, BSD, Helm, Kubernetes, GitHub, and

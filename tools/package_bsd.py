@@ -79,7 +79,9 @@ def package(stage, output):
         created = output / (name + '.tgz')
     else:
         raise ValueError('unsupported package system')
-    asset = output / f'{name}-{system}-{metadata["minimum_os"]}-amd64{created.suffix}'
+    # OpenBSD requires the archive basename to match its internal package name.
+    # The Helm chart has a separate helm-sibuna-* asset name in this release.
+    asset = created if system == 'openbsd' else output / f'{name}-{system}-{metadata["minimum_os"]}-amd64{created.suffix}'
     created.rename(asset)
     print(asset)
 
