@@ -6,8 +6,12 @@ on:
         description: Existing stable app release (must match the chart)
         required: true
         default: v0.3.3
+      qualification_run:
+        description: Optional earlier run with a successful unchanged qualification job
+        required: false
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: helm-bootstrap-${{ inputs.tag }}
   cancel-in-progress: false
@@ -25,28 +29,41 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
+      - name: Verify reusable qualification belongs to these exact recipes
+        if: inputs.qualification_run != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          QUALIFICATION_RUN: ${{ inputs.qualification_run }}
+          APP_TAG: ${{ inputs.tag }}
+        run: python3 tools/check_helm_qualification.py "$QUALIFICATION_RUN" "$APP_TAG"
       - name: Verify existing release checksums, binary manifests and original source commit
+        if: inputs.qualification_run == ''
         env:
           GH_TOKEN: ${{ github.token }}
           APP_TAG: ${{ inputs.tag }}
         run: python3 tools/prepare_published_container.py "$APP_TAG" image-context
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        if: inputs.qualification_run == ''
         with:
           version: v0.38.0
           driver-opts: image=moby/buildkit@sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea
       - run: |
           python3 tools/install_distribution_tools.py "$RUNNER_TEMP/distribution-tools" helm kind kubectl
           python3 -m pip install PyYAML==6.0.2
+        if: inputs.qualification_run == ''
       - name: Qualify the actual non-root image and Kubernetes install, upgrade and uninstall
+        if: inputs.qualification_run == ''
         run: |
           docker buildx build --platform linux/amd64 --load -t sibuna:qualification image-context
           python3 tools/check_container.py sibuna:qualification
           python3 tools/check_helm.py --image sibuna:qualification
       - name: Package the chart and export the qualified two-architecture image
+        if: inputs.qualification_run == ''
         run: |
           helm package distribution/helm/sibuna --destination dist
           docker buildx build --platform linux/amd64,linux/arm64 --output type=oci,dest=sibuna-image.tar image-context
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: inputs.qualification_run == ''
         with:
           name: qualified-helm-bootstrap
           path: |
@@ -55,17 +72,20 @@ jobs:
           if-no-files-found: error
   publish:
     needs: qualify
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: write
       packages: write
+      actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: qualified-helm-bootstrap
           path: input
+          run-id: ${{ inputs.qualification_run || github.run_id }}
+          github-token: ${{ github.token }}
       - name: Refuse to replace a published chart release
         env:
           GH_TOKEN: ${{ github.token }}

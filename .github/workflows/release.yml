@@ -259,7 +259,7 @@ jobs:
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [build, crs-conformance, crs-console, native-packages, distribution-source, homebrew, container-and-chart]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: write
