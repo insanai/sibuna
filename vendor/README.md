@@ -23,6 +23,9 @@ reads instruction bytes from execute-only libc mappings. Other safe-mode checks
 and the operating system's memory protections remain enabled. Linux, macOS and
 Windows compiler flags are unchanged. The installed OpenBSD console must pass
 native tests with the default user limits before release.
+Paxos durable-state validation iterates its stored cell window by pointer rather
+than copying the array onto the stack. All per-cell invariant checks remain;
+nested journal replay no longer requires capacity-sized stack temporaries.
 The unused Zaxon terminal application and its Vaxis dependency are not built.
 
 The snapshots are tested through Sibuna's storage and cluster integration tests;

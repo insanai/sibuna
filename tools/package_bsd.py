@@ -21,7 +21,8 @@ def package(stage, output):
     binary = payload / 'usr/local/bin/sibuna'
     if hashlib.sha256(binary.read_bytes()).hexdigest() != metadata['binary_sha256']:
         raise ValueError('staged executable digest mismatch')
-    reported = subprocess.check_output([str(binary), '--version'], text=True).strip()
+    reported = subprocess.check_output([str(binary), '--version'], text=True,
+                                       stderr=subprocess.STDOUT).strip()
     if reported != f'sibuna {metadata["version"]}':
         raise ValueError('native executable version mismatch')
     output.mkdir(parents=True, exist_ok=True)

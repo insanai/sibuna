@@ -115,14 +115,16 @@ staging, library, maintainer and service-review requirements in SID 0011.
    this retry, while a different image at that version is refused. Source labels associate
    it with this repository. Do not announce a usable public chart until this is
    verified. The versioned image digest is attached as `IMAGE-DIGEST.txt`.
-2. **Homebrew tap:** create the public `insanai/homebrew-sibuna` repository with an
-   initial default-branch commit. Set `HOMEBREW_TAP_REPOSITORY` to that name and
-   `HOMEBREW_TAP_TOKEN` to a narrowly scoped GitHub App token or fine-grained token
-   granting that tap contents and pull-request writes. No secret goes in source.
-   After a release, automation proposes a formula-update PR; a maintainer reviews
-   and merges it. Without credentials the formula is still attached to the
-   release for manual review. Install with `brew install insanai/sibuna/sibuna`
-   only after the tap is created and the formula merged. The source formula
+2. **Homebrew tap:** the public `insanai/homebrew-sibuna` repository is the thin
+   publishing destination. Its daily/manual updater uses its own `GITHUB_TOKEN`
+   to import the qualified formula after publication, verifying source/formula
+   release checksums against GitHub asset digests. No cross-repository secret is
+   required. Recipes, the updater and its workflow remain in this monorepo under
+   `distribution/homebrew/`; the tap also carries a README and Sibuna license texts.
+   The optional monorepo PR workflow can still use HOMEBREW_TAP_REPOSITORY and a
+   narrowly scoped HOMEBREW_TAP_TOKEN for reviewed update PRs instead.
+   Install with `brew install insanai/sibuna/sibuna`
+   only after the qualified formula is present. The source formula
    requires exactly the release's Zig compiler. Homebrew core submission needs
    its own audit, human review and AI-assistance disclosure; the tap is not core.
 3. **Helm hosting:** existing Pages deploys docs and the complete chart index in

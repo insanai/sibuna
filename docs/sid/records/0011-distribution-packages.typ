@@ -108,8 +108,9 @@ Configuration, private seeds, data and account ownership persist through upgrade
 pinned SQLite inputs, and attaches a source bundle plus a formula with its measured SHA-256.
 `distribution/homebrew/sibuna.rb.in` builds from source with the exact supported Zig version;
 there is no cask. A native macOS source-build/test job gates publication. Tap updates become
-reviewable PRs only when the owner configures an existing tap and scoped cross-repository
-credentials. The release still carries the formula when those credentials are absent.
+available through the tap's daily/manual workflow, using its own scoped GITHUB_TOKEN and
+verifying release checksums against GitHub asset digests. Cross-repository credentials are
+optional for the monorepo's reviewed-PR route. The release always carries the formula.
 
 Container qualification checks non-root/read-only operation and persistent restart. The chart
 requires an existing Secret, uses group-readable 0440 projections with fsGroup 65532, one
@@ -137,10 +138,11 @@ Artifact Hub indexes that HTTP repository and does not host the image or chart b
   package defaults to private; an owner must make it public and verify anonymous pulls before
   announcing a usable chart. Version tags must never be replaced; IMAGE-DIGEST.txt records
   the image digest. These files prepare future releases and do not change published v0.3.3.
-- *Homebrew:* Create a public `insanai/homebrew-sibuna` repository with an initialized default
-  branch. Set public variable HOMEBREW_TAP_REPOSITORY and secret HOMEBREW_TAP_TOKEN with only
-  that tap's contents/PR write permissions, or supported scoped GitHub App access. Review the
-  generated update PR before merge. Core submission remains a separate human/community review.
+- *Homebrew:* The owner created public `insanai/homebrew-sibuna`; initialize it with the
+  upstream README, license notices and tap-owned release updater. The updater needs only
+  its own contents-write GITHUB_TOKEN and imports published checksum-qualified formulae.
+  HOMEBREW_TAP_REPOSITORY/HOMEBREW_TAP_TOKEN remain optional for the reviewed-PR route, scoped
+  only to that tap. Core submission remains a separate human/community review.
 - *Pages/Artifact Hub:* Enable/retain the existing Pages workflow and Actions dispatch rights.
   After the chart index is public, the owner registers an Artifact Hub account/organization
   and adds the Helm repository URL. Set the assigned public UUID as ARTIFACTHUB_REPOSITORY_ID
@@ -169,14 +171,14 @@ Small independent publishing repositories can still limit who has publishing acc
   columns: (1.1fr, 1.8fr, 1.7fr),
   table.header([*Content*], [*Upstream-owned source*], [*Distribution destination*]),
   [Debian/RPM/BSD], [Recipes and reusable integration under `distribution/` subdirectories, beside tests and the daemon.], [Community packaging trees/review systems; signed upstream APT/RPM metadata is a hosting destination, not necessarily another source Git repository.],
-  [Homebrew], [Source formula/resources and tests in `distribution/homebrew/`.], [A small dedicated tap, proposed `insanai/homebrew-sibuna`, exporting qualified formulae; homebrew/core separately owns accepted definitions.],
+  [Homebrew], [Source formula/resources and tests in `distribution/homebrew/`.], [The dedicated `insanai/homebrew-sibuna` tap exports qualified formulae; homebrew/core separately owns accepted definitions.],
   [WinGet], [Release-manifest generation/validation in the monorepo.], [Versioned manifests submitted to microsoft/winget-pkgs, which owns accepted community metadata.],
   [Guix], [Root `guix.scm` candidate now; reusable origins/package/service modules later under `distribution/guix/`.], [Official Guix packaging repository after review. An optional authenticated upstream channel can expose a designated monorepo directory; a new Git repository is not required initially.],
   [Images/Helm], [Container and chart source, schema and deployment tests under `distribution/`.], [GHCR runtime images; GitHub Pages HTTP chart repository indexed by Artifact Hub. Listing does not relocate source ownership.],
 )
 
-The proposed tap does not yet exist by virtue of this specification. Establish ownership and
-permissions through the onboarding gates before using its installation commands. Homebrew
+The owner-created tap receives recipes only after the release qualification gates pass.
+Check that the formula is present before using its installation commands. Homebrew
 expects a Git tap and its conventional GitHub name for one-argument tap commands.
 WinGet accepts reviewed manifests in its community repository. OCI registries distribute
 packaged charts independently of their source repository.

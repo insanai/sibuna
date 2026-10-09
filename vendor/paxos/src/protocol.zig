@@ -756,7 +756,10 @@ pub fn ProtocolGated(
 
             fn assertValid(self: *const DurableState) void {
                 if (!std.debug.runtime_safety) return;
-                for (self.cells, 0..) |cell, index| {
+                // Iterate the stored array through a pointer. Copying the entire
+                // window here creates capacity-sized stack frames at every
+                // nested replay validation, exceeding normal OpenBSD limits.
+                for (&self.cells, 0..) |cell, index| {
                     if (cell.slot != 0) {
                         std.debug.assert(cellIndex(cell.slot) == index);
                     }

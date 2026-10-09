@@ -138,6 +138,11 @@
         "reason": "Delayed Nacks cannot replace newer durable or observed leader evidence; compare complete round, priority and node ballots before changing role or leader hint.",
         "verification": "41 focused protocol and bitset tests include lower rounds, equal-round priority and node ordering, durable promises and earlier observed Nacks. Ignored Nacks preserve role, hint, ticks and promise; fresh higher rejection still demotes the campaign.",
         "source_sha256": "028d49159297b70ee36113d7415a66f191524b12762c1d45c61d6d0b642ad461"
+      },
+      {
+        "file": "src/protocol.zig",
+        "reason": "Iterate durable cells through an array pointer during invariant validation; avoid capacity-sized stack copies during nested journal replay under normal OpenBSD limits.",
+        "verification": "Existing per-cell invariant checks are preserved; native installed console restart qualification exercises retained journal replay."
       }
     ],
     "upstream_files": {
