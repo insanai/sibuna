@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 822c45805a612273e200c612475e4b596be854494af48fbb85f2d67a22bcb3a9 -->
+<!-- English source SHA-256: d0280e2c890d3f18780b8c0cd0965c2d6b1ebfe943eafba0ebdc2c69aa09e771 -->
 <h1 align="center">sibuna</h1>
 <p align="center">ブラウザーの計算量証明でウェブを保護し、必要に応じて管理コンソールも利用できます。</p>
 <p align="center">
@@ -41,7 +41,7 @@
 
 ## クイックスタート
 
-プラットフォームに合った[リリースをダウンロード](https://github.com/insanai/sibuna/releases/tag/v0.3.4)してください。標準パッケージにはストレージとコンソールのサポートが含まれます。コンソールは`--console`で起動します。
+プラットフォームに合った[リリースをダウンロード](https://github.com/insanai/sibuna/releases/tag/v0.3.5)してください。標準パッケージにはストレージとコンソールのサポートが含まれます。コンソールは`--console`で起動します。
 
 | プラットフォーム | パッケージ | 動作要件 |
 | --- | --- | --- |
@@ -50,14 +50,18 @@
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 15以降 |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 15以降 |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019以降、ネイティブの`sibuna.exe` |
+| FreeBSD x86-64 | `sibuna-0.3.5-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI パッケージ |
+| OpenBSD x86-64 | `sibuna-0.3.5-openbsd-7.9-amd64.tgz` | OpenBSD 7.9; CLI パッケージ |
 
 macOS向けビルドは未署名です。各パッケージにはライセンス、ソースへのリンク、ビルド情報が含まれます。使用する前に、`SHA256SUMS`と照合してアーカイブを検証してください。
+
+Debian/RPM パッケージは Linux x86-64 と ARM64、Arch `sibuna-bin` は x86-64 に対応します。FreeBSD 15.1 と OpenBSD 7.9 パッケージは x86-64 に対応し、CLI をインストールします。Linux パッケージは任意で有効にする無効状態の systemd サービスを含みます。BSD パッケージはサービス、アカウント、状態を作成しません。これらは上流の配布物で、コミュニティリポジトリでの採用は別の手続きです。Homebrew のソース formula と Helm chart も含まれます。インストール、検証、非公開の状態、更新、Kubernetes 設定は[パッケージ運用ガイド](https://insanai.github.io/sibuna/ja/book/operations.html)をご覧ください。
 
 Linux x86-64で、アプリがポート3000で待ち受けている場合：
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.5/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.5/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

@@ -63,7 +63,7 @@ package conventions, not IANA assignments or universal application defaults.
 #table(
   columns: (0.9fr, 2.5fr),
   table.header([*Area*], [*Verified behavior and implication*]),
-  [Platforms], [`tools/release_targets.py` covers Linux x86-64/ARM64, macOS ARM64/x86-64, and Windows x86-64. BSD is absent and requires native qualification.],
+  [Platforms], [`tools/release_targets.py` covers Linux x86-64/ARM64, macOS ARM64/x86-64, and Windows x86-64. Separate native BSD jobs target FreeBSD 15.1/amd64 and OpenBSD 7.9/amd64; each must pass before publication.],
   [Compiler], [`build.zig.zon` requires Zig 0.17.0, pinned in `tools/zig-release.json`. Older distribution compilers cannot be assumed compatible.],
   [Licenses], [`LICENSE` scopes engine LGPL-3.0 and console AGPL-3.0. The default executable is AGPL-covered. Apache-2.0 describes CRS rules, not Sibuna.],
   [Config], [`libs/core/src/config.zig` parses CLI arguments and rejects unknown options. No general INI reader or `--config` exists. Environment files need explicit argument mapping.],
@@ -640,7 +640,7 @@ do not promise zero downtime, guaranteed zero data loss, or effortless schema ro
   [Homebrew], [Generated source formula and build gate], [Create thin tap, scoped update-PR credentials, native formula run; core audit/acceptance separately. No cask.],
   [WinGet], [Windows ZIP contract], [GitHub contribution identity, actual manifests/hash, native portable qualification.],
   [Guix], [Local candidate/helper], [Source-built compiler, Guix evaluation/build, origins/policy review; Shepherd later.],
-  [BSD], [Specifications], [Native compatibility, complete independent ports, accounts/contact and service review.],
+  [BSD], [Native CLI package recipes and workflow gates], [Actual source/package/runtime runs; complete independent official ports and service review remain separate.],
   [Helm], [Chart/schema, qualified public image/chart, Pages index and verified repository UUID metadata], [Artifact Hub indexing/verified-publisher status, production network isolation and origin/ingress validation.],
   [Security], [Policy/process and reporting setting], [Merge/publish policy, responder assignments, notification/recovery drill and downstream contacts.],
 )
@@ -767,6 +767,45 @@ the fixtures are not public release assets and do not replace v0.3.3.
   public Artifact Hub API response exactly. No owner names or email addresses are included.
   Artifact Hub still reported verified_publisher false and no indexed package at this check;
   the next processing cycle, rather than metadata publication alone, sets that badge.
+
+= Version 0.3.5 Release Scope
+
+The requested next release is 0.3.5. It retains all five binary archives and adds
+upstream Debian/RPM (x86-64 and ARM64), Arch (x86-64), FreeBSD 15.1/amd64 and
+OpenBSD 7.9/amd64 packages to the same GitHub release. A source formula, offline
+corresponding-source bundle, chart and qualified public image accompany them.
+All English and seven translated README, book, operator-guide and website editions
+share versioned links and package commands. Historical benchmark results retain
+their original versions/commits and SID 0007's exception is not reclassified.
+
+BSD packages install only the CLI and notices under /usr/local. They create no
+account, rc service, administrator, credentials or state. Operators choose an
+unprivileged identity, private keys/state and explicit startup; stop before
+replacement/removal. Native jobs use the qualified base system's SDK and ordinary
+user limits, test the installed console/proxy/ingress, then replace/remove while
+checking retained operator files. FreeBSD .pkg carries ABI metadata; OpenBSD .tgz
+records native wanted libraries. SHA256SUMS includes both. Accepting an explicitly
+downloaded unsigned OpenBSD file does not disable system repository verification.
+These packages are not official ports; poudriere/ports-tree and service integration
+remain their community submission gates.
+
+The immutable v0.3.4 candidate was not published. Its native binaries, CRS,
+source and container/chart jobs passed, but Homebrew initially used stale runner
+metadata and Arch's minimal container suppressed documentation extraction.
+#link("https://github.com/insanai/sibuna/actions/runs/37894651349")[Original qualification]
+and #link("https://github.com/insanai/sibuna/actions/runs/37895138415")[recovery]
+retained publication gating. Homebrew passed after brew update; recovery correctly
+refused the failed Arch gate. The Arch fixture now removes only its documentation
+NoExtract pattern, preserving signature policy. No v0.3.4 app/image/chart was released.
+
+Native BSD investigation on the designated build host passed both actual proxy
+and ingress suites. A pure-Python large-frame masking fixture exceeded WebSocket
+idle limits under software emulation; equivalent byte-translation masking now
+passes with the original idle deadlines and independent RFC frame tests. FreeBSD
+also passed persistent console qualification. OpenBSD console and native package
+lifecycle remain required gates until their successful logs are recorded. Do not
+publish either an unqualified package or a version whose required release jobs failed.
+Recovery requires successful original BSD jobs/artifacts as well as existing gates.
 
 = References and Verification Limits
 

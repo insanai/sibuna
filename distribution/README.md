@@ -1,7 +1,7 @@
 # Sibuna distribution releases
 
 Keep recipes and validation in this monorepo. A separate `insanai/homebrew-sibuna`
-repository is a thin publishing tap containing the generated `Formula/sibuna.rb`.
+repository should be a thin publishing tap containing the generated `Formula/sibuna.rb`.
 Community archive submissions remain separate reviews; upstream release packages
 are not admission into Debian, Fedora, Arch, Homebrew core or GNU Guix.
 
@@ -11,6 +11,8 @@ The existing native Linux, macOS and Windows binary qualification remains intact
 A new stable tag also prepares:
 
 - Debian and RPM packages for x86-64 and ARM64; Arch `sibuna-bin` for x86-64.
+- FreeBSD 15.1/amd64 `.pkg` and OpenBSD 7.9/amd64 `.tgz`, built natively
+  against each qualified system’s headers and libraries. These are CLI packages.
 - A corresponding-source bundle with verified SQLite inputs, and a Homebrew source
   formula with its measured SHA-256. No cask is generated.
 - A two-architecture minimal OCI image for `ghcr.io/insanai/sibuna:VERSION`.
@@ -64,6 +66,35 @@ and disables the unit. Remove/purge keeps data and the service identity, so reti
 those explicitly only after backup. Console setup is a separate, stopped-daemon
 operation described in the upstream deployment guide; no admin is created.
 
+## BSD operations
+
+Verify the matching release's `SHA256SUMS` over authenticated GitHub HTTPS before
+installing the exact package for your OS release and CPU. As root, use:
+
+```sh
+pkg add ./sibuna-0.3.5-freebsd-15.1-amd64.pkg
+pkg_add -D unsigned ./sibuna-0.3.5-openbsd-7.9-amd64.tgz
+```
+
+The OpenBSD option accepts only this explicitly requested unsigned upstream file;
+it does not change system repository signature policy. These artifacts are not
+accepted FreeBSD/OpenBSD ports and do not promise other ABI versions or CPUs.
+Native package metadata records library/ABI requirements and qualified provenance.
+
+Both install `/usr/local/bin/sibuna` and license/security/source notices under
+`/usr/local/share/doc/sibuna`. They create no service, account, credentials or state.
+Run as an operator-chosen unprivileged user with a private 32-byte admission seed,
+a private data directory, and an IP-literal origin. Console bootstrap remains an
+explicit stopped-daemon operation. Stop Sibuna before replacing or removing its
+package; back up retained state and keys first. Restart explicitly after review.
+Package replacement/removal leaves separately managed configuration, seed and data
+alone. FreeBSD `rc.subr`, OpenBSD `rc.d`/`rcctl`, and Linux systemd are distinct;
+these initial BSD packages supply no service integration or pledge/unveil policy.
+
+See the book's [operator guide](https://insanai.github.io/sibuna/book/operations.html) for
+CLI, console and deployment details. Future official ports have separate source,
+staging, library, maintainer and service-review requirements in SID 0011.
+
 ## Publishing setup
 
 1. **GitHub release/GHCR:** the organization must allow Actions to publish packages.
@@ -114,8 +145,7 @@ The Artifact Hub account has been created. The first chart/image passed actual
 Kubernetes qualification. The GHCR image is public and anonymous access was
 verified; the organization's public-package creation permission was enabled
 briefly with owner approval and then restored. The `helm-v0.3.3` chart release
-is published and the Pages index contains Sibuna 0.3.3. Register the repository
-URL above in Artifact Hub. The owner has configured its public repository UUID
+is published and the Pages index contains Sibuna 0.3.3. The repository URL above is registered in Artifact Hub. The owner has configured its public repository UUID
 as `ARTIFACTHUB_REPOSITORY_ID`; Pages accepts either a variable or the existing
 secret and publishes only a validated UUID in verified-publisher metadata.
 The public metadata was checked against Artifact Hub's registered repository ID.
@@ -129,9 +159,11 @@ official community packaging described by SID 0011 remain separate launch work.
 `Distribution recipes` checks workflow syntax, Helm schema/template constraints,
 archive provenance/tamper rejection and concurrent private-seed creation on PRs.
 The release workflow additionally builds/tests the Homebrew formula, installs
-native packages, exercises a real systemd lifecycle on its disposable runner,
+Linux and both BSD native packages, exercises a real systemd lifecycle on its disposable runner,
 checks read-only/non-root container restart, and deploys/upgrades/uninstalls the
-actual chart/image in kind. The kind test checks persistence and Secret access;
+actual chart/image in kind. BSD jobs build against native system libc, run the
+existing library/live tests and qualify installed CLI authentication, persistent
+restart and shutdown as an ordinary user before replacement/removal. The kind test checks persistence and Secret access;
 its default CNI is not evidence of NetworkPolicy enforcement. Qualify network
 isolation with the production CNI before external exposure.
 

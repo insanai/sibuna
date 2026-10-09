@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 
 root = Path(sys.argv[1])
-suffixes = ('.tar.gz', '.zip', '.deb', '.rpm', '.pkg.tar.zst', '.tgz', '.rb')
+suffixes = ('.tar.gz', '.zip', '.deb', '.rpm', '.pkg.tar.zst', '.pkg', '.tgz', '.rb')
 files = sorted(p for p in root.iterdir() if p.is_file() and (p.name.endswith(suffixes) or p.name == 'IMAGE-DIGEST.txt'))
 if not files:
     raise SystemExit('no release artifacts')

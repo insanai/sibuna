@@ -17,6 +17,7 @@ def api(path):
 def require_gates(jobs, source_only=False):
     required = {'distribution-source'} if source_only else {
         'distribution-source', 'crs-conformance', 'crs-console', 'container-and-chart',
+        'bsd-freebsd', 'bsd-openbsd',
         *[f'build ({p["runner"]}, {p["package"]}, {p["target"]})' for p in PLATFORMS],
         *[f'native-packages ({p["runner"]}, {p["package"]}, {p["target"]})'
           for p in PLATFORMS if p['package'].startswith('linux-')],
@@ -67,6 +68,7 @@ def main():
         'sibuna-distribution-source', 'qualified-container',
         *[f'sibuna-{p["package"]}' for p in PLATFORMS],
         'sibuna-native-linux-amd64', 'sibuna-native-linux-arm64',
+        'sibuna-native-freebsd', 'sibuna-native-openbsd',
     }
     artifacts = api(base + '/artifacts?per_page=100')['artifacts']
     for name in names:

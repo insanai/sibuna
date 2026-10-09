@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 822c45805a612273e200c612475e4b596be854494af48fbb85f2d67a22bcb3a9 -->
+<!-- English source SHA-256: d0280e2c890d3f18780b8c0cd0965c2d6b1ebfe943eafba0ebdc2c69aa09e771 -->
 <h1 align="center">sibuna</h1>
 <p align="center">ब्राउज़र Proof of Work और वैकल्पिक कंसोल के साथ वेब सुरक्षा।</p>
 <p align="center">
@@ -41,7 +41,7 @@
 
 ## त्वरित शुरुआत (Quickstart)
 
-अपने प्लेटफ़ॉर्म के लिए [रिलीज़ डाउनलोड करें](https://github.com/insanai/sibuna/releases/tag/v0.3.4)। डिफ़ॉल्ट पैकेज में स्टोरेज और कंसोल समर्थन शामिल है। कंसोल `--console` के साथ शुरू होता है।
+अपने प्लेटफ़ॉर्म के लिए [रिलीज़ डाउनलोड करें](https://github.com/insanai/sibuna/releases/tag/v0.3.5)। डिफ़ॉल्ट पैकेज में स्टोरेज और कंसोल समर्थन शामिल है। कंसोल `--console` के साथ शुरू होता है।
 
 | प्लेटफ़ॉर्म | पैकेज | आवश्यकताएँ |
 | --- | --- | --- |
@@ -50,14 +50,18 @@
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 15 या बाद का |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 15 या बाद का |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019 या बाद का; नेटिव `sibuna.exe` |
+| FreeBSD x86-64 | `sibuna-0.3.5-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI पैकेज |
+| OpenBSD x86-64 | `sibuna-0.3.5-openbsd-7.9-amd64.tgz` | OpenBSD 7.9; CLI पैकेज |
 
 macOS बिल्ड बिना हस्ताक्षर वाले (Unsigned) हैं। प्रत्येक पैकेज में लाइसेंस, सोर्स लिंक और बिल्ड मैनिफ़ेस्ट शामिल हैं। उपयोग करने से पहले `SHA256SUMS` के विरुद्ध आर्काइव को सत्यापित (Verify) करें।
+
+Debian/RPM पैकेज Linux x86-64 और ARM64 के लिए हैं; Arch `sibuna-bin` x86-64 के लिए है। FreeBSD 15.1 और OpenBSD 7.9 पैकेज x86-64 पर CLI स्थापित करते हैं। Linux पैकेज में वैकल्पिक, निष्क्रिय systemd सेवा है। BSD पैकेज सेवा, खाता या स्थिति नहीं बनाते। ये upstream डाउनलोड हैं; सामुदायिक रिपॉज़िटरी की स्वीकृति अलग प्रक्रिया है। रिलीज़ में Homebrew स्रोत formula और Helm chart भी हैं। स्थापना, सत्यापन, निजी स्थिति, अपग्रेड और Kubernetes सेटअप के लिए [पैकेज संचालन मार्गदर्शिका](https://insanai.github.io/sibuna/hi/book/operations.html) देखें।
 
 Linux x86-64 के लिए, यदि आपका ऐप पोर्ट 3000 पर सुन रहा है:
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.5/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.5/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

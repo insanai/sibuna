@@ -10,7 +10,7 @@
 
 === Native Core Rule Set
 
-Version 0.3.0 packages include SID 0010's native CRS connector. It is opt-in: `--no-crs`
+Version 0.3.5 packages include SID 0010's native CRS connector. It is opt-in: `--no-crs`
 remains the default. Start in Audit, review the findings for the application with the
 selected rules and resource bounds, and only then select Enforce.
 
@@ -304,7 +304,7 @@ process inspection deadline, independent of the saved rule selection.
 
 === Release Packages and Licenses
 
-Version 0.3.0 packages include persistent storage, the browser solver and the optional
+Version 0.3.5 packages include persistent storage, the browser solver and the optional
 management console. Linux x86-64 and ARM64 packages link musl statically; macOS packages
 cover Intel and Apple Silicon, require macOS 15 or later, and are unsigned. Windows packages
 contain a native x86-64 executable for Windows 10 / Server 2019 or later. Use Ctrl+C for
@@ -322,6 +322,76 @@ AGPL-3.0; the default combined executable is distributed under AGPL-3.0.
 Build the engine without the console using `-Dconsole=false`. `LICENSE` and `NOTICE` describe component boundaries and third-party exceptions. Full terms
 are in `LICENSES/`. Every release tag includes the
 corresponding source and build scripts, and the console links to that source.
+
+=== Installing Native Packages
+
+GitHub Releases carries Debian and RPM packages for Linux x86-64/ARM64, an Arch
+`sibuna-bin` package for x86-64, a FreeBSD 15.1 x86-64 package and an OpenBSD 7.9
+x86-64 package alongside the binary archives. Download only the package matching
+your operating system and CPU, verify it against `SHA256SUMS`, then install locally:
+
+```sh
+# Debian / Ubuntu
+sudo apt install ./sibuna_*.deb
+# Fedora / RPM
+sudo dnf install ./sibuna*.rpm
+# Arch Linux
+sudo pacman -U ./sibuna-bin-*.pkg.tar.zst
+# FreeBSD 15.1 / amd64 (root shell)
+pkg add ./sibuna-0.3.5-freebsd-15.1-amd64.pkg
+# OpenBSD 7.9 / amd64 (root shell): this verified local upstream package only
+pkg_add -D unsigned ./sibuna-0.3.5-openbsd-7.9-amd64.tgz
+```
+
+These unsigned upstream downloads are separate from official distribution archives.
+Retain the operating system's repository signature checks. Package formats do not
+establish Debian, Fedora, Arch or BSD ports acceptance. Each package carries license
+texts, private security-reporting guidance and exact source/build provenance.
+
+Linux packages install a locked service identity and an optional, disabled systemd
+unit. Set the IP-literal origin in `/etc/sibuna/service.env` before explicitly starting
+`sibuna.service`. Its listener defaults to `127.0.0.1:8080`; the console stays off.
+First start creates a private admission seed as the service user. Reinstall and removal
+retain configuration, seed, data and account; upgrades require an explicit restart.
+Back up persistent state and credentials before upgrading or retiring the service.
+
+BSD packages and standalone archives install the CLI without a service, account or
+state directory. Run under an unprivileged account, keep the state directory private,
+retain a 32-byte admission seed across restarts and configure an IP-literal origin.
+Stop your process before replacing or removing its executable; the package manager
+does not manage that process. Preserve your configuration, credentials and state.
+Use the existing local console-initialization procedure with the daemon stopped.
+Do not assume Linux systemd instructions, FreeBSD rc.subr and OpenBSD rcctl are interchangeable.
+
+=== Homebrew and Kubernetes
+
+The release includes a source-built Homebrew formula with its source-bundle checksum;
+Sibuna is a CLI formula, not a cask. It requires Zig 0.17.0. A project tap and Homebrew
+core each have their own publication/review process. Follow the setup instructions in
+#link("https://github.com/insanai/sibuna/blob/main/distribution/README.md")[distribution operations]
+before using a tap installation command.
+
+Helm charts are indexed at `https://insanai.github.io/sibuna/charts/` and listed through
+Artifact Hub. The runtime image is hosted at `ghcr.io/insanai/sibuna`. Review the chart's
+values, create the existing admission Secret and supply an IPv4-literal origin. Configure
+NetworkPolicy ingress and egress for the intended callers and origin; the default denies
+both. Public TLS and access restrictions on internal health/metrics routes remain at
+the ingress/network boundary. The minimal image runs without a shell or package manager.
+
+```sh
+helm repo add sibuna https://insanai.github.io/sibuna/charts/
+helm repo update
+helm show values sibuna/sibuna --version 0.3.5
+# Prepare values.yaml with secret.existingSecret, upstream and NetworkPolicy rules.
+helm upgrade --install sibuna sibuna/sibuna --version 0.3.5 \
+  --namespace sibuna --create-namespace --values values.yaml
+```
+
+The chart uses one writer, Recreate upgrades and retained persistent storage. Preserve
+the PVC and admission Secret through uninstall/reinstall. Inspect `IMAGE-DIGEST.txt`
+and pin the image digest for immutable deployments. Package or chart rollback does
+not reverse database migrations. The default release excludes clustering; a separate
+cluster build and its native qualification are still required.
 
 Companies
 seeking a version under terms other than LGPL or AGPL can contact the authors, Vikrant

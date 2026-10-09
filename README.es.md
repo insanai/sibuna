@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 822c45805a612273e200c612475e4b596be854494af48fbb85f2d67a22bcb3a9 -->
+<!-- English source SHA-256: d0280e2c890d3f18780b8c0cd0965c2d6b1ebfe943eafba0ebdc2c69aa09e771 -->
 <h1 align="center">sibuna</h1>
 <p align="center">Protección web con prueba de trabajo en el navegador y consola opcional.</p>
 <p align="center">
@@ -48,7 +48,7 @@ por petición. Las reglas y límites locales controlan qué se puede pedir despu
 
 ## Inicio rápido
 
-[Descarga una versión](https://github.com/insanai/sibuna/releases/tag/v0.3.4) para tu plataforma. El paquete por defecto incluye soporte
+[Descarga una versión](https://github.com/insanai/sibuna/releases/tag/v0.3.5) para tu plataforma. El paquete por defecto incluye soporte
 de almacenamiento y consola. La consola arranca con `--console`.
 
 | Plataforma | Paquete | Requisitos |
@@ -58,15 +58,19 @@ de almacenamiento y consola. La consola arranca con `--console`.
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 15 o posterior |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 15 o posterior |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019 o posterior; `sibuna.exe` nativo |
+| FreeBSD x86-64 | `sibuna-0.3.5-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; paquete CLI |
+| OpenBSD x86-64 | `sibuna-0.3.5-openbsd-7.9-amd64.tgz` | OpenBSD 7.9; paquete CLI |
 
 Los paquetes macOS no están firmados. Cada paquete incluye licencias, enlaces a fuentes
 y manifiesto. Verifica el archivo contra `SHA256SUMS` antes de usarlo.
 
+Los paquetes Debian/RPM cubren Linux x86-64 y ARM64; Arch `sibuna-bin` cubre x86-64. Los paquetes FreeBSD 15.1 y OpenBSD 7.9 cubren x86-64 e instalan la CLI. Linux incluye un servicio systemd opcional y desactivado. BSD no crea servicio, cuenta ni estado. Son descargas del proyecto; la aceptación en repositorios comunitarios es independiente. La publicación también incluye una fórmula Homebrew desde fuentes y un chart Helm. Consulta la [guía de operaciones de paquetes](https://insanai.github.io/sibuna/es/book/operations.html) para instalación, verificación, estado privado, actualizaciones y Kubernetes.
+
 Para Linux x86-64, con la aplicación escuchando en el puerto 3000:
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.5/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.5/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

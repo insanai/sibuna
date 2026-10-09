@@ -8,7 +8,7 @@ root = Path(sys.argv[1]).resolve()
 cases = [
     ('debian:13-slim', '*.deb', "sed -i '\\|path-exclude.*usr/share/doc|d' /etc/dpkg/dpkg.cfg.d/*; apt-get update -qq; apt-get install -y /packages/*.deb", 'apt-get install -y --reinstall /packages/*.deb', 'apt-get remove -y sibuna'),
     ('fedora:44', '*.rpm', 'dnf install -y /packages/*.rpm', 'rpm -Uvh --replacepkgs /packages/*.rpm', 'rpm -e sibuna'),
-    ('archlinux:base', '*.pkg.tar.zst', 'pacman -Syu --noconfirm; pacman -U --noconfirm /packages/*.pkg.tar.zst', 'pacman -U --noconfirm /packages/*.pkg.tar.zst', 'pacman -R --noconfirm sibuna-bin'),
+    ('archlinux:base', '*.pkg.tar.zst', "sed -i 's#usr/share/doc/\\*##g' /etc/pacman.conf; pacman -Syu --noconfirm; pacman -U --noconfirm /packages/*.pkg.tar.zst", 'pacman -U --noconfirm /packages/*.pkg.tar.zst', 'pacman -R --noconfirm sibuna-bin'),
 ]
 for image, pattern, command, reinstall, remove in cases:
     packages = list(root.glob(pattern))

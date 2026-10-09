@@ -25,6 +25,16 @@
       "tarball": "https://ziglang.org/download/0.17.0/zig-x86_64-windows-0.17.0.zip",
       "shasum": "b5663f69581dcf391293fbf16c06cb80d81d806545ce618b4d0bab7f0eb8c428",
       "size": "100268137"
+    },
+    "x86_64-freebsd": {
+      "tarball": "https://ziglang.org/download/0.17.0/zig-x86_64-freebsd-0.17.0.tar.xz",
+      "shasum": "a314f1cc92d098bd39caf9e5607a0de2a8fd0d00064776cb3fd5b3bee38a67c9",
+      "size": "57468884"
+    },
+    "x86_64-openbsd": {
+      "tarball": "https://ziglang.org/download/0.17.0/zig-x86_64-openbsd-0.17.0.tar.xz",
+      "shasum": "5e9606fc322ef4c346c199e162d26e4c293358a36ea3ca72e877d42ef71e24be",
+      "size": "58612444"
     }
   }
 }

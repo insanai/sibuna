@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 822c45805a612273e200c612475e4b596be854494af48fbb85f2d67a22bcb3a9 -->
+<!-- English source SHA-256: d0280e2c890d3f18780b8c0cd0965c2d6b1ebfe943eafba0ebdc2c69aa09e771 -->
 <h1 align="center">sibuna</h1>
 <p align="center">브라우저 작업 증명과 선택형 콘솔로 웹 서비스를 보호합니다.</p>
 <p align="center">
@@ -41,7 +41,7 @@
 
 ## 빠른 시작
 
-플랫폼에 맞는 [릴리스를 다운로드하세요](https://github.com/insanai/sibuna/releases/tag/v0.3.4). 기본 패키지에는 저장소와 콘솔 지원이 포함됩니다. 콘솔은 `--console` 옵션으로 시작합니다.
+플랫폼에 맞는 [릴리스를 다운로드하세요](https://github.com/insanai/sibuna/releases/tag/v0.3.5). 기본 패키지에는 저장소와 콘솔 지원이 포함됩니다. 콘솔은 `--console` 옵션으로 시작합니다.
 
 | 플랫폼 | 패키지 | 요구 사항 |
 | --- | --- | --- |
@@ -50,14 +50,18 @@
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 15 이상 |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 15 이상 |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019 이상; 네이티브 `sibuna.exe` |
+| FreeBSD x86-64 | `sibuna-0.3.5-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI 패키지 |
+| OpenBSD x86-64 | `sibuna-0.3.5-openbsd-7.9-amd64.tgz` | OpenBSD 7.9; CLI 패키지 |
 
 macOS 빌드에는 서명이 없습니다. 각 패키지에는 라이선스, 소스 링크와 빌드 명세가 포함됩니다. 사용하기 전에 `SHA256SUMS`로 압축 파일을 검증하세요.
+
+Debian/RPM 패키지는 Linux x86-64와 ARM64를 지원하고 Arch `sibuna-bin`는 x86-64를 지원합니다. FreeBSD 15.1과 OpenBSD 7.9 패키지는 x86-64를 지원하며 CLI를 설치합니다. Linux 패키지는 선택적인 비활성 systemd 서비스를 포함합니다. BSD 패키지는 서비스, 계정, 상태를 생성하지 않습니다. 이는 업스트림 다운로드이며 커뮤니티 저장소 채택은 별도 절차입니다. 릴리스에는 Homebrew 소스 formula와 Helm 차트도 포함됩니다. 설치, 검증, 비공개 상태, 업그레이드, Kubernetes 설정은 [패키지 운영 가이드](https://insanai.github.io/sibuna/ko/book/operations.html)를 참조하세요.
 
 Linux x86-64에서 앱이 3000번 포트로 요청을 받는 경우:
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.5/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.5/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

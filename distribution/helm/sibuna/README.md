@@ -5,7 +5,7 @@ Secret and runs one writer with `Recreate` upgrades. The default service is
 ClusterIP, console and ingress are absent, and NetworkPolicy denies ingress and
 egress until the operator allows trusted clients and the origin.
 
-## Install after the chart and image are published
+## Install a published chart and image
 
 Create an operator-owned 32-byte random seed file with mode 0600, then:
 
@@ -14,7 +14,7 @@ kubectl create namespace sibuna
 kubectl -n sibuna create secret generic sibuna-admission --from-file=admission.seed=/private/path/admission.seed
 helm repo add sibuna https://insanai.github.io/sibuna/charts
 helm repo update
-helm install gateway sibuna/sibuna --namespace sibuna --set secret.existingSecret=sibuna-admission -f operator-values.yaml
+helm install gateway sibuna/sibuna --version 0.3.5 --namespace sibuna --set secret.existingSecret=sibuna-admission -f operator-values.yaml
 ```
 
 Supply an IPv4 literal origin with `upstream.host` and `upstream.port` and trusted
@@ -52,3 +52,20 @@ console listener, public ingress, cluster membership or TLS certificate is creat
 
 See upstream `SECURITY.md` for private reporting and `distribution/README.md` for
 publishing setup. This chart's metadata contains no personal security contacts.
+
+## Release updates
+
+Chart/app version 0.3.5 selects `ghcr.io/insanai/sibuna:0.3.5`. The release workflow
+qualifies and publishes the chart/image together, then refreshes the Pages index
+for Artifact Hub. Ordinary indexing needs no Artifact Hub API key. Inspect the
+published values, retain your admission Secret and PVC, and back up data before:
+
+```sh
+helm repo update
+helm show values sibuna/sibuna --version 0.3.5
+helm upgrade gateway sibuna/sibuna --version 0.3.5 --namespace sibuna --set secret.existingSecret=sibuna-admission -f operator-values.yaml
+```
+
+Review changes before upgrading. A Helm rollback does not undo database schema
+migrations. Linux/BSD package services are unrelated to the Kubernetes Pod; the
+chart runs the qualified Linux binary directly inside the minimal container.

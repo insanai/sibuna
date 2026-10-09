@@ -15,9 +15,10 @@ from prepare_build import prepare
 
 def main():
     lock = json.loads(Path(__file__).with_name("zig-release.json").read_text())
-    machine = {"AMD64": "x86_64", "arm64": "aarch64"}.get(platform.machine(),
+    machine = {"AMD64": "x86_64", "amd64": "x86_64", "arm64": "aarch64"}.get(platform.machine(),
                                                             platform.machine())
-    system = {"Darwin": "macos", "Linux": "linux", "Windows": "windows"}[platform.system()]
+    system = {"Darwin": "macos", "Linux": "linux", "Windows": "windows",
+              "FreeBSD": "freebsd", "OpenBSD": "openbsd"}[platform.system()]
     entry = lock["platforms"][f"{machine}-{system}"]
     destination = Path(sys.argv[1]).resolve()
     destination.mkdir(parents=True, exist_ok=True)

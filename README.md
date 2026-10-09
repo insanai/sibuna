@@ -43,7 +43,7 @@ Use access rules and local rate limits to control what those clients can request
 
 ## Quickstart
 
-[Download a release](https://github.com/insanai/sibuna/releases/tag/v0.3.4) for your platform.
+[Download a release](https://github.com/insanai/sibuna/releases/tag/v0.3.5) for your platform.
 The default package includes storage and console support. The console starts with `--console`.
 
 | Platform | Package | Requirements |
@@ -53,15 +53,25 @@ The default package includes storage and console support. The console starts wit
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 15 or later |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 15 or later |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019 or later; native `sibuna.exe` |
+| FreeBSD x86-64 | `sibuna-0.3.5-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI package |
+| OpenBSD x86-64 | `sibuna-0.3.5-openbsd-7.9-amd64.tgz` | OpenBSD 7.9; CLI package |
 
 macOS builds are unsigned. Each package includes licenses, source links and a build manifest.
 Verify the archive against `SHA256SUMS` before using it.
 
+Debian/RPM packages cover Linux x86-64 and ARM64; Arch `sibuna-bin` covers x86-64.
+FreeBSD 15.1 and OpenBSD 7.9 packages cover x86-64 and install the CLI.
+Linux packages include an optional, disabled systemd service. BSD packages create no
+service, account or state. These are upstream downloads; community archive acceptance
+is separate. The release also includes a Homebrew source formula and a Helm chart.
+See the [package operations guide](https://insanai.github.io/sibuna/book/operations.html)
+for installation, verification, private state, upgrades and Kubernetes setup.
+
 For Linux x86-64, with your app listening on port 3000:
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.5/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.5/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

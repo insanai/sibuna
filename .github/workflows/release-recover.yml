@@ -143,7 +143,7 @@ jobs:
           else
             gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --draft --title "Sibuna $RELEASE_TAG" --notes-file ../.github/release-notes.txt
           fi
-          gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber ./*.tar.gz ./*.zip ./*.deb ./*.rpm ./*.pkg.tar.zst ./*.tgz sibuna.rb IMAGE-DIGEST.txt SHA256SUMS
+          gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber ./*.tar.gz ./*.zip ./*.deb ./*.rpm ./*.pkg.tar.zst ./*.pkg ./*.tgz sibuna.rb IMAGE-DIGEST.txt SHA256SUMS
           gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
   refresh-distributions:
     needs: publish

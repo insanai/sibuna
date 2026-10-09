@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 822c45805a612273e200c612475e4b596be854494af48fbb85f2d67a22bcb3a9 -->
+<!-- English source SHA-256: d0280e2c890d3f18780b8c0cd0965c2d6b1ebfe943eafba0ebdc2c69aa09e771 -->
 <h1 align="center">sibuna</h1>
 <p align="center">通过浏览器工作量证明保护网站，并提供可选的管理控制台。</p>
 <p align="center">
@@ -41,7 +41,7 @@
 
 ## 快速入门
 
-[下载适合平台的发行包](https://github.com/insanai/sibuna/releases/tag/v0.3.4)。默认安装包包含存储和控制台支持。使用 `--console` 启动控制台。
+[下载适合平台的发行包](https://github.com/insanai/sibuna/releases/tag/v0.3.5)。默认安装包包含存储和控制台支持。使用 `--console` 启动控制台。
 
 | 平台 | 安装包 | 要求 |
 | --- | --- | --- |
@@ -50,14 +50,18 @@
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 15 或更高版本 |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 15 或更高版本 |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019 或更高版本；原生 `sibuna.exe` |
+| FreeBSD x86-64 | `sibuna-0.3.5-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI 软件包 |
+| OpenBSD x86-64 | `sibuna-0.3.5-openbsd-7.9-amd64.tgz` | OpenBSD 7.9; CLI 软件包 |
 
 macOS 构建未签名。每个安装包都包含许可证、源码链接和构建清单。使用前，请对照 `SHA256SUMS` 校验压缩包。
+
+Debian/RPM 软件包支持 Linux x86-64 和 ARM64；Arch `sibuna-bin` 支持 x86-64。FreeBSD 15.1 和 OpenBSD 7.9 软件包支持 x86-64，并安装 CLI。Linux 软件包包含默认停用的可选 systemd 服务。BSD 软件包不创建服务、账户或状态。这些是上游下载；社区仓库接纳需另行审核。发行版还包含 Homebrew 源码 formula 和 Helm chart。安装、验证、私密状态、升级及 Kubernetes 设置请参阅[软件包运维指南](https://insanai.github.io/sibuna/zh-hans/book/operations.html)。
 
 在 Linux x86-64 上，假设应用监听 3000 端口：
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.5/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.5/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

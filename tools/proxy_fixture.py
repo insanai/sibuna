@@ -13,6 +13,17 @@ from email.parser import BytesParser
 GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
 
+def masked_payload(payload, mask):
+    assert len(mask) == 4
+    # Keep large fixture frames out of Python's per-byte interpreter loop. An
+    # emulated origin must still answer within the real daemon's idle deadline.
+    result = bytearray(len(payload))
+    for offset, key in enumerate(mask):
+        table = bytes(byte ^ key for byte in range(256))
+        result[offset::4] = payload[offset::4].translate(table)
+    return bytes(result)
+
+
 def http_response(reader):
     line = reader.readline(16385)
     status = int(line.split()[1])
@@ -41,7 +52,7 @@ def frame(opcode, payload, masked=False, final=True):
     if not masked:
         return prefix + payload
     mask = os.urandom(4)
-    return prefix + mask + bytes(b ^ mask[i % 4] for i, b in enumerate(payload))
+    return prefix + mask + masked_payload(payload, mask)
 
 
 def receive(reader, masked):
@@ -58,7 +69,7 @@ def receive(reader, masked):
     payload = reader.read(length)
     assert len(payload) == length
     if masked:
-        payload = bytes(b ^ mask[i % 4] for i, b in enumerate(payload))
+        payload = masked_payload(payload, mask)
     return head[0] & 15, payload, bool(head[0] & 128)
 
 

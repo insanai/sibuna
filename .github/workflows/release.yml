@@ -222,6 +222,67 @@ jobs:
           PYTHON
           brew install --build-from-source sibuna/qualification/sibuna
           brew test sibuna/qualification/sibuna
+  bsd-freebsd:
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.platform == 'all'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: vmactions/freebsd-vm@c46abacb49f09938ca4e1702d15d836285d694cc # v1, pinned 2026-10-09
+        env:
+          CONTACT: ${{ vars.SIBUNA_PACKAGE_CONTACT }}
+        with:
+          release: '15.1'
+          arch: x86_64
+          mem: 6144
+          cpu: 2
+          envs: CONTACT
+          sync: rsync
+          prepare: |
+            set -eu
+            env ASSUME_ALWAYS_YES=yes pkg install -y python314 git gnupg
+            test -e /usr/local/bin/python3 || ln -s /usr/local/bin/python3.14 /usr/local/bin/python3
+            pw useradd qualification -m -s /bin/sh
+          run: |
+            set -eu
+            python3 tools/qualify_bsd_release.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sibuna-native-freebsd
+          path: dist/*.pkg
+          if-no-files-found: error
+  bsd-openbsd:
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.platform == 'all'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: vmactions/openbsd-vm@5f7b2c933b8846a138361d6843c52af4bef5d945 # v1, pinned 2026-10-09
+        env:
+          CONTACT: ${{ vars.SIBUNA_PACKAGE_CONTACT }}
+        with:
+          release: '7.9'
+          arch: x86_64
+          mem: 6144
+          cpu: 2
+          envs: CONTACT
+          sync: rsync
+          prepare: |
+            set -eu
+            pkg_add python3 git gnupg
+            useradd -m -s /bin/sh qualification
+          run: |
+            set -eu
+            python3 tools/qualify_bsd_release.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sibuna-native-openbsd
+          path: dist/*.tgz
+          if-no-files-found: error
   container-and-chart:
     needs: [build, distribution-source]
     runs-on: ubuntu-22.04
@@ -259,7 +320,7 @@ jobs:
           if-no-files-found: error
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build, crs-conformance, crs-console, native-packages, distribution-source, homebrew, container-and-chart]
+    needs: [build, crs-conformance, crs-console, native-packages, distribution-source, homebrew, bsd-freebsd, bsd-openbsd, container-and-chart]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -326,7 +387,7 @@ jobs:
           else
             gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --draft --title "Sibuna $RELEASE_TAG" --notes-file ../.github/release-notes.txt
           fi
-          gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber ./*.tar.gz ./*.zip ./*.deb ./*.rpm ./*.pkg.tar.zst ./*.tgz sibuna.rb IMAGE-DIGEST.txt SHA256SUMS
+          gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber ./*.tar.gz ./*.zip ./*.deb ./*.rpm ./*.pkg.tar.zst ./*.pkg ./*.tgz sibuna.rb IMAGE-DIGEST.txt SHA256SUMS
           gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
   refresh-distributions:
     needs: publish

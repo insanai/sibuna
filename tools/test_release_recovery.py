@@ -8,7 +8,8 @@ from release_targets import PLATFORMS
 
 class RecoveryGateTest(unittest.TestCase):
     def setUp(self):
-        names = ['distribution-source', 'crs-conformance', 'crs-console', 'container-and-chart']
+        names = ['distribution-source', 'crs-conformance', 'crs-console', 'container-and-chart',
+                 'bsd-freebsd', 'bsd-openbsd']
         names += [f'build ({p["runner"]}, {p["package"]}, {p["target"]})' for p in PLATFORMS]
         names += [f'native-packages ({p["runner"]}, {p["package"]}, {p["target"]})'
                   for p in PLATFORMS if p['package'].startswith('linux-')]

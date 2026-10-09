@@ -35,12 +35,17 @@ def exchange(port, path, hdrs, method="GET", body=None, tls=None):
 
 
 def websocket(port, hdrs, tls=None):
+    # Prepare large masked frames before starting the short idle deadline. Software
+    # emulation can spend longer masking the fixture than the daemon allows silence.
+    messages = ((1, b"frag", False), (9, b"ping", True),
+                (0, b"mented", True), (2, bytes(range(256)) * 8192, True))
+    prepared = [(opcode, payload, final, frame(opcode, payload, masked=True, final=final))
+                for opcode, payload, final in messages]
     client = WebSocket(port, hdrs, tls=tls)
     try:
         assert receive(client.reader, False) == (1, b"origin ready", True)
-        for opcode, payload, final in ((1, b"frag", False), (9, b"ping", True),
-                                       (0, b"mented", True), (2, bytes(range(256)) * 8192, True)):
-            client.socket.sendall(frame(opcode, payload, masked=True, final=final))
+        for opcode, payload, final, encoded in prepared:
+            client.socket.sendall(encoded)
             try:
                 actual = receive(client.reader, False)
                 assert actual == (10 if opcode == 9 else opcode, payload, final)
