@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 48d28acad3b10231e32c88bcf3d43e324be89f143fe1bea1ee6492a32e5a1c0e -->
+<!-- English source SHA-256: 822c45805a612273e200c612475e4b596be854494af48fbb85f2d67a22bcb3a9 -->
 <h1 align="center">sibuna</h1>
 <p align="center">브라우저 작업 증명과 선택형 콘솔로 웹 서비스를 보호합니다.</p>
 <p align="center">
@@ -41,7 +41,7 @@
 
 ## 빠른 시작
 
-플랫폼에 맞는 [릴리스를 다운로드하세요](https://github.com/insanai/sibuna/releases/tag/v0.3.3). 기본 패키지에는 저장소와 콘솔 지원이 포함됩니다. 콘솔은 `--console` 옵션으로 시작합니다.
+플랫폼에 맞는 [릴리스를 다운로드하세요](https://github.com/insanai/sibuna/releases/tag/v0.3.4). 기본 패키지에는 저장소와 콘솔 지원이 포함됩니다. 콘솔은 `--console` 옵션으로 시작합니다.
 
 | 플랫폼 | 패키지 | 요구 사항 |
 | --- | --- | --- |
@@ -56,8 +56,8 @@ macOS 빌드에는 서명이 없습니다. 각 패키지에는 라이선스, 소
 Linux x86-64에서 앱이 3000번 포트로 요청을 받는 경우:
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.3/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.3/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

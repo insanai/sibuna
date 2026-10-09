@@ -1,63 +1,55 @@
-Sibuna v0.3.3 fixes console diagnostics and the recovery-code screen after two-factor
-setup. Request inspection, CRS decisions and wire protocols are unchanged from v0.3.2.
-
-Fixes:
-- An unsupported console schema now reports CONSOLESCHEMA. The hint asks operators to
-  keep the data directory and use compatible binaries. It no longer suggests a quorum outage.
-- Invalid input, permission refusals, stale revisions and storage outages have distinct
-  hints, shared by the HTTP service and Wasm interface. After a write timeout, operators
-  are told to read the saved state before retrying.
-- In v0.3.2, successful two-factor confirmation revoked the session, but the interface
-  switched to sign-in before showing the ten recovery codes. The codes now remain on a
-  standalone result screen until the user saves them. This screen has no dashboard access
-  or telemetry stream. A late revocation callback cannot erase the new codes.
-- Confirmation and disabling two-factor clear the previous account view. Failed attempts
-  resume the authenticated stream without changing the factor or its replay checks.
-
-Upgrade:
-- The console schema remains at version 46. No migration is added in this release.
-- When upgrading from a release older than v0.3.2, upgrade every cluster node. Older binaries
-  cannot use schema 46. Do not downgrade or edit its version marker.
-- Retain the console key file, and give every console node the same key.
-
-Qualification:
-- Native storage tests cover newer and invalid schema markers, migration rollback and
-  typed startup failures. HTTP and Wasm tests distinguish refusals from storage outages.
-- A live daemon and the shipped Wasm complete enrollment, save the recovery codes, sign in,
-  replace the codes and disable two-factor. The test also injects a late revocation callback.
-- The Linux regression gate passed all 95 build steps. It executed 568 tests successfully;
-  other unchanged tests were cached. Book and SID builds passed, and affected pages were
-  inspected after rendering.
-- Chrome reproduced the v0.3.2 recovery-screen defect. The final binary then showed all
-  ten codes, cleared them after saving and returned to sign-in. Recovery replacement and
-  disabling were also checked, including a narrow layout. Desktop emulation was restored.
-- The release workflow qualifies each packaged executable before publication. A twelve-hour
-  single-node and three-host functional soak will start after publication. Its results are
-  separate from these release checks and from performance acceptance.
-- No measured request subsystem changed. Existing benchmark records remain tied to their
-  recorded commits. The SID 0007 performance exception remains; this release does not
-  claim that the strict console-impact gate passed.
+Sibuna v0.3.4 adds upstream Linux packages alongside the Linux, macOS and Windows
+binary archives. Request inspection, console behavior and storage schema are
+unchanged from v0.3.3. The embedded console source link now names v0.3.4.
+The build-only source-map-js dependency is updated to 1.2.2 for GHSA-68fv-2mgg-jv7q;
+regenerated runtime CSS is byte-identical. This library is not shipped in the daemon.
 
 Downloads:
-- Linux x86-64 and ARM64: statically linked musl builds; Linux 5.10 or later.
-- macOS Apple Silicon and Intel: macOS 15 or later; unsigned command-line builds.
-- Windows x86-64: native sibuna.exe; Windows 10 / Server 2019 or later.
+- Linux x86-64 and ARM64: static musl binary archives, Debian .deb and RPM .rpm.
+- Arch Linux x86-64: sibuna-bin .pkg.tar.zst, installed with pacman -U.
+- macOS Apple Silicon and Intel: unsigned CLI archives; macOS 15 or later.
+- Windows x86-64: native sibuna.exe archive; Windows 10 / Server 2019 or later.
+- Corresponding-source bundle with verified SQLite inputs for offline builds.
+- Source-built Homebrew formula (sibuna.rb); no cask. Tap/core acceptance is separate.
+- Helm chart 0.3.4 and public image ghcr.io/insanai/sibuna:0.3.4 for amd64/arm64.
 
-Archives include the executable, README, license texts, dependency notices and an exact
-build manifest. SHA256SUMS covers every archive. Engine sources are LGPL-3.0; console
-sources, including the Wasm interface, are AGPL-3.0. The combined executable is AGPL-covered.
-CRS rules are Apache-2.0 and are downloaded and verified at runtime, not bundled.
-Corresponding source and build scripts are in this release's tag and linked from the console.
-Companies seeking alternative licensing can contact the authors, Vikrant Rathore and
-Ronak Rathore. Third-party libraries remain subject to their respective licenses.
+The Debian, RPM and Arch packages wrap the qualified Linux executable. They install
+an optional systemd unit but do not enable or start it. Configure the IP-literal
+origin in /etc/sibuna/service.env before explicitly starting the service. The
+proxy defaults to 127.0.0.1:8080. Console setup remains an operator decision.
+Installation/removal retains configuration, private admission seed, data and
+service account. Upgrades require an explicit restart after backup and review.
 
-The shipped builds include storage and console support; the console starts with --console.
-Multi-node deployments require a separate -Dcluster=true build with OpenSSL 3. No GeoIP address
-database is bundled; use the documented CLI import/update commands for your chosen dataset.
+These are unsigned upstream packages, not admission into Debian, Fedora or Arch.
+Verify SHA256SUMS before installation. Signed APT/DNF/pacman repositories, AUR
+submission, Homebrew core, Guix and BSD ports have separate gates. FreeBSD/OpenBSD
+packages are not included until their native qualification passes.
 
-The v0.3.0 release notes describe the earlier behaviour changes and deployment limits:
-https://github.com/insanai/sibuna/releases/tag/v0.3.0
+Qualification required before publication:
+- All five native binary builds and their existing executable/CRS checks must pass.
+- Debian/Fedora/Arch installation, reinstall and removal preserve private seed/config.
+- The systemd service starts/restarts and stops on removal on disposable CI.
+- The Homebrew source formula builds and passes persistent startup/restart tests.
+- The minimal non-root/read-only container and Restricted Kubernetes installation,
+  Recreate upgrade and retained PVC/Secret checks pass before publication.
+- IMAGE-DIGEST.txt records the anonymously accessible multi-platform image digest.
+  The image includes CA certificates and identity data, with no shell/package utilities.
 
+Upgrade:
+- Console schema remains 46. No database migration is added in this release.
+- Retain admission seed, console key and persistent state; back up before upgrade.
+- Upgrading from before v0.3.2 requires upgrading all cluster nodes. Incompatible
+  older binaries cannot use schema 46. Package/Helm rollback does not undo migrations.
+- No measured request subsystem changed. Benchmarks remain tied to their recorded
+  commits; the SID 0007 console performance exception remains.
+
+Archives/packages include license texts, notices, security guidance and source
+provenance. The engine is LGPL-3.0; the console and combined binary are AGPL-3.0.
+Third-party materials retain their licenses. CRS rules are Apache-2.0, downloaded
+and verified at runtime rather than bundled. Report suspected vulnerabilities
+privately through the repository's GitHub security reporting page.
+
+Source: https://github.com/insanai/sibuna/tree/v0.3.4
 Documentation: https://insanai.github.io/sibuna/
-Deployment guide: https://insanai.github.io/sibuna/book/operations.html
-Source: https://github.com/insanai/sibuna/tree/v0.3.3
+Package operations: https://github.com/insanai/sibuna/blob/v0.3.4/distribution/README.md
+Helm repository: https://insanai.github.io/sibuna/charts/

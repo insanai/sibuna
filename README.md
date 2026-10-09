@@ -43,7 +43,7 @@ Use access rules and local rate limits to control what those clients can request
 
 ## Quickstart
 
-[Download a release](https://github.com/insanai/sibuna/releases/tag/v0.3.3) for your platform.
+[Download a release](https://github.com/insanai/sibuna/releases/tag/v0.3.4) for your platform.
 The default package includes storage and console support. The console starts with `--console`.
 
 | Platform | Package | Requirements |
@@ -60,8 +60,8 @@ Verify the archive against `SHA256SUMS` before using it.
 For Linux x86-64, with your app listening on port 3000:
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.3/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.3/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

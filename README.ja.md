@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 48d28acad3b10231e32c88bcf3d43e324be89f143fe1bea1ee6492a32e5a1c0e -->
+<!-- English source SHA-256: 822c45805a612273e200c612475e4b596be854494af48fbb85f2d67a22bcb3a9 -->
 <h1 align="center">sibuna</h1>
 <p align="center">ブラウザーの計算量証明でウェブを保護し、必要に応じて管理コンソールも利用できます。</p>
 <p align="center">
@@ -41,7 +41,7 @@
 
 ## クイックスタート
 
-プラットフォームに合った[リリースをダウンロード](https://github.com/insanai/sibuna/releases/tag/v0.3.3)してください。標準パッケージにはストレージとコンソールのサポートが含まれます。コンソールは`--console`で起動します。
+プラットフォームに合った[リリースをダウンロード](https://github.com/insanai/sibuna/releases/tag/v0.3.4)してください。標準パッケージにはストレージとコンソールのサポートが含まれます。コンソールは`--console`で起動します。
 
 | プラットフォーム | パッケージ | 動作要件 |
 | --- | --- | --- |
@@ -56,8 +56,8 @@ macOS向けビルドは未署名です。各パッケージにはライセンス
 Linux x86-64で、アプリがポート3000で待ち受けている場合：
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.3/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.3/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

@@ -1,6 +1,6 @@
 .{
     .name = .sibuna,
-    .version = "0.3.3",
+    .version = "0.3.4",
     .fingerprint = 0xaa8849243c3108cc,
     .minimum_zig_version = "0.17.0",
     .dependencies = .{

@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 48d28acad3b10231e32c88bcf3d43e324be89f143fe1bea1ee6492a32e5a1c0e -->
+<!-- English source SHA-256: 822c45805a612273e200c612475e4b596be854494af48fbb85f2d67a22bcb3a9 -->
 <h1 align="center">sibuna</h1>
 <p align="center">通过浏览器工作量证明保护网站，并提供可选的管理控制台。</p>
 <p align="center">
@@ -41,7 +41,7 @@
 
 ## 快速入门
 
-[下载适合平台的发行包](https://github.com/insanai/sibuna/releases/tag/v0.3.3)。默认安装包包含存储和控制台支持。使用 `--console` 启动控制台。
+[下载适合平台的发行包](https://github.com/insanai/sibuna/releases/tag/v0.3.4)。默认安装包包含存储和控制台支持。使用 `--console` 启动控制台。
 
 | 平台 | 安装包 | 要求 |
 | --- | --- | --- |
@@ -56,8 +56,8 @@ macOS 构建未签名。每个安装包都包含许可证、源码链接和构�
 在 Linux x86-64 上，假设应用监听 3000 端口：
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.3/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.3/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v0.3.4/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)
