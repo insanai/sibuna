@@ -18,6 +18,7 @@ index and bundle. Read a record's status before treating its design as implement
 | 0008 | AI bot traffic identification and operator analytics (open discussion) | analytics |
 | 0009 | Chunked request bodies and transfer-coding validation | network |
 | 0010 | Native OWASP Core Rule Set and verified rule updates | security |
+| 0011 | Distribution launch: native packages, GNU Guix, BSD Ports, and Helm | distribution |
 
 ## Layout
 

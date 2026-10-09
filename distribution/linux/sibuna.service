@@ -1,0 +1,32 @@
+[Unit]
+Description=Sibuna admission proxy
+Documentation=https://github.com/insanai/sibuna
+After=network.target
+
+[Service]
+Type=simple
+User=sibuna
+Group=sibuna
+StateDirectory=sibuna
+StateDirectoryMode=0700
+UMask=0077
+Environment=SIBUNA_HOST=127.0.0.1 SIBUNA_PORT=8080 SIBUNA_UPSTREAM_HOST=127.0.0.1 SIBUNA_UPSTREAM_PORT=3000
+EnvironmentFile=-/etc/sibuna/service.env
+ExecStartPre=/usr/lib/sibuna/seed.py /var/lib/sibuna/admission.seed
+ExecStart=/usr/bin/sibuna --host ${SIBUNA_HOST} --port ${SIBUNA_PORT} --upstream-host ${SIBUNA_UPSTREAM_HOST} --upstream-port ${SIBUNA_UPSTREAM_PORT} --secret-file /var/lib/sibuna/admission.seed --data-dir /var/lib/sibuna
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+NoNewPrivileges=true
+CapabilityBoundingSet=
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

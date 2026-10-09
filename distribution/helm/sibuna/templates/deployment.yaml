@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sibuna.name" . }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "sibuna.selector" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "sibuna.selector" . | nindent 8 }}
+      annotations:
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: sibuna
+          image: {{ if .Values.image.digest }}{{ printf "%s@%s" .Values.image.repository .Values.image.digest | quote }}{{ else }}{{ printf "%s:%s" .Values.image.repository (.Values.image.tag | default .Chart.AppVersion) | quote }}{{ end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - --host
+            - 0.0.0.0
+            - --port
+            - "8080"
+            - --upstream-host
+            - {{ .Values.upstream.host | quote }}
+            - --upstream-port
+            - {{ .Values.upstream.port | quote }}
+            - --secret-file
+            - /run/sibuna-secret/admission.seed
+            - --data-dir
+            - /var/lib/sibuna
+          ports:
+            - name: proxy
+              containerPort: 8080
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          startupProbe:
+            httpGet: {path: /__sibuna/health, port: proxy}
+            failureThreshold: 30
+            periodSeconds: 2
+          readinessProbe:
+            httpGet: {path: /__sibuna/health, port: proxy}
+          livenessProbe:
+            httpGet: {path: /__sibuna/health, port: proxy}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - {name: state, mountPath: /var/lib/sibuna}
+            - {name: seed, mountPath: /run/sibuna-secret, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: seed
+          secret:
+            secretName: {{ required "secret.existingSecret must refer to an operator-created Secret" .Values.secret.existingSecret | quote }}
+            defaultMode: 0440
+            items:
+              - key: {{ .Values.secret.key | quote }}
+                path: admission.seed
+        - name: state
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default (include "sibuna.name" .) | quote }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: tmp
+          emptyDir: {}

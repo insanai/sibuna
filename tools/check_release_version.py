@@ -21,9 +21,15 @@ if __name__ == "__main__":
     shell = (ROOT / "apps/console-ui/web/shell.html").read_text()
     if f"https://github.com/insanai/sibuna/tree/v{expected}" not in shell:
         raise SystemExit("Console source offer must name the release tag")
-    if len(os.sys.argv) > 1:
+    chart = ROOT / "distribution/helm/sibuna/Chart.yaml"
+    if chart.exists():
+        for field in ("version", "appVersion"):
+            value = re.search(r'^' + field + r':\s*"?([^"\s]+)"?\s*$', chart.read_text(), re.MULTILINE)
+            if value is None or value.group(1) != expected:
+                raise SystemExit(f"Initial chart {field} must match release {expected}")
+    if len(os.sys.argv) > 1 and os.sys.argv[1] != "--print-version":
         actual = subprocess.check_output([os.sys.argv[1], "--version"],
                                          stderr=subprocess.STDOUT, text=True).strip()
         if actual != f"sibuna {expected}":
             raise SystemExit(f"Binary reports {actual!r}, expected sibuna {expected}")
-    print(f"release-version: {expected}")
+    print(expected if "--print-version" in os.sys.argv else f"release-version: {expected}")

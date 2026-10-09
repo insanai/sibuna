@@ -1,5 +1,8 @@
 # Contributing to Sibuna
 
+Report suspected vulnerabilities through the private channel in [SECURITY.md](SECURITY.md).
+Do not put unpatched exploit details or live secrets in public issues, pull requests, or SIDs.
+
 Run `zig build fmt`, `zig build test`, and `zig build sid` before submitting a change. Regenerate
 `benchmarks/results/latest.json` with `sh benchmarks/run-all.sh` whenever a change touches a
 measured subsystem; the book renders its figures from that file.

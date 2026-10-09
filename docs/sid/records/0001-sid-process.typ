@@ -2,12 +2,12 @@
 #let sid-title = "The Shibuna Discussion Process and Engineering Standards"
 #let sid-state = "published"
 #let sid-created = "2026-09-07"
-#let sid-discussion = "Process document establishing RFC/RFD design lifecycle, TigerStyle engineering standards, and Elm-style error reporting"
+#let sid-discussion = "SID lifecycle, TigerStyle standards, Elm-style diagnostics, and private security reporting, response, disclosure, and package-release readiness."
 #let sid-labels = ("documentation", "process", "standards",)
-#let sid-authors = ("Sibuna Contributors <team@sibuna.local>",)
+#let sid-authors = ("Sibuna Contributors",)
 #let sid-category = "Process Memo"
 #let sid-status = "Published"
-#let sid-last-updated = "2026-10-07"
+#let sid-last-updated = "2026-10-09"
 
 #import "../../shared/sid.typ": sid-document
 
@@ -26,6 +26,10 @@
 )
 
 = Abstract
+
+*Revision, 2026-10-09:* Added the public security policy and confidential reporting/response
+process, maintainer privacy, supported-version limits, and distribution security launch gates.
+The reporting policy lives in `SECURITY.md`; package-specific readiness is tracked in SID 0011.
 
 The `sibuna` monorepo requires a durable decision-record process for architectural,
 cryptographic, protocol, security, and operational changes across the high-performance
@@ -209,6 +213,97 @@ The system strictly distinguishes between two failure classes:
   sets and accompanied by human-friendly Elm-style explanations and hints.
 - *Invariant Violations:* Internal programming bugs or impossible states (corrupted ring buffer pointers,
   unreachable switch arms). These halt execution immediately via `std.debug.assert(...)` in safe builds.
+
+= Security Policy, Reporting, and Coordinated Disclosure
+
+== Public Policy and Private Ownership
+
+`SECURITY.md` is the public source of truth for supported versions, private intake, response
+targets, and disclosure. Link to it from contributor guidance and distribution metadata.
+Two designated project maintainers own security questions, as assigned privately by the project
+owners. Public policies, SIDs, packaging contacts, and advisories use project roles instead of
+their personal names, email addresses, phone numbers, or private contact details. Do not create
+a public contact roster or invent a security mailbox. Required package contacts use a reachable
+project-controlled address/identity approved by its owners, not a private personal contact.
+
+Maintain assignments and primary/backup responsibility in access-controlled project records,
+outside public git. Both responders need appropriate GitHub advisory access, MFA, recovery,
+and working notifications. Repository permissions may give additional administrators access;
+verify that access rather than promising reports are visible to exactly two people.
+GitHub can display account identities inside private reports and profiles; this process does
+not promise platform anonymity or remove existing source/license attribution.
+
+== Supported Versions and Intake
+
+Security fixes target the latest stable release. Older releases receive backports only by
+explicit announcement; unreleased branches and local package candidates receive best-effort
+triage. Downstream distributions own their independent backport policy. Support ranges must
+be revisited when a release or maintenance commitment changes, not inferred from a package
+manager's ability to install an old version.
+
+Use GitHub private vulnerability reporting at
+#link("https://github.com/insanai/sibuna/security/advisories/new")[the private advisory form].
+Never put unpatched exploits, secrets, identifying deployment data, or confidential triage
+in public issues, pull requests, SIDs, review discussions, or CI logs. If intake is unavailable,
+the reporter may request a private contact publicly without technical details, then wait for
+a verified private route. The optional private form asks for summary/impact, version/environment,
+reproduction/evidence, and coordination preferences; full exploits, legal names, and severity
+scores are not prerequisites.
+
+On 2026-10-09 the repository reporting API initially returned disabled. This revision enables
+and rechecks private reporting. A setting check is not evidence that notifications are delivered
+or the uncommitted public policy has been published. Verify those separately before launch.
+
+== Handling and Response Targets
+
+1. The primary responder acknowledges within a target of three business days; the backup
+   covers absence. Give an initial assessment within seven business days and weekly progress
+   while an accepted issue is actively investigated. These are targets, not a guaranteed SLA.
+2. Reproduce safely on isolated synthetic data. Assess impact, prerequisites, exposure,
+   affected versions, exploitability, and active exploitation. Request missing evidence privately;
+   an incomplete proof of concept is not by itself a reason to discard a plausible report.
+3. Assign a remediation owner and independent reviewer. Keep confidential patches in a private
+   advisory workspace until disclosure; do not leak the vulnerability through public CI,
+   generated test artifacts, issue titles, commits, branch names, or an early public SID.
+4. Add meaningful regression and relevant integration tests, validate the fix and mitigations,
+   and prepare affected/fixed version ranges plus operator upgrade instructions. Escalate
+   actively exploited or high-impact issues promptly; do not assume every finding merits a CVE.
+5. Coordinate with the reporter and affected distribution security contacts on an agreed date,
+   normally targeting a fix/advisory within 90 days of receipt. Document agreed extensions or
+   earlier disclosure for active exploitation/public exposure. This is not a blanket embargo.
+6. Publish a reviewed project advisory and patched release/mitigation, request a CVE where
+   appropriate, and notify downstream maintainers through their approved security process.
+   Reporter credit is opt-in; prefer a chosen handle/link and omit unconsented identifying data.
+7. Record the outcome, response gaps, and follow-up work privately. After disclosure, publish
+   only the technical lessons needed in a SID; sanitize reporter, maintainer, and operator data.
+
+Reporters test only authorized systems and avoid service disruption and unrelated data access.
+The project does not promise payment, a bug bounty, legal safe harbor, or 24/7 incident coverage.
+
+== Security Gates for Distribution Launch
+
+Before advertising a new package channel, publish the policy, verify private form access,
+responder permissions and notification/recovery routing, assign primary/backup coverage, and
+exercise a private intake drill. Do not submit a fabricated public vulnerability to test it.
+Complete the account, source/license, credential, and native package gates in SID 0011.
+Do not publish personal contact information just to satisfy package metadata; establish the
+approved monitored project channel first.
+
+Packages preserve least privilege, separate admission/console/cluster keys, persistent state,
+and validated source/update provenance. Review known deployment limits, including internal
+health/metrics routes bypassing policy and lack of general origin DNS resolution. A security
+policy does not substitute for securing these behaviors or passing native qualification.
+
+For compromised build/publishing credentials, revoke access, stop affected publication,
+identify impacted artifacts, and coordinate advisories/replacement versions. Do not silently
+replace published immutable archives or expose secrets in the incident record. Package rollback
+does not undo schema migrations; test compatibility or restore an appropriate state backup.
+
+== References
+
+- `SECURITY.md` and `.github/VULNERABILITY_REPORT.yml`.
+- SID 0011: distribution accounts, community policy, release and security readiness.
+- #link("https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/configure-vulnerability-reporting/configure-for-a-repository")[GitHub private reporting and notifications].
 
 = Compilation Targets and Verification
 

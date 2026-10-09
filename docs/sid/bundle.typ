@@ -14,7 +14,7 @@
   "sid/0001-sid-process.html",
   title: [SID 0001: The Shibuna Discussion Process and Engineering Standards],
   author: ("Sibuna Contributors",),
-  description: [SID process, TigerStyle engineering standards, structural code limits, and Elm-style diagnostic reporting.],
+  description: [SID lifecycle, TigerStyle standards, diagnostics, private security reporting and response, maintainer privacy, and release readiness.],
 )[
   #include "records/0001-sid-process.typ"
 ]
@@ -138,4 +138,17 @@
 
 #document("pdf/sid-0010-owasp-crs-native-engine.pdf")[
   #include "records/0010-owasp-crs-native-engine.typ"
+]
+
+#document(
+  "sid/0011-distribution-packages.html",
+  title: [SID 0011: Distribution Launch: Native Packages, GNU Guix, BSD Ports, and Helm],
+  author: ("Sibuna Contributors",),
+  description: [Code-reviewed launch plan for Debian, RPM, Arch, Homebrew, WinGet, GNU Guix, FreeBSD, OpenBSD, and Helm: repository ownership, community requirements, accounts, source builds, service lifecycle, security reporting, and per-target release gates.],
+)[
+  #include "records/0011-distribution-packages.typ"
+]
+
+#document("pdf/sid-0011-distribution-packages.pdf")[
+  #include "records/0011-distribution-packages.typ"
 ]

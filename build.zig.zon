@@ -18,10 +18,13 @@
         "tools",
         "vendor",
         "docs",
+        "distribution",
         "README.md",
         "LICENSE",
+        "SECURITY.md",
         "LICENSES",
         "NOTICE",
         "CONTRIBUTING.md",
+        "guix.scm",
     },
 }

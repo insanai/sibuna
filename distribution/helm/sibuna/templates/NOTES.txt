@@ -1,0 +1,7 @@
+Sibuna uses a single writer with Recreate upgrades. Back up the PVC before upgrade.
+The PVC is retained on uninstall; erase it and the operator-owned Secret explicitly
+only when retiring the installation. Do not share this PVC between releases.
+Health probes test the listener, not origin reachability or storage durability.
+Allow trusted callers and the IP-literal origin in networkPolicy values. Your CNI
+must implement NetworkPolicy. Protect /__sibuna/* at any external ingress.
+No console, ingress, TLS termination or administrator account is created.

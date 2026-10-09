@@ -1,0 +1,63 @@
+class Sibuna < Formula
+  desc "Admission proxy with proof-of-work challenges and WAF inspection"
+  homepage "https://github.com/insanai/sibuna"
+  url "https://github.com/insanai/sibuna/releases/download/v@VERSION@/sibuna-@VERSION@-source.tar.gz"
+  sha256 "@SHA256@"
+  license all_of: ["LGPL-3.0-only", "AGPL-3.0-only"]
+
+  depends_on "python@3.14" => :build
+  depends_on "zig" => :build
+
+  def install
+    odie "This release requires Zig @ZIG@" unless Utils.safe_popen_read("zig", "version").strip == "@ZIG@"
+    system "python3.14", "tools/console_assets.py", "check"
+    system "zig", "build", "-Doptimize=safe", "-Dstrip=true", "-Dstorage=true",
+           "-Dconsole=true", "-Dcluster=false", "-Dcpu=baseline", "-j2"
+    bin.install "zig-out/bin/sibuna"
+    doc.install "NOTICE", "SECURITY.md", "SOURCE.txt"
+    doc.install "LICENSES"
+  end
+
+  def caveats
+    <<~EOS
+      No service is started automatically. Before running Sibuna, create a private
+      32-byte admission seed and pass --secret-file and a persistent --data-dir.
+      Configure an IP literal origin with --upstream-host and --upstream-port.
+      The console is opt-in; see the upstream operations documentation.
+    EOS
+  end
+
+  test do
+    assert_match version.to_s, shell_output("#{bin}/sibuna --version 2>&1")
+    require "net/http"
+    require "timeout"
+    seed = testpath/"admission.seed"
+    seed.binwrite Random.bytes(32)
+    seed.chmod 0600
+    original_seed = seed.binread
+    port = free_port
+    2.times do
+      pid = Process.spawn((bin/"sibuna").to_s, "--host", "127.0.0.1", "--port", port.to_s,
+                          "--secret-file", seed.to_s, "--data-dir", (testpath/"state").to_s,
+                          out: (testpath/"daemon.log").to_s, err: (testpath/"daemon.log").to_s)
+      begin
+        Timeout.timeout(15) do
+          loop do
+            begin
+              response = Net::HTTP.get_response(URI("http://127.0.0.1:#{port}/__sibuna/health"))
+              break if response.code == "200"
+            rescue Errno::ECONNREFUSED, EOFError
+              # Wait for the first listener startup.
+            end
+            sleep 0.1
+          end
+        end
+        assert_equal original_seed, seed.binread
+        assert_path_exists testpath/"state"
+      ensure
+        Process.kill("TERM", pid) rescue Errno::ESRCH
+        Process.wait pid
+      end
+    end
+  end
+end

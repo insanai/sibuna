@@ -1,0 +1,13 @@
+apiVersion: v2
+name: sibuna
+description: Sibuna admission proxy with persistent state and an operator-owned Secret
+type: application
+version: 0.3.3
+appVersion: "0.3.3"
+home: https://github.com/insanai/sibuna
+sources:
+  - https://github.com/insanai/sibuna
+keywords: [security, proxy, waf, proof-of-work]
+annotations:
+  artifacthub.io/category: security
+  artifacthub.io/license: AGPL-3.0-only

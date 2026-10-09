@@ -1,0 +1,31 @@
+image:
+  repository: ghcr.io/insanai/sibuna
+  tag: "" # defaults to Chart.appVersion; set digest for immutable deployments
+  digest: ""
+  pullPolicy: IfNotPresent
+secret:
+  existingSecret: "" # REQUIRED; admission.seed is 32 raw bytes or 64 hex characters
+  key: admission.seed
+upstream:
+  host: 127.0.0.1 # IP literal; can point at an operator-provided sidecar
+  port: 3000
+service:
+  port: 8080
+persistence:
+  enabled: true
+  existingClaim: ""
+  size: 1Gi
+  storageClass: ""
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 512Mi
+podAnnotations: {}
+# Private internal routes share the proxy listener. Restrict callers at the
+# network/ingress boundary; no ingress or console is created by this chart.
+networkPolicy:
+  enabled: true
+  ingressFrom: [] # deny ingress until explicit namespace/pod/ipBlock rules supplied
+  egressTo: [] # deny egress until the IP-literal origin is allowed

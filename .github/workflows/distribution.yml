@@ -1,0 +1,24 @@
+name: Distribution recipes
+on:
+  push:
+    branches: [main]
+    paths: ['distribution/**', 'tools/*distribution*', 'tools/package_linux.py', 'tools/package_source.py', 'tools/check_*package*.py', 'tools/check_helm.py', 'tools/check_container.py', 'tools/prepare*container.py', 'tools/release_checksums.py', 'tools/update_homebrew_tap.py', 'tools/build_chart_repository.py', '.github/workflows/release.yml', '.github/workflows/pages.yml', '.github/workflows/distribution.yml', '.github/workflows/homebrew.yml', '.github/workflows/helm-bootstrap.yml']
+  pull_request:
+    paths: ['distribution/**', 'tools/*distribution*', 'tools/package_linux.py', 'tools/package_source.py', 'tools/check_*package*.py', 'tools/check_helm.py', 'tools/check_container.py', 'tools/prepare*container.py', 'tools/release_checksums.py', 'tools/update_homebrew_tap.py', 'tools/build_chart_repository.py', '.github/workflows/release.yml', '.github/workflows/pages.yml', '.github/workflows/distribution.yml', '.github/workflows/homebrew.yml', '.github/workflows/helm-bootstrap.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - run: python tools/install_distribution_tools.py "$RUNNER_TEMP/distribution-tools" helm actionlint
+      - run: python -m pip install PyYAML==6.0.2
+      - run: actionlint -shellcheck=
+      - run: python tools/check_helm.py
+      - run: python tools/test_distribution.py

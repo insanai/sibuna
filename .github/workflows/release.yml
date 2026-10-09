@@ -1,4 +1,4 @@
-name: Binary release
+name: Release binaries and distributions
 on:
   push:
     tags: ['v*']
@@ -73,12 +73,16 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       matrix: ${{ steps.targets.outputs.matrix }}
+      linux: ${{ steps.targets.outputs.linux }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - id: targets
         env:
           PLATFORM: ${{ inputs.platform || 'all' }}
-        run: echo "matrix=$(python3 tools/release_targets.py "$PLATFORM")" >> "$GITHUB_OUTPUT"
+        run: |
+          MATRIX=$(python3 tools/release_targets.py "$PLATFORM")
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "linux=$(echo "$MATRIX" | python3 -c 'import json,sys; print(json.dumps([x for x in json.load(sys.stdin) if x["package"].startswith("linux-")]))')" >> "$GITHUB_OUTPUT"
   build:
     needs: plan
     strategy:
@@ -138,13 +142,128 @@ jobs:
           name: sibuna-${{ matrix.package }}
           path: dist/*
           if-no-files-found: error
+  native-packages:
+    needs: [plan, build]
+    if: contains(needs.plan.outputs.matrix, 'linux-')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.linux) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: sibuna-${{ matrix.package }}
+          path: input
+      - run: python tools/install_distribution_tools.py "$RUNNER_TEMP/distribution-tools" nfpm
+      - name: Package the qualified executable and preserve its provenance
+        env:
+          PACKAGE: ${{ matrix.package }}
+          CONTACT: ${{ vars.SIBUNA_PACKAGE_CONTACT }}
+        run: |
+          VERSION=$(python tools/check_release_version.py --print-version)
+          python tools/package_linux.py --archive "input/sibuna-$PACKAGE.tar.gz" \
+            --arch "${PACKAGE#linux-}" --version "$VERSION" --commit "$GITHUB_SHA" --contact "$CONTACT"
+      - name: Inspect package payloads and install/upgrade/remove on native Linux
+        if: matrix.package == 'linux-amd64'
+        run: |
+          python tools/check_linux_packages.py dist
+          python tools/check_systemd_package.py dist
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sibuna-native-${{ matrix.package }}
+          path: dist/*
+          if-no-files-found: error
+  distribution-source:
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.platform == 'all'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - run: python tools/package_source.py
+      - run: python tools/install_distribution_tools.py "$RUNNER_TEMP/distribution-tools" helm
+      - name: Lint and package the versioned Helm chart
+        run: |
+          VERSION=$(python tools/check_release_version.py --print-version)
+          helm lint distribution/helm/sibuna --strict --set secret.existingSecret=qualification
+          helm package distribution/helm/sibuna --version "$VERSION" --app-version "$VERSION" --destination dist
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sibuna-distribution-source
+          path: dist/*
+          if-no-files-found: error
+  homebrew:
+    needs: distribution-source
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: sibuna-distribution-source
+          path: input
+      - name: Build and test the source formula in an isolated qualification tap
+        run: |
+          brew tap-new --no-git sibuna/qualification
+          TAP=$(brew --repository)/Library/Taps/sibuna/homebrew-qualification
+          python3 - "$TAP/Formula/sibuna.rb" <<'PYTHON'
+          import pathlib,re,sys
+          formula=pathlib.Path('input/sibuna.rb').read_text()
+          source=next(pathlib.Path('input').glob('*-source.tar.gz')).resolve().as_uri()
+          pathlib.Path(sys.argv[1]).write_text(re.sub(r'url "[^"]+"', f'url "{source}"', formula, count=1))
+          PYTHON
+          brew install --build-from-source sibuna/qualification/sibuna
+          brew test sibuna/qualification/sibuna
+  container-and-chart:
+    needs: [build, distribution-source]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: sibuna-linux-*
+          path: input
+          merge-multiple: true
+      - name: Prepare and verify both image architectures
+        run: python3 tools/prepare_container.py input image-context
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        with:
+          version: v0.38.0
+          driver-opts: image=moby/buildkit@sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea
+      - run: |
+          python3 tools/install_distribution_tools.py "$RUNNER_TEMP/distribution-tools" helm kind kubectl
+          python3 -m pip install PyYAML==6.0.2
+      - name: Qualify unprivileged container and chart deployment
+        run: |
+          docker buildx build --platform linux/amd64 --load -t sibuna:qualification image-context
+          python3 tools/check_container.py sibuna:qualification
+          python3 tools/check_helm.py --image sibuna:qualification
+      - name: Export the multi-platform image without registry publication
+        run: docker buildx build --platform linux/amd64,linux/arm64 --output type=oci,dest=sibuna-image.tar image-context
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: qualified-container
+          path: sibuna-image.tar
+          if-no-files-found: error
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build, crs-conformance, crs-console]
+    needs: [build, crs-conformance, crs-console, native-packages, distribution-source, homebrew, container-and-chart]
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     permissions:
       contents: write
+      packages: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -152,17 +271,76 @@ jobs:
           pattern: sibuna-*
           merge-multiple: true
           path: dist
+      - name: Verify release remains unpublished before publishing any artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft > "$RUNNER_TEMP/release-state.json"; then
+            python3 -c 'import json,os; assert json.load(open(os.environ["RUNNER_TEMP"]+"/release-state.json"))["isDraft"], "Already published: do not replace artifacts"'
+          fi
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: qualified-container
+          path: image
+      - name: Publish the qualified immutable-version image to GHCR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          # skopeo copies the previously qualified OCI archive; it does not rebuild.
+          sudo apt-get update && sudo apt-get install -y skopeo
+          skopeo inspect --raw "oci-archive:image/sibuna-image.tar" > "$RUNNER_TEMP/local-image-index.json"
+          if skopeo inspect --raw --authfile "$HOME/.docker/config.json" "docker://$IMAGE:${RELEASE_TAG#v}" > "$RUNNER_TEMP/remote-image-index.json" 2> "$RUNNER_TEMP/image-state.err"; then
+            # Resume a failed publish job only when the existing image is byte-identical.
+            cmp "$RUNNER_TEMP/local-image-index.json" "$RUNNER_TEMP/remote-image-index.json" || {
+              echo "Image version already exists with different bytes; refusing replacement" >&2
+              exit 1
+            }
+          else
+            if ! grep -Eq 'manifest unknown|name unknown' "$RUNNER_TEMP/image-state.err"; then
+              cat "$RUNNER_TEMP/image-state.err" >&2
+              echo "Cannot verify image-version absence; refusing publication" >&2
+              exit 1
+            fi
+            skopeo copy --all --preserve-digests --authfile "$HOME/.docker/config.json" "oci-archive:image/sibuna-image.tar" "docker://$IMAGE:${RELEASE_TAG#v}"
+          fi
+          # First-time GHCR visibility is an owner-controlled setting. Keep the
+          # release unpublished until users can anonymously obtain the image.
+          if ! skopeo inspect --no-creds "docker://$IMAGE:${RELEASE_TAG#v}" --format '{{.Digest}}' > dist/IMAGE-DIGEST.txt; then
+            echo "Set the GHCR sibuna package to public, then rerun this failed publish job (reuse qualified artifacts)." >&2
+            exit 1
+          fi
       - name: Publish only after all platforms pass
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           cd dist
-          sha256sum *.tar.gz *.zip > SHA256SUMS
+          python3 ../tools/release_checksums.py .
           if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft > release-state.json; then
             python -c 'import json; assert json.load(open("release-state.json"))["isDraft"], "Already published: do not replace release assets"'
           else
             gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --draft --title "Sibuna $RELEASE_TAG" --notes-file ../.github/release-notes.txt
           fi
-          gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber ./*.tar.gz ./*.zip SHA256SUMS
+          gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber ./*.tar.gz ./*.zip ./*.deb ./*.rpm ./*.pkg.tar.zst ./*.tgz sibuna.rb IMAGE-DIGEST.txt SHA256SUMS
           gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
+  refresh-distributions:
+    needs: publish
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Refresh the public Helm repository after release publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main --repo "$GITHUB_REPOSITORY"
+      - name: Dispatch the independently retryable Homebrew tap update
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: gh workflow run homebrew.yml --ref main --repo "$GITHUB_REPOSITORY" -f tag="$RELEASE_TAG"

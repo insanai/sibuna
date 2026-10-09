@@ -1,0 +1,136 @@
+name: Bootstrap Helm release from published binaries
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing stable app release (must match the chart)
+        required: true
+        default: v0.3.3
+permissions:
+  contents: read
+concurrency:
+  group: helm-bootstrap-${{ inputs.tag }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+jobs:
+  qualify:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Verify existing release checksums, binary manifests and original source commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP_TAG: ${{ inputs.tag }}
+        run: python3 tools/prepare_published_container.py "$APP_TAG" image-context
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        with:
+          version: v0.38.0
+          driver-opts: image=moby/buildkit@sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea
+      - run: |
+          python3 tools/install_distribution_tools.py "$RUNNER_TEMP/distribution-tools" helm kind kubectl
+          python3 -m pip install PyYAML==6.0.2
+      - name: Qualify the actual non-root image and Kubernetes install, upgrade and uninstall
+        run: |
+          docker buildx build --platform linux/amd64 --load -t sibuna:qualification image-context
+          python3 tools/check_container.py sibuna:qualification
+          python3 tools/check_helm.py --image sibuna:qualification
+      - name: Package the chart and export the qualified two-architecture image
+        run: |
+          helm package distribution/helm/sibuna --destination dist
+          docker buildx build --platform linux/amd64,linux/arm64 --output type=oci,dest=sibuna-image.tar image-context
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: qualified-helm-bootstrap
+          path: |
+            sibuna-image.tar
+            dist/*.tgz
+          if-no-files-found: error
+  publish:
+    needs: qualify
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: qualified-helm-bootstrap
+          path: input
+      - name: Refuse to replace a published chart release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP_TAG: ${{ inputs.tag }}
+        run: |
+          if gh release view "helm-$APP_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft > "$RUNNER_TEMP/release-state.json"; then
+            python3 -c 'import json,os; assert json.load(open(os.environ["RUNNER_TEMP"]+"/release-state.json"))["isDraft"], "Already published: refusing replacement"'
+          fi
+      - name: Publish the qualified image without rebuilding or replacing a different image
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP_TAG: ${{ inputs.tag }}
+        run: |
+          sudo apt-get update && sudo apt-get install -y skopeo
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}:${APP_TAG#v}"
+          skopeo inspect --raw oci-archive:input/sibuna-image.tar > "$RUNNER_TEMP/local-index.json"
+          if skopeo inspect --raw --authfile "$HOME/.docker/config.json" "docker://$IMAGE" > "$RUNNER_TEMP/remote-index.json" 2> "$RUNNER_TEMP/image-state.err"; then
+            cmp "$RUNNER_TEMP/local-index.json" "$RUNNER_TEMP/remote-index.json"
+          else
+            if ! grep -Eq 'manifest unknown|name unknown' "$RUNNER_TEMP/image-state.err"; then
+              cat "$RUNNER_TEMP/image-state.err" >&2
+              exit 1
+            fi
+            skopeo copy --all --preserve-digests --authfile "$HOME/.docker/config.json" oci-archive:input/sibuna-image.tar "docker://$IMAGE"
+          fi
+          mkdir -p dist
+          cp input/dist/*.tgz dist/
+          if ! skopeo inspect --no-creds "docker://$IMAGE" --format '{{.Digest}}' > dist/IMAGE-DIGEST.txt; then
+            echo "Make the GHCR sibuna package public, then rerun only this failed job to reuse the qualified image." >&2
+            exit 1
+          fi
+      - name: Publish a separate chart release, keeping app release assets and latest unchanged
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP_TAG: ${{ inputs.tag }}
+        run: |
+          python3 tools/release_checksums.py dist
+          cat > "$RUNNER_TEMP/chart-release-notes.txt" <<EOF
+          Initial Helm chart for Sibuna $APP_TAG. The existing application release is unchanged.
+          The GHCR image wraps its checksum-verified Linux amd64/arm64 binaries in a pinned
+          distroless base. Original binary manifests/source links are retained; OCI labels
+          record the separate packaging revision. The private security reporting policy is
+          added as packaging documentation. No shell or package utilities are included.
+
+          The image passed non-root/read-only startup, persistent restart and graceful stop.
+          The chart passed Restricted admission, health, Recreate upgrade and retained PVC/Secret
+          checks on Kubernetes. Production NetworkPolicy enforcement is an operator requirement.
+
+          Repository: https://insanai.github.io/sibuna/charts/
+          Image: ghcr.io/insanai/sibuna:${APP_TAG#v}
+          SHA256SUMS covers the chart and IMAGE-DIGEST.txt. These artifacts are unsigned.
+          EOF
+          if ! gh release view "helm-$APP_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "helm-$APP_TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --draft --latest=false --title "Sibuna Helm ${APP_TAG#v}" --notes-file "$RUNNER_TEMP/chart-release-notes.txt"
+          fi
+          gh release upload "helm-$APP_TAG" --repo "$GITHUB_REPOSITORY" --clobber dist/*.tgz dist/IMAGE-DIGEST.txt dist/SHA256SUMS
+          gh release edit "helm-$APP_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest=false
+  refresh-index:
+    needs: publish
+    runs-on: ubuntu-22.04
+    permissions:
+      actions: write
+    steps:
+      - name: Rebuild the unified documentation and chart Pages site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main

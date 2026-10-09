@@ -36,7 +36,7 @@ def package(binary, target, destination):
         root = Path(temporary)
         shutil.copyfile(binary, root / binary.name)
         (root / binary.name).chmod(0o755)
-        for name in ("README.md", "LICENSE", "NOTICE"):
+        for name in ("README.md", "LICENSE", "NOTICE", "SECURITY.md"):
             shutil.copyfile(ROOT / name, root / name)
         # Each archive carries only the C runtime notices its executable links.
         linked = {"musl-COPYRIGHT.txt": target.startswith("linux"),

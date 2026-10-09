@@ -2,9 +2,9 @@ name: Documentation
 on:
   push:
     branches: [main]
-    paths: ['docs/**', 'README*.md', 'benchmarks/results/**', 'tools/i18n/**', 'tools/build_site.py', 'tools/site_html.py', '.github/workflows/pages.yml']
+    paths: ['docs/**', 'README*.md', 'benchmarks/results/**', 'tools/i18n/**', 'tools/build_site.py', 'tools/site_html.py', 'tools/build_chart_repository.py', 'tools/install_distribution_tools.py', 'distribution/helm/**', '.github/workflows/pages.yml']
   pull_request:
-    paths: ['docs/**', 'README*.md', 'benchmarks/results/**', 'tools/i18n/**', 'tools/build_site.py', 'tools/site_html.py', '.github/workflows/pages.yml']
+    paths: ['docs/**', 'README*.md', 'benchmarks/results/**', 'tools/i18n/**', 'tools/build_site.py', 'tools/site_html.py', 'tools/build_chart_repository.py', 'tools/install_distribution_tools.py', 'distribution/helm/**', '.github/workflows/pages.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -29,6 +29,13 @@ jobs:
         run: PYTHONPATH=tools python3 -m unittest discover -s tools/i18n -t tools -p 'test_*.py'
       - name: Build book, guides, SIDs and whitepaper
         run: python3 tools/build_site.py
+      - name: Rebuild the public Helm chart repository from published releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY_ID: ${{ vars.ARTIFACTHUB_REPOSITORY_ID }}
+        run: |
+          python3 tools/install_distribution_tools.py "$RUNNER_TEMP/distribution-tools" helm
+          python3 tools/build_chart_repository.py docs/build/site/charts --repository-id "$REPOSITORY_ID"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: github.event_name == 'pull_request'
         with:

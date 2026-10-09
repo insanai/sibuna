@@ -1,0 +1,41 @@
+name: Homebrew tap update
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published stable release tag (for example v0.3.4)
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: homebrew-${{ inputs.tag }}
+  cancel-in-progress: false
+jobs:
+  propose:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Download and verify the published formula
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease > "$RUNNER_TEMP/tap-release.json"
+          python3 -c 'import json,os; r=json.load(open(os.environ["RUNNER_TEMP"]+"/tap-release.json")); assert not r["isDraft"] and not r["isPrerelease"]'
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern sibuna.rb --pattern SHA256SUMS --dir "$RUNNER_TEMP/tap-input"
+          cd "$RUNNER_TEMP/tap-input"
+          grep '  sibuna.rb$' SHA256SUMS | sha256sum --check --status
+      - name: Propose the tap PR when scoped cross-repository access is configured
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          TAP: ${{ vars.HOMEBREW_TAP_REPOSITORY }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          if [ -n "$TAP" ] && [ -n "$GH_TOKEN" ]; then
+            python3 tools/update_homebrew_tap.py "$TAP" "$RELEASE_TAG" "$RUNNER_TEMP/tap-input/sibuna.rb"
+          else
+            echo "Formula is attached to the release. Configure HOMEBREW_TAP_REPOSITORY and HOMEBREW_TAP_TOKEN, then rerun this workflow to propose the PR."
+          fi
