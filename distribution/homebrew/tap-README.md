@@ -6,9 +6,9 @@ a CLI **formula**, built from source. Packaging source and qualification live in
 the [Sibuna monorepo](https://github.com/insanai/sibuna/tree/main/distribution/homebrew).
 
 The formula is imported only after an upstream release passes its native
-Homebrew source-build and restart tests. The latest published release currently
-predates qualified source formula assets; installation becomes available when
-the 0.3.5 release qualification finishes and `Formula/sibuna.rb` appears here.
+Homebrew source-build and restart tests. Check that `Formula/sibuna.rb` is present
+before installation. Each formula uses the corresponding published source bundle
+and its verified checksum.
 
 ## Installation
 
