@@ -7,6 +7,15 @@ const ProductGraph = struct {
     zaxonlite: *std.Build.Module,
 };
 
+fn cFlags(b: *std.Build, target: std.Build.ResolvedTarget, flags: []const []const u8) []const []const u8 {
+    if (target.result.os.tag != .openbsd) return flags;
+    // UBSan's indirect-function check reads the callee's instruction bytes.
+    // OpenBSD libc is execute-only; preserve that OS protection and every
+    // other safe-mode C check instead of probing inaccessible library text.
+    return std.mem.concat(b.allocator, []const u8, &.{ flags, &.{"-fno-sanitize=function"} }) catch
+        @panic("out of memory preparing OpenBSD C flags");
+}
+
 /// One optimization mode's full product graph: the static SQLite library
 /// (FTS5 plus the pinned sqlite-vec compiled in), the translated C import,
 /// the pure `zaxon_search` module, and the zaxonlite module itself. The
@@ -43,7 +52,7 @@ fn addProductGraph(
         "-DSQLITE_MAX_MMAP_SIZE=0";
     sqlite_mod.addCSourceFile(.{
         .file = sqlite_dep.path("sqlite3.c"),
-        .flags = &.{
+        .flags = cFlags(b, target, &.{
             "-DSQLITE_THREADSAFE=1",
             "-DSQLITE_OMIT_LOAD_EXTENSION",
             "-DSQLITE_OMIT_DEPRECATED",
@@ -52,7 +61,7 @@ fn addProductGraph(
             "-DHAVE_USLEEP=1",
             "-DSQLITE_ENABLE_FTS5",
             mmap_flag,
-        },
+        }),
     });
     // Pinned sqlite-vec, statically registered per connection. The
     // filesystem helpers stay out, and no AVX or NEON flag is set: the
@@ -60,7 +69,7 @@ fn addProductGraph(
     // target does not guarantee (ZDS 0009).
     sqlite_mod.addCSourceFile(.{
         .file = vec_dep.path("sqlite-vec.c"),
-        .flags = &.{
+        .flags = cFlags(b, target, &.{
             "-DSQLITE_CORE",
             "-DSQLITE_VEC_STATIC",
             "-DSQLITE_VEC_OMIT_FS",
@@ -71,7 +80,7 @@ fn addProductGraph(
             "-Du_int8_t=uint8_t",
             "-Du_int16_t=uint16_t",
             "-Du_int64_t=uint64_t",
-        },
+        }),
     });
     const sqlite_lib = b.addLibrary(.{
         .name = "sqlite3",

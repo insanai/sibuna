@@ -51,6 +51,7 @@ def start(binary, directory, console_port, logfile, key_file=None, proxy=False,
     deadline = time.monotonic() + 30
     while time.monotonic() < deadline:
         if proc.poll() is not None:
+            log_tail(proc)
             raise RuntimeError("daemon exited before console startup")
         try:
             if request(console_port, "GET", "/console/api/setup")[0] == (403 if proxy else 200):

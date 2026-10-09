@@ -8,7 +8,7 @@ on:
         description: Native platform to qualify (tags always build all)
         type: choice
         default: all
-        options: [all, linux-amd64, linux-arm64, macos-arm64, macos-amd64, windows-amd64]
+        options: [all, linux-amd64, linux-arm64, macos-arm64, macos-amd64, windows-amd64, bsd-freebsd, bsd-openbsd]
 permissions:
   contents: read
 concurrency:
@@ -19,6 +19,7 @@ defaults:
     shell: bash
 jobs:
   crs-conformance:
+    if: '!startsWith(inputs.platform, ''bsd-'')'
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
@@ -42,6 +43,7 @@ jobs:
             crs-primitive-check crs-regex-check crs-signature-check crs-acquisition-check \
             crs-update-test crs-package-check crs-artifact-check -j2 --summary all -- --download
   crs-console:
+    if: '!startsWith(inputs.platform, ''bsd-'')'
     runs-on: ubuntu-22.04
     timeout-minutes: 45
     steps:
@@ -70,6 +72,7 @@ jobs:
       - name: Qualify three-node CRS propagation and restart
         run: zig build crs-cluster-check -Dcluster=true -j2 --summary all -- --download
   plan:
+    if: '!startsWith(inputs.platform, ''bsd-'')'
     runs-on: ubuntu-22.04
     outputs:
       matrix: ${{ steps.targets.outputs.matrix }}
@@ -85,6 +88,7 @@ jobs:
           echo "linux=$(echo "$MATRIX" | python3 -c 'import json,sys; print(json.dumps([x for x in json.load(sys.stdin) if x["package"].startswith("linux-")]))')" >> "$GITHUB_OUTPUT"
   build:
     needs: plan
+    if: needs.plan.result == 'success'
     strategy:
       fail-fast: false
       matrix:
@@ -223,7 +227,7 @@ jobs:
           brew install --build-from-source sibuna/qualification/sibuna
           brew test sibuna/qualification/sibuna
   bsd-freebsd:
-    if: startsWith(github.ref, 'refs/tags/v') || inputs.platform == 'all'
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.platform == 'all' || inputs.platform == 'bsd-freebsd'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -245,16 +249,17 @@ jobs:
             env ASSUME_ALWAYS_YES=yes pkg install -y python314 git gnupg
             test -e /usr/local/bin/python3 || ln -s /usr/local/bin/python3.14 /usr/local/bin/python3
             pw useradd qualification -m -s /bin/sh
+            pw useradd builder -m -s /bin/sh
           run: |
             set -eu
-            python3 tools/qualify_bsd_release.py
+            ${{ startsWith(github.ref, 'refs/tags/v') && 'python3 tools/qualify_bsd_release.py' || 'python3 tools/qualify_bsd_release.py --candidate' }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: sibuna-native-freebsd
           path: dist/*.pkg
           if-no-files-found: error
   bsd-openbsd:
-    if: startsWith(github.ref, 'refs/tags/v') || inputs.platform == 'all'
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.platform == 'all' || inputs.platform == 'bsd-openbsd'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -275,9 +280,10 @@ jobs:
             set -eu
             pkg_add python3 git gnupg
             useradd -m -s /bin/sh qualification
+            useradd -m -s /bin/sh -L pbuild builder
           run: |
             set -eu
-            python3 tools/qualify_bsd_release.py
+            ${{ startsWith(github.ref, 'refs/tags/v') && 'python3 tools/qualify_bsd_release.py' || 'python3 tools/qualify_bsd_release.py --candidate' }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: sibuna-native-openbsd

@@ -116,7 +116,11 @@
           "src/payload_store.zig": "80b33acdfc06cbb28c1806b570e76b55ae775af4650339d9ffa05ded02b1507d"
         }
       }
-    ]
+    ],
+    "sibuna_openbsd_build_adaptation": {
+      "file": "build.zig",
+      "reason": "Omit only UBSan indirect-function instrumentation for OpenBSD C sources; it reads execute-only libc text. Retain other safe checks and OS execute-only mappings."
+    }
   },
   "paxos": {
     "version": "0.7.0",

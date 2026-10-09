@@ -25,11 +25,18 @@ pub fn BoundedQueue(comptime T: type, comptime capacity: usize) type {
         tail: std.atomic.Value(usize) align(64) = std.atomic.Value(usize).init(0),
 
         pub fn init() Self {
-            var self: Self = .{ .slots = undefined };
+            var self: Self = undefined;
+            self.initInPlace();
+            return self;
+        }
+
+        /// Initialize heap-owned rings without a capacity-sized stack temporary.
+        pub fn initInPlace(self: *Self) void {
+            self.head = .init(0);
+            self.tail = .init(0);
             for (&self.slots, 0..) |*slot, i| {
                 slot.sequence = std.atomic.Value(usize).init(i);
             }
-            return self;
         }
 
         /// Returns false when the queue is full; the value is not stored.
@@ -91,7 +98,7 @@ test "bounded queue accepts concurrent producers" {
     const Q = BoundedQueue(u64, 1024);
     const q = try std.testing.allocator.create(Q);
     defer std.testing.allocator.destroy(q);
-    q.* = Q.init();
+    q.initInPlace();
     const Producer = struct {
         fn run(queue: *Q, base: u64) void {
             var n: u64 = 0;

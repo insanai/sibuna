@@ -200,7 +200,7 @@ pub const Persistent = struct {
             .state = state,
             .policy_text = policy_text,
             .db = undefined,
-            .queue = IncidentQueue.init(),
+            .queue = undefined,
             .console_incidents = if (build_options.console) store.ConsoleIncidents.init() else {},
             .console_mailbox = if (build_options.console) .{ .gpa = gpa } else {},
             .spare = spare,
@@ -208,6 +208,7 @@ pub const Persistent = struct {
             .arenas = .{ std.heap.ArenaAllocator.init(gpa), std.heap.ArenaAllocator.init(gpa) },
             .node_id = if (cfg.cluster_node == 0) 1 else cfg.cluster_node,
         };
+        self.queue.initInPlace();
         if (build_options.console) {
             self.console_node = @import("console_node_state.zig").State.init(io);
         }

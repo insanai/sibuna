@@ -9,10 +9,13 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+if sys.argv[1:] not in ([], ['--candidate']):
+    raise SystemExit('usage: qualify_bsd_release.py [--candidate]')
+candidate = sys.argv[1:] == ['--candidate']
 system = platform.system().lower()
 if system not in ('freebsd', 'openbsd') or os.getuid() != 0:
     raise SystemExit('run as root only inside a disposable native BSD guest')
-identity = pwd.getpwnam('qualification')
+identity = pwd.getpwnam('builder')
 subprocess.run(['chown', '-R', f'{identity.pw_uid}:{identity.pw_gid}', str(ROOT)], check=True)
 
 
@@ -37,7 +40,7 @@ user(python, ROOT / 'tools/proxy_fixture_test.py')
 stage = ROOT / '.zig-cache/bsd-package'
 user(python, ROOT / 'tools/prepare_bsd_package.py', '--source', ROOT,
      '--binary', binary, '--system', system, '--destination', stage,
-     '--contact', os.environ['CONTACT'])
+     '--contact', os.environ['CONTACT'], *(['--candidate'] if candidate else []))
 subprocess.run([python, str(ROOT / 'tools/package_bsd.py'), str(stage), str(ROOT / 'dist')], check=True)
 suffix = '*.pkg' if system == 'freebsd' else '*.tgz'
 package, = (ROOT / 'dist').glob(suffix)

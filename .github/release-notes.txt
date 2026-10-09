@@ -1,6 +1,6 @@
 Sibuna v0.3.5 expands upstream distribution packages and installation documentation.
 The five Linux/macOS/Windows binary archives retain their native qualification.
-Request inspection, console behavior and storage schema are unchanged from v0.3.3.
+Request inspection, console behavior and storage schema retain their v0.3.3 contracts.
 The embedded console source offer names this immutable v0.3.5 tag.
 
 Downloads:
@@ -37,6 +37,10 @@ The English and seven translated READMEs, book, operator guide and website cover
 all installation mechanisms, verification, upgrades and retained credentials/data.
 The build-only source-map-js dependency is updated to 1.2.2 for GHSA-68fv-2mgg-jv7q;
 regenerated runtime CSS is byte-identical and this dependency is not in the daemon.
+Startup initializes allocated incident and telemetry rings in place, avoiding temporaries
+larger than OpenBSD's ordinary stack limit. Its C build omits the indirect-function
+sanitizer that reads execute-only libc code; other safe checks and OS protections
+remain enabled. Linux/macOS/Windows C flags are unchanged.
 WebSocket test fixtures mask large frames efficiently under software emulation,
 with independent RFC frame checks and the original daemon idle deadlines retained.
 

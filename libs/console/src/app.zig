@@ -76,7 +76,7 @@ pub const App = struct {
         errdefer gpa.destroy(self);
         const telemetry = try gpa.create(store.ConsoleTelemetry);
         errdefer gpa.destroy(telemetry);
-        telemetry.* = store.ConsoleTelemetry.init();
+        telemetry.initInPlace();
         const hub = try @import("subscription_hub.zig").Hub.init(gpa, io, boot);
         errdefer hub.deinit();
         self.* = .{

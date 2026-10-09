@@ -802,8 +802,12 @@ Native BSD investigation on the designated build host passed both actual proxy
 and ingress suites. A pure-Python large-frame masking fixture exceeded WebSocket
 idle limits under software emulation; equivalent byte-translation masking now
 passes with the original idle deadlines and independent RFC frame tests. FreeBSD
-also passed persistent console qualification. OpenBSD console and native package
-lifecycle remain required gates until their successful logs are recorded. Do not
+also passed persistent console qualification. OpenBSD startup exposed a capacity-sized incident-ring temporary exceeding the
+ordinary 4 MiB stack and a C indirect-function sanitizer reading execute-only
+libc instruction bytes. Incident and console telemetry rings now initialize directly in their allocated
+storage. Only OpenBSD's C indirect-function sanitizer is omitted; other safe-mode
+checks and execute-only system mappings remain intact. The installed console
+and native package lifecycle still require successful ordinary-user logs. Do not
 publish either an unqualified package or a version whose required release jobs failed.
 Recovery requires successful original BSD jobs/artifacts as well as existing gates.
 

@@ -18,6 +18,11 @@ at startup under the node's directory lock. File, directory and journal barriers
 are unchanged. These corrections and their regression tests are recorded in
 `provenance.json`. The build entry points expose the embedded
 library and preserve its SQLite, sqlite-vec and optional OpenSSL configuration.
+For OpenBSD only, the C build omits UBSan's indirect-function check because it
+reads instruction bytes from execute-only libc mappings. Other safe-mode checks
+and the operating system's memory protections remain enabled. Linux, macOS and
+Windows compiler flags are unchanged. The installed OpenBSD console must pass
+native tests with the default user limits before release.
 The unused Zaxon terminal application and its Vaxis dependency are not built.
 
 The snapshots are tested through Sibuna's storage and cluster integration tests;

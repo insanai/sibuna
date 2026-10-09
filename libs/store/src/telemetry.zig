@@ -105,10 +105,17 @@ pub const ConsoleTelemetry = struct {
     adaptive_rate_256: std.atomic.Value(u64) = .init(0),
 
     pub fn init() ConsoleTelemetry {
-        return .{
-            .queue = Queue(Record, 4096).init(),
-            .challenge_queue = Queue(ChallengeRecord, 4096).init(),
-        };
+        var self: ConsoleTelemetry = undefined;
+        self.initInPlace();
+        return self;
+    }
+
+    /// The console owns this allocation; initialize rings without copying them
+    /// through startup's stack, which is only 4 MiB on a default OpenBSD login.
+    pub fn initInPlace(self: *ConsoleTelemetry) void {
+        self.* = .{ .queue = undefined, .challenge_queue = undefined };
+        self.queue.initInPlace();
+        self.challenge_queue.initInPlace();
     }
 
     /// Every challenge event is offered; the bounded queue drops and counts under pressure.
@@ -192,7 +199,7 @@ test "exact outcomes remain complete when the bounded sample queue overflows" {
     const t = std.testing;
     const telemetry = try t.allocator.create(ConsoleTelemetry);
     defer t.allocator.destroy(telemetry);
-    telemetry.* = ConsoleTelemetry.init();
+    telemetry.initInPlace();
     seed(1234);
     for (0..500000) |_| telemetry.record(.admitted, .{
         .second = 1,

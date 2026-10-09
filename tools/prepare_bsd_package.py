@@ -17,7 +17,7 @@ def git(source, *args):
     return subprocess.check_output(['git', '-C', str(source), *args], text=True).strip()
 
 
-def prepare(source, binary, system, destination, contact):
+def prepare(source, binary, system, destination, contact, candidate=False):
     if destination.exists():
         raise ValueError('staging destination must not already exist')
     if git(source, 'status', '--porcelain') or git(ROOT, 'status', '--porcelain'):
@@ -25,7 +25,7 @@ def prepare(source, binary, system, destination, contact):
     commit = git(source, 'rev-parse', 'HEAD')
     release = re.search(r'\.version = "([0-9]+\.[0-9]+\.[0-9]+)"',
                         (source / 'build.zig.zon').read_text()).group(1)
-    if git(source, 'rev-parse', f'v{release}^{{commit}}') != commit:
+    if not candidate and git(source, 'rev-parse', f'v{release}^{{commit}}') != commit:
         raise ValueError('source must be the immutable application tag')
     if not re.fullmatch(r'[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+', contact):
         raise ValueError('an authorized public packaging contact is required')
@@ -45,7 +45,8 @@ def prepare(source, binary, system, destination, contact):
                                              or n == 'musl-COPYRIGHT.txt'])
     manifest = {
         'version': release, 'commit': commit, 'target': target, 'zig': '0.17.0',
-        'source': f'https://github.com/insanai/sibuna/tree/v{release}',
+        'source': f'https://github.com/insanai/sibuna/tree/{commit if candidate else "v" + release}',
+        'release_candidate': candidate,
         'recipe_commit': git(ROOT, 'rev-parse', 'HEAD'), 'os': system, 'minimum_os': minimum,
         'architecture': 'amd64', 'optimization': 'safe', 'stripped': True,
         'features': {'storage': True, 'console': True, 'cluster': False},
@@ -55,9 +56,10 @@ def prepare(source, binary, system, destination, contact):
     }
     (docs / 'sibuna.build.json').write_text(json.dumps(manifest, indent=2) + '\n')
     (docs / 'SOURCE.txt').write_text(
-        f'Corresponding source: {manifest["source"]}\nCommit: {commit}\n'
-        f'Source bundle: https://github.com/insanai/sibuna/releases/download/v{release}/'
-        f'sibuna-{release}-source.tar.gz\n'
+        f'Corresponding source: {manifest["source"]}\nCommit: {commit}\n' +
+        ('Candidate qualification only; no published release/source-bundle claim.\n' if candidate else
+         f'Source bundle: https://github.com/insanai/sibuna/releases/download/v{release}/'
+         f'sibuna-{release}-source.tar.gz\n') +
         f'Packaging recipe commit: {manifest["recipe_commit"]}\n'
         f'Build natively on {system} {minimum}/amd64 using its system headers/libraries: '
         'zig build -Dcpu=baseline -Doptimize=safe -Dstrip=true '
@@ -78,6 +80,8 @@ if __name__ == '__main__':
     parser.add_argument('--system', choices=TARGETS, required=True)
     parser.add_argument('--destination', type=Path, required=True)
     parser.add_argument('--contact', required=True)
+    parser.add_argument('--candidate', action='store_true',
+                        help='qualify a clean commit before tagging; never a publishing run')
     args = parser.parse_args()
     prepare(args.source.resolve(), args.binary.resolve(), args.system,
-            args.destination.resolve(), args.contact)
+            args.destination.resolve(), args.contact, args.candidate)
