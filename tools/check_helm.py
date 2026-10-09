@@ -33,6 +33,7 @@ def validate():
         container = pod['containers'][0]
         assert container['securityContext']['readOnlyRootFilesystem'] is True
         assert '--console' not in container['args']
+        assert container['args'][container['args'].index('--data-dir') + 1] == '/var/lib/sibuna/data'
         assert pod['volumes'][0]['secret']['defaultMode'] == 0o440
         assert documents['Service']['spec']['type'] == 'ClusterIP'
         assert documents['NetworkPolicy']['spec']['ingress'] == []

@@ -40,7 +40,7 @@ spec:
             - --secret-file
             - /run/sibuna-secret/admission.seed
             - --data-dir
-            - /var/lib/sibuna
+            - /var/lib/sibuna/data
           ports:
             - name: proxy
               containerPort: 8080

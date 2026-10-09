@@ -27,7 +27,14 @@ The release job refuses to replace published releases or existing versioned imag
 tags. Do not re-tag an existing version. Increase the app version, Chart.yaml
 version/appVersion, and existing source-offer/release-note references together
 before the next tag. The new files
-are for the next release; they do not retroactively change v0.3.3.
+are for the next application release; they do not retroactively change v0.3.3.
+For initial Helm publication, `helm-bootstrap.yml` verifies both existing
+v0.3.3 Linux downloads against GitHub digests, their published checksums,
+executable manifests and the original source commit. It qualifies the image and
+chart, then publishes a separate `helm-v0.3.3` release without altering the app
+release or latest marker. Image labels identify the original binary source and
+the separate packaging revision. The supplemental security policy comes from
+that packaging revision. Future app tags use the complete release workflow.
 
 ## Linux operations
 

@@ -574,6 +574,10 @@ No secret generation on Helm upgrade. Require non-root, no privilege escalation,
 capabilities, RuntimeDefault seccomp, read-only root plus explicit writable state/tmp, and no
 service-account token automount unless needed. Read-only root is an additional choice, not
 by itself proof of Restricted PSS.
+The chart passes `/var/lib/sibuna/data` inside its mounted state volume: the non-root daemon
+creates/owns the private 0700 child directory. A storage-driver-owned mount root cannot be
+chmodded by UID 65532 even when fsGroup grants write access. No privileged chown/init utility
+is needed; existing claims must permit child creation or provide that correctly owned child.
 #link("https://kubernetes.io/docs/concepts/security/pod-security-standards/")[Pod Security Standards].
 
 Startup/liveness uses `/__sibuna/health` with initialization grace. Readiness means listener

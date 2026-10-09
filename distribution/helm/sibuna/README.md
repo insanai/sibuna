@@ -37,6 +37,11 @@ change to overlapping rolling updates. Back up before upgrade. The PVC is
 retained on uninstall, as is the independently created Secret. Erasure is an
 explicit retirement operation. Disabling persistence is for disposable tests.
 The image filesystem is read-only; `/tmp` and the state volume remain writable.
+Sibuna creates its private data directory at `/var/lib/sibuna/data` inside the
+mounted volume. The volume root may remain owned by the storage driver; the
+daemon owns this child directory and can enforce its required 0700 permissions
+without a privileged init container. Existing claims must allow UID/GID 65532
+to create that child, or contain a data directory already owned by UID 65532.
 
 Probes call `/__sibuna/health`, which checks the listener rather than origin
 reachability or storage durability. `/__sibuna/metrics` and other internal routes
