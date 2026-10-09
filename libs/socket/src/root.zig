@@ -29,7 +29,7 @@ pub fn shutdown(io: std.Io, stream: std.Io.net.Stream, how: std.Io.net.ShutdownH
             .CONNRESET => return error.ConnectionResetByPeer,
             .CONNABORTED => return error.ConnectionAborted,
             .BADF, .NOTSOCK => |err| {
-                if (@import("builtin").mode == .Debug)
+                if (@import("builtin").mode == .debug)
                     std.debug.panic("invalid socket shutdown descriptor: {t}", .{err});
                 return std.posix.unexpectedErrno(err);
             },
