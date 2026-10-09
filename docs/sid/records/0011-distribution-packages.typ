@@ -816,6 +816,13 @@ and native package lifecycle still require successful ordinary-user logs. Do not
 publish either an unqualified package or a version whose required release jobs failed.
 Recovery requires successful original BSD jobs/artifacts as well as existing gates.
 
+The required primitive benchmark refresh records clean source revision 4ce8534410de
+in `benchmarks/results/latest-20261009T093609Z.json`, including source/executable digests,
+seven-batch ranges and a 9,960 KiB storage-inactive idle RSS. The private host label is
+redacted. Concurrent source qualification and disposable BSD guests mean CPU activity
+was not isolated; this record is not a cross-host regression comparison or SID 0007
+console-performance acceptance. Earlier dated measurements retain their original provenance.
+
 = References and Verification Limits
 
 Policies checked on 2026-10-09. Debian, Homebrew, Microsoft, BSD, Helm, Kubernetes, GitHub, and

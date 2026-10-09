@@ -6,13 +6,20 @@ Both write timestamped results and update their respective `latest` JSON files.
 
 ## Primitive baseline
 
-`latest.json` and `latest-20261007T084613Z.json` record clean revision
-`0796752a0a6fdd8c1f97a27ee3334c41edc84d7a`, measured on the Linux service container
+`latest.json` and `latest-20261009T093609Z.json` record clean revision
+`4ce8534410dee575231f4b39b9e0f371f9c61de2`, measured on the designated shared Linux build container
 with Zig 0.17.0 at ReleaseFast. Each row retains seven-batch median, minimum and maximum
 latencies. Storage and console are compiled in but inactive; native CRS is disabled.
 The idle process measurement uses two workers without a data directory or console listener.
 The record identifies the source, executable, dependency and solver module. Its ReleaseFast
-executable differs from the ReleaseSafe native-CRS measurements below; idle RSS is 10,076 KiB.
+executable differs from the ReleaseSafe native-CRS measurements below; idle RSS is 9,960 KiB.
+The private host label is redacted. Source qualification ran concurrently and disposable
+BSD guests were present, so CPU activity was not isolated. This refresh verifies the
+measurement tooling after startup changes; do not infer a performance change by comparing
+it with another host's baseline or treat it as console performance acceptance.
+
+`latest-20261007T084613Z.json` retains the earlier clean revision
+`0796752a0a6fdd8c1f97a27ee3334c41edc84d7a` and 10,076 KiB idle RSS measurement.
 
 The earlier `latest-release-030-20261007.json` retains revision `d461e7f` and its 9,996 KiB
 idle RSS measurement. It is a separate recorded build, not an alias for the current baseline.

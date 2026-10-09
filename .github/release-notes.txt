@@ -59,8 +59,9 @@ Upgrade:
 - Preserve admission seed, console key and state; back up before upgrading.
 - Before v0.3.2, upgrade every cluster node: older binaries cannot use schema 46.
 - Package/Helm rollback does not undo a database migration.
-- No measured request subsystem changed. Benchmarks retain their recorded commits;
-  the SID 0007 console performance exception remains.
+- No measured request subsystem changed. The required primitive benchmark refresh
+  records its source commit and shared-host conditions; earlier dated measurements
+  retain their provenance. The SID 0007 console performance exception remains.
 
 The engine is LGPL-3.0; the console and combined binary are AGPL-3.0. All packages
 carry license texts, notices, security guidance and corresponding-source provenance.
