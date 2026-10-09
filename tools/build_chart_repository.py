@@ -43,6 +43,15 @@ def build(destination, repository_id):
                 (destination / name).write_bytes(data)
         page += 1
     subprocess.run(['helm', 'repo', 'index', str(destination), '--url', 'https://insanai.github.io/sibuna/charts'], check=True)
+    (destination / 'index.html').write_text(
+        '<!doctype html><html lang="en"><meta charset="utf-8">'
+        '<title>Sibuna Helm repository</title><h1>Sibuna Helm repository</h1>'
+        '<p>Repository URL: <code>https://insanai.github.io/sibuna/charts/</code></p>'
+        '<pre>helm repo add sibuna https://insanai.github.io/sibuna/charts/\n'
+        'helm repo update\nhelm search repo sibuna</pre>'
+        '<p><a href="index.yaml">Helm index</a> · '
+        '<a href="https://github.com/insanai/sibuna/tree/main/distribution/helm/sibuna">'
+        'Installation and security requirements</a></p></html>\n')
     if repository_id:
         import uuid
         uuid.UUID(repository_id)

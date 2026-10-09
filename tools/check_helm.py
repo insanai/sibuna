@@ -93,6 +93,9 @@ def deploy(image, user_namespace=False):
             # Diagnostic resources/events expose no Secret values.
             subprocess.run(['kubectl', '-n', 'sibuna-test', 'get', 'pods,pvc'], env=env)
             subprocess.run(['kubectl', '-n', 'sibuna-test', 'get', 'events', '--sort-by=.lastTimestamp'], env=env)
+            subprocess.run(['kubectl', '-n', 'sibuna-test', 'logs', 'deployment/check-sibuna', '--tail=80'], env=env)
+            subprocess.run(['kubectl', '-n', 'sibuna-test', 'get', 'pods', '-o',
+                            'jsonpath={range .items[*]}{.status.containerStatuses}{"\\n"}{end}'], env=env)
             raise
         finally:
             run('kind', 'delete', 'cluster', '--name', name)
