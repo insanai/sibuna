@@ -68,6 +68,8 @@ Revision note
 
 2026-10-15 (Rust port, node commands): the intent commits first; the console checks authority and expiry again before the local effect, which runs through the daemon's ``Node`` trait; a completion that cannot be recorded is kept in memory, retried by the next request and by the collector, and blocks new commands; a command arriving while another runs is refused with 503 ``CONSOLENODE`` instead of queueing. The policy page reads the engine the node serves through ``Node::engine``; the policy tester without a draft and replay evaluate the committed policy composed by storage, reported beside the node's applied revision.
 
+2026-10-15 (Rust port, live hub): the hub keeps its bounds (rings of 1,024 records of at most 2 KiB per topic, outboxes of 64 frames, views of 64 KiB and filtered views of 16 KiB) but allocates them on demand. A ring is guarded by the hub's topic lock, so a publication is never lost to contention; Zig reported such a loss as a one-record gap. Server messages carry only the members of their operation, in the order of this record's example, which the console reproduces byte for byte; Zig also wrote ``"data":null`` and the unused part, update and kind members. Fan-out runs once per second on the first feeder tick of each new second of the console's clock. A stream writer waits on its subscriber's condition variable for at most 100 ms instead of sleeping 100 ms. If the five-second recheck cannot reach storage, the stream closes with 1013 instead of reporting the session unauthorized. The feeder reaches storage only through background tickets and holds at most two of the console's four background jobs.
+
 Abstract
 --------
 
