@@ -241,7 +241,7 @@ The port is accepted when:
 4. The benchmarks of SID 0002 (primitives, and whole-product runs under ``wrk``) show the Rust daemon at or above the Zig daemon's throughput, with p99 latency no worse, on the same machine; the results are recorded under ``benchmarks/results/``.
 5. The console passes its golden fixtures and its browser workflows in a headless browser, with screenshots reviewed.
 
-Status: in progress. This section is updated with the evidence as each criterion is met.
+Status: all five criteria are met (evidence below, 2026-10-15). The record stays open for the maintainer's review before it is accepted.
 
 Evidence recorded so far (2026-10-15):
 
