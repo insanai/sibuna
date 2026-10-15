@@ -5,7 +5,7 @@
 //! A command signs in with a password (and a second-factor code when the account has one)
 //! read from private files, or presents a bearer token read from a private file; it never
 //! takes a credential as an argument. It runs one operation, checks the reply against the
-//! exact contract ([`reply`]) and prints the reply's bytes, then signs out. Expected
+//! exact contract (the `reply` module) and prints the reply's bytes, then signs out. Expected
 //! revisions stay explicit, and a lost reply never implies a rollback: the hints say to
 //! query the state before retrying.
 //!

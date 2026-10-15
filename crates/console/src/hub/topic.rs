@@ -8,6 +8,8 @@
 //! fragments of at most [`FRAGMENT_BYTES`] bytes, one ring record each, numbered by part.
 //!
 //! The feeder thread publishes; the hub's fan-out reads. Both hold the hub's topic lock.
+//!
+//! [`FRAGMENT_BYTES`]: sibuna_console_protocol::subscriptions::FRAGMENT_BYTES
 
 use std::collections::VecDeque;
 use std::fmt::{self, Write};
