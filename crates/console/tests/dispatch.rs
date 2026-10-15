@@ -118,9 +118,9 @@ fn posts_need_the_canonical_origin_unless_a_bearer_presents() {
     let wrong = [("Origin", "http://evil.example")];
     let foreign = harness.request("POST", "/console/api/login", &wrong, b"{}");
     assert_eq!(foreign.status, 400);
-    // With the right origin the login handler runs (U2 serves it).
-    let login = harness.post("/console/api/login", &[], "{}");
-    assert_ne!(login.status, 400);
+    // With the right origin the login handler runs and refuses the unknown account.
+    let login = harness.post("/console/api/login", &[], r#"{"username":"nobody","password":"x"}"#);
+    assert_eq!(login.status, 401);
     // A bearer request may omit the origin: it reaches authentication.
     let bearer = format!("Bearer {TOKEN}");
     let users = harness.request(
