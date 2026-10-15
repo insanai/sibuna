@@ -8,7 +8,8 @@
 //!   read frames (masked writes, unmasked reads), publish each completed stats view,
 //!     send queued queries, answer pings, at most 128 messages per second
 //!   ends on error, close, 10 s without an accepted snapshot, or after one hour
-//!   -> peer stale (or rejected), back off 1, 2, 4 ... 30 s plus up to 0.9 s of jitter
+//!   -> peer stale (or rejected: one `peer.rejected` audit row when it becomes so),
+//!      back off 1, 2, 4 ... 30 s plus up to 0.9 s of jitter
 //! ```
 //!
 //! The worker reads with a socket deadline of at most 250 ms and polls between reads, so a
@@ -21,6 +22,7 @@ use std::time::{Duration, Instant};
 use sibuna_console_protocol::StatsSnapshot;
 use sibuna_console_protocol::subscription_client::{Client, Event as ViewEvent};
 use sibuna_console_protocol::subscriptions::Topic;
+use sibuna_console_storage::audit::{AuditAction, AuditRow, append_audit};
 use sibuna_http::websocket::{
     Event, FrameError, FrameReader, MAX_HEADER, MAX_MESSAGE, Opcode, ReceiveError, Receiver, Role,
     encode,
@@ -35,6 +37,7 @@ use super::wire::{self, WireError};
 use crate::config::{PeerOrigin, parse_peer_origin};
 use crate::random::{self, RandomError};
 use crate::shared::Shared;
+use crate::storage::StorageFailure;
 
 /// The longest a connection may go without an accepted snapshot (and the connect bound).
 const PROGRESS: Duration = Duration::from_secs(10);
@@ -85,15 +88,16 @@ enum WorkerError {
 }
 
 impl WorkerError {
-    /// Returns true when the peer itself was refused (its proof, its upgrade reply or its
-    /// certificate), as opposed to an unreachable or silent peer.
-    fn is_rejected(&self) -> bool {
-        matches!(
-            self,
-            WorkerError::Configuration
-                | WorkerError::Wire(_)
-                | WorkerError::Tls(TlsError::Certificate { .. })
-        )
+    /// Returns why the peer itself was refused (its configuration, its upgrade reply or
+    /// proof, or its certificate), or `None` for an unreachable or silent peer.
+    fn rejection(&self) -> Option<&'static str> {
+        match self {
+            WorkerError::Configuration => Some("configuration"),
+            WorkerError::Wire(WireError::InvalidProof) => Some("proof"),
+            WorkerError::Wire(WireError::InvalidRequest) => Some("upgrade"),
+            WorkerError::Tls(TlsError::Certificate { .. }) => Some("certificate"),
+            _ => None,
+        }
     }
 }
 
@@ -151,13 +155,23 @@ impl From<FrameError> for WorkerError {
 pub fn run(shared: &Shared, index: usize) {
     let mut backoff: u64 = 1;
     let mut connector = None;
+    // The reason of a refusal not yet audited.
+    let mut unaudited = None;
     while !shared.is_stopping() {
         let started = Instant::now();
         let ended = attempt(shared, index, &mut connector);
         if shared.is_stopping() {
             return;
         }
-        shared.peers.failed(index, ended.as_ref().is_err_and(WorkerError::is_rejected));
+        let rejection = ended.as_ref().err().and_then(WorkerError::rejection);
+        if shared.peers.failed(index, rejection.is_some()) {
+            unaudited = rejection;
+        }
+        if let Some(reason) = unaudited
+            && audit_rejection(shared, index, reason)
+        {
+            unaudited = None;
+        }
         if started.elapsed() >= PROGRESS {
             backoff = 1;
         }
@@ -168,6 +182,25 @@ pub fn run(shared: &Shared, index: usize) {
         }
         backoff = (backoff * 2).min(MAX_BACKOFF);
     }
+}
+
+/// Submits the `peer.rejected` audit row of peer `index`, refused for `reason`, as a
+/// background job. Returns false when the background allowance or the queue is full, so the
+/// caller tries again after its backoff; true once submitted (or when storage has stopped).
+fn audit_rejection(shared: &Shared, index: usize, reason: &'static str) -> bool {
+    let Some(target) = shared.peers.targets().get(index) else { return true };
+    // An origin is printable ASCII; the audit target holds at most 128 bytes.
+    let origin = target.origin.get(..target.origin.len().min(128)).unwrap_or_default();
+    let row = AuditRow {
+        subject: Some(u64::from(target.node)),
+        target: Some(origin.to_owned()),
+        after: Some(format!("{{\"reason\":\"{reason}\"}}")),
+        ..AuditRow::new(AuditAction::PeerRejected, shared.now())
+    };
+    let submitted = shared.storage.submit_background(move |tx| {
+        Box::pin(async move { append_audit(tx, &row).await.map(drop) })
+    });
+    !matches!(submitted, Err(StorageFailure::Busy | StorageFailure::Deferred))
 }
 
 /// One connection: connect, authenticate, subscribe and receive until it ends.

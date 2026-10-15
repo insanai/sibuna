@@ -32,7 +32,10 @@
 //!   page that does not fit (fewer rows) and answers `unavailable` when even one row does
 //!   not; Zig closed the stream.
 //! - A refused certificate marks the peer `rejected`, like a refused proof, so the operator
-//!   sees it on the nodes page (SID 0012); Zig marked it stale.
+//!   sees it on the nodes page (SID 0012); Zig marked it stale. The first refusal after any
+//!   other state writes one `peer.rejected` audit row (SID 0012's "peer status and audit
+//!   records"), through the background allowance, never one per retry.
+//! - A peer whose worker thread cannot start is reported `stale`, not `unobserved`.
 //!
 //! # Zig machinery that Rust deleted
 //!
@@ -211,9 +214,10 @@ impl Peers {
         self.lock().publish(handle, update)
     }
 
-    /// Records that the connection to peer `index` ended, `rejected` or not.
-    pub fn failed(&self, index: usize, rejected: bool) {
-        self.lock().failed(index, rejected);
+    /// Records that the connection to peer `index` ended, `rejected` or not. Returns true
+    /// when the peer has just become rejected.
+    pub fn failed(&self, index: usize, rejected: bool) -> bool {
+        self.lock().failed(index, rejected)
     }
 
     /// Queues a query of `kind` with `cursor` to peer `node` at `now`.
@@ -260,8 +264,12 @@ pub fn run(shared: &Shared) {
                 .name("sibuna-console-peer".into())
                 .stack_size(stack::bytes(usable))
                 .spawn_scoped(scope, move || worker::run(shared, index));
-            // A worker that cannot start leaves its peer unobserved; the others still run.
-            drop(spawned);
+            // A worker that cannot start leaves its peer without observations: it is
+            // reported stale (not merely unobserved) so the operator sees the gap; the
+            // others still run.
+            if spawned.is_err() {
+                shared.peers.failed(index, false);
+            }
         }
         while shared.sleep(std::time::Duration::from_secs(1)) {}
         shared.peers.stop();

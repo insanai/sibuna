@@ -258,12 +258,13 @@ impl Store {
     }
 
     /// Records that the connection to peer `index` ended: rejected (refused proof or
-    /// certificate) or stale.
-    pub fn failed(&mut self, index: usize, rejected: bool) {
-        if let Some(slot) = self.slots.get_mut(index) {
-            slot.observation.status =
-                if rejected { PeerStatus::Rejected } else { PeerStatus::Stale };
-        }
+    /// certificate) or stale. Returns true when the peer was not rejected before, so the
+    /// caller audits a refusal once, not on every retry.
+    pub fn failed(&mut self, index: usize, rejected: bool) -> bool {
+        let Some(slot) = self.slots.get_mut(index) else { return false };
+        let before = slot.observation.status;
+        slot.observation.status = if rejected { PeerStatus::Rejected } else { PeerStatus::Stale };
+        rejected && before != PeerStatus::Rejected
     }
 
     /// Replaces `out` with every peer's latest observation, in configuration order.

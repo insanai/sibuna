@@ -289,6 +289,7 @@ fn two_consoles_peer_over_wss_through_the_ingress_with_a_private_ca() {
     dashboard_and_nodes_topic(&a, &session_a);
     peer_queries(&a, &session_a);
     inbound_admission(&b);
+    rejections_are_audited_once(&b);
 
     // A stopped peer turns stale; its last values stay, never zero.
     b.stop();
@@ -297,6 +298,35 @@ fn two_consoles_peer_over_wss_through_the_ingress_with_a_private_ca() {
     let reply = post(&a, &session_a, "/console/api/timeline", "{\"node\":2}");
     assert_eq!((reply.status, reply.code().as_str()), (503, "CONSOLEPEERQUERY"));
     a.stop();
+}
+
+/// Each refused peer is audited once when it becomes rejected, never per retry.
+fn rejections_are_audited_once(b: &Harness) {
+    let rows = || {
+        b.transact(|tx| {
+            Box::pin(async move {
+                let sql = sibuna_storage::Sql::both(
+                    "SELECT subject, target, after_summary FROM console_audit \
+                     WHERE action = 'peer.rejected' ORDER BY subject",
+                );
+                let rows = tx.fetch_all(sql, &[]).await?;
+                Ok(rows
+                    .iter()
+                    .map(|row| {
+                        let cell = |index: usize| row[index].as_str().unwrap_or("").to_owned();
+                        (row[0].as_i64().unwrap(), cell(1), cell(2))
+                    })
+                    .collect::<Vec<_>>())
+            })
+        })
+    };
+    let first = until("two peer.rejected rows", 30, || Some(rows()).filter(|r| r.len() == 2));
+    assert_eq!((first[0].0, first[1].0), (3, 4));
+    assert!(first.iter().all(|(_, target, _)| target.starts_with("https://")), "{first:?}");
+    assert!(first.iter().all(|(_, _, after)| after.contains("certificate")), "{first:?}");
+    // The workers retry every few seconds; the refusals stay audited once.
+    std::thread::sleep(Duration::from_secs(4));
+    assert_eq!(rows().len(), 2);
 }
 
 /// The dashboard combines both nodes and selects one; the nodes topic carries the peer.
