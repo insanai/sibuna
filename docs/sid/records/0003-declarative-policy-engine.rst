@@ -18,6 +18,12 @@ Revision note
 
 2026-10-15: Ported from the Typst original in the Zig repository. The record describes the Zig implementation as it was decided; SID 0010 maps its packages to the Rust crates of the port.
 
+2026-10-15 (Rust port): the reputation trie comes from ``sibuna-cidr``, which fixes a Zig bug. The Zig trie stored the prefix ``0.0.0.0/0`` (equally ``::ffff:0:0/96``) on the node where IPv4 lookups begin, but never read that node's value, so an ``ip_rules`` entry for it was accepted and silently matched nothing. In the port it matches every IPv4 client, as its text says. A policy file that carries such an entry therefore behaves differently: ``"0.0.0.0/0": "DENY"`` now denies every IPv4 client at step 2 of the evaluation order, where the Zig daemon ignored it. Per-rule ``remote_addresses`` were matched by mask arithmetic in Zig and were not affected. A failed trie insertion now leaves the trie unchanged; Zig kept the nodes it had created, and they counted against the 8,192-node capacity. The accepted address syntax, including Zig's lenient IPv4 parts such as ``010`` and ``+1``, is unchanged.
+
+2026-10-15 (Rust port): score resolution is computed in wider, saturating arithmetic, so extreme managed weights and difficulties saturate where Zig would have trapped on overflow; every value a valid policy produces is unchanged. A number in an integer field whose integrality depends on binary128 rounding (more than about 34 significant digits) is judged exactly, where Zig could round it to an integer and accept it. A loader error found while parsing JSON also reports its byte offset in the diagnostic. The candidate engine composed from management documents is bounded by its inputs (a 256 KiB file, 128 documents of 4 KiB, 8,192 reputation rows) instead of by a 2 MiB arena, which a valid file could exhaust. Otherwise decisions, WAF findings, loader acceptance, diagnostics, rule hashes and quota scopes are those of the Zig library; a differential test replays generated requests, mutated policy files and management documents against its output.
+
+2026-10-15 (Rust port): dynamic policies are read from the SQLite or PostgreSQL storage of SID 0011 instead of Zaxonlite, and a rebuilt engine is published as an owned value behind an ``Arc`` instead of into the spare read-copy-update slot (SID 0002, SID 0010). A rebuild that fails keeps the previous engine, as before.
+
 Abstract
 --------
 
@@ -160,10 +166,18 @@ Policy file
 
 Field aliases accepted for compatibility with existing policy files: ``path_regex``, ``user_agent_regex``, ``headers_regex``, ``cidrs``. ``ip_rules`` feeds the reputation trie, which scales to thousands of prefixes; per-rule ``remote_addresses`` is meant for a handful.
 
+.. admonition:: Rust port note (2026-10-15)
+
+   In the Zig trie an ``ip_rules`` entry for ``0.0.0.0/0`` (or ``::ffff:0:0/96``) never matched. In the Rust port it matches every IPv4 client. See the revision note.
+
 Dynamic policies
 ----------------
 
 With ``--data-dir``, rows of the Zaxonlite ``policies`` table (name, priority, patterns, action, difficulty, algorithm, JSON header matchers, JSON CIDR list, weight, enabled) are appended after the file rules on every rebuild, and rebuilds are published to the workers through the read-copy-update engine slot without a restart. Rows replicate across a cluster by Multi-Paxos. The mechanism is specified in SID 0005.
+
+.. admonition:: Rust port note (2026-10-15)
+
+   The Rust port reads these rows from SQLite (one node) or a shared PostgreSQL database (a cluster) as SID 0011 specifies, and publishes each rebuilt engine behind an ``Arc`` instead of a read-copy-update slot.
 
 Verification
 ------------

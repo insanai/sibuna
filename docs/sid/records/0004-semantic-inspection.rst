@@ -18,6 +18,10 @@ Revision note
 
 2026-10-15: Ported from the Typst original in the Zig repository. The record describes the Zig implementation as it was decided; SID 0010 maps its packages to the Rust crates of the port.
 
+2026-10-15 (Rust port): the tagged signature automaton is built by ``sibuna-patterns``, whose table holds one ``u32`` successor per state and byte class instead of 256 ``u16`` successors per state. Bytes that occur in no signature share one class, and with case folding both cases of a letter share a class, so a row is as wide as the number of distinct signature bytes plus one. A scan is still exactly one dependent load per input byte with failure links folded in, and the state capacity is still derived from the signature lengths; the signature sets need several times less memory. Case folding is an option of the builder, which Sibuna turns on, instead of a fixed comptime table. Category tags run from 0 to 63, so that the set of categories found in a field is one 64-bit word; Sibuna's categories are below 4. Findings are unchanged: a differential test replays generated requests and payloads against the Zig library.
+
+2026-10-15 (Rust port): the GCRA limiter (``sibuna-store``) keeps its decisions, its bound, its table layout and its probe rule. Zig's limiter already used saturating arithmetic; the port also saturates the conversion of a window in seconds to milliseconds in its convenience entry point, where Zig would have overflowed. The ban table keeps its versioned snapshots and lock-free readers. WAF denials and honeypot hits still enter the bounded incident ring; the storage layer behind it is SID 0011 instead of SID 0005.
+
 .. admonition:: Revision note (2026-09-07)
 
    Revised after the implementation review of 2026-09-07. The first implementation matched a flat list of substrings in every header; because ``/*`` was on that list, every browser's ``Accept: text/html,...,*/*;q=0.8`` header was classified as SQL injection and every real browser received ``403``. The review replaced the flat list with the tagged automaton and the structural tokenizers described here, added a test that passes a complete Chrome request untouched, and corrected the "sliding window" description of the rate limiter to what the code implements: the Generic Cell Rate Algorithm.
@@ -55,6 +59,10 @@ Tagged signature automaton
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 All strong signatures of every category (traversal targets such as ``../`` and ``/etc/passwd``, SQL constructs such as ``union select`` and ``xp_cmdshell``, script vectors such as ``<script`` and ``javascript:``, command vectors such as ``/bin/sh`` and ``${jndi:``) live in one dense Aho-Corasick automaton sized from the sum of signature lengths with an 8-bit category tag per pattern. A field is scanned exactly once regardless of the number of signatures; a hit yields a ``Decision`` of ``deny`` named ``waf:<category>``. The automaton is case-folded through a comptime table.
+
+.. admonition:: Rust port note (2026-10-15)
+
+   The Rust automaton indexes its rows by byte class rather than by byte, and its tags run from 0 to 63. A scan is still one load per byte. See the revision note.
 
 Structural tokenizers
 ~~~~~~~~~~~~~~~~~~~~~

@@ -18,6 +18,8 @@ Revision note
 
 2026-10-15: Ported from the Typst original in the Zig repository. The record describes the Zig implementation as it was decided; SID 0010 maps its packages to the Rust crates of the port. The Rust port removes the Zaxonlite dependency. SID 0011 replaces it with sqlx: SQLite for a single node and PostgreSQL for clusters. This record remains the account of the Zig design.
 
+2026-10-15 (Rust port): beyond the storage engine, the port replaces two mechanisms this record specifies. The read-copy-update engine slot becomes an owned engine published behind an ``Arc``, which is never rebuilt in place (SID 0002, SID 0006 Part G). The sqlite-vec nearest-neighbour search over every incident becomes a search over the most recent 16,384 embeddings of all nodes, kept in memory by the storage thread (SID 0011, SID 0006 Part I). The incident ring of 512 records, the batches of 32, the durable receipts and the campaign threshold are unchanged.
+
 .. admonition:: Revision note (2026-09-07)
 
    Revised after the implementation review of 2026-09-07, at which point the storage layer existed only as a design. All three phases are now implemented in ``apps/sibuna/src/persistent.zig`` against the official ``insanai/zaxonlite`` release (v0.7.0 since 2026-09-14). Zaxonlite 0.7.0 fixed the cluster trim regression that wedged members under sustained replicated load (upstream issue 10) and cut its journal, TRIM, identity, and wire formats without migration, so data directories from earlier builds are recreated rather than upgraded. This record describes the code as built and lists what remains unexercised.

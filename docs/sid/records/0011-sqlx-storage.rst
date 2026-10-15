@@ -159,6 +159,7 @@ Review history
 --------------
 
 - 2026-10-15: drafted with the Rust port (SID 0010).
+- 2026-10-15 (Rust port): the implementation in ``sibuna-storage`` differs from this specification as follows. The schema table is ``sibuna_schema(component, version, applied_at)``: the ``component`` column lets the console add its own numbered migrations without making nodes that lack the console refuse the database. Incident text is stored as UTF-8 with NUL bytes dropped and invalid sequences replaced by U+FFFD, because PostgreSQL text holds neither; Zig stored raw bytes. PostgreSQL full-text search uses a generated ``tsvector`` with the ``simple`` configuration (no stemming, like the default FTS5 tokenizer) and ``websearch_to_tsquery``, so a query string never fails to parse there, while SQLite keeps the FTS5 ``MATCH`` syntax. Under PostgreSQL a batch with honeypot bans locks the revision row first, so two nodes that ban the same addresses in different orders cannot deadlock, and the revision triggers also cover ``TRUNCATE``. Startup retries only transient connection errors, for a bounded time. The console's evidence, head and country sidecars are not written yet; the console port adds them with its own migrations.
 
 References
 ----------

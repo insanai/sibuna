@@ -18,6 +18,8 @@ Revision note
 
 2026-10-15: Ported from the Typst original in the Zig repository. The record describes the Zig implementation as it was decided; SID 0010 maps its packages to the Rust crates of the port.
 
+2026-10-15 (Rust port): the framing rules R1 to R10, the decoder of Definition 1 and the admission phase are unchanged in ``sibuna-http`` and the daemon: admission still decodes in place in the connection buffer, and every accepted and refused input is the same. The streaming phase of Forwarding differs. Once the decoded prefix has been sent as the first chunk, the proxy (``sibuna-net``) reads further client bytes into a 16 KiB upload buffer, decodes them in place there, and sends each read as one canonical chunk; Zig decoded later reads inside the connection reader's buffer. Bytes still pending in the connection buffer when streaming begins are copied once into the upload buffer. The reason is ownership: the proxy borrows the parsed request, whose slices point into the connection buffer, so it must not refill that buffer, and the compiler now proves that the request is never read after a refill. The upload buffer is allocated once per connection, together with the origin read and write buffers, so a proxied request in the steady state still allocates nothing (the ``steady_state`` test of ``sibuna-net`` counts the allocations of 500 keep-alive requests). Goal 4's "no second per-connection buffer" no longer holds literally, because the upload buffer is such a second buffer. Lemma 2 applies to the upload buffer as it did to the connection buffer. Corollary 7 is unchanged, because the origin framing still depends only on :math:`B` and on Sibuna's reads, but an origin chunk of the streaming phase now carries at most 16 KiB.
+
 Abstract
 --------
 
@@ -233,6 +235,10 @@ The proxy's request body becomes an explicit union read by ``writeHead``, ``exch
 
 A complete chunked body becomes ``.length = |B|``. From there it takes exactly the ``Content-Length`` path, including the retry rule for safe methods with a fully buffered body. An incomplete one becomes ``.chunked``. Its head carries ``Transfer-Encoding: chunked``; its decoded prefix is sent as the first chunk; then each read is decoded in place and sent as one chunk. The terminal ``0`` CRLF CRLF is written only once the decoder reaches ``done``.
 
+.. admonition:: Rust port note (2026-10-15)
+
+   In the Rust proxy each later read goes into a 16 KiB upload buffer of the connection, not the connection buffer, and is decoded in place there. See the revision note.
+
 .. admonition:: Corollary 7 (Origin framing independence)
 
    The bytes the origin receives depend only on :math:`B` and on how Sibuna's reads segment the stream. They do not depend on the client's chunk sizes, extensions, trailers or letter case. Every message is either ``Content-Length`` framed or canonical chunked.
@@ -245,6 +251,10 @@ Cost
 .. admonition:: Lemma 8 (Linear work, constant memory)
 
    Admission moves each body byte at most once (Lemma 2) plus an unconsumed tail shorter than :math:`L` per read, and moves any pipelined bytes once when the body completes. Streaming touches each byte once in place and adds at most 20 framing bytes per origin chunk (16 hexadecimal digits and two CRLFs). The decoder state is 24 bytes on the stack. Neither phase allocates.
+
+.. admonition:: Rust port note (2026-10-15)
+
+   In the Rust port the streaming phase works in a per-connection upload buffer allocated once with the connection, so the request path still allocates nothing, but that buffer is a second per-connection buffer. Bytes pending in the connection buffer when streaming begins are copied into it once.
 
 The ``Content-Length`` and body-less paths gain one branch each in ``serveOne`` and in ``exchange``. Chunked uploads pay one in-L1 ``memmove`` per byte, which is cheap next to the socket read that delivered the byte, plus a chunk-size line per read. Streaming keeps the relay discipline of ``proxy.step``: forward what is buffered, flush the origin before waiting, read once. The slow-body defence counts raw bytes received, so a chunked upload must sustain the same 16 KiB per idle period as a ``Content-Length`` upload.
 

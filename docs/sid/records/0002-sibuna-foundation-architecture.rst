@@ -18,6 +18,10 @@ Revision note
 
 2026-10-15: Ported from the Typst original in the Zig repository. The record describes the Zig implementation as it was decided; SID 0010 maps its packages to the Rust crates of the port.
 
+2026-10-15 (Rust port): the reverse proxy (``sibuna-net``) changes three mechanisms of the request contract. First, the origin pool still holds at most 256 idle sockets, but in 16 stripes of 16 sockets with a lock each; a connection thread gives to and takes from its home stripe first and looks into the other stripes before it connects afresh. Zig kept one pool under one spin lock, which every proxied request contended for. Second, an accepted WebSocket upgrade is relayed by two threads: the connection's own thread carries origin-to-client bytes, and a scoped thread with a 128 KiB stack carries client-to-origin bytes. Zig served both directions from one thread with ``poll(2)``, which the Rust standard library does not expose; two threads with socket timeouts keep the relay free of ``unsafe``. An upgraded connection therefore holds two threads, so the number of connection threads can reach twice ``--max-connections`` when every connection is upgraded. Half closes, failure handling and the idle bound over both directions are unchanged. Third, the proxy borrows the parsed request instead of re-reading the connection buffer, and reads the rest of a streamed upload into a per-connection upload buffer (SID 0009). Bytes on the wire, the retry rule and the keep-alive decisions are unchanged; the port replays scenarios recorded from the Zig proxy and compares what the origin and the client receive.
+
+2026-10-15 (Rust port): the policy engine is no longer a fixed-capacity value held in two double-buffered slots with an arena per slot and a reader count. ``sibuna-policy`` builds an owned ``Engine`` off the request path (about 200 KiB of compact heap tables, reported by ``Engine::heap_bytes``, where the Zig value was 853,728 bytes), and the daemon publishes it behind an ``Arc``. Each request thread reads it through a cache that checks a generation counter with one acquire load and clones the ``Arc`` only after a publication; an old engine is freed when the last thread holding it moves on, and no writer ever waits for readers to drain. The reason is ownership: reference counting replaces the slot protocol and its arena reset rules, so an engine cannot be freed or rebuilt while a request still reads it. The capacities (128 rules, 128-byte rule names, 8,192 trie nodes) and every decision are unchanged. The signature automata use byte classes instead of 256 columns per state (SID 0006, Part F). Storage is SQLite or PostgreSQL through sqlx (SID 0011) instead of Zaxonlite.
+
 Abstract
 --------
 
@@ -79,6 +83,10 @@ The response path applies these checks in order:
 #. A valid session satisfies an admission challenge; it never overrides a denial or WAF finding.
 #. An admitted reverse-proxy request streams to the origin; forward auth returns a verdict. The proxy reads the origin's response head (at most 16 KB), classifies the body framing by RFC 9112 (no body, ``Content-Length``, chunked, or close-delimited), relays it exactly, and keeps the client connection open unless the response was close-delimited. Origin sockets left at a clean boundary by a persistent response return to a fixed pool of 256; a pooled socket the origin has closed is retried once on a fresh connection before any byte reaches the client, and only when the request body was fully buffered.
 
+.. admonition:: Rust port note (2026-10-15)
+
+   The pool of 256 is striped (16 stripes of 16 sockets, a lock each), and an upgraded WebSocket connection uses a second relay thread. See the revision note.
+
 The server's primitive parsing, evaluation and verification routines take no allocator. This is a source/API contract, not a claim that the networking runtime, thread creation, startup, or persistent storage perform no allocation. Benchmark instrumentation is linked only into the standalone benchmark executable. Production metrics and snapshot reader counts still have real atomic costs; they are not benchmark overhead.
 
 Authentication and work
@@ -96,6 +104,10 @@ Policy and memory
 The engine owns fixed-capacity rules, a radix trie, and dense Aho-Corasick tables. Signature capacity is one plus the sum of pattern lengths: no trie can require more states. This retains one transition lookup per input byte while avoiding the former oversized tables. Exact engine and table sizes are emitted by the benchmark using ``@sizeOf``.
 
 Dynamic storage owns two engine slots and an arena dedicated to each slot. A slot's arena is reset only when that slot is inactive and prior readers have drained. Response rule names are copied into a bounded 128-byte buffer, then the reader releases its slot before any proxy I/O. Pointer publication and reader-counter operations use sequential consistency so the cross-atomic ordering argument is valid. Storage polling, SQL, vector search and persistence stay on the storage thread.
+
+.. admonition:: Rust port note (2026-10-15)
+
+   The Rust daemon has no engine slots, slot arenas or reader counts: it publishes an owned engine behind an ``Arc``, and sizes come from ``Engine::heap_bytes`` instead of ``@sizeOf``. See the revision note.
 
 Measurement gates
 -----------------

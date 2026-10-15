@@ -18,6 +18,16 @@ Revision note
 
 2026-10-15: Ported from the Typst original in the Zig repository. The record describes the Zig implementation as it was decided; SID 0010 maps its packages to the Rust crates of the port.
 
+2026-10-15 (Rust port, Parts A to C): SHA-256 in ``sibuna-crypto`` detects the x86-64 SHA extensions and the ARMv8 SHA-2 instructions at run time, where Zig's standard library chose at build time from the target features, so one binary uses the instructions on every CPU that has them; a build without the ``std`` feature still decides at compile time. Digests, and therefore every Hashcash and PoSW result, are unchanged. The PoSW verifier derives the challenged leaves :math:`\gamma_i` from one SHA-256 state that has absorbed the statement :math:`\chi` once, instead of rehashing :math:`\chi` for every :math:`i`. The digests and the count of hash evaluations in Lemma 12 are the same, and verification costs :math:`t` fewer SHA-256 compressions. Ed25519 tokens are verified with width-5 non-adjacent-form digits for the public key and width-8 digits over a precomputed table of base-point multiples, instead of Zig's signed 4-bit windows, and the public key is decoded once when the coordinator starts instead of on every verification. Decoding now rejects off-curve, identity and small-order keys, which Zig rejected only in ``verify``. Exactly the same signatures are accepted, and verification is faster. The rule hash of Definitions 17 and 20 and the ban-table key are Wyhash; ``sibuna-crypto`` counts the input length in a ``u64`` where Zig used ``usize``. The two agree bit for bit on every 64-bit target and differ only on 32-bit targets for inputs of 4 GiB or more, which Sibuna never hashes. The measurements quoted in this record are those of the Zig build.
+
+2026-10-15 (Rust port, Parts D, E and H): the GCRA limiter, the spent set and the adaptive controller keep their definitions, table layouts and probe rules. Zig's limiter already saturated its arithmetic; the port also saturates the conversion of a window in seconds to milliseconds in its convenience entry point. The adaptive controller and the coordinator saturate where Zig would have trapped on overflow (a difficulty plus the bump past ``u32::MAX``, an EWMA product, a smoothing factor ``alpha_256`` above 256, a time near ``u64::MAX`` plus a lifetime). Theorem 23 and Definition 32 hold unchanged for every value the daemon can produce.
+
+2026-10-15 (Rust port, Part F): the automata of ``sibuna-patterns`` index their rows by byte class instead of by byte. A class is a byte that occurs in some pattern, with both cases of a letter forming one class under case folding, or the one class of all other bytes. Each row holds one ``u32`` successor per class, so construction takes :math:`O(m c)` time and space for :math:`c \le \sigma` classes instead of :math:`O(m \sigma)`, and a scan is still one dependent load per input byte with failure links folded in: Theorem 29 holds with :math:`c` in place of :math:`\sigma`. Match states are numbered after all other states, so the scan detects a match with one comparison. Patterns equal under case folding are all kept, and the one added first wins a first-match scan, where Zig overwrote the earlier one; Sibuna's signature tables contain no such duplicates. Tags run from 0 to 63, so a set of tags is one 64-bit word. Findings are unchanged.
+
+2026-10-15 (Rust port, Part G): the slot protocol of Definition 30 is not ported. The daemon publishes each rebuilt engine as an owned value behind an ``Arc`` (SID 0010). Each request thread reads it through a cache that checks a generation counter with one acquire load per request and clones the ``Arc`` only after a publication; an engine is freed when the last thread holding it moves on, and no writer waits for readers to drain. An engine is never rebuilt in place, so the property of Lemma 31 holds by reference counting, and the fourth open problem does not apply to the port. The incident ring is unchanged.
+
+2026-10-15 (Rust port, Part I): sqlite-vec is gone with Zaxonlite. The storage thread keeps the most recent 16,384 embeddings of all nodes in memory and assigns an incident to the campaign of its nearest neighbour among them (SID 0011), instead of a nearest-neighbour query over every recorded incident. An incident older than that window is not compared, so a variant that recurs after 16,384 newer incidents founds a new campaign. The embedding, the cosine threshold of 0.35 and the campaign identifiers are unchanged.
+
 .. admonition:: Implementation review: 2026-09-07
 
    The cited sequential-work results apply under their random-oracle assumptions to the constructions and bounds in the papers. They are not an independent audit of this concrete SHA-256 protocol, its parameter calibration, browser timing or quantum security level. `Cohen-Pietrzak (2018) <https://eprint.iacr.org/2018/183>`__ and `Blocki-Lee-Zhou (2021) <https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.ITC.2021.22>`__ are the primary references. Hash evaluations below must not be confused with SHA-256 compression calls: variable-length labels and padding can require multiple compressions.
@@ -139,6 +149,10 @@ The tail is what an operator feels: at any difficulty, about 5% of honest client
 
    ``libs/crypto/src/pow.zig``: ``computeHashcash`` absorbs the challenge, a colon, and the decimal nonce; ``checkDifficultyBits(digest, bits)`` tests ``bits/8`` whole zero bytes and a mask on the remainder; ``verifyHashcashBits`` composes the two. The hash is ``std.crypto.hash.sha2.Sha256``, which dispatches to the ARMv8 ``sha256h``/``sha256h2`` instructions on aarch64 targets with the ``sha2`` feature and to SHA-NI on x86-64 with ``sha`` and ``avx2``. Measured verification: **62.6 ns** per solution, zero heap bytes. The browser solver in ``apps/wasm-pow/src/entry.zig`` (``sibuna_solve_step``) pre-absorbs the prefix once and copies the 32-byte SHA state per nonce; in V8 it runs at about :math:`0.3\,\mu\mathrm{s}` per hash, so 16 bits takes about 20 ms.
 
+.. admonition:: Rust port note (2026-10-15)
+
+   The Rust SHA-256 chooses its hardware path at run time, not at build time. Digests are unchanged. See the revision note.
+
 Part B: Proof of Sequential Work
 --------------------------------
 
@@ -184,6 +198,10 @@ For intuition only, if a fixed commitment has an invalid fraction :math:`\alpha`
 .. admonition:: Proof of Lemma 12
 
    Per opened leaf: one leaf hash over at most :math:`n` sibling labels, then :math:`n` parent hashes over two labels each. The verifier walks the proof in place and keeps one 32-byte running label. :math:`\square`
+
+.. admonition:: Rust port note (2026-10-15)
+
+   The Rust verifier derives the :math:`t` challenges from one SHA-256 state that has absorbed :math:`\chi` once. The count of hash evaluations is unchanged, and verification costs :math:`t` fewer compressions.
 
 .. admonition:: Lemma 13 (Prover memory)
 
@@ -329,6 +347,10 @@ The fingerprint binds the token to the client identity the daemon can observe (a
 
 Ed25519 tokens remain available (``--token-scheme ed25519``) for the one deployment shape where verifiers must not be able to mint: they are then a deliberate trade of :math:`400\times` verification cost and post-quantum security for key separation.
 
+.. admonition:: Rust port note (2026-10-15)
+
+   The 52.8 microseconds and the factor of 400 are Zig figures. The Rust verifier uses non-adjacent-form digits and decodes the public key once, so it is faster; it accepts exactly the same signatures.
+
 .. admonition:: Implementation
 
    ``libs/crypto/src/keys.zig`` derives four purpose keys from one 32-byte seed by keyed BLAKE3 over a domain string (``sibuna/token/v1``, ``sibuna/challenge/v1``, ``sibuna/ed25519/v1``, ``sibuna/fingerprint/v1``), so a leak of one purpose key reveals nothing about another. The seed comes from ``--secret-file`` or ``SIBUNA_SECRET``, else a fresh random value per process. ``libs/crypto/src/token.zig``: ``MacToken.mint``/``verify``, ``Token`` (Ed25519), ``computeFingerprintKeyed``. ``libs/challenge/src/coordinator.zig``: ``createChallengeWithSpec``, ``decode``, ``verifyAndMint``, ``verifyCookie``.
@@ -407,6 +429,10 @@ Multi-pattern matching
 
 Sibuna uses the dense form: 256 successors of two bytes each per state, 512 bytes per state, failure links folded into the table so that scanning is exactly one load per input byte and never follows a failure chain. Case folding uses a comptime table so the automaton is byte-oriented and branch-free. Every pattern carries a tag (category), so one pass over a field returns both the match and its class. Each automaton capacity is one plus the sum of its pattern lengths; both live inside the ``Engine`` value so an engine can be rebuilt and swapped as one object (Part G).
 
+.. admonition:: Rust port note (2026-10-15)
+
+   The Rust automata have one ``u32`` successor per state and byte class, not 256 two-byte successors per state. Construction is :math:`O(m c)` for :math:`c \le \sigma` classes, and a scan is still one load per byte. See the revision note.
+
 The semantic layer
 ~~~~~~~~~~~~~~~~~~
 
@@ -443,6 +469,10 @@ The policy engine is a fixed-capacity value (rules, both automata, the reputatio
 .. admonition:: Proof of Lemma 31
 
    Consider a reader :math:`R` and the swap :math:`S` that retires slot :math:`A`. If :math:`R`'s increment and successful pointer recheck on :math:`A` precede :math:`S` in the sequentially consistent order, the writer's subsequent zero-check observes the increment and waits until :math:`R` releases. If :math:`R`'s increment follows :math:`S`, then :math:`R`'s reload of the pointer (which follows its increment) observes the swapped value :math:`B \neq A`, so :math:`R` decrements and retries; :math:`R` never uses :math:`A`. All pointer publication, pointer recheck, counter increments/decrements and writer zero-checks use sequential consistency. In that single total order, either the reader pins and rechecks before retirement (the writer sees its count), or its recheck sees retirement and retries. Acquire/release alone on separate atomics is not sufficient for this argument. :math:`\square`
+
+.. admonition:: Rust port note (2026-10-15)
+
+   The Rust daemon does not use this slot protocol. It publishes each engine behind an ``Arc`` and never rebuilds one in place, so no request can read an engine that is being rebuilt or freed. See the revision note.
 
 The cost includes an atomic increment and decrement per classification on a cache-line-aligned counter; contention must be measured. The response copies its rule name before releasing the slot, so origin I/O does not prolong the writer's wait. Incidents flow from workers to the storage thread through a bounded multi-producer single-consumer ring (Vyukov's sequence-stamped design [19]): each slot carries a sequence number that tells producers whether it is free and the consumer whether it is full, so neither side locks, and a full ring drops the newest record rather than blocking a response.
 
@@ -481,6 +511,10 @@ Incidents recorded by the WAF are embedded so that the storage layer can group v
    Fold digits to ``0`` and letters to lowercase. For each byte trigram :math:`g` of the payload let :math:`h(g)` be a 64-bit hash; add :math:`\mathrm{sign}(h(g)) \in \{-1, +1\}` (the top bit) to coordinate :math:`h(g) \bmod 64`. Normalise to unit length.
 
 This is the hashing trick of Weinberger et al. [20] over Broder's shingles [21]; the random sign makes the estimator of the inner product unbiased, and the fold makes ``id=1'`` and ``id=42'`` share almost all trigrams. Cosine similarity is then a dot product, and sqlite-vec's cosine KNN (the vector table is declared with ``distance_metric=cosine``) returns the nearest recorded incident. An incident joins the nearest campaign when the cosine distance is below 0.35 and otherwise founds a new campaign whose identifier is its own. The storage test in ``apps/sibuna/src/persistent.zig`` verifies that two SQL injection variants against different paths share a campaign and a honeypot hit does not.
+
+.. admonition:: Rust port note (2026-10-15)
+
+   The Rust storage searches only the most recent 16,384 embeddings of all nodes, kept in memory, instead of every recorded incident through sqlite-vec (SID 0011). See the revision note.
 
 .. admonition:: Implementation
 
