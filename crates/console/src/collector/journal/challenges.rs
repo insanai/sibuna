@@ -6,7 +6,7 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use sibuna_console_protocol::challenge_minutes::{Record, RecordWrite};
-use sibuna_console_protocol::minutes::{Cursor, Status};
+use sibuna_console_protocol::minutes::Cursor;
 use sibuna_console_storage::observations::{MinuteWrite, write_minute};
 use sibuna_store::challenge_metrics::{BIN_COUNT, BUCKET_COUNT, CAUSE_COUNT, Metrics};
 
@@ -226,11 +226,6 @@ impl ChallengeJournal {
         if let Some(outcome) = self.lane.start(submitted, ms) {
             self.finish(outcome, ms);
         }
-    }
-
-    /// Returns the journal's health.
-    pub(crate) fn status(&self, retention_failures: u64) -> Status {
-        self.pending.status(retention_failures)
     }
 }
 

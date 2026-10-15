@@ -36,8 +36,8 @@
 //!   `coverage.fill_difficulty(&mut page)`).
 //! - `Live::request_announce(control_revision)`: the node-command executor asks for a
 //!   membership announcement after an applied command (unit U3).
-//! - [`dashboard::Frame`]: `collect(&local, &observations, now)`, `view(node)`, `scope()`,
-//!   `combined()`, for the hub's feeder (unit U5); see the module's documentation.
+//! - [`dashboard::Frame`]: `collect(&local, &observations, now)` and `view(node)`, for
+//!   the hub's feeder (unit U5); see the module's documentation.
 //!
 //! # Changes from the Zig version
 //!
@@ -115,8 +115,6 @@ pub const PERIOD: Duration = Duration::from_millis(250);
 /// Why a live view is not available.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum LiveError {
-    /// Nothing has been observed yet, or the collector is not running.
-    Unavailable,
     /// The cursor belongs to an earlier epoch or boot: 409 `TIMELINE001`.
     HistoryChanged,
     /// The query is malformed: a limit outside 1 to 16 or an incomplete cursor (400).
@@ -126,7 +124,6 @@ pub enum LiveError {
 impl fmt::Display for LiveError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
-            LiveError::Unavailable => "the live view is not available",
             LiveError::HistoryChanged => "the live history changed",
             LiveError::InvalidQuery => "the live query is invalid",
         })

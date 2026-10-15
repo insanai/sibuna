@@ -210,11 +210,13 @@ impl Frame {
     }
 
     /// Returns the scope of the last [`Frame::collect`].
+    #[cfg(test)]
     pub fn scope(&self) -> &Scope {
         &self.scope
     }
 
     /// Returns the combined statistics, or `None` while the aggregate is unavailable.
+    #[cfg(test)]
     pub fn combined(&self) -> Option<&StatsSnapshot> {
         self.scope.available.then_some(&self.combined)
     }

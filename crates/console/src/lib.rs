@@ -43,31 +43,47 @@
 //!
 //! # Units and their interfaces
 //!
-//! The port is split into units (the console port plan, section 3). This crate's foundation
-//! (U1) declares every cross-unit interface with the public names the later units keep;
-//! each later unit replaces the bodies of the modules it owns. Stub bodies answer 503
-//! `CONSOLE004` (routes), return "unavailable" values, or do nothing (threads).
+//! The port was split into units (the console port plan, section 3). The foundation (U1)
+//! declared every cross-unit interface; each later unit implemented the modules it owned
+//! and added the interfaces below. Every unit has landed.
 //!
-//! - **U1** (this foundation): `console`, `shared`, `config/`, `host`, `keys`, `clock`,
-//!   `random`, `routes`, `dispatch`, `assets`, `limits`, `storage`, `http/`, `geo/slot`,
-//!   the stubs below, and `tests/support`. Its interface is listed after this list.
+//! - **U1** (foundation): `console`, `shared`, `config/`, `host`, `keys`, `clock`,
+//!   `random`, `routes`, `dispatch`, `assets`, `limits`, `storage`, `http/`, `geo/slot`
+//!   and `tests/support`. Its interface for every unit is listed after this list.
 //! - **U2** owns `api/{session,totp,users,tokens,kiosk,audit}`, `auth/`, `client`,
 //!   `command/`:
 //!   - `auth::password::Verifier::new(&Setup) -> Result<Verifier, VerifierError>`
-//!   - `command::run(&[String], &mut dyn Write) -> Result<(), CommandError>`, which the
-//!     daemon calls for `sibuna console ...`
+//!   - `client::send(&Endpoint, &Request, &Limits) -> Result<Response, ClientError>` and
+//!     `client::send_cancellable(.., cancel: &dyn Fn() -> bool)`, which gives up within
+//!     about a second of `cancel` turning true (the notifier, the GeoIP download)
+//!   - [`command::run`]`(&[String], &mut dyn Write) -> Result<(), CommandError>` and
+//!     [`command::run_with`]`(args, out, notes)`, which also writes progress lines and the
+//!     sign-out warning to `notes`; the daemon calls `run_with` for `sibuna console ...`
+//!     with standard output and standard error
 //! - **U3** owns `api/{policies,workflows,country,pages,settings,notifications,nodes,`
 //!   `events,export,security,challenges,minutes,rule_hits,ranking_history}` and `nodes`:
+//!   - [`PolicyBase`]: the daemon's WAF switch, policy file, global limiter, honeypot ban
+//!     and built-in challenge page, given as `Inputs::policy`
 //!   - `api::pages::Drafts::new(&Setup) -> Drafts`
-//!   - `nodes::Commands::new(&Setup) -> Commands`
-//!   - `nodes::Commands::retry(&self, &Shared)`, called by the collector every tick
+//!   - `nodes::Commands::new(&Setup) -> Commands`; `execute(&Shared, &Credential,
+//!     &Command) -> Result<Receipt, RouteError>` (intent, rechecks, effect through the
+//!     [`Node`], completion); `retry(&Shared)`, called by the collector every tick;
+//!     `control_revision`, `is_pending`, `uptime_ms` and `pending_receipt(&[u8; 16])` for
+//!     `nodes/local`
+//!   - the aggregate reads take the work bound of [`Config::query_steps`]
 //! - **U4** owns `collector/` and `api/live`:
-//!   - `collector::Live::new(&Setup) -> Live`
-//!   - `Live::stats(&self, &Shared) -> StatsSnapshot`
-//!   - `Live::timeline(&self, &Shared, &timeline::Query)`
-//!     `-> Result<timeline::Page, LiveError>`
-//!   - `Live::rankings(&self, &Shared) -> Result<rankings::Page, LiveError>`
-//!   - `Live::challenges(&self, &Shared) -> Result<challenges::Snapshot, LiveError>`
+//!   - `collector::Live::new(&Setup) -> Live`; the views `stats(&Shared) ->
+//!     StatsSnapshot`, `timeline(&Shared, &timeline::Query) -> Result<timeline::Page,
+//!     LiveError>`, `rankings(&Shared) -> Result<rankings::Page, LiveError>`,
+//!     `challenges(&Shared) -> Result<challenges::Snapshot, LiveError>`
+//!   - `Live::record_coverage(&Shared) -> RecordCoverage` (`fill_records`,
+//!     `fill_difficulty` complete the stored challenge pages with node-owned counters)
+//!   - `Live::request_announce(control_revision)`, called by `nodes` after an applied
+//!     command
+//!   - `collector::live::configured_bin(&Defaults) -> u8` and
+//!     `challenge_snapshot(&Metrics, Defaults, u8, now) -> challenges::Snapshot`
+//!   - `collector::dashboard::Frame`: `new()`, `collect(&local, &observations, now)` and
+//!     `view(node) -> View`, the dashboard frame merging local and peer views (U5)
 //!   - `collector::run(&Shared)`, the collector thread
 //! - **U5** owns `hub/` and `api/stream`:
 //!   - `hub::Hub::new(&Setup) -> Hub`
@@ -84,11 +100,17 @@
 //!   - `Notifier::raise(&self, Event, u64, &str)`, called by the collector
 //!   - `Notifier::test_destination(&self, &Shared, &Destination, &Read) -> Delivery`,
 //!     called by `api/notifications`
+//!   - `notify::target`: `validate_webhook`, `validate_syslog`, `target_host`,
+//!     `envelope_subject` and `is_address_allowed`, shared by delivery and the
+//!     destination routes
 //!   - `notify::run(&Shared)`, the notifier thread
-//!   - `geo::Importer::new(&Setup) -> Importer`
+//!   - `geo::Importer::with_embedded(&Setup, Option<&'static [u8]>) -> Importer`, over
+//!     the daemon's embedded snapshot ([`Inputs::geoip_embedded`])
 //!   - `Importer::restore(&self, &Shared) -> Result<(), ImportError>`, called by
 //!     `Console::start`
-//!   - `Importer::status(&self) -> ImportStatus`
+//!   - `Importer::start(&self, &Shared, ImportRequest) -> Result<(), ImportError>` (one
+//!     import thread at a time), `status(&self) -> ImportStatus`, `shown(&self) -> Shown`
+//!     (the generation the GeoIP page shows)
 //!   - `Importer::stop(&self)`, called by `Console::stop`
 //!   - `probe::Probes::new(&Setup) -> Probes`
 //!   - `Probes::snapshot(&self, &mut Vec<nodes::Probe>)`
@@ -98,9 +120,19 @@
 //!   - `Peers::reports(&self, u64, &mut Vec<nodes::Peer>)`
 //!   - `Peers::snapshots(&self, &mut Vec<Observation>)`
 //!   - `Peers::contains(&self, u32) -> bool`
+//!   - `Peers::admit(&Transcript, &[u8; 32], now) -> Result<Inbound, StoreError>` (the
+//!     inbound `/console/peer` route; dropping `Inbound` releases the link),
+//!     `activate`, `publish` and `failed` (the outbound workers),
+//!     `submit(node, Kind, Cursor, now) -> Result<Ticket, StoreError>` (peer queries of
+//!     the timeline and rankings routes), `targets`, `self_node`, `key` and `stop`
 //!   - `peer::run(&Shared)`, the parent of the peer workers
-//! - **U8** (the daemon, `cmd/sibuna`) implements [`Node`] and registers
-//!   [`snapshot_hook`], [`committed_hook`],
+//!   - `sibuna_tls::testing` (feature `testing`): `Ingress::start(Leaf)`, `forward_to`,
+//!     `forwarded`, `refused`, and `ca_file()`, a TLS-terminating test proxy with a
+//!     private CA
+//! - **U8** (the daemon, `cmd/sibuna`) implements [`Node`] (drain flag, ban gauge and
+//!   clear, rule-hit samples with the retired generation's final counters
+//!   ([`RuleHitSample::retired`]), applied revision, connection count, the published
+//!   engine) and registers [`snapshot_hook`], [`committed_hook`],
 //!   `sidecars::incident_hook(Some(geo.country_lookup()))` and `console_storage::CONSOLE`
 //!   with the storage thread.
 //!
@@ -118,7 +150,7 @@
 //!   `hint`); `http::credential` (`presented`, `session_token`, `check_csrf`,
 //!   `csrf_token`, `parse_bearer`, the cookie name).
 //! - Storage: `storage::ConsoleStorage` in `Shared::storage`: `transact(job)` for HTTP
-//!   (one transaction, committed on success, waits at most 10 s), `run(job)`, and
+//!   (one transaction, committed on success, waits at most 10 s) and
 //!   `submit_background(job) -> BackgroundTicket` for background tasks (at most 4 jobs
 //!   together; `try_take` never blocks). `storage::StorageFailure::route_error` maps a
 //!   failure with the route's own code.
@@ -153,7 +185,22 @@
 //!   stream readers, rings allocated on demand within the same bounds, 34 bytes per GeoIP
 //!   range).
 //! - Assets are passed in by the daemon ([`AssetBytes`]) instead of `@embedFile`, so this
-//!   crate builds without the WebAssembly module.
+//!   crate builds without the WebAssembly module; so is the embedded GeoIP snapshot, which
+//!   the daemon's build validates (decision 7).
+//! - The SQLite step bound of aggregate reads is [`Config::query_steps`], checked by
+//!   [`Config::validate`] (Zig checked it only in the daemon's flag parser).
+//! - Services that ran on Zig's storage owner run on console threads: rule hits are
+//!   sampled from the published engine through [`Node`] once a second; the daemon keeps a
+//!   retired generation's counters until a sample read their final values, so the cutover
+//!   loses no hit counted before the publication (`collector::journal::rule_hits`).
+//!   Membership announcements and node-command completions are background jobs.
+//! - `nodes/local` reports the daemon's open data-plane connections
+//!   ([`Node::connection_count`]).
+//! - A peer that becomes `rejected` (refused certificate or proof) writes one
+//!   `peer.rejected` audit row (SID 0012); a peer whose worker cannot start is reported
+//!   `stale` instead of staying `unobserved`.
+//! - The modules `collector`, `hub`, `api::stream`, `nodes`, `peer`, `geo::import` and
+//!   `probe` list their own changes.
 //!
 //! # Zig machinery that Rust deleted
 //!
@@ -167,11 +214,6 @@
 //!   generations: an `Arc` per generation.
 //! - `?*anyopaque` handler contexts: the listener's handler is a closure over the shared
 //!   state.
-
-// The foundation (unit U1) declares the interfaces that units U2 to U7 implement and call;
-// until they land, much of it has no caller yet. Remove this allow when the last unit has
-// landed (U8, milestone B), so dead code is reported again.
-#![allow(dead_code)]
 
 mod api;
 mod assets;

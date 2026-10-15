@@ -89,11 +89,6 @@ impl Ingress {
         }
         self.networks.iter().any(|network| network.contains(peer))
     }
-
-    /// Returns true when the console sits behind a proxy.
-    pub fn is_behind_proxy(&self) -> bool {
-        self.behind_proxy
-    }
 }
 
 #[cfg(test)]

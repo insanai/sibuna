@@ -96,6 +96,7 @@ impl Assets {
     }
 
     /// Returns the served path of asset `index` (0 wasm, 1 glue, 2 css), or `None`.
+    #[cfg(test)]
     pub fn path(&self, index: usize) -> Option<String> {
         Some(format!("{ROOT}{}/{}", self.prefixes.get(index)?, NAMES.get(index)?))
     }

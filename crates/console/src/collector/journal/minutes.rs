@@ -137,6 +137,7 @@ impl MinuteJournal {
     }
 
     /// Queues `record` as [`Pending::offer`] does.
+    #[cfg(test)]
     pub(crate) fn offer(&mut self, record: Record) {
         self.pending.offer(record);
     }

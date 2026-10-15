@@ -396,6 +396,7 @@ fn io_error(error: io::Error) -> ClientError {
 /// `GET target` from `endpoint` with `fields`; see [`send`].
 ///
 /// Fails like [`send`].
+#[cfg(test)]
 pub fn get(
     endpoint: &Endpoint<'_>,
     target: &str,
@@ -408,6 +409,7 @@ pub fn get(
 /// `POST target` to `endpoint` with `fields` and a JSON `body`; see [`send`].
 ///
 /// Fails like [`send`].
+#[cfg(test)]
 pub fn post_json(
     endpoint: &Endpoint<'_>,
     target: &str,

@@ -70,6 +70,7 @@ impl Secret {
     }
 
     /// Returns true for an empty secret.
+    #[cfg(test)]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }

@@ -224,11 +224,6 @@ pub struct Importer {
 }
 
 impl Importer {
-    /// Returns an idle importer without an embedded snapshot.
-    pub fn new(setup: &Setup<'_>) -> Importer {
-        Importer::with_embedded(setup, None)
-    }
-
     /// Returns an idle importer that restores the embedded snapshot `embedded` (decision
     /// 7) when storage holds no generation.
     pub fn with_embedded(setup: &Setup<'_>, embedded: Option<&'static [u8]>) -> Importer {

@@ -17,8 +17,8 @@
 //! Changes from Zig: storage calls are background jobs with tickets (at most 4 for every
 //! background task together, [`wait_for`]); the notifier waits for each on its own thread,
 //! at most 10 seconds including the wait for a free slot. Zig logged lost local events and
-//! failed rounds; the library does not print ([`Notifier::dropped_count`] counts lost
-//! events), and a failed round is retried a second later.
+//! failed rounds; the library does not print: a full ring of raised events drops the
+//! newest (the ring is bounded), and a failed round is retried a second later.
 
 pub mod delivery;
 mod syslog;
@@ -92,11 +92,6 @@ impl Notifier {
     /// the event as dropped.
     pub fn raise(&self, event: Event, second: u64, detail: &str) {
         self.ring.lock().unwrap_or_else(PoisonError::into_inner).offer(event, second, detail);
-    }
-
-    /// Returns how many raised events a full ring dropped.
-    pub fn dropped_count(&self) -> u64 {
-        self.ring.lock().unwrap_or_else(PoisonError::into_inner).dropped()
     }
 
     /// Sends a test delivery to `destination`, reading its sealed secret with `read`, and

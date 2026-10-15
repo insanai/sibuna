@@ -86,6 +86,7 @@ impl Detector {
     }
 
     /// Returns true when the next excursion above the threshold will fire.
+    #[cfg(test)]
     pub(crate) fn is_armed(&self) -> bool {
         self.armed
     }
@@ -136,6 +137,7 @@ impl Ring {
     }
 
     /// Returns how many events a full ring dropped.
+    #[cfg(test)]
     pub(crate) fn dropped(&self) -> u64 {
         self.dropped
     }

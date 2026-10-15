@@ -159,7 +159,6 @@ fn timeline_page(
         Ok(page) => Ok(reply::json(context, &page)?),
         Err(LiveError::HistoryChanged) => Err(RouteError::fail(409, "TIMELINE001")),
         Err(LiveError::InvalidQuery) => Err(RouteError::BadRequest),
-        Err(LiveError::Unavailable) => Err(RouteError::Unavailable),
     }
 }
 

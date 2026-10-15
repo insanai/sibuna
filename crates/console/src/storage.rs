@@ -5,8 +5,8 @@
 //! `sibuna-console-storage` in one transaction, which commits when the function succeeds
 //! and rolls back otherwise:
 //!
-//! - HTTP handlers call [`ConsoleStorage::transact`] (or [`ConsoleStorage::run`] for a
-//!   job over the database handle) and wait at most [`HTTP_WAIT`]; past it they answer
+//! - HTTP handlers call [`ConsoleStorage::transact`] and wait at most [`HTTP_WAIT`];
+//!   past it they answer
 //!   503 `CONSOLEQUORUM` and the job still commits or rolls back whole.
 //! - Background tasks (collector, journals, feeder, retention) call
 //!   [`ConsoleStorage::submit_background`] and poll the [`BackgroundTicket`]; they never
@@ -17,7 +17,6 @@
 //! [`StorageFailure`] is what a caller sees; [`StorageFailure::route_error`] maps it to the
 //! reply of a route, with the route's own failure code.
 
-use std::future::Future;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
@@ -155,11 +154,6 @@ impl ConsoleStorage {
         ConsoleStorage { storage, background: Arc::new(AtomicUsize::new(0)) }
     }
 
-    /// Borrows the storage handle.
-    pub fn storage(&self) -> &Arc<Storage> {
-        &self.storage
-    }
-
     /// Runs `job` in one transaction, committed when it returns `Ok`, and waits at most
     /// [`HTTP_WAIT`] for the result. For HTTP handlers.
     ///
@@ -176,20 +170,6 @@ impl ConsoleStorage {
             + 'static,
     {
         let ticket = self.storage.submit(move |db| in_transaction(db, job))?;
-        wait(ticket)
-    }
-
-    /// Runs `job` with the database handle and waits at most [`HTTP_WAIT`]. For the rare
-    /// handler that needs several transactions or none.
-    ///
-    /// Fails like [`ConsoleStorage::transact`].
-    pub fn run<T, F, Fut>(&self, job: F) -> Result<T, StorageFailure>
-    where
-        T: Send + 'static,
-        F: FnOnce(Database) -> Fut + Send + 'static,
-        Fut: Future<Output = Result<T, ConsoleStorageError>> + 'static,
-    {
-        let ticket = self.storage.submit(move |db| async move { Ok(job(db).await) })?;
         wait(ticket)
     }
 

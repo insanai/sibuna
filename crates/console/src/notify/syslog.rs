@@ -14,7 +14,8 @@ pub const FACILITY_LOCAL0: u8 = 16;
 pub enum Severity {
     /// Warning (4).
     Warning,
-    /// Notice (5).
+    /// Notice (5); only the ported Zig test formats one.
+    #[cfg(test)]
     Notice,
 }
 
@@ -22,6 +23,7 @@ impl Severity {
     fn code(self) -> u8 {
         match self {
             Severity::Warning => 4,
+            #[cfg(test)]
             Severity::Notice => 5,
         }
     }

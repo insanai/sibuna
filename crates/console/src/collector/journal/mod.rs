@@ -246,6 +246,7 @@ impl<R: Snapshot> Pending<R> {
     }
 
     /// Returns how many snapshots wait (including the one in flight).
+    #[cfg(test)]
     pub(crate) fn len(&self) -> usize {
         self.jobs.len()
     }

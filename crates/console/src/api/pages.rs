@@ -78,6 +78,7 @@ impl Drafts {
     }
 
     /// Returns how many drafts are kept.
+    #[cfg(test)]
     pub fn count(&self) -> usize {
         self.slots.lock().unwrap_or_else(PoisonError::into_inner).len()
     }

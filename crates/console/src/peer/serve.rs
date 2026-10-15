@@ -88,7 +88,6 @@ fn page(shared: &Shared, wire: &Wire, rows: u8) -> (Status, String) {
                 Ok(page) => (Status::Ok, to_json(&page)),
                 Err(LiveError::HistoryChanged) => (Status::Conflict, String::new()),
                 Err(LiveError::InvalidQuery) => (Status::Invalid, String::new()),
-                Err(LiveError::Unavailable) => (Status::Unavailable, String::new()),
             }
         }
         super::Kind::Rankings => match shared.live.rankings(shared) {
