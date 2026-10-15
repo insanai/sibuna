@@ -99,6 +99,12 @@ Workspace
    * - ``sibuna-storage``
      - no
      - persistent layer over sqlx (SID 0011)
+   * - ``sibuna-serve``
+     - yes
+     - bounded HTTP/1.1 listener with joinable workers, deadlines, admission classes and WebSocket upgrades
+   * - ``sibuna-tls``
+     - no
+     - blocking outbound TLS through rustls for the console (SID 0012)
    * - ``sibuna-console*``
      - no
      - console protocol, server and WebAssembly interface (SID 0007)
@@ -240,14 +246,14 @@ Status: in progress. This section is updated with the evidence as each criterion
 Open questions
 --------------
 
-- Whether the ban table and the spent set should use ``std::sync::Mutex`` or a spin lock: decided by benchmark.
+- Closed 2026-10-15: the spent set and the limiter use ``std::sync::Mutex`` (see the review history for the measurements); the ban table keeps its seqlock readers with a mutex for writers.
 - Whether an ``epoll`` event loop is needed to reach parity: decided by benchmark.
 
 Review history
 --------------
 
 - 2026-10-15: drafted with the start of the port.
-- 2026-10-15 (Rust port): each crate lists its deliberate changes from Zig in its crate documentation, and the design records that those changes touch carry dated revision notes (SID 0002 to SID 0007, SID 0009, SID 0011, SID 0012). Evidence for the first open question: ``sibuna-store`` measured ``std::sync::Mutex`` against a spin lock on a Ryzen 9 5950X. The spin lock saves about a nanosecond per uncontended operation but loses under contention (the spent set at 64 threads: 11.2 against 6.9 million operations per second; GCRA on six hot addresses at 64 threads: 37.4 against 6.5 million), so the spent set and the limiter use the mutex; the question stays open until the maintainer closes it. The HTML snippet compiler of ``sibuna-html`` adds the code ``HTML008`` (a snippet file name must yield Rust item names) to ``HTML001`` to ``HTML007``.
+- 2026-10-15 (Rust port): each crate lists its deliberate changes from Zig in its crate documentation, and the design records that those changes touch carry dated revision notes (SID 0002 to SID 0007, SID 0009, SID 0011, SID 0012). Evidence for the first open question: ``sibuna-store`` measured ``std::sync::Mutex`` against a spin lock on a Ryzen 9 5950X. The spin lock saves about a nanosecond per uncontended operation but loses under contention (the spent set at 64 threads: 11.2 against 6.9 million operations per second; GCRA on six hot addresses at 64 threads: 37.4 against 6.5 million), so the spent set and the limiter use the mutex; the question is closed in favour of the mutex. The HTML snippet compiler of ``sibuna-html`` adds the code ``HTML008`` (a snippet file name must yield Rust item names) to ``HTML001`` to ``HTML007``.
 
 References
 ----------
