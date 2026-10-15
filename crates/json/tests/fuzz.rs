@@ -1,4 +1,4 @@
-//! Deterministic fuzzing of the parser and writer.
+//! Deterministic fuzzing of the parser, the pull reader and the writer.
 //!
 //! A xorshift generator produces valid documents and mutates them and the conformance
 //! corpus (bit flips, structural bytes, truncation, duplication, splicing, deep nesting).
@@ -6,10 +6,19 @@
 //! values must respect the limits they were parsed with, the limits must reject exactly the
 //! values that break them, and writing an accepted value must give text that parses back
 //! to the same value and writes back to the same bytes.
+//!
+//! The pull reader is checked on every input too, with both sets of limits: a naive tree
+//! built from its events (with its own duplicate-key check) must equal the tree parser's
+//! result, error kind and offset included; peeking before every event, and skipping
+//! values at random, must find the same first problem as plain stepping; offsets, depth,
+//! value count and string lengths stay within the input and the limits; and an error
+//! repeats on every later call.
 
 mod corpus;
 
-use sibuna_json::{ErrorKind, Limits, Value, parse_with_limits};
+use std::borrow::Cow;
+
+use sibuna_json::{Error, ErrorKind, Event, Limits, Object, PullReader, Value, parse_with_limits};
 
 /// Marsaglia's xorshift64: small, fast and reproducible from its seed.
 struct XorShift(u64);
@@ -178,11 +187,189 @@ fn cost(value: &Value<'_>, depth: usize, total: &mut Cost) {
 const TIGHT: Limits =
     Limits { max_input_bytes: 2048, max_depth: 6, max_values: 64, max_string_bytes: 16 };
 
+/// An open container of the naive tree builder.
+enum Open<'a> {
+    Array(Vec<Value<'a>>),
+    /// Members, the offset of each key, and the pending key with its offset.
+    Object(Vec<(Cow<'a, str>, Value<'a>)>, Vec<usize>, Option<(Cow<'a, str>, usize)>),
+}
+
+/// The outcome of reading a document with the pull reader: the naive tree, or the first
+/// error as (kind, offset).
+type Outcome<'a> = Result<Value<'a>, (ErrorKind, usize)>;
+
+/// Steps through `input` with `next` alone, checking the per-event invariants, and builds
+/// a tree with a naive duplicate-key check made when each object closes.
+fn pull_tree<'a>(input: &'a [u8], limits: &Limits) -> (Outcome<'a>, Option<Error>) {
+    let mut reader = PullReader::with_limits(input, limits);
+    let mut stack: Vec<Open<'a>> = Vec::new();
+    let mut values = 0;
+    loop {
+        let event = match reader.next() {
+            Ok(Some(event)) => event,
+            Ok(None) => panic!("the document ended before its root value"),
+            Err(error) => {
+                assert_eq!(reader.next(), Err(error), "errors repeat");
+                assert_eq!(reader.peek(), Err(error), "errors repeat");
+                return (Err((error.kind, error.offset)), Some(error));
+            }
+        };
+        assert!(reader.event_offset() < reader.offset() && reader.offset() <= input.len());
+        assert!(reader.depth() <= limits.max_depth);
+        let value = match event {
+            Event::BeginArray | Event::BeginObject => {
+                values += 1;
+                stack.push(match event {
+                    Event::BeginArray => Open::Array(Vec::new()),
+                    _ => Open::Object(Vec::new(), Vec::new(), None),
+                });
+                continue;
+            }
+            Event::Key(key) => {
+                assert!(key.len() <= limits.max_string_bytes);
+                if let Some(Open::Object(_, _, pending)) = stack.last_mut() {
+                    *pending = Some((key, reader.event_offset()));
+                }
+                continue;
+            }
+            Event::EndArray | Event::EndObject => match close(stack.pop()) {
+                Ok(value) => value,
+                Err(error) => return (Err(error), None),
+            },
+            scalar => {
+                values += 1;
+                scalar_value(scalar, limits)
+            }
+        };
+        assert!(values <= limits.max_values);
+        match stack.last_mut() {
+            Some(Open::Array(items)) => items.push(value),
+            Some(Open::Object(members, offsets, pending)) => {
+                let (key, offset) = pending.take().expect("a key before every member value");
+                members.push((key, value));
+                offsets.push(offset);
+            }
+            None => {
+                let end = reader.next().map_err(|error| (error.kind, error.offset));
+                return match end {
+                    Ok(None) => (Ok(value), None),
+                    Ok(Some(event)) => panic!("{event:?} after the root value"),
+                    Err(error) => (Err(error), None),
+                };
+            }
+        }
+    }
+}
+
+/// Closes a container of the naive builder, checking an object for duplicate keys.
+fn close(open: Option<Open<'_>>) -> Result<Value<'_>, (ErrorKind, usize)> {
+    match open {
+        Some(Open::Array(items)) => Ok(Value::Array(items)),
+        Some(Open::Object(members, offsets, _)) => {
+            let repeat = (0..members.len())
+                .find(|&i| members[..i].iter().any(|(key, _)| *key == members[i].0));
+            if let Some(index) = repeat {
+                return Err((ErrorKind::DuplicateKey, offsets[index]));
+            }
+            let mut object = Object::new();
+            for (key, value) in members {
+                object.insert(key, value);
+            }
+            Ok(Value::Object(object))
+        }
+        None => panic!("an end without a begin"),
+    }
+}
+
+/// Converts a scalar event into its value.
+fn scalar_value<'a>(event: Event<'a>, limits: &Limits) -> Value<'a> {
+    match event {
+        Event::String(text) => {
+            assert!(text.len() <= limits.max_string_bytes);
+            Value::String(text)
+        }
+        Event::Number(number) => Value::Number(number),
+        Event::Bool(flag) => Value::Bool(flag),
+        Event::Null => Value::Null,
+        other => panic!("{other:?} is not a scalar"),
+    }
+}
+
+/// Reads `input` with `next` alone and returns the reader's first error, if any.
+fn first_error(input: &[u8], limits: &Limits) -> Option<Error> {
+    let mut reader = PullReader::with_limits(input, limits);
+    loop {
+        match reader.next() {
+            Ok(Some(_)) => {}
+            Ok(None) => return None,
+            Err(error) => return Some(error),
+        }
+    }
+}
+
+/// Reads `input` peeking before every event, and returns the first error.
+fn first_error_peeking(input: &[u8], limits: &Limits) -> Option<Error> {
+    let mut reader = PullReader::with_limits(input, limits);
+    loop {
+        let peeked = reader.peek();
+        let read = reader.next();
+        match (peeked, read) {
+            (Ok(Some(kind)), Ok(Some(event))) => assert_eq!(kind, event.kind()),
+            (Ok(Some(_)), Err(error)) => return Some(error),
+            (Ok(None), Ok(None)) => return None,
+            (Err(first), Err(second)) => {
+                assert_eq!(first, second);
+                return Some(first);
+            }
+            (peeked, read) => panic!("peek {peeked:?} disagrees with next {read:?}"),
+        }
+    }
+}
+
+/// Reads `input` skipping values at points chosen by `rng`, and returns the first error.
+fn first_error_skipping(input: &[u8], limits: &Limits, rng: &mut XorShift) -> Option<Error> {
+    let mut reader = PullReader::with_limits(input, limits);
+    loop {
+        let step = if rng.below(3) == 0 {
+            let depth = reader.depth();
+            reader.skip_value().inspect(|_| {
+                assert_eq!(reader.depth(), depth, "a skipped value is whole");
+            })
+        } else {
+            reader.next().map(|event| event.is_some())
+        };
+        match step {
+            Ok(_) if reader.depth() == 0 && reader.peek() == Ok(None) => return None,
+            Ok(_) => {}
+            Err(error) => return Some(error),
+        }
+    }
+}
+
+/// Checks the pull reader on `input` against the tree parser's `expected` outcome.
+fn check_pull(input: &[u8], limits: &Limits, expected: &Result<Value<'_>, Error>) {
+    let (naive, error) = pull_tree(input, limits);
+    match (expected, &naive) {
+        (Ok(tree), Ok(value)) => assert_eq!(tree, value),
+        (Err(tree), Err(pull)) => assert_eq!((tree.kind, tree.offset), *pull),
+        _ => panic!("tree {expected:?} and pull reader {naive:?} disagree"),
+    }
+    let reader_error = first_error(input, limits);
+    if let Some(error) = error {
+        assert_eq!(reader_error, Some(error));
+    }
+    assert_eq!(first_error_peeking(input, limits), reader_error);
+    let mut rng = XorShift(input.len() as u64 * 0x9E37_79B9 + 1);
+    assert_eq!(first_error_skipping(input, limits, &mut rng), reader_error);
+}
+
 /// Checks every invariant for one input.
 fn check(input: &[u8]) {
     let default = Limits::default();
     let result = parse_with_limits(input, &default);
     let tight = parse_with_limits(input, &TIGHT);
+    check_pull(input, &default, &result);
+    check_pull(input, &TIGHT, &tight);
     for error in [result.as_ref().err(), tight.as_ref().err()].into_iter().flatten() {
         assert!(error.offset <= input.len().max(TIGHT.max_input_bytes), "{error:?}");
         assert!(error.line >= 1 && error.column >= 1);

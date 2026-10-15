@@ -1,46 +1,17 @@
-//! The bounded, iterative parser.
+//! The tree parser: a loop over the events of a [`PullReader`] that builds a [`Value`].
 //!
-//! The parser keeps an explicit stack of open arrays and objects instead of recursing, so
-//! deep input cannot overflow the thread's stack; the stack itself is bounded by
-//! [`Limits::max_depth`]. Every limit is checked before the work it bounds.
+//! Open arrays and objects wait on an explicit stack instead of the thread's call stack,
+//! so deep input cannot overflow it; the stack is bounded by [`Limits::max_depth`]. The
+//! grammar, the limits and every error but [`ErrorKind::DuplicateKey`] come from the pull
+//! reader, so both report the same problem at the same offset.
 
 use std::borrow::Cow;
 use std::mem;
 
 use crate::error::{Error, ErrorKind};
-use crate::number::{self, Number};
+use crate::limits::Limits;
+use crate::pull::{PullReader, Step};
 use crate::value::{Object, Value};
-
-/// Bounds on the work and memory a document may cost. Exceeding one is an error.
-///
-/// ```
-/// let limits = sibuna_json::Limits { max_depth: 8, ..Default::default() };
-/// assert!(sibuna_json::parse_with_limits(b"[[[[[[[[[1]]]]]]]]]", &limits).is_err());
-/// ```
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct Limits {
-    /// The longest input accepted, in bytes. Default: 16 MiB.
-    pub max_input_bytes: usize,
-    /// The deepest nesting of arrays and objects. Default: 64. Dropping and writing a
-    /// value recurse once per level, so very large values risk the thread's stack.
-    pub max_depth: usize,
-    /// The most values (scalars, arrays and objects, not counting keys) in the document.
-    /// Default: 1,000,000.
-    pub max_values: usize,
-    /// The longest decoded string or key, in bytes. Default: 1 MiB.
-    pub max_string_bytes: usize,
-}
-
-impl Default for Limits {
-    fn default() -> Limits {
-        Limits {
-            max_input_bytes: 16 << 20,
-            max_depth: 64,
-            max_values: 1_000_000,
-            max_string_bytes: 1 << 20,
-        }
-    }
-}
 
 /// Parses one JSON document with the default [`Limits`].
 ///
@@ -66,18 +37,60 @@ pub fn parse(input: &[u8]) -> Result<Value<'_>, Error> {
 /// Returns the first problem found, with its location. A duplicate key is reported when
 /// its object closes, so an error later inside that object is reported first.
 pub fn parse_with_limits<'a>(input: &'a [u8], limits: &Limits) -> Result<Value<'a>, Error> {
-    if input.len() > limits.max_input_bytes {
-        return Err(Error::at(ErrorKind::InputTooLarge, input, limits.max_input_bytes));
+    let mut reader = PullReader::with_limits(input, limits);
+    let mut stack: Vec<Frame<'a>> = Vec::new();
+    loop {
+        let value = match reader.step(true) {
+            Step::BeginArray => {
+                stack.push(Frame::Array(Vec::new()));
+                continue;
+            }
+            Step::BeginObject => {
+                stack.push(Frame::Object(ObjectFrame::default()));
+                continue;
+            }
+            Step::Key => {
+                if let Some(Frame::Object(object)) = stack.last_mut() {
+                    object.key = reader.take_text();
+                    object.key_offset = reader.event_offset();
+                }
+                continue;
+            }
+            Step::EndArray | Step::EndObject => match stack.pop() {
+                Some(Frame::Array(items)) => Value::Array(items),
+                Some(Frame::Object(object)) => object.close(input)?,
+                // The reader pairs every end with a begin, so the stack is never empty here.
+                None => Value::Null,
+            },
+            Step::String => Value::String(reader.take_text()),
+            Step::Number => Value::Number(reader.take_number()),
+            Step::True => Value::Bool(true),
+            Step::False => Value::Bool(false),
+            Step::Null => Value::Null,
+            Step::Failed => return Err(reader.failure()),
+            // The reader ends only after a complete root value, which returns below.
+            Step::End => return Err(Error::at(ErrorKind::UnexpectedEnd, input, input.len())),
+        };
+        match stack.last_mut() {
+            Some(Frame::Array(items)) => items.push(value),
+            Some(Frame::Object(object)) => object.push(value),
+            None => return finish(&mut reader, input, value),
+        }
     }
-    let text = std::str::from_utf8(input)
-        .map_err(|e| Error::at(ErrorKind::InvalidUtf8, input, e.valid_up_to()))?;
-    let mut parser = Parser { text, bytes: input, pos: 0, limits, value_count: 0 };
-    let value = parser.document()?;
-    parser.skip_whitespace();
-    if parser.pos != input.len() {
-        return Err(parser.error(ErrorKind::TrailingCharacters, parser.pos));
+}
+
+/// Requires the end of the document after the root `value`.
+fn finish<'a>(
+    reader: &mut PullReader<'a>,
+    input: &[u8],
+    value: Value<'a>,
+) -> Result<Value<'a>, Error> {
+    match reader.step(false) {
+        Step::End => Ok(value),
+        Step::Failed => Err(reader.failure()),
+        // The reader reports anything after the root value as an error itself.
+        _ => Err(Error::at(ErrorKind::TrailingCharacters, input, reader.event_offset())),
     }
-    Ok(value)
 }
 
 /// An array or object whose closing bracket has not been read yet.
@@ -86,8 +99,9 @@ enum Frame<'a> {
     Object(ObjectFrame<'a>),
 }
 
-/// An open object: its members so far, the key whose value is being parsed, and the offset
+/// An open object: its members so far, the key whose value is being read, and the offset
 /// of every key for duplicate reports.
+#[derive(Default)]
 struct ObjectFrame<'a> {
     members: Vec<(Cow<'a, str>, Value<'a>)>,
     key_offsets: Vec<usize>,
@@ -95,343 +109,21 @@ struct ObjectFrame<'a> {
     key_offset: usize,
 }
 
-/// What follows a finished value.
-enum Next<'a> {
-    /// Another value starts at the current position.
-    Value,
-    /// The document's root value is complete.
-    Done(Value<'a>),
-}
-
-/// For each byte, whether the string scanner must stop at it: `"`, `\` or a control
-/// character.
-const STRING_STOP: [bool; 256] = {
-    let mut table = [false; 256];
-    let mut byte = 0;
-    while byte < 0x20 {
-        table[byte] = true;
-        byte += 1;
-    }
-    table[b'"' as usize] = true;
-    table[b'\\' as usize] = true;
-    table
-};
-
-struct Parser<'a, 'l> {
-    text: &'a str,
-    bytes: &'a [u8],
-    pos: usize,
-    limits: &'l Limits,
-    value_count: usize,
-}
-
-impl<'a> Parser<'a, '_> {
-    fn error(&self, kind: ErrorKind, offset: usize) -> Error {
-        Error::at(kind, self.bytes, offset)
-    }
-
-    /// Returns the error for input that stops at `offset`: the end of input if that is
-    /// where `offset` is, `kind` otherwise.
-    fn error_or_end(&self, kind: ErrorKind, offset: usize) -> Error {
-        let kind = if offset >= self.bytes.len() { ErrorKind::UnexpectedEnd } else { kind };
-        self.error(kind, offset)
-    }
-
-    fn skip_whitespace(&mut self) {
-        while let Some(b' ' | b'\t' | b'\n' | b'\r') = self.bytes.get(self.pos) {
-            self.pos += 1;
-        }
-    }
-
-    /// Parses values until the root value is complete.
-    fn document(&mut self) -> Result<Value<'a>, Error> {
-        let mut stack = Vec::new();
-        loop {
-            let Some(value) = self.begin_value(&mut stack)? else {
-                continue;
-            };
-            if let Next::Done(root) = self.attach(&mut stack, value)? {
-                return Ok(root);
-            }
-        }
-    }
-
-    /// Reads the start of a value. Returns a complete scalar or empty container, or `None`
-    /// after opening a container whose first element (or first key and colon) follows.
-    fn begin_value(&mut self, stack: &mut Vec<Frame<'a>>) -> Result<Option<Value<'a>>, Error> {
-        self.skip_whitespace();
-        let start = self.pos;
-        if self.value_count >= self.limits.max_values {
-            return Err(self.error(ErrorKind::ValueLimit, start));
-        }
-        self.value_count += 1;
-        let Some(&byte) = self.bytes.get(start) else {
-            return Err(self.error(ErrorKind::UnexpectedEnd, start));
-        };
-        match byte {
-            b'[' | b'{' => {
-                if stack.len() >= self.limits.max_depth {
-                    return Err(self.error(ErrorKind::DepthLimit, start));
-                }
-                self.pos += 1;
-                self.skip_whitespace();
-                self.open_container(byte, stack)
-            }
-            b'"' => Ok(Some(Value::String(self.string()?))),
-            b'-' | b'0'..=b'9' => Ok(Some(Value::Number(self.number()?))),
-            b't' => self.literal("true", Value::Bool(true)).map(Some),
-            b'f' => self.literal("false", Value::Bool(false)).map(Some),
-            b'n' => self.literal("null", Value::Null).map(Some),
-            _ => Err(self.error(ErrorKind::ExpectedValue, start)),
-        }
-    }
-
-    /// Opens the array or object whose bracket was just read.
-    fn open_container(
-        &mut self,
-        bracket: u8,
-        stack: &mut Vec<Frame<'a>>,
-    ) -> Result<Option<Value<'a>>, Error> {
-        let close = if bracket == b'[' { b']' } else { b'}' };
-        if self.bytes.get(self.pos) == Some(&close) {
-            self.pos += 1;
-            return Ok(Some(if bracket == b'[' {
-                Value::Array(Vec::new())
-            } else {
-                Value::Object(Object::new())
-            }));
-        }
-        let frame = if bracket == b'[' {
-            Frame::Array(Vec::new())
-        } else {
-            let (key, key_offset) = self.key()?;
-            Frame::Object(ObjectFrame {
-                members: Vec::new(),
-                key_offsets: Vec::new(),
-                key,
-                key_offset,
-            })
-        };
-        stack.push(frame);
-        Ok(None)
-    }
-
-    /// Adds a finished value to the innermost open container, and closes every container
-    /// that ends right after it.
-    fn attach(
-        &mut self,
-        stack: &mut Vec<Frame<'a>>,
-        mut value: Value<'a>,
-    ) -> Result<Next<'a>, Error> {
-        loop {
-            let Some(mut frame) = stack.pop() else {
-                return Ok(Next::Done(value));
-            };
-            self.skip_whitespace();
-            let at = self.pos;
-            let byte = self.bytes.get(at).copied();
-            self.pos += 1;
-            value = match (&mut frame, byte) {
-                (Frame::Array(items), Some(b',')) => {
-                    items.push(value);
-                    stack.push(frame);
-                    return Ok(Next::Value);
-                }
-                (Frame::Array(items), Some(b']')) => {
-                    items.push(value);
-                    Value::Array(mem::take(items))
-                }
-                (Frame::Object(object), Some(b',')) => {
-                    object.push(value);
-                    (object.key, object.key_offset) = self.key()?;
-                    stack.push(frame);
-                    return Ok(Next::Value);
-                }
-                (Frame::Object(object), Some(b'}')) => {
-                    object.push(value);
-                    self.close_object(object)?
-                }
-                (Frame::Array(_), _) => {
-                    return Err(self.error_or_end(ErrorKind::ExpectedCommaOrBracket, at));
-                }
-                (Frame::Object(_), _) => {
-                    return Err(self.error_or_end(ErrorKind::ExpectedCommaOrBrace, at));
-                }
-            };
-        }
-    }
-
-    /// Checks a finished object for duplicate keys and returns it as a value.
-    fn close_object(&self, frame: &mut ObjectFrame<'a>) -> Result<Value<'a>, Error> {
-        if let Some(index) = first_duplicate(&frame.members) {
-            // Keys and their offsets are pushed together, so every member has an offset.
-            let offset = frame.key_offsets.get(index).copied().unwrap_or(0);
-            return Err(self.error(ErrorKind::DuplicateKey, offset));
-        }
-        Ok(Value::Object(Object::from_unique(mem::take(&mut frame.members))))
-    }
-
-    /// Reads an object key and the colon after it; returns the key and its offset.
-    fn key(&mut self) -> Result<(Cow<'a, str>, usize), Error> {
-        self.skip_whitespace();
-        let start = self.pos;
-        if self.bytes.get(start) != Some(&b'"') {
-            return Err(self.error_or_end(ErrorKind::ExpectedKey, start));
-        }
-        let key = self.string()?;
-        self.skip_whitespace();
-        if self.bytes.get(self.pos) != Some(&b':') {
-            return Err(self.error_or_end(ErrorKind::ExpectedColon, self.pos));
-        }
-        self.pos += 1;
-        Ok((key, start))
-    }
-
-    /// Reads `word`, whose first byte is known to match, and returns `value`.
-    fn literal(&mut self, word: &str, value: Value<'a>) -> Result<Value<'a>, Error> {
-        let rest = self.bytes.get(self.pos..).unwrap_or_default();
-        let matched = rest.iter().zip(word.as_bytes()).take_while(|(a, b)| a == b).count();
-        if matched < word.len() {
-            return Err(self.error_or_end(ErrorKind::InvalidLiteral, self.pos + matched));
-        }
-        self.pos += word.len();
-        Ok(value)
-    }
-
-    fn number(&mut self) -> Result<Number<'a>, Error> {
-        let start = self.pos;
-        let end = number::scan(self.bytes, start)
-            .map_err(|offset| self.error_or_end(ErrorKind::InvalidNumber, offset))?;
-        self.pos = end;
-        // The number is ASCII, so its ends are character boundaries.
-        Ok(Number::from_scanned(self.slice(start, end)))
-    }
-
-    /// Reads a string whose opening quote is at the current position.
-    fn string(&mut self) -> Result<Cow<'a, str>, Error> {
-        let start = self.pos + 1;
-        let end = self.plain_run(start);
-        match self.bytes.get(end) {
-            Some(b'"') => {
-                self.check_string_len(end - start, start)?;
-                self.pos = end + 1;
-                Ok(Cow::Borrowed(self.slice(start, end)))
-            }
-            Some(b'\\') => {
-                let mut decoded = String::new();
-                decoded.push_str(self.slice(start, end));
-                self.escaped_string(end, decoded).map(Cow::Owned)
-            }
-            _ => Err(self.error_or_end(ErrorKind::ControlCharacter, end)),
-        }
-    }
-
-    /// Returns the input text from `start` to `end`.
-    ///
-    /// Callers pass offsets of ASCII bytes (quotes, backslashes, digits, the end of an
-    /// escape) or of the input's end, which are always character boundaries inside the
-    /// input; the checked `get` turns a broken promise into an empty slice, not a panic.
-    fn slice(&self, start: usize, end: usize) -> &'a str {
-        self.text.get(start..end).unwrap_or_default()
-    }
-
-    /// Returns the end of the run of bytes from `start` that need no attention.
-    fn plain_run(&self, start: usize) -> usize {
-        let rest = &self.bytes[start.min(self.bytes.len())..];
-        start + rest.iter().position(|&b| STRING_STOP[usize::from(b)]).unwrap_or(rest.len())
-    }
-
-    fn check_string_len(&self, len: usize, offset: usize) -> Result<(), Error> {
-        if len > self.limits.max_string_bytes {
-            return Err(self.error(ErrorKind::StringTooLong, offset));
-        }
-        Ok(())
-    }
-
-    /// Continues a string at the backslash at `at`, appending to `decoded`.
-    fn escaped_string(&mut self, mut at: usize, mut decoded: String) -> Result<String, Error> {
-        let start = at;
-        loop {
-            match self.bytes.get(at) {
-                Some(b'"') => {
-                    self.pos = at + 1;
-                    return Ok(decoded);
-                }
-                Some(b'\\') => at = self.escape(at, &mut decoded)?,
-                _ => return Err(self.error_or_end(ErrorKind::ControlCharacter, at)),
-            }
-            let end = self.plain_run(at);
-            decoded.push_str(self.slice(at, end));
-            self.check_string_len(decoded.len(), start)?;
-            at = end;
-        }
-    }
-
-    /// Decodes the escape sequence whose backslash is at `at`; returns the offset after it.
-    fn escape(&self, at: usize, decoded: &mut String) -> Result<usize, Error> {
-        let Some(&kind) = self.bytes.get(at + 1) else {
-            return Err(self.error(ErrorKind::UnexpectedEnd, at + 1));
-        };
-        let character = match kind {
-            b'"' => '"',
-            b'\\' => '\\',
-            b'/' => '/',
-            b'b' => '\u{8}',
-            b'f' => '\u{c}',
-            b'n' => '\n',
-            b'r' => '\r',
-            b't' => '\t',
-            b'u' => return self.unicode_escape(at, decoded),
-            _ => return Err(self.error(ErrorKind::InvalidEscape, at)),
-        };
-        decoded.push(character);
-        Ok(at + 2)
-    }
-
-    /// Decodes `\uXXXX` at `at`, and the low half that must follow a high surrogate.
-    fn unicode_escape(&self, at: usize, decoded: &mut String) -> Result<usize, Error> {
-        let first = self.hex4(at + 2)?;
-        let (code, end) = match first {
-            0xD800..=0xDBFF => {
-                if self.bytes.get(at + 6..at + 8) != Some(b"\\u") {
-                    return Err(self.error_or_end(ErrorKind::LoneSurrogate, at + 6));
-                }
-                let second = self.hex4(at + 8)?;
-                if !(0xDC00..=0xDFFF).contains(&second) {
-                    return Err(self.error(ErrorKind::LoneSurrogate, at + 6));
-                }
-                (0x10000 + ((first - 0xD800) << 10) + (second - 0xDC00), at + 12)
-            }
-            0xDC00..=0xDFFF => return Err(self.error(ErrorKind::LoneSurrogate, at)),
-            _ => (first, at + 6),
-        };
-        let character =
-            char::from_u32(code).ok_or_else(|| self.error(ErrorKind::LoneSurrogate, at))?;
-        decoded.push(character);
-        Ok(end)
-    }
-
-    /// Reads four hexadecimal digits at `at`.
-    fn hex4(&self, at: usize) -> Result<u32, Error> {
-        let mut code = 0;
-        for offset in at..at + 4 {
-            let Some(&byte) = self.bytes.get(offset) else {
-                return Err(self.error(ErrorKind::UnexpectedEnd, offset));
-            };
-            let digit = char::from(byte)
-                .to_digit(16)
-                .ok_or_else(|| self.error(ErrorKind::InvalidEscape, offset))?;
-            code = code << 4 | digit;
-        }
-        Ok(code)
-    }
-}
-
 impl<'a> ObjectFrame<'a> {
     /// Adds the member whose key is pending.
     fn push(&mut self, value: Value<'a>) {
         self.members.push((mem::take(&mut self.key), value));
         self.key_offsets.push(self.key_offset);
+    }
+
+    /// Checks the finished object for duplicate keys and returns it as a value.
+    fn close(self, input: &[u8]) -> Result<Value<'a>, Error> {
+        if let Some(index) = first_duplicate(&self.members) {
+            // Keys and their offsets are pushed together, so every member has an offset.
+            let offset = self.key_offsets.get(index).copied().unwrap_or(0);
+            return Err(Error::at(ErrorKind::DuplicateKey, input, offset));
+        }
+        Ok(Value::Object(Object::from_unique(self.members)))
     }
 }
 

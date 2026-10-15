@@ -48,6 +48,16 @@ fn main() {
     measure(&format!("parse {} KiB", text.len() / 1024), text.len(), || {
         black_box(sibuna_json::parse_with_limits(black_box(text.as_bytes()), &limits).unwrap());
     });
+    measure(&format!("pull events {} KiB", text.len() / 1024), text.len(), || {
+        let mut reader = sibuna_json::PullReader::with_limits(black_box(text.as_bytes()), &limits);
+        while let Some(event) = reader.next().unwrap() {
+            black_box(event);
+        }
+    });
+    measure(&format!("skip_value {} KiB", text.len() / 1024), text.len(), || {
+        let mut reader = sibuna_json::PullReader::with_limits(black_box(text.as_bytes()), &limits);
+        black_box(reader.skip_value().unwrap());
+    });
     let value = sibuna_json::parse(text.as_bytes()).unwrap();
     let mut out = String::with_capacity(text.len());
     measure(&format!("write {} KiB", text.len() / 1024), text.len(), || {

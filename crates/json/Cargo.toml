@@ -1,6 +1,6 @@
 [package]
 name = "sibuna-json"
-description = "A bounded JSON parser and writer with located errors"
+description = "A bounded JSON parser, streaming pull reader and writer with located errors"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
