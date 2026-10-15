@@ -82,6 +82,11 @@
 //!   - A request field whose name equals a dropped field with `_` for `-` (`X_Forwarded_For`)
 //!     is dropped too, and a `Connection` field can no longer nominate `Host` away.
 //!   - Each direction of an upgrade relay must deliver a byte per idle period on its own.
+//!   - `X-Forwarded-For` is the chain the request arrived with, when the daemon trusts it
+//!     ([`Audit::trusts_forwarded`]), followed by the socket peer ([`Audit::peer`]); without
+//!     trust it is the socket peer alone. `X-Real-IP` stays the client the request was judged
+//!     by. Zig wrote the judged client into both, so the origin never learned the path the
+//!     request took. Untrusted, the head is the Zig head whenever the peer is the client.
 //! - **Connect helpers.** `std::net::TcpStream::connect_timeout` and socket timeouts replace
 //!   the hand-driven non-blocking connect and `poll(2)` loop; [`connect::wake_listener`] is
 //!   the daemon's `requestStop` wake-up.

@@ -127,9 +127,20 @@ impl Upload {
 pub type HeadSink<'a> = &'a mut dyn FnMut(&[u8]);
 
 /// The audit fields written to the origin and the sinks for what the origin answered.
+///
+/// The origin learns the client as a reverse proxy usually tells it: `X-Real-IP` is the
+/// client the request was judged by (`client_ip`), and `X-Forwarded-For` is the chain the
+/// request arrived with, when that chain is trusted (`trusts_forwarded`), followed by the
+/// socket peer (`peer`). Without trust the origin receives the socket peer alone, never an
+/// entry the client wrote.
 pub struct Audit<'a> {
-    /// The client address, written as `X-Forwarded-For` and `X-Real-IP`.
+    /// The client address the request was judged by, written as `X-Real-IP`.
     pub client_ip: &'a [u8],
+    /// The socket peer address, the last entry of `X-Forwarded-For`.
+    pub peer: &'a [u8],
+    /// The request's own `X-Forwarded-For` fields come from a trusted proxy, so they are
+    /// passed on before `peer`; otherwise they are dropped.
+    pub trusts_forwarded: bool,
     /// The admission status, written as `X-Sibuna-Status`.
     pub status: &'a [u8],
     /// The deciding rule, written as `X-Sibuna-Rule`.
@@ -149,6 +160,8 @@ impl Default for Audit<'_> {
     fn default() -> Self {
         Audit {
             client_ip: b"",
+            peer: b"",
+            trusts_forwarded: false,
             status: b"",
             rule: b"",
             scheme: b"http",

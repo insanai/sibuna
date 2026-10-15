@@ -215,6 +215,7 @@ fn proxy(
         upload,
         audit: Audit {
             client_ip: b"203.0.113.1",
+            peer: b"203.0.113.1",
             status: b"PASS",
             rule: b"test",
             ..Audit::default()

@@ -112,12 +112,22 @@ pub(crate) fn write_request_head<W: Write + ?Sized>(
     } else {
         b"Connection: keep-alive\r\n"
     })?;
-    write_audit(out, audit)
+    write_audit(out, request, audit)
 }
 
-fn write_audit<W: Write + ?Sized>(out: &mut W, audit: &Audit<'_>) -> io::Result<()> {
-    let fields: [(&[u8], &[u8]); 5] = [
-        (b"X-Forwarded-For: ", audit.client_ip),
+/// Writes the audit fields and the blank line that ends the head (see [`Audit`]).
+fn write_audit<W: Write + ?Sized>(
+    out: &mut W,
+    request: &Request<'_>,
+    audit: &Audit<'_>,
+) -> io::Result<()> {
+    out.write_all(b"X-Forwarded-For: ")?;
+    if audit.trusts_forwarded {
+        write_received_chain(out, request)?;
+    }
+    out.write_all(audit.peer)?;
+    out.write_all(b"\r\n")?;
+    let fields: [(&[u8], &[u8]); 4] = [
         (b"X-Forwarded-Proto: ", audit.scheme),
         (b"X-Real-IP: ", audit.client_ip),
         (b"X-Sibuna-Status: ", audit.status),
@@ -129,6 +139,25 @@ fn write_audit<W: Write + ?Sized>(out: &mut W, audit: &Audit<'_>) -> io::Result<
         out.write_all(b"\r\n")?;
     }
     out.write_all(b"\r\n")
+}
+
+/// Writes every `X-Forwarded-For` field of `request` in order as one list, each value
+/// trimmed of spaces and tabs and followed by `, `; empty values are skipped. The same fields
+/// the daemon reads the client from, so the origin sees the chain the identity came from.
+/// The values lie in the bounded request head and hold no line breaks, which the parser
+/// refuses.
+fn write_received_chain<W: Write + ?Sized>(out: &mut W, request: &Request<'_>) -> io::Result<()> {
+    let chain = request
+        .headers()
+        .iter()
+        .filter(|header| header.name.eq_ignore_ascii_case(b"x-forwarded-for"))
+        .map(|header| header.value.trim_ascii())
+        .filter(|value| !value.is_empty());
+    for value in chain {
+        out.write_all(value)?;
+        out.write_all(b", ")?;
+    }
+    Ok(())
 }
 
 /// Writes `value` in decimal without leading zeros.
@@ -156,6 +185,7 @@ mod tests {
     fn audit() -> Audit<'static> {
         Audit {
             client_ip: b"203.0.113.4",
+            peer: b"203.0.113.4",
             status: b"PASS",
             rule: b"default/allow",
             ..Audit::default()
@@ -181,6 +211,60 @@ mod tests {
         assert!(contains(&out, b"X-Forwarded-For: 203.0.113.4\r\n"));
         assert!(contains(&out, b"X-Sibuna-Rule: default/allow\r\n"));
         assert!(out.ends_with(b"\r\n\r\n"));
+    }
+
+    /// Returns the values of the field `name` in the head `out`, in order.
+    fn field_values(out: &[u8], name: &str) -> Vec<String> {
+        let text = String::from_utf8(out.to_vec()).unwrap();
+        let prefix = format!("{name}: ");
+        text.split("\r\n")
+            .filter_map(|line| line.strip_prefix(&prefix))
+            .map(String::from)
+            .collect()
+    }
+
+    const CHAINED: &[u8] =
+        b"GET / HTTP/1.1\r\nHost: h\r\nX-Forwarded-For: 6.6.6.6, 198.51.100.7\r\n\
+        X-Real-IP: 6.6.6.7\r\nx-forwarded-for:  \t\r\nX-FORWARDED-FOR: 2001:db8::5 \r\n\
+        X_Forwarded_For: 6.6.6.8\r\n\r\n";
+
+    /// A trusted chain is passed on in field order, the socket peer appended; the client
+    /// the request was judged by is `X-Real-IP`.
+    #[test]
+    fn a_trusted_chain_reaches_the_origin_followed_by_the_socket_peer() {
+        let request = parse_request(CHAINED).unwrap();
+        let audit = Audit {
+            client_ip: b"2001:db8::5",
+            peer: b"10.0.0.2",
+            trusts_forwarded: true,
+            ..audit()
+        };
+        let mut out = Vec::new();
+        write_request_head(&mut out, &request, &Upload::None, &audit, false).unwrap();
+        let chain = "6.6.6.6, 198.51.100.7, 2001:db8::5, 10.0.0.2";
+        assert_eq!(field_values(&out, "X-Forwarded-For"), [chain]);
+        assert_eq!(field_values(&out, "X-Real-IP"), ["2001:db8::5"]);
+        // An underscore spelling is no part of the chain and is dropped.
+        assert!(!contains(&out, b"6.6.6.8") && !contains(&out, b"6.6.6.7"));
+        // A trusted request without a chain gets the peer alone.
+        let request = parse_request(b"GET / HTTP/1.1\r\nHost: h\r\n\r\n").unwrap();
+        out.clear();
+        write_request_head(&mut out, &request, &Upload::None, &audit, false).unwrap();
+        assert_eq!(field_values(&out, "X-Forwarded-For"), ["10.0.0.2"]);
+    }
+
+    /// Without trust the origin hears of the socket peer only: no entry the client wrote.
+    #[test]
+    fn an_untrusted_chain_is_replaced_by_the_socket_peer() {
+        let request = parse_request(CHAINED).unwrap();
+        let audit = Audit { client_ip: b"10.0.0.2", peer: b"10.0.0.2", ..audit() };
+        let mut out = Vec::new();
+        write_request_head(&mut out, &request, &Upload::None, &audit, false).unwrap();
+        assert_eq!(field_values(&out, "X-Forwarded-For"), ["10.0.0.2"]);
+        assert_eq!(field_values(&out, "X-Real-IP"), ["10.0.0.2"]);
+        for spoofed in ["6.6.6", "198.51.100.7", "2001:db8::5"] {
+            assert!(!contains(&out, spoofed.as_bytes()), "{spoofed}");
+        }
     }
 
     #[test]

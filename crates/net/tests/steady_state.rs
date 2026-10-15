@@ -100,7 +100,7 @@ fn serve_origin(mut stream: TcpStream) {
 const REQUEST: &[u8] = b"GET /index.html?a=1 HTTP/1.1\r\nHost: example.com\r\n\
     User-Agent: Mozilla/5.0 (Macintosh) AppleWebKit/537.36 Chrome/128.0 Safari/537.36\r\n\
     Accept: text/html,application/xhtml+xml,*/*;q=0.8\r\nAccept-Language: en-US\r\n\
-    Cookie: sibuna_session=abc\r\n\r\n";
+    Cookie: sibuna_session=abc\r\nX-Forwarded-For: 198.51.100.4\r\n\r\n";
 
 /// A client socket, the daemon's end of it, and the per-connection state.
 struct Bench {
@@ -152,6 +152,8 @@ impl Bench {
                 upload: Upload::None,
                 audit: Audit {
                     client_ip: b"203.0.113.9",
+                    peer: b"192.0.2.1",
+                    trusts_forwarded: true,
                     status: b"PASS",
                     rule: b"r",
                     ..Audit::default()

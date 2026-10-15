@@ -157,7 +157,6 @@ fn result_text(result: Result<bool, ProxyError>) -> String {
 /// Runs one scenario through `stream_proxy` as the Zig harness ran it through `streamProxy`.
 fn run(scenario: &Scenario, pool: &Pool, workspace: &mut Workspace) -> Outcome {
     let origin_listener = TcpListener::bind("127.0.0.1:0").unwrap();
-    let origin_port = origin_listener.local_addr().unwrap().port();
     let origin_address = origin_listener.local_addr().unwrap();
     let (response, to_eof) = (scenario.origin.clone(), scenario.to_eof);
     let origin = thread::spawn(move || origin_main(origin_listener, response, to_eof));
@@ -207,11 +206,15 @@ fn run(scenario: &Scenario, pool: &Pool, workspace: &mut Workspace) -> Outcome {
             websocket_idle_timeout_seconds: 5,
         },
         upstream_host: "127.0.0.1",
-        upstream_port: origin_port,
+        upstream_port: origin_address.port(),
         request: &request,
         upload,
         audit: Audit {
             client_ip: b"203.0.113.9",
+            // Zig wrote the judged client as `X-Forwarded-For`; an untrusted chain ending in
+            // the same peer gives the origin the same head.
+            peer: b"203.0.113.9",
+            trusts_forwarded: false,
             status: b"PASS",
             rule: b"default/allow",
             scheme: scenario.scheme.as_bytes(),
