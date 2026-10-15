@@ -11,6 +11,7 @@ use sibuna_console_protocol::dashboard::Source;
 use sibuna_html::write_value;
 
 use crate::format;
+use crate::json::parse_integer;
 use crate::render::Html;
 use crate::snippets;
 use crate::state::State;
@@ -151,7 +152,7 @@ pub enum SelectError {
 ///
 /// [`SelectError`] for text that is not a node number, no scope, or an unknown node.
 pub fn parse_selection(state: &State, text: &str) -> Result<Option<u32>, SelectError> {
-    let node = super::parse_decimal(text)
+    let node = parse_integer::<u64>(text)
         .and_then(|node| u32::try_from(node).ok())
         .ok_or(SelectError::Invalid)?;
     let scope = state.dashboard_scope.as_ref().ok_or(SelectError::Unavailable)?;

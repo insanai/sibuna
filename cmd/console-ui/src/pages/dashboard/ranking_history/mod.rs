@@ -17,9 +17,10 @@ use sibuna_json::Value;
 
 pub(super) use page::render;
 
-use super::{parse_decimal, period};
+use super::period;
 use crate::error::UiError;
 use crate::json;
+use crate::json::parse_integer;
 use crate::page::{Context, Reply as Envelope};
 use crate::state::{Phase, State};
 
@@ -174,7 +175,7 @@ impl Window {
         }
         let bytes = hex_decode(&reply.archive).ok_or(UiError::InvalidResponse)?;
         let digest = sibuna_crypto::sha256::Sha256::digest(&bytes);
-        if super::hex_lower(&digest) != cursor.digest.as_str() {
+        if crate::format::hex(&digest) != cursor.digest.as_str() {
             return Err(UiError::InvalidResponse);
         }
         let archive = rankings_archive::decode(&bytes).map_err(|_| UiError::InvalidResponse)?;
@@ -343,7 +344,7 @@ pub(super) fn action(
 fn configure(state: &State, fields: &Value<'_>) -> Option<(Inputs, [Request; 2])> {
     let now = state.stats.as_ref()?.timestamp / 60;
     let number =
-        |key| parse_decimal(json::string(fields, key)).and_then(|n| u32::try_from(n).ok());
+        |key| parse_integer::<u64>(json::string(fields, key)).and_then(|n| u32::try_from(n).ok());
     let (minutes, offset) = (number("minutes")?, number("offset")?);
     let (node, other_node) = (number("node")?, number("other_node")?);
     let mode = match json::string(fields, "mode") {
@@ -398,7 +399,7 @@ fn request(model: &mut Model, serial: &mut u64, cx: &mut Context<'_>) -> Result<
     }
     *serial = serial.checked_add(1).ok_or(UiError::InvalidRequest)?;
     let query = &window.query;
-    cx.post(&format!("{PREFIX}{serial}"), "/console/api/rankings/history", |json| {
+    cx.post(&format!("{PREFIX}{serial}"), "/console/api/rankings/history", &mut |json| {
         json.begin_object()?;
         json.key("from_minute")?;
         json.uint(query.from_minute)?;
@@ -433,10 +434,7 @@ pub(super) fn response(
     }
     model.busy = false;
     if status == 401 || status == 403 {
-        cx.disconnect()?;
-        cx.reset_session(Phase::Login);
-        cx.state.set_message("Your access changed. Sign in to read retained rankings.");
-        return Ok(());
+        return cx.end_session("Your access changed. Sign in to read retained rankings.");
     }
     let state = &*cx.state;
     if state.phase != Phase::Dashboard || !model.open || state.paused || state.hidden {

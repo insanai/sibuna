@@ -14,11 +14,12 @@ use sibuna_console_protocol::{Text, minutes};
 use sibuna_html::write_value;
 use sibuna_json::Value;
 
-use super::sparkline::{self, METRICS, Metric};
-use super::{parse_decimal, period};
+use super::period;
+use crate::charts::{self, METRICS, Metric};
 use crate::error::UiError;
 use crate::format;
 use crate::json;
+use crate::json::parse_integer;
 use crate::page::{Context, Reply};
 use crate::render::Html;
 use crate::state::{Phase, State};
@@ -158,7 +159,7 @@ pub(super) fn action(
 fn configure(state: &State, fields: &Value<'_>) -> Option<Model> {
     let now = state.stats.as_ref()?.timestamp / 60;
     let number =
-        |key| parse_decimal(json::string(fields, key)).and_then(|n| u32::try_from(n).ok());
+        |key| parse_integer::<u64>(json::string(fields, key)).and_then(|n| u32::try_from(n).ok());
     let minutes = number("minutes")?;
     let offset = number("offset")?;
     let mode = Mode::from_name(json::string(fields, "mode"))?;
@@ -246,8 +247,8 @@ fn request(
 /// Splits a reply id into its side and ticket.
 fn parse_id(id: &str) -> Option<(usize, u64)> {
     let mut parts = id.strip_prefix(PREFIX)?.split('-');
-    let side = usize::try_from(parse_decimal(parts.next()?)?).ok()?;
-    let ticket = parse_decimal(parts.next()?)?;
+    let side = usize::try_from(parse_integer::<u64>(parts.next()?)?).ok()?;
+    let ticket = parse_integer::<u64>(parts.next()?)?;
     if parts.next().is_some() || side >= 2 {
         return None;
     }
@@ -277,10 +278,7 @@ pub(super) fn response(
     }
     model.busy[side] = false;
     if status == 401 || status == 403 {
-        cx.disconnect()?;
-        cx.reset_session(Phase::Login);
-        cx.state.set_message("Your access changed. Sign in to compare retained traffic.");
-        return Ok(());
+        return cx.end_session("Your access changed. Sign in to compare retained traffic.");
     }
     model.failed[side] = true;
     if status != 200 {
@@ -466,14 +464,14 @@ fn metric(model: &Model, out: &mut Html<'_>, metric: Metric) -> fmt::Result {
     let [current, reference] = &model.windows;
     // Minute format v1 has no persisted proxy mode: origin counts cannot tell a
     // forward-auth non-observation from a reverse proxy observing zero errors.
-    let origin = sparkline::is_origin(metric);
+    let origin = charts::is_origin(metric);
     let change = if origin || model.failed[0] || model.failed[1] {
         Deviation::Unavailable
     } else {
         minute_summary::deviation(current, reference, metric)
     };
     out.write_str("<tr class=\"")?;
-    out.write_str(sparkline::tone(metric))?;
+    out.write_str(charts::tone(metric))?;
     if format::is_tinted(change) {
         out.write_str(" sb-deviation")?;
     }

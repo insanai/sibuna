@@ -7,9 +7,7 @@
 //! as the Zig `golden.zig` did. Set `SIBUNA_UPDATE_CONSOLE_GOLDENS=1` to rewrite the
 //! fixtures after a reviewed change.
 //!
-//! Every fixture file is listed exactly once: in [`CHECKED`] when a test compares it, or
-//! in [`PENDING`] with the module it awaits. A page port moves its fixtures from one list
-//! to the other.
+//! Every fixture file is listed exactly once in [`CHECKED`], and a test compares it.
 
 use std::path::PathBuf;
 
@@ -54,9 +52,6 @@ pub const CHECKED: &[&str] = &[
     "kiosk-security",
     "kiosk-security-recorded",
 ];
-
-/// Fixtures waiting for a page module, with the module (group) that produces them.
-pub const PENDING: &[(&str, &str)] = &[];
 
 /// Resets `app` to `phase` at the fixture time, signed in as an administrator of console
 /// node 1 for every phase but the four authentication phases (Zig's `configure`).
@@ -142,7 +137,7 @@ mod tests {
     use crate::testing::Harness;
 
     #[test]
-    fn every_fixture_is_checked_or_pending_exactly_once() {
+    fn every_fixture_is_checked_exactly_once() {
         let directory = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/golden");
         let mut files: Vec<String> = std::fs::read_dir(directory)
             .unwrap()
@@ -150,12 +145,7 @@ mod tests {
             .filter_map(|name| name.strip_suffix(".html").map(str::to_owned))
             .collect();
         files.sort();
-        let mut listed: Vec<String> = CHECKED
-            .iter()
-            .copied()
-            .chain(PENDING.iter().map(|(name, _)| *name))
-            .map(str::to_owned)
-            .collect();
+        let mut listed: Vec<String> = CHECKED.iter().copied().map(str::to_owned).collect();
         listed.sort();
         assert_eq!(files, listed);
     }

@@ -5,7 +5,7 @@
 //! default, or fails when it has none. Integers are integer literals in the field's range;
 //! 64-bit counters may also travel as decimal strings ([`json::counter`]). Identifiers
 //! inside action names and form fields are parsed with Zig's `std.fmt.parseInt` rules
-//! ([`parse_integer`]), so the same texts are accepted.
+//! ([`json::parse_integer`]), so the same texts are accepted.
 
 use sibuna_json::Value;
 
@@ -84,61 +84,19 @@ pub(crate) fn list<'v, 'a>(value: &'v Value<'a>, max: usize) -> Option<&'v [Valu
     value.as_array().filter(|items| items.len() <= max)
 }
 
-/// Parses `text` as Zig's `std.fmt.parseInt(T, text, 10)` does: an optional sign, then
-/// decimal digits with underscores between them (not at either end). Returns `None` for
-/// anything else and for values outside `T`.
-pub(crate) fn parse_integer<T: TryFrom<i128>>(text: &str) -> Option<T> {
-    let (negative, digits) = match text.as_bytes().split_first()? {
-        (b'+', rest) => (false, rest),
-        (b'-', rest) => (true, rest),
-        _ => (false, text.as_bytes()),
-    };
-    if digits.first().is_none_or(|&byte| byte == b'_') || digits.last() == Some(&b'_') {
-        return None;
-    }
-    let mut value: i128 = 0;
-    for &byte in digits {
-        if byte == b'_' {
-            continue;
-        }
-        let digit = i128::from(byte.checked_sub(b'0').filter(|digit| *digit < 10)?);
-        value = value.checked_mul(10)?;
-        value = if negative { value.checked_sub(digit)? } else { value.checked_add(digit)? };
-    }
-    T::try_from(value).ok()
-}
-
-/// Parses an identifier, as [`parse_integer`] does for `u64`.
+/// Parses an identifier, as [`json::parse_integer`] does for `u64`.
 ///
 /// # Errors
 ///
 /// [`UiError::InvalidRequest`] when `text` is not one; action names carry identifiers, so
 /// a bad one is a malformed request.
 pub(crate) fn identifier(text: &str) -> Result<u64, UiError> {
-    parse_integer(text).ok_or(UiError::InvalidRequest)
+    json::parse_integer(text).ok_or(UiError::InvalidRequest)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn integers_follow_zig_parse_int() {
-        assert_eq!(parse_integer::<u64>("9007199254740993"), Some(9_007_199_254_740_993));
-        assert_eq!(parse_integer::<u64>("+7"), Some(7));
-        assert_eq!(parse_integer::<u64>("1_000"), Some(1000));
-        assert_eq!(parse_integer::<u64>("1__0"), Some(10));
-        assert_eq!(parse_integer::<u64>("-0"), Some(0));
-        assert_eq!(parse_integer::<u64>("-1"), None);
-        assert_eq!(parse_integer::<u64>("_1"), None);
-        assert_eq!(parse_integer::<u64>("1_"), None);
-        assert_eq!(parse_integer::<u64>(""), None);
-        assert_eq!(parse_integer::<u64>("+"), None);
-        assert_eq!(parse_integer::<u64>("1a"), None);
-        assert_eq!(parse_integer::<u64>("18446744073709551616"), None);
-        assert_eq!(parse_integer::<u8>("256"), None);
-        assert_eq!(parse_integer::<u32>(" 1"), None);
-    }
 
     #[test]
     fn members_take_defaults_and_ignore_unknown_keys() {

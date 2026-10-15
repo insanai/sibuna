@@ -1,5 +1,6 @@
 //! Compiles `src/snippets/*.html` into Rust render functions with `sibuna-html`, and sets
-//! the WebAssembly module's memory ceiling.
+//! the WebAssembly module's memory ceiling and, without debug information, asks the linker
+//! to encode call targets and data addresses in their shortest form.
 
 use std::{env, fs, path::Path, process};
 
@@ -30,5 +31,12 @@ fn main() {
     fs::write(output, sibuna_html::generate(&templates)).expect("write snippets.rs");
     if env::var("CARGO_CFG_TARGET_ARCH").is_ok_and(|arch| arch == "wasm32") {
         println!("cargo::rustc-link-arg-cdylib=--max-memory={MAX_MEMORY}");
+        // The LTO object pads every function index and data address to five LEB128 bytes
+        // so the linker can patch it; `--compress-relocations` rewrites them in their
+        // shortest form (a tenth of the module). The linker refuses it with debug
+        // information, which only the dev profile keeps.
+        if env::var("DEBUG").is_ok_and(|debug| debug == "false") {
+            println!("cargo::rustc-link-arg-cdylib=--compress-relocations");
+        }
     }
 }

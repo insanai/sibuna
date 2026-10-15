@@ -36,8 +36,8 @@ pub use window::{MAX_CONTINUATIONS, Window};
 
 use crate::error::UiError;
 use crate::json;
+use crate::json::parse_integer;
 use crate::page::{Context, Page, Reply, Screen, View};
-use crate::pages::events::wire::parse_integer;
 use crate::render::Html;
 use crate::state::{Phase, State};
 
@@ -69,7 +69,7 @@ impl Challenges {
         self.busy = true;
         cx.state.stats_busy = false;
         let selected = self.selected;
-        cx.post("challenges", "/console/api/challenges", |json| {
+        cx.post("challenges", "/console/api/challenges", &mut |json| {
             json.begin_object()?;
             json.key("bin")?;
             optional_uint(json, selected.map(u64::from))?;
@@ -95,7 +95,7 @@ impl Challenges {
         model.busy = true;
         model.failed = false;
         let (hours, selected) = (model.hours, model.selected);
-        cx.post("challenges-summary", "/console/api/challenges/summary", |json| {
+        cx.post("challenges-summary", "/console/api/challenges/summary", &mut |json| {
             json.begin_object()?;
             json.key("hours")?;
             json.uint(u64::from(hours))?;
@@ -116,7 +116,7 @@ impl Challenges {
         model.difficulty_busy = true;
         model.difficulty_failed = false;
         let hours = model.hours;
-        cx.post("challenges-difficulty", "/console/api/challenges/difficulty", |json| {
+        cx.post("challenges-difficulty", "/console/api/challenges/difficulty", &mut |json| {
             json.begin_object()?;
             json.key("hours")?;
             json.uint(u64::from(hours))?;
@@ -149,7 +149,7 @@ impl Challenges {
         model.busy = true;
         model.failed = false;
         let (hours, outcome, cause) = (model.hours, model.outcome, model.cause);
-        cx.post("challenges-records", "/console/api/challenges/records", |json| {
+        cx.post("challenges-records", "/console/api/challenges/records", &mut |json| {
             json.begin_object()?;
             json.key("hours")?;
             json.uint(u64::from(hours))?;
@@ -219,8 +219,8 @@ impl Challenges {
         };
         self.busy = false;
         if status == 401 || status == 403 {
-            cx.reset_session(Phase::Login);
-            cx.state.set_message("Your access changed. Sign in again to view challenges.");
+            // Writing into the owned command list cannot fail.
+            let _ = cx.end_session("Your access changed. Sign in again to view challenges.");
             return;
         }
         let Some(snapshot) = snapshot else {
@@ -353,7 +353,7 @@ fn optional_uint(json: &mut crate::commands::Json<'_>, value: Option<u64>) -> fm
 /// Writes a minute cursor as the summary request carries it: the boot id as lowercase
 /// hex text.
 fn minute_cursor(json: &mut crate::commands::Json<'_>, cursor: &MinuteCursor) -> fmt::Result {
-    let boot: String = cursor.boot.iter().map(|byte| format!("{byte:02x}")).collect();
+    let boot = crate::format::hex(&cursor.boot);
     json.begin_object()?;
     json.key("minute")?;
     json.uint(cursor.minute)?;

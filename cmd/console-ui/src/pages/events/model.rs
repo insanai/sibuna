@@ -101,7 +101,7 @@ impl Model {
 
 /// Parses an identifier the server sent as a decimal string.
 fn decimal(text: &str) -> Result<u64, UiError> {
-    wire::parse_integer(text).ok_or(UiError::InvalidResponse)
+    crate::json::parse_integer(text).ok_or(UiError::InvalidResponse)
 }
 
 /// A page of incidents as it crosses the wire, borrowing the reply.

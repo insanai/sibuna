@@ -2,13 +2,16 @@
 //! `policy_transfer.zig`): moving a rule, replaying retained events against the draft,
 //! importing and exporting one rule document, and replacing every rule with a policy set.
 //!
-//! A policy set is reviewed first (count and batch digest), then sent one document per
-//! request (`import/chunk`) and committed (`import/commit`). SID 0013 replaces the chunks
-//! and the commit with one bounded request; this module keeps the request shapes the
-//! server accepts today.
+//! A policy set is reviewed first (its count and SHA-256), then sent as one bounded request
+//! (`policies/import`) that replaces every rule atomically. Zig staged the set one document
+//! per request under a batch key and committed it with a further request; SID 0013 (review
+//! of 2026-10-15) made the import one request, so a set is never half sent.
 
 use std::fmt::{self, Write as _};
 
+use sibuna_console_protocol::workflows::{
+    MAX_IMPORT_BYTES, MAX_IMPORT_DOCUMENT, MAX_IMPORT_DOCUMENTS,
+};
 use sibuna_console_protocol::{Action, Text};
 use sibuna_html::write_value;
 use sibuna_json::Value;
@@ -20,18 +23,12 @@ use super::replay::Replay;
 use super::{Policies, success};
 use crate::commands::Field;
 use crate::error::UiError;
+use crate::format;
 use crate::json;
 use crate::page::Context;
 use crate::render::Html;
 use crate::snippets;
 use crate::state::{Phase, State};
-
-/// The most documents a policy set holds.
-const MAX_SET_DOCUMENTS: usize = 128;
-/// The most bytes of compact documents a policy set holds.
-const MAX_SET_BYTES: usize = 64 * 1024;
-/// The most bytes of one compact document.
-const MAX_DOCUMENT: usize = 4096;
 
 /// Where a policy set import stands.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -41,10 +38,8 @@ pub enum Stage {
     Idle,
     /// The set waits for the operator's confirmation; nothing was sent.
     Review,
-    /// Documents are being sent.
+    /// The import request is in flight.
     Sending,
-    /// The commit is in flight.
-    Committing,
 }
 
 /// A policy set being imported.
@@ -52,9 +47,8 @@ pub enum Stage {
 pub struct ImportAll {
     /// Where the import stands.
     pub stage: Stage,
-    /// Documents sent so far.
-    pub sent: usize,
-    /// The batch digest that groups the chunks: 64 lowercase hex digits.
+    /// The SHA-256 of the documents as JSON lines (each followed by a line feed), the
+    /// digest the `policy.import` audit row names: 64 lowercase hex digits.
     pub digest: String,
     /// The committed revision the set replaces.
     pub expected: Text<20>,
@@ -121,14 +115,15 @@ fn validate_fields(source: &str) -> Result<(), FormError> {
     }
 }
 
-/// Returns the lowercase hexadecimal text of `bytes`.
-fn hex(bytes: &[u8]) -> String {
-    let mut text = String::with_capacity(bytes.len() * 2);
-    for byte in bytes {
-        // Writing into a `String` cannot fail.
-        let _ = write!(text, "{byte:02x}");
+/// Returns the SHA-256 of `documents` as JSON lines, as storage computes it for the
+/// audit row.
+fn set_digest(documents: &[String]) -> String {
+    let mut hasher = sibuna_crypto::sha256::Sha256::new();
+    for document in documents {
+        hasher.update(document.as_bytes());
+        hasher.update(b"\n");
     }
-    text
+    format::hex(&hasher.finalize())
 }
 
 impl Policies {
@@ -167,8 +162,7 @@ impl Policies {
             "managed-import-cancel" => self.manager.import_all = ImportAll::default(),
             "managed-import-confirm" if self.manager.import_all.stage == Stage::Review => {
                 self.manager.import_all.stage = Stage::Sending;
-                self.manager.import_all.sent = 0;
-                self.send_chunk(cx)?;
+                self.send_set(cx)?;
             }
             _ => return Ok(false),
         }
@@ -190,7 +184,8 @@ impl Policies {
     }
 
     /// Parses a pasted policy set, keeps its compact documents and shows the count and
-    /// digest to confirm. Nothing is sent until the operator confirms.
+    /// SHA-256 to confirm. Nothing is sent until the operator confirms. The bounds are the
+    /// import request's: 1 to 128 documents of at most 4 KiB, at most 256 KiB in all.
     fn review_set(&mut self, state: &mut State, text: &str) {
         let manager = &mut self.manager;
         if !state.allows(Action::ManagePolicy) || manager.committed.is_empty() {
@@ -200,7 +195,7 @@ impl Policies {
         let Some(items) = parsed.as_ref().ok().and_then(Value::as_array) else {
             return state.set_message("The policy set must be a JSON array of rule documents.");
         };
-        if items.is_empty() || items.len() > MAX_SET_DOCUMENTS {
+        if items.is_empty() || items.len() > MAX_IMPORT_DOCUMENTS {
             return state
                 .set_message("The policy set must hold between 1 and 128 rule documents.");
         }
@@ -213,45 +208,40 @@ impl Policies {
             }
             let document = item.to_string();
             used += document.len();
-            if used > MAX_SET_BYTES {
-                return state.set_message("The policy set exceeds 64 KiB of compact documents.");
+            if used > MAX_IMPORT_BYTES {
+                return state.set_message("The policy set exceeds 256 KiB of compact documents.");
             }
-            if document.len() > MAX_DOCUMENT {
+            if document.len() > MAX_IMPORT_DOCUMENT {
                 return state.set_message("One rule document exceeds 4 KiB.");
             }
             documents.push(document);
         }
-        // The key only groups chunks; the storage owner hashes the staged set at commit.
-        // It is unique to the session: its CSRF text, the time, the size and the count.
-        let mut key = [0u8; 32];
-        for (byte, csrf) in key.iter_mut().zip(state.csrf.as_str().bytes()) {
-            *byte = csrf;
-        }
-        key[..8].copy_from_slice(&state.browser_time.to_le_bytes());
-        // `used` is at most 64 KiB and the count at most 128, so both fit.
-        key[8..12].copy_from_slice(&u32::try_from(used).unwrap_or(u32::MAX).to_le_bytes());
-        key[12] = u8::try_from(documents.len()).unwrap_or(u8::MAX);
         manager.import_all = ImportAll {
             stage: Stage::Review,
-            sent: 0,
-            digest: hex(&key),
+            digest: set_digest(&documents),
             expected: manager.committed.clone(),
             documents,
         };
     }
 
-    /// Sends the next document of the policy set.
-    fn send_chunk(&mut self, cx: &mut Context<'_>) -> Result<(), UiError> {
-        let import = &self.manager.import_all;
-        let index = import.sent;
-        let document = import.documents.get(index).cloned().unwrap_or_default();
-        let (digest, ordinal) = (import.digest.clone(), u64::try_from(index).unwrap_or(0));
-        let fields = [
-            ("digest", Field::Text(&digest)),
-            ("ordinal", Field::Unsigned(ordinal)),
-            ("document", Field::Text(&document)),
-        ];
-        self.post_managed(cx, "import-chunk", &fields)
+    /// Sends the reviewed set as one import request: the revision it replaces and the
+    /// compact documents, in order.
+    fn send_set(&mut self, cx: &mut Context<'_>) -> Result<(), UiError> {
+        let import = std::mem::take(&mut self.manager.import_all);
+        let result = self.post_managed_body(cx, "import", &mut |json| {
+            json.begin_object()?;
+            json.key("expected_revision")?;
+            json.string(import.expected.as_str())?;
+            json.key("documents")?;
+            json.begin_array()?;
+            for document in &import.documents {
+                json.string(document)?;
+            }
+            json.end_array()?;
+            json.end_object()
+        });
+        self.manager.import_all = import;
+        result
     }
 
     /// Takes a reply that belongs to a workflow; returns false for other replies.
@@ -274,23 +264,7 @@ impl Policies {
         } else if id.starts_with("managed-replay-") {
             manager.replay = Some(Replay::read(body));
             cx.commands.focus("#policy-replay")?;
-        } else if id.starts_with("managed-import-chunk-") {
-            let import = &mut manager.import_all;
-            import.sent += 1;
-            if import.sent < import.documents.len() {
-                self.send_chunk(cx)?;
-                return Ok(true);
-            }
-            import.stage = Stage::Committing;
-            let (digest, expected) = (import.digest.clone(), import.expected.clone());
-            let count = u64::try_from(import.documents.len()).unwrap_or(0);
-            let fields = [
-                ("digest", Field::Text(&digest)),
-                ("count", Field::Unsigned(count)),
-                ("expected_revision", Field::Text(expected.as_str())),
-            ];
-            self.post_managed(cx, "import-commit", &fields)?;
-        } else if id.starts_with("managed-import-commit-") {
+        } else if id.starts_with("managed-import-") {
             manager.committed = Text::new(json::string(body, "committed"))?;
             manager.import_all = ImportAll::default();
             manager.view = ManagedView::Catalog;
@@ -413,12 +387,10 @@ impl Policies {
         out.write_str("</details>")
     }
 
-    /// A failed chunk or commit leaves the staged set for review again.
+    /// A failed import leaves the set for review again; nothing was applied.
     pub(super) fn import_failed(&mut self, id: &str) {
         let import = &mut self.manager.import_all;
-        if id.starts_with("managed-import-")
-            && matches!(import.stage, Stage::Sending | Stage::Committing)
-        {
+        if id.starts_with("managed-import-") && import.stage == Stage::Sending {
             import.stage = Stage::Review;
         }
     }
@@ -429,15 +401,14 @@ fn render_staged(out: &mut Html<'_>, import: &ImportAll) -> fmt::Result {
     let busy = if import.stage == Stage::Review { "" } else { " disabled" };
     out.write_str("<div class=\"sb-panel mt-3\"><p role=\"status\">")?;
     write_value(out, &import.documents.len())?;
-    out.write_str(" rule documents (batch ")?;
+    out.write_str(" rule documents (SHA-256 ")?;
     out.escaped(&import.digest)?;
     out.write_str("), replacing every managed rule at revision ")?;
     out.escaped(import.expected.as_str())?;
     out.write_str(". ")?;
     out.write_str(match import.stage {
         Stage::Review => "Nothing has been sent yet.",
-        Stage::Sending => "Sending documents\u{2026}",
-        Stage::Committing => "Committing\u{2026}",
+        Stage::Sending => "Replacing the rules\u{2026}",
         Stage::Idle => "",
     })?;
     out.write_str(
@@ -481,7 +452,7 @@ mod tests {
     }
 
     #[test]
-    fn a_policy_set_digest_groups_by_session_time_size_and_count() {
+    fn a_policy_set_is_reviewed_with_the_digest_the_audit_names() {
         let mut state = State { browser_time: 0x0102, ..State::new() };
         state.csrf.set("0123456789abcdefghijklmnopqrstuvwxyz").unwrap();
         state.role.set("admin").unwrap();
@@ -491,9 +462,8 @@ mod tests {
         let import = &page.manager.import_all;
         assert_eq!(import.stage, Stage::Review);
         assert_eq!(import.documents, ["{\"id\":\"a\"}", "{\"b\":1.50}"]);
-        let expected = "0201000000000000140000000264656667\
-                        68696a6b6c6d6e6f70717273747576";
-        assert_eq!(import.digest, expected);
+        let expected = sibuna_crypto::sha256::Sha256::digest(b"{\"id\":\"a\"}\n{\"b\":1.50}\n");
+        assert_eq!(import.digest, format::hex(&expected));
         page.review_set(&mut state, "[1]");
         assert_eq!(
             state.message.as_str(),
@@ -504,9 +474,18 @@ mod tests {
             state.message.as_str(),
             "The policy set must be a JSON array of rule documents."
         );
-        let big =
-            format!("[{}]", vec![format!("{{\"a\":\"{}\"}}", "x".repeat(4000)); 17].join(","));
-        page.review_set(&mut state, &big);
-        assert_eq!(state.message.as_str(), "The policy set exceeds 64 KiB of compact documents.");
+        // 64 documents of 4,000 bytes fit the 256 KiB bound; 66 do not.
+        let set = |count: usize| {
+            format!("[{}]", vec![format!("{{\"a\":\"{}\"}}", "x".repeat(4000)); count].join(","))
+        };
+        state.clear_message();
+        page.review_set(&mut state, &set(64));
+        assert!(state.message.is_empty());
+        assert_eq!(page.manager.import_all.documents.len(), 64);
+        page.review_set(&mut state, &set(66));
+        assert_eq!(state.message.as_str(), "The policy set exceeds 256 KiB of compact documents.");
+        let long = format!("[{{\"a\":\"{}\"}}]", "x".repeat(4096));
+        page.review_set(&mut state, &long);
+        assert_eq!(state.message.as_str(), "One rule document exceeds 4 KiB.");
     }
 }

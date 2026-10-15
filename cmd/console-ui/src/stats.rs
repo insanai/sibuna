@@ -9,7 +9,7 @@ use sibuna_console_protocol::{StatsSnapshot, nodes};
 use sibuna_json::Value;
 
 use crate::error::UiError;
-use crate::page::Context;
+use crate::page::{Context, SESSION_ENDED};
 use crate::state::{GlobeView, Phase, State};
 
 /// One second of the live series.
@@ -168,12 +168,7 @@ pub(crate) fn reply(cx: &mut Context<'_>, status: i64, body: &Value<'_>) -> Resu
         return Ok(());
     }
     if status == 401 || status == 403 {
-        cx.state.phase = Phase::Login;
-        cx.state.stats = None;
-        cx.state.geometry.unload();
-        cx.state.csrf.clear();
-        cx.state.set_message("Your session ended. Sign in to continue.");
-        return cx.disconnect();
+        return cx.end_session(SESSION_ENDED);
     }
     cx.state.stale = status != 200;
     if cx.state.stale {
@@ -226,7 +221,7 @@ pub(crate) fn snapshot_received(
     if state.phase == Phase::SecurityOverview {
         return Ok(());
     }
-    cx.every(|page, cx| page.stats_received(cx))?;
+    cx.every(&mut |page, cx| page.stats_received(cx))?;
     let state = &mut *cx.state;
     if state.is_full_access()
         && !state.geometry.is_loaded()

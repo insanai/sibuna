@@ -11,11 +11,12 @@ use sibuna_json::Value;
 
 use super::heads::{self, Charset, Copied, IncidentHeads};
 use super::model::{MAX_PAGES, Model};
-use super::wire::{identifier, parse_integer};
+use super::wire::identifier;
 use super::{Events, Investigation};
 use crate::commands::{Field, Json, write_fields};
 use crate::error::UiError;
 use crate::json;
+use crate::json::parse_integer;
 use crate::page::Context;
 use crate::pages::similarity::Similarity;
 use crate::scope;
@@ -223,7 +224,7 @@ impl Events {
                     return Ok(true);
                 }
                 *model = IncidentHeads { id, busy: true, ..IncidentHeads::default() };
-                cx.post("events-heads", "/console/api/events/heads", |json| {
+                cx.post("events-heads", "/console/api/events/heads", &mut |json| {
                     write_fields(json, &[("id", Field::Text(rest))])
                 })?;
             }
@@ -322,7 +323,7 @@ pub(super) fn query(model: &Model, cx: &mut Context<'_>, kind: Query) -> Result<
     };
     let csv = kind == Query::Csv;
     let filename = if csv { "sibuna-events.csv" } else { "sibuna-events.json" };
-    cx.commands.emit(|json| {
+    cx.commands.emit(&mut |json| {
         json.begin_object()?;
         let envelope =
             [("op", op), ("id", id), ("method", "POST"), ("filename", filename), ("path", path)];

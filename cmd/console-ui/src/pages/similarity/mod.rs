@@ -23,7 +23,7 @@ use crate::format;
 use crate::page::{Context, Page, Reply, Screen, View};
 use crate::pages::events::Events;
 use crate::pages::events::wire::{
-    self, boolean, counter, identifier, nullable, number, or, parse_integer, required, text,
+    self, boolean, counter, identifier, nullable, number, or, required, text,
 };
 use crate::render::{self, Html};
 use crate::snippets;
@@ -118,7 +118,7 @@ impl Model {
 }
 
 fn decimal(text: &str) -> Result<u64, UiError> {
-    parse_integer(text).ok_or(UiError::InvalidResponse)
+    crate::json::parse_integer(text).ok_or(UiError::InvalidResponse)
 }
 
 /// One part of a search as it crosses the wire, borrowing the reply.
@@ -233,7 +233,7 @@ impl Similarity {
         model.busy = true;
         let model = &*model;
         let id = format!("similarity-{}", model.generation);
-        cx.post(&id, "/console/api/events/similar", |json| {
+        cx.post(&id, "/console/api/events/similar", &mut |json| {
             json.begin_object()?;
             json.key("source")?;
             json.string(&model.source.to_string())?;
@@ -267,7 +267,9 @@ impl Similarity {
         reply: &Reply<'_, '_>,
     ) -> Result<bool, UiError> {
         let Some(generation) = reply.id.strip_prefix("similarity-") else { return Ok(false) };
-        let Some(generation) = parse_integer::<u32>(generation) else { return Ok(false) };
+        let Some(generation) = crate::json::parse_integer::<u32>(generation) else {
+            return Ok(false);
+        };
         let model = &mut self.model;
         if cx.state.phase != Phase::Similarity || generation != model.generation || !model.running
         {
@@ -297,9 +299,7 @@ impl Similarity {
         model.busy = false;
         match status {
             401 | 403 => {
-                cx.reset_session(Phase::Login);
-                cx.state
-                    .set_message("Your access changed. Sign in again to investigate incidents.");
+                cx.end_session("Your access changed. Sign in again to investigate incidents.")?;
                 return Ok(true);
             }
             429 => {

@@ -72,9 +72,15 @@ pub fn render(view: &View<'_>, out: &mut Html<'_>) -> fmt::Result {
     let state = view.state;
     let authenticated = state.is_full_access();
     if !authenticated {
+        let held = || {
+            view.pages
+                .screen(Screen::Phase(state.phase))
+                .is_some_and(|page| page.shown_signed_out())
+        };
         match state.phase {
             Phase::Loading | Phase::Setup | Phase::Login | Phase::Password => {}
             Phase::Security if !state.csrf.is_empty() => {}
+            _ if held() => {}
             _ => return authentication(view, out),
         }
     }
@@ -107,8 +113,8 @@ fn page(view: &View<'_>, out: &mut Html<'_>) -> fmt::Result {
     }
 }
 
-/// Draws a page whose module is not registered in this build. Stage 1 of the Rust port
-/// uses it for the pages still being ported; the Zig module had every page.
+/// Draws a page whose module is not registered: a test registry that leaves pages out.
+/// [`crate::pages::load_pages`] registers a module for every phase.
 fn unavailable(state: &State, out: &mut Html<'_>) -> fmt::Result {
     let name = if state.phase == Phase::SecurityOverview {
         "security-overview"

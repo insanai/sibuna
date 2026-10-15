@@ -17,7 +17,6 @@ use super::motion::zig_mod;
 use super::panel::Scene;
 use super::projection::{CENTER_X, CENTER_Y, RADIUS, line, project};
 use super::route::{Route, segment};
-use super::tenths::tenths;
 use crate::format;
 use crate::geometry::{self, Point};
 use crate::state::{GlobeView, State};
@@ -157,17 +156,17 @@ fn node_marker(out: &mut impl Write, view: GlobeView, point: Point, node: u32) -
         (CENTER_X + RADIUS * projected.x, CENTER_Y - RADIUS * projected.y)
     };
     write!(out, "<g id=\"sibuna-location-{node}\"><circle cx=\"")?;
-    tenths(out, x)?;
+    format::decimal(out, x, 1)?;
     out.write_str("\" cy=\"")?;
-    tenths(out, y)?;
+    format::decimal(out, y, 1)?;
     out.write_str("\" r=\"4\" fill=\"#7c5cdb\" stroke=\"white\"><title>Sibuna server: ")?;
     format::decimal(out, point.lat, 4)?;
     out.write_str(", ")?;
     format::decimal(out, point.lon, 4)?;
     out.write_str(" (configured)</title></circle><text x=\"")?;
-    tenths(out, x)?;
+    format::decimal(out, x, 1)?;
     out.write_str("\" y=\"")?;
-    tenths(out, y - 8.0)?;
+    format::decimal(out, y - 8.0, 1)?;
     write!(
         out,
         "\" font-size=\"9\" text-anchor=\"middle\" fill=\"currentColor\">Sibuna {node}</text></g>"
@@ -193,8 +192,8 @@ fn arrow(out: &mut impl Write, route: &Route, view: GlobeView, t: f64) -> fmt::R
     out.write_str("<path class=\"sb-flow-arrow\" d=\"")?;
     line(out, tip, left)?;
     out.write_str("L")?;
-    tenths(out, right.0)?;
+    format::decimal(out, right.0, 1)?;
     out.write_str(",")?;
-    tenths(out, right.1)?;
+    format::decimal(out, right.1, 1)?;
     out.write_str("Z\" fill=\"#18a8b7\"/>")
 }

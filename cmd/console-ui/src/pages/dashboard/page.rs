@@ -5,8 +5,8 @@ use std::fmt::{self, Write as _};
 
 use sibuna_html::write_value;
 
-use super::sparkline::{self, Metric, OUTCOMES};
 use super::{Dashboard, comparison, period, ranking_history, rankings, scope, tiles, timeline};
+use crate::charts::{self, Metric, OUTCOMES};
 use crate::format;
 use crate::page::View;
 use crate::render::{self, Html};
@@ -104,9 +104,9 @@ pub fn chart(state: &State, out: &mut Html<'_>) -> fmt::Result {
     out.write_str("</svg><p class=\"sb-note\">Stacked by outcome:")?;
     for metric in OUTCOMES {
         out.write_str(" <span class=\"sb-legend ")?;
-        out.write_str(sparkline::tone(metric))?;
+        out.write_str(charts::tone(metric))?;
         out.write_str("\">")?;
-        out.write_str(sparkline::name(metric))?;
+        out.write_str(charts::name(metric))?;
         out.write_str("</span>")?;
     }
     out.write_str(".</p>")
@@ -117,16 +117,16 @@ pub fn chart(state: &State, out: &mut Html<'_>) -> fmt::Result {
 fn bar(out: &mut Html<'_>, x: u64, point: &Point, maximum: f64) -> fmt::Result {
     let Some(rates) = &point.outcome_rates else {
         let height = stats::rate(point) / maximum * 140.0;
-        return segment(out, x, 150.0 - height, height, sparkline::tone(Metric::Requests));
+        return segment(out, x, 150.0 - height, height, charts::tone(Metric::Requests));
     };
     let mut top = 150.0;
     for metric in OUTCOMES {
-        let height = sparkline::rate(rates, metric) / maximum * 140.0;
+        let height = charts::rate(rates, metric) / maximum * 140.0;
         if height.is_nan() || height <= 0.0 {
             continue;
         }
         top -= height;
-        segment(out, x, top, height, sparkline::tone(metric))?;
+        segment(out, x, top, height, charts::tone(metric))?;
     }
     Ok(())
 }

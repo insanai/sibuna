@@ -9,7 +9,8 @@ use sibuna_console_protocol::minute_summary::{self, Deviation};
 use sibuna_html::write_value;
 
 use super::period;
-use super::sparkline::{self, Gauge, METRICS, Metric};
+use super::sparkline::{self, Gauge};
+use crate::charts::{self, METRICS, Metric};
 use crate::format;
 use crate::render::Html;
 use crate::state::State;
@@ -117,7 +118,7 @@ fn tile(model: &period::Model, state: &State, out: &mut Html<'_>, metric: Metric
     let retained = retained(model, state);
     let change = if retained { model.change(metric) } else { Deviation::Unavailable };
     out.write_str("<article class=\"sb-tile ")?;
-    out.write_str(sparkline::tone(metric))?;
+    out.write_str(charts::tone(metric))?;
     if format::is_tinted(change) {
         out.write_str(" sb-deviation")?;
     }
@@ -141,7 +142,7 @@ fn tile(model: &period::Model, state: &State, out: &mut Html<'_>, metric: Metric
 
 /// Writes the period total of `metric`.
 fn retained_value(model: &period::Model, out: &mut Html<'_>, metric: Metric) -> fmt::Result {
-    if sparkline::is_origin(metric) {
+    if charts::is_origin(metric) {
         return out.write_str("Not recorded");
     }
     let Ok(totals) = model.read(0) else { return out.write_str("Unavailable") };
@@ -160,13 +161,13 @@ fn live_value(state: &State, out: &mut Html<'_>, metric: Metric) -> fmt::Result 
     let Some(stats) = &state.stats else { return out.write_str("\u{2014}") };
     let separated =
         matches!(metric, Metric::Denied | Metric::Banned | Metric::RateLimited | Metric::Other);
-    if sparkline::is_origin(metric) && stats.proxy_mode != Some(ProxyMode::ReverseProxy) {
+    if charts::is_origin(metric) && stats.proxy_mode != Some(ProxyMode::ReverseProxy) {
         return out.write_str("Not observed");
     }
     if separated && stats.outcomes_version != 1 {
         return out.write_str("Not recorded");
     }
-    format::count(out, sparkline::counter(stats, metric))
+    format::count(out, charts::counter(stats, metric))
 }
 
 #[cfg(test)]

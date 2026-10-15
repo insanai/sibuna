@@ -3,6 +3,7 @@
 //! pages).
 
 use super::*;
+use crate::state::Phase;
 use crate::testing::{ADMIN_SESSION, Harness, Probe, with_probes};
 
 fn frame(harness: &mut Harness, topic: &str, op: &str, sequence: u64, data: Option<&str>) {

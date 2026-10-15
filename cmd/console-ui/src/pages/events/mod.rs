@@ -119,11 +119,7 @@ impl Events {
         self.model.busy = false;
         match status {
             401 | 403 => {
-                self.model = Model::default();
-                cx.state.csrf.clear();
-                cx.state.phase = Phase::Login;
-                cx.state.set_message("Your access changed. Sign in again to view incidents.");
-                return Ok(());
+                return cx.end_session("Your access changed. Sign in again to view incidents.");
             }
             429 => {
                 cx.state.set_message(

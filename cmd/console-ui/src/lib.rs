@@ -49,8 +49,8 @@
 //! - The render pipeline ([`render`]): signed-out phases draw the authentication card; a
 //!   wall display draws the [`Screen::Kiosk`] module without the shell; otherwise the
 //!   navigation shell ([`shell`]) surrounds the module whose [`Page::screen`] is the
-//!   current phase. A phase without a registered module draws a placeholder heading
-//!   ("This page is not available in this build").
+//!   current phase. A phase without a registered module (only a test registry has one)
+//!   draws a placeholder heading ("This page is not available in this build").
 //! - Shared helpers for pages: [`render::message`], [`render::field`],
 //!   [`render::statistics_tabs`], [`live::render_status`], [`format`](mod@format) (counts with
 //!   separators, Zig-identical decimals, timestamps, deviations), [`scope`] (the live
@@ -96,16 +96,20 @@
 //! - [`Page::finish`]: the end of every event, before rendering (`kiosk_grant.retain`,
 //!   `traffic_period_controller.sync`).
 //! - [`Page::reset`]: sign-out or an expired session; drop everything (`State.reset`).
-//! - [`Page::frame`]: an animation frame, for the globe (`globe_motion.frame`).
+//! - [`Page::frame`]: an animation frame, for the globe (`globe_motion.frame`); it may
+//!   advance shared view state, as the globe's turn.
+//! - [`Page::shown_signed_out`]: the module's screen stays on although the session is
+//!   signed out (the recovery codes after two-factor enrollment ended the session).
 //!
 //! Handlers get a [`Context`]: `cx.state` (the shared [`State`]), `cx.commands`, and
 //! `cx.pages` (every other module, reachable with [`Pages::find`] and
 //! [`Pages::find_mut`] by type; the running module is taken out while it runs). Helpers:
 //! [`Context::get`], [`Context::post`] (adds the CSRF token), [`Context::post_value`] for
 //! any [`sibuna_console_protocol::codec::Encode`] body, [`Context::action`] (offer an
-//! action to the other modules, for example to open another page),
-//! [`Context::disconnect`] and [`Context::reset_session`]. Rules that keep modules
-//! independent:
+//! action to the other modules, for example to open another page), [`Context::with_page`]
+//! (take one other module out and call it, as the security overview opens an
+//! investigation on the Events page), [`Context::disconnect`], [`Context::reset_session`]
+//! and [`Context::end_session`]. Rules that keep modules independent:
 //!
 //! - The core moves focus to `main h1` after any phase change; a module never emits that
 //!   focus itself (Zig's bounded-envelope handlers did, for their own phase changes).
@@ -120,9 +124,22 @@
 //!   [`State::set_message`] and return `Ok(true)` instead where Zig did so.
 //! - Panels shared by several pages (the globe, the timeline, the traffic tiles) are
 //!   modules without a screen; the pages that draw them call their render functions
-//!   through [`Pages::find`] on [`View::pages`].
+//!   through [`Pages::find`] on [`View::pages`]. Decision tones, metric names and the
+//!   counter sparkline that several pages draw are in [`charts`].
+//! - One session-expiry rule: a reply that refuses the session (401, or the 403 of a read
+//!   whose page has no role message) calls [`Context::end_session`]. The bridge closes
+//!   the live connection and cancels every timer, the shared state and every module are
+//!   reset to sign-in, the appearance (theme and density) survives, and the operator
+//!   reads why. Zig's pages differed: some reset the appearance, some kept page state.
 //!
-//! # How to port a page
+//! # How to add a page
+//!
+//! Every page of the Zig module is ported and registered in `pages/mod.rs`, in the order
+//! `main.zig` consulted its controllers (actions: kiosk, dashboard node, policy audit
+//! link, management, managed policies, incident addresses, policies, similarity,
+//! challenges, events, account, geography; replies: similarity, events, challenges,
+//! incident heads, management prefixes, rankings/timeline/minutes, policies, account,
+//! events export, GeoIP).
 //!
 //! The worked example is [`pages::AccountSecurity`], ported from `security.zig` and
 //! `account_security_controller.zig` with the fixtures `security.html` and
@@ -141,12 +158,12 @@
 //!    depend on them.
 //! 3. Write `reset` (`*self = Self::default()`), and `left` if the page shows one-time
 //!    values.
-//! 4. Register the module in `pages/mod.rs`, at its place in the dispatch order below.
+//! 4. Register the module in `pages/mod.rs`, at its place in the dispatch order above.
 //! 5. Port the Zig tests into the module's `tests` (drive the whole application with
 //!    `testing::Harness` and its JSON events, or call the module directly), and port the
 //!    fixture: build the scene with `golden::configure` and the state setters (or with
-//!    recorded events), call `golden::check("<fixture>", app.render_now())`, and move the
-//!    fixture from `golden::PENDING` to `golden::CHECKED`.
+//!    recorded events), call `golden::check("<fixture>", app.render_now())`, and list the
+//!    fixture in `golden::CHECKED`.
 //! 6. Run `cargo test`, `cargo clippy --all-targets`, `cargo xtask check cmd/console-ui`,
 //!    and the WebAssembly build below, and note the module size.
 //!
@@ -195,41 +212,6 @@
 //! }
 //! ```
 //!
-//! # Remaining pages, grouped for parallel porting
-//!
-//! Register them in this order, which is the order `main.zig` consulted its controllers
-//! (actions: kiosk, dashboard node, policy audit link, management, managed policies,
-//! incident addresses, policies, similarity, challenges, events, account, geography;
-//! replies: similarity, events, challenges, incident heads, management prefixes,
-//! rankings/timeline/minutes, policies, account, events export, GeoIP). Fixtures are in
-//! `tests/golden`.
-//!
-//! - A. Traffic dashboard: the dashboard screen of `render.zig` (`page`, `timeline`,
-//!   `coverage`), `traffic_tiles`, `counter_sparkline`, `outcome_sparkline`,
-//!   `dashboard_scope` (render and `select`; the pure functions are in [`scope`]),
-//!   `timeline_panel`, `minute_panel`, `minute_comparison`, `history_controls`,
-//!   `traffic_period_*`, `comparison_*`, `rankings_*`, `ranking_history_*`. Fixtures:
-//!   dashboard, traffic-live, traffic-stale, traffic-comparison, traffic-period,
-//!   traffic-period-partial, ranking-history.
-//! - B. Globe: `globe`, `globe_connections`, `globe_data`, `globe_motion`,
-//!   `geographic_route`, and the projection half of `geography` (validation and reading
-//!   are in [`geometry`]). Drawn by A and C; it implements [`Page::frame`].
-//! - C. Security overview and wall display: `security_overview_*`,
-//!   `security_category_chart`, `security_outcome_charts`, `security_investigation`,
-//!   `kiosk_page` ([`Screen::Kiosk`]), `kiosk_grant` ([`Screen::AccountPanel`]). Fixtures:
-//!   security_overview, security-recorded, kiosk-security, kiosk-security-recorded,
-//!   kiosk-traffic (needs A and B).
-//! - D. Events and similarity: `events_page`, `events_state`, `events_actions`,
-//!   `filter_form`, `incident_heads`, `similarity_*`. Fixtures: events, similarity.
-//! - E. Challenges: `challenges_page`, `challenge_summary`, `challenge_records`. Fixture:
-//!   challenges.
-//! - F. Policies: `policies_page`, `policy_*`, `managed_controller`,
-//!   `workflow_controller`, `request_headers`, `inspection_form`, `reputation_*`,
-//!   `rule_hit_*`. Fixtures: policies, rule-hit-history, rule-hit-history-partial.
-//! - G. Management: `users_*`, `tokens_*`, `audit_*`, `settings_*` with `pages_*`,
-//!   `nodes_*` with `peer_page`, `geoip_page`. Fixtures: users, tokens, audit,
-//!   audit-detail, settings, nodes, geoip.
-//!
 //! # Bounds and budget
 //!
 //! - Events: at most [`INPUT_LIMIT`] bytes (the largest retained rankings reply plus its
@@ -242,11 +224,18 @@
 //! - Linear memory: at most 16 MiB (set by `build.rs`). The module starts with 1.5 MiB
 //!   (mostly the 1 MiB stack); the worst event (the largest input, all small values)
 //!   grows it to 3.6 MiB while its tree is parsed.
-//! - Module size: SID 0007 sets a 768 KiB ceiling and a 640 KiB review threshold. Build
-//!   with `cargo build -p sibuna-console-ui --target wasm32-unknown-unknown --release`
-//!   (this package's release profile is `opt-level = "s"`, stripped). Stage 1 (the core
-//!   and the account security page) is 271,005 bytes; about half is shared machinery the
-//!   pages reuse (the JSON parser, the protocol decoders, float formatting).
+//! - Module size: SID 0007 sets a 768 KiB (786,432-byte) ceiling and a 640 KiB review
+//!   threshold. Build with
+//!   `cargo build -p sibuna-console-ui --target wasm32-unknown-unknown --profile wasm`
+//!   (the workspace's `wasm` profile: `opt-level = "z"`, fat LTO, stripped, panics
+//!   abort); `build.rs` adds the linker's `--compress-relocations` when there is no debug
+//!   information. With every page the module is 719,406 bytes (270,612 gzipped), above
+//!   the review threshold. What brought it under the ceiling from 936,750 bytes with the
+//!   old release profile: the `wasm` profile, shortest-form call targets and data
+//!   addresses (about 55 KiB), trait-object writers for commands and dispatch, one
+//!   function that ends every expired session, list decoding by loop instead of fallible
+//!   `collect`, a sorted vector instead of a `BTreeMap` in the delta patcher, and one copy
+//!   of the shared charts and parsers.
 //!
 //! # Assets
 //!
@@ -264,9 +253,7 @@
 //! `tests/golden/*.html` are the reviewed pages of the Zig module. The harness (`golden`,
 //! a test module) compares rendered pages byte for byte and runs the mechanical principle
 //! checks; `SIBUNA_UPDATE_CONSOLE_GOLDENS=1` rewrites fixtures after a reviewed change.
-//! Stage 1 checks loading, login, setup, password, required-password, security and
-//! required-totp; the others are listed in `golden::PENDING` with the group that
-//! produces them.
+//! All 32 fixtures are listed in `golden::CHECKED` and match byte for byte.
 //!
 //! # Changes from the Zig module
 //!
@@ -299,12 +286,22 @@
 //! - A pending authenticator seed is erased when the operator leaves the two-factor page
 //!   ([`Page::left`]); Zig erased it on the next visit or on the `account` action.
 //! - Linear memory grows on demand up to 16 MiB instead of a fixed 4 MiB.
-//! - The unported pages draw a placeholder heading; Zig had every page.
+//! - Every session expiry follows one rule ([`Context::end_session`]) and keeps the
+//!   appearance; Zig's pages ended sessions in several ways.
+//! - A policy set is imported with one request (`policies/import`, SID 0013) of at most
+//!   128 documents and 256 KiB, instead of one request per document and a commit with a
+//!   64 KiB limit; the review shows the set's SHA-256, the digest the audit row names.
+//! - Confirming two-factor authentication drops the session token at once, as Zig did,
+//!   but the recovery codes stay on screen until acknowledged ([`Page::shown_signed_out`]);
+//!   Zig never showed them.
+//! - The member card names a node's address the management address (SID 0013), not the
+//!   consensus address.
 
 #[cfg(target_arch = "wasm32")]
 mod abi;
 mod app;
 pub mod appearance;
+pub mod charts;
 pub mod commands;
 mod dispatch;
 pub mod error;

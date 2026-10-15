@@ -12,6 +12,7 @@ use sibuna_html::write_value;
 
 use super::model::{MAX_PAGES, Model};
 use super::{Events, heads};
+use crate::charts;
 use crate::format;
 use crate::live;
 use crate::page::View;
@@ -247,18 +248,6 @@ fn period(model: &Model, out: &mut Html<'_>) -> fmt::Result {
     out.write_str(". Applying filters starts a new period.</p>")
 }
 
-/// Findings colour by the decision they record (R8): honeypot hits ban, audit findings
-/// only inform, and every other recorded category denied the request.
-fn category_tone(category: &str) -> &'static str {
-    if category == "honeypot" {
-        "sb-decision-banned"
-    } else if category.starts_with("audit:") {
-        "sb-decision-info"
-    } else {
-        "sb-decision-denied"
-    }
-}
-
 fn incident(events: &Events, row: &Row, manage: bool, out: &mut Html<'_>) -> fmt::Result {
     if row.grouped {
         return source(row, out);
@@ -267,7 +256,7 @@ fn incident(events: &Events, row: &Row, manage: bool, out: &mut Html<'_>) -> fmt
         "<article class=\"border-b border-base-300 py-4\"><h2>\
          <span class=\"badge badge-outline sb-chip ",
     )?;
-    out.write_str(category_tone(row.category.as_str()))?;
+    out.write_str(charts::category_tone(row.category.as_str()))?;
     out.write_str("\">")?;
     out.escaped(row.category.as_str())?;
     out.write_str("</span> <span class=\"sb-note\">#")?;

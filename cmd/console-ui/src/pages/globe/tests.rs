@@ -9,6 +9,7 @@ use super::panel::Scene;
 use super::*;
 use crate::golden::{self, FIXTURE_TIME};
 use crate::page::Pages;
+use crate::state::GlobeView;
 use crate::testing::{ADMIN_SESSION, Harness};
 
 const WORLD: &[u8] = include_bytes!("../../../web/assets/world-110m.bin");
@@ -187,7 +188,7 @@ fn expect_globe(name: &str, globe: &str) {
     let page = std::fs::read_to_string(path).unwrap();
     let start = page.find("<h2>Live earth globe</h2>").unwrap();
     assert!(page[start..].starts_with(globe), "{name}: the globe differs from the fixture");
-    assert!(golden::CHECKED.contains(&name) || golden::PENDING.iter().any(|(n, _)| *n == name));
+    assert!(golden::CHECKED.contains(&name));
 }
 
 /// The sixteen countries of a busy snapshot, largest first.
@@ -239,9 +240,8 @@ fn frames_turn_the_globe_and_the_next_event_keeps_the_turn() {
     let start = harness.app.state().globe;
     assert!(harness.app.frame(1000.0) > 0);
     assert!(harness.app.frame(1100.0) > 0);
-    let turned = globe(&harness).view(harness.app.state());
+    let turned = harness.app.state().globe;
     assert!((turned.lon - start.lon - 0.4).abs() < 1e-9);
-    assert_eq!(harness.app.state().globe, start, "frames do not touch the shared state");
     // The frame is the scene of the panel at the turned view.
     let frame = harness.app.frame_html().to_owned();
     assert!(frame.contains("class=\"sb-connection\"") && frame.contains("sb-flow-arrow"));
@@ -266,7 +266,6 @@ fn a_view_another_module_sets_wins_over_the_turn() {
     harness.app.frame(1100.0);
     let centred = GlobeView { lon: 103.0, lat: 1.0, flat: false };
     harness.app.state_mut().globe = centred;
-    assert_eq!(globe(&harness).view(harness.app.state()), centred);
     harness.send(3, "{\"id\":\"age\",\"browser_time\":172800}");
     assert_eq!(harness.app.state().globe, centred);
 }

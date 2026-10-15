@@ -9,7 +9,6 @@ use sibuna_html::write_value;
 
 use super::{Mode, Model, Window};
 use crate::format;
-use crate::pages::dashboard::hex_lower;
 use crate::pages::dashboard::rankings::{BROWSER_SLOTS, OS_SLOTS};
 use crate::render::Html;
 use crate::snippets;
@@ -148,7 +147,7 @@ fn paths(out: &mut Html<'_>, windows: &[Window; 2]) -> fmt::Result {
             Ok(text) => out.escaped(text)?,
             Err(_) => {
                 out.write_str("hex:")?;
-                out.write_str(&hex_lower(key))?;
+                out.write_str(&format::hex(key))?;
             }
         }
         out.write_str("</code></th>")?;

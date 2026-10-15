@@ -172,7 +172,7 @@ fn response_pages_save_preview_and_keep_the_draft() {
     assert!(harness.html().contains("The page could not be decoded."));
     harness.respond("pages-7", 401, "null");
     assert_eq!(harness.app.state().phase, Phase::Login);
-    assert!(!harness.html().contains("Your session ended"));
+    assert!(harness.html().contains("Your session ended. Sign in to continue."));
 }
 
 #[test]

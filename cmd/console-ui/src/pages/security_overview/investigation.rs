@@ -8,8 +8,8 @@ use sibuna_console_protocol::security::Module;
 
 use super::model::Model;
 use crate::error::UiError;
+use crate::json::parse_integer;
 use crate::pages::events::Investigation;
-use crate::pages::events::wire::parse_integer;
 
 /// Parses an index of an action name.
 fn index(part: Option<&str>) -> Result<usize, UiError> {

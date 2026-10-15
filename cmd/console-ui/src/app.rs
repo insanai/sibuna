@@ -203,7 +203,7 @@ impl App {
             let _ = cx.commands.timer("age", 1000);
         }
         // A module records its own failure; one failing module does not stop the others.
-        let _ = cx.each(|page, cx| {
+        let _ = cx.each(&mut |page, cx| {
             let _ = page.finish(cx);
             Ok(false)
         });
@@ -255,7 +255,7 @@ impl App {
             return 0;
         }
         wipe_string(&mut self.frame);
-        self.pages.frame(&self.state, milliseconds, &mut self.frame)
+        self.pages.frame(&mut self.state, milliseconds, &mut self.frame)
     }
 
     /// Returns the latest animation frame.

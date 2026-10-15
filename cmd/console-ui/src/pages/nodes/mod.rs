@@ -23,8 +23,7 @@ use sibuna_json::Value;
 
 use crate::commands::{Field, write_fields};
 use crate::error::UiError;
-use crate::page::{Context, Page, Reply, Screen, View};
-use crate::pages::management;
+use crate::page::{Context, Page, Reply, SESSION_ENDED, Screen, View};
 use crate::render::Html;
 use crate::state::{Phase, State};
 pub use model::{Busy, Input, MAX_REVISION, Peers};
@@ -114,7 +113,7 @@ impl Nodes {
         self.attempted = true;
         self.loaded = false;
         let revision = pending.revision.to_string();
-        let result = cx.post(&id, "/console/api/nodes/command", |json| {
+        let result = cx.post(&id, "/console/api/nodes/command", &mut |json| {
             write_fields(
                 json,
                 &[
@@ -188,7 +187,7 @@ impl Nodes {
             "nodes-receipt" => {
                 let Some(pending) = self.pending.clone() else { return Ok(()) };
                 let id = self.ticket(cx.state, Busy::Receipt)?;
-                let result = cx.post(&id, "/console/api/nodes/command/read", |json| {
+                let result = cx.post(&id, "/console/api/nodes/command/read", &mut |json| {
                     write_fields(json, &[("id", Field::Text(pending.id.as_str()))])
                 });
                 if result.is_err() {
@@ -302,7 +301,7 @@ impl Page for Nodes {
             return Ok(true);
         }
         if status == 401 {
-            management::end_session(cx, true)?;
+            cx.end_session(SESSION_ENDED)?;
             return Ok(true);
         }
         if status != 200 {

@@ -65,7 +65,6 @@ mod manager;
 mod replay;
 mod reputation;
 mod rule_hits;
-mod sparkline;
 mod workflow;
 
 use std::fmt;
@@ -201,7 +200,9 @@ impl Policies {
         let revision = crate::json::string(fields, "revision");
         let valid_id = !id.is_empty()
             && id.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
-        if !valid_id || parse_int::<u64>(revision).is_none_or(|number| number == 0) {
+        if !valid_id
+            || crate::json::parse_integer::<u64>(revision).is_none_or(|number| number == 0)
+        {
             return Ok(());
         }
         cx.state.phase = Phase::Policies;
@@ -219,31 +220,6 @@ impl Policies {
             &fields,
         )
     }
-}
-
-/// Parses a decimal integer as Zig's `std.fmt.parseInt(T, text, 10)` does: an optional
-/// `+` or `-`, then digits, with underscores allowed between digits. Returns `None` for
-/// any other text and for a value outside `T`.
-fn parse_int<T: TryFrom<i128>>(text: &str) -> Option<T> {
-    let (negative, digits) = match text.as_bytes().first() {
-        Some(b'-') => (true, text.get(1..)?),
-        Some(b'+') => (false, text.get(1..)?),
-        _ => (false, text),
-    };
-    if digits.is_empty() || digits.starts_with('_') || digits.ends_with('_') {
-        return None;
-    }
-    let mut value: i128 = 0;
-    for byte in digits.bytes() {
-        if byte == b'_' {
-            continue;
-        }
-        if !byte.is_ascii_digit() {
-            return None;
-        }
-        value = value.checked_mul(10)?.checked_add(i128::from(byte - b'0'))?;
-    }
-    T::try_from(if negative { -value } else { value }).ok()
 }
 
 /// Shows `text` as a success message.

@@ -4,13 +4,14 @@
 use sibuna_console_protocol::{Action, Text};
 use sibuna_json::Value;
 
+use super::Policies;
 use super::data::{Decision, Modes, Snapshot};
 use super::manager::managed_post;
-use super::{Policies, parse_int};
 use crate::commands::{Field, Json, write_fields};
 use crate::error::UiError;
 use crate::json;
-use crate::page::Context;
+use crate::json::parse_integer;
+use crate::page::{Context, SESSION_ENDED};
 use crate::pages::request_headers;
 use crate::state::Phase;
 
@@ -202,7 +203,7 @@ impl Policies {
         status: i64,
         body: &Value<'_>,
     ) -> Result<(), UiError> {
-        let generation = id.rsplit_once('-').and_then(|(_, number)| parse_int::<u32>(number));
+        let generation = id.rsplit_once('-').and_then(|(_, number)| parse_integer::<u32>(number));
         if generation != Some(self.tickets.policy) {
             return Ok(());
         }
@@ -212,8 +213,7 @@ impl Policies {
             return Ok(());
         }
         if status == 401 || status == 403 {
-            cx.reset_session(Phase::Login);
-            return cx.disconnect();
+            return cx.end_session(SESSION_ENDED);
         }
         if status != 200 {
             self.applied.stale = status != 400 && status != 429;
@@ -243,7 +243,7 @@ impl Policies {
     /// Takes a page of applied rules; its revision and continuation must be valid.
     fn page_received(&mut self, body: &Value<'_>) -> Result<(), UiError> {
         let applied = json::string(body, "applied");
-        parse_int::<u64>(applied).ok_or(UiError::InvalidResponse)?;
+        parse_integer::<u64>(applied).ok_or(UiError::InvalidResponse)?;
         let next = json::field(body, "next").ok_or(UiError::InvalidResponse)?;
         let next = match next {
             Value::Null => None,
@@ -340,7 +340,7 @@ fn query(
     } else {
         (format!("policies-{generation}"), "/console/api/policies/query")
     };
-    cx.post(&id, path, |json| body(json))
+    cx.post(&id, path, body)
 }
 
 /// Returns a text member, or null.
@@ -364,7 +364,7 @@ fn write_field(json: &mut Json<'_>, value: Field<'_>) -> std::fmt::Result {
 /// modes.
 fn submit(snapshot: Option<&Snapshot>, fields: &Value<'_>) -> Option<(Text<20>, Modes)> {
     let snapshot = snapshot?;
-    parse_int::<u64>(&snapshot.committed)?;
+    parse_integer::<u64>(&snapshot.committed)?;
     if snapshot.committed != snapshot.applied || json::string(fields, "reviewed") != "on" {
         return None;
     }

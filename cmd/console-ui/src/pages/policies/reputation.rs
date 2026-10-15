@@ -9,11 +9,12 @@ use sibuna_console_protocol::{Action, Text};
 use sibuna_html::write_value;
 use sibuna_json::Value;
 
-use super::{Policies, parse_int, success};
+use super::{Policies, success};
 use crate::commands::Field;
 use crate::error::UiError;
 use crate::json;
-use crate::page::Context;
+use crate::json::parse_integer;
+use crate::page::{Context, SESSION_ENDED};
 use crate::render::Html;
 use crate::snippets;
 use crate::state::{Phase, State};
@@ -285,7 +286,7 @@ fn hours(fields: &Value<'_>) -> Result<u64, UiError> {
     if text.is_empty() {
         return Ok(0);
     }
-    let value = parse_int::<u64>(text).ok_or(UiError::InvalidRequest)?;
+    let value = parse_integer::<u64>(text).ok_or(UiError::InvalidRequest)?;
     if value == 0 || value > 87_600 {
         return Err(UiError::InvalidRequest);
     }
@@ -375,7 +376,8 @@ impl Policies {
         fields: &[(&str, Field<'_>)],
     ) -> Result<(), UiError> {
         let ticket = self.reputation.ticket.clone();
-        let result = cx.post(&ticket, path, |json| crate::commands::write_fields(json, fields));
+        let result =
+            cx.post(&ticket, path, &mut |json| crate::commands::write_fields(json, fields));
         if result.is_err() {
             self.reputation.busy = false;
         }
@@ -495,8 +497,7 @@ impl Policies {
         let kind = model.kind;
         model.busy = false;
         if status == 401 {
-            cx.reset_session(Phase::Login);
-            return Ok(());
+            return cx.end_session(SESSION_ENDED);
         }
         if status != 200 {
             model.undo = Undo::default();

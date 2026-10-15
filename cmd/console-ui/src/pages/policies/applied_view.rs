@@ -11,23 +11,12 @@ use super::Policies;
 use super::applied::{Applied, Evaluation};
 use super::data::{AppliedPage, Inspection, Mode, Modes, Row};
 use super::limits;
-use super::sparkline;
+use crate::charts;
 use crate::format;
 use crate::live;
 use crate::render::{self, Html};
 use crate::snippets;
 use crate::state::State;
-
-/// Returns the decision class of a rule action: one colour per decision (R8), shared
-/// with the outcome palette of the traffic tiles.
-pub fn action_tone(action: &str) -> &'static str {
-    match action {
-        "allow" => "sb-decision-admitted",
-        "deny" => "sb-decision-denied",
-        "challenge" => "sb-decision-challenged",
-        _ => "sb-decision-info",
-    }
-}
 
 /// Returns the protection surface with its plain-language gloss (R3).
 fn surface(value: Option<&str>) -> &'static str {
@@ -144,7 +133,7 @@ fn policy_row(out: &mut Html<'_>, row: &Row) -> fmt::Result {
             index: &(u16::from(row.index) + 1),
             name: &row.name.as_str(),
             action: &row.action.as_str(),
-            tone: &action_tone(&row.action),
+            tone: &charts::action_tone(&row.action),
             path: &if row.path.is_empty() { "Any path" } else { row.path.as_str() },
             user_agent: &if row.user_agent.is_empty() {
                 "Any user agent"
@@ -323,7 +312,7 @@ fn today_values(out: &mut Html<'_>, value: &Today) -> fmt::Result {
     out.write_str("</p><p class=\"sb-note\">Snapshot: ")?;
     format::timestamp(out, value.observed_at)?;
     out.write_str(". Refresh policies for newer observations.</p>")?;
-    sparkline::render(
+    charts::counter_sparkline(
         out,
         &value.hours,
         "Recorded hourly matches today; gaps have no observations",
@@ -390,8 +379,8 @@ mod tests {
         assert_eq!(surface(page.surface.as_deref()), "Not reported");
         assert_eq!(limits_text(&page), "Not reported");
         assert_eq!(surface(Some("gate")), "Gate (challenge only)");
-        assert_eq!(action_tone("allow"), "sb-decision-admitted");
-        assert_eq!(action_tone("weigh"), "sb-decision-info");
+        assert_eq!(charts::action_tone("allow"), "sb-decision-admitted");
+        assert_eq!(charts::action_tone("weigh"), "sb-decision-info");
     }
 
     /// The Zig module printed this sentence into 128 bytes and showed "Not reported" when

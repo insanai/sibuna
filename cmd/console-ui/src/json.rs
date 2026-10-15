@@ -65,6 +65,36 @@ pub fn counter(value: &Value<'_>) -> Option<u64> {
     text.parse().ok()
 }
 
+/// Parses `text` as Zig's `std.fmt.parseInt(T, text, 10)` does: an optional sign, then
+/// decimal digits with underscores between them (not at either end). Returns `None` for
+/// anything else and for values outside `T`. Action names, form fields and request ids
+/// carry such numbers.
+pub fn parse_integer<T: TryFrom<i128>>(text: &str) -> Option<T> {
+    T::try_from(parse_wide(text)?).ok()
+}
+
+/// The type-independent part of [`parse_integer`], so the module keeps one copy of it.
+fn parse_wide(text: &str) -> Option<i128> {
+    let (negative, digits) = match text.as_bytes().split_first()? {
+        (b'+', rest) => (false, rest),
+        (b'-', rest) => (true, rest),
+        _ => (false, text.as_bytes()),
+    };
+    if digits.first().is_none_or(|&byte| byte == b'_') || digits.last() == Some(&b'_') {
+        return None;
+    }
+    let mut value: i128 = 0;
+    for &byte in digits {
+        if byte == b'_' {
+            continue;
+        }
+        let digit = i128::from(byte.checked_sub(b'0').filter(|digit| *digit < 10)?);
+        value = value.checked_mul(10)?;
+        value = if negative { value.checked_sub(digit)? } else { value.checked_add(digit)? };
+    }
+    Some(value)
+}
+
 /// Returns member `key` as a boolean, or `None` when it is absent or not a boolean.
 pub fn boolean(value: &Value<'_>, key: &str) -> Option<bool> {
     field(value, key).and_then(Value::as_bool)
@@ -100,6 +130,27 @@ mod tests {
             sibuna_json::parse(br#"["18446744073709551615",4,"+1","1e3",1.5,-2]"#).unwrap();
         let read: Vec<Option<u64>> = counters.as_array().unwrap().iter().map(counter).collect();
         assert_eq!(read, [Some(u64::MAX), Some(4), None, None, None, None]);
+    }
+
+    #[test]
+    fn integers_follow_zig_parse_int() {
+        assert_eq!(parse_integer::<u64>("9007199254740993"), Some(9_007_199_254_740_993));
+        assert_eq!(parse_integer::<u64>("+7"), Some(7));
+        assert_eq!(parse_integer::<u64>("1_000"), Some(1000));
+        assert_eq!(parse_integer::<u64>("1__0"), Some(10));
+        assert_eq!(parse_integer::<u64>("-0"), Some(0));
+        assert_eq!(parse_integer::<u64>("-1"), None);
+        assert_eq!(parse_integer::<i32>("-17"), Some(-17));
+        assert_eq!(parse_integer::<u64>("_1"), None);
+        assert_eq!(parse_integer::<u64>("1_"), None);
+        assert_eq!(parse_integer::<u64>(""), None);
+        assert_eq!(parse_integer::<u64>("+"), None);
+        assert_eq!(parse_integer::<u64>("-"), None);
+        assert_eq!(parse_integer::<u64>("1a"), None);
+        assert_eq!(parse_integer::<u64>("\u{b2}"), None);
+        assert_eq!(parse_integer::<u64>("18446744073709551616"), None);
+        assert_eq!(parse_integer::<u8>("256"), None);
+        assert_eq!(parse_integer::<u32>(" 1"), None);
     }
 
     #[test]

@@ -31,7 +31,7 @@
 //!   rankings and retained seconds are requested from [`Page::stats_received`], as Zig did
 //!   from `statsResponse`.
 //! - A 401 or 403 to a traffic-period, comparison or ranking-history read ends the session
-//!   like every other expiry ([`Context::reset_session`]), keeping the appearance; Zig's
+//!   like every other expiry ([`Context::end_session`]), keeping the appearance; Zig's
 //!   `state.reset()` there also reset the theme and density.
 //! - Replies decode with the protocol crate's decoders, which refuse members they do not
 //!   know where Zig's reflection decoder ignored them (timeline pages, minute pages and
@@ -64,7 +64,7 @@ pub use scope::render as render_scope;
 
 use crate::error::UiError;
 use crate::json;
-use crate::page::{Context, Page, Reply, Screen, View};
+use crate::page::{Context, Page, Reply, SESSION_ENDED, Screen, View};
 use crate::render::Html;
 use crate::state::{Phase, State};
 
@@ -108,39 +108,9 @@ fn next_ticket(serial: &mut u32) -> u32 {
     *serial
 }
 
-/// Parses a decimal integer as Zig's `std.fmt.parseInt(_, _, 10)` does: an optional sign
-/// (a negative value must be zero) and underscores between digits.
-pub(crate) fn parse_decimal(text: &str) -> Option<u64> {
-    let (negative, digits) = match text.as_bytes().split_first() {
-        Some((b'+', rest)) => (false, rest),
-        Some((b'-', rest)) => (true, rest),
-        _ => (false, text.as_bytes()),
-    };
-    if digits.first().is_none_or(|first| *first == b'_') || digits.last() == Some(&b'_') {
-        return None;
-    }
-    let mut value: u64 = 0;
-    for byte in digits.iter().filter(|byte| **byte != b'_') {
-        let digit = char::from(*byte).to_digit(10)?;
-        value = value.checked_mul(10)?.checked_add(u64::from(digit))?;
-    }
-    (!negative || value == 0).then_some(value)
-}
-
 /// Returns the ticket of a reply id `<prefix><ticket>`.
 fn reply_ticket(id: &str, prefix: &str) -> Option<u64> {
-    parse_decimal(id.strip_prefix(prefix)?)
-}
-
-/// Returns `bytes` as lowercase hex digits.
-pub(crate) fn hex_lower(bytes: &[u8]) -> String {
-    const DIGITS: &[u8; 16] = b"0123456789abcdef";
-    let mut text = String::with_capacity(bytes.len() * 2);
-    for byte in bytes {
-        text.push(char::from(DIGITS[usize::from(byte >> 4)]));
-        text.push(char::from(DIGITS[usize::from(byte & 15)]));
-    }
-    text
+    json::parse_integer(id.strip_prefix(prefix)?)
 }
 
 /// Draws the globe panel of the globe module ([`crate::pages::globe`]).
@@ -191,7 +161,7 @@ impl Dashboard {
     fn refresh(&mut self, cx: &mut Context<'_>, force: bool) -> Result<(), UiError> {
         if let Some(id) = rankings::request(self, cx.state) {
             let node = crate::scope::selected_node(cx.state);
-            cx.post(&id, "/console/api/rankings/query", |json| {
+            cx.post(&id, "/console/api/rankings/query", &mut |json| {
                 json.begin_object()?;
                 codec::field(json, "node", &node)?;
                 json.end_object()
@@ -224,9 +194,7 @@ impl Dashboard {
             rankings::response(&mut self.rankings, cx.state, id, status, body)
         };
         if expired {
-            cx.reset_session(Phase::Login);
-            cx.state.set_message("Your session ended. Sign in to continue.");
-            cx.disconnect()?;
+            cx.end_session(SESSION_ENDED)?;
         }
         Ok(())
     }

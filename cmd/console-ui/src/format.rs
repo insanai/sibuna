@@ -31,7 +31,7 @@ impl Write for Digits {
 }
 
 /// Writes Zig's spelling of a non-finite value and returns true, or returns false.
-fn non_finite(out: &mut impl Write, value: f64) -> Result<bool, fmt::Error> {
+fn non_finite(out: &mut dyn Write, value: f64) -> Result<bool, fmt::Error> {
     if value.is_nan() {
         out.write_str("nan")?;
     } else if value.is_infinite() {
@@ -47,7 +47,7 @@ fn non_finite(out: &mut impl Write, value: f64) -> Result<bool, fmt::Error> {
 /// # Errors
 ///
 /// The sink's error.
-pub fn shortest(out: &mut impl Write, value: f64) -> fmt::Result {
+pub fn shortest(out: &mut dyn Write, value: f64) -> fmt::Result {
     if non_finite(out, value)? {
         return Ok(());
     }
@@ -57,13 +57,83 @@ pub fn shortest(out: &mut impl Write, value: f64) -> fmt::Result {
 /// Writes `value` with exactly `places` decimals, rounding its shortest digits half up
 /// (Zig's `{d:.N}`). A negative value keeps its sign even when it rounds to zero.
 ///
+/// Most values take a fast path that rounds the value itself (see [`fast_decimal`]); a busy
+/// globe frame writes about 40,000 coordinates, and the shortest-digits conversion was most
+/// of its cost.
+///
 /// # Errors
 ///
 /// The sink's error.
-pub fn decimal(out: &mut impl Write, value: f64, places: usize) -> fmt::Result {
+pub fn decimal(out: &mut dyn Write, value: f64, places: usize) -> fmt::Result {
     if non_finite(out, value)? {
         return Ok(());
     }
+    match fast_decimal(out, value, places) {
+        Some(result) => result,
+        None => exact_decimal(out, value, places),
+    }
+}
+
+/// Powers of ten for the fast path, by number of decimals.
+const POWERS: [u64; 5] = [1, 10, 100, 1000, 10_000];
+/// The fast path handles `|value| * 10^places` below this; the exact path the rest.
+const FAST_LIMIT: f64 = 1e7;
+/// How far `|value| * 10^places` must be from a rounding midpoint for the fast path.
+const MARGIN: f64 = 1e-6;
+
+/// Writes a finite `value` like [`exact_decimal`] by rounding the value itself, or returns
+/// `None` when that could differ.
+///
+/// Zig rounds the shortest decimal `s` of a value `v` half up. Rounding half up changes
+/// only at the midpoints `(k + 1/2) / 10^places`, and `s` lies within half an ulp of `v`,
+/// so rounding `s` and rounding `v` can differ only when a midpoint lies within an ulp of
+/// `v`. Below [`FAST_LIMIT`] that ulp, scaled by `10^places`, is below `2^-29`, as is the
+/// error of the scaled product, so a scaled value at least [`MARGIN`] from a midpoint
+/// rounds the same both ways.
+fn fast_decimal(out: &mut dyn Write, value: f64, places: usize) -> Option<fmt::Result> {
+    let power = *POWERS.get(places)?;
+    let scaled = value.abs() * power as f64;
+    if scaled >= FAST_LIMIT || (scaled - scaled.floor() - 0.5).abs() < MARGIN {
+        return None;
+    }
+    // Below FAST_LIMIT the rounded value fits a u64 exactly; the cast cannot truncate.
+    let rounded = (scaled + 0.5).floor() as u64;
+    Some(write_fixed(out, value.is_sign_negative(), rounded, places))
+}
+
+/// Writes `rounded / 10^places` with `places` decimals, after a minus sign when
+/// `negative`.
+fn write_fixed(out: &mut dyn Write, negative: bool, rounded: u64, places: usize) -> fmt::Result {
+    // `rounded` is below 10^8 and `places` at most 4, so at most nine digits and a point
+    // are written from the right: every index below stays in bounds.
+    let mut digits = [0u8; 24];
+    let mut start = digits.len();
+    let mut rest = rounded;
+    for _ in 0..places {
+        start -= 1;
+        digits[start] = b'0' + (rest % 10) as u8;
+        rest /= 10;
+    }
+    if places > 0 {
+        start -= 1;
+        digits[start] = b'.';
+    }
+    loop {
+        start -= 1;
+        digits[start] = b'0' + (rest % 10) as u8;
+        rest /= 10;
+        if rest == 0 {
+            break;
+        }
+    }
+    if negative {
+        out.write_str("-")?;
+    }
+    out.write_str(std::str::from_utf8(&digits[start..]).map_err(|_| fmt::Error)?)
+}
+
+/// Writes `value` with exactly `places` decimals from its shortest round-trip digits.
+fn exact_decimal(out: &mut dyn Write, value: f64, places: usize) -> fmt::Result {
     let mut digits = Digits { bytes: [0; FLOAT_TEXT], len: 0 };
     write!(digits, "{}", value.abs())?;
     let text = digits.bytes.get(..digits.len).ok_or(fmt::Error)?;
@@ -112,13 +182,24 @@ pub fn decimal(out: &mut impl Write, value: f64, places: usize) -> fmt::Result {
     Ok(())
 }
 
+/// Returns `bytes` as lowercase hexadecimal digits, two per byte.
+pub fn hex(bytes: &[u8]) -> String {
+    const DIGITS: &[u8; 16] = b"0123456789abcdef";
+    let mut text = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
+        text.push(char::from(DIGITS[usize::from(byte >> 4)]));
+        text.push(char::from(DIGITS[usize::from(byte & 15)]));
+    }
+    text
+}
+
 /// Writes a count with thousands separators (`12,345`); identifiers and wire values stay
 /// ungrouped.
 ///
 /// # Errors
 ///
 /// The sink's error.
-pub fn count(out: &mut impl Write, value: u64) -> fmt::Result {
+pub fn count(out: &mut dyn Write, value: u64) -> fmt::Result {
     let mut buffer = [0u8; 26];
     let mut start = buffer.len();
     let mut remaining = value;
@@ -149,7 +230,7 @@ pub const MAX_TIMESTAMP: u64 = 253_402_300_799;
 /// # Errors
 ///
 /// The sink's error.
-pub fn timestamp(out: &mut impl Write, seconds: u64) -> fmt::Result {
+pub fn timestamp(out: &mut dyn Write, seconds: u64) -> fmt::Result {
     if seconds > MAX_TIMESTAMP {
         return out.write_str("Time unavailable");
     }
@@ -171,7 +252,7 @@ pub fn timestamp(out: &mut impl Write, seconds: u64) -> fmt::Result {
 }
 
 /// Writes `value` with leading zeros to `width` digits.
-fn padded(out: &mut impl Write, value: u64, width: u32) -> fmt::Result {
+fn padded(out: &mut dyn Write, value: u64, width: u32) -> fmt::Result {
     let mut limit = 10u64.pow(width.saturating_sub(1));
     while limit > 1 && value < limit {
         out.write_str("0")?;
@@ -211,7 +292,7 @@ pub fn is_tinted(change: Deviation) -> bool {
 /// # Errors
 ///
 /// The sink's error.
-pub fn deviation(out: &mut impl Write, change: Deviation) -> fmt::Result {
+pub fn deviation(out: &mut dyn Write, change: Deviation) -> fmt::Result {
     match change {
         Deviation::Unavailable => out.write_str("Not available"),
         Deviation::New => out.write_str("\u{2191} New"),
@@ -233,7 +314,7 @@ pub fn deviation(out: &mut impl Write, change: Deviation) -> fmt::Result {
 mod tests {
     use super::*;
 
-    fn text(write: impl FnOnce(&mut String) -> fmt::Result) -> String {
+    fn text(write: impl FnOnce(&mut dyn Write) -> fmt::Result) -> String {
         let mut out = String::new();
         write(&mut out).unwrap();
         out
@@ -279,6 +360,12 @@ mod tests {
     }
 
     #[test]
+    fn hex_is_lowercase_with_two_digits_per_byte() {
+        assert_eq!(hex(&[0, 0xab, 0x10]), "00ab10");
+        assert_eq!(hex(&[]), "");
+    }
+
+    #[test]
     fn counts_group_thousands_and_keep_full_precision() {
         let cases = [
             (0, "0"),
@@ -320,6 +407,59 @@ mod tests {
         assert_eq!(text(|out| deviation(out, Deviation::Percent(-33.35))), "\u{2193} 33.4%");
         assert_eq!(text(|out| deviation(out, Deviation::Percent(0.0))), "\u{2192} 0.0%");
         assert!(is_tinted(Deviation::Percent(-25.0)) && !is_tinted(Deviation::Percent(24.9)));
+    }
+
+    fn both(value: f64, places: usize) -> (String, String) {
+        let fast = text(|out| decimal(out, value, places));
+        let exact = text(|out| {
+            if !non_finite(out, value)? {
+                exact_decimal(out, value, places)?;
+            }
+            Ok(())
+        });
+        (fast, exact)
+    }
+
+    /// The fast path agrees with the shortest-digits path on random coordinates, on values
+    /// next to every midpoint of a scene, and on random bit patterns (ported from the
+    /// globe's `tenths`, which this path replaces).
+    #[test]
+    fn the_fast_path_agrees_with_the_shortest_digits() {
+        let mut seed = 0x2545_f491_4f6c_dd1d_u64;
+        let mut next = move || {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            seed
+        };
+        for round in 0..200_000 {
+            let places = round % 5;
+            let unit = (next() >> 11) as f64 / (1u64 << 53) as f64;
+            let value = unit * 1000.0 - 500.0;
+            let (fast, exact) = both(value, places);
+            assert_eq!(fast, exact, "{value:?} at {places}");
+            let (fast, exact) = both(f64::from_bits(next()), places);
+            assert_eq!(fast, exact);
+        }
+        for (places, &power) in POWERS.iter().enumerate() {
+            let scale = power as f64;
+            for k in -5000..5000 {
+                let mut value = (f64::from(k) + 0.5) / scale;
+                for _ in 0..4 {
+                    value = value.next_down();
+                }
+                for _ in 0..8 {
+                    let (fast, exact) = both(value, places);
+                    assert_eq!(fast, exact, "{value:?} at {places}");
+                    value = value.next_up();
+                }
+            }
+        }
+        for (value, expected) in
+            [(0.15, "0.2"), (-0.04, "-0.0"), (199.95, "200.0"), (1e7, "10000000.0")]
+        {
+            assert_eq!(both(value, 1), (expected.to_owned(), expected.to_owned()));
+        }
     }
 
     /// Random values: `decimal` never panics and agrees with exact rounding whenever it

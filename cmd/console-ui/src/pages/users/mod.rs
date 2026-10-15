@@ -14,8 +14,8 @@ use sibuna_json::Value;
 use crate::commands::{Field, write_fields};
 use crate::error::UiError;
 use crate::json;
-use crate::page::{Context, Page, Reply, Screen, View};
-use crate::pages::management::{self, Cursor, Ticket, index_after, is_on};
+use crate::page::{Context, Page, Reply, SESSION_ENDED, Screen, View};
+use crate::pages::management::{Cursor, Ticket, index_after, is_on};
 use crate::render::Html;
 use crate::secret::Secret;
 use crate::state::{Phase, State};
@@ -150,7 +150,7 @@ impl Users {
         self.selected = None;
         self.next = None;
         let after = self.cursor.start().to_string();
-        let result = cx.post(&id, "/console/api/users/query", |json| {
+        let result = cx.post(&id, "/console/api/users/query", &mut |json| {
             write_fields(json, &[("after", Field::Text(&after))])
         });
         self.busy &= result.is_ok();
@@ -168,7 +168,7 @@ impl Users {
         }
         let id = self.ticket(cx.state, Kind::Create)?;
         let (username, role) = (self.username.as_str(), self.role.name());
-        let result = cx.post(&id, "/console/api/users/create", |json| {
+        let result = cx.post(&id, "/console/api/users/create", &mut |json| {
             write_fields(json, &[("username", Field::Text(username)), ("role", Field::Text(role))])
         });
         self.busy &= result.is_ok();
@@ -211,7 +211,7 @@ impl Users {
         let access = kind == Kind::Access;
         let role = if access { Field::Text(self.role.name()) } else { Field::Null };
         let disabled = if access { Field::Bool(self.disabled) } else { Field::Null };
-        let result = cx.post(&id, "/console/api/users/change", |json| {
+        let result = cx.post(&id, "/console/api/users/change", &mut |json| {
             write_fields(
                 json,
                 &[
@@ -289,7 +289,7 @@ impl Users {
             return Ok(());
         };
         if self.self_revoke {
-            return management::end_session(cx, true);
+            return cx.end_session(SESSION_ENDED);
         }
         let mint = matches!(self.kind, Kind::Create | Kind::Password);
         if mint {
@@ -382,7 +382,7 @@ impl Page for Users {
         }
         self.busy = false;
         if status == 401 {
-            management::end_session(cx, true)?;
+            cx.end_session(SESSION_ENDED)?;
             return Ok(true);
         }
         if status != 200 {

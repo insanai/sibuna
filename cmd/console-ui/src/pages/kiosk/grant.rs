@@ -67,7 +67,7 @@ impl KioskGrant {
         self.ticket = format!("{PREFIX}{}", self.generation);
         self.busy = true;
         cx.state.clear_message();
-        let sent = cx.post(&self.ticket, "/console/api/kiosk/token", |json| {
+        let sent = cx.post(&self.ticket, "/console/api/kiosk/token", &mut |json| {
             write_fields(json, &[("label", Field::Text(label))])
         });
         if sent.is_err() {

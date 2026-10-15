@@ -10,13 +10,11 @@ use sibuna_html::write_value;
 
 use super::charts;
 use super::model::{Model, PERIODS};
+use crate::charts::{self as shared, Metric};
 use crate::format;
 use crate::live;
 use crate::page::View;
-use crate::pages::dashboard::{
-    self,
-    sparkline::{self, Metric},
-};
+use crate::pages::dashboard;
 use crate::render::{self, Html};
 use crate::scope;
 use crate::state::State;
@@ -153,7 +151,7 @@ pub fn request_tiles(model: &Model, state: &State, out: &mut Html<'_>) -> fmt::R
 
 fn tile_begin(out: &mut Html<'_>, label: &str, tone: Metric) -> fmt::Result {
     out.write_str("<article class=\"sb-tile ")?;
-    out.write_str(sparkline::tone(tone))?;
+    out.write_str(shared::tone(tone))?;
     out.write_str("\"><h3>")?;
     out.write_str(label)?;
     out.write_str("</h3><strong>")
@@ -179,7 +177,7 @@ fn outcome_tile(state: &State, out: &mut Html<'_>, label: &str, metric: Metric) 
     tile_begin(out, label, metric)?;
     match &state.stats {
         Some(stats) if stats.outcomes_version == 1 => {
-            format::count(out, sparkline::counter(stats, metric))
+            format::count(out, shared::counter(stats, metric))
         }
         Some(_) => out.write_str("Not recorded"),
         None => out.write_str("Unavailable"),

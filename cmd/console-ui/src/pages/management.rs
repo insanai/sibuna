@@ -1,5 +1,6 @@
 //! Helpers the management pages share (users, tokens, audit, settings and nodes): request
-//! tickets, page cursors, the end of an expired session and checkbox fields.
+//! tickets, page cursors and checkbox fields. An expired session ends with
+//! [`crate::page::Context::end_session`], as on every page.
 //!
 //! Each Zig controller kept a module-level generation counter and a fixed `[128]u64`
 //! cursor array; here each page owns a [`Ticket`] and a [`Cursor`].
@@ -8,14 +9,9 @@ use sibuna_json::Value;
 
 use crate::error::UiError;
 use crate::json;
-use crate::page::Context;
-use crate::state::Phase;
 
 /// The most pages a catalog browses before the operator must narrow it.
 pub const MAX_PAGES: usize = 128;
-
-/// The message shown when the server ended the session.
-pub const SESSION_ENDED: &str = "Your session ended. Sign in to continue.";
 
 /// The request id of a page's newest request: `<prefix>-<generation>`.
 ///
@@ -124,24 +120,6 @@ impl Default for Cursor {
 /// Returns true when the form checkbox `key` is ticked (the browser sends `"on"`).
 pub fn is_on(fields: &Value<'_>, key: &str) -> bool {
     json::string(fields, key) == "on"
-}
-
-/// Ends a session the server refused with 401: every page and the shared state return to
-/// their defaults (Zig's `state.reset`), the phase becomes sign-in and, when `announce`,
-/// the operator reads why and the bridge closes the live connection.
-///
-/// # Errors
-///
-/// [`UiError::Write`] if the command cannot be written.
-pub fn end_session(cx: &mut Context<'_>, announce: bool) -> Result<(), UiError> {
-    cx.state.reset();
-    cx.pages.reset_all();
-    cx.state.phase = Phase::Login;
-    if announce {
-        cx.state.set_message(SESSION_ENDED);
-        cx.commands.disconnect()?;
-    }
-    Ok(())
 }
 
 /// Parses the decimal index that follows `prefix` in an action name such as

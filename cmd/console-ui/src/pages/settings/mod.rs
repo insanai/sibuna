@@ -23,8 +23,8 @@ use sibuna_json::Value;
 use crate::commands::{Field, write_fields};
 use crate::error::UiError;
 use crate::json;
-use crate::page::{Context, Page, Reply, Screen, View};
-use crate::pages::management::{self, Ticket, index_after, is_on};
+use crate::page::{Context, Page, Reply, SESSION_ENDED, Screen, View};
+use crate::pages::management::{Ticket, index_after, is_on};
 use crate::render::Html;
 use crate::state::{Phase, State};
 use templates::Templates;
@@ -178,11 +178,11 @@ impl Settings {
         let result = match kind {
             Kind::About => cx.get(&id, "/console/api/about"),
             Kind::Settings => {
-                cx.post(&id, "/console/api/settings/query", |json| write_fields(json, &[]))
+                cx.post(&id, "/console/api/settings/query", &mut |json| write_fields(json, &[]))
             }
             _ => {
                 let after = self.after;
-                cx.post(&id, "/console/api/notifications/query", |json| {
+                cx.post(&id, "/console/api/notifications/query", &mut |json| {
                     write_fields(json, &[("after", Field::Unsigned(after))])
                 })
             }
@@ -208,7 +208,7 @@ impl Settings {
         let revision = selected.map_or_else(|| "0".to_owned(), |row| row.revision.to_string());
         let kind = json::string(fields, "kind");
         let transport = if kind == "syslog" { json::string(fields, "transport") } else { "udp" };
-        let result = cx.post(&id, "/console/api/notifications/save", |json| {
+        let result = cx.post(&id, "/console/api/notifications/save", &mut |json| {
             write_fields(
                 json,
                 &[
@@ -238,7 +238,7 @@ impl Settings {
         let (destination, revision) = (row.id, row.revision.to_string());
         let id = self.ticket(cx.state, if remove { Kind::Remove } else { Kind::Testing })?;
         let result = if remove {
-            cx.post(&id, "/console/api/notifications/remove", |json| {
+            cx.post(&id, "/console/api/notifications/remove", &mut |json| {
                 write_fields(
                     json,
                     &[
@@ -248,7 +248,7 @@ impl Settings {
                 )
             })
         } else {
-            cx.post(&id, "/console/api/notifications/test", |json| {
+            cx.post(&id, "/console/api/notifications/test", &mut |json| {
                 write_fields(json, &[("id", Field::Unsigned(destination))])
             })
         };
@@ -268,7 +268,7 @@ impl Settings {
         }
         let revision = self.setting(key).map_or(0, |item| item.revision).to_string();
         let id = self.ticket(cx.state, Kind::SettingChange)?;
-        let result = cx.post(&id, "/console/api/settings/change", |json| {
+        let result = cx.post(&id, "/console/api/settings/change", &mut |json| {
             write_fields(
                 json,
                 &[
@@ -427,7 +427,7 @@ impl Page for Settings {
         }
         self.busy = false;
         if status == 401 {
-            management::end_session(cx, true)?;
+            cx.end_session(SESSION_ENDED)?;
             return Ok(true);
         }
         if status != 200 {

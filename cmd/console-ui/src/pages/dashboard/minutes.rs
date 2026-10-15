@@ -10,7 +10,7 @@ use sibuna_console_protocol::minutes::{self, Cursor, Reply, Request};
 use sibuna_html::write_value;
 use sibuna_json::Value;
 
-use super::{Dashboard, hex_lower};
+use super::Dashboard;
 use crate::error::UiError;
 use crate::format;
 use crate::render::Html;
@@ -350,7 +350,7 @@ fn row(row: &Row, out: &mut Html<'_>) -> fmt::Result {
     format::timestamp(out, row.minute.saturating_mul(60))?;
     out.write_str("</td><td class=\"whitespace-nowrap\">")?;
     write_value(out, &row.node)?;
-    let boot = hex_lower(&row.boot);
+    let boot = format::hex(&row.boot);
     out.write_str(" / <abbr title=\"")?;
     out.write_str(&boot)?;
     out.write_str("\">")?;

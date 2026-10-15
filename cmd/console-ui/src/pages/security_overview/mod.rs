@@ -22,7 +22,7 @@
 //!   stale.
 //! - The live feed is a `Vec` of at most eight rows, newest first, instead of eight
 //!   optional slots filled by insertion; the order and the ties are the same.
-//! - A 401 or 403 ends the session like every other expiry ([`Context::reset_session`]),
+//! - A 401 or 403 ends the session like every other expiry ([`Context::end_session`]),
 //!   keeping the appearance; Zig's `state.reset()` there also reset the theme and density.
 //! - Pages decode with the protocol crate's decoder, which refuses members it does not
 //!   know where Zig's reflection decoder ignored them.
@@ -48,9 +48,9 @@ pub use model::{FEED_ROWS, FeedRow, Model, PERIODS, VIEWS};
 use crate::commands::Commands;
 use crate::error::UiError;
 use crate::json;
-use crate::page::{Context, Page, Pages, Reply, Screen, View};
+use crate::json::parse_integer;
+use crate::page::{Context, Page, Reply, Screen, View};
 use crate::pages::events::Events;
-use crate::pages::events::wire::parse_integer;
 use crate::render::Html;
 use crate::state::{Phase, State};
 
@@ -131,14 +131,10 @@ impl SecurityOverview {
         let Some(picked) = investigation::selection(&self.model, name)? else {
             return Ok(false);
         };
-        // The Events module lives in `cx.pages`; it sends its query through a context of
-        // the same state and commands.
-        let Context { state, commands, pages, live } = cx;
-        let Some(events) = pages.find_mut::<Events>() else { return Ok(false) };
-        let mut others = Pages::default();
-        let mut inner = Context { state, commands, pages: &mut others, live };
-        events.investigate(&mut inner, picked)?;
-        Ok(true)
+        match cx.with_page(|events: &mut Events, cx| events.investigate(cx, picked)) {
+            Some(result) => result.map(|()| true),
+            None => Ok(false),
+        }
     }
 
     /// Takes the reply to a view request.
@@ -161,10 +157,7 @@ impl SecurityOverview {
         }
         model.busy[index] = false;
         if status == 401 || status == 403 {
-            cx.disconnect()?;
-            cx.reset_session(Phase::Login);
-            cx.state.set_message("Your access changed. Sign in to view security statistics.");
-            return Ok(());
+            return cx.end_session("Your access changed. Sign in to view security statistics.");
         }
         model.failed[index] = true;
         if status != 200 {

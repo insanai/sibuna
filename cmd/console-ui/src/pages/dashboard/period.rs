@@ -19,10 +19,11 @@ use sibuna_console_protocol::{Text, minutes};
 use sibuna_html::write_value;
 use sibuna_json::Value;
 
-use super::{parse_decimal, reply_ticket};
+use super::reply_ticket;
 use crate::error::UiError;
 use crate::format;
 use crate::json;
+use crate::json::parse_integer;
 use crate::page::{Context, Reply};
 use crate::render::Html;
 use crate::scope;
@@ -359,7 +360,7 @@ pub(super) fn action(
         return Ok(true);
     }
     if name == "traffic-period" {
-        let hours = parse_decimal(json::string(fields, "hours"))
+        let hours = parse_integer::<u64>(json::string(fields, "hours"))
             .and_then(|hours| u16::try_from(hours).ok())
             .ok_or(UiError::InvalidRequest)?;
         if !CHOICES.iter().any(|(choice, _)| *choice == hours) {
@@ -388,10 +389,7 @@ pub(super) fn response(
     }
     model.busy = false;
     if status == 401 || status == 403 {
-        cx.disconnect()?;
-        cx.reset_session(Phase::Login);
-        cx.state.set_message("Your access changed. Sign in to read retained traffic.");
-        return Ok(());
+        return cx.end_session("Your access changed. Sign in to read retained traffic.");
     }
     if !active(cx.state, model) {
         return Ok(());

@@ -339,6 +339,9 @@ fn member_rendering_orders_unhealthy_first_marks_the_leader_once_and_never_inven
     // SID 0013: member rows carry the applied policy revision, not consensus log slots.
     assert!(document.contains("<td>9007199254740992 (behind committed)</td>"));
     assert!(!document.contains("Log slots") && !document.contains("Replication lag"));
+    // The address a member row carries is its management address (SID 0013).
+    assert!(document.contains("<th scope=\"row\">Management address</th>"));
+    assert!(!document.contains("Consensus address"));
 }
 
 /// Ported from `nodes_test.zig`.

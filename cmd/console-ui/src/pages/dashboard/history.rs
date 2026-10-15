@@ -5,9 +5,10 @@
 
 use sibuna_json::Value;
 
-use super::{Dashboard, minutes, parse_decimal};
+use super::{Dashboard, minutes};
 use crate::error::UiError;
 use crate::json;
+use crate::json::parse_integer;
 use crate::state::{Phase, State};
 
 /// What an action did.
@@ -75,7 +76,7 @@ fn minute_action(
         if model.busy || state.paused {
             return Ok(Outcome::Changed);
         }
-        let hours = parse_decimal(json::string(fields, "hours"))
+        let hours = parse_integer::<u64>(json::string(fields, "hours"))
             .and_then(|hours| u16::try_from(hours).ok())
             .filter(|hours| minutes::is_window(*hours))
             .ok_or(UiError::InvalidRequest)?;

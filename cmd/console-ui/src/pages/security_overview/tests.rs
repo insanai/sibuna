@@ -10,6 +10,7 @@ use super::*;
 use crate::app::App;
 use crate::golden::{self, FIXTURE_TIME};
 use crate::live::Connection;
+use crate::page::Pages;
 use crate::stats::Point;
 use crate::testing::{ADMIN_SESSION, Harness};
 

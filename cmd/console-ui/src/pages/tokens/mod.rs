@@ -14,8 +14,8 @@ use sibuna_json::Value;
 use crate::commands::{Field, write_fields};
 use crate::error::UiError;
 use crate::json;
-use crate::page::{Context, Page, Reply, Screen, View};
-use crate::pages::management::{self, Cursor, Ticket, index_after, is_on};
+use crate::page::{Context, Page, Reply, SESSION_ENDED, Screen, View};
+use crate::pages::management::{Cursor, Ticket, index_after, is_on};
 use crate::render::Html;
 use crate::secret::Secret;
 use crate::state::{Phase, State};
@@ -185,7 +185,7 @@ impl Tokens {
         self.selected = None;
         self.next = None;
         let after = self.cursor.start().to_string();
-        let result = cx.post(&id, "/console/api/tokens/query", |json| {
+        let result = cx.post(&id, "/console/api/tokens/query", &mut |json| {
             write_fields(json, &[("after", Field::Text(&after))])
         });
         self.busy &= result.is_ok();
@@ -213,7 +213,7 @@ impl Tokens {
         let id = self.ticket(cx.state, Kind::Create)?;
         self.expires = expires;
         let (label, role, scopes) = (self.label.as_str(), self.role, self.scopes);
-        let result = cx.post(&id, "/console/api/tokens/create", |json| {
+        let result = cx.post(&id, "/console/api/tokens/create", &mut |json| {
             json.begin_object()?;
             json.key("label")?;
             json.string(label)?;
@@ -254,7 +254,7 @@ impl Tokens {
         }
         let (target, revision) = (row.id.to_string(), row.revision.to_string());
         let id = self.ticket(cx.state, if remove { Kind::Remove } else { Kind::Revoke })?;
-        let result = cx.post(&id, "/console/api/tokens/revoke", |json| {
+        let result = cx.post(&id, "/console/api/tokens/revoke", &mut |json| {
             write_fields(
                 json,
                 &[
@@ -395,7 +395,7 @@ impl Page for Tokens {
         }
         self.busy = false;
         if status == 401 {
-            management::end_session(cx, true)?;
+            cx.end_session(SESSION_ENDED)?;
             return Ok(true);
         }
         if status != 200 {

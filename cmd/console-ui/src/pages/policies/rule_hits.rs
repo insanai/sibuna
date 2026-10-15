@@ -12,11 +12,13 @@ use sibuna_console_protocol::rule_hit_history::{self, Part, Query, Request, Wind
 use sibuna_console_protocol::rule_hits::Key;
 use sibuna_json::Value;
 
-use super::{Policies, parse_int, sparkline};
+use super::Policies;
+use crate::charts;
 use crate::error::UiError;
 use crate::format;
 use crate::json;
-use crate::page::Context;
+use crate::json::parse_integer;
+use crate::page::{Context, SESSION_ENDED};
 use crate::render::Html;
 use crate::snippets;
 use crate::state::{Phase, State};
@@ -134,12 +136,12 @@ impl RuleHits {
 
 /// Reads a decimal form field the way Zig's `parseInt` did.
 fn number<T: TryFrom<i128>>(input: &Value<'_>, key: &str) -> Option<T> {
-    parse_int(json::string(input, key))
+    parse_integer(json::string(input, key))
 }
 
 /// Reads an optional revision: empty for every revision.
 fn revision(text: &str) -> Option<Option<u64>> {
-    if text.is_empty() { Some(None) } else { parse_int::<u64>(text).map(Some) }
+    if text.is_empty() { Some(None) } else { parse_integer::<u64>(text).map(Some) }
 }
 
 /// Returns the configured inputs and the two window requests at `now` (Unix seconds),
@@ -223,7 +225,7 @@ impl Policies {
                 model.inputs.node = state.console_node.ok_or(UiError::InvalidRequest)?;
                 let edit = json::string(input, "edit_at");
                 if !edit.is_empty() {
-                    model.inputs.edit_at = parse_int(edit).ok_or(UiError::InvalidRequest)?;
+                    model.inputs.edit_at = parse_integer(edit).ok_or(UiError::InvalidRequest)?;
                     model.inputs.mode = Mode::Edit;
                     model.inputs.after_revision = Text::new(json::string(input, "revision"))?;
                 }
@@ -292,7 +294,7 @@ impl Policies {
         status: i64,
         body: &Value<'_>,
     ) -> Result<(), UiError> {
-        let ticket = id.strip_prefix("rule-hits-").and_then(parse_int::<u64>);
+        let ticket = id.strip_prefix("rule-hits-").and_then(parse_integer::<u64>);
         let model = &mut self.rule_hits;
         if ticket.is_none_or(|ticket| ticket == 0 || ticket != model.ticket)
             || !model.busy
@@ -302,8 +304,7 @@ impl Policies {
         }
         model.busy = false;
         if status == 401 || status == 403 {
-            cx.reset_session(Phase::Login);
-            return cx.disconnect();
+            return cx.end_session(SESSION_ENDED);
         }
         let state = &*cx.state;
         if state.phase != Phase::Policies || !model.open || state.paused || state.hidden {
@@ -416,7 +417,7 @@ fn period(out: &mut Html<'_>, window: &Window, side: usize) -> fmt::Result {
         .filter(|(index, _)| rule_hit_history::bin_range(request, *index).is_some())
         .map(|(_, bin)| if bin.rows == 0 { None } else { bin.hits })
         .collect();
-    sparkline::render(
+    charts::counter_sparkline(
         out,
         &values,
         "Recorded matches over this period; gaps have no observations",

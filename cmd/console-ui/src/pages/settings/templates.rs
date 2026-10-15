@@ -17,8 +17,8 @@ use sibuna_json::Value;
 use crate::commands::{Field, write_fields};
 use crate::error::UiError;
 use crate::json;
-use crate::page::Context;
-use crate::pages::management::{self, Ticket};
+use crate::page::{Context, SESSION_ENDED};
+use crate::pages::management::Ticket;
 use crate::render::Html;
 use crate::snippets;
 use crate::state::Phase;
@@ -156,7 +156,7 @@ impl Templates {
     /// [`UiError::Write`] if the command cannot be written.
     pub fn read(&mut self, cx: &mut Context<'_>) -> Result<(), UiError> {
         let id = self.ticket(Operation::Read)?;
-        let result = cx.post(&id, "/console/api/pages/read", |json| {
+        let result = cx.post(&id, "/console/api/pages/read", &mut |json| {
             write_fields(json, &[("kind", Field::Text(self.kind))])
         });
         self.busy &= result.is_ok();
@@ -171,7 +171,7 @@ impl Templates {
         }
         let id = self.ticket(Operation::Edit)?;
         let revision = self.revision.to_string();
-        let result = cx.post(&id, "/console/api/pages/edit", |json| {
+        let result = cx.post(&id, "/console/api/pages/edit", &mut |json| {
             write_fields(
                 json,
                 &[
@@ -216,7 +216,7 @@ impl Templates {
             "preview" => {
                 self.set_draft(html);
                 let id = self.ticket(Operation::Preview)?;
-                let result = cx.post(&id, "/console/api/pages/preview", |json| {
+                let result = cx.post(&id, "/console/api/pages/preview", &mut |json| {
                     write_fields(
                         json,
                         &[("kind", Field::Text(self.kind)), ("html", Field::Text(html))],
@@ -256,7 +256,7 @@ impl Templates {
         }
         self.busy = false;
         if status == 401 {
-            return management::end_session(cx, false);
+            return cx.end_session(SESSION_ENDED);
         }
         if status != 200 {
             self.result_ok = false;

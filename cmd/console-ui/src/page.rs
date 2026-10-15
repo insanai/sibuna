@@ -21,6 +21,13 @@ use crate::live::Connection;
 use crate::render::Html;
 use crate::state::{Phase, State};
 
+/// A function the core calls on each module in turn; see [`Pages::each`].
+pub(crate) type Handler<'h> =
+    dyn FnMut(&mut dyn Page, &mut Context<'_>) -> Result<bool, UiError> + 'h;
+
+/// The message an expired session shows unless its page says more.
+pub const SESSION_ENDED: &str = "Your session ended. Sign in to continue.";
+
 /// Where a module draws.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Screen {
@@ -98,7 +105,7 @@ impl Context<'_> {
         &mut self,
         id: &str,
         path: &str,
-        body: impl FnOnce(&mut Json<'_>) -> fmt::Result,
+        body: &mut dyn FnMut(&mut Json<'_>) -> fmt::Result,
     ) -> Result<(), UiError> {
         self.commands.post(id, path, self.state.csrf.as_str(), body)
     }
@@ -125,24 +132,45 @@ impl Context<'_> {
     ///
     /// The handling module's error.
     pub fn action(&mut self, name: &str, fields: &Value<'_>) -> Result<bool, UiError> {
-        self.each(|page, cx| page.action(cx, name, fields))
+        self.each(&mut |page, cx| page.action(cx, name, fields))
+    }
+
+    /// Takes the module of type `T` out of [`Context::pages`], calls `handler` with it and
+    /// a context over the other modules, and puts it back; returns the handler's result.
+    /// Returns `None` when no module of type `T` is registered, or when it is the module
+    /// whose handler is running. A page uses it to hand work to another page, as the
+    /// security overview opens an investigation on the Events page.
+    pub fn with_page<T: Page, R>(
+        &mut self,
+        handler: impl FnOnce(&mut T, &mut Context<'_>) -> R,
+    ) -> Option<R> {
+        let index = self.pages.position::<T>()?;
+        let mut page = self.pages.take(index)?;
+        let resets = self.pages.resets;
+        let mut cx = Context {
+            state: &mut *self.state,
+            commands: &mut *self.commands,
+            pages: &mut *self.pages,
+            live: &mut *self.live,
+        };
+        let any: &mut dyn Any = page.as_mut();
+        let result = any.downcast_mut::<T>().map(|typed| handler(typed, &mut cx));
+        self.pages.restore(index, page, resets);
+        result
     }
 
     /// Calls `handler` on each other module in order until one returns `Ok(true)` or an
     /// error; see [`Pages::each`].
-    pub(crate) fn each(
-        &mut self,
-        handler: impl FnMut(&mut dyn Page, &mut Context<'_>) -> Result<bool, UiError>,
-    ) -> Result<bool, UiError> {
+    pub(crate) fn each(&mut self, handler: &mut Handler<'_>) -> Result<bool, UiError> {
         self.pages.each(self.state, self.commands, self.live, handler)
     }
 
     /// Calls `handler` on every other module in order, stopping at the first error.
     pub(crate) fn every(
         &mut self,
-        mut handler: impl FnMut(&mut dyn Page, &mut Context<'_>) -> Result<(), UiError>,
+        handler: &mut dyn FnMut(&mut dyn Page, &mut Context<'_>) -> Result<(), UiError>,
     ) -> Result<(), UiError> {
-        self.each(|page, cx| handler(page, cx).map(|()| false)).map(|_| ())
+        self.each(&mut |page, cx| handler(page, cx).map(|()| false)).map(|_| ())
     }
 
     /// Closes the live connection (if one is open or opening), marks the statistics
@@ -166,6 +194,24 @@ impl Context<'_> {
         self.state.reset_to(phase);
         self.pages.reset_all();
     }
+
+    /// Ends a session the server no longer accepts (a 401, or a 403 that refuses the
+    /// session itself): the one session-expiry rule of every page. The bridge closes the
+    /// live connection, aborts the geometry download and cancels every timer; the shared
+    /// state and every module return to their defaults with the sign-in phase, keeping
+    /// the appearance (theme and density); the operator reads `message`, usually
+    /// [`SESSION_ENDED`].
+    ///
+    /// # Errors
+    ///
+    /// [`UiError::Write`] if the command cannot be written.
+    pub fn end_session(&mut self, message: &str) -> Result<(), UiError> {
+        self.commands.disconnect()?;
+        *self.live = Connection::default();
+        self.reset_session(Phase::Login);
+        self.state.set_message(message);
+        Ok(())
+    }
 }
 
 /// A page or panel module. Every method has a default that does nothing except
@@ -178,6 +224,13 @@ pub trait Page: Any {
     /// Returns the screen this module draws, if it draws one.
     fn screen(&self) -> Option<Screen> {
         None
+    }
+
+    /// Returns true when the module's screen stays on although the session is signed out:
+    /// the recovery codes that confirming two-factor authentication shows once, after the
+    /// confirmation ended the session. The render then draws the module without the shell.
+    fn shown_signed_out(&self) -> bool {
+        false
     }
 
     /// Draws the module's screen into `out`. Only called when [`Page::screen`] matches
@@ -302,8 +355,9 @@ pub trait Page: Any {
     fn reset(&mut self);
 
     /// Draws one animation frame into `out` (cleared by the caller) and returns its
-    /// length, or 0 for no frame. Only the globe animates.
-    fn frame(&mut self, state: &State, milliseconds: f64, out: &mut String) -> usize {
+    /// length, or 0 for no frame; the frame may advance shared view state (the globe's
+    /// turn). Only the globe animates.
+    fn frame(&mut self, state: &mut State, milliseconds: f64, out: &mut String) -> usize {
         let _ = (state, milliseconds, out);
         0
     }
@@ -353,6 +407,32 @@ impl Pages {
         })
     }
 
+    /// Returns the slot of the module of type `T`, if it is present.
+    fn position<T: Page>(&self) -> Option<usize> {
+        self.slots.iter().position(|slot| {
+            slot.as_deref().is_some_and(|page| {
+                let page: &dyn Any = page;
+                page.is::<T>()
+            })
+        })
+    }
+
+    /// Takes the module in slot `index` out of the registry while its handler runs.
+    fn take(&mut self, index: usize) -> Option<Box<dyn Page>> {
+        self.slots.get_mut(index).and_then(Option::take)
+    }
+
+    /// Puts a module back into slot `index` after its handler ran; a module whose handler
+    /// reset the session (the reset count moved past `resets`) is reset too.
+    fn restore(&mut self, index: usize, mut page: Box<dyn Page>, resets: u64) {
+        if self.resets != resets {
+            page.reset();
+        }
+        if let Some(slot) = self.slots.get_mut(index) {
+            *slot = Some(page);
+        }
+    }
+
     /// Returns the module that draws `screen`.
     pub(crate) fn screen(&self, screen: Screen) -> Option<&dyn Page> {
         self.slots.iter().flatten().map(Box::as_ref).find(|page| page.screen() == Some(screen))
@@ -378,12 +458,10 @@ impl Pages {
         state: &mut State,
         commands: &mut Commands,
         live: &mut Connection,
-        mut handler: impl FnMut(&mut dyn Page, &mut Context<'_>) -> Result<bool, UiError>,
+        handler: &mut Handler<'_>,
     ) -> Result<bool, UiError> {
         for index in 0..self.slots.len() {
-            let Some(mut page) = self.slots.get_mut(index).and_then(Option::take) else {
-                continue;
-            };
+            let Some(mut page) = self.take(index) else { continue };
             let resets = self.resets;
             let mut cx = Context {
                 state: &mut *state,
@@ -392,12 +470,7 @@ impl Pages {
                 live: &mut *live,
             };
             let result = handler(page.as_mut(), &mut cx);
-            if self.resets != resets {
-                page.reset();
-            }
-            if let Some(slot) = self.slots.get_mut(index) {
-                *slot = Some(page);
-            }
+            self.restore(index, page, resets);
             if !matches!(result, Ok(false)) {
                 return result;
             }
@@ -420,7 +493,12 @@ impl Pages {
     }
 
     /// Asks the modules for an animation frame; the first non-empty one wins.
-    pub(crate) fn frame(&mut self, state: &State, milliseconds: f64, out: &mut String) -> usize {
+    pub(crate) fn frame(
+        &mut self,
+        state: &mut State,
+        milliseconds: f64,
+        out: &mut String,
+    ) -> usize {
         for page in self.slots.iter_mut().flatten() {
             let length = page.frame(state, milliseconds, out);
             if length != 0 {

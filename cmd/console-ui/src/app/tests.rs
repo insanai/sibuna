@@ -193,3 +193,41 @@ fn the_page_is_cleared_when_it_exceeds_the_render_bound() {
     harness.action("dashboard", "{}");
     assert!(harness.html().contains("Statistics"));
 }
+
+/// Every session expiry follows one rule (SID 0007, Rust port consolidation): the session
+/// and every page are cleared, the live connection and timers stop, and the appearance
+/// (theme and density) survives. Some Zig pages reset the appearance or kept page state.
+#[test]
+fn every_session_expiry_clears_the_session_and_keeps_the_appearance() {
+    use crate::appearance::{Density, Theme};
+    type Expire = fn(&mut Harness);
+    let cases: [(&str, Expire); 4] = [
+        ("statistics", |harness| harness.respond("stats", 401, "{}")),
+        ("live stream", |harness| {
+            harness.stream("{\"state\":\"message\",\"body\":{\"error\":\"unauthorized\"}}");
+        }),
+        ("events", |harness| {
+            harness.action("events", "null");
+            harness.respond("events", 403, "{\"rows\":[],\"next\":null}");
+        }),
+        ("users", |harness| {
+            harness.action("users", "null");
+            harness.respond("users-1", 401, "null");
+        }),
+    ];
+    for (name, expire) in cases {
+        let mut harness = Harness::new();
+        harness.respond("session", 200, ADMIN_SESSION);
+        let appearance = &mut harness.app.state_mut().appearance;
+        appearance.theme = Theme::Dark;
+        appearance.density = Density::Compact;
+        expire(&mut harness);
+        let state = harness.app.state();
+        assert_eq!(state.phase, Phase::Login, "{name}");
+        assert!(state.csrf.is_empty() && state.stats.is_none(), "{name}");
+        assert_eq!(state.appearance.theme, Theme::Dark, "{name}");
+        assert_eq!(state.appearance.density, Density::Compact, "{name}");
+        assert!(harness.commands().contains("{\"op\":\"disconnect\"}"), "{name}");
+        assert!(harness.html().contains("Sign in"), "{name}");
+    }
+}

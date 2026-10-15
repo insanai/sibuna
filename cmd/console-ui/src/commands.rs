@@ -93,14 +93,15 @@ impl Commands {
         self.count
     }
 
-    /// Appends one command that `write` writes as a single JSON value.
+    /// Appends one command that `write` writes as a single JSON value. The writer is a
+    /// trait object, so the many call sites share one copy of this function in the module.
     ///
     /// # Errors
     ///
     /// [`UiError::Write`] if `write` fails; the partial command is removed.
     pub fn emit(
         &mut self,
-        write: impl FnOnce(&mut Json<'_>) -> fmt::Result,
+        write: &mut dyn FnMut(&mut Json<'_>) -> fmt::Result,
     ) -> Result<(), UiError> {
         let start = self.text.len();
         if self.count > 0 {
@@ -121,7 +122,7 @@ impl Commands {
     ///
     /// As [`Commands::emit`].
     pub fn emit_fields(&mut self, fields: &[(&str, Field<'_>)]) -> Result<(), UiError> {
-        self.emit(|json| write_fields(json, fields))
+        self.emit(&mut |json| write_fields(json, fields))
     }
 
     /// Asks the bridge to `GET` `path` and to reply with a response event named `id`.
@@ -149,9 +150,9 @@ impl Commands {
         id: &str,
         path: &str,
         csrf: &str,
-        body: impl FnOnce(&mut Json<'_>) -> fmt::Result,
+        body: &mut dyn FnMut(&mut Json<'_>) -> fmt::Result,
     ) -> Result<(), UiError> {
-        self.emit(|json| {
+        self.emit(&mut |json| {
             json.begin_object()?;
             let envelope = [("op", "request"), ("method", "POST"), ("id", id), ("path", path)];
             for (name, value) in envelope {
@@ -178,7 +179,7 @@ impl Commands {
         csrf: &str,
         body: &T,
     ) -> Result<(), UiError> {
-        self.post(id, path, csrf, |json| body.encode(json))
+        self.post(id, path, csrf, &mut |json| body.encode(json))
     }
 
     /// Moves keyboard focus to the first element matching `selector` and scrolls it into
@@ -271,7 +272,7 @@ mod tests {
         commands.begin();
         commands.get("session", "/console/api/session").unwrap();
         commands
-            .post("login", "/console/api/login", "token", |json| {
+            .post("login", "/console/api/login", "token", &mut |json| {
                 write_fields(json, &[("username", Field::Text("a\"b")), ("n", Field::Null)])
             })
             .unwrap();
@@ -299,7 +300,7 @@ mod tests {
         let mut commands = Commands::default();
         commands.begin();
         commands.disconnect().unwrap();
-        assert_eq!(commands.emit(|_| Err(fmt::Error)), Err(UiError::Write));
+        assert_eq!(commands.emit(&mut |_| Err(fmt::Error)), Err(UiError::Write));
         commands.end();
         assert_eq!(commands.as_str(), "[{\"op\":\"disconnect\"}]");
     }

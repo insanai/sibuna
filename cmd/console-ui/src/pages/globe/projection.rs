@@ -16,7 +16,7 @@
 
 use std::fmt::{self, Write};
 
-use super::tenths::tenths;
+use crate::format;
 use crate::geometry::{self, Point};
 use crate::state::GlobeView;
 
@@ -68,13 +68,13 @@ pub(super) fn horizon(a: Vector, b: Vector) -> Option<Vector> {
 /// Writes one move-and-line command, `M{x1},{y1}L{x2},{y2}`, with one decimal each.
 pub(super) fn line(out: &mut impl Write, from: (f64, f64), to: (f64, f64)) -> fmt::Result {
     out.write_str("M")?;
-    tenths(out, from.0)?;
+    format::decimal(out, from.0, 1)?;
     out.write_str(",")?;
-    tenths(out, from.1)?;
+    format::decimal(out, from.1, 1)?;
     out.write_str("L")?;
-    tenths(out, to.0)?;
+    format::decimal(out, to.0, 1)?;
     out.write_str(",")?;
-    tenths(out, to.1)
+    format::decimal(out, to.1, 1)
 }
 
 /// Writes the visible part of the edge from `a` to `b`, if any.

@@ -13,7 +13,6 @@ use sibuna_html::write_value;
 use super::activity::activity;
 use super::connections::{self, destination, write_code};
 use super::projection::{self, CENTER_X, CENTER_Y, RADIUS, project};
-use super::tenths::tenths;
 use crate::format;
 use crate::geometry;
 use crate::render::Html;
@@ -231,11 +230,11 @@ fn country_markers(
         // Counts beyond 2^53 lose precision here, far beyond the cap of 14.
         let radius = (2.0 * (country.samples as f64).sqrt()).min(MAX_MARKER_RADIUS);
         out.write_str("<circle cx=\"")?;
-        tenths(out, x)?;
+        format::decimal(out, x, 1)?;
         out.write_str("\" cy=\"")?;
-        tenths(out, y)?;
+        format::decimal(out, y, 1)?;
         out.write_str("\" r=\"")?;
-        tenths(out, radius)?;
+        format::decimal(out, radius, 1)?;
         out.write_str("\" fill=\"#d94736\" fill-opacity=\".7\" stroke=\"white\"><title>")?;
         write_code(out, country.code)?;
         write!(out, ": {} {}</title></circle>", country.samples, selected.unit)?;

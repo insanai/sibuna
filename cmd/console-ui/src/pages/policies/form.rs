@@ -12,8 +12,8 @@ use sibuna_html::write_value;
 use sibuna_json::{Value, Writer};
 
 use super::limits::{self, Limits};
-use super::parse_int;
 use crate::json;
+use crate::json::parse_integer;
 use crate::render::Html;
 use crate::snippets;
 
@@ -171,15 +171,15 @@ impl Form {
         let action = fallback(self.action.as_str(), "deny");
         let challenge = action == "challenge";
         let weigh = action == "weigh";
-        let priority = parse_int::<i32>(fallback(self.priority.as_str(), "100"))
+        let priority = parse_integer::<i32>(fallback(self.priority.as_str(), "100"))
             .ok_or(FormError::InvalidNumber)?;
         let difficulty = if challenge && !self.difficulty.is_empty() {
-            Some(parse_int::<u32>(self.difficulty.as_str()).ok_or(FormError::InvalidNumber)?)
+            Some(parse_integer::<u32>(self.difficulty.as_str()).ok_or(FormError::InvalidNumber)?)
         } else {
             None
         };
         let weight = if weigh {
-            parse_int::<i32>(fallback(self.weight.as_str(), "0"))
+            parse_integer::<i32>(fallback(self.weight.as_str(), "0"))
                 .ok_or(FormError::InvalidNumber)?
         } else {
             0

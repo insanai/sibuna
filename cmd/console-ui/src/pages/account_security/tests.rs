@@ -136,6 +136,8 @@ fn recovery_codes_are_displayed_exactly_once_and_erased_after_acknowledgement() 
         assert!(!harness.commands().contains(code.as_str()));
     }
     assert!(!harness.commands().contains("\"op\":\"connect\""));
+    // The confirmation ended the session: its token is gone while the codes are shown.
+    assert!(harness.app.state().csrf.is_empty());
     // Navigation is refused until the operator acknowledges the codes.
     for action in ["account", "dashboard", "security", "logout", "users", "geoip"] {
         harness.action(action, "null");

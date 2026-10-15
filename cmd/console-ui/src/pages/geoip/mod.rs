@@ -15,7 +15,7 @@ use crate::commands::{Field, write_fields};
 use crate::error::UiError;
 use crate::format;
 use crate::json;
-use crate::page::{Context, Page, Reply, Screen, View};
+use crate::page::{Context, Page, Reply, SESSION_ENDED, Screen, View};
 use crate::render::{Html, value};
 use crate::state::{Phase, State};
 
@@ -78,12 +78,7 @@ impl Geoip {
             return Ok(());
         }
         match status {
-            401 | 403 => {
-                cx.state.phase = Phase::Login;
-                cx.state.csrf.clear();
-                cx.state.geometry.unload();
-                Ok(())
-            }
+            401 | 403 => cx.end_session(SESSION_ENDED),
             0 => {
                 cx.state.set_message("Connection lost. Import status is unknown; reconnecting.");
                 self.importing = true;
@@ -127,7 +122,7 @@ impl Page for Geoip {
         }
         self.importing = true;
         let revision = self.metadata.revision;
-        cx.post("geo-import", "/console/api/geoip", |json| {
+        cx.post("geo-import", "/console/api/geoip", &mut |json| {
             write_fields(
                 json,
                 &[

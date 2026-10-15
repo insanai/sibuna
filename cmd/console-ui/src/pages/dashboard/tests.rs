@@ -11,6 +11,7 @@ use super::*;
 use crate::app::App;
 use crate::commands::Commands;
 use crate::golden::{self, FIXTURE_TIME};
+use crate::json::parse_integer;
 use crate::live::Connection;
 use crate::page::Pages;
 use crate::stats::Point;
@@ -77,14 +78,13 @@ fn two_node_scope() -> Option<Scope> {
 
 #[test]
 fn zig_decimal_parsing_accepts_signs_and_inner_underscores() {
-    assert_eq!(parse_decimal("+10"), Some(10));
-    assert_eq!(parse_decimal("1_000"), Some(1000));
-    assert_eq!(parse_decimal("-0"), Some(0));
+    assert_eq!(parse_integer::<u64>("+10"), Some(10));
+    assert_eq!(parse_integer::<u64>("1_000"), Some(1000));
+    assert_eq!(parse_integer::<u64>("-0"), Some(0));
     for invalid in ["", "-1", " 1", "1 ", "_1", "1_", "0x10", "+", "18446744073709551616"] {
-        assert_eq!(parse_decimal(invalid), None, "{invalid}");
+        assert_eq!(parse_integer::<u64>(invalid), None, "{invalid}");
     }
     assert_eq!(reply_ticket("timeline-7", "timeline-"), Some(7));
-    assert_eq!(hex_lower(&[0, 0xab, 0x10]), "00ab10");
 }
 
 #[test]
@@ -668,7 +668,7 @@ fn fuzz_reply_decoders_are_atomic_and_bounded() {
     for _ in 0..100_000 {
         let input = random.mutate(&seeds);
         if let Ok(text) = std::str::from_utf8(&input) {
-            let _ = parse_decimal(text);
+            let _ = parse_integer::<u64>(text);
         }
         let Ok(value) = sibuna_json::parse(&input) else { continue };
         let mut ranked = rankings::Model { generation: 3, ..rankings::Model::default() };

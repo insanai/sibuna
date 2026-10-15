@@ -20,10 +20,10 @@ use sibuna_json::Value;
 use crate::commands::Commands;
 use crate::error::UiError;
 use crate::json;
-use crate::page::Context;
+use crate::page::{Context, SESSION_ENDED};
 use crate::render::Html;
 use crate::secret::Secret;
-use crate::state::{Phase, State};
+use crate::state::State;
 
 /// The freshness of one topic, as the pages show it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -214,7 +214,7 @@ pub(crate) fn sync(cx: &mut Context<'_>) -> Result<(), UiError> {
 }
 
 fn send(commands: &mut Commands, op: &str, topic: Topic, args: &Args) -> Result<(), UiError> {
-    commands.emit(|json| {
+    commands.emit(&mut |json| {
         json.begin_object()?;
         json.key("op")?;
         json.string("send")?;
@@ -333,12 +333,7 @@ pub(crate) fn failed(cx: &mut Context<'_>, value: &Value<'_>) -> Result<(), UiEr
 
 /// Ends the session after the server revoked it.
 fn expire(cx: &mut Context<'_>) -> Result<(), UiError> {
-    cx.live.stop(cx.commands)?;
-    cx.state.reset();
-    cx.pages.reset_all();
-    cx.state.phase = Phase::Login;
-    cx.state.set_message("Your session ended. Sign in to continue.");
-    Ok(())
+    cx.end_session(SESSION_ENDED)
 }
 
 /// Applies a completed view to the state and the modules.
@@ -378,7 +373,7 @@ fn publish(
         Topic::Nodes | Topic::Challenges => {}
         Topic::Events | Topic::Audit => coverage(cx.state, topic, view)?,
     }
-    cx.every(|page, cx| page.publish(cx, topic, view))?;
+    cx.every(&mut |page, cx| page.publish(cx, topic, view))?;
     Ok(None)
 }
 

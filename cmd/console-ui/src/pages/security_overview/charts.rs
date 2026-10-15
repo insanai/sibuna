@@ -9,8 +9,8 @@ use sibuna_console_protocol::dashboard::Rates;
 use sibuna_console_protocol::security::{BUCKETS, Rank};
 use sibuna_html::write_value;
 
+use crate::charts::{self as shared, Metric};
 use crate::format;
-use crate::pages::dashboard::sparkline::{self, Metric};
 use crate::render::Html;
 use crate::state::State;
 use crate::stats::slot;
@@ -70,7 +70,7 @@ pub fn categories(out: &mut Html<'_>, rows: &[Option<Rank>; 5], total: u64) -> f
 
 /// Returns the rate of `metric` in `rates`.
 fn rate(rates: &Rates, metric: Metric) -> f64 {
-    sparkline::rate(rates, metric)
+    shared::rate(rates, metric)
 }
 
 /// Draws one bar of a 360 by 90 chart: `index` places it, `height` is at most 80.
@@ -132,7 +132,7 @@ fn outcome(
         point.outcome_rates.as_ref().filter(|_| point.second == second).map(|r| rate(r, metric))
     };
     out.write_str("<article class=\"sb-panel ")?;
-    out.write_str(sparkline::tone(metric))?;
+    out.write_str(shared::tone(metric))?;
     out.write_str("\"><h3>")?;
     out.write_str(label)?;
     out.write_str(

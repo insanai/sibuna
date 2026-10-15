@@ -108,20 +108,20 @@ fn authentication_action(
     match name {
         "login" => {
             cx.state.username = Text::new(json::string(fields, "username"))?;
-            cx.post("login", "/console/api/login", |json| json.value(fields))
+            cx.post("login", "/console/api/login", &mut |json| json.value(fields))
         }
         "kiosk-exchange" => {
             let code = json::string(fields, "code");
-            cx.post(name, "/console/api/kiosk/exchange", |json| {
+            cx.post(name, "/console/api/kiosk/exchange", &mut |json| {
                 write_fields(json, &[("code", Field::Text(code))])
             })
         }
         "change-password" => {
-            cx.post("password", "/console/api/password", |json| json.value(fields))
+            cx.post("password", "/console/api/password", &mut |json| json.value(fields))
         }
         "logout" => {
             cx.live.sign_out(cx.commands)?;
-            cx.post(name, "/console/api/logout", |json| json.null())
+            cx.post(name, "/console/api/logout", &mut |json| json.null())
         }
         _ => {
             cx.state.busy = false;
@@ -137,7 +137,7 @@ fn response(cx: &mut Context<'_>, value: &Value<'_>) -> Result<(), UiError> {
     let status = json::field(value, "status").and_then(json::integer);
     let body = json::field(value, "body");
     let reply = Reply { id, status, body, envelope: value };
-    if cx.each(|page, cx| page.response(cx, &reply))? {
+    if cx.each(&mut |page, cx| page.response(cx, &reply))? {
         return Ok(());
     }
     let (Some(status), Some(body)) = (status, body) else { return Ok(()) };
@@ -237,7 +237,7 @@ fn timer(cx: &mut Context<'_>, id: &str) -> Result<(), UiError> {
     if id == "live-retry" {
         cx.live.retry_elapsed();
     }
-    cx.each(|page, cx| page.timer(cx, id)).map(|_| ())
+    cx.each(&mut |page, cx| page.timer(cx, id)).map(|_| ())
 }
 
 /// Handles a stream event; a completed statistics view is accepted, and a snapshot that
@@ -259,7 +259,7 @@ fn visibility(cx: &mut Context<'_>, value: &Value<'_>) -> Result<(), UiError> {
     if hidden {
         return cx.disconnect();
     }
-    cx.every(|page, cx| page.resume(cx))
+    cx.every(&mut |page, cx| page.resume(cx))
 }
 
 #[cfg(test)]

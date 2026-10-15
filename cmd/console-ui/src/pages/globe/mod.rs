@@ -37,12 +37,8 @@
 //!
 //! # Changes from the Zig module
 //!
-//! - Zig's animation wrote the turned longitude into the shared `State` from `sb_frame`.
-//!   [`Page::frame`] borrows the state immutably, so the module keeps the turned view
-//!   beside the view it was turned from ([`Globe`]'s `spin`). Every reader uses the turned
-//!   view while the shared view is still the one it was turned from; the next event writes
-//!   it back into `state.globe` ([`Page::finish`], and before any globe action). A change
-//!   another module makes to `state.globe` in between wins, as it did in Zig.
+//! - As in Zig, each animation frame writes the turned longitude into the shared
+//!   `state.globe` ([`Page::frame`] borrows the state mutably).
 //! - The motion state (`rotating`, the frame clock and the arrow phase) lives in this
 //!   module, so a wall-display code exchange, which resets every module, restarts rotation;
 //!   Zig carried the motion of the previous session over. The reduced-motion preference
@@ -50,9 +46,8 @@
 //! - Country codes in the SVG titles of markers and connections are escaped like every
 //!   other value (Zig printed the two code bytes raw; see the SID 0007 revision note).
 //! - The 512 KiB frame buffer is a reused string bounded by [`RENDER_LIMIT`].
-//! - Scene coordinates are written by a fast path that agrees with
-//!   [`crate::format::decimal`] (Zig's `{d:.1}`) and falls back to it near a rounding
-//!   midpoint; see `tenths`.
+//! - Scene coordinates are written by [`crate::format::decimal`] (Zig's `{d:.1}`), whose
+//!   fast path keeps a busy frame cheap.
 
 mod activity;
 mod connections;
@@ -60,7 +55,6 @@ mod motion;
 mod panel;
 mod projection;
 mod route;
-mod tenths;
 
 #[cfg(test)]
 mod tests;
@@ -72,7 +66,7 @@ use sibuna_json::Value;
 use crate::error::UiError;
 use crate::page::{Context, Page, View};
 use crate::render::{Html, RENDER_LIMIT};
-use crate::state::{GlobeView, Phase, State};
+use crate::state::{Phase, State};
 
 pub use motion::Motion;
 
@@ -91,34 +85,14 @@ pub fn render(view: &View<'_>, out: &mut Html<'_>) -> fmt::Result {
     }
 }
 
-/// A turned view the next event writes back into `state.globe`.
-#[derive(Clone, Copy, Debug, PartialEq)]
-struct Spin {
-    /// The shared view the animation started from.
-    from: GlobeView,
-    /// The view after the frames since then.
-    to: GlobeView,
-}
-
 /// The globe module: the animation state and the panel's actions.
 #[derive(Debug, Default)]
 pub struct Globe {
     /// Rotation, frame clock and arrow phase.
     pub motion: Motion,
-    /// The view the animation turned to since the last event, if any.
-    spin: Option<Spin>,
 }
 
 impl Globe {
-    /// Returns the view to draw: the turned view while `state.globe` is still the view
-    /// it was turned from, else `state.globe`.
-    pub fn view(&self, state: &State) -> GlobeView {
-        match self.spin {
-            Some(spin) if spin.from == state.globe => spin.to,
-            _ => state.globe,
-        }
-    }
-
     /// Draws the globe panel for `state`; see [`render`].
     ///
     /// # Errors
@@ -128,19 +102,9 @@ impl Globe {
         panel::panel(state, &self.scene(state), out)
     }
 
-    /// Writes the turned view back into the shared state.
-    fn settle(&mut self, state: &mut State) {
-        state.globe = self.view(state);
-        self.spin = None;
-    }
-
     /// Returns what the scene draws beyond the shared state.
     fn scene(&self, state: &State) -> panel::Scene {
-        panel::Scene {
-            view: self.view(state),
-            rotating: self.motion.rotating,
-            flow: self.motion.flow,
-        }
+        panel::Scene { view: state.globe, rotating: self.motion.rotating, flow: self.motion.flow }
     }
 }
 
@@ -154,25 +118,19 @@ impl Page for Globe {
         if cx.state.phase != Phase::Dashboard {
             return Ok(false);
         }
-        self.settle(cx.state);
         Ok(motion::action(cx.state, &mut self.motion, name))
-    }
-
-    fn finish(&mut self, cx: &mut Context<'_>) -> Result<(), UiError> {
-        self.settle(cx.state);
-        Ok(())
     }
 
     fn reset(&mut self) {
         *self = Globe::default();
     }
 
-    fn frame(&mut self, state: &State, milliseconds: f64, out: &mut String) -> usize {
-        let mut view = self.view(state);
+    fn frame(&mut self, state: &mut State, milliseconds: f64, out: &mut String) -> usize {
+        let mut view = state.globe;
         if !self.motion.advance(state, &mut view, milliseconds) {
             return 0;
         }
-        self.spin = Some(Spin { from: state.globe, to: view });
+        state.globe = view;
         let scene = self.scene(state);
         let mut sink = Html::new(out, RENDER_LIMIT);
         if panel::scene(state, &scene, &mut sink).is_err() {

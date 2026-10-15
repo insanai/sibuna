@@ -23,8 +23,8 @@ use sibuna_json::Value;
 use crate::commands::{Field, write_fields};
 use crate::error::UiError;
 use crate::json;
-use crate::page::{Context, Page, Reply, Screen, View};
-use crate::pages::management::{self, Cursor, Ticket, index_after, is_on};
+use crate::page::{Context, Page, Reply, SESSION_ENDED, Screen, View};
+use crate::pages::management::{Cursor, Ticket, index_after, is_on};
 use crate::render::Html;
 use crate::state::{Phase, State};
 
@@ -228,7 +228,7 @@ impl Audit {
         let (since, until) = (self.since.to_string(), self.until.to_string());
         let actor =
             if self.actor.is_empty() { Field::Null } else { Field::Text(self.actor.as_str()) };
-        let result = cx.post(&id, path, |json| {
+        let result = cx.post(&id, path, &mut |json| {
             write_fields(
                 json,
                 &[
@@ -251,7 +251,7 @@ impl Audit {
         self.detail = None;
         let id = self.ticket(cx.state, Kind::Read)?;
         let record = self.selected.to_string();
-        let result = cx.post(&id, "/console/api/audit/read", |json| {
+        let result = cx.post(&id, "/console/api/audit/read", &mut |json| {
             write_fields(json, &[("id", Field::Text(&record))])
         });
         self.busy &= result.is_ok();
@@ -356,7 +356,7 @@ impl Audit {
         let id = self.ticket(cx.state, Kind::RevertRead)?;
         let rule = self.revert_target.id.as_str();
         let revision = self.revert_target.revision.to_string();
-        let result = cx.post(&id, "/console/api/policies/read", |json| {
+        let result = cx.post(&id, "/console/api/policies/read", &mut |json| {
             write_fields(
                 json,
                 &[
@@ -385,7 +385,7 @@ impl Audit {
             let id = self.ticket(cx.state, Kind::RevertEdit)?;
             let revision = self.revert_target.revision.to_string();
             let document = json::string(body, "document");
-            let result = cx.post(&id, "/console/api/policies/edit", |json| {
+            let result = cx.post(&id, "/console/api/policies/edit", &mut |json| {
                 write_fields(
                     json,
                     &[
@@ -478,7 +478,7 @@ impl Page for Audit {
         }
         self.busy = false;
         if status == 401 {
-            management::end_session(cx, true)?;
+            cx.end_session(SESSION_ENDED)?;
             return Ok(true);
         }
         let reverting = matches!(self.kind, Kind::RevertRead | Kind::RevertEdit);

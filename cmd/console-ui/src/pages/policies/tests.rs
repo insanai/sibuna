@@ -570,28 +570,26 @@ fn the_editor_imports_exports_and_replays_a_draft() {
 }
 
 #[test]
-fn a_policy_set_is_sent_document_by_document_then_committed() {
+fn a_policy_set_is_sent_as_one_import_request() {
     let mut harness = editor();
     let fields =
         "{\"confirmed\":\"on\",\"documents\":\"[{\\\"id\\\":\\\"a\\\"},{\\\"id\\\":\\\"b\\\"}]\"}";
     harness.action("managed-import-all", fields);
-    assert!(harness.html().contains("2 rule documents (batch "));
+    assert!(harness.html().contains("2 rule documents (SHA-256 "));
     assert!(!requests(&harness));
     harness.action("managed-import-confirm", "null");
-    assert!(harness.commands().contains("\"ordinal\":0,\"document\":\"{\\\"id\\\":\\\"a\\\"}\""));
-    let id = format!("managed-import-chunk-{}", generation(&mut harness));
-    harness.respond(&id, 200, "{}");
-    assert!(harness.commands().contains("\"ordinal\":1"));
-    let id = format!("managed-import-chunk-{}", generation(&mut harness));
+    assert!(harness.commands().contains(
+        "\"path\":\"/console/api/policies/import\",\"csrf\":\"test csrf\",\"body\":\
+         {\"expected_revision\":\"7\",\"documents\":[\"{\\\"id\\\":\\\"a\\\"}\",\
+         \"{\\\"id\\\":\\\"b\\\"}\"]}"
+    ));
+    assert!(harness.html().contains("Replacing the rules\u{2026}"));
+    // A failed import applied nothing: the set waits for review again.
+    let id = format!("managed-import-{}", generation(&mut harness));
     harness.respond(&id, 500, "{}");
     assert!(harness.html().contains("Nothing has been sent yet."));
     harness.action("managed-import-confirm", "null");
-    let id = format!("managed-import-chunk-{}", generation(&mut harness));
-    harness.respond(&id, 200, "{}");
-    let id = format!("managed-import-chunk-{}", generation(&mut harness));
-    harness.respond(&id, 200, "{}");
-    assert!(harness.commands().contains("\"count\":2,\"expected_revision\":\"7\""));
-    let id = format!("managed-import-commit-{}", generation(&mut harness));
+    let id = format!("managed-import-{}", generation(&mut harness));
     harness.respond(&id, 200, "{\"committed\":\"9\"}");
     assert!(harness.html().contains("Policy set replaced."));
     assert!(harness.commands().contains("\"body\":{\"kind\":\"catalog\"}"));

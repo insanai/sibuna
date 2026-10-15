@@ -5,9 +5,9 @@ use sibuna_console_protocol::rankings_archive::{Archive, Identity};
 
 use super::*;
 use crate::commands::Commands;
+use crate::format::hex as hex_lower;
 use crate::live::Connection;
 use crate::page::Pages;
-use crate::pages::dashboard::hex_lower;
 
 /// One archive of node 7 at minute 2 holding 256 distinct paths, with its cursor.
 fn archive() -> (String, Cursor) {

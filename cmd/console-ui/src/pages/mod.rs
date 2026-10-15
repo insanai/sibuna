@@ -2,8 +2,8 @@
 //!
 //! To add a module, declare it below and add one line to [`load_pages`]. Order matters
 //! only where two modules would claim the same action, reply id or timer; the list keeps
-//! the order in which the Zig `main.zig` consulted its controllers (see the crate
-//! documentation for the full order the remaining pages take).
+//! the order in which the Zig `main.zig` consulted its controllers (the crate
+//! documentation lists it).
 
 mod account_security;
 mod audit;

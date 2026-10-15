@@ -10,11 +10,11 @@ use sibuna_json::Value;
 use super::form::{self, Form, FormError};
 use super::replay::Replay;
 use super::workflow::ImportAll;
-use super::{Policies, parse_int, success};
-use crate::commands::{Field, write_fields};
+use super::{Policies, success};
+use crate::commands::{Field, Json, write_fields};
 use crate::error::UiError;
 use crate::format;
-use crate::json;
+use crate::json::{self, parse_integer};
 use crate::live;
 use crate::page::Context;
 use crate::render::{self, Html};
@@ -148,8 +148,7 @@ fn path(kind: &str) -> &'static str {
         "inspection" => "/console/api/inspection/edit",
         "order" => "/console/api/policies/order",
         "replay" => "/console/api/policies/replay",
-        "import-chunk" => "/console/api/policies/import/chunk",
-        "import-commit" => "/console/api/policies/import/commit",
+        "import" => "/console/api/policies/import",
         _ => "/console/api/policies/read",
     }
 }
@@ -163,10 +162,22 @@ pub fn managed_post(
     kind: &str,
     fields: &[(&str, Field<'_>)],
 ) -> Result<(), UiError> {
+    managed_post_body(cx, generation, busy, kind, &mut |json| write_fields(json, fields))
+}
+
+/// Posts the body `body` writes as the managed request `managed-<kind>-<n>`; see
+/// [`managed_post`].
+pub fn managed_post_body(
+    cx: &mut Context<'_>,
+    generation: &mut u32,
+    busy: &mut bool,
+    kind: &str,
+    body: &mut dyn FnMut(&mut Json<'_>) -> fmt::Result,
+) -> Result<(), UiError> {
     *generation = generation.wrapping_add(1);
     let id = format!("managed-{kind}-{generation}");
     *busy = true;
-    cx.post(&id, path(kind), |json| write_fields(json, fields))
+    cx.post(&id, path(kind), body)
 }
 
 impl Policies {
@@ -178,6 +189,16 @@ impl Policies {
         fields: &[(&str, Field<'_>)],
     ) -> Result<(), UiError> {
         managed_post(cx, &mut self.tickets.policy, &mut self.applied.busy, kind, fields)
+    }
+
+    /// Posts a managed request with the body `body` writes; see [`managed_post_body`].
+    pub(super) fn post_managed_body(
+        &mut self,
+        cx: &mut Context<'_>,
+        kind: &str,
+        body: &mut dyn FnMut(&mut Json<'_>) -> fmt::Result,
+    ) -> Result<(), UiError> {
+        managed_post_body(cx, &mut self.tickets.policy, &mut self.applied.busy, kind, body)
     }
 
     /// Handles the `managed-` actions of the catalog, the history and the editor.
@@ -377,7 +398,7 @@ impl Policies {
             return Ok(());
         }
         let revision = json::string(body, "committed");
-        parse_int::<u64>(revision).ok_or(UiError::InvalidResponse)?;
+        parse_integer::<u64>(revision).ok_or(UiError::InvalidResponse)?;
         self.manager.committed = Text::new(revision)?;
         self.applied.stale = false;
         let document = json::string(body, "document");
@@ -584,7 +605,7 @@ fn catalog_row(out: &mut Html<'_>, row: &ListingRow, order_disabled: bool) -> fm
             id: &row.id.as_str(),
             name: &row.name.as_str(),
             action: &row.action.as_str(),
-            tone: &super::applied_view::action_tone(&row.action),
+            tone: &crate::charts::action_tone(&row.action),
             priority: &row.priority,
             enabled: &if row.enabled { "Enabled" } else { "Disabled" },
             dim: &if row.enabled { "" } else { " opacity-60" },
