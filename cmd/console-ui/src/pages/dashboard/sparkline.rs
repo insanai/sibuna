@@ -106,7 +106,8 @@ fn series(out: &mut Html<'_>, points: &[Option<f64>; 60], label: &str, unit: &st
     let observed = points.iter().flatten().count();
     let maximum = points.iter().flatten().fold(1.0_f64, |maximum, rate| maximum.max(*rate));
     out.write_str(
-        "<svg class=\"sb-sparkline\" viewBox=\"0 0 180 40\" role=\"img\" aria-label=\"",
+        "<svg class=\"sb-sparkline\" viewBox=\"0 0 180 40\" preserveAspectRatio=\"none\" \
+         role=\"img\" aria-label=\"",
     )?;
     out.escaped(label)?;
     out.escaped(unit)?;
@@ -114,7 +115,7 @@ fn series(out: &mut Html<'_>, points: &[Option<f64>; 60], label: &str, unit: &st
     write_value(out, &observed)?;
     out.write_str(
         " observed intervals\"><path fill=\"none\" stroke=\"currentColor\" \
-         stroke-width=\"1.5\" d=\"",
+         stroke-width=\"1.5\" vector-effect=\"non-scaling-stroke\" d=\"",
     )?;
     let mut connected = false;
     for (index, value) in points.iter().enumerate() {

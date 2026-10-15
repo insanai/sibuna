@@ -214,14 +214,15 @@ fn series(points: &[Option<f64>; 60], label: &str, out: &mut Html<'_>) -> fmt::R
     let maximum = points.iter().flatten().fold(1.0_f64, |maximum, value| maximum.max(*value));
     let observed = points.iter().flatten().count();
     out.write_str(
-        "<svg class=\"sb-sparkline\" viewBox=\"0 0 180 40\" role=\"img\" aria-label=\"",
+        "<svg class=\"sb-sparkline\" viewBox=\"0 0 180 40\" preserveAspectRatio=\"none\" \
+         role=\"img\" aria-label=\"",
     )?;
     out.escaped(label)?;
     out.write_str(", last 60 seconds; ")?;
     value(out, &observed)?;
     out.write_str(
         " observed intervals\"><path fill=\"none\" stroke=\"currentColor\" \
-         stroke-width=\"1.5\" d=\"",
+         stroke-width=\"1.5\" vector-effect=\"non-scaling-stroke\" d=\"",
     )?;
     let mut connected = false;
     for (index, point) in points.iter().enumerate() {
