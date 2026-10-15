@@ -77,10 +77,10 @@
 //!   a distance that is not a finite number from 0 to 2, [`rule_hit_history::bin_range`]
 //!   returns `None` for an index past the bins, and [`minute_summary::value`] returns
 //!   `None` when the request total overflows (a deviation is then unavailable).
-//! - Decoders decide integrality exactly where Zig rounded through `f128`; they refuse
-//!   hexadecimal float strings, and numbers that are infinite or NaN as `f64` (Zig stored
-//!   such a value and later wrote it as the invalid token `inf`). Parsing is bounded by
-//!   [`sibuna_json::Limits`], including a nesting depth of 64.
+//! - Decoders decide exactly whether a number is whole, where Zig rounded through `f128`;
+//!   they refuse hexadecimal float strings, and numbers that are infinite or NaN as `f64`
+//!   (Zig stored such a value and later wrote it as the invalid token `inf`). Parsing is
+//!   bounded by [`sibuna_json::Limits`], including a nesting depth of 64.
 //! - [`rankings_archive::MAX_BYTES`] is 48,536 bytes, the largest SBR2 archive. Zig's value
 //!   was 48,528 bytes, because it counted the referrer section header as 4 bytes instead of
 //!   12, so it refused a minute whose two sketches were both full (see that constant). The

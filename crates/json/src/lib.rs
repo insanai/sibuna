@@ -46,7 +46,8 @@
 //! - Numbers keep their source text ([`Number`]) instead of becoming `integer`, `float` or
 //!   `number_string`. [`Number::as_i64`] and [`Number::as_u64`] convert exactly; like
 //!   Zig's typed parsing they accept integral values written with a fraction or exponent
-//!   (`8.0`, `1e3`), but they decide integrality exactly where Zig rounded through `f128`.
+//!   (`8.0`, `1e3`), but they decide exactly whether a value is whole, where Zig rounded
+//!   through `f128`.
 //!   [`Number::is_integer_literal`] is Zig's `isNumberFormattedLikeAnInteger`.
 //! - Duplicate keys are always an error; the `use_first` and `use_last` options are not
 //!   ported, because no Sibuna caller used them and unique keys make [`Object::get`]

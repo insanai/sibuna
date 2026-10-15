@@ -15,8 +15,8 @@
 //! - a byte array may be a string of exactly its length or an array of byte values;
 //! - bounded text and lists longer than their capacity are rejected, never truncated.
 //!
-//! Integrality is decided exactly where Zig rounded through `f128`, and a numeric string
-//! that Zig's `parseFloat` would read as a hexadecimal float is rejected.
+//! Whether a number is whole is decided exactly, where Zig rounded through `f128`, and a
+//! numeric string that Zig's `parseFloat` would read as a hexadecimal float is rejected.
 
 use std::fmt::{self, Write};
 
@@ -732,7 +732,7 @@ pub(crate) fn zig_slice_to_int(text: &str) -> Option<i128> {
     if integer_like(text) {
         return zig_parse_int(text);
     }
-    // Decide integrality exactly on the number's text.
+    // Decide exactly, on the number's text, whether it is whole.
     let syntax = zig_float_syntax(text)?;
     let number = Number::parse(&syntax)?;
     match number.as_i64() {

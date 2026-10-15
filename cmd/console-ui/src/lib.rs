@@ -286,7 +286,10 @@
 //! - The `json_value.zig` reflection decoder is replaced by the protocol crate's
 //!   [`sibuna_console_protocol::codec::Decode`] and the [`json`] helpers. Live statistics
 //!   views decode as `dashboard::View`, which rejects members it does not know where Zig
-//!   ignored them; a refused view restarts the connection like any invalid view.
+//!   ignored them; a refused view restarts the connection like any invalid view. A counter
+//!   sent as a string is read as the protocol reads integers (Zig's `sliceToInt`), so `"+1"`
+//!   and `"1e3"` are accepted where the Zig decoder refused them; whether the value is a
+//!   whole number is decided exactly on the text, never through a float.
 //! - Explicit `refresh()` calls became the once-per-event subscription reconciliation, so
 //!   commands may appear later in the list than in Zig; their set is the same.
 //! - The geometry is forgotten as soon as the bridge asks for the buffer again, and when a

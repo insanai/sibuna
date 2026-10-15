@@ -7,9 +7,9 @@
 //! tag name, or an integer text that names a tag by number.
 //!
 //! One deliberate difference: Zig rounded such floats through binary128 before testing
-//! integrality, so a text with more than about 34 significant digits could round to an
-//! integer (`1.0000000000000000000000000000000000001` read as 1). We decide integrality
-//! exactly and refuse such texts.
+//! whether they were whole, so a text with more than about 34 significant digits could round
+//! to an integer (`1.0000000000000000000000000000000000001` read as 1). We decide exactly
+//! whether the value is whole and refuse such texts.
 
 use super::ErrorKind;
 

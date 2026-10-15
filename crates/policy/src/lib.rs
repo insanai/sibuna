@@ -48,7 +48,7 @@
 //!   Zig accepted the entry and silently never matched it.
 //! - WEIGH arithmetic is widened, so extreme managed weights and difficulties saturate
 //!   where Zig would trap on overflow.
-//! - A number in an integer field whose integrality depends on binary128 rounding (more
+//! - A number in an integer field that is whole or not depending on binary128 rounding (more
 //!   than about 34 significant digits) is judged exactly; Zig could round it to an integer.
 //! - Errors are enums per module carrying Zig's error names (`name()`); a JSON-level loader
 //!   error also reports its byte offset in the `Diagnostic`.
