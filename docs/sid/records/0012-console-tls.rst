@@ -71,6 +71,7 @@ Review history
 - 2026-10-15: corrected the crate list and the API signature after the ``sibuna-tls`` implementation; recorded the stricter webhook rule.
 - 2026-10-15 (Rust port): two further differences from the Zig TLS client, recorded in ``sibuna-tls``. Zig's certificate bundle skipped CA certificates that had already expired when the file was read; rustls (webpki) uses a trust anchor's name and key only and ignores its validity period, the convention of RFC 5280, while the leaf and the intermediates are still checked for expiry. The per-connection 6 MiB allocation ceiling of the Zig peer client is not carried over, because rustls bounds its own buffers (handshake messages, records, and 64 KiB of buffered plaintext by default).
 - 2026-10-15 (Rust port): the console's outbound HTTP client (``sibuna-console::client``, used by the CLI, GeoIP downloads and webhooks) is one module: an ``Origin`` and ``Endpoint`` with an optional pinned address and a ``Connector``, one deadline over connect and exchange, a body bound, and redirects returned to the caller.
+- 2026-10-15 (Rust port): ``sibuna-net``'s outbound module keeps only the address policy and bounded resolution. ``Post``, ``post``, ``Pinned`` and the curl HTTPS path are removed; webhooks and GeoIP downloads use ``sibuna-console::client``.
 
 References
 ----------
