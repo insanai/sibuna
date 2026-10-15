@@ -81,10 +81,11 @@
 //!   hexadecimal float strings, and numbers that are infinite or NaN as `f64` (Zig stored
 //!   such a value and later wrote it as the invalid token `inf`). Parsing is bounded by
 //!   [`sibuna_json::Limits`], including a nesting depth of 64.
-//! - [`rankings_archive::MAX_BYTES`] keeps Zig's value, 48,528 bytes, although the largest
-//!   SBR2 archive is 48,536 bytes; such an archive is refused as it was (see that
-//!   constant). The Zig test that expected `MAX_BYTES` for a paths-only archive was never
-//!   run; its port checks the real length, 37,784 bytes.
+//! - [`rankings_archive::MAX_BYTES`] is 48,536 bytes, the largest SBR2 archive. Zig's value
+//!   was 48,528 bytes, because it counted the referrer section header as 4 bytes instead of
+//!   12, so it refused a minute whose two sketches were both full (see that constant). The
+//!   Zig test that expected `MAX_BYTES` for a paths-only archive was never run; its port
+//!   checks the real length, 37,784 bytes.
 //! - Peer snapshots have a streaming decoder, [`StatsSnapshot::from_json`], beside the
 //!   tree decoder; it accepts and refuses exactly the same documents (the fuzz and
 //!   differential tests compare both).
