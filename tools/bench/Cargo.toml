@@ -1,0 +1,24 @@
+[package]
+name = "sibuna-bench"
+description = "Benchmarks for Sibuna: primitive timings, whole-product runs under wrk and open-loop latency"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+sibuna-crypto = { workspace = true }
+sibuna-json = { workspace = true }
+sibuna-pow = { workspace = true }
+sibuna-patterns = { workspace = true }
+sibuna-cidr = { workspace = true }
+sibuna-policy = { workspace = true }
+sibuna-challenge = { workspace = true }
+sibuna-store = { workspace = true }
+sibuna-http = { workspace = true }
+
+[lints]
+workspace = true
