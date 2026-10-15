@@ -123,6 +123,7 @@ pub mod audit;
 pub mod bound;
 mod error;
 pub mod events;
+pub mod feed;
 pub mod geoip;
 pub mod kiosk;
 pub mod leases;

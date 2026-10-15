@@ -10,6 +10,7 @@ mod accounts;
 mod audit;
 mod deliveries;
 mod events;
+mod feed;
 mod geoip;
 mod kiosk;
 mod leases;
