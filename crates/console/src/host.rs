@@ -21,6 +21,11 @@ pub struct RuleHitSample {
     pub generation: Generation,
     /// The counter values, read from the generation's own counters.
     pub counts: Snapshot<MAX_RULES>,
+    /// The final counter values of the generation the previous sample read, when a
+    /// publication has retired it since; `retired.generation` names it. The daemon keeps a
+    /// retired generation's counters until a sample has read them, so the hits counted
+    /// between the last sample and the publication are not lost.
+    pub retired: Option<Snapshot<MAX_RULES>>,
 }
 
 /// The daemon's side of the console: local effects and live readings.
@@ -48,12 +53,20 @@ pub trait Node: Send + Sync + fmt::Debug {
 
     /// Fills `sample` with the published engine's rule-hit counters and their generation
     /// and returns true, or returns false (leaving `sample` unspecified) when the engine has
-    /// no counters. `sample` is reused across calls so the collector does not allocate.
+    /// no counters. When a publication retired the generation the previous call read, its
+    /// final counters go to `sample.retired` (once), else `sample.retired` is `None`.
+    /// `sample` is reused across calls so the collector does not allocate.
     fn sample_rule_hits(&self, sample: &mut RuleHitSample) -> bool;
 
     /// Returns the policy revision of the engine the node currently serves; 0 before the
     /// first snapshot was applied.
     fn applied_revision(&self) -> u64;
+
+    /// Returns how many data-plane connections the node serves now, for `nodes/local`; 0
+    /// when the node does not report it (the default).
+    fn connection_count(&self) -> u32 {
+        0
+    }
 
     /// Returns the engine the node currently serves, for the policy page's applied rules,
     /// inspection modes and reputation trie size (Zig read the published engine on the

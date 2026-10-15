@@ -11,13 +11,16 @@
 //! # Changes from the Zig version
 //!
 //! Zig's storage owner swapped the engine itself and read the retired generation's final
-//! counters before it began the next one. The console only samples the published engine:
-//! when the sampled generation changes, the old generation's open frame is sealed as a
-//! cutover (never complete) without the hits counted after its last sample, at most one
-//! second's worth. The new generation's first interval starts at its publication time when
-//! that time is plausible on the console's clocks (at most five seconds before the first
-//! sample); otherwise it starts at the first sample, and hits counted before it are reported
-//! as unconfirmed.
+//! counters before it began the next one. Here the daemon publishes engines and the console
+//! samples them: the daemon keeps the counters of the generation the console last sampled
+//! until the next sample has read them (`RuleHitSample::retired`), and the journal folds
+//! those final counters into the old generation's open frame before it seals it as a
+//! cutover (never complete), so no hit counted before the publication is lost. A hit a
+//! request records into the retired counters after that read (a request that began before
+//! the publication) is not counted. The new generation's first interval starts at its
+//! publication time when that time is plausible on the console's clocks (at most five
+//! seconds before the first sample); otherwise it starts at the first sample, and hits
+//! counted before it are reported as unconfirmed.
 
 use std::collections::VecDeque;
 
@@ -87,6 +90,7 @@ impl Default for RuleHitJournal {
 
 impl RuleHitJournal {
     /// Returns the journal's health.
+    #[cfg(test)]
     pub(crate) fn status(&self) -> Status {
         self.status
     }
@@ -278,7 +282,8 @@ impl RuleHitJournal {
         self.sample = sample;
     }
 
-    /// Records one sample: a new generation retires the old one and begins.
+    /// Records one sample: a new generation retires the old one, folding the old one's
+    /// final counters when the sample carries them, and begins.
     pub(crate) fn record(&mut self, sample: &RuleHitSample, now: Clock) {
         let number = sample.generation.number;
         if number == 0 || sample.counts.generation != number {
@@ -286,8 +291,9 @@ impl RuleHitJournal {
         }
         let current = self.generation.as_ref().map(|generation| generation.number);
         if current != Some(number) {
-            if current.is_some() {
-                self.finish(None);
+            if let Some(current) = current {
+                let last = sample.retired.as_ref().filter(|retired| retired.generation == current);
+                self.finish(last.map(|retired| (retired, now)));
             }
             self.begin(&sample.generation, &sample.counts, now);
         }
@@ -459,10 +465,11 @@ mod tests {
         assert!(journal.status().overflow);
     }
 
-    // The console samples only the published engine: a new generation retires the old one
-    // without resetting either generation's counters, and begins at its publication.
+    // A new generation retires the old one without resetting either generation's counters,
+    // folds the old one's final counters (no hit after its last sample is lost), and begins
+    // at its publication.
     #[test]
-    fn a_published_generation_retires_the_old_one_without_resetting_counters() {
+    fn a_published_generation_retires_the_old_one_without_losing_hits() {
         let mut journal = RuleHitJournal::default();
         let old = counters(1);
         let mut matches = Matches::new();
@@ -474,23 +481,29 @@ mod tests {
         old.record(&matches);
         sample.counts = read(&old);
         journal.record(&sample, Clock { utc: 102, ms: 102_000 });
+        // Two more hits after the last sample, before the publication.
+        old.record(&matches);
+        old.record(&matches);
         let new = counters(2);
         new.record(&matches);
         sample.generation = generation(2, 102, 1);
         sample.generation.born = Clock { utc: 102, ms: 102_500 };
         sample.counts = read(&new);
+        sample.retired = Some(read(&old));
         journal.record(&sample, Clock { utc: 103, ms: 103_000 });
         let (span, entries) = journal.pending().unwrap();
-        assert_eq!((span.generation, entries[0].hits, span.complete), (1, Some(2), false));
+        assert_eq!((span.generation, entries[0].hits, span.complete), (1, Some(4), false));
         assert_eq!(journal.current.span.generation, 2);
         assert_eq!(journal.current.span.start_ms, 102_500);
         assert_eq!(journal.current.entries[0].hits, Some(1));
         assert_eq!(journal.status().unconfirmed, 0);
-        // A generation first seen long after its publication starts at the sample.
+        // A generation first seen long after its publication starts at the sample. Final
+        // counters of a generation the journal did not follow are ignored.
         let late = counters(3);
         late.record(&matches);
         sample.generation = generation(3, 10, 1);
         sample.counts = read(&late);
+        sample.retired = Some(read(&old));
         journal.record(&sample, Clock { utc: 104, ms: 104_000 });
         assert_eq!(journal.status().unconfirmed, 1);
         assert_eq!(journal.current.span.observations, 0);
