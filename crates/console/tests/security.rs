@@ -187,6 +187,75 @@ fn bearer_tokens_read_only_within_their_scopes() {
     harness.stop();
 }
 
+// Ported from `console_read_clock_test.zig` "queued investigation rejects expired and
+// password-restricted sessions and required MFA" (the required-MFA case) and "storage reads
+// enforce bearer capabilities and the issuer MFA requirement" (the issuer case). Behind a
+// proxy the console requires administrators to have a second factor.
+#[test]
+fn investigation_refuses_administrators_and_their_tokens_without_a_required_factor() {
+    let config = sibuna_console::Config {
+        listen: "127.0.0.1:0".parse().unwrap(),
+        behind_proxy: true,
+        origin: "https://console.example".into(),
+        trusted_proxies: vec!["127.0.0.1/32".into()],
+        ..sibuna_console::Config::default()
+    };
+    let harness = Harness::start_with("security-required-factor", config, |_| {});
+    let admin = harness.create_user("admin", Role::Admin, false);
+    let session = harness.sign_in(admin, 1);
+    let now = support::unix_now();
+    let proxied = |session: &Session, path: &str, body: &str| {
+        let headers = [
+            ("Cookie", session.cookie.as_str()),
+            ("X-Console-CSRF", session.csrf.as_str()),
+            ("X-Forwarded-Proto", "https"),
+        ];
+        harness.post(path, &headers, body)
+    };
+    for (path, body) in investigation(now) {
+        let reply = proxied(&session, path, &body);
+        assert_eq!((reply.status, reply.code().as_str()), (403, "CONSOLE403"), "{path}");
+    }
+    // The requirement concerns administrators: an operator reads through the same proxy.
+    let operator = harness.create_user("operator", Role::Operator, false);
+    let (path, body) = &investigation(now)[0];
+    let reply = proxied(&harness.sign_in(operator, 1), path, body);
+    assert_eq!(reply.status, 200, "{}", reply.text());
+    // A statistics token issued by that administrator reads nothing, not even minutes.
+    let raw = [3u8; 32];
+    let create = Create {
+        auth: users::Auth::default(),
+        label: Text::new("statistics only").unwrap(),
+        role: Role::Viewer,
+        scopes: Scope::StatsRead.bit(),
+        expires: None,
+        digest: Sha256::digest(&raw),
+    };
+    let issuer = Credential {
+        kind: CredentialKind::Session,
+        digest: Sha256::digest(&cookie_token(&session)),
+        csrf_digest: Sha256::digest(
+            &sibuna_encoding::hex::decode(session.csrf.as_bytes()).unwrap(),
+        ),
+        require_totp: false,
+        client: None,
+    };
+    harness.transact(move |tx| {
+        Box::pin(async move { tokens::create_token(tx, &issuer, &create, now).await })
+    });
+    let bearer = format!("Bearer {}", sibuna_encoding::hex::encode(&raw));
+    for (path, body) in investigation(now) {
+        let headers = [
+            ("Authorization", bearer.as_str()),
+            ("Content-Type", "application/json"),
+            ("X-Forwarded-Proto", "https"),
+        ];
+        let reply = harness.request("POST", path, &headers, body.as_bytes());
+        assert_eq!((reply.status, reply.code().as_str()), (403, "CONSOLE403"), "{path}");
+    }
+    harness.stop();
+}
+
 /// Returns the raw session token of `session`'s cookie.
 fn cookie_token(session: &Session) -> Vec<u8> {
     let hex = session.cookie.strip_prefix("__sibuna_console=").unwrap();

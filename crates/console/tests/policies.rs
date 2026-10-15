@@ -198,3 +198,78 @@ fn edits_need_policy_authority_and_required_mfa() {
     assert_eq!(saved.text(), r#"{"committed":"1","applied":"0"}"#);
     harness.stop();
 }
+
+/// Runs `sql` in a committed transaction of its own.
+fn exec(harness: &Harness, sql: &'static str) {
+    harness.transact(move |tx| {
+        Box::pin(async move {
+            tx.execute(sibuna_storage::Sql::both(sql), &[]).await?;
+            Ok(())
+        })
+    });
+}
+
+/// Returns the integer `sql` selects.
+fn scalar(harness: &Harness, sql: &'static str) -> i64 {
+    harness.transact(move |tx| {
+        Box::pin(async move {
+            let rows = tx.fetch_all(sibuna_storage::Sql::both(sql), &[]).await?;
+            Ok(rows[0][0].as_i64().unwrap())
+        })
+    })
+}
+
+// Ported from `console_inspection_test.zig` "failed inspection audit rolls back settings and
+// revision without partial publication", from `console_limits_test.zig` "limit edits roll
+// back with failed audit and invalid stored limits retain the old engine" (the audit half;
+// the engine half is `persistent.rs`), and from the audit-failure half of
+// `console_store_test.zig` "policy edits commit revision history and audit atomically and
+// reject stale saves".
+#[test]
+fn failed_audits_roll_back_rule_and_inspection_edits() {
+    let harness = Harness::start("policies-audit-failure");
+    let session = admin(&harness, Role::Admin);
+    let limited = r#"{"id":"quota","name":"Quota","action":"allow","path":"/quota",
+        "limits":{"rate":2,"window_seconds":60,"ban_seconds":3}}"#;
+    exec(
+        &harness,
+        "CREATE TRIGGER reject_limit BEFORE INSERT ON console_audit \
+         WHEN NEW.action = 'policy.edit' BEGIN SELECT RAISE(ABORT, 'test rollback'); END",
+    );
+    let failed = edit(&harness, &session, "0", limited);
+    assert_eq!(failed.status, 503, "{}", failed.text());
+    let committed = "SELECT revision FROM policy_revision WHERE id = 1";
+    assert_eq!(scalar(&harness, committed), 0);
+    assert_eq!(scalar(&harness, "SELECT COUNT(*) FROM policies"), 0);
+    assert_eq!(scalar(&harness, "SELECT COUNT(*) FROM console_policy_history"), 0);
+    exec(&harness, "DROP TRIGGER reject_limit");
+    assert_eq!(
+        edit(&harness, &session, "0", limited).text(),
+        r#"{"committed":"1","applied":"0"}"#
+    );
+    let limits = "SELECT limit_rate FROM policies WHERE id = 'quota'";
+    assert_eq!(scalar(&harness, limits), 2);
+
+    exec(
+        &harness,
+        "CREATE TRIGGER reject_inspection BEFORE INSERT ON console_inspection_history \
+         BEGIN SELECT RAISE(ABORT, 'injected failure'); END",
+    );
+    let modes = r#"{"path_traversal":"enforce","sqli":"audit","xss":"enforce","rce":"enforce"}"#;
+    let body = format!(
+        "{{\"expected_revision\":\"1\",\"document\":{}}}",
+        sibuna_console_protocol::codec::to_json(modes)
+    );
+    let path = "/console/api/inspection/edit";
+    let failed = post(&harness, &session, path, &body);
+    assert_eq!(failed.status, 503, "{}", failed.text());
+    assert_eq!(scalar(&harness, committed), 1);
+    assert_eq!(scalar(&harness, "SELECT COUNT(*) FROM policy_inspection"), 0);
+    let audited = "SELECT COUNT(*) FROM console_audit WHERE action = 'inspection.edit'";
+    assert_eq!(scalar(&harness, audited), 0);
+    exec(&harness, "DROP TRIGGER reject_inspection");
+    let saved = post(&harness, &session, path, &body);
+    assert_eq!(saved.text(), r#"{"committed":"2","applied":"0"}"#);
+    assert_eq!(scalar(&harness, audited), 1);
+    harness.stop();
+}
