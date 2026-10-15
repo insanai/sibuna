@@ -24,6 +24,7 @@ use sibuna_net::peers::{PeerTable, PeerTicket};
 use sibuna_net::{IdleTable, Pool};
 use sibuna_store::ban_table::BanTable;
 use sibuna_store::limiter::RateLimiter;
+use sibuna_store::placement::ClientHasher;
 
 use crate::slot::EngineSlot;
 use crate::tasks::TaskPool;
@@ -71,6 +72,9 @@ pub struct Server {
     pub(crate) config: Config,
     pub(crate) slot: Arc<EngineSlot>,
     pub(crate) coordinator: Coordinator,
+    /// Hashes each request's client key once, under a key drawn when the server is built;
+    /// the rate limiters and the ban table derive their placements from that hash.
+    pub(crate) client_hasher: ClientHasher,
     pub(crate) rate_limiter: RateLimiter,
     pub(crate) rule_rate_limiter: RateLimiter,
     /// The challenge budget's own table, so challenge traffic cannot crowd request cells.
@@ -118,6 +122,7 @@ impl Server {
             config,
             slot,
             coordinator,
+            client_hasher: ClientHasher::new(),
             rate_limiter: RateLimiter::with_cells(rate_cells),
             rule_rate_limiter: RateLimiter::with_cells(rate_cells),
             challenge_rate_limiter: RateLimiter::with_cells(rate_cells),

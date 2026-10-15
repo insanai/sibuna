@@ -70,7 +70,7 @@ fn route<'c, W: Write>(ctx: &mut Ctx<'c, W>, spare: &'c mut [u8]) -> io::Result<
     if submission {
         telemetry::observe_submission(ctx);
     }
-    if server.bans.is_banned(ctx.client_key.as_bytes(), ctx.now) {
+    if server.bans.is_banned_hashed(ctx.client_hash, ctx.now) {
         if submission {
             telemetry::observe_banned_submission(ctx);
         }
@@ -115,7 +115,7 @@ fn check_rate<W: Write>(
     scope: u64,
     limits: RateLimits,
 ) -> RateDecision {
-    let decision = limiter.check_scoped(ctx.client_key.as_bytes(), scope, ctx.now_ms, limits);
+    let decision = limiter.check_hashed(ctx.client_hash, scope, ctx.now_ms, limits);
     if decision.evicted {
         ctx.server.metrics.rate_evictions.bump();
     }
@@ -127,7 +127,7 @@ fn check_rate<W: Write>(
 /// whether the ban was recorded.
 pub(crate) fn ban_client<W: Write>(ctx: &Ctx<'_, W>, until: u64) -> bool {
     let metrics = &ctx.server.metrics;
-    match ctx.server.bans.ban(ctx.client_key.as_bytes(), until, ctx.now) {
+    match ctx.server.bans.ban_hashed(ctx.client_hash, until, ctx.now) {
         Ok(()) => {
             metrics.bans_issued.bump();
             true
@@ -383,6 +383,8 @@ pub(crate) fn forward<W: Write>(
         upload: ctx.upload,
         audit: Audit {
             client_ip: ctx.client_ip,
+            peer: ctx.peer,
+            trusts_forwarded: config.trusts_forwarded(),
             status: status.as_bytes(),
             rule: rule_name.as_bytes(),
             scheme: forwarded::scheme(&ctx.request, config.trusts_forwarded()).as_bytes(),

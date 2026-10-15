@@ -51,14 +51,38 @@ fn spoofed_leftmost_entries_cannot_ban_others_reuse_tokens_or_evade_limits() {
     let cookie = hashcash_session(p, "198.51.100.1, 192.0.2.10", "/");
     let own = get(p, "/", "198.51.100.1, 192.0.2.10", BROWSER_UA, &cookie);
     assert!(own.contains("ORIGIN|GET /"), "{}", own.text());
-    assert!(own.contains("X-Real-IP: 192.0.2.10"));
-    assert!(!own.contains("198.51.100.1"), "a client-written entry reached the origin");
+    assert!(own.contains("X-Real-IP: 192.0.2.10\r\n"), "{}", own.text());
+    // The origin gets the chain as a reverse proxy passes it on: the socket peer appended.
+    assert!(own.contains("X-Forwarded-For: 198.51.100.1, 192.0.2.10, 127.0.0.1\r\n"));
     for real in ["192.0.2.11", "203.0.113.200"] {
         let reused = get(p, "/", &format!("198.51.100.1, {real}"), BROWSER_UA, &cookie);
         assert!(reused.contains("Weighing Connection"), "token reused from {real}");
     }
     // Rotating the client-written entry does not make a new client.
     assert_eq!(refused_of_twelve(p, |n| format!("10.0.{}.{}, 192.0.2.77", n / 256, n % 256)), 4);
+}
+
+/// With forwarded trust the origin receives the chain the request arrived with followed by
+/// the socket peer, and the judged client as `X-Real-IP`; without it, only the socket peer,
+/// never an entry the client wrote. Both drop the underscore spelling.
+#[test]
+fn the_origin_receives_the_trusted_chain_and_the_socket_peer() {
+    let spoof = "X_Forwarded_For: 6.6.6.6\r\nX-Real-IP: 6.6.6.7\r\n";
+    let chain = "203.0.113.70, 198.51.100.70";
+    let trusted = server(|_| {});
+    let response = get(trusted.port, "/robots.txt", chain, BROWSER_UA, spoof);
+    assert!(response.contains("ORIGIN|GET /robots.txt"), "{}", response.text());
+    assert!(response.contains("X-Forwarded-For: 203.0.113.70, 198.51.100.70, 127.0.0.1\r\n"));
+    assert!(response.contains("X-Real-IP: 198.51.100.70\r\n"));
+    assert!(!response.contains("6.6.6."), "{}", response.text());
+    let untrusted = server(|config| config.trust_forwarded = Some(false));
+    let response = get(untrusted.port, "/robots.txt", chain, BROWSER_UA, spoof);
+    assert!(response.contains("ORIGIN|GET /robots.txt"), "{}", response.text());
+    assert!(response.contains("X-Forwarded-For: 127.0.0.1\r\n"));
+    assert!(response.contains("X-Real-IP: 127.0.0.1\r\n"));
+    for written in ["203.0.113.70", "198.51.100.70", "6.6.6."] {
+        assert!(!response.contains(written), "{written} reached the origin");
+    }
 }
 
 #[test]

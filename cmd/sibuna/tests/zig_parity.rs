@@ -124,6 +124,13 @@ fn normalize(response: &Response) -> String {
     if volatile.iter().any(|marker| response.text().contains(marker)) {
         text = mask(&text, "Content-Length: ", &['\r']);
     }
+    // The origin's echo of `X-Forwarded-For` differs by design: Zig wrote the judged client
+    // alone, Rust passes the trusted chain on and appends the socket peer (2026-10-15).
+    // `X-Real-IP` still carries the judged client in both and is compared.
+    if response.text().contains("ORIGIN|") {
+        text = mask(&text, "X-Forwarded-For: ", &['\r']);
+        text = mask(&text, "Content-Length: ", &['\r']);
+    }
     text
 }
 

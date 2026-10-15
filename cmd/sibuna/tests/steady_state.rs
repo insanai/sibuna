@@ -123,8 +123,10 @@ fn response_length(stream: &mut TcpStream, request: &[u8]) -> usize {
     }
 }
 
-#[test]
-fn a_warm_connection_serves_every_decision_without_allocating() {
+/// Starts a daemon in front of the allocation-free origin and returns it with one request of
+/// each decision kind, all from one trusted forwarded client: admitted with a session,
+/// challenged (interstitial and JSON), a static path, two WAF denials and health.
+fn daemon_and_requests() -> (support::Fixture, Vec<Vec<u8>>) {
     let mut config = Config {
         upstream_port: start_origin(),
         trust_forwarded: Some(true),
@@ -138,9 +140,8 @@ fn a_warm_connection_serves_every_decision_without_allocating() {
     let mut engine = Engine::new(config.default_difficulty);
     engine.pages = sibuna::recipe::daemon_pages().unwrap();
     let fixture = support::start_server(config, engine, Hooks::default());
-    let port = fixture.port;
     let ip = "192.0.2.77";
-    let cookie = support::hashcash_session(port, ip, "/private");
+    let cookie = support::hashcash_session(fixture.port, ip, "/private");
     let head = |path: &str, extra: &str| {
         format!(
             "GET {path} HTTP/1.1\r\nHost: t\r\nX-Forwarded-For: {ip}\r\n\
@@ -149,7 +150,7 @@ fn a_warm_connection_serves_every_decision_without_allocating() {
         )
         .into_bytes()
     };
-    let requests = [
+    let requests = vec![
         head("/private", &cookie),
         head("/private", support::BROWSER_ACCEPT),
         head("/private", "Accept: application/json\r\n"),
@@ -158,7 +159,13 @@ fn a_warm_connection_serves_every_decision_without_allocating() {
         head("/search?q=%3Cscript%3E", support::BROWSER_ACCEPT),
         head("/__sibuna/health", ""),
     ];
-    let mut stream = TcpStream::connect(support::address(port)).unwrap();
+    (fixture, requests)
+}
+
+#[test]
+fn a_warm_connection_serves_every_decision_without_allocating() {
+    let (fixture, requests) = daemon_and_requests();
+    let mut stream = TcpStream::connect(support::address(fixture.port)).unwrap();
     stream.set_nodelay(true).unwrap();
     let lengths: Vec<usize> = requests.iter().map(|r| response_length(&mut stream, r)).collect();
     let mut buffer = vec![0u8; 64 * 1024];
@@ -179,4 +186,37 @@ fn a_warm_connection_serves_every_decision_without_allocating() {
     COUNTING.store(false, Ordering::SeqCst);
     assert_eq!(served, 0, "allocations on the request path");
     assert_eq!(ALLOCATIONS.load(Ordering::SeqCst), 1);
+}
+
+/// The full cost of a request as a client on loopback sees it: a warm keep-alive round trip
+/// of the admitted (proxied) request and of health, each the median of seven batches of
+/// 2,000 on a connection of their own (a connection serves at most 4,096 requests). The
+/// loopback system calls dominate; run with
+/// `cargo test -p sibuna --release --test steady_state -- --ignored --nocapture`.
+#[test]
+#[ignore = "timing run; use --release"]
+#[allow(clippy::print_stdout)]
+fn warm_round_trip_timing() {
+    const ROUNDS: u32 = 2000;
+    let (fixture, requests) = daemon_and_requests();
+    let mut buffer = vec![0u8; 64 * 1024];
+    for (label, request) in [("admitted, proxied", &requests[0]), ("health", &requests[6])] {
+        let mut batches: Vec<f64> = (0..7)
+            .map(|_| {
+                let mut stream = TcpStream::connect(support::address(fixture.port)).unwrap();
+                stream.set_nodelay(true).unwrap();
+                let length = response_length(&mut stream, request);
+                for _ in 0..100 {
+                    exchange(&mut stream, request, &mut buffer, length);
+                }
+                let start = std::time::Instant::now();
+                for _ in 0..ROUNDS {
+                    exchange(&mut stream, request, &mut buffer, length);
+                }
+                start.elapsed().as_nanos() as f64 / f64::from(ROUNDS)
+            })
+            .collect();
+        batches.sort_by(f64::total_cmp);
+        println!("daemon/round_trip {label:<20} {:>9.0} ns (min {:.0})", batches[3], batches[0]);
+    }
 }

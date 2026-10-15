@@ -15,11 +15,16 @@
 //! appending proxies pass through from the client.
 //!
 //! The address is parsed once per request. Policy reads the parsed address; the rate
-//! limiters and the ban table read a [`ClientKey`], its canonical bytes, so `1.2.3.4`,
-//! `::ffff:1.2.3.4` and `001.2.3.4` are one client. IPv6 clients are aggregated to their
-//! `--ipv6-prefix` network (a /64 by default) for limits and bans, because one subscriber
-//! commonly holds a whole /64 and would otherwise multiply its budget. The text stays for
-//! incidents, logs and the token fingerprint, a format shared with Zig nodes.
+//! limiters and the ban table know the client by a [`ClientKey`], its canonical bytes, so
+//! `1.2.3.4`, `::ffff:1.2.3.4` and `001.2.3.4` are one client. IPv6 clients are aggregated
+//! to their `--ipv6-prefix` network (a /64 by default) for limits and bans, because one
+//! subscriber commonly holds a whole /64 and would otherwise multiply its budget. The key is
+//! hashed once per request with the server's secret [`ClientHasher`], and every table
+//! derives its placement from that [`ClientHash`] (see `sibuna_store::placement`), so a
+//! request pays for one keyed hash, not one per table. The text stays for incidents, logs
+//! and the token fingerprint, a format shared with Zig nodes.
+//!
+//! [`ClientHasher`]: sibuna_store::placement::ClientHasher
 
 use std::io::Write;
 use std::net::{IpAddr, TcpStream};
@@ -27,6 +32,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use sibuna_http::Request;
 use sibuna_net::{Activity, Upload, Workspace};
+use sibuna_store::placement::ClientHash;
 
 use crate::connection::Link;
 use crate::server::Server;
@@ -55,8 +61,11 @@ pub(crate) struct Ctx<'c, W> {
     pub client_ip: &'c [u8],
     /// `client_ip` parsed; `None` only when the peer text itself is not an address.
     pub client_address: Option<IpAddr>,
-    /// The bytes the rate limiters and the ban table know the client by.
-    pub client_key: ClientKey<'c>,
+    /// The keyed hash of the client's [`ClientKey`], computed once; the rate limiters and the
+    /// ban table place the client by it.
+    pub client_hash: ClientHash,
+    /// The socket peer address as text, whatever the forwarded fields say.
+    pub peer: &'c [u8],
     pub user_agent: &'c [u8],
     /// Unix seconds and milliseconds when the request was dispatched.
     pub now: u64,
@@ -78,6 +87,7 @@ impl<'c, W: Write> Ctx<'c, W> {
         let server = link.server;
         let (client_ip, client_address) = resolve_client(server, &request, peer);
         let client_key = ClientKey::new(client_ip, client_address, server.config.ipv6_prefix);
+        let client_hash = server.client_hasher.hash(client_key.as_bytes());
         let user_agent = request.header(b"user-agent").unwrap_or_default();
         let keep_alive =
             request.wants_keep_alive() && declared_body <= request.body.len() && !link.last;
@@ -95,7 +105,8 @@ impl<'c, W: Write> Ctx<'c, W> {
             declared_body,
             client_ip,
             client_address,
-            client_key,
+            client_hash,
+            peer,
             user_agent,
             now: now_ms / 1000,
             now_ms,
