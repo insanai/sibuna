@@ -46,7 +46,8 @@ Console: --console <host:port> (requires --data-dir or --database-url); \
 incident; off by default); --console-capture-header <name> (repeatable, up to 16: keep this \
 header's value in stored heads; credential names stay redacted); --console-key-file <path> \
 (64 hex characters, owner-only permissions); --console-origin <https-origin>; \
---console-behind-proxy; --console-trusted-proxy <CIDR> (repeatable); --console-advertise \
+--console-behind-proxy; --console-cookie-secure (mark session cookies Secure without a \
+proxy); --console-trusted-proxy <CIDR> (repeatable); --console-advertise \
 <origin> (link peers show for this console); --console-location <latitude,longitude> \
 (declared server position on globe); --console-peer <node-id>=<https://origin> (repeatable \
 management peer); --console-peer-key-file <path> (independent owner-only 64-hex key); \
