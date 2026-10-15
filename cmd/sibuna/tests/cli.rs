@@ -172,6 +172,17 @@ fn unusable_secrets_stop_startup() {
     let output = Command::new(SIBUNA).env("SIBUNA_SECRET", "nothex").output().unwrap();
     assert_eq!(output.status.code(), Some(1));
     assert_eq!(stderr(&output), "SIBUNA_SECRET must hold 64 hex characters\n");
+    // A secret that is not UTF-8 is refused, not taken for an unset variable.
+    #[cfg(unix)]
+    {
+        use std::os::unix::ffi::OsStrExt;
+        let mut invalid = vec![b'a'; 63];
+        invalid.push(0xff);
+        let invalid = std::ffi::OsStr::from_bytes(&invalid);
+        let output = Command::new(SIBUNA).env("SIBUNA_SECRET", invalid).output().unwrap();
+        assert_eq!(output.status.code(), Some(1));
+        assert_eq!(stderr(&output), "SIBUNA_SECRET must hold 64 hex characters\n");
+    }
     std::fs::remove_dir_all(dir).unwrap();
 }
 
