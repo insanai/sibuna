@@ -272,6 +272,9 @@ impl Default for Config {
 impl Config {
     /// Connections, idle leases and task slots share one 8192-entry capacity.
     pub const MAX_CONNECTIONS_LIMIT: u32 = 8192;
+    /// The largest `--cluster-node` id: storage numbers incidents per node within a 64-bit
+    /// id, and its schema checks node ids from 1 to this bound (SID 0011).
+    pub const MAX_NODE_ID: u32 = 8_388_607;
 
     /// Returns whether forwarded client addresses are trusted: the explicit choice, or
     /// else true exactly in forward-auth mode.
@@ -441,7 +444,7 @@ Storage (SID 0011):
   --data-dir, -D <path>        One node: persist to the SQLite file <path>/sibuna.db
   --database-url <url>         Cluster: shared PostgreSQL database (postgres://...)
   --database-url-file <path>   Read the database URL from an owner-only file
-  --cluster-node <id>          This node's id (required with a database URL)
+  --cluster-node <id>          This node's id, 1-8388607 (required with a database URL)
   --storage-poll-ms <ms>       Storage tick interval (default: 500)
 
   --verbose, -v                Verbose logging

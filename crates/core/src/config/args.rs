@@ -362,8 +362,9 @@ impl Config {
             "--database-url" => self.database_url = Some(database_url(value)?),
             "--database-url-file" => self.database_url_file = Some(text(value, "a file path")?),
             "--cluster-node" => {
-                let max = u64::from(u32::MAX);
-                self.cluster_node = Some(number(value, 0, max, "a node id")?);
+                // Zig accepted 0, which storage then numbered as node 1 (SID 0011).
+                let max = u64::from(Config::MAX_NODE_ID);
+                self.cluster_node = Some(number(value, 1, max, "a node id 1-8388607")?);
             }
             "--storage-poll-ms" => {
                 self.storage_poll_ms = number(value, 1, 60_000, "milliseconds 1-60000")?;

@@ -222,10 +222,15 @@ fn storage_options_follow_sid_0011() {
     let cluster = parse(&["--database-url", url, "--cluster-node", "3"]).unwrap();
     assert_eq!(cluster.database_url.as_deref(), Some(url));
     assert_eq!(cluster.storage_backend(), StorageBackend::Postgres);
-    let from_file = parse(&["--database-url-file", "/run/db", "--cluster-node", "0"]).unwrap();
+    let from_file = parse(&["--database-url-file", "/run/db", "--cluster-node", "2"]).unwrap();
     assert_eq!(from_file.database_url_file.as_deref(), Some("/run/db"));
     assert_eq!(from_file.storage_backend(), StorageBackend::Postgres);
 
+    // Node 0 would share storage node 1; ids beyond the schema's bound are refused too.
+    for id in ["0", "8388608"] {
+        assert!(parse(&["--database-url", url, "--cluster-node", id]).is_err(), "{id}");
+    }
+    assert_eq!(parse(&["--cluster-node", "8388607"]).unwrap().node_id(), 8_388_607);
     let missing = parse(&["--database-url", url]).unwrap_err();
     assert_eq!(
         (missing.kind, missing.option.as_str()),
