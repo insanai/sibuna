@@ -2,14 +2,17 @@
 //!
 //! One OS thread owns a current-thread tokio runtime and the connection pool. Request
 //! threads only copy incidents into a bounded ring and never wait. Other callers (the daemon,
-//! the console) send jobs to the thread and wait for the answer.
+//! the console) send jobs to the thread and wait for the answer. The job queue is bounded
+//! ([`JOB_QUEUE`]) and refuses at once when full, and the thread runs at most
+//! [`JOBS_PER_TICK`] jobs before it checks whether its tick is due, so a burst of console
+//! requests can neither grow memory nor starve incident batches and policy publication.
 
 use std::fmt;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
-use std::sync::mpsc;
+use std::sync::mpsc::{self, TrySendError};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
@@ -35,6 +38,12 @@ const STARTUP_RETRY: Duration = Duration::from_millis(100);
 pub const SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(15);
 /// The largest node id: incident ids keep the node in 23 bits so they stay positive.
 pub const MAX_NODE_ID: u32 = 0x7f_ffff;
+/// The most jobs that wait for the storage thread, the capacity of the Zig console mailbox.
+/// A job submitted beyond it is refused with [`StorageError::Busy`].
+pub const JOB_QUEUE: usize = 32;
+/// The most jobs the storage thread runs before it checks whether its tick is due, as the
+/// Zig storage thread capped console work per tick.
+pub const JOBS_PER_TICK: usize = 16;
 
 /// A future the storage thread runs; it may borrow nothing and need not be `Send`.
 pub type LocalFuture<T> = Pin<Box<dyn Future<Output = T>>>;
@@ -92,7 +101,7 @@ impl fmt::Debug for Hooks {
 /// The running storage layer. Dropping it shuts it down.
 pub struct Storage {
     shared: Arc<Shared>,
-    commands: mpsc::Sender<Job>,
+    commands: mpsc::SyncSender<Job>,
     thread: Option<JoinHandle<bool>>,
 }
 
@@ -121,7 +130,7 @@ impl Storage {
         let settings = Settings { node, ban_seconds: config.ban_seconds };
         let poll = Duration::from_millis(config.storage_poll_ms).max(MIN_POLL);
         let shared = Arc::new(Shared::new(Arc::clone(&hooks.metrics)));
-        let (commands, jobs) = mpsc::channel::<Job>();
+        let (commands, jobs) = mpsc::sync_channel::<Job>(JOB_QUEUE);
         let (ready_tx, ready_rx) = mpsc::sync_channel::<Result<(), StorageError>>(1);
         let thread_shared = Arc::clone(&shared);
         let thread = std::thread::Builder::new()
@@ -160,9 +169,12 @@ impl Storage {
     }
 
     /// Runs `job` on the storage thread with the database handle and returns its result.
-    /// The calling thread waits, so request threads must not call this.
+    /// The calling thread waits for the job to run, so request threads must not call this;
+    /// it never waits for room in the queue.
     ///
-    /// Fails with [`StorageError::Stopped`] when the thread is gone, or with the job's error.
+    /// Fails with [`StorageError::Busy`] at once when [`JOB_QUEUE`] jobs are already waiting
+    /// (a console answers 503), with [`StorageError::Stopped`] when the thread is gone, or
+    /// with the job's error.
     pub fn with_database<T, F, Fut>(&self, job: F) -> Result<T, StorageError>
     where
         T: Send + 'static,
@@ -175,7 +187,10 @@ impl Storage {
                 let _ = reply_tx.send(job(db).await);
             })
         });
-        self.commands.send(boxed).map_err(|_| StorageError::Stopped)?;
+        self.commands.try_send(boxed).map_err(|error| match error {
+            TrySendError::Full(_) => StorageError::Busy,
+            TrySendError::Disconnected(_) => StorageError::Stopped,
+        })?;
         self.shared.wake.notify_one();
         reply_rx.recv().map_err(|_| StorageError::Stopped)?
     }
@@ -263,17 +278,19 @@ async fn open_with_retry(
     }
 }
 
-/// The storage thread's loop: run jobs, tick every `poll` (sooner after a policy
-/// notification, later while the database fails), then flush on shutdown.
+/// The storage thread's loop: run queued jobs, at most [`JOBS_PER_TICK`] at a time, tick
+/// every `poll` (sooner after a policy notification, later while the database fails), then
+/// flush on shutdown.
+///
+/// A due tick waits for at most [`JOBS_PER_TICK`] jobs plus the one running, however many
+/// callers keep the queue full.
 async fn serve(mut worker: Worker, jobs: mpsc::Receiver<Job>, poll: Duration) -> bool {
     let shared = Arc::clone(&worker.shared);
     let listener = crate::listen::start(&worker.db, Arc::clone(&shared));
     let mut failures = 0u32;
     let mut next_tick = tokio::time::Instant::now() + poll;
     while !worker.is_stopping() {
-        while let Ok(job) = jobs.try_recv() {
-            job(worker.db.clone()).await;
-        }
+        let backlog = run_jobs(&jobs, &worker.db).await;
         let notified = shared.policy_notified.swap(false, Ordering::Relaxed);
         if notified || tokio::time::Instant::now() >= next_tick {
             let healthy = match worker.tick().await {
@@ -286,7 +303,13 @@ async fn serve(mut worker: Worker, jobs: mpsc::Receiver<Job>, poll: Duration) ->
             failures = if healthy { 0 } else { failures.saturating_add(1) };
             next_tick = tokio::time::Instant::now() + backoff(poll, failures);
         }
-        let _ = tokio::time::timeout_at(next_tick, shared.wake.notified()).await;
+        if backlog {
+            // More jobs may wait, and their wake-ups were merged into one permit; let the
+            // listener run, then continue without sleeping.
+            tokio::task::yield_now().await;
+        } else {
+            let _ = tokio::time::timeout_at(next_tick, shared.wake.notified()).await;
+        }
     }
     if let Some(listener) = listener {
         listener.abort();
@@ -294,6 +317,16 @@ async fn serve(mut worker: Worker, jobs: mpsc::Receiver<Job>, poll: Duration) ->
     let flushed = tokio::time::timeout(SHUTDOWN_TIMEOUT, worker.flush()).await.unwrap_or(false);
     let closed = tokio::time::timeout(SHUTDOWN_TIMEOUT, worker.db.close()).await.is_ok();
     flushed && closed
+}
+
+/// Runs at most [`JOBS_PER_TICK`] queued jobs in order. Returns true when it stopped at the
+/// cap, so more jobs may be waiting.
+async fn run_jobs(jobs: &mpsc::Receiver<Job>, db: &Database) -> bool {
+    for _ in 0..JOBS_PER_TICK {
+        let Ok(job) = jobs.try_recv() else { return false };
+        job(db.clone()).await;
+    }
+    true
 }
 
 /// The wait before the next tick after `failures` failed ticks in a row: the poll interval

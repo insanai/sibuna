@@ -5,15 +5,19 @@
 
 mod common;
 
-use std::sync::Arc;
-use std::time::Duration;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::{Arc, mpsc};
+use std::time::{Duration, Instant};
 
 use common::{
     PostgresDb, block_on, postgres_config, recording_hooks, scratch_dir, sqlite_config, unix_now,
     wait_until,
 };
 use sibuna_core::{Config, Incident};
-use sibuna_storage::{Database, PolicyAction, RuleLimits, Sql, Storage, Target};
+use sibuna_storage::{
+    Database, Hooks, JOB_QUEUE, JOBS_PER_TICK, PolicyAction, RuleLimits, Sql, Storage,
+    StorageError, Target,
+};
 
 fn incident(index: u64, category: &'static str) -> Incident<'static> {
     Incident {
@@ -122,5 +126,155 @@ fn a_direct_operator_insert_bumps_the_revision_and_reaches_a_running_node() {
     }
     if let Some(db) = PostgresDb::create("operator") {
         operator_insert_reaches_the_node(&postgres_config(&db.url, 1, 1000), |sql| db.exec(sql));
+    }
+}
+
+/// What a submitter saw: `true` for an accepted job, `false` for `Busy`.
+fn outcome(result: Result<(), StorageError>) -> bool {
+    match result {
+        Ok(()) => true,
+        Err(StorageError::Busy) => false,
+        Err(other) => panic!("unexpected {other}"),
+    }
+}
+
+/// Holds the storage thread in one job, fills the queue from other threads, and checks that
+/// every submission beyond [`JOB_QUEUE`] is refused at once while the accepted ones all run
+/// once the thread is free again.
+fn full_queue_refuses_at_once(config: &Config) {
+    let storage = Storage::start(config, Hooks::default()).expect("start");
+    let extra = 8;
+    std::thread::scope(|scope| {
+        let (started_tx, started_rx) = mpsc::channel();
+        let (gate_tx, gate_rx) = mpsc::channel::<()>();
+        let blocker = scope.spawn(|| {
+            // Blocking inside the job holds the whole storage thread, which is the point.
+            storage.with_database(move |_db| async move {
+                started_tx.send(()).unwrap();
+                gate_rx.recv().unwrap();
+                Ok(())
+            })
+        });
+        started_rx.recv_timeout(Duration::from_secs(5)).expect("the blocker runs");
+        let (results_tx, results_rx) = mpsc::channel();
+        for _ in 0..JOB_QUEUE + extra {
+            let results = results_tx.clone();
+            let storage = &storage;
+            scope.spawn(move || {
+                let result = storage.with_database(|_db| async { Ok(()) });
+                results.send(outcome(result)).unwrap();
+            });
+        }
+        // While the thread is held no accepted job can finish, so every early answer is a
+        // refusal, and refusals come without waiting for the thread.
+        for _ in 0..extra {
+            let accepted = results_rx.recv_timeout(Duration::from_secs(2)).expect("refused");
+            assert!(!accepted, "an accepted job finished while the thread was held");
+        }
+        let start = Instant::now();
+        assert!(!outcome(storage.with_database(|_db| async { Ok(()) })));
+        assert!(start.elapsed() < Duration::from_millis(100), "a refusal does not wait");
+        assert!(results_rx.recv_timeout(Duration::from_millis(100)).is_err());
+        gate_tx.send(()).unwrap();
+        blocker.join().unwrap().unwrap();
+        for _ in 0..JOB_QUEUE {
+            let accepted = results_rx.recv_timeout(Duration::from_secs(5)).expect("answer");
+            assert!(accepted, "exactly the queue's capacity was accepted");
+        }
+    });
+    assert!(storage.shutdown());
+}
+
+#[test]
+fn a_full_job_queue_refuses_at_once() {
+    if cfg!(feature = "sqlite") {
+        let dir = scratch_dir("busy");
+        full_queue_refuses_at_once(&sqlite_config(&dir, 50));
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+    if let Some(db) = PostgresDb::create("busy") {
+        full_queue_refuses_at_once(&postgres_config(&db.url, 1, 50));
+    }
+}
+
+/// How long each flooding job holds the storage thread.
+const SLOW_JOB: Duration = Duration::from_millis(20);
+/// The poll interval of the flood test.
+const FLOOD_POLL_MS: u64 = 50;
+
+/// The longest a due tick may wait under a flood: one poll interval, the job cap and the
+/// job already running, plus slack for the tick's own work on a loaded test machine.
+fn flood_bound() -> Duration {
+    let jobs = u32::try_from(JOBS_PER_TICK + 1).unwrap();
+    Duration::from_millis(FLOOD_POLL_MS) + SLOW_JOB * jobs + Duration::from_millis(500)
+}
+
+/// Keeps the job queue full of slow jobs from many threads, and checks that queued
+/// incidents are persisted and an operator's write is published within [`flood_bound`].
+fn flood_does_not_starve_ticks(config: &Config, operator: impl FnOnce(&'static str)) {
+    let (hooks, latest) = recording_hooks();
+    let metrics = Arc::clone(&hooks.metrics);
+    let storage = Storage::start(config, hooks).expect("start");
+    let before = latest.lock().unwrap().as_ref().map(|snapshot| snapshot.revision).unwrap();
+    let stop = AtomicBool::new(false);
+    let (ran, refused) = (AtomicUsize::new(0), AtomicUsize::new(0));
+    std::thread::scope(|scope| {
+        for _ in 0..2 * JOB_QUEUE {
+            scope.spawn(|| {
+                while !stop.load(Ordering::Relaxed) {
+                    let slow = |_db| async {
+                        tokio::time::sleep(SLOW_JOB).await;
+                        Ok(())
+                    };
+                    match storage.with_database(slow) {
+                        Ok(()) => ran.fetch_add(1, Ordering::Relaxed),
+                        Err(StorageError::Busy) => {
+                            std::thread::sleep(Duration::from_millis(1));
+                            refused.fetch_add(1, Ordering::Relaxed)
+                        }
+                        Err(other) => panic!("unexpected {other}"),
+                    };
+                }
+            });
+        }
+        assert!(
+            wait_until(Duration::from_secs(5), || refused.load(Ordering::Relaxed) > 0).is_some()
+        );
+        for index in 0..10 {
+            storage.record_incident(&incident(index, "waf:sqli"));
+        }
+        let persisted =
+            wait_until(Duration::from_secs(10), || metrics.incidents_persisted.value() == 10);
+        operator(OPERATOR_INSERT);
+        let published = wait_until(Duration::from_secs(10), || {
+            latest.lock().unwrap().as_ref().is_some_and(|snapshot| snapshot.revision > before)
+        });
+        stop.store(true, Ordering::Relaxed);
+        let persisted = persisted.expect("incidents persist under a flood");
+        let published = published.expect("the policy is published under a flood");
+        assert!(persisted <= flood_bound(), "incidents waited {persisted:?}");
+        assert!(published <= flood_bound(), "publication waited {published:?}");
+    });
+    assert!(ran.load(Ordering::Relaxed) > JOBS_PER_TICK, "the flood ran jobs");
+    assert!(storage.shutdown());
+}
+
+#[test]
+fn a_flood_of_slow_jobs_does_not_delay_incidents_or_policy_beyond_the_job_cap() {
+    if cfg!(feature = "sqlite") {
+        let dir = scratch_dir("flood");
+        let target = Target::Sqlite(dir.join("sibuna.db"));
+        flood_does_not_starve_ticks(&sqlite_config(&dir, FLOOD_POLL_MS), |sql| {
+            block_on(async move {
+                let operator = Database::open(&target).await.unwrap();
+                operator.execute_script(sql).await.unwrap();
+                operator.close().await;
+            });
+        });
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+    if let Some(db) = PostgresDb::create("flood") {
+        let config = postgres_config(&db.url, 1, FLOOD_POLL_MS);
+        flood_does_not_starve_ticks(&config, |sql| db.exec(sql));
     }
 }

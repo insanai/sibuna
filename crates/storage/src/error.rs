@@ -70,6 +70,9 @@ pub enum StorageError {
     UnsupportedColumnType(String),
     /// A search query is longer than [`crate::MAX_SEARCH_QUERY`] bytes.
     SearchQueryTooLong,
+    /// The storage thread's job queue is full; the job was not queued. Retrying later may
+    /// succeed.
+    Busy,
     /// The storage thread has stopped, so the request could not be served.
     Stopped,
     /// The storage thread or its runtime could not be created.
@@ -126,10 +129,11 @@ impl StorageError {
     }
 
     /// Returns true when retrying later may succeed: the database was unreachable, busy, or
-    /// aborted the transaction for a conflict with another writer.
+    /// aborted the transaction for a conflict with another writer, or the storage thread's
+    /// job queue was full.
     pub fn is_transient(&self) -> bool {
         let StorageError::Database(error) = self else {
-            return matches!(self, StorageError::PolicyRevisionChanged);
+            return matches!(self, StorageError::PolicyRevisionChanged | StorageError::Busy);
         };
         match error {
             sqlx::Error::Io(_) | sqlx::Error::PoolTimedOut | sqlx::Error::Protocol(_) => true,
@@ -195,6 +199,7 @@ impl fmt::Display for StorageError {
                 write!(f, "cannot decode a result column of type {name}")
             }
             StorageError::SearchQueryTooLong => write!(f, "the search query is too long"),
+            StorageError::Busy => write!(f, "the storage thread has too many queued jobs"),
             StorageError::Stopped => write!(f, "the storage thread has stopped"),
             StorageError::Thread(error) => write!(f, "cannot start the storage thread: {error}"),
         }

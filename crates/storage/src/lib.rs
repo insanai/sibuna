@@ -124,6 +124,12 @@
 //!   `close_done` flag of the bounded close: [`Storage::start`] builds everything on the
 //!   storage thread and reports through a channel; [`Storage::shutdown`] (or `Drop`) joins
 //!   the thread, which bounds its own flush and close with `tokio::time::timeout`.
+//! - The console mailbox (32 fixed slots with tickets, states, abandonment and completion
+//!   events): a bounded channel of [`JOB_QUEUE`] boxed jobs, each answering through a
+//!   one-shot channel of its own, so a caller that gives up simply drops its receiver. A
+//!   full queue refuses at once with [`StorageError::Busy`], and the storage thread runs at
+//!   most [`JOBS_PER_TICK`] jobs before it checks its tick, as Zig's tick took at most 16.
+//!   The mailbox's urgent and background priorities are not kept: jobs run in order.
 //! - `Db` as a tagged union with `unreachable` arms for builds without a cluster: the
 //!   [`Database`] enum has exactly the variants of the enabled cargo features.
 
@@ -162,7 +168,7 @@ pub use policy::{
 };
 pub use schema::{Migration, MigrationSet};
 pub use storage::{
-    EmbedFn, ErrorFn, Hooks, LocalFuture, MAX_BACKOFF, MAX_NODE_ID, MIN_POLL, PublishFn,
-    SHUTDOWN_TIMEOUT, STARTUP_TIMEOUT, Storage, TickHook,
+    EmbedFn, ErrorFn, Hooks, JOB_QUEUE, JOBS_PER_TICK, LocalFuture, MAX_BACKOFF, MAX_NODE_ID,
+    MIN_POLL, PublishFn, SHUTDOWN_TIMEOUT, STARTUP_TIMEOUT, Storage, TickHook,
 };
 pub use url_file::{MAX_URL_FILE, read_database_url_file};
