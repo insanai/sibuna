@@ -9,6 +9,7 @@ repository.workspace = true
 authors.workspace = true
 
 [dependencies]
+sibuna-core = { workspace = true }
 sibuna-crypto = { workspace = true }
 sibuna-encoding = { workspace = true }
 sibuna-pow = { workspace = true }
