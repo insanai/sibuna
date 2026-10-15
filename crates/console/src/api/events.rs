@@ -217,11 +217,12 @@ pub(crate) fn read_page(
     let format = form.format;
     let input = form.into_query(shared, call, export)?;
     let credential = call.credential(shared)?;
+    let bound = work_bound(shared);
     let now = call.now;
     let page = shared
         .storage
         .transact(move |tx| {
-            Box::pin(async move { query_events(tx, &credential, &input, work_bound(), now).await })
+            Box::pin(async move { query_events(tx, &credential, &input, bound, now).await })
         })
         .map_err(|failure| read_error(failure, "CONSOLEEVENTS"))?;
     Ok((format, page))

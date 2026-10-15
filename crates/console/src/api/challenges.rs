@@ -128,12 +128,13 @@ fn summary(shared: &Shared, context: &mut Context<'_>, call: &Call) -> Result<()
         ..challenge_minutes::Query::default()
     };
     let credential = call.credential(shared)?;
+    let bound = work_bound(shared);
     let summary = shared
         .storage
         .transact(move |tx| {
-            Box::pin(async move {
-                summarize_challenges(tx, &credential, &query, work_bound(), now).await
-            })
+            Box::pin(
+                async move { summarize_challenges(tx, &credential, &query, bound, now).await },
+            )
         })
         .map_err(|failure| read_error(failure, CODE))?;
     Ok(reply::json(context, &summary)?)

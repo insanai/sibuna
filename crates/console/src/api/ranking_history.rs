@@ -34,11 +34,12 @@ pub fn handle(shared: &Shared, context: &mut Context<'_>, call: &Call) -> Result
     };
     ranking_history::validate(&query).map_err(|_| RouteError::fail(400, "RANKHISTORY"))?;
     let credential = call.credential(shared)?;
+    let bound = work_bound(shared);
     let now = call.now;
     let page = shared
         .storage
         .transact(move |tx| {
-            Box::pin(async move { read_history(tx, &credential, &query, work_bound(), now).await })
+            Box::pin(async move { read_history(tx, &credential, &query, bound, now).await })
         })
         .map_err(|failure| match failure.failure() {
             sibuna_console_protocol::storage::Failure::Conflict => {

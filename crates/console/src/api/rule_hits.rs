@@ -37,9 +37,10 @@ pub fn handle(shared: &Shared, context: &mut Context<'_>, call: &Call) -> Result
     };
     rule_hit_history::validate(&query).map_err(|_| RouteError::fail(400, "CONSOLE400"))?;
     let credential = call.credential(shared)?;
+    let bound = work_bound(shared);
     let now = call.now;
     let part = shared.storage.transact(move |tx| {
-        Box::pin(async move { read_history(tx, &credential, &query, work_bound(), now).await })
+        Box::pin(async move { read_history(tx, &credential, &query, bound, now).await })
     });
     match part {
         Ok(part) => Ok(reply::json(context, &part)?),

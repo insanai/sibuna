@@ -50,11 +50,10 @@ pub fn handle(shared: &Shared, context: &mut Context<'_>, call: &Call) -> Result
         limit: request.limit,
     };
     let credential = call.credential(shared)?;
+    let bound = work_bound(shared);
     if summarized {
         let part = shared.storage.transact(move |tx| {
-            Box::pin(
-                async move { summarize_minutes(tx, &credential, &query, work_bound(), now).await },
-            )
+            Box::pin(async move { summarize_minutes(tx, &credential, &query, bound, now).await })
         });
         return match part {
             Ok(part) => Ok(reply::json(context, &part)?),

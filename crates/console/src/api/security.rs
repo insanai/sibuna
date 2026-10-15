@@ -38,13 +38,12 @@ pub fn handle(shared: &Shared, context: &mut Context<'_>, call: &Call) -> Result
         aggregate_only,
     };
     let credential = call.credential(shared)?;
+    let bound = work_bound(shared);
     let now = call.now;
     let page = shared
         .storage
         .transact(move |tx| {
-            Box::pin(
-                async move { query_security(tx, &credential, &input, work_bound(), now).await },
-            )
+            Box::pin(async move { query_security(tx, &credential, &input, bound, now).await })
         })
         .map_err(|failure| read_error(failure, "CONSOLESECURITY"))?;
     Ok(reply::json(context, &page)?)

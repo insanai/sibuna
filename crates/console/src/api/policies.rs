@@ -146,10 +146,10 @@ pub(crate) fn optional_decimal(text: Option<&str>) -> Result<Option<u64>, RouteE
     text.map(decimal).transpose()
 }
 
-/// The work bound of aggregate reads: SID 0013's defaults, until the daemon passes
-/// `--console-query-steps`.
-pub(crate) fn work_bound() -> WorkBound {
-    WorkBound::default()
+/// The work bound of aggregate reads: `--console-query-steps` SQLite steps
+/// ([`crate::Config::query_steps`]) and SID 0013's PostgreSQL statement timeout.
+pub(crate) fn work_bound(shared: &Shared) -> WorkBound {
+    WorkBound { sqlite_steps: shared.config.query_steps, ..WorkBound::default() }
 }
 
 /// Returns `text` cut to [`DISPLAY`] bytes at a character boundary, and whether it was

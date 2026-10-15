@@ -193,13 +193,14 @@ fn replay(shared: &Shared, context: &mut Context<'_>, call: &Call) -> Result<(),
         hours: form.hours,
     };
     let credential = call.credential(shared)?;
+    let bound = work_bound(shared);
     let (base, now) = (Base::of(shared), call.now);
     let mut summary = shared
         .storage
         .transact(move |tx| {
             Box::pin(async move {
                 let options = base.options();
-                stored::replay(tx, &credential, &options, &input, work_bound(), now).await
+                stored::replay(tx, &credential, &options, &input, bound, now).await
             })
         })
         .map_err(workflow_error)?;

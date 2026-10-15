@@ -30,6 +30,12 @@ pub const MAX_PROXY: usize = 49;
 pub const MAX_ORIGIN: usize = 255;
 /// The most probed data-plane listeners.
 pub const MAX_PROBES: usize = 8;
+/// The fewest SQLite steps one aggregate read may take (`--console-query-steps`).
+pub const MIN_QUERY_STEPS: u64 = 100_000;
+/// The most SQLite steps one aggregate read may take.
+pub const MAX_QUERY_STEPS: u64 = 50_000_000;
+/// The SQLite steps one aggregate read may take by default (SID 0013).
+pub const DEFAULT_QUERY_STEPS: u64 = 4_000_000;
 
 /// One probed data-plane listener (`--console-probe <node>=http://<ip>[:port]`).
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -76,6 +82,9 @@ pub struct Config {
     pub peers: Peers,
     /// Slot quotas and the memory budget.
     pub budget: Budget,
+    /// The SQLite steps one aggregate read (Security, Events, history, replay) may take
+    /// (`--console-query-steps`), from [`MIN_QUERY_STEPS`] to [`MAX_QUERY_STEPS`].
+    pub query_steps: u64,
 }
 
 impl Default for Config {
@@ -92,6 +101,7 @@ impl Default for Config {
             probes: Vec::new(),
             peers: Peers::default(),
             budget: Budget::default(),
+            query_steps: DEFAULT_QUERY_STEPS,
         }
     }
 }
@@ -121,6 +131,8 @@ pub enum ConfigError {
     DuplicateProbe,
     /// The management peers are invalid.
     Peers(PeerConfigError),
+    /// The query steps are outside [`MIN_QUERY_STEPS`] to [`MAX_QUERY_STEPS`].
+    InvalidQuerySteps,
 }
 
 impl ConfigError {
@@ -144,6 +156,7 @@ impl ConfigError {
             }
             ConfigError::DuplicateProbe => "Probe each node once.",
             ConfigError::Peers(error) => error.hint(),
+            ConfigError::InvalidQuerySteps => "Give 100000 to 50000000 query steps.",
         }
     }
 }
@@ -163,6 +176,7 @@ impl fmt::Display for ConfigError {
             ConfigError::InvalidProbe => f.write_str("invalid console probe"),
             ConfigError::DuplicateProbe => f.write_str("duplicate console probe"),
             ConfigError::Peers(error) => error.fmt(f),
+            ConfigError::InvalidQuerySteps => f.write_str("invalid console query steps"),
         }
     }
 }
@@ -182,8 +196,12 @@ impl Config {
     ///
     /// Fails with the first [`ConfigError`] that applies, in Zig's order: the budget, the
     /// location, the advertised URL, the probes, the peers, then the loopback rule and,
-    /// behind a proxy, the trusted networks and the origin.
+    /// behind a proxy, the trusted networks and the origin. The query steps (which Zig's
+    /// flag parser checked) are checked first.
     pub fn validate(&self, node_id: u32) -> Result<(), ConfigError> {
+        if !(MIN_QUERY_STEPS..=MAX_QUERY_STEPS).contains(&self.query_steps) {
+            return Err(ConfigError::InvalidQuerySteps);
+        }
         self.budget.validate().map_err(ConfigError::Budget)?;
         if self.server_location.is_some_and(|location| !location.is_valid()) {
             return Err(ConfigError::InvalidLocation);
