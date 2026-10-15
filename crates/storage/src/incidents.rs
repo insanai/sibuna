@@ -1,6 +1,11 @@
 //! Incident records: the fixed-size copy a request thread queues, the prepared batch the
 //! storage thread writes, the durable receipt, and forensic search.
 //!
+//! The user agent, path and payload are stored as the raw bytes the request carried, because
+//! an investigator needs an attack's exact bytes (SID 0011). Full-text search indexes a lossy
+//! UTF-8 rendering of the path and the payload (see `render`): in `incidents_fts` on SQLite,
+//! and in the text column `search_text` that feeds the generated `tsvector` on PostgreSQL.
+//!
 //! An incident id is `(node << 40) | sequence`. Each node keeps the receipt
 //! `incident_cursor_<node>` in `sibuna_meta`: the sequence after its last committed batch.
 //! The receipt advances in the same transaction as the batch, and every insert of the batch
@@ -12,7 +17,9 @@ use sibuna_core::Incident;
 use crate::campaigns::{
     CampaignWindow, Embedding, NODE_SHIFT, SEQUENCE_LIMIT, dot, embedding_bytes, normalize,
 };
-use crate::database::{Cell, Database, Dialect, Param, Sql, Transaction, int_at, text_at};
+use crate::database::{
+    Cell, Database, Dialect, Param, Sql, Transaction, bytes_at, int_at, text_at,
+};
 use crate::error::StorageError;
 use crate::policy::sql_time;
 
@@ -76,8 +83,9 @@ impl IncidentRecord {
 }
 
 /// Database text from captured bytes: invalid UTF-8 becomes U+FFFD and NUL bytes are
-/// dropped, because PostgreSQL text cannot hold them (Zig's quoting dropped them too).
-fn text(bytes: &[u8]) -> String {
+/// dropped, because PostgreSQL text cannot hold them. Used for the text columns (client
+/// address, method, category) and for the search rendering of the byte columns.
+fn render(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes).chars().filter(|&c| c != '\0').collect()
 }
 
@@ -87,11 +95,15 @@ fn text(bytes: &[u8]) -> String {
 pub(crate) struct PreparedIncident {
     pub(crate) id: i64,
     client_ip: String,
-    user_agent: String,
+    user_agent: Vec<u8>,
     method: String,
-    path: String,
+    path: Vec<u8>,
     category: String,
-    payload: String,
+    payload: Vec<u8>,
+    /// The rendering of `path` that full-text search indexes.
+    search_path: String,
+    /// The rendering of `payload` that full-text search indexes.
+    search_payload: String,
     embedding: [u8; 256],
     pub(crate) unit: Embedding,
     pub(crate) campaign: i64,
@@ -145,17 +157,19 @@ pub(crate) fn prepare(
             }
         }
         let campaign = nearest.filter(|found| found.is_close()).map_or(id, |found| found.campaign);
-        let category = text(record.category.as_bytes());
+        let category = render(record.category.as_bytes());
         let ban_until = (category == "honeypot")
             .then(|| sql_time(record.now.saturating_add(context.ban_seconds)));
         incidents.push(PreparedIncident {
             id,
-            client_ip: text(record.client_ip.as_bytes()),
-            user_agent: text(record.user_agent.as_bytes()),
-            method: text(record.method.as_bytes()),
-            path: text(record.path.as_bytes()),
+            client_ip: render(record.client_ip.as_bytes()),
+            user_agent: record.user_agent.as_bytes().to_vec(),
+            method: render(record.method.as_bytes()),
+            path: record.path.as_bytes().to_vec(),
             category,
-            payload: text(record.payload.as_bytes()),
+            payload: record.payload.as_bytes().to_vec(),
+            search_path: render(record.path.as_bytes()),
+            search_payload: render(record.payload.as_bytes()),
             embedding: embedding_bytes(&embedding),
             unit,
             campaign,
@@ -179,13 +193,28 @@ macro_rules! guarded {
     };
 }
 
-const INSERT_INCIDENT: Sql = Sql::both(guarded!(
-    "INSERT INTO security_incidents (id, node_id, client_ip, user_agent, method, path, \
-     violation_category, offending_payload, campaign_id, recorded_at, embedding) \
-     SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11",
-    "$12",
-    "$13"
-));
+/// SQLite binds the first 13 parameters of [`write_incident`]'s row; PostgreSQL also binds
+/// the two search renderings, which it joins into `search_text`.
+const INSERT_INCIDENT: Sql = Sql {
+    sqlite: guarded!(
+        "INSERT INTO security_incidents (id, node_id, client_ip, user_agent, method, path, \
+         violation_category, offending_payload, campaign_id, recorded_at, embedding) \
+         SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11",
+        "$12",
+        "$13"
+    ),
+    postgres: guarded!(
+        "INSERT INTO security_incidents (id, node_id, client_ip, user_agent, method, path, \
+         violation_category, offending_payload, campaign_id, recorded_at, embedding, \
+         search_text) \
+         SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $14 || ' ' || $15",
+        "$12",
+        "$13"
+    ),
+};
+
+/// The number of parameters [`INSERT_INCIDENT`] reads in each dialect.
+const SQLITE_INSERT_PARAMS: usize = 13;
 
 const INSERT_FTS: Sql = Sql::both(guarded!(
     "INSERT INTO incidents_fts (rowid, path, offending_payload) SELECT $1, $2, $3",
@@ -244,10 +273,12 @@ const LOAD_CURSOR: Sql = Sql::both(
 );
 
 const SEARCH: Sql = Sql {
-    sqlite: "SELECT s.id, s.client_ip, s.violation_category, s.path, s.campaign_id \
+    sqlite: "SELECT s.id, s.client_ip, s.method, s.user_agent, s.path, s.violation_category, \
+             s.offending_payload, s.campaign_id \
              FROM incidents_fts f JOIN security_incidents s ON s.id = f.rowid \
              WHERE incidents_fts MATCH $1 ORDER BY rank LIMIT $2",
-    postgres: "SELECT id, client_ip, violation_category, path, campaign_id \
+    postgres: "SELECT id, client_ip, method, user_agent, path, violation_category, \
+               offending_payload, campaign_id \
                FROM security_incidents, websearch_to_tsquery('simple', $1) AS query \
                WHERE search @@ query ORDER BY ts_rank(search, query) DESC, id LIMIT $2",
 };
@@ -285,27 +316,34 @@ async fn write_incident(
     key: &str,
     end: i64,
 ) -> Result<(), StorageError> {
-    let row: [Param<'_>; 13] = [
+    let row: [Param<'_>; 15] = [
         incident.id.into(),
         i64::from(node).into(),
         incident.client_ip.as_str().into(),
-        incident.user_agent.as_str().into(),
+        incident.user_agent.as_slice().into(),
         incident.method.as_str().into(),
-        incident.path.as_str().into(),
+        incident.path.as_slice().into(),
         incident.category.as_str().into(),
-        incident.payload.as_str().into(),
+        incident.payload.as_slice().into(),
         incident.campaign.into(),
         incident.recorded_at.into(),
         incident.embedding.as_slice().into(),
         key.into(),
         end.into(),
+        incident.search_path.as_str().into(),
+        incident.search_payload.as_str().into(),
     ];
-    tx.execute(INSERT_INCIDENT, &row).await?;
+    // Both bounds are constants no larger than the array, so the slices are in bounds.
+    let bound = match tx.dialect() {
+        Dialect::Sqlite => &row[..SQLITE_INSERT_PARAMS],
+        Dialect::Postgres => &row[..],
+    };
+    tx.execute(INSERT_INCIDENT, bound).await?;
     if tx.dialect() == Dialect::Sqlite {
         let fts: [Param<'_>; 5] = [
             incident.id.into(),
-            incident.path.as_str().into(),
-            incident.payload.as_str().into(),
+            incident.search_path.as_str().into(),
+            incident.search_payload.as_str().into(),
             key.into(),
             end.into(),
         ];
@@ -350,25 +388,34 @@ pub(crate) async fn load_next_sequence(db: &Database, node: u32) -> Result<u64, 
     Ok(((largest & (SEQUENCE_LIMIT - 1)) + 1).max(receipt))
 }
 
-/// One incident found by [`Database::search_incidents`].
+/// One incident found by [`Database::search_incidents`]. The user agent, path and payload
+/// are the raw bytes the request carried (within the record's bounds), not necessarily
+/// UTF-8; the reader chooses how to display them.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct IncidentHit {
     /// The incident id, `(node << 40) | sequence`.
     pub id: i64,
     /// The client address.
     pub client_ip: String,
+    /// The request method.
+    pub method: String,
+    /// The `User-Agent` bytes, at most 200.
+    pub user_agent: Vec<u8>,
+    /// The request path bytes, at most 512.
+    pub path: Vec<u8>,
     /// The violation category.
     pub category: String,
-    /// The request path.
-    pub path: String,
+    /// The offending payload bytes, at most 512.
+    pub payload: Vec<u8>,
     /// The campaign the incident joined.
     pub campaign_id: Option<i64>,
 }
 
 impl Database {
-    /// Searches the paths and payloads of recorded incidents and returns at most `limit`
-    /// (capped at [`MAX_SEARCH_RESULTS`]) hits, best first. SQLite reads `query` as an FTS5
-    /// `MATCH` expression; PostgreSQL as a web search (`websearch_to_tsquery`).
+    /// Searches the paths and payloads of recorded incidents (their lossy UTF-8 rendering)
+    /// and returns at most `limit` (capped at [`MAX_SEARCH_RESULTS`]) hits, best first.
+    /// SQLite reads `query` as an FTS5 `MATCH` expression; PostgreSQL as a web search
+    /// (`websearch_to_tsquery`).
     ///
     /// Fails with [`StorageError::SearchQueryTooLong`] beyond [`MAX_SEARCH_QUERY`] bytes, and
     /// with the driver's error (for example an FTS5 syntax error).
@@ -388,9 +435,12 @@ impl Database {
                 Ok(IncidentHit {
                     id: int_at(row, 0, table, "id")?,
                     client_ip: text_at(row, 1, table, "client_ip")?,
-                    category: text_at(row, 2, table, "violation_category")?,
-                    path: text_at(row, 3, table, "path")?,
-                    campaign_id: row.get(4).and_then(Cell::as_i64),
+                    method: text_at(row, 2, table, "method")?,
+                    user_agent: bytes_at(row, 3, table, "user_agent")?,
+                    path: bytes_at(row, 4, table, "path")?,
+                    category: text_at(row, 5, table, "violation_category")?,
+                    payload: bytes_at(row, 6, table, "offending_payload")?,
+                    campaign_id: row.get(7).and_then(Cell::as_i64),
                 })
             })
             .collect()
@@ -471,7 +521,7 @@ mod tests {
             assert_eq!(record.payload.as_bytes(), &a[..a.len().min(512)]);
             assert_eq!(record.path.as_bytes(), &b[..b.len().min(512)]);
             assert!(record.client_ip.as_bytes().len() <= 48);
-            let path = text(record.path.as_bytes());
+            let path = render(record.path.as_bytes());
             assert!(!path.contains('\0'));
             // Each byte becomes at most one three-byte replacement character.
             assert!(path.len() <= 3 * 512);

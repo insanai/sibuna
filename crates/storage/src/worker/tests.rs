@@ -13,6 +13,8 @@ use crate::incidents::write_batch;
 use crate::policy::{InspectionRow, ReputationRow};
 use crate::testing::{Fixture, for_each_backend};
 
+mod raw_bytes;
+
 fn honeypot(now: u64) -> Incident<'static> {
     Incident {
         client_ip: "198.51.100.99",
@@ -44,9 +46,7 @@ fn sqli(
     }
 }
 
-const DELETE_INCIDENTS_SQLITE: &str = "INSERT INTO incidents_fts (incidents_fts, rowid, path, \
-    offending_payload) SELECT 'delete', id, path, offending_payload FROM security_incidents; \
-    DELETE FROM security_incidents;";
+const DELETE_INCIDENTS_SQLITE: &str = "DELETE FROM incidents_fts; DELETE FROM security_incidents;";
 
 #[test]
 fn incident_identity_survives_removal_of_all_rows_and_rejects_exhausted_or_corrupt_receipts() {
@@ -364,7 +364,7 @@ async fn limits(target: Target) {
     let owner = Fixture::open(&target).await;
     assert_eq!(
         owner.ints("SELECT COUNT(*) FROM sibuna_schema WHERE component = 'core'").await,
-        [1]
+        [crate::schema::CORE.latest() as i64]
     );
     owner.exec("INSERT INTO sibuna_schema VALUES ('core', 99, 0)").await;
     owner.close().await;
@@ -372,7 +372,7 @@ async fn limits(target: Target) {
     let Err(StorageError::SchemaTooNew { component, found, known }) = refused else {
         panic!("a newer schema must be refused");
     };
-    assert_eq!((component, found, known), ("core", 99, 1));
+    assert_eq!((component, found, known), ("core", 99, crate::schema::CORE.latest()));
 }
 
 static TEST_NOW: AtomicU64 = AtomicU64::new(0);

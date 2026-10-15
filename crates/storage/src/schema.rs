@@ -102,11 +102,14 @@ pub async fn migrate(db: &Database, sets: &[MigrationSet], now: u64) -> Result<(
 }
 
 /// The core schema of SID 0011: the tables of SID 0005 with the rule limit column, the
-/// inspection override, the incident embedding and full-text search.
+/// inspection override, the incident embedding and full-text search (version 1), and the
+/// raw bytes of incident user agents, paths and payloads (version 2).
 pub const CORE: MigrationSet = MigrationSet { component: "core", migrations: &CORE_MIGRATIONS };
 
-const CORE_MIGRATIONS: [Migration; 1] =
-    [Migration { version: 1, sqlite: SQLITE_V1, postgres: POSTGRES_V1 }];
+const CORE_MIGRATIONS: [Migration; 2] = [
+    Migration { version: 1, sqlite: SQLITE_V1, postgres: POSTGRES_V1 },
+    Migration { version: 2, sqlite: SQLITE_V2, postgres: POSTGRES_V2 },
+];
 
 const SQLITE_V1: &str = "
 CREATE TABLE sibuna_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -201,4 +204,49 @@ CREATE TRIGGER version_ip_reputation
 CREATE TRIGGER version_policy_inspection
     AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON policy_inspection
     FOR EACH STATEMENT EXECUTE FUNCTION sibuna_policy_revision();
+";
+
+/// Version 2 on SQLite: the user agent, path and payload become `BLOB` columns holding the
+/// captured bytes, and `incidents_fts` holds its own text (a lossy UTF-8 rendering) instead of
+/// reading the bytes as external content. SQLite cannot change a declared column type, so
+/// the table is rebuilt; stored text becomes its UTF-8 bytes, and the index is refilled from
+/// that text, which version 1 already wrote as valid UTF-8 without NUL. No table references
+/// `security_incidents` at core version 1, so dropping it breaks no foreign key.
+const SQLITE_V2: &str = "
+DROP TABLE incidents_fts;
+CREATE VIRTUAL TABLE incidents_fts USING fts5(path, offending_payload);
+INSERT INTO incidents_fts (rowid, path, offending_payload)
+    SELECT id, path, offending_payload FROM security_incidents;
+CREATE TABLE security_incidents_v2 (
+    id INTEGER PRIMARY KEY, node_id INTEGER NOT NULL, client_ip TEXT NOT NULL,
+    user_agent BLOB NOT NULL, method TEXT NOT NULL, path BLOB NOT NULL,
+    violation_category TEXT NOT NULL, offending_payload BLOB NOT NULL,
+    campaign_id INTEGER, recorded_at INTEGER NOT NULL,
+    embedding BLOB CHECK (embedding IS NULL OR length(embedding) = 256));
+INSERT INTO security_incidents_v2 (id, node_id, client_ip, user_agent, method, path,
+        violation_category, offending_payload, campaign_id, recorded_at, embedding)
+    SELECT id, node_id, client_ip, CAST(user_agent AS BLOB), method, CAST(path AS BLOB),
+        violation_category, CAST(offending_payload AS BLOB), campaign_id, recorded_at, embedding
+    FROM security_incidents;
+DROP TABLE security_incidents;
+ALTER TABLE security_incidents_v2 RENAME TO security_incidents;
+CREATE INDEX security_incidents_recorded ON security_incidents (recorded_at);
+";
+
+/// Version 2 on PostgreSQL: the user agent, path and payload become `BYTEA` holding the
+/// captured bytes, and the generated `tsvector` reads the new text column `search_text` (a
+/// lossy UTF-8 rendering of path and payload). The generated column depends on the columns
+/// whose type changes, so it is dropped (with its index) and added again.
+const POSTGRES_V2: &str = "
+ALTER TABLE security_incidents DROP COLUMN search;
+ALTER TABLE security_incidents ADD COLUMN search_text TEXT NOT NULL DEFAULT '';
+UPDATE security_incidents SET search_text = path || ' ' || offending_payload;
+ALTER TABLE security_incidents
+    ALTER COLUMN search_text DROP DEFAULT,
+    ALTER COLUMN user_agent TYPE BYTEA USING convert_to(user_agent, 'UTF8'),
+    ALTER COLUMN path TYPE BYTEA USING convert_to(path, 'UTF8'),
+    ALTER COLUMN offending_payload TYPE BYTEA USING convert_to(offending_payload, 'UTF8');
+ALTER TABLE security_incidents ADD COLUMN search tsvector
+    GENERATED ALWAYS AS (to_tsvector('simple', search_text)) STORED;
+CREATE INDEX security_incidents_search ON security_incidents USING GIN (search);
 ";

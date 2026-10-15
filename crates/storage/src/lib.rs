@@ -62,8 +62,12 @@
 //!   applied, as a failed Zig loader did. Matcher and limit documents are therefore
 //!   validated by the policy crate, not here; this crate checks column types and bounds the
 //!   number of rows ([`policy::MAX_POLICY_ROWS`], [`policy::MAX_REPUTATION_ROWS`]).
-//! - Incident text is stored as UTF-8 with NUL bytes dropped (invalid sequences become
-//!   U+FFFD), because PostgreSQL text holds neither. Zig wrote raw bytes.
+//! - Incident user agents, paths and payloads are raw bytes (`BLOB` / `BYTEA`) as in Zig,
+//!   but full-text search indexes a lossy UTF-8 rendering (NUL dropped, invalid sequences
+//!   U+FFFD), because PostgreSQL text holds neither. On SQLite `incidents_fts` therefore
+//!   holds its own text instead of being Zig's external-content table over the incident
+//!   rows; on PostgreSQL the rendering is the column `search_text`. The client address,
+//!   method and category are text, rendered the same way.
 //! - Under PostgreSQL a batch with honeypot bans locks the revision row first, so two nodes
 //!   banning the same addresses in different orders cannot deadlock. Statement triggers
 //!   also cover `TRUNCATE`.

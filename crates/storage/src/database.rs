@@ -451,3 +451,18 @@ pub(crate) fn optional_text_at(
         _ => text_at(row, index, table, column).map(Some),
     }
 }
+
+/// Reads column `index` of `row` as owned bytes. Text is accepted as its UTF-8 bytes,
+/// because SQLite keeps the type a direct write used.
+pub(crate) fn bytes_at(
+    row: &[Cell],
+    index: usize,
+    table: &'static str,
+    column: &'static str,
+) -> Result<Vec<u8>, StorageError> {
+    match row.get(index) {
+        Some(Cell::Bytes(bytes)) => Ok(bytes.clone()),
+        Some(Cell::Text(text)) => Ok(text.as_bytes().to_vec()),
+        _ => Err(StorageError::InvalidRow { table, column }),
+    }
+}

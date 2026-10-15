@@ -69,7 +69,10 @@ fn start_refuses_a_newer_schema_and_the_in_memory_configuration() {
     storage.with_database(move |db| async move { db.execute_script(bump).await }).unwrap();
     assert!(storage.shutdown());
     let error = Storage::start(&config, Hooks::default()).unwrap_err();
-    assert!(matches!(error, StorageError::SchemaTooNew { found: 7, known: 1, .. }), "{error}");
+    let latest = sibuna_storage::schema::CORE.latest();
+    let newer =
+        matches!(error, StorageError::SchemaTooNew { found: 7, known, .. } if known == latest);
+    assert!(newer, "{error}");
     assert!(error.to_string().contains("version 7"));
     let error = Storage::start(&Config::default(), Hooks::default()).unwrap_err();
     assert!(matches!(error, StorageError::NoBackend));
