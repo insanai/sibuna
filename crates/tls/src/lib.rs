@@ -23,6 +23,11 @@
 //! addresses against its outbound policy (`sibuna-net`), and calls
 //! [`Connector::connect_address`].
 //!
+//! With the `testing` feature, [`testing::Ingress`] is a TLS-terminating proxy for tests
+//! of other crates: it presents a fixed test certificate (signed by the test CA of
+//! [`testing::ca_file`], or deliberately wrong) and relays to a plain TCP listener, as the
+//! HTTPS ingress in front of a console does (SID 0012). Only dev-dependencies enable it.
+//!
 //! # Changes from the Zig version
 //!
 //! - Zig's `std.http.Client` carried its own TLS client and certificate bundle per client
@@ -45,6 +50,9 @@ mod error;
 mod plaintext;
 mod stream;
 mod trust;
+
+#[cfg(feature = "testing")]
+pub mod testing;
 
 use std::net::ToSocketAddrs;
 use std::time::Instant;

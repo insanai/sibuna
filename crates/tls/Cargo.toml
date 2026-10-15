@@ -8,6 +8,11 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 
+[features]
+# `testing::Ingress`: a TLS-terminating test proxy with the fixed test certificates, for the
+# console's peer tests (dev-dependencies only, never in a release build).
+testing = []
+
 [dependencies]
 rustls = { workspace = true }
 rustls-native-certs = { workspace = true }
