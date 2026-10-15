@@ -1,0 +1,30 @@
+[package]
+name = "sibuna-console-storage"
+description = "Sibuna console storage: typed tables and transactional invariants over sqlx (SID 0013)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = ["sqlite"]
+sqlite = ["sibuna-storage/sqlite"]
+postgres = ["sibuna-storage/postgres"]
+
+[dependencies]
+sibuna-storage = { workspace = true }
+sibuna-console-protocol = { workspace = true }
+sibuna-crypto = { workspace = true }
+# Audit summaries are JSON objects: written with its writer, read back with its parser.
+sibuna-json = { workspace = true }
+# The protocol carries the User-Agent digest of a session as hex.
+sibuna-encoding = { workspace = true }
+
+[dev-dependencies]
+# The test harness starts a storage thread, whose configuration is the daemon's `Config`.
+sibuna-core = { workspace = true }
+
+[lints]
+workspace = true
