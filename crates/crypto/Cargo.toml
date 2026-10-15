@@ -1,6 +1,6 @@
 [package]
 name = "sibuna-crypto"
-description = "SHA-1, SHA-256 (SHA-NI), BLAKE3, HMAC, Ed25519 and Wyhash without dependencies"
+description = "Hashes, MACs, signatures, Argon2 and ChaCha20-Poly1305 for Sibuna, without dependencies"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
