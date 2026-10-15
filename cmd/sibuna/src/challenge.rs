@@ -16,7 +16,7 @@ use sibuna_challenge::{
 use sibuna_core::ErrorKind;
 use sibuna_encoding::base64::{self, URL_SAFE_NO_PAD};
 use sibuna_http::response::{self, Extra, Status};
-use sibuna_http::{Method, Request, forwarded, split_target};
+use sibuna_http::{Method, Request, forwarded, normalize_path, split_target};
 use sibuna_policy::normalizer::percent_decode;
 use sibuna_pow::posw::MAX_PROOF_SIZE;
 
@@ -69,15 +69,48 @@ fn required<W: Write>(ctx: &Ctx<'_, W>, verdict: &Verdict) -> WorkLevel {
     required_work(spec.algorithm, spec.difficulty)
 }
 
+/// The most session cookie values one request may present; each costs one verification.
+const MAX_SESSION_COOKIES: usize = 8;
+
 /// Returns the rule hash a valid session cookie carries when its work reaches what
-/// `verdict` demands; `None` when there is no cookie, it does not verify, or it paid less.
+/// `verdict` demands; `None` when there is no cookie, none verifies, or each paid less.
+///
+/// Every value of the session cookie in every `Cookie` field is tried in order, up to
+/// [`MAX_SESSION_COOKIES`], and the first that verifies and suffices admits. Reading only
+/// the first value let a page on a sibling domain plant a cookie of the same name ahead
+/// of the real one (cookie tossing) and keep its visitors in a challenge loop.
 pub(crate) fn session_rule_hash<W: Write>(ctx: &Ctx<'_, W>, verdict: &Verdict) -> Option<u64> {
     let server = ctx.server;
-    let cookie = ctx.request.cookie(server.config.cookie_name.as_bytes())?;
-    let coordinator = &server.coordinator;
-    let session =
-        coordinator.verify_cookie(cookie, ctx.client_ip, ctx.user_agent, ctx.now).ok()?;
-    session.work.satisfies(required(ctx, verdict)).then_some(session.rule_hash)
+    let required = required(ctx, verdict);
+    let candidates = cookie_values(&ctx.request, server.config.cookie_name.as_bytes());
+    candidates.take(MAX_SESSION_COOKIES).find_map(|cookie| {
+        let coordinator = &server.coordinator;
+        let session =
+            coordinator.verify_cookie(cookie, ctx.client_ip, ctx.user_agent, ctx.now).ok()?;
+        session.work.satisfies(required).then_some(session.rule_hash)
+    })
+}
+
+/// Returns every value of the cookie `name` in every `Cookie` field, in order. Pairs are
+/// split at `;` and read as [`Request::cookie`] reads them: trimmed of SP and HTAB, the
+/// value between the first and the second `=`, empty without `=`.
+fn cookie_values<'r, 'a>(
+    request: &'r Request<'a>,
+    name: &'r [u8],
+) -> impl Iterator<Item = &'a [u8]> + 'r {
+    request
+        .headers()
+        .iter()
+        .filter(|header| header.name.eq_ignore_ascii_case(b"cookie"))
+        .flat_map(|header| header.value.split(|&byte| byte == b';'))
+        .filter_map(move |pair| {
+            let pair = pair.trim_ascii_start().trim_ascii_end();
+            match pair.strip_prefix(name)?.split_first() {
+                None => Some(&pair[..0]),
+                Some((b'=', value)) => value.split(|&byte| byte == b'=').next(),
+                Some(_) => None,
+            }
+        })
 }
 
 /// The requirement a challenged response carries to issuance, sealed for this client.
@@ -140,7 +173,8 @@ pub(crate) fn handle_page<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<()> {
 
 fn error_page_ticket<W: Write>(ctx: &mut Ctx<'_, W>) -> Option<RequirementTicket> {
     let trusted = ctx.server.config.trusts_forwarded();
-    let original = forwarded::target(&ctx.request, trusted).ok()??;
+    let mut buffer = [0u8; forwarded::MAX_URI];
+    let original = forwarded::target(&ctx.request, trusted, &mut buffer).ok()??;
     let verdict = target_verdict(ctx, original.path, original.query);
     if !verdict.is_challenge() {
         return None;
@@ -150,7 +184,7 @@ fn error_page_ticket<W: Write>(ctx: &mut Ctx<'_, W>) -> Option<RequirementTicket
 
 /// `/__sibuna/challenge.json`: issues a challenge. The challenged response's own ticket
 /// decides the work; only without a valid ticket is the reported URL evaluated, through the
-/// same target split admission uses.
+/// same target split and path normalisation admission uses.
 pub(crate) fn handle_issue<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<()> {
     let requirement = match ticket_requirement(ctx) {
         Some(requirement) => requirement,
@@ -192,7 +226,9 @@ fn ticket_requirement<W: Write>(ctx: &Ctx<'_, W>) -> Option<Requirement> {
 }
 
 /// A client without a ticket (an API client, an expired page) reports the URL it protects.
-/// Returns `None` after answering 414 for a target that is too long.
+/// Its path is evaluated in normal form, as the request itself would be. Returns `None`
+/// after answering 414 for a target that is too long, or 400 for a path that has no normal
+/// form (such a request is itself refused with 400, so it has no requirement).
 fn reported_requirement<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<Option<Requirement>> {
     let raw = query_param(ctx.request.query, b"path").unwrap_or(b"/");
     if raw.len() > MAX_REPORTED_TARGET {
@@ -202,7 +238,13 @@ fn reported_requirement<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<Option<Req
     }
     let mut decoded = [0u8; MAX_REPORTED_TARGET];
     let target = split_target(percent_decode(raw, &mut decoded));
-    let verdict = target_verdict(ctx, target.path, target.query);
+    let mut normal = [0u8; MAX_REPORTED_TARGET];
+    let Ok(path) = normalize_path(target.path, &mut normal) else {
+        let text = b"Malformed challenge target";
+        response::write_text(ctx.writer, Status::BadRequest, text, ctx.keep_alive)?;
+        return Ok(None);
+    };
+    let verdict = target_verdict(ctx, path.as_bytes(), target.query);
     Ok(Some(Requirement {
         spec: challenge_spec(ctx, &verdict),
         rule_hash: rule_hash(verdict.rule_name()),
@@ -413,5 +455,16 @@ mod tests {
         assert_eq!(parsed, Err(&b"Invalid numeric nonce"[..]));
         let parsed = parse_solution(b"{}", &mut proof);
         assert_eq!(parsed, Err(&b"Missing nonce or proof field"[..]));
+    }
+
+    #[test]
+    fn every_session_cookie_value_in_every_field_is_a_candidate() {
+        let raw = b"GET / HTTP/1.1\r\nCookie: a=1; t=first; tx=no\r\nX: y\r\n\
+                    cookie:  t=second=tail ;t\r\nCookie: t=third\r\n\r\n";
+        let request = sibuna_http::parse_request(raw).unwrap();
+        let values: Vec<&[u8]> = cookie_values(&request, b"t").collect();
+        assert_eq!(values, [&b"first"[..], b"second", b"", b"third"]);
+        assert_eq!(request.cookie(b"t"), Some(&b"first"[..]), "the first is cookie()'s");
+        assert_eq!(cookie_values(&request, b"missing").count(), 0);
     }
 }

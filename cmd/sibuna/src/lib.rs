@@ -68,6 +68,14 @@
 //! - The console's request telemetry (outcome counters, samples, challenge observations,
 //!   origin head capture) is not ported yet; the private `telemetry` module holds its seams
 //!   as empty inline functions at the points where Zig recorded them.
+//! - Security fixes of 2026-10-15 (approved by the maintainer): a trusted forwarded client
+//!   is the `X-Forwarded-For` entry `--trusted-hops` from the right, not the leftmost one
+//!   a client writes, and must parse as an address (see `context`); limits and bans key on
+//!   the canonical address, IPv6 aggregated to `--ipv6-prefix`; the challenge budget has
+//!   its own limiter table; tables are sized by `--rate-table-cells`, `--ban-table-slots`
+//!   and `--spent-tags`; the honeypot bans only top-level requests (`Sec-Fetch-Dest`
+//!   absent or `document`, `Sec-Fetch-Site` not `cross-site`); every session cookie value
+//!   is tried, up to eight. New counters follow Zig's in the metrics exposition.
 //!
 //! # Zig machinery that Rust deleted
 //!
@@ -125,6 +133,7 @@
 pub mod assets;
 mod challenge;
 pub mod cli;
+mod client_writer;
 mod connection;
 mod context;
 pub mod daemon;

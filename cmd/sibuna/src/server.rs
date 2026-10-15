@@ -3,11 +3,13 @@
 //! Accept workers (`--workers`, one per CPU by default, at most 64) share the listener.
 //! Each accepted connection is served on a thread of its own from a [`TaskPool`], bounded by
 //! `--max-connections`; beyond the bound the worker answers 503 and closes the socket
-//! without spawning, counting the event in `sibuna_overloaded_total`. An idle reaper thread
-//! cuts connections that stay silent past `--idle-timeout`.
+//! without spawning, counting the event in `sibuna_overloaded_total`. One client address may
+//! hold at most `--max-connections-per-ip` of those connections, so a single client cannot
+//! take every slot; it is answered the same way beyond its bound. An idle reaper thread cuts
+//! connections that stay silent past `--idle-timeout`.
 
 use std::io::{self, Write};
-use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream};
+use std::net::{IpAddr, Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::num::NonZeroU32;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
@@ -18,6 +20,7 @@ use sibuna_challenge::{AdaptiveConfig, Algorithm, ChallengeSpec, Coordinator, Se
 use sibuna_core::{Config, Incident, Metrics, Mode, PowAlgorithm};
 use sibuna_net::buffered::Writer;
 use sibuna_net::connect::{set_no_delay, wake_listener};
+use sibuna_net::peers::{PeerTable, PeerTicket};
 use sibuna_net::{IdleTable, Pool};
 use sibuna_store::ban_table::BanTable;
 use sibuna_store::limiter::RateLimiter;
@@ -70,6 +73,8 @@ pub struct Server {
     pub(crate) coordinator: Coordinator,
     pub(crate) rate_limiter: RateLimiter,
     pub(crate) rule_rate_limiter: RateLimiter,
+    /// The challenge budget's own table, so challenge traffic cannot crowd request cells.
+    pub(crate) challenge_rate_limiter: RateLimiter,
     pub(crate) bans: BanTable,
     pub(crate) idle: IdleTable,
     /// Idle keep-alive connections to the origin.
@@ -80,6 +85,8 @@ pub struct Server {
     pub(crate) connections: AtomicU32,
     /// The connection bound; starts at `--max-connections`. Relaxed, read once per accept.
     max_connections: AtomicU32,
+    /// Open connections per client address, bounded by `--max-connections-per-ip`.
+    peers: PeerTable,
     /// Set once by [`Running::stop`]. Release on store, acquire on load.
     pub(crate) stopping: AtomicBool,
     pub(crate) hooks: Hooks,
@@ -102,15 +109,19 @@ impl Server {
     pub fn new(options: Options) -> Server {
         let Options { config, slot, seed, metrics, hooks } = options;
         let coordinator = Coordinator::new(&seed, coordinator_options(&config));
+        let rate_cells = usize::try_from(config.rate_table_cells).unwrap_or(usize::MAX);
+        let ban_slots = usize::try_from(config.ban_table_slots).unwrap_or(usize::MAX);
         let capacity = Config::MAX_CONNECTIONS_LIMIT as usize;
         Server {
             max_connections: AtomicU32::new(config.max_connections),
+            peers: PeerTable::new(),
             config,
             slot,
             coordinator,
-            rate_limiter: RateLimiter::new(),
-            rule_rate_limiter: RateLimiter::new(),
-            bans: BanTable::new(),
+            rate_limiter: RateLimiter::with_cells(rate_cells),
+            rule_rate_limiter: RateLimiter::with_cells(rate_cells),
+            challenge_rate_limiter: RateLimiter::with_cells(rate_cells),
+            bans: BanTable::with_capacity(ban_slots),
             idle: IdleTable::with_capacity(capacity),
             pool: Pool::new(),
             tasks: TaskPool::new(capacity),
@@ -151,6 +162,11 @@ impl Server {
         self.connections.load(Ordering::Relaxed)
     }
 
+    /// Returns the number of connections the client at `address` holds now.
+    pub fn connection_count_of(&self, address: IpAddr) -> u32 {
+        self.peers.count(address)
+    }
+
     pub(crate) fn is_stopping(&self) -> bool {
         self.stopping.load(Ordering::Acquire)
     }
@@ -176,6 +192,7 @@ fn coordinator_options(config: &Config) -> sibuna_challenge::Options {
         },
         node: NonZeroU32::new(config.node_id()),
         adaptive: AdaptiveConfig::default(),
+        spent_capacity: usize::try_from(config.spent_tags).unwrap_or(usize::MAX),
     }
 }
 
@@ -284,8 +301,8 @@ fn request_stop(server: &Server, address: SocketAddr) {
 /// never delays the others.
 fn accept_loop(server: &Arc<Server>, listener: &TcpListener) {
     while !server.is_stopping() {
-        let stream = match listener.accept() {
-            Ok((stream, _)) => stream,
+        let (stream, peer) = match listener.accept() {
+            Ok(accepted) => accepted,
             Err(error) if error.kind() == io::ErrorKind::InvalidInput => return,
             Err(error) => {
                 // Out of descriptors or memory: back off briefly instead of spinning.
@@ -298,32 +315,57 @@ fn accept_loop(server: &Arc<Server>, listener: &TcpListener) {
         if server.is_stopping() {
             return;
         }
-        let limit = server.max_connections.load(Ordering::Relaxed);
-        if server.connections.fetch_add(1, Ordering::Relaxed) >= limit {
-            server.connections.fetch_sub(1, Ordering::Relaxed);
-            server.metrics.overloaded.bump();
-            reject(server, &stream, "Service Unavailable: connection limit reached");
-            continue;
-        }
+        let Some(admitted) = admit(server, &stream, peer.ip()) else { continue };
         set_no_delay(&stream);
-        let task_server = Arc::clone(server);
         let launched = server.tasks.launch(move || {
-            let _counted = Counted(&task_server);
-            crate::connection::serve(&task_server, &stream);
+            crate::connection::serve(&admitted.server, &stream);
+            drop(admitted);
         });
         if launched.is_err() {
-            server.connections.fetch_sub(1, Ordering::Relaxed);
+            // The task was dropped unrun, and with it its admission.
             server.metrics.overloaded.bump();
         }
     }
 }
 
-/// Releases a connection's place in the bound when its thread ends, however it ends.
-struct Counted<'s>(&'s Server);
+/// Takes a place for a connection from `peer` under the global and the per-client bounds,
+/// or answers 503 and returns `None`.
+fn admit(server: &Arc<Server>, stream: &TcpStream, peer: IpAddr) -> Option<Admitted> {
+    let limit = server.max_connections.load(Ordering::Relaxed);
+    if server.connections.fetch_add(1, Ordering::Relaxed) >= limit {
+        server.connections.fetch_sub(1, Ordering::Relaxed);
+        server.metrics.overloaded.bump();
+        reject(server, stream, "Service Unavailable: connection limit reached");
+        return None;
+    }
+    match server.peers.admit(peer, server.config.max_connections_per_ip) {
+        Ok(ticket) => Some(Admitted { server: Arc::clone(server), ticket: Some(ticket) }),
+        Err(_) => {
+            server.connections.fetch_sub(1, Ordering::Relaxed);
+            server.metrics.overloaded.bump();
+            reject(
+                server,
+                stream,
+                "Service Unavailable: connection limit reached for this client",
+            );
+            None
+        }
+    }
+}
 
-impl Drop for Counted<'_> {
+/// A connection's places in the global and the per-client bounds, released when it is
+/// dropped: when its thread ends, however it ends, or when its task never starts.
+struct Admitted {
+    server: Arc<Server>,
+    ticket: Option<PeerTicket>,
+}
+
+impl Drop for Admitted {
     fn drop(&mut self) {
-        self.0.connections.fetch_sub(1, Ordering::Relaxed);
+        if let Some(ticket) = self.ticket.take() {
+            self.server.peers.release(ticket);
+        }
+        self.server.connections.fetch_sub(1, Ordering::Relaxed);
     }
 }
 

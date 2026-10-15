@@ -8,7 +8,9 @@
 
 use std::io::Write;
 use std::net::{SocketAddr, TcpStream};
+use std::time::Duration;
 
+use sibuna_http::Method;
 use sibuna_http::chunked::Decoder;
 use sibuna_http::response::{self, Status};
 use sibuna_http::{ParseError, Request, Version, parse_request};
@@ -16,6 +18,7 @@ use sibuna_net::Upload;
 use sibuna_net::Workspace;
 use sibuna_net::buffered::{ReadError, Reader, Writer};
 
+use crate::client_writer::ClientWriter;
 use crate::context::Ctx;
 use crate::server::Server;
 use crate::slot::EngineCache;
@@ -49,15 +52,18 @@ pub fn serve(server: &Server, stream: &TcpStream) {
     if server.is_stopping() {
         return;
     }
+    bound_client_writes(server, stream);
     let mut read_buffer = [0u8; MAX_REQUEST_BYTES];
     let mut write_buffer = [0u8; WRITE_BUFFER];
+    // The normal forms of the request path and of a forwarded path, both from one head.
+    let mut path_buffer = [0u8; MAX_HEAD_BYTES];
     let mut reader = Reader::new(stream, &mut read_buffer[..]);
     let mut peer = PeerText::default();
     peer.format(stream.peer_addr().ok());
     let mut link = Link {
         server,
         stream,
-        writer: Writer::new(stream, &mut write_buffer[..]),
+        writer: ClientWriter::new(Writer::new(stream, &mut write_buffer[..])),
         workspace: Workspace::new(),
         cache: EngineCache::new(),
         activity: lease.activity(),
@@ -65,10 +71,20 @@ pub fn serve(server: &Server, stream: &TcpStream) {
     };
     for served in 0..MAX_REQUESTS_PER_CONNECTION {
         link.last = served + 1 == MAX_REQUESTS_PER_CONNECTION;
-        if !serve_one(&mut reader, &mut link, peer.as_bytes()) {
+        if !serve_one(&mut reader, &mut link, peer.as_bytes(), &mut path_buffer) {
             break;
         }
         lease.touch();
+    }
+}
+
+/// Gives the client socket a write timeout of the idle timeout: a client that accepts no
+/// byte for that long fails the write and loses the connection, however busy the origin is.
+/// The idle reaper bounds silence; this bounds a stalled reader on its own (SID 0002).
+fn bound_client_writes(server: &Server, stream: &TcpStream) {
+    let seconds = server.config.idle_timeout_seconds;
+    if seconds > 0 {
+        let _ = stream.set_write_timeout(Some(Duration::from_secs(u64::from(seconds))));
     }
 }
 
@@ -110,12 +126,15 @@ fn find_blank_line(bytes: &[u8]) -> Option<usize> {
     bytes.windows(4).position(|window| window == b"\r\n\r\n")
 }
 
-/// Serves one request. Returns whether the connection may serve another.
+/// Serves one request; `paths` holds the normal forms of its paths. Returns whether the
+/// connection may serve another.
 fn serve_one<W: Write>(
     reader: &mut Reader<'_, &TcpStream>,
-    link: &mut Link<'_, W>,
+    link: &mut Link<'_, ClientWriter<W>>,
     peer: &[u8],
+    paths: &mut [u8],
 ) -> bool {
+    link.writer.begin_response(false);
     let head_len = match read_head(reader) {
         Head::Complete(length) => length,
         Head::TooLarge => {
@@ -132,6 +151,11 @@ fn serve_one<W: Write>(
             Ok(request) => request,
             Err(error) => return reject_head(link, error),
         };
+        // Every response to HEAD, Sibuna's own included, is a head without a body.
+        link.writer.begin_response(request.method == Method::Head);
+        if has_repeated_host(&request) {
+            return reject_repeated_host(link);
+        }
         let declared = request.content_length().unwrap_or(0);
         if !expect_continue(link, &request, declared, peer) {
             return false;
@@ -140,13 +164,13 @@ fn serve_one<W: Write>(
             // No body: the head parsed above is the request; nothing moves in the buffer.
             let upload = Upload::declared(&request);
             let pending = bytes.get(head_len..).unwrap_or_default();
-            let keep = dispatch(link, request, pending, upload, 0, peer);
+            let keep = dispatch(link, request, pending, upload, 0, peer, paths);
             reader.consume(head_len);
             return keep;
         }
         (declared, request.chunked)
     };
-    serve_with_body(reader, link, peer, head_len, framing)
+    serve_with_body(reader, link, peer, paths, head_len, framing)
 }
 
 /// Buffers the body, then dispatches the request with it.
@@ -154,6 +178,7 @@ fn serve_with_body<W: Write>(
     reader: &mut Reader<'_, &TcpStream>,
     link: &mut Link<'_, W>,
     peer: &[u8],
+    paths: &mut [u8],
     head_len: usize,
     (declared, chunked): (usize, bool),
 ) -> bool {
@@ -176,11 +201,13 @@ fn serve_with_body<W: Write>(
     };
     request.body = bytes.get(head_len..head_len + body_len).unwrap_or_default();
     let pending = bytes.get(head_len + body_len..).unwrap_or_default();
-    let keep = dispatch(link, request, pending, upload, declared, peer);
+    let keep = dispatch(link, request, pending, upload, declared, peer, paths);
     reader.consume(head_len + body_len);
     keep
 }
 
+/// Puts the request path in normal form, then dispatches the request. A path without a
+/// normal form is answered 400 and the connection closed.
 fn dispatch<W: Write>(
     link: &mut Link<'_, W>,
     request: Request<'_>,
@@ -188,11 +215,17 @@ fn dispatch<W: Write>(
     upload: Upload,
     declared_body: usize,
     peer: &[u8],
+    paths: &mut [u8],
 ) -> bool {
+    let Ok((request, spare)) = crate::dispatch::normalize_target(request, paths) else {
+        link.server.metrics.parse_errors.bump();
+        let _ = response::write_400(&mut link.writer, b"Malformed request target");
+        return false;
+    };
     let mut ctx = Ctx::new(link, request, peer, declared_body);
     ctx.pending = pending;
     ctx.upload = upload;
-    crate::dispatch::dispatch(&mut ctx).unwrap_or(false)
+    crate::dispatch::dispatch(&mut ctx, spare).unwrap_or(false)
 }
 
 /// Why a body could not be buffered.
@@ -259,6 +292,21 @@ fn reject_head<W: Write>(link: &mut Link<'_, W>, error: ParseError) -> bool {
     } else {
         response::write_400(writer, b"Malformed HTTP request")
     };
+    false
+}
+
+/// True when `request` has more than one `Host` field. RFC 9112 section 3.2 requires a 400:
+/// recipients disagree on which one counts, and a `Connection` field naming `host` once
+/// made the proxy drop both.
+fn has_repeated_host(request: &Request<'_>) -> bool {
+    let mut hosts = request.headers().iter().filter(|h| h.name.eq_ignore_ascii_case(b"host"));
+    hosts.next().is_some() && hosts.next().is_some()
+}
+
+/// Answers a request with more than one `Host` field.
+fn reject_repeated_host<W: Write>(link: &mut Link<'_, W>) -> bool {
+    link.server.metrics.parse_errors.bump();
+    let _ = response::write_400(&mut link.writer, b"Malformed HTTP request: repeated Host field");
     false
 }
 

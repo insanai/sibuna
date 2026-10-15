@@ -950,6 +950,7 @@ name = "sibuna"
 version = "0.2.0"
 dependencies = [
  "sibuna-challenge",
+ "sibuna-cidr",
  "sibuna-core",
  "sibuna-crypto",
  "sibuna-encoding",
@@ -1011,11 +1012,14 @@ dependencies = [
 name = "sibuna-console-storage"
 version = "0.2.0"
 dependencies = [
+ "sibuna-cidr",
  "sibuna-console-protocol",
  "sibuna-core",
  "sibuna-crypto",
  "sibuna-encoding",
+ "sibuna-geoip",
  "sibuna-json",
+ "sibuna-policy",
  "sibuna-storage",
 ]
 

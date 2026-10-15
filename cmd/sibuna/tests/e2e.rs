@@ -81,7 +81,8 @@ fn audit_inspection_records_findings_while_other_inspection_rules_and_reputation
     assert_eq!(get(p, mixed, "203.0.113.221", "curl", "").status(), 403);
     assert_eq!(get(p, "/?q=union%20select", "203.0.113.222", "Amazonbot", "").status(), 403);
     assert_eq!(get(p, "/robots.txt?q=union%20select", "203.0.113.223", "curl", "").status(), 403);
-    assert_eq!(get(p, "/../../etc/passwd", "203.0.113.224", "curl", "").status(), 401);
+    // A path above the root has no normal form: refused before policy (Zig challenged it).
+    assert_eq!(get(p, "/../../etc/passwd", "203.0.113.224", "curl", "").status(), 400);
     assert_eq!(AUDITED.load(Ordering::Relaxed) - before, 4);
 }
 
@@ -295,7 +296,10 @@ fn policy_and_waf_denials_honeypot_bans_and_rate_limiting() {
     assert_eq!(get(p, "/", "203.0.113.30", "Mozilla/5.0 Amazonbot/0.1", "").status(), 403);
     let worker = "CF-Worker: x.workers.dev\r\n";
     assert_eq!(get(p, "/", "203.0.113.30", "curl/8", worker).status(), 403);
+    // A path above the root has no normal form: refused before the WAF (Zig denied it there).
     let traversal = "/static/../../etc/passwd";
+    assert_eq!(get(p, traversal, "203.0.113.31", BROWSER_UA, BROWSER_ACCEPT).status(), 400);
+    let traversal = "/static/../etc/passwd?f=..%2F..%2Fetc%2Fpasswd";
     assert_eq!(get(p, traversal, "203.0.113.31", BROWSER_UA, BROWSER_ACCEPT).status(), 403);
     let injection = "/search?q=1%27%20union%20select%20null--";
     assert_eq!(get(p, injection, "203.0.113.31", BROWSER_UA, BROWSER_ACCEPT).status(), 403);

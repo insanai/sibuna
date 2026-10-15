@@ -9,43 +9,68 @@
 //! 6. a valid session clears an admission challenge whose work it already paid, never a
 //!    denial;
 //! 7. an admitted request streams to the origin, or forward authorization answers.
+//!
+//! Before any step the request path is put in normal form ([`normalize_target`]): every
+//! decision above, the reserved-route match and the path the origin receives read that one
+//! path, so the origin never routes on a spelling policy did not judge.
 
 use std::io::{self, Write};
 
-use sibuna_http::forwarded;
 use sibuna_http::response::{self, Extra, Status};
+use sibuna_http::{PathError, Request, forwarded, normalize_path};
 use sibuna_net::{Audit, Client, Exchange, ProxyError};
 use sibuna_policy::{Action, Algorithm, Engine, Header, Limits, MAX_RULE_NAME, RequestView};
-use sibuna_store::limiter::{Decision as RateDecision, Limits as RateLimits};
+use sibuna_store::limiter::{
+    DEFAULT_SCOPE, Decision as RateDecision, Limits as RateLimits, RateLimiter,
+};
 
 use crate::context::Ctx;
 use crate::pages::{self, Page, PageExtra};
 use crate::server::is_forward_auth;
 use crate::telemetry::{self, Outcome};
 
-/// A stable scope keeps the challenge budget's buckets apart from the request limiter's.
-const CHALLENGE_SCOPE: u64 = 0x5b_c0ff_ee00_0001;
+/// Puts the path of `request` in normal form ([`sibuna_http::normalize_path`]), written
+/// into the front of `buffer`, and returns the request with it and the rest of `buffer`.
+/// The rest holds the normal form of a trusted forwarded path later; both paths lie inside
+/// one request head, so a buffer of the head's size holds both.
+///
+/// # Errors
+///
+/// The [`PathError`] of a path that has no normal form; the caller answers 400.
+pub(crate) fn normalize_target<'b>(
+    mut request: Request<'b>,
+    buffer: &'b mut [u8],
+) -> Result<(Request<'b>, &'b mut [u8]), PathError> {
+    let (front, spare) =
+        buffer.split_at_mut_checked(request.path.len()).ok_or(PathError::TooLong)?;
+    request.path = normalize_path(request.path, front)?.as_bytes();
+    Ok((request, spare))
+}
 
-/// Dispatches one request. Returns whether the connection may serve another; an error is a
-/// failed write, after which the connection closes.
-pub(crate) fn dispatch<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<bool> {
-    let result = route(ctx);
+/// Dispatches one request whose path is in normal form. `spare` receives the normal form of
+/// a trusted forwarded path. Returns whether the connection may serve another; an error is
+/// a failed write, after which the connection closes.
+pub(crate) fn dispatch<'c, W: Write>(
+    ctx: &mut Ctx<'c, W>,
+    spare: &'c mut [u8],
+) -> io::Result<bool> {
+    let result = route(ctx, spare);
     // Every parsed external request gets one selected outcome, even on an early error.
     telemetry::finish(ctx);
     result
 }
 
-fn route<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<bool> {
+fn route<'c, W: Write>(ctx: &mut Ctx<'c, W>, spare: &'c mut [u8]) -> io::Result<bool> {
     let server = ctx.server;
     server.metrics.requests.bump();
-    if !ctx.internal && !restore_authorization_target(ctx)? {
+    if !ctx.internal && !restore_authorization_target(ctx, spare)? {
         return Ok(false);
     }
     let submission = ctx.internal && crate::challenge::is_submission(&ctx.request);
     if submission {
         telemetry::observe_submission(ctx);
     }
-    if server.bans.is_banned(ctx.client_ip, ctx.now) {
+    if server.bans.is_banned(ctx.client_key.as_bytes(), ctx.now) {
         if submission {
             telemetry::observe_banned_submission(ctx);
         }
@@ -57,13 +82,14 @@ fn route<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<bool> {
     }
     if ctx.internal {
         if crate::challenge::is_work(&ctx.request) {
-            // Issuance and verification bypass policy, so they spend a budget of their own.
+            // Issuance and verification bypass policy, so they spend a budget of their own,
+            // in a table of its own that challenge traffic cannot crowd request cells out of.
             let budget = RateLimits {
                 rate: server.config.challenge_rate_limit,
                 window_ms: server.config.rate_window_seconds.saturating_mul(1000),
             };
-            let limiter = &server.rate_limiter;
-            let spend = limiter.check_scoped(ctx.client_ip, CHALLENGE_SCOPE, ctx.now_ms, budget);
+            let limiter = &server.challenge_rate_limiter;
+            let spend = check_rate(ctx, limiter, DEFAULT_SCOPE, budget);
             if spend.limited {
                 return rate_limited(ctx, spend, 0);
             }
@@ -75,15 +101,46 @@ fn route<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<bool> {
         rate: server.config.rate_limit,
         window_ms: server.config.rate_window_seconds.saturating_mul(1000),
     };
-    let rate = server.rate_limiter.check(ctx.client_ip, ctx.now_ms, limits);
+    let rate = check_rate(ctx, &server.rate_limiter, DEFAULT_SCOPE, limits);
     if rate.limited {
         return rate_limited(ctx, rate, 0);
     }
     apply_policy(ctx)
 }
 
+/// Records one arrival of the client in `limiter` within `scope`, counting an eviction.
+fn check_rate<W: Write>(
+    ctx: &Ctx<'_, W>,
+    limiter: &RateLimiter,
+    scope: u64,
+    limits: RateLimits,
+) -> RateDecision {
+    let decision = limiter.check_scoped(ctx.client_key.as_bytes(), scope, ctx.now_ms, limits);
+    if decision.evicted {
+        ctx.server.metrics.rate_evictions.bump();
+    }
+    decision
+}
+
+/// Bans the client until `until` and counts the ban; a ban the table refuses (every slot
+/// the key may take holds a ban in effect) is counted in `bans_refused` instead. Returns
+/// whether the ban was recorded.
+pub(crate) fn ban_client<W: Write>(ctx: &Ctx<'_, W>, until: u64) -> bool {
+    let metrics = &ctx.server.metrics;
+    match ctx.server.bans.ban(ctx.client_key.as_bytes(), until, ctx.now) {
+        Ok(()) => {
+            metrics.bans_issued.bump();
+            true
+        }
+        Err(_) => {
+            metrics.bans_refused.bump();
+            false
+        }
+    }
+}
+
 /// Answers 429 with `Retry-After`. A rule's quota may also ban the address for
-/// `ban_seconds`, unless the refusal came from table saturation rather than this client.
+/// `ban_seconds`.
 pub(crate) fn rate_limited<W: Write>(
     ctx: &mut Ctx<'_, W>,
     rate: RateDecision,
@@ -92,10 +149,9 @@ pub(crate) fn rate_limited<W: Write>(
     let server = ctx.server;
     server.metrics.rate_limited.bump();
     telemetry::record_outcome(ctx, Outcome::RateLimited, 429);
-    let ban = if rate.capacity_exhausted { 0 } else { u64::from(ban_seconds) };
-    if ban != 0 {
-        server.bans.ban(ctx.client_ip, ctx.now.saturating_add(ban), ctx.now);
-        server.metrics.bans_issued.bump();
+    let mut ban = u64::from(ban_seconds);
+    if ban != 0 && !ban_client(ctx, ctx.now.saturating_add(ban)) {
+        ban = 0;
     }
     let retry_seconds = ban.max(rate.retry_after_ms.div_ceil(1000));
     let mut buffer = [0u8; 64];
@@ -172,7 +228,7 @@ impl Verdict {
 
 /// Converts the request's fields into the engine's view of them.
 pub(crate) fn policy_headers<'r>(
-    request: &sibuna_http::Request<'r>,
+    request: &Request<'r>,
     out: &mut [Header<'r>; sibuna_http::MAX_HEADERS],
 ) -> usize {
     let mut count = 0;
@@ -191,6 +247,7 @@ fn request_verdict<W: Write>(ctx: &mut Ctx<'_, W>) -> Verdict {
         path: ctx.request.path,
         query: ctx.request.query,
         client_ip: ctx.client_ip,
+        client_address: ctx.client_address,
         user_agent: ctx.user_agent,
         headers: fields.get(..count).unwrap_or_default(),
         body: ctx.request.body,
@@ -213,6 +270,7 @@ pub(crate) fn target_verdict<W: Write>(
         path,
         query,
         client_ip: ctx.client_ip,
+        client_address: ctx.client_address,
         user_agent: ctx.user_agent,
         headers: fields.get(..count).unwrap_or_default(),
         body: b"",
@@ -228,8 +286,7 @@ fn apply_policy<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<bool> {
     if let Some(limits) = verdict.limits {
         let window_ms = u64::from(limits.window_seconds) * 1000;
         let quota = RateLimits { rate: limits.rate, window_ms };
-        let limiter = &server.rule_rate_limiter;
-        let rate = limiter.check_scoped(ctx.client_ip, verdict.limit_scope, ctx.now_ms, quota);
+        let rate = check_rate(ctx, &server.rule_rate_limiter, verdict.limit_scope, quota);
         if rate.limited {
             return rate_limited(ctx, rate, limits.ban_seconds);
         }
@@ -267,14 +324,18 @@ fn apply_policy<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<bool> {
     }
 }
 
-/// Restores ingress metadata for external authorization requests before any decision.
-/// Returns false after answering 400 for invalid metadata.
-fn restore_authorization_target<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<bool> {
+/// Restores ingress metadata for external authorization requests before any decision; the
+/// original path is normalised into `spare`. Returns false after answering 400 for invalid
+/// metadata.
+fn restore_authorization_target<'c, W: Write>(
+    ctx: &mut Ctx<'c, W>,
+    spare: &'c mut [u8],
+) -> io::Result<bool> {
     let config = &ctx.server.config;
     if !is_forward_auth(config) {
         return Ok(true);
     }
-    match forwarded::target(&ctx.request, config.trusts_forwarded()) {
+    match forwarded::target(&ctx.request, config.trusts_forwarded(), spare) {
         Ok(Some(original)) => {
             original.apply(&mut ctx.request);
             Ok(true)

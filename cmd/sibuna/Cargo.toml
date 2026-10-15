@@ -27,6 +27,7 @@ postgres = ["storage", "sibuna-storage/postgres"]
 storage = ["dep:sibuna-storage"]
 
 [dependencies]
+sibuna-cidr = { workspace = true }
 sibuna-crypto = { workspace = true }
 sibuna-encoding = { workspace = true }
 sibuna-http = { workspace = true }

@@ -185,7 +185,24 @@ fn reverse_proxy_answers_are_byte_identical() {
     for _ in 0..8 {
         compare(&zig, &rust, &request("/robots.txt", "198.51.100.10", "curl", ""));
     }
-    compare(&zig, &rust, &request("/__sibuna/metrics", "198.51.100.11", "curl", ""));
+    compare_metrics(&zig, &rust);
+}
+
+/// The Zig daemon's counters read the same; the port's security counters follow them, all
+/// zero here (so only the body and its length differ).
+fn compare_metrics(zig: &Process, rust: &Process) {
+    let raw = request("/__sibuna/metrics", "198.51.100.11", "curl", "");
+    let theirs = round_trip(zig.port, raw.as_bytes());
+    let ours = round_trip(rust.port, raw.as_bytes());
+    assert_eq!(ours.status(), theirs.status());
+    let (ours, theirs) = (ours.body_text(), theirs.body_text());
+    let added = ours.strip_prefix(theirs.as_str()).expect("the Zig counters come first");
+    let names = ["bans_refused", "forwarded_invalid", "honeypot_refused", "rate_evictions"];
+    let expected: String = names
+        .iter()
+        .map(|name| format!("# TYPE sibuna_{name}_total counter\nsibuna_{name}_total 0\n"))
+        .collect();
+    assert_eq!(added, expected);
 }
 
 #[test]

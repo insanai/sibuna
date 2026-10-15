@@ -310,6 +310,19 @@ fn route(conn: &mut Conn, head: &[u8], seq: u32) -> bool {
         conn.send(b"HTTP/1.1 200 OK\r\nContent-Length: 100\r\n\r\n0123456789");
         return false;
     }
+    if line.contains("/headbody") {
+        // A faulty origin: a HEAD response followed, late, by bytes shaped as a response.
+        let evil = b"HTTP/1.1 200 OK\r\nContent-Length: 9\r\nX-Poison: 1\r\n\r\nPOISONED!";
+        conn.send(format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n", evil.len()).as_bytes());
+        thread::sleep(Duration::from_millis(50));
+        return conn.send(evil);
+    }
+    if line.contains("/large-body") {
+        // 64 MiB as fast as the socket takes it.
+        conn.send(b"HTTP/1.1 200 OK\r\nContent-Length: 67108864\r\n\r\n");
+        let block = vec![b'L'; 1 << 20];
+        return (0..64).all(|_| conn.send(&block));
+    }
     let head_text = &head[..head.len() - 4];
     let mut reply = format!(
         "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nX-Origin: stub\r\nX-Origin-Seq: {seq}\r\n\

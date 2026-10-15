@@ -4,8 +4,8 @@
 use std::fmt;
 use std::io::{self, Write};
 
-use sibuna_http::Method;
 use sibuna_http::response::{self, Extra, Status};
+use sibuna_http::{Method, Request};
 
 use crate::assets::{WASM_SOLVER, WORKER_JS};
 use crate::context::Ctx;
@@ -48,16 +48,37 @@ pub(crate) fn handle_internal<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<()> 
 }
 
 /// A link no person follows: the client is banned for `--ban-seconds` and the hit recorded.
+///
+/// Only a top-level request bans: one without fetch metadata (scrapers and old clients send
+/// none), or a document fetch that is not cross-site. A page anywhere could otherwise embed
+/// the link as an image or script and get every visitor banned, a whole network at once
+/// behind a shared address. Such a request is answered 404 and counted in
+/// `sibuna_honeypot_refused_total`.
 fn honeypot<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<()> {
     let server = ctx.server;
+    if !is_top_level_request(&ctx.request) {
+        server.metrics.honeypot_refused.bump();
+        return response::write_text(ctx.writer, Status::NotFound, b"Not Found", ctx.keep_alive);
+    }
     server.metrics.banned.bump();
-    server.metrics.bans_issued.bump();
     let until = ctx.now.saturating_add(server.config.ban_seconds);
-    server.bans.ban(ctx.client_ip, until, ctx.now);
+    crate::dispatch::ban_client(ctx, until);
     crate::incidents::record_incident(ctx, "honeypot");
     let extra = PageExtra { reason: "honeypot", ..PageExtra::default() };
     let text = "Access Denied: automated scraper honeypot triggered";
     pages::respond(ctx, Page::Banned, Status::Forbidden, text, extra)
+}
+
+/// Returns whether `request` may be a person's own navigation: its `Sec-Fetch-Dest` is
+/// absent or `document`, and its `Sec-Fetch-Site` is absent or not `cross-site`.
+fn is_top_level_request(request: &Request<'_>) -> bool {
+    let document = request
+        .header(b"sec-fetch-dest")
+        .is_none_or(|dest| dest.eq_ignore_ascii_case(b"document"));
+    let not_cross_site = request
+        .header(b"sec-fetch-site")
+        .is_none_or(|site| !site.eq_ignore_ascii_case(b"cross-site"));
+    document && not_cross_site
 }
 
 fn health<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<()> {
