@@ -835,3 +835,84 @@ fn two_nodes_editing_at_one_revision_one_wins() {
         );
     });
 }
+
+// Ported from `console_policy_auth_test.zig` "queued policy and inspection edits refuse
+// expired or incomplete MFA authority".
+#[test]
+fn rule_and_inspection_edits_refuse_expired_sessions_and_missing_required_factors() {
+    for_each_backend("policy_expired_mfa", |db| async move {
+        let mut tx = db.begin().await.expect("begin");
+        let (_, credential) = admin(&mut tx).await;
+        let rule = r#"{"id":"edit","name":"Deny","action":"deny","path":"/edit"}"#;
+        let modes =
+            r#"{"path_traversal":"enforce","sqli":"audit","xss":"enforce","rce":"disabled"}"#;
+        let start = revision(&mut tx).await;
+        // Each edit is made at the revision current when it reaches storage.
+        let both = async |tx: &mut Transaction, credential: &Credential, now: u64| {
+            let expected = revision(tx).await;
+            let rule =
+                policy::edit_rule(tx, credential, &base(), &edit(rule, expected), now).await;
+            let modes = edit(modes, revision(tx).await);
+            let inspection = policy::edit_inspection(tx, credential, &base(), &modes, now).await;
+            (rule, inspection)
+        };
+        // The cookie has been idle for 30 minutes when the edits reach storage.
+        let (rule_edit, inspection_edit) = both(&mut tx, &credential, NOW + 1800).await;
+        assert!(matches!(rule_edit, Err(ConsoleStorageError::Unauthorized)), "{rule_edit:?}");
+        assert!(matches!(inspection_edit, Err(ConsoleStorageError::Unauthorized)));
+        // An administrator without the required second factor is refused.
+        let required = Credential { require_totp: true, ..credential.clone() };
+        let (rule_edit, inspection_edit) = both(&mut tx, &required, NOW).await;
+        assert!(matches!(rule_edit, Err(ConsoleStorageError::Forbidden)), "{rule_edit:?}");
+        assert!(matches!(inspection_edit, Err(ConsoleStorageError::Forbidden)));
+        assert_eq!(revision(&mut tx).await, start);
+        // Required factors apply to administrators; an operator still edits policy.
+        let operator = create_account(&mut tx, &credential, "ops", Role::Operator).await;
+        let operator = sign_in(&mut tx, operator, 1, 30).await;
+        let operator = Credential { require_totp: true, ..operator };
+        let (rule_edit, inspection_edit) = both(&mut tx, &operator, NOW).await;
+        assert_eq!(rule_edit.expect("operator rule edit"), start + 1);
+        assert_eq!(inspection_edit.expect("operator inspection edit"), start + 2);
+        let audited = crate::common::audit_actions(&mut tx).await;
+        let edits = audited
+            .iter()
+            .filter(|action| matches!(action.as_str(), "policy.edit" | "inspection.edit"));
+        assert_eq!(edits.count(), 2);
+    });
+}
+
+// Ported from `console_policy_audit_test.zig` "audit records preserve the full supported
+// policy identifier and bounded page encoding".
+#[test]
+fn audit_rows_keep_the_full_policy_identifier_and_pages_stay_bounded() {
+    use sibuna_console_protocol::audit::{self, LAST_ID, PAGE_ROWS};
+    for_each_backend("policy_long_identifier", |db| async move {
+        let mut tx = db.begin().await.expect("begin");
+        let (_, credential) = admin(&mut tx).await;
+        let id = "a".repeat(128);
+        let committed =
+            save(&mut tx, &format!(r#"{{"id":"{id}","name":"A","action":"deny"}}"#)).await;
+        let row = audit_rows(&mut tx).await.pop().expect("audit");
+        assert_eq!(row.target.as_deref(), Some(id.as_str()));
+        let read =
+            audit::Read { id: u64::try_from(row.id).expect("id"), ..audit::Read::default() };
+        let detail = sibuna_console_storage::audit::read_audit(&mut tx, &credential, &read, NOW)
+            .await
+            .expect("detail");
+        let target = detail.row.policy_revision().expect("a navigable policy revision");
+        assert_eq!((target.id.as_str(), target.revision), (id.as_str(), committed));
+        // A full page of such rows, every number at its largest, keeps the Zig 4 KiB bound.
+        let rows = (0..PAGE_ROWS as u64)
+            .map(|index| audit::Row {
+                id: LAST_ID - index,
+                actor: LAST_ID,
+                subject: LAST_ID,
+                recorded_at: LAST_ID,
+                ..detail.row.clone()
+            })
+            .collect();
+        let page = audit::Page { rows, next: None };
+        let encoded = sibuna_console_protocol::codec::to_json(&page);
+        assert!(encoded.len() <= 4096, "{} bytes", encoded.len());
+    });
+}

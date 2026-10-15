@@ -135,3 +135,57 @@ fn audit_page_filters_pages_and_redacts() {
         assert_eq!(scalar(&mut tx, "SELECT last_id FROM console_audit_cursor").await, 11);
     });
 }
+
+// Ported from `console_audit_test.zig` "audit pages preserve full-width cursors, filters,
+// redaction and historical absence".
+#[test]
+fn audit_pages_keep_full_width_cursors_filters_redaction_and_absent_summaries() {
+    for_each_backend("audit_full_width", |db| async move {
+        let mut tx = db.begin().await.expect("begin");
+        let admin = bootstrap_admin(&mut tx).await;
+        let credential = sign_in(&mut tx, admin, 1, 10).await;
+        // Ten rows above 2^53, written as an older build or an operator would: no role and
+        // no summaries.
+        let rows = Sql::both(
+            "WITH RECURSIVE n(i) AS (SELECT 9007199254740993 UNION ALL SELECT i + 1 FROM n \
+             WHERE i < 9007199254741002) INSERT INTO console_audit (id, actor, subject, action, \
+             recorded_at) SELECT i, 1, 1, 'kiosk.grant', 100 FROM n",
+        );
+        tx.execute(rows, &[]).await.expect("historical rows");
+        let mut input = audit::Query {
+            action: Text::new("kiosk.grant").expect("action"),
+            actor: Some(1),
+            since: 100,
+            until: 100,
+            ..audit::Query::default()
+        };
+        let first = query_audit(&mut tx, &credential, &input, NOW).await.expect("first page");
+        assert_eq!(first.rows.len(), 8);
+        assert_eq!(first.rows[0].id, 9_007_199_254_741_002);
+        input.before = first.next.expect("a cursor");
+        let second = query_audit(&mut tx, &credential, &input, NOW).await.expect("second page");
+        assert_eq!((second.rows.len(), second.next), (2, None));
+        assert!(second.rows[0].id < first.rows[7].id);
+        let read = audit::Read { auth: users::Auth::default(), id: first.rows[0].id };
+        let detail = read_audit(&mut tx, &credential, &read, NOW).await.expect("detail");
+        assert!(detail.before.is_none() && detail.after.is_none());
+        assert_eq!(detail.row.actor_role, None);
+        // A secret field slipped into a stored summary is not shown.
+        let secret = Sql::both(
+            "UPDATE console_audit SET after_summary = '{\"revision\":2,\"token\":\"private\"}' \
+             WHERE id = 9007199254741002",
+        );
+        tx.execute(secret, &[]).await.expect("direct write");
+        let detail = read_audit(&mut tx, &credential, &read, NOW).await.expect("detail");
+        assert!(detail.after_redacted);
+        assert_eq!(detail.after.as_ref().map(Text::as_str), Some("{\"revision\":2}"));
+        // Another actor and another window select nothing.
+        input.before = 0;
+        let other = audit::Query { actor: Some(2), ..input.clone() };
+        let page = query_audit(&mut tx, &credential, &other, NOW).await.expect("actor");
+        assert!(page.rows.is_empty());
+        let later = audit::Query { since: 101, until: 102, ..input };
+        let page = query_audit(&mut tx, &credential, &later, NOW).await.expect("window");
+        assert!(page.rows.is_empty());
+    });
+}
