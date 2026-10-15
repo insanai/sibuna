@@ -121,3 +121,17 @@ fn golden_tokens_page() {
     configure(&mut app, Phase::Tokens);
     golden::check("tokens", app.render_now());
 }
+
+// Opening the page keeps the window at the top; a later page scrolls to the catalog.
+#[test]
+fn tokens_first_page_keeps_the_window_at_the_top() {
+    let mut harness = signed_in();
+    let empty = "{\"version\":1,\"rows\":[],\"next\":null}";
+    harness.action("tokens", "null");
+    harness.respond("tokens-1", 200, empty);
+    assert!(harness.commands().contains("\"selector\":\"#tokens-catalog\",\"top\":true"));
+    harness.action("tokens-first", "null");
+    harness.respond("tokens-2", 200, empty);
+    assert!(harness.commands().contains("\"selector\":\"#tokens-catalog\""));
+    assert!(!harness.commands().contains("\"top\":true"));
+}

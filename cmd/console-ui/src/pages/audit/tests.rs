@@ -235,3 +235,16 @@ fn golden_audit_detail_with_the_revert_confirmation() {
     audit.revert_open = true;
     golden::check("audit-detail", app.render_now());
 }
+
+// Opening the page keeps the window at the top; a later page scrolls to the catalog.
+#[test]
+fn audit_first_page_keeps_the_window_at_the_top() {
+    let mut harness = signed_in("viewer");
+    let empty = "{\"version\":1,\"rows\":[],\"next\":null}";
+    harness.respond("audit-1", 200, empty);
+    assert!(harness.commands().contains("\"selector\":\"#audit-catalog\",\"top\":true"));
+    harness.action("audit-refresh", "null");
+    harness.respond("audit-2", 200, empty);
+    assert!(harness.commands().contains("\"selector\":\"#audit-catalog\""));
+    assert!(!harness.commands().contains("\"top\":true"));
+}

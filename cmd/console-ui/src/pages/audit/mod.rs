@@ -69,6 +69,9 @@ pub struct Audit {
     pub busy: bool,
     /// The current page has arrived.
     pub loaded: bool,
+    /// The page was just opened from the navigation: the first reply keeps the window at
+    /// the top instead of scrolling to the catalog.
+    pub entered: bool,
     /// The newest request.
     pub ticket: Ticket,
     /// The actor filter, decimal digits or empty.
@@ -99,6 +102,7 @@ impl Default for Audit {
             kind: Kind::Query,
             busy: false,
             loaded: false,
+            entered: false,
             ticket: Ticket::default(),
             actor: Text::default(),
             action: Text::default(),
@@ -430,7 +434,12 @@ impl Audit {
                 ])?;
             }
         }
-        cx.commands.focus(if self.detail.is_some() { "#audit-detail" } else { "#audit-catalog" })
+        let selector = if self.detail.is_some() { "#audit-detail" } else { "#audit-catalog" };
+        if std::mem::take(&mut self.entered) {
+            cx.commands.focus_top(selector)
+        } else {
+            cx.commands.focus(selector)
+        }
     }
 }
 
@@ -455,6 +464,7 @@ impl Page for Audit {
             cx.state.stats_busy = false;
             cx.state.stale = true;
             self.window(cx.state);
+            self.entered = true;
             self.query(cx, Kind::Query)?;
             return Ok(true);
         }

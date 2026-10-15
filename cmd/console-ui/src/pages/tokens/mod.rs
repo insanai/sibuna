@@ -52,6 +52,9 @@ pub struct Tokens {
     pub busy: bool,
     /// The current page has arrived.
     pub loaded: bool,
+    /// The page was just opened from the navigation: the first reply keeps the window at
+    /// the top instead of scrolling to the catalog.
+    pub entered: bool,
     /// What the newest request does.
     pub kind: Kind,
     /// The newest request.
@@ -83,6 +86,7 @@ impl Default for Tokens {
             selected: None,
             busy: false,
             loaded: false,
+            entered: false,
             kind: Kind::Query,
             ticket: Ticket::default(),
             label: Text::default(),
@@ -363,6 +367,7 @@ impl Page for Tokens {
             cx.state.clear_message();
             cx.state.stats_busy = false;
             cx.state.stale = true;
+            self.entered = true;
             self.query(cx)?;
             return Ok(true);
         }
@@ -409,7 +414,11 @@ impl Page for Tokens {
             }
             let selector =
                 if self.secret.is_empty() { "#tokens-catalog" } else { "#tokens-secret" };
-            cx.commands.focus(selector)?;
+            if std::mem::take(&mut self.entered) {
+                cx.commands.focus_top(selector)?;
+            } else {
+                cx.commands.focus(selector)?;
+            }
             return Ok(true);
         }
         self.saved(body)?;
