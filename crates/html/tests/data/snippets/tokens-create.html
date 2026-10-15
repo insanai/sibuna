@@ -1,0 +1,14 @@
+<section class="sb-panel">
+    <h2>Create a token</h2>
+    <form class="sb-settings-form" id="tokens-create" data-change="tokens-draft">
+        <fieldset{{ busy }}>
+            <label for="tokens-label">Label</label>
+            <input id="tokens-label" class="input input-bordered" name="label" maxlength="64"
+                required autocomplete="off" value="{{ label }}">
+            <label for="tokens-role">Role</label>
+            <select id="tokens-role" class="select select-bordered" name="role">
+                <option value="viewer"{{ viewer }}>viewer</option>
+                <option value="operator"{{ operator }}>operator</option>
+                <option value="admin"{{ admin }}>admin</option>
+            </select>
+            <fieldset><legend>Scopes — select at least one</legend>

@@ -1,0 +1,13 @@
+<div class="sb-rule-field">
+<label for="rule-path">Path pattern (blank matches any)</label>
+<input class="input" id="rule-path" name="rule_path" value="{{ path }}" maxlength="512">
+</div>
+<div class="sb-rule-field">
+<label for="rule-agent">User-agent pattern (blank matches any)</label>
+<input class="input" id="rule-agent" name="rule_user_agent" value="{{ user_agent }}" maxlength="512">
+</div>
+<div class="sb-rule-field">
+<label for="rule-priority">Priority (lower numbers run first)</label>
+<input class="input" id="rule-priority" name="rule_priority" type="number"
+       min="-2147483648" max="2147483647" value="{{ priority }}" required>
+</div>

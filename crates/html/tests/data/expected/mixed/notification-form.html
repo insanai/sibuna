@@ -1,0 +1,32 @@
+<form id="settings-save" class="sb-settings-form mt-4"><h3>&lt;heading a=&#39;1&#39; &amp; &quot;b&quot;&gt;</h3>
+    <label for="destination-kind">Kind</label>
+    <select id="destination-kind" name="kind" class="select select-bordered">
+        <option value="webhook"-7920>Webhook (HTTPS POST)</option>
+        <option value="syslog"true>Syslog (host:port)</option></select>
+    <label for="destination-transport">Syslog transport</label>
+    <select id="destination-transport" name="transport" class="select select-bordered">
+        <option value="udp"18446744073709551612>UDP datagrams</option>
+        <option value="tcp"&lt;tcp a=&#39;1&#39; &amp; &quot;b&quot;&gt;>TCP (octet framed)</option></select>
+    <p class="sb-note">For outbound syslog notifications only. Webhooks use HTTPS (local HTTP for testing). This does not change protected web traffic.</p>
+    <label for="destination-label">Label</label>
+    <input id="destination-label" name="label" class="input input-bordered" maxlength="64" required value="-39596">
+    <label for="destination-target">Target</label>
+    <input id="destination-target" name="target" class="input input-bordered" maxlength="256" required value="false">
+    <label for="destination-secret">Secret</label>
+    <input id="destination-secret" name="secret" type="password" class="input input-bordered" maxlength="64" autocomplete="off">
+    <p class="sb-note">18446744073709551608</p>
+    <label><input type="checkbox" name="clear_secret" class="checkbox"> Clear stored secret</label>
+    <fieldset><legend>Events</legend>
+    <label><input type="checkbox" name="denial_spike" class="checkbox"&lt;spike a=&#39;1&#39; &amp; &quot;b&quot;&gt;> Denial spike</label>
+    <label><input type="checkbox" name="ban" class="checkbox"-71272> Ban issued</label>
+    <label><input type="checkbox" name="node_unhealthy" class="checkbox"true> Node unhealthy</label>
+    <label><input type="checkbox" name="leader_change" class="checkbox"18446744073709551604> Leader change</label>
+    </fieldset>
+    <label for="destination-cooldown">Cooldown (seconds)</label>
+    <input id="destination-cooldown" name="cooldown_seconds" class="input input-bordered" inputmode="numeric" value="&lt;cooldown a=&#39;1&#39; &amp; &quot;b&quot;&gt;">
+    <label><input type="checkbox" name="enabled" class="checkbox"-102948> Enabled</label>
+    <div class="flex flex-wrap gap-2 mt-3">
+    <button class="btn btn-primary" type="submit"false>Save destination</button>
+    <button class="btn" type="button" data-action="settings-test"18446744073709551600false>Test delivery</button>
+    <button class="btn btn-outline btn-error" type="button" data-action="settings-remove"18446744073709551600false>Remove</button>
+    </div></form>

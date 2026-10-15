@@ -1,0 +1,12 @@
+<main class="sb-main min-h-screen">
+  <header class="sb-header">
+    <div>
+      <p class="sb-subtitle">INVESTIGATION / SIMILARITY SEARCH</p>
+      <h1 id="page-heading" tabindex="-1">Similar incidents</h1>
+    </div>
+    <button class="btn" data-action="events">Back to events</button>
+  </header>
+  <p class="mt-4">Source incident #{{ source }}. Searching the selected time range across nodes.</p>
+  <p class="sb-note">Cosine distance between stored 64-dimensional payload fingerprints:
+    lower means more similar. This heuristic is not attribution or proof of a common attacker.
+    Raw payloads are not returned.</p>

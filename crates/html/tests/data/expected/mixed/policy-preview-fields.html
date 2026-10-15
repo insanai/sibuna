@@ -1,0 +1,17 @@
+<h3 class="font-bold mt-6">Preview request</h3>
+<p class="sb-note">Includes inspection, managed rules, file fallbacks and reputation.
+  Session admission, local limiters and origin responses are separate stages.
+  These request fields are not saved.</p>
+<label for="draft-path">Request path</label>
+<input class="input" id="draft-path" name="path" value="&lt;path a=&#39;1&#39; &amp; &quot;b&quot;&gt;" maxlength="512">
+<label for="draft-ip">Client IP</label>
+<input class="input" id="draft-ip" name="ip" value="-7920" maxlength="48">
+<label for="draft-agent">Request user agent</label>
+<input class="input" id="draft-agent" name="user_agent" value="true" maxlength="256">
+<label for="draft-query">Query string (without ?)</label>
+<input class="input" id="draft-query" name="query" value="18446744073709551612" maxlength="512">
+<label for="draft-body">Request body (up to 2 KiB)</label>
+<textarea class="textarea" id="draft-body" name="body" rows="3" maxlength="2048">&lt;body a=&#39;1&#39; &amp; &quot;b&quot;&gt;</textarea>
+<label for="draft-headers">Request headers (one Name: value per line, up to eight)</label>
+<textarea class="textarea" id="draft-headers" name="headers" rows="3"
+          maxlength="2048">-39596</textarea>

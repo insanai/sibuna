@@ -1,0 +1,10 @@
+<fieldset class="fieldset sb-rule-wide">
+  <legend class="fieldset-legend">Per-client rule quota</legend>
+  <p class="sb-note">Optional for Allow, Deny and Challenge rules. Leave all three fields empty to disable. WEIGH rules cannot own a quota. The global limiter still applies.</p>
+  <div class="sb-rule-grid">
+    <div class="sb-rule-field"><label for="rule-limit-rate">Burst requests</label><input class="input input-bordered" id="rule-limit-rate" name="rule_limit_rate" type="number" min="1" max="1000000" value="{{ rate }}"></div>
+    <div class="sb-rule-field"><label for="rule-limit-window">Pacing window (seconds)</label><input class="input input-bordered" id="rule-limit-window" name="rule_limit_window" type="number" min="1" max="86400" value="{{ window }}"></div>
+    <div class="sb-rule-field"><label for="rule-limit-ban">Local ban (seconds)</label><input class="input input-bordered" id="rule-limit-ban" name="rule_limit_ban" type="number" min="0" max="86400" placeholder="0" value="{{ ban }}"></div>
+  </div>
+  <p class="sb-note">Checked before session bypass. Excess requests return 429; a positive ban also blocks this address across paths on this node. Quotas are node-local and do not reset on unrelated policy edits.</p>
+</fieldset>

@@ -1,0 +1,31 @@
+<form id="audit-filter" class="sb-panel sb-filters mt-6">
+    <fieldset&lt;busy a=&#39;1&#39; &amp; &quot;b&quot;&gt;><legend class="font-bold mb-4">Filter recorded activity</legend>
+        <div class="sb-filter-grid sb-filter-three">
+            <div class="sb-filter-field">
+                <label for="audit-actor">Actor ID</label>
+                <input id="audit-actor" class="input input-bordered" name="actor"
+                    inputmode="numeric" pattern="[0-9]*" maxlength="19" value="&lt;actor a=&#39;1&#39; &amp; &quot;b&quot;&gt;"
+                    placeholder="All actors">
+            </div>
+            <div class="sb-filter-field">
+                <label for="audit-action">Action</label>
+                <input id="audit-action" class="input input-bordered" name="action" maxlength="48"
+                    pattern="[a-z0-9._]*" placeholder="e.g. user.create" value="&lt;action a=&#39;1&#39; &amp; &quot;b&quot;&gt;">
+            </div>
+            <div class="sb-filter-field">
+                <label for="audit-days">Period</label>
+                <select id="audit-days" class="select select-bordered" name="days">
+                    <option value="1"&lt;day a=&#39;1&#39; &amp; &quot;b&quot;&gt;>Last 24 hours</option>
+                    <option value="7"&lt;week a=&#39;1&#39; &amp; &quot;b&quot;&gt;>Last 7 days</option>
+                    <option value="30"&lt;month a=&#39;1&#39; &amp; &quot;b&quot;&gt;>Last 30 days</option>
+                    <option value="365"&lt;year a=&#39;1&#39; &amp; &quot;b&quot;&gt;>Last 365 days</option>
+                </select>
+            </div>
+        </div>
+        <p class="sb-note mt-4">Leave actor and action blank to include all values.
+            Actions match the exact recorded name.</p>
+        <div class="sb-filter-actions">
+            <button class="btn btn-primary" type="submit">Apply audit filters</button>
+        </div>
+    </fieldset>
+</form>

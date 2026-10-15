@@ -1,0 +1,33 @@
+[package]
+name = "sibuna-html"
+description = "Escaped HTML snippets: a build-time template compiler and a small runtime"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = ["compiler"]
+# `String` and `Cow<str>` values.
+alloc = []
+# The template compiler and code generator, used from build scripts.
+compiler = ["alloc"]
+
+[dependencies]
+
+[lints]
+workspace = true
+
+[[test]]
+name = "diagnostics"
+required-features = ["compiler"]
+
+[[test]]
+name = "golden"
+required-features = ["compiler"]
+
+[[test]]
+name = "snapshot"
+required-features = ["compiler"]

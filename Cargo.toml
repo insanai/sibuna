@@ -11,8 +11,7 @@ license = "Apache-2.0"
 repository = "https://github.com/insanai/sibuna"
 authors = ["Vikrant Rathore <vikrant@vyomtech.com>"]
 
-# Every dependency is declared once here. The data plane has no external crates: each
-# entry below is a workspace crate.
+# Every dependency is declared once here. The data plane has no external crates.
 [workspace.dependencies]
 sibuna-crypto = { path = "crates/crypto", version = "0.2.0" }
 sibuna-encoding = { path = "crates/encoding", version = "0.2.0" }
@@ -28,6 +27,15 @@ sibuna-core = { path = "crates/core", version = "0.2.0" }
 sibuna-policy = { path = "crates/policy", version = "0.2.0" }
 sibuna-challenge = { path = "crates/challenge", version = "0.2.0" }
 sibuna-net = { path = "crates/net", version = "0.2.0" }
+sibuna-storage = { path = "crates/storage", version = "0.2.0" }
+sibuna-html = { path = "crates/html", version = "0.2.0" }
+
+# External crates. Each one is admitted by a design record and confined to one crate.
+# sqlx: SQL storage for SQLite (single node) and PostgreSQL (clusters); SID 0011. Used without
+# macros, migrations or TLS so no database is needed at build time. Only sibuna-storage uses it.
+sqlx = { version = "=0.9.0", default-features = false, features = ["runtime-tokio"] }
+# tokio: the runtime sqlx requires; a current-thread runtime on the storage thread only. SID 0011.
+tokio = { version = "1.53", default-features = false, features = ["rt", "time", "sync"] }
 
 [workspace.lints.rust]
 unsafe_code = "deny"

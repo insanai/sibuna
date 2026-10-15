@@ -1,0 +1,9 @@
+<form id="audit-revert-confirm" class="sb-settings-form my-3" aria-labelledby="audit-revert-heading">
+    <h3 id="audit-revert-heading" tabindex="-1">Revert &lt;id a=&#39;1&#39; &amp; &quot;b&quot;&gt; to the document before revision -7920</h3>
+    <p class="sb-note">The document recorded before this change becomes a new revision of the rule on every node. Nothing is deleted: this audit record stays and the revert is recorded as a further policy edit. The revert is refused if the rule set changed after revision -7920; use Policy history to compare and rebase in that case.</p>
+    <label><input class="checkbox checkbox-sm" type="checkbox" name="confirmed" requiredtrue> I understand this replaces the current rule with the earlier document.</label>
+    <div class="sb-filter-actions">
+        <button class="btn btn-error" type="submit"true>Revert to the earlier document</button>
+        <button class="btn" type="button" data-action="audit-revert-cancel"true>Keep the current rule</button>
+    </div>
+</form>

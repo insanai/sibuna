@@ -1,0 +1,26 @@
+<form class="sb-filters" id="rank-history-start">
+    <fieldset class="sb-filter-grid sb-filter-three"&lt;disabled a=&#39;1&#39; &amp; &quot;b&quot;&gt;>
+        <label class="sb-filter-field"><span>Rankings comparison</span>
+            <select class="select" name="mode">
+                <option value="previous"&lt;previous a=&#39;1&#39; &amp; &quot;b&quot;&gt;>Previous period</option>
+                <option value="yesterday"&lt;yesterday a=&#39;1&#39; &amp; &quot;b&quot;&gt;>Same window yesterday</option>
+                <option value="node"&lt;node_mode a=&#39;1&#39; &amp; &quot;b&quot;&gt;>Another node</option>
+            </select>
+        </label>
+        <label class="sb-filter-field"><span>Ranking minutes</span>
+            <input class="input" type="number" name="minutes" min="1" max="129600" value="&lt;minutes a=&#39;1&#39; &amp; &quot;b&quot;&gt;" required>
+        </label>
+        <label class="sb-filter-field"><span>Ranking end (minutes ago)</span>
+            <input class="input" type="number" name="offset" min="0" max="129599" value="&lt;offset a=&#39;1&#39; &amp; &quot;b&quot;&gt;" required>
+        </label>
+        <label class="sb-filter-field"><span>Ranking node (0 for all retained nodes)</span>
+            <input class="input" type="number" name="node" min="0" max="4294967295" value="&lt;node a=&#39;1&#39; &amp; &quot;b&quot;&gt;" required>
+        </label>
+        <label class="sb-filter-field"><span>Reference ranking node</span>
+            <input class="input" type="number" name="other_node" min="0" max="4294967295" value="&lt;other_node a=&#39;1&#39; &amp; &quot;b&quot;&gt;" required>
+        </label>
+        <div class="sb-filter-actions sb-comparison-actions">
+            <button class="btn btn-primary">Compare path rankings</button>
+        </div>
+    </fieldset>
+</form>

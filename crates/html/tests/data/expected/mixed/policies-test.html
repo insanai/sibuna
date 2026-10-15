@@ -1,0 +1,22 @@
+<section id="policy-tester" tabindex="-1"
+         class="card bg-base-100 border border-base-300 p-6 mt-6">
+  <h2 class="font-bold">Evaluate a request</h2>
+  <p class="sb-note">Evaluate the applied policy snapshot without sending traffic or changing rules.
+    This includes inspection, reputation, file rules and database rules. Session admission,
+    local rate limits, bans outside the engine and origin responses are separate stages.
+    The supplied fields are not saved.</p>
+  <form id="policy-run" class="sb-settings-form">
+    <label for="policy-path">Path</label>
+    <input class="input" id="policy-path" name="path" value="&lt;path a=&#39;1&#39; &amp; &quot;b&quot;&gt;" required maxlength="512">
+    <label for="policy-ip">Client IP</label>
+    <input class="input" id="policy-ip" name="ip" value="-7920" required maxlength="48">
+    <label for="policy-agent">User agent</label>
+    <input class="input" id="policy-agent" name="user_agent" value="true" maxlength="256">
+    <label for="policy-query">Query string (without ?)</label>
+    <input class="input" id="policy-query" name="query" value="18446744073709551612" maxlength="512">
+    <label for="policy-body">Body (up to 2 KiB)</label>
+    <textarea class="textarea" id="policy-body" name="body" rows="3"
+              maxlength="2048">&lt;body a=&#39;1&#39; &amp; &quot;b&quot;&gt;</textarea>
+    <label for="policy-headers">Request headers (one Name: value per line, up to eight)</label>
+    <textarea class="textarea" id="policy-headers" name="headers" rows="3"
+              maxlength="2048">-39596</textarea>
