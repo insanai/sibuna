@@ -61,7 +61,7 @@ const TOKENS: [&str; 26] = [
 /// Lines where the Rust engine deliberately differs from the Zig reference, by reason (the
 /// `waf` and `body_fields` module docs and SID 0004 record each change). Every other change
 /// of the WAF since the reference keeps these inputs' lines equal.
-const DELIBERATE: [(&str, &[&str]); 2] = [
+const DELIBERATE: [(&str, &[&str]); 3] = [
     (
         "a text body under a binary Content-Type is inspected; Zig skipped every body of a \
          declared binary type",
@@ -81,6 +81,17 @@ const DELIBERATE: [(&str, &[&str]); 2] = [
         "a decoded line feed (%0a, %250a) before a command is command injection; Zig folded \
          it into a space before the detector saw it",
         &["R321", "R945", "R1581", "P42.2", "P42.3"],
+    ),
+    (
+        "a command name followed by `=` or `[...]=` is an assignment or a query parameter \
+         (`a=1&id=5`), not a command; Zig denied it as `waf:rce`",
+        &[
+            "R184", "R202", "R280", "R308", "R315", "R350", "R419", "R509", "R513", "R514",
+            "R560", "R603", "R661", "R682", "R703", "R751", "R760", "R784", "R786", "R830",
+            "R955", "R994", "R999", "R1010", "R1061", "R1123", "R1138", "R1183", "R1288", "R1369",
+            "R1386", "R1459", "R1468", "R1618", "R1688", "R1720", "R1786", "R1831", "R1873",
+            "R1970",
+        ],
     ),
 ];
 

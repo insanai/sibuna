@@ -348,7 +348,9 @@ pub(crate) fn split_script_scheme(text: &[u8]) -> Option<Violation> {
 }
 
 /// True when `text`, after spaces and tabs, starts with a shell command name that is not
-/// followed by a word byte.
+/// followed by a word byte, nor by `=` or `[...]=`. A name followed by `=` is a shell
+/// assignment word, not a command, and in a query string it is a parameter (`a=1&id=5`,
+/// `&type[]=x`), so only the separator and a command proper count.
 fn starts_with_shell_command(text: &[u8]) -> bool {
     let start = skip_spaces(text, 0);
     crate::steps::count(start as u64);
@@ -359,7 +361,27 @@ fn starts_with_shell_command(text: &[u8]) -> bool {
         let command = command.as_bytes();
         starts_with_ignore_case(rest, command)
             && rest.get(command.len()).is_none_or(|&next| !is_word_byte(next))
+            && !is_assignment(&rest[command.len()..])
     })
+}
+
+/// The longest `[...]` index of an array parameter (`type[]=`, `id[key]=`) we look past.
+const MAX_INDEX: usize = 64;
+
+/// True when `rest`, the text after a name, makes the name an assignment: it starts with
+/// `=`, or with a bracketed index of at most [`MAX_INDEX`] bytes followed by `=`.
+fn is_assignment(rest: &[u8]) -> bool {
+    match rest.first() {
+        Some(b'=') => true,
+        Some(b'[') => {
+            let window = &rest[..rest.len().min(MAX_INDEX + 2)];
+            window
+                .iter()
+                .position(|&byte| byte == b']')
+                .is_some_and(|close| window.get(close + 1) == Some(&b'='))
+        }
+        _ => false,
+    }
 }
 
 /// Command injection: a shell separator (`;`, `|`, `||`, `&`, `&&`, `$(`, backtick, LF)

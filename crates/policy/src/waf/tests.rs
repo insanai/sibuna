@@ -46,6 +46,26 @@ fn check_rce_detects_command_injection_but_not_punctuation() {
     assert!(check_rce(b"${jndi:ldap://x}").is_some());
     assert!(check_rce(b"status ok; done | next").is_none());
     assert!(check_rce(b"a=1&b=2&c=3").is_none());
+    assert!(check_rce(b"ping 127.0.0.1&id").is_some());
+    assert!(check_rce(b"x;cat /etc/passwd").is_some());
+    assert!(check_rce(b"x|id[0]").is_some());
+}
+
+// A command name followed by `=` is a shell assignment, and in a query string a
+// parameter: `a=1&id=5` was denied as `waf:rce` before.
+#[test]
+fn check_rce_allows_parameters_named_like_commands() {
+    for query in [
+        &b"a=1&id=5"[..],
+        b"page=2&type=book&set=3&dir=asc",
+        b"q=x;env=prod",
+        b"a=1&type[]=x&id[key]=7",
+        b"a=1&cat=",
+    ] {
+        assert!(check_rce(query).is_none(), "{}", String::from_utf8_lossy(query));
+        assert!(inspect_text(query).is_none(), "{}", String::from_utf8_lossy(query));
+    }
+    assert!(check_rce(b"a=1&id[0").is_some());
 }
 
 #[test]

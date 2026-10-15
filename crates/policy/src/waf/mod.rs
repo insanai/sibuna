@@ -26,6 +26,8 @@
 //! - The detectors also find `onerror =` (white space before `=`), an event handler on a
 //!   tag of any name, tautologies with `<`, `>`, `<>` and `!=` (`or 2>1`), and `union` and
 //!   `select` joined by parentheses (`union(select`).
+//! - A command name followed by `=` or `[...]=` is an assignment, not a command: Zig
+//!   denied query strings such as `a=1&id=5` as command injection.
 
 mod canonical;
 mod classes;
