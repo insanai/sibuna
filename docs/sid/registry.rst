@@ -50,6 +50,6 @@ Discussion registry
      - accepted
    * - 0013
      - :doc:`records/0013-console-storage`
-     - discussion
+     - accepted
 
 .. sid-generated-end

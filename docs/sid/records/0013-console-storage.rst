@@ -1,13 +1,13 @@
 :sid-number: 0013
 :sid-title: Console Storage for the Rust Port: A Typed Schema with Invariants in Rust
-:sid-state: discussion
-:sid-status: Open for Discussion
+:sid-state: accepted
+:sid-status: Accepted
 :sid-type: Architectural Specification
 :sid-authors: ["Vikrant Rathore"]
 :sid-created: 2026-10-15
 :sid-updated: 2026-10-15
 :sid-discussion: No external discussion URL assigned
-:sid-summary: Specifies the console's storage for the Rust port as one typed baseline migration of 35 STRICT tables without triggers, in which every invariant that a Zig trigger enforced is enforced by exactly one transactional Rust function on SQLite and PostgreSQL alike, together with one search language, retention jobs and a per-route table of reads and writes.
+:sid-summary: Specifies the console's storage for the Rust port as one typed baseline migration of 33 STRICT tables without triggers, in which every invariant that a Zig trigger enforced is enforced by exactly one transactional Rust function on SQLite and PostgreSQL alike, together with one search language, retention jobs and a per-route table of reads and writes.
 :sid-labels: ["console","storage","rust"]
 
 Console Storage for the Rust Port: A Typed Schema with Invariants in Rust
@@ -16,7 +16,7 @@ Console Storage for the Rust Port: A Typed Schema with Invariants in Rust
 Abstract
 --------
 
-This record specifies the console's storage for the Rust port before any of it is written. The console keeps the behaviour of SID 0007 and stores its state through sqlx as SID 0011 specifies: an embedded SQLite file for one node and one PostgreSQL database for a cluster. The schema is one baseline migration of the component ``console``. It has 35 typed tables; the Zig console had 44 tables and 49 triggers. No console table has a trigger. Each invariant that a Zig trigger enforced is now enforced by exactly one Rust function that runs its statements in one transaction, and the database's ``NOT NULL``, ``CHECK`` and foreign-key constraints refuse what the Rust types cannot represent. The record also fixes one search language for the Events page with the same matches on both backends, the retention jobs and their bounds, and the tables each HTTP route group reads and writes.
+This record specifies the console's storage for the Rust port before any of it is written. The console keeps the behaviour of SID 0007 and stores its state through sqlx as SID 0011 specifies: an embedded SQLite file for one node and one PostgreSQL database for a cluster. The schema is one baseline migration of the component ``console``. It has 33 typed tables; the Zig console had 44 tables and 49 triggers. No console table has a trigger. Each invariant that a Zig trigger enforced is now enforced by exactly one Rust function that runs its statements in one transaction, and the database's ``NOT NULL``, ``CHECK`` and foreign-key constraints refuse what the Rust types cannot represent. The record also fixes one search language for the Events page with the same matches on both backends, the retention jobs and their bounds, and the tables each HTTP route group reads and writes.
 
 Motivation and scope
 --------------------
@@ -62,6 +62,8 @@ The following constraints of the Zig console came from Zig, Zaxonlite or the Zig
      - Typed single-row tables (``console_audit_cursor``; the core ``policy_revision``).
    * - Page sizes and lookahead rows sized to fit Zaxonlite's 100-row and 64 KiB statement envelope (for example 32 challenge-minute rows because a row was 1,792 hex bytes, or ten-row chunk reads).
      - A storage function takes its page size from the protocol request and imposes no envelope of its own. Page sizes remain response bounds of the protocol.
+   * - Rankings archives written in 2,048-byte chunks with a reservation and a separate publish step, and policy imports staged in chunks, to fit Zaxonlite's 64 KiB statement envelope and the mailbox's bounded payloads.
+     - An archive is one row holding one ``BLOB`` of at most 48,536 bytes, stored by one function in one transaction. A policy import is one bounded request whose documents are validated and applied in one transaction.
    * - Fixed SQL text buffers and fixed parameter arrays, and SQL text assembled per filter combination.
      - Static statements with bound parameters; optional filters are written as ``($n IS NULL OR column = $n)``.
    * - Saturating arithmetic inside trigger bodies, because a SQLite integer overflow in a trigger becomes a float.
@@ -109,7 +111,7 @@ Principles
      - A sign-out writes ``session.logout`` with the address of the sign-out and deletes the session.
      - ``accounts::end_session``
    * - S5
-     - Enabling TOTP requires an unexpired enrollment at the expected factor revision, stores the recovery digests, and revokes the account through S2 with the action ``totp.enable``.
+     - Enabling TOTP requires an unexpired enrollment at the expected factor revision, stores the recovery digests, writes ``totp.enable``, and revokes the account through S2, which writes ``user.revoke``.
      - ``accounts::enable_totp``
    * - S6
      - A password change replaces the hash, clears ``must_change`` and the bootstrap expiry, revokes through S2, and inserts the replacement session through S3, all or nothing.
@@ -127,7 +129,7 @@ Principles
      - At most 64 kiosk grants are outstanding, and each grant writes ``kiosk.grant`` without the code.
      - ``kiosk::grant_kiosk``
    * - S11
-     - A kiosk grant is exchanged at most once, before its use-by time and while the granting account keeps its revision; the exchange inserts one kiosk session expiring with the grant and writes ``kiosk.exchange``.
+     - A kiosk grant is exchanged at most once, before its use-by time and while the granting account keeps its revision; the exchange inserts one kiosk session expiring with the grant, writes ``kiosk.exchange`` and ``session.create``, and leaves the granting account's last sign-in time unchanged.
      - ``kiosk::exchange_kiosk``
    * - S12
      - A GeoIP generation becomes active only when all of its ranges are stored and the active revision is the expected one; the switch writes ``geoip.activate``.
@@ -142,7 +144,7 @@ Principles
      - An ordering swaps the priorities of two adjacent rules, writes two history rows and ``policy.order``, and advances the revision once.
      - ``policy::order_rules``
    * - S16
-     - An import replaces every rule with the complete staged set, writes one history row per rule and ``policy.import``, deletes the staged chunks, and advances the revision once.
+     - An import replaces every rule with the complete set carried by one request (at most 128 documents), writes one history row per rule and ``policy.import``, and advances the revision once.
      - ``policy::import_rules``
    * - S17
      - A reputation edit or removal by the console writes or deletes the prefix, records the console as its owner (or removes the ownership), writes ``reputation.edit`` or ``reputation.remove``, and advances the revision once.
@@ -190,13 +192,13 @@ Principles
      - A command leaves ``intent`` once, to ``applied`` or ``rejected``, and writes ``node.command.applied`` or ``node.command.rejected``; a repeated identical completion changes nothing.
      - ``nodes::complete_command``
    * - S32
-     - A ranking archive is reserved only within 64 pending reservations and the 512 MiB charged quota, and its charge is added to the usage counter in the same transaction.
-     - ``rankings::reserve_archive``
+     - A ranking archive is stored only when its bytes have its digest as their SHA-256 and decode as an archive, and only within the 512 MiB charged quota; its charge is added to the usage counter by a conditional update and the archive row, with its node, boot and minute, is inserted in the same transaction.
+     - ``rankings::store_archive``
    * - S33
-     - An archive is published only when its chunks reassemble to bytes whose SHA-256 is its digest and that decode as an archive; publication fixes its node, boot and minute.
-     - ``rankings::publish_archive``
+     - Merged into S32: an archive is stored whole, so there is no separate publication.
+     - ``rankings::store_archive``
    * - S34
-     - Deleting a reservation or an archive deletes its chunks and subtracts its charge, so the usage counter equals the sum of the charges of the stored archives.
+     - Deleting an archive subtracts its charge, so the usage counter equals the sum of the charges of the stored archives.
      - ``rankings::prune_rankings``
    * - S35
      - A rule-hit observation and its hour and day roll-ups commit together; replaying an identical observation changes nothing, a conflicting observation with the same identity aborts the whole batch, and an overflow makes a roll-up's hit count unavailable rather than wrong.
@@ -229,9 +231,9 @@ The Zig console also enforced invariants with conditional statements rather than
 
 **Transactions and locks.** A storage function receives ``&mut Transaction`` from ``sibuna-storage`` and never commits; its caller begins and commits. On SQLite, one storage thread runs one job at a time, so a transaction never waits for another writer of the same node. On PostgreSQL several nodes write concurrently under ``READ COMMITTED``, and the functions take locks in one fixed order, which prevents deadlocks:
 
-1. A capacity-checked insert (users, tokens, sessions, kiosk grants, destinations, queued events, node commands, GeoIP generations, ranking reservations) first takes ``pg_advisory_xact_lock`` with the key of its table, so two nodes cannot both pass the count.
+1. A capacity-checked insert (users, tokens, sessions, kiosk grants, destinations, queued events, node commands, GeoIP generations) first takes ``pg_advisory_xact_lock`` with the key of its table, so two nodes cannot both pass the count.
 2. A policy workflow then locks the revision with ``SELECT revision FROM policy_revision WHERE id = 1 FOR UPDATE``, as the core's ban batches already do (SID 0011).
-3. Conditional updates of the governed rows follow (``WHERE revision = $expected`` and similar), which PostgreSQL re-evaluates after a row lock.
+3. Conditional updates of the governed rows follow (``WHERE revision = $expected`` and similar), which PostgreSQL re-evaluates after a row lock. When a change involves two accounts (an administrator changing another account), both rows are locked with ``FOR UPDATE`` in identifier order and the actor is rechecked, so two administrators cannot disable each other at once.
 4. ``console_rank_usage`` is locked by its conditional update.
 5. ``audit::append_audit`` runs last and locks ``console_audit_cursor``. Audit appends are therefore serialised cluster-wide, and identifiers follow commit order.
 
@@ -277,15 +279,15 @@ A storage function has the shape below. Failures are values of ``ConsoleStorageE
 
 Time is a parameter, read once by the caller, so tests control it. The resource bounds are:
 
-- **Outstanding jobs.** ``with_database`` blocks its caller until the job finishes, so a calling thread has at most one outstanding job. The console's calling threads are its service slots (at most 96, SID 0007) and its background jobs (retention, notifier, membership, journals, GeoIP maintenance, command completion), so at most 96 plus the number of background jobs can wait at once. No separate mailbox capacity is needed.
-- **Fairness.** The storage thread runs jobs one at a time. Between two jobs it runs the core tick when the tick is due, so console work cannot delay incident batches and policy rebuilds by more than one job. This is a change to the storage loop of ``sibuna-storage``.
-- **Query deadlines.** A console read that aggregates over a time window (security trends, minute and challenge summaries, events with a search, rankings history, rule-hit history, replay) runs under a work bound. On SQLite the bound is ``--console-query-steps`` virtual-machine steps (100,000 to 50,000,000, default 4,000,000), enforced through the connection's progress handler. On PostgreSQL it is ``SET LOCAL statement_timeout`` of 2,000 ms. Exhaustion returns ``Unavailable`` with the hint to narrow the period, as in SID 0007. Point reads by key have no separate bound.
+- **Outstanding jobs.** ``with_database`` blocks its caller until the job finishes, so a calling thread has at most one outstanding job. The bounded job queue of SID 0011 bounds the jobs of all callers together: when 32 jobs are queued, ``with_database`` refuses the next one at once with a busy error, and the console answers that refusal with its 503 "console busy" response. The console adds no queue of its own.
+- **Fairness.** The storage thread of SID 0011 runs at most 16 jobs between two ticks and always runs a due tick first, so console work cannot hold back incident batches and policy rebuilds. The console relies on that bound; SID 0011 owns it.
+- **Query deadlines.** A console read that aggregates over a time window (security trends, minute and challenge summaries, events with a search, rankings history, rule-hit history, replay) runs under a work bound. On SQLite the bound is ``--console-query-steps`` virtual-machine steps (100,000 to 50,000,000, default 4,000,000), enforced through sqlx's safe progress handler (``LockedSqliteHandle::set_progress_handler`` of sqlx-sqlite 0.9). On PostgreSQL it is ``SET LOCAL statement_timeout = 2000`` (milliseconds) in the read's transaction. No new option is added. Exhaustion returns ``Unavailable`` with the hint to narrow the period, as in SID 0007. Point reads by key have no separate bound.
 - **Write batches.** A background delete removes at most 256 rows per transaction (see "Retention and quotas"), so no job holds the storage thread or a lock for long.
 
 Changes to the core storage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The console needs four changes in ``sibuna-storage``. No Rust deployment exists, so they are folded into the core baseline (version 1) as earlier changes of SID 0011 were.
+The console needs four changes in ``sibuna-storage``. No Rust deployment exists, so they are folded into the core baseline (version 1) as earlier changes of SID 0011 were. The bounded job queue and the tick-first fairness of "Calling convention and resource bounds" are SID 0011's and are not changes made for the console.
 
 1. **Search columns.** The full-text index holds the canonical tokens of "Search" instead of a lossy rendering. On SQLite the table becomes ``CREATE VIRTUAL TABLE incidents_fts USING fts5(path, offending_payload, tokenize = 'ascii')``. On PostgreSQL the columns ``search_text`` and the generated ``search`` are replaced by ``search tsvector NOT NULL``, written by Rust from the tokens, with the existing GIN index.
 2. **Incident sidecars.** The incident batch writes the console's evidence, heads and country sidecars in the batch's transaction, through a hook the console registers with ``Hooks``. The hook receives the batch's incident identifiers and records and inserts rows only when the console is enabled.
@@ -504,19 +506,11 @@ Policy workflow and revisions
        previous_xss TEXT NOT NULL CHECK (previous_xss IN ('disabled', 'audit', 'enforce')),
        previous_rce TEXT NOT NULL CHECK (previous_rce IN ('disabled', 'audit', 'enforce'))) STRICT;
 
-   CREATE TABLE console_policy_import_chunks (
-       digest BLOB NOT NULL CHECK (length(digest) = 32),
-       ordinal INTEGER NOT NULL CHECK (ordinal BETWEEN 0 AND 127),
-       recorded_at INTEGER NOT NULL CHECK (recorded_at >= 0),
-       document TEXT NOT NULL CHECK (CASE WHEN json_valid(document)
-           THEN json_type(document) = 'object' AND length(CAST(document AS BLOB)) <= 4096
-           ELSE 0 END),
-       PRIMARY KEY (digest, ordinal)) STRICT;
-
 - ``revision`` in both history tables is the policy revision that the edit committed. A baseline row records the rule as it stood at the expected revision before its first console edit; it has no actor.
 - The inspection document of Zig was a canonical JSON object of exactly four mode names. Eight enumerated columns state that exactly, so the history table is typed instead of holding JSON.
 - The policy history and inspection history stay separate tables: one is keyed by rule and revision and the other by revision alone, and merging them would need a nullable key.
-- An import stages its canonical documents in chunks of the import identified by the SHA-256 of the whole set, at most 128 documents (the engine's rule capacity). Zig staged the typed columns of each rule beside its document so that a trigger could copy them; ``policy::import_rules`` parses and validates every document while it builds the candidate engine anyway, so only the document is staged.
+- An import carries the whole set in one console request body: at most 128 documents (the engine's rule capacity) within the policy crate's file bound of 256 KiB. ``policy::import_rules`` validates the set by building the candidate engine and replaces the rules in one transaction, so nothing is staged. Zig staged the documents and their typed columns in chunks, because a replicated statement had a 64 KiB envelope and a trigger copied the columns.
+- Both history tables follow the audit retention setting, except that a rule's newest history row and the newest inspection row are never deleted, so revert and comparison always have a baseline.
 - The stage tables of Zig are removed (see "Motivation and scope").
 
 Reputation and country actions
@@ -667,7 +661,7 @@ Node membership and commands
    CREATE INDEX console_commands_node ON console_commands (node, requested_at, id);
 
 - Each node writes only its own membership row: at start, every 60 seconds, and after every applied rebuild, coalesced to at most one write per 2 seconds and retried after 30 seconds on failure. ``first_seen`` is kept on update.
-- ``address`` is the node's management address, or ``local`` for a single node. The Zaxonlite log frontiers ``applied_slot`` and ``decided_slot`` are dropped, because the Rust port has no consensus log; the protocol reports them as unavailable.
+- ``address`` is the node's management address, or ``local`` for a single node. The Zaxonlite log frontiers ``applied_slot`` and ``decided_slot`` are dropped from the table, the console protocol and the interface, because the Rust port has no consensus log; a node row carries its applied policy revision instead.
 - A command targets a node that has a membership row, hence the foreign key.
 
 GeoIP generations
@@ -778,28 +772,15 @@ Observations: minutes, challenges, rankings and rule hits
 
    CREATE TABLE console_rank_archives (
        digest BLOB NOT NULL PRIMARY KEY CHECK (length(digest) = 32),
-       total_bytes INTEGER NOT NULL CHECK (total_bytes BETWEEN 92 AND 48536),
-       charge INTEGER NOT NULL CHECK (charge = (total_bytes + 2047) / 2048 * 8192 + 1024),
-       reserved_at INTEGER NOT NULL CHECK (reserved_at >= 0),
-       published_at INTEGER CHECK (published_at >= reserved_at),
-       node INTEGER CHECK (node BETWEEN 1 AND 8388607),
-       boot BLOB CHECK (length(boot) = 16),
-       minute INTEGER CHECK (minute >= 0),
-       CHECK ((published_at IS NULL) = (node IS NULL)),
-       CHECK ((node IS NULL) = (boot IS NULL) AND (boot IS NULL) = (minute IS NULL)),
+       node INTEGER NOT NULL CHECK (node BETWEEN 1 AND 8388607),
+       boot BLOB NOT NULL CHECK (length(boot) = 16),
+       minute INTEGER NOT NULL CHECK (minute >= 0),
+       bytes BLOB NOT NULL CHECK (length(bytes) BETWEEN 92 AND 48536),
+       charge INTEGER NOT NULL CHECK (charge = (length(bytes) + 2047) / 2048 * 8192 + 1024),
+       stored_at INTEGER NOT NULL CHECK (stored_at >= 0),
        UNIQUE (node, boot, minute)) STRICT;
-   CREATE INDEX console_rank_published ON console_rank_archives (minute, digest)
-       WHERE published_at IS NOT NULL;
-   CREATE INDEX console_rank_node ON console_rank_archives (node, minute, digest)
-       WHERE published_at IS NOT NULL;
-   CREATE INDEX console_rank_pending ON console_rank_archives (reserved_at, digest)
-       WHERE published_at IS NULL;
-
-   CREATE TABLE console_rank_chunks (
-       digest BLOB NOT NULL REFERENCES console_rank_archives (digest) ON DELETE CASCADE,
-       ordinal INTEGER NOT NULL CHECK (ordinal BETWEEN 0 AND 23),
-       bytes BLOB NOT NULL CHECK (length(bytes) BETWEEN 1 AND 2048),
-       PRIMARY KEY (digest, ordinal)) STRICT;
+   CREATE INDEX console_rank_minute ON console_rank_archives (minute, digest);
+   CREATE INDEX console_rank_node ON console_rank_archives (node, minute, digest);
 
    CREATE TABLE console_rule_hits (
        node INTEGER NOT NULL CHECK (node BETWEEN 1 AND 8388607),
@@ -853,7 +834,8 @@ Observations: minutes, challenges, rankings and rule hits
 - Minute and challenge-minute payloads stay versioned binary records (``SBM2`` of 176 bytes; ``SBC1`` of 128 bytes plus 96 bytes for each of at most eight partitions), because their counters are unsigned 64-bit values that exceed SQL's signed integers. The ``CHECK`` on the magic prefix refuses another format. The Rust port writes only ``SBM2``; ``SBM1`` rows existed only in Zig databases.
 - The two minute tables stay separate: their payloads, readers and summaries differ, and a ``kind`` column would make every query and index longer without a shared reader.
 - A challenge record's ``cause`` is the rejection cause ordinal (13 causes) and is ``NULL`` unless the outcome is a rejection; Zig stored ``255`` for "no cause". The Rust record type maps its ``NO_CAUSE`` constant to ``NULL`` at the storage boundary. ``algorithm`` uses the names of SID 0011's ``ChallengeAlgorithm``.
-- ``console_rank_pending`` and ``console_rank_archives`` of Zig are merged: an archive has one row from its reservation (``published_at`` ``NULL``) to its expiry, so its chunks can reference it with ``ON DELETE CASCADE`` and no trigger or function has to remember to delete them. The ``CHECK`` on ``charge`` states the charging formula of SID 0007: whole 2,048-byte chunks at 8,192 bytes each plus 1,024 bytes. The largest archive (48,536 bytes, SID 0007 as corrected for the Rust port) is 24 chunks; Zig refused chunk ordinals from 19, a bound left from the 37,468-byte ``SBR1`` format, so an ``SBR2`` archive above 38,912 bytes could not be stored. The Rust bound follows the format.
+- An archive is one row holding its whole ``SBR2`` record as one ``BLOB`` of 92 to 48,536 bytes (SID 0007 as corrected for the Rust port). Zig reserved an archive, wrote it in 2,048-byte chunks and published it in a separate step, because a replicated statement had a 64 KiB envelope and the mailbox carried bounded payloads; neither exists here, so the chunk table, the reservation state and the bound on pending reservations are gone. ``rankings::store_archive`` checks the digest and the format, takes the quota and inserts the row in one transaction (S32). Zig also refused chunk ordinals from 19, a bound left from the 37,468-byte ``SBR1`` format, so an ``SBR2`` archive above 38,912 bytes could not be stored; the Rust bound follows the format.
+- The ``CHECK`` on ``charge`` keeps the charging formula of SID 0007 unchanged: whole 2,048-byte units at 8,192 bytes each plus 1,024 bytes. Retention arithmetic and the 512 MiB quota therefore keep their meaning.
 - ``console_rank_usage`` stays a counter row instead of a sum over archives, because on PostgreSQL its conditional update (``SET charged_bytes = charged_bytes + $charge WHERE charged_bytes + $charge <= 536870912``) is the atomic quota check across nodes. S34 keeps it equal to the sum, and a test checks the equality.
 - Rule hits keep the ``(node, boot, sequence, rule_key)`` identity. Zig refused a conflicting replay through a ``guard`` column whose ``CHECK`` failed on update; S35 inserts with ``ON CONFLICT DO NOTHING``, compares the stored row of every conflict, and aborts the transaction on a difference. A hit count is ``NULL`` when its counter was exhausted or a roll-up sum would overflow.
 
@@ -1031,7 +1013,7 @@ The table maps each of the 49 Zig triggers (schema version 40) to its replacemen
      - S10
      - ``kiosk_grants_are_bounded_and_audited``
    * - ``console_kiosk_exchanged``
-     - audit ``kiosk.exchange``
+     - audit ``kiosk.exchange`` (and, through the cookie-session triggers, ``session.create``)
      - S11
      - ``kiosk_exchange_is_single_use``
    * - ``console_geo_activated``
@@ -1060,7 +1042,7 @@ The table maps each of the 49 Zig triggers (schema version 40) to its replacemen
      - ``country_replacement_removes_unreviewed_prefixes``
    * - ``console_policy_import_apply``
      - replace every rule, history per rule, ``policy.import``, delete the stage, revision
-     - S16, S38
+     - S16 (nothing is staged), S38
      - ``import_replaces_all_rules_in_one_revision``
    * - ``console_page_commit``
      - page upsert or deletion, ``page.edit`` or ``page.reset``, revision bump
@@ -1136,11 +1118,11 @@ The table maps each of the 49 Zig triggers (schema version 40) to its replacemen
      - ``rankings_quota_is_enforced``
    * - ``console_rank_published``
      - remove the pending row
-     - S33 (one row per archive)
-     - ``archive_publishes_only_verified_bytes``
+     - S32 (an archive is stored whole; S33 is merged into S32)
+     - ``archive_stores_only_verified_bytes``
    * - ``console_rank_abandoned``, ``console_rank_expired``
      - delete chunks and release the charge
-     - S34 and the chunk cascade
+     - S34 (no chunks exist)
      - ``usage_equals_charges_after_pruning``
    * - ``console_rule_hit_hour``, ``console_rule_hit_day``
      - roll-ups with saturation and ``NULL`` on overflow
@@ -1155,7 +1137,7 @@ The table maps each of the 49 Zig triggers (schema version 40) to its replacemen
      - S36 and the cascade
      - ``incident_deletion_removes_index_and_sidecars``
 
-Two deliberate differences follow from the Zig trigger chains. Enabling TOTP wrote both ``user.revoke`` (from the user-update trigger it set off) and ``totp.enable``; S5 writes ``totp.enable`` only. A kiosk exchange also fired the cookie-session triggers, writing ``session.create`` and moving the granting account's last sign-in time; S11 writes ``kiosk.exchange`` only and leaves the last sign-in alone.
+The audit rows stay as Sibuna writes them, with one side effect of Zig's trigger chains removed. Enabling TOTP writes both ``totp.enable`` and ``user.revoke``: the account's sessions are revoked, and the trail says so (S5 through S2). A kiosk exchange writes ``kiosk.exchange`` and ``session.create``, because a session was created (S11). It does not move the granting account's last sign-in time: in Zig that followed from the cookie-session trigger chain, but the account's owner did not sign in.
 
 Search
 ~~~~~~
@@ -1255,7 +1237,7 @@ One Rust job, ``retention::RetentionJob``, deletes expired rows on behalf of the
      - ``console_rule_hits`` with ``minute`` before the cutoff; roll-ups whose ``bucket + grain`` is at most the cutoff
      - ``retention.minutes``
    * - rankings
-     - published archives with ``minute`` before now minus ``retention.rankings`` days; then the oldest published archives while ``charged_bytes`` exceeds 536,673,280 (the quota less one largest charge, 197,632); reservations older than 600 seconds
+     - archives with ``minute`` before now minus ``retention.rankings`` days; then the oldest archives while ``charged_bytes`` exceeds 536,673,280 (the quota less one largest charge, 197,632)
      - 1 to 7 days, default 7; 512 MiB charged
    * - challenge records
      - ``console_challenge_records`` and ``console_challenge_difficulty`` older than 7 days; each batch write also deletes up to 64 expired records first
@@ -1269,8 +1251,11 @@ One Rust job, ``retention::RetentionJob``, deletes expired rows on behalf of the
    * - notification history
      - completed events older than 7 days, with their deliveries (S27)
      - 7 days; at most 4,096 stored
+   * - policy history
+     - ``console_policy_history`` and ``console_inspection_history`` rows recorded before now minus ``retention.audit`` days, except the newest row of each rule and the newest inspection row
+     - ``retention.audit``
    * - staged chunks
-     - ``console_country_chunks`` and ``console_policy_import_chunks`` older than 600 seconds
+     - ``console_country_chunks`` older than 600 seconds
      - 10 minutes
    * - GeoIP
      - chunks, then the generation row, of every generation that is not active and was created before the active one was loaded or more than an hour ago
@@ -1279,9 +1264,11 @@ One Rust job, ``retention::RetentionJob``, deletes expired rows on behalf of the
      - commands requested more than 30 days ago, except an intent of the target node's current boot
      - 30 days; 4,096 per node
 
-The quotas checked at insertion are: 1,024 accounts; 1,024 tokens; 4,096 live sessions; 64 outstanding kiosk grants; 8 notification destinations; 256 pending and 4,096 stored notification events; 4,096 commands per node; 2 GeoIP generations of at most 1,048,576 ranges; 64 pending ranking reservations and 512 MiB of charged ranking bytes; 128 documents per import and 1,024 prefixes per country set. The charged quota bounds reservations, not the database file; journal and index costs remain separate, as SID 0007 states.
+The quotas checked at insertion are: 1,024 accounts; 1,024 tokens; 4,096 live sessions; 64 outstanding kiosk grants; 8 notification destinations; 256 pending and 4,096 stored notification events; 4,096 commands per node; 2 GeoIP generations of at most 1,048,576 ranges; 512 MiB of charged ranking bytes; 128 documents per import and 1,024 prefixes per country set. The charged quota bounds the stored archives, not the database file; journal and index costs remain separate, as SID 0007 states.
 
-Policy and inspection history have no retention, as in Zig; see "Open questions".
+Policy and inspection history follow the audit retention setting. Zig kept them for ever; they grow with human edits, but an automated client with a token could grow them quickly. A rule's newest history row is never deleted, so revert and comparison always have a baseline.
+
+SID 0011 named "a retention delete cannot remove an incident under investigation" as an example invariant. It has no counterpart here: the Zig console had no such rule, and a hold on incidents would be a new feature.
 
 Reads and writes per route group
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1338,16 +1325,16 @@ Every authenticated route first reads its credential (``console_sessions`` or ``
      - none
    * - rankings
      - ``rankings``, ``rankings/query``, ``rankings/history``
-     - ``console_rank_archives``, ``console_rank_chunks``, ``console_rank_usage``, ``console_settings``
+     - ``console_rank_archives``, ``console_rank_usage``, ``console_settings``
      - none
    * - policy
      - ``policies/query``, ``policies/read``, ``policies/test``, ``policies/replay``, ``policies/hits``
      - ``policies``, ``policy_inspection``, ``ip_reputation``, ``policy_revision``, ``console_pages``, ``console_policy_history``, ``console_rule_hits``, ``console_rule_hit_rollups``, ``security_incidents``, ``console_incident_evidence``
      - none
    * - policy edits
-     - ``policies/edit``, ``policies/order``, ``policies/import/chunk``, ``policies/import/commit``, ``inspection/edit``
-     - the policy reads above, ``console_policy_import_chunks``
-     - ``policies``, ``policy_inspection``, ``policy_revision``, ``console_policy_history``, ``console_inspection_history``, ``console_policy_import_chunks`` (S13 to S16)
+     - ``policies/edit``, ``policies/order``, ``policies/import``, ``inspection/edit``
+     - the policy reads above
+     - ``policies``, ``policy_inspection``, ``policy_revision``, ``console_policy_history``, ``console_inspection_history`` (S13 to S16)
    * - reputation and country actions
      - ``reputation/query``, ``reputation/edit``, ``reputation/remove``, ``geoip/country/preview``, ``geoip/country/apply``
      - ``ip_reputation``, ``console_reputation_sources``, ``console_country_chunks``, ``policies``, ``policy_revision``, ``console_geo_active``
@@ -1383,12 +1370,12 @@ Every authenticated route first reads its credential (``console_sessions`` or ``
    * - background jobs (no route)
      - retention, notifier, membership, minute, challenge, ranking and rule-hit journals, command completion, incident sidecars
      - the rows they maintain, ``console_job_leases``, ``console_settings``
-     - the tables of "Retention and quotas"; ``console_notification_events`` and deliveries (S24 to S27); ``console_nodes``; the observation tables (S32 to S35, S40); ``console_commands`` (S31); the sidecars
+     - the tables of "Retention and quotas"; ``console_notification_events`` and deliveries (S24 to S27); ``console_nodes``; the observation tables (S32, S34, S35, S40); ``console_commands`` (S31); the sidecars
 
 Rationale and alternatives
 --------------------------
 
-**Why not port the triggers.** A trigger port would be two programs, one per dialect, with different firing rules: SQLite fires row triggers per row, PostgreSQL statement triggers once per statement and row triggers in name order. Zig's triggers also chained (a TOTP change fired a user update, which fired a session deletion and an audit), which produced the duplicate audit rows noted in the catalogue. A Rust function states the whole invariant in one place, in the language its readers already read, with typed results instead of change counts that include trigger writes.
+**Why not port the triggers.** A trigger port would be two programs, one per dialect, with different firing rules: SQLite fires row triggers per row, PostgreSQL statement triggers once per statement and row triggers in name order. Zig's triggers also chained (a TOTP change fired a user update, which fired a session deletion and an audit), and one chain moved the granting account's last sign-in time on a kiosk exchange, a side effect noted in the catalogue. A Rust function states the whole invariant in one place, in the language its readers already read, with typed results instead of change counts that include trigger writes.
 
 **Why one function per invariant.** It makes the rule checkable: a review finds every write of a governed table in one function, and the test of that function is the test of the invariant. Functions that need the same effect call the enforcing function (S6 calls S2 and S3) rather than repeating its statements.
 
@@ -1411,7 +1398,7 @@ Security and operational considerations
 
 **What an operator writing SQL directly can break.** An operator with write access to the database can delete or rewrite audit rows, insert rows that claim actions nobody took, change a setting or a rule without an audit row, and delete console rows. The audit is append-only to the console, not tamper-proof, as SID 0007 states; a deployment that needs more can grant the operators' PostgreSQL role ``INSERT`` and ``SELECT`` only on ``console_audit`` and keep a separate role for the daemon. Direct writes to ``policies``, ``ip_reputation`` and ``policy_inspection`` remain supported and reach every node through the core's triggers, without console history or audit, as in Zig.
 
-**What such an operator cannot break.** The constraints refuse every row outside the Rust types: an unknown role, action, state or enumerated name; a digest, boot or payload of the wrong length; a setting beyond its catalogue bound; a session longer than 12 hours or idling past its expiry; a kiosk grant with other lifetimes; a sending delivery without a claim; the removal of a destination with unfinished deliveries; a published archive without its identity or with a wrong charge; a GeoIP activation of a missing generation or the deletion of the active one; a reference to a missing account, node, event, incident or reputation prefix. A direct deletion of an incident or reputation row takes its console sidecars or ownership with it, and a direct deletion of an archive takes its chunks.
+**What such an operator cannot break.** The constraints refuse every row outside the Rust types: an unknown role, action, state or enumerated name; a digest, boot or payload of the wrong length; a setting beyond its catalogue bound; a session longer than 12 hours or idling past its expiry; a kiosk grant with other lifetimes; a sending delivery without a claim; the removal of a destination with unfinished deliveries; an archive without its node, boot and minute or with a wrong charge; a GeoIP activation of a missing generation or the deletion of the active one; a reference to a missing account, node, event, incident or reputation prefix. A direct deletion of an incident or reputation row takes its console sidecars or ownership with it.
 
 **Secrets.** TOTP seeds and webhook secrets are stored only as sealed envelopes; sessions, CSRF tokens, kiosk codes, tokens and recovery codes only as SHA-256 digests. A read of the database therefore yields no usable credential, as in SID 0007.
 
@@ -1422,12 +1409,12 @@ Backwards compatibility
 
 A Zig console database is not migrated, consistent with SID 0011: the Rust daemon does not read a Zaxonlite data directory. Before moving, operators export policies with ``sibuna console policies export`` and, if they need them, the audit log through ``audit/export``. On the Rust daemon they create the administrator with ``sibuna console init-admin``, recreate users, tokens, destinations, settings and page templates, and import the GeoIP dataset again. Minute history, rankings, rule hits, challenge records and incident sidecars start empty.
 
-Routes, wire formats and console behaviour are unchanged, with the two audit differences stated in the catalogue. The protocol's node fields ``applied_slot`` and ``decided_slot`` report no value, because the Rust port has no consensus log.
+Routes, wire formats and console behaviour are unchanged except in three points. A kiosk exchange no longer moves the granting account's last sign-in time (see the catalogue). A policy import is one request, ``policies/import``, instead of chunks and a commit. The protocol and the interface drop the node fields ``applied_slot`` and ``decided_slot``, because the Rust port has no consensus log.
 
 Acceptance criteria and implementation status
 ---------------------------------------------
 
-1. The console migration, component ``console`` version 1, creates exactly the 35 tables and the indexes of this record on SQLite and on PostgreSQL, and a node built without the console starts against the same database.
+1. The console migration, component ``console`` version 1, creates exactly the 33 tables and the indexes of this record on SQLite and on PostgreSQL, and a node built without the console starts against the same database.
 2. ``sqlite_master`` lists no trigger except the core's nine revision triggers, and ``pg_trigger`` lists no user trigger except the core's three.
 3. Every test of the invariant catalogue passes on SQLite, and on PostgreSQL when ``SIBUNA_TEST_DATABASE_URL`` names a test database.
 4. For every ``CHECK``, ``NOT NULL`` and foreign key of the console schema, a test shows that a direct write breaking it is refused on both backends.
@@ -1437,21 +1424,24 @@ Acceptance criteria and implementation status
 8. Two nodes against one PostgreSQL database race every capacity-checked insert and every policy workflow without exceeding a capacity, losing an update or deadlocking, and their audit identifiers follow commit order.
 9. ``cargo build``, ``cargo test``, ``cargo clippy --all-targets`` and the limit checker pass.
 
-Status: proposed. No console storage code exists.
+Status: accepted. The implementation in ``sibuna-console-storage`` is in progress.
 
 Open questions
 --------------
 
-- Whether policy and inspection history need retention. Zig kept them for ever; they grow with human edits only, but an automated client with a token could grow them quickly.
-- The PostgreSQL statement timeout for console reads: 2,000 ms is proposed; the measured cost of the security aggregates on a 30-day window may call for a different value or a separate option.
-- Whether the protocol should drop ``applied_slot`` and ``decided_slot`` rather than report them as unavailable.
-- Whether a rankings archive should be stored as one bounded BLOB (at most 48,536 bytes) instead of 2,048-byte chunks. The chunks existed to fit Zaxonlite's statement envelope; one row per archive would remove the chunk table and its ordinal bound, while the charged-quota formula of SID 0007 could stay as it is.
-- SID 0011 named "a retention delete cannot remove an incident under investigation" as an example invariant. The Zig console had no such rule, and this record adds none; a hold on incidents would be a new feature with its own record.
+None remain. The review of 2026-10-15 decided the draft's questions as follows.
+
+- Policy and inspection history follow the audit retention setting (1 to 365 days), except that a rule's newest history row is never deleted, so revert and comparison always have a baseline.
+- The PostgreSQL work bound of console reads is ``SET LOCAL statement_timeout = 2000`` (milliseconds) for aggregate reads; SQLite uses ``--console-query-steps`` through sqlx's safe progress handler. No new option is added.
+- ``applied_slot`` and ``decided_slot`` are dropped from the console protocol and the interface; a node row carries its applied policy revision instead.
+- A rankings archive is one bounded ``BLOB`` of at most 48,536 bytes; the chunk table is gone and the charged-quota formula of SID 0007 is unchanged.
+- No incident hold is added; SID 0011's example of an "incident under investigation" invariant has no counterpart.
 
 Review history
 --------------
 
 - 2026-10-15: drafted before the implementation, from SID 0007, SID 0011 and the Zig schema at version 40 (44 tables, 49 triggers).
+- 2026-10-15 (review): accepted with these changes. (1) The console relies on SID 0011's bounded job queue (a busy refusal at 32 queued jobs, answered with the console's 503 "console busy" response) and on its fairness (at most 16 jobs between ticks, a due tick first); the record no longer claims that no mailbox capacity is needed, and the storage-loop change is SID 0011's, not a console change. (2) A rankings archive is one row with one ``BLOB`` of at most 48,536 bytes: ``console_rank_chunks``, the reservation state and the bound on pending reservations are dropped, ``rankings::store_archive`` checks the digest and the format, takes the quota and inserts in one transaction (S33 is merged into S32), S34 deletes archives and subtracts their charge, and the charge formula of SID 0007 is unchanged. (3) A policy import is one bounded request of at most 128 documents within the policy crate's 256 KiB file bound; ``console_policy_import_chunks`` is dropped, while country actions keep their staged review. The schema has 33 tables. (4) Enabling TOTP writes ``totp.enable`` and ``user.revoke``; a kiosk exchange writes ``kiosk.exchange`` and ``session.create`` but does not move the granting account's last sign-in time. (5) The open questions are decided: history follows the audit retention except each rule's newest row, the PostgreSQL read bound is a 2,000 ms ``statement_timeout`` and SQLite's is the progress handler, ``applied_slot`` and ``decided_slot`` are dropped from the protocol and the interface, and no incident hold is added.
 
 References
 ----------
@@ -1469,3 +1459,10 @@ References
 
    2026-10-15: prediscussion -> discussion. Specification of the console
    storage, written before the implementation
+
+.. rubric:: Lifecycle event
+
+::
+
+   2026-10-15: discussion -> accepted. Reviewed and accepted with the changes in
+   its review history
