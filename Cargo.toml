@@ -6,7 +6,7 @@ default-members = ["crates/*", "cmd/sibuna", "tools/*"]
 [workspace.package]
 version = "0.2.0"
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.94"
 license = "Apache-2.0"
 repository = "https://github.com/insanai/sibuna"
 authors = ["Vikrant Rathore <vikrant@vyomtech.com>"]
