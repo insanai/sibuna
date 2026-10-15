@@ -24,9 +24,19 @@
 //! version was even and unchanged, so it never combines one ban's key with another's expiry.
 //! All slot accesses on this protocol are sequentially consistent, as in the Zig version,
 //! which keeps the argument simple: every access belongs to one total order.
+//!
+//! # The live-ban gauge
+//!
+//! The console shows how many bans are in effect once a second. [`BanTable::active_count`]
+//! is exact but takes the writer lock and reads every slot. [`BanTable::approximate_active_count`]
+//! takes no lock (decision 5 of the console port): a counter holds the number of slots
+//! whose expiry is not zero, kept by every change of an expiry, and each call observes the
+//! expiries of one sixteenth of the table, setting an expired ban's expiry to zero (as a
+//! lift does) and decrementing the counter. The count is therefore at most a sixteen-call
+//! sweep behind an expiry and never misses a ban in effect.
 
 use std::fmt;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicI64, AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Mutex, MutexGuard, PoisonError};
 
 use crate::placement::{ClientHash, ClientHasher, TableSecret};
@@ -42,6 +52,9 @@ pub const MIN_CAPACITY: usize = 1 << 10;
 pub const MAX_CAPACITY: usize = 1 << 24;
 /// The number of consecutive slots a key may occupy, counted from its home slot.
 pub const MAX_PROBE: usize = 8;
+/// The parts of the table one call of [`BanTable::approximate_active_count`] sweeps for
+/// expired bans: the whole table is observed every sixteen calls.
+pub const SWEEP_PARTS: usize = 16;
 
 /// Why [`BanTable::ban`] did not record a ban.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -80,6 +93,15 @@ pub struct BanTable {
     secret: TableSecret,
     /// Serialises writers (bans, lifts, counts and clears); readers do not take it.
     write_lock: Mutex<()>,
+    /// The slots whose expiry is not zero. Every change of an expiry between zero and
+    /// non-zero is an atomic read-modify-write of the slot's expiry followed by one relaxed
+    /// increment or decrement here, so the counter equals the number of such slots once
+    /// the changes in flight have finished. Signed: a decrement may land before the
+    /// increment it pairs with.
+    live: AtomicI64,
+    /// Where the next sweep of [`BanTable::approximate_active_count`] starts (relaxed: it
+    /// only spreads the sweeps over the table).
+    sweep_cursor: AtomicUsize,
 }
 
 impl BanTable {
@@ -99,6 +121,8 @@ impl BanTable {
             hasher: ClientHasher::new(),
             secret: TableSecret::draw(),
             write_lock: Mutex::new(()),
+            live: AtomicI64::new(0),
+            sweep_cursor: AtomicUsize::new(0),
         }
     }
 
@@ -143,18 +167,30 @@ impl BanTable {
         let key = self.slot_key(banned);
         let _writers = self.lock_writers();
         let slot = self.vacancy(key, now).ok_or(BanError::Full)?;
-        Self::write_slot(slot, key, until);
+        self.write_slot(slot, key, until);
         Ok(())
     }
 
     /// Replaces the ban in `slot`; the caller holds the writer lock.
-    fn write_slot(slot: &Slot, key: u64, until: u64) {
+    fn write_slot(&self, slot: &Slot, key: u64, until: u64) {
         // A key and an expiry are one logical value: bracket the replacement with an odd
         // version so readers cannot combine an old key with the next key's expiry.
         slot.version.fetch_add(1, Ordering::SeqCst);
-        slot.until.store(until, Ordering::SeqCst);
+        // A swap, not a store: a sweep may have set an expired expiry to zero meanwhile,
+        // and the counter must follow the value actually replaced.
+        let previous = slot.until.swap(until, Ordering::SeqCst);
         slot.key.store(key, Ordering::SeqCst);
         slot.version.fetch_add(1, Ordering::SeqCst);
+        self.count_change(previous, until);
+    }
+
+    /// Adjusts the live counter for an expiry that changed from `previous` to `until`.
+    fn count_change(&self, previous: u64, until: u64) {
+        match (previous != 0, until != 0) {
+            (false, true) => self.live.fetch_add(1, Ordering::Relaxed),
+            (true, false) => self.live.fetch_sub(1, Ordering::Relaxed),
+            _ => return,
+        };
     }
 
     /// Chooses the slot a ban of `key` takes: the key's own slot, else the first unused,
@@ -240,7 +276,7 @@ impl BanTable {
             let slot = self.slot(key, probe);
             match slot.key.load(Ordering::Relaxed) {
                 0 => return,
-                k if k == key => return Self::write_slot(slot, key, 0),
+                k if k == key => return self.write_slot(slot, key, 0),
                 _ => {}
             }
         }
@@ -262,6 +298,34 @@ impl BanTable {
         active.count() as u32
     }
 
+    /// Returns about how many bans are in effect at `now`, without the writer lock and
+    /// without reading every slot: a gauge, not a decision (see the module documentation).
+    ///
+    /// The count never misses a ban in effect. A ban that expired is still counted until a
+    /// sweep observes it; each call sweeps one [`SWEEP_PARTS`]-th of the table, setting the
+    /// expiry of every ban that expired before `now` to zero, as a lift would. Never blocks:
+    /// a sweep races only with writers, and both sides change an expiry by an atomic
+    /// read-modify-write, so each change is counted once.
+    pub fn approximate_active_count(&self, now: u64) -> u32 {
+        let part = self.slots.len() / SWEEP_PARTS;
+        let start = self.sweep_cursor.fetch_add(part, Ordering::Relaxed);
+        for offset in 0..part {
+            let slot = &self.slots[start.wrapping_add(offset) & self.mask];
+            let until = slot.until.load(Ordering::SeqCst);
+            if until == 0 || until >= now {
+                continue;
+            }
+            // Only this expired value is replaced; a writer that changed it meanwhile wins.
+            // The key stays, so probe chains are kept and readers see a lifted ban.
+            let swept = slot.until.compare_exchange(until, 0, Ordering::SeqCst, Ordering::SeqCst);
+            if swept.is_ok() {
+                self.live.fetch_sub(1, Ordering::Relaxed);
+            }
+        }
+        // At most `MAX_CAPACITY` slots; a transiently negative count reads as zero.
+        u32::try_from(self.live.load(Ordering::Relaxed).max(0)).unwrap_or(u32::MAX)
+    }
+
     /// Lifts every ban and returns how many were in effect at `now`.
     ///
     /// Serialised with writers: a ban raised after `clear` returns stays in effect. Keys
@@ -273,8 +337,9 @@ impl BanTable {
         let count = self.count_active(now);
         for slot in self.slots.iter() {
             slot.version.fetch_add(1, Ordering::SeqCst);
-            slot.until.store(0, Ordering::SeqCst);
+            let previous = slot.until.swap(0, Ordering::SeqCst);
             slot.version.fetch_add(1, Ordering::SeqCst);
+            self.count_change(previous, 0);
         }
         count
     }
@@ -512,5 +577,72 @@ mod tests {
                 });
             }
         });
+    }
+
+    /// The gauge follows bans, replacements, lifts and clears at once, and expiries within
+    /// one sweep of the table.
+    #[test]
+    fn the_approximate_count_follows_changes_and_sweeps_expired_bans() {
+        let list = BanTable::with_capacity(MIN_CAPACITY);
+        assert_eq!(list.approximate_active_count(100), 0);
+        list.ban(b"10.0.0.1", 200, 100).unwrap();
+        list.ban(b"10.0.0.2", 150, 100).unwrap();
+        list.ban(b"10.0.0.3", 300, 100).unwrap();
+        assert_eq!(list.approximate_active_count(100), 3);
+        // A replacement of a ban in effect is not a new one; a lift ends one.
+        list.ban(b"10.0.0.1", 400, 100).unwrap();
+        list.lift(b"10.0.0.3");
+        list.lift(b"10.0.0.3");
+        assert_eq!(list.approximate_active_count(100), 2);
+        // 10.0.0.2 expires at 151; within one sweep of the table it is no longer counted.
+        let mut counts = Vec::new();
+        for _ in 0..SWEEP_PARTS {
+            counts.push(list.approximate_active_count(160));
+        }
+        assert!(counts.iter().all(|&count| count >= 1), "{counts:?}");
+        assert_eq!(list.approximate_active_count(160), 1);
+        assert_eq!(list.active_count(160), 1);
+        // A swept ban reads as lifted; banning the key again counts it again.
+        assert!(!list.is_banned(b"10.0.0.2", 160));
+        list.ban(b"10.0.0.2", 500, 160).unwrap();
+        assert_eq!(list.approximate_active_count(160), 2);
+        assert_eq!(list.clear(160), 2);
+        assert_eq!(list.approximate_active_count(160), 0);
+    }
+
+    /// Writers ban, replace and lift while a sweeper runs; afterwards the counter equals
+    /// the exact count, so no change was counted twice or lost.
+    #[test]
+    fn sweeps_racing_with_writers_keep_the_count_exact() {
+        let list = BanTable::with_capacity(MIN_CAPACITY);
+        let stop = AtomicBool::new(false);
+        thread::scope(|s| {
+            for writer in 0..4u32 {
+                let list = &list;
+                s.spawn(move || {
+                    for n in 0..5_000u32 {
+                        let key = format!("{writer}.{}", n % 300);
+                        // Half the bans are born expired at time 1,000.
+                        let until = if n % 2 == 0 { 900 } else { 2_000 };
+                        let _ = list.ban(key.as_bytes(), until, 1_000);
+                        if n % 7 == 0 {
+                            list.lift(key.as_bytes());
+                        }
+                    }
+                });
+            }
+            s.spawn(|| {
+                while !stop.load(Ordering::Relaxed) {
+                    list.approximate_active_count(1_000);
+                }
+            });
+            thread::sleep(std::time::Duration::from_millis(50));
+            stop.store(true, Ordering::Relaxed);
+        });
+        for _ in 0..SWEEP_PARTS {
+            list.approximate_active_count(1_000);
+        }
+        let exact = list.active_count(1_000);
+        assert_eq!(list.approximate_active_count(1_000), exact);
     }
 }
