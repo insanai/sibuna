@@ -20,7 +20,7 @@ We begin with a single question: what is the cheapest safe decision the server c
    * - How does the browser solve?
      - Part VII: worker messages, memory, and calibration.
    * - How do we know it works?
-     - Part VIII: four harnesses and what each excludes.
+     - Part VIII: three harnesses and what each excludes.
    * - How do we run it?
      - Part IX: flags, topologies, policy, storage, clustering, packaging.
    * - What was that error?
