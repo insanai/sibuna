@@ -22,7 +22,7 @@ use sibuna_console::{Clock, RuleHitSample};
 use sibuna_console_protocol::rule_hits::{self, Generation, Identity, Key, MAX_RULES, Name};
 use sibuna_crypto::sha256::Sha256;
 use sibuna_policy::{Engine, RuleMatches};
-use sibuna_store::rule_hits::{Counters, Matches};
+use sibuna_store::rule_hits::{Counters, Matches, Snapshot};
 
 /// The longest rule identity source kept readable; a longer one is hashed.
 const MAX_READABLE: usize = 128;
@@ -66,7 +66,12 @@ impl RuleHits {
     /// Fills `sample` with the counter values and the generation, reusing its storage.
     pub fn sample(&self, sample: &mut RuleHitSample) {
         sample.generation.clone_from(&self.generation);
-        self.counters.read(&mut sample.counts);
+        self.read(&mut sample.counts);
+    }
+
+    /// Reads the counter values into `counts`.
+    pub fn read(&self, counts: &mut Snapshot<MAX_RULES>) {
+        self.counters.read(counts);
     }
 }
 
