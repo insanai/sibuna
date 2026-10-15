@@ -265,6 +265,7 @@ Review history
 - 2026-10-15 (console port): ``cmd/sibuna`` features are ``default = [sqlite, console]``; ``console`` enables storage and the crates ``sibuna-console``, ``sibuna-console-protocol``, ``sibuna-console-storage`` and ``sibuna-json``. ``--no-default-features`` stays free of external crates. The console server is the application crate ``sibuna-console``; TOTP joins ``sibuna-crypto`` and the range-to-prefix split joins ``sibuna-geoip``, both reusable.
 - 2026-10-15 (console port): ``sibuna-crypto`` gains ``totp`` (RFC 4226 and 6238, HMAC-SHA1, six digits, 30 s steps, base32 seeds) for the console's second factor; ``sibuna-geoip::prefixes`` holds the range-to-prefix split used by country actions.
 - 2026-10-15 (console port): ``sibuna-tls`` has a ``testing`` feature, ``testing::Ingress``, a TLS-terminating test proxy with the fixed test certificates; only dev-dependencies enable it.
+- 2026-10-15 (console port): ``sibuna`` has an optional build-dependency on ``sibuna-geoip`` (console feature) to validate the embedded GeoIP snapshot. The console's end-to-end suite is ``cmd/sibuna/tests/console_*.rs``; its PostgreSQL cluster scenarios run when ``SIBUNA_TEST_DATABASE_URL`` is set. With the console compiled in, disabled, storage only, or enabled and idle, the 16 product workloads stay within about 1% of the daemon built without it, which is within noise.
 
 References
 ----------
