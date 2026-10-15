@@ -1,0 +1,458 @@
+//! Records the bytes Zig's streamProxy puts on the wire for a set of scenarios.
+//! Each scenario: a raw client request, a canned origin response; we record what the origin
+//! received, what the client received, the result, the origin status and the captured head.
+const std = @import("std");
+const Io = std.Io;
+const net = @import("net");
+const io = std.testing.io;
+
+const Mode = enum { buffered, partial, chunked_stream, chunked_complete };
+
+const Scenario = struct {
+    name: []const u8,
+    client: []const u8,
+    origin: []const u8,
+    mode: Mode = .buffered,
+    partial: usize = 0,
+    scheme: []const u8 = "http",
+    keep_alive: bool = true,
+    to_eof: bool = false,
+};
+
+const OriginTask = struct {
+    listener: *Io.net.Server,
+    response: []const u8,
+    to_eof: bool,
+    received: [200 * 1024]u8 = undefined,
+    len: usize = 0,
+
+    fn save(task: *OriginTask, bytes: []const u8) void {
+        @memcpy(task.received[0..bytes.len], bytes);
+        task.len = bytes.len;
+    }
+};
+
+fn contentLength(head: []const u8) ?usize {
+    const at = std.mem.indexOf(u8, head, "\r\nContent-Length: ") orelse return null;
+    const digits = std.mem.sliceTo(head[at + 18 ..], '\r');
+    return std.fmt.parseInt(usize, digits, 10) catch null;
+}
+
+fn originMain(task: *OriginTask) void {
+    const stream = task.listener.accept(io) catch return;
+    defer stream.close(io);
+    var buf: [200 * 1024]u8 = undefined;
+    var reader = stream.reader(io, &buf);
+    var wbuf: [4096]u8 = undefined;
+    var writer = stream.writer(io, &wbuf);
+    const r = &reader.interface;
+    const head_end = while (true) {
+        if (std.mem.indexOf(u8, r.buffered(), "\r\n\r\n")) |i| break i + 4;
+        r.fillMore() catch {
+            task.save(r.buffered());
+            return;
+        };
+    };
+    if (task.to_eof) {
+        writer.interface.writeAll(task.response) catch {};
+        writer.interface.flush() catch {};
+        while (true) r.fillMore() catch break;
+        task.save(r.buffered());
+        return;
+    }
+    const head = r.buffered()[0..head_end];
+    if (contentLength(head)) |n| {
+        while (r.buffered().len < head_end + n) r.fillMore() catch break;
+    } else if (std.mem.indexOf(u8, head, "Transfer-Encoding: chunked") != null) {
+        while (!std.mem.endsWith(u8, r.buffered(), "\n0\r\n\r\n")) r.fillMore() catch break;
+    }
+    task.save(r.buffered());
+    writer.interface.writeAll(task.response) catch {};
+    writer.interface.flush() catch {};
+}
+
+const Capture = struct {
+    bytes: [32 * 1024]u8 = undefined,
+    len: usize = 0,
+    seen: bool = false,
+
+    fn call(context: *anyopaque, raw: []const u8) void {
+        const self: *Capture = @ptrCast(@alignCast(context));
+        @memcpy(self.bytes[0..raw.len], raw);
+        self.len = raw.len;
+        self.seen = true;
+    }
+};
+
+var pool: net.proxy.Pool = .{};
+
+fn hexLine(tag: []const u8, bytes: []const u8) void {
+    std.debug.print("{s} ", .{tag});
+    for (bytes) |b| std.debug.print("{x:0>2}", .{b});
+    std.debug.print("\n", .{});
+}
+
+fn run(s: Scenario) !void {
+    const addr = try Io.net.IpAddress.parse("127.0.0.1", 0);
+    var origin_listener = try addr.listen(io, .{ .reuse_address = true });
+    defer origin_listener.deinit(io);
+    const task = try std.heap.page_allocator.create(OriginTask);
+    defer std.heap.page_allocator.destroy(task);
+    task.* = .{ .listener = &origin_listener, .response = s.origin, .to_eof = s.to_eof };
+    const thread = try std.Thread.spawn(.{}, originMain, .{task});
+
+    var front = try addr.listen(io, .{ .reuse_address = true });
+    defer front.deinit(io);
+    const client_end = try front.socket.address.connect(io, .{ .mode = .stream });
+    defer client_end.close(io);
+    const server_end = try front.accept(io);
+    defer server_end.close(io);
+    {
+        var cbuf: [4096]u8 = undefined;
+        var cw = client_end.writer(io, &cbuf);
+        try cw.interface.writeAll(s.client);
+        try cw.interface.flush();
+        try client_end.shutdown(io, .send);
+    }
+    const conn_buf = try std.heap.page_allocator.alloc(u8, 200 * 1024);
+    defer std.heap.page_allocator.free(conn_buf);
+    var reader = server_end.reader(io, conn_buf);
+    var wbuf: [16 * 1024]u8 = undefined;
+    var writer = server_end.writer(io, &wbuf);
+    const r = &reader.interface;
+    while (true) r.fillMore() catch break;
+    const head_len = std.mem.indexOf(u8, r.buffered(), "\r\n\r\n").? + 4;
+    var req = try net.parseRequest(r.buffered()[0..head_len]);
+    var decoder: net.chunked.Decoder = .{};
+    var upload: net.proxy.Upload = undefined;
+    switch (s.mode) {
+        .buffered => {
+            const n = req.contentLength() orelse 0;
+            req.body = r.buffered()[head_len..][0..n];
+            r.toss(head_len + n);
+            upload = .declared(&req);
+        },
+        .partial => {
+            req.body = r.buffered()[head_len..][0..s.partial];
+            r.toss(head_len + s.partial);
+            upload = .declared(&req);
+        },
+        .chunked_stream => {
+            req.body = "";
+            r.toss(head_len);
+            upload = .{ .chunked = &decoder };
+        },
+        .chunked_complete => {
+            const raw = r.buffered()[head_len..];
+            const step = try decoder.decode(raw);
+            if (!decoder.done()) return error.Incomplete;
+            req.body = raw[0..step.output];
+            r.toss(head_len + step.consumed);
+            upload = .{ .length = step.output };
+        },
+    }
+    var status: u16 = 0;
+    var capture: Capture = .{};
+    const audit = net.ProxyAudit{
+        .client_ip = "203.0.113.9",
+        .status = "PASS",
+        .rule = "default/allow",
+        .scheme = s.scheme,
+        .response_status = &status,
+        .response_head = .{ .context = &capture, .call = Capture.call },
+    };
+    const result = net.proxy.streamProxy(&pool, .{
+        .io = io,
+        .client = .{
+            .stream = server_end,
+            .reader = r,
+            .writer = &writer.interface,
+            .relay = .{ .idle_timeout_seconds = 5 },
+        },
+        .upstream_host = "127.0.0.1",
+        .upstream_port = origin_listener.socket.address.ip4.port,
+        .request = &req,
+        .upload = upload,
+        .audit = audit,
+        .keep_alive = s.keep_alive,
+    });
+    pool.drain(io);
+    server_end.shutdown(io, .both) catch {};
+    // Unblocks an origin that was never contacted.
+    if (origin_listener.socket.address.connect(io, .{ .mode = .stream })) |dummy| {
+        dummy.close(io);
+    } else |_| {}
+    thread.join();
+
+    const out = try std.heap.page_allocator.alloc(u8, 200 * 1024);
+    defer std.heap.page_allocator.free(out);
+    var len: usize = 0;
+    var rbuf: [4096]u8 = undefined;
+    var cr = client_end.reader(io, &rbuf);
+    while (true) {
+        const n = cr.interface.readSliceShort(out[len..]) catch break;
+        if (n == 0) break;
+        len += n;
+    }
+
+    std.debug.print("scenario {s}\n", .{s.name});
+    hexLine("client", s.client);
+    hexLine("origin", s.origin);
+    std.debug.print("mode {s} {d}\n", .{ @tagName(s.mode), s.partial });
+    std.debug.print("scheme {s}\n", .{s.scheme});
+    std.debug.print("keep_alive {d}\n", .{@intFromBool(s.keep_alive)});
+    std.debug.print("to_eof {d}\n", .{@intFromBool(s.to_eof)});
+    if (result) |keep| {
+        std.debug.print("result ok {d}\n", .{@intFromBool(keep)});
+    } else |err| {
+        std.debug.print("result err {s}\n", .{@errorName(err)});
+    }
+    std.debug.print("status {d}\n", .{status});
+    if (capture.seen) hexLine("head", capture.bytes[0..capture.len]) else std.debug.print("head -\n", .{});
+    hexLine("origin_received", task.received[0..task.len]);
+    hexLine("client_received", out[0..len]);
+    std.debug.print("end\n", .{});
+}
+
+const ws_head = "GET /ws HTTP/1.1\r\nHost: h\r\nConnection: keep-alive, Upgrade\r\n" ++
+    "Upgrade: websocket\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n" ++
+    "Sec-WebSocket-Version: 13\r\nSec-WebSocket-Extensions: x\r\n";
+const ws_accept = "Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\n";
+const chunked_upload = "POST /up HTTP/1.1\r\nHost: h\r\nTransfer-Encoding: chunked\r\n\r\n" ++
+    "5;ext=1\r\nhello\r\n6\r\n world\r\n0\r\nX-T: 1\r\n\r\n";
+const ok2 = "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok";
+
+fn bigBody() []const u8 {
+    const S = struct {
+        var bytes: [300]u8 = undefined;
+    };
+    for (&S.bytes, 0..) |*b, i| b.* = "abcdefghijklmnopqrstuvwxyz0123456789"[i % 36];
+    return &S.bytes;
+}
+
+fn bigHead() []const u8 {
+    const S = struct {
+        var bytes: [17 * 1024 + 64]u8 = undefined;
+    };
+    const prefix = "HTTP/1.1 200 OK\r\nX-Big: ";
+    @memcpy(S.bytes[0..prefix.len], prefix);
+    @memset(S.bytes[prefix.len .. S.bytes.len - 4], 'a');
+    @memcpy(S.bytes[S.bytes.len - 4 ..], "\r\n\r\n");
+    return &S.bytes;
+}
+
+test "vectors" {
+    var partial_buf: [512]u8 = undefined;
+    const partial = try std.fmt.bufPrint(
+        &partial_buf,
+        "POST /big HTTP/1.1\r\nHost: h\r\nContent-Length: 300\r\n\r\n{s}",
+        .{bigBody()},
+    );
+    var informational: [1024]u8 = undefined;
+    var w = std.Io.Writer.fixed(&informational);
+    for (0..9) |_| try w.writeAll("HTTP/1.1 100 Continue\r\n\r\n");
+    try w.writeAll(ok2);
+    const scenarios = [_]Scenario{
+        .{
+            .name = "get_basic",
+            .client = "GET /index.html?a=1&b=2 HTTP/1.1\r\nHost: example.com\r\n" ++
+                "User-Agent: ua\r\nAccept: */*\r\n\r\n",
+            .origin = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhello",
+        },
+        .{
+            .name = "hop_by_hop",
+            .client = "GET /p? HTTP/1.1\r\nHost: h\r\nConnection: keep-alive, X-Drop\r\n" ++
+                "X-Drop: secret\r\nKeep-Alive: timeout=5\r\nProxy-Connection: x\r\nTE: trailers\r\n" ++
+                "Trailer: x\r\nX-Forwarded-For: 1.1.1.1\r\nX-Real-IP: 2.2.2.2\r\n" ++
+                "X-Sibuna-Status: FAKE\r\nX-Sibuna-Rule: fake\r\nProxy-Authorization: Basic x\r\n" ++
+                "Forwarded: for=1.1.1.1\r\nX-Forwarded-Proto: https\r\nX-Forwarded-Host: evil\r\n" ++
+                "X-Forwarded-Port: 1\r\nExpect: 100-continue\r\nX-Keep: yes\r\n\r\n",
+            .origin = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+            .scheme = "https",
+        },
+        .{
+            .name = "http10_client",
+            .client = "GET / HTTP/1.0\r\nHost: h\r\n\r\n",
+            .origin = ok2,
+            .keep_alive = false,
+        },
+        .{
+            .name = "post_buffered",
+            .client = "POST /submit HTTP/1.1\r\nHost: h\r\nContent-Type: application/json\r\n" ++
+                "Content-Length: 13\r\n\r\n{\"a\":\"hello\"}",
+            .origin = "HTTP/1.1 201 Created\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok",
+        },
+        .{
+            .name = "post_partial",
+            .client = partial,
+            .origin = "HTTP/1.1 200 OK\r\nContent-Length: 3\r\n\r\nyes",
+            .mode = .partial,
+            .partial = 10,
+            .keep_alive = false,
+        },
+        .{
+            .name = "chunked_stream",
+            .client = chunked_upload,
+            .origin = ok2,
+            .mode = .chunked_stream,
+            .keep_alive = false,
+        },
+        .{
+            .name = "chunked_complete",
+            .client = chunked_upload,
+            .origin = ok2,
+            .mode = .chunked_complete,
+        },
+        .{
+            .name = "chunked_malformed_stream",
+            .client = "POST /up HTTP/1.1\r\nHost: h\r\nTransfer-Encoding: chunked\r\n\r\n" ++
+                "5\r\nhello\r\n5 \r\nworld\r\n0\r\n\r\n",
+            .origin = ok2,
+            .mode = .chunked_stream,
+            .keep_alive = false,
+        },
+        .{
+            .name = "head_request",
+            .client = "HEAD /x HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = "HTTP/1.1 200 OK\r\nContent-Length: 1234\r\nContent-Type: text/html\r\n\r\n",
+        },
+        .{
+            .name = "resp_chunked",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n" ++
+                "5\r\nhello\r\n6;ext=1\r\n world\r\n0\r\nX-Trailer: t\r\n\r\n",
+        },
+        .{
+            .name = "resp_chunked_zig_integers",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n" ++
+                "A\r\n0123456789\r\n+3\r\nabc\r\n1_0 ;x\r\n0123456789abcdef\r\n -0 \r\n\n",
+        },
+        .{
+            .name = "resp_http10_close",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = "HTTP/1.0 200 OK\r\nServer: old\r\n\r\nuntil close",
+        },
+        .{
+            .name = "resp_http10_keepalive",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = "HTTP/1.0 200 OK\r\nConnection: Keep-Alive\r\nContent-Length: 2\r\n" ++
+                "Keep-Alive: timeout=5\r\n\r\nhi",
+        },
+        .{
+            .name = "resp_204",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = "HTTP/1.1 204 No Content\r\nContent-Length: 5\r\n\r\n",
+        },
+        .{
+            .name = "resp_304",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = "HTTP/1.1 304 Not Modified\r\nETag: \"x\"\r\n\r\n",
+        },
+        .{
+            .name = "resp_1xx",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = "HTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 103 Early Hints\r\n" ++
+                "Link: </s.css>; rel=preload\r\n\r\n" ++ ok2,
+        },
+        .{
+            .name = "resp_too_many_1xx",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = w.buffered(),
+        },
+        .{
+            .name = "resp_connection_fields",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = "HTTP/1.1 200 OK\r\nContent-Length: 99\r\nTransfer-Encoding: chunked\r\n" ++
+                "Connection: close, X-Hop\r\nX-Hop: omit\r\nKeep-Alive: t\r\n" ++
+                "Proxy-Authenticate: x\r\nUpgrade: h2\r\nX-App: preserve\r\n\r\n1\r\na\r\n0\r\n\r\n",
+        },
+        .{
+            .name = "resp_malformed_status",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = "HTTP/1.1 2x0 OK\r\n\r\n",
+        },
+        .{
+            .name = "resp_bad_header",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = "HTTP/1.1 200 OK\r\nBad Header: x\r\nContent-Length: 0\r\n\r\n",
+        },
+        .{
+            .name = "resp_truncated",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = "HTTP/1.1 200 OK\r\nContent-Length: 100\r\n\r\n0123456789",
+        },
+        .{
+            .name = "resp_empty",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = "",
+        },
+        .{
+            .name = "resp_101_unrequested",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\n" ++
+                "Connection: Upgrade\r\n\r\n",
+        },
+        .{
+            .name = "resp_chunked_bad",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\nzz\r\n",
+        },
+        .{
+            .name = "resp_cl_conflict",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = "HTTP/1.1 200 OK\r\nContent-Length: 1\r\nContent-Length: 2\r\n\r\nab",
+        },
+        .{
+            .name = "resp_te_gzip_only",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = "HTTP/1.1 200 OK\r\nTransfer-Encoding: gzip\r\n\r\nabc",
+        },
+        .{
+            .name = "resp_cl_plus",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = "HTTP/1.1 200 OK\r\nContent-Length: +3\r\n\r\nabc",
+        },
+        .{
+            .name = "resp_head_too_large",
+            .client = "GET / HTTP/1.1\r\nHost: h\r\n\r\n",
+            .origin = bigHead(),
+        },
+        .{
+            .name = "websocket_upgrade",
+            .client = ws_head ++ "\r\nCLIENT-FRAME",
+            .origin = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\n" ++
+                "Connection: Upgrade\r\n" ++ ws_accept ++ "X-Origin: o\r\n\r\nORIGIN-FRAME",
+            .to_eof = true,
+        },
+        .{
+            .name = "websocket_refused",
+            .client = ws_head ++ "\r\n",
+            .origin = "HTTP/1.1 403 Forbidden\r\nContent-Length: 2\r\n\r\nno",
+        },
+        .{
+            .name = "websocket_bad_accept",
+            .client = ws_head ++ "\r\n",
+            .origin = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\n" ++
+                "Connection: Upgrade\r\nSec-WebSocket-Accept: other\r\n\r\n",
+            .to_eof = true,
+        },
+        .{
+            .name = "websocket_missing_key",
+            .client = "GET /ws HTTP/1.1\r\nHost: h\r\nConnection: upgrade\r\n" ++
+                "Upgrade: websocket\r\n\r\n",
+            .origin = ok2,
+        },
+        .{
+            .name = "upgrade_nominated_without_field",
+            .client = "GET / HTTP/1.1\r\nConnection: upgrade\r\nHost: h\r\n\r\n",
+            .origin = ok2,
+        },
+        .{
+            .name = "websocket_zero_length",
+            .client = ws_head ++ "Content-Length: 0\r\n\r\n",
+            .origin = "HTTP/1.1 403 Forbidden\r\nContent-Length: 2\r\n\r\nno",
+        },
+    };
+    for (scenarios) |s| try run(s);
+}
