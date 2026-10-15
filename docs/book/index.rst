@@ -15,6 +15,7 @@ The mathematics and engineering of web defense.
    zero-allocation
    algorithms
    wasm-engine
+   benchmarks
    operations
    reference
    quick-reference
