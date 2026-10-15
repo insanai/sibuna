@@ -21,8 +21,7 @@ pub const LEGACY_BYTES: usize = 92 + 256 * (2 + 128 + 16);
 /// The largest archive accepted: the largest possible SBR2 archive. The Zig console counted
 /// the referrer section header as 4 bytes instead of 12, so it refused a minute whose two
 /// sketches were both full and never archived it, contrary to SID 0007; we count it right.
-pub const MAX_BYTES: usize =
-    LEGACY_BYTES + 12 + 256 * (2 + 24 + 16) + 8 * (8 + 8 + STATUS_SLOTS);
+pub const MAX_BYTES: usize = LEGACY_BYTES + 12 + 256 * (2 + 24 + 16) + 8 * (8 + 8 + STATUS_SLOTS);
 
 /// Why an archive could not be written or read.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

@@ -266,10 +266,8 @@ pub enum Request {
     CountryPreflight(workflows::CountryPreflight),
     /// Applies a country replacement.
     CountryApply(workflows::CountryApply),
-    /// Stages a chunk of a policy import.
-    ImportChunk(workflows::ImportChunk),
-    /// Commits a staged policy import.
-    ImportCommit(workflows::ImportCommit),
+    /// Replaces every managed rule with a policy set.
+    Import(workflows::Import),
 }
 
 /// A result from the storage owner.
@@ -429,8 +427,7 @@ fn validate_management(request: &Request) -> Result<(), ValidationError> {
             workflows::validate_country(input.count, input.expected_revision)?;
             limit(input.until.unwrap_or(0) > MAX_I64)
         }
-        Request::ImportChunk(input) => workflows::validate_import_chunk(input),
-        Request::ImportCommit(input) => workflows::validate_import_commit(input),
+        Request::Import(input) => workflows::validate_import(input),
         Request::EventsQuery(query) => events::validate(query),
         Request::SecurityQuery(query) => security::validate(query),
         Request::EventsSimilar(query) => similarity::validate(query),

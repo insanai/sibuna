@@ -265,10 +265,6 @@ pub struct Member {
     pub applied_revision: u64,
     /// The control revision the member applied.
     pub control_revision: u64,
-    /// The member's applied slot.
-    pub applied_slot: u64,
-    /// The member's decided slot.
-    pub decided_slot: u64,
     /// The member is draining.
     pub draining: bool,
 }
@@ -285,8 +281,6 @@ impl Encode for Member {
         counter_field(json, "last_seen", self.last_seen)?;
         counter_field(json, "applied_revision", self.applied_revision)?;
         counter_field(json, "control_revision", self.control_revision)?;
-        counter_field(json, "applied_slot", self.applied_slot)?;
-        counter_field(json, "decided_slot", self.decided_slot)?;
         field(json, "draining", &self.draining)?;
         json.end_object()
     }
@@ -305,8 +299,6 @@ impl Decode for Member {
             last_seen: fields.or_default("last_seen")?,
             applied_revision: fields.or_default("applied_revision")?,
             control_revision: fields.or_default("control_revision")?,
-            applied_slot: fields.or_default("applied_slot")?,
-            decided_slot: fields.or_default("decided_slot")?,
             draining: fields.or_default("draining")?,
         };
         fields.finish()?;
@@ -762,7 +754,7 @@ mod tests {
             members: vec![Member {
                 node: 1,
                 address: Text::new("10.0.0.1:7000").unwrap(),
-                applied_slot: u64::MAX,
+                applied_revision: u64::MAX,
                 ..Default::default()
             }],
         };
@@ -770,7 +762,8 @@ mod tests {
         assert!(text.starts_with(
             "{\"self\":1,\"committed\":4,\"storage\":{\"role\":\"leader\",\"leader\":1,\"term\":0,"
         ));
-        assert!(text.contains("\"applied_slot\":\"18446744073709551615\""));
+        assert!(text.contains("\"applied_revision\":\"18446744073709551615\""));
+        assert!(!text.contains("slot"));
         assert_eq!(from_json::<Page>(text.as_bytes()), Ok(page));
         let receipt =
             Receipt { applied_revision: Some(2), cleared_entries: Some(3), ..Default::default() };

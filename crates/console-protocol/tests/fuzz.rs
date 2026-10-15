@@ -126,7 +126,11 @@ fn seeds_with_checks() -> Vec<(Vec<u8>, Check)> {
         .iter()
         .filter_map(|(name, check)| {
             let json = golden.iter().find(|(key, _)| key == name)?.1;
-            Some((json.as_bytes().to_vec(), *check))
+            // SID 0013 dropped the member fields `applied_slot` and `decided_slot`.
+            let json = json
+                .replace(",\"applied_slot\":\"18446744073709551615\",\"decided_slot\":6", "")
+                .replace(",\"applied_slot\":0,\"decided_slot\":0", "");
+            Some((json.into_bytes(), *check))
         })
         .collect();
     let rates = dashboard::Rates { requests: 0.5, ..Default::default() };

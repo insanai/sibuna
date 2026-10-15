@@ -475,7 +475,13 @@ pub fn decode_list<T: Decode>(
     if items.len() > max {
         return Err(DecodeError::new(path, DecodeErrorKind::TooMany { max }));
     }
-    items.iter().enumerate().map(|(index, item)| T::decode(item, path.index(index))).collect()
+    // A plain loop: the module keeps one small copy per element type instead of the
+    // iterator adapters a fallible `collect` instantiates.
+    let mut list = Vec::with_capacity(items.len());
+    for (index, item) in items.iter().enumerate() {
+        list.push(T::decode(item, path.index(index))?);
+    }
+    Ok(list)
 }
 
 /// Reads a string of any length (bounded only by the document).

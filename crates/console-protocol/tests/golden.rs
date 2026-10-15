@@ -229,14 +229,19 @@ fn cluster() {
                 last_seen: 2,
                 applied_revision: 3,
                 control_revision: 4,
-                applied_slot: MAX,
-                decided_slot: 6,
                 draining: true,
             },
             nodes::Member { node: 2, ..nodes::Member::default() },
         ],
     };
-    check("nodes_page", &page);
+    // SID 0013 (review of 2026-10-15) drops the Zaxonlite log frontiers `applied_slot` and
+    // `decided_slot` from the member row; the rest of Zig's bytes are unchanged.
+    let expected = zig("nodes_page")
+        .replace(",\"applied_slot\":\"18446744073709551615\",\"decided_slot\":6", "")
+        .replace(",\"applied_slot\":0,\"decided_slot\":0", "");
+    assert_eq!(to_json(&page), expected, "encoding of nodes_page");
+    assert_eq!(from_json::<nodes::Page>(expected.as_bytes()).unwrap(), page);
+    assert!(from_json::<nodes::Page>(zig("nodes_page").as_bytes()).is_err());
     let probe = nodes::Probe {
         node: 2,
         health: nodes::Health::Degraded,

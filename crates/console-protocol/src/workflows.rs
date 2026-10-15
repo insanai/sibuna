@@ -1,5 +1,9 @@
 //! Policy workflows: rule ordering, replay of retained events, reputation prefixes,
 //! country blocks and atomic set import. Every mutation names an expected revision.
+//!
+//! A policy set import is one bounded request ([`Import`]); Zig staged it in chunks under a
+//! client-chosen digest and committed it with a second request (SID 0013, review of
+//! 2026-10-15).
 
 use crate::error::{MAX_I64, ValidationError, limit};
 use crate::text::Text;
@@ -25,8 +29,12 @@ pub const REPLAY_SCAN: usize = 64;
 pub const MAX_REPLAY_HOURS: u16 = 24 * 7;
 /// How long a staged workflow lives, in seconds.
 pub const STAGE_SECONDS: u64 = 600;
-/// The most chunks an import holds.
-pub const MAX_IMPORT_CHUNKS: u16 = 128;
+/// The most documents an import holds: the engine's rule capacity.
+pub const MAX_IMPORT_DOCUMENTS: usize = 128;
+/// The longest document of an import, in bytes of compact JSON.
+pub const MAX_IMPORT_DOCUMENT: usize = 4096;
+/// The most bytes of documents an import holds: the policy crate's file bound.
+pub const MAX_IMPORT_BYTES: usize = 256 * 1024;
 
 /// A move in the rule order.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
@@ -300,28 +308,16 @@ pub struct CountrySummary {
     pub sample: Vec<Text<MAX_PREFIX>>,
 }
 
-/// One chunk of a staged policy import.
+/// Replaces every managed rule with a policy set in one request.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct ImportChunk {
-    /// SHA-256 of the whole import.
-    pub digest: [u8; 32],
-    /// The chunk number, below [`MAX_IMPORT_CHUNKS`].
-    pub ordinal: u16,
-    /// A non-empty document part.
-    pub document: Text<4096>,
-}
-
-/// Commits a staged import atomically.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct ImportCommit {
+pub struct Import {
     /// The operator's credential.
     pub auth: users::Auth,
     /// The revision the operator saw.
     pub expected_revision: u64,
-    /// SHA-256 of the whole import.
-    pub digest: [u8; 32],
-    /// Chunks, 1 to [`MAX_IMPORT_CHUNKS`].
-    pub count: u16,
+    /// 1 to [`MAX_IMPORT_DOCUMENTS`] non-empty compact rule documents, at most
+    /// [`MAX_IMPORT_BYTES`] in all.
+    pub documents: Vec<Text<MAX_IMPORT_DOCUMENT>>,
 }
 
 /// Checks a rule move.
@@ -385,26 +381,22 @@ pub fn validate_country(count: u16, revision: u64) -> Result<(), ValidationError
     limit(count > MAX_COUNTRY_PREFIXES || revision >= MAX_I64)
 }
 
-/// Checks an import chunk.
+/// Checks an import.
 ///
 /// # Errors
 ///
-/// [`ValidationError::InvalidLimit`] for an empty document or an ordinal of
-/// [`MAX_IMPORT_CHUNKS`] or more.
-pub fn validate_import_chunk(input: &ImportChunk) -> Result<(), ValidationError> {
-    limit(input.document.is_empty() || input.ordinal >= MAX_IMPORT_CHUNKS)
-}
-
-/// Checks an import commit.
-///
-/// # Errors
-///
-/// [`ValidationError::InvalidLimit`] for no chunks or more than [`MAX_IMPORT_CHUNKS`], or
-/// an oversized revision.
-pub fn validate_import_commit(input: &ImportCommit) -> Result<(), ValidationError> {
-    limit(
-        input.count == 0 || input.count > MAX_IMPORT_CHUNKS || input.expected_revision >= MAX_I64,
-    )
+/// [`ValidationError::InvalidLimit`] for no documents or more than
+/// [`MAX_IMPORT_DOCUMENTS`], an empty document, or an oversized revision;
+/// [`ValidationError::TooLarge`] for more than [`MAX_IMPORT_BYTES`] of documents.
+pub fn validate_import(input: &Import) -> Result<(), ValidationError> {
+    let count = input.documents.len();
+    limit(count == 0 || count > MAX_IMPORT_DOCUMENTS || input.expected_revision >= MAX_I64)?;
+    limit(input.documents.iter().any(Text::is_empty))?;
+    let total = input.documents.iter().map(|document| document.len()).sum::<usize>();
+    if total > MAX_IMPORT_BYTES {
+        return Err(ValidationError::TooLarge);
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -419,13 +411,6 @@ mod tests {
         assert!(validate_replay(&Replay { committed: Some(1), ..Replay::default() }).is_err());
         assert_eq!(validate_country(1024, 0), Ok(()));
         assert!(validate_country(1025, 0).is_err());
-        assert!(
-            validate_import_commit(&ImportCommit { count: 129, ..ImportCommit::default() })
-                .is_err()
-        );
-        assert!(
-            validate_import_chunk(&ImportChunk { ordinal: 1, ..ImportChunk::default() }).is_err()
-        );
         let chunk =
             CountryChunk { prefixes: vec![Text::default(); 33], ..CountryChunk::default() };
         assert!(validate_country_chunk(&chunk).is_err());
@@ -435,5 +420,24 @@ mod tests {
             ..ReputationEdit::default()
         };
         assert!(validate_reputation_edit(&edit).is_err());
+    }
+
+    #[test]
+    fn an_import_holds_1_to_128_documents_within_256_kib() {
+        let document = Text::new("{\"id\":\"a\",\"name\":\"A\",\"action\":\"deny\"}").unwrap();
+        let import = Import { documents: vec![document.clone()], ..Import::default() };
+        assert_eq!(validate_import(&import), Ok(()));
+        assert!(validate_import(&Import::default()).is_err());
+        let many = Import { documents: vec![document; 129], ..Import::default() };
+        assert!(validate_import(&many).is_err());
+        let empty = Import { documents: vec![Text::default()], ..Import::default() };
+        assert!(validate_import(&empty).is_err());
+        let full = Text::new(&"x".repeat(MAX_IMPORT_DOCUMENT)).unwrap();
+        let largest = Import { documents: vec![full.clone(); 64], ..Import::default() };
+        assert_eq!(validate_import(&largest), Ok(()));
+        let large = Import { documents: vec![full; 65], ..Import::default() };
+        assert_eq!(validate_import(&large), Err(ValidationError::TooLarge));
+        let stale = Import { expected_revision: MAX_I64, ..import };
+        assert!(validate_import(&stale).is_err());
     }
 }

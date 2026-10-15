@@ -11,7 +11,6 @@
 //! `f64` (so `1.50` equals `1.5` and is rewritten as `1.5`). Applying a delta removes keys
 //! as Zig's `swapRemove` did (the last member moves into the gap) and appends new keys.
 
-use std::collections::BTreeMap;
 use std::fmt::{self, Write};
 
 use sibuna_json::{Error as JsonError, Number, Object, Value, Writer};
@@ -240,26 +239,38 @@ pub(crate) fn patch<'v, 'a>(
     let state = state.as_object().ok_or(DeltaError::NotAnObject)?;
     let (set, remove) = split_delta(delta)?;
     let mut members: Vec<(&str, &Value<'a>)> = state.iter().collect();
-    let mut index: BTreeMap<&str, usize> =
+    // The positions of the state's keys, sorted by key for binary search; a removed key
+    // keeps its entry with the position `GONE`. The keys of a JSON object are unique, so
+    // the unstable sort is deterministic. New keys of `set` need no entry: `set` names
+    // each key once, after every removal.
+    const GONE: usize = usize::MAX;
+    let mut index: Vec<(&str, usize)> =
         members.iter().enumerate().map(|(i, (key, _))| (*key, i)).collect();
+    index.sort_unstable_by(|a, b| a.0.cmp(b.0));
+    // `find` returns a slot of `index`, so indexing with it below stays in bounds.
+    let find =
+        |index: &[(&str, usize)], key: &str| index.binary_search_by(|entry| entry.0.cmp(key)).ok();
     for key in remove {
-        let Some(position) = index.remove(key) else { continue };
+        let Some(slot) = find(&index, key) else { continue };
+        let position = std::mem::replace(&mut index[slot].1, GONE);
+        if position == GONE {
+            continue;
+        }
         members.swap_remove(position);
-        if let Some((moved, _)) = members.get(position) {
-            index.insert(moved, position);
+        if let Some((moved, _)) = members.get(position)
+            && let Some(moved_slot) = find(&index, moved)
+        {
+            index[moved_slot].1 = position;
         }
     }
     for (key, value) in set {
-        match index.get(key) {
-            Some(&position) => {
+        match find(&index, key).map(|slot| index[slot].1).filter(|&position| position != GONE) {
+            Some(position) => {
                 if let Some(member) = members.get_mut(position) {
                     member.1 = value;
                 }
             }
-            None => {
-                index.insert(key, members.len());
-                members.push((key, value));
-            }
+            None => members.push((key, value)),
         }
     }
     Ok(Patched { members })

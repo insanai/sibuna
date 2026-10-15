@@ -17,6 +17,8 @@ use crate::text::Text;
 
 /// The most rows one events page returns.
 pub const MAX_LIMIT: u16 = 10;
+/// The longest search text, in bytes (SID 0013, "Search").
+pub const MAX_SEARCH: usize = 256;
 
 /// A keyset position: rows strictly before `(time, id)`.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
@@ -62,6 +64,10 @@ pub struct Query {
     pub ip: Text<48>,
     /// A path prefix, or empty for all.
     pub path_prefix: Text<256>,
+    /// A search in the storage search language over paths and payloads (SID 0013,
+    /// "Search"), or empty for none. Storage parses it and refuses a query the language
+    /// does not accept.
+    pub search: Text<MAX_SEARCH>,
     /// Address presenting the credential; recorded on the export audit row only.
     pub client: Text<48>,
 }
@@ -85,6 +91,7 @@ impl Default for Query {
             module: None,
             ip: Text::default(),
             path_prefix: Text::default(),
+            search: Text::default(),
             client: Text::default(),
         }
     }
