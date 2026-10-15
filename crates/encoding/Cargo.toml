@@ -8,7 +8,16 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 
+[features]
+default = ["alloc"]
+# `encode` and `decode` helpers that return `String` and `Vec<u8>`.
+alloc = []
+
 [dependencies]
 
 [lints]
 workspace = true
+
+[[bench]]
+name = "codec"
+harness = false
