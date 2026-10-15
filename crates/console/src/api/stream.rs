@@ -23,6 +23,11 @@
 //! 1013, "try again later". A client may send at most 64 commands per second, and a kiosk
 //! session may subscribe to `stats` only; anything else closes with 1008.
 //!
+//! The management peer stream of `/console/peer` (`api/peer.rs`) runs the same writer and
+//! reader through [`serve`] with [`Party::Peer`]: it may subscribe to unfiltered `stats`
+//! only, its queries (`peer_query`) pass from the reader to the writer through a bounded
+//! inbox and are answered between hub frames, and it ends after an hour.
+//!
 //! # Changes from the Zig version
 //!
 //! - The writer waits for hub frames on a condition variable for at most 100 ms instead of
@@ -44,11 +49,12 @@ use sibuna_http::websocket::{
     Event, FrameError, FrameReader, MAX_CONTROL, Opcode, ReceiveError, Receiver, Role,
 };
 use sibuna_json::Writer;
-use sibuna_serve::{Class, Context, Deadline, Input, Sender, ServeError, stack};
+use sibuna_serve::{Class, Context, Deadline, Input, Sender, ServeError, WebSocket, stack};
 
 use crate::dispatch::Call;
 use crate::http::RouteError;
 use crate::hub::{Gap, Hub, HubError, Item, Subscription};
+use crate::peer::Inbox;
 use crate::shared::Shared;
 use crate::storage::{HTTP_WAIT, StorageFailure};
 
@@ -89,24 +95,51 @@ pub fn handle(shared: &Shared, context: &mut Context<'_>, call: &Call) -> Result
     let Some(subscription) = attached.subscription.as_ref() else {
         return Err(RouteError::Unavailable);
     };
+    serve(shared, socket, subscription, Party::Browser { principal, digest });
+    Ok(())
+}
+
+/// Who is on the other end of a stream.
+pub(crate) enum Party {
+    /// A signed-in browser session, checked again every five seconds.
+    Browser {
+        /// The session's principal, as last checked.
+        principal: Principal,
+        /// The session token's digest.
+        digest: [u8; 32],
+    },
+    /// An admitted management peer: local statistics and peer queries only.
+    Peer {
+        /// The peer's node id.
+        node: u32,
+        /// When the stream must end, in Unix seconds.
+        expires: u64,
+    },
+}
+
+/// Serves the upgraded `socket` of `subscription` for `party` until either side stops:
+/// the calling worker thread writes, a scoped thread reads.
+pub(crate) fn serve(
+    shared: &Shared,
+    socket: WebSocket<'_>,
+    subscription: &Subscription,
+    party: Party,
+) {
     let link = Link::new(shared.now());
+    let (kiosk, peer) = match &party {
+        Party::Browser { principal, .. } => (principal.kiosk, false),
+        Party::Peer { .. } => (true, true),
+    };
     let mut writer = StreamWriter {
         shared,
         sender: socket.sender,
         deadline: socket.deadline,
         link: &link,
         subscription,
-        principal,
-        digest,
+        party,
     };
-    let reader = StreamReader {
-        shared,
-        link: &link,
-        subscription,
-        kiosk: writer.principal.kiosk,
-        second: 0,
-        commands: 0,
-    };
+    let reader =
+        StreamReader { shared, link: &link, subscription, kiosk, peer, second: 0, commands: 0 };
     let usable = usize::try_from(shared.config.budget.stack_bytes).unwrap_or(stack::USABLE);
     std::thread::scope(|scope| {
         let thread = std::thread::Builder::new()
@@ -119,7 +152,6 @@ pub fn handle(shared: &Shared, context: &mut Context<'_>, call: &Call) -> Result
         // Wakes a reader blocked on the socket, so the scope can join it.
         writer.sender.shutdown();
     });
-    Ok(())
 }
 
 /// Attaches a browser subscriber, mapping a full table to 503 `CONSOLE503`.
@@ -131,9 +163,9 @@ fn attach(hub: &Hub) -> Result<Subscription, RouteError> {
 }
 
 /// A subscription that is detached when the handler returns, however it returns.
-struct Attached<'h> {
-    hub: &'h Hub,
-    subscription: Option<Subscription>,
+pub(crate) struct Attached<'h> {
+    pub(crate) hub: &'h Hub,
+    pub(crate) subscription: Option<Subscription>,
 }
 
 impl Drop for Attached<'_> {
@@ -160,6 +192,8 @@ struct Link {
     /// When the last frame arrived, in Unix seconds. Relaxed: a value read on its own.
     last_read: AtomicU64,
     controls: Mutex<Vec<Control>>,
+    /// A peer's queries, from the reader to the writer.
+    queries: Inbox,
 }
 
 impl Link {
@@ -169,6 +203,7 @@ impl Link {
             close_code: AtomicU16::new(0),
             last_read: AtomicU64::new(now),
             controls: Mutex::new(Vec::new()),
+            queries: Inbox::default(),
         }
     }
 
@@ -200,8 +235,7 @@ struct StreamWriter<'a, 's> {
     deadline: Deadline<'s>,
     link: &'a Link,
     subscription: &'a Subscription,
-    principal: Principal,
-    digest: [u8; 32],
+    party: Party,
 }
 
 impl StreamWriter<'_, '_> {
@@ -215,7 +249,7 @@ impl StreamWriter<'_, '_> {
             }
             let now = self.shared.now();
             let idle = now.saturating_sub(self.link.last_read.load(Ordering::Relaxed));
-            if now >= self.principal.expires || idle >= IDLE_SECONDS {
+            if now >= self.expires() || idle >= IDLE_SECONDS {
                 self.close(1008);
                 break;
             }
@@ -224,6 +258,9 @@ impl StreamWriter<'_, '_> {
                     break;
                 }
                 last_auth = now;
+            }
+            if !self.answer_query() {
+                break;
             }
             if !self.deliver() {
                 break;
@@ -281,12 +318,38 @@ impl StreamWriter<'_, '_> {
         true
     }
 
-    /// Checks the session again; false (after closing) when it ended or cannot be checked.
+    /// Returns when the stream must end: the session's expiry, or the peer's hour.
+    fn expires(&self) -> u64 {
+        match &self.party {
+            Party::Browser { principal, .. } => principal.expires,
+            Party::Peer { expires, .. } => *expires,
+        }
+    }
+
+    /// Answers one queued peer query; false after a failed write.
+    fn answer_query(&mut self) -> bool {
+        let Some(query) = self.link.queries.take() else { return true };
+        let text = crate::peer::respond_query(self.shared, &query);
+        self.send(Opcode::Text, text.as_bytes())
+    }
+
+    /// Checks the party again; false (after closing) when it is no longer allowed.
     fn authorize(&mut self) -> bool {
+        let digest = match &self.party {
+            Party::Browser { digest, .. } => *digest,
+            Party::Peer { node, .. } => {
+                // The configured membership is fixed while the console runs.
+                if self.shared.peers.contains(*node) {
+                    return true;
+                }
+                self.close(1008);
+                return false;
+            }
+        };
         // Storage may take its whole wait; the deadline must outlast it.
         self.deadline.extend(HTTP_WAIT.as_secs() + 2);
         let check = AuthorizationCheck {
-            session_digest: self.digest,
+            session_digest: digest,
             touch: false,
             kind: CredentialKind::Session,
         };
@@ -297,7 +360,9 @@ impl StreamWriter<'_, '_> {
             .transact(move |tx| Box::pin(async move { access::authorize(tx, &check, now).await }));
         match resolved {
             Ok(principal) if !self.shared.is_restricted(&principal) => {
-                self.principal = principal;
+                if let Party::Browser { principal: current, .. } = &mut self.party {
+                    *current = principal;
+                }
                 true
             }
             Err(StorageFailure::Console(error)) if error.failure() == Failure::Unavailable => {
@@ -351,6 +416,8 @@ struct StreamReader<'a> {
     link: &'a Link,
     subscription: &'a Subscription,
     kiosk: bool,
+    /// The other end is a management peer, which may also send queries.
+    peer: bool,
     /// The second the command allowance counts in, and the commands in it.
     second: u64,
     commands: u32,
@@ -397,6 +464,15 @@ impl StreamReader<'_> {
             return false;
         }
         self.commands += 1;
+        if self.peer {
+            // A peer's query goes to the writer; anything else is a subscription command.
+            let Ok(value) = sibuna_json::parse(text.as_bytes()) else { return false };
+            match crate::peer::accept_query(&value) {
+                Ok(Some(query)) => return self.link.queries.push(query),
+                Ok(None) => {}
+                Err(_) => return false,
+            }
+        }
         let Ok(input) = subscriptions::parse(text.as_bytes()) else { return false };
         if input.op == Op::Ping {
             return self.link.enqueue(Opcode::Text, b"{\"op\":\"pong\"}");

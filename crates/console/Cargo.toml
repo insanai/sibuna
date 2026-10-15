@@ -45,5 +45,9 @@ sibuna-cidr = { workspace = true }
 # The private engine of the policy tester and page template validation.
 sibuna-policy = { workspace = true }
 
+[dev-dependencies]
+# The TLS-terminating test ingress for the management peer tests (tests/peers.rs).
+sibuna-tls = { workspace = true, features = ["testing"] }
+
 [lints]
 workspace = true
