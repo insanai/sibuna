@@ -1,0 +1,17 @@
+            </fieldset>
+            <label for="tokens-days">Expires after</label>
+            <select id="tokens-days" class="select select-bordered" name="days">
+                <option value="7"{{ week }}>7 days</option>
+                <option value="30"{{ month }}>30 days</option>
+                <option value="90"{{ quarter }}>90 days</option>
+                <option value="0"{{ never }}>Never</option>
+            </select>
+            <p class="sb-note">GeoIP update automation needs both Read GeoIP status and Update
+                GeoIP. Store tokens in private files; never put them in URLs.</p>
+            <label><input class="checkbox checkbox-sm" type="checkbox"
+                id="tokens-confirmed" name="confirmed"
+                required{{ confirmed }}> I reviewed the role, scopes and expiry.</label>
+            <button class="btn btn-primary" type="submit">Create token</button>
+        </fieldset>
+    </form>
+</section>

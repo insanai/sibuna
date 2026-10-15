@@ -1,0 +1,26 @@
+<form class="sb-filters" id="rank-history-start">
+    <fieldset class="sb-filter-grid sb-filter-three"{{ disabled }}>
+        <label class="sb-filter-field"><span>Rankings comparison</span>
+            <select class="select" name="mode">
+                <option value="previous"{{ previous }}>Previous period</option>
+                <option value="yesterday"{{ yesterday }}>Same window yesterday</option>
+                <option value="node"{{ node_mode }}>Another node</option>
+            </select>
+        </label>
+        <label class="sb-filter-field"><span>Ranking minutes</span>
+            <input class="input" type="number" name="minutes" min="1" max="129600" value="{{ minutes }}" required>
+        </label>
+        <label class="sb-filter-field"><span>Ranking end (minutes ago)</span>
+            <input class="input" type="number" name="offset" min="0" max="129599" value="{{ offset }}" required>
+        </label>
+        <label class="sb-filter-field"><span>Ranking node (0 for all retained nodes)</span>
+            <input class="input" type="number" name="node" min="0" max="4294967295" value="{{ node }}" required>
+        </label>
+        <label class="sb-filter-field"><span>Reference ranking node</span>
+            <input class="input" type="number" name="other_node" min="0" max="4294967295" value="{{ other_node }}" required>
+        </label>
+        <div class="sb-filter-actions sb-comparison-actions">
+            <button class="btn btn-primary">Compare path rankings</button>
+        </div>
+    </fieldset>
+</form>

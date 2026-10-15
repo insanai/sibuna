@@ -1,0 +1,28 @@
+[package]
+name = "sibuna-console-ui"
+description = "The Sibuna console interface, compiled to WebAssembly"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+sibuna-console-protocol = { workspace = true }
+sibuna-json = { workspace = true }
+sibuna-html = { workspace = true, default-features = false, features = ["alloc"] }
+
+[build-dependencies]
+sibuna-html = { workspace = true }
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+# SHA-256 digests of QR matrices, as in the Zig test vectors.
+sibuna-crypto = { workspace = true }

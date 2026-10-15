@@ -962,6 +962,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "sibuna-bench"
+version = "0.2.0"
+dependencies = [
+ "sibuna-challenge",
+ "sibuna-cidr",
+ "sibuna-crypto",
+ "sibuna-http",
+ "sibuna-json",
+ "sibuna-patterns",
+ "sibuna-policy",
+ "sibuna-pow",
+ "sibuna-store",
+]
+
+[[package]]
 name = "sibuna-browser"
 version = "0.2.0"
 dependencies = [
@@ -989,6 +1004,28 @@ version = "0.2.0"
 name = "sibuna-console-protocol"
 version = "0.2.0"
 dependencies = [
+ "sibuna-json",
+]
+
+[[package]]
+name = "sibuna-console-storage"
+version = "0.2.0"
+dependencies = [
+ "sibuna-console-protocol",
+ "sibuna-core",
+ "sibuna-crypto",
+ "sibuna-encoding",
+ "sibuna-json",
+ "sibuna-storage",
+]
+
+[[package]]
+name = "sibuna-console-ui"
+version = "0.2.0"
+dependencies = [
+ "sibuna-console-protocol",
+ "sibuna-crypto",
+ "sibuna-html",
  "sibuna-json",
 ]
 
@@ -1039,6 +1076,15 @@ version = "0.2.0"
 dependencies = [
  "sibuna-core",
  "sibuna-http",
+]
+
+[[package]]
+name = "sibuna-parity"
+version = "0.2.0"
+dependencies = [
+ "sibuna-encoding",
+ "sibuna-json",
+ "sibuna-pow",
 ]
 
 [[package]]
