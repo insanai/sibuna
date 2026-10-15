@@ -283,6 +283,19 @@ pub trait Page: Any {
         Ok(false)
     }
 
+    /// The bridge refused the operator action `action` because its event exceeded
+    /// [`crate::INPUT_LIMIT`]; nothing of it reached the module. Return true after
+    /// explaining what the operator can do instead; otherwise the core shows a generic
+    /// message.
+    ///
+    /// # Errors
+    ///
+    /// Any [`UiError`].
+    fn input_too_large(&mut self, cx: &mut Context<'_>, action: &str) -> Result<bool, UiError> {
+        let _ = (cx, action);
+        Ok(false)
+    }
+
     /// The tab became visible again: refresh what the page shows.
     ///
     /// # Errors

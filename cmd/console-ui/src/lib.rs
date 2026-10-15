@@ -9,8 +9,10 @@
 //!
 //! # The bridge (ABI)
 //!
-//! The exports keep the Zig names and meanings, so `glue.js` is unchanged except for two
-//! comments. All of them live in the `abi` module, the only module with `unsafe` code.
+//! The exports keep the Zig names and meanings, so `glue.js` is Zig's bridge except for
+//! comments and one fix: an event longer than [`INPUT_LIMIT`] is replaced by a small one
+//! instead of being dropped (see "Bounds and budget"). All exports live in the `abi`
+//! module, the only module with `unsafe` code.
 //!
 //! - `sb_init()`: start at the loading phase and request `GET /console/api/session`.
 //! - `sb_input() -> *mut u8` and `sb_input_capacity()`: where the bridge writes an event,
@@ -83,6 +85,8 @@
 //!   chose. The controller's `response`, and `boundedEnvelope` in `main.zig`.
 //! - [`Page::timer`]: a browser timer, including the one-second `age` tick; `Ok(true)`
 //!   stops later modules. The kind-3 branch of `main.zig`.
+//! - [`Page::input_too_large`]: the bridge refused the module's form action because its
+//!   event exceeded [`INPUT_LIMIT`]; explain what to do instead (new in the Rust port).
 //! - [`Page::resume`]: the tab became visible (the kind-5 branch).
 //! - [`Page::stats_received`]: a live snapshot was accepted on the dashboard or the
 //!   Nodes page (`refreshRankings`, `refreshTimeline`).
@@ -215,8 +219,12 @@
 //! # Bounds and budget
 //!
 //! - Events: at most [`INPUT_LIMIT`] bytes (the largest retained rankings reply plus its
-//!   envelope); the bridge refuses longer replies. JSON nesting is limited to
-//!   [`json::MAX_DEPTH`].
+//!   envelope), which bounds the parsed event tree. The bridge replaces a longer event by
+//!   a small one: a reply fails as a network error does (status 0), a stream message is
+//!   invalid, and any other event, in practice a large form, arrives as
+//!   [`EventKind::InputTooLarge`] with its action name, so the page can explain
+//!   ([`Page::input_too_large`]) or the core shows a generic message. JSON nesting is
+//!   limited to [`json::MAX_DEPTH`].
 //! - Rendered page: at most [`render::RENDER_LIMIT`] (512 KiB), a sanity bound; a page that
 //!   exceeds it is not shown.
 //! - Geometry: [`geometry::MAX_BYTES`], [`geometry::MAX_RINGS`] rings,
@@ -229,7 +237,7 @@
 //!   `cargo build -p sibuna-console-ui --target wasm32-unknown-unknown --profile wasm`
 //!   (the workspace's `wasm` profile: `opt-level = "z"`, fat LTO, stripped, panics
 //!   abort); `build.rs` adds the linker's `--compress-relocations` when there is no debug
-//!   information. With every page the module is 719,406 bytes (270,612 gzipped), above
+//!   information. With every page the module is 720,111 bytes (270,853 gzipped), above
 //!   the review threshold. What brought it under the ceiling from 936,750 bytes with the
 //!   old release profile: the `wasm` profile, shortest-form call targets and data
 //!   addresses (about 55 KiB), trait-object writers for commands and dispatch, one
@@ -296,6 +304,9 @@
 //!   Zig never showed them.
 //! - The member card names a node's address the management address (SID 0013), not the
 //!   consensus address.
+//! - An event longer than [`INPUT_LIMIT`] is replaced by a small event instead of being
+//!   dropped by the bridge, so a large pasted policy set (the import request allows
+//!   256 KiB) is answered with a message naming the command-line import, not ignored.
 
 #[cfg(target_arch = "wasm32")]
 mod abi;

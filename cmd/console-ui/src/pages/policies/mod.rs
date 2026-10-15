@@ -41,6 +41,9 @@
 //!   were module-level variables in Zig. The documents and the replay now belong to the
 //!   page and are dropped at sign-out (Zig kept the replay); the counters still survive a
 //!   session reset, so a late reply to an earlier session is never accepted.
+//! - A pasted policy set whose event exceeds [`crate::INPUT_LIMIT`] is refused by the
+//!   bridge and reported here ([`Page::input_too_large`]): the operator is told to import
+//!   it with `sibuna console policies import`. Zig's bridge dropped the event silently.
 //! - Bugs fixed: the node-local limits sentence was cut to "Not reported" when its numbers
 //!   did not fit a 128-byte buffer (for example 10,000 requests); the IP groups claimed
 //!   every `country-` action, which hid the globe's country buttons on the dashboard;
@@ -87,6 +90,12 @@ use rule_hits::RuleHits;
 /// The action the audit page sends to open a recorded revision of a managed rule; its
 /// fields are `id` (the rule id) and `revision` (decimal).
 pub const REVIEW_REVISION_ACTION: &str = "policies-review-revision";
+
+/// The message for a pasted policy set that the bridge refused because its event exceeded
+/// [`crate::INPUT_LIMIT`]. The import request itself allows 256 KiB (SID 0013), so the
+/// command line, which sends the file directly, still imports such a set.
+const SET_TOO_LARGE: &str = "The policy set is larger than this page accepts. Import it with \
+     sibuna console policies import --file <set.json>.";
 
 /// The request counters of the page. They survive a session reset, as Zig's module-level
 /// counters did, so a reply to a request of an earlier session never matches.
@@ -163,6 +172,15 @@ impl Page for Policies {
         } else {
             self.policy_response(cx, id, status, body)?;
         }
+        Ok(true)
+    }
+
+    fn input_too_large(&mut self, cx: &mut Context<'_>, action: &str) -> Result<bool, UiError> {
+        if action != "managed-import-all" {
+            return Ok(false);
+        }
+        cx.state.set_message(SET_TOO_LARGE);
+        cx.commands.focus("#console-message")?;
         Ok(true)
     }
 

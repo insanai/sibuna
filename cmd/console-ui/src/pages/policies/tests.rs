@@ -594,3 +594,23 @@ fn a_policy_set_is_sent_as_one_import_request() {
     assert!(harness.html().contains("Policy set replaced."));
     assert!(harness.commands().contains("\"body\":{\"kind\":\"catalog\"}"));
 }
+
+/// A pasted policy set longer than the event input is refused by the bridge; the page
+/// names the command-line import, which takes the 256 KiB the import request allows.
+#[test]
+fn an_oversized_policy_set_names_the_command_line_import() {
+    let mut harness = editor();
+    let refused = "{\"kind\":1,\"action\":\"managed-import-all\",\"bytes\":180000,\
+                   \"browser_time\":172800}";
+    harness.send(11, refused);
+    assert!(harness.html().contains(
+        "The policy set is larger than this page accepts. Import it with sibuna console \
+         policies import --file &lt;set.json&gt;."
+    ));
+    assert!(harness.commands().contains("\"selector\":\"#console-message\""));
+    assert!(!requests(&harness));
+    assert_eq!(page(&mut harness.app).manager.import_all.stage, workflow::Stage::Idle);
+    // Another form of the page still gets the generic message.
+    harness.send(11, "{\"kind\":1,\"action\":\"managed-import\",\"bytes\":101169}");
+    assert!(harness.html().contains("This form is larger than the console accepts."));
+}

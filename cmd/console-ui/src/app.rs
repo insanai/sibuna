@@ -19,8 +19,10 @@ use crate::wipe::{wipe_bytes, wipe_string};
 use crate::{json, pages};
 
 /// The largest event the bridge may deliver, in bytes: the largest server reply (a
-/// retained rankings archive in hexadecimal) plus the event envelope. The bridge refuses
-/// longer replies before they reach the module.
+/// retained rankings archive in hexadecimal) plus the event envelope. The bound keeps the
+/// parsed event tree small. The bridge never delivers a longer event: it fails a longer
+/// reply as a network error, counts a longer stream message as invalid, and reports any
+/// other longer event (a large form) as an [`EventKind::InputTooLarge`] event.
 pub const INPUT_LIMIT: usize = ranking_history::EVENT_BYTES;
 
 /// The kinds of browser event, numbered as `glue.js` numbers them.
@@ -44,6 +46,10 @@ pub enum EventKind {
     Appearance,
     /// 10: the system theme changed.
     SystemTheme,
+    /// 11: the bridge refused an event longer than [`INPUT_LIMIT`]:
+    /// `{"kind": .., "action": .., "bytes": ..}`, with the refused event's kind, its action
+    /// name (empty unless the kind is 1) and its length.
+    InputTooLarge,
 }
 
 impl EventKind {
@@ -59,6 +65,7 @@ impl EventKind {
             8 => EventKind::Route,
             9 => EventKind::Appearance,
             10 => EventKind::SystemTheme,
+            11 => EventKind::InputTooLarge,
             _ => return None,
         })
     }

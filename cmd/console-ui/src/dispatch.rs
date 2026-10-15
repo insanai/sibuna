@@ -51,7 +51,23 @@ pub(crate) fn event(
             Ok(())
         }
         EventKind::Visibility => visibility(cx, value),
+        EventKind::InputTooLarge => input_too_large(cx, json::string(value, "action")),
     }
+}
+
+/// The message for an event the bridge refused when no module explains it.
+pub(crate) const INPUT_TOO_LARGE: &str =
+    "This form is larger than the console accepts. Shorten it and try again.";
+
+/// Handles an event the bridge refused for its size: the module whose form sent the
+/// action explains, or the core shows [`INPUT_TOO_LARGE`]. Nothing of the refused event
+/// arrived, so no request or state change follows.
+fn input_too_large(cx: &mut Context<'_>, action: &str) -> Result<(), UiError> {
+    if cx.each(&mut |page, cx| page.input_too_large(cx, action))? {
+        return Ok(());
+    }
+    cx.state.set_message(INPUT_TOO_LARGE);
+    cx.commands.focus("#console-message")
 }
 
 /// Handles the operator action `name` with its form `fields`.

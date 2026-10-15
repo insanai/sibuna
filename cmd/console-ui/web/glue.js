@@ -14,14 +14,30 @@ const timers = new Map();
 function read(pointer, length) {
   return decoder.decode(new Uint8Array(wasm.memory.buffer, pointer, length));
 }
+// The kind of event that reports an event longer than the input (EventKind::InputTooLarge).
+const inputTooLarge = 11;
 function event(kind, value) {
   value.browser_time = Math.floor(Date.now() / 1000);
   if (kind === 4) value.entropy = crypto.getRandomValues(new Uint32Array(1))[0];
-  const bytes = encoder.encode(JSON.stringify(value));
-  if (bytes.length > wasm.sb_input_capacity()) return;
+  let bytes = encoder.encode(JSON.stringify(value));
+  if (bytes.length > wasm.sb_input_capacity()) {
+    [kind, value] = refusal(kind, value, bytes.length);
+    bytes = encoder.encode(JSON.stringify(value));
+  }
   new Uint8Array(wasm.memory.buffer, wasm.sb_input(), bytes.length).set(bytes);
   wasm.sb_event(kind, bytes.length);
   flush();
+}
+// Replaces an event the module's input cannot hold with a small one, so it is never dropped
+// silently: a reply fails as a network error does, a stream message counts as invalid, and
+// any other event (a large form) is reported with its kind, action name and length.
+function refusal(kind, value, length) {
+  const time = value.browser_time;
+  if (kind === 2) return [2, {id: String(value.id).slice(0, 128), status: 0, body: {},
+    browser_time: time}];
+  if (kind === 4) return [4, {state: "invalid", browser_time: time, entropy: value.entropy}];
+  const action = kind === 1 ? String(value.action ?? "").slice(0, 128) : "";
+  return [inputTooLarge, {kind, action, bytes: length, browser_time: time}];
 }
 function flush() {
   const html = read(wasm.sb_html(), wasm.sb_html_length());

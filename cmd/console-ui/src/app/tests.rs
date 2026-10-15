@@ -231,3 +231,24 @@ fn every_session_expiry_clears_the_session_and_keeps_the_appearance() {
         assert!(harness.html().contains("Sign in"), "{name}");
     }
 }
+
+/// The bridge never drops an event longer than the input: it sends the refusal event,
+/// numbered as [`EventKind`] numbers it. A form that no page explains (here a page
+/// template) gets the generic message, and nothing is requested.
+#[test]
+fn the_bridge_reports_an_oversized_form_instead_of_dropping_it() {
+    let glue = include_str!("../../web/glue.js");
+    assert!(glue.contains("const inputTooLarge = 11;"));
+    assert!(!glue.contains("sb_input_capacity()) return;"));
+    assert_eq!(EventKind::from_code(11), Some(EventKind::InputTooLarge));
+    let mut harness = Harness::new();
+    harness.respond("session", 200, ADMIN_SESSION);
+    harness.send(
+        11,
+        "{\"kind\":1,\"action\":\"pages-save\",\"bytes\":101169,\"browser_time\":172800}",
+    );
+    assert!(harness.html().contains(dispatch::INPUT_TOO_LARGE));
+    assert!(harness.commands().contains("{\"op\":\"focus\",\"selector\":\"#console-message\"}"));
+    assert!(!harness.commands().contains("\"op\":\"request\""));
+    assert_eq!(harness.app.state().phase, Phase::Dashboard);
+}
