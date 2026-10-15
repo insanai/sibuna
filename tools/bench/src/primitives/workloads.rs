@@ -269,10 +269,20 @@ fn spent_tag(i: u64) -> Tag {
     tag
 }
 
+/// The spent-set capacity of the Zig benchmark: 16 shards of 4,096 slots.
+const ZIG_SPENT_TAGS: usize = 1 << 16;
+
 fn state(runs: &mut Vec<Run>) {
+    // As Zig's `ctx.* = .{}`, the reset empties one table in place outside the timer, so
+    // every batch probes resident memory. A fresh zeroed table per batch would time the
+    // kernel mapping its pages on first write, a cost a running daemon pays once.
+    let spent = SpentSet::with_capacity(ZIG_SPENT_TAGS);
     let timing = measure(
         40_000,
-        || Box::new(SpentSet::new()),
+        || {
+            spent.clear();
+            &spent
+        },
         |set, n| {
             let mut spent = 0;
             for i in 0..n {
