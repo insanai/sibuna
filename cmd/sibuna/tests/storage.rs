@@ -206,9 +206,8 @@ fn waf_denials_are_recorded_as_searchable_incidents() {
         assert_eq!(row[1], format!("/search{n}"));
         assert_eq!(row[2], "q=1%27%20union%20select%20null--");
         assert_eq!((row[3].as_str(), row[4].as_str()), ("GET", "curl/8"));
-        // FTS5 reads the word inside the path; PostgreSQL's parser keeps the path as one token.
-        let term =
-            if backend.label == "postgres" { format!("/search{n}") } else { format!("search{n}") };
+        // Both backends index the canonical tokens of `sibuna_storage::search`.
+        let term = format!("search{n}");
         let hits = storage.search_incidents(&term, 10).unwrap();
         assert!(hits.iter().any(|hit| hit.client_ip == ip), "{}: {hits:?}", backend.label);
         let server = daemon.server().unwrap();
