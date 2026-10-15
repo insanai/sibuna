@@ -64,6 +64,10 @@ Revision note
 
 2026-10-15 (Rust port, membership and gauges): membership rows are announced by the collector at start, every minute, and within two seconds of a change of the applied policy revision or the control revision. Resident memory and CPU time are read from ``/proc``, with a CPU resolution of 10 ms. ``geo_maintenance_failures`` is always 0, because GeoIP pruning is a retention kind.
 
+2026-10-15 (Rust port, access): a refused sign-in is audited (``session.denied``) before the 401 reply instead of through a background mailbox job; the reply stays identical for an unknown account, a wrong password and a wrong second factor. Unknown accounts are verified against a constant PHC string with the console's Argon2id parameters, so they cost a full verification. The single Argon2id workspace (19 MiB) is allocated at start and wiped by every use; a concurrent check is refused with 429 ``CONSOLE003``. Storage failures of sign-in, password change, TOTP and kiosk exchange answer 503 ``CONSOLEQUORUM``. The ``sibuna console`` client speaks HTTP/1.1 through ``sibuna-tls`` (plain HTTP only to loopback literals), bounds replies to 16 KiB and each request to 20 s, never follows redirects, and imports a policy set with one ``policies/import`` request.
+
+2026-10-15 (Rust port, node commands): the intent commits first; the console checks authority and expiry again before the local effect, which runs through the daemon's ``Node`` trait; a completion that cannot be recorded is kept in memory, retried by the next request and by the collector, and blocks new commands; a command arriving while another runs is refused with 503 ``CONSOLENODE`` instead of queueing. The policy page reads the engine the node serves through ``Node::engine``; the policy tester without a draft and replay evaluate the committed policy composed by storage, reported beside the node's applied revision.
+
 Abstract
 --------
 
