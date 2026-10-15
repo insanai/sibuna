@@ -12,6 +12,8 @@ The mathematics and engineering of web defense.
    prior-art
    cryptography
    protocol
+   zero-allocation
    algorithms
+   wasm-engine
    solutions
    glossary
