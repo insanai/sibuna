@@ -40,7 +40,10 @@
 //!   the optimiser cannot see through, instead of volatile writes that would need `unsafe`.
 #![no_std]
 
-#[cfg(any(feature = "std", test))]
+// `std` serves only run-time CPU feature detection, which exists on x86-64 and aarch64.
+// Elsewhere (WebAssembly) the crate stays `no_std` even with the feature on, so a `no_std`
+// binary that brings its own panic handler can depend on it through the workspace defaults.
+#[cfg(any(all(feature = "std", any(target_arch = "x86_64", target_arch = "aarch64")), test))]
 extern crate std;
 
 mod buffer;
