@@ -61,6 +61,8 @@ pub struct FakeNode {
     pub revision: AtomicU64,
     /// The rule-hit sample to report, if any.
     pub sample: Mutex<Option<RuleHitSample>>,
+    /// The engine to report as served, if any.
+    pub engine: Mutex<Option<Arc<sibuna_policy::Engine>>>,
 }
 
 impl Node for FakeNode {
@@ -93,6 +95,10 @@ impl Node for FakeNode {
 
     fn applied_revision(&self) -> u64 {
         self.revision.load(Ordering::SeqCst)
+    }
+
+    fn engine(&self) -> Option<Arc<sibuna_policy::Engine>> {
+        self.engine.lock().unwrap().clone()
     }
 }
 

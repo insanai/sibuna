@@ -26,6 +26,7 @@ use sibuna_storage::Storage;
 use sibuna_store::incidents::ConsoleIncidents;
 use sibuna_store::telemetry::ConsoleTelemetry;
 
+use crate::api::policies::PolicyBase;
 use crate::assets::AssetBytes;
 use crate::clock::{Clock, SystemClock};
 use crate::config::{Budget, Config, ConfigError};
@@ -61,6 +62,8 @@ pub struct Inputs {
     pub proxy_mode: ProxyMode,
     /// The challenge parameters the node issues by default.
     pub challenge_defaults: Defaults,
+    /// The daemon's policy settings that candidates and the policy page start from.
+    pub policy: PolicyBase,
     /// The console keys.
     pub keys: Keys,
     /// The interface's files.
@@ -86,6 +89,7 @@ impl Inputs {
             version: String::new(),
             proxy_mode: ProxyMode::default(),
             challenge_defaults: Defaults::default(),
+            policy: PolicyBase::default(),
             keys: Keys::default(),
             assets: AssetBytes::default(),
             clock: Arc::new(SystemClock::new()),

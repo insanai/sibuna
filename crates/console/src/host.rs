@@ -7,6 +7,7 @@
 //! `cmd/sibuna/src/console/node.rs` and tests implement with a fake.
 
 use std::fmt;
+use std::sync::Arc;
 
 use sibuna_console_protocol::rule_hits::{Generation, MAX_RULES};
 use sibuna_store::rule_hits::Snapshot;
@@ -53,4 +54,11 @@ pub trait Node: Send + Sync + fmt::Debug {
     /// Returns the policy revision of the engine the node currently serves; 0 before the
     /// first snapshot was applied.
     fn applied_revision(&self) -> u64;
+
+    /// Returns the engine the node currently serves, for the policy page's applied rules,
+    /// inspection modes and reputation trie size (Zig read the published engine on the
+    /// storage owner). `None` when the node does not report it; the default.
+    fn engine(&self) -> Option<Arc<sibuna_policy::Engine>> {
+        None
+    }
 }

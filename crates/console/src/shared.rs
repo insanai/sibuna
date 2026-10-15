@@ -16,6 +16,7 @@ use sibuna_core::Metrics;
 use sibuna_store::incidents::ConsoleIncidents;
 use sibuna_store::telemetry::ConsoleTelemetry;
 
+use crate::api::policies::PolicyBase;
 use crate::assets::Assets;
 use crate::clock::Clock;
 use crate::config::Config;
@@ -65,6 +66,8 @@ pub struct Shared {
     pub identity: Identity,
     /// The trusted-ingress rule.
     pub ingress: Ingress,
+    /// The daemon's policy settings that candidates and the policy page start from.
+    pub policy: PolicyBase,
     /// The console keys, wiped when the console stops.
     pub keys: Keys,
     /// Storage calls with the background allowance.
@@ -144,6 +147,7 @@ impl Shared {
         let peers = peer::Peers::new(&setup);
         Ok(Shared {
             ingress: Ingress::new(&config),
+            policy: inputs.policy,
             storage: ConsoleStorage::new(inputs.storage),
             clock: inputs.clock,
             node: inputs.node,

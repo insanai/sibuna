@@ -198,6 +198,7 @@ mod routes;
 mod shared;
 mod storage;
 
+pub use api::policies::PolicyBase;
 pub use assets::AssetBytes;
 pub use clock::{Clock, ManualClock, SystemClock};
 pub use config::{Budget, Config, ConfigError};
