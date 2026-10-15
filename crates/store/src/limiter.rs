@@ -409,6 +409,24 @@ mod tests {
         assert!(!limiter.is_rate_limited(b"c", 200, 3, 10));
     }
 
+    // Ported from `store/src/rate_limiter.zig` "clients are independent and drained cells
+    // are reclaimed".
+    // Zig refused a client whose probe window was full, so its loop failed unless drained
+    // cells were reused. Here a full window evicts instead, so we check reclamation
+    // directly: twice as many identities as cells, each arriving after the previous one
+    // has drained, take drained cells and never evict.
+    #[test]
+    fn drained_cells_are_reclaimed_without_eviction() {
+        let limiter = RateLimiter::with_cells(MIN_CELLS);
+        let limits = Limits { rate: 2, window_ms: 1000 };
+        for n in 0..(MIN_CELLS * 2) as u64 {
+            let key = format!("ip{n}");
+            let decision = limiter.check(key.as_bytes(), 100_000 + n * 2000, limits);
+            assert!(!decision.limited && !decision.evicted, "identity {n}: {decision:?}");
+        }
+        assert_eq!(limiter.eviction_count(), 0);
+    }
+
     #[test]
     fn non_divisible_windows_preserve_burst_and_do_not_exceed_sustained_rate() {
         let limiter = RateLimiter::new();
