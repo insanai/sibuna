@@ -9,8 +9,13 @@ repository.workspace = true
 authors.workspace = true
 
 [dependencies]
+sibuna-cidr = { workspace = true }
 sibuna-crypto = { workspace = true }
 sibuna-inflate = { workspace = true }
 
 [lints]
 workspace = true
+
+[[bin]]
+name = "geoip-snapshot"
+path = "src/bin/geoip-snapshot.rs"

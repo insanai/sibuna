@@ -1,0 +1,11 @@
+2001:200::,2001:200:ffff:ffff:ffff:ffff:ffff:ffff,JP
+2001:208::,2001:208:ffff:ffff:ffff:ffff:ffff:ffff,SG
+2001:218::,2001:218:4000:5:ffff:ffff:ffff:ffff,JP
+2001:218:4000:6::,2001:218:4000:6:ffff:ffff:ffff:ffff,SG
+2001:218:4000:7::,2001:218:6000:1:ffff:ffff:ffff:ffff,JP
+2001:218:6000:2::,2001:218:6000:2:ffff:ffff:ffff:ffff,HK
+2001:218:6000:3::,2001:218:6001:ffff:ffff:ffff:ffff:ffff,JP
+2001:218:6002::,2001:218:6002:ffff:ffff:ffff:ffff:ffff,HK
+2001:218:6003::,2001:218:8000:3:ffff:ffff:ffff:ffff,JP
+2001:218:8000:4::,2001:218:8000:4:ffff:ffff:ffff:ffff,TH
+2401:b60:1a10::,2401:b60:1a1f:ffff:ffff:ffff:ffff:ffff,AN
