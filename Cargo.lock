@@ -1002,6 +1002,27 @@ name = "sibuna-cidr"
 version = "0.2.0"
 
 [[package]]
+name = "sibuna-console"
+version = "0.2.0"
+dependencies = [
+ "sibuna-cidr",
+ "sibuna-console-protocol",
+ "sibuna-console-storage",
+ "sibuna-core",
+ "sibuna-crypto",
+ "sibuna-encoding",
+ "sibuna-geoip",
+ "sibuna-http",
+ "sibuna-json",
+ "sibuna-net",
+ "sibuna-policy",
+ "sibuna-serve",
+ "sibuna-storage",
+ "sibuna-store",
+ "sibuna-tls",
+]
+
+[[package]]
 name = "sibuna-console-protocol"
 version = "0.2.0"
 dependencies = [

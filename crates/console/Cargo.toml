@@ -1,0 +1,49 @@
+[package]
+name = "sibuna-console"
+description = "The Sibuna console server: routes, authentication, live hub, collectors and peers (SID 0007)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = ["sqlite"]
+sqlite = ["sibuna-storage/sqlite", "sibuna-console-storage/sqlite"]
+postgres = ["sibuna-storage/postgres", "sibuna-console-storage/postgres"]
+
+[dependencies]
+# The bounded listener, its admission classes and WebSocket upgrades (SID 0007).
+sibuna-serve = { workspace = true }
+# Wire contracts shared with the WebAssembly interface and peer consoles.
+sibuna-console-protocol = { workspace = true }
+# The console's tables and transactional invariants (SID 0013).
+sibuna-console-storage = { workspace = true }
+# The storage thread, its job queue and tickets (SID 0011).
+sibuna-storage = { workspace = true }
+# The data plane's telemetry rings, incident feed and rule-hit counters.
+sibuna-store = { workspace = true }
+# Metrics and the daemon's incident types.
+sibuna-core = { workspace = true }
+# SHA-256, HMAC, constant-time comparison, Argon2id and TOTP.
+sibuna-crypto = { workspace = true }
+# Hexadecimal credentials and digests.
+sibuna-encoding = { workspace = true }
+# JSON replies and bodies.
+sibuna-json = { workspace = true }
+# HTTP request heads, chunked bodies and WebSocket frames.
+sibuna-http = { workspace = true }
+# Outbound address policy and the response-head parser (webhooks, probes, the CLI client).
+sibuna-net = { workspace = true }
+# Outbound TLS for webhooks, GeoIP downloads and management peers (SID 0012).
+sibuna-tls = { workspace = true }
+# The active GeoIP generation.
+sibuna-geoip = { workspace = true }
+# Country prefixes for country actions.
+sibuna-cidr = { workspace = true }
+# The private engine of the policy tester and page template validation.
+sibuna-policy = { workspace = true }
+
+[lints]
+workspace = true
