@@ -962,6 +962,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "sibuna-browser"
+version = "0.2.0"
+dependencies = [
+ "sibuna-encoding",
+ "sibuna-http",
+ "sibuna-json",
+]
+
+[[package]]
 name = "sibuna-challenge"
 version = "0.2.0"
 dependencies = [
@@ -1042,6 +1051,7 @@ version = "0.2.0"
 dependencies = [
  "sibuna-cidr",
  "sibuna-crypto",
+ "sibuna-json",
  "sibuna-patterns",
 ]
 

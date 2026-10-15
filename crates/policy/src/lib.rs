@@ -77,10 +77,11 @@
 //! - The 8 KiB `undefined` canonicalisation buffer: a stack buffer sized to the field.
 //! - Per-category automaton scans in mixed inspection modes: one scan for every category's
 //!   tags, then a tagged search only for the categories present.
-//! - `std.json.parseFromSliceLeaky` with reflection over Zig structs: a streaming reader
-//!   (`json`) that consumes tokens in Zig's order, so the first error in document order wins.
-//!   It is local to this crate because `sibuna-json` parses whole documents first and would
-//!   report a late syntax error ahead of an earlier unknown key.
+//! - `std.json.parseFromSliceLeaky` with reflection over Zig structs: typed helpers
+//!   (`json`) over `sibuna_json::PullReader` that consume events in Zig's order, so the
+//!   first error in document order wins. Only Zig's typed-parsing quirks live here
+//!   (integers as strings, enumeration tag numbers, byte strings as arrays, Zig's error
+//!   names and offsets); the grammar is the workspace's one JSON reader.
 
 pub mod body_fields;
 pub mod bots;

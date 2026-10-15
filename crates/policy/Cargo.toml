@@ -12,6 +12,7 @@ authors.workspace = true
 sibuna-patterns = { workspace = true }
 sibuna-cidr = { workspace = true }
 sibuna-crypto = { workspace = true }
+sibuna-json = { workspace = true }
 
 [lints]
 workspace = true
