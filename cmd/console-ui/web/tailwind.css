@@ -75,6 +75,8 @@
 body { margin: 0; min-width: 320px; color: var(--color-base-content); background: var(--color-base-200); }
 button, input, select, textarea { font: inherit; }
 :focus-visible { outline: 3px solid var(--color-primary); outline-offset: 3px; }
+/* A heading focused by the page (tabindex -1) guides screen readers; it is not a control. */
+:is(h1, h2, h3)[tabindex="-1"]:focus-visible { outline: none; }
 .sb-shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; align-items: start; }
 .sb-content { min-width: 0; }
 .sb-mobile-header { display: none; }
