@@ -14,8 +14,10 @@ use std::thread;
 use std::time::Instant;
 
 use sibuna_crypto::wyhash;
+use sibuna_store::ban_table::BanTable;
 use sibuna_store::limiter::{Limits, RateLimiter};
-use sibuna_store::spent::{SpentSet, Tag};
+use sibuna_store::ring::BoundedQueue;
+use sibuna_store::spent::{self, SpentSet, Tag};
 
 const BATCHES: usize = 7;
 
@@ -116,6 +118,19 @@ fn challenge_store_robin_hood_spend_and_lookup() {
     );
 }
 
+/// The same workload in a set of the Zig set's size (65,536 tags, 1.5 MiB), which stays in
+/// the cache; the default set (24 MiB) does not.
+#[test]
+#[ignore = "timing run; use --release"]
+fn challenge_store_robin_hood_spend_and_lookup_zig_capacity() {
+    measure(
+        "challenge_store/robin_hood_spend_and_lookup (64 Ki tags)",
+        40_000,
+        || Box::new(SpentSet::with_capacity(spent::MIN_CAPACITY)),
+        |s, n| spent_body(s, n),
+    );
+}
+
 /// Zig 0.16 release build on this machine: 5.5 to 5.6 ns/op.
 #[test]
 #[ignore = "timing run; use --release"]
@@ -188,6 +203,148 @@ fn contended_gcra(threads: usize) {
         println!(
             "rate_limiter/gcra {threads} threads, {label:<22} {:>7.1} M checks/s",
             total / elapsed.as_secs_f64() / 1e6,
+        );
+    }
+}
+
+/// Checks the six benchmark addresses against a table holding 1,024 other bans: half of
+/// the checks look up an address under a ban, half one that is not.
+fn ban_lookup_body(table: &BanTable, iters: u64) -> u64 {
+    let mut banned = 0;
+    for i in 0..iters {
+        let ip = TEST_IPS[(i % TEST_IPS.len() as u64) as usize];
+        banned += u64::from(table.is_banned(ip, 500));
+    }
+    banned
+}
+
+fn ban_table_with_bans() -> Box<BanTable> {
+    let table = Box::new(BanTable::new());
+    for n in 0..1024u32 {
+        let ip = format!("198.51.{}.{}", n / 256, n % 256);
+        let _ = table.ban(ip.as_bytes(), 1000, 0);
+    }
+    for ip in TEST_IPS.iter().step_by(2) {
+        let _ = table.ban(ip, 1000, 0);
+    }
+    table
+}
+
+/// Not in the Zig benchmark; it measures the ban table's per-request read.
+#[test]
+#[ignore = "timing run; use --release"]
+fn ban_table_lookup() {
+    measure("ban_table/is_banned", 200_000, ban_table_with_bans, |t, n| ban_lookup_body(t, n));
+}
+
+/// Not in the Zig benchmark; it measures raising a ban (honeypot hits, rule quotas).
+#[test]
+#[ignore = "timing run; use --release"]
+fn ban_table_ban() {
+    measure(
+        "ban_table/ban",
+        200_000,
+        || Box::new(BanTable::new()),
+        |table, iters| {
+            for i in 0..iters {
+                let ip = TEST_IPS[(i % TEST_IPS.len() as u64) as usize];
+                let _ = table.ban(ip, 1000 + i, 0);
+            }
+            iters
+        },
+    );
+}
+
+/// A record the size of a telemetry sample, so a push copies what the daemon copies.
+#[derive(Clone, Copy)]
+struct Sample {
+    bytes: [u64; 32],
+}
+
+/// The outcome of one queue run: producer nanoseconds per push and the share refused.
+struct QueueRun {
+    nanos_per_push: f64,
+    refused: f64,
+}
+
+/// Runs `producers` threads that push `per_producer` samples each into a queue of 4,096
+/// slots while one consumer drains it. With `pace`, a producer does that many rounds of
+/// unrelated work between pushes and times each push alone (a request thread pushes once
+/// per sampled request); without it, producers push back to back and time the whole loop.
+fn queue_run(producers: usize, per_producer: u64, pace: u32) -> QueueRun {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    let queue = BoundedQueue::<Sample, 4096>::new();
+    let barrier = Barrier::new(producers + 1);
+    let done = AtomicUsize::new(0);
+    let (nanos, refused) = thread::scope(|s| {
+        let workers: Vec<_> = (0..producers)
+            .map(|p| {
+                let (queue, barrier, done) = (&queue, &barrier, &done);
+                s.spawn(move || {
+                    barrier.wait();
+                    let (mut nanos, mut refused) = (0u128, 0u64);
+                    let start = Instant::now();
+                    for i in 0..per_producer {
+                        let mut sample = Sample { bytes: [0; 32] };
+                        sample.bytes[0] = p as u64 ^ i;
+                        if pace == 0 {
+                            refused += u64::from(queue.push(sample).is_err());
+                            continue;
+                        }
+                        let mut work = i;
+                        for _ in 0..pace {
+                            work = black_box(work.wrapping_mul(0x9e37_79b9_7f4a_7c15));
+                        }
+                        let before = Instant::now();
+                        refused += u64::from(queue.push(sample).is_err());
+                        nanos += before.elapsed().as_nanos();
+                    }
+                    if pace == 0 {
+                        nanos = start.elapsed().as_nanos();
+                    }
+                    done.fetch_add(1, Ordering::Release);
+                    (nanos, refused)
+                })
+            })
+            .collect();
+        let mut consumer = queue.consumer().expect("first claim");
+        barrier.wait();
+        while done.load(Ordering::Acquire) < producers {
+            if let Some(sample) = consumer.pop() {
+                black_box(sample.bytes[0]);
+            }
+        }
+        workers.into_iter().fold((0u128, 0u64), |(n, r), worker| {
+            let (nanos, refused) = worker.join().expect("producer");
+            (n + nanos, r + refused)
+        })
+    });
+    let pushes = (producers as u64 * per_producer) as f64;
+    QueueRun { nanos_per_push: nanos as f64 / pushes, refused: refused as f64 / pushes }
+}
+
+/// Measures the producer side of the bounded queue: one and sixteen producers pushing back
+/// to back, and sixteen producers that push between rounds of other work (a connection
+/// thread pushes one sample per 64 requests), each the median of seven runs.
+#[test]
+#[ignore = "timing run; use --release"]
+fn bounded_queue_producers() {
+    for (label, producers, per_producer, pace) in [
+        ("1 producer, back to back", 1, 4_000_000, 0),
+        ("16 producers, back to back", 16, 500_000, 0),
+        ("16 producers, push every ~0.3 us", 16, 200_000, 200),
+        ("16 producers, push every ~30 us", 16, 20_000, 20_000),
+    ] {
+        let mut runs: Vec<QueueRun> =
+            (0..BATCHES).map(|_| queue_run(producers, per_producer, pace)).collect();
+        runs.sort_by(|a, b| a.nanos_per_push.total_cmp(&b.nanos_per_push));
+        let median = &runs[BATCHES / 2];
+        println!(
+            "bounded_queue/{label:<34} {:>8.2} ns/push (min {:.2}, max {:.2}), {:.1}% refused",
+            median.nanos_per_push,
+            runs[0].nanos_per_push,
+            runs[BATCHES - 1].nanos_per_push,
+            100.0 * median.refused,
         );
     }
 }

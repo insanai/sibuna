@@ -2,10 +2,17 @@
 //!
 //! A service that issues stateless, authenticated tokens (for example proof-of-work
 //! challenges) needs memory only for the tokens already *spent*, to refuse their replay.
-//! Each entry is a 16-byte tag plus its expiry time. Entries live in 16 shards, each a table
-//! of 4,096 slots behind its own lock, with Robin Hood open addressing (Celis, 1986): an
-//! insertion displaces any occupant closer to its home slot than the incoming key, which
+//! Each entry is a 16-byte tag plus its expiry time, 24 bytes in all. Entries live in 16
+//! shards, each a table behind its own lock, with Robin Hood open addressing (Celis, 1986):
+//! an insertion displaces any occupant closer to its home slot than the incoming key, which
 //! keeps probe lengths clustered around the mean and lets lookups stop early.
+//!
+//! The capacity is chosen when the set is built ([`SpentSet::with_capacity`]). It must hold
+//! every tag spent within one challenge lifetime: a set sized for the challenge TTL times
+//! the peak rate of verified solutions. The default, [`DEFAULT_CAPACITY`] tags (24 MiB),
+//! holds 300 seconds of 3,000 verified solutions per second at a load that keeps probe
+//! windows short. The Zig set held 65,536 tags, which about 220 solutions per second
+//! exhausted within a five-minute lifetime, after which honest solutions were refused.
 //!
 //! Expired entries are reclaimed during insertion, so no sweeper runs. Replay safety rests
 //! on one rule: a failed insertion never evicts a live tag. Insertion first simulates the
@@ -17,6 +24,7 @@
 //! itself presented was spent.
 
 use std::fmt;
+use std::num::NonZeroU64;
 use std::sync::{Mutex, MutexGuard, PoisonError};
 
 /// A spent tag: 16 bytes, uniformly distributed (the caller's MAC output or hash).
@@ -24,8 +32,12 @@ pub type Tag = [u8; 16];
 
 /// The number of independently locked shards.
 pub const SHARD_COUNT: usize = 16;
-/// The number of slots in one shard.
-pub const SHARD_CAPACITY: usize = 4096;
+/// The tags a set built with [`SpentSet::new`] holds: 1,048,576 (24 MiB).
+pub const DEFAULT_CAPACITY: usize = 1 << 20;
+/// The fewest tags a set holds: 65,536, the Zig set's fixed capacity.
+pub const MIN_CAPACITY: usize = 1 << 16;
+/// The most tags a set holds: 16,777,216 (384 MiB).
+pub const MAX_CAPACITY: usize = 1 << 24;
 /// The longest probe distance an entry may have.
 pub const MAX_PROBE: u8 = 64;
 
@@ -49,20 +61,26 @@ impl fmt::Display for SpendError {
 
 impl std::error::Error for SpendError {}
 
-/// One occupied slot.
+/// One occupied slot. The expiry is never zero (an expiry of zero is stored as one), which
+/// lets `Option<Entry>` use it as the empty marker and keeps a slot at 24 bytes. The probe
+/// distance is not stored: it follows from the slot index and the tag's home.
 #[derive(Clone, Copy, Debug)]
 struct Entry {
     tag: Tag,
-    expires_at: u64,
-    /// Probe distance from the tag's home slot; at most `MAX_PROBE - 1`.
-    dist: u8,
+    expires_at: NonZeroU64,
 }
 
 impl Entry {
+    fn new(tag: Tag, expires_at: u64) -> Entry {
+        Entry { tag, expires_at: NonZeroU64::new(expires_at).unwrap_or(NonZeroU64::MIN) }
+    }
+
     fn is_expired(&self, now: u64) -> bool {
-        now > self.expires_at
+        now > self.expires_at.get()
     }
 }
+
+const _: () = assert!(size_of::<Option<Entry>>() == 24);
 
 /// Splits a tag into its shard selector (first 8 bytes) and home selector (last 8 bytes),
 /// both little-endian as in the Zig version.
@@ -71,38 +89,44 @@ fn tag_words(tag: &Tag) -> (u64, u64) {
     (word as u64, (word >> 64) as u64)
 }
 
-/// The open-addressed table of one shard. Indices are always reduced modulo
-/// `SHARD_CAPACITY`, the table's fixed length, so every index is in bounds.
+/// The open-addressed table of one shard. Its length is a power of two of at least
+/// `MAX_PROBE` slots, and indices are always masked with `mask`, so every index is in
+/// bounds.
 struct Table {
-    entries: Box<[Option<Entry>; SHARD_CAPACITY]>,
+    entries: Box<[Option<Entry>]>,
+    mask: usize,
 }
 
 impl Table {
-    fn new() -> Self {
-        let Ok(entries) = vec![None; SHARD_CAPACITY].into_boxed_slice().try_into() else {
-            unreachable!("the vector has exactly SHARD_CAPACITY elements");
-        };
-        Self { entries }
+    /// Returns a table of `slots` empty slots; `slots` is a power of two.
+    fn new(slots: usize) -> Self {
+        Self { entries: vec![None; slots].into_boxed_slice(), mask: slots - 1 }
     }
 
-    fn home(tag: &Tag) -> usize {
-        (tag_words(tag).1 % SHARD_CAPACITY as u64) as usize
+    fn home(&self, tag: &Tag) -> usize {
+        tag_words(tag).1 as usize & self.mask
+    }
+
+    /// The probe distance of `entry` stored at `idx`; below `MAX_PROBE` by construction.
+    fn dist(&self, entry: &Entry, idx: usize) -> u8 {
+        let dist = idx.wrapping_sub(self.home(&entry.tag)) & self.mask;
+        u8::try_from(dist).unwrap_or(u8::MAX)
     }
 
     /// Robin Hood lookup with early termination: once a slot's occupant is closer to its
     /// home than we are to ours, the key cannot lie further on (SID 0006, Lemma 27).
     fn find(&mut self, tag: &Tag) -> Option<&mut Entry> {
-        let mut idx = Self::home(tag);
+        let mut idx = self.home(tag);
         let mut found = None;
         for dist in 0..MAX_PROBE {
             match &self.entries[idx] {
                 None => return None,
-                Some(e) if e.dist < dist => return None,
+                Some(e) if self.dist(e, idx) < dist => return None,
                 Some(e) if e.tag == *tag => {
                     found = Some(idx);
                     break;
                 }
-                Some(_) => idx = (idx + 1) % SHARD_CAPACITY,
+                Some(_) => idx = (idx + 1) & self.mask,
             }
         }
         self.entries[found?].as_mut()
@@ -111,19 +135,20 @@ impl Table {
     /// Simulates the displacement path before anything is modified, so that a failed
     /// bounded insertion cannot evict an already spent tag and permit its replay.
     fn can_insert(&self, tag: &Tag, now: u64) -> bool {
-        let mut idx = Self::home(tag);
+        let mut idx = self.home(tag);
         let mut dist: u8 = 0;
         let mut probes = 0;
-        while dist < MAX_PROBE && probes < SHARD_CAPACITY {
+        while dist < MAX_PROBE && probes < self.entries.len() {
             let Some(e) = &self.entries[idx] else { return true };
-            if e.is_expired(now) && dist >= e.dist {
+            let occupant = self.dist(e, idx);
+            if e.is_expired(now) && dist >= occupant {
                 return true;
             }
             // The carried key would swap here and continue as the displaced occupant.
-            if dist > e.dist {
-                dist = e.dist;
+            if dist > occupant {
+                dist = occupant;
             }
-            idx = (idx + 1) % SHARD_CAPACITY;
+            idx = (idx + 1) & self.mask;
             dist += 1;
             probes += 1;
         }
@@ -136,7 +161,7 @@ impl Table {
             if !existing.is_expired(now) {
                 return Err(SpendError::DoubleSpend);
             }
-            existing.expires_at = expires_at;
+            *existing = Entry::new(*tag, expires_at);
             return Ok(());
         }
         self.insert(tag, expires_at, now)
@@ -150,29 +175,31 @@ impl Table {
         if !self.can_insert(tag, now) {
             return Err(SpendError::Full);
         }
-        let mut carry = Entry { tag: *tag, expires_at, dist: 0 };
-        let mut idx = Self::home(tag);
-        while carry.dist < MAX_PROBE {
-            let slot = &mut self.entries[idx];
-            let Some(e) = slot else {
-                *slot = Some(carry);
+        let mut carry = Entry::new(*tag, expires_at);
+        let mut carry_dist: u8 = 0;
+        let mut idx = self.home(tag);
+        while carry_dist < MAX_PROBE {
+            let Some(occupant) = self.entries[idx] else {
+                self.entries[idx] = Some(carry);
                 return Ok(());
             };
+            let occupant_dist = self.dist(&occupant, idx);
             // Overwriting an expired occupant is safe only when the new distance is not
             // smaller, so keys probing past this slot still pass the early-termination test.
-            if e.is_expired(now) && carry.dist >= e.dist {
-                *e = carry;
+            if occupant.is_expired(now) && carry_dist >= occupant_dist {
+                self.entries[idx] = Some(carry);
                 return Ok(());
             }
-            if carry.dist > e.dist {
-                std::mem::swap(&mut carry, e);
+            if carry_dist > occupant_dist {
+                self.entries[idx] = Some(carry);
+                (carry, carry_dist) = (occupant, occupant_dist);
                 // A displaced expired entry is simply dropped.
                 if carry.is_expired(now) {
                     return Ok(());
                 }
             }
-            idx = (idx + 1) % SHARD_CAPACITY;
-            carry.dist += 1;
+            idx = (idx + 1) & self.mask;
+            carry_dist += 1;
         }
         Err(SpendError::Full)
     }
@@ -195,23 +222,36 @@ impl Shard {
 
 /// A fixed-capacity set of spent tags with expiry, safe to share between threads.
 ///
-/// Capacity is `SHARD_COUNT * SHARD_CAPACITY` (65,536) tags. Times are caller-defined
-/// integers (seconds in Sibuna); an entry is live while `now <= expires_at`.
+/// Times are caller-defined integers (seconds in Sibuna); an entry is live while
+/// `now <= expires_at`.
 pub struct SpentSet {
     shards: [Shard; SHARD_COUNT],
 }
 
 impl SpentSet {
-    /// Returns an empty set; allocates the 16 shard tables (2 MiB in all) on the heap.
+    /// Returns an empty set of [`DEFAULT_CAPACITY`] tags (24 MiB, allocated here once).
     pub fn new() -> Self {
-        Self { shards: std::array::from_fn(|_| Shard { table: Mutex::new(Table::new()) }) }
+        Self::with_capacity(DEFAULT_CAPACITY)
+    }
+
+    /// Returns an empty set of about `tags` slots of 24 bytes, allocated here once: `tags`
+    /// is clamped to [`MIN_CAPACITY`]`..=`[`MAX_CAPACITY`] and rounded up to a power of
+    /// two. Never fails.
+    pub fn with_capacity(tags: usize) -> Self {
+        let slots = tags.clamp(MIN_CAPACITY, MAX_CAPACITY).next_power_of_two() / SHARD_COUNT;
+        Self { shards: std::array::from_fn(|_| Shard { table: Mutex::new(Table::new(slots)) }) }
+    }
+
+    /// Returns the number of slots, the most tags the set can hold.
+    pub fn capacity(&self) -> usize {
+        SHARD_COUNT * self.shards[0].lock().entries.len()
     }
 
     fn shard(&self, tag: &Tag) -> &Shard {
         &self.shards[(tag_words(tag).0 % SHARD_COUNT as u64) as usize]
     }
 
-    /// Records `tag` as spent until `expires_at`.
+    /// Records `tag` as spent until `expires_at` (an expiry of zero counts as one).
     ///
     /// An expired entry for the same tag is renewed in place. Fails with
     /// [`SpendError::DoubleSpend`] when the tag is present and unexpired, and with
@@ -235,7 +275,7 @@ impl Default for SpentSet {
 
 impl fmt::Debug for SpentSet {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("SpentSet").field("shards", &SHARD_COUNT).finish_non_exhaustive()
+        f.debug_struct("SpentSet").field("capacity", &self.capacity()).finish_non_exhaustive()
     }
 }
 
@@ -267,9 +307,9 @@ mod tests {
 
     #[test]
     fn robin_hood_shards_stay_correct_under_load_and_reclaim_expired_slots() {
-        let store = SpentSet::new();
+        let store = SpentSet::with_capacity(MIN_CAPACITY);
         let now = 5000;
-        let total = (SHARD_COUNT * SHARD_CAPACITY / 2) as u64;
+        let total = (MIN_CAPACITY / 2) as u64;
         for n in 0..total {
             assert_eq!(store.mark_spent(&tag_from(n), now + 100, now), Ok(()));
         }
@@ -293,13 +333,15 @@ mod tests {
         ((u128::from(high) << 64) | u128::from(low)).to_le_bytes()
     }
 
-    /// Checks the structural invariants: every entry sits exactly `dist` slots after its
-    /// home, within the probe bound.
+    /// The slots of the tables the shard-level tests use, as in the Zig version.
+    const SHARD_CAPACITY: usize = 4096;
+
+    /// Checks the structural invariant: every entry sits within the probe bound of its
+    /// home.
     fn assert_structure(table: &Table) {
         for (idx, slot) in table.entries.iter().enumerate() {
             if let Some(e) = slot {
-                assert!(e.dist < MAX_PROBE);
-                assert_eq!((Table::home(&e.tag) + usize::from(e.dist)) % SHARD_CAPACITY, idx);
+                assert!(table.dist(e, idx) < MAX_PROBE);
             }
         }
     }
@@ -324,7 +366,7 @@ mod tests {
     fn fuzz_against_reference_never_loses_a_live_tag() {
         use std::collections::HashMap;
         let mut rng = Rng(0x9e37_79b9_7f4a_7c15);
-        let mut table = Table::new();
+        let mut table = Table::new(SHARD_CAPACITY);
         let mut model: HashMap<Tag, u64> = HashMap::new();
         let mut now = 1000u64;
         let mut fulls = 0;
@@ -384,7 +426,7 @@ mod tests {
 
     #[test]
     fn failed_insertion_leaves_all_live_spent_tags_reachable() {
-        let mut table = Table::new();
+        let mut table = Table::new(SHARD_CAPACITY);
         // A home-zero insertion displaces the home-one chain before hitting the probe
         // limit. Previously the last displaced live tag was lost.
         let tags: Vec<Tag> =
@@ -409,7 +451,8 @@ mod tests {
 
     impl SpinSet {
         fn new() -> Self {
-            Self { shards: (0..SHARD_COUNT).map(|_| Mutex::new(Table::new())).collect() }
+            let slots = MIN_CAPACITY / SHARD_COUNT;
+            Self { shards: (0..SHARD_COUNT).map(|_| Mutex::new(Table::new(slots))).collect() }
         }
 
         fn lock(&self, tag: &Tag) -> MutexGuard<'_, Table> {
@@ -464,14 +507,17 @@ mod tests {
     #[ignore = "timing run; use --release"]
     fn lock_choice_mutex_against_spin_lock() {
         for threads in [1, 16, 64] {
-            let set = std::sync::RwLock::new(SpentSet::new());
+            let set = std::sync::RwLock::new(SpentSet::with_capacity(MIN_CAPACITY));
             let mutex = contended(
                 threads,
                 &|_, tag| {
                     let set = set.read().unwrap_or_else(PoisonError::into_inner);
                     set.mark_spent(tag, 200_000, 100).is_ok() && set.is_spent(tag, 150)
                 },
-                &|| *set.write().unwrap_or_else(PoisonError::into_inner) = SpentSet::new(),
+                &|| {
+                    *set.write().unwrap_or_else(PoisonError::into_inner) =
+                        SpentSet::with_capacity(MIN_CAPACITY);
+                },
             );
             let spin_set = std::sync::RwLock::new(SpinSet::new());
             let spin = contended(
@@ -487,5 +533,26 @@ mod tests {
                 "spent set, {threads:>2} threads: mutex {mutex:6.1} M/s, spin {spin:6.1} M/s"
             );
         }
+    }
+
+    #[test]
+    fn capacity_is_configurable_and_holds_that_many_live_tags_at_moderate_load() {
+        assert_eq!(SpentSet::with_capacity(0).capacity(), MIN_CAPACITY);
+        assert_eq!(SpentSet::with_capacity(100_000).capacity(), 1 << 17);
+        let set = SpentSet::with_capacity(1 << 17);
+        // Three quarters of the capacity, all live at once: more than the Zig set's total.
+        for n in 0..(3 << 15) {
+            assert_eq!(set.mark_spent(&tag_from(n), 1000, 0), Ok(()), "tag {n}");
+        }
+        assert!(set.is_spent(&tag_from(17), 500));
+        assert_eq!(set.mark_spent(&tag_from(17), 1000, 500), Err(SpendError::DoubleSpend));
+    }
+
+    #[test]
+    fn an_expiry_of_zero_counts_as_one() {
+        let set = SpentSet::with_capacity(MIN_CAPACITY);
+        assert_eq!(set.mark_spent(&tag_from(1), 0, 0), Ok(()));
+        assert!(set.is_spent(&tag_from(1), 1));
+        assert!(!set.is_spent(&tag_from(1), 2));
     }
 }

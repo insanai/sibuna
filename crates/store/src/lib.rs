@@ -8,10 +8,13 @@
 //!
 //! - [`ring::BoundedQueue`]: Vyukov's sequence-stamped MPSC ring; a full queue refuses.
 //! - [`spent::SpentSet`]: spent 16-byte tags with expiry, Robin Hood hashing in 16 locked
-//!   shards; a refused insertion never evicts a live tag, so it cannot enable a replay.
+//!   shards of a configured capacity; a refused insertion never evicts a live tag, so it
+//!   cannot enable a replay.
 //! - [`limiter::RateLimiter`]: GCRA with the bound `N + floor(L / T)` per interval `L`, in 16
-//!   locked shards of 512 cells; scoped budgets; saturation fails closed.
-//! - [`ban_table::BanTable`]: temporary bans with versioned, lock-free reads.
+//!   locked shards of a configured number of cells placed by a secret keyed hash; scoped
+//!   budgets; a full probe window evicts the cell closest to draining.
+//! - [`ban_table::BanTable`]: temporary bans with versioned, lock-free reads, placed by a
+//!   secret keyed hash; a full probe window refuses a new ban instead of evicting one.
 //! - [`telemetry`], [`challenge_metrics`], [`rule_hits`], [`incidents`]: Sibuna's console
 //!   counters and sample queues; they depend on nothing outside this crate.
 //!
@@ -54,8 +57,30 @@
 //! # Changes from the Zig version
 //!
 //! `libs/store/src/*.zig` and `libs/core/src/lock.zig` are the specification, with SID 0004
-//! and SID 0006. Decisions, bounds, table layouts, probe rules and key derivations are
-//! unchanged; the API is Rust's.
+//! and SID 0006. Decisions, bounds and probe rules are unchanged except for the security
+//! fixes below; the API is Rust's.
+//!
+//! Security fixes (2026-10-15, approved by the maintainer):
+//!
+//! - The limiter and the ban table place keys with a keyed hash (`RandomState`, SipHash-1-3
+//!   today) whose key each table draws once from operating-system randomness. Zig used
+//!   Wyhash with seeds written in the source, so anyone could compute addresses that share
+//!   a victim's probe window. Placement is process-local and never on the wire; the Zig key
+//!   vectors are gone. The keyed hash costs about 10 ns per operation (see the report).
+//! - The limiter's size is an option ([`limiter::RateLimiter::with_cells`], 262,144 cells
+//!   by default instead of 8,192), and a full probe window evicts the cell with the oldest
+//!   TAT instead of refusing the new client; the decision reports `evicted` instead of
+//!   `capacity_exhausted`.
+//! - The ban table's size is an option ([`ban_table::BanTable::with_capacity`], 65,536
+//!   slots by default instead of 4,096), and a ban is refused ([`ban_table::BanError`])
+//!   rather than evicting a ban still in effect. `lift` no longer takes a slot.
+//! - The spent set's size is an option ([`spent::SpentSet::with_capacity`], 1,048,576 tags
+//!   by default instead of 65,536); its slots shrank to 24 bytes (the probe distance is
+//!   derived from the slot index, and the expiry's niche marks an empty slot).
+//!
+//! The Vyukov ring stays. Replacing it with `std::sync::mpsc::sync_channel` was measured
+//! (`tests/timing.rs`, `bounded_queue_producers`): with sixteen producers the channel cost
+//! 20 to 45 % more per push, beyond the 20 % the maintainer allowed for removing `unsafe`.
 //!
 //! - The queue's `push` returns `Err(value)` instead of `false`, handing the value back.
 //!   The "single consumer only" comment became a type rule: `pop` takes `&mut self`, or a

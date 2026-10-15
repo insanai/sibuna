@@ -9,10 +9,29 @@
 //! requests and is then paced at one per `T`, with no fixed-window boundary artefact and no
 //! per-request history.
 //!
-//! Cells live in 16 lock-striped shards of 512 open-addressed slots with a 16-slot probe
-//! window. A cell whose TAT is older than `now - tau` has fully drained and is reclaimed in
-//! place, so no sweeper runs. A saturated probe window refuses a new client (fail closed)
-//! instead of evicting an active client's state.
+//! Cells live in 16 lock-striped shards of open-addressed slots with a 16-slot probe window;
+//! the number of cells is chosen when the limiter is built ([`RateLimiter::with_cells`]). A
+//! cell whose TAT is older than `now - tau` has fully drained and is reclaimed in place, so
+//! no sweeper runs.
+//!
+//! # Placement is secret
+//!
+//! A client's cell key is a keyed hash (the standard library's `RandomState`, SipHash-1-3
+//! today, keyed from operating-system randomness) of the scope and the client bytes. The key
+//! is drawn once per limiter, so cell placement differs between processes and between
+//! limiters, and is never on the wire. With a public hash (the Zig version used Wyhash with
+//! fixed seeds) an attacker could compute addresses whose cells share a victim's probe
+//! window and crowd the victim out.
+//!
+//! # A full probe window evicts
+//!
+//! When every cell of a client's probe window belongs to another active client, the new
+//! client takes the cell with the oldest TAT, the one closest to draining. The Zig limiter
+//! refused the new client instead (fail closed), which let a busy site or an attacker with
+//! many addresses lock clients out. Eviction can at worst grant the evicted client a fresh
+//! burst of `rate` requests on its next arrival; the decision reports it (`evicted`) so the
+//! daemon can count it. With keyed placement and a table sized for the expected clients,
+//! eviction is rare.
 //!
 //! The shard lock is `std::sync::Mutex`: one compare-and-swap uncontended, a short spin
 //! while the holder runs, then a futex wait. That is the adaptive design the Zig limiter's
@@ -20,17 +39,23 @@
 //! spin lock whose holder is preempted makes every waiter burn its time slice.
 
 use std::fmt;
+use std::hash::{BuildHasher, Hasher, RandomState};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, MutexGuard, PoisonError};
-
-use sibuna_crypto::wyhash;
 
 /// The number of independently locked shards.
 pub const SHARD_COUNT: usize = 16;
-/// The number of cells in one shard.
-pub const SLOTS_PER_SHARD: usize = 512;
 /// The number of consecutive cells a key may occupy, counted from its home cell.
 pub const MAX_PROBE: usize = 16;
-/// The scope [`RateLimiter::check`] uses: the first SHA-256 initial word, as in Zig.
+/// The cells of a limiter built with [`RateLimiter::new`]: 262,144 cells (4 MiB), room for
+/// about 100,000 active clients at a load that keeps eviction rare.
+pub const DEFAULT_CELLS: usize = 1 << 18;
+/// The fewest cells a limiter has: 4,096 (64 KiB).
+pub const MIN_CELLS: usize = 1 << 12;
+/// The most cells a limiter has: 16,777,216 (256 MiB).
+pub const MAX_CELLS: usize = 1 << 24;
+/// The scope [`RateLimiter::check`] uses, kept from Zig (the first SHA-256 initial word).
+/// Placement no longer depends on it; it only separates the default budget from others.
 pub const DEFAULT_SCOPE: u64 = 0x6a09_e667;
 
 /// A rate: `rate` requests per `window_ms` milliseconds from an idle client.
@@ -72,9 +97,9 @@ impl Limits {
 pub struct Decision {
     /// The arrival does not conform and must be refused.
     pub limited: bool,
-    /// The refusal is due to table saturation, not to this client's rate; callers should
-    /// not escalate it (for example into a ban).
-    pub capacity_exhausted: bool,
+    /// The client's cell was claimed by evicting another active client's state, because
+    /// its probe window was full; the arrival itself was judged normally.
+    pub evicted: bool,
     /// Milliseconds until the next arrival would conform; zero when admitted.
     pub retry_after_ms: u64,
     /// Further arrivals that would conform right now.
@@ -89,50 +114,49 @@ struct Cell {
 }
 
 /// The cells of one shard, on cache lines of their own so neighbouring locks do not
-/// false-share. Indices are reduced modulo `SLOTS_PER_SHARD`, the array length.
+/// false-share. The cell count is a power of two; indices are masked with `mask`.
 #[repr(align(64))]
 struct Shard {
-    cells: Mutex<[Cell; SLOTS_PER_SHARD]>,
+    cells: Mutex<Box<[Cell]>>,
+    mask: usize,
 }
 
 impl Shard {
-    fn new() -> Self {
-        Self { cells: Mutex::new([Cell::default(); SLOTS_PER_SHARD]) }
+    /// Returns a shard of `slots` empty cells; `slots` is a power of two of at least
+    /// `MAX_PROBE`.
+    fn new(slots: usize) -> Self {
+        Self {
+            cells: Mutex::new(vec![Cell::default(); slots].into_boxed_slice()),
+            mask: slots - 1,
+        }
     }
 
     /// Locks the cells. Nothing panics while the lock is held; were a panic ever to occur,
     /// the cells would still be valid, so a poisoned lock is entered.
-    fn lock(&self) -> MutexGuard<'_, [Cell; SLOTS_PER_SHARD]> {
+    fn lock(&self) -> MutexGuard<'_, Box<[Cell]>> {
         self.cells.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
     /// Records one arrival for `key` (non-zero) at `now_ms` under `limits` (non-zero rate).
     #[inline]
     fn check(&self, key: u64, now_ms: u64, limits: Limits) -> Decision {
-        arrive(&mut self.lock(), key, now_ms, limits)
+        arrive(&mut self.lock(), self.mask, key, now_ms, limits)
     }
 }
 
 /// Applies one arrival to the cells of a locked shard.
 #[inline]
-fn arrive(cells: &mut [Cell; SLOTS_PER_SHARD], key: u64, now_ms: u64, limits: Limits) -> Decision {
+fn arrive(cells: &mut [Cell], mask: usize, key: u64, now_ms: u64, limits: Limits) -> Decision {
     let interval = limits.emission_interval();
     let tau = limits.burst_tolerance();
-    let Some(cell) = locate(cells, key, now_ms, tau) else {
-        return Decision {
-            limited: true,
-            capacity_exhausted: true,
-            retry_after_ms: interval,
-            remaining: 0,
-        };
-    };
+    let (cell, evicted) = locate(cells, mask, key, now_ms, tau);
     let tat = cell.tat_ms.max(now_ms);
     let horizon = now_ms.saturating_add(tau);
     if tat > horizon {
         // `tat > now_ms + tau` without saturation, so the difference is positive.
         return Decision {
             limited: true,
-            capacity_exhausted: false,
+            evicted,
             retry_after_ms: tat - tau - now_ms,
             remaining: 0,
         };
@@ -145,62 +169,103 @@ fn arrive(cells: &mut [Cell; SLOTS_PER_SHARD], key: u64, now_ms: u64, limits: Li
         // The minimum with `rate` fits in `u32`.
         further.min(u64::from(limits.rate)) as u32
     };
-    Decision { limited: false, capacity_exhausted: false, retry_after_ms: 0, remaining }
+    Decision { limited: false, evicted, retry_after_ms: 0, remaining }
 }
 
 /// Finds `key`'s cell in its probe window, or claims the first free or fully drained cell
-/// there; returns `None` when every cell in the window belongs to an active client.
+/// there, or else evicts the cell with the oldest TAT. Returns the cell and whether an
+/// active client was evicted. `cells.len()` is `mask + 1`, so every masked index is in
+/// bounds.
 #[inline]
-fn locate(
-    cells: &mut [Cell; SLOTS_PER_SHARD],
-    key: u64,
-    now_ms: u64,
-    tau: u64,
-) -> Option<&mut Cell> {
-    let home = ((key >> 8) % SLOTS_PER_SHARD as u64) as usize;
+fn locate(cells: &mut [Cell], mask: usize, key: u64, now_ms: u64, tau: u64) -> (&mut Cell, bool) {
+    let home = (key >> 8) as usize & mask;
     // Fast path for the common case: a returning client in its home cell. The scan below
     // would return the same cell at its first probe.
     if cells[home].key == key {
-        return Some(&mut cells[home]);
+        return (&mut cells[home], false);
     }
     let mut free = None;
+    let mut oldest = home;
     // The whole window is scanned: a key may sit after a free cell that was reclaimed.
     for probe in 0..MAX_PROBE {
-        let idx = (home + probe) % SLOTS_PER_SHARD;
-        let cell = &cells[idx];
+        let idx = (home + probe) & mask;
+        let cell = cells[idx];
         if cell.key == key {
-            return Some(&mut cells[idx]);
+            return (&mut cells[idx], false);
         }
         if free.is_none() && (cell.key == 0 || cell.tat_ms.saturating_add(tau) < now_ms) {
             free = Some(idx);
         }
+        if cell.tat_ms < cells[oldest].tat_ms {
+            oldest = idx;
+        }
     }
-    let victim = &mut cells[free?];
-    *victim = Cell { key, tat_ms: 0 };
-    Some(victim)
+    let (victim, evicted) = match free {
+        Some(idx) => (idx, false),
+        None => (oldest, true),
+    };
+    let cell = &mut cells[victim];
+    *cell = Cell { key, tat_ms: 0 };
+    (cell, evicted)
 }
 
-/// Derives the cell key of `client` in `scope`: Wyhash seeded with the scope, as in Zig.
-/// Key zero marks an empty cell, so a hash of zero is nudged to one.
+/// Derives the cell key of `client` in `scope`: the limiter's keyed hash of the scope and
+/// the client bytes. Key zero marks an empty cell, so a hash of zero is nudged to one.
 #[inline]
-fn client_key(scope: u64, client: &[u8]) -> u64 {
-    wyhash::hash(scope, client).max(1)
+fn client_key(keys: &RandomState, scope: u64, client: &[u8]) -> u64 {
+    let mut hasher = keys.build_hasher();
+    // The scope has a fixed width, so scope and client cannot run into each other.
+    hasher.write_u64(scope);
+    hasher.write(client);
+    hasher.finish().max(1)
 }
 
-/// A GCRA limiter for many clients in fixed memory (about 128 KiB), safe to share between
-/// threads. Clients are identified by byte strings (an address, say) within a scope.
+/// Returns the per-shard cell count for a request of `cells` in all: clamped to
+/// `MIN_CELLS..=MAX_CELLS`, rounded up to a power of two, divided among the shards.
+fn shard_slots(cells: usize) -> usize {
+    cells.clamp(MIN_CELLS, MAX_CELLS).next_power_of_two() / SHARD_COUNT
+}
+
+/// A GCRA limiter for many clients in fixed memory, safe to share between threads. Clients
+/// are identified by byte strings (an address, say) within a scope.
 pub struct RateLimiter {
     shards: [Shard; SHARD_COUNT],
+    /// The secret placement key, drawn once when the limiter is built.
+    keys: RandomState,
+    /// Arrivals that evicted another active client's cell (relaxed: a statistic).
+    evictions: AtomicU64,
 }
 
 impl RateLimiter {
-    /// Returns a limiter with every cell empty.
+    /// Returns a limiter of [`DEFAULT_CELLS`] empty cells (4 MiB).
     pub fn new() -> Self {
-        Self { shards: std::array::from_fn(|_| Shard::new()) }
+        Self::with_cells(DEFAULT_CELLS)
+    }
+
+    /// Returns a limiter of about `cells` empty cells of 16 bytes each, allocated here
+    /// once: `cells` is clamped to [`MIN_CELLS`]`..=`[`MAX_CELLS`] and rounded up to a power
+    /// of two. Draws a fresh secret placement key. Never fails.
+    pub fn with_cells(cells: usize) -> Self {
+        let slots = shard_slots(cells);
+        Self {
+            shards: std::array::from_fn(|_| Shard::new(slots)),
+            keys: RandomState::new(),
+            evictions: AtomicU64::new(0),
+        }
+    }
+
+    /// Returns the number of cells.
+    pub fn cell_count(&self) -> usize {
+        SHARD_COUNT * (self.shards[0].mask + 1)
+    }
+
+    /// Returns how many arrivals evicted another active client's cell.
+    pub fn eviction_count(&self) -> u64 {
+        self.evictions.load(Ordering::Relaxed)
     }
 
     /// Records one arrival from `client` at `now_ms` in the default scope and reports
-    /// whether it conforms to `limits`. Never fails; saturation is reported in the decision.
+    /// whether it conforms to `limits`. Never fails.
     #[inline]
     pub fn check(&self, client: &[u8], now_ms: u64, limits: Limits) -> Decision {
         self.check_scoped(client, DEFAULT_SCOPE, now_ms, limits)
@@ -210,8 +275,8 @@ impl RateLimiter {
     ///
     /// The same client in different scopes has independent budgets, so one limiter can
     /// serve several stable rules. A zero `limits.rate` refuses every arrival with a retry
-    /// delay of one window. The cell key is Wyhash of `client` seeded with `scope` (zero
-    /// mapped to one), identical to the Zig limiter.
+    /// delay of one window. The cell key is the limiter's keyed hash of `scope` and
+    /// `client` (see the module documentation).
     #[inline]
     pub fn check_scoped(
         &self,
@@ -220,16 +285,20 @@ impl RateLimiter {
         now_ms: u64,
         limits: Limits,
     ) -> Decision {
-        let key = client_key(scope, client);
         if limits.rate == 0 {
             return Decision {
                 limited: true,
-                capacity_exhausted: false,
+                evicted: false,
                 retry_after_ms: limits.window_ms,
                 remaining: 0,
             };
         }
-        self.shards[(key % SHARD_COUNT as u64) as usize].check(key, now_ms, limits)
+        let key = client_key(&self.keys, scope, client);
+        let decision = self.shards[(key % SHARD_COUNT as u64) as usize].check(key, now_ms, limits);
+        if decision.evicted {
+            self.evictions.fetch_add(1, Ordering::Relaxed);
+        }
+        decision
     }
 
     /// Returns whether `client` exceeded `limit` requests per `window_seconds` with this
@@ -254,7 +323,10 @@ impl Default for RateLimiter {
 
 impl fmt::Debug for RateLimiter {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("RateLimiter").field("shards", &SHARD_COUNT).finish_non_exhaustive()
+        f.debug_struct("RateLimiter")
+            .field("cells", &self.cell_count())
+            .field("evictions", &self.eviction_count())
+            .finish_non_exhaustive()
     }
 }
 
@@ -310,7 +382,8 @@ mod tests {
         assert!(!limiter.check(b"b", 0, limits).limited);
         // Advance beyond the window between new identities so old cells are reclaimed
         // without a sweeper; saturation is tested separately.
-        for n in 0..(SHARD_COUNT * SLOTS_PER_SHARD * 2) as u64 {
+        let limiter = RateLimiter::with_cells(MIN_CELLS);
+        for n in 0..(MIN_CELLS * 2) as u64 {
             let key = format!("ip{n}");
             assert!(!limiter.check(key.as_bytes(), 100_000 + n * 2000, limits).limited);
         }
@@ -332,20 +405,27 @@ mod tests {
     }
 
     #[test]
-    fn saturation_cannot_evict_an_active_client_and_reset_its_quota() {
-        let shard = Shard::new();
+    fn a_full_window_evicts_the_cell_with_the_oldest_tat_and_reports_it() {
+        let shard = Shard::new(256);
         let limits = Limits { rate: 1, window_ms: 1000 };
-        // All keys share the same home and occupy exactly the probe window.
+        // Keys below 256 share home cell 0 and fill exactly the probe window, each with a
+        // later TAT than the one before.
         let keys = 1..=MAX_PROBE as u64;
         for key in keys.clone() {
-            assert!(!shard.check(key, 100, limits).limited);
+            let d = shard.check(key, 100 + key, limits);
+            assert!(!d.limited && !d.evicted);
         }
         let outsider = MAX_PROBE as u64 + 1;
-        assert!(shard.check(outsider, 100, limits).limited);
-        assert!(shard.check(outsider, 100, limits).capacity_exhausted);
-        for key in keys {
-            assert!(shard.check(key, 100, limits).limited);
+        let d = shard.check(outsider, 200, limits);
+        assert!(!d.limited && d.evicted, "the outsider takes the oldest cell");
+        assert!(shard.check(outsider, 200, limits).limited, "and keeps its own quota");
+        for key in 2..=MAX_PROBE as u64 {
+            assert!(shard.check(key, 200, limits).limited, "key {key} lost its state");
         }
+        // The evicted client comes back with a fresh burst, evicting the next oldest.
+        let back = shard.check(1, 200, limits);
+        assert!(!back.limited && back.evicted);
+        assert!(!shard.check(2, 200, limits).limited);
     }
 
     #[test]
@@ -360,15 +440,96 @@ mod tests {
         assert!(!limiter.check_scoped(b"client-a", 1, 1100, limits).limited);
     }
 
-    /// The keys come from Zig 0.16 `std.hash.Wyhash.hash` with the limiter's seeds, so a
-    /// Rust and a Zig node agree on cell placement.
+    /// Returns `count` clients whose cells share `victim`'s shard and home cell in
+    /// `limiter`, found by search, as an attacker who knew the placement key would.
+    fn colliding_clients(limiter: &RateLimiter, victim: &[u8], count: usize) -> Vec<String> {
+        let place = |client: &[u8]| {
+            let key = client_key(&limiter.keys, DEFAULT_SCOPE, client);
+            (key % SHARD_COUNT as u64, (key >> 8) as usize & limiter.shards[0].mask)
+        };
+        let target = place(victim);
+        (0u32..)
+            .map(|n| format!("2001:db8::{n:x}"))
+            .filter(|client| place(client.as_bytes()) == target)
+            .take(count)
+            .collect()
+    }
+
+    /// Precomputed collisions crowd a victim out only in the limiter they were computed
+    /// for: another limiter (another process) places the same clients elsewhere.
     #[test]
-    fn key_derivation_matches_zig() {
-        assert_eq!(client_key(DEFAULT_SCOPE, b"192.168.1.100"), 0xc1e4_87a0_6542_6264);
-        assert_eq!(client_key(DEFAULT_SCOPE, b"10.0.0.1"), 0x8613_a3d9_5610_ac32);
-        assert_eq!(client_key(DEFAULT_SCOPE, b""), 0x79ae_cd9f_5dbd_0bf2);
-        assert_eq!(client_key(0x5b_c0ff_ee00_0001, b"2001:db8::1"), 0x28a4_e891_56c1_9216);
-        assert_eq!(client_key(0x5b_c0ff_ee00_0001, b"8.8.8.8"), 0x83f8_061e_20d8_2b6b);
+    fn a_colliding_set_built_for_one_limiter_does_not_collide_in_another() {
+        let limits = Limits { rate: 1, window_ms: 10_000 };
+        let known = RateLimiter::with_cells(MIN_CELLS);
+        let attackers = colliding_clients(&known, b"victim", MAX_PROBE);
+        for limiter in [&known, &RateLimiter::with_cells(MIN_CELLS)] {
+            for attacker in &attackers {
+                assert!(!limiter.check(attacker.as_bytes(), 0, limits).limited);
+            }
+        }
+        assert!(known.check(b"victim", 0, limits).evicted, "the set crowds its own limiter");
+        let other = RateLimiter::with_cells(MIN_CELLS);
+        for attacker in &attackers {
+            assert!(!other.check(attacker.as_bytes(), 0, limits).limited);
+        }
+        let victim = other.check(b"victim", 0, limits);
+        assert!(!victim.limited && !victim.evicted, "the set is scattered elsewhere");
+        assert_eq!(other.eviction_count(), 0);
+        assert_eq!(known.eviction_count(), 1);
+    }
+
+    #[test]
+    fn placement_keys_differ_between_limiters_and_keep_scopes_apart() {
+        let (a, b) = (RateLimiter::new(), RateLimiter::new());
+        for n in 0..256u32 {
+            let client = format!("198.51.100.{n}");
+            let key_a = client_key(&a.keys, DEFAULT_SCOPE, client.as_bytes());
+            assert_ne!(key_a, client_key(&b.keys, DEFAULT_SCOPE, client.as_bytes()));
+            assert_ne!(key_a, client_key(&a.keys, DEFAULT_SCOPE + 1, client.as_bytes()));
+            assert_ne!(key_a, 0);
+        }
+    }
+
+    /// The clients whose keys the placement probe prints.
+    const PROBE_CLIENTS: [&str; 4] = ["192.0.2.1", "2001:db8::1", "10.0.0.1", ""];
+
+    /// Prints the cell keys of `PROBE_CLIENTS` in a fresh limiter and the slot keys of a
+    /// fresh ban table; run as a child process by the test below.
+    #[test]
+    #[ignore = "helper run by placement_keys_differ_between_processes"]
+    fn placement_probe() {
+        let limiter = RateLimiter::new();
+        let bans = crate::ban_table::BanTable::new();
+        for client in PROBE_CLIENTS {
+            let cell = client_key(&limiter.keys, DEFAULT_SCOPE, client.as_bytes());
+            println!("PLACEMENT={cell:016x} {:016x}", bans.slot_key(client.as_bytes()));
+        }
+    }
+
+    /// Runs this test binary again and compares the keys its fresh tables use with ours.
+    #[test]
+    fn placement_keys_differ_between_processes() {
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", "limiter::tests::placement_probe", "--ignored", "--nocapture"])
+            .args(["--test-threads", "1"])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        let text = String::from_utf8(output.stdout).unwrap();
+        let child: Vec<&str> = text
+            .lines()
+            .filter_map(|l| l.split_once("PLACEMENT=").map(|(_, keys)| keys))
+            .collect();
+        assert_eq!(child.len(), PROBE_CLIENTS.len(), "{text}");
+        let limiter = RateLimiter::new();
+        let bans = crate::ban_table::BanTable::new();
+        for (client, line) in PROBE_CLIENTS.iter().zip(child) {
+            let cell = client_key(&limiter.keys, DEFAULT_SCOPE, client.as_bytes());
+            let slot = bans.slot_key(client.as_bytes());
+            let (child_cell, child_slot) = line.split_once(' ').unwrap();
+            assert_ne!(format!("{cell:016x}"), child_cell, "{client:?}");
+            assert_ne!(format!("{slot:016x}"), child_slot, "{client:?}");
+        }
     }
 
     /// Ported from the Zig `core.Lock` test: concurrent arrivals for one key are a
@@ -411,7 +572,7 @@ mod tests {
                 let retry = (tat - tau - t) as u64;
                 return Decision {
                     limited: true,
-                    capacity_exhausted: false,
+                    evicted: false,
                     retry_after_ms: retry,
                     remaining: 0,
                 };
@@ -422,7 +583,7 @@ mod tests {
             } else {
                 ((t + tau - self.tat) / interval + 1).min(u128::from(limits.rate)) as u32
             };
-            Decision { limited: false, capacity_exhausted: false, retry_after_ms: 0, remaining }
+            Decision { limited: false, evicted: false, retry_after_ms: 0, remaining }
         }
     }
 
