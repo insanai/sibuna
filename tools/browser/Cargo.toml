@@ -1,0 +1,18 @@
+[package]
+name = "sibuna-browser"
+description = "Drives headless Chromium over the DevTools protocol for Sibuna's browser checks"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+sibuna-http = { workspace = true }
+sibuna-json = { workspace = true }
+sibuna-encoding = { workspace = true }
+
+[lints]
+workspace = true

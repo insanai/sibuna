@@ -1,9 +1,11 @@
 //! Repository tasks for the Sibuna workspace, run as `cargo xtask <command>`.
 //!
 //! `main` is a small dispatcher over [`COMMANDS`]; each command lives in a module of its
-//! own. Today there is `check`, which enforces the structural limits of the house rules.
-//! Builds of the WebAssembly solver (`wasm`) and benchmark runs (`bench`) are meant to
-//! join it as further modules and table entries.
+//! own or in a tool crate beside this one. Today there is `check`, which enforces the
+//! structural limits of the house rules, and `browser`, which runs the `sibuna-browser`
+//! tool (`tools/browser`) for checks in headless Chromium. Builds of the WebAssembly
+//! solver (`wasm`) and benchmark runs (`bench`) are meant to join them as further modules
+//! and table entries.
 //!
 //! Deliberate changes from the Zig repository's `tools/check-style.sh` and
 //! `check-style.awk`:
@@ -25,7 +27,7 @@ mod check;
 use std::ffi::OsString;
 use std::io::{self, Write};
 use std::path::Path;
-use std::process::ExitCode;
+use std::process::{self, ExitCode};
 
 /// One subcommand: its name, its argument synopsis and a one-line summary for `help`.
 struct Command {
@@ -35,11 +37,16 @@ struct Command {
 }
 
 /// Every subcommand, in the order `help` lists them.
-const COMMANDS: [Command; 2] = [
+const COMMANDS: [Command; 3] = [
     Command {
         name: "check",
         synopsis: "[PATH...]",
         summary: "Check function, file and line length limits and forbid tabs",
+    },
+    Command {
+        name: "browser",
+        synopsis: "<ARGS...>",
+        summary: "Run sibuna-browser checks in headless Chromium",
     },
     Command { name: "help", synopsis: "", summary: "Print this help" },
 ];
@@ -54,6 +61,7 @@ fn main() -> ExitCode {
     };
     match command.to_str() {
         Some("check") => check(rest),
+        Some("browser") => browser(rest),
         Some("help" | "-h" | "--help") => help(),
         _ => unknown_command(&command.to_string_lossy()),
     }
@@ -75,6 +83,27 @@ fn check(arguments: &[OsString]) -> ExitCode {
     }
 }
 
+/// Runs `cargo run -q -p sibuna-browser -- <arguments>` and passes on its exit status.
+fn browser(arguments: &[OsString]) -> ExitCode {
+    // Cargo sets CARGO for the programs it runs, naming the cargo that ran us.
+    let cargo = std::env::var_os("CARGO").unwrap_or_else(|| OsString::from("cargo"));
+    let status = process::Command::new(cargo)
+        .args(["run", "-q", "-p", "sibuna-browser", "--"])
+        .args(arguments)
+        .status();
+    match status {
+        Ok(status) => match status.code().and_then(|code| u8::try_from(code).ok()) {
+            Some(code) => ExitCode::from(code),
+            // Killed by a signal, or a code outside 0 to 255.
+            None => ExitCode::FAILURE,
+        },
+        Err(error) => {
+            let _ = writeln!(io::stderr(), "xtask browser: cannot run cargo: {error}");
+            ExitCode::from(EXIT_USAGE)
+        }
+    }
+}
+
 fn help() -> ExitCode {
     let mut text = String::from(
         "Repository tasks for the Sibuna workspace.\n\nUsage: cargo xtask <COMMAND>\n\n\
@@ -88,7 +117,9 @@ fn help() -> ExitCode {
         "\n`check` scans crates/, cmd/ and tools/ (or the given paths). It fails when a\n\
          function body has more than 70 logical lines, a file more than 1,408 lines or a\n\
          line more than 108 characters, or when a line holds a tab. Lines over 99\n\
-         characters are warnings.\n",
+         characters are warnings.\n\n\
+         `browser` passes its arguments to the sibuna-browser tool; run\n\
+         `cargo xtask browser help` for its commands.\n",
     );
     match io::stdout().lock().write_all(text.as_bytes()) {
         Ok(()) => ExitCode::SUCCESS,
@@ -148,6 +179,7 @@ mod tests {
     fn suggests_only_close_commands() {
         assert_eq!(closest_command("chek"), Some("check"));
         assert_eq!(closest_command("hlep"), Some("help"));
+        assert_eq!(closest_command("browsr"), Some("browser"));
         assert_eq!(closest_command("wasm"), None);
     }
 }
