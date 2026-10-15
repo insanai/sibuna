@@ -87,13 +87,6 @@ opt-level = 3
 [profile.wasm.package.sibuna-crypto]
 opt-level = 3
 
-# The daemon's build script still builds the solver with `--release`; keep that build
-# optimised for size until it moves to the `wasm` profile.
-[profile.release.package.sibuna-pow-wasm]
-opt-level = "z"
-debug = false
-strip = true
-
 [profile.bench]
 inherits = "release"
 debug = true

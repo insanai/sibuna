@@ -24,10 +24,10 @@ pub fn rust_daemon() -> PathBuf {
     exe_dir().unwrap_or_default().join("sibuna")
 }
 
-/// Returns the browser solver module of a release build in the same target directory, if
-/// one was built.
+/// Returns the browser solver module in the same target directory, if one was built: the
+/// daemon's build script builds it with the `wasm` profile.
 pub fn wasm_solver() -> Option<PathBuf> {
     let target = exe_dir()?.parent()?.to_path_buf();
-    let path = target.join("wasm32-unknown-unknown/release/sibuna_pow_wasm.wasm");
+    let path = target.join("wasm32-unknown-unknown/wasm/sibuna_pow_wasm.wasm");
     path.exists().then_some(path)
 }
