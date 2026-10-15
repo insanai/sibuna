@@ -9,6 +9,8 @@ mod support;
 
 use std::io::{Read, Write};
 use std::net::{IpAddr, Ipv4Addr, TcpStream};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -105,6 +107,73 @@ fn one_client_cannot_hold_more_than_its_share_of_connections() {
     assert!(eventually(|| server.connection_count_of(LOCALHOST) == 1));
     let health = round_trip(fixture.port, b"GET /__sibuna/health HTTP/1.1\r\nHost: t\r\n\r\n");
     assert_eq!(health.status(), 200);
+}
+
+/// Reads one response from `stream` by its `Content-Length`, without waiting for the close,
+/// and returns its status.
+fn read_one_response(stream: &mut TcpStream) -> u16 {
+    let mut data = Vec::new();
+    let mut chunk = [0u8; 4096];
+    loop {
+        let n = stream.read(&mut chunk).unwrap();
+        assert!(n > 0, "the connection closed before a whole response");
+        data.extend_from_slice(&chunk[..n]);
+        let Some(end) = data.windows(4).position(|w| w == b"\r\n\r\n") else { continue };
+        let head = std::str::from_utf8(&data[..end]).unwrap().to_ascii_lowercase();
+        let length = head
+            .lines()
+            .find_map(|line| line.strip_prefix("content-length:"))
+            .map_or(0, |value| value.trim().parse::<usize>().unwrap());
+        if data.len() >= end + 4 + length {
+            return head[9..12].parse().unwrap();
+        }
+    }
+}
+
+/// A client that reconnects as soon as it reads a closing response must find its place free:
+/// the connection gives its place back before writing that response. Before, a client at its
+/// per-client bound that reconnected at once (as wrk does after `Connection: close`) was
+/// sometimes refused with 503.
+#[test]
+fn a_client_that_reconnects_after_a_closing_response_is_admitted() {
+    // Eight clients at a bound of eight keep every place taken, so a place given back late
+    // is refused to the reconnecting client.
+    const CLIENTS: usize = 8;
+    let fixture = server(|config| config.max_connections_per_ip = CLIENTS as u32);
+    let port = fixture.port;
+    let raw = b"GET /__sibuna/health HTTP/1.1\r\nHost: t\r\nConnection: close\r\n\r\n";
+    // Busy threads on every CPU preempt the server's threads, as a loaded machine does, so
+    // a connection thread can be paused between its last response and giving its place back.
+    let busy = Arc::new(AtomicBool::new(true));
+    let cpus = thread::available_parallelism().map_or(4, usize::from);
+    let spinners: Vec<_> = (0..cpus * 2)
+        .map(|_| {
+            let busy = Arc::clone(&busy);
+            thread::spawn(move || {
+                while busy.load(Ordering::Relaxed) {
+                    std::hint::spin_loop();
+                }
+            })
+        })
+        .collect();
+    let clients: Vec<_> = (0..CLIENTS)
+        .map(|_| {
+            thread::spawn(move || {
+                (0..500)
+                    .filter(|_| {
+                        let mut stream = TcpStream::connect(address(port)).unwrap();
+                        stream.write_all(raw).unwrap();
+                        read_one_response(&mut stream) != 200
+                    })
+                    .count()
+            })
+        })
+        .collect();
+    let refused: usize = clients.into_iter().map(|client| client.join().unwrap()).sum();
+    busy.store(false, Ordering::Relaxed);
+    spinners.into_iter().for_each(|spinner| spinner.join().unwrap());
+    assert_eq!(refused, 0);
+    assert_eq!(fixture.server().metrics().overloaded.value(), 0);
 }
 
 /// The review's M7b reproduction: a client that asks for a large response and never reads

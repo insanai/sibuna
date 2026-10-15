@@ -363,8 +363,8 @@ fn accept_loop(server: &Arc<Server>, listener: &TcpListener) {
         let Some(admitted) = admit(server, &stream, peer.ip()) else { continue };
         set_no_delay(&stream);
         let launched = server.tasks.launch(move || {
-            crate::connection::serve(&admitted.server, &stream);
-            drop(admitted);
+            let server = Arc::clone(&admitted.server);
+            crate::connection::serve(&server, &stream, admitted);
         });
         if launched.is_err() {
             // The task was dropped unrun, and with it its admission.
@@ -400,7 +400,10 @@ fn admit(server: &Arc<Server>, stream: &TcpStream, peer: IpAddr) -> Option<Admit
 
 /// A connection's places in the global and the per-client bounds, released when it is
 /// dropped: when its thread ends, however it ends, or when its task never starts.
-struct Admitted {
+/// A connection's place under the global and per-client bounds, given back when dropped.
+/// The connection gives it back before writing the response that ends it, so a client that
+/// reconnects as soon as it reads that response finds its place free.
+pub(crate) struct Admitted {
     server: Arc<Server>,
     ticket: Option<PeerTicket>,
 }

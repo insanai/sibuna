@@ -95,6 +95,10 @@ impl<'c, W: Write> Ctx<'c, W> {
         let user_agent = request.header(b"user-agent").unwrap_or_default();
         let keep_alive =
             request.wants_keep_alive() && declared_body <= request.body.len() && !link.last;
+        if !keep_alive {
+            // The client may reconnect as soon as it reads this response.
+            link.admission = None;
+        }
         let internal = request.path.starts_with(b"/__sibuna/");
         Ctx {
             server,

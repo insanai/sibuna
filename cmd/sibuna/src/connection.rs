@@ -20,7 +20,7 @@ use sibuna_net::buffered::{ReadError, Reader, Writer};
 
 use crate::client_writer::ClientWriter;
 use crate::context::Ctx;
-use crate::server::Server;
+use crate::server::{Admitted, Server};
 use crate::slot::EngineCache;
 
 /// The connection buffer: one request head and as much of its body as fits.
@@ -43,11 +43,15 @@ pub(crate) struct Link<'c, W> {
     pub activity: &'c sibuna_net::Activity,
     /// The last request this connection may serve: its response announces the close.
     pub last: bool,
+    /// The connection's place under the connection bounds; dropped (given back) when a
+    /// response will end the connection, before it is written.
+    pub admission: Option<Admitted>,
 }
 
 /// Serves one accepted connection until it closes, fails, is reaped or reaches the request
-/// bound.
-pub fn serve(server: &Server, stream: &TcpStream) {
+/// bound. `admission` is given back before the response that closes the connection, and at
+/// the latest when this returns.
+pub fn serve(server: &Server, stream: &TcpStream, admission: Admitted) {
     let Some(lease) = server.idle.register(stream) else { return };
     if server.is_stopping() {
         return;
@@ -69,6 +73,7 @@ pub fn serve(server: &Server, stream: &TcpStream) {
         cache: EngineCache::new(),
         activity: lease.activity(),
         last: false,
+        admission: Some(admission),
     };
     for served in 0..MAX_REQUESTS_PER_CONNECTION {
         link.last = served + 1 == MAX_REQUESTS_PER_CONNECTION;
