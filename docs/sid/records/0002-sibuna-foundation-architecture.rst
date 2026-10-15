@@ -36,6 +36,8 @@ Revision note
 
 2026-10-15 (Rust port, performance): connection threads are reused. Zig started a thread for every accepted connection and ended it with the connection; the port did the same at first. Creating and ending a thread maps and unmaps its signal stack and returns its stack pages, and those address-space changes stalled the daemon's other threads: with 64 connections each closed after 4,096 requests, the 99.9th percentile at 100,000 admitted requests per second was 0.3 to 2 ms, against 0.1 ms for Zig. A thread that finishes its connection now parks and takes the next one; a thread parked for 10 seconds ends and is joined by the next launch or the next thread to finish a task, so a burst does not leave its stacks resident. A thread whose connection panics ends instead of parking. At most ``--max-connections`` connections are served at once, as before. The 99.9th percentile at 100,000 requests per second is now 62 us (Zig 112 us) in forward-auth mode and 150 us (Zig 1,597 us) in reverse-proxy mode (``benchmarks/results/latency-latest.md``).
 
+2026-10-15 (Rust port, bug fix): a connection gives its place under ``--max-connections`` and ``--max-connections-per-ip`` back before it writes the response that ends it (``Connection: close``, or the last of the 4,096 requests a connection may carry), instead of after its thread returns. A client may reconnect as soon as it reads that response; when the old place was still counted, a client at its per-client bound was refused with ``503``. The whole-product benchmark showed it as a few unexpected answers in two million (``sibuna_overloaded_total``), and a regression test reproduces it under CPU pressure (``cmd/sibuna/tests/hardening.rs``).
+
 Abstract
 --------
 
