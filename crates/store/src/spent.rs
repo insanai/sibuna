@@ -295,6 +295,14 @@ impl SpentSet {
     pub fn is_spent(&self, tag: &Tag, now: u64) -> bool {
         self.shard(tag).lock().is_spent(tag, now)
     }
+
+    /// Forgets every tag, keeping the allocation: each slot is written empty in place, so
+    /// the whole table is resident afterwards. One shard is locked at a time.
+    pub fn clear(&self) {
+        for shard in &self.shards {
+            shard.lock().slots.fill([0; 3]);
+        }
+    }
 }
 
 impl Default for SpentSet {
@@ -333,6 +341,17 @@ mod tests {
         // After expiry the same tag may be spent again (a fresh token with an identical tag
         // is astronomically unlikely, but the rule is defined).
         assert_eq!(store.mark_spent(&tag, now + 1200, now + 601), Ok(()));
+    }
+
+    #[test]
+    fn clear_forgets_every_tag_and_keeps_the_capacity() {
+        let store = SpentSet::with_capacity(MIN_CAPACITY);
+        let tags: Vec<Tag> = (0..1000).map(tag_from).collect();
+        tags.iter().for_each(|tag| store.mark_spent(tag, 500, 100).unwrap());
+        store.clear();
+        assert!(tags.iter().all(|tag| !store.is_spent(tag, 150)));
+        assert_eq!(store.capacity(), MIN_CAPACITY);
+        assert_eq!(store.mark_spent(&tags[0], 500, 100), Ok(()));
     }
 
     #[test]
