@@ -4,6 +4,9 @@
 
 #![allow(dead_code, clippy::unwrap_used)]
 
+#[cfg(feature = "console")]
+pub mod console;
+
 use std::io::{Read, Write};
 use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -317,6 +320,13 @@ fn route(conn: &mut Conn, head: &[u8], seq: u32) -> bool {
         thread::sleep(Duration::from_millis(50));
         return conn.send(evil);
     }
+    if line.contains("/origin-error") {
+        // An origin that fails: the console counts it as an origin 5xx.
+        return conn.send(b"HTTP/1.1 500 Internal Server Error\r\nContent-Length: 5\r\n\r\nerror");
+    }
+    if line.starts_with("GET /ws") {
+        return websocket_upgrade(conn, head);
+    }
     if line.contains("/large-body") {
         // 64 MiB as fast as the socket takes it.
         conn.send(b"HTTP/1.1 200 OK\r\nContent-Length: 67108864\r\n\r\n");
@@ -332,6 +342,26 @@ fn route(conn: &mut Conn, head: &[u8], seq: u32) -> bool {
     .into_bytes();
     reply.extend_from_slice(head_text);
     conn.send(&reply)
+}
+
+/// Accepts a WebSocket upgrade with a valid `Sec-WebSocket-Accept` and holds the socket
+/// until the client closes it.
+fn websocket_upgrade(conn: &mut Conn, head: &[u8]) -> bool {
+    let text = String::from_utf8_lossy(head).into_owned();
+    let Some(key) = header_of(&text, "sec-websocket-key") else { return false };
+    let Ok(accept) = sibuna_http::websocket::accept_key(key.as_bytes()) else { return false };
+    let reply = format!(
+        "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\
+         Sec-WebSocket-Accept: {}\r\n\r\n",
+        String::from_utf8_lossy(&accept)
+    );
+    if !conn.send(reply.as_bytes()) {
+        return false;
+    }
+    while conn.more() {
+        conn.buffer.clear();
+    }
+    false
 }
 
 /// Twelve chunks a quarter second apart: three seconds of activity against a one-second
