@@ -56,6 +56,12 @@
       "rust_status": "403 Forbidden"
     },
     {
+      "id": "fix-12-waf-parameter-named-like-a-command",
+      "reason": "Bug fix of the Rust daemon (2026-10-15, SID 0004): a command name followed by `=` or `[...]=` is a shell assignment or a query parameter (`a=1&id=5`), not a command, so it is no longer denied as waf:rce; Zig denied it.",
+      "request": "&id=5",
+      "zig_status": "403 Forbidden"
+    },
+    {
       "id": "fix-01-origin-form-only",
       "reason": "Maintainer-approved security fix of the Rust daemon (2026-10-15), deliberately different from Zig: only origin-form targets (and OPTIONS *) are accepted; an absolute-form or authority-form target gets 400 and the connection closes.",
       "request": [
@@ -165,6 +171,14 @@
         ",198.",
         "unknown, "
       ]
+    },
+    {
+      "id": "fix-08-forwarded-chain",
+      "reason": "Security fix of the Rust daemon (2026-10-15, SID 0002 note with commit d06b5d4), deliberately different from Zig: when forwarding is trusted, the X-Forwarded-For sent to the origin is the received chain followed by the socket peer, so the origin can verify the hop; Zig passed the received value on unchanged. X-Real-IP stays the resolved client.",
+      "config": "proxy-*-trust-*",
+      "field": "origin",
+      "request": "X-Forwarded-For: ",
+      "rust": ", 127."
     },
     {
       "id": "fix-08-forwarded-invalid",
