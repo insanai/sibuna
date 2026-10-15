@@ -18,6 +18,8 @@ Revision note
 
 2026-10-15: Ported from the Typst original in the Zig repository. The record describes the Zig implementation as it was decided; SID 0010 maps its packages to the Rust crates of the port. In the Rust port the console server and its WebAssembly interface are Rust crates, and storage uses sqlx (SID 0011) instead of Zaxonlite; SQLite triggers described here become explicit transactional statements so both SQLite and PostgreSQL enforce the same invariants.
 
+2026-10-15 (Rust port, listener admission): the accepted deviation that left ``admission.zig`` an unwired reference no longer holds. The Rust listener (``sibuna-serve``) admits every connection in the HTTP class and moves an upgraded connection to the browser or peer class in one step, with the same bounds (96 slots, 16 reserved for HTTP, at most 64 browser and 16 peer streams). The 65th browser subscriber is refused by admission, and the console still answers it with its own 503. Outbound connections from the console use TLS through rustls (SID 0012).
+
 Abstract
 --------
 
