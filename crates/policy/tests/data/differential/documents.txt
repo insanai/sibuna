@@ -1,0 +1,4 @@
+{"id":"checkout","name":"Checkout","action":"challenge","path":"/checkout/*","headers":{"X-Api":"v2"},"cidrs":["8.8.8.0/24"],"algorithm":"posw","difficulty":16}
+{"id":"a","name":"A","action":"allow","limits":{"rate":1000000,"window_seconds":86400,"ban_seconds":86400}}
+{"id":"w-1","name":"Weight","action":"weigh","weight":-20,"priority":5,"enabled":false,"user_agent":"Headless"}
+{"id":"deny_2","name":"Deny","action":"deny","path":"/private","cidrs":["10.0.0.0/8","2001:db8::/32"],"headers":{"A":"1","B":"2"}}

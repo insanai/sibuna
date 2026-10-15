@@ -1,0 +1,25 @@
+{
+  "default_action": "CHALLENGE",
+  "waf": true,
+  "inspection": { "sqli": "audit", "xss": "enforce", "path_traversal": "audit", "rce": "disabled" },
+  "thresholds": { "challenge_at": 10, "deny_at": 40, "bits_step": 4 },
+  "ip_rules": { "203.0.113.0/24": "DENY", "10.200.0.0/16": "ALLOW", "2a02:1234::/32": "CHALLENGE", "fe80::1": "DENY" },
+  "rules": [
+    { "name": "deny-bad-worker", "headers": { "CF-Worker": ".*" }, "action": "DENY" },
+    { "name": "protect-checkout", "path": "/api/checkout/*", "action": "CHALLENGE",
+      "challenge": { "difficulty": 20, "algorithm": "posw" },
+      "limits": { "rate": 5, "window_seconds": 60, "ban_seconds": 600 } },
+    { "name": "internal-subnets", "remote_addresses": ["10.0.0.0/8", "fd00::/8", "::1"], "action": "ALLOW" },
+    { "name": "office", "cidrs": ["8.8.8.0/24"], "path_regex": "^/admin.*$", "action": "ALLOW" },
+    { "name": "admin", "path": "/admin*", "action": "DENY", "limits": { "rate": 1, "window_seconds": 10 } },
+    { "name": "headless", "user_agent": "Headless", "action": "WEIGH", "weight": 30 },
+    { "name": "old-chrome", "user_agent_regex": "Chrome/7", "action": "WEIGH", "weight": 15 },
+    { "name": "partner-token", "headers": { "X-Partner": "v2" }, "action": "WEIGH", "weight": -20 },
+    { "name": "trusted", "path": "/trusted/*", "action": "WEIGH", "weight": -5 },
+    { "name": "api-key", "headers_regex": { "X-Api": "^v2$", "X-Token": "test" }, "action": "ALLOW" },
+    { "name": "scrapers", "user_agent": "python-requests", "action": "CHALLENGE", "challenge": { "difficulty": 22, "algorithm": "hashcash" } },
+    { "name": "amazonbot", "user_agent": "Amazonbot", "action": "DENY" },
+    { "name": "login", "path": "^/login$", "action": "CHALLENGE", "challenge": { "algorithm": "sha256" } },
+    { "name": "exact-root", "path": "/", "user_agent": "curl", "action": "ALLOW" }
+  ]
+}

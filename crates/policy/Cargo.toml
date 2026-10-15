@@ -11,7 +11,6 @@ authors.workspace = true
 [dependencies]
 sibuna-patterns = { workspace = true }
 sibuna-cidr = { workspace = true }
-sibuna-json = { workspace = true }
 sibuna-crypto = { workspace = true }
 
 [lints]

