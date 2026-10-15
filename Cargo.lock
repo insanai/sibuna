@@ -957,6 +957,7 @@ dependencies = [
  "sibuna-core",
  "sibuna-crypto",
  "sibuna-encoding",
+ "sibuna-geoip",
  "sibuna-http",
  "sibuna-json",
  "sibuna-net",

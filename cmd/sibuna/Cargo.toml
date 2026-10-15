@@ -33,6 +33,7 @@ console = [
     "dep:sibuna-console-protocol",
     "dep:sibuna-console-storage",
     "dep:sibuna-json",
+    "dep:sibuna-geoip",
 ]
 
 [dependencies]
@@ -51,6 +52,10 @@ sibuna-console = { workspace = true, optional = true }
 sibuna-console-protocol = { workspace = true, optional = true }
 sibuna-console-storage = { workspace = true, optional = true }
 sibuna-json = { workspace = true, optional = true }
+
+# build.rs decodes the GeoIP snapshot it embeds with the console (SIBUNA_GEOIP_DATA).
+[build-dependencies]
+sibuna-geoip = { workspace = true, optional = true }
 
 [lints]
 workspace = true

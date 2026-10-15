@@ -18,6 +18,12 @@
 //! `SIBUNA_POW_WASM=<path>` and `SIBUNA_CONSOLE_WASM=<path>` embed prebuilt modules
 //! instead, for builds without the WebAssembly target or without network access to
 //! install it.
+//!
+//! With the `console` feature, `SIBUNA_GEOIP_DATA=<path>` embeds a GeoIP snapshot (written
+//! by `geoip-snapshot`) as `$OUT_DIR/geoip.bin`, which the console serves at revision 0
+//! until the first durable import (decision 7). The snapshot is decoded here, so a build
+//! never embeds one the console would refuse. Without the variable the file is empty and
+//! the build embeds no snapshot. Without the console a named snapshot fails the build.
 
 use std::env;
 use std::fmt::Write as _;
@@ -90,7 +96,62 @@ fn main() -> ExitCode {
     {
         return code;
     }
-    ExitCode::SUCCESS
+    match embed_geoip(&out_dir) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(code) => code,
+    }
+}
+
+/// Copies the snapshot `SIBUNA_GEOIP_DATA` names into `out_dir` as `geoip.bin` after
+/// decoding it, or writes an empty file when the variable is unset or empty.
+#[cfg(feature = "console")]
+fn embed_geoip(out_dir: &Path) -> Result<(), ExitCode> {
+    const VARIABLE: &str = "SIBUNA_GEOIP_DATA";
+    println!("cargo:rerun-if-env-changed={VARIABLE}");
+    let bytes = match env::var_os(VARIABLE) {
+        Some(path) if !path.is_empty() => {
+            let path = PathBuf::from(path);
+            println!("cargo:rerun-if-changed={}", path.display());
+            let bytes = fs::read(&path).map_err(|error| {
+                let message = format!("The snapshot {} cannot be read: {error}.", path.display());
+                fail("GEOIP SNAPSHOT UNREADABLE", &message, "Check the path in SIBUNA_GEOIP_DATA.")
+            })?;
+            match sibuna_geoip::snapshot::load_embedded(&bytes) {
+                Ok(Some(_)) => bytes,
+                Ok(None) => {
+                    let message = format!("The snapshot {} is empty.", path.display());
+                    let hint = "Unset SIBUNA_GEOIP_DATA to build without a snapshot.";
+                    return Err(fail("GEOIP SNAPSHOT EMPTY", &message, hint));
+                }
+                Err(error) => {
+                    let message = format!("{} is not a valid snapshot: {error}.", path.display());
+                    let hint = "Write the snapshot with `geoip-snapshot` from a provider's CSV.";
+                    return Err(fail("GEOIP SNAPSHOT INVALID", &message, hint));
+                }
+            }
+        }
+        _ => Vec::new(),
+    };
+    let destination = out_dir.join("geoip.bin");
+    fs::write(&destination, &bytes).map_err(|error| {
+        let message = format!("Writing {} failed: {error}.", destination.display());
+        fail("GEOIP SNAPSHOT NOT WRITTEN", &message, "Check the build directory.")
+    })
+}
+
+/// Without the console there is no GeoIP snapshot to embed: a snapshot named anyway is
+/// refused, as Zig refused `-Dgeoip-data` without `-Dconsole=true` (`GEOIP001`).
+#[cfg(not(feature = "console"))]
+fn embed_geoip(_out_dir: &Path) -> Result<(), ExitCode> {
+    println!("cargo:rerun-if-env-changed=SIBUNA_GEOIP_DATA");
+    match env::var_os("SIBUNA_GEOIP_DATA") {
+        Some(path) if !path.is_empty() => Err(fail(
+            "GEOIP001",
+            "An embedded GeoIP snapshot requires console support.",
+            "Build with the console feature, or unset SIBUNA_GEOIP_DATA.",
+        )),
+        _ => Ok(()),
+    }
 }
 
 /// Builds `module` (or takes the prebuilt one), checks it and copies it into `out_dir`.
