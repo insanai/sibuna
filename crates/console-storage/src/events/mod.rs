@@ -17,8 +17,8 @@
 //!
 //! # Changes from the Zig version
 //!
-//! - The search filter is new (SID 0013). The protocol's `events::Query` carries no search
-//!   text, so [`query_events`] takes it as a separate argument.
+//! - The search filter is new (SID 0013); it is the `search` member of the protocol's
+//!   `events::Query`.
 //! - Paths and user agents are stored bytes; the display copy and the redaction of the
 //!   query string work on bytes. Heads are stored bytes and leave storage as lowercase hex,
 //!   the wire format Zig stored.
@@ -91,7 +91,7 @@ impl EventPage {
 }
 
 /// Reads one page of incidents, or of groups by node and address, matching `input`'s
-/// filters and the search `search` (empty for none); with `input.export_page`, the export
+/// filters and its search `input.search` (empty for none); with `input.export_page`, the export
 /// is audited (S39) before the page is returned. The credential is `credential`;
 /// `input.session_digest` is not read. Borrows everything; returns an owned page.
 ///
@@ -105,12 +105,11 @@ pub async fn query_events(
     tx: &mut Transaction,
     credential: &Credential,
     input: &events::Query,
-    search: &str,
     bound: WorkBound,
     now: u64,
 ) -> Result<EventPage, ConsoleStorageError> {
     events::validate(input).map_err(|_| ConsoleStorageError::InvalidInput("events query"))?;
-    let search = search::Query::parse(search)
+    let search = search::Query::parse(input.search.as_str())
         .map_err(|_| ConsoleStorageError::InvalidInput("search query"))?;
     access::authorize_in(tx, credential, EVENTS_NEED, now).await?;
     let expression = search.map(|query| query.expression(tx.dialect()));
@@ -134,7 +133,7 @@ pub async fn read_event(
     now: u64,
 ) -> Result<Option<Row>, ConsoleStorageError> {
     let input = events::Query { incident: id, limit: 1, ..events::Query::default() };
-    let page = query_events(tx, credential, &input, "", WorkBound::default(), now).await?;
+    let page = query_events(tx, credential, &input, WorkBound::default(), now).await?;
     Ok(page.rows.into_iter().next())
 }
 

@@ -36,6 +36,8 @@ pub enum CapacityLock {
     Commands,
     /// `console_geo_generations`: 2 generations.
     GeoGenerations,
+    /// `console_country_chunks`: 16 staged country sets.
+    CountrySets,
 }
 
 impl CapacityLock {
@@ -51,6 +53,7 @@ impl CapacityLock {
             CapacityLock::Events => 6,
             CapacityLock::Commands => 7,
             CapacityLock::GeoGenerations => 8,
+            CapacityLock::CountrySets => 9,
         };
         0x7362_636c_0000_0000 | table
     }
@@ -85,6 +88,7 @@ mod tests {
             CapacityLock::Events,
             CapacityLock::Commands,
             CapacityLock::GeoGenerations,
+            CapacityLock::CountrySets,
         ];
         let mut keys: Vec<i64> = all.iter().map(|lock| lock.key()).collect();
         keys.sort_unstable();

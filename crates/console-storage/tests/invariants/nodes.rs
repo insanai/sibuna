@@ -102,7 +102,6 @@ fn membership_rows_keep_first_seen_and_show_safe_links_only() {
         assert_eq!(first.console_url.as_str(), "https://console.example:9443");
         assert_eq!((first.applied_revision, first.control_revision), (4, 2));
         assert!(first.draining && !page.members[1].draining);
-        assert_eq!((first.applied_slot, first.decided_slot), (0, 0));
         // A clock stepped back never moves last_seen below first_seen.
         store::announce(&mut tx, &announcement(2, [0x33; 16]), NOW - 50).await.expect("back");
         let second = &store::load_members(&mut tx).await.expect("members").members[1];

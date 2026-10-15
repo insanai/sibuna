@@ -47,6 +47,7 @@ pub(crate) use candidate::{Inputs, refusal};
 
 use sibuna_console_protocol::tokens::Scope;
 use sibuna_console_protocol::{Action, Principal, Text};
+use sibuna_policy::management::MAX_DOCUMENT;
 use sibuna_storage::{Param, Sql, Transaction};
 
 use crate::access::{Credential, Need};
@@ -93,7 +94,15 @@ const INSERT_HISTORY: Sql = Sql {
 };
 
 /// Inserts one history row of rule `id` at `revision`; `kind` pairs the row's kind with
-/// its actor (none for a baseline). Fails with the driver's error.
+/// its actor (none for a baseline).
+///
+/// The document bound is checked here, on the compact text the row stores, because the
+/// backends measure differently: SQLite's check counts the stored text, while
+/// PostgreSQL's counts the JSONB rendering, which adds a space after every colon and comma
+/// and is therefore bounded at 8,192 bytes instead.
+///
+/// Fails with [`ConsoleStorageError::InvalidInput`] (`"history document size"`) for a
+/// document longer than [`MAX_DOCUMENT`] bytes, and with the driver's error.
 pub(crate) async fn insert_history(
     tx: &mut Transaction,
     id: &str,
@@ -102,6 +111,9 @@ pub(crate) async fn insert_history(
     now: u64,
     document: &str,
 ) -> Result<(), ConsoleStorageError> {
+    if document.len() > MAX_DOCUMENT {
+        return Err(ConsoleStorageError::InvalidInput("history document size"));
+    }
     let params: [Param<'_>; 6] = [
         id.into(),
         row::int(revision)?.into(),

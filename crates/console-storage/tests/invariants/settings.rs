@@ -2,7 +2,8 @@
 //! with the old and new value.
 
 use sibuna_console_protocol::notifications::SettingChange;
-use sibuna_console_protocol::{Role, Text, users};
+use sibuna_console_protocol::{Role, Text, audit, users};
+use sibuna_console_storage::audit::read_audit;
 use sibuna_console_storage::settings::{self, SettingKey};
 use sibuna_console_storage::{ConsoleStorageError, Credential};
 use sibuna_storage::{Database, Transaction};
@@ -62,6 +63,13 @@ fn setting_change_is_audited() {
             summaries(&mut tx, row.id).await,
             (Some("{\"value\":\"30\"}".to_owned()), Some("{\"value\":\"60\"}".to_owned()))
         );
+        // The Audit page shows both values: they are catalogue numbers, not secrets.
+        let read =
+            audit::Read { id: u64::try_from(row.id).expect("id"), ..audit::Read::default() };
+        let detail = read_audit(&mut tx, &cookie(10), &read, NOW).await.expect("detail");
+        assert_eq!(detail.before.as_ref().map(Text::as_str), Some("{\"value\":\"30\"}"));
+        assert_eq!(detail.after.as_ref().map(Text::as_str), Some("{\"value\":\"60\"}"));
+        assert!(!detail.before_redacted && !detail.after_redacted);
         // Stale revisions, including a second creation, are conflicts.
         for stale in
             [setting("retention.audit", "90", 1, true), setting("retention.audit", "90", 0, true)]

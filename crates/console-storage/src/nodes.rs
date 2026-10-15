@@ -12,8 +12,7 @@
 //! seconds and after every applied rebuild. A row states facts about its writer; the
 //! console never probes an address read from it. A row carries the policy revision its
 //! node applied; the Zaxonlite log frontiers `applied_slot` and `decided_slot` are gone
-//! (SID 0013, review of 2026-10-15), and the members this module returns carry zeros in
-//! the protocol's fields of those names.
+//! from the table and from the protocol's member row (SID 0013, review of 2026-10-15).
 //!
 //! The local effect of a command (drain, resume, clearing the ban table) is the daemon's:
 //! storage records the intent before it and the completion after it, and a durable intent
@@ -208,8 +207,6 @@ fn decode_member(mut fields: Fields) -> Result<Member, ConsoleStorageError> {
         last_seen: fields.integer("last_seen")?,
         applied_revision: fields.integer("applied_revision")?,
         control_revision: fields.integer("control_revision")?,
-        applied_slot: 0,
-        decided_slot: 0,
         draining: fields.flag("draining")?,
     })
 }

@@ -20,7 +20,7 @@
 
 mod country;
 
-pub use country::{apply_country, preview_country, stage_country_chunk};
+pub use country::{MAX_STAGED_SETS, apply_country, preview_country, stage_country_chunk};
 
 use sibuna_console_protocol::Text;
 use sibuna_console_protocol::workflows::{

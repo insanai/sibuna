@@ -2,16 +2,21 @@
 //!
 //! The console stages the prefixes of a country from the active GeoIP generation in chunks
 //! of at most 32 under the SHA-256 of the whole set ([`stage_country_chunk`]); retention
-//! deletes chunks older than ten minutes. A preview ([`preview_country`]) checks that the
-//! staged set is complete, that no prefix of it belongs to another owner, and that the
-//! candidate engine holds it, and lists the changes; [`apply_country`] repeats the review
-//! at the locked revision and replaces the country's owned set in one transaction.
+//! deletes chunks older than ten minutes. At most [`MAX_STAGED_SETS`] sets are staged
+//! within those ten minutes, so the table stays bounded however often reviews start.
+//!
+//! A preview ([`preview_country`]) checks that the staged set is complete, that no prefix
+//! of it belongs to another owner, and that the candidate engine holds it, and lists the
+//! changes; its trie node counts cover the candidate's whole reputation trie.
+//! [`apply_country`] repeats the review at the locked revision and replaces the country's
+//! owned set in one transaction.
 
 use sibuna_console_protocol::Text;
 use sibuna_console_protocol::workflows::{
     self, Change, ChangeKind, CountryApply, CountryChunk, CountryPreflight, CountrySummary,
     ReputationAction,
 };
+use sibuna_policy::Engine;
 use sibuna_policy::candidate::Options;
 use sibuna_storage::{Param, Sql, Transaction};
 
@@ -19,6 +24,7 @@ use super::{engine_action, score};
 use crate::access::{self, Credential};
 use crate::audit::{self, AuditAction};
 use crate::error::ConsoleStorageError;
+use crate::lock::{CapacityLock, lock_capacity};
 use crate::policy::summary::SummaryWriter;
 use crate::policy::{Inputs, POLICY_WRITE, bounded, policy_audit, refusal};
 use crate::revision;
@@ -26,6 +32,15 @@ use crate::row::{self, Fields};
 
 /// Rows a preview lists of removed prefixes, changes and the new set.
 const SAMPLE_ROWS: usize = 8;
+/// The most distinct country sets staged within the retention window
+/// ([`workflows::STAGE_SECONDS`]).
+pub const MAX_STAGED_SETS: i64 = 16;
+
+const STAGED_SETS: Sql = Sql::both(
+    "SELECT CAST(COUNT(DISTINCT digest) AS BIGINT), \
+     CAST(COUNT(CASE WHEN digest = $1 THEN 1 END) AS BIGINT) \
+     FROM console_country_chunks WHERE recorded_at >= $2",
+);
 
 const UNSTAGE: Sql = Sql::both(
     "DELETE FROM console_country_chunks WHERE digest = $1 AND (ordinal = $2 OR prefix = $3)",
@@ -43,7 +58,9 @@ const STAGE: Sql = Sql::both(
 ///
 /// Fails with [`ConsoleStorageError::InvalidInput`] for an empty or oversized chunk, a
 /// prefix that does not parse or an ordinal of 1,024 or more, like
-/// [`access::authorize_in`] for policy writers, and with the driver's error.
+/// [`access::authorize_in`] for policy writers, with [`ConsoleStorageError::Capacity`] for
+/// a chunk of a new set while [`MAX_STAGED_SETS`] sets are staged within the retention
+/// window, and with the driver's error.
 pub async fn stage_country_chunk(
     tx: &mut Transaction,
     credential: &Credential,
@@ -62,6 +79,7 @@ pub async fn stage_country_chunk(
         }
     }
     access::authorize_in(tx, credential, POLICY_WRITE, now).await?;
+    check_staged_sets(tx, &chunk.digest, now).await?;
     for (index, prefix) in chunk.prefixes.iter().enumerate() {
         let ordinal = i64::from(first + index as u32);
         let params: [Param<'_>; 3] =
@@ -74,6 +92,27 @@ pub async fn stage_country_chunk(
             row::int(now)?.into(),
         ];
         tx.execute(STAGE, &params).await?;
+    }
+    Ok(())
+}
+
+/// Refuses a chunk that would start a set beyond [`MAX_STAGED_SETS`] staged within the
+/// retention window; a chunk of a set already staged passes. Takes the capacity lock first
+/// so two nodes cannot both start the seventeenth set. Fails with
+/// [`ConsoleStorageError::Capacity`] and with the driver's error.
+async fn check_staged_sets(
+    tx: &mut Transaction,
+    digest: &[u8; 32],
+    now: u64,
+) -> Result<(), ConsoleStorageError> {
+    lock_capacity(tx, CapacityLock::CountrySets).await?;
+    let since = row::int(now.saturating_sub(workflows::STAGE_SECONDS))?;
+    let rows = tx.fetch_all(STAGED_SETS, &[digest.as_slice().into(), since.into()]).await?;
+    let mut fields = Fields::new(row::first(rows).unwrap_or_default(), "console_country_chunks");
+    let sets: i64 = fields.integer("digest")?;
+    let own: i64 = fields.integer("digest")?;
+    if own == 0 && sets >= MAX_STAGED_SETS {
+        return Err(ConsoleStorageError::Capacity);
     }
     Ok(())
 }
@@ -263,9 +302,8 @@ async fn reviewed(
     now: u64,
 ) -> Result<CountrySummary, ConsoleStorageError> {
     let mut summary = describe(tx, review).await?;
-    let current = Inputs::load(tx, now, None).await?;
-    current.compose(base).map_err(refusal)?;
-    summary.nodes_before = node_count(current.reputation.iter().map(|(cidr, _)| cidr.as_str()));
+    let current = Inputs::load(tx, now, None).await?.compose(base).map_err(refusal)?;
+    summary.nodes_before = node_count(&current);
     let without = Inputs::load(tx, now, Some(review.country)).await?;
     let mut engine = without.compose(base).map_err(refusal)?;
     let staged = staged_prefixes(tx, review.digest).await?;
@@ -276,20 +314,15 @@ async fn reviewed(
             sibuna_cidr::TrieError::InvalidCidr(_) => ConsoleStorageError::InvalidInput("prefix"),
         })?;
     }
-    let kept = without.reputation.iter().map(|(cidr, _)| cidr.as_str());
-    summary.nodes_after = node_count(kept.chain(staged.iter().map(String::as_str)));
+    summary.nodes_after = node_count(&engine);
     summary.sample = staged.iter().take(SAMPLE_ROWS).map(|prefix| bounded(prefix)).collect();
     Ok(summary)
 }
 
-/// Returns the node count of a reputation trie holding `prefixes` (prefixes that do not
-/// parse or do not fit are skipped: the candidate engine has refused those already).
-fn node_count<'a>(prefixes: impl Iterator<Item = &'a str>) -> u16 {
-    let mut trie = sibuna_cidr::PrefixTrie::<()>::new();
-    for prefix in prefixes {
-        let _ = trie.insert_cidr(prefix.as_bytes(), ());
-    }
-    u16::try_from(trie.node_count()).unwrap_or(u16::MAX)
+/// Returns the node count of the candidate's whole reputation trie: the policy file's
+/// entries, the stored rows and any staged set, the root and the IPv4 path included.
+fn node_count(engine: &Engine) -> u16 {
+    u16::try_from(engine.reputation_node_count()).unwrap_or(u16::MAX)
 }
 
 const STAGED: Sql = Sql::both(
@@ -452,15 +485,6 @@ async fn changes(
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn node_counts_follow_the_prefixes() {
-        let empty = node_count(std::iter::empty());
-        let one = node_count(["192.0.2.0/24"].into_iter());
-        let two = node_count(["192.0.2.0/24", "192.0.3.0/24"].into_iter());
-        assert!(empty < one && one < two);
-        assert_eq!(node_count(["192.0.2.0/24", "not a prefix"].into_iter()), one);
-    }
 
     #[test]
     fn country_requests_need_a_listed_code() {

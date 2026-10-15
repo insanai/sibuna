@@ -140,7 +140,7 @@ CREATE TABLE console_policy_history (
     actor BIGINT REFERENCES console_users (id),
     recorded_at BIGINT NOT NULL CHECK (recorded_at >= 0),
     document JSONB NOT NULL CHECK (jsonb_typeof(document) = 'object'
-        AND octet_length(CAST(document AS TEXT)) <= 4096),
+        AND octet_length(CAST(document AS TEXT)) <= 8192),
     PRIMARY KEY (policy_id, revision),
     CHECK ((kind = 'baseline') = (actor IS NULL)));
 CREATE INDEX console_policy_history_time ON console_policy_history (recorded_at);

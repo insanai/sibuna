@@ -2,8 +2,8 @@
 //! and the reputation page.
 
 use sibuna_console_protocol::workflows::{
-    ChangeKind, CountryApply, CountryChunk, CountryPreflight, CountrySummary, ReputationAction,
-    ReputationEdit, ReputationQuery, ReputationRemove,
+    self, ChangeKind, CountryApply, CountryChunk, CountryPreflight, CountrySummary,
+    ReputationAction, ReputationEdit, ReputationQuery, ReputationRemove,
 };
 use sibuna_console_protocol::{Role, Text, users};
 use sibuna_console_storage::reputation::{self, PrefixChange};
@@ -271,7 +271,10 @@ fn country_replacement_removes_unreviewed_prefixes() {
                 ("203.0.113.0/24", ChangeKind::Added)
             ]
         );
-        assert!(review.nodes_before > 0 && review.nodes_after > 0);
+        // The counts cover the whole candidate trie, the root and the IPv4 path included.
+        let empty = sibuna_policy::Engine::new(16).reputation_node_count();
+        assert!(usize::from(review.nodes_before) > empty);
+        assert!(usize::from(review.nodes_after) > empty);
         assert_eq!(review.sample.len(), 2);
         apply(&mut tx, &next).await.expect("next");
         let gone =
@@ -424,6 +427,31 @@ fn staged_chunks_are_checked_and_replace_their_slot() {
         let expiring =
             "SELECT CAST(COUNT(*) AS BIGINT) FROM ip_reputation WHERE banned_until IS NOT NULL";
         assert_eq!(count(&mut tx, expiring).await, 1);
+    });
+}
+
+#[test]
+fn at_most_sixteen_country_sets_are_staged_at_once() {
+    for_each_backend("country_stage_sets", |db| async move {
+        let mut tx = db.begin().await.expect("begin");
+        admin(&mut tx).await;
+        let chunk = |seed: u8, ordinal: u16| CountryChunk {
+            digest: [seed; 32],
+            ordinal,
+            prefixes: vec![Text::new(&format!("192.0.{seed}.0/24")).expect("prefix")],
+        };
+        let mut stage = async |seed: u8, ordinal: u16, now: u64| {
+            reputation::stage_country_chunk(&mut tx, &cookie(10), &chunk(seed, ordinal), now).await
+        };
+        for seed in 1..=16 {
+            stage(seed, 0, NOW).await.expect("one of sixteen sets");
+        }
+        let outcome = stage(17, 0, NOW).await;
+        assert!(matches!(outcome, Err(ConsoleStorageError::Capacity)), "{outcome:?}");
+        // A staged set may still grow, and sets older than the window no longer count.
+        stage(16, 1, NOW).await.expect("a further chunk of a staged set");
+        let later = NOW + workflows::STAGE_SECONDS + 1;
+        stage(17, 0, later).await.expect("a set once the others aged out");
     });
 }
 

@@ -1,6 +1,6 @@
 //! The constraints of the policy history tables.
 
-use sibuna_storage::Database;
+use sibuna_storage::{Database, Dialect};
 
 use crate::common::{bootstrap_admin, for_each_backend, insert};
 use crate::{refuses, with};
@@ -15,6 +15,21 @@ pub(crate) async fn admin(db: &Database) {
     let mut tx = db.begin().await.expect("begin");
     bootstrap_admin(&mut tx).await;
     tx.commit().await.expect("commit");
+}
+
+/// Returns a compact JSON object of exactly `length` bytes (at least 16) with as many
+/// one-digit members as fit: `{"m0":0,"m1":0,...,"pad":"xx"}`.
+fn many_members(length: usize) -> String {
+    let mut text = String::from("{");
+    let mut index = 0;
+    // Each member is at most 10 bytes; keep room for the padding member.
+    while text.len() + 10 + 10 < length {
+        text.push_str(&format!("\"m{index}\":0,"));
+        index += 1;
+    }
+    let pad = length - text.len() - "\"pad\":\"\"}".len();
+    text.push_str(&format!("\"pad\":\"{}\"}}", "x".repeat(pad)));
+    text
 }
 
 #[test]
@@ -46,8 +61,20 @@ fn policy_history_refuses_rows_the_types_cannot_hold() {
             ("document", "NULL"),
         ]);
         bad.push(("policy_id", format!("'{}'", "p".repeat(129))));
-        bad.push(("document", format!("'{{\"a\":\"{}\"}}'", "x".repeat(4096))));
+        // PostgreSQL bounds the JSONB rendering at 8,192 bytes; SQLite the text at 4,096.
+        bad.push(("document", format!("'{{\"a\":\"{}\"}}'", "x".repeat(8192))));
         refuses(&db, "console_policy_history", &template, &bad).await;
+        // A compact document of exactly 4,096 bytes whose rendering is longer (a space after
+        // every colon and comma) is accepted on both backends.
+        let compact = many_members(4096);
+        assert!(compact.len() == 4096 && compact.matches(':').count() > 300);
+        let full = with(&with(&template, "revision", "2"), "document", &format!("'{compact}'"));
+        insert(&db, "console_policy_history", &full).await.expect("a 4 KiB document");
+        if db.dialect() == Dialect::Sqlite {
+            let over = format!("'{}'", many_members(4097));
+            let over = with(&with(&template, "revision", "3"), "document", &over);
+            assert!(insert(&db, "console_policy_history", &over).await.is_err());
+        }
         // The key is the rule and the revision.
         let again = with(&template, "document", "'{}'");
         assert!(insert(&db, "console_policy_history", &again).await.is_err());

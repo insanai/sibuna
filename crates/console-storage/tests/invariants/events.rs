@@ -105,7 +105,13 @@ pub(crate) async fn admin(tx: &mut Transaction) -> Credential {
 }
 
 async fn page(tx: &mut Transaction, admin: &Credential, input: &Query, find: &str) -> EventPage {
-    events::query_events(tx, admin, input, find, WorkBound::default(), NOW).await.expect("page")
+    let input = searching(input, find);
+    events::query_events(tx, admin, &input, WorkBound::default(), NOW).await.expect("page")
+}
+
+/// Returns `input` with the search text `find`.
+fn searching(input: &Query, find: &str) -> Query {
+    Query { search: Text::new(find).expect("search text"), ..input.clone() }
 }
 
 /// Reads every page of `input` and returns the ids in page order.
@@ -163,7 +169,7 @@ fn incident_pages_bound_bytes_paginate_tied_timestamps_and_redact_queries() {
         assert_eq!(empty.to_json(), "{\"rows\":[],\"next\":null}");
         tx.execute(Sql::both("DELETE FROM console_sessions"), &[]).await.expect("sign out");
         let refused =
-            events::query_events(&mut tx, &admin, &input, "", WorkBound::default(), NOW).await;
+            events::query_events(&mut tx, &admin, &input, WorkBound::default(), NOW).await;
         assert!(matches!(refused, Err(ConsoleStorageError::Unauthorized)));
     });
 }
@@ -194,7 +200,7 @@ fn source_groups_count_exactly_and_exports_are_audited_first() {
         // A credential that no longer authorizes gets nothing and audits nothing.
         let stranger = Credential { digest: [99; 32], ..admin.clone() };
         let refused =
-            events::query_events(&mut tx, &stranger, &input, "", WorkBound::default(), NOW).await;
+            events::query_events(&mut tx, &stranger, &input, WorkBound::default(), NOW).await;
         assert!(matches!(refused, Err(ConsoleStorageError::Unauthorized)));
         assert_eq!(audit_actions(&mut tx).await.len(), audited);
     });
@@ -343,7 +349,7 @@ fn every_filter_selects_exactly_its_rows() {
         assert_eq!(campaign.rows[0].campaign, Some(9_007_199_254_740_993));
         let invalid = Query { limit: 11, ..Query::default() };
         let refused =
-            events::query_events(&mut tx, &admin, &invalid, "", WorkBound::default(), NOW).await;
+            events::query_events(&mut tx, &admin, &invalid, WorkBound::default(), NOW).await;
         assert!(matches!(refused, Err(ConsoleStorageError::InvalidInput(_))));
     });
 }
@@ -478,15 +484,9 @@ fn the_search_filter_matches_the_reference_on_both_backends() {
         let grouped = Query { grouped: true, ..Query::default() };
         let groups = page(&mut tx, &admin, &grouped, "admin").await;
         assert_eq!(groups.rows.iter().map(|row| row.count).sum::<u64>(), 3);
-        let refused = events::query_events(
-            &mut tx,
-            &admin,
-            &Query::default(),
-            "a OR",
-            WorkBound::default(),
-            NOW,
-        )
-        .await;
+        let invalid = searching(&Query::default(), "a OR");
+        let refused =
+            events::query_events(&mut tx, &admin, &invalid, WorkBound::default(), NOW).await;
         assert!(matches!(refused, Err(ConsoleStorageError::InvalidInput("search query"))));
     });
 }
@@ -529,24 +529,22 @@ fn a_search_past_its_work_bound_is_unavailable() {
         let admin = admin(&mut tx).await;
         many(&mut tx).await;
         tx.commit().await.expect("commit");
-        let grouped = Query { grouped: true, ..Query::default() };
+        let grouped = searching(&Query { grouped: true, ..Query::default() }, "attack");
         let mut tx = db.begin().await.expect("begin");
-        let refused = events::query_events(&mut tx, &admin, &grouped, "attack", TINY, NOW).await;
+        let refused = events::query_events(&mut tx, &admin, &grouped, TINY, NOW).await;
         assert!(matches!(refused, Err(ConsoleStorageError::Unavailable)), "{refused:?}");
         drop(tx);
         // A cancelled statement aborts a PostgreSQL transaction, so the next read begins
         // its own; the default bound suffices for the same read.
         let mut tx = db.begin().await.expect("begin");
-        let bounded =
-            events::query_events(&mut tx, &admin, &grouped, "attack", WorkBound::default(), NOW)
-                .await
-                .expect("within the default bound");
+        let bounded = events::query_events(&mut tx, &admin, &grouped, WorkBound::default(), NOW)
+            .await
+            .expect("within the default bound");
         // The page's byte bound may keep fewer than its ten rows; more always follow.
         assert!(!bounded.rows.is_empty() && bounded.next.is_some());
         if tx.dialect() == Dialect::Sqlite {
             // On SQLite an interrupted read leaves the transaction usable, without the bound.
-            let refused =
-                events::query_events(&mut tx, &admin, &grouped, "attack", TINY, NOW).await;
+            let refused = events::query_events(&mut tx, &admin, &grouped, TINY, NOW).await;
             assert!(matches!(refused, Err(ConsoleStorageError::Unavailable)));
             let rows = page(&mut tx, &admin, &Query { limit: 1, ..Query::default() }, "").await;
             assert_eq!(rows.rows.len(), 1);

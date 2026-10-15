@@ -164,7 +164,12 @@ fn is_text_field(action: &str, key: &str) -> bool {
         "secret",
     ];
     const NOTIFICATION_TEXT: [&str; 4] = ["operation", "outcome", "detail", "transport"];
-    TEXT.contains(&key) || (is_notification(action) && NOTIFICATION_TEXT.contains(&key))
+    TEXT.contains(&key)
+        || (is_notification(action) && NOTIFICATION_TEXT.contains(&key))
+        // A setting's value is a catalogue number written as text, never a secret; the
+        // Audit page shows it before and after the change. Scoped like the delivery
+        // fields, so a `value` elsewhere stays hidden.
+        || (action == "setting.change" && key == "value")
 }
 
 fn is_number_field(action: &str, key: &str) -> bool {
@@ -254,6 +259,17 @@ mod tests {
         assert!(!copied.text.as_str().contains("private"));
         let copied = copy(source, "user.update").unwrap();
         assert_eq!(copied.text.as_str(), "{\"revision\":1}");
+    }
+
+    #[test]
+    fn setting_changes_show_their_values() {
+        let before = Summary::new().text("value", "30").finish();
+        let copied = copy(&before, "setting.change").unwrap();
+        assert_eq!(copied.text.as_str(), "{\"value\":\"30\"}");
+        assert!(!copied.redacted);
+        let elsewhere = copy(&before, "page.edit").unwrap();
+        assert_eq!(elsewhere.text.as_str(), "{}");
+        assert!(elsewhere.redacted);
     }
 
     #[test]

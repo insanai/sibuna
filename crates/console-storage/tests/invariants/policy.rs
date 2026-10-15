@@ -404,6 +404,32 @@ fn ordering_swaps_two_rules_in_one_revision() {
 }
 
 #[test]
+fn history_documents_are_bounded_before_the_insert() {
+    for_each_backend("policy_history_bound", |db| async move {
+        let mut tx = db.begin().await.expect("begin");
+        let (_, credential) = admin(&mut tx).await;
+        // A rule written directly with SQL renders to more than 4,096 bytes; moving it
+        // would record that rendering, which storage refuses before the insert on both
+        // backends rather than leaving it to a CHECK that measures differently.
+        let sql = Sql::both(
+            "INSERT INTO policies (id, name, priority, action, enabled, created_at, updated_at) \
+             VALUES ($1, $2, $3, 'deny', TRUE, 0, 0)",
+        );
+        let long = "n".repeat(4100);
+        for (id, name, priority) in [("long", long.as_str(), 1_i64), ("short", "S", 2)] {
+            let params: [Param<'_>; 3] = [id.into(), name.into(), priority.into()];
+            tx.execute(sql, &params).await.expect("insert rule");
+        }
+        let start = revision(&mut tx).await;
+        let moved =
+            policy::order_rules(&mut tx, &credential, &order("long", Direction::Down, start), NOW)
+                .await;
+        assert_eq!(invalid(moved), "history document size");
+        assert!(history(&mut tx, "long").await.is_empty());
+    });
+}
+
+#[test]
 fn ordering_nudges_equal_priorities_and_refuses_edges() {
     for_each_backend("policy_order_edges", |db| async move {
         let mut tx = db.begin().await.expect("begin");
