@@ -1,16 +1,12 @@
 //! The harness of the console storage tests: every test runs on SQLite and, when
 //! `SIBUNA_TEST_DATABASE_URL` names a PostgreSQL database, on PostgreSQL too, each time on
-//! a fresh, fully migrated schema of its own.
+//! a fresh, fully migrated database of its own.
 //!
-//! `sibuna-storage` keeps its own `testing::for_each_backend` private for now (SID 0013
-//! plans to export it), so this file provides the equivalent. It needs a tokio runtime but
-//! may not depend on tokio, so it borrows the storage thread's runtime: it starts a real
-//! `Storage` on a temporary SQLite file with the console migrations in `Hooks`, and runs the
-//! test inside `Storage::with_database`. The SQLite test uses that database; the PostgreSQL
-//! test opens its own pool, on a schema named after the test, from inside the same job.
-//!
-//! A test body is an async closure taking the `Database`; it panics on failure. A panic is
-//! caught on the storage thread and re-raised on the test thread with the backend's name.
+//! The databases come from `sibuna_storage::testing::for_each_backend` (feature `testing`,
+//! SID 0013), which also provides the runtime. This file migrates the core and console
+//! schemas twice (the second application must change nothing) and runs the test body, an
+//! async closure taking the `Database` that panics on failure. A panic is re-raised with
+//! the test's and the backend's name.
 
 #![allow(dead_code)]
 
@@ -25,14 +21,11 @@ use std::task::{Context, Poll};
 use sibuna_console_protocol::auth::{Factor, Session};
 use sibuna_console_protocol::{CredentialKind, Role, Text, auth, users};
 use sibuna_console_storage::{CONSOLE, Credential, accounts};
-use sibuna_core::Config;
 use sibuna_storage::schema::{CORE, migrate};
-use sibuna_storage::{
-    Cell, Database, Dialect, Hooks, Sql, Storage, StorageError, Target, Transaction,
-};
+use sibuna_storage::{Cell, Database, Dialect, Sql, StorageError, Transaction};
 
-/// The environment variable naming a PostgreSQL database whose role may create schemas.
-pub const POSTGRES_ENV: &str = "SIBUNA_TEST_DATABASE_URL";
+/// The environment variable naming a PostgreSQL database whose role may create databases.
+pub const POSTGRES_ENV: &str = sibuna_storage::testing::POSTGRES_ENV;
 /// The time the tests run at, in Unix seconds (2027-01-15).
 pub const NOW: u64 = 1_800_000_000;
 
@@ -41,97 +34,40 @@ pub const NOW: u64 = 1_800_000_000;
 static ONE_AT_A_TIME: Mutex<()> = Mutex::new(());
 
 /// Runs `test` on a fresh SQLite database and, when [`POSTGRES_ENV`] is set and the crate
-/// is built with `postgres`, on a fresh PostgreSQL schema named after `name`.
+/// is built with `postgres`, on a fresh PostgreSQL database named after `name`.
 pub fn for_each_backend<F, Fut>(name: &str, test: F)
 where
     F: Fn(Database) -> Fut + Clone + Send + 'static,
     Fut: Future<Output = ()> + 'static,
 {
     let _turn = ONE_AT_A_TIME.lock().unwrap_or_else(PoisonError::into_inner);
-    let postgres = std::env::var(POSTGRES_ENV).ok().filter(|_| cfg!(feature = "postgres"));
-    let dir = std::env::temp_dir().join(format!("sibuna-cstore-{}-{name}", std::process::id()));
-    let _ = std::fs::remove_dir_all(&dir);
-    let Some(storage) = start_host(&dir, postgres.as_deref()) else { return };
-    if cfg!(feature = "sqlite") {
-        let sqlite_test = test.clone();
-        let outcome = storage.with_database(move |db| async move {
-            // The host already applied both sets; applying them again must change nothing.
-            migrate(&db, &[CORE, CONSOLE], NOW).await?;
-            Ok(CatchUnwind(Box::pin(sqlite_test(db))).await)
-        });
-        report(name, "SQLite", outcome);
-    }
-    if let Some(base) = postgres {
-        let schema = schema_name(name);
-        let outcome = storage.with_database(move |_| run_postgres(base, schema, test));
-        report(name, "PostgreSQL", outcome);
-    }
-    drop(storage);
-    let _ = std::fs::remove_dir_all(&dir);
+    let label = name.to_owned();
+    sibuna_storage::testing::for_each_backend(name, move |target| {
+        let (test, label) = (test.clone(), label.clone());
+        Box::pin(async move {
+            let backend = format!("{:?}", target.dialect());
+            let db = Database::open(&target).await.expect("open the test database");
+            let migrated = migrate_twice(&db).await;
+            let outcome = match migrated {
+                Ok(()) => CatchUnwind(Box::pin(test(db.clone()))).await,
+                Err(error) => Err(format!("could not migrate: {error:?}")),
+            };
+            db.close().await;
+            if let Err(message) = outcome {
+                panic!("{label} failed on {backend}: {message}");
+            }
+        })
+    });
 }
 
-/// Starts the storage thread whose runtime runs the tests: on a temporary SQLite file with
-/// the console migrations in `Hooks`, or, in a build without SQLite, on the PostgreSQL test
-/// database itself (whose default schema then holds the core tables; the tests use schemas
-/// of their own). Returns `None` when no backend is available.
-fn start_host(dir: &std::path::Path, postgres: Option<&str>) -> Option<Storage> {
-    let (config, hooks) = if cfg!(feature = "sqlite") {
-        let data_dir = Some(dir.to_string_lossy().into_owned());
-        let hooks = Hooks { migrations: vec![CONSOLE], ..Hooks::default() };
-        (Config { data_dir, ..Config::default() }, hooks)
-    } else {
-        let database_url = Some(postgres?.to_owned());
-        (Config { database_url, ..Config::default() }, Hooks::default())
-    };
-    Some(Storage::start(&config, hooks).expect("start the storage thread"))
+/// Applies the core and console schemas, then applies them again, which must change nothing.
+async fn migrate_twice(db: &Database) -> Result<(), StorageError> {
+    migrate(db, &[CORE, CONSOLE], NOW).await?;
+    migrate(db, &[CORE, CONSOLE], NOW).await
 }
 
-async fn run_postgres<F, Fut>(
-    base: String,
-    schema: String,
-    test: F,
-) -> Result<Result<(), String>, StorageError>
-where
-    F: Fn(Database) -> Fut,
-    Fut: Future<Output = ()> + 'static,
-{
-    let admin = Database::open(&Target::Postgres(base.clone())).await?;
-    let script = format!("DROP SCHEMA IF EXISTS {schema} CASCADE; CREATE SCHEMA {schema}");
-    admin.execute_script(&script).await?;
-    admin.close().await;
-    let db = Database::open(&Target::Postgres(with_search_path(&base, &schema))).await?;
-    migrate(&db, &[CORE, CONSOLE], NOW).await?;
-    migrate(&db, &[CORE, CONSOLE], NOW).await?;
-    let outcome = CatchUnwind(Box::pin(test(db.clone()))).await;
-    db.close().await;
-    let admin = Database::open(&Target::Postgres(base)).await?;
-    admin.execute_script(&format!("DROP SCHEMA IF EXISTS {schema} CASCADE")).await?;
-    admin.close().await;
-    Ok(outcome)
-}
-
-fn report(name: &str, backend: &str, outcome: Result<Result<(), String>, StorageError>) {
-    match outcome {
-        Ok(Ok(())) => {}
-        Ok(Err(message)) => panic!("{name} failed on {backend}: {message}"),
-        Err(error) => panic!("{name} could not run on {backend}: {error:?}"),
-    }
-}
-
-/// A schema name of at most 63 bytes, unique per process and test.
-fn schema_name(name: &str) -> String {
-    let mut schema = format!("cs_{}_{name}", std::process::id());
-    schema.truncate(63);
-    schema
-}
-
-/// Returns `base` with `search_path` set to `schema` for every connection.
-fn with_search_path(base: &str, schema: &str) -> String {
-    let separator = if base.contains('?') { '&' } else { '?' };
-    format!("{base}{separator}options=-c%20search_path%3D{schema}")
-}
-
-/// Polls a test body, turning a panic into an error message so the storage thread survives.
+/// Polls a test body, turning a panic into an error message so the database is closed
+/// before the panic is raised again.
 struct CatchUnwind<F>(Pin<Box<F>>);
 
 impl<F: Future<Output = ()>> Future for CatchUnwind<F> {

@@ -120,12 +120,28 @@ compile_error!("sibuna-console-storage needs the `sqlite` or the `postgres` feat
 pub mod access;
 pub mod accounts;
 pub mod audit;
+pub mod bound;
 mod error;
+pub mod events;
+pub mod geoip;
 pub mod kiosk;
+pub mod leases;
 pub mod lock;
+pub mod nodes;
+pub mod notifications;
+pub mod observations;
+pub mod pages;
+pub mod policy;
+pub mod rankings;
+pub mod reputation;
+pub mod retention;
 pub mod revision;
 pub mod row;
+pub mod rule_hits;
 pub mod schema;
+pub mod security;
+pub mod settings;
+pub mod sidecars;
 pub mod tokens;
 
 pub use access::{Credential, Need};

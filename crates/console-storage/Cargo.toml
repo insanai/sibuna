@@ -21,10 +21,20 @@ sibuna-crypto = { workspace = true }
 sibuna-json = { workspace = true }
 # The protocol carries the User-Agent digest of a session as hex.
 sibuna-encoding = { workspace = true }
+# Policy workflows validate the candidate engine and page templates before they store them.
+sibuna-policy = { workspace = true }
+# Country actions measure the reputation trie a candidate would hold.
+sibuna-cidr = { workspace = true }
+# Country actions accept only the ISO 3166-1 codes the GeoIP data uses.
+sibuna-geoip = { workspace = true }
+# The incident sidecar hook reads the daemon's response states.
+sibuna-core = { workspace = true }
 
 [dev-dependencies]
-# The test harness starts a storage thread, whose configuration is the daemon's `Config`.
+# The daemon's `Config` and incident types, for tests that start a storage thread.
 sibuna-core = { workspace = true }
+# The test harness: a fresh database per test on every backend (SID 0013).
+sibuna-storage = { workspace = true, features = ["testing"] }
 
 [lints]
 workspace = true

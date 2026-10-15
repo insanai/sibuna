@@ -7,6 +7,17 @@
 mod common;
 
 mod accounts;
+mod geoip;
+mod nodes;
+mod notifications;
+mod observations;
+mod pages;
+mod policy;
+mod rankings;
+mod reputation;
+mod rule_hits;
+mod settings;
+mod sidecars;
 
 use sibuna_storage::Database;
 
