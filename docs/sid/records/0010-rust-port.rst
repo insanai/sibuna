@@ -248,13 +248,16 @@ Evidence recorded so far (2026-10-15):
 - Criterion 2: Rust and Zig daemons sharing a seed verify each other's MAC and Ed25519 session tokens and requirement tickets (``crates/challenge`` cross-implementation tests against the Zig baseline binary).
 - Criterion 3: ``cargo xtask browser`` drives Chromium 155 headless through the interstitial; the challenge passes with WebAssembly (solve 29 to 34 ms) and with the JavaScript fallback (84 to 91 ms, WebAssembly disabled). Detection relies on the default interstitial markup (``#status``, ``.progress-bar``).
 - Differential behaviour: ``cargo xtask parity`` replays generated corpora against both daemons in 17 configurations. At commit ``dda1162`` four seeds (three of 20,000 requests and one of 60,000) gave no unexplained difference; every allowed difference is listed with its reason in ``tools/parity/allow-list.json``.
-- Criterion 4 (preliminary): ``cargo xtask bench`` records primitives, whole-product and open-loop latency runs in ``benchmarks/results/``. The final figures are taken on a quiet machine after the console port.
+- Criterion 4, met: on an AMD Ryzen 9 5950X with the daemons on CPUs 0 to 3 and the load on CPUs 8 to 15 (``benchmarks/results/``, 2026-10-15), the Rust daemon is at or above the Zig daemon's throughput in all 16 whole-product workloads (ratios 1.00 to 1.09) with p99 no worse (ratios 0.46 to 1.00) and 4 to 18% less CPU per request; peak memory is about half (16 MiB against 31 MiB). At equal offered load from 10,000 to 150,000 requests per second, every percentile from p50 to p99.9 is at or below Zig's, after the connection threads were made reusable (SID 0002 revision note; before that, p99.9 at 100,000 requests per second was 0.3 to 2 ms against Zig's 0.1 ms). Of the primitive rows, all are faster than Zig except ``gcra_check`` and ``gcra_four_rule_scopes`` (12.8 against 5.7 ns), whose byte API now includes the keyed SipHash-1-3 of the client (a security fix); the daemon hashes once per request, and the hashed rows measure 6.2 ns.
+- Criterion 5, met: the console's 290 interface tests, including the golden fixtures, pass. ``cargo xtask browser console`` passed all 17 steps against a fresh daemon in Chromium 155 (no WebSocket and no map request before sign-in, the forced password change, live tiles across stats deltas, every page with no exception, console error or CSP violation, the wall display limited to statistics, the WebSocket closed at sign-out), and we reviewed its screenshots; the review led to three interface fixes (sparkline width, the Audit and Tokens scroll position, the heading focus ring). The eight-dashboard smoke run is in ``benchmarks/results/console-8-dashboards-2026-10-15.md``.
+- Criterion 1, partly recorded: the workspace suite (about 2,100 tests on SQLite, and 700 more against PostgreSQL) and the daemon and console end-to-end suites pass. Each crate's documentation and port report names the Zig tests it ported, but a complete mapping of every Zig unit test to its Rust counterpart is not yet recorded in one place.
+- Differential behaviour, latest: at commit ``f5fa5be``, ``cargo xtask parity`` (seed 20261015, 20,018 requests, 17 configurations) gave no unexplained difference.
 
 Open questions
 --------------
 
 - Closed 2026-10-15: the spent set and the limiter use ``std::sync::Mutex`` (see the review history for the measurements); the ban table keeps its seqlock readers with a mutex for writers.
-- Whether an ``epoll`` event loop is needed to reach parity: decided by benchmark.
+- Closed 2026-10-15: no ``epoll`` event loop is needed for parity. Blocking threads, reused across connections, meet criterion 4.
 
 Review history
 --------------
