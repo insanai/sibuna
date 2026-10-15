@@ -62,8 +62,8 @@ impl fmt::Display for SpendError {
 impl std::error::Error for SpendError {}
 
 /// One occupied slot. The expiry is never zero (an expiry of zero is stored as one), which
-/// lets `Option<Entry>` use it as the empty marker and keeps a slot at 24 bytes. The probe
-/// distance is not stored: it follows from the slot index and the tag's home.
+/// lets a zero expiry mark an empty slot and keeps a slot at 24 bytes. The probe distance is
+/// not stored: it follows from the slot index and the tag's home.
 #[derive(Clone, Copy, Debug)]
 struct Entry {
     tag: Tag,
@@ -80,7 +80,28 @@ impl Entry {
     }
 }
 
-const _: () = assert!(size_of::<Option<Entry>>() == 24);
+/// A slot as stored: the tag's two little-endian words and the expiry, zero when the slot is
+/// empty. A plain array rather than `Option<Entry>`, because `vec![[0; 3]; n]` asks the
+/// allocator for zeroed memory: the kernel maps a page of slots only when one is first
+/// written, so a large idle set is not resident.
+type Slot = [u64; 3];
+
+impl Entry {
+    /// Reads the entry a slot holds; `None` for an empty slot.
+    #[inline]
+    fn load(slot: &Slot) -> Option<Entry> {
+        let [low, high, expires_at] = *slot;
+        let tag = (u128::from(high) << 64 | u128::from(low)).to_le_bytes();
+        Some(Entry { tag, expires_at: NonZeroU64::new(expires_at)? })
+    }
+
+    /// Returns the slot that holds this entry.
+    #[inline]
+    fn store(&self) -> Slot {
+        let (low, high) = tag_words(&self.tag);
+        [low, high, self.expires_at.get()]
+    }
+}
 
 /// Splits a tag into its shard selector (first 8 bytes) and home selector (last 8 bytes),
 /// both little-endian as in the Zig version.
@@ -93,14 +114,26 @@ fn tag_words(tag: &Tag) -> (u64, u64) {
 /// `MAX_PROBE` slots, and indices are always masked with `mask`, so every index is in
 /// bounds.
 struct Table {
-    entries: Box<[Option<Entry>]>,
+    slots: Box<[Slot]>,
     mask: usize,
 }
 
 impl Table {
     /// Returns a table of `slots` empty slots; `slots` is a power of two.
     fn new(slots: usize) -> Self {
-        Self { entries: vec![None; slots].into_boxed_slice(), mask: slots - 1 }
+        Self { slots: vec![[0; 3]; slots].into_boxed_slice(), mask: slots - 1 }
+    }
+
+    /// The entry at `idx`, which is in bounds (a masked index).
+    #[inline]
+    fn entry(&self, idx: usize) -> Option<Entry> {
+        Entry::load(&self.slots[idx])
+    }
+
+    /// Stores `entry` at `idx`, which is in bounds (a masked index).
+    #[inline]
+    fn put(&mut self, idx: usize, entry: Entry) {
+        self.slots[idx] = entry.store();
     }
 
     fn home(&self, tag: &Tag) -> usize {
@@ -115,21 +148,18 @@ impl Table {
 
     /// Robin Hood lookup with early termination: once a slot's occupant is closer to its
     /// home than we are to ours, the key cannot lie further on (SID 0006, Lemma 27).
-    fn find(&mut self, tag: &Tag) -> Option<&mut Entry> {
+    /// Returns the index and the entry of `tag`.
+    fn find(&self, tag: &Tag) -> Option<(usize, Entry)> {
         let mut idx = self.home(tag);
-        let mut found = None;
         for dist in 0..MAX_PROBE {
-            match &self.entries[idx] {
+            match self.entry(idx) {
                 None => return None,
-                Some(e) if self.dist(e, idx) < dist => return None,
-                Some(e) if e.tag == *tag => {
-                    found = Some(idx);
-                    break;
-                }
+                Some(e) if self.dist(&e, idx) < dist => return None,
+                Some(e) if e.tag == *tag => return Some((idx, e)),
                 Some(_) => idx = (idx + 1) & self.mask,
             }
         }
-        self.entries[found?].as_mut()
+        None
     }
 
     /// Simulates the displacement path before anything is modified, so that a failed
@@ -138,9 +168,9 @@ impl Table {
         let mut idx = self.home(tag);
         let mut dist: u8 = 0;
         let mut probes = 0;
-        while dist < MAX_PROBE && probes < self.entries.len() {
-            let Some(e) = &self.entries[idx] else { return true };
-            let occupant = self.dist(e, idx);
+        while dist < MAX_PROBE && probes < self.slots.len() {
+            let Some(e) = self.entry(idx) else { return true };
+            let occupant = self.dist(&e, idx);
             if e.is_expired(now) && dist >= occupant {
                 return true;
             }
@@ -157,18 +187,18 @@ impl Table {
 
     /// Records `tag` as spent; see [`SpentSet::mark_spent`].
     fn mark_spent(&mut self, tag: &Tag, expires_at: u64, now: u64) -> Result<(), SpendError> {
-        if let Some(existing) = self.find(tag) {
+        if let Some((idx, existing)) = self.find(tag) {
             if !existing.is_expired(now) {
                 return Err(SpendError::DoubleSpend);
             }
-            *existing = Entry::new(*tag, expires_at);
+            self.put(idx, Entry::new(*tag, expires_at));
             return Ok(());
         }
         self.insert(tag, expires_at, now)
     }
 
-    fn is_spent(&mut self, tag: &Tag, now: u64) -> bool {
-        self.find(tag).is_some_and(|e| !e.is_expired(now))
+    fn is_spent(&self, tag: &Tag, now: u64) -> bool {
+        self.find(tag).is_some_and(|(_, e)| !e.is_expired(now))
     }
 
     fn insert(&mut self, tag: &Tag, expires_at: u64, now: u64) -> Result<(), SpendError> {
@@ -179,19 +209,19 @@ impl Table {
         let mut carry_dist: u8 = 0;
         let mut idx = self.home(tag);
         while carry_dist < MAX_PROBE {
-            let Some(occupant) = self.entries[idx] else {
-                self.entries[idx] = Some(carry);
+            let Some(occupant) = self.entry(idx) else {
+                self.put(idx, carry);
                 return Ok(());
             };
             let occupant_dist = self.dist(&occupant, idx);
             // Overwriting an expired occupant is safe only when the new distance is not
             // smaller, so keys probing past this slot still pass the early-termination test.
             if occupant.is_expired(now) && carry_dist >= occupant_dist {
-                self.entries[idx] = Some(carry);
+                self.put(idx, carry);
                 return Ok(());
             }
             if carry_dist > occupant_dist {
-                self.entries[idx] = Some(carry);
+                self.put(idx, carry);
                 (carry, carry_dist) = (occupant, occupant_dist);
                 // A displaced expired entry is simply dropped.
                 if carry.is_expired(now) {
@@ -244,7 +274,7 @@ impl SpentSet {
 
     /// Returns the number of slots, the most tags the set can hold.
     pub fn capacity(&self) -> usize {
-        SHARD_COUNT * self.shards[0].lock().entries.len()
+        SHARD_COUNT * self.shards[0].lock().slots.len()
     }
 
     fn shard(&self, tag: &Tag) -> &Shard {
@@ -339,9 +369,9 @@ mod tests {
     /// Checks the structural invariant: every entry sits within the probe bound of its
     /// home.
     fn assert_structure(table: &Table) {
-        for (idx, slot) in table.entries.iter().enumerate() {
-            if let Some(e) = slot {
-                assert!(table.dist(e, idx) < MAX_PROBE);
+        for idx in 0..table.slots.len() {
+            if let Some(e) = table.entry(idx) {
+                assert!(table.dist(&e, idx) < MAX_PROBE);
             }
         }
     }
@@ -383,7 +413,7 @@ mod tests {
                 _ => {
                     let expires_at = now + 1 + (r >> 20) % 60;
                     let live = model.get(&tag).is_some_and(|&until| now <= until);
-                    let before = (step % 64 == 0).then(|| table.entries.clone());
+                    let before = (step % 64 == 0).then(|| table.slots.clone());
                     let result = table.mark_spent(&tag, expires_at, now);
                     match result {
                         Ok(()) => {
@@ -395,16 +425,7 @@ mod tests {
                             assert!(!live);
                             fulls += 1;
                             if let Some(before) = before {
-                                let same =
-                                    before.iter().zip(table.entries.iter()).all(|(a, b)| {
-                                        match (a, b) {
-                                            (None, None) => true,
-                                            (Some(a), Some(b)) => {
-                                                a.tag == b.tag && a.expires_at == b.expires_at
-                                            }
-                                            _ => false,
-                                        }
-                                    });
+                                let same = before == table.slots;
                                 assert!(same, "a refused insertion changed the table");
                             }
                         }

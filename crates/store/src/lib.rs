@@ -2,7 +2,11 @@
 //! of authenticated tags, a GCRA rate limiter, a ban table and striped counters.
 //!
 //! Every store allocates its fixed capacity once, when it is built, and never allocates or
-//! blocks on a global lock afterwards. Each is safe to share between threads by reference
+//! blocks on a global lock afterwards. The large tables (limiter, spent set) are allocated
+//! zeroed, an empty slot being all zero bits, so their pages stay virtual until a slot is
+//! first written: resident memory grows with use, not with capacity (`tests/resident.rs`).
+//! The ban table is small and built eagerly, because atomics cannot be obtained from zeroed
+//! memory without `unsafe`. Each is safe to share between threads by reference
 //! (for example inside an `Arc`), and none needs a background sweeper: expired state is
 //! reclaimed in place.
 //!
@@ -15,6 +19,8 @@
 //!   budgets; a full probe window evicts the cell closest to draining.
 //! - [`ban_table::BanTable`]: temporary bans with versioned, lock-free reads, placed by a
 //!   secret keyed hash; a full probe window refuses a new ban instead of evicting one.
+//! - [`placement`]: the keyed [`placement::ClientHash`] a caller computes once per request
+//!   and hands to every limiter and ban table, each of which derives its own placement.
 //! - [`telemetry`], [`challenge_metrics`], [`rule_hits`], [`incidents`]: Sibuna's console
 //!   counters and sample queues; they depend on nothing outside this crate.
 //!
@@ -62,11 +68,17 @@
 //!
 //! Security fixes (2026-10-15, approved by the maintainer):
 //!
-//! - The limiter and the ban table place keys with a keyed hash (`RandomState`, SipHash-1-3
-//!   today) whose key each table draws once from operating-system randomness. Zig used
-//!   Wyhash with seeds written in the source, so anyone could compute addresses that share
-//!   a victim's probe window. Placement is process-local and never on the wire; the Zig key
-//!   vectors are gone. The keyed hash costs about 10 ns per operation (see the report).
+//! - The limiter and the ban table place keys by a secret keyed hash. Zig used Wyhash with
+//!   seeds written in the source, so anyone could compute addresses that share a victim's
+//!   probe window. A caller hashes the client once per request with a
+//!   [`placement::ClientHasher`] (SipHash-1-3 under a key drawn from operating-system
+//!   randomness) and passes the [`placement::ClientHash`] to each table, which derives its
+//!   key with a secret of its own and the SplitMix64 finaliser (two multiplications). The
+//!   methods that take bytes hash them with the table's own hasher. Placement is
+//!   process-local and never on the wire; the Zig key vectors are gone. On a Ryzen 9 5950X
+//!   (`tests/timing.rs`) a table operation on a precomputed hash costs about what the
+//!   unkeyed Zig-style one did (GCRA 7.5 against 6.2 ns, ban lookup 2.7 against 5.5 ns), and
+//!   the one SipHash of a 17-byte client key costs about 10 ns per request.
 //! - The limiter's size is an option ([`limiter::RateLimiter::with_cells`], 262,144 cells
 //!   by default instead of 8,192), and a full probe window evicts the cell with the oldest
 //!   TAT instead of refusing the new client; the decision reports `evicted` instead of
@@ -76,7 +88,7 @@
 //!   rather than evicting a ban still in effect. `lift` no longer takes a slot.
 //! - The spent set's size is an option ([`spent::SpentSet::with_capacity`], 1,048,576 tags
 //!   by default instead of 65,536); its slots shrank to 24 bytes (the probe distance is
-//!   derived from the slot index, and the expiry's niche marks an empty slot).
+//!   derived from the slot index, and a zero expiry marks an empty slot).
 //!
 //! The Vyukov ring stays. Replacing it with `std::sync::mpsc::sync_channel` was measured
 //! (`tests/timing.rs`, `bounded_queue_producers`): with sixteen producers the channel cost
@@ -105,7 +117,8 @@
 //!   fixed storage once in `new()` instead of being embedded and filled in place with
 //!   `undefined`, so no constructor needs a large stack frame.
 //! - `undefined` queue slots: `MaybeUninit` slots whose state the sequence numbers track;
-//!   spent-set slots are `Option<Entry>` instead of an `occupied` flag.
+//!   spent-set slots hold an expiry of zero when empty instead of an `occupied` flag, and
+//!   are read as `Option<Entry>`.
 //! - Sentinels: a challenge record holds `Option` for an absent duration or cause (Zig's
 //!   `maxInt(u32)` and 255) and enums for its outcome and algorithm.
 //! - Length fields that callers had to respect: telemetry and incident records keep their
@@ -117,6 +130,7 @@ pub mod ban_table;
 pub mod challenge_metrics;
 pub mod incidents;
 pub mod limiter;
+pub mod placement;
 pub mod ring;
 pub mod rule_hits;
 pub mod spent;

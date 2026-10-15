@@ -5,9 +5,13 @@
 //! open-addressed by a keyed hash of the banned key (an address, say) with an 8-slot probe
 //! window, and expire by timestamp, so no sweeper runs.
 //!
-//! The slot key is a keyed hash (the standard library's `RandomState`, SipHash-1-3 today)
-//! whose key is drawn once per table from operating-system randomness, so nobody outside
-//! the process can compute which bans share a probe window. A ban takes the key's own
+//! The slot key is derived from a keyed hash of the banned key (SipHash-1-3 under a key drawn
+//! from operating-system randomness) and a secret the table draws when it is built (see
+//! [`crate::placement`]), so nobody outside the process can compute which bans share a probe
+//! window. A caller that consults several tables per request hashes the client once and
+//! passes the [`ClientHash`] to the `*_hashed` methods; the methods taking bytes hash them
+//! with the table's own hasher. A table must be used through one of the two. A ban takes the
+//! key's own
 //! slot, an unused slot, or a slot whose ban expired or was lifted. When the window holds
 //! only bans still in effect, the new ban is refused ([`BanError::Full`]) and the caller
 //! counts it: a ban in effect is never evicted, so a banned client cannot lift its own ban
@@ -22,9 +26,13 @@
 //! which keeps the argument simple: every access belongs to one total order.
 
 use std::fmt;
-use std::hash::{BuildHasher, RandomState};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, MutexGuard, PoisonError};
+
+use crate::placement::{ClientHash, ClientHasher, TableSecret};
+
+/// The scope slot keys are derived in; the ban table has only one.
+const BAN_SCOPE: u64 = 0;
 
 /// The slots of a table built with [`BanTable::new`]: 65,536 (1.5 MiB).
 pub const DEFAULT_CAPACITY: usize = 1 << 16;
@@ -66,8 +74,10 @@ pub struct BanTable {
     /// A power of two of slots; indices are masked with `mask`.
     slots: Box<[Slot]>,
     mask: usize,
-    /// The secret placement key, drawn once when the table is built.
-    keys: RandomState,
+    /// Hashes keys for the methods that take bytes.
+    hasher: ClientHasher,
+    /// The secret slot keys are derived with, drawn once when the table is built.
+    secret: TableSecret,
     /// Serialises writers (bans, lifts, counts and clears); readers do not take it.
     write_lock: Mutex<()>,
 }
@@ -80,13 +90,14 @@ impl BanTable {
 
     /// Returns an empty table of about `capacity` slots of 24 bytes, allocated here once:
     /// `capacity` is clamped to [`MIN_CAPACITY`]`..=`[`MAX_CAPACITY`] and rounded up to a
-    /// power of two. Draws a fresh secret placement key. Never fails.
+    /// power of two. Draws a fresh placement secret and hasher key. Never fails.
     pub fn with_capacity(capacity: usize) -> Self {
         let slots = capacity.clamp(MIN_CAPACITY, MAX_CAPACITY).next_power_of_two();
         Self {
             slots: (0..slots).map(|_| Slot::default()).collect(),
             mask: slots - 1,
-            keys: RandomState::new(),
+            hasher: ClientHasher::new(),
+            secret: TableSecret::draw(),
             write_lock: Mutex::new(()),
         }
     }
@@ -96,10 +107,10 @@ impl BanTable {
         self.slots.len()
     }
 
-    /// Derives the slot key of `banned`: the table's keyed hash, zero mapped to one.
+    /// Derives the (non-zero) slot key of the key whose keyed hash is `banned`.
     #[inline]
-    pub(crate) fn slot_key(&self, banned: &[u8]) -> u64 {
-        self.keys.hash_one(banned).max(1)
+    pub(crate) fn slot_key(&self, banned: ClientHash) -> u64 {
+        self.secret.place(banned, BAN_SCOPE)
     }
 
     /// The slot `probe` steps after `key`'s home. The mask keeps it below `slots.len()`.
@@ -120,6 +131,15 @@ impl BanTable {
     /// neither the key, nor an unused slot, nor a ban that expired before `now` or was
     /// lifted.
     pub fn ban(&self, banned: &[u8], until: u64, now: u64) -> Result<(), BanError> {
+        self.ban_hashed(self.hasher.hash(banned), until, now)
+    }
+
+    /// Bans the key whose keyed hash is `banned`, as [`BanTable::ban`] does for bytes.
+    ///
+    /// # Errors
+    ///
+    /// [`BanError::Full`], changing nothing, as for [`BanTable::ban`].
+    pub fn ban_hashed(&self, banned: ClientHash, until: u64, now: u64) -> Result<(), BanError> {
         let key = self.slot_key(banned);
         let _writers = self.lock_writers();
         let slot = self.vacancy(key, now).ok_or(BanError::Full)?;
@@ -167,7 +187,15 @@ impl BanTable {
     ///
     /// A reader that meets a slot being rewritten spins until the writer finishes; writes
     /// are a handful of stores, so the wait is short.
+    #[inline]
     pub fn is_banned(&self, banned: &[u8], now: u64) -> bool {
+        self.is_banned_hashed(self.hasher.hash(banned), now)
+    }
+
+    /// Returns whether the key whose keyed hash is `banned` is under a ban in effect at
+    /// `now`, as [`BanTable::is_banned`] does for bytes. Never blocks.
+    #[inline]
+    pub fn is_banned_hashed(&self, banned: ClientHash, now: u64) -> bool {
         let key = self.slot_key(banned);
         for probe in 0..MAX_PROBE {
             let (k, until) = Self::read_slot(self.slot(key, probe));
@@ -200,6 +228,12 @@ impl BanTable {
     /// Lifts any ban of `banned`; never fails. The key keeps its slot, so a later ban of it
     /// lands there again.
     pub fn lift(&self, banned: &[u8]) {
+        self.lift_hashed(self.hasher.hash(banned));
+    }
+
+    /// Lifts any ban of the key whose keyed hash is `banned`, as [`BanTable::lift`] does for
+    /// bytes; never fails.
+    pub fn lift_hashed(&self, banned: ClientHash) {
         let key = self.slot_key(banned);
         let _writers = self.lock_writers();
         for probe in 0..MAX_PROBE {
@@ -322,7 +356,7 @@ mod tests {
     /// Keys whose slot keys share `anchor`'s home slot in `list`, found by search, as an
     /// attacker who knew the placement key would.
     fn colliding_keys(list: &BanTable, anchor: &str, count: usize) -> Vec<String> {
-        let home = |key: &[u8]| list.slot_key(key) as usize & list.mask;
+        let home = |key: &[u8]| list.slot_key(list.hasher.hash(key)) as usize & list.mask;
         let target = home(anchor.as_bytes());
         let mut keys = vec![anchor.to_owned()];
         let others = (0u32..).map(|n| format!("k{n}")).filter(|k| home(k.as_bytes()) == target);
@@ -387,10 +421,56 @@ mod tests {
     #[test]
     fn slot_keys_differ_between_tables() {
         let (a, b) = (BanTable::new(), BanTable::new());
+        let shared = ClientHasher::new();
         for n in 0..256u32 {
             let ip = format!("2001:db8::{n:x}");
-            assert_ne!(a.slot_key(ip.as_bytes()), b.slot_key(ip.as_bytes()));
+            let own = |list: &BanTable| list.slot_key(list.hasher.hash(ip.as_bytes()));
+            assert_ne!(own(&a), own(&b));
+            // One hash of the client, shared by both tables, still lands differently.
+            let hash = shared.hash(ip.as_bytes());
+            assert_ne!(a.slot_key(hash), b.slot_key(hash));
         }
+    }
+
+    /// The daemon's way: one hasher for the process, each request hashed once. A set that
+    /// collides in one table, found by an attacker who could see that table's placement, is
+    /// scattered in another table given the very same hashes.
+    #[test]
+    fn a_colliding_set_does_not_transfer_between_tables_sharing_a_hasher() {
+        let hasher = ClientHasher::new();
+        let (known, other) =
+            (BanTable::with_capacity(MIN_CAPACITY), BanTable::with_capacity(MIN_CAPACITY));
+        let home = |list: &BanTable, key: &str| {
+            list.slot_key(hasher.hash(key.as_bytes())) as usize & list.mask
+        };
+        let target = home(&known, "victim");
+        let keys: Vec<String> = (0u32..)
+            .map(|n| format!("k{n}"))
+            .filter(|key| home(&known, key) == target)
+            .take(MAX_PROBE + 1)
+            .collect();
+        let refused = |list: &BanTable| {
+            let banned = |key: &String| list.ban_hashed(hasher.hash(key.as_bytes()), 1000, 0);
+            keys.iter().filter(|key| banned(key).is_err()).count()
+        };
+        assert_eq!(refused(&known), 1);
+        assert_eq!(refused(&other), 0);
+        let homes: std::collections::HashSet<usize> =
+            keys.iter().map(|key| home(&other, key)).collect();
+        assert!(homes.len() > MAX_PROBE / 2, "{homes:?}");
+    }
+
+    #[test]
+    fn hashed_and_byte_methods_agree_within_their_own_hasher() {
+        let list = BanTable::new();
+        let hash = list.hasher.hash(b"10.0.0.9");
+        list.ban(b"10.0.0.9", 200, 100).unwrap();
+        assert!(list.is_banned_hashed(hash, 150));
+        list.lift_hashed(hash);
+        assert!(!list.is_banned(b"10.0.0.9", 150));
+        list.ban_hashed(hash, 300, 100).unwrap();
+        assert!(list.is_banned(b"10.0.0.9", 250));
+        assert!(!list.is_banned_hashed(list.hasher.hash(b"10.0.0.8"), 250));
     }
 
     #[test]

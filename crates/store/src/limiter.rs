@@ -16,12 +16,18 @@
 //!
 //! # Placement is secret
 //!
-//! A client's cell key is a keyed hash (the standard library's `RandomState`, SipHash-1-3
-//! today, keyed from operating-system randomness) of the scope and the client bytes. The key
-//! is drawn once per limiter, so cell placement differs between processes and between
-//! limiters, and is never on the wire. With a public hash (the Zig version used Wyhash with
-//! fixed seeds) an attacker could compute addresses whose cells share a victim's probe
-//! window and crowd the victim out.
+//! A client's cell key is derived from a keyed hash of the client (SipHash-1-3 under a key
+//! drawn from operating-system randomness, see [`crate::placement`]), the limiter's own secret
+//! and the scope. Every limiter draws its secret when it is built, so cell placement differs
+//! between processes and between limiters, and is never on the wire. With a public hash (the
+//! Zig version used Wyhash with fixed seeds) an attacker could compute addresses whose cells
+//! share a victim's probe window and crowd the victim out.
+//!
+//! A caller that consults several tables per request hashes the client once with a
+//! [`ClientHasher`] and passes the [`ClientHash`] to [`RateLimiter::check_hashed`]; the
+//! derivation per table is two multiplications. [`RateLimiter::check`] and
+//! [`RateLimiter::check_scoped`] hash the bytes with the limiter's own hasher instead. A
+//! limiter must be used through one of the two, or a client gets two cells.
 //!
 //! # A full probe window evicts
 //!
@@ -39,9 +45,10 @@
 //! spin lock whose holder is preempted makes every waiter burn its time slice.
 
 use std::fmt;
-use std::hash::{BuildHasher, Hasher, RandomState};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, MutexGuard, PoisonError};
+
+use crate::placement::{ClientHash, ClientHasher, TableSecret};
 
 /// The number of independently locked shards.
 pub const SHARD_COUNT: usize = 16;
@@ -106,12 +113,14 @@ pub struct Decision {
     pub remaining: u32,
 }
 
-/// One client's state. Key zero marks an empty cell.
-#[derive(Clone, Copy, Debug, Default)]
-struct Cell {
-    key: u64,
-    tat_ms: u64,
-}
+/// One client's state, `[key, tat_ms]`; key zero marks an empty cell. A plain array rather
+/// than a struct, because `vec![[0; 2]; n]` asks the allocator for zeroed memory: the kernel
+/// maps a page of cells only when one is first written, so an idle limiter is not resident.
+type Cell = [u64; 2];
+/// The index of a cell's key.
+const KEY: usize = 0;
+/// The index of a cell's theoretical arrival time in milliseconds.
+const TAT: usize = 1;
 
 /// The cells of one shard, on cache lines of their own so neighbouring locks do not
 /// false-share. The cell count is a power of two; indices are masked with `mask`.
@@ -125,10 +134,7 @@ impl Shard {
     /// Returns a shard of `slots` empty cells; `slots` is a power of two of at least
     /// `MAX_PROBE`.
     fn new(slots: usize) -> Self {
-        Self {
-            cells: Mutex::new(vec![Cell::default(); slots].into_boxed_slice()),
-            mask: slots - 1,
-        }
+        Self { cells: Mutex::new(vec![[0; 2]; slots].into_boxed_slice()), mask: slots - 1 }
     }
 
     /// Locks the cells. Nothing panics while the lock is held; were a panic ever to occur,
@@ -150,7 +156,7 @@ fn arrive(cells: &mut [Cell], mask: usize, key: u64, now_ms: u64, limits: Limits
     let interval = limits.emission_interval();
     let tau = limits.burst_tolerance();
     let (cell, evicted) = locate(cells, mask, key, now_ms, tau);
-    let tat = cell.tat_ms.max(now_ms);
+    let tat = cell[TAT].max(now_ms);
     let horizon = now_ms.saturating_add(tau);
     if tat > horizon {
         // `tat > now_ms + tau` without saturation, so the difference is positive.
@@ -161,11 +167,11 @@ fn arrive(cells: &mut [Cell], mask: usize, key: u64, now_ms: u64, limits: Limits
             remaining: 0,
         };
     }
-    cell.tat_ms = tat.saturating_add(interval);
-    let remaining = if cell.tat_ms > horizon {
+    cell[TAT] = tat.saturating_add(interval);
+    let remaining = if cell[TAT] > horizon {
         0
     } else {
-        let further = ((horizon - cell.tat_ms) / interval).saturating_add(1);
+        let further = ((horizon - cell[TAT]) / interval).saturating_add(1);
         // The minimum with `rate` fits in `u32`.
         further.min(u64::from(limits.rate)) as u32
     };
@@ -181,7 +187,7 @@ fn locate(cells: &mut [Cell], mask: usize, key: u64, now_ms: u64, tau: u64) -> (
     let home = (key >> 8) as usize & mask;
     // Fast path for the common case: a returning client in its home cell. The scan below
     // would return the same cell at its first probe.
-    if cells[home].key == key {
+    if cells[home][KEY] == key {
         return (&mut cells[home], false);
     }
     let mut free = None;
@@ -190,13 +196,13 @@ fn locate(cells: &mut [Cell], mask: usize, key: u64, now_ms: u64, tau: u64) -> (
     for probe in 0..MAX_PROBE {
         let idx = (home + probe) & mask;
         let cell = cells[idx];
-        if cell.key == key {
+        if cell[KEY] == key {
             return (&mut cells[idx], false);
         }
-        if free.is_none() && (cell.key == 0 || cell.tat_ms.saturating_add(tau) < now_ms) {
+        if free.is_none() && (cell[KEY] == 0 || cell[TAT].saturating_add(tau) < now_ms) {
             free = Some(idx);
         }
-        if cell.tat_ms < cells[oldest].tat_ms {
+        if cell[TAT] < cells[oldest][TAT] {
             oldest = idx;
         }
     }
@@ -205,19 +211,8 @@ fn locate(cells: &mut [Cell], mask: usize, key: u64, now_ms: u64, tau: u64) -> (
         None => (oldest, true),
     };
     let cell = &mut cells[victim];
-    *cell = Cell { key, tat_ms: 0 };
+    *cell = [key, 0];
     (cell, evicted)
-}
-
-/// Derives the cell key of `client` in `scope`: the limiter's keyed hash of the scope and
-/// the client bytes. Key zero marks an empty cell, so a hash of zero is nudged to one.
-#[inline]
-fn client_key(keys: &RandomState, scope: u64, client: &[u8]) -> u64 {
-    let mut hasher = keys.build_hasher();
-    // The scope has a fixed width, so scope and client cannot run into each other.
-    hasher.write_u64(scope);
-    hasher.write(client);
-    hasher.finish().max(1)
 }
 
 /// Returns the per-shard cell count for a request of `cells` in all: clamped to
@@ -230,8 +225,10 @@ fn shard_slots(cells: usize) -> usize {
 /// are identified by byte strings (an address, say) within a scope.
 pub struct RateLimiter {
     shards: [Shard; SHARD_COUNT],
-    /// The secret placement key, drawn once when the limiter is built.
-    keys: RandomState,
+    /// Hashes client bytes for [`RateLimiter::check`] and [`RateLimiter::check_scoped`].
+    hasher: ClientHasher,
+    /// The secret placement keys are derived with, drawn once when the limiter is built.
+    secret: TableSecret,
     /// Arrivals that evicted another active client's cell (relaxed: a statistic).
     evictions: AtomicU64,
 }
@@ -244,12 +241,13 @@ impl RateLimiter {
 
     /// Returns a limiter of about `cells` empty cells of 16 bytes each, allocated here
     /// once: `cells` is clamped to [`MIN_CELLS`]`..=`[`MAX_CELLS`] and rounded up to a power
-    /// of two. Draws a fresh secret placement key. Never fails.
+    /// of two. Draws a fresh placement secret and hasher key. Never fails.
     pub fn with_cells(cells: usize) -> Self {
         let slots = shard_slots(cells);
         Self {
             shards: std::array::from_fn(|_| Shard::new(slots)),
-            keys: RandomState::new(),
+            hasher: ClientHasher::new(),
+            secret: TableSecret::draw(),
             evictions: AtomicU64::new(0),
         }
     }
@@ -275,12 +273,27 @@ impl RateLimiter {
     ///
     /// The same client in different scopes has independent budgets, so one limiter can
     /// serve several stable rules. A zero `limits.rate` refuses every arrival with a retry
-    /// delay of one window. The cell key is the limiter's keyed hash of `scope` and
-    /// `client` (see the module documentation).
+    /// delay of one window. The client bytes are hashed with the limiter's own hasher; a
+    /// caller that already holds a [`ClientHash`] calls [`RateLimiter::check_hashed`].
     #[inline]
     pub fn check_scoped(
         &self,
         client: &[u8],
+        scope: u64,
+        now_ms: u64,
+        limits: Limits,
+    ) -> Decision {
+        self.check_hashed(self.hasher.hash(client), scope, now_ms, limits)
+    }
+
+    /// Records one arrival from the client whose keyed hash is `client` within `scope` at
+    /// `now_ms`, as [`RateLimiter::check_scoped`] does for bytes. The hash comes from the one
+    /// [`ClientHasher`] this limiter is always given; deriving the cell key from it costs two
+    /// multiplications. Never fails.
+    #[inline]
+    pub fn check_hashed(
+        &self,
+        client: ClientHash,
         scope: u64,
         now_ms: u64,
         limits: Limits,
@@ -293,12 +306,18 @@ impl RateLimiter {
                 remaining: 0,
             };
         }
-        let key = client_key(&self.keys, scope, client);
+        let key = self.cell_key(client, scope);
         let decision = self.shards[(key % SHARD_COUNT as u64) as usize].check(key, now_ms, limits);
         if decision.evicted {
             self.evictions.fetch_add(1, Ordering::Relaxed);
         }
         decision
+    }
+
+    /// Derives the (non-zero) cell key of `client` in `scope` from the limiter's secret.
+    #[inline]
+    fn cell_key(&self, client: ClientHash, scope: u64) -> u64 {
+        self.secret.place(client, scope)
     }
 
     /// Returns whether `client` exceeded `limit` requests per `window_seconds` with this
@@ -440,13 +459,18 @@ mod tests {
         assert!(!limiter.check_scoped(b"client-a", 1, 1100, limits).limited);
     }
 
-    /// Returns `count` clients whose cells share `victim`'s shard and home cell in
-    /// `limiter`, found by search, as an attacker who knew the placement key would.
-    fn colliding_clients(limiter: &RateLimiter, victim: &[u8], count: usize) -> Vec<String> {
-        let place = |client: &[u8]| {
-            let key = client_key(&limiter.keys, DEFAULT_SCOPE, client);
-            (key % SHARD_COUNT as u64, (key >> 8) as usize & limiter.shards[0].mask)
-        };
+    /// Returns where `limiter` puts the cell key `key`: its shard and its home cell.
+    fn place(limiter: &RateLimiter, key: u64) -> (u64, usize) {
+        (key % SHARD_COUNT as u64, (key >> 8) as usize & limiter.shards[0].mask)
+    }
+
+    /// Returns `count` clients that `place` puts where it puts `victim`, found by search, as
+    /// an attacker who could see the placement would.
+    fn colliding_clients(
+        place: impl Fn(&[u8]) -> (u64, usize),
+        victim: &[u8],
+        count: usize,
+    ) -> Vec<String> {
         let target = place(victim);
         (0u32..)
             .map(|n| format!("2001:db8::{n:x}"))
@@ -455,13 +479,21 @@ mod tests {
             .collect()
     }
 
+    /// The clients that crowd `victim` out of `limiter` through its own hasher.
+    fn crowding_own(limiter: &RateLimiter, victim: &[u8]) -> Vec<String> {
+        let own = |client: &[u8]| {
+            place(limiter, limiter.cell_key(limiter.hasher.hash(client), DEFAULT_SCOPE))
+        };
+        colliding_clients(own, victim, MAX_PROBE)
+    }
+
     /// Precomputed collisions crowd a victim out only in the limiter they were computed
     /// for: another limiter (another process) places the same clients elsewhere.
     #[test]
     fn a_colliding_set_built_for_one_limiter_does_not_collide_in_another() {
         let limits = Limits { rate: 1, window_ms: 10_000 };
         let known = RateLimiter::with_cells(MIN_CELLS);
-        let attackers = colliding_clients(&known, b"victim", MAX_PROBE);
+        let attackers = crowding_own(&known, b"victim");
         for limiter in [&known, &RateLimiter::with_cells(MIN_CELLS)] {
             for attacker in &attackers {
                 assert!(!limiter.check(attacker.as_bytes(), 0, limits).limited);
@@ -478,35 +510,108 @@ mod tests {
         assert_eq!(known.eviction_count(), 1);
     }
 
+    /// Sends one arrival of every attacker and then the victim, all through `hasher` in
+    /// `scope`, and returns whether the victim's arrival evicted a cell.
+    fn victim_evicted(
+        limiter: &RateLimiter,
+        hasher: &ClientHasher,
+        attackers: &[String],
+        scope: u64,
+    ) -> bool {
+        let limits = Limits { rate: 1, window_ms: 10_000 };
+        for attacker in attackers {
+            let hash = hasher.hash(attacker.as_bytes());
+            assert!(!limiter.check_hashed(hash, scope, 0, limits).limited);
+        }
+        limiter.check_hashed(hasher.hash(b"victim"), scope, 0, limits).evicted
+    }
+
+    /// The daemon's way: one hasher for the process, each client hashed once per request
+    /// and the hash given to every table. A set found to collide in one limiter in one scope
+    /// collides nowhere else: not in another limiter given the same hashes, not in another
+    /// scope of the same limiter, and not under another hasher (another process).
+    #[test]
+    fn a_colliding_set_does_not_transfer_between_tables_scopes_or_hashers() {
+        let hasher = ClientHasher::new();
+        let known = RateLimiter::with_cells(MIN_CELLS);
+        let in_known = |client: &[u8]| place(&known, known.cell_key(hasher.hash(client), 1));
+        let attackers = colliding_clients(in_known, b"victim", MAX_PROBE);
+        assert!(victim_evicted(&known, &hasher, &attackers, 1), "the set crowds its target");
+        let other = RateLimiter::with_cells(MIN_CELLS);
+        assert!(!victim_evicted(&other, &hasher, &attackers, 1), "another table");
+        let fresh = RateLimiter::with_cells(MIN_CELLS);
+        let in_fresh = |client: &[u8]| place(&fresh, fresh.cell_key(hasher.hash(client), 1));
+        let attackers = colliding_clients(in_fresh, b"victim", MAX_PROBE);
+        assert!(!victim_evicted(&fresh, &hasher, &attackers, 2), "another scope");
+        assert!(!victim_evicted(&fresh, &ClientHasher::new(), &attackers, 1), "another hasher");
+        assert_eq!(other.eviction_count() + fresh.eviction_count(), 0);
+    }
+
     #[test]
     fn placement_keys_differ_between_limiters_and_keep_scopes_apart() {
         let (a, b) = (RateLimiter::new(), RateLimiter::new());
+        let shared = ClientHasher::new();
         for n in 0..256u32 {
             let client = format!("198.51.100.{n}");
-            let key_a = client_key(&a.keys, DEFAULT_SCOPE, client.as_bytes());
-            assert_ne!(key_a, client_key(&b.keys, DEFAULT_SCOPE, client.as_bytes()));
-            assert_ne!(key_a, client_key(&a.keys, DEFAULT_SCOPE + 1, client.as_bytes()));
+            let own = |limiter: &RateLimiter, scope| {
+                limiter.cell_key(limiter.hasher.hash(client.as_bytes()), scope)
+            };
+            let key_a = own(&a, DEFAULT_SCOPE);
+            assert_ne!(key_a, own(&b, DEFAULT_SCOPE));
+            assert_ne!(key_a, own(&a, DEFAULT_SCOPE + 1));
             assert_ne!(key_a, 0);
+            let hash = shared.hash(client.as_bytes());
+            assert_ne!(a.cell_key(hash, DEFAULT_SCOPE), b.cell_key(hash, DEFAULT_SCOPE));
         }
+    }
+
+    #[test]
+    fn hashed_and_byte_checks_share_cells_within_one_hasher() {
+        let limiter = RateLimiter::new();
+        let limits = Limits { rate: 2, window_ms: 1000 };
+        let hash = limiter.hasher.hash(b"192.0.2.5");
+        assert!(!limiter.check(b"192.0.2.5", 0, limits).limited);
+        assert!(!limiter.check_hashed(hash, DEFAULT_SCOPE, 0, limits).limited);
+        assert!(limiter.check(b"192.0.2.5", 0, limits).limited);
+        assert!(!limiter.check_hashed(hash, 7, 0, limits).limited);
+        let zero = Limits { rate: 0, window_ms: 500 };
+        assert_eq!(limiter.check_hashed(hash, 7, 0, zero).retry_after_ms, 500);
     }
 
     /// The clients whose keys the placement probe prints.
     const PROBE_CLIENTS: [&str; 4] = ["192.0.2.1", "2001:db8::1", "10.0.0.1", ""];
 
-    /// Prints the cell keys of `PROBE_CLIENTS` in a fresh limiter and the slot keys of a
-    /// fresh ban table; run as a child process by the test below.
+    /// Returns, for `client` and its index `n`: its hash under a fresh process hasher, its
+    /// cell key in `limiter` through the limiter's own hasher, and the cell and slot keys
+    /// that `limiter` and `bans` derive from the fixed hash `n`, all as hexadecimal text.
+    fn probe_line(
+        hasher: &ClientHasher,
+        limiter: &RateLimiter,
+        bans: &crate::ban_table::BanTable,
+        client: &str,
+        n: u64,
+    ) -> String {
+        let hash = hasher.hash(client.as_bytes()).raw();
+        let own = limiter.cell_key(limiter.hasher.hash(client.as_bytes()), DEFAULT_SCOPE);
+        let fixed = ClientHash::from_raw(n);
+        let cell = limiter.cell_key(fixed, DEFAULT_SCOPE);
+        format!("{hash:016x} {own:016x} {cell:016x} {:016x}", bans.slot_key(fixed))
+    }
+
+    /// Prints the probe lines of `PROBE_CLIENTS` for a fresh hasher, limiter and ban table;
+    /// run as a child process by the test below.
     #[test]
     #[ignore = "helper run by placement_keys_differ_between_processes"]
     fn placement_probe() {
-        let limiter = RateLimiter::new();
+        let (hasher, limiter) = (ClientHasher::new(), RateLimiter::new());
         let bans = crate::ban_table::BanTable::new();
-        for client in PROBE_CLIENTS {
-            let cell = client_key(&limiter.keys, DEFAULT_SCOPE, client.as_bytes());
-            println!("PLACEMENT={cell:016x} {:016x}", bans.slot_key(client.as_bytes()));
+        for (n, client) in (0..).zip(PROBE_CLIENTS) {
+            println!("PLACEMENT={}", probe_line(&hasher, &limiter, &bans, client, n));
         }
     }
 
-    /// Runs this test binary again and compares the keys its fresh tables use with ours.
+    /// Runs this test binary again and compares the keys its fresh hasher and tables
+    /// produce with ours: every one differs, the derivations from a fixed hash included.
     #[test]
     fn placement_keys_differ_between_processes() {
         let output = std::process::Command::new(std::env::current_exe().unwrap())
@@ -521,14 +626,13 @@ mod tests {
             .filter_map(|l| l.split_once("PLACEMENT=").map(|(_, keys)| keys))
             .collect();
         assert_eq!(child.len(), PROBE_CLIENTS.len(), "{text}");
-        let limiter = RateLimiter::new();
+        let (hasher, limiter) = (ClientHasher::new(), RateLimiter::new());
         let bans = crate::ban_table::BanTable::new();
-        for (client, line) in PROBE_CLIENTS.iter().zip(child) {
-            let cell = client_key(&limiter.keys, DEFAULT_SCOPE, client.as_bytes());
-            let slot = bans.slot_key(client.as_bytes());
-            let (child_cell, child_slot) = line.split_once(' ').unwrap();
-            assert_ne!(format!("{cell:016x}"), child_cell, "{client:?}");
-            assert_ne!(format!("{slot:016x}"), child_slot, "{client:?}");
+        for ((n, client), line) in (0..).zip(PROBE_CLIENTS).zip(child) {
+            let ours = probe_line(&hasher, &limiter, &bans, client, n);
+            for (mine, theirs) in ours.split(' ').zip(line.split(' ')) {
+                assert_ne!(mine, theirs, "{client:?}: {ours} against {line}");
+            }
         }
     }
 

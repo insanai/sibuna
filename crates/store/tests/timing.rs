@@ -15,7 +15,8 @@ use std::time::Instant;
 
 use sibuna_crypto::wyhash;
 use sibuna_store::ban_table::BanTable;
-use sibuna_store::limiter::{Limits, RateLimiter};
+use sibuna_store::limiter::{DEFAULT_SCOPE, Limits, RateLimiter};
+use sibuna_store::placement::{ClientHash, ClientHasher};
 use sibuna_store::ring::BoundedQueue;
 use sibuna_store::spent::{self, SpentSet, Tag};
 
@@ -253,6 +254,145 @@ fn ban_table_ban() {
             iters
         },
     );
+}
+
+/// The daemon's client keys for `TEST_IPS`: a zero byte and the 16-byte IPv4-mapped address.
+fn daemon_keys() -> Vec<[u8; 17]> {
+    TEST_IPS
+        .iter()
+        .map(|ip| {
+            let text = std::str::from_utf8(ip).expect("benchmark addresses are text");
+            let address: std::net::Ipv4Addr = text.parse().expect("benchmark addresses are IPv4");
+            let mut key = [0u8; 17];
+            key[1..].copy_from_slice(&address.to_ipv6_mapped().octets());
+            key
+        })
+        .collect()
+}
+
+/// The keyed hash the daemon computes once per request, of a 17-byte client key.
+#[test]
+#[ignore = "timing run; use --release"]
+fn client_hash_once_per_request() {
+    let keys = daemon_keys();
+    measure(
+        "placement/client_hash (SipHash-1-3, 17 bytes)",
+        1_000_000,
+        ClientHasher::new,
+        |h, n| {
+            (0..n).fold(0u64, |acc, i| {
+                let hash = h.hash(black_box(&keys[(i % 6) as usize]));
+                acc.wrapping_add(u64::from(black_box(hash) == black_box(hash)))
+            })
+        },
+    );
+    let key = [7u8; 32];
+    measure(
+        "placement/keyed BLAKE3 (17 bytes, for comparison)",
+        1_000_000,
+        || key,
+        |k, n| {
+            (0..n).fold(0u64, |acc, i| {
+                let digest =
+                    sibuna_crypto::blake3::keyed_hash(k, black_box(&keys[(i % 6) as usize]));
+                acc.wrapping_add(u64::from(digest[0]))
+            })
+        },
+    );
+}
+
+/// The limiter and the ban table with the client hashes computed beforehand: the cost of a
+/// table operation alone, comparable with the Zig figures and the pre-keyed tables.
+#[test]
+#[ignore = "timing run; use --release"]
+fn table_operations_on_precomputed_hashes() {
+    let hasher = ClientHasher::new();
+    let hashes: Vec<ClientHash> = TEST_IPS.iter().map(|ip| hasher.hash(ip)).collect();
+    let limits = Limits { rate: 100, window_ms: 10_000 };
+    measure(
+        "rate_limiter/gcra_check_hashed",
+        200_000,
+        || Box::new(RateLimiter::new()),
+        |l, n| {
+            (0..n)
+                .map(|i| {
+                    l.check_hashed(hashes[(i % 6) as usize], DEFAULT_SCOPE, 10_000 + i, limits)
+                })
+                .filter(|d| d.limited)
+                .count() as u64
+        },
+    );
+    measure(
+        "rate_limiter/gcra_four_rule_scopes_hashed",
+        200_000,
+        || Box::new(RateLimiter::new()),
+        |l, n| {
+            let scoped = |i: u64| {
+                l.check_hashed(hashes[(i % 6) as usize], 1 + (i / 6) % 4, 10_000 + i, limits)
+            };
+            (0..n).map(scoped).filter(|d| d.limited).count() as u64
+        },
+    );
+    let table = ban_table_with_bans();
+    measure(
+        "ban_table/is_banned_hashed",
+        200_000,
+        || &table,
+        |t, n| (0..n).map(|i| u64::from(t.is_banned_hashed(hashes[(i % 6) as usize], 500))).sum(),
+    );
+}
+
+/// The tables the daemon consults for one admitted request.
+struct DaemonTables {
+    hasher: ClientHasher,
+    bans: Box<BanTable>,
+    requests: Box<RateLimiter>,
+    rules: Box<RateLimiter>,
+}
+
+fn daemon_tables() -> DaemonTables {
+    DaemonTables {
+        hasher: ClientHasher::new(),
+        bans: ban_table_with_bans(),
+        requests: Box::new(RateLimiter::new()),
+        rules: Box::new(RateLimiter::new()),
+    }
+}
+
+/// The store work of one admitted request whose rule has a quota: the ban table, the
+/// request limiter and the rule limiter. First with the bytes hashed in every table (the
+/// daemon before this change), then with one client hash per request (the daemon now).
+#[test]
+#[ignore = "timing run; use --release"]
+fn daemon_request_store_path() {
+    let keys = daemon_keys();
+    let limits = Limits { rate: 1_000_000, window_ms: 10_000 };
+    measure("daemon/store_path, hash per table (3 SipHash)", 200_000, daemon_tables, |t, n| {
+        let mut passed = 0;
+        for i in 0..n {
+            let key = &keys[(i % 6) as usize];
+            let now = 10_000 + i;
+            passed += u64::from(
+                !t.bans.is_banned(key, 500)
+                    && !t.requests.check(key, now, limits).limited
+                    && !t.rules.check_scoped(key, 0x5eed, now, limits).limited,
+            );
+        }
+        passed
+    });
+    measure("daemon/store_path, one ClientHash (1 SipHash)", 200_000, daemon_tables, |t, n| {
+        let mut passed = 0;
+        for i in 0..n {
+            let hash = t.hasher.hash(&keys[(i % 6) as usize]);
+            let now = 10_000 + i;
+            passed += u64::from(
+                !t.bans.is_banned_hashed(hash, 500)
+                    && !t.requests.check_hashed(hash, DEFAULT_SCOPE, now, limits).limited
+                    && !t.rules.check_hashed(hash, 0x5eed, now, limits).limited,
+            );
+        }
+        passed
+    });
 }
 
 /// A record the size of a telemetry sample, so a push copies what the daemon copies.
