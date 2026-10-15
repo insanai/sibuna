@@ -154,11 +154,18 @@ pub struct Config {
     /// Whether `X-Forwarded-For` and `X-Real-IP` from the peer are trusted; `None` means
     /// "only in forward-auth mode", where the ingress is the only peer.
     pub trust_forwarded: Option<bool>,
+    /// Trusted proxies in front of the daemon when forwarded identity is trusted: the client
+    /// is the `X-Forwarded-For` entry this many positions from the right (1 is the address
+    /// the nearest proxy appended). Entries further left are written by the client.
+    pub trusted_hops: u8,
     /// Accept threads; zero means one per CPU. Each accepted connection is then served on
     /// its own thread up to `max_connections`.
     pub workers: u16,
     /// Connections served concurrently; further ones are answered 503.
     pub max_connections: u32,
+    /// Connections one client address (the socket peer, never a forwarded header) may hold
+    /// at once; further ones are answered 503. Zero disables the bound.
+    pub max_connections_per_ip: u32,
     /// The longest silence a connection may hold a worker: a request head must arrive
     /// within it, and during an exchange it bounds the gap between successive relayed
     /// chunks on either socket, so a silent origin is cut while a slow active response is
@@ -177,6 +184,17 @@ pub struct Config {
     pub challenge_rate_limit: u32,
     /// The honeypot ban duration in seconds.
     pub ban_seconds: u64,
+    /// The prefix length IPv6 clients are aggregated to for rate limits and bans, so one
+    /// network's addresses share one budget.
+    pub ipv6_prefix: u8,
+    /// Cells of each GCRA limiter table (requests, rule quotas, challenge budget), 16 bytes
+    /// each, rounded up to a power of two.
+    pub rate_table_cells: u32,
+    /// Slots of the ban table, 24 bytes each, rounded up to a power of two.
+    pub ban_table_slots: u32,
+    /// Solved challenges remembered against replay, 24 bytes each: at least the challenge
+    /// lifetime times the peak rate of verified solutions.
+    pub spent_tags: u32,
     /// Whether the semantic WAF runs (shield) or only the challenge (gate).
     pub waf: bool,
     /// Database steps one console period aggregate may spend before it fails as
@@ -223,14 +241,20 @@ impl Default for Config {
             secret_file: None,
             policy_file: None,
             trust_forwarded: None,
+            trusted_hops: 1,
             workers: 0,
             max_connections: 1024,
+            max_connections_per_ip: 64,
             idle_timeout_seconds: 15,
             websocket_idle_timeout_seconds: 300,
             rate_limit: 100,
             rate_window_seconds: 10,
             challenge_rate_limit: 30,
             ban_seconds: 3600,
+            ipv6_prefix: 64,
+            rate_table_cells: 1 << 18,
+            ban_table_slots: 1 << 16,
+            spent_tags: 1 << 20,
             waf: true,
             console_query_steps: 4_000_000,
             console_capture_heads: false,
@@ -334,14 +358,20 @@ impl fmt::Debug for Config {
             .field("secret_file", &self.secret_file)
             .field("policy_file", &self.policy_file)
             .field("trust_forwarded", &self.trust_forwarded)
+            .field("trusted_hops", &self.trusted_hops)
             .field("workers", &self.workers)
             .field("max_connections", &self.max_connections)
+            .field("max_connections_per_ip", &self.max_connections_per_ip)
             .field("idle_timeout_seconds", &self.idle_timeout_seconds)
             .field("websocket_idle_timeout_seconds", &self.websocket_idle_timeout_seconds)
             .field("rate_limit", &self.rate_limit)
             .field("rate_window_seconds", &self.rate_window_seconds)
             .field("challenge_rate_limit", &self.challenge_rate_limit)
             .field("ban_seconds", &self.ban_seconds)
+            .field("ipv6_prefix", &self.ipv6_prefix)
+            .field("rate_table_cells", &self.rate_table_cells)
+            .field("ban_table_slots", &self.ban_table_slots)
+            .field("spent_tags", &self.spent_tags)
             .field("waf", &self.waf)
             .field("console_query_steps", &self.console_query_steps)
             .field("console_capture_heads", &self.console_capture_heads)
@@ -393,6 +423,19 @@ Surface:
   --challenge-rate-limit <n>   Challenge issues and verifies per window (default: 30)
   --ban-seconds <s>            Honeypot ban duration (default: 3600)
   --policy-file, -P <path>     Declarative JSON policy file
+
+Client identity and state tables:
+  --max-connections-per-ip <n> Concurrent connections per client address, 0 = no bound
+                               (default: 64)
+  --trusted-hops <n>           Trusted proxies in front of Sibuna: the client is the n-th
+                               X-Forwarded-For entry from the right (1-8, default: 1)
+  --ipv6-prefix <len>          IPv6 prefix that limits and bans apply to (32-128,
+                               default: 64)
+  --rate-table-cells <n>       Cells per rate limiter table, 16 bytes each
+                               (default: 262144)
+  --ban-table-slots <n>        Ban table slots, 24 bytes each (default: 65536)
+  --spent-tags <n>             Solved challenges remembered, 24 bytes each
+                               (default: 1048576)
 
 Storage (SID 0011):
   --data-dir, -D <path>        One node: persist to the SQLite file <path>/sibuna.db

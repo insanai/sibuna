@@ -77,17 +77,22 @@ fn prometheus_matches_zig() {
     let [record] = &records("prometheus")[..] else { panic!("one prometheus record") };
     let metrics = Metrics::default();
     // The generator stored 1, then v * 7 + 3 for each next counter, and u64::MAX last.
+    // The port's security counters follow Zig's; the Zig counters keep their exposition.
     let mut value: u64 = 1;
     let counters = metrics.counters();
-    for (_, counter) in &counters {
+    let zig_counters = &counters[..sibuna_core::metrics::ZIG_COUNTER_COUNT];
+    for (_, counter) in zig_counters {
         counter.add(value);
         value = value * 7 + 3;
     }
-    let last: &Counter = counters[counters.len() - 1].1;
+    let last: &Counter = zig_counters[zig_counters.len() - 1].1;
     last.add(u64::MAX - last.value());
     let mut out = String::new();
     metrics.write_prometheus(&mut out).unwrap();
-    assert_eq!(out.as_bytes(), &record[0][..]);
+    let zig_lines = 2 * sibuna_core::metrics::ZIG_COUNTER_COUNT;
+    let end = out.match_indices('\n').nth(zig_lines - 1).map_or(out.len(), |(at, _)| at + 1);
+    assert_eq!(&out.as_bytes()[..end], &record[0][..]);
+    assert!(out[end..].starts_with("# TYPE sibuna_bans_refused_total counter\n"));
 }
 
 #[test]

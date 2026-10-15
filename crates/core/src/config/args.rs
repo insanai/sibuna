@@ -137,7 +137,7 @@ impl Fault {
 }
 
 /// Options that take a value. Flags are recognised by `Config::apply_flag` instead.
-const VALUED_OPTIONS: [&str; 35] = [
+const VALUED_OPTIONS: &[&str] = &[
     "--port",
     "-p",
     "--host",
@@ -161,12 +161,18 @@ const VALUED_OPTIONS: [&str; 35] = [
     "--workers",
     "-w",
     "--max-connections",
+    "--max-connections-per-ip",
     "--idle-timeout",
     "--websocket-idle-timeout",
     "--rate-limit",
     "--rate-window",
     "--challenge-rate-limit",
     "--ban-seconds",
+    "--trusted-hops",
+    "--ipv6-prefix",
+    "--rate-table-cells",
+    "--ban-table-slots",
+    "--spent-tags",
     "--data-dir",
     "-D",
     "--database-url",
@@ -323,6 +329,11 @@ impl Config {
                 let limit = u64::from(Config::MAX_CONNECTIONS_LIMIT);
                 self.max_connections = number(value, 1, limit, "1-8192")?;
             }
+            "--max-connections-per-ip" => {
+                let limit = u64::from(Config::MAX_CONNECTIONS_LIMIT);
+                self.max_connections_per_ip =
+                    number(value, 0, limit, "0 for no bound, or 1-8192")?;
+            }
             "--idle-timeout" => {
                 self.idle_timeout_seconds = number(value, 0, 86_400, "seconds 0-86400")?;
             }
@@ -356,6 +367,25 @@ impl Config {
             }
             "--storage-poll-ms" => {
                 self.storage_poll_ms = number(value, 1, 60_000, "milliseconds 1-60000")?;
+            }
+            _ => return self.apply_identity_option(option, value),
+        }
+        Ok(())
+    }
+
+    /// Applies the client identity and state table options.
+    fn apply_identity_option(&mut self, option: &str, value: &str) -> Result<(), Fault> {
+        match option {
+            "--trusted-hops" => self.trusted_hops = number(value, 1, 8, "proxies 1-8")?,
+            "--ipv6-prefix" => self.ipv6_prefix = number(value, 32, 128, "a length 32-128")?,
+            "--rate-table-cells" => {
+                self.rate_table_cells = number(value, 4096, 1 << 24, "cells 4096-16777216")?;
+            }
+            "--ban-table-slots" => {
+                self.ban_table_slots = number(value, 1024, 1 << 24, "slots 1024-16777216")?;
+            }
+            "--spent-tags" => {
+                self.spent_tags = number(value, 65_536, 1 << 24, "tags 65536-16777216")?;
             }
             // Every option in VALUED_OPTIONS is handled above or here.
             _ => return Err(Fault { kind: ArgErrorKind::UnknownOption, expected: "" }),
@@ -462,6 +492,45 @@ mod tests {
         assert!(database_url("PostgreSQL://db").is_ok());
         for bad in ["", "db", "sqlite://x.db", "postgres:/db", "postgres://\n"] {
             assert!(database_url(bad).is_err(), "{bad:?}");
+        }
+    }
+
+    #[test]
+    fn the_per_client_connection_bound_takes_zero_to_the_global_limit() {
+        assert_eq!(Config::default().max_connections_per_ip, 64);
+        let parse = |value: &str| Config::parse_args(&["--max-connections-per-ip", value]);
+        assert_eq!(parse("0").map(|config| config.max_connections_per_ip).ok(), Some(0));
+        assert_eq!(parse("8192").map(|config| config.max_connections_per_ip).ok(), Some(8192));
+        assert!(parse("8193").is_err() && parse("-1").is_err());
+    }
+
+    #[test]
+    fn identity_and_table_options_take_their_ranges() {
+        let config = Config::default();
+        assert_eq!((config.trusted_hops, config.ipv6_prefix), (1, 64));
+        assert_eq!((config.rate_table_cells, config.ban_table_slots), (1 << 18, 1 << 16));
+        assert_eq!(config.spent_tags, 1 << 20);
+        let parse = |option: &str, value: &str| Config::parse_args(&[option, value]);
+        let hops = parse("--trusted-hops", "3").map(|config| config.trusted_hops);
+        assert_eq!(hops.ok(), Some(3));
+        let prefix = parse("--ipv6-prefix", "48").map(|config| config.ipv6_prefix);
+        assert_eq!(prefix.ok(), Some(48));
+        let cells = parse("--rate-table-cells", "1000000").map(|config| config.rate_table_cells);
+        assert_eq!(cells.ok(), Some(1_000_000));
+        let slots = parse("--ban-table-slots", "1024").map(|config| config.ban_table_slots);
+        assert_eq!(slots.ok(), Some(1024));
+        let tags = parse("--spent-tags", "16777216").map(|config| config.spent_tags);
+        assert_eq!(tags.ok(), Some(1 << 24));
+        for (option, bad) in [
+            ("--trusted-hops", "0"),
+            ("--trusted-hops", "9"),
+            ("--ipv6-prefix", "31"),
+            ("--ipv6-prefix", "129"),
+            ("--rate-table-cells", "4095"),
+            ("--ban-table-slots", "16777217"),
+            ("--spent-tags", "65535"),
+        ] {
+            assert!(parse(option, bad).is_err(), "{option} {bad}");
         }
     }
 

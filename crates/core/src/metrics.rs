@@ -90,10 +90,23 @@ pub struct Metrics {
     pub parse_errors: Counter,
     /// Connections refused because every slot was busy.
     pub overloaded: Counter,
+    /// Bans not recorded because every slot their key may take held a ban in effect.
+    pub bans_refused: Counter,
+    /// Requests whose trusted forwarded client address did not parse; they are judged by
+    /// the socket peer instead.
+    pub forwarded_invalid: Counter,
+    /// Honeypot hits that banned nobody because a page, not a person, requested them
+    /// (a cross-site or subresource fetch).
+    pub honeypot_refused: Counter,
+    /// Rate limiter arrivals that evicted another active client's cell.
+    pub rate_evictions: Counter,
 }
 
 /// The number of counters in [`Metrics`].
-pub const COUNTER_COUNT: usize = 18;
+pub const COUNTER_COUNT: usize = 22;
+
+/// The number of counters the Zig daemon exposed; the ones after them are new in the port.
+pub const ZIG_COUNTER_COUNT: usize = 18;
 
 impl Metrics {
     /// Returns every counter with its field name, in exposition order. The names borrow
@@ -118,11 +131,17 @@ impl Metrics {
             ("upstream_errors", &self.upstream_errors),
             ("parse_errors", &self.parse_errors),
             ("overloaded", &self.overloaded),
+            ("bans_refused", &self.bans_refused),
+            ("forwarded_invalid", &self.forwarded_invalid),
+            ("honeypot_refused", &self.honeypot_refused),
+            ("rate_evictions", &self.rate_evictions),
         ]
     }
 
     /// Writes the Prometheus text exposition (format 0.0.4) of every counter into `out`:
-    /// a `# TYPE` line and a sample line per counter, byte for byte as the Zig daemon did.
+    /// a `# TYPE` line and a sample line per counter, in the Zig daemon's format. The first
+    /// [`ZIG_COUNTER_COUNT`] counters are the Zig daemon's, byte for byte; the security
+    /// counters of the port follow them.
     /// It allocates nothing and fails only when `out` fails.
     pub fn write_prometheus(&self, out: &mut impl fmt::Write) -> fmt::Result {
         for (name, counter) in self.counters() {
