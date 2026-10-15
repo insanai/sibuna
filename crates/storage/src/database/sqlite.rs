@@ -6,7 +6,7 @@ use sqlx::sqlite::{
     SqliteArguments, SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteRow,
     SqliteSynchronous,
 };
-use sqlx::{Decode, Row as _, Sqlite, TypeInfo, ValueRef};
+use sqlx::{Decode, Row as _, Sqlite, SqliteConnection, TypeInfo, ValueRef};
 
 use super::{ACQUIRE_TIMEOUT, BUSY_TIMEOUT, Cell, Database, POOL_CONNECTIONS, Param, Row};
 use crate::error::StorageError;
@@ -105,4 +105,31 @@ fn decode_row(row: &SqliteRow) -> Result<Row, StorageError> {
 
 fn decode(error: sqlx::error::BoxDynError) -> StorageError {
     StorageError::Database(sqlx::Error::Decode(error))
+}
+
+/// The virtual-machine steps between two calls of the progress handler.
+const PROGRESS_INTERVAL: u64 = 1_000;
+
+/// Installs a progress handler that interrupts the running statement once the connection
+/// has taken more than `steps` virtual-machine steps since this call.
+pub(super) async fn bound_work(
+    connection: &mut SqliteConnection,
+    steps: u64,
+) -> Result<(), StorageError> {
+    let allowed_calls = steps.div_ceil(PROGRESS_INTERVAL);
+    let mut calls = 0u64;
+    let mut handle = connection.lock_handle().await?;
+    // The interval is a small constant, so the conversion cannot fail.
+    let interval = i32::try_from(PROGRESS_INTERVAL).unwrap_or(i32::MAX);
+    handle.set_progress_handler(interval, move || {
+        calls = calls.saturating_add(1);
+        calls <= allowed_calls
+    });
+    Ok(())
+}
+
+/// Removes the progress handler of `connection`, if any.
+pub(super) async fn end_work_bound(connection: &mut SqliteConnection) -> Result<(), StorageError> {
+    connection.lock_handle().await?.remove_progress_handler();
+    Ok(())
 }

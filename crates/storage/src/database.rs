@@ -26,6 +26,27 @@ pub const POOL_CONNECTIONS: u32 = 4;
 /// The name of the SQLite file inside the data directory.
 pub const SQLITE_FILE: &str = "sibuna.db";
 
+/// A bound on the work of one read that aggregates over a time window (SID 0013, "Calling
+/// convention and resource bounds"). A statement that passes it fails with an error for
+/// which [`StorageError::is_work_exhausted`] holds.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct WorkBound {
+    /// SQLite: the virtual-machine steps the read may take (`--console-query-steps`,
+    /// 100,000 to 50,000,000), counted by a progress handler over every statement of the
+    /// transaction until [`Transaction::end_work_bound`].
+    pub sqlite_steps: u64,
+    /// PostgreSQL: `statement_timeout` in milliseconds for each statement of the
+    /// transaction (`SET LOCAL`).
+    pub postgres_timeout_ms: u64,
+}
+
+impl Default for WorkBound {
+    /// The defaults of SID 0013: 4,000,000 steps and 2,000 milliseconds.
+    fn default() -> Self {
+        WorkBound { sqlite_steps: 4_000_000, postgres_timeout_ms: 2_000 }
+    }
+}
+
 /// Where the database lives, derived from the configuration.
 #[derive(Clone, PartialEq, Eq)]
 pub enum Target {
@@ -310,7 +331,11 @@ impl Database {
         Ok(match self {
             #[cfg(feature = "sqlite")]
             Database::Sqlite(pool) => {
-                Transaction::Sqlite(pool.begin_with("BEGIN IMMEDIATE").await?)
+                let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
+                // A read whose work bound was set and never ended (it failed on the way)
+                // must not limit the next user of the pooled connection.
+                sqlite::end_work_bound(&mut tx).await?;
+                Transaction::Sqlite(tx)
             }
             #[cfg(feature = "postgres")]
             Database::Postgres(pool) => Transaction::Postgres(pool.begin().await?),
@@ -378,6 +403,31 @@ impl Transaction {
             }
         };
         Ok(())
+    }
+
+    /// Bounds the work of the statements that follow in this transaction (SID 0013): on
+    /// SQLite a progress handler interrupts the statement that passes
+    /// `bound.sqlite_steps` virtual-machine steps in total; on PostgreSQL each statement
+    /// runs under `SET LOCAL statement_timeout`. Fails with the driver's error.
+    pub async fn bound_work(&mut self, bound: WorkBound) -> Result<(), StorageError> {
+        match self {
+            #[cfg(feature = "sqlite")]
+            Transaction::Sqlite(tx) => sqlite::bound_work(tx, bound.sqlite_steps).await,
+            #[cfg(feature = "postgres")]
+            Transaction::Postgres(tx) => postgres::bound_work(tx, bound.postgres_timeout_ms).await,
+        }
+    }
+
+    /// Removes the bound [`Transaction::bound_work`] set. Beginning a transaction also
+    /// removes a bound left behind on a pooled connection, so a read that fails before it
+    /// calls this cannot limit later work. Fails with the driver's error.
+    pub async fn end_work_bound(&mut self) -> Result<(), StorageError> {
+        match self {
+            #[cfg(feature = "sqlite")]
+            Transaction::Sqlite(tx) => sqlite::end_work_bound(tx).await,
+            #[cfg(feature = "postgres")]
+            Transaction::Postgres(tx) => postgres::end_work_bound(tx).await,
+        }
     }
 
     /// Commits the transaction. An error leaves the outcome unknown when the connection

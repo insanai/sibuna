@@ -119,6 +119,8 @@ const CORE_MIGRATIONS: [Migration; 1] =
 
 /// Version 1 on SQLite. Every table is `STRICT`, so a value of the wrong storage class is
 /// refused; the `CHECK` constraints mirror the Rust types the storage layer decodes into.
+/// `incidents_fts` holds the canonical search tokens of SID 0013 joined by spaces, which its
+/// `ascii` tokenizer splits exactly at the spaces.
 const SQLITE_V1: &str = "
 CREATE TABLE policy_revision (
     id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -186,7 +188,7 @@ CREATE TABLE security_incidents (
     embedding BLOB NOT NULL CHECK (length(embedding) = 256),
     CHECK ((id >> 40) = node_id AND (id & 1099511627775) >= 1)) STRICT;
 CREATE INDEX security_incidents_recent ON security_incidents (recorded_at, id);
-CREATE VIRTUAL TABLE incidents_fts USING fts5(path, offending_payload);
+CREATE VIRTUAL TABLE incidents_fts USING fts5(path, offending_payload, tokenize = 'ascii');
 
 CREATE TRIGGER policies_revision_insert AFTER INSERT ON policies BEGIN
     UPDATE policy_revision SET revision = revision + 1 WHERE id = 1; END;
@@ -210,7 +212,8 @@ CREATE TRIGGER policy_inspection_revision_delete AFTER DELETE ON policy_inspecti
 
 /// Version 1 on PostgreSQL: the same tables with PostgreSQL's types (see the dialect table of
 /// SID 0011): `BOOLEAN` for `enabled`, `JSONB` for the matchers, `BYTEA` for raw bytes, the
-/// `"C"` collation for rule ids and names, and the search column feeding a `tsvector`.
+/// `"C"` collation for rule ids and names, and the `tsvector` of the canonical search tokens
+/// (SID 0013), which the storage layer writes itself.
 const POSTGRES_V1: &str = "
 CREATE TABLE policy_revision (
     id BIGINT PRIMARY KEY CHECK (id = 1),
@@ -274,8 +277,7 @@ CREATE TABLE security_incidents (
     campaign_id BIGINT NOT NULL,
     recorded_at BIGINT NOT NULL CHECK (recorded_at >= 0),
     embedding BYTEA NOT NULL CHECK (octet_length(embedding) = 256),
-    search_text TEXT NOT NULL,
-    search tsvector GENERATED ALWAYS AS (to_tsvector('simple', search_text)) STORED,
+    search tsvector NOT NULL,
     CHECK ((id >> 40) = node_id AND (id & 1099511627775) >= 1));
 CREATE INDEX security_incidents_recent ON security_incidents (recorded_at, id);
 CREATE INDEX security_incidents_search ON security_incidents USING GIN (search);

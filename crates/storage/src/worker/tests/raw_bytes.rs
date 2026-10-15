@@ -56,9 +56,9 @@ async fn round_trip(target: Target) {
     let expected = [USER_AGENT, PATH, PAYLOAD].map(|bytes| Cell::Bytes(bytes.to_vec()));
     assert_eq!(cells, expected);
     if target.dialect() == Dialect::Postgres {
-        let search = p.row("SELECT search_text FROM security_incidents").await;
+        let search = p.row("SELECT CAST(search AS TEXT) FROM security_incidents").await;
         let text = search[0].as_str().unwrap();
-        assert!(!text.contains('\0') && text.contains("exfiltrate"), "{text:?}");
+        assert!(!text.contains('\0') && text.contains("'exfiltrate':"), "{text:?}");
     }
     let expected = match target.dialect() {
         Dialect::Sqlite => "blob,blob,blob",

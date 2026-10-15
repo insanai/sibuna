@@ -35,6 +35,13 @@
 //!   `CHECK` constraints that mirror the Rust types, and an index for every query, so the
 //!   database refuses a row the row structs could not hold.
 //! - [`read_database_url_file`] reads `--database-url-file`.
+//! - [`search`] is the search language of SID 0013: canonical tokens, which the incident
+//!   writer indexes, and queries translated for both backends, which
+//!   [`Database::search_incidents`] and the console's Events page evaluate.
+//! - For the console (SID 0013, "Changes to the core storage"): [`Hooks::on_incidents`]
+//!   writes the incident sidecars in the batch's transaction, [`Database::delete_incidents`]
+//!   is retention's deletion, [`Transaction::bound_work`] bounds the work of aggregate reads,
+//!   and [`testing::for_each_backend`] (feature `testing`) runs a test on every backend.
 //!
 //! Under PostgreSQL the revision triggers also `NOTIFY sibuna_policy`, and the thread
 //! `LISTEN`s so a node ticks at once when another node changes the policy.
@@ -72,9 +79,11 @@
 //!   `security_incidents`, and campaigns are assigned in memory over the most recent 16,384
 //!   embeddings of all nodes (see [`campaigns`]). Incidents older than the window are not
 //!   compared, as SID 0011 records.
-//! - PostgreSQL full-text search uses a generated `tsvector` with the `simple`
-//!   configuration (no stemming, like FTS5's default tokenizer) and `websearch_to_tsquery`,
-//!   so a query string never fails to parse there; SQLite keeps FTS5 `MATCH` syntax.
+//! - Full-text search has one language on both backends (SID 0013, "Search"): Rust
+//!   tokenizes paths and payloads into canonical tokens, SQLite's `incidents_fts` uses the
+//!   `ascii` tokenizer over them, PostgreSQL stores a `tsvector` that Rust writes, and a
+//!   query is parsed in Rust and translated, so both return the same matches. Zig passed the
+//!   query to FTS5 `MATCH` unchanged.
 //! - The engine is not built here. The storage thread hands plain rows
 //!   ([`PolicySnapshot`]) to the daemon's publish hook, which builds the engine, adds the
 //!   file policy and returns whether it published; a refusal keeps the old revision
@@ -83,16 +92,15 @@
 //!   number of rows ([`policy::MAX_POLICY_ROWS`], [`policy::MAX_REPUTATION_ROWS`]). Zig
 //!   skipped reputation rows it could not read; the typed schema cannot hold such rows.
 //! - Incident user agents, paths and payloads are raw bytes (`BLOB` / `BYTEA`) as in Zig,
-//!   but full-text search indexes a lossy UTF-8 rendering (NUL dropped, invalid sequences
-//!   U+FFFD), because PostgreSQL text holds neither. On SQLite `incidents_fts` therefore
-//!   holds its own text instead of being Zig's external-content table over the incident
-//!   rows; on PostgreSQL the rendering is the column `search_text`. The client address,
-//!   method and category are text, rendered the same way.
+//!   but full-text search indexes their canonical tokens, so on SQLite `incidents_fts` holds
+//!   its own text instead of being Zig's external-content table over the incident rows. The
+//!   client address, method and category are text (NUL dropped, invalid UTF-8 as U+FFFD).
 //! - Under PostgreSQL a batch with honeypot bans locks the revision row first, so two nodes
 //!   banning the same addresses in different orders cannot deadlock. Statement triggers
 //!   also cover `TRUNCATE`.
-//! - The console's sidecars (evidence, heads, country) are not written yet; the console port
-//!   adds them with its own migrations and [`Hooks::on_tick`].
+//! - The console's sidecars (evidence, heads, country) are written by the console's
+//!   [`Hooks::on_incidents`] in the batch's transaction, as Zig appended them to the batch's
+//!   SQL. The ring record carries the evidence and the redacted heads, as Zig's did.
 //! - Errors are a [`StorageError`] enum; the thread reports recovered errors through
 //!   [`Hooks::on_error`] instead of printing.
 //! - Building a snapshot takes a little memory each time (owned `String`s), where Zig
@@ -145,20 +153,21 @@ mod incidents;
 mod listen;
 pub mod policy;
 pub mod schema;
+pub mod search;
 mod storage;
-#[cfg(test)]
-mod testing;
+#[cfg(any(test, feature = "testing"))]
+pub mod testing;
 mod url_file;
 mod worker;
 
 pub use campaigns::{CAMPAIGN_DISTANCE, DIMENSIONS, Embedding, WINDOW};
 pub use database::{
     ACQUIRE_TIMEOUT, BUSY_TIMEOUT, Cell, Columns, Database, Dialect, POOL_CONNECTIONS, Param, Row,
-    SQLITE_FILE, Sql, Target, Transaction,
+    SQLITE_FILE, Sql, Target, Transaction, WorkBound,
 };
 pub use error::{StorageError, UrlFileProblem};
 pub use incidents::{
-    INCIDENT_BATCH, INCIDENT_QUEUE, IncidentHit, IncidentReceipt, MAX_SEARCH_QUERY,
+    BatchIncident, INCIDENT_BATCH, INCIDENT_QUEUE, IncidentHit, IncidentReceipt, MAX_SEARCH_QUERY,
     MAX_SEARCH_RESULTS,
 };
 pub use listen::POLICY_CHANNEL;
@@ -168,7 +177,8 @@ pub use policy::{
 };
 pub use schema::{Migration, MigrationSet};
 pub use storage::{
-    EmbedFn, ErrorFn, Hooks, JOB_QUEUE, JOBS_PER_TICK, LocalFuture, MAX_BACKOFF, MAX_NODE_ID,
-    MIN_POLL, PublishFn, SHUTDOWN_TIMEOUT, STARTUP_TIMEOUT, Storage, TickHook,
+    BorrowedFuture, EmbedFn, ErrorFn, Hooks, IncidentHook, JOB_QUEUE, JOBS_PER_TICK, LocalFuture,
+    MAX_BACKOFF, MAX_NODE_ID, MIN_POLL, PublishFn, SHUTDOWN_TIMEOUT, STARTUP_TIMEOUT, Storage,
+    TickHook,
 };
 pub use url_file::{MAX_URL_FILE, read_database_url_file};

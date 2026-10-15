@@ -209,7 +209,8 @@ impl Worker {
             self.prepared = Some(prepare(&self.pending, &context)?);
         }
         let Some(batch) = self.prepared.take() else { return Ok(0) };
-        if let Err(error) = write_batch(&self.db, self.settings.node, &batch).await {
+        let hook = self.hooks.on_incidents.as_mut();
+        if let Err(error) = write_batch(&self.db, self.settings.node, &batch, hook).await {
             self.prepared = Some(batch);
             return Err(error);
         }

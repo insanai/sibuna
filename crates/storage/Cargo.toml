@@ -12,6 +12,8 @@ authors.workspace = true
 default = ["sqlite"]
 sqlite = ["sqlx/sqlite-bundled"]
 postgres = ["sqlx/postgres"]
+# Exports `testing::for_each_backend` for the console's storage tests (SID 0013).
+testing = []
 
 [dependencies]
 sibuna-core = { workspace = true }

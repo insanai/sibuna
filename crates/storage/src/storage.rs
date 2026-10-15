@@ -19,9 +19,9 @@ use std::time::Duration;
 use sibuna_core::{Config, Incident, Metrics};
 
 use crate::campaigns::Embedding;
-use crate::database::{Database, Target};
+use crate::database::{Database, Target, Transaction};
 use crate::error::StorageError;
-use crate::incidents::IncidentHit;
+use crate::incidents::{BatchIncident, IncidentHit};
 use crate::policy::PolicySnapshot;
 use crate::schema::MigrationSet;
 use crate::worker::{Settings, Shared, Worker};
@@ -47,6 +47,18 @@ pub const JOBS_PER_TICK: usize = 16;
 
 /// A future the storage thread runs; it may borrow nothing and need not be `Send`.
 pub type LocalFuture<T> = Pin<Box<dyn Future<Output = T>>>;
+/// A future the storage thread runs that borrows from its caller for `'a`.
+pub type BorrowedFuture<'a, T> = Pin<Box<dyn Future<Output = T> + 'a>>;
+/// Writes the console's incident sidecars (SID 0013): called with the batch's transaction
+/// and its incidents after they were inserted and before the receipt advances. An error
+/// rolls the batch back; the storage thread retries it on the next tick.
+pub type IncidentHook = Box<
+    dyn for<'a> FnMut(
+            &'a mut Transaction,
+            &'a [BatchIncident<'a>],
+        ) -> BorrowedFuture<'a, Result<(), StorageError>>
+        + Send,
+>;
 /// Work run on the storage thread at the end of every tick (the console's due work).
 pub type TickHook = Box<dyn FnMut(Database) -> LocalFuture<()> + Send>;
 /// The embedding function of SID 0006: payload bytes to 64 dimensions.
@@ -66,6 +78,9 @@ pub struct Hooks {
     pub publish: PublishFn,
     /// Runs at the end of each tick, after the policy check.
     pub on_tick: Option<TickHook>,
+    /// Writes the console's sidecars of each incident batch in the batch's transaction;
+    /// registered only when the console is enabled.
+    pub on_incidents: Option<IncidentHook>,
     /// Hears about errors the thread recovers from (a failed write, an unreachable
     /// database); the thread itself never prints.
     pub on_error: Option<ErrorFn>,
@@ -81,6 +96,7 @@ impl Default for Hooks {
             embed: Box::new(|_| [0.0; 64]),
             publish: Box::new(|_| true),
             on_tick: None,
+            on_incidents: None,
             on_error: None,
             metrics: Arc::default(),
             migrations: Vec::new(),
@@ -92,6 +108,7 @@ impl fmt::Debug for Hooks {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Hooks")
             .field("on_tick", &self.on_tick.is_some())
+            .field("on_incidents", &self.on_incidents.is_some())
             .field("on_error", &self.on_error.is_some())
             .field("migrations", &self.migrations)
             .finish_non_exhaustive()

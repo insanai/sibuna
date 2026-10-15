@@ -1,26 +1,41 @@
-//! Test support: a fresh database per test on every backend, a worker fixture that
-//! records the published snapshots, and the Zig embedding.
+//! Test support (SID 0013, "Changes to the core storage", item 4): a fresh database per test
+//! on every backend. Exported behind the `testing` feature so that the console's storage
+//! tests run on SQLite and, when [`POSTGRES_ENV`] is set, on PostgreSQL; the crate's own tests
+//! also get a worker fixture that records the published snapshots, and the Zig embedding.
 
 // Each backend's helpers go unused in a build without that backend.
 #![cfg_attr(not(all(feature = "sqlite", feature = "postgres")), allow(dead_code))]
+// Test support: a failure to set up a test database is reported by panicking.
+#![allow(clippy::expect_used, clippy::unwrap_used)]
 
 use std::future::Future;
+use std::panic::AssertUnwindSafe;
 use std::path::PathBuf;
+#[cfg(test)]
 use std::sync::{Arc, Mutex};
 
+#[cfg(test)]
 use sibuna_core::{Incident, Metrics};
 
+#[cfg(test)]
 use crate::campaigns::{DIMENSIONS, Embedding};
-use crate::database::{Cell, Database, Sql, Target};
+#[cfg(test)]
+use crate::database::{Cell, Sql};
+use crate::database::{Database, Target};
+#[cfg(test)]
 use crate::policy::PolicySnapshot;
-use crate::storage::{Hooks, LocalFuture};
+#[cfg(test)]
+use crate::storage::Hooks;
+use crate::storage::LocalFuture;
+#[cfg(test)]
 use crate::worker::{Settings, Shared, Worker};
 
 /// The environment variable naming a PostgreSQL database whose role may create databases.
-pub(crate) const POSTGRES_ENV: &str = "SIBUNA_TEST_DATABASE_URL";
+pub const POSTGRES_ENV: &str = "SIBUNA_TEST_DATABASE_URL";
 
-/// Runs `future` to completion on a fresh current-thread runtime.
-pub(crate) fn block_on<F: Future>(future: F) -> F::Output {
+/// Runs `future` to completion on a fresh current-thread runtime. Panics when the runtime
+/// cannot be built.
+pub fn block_on<F: Future>(future: F) -> F::Output {
     tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
@@ -29,31 +44,44 @@ pub(crate) fn block_on<F: Future>(future: F) -> F::Output {
 }
 
 /// Runs `test` against a fresh SQLite file and, when [`POSTGRES_ENV`] is set and the
-/// `postgres` feature is built, against a fresh PostgreSQL database named after `name`.
-pub(crate) fn for_each_backend(name: &str, test: impl Fn(Target) -> LocalFuture<()>) {
+/// `postgres` feature is built, against a fresh PostgreSQL database named after `name` and
+/// this process. Each database is removed afterwards, also when `test` panics; the panic is
+/// then raised again on the calling thread.
+pub fn for_each_backend(name: &str, test: impl Fn(Target) -> LocalFuture<()>) {
     #[cfg(feature = "sqlite")]
     {
         let dir = scratch_dir(name);
-        block_on(test(Target::Sqlite(dir.join("sibuna.db"))));
+        let outcome = run(&test, Target::Sqlite(dir.join("sibuna.db")));
         let _ = std::fs::remove_dir_all(&dir);
+        if let Err(panic) = outcome {
+            std::panic::resume_unwind(panic);
+        }
     }
     #[cfg(feature = "postgres")]
     if let Ok(base) = std::env::var(POSTGRES_ENV) {
         let target = block_on(fresh_postgres(&base, name));
-        block_on(test(target));
+        let outcome = run(&test, target);
         block_on(drop_postgres(&base, name));
+        if let Err(panic) = outcome {
+            std::panic::resume_unwind(panic);
+        }
     }
 }
 
+/// Runs one backend's test on its own runtime, catching a panic so the caller can clean up.
+fn run(test: &impl Fn(Target) -> LocalFuture<()>, target: Target) -> std::thread::Result<()> {
+    std::panic::catch_unwind(AssertUnwindSafe(|| block_on(test(target))))
+}
+
 /// Returns an empty directory for one test.
-pub(crate) fn scratch_dir(name: &str) -> PathBuf {
+pub fn scratch_dir(name: &str) -> PathBuf {
     let dir = std::env::temp_dir().join(format!("sibuna-storage-{}-{name}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     dir
 }
 
 /// Returns `base` with its database name replaced by `name`.
-pub(crate) fn with_database_name(base: &str, name: &str) -> String {
+pub fn with_database_name(base: &str, name: &str) -> String {
     let (head, query) = base.split_once('?').map_or((base, None), |(h, q)| (h, Some(q)));
     let authority = head.find("://").map_or(0, |at| at + 3);
     let path = head[authority..].find('/').map_or(head.len(), |at| authority + at);
@@ -65,12 +93,17 @@ pub(crate) fn with_database_name(base: &str, name: &str) -> String {
     url
 }
 
+/// The PostgreSQL database of test `name` in this process; at most 63 bytes. The process id
+/// keeps concurrent test binaries apart.
 fn database_name(name: &str) -> String {
-    format!("sibuna_t_{name}")
+    let mut database = format!("sibuna_t_{}_{name}", std::process::id());
+    database.truncate(63);
+    database
 }
 
-/// Drops and recreates the test database `name` and returns its target.
-pub(crate) async fn fresh_postgres(base: &str, name: &str) -> Target {
+/// Drops and recreates the test database `name` and returns its target. Panics when the
+/// server refuses.
+pub async fn fresh_postgres(base: &str, name: &str) -> Target {
     drop_postgres(base, name).await;
     let admin = Database::open(&Target::Postgres(base.to_owned())).await.expect("admin");
     let database = database_name(name);
@@ -82,7 +115,7 @@ pub(crate) async fn fresh_postgres(base: &str, name: &str) -> Target {
 /// Drops the test database `name`, best effort: a background process (autovacuum) our role
 /// may not terminate can hold it for a moment, and a leftover is dropped by the next
 /// [`fresh_postgres`].
-pub(crate) async fn drop_postgres(base: &str, name: &str) {
+pub async fn drop_postgres(base: &str, name: &str) {
     let admin = Database::open(&Target::Postgres(base.to_owned())).await.expect("admin");
     let script = format!("DROP DATABASE IF EXISTS {} WITH (FORCE)", database_name(name));
     for _ in 0..20 {
@@ -94,6 +127,7 @@ pub(crate) async fn drop_postgres(base: &str, name: &str) {
     admin.close().await;
 }
 
+#[cfg(test)]
 /// Zig's `policy.embedding.embed`: signed feature hashing of case- and digit-folded byte
 /// trigrams into 64 dimensions, L2-normalised. The policy crate owns the production copy.
 pub(crate) fn embed(payload: &[u8]) -> Embedding {
@@ -124,12 +158,14 @@ pub(crate) fn embed(payload: &[u8]) -> Embedding {
 }
 
 /// A worker driven by hand, with the snapshots it published.
+#[cfg(test)]
 pub(crate) struct Fixture {
     pub(crate) worker: Worker,
     pub(crate) snapshots: Arc<Mutex<Vec<PolicySnapshot>>>,
     pub(crate) metrics: Arc<Metrics>,
 }
 
+#[cfg(test)]
 impl Fixture {
     /// Opens a worker for node 1 that accepts every snapshot.
     pub(crate) async fn open(target: &Target) -> Fixture {

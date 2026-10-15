@@ -15,10 +15,12 @@ use crate::policy::{
 };
 use crate::testing::{Fixture, for_each_backend};
 
+mod console_hooks;
 mod constraints;
 #[cfg(feature = "sqlite")]
 mod plans;
 mod raw_bytes;
+mod search_conformance;
 
 fn honeypot(now: u64) -> Incident<'static> {
     Incident {
@@ -241,7 +243,7 @@ async fn replay_after_failure(p: &mut Fixture, dialect: Dialect) {
     }
     // Commit successfully but pretend the client lost its acknowledgement.
     let batch = p.worker.prepared.clone().unwrap();
-    write_batch(&p.worker.db, 1, &batch).await.unwrap();
+    write_batch(&p.worker.db, 1, &batch, None).await.unwrap();
     p.worker_tick().await;
     p.worker_tick().await;
     let counts = p
@@ -487,7 +489,8 @@ async fn search(target: Target) {
     owner.worker_tick().await;
     let long = "x".repeat(crate::MAX_SEARCH_QUERY + 1);
     let error = owner.worker.db.search_incidents(&long, 10).await;
-    assert!(matches!(error, Err(StorageError::SearchQueryTooLong)));
+    let too_long = crate::search::SearchProblem::TooLong;
+    assert!(matches!(error, Err(StorageError::Search(found)) if found.problem == too_long));
     assert_eq!(owner.worker.db.search_incidents("vault", 3).await.unwrap().len(), 3);
     assert!(owner.worker.db.search_incidents("nothing", 3).await.unwrap().is_empty());
     owner.close().await;

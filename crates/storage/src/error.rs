@@ -68,8 +68,9 @@ pub enum StorageError {
     },
     /// A result column has a PostgreSQL type the storage layer does not decode.
     UnsupportedColumnType(String),
-    /// A search query is longer than [`crate::MAX_SEARCH_QUERY`] bytes.
-    SearchQueryTooLong,
+    /// A search query breaks the search language of SID 0013 (for example it is longer
+    /// than [`crate::MAX_SEARCH_QUERY`] bytes); the value renders the diagnostic.
+    Search(crate::search::SearchError),
     /// The storage thread's job queue is full; the job was not queued. Retrying later may
     /// succeed.
     Busy,
@@ -124,8 +125,22 @@ impl StorageError {
             StorageError::InvalidRow { .. } => {
                 "Correct the stored row; its value does not fit the column's type."
             }
+            StorageError::Search(error) => error.problem.hint(),
+            _ if self.is_work_exhausted() => "Narrow the period or the search and try again.",
             _ => return None,
         })
+    }
+
+    /// Returns true when a statement stopped at its read work bound
+    /// ([`crate::Transaction::bound_work`]): SQLite's progress handler interrupted it
+    /// (`SQLITE_INTERRUPT`, code 9) or PostgreSQL cancelled it at `statement_timeout`
+    /// (SQLSTATE 57014). The console answers it as unavailable, with the hint to narrow the
+    /// period.
+    pub fn is_work_exhausted(&self) -> bool {
+        let StorageError::Database(sqlx::Error::Database(database)) = self else {
+            return false;
+        };
+        matches!(database.code().as_deref(), Some("9" | "57014"))
     }
 
     /// Returns true when retrying later may succeed: the database was unreachable, busy, or
@@ -198,7 +213,9 @@ impl fmt::Display for StorageError {
             StorageError::UnsupportedColumnType(name) => {
                 write!(f, "cannot decode a result column of type {name}")
             }
-            StorageError::SearchQueryTooLong => write!(f, "the search query is too long"),
+            StorageError::Search(error) => {
+                write!(f, "invalid search at byte {}: {}", error.offset, error.problem.message())
+            }
             StorageError::Busy => write!(f, "the storage thread has too many queued jobs"),
             StorageError::Stopped => write!(f, "the storage thread has stopped"),
             StorageError::Thread(error) => write!(f, "cannot start the storage thread: {error}"),
@@ -227,6 +244,7 @@ impl std::error::Error for StorageError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             StorageError::DataDir { source, .. } | StorageError::Thread(source) => Some(source),
+            StorageError::Search(error) => Some(error),
             StorageError::Database(error) => Some(error),
             StorageError::UrlFile { problem: UrlFileProblem::Read(error), .. } => Some(error),
             _ => None,

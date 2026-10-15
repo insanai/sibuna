@@ -127,14 +127,14 @@ async fn constraints(target: Target) {
     p.close().await;
 }
 
-/// Inserts one incident with bound values; PostgreSQL also needs the search text.
+/// Inserts one incident with bound values; PostgreSQL also needs the search vector.
 const INSERT_INCIDENT: Sql = Sql {
     sqlite: "INSERT INTO security_incidents (id, node_id, client_ip, user_agent, method, path, \
              violation_category, offending_payload, campaign_id, recorded_at, embedding) \
              VALUES ($1, $2, '192.0.2.9', $3, 'GET', $4, 'waf:xss', $5, $1, $6, $7)",
     postgres: "INSERT INTO security_incidents (id, node_id, client_ip, user_agent, method, \
                path, violation_category, offending_payload, campaign_id, recorded_at, \
-               embedding, search_text) \
+               embedding, search) \
                VALUES ($1, $2, '192.0.2.9', $3, 'GET', $4, 'waf:xss', $5, $1, $6, $7, '')",
 };
 

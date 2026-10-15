@@ -1,7 +1,7 @@
 //! The PostgreSQL side of [`super::Database`]: connecting and binding and decoding values.
 
 use sqlx::postgres::{PgArguments, PgConnectOptions, PgPoolOptions, PgRow};
-use sqlx::{Decode, Postgres, Row as _, TypeInfo, ValueRef};
+use sqlx::{Decode, PgConnection, Postgres, Row as _, TypeInfo, ValueRef};
 
 use super::{ACQUIRE_TIMEOUT, Cell, Database, POOL_CONNECTIONS, Param, Row};
 use crate::error::StorageError;
@@ -88,4 +88,24 @@ fn decode<'r, T: Decode<'r, Postgres>>(
     value: sqlx::postgres::PgValueRef<'r>,
 ) -> Result<T, StorageError> {
     T::decode(value).map_err(|error| StorageError::Database(sqlx::Error::Decode(error)))
+}
+
+/// Sets `statement_timeout` for the rest of the transaction (`set_config(..., true)` is
+/// `SET LOCAL` with a bound value).
+pub(super) async fn bound_work(
+    connection: &mut PgConnection,
+    timeout_ms: u64,
+) -> Result<(), StorageError> {
+    let value = timeout_ms.to_string();
+    sqlx::query("SELECT set_config('statement_timeout', $1, true)")
+        .bind(value)
+        .execute(connection)
+        .await?;
+    Ok(())
+}
+
+/// Returns `statement_timeout` to the session's value for the rest of the transaction.
+pub(super) async fn end_work_bound(connection: &mut PgConnection) -> Result<(), StorageError> {
+    sqlx::raw_sql("SET LOCAL statement_timeout TO DEFAULT").execute(connection).await?;
+    Ok(())
 }

@@ -1,18 +1,21 @@
 //! Incident records: the fixed-size copy a request thread queues, the prepared batch the
-//! storage thread writes, the durable receipt, and forensic search.
+//! storage thread writes, the durable receipt, retention's deletion, and forensic search.
 //!
 //! The user agent, path and payload are stored as the raw bytes the request carried, because
-//! an investigator needs an attack's exact bytes (SID 0011). Full-text search indexes a lossy
-//! UTF-8 rendering of the path and the payload (see `render`): in `incidents_fts` on SQLite,
-//! and in the text column `search_text` that feeds the generated `tsvector` on PostgreSQL.
+//! an investigator needs an attack's exact bytes (SID 0011). Full-text search indexes the
+//! canonical tokens of the path and the payload ([`crate::search::tokens`], SID 0013): as
+//! text in `incidents_fts` on SQLite, and as the `tsvector` column `search` on PostgreSQL.
 //!
 //! An incident id is `(node << 40) | sequence`. Each node keeps its receipt, a row of
 //! `incident_receipts`: the sequence after its last committed batch.
 //! The receipt advances in the same transaction as the batch, and every insert of the batch
 //! is guarded by "the receipt is still below this batch's end". Replaying a batch whose
 //! commit was not acknowledged therefore writes nothing twice, exactly as in the Zig daemon.
+//! The console's sidecars (evidence, heads, country) are written by the incident hook in the
+//! same transaction ([`crate::Hooks::on_incidents`]).
 
-use sibuna_core::Incident;
+use sibuna_core::incident_heads::{REQUEST_BYTES, RESPONSE_BYTES, ResponseState};
+use sibuna_core::{Evidence, Incident};
 
 use crate::campaigns::{
     CampaignWindow, Embedding, NODE_SHIFT, SEQUENCE_LIMIT, dot, embedding_bytes, normalize,
@@ -20,13 +23,15 @@ use crate::campaigns::{
 use crate::database::{Columns, Database, Dialect, Param, Row, Sql, Transaction};
 use crate::error::StorageError;
 use crate::policy::sql_time;
+use crate::search::{self, Query};
+use crate::storage::IncidentHook;
 
 /// The most incidents one transaction writes.
 pub const INCIDENT_BATCH: usize = 32;
 /// The number of slots of the incident ring.
 pub const INCIDENT_QUEUE: usize = 512;
-/// The longest full-text query accepted, in bytes.
-pub const MAX_SEARCH_QUERY: usize = 1024;
+/// The longest search query accepted, in bytes (the search language's bound).
+pub const MAX_SEARCH_QUERY: usize = search::MAX_QUERY_BYTES;
 /// The most rows one search returns.
 pub const MAX_SEARCH_RESULTS: u32 = 1000;
 
@@ -53,7 +58,8 @@ impl<const N: usize> Field<N> {
 }
 
 /// The copy of an [`Incident`] that crosses the ring: fixed size, owning its bytes, so a
-/// request thread hands it over without allocating. The capacities are the Zig record's.
+/// request thread hands it over without allocating. The capacities are the Zig record's,
+/// including the console's evidence and redacted heads.
 #[derive(Clone, Copy)]
 pub(crate) struct IncidentRecord {
     client_ip: Field<48>,
@@ -63,12 +69,20 @@ pub(crate) struct IncidentRecord {
     category: Field<32>,
     payload: Field<512>,
     now: u64,
+    evidence: Evidence,
+    request_head: Field<REQUEST_BYTES>,
+    response_head: Field<RESPONSE_BYTES>,
+    request_truncated: bool,
+    response_truncated: bool,
+    response_state: ResponseState,
 }
 
 impl IncidentRecord {
-    /// Copies `incident`, cutting each field at its capacity.
+    /// Copies `incident`, cutting each field at its capacity. As in Zig, the evidence's
+    /// `truncated` bits gain one bit per field the copy cut (IP, User-Agent, method, path,
+    /// category, payload, lowest first) and bit 6 for a body shorter than declared.
     pub(crate) fn from_incident(incident: &Incident<'_>) -> IncidentRecord {
-        IncidentRecord {
+        let record = IncidentRecord {
             client_ip: Field::copy_from(incident.client_ip.as_bytes()),
             user_agent: Field::copy_from(incident.user_agent),
             method: Field::copy_from(incident.method.as_bytes()),
@@ -76,13 +90,35 @@ impl IncidentRecord {
             category: Field::copy_from(incident.category.as_bytes()),
             payload: Field::copy_from(incident.payload),
             now: incident.now,
+            evidence: incident.evidence,
+            request_head: Field::copy_from(incident.request_head),
+            response_head: Field::copy_from(incident.response_head),
+            request_truncated: incident.request_truncated,
+            response_truncated: incident.response_truncated,
+            response_state: incident.response_state,
+        };
+        let cut = [
+            incident.client_ip.len() > 48,
+            incident.user_agent.len() > 200,
+            incident.method.len() > 8,
+            incident.path.len() > 512,
+            incident.category.len() > 32,
+            incident.payload.len() > 512,
+            incident.evidence.body_bytes < incident.evidence.declared_body_bytes,
+        ];
+        let mut evidence = record.evidence;
+        for (bit, cut) in (0u16..).zip(cut) {
+            if cut {
+                evidence.truncated |= 1 << bit;
+            }
         }
+        IncidentRecord { evidence, ..record }
     }
 }
 
 /// Database text from captured bytes: invalid UTF-8 becomes U+FFFD and NUL bytes are
 /// dropped, because PostgreSQL text cannot hold them. Used for the text columns (client
-/// address, method, category) and for the search rendering of the byte columns.
+/// address, method, category).
 fn render(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes).chars().filter(|&c| c != '\0').collect()
 }
@@ -98,16 +134,53 @@ pub(crate) struct PreparedIncident {
     path: Vec<u8>,
     category: String,
     payload: Vec<u8>,
-    /// The rendering of `path` that full-text search indexes.
-    search_path: String,
-    /// The rendering of `payload` that full-text search indexes.
-    search_payload: String,
+    /// The canonical tokens of `path` that full-text search indexes.
+    path_tokens: Vec<String>,
+    /// The canonical tokens of `payload` that full-text search indexes.
+    payload_tokens: Vec<String>,
     embedding: [u8; 256],
     pub(crate) unit: Embedding,
     pub(crate) campaign: i64,
     recorded_at: i64,
     /// For honeypot hits, the time the ban ends.
     ban_until: Option<i64>,
+    /// What the console captured, for the incident hook.
+    capture: Capture,
+}
+
+/// The console's capture of one incident, kept for the incident hook.
+#[derive(Clone, Debug)]
+struct Capture {
+    evidence: Evidence,
+    request_head: Vec<u8>,
+    response_head: Vec<u8>,
+    request_truncated: bool,
+    response_truncated: bool,
+    response_state: ResponseState,
+}
+
+/// One incident of a written batch, as the incident hook sees it (SID 0013, "Changes to the
+/// core storage", item 2). It borrows the prepared batch.
+#[derive(Clone, Copy, Debug)]
+pub struct BatchIncident<'a> {
+    /// The incident id, `(node << 40) | sequence`.
+    pub id: i64,
+    /// The client address as stored.
+    pub client_ip: &'a str,
+    /// The time of the incident in Unix seconds.
+    pub recorded_at: u64,
+    /// The evidence metadata; version 0 means nothing was recorded.
+    pub evidence: Evidence,
+    /// The redacted request head; empty when capture is off.
+    pub request_head: &'a [u8],
+    /// The redacted origin response head; empty when there was none.
+    pub response_head: &'a [u8],
+    /// True when the request head was cut at its capacity.
+    pub request_truncated: bool,
+    /// True when the response head was cut at its capacity.
+    pub response_truncated: bool,
+    /// How the response side was observed.
+    pub response_state: ResponseState,
 }
 
 /// A batch of incidents with consecutive sequence numbers ending before `end`.
@@ -166,13 +239,21 @@ pub(crate) fn prepare(
             path: record.path.as_bytes().to_vec(),
             category,
             payload: record.payload.as_bytes().to_vec(),
-            search_path: render(record.path.as_bytes()),
-            search_payload: render(record.payload.as_bytes()),
+            path_tokens: search::index_tokens(record.path.as_bytes()),
+            payload_tokens: search::index_tokens(record.payload.as_bytes()),
             embedding: embedding_bytes(&embedding),
             unit,
             campaign,
             recorded_at: sql_time(record.now),
             ban_until,
+            capture: Capture {
+                evidence: record.evidence,
+                request_head: record.request_head.as_bytes().to_vec(),
+                response_head: record.response_head.as_bytes().to_vec(),
+                request_truncated: record.request_truncated,
+                response_truncated: record.response_truncated,
+                response_state: record.response_state,
+            },
         });
     }
     Ok(PreparedBatch { end, incidents })
@@ -183,7 +264,7 @@ pub(crate) fn prepare(
 // 0) < $end`. A replayed batch whose first commit succeeded therefore inserts nothing.
 
 /// SQLite binds the first 12 parameters of [`write_incident`]'s row; PostgreSQL also binds
-/// the two search renderings, which it joins into `search_text`.
+/// the `tsvector` literal of the canonical tokens.
 const INSERT_INCIDENT: Sql = Sql {
     sqlite: "INSERT INTO security_incidents (id, node_id, client_ip, user_agent, method, path, \
              violation_category, offending_payload, campaign_id, recorded_at, embedding) \
@@ -192,8 +273,8 @@ const INSERT_INCIDENT: Sql = Sql {
              WHERE node_id = $2), 0) < $12",
     postgres: "INSERT INTO security_incidents (id, node_id, client_ip, user_agent, method, \
                path, violation_category, offending_payload, campaign_id, recorded_at, \
-               embedding, search_text) \
-               SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $13 || ' ' || $14 \
+               embedding, search) \
+               SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CAST($13 AS tsvector) \
                WHERE COALESCE((SELECT next_sequence FROM incident_receipts \
                WHERE node_id = $2), 0) < $12",
 };
@@ -254,10 +335,10 @@ pub(crate) const SEARCH: Sql = Sql {
     sqlite: "SELECT s.id, s.client_ip, s.method, s.user_agent, s.path, s.violation_category, \
              s.offending_payload, s.campaign_id \
              FROM incidents_fts f JOIN security_incidents s ON s.id = f.rowid \
-             WHERE incidents_fts MATCH $1 ORDER BY rank LIMIT $2",
+             WHERE incidents_fts MATCH $1 ORDER BY f.rank, s.id LIMIT $2",
     postgres: "SELECT id, client_ip, method, user_agent, path, violation_category, \
                offending_payload, campaign_id \
-               FROM security_incidents, websearch_to_tsquery('simple', $1) AS query \
+               FROM security_incidents, CAST($1 AS tsquery) AS query \
                WHERE search @@ query ORDER BY ts_rank(search, query) DESC, id LIMIT $2",
 };
 
@@ -282,11 +363,14 @@ impl IncidentReceipt {
     }
 }
 
-/// Writes `batch` for `node` and advances its receipt, all in one transaction.
+/// Writes `batch` for `node`, runs the incident hook over it, and advances the receipt, all
+/// in one transaction. A hook failure rolls the whole batch back, so the batch and its
+/// sidecars commit together.
 pub(crate) async fn write_batch(
     db: &Database,
     node: u32,
     batch: &PreparedBatch,
+    hook: Option<&mut IncidentHook>,
 ) -> Result<(), StorageError> {
     let node = i64::from(node);
     let end = i64::try_from(batch.end).unwrap_or(i64::MAX);
@@ -298,8 +382,27 @@ pub(crate) async fn write_batch(
     for incident in &batch.incidents {
         write_incident(&mut tx, incident, node, end).await?;
     }
+    if let Some(hook) = hook {
+        let incidents: Vec<BatchIncident<'_>> = batch.incidents.iter().map(view).collect();
+        hook(&mut tx, &incidents).await?;
+    }
     tx.execute(ADVANCE_RECEIPT, &[node.into(), end.into()]).await?;
     tx.commit().await
+}
+
+fn view(incident: &PreparedIncident) -> BatchIncident<'_> {
+    let capture = &incident.capture;
+    BatchIncident {
+        id: incident.id,
+        client_ip: &incident.client_ip,
+        recorded_at: u64::try_from(incident.recorded_at).unwrap_or(0),
+        evidence: capture.evidence,
+        request_head: &capture.request_head,
+        response_head: &capture.response_head,
+        request_truncated: capture.request_truncated,
+        response_truncated: capture.response_truncated,
+        response_state: capture.response_state,
+    }
 }
 
 async fn write_incident(
@@ -308,7 +411,15 @@ async fn write_incident(
     node: i64,
     end: i64,
 ) -> Result<(), StorageError> {
-    let row: [Param<'_>; 14] = [
+    let path_text = search::fts_text(&incident.path_tokens);
+    let payload_text = search::fts_text(&incident.payload_tokens);
+    let vector = match tx.dialect() {
+        Dialect::Sqlite => String::new(),
+        Dialect::Postgres => {
+            search::tsvector_literal(&incident.path_tokens, &incident.payload_tokens)
+        }
+    };
+    let row: [Param<'_>; 13] = [
         incident.id.into(),
         node.into(),
         incident.client_ip.as_str().into(),
@@ -321,8 +432,7 @@ async fn write_incident(
         incident.recorded_at.into(),
         incident.embedding.as_slice().into(),
         end.into(),
-        incident.search_path.as_str().into(),
-        incident.search_payload.as_str().into(),
+        vector.as_str().into(),
     ];
     // Both bounds are constants no larger than the array, so the slices are in bounds.
     let bound = match tx.dialect() {
@@ -333,8 +443,8 @@ async fn write_incident(
     if tx.dialect() == Dialect::Sqlite {
         let fts: [Param<'_>; 5] = [
             incident.id.into(),
-            incident.search_path.as_str().into(),
-            incident.search_payload.as_str().into(),
+            path_text.as_str().into(),
+            payload_text.as_str().into(),
             node.into(),
             end.into(),
         ];
@@ -351,6 +461,41 @@ async fn write_incident(
         tx.execute(HONEYPOT, &ban).await?;
     }
     Ok(())
+}
+
+/// The incidents a retention batch removes: recorded before `$1`, oldest first, at most `$2`.
+/// SQLite deletes the full-text rows first, with the same selection; PostgreSQL skips rows
+/// another node's retention batch holds.
+const DELETE_FTS: Sql = Sql::both(
+    "DELETE FROM incidents_fts WHERE rowid IN (SELECT id FROM security_incidents \
+     WHERE recorded_at < $1 ORDER BY recorded_at, id LIMIT $2)",
+);
+const DELETE_INCIDENTS: Sql = Sql {
+    sqlite: "DELETE FROM security_incidents WHERE id IN (SELECT id FROM security_incidents \
+             WHERE recorded_at < $1 ORDER BY recorded_at, id LIMIT $2)",
+    postgres: "DELETE FROM security_incidents WHERE id IN (SELECT id FROM security_incidents \
+               WHERE recorded_at < $1 ORDER BY recorded_at, id LIMIT $2 FOR UPDATE SKIP LOCKED)",
+};
+
+impl Database {
+    /// Deletes at most `limit` incidents recorded before `before` (Unix seconds), oldest
+    /// first, together with their `incidents_fts` rows on SQLite, in the caller's
+    /// transaction (SID 0013, S36). The console's sidecars follow by `ON DELETE CASCADE`.
+    /// Receipts are never deleted, so incident ids stay monotonic. Returns the number of
+    /// incidents deleted.
+    ///
+    /// Fails with the driver's error.
+    pub async fn delete_incidents(
+        tx: &mut Transaction,
+        before: u64,
+        limit: u32,
+    ) -> Result<u64, StorageError> {
+        let params = [sql_time(before).into(), i64::from(limit).into()];
+        if tx.dialect() == Dialect::Sqlite {
+            tx.execute(DELETE_FTS, &params).await?;
+        }
+        tx.execute(DELETE_INCIDENTS, &params).await
+    }
 }
 
 /// Returns the next sequence number of `node`: one past its largest stored id, or its
@@ -399,23 +544,25 @@ pub struct IncidentHit {
 }
 
 impl Database {
-    /// Searches the paths and payloads of recorded incidents (their lossy UTF-8 rendering)
-    /// and returns at most `limit` (capped at [`MAX_SEARCH_RESULTS`]) hits, best first.
-    /// SQLite reads `query` as an FTS5 `MATCH` expression; PostgreSQL as a web search
-    /// (`websearch_to_tsquery`).
+    /// Searches the paths and payloads of recorded incidents with the search language of
+    /// SID 0013 ([`Query`]) and returns at most `limit` (capped at [`MAX_SEARCH_RESULTS`])
+    /// hits, best first: by FTS5's `bm25` on SQLite and `ts_rank` on PostgreSQL, ties by
+    /// id. Both backends return the same set of matches; the order may differ. An empty
+    /// query returns no hits.
     ///
-    /// Fails with [`StorageError::SearchQueryTooLong`] beyond [`MAX_SEARCH_QUERY`] bytes, and
-    /// with the driver's error (for example an FTS5 syntax error).
+    /// Fails with [`StorageError::Search`] for a query the language refuses (longer than
+    /// [`MAX_SEARCH_QUERY`] bytes, for example), and with the driver's error.
     pub async fn search_incidents(
         &self,
         query: &str,
         limit: u32,
     ) -> Result<Vec<IncidentHit>, StorageError> {
-        if query.len() > MAX_SEARCH_QUERY {
-            return Err(StorageError::SearchQueryTooLong);
-        }
+        let Some(query) = Query::parse(query).map_err(StorageError::Search)? else {
+            return Ok(Vec::new());
+        };
+        let expression = query.expression(self.dialect());
         let limit = i64::from(limit.min(MAX_SEARCH_RESULTS));
-        let rows = self.fetch_all(SEARCH, &[query.into(), limit.into()]).await?;
+        let rows = self.fetch_all(SEARCH, &[expression.as_str().into(), limit.into()]).await?;
         rows.into_iter().map(IncidentHit::decode).collect()
     }
 }
