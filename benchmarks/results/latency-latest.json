@@ -1,0 +1,2059 @@
+{
+  "meta": {
+    "date": "2026-10-15T23:07:14Z",
+    "host": "paxos-zig",
+    "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+    "logical_cpus": 32,
+    "os": "Linux 7.0.0-28-generic x86_64",
+    "kernel": "7.0.0-28-generic",
+    "governor": "powersave",
+    "load_average": "52.31 19.10 8.98 1/1518 2178131",
+    "boost": "1",
+    "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)",
+    "git": "249d9136f48065773cd8da5b8ca695452cf17ebc",
+    "dirty": true
+  },
+  "load": {
+    "generator": "sibuna-bench generate (open loop, one blocking thread per connection)",
+    "connections": 64,
+    "seconds": 10,
+    "warmup_seconds": 2,
+    "repetitions": 3,
+    "rates": [
+      10000,
+      25000,
+      50000,
+      100000,
+      150000
+    ],
+    "workload": "admitted: GET /private with a valid session cookie",
+    "product": "sibuna-shield"
+  },
+  "daemon_cpus": "0,1,2,3",
+  "load_cpus": "8,9,10,11,12,13,14,15",
+  "daemons": {
+    "rust": {
+      "path": "/home/insan/projects/sibuna2/target/main/release/sibuna",
+      "bytes": 49113856,
+      "sha256": "e4d819b2fae7e6e17ac23cf640c62d3e40c620108bdcc62f4896ab0e6479722c"
+    },
+    "zig": {
+      "path": "/tmp/claude-1000/-home-insan-projects-sibuna2/7eb5843a-dcb8-4e49-b872-04e7f4d823b5/scratchpad/zig-baseline/bin/sibuna",
+      "bytes": 34576440,
+      "sha256": "36fc050035555ed6b6239b710c0ea5e37c73fd157db6f7e667758e02580b4a42"
+    }
+  },
+  "runs": [
+    {
+      "implementation": "rust",
+      "product": "sibuna-shield",
+      "mode": "forward_auth",
+      "rates": [
+        {
+          "target_rps": 10000,
+          "achieved_rps": {
+            "median": 10000,
+            "min": 10000,
+            "max": 10000
+          },
+          "latency_us": {
+            "p50": {
+              "median": 30.2,
+              "min": 29.7,
+              "max": 30.3
+            },
+            "p90": {
+              "median": 32.3,
+              "min": 31.9,
+              "max": 32.4
+            },
+            "p99": {
+              "median": 36.8,
+              "min": 35.8,
+              "max": 38.6
+            },
+            "p999": {
+              "median": 57.6,
+              "min": 57.5,
+              "max": 57.9
+            },
+            "max": {
+              "median": 355.2,
+              "min": 214.9,
+              "max": 4516.1
+            },
+            "mean": {
+              "median": 30.3,
+              "min": 29.9,
+              "max": 30.8
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 16.916666666666664,
+            "min": 16.749999999999996,
+            "max": 17.000000000000004
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 10000,
+              "achieved_rps": 10000,
+              "requests": 100000,
+              "responses": 120000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 30.2,
+                "p90": 31.9,
+                "p99": 36.8,
+                "p999": 57.6,
+                "max": 355.2,
+                "mean": 30.3
+              },
+              "daemon_cpu_us_per_request": 16.916666666666664
+            },
+            {
+              "target_rps": 10000,
+              "achieved_rps": 10000,
+              "requests": 100000,
+              "responses": 120000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 30.3,
+                "p90": 32.4,
+                "p99": 35.8,
+                "p999": 57.5,
+                "max": 4516.1,
+                "mean": 30.8
+              },
+              "daemon_cpu_us_per_request": 17.000000000000004
+            },
+            {
+              "target_rps": 10000,
+              "achieved_rps": 10000,
+              "requests": 100000,
+              "responses": 120000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 29.7,
+                "p90": 32.3,
+                "p99": 38.6,
+                "p999": 57.9,
+                "max": 214.9,
+                "mean": 29.9
+              },
+              "daemon_cpu_us_per_request": 16.749999999999996
+            }
+          ]
+        },
+        {
+          "target_rps": 25000,
+          "achieved_rps": {
+            "median": 24999.9,
+            "min": 24999.9,
+            "max": 24999.9
+          },
+          "latency_us": {
+            "p50": {
+              "median": 28.2,
+              "min": 27.9,
+              "max": 28.3
+            },
+            "p90": {
+              "median": 30.7,
+              "min": 30.6,
+              "max": 30.8
+            },
+            "p99": {
+              "median": 33.6,
+              "min": 32,
+              "max": 34.2
+            },
+            "p999": {
+              "median": 45,
+              "min": 43.3,
+              "max": 45.7
+            },
+            "max": {
+              "median": 1035,
+              "min": 654.6,
+              "max": 1125.4
+            },
+            "mean": {
+              "median": 28.4,
+              "min": 28.3,
+              "max": 28.5
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 15.833333333333334,
+            "min": 15.499999999999995,
+            "max": 16.033333333333335
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 25000,
+              "achieved_rps": 24999.9,
+              "requests": 250000,
+              "responses": 300000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 28.3,
+                "p90": 30.8,
+                "p99": 33.6,
+                "p999": 45,
+                "max": 1035,
+                "mean": 28.5
+              },
+              "daemon_cpu_us_per_request": 16.033333333333335
+            },
+            {
+              "target_rps": 25000,
+              "achieved_rps": 24999.9,
+              "requests": 250000,
+              "responses": 300000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 27.9,
+                "p90": 30.7,
+                "p99": 34.2,
+                "p999": 45.7,
+                "max": 654.6,
+                "mean": 28.3
+              },
+              "daemon_cpu_us_per_request": 15.499999999999995
+            },
+            {
+              "target_rps": 25000,
+              "achieved_rps": 24999.9,
+              "requests": 250000,
+              "responses": 300000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 28.2,
+                "p90": 30.6,
+                "p99": 32,
+                "p999": 43.3,
+                "max": 1125.4,
+                "mean": 28.4
+              },
+              "daemon_cpu_us_per_request": 15.833333333333334
+            }
+          ]
+        },
+        {
+          "target_rps": 50000,
+          "achieved_rps": {
+            "median": 49999.7,
+            "min": 49999.7,
+            "max": 49999.7
+          },
+          "latency_us": {
+            "p50": {
+              "median": 24.7,
+              "min": 24.6,
+              "max": 24.8
+            },
+            "p90": {
+              "median": 27,
+              "min": 26.9,
+              "max": 27.1
+            },
+            "p99": {
+              "median": 29.8,
+              "min": 29.8,
+              "max": 30.3
+            },
+            "p999": {
+              "median": 40.4,
+              "min": 40,
+              "max": 42.8
+            },
+            "max": {
+              "median": 3029.3,
+              "min": 996.4,
+              "max": 3035.2
+            },
+            "mean": {
+              "median": 25,
+              "min": 25,
+              "max": 25.2
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 13.833333333333341,
+            "min": 13.816666666666665,
+            "max": 13.933333333333332
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 50000,
+              "achieved_rps": 49999.7,
+              "requests": 500000,
+              "responses": 600000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 24.8,
+                "p90": 27.1,
+                "p99": 30.3,
+                "p999": 42.8,
+                "max": 3035.2,
+                "mean": 25.2
+              },
+              "daemon_cpu_us_per_request": 13.933333333333332
+            },
+            {
+              "target_rps": 50000,
+              "achieved_rps": 49999.7,
+              "requests": 500000,
+              "responses": 600000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 24.6,
+                "p90": 27,
+                "p99": 29.8,
+                "p999": 40,
+                "max": 3029.3,
+                "mean": 25
+              },
+              "daemon_cpu_us_per_request": 13.816666666666665
+            },
+            {
+              "target_rps": 50000,
+              "achieved_rps": 49999.7,
+              "requests": 500000,
+              "responses": 600000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 24.7,
+                "p90": 26.9,
+                "p99": 29.8,
+                "p999": 40.4,
+                "max": 996.4,
+                "mean": 25
+              },
+              "daemon_cpu_us_per_request": 13.833333333333341
+            }
+          ]
+        },
+        {
+          "target_rps": 100000,
+          "achieved_rps": {
+            "median": 99998.5,
+            "min": 99998.2,
+            "max": 99998.6
+          },
+          "latency_us": {
+            "p50": {
+              "median": 23.5,
+              "min": 23.4,
+              "max": 23.6
+            },
+            "p90": {
+              "median": 25.7,
+              "min": 25.6,
+              "max": 25.7
+            },
+            "p99": {
+              "median": 40.7,
+              "min": 40.4,
+              "max": 41.9
+            },
+            "p999": {
+              "median": 62.1,
+              "min": 57.8,
+              "max": 66
+            },
+            "max": {
+              "median": 2358.1,
+              "min": 891.2,
+              "max": 3057.6
+            },
+            "mean": {
+              "median": 24.4,
+              "min": 24.4,
+              "max": 24.4
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 13.483333333333333,
+            "min": 13.483333333333333,
+            "max": 13.491666666666665
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 100000,
+              "achieved_rps": 99998.5,
+              "requests": 1000000,
+              "responses": 1200000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 23.5,
+                "p90": 25.7,
+                "p99": 40.7,
+                "p999": 62.1,
+                "max": 3057.6,
+                "mean": 24.4
+              },
+              "daemon_cpu_us_per_request": 13.483333333333333
+            },
+            {
+              "target_rps": 100000,
+              "achieved_rps": 99998.6,
+              "requests": 1000000,
+              "responses": 1200000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 23.4,
+                "p90": 25.6,
+                "p99": 41.9,
+                "p999": 66,
+                "max": 2358.1,
+                "mean": 24.4
+              },
+              "daemon_cpu_us_per_request": 13.483333333333333
+            },
+            {
+              "target_rps": 100000,
+              "achieved_rps": 99998.2,
+              "requests": 1000000,
+              "responses": 1200000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 23.6,
+                "p90": 25.7,
+                "p99": 40.4,
+                "p999": 57.8,
+                "max": 891.2,
+                "mean": 24.4
+              },
+              "daemon_cpu_us_per_request": 13.491666666666665
+            }
+          ]
+        },
+        {
+          "target_rps": 150000,
+          "achieved_rps": {
+            "median": 149995.7,
+            "min": 149995.3,
+            "max": 149995.8
+          },
+          "latency_us": {
+            "p50": {
+              "median": 25.3,
+              "min": 25.2,
+              "max": 25.4
+            },
+            "p90": {
+              "median": 35.8,
+              "min": 35.7,
+              "max": 36
+            },
+            "p99": {
+              "median": 51.4,
+              "min": 51.2,
+              "max": 51.7
+            },
+            "p999": {
+              "median": 74.5,
+              "min": 73.8,
+              "max": 79.4
+            },
+            "max": {
+              "median": 1752.6,
+              "min": 1260.4,
+              "max": 3474.3
+            },
+            "mean": {
+              "median": 27.6,
+              "min": 27.5,
+              "max": 27.7
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 14.161118978399431,
+            "min": 14.15556341975745,
+            "max": 14.177785654325369
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 150000,
+              "achieved_rps": 149995.8,
+              "requests": 1499999,
+              "responses": 1799999,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 25.3,
+                "p90": 35.8,
+                "p99": 51.4,
+                "p999": 74.5,
+                "max": 1260.4,
+                "mean": 27.6
+              },
+              "daemon_cpu_us_per_request": 14.161118978399431
+            },
+            {
+              "target_rps": 150000,
+              "achieved_rps": 149995.3,
+              "requests": 1499999,
+              "responses": 1799999,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 25.2,
+                "p90": 35.7,
+                "p99": 51.2,
+                "p999": 73.8,
+                "max": 1752.6,
+                "mean": 27.5
+              },
+              "daemon_cpu_us_per_request": 14.15556341975745
+            },
+            {
+              "target_rps": 150000,
+              "achieved_rps": 149995.7,
+              "requests": 1499999,
+              "responses": 1799999,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 25.4,
+                "p90": 36,
+                "p99": 51.7,
+                "p999": 79.4,
+                "max": 3474.3,
+                "mean": 27.7
+              },
+              "daemon_cpu_us_per_request": 14.177785654325369
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "implementation": "zig",
+      "product": "sibuna-shield",
+      "mode": "forward_auth",
+      "rates": [
+        {
+          "target_rps": 10000,
+          "achieved_rps": {
+            "median": 10000,
+            "min": 10000,
+            "max": 10000
+          },
+          "latency_us": {
+            "p50": {
+              "median": 32.8,
+              "min": 32.6,
+              "max": 32.9
+            },
+            "p90": {
+              "median": 34.2,
+              "min": 34.1,
+              "max": 35.7
+            },
+            "p99": {
+              "median": 43.8,
+              "min": 38.4,
+              "max": 57.7
+            },
+            "p999": {
+              "median": 60.9,
+              "min": 48.2,
+              "max": 62.3
+            },
+            "max": {
+              "median": 1029.8,
+              "min": 120,
+              "max": 2029.9
+            },
+            "mean": {
+              "median": 32.9,
+              "min": 32.8,
+              "max": 33.3
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 19.916666666666668,
+            "min": 19.916666666666664,
+            "max": 19.916666666666668
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 10000,
+              "achieved_rps": 10000,
+              "requests": 100000,
+              "responses": 120000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 32.6,
+                "p90": 34.2,
+                "p99": 57.7,
+                "p999": 62.3,
+                "max": 1029.8,
+                "mean": 32.8
+              },
+              "daemon_cpu_us_per_request": 19.916666666666668
+            },
+            {
+              "target_rps": 10000,
+              "achieved_rps": 10000,
+              "requests": 100000,
+              "responses": 120000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 32.8,
+                "p90": 35.7,
+                "p99": 43.8,
+                "p999": 48.2,
+                "max": 120,
+                "mean": 33.3
+              },
+              "daemon_cpu_us_per_request": 19.916666666666668
+            },
+            {
+              "target_rps": 10000,
+              "achieved_rps": 10000,
+              "requests": 100000,
+              "responses": 120000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 32.9,
+                "p90": 34.1,
+                "p99": 38.4,
+                "p999": 60.9,
+                "max": 2029.9,
+                "mean": 32.9
+              },
+              "daemon_cpu_us_per_request": 19.916666666666664
+            }
+          ]
+        },
+        {
+          "target_rps": 25000,
+          "achieved_rps": {
+            "median": 24999.9,
+            "min": 24999.9,
+            "max": 24999.9
+          },
+          "latency_us": {
+            "p50": {
+              "median": 29.5,
+              "min": 29.1,
+              "max": 30
+            },
+            "p90": {
+              "median": 32.7,
+              "min": 32.6,
+              "max": 33
+            },
+            "p99": {
+              "median": 35.9,
+              "min": 35.9,
+              "max": 36.7
+            },
+            "p999": {
+              "median": 46.7,
+              "min": 46.5,
+              "max": 47.5
+            },
+            "max": {
+              "median": 495.9,
+              "min": 265,
+              "max": 950.2
+            },
+            "mean": {
+              "median": 29.5,
+              "min": 29.3,
+              "max": 30.1
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 17.9,
+            "min": 17.59999999999999,
+            "max": 18.166666666666664
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 25000,
+              "achieved_rps": 24999.9,
+              "requests": 250000,
+              "responses": 300000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 29.5,
+                "p90": 32.6,
+                "p99": 35.9,
+                "p999": 47.5,
+                "max": 950.2,
+                "mean": 29.5
+              },
+              "daemon_cpu_us_per_request": 17.9
+            },
+            {
+              "target_rps": 25000,
+              "achieved_rps": 24999.9,
+              "requests": 250000,
+              "responses": 300000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 29.1,
+                "p90": 32.7,
+                "p99": 35.9,
+                "p999": 46.7,
+                "max": 495.9,
+                "mean": 29.3
+              },
+              "daemon_cpu_us_per_request": 17.59999999999999
+            },
+            {
+              "target_rps": 25000,
+              "achieved_rps": 24999.9,
+              "requests": 250000,
+              "responses": 300000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 30,
+                "p90": 33,
+                "p99": 36.7,
+                "p999": 46.5,
+                "max": 265,
+                "mean": 30.1
+              },
+              "daemon_cpu_us_per_request": 18.166666666666664
+            }
+          ]
+        },
+        {
+          "target_rps": 50000,
+          "achieved_rps": {
+            "median": 49999.5,
+            "min": 49999.4,
+            "max": 49999.6
+          },
+          "latency_us": {
+            "p50": {
+              "median": 26.8,
+              "min": 26.5,
+              "max": 26.9
+            },
+            "p90": {
+              "median": 29,
+              "min": 28.8,
+              "max": 29.1
+            },
+            "p99": {
+              "median": 32.3,
+              "min": 31.9,
+              "max": 32.4
+            },
+            "p999": {
+              "median": 47.3,
+              "min": 46.1,
+              "max": 47.9
+            },
+            "max": {
+              "median": 1685.8,
+              "min": 1668.3,
+              "max": 2027.4
+            },
+            "mean": {
+              "median": 27.3,
+              "min": 27,
+              "max": 27.4
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 16.283333333333328,
+            "min": 16.16666666666667,
+            "max": 16.28333333333334
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 50000,
+              "achieved_rps": 49999.5,
+              "requests": 500000,
+              "responses": 600000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 26.9,
+                "p90": 29.1,
+                "p99": 32.3,
+                "p999": 47.9,
+                "max": 1685.8,
+                "mean": 27.4
+              },
+              "daemon_cpu_us_per_request": 16.28333333333334
+            },
+            {
+              "target_rps": 50000,
+              "achieved_rps": 49999.6,
+              "requests": 500000,
+              "responses": 600000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 26.8,
+                "p90": 29,
+                "p99": 32.4,
+                "p999": 47.3,
+                "max": 2027.4,
+                "mean": 27.3
+              },
+              "daemon_cpu_us_per_request": 16.283333333333328
+            },
+            {
+              "target_rps": 50000,
+              "achieved_rps": 49999.4,
+              "requests": 500000,
+              "responses": 600000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 26.5,
+                "p90": 28.8,
+                "p99": 31.9,
+                "p999": 46.1,
+                "max": 1668.3,
+                "mean": 27
+              },
+              "daemon_cpu_us_per_request": 16.16666666666667
+            }
+          ]
+        },
+        {
+          "target_rps": 100000,
+          "achieved_rps": {
+            "median": 99996.1,
+            "min": 99996,
+            "max": 99996.1
+          },
+          "latency_us": {
+            "p50": {
+              "median": 25.7,
+              "min": 25.6,
+              "max": 25.7
+            },
+            "p90": {
+              "median": 28.3,
+              "min": 28.1,
+              "max": 28.3
+            },
+            "p99": {
+              "median": 47,
+              "min": 46.6,
+              "max": 47.5
+            },
+            "p999": {
+              "median": 112.2,
+              "min": 104.3,
+              "max": 116.5
+            },
+            "max": {
+              "median": 3116.3,
+              "min": 3037.5,
+              "max": 3342.7
+            },
+            "mean": {
+              "median": 27.4,
+              "min": 27.3,
+              "max": 27.4
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 15.95,
+            "min": 15.941666666666663,
+            "max": 15.966666666666663
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 100000,
+              "achieved_rps": 99996.1,
+              "requests": 1000000,
+              "responses": 1200000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 25.6,
+                "p90": 28.1,
+                "p99": 47,
+                "p999": 104.3,
+                "max": 3342.7,
+                "mean": 27.3
+              },
+              "daemon_cpu_us_per_request": 15.941666666666663
+            },
+            {
+              "target_rps": 100000,
+              "achieved_rps": 99996.1,
+              "requests": 1000000,
+              "responses": 1200000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 25.7,
+                "p90": 28.3,
+                "p99": 47.5,
+                "p999": 116.5,
+                "max": 3037.5,
+                "mean": 27.4
+              },
+              "daemon_cpu_us_per_request": 15.95
+            },
+            {
+              "target_rps": 100000,
+              "achieved_rps": 99996,
+              "requests": 1000000,
+              "responses": 1200000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 25.7,
+                "p90": 28.3,
+                "p99": 46.6,
+                "p999": 112.2,
+                "max": 3116.3,
+                "mean": 27.4
+              },
+              "daemon_cpu_us_per_request": 15.966666666666663
+            }
+          ]
+        },
+        {
+          "target_rps": 150000,
+          "achieved_rps": {
+            "median": 149991.7,
+            "min": 149990.4,
+            "max": 149991.8
+          },
+          "latency_us": {
+            "p50": {
+              "median": 28.2,
+              "min": 28.1,
+              "max": 28.2
+            },
+            "p90": {
+              "median": 43,
+              "min": 42.8,
+              "max": 43.1
+            },
+            "p99": {
+              "median": 62.4,
+              "min": 62,
+              "max": 62.6
+            },
+            "p999": {
+              "median": 977.6,
+              "min": 904.6,
+              "max": 1156.7
+            },
+            "max": {
+              "median": 7767,
+              "min": 7373.1,
+              "max": 8941.4
+            },
+            "mean": {
+              "median": 33.8,
+              "min": 33.7,
+              "max": 34
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 16.733342629634798,
+            "min": 16.694453719140963,
+            "max": 16.76112042284468
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 150000,
+              "achieved_rps": 149990.4,
+              "requests": 1499999,
+              "responses": 1799999,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 28.2,
+                "p90": 43.1,
+                "p99": 62.6,
+                "p999": 904.6,
+                "max": 7767,
+                "mean": 33.7
+              },
+              "daemon_cpu_us_per_request": 16.76112042284468
+            },
+            {
+              "target_rps": 150000,
+              "achieved_rps": 149991.7,
+              "requests": 1499999,
+              "responses": 1799999,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 28.1,
+                "p90": 42.8,
+                "p99": 62.4,
+                "p999": 1156.7,
+                "max": 8941.4,
+                "mean": 34
+              },
+              "daemon_cpu_us_per_request": 16.694453719140963
+            },
+            {
+              "target_rps": 150000,
+              "achieved_rps": 149991.8,
+              "requests": 1499999,
+              "responses": 1799999,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 28.2,
+                "p90": 43,
+                "p99": 62,
+                "p999": 977.6,
+                "max": 7373.1,
+                "mean": 33.8
+              },
+              "daemon_cpu_us_per_request": 16.733342629634798
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "product": "sibuna-shield",
+      "mode": "reverse_proxy",
+      "rates": [
+        {
+          "target_rps": 10000,
+          "achieved_rps": {
+            "median": 10000,
+            "min": 10000,
+            "max": 10000
+          },
+          "latency_us": {
+            "p50": {
+              "median": 56.5,
+              "min": 55.5,
+              "max": 57.3
+            },
+            "p90": {
+              "median": 60.6,
+              "min": 60.5,
+              "max": 60.9
+            },
+            "p99": {
+              "median": 65.3,
+              "min": 65,
+              "max": 65.5
+            },
+            "p999": {
+              "median": 76.1,
+              "min": 75.7,
+              "max": 78.7
+            },
+            "max": {
+              "median": 555.1,
+              "min": 392.3,
+              "max": 1161.3
+            },
+            "mean": {
+              "median": 56.2,
+              "min": 55.5,
+              "max": 56.9
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 32.25,
+            "min": 31.999999999999993,
+            "max": 32.5
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 10000,
+              "achieved_rps": 10000,
+              "requests": 100000,
+              "responses": 120000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 57.3,
+                "p90": 60.9,
+                "p99": 65.3,
+                "p999": 75.7,
+                "max": 555.1,
+                "mean": 56.9
+              },
+              "daemon_cpu_us_per_request": 32.5
+            },
+            {
+              "target_rps": 10000,
+              "achieved_rps": 10000,
+              "requests": 100000,
+              "responses": 120000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 56.5,
+                "p90": 60.6,
+                "p99": 65.5,
+                "p999": 78.7,
+                "max": 392.3,
+                "mean": 56.2
+              },
+              "daemon_cpu_us_per_request": 32.25
+            },
+            {
+              "target_rps": 10000,
+              "achieved_rps": 10000,
+              "requests": 100000,
+              "responses": 120000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 55.5,
+                "p90": 60.5,
+                "p99": 65,
+                "p999": 76.1,
+                "max": 1161.3,
+                "mean": 55.5
+              },
+              "daemon_cpu_us_per_request": 31.999999999999993
+            }
+          ]
+        },
+        {
+          "target_rps": 25000,
+          "achieved_rps": {
+            "median": 24999.8,
+            "min": 24999.8,
+            "max": 24999.8
+          },
+          "latency_us": {
+            "p50": {
+              "median": 50.7,
+              "min": 50.6,
+              "max": 50.8
+            },
+            "p90": {
+              "median": 54,
+              "min": 54,
+              "max": 55.3
+            },
+            "p99": {
+              "median": 58.5,
+              "min": 58.4,
+              "max": 60.4
+            },
+            "p999": {
+              "median": 72.1,
+              "min": 71,
+              "max": 72.1
+            },
+            "max": {
+              "median": 1104.8,
+              "min": 912.5,
+              "max": 1170.5
+            },
+            "mean": {
+              "median": 51.1,
+              "min": 51,
+              "max": 51.3
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 28.633333333333333,
+            "min": 28.533333333333328,
+            "max": 28.66666666666667
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 25000,
+              "achieved_rps": 24999.8,
+              "requests": 250000,
+              "responses": 300000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 50.7,
+                "p90": 54,
+                "p99": 58.4,
+                "p999": 72.1,
+                "max": 1104.8,
+                "mean": 51.1
+              },
+              "daemon_cpu_us_per_request": 28.533333333333328
+            },
+            {
+              "target_rps": 25000,
+              "achieved_rps": 24999.8,
+              "requests": 250000,
+              "responses": 300000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 50.8,
+                "p90": 55.3,
+                "p99": 60.4,
+                "p999": 72.1,
+                "max": 912.5,
+                "mean": 51.3
+              },
+              "daemon_cpu_us_per_request": 28.633333333333333
+            },
+            {
+              "target_rps": 25000,
+              "achieved_rps": 24999.8,
+              "requests": 250000,
+              "responses": 300000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 50.6,
+                "p90": 54,
+                "p99": 58.5,
+                "p999": 71,
+                "max": 1170.5,
+                "mean": 51
+              },
+              "daemon_cpu_us_per_request": 28.66666666666667
+            }
+          ]
+        },
+        {
+          "target_rps": 50000,
+          "achieved_rps": {
+            "median": 49999.5,
+            "min": 49999.5,
+            "max": 49999.6
+          },
+          "latency_us": {
+            "p50": {
+              "median": 47,
+              "min": 46.8,
+              "max": 47.3
+            },
+            "p90": {
+              "median": 50.1,
+              "min": 49.8,
+              "max": 50.9
+            },
+            "p99": {
+              "median": 60,
+              "min": 57.5,
+              "max": 65.6
+            },
+            "p999": {
+              "median": 73.9,
+              "min": 70.6,
+              "max": 79.9
+            },
+            "max": {
+              "median": 3066.3,
+              "min": 952.7,
+              "max": 3073.8
+            },
+            "mean": {
+              "median": 47.7,
+              "min": 47.5,
+              "max": 48.2
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 27.449999999999996,
+            "min": 27.33333333333333,
+            "max": 27.483333333333338
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 50000,
+              "achieved_rps": 49999.6,
+              "requests": 500000,
+              "responses": 600000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 47,
+                "p90": 50.1,
+                "p99": 60,
+                "p999": 73.9,
+                "max": 952.7,
+                "mean": 47.7
+              },
+              "daemon_cpu_us_per_request": 27.483333333333338
+            },
+            {
+              "target_rps": 50000,
+              "achieved_rps": 49999.5,
+              "requests": 500000,
+              "responses": 600000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 46.8,
+                "p90": 49.8,
+                "p99": 57.5,
+                "p999": 70.6,
+                "max": 3073.8,
+                "mean": 47.5
+              },
+              "daemon_cpu_us_per_request": 27.33333333333333
+            },
+            {
+              "target_rps": 50000,
+              "achieved_rps": 49999.5,
+              "requests": 500000,
+              "responses": 600000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 47.3,
+                "p90": 50.9,
+                "p99": 65.6,
+                "p999": 79.9,
+                "max": 3066.3,
+                "mean": 48.2
+              },
+              "daemon_cpu_us_per_request": 27.449999999999996
+            }
+          ]
+        },
+        {
+          "target_rps": 100000,
+          "achieved_rps": {
+            "median": 99996.3,
+            "min": 99996.1,
+            "max": 99996.7
+          },
+          "latency_us": {
+            "p50": {
+              "median": 54.8,
+              "min": 54.8,
+              "max": 55.3
+            },
+            "p90": {
+              "median": 74.8,
+              "min": 74.2,
+              "max": 76.5
+            },
+            "p99": {
+              "median": 100.4,
+              "min": 100,
+              "max": 104.4
+            },
+            "p999": {
+              "median": 150.1,
+              "min": 138.1,
+              "max": 209.8
+            },
+            "max": {
+              "median": 2239.2,
+              "min": 1716.4,
+              "max": 2849.3
+            },
+            "mean": {
+              "median": 58.6,
+              "min": 58.6,
+              "max": 59.6
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 28.424999999999986,
+            "min": 28.408333333333335,
+            "max": 28.575000000000006
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 100000,
+              "achieved_rps": 99996.1,
+              "requests": 1000000,
+              "responses": 1200000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 55.3,
+                "p90": 76.5,
+                "p99": 104.4,
+                "p999": 209.8,
+                "max": 2239.2,
+                "mean": 59.6
+              },
+              "daemon_cpu_us_per_request": 28.575000000000006
+            },
+            {
+              "target_rps": 100000,
+              "achieved_rps": 99996.3,
+              "requests": 1000000,
+              "responses": 1200000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 54.8,
+                "p90": 74.2,
+                "p99": 100,
+                "p999": 150.1,
+                "max": 1716.4,
+                "mean": 58.6
+              },
+              "daemon_cpu_us_per_request": 28.408333333333335
+            },
+            {
+              "target_rps": 100000,
+              "achieved_rps": 99996.7,
+              "requests": 1000000,
+              "responses": 1200000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 54.8,
+                "p90": 74.8,
+                "p99": 100.4,
+                "p999": 138.1,
+                "max": 2849.3,
+                "mean": 58.6
+              },
+              "daemon_cpu_us_per_request": 28.424999999999986
+            }
+          ]
+        },
+        {
+          "target_rps": 150000,
+          "achieved_rps": {
+            "median": 134344.5,
+            "min": 134223.8,
+            "max": 134388.5
+          },
+          "latency_us": {
+            "p50": {
+              "median": 583933.9,
+              "min": 576369.8,
+              "max": 700399.7
+            },
+            "p90": {
+              "median": 1544160.3,
+              "min": 1360151.5,
+              "max": 1580563.8
+            },
+            "p99": {
+              "median": 1906273.3,
+              "min": 1631233.5,
+              "max": 2218759.6
+            },
+            "p999": {
+              "median": 1967133.6,
+              "min": 1672282.5,
+              "max": 2693420
+            },
+            "max": {
+              "median": 1989963.6,
+              "min": 1729815.9,
+              "max": 2742140.2
+            },
+            "mean": {
+              "median": 684848.8,
+              "min": 676673.6,
+              "max": 721741.6
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 29.222238456799122,
+            "min": 29.172238429021363,
+            "max": 29.244460691367042
+          },
+          "errors_total": 4,
+          "repetitions": [
+            {
+              "target_rps": 150000,
+              "achieved_rps": 134223.8,
+              "requests": 1499999,
+              "responses": 1799999,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 583933.9,
+                "p90": 1580563.8,
+                "p99": 1906273.3,
+                "p999": 1967133.6,
+                "max": 1989963.6,
+                "mean": 721741.6
+              },
+              "daemon_cpu_us_per_request": 29.244460691367042
+            },
+            {
+              "target_rps": 150000,
+              "achieved_rps": 134344.5,
+              "requests": 1499999,
+              "responses": 1799999,
+              "errors": 0,
+              "bad_status": 2,
+              "latency_us": {
+                "p50": 576369.8,
+                "p90": 1544160.3,
+                "p99": 2218759.6,
+                "p999": 2693420,
+                "max": 2742140.2,
+                "mean": 676673.6
+              },
+              "daemon_cpu_us_per_request": 29.172238429021363
+            },
+            {
+              "target_rps": 150000,
+              "achieved_rps": 134388.5,
+              "requests": 1499999,
+              "responses": 1799999,
+              "errors": 0,
+              "bad_status": 2,
+              "latency_us": {
+                "p50": 700399.7,
+                "p90": 1360151.5,
+                "p99": 1631233.5,
+                "p999": 1672282.5,
+                "max": 1729815.9,
+                "mean": 684848.8
+              },
+              "daemon_cpu_us_per_request": 29.222238456799122
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "implementation": "zig",
+      "product": "sibuna-shield",
+      "mode": "reverse_proxy",
+      "rates": [
+        {
+          "target_rps": 10000,
+          "achieved_rps": {
+            "median": 10000,
+            "min": 10000,
+            "max": 10000
+          },
+          "latency_us": {
+            "p50": {
+              "median": 57.2,
+              "min": 56.3,
+              "max": 57.7
+            },
+            "p90": {
+              "median": 61.1,
+              "min": 61.1,
+              "max": 61.1
+            },
+            "p99": {
+              "median": 67,
+              "min": 66.6,
+              "max": 70.1
+            },
+            "p999": {
+              "median": 77.9,
+              "min": 75,
+              "max": 93.9
+            },
+            "max": {
+              "median": 1676.3,
+              "min": 611.7,
+              "max": 1837
+            },
+            "mean": {
+              "median": 56.9,
+              "min": 56.6,
+              "max": 57.3
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 34.99999999999999,
+            "min": 34.666666666666664,
+            "max": 35.333333333333336
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 10000,
+              "achieved_rps": 10000,
+              "requests": 100000,
+              "responses": 120000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 56.3,
+                "p90": 61.1,
+                "p99": 70.1,
+                "p999": 93.9,
+                "max": 1676.3,
+                "mean": 56.6
+              },
+              "daemon_cpu_us_per_request": 34.666666666666664
+            },
+            {
+              "target_rps": 10000,
+              "achieved_rps": 10000,
+              "requests": 100000,
+              "responses": 120000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 57.2,
+                "p90": 61.1,
+                "p99": 66.6,
+                "p999": 77.9,
+                "max": 1837,
+                "mean": 56.9
+              },
+              "daemon_cpu_us_per_request": 34.99999999999999
+            },
+            {
+              "target_rps": 10000,
+              "achieved_rps": 10000,
+              "requests": 100000,
+              "responses": 120000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 57.7,
+                "p90": 61.1,
+                "p99": 67,
+                "p999": 75,
+                "max": 611.7,
+                "mean": 57.3
+              },
+              "daemon_cpu_us_per_request": 35.333333333333336
+            }
+          ]
+        },
+        {
+          "target_rps": 25000,
+          "achieved_rps": {
+            "median": 24999.8,
+            "min": 24999.8,
+            "max": 24999.8
+          },
+          "latency_us": {
+            "p50": {
+              "median": 51.1,
+              "min": 50.8,
+              "max": 52.7
+            },
+            "p90": {
+              "median": 55,
+              "min": 55,
+              "max": 55.4
+            },
+            "p99": {
+              "median": 60.6,
+              "min": 60,
+              "max": 60.7
+            },
+            "p999": {
+              "median": 73.1,
+              "min": 72.9,
+              "max": 75
+            },
+            "max": {
+              "median": 518.2,
+              "min": 293.3,
+              "max": 1664.9
+            },
+            "mean": {
+              "median": 51.6,
+              "min": 51.3,
+              "max": 52.9
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 30.799999999999994,
+            "min": 30.766666666666662,
+            "max": 31
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 25000,
+              "achieved_rps": 24999.8,
+              "requests": 250000,
+              "responses": 300000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 50.8,
+                "p90": 55,
+                "p99": 60.7,
+                "p999": 72.9,
+                "max": 518.2,
+                "mean": 51.3
+              },
+              "daemon_cpu_us_per_request": 30.766666666666662
+            },
+            {
+              "target_rps": 25000,
+              "achieved_rps": 24999.8,
+              "requests": 250000,
+              "responses": 300000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 52.7,
+                "p90": 55.4,
+                "p99": 60,
+                "p999": 75,
+                "max": 1664.9,
+                "mean": 52.9
+              },
+              "daemon_cpu_us_per_request": 31
+            },
+            {
+              "target_rps": 25000,
+              "achieved_rps": 24999.8,
+              "requests": 250000,
+              "responses": 300000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 51.1,
+                "p90": 55,
+                "p99": 60.6,
+                "p999": 73.1,
+                "max": 293.3,
+                "mean": 51.6
+              },
+              "daemon_cpu_us_per_request": 30.799999999999994
+            }
+          ]
+        },
+        {
+          "target_rps": 50000,
+          "achieved_rps": {
+            "median": 49998.3,
+            "min": 49998,
+            "max": 49998.8
+          },
+          "latency_us": {
+            "p50": {
+              "median": 48.9,
+              "min": 48.3,
+              "max": 48.9
+            },
+            "p90": {
+              "median": 52.3,
+              "min": 51.6,
+              "max": 52.7
+            },
+            "p99": {
+              "median": 65.2,
+              "min": 58.3,
+              "max": 69.8
+            },
+            "p999": {
+              "median": 94,
+              "min": 90.8,
+              "max": 99.7
+            },
+            "max": {
+              "median": 2833,
+              "min": 2812.9,
+              "max": 2935.1
+            },
+            "mean": {
+              "median": 49.9,
+              "min": 49.4,
+              "max": 50.2
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 29.91666666666667,
+            "min": 29.733333333333338,
+            "max": 29.983333333333338
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 50000,
+              "achieved_rps": 49998,
+              "requests": 500000,
+              "responses": 600000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 48.9,
+                "p90": 52.3,
+                "p99": 65.2,
+                "p999": 94,
+                "max": 2812.9,
+                "mean": 49.9
+              },
+              "daemon_cpu_us_per_request": 29.983333333333338
+            },
+            {
+              "target_rps": 50000,
+              "achieved_rps": 49998.8,
+              "requests": 500000,
+              "responses": 600000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 48.3,
+                "p90": 51.6,
+                "p99": 58.3,
+                "p999": 90.8,
+                "max": 2833,
+                "mean": 49.4
+              },
+              "daemon_cpu_us_per_request": 29.733333333333338
+            },
+            {
+              "target_rps": 50000,
+              "achieved_rps": 49998.3,
+              "requests": 500000,
+              "responses": 600000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 48.9,
+                "p90": 52.7,
+                "p99": 69.8,
+                "p999": 99.7,
+                "max": 2935.1,
+                "mean": 50.2
+              },
+              "daemon_cpu_us_per_request": 29.91666666666667
+            }
+          ]
+        },
+        {
+          "target_rps": 100000,
+          "achieved_rps": {
+            "median": 99993,
+            "min": 99992.6,
+            "max": 99993.6
+          },
+          "latency_us": {
+            "p50": {
+              "median": 61.4,
+              "min": 61.4,
+              "max": 61.6
+            },
+            "p90": {
+              "median": 87.4,
+              "min": 87.2,
+              "max": 87.4
+            },
+            "p99": {
+              "median": 120.2,
+              "min": 120,
+              "max": 121.3
+            },
+            "p999": {
+              "median": 1596.7,
+              "min": 1533.7,
+              "max": 1909.6
+            },
+            "max": {
+              "median": 7665.2,
+              "min": 6986.7,
+              "max": 7826.8
+            },
+            "mean": {
+              "median": 69.7,
+              "min": 69.6,
+              "max": 70.4
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 31.05833333333332,
+            "min": 31.016666666666666,
+            "max": 31.091666666666665
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 100000,
+              "achieved_rps": 99992.6,
+              "requests": 1000000,
+              "responses": 1200000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 61.4,
+                "p90": 87.4,
+                "p99": 120.2,
+                "p999": 1533.7,
+                "max": 7826.8,
+                "mean": 69.6
+              },
+              "daemon_cpu_us_per_request": 31.05833333333332
+            },
+            {
+              "target_rps": 100000,
+              "achieved_rps": 99993.6,
+              "requests": 1000000,
+              "responses": 1200000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 61.4,
+                "p90": 87.2,
+                "p99": 120,
+                "p999": 1596.7,
+                "max": 6986.7,
+                "mean": 69.7
+              },
+              "daemon_cpu_us_per_request": 31.016666666666666
+            },
+            {
+              "target_rps": 100000,
+              "achieved_rps": 99993,
+              "requests": 1000000,
+              "responses": 1200000,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 61.6,
+                "p90": 87.4,
+                "p99": 121.3,
+                "p999": 1909.6,
+                "max": 7665.2,
+                "mean": 70.4
+              },
+              "daemon_cpu_us_per_request": 31.091666666666665
+            }
+          ]
+        },
+        {
+          "target_rps": 150000,
+          "achieved_rps": {
+            "median": 122974.4,
+            "min": 122744.2,
+            "max": 123443.7
+          },
+          "latency_us": {
+            "p50": {
+              "median": 1268821.6,
+              "min": 1241207.9,
+              "max": 1286627.4
+            },
+            "p90": {
+              "median": 2055001.4,
+              "min": 1998892.4,
+              "max": 2057514.8
+            },
+            "p99": {
+              "median": 2352671.6,
+              "min": 2316494,
+              "max": 2388052
+            },
+            "p999": {
+              "median": 2458151.7,
+              "min": 2418949.8,
+              "max": 2576092.3
+            },
+            "max": {
+              "median": 2502766.3,
+              "min": 2457378.4,
+              "max": 2608163.9
+            },
+            "mean": {
+              "median": 1290071.8,
+              "min": 1254063.8,
+              "max": 1290273.3
+            }
+          },
+          "daemon_cpu_us_per_request": {
+            "median": 31.522239734577635,
+            "min": 31.422239679022045,
+            "max": 31.566684203713443
+          },
+          "errors_total": 0,
+          "repetitions": [
+            {
+              "target_rps": 150000,
+              "achieved_rps": 123443.7,
+              "requests": 1499999,
+              "responses": 1799999,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 1241207.9,
+                "p90": 1998892.4,
+                "p99": 2316494,
+                "p999": 2418949.8,
+                "max": 2457378.4,
+                "mean": 1254063.8
+              },
+              "daemon_cpu_us_per_request": 31.422239679022045
+            },
+            {
+              "target_rps": 150000,
+              "achieved_rps": 122974.4,
+              "requests": 1499999,
+              "responses": 1799999,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 1286627.4,
+                "p90": 2055001.4,
+                "p99": 2352671.6,
+                "p999": 2458151.7,
+                "max": 2502766.3,
+                "mean": 1290273.3
+              },
+              "daemon_cpu_us_per_request": 31.522239734577635
+            },
+            {
+              "target_rps": 150000,
+              "achieved_rps": 122744.2,
+              "requests": 1499999,
+              "responses": 1799999,
+              "errors": 0,
+              "bad_status": 0,
+              "latency_us": {
+                "p50": 1268821.6,
+                "p90": 2057514.8,
+                "p99": 2388052,
+                "p999": 2576092.3,
+                "max": 2608163.9,
+                "mean": 1290071.8
+              },
+              "daemon_cpu_us_per_request": 31.566684203713443
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "method": "Each connection sends on a fixed schedule; latency counts from the due time when the previous answer made the request late, otherwise from the actual send (coordinated-omission correction as in wrk2). Percentiles are nearest-rank over every measured request of one run; each figure is the median over the repetitions, with the min-max spread beside it in latency_us.",
+  "load_average_before": "1.30 1.91 4.02 1/1537 2162474",
+  "load_average_after": "52.31 19.10 8.98 1/1518 2178145"
+}
