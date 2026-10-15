@@ -24,6 +24,10 @@ Revision note
 
 2026-10-15 (Rust port): dynamic policies are read from the SQLite or PostgreSQL storage of SID 0011 instead of Zaxonlite, and a rebuilt engine is published as an owned value behind an ``Arc`` instead of into the spare read-copy-update slot (SID 0002, SID 0010). A rebuild that fails keeps the previous engine, as before.
 
+2026-10-15 (Rust port, security fix): rules match the request path in the normal form of SID 0009 (revision of 2026-10-15), and that is the path the origin receives. Zig matched the path as sent and forwarded it verbatim, while origins route on a decoded and resolved path. With a rule denying ``/admin/*``, the spellings ``//admin/x``, ``/./admin/x``, ``/%61dmin/x``, ``/admin%2fx`` and ``/admin;x/y`` all reached the origin. With ``^/login$`` at 24 bits, ``//login`` was challenged at the default 16 bits and escaped the rule's quota. The built-in ``well-known`` ALLOW let ``/.well-known/..;x/admin`` reach ``/admin`` on Tomcat and Spring without a challenge. Every path criterion, the static bypass paths, rule quotas and the challenge requirement now read the normal path. So do the reserved-route match, the original URI of forward authorization, and the URL the interstitial reports. The pattern grammar is unchanged, but a pattern matches only paths in normal form, so patterns must be written in that form. That means one slash between segments, no dot segments, unreserved characters unescaped, and other escapes with upper-case hexadecimal digits (``/caf%C3%A9/*``). A pattern that holds ``;``, ``%2F``, ``%5C`` or ``\`` matches nothing. Matching stays case-sensitive: ``/admin/*`` does not match ``/ADMIN/x``. An origin that folds case needs a rule for each spelling. A path above the root (``/static/../../etc/passwd``) is refused with 400 before evaluation, where Zig let the WAF deny it as ``waf:path_traversal``.
+
+2026-10-15 (Rust port, security fix): ``RequestView`` carries the client address parsed once by the daemon (``client_address``); reputation and CIDR criteria read it instead of re-parsing ``client_ip``, which remains for incidents and logs.
+
 Abstract
 --------
 
@@ -75,6 +79,10 @@ Data model
    };
 
 Pattern grammar: ``.*`` or ``*`` matches anything; ``^...$`` anchors an exact path; a trailing ``*``, ``/*``, or ``.*`` is a prefix match; a pattern beginning with ``/`` is an exact path; anything else is a case-insensitive substring, the natural form for User-Agent rules. Header patterns use the same grammar against the header value. CIDR matchers accept ``10.0.0.0/8``, ``2001:db8::/32``, bare addresses, and IPv4-mapped IPv6 literals.
+
+.. admonition:: Rust port note (2026-10-15)
+
+   Path criteria and the static bypass paths match the request path in the normal form of SID 0009: one slash between segments, no dot segments, unreserved characters unescaped and other escapes in upper case. Write patterns in that form. Matching is case-sensitive. See the revision note.
 
 Evaluation order
 ----------------

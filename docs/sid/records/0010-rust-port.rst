@@ -36,7 +36,7 @@ The following are identical to the Zig daemon, and each has tests whose expected
 - the challenge identifier (36-byte payload, 16-byte keyed BLAKE3 tag, 70 URL-safe base64 characters), the requirement ticket (59 characters), and both session token formats (75-character keyed BLAKE3 MAC token, 139-character Ed25519 token);
 - the key schedule (keyed BLAKE3 subkeys ``sibuna/token/v1`` and the others of SID 0002) and node binding of challenge keys;
 - Hashcash (``SHA-256(challenge ":" decimal(nonce))`` with bit-level difficulty) and the Cohen-Pietrzak proof layout of SID 0006;
-- the rule hash and the ban-table key, both Zig's ``std.hash.Wyhash`` with their fixed seeds, so rule identities stored in tokens agree across implementations;
+- the rule hash (Zig's ``std.hash.Wyhash`` with its fixed seed), so rule identities stored in tokens agree across implementations;
 - the HTTP/1.1 parser's acceptance and rejection set, including every smuggling and chunked-framing case of SID 0009;
 - policy evaluation order, WEIGH scoring, WAF categories and the Elm-style diagnostics of SID 0001 and SID 0003;
 - every route, status code, header and response body the end-to-end suite observes.
@@ -254,6 +254,7 @@ Review history
 
 - 2026-10-15: drafted with the start of the port.
 - 2026-10-15 (Rust port): each crate lists its deliberate changes from Zig in its crate documentation, and the design records that those changes touch carry dated revision notes (SID 0002 to SID 0007, SID 0009, SID 0011, SID 0012). Evidence for the first open question: ``sibuna-store`` measured ``std::sync::Mutex`` against a spin lock on a Ryzen 9 5950X. The spin lock saves about a nanosecond per uncontended operation but loses under contention (the spent set at 64 threads: 11.2 against 6.9 million operations per second; GCRA on six hot addresses at 64 threads: 37.4 against 6.5 million), so the spent set and the limiter use the mutex; the question is closed in favour of the mutex. The HTML snippet compiler of ``sibuna-html`` adds the code ``HTML008`` (a snippet file name must yield Rust item names) to ``HTML001`` to ``HTML007``.
+- 2026-10-15 (security review): limiter and ban-table placement is process-local, keyed per table, and not part of any wire format; only the rule hash keeps Zig's ``std.hash.Wyhash`` with its fixed seed. The Vyukov ring remains the store's only non-FFI ``unsafe``: ``std::sync::mpsc::sync_channel`` was measured 30 to 45% slower on the producer path with 16 producers. An adversarial review (2026-10-15) found request-path weaknesses inherited from Zig (trusted forwarded address, origin pool reuse, request-target normalisation, WAF canonicalisation bound, keyed tables, honeypot cross-site requests, adaptive input, connection limits); each fix is recorded in the SID that specifies the mechanism.
 
 References
 ----------

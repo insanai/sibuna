@@ -32,6 +32,12 @@ Revision note
 
    The cited sequential-work results apply under their random-oracle assumptions to the constructions and bounds in the papers. They are not an independent audit of this concrete SHA-256 protocol, its parameter calibration, browser timing or quantum security level. `Cohen-Pietrzak (2018) <https://eprint.iacr.org/2018/183>`__ and `Blocki-Lee-Zhou (2021) <https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.ITC.2021.22>`__ are the primary references. Hash evaluations below must not be confused with SHA-256 compression calls: variable-length labels and padding can require multiple compressions.
 
+2026-10-15 (Rust port, security fix, Parts A to C): the ban-table key is no longer Wyhash with a public seed; see SID 0004.
+
+2026-10-15 (Rust port, security fix, Parts D and E): the limiter evicts the oldest-TAT cell of a full probe window instead of refusing (Theorem 23 holds for every client whose cell is not evicted; an evicted client restarts from an idle state). The spent set's capacity is configurable (``--spent-tags``, default 1,048,576 tags, 24 MiB, 24-byte slots); the Zig set's 65,536 tags were exhausted by about 220 verified solutions per second within a five-minute challenge lifetime, after which honest solutions were refused.
+
+2026-10-15 (Rust port, security fix, Part H): the adaptive controller's input is the rate of verified solutions, not of issued challenges, which cost a flooder nothing; issuance only advances the bucket clock so the average decays. Arithmetic and bounds are unchanged.
+
 Abstract
 --------
 
