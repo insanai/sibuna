@@ -13,6 +13,9 @@ pub enum StorageError {
     NoBackend,
     /// The configuration selects a backend this build was compiled without.
     BackendNotBuilt(&'static str),
+    /// The database URL asks for a `sslmode` that needs TLS, and this build lacks the
+    /// `postgres-tls` feature. It is refused before any connection is made.
+    TlsNotBuilt(crate::tls::SslMode),
     /// The node id does not fit the 23 bits incident identifiers reserve for it.
     NodeIdTooLarge(u32),
     /// The data directory could not be created.
@@ -107,7 +110,22 @@ impl StorageError {
             StorageError::BackendNotBuilt(_) => {
                 "Rebuild with the matching cargo feature (`sqlite` or `postgres`)."
             }
+            StorageError::TlsNotBuilt(_) => {
+                "Build Sibuna with the `postgres-tls` cargo feature (`cargo build --release \
+                 -p sibuna --features postgres-tls`). Do not lower `sslmode` to reach a \
+                 database across a network you do not trust."
+            }
             StorageError::NodeIdTooLarge(_) => "Choose a `--cluster-node` below 8388608.",
+            _ if self.is_tls_failure() => {
+                "Check that `sslrootcert` names the certificate authority that signed the \
+                 server's certificate, and that the URL's host is a name in that certificate."
+            }
+            StorageError::Database(sqlx::Error::Database(database))
+                if database.code().as_deref() == Some("28000") =>
+            {
+                "The server's pg_hba.conf refused this connection. A server that accepts TCP \
+                 only over TLS (`hostssl`) needs `sslmode=verify-full` in the database URL."
+            }
             StorageError::UrlFile { .. } => {
                 "Store only the URL in a file of mode 0600 owned by the daemon's user."
             }
@@ -143,10 +161,28 @@ impl StorageError {
         matches!(database.code().as_deref(), Some("9" | "57014"))
     }
 
+    /// Returns true when a PostgreSQL connection failed in TLS: the server refused TLS, or
+    /// its certificate was refused (rustls reports that through an I/O error of kind
+    /// `InvalidData`, which nothing else on a connection produces), or the root certificate
+    /// file could not be used.
+    pub fn is_tls_failure(&self) -> bool {
+        match self {
+            StorageError::Database(sqlx::Error::Tls(_)) => true,
+            StorageError::Database(sqlx::Error::Io(error)) => {
+                error.kind() == std::io::ErrorKind::InvalidData
+            }
+            _ => false,
+        }
+    }
+
     /// Returns true when retrying later may succeed: the database was unreachable, busy, or
     /// aborted the transaction for a conflict with another writer, or the storage thread's
-    /// job queue was full.
+    /// job queue was full. A TLS failure is not transient: a refused certificate stays
+    /// refused, so startup fails at once instead of retrying for [`crate::STARTUP_TIMEOUT`].
     pub fn is_transient(&self) -> bool {
+        if self.is_tls_failure() {
+            return false;
+        }
         let StorageError::Database(error) = self else {
             return matches!(self, StorageError::PolicyRevisionChanged | StorageError::Busy);
         };
@@ -175,6 +211,11 @@ impl fmt::Display for StorageError {
             StorageError::BackendNotBuilt(name) => {
                 write!(f, "this build has no {name} storage backend")
             }
+            StorageError::TlsNotBuilt(mode) => write!(
+                f,
+                "sslmode={mode} (from the database URL or PGSSLMODE) needs TLS, but this \
+                 build cannot encrypt PostgreSQL connections"
+            ),
             StorageError::NodeIdTooLarge(id) => {
                 write!(f, "node id {id} does not fit the 23 bits incident ids reserve for it")
             }

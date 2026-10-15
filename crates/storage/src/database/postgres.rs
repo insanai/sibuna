@@ -1,16 +1,23 @@
 //! The PostgreSQL side of [`super::Database`]: connecting and binding and decoding values.
 
-use sqlx::postgres::{PgArguments, PgConnectOptions, PgPoolOptions, PgRow};
+use sqlx::postgres::{PgArguments, PgConnectOptions, PgPoolOptions, PgRow, PgSslMode};
 use sqlx::{Decode, PgConnection, Postgres, Row as _, TypeInfo, ValueRef};
 
 use super::{ACQUIRE_TIMEOUT, Cell, Database, POOL_CONNECTIONS, Param, Row};
 use crate::error::StorageError;
+use crate::tls::{PostgresTls, SslMode};
 
 type Query = sqlx::query::Query<'static, Postgres, PgArguments>;
 
-/// Connects to `url`. One connection is made at once, so an unreachable server fails here.
+/// Connects to `url`. One connection is made at once, so an unreachable server or a
+/// refused certificate fails here. A `sslmode` that needs TLS in a build without it is
+/// refused before connecting, and `require` with a root certificate verifies it as
+/// `verify-ca` (see [`crate::tls`]).
 pub(super) async fn open(url: &str) -> Result<Database, StorageError> {
     let options: PgConnectOptions = url.parse()?;
+    let tls = PostgresTls::from_options(&options, url);
+    tls.check_built()?;
+    let options = options.ssl_mode(sqlx_mode(tls.effective_mode()));
     let pool = PgPoolOptions::new()
         // One extra connection for the LISTEN session, which holds its connection.
         .max_connections(POOL_CONNECTIONS + 1)
@@ -18,6 +25,17 @@ pub(super) async fn open(url: &str) -> Result<Database, StorageError> {
         .connect_with(options)
         .await?;
     Ok(Database::Postgres(pool))
+}
+
+fn sqlx_mode(mode: SslMode) -> PgSslMode {
+    match mode {
+        SslMode::Disable => PgSslMode::Disable,
+        SslMode::Allow => PgSslMode::Allow,
+        SslMode::Prefer => PgSslMode::Prefer,
+        SslMode::Require => PgSslMode::Require,
+        SslMode::VerifyCa => PgSslMode::VerifyCa,
+        SslMode::VerifyFull => PgSslMode::VerifyFull,
+    }
 }
 
 fn bind(text: &'static str, params: &[Param<'_>]) -> Query {

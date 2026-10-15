@@ -37,12 +37,18 @@ sibuna-console = { path = "crates/console", version = "0.2.0", default-features 
 
 # External crates. Each one is admitted by a design record and confined to one crate.
 # sqlx: SQL storage for SQLite (single node) and PostgreSQL (clusters); SID 0011. Used without
-# macros, migrations or TLS so no database is needed at build time. Only sibuna-storage uses it.
+# macros or migrations so no database is needed at build time. Only sibuna-storage uses it.
+# PostgreSQL TLS is sibuna-storage's `postgres-tls` feature, which enables sqlx's
+# `tls-rustls-ring-native-roots`: it reuses the rustls, ring and rustls-native-certs below
+# (one rustls version, no new crate beside sibuna-tls). `tls-rustls-ring-webpki` would add
+# webpki-roots, native-tls would add OpenSSL, and sqlx 0.9 cannot take a stream that
+# sibuna-tls built (PgConnection opens its own socket). SID 0012.
 sqlx = { version = "=0.9.0", default-features = false, features = ["runtime-tokio"] }
 # tokio: the runtime sqlx requires; a current-thread runtime on the storage thread only. SID 0011.
 tokio = { version = "1.53", default-features = false, features = ["rt", "time", "sync"] }
-# rustls with ring and the system trust store: outbound TLS for the console only, confined to
-# sibuna-tls; an in-house TLS client was rejected as too large and security-critical. SID 0012.
+# rustls with ring and the system trust store: outbound TLS for the console, confined to
+# sibuna-tls, and through sqlx for PostgreSQL under `postgres-tls`; an in-house TLS client was
+# rejected as too large and security-critical. SID 0012.
 rustls = { version = "0.23.46", default-features = false, features = ["std", "tls12", "ring"] }
 rustls-native-certs = { version = "0.8.5" }
 

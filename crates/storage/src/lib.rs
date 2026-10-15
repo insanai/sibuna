@@ -35,6 +35,10 @@
 //!   `CHECK` constraints that mirror the Rust types, and an index for every query, so the
 //!   database refuses a row the row structs could not hold.
 //! - [`read_database_url_file`] reads `--database-url-file`.
+//! - [`tls`] reads libpq's `sslmode` and `sslrootcert` from the URL, says what protects the
+//!   connection ([`Protection`]) and refuses a mode that needs TLS in a build without the
+//!   `postgres-tls` feature, which enables sqlx's rustls client with ring and the system
+//!   trust store (SID 0012).
 //! - [`search`] is the search language of SID 0013: canonical tokens, which the incident
 //!   writer indexes, and queries translated for both backends, which
 //!   [`Database::search_incidents`] and the console's Events page evaluate.
@@ -163,6 +167,7 @@ pub mod search;
 mod storage;
 #[cfg(any(test, feature = "testing"))]
 pub mod testing;
+pub mod tls;
 mod url_file;
 mod worker;
 
@@ -187,4 +192,5 @@ pub use storage::{
     JOBS_PER_TICK, LocalFuture, MAX_BACKOFF, MAX_NODE_ID, MIN_POLL, PublishFn, SHUTDOWN_TIMEOUT,
     STARTUP_TIMEOUT, SnapshotHook, Storage, TickHook, Ticket,
 };
+pub use tls::{POSTGRES_TLS, PostgresTls, Protection, SslMode};
 pub use url_file::{MAX_URL_FILE, read_database_url_file};

@@ -12,6 +12,10 @@ authors.workspace = true
 default = ["sqlite"]
 sqlite = ["sqlx/sqlite-bundled"]
 postgres = ["sqlx/postgres"]
+# TLS for PostgreSQL connections (`sslmode`, `sslrootcert`): sqlx's rustls client with ring
+# and the system trust store, the crates sibuna-tls already brings (SID 0012). Without it a
+# URL whose `sslmode` needs TLS is refused at startup.
+postgres-tls = ["postgres", "sqlx/tls-rustls-ring-native-roots"]
 # Exports `testing::for_each_backend` for the console's storage tests (SID 0013).
 testing = []
 
