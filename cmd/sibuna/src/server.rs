@@ -1,12 +1,12 @@
 //! The daemon's shared state, the accept workers and the stop sequence.
 //!
 //! Accept workers (`--workers`, one per CPU by default, at most 64) share the listener.
-//! Each accepted connection is served on a thread of its own from a [`TaskPool`], bounded by
-//! `--max-connections`; beyond the bound the worker answers 503 and closes the socket
-//! without spawning, counting the event in `sibuna_overloaded_total`. One client address may
-//! hold at most `--max-connections-per-ip` of those connections, so a single client cannot
-//! take every slot; it is answered the same way beyond its bound. An idle reaper thread cuts
-//! connections that stay silent past `--idle-timeout`.
+//! Each accepted connection is served on a thread of its own from a [`TaskPool`], which
+//! reuses threads across connections, bounded by `--max-connections`; beyond the bound the
+//! worker answers 503 and closes the socket, counting the event in `sibuna_overloaded_total`.
+//! One client address may hold at most `--max-connections-per-ip` of those connections, so a
+//! single client cannot take every slot; it is answered the same way beyond its bound. An
+//! idle reaper thread cuts connections that stay silent past `--idle-timeout`.
 
 use std::io::{self, Write};
 use std::net::{IpAddr, Shutdown, SocketAddr, TcpListener, TcpStream};

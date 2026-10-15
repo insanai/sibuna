@@ -61,8 +61,9 @@
 //! - Signals: Zig installed a handler that set a flag and polled it every 100 ms. We block
 //!   SIGINT and SIGTERM and wait for them with `sigwait` on a dedicated thread, which wakes
 //!   the main thread at once.
-//! - Connection threads and the task table are `std::thread`s in a [`tasks::TaskPool`] with
-//!   the same lowest-free-slot policy; a panicking connection frees its slot (a drop guard).
+//! - Connection threads are `std::thread`s in a [`tasks::TaskPool`]. Zig started a thread per
+//!   connection; the pool reuses a thread from one connection to the next, because creating
+//!   and ending threads stalled the others (SID 0002). A panicking connection ends its thread.
 //!   The idle table and the origin pool come from `sibuna-net`, whose sockets are reference
 //!   counted, so the reaper can never shut down a reused descriptor.
 //! - An accept error other than an interrupted call pauses the worker for 1 ms instead of

@@ -1,178 +1,354 @@
-//! Joinable connection threads in a fixed table of slots.
+//! Connection threads, reused from one connection to the next.
 //!
-//! Each accepted connection runs on a thread of its own. A finished thread still owns its
-//! stack until it is joined, so a slot is joined when it is taken again, and a new task takes
-//! the lowest finished slot rather than advancing a cursor: a cursor would reach a finished
-//! slot again only after a full lap of the table, leaving thousands of finished threads
-//! resident, and memory would grow with the connections served instead of those open.
+//! Each accepted connection runs on a thread of its own, at most `capacity` at once. A thread
+//! that finishes its connection parks and takes the next one, so a steady stream of new
+//! connections creates no threads. Creating and ending a thread maps and unmaps its signal
+//! stack and returns its stack pages; those address-space changes stall the daemon's other
+//! threads. With a thread per connection, the 99.9th percentile at 100,000 requests per
+//! second (64 connections, each closed after 4,096 requests) was 0.3 to 2 ms; with reuse it
+//! is 60 us, below the Zig daemon's.
+//!
+//! A parked thread that gets no connection for [`IDLE_EXPIRY`] ends; the next launch, or the
+//! next thread to finish a task, joins it, so a burst of connections does not leave its
+//! threads and their stacks resident.
+//! A thread whose task panics ends instead of parking, so no thread-local state survives a
+//! failed connection.
 
+use std::collections::VecDeque;
 use std::io;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, PoisonError};
+use std::panic::AssertUnwindSafe;
+use std::sync::{Arc, Condvar, Mutex, MutexGuard, PoisonError};
 use std::thread::JoinHandle;
+use std::time::{Duration, Instant};
 
 /// The stack of a connection thread, as in the Zig daemon. It holds the 64 KiB read buffer
 /// and the 16 KiB write buffer (80 KiB) and leaves ample room for evaluation; the proxy's
 /// 40 KiB workspace lives on the heap.
 const STACK_SIZE: usize = 1024 * 1024;
 
+/// How long a parked thread waits for a connection before it ends.
+pub const IDLE_EXPIRY: Duration = Duration::from_secs(10);
+
+/// One connection's work.
+type Task = Box<dyn FnOnce() + Send + 'static>;
+
 /// Why a task could not start.
 #[derive(Debug)]
 pub enum LaunchError {
-    /// Every slot holds a running thread.
+    /// `capacity` tasks are running.
     Capacity,
     /// The operating system refused the thread.
     Spawn(io::Error),
 }
 
-#[derive(Debug)]
-struct Slot {
-    thread: Option<JoinHandle<()>>,
-    /// True while no thread runs in the slot. Release when the thread finishes and acquire
-    /// when the slot is chosen, so the join below sees a completed thread.
-    done: Arc<AtomicBool>,
+/// The pool's bookkeeping, under one lock. Every parked thread is either counted in `idle`
+/// or has a task waiting for it in `queue`: a launch takes an idle thread by moving one count
+/// from `idle` to `busy` and queueing the task.
+struct State {
+    /// Tasks handed to parked threads, at most one per parked thread.
+    queue: VecDeque<Task>,
+    /// Parked threads without a task.
+    idle: usize,
+    /// Tasks running or queued.
+    busy: usize,
+    /// The handle of each thread, by entry; `None` for a free entry.
+    threads: Vec<Option<JoinHandle<()>>>,
+    /// Entries whose thread has ended and waits to be joined.
+    ended: Vec<usize>,
+    /// Set by [`TaskPool::join`]: parked threads end.
+    stopping: bool,
 }
 
-impl Slot {
-    fn new() -> Slot {
-        Slot { thread: None, done: Arc::new(AtomicBool::new(true)) }
+impl State {
+    /// Takes the handles of the ended threads, freeing their entries.
+    fn take_ended(&mut self) -> Vec<JoinHandle<()>> {
+        let ended = std::mem::take(&mut self.ended);
+        ended.into_iter().filter_map(|index| self.threads.get_mut(index)?.take()).collect()
+    }
+
+    /// Returns a free entry for a new thread's handle.
+    fn free_entry(&mut self) -> usize {
+        self.threads.iter().position(Option::is_none).unwrap_or_else(|| {
+            self.threads.push(None);
+            self.threads.len() - 1
+        })
     }
 }
 
-/// A fixed table of joinable task slots.
-#[derive(Debug)]
+struct Shared {
+    state: Mutex<State>,
+    /// Wakes parked threads: a task was queued, or the pool is stopping.
+    wake: Condvar,
+    capacity: usize,
+    idle_expiry: Duration,
+}
+
+impl Shared {
+    fn lock(&self) -> MutexGuard<'_, State> {
+        self.state.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+}
+
+/// Connection threads, at most `capacity` running at once, reused across connections.
 pub struct TaskPool {
-    slots: Mutex<Vec<Slot>>,
+    shared: Arc<Shared>,
+}
+
+impl std::fmt::Debug for TaskPool {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let state = self.shared.lock();
+        f.debug_struct("TaskPool")
+            .field("capacity", &self.shared.capacity)
+            .field("busy", &state.busy)
+            .field("idle", &state.idle)
+            .finish()
+    }
 }
 
 impl TaskPool {
-    /// Returns a pool of `capacity` slots (at least one).
+    /// Returns a pool for at most `capacity` tasks at once (at least one). No thread starts
+    /// until the first launch.
     pub fn new(capacity: usize) -> TaskPool {
-        let slots = (0..capacity.max(1)).map(|_| Slot::new()).collect();
-        TaskPool { slots: Mutex::new(slots) }
+        TaskPool::with_idle_expiry(capacity, IDLE_EXPIRY)
     }
 
-    /// Runs `task` on a new thread in the lowest finished slot, joining that slot's previous
-    /// thread first so its stack is reclaimed before a new one is allocated.
+    /// Returns a pool like [`TaskPool::new`] whose parked threads end after `idle_expiry`.
+    pub fn with_idle_expiry(capacity: usize, idle_expiry: Duration) -> TaskPool {
+        let state = State {
+            queue: VecDeque::new(),
+            idle: 0,
+            busy: 0,
+            threads: Vec::new(),
+            ended: Vec::new(),
+            stopping: false,
+        };
+        let shared = Shared {
+            state: Mutex::new(state),
+            wake: Condvar::new(),
+            capacity: capacity.max(1),
+            idle_expiry,
+        };
+        TaskPool { shared: Arc::new(shared) }
+    }
+
+    /// Runs `task` on a parked thread, or on a new one when none is parked. Threads that
+    /// ended since the last launch are joined first, outside the lock.
     ///
-    /// Fails with [`LaunchError::Capacity`] when every slot is busy and with
-    /// [`LaunchError::Spawn`] when the thread cannot be created; `task` is then dropped.
+    /// Fails with [`LaunchError::Capacity`] when `capacity` tasks are running and with
+    /// [`LaunchError::Spawn`] when a needed thread cannot be created; `task` is then dropped.
     pub fn launch(&self, task: impl FnOnce() + Send + 'static) -> Result<(), LaunchError> {
-        let mut slots = self.slots.lock().unwrap_or_else(PoisonError::into_inner);
-        let index = free_slot(&slots).ok_or(LaunchError::Capacity)?;
-        let slot = &mut slots[index];
-        if let Some(thread) = slot.thread.take() {
-            // The slot is free, so its thread has run to completion; join reclaims it.
+        let task: Task = Box::new(task);
+        let (ended, outcome) = {
+            let mut state = self.shared.lock();
+            let ended = state.take_ended();
+            let outcome = if state.busy >= self.shared.capacity {
+                Err(LaunchError::Capacity)
+            } else if state.idle > 0 {
+                state.idle -= 1;
+                state.busy += 1;
+                state.queue.push_back(task);
+                self.shared.wake.notify_one();
+                Ok(())
+            } else {
+                spawn(&self.shared, &mut state, task)
+            };
+            (ended, outcome)
+        };
+        for thread in ended {
             let _ = thread.join();
         }
-        slot.done.store(false, Ordering::Release);
-        let done = Arc::clone(&slot.done);
-        let spawned = std::thread::Builder::new().stack_size(STACK_SIZE).spawn(move || {
-            // Marks the slot free even if the task panics.
-            let _finished = Finished(done);
-            task();
-        });
-        match spawned {
-            Ok(thread) => {
-                slot.thread = Some(thread);
-                Ok(())
-            }
-            Err(error) => {
-                slot.done.store(true, Ordering::Release);
-                Err(LaunchError::Spawn(error))
-            }
-        }
+        outcome
     }
 
-    /// Joins every thread. The caller has stopped every launcher first.
+    /// Ends every parked thread and joins every thread, after the running ones finish their
+    /// tasks. The caller has stopped every launcher first.
     pub fn join(&self) {
         let threads: Vec<JoinHandle<()>> = {
-            let mut slots = self.slots.lock().unwrap_or_else(PoisonError::into_inner);
-            slots.iter_mut().filter_map(|slot| slot.thread.take()).collect()
+            let mut state = self.shared.lock();
+            state.stopping = true;
+            self.shared.wake.notify_all();
+            state.threads.iter_mut().filter_map(Option::take).collect()
         };
         for thread in threads {
             let _ = thread.join();
         }
     }
 
-    /// Returns the number of threads still running.
+    /// Returns the number of tasks running or about to run.
     pub fn running_count(&self) -> usize {
-        let slots = self.slots.lock().unwrap_or_else(PoisonError::into_inner);
-        slots.iter().filter(|slot| !slot.done.load(Ordering::Acquire)).count()
+        self.shared.lock().busy
+    }
+
+    /// Returns the number of threads that have not ended: running and parked.
+    pub fn thread_count(&self) -> usize {
+        let state = self.shared.lock();
+        state.busy + state.idle
     }
 }
 
-/// Sets the slot's `done` flag when the task ends, however it ends.
-struct Finished(Arc<AtomicBool>);
-
-impl Drop for Finished {
-    fn drop(&mut self) {
-        self.0.store(true, Ordering::Release);
+/// Starts a thread for `task` and counts it busy. The lock is held, so the new thread cannot
+/// park before it is counted.
+fn spawn(shared: &Arc<Shared>, state: &mut State, task: Task) -> Result<(), LaunchError> {
+    let index = state.free_entry();
+    let worker = Arc::clone(shared);
+    let spawned = std::thread::Builder::new()
+        .stack_size(STACK_SIZE)
+        .spawn(move || work(&worker, index, task));
+    match spawned {
+        Ok(thread) => {
+            state.threads[index] = Some(thread);
+            state.busy += 1;
+            Ok(())
+        }
+        Err(error) => Err(LaunchError::Spawn(error)),
     }
 }
 
-/// The slot a new task takes: the lowest whose previous thread has finished. Kept apart
-/// from `launch` so the reuse policy can be tested without threads.
-fn free_slot(slots: &[Slot]) -> Option<usize> {
-    slots.iter().position(|slot| slot.done.load(Ordering::Acquire))
+/// A connection thread: runs its task, then the tasks it is given while parked, until it
+/// expires, the pool stops, or a task panics.
+fn work(shared: &Shared, index: usize, first: Task) {
+    let mut next = Some(first);
+    while let Some(task) = next.take() {
+        // The panic hook has reported the panic; the task's guards ran while unwinding.
+        if std::panic::catch_unwind(AssertUnwindSafe(task)).is_err() {
+            let mut state = shared.lock();
+            state.busy -= 1;
+            state.ended.push(index);
+            return;
+        }
+        join_ended(shared);
+        next = park(shared, index);
+    }
+}
+
+/// Joins the threads that have ended, outside the lock, so that after a burst their stacks
+/// are returned without waiting for the next launch.
+fn join_ended(shared: &Shared) {
+    let ended = shared.lock().take_ended();
+    for thread in ended {
+        let _ = thread.join();
+    }
+}
+
+/// Counts the calling thread idle and waits for a task. Returns `None`, with the thread
+/// recorded as ended, when the pool stops or no task comes within the idle expiry.
+fn park(shared: &Shared, index: usize) -> Option<Task> {
+    let mut state = shared.lock();
+    state.busy -= 1;
+    state.idle += 1;
+    let deadline = Instant::now() + shared.idle_expiry;
+    loop {
+        // A queued task was counted out of `idle` by its launcher, for this thread or another
+        // parked one; any of them may take it.
+        if let Some(task) = state.queue.pop_front() {
+            return Some(task);
+        }
+        let left = deadline.saturating_duration_since(Instant::now());
+        if state.stopping || left.is_zero() {
+            state.idle -= 1;
+            state.ended.push(index);
+            return None;
+        }
+        state = shared.wake.wait_timeout(state, left).unwrap_or_else(PoisonError::into_inner).0;
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use std::sync::mpsc;
+    use std::thread::ThreadId;
 
     use super::*;
 
-    #[test]
-    fn a_task_takes_the_lowest_finished_slot_instead_of_walking_the_table() {
-        // The reuse policy is what bounds memory: a finished thread keeps its stack until it
-        // is joined, and a slot is joined only when it is taken again.
-        let slots: Vec<Slot> = (0..8).map(|_| Slot::new()).collect();
-        assert_eq!(free_slot(&slots), Some(0));
-        slots[0].done.store(false, Ordering::Release);
-        assert_eq!(free_slot(&slots), Some(1));
-        // Once the first task finishes it is chosen again, so its thread is joined promptly.
-        slots[1].done.store(false, Ordering::Release);
-        slots[0].done.store(true, Ordering::Release);
-        assert_eq!(free_slot(&slots), Some(0));
-        // A full table reports exhaustion so the caller answers 503 instead of overcommitting.
-        for slot in &slots {
-            slot.done.store(false, Ordering::Release);
+    fn launch_until_accepted(pool: &TaskPool, task: impl FnOnce() + Send + Clone + 'static) {
+        loop {
+            match pool.launch(task.clone()) {
+                Ok(()) => return,
+                Err(LaunchError::Capacity) => std::thread::yield_now(),
+                Err(LaunchError::Spawn(error)) => panic!("{error}"),
+            }
         }
-        assert_eq!(free_slot(&slots), None);
+    }
+
+    fn wait_until(condition: impl Fn() -> bool) {
+        let deadline = Instant::now() + Duration::from_secs(10);
+        while !condition() {
+            assert!(Instant::now() < deadline, "timed out");
+            std::thread::sleep(Duration::from_millis(1));
+        }
     }
 
     #[test]
-    fn launched_tasks_run_and_slots_are_reused_after_join() {
+    fn launched_tasks_run_within_the_capacity() {
         let pool = TaskPool::new(2);
         let (sender, receiver) = mpsc::channel();
         for value in 0..10 {
             let sender = sender.clone();
-            loop {
-                let sender = sender.clone();
-                match pool.launch(move || sender.send(value).unwrap()) {
-                    Ok(()) => break,
-                    Err(LaunchError::Capacity) => std::thread::yield_now(),
-                    Err(LaunchError::Spawn(error)) => panic!("{error}"),
-                }
-            }
+            launch_until_accepted(&pool, move || sender.send(value).unwrap());
         }
         drop(sender);
         let mut seen: Vec<i32> = receiver.iter().collect();
         seen.sort_unstable();
         assert_eq!(seen, (0..10).collect::<Vec<_>>());
+        assert!(pool.thread_count() <= 2);
         pool.join();
         assert_eq!(pool.running_count(), 0);
     }
 
+    // The point of the pool: one connection after another runs on one thread.
     #[test]
-    fn a_panicking_task_frees_its_slot() {
+    fn a_finished_thread_takes_the_next_task() {
+        let pool = TaskPool::new(4);
+        let (sender, receiver) = mpsc::channel::<ThreadId>();
+        for _ in 0..20 {
+            let sender = sender.clone();
+            pool.launch(move || sender.send(std::thread::current().id()).unwrap()).unwrap();
+            receiver.recv().unwrap();
+            wait_until(|| pool.running_count() == 0);
+        }
+        assert_eq!(pool.thread_count(), 1);
+        pool.join();
+        assert_eq!(pool.thread_count(), 0);
+    }
+
+    #[test]
+    fn a_full_pool_refuses_and_frees_places_as_tasks_end() {
+        let pool = TaskPool::new(2);
+        let (release, wait) = mpsc::channel::<()>();
+        let wait = Arc::new(Mutex::new(wait));
+        for _ in 0..2 {
+            let wait = Arc::clone(&wait);
+            pool.launch(move || wait.lock().unwrap().recv().unwrap()).unwrap();
+        }
+        assert!(matches!(pool.launch(|| {}), Err(LaunchError::Capacity)));
+        release.send(()).unwrap();
+        wait_until(|| pool.running_count() == 1);
+        pool.launch(|| {}).unwrap();
+        release.send(()).unwrap();
+        pool.join();
+    }
+
+    #[test]
+    fn a_panicking_task_ends_its_thread_and_frees_its_place() {
         let pool = TaskPool::new(1);
         pool.launch(|| panic!("task failure")).unwrap();
-        while pool.running_count() != 0 {
-            std::thread::yield_now();
-        }
+        wait_until(|| pool.thread_count() == 0);
+        let (sender, receiver) = mpsc::channel();
+        pool.launch(move || sender.send(7).unwrap()).unwrap();
+        assert_eq!(receiver.recv().unwrap(), 7);
+        pool.join();
+    }
+
+    #[test]
+    fn idle_threads_expire_and_the_next_launch_joins_them() {
+        let pool = TaskPool::with_idle_expiry(4, Duration::from_millis(20));
+        let (sender, receiver) = mpsc::channel();
+        pool.launch(move || sender.send(()).unwrap()).unwrap();
+        receiver.recv().unwrap();
+        wait_until(|| pool.thread_count() == 0);
+        assert_eq!(pool.shared.lock().ended.len(), 1);
         pool.launch(|| {}).unwrap();
+        assert!(pool.shared.lock().ended.is_empty());
         pool.join();
     }
 }
