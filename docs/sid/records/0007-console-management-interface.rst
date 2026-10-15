@@ -54,6 +54,16 @@ Revision note
 
 2026-10-15 (Rust port, console router): an unknown GET under ``/console/`` outside ``api/`` and ``assets/`` answers the shell, as the Router section specifies; Zig answered 404. The About reply's ``schema`` field reports the console schema component's version (1) instead of Zig's schema version 40. ``CONSOLEQUORUM`` now means that the database did not answer in time, and its hint says so.
 
+2026-10-15 (Rust port, daemon integration): ``--console`` requires ``--data-dir`` or ``--database-url`` (``CONSOLE001`` StorageRequired), and ``init-admin`` is also available as ``sibuna console init-admin``. The drain check precedes connection admission in the accept loop. The daemon's build script builds the solver and the interface with the ``wasm`` profile and ``--compress-relocations`` and fails the build above 768 KiB; ``SIBUNA_CONSOLE_WASM`` names a prebuilt module instead.
+
+2026-10-15 (Rust port, rule observations): rule-hit counters are allocated with each published engine (one ``Arc`` with the engine) and numbered per boot by the publish hook; a refused snapshot publishes nothing, so live counters are never reset. The collector samples the published engine's counters once per second through ``Node::sample_rule_hits``. At a publication, the retired generation's open frame is sealed as a cutover, which is never complete. The new generation's first interval starts at its publication when that time is at most five seconds before the first sample; otherwise it starts at the first sample, and earlier hits are counted as unconfirmed.
+
+2026-10-15 (Rust port, ban gauge): the active-ban gauge is a relaxed counter of slots whose expiry is non-zero, kept by an atomic swap or compare-exchange on every expiry change; each gauge read sweeps one sixteenth of the table and zeroes expired expiries. It never misses a ban in effect, lags an expiry by at most sixteen reads, and never takes the writer lock that request threads use.
+
+2026-10-15 (Rust port, collector): the collector thread runs every 250 ms and reaches storage only through background tickets, within the console's allowance of four jobs. A journal write that cannot be queued is tried on the next tick without spending a retry. A job unanswered after ten seconds is abandoned and counted as unconfirmed. Journals no longer prune: the retention job deletes minutes, ranking archives and challenge records under its lease (SID 0013), and failed retention batches of minutes and rankings appear as those journals' maintenance failures. The ranking journal reads the archive inventory every five seconds and stores each archive in one step.
+
+2026-10-15 (Rust port, membership and gauges): membership rows are announced by the collector at start, every minute, and within two seconds of a change of the applied policy revision or the control revision. Resident memory and CPU time are read from ``/proc``, with a CPU resolution of 10 ms. ``geo_maintenance_failures`` is always 0, because GeoIP pruning is a retention kind.
+
 Abstract
 --------
 
