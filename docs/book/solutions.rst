@@ -62,7 +62,7 @@ Part IX: Operations
 
 **9.1.** If the data commits before a separate receipt update, a crash between them leaves the old receipt and a retry can apply the effect again. If the receipt commits first, a crash before the data write can cause the retry to skip data that never existed. One atomic transaction removes both gaps. Losing the transaction's acknowledgement still requires the retained retry.
 
-**9.2.** ``ip_rules: {"10.20.0.0/16": "ALLOW"}`` (or an ``ip_reputation`` row with score 100) admits staging; a rule ``{"name": "admin", "path": "/admin/*", "action": "CHALLENGE", "challenge": {"difficulty": 20, "algorithm": "posw"}}`` demands the work; a rule matching ``headers: {"X-Partner-Key": ".*"}`` with ``ALLOW`` admits the partner. The 30-per-10-seconds limit is a daemon flag (``--rate-limit 30 --rate-window 10``) and applies to every client, so either accept that or place the partner behind its own Sibuna instance.
+**9.2.** ``ip_rules: {"10.20.0.0/16": "ALLOW"}`` (or an ``ip_reputation`` row with score 100) admits staging; a rule ``{"name": "admin", "path": "/admin/*", "action": "CHALLENGE", "challenge": {"difficulty": 20, "algorithm": "posw"}}`` demands the work; a rule matching ``headers: {"X-Partner-Key": ".*"}`` with ``ALLOW`` and ``"limits": {"rate": 30, "window_seconds": 10}`` admits the partner at 30 requests per 10 seconds. The rule's quota is checked for every request it matches, after the per-client daemon limit (``--rate-limit``, ``--rate-window``), which must therefore be at least as generous.
 
 Part X: Reference
 -----------------

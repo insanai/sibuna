@@ -31,7 +31,7 @@ The browser solver compiles the exact sources the server verifies with. ``cmd/si
    debug = false
    strip = true
 
-The daemon embeds the module. Its build script (``cmd/sibuna/build.rs``) runs a nested ``cargo build -p sibuna-pow-wasm --target wasm32-unknown-unknown --release`` with a target directory of its own, so it never waits on the lock of the outer build, checks that the result starts with the WebAssembly magic bytes, and copies it to the build output directory. ``SIBUNA_POW_WASM=<path>`` embeds a prebuilt module instead, for builds without the WebAssembly target. The daemon then includes the bytes in its binary:
+The daemon embeds the module. Its build script (``cmd/sibuna/build.rs``) runs a nested ``cargo rustc -p sibuna-pow-wasm --target wasm32-unknown-unknown --profile wasm`` into the workspace's target directory (``target/wasm32-unknown-unknown/wasm/``). The nested build locks only the ``wasm`` profile's directories, so it never waits on the outer build. The final link gets ``--compress-relocations``. The script checks that the result starts with the WebAssembly magic bytes, and copies it to the build output directory. ``SIBUNA_POW_WASM=<path>`` embeds a prebuilt module instead, for builds without the WebAssembly target. The daemon then includes the bytes in its binary:
 
 .. code-block:: rust
 
