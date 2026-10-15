@@ -9,6 +9,8 @@
 // every helper.
 #![allow(dead_code, clippy::unwrap_used, clippy::expect_used)]
 
+pub mod dashboard;
+
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream};
 use std::path::PathBuf;
