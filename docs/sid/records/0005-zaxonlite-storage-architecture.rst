@@ -1,11 +1,13 @@
 :sid-number: 0005
 :sid-title: Distributed Storage Architecture: Zaxonlite Integration for Dynamic Policies, Replicated Reputation, and Incident Forensics
 :sid-state: published
+:sid-status: Published
 :sid-type: Architectural Specification
 :sid-authors: ["Sibuna Contributors <team@sibuna.local>"]
 :sid-created: 2026-09-07
 :sid-updated: 2026-10-15
 :sid-discussion: No external discussion URL assigned
+:sid-summary: Specifies and records the implementation of Sibuna's Edge surface: the embedded Zaxonlite store (replicated SQLite on paxos-zig) for cluster-wide dynamic policies, IP reputation, and forensic incident search, the read-copy-update engine slot that keeps the request path free of database access, the lock-free incident ring, and campaign clustering of attack payloads.
 :sid-labels: ["storage", "zaxonlite", "paxos", "sqlite", "distributed"]
 
 Distributed Storage Architecture: Zaxonlite Integration for Dynamic Policies, Replicated Reputation, and Incident Forensics

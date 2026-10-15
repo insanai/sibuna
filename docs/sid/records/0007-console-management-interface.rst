@@ -1,11 +1,13 @@
 :sid-number: 0007
 :sid-title: The Sibuna Console: A Real-Time Management Interface for Nodes and Clusters in Pure Zig
 :sid-state: committed
+:sid-status: Committed
 :sid-type: Architectural Specification
 :sid-authors: ["Sibuna Contributors <team@sibuna.local>"]
 :sid-created: 2026-09-08
 :sid-updated: 2026-10-15
 :sid-discussion: No external discussion URL assigned
+:sid-summary: Specifies the Sibuna Console, a complete management interface for Sibuna: a separate pure-Zig module started from the Sibuna CLI that serves a real-time web interface over the standard library's HTTP server and WebSockets, renders its pages from a WebAssembly module styled with daisyUI 5, keeps authentication, statistics, audit, and a GeoIP database in the embedded Zaxonlite store, manages one node or a replicated cluster, and defines performance acceptance targets that remain to be measured.
 :sid-labels: ["console", "management", "websocket", "ui", "zaxonlite", "geoip", "cluster"]
 
 The Sibuna Console: A Real-Time Management Interface for Nodes and Clusters in Pure Zig

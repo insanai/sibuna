@@ -1,11 +1,13 @@
 :sid-number: XXXXX
 :sid-title: Title goes here
 :sid-state: prediscussion
+:sid-status: Working Draft
 :sid-type: Architectural Specification
 :sid-authors: ["Author name"]
 :sid-created: YYYY-MM-DD
 :sid-updated: YYYY-MM-DD
 :sid-discussion: No external discussion URL assigned
+:sid-summary: One sentence that says what the record decides.
 :sid-labels: ["architecture"]
 
 Discussion proposal

@@ -1,11 +1,13 @@
 :sid-number: 0001
 :sid-title: The Sibuna Discussion Process and Engineering Standards
 :sid-state: published
+:sid-status: Published
 :sid-type: Process Memo
 :sid-authors: ["Sibuna Contributors <team@sibuna.local>"]
 :sid-created: 2026-09-07
 :sid-updated: 2026-10-15
 :sid-discussion: No external discussion URL assigned
+:sid-summary: Process document establishing RFC/RFD design lifecycle, TigerStyle engineering standards, and Elm-style error reporting
 :sid-labels: ["documentation", "process", "standards"]
 
 The Sibuna Discussion Process and Engineering Standards

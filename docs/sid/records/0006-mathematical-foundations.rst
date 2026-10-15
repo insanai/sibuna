@@ -1,11 +1,13 @@
 :sid-number: 0006
 :sid-title: Mathematical Foundations of Sibuna: Sequential Work, Symmetric Authentication, Bounded State, and Linear-Time Inspection
 :sid-state: published
+:sid-status: Published
 :sid-type: Architectural Specification
 :sid-authors: ["Sibuna Contributors <team@sibuna.local>"]
 :sid-created: 2026-09-07
 :sid-updated: 2026-10-15
 :sid-discussion: No external discussion URL assigned
+:sid-summary: A paper-style record of the mathematics behind every Sibuna hot-path primitive: the Cohen-Pietrzak proof of sequential work and the geometric hashcash tier, keyed-hash tokens and stateless challenges with work-bounded state, GCRA rate limiting, Robin Hood spent sets, Aho-Corasick and single-pass tokenizers for inspection, read-copy-update engine slots, adaptive difficulty, and feature-hashed campaign clustering, each with definitions, lemmas, proofs, citations, and the exact pure-Zig implementation and measurement that realises it.
 :sid-labels: ["mathematics", "cryptography", "proof-of-work", "posw", "rate-limiting", "hashing", "automata"]
 
 Mathematical Foundations of Sibuna: Sequential Work, Symmetric Authentication, Bounded State, and Linear-Time Inspection

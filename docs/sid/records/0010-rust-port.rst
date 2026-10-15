@@ -1,11 +1,13 @@
 :sid-number: 0010
 :sid-title: The Rust Port: Workspace, Crates, Dependency Policy and Performance Parity
 :sid-state: discussion
+:sid-status: Open for Discussion
 :sid-type: Architectural Specification
 :sid-authors: ["Vikrant Rathore"]
 :sid-created: 2026-10-15
 :sid-updated: 2026-10-15
 :sid-discussion: No external discussion URL assigned
+:sid-summary: Ports Sibuna from Zig 0.16 to a Rust workspace that keeps every wire format bit for bit, builds the data plane from small in-house crates without external dependencies, and is accepted when it matches or exceeds the Zig daemon in the benchmarks of SID 0002.
 :sid-labels: ["architecture","rust","performance"]
 
 The Rust Port: Workspace, Crates, Dependency Policy and Performance Parity

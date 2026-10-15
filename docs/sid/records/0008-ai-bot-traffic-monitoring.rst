@@ -1,11 +1,13 @@
 :sid-number: 0008
 :sid-title: AI Bot Traffic Identification, Multi-Tier Verification, and Operator Console Analytics
 :sid-state: discussion
+:sid-status: Open for Discussion
 :sid-type: Architectural Specification
 :sid-authors: ["Sibuna Contributors <team@sibuna.local>"]
 :sid-created: 2026-09-15
 :sid-updated: 2026-10-15
 :sid-discussion: No external discussion URL assigned
+:sid-summary: Specifies the architecture for identifying, verifying, and monitoring AI crawler and automated bot traffic in Sibuna: zero-allocation single-pass signature matching, sub-microsecond Radix CIDR verification for major providers (OpenAI, Anthropic, Google Gemini, Perplexity, Meta, Apple, ByteDance), multi-tier confidence classification, bounded telemetry extensions, and a real-time console dashboard delivering visual composition, time-series analysis, and granular tabular analytics contrasting bot traffic against actual human traffic.
 :sid-labels: ["analytics", "bot-detection", "console", "dashboard", "waf", "ai-crawlers"]
 
 AI Bot Traffic Identification, Multi-Tier Verification, and Operator Console Analytics

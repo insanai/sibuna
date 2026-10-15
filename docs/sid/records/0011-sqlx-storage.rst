@@ -1,11 +1,13 @@
 :sid-number: 0011
 :sid-title: Storage Through sqlx: SQLite for One Node, PostgreSQL for Clusters
 :sid-state: discussion
+:sid-status: Open for Discussion
 :sid-type: Architectural Specification
 :sid-authors: ["Vikrant Rathore"]
 :sid-created: 2026-10-15
 :sid-updated: 2026-10-15
 :sid-discussion: No external discussion URL assigned
+:sid-summary: Replaces Zaxonlite with storage through sqlx, an embedded SQLite file for a single node and one shared PostgreSQL database for a cluster, while storage stays optional and one storage thread owns all SQL off the request path.
 :sid-labels: ["storage","rust","cluster"]
 
 Storage Through sqlx: SQLite for One Node, PostgreSQL for Clusters

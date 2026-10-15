@@ -1,11 +1,13 @@
 :sid-number: 0003
 :sid-title: Declarative Rule Policy Engine
 :sid-state: published
+:sid-status: Published
 :sid-type: Architectural Specification
 :sid-authors: ["Sibuna Contributors <team@sibuna.local>"]
 :sid-created: 2026-09-07
 :sid-updated: 2026-10-15
 :sid-discussion: No external discussion URL assigned
+:sid-summary: Specification of Sibuna's zero-allocation declarative rule engine: JSON policy files, multi-criteria matching over path, user agent, headers, and IPv4/IPv6 CIDRs, WEIGH scoring with thresholds, per-rule challenge parameters, the evaluation order, and dynamic policies replicated through Zaxonlite.
 :sid-labels: ["policy", "architecture", "zero-alloc", "firewall"]
 
 Declarative Rule Policy Engine

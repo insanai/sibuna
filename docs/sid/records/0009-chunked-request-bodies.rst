@@ -1,11 +1,13 @@
 :sid-number: 0009
 :sid-title: Chunked Request Bodies: Strict In-Place Decoding, Canonical Re-Framing, and Inspection Equivalence
 :sid-state: discussion
+:sid-status: Open for Discussion
 :sid-type: Architectural Specification
 :sid-authors: ["Sibuna Contributors <team@sibuna.local>"]
 :sid-created: 2026-10-02
 :sid-updated: 2026-10-15
 :sid-discussion: No external discussion URL assigned
+:sid-summary: Specifies how the reverse proxy accepts chunked request bodies without a heap allocation or a second buffer: a strict RFC 9112 chunk grammar that rejects every known terminator and extension ambiguity, an in-place decoder whose output never overtakes its input, Content-Length forwarding for bodies that complete within the connection buffer and canonical re-chunking for the rest, and proofs that inspection sees exactly the bytes a Content-Length request would show and that the origin cannot observe the client's framing.
 :sid-labels: ["http", "proxy", "security", "request-smuggling", "performance"]
 
 Chunked Request Bodies: Strict In-Place Decoding, Canonical Re-Framing, and Inspection Equivalence

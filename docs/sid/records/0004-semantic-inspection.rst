@@ -1,11 +1,13 @@
 :sid-number: 0004
 :sid-title: Semantic Attack Inspection and GCRA Rate Limiting: The Shield Surface
 :sid-state: published
+:sid-status: Published
 :sid-type: Architectural Specification
 :sid-authors: ["Sibuna Contributors <team@sibuna.local>"]
 :sid-created: 2026-09-07
 :sid-updated: 2026-10-15
 :sid-discussion: No external discussion URL assigned
+:sid-summary: Design and measured implementation of Sibuna's Shield surface: a single-pass tagged signature automaton, single-pass structural tokenizers for SQL injection, cross-site scripting, path traversal, and command injection, the byte-class pre-scan and canonicalisation gate, the GCRA rate limiter, the ban table, and incident recording.
 :sid-labels: ["waf", "security", "rate-limiting", "zero-alloc"]
 
 Semantic Attack Inspection and GCRA Rate Limiting: The Shield Surface

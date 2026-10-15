@@ -20,3 +20,5 @@ html_title = "Sibuna Discussions"
 numfig = true
 
 pdf_paper_size = "a4"
+# Sibuna's admonition boxes; the design is in _templates/sibuna.typ.
+pdf_preamble = "_templates/preamble.typ"

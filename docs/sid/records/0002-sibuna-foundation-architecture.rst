@@ -1,11 +1,13 @@
 :sid-number: 0002
 :sid-title: Sibuna: Foundation Architecture, Delivery Plan, and Performance Contract
 :sid-state: published
+:sid-status: Published
 :sid-type: Architectural Specification
 :sid-authors: ["Sibuna Contributors <team@sibuna.local>"]
 :sid-created: 2026-09-07
 :sid-updated: 2026-10-15
 :sid-discussion: No external discussion URL assigned
+:sid-summary: Foundational architectural specification, zero-allocation pipeline, two-tier proof-of-work engine, keyed-hash session tokens, product surfaces, measured performance contract, and delivery record for the Sibuna pure-Zig monorepo
 :sid-labels: ["architecture", "firewall", "pow", "performance"]
 
 Sibuna: Foundation Architecture, Delivery Plan, and Performance Contract

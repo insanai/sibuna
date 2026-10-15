@@ -27,23 +27,23 @@ open = "discussion"
 
 [workflow.states.prediscussion]
 next = ["abandoned"]
-status = "Working draft"
+status = "Working Draft"
 
 [workflow.states.discussion]
 next = ["accepted", "published", "abandoned"]
-status = "Open for discussion"
+status = "Open for Discussion"
 
 [workflow.states.accepted]
 next = ["published", "committed", "abandoned"]
-status = "Accepted direction"
+status = "Accepted"
 
 [workflow.states.published]
 next = ["committed", "abandoned"]
-status = "Adopted design"
+status = "Published"
 
 [workflow.states.committed]
 evidence = true
-status = "Implemented design"
+status = "Committed"
 
 [workflow.states.abandoned]
-status = "Closed proposal"
+status = "Abandoned"
