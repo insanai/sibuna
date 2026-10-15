@@ -25,7 +25,15 @@
 //!   common cases.
 //! - [`Database`] is a dialect-neutral handle: statements take [`Param`]s bound to `$1`,
 //!   `$2`, ... and return rows of owned [`Cell`]s, so every query is written once and only
-//!   SQL text that differs between dialects is written twice ([`Sql`]).
+//!   SQL text that differs between dialects is written twice ([`Sql`]). Each table the
+//!   storage layer reads has one row struct ([`PolicyRow`], [`InspectionRow`],
+//!   [`ReputationRow`], [`IncidentReceipt`], [`IncidentHit`]) decoded by one function with a
+//!   [`Columns`] reader, and each enumerated column one enum ([`PolicyAction`],
+//!   [`ChallengeAlgorithm`], [`InspectionMode`]) whose `as_str` binds and whose `parse`
+//!   decodes.
+//! - The [`schema`] is typed (SID 0011, "Schema and migrations"): `STRICT` tables on SQLite,
+//!   `CHECK` constraints that mirror the Rust types, and an index for every query, so the
+//!   database refuses a row the row structs could not hold.
 //! - [`read_database_url_file`] reads `--database-url-file`.
 //!
 //! Under PostgreSQL the revision triggers also `NOTIFY sibuna_policy`, and the thread
@@ -45,10 +53,21 @@
 //!   replayed batch is no longer the retained SQL text but the retained prepared batch
 //!   (ids, embeddings, campaigns), written again under the same receipt guard.
 //! - The schema is versioned by numbered migrations in `sibuna_schema(component, version,
-//!   applied_at)`. The table has a `component` column beyond SID 0011's two columns, so the
-//!   console can add its own numbered migrations without making nodes that lack it refuse
-//!   the database. The `policy_format` key and the additive `limit_config` upgrade of
-//!   `policy_limits.zig` are replaced by migration 1, which has the column.
+//!   applied_at)`; the `component` column lets the console add its own numbered migrations
+//!   without making nodes that lack it refuse the database. The core schema is one baseline
+//!   migration. The `policy_format` key and the additive `limit_config` upgrade of
+//!   `policy_limits.zig` are gone: Zaxonlite data is not migrated (SID 0011).
+//! - The key/value table `sibuna_meta` is gone. The policy revision is the single row of
+//!   `policy_revision`, and each node's incident receipt is its row of `incident_receipts`
+//!   (Zig's `incident_cursor_<node>` key); the replay guard reads that row.
+//! - The schema is typed: SQLite tables are `STRICT`, enumerated columns (action,
+//!   algorithm, inspection modes) and bounded integers have `CHECK` constraints, and stored
+//!   names are the lowercase ones (`deny`, not `DENY`). Rule limits are the typed columns
+//!   `limit_rate`, `limit_window_seconds` and `limit_ban_seconds` ([`RuleLimits`]) instead
+//!   of the JSON document `limit_config`; matchers stay JSON, checked with `json_valid` on
+//!   SQLite and stored as `JSONB` on PostgreSQL. Incidents reference their node's receipt.
+//!   Zig read every cell as text and parsed it; a stored value of the wrong type or range is
+//!   now refused when it is written.
 //! - sqlite-vec and `incidents_vec` are gone: the embedding is a 256-byte column of
 //!   `security_incidents`, and campaigns are assigned in memory over the most recent 16,384
 //!   embeddings of all nodes (see [`campaigns`]). Incidents older than the window are not
@@ -60,8 +79,9 @@
 //!   ([`PolicySnapshot`]) to the daemon's publish hook, which builds the engine, adds the
 //!   file policy and returns whether it published; a refusal keeps the old revision
 //!   applied, as a failed Zig loader did. Matcher and limit documents are therefore
-//!   validated by the policy crate, not here; this crate checks column types and bounds the
-//!   number of rows ([`policy::MAX_POLICY_ROWS`], [`policy::MAX_REPUTATION_ROWS`]).
+//!   validated by the policy crate, not here; this crate decodes typed columns and bounds the
+//!   number of rows ([`policy::MAX_POLICY_ROWS`], [`policy::MAX_REPUTATION_ROWS`]). Zig
+//!   skipped reputation rows it could not read; the typed schema cannot hold such rows.
 //! - Incident user agents, paths and payloads are raw bytes (`BLOB` / `BYTEA`) as in Zig,
 //!   but full-text search indexes a lossy UTF-8 rendering (NUL dropped, invalid sequences
 //!   U+FFFD), because PostgreSQL text holds neither. On SQLite `incidents_fts` therefore
@@ -98,6 +118,8 @@
 //! - The `?*anyopaque` hook context and `recordIncidentHook` cast: [`Storage::record_incident`]
 //!   on a shared reference; the ring is reached through an `Arc`.
 //! - `maxInt(u64)` as "no expiry", `version = 0` as "nothing applied": `Option<u64>`.
+//! - Every cell read as text and parsed by position: one typed row struct per table, decoded
+//!   in `SELECT` order by [`Columns`], with enums for enumerated columns.
 //! - `open`/`stop`/`shutdown` with `errdefer` chains, `worker_done` polling and the global
 //!   `close_done` flag of the bounded close: [`Storage::start`] builds everything on the
 //!   storage thread and reports through a channel; [`Storage::shutdown`] (or `Drop`) joins
@@ -125,15 +147,19 @@ mod worker;
 
 pub use campaigns::{CAMPAIGN_DISTANCE, DIMENSIONS, Embedding, WINDOW};
 pub use database::{
-    ACQUIRE_TIMEOUT, BUSY_TIMEOUT, Cell, Database, Dialect, POOL_CONNECTIONS, Param, Row,
+    ACQUIRE_TIMEOUT, BUSY_TIMEOUT, Cell, Columns, Database, Dialect, POOL_CONNECTIONS, Param, Row,
     SQLITE_FILE, Sql, Target, Transaction,
 };
 pub use error::{StorageError, UrlFileProblem};
 pub use incidents::{
-    INCIDENT_BATCH, INCIDENT_QUEUE, IncidentHit, MAX_SEARCH_QUERY, MAX_SEARCH_RESULTS,
+    INCIDENT_BATCH, INCIDENT_QUEUE, IncidentHit, IncidentReceipt, MAX_SEARCH_QUERY,
+    MAX_SEARCH_RESULTS,
 };
 pub use listen::POLICY_CHANNEL;
-pub use policy::{InspectionRow, PolicyRow, PolicySnapshot, ReputationRow};
+pub use policy::{
+    ChallengeAlgorithm, InspectionMode, InspectionRow, PolicyAction, PolicyRow, PolicySnapshot,
+    ReputationRow, RuleLimits,
+};
 pub use schema::{Migration, MigrationSet};
 pub use storage::{
     EmbedFn, ErrorFn, Hooks, LocalFuture, MAX_BACKOFF, MAX_NODE_ID, MIN_POLL, PublishFn,

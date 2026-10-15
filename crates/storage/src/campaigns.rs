@@ -6,15 +6,16 @@
 //! starts a campaign named by its own incident id. The search is a linear scan over
 //! contiguous `[f32; 64]` rows, which the compiler vectorises.
 //!
-//! The window is refreshed incrementally from the durable receipts: every node's
-//! `incident_cursor_<node>` advances in the same transaction as that node's incidents, so all
-//! of a node's rows below its cursor are committed once the cursor is visible. The refresh
-//! reads the cursors, and for each node that advanced fetches exactly the new id range.
+//! The window is refreshed incrementally from the durable receipts: every node's row of
+//! `incident_receipts` advances in the same transaction as that node's incidents, so all of
+//! a node's rows below its receipt are committed once the receipt is visible. The refresh
+//! reads the receipts, and for each node that advanced fetches exactly the new id range.
 
 use std::collections::HashMap;
 
-use crate::database::{Cell, Database, Dialect, Param, Sql};
+use crate::database::{Columns, Database, Dialect, Param, Row, Sql};
 use crate::error::StorageError;
+use crate::incidents::IncidentReceipt;
 
 /// The number of dimensions of an incident embedding (SID 0006).
 pub const DIMENSIONS: usize = 64;
@@ -182,16 +183,19 @@ impl CampaignWindow {
         if tx.dialect() == Dialect::Postgres {
             tx.execute(REPEATABLE_READ, &[]).await?;
         }
-        let cursors = tx.fetch_all(CURSORS, &[]).await?;
+        let receipts = tx.fetch_all(RECEIPTS, &[]).await?;
         let limit = i64::try_from(WINDOW).unwrap_or(i64::MAX);
-        let mut rows = tx.fetch_all(RECENT, &[limit.into()]).await?;
+        let rows = tx.fetch_all(RECENT, &[limit.into()]).await?;
         tx.commit().await?;
-        rows.reverse();
-        for row in &rows {
-            self.push_row(row);
+        let receipts = decode_receipts(receipts)?;
+        let mut recent =
+            rows.into_iter().map(StoredEmbedding::decode).collect::<Result<Vec<_>, _>>()?;
+        recent.reverse();
+        for stored in recent {
+            self.push(normalize(&stored.embedding), stored.campaign_id);
         }
-        for (node, cursor) in parse_cursors(&cursors) {
-            self.advance(node, cursor);
+        for receipt in receipts {
+            self.advance(receipt.node_id, receipt.next_sequence);
         }
         Ok(())
     }
@@ -199,8 +203,8 @@ impl CampaignWindow {
     /// Fetches the rows every node committed since the last refresh, at most [`WINDOW`]
     /// per node.
     pub(crate) async fn refresh(&mut self, db: &Database) -> Result<(), StorageError> {
-        let cursors = db.fetch_all(CURSORS, &[]).await?;
-        for (node, cursor) in parse_cursors(&cursors) {
+        let receipts = decode_receipts(db.fetch_all(RECEIPTS, &[]).await?)?;
+        for IncidentReceipt { node_id: node, next_sequence: cursor } in receipts {
             let known = self.cursor(node);
             if cursor <= known {
                 continue;
@@ -213,51 +217,61 @@ impl CampaignWindow {
             let low = i64::try_from(base + first).unwrap_or(i64::MAX);
             let high = i64::try_from(base + cursor).unwrap_or(i64::MAX);
             let range: [Param<'_>; 2] = [low.into(), high.into()];
-            let rows = db.fetch_all(RANGE, &range).await?;
-            for row in &rows {
-                self.push_row(row);
+            for row in db.fetch_all(RANGE, &range).await? {
+                let stored = StoredEmbedding::decode(row)?;
+                self.push(normalize(&stored.embedding), stored.campaign_id);
             }
             self.advance(node, cursor);
         }
         Ok(())
     }
+}
 
-    /// Adds one `(campaign_id, embedding)` row; rows without a readable embedding or
-    /// campaign are skipped.
-    fn push_row(&mut self, row: &[Cell]) {
-        let campaign = row.first().and_then(Cell::as_i64);
-        let embedding = row.get(1).and_then(Cell::as_bytes).and_then(embedding_from_bytes);
-        if let (Some(campaign), Some(embedding)) = (campaign, embedding) {
-            self.push(normalize(&embedding), campaign);
-        }
+/// The `(campaign_id, embedding)` columns of one `security_incidents` row.
+struct StoredEmbedding {
+    campaign_id: i64,
+    embedding: Embedding,
+}
+
+impl StoredEmbedding {
+    /// Decodes one row of [`RECENT`] or [`RANGE`]. Fails with [`StorageError::InvalidRow`]
+    /// when the embedding is not 256 bytes, which the schema's `CHECK` already refuses.
+    fn decode(row: Row) -> Result<StoredEmbedding, StorageError> {
+        let mut columns = Columns::new(row, "security_incidents");
+        let campaign_id = columns.integer("campaign_id")?;
+        let bytes = columns.bytes("embedding")?;
+        let embedding =
+            embedding_from_bytes(&bytes).ok_or_else(|| columns.invalid("embedding"))?;
+        Ok(StoredEmbedding { campaign_id, embedding })
     }
+}
+
+/// Decodes the rows of [`RECEIPTS`], clamping each receipt to 2^40 (the schema's bound).
+fn decode_receipts(rows: Vec<Row>) -> Result<Vec<IncidentReceipt>, StorageError> {
+    rows.into_iter()
+        .map(|row| {
+            let receipt = IncidentReceipt::decode(row)?;
+            Ok(IncidentReceipt {
+                next_sequence: receipt.next_sequence.min(SEQUENCE_LIMIT),
+                ..receipt
+            })
+        })
+        .collect()
 }
 
 const REPEATABLE_READ: Sql = Sql::both("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
 
-const CURSORS: Sql =
-    Sql::both("SELECT key, value FROM sibuna_meta WHERE key LIKE 'incident_cursor_%'");
+const RECEIPTS: Sql = Sql::both("SELECT node_id, next_sequence FROM incident_receipts");
 
-const RECENT: Sql = Sql::both(
-    "SELECT campaign_id, embedding FROM security_incidents WHERE embedding IS NOT NULL \
+pub(crate) const RECENT: Sql = Sql::both(
+    "SELECT campaign_id, embedding FROM security_incidents \
      ORDER BY recorded_at DESC, id DESC LIMIT $1",
 );
 
-const RANGE: Sql = Sql::both(
-    "SELECT campaign_id, embedding FROM security_incidents \
-     WHERE id >= $1 AND id < $2 AND embedding IS NOT NULL ORDER BY id",
+pub(crate) const RANGE: Sql = Sql::both(
+    "SELECT campaign_id, embedding FROM security_incidents WHERE id >= $1 AND id < $2 \
+     ORDER BY id",
 );
-
-/// Reads `(incident_cursor_<node>, value)` rows; malformed rows are skipped, because a
-/// receipt only guides the refresh here.
-fn parse_cursors(rows: &[Vec<Cell>]) -> impl Iterator<Item = (u32, u64)> + '_ {
-    rows.iter().filter_map(|row| {
-        let key = row.first()?.as_str()?;
-        let node = key.strip_prefix("incident_cursor_")?.parse().ok()?;
-        let cursor = u64::try_from(row.get(1)?.as_i64()?).ok()?;
-        Some((node, cursor.min(SEQUENCE_LIMIT)))
-    })
-}
 
 #[cfg(test)]
 mod tests {

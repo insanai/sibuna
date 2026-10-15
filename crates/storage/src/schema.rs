@@ -6,7 +6,7 @@
 //! rejects the console's tables. All pending migrations of every set run in one transaction;
 //! under PostgreSQL a transaction-scoped advisory lock serialises nodes that start together.
 
-use crate::database::{Database, Dialect, Param, Sql};
+use crate::database::{Columns, Database, Dialect, Param, Sql};
 use crate::error::StorageError;
 
 /// One schema change.
@@ -46,10 +46,16 @@ impl MigrationSet {
 /// The key of the PostgreSQL advisory lock that serialises migrations ("sibuna" in ASCII).
 const MIGRATION_LOCK: i64 = 0x7369_6275_6e61;
 
-const SCHEMA_TABLE: Sql = Sql::both(
-    "CREATE TABLE IF NOT EXISTS sibuna_schema (component TEXT NOT NULL, \
-     version BIGINT NOT NULL, applied_at BIGINT NOT NULL, PRIMARY KEY (component, version))",
-);
+const SCHEMA_TABLE: Sql = Sql {
+    sqlite: "CREATE TABLE IF NOT EXISTS sibuna_schema (component TEXT NOT NULL, \
+             version INTEGER NOT NULL CHECK (version >= 1), \
+             applied_at INTEGER NOT NULL CHECK (applied_at >= 0), \
+             PRIMARY KEY (component, version)) STRICT",
+    postgres: "CREATE TABLE IF NOT EXISTS sibuna_schema (component TEXT NOT NULL, \
+               version BIGINT NOT NULL CHECK (version >= 1), \
+               applied_at BIGINT NOT NULL CHECK (applied_at >= 0), \
+               PRIMARY KEY (component, version))",
+};
 const APPLIED_VERSION: Sql = Sql::both(
     "SELECT CAST(COALESCE(MAX(version), 0) AS BIGINT) FROM sibuna_schema WHERE component = $1",
 );
@@ -78,8 +84,10 @@ pub async fn migrate(db: &Database, sets: &[MigrationSet], now: u64) -> Result<(
     let applied_at = i64::try_from(now).unwrap_or(i64::MAX);
     for set in sets {
         let rows = tx.fetch_all(APPLIED_VERSION, &[set.component.into()]).await?;
-        let applied = rows.first().and_then(|row| row.first()).and_then(|cell| cell.as_i64());
-        let applied = applied.and_then(|value| u64::try_from(value).ok()).unwrap_or(0);
+        let applied: u64 = match rows.into_iter().next() {
+            Some(row) => Columns::new(row, "sibuna_schema").integer("version")?,
+            None => 0,
+        };
         if applied > set.latest() {
             return Err(StorageError::SchemaTooNew {
                 component: set.component,
@@ -101,152 +109,190 @@ pub async fn migrate(db: &Database, sets: &[MigrationSet], now: u64) -> Result<(
     tx.commit().await
 }
 
-/// The core schema of SID 0011: the tables of SID 0005 with the rule limit column, the
-/// inspection override, the incident embedding and full-text search (version 1), and the
-/// raw bytes of incident user agents, paths and payloads (version 2).
+/// The core schema of SID 0011, section "Schema and migrations": one baseline migration that
+/// creates every table, index and trigger at once. No Rust deployment predates it, so the
+/// development migrations that came before were folded into it.
 pub const CORE: MigrationSet = MigrationSet { component: "core", migrations: &CORE_MIGRATIONS };
 
-const CORE_MIGRATIONS: [Migration; 2] = [
-    Migration { version: 1, sqlite: SQLITE_V1, postgres: POSTGRES_V1 },
-    Migration { version: 2, sqlite: SQLITE_V2, postgres: POSTGRES_V2 },
-];
+const CORE_MIGRATIONS: [Migration; 1] =
+    [Migration { version: 1, sqlite: SQLITE_V1, postgres: POSTGRES_V1 }];
 
+/// Version 1 on SQLite. Every table is `STRICT`, so a value of the wrong storage class is
+/// refused; the `CHECK` constraints mirror the Rust types the storage layer decodes into.
 const SQLITE_V1: &str = "
-CREATE TABLE sibuna_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-INSERT INTO sibuna_meta (key, value) VALUES ('policy_version', '0')
-    ON CONFLICT (key) DO NOTHING;
+CREATE TABLE policy_revision (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    revision INTEGER NOT NULL CHECK (revision >= 0)) STRICT;
+INSERT INTO policy_revision (id, revision) VALUES (1, 0);
+
 CREATE TABLE policies (
-    id TEXT PRIMARY KEY, name TEXT NOT NULL, priority INTEGER NOT NULL DEFAULT 100,
-    path_pattern TEXT, ua_pattern TEXT, action TEXT NOT NULL, difficulty INTEGER,
-    algorithm TEXT, header_matchers TEXT, cidr_matchers TEXT,
-    weight INTEGER NOT NULL DEFAULT 0, enabled INTEGER NOT NULL DEFAULT 1,
-    created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, limit_config TEXT);
-CREATE TABLE ip_reputation (
-    ip_or_cidr TEXT PRIMARY KEY, reputation_score INTEGER NOT NULL, banned_until INTEGER,
-    trigger_rule TEXT, hits INTEGER NOT NULL DEFAULT 1, last_seen INTEGER NOT NULL);
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    priority INTEGER NOT NULL DEFAULT 100,
+    path_pattern TEXT,
+    ua_pattern TEXT,
+    action TEXT NOT NULL CHECK (action IN ('allow', 'deny', 'challenge', 'weigh')),
+    difficulty INTEGER CHECK (difficulty BETWEEN 0 AND 4294967295),
+    algorithm TEXT CHECK (algorithm IN ('hashcash', 'posw')),
+    header_matchers TEXT CHECK (CASE WHEN json_valid(header_matchers)
+        THEN json_type(header_matchers) = 'object' ELSE header_matchers IS NULL END),
+    cidr_matchers TEXT CHECK (CASE WHEN json_valid(cidr_matchers)
+        THEN json_type(cidr_matchers) = 'array' ELSE cidr_matchers IS NULL END),
+    weight INTEGER NOT NULL DEFAULT 0 CHECK (weight BETWEEN -2147483648 AND 2147483647),
+    limit_rate INTEGER CHECK (limit_rate BETWEEN 1 AND 1000000),
+    limit_window_seconds INTEGER CHECK (limit_window_seconds BETWEEN 1 AND 86400),
+    limit_ban_seconds INTEGER NOT NULL DEFAULT 0
+        CHECK (limit_ban_seconds BETWEEN 0 AND 86400),
+    enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
+    created_at INTEGER NOT NULL CHECK (created_at >= 0),
+    updated_at INTEGER NOT NULL CHECK (updated_at >= 0),
+    CHECK ((limit_rate IS NULL) = (limit_window_seconds IS NULL)),
+    CHECK (limit_rate IS NOT NULL OR limit_ban_seconds = 0)) STRICT;
+CREATE INDEX policies_enabled ON policies (priority, name, id) WHERE enabled;
+
 CREATE TABLE policy_inspection (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     path_traversal TEXT NOT NULL CHECK (path_traversal IN ('disabled', 'audit', 'enforce')),
     sqli TEXT NOT NULL CHECK (sqli IN ('disabled', 'audit', 'enforce')),
     xss TEXT NOT NULL CHECK (xss IN ('disabled', 'audit', 'enforce')),
-    rce TEXT NOT NULL CHECK (rce IN ('disabled', 'audit', 'enforce')));
+    rce TEXT NOT NULL CHECK (rce IN ('disabled', 'audit', 'enforce'))) STRICT;
+
+CREATE TABLE ip_reputation (
+    ip_or_cidr TEXT NOT NULL PRIMARY KEY,
+    reputation_score INTEGER NOT NULL CHECK (reputation_score BETWEEN -100 AND 100),
+    banned_until INTEGER CHECK (banned_until >= 0),
+    trigger_rule TEXT,
+    hits INTEGER NOT NULL DEFAULT 1 CHECK (hits >= 0),
+    last_seen INTEGER NOT NULL CHECK (last_seen >= 0)) STRICT;
+CREATE INDEX ip_reputation_decisive ON ip_reputation (banned_until)
+    WHERE reputation_score <= -50 OR reputation_score >= 50;
+
+CREATE TABLE incident_receipts (
+    node_id INTEGER PRIMARY KEY CHECK (node_id BETWEEN 1 AND 8388607),
+    next_sequence INTEGER NOT NULL CHECK (next_sequence BETWEEN 1 AND 1099511627776)) STRICT;
+
 CREATE TABLE security_incidents (
-    id INTEGER PRIMARY KEY, node_id INTEGER NOT NULL, client_ip TEXT NOT NULL,
-    user_agent TEXT NOT NULL, method TEXT NOT NULL, path TEXT NOT NULL,
-    violation_category TEXT NOT NULL, offending_payload TEXT NOT NULL,
-    campaign_id INTEGER, recorded_at INTEGER NOT NULL,
-    embedding BLOB CHECK (embedding IS NULL OR length(embedding) = 256));
-CREATE INDEX security_incidents_recorded ON security_incidents (recorded_at);
-CREATE VIRTUAL TABLE incidents_fts USING fts5(
-    path, offending_payload, content='security_incidents', content_rowid='id');
-CREATE TRIGGER version_policies_insert AFTER INSERT ON policies BEGIN
-    UPDATE sibuna_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'policy_version'; END;
-CREATE TRIGGER version_policies_update AFTER UPDATE ON policies BEGIN
-    UPDATE sibuna_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'policy_version'; END;
-CREATE TRIGGER version_policies_delete AFTER DELETE ON policies BEGIN
-    UPDATE sibuna_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'policy_version'; END;
-CREATE TRIGGER version_ip_reputation_insert AFTER INSERT ON ip_reputation BEGIN
-    UPDATE sibuna_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'policy_version'; END;
-CREATE TRIGGER version_ip_reputation_update AFTER UPDATE ON ip_reputation BEGIN
-    UPDATE sibuna_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'policy_version'; END;
-CREATE TRIGGER version_ip_reputation_delete AFTER DELETE ON ip_reputation BEGIN
-    UPDATE sibuna_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'policy_version'; END;
-CREATE TRIGGER version_policy_inspection_insert AFTER INSERT ON policy_inspection BEGIN
-    UPDATE sibuna_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'policy_version'; END;
-CREATE TRIGGER version_policy_inspection_update AFTER UPDATE ON policy_inspection BEGIN
-    UPDATE sibuna_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'policy_version'; END;
-CREATE TRIGGER version_policy_inspection_delete AFTER DELETE ON policy_inspection BEGIN
-    UPDATE sibuna_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'policy_version'; END;
+    id INTEGER PRIMARY KEY,
+    node_id INTEGER NOT NULL
+        REFERENCES incident_receipts (node_id) DEFERRABLE INITIALLY DEFERRED,
+    client_ip TEXT NOT NULL,
+    user_agent BLOB NOT NULL CHECK (length(user_agent) <= 200),
+    method TEXT NOT NULL,
+    path BLOB NOT NULL CHECK (length(path) <= 512),
+    violation_category TEXT NOT NULL,
+    offending_payload BLOB NOT NULL CHECK (length(offending_payload) <= 512),
+    campaign_id INTEGER NOT NULL,
+    recorded_at INTEGER NOT NULL CHECK (recorded_at >= 0),
+    embedding BLOB NOT NULL CHECK (length(embedding) = 256),
+    CHECK ((id >> 40) = node_id AND (id & 1099511627775) >= 1)) STRICT;
+CREATE INDEX security_incidents_recent ON security_incidents (recorded_at, id);
+CREATE VIRTUAL TABLE incidents_fts USING fts5(path, offending_payload);
+
+CREATE TRIGGER policies_revision_insert AFTER INSERT ON policies BEGIN
+    UPDATE policy_revision SET revision = revision + 1 WHERE id = 1; END;
+CREATE TRIGGER policies_revision_update AFTER UPDATE ON policies BEGIN
+    UPDATE policy_revision SET revision = revision + 1 WHERE id = 1; END;
+CREATE TRIGGER policies_revision_delete AFTER DELETE ON policies BEGIN
+    UPDATE policy_revision SET revision = revision + 1 WHERE id = 1; END;
+CREATE TRIGGER ip_reputation_revision_insert AFTER INSERT ON ip_reputation BEGIN
+    UPDATE policy_revision SET revision = revision + 1 WHERE id = 1; END;
+CREATE TRIGGER ip_reputation_revision_update AFTER UPDATE ON ip_reputation BEGIN
+    UPDATE policy_revision SET revision = revision + 1 WHERE id = 1; END;
+CREATE TRIGGER ip_reputation_revision_delete AFTER DELETE ON ip_reputation BEGIN
+    UPDATE policy_revision SET revision = revision + 1 WHERE id = 1; END;
+CREATE TRIGGER policy_inspection_revision_insert AFTER INSERT ON policy_inspection BEGIN
+    UPDATE policy_revision SET revision = revision + 1 WHERE id = 1; END;
+CREATE TRIGGER policy_inspection_revision_update AFTER UPDATE ON policy_inspection BEGIN
+    UPDATE policy_revision SET revision = revision + 1 WHERE id = 1; END;
+CREATE TRIGGER policy_inspection_revision_delete AFTER DELETE ON policy_inspection BEGIN
+    UPDATE policy_revision SET revision = revision + 1 WHERE id = 1; END;
 ";
 
+/// Version 1 on PostgreSQL: the same tables with PostgreSQL's types (see the dialect table of
+/// SID 0011): `BOOLEAN` for `enabled`, `JSONB` for the matchers, `BYTEA` for raw bytes, the
+/// `"C"` collation for rule ids and names, and the search column feeding a `tsvector`.
 const POSTGRES_V1: &str = "
-CREATE TABLE sibuna_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-INSERT INTO sibuna_meta (key, value) VALUES ('policy_version', '0')
-    ON CONFLICT (key) DO NOTHING;
+CREATE TABLE policy_revision (
+    id BIGINT PRIMARY KEY CHECK (id = 1),
+    revision BIGINT NOT NULL CHECK (revision >= 0));
+INSERT INTO policy_revision (id, revision) VALUES (1, 0);
+
 CREATE TABLE policies (
-    id TEXT PRIMARY KEY, name TEXT NOT NULL, priority BIGINT NOT NULL DEFAULT 100,
-    path_pattern TEXT, ua_pattern TEXT, action TEXT NOT NULL, difficulty BIGINT,
-    algorithm TEXT, header_matchers TEXT, cidr_matchers TEXT,
-    weight BIGINT NOT NULL DEFAULT 0, enabled BIGINT NOT NULL DEFAULT 1,
-    created_at BIGINT NOT NULL, updated_at BIGINT NOT NULL, limit_config TEXT);
-CREATE TABLE ip_reputation (
-    ip_or_cidr TEXT PRIMARY KEY, reputation_score BIGINT NOT NULL, banned_until BIGINT,
-    trigger_rule TEXT, hits BIGINT NOT NULL DEFAULT 1, last_seen BIGINT NOT NULL);
+    id TEXT COLLATE \"C\" NOT NULL PRIMARY KEY,
+    name TEXT COLLATE \"C\" NOT NULL,
+    priority BIGINT NOT NULL DEFAULT 100,
+    path_pattern TEXT,
+    ua_pattern TEXT,
+    action TEXT NOT NULL CHECK (action IN ('allow', 'deny', 'challenge', 'weigh')),
+    difficulty BIGINT CHECK (difficulty BETWEEN 0 AND 4294967295),
+    algorithm TEXT CHECK (algorithm IN ('hashcash', 'posw')),
+    header_matchers JSONB CHECK (jsonb_typeof(header_matchers) = 'object'),
+    cidr_matchers JSONB CHECK (jsonb_typeof(cidr_matchers) = 'array'),
+    weight INTEGER NOT NULL DEFAULT 0 CHECK (weight BETWEEN -2147483648 AND 2147483647),
+    limit_rate INTEGER CHECK (limit_rate BETWEEN 1 AND 1000000),
+    limit_window_seconds INTEGER CHECK (limit_window_seconds BETWEEN 1 AND 86400),
+    limit_ban_seconds INTEGER NOT NULL DEFAULT 0
+        CHECK (limit_ban_seconds BETWEEN 0 AND 86400),
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at BIGINT NOT NULL CHECK (created_at >= 0),
+    updated_at BIGINT NOT NULL CHECK (updated_at >= 0),
+    CHECK ((limit_rate IS NULL) = (limit_window_seconds IS NULL)),
+    CHECK (limit_rate IS NOT NULL OR limit_ban_seconds = 0));
+CREATE INDEX policies_enabled ON policies (priority, name, id) WHERE enabled;
+
 CREATE TABLE policy_inspection (
     id BIGINT PRIMARY KEY CHECK (id = 1),
     path_traversal TEXT NOT NULL CHECK (path_traversal IN ('disabled', 'audit', 'enforce')),
     sqli TEXT NOT NULL CHECK (sqli IN ('disabled', 'audit', 'enforce')),
     xss TEXT NOT NULL CHECK (xss IN ('disabled', 'audit', 'enforce')),
     rce TEXT NOT NULL CHECK (rce IN ('disabled', 'audit', 'enforce')));
+
+CREATE TABLE ip_reputation (
+    ip_or_cidr TEXT NOT NULL PRIMARY KEY,
+    reputation_score INTEGER NOT NULL CHECK (reputation_score BETWEEN -100 AND 100),
+    banned_until BIGINT CHECK (banned_until >= 0),
+    trigger_rule TEXT,
+    hits BIGINT NOT NULL DEFAULT 1 CHECK (hits >= 0),
+    last_seen BIGINT NOT NULL CHECK (last_seen >= 0));
+CREATE INDEX ip_reputation_decisive ON ip_reputation (banned_until)
+    WHERE reputation_score <= -50 OR reputation_score >= 50;
+
+CREATE TABLE incident_receipts (
+    node_id BIGINT PRIMARY KEY CHECK (node_id BETWEEN 1 AND 8388607),
+    next_sequence BIGINT NOT NULL CHECK (next_sequence BETWEEN 1 AND 1099511627776));
+
 CREATE TABLE security_incidents (
-    id BIGINT PRIMARY KEY, node_id BIGINT NOT NULL, client_ip TEXT NOT NULL,
-    user_agent TEXT NOT NULL, method TEXT NOT NULL, path TEXT NOT NULL,
-    violation_category TEXT NOT NULL, offending_payload TEXT NOT NULL,
-    campaign_id BIGINT, recorded_at BIGINT NOT NULL,
-    embedding BYTEA CHECK (embedding IS NULL OR octet_length(embedding) = 256),
-    search tsvector GENERATED ALWAYS AS
-        (to_tsvector('simple', path || ' ' || offending_payload)) STORED);
-CREATE INDEX security_incidents_recorded ON security_incidents (recorded_at);
+    id BIGINT PRIMARY KEY,
+    node_id BIGINT NOT NULL
+        REFERENCES incident_receipts (node_id) DEFERRABLE INITIALLY DEFERRED,
+    client_ip TEXT NOT NULL,
+    user_agent BYTEA NOT NULL CHECK (octet_length(user_agent) <= 200),
+    method TEXT NOT NULL,
+    path BYTEA NOT NULL CHECK (octet_length(path) <= 512),
+    violation_category TEXT NOT NULL,
+    offending_payload BYTEA NOT NULL CHECK (octet_length(offending_payload) <= 512),
+    campaign_id BIGINT NOT NULL,
+    recorded_at BIGINT NOT NULL CHECK (recorded_at >= 0),
+    embedding BYTEA NOT NULL CHECK (octet_length(embedding) = 256),
+    search_text TEXT NOT NULL,
+    search tsvector GENERATED ALWAYS AS (to_tsvector('simple', search_text)) STORED,
+    CHECK ((id >> 40) = node_id AND (id & 1099511627775) >= 1));
+CREATE INDEX security_incidents_recent ON security_incidents (recorded_at, id);
 CREATE INDEX security_incidents_search ON security_incidents USING GIN (search);
+
 CREATE FUNCTION sibuna_policy_revision() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-    UPDATE sibuna_meta SET value = CAST(CAST(value AS BIGINT) + 1 AS TEXT)
-        WHERE key = 'policy_version';
+    UPDATE policy_revision SET revision = revision + 1 WHERE id = 1;
     PERFORM pg_notify('sibuna_policy', '');
     RETURN NULL;
 END
 $$;
-CREATE TRIGGER version_policies AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON policies
+CREATE TRIGGER policies_revision AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON policies
     FOR EACH STATEMENT EXECUTE FUNCTION sibuna_policy_revision();
-CREATE TRIGGER version_ip_reputation
+CREATE TRIGGER ip_reputation_revision
     AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON ip_reputation
     FOR EACH STATEMENT EXECUTE FUNCTION sibuna_policy_revision();
-CREATE TRIGGER version_policy_inspection
+CREATE TRIGGER policy_inspection_revision
     AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON policy_inspection
     FOR EACH STATEMENT EXECUTE FUNCTION sibuna_policy_revision();
-";
-
-/// Version 2 on SQLite: the user agent, path and payload become `BLOB` columns holding the
-/// captured bytes, and `incidents_fts` holds its own text (a lossy UTF-8 rendering) instead of
-/// reading the bytes as external content. SQLite cannot change a declared column type, so
-/// the table is rebuilt; stored text becomes its UTF-8 bytes, and the index is refilled from
-/// that text, which version 1 already wrote as valid UTF-8 without NUL. No table references
-/// `security_incidents` at core version 1, so dropping it breaks no foreign key.
-const SQLITE_V2: &str = "
-DROP TABLE incidents_fts;
-CREATE VIRTUAL TABLE incidents_fts USING fts5(path, offending_payload);
-INSERT INTO incidents_fts (rowid, path, offending_payload)
-    SELECT id, path, offending_payload FROM security_incidents;
-CREATE TABLE security_incidents_v2 (
-    id INTEGER PRIMARY KEY, node_id INTEGER NOT NULL, client_ip TEXT NOT NULL,
-    user_agent BLOB NOT NULL, method TEXT NOT NULL, path BLOB NOT NULL,
-    violation_category TEXT NOT NULL, offending_payload BLOB NOT NULL,
-    campaign_id INTEGER, recorded_at INTEGER NOT NULL,
-    embedding BLOB CHECK (embedding IS NULL OR length(embedding) = 256));
-INSERT INTO security_incidents_v2 (id, node_id, client_ip, user_agent, method, path,
-        violation_category, offending_payload, campaign_id, recorded_at, embedding)
-    SELECT id, node_id, client_ip, CAST(user_agent AS BLOB), method, CAST(path AS BLOB),
-        violation_category, CAST(offending_payload AS BLOB), campaign_id, recorded_at, embedding
-    FROM security_incidents;
-DROP TABLE security_incidents;
-ALTER TABLE security_incidents_v2 RENAME TO security_incidents;
-CREATE INDEX security_incidents_recorded ON security_incidents (recorded_at);
-";
-
-/// Version 2 on PostgreSQL: the user agent, path and payload become `BYTEA` holding the
-/// captured bytes, and the generated `tsvector` reads the new text column `search_text` (a
-/// lossy UTF-8 rendering of path and payload). The generated column depends on the columns
-/// whose type changes, so it is dropped (with its index) and added again.
-const POSTGRES_V2: &str = "
-ALTER TABLE security_incidents DROP COLUMN search;
-ALTER TABLE security_incidents ADD COLUMN search_text TEXT NOT NULL DEFAULT '';
-UPDATE security_incidents SET search_text = path || ' ' || offending_payload;
-ALTER TABLE security_incidents
-    ALTER COLUMN search_text DROP DEFAULT,
-    ALTER COLUMN user_agent TYPE BYTEA USING convert_to(user_agent, 'UTF8'),
-    ALTER COLUMN path TYPE BYTEA USING convert_to(path, 'UTF8'),
-    ALTER COLUMN offending_payload TYPE BYTEA USING convert_to(offending_payload, 'UTF8');
-ALTER TABLE security_incidents ADD COLUMN search tsvector
-    GENERATED ALWAYS AS (to_tsvector('simple', search_text)) STORED;
-CREATE INDEX security_incidents_search ON security_incidents USING GIN (search);
 ";

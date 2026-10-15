@@ -169,12 +169,12 @@ pub enum Cell {
 }
 
 impl Cell {
-    /// Returns the integer this cell holds; text that is a decimal integer counts, because
-    /// SQLite keeps whatever a direct write stored. Returns `None` otherwise.
+    /// Returns the integer this cell holds; `None` for every other kind. Text is not parsed:
+    /// the schema's tables are typed (`STRICT` on SQLite), so an integer column holds
+    /// integers.
     pub fn as_i64(&self) -> Option<i64> {
         match self {
             Cell::Int(value) => Some(*value),
-            Cell::Text(text) => text.trim().parse().ok(),
             _ => None,
         }
     }
@@ -399,70 +399,98 @@ impl fmt::Debug for Transaction {
     }
 }
 
-/// Reads column `index` of `row` as an integer, failing with [`StorageError::InvalidRow`]
-/// naming `table` and `column` when the cell is missing, NULL or not an integer.
-pub(crate) fn int_at(
-    row: &[Cell],
-    index: usize,
+/// Reads the cells of one result row from left to right, so that a row struct's decode
+/// function names each column once, in `SELECT` order, and an error names the table and the
+/// column. It owns the row and moves text and bytes out of it without copying.
+#[derive(Debug)]
+pub struct Columns {
+    cells: std::vec::IntoIter<Cell>,
     table: &'static str,
-    column: &'static str,
-) -> Result<i64, StorageError> {
-    row.get(index).and_then(Cell::as_i64).ok_or(StorageError::InvalidRow { table, column })
 }
 
-/// Reads column `index` of `row` as an optional integer: NULL gives `None`.
-pub(crate) fn optional_int_at(
-    row: &[Cell],
-    index: usize,
-    table: &'static str,
-    column: &'static str,
-) -> Result<Option<i64>, StorageError> {
-    match row.get(index) {
-        Some(Cell::Null) => Ok(None),
-        Some(cell) => cell.as_i64().map(Some).ok_or(StorageError::InvalidRow { table, column }),
-        None => Err(StorageError::InvalidRow { table, column }),
+impl Columns {
+    /// Starts reading `row`, a row of `table`.
+    pub fn new(row: Row, table: &'static str) -> Columns {
+        Columns { cells: row.into_iter(), table }
     }
-}
 
-/// Reads column `index` of `row` as owned text. Integers are accepted and formatted,
-/// because SQLite keeps the type a direct write used.
-pub(crate) fn text_at(
-    row: &[Cell],
-    index: usize,
-    table: &'static str,
-    column: &'static str,
-) -> Result<String, StorageError> {
-    match row.get(index) {
-        Some(Cell::Text(text)) => Ok(text.clone()),
-        Some(Cell::Int(value)) => Ok(value.to_string()),
-        _ => Err(StorageError::InvalidRow { table, column }),
+    /// Returns the error for `column` of this table: [`StorageError::InvalidRow`].
+    pub fn invalid(&self, column: &'static str) -> StorageError {
+        StorageError::InvalidRow { table: self.table, column }
     }
-}
 
-/// Reads column `index` of `row` as optional owned text: NULL gives `None`.
-pub(crate) fn optional_text_at(
-    row: &[Cell],
-    index: usize,
-    table: &'static str,
-    column: &'static str,
-) -> Result<Option<String>, StorageError> {
-    match row.get(index) {
-        Some(Cell::Null) => Ok(None),
-        _ => text_at(row, index, table, column).map(Some),
+    /// Takes the next cell; fails when the row has no more cells.
+    fn take(&mut self, column: &'static str) -> Result<Cell, StorageError> {
+        self.cells.next().ok_or_else(|| self.invalid(column))
     }
-}
 
-/// Reads column `index` of `row` as owned bytes. Text is accepted as its UTF-8 bytes,
-/// because SQLite keeps the type a direct write used.
-pub(crate) fn bytes_at(
-    row: &[Cell],
-    index: usize,
-    table: &'static str,
-    column: &'static str,
-) -> Result<Vec<u8>, StorageError> {
-    match row.get(index) {
-        Some(Cell::Bytes(bytes)) => Ok(bytes.clone()),
-        Some(Cell::Text(text)) => Ok(text.as_bytes().to_vec()),
-        _ => Err(StorageError::InvalidRow { table, column }),
+    /// Takes the next cell as an integer of type `T` (`i64`, `u64`, `u32`, `i32`, ...).
+    /// Fails when the cell is NULL, not an integer, or outside the range of `T`.
+    pub fn integer<T: TryFrom<i64>>(&mut self, column: &'static str) -> Result<T, StorageError> {
+        match self.take(column)? {
+            Cell::Int(value) => T::try_from(value).map_err(|_| self.invalid(column)),
+            _ => Err(self.invalid(column)),
+        }
+    }
+
+    /// Takes the next cell as an optional integer: NULL gives `None`; otherwise as
+    /// [`Columns::integer`].
+    pub fn optional_integer<T: TryFrom<i64>>(
+        &mut self,
+        column: &'static str,
+    ) -> Result<Option<T>, StorageError> {
+        match self.take(column)? {
+            Cell::Null => Ok(None),
+            Cell::Int(value) => T::try_from(value).map(Some).map_err(|_| self.invalid(column)),
+            _ => Err(self.invalid(column)),
+        }
+    }
+
+    /// Takes the next cell as text. Fails when it is NULL or not text.
+    pub fn text(&mut self, column: &'static str) -> Result<String, StorageError> {
+        match self.take(column)? {
+            Cell::Text(text) => Ok(text),
+            _ => Err(self.invalid(column)),
+        }
+    }
+
+    /// Takes the next cell as optional text: NULL gives `None`. Fails for any other kind.
+    pub fn optional_text(&mut self, column: &'static str) -> Result<Option<String>, StorageError> {
+        match self.take(column)? {
+            Cell::Null => Ok(None),
+            Cell::Text(text) => Ok(Some(text)),
+            _ => Err(self.invalid(column)),
+        }
+    }
+
+    /// Takes the next cell as bytes. Fails when it is NULL or not a byte string.
+    pub fn bytes(&mut self, column: &'static str) -> Result<Vec<u8>, StorageError> {
+        match self.take(column)? {
+            Cell::Bytes(bytes) => Ok(bytes),
+            _ => Err(self.invalid(column)),
+        }
+    }
+
+    /// Takes the next cell as the text name of an enumerated value and returns
+    /// `parse(name)`. Fails when the cell is not text or `parse` returns `None`.
+    pub fn parsed<T>(
+        &mut self,
+        column: &'static str,
+        parse: fn(&str) -> Option<T>,
+    ) -> Result<T, StorageError> {
+        let text = self.text(column)?;
+        parse(&text).ok_or_else(|| self.invalid(column))
+    }
+
+    /// As [`Columns::parsed`], but NULL gives `None`.
+    pub fn optional_parsed<T>(
+        &mut self,
+        column: &'static str,
+        parse: fn(&str) -> Option<T>,
+    ) -> Result<Option<T>, StorageError> {
+        match self.optional_text(column)? {
+            None => Ok(None),
+            Some(text) => parse(&text).map(Some).ok_or_else(|| self.invalid(column)),
+        }
     }
 }

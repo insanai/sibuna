@@ -10,9 +10,14 @@ use sibuna_core::Incident;
 use crate::database::{Dialect, Target};
 use crate::error::StorageError;
 use crate::incidents::write_batch;
-use crate::policy::{InspectionRow, ReputationRow};
+use crate::policy::{
+    ChallengeAlgorithm, InspectionMode, InspectionRow, PolicyAction, ReputationRow, RuleLimits,
+};
 use crate::testing::{Fixture, for_each_backend};
 
+mod constraints;
+#[cfg(feature = "sqlite")]
+mod plans;
 mod raw_bytes;
 
 fn honeypot(now: u64) -> Incident<'static> {
@@ -73,18 +78,26 @@ async fn identity(target: Target) {
     let counts =
         owner.ints("SELECT COUNT(*), MIN(id & 1099511627775) FROM security_incidents").await;
     assert_eq!(counts, [1, 2]);
-    owner.exec("DELETE FROM sibuna_meta WHERE key = 'incident_cursor_1'").await;
+    assert_eq!(owner.ints("SELECT next_sequence FROM incident_receipts").await, [3]);
+    // A receipt behind the stored rows: the largest stored id still decides.
+    owner.exec("UPDATE incident_receipts SET next_sequence = 1 WHERE node_id = 1").await;
     owner.worker.load_next_sequence().await.unwrap();
     assert_eq!(owner.worker.next_sequence, 3);
-    owner.exec("INSERT INTO sibuna_meta VALUES ('incident_cursor_1', '1099511627776')").await;
+    owner.exec("UPDATE incident_receipts SET next_sequence = 1099511627776").await;
     owner.worker.load_next_sequence().await.unwrap();
     owner.record(&event);
     assert!(matches!(owner.worker.drain().await, Err(StorageError::IncidentIdExhausted)));
     // The exhausted fixture cannot flush; the production shutdown reports this failure.
     owner.worker.pending.clear();
-    owner.exec("UPDATE sibuna_meta SET value = '0' WHERE key = 'incident_cursor_1'").await;
-    let corrupt = owner.worker.load_next_sequence().await;
-    assert!(matches!(corrupt, Err(StorageError::InvalidIncidentCursor)));
+    // Zig could store a corrupt receipt; the schema refuses one, and a stored incident
+    // keeps its node's receipt from being deleted.
+    for refused in [
+        "UPDATE incident_receipts SET next_sequence = 0",
+        "UPDATE incident_receipts SET next_sequence = 1099511627777",
+        "DELETE FROM incident_receipts WHERE node_id = 1",
+    ] {
+        assert!(owner.worker.db.execute_script(refused).await.is_err(), "{refused}");
+    }
     owner.close().await;
 }
 
@@ -95,10 +108,15 @@ impl Fixture {
     }
 }
 
+/// The matcher documents are written as PostgreSQL's `JSONB` prints them, so both backends
+/// return the same text.
+const HEADERS: &str = "{\"X-Api\": \"v2\"}";
+const CIDRS: &str = "[\"10.0.0.0/8\"]";
+
 const INSERT_P1: &str = "INSERT INTO policies (id, name, priority, path_pattern, action, \
     difficulty, algorithm, header_matchers, cidr_matchers, weight, enabled, created_at, \
-    updated_at) VALUES ('p1', 'protect-secret', 10, '/secret/*', 'CHALLENGE', 20, 'posw', \
-    '{\"X-Api\":\"v2\"}', '[\"10.0.0.0/8\"]', 0, 1, 100, 100)";
+    updated_at) VALUES ('p1', 'protect-secret', 10, '/secret/*', 'challenge', 20, 'posw', \
+    '{\"X-Api\": \"v2\"}', '[\"10.0.0.0/8\"]', 0, TRUE, 100, 100)";
 
 #[test]
 fn persistent_store_policy_reload_reputation_forensics_campaigns() {
@@ -119,11 +137,12 @@ async fn store(target: Target) {
     assert!(fresh.revision > first.revision);
     let [rule] = fresh.rules.as_slice() else { panic!("one rule: {fresh:?}") };
     assert_eq!((rule.id.as_str(), rule.name.as_str()), ("p1", "protect-secret"));
-    assert_eq!((rule.action.as_str(), rule.difficulty), ("CHALLENGE", Some(20)));
-    assert_eq!(rule.algorithm.as_deref(), Some("posw"));
+    assert_eq!((rule.action, rule.difficulty), (PolicyAction::Challenge, Some(20)));
+    assert_eq!(rule.algorithm, Some(ChallengeAlgorithm::Posw));
     assert_eq!(rule.path_pattern.as_deref(), Some("/secret/*"));
-    assert_eq!(rule.header_matchers.as_deref(), Some("{\"X-Api\":\"v2\"}"));
-    assert_eq!(rule.cidr_matchers.as_deref(), Some("[\"10.0.0.0/8\"]"));
+    assert_eq!(rule.header_matchers.as_deref(), Some(HEADERS));
+    assert_eq!(rule.cidr_matchers.as_deref(), Some(CIDRS));
+    assert_eq!((rule.weight, rule.limits), (0, None));
     let ban = ReputationRow {
         ip_or_cidr: "198.51.100.7".into(),
         reputation_score: -100,
@@ -134,7 +153,7 @@ async fn store(target: Target) {
 
     // Repeated updates with identical timestamps must reload every time.
     for round in 0..4 {
-        let action = if round % 2 == 0 { "DENY" } else { "ALLOW" };
+        let action = if round % 2 == 0 { PolicyAction::Deny } else { PolicyAction::Allow };
         let params = [action.into()];
         let update = crate::database::Sql::both("UPDATE policies SET action = $1 WHERE id = 'p1'");
         p.worker.db.execute(update, &params).await.unwrap();
@@ -256,8 +275,8 @@ fn rejected_snapshots_preserve_the_applied_revision_until_repaired() {
 async fn rejected(target: Target) {
     let good = |snapshot: &crate::PolicySnapshot| {
         snapshot.rules.iter().all(|rule| {
-            rule.header_matchers.as_deref() == Some("{\"X-Api\":\"v2\"}")
-                && rule.cidr_matchers.as_deref() == Some("[\"10.0.0.0/8\"]")
+            rule.header_matchers.as_deref() == Some(HEADERS)
+                && rule.cidr_matchers.as_deref() == Some(CIDRS)
         })
     };
     let mut owner = Fixture::open_with(&target, 1, good).await;
@@ -265,14 +284,16 @@ async fn rejected(target: Target) {
         .exec(
             "INSERT INTO policies (id, name, action, path_pattern, created_at, updated_at, \
                header_matchers, cidr_matchers) VALUES ('limited', 'Limited', 'allow', \
-               '/private', 1, 1, '{\"X-Api\":\"v2\"}', '[\"10.0.0.0/8\"]')",
+               '/private', 1, 1, '{\"X-Api\": \"v2\"}', '[\"10.0.0.0/8\"]')",
         )
         .await;
     owner.worker_tick().await;
     let applied = owner.worker.applied_revision;
+    // Documents of the right JSON type that the daemon refuses; a document of the wrong
+    // type (`'[]'` for headers) the schema refuses itself (see `constraints`).
     let cases = [
-        "header_matchers = '[]'",
         "header_matchers = '{\"X-Api\":7}'",
+        "header_matchers = '{\"A\":\"1\",\"B\":\"2\",\"C\":\"3\",\"D\":\"4\",\"E\":\"5\"}'",
         "cidr_matchers = '[\"invalid\"]'",
     ];
     for case in cases {
@@ -283,7 +304,7 @@ async fn rejected(target: Target) {
         assert!(matches!(owner.worker.tick().await, Err(StorageError::PublishRejected)));
         owner
             .exec(
-                "UPDATE policies SET header_matchers = '{\"X-Api\":\"v2\"}', \
+                "UPDATE policies SET header_matchers = '{\"X-Api\": \"v2\"}', \
                    cidr_matchers = '[\"10.0.0.0/8\"]'",
             )
             .await;
@@ -308,10 +329,10 @@ async fn inspection(target: Target) {
         .await;
     owner.worker_tick().await;
     let expected = InspectionRow {
-        path_traversal: "disabled".into(),
-        sqli: "audit".into(),
-        xss: "enforce".into(),
-        rce: "enforce".into(),
+        path_traversal: InspectionMode::Disabled,
+        sqli: InspectionMode::Audit,
+        xss: InspectionMode::Enforce,
+        rce: InspectionMode::Enforce,
     };
     assert_eq!(owner.latest().inspection, Some(expected));
     // The CHECK constraints refuse unknown modes and a second row.
@@ -337,8 +358,8 @@ fn rule_limits_load_and_newer_schemas_are_refused() {
     for_each_backend("limits", |target| Box::pin(limits(target)));
 }
 
-/// `policy_limits.zig`: a legacy row without limits loads with none; a stored limit
-/// document loads verbatim; a database from a newer build is refused.
+/// `policy_limits.zig`: a legacy row without limits loads with none; stored limits load as
+/// typed values; a database from a newer build is refused.
 async fn limits(target: Target) {
     let mut owner = Fixture::open(&target).await;
     owner
@@ -348,16 +369,13 @@ async fn limits(target: Target) {
         )
         .await;
     owner.worker_tick().await;
-    assert_eq!(owner.latest().rules[0].limit_config, None);
+    assert_eq!(owner.latest().rules[0].limits, None);
     owner
-        .exec(
-            "UPDATE policies SET limit_config = '{\"rate\":1,\"window_seconds\":60}' \
-               WHERE id = 'legacy'",
-        )
+        .exec("UPDATE policies SET limit_rate = 1, limit_window_seconds = 60 WHERE id = 'legacy'")
         .await;
     owner.worker_tick().await;
-    let limits = owner.latest().rules[0].limit_config.clone();
-    assert_eq!(limits.as_deref(), Some("{\"rate\":1,\"window_seconds\":60}"));
+    let limits = owner.latest().rules[0].limits;
+    assert_eq!(limits, Some(RuleLimits { rate: 1, window_seconds: 60, ban_seconds: 0 }));
     owner.close().await;
 
     // Reopening applies nothing twice.
@@ -441,7 +459,7 @@ async fn window(target: Target) {
     let hits = two.worker.db.search_incidents("users", 10).await.unwrap();
     assert_eq!(hits.len(), 2);
     let first_id = (1i64 << 40) | 1;
-    assert!(hits.iter().all(|hit| hit.campaign_id == Some(first_id)));
+    assert!(hits.iter().all(|hit| hit.campaign_id == first_id));
     let ids =
         two.ints("SELECT COUNT(DISTINCT campaign_id), COUNT(*) FROM security_incidents").await;
     assert_eq!(ids, [2, 3]);

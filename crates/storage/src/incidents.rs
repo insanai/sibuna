@@ -6,8 +6,8 @@
 //! UTF-8 rendering of the path and the payload (see `render`): in `incidents_fts` on SQLite,
 //! and in the text column `search_text` that feeds the generated `tsvector` on PostgreSQL.
 //!
-//! An incident id is `(node << 40) | sequence`. Each node keeps the receipt
-//! `incident_cursor_<node>` in `sibuna_meta`: the sequence after its last committed batch.
+//! An incident id is `(node << 40) | sequence`. Each node keeps its receipt, a row of
+//! `incident_receipts`: the sequence after its last committed batch.
 //! The receipt advances in the same transaction as the batch, and every insert of the batch
 //! is guarded by "the receipt is still below this batch's end". Replaying a batch whose
 //! commit was not acknowledged therefore writes nothing twice, exactly as in the Zig daemon.
@@ -17,9 +17,7 @@ use sibuna_core::Incident;
 use crate::campaigns::{
     CampaignWindow, Embedding, NODE_SHIFT, SEQUENCE_LIMIT, dot, embedding_bytes, normalize,
 };
-use crate::database::{
-    Cell, Database, Dialect, Param, Sql, Transaction, bytes_at, int_at, text_at,
-};
+use crate::database::{Columns, Database, Dialect, Param, Row, Sql, Transaction};
 use crate::error::StorageError;
 use crate::policy::sql_time;
 
@@ -180,99 +178,79 @@ pub(crate) fn prepare(
     Ok(PreparedBatch { end, incidents })
 }
 
-/// The receipt guard shared by every insert: "the receipt is still below this batch's end".
-macro_rules! guarded {
-    ($head:literal, $key:literal, $end:literal) => {
-        concat!(
-            $head,
-            " WHERE COALESCE((SELECT CAST(value AS BIGINT) FROM sibuna_meta WHERE key = ",
-            $key,
-            "), 0) < ",
-            $end
-        )
-    };
-}
+// Every insert of a batch carries the receipt guard: "the node's receipt is still below this
+// batch's end", `COALESCE((SELECT next_sequence FROM incident_receipts WHERE node_id = $n),
+// 0) < $end`. A replayed batch whose first commit succeeded therefore inserts nothing.
 
-/// SQLite binds the first 13 parameters of [`write_incident`]'s row; PostgreSQL also binds
+/// SQLite binds the first 12 parameters of [`write_incident`]'s row; PostgreSQL also binds
 /// the two search renderings, which it joins into `search_text`.
 const INSERT_INCIDENT: Sql = Sql {
-    sqlite: guarded!(
-        "INSERT INTO security_incidents (id, node_id, client_ip, user_agent, method, path, \
-         violation_category, offending_payload, campaign_id, recorded_at, embedding) \
-         SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11",
-        "$12",
-        "$13"
-    ),
-    postgres: guarded!(
-        "INSERT INTO security_incidents (id, node_id, client_ip, user_agent, method, path, \
-         violation_category, offending_payload, campaign_id, recorded_at, embedding, \
-         search_text) \
-         SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $14 || ' ' || $15",
-        "$12",
-        "$13"
-    ),
+    sqlite: "INSERT INTO security_incidents (id, node_id, client_ip, user_agent, method, path, \
+             violation_category, offending_payload, campaign_id, recorded_at, embedding) \
+             SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11 \
+             WHERE COALESCE((SELECT next_sequence FROM incident_receipts \
+             WHERE node_id = $2), 0) < $12",
+    postgres: "INSERT INTO security_incidents (id, node_id, client_ip, user_agent, method, \
+               path, violation_category, offending_payload, campaign_id, recorded_at, \
+               embedding, search_text) \
+               SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $13 || ' ' || $14 \
+               WHERE COALESCE((SELECT next_sequence FROM incident_receipts \
+               WHERE node_id = $2), 0) < $12",
 };
 
-/// The number of parameters [`INSERT_INCIDENT`] reads in each dialect.
-const SQLITE_INSERT_PARAMS: usize = 13;
+/// The number of parameters [`INSERT_INCIDENT`] reads on SQLite.
+const SQLITE_INSERT_PARAMS: usize = 12;
 
-const INSERT_FTS: Sql = Sql::both(guarded!(
-    "INSERT INTO incidents_fts (rowid, path, offending_payload) SELECT $1, $2, $3",
-    "$4",
-    "$5"
-));
+const INSERT_FTS: Sql = Sql::both(
+    "INSERT INTO incidents_fts (rowid, path, offending_payload) SELECT $1, $2, $3 \
+     WHERE COALESCE((SELECT next_sequence FROM incident_receipts WHERE node_id = $4), 0) < $5",
+);
 
 /// Zig's honeypot upsert: score -100, the later of the two ban ends, one more hit.
 const HONEYPOT: Sql = Sql {
-    sqlite: concat!(
-        guarded!(
-            "INSERT INTO ip_reputation (ip_or_cidr, reputation_score, banned_until, \
-             trigger_rule, hits, last_seen) SELECT $1, -100, $2, 'honeypot', 1, $3",
-            "$4",
-            "$5"
-        ),
-        " ON CONFLICT (ip_or_cidr) DO UPDATE SET hits = ip_reputation.hits + 1, \
-         reputation_score = -100, \
-         banned_until = MAX(COALESCE(ip_reputation.banned_until, 0), excluded.banned_until), \
-         trigger_rule = 'honeypot', \
-         last_seen = MAX(ip_reputation.last_seen, excluded.last_seen)"
-    ),
-    postgres: concat!(
-        guarded!(
-            "INSERT INTO ip_reputation (ip_or_cidr, reputation_score, banned_until, \
-             trigger_rule, hits, last_seen) SELECT $1, -100, $2, 'honeypot', 1, $3",
-            "$4",
-            "$5"
-        ),
-        " ON CONFLICT (ip_or_cidr) DO UPDATE SET hits = ip_reputation.hits + 1, \
-         reputation_score = -100, \
-         banned_until = GREATEST(COALESCE(ip_reputation.banned_until, 0), \
-         excluded.banned_until), trigger_rule = 'honeypot', \
-         last_seen = GREATEST(ip_reputation.last_seen, excluded.last_seen)"
-    ),
+    sqlite: "INSERT INTO ip_reputation (ip_or_cidr, reputation_score, banned_until, \
+             trigger_rule, hits, last_seen) SELECT $1, -100, $2, 'honeypot', 1, $3 \
+             WHERE COALESCE((SELECT next_sequence FROM incident_receipts \
+             WHERE node_id = $4), 0) < $5 \
+             ON CONFLICT (ip_or_cidr) DO UPDATE SET hits = ip_reputation.hits + 1, \
+             reputation_score = -100, \
+             banned_until = MAX(COALESCE(ip_reputation.banned_until, 0), excluded.banned_until), \
+             trigger_rule = 'honeypot', \
+             last_seen = MAX(ip_reputation.last_seen, excluded.last_seen)",
+    postgres: "INSERT INTO ip_reputation (ip_or_cidr, reputation_score, banned_until, \
+               trigger_rule, hits, last_seen) SELECT $1, -100, $2, 'honeypot', 1, $3 \
+               WHERE COALESCE((SELECT next_sequence FROM incident_receipts \
+               WHERE node_id = $4), 0) < $5 \
+               ON CONFLICT (ip_or_cidr) DO UPDATE SET hits = ip_reputation.hits + 1, \
+               reputation_score = -100, \
+               banned_until = GREATEST(COALESCE(ip_reputation.banned_until, 0), \
+               excluded.banned_until), trigger_rule = 'honeypot', \
+               last_seen = GREATEST(ip_reputation.last_seen, excluded.last_seen)",
 };
 
-const CURSOR: Sql = Sql {
-    sqlite: "INSERT INTO sibuna_meta (key, value) VALUES ($1, $2) ON CONFLICT (key) \
-             DO UPDATE SET value = MAX(CAST(sibuna_meta.value AS INTEGER), \
-             CAST(excluded.value AS INTEGER))",
-    postgres: "INSERT INTO sibuna_meta (key, value) VALUES ($1, $2) ON CONFLICT (key) \
-               DO UPDATE SET value = CAST(GREATEST(CAST(sibuna_meta.value AS BIGINT), \
-               CAST(excluded.value AS BIGINT)) AS TEXT)",
+/// Advances the node's receipt; it never moves backwards.
+const ADVANCE_RECEIPT: Sql = Sql {
+    sqlite: "INSERT INTO incident_receipts (node_id, next_sequence) VALUES ($1, $2) \
+             ON CONFLICT (node_id) DO UPDATE SET \
+             next_sequence = MAX(incident_receipts.next_sequence, excluded.next_sequence)",
+    postgres: "INSERT INTO incident_receipts (node_id, next_sequence) VALUES ($1, $2) \
+               ON CONFLICT (node_id) DO UPDATE SET \
+               next_sequence = GREATEST(incident_receipts.next_sequence, \
+               excluded.next_sequence)",
 };
 
 /// Taken first by a PostgreSQL batch that bans: the revision triggers lock this row, and
 /// taking it before any reputation row keeps concurrent nodes from deadlocking.
 const LOCK_REVISION: Sql =
-    Sql::both("SELECT value FROM sibuna_meta WHERE key = 'policy_version' FOR UPDATE");
+    Sql::both("SELECT revision FROM policy_revision WHERE id = 1 FOR UPDATE");
 
-const LOAD_CURSOR: Sql = Sql::both(
+pub(crate) const NEXT_SEQUENCE: Sql = Sql::both(
     "SELECT CAST(COALESCE(MAX(id), 0) AS BIGINT), \
-     COALESCE((SELECT value FROM sibuna_meta WHERE key = $1), '1') \
+     COALESCE((SELECT next_sequence FROM incident_receipts WHERE node_id = $1), 1) \
      FROM security_incidents WHERE id >= $2 AND id < $3",
 );
 
-const SEARCH: Sql = Sql {
+pub(crate) const SEARCH: Sql = Sql {
     sqlite: "SELECT s.id, s.client_ip, s.method, s.user_agent, s.path, s.violation_category, \
              s.offending_payload, s.campaign_id \
              FROM incidents_fts f JOIN security_incidents s ON s.id = f.rowid \
@@ -283,9 +261,25 @@ const SEARCH: Sql = Sql {
                WHERE search @@ query ORDER BY ts_rank(search, query) DESC, id LIMIT $2",
 };
 
-/// Returns the `sibuna_meta` key of `node`'s receipt.
-pub(crate) fn cursor_key(node: u32) -> String {
-    format!("incident_cursor_{node}")
+/// One row of `incident_receipts`: a node's durable receipt.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct IncidentReceipt {
+    /// The node, 1 to [`crate::MAX_NODE_ID`].
+    pub node_id: u32,
+    /// The sequence number after the node's last committed batch, 1 to 2^40.
+    pub next_sequence: u64,
+}
+
+impl IncidentReceipt {
+    /// Decodes a `(node_id, next_sequence)` row. Fails with [`StorageError::InvalidRow`] for
+    /// a cell that does not have its column's type or range.
+    pub(crate) fn decode(row: Row) -> Result<IncidentReceipt, StorageError> {
+        let mut columns = Columns::new(row, "incident_receipts");
+        Ok(IncidentReceipt {
+            node_id: columns.integer("node_id")?,
+            next_sequence: columns.integer("next_sequence")?,
+        })
+    }
 }
 
 /// Writes `batch` for `node` and advances its receipt, all in one transaction.
@@ -294,7 +288,7 @@ pub(crate) async fn write_batch(
     node: u32,
     batch: &PreparedBatch,
 ) -> Result<(), StorageError> {
-    let key = cursor_key(node);
+    let node = i64::from(node);
     let end = i64::try_from(batch.end).unwrap_or(i64::MAX);
     let mut tx = db.begin().await?;
     let bans = batch.incidents.iter().any(|incident| incident.ban_until.is_some());
@@ -302,23 +296,21 @@ pub(crate) async fn write_batch(
         tx.execute(LOCK_REVISION, &[]).await?;
     }
     for incident in &batch.incidents {
-        write_incident(&mut tx, incident, node, &key, end).await?;
+        write_incident(&mut tx, incident, node, end).await?;
     }
-    let end_text = batch.end.to_string();
-    tx.execute(CURSOR, &[key.as_str().into(), end_text.as_str().into()]).await?;
+    tx.execute(ADVANCE_RECEIPT, &[node.into(), end.into()]).await?;
     tx.commit().await
 }
 
 async fn write_incident(
     tx: &mut Transaction,
     incident: &PreparedIncident,
-    node: u32,
-    key: &str,
+    node: i64,
     end: i64,
 ) -> Result<(), StorageError> {
-    let row: [Param<'_>; 15] = [
+    let row: [Param<'_>; 14] = [
         incident.id.into(),
-        i64::from(node).into(),
+        node.into(),
         incident.client_ip.as_str().into(),
         incident.user_agent.as_slice().into(),
         incident.method.as_str().into(),
@@ -328,7 +320,6 @@ async fn write_incident(
         incident.campaign.into(),
         incident.recorded_at.into(),
         incident.embedding.as_slice().into(),
-        key.into(),
         end.into(),
         incident.search_path.as_str().into(),
         incident.search_payload.as_str().into(),
@@ -344,7 +335,7 @@ async fn write_incident(
             incident.id.into(),
             incident.search_path.as_str().into(),
             incident.search_payload.as_str().into(),
-            key.into(),
+            node.into(),
             end.into(),
         ];
         tx.execute(INSERT_FTS, &fts).await?;
@@ -354,7 +345,7 @@ async fn write_incident(
             incident.client_ip.as_str().into(),
             until.into(),
             incident.recorded_at.into(),
-            key.into(),
+            node.into(),
             end.into(),
         ];
         tx.execute(HONEYPOT, &ban).await?;
@@ -366,24 +357,20 @@ async fn write_incident(
 /// receipt when that is later. The receipt survives retention: deriving identity only from
 /// the remaining rows could reuse ids and make the replay guard drop later batches.
 ///
-/// Fails with [`StorageError::InvalidIncidentCursor`] when the receipt is zero, beyond 2^40
-/// or not a number.
+/// Fails with [`StorageError::InvalidIncidentReceipt`] when the receipt is zero or beyond
+/// 2^40, which the schema's `CHECK` already refuses.
 pub(crate) async fn load_next_sequence(db: &Database, node: u32) -> Result<u64, StorageError> {
-    let key = cursor_key(node);
     let base = u64::from(node) << NODE_SHIFT;
     let low = i64::try_from(base).unwrap_or(i64::MAX);
     let high = i64::try_from(base + SEQUENCE_LIMIT).unwrap_or(i64::MAX);
-    let rows = db.fetch_all(LOAD_CURSOR, &[key.as_str().into(), low.into(), high.into()]).await?;
-    let [row] = rows.as_slice() else {
-        return Err(StorageError::InvalidIncidentCursor);
-    };
-    let largest = row.first().and_then(Cell::as_i64).and_then(|id| u64::try_from(id).ok());
-    let receipt = row.get(1).and_then(Cell::as_i64).and_then(|value| u64::try_from(value).ok());
-    let (Some(largest), Some(receipt)) = (largest, receipt) else {
-        return Err(StorageError::InvalidIncidentCursor);
-    };
+    let params = [i64::from(node).into(), low.into(), high.into()];
+    let rows = db.fetch_all(NEXT_SEQUENCE, &params).await?;
+    let row = rows.into_iter().next().ok_or(StorageError::InvalidIncidentReceipt)?;
+    let mut columns = Columns::new(row, "incident_receipts");
+    let largest: u64 = columns.integer("id")?;
+    let receipt: u64 = columns.integer("next_sequence")?;
     if receipt == 0 || receipt > SEQUENCE_LIMIT {
-        return Err(StorageError::InvalidIncidentCursor);
+        return Err(StorageError::InvalidIncidentReceipt);
     }
     Ok(((largest & (SEQUENCE_LIMIT - 1)) + 1).max(receipt))
 }
@@ -407,8 +394,8 @@ pub struct IncidentHit {
     pub category: String,
     /// The offending payload bytes, at most 512.
     pub payload: Vec<u8>,
-    /// The campaign the incident joined.
-    pub campaign_id: Option<i64>,
+    /// The campaign the incident joined: the id of its first incident.
+    pub campaign_id: i64,
 }
 
 impl Database {
@@ -429,21 +416,25 @@ impl Database {
         }
         let limit = i64::from(limit.min(MAX_SEARCH_RESULTS));
         let rows = self.fetch_all(SEARCH, &[query.into(), limit.into()]).await?;
-        let table = "security_incidents";
-        rows.iter()
-            .map(|row| {
-                Ok(IncidentHit {
-                    id: int_at(row, 0, table, "id")?,
-                    client_ip: text_at(row, 1, table, "client_ip")?,
-                    method: text_at(row, 2, table, "method")?,
-                    user_agent: bytes_at(row, 3, table, "user_agent")?,
-                    path: bytes_at(row, 4, table, "path")?,
-                    category: text_at(row, 5, table, "violation_category")?,
-                    payload: bytes_at(row, 6, table, "offending_payload")?,
-                    campaign_id: row.get(7).and_then(Cell::as_i64),
-                })
-            })
-            .collect()
+        rows.into_iter().map(IncidentHit::decode).collect()
+    }
+}
+
+impl IncidentHit {
+    /// Decodes one row of [`SEARCH`]. Fails with [`StorageError::InvalidRow`] for a cell that
+    /// does not have its column's type.
+    fn decode(row: Row) -> Result<IncidentHit, StorageError> {
+        let mut columns = Columns::new(row, "security_incidents");
+        Ok(IncidentHit {
+            id: columns.integer("id")?,
+            client_ip: columns.text("client_ip")?,
+            method: columns.text("method")?,
+            user_agent: columns.bytes("user_agent")?,
+            path: columns.bytes("path")?,
+            category: columns.text("violation_category")?,
+            payload: columns.bytes("offending_payload")?,
+            campaign_id: columns.integer("campaign_id")?,
+        })
     }
 }
 

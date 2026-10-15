@@ -11,11 +11,14 @@
 use std::sync::Arc;
 
 use sibuna_core::{Config, Metrics};
-use sibuna_policy::limits::{Limits, StoredLimitError, managed_identity};
+use sibuna_policy::limits::{Limits, managed_identity};
 use sibuna_policy::loader::Diagnostic;
 use sibuna_policy::matchers::{self, MatcherError};
 use sibuna_policy::{Action, Algorithm, Engine, Mode, Modes, PolicyRule, RuleError};
-use sibuna_storage::{Hooks, InspectionRow, PolicyRow, PolicySnapshot, Storage, StorageError};
+use sibuna_storage::{
+    ChallengeAlgorithm, Hooks, InspectionMode, InspectionRow, PolicyAction, PolicyRow,
+    PolicySnapshot, RuleLimits, Storage, StorageError,
+};
 
 use crate::recipe::{BuildError, Recipe};
 use crate::slot::EngineSlot;
@@ -45,13 +48,38 @@ pub fn build_engine(recipe: &Recipe, snapshot: &PolicySnapshot) -> Result<Engine
 }
 
 fn inspection_modes(row: &InspectionRow) -> Result<Modes, BuildError> {
-    let mode = |text: &str| Mode::parse(text.as_bytes()).ok_or(BuildError::InvalidInspectionMode);
     Ok(Modes {
-        path_traversal: mode(&row.path_traversal)?,
-        sqli: mode(&row.sqli)?,
-        xss: mode(&row.xss)?,
-        rce: mode(&row.rce)?,
+        path_traversal: mode(row.path_traversal),
+        sqli: mode(row.sqli),
+        xss: mode(row.xss),
+        rce: mode(row.rce),
     })
+}
+
+/// The stored enums mirror the policy crate's; the database's CHECK constraints keep any
+/// other value out, so the conversions are total.
+fn mode(stored: InspectionMode) -> Mode {
+    match stored {
+        InspectionMode::Disabled => Mode::Disabled,
+        InspectionMode::Audit => Mode::Audit,
+        InspectionMode::Enforce => Mode::Enforce,
+    }
+}
+
+fn action(stored: PolicyAction) -> Action {
+    match stored {
+        PolicyAction::Allow => Action::Allow,
+        PolicyAction::Deny => Action::Deny,
+        PolicyAction::Challenge => Action::Challenge,
+        PolicyAction::Weigh => Action::Weigh,
+    }
+}
+
+fn algorithm(stored: ChallengeAlgorithm) -> Algorithm {
+    match stored {
+        ChallengeAlgorithm::Hashcash => Algorithm::Hashcash,
+        ChallengeAlgorithm::Posw => Algorithm::Posw,
+    }
 }
 
 fn invalid(row: &PolicyRow, problem: &str) -> BuildError {
@@ -60,23 +88,16 @@ fn invalid(row: &PolicyRow, problem: &str) -> BuildError {
 
 /// Decodes one stored rule, checking its cells in the order the Zig loader did.
 fn decode_rule(row: &PolicyRow) -> Result<PolicyRule, BuildError> {
-    let action = Action::parse(row.action.as_bytes()).ok_or_else(|| invalid(row, "action"))?;
-    let mut rule = PolicyRule::new(&row.name, action);
+    let mut rule = PolicyRule::new(&row.name, action(row.action));
     rule.limit_identity = managed_identity(row.id.as_bytes());
-    if let Some(text) = &row.limit_config {
-        rule.limits = stored_limits(text).map_err(|error| invalid(row, error_name(&error)))?;
+    if let Some(stored) = row.limits {
+        rule.limits = Some(rule_limits(stored).map_err(|_| invalid(row, "InvalidRuleLimit"))?);
     }
     rule.path_pattern = row.path_pattern.clone();
     rule.ua_pattern = row.ua_pattern.clone();
-    if let Some(value) = row.difficulty {
-        rule.difficulty = Some(u32::try_from(value).map_err(|_| invalid(row, "difficulty"))?);
-    }
-    if let Some(name) = &row.algorithm {
-        let algorithm =
-            Algorithm::parse(name.as_bytes()).ok_or_else(|| invalid(row, "algorithm"))?;
-        rule.algorithm = Some(algorithm);
-    }
-    rule.weight = i32::try_from(row.weight).map_err(|_| invalid(row, "weight"))?;
+    rule.difficulty = row.difficulty;
+    rule.algorithm = row.algorithm.map(algorithm);
+    rule.weight = row.weight;
     if let Some(text) = &row.header_matchers {
         rule.headers = matchers::headers_from_json(text.as_bytes())
             .map_err(|error| invalid(row, matcher_name(error)))?;
@@ -88,15 +109,15 @@ fn decode_rule(row: &PolicyRow) -> Result<PolicyRule, BuildError> {
     Ok(rule)
 }
 
-fn stored_limits(text: &str) -> Result<Option<Limits>, StoredLimitError> {
-    Limits::from_json(text.as_bytes())
-}
-
-fn error_name(error: &StoredLimitError) -> &'static str {
-    match error {
-        StoredLimitError::InvalidRuleLimit => "InvalidRuleLimit",
-        StoredLimitError::Json(_) => "InvalidRuleLimit",
-    }
+/// The stored quota as the engine's limits, validated with the engine's own bounds.
+fn rule_limits(stored: RuleLimits) -> Result<Limits, sibuna_policy::limits::InvalidRuleLimit> {
+    let limits = Limits {
+        rate: stored.rate,
+        window_seconds: stored.window_seconds,
+        ban_seconds: stored.ban_seconds,
+    };
+    limits.validate()?;
+    Ok(limits)
 }
 
 fn matcher_name(error: MatcherError) -> &'static str {
@@ -148,11 +169,11 @@ mod tests {
 
     use super::*;
 
-    fn row(id: &str, action: &str, path: &str) -> PolicyRow {
+    fn row(id: &str, action: PolicyAction, path: &str) -> PolicyRow {
         PolicyRow {
             id: id.into(),
             name: id.into(),
-            action: action.into(),
+            action,
             path_pattern: Some(path.into()),
             ..PolicyRow::default()
         }
@@ -171,7 +192,7 @@ mod tests {
             ..recipe()
         };
         let mut snapshot =
-            PolicySnapshot { rules: vec![row("live", "deny", "/admin*")], ..Default::default() };
+            PolicySnapshot { rules: vec![row("live", PolicyAction::Deny, "/admin*")], ..Default::default() };
         snapshot.reputation.push(ReputationRow {
             ip_or_cidr: "198.51.100.0/24".into(),
             reputation_score: -100,
@@ -202,10 +223,12 @@ mod tests {
             ("nine cidrs", |r| {
                 r.cidr_matchers = Some(format!("[{}]", ["\"10.0.0.0/8\""; 9].join(",")))
             }),
-            ("bad limit", |r| r.limit_config = Some(r#"{"rate":0,"window_seconds":60}"#.into())),
+            ("bad limit", |r| {
+                r.limits = Some(RuleLimits { rate: 0, window_seconds: 60, ban_seconds: 0 });
+            }),
         ];
         for (label, corrupt) in cases {
-            let mut stored = row("limited", "allow", "/private");
+            let mut stored = row("limited", PolicyAction::Allow, "/private");
             corrupt(&mut stored);
             let snapshot = PolicySnapshot { rules: vec![stored], ..Default::default() };
             assert!(
@@ -216,10 +239,10 @@ mod tests {
                 "{label}"
             );
         }
-        let mut good = row("limited", "allow", "/private");
+        let mut good = row("limited", PolicyAction::Allow, "/private");
         good.header_matchers = Some(r#"{"X-Api":"v2"}"#.into());
         good.cidr_matchers = Some(r#"["10.0.0.0/8"]"#.into());
-        good.limit_config = Some(r#"{"rate":1,"window_seconds":60}"#.into());
+        good.limits = Some(RuleLimits { rate: 1, window_seconds: 60, ban_seconds: 0 });
         let snapshot = PolicySnapshot { rules: vec![good], ..Default::default() };
         let engine = build_engine(&recipe(), &snapshot).unwrap();
         let headers = [sibuna_policy::Header { name: b"X-Api", value: b"v2" }];
@@ -235,10 +258,10 @@ mod tests {
         let recipe =
             Recipe { policy_file: Some(br#"{"inspection":{"rce":"audit"}}"#.into()), ..recipe() };
         let inspection = InspectionRow {
-            path_traversal: "disabled".into(),
-            sqli: "audit".into(),
-            xss: "enforce".into(),
-            rce: "enforce".into(),
+            path_traversal: InspectionMode::Disabled,
+            sqli: InspectionMode::Audit,
+            xss: InspectionMode::Enforce,
+            rce: InspectionMode::Enforce,
         };
         let mut snapshot = PolicySnapshot { inspection: Some(inspection), ..Default::default() };
         let engine = build_engine(&recipe, &snapshot).unwrap();
@@ -248,23 +271,17 @@ mod tests {
         let engine = build_engine(&recipe, &snapshot).unwrap();
         assert_eq!(engine.inspection_modes.sqli, Mode::Enforce);
         assert_eq!(engine.inspection_modes.rce, Mode::Audit);
-        snapshot.inspection = Some(InspectionRow { sqli: "loud".into(), ..Default::default() });
-        assert_eq!(
-            build_engine(&recipe, &snapshot).err(),
-            Some(BuildError::InvalidInspectionMode)
-        );
     }
 
     #[test]
-    fn legacy_rows_without_limits_load_and_unknown_actions_refuse() {
-        let snapshot =
-            PolicySnapshot { rules: vec![row("legacy", "deny", "/legacy")], ..Default::default() };
+    fn rows_without_limits_load() {
+        let snapshot = PolicySnapshot {
+            rules: vec![row("legacy", PolicyAction::Deny, "/legacy")],
+            ..Default::default()
+        };
         let engine = build_engine(&recipe(), &snapshot).unwrap();
         let decision = engine.evaluate(&RequestView::new(b"/legacy", b"8.8.8.8", b""));
         assert_eq!(decision.action, Action::Deny);
         assert!(decision.limits.is_none());
-        let snapshot =
-            PolicySnapshot { rules: vec![row("odd", "maybe", "/")], ..Default::default() };
-        assert!(build_engine(&recipe(), &snapshot).is_err());
     }
 }

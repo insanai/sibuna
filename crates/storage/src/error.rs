@@ -42,10 +42,10 @@ pub enum StorageError {
     },
     /// A migration set is not numbered 1, 2, 3, and so on.
     InvalidMigrations(&'static str),
-    /// `sibuna_meta` has no `policy_version` row, or it is not a number.
-    MissingPolicyVersion,
-    /// The durable incident receipt of this node is zero, beyond 2^40 or not a number.
-    InvalidIncidentCursor,
+    /// `policy_revision` has lost its single row.
+    MissingPolicyRevision,
+    /// The durable incident receipt of this node is zero or beyond 2^40.
+    InvalidIncidentReceipt,
     /// This node has used all 2^40 incident sequence numbers.
     IncidentIdExhausted,
     /// A writer committed while a policy snapshot was loading; the snapshot was discarded.
@@ -110,12 +110,17 @@ impl StorageError {
             StorageError::SchemaTooNew { .. } => {
                 "Run a Sibuna version at least as new as the one that last migrated the database."
             }
-            StorageError::InvalidIncidentCursor => {
-                "Repair or delete the `incident_cursor_<node>` row in `sibuna_meta`."
+            StorageError::MissingPolicyRevision => {
+                "Restore it with `INSERT INTO policy_revision (id, revision) VALUES (1, 0)`."
+            }
+            StorageError::InvalidIncidentReceipt => {
+                "Repair this node's row in `incident_receipts`."
             }
             StorageError::IncidentIdExhausted => "Give this node a new `--cluster-node` id.",
             StorageError::PublishRejected => "Correct the stored policy rows the daemon rejected.",
-            StorageError::InvalidRow { .. } => "Correct the stored row; its type is wrong.",
+            StorageError::InvalidRow { .. } => {
+                "Correct the stored row; its value does not fit the column's type."
+            }
             _ => return None,
         })
     }
@@ -169,10 +174,10 @@ impl fmt::Display for StorageError {
             StorageError::InvalidMigrations(component) => {
                 write!(f, "the migrations of `{component}` are not numbered 1, 2, 3, ...")
             }
-            StorageError::MissingPolicyVersion => {
-                write!(f, "sibuna_meta has no numeric policy_version")
+            StorageError::MissingPolicyRevision => {
+                write!(f, "the table policy_revision has no row")
             }
-            StorageError::InvalidIncidentCursor => write!(f, "the incident receipt is invalid"),
+            StorageError::InvalidIncidentReceipt => write!(f, "the incident receipt is invalid"),
             StorageError::IncidentIdExhausted => {
                 write!(f, "this node has used every incident sequence number")
             }
@@ -181,7 +186,7 @@ impl fmt::Display for StorageError {
             }
             StorageError::PublishRejected => write!(f, "the policy snapshot was rejected"),
             StorageError::InvalidRow { table, column } => {
-                write!(f, "{table}.{column} holds a value of the wrong type")
+                write!(f, "{table}.{column} holds a value of the wrong type or range")
             }
             StorageError::TooManyRows { table, limit } => {
                 write!(f, "{table} holds more than {limit} rows")

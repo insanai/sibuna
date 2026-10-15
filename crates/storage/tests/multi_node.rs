@@ -43,7 +43,7 @@ fn three_nodes_share_policy_bans_and_collision_free_incident_ids() {
 
     db.exec(
         "INSERT INTO policies (id, name, priority, path_pattern, action, created_at, updated_at) \
-         VALUES ('cluster', 'cluster-rule', 5, '/admin/*', 'DENY', 1, 1)",
+         VALUES ('cluster', 'cluster-rule', 5, '/admin/*', 'deny', 1, 1)",
     );
     let has_rule = |s: &PolicySnapshot| s.rules.iter().any(|rule| rule.id == "cluster");
     let took = wait_until(Duration::from_millis(POLL_MS * 3 / 2), || {

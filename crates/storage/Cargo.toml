@@ -22,6 +22,8 @@ tokio = { workspace = true }
 [dev-dependencies]
 # The tests embed payloads with the Zig embedding, which hashes trigrams with Wyhash.
 sibuna-crypto = { workspace = true }
+# A test checks that the stored action, algorithm and mode names parse in the policy crate.
+sibuna-policy = { workspace = true }
 
 [lints]
 workspace = true
