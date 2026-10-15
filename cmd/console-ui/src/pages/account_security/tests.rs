@@ -93,10 +93,89 @@ fn enrollment_draws_the_qr_code_and_confirmation_returns_recovery_codes() {
     let model = page(&mut harness.app);
     assert_eq!(model.recovery_codes.len(), 10);
     assert!(model.secret.is_empty());
-    assert!(harness.app.state().csrf.is_empty());
+    // The session ended: no shell, no live connection, until the codes are acknowledged.
+    assert!(!harness.app.state().is_full_access());
+    assert!(harness.html().contains("Save your recovery codes"));
     harness.action("recovery-saved", "{}");
     assert_eq!(harness.app.state().phase, Phase::Login);
+    assert!(harness.app.state().csrf.is_empty());
     assert!(page(&mut harness.app).recovery_codes.is_empty());
+}
+
+/// Signs in, enrolls and confirms; returns the harness showing the ten codes.
+fn confirmed(session: &str) -> (Harness, Vec<String>) {
+    let mut harness = Harness::new();
+    harness.respond("session", 200, session);
+    harness.action("security", "null");
+    harness.respond("totp", 200, "{\"available\":true,\"enabled\":false,\"revision\":3}");
+    harness.action("totp-enroll", "{\"password\":\"p\"}");
+    harness.respond(
+        "totp-enroll",
+        200,
+        "{\"secret\":\"ABCDEFGHIJKLMNOP\",\"uri\":\"otpauth://totp/S:1?secret=A\",\"revision\":4}",
+    );
+    harness.action("totp-confirm", "{\"password\":\"p\",\"code\":\"123456\"}");
+    let codes: Vec<String> = (0..10).map(|index| format!("recovery-code-{index:018}")).collect();
+    let quoted: Vec<String> = codes.iter().map(|code| format!("\"{code}\"")).collect();
+    let body = format!("{{\"recovery_codes\":[{}]}}", quoted.join(","));
+    harness.respond("totp-confirm", 200, &body);
+    (harness, codes)
+}
+
+/// Fixes the Zig bug: clearing the CSRF token after the confirmation made the renderer
+/// draw the sign-in card, so the codes were never shown (SID 0007, revision note).
+#[test]
+fn recovery_codes_are_displayed_exactly_once_and_erased_after_acknowledgement() {
+    let session = "{\"user\":1,\"csrf\":\"test\",\"node\":1,\"role\":\"admin\"}";
+    let (mut harness, codes) = confirmed(session);
+    let html = harness.html().to_owned();
+    assert!(html.contains("<h2>Save your recovery codes</h2>"));
+    assert!(!html.contains("<nav ") && !html.contains("<form id=\"login\">"));
+    for code in &codes {
+        assert_eq!(html.matches(&format!("<li><code>{code}</code></li>")).count(), 1);
+        assert!(!harness.commands().contains(code.as_str()));
+    }
+    assert!(!harness.commands().contains("\"op\":\"connect\""));
+    // Navigation is refused until the operator acknowledges the codes.
+    for action in ["account", "dashboard", "security", "logout", "users", "geoip"] {
+        harness.action(action, "null");
+        assert_eq!(harness.app.state().phase, Phase::Security, "{action}");
+        assert!(!harness.commands().contains("\"op\":\"request\""), "{action}");
+        assert_eq!(harness.html(), html, "{action}");
+    }
+    harness.action("theme", "null");
+    assert!(harness.commands().contains("\"op\":\"appearance\""));
+    harness.action("recovery-saved", "{}");
+    assert_eq!(harness.app.state().phase, Phase::Login);
+    assert!(harness.app.state().csrf.is_empty());
+    assert!(!harness.app.state().totp_required);
+    assert!(page(&mut harness.app).recovery_codes.is_empty());
+    assert!(harness.html().contains("<form id=\"login\">"));
+    for code in &codes {
+        assert!(!harness.html().contains(code.as_str()));
+    }
+    // Signing in again and reopening the page never shows them again.
+    harness.respond("login", 200, session);
+    harness.action("security", "null");
+    harness.respond("totp", 200, "{\"available\":true,\"enabled\":true,\"revision\":5}");
+    assert!(harness.html().contains("Two-factor authentication is enabled."));
+    for code in &codes {
+        assert!(!harness.html().contains(code.as_str()));
+    }
+}
+
+#[test]
+fn a_required_enrollment_keeps_its_restriction_after_acknowledgement() {
+    let session = "{\"user\":1,\"csrf\":\"test\",\"role\":\"admin\",\"totp_required\":true}";
+    let (mut harness, codes) = confirmed(session);
+    assert!(harness.html().contains(codes[9].as_str()));
+    harness.action("recovery-saved", "{}");
+    assert!(harness.app.state().totp_required && harness.app.state().csrf.is_empty());
+    // A session reset while the codes are shown erases them too.
+    let (mut harness, codes) = confirmed(session);
+    harness.app.pages_mut().reset_all();
+    assert!(page(&mut harness.app).recovery_codes.is_empty());
+    assert!(!harness.app.render_now().contains(codes[0].as_str()));
 }
 
 #[test]

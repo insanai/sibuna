@@ -5,6 +5,15 @@
 //! It was ported from `security.zig` (rendering) and `account_security_controller.zig`
 //! (actions and replies); its state moved out of the shared Zig `State` into
 //! [`AccountSecurity`].
+//!
+//! Deliberate change (a Zig bug, SID 0007): enabling two-factor authentication ends the
+//! session, and Zig cleared the CSRF token as soon as the confirmation succeeded, so the
+//! renderer drew the sign-in card and the ten recovery codes were never shown. Here the
+//! page stays on screen while the codes are pending: the session is held in the
+//! restricted state of a required enrollment (no navigation shell, no live connection,
+//! no other page) and every action but the acknowledgement and the appearance toggles is
+//! refused. The acknowledgement (`recovery-saved`) erases the codes and then signs out
+//! as Zig intended; leaving the page any other way erases them as well.
 
 mod qr;
 
@@ -38,8 +47,11 @@ pub struct AccountSecurity {
     pub secret: Secret<32>,
     /// The `otpauth` URI of a pending enrollment, drawn as a QR code.
     pub uri: Secret<134>,
-    /// The recovery codes, shown once after confirmation.
+    /// The recovery codes, shown once after confirmation until acknowledged.
     pub recovery_codes: Vec<Secret<RECOVERY_CODE_BYTES>>,
+    /// Whether enrollment was required before the confirmation restricted the session
+    /// while the recovery codes are shown; restored on acknowledgement.
+    required_before_codes: bool,
 }
 
 impl AccountSecurity {
@@ -105,8 +117,13 @@ impl AccountSecurity {
             "totp-confirm" => {
                 self.recovery_codes = recovery_codes(body)?;
                 self.forget_enrollment();
-                // Enabling two-factor authentication ends the session.
-                state.csrf.clear();
+                // Enabling two-factor authentication ends the session. The session's
+                // token is dropped only when the operator acknowledges the codes; until
+                // then the session is restricted as during a required enrollment, so the
+                // renderer keeps this page without the shell and the live connection
+                // closes.
+                self.required_before_codes = state.totp_required;
+                state.totp_required = true;
                 state.geometry.unload();
                 state.stats = None;
             }
@@ -171,10 +188,19 @@ impl Page for AccountSecurity {
     ) -> Result<bool, UiError> {
         if name == "recovery-saved" {
             self.forget_enrollment();
+            let pending = !self.recovery_codes.is_empty();
             self.recovery_codes.clear();
+            if pending {
+                cx.state.totp_required = self.required_before_codes;
+            }
             cx.state.csrf.clear();
             cx.state.phase = Phase::Login;
             return Ok(true);
+        }
+        if !self.recovery_codes.is_empty() {
+            // The codes stay on screen until acknowledged; only the appearance toggles
+            // pass, which the core handles after the modules.
+            return Ok(name != "theme" && name != "density");
         }
         if name == "security" && !cx.state.csrf.is_empty() {
             cx.state.phase = Phase::Security;
@@ -215,10 +241,18 @@ impl Page for AccountSecurity {
         Ok(true)
     }
 
-    fn left(&mut self, _state: &mut State, from: Phase) {
+    fn left(&mut self, state: &mut State, from: Phase) {
         // Deliberate change: Zig kept a pending seed until the page was opened again.
-        if from == Phase::Security {
-            self.forget_enrollment();
+        if from != Phase::Security {
+            return;
+        }
+        self.forget_enrollment();
+        // Recovery codes are shown once: leaving the page without the acknowledgement
+        // (only a session reset can) erases them and ends the restricted session.
+        if !self.recovery_codes.is_empty() {
+            self.recovery_codes.clear();
+            state.totp_required = self.required_before_codes;
+            state.csrf.clear();
         }
     }
 
