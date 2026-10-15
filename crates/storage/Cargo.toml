@@ -1,0 +1,27 @@
+[package]
+name = "sibuna-storage"
+description = "Sibuna persistent layer over SQLite or PostgreSQL through sqlx (SID 0011)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = ["sqlite"]
+sqlite = ["sqlx/sqlite-bundled"]
+postgres = ["sqlx/postgres"]
+
+[dependencies]
+sibuna-core = { workspace = true }
+sibuna-store = { workspace = true }
+sqlx = { workspace = true }
+tokio = { workspace = true }
+
+[dev-dependencies]
+# The tests embed payloads with the Zig embedding, which hashes trigrams with Wyhash.
+sibuna-crypto = { workspace = true }
+
+[lints]
+workspace = true
