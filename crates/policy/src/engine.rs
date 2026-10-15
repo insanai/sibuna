@@ -377,6 +377,13 @@ impl Engine {
         self.reputation.lookup_str(text).copied()
     }
 
+    /// Returns the number of nodes the reputation trie uses, the root and the IPv4 path
+    /// included, out of its capacity of 8,192: every entry counts, whether it came from
+    /// the policy file, storage or a staged country set.
+    pub fn reputation_node_count(&self) -> usize {
+        self.reputation.node_count()
+    }
+
     /// Returns the WAF signature automaton, for inspection outside evaluation.
     pub fn signatures(&self) -> &Signatures {
         &self.signatures

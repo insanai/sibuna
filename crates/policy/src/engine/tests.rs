@@ -278,3 +278,21 @@ fn the_parsed_client_address_decides_reputation_and_cidr_rules() {
     assert_eq!(unparsed.address(), None);
     assert_ne!(engine.evaluate(&unparsed).action, Action::Deny);
 }
+
+#[test]
+fn reputation_node_count_covers_every_entry() {
+    let mut engine = Engine::new(16);
+    let empty = engine.reputation_node_count();
+    // The root and the IPv4-mapped path exist before any entry.
+    assert!(empty > 1);
+    engine.insert_reputation(b"192.0.2.0/24", Action::Deny).unwrap();
+    let one = engine.reputation_node_count();
+    assert_eq!(one, empty + 24);
+    // A replaced entry adds no node; a sibling prefix adds only its own branch.
+    engine.insert_reputation(b"192.0.2.0/24", Action::Allow).unwrap();
+    assert_eq!(engine.reputation_node_count(), one);
+    engine.insert_reputation(b"192.0.3.0/24", Action::Deny).unwrap();
+    assert_eq!(engine.reputation_node_count(), one + 1);
+    engine.clear_reputation();
+    assert_eq!(engine.reputation_node_count(), empty);
+}
