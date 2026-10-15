@@ -8,6 +8,12 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 
+[features]
+default = ["std"]
+# Run-time CPU feature detection for the SHA-256 hardware paths. Without it the
+# hardware path is chosen at compile time from `target_feature`.
+std = []
+
 [dependencies]
 
 [lints]
