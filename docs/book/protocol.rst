@@ -3,10 +3,6 @@ Part IV: The Sibuna Protocol
 
 We specify the wire protocol as implemented: the interstitial round trip, the stateless challenge record, both solution formats, verification order, single-use enforcement, and the session cookie.
 
-.. note::
-
-   The ``sibuna-challenge`` crate (keys, tokens, the challenge coordinator, tickets and adaptive difficulty) is still being ported. Until it lands, this part shows its code in the Zig original, which SID 0010 makes the specification of the crate's behaviour; the prose names the Rust functions in snake case. The wire formats, routes, status codes and diagnostics are identical in both implementations.
-
 The Challenge Round Trip
 ------------------------
 
@@ -79,35 +75,53 @@ The Stateless Challenge Record
 
 .. admonition:: Implementation: ``Coordinator::create_challenge_with_spec``
 
-   Builds the 36-byte payload, tags it under the challenge key, and base64url-encodes the 52 bytes into a 70-character identifier. In the ``sibuna-challenge`` crate (Zig original shown).
+   Builds the 36-byte payload, tags it under the challenge key, and base64url-encodes the 52 bytes into a 70-character identifier. In ``crates/challenge/src/coordinator.rs`` (crate ``sibuna-challenge``).
 
-.. code-block:: zig
+.. code-block:: rust
 
-   pub fn createChallengeWithSpec(self: *Coordinator, client_ip: []const u8,
-       user_agent: []const u8,
-       now: u64, spec: ChallengeSpec, rule_hash: u64) ChallengePayload {
-       self.adaptive.observe(now * 1000);
-       var effective = spec;
-       effective.difficulty += self.adaptive.bump();
-       const fp = self.fingerprint(client_ip, user_agent);
-       const difficulty: u8 = switch (effective.algorithm) {
-           .hashcash => @intCast(effective.hashcashBits()),
-           .posw => effective.poswDepth(),
+   pub fn create_challenge_with_spec(
+       &self,
+       client_ip: &[u8],
+       user_agent: &[u8],
+       now: u64,
+       spec: ChallengeSpec,
+       rule_hash: u64,
+   ) -> Challenge {
+       self.adaptive.observe(now.saturating_mul(1000));
+       let effective = ChallengeSpec {
+           difficulty: spec.difficulty.saturating_add(self.adaptive.bump()),
+           ..spec
        };
-       const challenges: u8 = if (effective.algorithm == .posw) effective.posw_challenges else 0;
+       let fingerprint = self.fingerprint(client_ip, user_agent);
+       let difficulty = effective.parameter();
+       let challenges = match effective.algorithm {
+           Algorithm::Hashcash => 0,
+           Algorithm::Posw => effective.posw_challenges,
+       };
 
-       var raw: [id_raw_len]u8 = undefined;
-       raw[0] = version;
-       raw[1] = @intFromEnum(effective.algorithm);
-       raw[2] = difficulty;
-       raw[3] = challenges;
-       std.mem.writeInt(u64, raw[4..12], now, .little);
-       std.mem.writeInt(u64, raw[12..20], fp, .little);
-       std.mem.writeInt(u64, raw[20..28], self.nextNonce(now, fp), .little);
-       std.mem.writeInt(u64, raw[28..36], rule_hash, .little);
-       raw[payload_len..id_raw_len].* = self.tagFor(raw[0..payload_len]);
-       // ... base64url encode and return the payload view
+       let mut payload = [0u8; ID_PAYLOAD_LEN];
+       payload[0] = ID_VERSION;
+       payload[1] = effective.algorithm.to_byte();
+       payload[2] = difficulty;
+       payload[3] = challenges;
+       payload[4..12].copy_from_slice(&now.to_le_bytes());
+       payload[12..20].copy_from_slice(&fingerprint.to_le_bytes());
+       payload[20..28].copy_from_slice(&self.next_nonce(now, fingerprint).to_le_bytes());
+       payload[28..36].copy_from_slice(&rule_hash.to_le_bytes());
+       let mut raw = [0u8; ID_RAW_LEN];
+       raw[..ID_PAYLOAD_LEN].copy_from_slice(&payload);
+       raw[ID_PAYLOAD_LEN..].copy_from_slice(&self.challenge_tag(&payload));
+
+       Challenge {
+           id: encoded::encode(&raw),
+           algorithm: effective.algorithm,
+           difficulty,
+           challenges,
+           expires_at: now.saturating_add(u64::from(self.challenge_ttl)),
+       }
    }
+
+The identifier is an ``Encoded<70>``: the text lives in an array of exactly its length, so issuing a challenge never allocates. ``ChallengeSpec::parameter`` maps work bits to the tier's own unit, Hashcash bits (at most 64) or PoSW depth (``difficulty - 3``, clamped to 4 through 24).
 
 Three details deserve attention:
 
@@ -124,29 +138,47 @@ Verification Order and Single Use
 
 .. admonition:: Implementation: ``Coordinator::verify_and_mint``
 
-   Decodes and authenticates the identifier, checks age and client binding, verifies the proof for the recorded tier, records the tag as spent, and mints the session token. In the ``sibuna-challenge`` crate (Zig original shown).
+   Decodes and authenticates the identifier, checks age and client binding, verifies the proof for the recorded tier, records the tag as spent, and mints the session token. In ``crates/challenge/src/coordinator.rs`` (crate ``sibuna-challenge``).
 
-.. code-block:: zig
+.. code-block:: rust
 
-   pub fn verifyAndMint(self: *Coordinator, challenge_id: []const u8, solution: Solution,
-       client_ip: []const u8, user_agent: []const u8, now: u64) VerifyError!VerifiedResult {
-       const decoded = try self.decode(challenge_id);
-       const expires_at = decoded.issued_at + self.challenge_ttl;
-       if (now > expires_at or decoded.issued_at > now + 60) return error.ChallengeExpired;
-       if (decoded.fingerprint != self.fingerprint(client_ip, user_agent)) {
-           return error.FingerprintMismatch;
+   pub fn verify_and_mint(
+       &self,
+       challenge_id: &[u8],
+       solution: Solution<'_>,
+       client_ip: &[u8],
+       user_agent: &[u8],
+       now: u64,
+   ) -> Result<Verified, VerifyError> {
+       let record = self.decode(challenge_id)?;
+       let expires_at = record.issued_at.saturating_add(u64::from(self.challenge_ttl));
+       if now > expires_at || record.issued_at > now.saturating_add(CLOCK_SKEW_SECONDS) {
+           return Err(VerifyError::ChallengeExpired);
        }
-       try checkSolution(challenge_id, decoded, solution);
-       self.spent.markSpent(&decoded.tag, expires_at, now) catch |err| switch (err) {
-           error.DoubleSpendAttempt => return error.DoubleSpendAttempt,
-           else => return error.StoreFull,
+       if record.fingerprint != self.fingerprint(client_ip, user_agent) {
+           return Err(VerifyError::FingerprintMismatch);
+       }
+       check_solution(challenge_id, &record, solution)?;
+       self.spent.mark_spent(&record.tag, expires_at, now).map_err(|error| match error {
+           SpendError::DoubleSpend => VerifyError::DoubleSpendAttempt,
+           SpendError::Full => VerifyError::StoreFull,
+       })?;
+       let work = WorkLevel {
+           algorithm: record.algorithm.to_byte(),
+           bits: record.algorithm.work_bits(record.difficulty),
        };
-       return self.mintToken(now, decoded.rule_hash, decoded.fingerprint);
+       Ok(Verified {
+           token: self.mint_token(now, record.rule_hash, record.fingerprint, work),
+           algorithm: record.algorithm,
+           difficulty: record.difficulty,
+           challenges: record.challenges,
+           ttl_seconds: self.token_ttl,
+       })
    }
 
-The order is deliberate. Tag, age, and binding are constant-time checks that reject garbage before any hashing. A wrong proof must not consume the challenge, so the spent set is written only after ``check_solution`` succeeds. Two threads that both verify the same valid solution race on ``mark_spent``; the shard lock serialises them, exactly one wins, and the other receives ``DoubleSpendAttempt``. The ``issued_at > now + 60`` clause rejects records minted by a node whose clock runs ahead by more than a minute, which would otherwise extend a challenge's life.
+The order is deliberate. Tag, age, and binding are constant-time checks that reject garbage before any hashing. A wrong proof must not consume the challenge, so the spent set is written only after ``check_solution`` succeeds. Two threads that both verify the same valid solution race on ``mark_spent``; the shard lock serialises them, exactly one wins, and the other receives ``VerifyError::DoubleSpendAttempt``. The clause ``issued_at > now + 60`` (``CLOCK_SKEW_SECONDS`` is 60) rejects records minted by a node whose clock runs ahead by more than a minute, which would otherwise extend a challenge's life.
 
-Errors surface to the client as ``400`` with an Elm-style diagnostic (Part X): the end-to-end tests assert on ``DOUBLE SPEND``, ``FINGERPRINT MISMATCH``, ``WRONG SOLUTION TYPE``, and ``MALFORMED CHALLENGE`` in the response body.
+Errors surface to the client as ``400`` with an Elm-style diagnostic (Part X): each ``VerifyError`` converts into ``sibuna_core::errors::ErrorKind``, whose explanation is the response body. The end-to-end tests assert on ``DOUBLE SPEND``, ``FINGERPRINT MISMATCH``, ``WRONG SOLUTION TYPE``, and ``MALFORMED CHALLENGE`` in the response body.
 
 The Session Cookie
 ------------------
@@ -155,26 +187,36 @@ The Session Cookie
 
    Read the keyed-hash token, understand the cookie attributes, and explain the client binding.
 
-.. admonition:: Implementation: ``MacToken::mint`` and ``MacToken::verify``
+.. admonition:: Implementation: ``token::mac::mint`` and ``token::mac::verify``
 
-   Serialises the 40-byte payload, appends the first 16 bytes of keyed BLAKE3 over it, and verifies with a constant-time comparison. In the ``sibuna-challenge`` crate (Zig original shown).
+   Serialises the 40-byte payload, appends the first 16 bytes of keyed BLAKE3 over it, and verifies with a constant-time comparison. In ``crates/challenge/src/token/mac.rs`` (crate ``sibuna-challenge``). ``Coordinator::verify_cookie`` calls it with the client's fingerprint.
 
-.. code-block:: zig
+.. code-block:: rust
 
-   pub fn verify(key: *const [32]u8, token_str: []const u8, now: u64,
-       expected_fingerprint: ?u64) TokenError!Payload {
-       if (token_str.len != encoded_size) return error.InvalidTokenLength;
-       var raw: [raw_size]u8 = undefined;
-       b64.Decoder.decode(&raw, token_str) catch return error.InvalidEncoding;
-       const expected = tag(key, raw[0..payload_size]);
-       if (!std.crypto.timing_safe.eql([tag_size]u8, expected,
-       raw[payload_size..raw_size].*)) {
-           return error.InvalidTokenSignature;
+   pub fn verify(
+       key: &[u8; 32],
+       text: &[u8],
+       now: u64,
+       expected_fingerprint: Option<u64>,
+   ) -> Result<Payload, TokenError> {
+       if text.len() != TOKEN_LEN {
+           return Err(TokenError::InvalidTokenLength);
        }
-       const payload = Payload.deserialize(raw[0..payload_size]);
-       try payload.check(now, expected_fingerprint);
-       return payload;
+       let raw: [u8; RAW_LEN] =
+           encoded::decode::<RAW_LEN, TOKEN_LEN>(text).ok_or(TokenError::InvalidEncoding)?;
+       let (payload, given) = raw.split_at(PAYLOAD_LEN);
+       let mut bytes = [0u8; PAYLOAD_LEN];
+       bytes.copy_from_slice(payload);
+       // Constant time: an early exit would tell a forger how many tag bytes were right.
+       if !ct::eq(&tag(key, &bytes), given) {
+           return Err(TokenError::InvalidTokenSignature);
+       }
+       let payload = Payload::from_bytes(&bytes)?;
+       payload.check(now, expected_fingerprint)?;
+       Ok(payload)
    }
+
+The tag is checked before the payload is parsed: a payload of another version is refused with ``TokenError::InvalidEncoding`` only once it is known to be authentic, and a forged one never reaches the parser.
 
 The cookie is emitted as
 
@@ -183,7 +225,7 @@ The cookie is emitted as
    Set-Cookie: __sibuna_token=<75 chars>; Path=/; Max-Age=86400; HttpOnly;
        SameSite=Lax[; Secure]
 
-``HttpOnly`` keeps it out of page scripts, ``SameSite=Lax`` stops cross-site replay while allowing top-level navigation, and ``Secure`` is added with ``--secure-cookie`` when TLS terminates in front of the daemon. Because the payload carries the keyed fingerprint of address and User-Agent, a cookie copied to another machine fails with ``TokenBoundAddressMismatch``; the end-to-end test "the cookie is bound to the client identity" exercises exactly that path.
+``HttpOnly`` keeps it out of page scripts, ``SameSite=Lax`` stops cross-site replay while allowing top-level navigation, and ``Secure`` is added with ``--secure-cookie`` when TLS terminates in front of the daemon. Because the payload carries the keyed fingerprint of address and User-Agent, a cookie copied to another machine fails with ``TokenError::TokenBoundAddressMismatch``; the end-to-end test "the cookie is bound to the client identity" exercises exactly that path.
 
 The payload begins with a version byte and the *work level* the holder paid: the mechanism (Hashcash or PoSW) and the work bits actually solved, including any load-adaptive bump. A session clears a challenge only when its level reaches what the route demands, computed from the rule's difficulty through the same clamping the challenge itself applies. Levels are ordered, not named: a cookie earned at 24 bits also covers every 16-bit route, while a 16-bit cookie presented to a 24-bit route falls through to the stronger interstitial and the new cookie replaces the old one. ``rule_hash`` remains the audit identity of the rule that issued the challenge; it is reported upstream, never used for admission. WAF findings and explicit denials are never cleared by a session. The end-to-end test "a session earned on a cheaper route does not admit a route that demands more work" exercises both directions.
 

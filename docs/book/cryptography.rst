@@ -182,22 +182,29 @@ A second consequence matters for the long term: Ed25519 rests on discrete logari
 The Key Schedule
 ~~~~~~~~~~~~~~~~
 
-One 32-byte master seed (from ``--secret-file``, ``SIBUNA_SECRET``, or a fresh random value) derives every purpose key with keyed BLAKE3 and a domain string. The key schedule belongs to the ``sibuna-challenge`` crate.
+One 32-byte master seed (from ``--secret-file``, ``SIBUNA_SECRET``, or a fresh random value) derives every purpose key with keyed BLAKE3 and a domain string: the token, challenge, Ed25519 and fingerprint keys, and the requirement key that seals requirement tickets (Part IV).
 
-.. note::
+.. admonition:: Implementation: ``Keys::derive``
 
-   The ``sibuna-challenge`` crate is still being ported. Until it lands, we show its code in the Zig original, which SID 0010 makes the specification of the crate's behaviour. The domain strings and the byte layouts are identical in both.
+   Derives the five purpose keys from the seed. In ``crates/challenge/src/keys.rs`` (crate ``sibuna-challenge``). ``Keys`` and ``Seed`` zero their bytes when dropped, and their ``Debug`` output is redacted.
 
-.. code-block:: zig
+.. code-block:: rust
 
-   pub fn derive(seed: *const [32]u8) Keys {
-       return .{
-           .token = subkey(seed, "sibuna/token/v1"),
-           .challenge = subkey(seed, "sibuna/challenge/v1"),
-           .ed25519_seed = subkey(seed, "sibuna/ed25519/v1"),
-           .fingerprint = subkey(seed, "sibuna/fingerprint/v1"),
-       };
+   pub fn derive(seed: &Seed) -> Keys {
+       Keys {
+           token: subkey(seed, "sibuna/token/v1"),
+           challenge: subkey(seed, "sibuna/challenge/v1"),
+           ed25519_seed: subkey(seed, "sibuna/ed25519/v1"),
+           fingerprint: subkey(seed, "sibuna/fingerprint/v1"),
+           requirement: subkey(seed, "sibuna/requirement/v1"),
+       }
    }
+
+   fn subkey(seed: &Seed, purpose: &str) -> [u8; 32] {
+       blake3::keyed_hash(seed.as_bytes(), purpose.as_bytes())
+   }
+
+In a cluster, ``Keys::bind_node`` replaces the challenge key by keyed BLAKE3 under it over ``sibuna/challenge-node/v1`` and the node id, so a challenge must return to the node that issued it, while session tokens and requirement tickets stay valid on every member.
 
 Domain separation prevents accidental reuse across purposes; compromise of the master seed compromises every derived key. A cluster only has to agree on one seed.
 
