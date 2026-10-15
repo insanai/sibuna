@@ -305,4 +305,51 @@ mod tests {
         accept(&mut state, &next);
         assert_eq!(state.points[slot(102)].duration_ms, 0);
     }
+
+    // Ported from `json_value.zig` "statistics encode UTF-8 boot bytes as an array and
+    // preserve full-width counters". The Zig check that the snapshot leaves headroom in a
+    // fixed 8 KiB WebSocket buffer has no counterpart: the Rust frames are not fixed.
+    #[test]
+    fn statistics_encode_utf8_boot_bytes_as_an_array_and_keep_full_width_counters() {
+        use sibuna_console_protocol::codec::to_json;
+        use sibuna_console_protocol::{COUNTRY_SLOTS, CountryCount, incident_geo};
+
+        let maximum = u64::MAX;
+        let country = CountryCount { code: 0x5553, samples: maximum };
+        let snapshot = StatsSnapshot {
+            incident_geo: Some(incident_geo::Snapshot {
+                countries: [country; COUNTRY_SLOTS],
+                unknown: maximum,
+                other: maximum,
+                dropped: maximum,
+                expired: maximum,
+                future: maximum,
+                started_at: maximum,
+                ..incident_geo::Snapshot::default()
+            }),
+            outcomes_version: 1,
+            retention_failures: Some(maximum),
+            boot: [b'a'; 16],
+            uptime_ms: maximum,
+            requests: maximum,
+            admitted: maximum,
+            timestamp: 100,
+            countries: [country; COUNTRY_SLOTS],
+            ..StatsSnapshot::default()
+        };
+        let text = to_json(&snapshot);
+        let value = sibuna_json::parse(text.as_bytes()).unwrap();
+        let object = value.as_object().unwrap();
+        assert!(object.get("requests").unwrap().as_str().is_some(), "{text}");
+        assert!(object.get("boot").unwrap().as_array().is_some(), "{text}");
+        // The page decodes live statistics exactly as `reply` does.
+        let restored = StatsSnapshot::decode(&value, Path::Root).unwrap();
+        assert_eq!(restored.requests, maximum);
+        assert_eq!(restored.retention_failures, Some(maximum));
+        assert_eq!(restored.countries[0].samples, maximum);
+        let geo = restored.incident_geo.unwrap();
+        assert_eq!((geo.countries[0].samples, geo.unknown), (maximum, maximum));
+        assert_eq!(restored.boot, snapshot.boot);
+        assert_eq!(restored, snapshot);
+    }
 }
