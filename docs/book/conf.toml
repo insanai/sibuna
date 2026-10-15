@@ -1,0 +1,33 @@
+# Configuration file for Guidedog.
+#
+# The settings use the names of Sphinx's conf.py, written in TOML:
+# https://www.sphinx-doc.org/en/master/usage/configuration.html
+
+# -- Project information -----------------------------------------------------
+
+project = "The Sibuna Book"
+copyright = "2026, Sibuna Contributors"
+author = "Sibuna Contributors"
+version = "0.2"
+release = "0.2.0"
+
+# -- General configuration ---------------------------------------------------
+
+extensions = ["sphinx.ext.graphviz"]
+numfig = true
+templates_path = ["_templates"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+language = "en"
+source_suffix = [".rst"]
+root_doc = "index"
+
+# -- Options for HTML output -------------------------------------------------
+
+html_theme = "guidedog"
+html_static_path = ["_static"]
+
+# -- Options for PDF output (typeset by Typst from _templates/book.typ) --------
+
+pdf_paper_size = "a4"
+# Sibuna's admonition boxes; the design is in _templates/sibuna.typ.
+pdf_preamble = "_templates/preamble.typ"
