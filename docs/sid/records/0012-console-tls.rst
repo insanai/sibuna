@@ -28,10 +28,11 @@ This record covers outbound client TLS. Sibuna still terminates no inbound TLS: 
 Specification
 -------------
 
-- **Crates.** ``rustls`` 0.23 (features ``std``, ``tls12``, ``ring``), ``ring`` 0.17, ``rustls-pki-types``, ``rustls-webpki``, ``rustls-native-certs`` 0.8, and their transitive dependencies (``untrusted``, ``subtle``, ``zeroize``, ``log``, ``getrandom``, ``cfg-if``, ``libc``, ``once_cell``, ``openssl-probe``): thirteen crates in all, declared once in the root manifest with versions pinned by the lock file.
-- **Confinement.** One crate, ``sibuna-tls``, wraps them behind a small blocking API: ``connect(host, port, trust) -> TlsStream`` implementing ``Read`` and ``Write`` over a ``TcpStream``, and ``Trust { system: bool, ca_file: Option<PathBuf> }``. Only the console crates and the PostgreSQL TLS feature of ``sibuna-storage`` depend on it, behind the daemon's ``console`` and ``postgres-tls`` features. A build without those features contains none of these crates.
+- **Crates.** ``rustls`` 0.23 (features ``std``, ``tls12``, ``ring``), ``ring`` 0.17, ``rustls-pki-types``, ``rustls-webpki``, ``rustls-native-certs`` 0.8, and their transitive dependencies (``untrusted``, ``subtle``, ``zeroize``, ``getrandom``, ``cfg-if``, ``libc``, ``once_cell``, ``openssl-probe``): thirteen crates in all at run time, declared once in the root manifest with versions pinned by the lock file. The ``logging`` feature of ``rustls`` stays off, so ``log`` is not among them. ``ring``'s build script adds three build-time crates (``cc``, ``shlex``, ``find-msvc-tools``) and needs a C compiler; they are not linked into the daemon.
+- **Confinement.** One crate, ``sibuna-tls``, wraps them behind a small blocking API: ``connect(host, port, trust, deadline) -> TlsStream`` (and a ``Connector`` built once from a ``Trust`` for repeated connections) implementing ``Read`` and ``Write`` over a ``TcpStream``, and ``Trust { system: bool, ca_file: Option<PathBuf> }``. Only the console crates and the PostgreSQL TLS feature of ``sibuna-storage`` depend on it, behind the daemon's ``console`` and ``postgres-tls`` features. A build without those features contains none of these crates.
 - **Policy.** TLS 1.3 and TLS 1.2 with the ``ring`` provider's default cipher suites. Certificates are verified against the system roots, or the operator's PEM file when ``--console-peer-ca-file`` names one (which replaces the system roots for peers, as in the Zig daemon). Host-name verification is always on and cannot be disabled. Plain HTTP is allowed only to literal loopback addresses, decided before any connection is made. Every connection has a deadline covering connect, handshake and the exchange.
 - **Bounds.** Response heads and bodies read over TLS keep the limits of SID 0007 (for example the GeoIP compressed-input bound). One redirect is followed for GeoIP downloads, only to the publisher hosts SID 0007 lists.
+- **Plain HTTP to public addresses.** The Zig webhook validator accepted ``http://`` to public IP literals, although SID 0007 and the operator documentation allow plain HTTP only to loopback. The Rust console enforces the documented rule.
 - **Replacing the interim path.** ``sibuna-net``'s outbound module currently runs ``curl`` for HTTPS; it moves to ``sibuna-tls``, and the ``curl`` path is removed.
 
 Rationale and alternatives
@@ -67,6 +68,7 @@ Review history
 --------------
 
 - 2026-10-15: drafted after the maintainer chose ``rustls`` over an in-house TLS client and over running ``curl``.
+- 2026-10-15: corrected the crate list and the API signature after the ``sibuna-tls`` implementation; recorded the stricter webhook rule.
 
 References
 ----------
