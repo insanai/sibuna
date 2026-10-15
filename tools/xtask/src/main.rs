@@ -3,9 +3,11 @@
 //! `main` is a small dispatcher over [`COMMANDS`]; each command lives in a module of its
 //! own or in a tool crate beside this one. Today there is `check`, which enforces the
 //! structural limits of the house rules, and `browser`, which runs the `sibuna-browser`
-//! tool (`tools/browser`) for checks in headless Chromium. Builds of the WebAssembly
-//! solver (`wasm`) and benchmark runs (`bench`) are meant to join them as further modules
-//! and table entries.
+//! tool (`tools/browser`) for checks in headless Chromium, and `bench`, which builds the
+//! daemon and runs the `sibuna-bench` tool (`tools/bench`) in release mode, and `parity`,
+//! which runs the `sibuna-parity` tool (`tools/parity`) that compares the Rust daemon with
+//! the Zig daemon. Builds of the WebAssembly solver (`wasm`) are meant to join them as a
+//! further module and table entry.
 //!
 //! Deliberate changes from the Zig repository's `tools/check-style.sh` and
 //! `check-style.awk`:
@@ -37,7 +39,7 @@ struct Command {
 }
 
 /// Every subcommand, in the order `help` lists them.
-const COMMANDS: [Command; 3] = [
+const COMMANDS: [Command; 5] = [
     Command {
         name: "check",
         synopsis: "[PATH...]",
@@ -47,6 +49,16 @@ const COMMANDS: [Command; 3] = [
         name: "browser",
         synopsis: "<ARGS...>",
         summary: "Run sibuna-browser checks in headless Chromium",
+    },
+    Command {
+        name: "bench",
+        synopsis: "<COMMAND> [OPTIONS]",
+        summary: "Run the benchmarks (primitives, product, latency) in release mode",
+    },
+    Command {
+        name: "parity",
+        synopsis: "[OPTIONS]",
+        summary: "Compare the Rust daemon with the Zig daemon over a generated corpus",
     },
     Command { name: "help", synopsis: "", summary: "Print this help" },
 ];
@@ -62,6 +74,8 @@ fn main() -> ExitCode {
     match command.to_str() {
         Some("check") => check(rest),
         Some("browser") => browser(rest),
+        Some("bench") => bench(rest),
+        Some("parity") => parity(rest),
         Some("help" | "-h" | "--help") => help(),
         _ => unknown_command(&command.to_string_lossy()),
     }
@@ -104,6 +118,43 @@ fn browser(arguments: &[OsString]) -> ExitCode {
     }
 }
 
+/// Builds the daemon in release mode, then runs `cargo run --release -q -p sibuna-bench --
+/// <arguments>` and passes on its exit status. The benchmark finds the daemon beside its
+/// own binary in the release directory.
+fn bench(arguments: &[OsString]) -> ExitCode {
+    let wants_help = arguments.first().is_none_or(|first| first == "help" || first == "--help");
+    if !wants_help && let Err(code) = cargo(&["build", "--release", "-q", "-p", "sibuna"], &[]) {
+        return code;
+    }
+    let run = ["run", "--release", "-q", "-p", "sibuna-bench", "--"];
+    cargo(&run, arguments).map_or_else(|code| code, |()| ExitCode::SUCCESS)
+}
+
+/// Runs `cargo run -q -p sibuna-parity -- <arguments>` and passes on its exit status. The
+/// tool builds the Rust daemon itself unless `--rust` names one.
+fn parity(arguments: &[OsString]) -> ExitCode {
+    let run = ["run", "-q", "-p", "sibuna-parity", "--"];
+    cargo(&run, arguments).map_or_else(|code| code, |()| ExitCode::SUCCESS)
+}
+
+/// Runs the cargo that ran us with `args` and `extra`; a failure carries the exit code to
+/// pass on.
+fn cargo(args: &[&str], extra: &[OsString]) -> Result<(), ExitCode> {
+    // Cargo sets CARGO for the programs it runs, naming the cargo that ran us.
+    let cargo = std::env::var_os("CARGO").unwrap_or_else(|| OsString::from("cargo"));
+    match process::Command::new(cargo).args(args).args(extra).status() {
+        Ok(status) if status.success() => Ok(()),
+        Ok(status) => {
+            let code = status.code().and_then(|code| u8::try_from(code).ok());
+            Err(code.map_or(ExitCode::FAILURE, ExitCode::from))
+        }
+        Err(error) => {
+            let _ = writeln!(io::stderr(), "xtask: cannot run cargo: {error}");
+            Err(ExitCode::from(EXIT_USAGE))
+        }
+    }
+}
+
 fn help() -> ExitCode {
     let mut text = String::from(
         "Repository tasks for the Sibuna workspace.\n\nUsage: cargo xtask <COMMAND>\n\n\
@@ -119,7 +170,12 @@ fn help() -> ExitCode {
          line more than 108 characters, or when a line holds a tab. Lines over 99\n\
          characters are warnings.\n\n\
          `browser` passes its arguments to the sibuna-browser tool; run\n\
-         `cargo xtask browser help` for its commands.\n",
+         `cargo xtask browser help` for its commands.\n\n\
+         `bench` builds the daemon and the sibuna-bench tool in release mode and passes its\n\
+         arguments on; run `cargo xtask bench help` for its commands and options.\n\n\
+         `parity` runs the sibuna-parity tool, which plays a generated corpus against the\n\
+         Zig and the Rust daemon and reports every difference not on its allow-list; run\n\
+         `cargo xtask parity --help` for its options.\n",
     );
     match io::stdout().lock().write_all(text.as_bytes()) {
         Ok(()) => ExitCode::SUCCESS,
