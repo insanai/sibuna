@@ -12,7 +12,8 @@ use sibuna_patterns::{Automaton, Options};
 use sibuna_policy::bots::{AI_SCRAPERS, SCRAPER_LIBRARIES, SEARCH_CRAWLERS};
 use sibuna_policy::{Action, Engine, Header, Mode, Modes, RequestView};
 use sibuna_pow::{hashcash, posw};
-use sibuna_store::limiter::{Limits, RateLimiter};
+use sibuna_store::limiter::{DEFAULT_SCOPE, Limits, RateLimiter};
+use sibuna_store::placement::{ClientHash, ClientHasher};
 use sibuna_store::spent::{SpentSet, Tag};
 
 use super::{Run, Sizes, measure};
@@ -315,6 +316,46 @@ fn state(runs: &mut Vec<Run>) {
         },
     );
     runs.push(Run::new("rate_limiter", "gcra_four_rule_scopes", timing));
+    hashed_gcra(runs, limits);
+}
+
+/// The rows above measure the byte API Zig has (hashing each address); the daemon hashes a
+/// client once per request and passes the hash (`check_hashed`), measured here with hashes
+/// computed before the loop.
+fn hashed_gcra(runs: &mut Vec<Run>, limits: Limits) {
+    let hasher = ClientHasher::new();
+    let hashes: Vec<ClientHash> = TEST_IPS.iter().map(|ip| hasher.hash(ip)).collect();
+    let count = hashes.len() as u64;
+    let timing = measure(
+        200_000,
+        || Box::new(RateLimiter::new()),
+        |limiter, n| {
+            let mut limited = 0;
+            for i in 0..n {
+                let client = hashes[(i % count) as usize];
+                let result = limiter.check_hashed(client, DEFAULT_SCOPE, 10_000 + i, limits);
+                limited += u64::from(result.limited);
+            }
+            limited
+        },
+    );
+    runs.push(Run::new("rate_limiter", "gcra_check_hashed", timing));
+
+    let timing = measure(
+        200_000,
+        || Box::new(RateLimiter::new()),
+        |limiter, n| {
+            let mut limited = 0;
+            for i in 0..n {
+                let client = hashes[(i % count) as usize];
+                let scope = 1 + (i / count) % 4;
+                limited +=
+                    u64::from(limiter.check_hashed(client, scope, 10_000 + i, limits).limited);
+            }
+            limited
+        },
+    );
+    runs.push(Run::new("rate_limiter", "gcra_four_rule_scopes_hashed", timing));
 }
 
 fn http_and_policy(runs: &mut Vec<Run>) -> Sizes {
