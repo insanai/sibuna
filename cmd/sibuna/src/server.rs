@@ -25,6 +25,8 @@ use sibuna_net::{IdleTable, Pool};
 use sibuna_store::ban_table::BanTable;
 use sibuna_store::limiter::RateLimiter;
 use sibuna_store::placement::ClientHasher;
+#[cfg(feature = "console")]
+use sibuna_store::telemetry::ConsoleTelemetry;
 
 use crate::slot::EngineSlot;
 use crate::tasks::TaskPool;
@@ -45,11 +47,19 @@ pub type IncidentHook = Box<dyn Fn(&Incident<'_>) + Send + Sync>;
 pub struct Hooks {
     /// Called after a WAF denial, a honeypot hit or an audit finding.
     pub record_incident: Option<IncidentHook>,
+    /// The console's telemetry (`--console`): outcome counters, request samples and
+    /// challenge observations. `None` keeps every console seam one untaken branch.
+    #[cfg(feature = "console")]
+    pub telemetry: Option<Arc<ConsoleTelemetry>>,
 }
 
 impl std::fmt::Debug for Hooks {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Hooks").field("record_incident", &self.record_incident.is_some()).finish()
+        let mut debug = f.debug_struct("Hooks");
+        debug.field("record_incident", &self.record_incident.is_some());
+        #[cfg(feature = "console")]
+        debug.field("telemetry", &self.telemetry.is_some());
+        debug.finish()
     }
 }
 
@@ -93,6 +103,10 @@ pub struct Server {
     peers: PeerTable,
     /// Set once by [`Running::stop`]. Release on store, acquire on load.
     pub(crate) stopping: AtomicBool,
+    /// Set by the console's drain command: new connections are answered 503 while it is
+    /// set. Release on store, acquire on load, as for `stopping`.
+    #[cfg(feature = "console")]
+    draining: AtomicBool,
     pub(crate) hooks: Hooks,
 }
 
@@ -133,6 +147,8 @@ impl Server {
             metrics,
             connections: AtomicU32::new(0),
             stopping: AtomicBool::new(false),
+            #[cfg(feature = "console")]
+            draining: AtomicBool::new(false),
             hooks,
         }
     }
@@ -174,6 +190,25 @@ impl Server {
 
     pub(crate) fn is_stopping(&self) -> bool {
         self.stopping.load(Ordering::Acquire)
+    }
+
+    /// Starts or ends draining: while draining, new connections are answered 503 "node is
+    /// draining" and the connections being served finish.
+    #[cfg(feature = "console")]
+    pub fn set_draining(&self, draining: bool) {
+        self.draining.store(draining, Ordering::Release);
+    }
+
+    /// Returns whether the server is draining.
+    #[cfg(feature = "console")]
+    pub fn is_draining(&self) -> bool {
+        self.draining.load(Ordering::Acquire)
+    }
+
+    /// Returns the ban table, for the console's gauge and clear command.
+    #[cfg(feature = "console")]
+    pub fn bans(&self) -> &BanTable {
+        &self.bans
     }
 }
 
@@ -319,6 +354,11 @@ fn accept_loop(server: &Arc<Server>, listener: &TcpListener) {
         };
         if server.is_stopping() {
             return;
+        }
+        #[cfg(feature = "console")]
+        if server.is_draining() {
+            reject(server, &stream, "Service Unavailable: node is draining");
+            continue;
         }
         let Some(admitted) = admit(server, &stream, peer.ip()) else { continue };
         set_no_delay(&stream);

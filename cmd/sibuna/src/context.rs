@@ -73,6 +73,10 @@ pub(crate) struct Ctx<'c, W> {
     pub keep_alive: bool,
     /// The route identity, taken before any trusted authorization-target rewrite.
     pub internal: bool,
+    /// What the console tracks for this request: its counted outcome and held-back audit
+    /// findings.
+    #[cfg(feature = "console")]
+    pub console: crate::telemetry::RequestState,
 }
 
 impl<'c, W: Write> Ctx<'c, W> {
@@ -112,6 +116,8 @@ impl<'c, W: Write> Ctx<'c, W> {
             now_ms,
             keep_alive,
             internal,
+            #[cfg(feature = "console")]
+            console: crate::telemetry::RequestState::default(),
         }
     }
 }

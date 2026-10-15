@@ -1,11 +1,23 @@
-//! Builds the browser solver (`sibuna-pow-wasm`) for `wasm32-unknown-unknown` and copies it to
-//! `$OUT_DIR/sibuna-pow.wasm`, where the daemon embeds it with `include_bytes!` and serves it
-//! as `/__sibuna/wasm/sibuna-pow.wasm`.
+//! Builds the WebAssembly modules the daemon embeds and copies them into `$OUT_DIR`, where
+//! `include_bytes!` picks them up:
 //!
-//! The solver is built by a nested `cargo build` with a target directory of its own
-//! (`wasm-embed` under the workspace's target directory), so it never waits on the lock of
-//! the outer build. `SIBUNA_POW_WASM=<path>` embeds a prebuilt module instead, for builds
-//! without the WebAssembly target or without network access to install it.
+//! - the browser solver (`sibuna-pow-wasm`), served as `/__sibuna/wasm/sibuna-pow.wasm`, as
+//!   `$OUT_DIR/sibuna-pow.wasm`;
+//! - with the `console` feature, the console interface (`sibuna-console-ui`), served under
+//!   its digest, as `$OUT_DIR/console.wasm`. SID 0007 caps it at 768 KiB; a larger module
+//!   fails the build.
+//!
+//! Both are built by a nested `cargo rustc --target wasm32-unknown-unknown --profile wasm`
+//! into the workspace's own target directory, so they land in
+//! `target/wasm32-unknown-unknown/wasm/` beside a hand-made build of the same profile. The
+//! nested build locks only the `wasm` profile's directories, never the outer build's. The
+//! final link gets `--compress-relocations`, which rewrites the padded function indices
+//! and data addresses of the LTO object in their shortest form; the linker accepts it
+//! because the `wasm` profile keeps no debug information.
+//!
+//! `SIBUNA_POW_WASM=<path>` and `SIBUNA_CONSOLE_WASM=<path>` embed prebuilt modules
+//! instead, for builds without the WebAssembly target or without network access to
+//! install it.
 
 use std::env;
 use std::fmt::Write as _;
@@ -13,13 +25,55 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 
-/// The environment variable that names a prebuilt solver module.
-const OVERRIDE: &str = "SIBUNA_POW_WASM";
-/// The WebAssembly target the solver is built for.
+/// The WebAssembly target the modules are built for.
 const TARGET: &str = "wasm32-unknown-unknown";
+/// The cargo profile of both modules (the workspace's `[profile.wasm]`).
+const PROFILE: &str = "wasm";
+/// The largest console interface module, in bytes (SID 0007, Budget: 768 KiB).
+const CONSOLE_CEILING: usize = 768 * 1024;
+
+/// One embedded module: how to build it and where it goes.
+struct Module {
+    /// The package that builds it.
+    package: &'static str,
+    /// The file cargo writes.
+    artifact: &'static str,
+    /// The file name in `$OUT_DIR`.
+    embedded: &'static str,
+    /// The environment variable naming a prebuilt module.
+    prebuilt: &'static str,
+    /// Workspace paths whose change rebuilds it.
+    watched: &'static [&'static str],
+    /// The largest accepted size in bytes.
+    ceiling: usize,
+}
+
+const SOLVER: Module = Module {
+    package: "sibuna-pow-wasm",
+    artifact: "sibuna_pow_wasm.wasm",
+    embedded: "sibuna-pow.wasm",
+    prebuilt: "SIBUNA_POW_WASM",
+    watched: &["cmd/sibuna-pow-wasm", "crates/pow/src", "crates/crypto/src"],
+    ceiling: usize::MAX,
+};
+
+const CONSOLE: Module = Module {
+    package: "sibuna-console-ui",
+    artifact: "sibuna_console_ui.wasm",
+    embedded: "console.wasm",
+    prebuilt: "SIBUNA_CONSOLE_WASM",
+    watched: &[
+        "cmd/console-ui/src",
+        "cmd/console-ui/build.rs",
+        "crates/console-protocol/src",
+        "crates/html/src",
+        "crates/json/src",
+        "crates/crypto/src",
+    ],
+    ceiling: CONSOLE_CEILING,
+};
 
 fn main() -> ExitCode {
-    println!("cargo:rerun-if-env-changed={OVERRIDE}");
     println!("cargo:rerun-if-changed=build.rs");
     let Some(out_dir) = env::var_os("OUT_DIR").map(PathBuf::from) else {
         return fail(
@@ -28,54 +82,75 @@ fn main() -> ExitCode {
             "Run the build through cargo.",
         );
     };
-    let destination = out_dir.join("sibuna-pow.wasm");
-    let source = match env::var_os(OVERRIDE) {
+    if let Err(code) = embed(&SOLVER, &out_dir) {
+        return code;
+    }
+    if env::var_os("CARGO_FEATURE_CONSOLE").is_some()
+        && let Err(code) = embed(&CONSOLE, &out_dir)
+    {
+        return code;
+    }
+    ExitCode::SUCCESS
+}
+
+/// Builds `module` (or takes the prebuilt one), checks it and copies it into `out_dir`.
+fn embed(module: &Module, out_dir: &Path) -> Result<(), ExitCode> {
+    println!("cargo:rerun-if-env-changed={}", module.prebuilt);
+    let source = match env::var_os(module.prebuilt) {
         Some(path) if !path.is_empty() => {
             let path = PathBuf::from(path);
             println!("cargo:rerun-if-changed={}", path.display());
             path
         }
-        _ => match build_solver(&out_dir) {
-            Ok(path) => path,
-            Err(code) => return code,
-        },
+        _ => build(module, out_dir)?,
     };
-    let module = match fs::read(&source) {
-        Ok(bytes) => bytes,
-        Err(error) => {
-            let message =
-                format!("The solver module {} cannot be read: {error}.", source.display());
-            return fail("WASM SOLVER UNREADABLE", &message, "Check the path in SIBUNA_POW_WASM.");
-        }
-    };
-    if !module.starts_with(b"\0asm") {
+    let bytes = fs::read(&source).map_err(|error| {
+        let message = format!("The module {} cannot be read: {error}.", source.display());
+        let hint = format!("Check the path in {}.", module.prebuilt);
+        fail("WASM MODULE UNREADABLE", &message, &hint)
+    })?;
+    if !bytes.starts_with(b"\0asm") {
         let message = format!("{} is not a WebAssembly module.", source.display());
-        return fail("WASM SOLVER INVALID", &message, "Point SIBUNA_POW_WASM at a .wasm file.");
+        let hint = format!("Point {} at a .wasm file.", module.prebuilt);
+        return Err(fail("WASM MODULE INVALID", &message, &hint));
     }
-    if let Err(error) = fs::write(&destination, &module) {
+    if bytes.len() > module.ceiling {
+        let message = format!(
+            "{} is {} bytes; SID 0007 allows at most {} bytes for {}.",
+            source.display(),
+            bytes.len(),
+            module.ceiling,
+            module.package
+        );
+        let hint = "Shrink the interface (see the size notes in cmd/console-ui) before \
+                    embedding it.";
+        return Err(fail("WASM MODULE TOO LARGE", &message, hint));
+    }
+    let destination = out_dir.join(module.embedded);
+    fs::write(&destination, &bytes).map_err(|error| {
         let message = format!("Writing {} failed: {error}.", destination.display());
-        return fail("WASM SOLVER NOT WRITTEN", &message, "Check the build directory.");
-    }
-    ExitCode::SUCCESS
+        fail("WASM MODULE NOT WRITTEN", &message, "Check the build directory.")
+    })
 }
 
-/// Runs the nested build and returns the path of the module it produced.
-fn build_solver(out_dir: &Path) -> Result<PathBuf, ExitCode> {
+/// Runs the nested build of `module` and returns the path of the module it produced.
+fn build(module: &Module, out_dir: &Path) -> Result<PathBuf, ExitCode> {
     let Some(manifest_dir) = env::var_os("CARGO_MANIFEST_DIR").map(PathBuf::from) else {
         return Err(fail("MANIFEST DIR MISSING", "Cargo did not set it.", "Build with cargo."));
     };
     let workspace = manifest_dir.join("..").join("..");
-    for watched in ["cmd/sibuna-pow-wasm", "crates/pow/src", "crates/crypto/src", "Cargo.toml"] {
+    for watched in module.watched.iter().chain(&["Cargo.toml"]) {
         println!("cargo:rerun-if-changed={}", workspace.join(watched).display());
     }
     let target_dir = target_root(out_dir).unwrap_or_else(|| workspace.join("target"));
-    let embed_dir = target_dir.join("wasm-embed");
     let cargo = env::var_os("CARGO").unwrap_or_else(|| "cargo".into());
     let mut command = Command::new(cargo);
     command
         .current_dir(&workspace)
-        .args(["build", "-p", "sibuna-pow-wasm", "--target", TARGET, "--release", "--quiet"])
-        .env("CARGO_TARGET_DIR", &embed_dir);
+        .args(["rustc", "--quiet", "--lib", "-p", module.package])
+        .args(["--target", TARGET, "--profile", PROFILE])
+        .args(["--", "-C", "link-arg=--compress-relocations"])
+        .env("CARGO_TARGET_DIR", &target_dir);
     // The outer build's flags and jobserver belong to the host target, not to this one.
     for variable in [
         "CARGO_ENCODED_RUSTFLAGS",
@@ -88,18 +163,14 @@ fn build_solver(out_dir: &Path) -> Result<PathBuf, ExitCode> {
     ] {
         command.env_remove(variable);
     }
-    let output = match command.output() {
-        Ok(output) => output,
-        Err(error) => {
-            let message = format!("cargo could not be started for the solver build: {error}.");
-            return Err(fail("WASM SOLVER BUILD", &message, "Check that cargo is on PATH."));
-        }
-    };
+    let output = command.output().map_err(|error| {
+        let message = format!("cargo could not be started to build {}: {error}.", module.package);
+        fail("WASM MODULE BUILD", &message, "Check that cargo is on PATH.")
+    })?;
     if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(explain_failure(&stderr));
+        return Err(explain_failure(module, &String::from_utf8_lossy(&output.stderr)));
     }
-    Ok(embed_dir.join(TARGET).join("release").join("sibuna_pow_wasm.wasm"))
+    Ok(target_dir.join(TARGET).join(PROFILE).join(module.artifact))
 }
 
 /// The workspace target directory: the nearest ancestor of `OUT_DIR` that Cargo marked
@@ -108,28 +179,28 @@ fn target_root(out_dir: &Path) -> Option<PathBuf> {
     out_dir.ancestors().find(|dir| dir.join("CACHEDIR.TAG").is_file()).map(Path::to_path_buf)
 }
 
-fn explain_failure(stderr: &str) -> ExitCode {
+fn explain_failure(module: &Module, stderr: &str) -> ExitCode {
     let missing = stderr.contains("target may not be installed")
         || stderr.contains("can't find crate for `core`")
         || stderr.contains("can't find crate for `std`");
     if missing {
+        let hint = format!(
+            "Run `rustup target add {TARGET}`, or set {} to a prebuilt module.",
+            module.prebuilt
+        );
         return fail(
             "WASM TARGET MISSING",
-            "The daemon embeds the browser solver, built for wasm32-unknown-unknown, but this \
+            "The daemon embeds WebAssembly modules built for wasm32-unknown-unknown, but this \
              toolchain has no standard library for that target.",
-            "Run `rustup target add wasm32-unknown-unknown`, or set SIBUNA_POW_WASM to a \
-             prebuilt sibuna-pow.wasm.",
+            &hint,
         );
     }
-    let mut message = String::from("Building sibuna-pow-wasm for the browser failed:\n\n");
+    let mut message = format!("Building {} for the browser failed:\n\n", module.package);
     for line in stderr.lines().take(40) {
         let _ = writeln!(message, "    {line}");
     }
-    fail(
-        "WASM SOLVER BUILD",
-        message.trim_end(),
-        "Fix the error above, or set SIBUNA_POW_WASM to a prebuilt sibuna-pow.wasm.",
-    )
+    let hint = format!("Fix the error above, or set {} to a prebuilt module.", module.prebuilt);
+    fail("WASM MODULE BUILD", message.trim_end(), &hint)
 }
 
 /// Prints an Elm-style diagnostic for Cargo to show and fails the build script.

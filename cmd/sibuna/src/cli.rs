@@ -37,6 +37,8 @@ pub fn run(args: &[String], secret: Option<&str>) -> ExitCode {
     for arg in args {
         match arg.as_str() {
             "--help" => {
+                #[cfg(feature = "console")]
+                eprint!("{}", crate::console::HELP);
                 eprint!("{HELP}");
                 return ExitCode::SUCCESS;
             }
@@ -47,28 +49,152 @@ pub fn run(args: &[String], secret: Option<&str>) -> ExitCode {
             _ => {}
         }
     }
-    if args.first().is_some_and(|arg| arg == "console") {
-        report(
-            "CONSOLEBUILD: console support is not compiled. Hint: build with the console \
-             feature enabled.",
-        );
-        return ExitCode::FAILURE;
-    }
-    let mut config = match Config::parse_args(args) {
-        Ok(config) => config,
-        Err(error) => {
-            eprintln!("{error}");
-            return ExitCode::FAILURE;
+    let daemon_args = if args.first().is_some_and(|arg| arg == "console") {
+        match console_subcommand(args.get(1..).unwrap_or_default()) {
+            Ok(rest) => rest,
+            Err(code) => return code,
         }
+    } else {
+        args
     };
-    match start(&mut config, secret) {
-        Ok(code) => code,
+    match console_options(daemon_args) {
+        Ok(Some((mut config, console))) => match start(&mut config, secret, console) {
+            Ok(code) => code,
+            Err(()) => ExitCode::FAILURE,
+        },
+        Ok(None) => ExitCode::SUCCESS,
         Err(()) => ExitCode::FAILURE,
     }
 }
 
+/// `sibuna console <rest>`: without the console feature, refused.
+#[cfg(not(feature = "console"))]
+fn console_subcommand(_rest: &[String]) -> Result<&[String], ExitCode> {
+    report(
+        "CONSOLEBUILD: console support is not compiled. Hint: build with the console feature \
+         enabled.",
+    );
+    Err(ExitCode::FAILURE)
+}
+
+/// `sibuna console <rest>`: `init-admin` continues as a daemon command line; any other
+/// word is a console command, run here.
+#[cfg(feature = "console")]
+fn console_subcommand(rest: &[String]) -> Result<&[String], ExitCode> {
+    if rest.first().is_some_and(|word| word == "init-admin") {
+        return Ok(rest);
+    }
+    Err(console_command(rest))
+}
+
+/// The console's configuration when `--console` was given; nothing without the feature.
+#[cfg(feature = "console")]
+type ConsoleOption = Option<sibuna_console::Config>;
+/// The console's configuration when `--console` was given; nothing without the feature.
+#[cfg(not(feature = "console"))]
+type ConsoleOption = Option<std::convert::Infallible>;
+
+/// Parses the command line: the console's options are split off first, then the data
+/// plane's are parsed. Returns the configuration and the console's, `Ok(None)` after an
+/// offline `init-admin` succeeded, and `Err` when a failure was reported.
+#[cfg(not(feature = "console"))]
+fn console_options(args: &[String]) -> Result<Option<(Config, ConsoleOption)>, ()> {
+    match Config::parse_args(args) {
+        Ok(config) => Ok(Some((config, None))),
+        Err(error) => {
+            eprintln!("{error}");
+            Err(())
+        }
+    }
+}
+
+/// Parses the command line: the console's options are split off first, then the data
+/// plane's are parsed. Returns the configuration and the console's, `Ok(None)` after an
+/// offline `init-admin` succeeded, and `Err` when a failure was reported.
+#[cfg(feature = "console")]
+fn console_options(args: &[String]) -> Result<Option<(Config, ConsoleOption)>, ()> {
+    use crate::console::{init, options};
+    let parsed = options::parse(args).map_err(|error| {
+        report(&format!(
+            "CONSOLE002: invalid console options ({error}). Hint: check --console host:port, \
+             proxy settings, and query steps (100000-50000000, supplied once)."
+        ));
+    })?;
+    let mut config = Config::parse_args(&parsed.data_args).map_err(|error| {
+        eprintln!("{error}");
+    })?;
+    if let Some(steps) = parsed.query_steps {
+        config.console_query_steps = steps;
+    }
+    if parsed.capture_heads {
+        config.console_capture_heads = true;
+        config.console_capture_headers = parsed.capture_headers.clone();
+    }
+    if parsed.enabled {
+        validate_console(&parsed.config, &config)?;
+    }
+    if let Some(username) = &parsed.initial_admin {
+        return match init::run(&config, username) {
+            Ok(password) => {
+                eprint!("{}", init::created_message(username, &password));
+                Ok(None)
+            }
+            Err(error) => {
+                report(&format!(
+                    "CONSOLEBOOT: local initialization failed ({error}). Hint: use \
+                     --data-dir with a stopped, uninitialized Sibuna instance."
+                ));
+                Err(())
+            }
+        };
+    }
+    Ok(Some((config, parsed.enabled.then_some(parsed.config))))
+}
+
+/// Refuses a console configuration with `CONSOLE001`: no storage, or a rule of the
+/// console's configuration broken.
+#[cfg(feature = "console")]
+fn validate_console(console: &sibuna_console::Config, config: &Config) -> Result<(), ()> {
+    use sibuna_console::ConfigError;
+    let name = if config.storage_backend() == sibuna_core::StorageBackend::InMemory {
+        String::from("StorageRequired")
+    } else {
+        match console.validate(config.node_id()) {
+            Ok(()) => return Ok(()),
+            Err(ConfigError::Peers(error)) => format!("{error:?}"),
+            Err(ConfigError::Budget(_)) => String::from("InvalidBudget"),
+            Err(error) => format!("{error:?}"),
+        }
+    };
+    report(&format!(
+        "CONSOLE001: console configuration rejected ({name}). Hint: configure storage and a \
+         trusted HTTPS ingress for remote access."
+    ));
+    Err(())
+}
+
+/// Runs `sibuna console <args>` against a running console and renders a failure.
+#[cfg(feature = "console")]
+fn console_command(args: &[String]) -> ExitCode {
+    let mut stdout = io::stdout().lock();
+    match sibuna_console::command::run(args, &mut stdout) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            let mut text = String::new();
+            let _ =
+                diagnostic::render(&mut text, "console command", &error.to_string(), error.hint());
+            eprintln!("{text}");
+            ExitCode::FAILURE
+        }
+    }
+}
+
 /// Everything after parsing. `Err` means the failure was already reported.
-fn start(config: &mut Config, secret: Option<&str>) -> Result<ExitCode, ()> {
+fn start(
+    config: &mut Config,
+    secret: Option<&str>,
+    console: ConsoleOption,
+) -> Result<ExitCode, ()> {
     let seed = resolve_secret(config, secret)?;
     let shutdown = Shutdown::new();
     if let Err(error) = signals::install(std::sync::Arc::clone(&shutdown)) {
@@ -83,13 +209,22 @@ fn start(config: &mut Config, secret: Option<&str>) -> Result<ExitCode, ()> {
     let address = listen_address(config)?;
     let listener = bind(address, config.listen_port)?;
     let options = DaemonOptions { config: config.clone(), recipe, seed, hooks: Hooks::default() };
-    let daemon = match Daemon::start(options, listener) {
+    let started = match console {
+        #[cfg(feature = "console")]
+        Some(console) => Daemon::start_with_console(options, console, listener),
+        #[cfg(not(feature = "console"))]
+        Some(never) => match never {},
+        None => Daemon::start(options, listener),
+    };
+    let daemon = match started {
         Ok(daemon) => daemon,
         Err(error) => {
             report_start_error(&error);
             return Err(());
         }
     };
+    #[cfg(feature = "console")]
+    print_console_banner(&daemon);
     let mut banner = String::new();
     let _ = config.write_banner(&mut banner, VERSION);
     eprint!("{banner}");
@@ -114,7 +249,19 @@ fn report_start_error(error: &StartError) {
             report(&format!("Failed to build the policy engine: {error}"))
         }
         StartError::Io(error) => report(&format!("Failed to start the server: {error}")),
+        #[cfg(feature = "console")]
+        StartError::Console(error) => {
+            report(&format!("Failed to start the console: {error}. Hint: {}", error.hint()));
+        }
     }
+}
+
+/// Prints the console's startup lines (Zig's `announce`).
+#[cfg(feature = "console")]
+fn print_console_banner(daemon: &Daemon) {
+    let (Some(console), Some(storage)) = (daemon.console(), daemon.storage()) else { return };
+    let uninitialized = crate::console::start::is_uninitialized(storage).unwrap_or(false);
+    eprint!("{}", crate::console::start::banner(console, uninitialized));
 }
 
 /// Secret precedence: `--secret-file`, then `SIBUNA_SECRET`, then a random per-process seed

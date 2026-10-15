@@ -6,6 +6,11 @@
 //! requests. The origin below answers from a fixed buffer and the client reads into one, so
 //! the count is the daemon's own.
 //!
+//! With the console compiled in, the same holds with the console's request path enabled:
+//! outcome counters and samples, rule-hit counters in the published engine, head capture and
+//! evidence for denials (the console server itself is not started: its threads allocate as
+//! they please, and only the request path is measured).
+//!
 //! Counting allocations needs a `GlobalAlloc` shim, which is `unsafe` to implement; it lives
 //! only in this test binary and forwards every call to the system allocator.
 #![allow(unsafe_code, clippy::unwrap_used)]
@@ -20,7 +25,7 @@ use std::thread;
 
 use sibuna::Hooks;
 use sibuna_core::{Config, PowAlgorithm};
-use sibuna_policy::Engine;
+use sibuna_policy::{Action, Engine, PolicyRule};
 
 struct Counting;
 
@@ -123,10 +128,59 @@ fn response_length(stream: &mut TcpStream, request: &[u8]) -> usize {
     }
 }
 
+/// The engine of the steady-state daemon: the daemon's pages and one rule that matches the
+/// static path, so rule hits are recorded when the console counts them.
+fn engine(difficulty: u32) -> Engine {
+    let mut engine = Engine::new(difficulty);
+    engine.pages = sibuna::recipe::daemon_pages().unwrap();
+    let rule = PolicyRule {
+        path_pattern: Some("/robots.txt".into()),
+        ..PolicyRule::new("static", Action::Allow)
+    };
+    engine.insert_rule(0, rule).unwrap();
+    engine
+}
+
+/// The telemetry of the console-enabled daemon, read after serving.
+#[cfg(feature = "console")]
+static TELEMETRY: std::sync::OnceLock<std::sync::Arc<sibuna_store::telemetry::ConsoleTelemetry>> =
+    std::sync::OnceLock::new();
+/// Denials recorded with their evidence and redacted request head.
+#[cfg(feature = "console")]
+static EVIDENCE: AtomicU64 = AtomicU64::new(0);
+
+/// Turns on the console's request path in `config` and `hooks`; returns the step that
+/// publishes the engine with rule-hit counters once the server runs.
+#[cfg(feature = "console")]
+fn enable_console(
+    config: &mut Config,
+    hooks: &mut Hooks,
+) -> impl FnOnce(&support::Fixture) + use<> {
+    use sibuna::console::hits::Generations;
+    config.console_capture_heads = true;
+    let telemetry = std::sync::Arc::new(sibuna_store::telemetry::ConsoleTelemetry::new());
+    let _ = TELEMETRY.set(std::sync::Arc::clone(&telemetry));
+    hooks.telemetry = Some(telemetry);
+    hooks.record_incident = Some(Box::new(|incident| {
+        if incident.evidence.version == 1 && !incident.request_head.is_empty() {
+            EVIDENCE.fetch_add(1, Ordering::Relaxed);
+        }
+    }));
+    let difficulty = config.default_difficulty;
+    move |fixture| {
+        let clock = std::sync::Arc::new(sibuna_console::SystemClock::new());
+        let mut generations = Generations::new(1, [1; 16], clock);
+        let engine = engine(difficulty);
+        let hits = generations.next(&engine, 1, &[]).unwrap();
+        fixture.server().slot().publish_observed(engine, hits);
+    }
+}
+
 /// Starts a daemon in front of the allocation-free origin and returns it with one request of
 /// each decision kind, all from one trusted forwarded client: admitted with a session,
-/// challenged (interstitial and JSON), a static path, two WAF denials and health.
-fn daemon_and_requests() -> (support::Fixture, Vec<Vec<u8>>) {
+/// challenged (interstitial and JSON), a static path, two WAF denials and health. With
+/// `console`, the console's request path is enabled.
+fn daemon_and_requests(console: bool) -> (support::Fixture, Vec<Vec<u8>>) {
     let mut config = Config {
         upstream_port: start_origin(),
         trust_forwarded: Some(true),
@@ -137,9 +191,16 @@ fn daemon_and_requests() -> (support::Fixture, Vec<Vec<u8>>) {
         ..Config::default()
     };
     config.idle_timeout_seconds = 30;
-    let mut engine = Engine::new(config.default_difficulty);
-    engine.pages = sibuna::recipe::daemon_pages().unwrap();
-    let fixture = support::start_server(config, engine, Hooks::default());
+    let mut hooks = Hooks::default();
+    #[cfg(feature = "console")]
+    let publish = console.then(|| enable_console(&mut config, &mut hooks));
+    #[cfg(not(feature = "console"))]
+    assert!(!console, "the console is not compiled in");
+    let fixture = support::start_server(config.clone(), engine(config.default_difficulty), hooks);
+    #[cfg(feature = "console")]
+    if let Some(publish) = publish {
+        publish(&fixture);
+    }
     let ip = "192.0.2.77";
     let cookie = support::hashcash_session(fixture.port, ip, "/private");
     let head = |path: &str, extra: &str| {
@@ -164,7 +225,22 @@ fn daemon_and_requests() -> (support::Fixture, Vec<Vec<u8>>) {
 
 #[test]
 fn a_warm_connection_serves_every_decision_without_allocating() {
-    let (fixture, requests) = daemon_and_requests();
+    serve_without_allocating(false);
+}
+
+#[cfg(feature = "console")]
+#[test]
+fn a_warm_connection_with_the_console_enabled_serves_without_allocating() {
+    serve_without_allocating(true);
+}
+
+/// The counter is process wide, so the two tests above take turns.
+static TURN: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+fn serve_without_allocating(console: bool) {
+    let _turn = TURN.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    ALLOCATIONS.store(0, Ordering::SeqCst);
+    let (fixture, requests) = daemon_and_requests(console);
     let mut stream = TcpStream::connect(support::address(fixture.port)).unwrap();
     stream.set_nodelay(true).unwrap();
     let lengths: Vec<usize> = requests.iter().map(|r| response_length(&mut stream, r)).collect();
@@ -186,6 +262,27 @@ fn a_warm_connection_serves_every_decision_without_allocating() {
     COUNTING.store(false, Ordering::SeqCst);
     assert_eq!(served, 0, "allocations on the request path");
     assert_eq!(ALLOCATIONS.load(Ordering::SeqCst), 1);
+    #[cfg(feature = "console")]
+    if console {
+        check_console_saw(&fixture);
+    }
+}
+
+/// The console's request path did its work: every request counted, some sampled, the
+/// static rule's hits counted, denials recorded with evidence.
+#[cfg(feature = "console")]
+fn check_console_saw(fixture: &support::Fixture) {
+    let telemetry = TELEMETRY.get().unwrap();
+    let totals = telemetry.totals();
+    // 221 rounds of six external requests (health is internal); one more of each to learn
+    // the response lengths.
+    assert_eq!(totals.requests(), 221 * 6);
+    assert_eq!(totals.denied, 221 * 2);
+    assert!(telemetry.queue.consumer().is_some_and(|mut queue| queue.pop().is_some()));
+    let mut sample = sibuna_console::RuleHitSample::default();
+    fixture.server().slot().load_hits().unwrap().sample(&mut sample);
+    assert_eq!(sample.counts.values[0], 221);
+    assert_eq!(EVIDENCE.load(Ordering::Relaxed), 221 * 2);
 }
 
 /// The full cost of a request as a client on loopback sees it: a warm keep-alive round trip
@@ -197,10 +294,23 @@ fn a_warm_connection_serves_every_decision_without_allocating() {
 #[ignore = "timing run; use --release"]
 #[allow(clippy::print_stdout)]
 fn warm_round_trip_timing() {
+    round_trip_timing(false);
+    #[cfg(feature = "console")]
+    round_trip_timing(true);
+}
+
+#[allow(clippy::print_stdout)]
+fn round_trip_timing(console: bool) {
     const ROUNDS: u32 = 2000;
-    let (fixture, requests) = daemon_and_requests();
+    let (fixture, requests) = daemon_and_requests(console);
     let mut buffer = vec![0u8; 64 * 1024];
-    for (label, request) in [("admitted, proxied", &requests[0]), ("health", &requests[6])] {
+    let cases = [
+        ("admitted, proxied", &requests[0]),
+        ("challenged", &requests[1]),
+        ("WAF denied", &requests[4]),
+        ("health", &requests[6]),
+    ];
+    for (label, request) in cases {
         let mut batches: Vec<f64> = (0..7)
             .map(|_| {
                 let mut stream = TcpStream::connect(support::address(fixture.port)).unwrap();
@@ -217,6 +327,10 @@ fn warm_round_trip_timing() {
             })
             .collect();
         batches.sort_by(f64::total_cmp);
-        println!("daemon/round_trip {label:<20} {:>9.0} ns (min {:.0})", batches[3], batches[0]);
+        let mode = if console { "console" } else { "plain" };
+        println!(
+            "daemon/round_trip {mode:<8} {label:<20} {:>9.0} ns (min {:.0})",
+            batches[3], batches[0]
+        );
     }
 }

@@ -28,10 +28,16 @@
 //! - [`assets`]: the embedded WebAssembly solver, worker script and interstitial.
 //! - `recipe` and, with storage, `persistent`: how engines are built, from the policy file
 //!   and from stored policy rows.
+//! - With the console, [`console`]: the `--console*` options, the console server started
+//!   beside the data plane, `init-admin`, and the request path's telemetry behind the
+//!   private `telemetry` seams.
 //!
-//! Cargo features: `sqlite` (default) and `postgres` select the storage backends of
-//! `sibuna-storage`. Without either (`--no-default-features`) the daemon is the in-memory
-//! firewall and depends on no crate outside the workspace.
+//! Cargo features: `sqlite` and `postgres` select the storage backends of
+//! `sibuna-storage`; `console` adds the console server (SID 0007), which needs storage.
+//! The default is `sqlite` and `console`. Without features (`--no-default-features`) the
+//! daemon is the in-memory firewall and depends on no crate outside the workspace; with
+//! them it adds exactly sqlx and tokio (storage) and rustls, ring and the system trust
+//! store (the console's outbound TLS, SID 0012).
 //!
 //! # Changes from the Zig version
 //!
@@ -66,8 +72,10 @@
 //!   `AddressInUse`), else by the Rust description.
 //! - `console` on a build without the console names the cargo feature in its hint.
 //! - The console's request telemetry (outcome counters, samples, challenge observations,
-//!   origin head capture) is not ported yet; the private `telemetry` module holds its seams
-//!   as empty inline functions at the points where Zig recorded them.
+//!   rule hits, origin head capture) is reached through the private `telemetry` seams:
+//!   without the `console` feature they are empty inline functions, without `--console`
+//!   each is one untaken branch. A warm request allocates nothing either way
+//!   (`tests/steady_state.rs`).
 //! - Security fixes of 2026-10-15 (approved by the maintainer): a trusted forwarded client
 //!   is the `X-Forwarded-For` entry `--trusted-hops` from the right, not the leftmost one
 //!   a client writes, and must parse as an address (see `context`); limits and bans key on
@@ -135,6 +143,8 @@ mod challenge;
 pub mod cli;
 mod client_writer;
 mod connection;
+#[cfg(feature = "console")]
+pub mod console;
 mod context;
 pub mod daemon;
 mod dispatch;

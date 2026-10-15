@@ -53,6 +53,7 @@ pub fn serve(server: &Server, stream: &TcpStream) {
         return;
     }
     bound_client_writes(server, stream);
+    crate::telemetry::begin_connection(server);
     let mut read_buffer = [0u8; MAX_REQUEST_BYTES];
     let mut write_buffer = [0u8; WRITE_BUFFER];
     // The normal forms of the request path and of a forwarded path, both from one head.

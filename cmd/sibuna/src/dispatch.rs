@@ -193,7 +193,8 @@ pub(crate) struct Verdict {
 }
 
 impl Verdict {
-    fn of(decision: &sibuna_policy::Decision<'_>) -> Verdict {
+    /// Copies what the response needs out of `decision`.
+    pub(crate) fn of(decision: &sibuna_policy::Decision<'_>) -> Verdict {
         let mut rule = [0u8; MAX_RULE_NAME];
         let name = decision.rule_name;
         // Rule names are at most 128 bytes (the engine refuses longer ones); a longer
@@ -239,7 +240,7 @@ pub(crate) fn policy_headers<'r>(
     count
 }
 
-/// Evaluates the request with the current engine.
+/// Evaluates the request with the current engine (recording rule hits with the console).
 fn request_verdict<W: Write>(ctx: &mut Ctx<'_, W>) -> Verdict {
     let mut fields = [Header::default(); sibuna_http::MAX_HEADERS];
     let count = policy_headers(&ctx.request, &mut fields);
@@ -252,8 +253,7 @@ fn request_verdict<W: Write>(ctx: &mut Ctx<'_, W>) -> Verdict {
         headers: fields.get(..count).unwrap_or_default(),
         body: ctx.request.body,
     };
-    let engine: &Engine = ctx.cache.refresh(&ctx.server.slot);
-    Verdict::of(&engine.evaluate(&view))
+    telemetry::evaluate(ctx.cache, &ctx.server.slot, &view)
 }
 
 /// Evaluates a protected request that is described rather than present (the interstitial's
@@ -280,9 +280,16 @@ pub(crate) fn target_verdict<W: Write>(
 }
 
 fn apply_policy<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<bool> {
-    let server = ctx.server;
     let verdict = request_verdict(ctx);
     crate::incidents::record_audit_findings(ctx, verdict.audited);
+    let result = answer_verdict(ctx, &verdict);
+    // Findings held back for the origin's head are recorded on every other exit as well.
+    telemetry::flush_findings(ctx);
+    result
+}
+
+fn answer_verdict<W: Write>(ctx: &mut Ctx<'_, W>, verdict: &Verdict) -> io::Result<bool> {
+    let server = ctx.server;
     if let Some(limits) = verdict.limits {
         let window_ms = u64::from(limits.window_seconds) * 1000;
         let quota = RateLimits { rate: limits.rate, window_ms };
@@ -295,7 +302,7 @@ fn apply_policy<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<bool> {
     // must reach what this route demands. WAF and explicit denials are never cleared, and a
     // cheaper session falls through to the stronger challenge instead of admitting.
     if verdict.is_challenge()
-        && let Some(rule_hash) = crate::challenge::session_rule_hash(ctx, &verdict)
+        && let Some(rule_hash) = crate::challenge::session_rule_hash(ctx, verdict)
     {
         return forward(ctx, "PASS", "session", rule_hash);
     }
@@ -318,7 +325,7 @@ fn apply_policy<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<bool> {
         Action::Challenge | Action::Weigh => {
             server.metrics.challenged.bump();
             telemetry::record_outcome(ctx, Outcome::Challenged, 401);
-            crate::challenge::write_challenged(ctx, &verdict)?;
+            crate::challenge::write_challenged(ctx, verdict)?;
             Ok(ctx.keep_alive)
         }
     }
@@ -369,6 +376,18 @@ pub(crate) fn forward<W: Write>(
     }
     let config = &server.config;
     let mut origin_status = 0u16;
+    let status_sink = telemetry::origin_status_sink(ctx, &mut origin_status);
+    // A capture buffer only when audit findings wait for the origin's head (console).
+    let mut origin = telemetry::origin_head(ctx);
+    let capturing = origin.is_some();
+    let extra_headers = &config.console_capture_headers;
+    let mut capture = |raw: &[u8]| {
+        if let Some(origin) = origin.as_mut() {
+            origin.capture(raw, extra_headers);
+        }
+    };
+    let head_sink: Option<sibuna_net::HeadSink<'_>> =
+        if capturing { Some(&mut capture) } else { None };
     let exchange = Exchange {
         client: Client {
             stream: ctx.stream,
@@ -388,13 +407,13 @@ pub(crate) fn forward<W: Write>(
             status: status.as_bytes(),
             rule: rule_name.as_bytes(),
             scheme: forwarded::scheme(&ctx.request, config.trusts_forwarded()).as_bytes(),
-            response_status: telemetry::origin_status_sink(&mut origin_status),
-            response_head: None,
+            response_status: status_sink,
+            response_head: head_sink,
         },
         keep_alive: ctx.keep_alive,
     };
     let relayed = sibuna_net::stream_proxy(&server.pool, ctx.workspace, exchange);
-    telemetry::admitted_complete(ctx, origin_status);
+    telemetry::admitted_complete(ctx, origin_status, origin.as_ref());
     match relayed {
         Ok(keep) => Ok(keep),
         Err(error) => {

@@ -6,7 +6,14 @@
 //! rule cannot hide an operator's live denial) and the reputation rows, then publishes it.
 //! Any invalid row refuses the snapshot: the old engine stays live and the revision stays
 //! unapplied until the row is repaired. This is the port of `persistent_policy.zig`,
-//! `policy_inspection.zig` and `policy_limits.zig`; the SQL lives in `sibuna-storage`.
+//! `policy_inspection.zig`, `policy_limits.zig` and `console_pages_load.zig`; the SQL lives
+//! in `sibuna-storage`.
+//!
+//! The operator's page templates (read by the console's snapshot hook) are compiled into
+//! the engine too. A stored template that no longer compiles never refuses the snapshot:
+//! the page keeps its default, marked as a fallback, and a warning names the page. With the
+//! console, every published engine also carries fresh rule-hit counters
+//! ([`Publisher::observed`]).
 
 use std::sync::Arc;
 
@@ -14,19 +21,31 @@ use sibuna_core::{Config, Metrics};
 use sibuna_policy::limits::{Limits, managed_identity};
 use sibuna_policy::loader::Diagnostic;
 use sibuna_policy::matchers::{self, MatcherError};
+use sibuna_policy::pages::{Kind, PageError, Template};
 use sibuna_policy::{Action, Algorithm, Engine, Mode, Modes, PolicyRule, RuleError};
 use sibuna_storage::{
-    ChallengeAlgorithm, Hooks, InspectionMode, InspectionRow, PolicyAction, PolicyRow,
-    PolicySnapshot, RuleLimits, Storage, StorageError,
+    ChallengeAlgorithm, Hooks, InspectionMode, InspectionRow, PageTemplate, PolicyAction,
+    PolicyRow, PolicySnapshot, RuleLimits, Storage, StorageError,
 };
 
 use crate::recipe::{BuildError, Recipe};
 use crate::slot::EngineSlot;
 
-/// Builds the engine of `snapshot` on top of `recipe`.
+/// Builds the engine of `snapshot` on top of `recipe`. A stored page template that does
+/// not compile keeps the default page, marked as a fallback.
 ///
 /// Fails with the first [`BuildError`]; the caller then keeps the engine it has.
 pub fn build_engine(recipe: &Recipe, snapshot: &PolicySnapshot) -> Result<Engine, BuildError> {
+    build_engine_reporting(recipe, snapshot, &mut |_, _| {})
+}
+
+/// As [`build_engine`], calling `ignored` with the kind and error of each stored page
+/// template that did not compile.
+fn build_engine_reporting(
+    recipe: &Recipe,
+    snapshot: &PolicySnapshot,
+    ignored: &mut dyn FnMut(Kind, PageError),
+) -> Result<Engine, BuildError> {
     let mut engine = recipe.base_engine(&mut Diagnostic::default())?;
     if let Some(row) = &snapshot.inspection {
         engine.inspection_modes = inspection_modes(row)?;
@@ -44,7 +63,34 @@ pub fn build_engine(recipe: &Recipe, snapshot: &PolicySnapshot) -> Result<Engine
             .insert_reputation(row.ip_or_cidr.as_bytes(), action)
             .map_err(|_| BuildError::InvalidReputation(row.ip_or_cidr.clone()))?;
     }
+    install_pages(&mut engine, &snapshot.pages, ignored);
     Ok(engine)
+}
+
+/// Compiles the stored templates into `engine`'s pages. A template of an unknown kind is
+/// skipped; one that does not compile leaves the page as it was, marked as a fallback, and
+/// is reported to `ignored`.
+fn install_pages(
+    engine: &mut Engine,
+    templates: &[PageTemplate],
+    ignored: &mut dyn FnMut(Kind, PageError),
+) {
+    for stored in templates {
+        let Some(kind) = Kind::parse(stored.kind.as_bytes()) else { continue };
+        match Template::compile(kind, stored.html.as_bytes()) {
+            Ok(mut template) => {
+                template.revision = stored.revision;
+                engine.pages.set(kind, template);
+            }
+            Err(error) => {
+                let mut fallback: Template = engine.pages.page(kind).clone();
+                fallback.customized = false;
+                fallback.fallback = true;
+                engine.pages.set(kind, fallback);
+                ignored(kind, error);
+            }
+        }
+    }
 }
 
 fn inspection_modes(row: &InspectionRow) -> Result<Modes, BuildError> {
@@ -124,24 +170,64 @@ fn matcher_name(error: MatcherError) -> &'static str {
     error.name()
 }
 
-/// Starts the storage layer `config` selects. The first snapshot is built and published
-/// into `slot` before this returns; later ones are published as the policy changes.
-/// Incidents are embedded with the SID 0006 embedding, and recovered storage errors are
-/// reported on standard error.
-///
-/// Fails with the storage layer's error, including a refused first snapshot.
-pub fn start_storage(
-    config: &Config,
+/// Builds and publishes the engine of each snapshot the storage thread reads.
+pub struct Publisher {
     recipe: Recipe,
     slot: Arc<EngineSlot>,
-    metrics: Arc<Metrics>,
-) -> Result<Storage, StorageError> {
-    let hooks = Hooks {
-        embed: Box::new(sibuna_policy::embedding::embed),
-        publish: Box::new(move |snapshot: PolicySnapshot| {
-            match build_engine(&recipe, &snapshot) {
-                Ok(engine) => {
-                    slot.publish(engine);
+    /// Numbers the rule-hit generations while the console runs.
+    #[cfg(feature = "console")]
+    generations: Option<crate::console::hits::Generations>,
+}
+
+impl std::fmt::Debug for Publisher {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Publisher").field("recipe", &self.recipe).finish_non_exhaustive()
+    }
+}
+
+impl Publisher {
+    /// Returns a publisher building on `recipe` and publishing into `slot`.
+    pub fn new(recipe: Recipe, slot: Arc<EngineSlot>) -> Publisher {
+        Publisher {
+            recipe,
+            slot,
+            #[cfg(feature = "console")]
+            generations: None,
+        }
+    }
+
+    /// Publishes every engine with fresh rule-hit counters numbered by `generations`.
+    #[cfg(feature = "console")]
+    pub fn observed(self, generations: crate::console::hits::Generations) -> Publisher {
+        Publisher { generations: Some(generations), ..self }
+    }
+
+    /// Builds the engine of `snapshot` and publishes it; returns false, reporting why and
+    /// keeping the published engine (and its counters), when the snapshot is refused.
+    pub fn publish(&mut self, snapshot: &PolicySnapshot) -> bool {
+        let mut ignored = |kind: Kind, error: PageError| {
+            crate::cli::report(&format!(
+                "storage: page template {} ignored: {}; default retained",
+                kind.name(),
+                error.name()
+            ));
+        };
+        let engine = match build_engine_reporting(&self.recipe, snapshot, &mut ignored) {
+            Ok(engine) => engine,
+            Err(error) => {
+                crate::cli::report(&format!(
+                    "storage: policy revision {} not applied: {error}",
+                    snapshot.revision
+                ));
+                return false;
+            }
+        };
+        #[cfg(feature = "console")]
+        if let Some(generations) = self.generations.as_mut() {
+            let managed: Vec<&str> = snapshot.rules.iter().map(|row| row.id.as_str()).collect();
+            return match generations.next(&engine, snapshot.revision, &managed) {
+                Ok(hits) => {
+                    self.slot.publish_observed(engine, hits);
                     true
                 }
                 Err(error) => {
@@ -151,14 +237,35 @@ pub fn start_storage(
                     ));
                     false
                 }
-            }
-        }),
+            };
+        }
+        self.slot.publish(engine);
+        true
+    }
+}
+
+/// Starts the storage layer `config` selects. The first snapshot is built and published by
+/// `publisher` before this returns; later ones are published as the policy changes.
+/// Incidents are embedded with the SID 0006 embedding, and recovered storage errors are
+/// reported on standard error. `extend` adds further hooks (the console's).
+///
+/// Fails with the storage layer's error, including a refused first snapshot.
+pub fn start_storage(
+    config: &Config,
+    mut publisher: Publisher,
+    metrics: Arc<Metrics>,
+    extend: impl FnOnce(&mut Hooks),
+) -> Result<Storage, StorageError> {
+    let mut hooks = Hooks {
+        embed: Box::new(sibuna_policy::embedding::embed),
+        publish: Box::new(move |snapshot: PolicySnapshot| publisher.publish(&snapshot)),
         on_error: Some(Box::new(|error: &StorageError| {
             crate::cli::report(&format!("storage: {error}"));
         })),
         metrics,
         ..Hooks::default()
     };
+    extend(&mut hooks);
     Storage::start(config, hooks)
 }
 
@@ -285,5 +392,116 @@ mod tests {
         let decision = engine.evaluate(&RequestView::new(b"/legacy", b"8.8.8.8", b""));
         assert_eq!(decision.action, Action::Deny);
         assert!(decision.limits.is_none());
+    }
+
+    fn page(kind: &str, html: &str, revision: u64) -> PageTemplate {
+        PageTemplate { kind: kind.into(), html: html.into(), revision }
+    }
+
+    // console_pages_test.zig (daemon side): the rebuilt engine carries the stored template;
+    // other kinds keep their defaults; a stored template that no longer validates keeps the
+    // default as a fallback, and an unknown kind is skipped.
+    #[test]
+    fn stored_pages_compile_into_the_engine_or_fall_back_to_the_default() {
+        let custom = "<!doctype html><p>Blocked: {{ reason }} ({{ status }})</p>";
+        let mut snapshot = PolicySnapshot {
+            pages: vec![page("denied", custom, 1), page("unknown", custom, 1)],
+            ..Default::default()
+        };
+        let engine = build_engine(&recipe(), &snapshot).unwrap();
+        let denied = engine.pages.page(Kind::Denied);
+        assert!(denied.customized && denied.revision == 1 && !denied.fallback);
+        assert_eq!(denied.source(), custom);
+        assert!(!engine.pages.page(Kind::Banned).customized);
+        snapshot.pages = vec![page("denied", "<script>x</script>", 2)];
+        let mut ignored = Vec::new();
+        let engine = build_engine_reporting(&recipe(), &snapshot, &mut |kind, error| {
+            ignored.push((kind, error));
+        })
+        .unwrap();
+        let denied = engine.pages.page(Kind::Denied);
+        assert!(!denied.customized && denied.fallback);
+        assert_eq!(ignored.len(), 1);
+        assert_eq!(ignored[0].0, Kind::Denied);
+    }
+
+    // console_limits_test.zig (engine side): a managed rule's quota scope follows its id
+    // through renames and unrelated revisions, and invalid stored limits refuse the snapshot
+    // so the published engine (and its scope) stays.
+    #[test]
+    fn rule_limits_follow_the_managed_id_and_invalid_limits_keep_the_old_engine() {
+        let mut quota = row("quota", PolicyAction::Challenge, "/quota");
+        quota.limits = Some(RuleLimits { rate: 2, window_seconds: 60, ban_seconds: 3 });
+        let applied = |slot: &EngineSlot| {
+            let engine = slot.load();
+            let decision = engine.evaluate(&RequestView::new(b"/quota", b"8.8.8.8", b""));
+            (decision.limits, decision.limit_scope)
+        };
+        let slot = Arc::new(EngineSlot::new(Engine::new(8)));
+        let mut publisher = Publisher::new(recipe(), Arc::clone(&slot));
+        let mut snapshot = PolicySnapshot { rules: vec![quota.clone()], ..Default::default() };
+        assert!(publisher.publish(&snapshot));
+        let (limits, scope) = applied(&slot);
+        assert_eq!(limits.map(|limits| limits.rate), Some(2));
+        snapshot.rules.push(row("other", PolicyAction::Deny, "/other"));
+        snapshot.rules[0].name = "Renamed".into();
+        assert!(publisher.publish(&snapshot));
+        assert_eq!(applied(&slot).1, scope);
+        let mut broken = snapshot.clone();
+        broken.rules[0].limits = Some(RuleLimits { rate: 0, window_seconds: 60, ban_seconds: 0 });
+        assert!(!publisher.publish(&broken));
+        assert_eq!(applied(&slot), (limits, scope));
+        snapshot.rules[0].limits = None;
+        assert!(publisher.publish(&snapshot));
+        assert!(applied(&slot).0.is_none());
+    }
+
+    // console_rule_hits_test.zig: "published rule generations retain identities and a
+    // failed rebuild cannot reset counters".
+    #[cfg(feature = "console")]
+    #[test]
+    fn published_generations_keep_identities_and_a_failed_rebuild_keeps_the_counters() {
+        use sibuna_console::{ManualClock, RuleHitSample};
+        use sibuna_policy::RuleMatches;
+
+        use crate::console::hits::Generations;
+
+        let slot = Arc::new(EngineSlot::new(Engine::new(8)));
+        let clock = Arc::new(ManualClock::new(100, 1));
+        let generations = Generations::new(1, [1; 16], clock);
+        let mut publisher = Publisher::new(recipe(), Arc::clone(&slot)).observed(generations);
+        let mut tracked = row("tracked", PolicyAction::Allow, "/tracked");
+        tracked.name = "Tracked".into();
+        let mut snapshot =
+            PolicySnapshot { revision: 4, rules: vec![tracked], ..Default::default() };
+        assert!(publisher.publish(&snapshot));
+        let first = slot.load_hits().unwrap();
+        let engine = slot.load();
+        let mut matches = RuleMatches::new();
+        engine
+            .evaluate_with_matches(&RequestView::new(b"/tracked", b"8.8.8.8", b""), &mut matches);
+        first.record(&matches, engine.rule_count());
+        assert_eq!(first.generation().rules[0].key.as_str(), "m:tracked");
+        let number = first.generation().number;
+        // A refused snapshot publishes nothing: the counters keep their hit.
+        let mut broken = snapshot.clone();
+        broken.rules[0].header_matchers = Some("[]".into());
+        assert!(!publisher.publish(&broken));
+        let unchanged = slot.load_hits().unwrap();
+        assert_eq!(unchanged.generation().number, number);
+        let mut sample = RuleHitSample::default();
+        unchanged.sample(&mut sample);
+        assert_eq!(sample.counts.values[0], 1);
+        // A renamed rule is a new generation with the same key and fresh counters.
+        snapshot.revision = 5;
+        snapshot.rules[0].name = "Renamed".into();
+        assert!(publisher.publish(&snapshot));
+        let replaced = slot.load_hits().unwrap();
+        assert!(replaced.generation().number > number);
+        assert_eq!(replaced.generation().revision, 5);
+        assert_eq!(replaced.generation().rules[0].key.as_str(), "m:tracked");
+        assert_eq!(replaced.generation().rules[0].name.as_str(), "Renamed");
+        replaced.sample(&mut sample);
+        assert_eq!(sample.counts.values[0], 0);
     }
 }

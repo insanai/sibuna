@@ -54,6 +54,9 @@ fn help_lists_every_option() {
     let output = run(SIBUNA, &["-p", "1", "--help"]);
     assert!(output.status.success());
     let text = stderr(&output);
+    // With the console, its options are listed first, as Zig listed them.
+    #[cfg(feature = "console")]
+    let text = text.strip_prefix(sibuna::console::HELP).unwrap().to_owned();
     assert_eq!(text, sibuna_core::config::HELP);
     for option in ["--max-connections", "--policy-file", "--database-url", "--storage-poll-ms"] {
         assert!(text.contains(option), "{option}");
@@ -172,6 +175,7 @@ fn unusable_secrets_stop_startup() {
     std::fs::remove_dir_all(dir).unwrap();
 }
 
+#[cfg(not(feature = "console"))]
 #[test]
 fn the_console_subcommand_needs_the_console_feature() {
     let output = run(SIBUNA, &["console", "users"]);
