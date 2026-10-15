@@ -38,6 +38,10 @@ Revision note
 
 2026-10-15 (Rust port, false positive fix): a command name counts only when it is a command. A name followed by ``=`` or by a bracketed index and ``=`` (``id=``, ``type[]=``) is a shell assignment word, and in a query string it is a parameter, so ``a=1&id=5``, ``page=2&type=book`` and ``q=x;env=prod`` are no longer denied as ``waf:rce``. Zig denied them, which blocked ordinary requests whose parameters are named ``id``, ``type``, ``set``, ``dir``, ``cat`` or ``env``. The lone ``&`` stays a separator, so ``ping 127.0.0.1&id`` is still denied. The index is looked at for at most 64 bytes.
 
+2026-10-15 (Rust port, inspection modes): when some category is audited or disabled rather than enforced, each field is inspected per category, so that an audited finding cannot hide an enforced one. Zig then scanned the field with the automaton once per category. The port scans it once for the set of categories whose signatures occur in it, and then runs the tagged search only for the wanted categories among them; a category without a signature hit goes to its structural detector, as before. The findings are the same.
+
+2026-10-15 (Rust port, correction): the section on rate limiting stated Zig's table size, 16 shards of 512 slots. It now states the port's: the 16 shards share ``--rate-table-cells`` cells (default 262,144, so 16,384 per shard), a value clamped to 4,096 to 16,777,216 and rounded up to a power of two. The probe window is still 16 slots. The ban table's writers are serialised by a ``std::sync::Mutex`` instead of a spin flag; readers still validate a versioned snapshot without taking a lock.
+
 Abstract
 --------
 
@@ -94,7 +98,7 @@ The path, the query string, the User-Agent, every header except the structural c
 GCRA rate limiter
 ~~~~~~~~~~~~~~~~~
 
-The flood limiter is the Generic Cell Rate Algorithm in its virtual-scheduling form. A client's state is one 16-byte cell (keyed hash, theoretical arrival time). With emission interval :math:`T = \max(1, \lceil W / N \rceil)` and burst tolerance :math:`\tau = (N - 1) T`, an arrival at :math:`t` conforms iff :math:`\mathrm{TAT} \le t + \tau`, after which :math:`\mathrm{TAT} = \max(\mathrm{TAT}, t) + T`. The guarantee is the token-bucket bound: at most :math:`N + \lfloor L / T \rfloor` requests conform in any interval of length :math:`L`, with no fixed-window boundary artefact and no per-request log. Cells live in 16 lock-striped shards of 512 slots with a 16-slot probe window; a cell whose TAT is older than :math:`t - \tau` is drained and reclaimed in place. Defaults are 100 requests per 10 s (``--rate-limit``, ``--rate-window``); a rejection answers ``429`` with ``Retry-After``.
+The flood limiter is the Generic Cell Rate Algorithm in its virtual-scheduling form. A client's state is one 16-byte cell (keyed hash, theoretical arrival time). With emission interval :math:`T = \max(1, \lceil W / N \rceil)` and burst tolerance :math:`\tau = (N - 1) T`, an arrival at :math:`t` conforms iff :math:`\mathrm{TAT} \le t + \tau`, after which :math:`\mathrm{TAT} = \max(\mathrm{TAT}, t) + T`. The guarantee is the token-bucket bound: at most :math:`N + \lfloor L / T \rfloor` requests conform in any interval of length :math:`L`, with no fixed-window boundary artefact and no per-request log. Cells live in 16 lock-striped shards that share ``--rate-table-cells`` slots (default 262,144) with a 16-slot probe window; a cell whose TAT is older than :math:`t - \tau` is drained and reclaimed in place. Defaults are 100 requests per 10 s (``--rate-limit``, ``--rate-window``); a rejection answers ``429`` with ``Retry-After``.
 
 Ban table and incidents
 ~~~~~~~~~~~~~~~~~~~~~~~

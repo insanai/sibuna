@@ -28,6 +28,8 @@ Revision note
 
 2026-10-15 (Rust port, security fix): ``RequestView`` carries the client address parsed once by the daemon (``client_address``); reputation and CIDR criteria read it instead of re-parsing ``client_ip``, which remains for incidents and logs.
 
+2026-10-15 (Rust port, rule patterns): an engine compiles each rule pattern once, when the rule enters the engine. It keeps what the pattern's form needs: the exact text, the prefix, or, for the case-insensitive substring form, a case-folded needle with a Horspool shift table. Zig interpreted the pattern grammar on every request and rebuilt its substring search table each time. The grammar and every match are unchanged.
+
 Abstract
 --------
 

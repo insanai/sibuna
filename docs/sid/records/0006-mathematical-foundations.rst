@@ -38,6 +38,14 @@ Revision note
 
 2026-10-15 (Rust port, security fix, Part H): the adaptive controller's input is the rate of verified solutions, not of issued challenges, which cost a flooder nothing; issuance only advances the bucket clock so the average decays. Arithmetic and bounds are unchanged.
 
+2026-10-15 (Rust port, Parts A to C, primitives): BLAKE3 in ``sibuna-crypto`` is portable code only. Zig's SIMD paths hash large inputs several times faster, but Sibuna hashes only inputs under 100 bytes with BLAKE3 (token tags, fingerprints, the key schedule), where the portable code is faster. Ed25519 signing cannot fail; Zig's ``sign`` returned an error when the nonce reduced to zero, an event of probability about :math:`2^{-252}`. Signing keys, the master seed and the derived keys are wiped when dropped.
+
+2026-10-15 (Rust port, Parts A and B, solvers): functions that Zig defined only for valid parameters are total and never panic. ``challenge_leaf`` keeps all 32 bits for depths of 32 or more, where Zig's shift would be illegal; ``leaf_count`` saturates; and ``meets_hex`` refuses a hexadecimal difficulty whose bit count overflows. Valid parameters (depth 4 to 24, 1 to 32 challenges, as in Zig) never reach these cases, and the prover keeps Zig's depth-first recursion, at most 25 frames deep. The native reference solver and the browser solver share one Hashcash search, which absorbs the challenge and the colon once and clones that SHA-256 state for each nonce, as the Zig browser solver did; the Zig reference solver rehashed the prefix for every nonce. The nonce found is the same.
+
+2026-10-15 (Rust port, Part E): a spent-set slot no longer stores the probe distance or an occupied flag. The distance follows from the slot index and the tag's home slot, and a zero expiry marks an empty slot (an expiry of zero is stored as one), so a slot is 24 bytes. The 16 shards share the configured capacity, which is clamped to 65,536 to 16,777,216 tags and rounded up to a power of two. Definition 25 and Lemmas 26 to 28 apply unchanged, because the distances are the same numbers, computed instead of stored. Lookup is still capped at 64 probes.
+
+2026-10-15 (Rust port, Part F, construction): the capacity of an automaton is a value given to its builder instead of a compile-time parameter, with the same failures. A failed ``add`` leaves the builder unchanged; Zig kept the states it had created. The built-in signature sets are sized from their pattern lengths, as before.
+
 Abstract
 --------
 
