@@ -45,5 +45,8 @@ Discussion registry
    * - 0011
      - :doc:`records/0011-sqlx-storage`
      - discussion
+   * - 0012
+     - :doc:`records/0012-console-tls`
+     - accepted
 
 .. sid-generated-end

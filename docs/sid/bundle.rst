@@ -17,5 +17,6 @@ Discussion reading order
    records/0009-chunked-request-bodies
    records/0010-rust-port
    records/0011-sqlx-storage
+   records/0012-console-tls
 
 .. sid-generated-end
