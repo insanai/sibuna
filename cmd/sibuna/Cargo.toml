@@ -7,6 +7,24 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+build = "build.rs"
+
+[lib]
+name = "sibuna"
+path = "src/lib.rs"
+
+[[bin]]
+name = "sibuna"
+path = "src/main.rs"
+
+[features]
+default = ["sqlite"]
+# Persistent storage (SID 0011). Without either backend the daemon is the in-memory
+# firewall and depends on no external crate.
+sqlite = ["storage", "sibuna-storage/sqlite"]
+postgres = ["storage", "sibuna-storage/postgres"]
+# Internal: set by `sqlite` and `postgres`; enables the storage wiring.
+storage = ["dep:sibuna-storage"]
 
 [dependencies]
 sibuna-crypto = { workspace = true }
@@ -18,6 +36,7 @@ sibuna-policy = { workspace = true }
 sibuna-challenge = { workspace = true }
 sibuna-net = { workspace = true }
 sibuna-pow = { workspace = true }
+sibuna-storage = { workspace = true, optional = true }
 
 [lints]
 workspace = true

@@ -1,0 +1,95 @@
+//! Incidents handed to the storage layer: WAF denials, honeypot hits and audit findings.
+//! The hook copies what it keeps into a bounded ring, so recording never allocates or
+//! blocks the request.
+
+use std::io::Write;
+
+use sibuna_core::Incident;
+use sibuna_http::Method;
+use sibuna_policy::inspection::{audit_name, bit};
+use sibuna_policy::waf::AttackCategory;
+
+use crate::context::Ctx;
+
+/// The longest forensic payload recorded.
+const MAX_PAYLOAD: usize = 2048;
+
+/// Records a denial or honeypot hit in `category`, with the query (or else the body) as its
+/// forensic payload.
+pub(crate) fn record_incident<W: Write>(ctx: &Ctx<'_, W>, category: &str) {
+    let Some(hook) = ctx.server.hooks.record_incident.as_ref() else { return };
+    let request = &ctx.request;
+    let payload = if request.query.is_empty() { request.body } else { request.query };
+    let incident = Incident {
+        client_ip: text(ctx.client_ip),
+        user_agent: ctx.user_agent,
+        method: method_name(request.method),
+        path: request.path,
+        category,
+        payload: payload.get(..payload.len().min(MAX_PAYLOAD)).unwrap_or_default(),
+        now: ctx.now,
+        response_state: sibuna_core::incident::ResponseState::Local,
+        ..Incident::default()
+    };
+    hook(&incident);
+}
+
+/// Records one incident per audited WAF category in `findings`. An audit finding is not a
+/// response outcome: it keeps no raw query or body payload.
+pub(crate) fn record_audit_findings<W: Write>(ctx: &Ctx<'_, W>, findings: u8) {
+    if findings == 0 {
+        return;
+    }
+    let Some(hook) = ctx.server.hooks.record_incident.as_ref() else { return };
+    for category in AttackCategory::ALL {
+        if findings & bit(category) == 0 {
+            continue;
+        }
+        hook(&Incident {
+            client_ip: text(ctx.client_ip),
+            user_agent: ctx.user_agent,
+            method: method_name(ctx.request.method),
+            path: ctx.request.path,
+            category: audit_name(category),
+            payload: b"",
+            now: ctx.now,
+            response_state: sibuna_core::incident::ResponseState::Local,
+            ..Incident::default()
+        });
+    }
+}
+
+/// The method's name as the Zig daemon wrote it (`@tagName` of its method enum).
+pub(crate) fn method_name(method: Method) -> &'static str {
+    match method {
+        Method::Get => "GET",
+        Method::Post => "POST",
+        Method::Head => "HEAD",
+        Method::Put => "PUT",
+        Method::Delete => "DELETE",
+        Method::Options => "OPTIONS",
+        Method::Patch => "PATCH",
+        Method::Other => "OTHER",
+    }
+}
+
+/// The client address as text: its longest valid UTF-8 prefix (an address read from a
+/// forwarded header is not checked to be one).
+fn text(bytes: &[u8]) -> &str {
+    match std::str::from_utf8(bytes) {
+        Ok(text) => text,
+        Err(error) => std::str::from_utf8(&bytes[..error.valid_up_to()]).unwrap_or_default(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn addresses_keep_their_valid_prefix() {
+        assert_eq!(text(b"203.0.113.1"), "203.0.113.1");
+        assert_eq!(text(b"10.\xff1"), "10.");
+        assert_eq!(method_name(Method::Other), "OTHER");
+    }
+}
