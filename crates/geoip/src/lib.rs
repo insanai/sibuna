@@ -78,6 +78,7 @@ pub mod country;
 mod database;
 pub mod gzip;
 mod loader;
+pub mod prefixes;
 pub mod provider;
 pub mod range;
 pub mod snapshot;
