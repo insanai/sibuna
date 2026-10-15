@@ -184,8 +184,8 @@ pub struct Config {
     pub challenge_rate_limit: u32,
     /// The honeypot ban duration in seconds.
     pub ban_seconds: u64,
-    /// The prefix length IPv6 clients are aggregated to for rate limits and bans, so one
-    /// network's addresses share one budget.
+    /// The prefix length IPv6 clients are aggregated to for rate limits, bans and the
+    /// per-client connection bound, so one network's addresses share one budget.
     pub ipv6_prefix: u8,
     /// Cells of each GCRA limiter table (requests, rule quotas, challenge budget), 16 bytes
     /// each, rounded up to a power of two.
@@ -425,12 +425,12 @@ Surface:
   --policy-file, -P <path>     Declarative JSON policy file
 
 Client identity and state tables:
-  --max-connections-per-ip <n> Concurrent connections per client address, 0 = no bound
-                               (default: 64)
+  --max-connections-per-ip <n> Concurrent connections per client address (IPv6: per
+                               --ipv6-prefix network), 0 = no bound (default: 64)
   --trusted-hops <n>           Trusted proxies in front of Sibuna: the client is the n-th
                                X-Forwarded-For entry from the right (1-8, default: 1)
-  --ipv6-prefix <len>          IPv6 prefix that limits and bans apply to (32-128,
-                               default: 64)
+  --ipv6-prefix <len>          IPv6 prefix that limits, bans and the connection bound
+                               apply to (32-128, default: 64)
   --rate-table-cells <n>       Cells per rate limiter table, 16 bytes each
                                (default: 262144)
   --ban-table-slots <n>        Ban table slots, 24 bytes each (default: 65536)

@@ -132,7 +132,7 @@ impl Server {
         let capacity = Config::MAX_CONNECTIONS_LIMIT as usize;
         Server {
             max_connections: AtomicU32::new(config.max_connections),
-            peers: PeerTable::new(),
+            peers: PeerTable::with_ipv6_prefix(config.ipv6_prefix),
             config,
             slot,
             coordinator,

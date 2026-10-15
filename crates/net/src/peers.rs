@@ -7,8 +7,12 @@
 //! keyed hash and a scan of one bucket, whatever the load.
 //!
 //! The key is the canonical address of the socket peer: an IPv4 address and the same address
-//! written as IPv4-mapped IPv6 count together. Forwarded headers play no part, because they are
-//! not read before a connection is admitted and a client can write them freely.
+//! written as IPv4-mapped IPv6 count together. An IPv6 address counts with its network of the
+//! table's prefix length ([`PeerTable::with_ipv6_prefix`]; the daemon passes `--ipv6-prefix`,
+//! a /64 by default), because one subscriber usually holds a whole /64 and could otherwise
+//! open the allowed connections from each of its addresses. Forwarded headers play no part,
+//! because they are not read before a connection is admitted and a client can write them
+//! freely.
 //!
 //! ```
 //! use std::net::{IpAddr, Ipv4Addr};
@@ -73,11 +77,16 @@ pub struct PeerTable {
     buckets: Box<[Mutex<[Entry; BUCKET_ENTRIES]>]>,
     /// The hash keys, random per table, so a client cannot aim at one bucket.
     hasher: RandomState,
+    /// The leading bits of an IPv6 address that name its client, 32 to 128.
+    ipv6_prefix: u8,
 }
 
 impl fmt::Debug for PeerTable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("PeerTable").field("buckets", &self.buckets.len()).finish()
+        f.debug_struct("PeerTable")
+            .field("buckets", &self.buckets.len())
+            .field("ipv6_prefix", &self.ipv6_prefix)
+            .finish()
     }
 }
 
@@ -92,20 +101,31 @@ fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
     mutex.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
-/// The canonical key of `address`.
-fn key_of(address: IpAddr) -> Key {
+/// The canonical key of `address`: IPv4 as IPv4-mapped IPv6, and IPv6 cut to its first
+/// `ipv6_prefix` bits.
+fn key_of(address: IpAddr, ipv6_prefix: u8) -> Key {
     match address.to_canonical() {
         IpAddr::V4(v4) => v4.to_ipv6_mapped().octets(),
-        IpAddr::V6(v6) => v6.octets(),
+        IpAddr::V6(v6) => {
+            let mask = u128::MAX.checked_shl(128 - u32::from(ipv6_prefix.min(128))).unwrap_or(0);
+            (u128::from(v6) & mask).to_be_bytes()
+        }
     }
 }
 
 impl PeerTable {
-    /// An empty table of 1,024 buckets of 16 clients (about 330 KiB), allocated once.
+    /// An empty table of 1,024 buckets of 16 clients (about 330 KiB), allocated once, that
+    /// counts every address on its own.
     pub fn new() -> PeerTable {
+        PeerTable::with_ipv6_prefix(128)
+    }
+
+    /// An empty table like [`PeerTable::new`] that counts an IPv6 address with the network
+    /// of its first `ipv6_prefix` bits (clamped to 32 to 128), as limits and bans do.
+    pub fn with_ipv6_prefix(ipv6_prefix: u8) -> PeerTable {
         let buckets =
             (0..BUCKETS).map(|_| Mutex::new([Entry::default(); BUCKET_ENTRIES])).collect();
-        PeerTable { buckets, hasher: RandomState::new() }
+        PeerTable { buckets, hasher: RandomState::new(), ipv6_prefix: ipv6_prefix.clamp(32, 128) }
     }
 
     /// Admits one more connection from `address` when it holds fewer than `limit`; a limit
@@ -122,7 +142,7 @@ impl PeerTable {
         if limit == 0 {
             return Ok(PeerTicket { slot: None });
         }
-        let key = key_of(address);
+        let key = key_of(address, self.ipv6_prefix);
         let index = self.bucket_of(&key);
         let Some(bucket) = self.buckets.get(index) else {
             return Ok(PeerTicket { slot: None });
@@ -154,9 +174,9 @@ impl PeerTable {
         }
     }
 
-    /// The connections `address` holds now, as tracked.
+    /// The connections `address` (with its IPv6 network) holds now, as tracked.
     pub fn count(&self, address: IpAddr) -> u32 {
-        let key = key_of(address);
+        let key = key_of(address, self.ipv6_prefix);
         self.buckets.get(self.bucket_of(&key)).map_or(0, |bucket| {
             let entries = lock(bucket);
             entries.iter().find(|entry| entry.count > 0 && entry.key == key).map_or(0, |e| e.count)
@@ -207,6 +227,33 @@ mod tests {
         let v6 = IpAddr::V6(Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0, 1));
         let ticket = table.admit(v6, 1).unwrap();
         assert_eq!(table.count(v6), 1);
+        table.release(ticket);
+    }
+
+    // One subscriber's /64 shares one count; another /64 has its own.
+    #[test]
+    fn ipv6_addresses_count_with_their_network() {
+        let table = PeerTable::with_ipv6_prefix(64);
+        let one = IpAddr::V6(Ipv6Addr::new(0x2001, 0xdb8, 0, 1, 0, 0, 0, 1));
+        let same = IpAddr::V6(Ipv6Addr::new(0x2001, 0xdb8, 0, 1, 0xffff, 2, 3, 4));
+        let other = IpAddr::V6(Ipv6Addr::new(0x2001, 0xdb8, 0, 2, 0, 0, 0, 1));
+        let first = table.admit(one, 2).unwrap();
+        let second = table.admit(same, 2).unwrap();
+        assert_eq!(table.admit(same, 2).unwrap_err(), OverLimit);
+        let third = table.admit(other, 2).unwrap();
+        assert_eq!((table.count(one), table.count(other)), (2, 1));
+        [first, second, third].into_iter().for_each(|ticket| table.release(ticket));
+        assert_eq!(table.count(same), 0);
+        // The default table counts each address alone; IPv4 is never grouped.
+        let alone = PeerTable::new();
+        let tickets = [alone.admit(one, 1).unwrap(), alone.admit(same, 1).unwrap()];
+        tickets.into_iter().for_each(|ticket| alone.release(ticket));
+        let grouped_v4 = IpAddr::V4(Ipv4Addr::new(198, 51, 100, 1));
+        let ticket = table.admit(grouped_v4, 1).unwrap();
+        assert!(table.admit(IpAddr::V4(Ipv4Addr::new(198, 51, 100, 2)), 1).is_ok_and(|t| {
+            table.release(t);
+            true
+        }));
         table.release(ticket);
     }
 
