@@ -70,6 +70,13 @@ codegen-units = 1
 lto = "fat"
 debug = "line-tables-only"
 
+# The bundled SQLite's build script passes a plain `-g` for any debug setting, so its C code
+# carried full debug information: 13 MB of the 49 MB binary. Our panics and backtraces need
+# line tables of Rust code only. (ring adds `-g3` to its C code whatever the profile says.)
+# Debug sections are never loaded, so this changes the file's size, not resident memory.
+[profile.release.package.libsqlite3-sys]
+debug = false
+
 # The two WebAssembly modules are built with `cargo build --target wasm32-unknown-unknown
 # --profile wasm -p <crate>`: the browser solver (`sibuna-pow-wasm`) is downloaded by every
 # challenged visitor, the console interface (`sibuna-console-ui`) once per operator session,
