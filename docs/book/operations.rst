@@ -589,14 +589,17 @@ Each incident payload is embedded as a 64-dimensional unit vector by the hashing
 Clustering
 ~~~~~~~~~~
 
-A cluster is a set of nodes that share one PostgreSQL database. Build with the ``postgres`` feature (``cargo build --release -p sibuna --features postgres``) and start each member with the database and a node id of its own:
+A cluster is a set of nodes that share one PostgreSQL database. Build with the ``postgres-tls`` feature (``cargo build --release -p sibuna --features postgres-tls``; it implies ``postgres``) and start each member with the database and a node id of its own:
 
 .. code-block:: sh
 
    sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 \
           --secret-file /etc/sibuna/secret
 
-Every member must use the same master secret and a unique ``--cluster-node`` from 1 to 8,388,607. The URL file holds one ``postgres://`` URL and must be readable by its owner only; the banner never prints the URL. Writes go to the PostgreSQL primary. Each node's storage thread sees the committed revision change (by ``NOTIFY`` or by polling) and rebuilds its engine. The build enables no TLS for PostgreSQL connections (SID 0011 leaves the question open), so the connection to the database is not encrypted by Sibuna.
+Every member must use the same master secret and a unique ``--cluster-node`` from 1 to 8,388,607. The URL file holds one ``postgres://`` URL and must be readable by its owner only; the banner never prints the URL. Writes go to the PostgreSQL primary. Each node's storage thread sees the committed revision change (by ``NOTIFY`` or by polling) and rebuilds its engine.
+Nodes reach the shared database across the network, so we encrypt and verify that connection. We give the server a certificate signed by our own certificate authority, and we name that authority in the URL: ``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``. On the server we accept TCP only through ``hostssl`` lines in ``pg_hba.conf``.
+
+At startup the daemon prints one line about the database connection. With ``verify-full`` it says that the certificate and host name are verified. With any weaker mode it prints a warning and a hint. Without ``sslmode`` the mode is ``prefer``: the connection is encrypted only if the server offers TLS, and the server is not verified. A daemon built without ``postgres-tls`` refuses ``require``, ``verify-ca`` and ``verify-full`` and names the missing feature; it never falls back to plaintext. A refused certificate stops startup at once; the hint asks us to check ``sslrootcert`` and that the URL's host is a name in the server's certificate. ``sslrootcert`` adds our authority to the system trust store; it does not remove the system's authorities (SID 0011, SID 0012).
 
 The Zig daemon replicated an embedded SQLite through Multi-Paxos (Zaxonlite), with a static member list, an elected leader, mutual TLS between members and snapshots of the replicated log. None of that exists in the Rust port. Replication, failover and backups are PostgreSQL's (streaming replication, Patroni or a managed service). The console's node view has no leader: it shows the role ``single`` for a SQLite node and ``unknown`` for a PostgreSQL node, and ``quorum`` means only that the node's last database round trip succeeded. If the database is unreachable, the last published engine keeps serving, incidents queue in the bounded ring and are dropped with a counter once it is full, and the storage thread retries with backoff; a node keeps its last policy until it reconnects. A Zig data directory is not read: export policies with ``sibuna console policies export`` from the Zig daemon and import them into the Rust daemon. Forensic history is not migrated.
 
