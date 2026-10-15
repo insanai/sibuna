@@ -188,6 +188,23 @@ The standards of SID 0001 carry over, written for Rust:
 - Bounded work on untrusted input: explicit limits that return errors, never panics or unbounded allocation.
 - ``cargo build``, ``cargo test``, ``cargo clippy --all-targets -- -D warnings``, ``cargo fmt --check`` and ``cargo xtask check`` pass before a change is merged. GitHub workflows may use shell or Python glue; repository tools are Rust.
 
+Memory management that Rust makes unnecessary
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Much Zig code existed only to manage memory by hand or to avoid footguns: ``deinit`` and ``errdefer`` chains, arenas reset per rebuild, double-buffered engine slots reused to avoid reallocating several megabytes, ``undefined`` initialisation, alignment workarounds for heap fixtures, and comments of the form "this slice must not outlive the next read". The port does not carry this machinery over. Ownership, borrowing, ``Drop`` and values built once off the hot path give the same guarantees, checked by the compiler. Each crate's documentation names the Zig mechanisms it removed and what replaced them. The observable behaviour (bytes on the wire, decisions, bounds and error texts) does not change, and the request path still does not allocate.
+
+Tools and documentation
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Repository tools are Rust programs under ``tools/``, in the pattern guidedog uses: ``tools/xtask`` dispatches ``cargo xtask <task>`` (``check``, and later ``wasm`` and ``bench``), and standalone tool crates sit beside it. The Zig repository's Python and shell drivers are not ported as scripts. End-to-end tests become Rust integration tests, and browser checks drive headless Chromium from Rust over the DevTools protocol, reusing the workspace's WebSocket and JSON crates. Python is allowed only in GitHub workflow glue, or in a benchmark driver when no reasonable Rust alternative exists.
+
+Documentation is not code. The design records are a guidedog discussion catalog (``docs/sid``, managed with ``guidedog dsc``) and the book and manual are guidedog projects; their PDFs use the Sibuna Typst design in each project's ``_templates/``. The repository contains no documentation build code: the Zig ``tools/sid.zig`` and the ``zig build sid*`` and ``book`` steps have no Rust counterpart.
+
+The OWASP Core Rule Set
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Sibuna's WAF is its own structural inspection (SID 0004), not the OWASP Core Rule Set. We evaluated running CRS beside it. The pure-Rust SecLang engines (``zentinel-modsec`` 0.4, about 92% of the CRS regression suite; ``barbacane-waf`` 0.1, about 94% and marked by its author as not for deployment) are single-maintainer projects a few months old whose recent history includes bypasses; the alternatives are bindings to libmodsecurity (C++) or to Coraza (Go). None is mature enough to enforce decisions on an edge server, and a missed case is a bypass. CRS is therefore an optional, off-by-default ``crs`` feature that runs ``zentinel-modsec`` (pinned) in audit mode, recording findings without changing decisions, while Sibuna's own inspection remains the enforcing layer. SID 0012 records the evaluation and the conditions for enforcing CRS.
+
 Rationale and alternatives
 --------------------------
 
