@@ -26,6 +26,8 @@ Revision note
 
 2026-10-15 (Rust port, security fix): with forwarded identity trusted, the client is the ``X-Forwarded-For`` entry ``--trusted-hops`` positions from the right (default 1, the address the nearest trusted proxy appended), reading all ``X-Forwarded-For`` fields as one list; ``X-Real-IP`` is read only without ``X-Forwarded-For``. An entry that is not an IP address is not trusted: the request is judged by the socket peer and counted (``sibuna_forwarded_invalid_total``). Zig took the leftmost entry, which appending ingresses pass through from the client, so a client could choose its own identity: ban others, reuse one solved proof across addresses and evade every per-client limit. The address is parsed once per request.
 
+2026-10-15 (Rust port): the origin receives ``X-Forwarded-For`` as a reverse proxy passes it on: the received chain when forwarded identity is trusted, followed by ``, `` and the socket peer; without trust, the socket peer alone, never a client-written entry. ``X-Real-IP`` is the client the request was judged by. Zig wrote the judged client into both fields. Origins behind Sibuna must read the client from ``X-Real-IP`` or from the right of ``X-Forwarded-For``, never from its leftmost entry.
+
 Abstract
 --------
 
