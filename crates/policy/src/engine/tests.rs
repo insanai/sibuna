@@ -91,7 +91,8 @@ fn engine_blocks_safeline_waf_attack_vectors_and_can_disable_the_waf() {
     assert_eq!((d_lfi.action, d_lfi.rule_name), (Action::Deny, "waf:path-traversal"));
     let headers = [Header { name: b"X-Query", value: b"<script>alert(1)</script>" }];
     let request = RequestView { headers: &headers, ..view(b"/search", b"1.2.3.4", b"Mozilla") };
-    assert_eq!(engine.evaluate(&request).rule_name, "waf:xss");
+    let d_xss = engine.evaluate(&request);
+    assert_eq!((d_xss.action, d_xss.rule_name), (Action::Deny, "waf:xss"));
     let request =
         RequestView { body: b"cmd=test; /bin/sh", ..view(b"/submit", b"1.2.3.4", b"Mozilla") };
     let d_rce = engine.evaluate(&request);
