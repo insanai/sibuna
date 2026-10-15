@@ -9,7 +9,6 @@
 //! and its result after it (S28).
 
 use std::fmt::{self, Write};
-use std::net::IpAddr;
 
 use sibuna_console_protocol::Text;
 use sibuna_console_protocol::codec::{
@@ -23,9 +22,7 @@ use sibuna_console_storage::notifications::{
     Reader, query_destinations, record_test, remove_destination, save_destination,
 };
 use sibuna_crypto::ct;
-use sibuna_crypto::sha256::Sha256;
 use sibuna_json::{Value, Writer};
-use sibuna_net::outbound::{self, Policy};
 use sibuna_serve::Context;
 
 use super::settings::settings_error;
@@ -33,13 +30,9 @@ use crate::auth::secrets::seal_bytes;
 use crate::dispatch::Call;
 use crate::http::body::read_json;
 use crate::http::{RouteError, reply};
+use crate::notify::target::{envelope_subject, target_host};
 use crate::routes::Handler;
 use crate::shared::Shared;
-
-/// The longest webhook URL Zig accepted, in bytes.
-const MAX_URL: usize = 512;
-/// The longest syslog address, in bytes.
-const MAX_SYSLOG: usize = 255;
 
 /// Serves `call.route`, one of this module's routes, after the dispatcher's checks.
 ///
@@ -55,107 +48,6 @@ pub fn handle(shared: &Shared, context: &mut Context<'_>, call: &Call) -> Result
         Handler::NotificationsTest => test(shared, context, call),
         _ => Err(RouteError::Unavailable),
     }
-}
-
-/// Returns the subject a sealed secret is bound to: the first eight bytes, little-endian,
-/// of SHA-256 over a domain and the destination's target. An envelope copied onto a row
-/// with another target cannot be opened, and the subject is known before the row has an id
-/// (Zig's `notify_target.envelopeSubject`).
-pub(crate) fn envelope_subject(target: &str) -> u64 {
-    let mut hasher = Sha256::new();
-    hasher.update(b"sibuna-console-notify-target-v1");
-    hasher.update(target.as_bytes());
-    let digest = hasher.finalize();
-    let mut first = [0u8; 8];
-    first.copy_from_slice(digest.get(..8).unwrap_or(&[0; 8]));
-    u64::from_le_bytes(first)
-}
-
-/// Returns the host of `target` when it may be stored for `kind` (Zig's `validateWebhook`
-/// and `validateSyslog`), or `None`.
-pub(crate) fn target_host(kind: Kind, target: &str) -> Option<String> {
-    match kind {
-        Kind::Webhook => webhook_host(target),
-        Kind::Syslog => syslog_host(target),
-    }
-}
-
-/// A webhook is `https://` to a public host on port 443 or 8443, or `http://` to a loopback
-/// literal on a port of 1024 or more, without user information or a fragment.
-fn webhook_host(url: &str) -> Option<String> {
-    if url.len() > MAX_URL || url.contains([' ', '\t', '\r', '\n', '"', '\'', '<', '>', '\\']) {
-        return None;
-    }
-    let (https, rest) = match (url.strip_prefix("https://"), url.strip_prefix("http://")) {
-        (Some(rest), _) => (true, rest),
-        (None, Some(rest)) => (false, rest),
-        _ => return None,
-    };
-    if url.contains('#') {
-        return None;
-    }
-    let end = rest.find(['/', '?']).unwrap_or(rest.len());
-    let authority = rest.get(..end)?;
-    if authority.contains('@') {
-        return None;
-    }
-    let (host, port) = split_host_port(authority)?;
-    let port = match port {
-        Some(text) => text.parse::<u16>().ok().filter(|&port| port != 0)?,
-        None if https => 443,
-        None => 80,
-    };
-    let literal = host.parse::<IpAddr>().ok();
-    let allowed = match literal {
-        Some(address) => {
-            outbound::is_allowed(
-                address,
-                if https { Policy::PublicOnly } else { Policy::LoopbackAllowed },
-            ) && (https || address.is_loopback())
-        }
-        None => https,
-    };
-    let port_allowed = if https { port == 443 || port == 8443 } else { port >= 1024 };
-    let named = outbound::Host::new(host).is_ok();
-    (allowed && port_allowed && named).then(|| host.to_owned())
-}
-
-/// Splits `authority` into a host (brackets removed) and an optional port text.
-fn split_host_port(authority: &str) -> Option<(&str, Option<&str>)> {
-    if let Some(rest) = authority.strip_prefix('[') {
-        let close = rest.find(']')?;
-        let host = rest.get(..close)?;
-        let after = rest.get(close + 1..)?;
-        let port = match after {
-            "" => None,
-            _ => Some(after.strip_prefix(':')?),
-        };
-        return (!host.is_empty()).then_some((host, port));
-    }
-    let (host, port) = match authority.rsplit_once(':') {
-        Some((host, port)) => (host, Some(port)),
-        None => (authority, None),
-    };
-    (!host.is_empty() && !host.contains(':')).then_some((host, port))
-}
-
-/// A syslog receiver is `host:port`; a literal address must be public or loopback.
-fn syslog_host(text: &str) -> Option<String> {
-    if text.is_empty() || text.len() > MAX_SYSLOG {
-        return None;
-    }
-    let (host, port) = text.rsplit_once(':')?;
-    let host = host.strip_prefix('[').and_then(|bare| bare.strip_suffix(']')).unwrap_or(host);
-    if host.is_empty() || host.contains([' ', '\t', '\r', '\n', '/', '\\', '"', '\'']) {
-        return None;
-    }
-    port.parse::<u16>().ok().filter(|&port| port != 0)?;
-    if let Ok(address) = host.parse::<IpAddr>()
-        && !outbound::is_allowed(address, Policy::LoopbackAllowed)
-    {
-        return None;
-    }
-    Some(host.to_owned())
 }
 
 /// The body of `notifications/query`.
@@ -430,47 +322,6 @@ impl Encode for Tested<'_> {
 mod tests {
     use super::*;
     use sibuna_console_protocol::codec::from_json;
-
-    // notify_target.zig: "webhook targets are https to public hosts or http to loopback
-    // literals" (the storage half; the notifier checks again before delivery).
-    #[test]
-    fn webhooks_are_https_to_public_hosts_or_http_to_loopback_literals() {
-        assert_eq!(
-            target_host(Kind::Webhook, "https://hooks.example/notify?team=ops").as_deref(),
-            Some("hooks.example")
-        );
-        assert_eq!(
-            target_host(Kind::Webhook, "https://[2606:4700::1]:8443/x").as_deref(),
-            Some("2606:4700::1")
-        );
-        for refused in [
-            "http://hooks.example/x",
-            "https://user@hooks.example/x",
-            "https://10.0.0.1/x",
-            "https://169.254.169.254/",
-            "ftp://hooks.example/x",
-            "https://hooks.example:22/x",
-            "https://[fe80::1]/x",
-            "https://hooks.example/x#frag",
-            "",
-            "https://hooks.example:9443/x",
-            "http://127.0.0.1:80/hook",
-            "https://hooks.example:0/x",
-            "https://hooks example/x",
-        ] {
-            assert_eq!(target_host(Kind::Webhook, refused), None, "{refused}");
-        }
-    }
-
-    #[test]
-    fn syslog_targets_are_host_and_port() {
-        assert_eq!(target_host(Kind::Syslog, "logs.example:514").as_deref(), Some("logs.example"));
-        assert_eq!(target_host(Kind::Syslog, "127.0.0.1:514").as_deref(), Some("127.0.0.1"));
-        assert_eq!(target_host(Kind::Syslog, "[::1]:514").as_deref(), Some("::1"));
-        for refused in ["logs.example", "10.0.0.1:514", "logs.example:0", ":514", "a/b:514"] {
-            assert_eq!(target_host(Kind::Syslog, refused), None, "{refused}");
-        }
-    }
 
     #[test]
     fn subjects_bind_the_target_and_forms_decode() {
