@@ -86,8 +86,8 @@ The schema is the one of SID 0005 and SID 0007, written once per dialect and app
      - ``ON CONFLICT ... DO UPDATE``
      - ``ON CONFLICT ... DO UPDATE``
    * - full-text search
-     - FTS5 external-content table ``incidents_fts``
-     - generated ``tsvector`` column with a GIN index
+     - FTS5 table ``incidents_fts`` holding a text rendering of the incident
+     - generated ``tsvector`` column over a text rendering, with a GIN index
    * - revision triggers
      - ``CREATE TRIGGER ... BEGIN UPDATE sibuna_meta ...; END``
      - a PL/pgSQL function and ``AFTER`` statement triggers
@@ -108,6 +108,8 @@ Incidents and campaigns
 An incident identifier is ``(node_id << 40) | sequence``. Each node keeps a durable receipt ``incident_cursor_<node>`` in ``sibuna_meta``, advanced in the same transaction as the batch, and every insert is guarded by the receipt, so replaying a batch after an ambiguous failure writes nothing twice. These rules are unchanged from SID 0005.
 
 Zaxonlite linked sqlite-vec and assigned campaigns with a nearest-neighbour query over every stored embedding. The Rust port stores the 64-dimension embedding of SID 0006 as 256 bytes (little-endian ``f32``) in ``security_incidents.embedding`` and searches in the storage thread: it keeps the most recent 16,384 embeddings of all nodes in memory (4 MiB), refreshed incrementally from the database on each tick, and assigns an incident to the campaign of its nearest neighbour when the cosine distance is at most 0.35. The distance threshold, the embedding and the campaign identifiers are unchanged. Clustering against older incidents than the window is a deliberate omission: campaigns are recent by nature, and the bound keeps memory and work fixed.
+
+A request carries bytes, not text, and an investigator needs the exact bytes of an attack. The columns ``user_agent``, ``path`` and ``offending_payload`` therefore hold raw bytes (``BLOB`` in SQLite, ``BYTEA`` in PostgreSQL), exactly as captured within the per-field bounds of the incident record (200, 512 and 512 bytes). The columns ``client_ip``, ``method`` and ``violation_category`` stay text. Full-text search indexes a lossy UTF-8 rendering of the path and the payload, in which invalid sequences are replaced by U+FFFD and NUL bytes are removed. On SQLite the rendering is kept in the FTS5 table ``incidents_fts``, which stores its own copy of the text instead of reading external content, because its external content would be the raw bytes; a row leaves the index with ``DELETE FROM incidents_fts WHERE rowid = ...``. On PostgreSQL the rendering is kept in a separate text column ``search_text`` (the path, a space, the payload) that feeds the generated ``tsvector``. Readers, the console among them, receive the raw bytes and choose how to display them. Core migration 2 converts an existing database inside its migration transaction and keeps every row; stored text becomes its UTF-8 bytes.
 
 Reputation and bans
 ~~~~~~~~~~~~~~~~~~~
@@ -160,6 +162,7 @@ Review history
 
 - 2026-10-15: drafted with the Rust port (SID 0010).
 - 2026-10-15 (Rust port): the implementation in ``sibuna-storage`` differs from this specification as follows. The schema table is ``sibuna_schema(component, version, applied_at)``: the ``component`` column lets the console add its own numbered migrations without making nodes that lack the console refuse the database. Incident text is stored as UTF-8 with NUL bytes dropped and invalid sequences replaced by U+FFFD, because PostgreSQL text holds neither; Zig stored raw bytes. PostgreSQL full-text search uses a generated ``tsvector`` with the ``simple`` configuration (no stemming, like the default FTS5 tokenizer) and ``websearch_to_tsquery``, so a query string never fails to parse there, while SQLite keeps the FTS5 ``MATCH`` syntax. Under PostgreSQL a batch with honeypot bans locks the revision row first, so two nodes that ban the same addresses in different orders cannot deadlock, and the revision triggers also cover ``TRUNCATE``. Startup retries only transient connection errors, for a bounded time. The console's evidence, head and country sidecars are not written yet; the console port adds them with its own migrations.
+- 2026-10-15 (raw incident bytes): ``user_agent``, ``path`` and ``offending_payload`` are stored as raw bytes again, as the Zig daemon stored them, because the UTF-8 conversion of the previous item lost forensic detail. Full-text search indexes a lossy UTF-8 rendering of the path and the payload kept beside the bytes: in ``incidents_fts`` on SQLite, which now holds its own text and is no longer an external-content table, because external content would hand FTS5 the bytes and a delete could not reproduce the indexed text; and in the text column ``search_text`` that feeds the generated ``tsvector`` on PostgreSQL. Readers receive the raw bytes. Core migration 2 upgrades existing databases in place.
 
 References
 ----------
