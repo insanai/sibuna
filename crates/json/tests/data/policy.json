@@ -1,0 +1,205 @@
+{
+  "default_action": "ALLOW",
+  "waf": true,
+  "thresholds": {
+    "challenge_at": 20,
+    "deny_at": 60,
+    "bits_step": 4
+  },
+  "ip_rules": {
+    "203.0.0.0/24": "CHALLENGE",
+    "203.0.1.0/24": "DENY",
+    "203.0.2.0/24": "CHALLENGE",
+    "203.0.3.0/24": "DENY",
+    "203.0.4.0/24": "CHALLENGE",
+    "203.0.5.0/24": "DENY",
+    "203.0.6.0/24": "CHALLENGE",
+    "203.0.7.0/24": "DENY",
+    "203.0.8.0/24": "CHALLENGE",
+    "203.0.9.0/24": "DENY",
+    "203.0.10.0/24": "CHALLENGE",
+    "203.0.11.0/24": "DENY"
+  },
+  "rules": [
+    {
+      "name": "block-bad-worker",
+      "headers": {
+        "CF-Worker": ".*",
+        "X-Forwarded-Host": "^evil\\."
+      },
+      "action": "DENY"
+    },
+    {
+      "name": "protect-checkout",
+      "path": "/api/checkout/1/*",
+      "action": "CHALLENGE",
+      "challenge": {
+        "difficulty": 9,
+        "algorithm": "hashcash"
+      },
+      "limits": {
+        "rate": 20,
+        "window_seconds": 60,
+        "ban_seconds": 300
+      }
+    },
+    {
+      "name": "protect-login",
+      "user_agent_regex": "(?i)headless|phantom|selenium",
+      "action": "WEIGH",
+      "weight": 12
+    },
+    {
+      "name": "api-rate",
+      "cidrs": [
+        "10.0.0.0/8",
+        "192.168.0.0/16",
+        "2001:db8::/32"
+      ],
+      "action": "ALLOW"
+    },
+    {
+      "name": "suspicious-ua",
+      "path_regex": "^/(wp-admin|wp-login\\.php|\\.env|\\.git/)",
+      "action": "DENY"
+    },
+    {
+      "name": "headless",
+      "headers": {
+        "CF-Worker": ".*",
+        "X-Forwarded-Host": "^evil\\."
+      },
+      "action": "DENY"
+    },
+    {
+      "name": "scanner-paths",
+      "path": "/api/checkout/6/*",
+      "action": "CHALLENGE",
+      "challenge": {
+        "difficulty": 14,
+        "algorithm": "hashcash"
+      },
+      "limits": {
+        "rate": 20,
+        "window_seconds": 60,
+        "ban_seconds": 300
+      }
+    },
+    {
+      "name": "admin-area",
+      "user_agent_regex": "(?i)headless|phantom|selenium",
+      "action": "WEIGH",
+      "weight": 17
+    },
+    {
+      "name": "office-allow",
+      "cidrs": [
+        "10.0.0.0/8",
+        "192.168.0.0/16",
+        "2001:db8::/32"
+      ],
+      "action": "ALLOW"
+    },
+    {
+      "name": "wp-probe",
+      "path_regex": "^/(wp-admin|wp-login\\.php|\\.env|\\.git/)",
+      "action": "DENY"
+    },
+    {
+      "name": "xmlrpc",
+      "headers": {
+        "CF-Worker": ".*",
+        "X-Forwarded-Host": "^evil\\."
+      },
+      "action": "DENY"
+    },
+    {
+      "name": "env-file",
+      "path": "/api/checkout/11/*",
+      "action": "CHALLENGE",
+      "challenge": {
+        "difficulty": 11,
+        "algorithm": "hashcash"
+      },
+      "limits": {
+        "rate": 20,
+        "window_seconds": 60,
+        "ban_seconds": 300
+      }
+    },
+    {
+      "name": "git-dir",
+      "user_agent_regex": "(?i)headless|phantom|selenium",
+      "action": "WEIGH",
+      "weight": 22
+    },
+    {
+      "name": "graphql",
+      "cidrs": [
+        "10.0.0.0/8",
+        "192.168.0.0/16",
+        "2001:db8::/32"
+      ],
+      "action": "ALLOW"
+    },
+    {
+      "name": "static-allow",
+      "path_regex": "^/(wp-admin|wp-login\\.php|\\.env|\\.git/)",
+      "action": "DENY"
+    },
+    {
+      "name": "block-crawler-0",
+      "user_agent": "Crawler/0",
+      "path": "/catalog/*",
+      "action": "CHALLENGE",
+      "challenge": {
+        "difficulty": 12
+      }
+    },
+    {
+      "name": "block-crawler-1",
+      "user_agent": "Crawler/1",
+      "path": "/catalog/*",
+      "action": "CHALLENGE",
+      "challenge": {
+        "difficulty": 12
+      }
+    },
+    {
+      "name": "block-crawler-2",
+      "user_agent": "Crawler/2",
+      "path": "/catalog/*",
+      "action": "CHALLENGE",
+      "challenge": {
+        "difficulty": 12
+      }
+    },
+    {
+      "name": "block-crawler-3",
+      "user_agent": "Crawler/3",
+      "path": "/catalog/*",
+      "action": "CHALLENGE",
+      "challenge": {
+        "difficulty": 12
+      }
+    },
+    {
+      "name": "block-crawler-4",
+      "user_agent": "Crawler/4",
+      "path": "/catalog/*",
+      "action": "CHALLENGE",
+      "challenge": {
+        "difficulty": 12
+      }
+    },
+    {
+      "name": "block-crawler-5",
+      "user_agent": "Crawler/5",
+      "path": "/catalog/*",
+      "action": "CHALLENGE",
+      "challenge": {
+        "difficulty": 12
+      }
+    }
+  ]
+}
