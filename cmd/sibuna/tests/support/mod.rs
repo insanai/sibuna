@@ -96,11 +96,16 @@ pub fn base_config(kind: FixtureKind) -> Config {
 }
 
 fn boot(kind: FixtureKind) -> Fixture {
+    boot_with(kind, Hooks::default())
+}
+
+/// Boots a fresh, unshared fixture of `kind` with `hooks` (the audit fixture replaces the
+/// incident hook with its own), for tests that read the counters of their own server.
+pub fn boot_with(kind: FixtureKind, mut hooks: Hooks) -> Fixture {
     let config = base_config(kind);
     let mut engine = Engine::new(config.default_difficulty);
     engine.pages = sibuna::recipe::daemon_pages().unwrap();
     engine.waf_enabled = config.waf;
-    let mut hooks = Hooks::default();
     match kind {
         FixtureKind::Quota => configure_quotas(&mut engine),
         FixtureKind::Proxy | FixtureKind::Budget | FixtureKind::Bounded | FixtureKind::Silent => {
