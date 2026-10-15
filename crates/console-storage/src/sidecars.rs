@@ -65,12 +65,29 @@ const INSERT_COUNTRY: Sql = Sql::both(
 /// Returns the incident hook that writes the sidecars of each batch, mapping addresses with
 /// `country` when one is given. The hook borrows the batch's transaction and incidents; it
 /// fails only with the driver's error.
+///
+/// An incident keeps the country it was first mapped with: when a batch rolls back and is
+/// retried, the mappings of the failed attempt are reused, so a GeoIP generation activated
+/// in between does not change them (as in Zig, which fixed them when it prepared the batch).
+/// Only the last attempt's mappings are kept.
 pub fn incident_hook(country: Option<CountryLookup>) -> IncidentHook {
+    let mut previous: Vec<(i64, Option<CountryMapping>)> = Vec::new();
     Box::new(move |tx, incidents| {
         let mappings: Vec<Option<CountryMapping>> = incidents
             .iter()
-            .map(|incident| country.as_ref().and_then(|lookup| lookup(incident.client_ip)))
+            .enumerate()
+            .map(|(index, incident)| {
+                // A retry presents the batch in the same order; search only if it does not.
+                let same = previous.get(index).filter(|(id, _)| *id == incident.id);
+                match same.or_else(|| previous.iter().find(|(id, _)| *id == incident.id)) {
+                    Some(&(_, mapping)) => mapping,
+                    None => country.as_ref().and_then(|lookup| lookup(incident.client_ip)),
+                }
+            })
             .collect();
+        previous.clear();
+        previous
+            .extend(incidents.iter().map(|incident| incident.id).zip(mappings.iter().copied()));
         Box::pin(async move {
             for (incident, mapping) in incidents.iter().zip(mappings) {
                 write_sidecars(tx, incident, mapping).await?;

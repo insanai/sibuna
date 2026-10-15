@@ -278,3 +278,96 @@ fn the_storage_thread_writes_sidecars_with_its_batches() {
     assert!(storage.shutdown());
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+/// Polls `read` on `storage` until it returns `true` or ten seconds pass; returns the last
+/// answer.
+fn wait_for(storage: &Storage, read: &'static str) -> bool {
+    let deadline = Instant::now() + Duration::from_secs(10);
+    loop {
+        let done = storage
+            .with_database(move |db| async move {
+                let rows = db.fetch_all(Sql::both(read), &[]).await?;
+                Ok::<bool, StorageError>(rows[0][0].as_i64() == Some(1))
+            })
+            .expect("poll");
+        if done || Instant::now() > deadline {
+            return done;
+        }
+        std::thread::sleep(Duration::from_millis(20));
+    }
+}
+
+// Ported from `console_event_country_test.zig` "incident country commits atomically and keeps
+// its generation across import and lost reply": a generation activated between a failed
+// attempt and its retry does not change the country the batch was first mapped with.
+#[test]
+fn a_retried_batch_keeps_the_country_it_was_first_mapped_with() {
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicBool, Ordering};
+    if !cfg!(feature = "sqlite") {
+        return;
+    }
+    let dir = crate::common::scratch("sidecar_country_retry");
+    let _ = std::fs::remove_dir_all(&dir);
+    let config = Config {
+        data_dir: Some(dir.to_string_lossy().into_owned()),
+        storage_poll_ms: 50,
+        ..Config::default()
+    };
+    // The loaded generation: [7; 32] maps the address to US until [8; 32] replaces it.
+    let replaced = Arc::new(AtomicBool::new(false));
+    let imported = Arc::clone(&replaced);
+    let lookup = move |_: &str| {
+        Some(if imported.load(Ordering::Relaxed) {
+            CountryMapping { country: Some(*b"DE"), generation: [8; 32] }
+        } else {
+            CountryMapping { country: Some(*b"US"), generation: [7; 32] }
+        })
+    };
+    let metrics = Arc::new(sibuna_core::Metrics::default());
+    let hooks = Hooks {
+        migrations: vec![CONSOLE],
+        on_incidents: Some(sidecars::incident_hook(Some(Box::new(lookup)))),
+        metrics: Arc::clone(&metrics),
+        ..Hooks::default()
+    };
+    let storage = Storage::start(&config, hooks).expect("start");
+    let fail = "CREATE TRIGGER fail_country BEFORE INSERT ON console_incident_country \
+                BEGIN SELECT RAISE(ABORT, 'injected'); END";
+    storage
+        .with_database(move |db| async move { db.execute_script(fail).await })
+        .expect("trigger");
+    let incident = Incident {
+        client_ip: "8.8.8.8",
+        method: "GET",
+        path: b"/trap",
+        category: "honeypot",
+        now: NOW,
+        ..Incident::default()
+    };
+    storage.record_incident(&incident);
+    let deadline = Instant::now() + Duration::from_secs(10);
+    while metrics.incident_write_failures.value() == 0 && Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    assert!(metrics.incident_write_failures.value() > 0, "the batch failed");
+    // The failed batch left neither the incident nor its country behind.
+    assert!(wait_for(&storage, "SELECT CAST(COUNT(*) = 0 AS INTEGER) FROM security_incidents"));
+    // A new generation is activated before the retry succeeds.
+    replaced.store(true, Ordering::Relaxed);
+    let repair = "DROP TRIGGER fail_country";
+    storage.with_database(move |db| async move { db.execute_script(repair).await }).expect("drop");
+    assert!(wait_for(&storage, "SELECT COUNT(*) FROM console_incident_country"));
+    let stored = storage
+        .with_database(|db| async move {
+            let sql = Sql::both("SELECT country, generation FROM console_incident_country");
+            let rows = db.fetch_all(sql, &[]).await?;
+            let country = rows[0][0].as_str().map(str::to_owned);
+            let generation = rows[0][1].as_bytes().map(<[u8]>::to_vec);
+            Ok::<_, StorageError>((country, generation))
+        })
+        .expect("country");
+    assert_eq!(stored, (Some("US".to_owned()), Some(vec![7; 32])));
+    assert!(storage.shutdown());
+    let _ = std::fs::remove_dir_all(&dir);
+}
