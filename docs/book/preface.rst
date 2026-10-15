@@ -17,6 +17,6 @@ The reader should know basic programming, logarithms, and conditional probabilit
 
 This is an implementation book, not a claim that computational puzzles eliminate automated traffic. Clients can buy compute, addresses can be shared, and application syntax is richer than a bounded detector. The useful result is a system whose costs and limitations can be examined, tested, and changed without hiding them behind a slogan.
 
-.. rubric:: Edition 0.3, September 2026
+.. rubric:: Edition for Sibuna 0.2.0, October 2026
 
 Sources, exercises, and reproducible measurements accompany the Sibuna repository.
