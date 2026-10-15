@@ -223,6 +223,21 @@ fn the_deadline_ends_a_stalled_handshake() {
 }
 
 #[test]
+fn cancellation_ends_a_stalled_handshake_long_before_its_deadline() {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    let tcp = TcpStream::connect(address).unwrap();
+    let started = Instant::now();
+    let deadline = started + Duration::from_secs(30);
+    let cancel = || started.elapsed() >= Duration::from_millis(300);
+    let refused = test_ca().connect_cancellable(tcp, "localhost", deadline, &cancel);
+    let elapsed = started.elapsed();
+    assert!(matches!(refused, Err(TlsError::HandshakeTimeout)), "{:?}", refused.err());
+    assert!(elapsed >= Duration::from_millis(300) && elapsed < Duration::from_secs(1));
+    drop(listener);
+}
+
+#[test]
 fn the_deadline_covers_the_exchange() {
     let (address, server) = serve_once("localhost", After::Stall);
     let deadline = Instant::now() + Duration::from_millis(500);

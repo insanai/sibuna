@@ -5,13 +5,15 @@
 //! secret. Runs on the notifier thread, or on a request thread for a test delivery.
 //!
 //! Changes from Zig: Zig raced the attempt against a sleeping task and cancelled the loser.
-//! Here every network step has the attempt's deadline (at most 10 seconds), but name
-//! resolution waits for the system resolver, which its own configuration bounds, and a
-//! stopping console waits for an attempt in flight to end. The webhook reply is read with
-//! the console's HTTP client, its body bounded to 64 KiB, where Zig read only the status
-//! line; a larger body fails the attempt.
+//! Here every network step has the attempt's deadline (at most 10 seconds) and blocks at
+//! most 250 ms at a time before it checks the deadline and whether the console is
+//! stopping, so stopping is prompt. Name resolution waits for the system resolver, which
+//! its own configuration bounds. The webhook reply is read with the console's HTTP client,
+//! its body bounded to 64 KiB, where Zig read only the status line; a larger body fails the
+//! attempt.
 
 use std::fmt;
+use std::io::Write;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, UdpSocket};
 use std::sync::OnceLock;
 use std::time::{Duration, Instant};
@@ -23,14 +25,13 @@ use sibuna_console_storage::access::Credential;
 use sibuna_console_storage::notifications::{Reader, SealedSecret, read_secret};
 use sibuna_crypto::{ct, hmac};
 use sibuna_json::Writer;
-use sibuna_net::connect::{Unreachable, connect_deadline, write_bounded};
 use sibuna_net::outbound::{self, OutboundError, Policy};
 use sibuna_tls::{Connector, Trust};
 
 use super::target::{self, InvalidTarget, envelope_subject};
 use super::{Delivery, syslog, wait_for};
 use crate::auth::secrets::{MAX_SEALED, open_bytes};
-use crate::client::{self, ClientError, Endpoint, Limits, Origin};
+use crate::client::{self, ClientError, Endpoint, Limits, Method, Origin, Request, Socket};
 use crate::shared::Shared;
 use crate::storage::StorageFailure;
 
@@ -134,9 +135,15 @@ impl From<ClientError> for DeliveryError {
     }
 }
 
-impl From<Unreachable> for DeliveryError {
-    fn from(_: Unreachable) -> DeliveryError {
-        DeliveryError::Unreachable
+impl From<std::io::Error> for DeliveryError {
+    /// A socket that timed out or was canceled ends the attempt at its deadline; any other
+    /// failure means the receiver could not be reached.
+    fn from(error: std::io::Error) -> DeliveryError {
+        if error.kind() == std::io::ErrorKind::TimedOut {
+            DeliveryError::Deadline
+        } else {
+            DeliveryError::Unreachable
+        }
     }
 }
 
@@ -170,7 +177,7 @@ fn run(shared: &Shared, trust: &SystemTrust, attempt: &Attempt<'_>) -> Result<u1
     }
     match destination.kind {
         Kind::Webhook => webhook(shared, trust, attempt, secret.as_ref(), expires),
-        Kind::Syslog => send_syslog(destination, attempt.event, expires),
+        Kind::Syslog => send_syslog(shared, destination, attempt.event, expires),
     }
 }
 
@@ -281,11 +288,20 @@ fn webhook(
         fields.push(("X-Sibuna-Signature", signed.as_str()));
     }
     let limits = Limits { deadline: expires, max_body: MAX_REPLY_BODY };
-    let response = client::post_json(&endpoint, webhook.path, &fields, body.as_bytes(), &limits)?;
+    let request = Request {
+        method: Method::Post,
+        target: webhook.path,
+        fields: &fields,
+        body: body.as_bytes(),
+        ..Request::default()
+    };
+    let stopping = || shared.is_stopping();
+    let response = client::send_cancellable(&endpoint, &request, &limits, &stopping)?;
     Ok(response.status)
 }
 
 fn send_syslog(
+    shared: &Shared,
     destination: &Destination,
     event: &Pending,
     expires: Instant,
@@ -303,8 +319,9 @@ fn send_syslog(
     );
     match destination.transport {
         Transport::Tcp => {
-            let stream = connect_deadline(address, expires)?;
-            write_bounded(&stream, syslog::framed(&line).as_bytes(), expires)?;
+            let stopping = || shared.is_stopping();
+            let mut socket = Socket::connect(address, expires, &stopping)?;
+            socket.write_all(syslog::framed(&line).as_bytes())?;
         }
         Transport::Udp => {
             let local = match address.ip() {

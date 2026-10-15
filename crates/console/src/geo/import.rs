@@ -18,7 +18,8 @@
 //!   thread runs one background storage job at a time.
 //! - An operator checksum must be 64 hex digits, where Zig checked only the length; a
 //!   request whose field exceeds its bound answers 400, where Zig answered 503.
-//! - Stopping cancels between steps; a download in flight ends at its own deadline.
+//! - Stopping cancels the import: every download step blocks at most 250 ms before it
+//!   checks the cancellation, and storage steps check it between jobs.
 
 use std::fmt;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32, Ordering};
@@ -558,7 +559,9 @@ impl Job {
         if provider.compression() == Compression::Gzip {
             self.progress.set(ImportState::Downloading);
             let trust = &self.progress.trust;
-            let bytes = download::fetch(trust, provider, 0, version, gzip::MAX_COMPRESSED_BYTES)
+            let canceled = || self.progress.is_canceled();
+            let most = gzip::MAX_COMPRESSED_BYTES;
+            let bytes = download::fetch(trust, provider, 0, version, most, &canceled)
                 .map_err(|_| JobError::Download)?;
             self.progress.set(ImportState::Validating);
             return gzip::decode(provider, version, &bytes, &self.progress.cancel)
@@ -571,16 +574,18 @@ impl Job {
     /// file is checked against its publisher digest before a row enters the loader.
     fn stage_files(&self, provider: Provider, version: &str) -> Result<Database, JobError> {
         let trust = &self.progress.trust;
+        let canceled = || self.progress.is_canceled();
         let mut loader = Loader::new();
         for file in 0..provider.file_count() {
             if self.progress.is_canceled() {
                 return Err(JobError::Canceled);
             }
             self.progress.set(ImportState::Downloading);
-            let expected = download::fetch_checksum(trust, provider, file, version)
+            let expected = download::fetch_checksum(trust, provider, file, version, &canceled)
                 .map_err(|_| JobError::Download)?;
-            let bytes = download::fetch(trust, provider, file, version, MAX_SOURCE_BYTES)
-                .map_err(|_| JobError::Download)?;
+            let bytes =
+                download::fetch(trust, provider, file, version, MAX_SOURCE_BYTES, &canceled)
+                    .map_err(|_| JobError::Download)?;
             if !ct::eq(&Sha256::digest(&bytes), &expected) {
                 return Err(JobError::ChecksumMismatch);
             }

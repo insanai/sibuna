@@ -11,17 +11,20 @@
 //!
 //! Changes from Zig: the reply buffer belongs to the probe thread instead of a
 //! thread-local static; the thread is always started and returns at once when nothing is
-//! configured, where Zig did not start it.
+//! configured, where Zig did not start it; and each socket step blocks at most 250 ms
+//! before it checks whether the console is stopping, so a silent target never delays a
+//! stop.
 
+use std::io::{Read, Write};
 use std::net::SocketAddr;
 use std::sync::{Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
 use sibuna_console_protocol::nodes::{Health, Probe};
 use sibuna_console_protocol::notifications::Event;
-use sibuna_net::connect::{Unreachable, connect_deadline, read_bounded, write_bounded};
 use sibuna_net::parse_response_head;
 
+use crate::client::Socket;
 use crate::config::parse_probe;
 use crate::shared::{Setup, Shared};
 
@@ -129,7 +132,7 @@ fn probe_one(
     let now = shared.now();
     let mut result = Probe { observed_at: now, ..previous };
     let started = Instant::now();
-    let Ok(health) = request(target, "/__sibuna/health", buffer) else {
+    let Some(health) = request(shared, target, "/__sibuna/health", buffer) else {
         result.health = Health::Down;
         return result;
     };
@@ -145,7 +148,8 @@ fn probe_one(
     }
     result.last_seen = now;
     result.draining = health.status == 503;
-    if let (Ok(metrics), Some(counter)) = (request(target, "/__sibuna/metrics", buffer), counter)
+    if let (Some(metrics), Some(counter)) =
+        (request(shared, target, "/__sibuna/metrics", buffer), counter)
         && let Some(total) =
             buffer.get(metrics.body).and_then(|body| requests_counter(body, REQUESTS))
     {
@@ -164,22 +168,30 @@ struct Reply {
 }
 
 /// One bounded `GET path`: connect, write and read until the target closes, all within
-/// [`PROBE_TIMEOUT`], into `buffer`; then parse the status line.
-fn request(target: &Target, path: &str, buffer: &mut [u8]) -> Result<Reply, Unreachable> {
+/// [`PROBE_TIMEOUT`], into `buffer`; then parse the status line. Every socket step blocks
+/// at most 250 ms before it checks whether the console is stopping. Returns `None` when the
+/// target cannot be reached, does not close in time, or answers no valid head.
+fn request(shared: &Shared, target: &Target, path: &str, buffer: &mut [u8]) -> Option<Reply> {
     let deadline = Instant::now() + PROBE_TIMEOUT;
-    let stream = connect_deadline(target.address, deadline)?;
+    let stopping = || shared.is_stopping();
+    let mut socket = Socket::connect(target.address, deadline, &stopping).ok()?;
     let head = format!(
         "GET {path} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\
          User-Agent: sibuna-console-probe\r\n\r\n",
         target.host
     );
-    write_bounded(&stream, head.as_bytes(), deadline)?;
-    let length = read_bounded(&stream, buffer, deadline)?;
-    let received = buffer.get(..length).unwrap_or_default();
-    let end = received.windows(4).position(|window| window == b"\r\n\r\n").ok_or(Unreachable)?;
-    let parsed = parse_response_head(received.get(..end + 4).ok_or(Unreachable)?, false);
-    let parsed = parsed.ok_or(Unreachable)?;
-    Ok(Reply { status: parsed.status, body: end + 4..length })
+    socket.write_all(head.as_bytes()).ok()?;
+    let mut length = 0;
+    while let Some(space) = buffer.get_mut(length..).filter(|space| !space.is_empty()) {
+        match socket.read(space).ok()? {
+            0 => break,
+            count => length += count,
+        }
+    }
+    let received = buffer.get(..length)?;
+    let end = received.windows(4).position(|window| window == b"\r\n\r\n")?;
+    let parsed = parse_response_head(received.get(..end + 4)?, false)?;
+    Some(Reply { status: parsed.status, body: end + 4..length })
 }
 
 /// Returns the value of the first line that starts with `name` (the family name and a

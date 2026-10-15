@@ -9,8 +9,10 @@
 //!
 //! Changes from Zig: the publisher host is resolved under the public-only address policy
 //! and the connection pinned to the checked address (Zig's HTTP client resolved without a
-//! policy); the 120-second deadline bounds every network step, but not name resolution,
-//! and a stopping console waits for a download in flight to end.
+//! policy). The 120-second deadline bounds every network step but not name resolution,
+//! which the system resolver's configuration bounds; each step blocks at most 250 ms
+//! before it checks the import's cancellation, so a stopping console never waits for a
+//! download.
 
 use std::fmt;
 use std::time::{Duration, Instant};
@@ -19,7 +21,9 @@ use sibuna_geoip::Provider;
 use sibuna_geoip::provider::{ChecksumError, ProviderError, parse_checksum_file};
 use sibuna_net::outbound::{self, OutboundError, Policy};
 
-use crate::client::{self, ClientError, Endpoint, Limits, Response, Scheme, split_url};
+use crate::client::{
+    self, ClientError, Endpoint, Limits, Method, Request, Response, Scheme, split_url,
+};
 use crate::notify::delivery::SystemTrust;
 
 /// The largest uncompressed source file.
@@ -87,7 +91,8 @@ impl From<ProviderError> for DownloadError {
     }
 }
 
-/// Downloads source file `file` of `provider` for `version`, at most `max_bytes` bytes.
+/// Downloads source file `file` of `provider` for `version`, at most `max_bytes` bytes,
+/// giving up when `cancel` returns true.
 ///
 /// Fails with [`DownloadError`].
 pub fn fetch(
@@ -96,9 +101,10 @@ pub fn fetch(
     file: u8,
     version: &str,
     max_bytes: usize,
+    cancel: &dyn Fn() -> bool,
 ) -> Result<Vec<u8>, DownloadError> {
     let url = provider.url(file, version)?;
-    fetch_url(trust, provider, &url, max_bytes)
+    fetch_url(trust, provider, &url, max_bytes, cancel)
 }
 
 /// Downloads and parses the publisher's SHA-256 file for source file `file`.
@@ -110,15 +116,17 @@ pub fn fetch_checksum(
     provider: Provider,
     file: u8,
     version: &str,
+    cancel: &dyn Fn() -> bool,
 ) -> Result<[u8; 32], DownloadError> {
     let url = provider.checksum_url(file, version)?.ok_or(DownloadError::NoChecksum)?;
     let name = provider.file_name(file, version)?;
-    let text = fetch_url(trust, provider, &url, CHECKSUM_BYTES)?;
+    let text = fetch_url(trust, provider, &url, CHECKSUM_BYTES, cancel)?;
     parse_checksum_file(&text, &name).map_err(DownloadError::Checksum)
 }
 
 /// Downloads `url` of `provider`, following at most one allowed redirect, within
-/// [`DOWNLOAD_TIMEOUT`]; returns at most `max_bytes` body bytes.
+/// [`DOWNLOAD_TIMEOUT`]; returns at most `max_bytes` body bytes. Every socket step blocks
+/// at most 250 ms before it checks the deadline and `cancel`.
 ///
 /// Fails with [`DownloadError`].
 pub fn fetch_url(
@@ -126,9 +134,10 @@ pub fn fetch_url(
     provider: Provider,
     url: &str,
     max_bytes: usize,
+    cancel: &dyn Fn() -> bool,
 ) -> Result<Vec<u8>, DownloadError> {
-    let deadline = Instant::now() + DOWNLOAD_TIMEOUT;
-    follow(provider, url, |url| exchange(trust, url, max_bytes, deadline))
+    let limits = Limits { deadline: Instant::now() + DOWNLOAD_TIMEOUT, max_body: max_bytes };
+    follow(provider, url, |url| exchange(trust, url, &limits, cancel))
 }
 
 /// What a reply asks for: its body, or one redirect.
@@ -176,8 +185,8 @@ fn next(mut response: Response) -> Result<Next, DownloadError> {
 fn exchange(
     trust: &SystemTrust,
     url: &str,
-    max_bytes: usize,
-    deadline: Instant,
+    limits: &Limits,
+    cancel: &dyn Fn() -> bool,
 ) -> Result<Response, DownloadError> {
     let (origin, target) = split_url(url).map_err(|_| DownloadError::InvalidUrl)?;
     if origin.scheme() != Scheme::Https {
@@ -191,8 +200,8 @@ fn exchange(
     let connector = trust.connector().ok_or(DownloadError::TlsUnavailable)?;
     let endpoint =
         Endpoint { origin: &origin, address: Some(address), connector: Some(connector) };
-    let limits = Limits { deadline, max_body: max_bytes };
-    Ok(client::get(&endpoint, target, &[], &limits)?)
+    let request = Request { method: Method::Get, target, ..Request::default() };
+    Ok(client::send_cancellable(&endpoint, &request, limits, cancel)?)
 }
 
 #[cfg(test)]
@@ -263,20 +272,53 @@ mod tests {
         assert!(matches!(result, Err(DownloadError::RedirectRejected)));
     }
 
+    /// A download stalled by a publisher that accepts and never answers ends as soon as the
+    /// import is canceled, long before the 120-second deadline: the redirect policy over
+    /// the HTTPS exchange the importer makes, pinned here to the stalled loopback server.
+    #[test]
+    fn a_stalled_download_ends_when_the_import_is_canceled() {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let ca = concat!(env!("CARGO_MANIFEST_DIR"), "/../tls/tests/data/ca.pem");
+        let connector = sibuna_tls::Connector::load(&sibuna_tls::Trust::from_ca_file(ca)).unwrap();
+        let canceled = std::sync::Arc::new(AtomicBool::new(false));
+        let flag = std::sync::Arc::clone(&canceled);
+        let stopper = std::thread::spawn(move || {
+            std::thread::sleep(Duration::from_millis(300));
+            flag.store(true, Ordering::Release);
+        });
+        let started = Instant::now();
+        let limits = Limits { deadline: started + DOWNLOAD_TIMEOUT, max_body: MAX_SOURCE_BYTES };
+        let cancel = || canceled.load(Ordering::Acquire);
+        let result = follow(Provider::UserCountry, "https://localhost/latest/x.csv", |url| {
+            let (origin, target) = split_url(url).map_err(|_| DownloadError::InvalidUrl)?;
+            let endpoint =
+                Endpoint { origin: &origin, address: Some(address), connector: Some(&connector) };
+            let request = Request { method: Method::Get, target, ..Request::default() };
+            Ok(client::send_cancellable(&endpoint, &request, &limits, &cancel)?)
+        });
+        assert!(matches!(result, Err(DownloadError::Client(ClientError::Deadline))), "{result:?}");
+        assert!(started.elapsed() < Duration::from_secs(1), "{:?}", started.elapsed());
+        stopper.join().unwrap();
+        drop(listener);
+    }
+
     #[test]
     fn only_https_urls_to_public_hosts_are_fetched() {
         let trust = SystemTrust::default();
-        let soon = Instant::now() + Duration::from_secs(1);
+        let limits = Limits { deadline: Instant::now() + Duration::from_secs(1), max_body: 10 };
+        let never = || false;
         assert!(matches!(
-            exchange(&trust, "http://127.0.0.1:1/x", 10, soon),
+            exchange(&trust, "http://127.0.0.1:1/x", &limits, &never),
             Err(DownloadError::InvalidUrl)
         ));
         assert!(matches!(
-            exchange(&trust, "https://127.0.0.1/x", 10, soon),
+            exchange(&trust, "https://127.0.0.1/x", &limits, &never),
             Err(DownloadError::Address(OutboundError::TargetRejected))
         ));
         assert!(matches!(
-            exchange(&trust, "https://10.1.2.3/x", 10, soon),
+            exchange(&trust, "https://10.1.2.3/x", &limits, &never),
             Err(DownloadError::Address(OutboundError::TargetRejected))
         ));
     }

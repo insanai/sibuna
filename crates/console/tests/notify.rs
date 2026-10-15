@@ -431,3 +431,67 @@ fn deliveries_keep_cooldowns_retries_and_identities() {
     let (audited, _) = audit(&harness, &admin, "notification.delivery");
     assert_eq!(audited.len(), 10);
 }
+
+/// A server that accepts connections and never answers; returns its address and a channel
+/// that receives one message per accepted connection.
+fn stalled() -> (SocketAddr, std::sync::mpsc::Receiver<()>) {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    let (sender, accepted) = std::sync::mpsc::channel();
+    std::thread::spawn(move || {
+        let mut held = Vec::new();
+        for stream in listener.incoming() {
+            let Ok(stream) = stream else { return };
+            held.push(stream);
+            if sender.send(()).is_err() {
+                return;
+            }
+        }
+    });
+    (address, accepted)
+}
+
+#[test]
+fn stopping_ends_stalled_deliveries_at_once() {
+    let (mut harness, metrics, admin) = start("notify-stop");
+    let (queued, queued_accepted) = stalled();
+    let (tested, tested_accepted) = stalled();
+    for (label, address, events) in [("queued", queued, 2), ("tested", tested, 1)] {
+        save(
+            &harness,
+            &admin,
+            &format!(
+                "{{\"kind\":\"webhook\",\"label\":\"{label}\",\"events\":{events},\
+                 \"target\":\"http://{address}/hook\",\"cooldown_seconds\":0}}"
+            ),
+        );
+    }
+    // The notifier delivers a ban to the first; a test delivery waits on the second.
+    metrics.bans_issued.add(1);
+    queued_accepted.recv_timeout(Duration::from_secs(30)).expect("the notifier connects");
+    let address = harness.address();
+    let origin = harness.origin();
+    let headers = [
+        ("Cookie".to_owned(), admin.cookie.clone()),
+        ("X-Console-CSRF".to_owned(), admin.csrf.clone()),
+        ("Origin".to_owned(), origin),
+        ("Content-Type".to_owned(), "application/json".to_owned()),
+    ];
+    let test = std::thread::spawn(move || {
+        let headers: Vec<(&str, &str)> =
+            headers.iter().map(|(name, value)| (name.as_str(), value.as_str())).collect();
+        support::request(
+            address,
+            "POST",
+            "/console/api/notifications/test",
+            &headers,
+            b"{\"id\":2}",
+        )
+    });
+    tested_accepted.recv_timeout(Duration::from_secs(10)).expect("the test connects");
+    let started = Instant::now();
+    harness.console.take().unwrap().stop();
+    let elapsed = started.elapsed();
+    assert!(elapsed < Duration::from_secs(1), "stop took {elapsed:?}");
+    let _ = test.join();
+}

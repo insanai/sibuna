@@ -64,14 +64,33 @@ impl Connector {
     /// [`TlsError::Handshake`]. On error the socket is dropped (closed).
     pub fn connect(
         &self,
+        tcp: TcpStream,
+        server_name: &str,
+        deadline: Instant,
+    ) -> Result<TlsStream, TlsError> {
+        self.connect_cancellable(tcp, server_name, deadline, &|| false)
+    }
+
+    /// Runs [`Connector::connect`], but blocks in no socket operation longer than 250 ms:
+    /// after each slice it checks the deadline and calls `cancel`, and gives up
+    /// when `cancel` returns true. A stopping program uses it so that a server that never
+    /// answers cannot hold it until the deadline.
+    ///
+    /// # Errors
+    ///
+    /// The errors of [`Connector::connect`]; a canceled handshake is
+    /// [`TlsError::HandshakeTimeout`], as if its deadline had passed.
+    pub fn connect_cancellable(
+        &self,
         mut tcp: TcpStream,
         server_name: &str,
         deadline: Instant,
+        cancel: &dyn Fn() -> bool,
     ) -> Result<TlsStream, TlsError> {
         let name = parse_server_name(server_name)?;
         let mut connection = ClientConnection::new(Arc::clone(&self.config), name)
             .map_err(TlsError::from_rustls)?;
-        handshake(&mut connection, &mut tcp, deadline)?;
+        handshake(&mut connection, &mut tcp, deadline, cancel)?;
         Ok(TlsStream::new(StreamOwned::new(connection, tcp), Some(deadline)))
     }
 
@@ -123,19 +142,26 @@ pub(crate) fn connect_tcp(address: SocketAddr, deadline: Instant) -> Result<TcpS
 
 /// Drives the handshake one socket operation at a time, re-arming the socket timeouts
 /// before each, so the whole handshake (not each read) is bounded by `deadline`; a server
-/// that trickles one byte at a time cannot stretch it.
+/// that trickles one byte at a time cannot stretch it. No operation blocks longer than
+/// [`SLICE`]; one that times out is retried (rustls keeps its state across a timeout)
+/// until the deadline passes or `cancel` returns true.
 fn handshake(
     connection: &mut ClientConnection,
     tcp: &mut TcpStream,
     deadline: Instant,
+    cancel: &dyn Fn() -> bool,
 ) -> Result<(), TlsError> {
     while connection.is_handshaking() {
         arm(tcp, deadline)?;
         if connection.wants_write() {
-            connection.write_tls(tcp).map_err(handshake_io)?;
+            if retry(connection.write_tls(tcp), cancel)?.is_none() {
+                continue;
+            }
         } else if connection.wants_read() {
-            if connection.read_tls(tcp).map_err(handshake_io)? == 0 {
-                return Err(TlsError::Closed);
+            match retry(connection.read_tls(tcp), cancel)? {
+                None => continue,
+                Some(0) => return Err(TlsError::Closed),
+                Some(_) => {}
             }
             if let Err(error) = connection.process_new_packets() {
                 // Tell the server why, as the protocol asks; a failure to do so changes
@@ -151,14 +177,34 @@ fn handshake(
     // The client's last flight (TLS 1.3 Finished) may still be queued.
     while connection.wants_write() {
         arm(tcp, deadline)?;
-        connection.write_tls(tcp).map_err(handshake_io)?;
+        retry(connection.write_tls(tcp), cancel)?;
     }
     Ok(())
 }
 
-/// Sets both socket timeouts to the time left before `deadline`.
+/// The longest one handshake socket operation of [`Connector::connect_cancellable`]
+/// blocks.
+pub(crate) const SLICE: Duration = Duration::from_millis(250);
+
+/// Returns the bytes a socket operation moved, `None` when it timed out within its slice
+/// and should be retried, or the error: a canceled handshake, or a failed operation.
+fn retry(result: io::Result<usize>, cancel: &dyn Fn() -> bool) -> Result<Option<usize>, TlsError> {
+    match result {
+        Ok(count) => Ok(Some(count)),
+        Err(error) if is_timeout(&error) => {
+            if cancel() {
+                Err(TlsError::HandshakeTimeout)
+            } else {
+                Ok(None)
+            }
+        }
+        Err(error) => Err(handshake_io(error)),
+    }
+}
+
+/// Sets both socket timeouts to the time left before `deadline`, at most [`SLICE`].
 fn arm(tcp: &TcpStream, deadline: Instant) -> Result<(), TlsError> {
-    let left = remaining(deadline).ok_or(TlsError::HandshakeTimeout)?;
+    let left = remaining(deadline).ok_or(TlsError::HandshakeTimeout)?.min(SLICE);
     tcp.set_read_timeout(Some(left)).map_err(TlsError::Io)?;
     tcp.set_write_timeout(Some(left)).map_err(TlsError::Io)
 }

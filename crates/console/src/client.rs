@@ -29,8 +29,10 @@
 //! # Changes from Zig
 //!
 //! - Zig raced each request against a sleeping task and cancelled the loser; here the
-//!   deadline is an [`Instant`] and the socket timeouts are re-armed to the time left before
-//!   every read and write, so no second thread is needed.
+//!   deadline is an [`Instant`] and the socket timeouts are re-armed before every read and
+//!   write, so no second thread is needed. No operation blocks longer than [`SLICE`]
+//!   before the deadline and the caller's cancellation check ([`send_cancellable`]) are
+//!   looked at again, so a stopping console never waits for a silent server.
 //! - Zig's endpoint enum and its fixed paths are gone: callers pass the request-target, so
 //!   one client serves the commands, downloads and webhooks.
 //! - A `Content-Encoding` other than `identity` is refused, as Zig refused it; a 1xx
@@ -38,8 +40,8 @@
 
 use std::fmt;
 use std::io::{self, Read, Write};
-use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
-use std::time::Instant;
+use std::net::{IpAddr, SocketAddr, TcpStream, ToSocketAddrs};
+use std::time::{Duration, Instant};
 
 use sibuna_crypto::ct;
 use sibuna_http::chunked::Decoder;
@@ -52,6 +54,12 @@ pub const MAX_ORIGIN: usize = 255;
 pub const MAX_TARGET: usize = 4096;
 /// The most addresses tried for one host name.
 pub const MAX_ADDRESSES: usize = 16;
+/// The longest one read or write blocks before the deadline and the cancellation check
+/// are looked at again.
+pub const SLICE: Duration = Duration::from_millis(250);
+/// The longest one connection attempt waits: attempts start at [`SLICE`] and double up to
+/// this, so a server more than 250 ms away can still answer a SYN.
+const MAX_CONNECT_SLICE: Duration = Duration::from_secs(1);
 
 /// The scheme of an [`Origin`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -426,8 +434,25 @@ pub fn send(
     request: &Request<'_>,
     limits: &Limits,
 ) -> Result<Response, ClientError> {
+    send_cancellable(endpoint, request, limits, &|| false)
+}
+
+/// Runs one exchange as [`send`] does, and also gives up when `cancel` returns true: no
+/// socket operation, connection attempt or TLS handshake step blocks longer than
+/// [`SLICE`] (a connection attempt at most one second) before `cancel` is called again. A
+/// stopping console passes its stop flag, so a server that never answers cannot hold it
+/// until the deadline. Name resolution without a pinned address is not covered: it waits
+/// for the system resolver, which its own configuration bounds.
+///
+/// Fails like [`send`]; a canceled exchange fails with [`ClientError::Deadline`].
+pub fn send_cancellable(
+    endpoint: &Endpoint<'_>,
+    request: &Request<'_>,
+    limits: &Limits,
+    cancel: &dyn Fn() -> bool,
+) -> Result<Response, ClientError> {
     let mut head = request_head(endpoint.origin, request)?;
-    let mut stream = match connect(endpoint, limits.deadline) {
+    let mut stream = match connect(endpoint, limits.deadline, cancel) {
         Ok(stream) => stream,
         Err(error) => {
             ct::zeroize(&mut head);
@@ -478,73 +503,212 @@ fn request_head(origin: &Origin, request: &Request<'_>) -> Result<Vec<u8>, Clien
     Ok(head.into_bytes())
 }
 
-/// A connection with the time left re-armed before every operation.
-enum Stream {
-    Plain { tcp: TcpStream, deadline: Instant },
-    Tls(Box<TlsStream>),
+/// A plain TCP socket whose reads and writes block at most [`SLICE`] at a time and give
+/// up at the deadline or when `cancel` returns true; both end as
+/// [`io::ErrorKind::TimedOut`].
+pub(crate) struct Socket<'a> {
+    tcp: TcpStream,
+    deadline: Instant,
+    cancel: &'a dyn Fn() -> bool,
 }
 
-/// Sets both socket timeouts to the time left before `deadline`.
-fn arm(tcp: &TcpStream, deadline: Instant) -> io::Result<()> {
-    let left = deadline.saturating_duration_since(Instant::now());
-    if left.is_zero() {
-        return Err(io::ErrorKind::TimedOut.into());
-    }
-    tcp.set_read_timeout(Some(left))?;
-    tcp.set_write_timeout(Some(left))
-}
-
-impl Read for Stream {
-    fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
-        match self {
-            Stream::Plain { tcp, deadline } => {
-                arm(tcp, *deadline)?;
-                tcp.read(buffer)
+impl<'a> Socket<'a> {
+    /// Connects to `address` before `deadline`, in attempts of [`SLICE`] growing to one
+    /// second, calling `cancel` after each attempt that timed out.
+    ///
+    /// Fails with [`io::ErrorKind::TimedOut`] at the deadline or when canceled, and with
+    /// the connection's error.
+    pub(crate) fn connect(
+        address: SocketAddr,
+        deadline: Instant,
+        cancel: &'a dyn Fn() -> bool,
+    ) -> io::Result<Socket<'a>> {
+        let mut slice = SLICE;
+        loop {
+            let left = deadline.saturating_duration_since(Instant::now());
+            if left.is_zero() || cancel() {
+                return Err(io::ErrorKind::TimedOut.into());
             }
-            Stream::Tls(tls) => tls.read(buffer),
+            match TcpStream::connect_timeout(&address, left.min(slice)) {
+                Ok(tcp) => return Ok(Socket { tcp, deadline, cancel }),
+                Err(error) if is_timeout(&error) => slice = (slice * 2).min(MAX_CONNECT_SLICE),
+                Err(error) => return Err(error),
+            }
+        }
+    }
+
+    /// Returns `TimedOut` once the deadline has passed or `cancel` returns true.
+    fn check(&self) -> io::Result<()> {
+        if Instant::now() >= self.deadline || (self.cancel)() {
+            return Err(io::ErrorKind::TimedOut.into());
+        }
+        Ok(())
+    }
+
+    /// Sets both socket timeouts to the time left, at most [`SLICE`].
+    fn arm(&self) -> io::Result<()> {
+        let left = self.deadline.saturating_duration_since(Instant::now());
+        if left.is_zero() {
+            return Err(io::ErrorKind::TimedOut.into());
+        }
+        self.tcp.set_read_timeout(Some(left.min(SLICE)))?;
+        self.tcp.set_write_timeout(Some(left.min(SLICE)))
+    }
+}
+
+/// A socket timeout shows as `WouldBlock` on Unix and `TimedOut` on Windows.
+fn is_timeout(error: &io::Error) -> bool {
+    matches!(error.kind(), io::ErrorKind::WouldBlock | io::ErrorKind::TimedOut)
+}
+
+impl Read for Socket<'_> {
+    fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+        loop {
+            self.arm()?;
+            match self.tcp.read(buffer) {
+                Err(error) if is_timeout(&error) => self.check()?,
+                other => return other,
+            }
         }
     }
 }
 
-impl Write for Stream {
+impl Write for Socket<'_> {
+    fn write(&mut self, buffer: &[u8]) -> io::Result<usize> {
+        loop {
+            self.arm()?;
+            match self.tcp.write(buffer) {
+                Err(error) if is_timeout(&error) => self.check()?,
+                other => return other,
+            }
+        }
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.tcp.flush()
+    }
+}
+
+/// A connection whose every operation waits at most [`SLICE`] before the deadline and the
+/// cancellation are checked again.
+enum Stream<'a> {
+    Plain(Socket<'a>),
+    Tls { tls: Box<TlsStream>, deadline: Instant, cancel: &'a dyn Fn() -> bool },
+}
+
+impl Stream<'_> {
+    /// Runs `operation` on the TLS stream in slices: rustls keeps its state across a
+    /// socket timeout, so a timed-out read or write is retried until the deadline passes
+    /// or `cancel` returns true.
+    fn tls_slices<T>(
+        tls: &mut TlsStream,
+        deadline: Instant,
+        cancel: &dyn Fn() -> bool,
+        mut operation: impl FnMut(&mut TlsStream) -> io::Result<T>,
+    ) -> io::Result<T> {
+        loop {
+            let now = Instant::now();
+            if now >= deadline || cancel() {
+                return Err(io::ErrorKind::TimedOut.into());
+            }
+            tls.set_deadline(Some(deadline.min(now + SLICE)))?;
+            match operation(tls) {
+                Err(error) if is_timeout(&error) => {}
+                other => return other,
+            }
+        }
+    }
+}
+
+impl Read for Stream<'_> {
+    fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+        match self {
+            Stream::Plain(socket) => socket.read(buffer),
+            Stream::Tls { tls, deadline, cancel } => {
+                Stream::tls_slices(tls, *deadline, *cancel, |tls| tls.read(buffer))
+            }
+        }
+    }
+}
+
+impl Write for Stream<'_> {
     fn write(&mut self, buffer: &[u8]) -> io::Result<usize> {
         match self {
-            Stream::Plain { tcp, deadline } => {
-                arm(tcp, *deadline)?;
-                tcp.write(buffer)
+            Stream::Plain(socket) => socket.write(buffer),
+            Stream::Tls { tls, deadline, cancel } => {
+                Stream::tls_slices(tls, *deadline, *cancel, |tls| tls.write(buffer))
             }
-            Stream::Tls(tls) => tls.write(buffer),
         }
     }
 
     fn flush(&mut self) -> io::Result<()> {
         match self {
-            Stream::Plain { tcp, .. } => tcp.flush(),
-            Stream::Tls(tls) => tls.flush(),
+            Stream::Plain(socket) => socket.flush(),
+            Stream::Tls { tls, deadline, cancel } => {
+                Stream::tls_slices(tls, *deadline, *cancel, TlsStream::flush)
+            }
         }
     }
 }
 
-fn connect(endpoint: &Endpoint<'_>, deadline: Instant) -> Result<Stream, ClientError> {
+/// Returns the address of a plain-HTTP host: a literal loopback address, with or without
+/// IPv6 brackets.
+fn plaintext_address(host: &str) -> Option<IpAddr> {
+    if !sibuna_tls::is_plaintext_allowed(host) {
+        return None;
+    }
+    host.trim_start_matches('[').trim_end_matches(']').parse().ok()
+}
+
+/// Connects TCP in slices and runs the TLS handshake for `server_name` in slices.
+fn connect_tls<'a>(
+    connector: &Connector,
+    address: SocketAddr,
+    server_name: &str,
+    deadline: Instant,
+    cancel: &'a dyn Fn() -> bool,
+) -> Result<Stream<'a>, TlsError> {
+    let socket = Socket::connect(address, deadline, cancel).map_err(|error| {
+        if is_timeout(&error) { TlsError::ConnectTimeout } else { TlsError::Connect(error) }
+    })?;
+    // Nagle's algorithm only delays a request-response exchange; failure changes nothing.
+    let _ = socket.tcp.set_nodelay(true);
+    let tls = connector.connect_cancellable(socket.tcp, server_name, deadline, cancel)?;
+    Ok(Stream::Tls { tls: Box::new(tls), deadline, cancel })
+}
+
+fn connect<'a>(
+    endpoint: &Endpoint<'_>,
+    deadline: Instant,
+    cancel: &'a dyn Fn() -> bool,
+) -> Result<Stream<'a>, ClientError> {
     let origin = endpoint.origin;
     if origin.scheme == Scheme::Http {
-        let tcp = sibuna_tls::connect_plain(&origin.host, origin.port, deadline)?;
-        return Ok(Stream::Plain { tcp, deadline });
+        let ip = plaintext_address(&origin.host).ok_or(ClientError::InsecureOrigin)?;
+        let socket = Socket::connect(SocketAddr::new(ip, origin.port), deadline, cancel).map_err(
+            |error| {
+                if is_timeout(&error) {
+                    ClientError::Deadline
+                } else {
+                    ClientError::Tls(TlsError::Connect(error))
+                }
+            },
+        )?;
+        return Ok(Stream::Plain(socket));
     }
     let connector = endpoint.connector.ok_or(ClientError::TlsRequired)?;
     if let Some(address) = endpoint.address {
-        let tls = connector.connect_address(address, &origin.host, deadline)?;
-        return Ok(Stream::Tls(Box::new(tls)));
+        return Ok(connect_tls(connector, address, &origin.host, deadline, cancel)?);
     }
     let unresolved = || ClientError::Tls(TlsError::Unresolved(origin.host.clone()));
     let bare = origin.host.trim_start_matches('[').trim_end_matches(']');
     let addresses = (bare, origin.port).to_socket_addrs().map_err(|_| unresolved())?;
     let mut last = unresolved();
     for address in addresses.take(MAX_ADDRESSES) {
-        match connector.connect_address(address, &origin.host, deadline) {
-            Ok(tls) => return Ok(Stream::Tls(Box::new(tls))),
+        match connect_tls(connector, address, &origin.host, deadline, cancel) {
+            Ok(stream) => return Ok(stream),
             // A bad name or certificate stays bad on every address; a timeout means the
-            // deadline has passed.
+            // deadline has passed or the exchange was canceled.
             Err(error @ (TlsError::InvalidServerName(_) | TlsError::Certificate { .. })) => {
                 return Err(error.into());
             }
@@ -898,6 +1062,33 @@ mod tests {
         let https = Origin::parse("https://console.example").unwrap();
         let endpoint = Endpoint { origin: &https, address: None, connector: None };
         assert!(matches!(get(&endpoint, "/", &[], &limits(1)), Err(ClientError::TlsRequired)));
+    }
+
+    #[test]
+    fn cancellation_ends_a_silent_exchange_long_before_its_deadline() {
+        // The backlog completes each TCP connection; nothing ever answers.
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let plain = Origin::parse(&format!("http://{address}")).unwrap();
+        let https = Origin::parse("https://localhost").unwrap();
+        let ca = concat!(env!("CARGO_MANIFEST_DIR"), "/../tls/tests/data/ca.pem");
+        let connector = Connector::load(&sibuna_tls::Trust::from_ca_file(ca)).unwrap();
+        let endpoints = [
+            Endpoint { origin: &plain, address: None, connector: None },
+            Endpoint { origin: &https, address: Some(address), connector: Some(&connector) },
+        ];
+        for endpoint in endpoints {
+            let started = Instant::now();
+            let limits = Limits { deadline: started + Duration::from_secs(30), max_body: 16 };
+            let cancel = || started.elapsed() >= Duration::from_millis(300);
+            let request = Request::default();
+            let result = send_cancellable(&endpoint, &request, &limits, &cancel);
+            assert!(matches!(result, Err(ClientError::Deadline)), "{result:?}");
+            let elapsed = started.elapsed();
+            assert!(elapsed >= Duration::from_millis(300), "{elapsed:?}");
+            assert!(elapsed < Duration::from_secs(1), "{elapsed:?}");
+        }
+        drop(listener);
     }
 
     /// A deterministic xorshift generator for the fuzz test.
