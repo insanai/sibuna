@@ -43,10 +43,11 @@
 //! - Storage is SQLite or PostgreSQL (SID 0011); the banner and help name them, and a build
 //!   without storage refuses the storage options with a hint.
 //! - Engine snapshots are `Arc<Engine>` values published through [`EngineSlot`]. Zig's two
-//!   engine slots with reader counts, the writer's spin until readers drained, the arenas
-//!   reset per rebuild and the 128-byte rule-name copy made to release the slot early are
-//!   gone; a request reads the engine through its connection's [`EngineCache`], and an old
-//!   engine is freed when the last cache holding it refreshes or closes.
+//!   engine slots with reader counts, the writer's spin until readers drained and the arenas
+//!   reset per rebuild are gone; a request reads the engine through its connection's [`EngineCache`], and an old
+//!   engine is freed when the last cache holding it refreshes or closes. The 128-byte copy of
+//!   the deciding rule's name remains: it ends the decision's borrow of the engine so the
+//!   response can be written while the cache refreshes.
 //! - Signals: Zig installed a handler that set a flag and polled it every 100 ms. We block
 //!   SIGINT and SIGTERM and wait for them with `sigwait` on a dedicated thread, which wakes
 //!   the main thread at once.

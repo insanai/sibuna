@@ -11,8 +11,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::thread::JoinHandle;
 
-/// The stack of a connection thread, as in the Zig daemon. The connection buffers live on
-/// the heap, so this leaves ample room for evaluation.
+/// The stack of a connection thread, as in the Zig daemon. It holds the 64 KiB read buffer
+/// and the 16 KiB write buffer (80 KiB) and leaves ample room for evaluation; the proxy's
+/// 40 KiB workspace lives on the heap.
 const STACK_SIZE: usize = 1024 * 1024;
 
 /// Why a task could not start.

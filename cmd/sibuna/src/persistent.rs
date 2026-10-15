@@ -191,8 +191,10 @@ mod tests {
             ),
             ..recipe()
         };
-        let mut snapshot =
-            PolicySnapshot { rules: vec![row("live", PolicyAction::Deny, "/admin*")], ..Default::default() };
+        let mut snapshot = PolicySnapshot {
+            rules: vec![row("live", PolicyAction::Deny, "/admin*")],
+            ..Default::default()
+        };
         snapshot.reputation.push(ReputationRow {
             ip_or_cidr: "198.51.100.0/24".into(),
             reputation_score: -100,
