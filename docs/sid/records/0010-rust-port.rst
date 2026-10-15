@@ -243,6 +243,13 @@ The port is accepted when:
 
 Status: in progress. This section is updated with the evidence as each criterion is met.
 
+Evidence recorded so far (2026-10-15):
+
+- Criterion 2: Rust and Zig daemons sharing a seed verify each other's MAC and Ed25519 session tokens and requirement tickets (``crates/challenge`` cross-implementation tests against the Zig baseline binary).
+- Criterion 3: ``cargo xtask browser`` drives Chromium 155 headless through the interstitial; the challenge passes with WebAssembly (solve 29 to 34 ms) and with the JavaScript fallback (84 to 91 ms, WebAssembly disabled). Detection relies on the default interstitial markup (``#status``, ``.progress-bar``).
+- Differential behaviour: ``cargo xtask parity`` replays generated corpora against both daemons in 17 configurations. At commit ``dda1162`` four seeds (three of 20,000 requests and one of 60,000) gave no unexplained difference; every allowed difference is listed with its reason in ``tools/parity/allow-list.json``.
+- Criterion 4 (preliminary): ``cargo xtask bench`` records primitives, whole-product and open-loop latency runs in ``benchmarks/results/``. The final figures are taken on a quiet machine after the console port.
+
 Open questions
 --------------
 
