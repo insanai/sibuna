@@ -36,6 +36,8 @@ Revision note
 
 2026-10-15 (Rust port, performance): placement keeps its secrecy at one keyed hash per request. The daemon hashes the canonical client key once with SipHash-1-3 under a key drawn at start (``ClientHasher``); each limiter and the ban table draw a 64-bit secret when built and derive the placement key as the SplitMix64 finaliser of (hash xor table secret xor scope). Since the attacker cannot compute the keyed hash, every derived key is unpredictable, and the per-table secret makes a colliding set found in one table scatter in another. Measured: GCRA check 7.6 ns and ban lookup 2.8 ns on a precomputed hash (6.2 and 5.5 ns unkeyed), plus 8.7 ns for the one SipHash per request; the store path of a request fell from 43 to 26 ns. The limiter and spent set are allocated zeroed (an empty slot is all zero bits), so idle tables are not resident: daemon idle RSS fell from 42 MiB to 5.4 MiB.
 
+2026-10-15 (Rust port, false positive fix): a command name counts only when it is a command. A name followed by ``=`` or by a bracketed index and ``=`` (``id=``, ``type[]=``) is a shell assignment word, and in a query string it is a parameter, so ``a=1&id=5``, ``page=2&type=book`` and ``q=x;env=prod`` are no longer denied as ``waf:rce``. Zig denied them, which blocked ordinary requests whose parameters are named ``id``, ``type``, ``set``, ``dir``, ``cat`` or ``env``. The lone ``&`` stays a separator, so ``ping 127.0.0.1&id`` is still denied. The index is looked at for at most 64 bytes.
+
 Abstract
 --------
 
@@ -81,7 +83,7 @@ Strong signatures alone cannot catch ``id=5' or 1=1`` without also catching pros
 
 - **SQL injection**: a word scanner looks up every alphanumeric word (at most 7 bytes) in the keyword table and, for ``or``/``and``, checks for a ``literal = literal`` tautology. A tautology is terminal. Otherwise a quote is mandatory, and a score of quote (1) + up to two keywords + comment marker (1) + ``=`` (1) must reach 4; ``admin'--`` and ``admin'/*`` are terminal on their own. "it's a group order from the shop" scores 3 and passes.
 - **Cross-site scripting**: requires ``<``; fires when a tag that can host script (``svg``, ``img``, ``body``, ``iframe``, ...) co-occurs with an ``on<event>=`` attribute in attribute position (preceded by whitespace, ``/``, or a quote). ``onboarding=1`` in a query string does not count.
-- **Command injection**: requires a separator; fires when ``;``, ``|``, ``&&``, ``||``, ``$(``, a backtick, or a newline is followed by a known command name (``cat``, ``wget``, ``curl``, ``nc``, ``bash``, ...). A bare ``;`` is punctuation.
+- **Command injection**: requires a separator; fires when ``;``, ``|``, ``&``, ``&&``, ``||``, ``$(``, a backtick, or a newline is followed by a known command name that is not an assignment (``id=5``) (``cat``, ``wget``, ``curl``, ``nc``, ``bash``, ...). A bare ``;`` is punctuation.
 - **Path traversal**: signatures plus the NUL byte and ``%00``.
 
 Field coverage and canonicalisation
