@@ -1,0 +1,49 @@
+# A discussion catalog: its identity, the process its records follow, and how
+# they are numbered. guidedog dsc reads it from the catalog folder.
+
+prefix = "sid"
+name = "Sibuna Discussions"
+author = "Vikrant Rathore"
+
+# The labels records may carry; leave labels out to allow any.
+# labels = ["architecture", "process"]
+# The kinds of record.
+types = ["Architectural Specification", "Process Memo", "Informational"]
+
+# Numbers have at least width digits, zero-padded (0007); a number that needs
+# more gets them. Promotion numbers from start, up to limit.
+[numbering]
+width = 4
+start = 1
+# limit = 99999
+
+# A new draft is in the draft state, numbered XXXXX. Promotion gives it a number
+# and moves it to the open state. The state command moves a record to one of
+# its state's next states, with --reason, and --evidence where the state asks for
+# it. status is the text a record's optional status field takes.
+[workflow]
+draft = "prediscussion"
+open = "discussion"
+
+[workflow.states.prediscussion]
+next = ["abandoned"]
+status = "Working draft"
+
+[workflow.states.discussion]
+next = ["accepted", "published", "abandoned"]
+status = "Open for discussion"
+
+[workflow.states.accepted]
+next = ["published", "committed", "abandoned"]
+status = "Accepted direction"
+
+[workflow.states.published]
+next = ["committed", "abandoned"]
+status = "Adopted design"
+
+[workflow.states.committed]
+evidence = true
+status = "Implemented design"
+
+[workflow.states.abandoned]
+status = "Closed proposal"
