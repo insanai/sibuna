@@ -13,7 +13,9 @@
 //! [`sibuna_get_buffer_ptr`] in the exported `memory` and calls the solvers. The exports
 //! and their signatures are those of the Zig module `apps/wasm-pow/src/entry.zig`.
 //!
-//! Build with `cargo build -p sibuna-pow-wasm --target wasm32-unknown-unknown --release`.
+//! Build with `cargo build -p sibuna-pow-wasm --target wasm32-unknown-unknown --profile wasm`
+//! (the workspace's size profile; its hashing crates keep `opt-level = 3`, so the module is
+//! byte-identical to the `--release` build that the daemon's build script embeds).
 //!
 //! # Deliberate changes from Zig
 //!

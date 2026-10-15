@@ -63,15 +63,33 @@ codegen-units = 1
 lto = "fat"
 debug = "line-tables-only"
 
-# The browser solver is downloaded by every challenged visitor: optimise it for size.
-[profile.release.package.sibuna-pow-wasm]
+# The two WebAssembly modules are built with `cargo build --target wasm32-unknown-unknown
+# --profile wasm -p <crate>`: the browser solver (`sibuna-pow-wasm`) is downloaded by every
+# challenged visitor, the console interface (`sibuna-console-ui`) once per operator session,
+# and SID 0007 caps the interface at 768 KiB. Panics abort on wasm32-unknown-unknown anyway;
+# saying so keeps unwinding out of every dependency.
+[profile.wasm]
+inherits = "release"
 opt-level = "z"
 debug = false
 strip = true
+panic = "abort"
 
-# The console interface is downloaded once per operator session; SID 0007 caps it at 768 KiB.
-[profile.release.package.sibuna-console-ui]
-opt-level = "s"
+[profile.wasm.package."*"]
+opt-level = "z"
+
+# The solver's hashing loops: at "z" the module grows by 12 percent; at 3 it
+# is byte-identical to the release build the daemon embeds.
+[profile.wasm.package.sibuna-pow]
+opt-level = 3
+
+[profile.wasm.package.sibuna-crypto]
+opt-level = 3
+
+# The daemon's build script still builds the solver with `--release`; keep that build
+# optimised for size until it moves to the `wasm` profile.
+[profile.release.package.sibuna-pow-wasm]
+opt-level = "z"
 debug = false
 strip = true
 
